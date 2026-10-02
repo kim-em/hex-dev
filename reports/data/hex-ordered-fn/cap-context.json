@@ -1,0 +1,52 @@
+{
+  "provenance": "Commands transcribed from the execution record; original logs did not record environment variables. No executable hash or dirty-file inventory was captured for these functional checks.",
+  "checkout_commit": "4229c31ac56f2c782545ff1dd47481fdfd4554fe",
+  "dirty": true,
+  "cases": [
+    {
+      "log": "cap-four-workers.log",
+      "command": [
+        "env",
+        "LEAN_NUM_THREADS=4",
+        ".lake/build/bin/hexorderedfn_bench",
+        "run",
+        "--param-schedule",
+        "doubling",
+        "--param-floor",
+        "8192",
+        "--param-ceiling",
+        "8192",
+        "--outer-trials",
+        "1",
+        "--max-seconds-per-call",
+        "0.25",
+        "--target-inner-nanos",
+        "1000000",
+        "Hex.OrderedFnBench.approximation"
+      ]
+    },
+    {
+      "log": "cap-one-worker.log",
+      "command": [
+        "env",
+        "LEAN_NUM_THREADS=1",
+        ".lake/build/bin/hexorderedfn_bench",
+        "run",
+        "--param-schedule",
+        "doubling",
+        "--param-floor",
+        "8192",
+        "--param-ceiling",
+        "8192",
+        "--outer-trials",
+        "1",
+        "--max-seconds-per-call",
+        "0.25",
+        "--target-inner-nanos",
+        "1000000",
+        "Hex.OrderedFnBench.approximation"
+      ]
+    }
+  ],
+  "cpu_affinity": "Not explicitly set for these functional watchdog checks. Scientific measurements use the automatically selected CPU."
+}

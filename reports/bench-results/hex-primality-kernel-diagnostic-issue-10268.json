@@ -1,0 +1,263 @@
+{
+  "cpu": 24,
+  "samples": [
+    {
+      "status": "ok",
+      "seconds": 2.613093899039086,
+      "returncode": 0,
+      "load_before": [
+        62.13037109375,
+        27.71728515625,
+        29.3671875
+      ],
+      "load_after": [
+        62.13037109375,
+        27.71728515625,
+        29.3671875
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.KernelDiagnostic (889ms)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.KernelDiagnostic:olean"
+      ],
+      "block": 0,
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\n\n@[expose] noncomputable def powBits (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ acc _ => acc)\n    (fun _ r bit acc base =>\n      (e.testBit bit).rec\n        (r (bit.add 1) acc ((base.mul base).mod n))\n        (r (bit.add 1) ((acc.mul base).mod n) ((base.mul base).mod n)))\n    (HexArith.bitLength e) 0 (1 % n) (a % n)\n\n@[expose] noncomputable def powDiv (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ _ _ => 0)\n    (fun _ r base exp acc =>\n      (exp.beq 0).rec\n        (((exp.mod 2).beq 0).rec\n          (r ((base.mul base).mod n) (exp.div 2) ((acc.mul base).mod n))\n          (r ((base.mul base).mod n) (exp.div 2) acc))\n        (acc.mod n))\n    e.succ (a % n) e 1\n"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.6419214920024388,
+      "returncode": 0,
+      "load_before": [
+        62.13037109375,
+        27.71728515625,
+        29.3671875
+      ],
+      "load_after": [
+        69.8076171875,
+        29.88037109375,
+        30.05810546875
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.KernelDiagnostic (1.2s)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.KernelDiagnostic:olean"
+      ],
+      "block": 0,
+      "arm": "current-power",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\n\n@[expose] noncomputable def powBits (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ acc _ => acc)\n    (fun _ r bit acc base =>\n      (e.testBit bit).rec\n        (r (bit.add 1) acc ((base.mul base).mod n))\n        (r (bit.add 1) ((acc.mul base).mod n) ((base.mul base).mod n)))\n    (HexArith.bitLength e) 0 (1 % n) (a % n)\n\n@[expose] noncomputable def powDiv (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ _ _ => 0)\n    (fun _ r base exp acc =>\n      (exp.beq 0).rec\n        (((exp.mod 2).beq 0).rec\n          (r ((base.mul base).mod n) (exp.div 2) ((acc.mul base).mod n))\n          (r ((base.mul base).mod n) (exp.div 2) acc))\n        (acc.mod n))\n    e.succ (a % n) e 1\nexample : HexArith.powModNat 2 57896044618658097711785492504343953926634992332820282019728792003956564819948 57896044618658097711785492504343953926634992332820282019728792003956564819949 = 1 := by decide +kernel\n"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.5745409770170227,
+      "returncode": 0,
+      "load_before": [
+        69.8076171875,
+        29.88037109375,
+        30.05810546875
+      ],
+      "load_after": [
+        69.8076171875,
+        29.88037109375,
+        30.05810546875
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.KernelDiagnostic (851ms)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.KernelDiagnostic:olean"
+      ],
+      "block": 0,
+      "arm": "raw-bits",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\n\n@[expose] noncomputable def powBits (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ acc _ => acc)\n    (fun _ r bit acc base =>\n      (e.testBit bit).rec\n        (r (bit.add 1) acc ((base.mul base).mod n))\n        (r (bit.add 1) ((acc.mul base).mod n) ((base.mul base).mod n)))\n    (HexArith.bitLength e) 0 (1 % n) (a % n)\n\n@[expose] noncomputable def powDiv (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ _ _ => 0)\n    (fun _ r base exp acc =>\n      (exp.beq 0).rec\n        (((exp.mod 2).beq 0).rec\n          (r ((base.mul base).mod n) (exp.div 2) ((acc.mul base).mod n))\n          (r ((base.mul base).mod n) (exp.div 2) acc))\n        (acc.mod n))\n    e.succ (a % n) e 1\nexample : powBits 2 57896044618658097711785492504343953926634992332820282019728792003956564819948 57896044618658097711785492504343953926634992332820282019728792003956564819949 = 1 := by decide +kernel\n"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.547679329989478,
+      "returncode": 0,
+      "load_before": [
+        69.8076171875,
+        29.88037109375,
+        30.05810546875
+      ],
+      "load_after": [
+        76.0693359375,
+        31.841796875,
+        30.69189453125
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.KernelDiagnostic (1.0s)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.KernelDiagnostic:olean"
+      ],
+      "block": 0,
+      "arm": "raw-div",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\n\n@[expose] noncomputable def powBits (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ acc _ => acc)\n    (fun _ r bit acc base =>\n      (e.testBit bit).rec\n        (r (bit.add 1) acc ((base.mul base).mod n))\n        (r (bit.add 1) ((acc.mul base).mod n) ((base.mul base).mod n)))\n    (HexArith.bitLength e) 0 (1 % n) (a % n)\n\n@[expose] noncomputable def powDiv (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ _ _ => 0)\n    (fun _ r base exp acc =>\n      (exp.beq 0).rec\n        (((exp.mod 2).beq 0).rec\n          (r ((base.mul base).mod n) (exp.div 2) ((acc.mul base).mod n))\n          (r ((base.mul base).mod n) (exp.div 2) acc))\n        (acc.mod n))\n    e.succ (a % n) e 1\nexample : powDiv 2 57896044618658097711785492504343953926634992332820282019728792003956564819948 57896044618658097711785492504343953926634992332820282019728792003956564819949 = 1 := by decide +kernel\n"
+    },
+    {
+      "status": "ok",
+      "seconds": 14.023221882991493,
+      "returncode": 0,
+      "load_before": [
+        76.0693359375,
+        31.841796875,
+        30.69189453125
+      ],
+      "load_after": [
+        95.8759765625,
+        37.5830078125,
+        32.57470703125
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.KernelDiagnostic (12s)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.KernelDiagnostic:olean"
+      ],
+      "block": 0,
+      "arm": "table",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\n\n@[expose] noncomputable def powBits (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ acc _ => acc)\n    (fun _ r bit acc base =>\n      (e.testBit bit).rec\n        (r (bit.add 1) acc ((base.mul base).mod n))\n        (r (bit.add 1) ((acc.mul base).mod n) ((base.mul base).mod n)))\n    (HexArith.bitLength e) 0 (1 % n) (a % n)\n\n@[expose] noncomputable def powDiv (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ _ _ => 0)\n    (fun _ r base exp acc =>\n      (exp.beq 0).rec\n        (((exp.mod 2).beq 0).rec\n          (r ((base.mul base).mod n) (exp.div 2) ((acc.mul base).mod n))\n          (r ((base.mul base).mod n) (exp.div 2) acc))\n        (acc.mod n))\n    e.succ (a % n) e 1\nexample : Hex.Nat.isTablePrime 57467 = true := by decide +kernel\n"
+    },
+    {
+      "status": "ok",
+      "seconds": 12.025827859004494,
+      "returncode": 0,
+      "load_before": [
+        95.8759765625,
+        37.5830078125,
+        32.57470703125
+      ],
+      "load_after": [
+        119.1015625,
+        45.54638671875,
+        35.25927734375
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.KernelDiagnostic (10s)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.KernelDiagnostic:olean"
+      ],
+      "block": 1,
+      "arm": "table",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\n\n@[expose] noncomputable def powBits (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ acc _ => acc)\n    (fun _ r bit acc base =>\n      (e.testBit bit).rec\n        (r (bit.add 1) acc ((base.mul base).mod n))\n        (r (bit.add 1) ((acc.mul base).mod n) ((base.mul base).mod n)))\n    (HexArith.bitLength e) 0 (1 % n) (a % n)\n\n@[expose] noncomputable def powDiv (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ _ _ => 0)\n    (fun _ r base exp acc =>\n      (exp.beq 0).rec\n        (((exp.mod 2).beq 0).rec\n          (r ((base.mul base).mod n) (exp.div 2) ((acc.mul base).mod n))\n          (r ((base.mul base).mod n) (exp.div 2) acc))\n        (acc.mod n))\n    e.succ (a % n) e 1\nexample : Hex.Nat.isTablePrime 57467 = true := by decide +kernel\n"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.827138495980762,
+      "returncode": 0,
+      "load_before": [
+        119.1015625,
+        45.54638671875,
+        35.25927734375
+      ],
+      "load_after": [
+        119.1015625,
+        45.54638671875,
+        35.25927734375
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.KernelDiagnostic (608ms)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.KernelDiagnostic:olean"
+      ],
+      "block": 1,
+      "arm": "raw-div",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\n\n@[expose] noncomputable def powBits (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ acc _ => acc)\n    (fun _ r bit acc base =>\n      (e.testBit bit).rec\n        (r (bit.add 1) acc ((base.mul base).mod n))\n        (r (bit.add 1) ((acc.mul base).mod n) ((base.mul base).mod n)))\n    (HexArith.bitLength e) 0 (1 % n) (a % n)\n\n@[expose] noncomputable def powDiv (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ _ _ => 0)\n    (fun _ r base exp acc =>\n      (exp.beq 0).rec\n        (((exp.mod 2).beq 0).rec\n          (r ((base.mul base).mod n) (exp.div 2) ((acc.mul base).mod n))\n          (r ((base.mul base).mod n) (exp.div 2) acc))\n        (acc.mod n))\n    e.succ (a % n) e 1\nexample : powDiv 2 57896044618658097711785492504343953926634992332820282019728792003956564819948 57896044618658097711785492504343953926634992332820282019728792003956564819949 = 1 := by decide +kernel\n"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.7820739590097219,
+      "returncode": 0,
+      "load_before": [
+        119.1015625,
+        45.54638671875,
+        35.25927734375
+      ],
+      "load_after": [
+        124.458984375,
+        47.87841796875,
+        36.0693359375
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.KernelDiagnostic (529ms)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.KernelDiagnostic:olean"
+      ],
+      "block": 1,
+      "arm": "raw-bits",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\n\n@[expose] noncomputable def powBits (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ acc _ => acc)\n    (fun _ r bit acc base =>\n      (e.testBit bit).rec\n        (r (bit.add 1) acc ((base.mul base).mod n))\n        (r (bit.add 1) ((acc.mul base).mod n) ((base.mul base).mod n)))\n    (HexArith.bitLength e) 0 (1 % n) (a % n)\n\n@[expose] noncomputable def powDiv (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ _ _ => 0)\n    (fun _ r base exp acc =>\n      (exp.beq 0).rec\n        (((exp.mod 2).beq 0).rec\n          (r ((base.mul base).mod n) (exp.div 2) ((acc.mul base).mod n))\n          (r ((base.mul base).mod n) (exp.div 2) acc))\n        (acc.mod n))\n    e.succ (a % n) e 1\nexample : powBits 2 57896044618658097711785492504343953926634992332820282019728792003956564819948 57896044618658097711785492504343953926634992332820282019728792003956564819949 = 1 := by decide +kernel\n"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.7155640439596027,
+      "returncode": 0,
+      "load_before": [
+        124.458984375,
+        47.87841796875,
+        36.0693359375
+      ],
+      "load_after": [
+        124.458984375,
+        47.87841796875,
+        36.0693359375
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.KernelDiagnostic (562ms)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.KernelDiagnostic:olean"
+      ],
+      "block": 1,
+      "arm": "current-power",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\n\n@[expose] noncomputable def powBits (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ acc _ => acc)\n    (fun _ r bit acc base =>\n      (e.testBit bit).rec\n        (r (bit.add 1) acc ((base.mul base).mod n))\n        (r (bit.add 1) ((acc.mul base).mod n) ((base.mul base).mod n)))\n    (HexArith.bitLength e) 0 (1 % n) (a % n)\n\n@[expose] noncomputable def powDiv (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ _ _ => 0)\n    (fun _ r base exp acc =>\n      (exp.beq 0).rec\n        (((exp.mod 2).beq 0).rec\n          (r ((base.mul base).mod n) (exp.div 2) ((acc.mul base).mod n))\n          (r ((base.mul base).mod n) (exp.div 2) acc))\n        (acc.mod n))\n    e.succ (a % n) e 1\nexample : HexArith.powModNat 2 57896044618658097711785492504343953926634992332820282019728792003956564819948 57896044618658097711785492504343953926634992332820282019728792003956564819949 = 1 := by decide +kernel\n"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.7517969680484384,
+      "returncode": 0,
+      "load_before": [
+        124.458984375,
+        47.87841796875,
+        36.0693359375
+      ],
+      "load_after": [
+        124.458984375,
+        47.87841796875,
+        36.0693359375
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.KernelDiagnostic (518ms)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.KernelDiagnostic:olean"
+      ],
+      "block": 1,
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\n\n@[expose] noncomputable def powBits (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ acc _ => acc)\n    (fun _ r bit acc base =>\n      (e.testBit bit).rec\n        (r (bit.add 1) acc ((base.mul base).mod n))\n        (r (bit.add 1) ((acc.mul base).mod n) ((base.mul base).mod n)))\n    (HexArith.bitLength e) 0 (1 % n) (a % n)\n\n@[expose] noncomputable def powDiv (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ _ _ => 0)\n    (fun _ r base exp acc =>\n      (exp.beq 0).rec\n        (((exp.mod 2).beq 0).rec\n          (r ((base.mul base).mod n) (exp.div 2) ((acc.mul base).mod n))\n          (r ((base.mul base).mod n) (exp.div 2) acc))\n        (acc.mod n))\n    e.succ (a % n) e 1\n"
+    }
+  ],
+  "protocol": "two reversed blocks; all completed samples retained",
+  "execution_mode": "kernel reduction in fresh Lake builds",
+  "source_reference": "production library sources at 6bfa5b232; HEAD/dirty metadata not originally captured; probe source is embedded",
+  "source_sha256": {
+    "HexPrimality/Table.lean": "420e4a89291b34717aebe1a3cd393e9857ae0309b816e5ba3b2e1b5d7b6bbe27",
+    "HexPrimality/Sieve.lean": "b90317eda625ac9dc7333505e1756a76a041d4acd34555d4131ec49d0bac1489",
+    "HexPrimality/Cert.lean": "e2fb751d95ac2536fa501b803ad8acb1d59679ee0c22237f1c17c45e96f91b79"
+  }
+}

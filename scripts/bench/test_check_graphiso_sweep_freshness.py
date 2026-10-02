@@ -16,6 +16,74 @@ LIB = ('lean_lib IndependentSupport where\n  srcDir := "bench"\n'
 NEXT = 'lean_exe next where\n  root := `Main\n'
 
 
+class NativeDependencyTests(unittest.TestCase):
+    BASE = "lean_lib HexBasic where\n\nlean_lib HexGraphIso where\n  precompileModules := true\n"
+
+    def test_already_native_dependency(self):
+        after = self.BASE.replace("lean_lib HexBasic where", "lean_lib HexBasic where\n  precompileModules := true")
+        self.assertFalse(check.lakefile_texts_differ(self.BASE, after))
+
+    def test_interpreted_graph_cannot_use_allowance(self):
+        before = self.BASE.replace("  precompileModules := true\n", "")
+        after = before.replace("lean_lib HexBasic where", "lean_lib HexBasic where\n  precompileModules := true")
+        self.assertTrue(check.lakefile_texts_differ(before, after))
+
+    def test_native_codegen_options_still_matter(self):
+        after = self.BASE.replace("lean_lib HexBasic where",
+            'lean_lib HexBasic where\n  precompileModules := true\n  moreLeancArgs := #["-O1"]')
+        self.assertTrue(check.lakefile_texts_differ(self.BASE, after))
+
+    def test_quoted_flag_does_not_establish_native_loading(self):
+        before = self.BASE.replace('  precompileModules := true',
+            '  moreLeancArgs := #["\n  precompileModules := true\n"]')
+        after = before.replace("lean_lib HexBasic where", "lean_lib HexBasic where\n  precompileModules := true")
+        self.assertTrue(check.lakefile_texts_differ(before, after))
+
+    def test_nonliteral_flags_are_not_ignored(self):
+        after = self.BASE.replace("lean_lib HexBasic where",
+            "lean_lib HexBasic where\n  precompileModules := (true && true)")
+        self.assertTrue(check.lakefile_texts_differ(self.BASE, after))
+
+    def test_independent_hasse_requirement(self):
+        requirement = ('\nrequire AINTLIB from git\n'
+                       '  "https://github.com/CBirkbeck/AINTLIB.git" @\n'
+                       '    "' + 'a' * 40 + '"\n')
+        with patch.object(check, "graph_import_prefixes",
+                          return_value={"HexGraphIso", "HexBasic"}):
+            self.assertFalse(check.lakefile_texts_differ(self.BASE,
+                self.BASE + requirement))
+            self.assertTrue(check.lakefile_texts_differ(self.BASE,
+                self.BASE + requirement.replace("CBirkbeck", "other")))
+        with patch.object(check, "graph_import_prefixes",
+                          return_value={"HexGraphIso", "HasseWeil"}):
+            self.assertTrue(check.lakefile_texts_differ(self.BASE,
+                self.BASE + requirement))
+
+    def test_exact_independent_thom_pin(self):
+        requirement = ('\nrequire TauCeti from git\n'
+                       '  "https://github.com/TauCetiProject/TauCeti.git" @\n'
+                       '    "ff72a2e86930d5268476ee33d55ab054ed1c3ea5"\n')
+        before = self.BASE + requirement
+        after = before.replace('ff72a2e86930d5268476ee33d55ab054ed1c3ea5',
+                               '0dbbe255a4f418084b30a3ffe6763d824a6b4250')
+        with patch.object(check, "graph_import_prefixes",
+                          return_value={"HexGraphIso", "HexBasic"}):
+            self.assertFalse(check.lakefile_texts_differ(before, after))
+            self.assertTrue(check.lakefile_texts_differ(
+                before.replace('ff72a2e86930d5268476ee33d55ab054ed1c3ea5', 'a' * 40), after))
+            self.assertTrue(check.lakefile_texts_differ(after, before))
+            self.assertTrue(check.lakefile_texts_differ(before,
+                after.replace('0dbbe255a4f418084b30a3ffe6763d824a6b4250', 'b' * 40)))
+            self.assertTrue(check.lakefile_texts_differ(before,
+                after.replace('TauCetiProject', 'other')))
+            self.assertTrue(check.lakefile_texts_differ(before,
+                after.replace('lean_lib HexBasic where',
+                              'lean_lib HexBasic where\n  moreLeancArgs := #["-O1"]')))
+        for prefixes in (None, {"HexGraphIso", "TauCeti"}):
+            with patch.object(check, "graph_import_prefixes", return_value=prefixes):
+                self.assertTrue(check.lakefile_texts_differ(before, after))
+
+
 class IndependentTargetTests(unittest.TestCase):
     def allowed(self, before, after):
         return check.independent_target_additions(before, after, {"HexOther"},

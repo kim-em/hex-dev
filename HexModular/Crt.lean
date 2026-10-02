@@ -403,6 +403,56 @@ theorem push_le {c c' : CrtVec k} {r : Vector Int k} {m : Nat}
     ∀ i : Fin k, 2 * c'.value[i].natAbs ≤ c'.modulus := by
   exact c'.le
 
+/-- A successful push uses a modulus coprime to the accumulated modulus. -/
+theorem push_coprime {c c' : CrtVec k} {r : Vector Int k} {m : Nat}
+    (h : c.push r m = some c') : Nat.Coprime c.modulus m := by
+  unfold push at h
+  split at h <;> try contradiction
+  next hm =>
+    dsimp only at h
+    split at h <;> try contradiction
+    next hg =>
+      rw [Hex.pureIntExtGcd_fst] at hg
+      have hg' : Nat.gcd (c.modulus % m) m = 1 := by
+        simpa only [Int.gcd_eq_natAbs_gcd_natAbs, Int.natAbs] using hg
+      change Nat.gcd c.modulus m = 1
+      rw [Nat.gcd_comm, Nat.gcd_rec]
+      exact hg'
+
+/-- Congruence with both the old state and the new image gives congruence
+modulo the entire accumulated product after a successful push. -/
+theorem push_congr {c c' : CrtVec k} {r : Vector Int k} {m : Nat}
+    (h : c.push r m = some c') (i : Fin k) (x : Int)
+    (hold : c.value[i] % (c.modulus : Int) = x % (c.modulus : Int))
+    (hnew : r[i] % (m : Int) = x % (m : Int)) :
+    c'.value[i] % (c'.modulus : Int) = x % (c'.modulus : Int) := by
+  have ho := (push_congr_old (Nat.dvd_refl c.modulus) h i).trans hold
+  have hn := (push_congr_new h i).trans hnew
+  have hdo : (c.modulus : Int) ∣ c'.value[i] - x :=
+    Int.dvd_of_emod_eq_zero (Int.emod_eq_emod_iff_emod_sub_eq_zero.mp ho)
+  have hdn : (m : Int) ∣ c'.value[i] - x :=
+    Int.dvd_of_emod_eq_zero (Int.emod_eq_emod_iff_emod_sub_eq_zero.mp hn)
+  apply emod_eq_of_dvd
+  rw [push_modulus h]
+  exact Int.ofNat_dvd_left.mpr ((push_coprime h).mul_dvd_of_dvd_of_dvd
+    (Int.ofNat_dvd_left.mp hdo) (Int.ofNat_dvd_left.mp hdn))
+
+/-- A strictly half-bounded integer congruent to a state's coordinate equals
+that coordinate; the stored coordinate only needs its non-strict bound. -/
+theorem eq_of_congr (c : CrtVec k) (i : Fin k) {x : Int}
+    (hx : 2 * x.natAbs < c.modulus)
+    (h : c.value[i] % (c.modulus : Int) = x % (c.modulus : Int)) :
+    c.value[i] = x := by
+  have hc := c.le i
+  have hdiff : (c.value[i] - x).natAbs < c.modulus :=
+    Nat.lt_of_le_of_lt (Int.natAbs_sub_le _ _) (by omega)
+  have hdvd : (c.modulus : Int) ∣ c.value[i] - x :=
+    Int.dvd_of_emod_eq_zero (Int.emod_eq_emod_iff_emod_sub_eq_zero.mp h)
+  have hz : c.value[i] - x = 0 := by
+    apply Int.eq_zero_of_dvd_of_natAbs_lt_natAbs hdvd
+    simpa using hdiff
+  omega
+
 end CrtVec
 
 /-- Two integers strictly smaller than half the accumulated modulus and

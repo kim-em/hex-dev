@@ -437,11 +437,31 @@ of `n`. This is a Phase 1 "wrong-complexity" violation
 ([PLAN/Phase1.md](../../PLAN/Phase1.md)) regardless of how well the
 proof of `powMod_eq` happens to discharge.
 
-The two forms are a specification/twin pair. `powModNat` and its
-recursion (`powModNatGo`, `bitLength`) are `@[expose]`, so a
-certificate checker written against `powModNat` replays by kernel
-reduction; the `@[csimp]` equality swaps in `powMod`'s Montgomery
-dispatch when the same checker runs compiled. Both return `0` at
+The two forms are a specification/twin pair. `powModNat` uses exposed
+`Nat.rec` and `Bool.rec` loops for kernel reduction: six-bit windows
+for `p ≤ 2^64`, four-bit windows for `p ≤ 2^512`, three-bit windows
+for `p ≤ 2^1024`, and two-bit windows for `p ≤ 2^2048`. Above that,
+reduced bases below `2^64` use two-bit windows through `p ≤ 2^4096`,
+then one-bit windows, without an exponent-length cutoff. Other inputs use
+binary square-and-multiply. The policy above `2^1024` follows the
+[tuning experiments for lean4#15167](https://gist.github.com/kim-em/684d41610eff65c2c3bd410ab89627fc/67c8ba6b1761acd670634f5bf29ecb5964e627e9).
+The Hex certificate corpus
+only reaches 512 bits and does not independently measure these larger branches.
+On upgrading to Lean `v4.36.0-rc1`, confirm that lean4#15167 is included, then
+replace the local kernel loops and their correctness proofs with upstream
+`Nat.powMod`, retaining the
+modulus-zero wrapper and the compiler rewrite to Hex's runtime implementation.
+Separately compare the compiled implementations before changing that rewrite:
+upstream `Nat.powMod` uses GMP, while Hex also has a word-sized Montgomery path.
+The runtime worker keeps its existing public name `powModNatGo`; it belongs
+to `powModBits`, whereas `powModNat.go` is the kernel accumulator.
+For positive moduli the respective intermediate
+bounds are `p^127`, `p^31`, `p^15`, `p^7`, `p^4 * 2^192`, `p^2 * 2^64`, and `p^2`.
+Window selection uses shifts so it also reduces under Meta's default
+exponentiation limit. These fixed windows retain logarithmic recursion
+in the exponent. The runtime fallback `powModBits` retains the original
+bit scan and reduces after every multiplication. The kernel specification is `noncomputable`; a proved `@[csimp]` equality
+redirects compiled calls to `powMod`'s Montgomery dispatch and this fallback. Both return `0` at
 `p = 0` (the modulus-zero convention `powMod` always had); the
 agreement at every input is what makes the `@[csimp]` registration
 unconditional. Downstream consumer: hex-primality's `checkPrime`
@@ -539,3 +559,10 @@ covered by the `compare` group against the GMP-backed
 `Hex.gmpIntExtGcd`. Those internal comparisons are the right
 shape for HexArith; an external tool would just be wrapping GMP
 again.
+
+## Integer square roots
+
+`HexArith/Nat/Sqrt.lean` provides Newton-iteration `HexArith.Nat.floorSqrt`
+and `ceilSqrt`, with zero equations, `floorSqrt_sq_le`, `le_ceilSqrt_sq`,
+and `ceilSqrt_le` for comparison with a known square bound. The polynomial
+Mignotte module retains compatibility aliases.

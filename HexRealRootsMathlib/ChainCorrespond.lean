@@ -12,7 +12,7 @@ public import HexPolyMathlib.Euclid
 public import HexPolyZMathlib.Squarefree
 public import HexRealRootsMathlib.SturmTheorem
 public import HexRealRootsMathlib.Separation
-public import HexRealRoots.Var
+public import HexRealRootsMathlib.SignVariations
 -- `import all` on the executable modules so the non-`@[expose]` bodies of
 -- `signVar`, `sturmVarAt`, `evalDyadic`, and `dyadicSign` unfold here, and on
 -- `Separation` so `Dyadic.toReal` unfolds.
@@ -140,6 +140,65 @@ private theorem toReal_horner_foldr (x : Dyadic) : ∀ cs : List Int,
               (cs.map (Int.cast : ℤ → ℝ)).foldr (fun c acc => c + Dyadic.toReal x * acc) 0
       rw [toReal_add, toReal_mul, HexRealRootsMathlib.toReal_ofInt, toReal_horner_foldr x cs]
 
+private theorem hornerDyadic_value (n e c a k : Int) :
+    let r := Hex.ZPoly.hornerDyadic n e c (a, k)
+    (r.1 : ℝ) * 2 ^ (-r.2) = c + (n : ℝ) * 2 ^ (-e) * ((a : ℝ) * 2 ^ (-k)) := by
+  have shift (b t : Int) (ht : 0 ≤ t) :
+      ((b <<< t.toNat : Int) : ℝ) = (b : ℝ) * 2 ^ t := by
+    simp [Int.shiftLeft_eq, ← zpow_natCast, Int.toNat_of_nonneg ht]
+  dsimp only
+  by_cases ha : a = 0
+  · simp [Hex.ZPoly.hornerDyadic, ha]
+  · by_cases hc : c = 0
+    · simp [Hex.ZPoly.hornerDyadic, ha, hc, zpow_add₀, mul_assoc, mul_left_comm]
+    simp only [Hex.ZPoly.hornerDyadic, ha, hc, ↓reduceIte]
+    split
+    · rename_i hk
+      dsimp only
+      rw [Int.cast_add, shift c (k + e) hk, Int.cast_mul]
+      simp only [zpow_neg, zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+      field_simp
+    · rename_i hk
+      dsimp only
+      rw [Int.cast_add, shift (n * a) (-(k + e)) (by omega), Int.cast_mul]
+      simp only [neg_zero, zpow_zero, mul_one, zpow_neg,
+        zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+      ring
+
+private theorem hornerDyadic_fold (n e : Int) (cs : List Int) :
+    let r := cs.foldr (Hex.ZPoly.hornerDyadic n e) (0, 0)
+    (r.1 : ℝ) * 2 ^ (-r.2) =
+      (cs.map (Int.cast : ℤ → ℝ)).foldr (fun c acc => c + (n : ℝ) * 2 ^ (-e) * acc) 0 := by
+  induction cs with
+  | nil => simp
+  | cons c cs ih =>
+    exact (hornerDyadic_value n e c _ _).trans
+      (congrArg (fun v : ℝ => (c : ℝ) + (n : ℝ) * 2 ^ (-e) * v) ih)
+
+/-- Selecting normalization by endpoint preserves the exact, canonical result
+of the ordinary dyadic Horner fold. -/
+theorem evalDyadic_eq_fold (q : Hex.ZPoly) (x : Dyadic) :
+    q.evalDyadic x = q.toArray.foldr (fun c acc => Dyadic.ofInt c + x * acc) 0 := by
+  apply Dyadic.toRat_inj.mp
+  apply Rat.cast_injective (α := ℝ)
+  change Dyadic.toReal _ = Dyadic.toReal _
+  rw [← Array.foldr_toList, toReal_horner_foldr]
+  unfold Hex.ZPoly.evalDyadic
+  cases x with
+  | zero =>
+    simp only [lt_self_iff_false, ↓reduceIte, ← Array.foldr_toList, Dyadic.toReal,
+      Dyadic.toRat_ofIntWithPrec_eq_mul_two_pow]
+    push_cast
+    simpa using hornerDyadic_fold 0 0 q.toArray.toList
+  | ofOdd n e hn =>
+    dsimp only
+    split
+    · rw [← Array.foldr_toList, toReal_horner_foldr]
+    · simp only [← Array.foldr_toList, Dyadic.toReal,
+        Dyadic.toRat_ofIntWithPrec_eq_mul_two_pow, Dyadic.toRat_ofOdd_eq_mul_two_pow]
+      push_cast
+      exact hornerDyadic_fold n e q.toArray.toList
+
 /-- **Evaluation correspondence.** The exact dyadic Horner evaluation of an
 integer polynomial, cast to `ℝ`, agrees with the Mathlib evaluation of its real
 cast at the real value of the dyadic point. -/
@@ -153,7 +212,7 @@ theorem toReal_evalDyadic (q : Hex.ZPoly) (x : Dyadic) :
     have h := Hex.DensePoly.toArray_getD q n
     rw [Array.getD_eq_getD_getElem?] at h
     exact h
-  unfold Hex.ZPoly.evalDyadic
+  rw [evalDyadic_eq_fold]
   rw [← Array.foldr_toList, toReal_horner_foldr, ← eval_hornerPoly, hcoeffs]
 
 /-- **Sign correspondence.** The exact integer sign of a dyadic value has, as a
@@ -201,70 +260,11 @@ theorem evalSign_zero_iff (p : Hex.ZPoly) (x : Dyadic) :
       sign_eq_zero_iff.mp hs
     exact_mod_cast hz
 
-/-- Filtering the real casts by nonzero commutes with filtering the integers by
-nonzero: casting to `ℝ` neither creates nor destroys zero entries. -/
-private theorem filter_map_ne_zero (l : List Int) :
-    (l.map (Int.cast : ℤ → ℝ)).filter (fun v => decide (v ≠ 0))
-      = (l.filter (· != 0)).map (Int.cast : ℤ → ℝ) := by
-  have hp : ((fun v => decide (v ≠ 0)) ∘ (Int.cast : ℤ → ℝ)) = (· != 0) := by
-    funext i
-    by_cases h : i = 0 <;> simp [Function.comp_apply, h]
-  rw [List.filter_map, hp]
-
-/-- Two nonzero leading entries: `signVar` peels one sign-change decision and
-recurses. Phrased through the public `Hex.signVar` (the internal `go` recursor is
-module-private), using that a nonzero head survives the zero-filter. -/
-private theorem signVar_cons_cons {a b : Int} (rest : List Int) (ha : a ≠ 0) (hb : b ≠ 0) :
-    Hex.signVar (a :: b :: rest)
-      = (if a * b < 0 then 1 else 0) + Hex.signVar (b :: rest) := by
-  have fa : (a :: b :: rest).filter (· != 0) = a :: b :: rest.filter (· != 0) := by
-    rw [List.filter_cons, ite_eq_left (by simpa using ha), List.filter_cons, ite_eq_left (by simpa using hb)]
-  have fb : (b :: rest).filter (· != 0) = b :: rest.filter (· != 0) := by
-    rw [List.filter_cons, ite_eq_left (by simpa using hb)]
-  unfold Hex.signVar
-  rw [fa, fb]
-  rfl
-
-/-- On a zero-free integer list, the executable count matches the abstract real
-count of the casts. Structural recursion peeling two elements; each retained
-entry is nonzero, so the executable and real sign tests agree pairwise. -/
-private theorem signVar_zeroFree : ∀ m : List Int, (∀ x ∈ m, x ≠ 0) →
-    Hex.signVar m = Sturm.countSignChanges (m.map (Int.cast : ℤ → ℝ))
-  | [], _ => rfl
-  | [a], ha => by
-      have ha0 : a ≠ 0 := ha a (by simp)
-      unfold Hex.signVar
-      rw [List.filter_cons, ite_eq_left (by simpa using ha0), List.filter_nil]
-      rfl
-  | a :: b :: rest, hne => by
-      have ha : a ≠ 0 := hne a (by simp)
-      have hb : b ≠ 0 := hne b (by simp)
-      have hbne : ∀ x ∈ b :: rest, x ≠ 0 := fun x hx => hne x (List.mem_cons_of_mem _ hx)
-      rw [signVar_cons_cons rest ha hb, signVar_zeroFree (b :: rest) hbne,
-        List.map_cons, List.map_cons, List.map_cons, Sturm.countSignChanges_cons_cons]
-      congr 1
-      have hcast : (a : ℝ) * (b : ℝ) = ((a * b : Int) : ℝ) := by push_cast; ring
-      rw [hcast]
-      by_cases h : a * b < 0
-      · rw [ite_eq_left h, ite_eq_left (by exact_mod_cast h)]
-      · rw [ite_eq_right h, ite_eq_right (by exact_mod_cast h)]
-
-/-- `signVar` reads only the zero-filtered list, so it is unchanged by
-pre-filtering out zeros. -/
-private theorem signVar_filter (l : List Int) :
-    Hex.signVar l = Hex.signVar (l.filter (· != 0)) := by
-  unfold Hex.signVar
-  rw [List.filter_filter]
-  simp only [Bool.and_self]
-
-/-- **Sign-variation count correspondence.** The executable integer
-sign-variation count of a list equals the abstract real sign-variation count of
-the list cast to `ℝ`. -/
+/-- Casting the executable integer sign-variation count to real inputs preserves the count. -/
 theorem signVar_eq (l : List Int) :
-    Hex.signVar l = Sturm.signVariations (l.map (Int.cast : ℤ → ℝ)) := by
-  rw [Sturm.signVariations, filter_map_ne_zero, signVar_filter]
-  exact signVar_zeroFree (l.filter (· != 0))
-    (fun x hx => by simpa using (List.mem_filter.mp hx).2)
+    Hex.signVar l = List.signVariations (l.map (Int.cast : ℤ → ℝ)) := by
+  rw [List.signVariations_map (fun n => sign_intCast n)]
+  exact signVar_eq_list l
 
 /-- **Sign-variation correspondence.** The executable Sturm sign-variation count
 of a chain at a dyadic point equals the abstract `Sturm.sturmVar` of the mapped
@@ -275,11 +275,10 @@ theorem sturmVarAt_eq (chain : Array Hex.ZPoly) (x : Dyadic) :
     Hex.sturmVarAt chain x
       = Sturm.sturmVar (chain.toList.map toPolyℝ) (Dyadic.toReal x) := by
   rw [Hex.sturmVarAt, signVar_eq, Sturm.sturmVar]
-  apply Sturm.signVariations_congr
+  apply List.signVariations_congr
   simp only [List.map_map]
-  rw [List.forall₂_map_left_iff, List.forall₂_map_right_iff, List.forall₂_same]
-  intro q _
-  rw [Function.comp_apply, Function.comp_apply, sign_dyadicSign, toReal_evalDyadic]
+  refine List.map_congr_left fun q _ => ?_
+  simp only [Function.comp_apply, sign_dyadicSign, toReal_evalDyadic]
 
 /-! # `spem` correspondence: the sign-managed pseudo-remainder over `ℝ`
 
@@ -1424,24 +1423,18 @@ theorem sturmCount_eq_card_roots (p : Hex.ZPoly) (hp : 1 ≤ p.natDegree)
 /-- Casting an integer's sign to `ℝ` preserves `SignType.sign`. -/
 private theorem sign_intCast_sign (n : Int) :
     SignType.sign ((n.sign : ℝ)) = SignType.sign ((n : ℝ)) := by
-  rcases lt_trichotomy n 0 with h | h | h
-  · rw [Int.sign_eq_neg_one_of_neg h]
-    have h2 : (n : ℝ) < 0 := by exact_mod_cast h
-    rw [show ((-1 : Int) : ℝ) = -1 by norm_num, sign_neg (by norm_num), sign_neg h2]
-  · subst h; simp
-  · rw [Int.sign_eq_one_of_pos h]
-    have h2 : (0:ℝ) < (n : ℝ) := by exact_mod_cast h
-    rw [show ((1 : Int) : ℝ) = 1 by norm_num, sign_pos (by norm_num), sign_pos h2]
+  simp only [sign_intCast]
+  rw [Int.sign_eq_sign]
+  cases SignType.sign n <;> decide
 
 /-- The executable `+∞` variation count matches the abstract one: both read
 the signs of the leading coefficients. -/
 theorem sturmVarPosInf_eq (chain : Array Hex.ZPoly) :
     Hex.sturmVarPosInf chain = Sturm.sturmVarPosInf (chain.toList.map toPolyℝ) := by
   rw [Hex.sturmVarPosInf, signVar_eq, Sturm.sturmVarPosInf]
-  apply Sturm.signVariations_congr
+  apply List.signVariations_congr
   simp only [List.map_map]
-  rw [List.forall₂_map_left_iff, List.forall₂_map_right_iff, List.forall₂_same]
-  intro q _
+  refine List.map_congr_left fun q _ => ?_
   simp only [Function.comp_apply]
   rw [leadingCoeff_toPolyℝ]
   exact sign_intCast_sign _
@@ -1451,10 +1444,9 @@ theorem sturmVarPosInf_eq (chain : Array Hex.ZPoly) :
 theorem sturmVarNegInf_eq (chain : Array Hex.ZPoly) :
     Hex.sturmVarNegInf chain = Sturm.sturmVarNegInf (chain.toList.map toPolyℝ) := by
   rw [Hex.sturmVarNegInf, signVar_eq, Sturm.sturmVarNegInf]
-  apply Sturm.signVariations_congr
+  apply List.signVariations_congr
   simp only [List.map_map]
-  rw [List.forall₂_map_left_iff, List.forall₂_map_right_iff, List.forall₂_same]
-  intro q _
+  refine List.map_congr_left fun q _ => ?_
   simp only [Function.comp_apply]
   rw [leadingCoeff_toPolyℝ, natDegree_toPolyℝ]
   by_cases hpar : (q).natDegree % 2 = 1

@@ -24,11 +24,14 @@ tag := "nauty-algorithm"
 A canonical labelling algorithm takes a finite graph and renames its
 vertices in a standard way, so that two graphs receive the same result
 exactly when they are isomorphic. The most widely used program for this
-task is Brendan McKay's nauty. This chapter is a complete written
-specification of the exact function computed by one pinned version of
-that program: dense nauty 2.9.3, run with the fixed options listed at
-the end of part one. `HexGraphIso` reimplements this algorithm in
-Lean, with identical behaviour.
+task is Brendan McKay's nauty. Parts one and two specify the exact
+function computed by dense nauty 2.9.3 with the fixed options listed
+at the end of part one, and describe its Lean implementation.
+{ref "nauty-algorithm-sparse"}[Part three] describes the different
+refinement, target selection and canonical comparison rules of sparse
+nauty 2.9.3. `HexGraphIso` implements both algorithms and proves their
+correctness. Traces is a separate comparator, with no Lean implementation
+in this library.
 
 No published document specifies this function. Three descriptions come
 closest:
@@ -705,6 +708,226 @@ target cells, row order, and label tie-breaking included, is the
 conformance suite, which compares the two programs on every graph with
 up to six vertices and on the families described in the `HexGraphIso`
 conformance documentation.
+
+# Part three: sparse nauty
+%%%
+tag := "nauty-algorithm-sparse"
+%%%
+
+Sparse nauty shares the individualization and search machinery of
+dense nauty, but changes several choices that determine the answer.
+Replacing dense rows by adjacency lists while keeping dense refinement
+would not reproduce sparse nauty. This section describes the sparse
+rules implemented by {name Hex.GraphIso.Nauty.Sparse.runColored}`runColored`.
+The {ref "hex-graph-iso-sparse"}[sparse API tutorial] gives examples of
+the public operations and their theorems.
+
+## Input and options
+
+The target is `sparsenauty` from the same pinned nauty 2.9.3 release.
+It uses `DEFAULTOPTIONS_SPARSEGRAPH`, with `getcanon = 1`,
+`defaultptn = FALSE`, `digraph = FALSE`, `tc_level = 100`,
+`invarproc = NULL` and `schreier = FALSE`. Other options keep their
+defaults. There are no edge weights or user refinement procedures.
+Vertices initially occur in increasing colour order, then increasing
+original vertex order within each colour. Input neighbour lists are
+sorted, and every initial colour cell is active.
+
+The working graph retains the native compressed adjacency arrays from
+{name Hex.SparseGraph}`SparseGraph`. The partition arrays and
+representation-independent orbit and search operations are shared with
+dense nauty. Sparse dispatch supplies refinement, target selection,
+automorphism testing, canonical comparison and canonical update.
+
+## Sparse refinement
+
+Refinement still produces an equitable ordered partition. Its active
+cells are stored in an array, initially in increasing position order.
+At each pass, it chooses the first singleton among the first ten array
+entries. If there is none, it chooses the last entry. Removal fills the
+chosen slot with the last entry and shortens the array. Thus subsequent
+choices depend on the array order, not just on the set of active cells.
+
+Before this loop, a shallow distance refinement applies when the level
+is at most two, the active array contains exactly one singleton, and
+the partition has at most `n / 8` cells. Breadth-first search computes
+distances from that singleton, using `n` for unreachable vertices.
+Each nontrivial cell is split by increasing distance. The singleton is
+removed from the active array, and the fragments made active by these
+splits are processed by the ordinary loop.
+
+{docstring Hex.GraphIso.Nauty.Sparse.distvals}
+
+For an ordinary pass, neighbour scans record only the nontrivial cells
+touched by the splitter. Their starting positions are sorted, and
+those cells are processed in that order. Untouched cells have zero
+counts throughout and need no scan. The two splitter cases have
+different rules:
+
+* With a singleton splitter, non-neighbours retain their order at the
+  front of the cell. Neighbours follow in reverse of their former
+  cell order. If both fragments are nonempty, they become separate
+  cells. An already active cell keeps both fragments active. Otherwise
+  the smaller fragment becomes active, with the non-neighbour fragment
+  chosen on a tie.
+* With a non-singleton splitter, vertices are grouped by increasing
+  neighbour count. The first two count values are separated by nauty's
+  three-way insertion procedure. Remaining values use its indirect
+  sort. If the old cell was active, every fragment is active.
+  Otherwise all but a largest fragment become active. The two-fragment
+  case activates the first fragment on a size tie. With three or more
+  fragments, the first largest fragment stays inactive.
+
+The indirect sort is part of the algorithm, including its permutation
+of equal-count vertices. Segments shorter than eleven use insertion
+sort. Larger segments use Bentley-McIlroy partitioning, with median of
+three pivot sampling below length `320` and median of nine thereafter.
+The smaller partition is processed first. A stable sort with the same
+numeric keys is not an interchangeable replacement.
+
+{docstring Hex.GraphIso.Nauty.Sparse.Sort.indirect}
+
+The refinement code uses the same
+{name Hex.GraphIso.Nauty.mash}`mash` and
+{name Hex.GraphIso.Nauty.cleanup}`cleanup` arithmetic as dense nauty,
+but summarizes the sparse events. Each ordinary pass records its
+splitter position and the number of touched cells. Singleton processing
+records each touched cell's start, its hit count and any new boundary.
+Count and distance processing have distinct updates involving the
+fragment values, boundaries and activation choices. The dense update
+sequence from part one does not apply to these branches. The executed
+definitions expose their exact update order:
+
+{docstring Hex.GraphIso.Nauty.Sparse.splitSingleton}
+
+{docstring Hex.GraphIso.Nauty.Sparse.splitCounts}
+
+{docstring Hex.GraphIso.Nauty.Sparse.refineWith}
+
+The optimized implementation retains counting and generation-mark
+arrays between nodes. A count is cleared before the first neighbour
+contribution to its cell. Vertex-to-cell indices and cell endpoints
+are maintained through refinement and may be reused by target selection.
+Individualization and partition recovery invalidate these indices.
+Entering refinement with no active cells also leaves them invalid, so
+target selection then scans the partition independently.
+
+The proofs show agreement with fresh refinement on the labelling,
+partition, active set, cell count and refinement code. They establish
+equitable output under the active-splitter invariant, preservation of
+ancestor cells, and equivariance under isomorphism. The bounds on array
+loops do not truncate reachable runs. Reusing storage changes none of
+the choices described above.
+
+## Target selection
+
+For each nontrivial cell, inspect its first vertex. Count the
+nontrivial cells to which that vertex has some but not all possible
+neighbours, including its own cell when applicable. At levels through
+`tc_level`, choose the first cell attaining the greatest count. At
+greater levels, choose the first nontrivial cell. A valid supplied
+target-cell hint takes precedence.
+
+{docstring Hex.GraphIso.Nauty.Sparse.bestcell}
+
+{docstring Hex.GraphIso.Nauty.Sparse.targetcell}
+
+The cached implementation uses the indices maintained by refinement
+and computes the same target. The unpruned specification uses fresh
+refinement and hint-free target selection, branching over every vertex
+of the chosen cell. Proofs justify the cached and hinted choices in
+the production traversal.
+
+## Canonical comparison and the declarative form
+
+A leaf key consists of its path of sparse refinement codes, terminated
+by the same `32767` sentinel, followed by the relabelled sparse graph.
+Codes compare lexicographically first. When they tie, graphs compare
+row by row, from vertex zero onwards. At the first differing row:
+
+* A smaller degree is preferred.
+* With equal degrees, the row containing the smallest vertex in the
+  symmetric difference of the two neighbour sets is preferred.
+
+Thus the degree comparison precedes adjacency comparison. This differs
+from the dense graph order and can select a different canonical form,
+as the {ref "hex-graph-iso-representations"}[two-edge example] shows.
+
+{docstring Hex.GraphIso.Nauty.Sparse.rowCmp}
+
+{docstring Hex.GraphIso.Nauty.Sparse.Key +hideFields}
+
+{name Hex.GraphIso.Nauty.Sparse.testcanlab}`testcanlab` computes the
+comparison together with the number of equal leading rows. The raw
+canonical store need not have sorted rows. Marks identify the first
+differing neighbour without sorting each candidate.
+{name Hex.GraphIso.Nauty.Sparse.updatecan}`updatecan` preserves the
+equal prefix and rewrites the remaining rows using inverse labels.
+Its invariant distinguishes allocated storage from the prefix that
+already represents valid canonical rows. Public output normalization
+sorts rows after the search, without choosing another label.
+
+{docstring Hex.GraphIso.Nauty.Sparse.testcanlab}
+
+{docstring Hex.GraphIso.Nauty.Sparse.updatecan}
+
+The declarative canonical key is the greatest leaf key of the finite
+unpruned sparse tree. A leaf attains this maximum, and its relabelling
+defines the canonical form. Equal maximum keys may have different
+attaining labels. The form is invariant under isomorphism; the label
+records how the particular input is renamed.
+
+{docstring Hex.GraphIso.Nauty.Sparse.canonSpecKey}
+
+{docstring Hex.GraphIso.Nauty.Sparse.specCanon}
+
+## Production proofs and certificates
+
+The production search proves totality and equality with the declarative
+maximum while retaining nauty's pruning and representation choices.
+{name Hex.GraphIso.Sparse.canon_eq_specCanon}`canon_eq_specCanon`
+identifies the total public form with that specification on every
+input, including the empty graph. This proof does not depend on
+certificate replay. The public label is parsed from the production
+search's literal output array.
+
+{docstring Hex.GraphIso.Sparse.canon_eq_specCanon}
+
+The full generator trace generates every colour-preserving
+automorphism. It is distinct from the bounded workspace used to prune
+the search: overwriting a pruning entry does not discard a returned
+generator. The orbit array gives the exact orbits of the full group.
+The product of indices along the first search path is its exact order,
+with no additional searches on individualized graphs.
+
+{name Hex.GraphIso.Sparse.Aut.generated_iff}`Aut.generated_iff`
+states that a permutation is generated by the returned list if and
+only if it is a colour-preserving automorphism.
+{name Hex.GraphIso.Sparse.autos_sameOrbit}`autos_sameOrbit` states the
+equivalence between equal orbit entries and an automorphism carrying
+one vertex to the other.
+
+Certificates serve a separate purpose: producing kernel proofs about
+closed inputs without reducing the whole optimized search. The sparse
+certificate records discrete leaves, branches discarded by a strictly
+smaller code, complete child lists, and checked automorphism references
+to earlier records. The checker recomputes sparse refinement and
+comparison and proves that the claimed maximum is attained and bounds
+all leaves. Production is proved complete, and the literal kernel
+checker is proved to agree with the specification checker.
+
+The public `graph_iso` tactic uses these sparse checkers for sparse
+goals. Its {ref "hex-graph-iso-certificates"}[search and certificate
+limits] count actual nodes and records. An exhausted limit is a tactic
+failure, not a mathematical verdict. Direct canonicalization and
+isomorphism search are total APIs without these limits.
+
+All correctness statements concern the executed Lean implementation.
+Agreement with C sparse nauty is established separately by exact
+conformance tests for indirect sorting, refinement, target selection,
+canonical labels, search counters, generators, orbits and group order.
+The [validation report](https://github.com/kim-em/hex-dev/blob/main/reports/sparse-nauty-validation.md)
+records those checks and the kernel replay and performance evidence.
 
 # References
 %%%

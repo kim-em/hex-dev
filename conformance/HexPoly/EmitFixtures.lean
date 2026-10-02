@@ -18,6 +18,9 @@ and re-runs each operation through python-flint for cross-check.
 
 Coverage:
 
+* `pseudoDiv`, `positivePseudoDiv`, and `pseudoGcd` over `Int`, with
+  zero inputs, negative multipliers, defective degree drops and nonconstant gcds.
+
 * `mul` over `DensePoly Int` at degrees 8 / 16 / 32 / 64, sparse and
   dense, with coefficients drawn deterministically from an LCG modulo
   ~2^16 so the committed JSONL is reproducible across machines.
@@ -235,9 +238,40 @@ private def emitGcdCase (c : GcdCase) : IO Unit := do
   let g : DensePoly Rat := gcd leftRat rightRat
   emitResult lib c.id "gcd" (polyRatValue g.toArray.toList)
 
+/-! Integer pseudo-arithmetic is compared with independent field arithmetic in
+FLINT. Exact multipliers and both division outputs are retained; gcd comparison
+is in the fraction field, including `(2, X)` and zero inputs. -/
+private def pseudoCases : List (String × DensePoly Int × DensePoly Int) := [
+  ("zero", 0, 0), ("zeroDivisor", ofCoeffs #[1, 0, 1], 0),
+  ("zeroDividend", 0, ofCoeffs #[3, -2]),
+  ("smaller", C 2, ofCoeffs #[1, 0, -3]),
+  ("negativeOdd", ofCoeffs #[1, 1], ofCoeffs #[3, -2]),
+  ("negativeEven", ofCoeffs #[1, 0, 1], ofCoeffs #[3, -2]),
+  ("defective", ofCoeffs #[0, 0, 0, 1], ofCoeffs #[1, 0, -2]),
+  ("constant", ofCoeffs #[1, 0, 1], C (-3)),
+  ("twoAndX", C 2, ofCoeffs #[0, 1]),
+  ("common", ofCoeffs #[1, -2, 1], ofCoeffs #[-1, 1]),
+  ("dense", densePoly 0x30103 5, densePoly 0x30203 3),
+  ("exactDrop", ofCoeffs #[-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    ofCoeffs #[-1, 0, 0, 0, 0, 0, 1])
+]
+
+private def pseudoValue (r : PseudoResult Int) : String :=
+  s!"[{r.multiplier},{polyValue r.quotient.toArray.toList},{polyValue r.remainder.toArray.toList}]"
+
+private def emitPseudoCase (c : String × DensePoly Int × DensePoly Int) : IO Unit := do
+  let id := "pseudo/" ++ c.1
+  let (p, q) := c.2
+  emitPolyFixture lib (id ++ "/left") p.toArray.toList
+  emitPolyFixture lib (id ++ "/right") q.toArray.toList
+  emitResult lib id "pseudoDiv" (pseudoValue (pseudoDiv p q))
+  emitResult lib id "positivePseudoDiv" (pseudoValue (positivePseudoDiv Int.sign p q))
+  emitResult lib id "pseudoGcd" (polyValue (pseudoGcd p q).toArray.toList)
+
 end Hex.PolyEmit
 
 def main : IO Unit := do
   for c in Hex.PolyEmit.mulCases    do Hex.PolyEmit.emitMulCase    c
   for c in Hex.PolyEmit.divModCases do Hex.PolyEmit.emitDivModCase c
   for c in Hex.PolyEmit.gcdCases    do Hex.PolyEmit.emitGcdCase    c
+  for c in Hex.PolyEmit.pseudoCases do Hex.PolyEmit.emitPseudoCase c

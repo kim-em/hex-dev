@@ -8,6 +8,10 @@ module
 
 public import HexPolyMathlib.PolynomialEquivalence
 public import HexPolyMathlib.Euclid
+public import HexPolyMathlib.Interpret
+public import HexPolyMathlib.Pseudo
+public import HexPolyMathlib.GrindTransport
+public import HexPolyMathlib.Literal
 
 public section
 
@@ -18,5 +22,6 @@ Mathlib's `Polynomial` API.
 This library exposes the concrete conversion functions between
 `Hex.DensePoly` and `Polynomial`, together with the ring equivalence and
 Euclidean-algorithm correspondence layer used by downstream Mathlib-facing
-polynomial libraries.
+polynomial libraries, and the `Lean.Grind.CommRing` to `CommRing` transport the
+bridge layers use on executable carriers.
 -/

@@ -28,9 +28,26 @@ open Hex
 # Functionality
 
 All public operations return normalized polynomials. Algorithms may use mutable
-arrays internally, but the public representation and its equality are
-canonical. For interoperability with Mathlib's `Polynomial`, use
+arrays internally. Trailing stored zeros are removed; nonzero coefficients
+need not have canonical representatives. For interoperability with Mathlib's
+`Polynomial`, use
 [`hex-poly-mathlib`](https://github.com/leanprover/hex-poly-mathlib).
+
+`Hex.DensePoly.Interpret.map` transports polynomials through a zero-reflecting
+coefficient map. Its lemmas cover arithmetic, derivative, Horner evaluation,
+division, gcd, extended gcd, powers and monicization without ring or field
+instances on the source. Scalar operation preservation is an explicit
+hypothesis. Structural equality remains distinct from equality after
+interpretation. Semantic monicization does not supply the literal
+`leadingCoeff = 1` witness required by `divModMonic` and `modByMonic`;
+use general division unless that structural witness is available.
+
+`pseudoDivMod` is the shared fraction-free division kernel. `pseudoDiv` records
+its multiplier, and `positivePseudoDiv` corrects a negative multiplier together
+with both outputs. `pseudoGcd` follows the plain remainder sequence with a
+proved decrease in stored degree. It computes a gcd over the fraction field
+up to a nonzero scalar; integer coefficients keep their ordinary domain
+operations.
 
 # Verification
 

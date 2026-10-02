@@ -35,7 +35,7 @@ any of the seven returned statistics.
 | 468 | `orbits[i] = i` | `initial` | identity orbits |
 | 469-470 | `grpsize1 = 1; grpsize2 = 0` | none | group-size output omitted |
 | 471-479 | zero counters, `numorbits = n`, empty fixed points, `noncheaplevel = 1`, `eqlev_canon = -1` | `Search`, `initial` | initial globals |
-| 480-490 | workspace, `worktop`, `fmptr` | `Search.autos`, `pushAuto` | pinned 500-pair capacity, initially empty |
+| 480-490 | workspace, `worktop`, `fmptr` | `SearchState.autos`, `pushAuto` | pinned 500-pair capacity, initially empty |
 | 491-493 | `errstatus = 0; needshortprune = FALSE` | `Exit` | no pending payload initially, aborts pinned out |
 | 494-496 | invariant counters | none | pinned-out options: no invariant |
 | 497-502 | `firstpathnode(...,1,numcells)` | `runState` | node fuel `n + 2`, sweep fuel `n + 1` |

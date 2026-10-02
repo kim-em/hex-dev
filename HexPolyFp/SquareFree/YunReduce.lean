@@ -1512,7 +1512,7 @@ private theorem normalizeMonic_squareFreeContributionReachable
           have hlead : DensePoly.leadingCoeff f = f.coeff 0 := by
             have hlead_last :
                 DensePoly.leadingCoeff f = f.coeff (f.size - 1) := by
-              simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
+              exact DensePoly.leadingCoeff_eq_coeff_last f (by omega)
             simpa [hf_size] using hlead_last
           rw [← hlead]
           have h := zmod64_mul_inv_eq_one_of_prime_ne_zero hp hlead_ne

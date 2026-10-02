@@ -40,19 +40,19 @@ inductive Leaf where
 The state includes the partition and any policy-specific bookkeeping.
 Sweep entries are indices below `n`; a policy may interpret them as
 vertex labels or target-cell offsets. -/
-class Policy (σ : Type) (n : Nat) where
+class Policy (σ : Type) (n : outParam Nat) {γ : outParam Type} where
   /-- Refine a node and return its cell count and code. -/
-  visit : Ctx n → Nat → Nat → σ → Nat × Nat × σ
+  visit : γ → Nat → Nat → σ → Nat × Nat × σ
   /-- Save a first-path refinement code. -/
   recordFirst : Nat → Nat → σ → σ
   /-- Compare an off-path refinement code with the reference paths. -/
   compareCodes : Nat → Nat → σ → σ
   /-- Choose a target cell, its sweep entries, and its size. -/
-  chooseTarget : Bool → Ctx n → Nat → Nat → Nat → σ → Int × VSet n × Nat × σ
+  chooseTarget : Bool → γ → Nat → Nat → Nat → σ → Int × VSet n × Nat × σ
   /-- Install the first discrete leaf. -/
   firstterminal : Nat → σ → σ
   /-- Classify an off-path node. -/
-  classify : Ctx n → Nat → Nat → σ → Leaf × σ
+  classify : γ → Nat → Nat → σ → Leaf × σ
   /-- Act on a node classification. -/
   leafExit : Leaf → Nat → σ → Exit × σ
   /-- Update the cheap-automorphism boundary. -/
@@ -74,7 +74,7 @@ class Policy (σ : Type) (n : Nat) where
   /-- Finish a complete sweep. -/
   afterSweep : Bool → Nat → Nat → Nat → σ → σ
 
-variable {n : Nat} {σ : Type} [Policy σ n]
+variable {n : Nat} {σ : Type} {γ : Type} [Policy σ n (γ := γ)]
 
 /-- A node continuation with its recursion bound supplied by the caller. -/
 abbrev NodeFn (σ : Type) := Bool → Nat → Nat → σ → Exit × σ
@@ -84,7 +84,7 @@ abbrev SweepFn (σ : Type) (n : Nat) :=
   Bool → Nat → Nat → Nat → Nat → Option Nat → VSet n → Nat → σ → Exit × Nat × σ
 
 /-- The local node operations, followed by a supplied child sweep. -/
-@[expose] def nodeStep (ctx : Ctx n) (tcLevel : Nat) (next : SweepFn σ n)
+@[expose] def nodeStep (ctx : γ) (tcLevel : Nat) (next : SweepFn σ n)
     (first : Bool) (level numcells : Nat) (st : σ) : Exit × σ :=
   Id.run do
     let (numcells, refcode, st) := Policy.visit (n := n) ctx level numcells st
@@ -155,7 +155,7 @@ unwind outward or filtering and resuming the current sweep. -/
 mutual
 
 /-- Refine a node, classify it, and sweep its surviving children. -/
-@[expose] def node (first : Bool) (ctx : Ctx n) (inf tcLevel fuel : Nat)
+@[expose] def node (first : Bool) (ctx : γ) (inf tcLevel fuel : Nat)
     (level numcells : Nat) (st : σ) : Exit × σ :=
   match fuel with
   | 0 => (.fuel, st)
@@ -168,7 +168,7 @@ mutual
 termination_by (fuel, 0, 0)
 
 /-- Sweep surviving vertices, transporting exits below this level. -/
-@[expose] def sweep (first : Bool) (ctx : Ctx n) (inf tcLevel fuel cfuel : Nat)
+@[expose] def sweep (first : Bool) (ctx : γ) (inf tcLevel fuel cfuel : Nat)
     (level numcells tc tv1 : Nat) (tv? : Option Nat) (tcell : VSet n)
     (index : Nat) (st : σ) : Exit × Nat × σ :=
   match tv?, cfuel with

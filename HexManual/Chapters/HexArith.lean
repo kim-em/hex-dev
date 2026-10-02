@@ -286,3 +286,8 @@ tag := "hex-arith-cross-references"
   The Mathlib correspondences live in the consuming libraries' `*Mathlib`
   counterparts. `HexArith` itself imports only `Std` and never depends
   on Mathlib.
+
+Natural square roots live in {name}`HexArith.Nat.floorSqrt` and
+{name}`HexArith.Nat.ceilSqrt`. The inequalities
+{name}`HexArith.Nat.floorSqrt_sq_le`, {name}`HexArith.Nat.le_ceilSqrt_sq`
+and {name}`HexArith.Nat.ceilSqrt_le` support integer determinant bounds.

@@ -1,0 +1,32 @@
+{
+  "command": [
+    "taskset",
+    "-c",
+    "76",
+    "perf",
+    "record",
+    "-q",
+    "-e",
+    "cycles:u",
+    "-F",
+    "999",
+    "--call-graph",
+    "dwarf,8192",
+    "-o",
+    "/tmp/sparse-before-cubic512-run.data",
+    "--",
+    "/tmp/hex-sparse-perf-baseline/profile",
+    "/tmp/hex-sparse-corpus/cubic512.graph",
+    "run",
+    "10"
+  ],
+  "load": [
+    1.52490234375,
+    1.4267578125,
+    3.6904296875
+  ],
+  "started": 1788930673.922336,
+  "stdout": "{\"elapsed_ns\":3136905157,\"iterations\":10,\"mode\":\"run\",\"name\":\"cubic512\",\"ns_per_iteration\":313690515,\"sink\":0}\n",
+  "stderr": "",
+  "returncode": 0
+}

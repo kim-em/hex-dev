@@ -1,0 +1,6 @@
+{
+  "path": "HexArith/Nat/Sqrt.lean",
+  "baseline_blob": null,
+  "current_blob": "d8e0eab8dd4f5868fb9bc81e2324f0edd111e120",
+  "reason": "Relocates the existing floorSqrt/ceilSqrt Newton implementation from HexPolyZ/Mignotte without changing its arithmetic, fuel, or branches. Existing polynomial callers retain reducible compatibility aliases. Added and renamed lemmas erase at runtime."
+}

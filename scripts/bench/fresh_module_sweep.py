@@ -29,7 +29,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence, TypeVar
+from typing import Callable, Sequence, TypeVar
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -43,6 +43,7 @@ VOLUNTARY_CONTEXT_MARKER = "__HEX_VOLUNTARY_CONTEXT__="
 NULL_MAGNITUDE_FACTOR = 3.0
 ACCOUNTING_QUANTIZATION_TICKS = 3
 T = TypeVar("T")
+SampleObserver = Callable[[str, dict[str, object]], None]
 
 sys.path.insert(0, str(ROOT))
 from scripts.ci.check_benches_mathlib_free import (  # noqa: E402
@@ -58,6 +59,8 @@ class ProbeModule:
 
     module: str
     expected_axioms: tuple[str, ...] | None = None
+    # Restrict inventory to declarations in this namespace, excluding import logs.
+    axiom_namespace: str | None = None
 
 
 @dataclass(frozen=True)
@@ -86,6 +89,7 @@ class SweepSpec:
     required_samples: int | None = None
     import_baseline_control: str | None = None
     absolute_only: bool = False
+    retain_compiler_output: bool = False
 
 
 def parse_args(
@@ -836,7 +840,21 @@ def terminate_process_group(child: subprocess.Popen[str], grace: float = 5.0) ->
     child.communicate()
 
 
-def parse_axioms(output: str) -> list[str] | None:
+def parse_axioms(output: str, namespace: str | None = None) -> list[str] | None:
+    if namespace is not None:
+        inventories = []
+        for match in re.finditer(
+            r"(?:^|:\s+)'([^\n]+?)' (?:depends on axioms: \[([^]]*)\]|does not depend on any axioms)",
+            output, re.MULTILINE,
+        ):
+            if match.group(1).startswith(namespace + "."):
+                inventories.append([
+                    item.strip() for item in (match.group(2) or "").split(",")
+                    if item.strip()
+                ])
+        if not inventories:
+            return None
+        return list(dict.fromkeys(axiom for inventory in inventories for axiom in inventory))
     match = re.search(r"depends on axioms: \[([^]]*)\]", output)
     if match:
         return [item.strip() for item in match.group(1).split(",") if item.strip()]
@@ -850,6 +868,9 @@ def build_sample(
     timeout: float,
     measurement_cpu: int | None = None,
     monitored_cpus: Sequence[int] = (),
+    sample_observer: SampleObserver | None = None,
+    retain_compiler_output: bool = False,
+    axiom_namespace: str | None = None,
 ) -> dict[str, object]:
     remove_module_outputs(module)
     host_before = sampled_host_state(host_state())
@@ -860,11 +881,26 @@ def build_sample(
     try:
         proc, elapsed, metrics = run_timed(command, timeout)
     except subprocess.TimeoutExpired as exc:
+        if sample_observer is not None:
+            sample_observer(module, {
+                "state": "timeout", "timeout_seconds": timeout,
+                "command": command,
+                "compiler_output": (
+                    (exc.stdout or b"").decode(errors="replace")
+                    if isinstance(exc.stdout, bytes) else (exc.stdout or "")
+                ),
+            })
         raise RuntimeError(
             f"probe timed out after {timeout:g}s: {' '.join(command)}"
         ) from exc
     output = proc.stdout + proc.stderr
     if proc.returncode != 0:
+        if sample_observer is not None:
+            sample_observer(module, {
+                "state": "failed", "returncode": proc.returncode,
+                "wall_nanos": elapsed, "command": command,
+                "compiler_output": output, **metrics,
+            })
         sys.stderr.write(output)
         raise RuntimeError(
             f"probe failed ({proc.returncode}): {' '.join(command)}"
@@ -923,7 +959,7 @@ def build_sample(
     result = {
         "wall_nanos": elapsed,
         **metrics,
-        "axioms": parse_axioms(output),
+        "axioms": parse_axioms(output, axiom_namespace),
         "host_before": host_before,
         "host_after": host_after,
         "cpu_accounting": {
@@ -948,6 +984,12 @@ def build_sample(
             ),
         },
     }
+    if axiom_namespace is not None:
+        result["axiom_namespace"] = axiom_namespace
+    if retain_compiler_output:
+        result["compiler_output"] = output
+    if sample_observer is not None:
+        sample_observer(module, result)
     return result
 
 
@@ -1013,6 +1055,8 @@ def build_shared_host_pair(
     measurement_cpu: int,
     monitored_cpus: Sequence[int],
     sibling_cpus: Sequence[int],
+    sample_observer: SampleObserver | None = None,
+    retain_compiler_output: bool = False,
 ) -> dict[str, object]:
     """Build one adjacent pair and retain host activity as context."""
     attempt_state = sampled_host_state(host_state())
@@ -1024,6 +1068,9 @@ def build_shared_host_pair(
             timeout,
             measurement_cpu=measurement_cpu,
             monitored_cpus=monitored_cpus,
+            sample_observer=sample_observer,
+            retain_compiler_output=retain_compiler_output,
+            axiom_namespace=module.axiom_namespace,
         )
         if cpu_affinity() != [measurement_cpu]:
             raise RuntimeError("shared-host CPU affinity changed during the sweep")
@@ -1093,7 +1140,11 @@ def validate_axioms(
     expected = (
         None if module.expected_axioms is None else list(module.expected_axioms)
     )
-    if sample["axioms"] != expected:
+    actual = sample["axioms"]
+    if module.axiom_namespace is not None:
+        actual = None if actual is None else sorted(actual)
+        expected = None if expected is None else sorted(expected)
+    if actual != expected:
         raise RuntimeError(
             f"{pair_name} {role} axiom set mismatch: "
             f"expected {expected}, got {sample['axioms']}"
@@ -1242,6 +1293,8 @@ def summarize(
             "reference": {
                 "module": pair.reference.module,
                 "expected_axioms": pair.reference.expected_axioms,
+                **({"axiom_namespace": pair.reference.axiom_namespace}
+                   if pair.reference.axiom_namespace is not None else {}),
                 "artifacts": artifact_sizes(
                     pair.reference.module, spec.src_dir
                 ),
@@ -1249,6 +1302,8 @@ def summarize(
             "candidate": {
                 "module": pair.candidate.module,
                 "expected_axioms": pair.candidate.expected_axioms,
+                **({"axiom_namespace": pair.candidate.axiom_namespace}
+                   if pair.candidate.axiom_namespace is not None else {}),
                 "artifacts": artifact_sizes(
                     pair.candidate.module, spec.src_dir
                 ),
@@ -1810,6 +1865,7 @@ def run_cli(
     spec: SweepSpec,
     caller_file: Path,
     argv: Sequence[str] | None = None,
+    sample_observer: SampleObserver | None = None,
 ) -> int:
     validate_spec(spec)
     args = parse_args(
@@ -1885,6 +1941,8 @@ def run_cli(
                     args.cpu,
                     monitored_cpus,
                     sibling_cpus,
+                    sample_observer,
+                    retain_compiler_output=spec.retain_compiler_output,
                 )
                 rows[pair.name].append(row)
             else:
@@ -1901,6 +1959,9 @@ def run_cli(
                         args.timeout,
                         measurement_cpu=None,
                         monitored_cpus=monitored_cpus,
+                        sample_observer=sample_observer,
+                        retain_compiler_output=spec.retain_compiler_output,
+                        axiom_namespace=module.axiom_namespace,
                     )
                     validate_axioms(pair.name, role, module, sample)
                     built[role] = sample
@@ -1992,6 +2053,7 @@ def run_cli(
                 "measurement-cpu-foreign-plus-all-SMT-sibling-busy",
             "null_magnitude_factor": NULL_MAGNITUDE_FACTOR,
             "absolute_only": spec.absolute_only,
+            "retain_compiler_output": spec.retain_compiler_output,
             "import_baseline_control": spec.import_baseline_control,
             "frequency_measurement":
                 "cpufreq-time-in-state-arm-mean",
@@ -2019,3 +2081,51 @@ def run_cli(
         display = output
     print(display)
     return 0 if release_quality else 2
+
+
+def run_retained_cli(
+    spec: SweepSpec, caller_file: Path, argv: Sequence[str] | None = None,
+) -> int:
+    """Retain every completed arm in an external, incrementally flushed sidecar."""
+    from scripts.bench.structural_tactic_sweep import acquire_cpu
+
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    args = parse_args(spec.description, arguments, default_samples=spec.required_samples or 4)
+    cpu, lease = acquire_cpu(args.cpu)
+    try:
+        env = environment()
+        output = args.output or (Path.home() / ".local/state/hex/proof-probes" /
+                                 default_output(env, spec.output_stem).name)
+        output = output.resolve()
+        if output.is_relative_to(ROOT.resolve()):
+            raise RuntimeError("choose a measurement output path outside the repository")
+        sidecar = Path(str(output) + ".samples.jsonl")
+        if output.exists() or sidecar.exists():
+            raise RuntimeError("measurement output exists; choose a fresh path")
+        # Flush every completed arm before validation, including failed arms.
+        sidecar.parent.mkdir(parents=True, exist_ok=True)
+        with sidecar.open("x") as log:
+            print(f"Incremental samples: {sidecar}", flush=True)
+            log.write(json.dumps({"type": "metadata", "environment": env,
+                                  "source_sha256": source_hashes(spec, caller_file)}) + "\n")
+            log.flush()
+
+            def observe(module, sample):
+                log.write(json.dumps({"type": "sample", "module": module, **sample}) + "\n")
+                log.flush()
+
+            try:
+                code = run_cli(spec, caller_file,
+                               [*arguments, "--shared-host", "--cpu", str(cpu),
+                                "--output", str(output)], sample_observer=observe)
+                log.write(json.dumps({"type": "complete", "code": code}) + "\n")
+                log.flush()
+            except BaseException as exc:
+                log.write(json.dumps({"type": "failure", "exception": type(exc).__name__,
+                                      "error": str(exc)}) + "\n")
+                log.flush()
+                print(f"Retained partial samples: {sidecar}", file=sys.stderr)
+                raise
+        return code
+    finally:
+        lease.close()

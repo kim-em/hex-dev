@@ -16,14 +16,14 @@ public section
 
 namespace Hex.GraphIso.Nauty
 
-variable {n : Nat}
+variable {n : Nat} {κ : Type}
 
 /-- First-code agreement remains above the sentinel after the first leaf. -/
-def Depth (last : Nat) (st : Search n) : Prop :=
+def Depth (last : Nat) (st : SearchState n κ) : Prop :=
   st.eqlevFirst ≤ last ∧ st.firstcode[last + 1]! = codeSentinel
 
 /-- Lowering agreement while preserving the reference preserves its depth bound. -/
-theorem Depth.mono {last : Nat} {st out : Search n} (h : Depth last st)
+theorem Depth.mono {last : Nat} {st out : SearchState n κ} (h : Depth last st)
     (hle : out.eqlevFirst ≤ st.eqlevFirst) (href : out.reference = st.reference) :
     Depth last out := by
   have hcodes := congrArg (fun x : Array Nat × Array Int × Array Nat => x.1) href
@@ -31,11 +31,11 @@ theorem Depth.mono {last : Nat} {st out : Search n} (h : Depth last st)
   exact ⟨Nat.le_trans hle h.1, by rw [hcodes]; exact h.2⟩
 
 /-- A real refinement code cannot advance agreement through the saved sentinel. -/
-theorem compareCodes_depth {last level code : Nat} {st : Search n}
+theorem compareCodes_depth {last level code : Nat} {st : SearchState n κ}
     (h : Depth last st) (hcode : code < codeSentinel) : Depth last (compareCodes level code st) := by
   have he : (compareCodes level code st).eqlevFirst ≤ last := by
     unfold compareCodes
-    simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.eqlevFirst, ite_self]
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.eqlevFirst, ite_self]
     split
     · rename_i hmatch
       have ha : st.eqlevFirst = level - 1 ∧ code = st.firstcode[level]! := by simpa using hmatch
@@ -49,7 +49,7 @@ theorem compareCodes_depth {last level code : Nat} {st : Search n}
     · exact h.1
   have hcodes : (compareCodes level code st).firstcode = st.firstcode := by
     unfold compareCodes
-    simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.firstcode, ite_self]
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.firstcode, ite_self]
   exact ⟨he, by rw [hcodes]; exact h.2⟩
 
 /-- Target selection can only lower first-code agreement. -/
@@ -57,7 +57,7 @@ theorem chooseTarget_le (ctx : Ctx n) (tcLevel level numcells : Nat) (st : Searc
     (chooseTarget false ctx tcLevel level numcells st).2.2.2.eqlevFirst ≤ st.eqlevFirst := by
   unfold chooseTarget
   simp only [Bool.false_eq_true, ite_false, Bool.not_false, Bool.true_and,
-    Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, apply_ite Search.eqlevFirst]
+    Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, apply_ite SearchState.eqlevFirst]
   repeat' split
   all_goals simp_all only [Bool.and_eq_true, Bool.or_eq_true, beq_iff_eq, decide_eq_true_eq]
   all_goals simp_all
@@ -68,14 +68,14 @@ theorem classify_eqlev (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
     (classify ctx level numcells st).2.eqlevFirst = st.eqlevFirst := by
   unfold classify
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq]
-  simp only [apply_ite Search.eqlevFirst, ite_self]
+  simp only [apply_ite SearchState.eqlevFirst, ite_self]
 
-private theorem admit_eqlev (st : Search n) : (admit st).eqlevFirst = st.eqlevFirst := by
+private theorem admit_eqlev (st : SearchState n κ) : (admit st).eqlevFirst = st.eqlevFirst := by
   unfold admit pushAuto
   simp only [Id.run_pure]
   split <;> rfl
 
-private theorem pruneReturn_eqlev (level : Nat) (st : Search n) :
+private theorem pruneReturn_eqlev (level : Nat) (st : SearchState n κ) :
     (pruneReturn level st).2.eqlevFirst = st.eqlevFirst := by
   unfold pruneReturn pushAuto
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
@@ -83,7 +83,7 @@ private theorem pruneReturn_eqlev (level : Nat) (st : Search n) :
   all_goals rfl
 
 /-- Leaf actions preserve the first-code agreement counter. -/
-theorem leafExit_eqlev (leaf : Leaf) (level : Nat) (st : Search n) :
+theorem leafExit_eqlev (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     (leafExit leaf level st).2.eqlevFirst = st.eqlevFirst := by
   cases leaf <;> unfold leafExit
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
@@ -94,16 +94,17 @@ theorem leafExit_eqlev (leaf : Leaf) (level : Nat) (st : Search n) :
     | exact pruneReturn_eqlev level _
 
 /-- Recovery can only lower first-code agreement. -/
-theorem recover_le (inf level : Nat) (st : Search n) :
+theorem recover_le (inf level : Nat) (st : SearchState n κ) :
     (Nauty.recover inf level st).eqlevFirst ≤ st.eqlevFirst := by
   unfold Nauty.recover recoverLevels recoverPtn
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.eqlevFirst, ite_self]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.eqlevFirst, ite_self]
   repeat' split
   all_goals omega
 
 /-- The search preserves the sentinel depth bound on off-path calls and later siblings. -/
 theorem depthPolicy (ctx : Ctx n) (inf tcLevel last : Nat) :
-    Generic.StablePolicy ctx inf tcLevel (Depth (n := n) last) (fun code => code < codeSentinel) where
+    Generic.StablePolicy ctx inf tcLevel (Depth (n := n) (κ := Array (VSet n)) last)
+      (fun code => code < codeSentinel) where
   code := fun level numcells st => refine_longcode_lt ctx level st.lab st.ptn st.active numcells
   visit := fun _ _ _ h => h
   compare := fun _ _ _ hc h => compareCodes_depth h hc
@@ -131,8 +132,8 @@ theorem depthPolicy (ctx : Ctx n) (inf tcLevel last : Nat) :
     intro level st h
     exact h.mono (recover_le inf level st) ((referencePolicy ctx inf tcLevel).recover level st)
   afterSweep := by
-    intro first level size index st h
-    change Depth last (afterSweep first level size index st)
+    intro level size index st h
+    change Depth last (afterSweep false level size index st)
     unfold afterSweep
     split <;> exact h
 
@@ -159,7 +160,11 @@ theorem firstPath_depth {ctx : Ctx n} {inf tcLevel fuel level numcells last : Na
     (hsize : st.firstcode.size = n + 2) (hlast : last ≤ n) :
     Depth last (node true ctx inf tcLevel fuel level numcells st).2 := by
   rw [node_eq_generic]
-  apply hpath.stable (depthPolicy ctx inf tcLevel last) (fun _ _ _ h => h)
+  apply hpath.stable (depthPolicy ctx inf tcLevel last) (fun _ _ _ h => h) (by
+    intro level size index st h
+    change Depth last (afterSweep true level size index st)
+    unfold afterSweep
+    split <;> exact h)
   change last ≤ last ∧ (leaf.firstcode.set! (last + 1) codeSentinel)[last + 1]! = codeSentinel
   exact ⟨Nat.le_refl _, Array.getElem!_set!_self _ _ _
     (by rw [firstPath_codeSize hpath, hsize]; omega)⟩

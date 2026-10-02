@@ -135,3 +135,19 @@ python-flint for integer and rational matrices.
 orders to an `aeval` divisibility characterization, identifies executable LCM
 with Mathlib's normalized LCM, proves divisibility into `charPoly`, and proves
 transpose and similarity invariance.
+
+## Kernel certificates
+
+`HexMinPoly/Kernel.lean` owns the list certificate for the
+[min_poly frontend](../../HexMinPolyMathlib/SPEC/hex-min-poly-mathlib.md#the-min_poly-tactic).
+`MinPolyWitness` reshapes `MinPolyCert` into rational input rows, integer
+rows with a common positive scale, and separately scaled polynomial and
+Krylov-inverse blocks. `checkMinPolyList` uses structural list recursion and
+integer arithmetic to check annihilation, cyclic-order minimality, the exact
+ordered basis family, and all four identities at every LCM step. It never
+replays the producer or reduces packed polynomial arithmetic. The companion's
+`minpoly_eq_of_checkList` transports any accepted witness to Mathlib's
+`minpoly`, and the polynomial literal adapter identifies the user's target.
+
+Malformed-certificate regressions live in the Mathlib-free conformance driver;
+the companion owns proof tests and the fresh-module performance obligations.

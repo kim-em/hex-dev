@@ -102,6 +102,94 @@ theorem ofAlgebraic?_isSome_iff (a b : AlgebraicNumber) :
     (ofAlgebraics? a bs)[i]'(by simpa using hi) = ofAlgebraic? a bs[i] := by
   simp [ofAlgebraics?, ofAlgebraic?]
 
+private theorem checkPair?_sound (theta alpha gamma : AlgebraicNumber)
+    (coordinates out : QAdjoin gamma × QAdjoin gamma)
+    (h : checkPair? theta alpha gamma coordinates = some out) :
+    out.1.toAlgebraicNumber = theta ∧ out.2.toAlgebraicNumber = alpha := by
+  letI : ZPoly.CheckedIrreducible gamma.p := gamma.checked
+  unfold checkPair? at h
+  obtain ⟨thetaRecovered, htheta, h⟩ := Option.bind_eq_some_iff.mp h
+  obtain ⟨alphaRecovered, halpha, h⟩ := Option.bind_eq_some_iff.mp h
+  by_cases heq : (thetaRecovered == theta && alphaRecovered == alpha) = true
+  · simp only [heq, ↓reduceIte, Option.some.injEq] at h
+    subst out
+    have hthetaEq : thetaRecovered = theta :=
+      beq_iff_eq.mp (Bool.and_eq_true_iff.mp heq).1
+    have halphaEq : alphaRecovered = alpha :=
+      beq_iff_eq.mp (Bool.and_eq_true_iff.mp heq).2
+    constructor
+    · apply AlgebraicNumber.toComplex_injective
+      rw [← hthetaEq, QAdjoin.toAlgebraicNumber]
+      exact (PolyQuot.toAlgebraicNumber_toComplex _ gamma.rep gamma.rep_mk).trans
+        (PolyQuot.toAlgebraicNumber?_sound coordinates.1 gamma.rep gamma.rep_mk
+          htheta).symm
+    · apply AlgebraicNumber.toComplex_injective
+      rw [← halphaEq, QAdjoin.toAlgebraicNumber]
+      exact (PolyQuot.toAlgebraicNumber_toComplex _ gamma.rep gamma.rep_mk).trans
+        (PolyQuot.toAlgebraicNumber?_sound coordinates.2 gamma.rep gamma.rep_mk
+          halpha).symm
+  · have hfalse : (thetaRecovered == theta && alphaRecovered == alpha) = false :=
+      Bool.eq_false_of_not_eq_true heq
+    simp [hfalse] at h
+
+/-- A successful shift conversion preserves both selected algebraic values. -/
+theorem recoverShift?_sound (theta alpha gamma : AlgebraicNumber)
+    (shift : Int) {coordinates : QAdjoin gamma × QAdjoin gamma}
+    (h : recoverShift? theta alpha gamma shift = some coordinates) :
+    coordinates.1.toAlgebraicNumber = theta ∧
+      coordinates.2.toAlgebraicNumber = alpha := by
+  unfold recoverShift? at h
+  by_cases hshift : shift = 0
+  · simp [hshift] at h
+  · simp only [hshift, ↓reduceIte] at h
+    letI : ZPoly.CheckedIrreducible gamma.p := gamma.checked
+    let generator : QAdjoin gamma := gamma.toQAdjoin
+    let affine : DensePoly (QAdjoin gamma) :=
+      DensePoly.ofList [generator, (-(shift : Rat)) • (1 : QAdjoin gamma)]
+    let thetaRelation := DensePoly.composeImpl
+      (DensePoly.ofCoeffs <| theta.p.toArray.map fun (c : Int) =>
+        (c : Rat) • (1 : QAdjoin gamma)) affine
+    let alphaRelation : DensePoly (QAdjoin gamma) :=
+      DensePoly.ofCoeffs <| alpha.p.toArray.map fun (c : Int) =>
+        (c : Rat) • (1 : QAdjoin gamma)
+    let common := DensePoly.gcd thetaRelation alphaRelation
+    by_cases hlinear : (common.natDegree = 1 && common.leadingCoeff != 0) = true
+    · dsimp [common, thetaRelation, alphaRelation, affine, generator] at hlinear
+      simp only [hlinear, ↓reduceIte] at h
+      exact checkPair?_sound theta alpha gamma _ coordinates h
+    · have hfalse :
+          (common.natDegree = 1 && common.leadingCoeff != 0) = false :=
+        Bool.eq_false_of_not_eq_true hlinear
+      dsimp [common, thetaRelation, alphaRelation, affine, generator] at hfalse
+      simp [hfalse] at h
+
+private theorem presentShift?_sound (theta alpha gamma : AlgebraicNumber)
+    (shift : Int) {p : Presentation}
+    (h : presentShift? theta alpha gamma shift = some p) :
+    p.entries.size = 2 ∧
+      (∀ hzero : 0 < p.entries.size, (p.entries[0]'hzero).toAlgebraicNumber = theta) ∧
+      (∀ hone : 1 < p.entries.size, (p.entries[1]'hone).toAlgebraicNumber = alpha) := by
+  unfold presentShift? at h
+  obtain ⟨coordinates, hcoordinates, h⟩ := Option.bind_eq_some_iff.mp h
+  have hp : p = ⟨gamma, #[coordinates.1, coordinates.2]⟩ :=
+    (Option.some.inj h).symm
+  subst p
+  obtain ⟨htheta, halpha⟩ :=
+    recoverShift?_sound theta alpha gamma shift hcoordinates
+  simp [htheta, halpha]
+
+private theorem fastPair?_sound (theta alpha : AlgebraicNumber)
+    {p : Presentation} (h : fastPair? theta alpha = some p) :
+    p.entries.size = 2 ∧
+      (∀ hzero : 0 < p.entries.size, (p.entries[0]'hzero).toAlgebraicNumber = theta) ∧
+      (∀ hone : 1 < p.entries.size, (p.entries[1]'hone).toAlgebraicNumber = alpha) := by
+  unfold fastPair? at h
+  obtain ⟨gamma, _, hp⟩ := Option.bind_eq_some_iff.mp h
+  by_cases hdegree : gamma.p.natDegree = theta.p.natDegree * alpha.p.natDegree
+  · simp only [hdegree, ↓reduceIte] at hp
+    exact presentShift?_sound theta alpha gamma 1 hp
+  · simp [hdegree] at hp
+
 private theorem presentation_exists (bs : Array AlgebraicNumber)
     (h : bs.all (fun b => b.isZero) ≠ true) :
     ∃ p, presentation? bs = some p := by
@@ -111,6 +199,21 @@ private theorem presentation_exists (bs : Array AlgebraicNumber)
   push Not at hn
   obtain ⟨b, hb, hz⟩ := hn
   exact ⟨b, Array.mem_toList_iff.mpr hb, Bool.eq_false_iff.mpr hz⟩
+
+private theorem commonFallback_spec (bs : Array AlgebraicNumber)
+    (hz : bs.all (fun b => b.isZero) ≠ true) :
+    (commonFallback bs).entries.size = bs.size ∧
+      ∀ i (hi : i < bs.size) (hp : i < (commonFallback bs).entries.size),
+        (commonFallback bs).entries[i].toAlgebraicNumber = bs[i] := by
+  obtain ⟨p, hp⟩ := presentation_exists bs hz
+  have hs := presentation?_sound bs hp
+  unfold commonFallback
+  rw [hp]
+  refine ⟨hs.1, ?_⟩
+  intro i hi hpi
+  apply AlgebraicNumber.toComplex_injective
+  exact (PolyQuot.toAlgebraicNumber_toComplex _ p.generator.rep p.generator.rep_mk).trans
+    (hs.2 i hi hpi)
 
 /-- The common presentation preserves length and every input value. -/
 theorem common_spec (bs : Array AlgebraicNumber) :
@@ -127,15 +230,27 @@ theorem common_spec (bs : Array AlgebraicNumber) :
     simp only [Array.getElem_map, PolyQuot.map_zero]
     have hall : ∀ b ∈ bs, b.isZero = true := by simpa only [Array.all_eq_true'] using hz
     exact ((AlgebraicNumber.isZero_iff bs[i]).mp (hall _ (Array.getElem_mem hi))).symm
-  · obtain ⟨p, hp⟩ := presentation_exists bs hz
-    have hs := presentation?_sound bs hp
-    unfold common
-    rw [ite_eq_right hz, hp]
-    refine ⟨hs.1, ?_⟩
-    intro i hi hpi
-    apply AlgebraicNumber.toComplex_injective
-    exact (PolyQuot.toAlgebraicNumber_toComplex _ p.generator.rep p.generator.rep_mk).trans
-      (hs.2 i hi hpi)
+  · by_cases hsize : bs.size = 2
+    · cases hfast : fastPair? bs[0]! bs[1]! with
+      | none =>
+          unfold common
+          rw [ite_eq_right hz, ite_eq_left hsize, hfast]
+          exact commonFallback_spec bs hz
+      | some p =>
+          have hs := fastPair?_sound bs[0]! bs[1]! hfast
+          have hcommon : common bs = p := by
+            unfold common
+            rw [ite_eq_right hz, ite_eq_left hsize, hfast]
+          rw [hcommon]
+          refine ⟨by omega, ?_⟩
+          intro i hi hpi
+          have hi' : i = 0 ∨ i = 1 := by omega
+          rcases hi' with rfl | rfl
+          · simpa [getElem!_pos bs 0 (by omega)] using hs.2.1 hpi
+          · simpa [getElem!_pos bs 1 (by omega)] using hs.2.2 hpi
+    · unfold common
+      rw [ite_eq_right hz, ite_eq_right hsize]
+      exact commonFallback_spec bs hz
 
 @[simp] theorem common_size (bs : Array AlgebraicNumber) :
     (common bs).entries.size = bs.size := (common_spec bs).1

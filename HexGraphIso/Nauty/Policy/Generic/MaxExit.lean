@@ -20,11 +20,11 @@ public section
 
 namespace Hex.GraphIso.Nauty.Generic
 
-variable {n : Nat} {σ : Type} [Policy σ n]
+variable {n : Nat} {σ : Type} {γ : Type} [Policy σ n (γ := γ)]
 
 /-- A node consumes every completed local action or sweep. Its own return
 always unwinds or reports exhausted fuel. -/
-theorem nodeStep_ne_done (ctx : Ctx n) (tcLevel : Nat) (next : SweepFn σ n)
+theorem nodeStep_ne_done (ctx : γ) (tcLevel : Nat) (next : SweepFn σ n)
     (first : Bool) (level numcells : Nat) (st : σ) :
     (nodeStep ctx tcLevel next first level numcells st).1 ≠ .done := by
   unfold nodeStep
@@ -35,7 +35,7 @@ theorem nodeStep_ne_done (ctx : Ctx n) (tcLevel : Nat) (next : SweepFn σ n)
   all_goals first | cases he | contradiction
 
 /-- No recursive node returns the sweep-completion exit. -/
-theorem node_ne_done (first : Bool) (ctx : Ctx n) (inf tcLevel fuel level numcells : Nat)
+theorem node_ne_done (first : Bool) (ctx : γ) (inf tcLevel fuel level numcells : Nat)
     (st : σ) : (node first ctx inf tcLevel fuel level numcells st).1 ≠ .done := by
   cases fuel with
   | zero => rw [node]; intro he; cases he

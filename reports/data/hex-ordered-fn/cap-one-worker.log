@@ -1,0 +1,8 @@
+Hex.OrderedFnBench.approximation    expected complexity: n * n    [warm cache]
+  env: lean=4.34.1, os=linux, arch=x86_64, commit=4229c31-dirty, 2026-09-27T06:07:53Z, host=chungus2
+  param  per-call  repeats  C
+  8_192  1.854 s   ×2^0     C=27.620
+  verdict: inconclusive (cMin=—, cMax=—, β=—)
+  per-spawn floor (harness self-measurement): 41.432 ms
+  peak RSS: 68_304 kB (across 1 ok row(s))
+  ‼ only 1 verdict-eligible row(s) survived warmup-trim + signal-floor filter; the verdict is below resolution. Lower `--warmup-fraction`, raise `--param-ceiling`, or use `where { paramSchedule := .custom #[...] }` to pin a tractable rung set.

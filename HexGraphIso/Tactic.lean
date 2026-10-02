@@ -27,12 +27,14 @@ over executable `Colored n k` values, and the uncoloured
 `Graph.Isomorphic G H` and `¬ Graph.Isomorphic G H` goals over
 `Graph n`. An uncoloured goal is coloured with the single colour zero
 and transported back through `Graph.isomorphic_singleColor_iff`, so
-both shapes run the same machinery. Three logical limits are optional
-and may appear in any order:
+both dense shapes run the same machinery. The tactic also accepts
+`Sparse.Isomorphic` goals over `Sparse.Colored n k` and
+`SparseGraph.Isomorphic` goals over `SparseGraph n`, including their
+negations. These use native sparse search and sparse canonical-key
+certificates. Two logical limits are optional and may appear in any order:
 
 ```
 graph_iso (maxSearchNodes := 200000) (maxCertRecords := 200000)
-  (maxKernelSteps := 10000000)
 ```
 
 A positive goal closes by the relabel shortcut when the right-hand
@@ -95,12 +97,6 @@ meta structure Config where
   /-- Certificate records per graph the kernel replays. Exceeding it
   abandons the certificate route, not the tactic. -/
   maxCertRecords : Nat := 100000
-  /-- Estimated kernel work: `checkCost n` for a witness, and
-  `(records + autom + 2) * checkCost n` for a certificate pair. This is
-  the limit that bounds the work the kernel itself does, so it is the
-  one to raise for a goal the elaborator solves but the kernel cannot
-  finish. -/
-  maxKernelSteps : Nat := 5000000
 
 meta section
 
@@ -365,16 +361,10 @@ meta def proveNotIsoCerts (cfg : Config) (G H : Side) :
   unless Nauty.checkDiffL BG BH do
     throwError "graph_iso: the graphs are isomorphic; the negative goal \
         is not provable"
-  -- one `checkCost` per record plus one per `.autom` payload, both sides
   let nv := BG.rows.length
-  let steps := (certG.size + certH.size + countAutom certG +
-    countAutom certH + 2) * checkCost nv
   unless certG.size ≤ cfg.maxCertRecords && certH.size ≤ cfg.maxCertRecords do
     return .error m!"the certificates hold {certG.size} and {certH.size} \
       records but maxCertRecords := {cfg.maxCertRecords}"
-  unless steps ≤ cfg.maxKernelSteps do
-    return .error m!"replaying them costs about {steps} kernel steps but \
-      maxKernelSteps := {cfg.maxKernelSteps}"
   let mkCheck (side : Side) (cert : Nauty.CertNode) (B : Kernel.Key) :
       MetaM Expr := do
     let checkTerm ← mkAppM ``Kernel.checkKey
@@ -389,7 +379,7 @@ meta def proveNotIsoCerts (cfg : Config) (G H : Side) :
     #[G.tie, H.tie, hG, hH, hd]
   trace[graph_iso] "route=certs n={nv} records={certG.size + certH.size} \
       recordsG={certG.size} recordsH={certH.size} \
-      autom={countAutom certG + countAutom certH} steps={steps}"
+      autom={countAutom certG + countAutom certH}"
   return .ok proof
 
 /-- Produce a proof of `¬ Isomorphic G H` for closed executable coloured
@@ -415,12 +405,8 @@ its colouring and the transporter equal to literals, then check the
 transporter on those literals. Returns the permutation expression and
 the proof of `IsIso G H p`. The `Colored` branch wraps that proof as
 `Isomorphic`, and downstream extensions decode it. -/
-meta def proveIsIso (cfg : Config) (n : Nat) (GE HE : Expr) (a b : Raw)
+meta def proveIsIso (n : Nat) (GE HE : Expr) (a b : Raw)
     (p : Array Nat) (nodes : Nat) : MetaM (Expr × Expr) := do
-  if checkCost n > cfg.maxKernelSteps then
-    throwError "graph_iso: replay exhausted: checking the transporter \
-        takes {checkCost n} steps but maxKernelSteps := \
-        {cfg.maxKernelSteps}"
   let pE ← permExpr n p
   let natLit (xs : List Nat) : MetaM Expr :=
     mkListLit (mkConst ``Nat) (xs.map mkNatLit)
@@ -544,7 +530,7 @@ meta def proveGraphIso (cfg : Config) (target : Expr)
         throwError "graph_iso: the graphs are not isomorphic; the positive \
             goal is not provable"
     | some p =>
-        let (pE, isIso) ← proveIsIso cfg n GE HE a b p nodes
+        let (pE, isIso) ← proveIsIso n GE HE a b p nodes
         let proof ← mkAppM ``Isomorphic.intro #[pE, isIso]
         unless ← isDefEq (← inferType proof) target do
           throwError "graph_iso: internal final proof mismatch"
@@ -582,16 +568,16 @@ end Tactic
 
 open Lean Elab Lean.Elab.Tactic Meta Lean.Parser.Tactic in
 /-- Close a closed `Isomorphic` or `¬ Isomorphic` goal over executable
-graphs, coloured (`Colored n k`) or uncoloured (`Graph n`).
+graphs, coloured (`Colored n k`, `Sparse.Colored n k`) or uncoloured
+(`Graph n`, `SparseGraph n`).
 
-Three logical limits are optional and may appear in any order:
+Two logical limits are optional and may appear in any order:
 
 ```
 graph_iso (maxSearchNodes := 200000) (maxCertRecords := 200000)
-  (maxKernelSteps := 10000000)
 ```
 
-They default to 100000, 100000, and 5000000. Importing `HexGraphIsoMathlib`
+Both default to 100000. Importing `HexGraphIsoMathlib`
 extends this same tactic to Mathlib `SimpleGraph` goals. See the module
 docstring for the proof routes. -/
 syntax (name := graphIsoTac) "graph_iso" optConfig : tactic

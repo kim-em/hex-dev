@@ -8,15 +8,16 @@ module
 
 public import HexNumberField.IntegerRoots
 public import HexNumberField.Roots
+public import HexNumberField.Interval
 
 public section
 
 /-!
-Exact primitives on canonical algebraic numbers that only need the stored
-isolations: the imaginary unit, complex conjugation, and the exact order on
-real numbers. Each works at a fixed precision derived from `mahlerPrec`, at
-which the approximation balls of two distinct roots of one polynomial are
-disjoint, so no API here refines without bound.
+Exact primitives on canonical algebraic numbers: the imaginary unit, real
+comparison, distances, and nearest-root selection. Real comparison first uses
+stored isolations, then bounded geometric refinement up to a precision derived
+from the product polynomial's separation bound. Inconclusive refinement uses
+the exact comparison at fixed separation precision; no API refines without bound.
 -/
 
 namespace Hex.AlgebraicNumber
@@ -45,11 +46,25 @@ equal; distinct ones are distinct roots of the product of their minimal
 polynomials, whose approximation balls at `separationPrec` of that product are
 disjoint, so the order of the ball centres is the order of the numbers. -/
 @[expose]
-def realCompare (a b : AlgebraicNumber) : Ordering :=
+def realCompareExact (a b : AlgebraicNumber) : Ordering :=
   if a == b then .eq
   else
     let prec := separationPrec (a.p * b.p)
     if (a.approx prec).re < (b.approx prec).re then .lt else .gt
+
+/-- Exact real order with stored-interval rejection and bounded geometric refinement.
+The product polynomial is constructed only when stored intervals overlap. -/
+@[expose] def realCompare (a b : AlgebraicNumber) : Ordering :=
+  if a == b then .eq else
+  match Interval.realOrder? a.rep.1.square b.rep.1.square with
+  | some result => result
+  | none =>
+    let cap := separationPrec (a.p * b.p) + 1
+    let start := max 1 (min a.rep.1.square.prec b.rep.1.square.prec)
+    let schedule := Interval.targets cap ((cap - start).toNat + 1) start
+    match Interval.search Interval.realOrder? schedule a.rep b.rep with
+    | some result => result
+    | none => realCompareExact a b
 
 end Hex.AlgebraicNumber
 

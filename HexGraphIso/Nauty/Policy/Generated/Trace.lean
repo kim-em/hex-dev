@@ -51,6 +51,12 @@ theorem orbit (h : Carries G gs base u v) : Aut.Orbit G base u v := by
   obtain ⟨p, _, hi, hf, hv⟩ := h
   exact ⟨p, hi, hf, hv⟩
 
+/-- Retaining the emitted generators retains their carrier words. -/
+theorem mono {more : List (Perm n)} (h : Carries G gs base u v)
+    (hsub : ∀ p ∈ gs, p ∈ more) : Carries G more base u v := by
+  obtain ⟨p, hp, hi, hf, hv⟩ := h
+  exact ⟨p, hp.mono hsub, hi, hf, hv⟩
+
 end Carries
 
 /-- Every recorded array is represented in the supplied generated group,

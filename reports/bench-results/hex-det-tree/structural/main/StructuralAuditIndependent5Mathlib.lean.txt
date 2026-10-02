@@ -1,0 +1,2 @@
+import HexPolyDetMathlib.ProofProbe.StructuralIndependent5Mathlib
+#print axioms HexPolyDetMathlib.ProofProbe.StructuralIndependent5Mathlib.result

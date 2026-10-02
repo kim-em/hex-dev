@@ -1,0 +1,13 @@
+{
+  "classification": "operational diagnostics, not scientific timing comparisons or Phase-4 evidence",
+  "initial_source_base": "36402182de38ab4f0544467f46abf3756693e245",
+  "first_module_seconds": 345,
+  "first_result": "failed at the one-million-heartbeat limit",
+  "second_module_seconds": 625,
+  "second_result": "failed at the five-million-heartbeat limit; misplaced docstrings also rejected",
+  "profiles": "temporary profileitM instrumentation around literals, replay, proof transport and base candidate checks; removed from coefficient adapters in the delivered source; profiling observations unpinned",
+  "successful_probe": "same common-root statement with a one-million-heartbeat elaborator limit; shared expressions plus an ordinary Kernel.check outside heartbeat accounting; source retained",
+  "initial_source_sha256": "d3e22c7354b828fd344346f1540620d335b8d977065af423ab260f907c8c5c1d",
+  "second_source_sha256": "d93d0544195da2d77cbb4b88724803973eb66a5574c1b32bc9a7839aeec2fb1c",
+  "profile_reproducibility": "The temporary instrumented tactic and adapter sources were not retained. These unpinned profiles are operational diagnostics and cannot be reproduced from the archived source snapshots."
+}

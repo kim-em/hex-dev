@@ -8,6 +8,7 @@ module
 
 public import HexMinPoly.Producer
 public import HexMinPoly.Small
+public import HexMinPoly.Kernel
 
 public section
 

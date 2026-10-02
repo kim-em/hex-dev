@@ -1,0 +1,184 @@
+Running as unit: hex-sparse-cactus-memory-sweep.service
+warning: mathlib: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/mathlib' has local changes
+warning: lean-bench: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/lean-bench' has local changes
+warning: NautyFFI: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/NautyFFI' has local changes
+warning: verso: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/verso' has local changes
+warning: plausible: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/plausible' has local changes
+warning: LeanSearchClient: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/LeanSearchClient' has local changes
+warning: importGraph: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/importGraph' has local changes
+warning: proofwidgets: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/proofwidgets' has local changes
+warning: aesop: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/aesop' has local changes
+warning: Qq: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/Qq' has local changes
+warning: batteries: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/batteries' has local changes
+warning: Cli: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/Cli' has local changes
+warning: illuminate: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/illuminate' has local changes
+warning: MD4Lean: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/MD4Lean' has local changes
+warning: subverso: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/subverso' has local changes
+Build completed successfully (1252 jobs).
+timing graph_iso on pos-circulant8 ...
+timing graph_iso on pos-circulant12 ...
+timing graph_iso on pos-circulant16 ...
+timing graph_iso on pos-circulant20 ...
+timing graph_iso on pos-circulant24 ...
+timing graph_iso on pos-circulant32 ...
+timing graph_iso on pos-grid3x3 ...
+timing graph_iso on pos-grid4x4 ...
+timing graph_iso on pos-grid5x5 ...
+timing graph_iso on pos-q3 ...
+timing graph_iso on pos-q4 ...
+timing graph_iso on pos-kneser5-2 ...
+timing graph_iso on neg-c6-vs-2c3 ...
+timing graph_iso on neg-c8-vs-2c4 ...
+timing graph_iso on neg-c10-vs-2c5 ...
+timing graph_iso on neg-c12-vs-2c6 ...
+timing graph_iso on neg-c14-vs-2c7 ...
+timing graph_iso on neg-c16-vs-2c8 ...
+timing graph_iso on neg-circulant10-2-5-vs-1-5 ...
+timing graph_iso on neg-kneser72-vs-johnson72 ...
+timing graph_iso on neg-grid3x4-vs-circulant12 ...
+timing graph_iso on neg-grid4x4-vs-q4 ...
+timing graph_iso on neg-grid4x5-vs-k8-12 ...
+timing graph_iso on neg-grid4x6-vs-2grid3x4 ...
+timing graph_iso on pos-circulant64 ...
+timing graph_iso on pos-circulant128 ...
+timing graph_iso on pos-q5 ...
+timing graph_iso on pos-q6 ...
+timing graph_iso on pos-kneser10-2 ...
+timing graph_iso on pos-paley61 ...
+timing graph_iso on neg-paley25-vs-latin5 ...
+timing graph_iso on neg-circ48-vs-2circ24 ...
+tactic failed on neg-circ48-vs-2circ24:
+dev/hex-dev-sparse-nauty/.lake/packages/verso' has local changes
+warning: plausible: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/plausible' has local changes
+warning: LeanSearchClient: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/LeanSearchClient' has local changes
+warning: importGraph: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/importGraph' has local changes
+warning: proofwidgets: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/proofwidgets' has local changes
+warning: aesop: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/aesop' has local changes
+warning: Qq: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/Qq' has local changes
+warning: batteries: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/batteries' has local changes
+warning: Cli: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/Cli' has local changes
+warning: illuminate: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/illuminate' has local changes
+warning: MD4Lean: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/MD4Lean' has local changes
+warning: subverso: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/subverso' has local changes
+import took 509ms
+cumulative profiling times:
+	attribute application 0.0171ms
+	compilation (IR) 0.162ms
+	compilation (LCNF base) 1.31ms
+	compilation (LCNF impure) 0.742ms
+	compilation (LCNF mono) 0.729ms
+	elaboration 6.69ms
+	fix level params 0.0636ms
+	import 509ms
+	initialization 20.1ms
+	instantiate metavars 0.0136ms
+	interpretation 8.88ms
+	let-to-have transformation 0.00861ms
+	linting 0.562ms
+	module linting 0.00116ms
+	parsing 0.376ms
+	process pre-definitions 2.49ms
+	share common exprs 2.05ms
+	tactic execution 4.43ms
+	type checking 7.62s
+	typeclass inference 0.927ms
+
+timing graph_iso on neg-circ96-vs-2circ48 ...
+tactic failed on neg-circ96-vs-2circ48:
+s/hex-dev/hex-dev-sparse-nauty/.lake/packages/verso' has local changes
+warning: plausible: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/plausible' has local changes
+warning: LeanSearchClient: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/LeanSearchClient' has local changes
+warning: importGraph: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/importGraph' has local changes
+warning: proofwidgets: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/proofwidgets' has local changes
+warning: aesop: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/aesop' has local changes
+warning: Qq: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/Qq' has local changes
+warning: batteries: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/batteries' has local changes
+warning: Cli: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/Cli' has local changes
+warning: illuminate: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/illuminate' has local changes
+warning: MD4Lean: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/MD4Lean' has local changes
+warning: subverso: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/subverso' has local changes
+import took 509ms
+cumulative profiling times:
+	attribute application 0.0205ms
+	compilation (IR) 0.17ms
+	compilation (LCNF base) 1.31ms
+	compilation (LCNF impure) 0.663ms
+	compilation (LCNF mono) 0.745ms
+	elaboration 6.4ms
+	fix level params 0.0978ms
+	import 509ms
+	initialization 20.1ms
+	instantiate metavars 0.0134ms
+	interpretation 26.2ms
+	let-to-have transformation 0.00892ms
+	linting 3.04ms
+	module linting 0.00125ms
+	parsing 0.402ms
+	process pre-definitions 7ms
+	share common exprs 7.73ms
+	tactic execution 4.15ms
+	type checking 8.85s
+	typeclass inference 0.947ms
+
+timing graph_iso on neg-paley61-vs-circulant61 ...
+tactic failed on neg-paley61-vs-circulant61:
+s/hex-dev/hex-dev-sparse-nauty/.lake/packages/verso' has local changes
+warning: plausible: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/plausible' has local changes
+warning: LeanSearchClient: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/LeanSearchClient' has local changes
+warning: importGraph: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/importGraph' has local changes
+warning: proofwidgets: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/proofwidgets' has local changes
+warning: aesop: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/aesop' has local changes
+warning: Qq: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/Qq' has local changes
+warning: batteries: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/batteries' has local changes
+warning: Cli: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/Cli' has local changes
+warning: illuminate: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/illuminate' has local changes
+warning: MD4Lean: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/MD4Lean' has local changes
+warning: subverso: repository '/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/packages/subverso' has local changes
+import took 509ms
+cumulative profiling times:
+	attribute application 0.0183ms
+	compilation (IR) 0.172ms
+	compilation (LCNF base) 1.52ms
+	compilation (LCNF impure) 0.76ms
+	compilation (LCNF mono) 0.908ms
+	elaboration 6.07ms
+	fix level params 0.0841ms
+	import 509ms
+	initialization 20ms
+	instantiate metavars 0.0181ms
+	interpretation 42.9ms
+	let-to-have transformation 0.00973ms
+	linting 0.627ms
+	module linting 0.0013ms
+	parsing 0.358ms
+	process pre-definitions 6.07ms
+	share common exprs 3.36ms
+	tactic execution 3.83ms
+	type checking 10.6s
+	typeclass inference 1.1ms
+
+/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/reports/figures/hexgraphiso-canon-cactus.svg
+/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/reports/figures/hexgraphiso-pairs-cactus.svg
+per-node cost fit from hexgraphiso-cactus-1e5c5738764f-chungus2.jsonl
+
+| family | sizes | n range | hex n^e | nauty n^e | diff | X (n ≤ 64) | X (n > 64) |
+|---|---|---|---|---|---|---|---|
+| circulant-12 | 17 | 8–255 | 1.74 | 1.71 | 0.03 | 22.92 | 22.74 |
+| circulant-1248 | 12 | 17–225 | 1.79 | 1.82 | -0.02 | 25.49 | 23.23 |
+| grid | 10 | 9–225 | 1.67 | 1.63 | 0.03 | 25.27 | 24.77 |
+| hypercube | 5 | 8–128 | 1.37 | 1.33 | 0.04 | 23.22 | 21.92 |
+| johnson | 10 | 10–231 | 1.00 | 1.16 | -0.16 | 24.56 | 17.55 |
+| kneser | 10 | 10–231 | 1.33 | 1.54 | -0.21 | 24.74 | 15.56 |
+| latin | 3 | 25–169 | 1.83 | 1.99 | -0.17 | 23.28 | 18.46 |
+| paley | 13 | 13–229 | 1.72 | 1.77 | -0.05 | 26.82 | 22.60 |
+| random | 18 | 10–255 | 1.87 | 1.97 | -0.10 | 35.77 | 27.68 |
+
+overall X (geometric mean): n ≤ 64: 26.45, n > 64: 21.77
+recorded reports/bench-results/hexgraphiso-cactus-1e5c5738764f-chungus2.jsonl, reports/bench-results/hexgraphiso-pairs-1e5c5738764f-chungus2.jsonl, tactic times, per-node fit, meta,
+reports/bench-results/hexgraphiso-cactus-1e5c5738764f.manifest
+and reports/figures/hexgraphiso-*.svg
+          Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+               Service runtime: 1min 58.064s
+             CPU time consumed: 1min 55.368s
+                   Memory peak: 2.8G (swap: 0B)

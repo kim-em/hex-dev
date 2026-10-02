@@ -253,3 +253,10 @@ Downstream of `HexMatrix`:
 * {ref "hex-row-reduce"}[HexRowReduce]: Gauss-Jordan reduction, the row
   span, and the nullspace.
 * {ref "hex-bareiss"}[HexBareiss]: the fraction-free integer determinant.
+
+Entrywise coefficient conversion is provided by {name}`Hex.Matrix.mapEntries`;
+its indexing theorem is {name}`Hex.Matrix.getElem_mapEntries`.
+
+The companion module `HexMatrixMathlib.Hadamard` provides
+{name}`Matrix.norm_det_le_prod_norm_column`, the Euclidean column-norm
+Hadamard inequality used by integer determinant bounds.

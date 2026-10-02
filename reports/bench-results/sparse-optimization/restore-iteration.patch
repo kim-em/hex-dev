@@ -1,0 +1,23 @@
+--- a/bench/HexGraphIso/SparseBench.lean
++++ b/bench/HexGraphIso/SparseBench.lean
+@@ -8,9 +8,7 @@
+ 
+ /-! Native sparse timing driver for the six-way comparison. The shared
+ adjacency-text corpus is decoded before timing. Native JSON edge input is
+-also supported for larger graphs. Every timed repetition is emitted. An
+-optional iteration count runs one stage repeatedly for CPU profiling;
+-parsing and preparation remain outside that loop. -/
++also supported for larger graphs. Every timed repetition is emitted. -/
+ 
+ open Lean Hex.GraphIso
+ 
+@@ -97,8 +95,7 @@
+     let (warmup, samples) ← time action
+     let key := if mode == "canon" then "hex_sparse_ns"
+       else if mode == "run" then "hex_sparse_search_ns"
+-      else if mode == "build" then "hex_sparse_build_ns"
+-      else if mode == "label" then "hex_sparse_label_ns" else "hex_sparse_output_ns"
++      else if mode == "build" then "hex_sparse_build_ns" else "hex_sparse_output_ns"
+     let fields := [("name", toJson name), ("family", toJson family), ("n", toJson n),
+       (key, toJson (samples.foldl min samples[0]!)),
+       ("samples_ns", toJson samples), ("warmup_ns", toJson warmup),

@@ -942,9 +942,19 @@ the first and third dependencies.
   the proved column sweep. A direct proof that fraction-free profiling finds
   exactly the independent rows and pivot columns would make the fallback
   unreachable and would support sharper bit-complexity analysis.
-- **Kernel reduction.** Nothing in this SPEC is on a `decide +kernel`
-  path today. If the Hermite certificate is ever checked in the kernel,
-  the exposure analysis in the `hex-mv-poly` SPEC applies verbatim, and
-  the `Vector.ofFn` and derived-`DecidableEq` traps recorded in
-  `progress/lean4-array-decidableeq-module-repro.md` will need the same
-  treatment.
+
+## Kernel certificates
+
+`HexHermite/Kernel.lean` owns the list certificate for the
+[hermite frontend](../../HexHermiteMathlib/SPEC/hex-hermite-mathlib.md#the-hermite-tactic).
+`HermiteWitness` reshapes `hnfCert` into list data. `checkHermiteList`
+checks the full HNF shape and the products `transform * A = form` and
+`transform * inverse = I` by structural recursion. `checkRemainder` checks
+`v = coefficients * form + residual` and residual pivot bounds. The
+companion proves the row-lattice basis and that a reduced residual is zero
+exactly for lattice members, for any checked witness. The kernel never
+replays Hermite reduction or lattice division; packed reference certificates
+remain outside this reduction path.
+
+Malformed-certificate regressions live in the Mathlib-free conformance driver;
+the companion owns proof tests and the fresh-module performance obligations.

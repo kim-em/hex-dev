@@ -1,0 +1,6 @@
+{
+  "path": "HexMatrix/Packed.lean",
+  "baseline_blob": null,
+  "current_blob": "719d4fa0504a7076f64027605ae8ed5fb53966a0",
+  "reason": "Adds the Kronecker-packed dot product primitives (Hex.Matrix.Packed) as a new module of HexMatrix for the kernel certificate checkers of the rank and det tactics; nothing on the factorization path imports or calls it, and no measured operation or branch of the factorization sweep changes."
+}

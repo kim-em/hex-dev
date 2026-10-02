@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic/OfFn.lean",
+  "baseline_blob": "525b585adac4213b07b34b2b5b6f08ef12e09f6c",
+  "current_blob": "63727f2a00e049cae7890ca4406ca1e39d57c176",
+  "reason": "Updates only the docstrings on the Array.map' and Array.zipWith' compatibility shims to record their Lean v4.35.0-rc1 removal point. No declaration or executable code changes."
+}

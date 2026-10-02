@@ -1,0 +1,22 @@
+env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=1f10e6e-dirty, 2026-09-12T21:24:19Z, host=chungus2
+Hex.RowReduceBench.Field.leanSolve8    [fixed] repeats=1
+  repeat 0  1.504 ms  (×2^8, total 385.105 ms)
+  median: 1.504 ms    min: 1.504 ms    max: 1.504 ms
+  hash: all repeats agree
+  observed hash: 0x9a2a4e0d29ac0f9
+  expected hash: matches
+  peak RSS: 67_972 kB (across 1 ok repeat(s))
+
+Hex.RowReduceBench.Field.flintSolve8    [fixed] repeats=1
+  repeat 0  157.656 µs  (×2^11, total 322.880 ms)
+  median: 157.656 µs    min: 157.656 µs    max: 157.656 µs
+  hash: all repeats agree
+  observed hash: 0x9a2a4e0d29ac0f9
+  expected hash: matches
+  peak RSS: 63_220 kB (across 1 ok repeat(s))
+
+relative median (baseline = Hex.RowReduceBench.Field.leanSolve8, the first CLI argument):
+  Hex.RowReduceBench.Field.leanSolve8: 1.000× (1.504 ms)
+  Hex.RowReduceBench.Field.flintSolve8: 0.105× (157.656 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-cached-solve-8-0.json

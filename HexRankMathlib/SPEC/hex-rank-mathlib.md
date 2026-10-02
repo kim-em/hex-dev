@@ -1,0 +1,748 @@
+# hex-rank-mathlib
+
+Correspondence between the executable rank certificate of
+[hex-rank](../../HexRank/SPEC/hex-rank.md) and Mathlib's `Matrix.rank`: a checked certificate
+determines the rank over the domain itself, the rank is unchanged by
+extension of scalars to any fraction field (`IsFractionRing`), the
+producer's certificate checks, the producer's index sets are the row and
+column rank profiles, and a Hex certificate and a Mathlib
+`Echelon.Decomposition` each determine the other. The kernel certificate
+of hex-rank determines the rank of a Mathlib integer matrix given as a
+row list, and the `rank` tactic closes rank equalities and inequalities
+on closed integer, rational, quadratic-integer and number-field literals. Dependencies are `HexRank`,
+`HexBareissMathlib`, `HexDeterminantMathlib`, `HexMatrixMathlib` and
+`HexNumberFieldMathlib` (the optional number-field handler), plus
+Mathlib. The certificate shapes, the checkers, the Mathlib-free soundness
+statements and the producers are in the computational SPEC and are not
+restated here.
+
+This library owns no runtime search, conformance driver or compiled
+benchmark. Its proof-side surface, the `rank` tactic and its certificate
+construction and kernel replay, uses representative example files under the
+manifest's `bench/HexRankMathlib/ProofProbe` root. CI builds them through
+`HexRankMathlibProofProbe`: integer full/deficient/low-rank literals, rational
+and quadratic full/deficient literals, and a number-field literal through the
+optional `NumberFieldTactic` import.
+The result declarations print their axiom dependencies; accepted proofs use
+only `propext`, `Classical.choice` and `Quot.sound`. Ordinary correspondence
+theorems and decidability instances use build-only correctness examples in
+`HexRankMathlib/Tests.lean` and the carrier tests.
+
+Under [Phase 4](../../PLAN/Phase4.md), these CI builds are the required proof
+track evidence. There is no compiled executable, tactic complexity verdict,
+required timing sweep, comparator ratio, profile or headline report for this
+library. The retained `eval_rank` comparisons below and the separate
+[carrier report](../../reports/hex-rank-carriers-performance.md) are build-cost
+diagnostics at their recorded revisions; they do not gate this proof track.
+
+Throughout, `e` is `HexMatrixMathlib.matrixEquiv`, `A : Hex.Matrix R n m`,
+`c : Hex.Matrix.RankCert R n m`, and `B`, `C`, `P`, `U`, `d`, `r` are as
+in [hex-rank §The certificate](../../HexRank/SPEC/hex-rank.md#the-certificate).
+
+## Transport
+
+Over `[CommRing R]`, entrywise lemmas in the style of
+`HexMatrixMathlib.matrixEquiv_mul`:
+
+```lean
+theorem matrixEquiv_selectRows (A : Hex.Matrix R n m) (rows : Vector (Fin n) k) :
+    e (Hex.Matrix.selectRows A rows) = (e A).submatrix rows.get id
+theorem matrixEquiv_selectCols (A : Hex.Matrix R n m) (cols : Vector (Fin m) k) :
+    e (Hex.Matrix.selectCols A cols) = (e A).submatrix id cols.get
+theorem matrixEquiv_selectedSubmatrix (A : Hex.Matrix R n m)
+    (rows : Vector (Fin n) k) (cols : Vector (Fin m) k) :
+    e (Hex.Matrix.selectedSubmatrix A rows cols) = (e A).submatrix rows.get cols.get
+```
+
+together with the existing `matrixEquiv_smul` and `matrixEquiv_one` in
+`HexMatrixMathlib/Algebra.lean`. The two selection lemmas belong in
+`HexMatrixMathlib` (released, regenerated from this monorepo) beside
+`matrixEquiv_mul`. `matrixEquiv_selectedSubmatrix` cannot, because
+`selectedSubmatrix` is defined in `HexDeterminant/Minor.lean`, above
+`HexMatrix`; it belongs in `HexDeterminantMathlib`, is also specified by
+[hex-determinantal-ideal-mathlib](../../SPEC/Libraries/hex-determinantal-ideal-mathlib.md),
+and whichever of the two planned companions lands first adds it there.
+
+With these, `checkRank A c = true` transports to three facts about
+`M := e A : Matrix (Fin n) (Fin m) R`:
+
+```text
+d ≠ 0
+(M.submatrix c.rows.get c.cols.get) * e c.adj = d • 1
+d • M = (M.submatrix id c.cols.get) * (e c.adj * M.submatrix c.rows.get id)
+```
+
+## Soundness for `Matrix.rank`
+
+Over `[CommRing R] [IsDomain R] [DecidableEq R]`:
+
+```lean
+theorem checkRank_sound (h : Hex.Matrix.checkRank A c = true) :
+    (e A).rank = c.rank
+```
+
+Proof, from the pinned Mathlib's `Mathlib/LinearAlgebra/Matrix/Rank.lean`:
+
+- **Lower bound.** From the second transported identity,
+  `Matrix.det_mul` and `Matrix.det_smul` with `Matrix.det_one` give
+  `det B · det (e c.adj) = d ^ r`, and `pow_ne_zero` in a domain gives
+  `det B ≠ 0`. `Matrix.rank_of_det_ne_zero` gives `B.rank = r`, and
+  `Matrix.rank_submatrix_le` gives `r = B.rank ≤ (e A).rank`.
+- **Upper bound.** `d ∈ nonZeroDivisors R` by
+  `mem_nonZeroDivisors_of_ne_zero`, so
+  `Matrix.rank_smul_of_mem_nonZeroDivisors` gives `(d • M).rank = M.rank`.
+  The third identity and `Matrix.rank_mul_le_left` give
+  `(d • M).rank ≤ (M.submatrix id c.cols.get).rank`, and
+  `Matrix.rank_le_card_width` bounds that by `Fintype.card (Fin r) = r`.
+  The strong rank condition these lemmas assume is
+  `commRing_strongRankCondition`
+  (`Mathlib/LinearAlgebra/FreeModule/StrongRankCondition.lean`) from
+  `IsDomain.toNontrivial`.
+
+The boundary cases need no separate treatment. At `r = 0` the lower bound
+is `0 ≤ rank` and the upper bound is `Matrix.rank_le_card_width` at width
+`0`. At `n = 0` or `m = 0` both `Matrix.rank` and `c.rank` are `0`.
+
+The same argument goes through a ring homomorphism into a domain whenever
+its image of the certificate denominator is nonzero. The source need only be
+a commutative ring:
+
+```lean
+theorem checkRank_sound_at [CommRing R] [CommRing S] [IsDomain S] [DecidableEq R]
+    (φ : R →+* S) (h : Hex.Matrix.checkRank A c = true) (hd : φ c.denom ≠ 0) :
+    ((e A).map φ).rank = c.rank
+```
+
+`φ.mapMatrix` preserves the two identities. The hypothesis `hd` gives the
+remaining nonvanishing fact, so the two rank bounds apply over `S`. This is
+the form used for polynomial specialisation. Injectivity supplies `hd` as a
+corollary:
+
+```lean
+theorem checkRank_sound_map [CommRing R] [CommRing S] [IsDomain S] [DecidableEq R]
+    (φ : R →+* S) (hφ : Function.Injective φ)
+    (h : Hex.Matrix.checkRank A c = true) :
+    ((e A).map φ).rank = c.rank
+```
+
+`checkRank_sound_map` derives `φ d ≠ 0` by injectivity and applies
+`checkRank_sound_at`. `checkRank_sound` is the case
+`φ = RingHom.id R`. Note the shape `(e A).map φ` rather than
+`e (A.map φ)`: `HexMatrix` has no entrywise map today, and a consumer
+holding a Mathlib matrix rewrites once.
+
+## Scalar extension
+
+```lean
+theorem rank_map_eq [CommRing R] [IsDomain R] [Field K] [Algebra R K] [IsFractionRing R K]
+    (M : Matrix (Fin n) (Fin m) R) :
+    (M.map (algebraMap R K)).rank = M.rank
+```
+
+This is the one reusable scalar-extension theorem, parameterised by
+`IsFractionRing R K` (`Mathlib/RingTheory/Localization/FractionRing.lean`,
+an abbreviation for `IsLocalization (nonZeroDivisors R) K`), so that a
+consumer is not forced through `FractionRing R`: `Rat.isFractionRing :
+IsFractionRing ℤ ℚ` (same file) and the instance
+`IsFractionRing K[X] (RatFunc K)` (`Mathlib/FieldTheory/RatFunc/Basic.lean`)
+apply directly, and `FractionRing R` is one more instance. The pinned
+Mathlib has no `Matrix.rank_map` and no statement relating `Matrix.rank`
+over a domain to `Matrix.rank` over a fraction field; the closest are
+`IsFractionRing.finrank_right_eq` and `IsLocalization.finrank_eq`
+(`Mathlib/LinearAlgebra/Dimension/Localization.lean`), which are about a
+module already over the fraction field and do not mention matrices.
+
+Proof, through the certificate. Every domain has an exact quotient
+classically: `quot a b := if h : ∃ q, a = q * b then Classical.choose h else 0`
+satisfies `quot (a * b) b = a` for `b ≠ 0` by `mul_right_cancel₀`. With
+`Classical.decEq R` and `IsDomain.toNontrivial`, `rankCertWith_check`
+below gives a certificate `c` for `e.symm M` that checks. Then
+`checkRank_sound` gives `M.rank = c.rank`, and `checkRank_sound_map` at
+`φ = algebraMap R K`, injective by `IsFractionRing.injective`, gives
+`(M.map φ).rank = c.rank`. The certificate is used as a proof device and
+never computed.
+
+Two consequences worth stating as corollaries:
+
+```lean
+theorem rank_map_eq_rank_fractionRing [CommRing R] [IsDomain R] (M : Matrix (Fin n) (Fin m) R) :
+    (M.map (algebraMap R (FractionRing R))).rank = M.rank
+theorem rank_eq_ratFunc_rank' [Field F] (M : Matrix (Fin n) (Fin m) (Polynomial F)) :
+    (M.map (algebraMap (Polynomial F) (RatFunc F))).rank = M.rank
+```
+
+The second makes `HexPolySmithMathlib.rank_eq_ratFunc_rank` a statement
+about `Matrix.rank` over `Polynomial F` itself, and identifies `snfRank`
+with `rankWith Hex.exactDiv` over `DensePoly F` through `polyMatrixEquiv`
+and `rankWith_eq` below.
+
+A direct proof through `IsLocalizedModule` (the `K`-span of the columns of
+`M.map φ` as the localisation of the `R`-span of the columns of `M`) is
+possible and would not need the producer. It is not required, and the
+certificate route reuses theorems this library proves anyway.
+
+## Producer correctness
+
+Over `[CommRing R] [DecidableEq R] [Nontrivial R]` with
+`(quot : R → R → R) (hquot : ∀ a b : R, b ≠ 0 → quot (a * b) b = a)`.
+`HexMatrixMathlib.isDomain_of_quot` (`HexBareissMathlib/Bareiss.lean`)
+supplies the `IsDomain R` instance inside every proof.
+
+```lean
+theorem rowReduceWith_spec (A : Hex.Matrix R n m) :
+    let D := Hex.Matrix.rowReduceWith quot A
+    let B := (e A).submatrix D.profile.rows.get D.profile.cols.get
+    D.denom = B.det ∧
+    (∀ k : Fin D.profile.rank,
+      (e D.matrix) (D.profile.rows.get k) = (B.adjugate * (e A).submatrix D.profile.rows.get id) k) ∧
+    (∀ i, i ∉ D.profile.rows.toList → (e D.matrix) i = 0)
+theorem rankCertWith_check (A : Hex.Matrix R n m) :
+    Hex.Matrix.checkRank A (Hex.Matrix.rankCertWith quot A) = true
+theorem rankWith_eq (A : Hex.Matrix R n m) :
+    Hex.Matrix.rankWith quot A = (e A).rank
+theorem Rank.rank_eq (A : Hex.Matrix Int n m) :
+    Hex.Matrix.rank A = (e A).rank
+theorem exists_rankCert [CommRing R] [IsDomain R] [DecidableEq R] (A : Hex.Matrix R n m) :
+    ∃ c : Hex.Matrix.RankCert R n m, Hex.Matrix.checkRank A c = true
+```
+
+`exists_rankCert` is completeness with no quotient hypothesis: the
+classical exact quotient of [Scalar extension](#scalar-extension) and
+`rankCertWith_check` supply the witness. The adjugate argument of
+[hex-rank §Completeness](../../HexRank/SPEC/hex-rank.md#completeness) is an alternative proof
+that does not go through the producer.
+
+`rowReduceWith_spec` is proved by induction along the column loop with the
+invariant of
+[hex-rank §Exactness and producer correctness](../../HexRank/SPEC/hex-rank.md#exactness-and-producer-correctness):
+after `k` pivots with block `B_k` and `p = B_k.det`, the pivot rows of the
+state are `B_k.adjugate * P_k` and each non-pivot row `i` is
+`p • A[i, :] − A[i, cols] * (B_k.adjugate * P_k)`. The pivot step first
+identifies the new pivot with `B_{k+1}.det` by the bordered-determinant
+identity `det [[B_k, u], [vᵀ, x]] = x · det B_k − vᵀ * B_k.adjugate * u`
+(Laplace expansion along the last row, `Matrix.det_succ_row` and
+`Matrix.adjugate_apply`), so that `B_{k+1}` is nonsingular, and then
+verifies the update against the invariant by left-multiplying by
+`B_{k+1}` and cancelling the nonzero scalar `B_{k+1}.det` in a domain,
+using `Matrix.mul_adjugate` (`Mathlib/LinearAlgebra/Matrix/Adjugate.lean`).
+Those are the only determinant facts used. That equality is what turns each
+`quot (…) prev` into the primed invariant value through `hquot`, so
+exactness of every division is a consequence of the invariant and not a
+separate hypothesis. The skip step changes nothing. `denom = B.det` is the
+invariant's `prev = p` at the end. No Desnanot-Jacobi or Sylvester
+identity is used, and `HexMatrixMathlib.desnanot_jacobi_borderedMinor` is
+not imported for this proof.
+
+`rankCertWith_check` applies `rowReduceWith_spec` to the pass over `A`
+(for `rows`, `cols`) and to the pass over `[B | 1]` (for `adj` and
+`denom`): the second pass has every column a pivot column and every row a
+pivot row in some order `π`, its reported pivot rows restricted to the
+right block are `(B.submatrix π id).adjugate * (1 : Matrix).submatrix π id`,
+which is `sign π • B.adjugate` by `Matrix.adjugate_mul_distrib` and the
+adjugate of a permutation matrix, and its `denom` is
+`(B.submatrix π id).det = sign π • B.det`. The three identities then hold
+with the common sign. Identity 3 for a non-pivot row is the "non-pivot
+rows are zero" clause of the first pass, read as
+`p • A[i, :] = A[i, cols] * (B.adjugate * P)`.
+
+`rankWith_eq` is `rankCertWith_check` composed with `checkRank_sound`, and
+`Rank.rank_eq` is its instance at `quot := HexArith.Int.exactDiv`,
+`hquot := Int.mul_ediv_cancel`.
+
+### The rank profile
+
+Over `[CommRing R] [IsDomain R]`, for `M : Matrix (Fin n) (Fin m) R`, define
+the two profiles as predicates on index lists:
+
+```lean
+def IsColRankProfile (M : Matrix (Fin n) (Fin m) R) (J : List (Fin m)) : Prop :=
+  ∀ j, j ∈ J ↔ (M.submatrix id (Fin.castLE (Nat.succ_le_of_lt j.isLt))).rank
+                = (M.submatrix id (Fin.castLE j.isLt.le)).rank + 1
+def IsRowRankProfile (M : Matrix (Fin n) (Fin m) R) (I : List (Fin n)) : Prop :=
+  ∀ i, i ∈ I ↔ (M.submatrix (Fin.castLE (Nat.succ_le_of_lt i.isLt)) id).rank
+                = (M.submatrix (Fin.castLE i.isLt.le) id).rank + 1
+
+theorem rowReduceWith_cols_eq_colProfile (A : Hex.Matrix R n m) :
+    IsColRankProfile (e A) (Hex.Matrix.rowReduceWith quot A).profile.cols.toList
+theorem rowReduceWith_rows_eq_rowProfile (A : Hex.Matrix R n m) :
+    IsRowRankProfile (e A) (Hex.Matrix.rowReduceWith quot A).profile.rows.toList
+```
+
+(`Fin.castLE` embeds the first `j` or `j + 1` indices.) Both are proved
+from `rowReduceWith_spec` and `checkRank_sound`: column `j` is a pivot
+column exactly when the reduced form has a nonzero entry in column `j` in
+some non-pivot row at the moment column `j` is scanned, and that is
+exactly when the rank of the first `j + 1` columns exceeds the rank of the
+first `j`. The row statement is the argument in
+[hex-rank §The rank profile](../../HexRank/SPEC/hex-rank.md#the-rank-profile), formalised as:
+the chosen pivot row at each step is the least-index non-pivot row with a
+nonzero eliminated entry, and every smaller-index non-pivot row with a
+nonzero eliminated entry would have been chosen first, so the chosen row
+is not in the span of the rows before it. Neither theorem is needed for
+`Rank.rank_eq`; they are what makes `rankProfileWith` an API rather than an
+implementation detail.
+
+## Relation to `Echelon.Decomposition`
+
+The pinned Mathlib's certificate
+(`Mathlib/LinearAlgebra/Matrix/Echelon/Decomposition.lean`, namespace
+`Echelon`, over `[Fintype m] [LinearOrder m] [Fintype n] [LinearOrder n]
+[CommRing R] [IsDomain R]`) is
+
+```lean
+structure Decomposition (A : Matrix m n R) where
+  L : Matrix m m R
+  σ : Equiv.Perm m
+  pivot : m → WithTop n
+  isPivotedBy : (L * (A.submatrix σ id)).IsPivotedBy pivot
+  L_lowerTriangular : L.IsLowerTriangular
+  L_diag_ne_zero (i : m) : L.diag i ≠ 0
+```
+
+with `Decomposition.rank_eq : A.rank = #{i | cert.pivot i ≠ ⊤}`. Its
+checker is the `Decidable (A.IsPivotedBy l)` instance of
+`Mathlib/LinearAlgebra/Matrix/Echelon/Pivot.lean`, run by `decide` in the
+kernel on the product `L * A.submatrix σ id` (`certifyCondition` in
+`Mathlib/Tactic/Echelon/Bareiss.lean`). It carries an `n × n`
+transform and no minor; the Hex certificate carries an `r × r` adjugate
+and no transform. Neither is a projection of the other, and the two
+conversions below each compute one `r × r` object.
+
+**From a Hex certificate.** A checked certificate alone does not
+determine a `Decomposition`, because `checkRank` accepts index sets that
+no echelon form has: on `A = [[1, 1]]` the certificate
+`rows = [0], cols = [1], denom = 1, adj = [[1]]` checks, but no echelon
+form of `A` has its pivot in column `1`; and on `B = [[0, 1], [1, 0]]`
+(the canonical certificate of that matrix) no lower triangular `T` with
+nonzero diagonal makes `T * B` upper triangular with nonzero diagonal,
+since the `(1, 0)` entry of `T * B` is the `(1, 1)` entry of `T`. The
+adapter therefore takes, besides the certificate, a lower triangular
+transform `T` of the pivot block together with the echelon condition it
+has to produce:
+
+```lean
+def RankCert.toDecomposition (h : Hex.Matrix.checkRank A c = true)
+    (T : Matrix (Fin c.rank) (Fin c.rank) R) (hT : T.IsLowerTriangular)
+    (hTd : ∀ i, T.diag i ≠ 0)
+    (hTP : (T * (e A).submatrix c.rows.get id).IsPivotedBy (fun k => ↑(c.cols.get k))) :
+    Echelon.Decomposition (e A)
+theorem RankCert.toDecomposition_pivot_card (h T hT hTd hTP) :
+    #{i | (RankCert.toDecomposition h T hT hTd hTP).pivot i ≠ ⊤} = c.rank
+```
+
+with
+
+```text
+σ     := the permutation moving c.rows to positions 0 … r - 1 in order
+L     := [[T, 0], [-(M.submatrix id c.cols.get restricted to non-pivot rows) * e c.adj, d • 1]]
+pivot := fun i => if i < r then ↑(c.cols.get i) else ⊤
+```
+
+`L` is block lower triangular with triangular diagonal blocks and diagonal
+entries the diagonal of `T` and `d`, all nonzero. The first `r` rows of
+`L * M.submatrix σ id` are `T * (M.submatrix c.rows.get id)`, pivoted at
+`c.cols` by `hTP` (which forces `c.cols` strictly increasing). The
+remaining rows are `d • M[i, :] − M[i, cols] * (e c.adj * P)`, which is
+`0` by identity 3. Existence is then a statement about the producer's
+certificates, not about arbitrary checked ones:
+
+```lean
+theorem nonempty_decomposition [CommRing R] [IsDomain R] (A : Hex.Matrix R n m) :
+    Nonempty (Echelon.Decomposition (e A))
+theorem exists_decomposition_of_checkRank (h : Hex.Matrix.checkRank A c = true) :
+    ∃ D : Echelon.Decomposition (e A), #{i | D.pivot i ≠ ⊤} = c.rank
+```
+
+The first is proved on `rankCertWith quot A` for the classical quotient:
+its `rows` are in elimination order and its `cols` strictly increasing,
+every leading principal minor of its `B` is a pivot of the run and so
+nonzero, and the below-only fraction-free elimination of `B` in that
+order (Bareiss 1968) supplies `T` over `R` with `T * P` in echelon form
+at `cols`, the columns between pivot columns being zero in every
+non-pivot row at the moment they were skipped. The second is the first
+together with `Decomposition.rank_eq` and `checkRank_sound`, and does
+not go through the given certificate's index sets.
+
+`T` is an input because this library does not compute it: it is the
+transform of a below-only fraction-free pass over `B`, which
+`Hex.Matrix.bareissNoPivotWith` performs without reporting. The
+executable adapter that produces `T`, and the `bareiss_ext` model that
+lets Hex's producer feed `norm_rank` directly, are follow-ups of this
+library under [SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md).
+
+**From a Decomposition.** Given `D : Echelon.Decomposition (e A)` with
+`r := #{i | D.pivot i ≠ ⊤}`, the rows with a pivot are the first `r` rows
+of `L * M.submatrix σ id` (`IsPivotedBy.monotone`), so
+`rows := (D.σ 0, …, D.σ (r - 1))` and `cols :=` the pivot columns in
+order. The `r × r` block of `M.submatrix σ id` at those positions is
+`(L.submatrix (first r) (first r))⁻¹ * (echelon block)` over the fraction
+field, a product of a lower triangular and an upper triangular matrix
+with nonzero diagonals, so its determinant is nonzero. Then
+`d := B.det`, `adj := B.adjugate`, and the three identities hold by
+`Matrix.mul_adjugate` and the argument of
+[hex-rank §Completeness](../../HexRank/SPEC/hex-rank.md#completeness):
+
+```lean
+theorem exists_rankCert_of_decomposition (D : Echelon.Decomposition (e A)) :
+    ∃ c : Hex.Matrix.RankCert R n m,
+      Hex.Matrix.checkRank A c = true ∧ c.rank = #{i | D.pivot i ≠ ⊤}
+```
+
+The executable form runs `rankCertWith`'s second pass on `[B | 1]` for
+`adj` and `denom`, with `rows`, `cols` read off `D`; it is one `O(r³)`
+pass and no elimination of `A`.
+
+## Kernel certificate
+
+`HexRankMathlib/Kernel.lean` proves the kernel certificate of
+[hex-rank §The kernel certificate](../../HexRank/SPEC/hex-rank.md#the-kernel-certificate) sound
+for `Matrix.rank` over `ℤ`, stated on the Mathlib matrix of a row list
+(`ofLists`, from the literal layer of
+[hex-matrix-mathlib](../../HexMatrixMathlib/SPEC/hex-matrix-mathlib.md#matrix-literals)):
+
+```lean
+theorem rank_eq_of_checkList (n m) (L) (c : RankWitness)
+    (h : checkRankList n m L c = true) : (ofLists n m L).rank = c.rank
+theorem rank_eq_of_checkList' (A : Matrix (Fin n) (Fin m) ℤ) (L) (c)
+    (hA : A = ofLists n m L) (h : checkRankList n m L c = true) : A.rank = c.rank
+theorem rank_le_of_checkList' … (hr : c.rank ≤ r) : A.rank ≤ r
+theorem le_rank_of_checkList' … (hr : r ≤ c.rank) : r ≤ A.rank
+```
+
+A literal `!![…]` is *definitionally* `ofLists n m [[…], …]` of its own
+entry expressions, one unfolding per entry; `hA` is `rfl`, and the kernel
+never evaluates an entry through `Matrix.of` and `vecCons` inside the
+arithmetic. This matters: reading the entries of a `16 × 16` literal by
+kernel evaluation of `A i j` costs about `200 ms`, more than the whole
+certificate check, while the definitional identification costs `6 ms`; the
+`fun i j => …` and `Matrix.ofArray` forms take the `200 ms` route.
+
+The proof follows `rank_eq_of_cert`. Lower bound: with `B` the pivot block
+`A.submatrix rows cols` and `V̄` the matrix of `vt` over `ZMod modulus`
+(entries missing from a column are zero, entries past the block width are
+ignored), the product `B.map Int.cast * V̄` is lower triangular with unit
+diagonal (`Matrix.IsLowerTriangular`,
+`det_of_isLowerTriangular`), so its determinant is `1`, `det B` is nonzero
+in `ZMod modulus` (`Int.cast_det`, nontrivial since `modulus ≥ 2`) and so
+in `ℤ`; then `rank_of_det_ne_zero` and `rank_submatrix_le`. Upper bound:
+for every row `i` there are coefficients `w` with `denom * A i j =
+Σ_l w l * A (rows l) j`, from the pivot rows themselves or from the
+consumed `z` row, so `denom • A = W * A.submatrix rows id` for `W` built
+from the chosen coefficients (`Classical.choose`, no injectivity of
+`rows` needed), and `rank_smul_of_mem_nonZeroDivisors`, `rank_mul_le_right`,
+`rank_le_card_height`. The bridge from lists to sums is
+`dotNat_eq_sum`, `combo_getD` and `rowsCheck_spec`, each by induction on
+the list the checker recurses on, and `pickCols_eq`, which identifies the
+one-pass read of the pivot block with indexed reads for strictly
+increasing pivot columns (`strictInc_iff`).
+
+The packed checker of
+[hex-rank §Packed evaluation](../../HexRank/SPEC/hex-rank.md#packed-evaluation)
+is sound through `checkRankList_of_packed`: `packRow` is `Nat.ofDigits`
+at `2^W` (`packRow_eq_ofDigits`, `packCol_eq` for the Horner loop), the
+product of two packed lists is `ofDigits` of their convolution
+(`ofDigits_conv`), a convolution coefficient of rows with entries below
+`M` is at most `r · M²` (`conv_getD_le`), digit `k` of an `ofDigits` with
+digits below the base is read off by division and remainder
+(`ofDigits_digit`), and the coefficient `r − 1` of a row against a
+reversed column is their dot product (`dotNat_eq_conv_reverse`); hence
+`dotPacked_eq`, `lowerCheckPacked_eq` and the implication; the upper
+bound's `rowSpanPacked_spec` and `rowsCheckPacked_imp` reduce the packed
+span check to `combo_getD` through `dotIntPacked_eq` and the columns of the
+pivot rows (`columns_bound`, `dotInt_eq_sum_right`); and
+`rank_eq_of_checkListPacked'` with its `≤`/`≥` forms are the plain
+theorems after the implication.
+
+## The `rank` tactic
+
+`HexRankMathlib/Tactic.lean` declares the non-reserved tactic keyword
+`rank`, closing
+
+```text
+A.rank = r      r = A.rank
+A.rank ≤ r      r ≥ A.rank
+r ≤ A.rank      A.rank ≥ r
+```
+
+for `A : Matrix (Fin n) (Fin m) ℤ` a closed literal in one of the four
+syntaxes of the literal layer of `hex-matrix-mathlib` (`!![…]`,
+`Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray xs h`), possibly behind
+definitions (unfolded within a small budget), and
+`r` a closed natural number compared in the ordinary order on `Nat`.
+Entries are closed integer expressions that `norm_num` evaluates and that
+the kernel reduces to their numerals: numerals and arithmetic on them
+(`1 - 1` is accepted). The row list `L` holds the numerals; a numeral
+entry of the literal is the same expression, so the identification is
+`rfl` at no cost, and any other entry is reduced once by the kernel.
+
+The tactic takes the shared configuration structure
+`HexMatrixMathlib.KernelConfig` as an `optConfig` (`rank -packing`,
+`rank (config := { packing := false })`; the default is packed), and is
+configured in no other way. It evaluates the entries with Mathlib's
+`evalRatEntry`, runs the compiled `Hex.Matrix.rankWitness`, quotes the
+witness with `toExpr`, and builds
+`rank_eq_of_checkListPacked' A L c W k rfl (of_decide_eq_true rfl)`, or
+`rank_eq_of_checkList' A L c rfl (of_decide_eq_true rfl)` with packing
+off, composed
+with a kernel-decided comparison of `c.rank` with `r`; the whole proof is
+added as an auxiliary lemma on the closed target (`addClosedProof` of the
+literal layer, with asynchronous checking off) so the kernel checks it
+exactly once, with no elaborator type check first, and the tactic sees a
+rejection.
+Outcomes follow the protocol of [SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md).
+Before evaluating entries or producing a certificate, the handler classifies
+a goal outside the rank comparisons, a matrix or bound with free variables
+or unresolved metavariables, a carrier outside the integer/rational fragment, and an unrecognized
+literal (including a `vecCons` chain not ending in `vecEmpty`) as
+`notApplicable`, throwing `throwUnsupportedSyntax`. A last-resort handler
+repeats only classification and reports `rank: not applicable: …` with its
+reason. It is registered **before** the numeric handler, so Lean's reverse
+registration order tries it **after** the numeric one. Later extensions
+register on the same syntax kind, use `@[no_fallback]` for their own errors,
+and delegate with `throwUnsupportedSyntax` outside their fragments.
+The numeric handler has `@[no_fallback]`, so ordinary errors cannot fall
+through and be hidden by another handler, while unsupported syntax still
+delegates. Entry evaluation and budget errors retain their diagnostics;
+a producer failure is declined with its reason. Such a capability decline
+is an ordinary error: `rank` has no internal fallback for it;
+a false target is reported with the certified rank before any
+proof is built; a rejection by the kernel is diagnosed by evaluating the
+bound, the certificate check and the identification of the literal in
+turn, and reported as a false target, a producer bug, or an entry the
+kernel cannot reduce. Accepted theorems depend on `propext`,
+`Classical.choice` and `Quot.sound` only.
+
+**Diagnostic comparison.** The unmodified pinned `eval_rank` supplies a
+reference for the retained build-cost investigation, not a Phase-4 ratio gate. The
+fresh-module probes `bench/HexRankMathlib/ProofProbe/{Dense8,Dense16,
+Deficient16,Dense32,LowRank32}{Hex,Mathlib}.lean` prove the same literal
+by `rank` and by `eval_rank`, each against its import-only baseline
+(`Baseline`, `MathlibBaseline`); `scripts/bench/rank_tactic_sweep.py`
+runs them through `fresh_module_sweep.py` (six samples, adjacent pairs,
+alternating orientation). Each arm's delta is an absolute estimate of its
+proof cost, literal elaboration included; the family's comparator ratio
+is the ratio of the two medians and is only as resolved as the smaller
+delta. Medians from
+`reports/bench-results/hex-rank-mathlib-tactic-probes-10216-rebased.json`
+(shared host, one CPU, both arms with `!![…]` elaboration inside the
+delta):
+
+| family | `eval_rank` | `rank` | ratio |
+|---|---|---|---|
+| dense `8 × 8` | 0.29 s | 0.11 s | 2.6 |
+| dense `16 × 16` | 1.95 s | 0.20 s | 9.6 |
+| dense `16 × 16`, rank 14 | 1.90 s | 0.28 s | 6.8 |
+| dense `32 × 32` | 15.11 s | 0.91 s | 16.6 |
+| `32 × 32`, rank 2 | 16.11 s | 0.57 s | 28.1 |
+
+Proof time against dimension, for the full-rank, rank `n − 2`, rank
+`n / 2` and rank `2` families up to a ten-second cap per run, in three
+arms (`eval_rank`, `rank`, and `rank -packing` for the plain checker on
+the same certificate) plus, with `--mathlib-root`, the `eval_rank` of
+another Mathlib checkout as a fourth arm (the record names its commit and
+label; the current record measures the open Mathlib pull request #43438,
+which replaces the `Echelon.Decomposition` check by list-based
+certificates), is recorded
+by `scripts/bench/rank_tactic_size_sweep.py` (profiler totals per file,
+imports excluded, the median of three runs per point with the range kept)
+and plotted by `scripts/plots/hex-rank-mathlib-tactic-size.py` to
+`reports/figures/hex-rank-mathlib-tactic-size.svg`. The dimension record is
+`reports/bench-results/hex-rank-mathlib-tactic-size-f9e81ced8335-chungus2.json`.
+It measures the integer-only frontend at that revision, excluding the additional
+carrier handlers and their imports. Full module costs and import baselines for
+the additional carriers are in the
+[carrier performance report](../../reports/hex-rank-carriers-performance.md).
+With the ten-second cap (a family stops for an arm after the first
+dimension whose median exceeds the cap, that dimension kept, and the
+ladders end at `n = 48` and, for rank `2`, `n = 128`),
+the pinned Mathlib's `eval_rank` reaches `n = 24` at full rank and rank
+`n / 2` (`6.5` and `8.4 s`; at `n = 28` two of the three runs complete, in
+`10.7` and `10.8 s`, and the third exceeds the wall limit), `n = 20` at rank `n − 2`
+(`3.8 s`, the next dimension exceeding the wall limit) and
+`n = 24` at rank `2` (`6.4 s`); the `eval_rank` of #43438 reaches `n = 48` at full rank, rank
+`n − 2` and rank `n / 2` (`7.3`, `8.2` and `8.0 s`) and `n = 64` at rank `2`
+(`8.1 s`); `rank` reaches `n = 48` at full rank (`1.3 s`, of which the
+kernel is `0.5 s`), rank `n − 2` (`1.7 s`, kernel `0.9 s`) and rank
+`n / 2` (`2.2 s`, kernel `1.3 s`), and `n = 128` at rank `2` (`6.5 s`, of which
+the kernel is `0.9 s` and the literal's elaboration and the entries'
+evaluation most of the rest); `rank -packing` reaches the same dimensions
+at `1.9`, `2.1`, `3.9` and `6.3 s`.
+
+Median kernel shares recorded by the same size sweep are:
+
+| family | `eval_rank` | `eval_rank` at #43438 | `rank` | `rank -packing` |
+|---|---|---|---|---|
+| dense `8 × 8`, rank 8 | 138 ms | 32 ms | 14 ms | 14 ms |
+| dense `16 × 16`, rank 16 | 1.24 s | 167 ms | 47 ms | 51 ms |
+| dense `16 × 16`, rank 14 | 1.11 s | 178 ms | 74 ms | 59 ms |
+| dense `32 × 32`, rank 32 | not run | 1.04 s | 194 ms | 315 ms |
+| `32 × 32`, rank 2 | timeout | 459 ms | 130 ms | 166 ms |
+
+A timeout entry has no profiler breakdown because the corresponding proof
+exceeded the sweep's wall limit (the import baseline plus the cap plus one
+second), and a
+"not run" entry is a dimension the arm never reached because its family
+had already stopped.
+
+### Additional entry models
+
+| Carrier | Exact model | Modular model | Import |
+| --- | --- | --- | --- |
+| `ℚ` | clear positive row denominators to `Int` | existing `ZMod M` witness | `HexRankMathlib` |
+| `Zsqrtd d`, with `IsDomain` | integer coefficient lists modulo `X² − d` | the same polynomial quotient over `ZMod M` | `HexRankMathlib` |
+| `PolyQuot p x`, including `QAdjoin a` | clear rational-coordinate row denominators to integer polynomial lists | `AdjoinRoot (C u * p mod M)`, where `u` inverts the leading coefficient | `HexRankMathlib.NumberFieldTactic` |
+
+Rationals reuse `DetWitness.scaledRows` and the existing integer checker.
+`rank_eq_of_scaledRows` identifies the cleared matrix with a diagonal
+multiple of the original, proves the diagonal determinant nonzero, and
+uses rank invariance under the injection `ℤ → ℚ`.
+
+The polynomial checker is described in the computational SPEC. Its
+soundness theorem `PolyWitness.rank_eq_of_check` is parametrised by a ring
+homomorphism to any nontrivial commutative ring. It requires only a domain
+of characteristic zero for the source and the defining polynomial relation
+at the chosen generator. `rank_eq_of_modular` contains the underlying
+matrix argument; `rank_map_of_injective` transports rank along any
+injective homomorphism between domains.
+
+For `Zsqrtd d`, `Zsqrtd.lift` supplies the reduction homomorphism and
+`Zsqrtd.dmuld` supplies the source relation. The frontend requires a
+synthesizable `IsDomain (Zsqrtd d)` instance. Transport into a quadratic
+field uses `rank_map_of_injective` with its embedding.
+
+For a number field, there is no homomorphism from the characteristic-zero
+field to a nontrivial finite-characteristic ring. The source of reduction
+is instead `AdjoinRoot p` over `Int`. Primitivity and irreducibility of
+`p`, via Gauss's lemma, make its evaluation homomorphism into `PolyQuot p x`
+injective. The defining polynomial need not be monic: its leading
+coefficient must be a unit modulo the selected modulus. The normalized
+modular polynomial is monic of positive degree, proving the target
+quotient nontrivial without primality or modular irreducibility.
+
+The optional frontend evaluates canonical rational coefficient lists,
+clears all denominators in each matrix row, and certifies the resulting
+integer polynomial rows. `rank_eq_scaled` checks positive row scales and
+one entrywise identity over the executable field before using the integral
+certificate. No field arithmetic occurs inside the rank checker. Open
+`Hex.PolyQuot.QAdjoinField` for the scoped field instances. The ordinary
+umbrella does not import this optional number-field dependency.
+
+The defining polynomial must reduce to literal coefficients. For `QAdjoin`,
+`AlgebraicNumber.ofNormalized` is the checked constructor for this purpose:
+it stores the supplied polynomial directly, with its canonical isolation
+obtained from `ofNormalized?` and an explicit success proof. The companion's
+`AlgebraicNumber.ofNormalized?_isSome` supplies that proof. A value built by
+`rootNear` hides a root search behind an irreducible definition. The handler
+first requires the defining polynomial to reduce to a constructor and its
+quoted coefficient data, with a local limit of 20,000 heartbeats (or the
+smaller ambient limit). It declines presentations that fail this check before
+invoking the kernel; use the checked constructor for such presentations.
+
+Tests include quadratic and cubic presentations, a nonmonic primitive
+polynomial, fractional coordinates, empty and rectangular shapes, and forged
+lower/upper certificates. The six-sample carrier sweep is
+`scripts/bench/rank_carrier_sweep.py --shared-host`; CPU selection uses a
+nonblocking placement lease. It compares rational and quadratic full-rank
+8 × 8 and rank-14 16 × 16 matrices to `eval_rank`, and records the absolute
+cost of an 8 × 8 closed-algebraic block fixture. The quadratic comparator
+imports Mathlib's `Echelon.Zsqrtd` registration explicitly.
+The [carrier performance report](../../reports/hex-rank-carriers-performance.md)
+records all six trials and representative kernel-attribution profiles.
+
+Closed carrier proofs use the literal layer’s `addClosedProof`, avoiding a
+preliminary elaborator type check. Proofs that depend on local instances are
+closed by `mkAuxTheorem` before insertion.
+
+Each handler obtains an equality and derives bounds with `Eq.le`, `Eq.ge`
+and transitivity, using a kernel-decided comparison of natural numbers.
+
+Rank goals on `Hex.Matrix` inputs are a later obligation of this
+library; the witness cannot certify the executable's own value without a Mathlib-free
+rank theory.
+
+## Decidability
+
+```lean
+instance (A : Matrix (Fin n) (Fin m) ℤ) (r : Nat) : Decidable (A.rank = r)
+```
+
+by `Rank.rank_eq` at `e.symm A`, in the style of hex-berlekamp-mathlib's
+`Decidable (Irreducible f)`. This is the instance
+[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md) planned for its `rank`, now
+supplied here with the direct algorithm; the multi-modular route may
+later replace the computation behind it without changing the statement.
+A generic instance for every carrier with an executable exact quotient is
+not declared, because the quotient is a function argument and not an
+instance; a carrier consumer writes the one-line
+`decidable_of_iff (rankWith quot A = r)` with `rankWith_eq`.
+
+## Mathlib inventory
+
+Checked against the pinned Mathlib, `v4.34.0-rc2` (Mathlib commit
+`85e3a25e006c35636f0e53b0e9296caca2685bc0`), by file path:
+
+- `Mathlib/LinearAlgebra/Matrix/Echelon/Decomposition.lean`:
+  `Echelon.Decomposition` and `Echelon.Decomposition.rank_eq`, the only
+  declarations in the file, over `[CommRing R] [IsDomain R]`.
+- `Mathlib/LinearAlgebra/Matrix/Echelon/Pivot.lean`: `Matrix.IsPivotedBy`,
+  `Matrix.IsPivotedBy.rank_eq`, `Matrix.IsPivotedBy.monotone`, and the
+  `Decidable (A.IsPivotedBy l)` instance.
+- `Mathlib/Tactic/NormRank.lean` and `Mathlib/Tactic/Echelon/{Core,Bareiss,Rat,Zsqrtd,Parsing}.lean`:
+  `norm_rank`, `eval_rank`, `certifyCondition`, `bareissDecomp`,
+  `BareissExt`, `bareiss_ext`. The elimination invariant there is not a
+  theorem; only the final certificate is kernel-checked.
+- `Mathlib/LinearAlgebra/Matrix/Rank.lean`: `Matrix.rank`,
+  `rank_of_det_ne_zero`, `rank_submatrix_le`, `rank_mul_le_left`,
+  `rank_le_card_width`, `rank_smul_of_mem_nonZeroDivisors`,
+  `rank_mul_eq_left_of_det_ne_zero`, `rank_mul_eq_right_of_det_ne_zero`.
+- `Mathlib/LinearAlgebra/Matrix/Determinant/Basic.lean`: `det_mul`,
+  `det_smul`, `det_one`, `RingHom.map_det`.
+- `Mathlib/LinearAlgebra/Matrix/Adjugate.lean`: `adjugate`,
+  `mul_adjugate`, `adjugate_mul`, `adjugate_mul_distrib`.
+- `Mathlib/RingTheory/Localization/FractionRing.lean`: `IsFractionRing`
+  (an `abbrev` for `IsLocalization (nonZeroDivisors R) K`),
+  `IsFractionRing.injective`, `IsFractionRing.to_map_eq_zero_iff`,
+  `Rat.isFractionRing`, `FractionRing`.
+- `Mathlib/FieldTheory/RatFunc/Basic.lean`: the instance
+  `IsFractionRing K[X] (RatFunc K)`.
+- `Mathlib/LinearAlgebra/Dimension/Localization.lean`:
+  `IsLocalization.finrank_eq`, `IsFractionRing.finrank_right_eq`, about
+  modules over the fraction field, not matrices.
+- **Absent.** `Matrix.rank_map`, any lemma relating `Matrix.rank A` to
+  `Matrix.rank (A.map (algebraMap R K))`, any "rank equals the largest
+  nonzero minor" lemma, any rank lemma parameterised over a `RingHom`,
+  and any statement about the generic rank of a polynomial matrix.
+  `rank_map_eq` and `checkRank_sound_map` are therefore new, and if
+  Mathlib gains either, this library should state agreement with it
+  rather than a second copy.
+
+An implementer must re-run these searches when the Mathlib pin moves.
+
+## Tests
+
+`HexRankMathlib/Tests.lean`, build-only:
+
+- `checkRank_sound` on a closed `Hex.Matrix ℤ 3 4` of rank `2` with a
+  hand-written certificate, the check discharged by `decide +kernel`,
+  concluding `(e A).rank = 2`;
+- `Rank.rank_eq` on the same matrix through `Hex.Matrix.rank`, and the
+  `Decidable (A.rank = r)` instance on its Mathlib form by `decide`;
+- `rank_map_eq` instantiated at `IsFractionRing ℤ ℚ` and at
+  `IsFractionRing ℚ[X] (RatFunc ℚ)`, to check the instances resolve
+  without going through `FractionRing`;
+- `exists_decomposition_of_checkRank` and
+  `exists_rankCert_of_decomposition` on a `2 × 2` matrix of rank `1`, to
+  check that the hypotheses are stated in the form a consumer has;
+- the `rank` tactic in every orientation on the `3 × 4` example, on
+  `!![…]` with a compound entry, on `Matrix.of ![…]`, `fun i j => …` and
+  `Matrix.ofArray` literals, on the empty shapes,
+  on a `16 × 16` full-rank and a `32 × 32` rank-`2` literal, and its
+  messages on a false target, a symbolic matrix, an unsupported carrier and a
+  closed non-literal (`#guard_msgs`);
+- numeric-first dispatch to a test stub for open matrices and bounds, other
+  carriers, unrecognized literals and unrelated goals, with the handler order
+  asserted explicitly; numeric successes and false-target errors precede the
+  stub, and last-resort messages are checked without the stub.
+
+These are not an independent oracle. The conformance stream of `HexRank`
+is.

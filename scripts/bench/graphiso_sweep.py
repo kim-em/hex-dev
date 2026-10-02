@@ -19,8 +19,8 @@ before timing.
 
 **Give-up rule.** Within a family, instances are run in increasing size
 and an implementation that fails one is not offered any larger instance
-of that family. These families are monotone in difficulty, so continuing
-would only spend the wall kill again for the same answer.
+of that family. This is the existing comparison protocol, not a monotonicity
+guarantee: irregular families can have easier instances beyond a cutoff.
 
 Output is one merged JSON line per instance with a `null` for every
 column that went unsolved, which the plotting script reads as an
@@ -36,6 +36,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import platform
+import signal
 import shutil
 import subprocess
 import sys
@@ -43,6 +45,8 @@ import time
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+from scripts.bench.graphiso_archive import normalize  # noqa: E402
 
 # (column key, produced fields, how to build the command)
 COLUMNS = [
@@ -54,6 +58,13 @@ COLUMNS = [
     ("nauty", ["nauty_ns", "nauty_whole_ns", "nauty_nodes"]),
     ("sparse", ["sparse_ns", "sparse_whole_ns", "sparse_nodes"]),
     ("traces", ["traces_ns", "traces_whole_ns", "traces_nodes"]),
+    ("hex-sparse-canon", ["hex_sparse_ns", "hex_sparse_nodes"]),
+    ("hex-sparse-run", ["hex_sparse_search_ns"]),
+    ("hex-sparse-build", ["hex_sparse_build_ns"]),
+    ("hex-sparse-output", ["hex_sparse_output_ns"]),
+    ("hex-sparse-autos", ["hex_sparse_autos_ns"]),
+    ("hex-sparse-cert-produce", ["hex_sparse_cert_produce_ns"]),
+    ("hex-sparse-cert-replay", ["hex_sparse_cert_replay_ns"]),
 ]
 
 # the field each column is judged on, for the budget test
@@ -61,6 +72,11 @@ JUDGED = {
     "hex-canon": "fast_ns", "hex-run": "search_ns", "hex-ffi": "nauty_ffi_ns",
     "iso-canon": "iso_ns", "iso-whole": "iso_whole_ns", "nauty": "nauty_ns",
     "sparse": "sparse_ns", "traces": "traces_ns",
+    "hex-sparse-canon": "hex_sparse_ns", "hex-sparse-run": "hex_sparse_search_ns",
+    "hex-sparse-build": "hex_sparse_build_ns", "hex-sparse-output": "hex_sparse_output_ns",
+    "hex-sparse-autos": "hex_sparse_autos_ns",
+    "hex-sparse-cert-produce": "hex_sparse_cert_produce_ns",
+    "hex-sparse-cert-replay": "hex_sparse_cert_replay_ns",
 }
 
 
@@ -79,6 +95,7 @@ def _pin(args) -> list[str]:
 
 def _command(column: str, path: Path, args) -> list[str]:
     hexbin = REPO_ROOT / ".lake/build/bin/hexgraphiso_cactus"
+    sparsebin = REPO_ROOT / ".lake/build/bin/hexgraphiso_sparse_bench"
     isobin = Path(args.isograph) / ".lake/build/bin/hexcompare"
     prefix = _pin(args)
     return prefix + {
@@ -90,6 +107,13 @@ def _command(column: str, path: Path, args) -> list[str]:
         "nauty": [str(args.nauty), str(path), "dense"],
         "sparse": [str(args.nauty), str(path), "sparse"],
         "traces": [str(args.nauty), str(path), "traces"],
+        "hex-sparse-canon": [str(sparsebin), str(path), "canon"],
+        "hex-sparse-run": [str(sparsebin), str(path), "run"],
+        "hex-sparse-build": [str(sparsebin), str(path), "build"],
+        "hex-sparse-output": [str(sparsebin), str(path), "output"],
+        "hex-sparse-autos": [str(sparsebin), str(path), "autos"],
+        "hex-sparse-cert-produce": [str(sparsebin), str(path), "cert-produce"],
+        "hex-sparse-cert-replay": [str(sparsebin), str(path), "cert-replay"],
     }[column]
 
 
@@ -98,12 +122,28 @@ def _wall(n: int, args) -> float:
     return args.kill + args.kill_per_1000 * n / 1000.0
 
 
+def run_group(command, timeout, **kwargs):
+    """Capture a command and kill all its descendants if its timeout expires."""
+    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            text=True, start_new_session=True, **kwargs)
+    try:
+        stdout, stderr = proc.communicate(timeout=timeout)
+    except BaseException as exc:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        stdout, stderr = proc.communicate()
+        if isinstance(exc, subprocess.TimeoutExpired):
+            raise subprocess.TimeoutExpired(command, timeout, output=stdout, stderr=stderr) from exc
+        raise
+    return subprocess.CompletedProcess(command, proc.returncode, stdout, stderr)
+
+
 def _run(column: str, path: Path, n: int, args) -> tuple[dict | None, str]:
     """Run one column on one instance. Returns (fields, status)."""
     try:
-        proc = subprocess.run(_command(column, path, args),
-                              capture_output=True, text=True,
-                              timeout=_wall(n, args))
+        proc = run_group(_command(column, path, args), timeout=_wall(n, args))
     except subprocess.TimeoutExpired:
         return None, "killed"
     if proc.returncode != 0:
@@ -130,6 +170,9 @@ def main() -> int:
     parser.add_argument("--nauty", default="/tmp/nautybench",
                         help="the standalone nauty driver")
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--raw-out", type=Path,
+                        help="append every completed process result and failure status; "
+                             "defaults to OUT.runs.jsonl")
     parser.add_argument("--budget", type=float, default=5.0,
                         help="seconds; a reported per-call time above this "
                              "counts as unsolved")
@@ -162,7 +205,8 @@ def main() -> int:
     if args.no_pin:
         args.cpu = None
     elif args.cpu is None:
-        args.cpu = os.getpid() % (os.cpu_count() or 1)
+        cpus = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else list(range(os.cpu_count() or 1))
+        args.cpu = cpus[os.getpid() % len(cpus)]
         print(f"pinning measurements to CPU {args.cpu}", file=sys.stderr)
 
     index = [json.loads(l) for l in
@@ -181,9 +225,16 @@ def main() -> int:
     if args.merge_into is not None:
         for line in args.merge_into.read_text().splitlines():
             if line:
-                r = json.loads(line)
+                r = normalize(json.loads(line))
                 best[r["name"]] = r
     status: dict[tuple[str, str], str] = {}
+    raw_path = args.raw_out or args.out.with_suffix(".runs.jsonl")
+    raw_path.parent.mkdir(parents=True, exist_ok=True)
+    raw = raw_path.open("a", buffering=1)
+    raw.write(json.dumps({"kind": "context", "host": platform.node(), "cpu": args.cpu,
+                          "time": time.time(), "load": os.getloadavg(),
+                          "arguments": {k: str(v) if isinstance(v, Path) else v
+                                        for k, v in vars(args).items()}}) + "\n")
     # a family an implementation has already lost is not offered again, in
     # this pass or any later one: rediscovering it costs another wall kill
     # for the same answer
@@ -203,6 +254,9 @@ def main() -> int:
                         continue
                     record, st = _run(column, Path(entry["path"]),
                                       entry["n"], args)
+                    raw.write(json.dumps({"kind": "run", "pass": p + 1, "column": column,
+                                          "name": name, "status": st, "result": record,
+                                          "time": time.time(), "load": os.getloadavg()}) + "\n")
                     if st != "ok":
                         gaveup.add((column, family))
                         status[(column, name)] = st
@@ -219,6 +273,7 @@ def main() -> int:
                                       else record[f])
         print(f"pass {p + 1} done in {time.time() - started:.0f}s",
               file=sys.stderr)
+    raw.close()
 
     for row in best.values():
         for column, fields in COLUMNS:

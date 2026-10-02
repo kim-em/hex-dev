@@ -37,10 +37,10 @@ def stableContract (n : Nat) (P : σ → Prop) : Contract σ n where
   sweepPre _ _ first _ _ _ tv1 cursor _ _ st := Past first tv1 cursor ∧ P st
   sweepPost _ _ _ _ _ _ _ _ _ _ _ result := P result.2.2
 
-variable [Policy σ n]
+variable {γ : Type} [Policy σ n (γ := γ)]
 
 /-- Local operations outside the first descent preserve a state invariant. -/
-structure StablePolicy (ctx : Ctx n) (inf tcLevel : Nat) (P : σ → Prop)
+structure StablePolicy (ctx : γ) (inf tcLevel : Nat) (P : σ → Prop)
     (validCode : Nat → Prop := fun _ => True)
     (validLeaf : Leaf → σ → Prop := fun _ _ => True) : Prop where
   code : ∀ level numcells (st : σ), validCode (Policy.visit ctx level numcells st).2.1
@@ -56,10 +56,10 @@ structure StablePolicy (ctx : Ctx n) (inf tcLevel : Nat) (P : σ → Prop)
   child : ∀ first level tc tv st, P st → P (Policy.child (n := n) first level tc tv st)
   leave : ∀ tv st, P st → P (Policy.leaveChild (n := n) tv st)
   recover : ∀ level st, P st → P (Policy.recover (n := n) inf level st)
-  afterSweep : ∀ first level size index st, P st →
-    P (Policy.afterSweep (n := n) first level size index st)
+  afterSweep : ∀ level size index st, P st →
+    P (Policy.afterSweep (n := n) false level size index st)
 
-variable {ctx : Ctx n} {inf tcLevel : Nat} {P : σ → Prop} {validCode : Nat → Prop} {validLeaf : Leaf → σ → Prop}
+variable {ctx : γ} {inf tcLevel : Nat} {P : σ → Prop} {validCode : Nat → Prop} {validLeaf : Leaf → σ → Prop}
 
 /-- An off-path node preserves the state invariant. -/
 theorem StablePolicy.node_step (h : StablePolicy ctx inf tcLevel P validCode validLeaf)
@@ -99,7 +99,7 @@ theorem StablePolicy.node_step (h : StablePolicy ctx inf tcLevel P validCode val
     cases exit with
     | fuel => exact hn
     | unwind => exact hn
-    | done => exact h.afterSweep false level size index result hn
+    | done => exact h.afterSweep level size index result hn
 
 /-- Once past the first child, all later recursive calls are off-path. -/
 theorem StablePolicy.sweep_step (h : StablePolicy ctx inf tcLevel P validCode validLeaf)

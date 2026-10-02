@@ -864,7 +864,8 @@ theorem divModArray_reconstruction {S : Type _}
       simpa [toArray, size] using hraw
     have hlead : q.toArray.getD (q.size - 1) (Zero.zero : S) = q.leadingCoeff := by
       unfold leadingCoeff toArray
-      simp [size]
+      rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?]
+      rfl
     have hcancel_array :
         ∀ a, a - scaleLead a * q.toArray.getD (q.size - 1) (Zero.zero : S) =
           (Zero.zero : S) := by

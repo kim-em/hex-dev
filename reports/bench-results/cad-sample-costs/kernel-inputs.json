@@ -1,0 +1,58 @@
+{
+  "Nlsat": {
+    "carrier_degree": 7,
+    "carrier_height": 32,
+    "sturm_max_height": 26267727086813,
+    "sturm_length": 8,
+    "atom_count": 3
+  },
+  "CircleParabola": {
+    "carrier_degree": 6,
+    "carrier_height": 1,
+    "sturm_max_height": 87,
+    "sturm_length": 7,
+    "atom_count": 3
+  },
+  "Circles": {
+    "carrier_degree": 4,
+    "carrier_height": 8,
+    "sturm_max_height": 36,
+    "sturm_length": 5,
+    "atom_count": 3
+  },
+  "Kahan": {
+    "carrier_degree": 6,
+    "carrier_height": 392,
+    "sturm_max_height": 67986921664,
+    "sturm_length": 7,
+    "atom_count": 4
+  },
+  "Sphere": {
+    "carrier_degree": 11,
+    "carrier_height": 50096,
+    "sturm_max_height": 1404516720736604067840,
+    "sturm_length": 12,
+    "atom_count": 4
+  },
+  "Tower4": {
+    "carrier_degree": 6,
+    "carrier_height": 2,
+    "sturm_max_height": 66,
+    "sturm_length": 7,
+    "atom_count": 3
+  },
+  "Tower8": {
+    "carrier_degree": 10,
+    "carrier_height": 2,
+    "sturm_max_height": 230,
+    "sturm_length": 7,
+    "atom_count": 3
+  },
+  "Vanishing": {
+    "carrier_degree": 4,
+    "carrier_height": 1,
+    "sturm_max_height": 2,
+    "sturm_length": 5,
+    "atom_count": 2
+  }
+}

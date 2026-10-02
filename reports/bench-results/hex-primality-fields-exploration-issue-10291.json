@@ -1,0 +1,396 @@
+{
+  "description": "Exploratory observations retained separately from the fixed paired sweep. The final sweep is the reproducible policy evidence.",
+  "baseline_commit": "cc2baf89e",
+  "traces": [
+    {
+      "name": "secp256k1",
+      "n": "115792089237316195423570985008687907853269984665640564039457584007908834671663",
+      "stdout": "{\"attempts\":272,\"nanos\":10957423552,\"status\":\"exhausted\"}\n",
+      "stderr": "factor 115792089237316195423570985008687907853269984665640564039457584007908834671662: { factors := [(13441, 1),\n              (7, 1),\n              (3, 1),\n              (2, 1),\n              (205115282021455665897114700593932402728804164701536103180137503955397371, 1)],\n  residual := 1 }; attempts 0; allowance (some 1024)\nfactor 205115282021455665897114700593932402728804164701536103180137503955397370: { factors := [(7723, 1), (31, 1), (29, 2), (5, 1), (3, 1), (2, 1)],\n  residual := 33957291228054575644562761185877073266390894853717235429717263 }; attempts 14; allowance (some 1024)\nfactor 205115282021455665897114700593932402728804164701536103180137503955397370: { factors := [(7723, 1), (31, 1), (29, 2), (5, 1), (3, 1), (2, 1)],\n  residual := 33957291228054575644562761185877073266390894853717235429717263 }; attempts 14; allowance (some 1009)\nfactor 205115282021455665897114700593932402728804164701536103180137503955397370: { factors := [(7723, 1), (31, 1), (29, 2), (5, 1), (3, 1), (2, 1)],\n  residual := 33957291228054575644562761185877073266390894853717235429717263 }; attempts 14; allowance (some 993)\nfactor 205115282021455665897114700593932402728804164701536103180137503955397370: { factors := [(7723, 1), (31, 1), (29, 2), (5, 1), (3, 1), (2, 1)],\n  residual := 33957291228054575644562761185877073266390894853717235429717263 }; attempts 14; allowance (some 978)\nfactor 205115282021455665897114700593932402728804164701536103180137503955397370: { factors := [(7723, 1), (31, 1), (29, 2), (5, 1), (3, 1), (2, 1)],\n  residual := 33957291228054575644562761185877073266390894853717235429717263 }; attempts 14; allowance (some 962)\nfactor 205115282021455665897114700593932402728804164701536103180137503955397370: { factors := [(7723, 1), (31, 1), (29, 2), (5, 1), (3, 1), (2, 1)],\n  residual := 33957291228054575644562761185877073266390894853717235429717263 }; attempts 14; allowance (some 945)\nfactor 205115282021455665897114700593932402728804164701536103180137503955397370: { factors := [(7723, 1), (31, 1), (29, 2), (5, 1), (3, 1), (2, 1)],\n  residual := 33957291228054575644562761185877073266390894853717235429717263 }; attempts 14; allowance (some 929)\nfactor 205115282021455665897114700593932402728804164701536103180137503955397370: { factors := [(7723, 1), (31, 1), (29, 2), (5, 1), (3, 1), (2, 1)],\n  residual := 33957291228054575644562761185877073266390894853717235429717263 }; attempts 14; allowance (some 912)\nfactor 205115282021455665897114700593932402728804164701536103180137503955397370: { factors := [(7723, 1), (31, 1), (29, 2), (5, 1), (3, 1), (2, 1)],\n  residual := 33957291228054575644562761185877073266390894853717235429717263 }; attempts 14; allowance (some 895)\nfactor 205115282021455665897114700593932402728804164701536103180137503955397370: { factors := [(7723, 1), (31, 1), (29, 2), (5, 1), (3, 1), (2, 1)],\n  residual := 33957291228054575644562761185877073266390894853717235429717263 }; attempts 14; allowance (some 877)\nfactor 205115282021455665897114700593932402728804164701536103180137503955397370: { factors := [(7723, 1), (31, 1), (29, 2), (5, 1), (3, 1), (2, 1)],\n  residual := 33957291228054575644562761185877073266390894853717235429717263 }; attempts 14; allowance (some 860)\nfactor 205115282021455665897114700593932402728804164701536103180137503955397370: { factors := [(7723, 1), (31, 1), (29, 2), (5, 1), (3, 1), (2, 1)],\n  residual := 33957291228054575644562761185877073266390894853717235429717263 }; attempts 14; allowance (some 842)\nfactor 205115282021455665897114700593932402728804164701536103180137503955397370: { factors := [(7723, 1), (31, 1), (29, 2), (5, 1), (3, 1), (2, 1)],\n  residual := 33957291228054575644562761185877073266390894853717235429717263 }; attempts 14; allowance (some 823)\nfactor 205115282021455665897114700593932402728804164701536103180137503955397370: { factors := [(7723, 1), (31, 1), (29, 2), (5, 1), (3, 1), (2, 1)],\n  residual := 33957291228054575644562761185877073266390894853717235429717263 }; attempts 14; allowance (some 805)\nfactor 205115282021455665897114700593932402728804164701536103180137503955397370: { factors := [(7723, 1), (31, 1), (29, 2), (5, 1), (3, 1), (2, 1)],\n  residual := 33957291228054575644562761185877073266390894853717235429717263 }; attempts 14; allowance (some 786)\nfactor 205115282021455665897114700593932402728804164701536103180137503955397370: { factors := [(7723, 1), (31, 1), (29, 2), (5, 1), (3, 1), (2, 1)],\n  residual := 33957291228054575644562761185877073266390894853717235429717263 }; attempts 14; allowance (some 766)\n",
+      "code": 0,
+      "cpu": 9
+    },
+    {
+      "name": "P-384",
+      "n": "39402006196394479212279040100143613805079739270465446667948293404245721771496870329047266088258938001861606973112319",
+      "stdout": "{\"attempts\":14,\"nanos\":812502737,\"status\":\"exhausted\"}\n",
+      "stderr": "factor 39402006196394479212279040100143613805079739270465446667948293404245721771496870329047266088258938001861606973112318: { factors := [(67, 1), (19, 1), (2, 1)],\n  residual := 15476043282165938418020047172090971643786229092877237497230280205909552934602070042830819359096205028225297318583 }; attempts 14; allowance (some 1024)\n",
+      "code": 0,
+      "cpu": 9
+    },
+    {
+      "name": "Curve448",
+      "n": "726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439",
+      "stdout": "{\"attempts\":67,\"nanos\":1252041174,\"status\":\"exhausted\"}\n",
+      "stderr": "factor 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365438: { factors := [(18287, 1), (641, 1), (2, 1), (6700417, 1), (196687, 1), (1466449, 1), (2916841, 1)],\n  residual := 5499843854549273892319703537820711808983983221387696175495353456336512485964978717225063928271651228087 }; attempts 67; allowance (some 1024)\n",
+      "code": 0,
+      "cpu": 9
+    },
+    {
+      "name": "P-521",
+      "n": "6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057151",
+      "stdout": "{\"attempts\":94,\"nanos\":1328594442,\"status\":\"exhausted\"}\n",
+      "stderr": "factor 6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057150: { factors := [(61681, 1),\n              (51481, 1),\n              (42641, 1),\n              (8191, 1),\n              (2731, 1),\n              (1613, 1),\n              (521, 1),\n              (157, 1),\n              (131, 1),\n              (53, 1),\n              (41, 1),\n              (31, 1),\n              (17, 1),\n              (11, 1),\n              (5, 2),\n              (3, 1),\n              (2, 1),\n              (858001, 1),\n              (5746001, 1),\n              (7623851, 1),\n              (409891, 1),\n              (34110701, 1),\n              (2400573761, 1),\n              (108140989558681, 1),\n              (308761441, 1)],\n  residual := 1647519855571282873631511502892048832068481089740271 }; attempts 94; allowance (some 1024)\n",
+      "code": 0,
+      "cpu": 9
+    }
+  ],
+  "ecm": [
+    {
+      "block": 0,
+      "name": "secp256k1",
+      "cmd": [
+        "taskset",
+        "-c",
+        "14",
+        ".lake/build/bin/hexprimality_policy_probe",
+        "ecm",
+        "33957291228054575644562761185877073266390894853717235429717263",
+        "4096",
+        "8"
+      ],
+      "cpu": 14,
+      "load": [
+        10.06982421875,
+        8.416015625,
+        12.43408203125
+      ],
+      "stdout": "6: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 18205055\n7: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 18085728\n8: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 18257703\n9: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 18138276\n10: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 18120660\n11: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 18239767\n12: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 18129734\n13: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 18320837\n",
+      "stderr": "",
+      "code": 0
+    },
+    {
+      "block": 0,
+      "name": "secp256k1",
+      "cmd": [
+        "taskset",
+        "-c",
+        "14",
+        ".lake/build/bin/hexprimality_policy_probe",
+        "ecm",
+        "33957291228054575644562761185877073266390894853717235429717263",
+        "32768",
+        "8"
+      ],
+      "cpu": 14,
+      "load": [
+        10.06982421875,
+        8.416015625,
+        12.43408203125
+      ],
+      "stdout": "6: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 143468444\n7: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 143493853\n8: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 143428184\n9: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 143929558\n10: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 143887295\n11: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 143612809\n12: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 143770652\n13: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 143723633\n",
+      "stderr": "",
+      "code": 0
+    },
+    {
+      "block": 0,
+      "name": "P-384",
+      "cmd": [
+        "taskset",
+        "-c",
+        "14",
+        ".lake/build/bin/hexprimality_policy_probe",
+        "ecm",
+        "15476043282165938418020047172090971643786229092877237497230280205909552934602070042830819359096205028225297318583",
+        "4096",
+        "8"
+      ],
+      "cpu": 14,
+      "load": [
+        9.66357421875,
+        8.35888671875,
+        12.39404296875
+      ],
+      "stdout": "6: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 807145746439,\n  result := Hex.Nat.EcmResult.factor 807145746439 }; nanos 20410254\n",
+      "stderr": "",
+      "code": 0
+    },
+    {
+      "block": 0,
+      "name": "P-384",
+      "cmd": [
+        "taskset",
+        "-c",
+        "14",
+        ".lake/build/bin/hexprimality_policy_probe",
+        "ecm",
+        "15476043282165938418020047172090971643786229092877237497230280205909552934602070042830819359096205028225297318583",
+        "32768",
+        "8"
+      ],
+      "cpu": 14,
+      "load": [
+        9.66357421875,
+        8.35888671875,
+        12.39404296875
+      ],
+      "stdout": "6: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 807145746439,\n  result := Hex.Nat.EcmResult.factor 807145746439 }; nanos 162169476\n",
+      "stderr": "",
+      "code": 0
+    },
+    {
+      "block": 0,
+      "name": "Curve448",
+      "cmd": [
+        "taskset",
+        "-c",
+        "14",
+        ".lake/build/bin/hexprimality_policy_probe",
+        "ecm",
+        "5499843854549273892319703537820711808983983221387696175495353456336512485964978717225063928271651228087",
+        "4096",
+        "8"
+      ],
+      "cpu": 14,
+      "load": [
+        9.66357421875,
+        8.35888671875,
+        12.39404296875
+      ],
+      "stdout": "6: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 20267342\n7: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 20329695\n8: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 20182577\n9: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 20189827\n10: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 20306941\n11: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 20163489\n12: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 20268344\n13: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 20214234\n",
+      "stderr": "",
+      "code": 0
+    },
+    {
+      "block": 0,
+      "name": "Curve448",
+      "cmd": [
+        "taskset",
+        "-c",
+        "14",
+        ".lake/build/bin/hexprimality_policy_probe",
+        "ecm",
+        "5499843854549273892319703537820711808983983221387696175495353456336512485964978717225063928271651228087",
+        "32768",
+        "8"
+      ],
+      "cpu": 14,
+      "load": [
+        9.66357421875,
+        8.35888671875,
+        12.39404296875
+      ],
+      "stdout": "6: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 160295879\n7: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 160178975\n8: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 160141339\n9: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 160202229\n10: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 160209841\n11: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 160187507\n12: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 160281276\n13: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 160326213\n",
+      "stderr": "",
+      "code": 0
+    },
+    {
+      "block": 1,
+      "name": "secp256k1",
+      "cmd": [
+        "taskset",
+        "-c",
+        "14",
+        ".lake/build/bin/hexprimality_policy_probe",
+        "ecm",
+        "33957291228054575644562761185877073266390894853717235429717263",
+        "32768",
+        "8"
+      ],
+      "cpu": 14,
+      "load": [
+        9.66357421875,
+        8.35888671875,
+        12.39404296875
+      ],
+      "stdout": "6: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 145709526\n7: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 145246460\n8: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 143029073\n9: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 144772588\n10: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 144858715\n11: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 144687100\n12: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 146113175\n13: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 144342540\n",
+      "stderr": "",
+      "code": 0
+    },
+    {
+      "block": 1,
+      "name": "secp256k1",
+      "cmd": [
+        "taskset",
+        "-c",
+        "14",
+        ".lake/build/bin/hexprimality_policy_probe",
+        "ecm",
+        "33957291228054575644562761185877073266390894853717235429717263",
+        "4096",
+        "8"
+      ],
+      "cpu": 14,
+      "load": [
+        9.66357421875,
+        8.35888671875,
+        12.39404296875
+      ],
+      "stdout": "6: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 17904119\n7: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 17848057\n8: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 17953582\n9: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 17956367\n10: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 17929116\n11: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 17992451\n12: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 17930589\n13: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 18078518\n",
+      "stderr": "",
+      "code": 0
+    },
+    {
+      "block": 1,
+      "name": "P-384",
+      "cmd": [
+        "taskset",
+        "-c",
+        "14",
+        ".lake/build/bin/hexprimality_policy_probe",
+        "ecm",
+        "15476043282165938418020047172090971643786229092877237497230280205909552934602070042830819359096205028225297318583",
+        "32768",
+        "8"
+      ],
+      "cpu": 14,
+      "load": [
+        9.66357421875,
+        8.35888671875,
+        12.39404296875
+      ],
+      "stdout": "6: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 807145746439,\n  result := Hex.Nat.EcmResult.factor 807145746439 }; nanos 164013618\n",
+      "stderr": "",
+      "code": 0
+    },
+    {
+      "block": 1,
+      "name": "P-384",
+      "cmd": [
+        "taskset",
+        "-c",
+        "14",
+        ".lake/build/bin/hexprimality_policy_probe",
+        "ecm",
+        "15476043282165938418020047172090971643786229092877237497230280205909552934602070042830819359096205028225297318583",
+        "4096",
+        "8"
+      ],
+      "cpu": 14,
+      "load": [
+        9.66357421875,
+        8.35888671875,
+        12.39404296875
+      ],
+      "stdout": "6: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 807145746439,\n  result := Hex.Nat.EcmResult.factor 807145746439 }; nanos 20252631\n",
+      "stderr": "",
+      "code": 0
+    },
+    {
+      "block": 1,
+      "name": "Curve448",
+      "cmd": [
+        "taskset",
+        "-c",
+        "14",
+        ".lake/build/bin/hexprimality_policy_probe",
+        "ecm",
+        "5499843854549273892319703537820711808983983221387696175495353456336512485964978717225063928271651228087",
+        "32768",
+        "8"
+      ],
+      "cpu": 14,
+      "load": [
+        9.66357421875,
+        8.35888671875,
+        12.39404296875
+      ],
+      "stdout": "6: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 162821722\n7: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 165577667\n8: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 172139874\n9: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 172004534\n10: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 195146237\n11: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 183748292\n12: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 207270859\n13: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 241418086\n",
+      "stderr": "",
+      "code": 0
+    },
+    {
+      "block": 1,
+      "name": "Curve448",
+      "cmd": [
+        "taskset",
+        "-c",
+        "14",
+        ".lake/build/bin/hexprimality_policy_probe",
+        "ecm",
+        "5499843854549273892319703537820711808983983221387696175495353456336512485964978717225063928271651228087",
+        "4096",
+        "8"
+      ],
+      "cpu": 14,
+      "load": [
+        9.66357421875,
+        8.35888671875,
+        12.39404296875
+      ],
+      "stdout": "6: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 33905939\n7: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 26910550\n8: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 27363641\n9: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 33509281\n10: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 31939634\n11: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 34204371\n12: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 36489098\n13: { stageBackend := some (Hex.Nat.EcmBackend.natural),\n  setupGcd := 1,\n  stageGcd := 1,\n  result := Hex.Nat.EcmResult.noFactor }; nanos 32752890\n",
+      "stderr": "",
+      "code": 0
+    }
+  ],
+  "p521_cap32": "{\"attempts\":170,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057151\\n  [(3, 0, Hex.Nat.PrimeCert.small 2),\\n   (3, 0, Hex.Nat.PrimeCert.small 3),\\n   (3, 1, Hex.Nat.PrimeCert.small 5),\\n   (3, 0, Hex.Nat.PrimeCert.small 11),\\n   (3, 0, Hex.Nat.PrimeCert.small 17),\\n   (3, 0, Hex.Nat.PrimeCert.small 31),\\n   (3, 0, Hex.Nat.PrimeCert.small 41),\\n   (3, 0, Hex.Nat.PrimeCert.small 53),\\n   (3, 0, Hex.Nat.PrimeCert.small 131),\\n   (3, 0, Hex.Nat.PrimeCert.small 157),\\n   (2, 0, Hex.Nat.PrimeCert.small 521),\\n   (3, 0, Hex.Nat.PrimeCert.small 1613),\\n   (3, 0, Hex.Nat.PrimeCert.small 2731),\\n   (3, 0, Hex.Nat.PrimeCert.small 8191),\\n   (3, 0, Hex.Nat.PrimeCert.small 42641),\\n   (3, 0, Hex.Nat.PrimeCert.small 51481),\\n   (3, 0, Hex.Nat.PrimeCert.small 61681),\\n   (3, 0, Hex.Nat.PrimeCert.pock 409891 [(3, 0, Hex.Nat.PrimeCert.small 1051)]),\\n   (3, 0, Hex.Nat.PrimeCert.pock 858001 [(3, 2, Hex.Nat.PrimeCert.small 5), (2, 0, Hex.Nat.PrimeCert.small 13)]),\\n   (3, 0, Hex.Nat.PrimeCert.pock 5746001 [(3, 1, Hex.Nat.PrimeCert.small 13), (3, 0, Hex.Nat.PrimeCert.small 17)]),\\n   (3, 0, Hex.Nat.PrimeCert.pock 7623851 [(3, 0, Hex.Nat.PrimeCert.small 37), (3, 0, Hex.Nat.PrimeCert.small 317)]),\\n   (3, 0, Hex.Nat.PrimeCert.pock 34110701 [(3, 0, Hex.Nat.PrimeCert.small 19), (3, 0, Hex.Nat.PrimeCert.small 1381)]),\\n   (3, 0, Hex.Nat.PrimeCert.pock 308761441 [(3, 0, Hex.Nat.PrimeCert.small 49481)]),\\n   (3,\\n    0,\\n    Hex.Nat.PrimeCert.pock 2400573761 [(3, 0, Hex.Nat.PrimeCert.small 347), (3, 0, Hex.Nat.PrimeCert.small 1663)]),\\n   (3,\\n    0,\\n    Hex.Nat.PrimeCert.pock\\n      108140989558681\\n      [(3, 0, Hex.Nat.PrimeCert.small 1433), (3, 0, Hex.Nat.PrimeCert.small 23609)])]\",\"check_nanos\":11567938,\"nanos\":1375795598,\"status\":\"ok\"}\nfactor 6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057150: { factors := [(61681, 1),\n              (51481, 1),\n              (42641, 1),\n              (8191, 1),\n              (2731, 1),\n              (1613, 1),\n              (521, 1),\n              (157, 1),\n              (131, 1),\n              (53, 1),\n              (41, 1),\n              (31, 1),\n              (17, 1),\n              (11, 1),\n              (5, 2),\n              (3, 1),\n              (2, 1),\n              (858001, 1),\n              (5746001, 1),\n              (7623851, 1),\n              (409891, 1),\n              (34110701, 1),\n              (2400573761, 1),\n              (108140989558681, 1),\n              (308761441, 1)],\n  residual := 1647519855571282873631511502892048832068481089740271 }; attempts 94; allowance (some 1024)\n",
+  "p384_rho262144": "{\"attempts\":14,\"nanos\":1049575424,\"status\":\"exhausted\"}\nfactor 39402006196394479212279040100143613805079739270465446667948293404245721771496870329047266088258938001861606973112318: { factors := [(67, 1), (19, 1), (2, 1)],\n  residual := 15476043282165938418020047172090971643786229092877237497230280205909552934602070042830819359096205028225297318583 }; attempts 14; allowance (some 1024)\n",
+  "p384_child": "{\"attempts\":19,\"nanos\":1300564861,\"status\":\"exhausted\"}\nfactor 19173790298027098165721053155794528970226934547887232785722672956982046098136719667167519737147526096: { factors := [(38557, 1), (8389, 1), (11, 3), (2, 4), (312289, 1)],\n  residual := 8913326561311260411185427017705935207065736969962576881302563771106887371009673983 }; attempts 19; allowance (some 1024)\n",
+  "offline_pari": {
+    "version": "2.17.3",
+    "input": "default(parisizemax, 4000000000);\nprint(\"secp \",factor(33957291228054575644562761185877073266390894853717235429717263));\nprint(\"p384 \",factor(15476043282165938418020047172090971643786229092877237497230280205909552934602070042830819359096205028225297318583));\nprint(\"curve448 \",factor(5499843854549273892319703537820711808983983221387696175495353456336512485964978717225063928271651228087));\nquit\n",
+    "output": "secp [132896956044521568488119, 1; 255515944373312847190720520512484175977, 1]\np384 [807145746439, 1; 19173790298027098165721053155794528970226934547887232785722672956982046098136719667167519737147526097, 1]\ncurve448 [1469495262398780123809, 1; 167773885276849215533569, 1; 596242599987116128415063, 1; 37414057161322375957408148834323969, 1]\n",
+    "child_input": "default(parisizemax,4000000000);\nprint(factor(8913326561311260411185427017705935207065736969962576881302563771106887371009673983));\nquit\n",
+    "child_output": "[1357291859799823621, 1; 529709925838459440593, 1; 12397338596863679689524759770405177749801411, 1]\n"
+  },
+  "proof_probe": {
+    "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057151\n  [(3, 0, Hex.Nat.PrimeCert.small 2),\n   (3, 0, Hex.Nat.PrimeCert.small 3),\n   (3, 1, Hex.Nat.PrimeCert.small 5),\n   (3, 0, Hex.Nat.PrimeCert.small 11),\n   (3, 0, Hex.Nat.PrimeCert.small 17),\n   (3, 0, Hex.Nat.PrimeCert.small 31),\n   (3, 0, Hex.Nat.PrimeCert.small 41),\n   (3, 0, Hex.Nat.PrimeCert.small 53),\n   (3, 0, Hex.Nat.PrimeCert.small 131),\n   (3, 0, Hex.Nat.PrimeCert.small 157),\n   (2, 0, Hex.Nat.PrimeCert.small 521),\n   (3, 0, Hex.Nat.PrimeCert.small 1613),\n   (3, 0, Hex.Nat.PrimeCert.small 2731),\n   (3, 0, Hex.Nat.PrimeCert.small 8191),\n   (3, 0, Hex.Nat.PrimeCert.small 42641),\n   (3, 0, Hex.Nat.PrimeCert.small 51481),\n   (3, 0, Hex.Nat.PrimeCert.small 61681),\n   (3, 0, Hex.Nat.PrimeCert.pock 409891 [(3, 0, Hex.Nat.PrimeCert.small 1051)]),\n   (3, 0, Hex.Nat.PrimeCert.pock 858001 [(3, 2, Hex.Nat.PrimeCert.small 5), (2, 0, Hex.Nat.PrimeCert.small 13)]),\n   (3, 0, Hex.Nat.PrimeCert.pock 5746001 [(3, 1, Hex.Nat.PrimeCert.small 13), (3, 0, Hex.Nat.PrimeCert.small 17)]),\n   (3, 0, Hex.Nat.PrimeCert.pock 7623851 [(3, 0, Hex.Nat.PrimeCert.small 37), (3, 0, Hex.Nat.PrimeCert.small 317)]),\n   (3, 0, Hex.Nat.PrimeCert.pock 34110701 [(3, 0, Hex.Nat.PrimeCert.small 19), (3, 0, Hex.Nat.PrimeCert.small 1381)]),\n   (3, 0, Hex.Nat.PrimeCert.pock 308761441 [(3, 0, Hex.Nat.PrimeCert.small 49481)]),\n   (3,\n    0,\n    Hex.Nat.PrimeCert.pock 2400573761 [(3, 0, Hex.Nat.PrimeCert.small 347), (3, 0, Hex.Nat.PrimeCert.small 1663)]),\n   (3,\n    0,\n    Hex.Nat.PrimeCert.pock\n      108140989558681\n      [(3, 0, Hex.Nat.PrimeCert.small 1433), (3, 0, Hex.Nat.PrimeCert.small 23609)])]\n\nopen Lean Elab Hex.PrimalityTactic in\nrun_cmd Lean.Elab.Command.liftTermElabM do\n  let input \u2190 IO.mkRef certificate\n  let cert \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let stx \u2190 certificateSyntax cert\n  let _ \u2190 Lean.Elab.Term.elabTerm stx (some (Lean.mkConst ``Hex.Nat.PrimeCert))\n  let stop \u2190 IO.monoNanosNow\n  logInfo m!\"RENDER_ELAB_NS {stop - start}\"\ntheorem result : Hex.Nat.Prime 6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057151 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057151 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  -- Change only a Hex witness base: subjects, products, and ordering remain\n  -- intact, so this control must reach the witness arithmetic.\n  let corruptWitness := value.replace fun e => Id.run do\n    unless e.isAppOfArity `Hex.Nat.PrimeCert.pock 2 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3 5 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3Sieve 6 do return none\n    let args := e.getAppArgs\n    let fs := args.back!\n    unless fs.isAppOfArity ``List.cons 3 do return none\n    let fsArgs := fs.getAppArgs\n    let entry := fsArgs[1]!\n    unless entry.isAppOfArity ``Prod.mk 4 do return none\n    let entryArgs := entry.getAppArgs\n    let entry := Lean.mkAppN entry.getAppFn (entryArgs.set! 2 (Lean.mkRawNatLit 0))\n    let fs := Lean.mkAppN fs.getAppFn (fsArgs.set! 1 entry)\n    return some (Lean.mkAppN e.getAppFn (args.set! (args.size - 1) fs))\n  let needsWitness := value.getUsedConstants.any fun name =>\n    name == `Hex.Nat.PrimeCert.pock || name == `Hex.Nat.PrimeCert.pock3 ||\n      name == `Hex.Nat.PrimeCert.pock3Sieve\n  if needsWitness && corruptWitness == value then\n    throwError \"witness corruption did not change the proof\"\n  if corruptWitness != value then\n    let bad := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corruptWitness\n    match Lean.Kernel.check env {} bad with\n    | .error _ => pure ()\n    | .ok _ => throwError \"kernel accepted the zero witness base\"\n    Lean.logInfo \"DIRECT_WITNESS_CONTROL rejected\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+    "render_elab_ns": 33176226,
+    "direct_kernel_ns": 127104717
+  },
+  "invalid_proof_probe": {
+    "reason": "Rendering command used a reserved identifier; failed build, excluded from performance conclusions",
+    "direct_kernel_ns": 154893918
+  },
+  "predecessor_factor_validation": [
+    {
+      "command": [
+        ".lake/build/bin/hexprimality_field_probe",
+        "validate",
+        "132896956044521568488118",
+        "2",
+        "3",
+        "22149492674086928081353"
+      ],
+      "stdout": "{\"valid_factorization\":true}\n",
+      "returncode": 0
+    },
+    {
+      "command": [
+        ".lake/build/bin/hexprimality_field_probe",
+        "validate",
+        "255515944373312847190720520512484175976",
+        "7240687",
+        "107590001",
+        "327994317642041349809048"
+      ],
+      "stdout": "{\"valid_factorization\":true}\n",
+      "returncode": 0
+    },
+    {
+      "command": [
+        ".lake/build/bin/hexprimality_field_probe",
+        "validate",
+        "807145746438",
+        "2",
+        "3",
+        "47",
+        "2862218959"
+      ],
+      "stdout": "{\"valid_factorization\":true}\n",
+      "returncode": 0
+    },
+    {
+      "command": [
+        ".lake/build/bin/hexprimality_field_probe",
+        "validate",
+        "1469495262398780123808",
+        "3402277943",
+        "431915113056"
+      ],
+      "stdout": "{\"valid_factorization\":true}\n",
+      "returncode": 0
+    },
+    {
+      "command": [
+        ".lake/build/bin/hexprimality_field_probe",
+        "validate",
+        "167773885276849215533568",
+        "97859369123353",
+        "1714438656"
+      ],
+      "stdout": "{\"valid_factorization\":true}\n",
+      "returncode": 0
+    }
+  ]
+}

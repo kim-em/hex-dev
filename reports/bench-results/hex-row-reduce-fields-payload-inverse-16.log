@@ -1,0 +1,12 @@
+Hex.RowReduceBench.Field.flintInverse16    [fixed] repeats=4
+  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f589e37-dirty, 2026-09-12T21:34:29Z, host=chungus2
+  repeat 0  945.331 µs  (×2^8, total 242.005 ms)
+  repeat 1  948.426 µs  (×2^8, total 242.797 ms)
+  repeat 2    1.009 ms  (×2^8, total 258.296 ms)
+  repeat 3  940.293 µs  (×2^8, total 240.715 ms)
+  median: 948.426 µs    min: 940.293 µs    max: 1.009 ms
+  hash: all repeats agree
+  observed hash: 0xc0e229f2fbba2a35
+  expected hash: matches
+  peak RSS: 63_308 kB..65_476 kB (across 4 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-payload-inverse-16.json

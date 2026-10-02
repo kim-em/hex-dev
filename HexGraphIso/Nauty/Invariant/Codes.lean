@@ -49,6 +49,8 @@ incumbent, whatever the deeper codes and rows are.
 
 namespace Hex.GraphIso.Nauty
 
+variable {κ : Type}
+
 set_option maxHeartbeats 1600000
 set_option linter.unusedSimpArgs false
 
@@ -302,14 +304,14 @@ theorem codeInv_eq_of_tied {nn : Nat} {cs bs : List Nat}
 /-! # Projections of the events -/
 
 private theorem compareCodes_canonlevel (level code : Nat)
-    (st : Search n) :
+    (st : SearchState n κ) :
     (compareCodes level code st).canonlevel = st.canonlevel := by
   rw [compareCodes]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.canonlevel, ite_self]
+    apply_ite SearchState.canonlevel, ite_self]
 
 private theorem compareCodes_compCanon (level code : Nat)
-    (st : Search n) :
+    (st : SearchState n κ) :
     (compareCodes level code st).compCanon =
       if st.eqlevCanon == Int.ofNat level - 1 then
         (if code < st.canoncode[level]! then (-1 : Int)
@@ -317,14 +319,14 @@ private theorem compareCodes_compCanon (level code : Nat)
       else st.compCanon := by
   rw [compareCodes]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.compCanon, apply_ite Search.eqlevCanon,
-    apply_ite Search.canoncode, apply_ite Search.firstcode,
-    apply_ite Search.eqlevFirst, ite_self]
+    apply_ite SearchState.compCanon, apply_ite SearchState.eqlevCanon,
+    apply_ite SearchState.canoncode, apply_ite SearchState.firstcode,
+    apply_ite SearchState.eqlevFirst, ite_self]
   all_goals repeat' split
   all_goals rfl
 
 private theorem compareCodes_eqlevCanon (level code : Nat)
-    (st : Search n) :
+    (st : SearchState n κ) :
     (compareCodes level code st).eqlevCanon =
       if st.eqlevCanon == Int.ofNat level - 1 then
         (if code < st.canoncode[level]! then st.eqlevCanon
@@ -333,14 +335,14 @@ private theorem compareCodes_eqlevCanon (level code : Nat)
       else st.eqlevCanon := by
   rw [compareCodes]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.eqlevCanon, apply_ite Search.canoncode,
-    apply_ite Search.firstcode, apply_ite Search.eqlevFirst,
+    apply_ite SearchState.eqlevCanon, apply_ite SearchState.canoncode,
+    apply_ite SearchState.firstcode, apply_ite SearchState.eqlevFirst,
     ite_self]
   all_goals repeat' split
   all_goals rfl
 
 private theorem compareCodes_canoncode (level code : Nat)
-    (st : Search n) :
+    (st : SearchState n κ) :
     (compareCodes level code st).canoncode =
       if (if st.eqlevCanon == Int.ofNat level - 1 then
             (if code < st.canoncode[level]! then (-1 : Int)
@@ -350,39 +352,39 @@ private theorem compareCodes_canoncode (level code : Nat)
       else st.canoncode := by
   rw [compareCodes]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.canoncode, apply_ite Search.compCanon,
-    apply_ite Search.eqlevCanon, apply_ite Search.firstcode,
-    apply_ite Search.eqlevFirst, ite_self]
+    apply_ite SearchState.canoncode, apply_ite SearchState.compCanon,
+    apply_ite SearchState.eqlevCanon, apply_ite SearchState.firstcode,
+    apply_ite SearchState.eqlevFirst, ite_self]
   all_goals repeat' split
   all_goals rfl
 
-private theorem recover_canoncode (n inf level : Nat) (st : Search n) :
+private theorem recover_canoncode (n inf level : Nat) (st : SearchState n κ) :
     (recover inf level st).canoncode = st.canoncode := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.canoncode, ite_self]
+    apply_ite SearchState.canoncode, ite_self]
 
-private theorem recover_canonlevel (n inf level : Nat) (st : Search n) :
+private theorem recover_canonlevel (n inf level : Nat) (st : SearchState n κ) :
     (recover inf level st).canonlevel = st.canonlevel := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.canonlevel, ite_self]
+    apply_ite SearchState.canonlevel, ite_self]
 
-private theorem recover_eqlevCanon (n inf level : Nat) (st : Search n) :
+private theorem recover_eqlevCanon (n inf level : Nat) (st : SearchState n κ) :
     (recover inf level st).eqlevCanon =
       if Int.ofNat level ≤ st.eqlevCanon then Int.ofNat level
       else st.eqlevCanon := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.eqlevCanon, ite_self]
+    apply_ite SearchState.eqlevCanon, ite_self]
 
-private theorem recover_compCanon (n inf level : Nat) (st : Search n) :
+private theorem recover_compCanon (n inf level : Nat) (st : SearchState n κ) :
     (recover inf level st).compCanon =
       if Int.ofNat level ≤ st.eqlevCanon then 0
       else st.compCanon := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.compCanon, apply_ite Search.eqlevCanon,
+    apply_ite SearchState.compCanon, apply_ite SearchState.eqlevCanon,
     ite_self]
 
 /-! # Event: one `othernode` comparison step -/
@@ -390,7 +392,7 @@ private theorem recover_compCanon (n inf level : Nat) (st : Search n) :
 /-- One `compareCodes` step at level `cs.length + 1` with fresh code
 `code` extends the comparison invariant by one level. -/
 theorem compareCodes_codeInv {nn : Nat} {cs bs : List Nat}
-    {st : Search n} {code : Nat}
+    {st : SearchState n κ} {code : Nat}
     (hinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
       st.eqlevCanon st.compCanon)
     (hcode : code < codeSentinel)
@@ -592,7 +594,7 @@ theorem compareCodes_codeInv {nn : Nat} {cs bs : List Nat}
 `lvl` truncates the path and restores full agreement when the match
 reached `lvl`. -/
 theorem recover_codeInv {nn N inf : Nat} {cs bs : List Nat}
-    {st : Search N} {lvl : Nat}
+    {st : SearchState N κ} {lvl : Nat}
     (hinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
       st.eqlevCanon st.compCanon)
     (hcc : st.compCanon ≤ 0)
@@ -669,7 +671,7 @@ row comparison: the pre-leaf state matched through the whole path
 (`compCanon = 0` invariant), so unwinding to any `lvl` within the
 path resets to full agreement whatever `compCanon` currently holds. -/
 theorem recover_codeInv_reset {nn N inf : Nat} {cs bs : List Nat}
-    {st : Search N} {lvl : Nat}
+    {st : SearchState N κ} {lvl : Nat}
     (hinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
       st.eqlevCanon 0)
     (hlvl : lvl ≤ cs.length) :
@@ -762,24 +764,24 @@ private theorem foldl_copy_getElem {src : Array Nat} :
           exact hc ⟨by omega, h2⟩)]
 
 private theorem firstterminal_canonlevel (level : Nat)
-    (st : Search n) :
+    (st : SearchState n κ) :
     (firstterminal level st).canonlevel = level := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
 private theorem firstterminal_eqlevCanon (level : Nat)
-    (st : Search n) :
+    (st : SearchState n κ) :
     (firstterminal level st).eqlevCanon = Int.ofNat level := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
 private theorem firstterminal_compCanon (level : Nat)
-    (st : Search n) :
+    (st : SearchState n κ) :
     (firstterminal level st).compCanon = 0 := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
-private theorem firstterminal_canoncode (level : Nat) (st : Search n) :
+private theorem firstterminal_canoncode (level : Nat) (st : SearchState n κ) :
     (firstterminal level st).canoncode =
       ((List.range (level + 1)).foldl
         (fun r i =>
@@ -793,7 +795,7 @@ private theorem firstterminal_canoncode (level : Nat) (st : Search n) :
 /-- `firstterminal` seeds the comparison invariant: the first leaf's
 codes become the incumbent with full agreement recorded. -/
 theorem firstterminal_codeInv {nn : Nat} {cs : List Nat}
-    {st : Search n}
+    {st : SearchState n κ}
     (hsize : st.canoncode.size = nn + 2)
     (hLnn : cs.length ≤ nn)
     (hfc : ∀ i, 1 ≤ i → i ≤ cs.length → st.firstcode[i]! = cs[i - 1]!)
@@ -1016,45 +1018,45 @@ theorem firstCodeInv_eq_of_live {nn : Nat} {cs fs : List Nat}
   firstCodeInv_eq_of_tied hinv (firstCodeInv_len_of_sentinel hinv hsent)
 
 private theorem compareCodes_firstcode (level code : Nat)
-    (st : Search n) :
+    (st : SearchState n κ) :
     (compareCodes level code st).firstcode = st.firstcode := by
   rw [compareCodes]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.firstcode, ite_self]
+    apply_ite SearchState.firstcode, ite_self]
 
 private theorem compareCodes_eqlevFirst (level code : Nat)
-    (st : Search n) :
+    (st : SearchState n κ) :
     (compareCodes level code st).eqlevFirst =
       if st.eqlevFirst == level - 1 ∧ code == st.firstcode[level]!
       then level else st.eqlevFirst := by
   rw [compareCodes]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.eqlevFirst, apply_ite Search.firstcode,
+    apply_ite SearchState.eqlevFirst, apply_ite SearchState.firstcode,
     ite_self]
   all_goals repeat' split
   all_goals rfl
 
 private theorem recover_eqlevFirst (n inf level : Nat)
-    (st : Search n) :
+    (st : SearchState n κ) :
     (recover inf level st).eqlevFirst =
       if level < st.eqlevFirst then level else st.eqlevFirst := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.eqlevFirst, ite_self]
+    apply_ite SearchState.eqlevFirst, ite_self]
 
 private theorem recover_firstcode (n inf level : Nat)
-    (st : Search n) :
+    (st : SearchState n κ) :
     (recover inf level st).firstcode = st.firstcode := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.firstcode, ite_self]
+    apply_ite SearchState.firstcode, ite_self]
 
 /-- One `compareCodes` step at level `cs.length + 1` with fresh code
 `code` extends the first-path agreement by one level exactly when the
 depth had reached the path and the code matches the first path's next
 code. -/
 theorem compareCodes_firstCodeInv {nn : Nat} {cs fs : List Nat}
-    {st : Search n} {code : Nat}
+    {st : SearchState n κ} {code : Nat}
     (hinv : FirstCodeInv nn cs fs st.firstcode st.eqlevFirst)
     (hcode : code < codeSentinel) :
     FirstCodeInv nn (cs ++ [code]) fs
@@ -1112,7 +1114,7 @@ theorem compareCodes_firstCodeInv {nn : Nat} {cs fs : List Nat}
 
 /-- `recover` clamps the agreement depth to the unwind level. -/
 theorem recover_firstCodeInv {nn N inf : Nat} {cs fs : List Nat}
-    {st : Search N} {lvl : Nat}
+    {st : SearchState N κ} {lvl : Nat}
     (hinv : FirstCodeInv nn cs fs st.firstcode st.eqlevFirst)
     (hlvl : lvl ≤ cs.length) :
     FirstCodeInv nn (cs.take lvl) fs

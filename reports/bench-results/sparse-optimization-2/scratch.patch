@@ -1,0 +1,155 @@
+--- a/HexGraphIso/Nauty/Sparse/Refine.lean
++++ b/HexGraphIso/Nauty/Sparse/Refine.lean
+@@ -14,9 +14,22 @@
+ 
+ namespace Hex.GraphIso.Nauty.Sparse
+ 
+-/-- The working arrays of `refine_sg`. Generation marks replace C's
+-periodically cleared short arrays; only equality with the current stamp
+-is observed. -/
++/-- Arrays retained across refinement calls. Marks use a monotonically
++increasing generation; counts are cleared when their cell is first touched. -/
++structure Scratch where
++  cellstart : Array Nat := #[]
++  hits : Array Nat := #[]
++  marks : Array Nat := #[]
++  vmarks : Array Nat := #[]
++  stamp : Nat := 0
++deriving Inhabited
++
++def Scratch.fresh (n : Nat) : Scratch := {
++  cellstart := Array.replicate n n, hits := Array.replicate n 0
++  marks := Array.replicate n 0, vmarks := Array.replicate n 0 }
++
++/-- The working state of `refine_sg`. Only equality with the current
++generation stamp is observed. -/
+ structure RefineSt (n : Nat) where
+   lab : Array Nat
+   ptn : Array Nat
+@@ -33,6 +46,10 @@
+ 
+ namespace RefineSt
+ 
++def toScratch (s : RefineSt n) : Scratch := {
++  cellstart := s.cellstart, hits := s.hits, marks := s.marks
++  vmarks := s.vmarks, stamp := s.stamp }
++
+ def push (s : RefineSt n) (v : Nat) : RefineSt n :=
+   { s with active := s.active.insert v, queue := s.queue.push v }
+ 
+@@ -42,14 +59,15 @@
+ end RefineSt
+ 
+ /-- Vertex-to-cell indices, using `n` for vertices in singleton cells. -/
+-def cellstarts (n : Nat) (lab ptn : Array Nat) (level : Nat) : Array Nat := Id.run do
+-  let mut starts := Array.replicate n n
++def cellstarts (n : Nat) (lab ptn : Array Nat) (level : Nat)
++    (starts : Array Nat := Array.replicate n n) : Array Nat := Id.run do
++  let mut starts := starts
+   let mut first := 0
+   for _ in [0:n] do
+     if first >= n then break
+     let last := cellEnd ptn level first
+-    if first < last then
+-      for i in [first:last + 1] do starts := starts.set! lab[i]! first
++    let start := if first < last then first else n
++    for i in [first:last + 1] do starts := starts.set! lab[i]! start
+     first := last + 1
+   return starts
+ 
+@@ -231,8 +249,8 @@
+ 
+ /-- `refine_sg`, including its shallow distance split and preference for
+ singleton splitters among the first ten active entries. -/
+-def refine (g : Graph n) (level : Nat) (lab ptn : Array Nat)
+-    (active : VSet n) (numcells : Nat) : RefineSt n := Id.run do
++def refineWith (g : Graph n) (level : Nat) (lab ptn : Array Nat)
++    (active : VSet n) (numcells : Nat) (scratch : Scratch) : RefineSt n := Id.run do
+   -- Walk the packed set in the same ascending order as nauty's initial
+   -- active scan, without constructing and filtering a list of all vertices.
+   let mut initialQueue := #[]
+@@ -242,12 +260,12 @@
+     initialQueue := initialQueue.push i
+     next := active.nextElem (some i)
+   let mut s : RefineSt n := {
++    cellstart := scratch.cellstart, hits := scratch.hits, marks := scratch.marks
++    vmarks := scratch.vmarks, stamp := scratch.stamp
+     lab, ptn, active, queue := initialQueue
+-    cellstart := #[], hits := Array.replicate n 0, marks := Array.replicate n 0,
+-    vmarks := Array.replicate n 0,
+     numcells, longcode := numcells }
+   if initialQueue.isEmpty then return { s with longcode := cleanup s.longcode }
+-  s := { s with cellstart := cellstarts n lab ptn level }
++  s := { s with cellstart := cellstarts n lab ptn level s.cellstart }
+   if level <= 2 && initialQueue.size == 1 && ptn[initialQueue[0]!]! <= level && numcells <= n / 8 then
+     let split := initialQueue[0]!
+     s := { s with
+@@ -277,4 +295,9 @@
+     else s := splitNontrivial g level split s
+   return { s with longcode := cleanup (mash s.longcode s.numcells) }
+ 
++/-- Standalone refinement with freshly initialized scratch storage. -/
++def refine (g : Graph n) (level : Nat) (lab ptn : Array Nat)
++    (active : VSet n) (numcells : Nat) : RefineSt n :=
++  refineWith g level lab ptn active numcells (.fresh n)
++
+ end Hex.GraphIso.Nauty.Sparse
+--- a/HexGraphIso/Nauty/Sparse/Search.lean
++++ b/HexGraphIso/Nauty/Sparse/Search.lean
+@@ -12,13 +12,25 @@
+ 
+ namespace Hex.GraphIso.Nauty.Sparse
+ 
+-abbrev State (n : Nat) := SearchState n (Graph n)
++/-- Canonical rows and scratch storage carried by the shared search.
++Scratch is independent of the partition nest restored during backtracking. -/
++structure Storage (n : Nat) extends Graph n where
++  scratch : Scratch
++deriving Inhabited
++
++def Storage.update (g : Graph n) (s : Storage n) (lab : Array Nat) (same : Nat) : Storage n :=
++  { s with toGraph := updatecan g s.toGraph lab same }
++
++abbrev State (n : Nat) := SearchState n (Storage n)
+ 
+ /-- Count the node and run the sparse refinement dispatch. -/
+ def visit (g : Graph n) (level numcells : Nat) (st : State n) : Nat × Nat × State n :=
+-  let r := refine g level st.lab st.ptn st.active numcells
++  let scratch := st.canong.scratch
++  let st : State n := { st with canong := { st.canong with scratch := default } }
++  let r := refineWith g level st.lab st.ptn st.active numcells scratch
+   (r.numcells, r.longcode, { st with
+     lab := r.lab, ptn := r.ptn, active := r.active
++    canong := { st.canong with scratch := r.toScratch }
+     numnodes := st.numnodes + 1 })
+ 
+ /-- The shared target guards, with `targetcell_sg` as the graph dispatch. -/
+@@ -54,8 +66,8 @@
+   if st.compCanon == 0 then
+     if level < st.canonlevel then st := { st with compCanon := 1 }
+     else
+-      st := { st with canong := updatecan g st.canong st.canonlab st.samerows, samerows := n }
+-      let (c, s) := testcanlab g st.canong st.lab
++      st := { st with canong := st.canong.update g st.canonlab st.samerows, samerows := n }
++      let (c, s) := testcanlab g st.canong.toGraph st.lab
+       st := { st with compCanon := c }
+       sr := s
+   if st.compCanon == 0 then
+@@ -93,7 +105,7 @@
+   firsttc := .replicate (n + 2) (-1)
+   firstlab := .replicate n 0
+   canonlab := .replicate n 0
+-  canong := g.blank
++  canong := { toGraph := g.blank, scratch := .fresh n }
+   workperm := .replicate n 0
+   numorbits := n }
+ 
+@@ -105,7 +117,7 @@
+ 
+ /-- Finish the pending canonical rows, preserving the raw sparse row order. -/
+ def finish (g : Graph n) (st : State n) : State n :=
+-  { st with canong := updatecan g st.canong st.canonlab st.samerows, samerows := n }
++  { st with canong := st.canong.update g st.canonlab st.samerows, samerows := n }
+ 
+ def run (g : Graph n) (lab : Array Nat) (ends : List Nat) : State n :=
+   finish g (runState g lab ends).2

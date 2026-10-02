@@ -627,7 +627,7 @@ theorem leadingCoeff_toPolynomial [Semiring R] [DecidableEq R]
   · have hpos : 0 < p.size := Nat.pos_of_ne_zero hsize
     rw [Hex.DensePoly.natDegree_eq_size_sub_one]
     show p.coeff (p.size - 1) = p.leadingCoeff
-    simp [Hex.DensePoly.leadingCoeff, Hex.DensePoly.coeff, Hex.DensePoly.size]
+    exact (Hex.DensePoly.leadingCoeff_eq_coeff_last p hpos).symm
 
 /-- {name}`toPolynomial` preserves divisibility: a divisibility in the executable
 representation transfers to the corresponding Mathlib polynomials. -/
@@ -700,6 +700,22 @@ private theorem toPolynomial_eq_hornerList [Semiring R] [DecidableEq R]
     toPolynomial p = hornerList p.toList := by
   ext n
   rw [coeff_toPolynomial, coeff_hornerList, toList_getD]
+
+/-- Evaluation through a coefficient hom is the downward Horner fold. -/
+theorem eval₂_horner {S : Type*} [Semiring R] [DecidableEq R] [CommSemiring S]
+    (f : R →+* S) (p : Hex.DensePoly R) (x : S) :
+    (toPolynomial p).eval₂ f x =
+      p.coeffs.toList.foldr (fun c acc => f c + x * acc) 0 := by
+  rw [toPolynomial_eq_hornerList]
+  have h : ∀ l : List R, (hornerList l).eval₂ f x =
+      l.foldr (fun c acc => f c + x * acc) 0 := by
+    intro l
+    induction l with
+    | nil => simp [hornerList]
+    | cons c cs ih =>
+      change (Polynomial.C c + Polynomial.X * hornerList cs).eval₂ f x = _
+      simp [Polynomial.eval₂_add, Polynomial.eval₂_mul, ih]
+  exact h p.toList
 
 /-- {name}`toPolynomial` intertwines the executable Horner composition with Mathlib's
 polynomial composition. -/

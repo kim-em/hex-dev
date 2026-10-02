@@ -45,7 +45,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
+import signal
 import statistics
 import subprocess
 import sys
@@ -58,7 +60,7 @@ TACTIC_FILE = """import HexGraphIso
 open Hex Hex.GraphIso
 def A : Colored {n} 1 := {exprA}
 def B : Colored {n} 1 := {exprB}
-example : {goal} := by graph_iso (maxSearchNodes := 100000000) (maxKernelSteps := 1000000000)
+example : {goal} := by graph_iso (maxSearchNodes := 100000000)
 """
 
 _TIME = re.compile(r"^\t(.+?) ([0-9.]+)(ms|s|m)$")
@@ -68,6 +70,31 @@ _EXCLUDED = {"import", "initialization", "parsing"}
 
 def _read_jsonl(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text().splitlines() if line]
+
+
+def _run_tactic(command: list[str], timeout: float) -> subprocess.CompletedProcess[str] | None:
+    """Run one proof; a timeout terminates Lake and Lean."""
+    proc = subprocess.Popen(
+        command, cwd=REPO_ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        text=True, start_new_session=True,
+        env=os.environ)
+
+    def stop() -> None:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        proc.communicate()
+
+    try:
+        stdout, stderr = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        stop()
+        return None
+    except BaseException:
+        stop()
+        raise
+    return subprocess.CompletedProcess(command, proc.returncode, stdout, stderr)
 
 
 def _tactic_seconds(record: dict, timeout: float) -> float | None:
@@ -83,15 +110,16 @@ def _tactic_seconds(record: dict, timeout: float) -> float | None:
         # `lake lean` loads the library's precompiled modules, as a
         # downstream `lake build` does; `lake env lean` would interpret
         # the compiled search instead.
-        proc = subprocess.run(
+        proc = _run_tactic(
             ["lake", "lean", str(path), "--", "-Dprofiler=true"],
-            cwd=REPO_ROOT, capture_output=True, text=True, timeout=timeout)
-    except subprocess.TimeoutExpired:
-        return None
+            timeout)
     finally:
         path.unlink()
+    if proc is None:
+        return None
     if proc.returncode != 0:
-        print(f"tactic failed on {record['name']}:\n{proc.stderr[-2000:]}",
+        diagnostics = (proc.stdout + proc.stderr)[-2000:]
+        print(f"tactic failed on {record['name']}:\n{diagnostics}",
               file=sys.stderr)
         return None
     total = 0.0
@@ -217,9 +245,10 @@ def main() -> int:
         caption += (f"\nmedian graph_iso time {neg_median:.2f} s; the "
                     f"{len(positives)} positive pairs, excluded here, "
                     f"median {pos_median * 1e3:.0f} ms")
+    caption += f"\ntactic timeout: {args.tactic_timeout:g} s wall time per pair"
     fig.text(0.5, 0.01, caption, ha="center", fontsize=7, style="italic")
     pairs_png = args.out_dir / "hexgraphiso-pairs-cactus.svg"
-    fig.tight_layout(rect=(0, 0.08, 1, 1))
+    fig.tight_layout(rect=(0, 0.1, 1, 1))
     fig.savefig(pairs_png)
     plt.close(fig)
 

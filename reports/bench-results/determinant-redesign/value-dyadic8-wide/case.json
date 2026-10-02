@@ -1,0 +1,8 @@
+{
+  "output": "reports/bench-results/determinant-redesign/value-dyadic8-wide",
+  "ring": "dyadic",
+  "dimension": 8,
+  "bits": 8,
+  "shape": "dense",
+  "spread": 64
+}

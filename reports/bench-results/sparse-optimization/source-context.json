@@ -1,0 +1,68 @@
+{
+  "base_commit": "d55a63de6c1a4a2132afb6e315cca7a322aabb57",
+  "host": "chungus2",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "checkpoints": {
+    "profile": {
+      "binary_sha256": "fa9e53900c9d448e67c8ce6c325282f65d176ab6c44990c0cd18b013f0115c6a",
+      "source_sha256": {
+        "HexPermGroup/Perm.lean": "39a1ea2eacc8d1b82af64b16f4c37b25d3923d01752469ebd16ee6b84c5f9c3c",
+        "HexGraphIso/Nauty/Sparse/Refine.lean": "facd02f83ce343f207db76e92d44efae5da3cac851cde1eeb5be5ea3593589e7",
+        "HexGraphIso/Nauty/Sparse/Target.lean": "08561a381d8fef89948b5872917ec3c822e5bccd8bda887fc555a7c8b9f1a2d8",
+        "bench/HexGraphIso/SparseBench.lean": "fe649789ab0a1f840078e33db162841f6f2c20f56488aefc085a4045d514e56d"
+      },
+      "restore_patch": "restore-profile.patch"
+    },
+    "ownership": {
+      "binary_sha256": "582a0260c21102747d3c58edab24f99caed9d040eaec1c7b0103f8e427a101d4",
+      "source_sha256": {
+        "HexPermGroup/Perm.lean": "39a1ea2eacc8d1b82af64b16f4c37b25d3923d01752469ebd16ee6b84c5f9c3c",
+        "HexGraphIso/Nauty/Sparse/Refine.lean": "c2da376f5335610486b1fc070fcb94e7d8f900dca000f501fa3b847f1ba0ad03",
+        "HexGraphIso/Nauty/Sparse/Target.lean": "08561a381d8fef89948b5872917ec3c822e5bccd8bda887fc555a7c8b9f1a2d8",
+        "bench/HexGraphIso/SparseBench.lean": "fe649789ab0a1f840078e33db162841f6f2c20f56488aefc085a4045d514e56d"
+      },
+      "restore_patch": "restore-ownership.patch"
+    },
+    "label": {
+      "binary_sha256": "2537bd5217ccc2f2296132ab09355b7740f1864a8ce37280915ad4baf32a43f4",
+      "source_sha256": {
+        "HexPermGroup/Perm.lean": "9f37e6622f455439ce2db0ac783841e82c7fcdf4f14728ea79b9441263ff4fcb",
+        "HexGraphIso/Nauty/Sparse/Refine.lean": "c2da376f5335610486b1fc070fcb94e7d8f900dca000f501fa3b847f1ba0ad03",
+        "HexGraphIso/Nauty/Sparse/Target.lean": "08561a381d8fef89948b5872917ec3c822e5bccd8bda887fc555a7c8b9f1a2d8",
+        "bench/HexGraphIso/SparseBench.lean": "fe649789ab0a1f840078e33db162841f6f2c20f56488aefc085a4045d514e56d"
+      },
+      "restore_patch": "restore-label.patch"
+    },
+    "iteration": {
+      "binary_sha256": "60e859234a52808392fc28374ecd12ea70a915fc35afe601c25eb7a12822aa5c",
+      "source_sha256": {
+        "HexPermGroup/Perm.lean": "9f37e6622f455439ce2db0ac783841e82c7fcdf4f14728ea79b9441263ff4fcb",
+        "HexGraphIso/Nauty/Sparse/Refine.lean": "763e059c2c228655dc68e377c053976563f345d85a1e3d559a764458e5c7b14c",
+        "HexGraphIso/Nauty/Sparse/Target.lean": "f67bafe16e98d80fd3ee7825ccf8853093c295454dfc7548c1136c763e2bc709",
+        "bench/HexGraphIso/SparseBench.lean": "fe649789ab0a1f840078e33db162841f6f2c20f56488aefc085a4045d514e56d"
+      },
+      "restore_patch": "restore-iteration.patch"
+    }
+  },
+  "current_source_sha256": {
+    "HexPermGroup/Perm.lean": "9f37e6622f455439ce2db0ac783841e82c7fcdf4f14728ea79b9441263ff4fcb",
+    "HexGraphIso/Nauty/Sparse/Refine.lean": "763e059c2c228655dc68e377c053976563f345d85a1e3d559a764458e5c7b14c",
+    "HexGraphIso/Nauty/Sparse/Target.lean": "f67bafe16e98d80fd3ee7825ccf8853093c295454dfc7548c1136c763e2bc709",
+    "bench/HexGraphIso/SparseBench.lean": "86e6c5dd720cbf065be72b94212a3dd6fc3bf674780ec781577702602d0a8387"
+  },
+  "conformance": {
+    "searches": 45491,
+    "refinements": 220,
+    "sorts": 130,
+    "dense_traces": 39032,
+    "dense_fixtures": 6233,
+    "sparse_fixtures": 6233,
+    "search_records_sha256": "3c2e1316becbab2e85015f8fe47e6f8bcbb309bc0a54302d5225c52063ef0c57",
+    "permutation_fixture_bytes": "unchanged"
+  },
+  "dense_cactus": {
+    "fingerprint": "b31b4f508c3f",
+    "sweep": "hexgraphiso-cactus-b31b4f508c3f-chungus2.jsonl",
+    "freshness_check": "passed"
+  }
+}

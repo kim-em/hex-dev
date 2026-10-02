@@ -11,12 +11,22 @@ and exits non-zero so CI fails the job.
 Operations cross-checked
 ------------------------
 
+* `field-inverse`, `field-solve` — complete outputs over rationals, prime
+  residues, and rational functions. Check inverse identities, augmented rank,
+  affine-basis completeness, and inconsistency certificates. Rational functions
+  load SymPy lazily and use DomainMatrix over QQ.frac_field(t).
 * `det`       — Lean `Matrix.det` (combinatorial sum over `n!`
   permutations).  python-flint computes the integer determinant via
   `fmpz_mat.det()`.
 * `bareiss`   — Lean `Matrix.bareiss` (fraction-free Bareiss).  The
   oracle expectation is identical to `det`: any disagreement here means
   Lean's two determinant implementations have drifted.
+* `det-rat`   — Lean `Hex.Det.det` over `Rat`, read from a `ratmatrix`
+  fixture whose entries are `[num, den]` pairs and whose result value is
+  the same pair shape.  python-flint computes it with `fmpq_mat.det()`.
+* `det-mod`   — Lean `Hex.Det.det` over prime residues, read from a
+  `modmatrix` fixture carrying its modulus.  python-flint computes it
+  with `nmod_mat.det()`.
 * `rank`      — Lean `Matrix.rowReduce_rank` over `Q`.  python-flint's
   `fmpz_mat.rank()` agrees with the rational rank of the integer matrix.
 * `rref`      — Lean's rational reduced row echelon form (`Matrix.rowReduce`)
@@ -125,6 +135,18 @@ def _fmpq_mat_from_pairs(rows: list[list[list[int]]]):
             num, den = entry
             out[i, j] = fmpq(int(num), int(den))
     return out
+
+
+def _rat_rows(record: dict[str, Any]) -> list[list[list[int]]]:
+    rows = record["rows"]
+    if not rows or not rows[0]:
+        raise OracleMismatch("ratmatrix fixture has no entries")
+    return rows
+
+
+def _nmod_mat(rows: list[list[int]], modulus: int):
+    from flint import nmod_mat  # type: ignore[import-not-found]
+    return nmod_mat(len(rows), len(rows[0]), [x for row in rows for x in row], modulus)
 
 
 def _fmpz_rows(matrix: Any) -> list[list[int]]:
@@ -240,7 +262,7 @@ def _check_det(
     oracle_version: str,
 ) -> None:
     rows = _rows(matrix_record)
-    if len(rows) != len(rows[0]):
+    if any(len(row) != len(rows) for row in rows):
         raise OracleMismatch(
             f"{lib}/{case_id}: det requires a square matrix, "
             f"got {len(rows)}x{len(rows[0])}"
@@ -284,6 +306,78 @@ def _check_bareiss(
         profile=profile,
         seed=seed,
         oracle_version=oracle_version,
+    )
+
+
+def _check_det_rat(
+    *,
+    case_id: str,
+    lib: str,
+    matrix_record: dict[str, Any],
+    lean_value: list[int],
+    failure_dir: Path,
+    profile: str,
+    seed: int,
+    oracle_version: str,
+) -> None:
+    from flint import fmpq  # type: ignore[import-not-found]
+    rows = _rat_rows(matrix_record)
+    if len(rows) != len(rows[0]):
+        raise OracleMismatch(
+            f"{lib}/{case_id}: det-rat requires a square matrix, "
+            f"got {len(rows)}x{len(rows[0])}"
+        )
+    oracle_value = _fmpq_mat_from_pairs(rows).det()
+    if not isinstance(lean_value, list) or len(lean_value) != 2:
+        raise OracleMismatch(
+            f"{lib}/{case_id}: det-rat value must be a [num, den] pair"
+        )
+    lean_rational = fmpq(int(lean_value[0]), int(lean_value[1]))
+    assert_equal(
+        [int(lean_rational.p), int(lean_rational.q)],
+        [int(oracle_value.p), int(oracle_value.q)],
+        library=lib,
+        case_id=f"{case_id}:det-rat",
+        kind="det-rat",
+        input_record=matrix_record,
+        oracle_name="python-flint",
+        oracle_version=oracle_version,
+        failure_dir=failure_dir,
+        profile=profile,
+        seed=seed,
+    )
+
+
+def _check_det_mod(
+    *,
+    case_id: str,
+    lib: str,
+    matrix_record: dict[str, Any],
+    lean_value: int,
+    failure_dir: Path,
+    profile: str,
+    seed: int,
+    oracle_version: str,
+) -> None:
+    rows = matrix_record["rows"]
+    if not rows or len(rows) != len(rows[0]):
+        raise OracleMismatch(
+            f"{lib}/{case_id}: det-mod requires a nonempty square matrix"
+        )
+    modulus = int(matrix_record["modulus"])
+    oracle_value = int(str(_nmod_mat(rows, modulus).det()))
+    assert_equal(
+        int(lean_value) % modulus,
+        oracle_value % modulus,
+        library=lib,
+        case_id=f"{case_id}:det-mod",
+        kind="det-mod",
+        input_record=matrix_record,
+        oracle_name="python-flint",
+        oracle_version=oracle_version,
+        failure_dir=failure_dir,
+        profile=profile,
+        seed=seed,
     )
 
 
@@ -501,7 +595,7 @@ def _check_nullspace(
 ) -> None:
     rows = _rows(matrix_record)
     n = len(rows)
-    m = len(rows[0]) if n else 0
+    m = len(rows[0]) if n else int(matrix_record.get("cols", 0))
     oracle_z = _fmpz_mat(rows)
     oracle_rank = int(oracle_z.rank())
     expected_nullity = m - oracle_rank
@@ -526,7 +620,7 @@ def _check_nullspace(
 
     from flint import fmpq, fmpq_mat  # type: ignore[import-not-found]
 
-    M_q = _fmpq_mat_from_int(rows)
+    M_q = _fmpq_mat_from_int(rows) if n else fmpq_mat(0, m)
 
     # (b) Each Lean basis vector is annihilated by M over Q.
     for k, vec in enumerate(lean_value):
@@ -579,6 +673,145 @@ def _check_nullspace(
     )
 
 
+def _field_check(record: dict[str, Any], value: Any, operation: str) -> None:
+    """Check full inverse/affine outputs in the fixture's exact field."""
+    from flint import fmpq, fmpq_mat, nmod_mat
+
+    carrier = record["carrier"]
+    n, m = record["n"], record["m"]
+    if carrier == "RationalFn":
+        # Keep SymPy out of the rational/integer/modular oracle paths.
+        from sympy import QQ, symbols
+        from sympy.polys.matrices import DomainMatrix
+        field = QQ.frac_field(symbols("t"))
+        t = field.gens[0]
+
+        def decode(q):
+            num, den = q
+            def poly(cs):
+                return sum((field.convert(QQ(*c)) * t**i for i, c in enumerate(cs)), field.zero)
+            return poly(num) / poly(den)
+
+        def construct(rows, nr, nc):
+            return DomainMatrix(rows, (nr, nc), field)
+
+        def rank(a):
+            return len(a.rref()[1])
+
+        def equal(a, b):
+            return (a - b).is_zero_matrix
+
+        def identity(k):
+            return DomainMatrix.eye(k, field).to_dense()
+
+        zero = field.zero
+    elif carrier in ("Rat", "ZMod64"):
+        if carrier == "Rat":
+            decode = lambda q: fmpq(*q)
+            construct = lambda rows, nr, nc: fmpq_mat(nr, nc, [x for r in rows for x in r])
+            zero = fmpq(0)
+        else:
+            p = record["modulus"]
+            if p < 2:
+                raise ValueError("invalid prime modulus")
+            decode = lambda q: int(q) % p
+            construct = lambda rows, nr, nc: nmod_mat(nr, nc, [x for r in rows for x in r], p)
+            zero = 0
+        rank = lambda a: a.rref()[1]
+        equal = lambda a, b: a == b
+        identity = lambda k: construct([[int(i == j) for j in range(k)] for i in range(k)], k, k)
+    else:
+        raise ValueError(f"unknown field carrier: {carrier}")
+
+    def matrix(rows, nr, nc):
+        if len(rows) != nr or any(len(r) != nc for r in rows):
+            raise ValueError(f"wrong matrix shape, expected {nr}x{nc}")
+        return construct([[decode(x) for x in r] for r in rows], nr, nc)
+
+    def zeros(nr, nc):
+        return construct([[zero] * nc for _ in range(nr)], nr, nc)
+
+    def require(ok, message):
+        if not ok:
+            raise ValueError(message)
+
+    a = matrix(record["rows"], n, m)
+    r = rank(a)
+    if operation == "field-inverse":
+        require(n == m, "inverse fixture is not square")
+        if value is None:
+            require(r < n, "inverse failed on an invertible matrix")
+        else:
+            b = matrix(value, n, n)
+            require(r == n, "inverse succeeded on a singular matrix")
+            require(equal(a * b, identity(n)) and equal(b * a, identity(n)), "inverse identities")
+            require(equal(b, a.inv()), "inverse disagrees with native exact inverse")
+        return
+
+    require(len(record["b"]) == n, "wrong RHS length")
+    rhs = matrix([[x] for x in record["b"]], n, 1)
+    augmented = matrix([row + [x] for row, x in zip(record["rows"], record["b"])], n, m + 1)
+    consistent = rank(augmented) == r
+    if "error" in value:
+        require(not consistent, "solve reported inconsistency for a consistent RHS")
+        y = matrix([value["error"]], 1, n)
+        require(equal(y * a, zeros(1, m)), "separator is not in the left kernel")
+        require(not equal(y * rhs, zeros(1, 1)), "separator does not separate the RHS")
+    else:
+        require(consistent, "solve succeeded for an inconsistent RHS")
+        require(len(value["particular"]) == m, "wrong particular length")
+        x = matrix([[x] for x in value["particular"]], m, 1)
+        basis = matrix(value["basis"], m, m - r)
+        require(equal(a * x, rhs), "particular solution residual")
+        require(equal(a * basis, zeros(n, m - r)), "nullspace basis residual")
+        require(rank(basis) == m - r, "basis does not span the whole kernel")
+        if n == m and r == n:
+            # FLINT solve only accepts invertible square coefficients.
+            expected = a.inv() * rhs if carrier == "RationalFn" else a.solve(rhs)
+            require(equal(x, expected), "unique solution disagrees with native exact solve")
+
+
+def _check_field(*, case_id, lib, matrix_record, lean_value, failure_dir,
+                 profile, seed, oracle_version, operation):
+    try:
+        _field_check(matrix_record, lean_value, operation)
+    except (ValueError, TypeError, KeyError, ZeroDivisionError) as exc:
+        from importlib.metadata import version
+        from scripts.oracle.common import write_failure
+        rational_functions = matrix_record["carrier"] == "RationalFn"
+        write_failure(failure_dir, library=lib, profile=profile, seed=seed,
+                      case_id=case_id, kind=operation, input_record=matrix_record,
+                      lean_output=lean_value, oracle_output="exact field identities and completeness",
+                      oracle_name="SymPy DomainMatrix" if rational_functions else "python-flint",
+                      oracle_version=version("sympy") if rational_functions else oracle_version,
+                      diff=str(exc))
+        raise OracleMismatch(str(exc)) from exc
+
+
+def _check_dixon(*, case_id, lib, matrix_record, lean_value, failure_dir,
+                 profile, seed, oracle_version):
+    """Compare the complete common-denominator solution and its reduction."""
+    from flint import fmpq_mat
+    from math import lcm
+    rows, rhs = matrix_record["rows"], matrix_record["rhs"]
+    n, m = len(rows), matrix_record["rhsCols"]
+    a = fmpq_mat(n, n, [int(x) for row in rows for x in row])
+    b = fmpq_mat(n, m, [int(x) for row in rhs for x in row])
+    if a.det() == 0:
+        expected = None
+    else:
+        x = a.solve(b) if n and m else fmpq_mat(n, m)
+        den = 1
+        for i in range(n):
+            for j in range(m):
+                den = lcm(den, int(x[i, j].q))
+        expected = {"num": [[int(x[i, j] * den) for j in range(m)] for i in range(n)],
+                    "den": den}
+    assert_equal(lean_value, expected, library=lib, case_id=f"{case_id}:dixon-solve",
+                 kind="dixon-solve", input_record=matrix_record, oracle_name="python-flint",
+                 oracle_version=oracle_version, failure_dir=failure_dir, profile=profile, seed=seed)
+
+
 def check(
     source: str | Path | None,
     *,
@@ -592,6 +825,10 @@ def check(
     checked = 0
     handlers = {
         "det":       _check_det,
+        "det-divisor": _check_det,
+        "dixon-solve": _check_dixon,
+        "det-rat":   _check_det_rat,
+        "det-mod":   _check_det_mod,
         "bareiss":   _check_bareiss,
         "charpoly":  _check_charpoly,
         "minpoly":   _check_minpoly,
@@ -601,6 +838,8 @@ def check(
         "hnf": _check_hnf,
         "hnf-transform": _check_hnf_transform,
         "snf": _check_snf,
+        "field-inverse": lambda **kw: _check_field(**kw, operation="field-inverse"),
+        "field-solve": lambda **kw: _check_field(**kw, operation="field-solve"),
     }
     for result in results:
         lib = result["lib"]

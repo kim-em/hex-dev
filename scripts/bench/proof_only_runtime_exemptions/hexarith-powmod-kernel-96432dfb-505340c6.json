@@ -1,0 +1,6 @@
+{
+  "path": "HexArith/Montgomery/Context.lean",
+  "baseline_blob": "96432dfbfd48de30418e99c170115b5d57c21edc",
+  "current_blob": "505340c66f5fbb9566927071494379a1e170e179",
+  "reason": "The factorization measurements time compiled FactorService requests, excluding module initialization and kernel replay. powModNatGo and powModWordOdd are byte-identical to the baseline. The old powModNat runtime body is preserved verbatim as powModBits; powMod changes only its two fallback references to this renamed definition. The existing powModNat_eq_powMod compiler-simplification theorem still routes compiled callers of powModNat through powMod, and the new implemented_by annotation points to that same runtime implementation. The new window and accumulator definitions are noncomputable kernel workers; they are not executed by this compiled service. The remaining changes are proofs, documentation and attribution. This exemption preserves the native factorization observations only; kernel performance is separately remeasured in reports/hex-primality-windowed-replay.md. The six-bit window for small moduli changes only this kernel definition; the compiler-simplification theorem and implemented_by target are unchanged."
+}

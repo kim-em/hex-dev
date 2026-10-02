@@ -52,7 +52,7 @@ theorem CheapHistory.compare {ctx : Ctx n} {tcLevel level numcells code : Nat} {
   apply h.transport (out := compareCodes level code st) ((referencePolicy ctx 0 tcLevel).compare level code st)
     ((gcaPolicy ctx 0 tcLevel).compare level code st)
   · unfold compareCodes
-    simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.noncheaplevel, ite_self]
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.noncheaplevel, ite_self]
     exact id
   · intro last hd
     exact compareCodes_depth hd hcode
@@ -81,7 +81,7 @@ theorem CheapHistory.classify {ctx : Ctx n} {tcLevel level numcells : Nat} {st :
     ((gcaPolicy ctx 0 tcLevel).classify level numcells st)
   · unfold Nauty.classify
     simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
-      apply_ite Search.noncheaplevel, ite_self]
+      apply_ite SearchState.noncheaplevel, ite_self]
     exact id
   · intro last hd
     exact hd.mono (Nat.le_of_eq (classify_eqlev ctx level numcells st))

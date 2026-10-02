@@ -1,0 +1,26 @@
+{
+  "binary_sha256": {
+    "hexgraphiso_sparse_bench": "cb1a8dde1e149b7714c27ad90fa0cbcf0c91b627b8f0cf72abbe30c1215562bb",
+    "hexgraphiso_sparse_probe": "fc60cee08a7718b4d96c14af1fd79e86511df9fa7a91af672d9884a0406b51dc"
+  },
+  "source_sha256": {
+    "HexGraph/Sparse/Normalize.lean": "6fd8049be817e73af4fc74186379be2aba8c4f66c222f6ed20b851e81a654d92"
+  },
+  "build": {
+    "result": "pass",
+    "jobs": 2238,
+    "targets": [
+      "hexgraphiso_sparse_bench",
+      "hexgraphiso_sparse_probe",
+      "hexgraphiso_emit_sparse",
+      "HexGraphIso.SparseTests",
+      "HexGraphIsoMathlib"
+    ]
+  },
+  "conformance": {
+    "searches": 45491,
+    "refinements": 220,
+    "sorts": 130,
+    "output_sha256": "3c2e1316becbab2e85015f8fe47e6f8bcbb309bc0a54302d5225c52063ef0c57"
+  }
+}

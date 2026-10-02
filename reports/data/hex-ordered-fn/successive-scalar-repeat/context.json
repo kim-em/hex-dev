@@ -1,0 +1,29 @@
+{
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10376/.lake/build/bin/hexorderedfn_bench",
+    "run",
+    "--filter",
+    "Hex.OrderedFnBench",
+    "--export-file",
+    "/tmp/issue-10376-successive-scalar-repeat/runtime.json",
+    "Hex.OrderedFnBench.successiveApproximation"
+  ],
+  "cpu": 30,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "load_before": [
+    62.50732421875,
+    70.85107421875,
+    39.36328125
+  ],
+  "lean_num_threads": "4",
+  "commit": "6b751bcaad0c7a4cc88c5cd5196e8f86827eb3af",
+  "executable_sha256": "6837f31a13e30bc915071c683957b0648804f83a6f25a24b7703699c9aede793",
+  "returncode": 0,
+  "load_after": [
+    24.22314453125,
+    57.48486328125,
+    37.31884765625
+  ],
+  "executable_sha256_after": "6837f31a13e30bc915071c683957b0648804f83a6f25a24b7703699c9aede793"
+}

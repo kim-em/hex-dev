@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "a56a63e3b99c2af2c1b477347d0b3a5bec8d9b51",
+  "current_blob": "a1e8c8aadaf3a77b72f65f4762c95d5b85791495",
+  "reason": "Combines the inherited, already-exempted target registrations with the new HexDeterminantalIdeal, HexDeterminantalIdealMathlib and HexDeterminantalIdealTests libraries, the hexdeterminantalideal_emit_fixtures and hexdeterminantalideal_bench executables, and the HexConformance globs for the new conformance modules. None of these targets changes hexbz_factor_service, any library it imports, or its build options."
+}

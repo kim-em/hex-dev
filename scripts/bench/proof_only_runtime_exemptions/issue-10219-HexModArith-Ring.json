@@ -1,0 +1,6 @@
+{
+  "path": "HexModArith/Ring.lean",
+  "baseline_blob": "572bd48723e1bb1b5eac544bdf950f9ac3759e31",
+  "current_blob": "25d77491b7f1d9cde974c883e5907ce7874a617c",
+  "reason": "Adds only a theorem identifying an integer cast representative with its remainder; the theorem erases at runtime."
+}

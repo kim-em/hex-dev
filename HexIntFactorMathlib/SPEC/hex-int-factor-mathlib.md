@@ -1,12 +1,5 @@
 # hex-int-factor-mathlib (depends on hex-int-factor + hex-primality-mathlib + Mathlib)
 
-## Correspondence-only classification
-
-This library is a `correspondence-only-layer`.
-
-Computational conformance owner: `HexIntFactor`
-Computational performance owner: `HexIntFactor`
-
 The companion proves that checked `HexIntFactor` data agrees with Mathlib's
 factorization, divisor, squarefree, totient, and multiplicative-order APIs. It
 does not search for factors or orders, replay a certificate, reify syntax, run

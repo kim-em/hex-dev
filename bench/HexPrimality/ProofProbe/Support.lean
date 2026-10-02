@@ -65,6 +65,8 @@ private meta def certEq : PrimeCert → PrimeCert → Bool
   | .pock n xs, .pock m ys => n == m && factorsEq xs ys
   | .pock3 n r s w xs, .pock3 n' r' s' w' ys =>
       n == n' && r == r' && s == s' && w == w' && factorsEq xs ys
+  | .pock3Sieve n r s w m xs, .pock3Sieve n' r' s' w' m' ys =>
+      n == n' && r == r' && s == s' && w == w' && m == m' && factorsEq xs ys
   | _, _ => false
 
 private meta def factorsEq : List (Nat × Nat × PrimeCert) →

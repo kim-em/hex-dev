@@ -1,0 +1,6 @@
+{
+  "path": "HexBareiss/Kernel.lean",
+  "baseline_blob": null,
+  "current_blob": "864ca110295172fd75096c030805a2be3c693103",
+  "reason": "Adds the packed triangularization checkers (triangularCheckPacked, checkDetListPacked, checkDetRatPacked) to the kernel determinant certificate module and takes dotInt and the column functions from Hex.Matrix.Packed; the module is the kernel certificate of the det tactic, nothing on the factorization path calls it, and no measured operation or branch of the factorization sweep changes."
+}

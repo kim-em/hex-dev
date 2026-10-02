@@ -1,0 +1,23 @@
+{
+  "command": [
+    "/run/current-system/sw/bin/python3",
+    "scripts/bench/graphiso_sweep.py",
+    "--corpus",
+    "/tmp/hex-sparse-cutover/corpus",
+    "--isograph",
+    "/tmp/IsoGraph",
+    "--passes",
+    "2",
+    "--only",
+    "hex-sparse-canon:cfi,hex-sparse-canon:circulant-12,hex-sparse-canon:circulant-1248,hex-sparse-canon:cubic,hex-sparse-canon:grid,hex-sparse-canon:hadamard,hex-sparse-canon:hypercube,hex-sparse-canon:johnson,hex-sparse-canon:kneser,hex-sparse-canon:latin,hex-sparse-canon:lattice,hex-sparse-canon:multipede,hex-sparse-canon:paley,hex-sparse-canon:projective-plane,hex-sparse-canon:random,hex-sparse-canon:shrunken-multipede,hex-sparse-canon:sparse-random,hex-sparse-canon:steiner,hex-sparse-canon:tree,hex-sparse-canon:union,hex-sparse-output:cfi,hex-sparse-output:circulant-12,hex-sparse-output:circulant-1248,hex-sparse-output:cubic,hex-sparse-output:grid,hex-sparse-output:hadamard,hex-sparse-output:hypercube,hex-sparse-output:johnson,hex-sparse-output:kneser,hex-sparse-output:latin,hex-sparse-output:lattice,hex-sparse-output:multipede,hex-sparse-output:paley,hex-sparse-output:projective-plane,hex-sparse-output:random,hex-sparse-output:shrunken-multipede,hex-sparse-output:sparse-random,hex-sparse-output:steiner,hex-sparse-output:tree,hex-sparse-output:union",
+    "--merge-into",
+    "reports/bench-results/sparse-cutover/comparison-seed.jsonl",
+    "--out",
+    "reports/bench-results/hexgraphiso-comparison-cutover-chungus2.jsonl",
+    "--raw-out",
+    "reports/bench-results/hexgraphiso-cutover-chungus2.runs.jsonl"
+  ],
+  "scope": "Canonicalization and output for all 102 corpus instances with n < 128; other cells retained from optimized2.",
+  "binary_sha256": "cb1a8dde1e149b7714c27ad90fa0cbcf0c91b627b8f0cf72abbe30c1215562bb",
+  "seed_sha256": "54851d939de58ebf0891eb291bd1ba5fb01d042c6a63bcb0ccebc0149ed4eb40"
+}

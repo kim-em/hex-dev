@@ -1,0 +1,506 @@
+{
+  "cpu": 12,
+  "host": "chungus2",
+  "load_before": [
+    8.171875,
+    10.9248046875,
+    30.4541015625
+  ],
+  "commit": "88b1c74eefb5e53f0e56440b848151003c44ac58",
+  "command": [
+    ".lake/build/bin/hexprimality_bench",
+    "run",
+    "Hex.PrimalityBench.runConstruction",
+    "Hex.PrimalityBench.runCurveChecker",
+    "Hex.PrimalityBench.runRuntimePrimes",
+    "Hex.PrimalityBench.runP521Construction",
+    "Hex.PrimalityBench.runP521Checker",
+    "--export-file",
+    "/tmp/fixed10291-export.json"
+  ],
+  "source_sha256": {
+    "bench/HexPrimality/Bench.lean": "d78e86808adf5a5ab9c7702e7814f13cb110635cd523cf6f54f5b31f870190ed",
+    "bench/HexPrimalityBench/Inputs.lean": "6a482734853890e7e3d1c923b88774bff287df9f8bf8973b5ec739c577601be2",
+    "HexPrimality/Construction.lean": "5ef4a354be722ff27e8a7ea5202e99d5bfdadbd88e986cca63a4ee761eb131d4"
+  },
+  "stdout": "Hex.PrimalityBench.runConstruction    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=88b1c74-dirty, 2026-09-20T08:45:00Z, host=chungus2\n  repeat 0  414.506 ms\n  repeat 1  416.496 ms\n  repeat 2  417.283 ms\n  repeat 3  415.094 ms\n  repeat 4  418.318 ms\n  median: 416.496 ms    min: 414.506 ms    max: 418.318 ms\n  hash: all repeats agree\n  observed hash: 0x1d\n  expected hash: matches\n  peak RSS: 68_508 kB..69_156 kB (across 5 ok repeat(s))\n\nHex.PrimalityBench.runCurveChecker    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=88b1c74-dirty, 2026-09-20T08:45:02Z, host=chungus2\n  repeat 0  527.077 \u00b5s  (\u00d72^1, total 1.054 ms)\n  repeat 1  563.891 \u00b5s  (\u00d72^1, total 1.128 ms)\n  repeat 2  555.068 \u00b5s  (\u00d72^1, total 1.110 ms)\n  repeat 3  526.786 \u00b5s  (\u00d72^1, total 1.054 ms)\n  repeat 4  525.099 \u00b5s  (\u00d72^1, total 1.050 ms)\n  median: 527.077 \u00b5s    min: 525.099 \u00b5s    max: 563.891 \u00b5s\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 68_220 kB..68_608 kB (across 5 ok repeat(s))\n\nHex.PrimalityBench.runRuntimePrimes    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=88b1c74-dirty, 2026-09-20T08:45:03Z, host=chungus2\n  repeat 0  52.119 ms\n  repeat 1  52.014 ms\n  repeat 2  52.040 ms\n  repeat 3  52.055 ms\n  repeat 4  51.998 ms\n  median: 52.040 ms    min: 51.998 ms    max: 52.119 ms\n  hash: all repeats agree\n  observed hash: 0xa97e\n  expected hash: matches\n  peak RSS: 68_464 kB..69_124 kB (across 5 ok repeat(s))\n\nHex.PrimalityBench.runP521Construction    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=88b1c74-dirty, 2026-09-20T08:45:03Z, host=chungus2\n  repeat 0  1.378 s\n  repeat 1  1.373 s\n  repeat 2  1.377 s\n  repeat 3  1.376 s\n  repeat 4  1.402 s\n  median: 1.377 s    min: 1.373 s    max: 1.402 s\n  hash: all repeats agree\n  observed hash: 0xaa\n  expected hash: matches\n  peak RSS: 68_592 kB..69_156 kB (across 5 ok repeat(s))\n\nHex.PrimalityBench.runP521Checker    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=88b1c74-dirty, 2026-09-20T08:45:12Z, host=chungus2\n  repeat 0  11.570 ms\n  repeat 1  11.547 ms\n  repeat 2  11.623 ms\n  repeat 3  11.517 ms\n  repeat 4  11.598 ms\n  median: 11.570 ms    min: 11.517 ms    max: 11.623 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 68_064 kB..68_796 kB (across 5 ok repeat(s))\n\nexported to /tmp/fixed10291-export.json\n",
+  "stderr": "",
+  "returncode": 0,
+  "load_after": [
+    7.75732421875,
+    10.74560546875,
+    30.1865234375
+  ],
+  "results": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 414505762,
+            "status": "ok",
+            "result_hash": "0x1d",
+            "repeat_index": 0,
+            "peak_rss_kb": 69152,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 416496464,
+            "status": "ok",
+            "result_hash": "0x1d",
+            "repeat_index": 1,
+            "peak_rss_kb": 68948,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 417282600,
+            "status": "ok",
+            "result_hash": "0x1d",
+            "repeat_index": 2,
+            "peak_rss_kb": 69156,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 415094354,
+            "status": "ok",
+            "result_hash": "0x1d",
+            "repeat_index": 3,
+            "peak_rss_kb": 69060,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 418318305,
+            "status": "ok",
+            "result_hash": "0x1d",
+            "repeat_index": 4,
+            "peak_rss_kb": 68508,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x1d",
+        "min_nanos": 414505762,
+        "median_nanos": 416496464,
+        "max_nanos": 418318305,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.PrimalityBench.runConstruction",
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789893900227,
+          "timestamp_iso": "2026-09-20T08:45:00Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "88b1c74eefb5e53f0e56440b848151003c44ac58",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": false,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 5,
+          "expected_hash": "0x1d"
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1054154,
+            "status": "ok",
+            "result_hash": "0x1",
+            "repeat_index": 0,
+            "peak_rss_kb": 68360,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1127782,
+            "status": "ok",
+            "result_hash": "0x1",
+            "repeat_index": 1,
+            "peak_rss_kb": 68424,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1110136,
+            "status": "ok",
+            "result_hash": "0x1",
+            "repeat_index": 2,
+            "peak_rss_kb": 68220,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1053573,
+            "status": "ok",
+            "result_hash": "0x1",
+            "repeat_index": 3,
+            "peak_rss_kb": 68416,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1050198,
+            "status": "ok",
+            "result_hash": "0x1",
+            "repeat_index": 4,
+            "peak_rss_kb": 68608,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x1",
+        "min_nanos": 525099,
+        "median_nanos": 527077,
+        "max_nanos": 563891,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.PrimalityBench.runCurveChecker",
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789893902900,
+          "timestamp_iso": "2026-09-20T08:45:02Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "88b1c74eefb5e53f0e56440b848151003c44ac58",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": false,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 5,
+          "expected_hash": "0x1"
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 52119122,
+            "status": "ok",
+            "result_hash": "0xa97e",
+            "repeat_index": 0,
+            "peak_rss_kb": 69124,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 52014067,
+            "status": "ok",
+            "result_hash": "0xa97e",
+            "repeat_index": 1,
+            "peak_rss_kb": 68960,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 52039935,
+            "status": "ok",
+            "result_hash": "0xa97e",
+            "repeat_index": 2,
+            "peak_rss_kb": 68464,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 52055008,
+            "status": "ok",
+            "result_hash": "0xa97e",
+            "repeat_index": 3,
+            "peak_rss_kb": 68952,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 51998394,
+            "status": "ok",
+            "result_hash": "0xa97e",
+            "repeat_index": 4,
+            "peak_rss_kb": 68768,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xa97e",
+        "min_nanos": 51998394,
+        "median_nanos": 52039935,
+        "max_nanos": 52119122,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.PrimalityBench.runRuntimePrimes",
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789893903079,
+          "timestamp_iso": "2026-09-20T08:45:03Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "88b1c74eefb5e53f0e56440b848151003c44ac58",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": false,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 5,
+          "expected_hash": "0xa97e"
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1377678462,
+            "status": "ok",
+            "result_hash": "0xaa",
+            "repeat_index": 0,
+            "peak_rss_kb": 69140,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1373016485,
+            "status": "ok",
+            "result_hash": "0xaa",
+            "repeat_index": 1,
+            "peak_rss_kb": 68840,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1377051378,
+            "status": "ok",
+            "result_hash": "0xaa",
+            "repeat_index": 2,
+            "peak_rss_kb": 68844,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1376271848,
+            "status": "ok",
+            "result_hash": "0xaa",
+            "repeat_index": 3,
+            "peak_rss_kb": 69156,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1401501527,
+            "status": "ok",
+            "result_hash": "0xaa",
+            "repeat_index": 4,
+            "peak_rss_kb": 68592,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xaa",
+        "min_nanos": 1373016485,
+        "median_nanos": 1377051378,
+        "max_nanos": 1401501527,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.PrimalityBench.runP521Construction",
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789893903553,
+          "timestamp_iso": "2026-09-20T08:45:03Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "88b1c74eefb5e53f0e56440b848151003c44ac58",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": false,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 5,
+          "expected_hash": "0xaa"
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 11570251,
+            "status": "ok",
+            "result_hash": "0x1",
+            "repeat_index": 0,
+            "peak_rss_kb": 68144,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 11547387,
+            "status": "ok",
+            "result_hash": "0x1",
+            "repeat_index": 1,
+            "peak_rss_kb": 68796,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 11622969,
+            "status": "ok",
+            "result_hash": "0x1",
+            "repeat_index": 2,
+            "peak_rss_kb": 68064,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 11517162,
+            "status": "ok",
+            "result_hash": "0x1",
+            "repeat_index": 3,
+            "peak_rss_kb": 68080,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 11597712,
+            "status": "ok",
+            "result_hash": "0x1",
+            "repeat_index": 4,
+            "peak_rss_kb": 68096,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x1",
+        "min_nanos": 11517162,
+        "median_nanos": 11570251,
+        "max_nanos": 11622969,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.PrimalityBench.runP521Checker",
+        "expected_hash_check": {
+          "status": "match"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789893912008,
+          "timestamp_iso": "2026-09-20T08:45:12Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "88b1c74eefb5e53f0e56440b848151003c44ac58",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": false,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 5,
+          "expected_hash": "0x1"
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789893900227,
+      "timestamp_iso": "2026-09-20T08:45:00Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0",
+      "lean_toolchain": "leanprover/lean4:4.34.0",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "88b1c74eefb5e53f0e56440b848151003c44ac58",
+      "exe_name": "hexprimality_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  }
+}

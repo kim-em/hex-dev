@@ -1,0 +1,22 @@
+env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=9c14175-dirty, 2026-09-12T21:56:25Z, host=chungus2
+Hex.RowReduceBench.Field.leanSolve16    [fixed] repeats=1
+  repeat 0  8.302 ms  (×2^5, total 265.660 ms)
+  median: 8.302 ms    min: 8.302 ms    max: 8.302 ms
+  hash: all repeats agree
+  observed hash: 0x2fbc47be395702dd
+  expected hash: matches
+  peak RSS: 63_372 kB (across 1 ok repeat(s))
+
+Hex.RowReduceBench.Field.flintSolve16    [fixed] repeats=1
+  repeat 0  336.201 µs  (×2^10, total 344.270 ms)
+  median: 336.201 µs    min: 336.201 µs    max: 336.201 µs
+  hash: all repeats agree
+  observed hash: 0x2fbc47be395702dd
+  expected hash: matches
+  peak RSS: 65_252 kB (across 1 ok repeat(s))
+
+relative median (baseline = Hex.RowReduceBench.Field.leanSolve16, the first CLI argument):
+  Hex.RowReduceBench.Field.leanSolve16: 1.000× (8.302 ms)
+  Hex.RowReduceBench.Field.flintSolve16: 0.040× (336.201 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-solve-16-2.json

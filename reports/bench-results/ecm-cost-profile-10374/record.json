@@ -1,0 +1,348 @@
+{
+  "cpu": 4,
+  "samples": [
+    {
+      "arm": "interpreted",
+      "command": [
+        "perf",
+        "record",
+        "-F",
+        "99",
+        "-g",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/ecm-10374-interpreted.perf",
+        "--",
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.EcmProfile"
+      ],
+      "source": "module\npublic import HexPrimality.Elab\npublic import HexIntFactor.Construction\npublic meta import HexPrimality.Elab\npublic meta import HexIntFactor.Construction\npublic section\n\nset_option maxHeartbeats 4000000\nset_option maxRecDepth 1024\n\n-- Both dispatch forms select precisely the default production provider.\ndef namedProvider : Hex.Nat.FactorSearch := Hex.Nat.ecmFactorSearch\n\nopen Lean Meta Elab in\nrun_cmd Command.liftTermElabM do\n  let some arg \u2190 IO.getEnv \"ECM_SUBJECT\" | throwError \"ECM_SUBJECT required\"\n  let some n := arg.toNat? | throwError \"invalid subject\"\n  let mode := (\u2190 IO.getEnv \"ECM_DISPATCH\").getD \"expression\"\n  let dispatchStart \u2190 IO.monoNanosNow\n  let factor \u2190 if mode == \"name\" then\n      unsafe evalConst Hex.Nat.FactorSearch ``namedProvider\n    else do\n      let e \u2190 Term.elabTermEnsuringType (\u2190 `(Hex.Nat.ecmFactorSearch))\n        (mkConst ``Hex.Nat.FactorSearch)\n      unsafe evalExpr Hex.Nat.FactorSearch (mkConst ``Hex.Nat.FactorSearch) e\n  let dispatchStop \u2190 IO.monoNanosNow\n  let hb \u2190 IO.getNumHeartbeats\n  let start \u2190 IO.monoNanosNow\n  let cell \u2190 IO.mkRef (Hex.Nat.Construction.run n (Hex.Rand.ofSeed n)\n    Hex.Nat.constructionBudget factor)\n  let result \u2190 cell.get\n  let stop \u2190 IO.monoNanosNow\n  let hbStop \u2190 IO.getNumHeartbeats\n  let fields := [(\"nanos\", toJson (stop-start)), (\"heartbeats_raw\", toJson (hbStop-hb)),\n    (\"dispatch_nanos\", toJson (dispatchStop-dispatchStart))]\n  let fields \u2190 match result with\n    | .error f => pure (fields ++ [(\"status\", toJson (reprStr f.stop)),\n        (\"attempts\", toJson f.attempts), (\"rand\", toJson (reprStr f.rand)), (\"events\", toJson (reprStr f.events))])\n    | .ok s => do\n      unless Hex.Nat.checkPrime s.cert.raw && s.cert.raw.subject == n do\n        throwError \"certificate check failed\"\n      pure (fields ++ [(\"status\", toJson \"ok\"), (\"attempts\", toJson s.attempts),\n        (\"rand\", toJson (reprStr s.rand)), (\"events\", toJson (reprStr s.events)), (\"certificate\", toJson (reprStr s.cert.raw))])\n  logInfo m!\"ECM_COST {(Json.mkObj fields).compress}\"\n\nopen Lean Elab in\nrun_cmd do\n  let maps \u2190 IO.FS.readFile \"/proc/self/maps\"\n  for line in maps.splitOn \"\\n\" do\n    if (line.splitOn \"Hex_Hex\").length > 1 then IO.println s!\"LOADED {line}\"\n",
+      "returncode": 0,
+      "stdout": "\u2139 [79/79] Built HexPrimality.ProofProbe.Curve25519.EcmProfile (32s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/EcmProfile.lean:15:0: ECM_COST {\"attempts\":145,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  115792089237316195423570985008687907853269984665640564039457584007908834671663\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock\\n      205115282021455665897114700593932402728804164701536103180137503955397371\\n      [(2,\\n        0,\\n        Hex.Nat.PrimeCert.pock3\\n          255515944373312847190720520512484175977\\n          185873736969223\\n          6447496504\\n          185873736969222\\n          [(3, 2, Hex.Nat.PrimeCert.small 2),\\n           (2, 0, Hex.Nat.PrimeCert.small 4423),\\n           (2, 0, Hex.Nat.PrimeCert.small 41201),\\n           (2, 0, Hex.Nat.PrimeCert.small 96557)])])]\",\"dispatch_nanos\":911360,\"events\":\"[]\",\"heartbeats_raw\":225934192,\"nanos\":31343337090,\"rand\":\"{ state := 16390740441490242943 }\",\"status\":\"ok\"}\ninfo: bench/HexPrimality/ProofProbe/Curve25519/EcmProfile.lean:47:0: LOADED 7acc08aa1000-7acc08aaa000 r--p 00000000 09:7f 1252585206                 /tmp/hex-10374-interpreted/.lake/build/lib/libHex_HexArith.so\nLOADED 7acc08aaa000-7acc08abc000 r-xp 00008000 09:7f 1252585206                 /tmp/hex-10374-interpreted/.lake/build/lib/libHex_HexArith.so\nLOADED 7acc08abc000-7acc08abd000 r--p 00019000 09:7f 1252585206                 /tmp/hex-10374-interpreted/.lake/build/lib/libHex_HexArith.so\nLOADED 7acc08abd000-7acc08abe000 rw-p 00019000 09:7f 1252585206                 /tmp/hex-10374-interpreted/.lake/build/lib/libHex_HexArith.so\nBuild completed successfully (79 jobs).\n",
+      "stderr": "WARNING: Kernel address maps (/proc/{kallsyms,modules}) are restricted,\ncheck /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.\n\nSamples in kernel functions may not be resolved if a suitable vmlinux\nfile is not found in the buildid cache or in the vmlinux path.\n\nSamples in kernel modules won't be resolved at all.\n\nIf some relocation was applied (e.g. kexec) symbols may be misresolved\neven with a suitable vmlinux or kallsyms file.\n\nCouldn't record kernel reference relocation symbol\nSymbol resolution may be skewed if relocation was used (e.g. kexec).\nCheck /proc/kallsyms permission or run as root.\n[ perf record: Woken up 119 times to write data ]\n[ perf record: Captured and wrote 29.460 MB /tmp/ecm-10374-interpreted.perf (3215 samples) ]\n",
+      "artifacts": {
+        ".lake/build/lib/lean/Hex_HexArith_ExactDiv.so": {
+          "bytes": 9352,
+          "sha256": "27e134fe9541f265e7d6ce06783cf1a59bba3fb33f317b1d4f94e2d823fce17f"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Nat_ModArith.so": {
+          "bytes": 8616,
+          "sha256": "cc04ee9b507fe922c5d26cf7bc15b48c7c1cc373517046a58ce68711621489eb"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Nat_Pow.so": {
+          "bytes": 8576,
+          "sha256": "972b45361fd47a5911e8f9c0ffb2a27464f565fda674a40dbe9b9934c3064a7e"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_ExtGcd.so": {
+          "bytes": 24896,
+          "sha256": "6a15c65d550a630b4c4a08686259affca5808d3a6505e984fe37ff24571672e6"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_UInt64_Wide.so": {
+          "bytes": 11672,
+          "sha256": "e4bc847d23d9a7e99a949e49bff412c913151162718c16eb3b135fa4593803ae"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Barrett_ReduceNat.so": {
+          "bytes": 12320,
+          "sha256": "1af7d3a4419dc81a94de50b5df1b93bc2fd619c26e8c9246e8603cad9b3bdf49"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Nat_Prime.so": {
+          "bytes": 24464,
+          "sha256": "6ee4495241bdfa02bd8a766a360ddd867f39d9e3c6d05b6f9b4885813c010981"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Montgomery_RedcNat.so": {
+          "bytes": 12896,
+          "sha256": "3b5a90aa04c08f604315d6796361bb36d2338d29dda75cb729c3ed469fe1da41"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Barrett_Reduce.so": {
+          "bytes": 12096,
+          "sha256": "283a407785f170186eaa1512d7fa07be24c7522aa0085fc92d3f0ee7db263eb2"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Nat_Sqrt.so": {
+          "bytes": 16336,
+          "sha256": "acf70bcc19757cffc4e32752c00ff2eb1fc4adc9ea3f500e8055f9a08ce718e4"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Montgomery_InvNat.so": {
+          "bytes": 10728,
+          "sha256": "283c0f13655ea751c7d951b3557c151b1c37dfbae034b606c2257858e748c1a3"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Barrett_Context.so": {
+          "bytes": 9936,
+          "sha256": "abb3667a8a212937f6012b974da351203ae57fcf9705b2807319ba30f2a8e5ce"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Barrett_Accumulator.so": {
+          "bytes": 24336,
+          "sha256": "1d7ee9d84094c536e3ad99645065f984b7d4d0c16bb7da417c7d916024b72041"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Montgomery_Redc.so": {
+          "bytes": 9776,
+          "sha256": "b730ba63a450594e61817cf84b8b6d862f6665be1f612e1cab73075a7fd816ed"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Montgomery_Context.so": {
+          "bytes": 31448,
+          "sha256": "76d0059a0c31c3f6dc39abb1d19bfbc086ce422c560ec708363dd3e8d794bdc4"
+        }
+      },
+      "aggregate_artifacts": {
+        ".lake/build/lib/libHex_HexArith.so": {
+          "bytes": 129328,
+          "sha256": "cd3194a596d190ed936d06079c9b6e5e6a27e8a488cf730f7b02b45f2cd5fa05"
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "command": [
+        "perf",
+        "record",
+        "-F",
+        "99",
+        "-g",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/ecm-10374-native.perf",
+        "--",
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.EcmProfile"
+      ],
+      "source": "module\npublic import HexPrimality.Elab\npublic import HexIntFactor.Construction\npublic meta import HexPrimality.Elab\npublic meta import HexIntFactor.Construction\npublic section\n\nset_option maxHeartbeats 4000000\nset_option maxRecDepth 1024\n\n-- Both dispatch forms select precisely the default production provider.\ndef namedProvider : Hex.Nat.FactorSearch := Hex.Nat.ecmFactorSearch\n\nopen Lean Meta Elab in\nrun_cmd Command.liftTermElabM do\n  let some arg \u2190 IO.getEnv \"ECM_SUBJECT\" | throwError \"ECM_SUBJECT required\"\n  let some n := arg.toNat? | throwError \"invalid subject\"\n  let mode := (\u2190 IO.getEnv \"ECM_DISPATCH\").getD \"expression\"\n  let dispatchStart \u2190 IO.monoNanosNow\n  let factor \u2190 if mode == \"name\" then\n      unsafe evalConst Hex.Nat.FactorSearch ``namedProvider\n    else do\n      let e \u2190 Term.elabTermEnsuringType (\u2190 `(Hex.Nat.ecmFactorSearch))\n        (mkConst ``Hex.Nat.FactorSearch)\n      unsafe evalExpr Hex.Nat.FactorSearch (mkConst ``Hex.Nat.FactorSearch) e\n  let dispatchStop \u2190 IO.monoNanosNow\n  let hb \u2190 IO.getNumHeartbeats\n  let start \u2190 IO.monoNanosNow\n  let cell \u2190 IO.mkRef (Hex.Nat.Construction.run n (Hex.Rand.ofSeed n)\n    Hex.Nat.constructionBudget factor)\n  let result \u2190 cell.get\n  let stop \u2190 IO.monoNanosNow\n  let hbStop \u2190 IO.getNumHeartbeats\n  let fields := [(\"nanos\", toJson (stop-start)), (\"heartbeats_raw\", toJson (hbStop-hb)),\n    (\"dispatch_nanos\", toJson (dispatchStop-dispatchStart))]\n  let fields \u2190 match result with\n    | .error f => pure (fields ++ [(\"status\", toJson (reprStr f.stop)),\n        (\"attempts\", toJson f.attempts), (\"rand\", toJson (reprStr f.rand)), (\"events\", toJson (reprStr f.events))])\n    | .ok s => do\n      unless Hex.Nat.checkPrime s.cert.raw && s.cert.raw.subject == n do\n        throwError \"certificate check failed\"\n      pure (fields ++ [(\"status\", toJson \"ok\"), (\"attempts\", toJson s.attempts),\n        (\"rand\", toJson (reprStr s.rand)), (\"events\", toJson (reprStr s.events)), (\"certificate\", toJson (reprStr s.cert.raw))])\n  logInfo m!\"ECM_COST {(Json.mkObj fields).compress}\"\n\nopen Lean Elab in\nrun_cmd do\n  let maps \u2190 IO.FS.readFile \"/proc/self/maps\"\n  for line in maps.splitOn \"\\n\" do\n    if (line.splitOn \"Hex_Hex\").length > 1 then IO.println s!\"LOADED {line}\"\n",
+      "returncode": 0,
+      "stdout": "\u2139 [109/180] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10374/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [180/180] Built HexPrimality.ProofProbe.Curve25519.EcmProfile (15s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/EcmProfile.lean:15:0: ECM_COST {\"attempts\":145,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  115792089237316195423570985008687907853269984665640564039457584007908834671663\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock\\n      205115282021455665897114700593932402728804164701536103180137503955397371\\n      [(2,\\n        0,\\n        Hex.Nat.PrimeCert.pock3\\n          255515944373312847190720520512484175977\\n          185873736969223\\n          6447496504\\n          185873736969222\\n          [(3, 2, Hex.Nat.PrimeCert.small 2),\\n           (2, 0, Hex.Nat.PrimeCert.small 4423),\\n           (2, 0, Hex.Nat.PrimeCert.small 41201),\\n           (2, 0, Hex.Nat.PrimeCert.small 96557)])])]\",\"dispatch_nanos\":930810,\"events\":\"[]\",\"heartbeats_raw\":225250347,\"nanos\":15190829005,\"rand\":\"{ state := 16390740441490242943 }\",\"status\":\"ok\"}\ninfo: bench/HexPrimality/ProofProbe/Curve25519/EcmProfile.lean:47:0: LOADED 77e4a1027000-77e4a1046000 r--p 00000000 09:7f 6095538629                 /tmp/hex-10374-native/.lake/build/lib/libHex_HexIntFactor.so\nLOADED 77e4a1046000-77e4a1086000 r-xp 0001e000 09:7f 6095538629                 /tmp/hex-10374-native/.lake/build/lib/libHex_HexIntFactor.so\nLOADED 77e4a1086000-77e4a1088000 r--p 0005d000 09:7f 6095538629                 /tmp/hex-10374-native/.lake/build/lib/libHex_HexIntFactor.so\nLOADED 77e4a1088000-77e4a108a000 rw-p 0005e000 09:7f 6095538629                 /tmp/hex-10374-native/.lake/build/lib/libHex_HexIntFactor.so\nLOADED 77e4a108a000-77e4a1103000 r--p 00000000 09:7f 6095538624                 /tmp/hex-10374-native/.lake/build/lib/libHex_HexPrimality.so\nLOADED 77e4a1103000-77e4a1195000 r-xp 00078000 09:7f 6095538624                 /tmp/hex-10374-native/.lake/build/lib/libHex_HexPrimality.so\nLOADED 77e4a1195000-77e4a1199000 r--p 00109000 09:7f 6095538624                 /tmp/hex-10374-native/.lake/build/lib/libHex_HexPrimality.so\nLOADED 77e4a1199000-77e4a119a000 rw-p 0010c000 09:7f 6095538624                 /tmp/hex-10374-native/.lake/build/lib/libHex_HexPrimality.so\nLOADED 77e4a119b000-77e4a11a2000 r--p 00000000 09:7f 6095488285                 /tmp/hex-10374-native/.lake/build/lib/libHex_HexBasic.so\nLOADED 77e4a11a2000-77e4a11ad000 r-xp 00006000 09:7f 6095488285                 /tmp/hex-10374-native/.lake/build/lib/libHex_HexBasic.so\nLOADED 77e4a11ad000-77e4a11ae000 r--p 00010000 09:7f 6095488285                 /tmp/hex-10374-native/.lake/build/lib/libHex_HexBasic.so\nLOADED 77e4a11ae000-77e4a11af000 rw-p 00010000 09:7f 6095488285                 /tmp/hex-10374-native/.lake/build/lib/libHex_HexBasic.so\nLOADED 77e4a11af000-77e4a11b8000 r--p 00000000 09:7f 6095429593                 /tmp/hex-10374-native/.lake/build/lib/libHex_HexArith.so\nLOADED 77e4a11b8000-77e4a11ca000 r-xp 00008000 09:7f 6095429593                 /tmp/hex-10374-native/.lake/build/lib/libHex_HexArith.so\nLOADED 77e4a11ca000-77e4a11cb000 r--p 00019000 09:7f 6095429593                 /tmp/hex-10374-native/.lake/build/lib/libHex_HexArith.so\nLOADED 77e4a11cb000-77e4a11cc000 rw-p 00019000 09:7f 6095429593                 /tmp/hex-10374-native/.lake/build/lib/libHex_HexArith.so\nBuild completed successfully (180 jobs).\n",
+      "stderr": "WARNING: Kernel address maps (/proc/{kallsyms,modules}) are restricted,\ncheck /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.\n\nSamples in kernel functions may not be resolved if a suitable vmlinux\nfile is not found in the buildid cache or in the vmlinux path.\n\nSamples in kernel modules won't be resolved at all.\n\nIf some relocation was applied (e.g. kexec) symbols may be misresolved\neven with a suitable vmlinux or kallsyms file.\n\nCouldn't record kernel reference relocation symbol\nSymbol resolution may be skewed if relocation was used (e.g. kexec).\nCheck /proc/kallsyms permission or run as root.\n[ perf record: Woken up 68 times to write data ]\n[ perf record: Captured and wrote 16.611 MB /tmp/ecm-10374-native.perf (1618 samples) ]\n",
+      "artifacts": {
+        ".lake/build/lib/lean/Hex_HexArith_ExactDiv.so": {
+          "bytes": 9352,
+          "sha256": "27e134fe9541f265e7d6ce06783cf1a59bba3fb33f317b1d4f94e2d823fce17f"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Nat_ModArith.so": {
+          "bytes": 8616,
+          "sha256": "cc04ee9b507fe922c5d26cf7bc15b48c7c1cc373517046a58ce68711621489eb"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Nat_Pow.so": {
+          "bytes": 8576,
+          "sha256": "972b45361fd47a5911e8f9c0ffb2a27464f565fda674a40dbe9b9934c3064a7e"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_ExtGcd.so": {
+          "bytes": 24896,
+          "sha256": "6a15c65d550a630b4c4a08686259affca5808d3a6505e984fe37ff24571672e6"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_UInt64_Wide.so": {
+          "bytes": 11672,
+          "sha256": "e4bc847d23d9a7e99a949e49bff412c913151162718c16eb3b135fa4593803ae"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Barrett_ReduceNat.so": {
+          "bytes": 12320,
+          "sha256": "1af7d3a4419dc81a94de50b5df1b93bc2fd619c26e8c9246e8603cad9b3bdf49"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Nat_Prime.so": {
+          "bytes": 24464,
+          "sha256": "6ee4495241bdfa02bd8a766a360ddd867f39d9e3c6d05b6f9b4885813c010981"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Montgomery_RedcNat.so": {
+          "bytes": 12896,
+          "sha256": "3b5a90aa04c08f604315d6796361bb36d2338d29dda75cb729c3ed469fe1da41"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Barrett_Reduce.so": {
+          "bytes": 12096,
+          "sha256": "283a407785f170186eaa1512d7fa07be24c7522aa0085fc92d3f0ee7db263eb2"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Nat_Sqrt.so": {
+          "bytes": 16336,
+          "sha256": "acf70bcc19757cffc4e32752c00ff2eb1fc4adc9ea3f500e8055f9a08ce718e4"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Montgomery_InvNat.so": {
+          "bytes": 10728,
+          "sha256": "283c0f13655ea751c7d951b3557c151b1c37dfbae034b606c2257858e748c1a3"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Barrett_Context.so": {
+          "bytes": 9936,
+          "sha256": "abb3667a8a212937f6012b974da351203ae57fcf9705b2807319ba30f2a8e5ce"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Barrett_Accumulator.so": {
+          "bytes": 24336,
+          "sha256": "1d7ee9d84094c536e3ad99645065f984b7d4d0c16bb7da417c7d916024b72041"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Montgomery_Redc.so": {
+          "bytes": 9776,
+          "sha256": "b730ba63a450594e61817cf84b8b6d862f6665be1f612e1cab73075a7fd816ed"
+        },
+        ".lake/build/lib/lean/Hex_HexArith_Montgomery_Context.so": {
+          "bytes": 31448,
+          "sha256": "76d0059a0c31c3f6dc39abb1d19bfbc086ce422c560ec708363dd3e8d794bdc4"
+        },
+        ".lake/build/lib/lean/Hex_HexIntFactor_Rho.so": {
+          "bytes": 11200,
+          "sha256": "638469a39854a26d6dd11e746617338c3e73ac521cc33dc1529dcf03fc25a9e6"
+        },
+        ".lake/build/lib/lean/Hex_HexBasic_ArrayDecEq.so": {
+          "bytes": 11408,
+          "sha256": "33a2a66e688ae802687d953da9aa1d7cec20bde41b9c75761416af0f3695f960"
+        },
+        ".lake/build/lib/lean/Hex_HexBasic_Rand.so": {
+          "bytes": 30416,
+          "sha256": "26ef3916bc8519b50ea2223e5c1356d6f944d0b2ee059dfb646e17c308270b96"
+        },
+        ".lake/build/lib/lean/Hex_HexBasic_ListShim.so": {
+          "bytes": 8992,
+          "sha256": "90022596f53eacbc48a34147cf85850911dd6c9264121a58ffc676f9505ffa00"
+        },
+        ".lake/build/lib/lean/Hex_HexBasic_ExactDiv.so": {
+          "bytes": 9912,
+          "sha256": "6db380efffc8efbaa05302ce9330e9dd7802d2930b516c9f2276a854ab0c0d98"
+        },
+        ".lake/build/lib/lean/Hex_HexBasic_Vector_Modify.so": {
+          "bytes": 11000,
+          "sha256": "03b435072b4181956d075baddadb91933e5297f11405dd6f3ec8cbda281b4da6"
+        },
+        ".lake/build/lib/lean/Hex_HexBasic_OfFn.so": {
+          "bytes": 15328,
+          "sha256": "c03d07f7a3de06e995c68fc9d5f7756abd319cd241b38b0feccb3a591001ea67"
+        },
+        ".lake/build/lib/lean/Hex_HexBasic_ExtTreeMap.so": {
+          "bytes": 27480,
+          "sha256": "de1bbe99edb6f9e7860b5cd8184ea0137d3c14f0802d4a4a0d6a8600643ec1a8"
+        },
+        ".lake/build/lib/lean/Hex_HexBasic_Fold.so": {
+          "bytes": 8960,
+          "sha256": "473dc5c0428c5cca1ef9d037a6f743891fc4b48837fdfb1a4c10ab1c7cddd940"
+        },
+        ".lake/build/lib/lean/Hex_HexBasic_Sort.so": {
+          "bytes": 24776,
+          "sha256": "829703a2ed89508aa5b0a44814417b22492d644b28393e3789ce5952d09e5fe7"
+        },
+        ".lake/build/lib/lean/Hex_HexBasic_List.so": {
+          "bytes": 9032,
+          "sha256": "02bdcea37884cf618fd92a56abdff90fbc3e4b687122e0115c2583d591e0e588"
+        },
+        ".lake/build/lib/lean/Hex_HexBasic_ModuleBoundaryTests.so": {
+          "bytes": 10088,
+          "sha256": "e8787e6f6f675f4f3ff1c7c923c2109d86a04686c49ec9a8b4519d005f70a230"
+        },
+        ".lake/build/lib/lean/Hex_HexPrimality_Sieve.so": {
+          "bytes": 32304,
+          "sha256": "1fe102d02c7f5e5408bb71ed4f8b7bf8f5ad1ac57352c99ca93bfff8f2042515"
+        },
+        ".lake/build/lib/lean/Hex_HexPrimality_Cert3.so": {
+          "bytes": 9064,
+          "sha256": "99ee73fd3b6c8892b10d5e6d85061ef32d6589b3c6ca73d14b3c1afd2cc8ff77"
+        },
+        ".lake/build/lib/lean/Hex_HexPrimality_SieveElab.so": {
+          "bytes": 96240,
+          "sha256": "3935aa5e7698de154fce7d24b31f2590031ecb96be3f395ead2e9cc7f7f53082"
+        },
+        ".lake/build/lib/lean/Hex_HexPrimality_Order.so": {
+          "bytes": 15592,
+          "sha256": "92b3f0e10dffcad90386fc0d43c85ea94198d3fa86e56856dc9d5ac99f60df05"
+        },
+        ".lake/build/lib/lean/Hex_HexPrimality_MillerRabin.so": {
+          "bytes": 24448,
+          "sha256": "ec3bde3cfc3faab24b0c2acedea2d4b0380de56fe6f2f97013c63533ef9b8fc8"
+        },
+        ".lake/build/lib/lean/Hex_HexPrimality_Table.so": {
+          "bytes": 250840,
+          "sha256": "5c02617dc3d2d3f3edbe3afecff4514bd1a4cac761a3738164ff9e351d343a42"
+        },
+        ".lake/build/lib/lean/Hex_HexPrimality_PMinusOne.so": {
+          "bytes": 180880,
+          "sha256": "e411272bce73ee61de92dce2c53e97e6a152a859246c0d06d957a0e3e34ea410"
+        },
+        ".lake/build/lib/lean/Hex_HexPrimality_Cert.so": {
+          "bytes": 78712,
+          "sha256": "6a0083f22e923c6090a31fed57fd005a623ad5875ab4405af0fceebdf3aef31b"
+        },
+        ".lake/build/lib/lean/Hex_HexPrimality_Search.so": {
+          "bytes": 238784,
+          "sha256": "ec870371085b9d5363b66224d6f22c1c3c279ae73d0c9a03a44f9298491e5b10"
+        },
+        ".lake/build/lib/lean/Hex_HexPrimality_Construction.so": {
+          "bytes": 177744,
+          "sha256": "a047ae0c8fd3897bc30560a87c8c737d0427d843a049ed31d26a6fbd92a32a40"
+        },
+        ".lake/build/lib/lean/Hex_HexPrimality_Elab.so": {
+          "bytes": 415912,
+          "sha256": "7925a728d79c41efb26996691f570ddc6fb9a9b9f0c5c8b9e4e26be080f6f807"
+        },
+        ".lake/build/lib/lean/Hex_HexIntFactor_PMinusOne.so": {
+          "bytes": 11944,
+          "sha256": "b65006f0f544a3ceea011f310b3624678b8cc8de485b88532cb9a351892415d5"
+        },
+        ".lake/build/lib/lean/Hex_HexIntFactor_Ecm.so": {
+          "bytes": 79032,
+          "sha256": "eb46d164baf59051c405a4546c4fc5f7b9bfd5ce2a39aaf23198e6024a83c33d"
+        },
+        ".lake/build/lib/lean/Hex_HexIntFactor_Cert.so": {
+          "bytes": 34720,
+          "sha256": "0c48edadcd93a2aff3320a103d37452d4ecfe2d583f8e643ea7ca0d9cc45374c"
+        },
+        ".lake/build/lib/lean/Hex_HexIntFactor_EcmStage2.so": {
+          "bytes": 72792,
+          "sha256": "9f99dd96eb3cde785e9c63b5e6cf808e586f35a6165fe2609cb13bddea790f4a"
+        },
+        ".lake/build/lib/lean/Hex_HexIntFactor_Partial.so": {
+          "bytes": 26296,
+          "sha256": "a5045549d605fb8badf0222e63293d9d428e4baabbe57b82c61804aff884ed05"
+        },
+        ".lake/build/lib/lean/Hex_HexIntFactor_DivisorEnumeration.so": {
+          "bytes": 18752,
+          "sha256": "bd4f262445105808b80b5bc1cf27a0970f05c891dc5d3ad6f283f31991cf09c7"
+        },
+        ".lake/build/lib/lean/Hex_HexIntFactor_Construction.so": {
+          "bytes": 46152,
+          "sha256": "5318a6706c9b3db0d06526593dfcd0a03f0b1e15a8ea85f9427618c200ab7002"
+        },
+        ".lake/build/lib/lean/Hex_HexIntFactor_Order.so": {
+          "bytes": 30848,
+          "sha256": "29701208f36e0b783d4398e8e62dc786e91a2a715c54bec63059f192bb83cfb9"
+        },
+        ".lake/build/lib/lean/Hex_HexIntFactor_Small.so": {
+          "bytes": 57216,
+          "sha256": "06f39642fc8bdc841f86140f76c630f595c462d58abad6d4a00b56892aee75ea"
+        },
+        ".lake/build/lib/lean/Hex_HexIntFactor_Divisors.so": {
+          "bytes": 39816,
+          "sha256": "5b748812f48a6b1e4bd42d48ac29b12b5fc20c013f6f17928e1fe7196761dd16"
+        },
+        ".lake/build/lib/lean/Hex_HexIntFactor_Factor.so": {
+          "bytes": 128192,
+          "sha256": "d47634e198bd1e27cc979bc9c1a3cad6941f98a3c18af59096ab6480f1bee6a1"
+        },
+        ".lake/build/lib/lean/Hex_HexIntFactor_Primality.so": {
+          "bytes": 15568,
+          "sha256": "4767e06466cdd8c2dd62899499ed5e0fd265308b4eee3c0944eccf0f2b5110bb"
+        },
+        ".lake/build/lib/lean/Hex_HexIntFactor_Cyclotomic.so": {
+          "bytes": 64416,
+          "sha256": "9e78ad36053632f9ff2e091bdf1c4a0ba3ba3abff6e95aa5ab6281faf0d936a5"
+        }
+      },
+      "aggregate_artifacts": {
+        ".lake/build/lib/libHex_HexArith.so": {
+          "bytes": 129328,
+          "sha256": "cd3194a596d190ed936d06079c9b6e5e6a27e8a488cf730f7b02b45f2cd5fa05"
+        },
+        ".lake/build/lib/libHex_HexBasic.so": {
+          "bytes": 90808,
+          "sha256": "14fabbd2997b080d798ba1766f4925a64488ab0a3374f68271e3085c2b9c4685"
+        },
+        ".lake/build/lib/libHex_HexPrimality.so": {
+          "bytes": 1400464,
+          "sha256": "b5b9875d29236df1b56b7816915664db1a6cf5a7b36b5ce34d77fe2f527ceea2"
+        },
+        ".lake/build/lib/libHex_HexIntFactor.so": {
+          "bytes": 509776,
+          "sha256": "842399442ba82cb546d8f2e8fc80278711369d271b3bd2ff7351d553f2487b62"
+        }
+      }
+    }
+  ],
+  "scope": "whole fresh module, including import and rendering"
+}

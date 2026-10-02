@@ -18,4 +18,3 @@ set_option maxHeartbeats 40000000
 open Hex.GraphIso Hex.GraphIso.ProofProbe in
 example : ¬ Isomorphic (cfi false) (cfi true) := by
   graph_iso (maxSearchNodes := 100000000) (maxCertRecords := 100000000)
-    (maxKernelSteps := 4000000000)

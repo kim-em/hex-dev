@@ -1,0 +1,316 @@
+--- /dev/null
++++ b/HexGraph/Sparse/Pack.lean
+@@ -0,0 +1,68 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexGraph.Sparse
++
++@[expose] public section
++
++namespace Hex.SparseGraph
++
++@[inline] def packStep (acc : Array Nat × Array α) (row : List α) : Array Nat × Array α :=
++  let (offsets, neighbors) := acc
++  (offsets.push neighbors.size, neighbors ++ row)
++
++/-- Append each row directly to its final array, recording offsets in the
++same pass. No flattened intermediate list or row-length scan is needed. -/
++def pack (rows : List (List α)) : Array Nat × Array α :=
++  let (offsets, neighbors) := rows.foldl packStep (#[], #[])
++  (offsets.push neighbors.size, neighbors)
++
++private theorem pack_fold (rows : List (List α)) (offsets : Array Nat) (neighbors : Array α) :
++    let result := rows.foldl packStep (offsets, neighbors)
++    result.1.toList ++ [result.2.size] =
++        offsets.toList ++ rows.scanl (fun off row => off + row.length) neighbors.size ∧
++      result.2.toList = neighbors.toList ++ rows.flatten := by
++  induction rows generalizing offsets neighbors with
++  | nil => simp
++  | cons row rows ih =>
++    simp only [List.foldl_cons, packStep]
++    have h := ih (offsets.push neighbors.size) (neighbors ++ row)
++    have hsize : (neighbors ++ row).size = neighbors.size + row.length := by
++      rw [← Array.length_toList, Array.toList_appendList]
++      simp
++    simpa [List.scanl_cons, Array.toList_push, Array.toList_appendList,
++      List.flatten_cons, List.append_assoc, hsize] using h
++
++theorem pack_eq (rows : List (List α)) :
++    pack rows = ((offsetsOf rows).toArray, rows.flatten.toArray) := by
++  have h := pack_fold rows #[] #[]
++  apply Prod.ext
++  · apply Array.toList_inj.mp
++    simpa [pack, offsetsOf, Array.toList_push] using h.1
++  · apply Array.toList_inj.mp
++    simpa [pack] using h.2
++
++/-- The checked graph constructor with direct array packing. -/
++def ofRowsFast (rows : Vector (List (Fin n)) n)
++    (hs : ∀ i : Fin n, (rows[i]).Pairwise (· < ·))
++    (hr : ∀ i j : Fin n, j ∈ rows[i] ↔ i ∈ rows[j])
++    (hl : ∀ i : Fin n, i ∉ rows[i]) : SparseGraph n :=
++  let data := pack rows.toList
++  have ho : data.1 = (offsetsOf rows.toList).toArray := congrArg Prod.fst (pack_eq rows.toList)
++  have hn : data.2 = rows.toList.flatten.toArray := congrArg Prod.snd (pack_eq rows.toList)
++  { offsets := data.1
++    neighbors := data.2
++    layout := by rw [ho, hn]; exact (ofRows rows hs hr hl).layout
++    sorted i := by rw [ho, hn]; exact (ofRows rows hs hr hl).sorted i
++    symm i j := by rw [ho, hn]; exact (ofRows rows hs hr hl).symm i j
++    loopless i := by rw [ho, hn]; exact (ofRows rows hs hr hl).loopless i }
++
++@[csimp] theorem ofRows_eq_fast : @ofRows = @ofRowsFast := by
++  funext n rows hs hr hl
++  apply ext_arrays <;> simp [ofRows, ofRowsFast, pack_eq]
++
++end Hex.SparseGraph
+--- a/HexGraph/Sparse/Relabel.lean
++++ b/HexGraph/Sparse/Relabel.lean
+@@ -6,6 +6,7 @@
+ module
+ 
+ public import HexGraph.Sparse.Normalize
++public import HexGraph.Sparse.Pack
+ public import HexPermGroup.Perm
+ 
+ public section
+--- a/HexGraphIso/Nauty/Sparse/Graph.lean
++++ b/HexGraphIso/Nauty/Sparse/Graph.lean
+@@ -15,22 +15,40 @@
+ 
+ namespace Hex.GraphIso.Nauty.Sparse
+ 
+-/-- Working compressed adjacency. Canonical rows retain nauty's unsorted
+-neighbour order until the public result is constructed. -/
+-structure Graph (n : Nat) where
++/-- Canonical rows retain nauty's unsorted neighbour order until the public
++result is constructed. -/
++structure Rows (n : Nat) where
+   offsets : Array Nat
+   neighbors : Array Nat
+ deriving Inhabited, Repr
+ 
++/-- A view of native compressed adjacency, sharing its existing arrays. -/
++structure Graph (n : Nat) where
++  offsets : Array Nat
++  neighbors : Array (Fin n)
++deriving Inhabited, Repr
++
++def Rows.degree (G : Rows n) (v : Nat) : Nat := G.offsets[v + 1]! - G.offsets[v]!
++
+ namespace Graph
+ 
+ def ofGraph (G : Hex.SparseGraph n) : Graph n :=
+-  ⟨G.offsets, G.neighbors.map Fin.val⟩
++  ⟨G.offsets, G.neighbors⟩
++
++/-- `Fin` proofs are erased; reading a native entry requires no converted
++adjacency array or runtime vertex wrapper. -/
++@[inline] def neighbor (G : Graph n) (i : Nat) : Nat :=
++  if h : i < G.neighbors.size then G.neighbors[i].val
++  else panic! "index out of bounds"
++
++@[simp] theorem neighbor_ofGraph (G : Hex.SparseGraph n) (i : Nat)
++    (h : i < G.neighbors.size) : (ofGraph G).neighbor i = G.neighbors[i].val := by
++  simp [ofGraph, neighbor, h]
+ 
+ def degree (G : Graph n) (v : Nat) : Nat := G.offsets[v + 1]! - G.offsets[v]!
+ 
+ /-- Allocate the canonical store once, before the search. -/
+-def blank (G : Graph n) : Graph n :=
++def blank (G : Graph n) : Rows n :=
+   ⟨Array.replicate (n + 1) 0, Array.replicate G.neighbors.size 0⟩
+ 
+ end Graph
+@@ -51,14 +69,14 @@
+       if g.degree pi != g.degree i then return false
+       let stamp := i + 1
+       for j in [g.offsets[i]!:g.offsets[i + 1]!] do
+-        marks := marks.set! p[g.neighbors[j]!]! stamp
++        marks := marks.set! p[g.neighbor j]! stamp
+       for j in [g.offsets[pi]!:g.offsets[pi + 1]!] do
+-        if marks[g.neighbors[j]!]! != stamp then return false
++        if marks[g.neighbor j]! != stamp then return false
+   return true
+ 
+ /-- `updatecan_sg`: retain the shared prefix and rewrite the remaining
+ contiguous rows using inverse labels. No row sorting occurs in the search. -/
+-def updatecan (g canong : Graph n) (lab : Array Nat) (samerows : Nat) : Graph n := Id.run do
++def updatecan (g : Graph n) (canong : Rows n) (lab : Array Nat) (samerows : Nat) : Rows n := Id.run do
+   let inv := inverse n lab
+   let mut offsets := canong.offsets
+   let mut neighbors := canong.neighbors
+@@ -67,14 +85,14 @@
+     offsets := offsets.set! i k
+     let v := lab[i]!
+     for j in [g.offsets[v]!:g.offsets[v + 1]!] do
+-      neighbors := neighbors.set! k inv[g.neighbors[j]!]!
++      neighbors := neighbors.set! k inv[g.neighbor j]!
+       k := k + 1
+   offsets := offsets.set! n k
+   return ⟨offsets, neighbors⟩
+ 
+ /-- `testcanlab_sg`: smaller degree is preferred, then adjacency at the
+ first differing vertex. Return the comparison and the equal row prefix. -/
+-def testcanlab (g canong : Graph n) (lab : Array Nat) : Int × Nat := Id.run do
++def testcanlab (g : Graph n) (canong : Rows n) (lab : Array Nat) : Int × Nat := Id.run do
+   let inv := inverse n lab
+   let mut marks := Array.replicate n 0
+   for i in [0:n] do
+@@ -87,7 +105,7 @@
+     for j in [canong.offsets[i]!:canong.offsets[i + 1]!] do
+       marks := marks.set! canong.neighbors[j]! stamp
+     for j in [g.offsets[v]!:g.offsets[v + 1]!] do
+-      let k := inv[g.neighbors[j]!]!
++      let k := inv[g.neighbor j]!
+       if marks[k]! == stamp then marks := marks.set! k 0
+       else if k < mina then mina := k
+     if mina != n then
+@@ -110,7 +128,7 @@
+     head := head + 1
+     let next := dist[i]! + 1
+     for j in [g.offsets[i]!:g.offsets[i + 1]!] do
+-      let k := g.neighbors[j]!
++      let k := g.neighbor j
+       if dist[k]! == n then
+         dist := dist.set! k next
+         queue := queue.set! tail k
+--- a/HexGraphIso/Nauty/Sparse/Refine.lean
++++ b/HexGraphIso/Nauty/Sparse/Refine.lean
+@@ -190,13 +190,13 @@
+   let s := { s with marks := #[], vmarks := #[] }
+   let vertex := s.lab[split]!
+   for e in [g.offsets[vertex]!:g.offsets[vertex + 1]!] do
+-    let j := g.neighbors[e]!
++    let j := g.neighbor e
+     hitVertices := hitVertices.set! j stamp
+     let k := s.cellstart[j]!
+     if k != n && marks[k]! != stamp then
+       marks := marks.set! k stamp
+       touched := touched.push k
+-  touched := (Hex.List.sort touched.toList (· ≤ ·)).toArray
++  touched := touched.qsort (· < ·)
+   let mut s := { s with marks, vmarks := hitVertices, stamp }
+   s := s.hash touched.size
+   for first in touched do
+@@ -245,7 +245,7 @@
+   for i in [split:last] do
+     let vertex := s.lab[i]!
+     for e in [g.offsets[vertex]!:g.offsets[vertex + 1]!] do
+-      let j := g.neighbors[e]!
++      let j := g.neighbor e
+       let k := s.cellstart[j]!
+       if k != n then
+         if marks[k]! != stamp then
+@@ -254,7 +254,7 @@
+           for l in [k:s.cellend[k]! + 1] do
+             hits := hits.set! s.lab[l]! 0
+         hits := hits.set! j (hits[j]! + 1)
+-  touched := (Hex.List.sort touched.toList (· ≤ ·)).toArray
++  touched := touched.qsort (· < ·)
+   let mut s := { s with marks, hits, stamp }
+   s := s.hash touched.size
+   for first in touched do s := splitCounts level first false s
+--- a/HexGraphIso/Nauty/Sparse/Target.lean
++++ b/HexGraphIso/Nauty/Sparse/Target.lean
+@@ -37,11 +37,11 @@
+   for i in [0:starts.size] do
+     let v := lab[starts[i]!]!
+     for j in [g.offsets[v]!:g.offsets[v + 1]!] do
+-      let k := nntcell[g.neighbors[j]!]!
++      let k := nntcell[g.neighbor j]!
+       if k != n then hits := hits.set! k (hits[k]! + 1)
+     let mut count := 0
+     for j in [g.offsets[v]!:g.offsets[v + 1]!] do
+-      let k := nntcell[g.neighbors[j]!]!
++      let k := nntcell[g.neighbor j]!
+       if k != n then
+         if hits[k]! > 0 && hits[k]! < sizes[k]! then count := count + 1
+         hits := hits.set! k 0
+@@ -84,11 +84,11 @@
+   for first in starts do
+     let v := lab[first]!
+     for j in [g.offsets[v]!:g.offsets[v + 1]!] do
+-      let k := scratch.cellstart[g.neighbors[j]!]!
++      let k := scratch.cellstart[g.neighbor j]!
+       if k != n then hits := hits.set! k (hits[k]! + 1)
+     let mut count := 0
+     for j in [g.offsets[v]!:g.offsets[v + 1]!] do
+-      let k := scratch.cellstart[g.neighbors[j]!]!
++      let k := scratch.cellstart[g.neighbor j]!
+       if k != n then
+         if hits[k]! > 0 && hits[k]! < scratch.cellend[k]! - k + 1 then count := count + 1
+         hits := hits.set! k 0
+--- a/HexGraphIso/Nauty/Sparse/Search.lean
++++ b/HexGraphIso/Nauty/Sparse/Search.lean
+@@ -14,12 +14,12 @@
+ 
+ /-- Canonical rows and scratch storage carried by the shared search.
+ Scratch is independent of the partition nest restored during backtracking. -/
+-structure Storage (n : Nat) extends Graph n where
++structure Storage (n : Nat) extends Rows n where
+   scratch : Scratch
+ deriving Inhabited
+ 
+ def Storage.update (g : Graph n) (s : Storage n) (lab : Array Nat) (same : Nat) : Storage n :=
+-  { s with toGraph := updatecan g s.toGraph lab same }
++  { s with toRows := updatecan g s.toRows lab same }
+ 
+ def Storage.invalidate (s : Storage n) : Storage n :=
+   { s with scratch := { s.scratch with indexed := false } }
+@@ -73,7 +73,7 @@
+     if level < st.canonlevel then st := { st with compCanon := 1 }
+     else
+       st := { st with canong := st.canong.update g st.canonlab st.samerows, samerows := n }
+-      let (c, s) := testcanlab g st.canong.toGraph st.lab
++      let (c, s) := testcanlab g st.canong.toRows st.lab
+       st := { st with compCanon := c }
+       sr := s
+   if st.compCanon == 0 then
+@@ -115,7 +115,7 @@
+   firsttc := .replicate (n + 2) (-1)
+   firstlab := .replicate n 0
+   canonlab := .replicate n 0
+-  canong := { toGraph := g.blank, scratch := .fresh n }
++  canong := { toRows := g.blank, scratch := .fresh n }
+   workperm := .replicate n 0
+   numorbits := n }
+ 
+@@ -134,10 +134,11 @@
+ 
+ /-- Stable colour buckets in `O(n + k)` time. Valid colourings use every
+ bucket; the empty graph has no buckets. -/
+-def initialPartition (n k : Nat) (colors : Array Nat) : Array Nat × List Nat := Id.run do
++@[specialize] def initialPartitionWith (n k : Nat) (colors : Array α) (color : α → Nat) :
++    Array Nat × List Nat := Id.run do
+   let mut buckets : Array (List Nat) := Array.replicate k []
+   for i in [0:n] do
+-    let c := colors[i]!
++    let c := if h : i < colors.size then color colors[i] else panic! "index out of bounds"
+     buckets := buckets.set! c (i :: buckets[c]!)
+   let mut lab := #[]
+   let mut ends := []
+@@ -147,4 +148,7 @@
+       ends := (lab.size - 1) :: ends
+   return (lab, ends.reverse)
+ 
++def initialPartition (n k : Nat) (colors : Array Nat) : Array Nat × List Nat :=
++  initialPartitionWith n k colors id
++
+ end Hex.GraphIso.Nauty.Sparse
+--- a/HexGraphIso/Sparse/Run.lean
++++ b/HexGraphIso/Sparse/Run.lean
+@@ -14,7 +14,7 @@
+ 
+ /-- Run the sparse search from a native coloured graph. -/
+ def runColored (G : GraphIso.Sparse.Colored n k) : State n :=
+-  let (lab, ends) := initialPartition n k (G.coloring.cells.toArray.map Fin.val)
++  let (lab, ends) := initialPartitionWith n k G.coloring.cells.toArray Fin.val
+   run (Graph.ofGraph G.graph) lab ends
+ 
+ /-- Checked canonical graph and label, before the sparse totality theorem

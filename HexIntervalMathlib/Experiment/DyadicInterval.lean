@@ -110,7 +110,9 @@ private theorem rawContains_normalize (raw : Raw) (x : ℝ) :
                       linarith
                     simpa [rawContains, lowerContains, upperContains,
                       Raw.normalizeUnchecked, Raw.consistent, less] using impossible
-                · have realNotLess : ¬toReal lower < toReal upper := by
+                · have notOrdered : ¬lower ≤ upper := fun ordered =>
+                    equal (Dyadic.le_antisymm ordered (Dyadic.not_lt.mp less))
+                  have realNotLess : ¬toReal lower < toReal upper := by
                     simpa only [toReal_lt_iff] using less
                   have realNotEqual : toReal lower ≠ toReal upper := by
                     intro same
@@ -122,25 +124,25 @@ private theorem rawContains_normalize (raw : Raw) (x : ℝ) :
                       rintro ⟨lowerBound, upperBound⟩
                       linarith
                     simpa [rawContains, lowerContains, upperContains,
-                      Raw.normalizeUnchecked, Raw.consistent, less, equal] using impossible
+                      Raw.normalizeUnchecked, Raw.consistent, less, notOrdered] using impossible
 
                   · have impossible : ¬(toReal lower ≤ x ∧ x < toReal upper) := by
                       rintro ⟨lowerBound, upperBound⟩
                       linarith
                     simpa [rawContains, lowerContains, upperContains,
-                      Raw.normalizeUnchecked, Raw.consistent, less, equal] using impossible
+                      Raw.normalizeUnchecked, Raw.consistent, less, notOrdered] using impossible
 
                   · have impossible : ¬(toReal lower < x ∧ x ≤ toReal upper) := by
                       rintro ⟨lowerBound, upperBound⟩
                       linarith
                     simpa [rawContains, lowerContains, upperContains,
-                      Raw.normalizeUnchecked, Raw.consistent, less, equal] using impossible
+                      Raw.normalizeUnchecked, Raw.consistent, less, notOrdered] using impossible
 
                   · have impossible : ¬(toReal lower < x ∧ x < toReal upper) := by
                       rintro ⟨lowerBound, upperBound⟩
                       linarith
                     simpa [rawContains, lowerContains, upperContains,
-                      Raw.normalizeUnchecked, Raw.consistent, less, equal] using impossible
+                      Raw.normalizeUnchecked, Raw.consistent, less, notOrdered] using impossible
 
 private theorem compareChecked_lt {limit : EndpointLimit} {left right : Dyadic}
     (checked : compareChecked limit left right = .ok .lt) : left < right := by
@@ -207,9 +209,9 @@ private theorem compareChecked_gt {limit : EndpointLimit} {left right : Dyadic}
           simp only [fits, Bool.not_true, selfNotLess, ↓reduceIte] at checked
           change Except.ok Ordering.eq = Except.ok Ordering.gt at checked
           contradiction
-        · apply Dyadic.not_lt.mp
+        · apply Dyadic.not_le.mp
           intro leftLeRight
-          exact equal (Dyadic.le_antisymm leftLeRight (Dyadic.not_le.mp less))
+          exact equal (Dyadic.le_antisymm leftLeRight (Dyadic.not_lt.mp less))
 
 private theorem lowerContains_intersect {limit : EndpointLimit}
     {left right result : Lower} {x : ℝ}

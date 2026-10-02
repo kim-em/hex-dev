@@ -12,6 +12,11 @@ public import HexMatrixMathlib.Algebra
 public import HexMatrixMathlib.Lemmas
 public import HexMatrixMathlib.Gram
 public import HexMatrixMathlib.Submatrix
+public import HexMatrixMathlib.Literal
+public import HexMatrixMathlib.Hadamard
+public import HexMatrixMathlib.Packed
+public import HexMatrixMathlib.ListProducts
+public import HexMatrixMathlib.Rational
 
 public section
 

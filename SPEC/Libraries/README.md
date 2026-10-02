@@ -3,11 +3,15 @@
 - **hex-basic**: small Mathlib-free standard-library shims, including kernel-reducible array and vector operations
 - **hex-arith**: extended GCD, Barrett/Montgomery reduction, binomial coefficients, Fermat's little theorem
 - **hex-primality**: Miller-Rabin compositeness witnesses, Pocklington certificates, a kernel-reducible sieve and stored initial segment, the `primality` tactic
+- **[hex-ecpp](../../HexECPP/SPEC/hex-ecpp.md)** (active): elliptic-curve primality certificate checking with affine inverse witnesses and supplied-certificate conversion
 - **hex-int-factor**: integer factorization with complete prime-exponent certificates, the divisor-function API, multiplicative order and primitive roots
 - **hex-poly**: dense `Array`-backed polynomial representation
 - **hex-rational-fn**: canonical univariate rational functions, field arithmetic, partial evaluation, formal differentiation and normalization certificates
+- **[hex-ordered-fn](hex-ordered-fn.md)**: user-supplied real-constant and infinitesimal orders on rational functions, with conditional total field adapters
 - **hex-sparse-poly**: canonical sparse univariate polynomials as a sorted exponent/coefficient term array, with explicit conversions to and from the dense representation
 - **hex-mv-poly**: canonical distributed multivariate polynomials at fixed arity with explicit monomial orders
+- **hex-reflect**: shared `Lean.Meta.Sym.Arith` sessions, batch variable sealing, direct `Hex.MvPoly` conversion, provider results, conditions and budgets
+- **hex-kronecker**: deterministic kernel-checked polynomial identities by Kronecker substitution, for expression trees, term lists and polynomial-matrix products
 - **hex-mv-gcd**: multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
 - **hex-mv-hensel**: multivariate Hensel lifting against an evaluation ideal, with the coprimality witness, leading-coefficient contract, and reconstruction that Wang's EEZ factorization needs
 - **hex-mv-factor**: factorization of `Z[x_1, ..., x_n]` by Wang's EEZ algorithm, with a checked product decomposition and a separate irreducibility certificate
@@ -17,7 +21,13 @@
 - **hex-row-reduce**: row reduction (RREF), rank, span, nullspace
 - **hex-determinant**: the Leibniz determinant and its cofactor/Cauchy-Binet/Plücker theory
 - **hex-bareiss**: the fraction-free Bareiss determinant algorithm
+- **hex-det**: production determinant dispatch with carrier policies, measured crossovers, and the completed algorithm reported for tactics
+- **[hex-rank](../../HexRank/SPEC/hex-rank.md)**: matrix rank over any integral domain with a two-sided certificate (a nonsingular minor with its adjugate, and the identity expressing every column over the selected ones), the rectangular fraction-free producer, and the row and column rank profiles
+- **hex-generic-rank**: the rank of a multivariate polynomial matrix over its fraction field, as hex-rank's certificate at `MvPoly`, with the fixture families and benches that make polynomial-entry rank a supported operation
+- **hex-poly-det**: the determinant of a multivariate polynomial matrix, as hex-bareiss's polynomial determinant certificate instantiated at `MvPoly` with hex-mv-gcd's exact quotient
+- **[hex-determinantal-ideal](../../HexDeterminantalIdeal/SPEC/hex-determinantal-ideal.md)**: executable minors and determinantal-ideal generators of a matrix over a commutative ring, and the theorem that the rank over a field is below `r` exactly when every `r × r` minor vanishes
 - **hex-char-poly**: the characteristic polynomial by the division-free Samuelson-Berkowitz algorithm, over any commutative ring
+- **matrix tactics** are not a library: `rank`, `det` and `char_poly` live with their algorithm libraries per [SPEC/matrix-tactics.md](../matrix-tactics.md)
 - **hex-min-poly**: the matrix minimal polynomial over a field, from Krylov sequences, with a certificate proving annihilation and minimality
 - **hex-hermite**: Hermite normal form over `Int`, unimodular transforms, integer lattice membership, integer kernel bases
 - **hex-smith**: Smith normal form over `Int`, invariant factors, and the structure of a finitely generated abelian group
@@ -39,12 +49,18 @@
 - **hex-cyclotomic**: dense integer cyclotomic polynomials from a checked factorization of the index, the divisor family, and the factorization of `x^n - 1`
 - **hex-roots**: certified complex root isolation for `Z[x]` via dyadic squares, Pellet tests, and speculative Newton iteration
 - **hex-real-roots**: certified real root isolation for `Z[x]`: Sturm-count witnesses, a Descartes bisection search with a proven-complete Sturm fallback
+- **[hex-sturm](hex-sturm.md)** (planned): ordered-field Sturm–Tarski queries, coefficient evidence and root counts
+- **[hex-sign-det](hex-sign-det.md)** (planned): complete BKR sign tables, certified support reduction and Thom root descriptors
 - **hex-interval**: exact open, closed, empty, and unbounded dyadic intervals; a shared expression program; and a budgeted scheduler for propagation, refinement, and subdivision
 - **hex-interval-algebraic**: planned Mathlib-facing integration of interval facts with certified real and complex polynomial root isolation; `mathlib: true`
-- **hex-rcf**: the `rcf` tactic, a complete decision procedure for univariate real-closed-field sentences (Boolean combinations of polynomial inequalities under one `∀`/`∃` over `ℝ`); `mathlib: true`, soundness theorem in the same library
+- **[hex-real-formula](hex-real-formula.md)** (planned): shared multivariate real-arithmetic syntax, semantics, and reification; companion specified in the same file
+- **[hex-virtual-subst](hex-virtual-subst.md)** (planned): quadratic virtual substitution, exact QE and refutation certificates; Mathlib companion and tactic specified in the same file
+- **[hex-coverings](hex-coverings.md)** (planned): real-arithmetic satisfiability by cylindrical cell explanations and checked LRAT or covering refutations; Mathlib/Tau Ceti companion specified in the same file
+- **hex-rcf**: the `rcf` tactic for Boolean combinations of univariate polynomial comparisons under one `∀`/`∃` over `ℝ`, with integer/rational coefficients; `mathlib: true`, soundness in the same library. The [planned optional coefficient extension](../../HexRCF/SPEC/hex-rcf.md#planned-real-coefficient-extension) adds fixed real algebraic embeddings and authenticated caller-supplied constants, with conditional completeness for constant towers
 - **hex-resultant**: polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
 - **hex-number-field**: fixed fields `QAdjoin p x`, factorization-lazy `AlgebraicRoot`, canonical `AlgebraicNumber`, and roots of polynomials with algebraic coefficients
 - **[hex-real-algebraic](hex-real-algebraic.md)**: the real subtype of canonical algebraic numbers, exact ordered-field arithmetic, real roots, rounding, and dyadic approximation
+- **[hex-real-closure](hex-real-closure.md)** (planned): selected-root algebraic towers, dynamic splitting, complete real roots and shared samples
 - **hex-number-field-tower**: successive number-field extensions, Trager factorization, adjoining roots, splitting fields, and primitive-element flattening
 - **hex-berlekamp**: Berlekamp factoring, distinct-degree and equal-degree factorization (Cantor-Zassenhaus), and the Rabin irreducibility test over any `F_q`; the `factor_poly` / `irreducibility` tactic drivers (native `FpPoly p` arms plus extensions for other input types)
 - **hex-hensel**: Hensel lifting from `mod p` to `mod p^k`
@@ -68,12 +84,16 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-poly-z-gcd-mathlib**: gcd divisibility and maximality in `Polynomial ℤ`, and `Decidable (a ∣ b)`
 - **hex-cyclotomic-mathlib**: agreement with `Polynomial.cyclotomic n ℤ`, the degree `Nat.totient n`, irreducibility over `ℤ` and `ℚ`, and the divisor product
 - **hex-primality-mathlib**: `Hex.Nat.Prime ↔ Nat.Prime`, the explicit opt-in `norm_num` policy, and segment statements over `Finset.filter Nat.Prime`
+- **[hex-ecpp-mathlib](../../HexECPPMathlib/SPEC/hex-ecpp-mathlib.md)** (active): prime-field replay, Hasse-bound infrastructure, unconditional ECPP soundness, and explicit certificate elaboration
 - **hex-int-factor-mathlib**: agreement with `Nat.factorization`, `Decidable (Squarefree n)`, and `orderOf` in `(ZMod n)ˣ`
 - **hex-finite-field-mathlib**: `Fintype K` and `Fintype.card K = card K` for any `LawfulFiniteField`, and `frob = frobenius`
 - **hex-poly-mathlib**: `DensePoly R ≃+* Polynomial R`
 - **hex-rational-fn-mathlib**: equivalence with `RatFunc K`, canonical numerator/denominator agreement and partial-evaluation semantics
+- **[hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md)**: real evaluation, Hahn-series infinitesimal semantics, arithmetic correspondence and total-order laws
 - **hex-sparse-poly-mathlib**: `SparsePoly R ≃+* Polynomial R`, and the identification of the stored term array with `Polynomial.support`
 - **hex-mv-poly-mathlib**: `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
+- **hex-reflect-mathlib**: Mathlib carrier translations and the `MvPolynomial` correspondence for reflected batches
+- **hex-kronecker-mathlib**: bounded-box soundness and the `kronecker` tactic over any commutative ring
 - **hex-mv-gcd-mathlib**: gcd maximality transported to `MvPolynomial (Fin n) R`, and decidable divisibility and squarefreeness
 - **hex-mv-hensel-mathlib**: the evaluation ideal and its residue ring as Mathlib objects, the lifted identities transported to `MvPolynomial (Fin (n+1)) ℤ`, and the factor-coefficient bound
 - **hex-mv-factor-mathlib**: discharge of the univariate irreducibility obligations, factorization correctness and uniqueness in `MvPolynomial (Fin n) ℤ`, and `Decidable (Irreducible p)`
@@ -82,6 +102,11 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-row-reduce-mathlib**: rank = `Matrix.rank`, nullspace = `LinearMap.ker`, span agreement
 - **hex-determinant-mathlib**: `det` agreement with `Matrix.det`, plus the Plücker / Desnanot-Jacobi assembly
 - **hex-bareiss-mathlib**: Bareiss determinant = `Matrix.det`, via the bordered-minor invariant
+- **hex-det-mathlib**: determinant dispatch correctness and correspondence, including policy and fallback route laws
+- **[hex-rank-mathlib](../../HexRankMathlib/SPEC/hex-rank-mathlib.md)**: certificate soundness for `Matrix.rank` over any domain, rank invariance under `IsFractionRing` scalar extension, producer correctness, and the conversions to and from Mathlib's `Echelon.Decomposition`
+- **hex-generic-rank-mathlib**: the symbolic arm of the `rank` tactic as a handler on hex-rank-mathlib's syntax kind, with its three outputs (generic rank, conditional rank under the certificate's nonvanishing condition, handoff to the rank locus) and their soundness
+- **hex-poly-det-mathlib**: the symbolic arm of the `det` tactic as a handler on hex-bareiss-mathlib's syntax kind, over any commutative ring, with closed forms for small dimensions and an opt-in simproc
+- **[hex-determinantal-ideal-mathlib](../../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md)**: minors as `Matrix.det` of a `submatrix`, the rank-versus-minors theorem for `Matrix.rank` under any ring homomorphism into a field, rank-drop loci as zero sets, and invariance of `I_r(A)` under invertible row and column operations
 - **hex-char-poly-mathlib**: agreement with `Matrix.charpoly`, Cayley-Hamilton, the trace and determinant coefficients, transpose and similarity invariance
 - **hex-min-poly-mathlib**: agreement with `minpoly`, the annihilator-generator statement for the vector order polynomial, divisibility into the characteristic polynomial, and the degree bound
 - **hex-hermite-mathlib**: row lattice = `Submodule.span ℤ`, integer rank = `Matrix.rank`, and an executable basis of the kernel submodule
@@ -92,10 +117,12 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-poly-z-mathlib**: `DensePoly Int ≃+* Polynomial ℤ`, Mignotte bound (via Mathlib's Mahler measure)
 - **hex-roots-mathlib**: Pellet's test on circles (built from `circleIntegral`), the Mahler separation bound, soundness of refinement and `ZPoly.isolateComplexRoots?`
 - **hex-real-roots-mathlib**: Sturm's theorem (counting form over `Polynomial ℝ`), chain correspondence, soundness and completeness of `ZPoly.isolateRealRoots?`
+- **[hex-sign-det-mathlib](hex-sign-det-mathlib.md)** (planned): exact sign-table replay, complete support and Thom root identity/order correspondence
 - **hex-interval-mathlib**: real semantics, verified arithmetic and elementary-function propagators, certificate replay, and the `interval` tactic
 - **hex-resultant-mathlib**: executable resultant agreement with `Polynomial.resultant`, specialization, root-product, and discriminant theorems
 - **hex-number-field-mathlib**: fixed-field correspondence, exactification, lazy arithmetic, and algebraic-coefficient root completeness
 - **[hex-real-algebraic-mathlib](hex-real-algebraic.md#companion-and-proof-inventory)**: ordered-field structure, the embedding into the algebraic reals, operation correspondence, and `IsRealClosed`
+- **[hex-real-closure-mathlib](hex-real-closure-mathlib.md)** (planned): selected-root field semantics, splitting transport, complete roots, compatible algebraic union and finite-sign realization
 - **hex-number-field-tower-mathlib**: tower embeddings, Trager correctness, splitting fields, and primitive-element equivalence
 - **hex-poly-fp-mathlib**: `FpPoly p ≃+* Polynomial (ZMod p)`, and transport of coefficients, degree, leading coefficients, ring operations, coefficient-sum evaluation, composition, and divisibility
 - **hex-berlekamp-mathlib**: `Decidable (Irreducible f)` for `Polynomial (ZMod p)`; the `Polynomial (ZMod p)` extension for `factor_poly` / `irreducibility`
@@ -109,6 +136,8 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-summation-mathlib**: `Finset.sum` semantics over characteristic-zero fields, the `Nat.choose` / `Nat.factorial` / `ascPochhammer` ratio kit, the summand recognizer, and the `gosper`, `zeilberger`, and `hyper` tactics
 - **hex-graph-iso-mathlib**: correspondence with finite `SimpleGraph`, ordered-colour isomorphisms, and the `SimpleGraph` extension of `graph_iso`
 - **hex-perm-group-mathlib** (planned): correspondence for permutation groups, finite actions, subgroup search, block systems, normal structure, sampling and products
+- **[hex-real-formula-mathlib](hex-real-formula.md)** (planned): real semantics, formula normalization, and shared reification
+- **[hex-virtual-subst-mathlib](hex-virtual-subst.md)** (planned): elimination-set and substitution proofs, certificate soundness, and the `virtual_subst` tactic
 
 **cslib companion libraries** (planned proof-only libraries that depend on a
 computational library and on
@@ -126,11 +155,16 @@ Each library with its immediate dependencies:
 - **hex-basic**: (none)
 - **hex-arith**: (none)
 - **hex-primality**: hex-arith, hex-basic
+- **hex-ecpp** (active): hex-primality, hex-arith
 - **hex-int-factor**: hex-primality, hex-arith, hex-basic
 - **hex-poly**: (none)
 - **hex-rational-fn**: hex-poly, hex-poly-fast
+- **hex-ordered-fn**: hex-rational-fn, hex-poly, hex-poly-fast
+- **hex-ordered-fn-mathlib**: hex-ordered-fn, hex-rational-fn-mathlib, hex-poly-mathlib, Mathlib
 - **hex-sparse-poly**: hex-poly, hex-basic
 - **hex-mv-poly**: hex-poly, hex-basic
+- **hex-reflect**: hex-mv-poly, hex-basic
+- **hex-kronecker**: hex-mv-poly, hex-matrix
 - **hex-mv-gcd**: hex-mv-poly, hex-poly, hex-poly-fp, hex-resultant, hex-arith, hex-mod-arith
 - **hex-mv-hensel**: hex-mv-gcd, hex-mv-poly, hex-poly, hex-poly-z, hex-poly-fp, hex-mod-arith, hex-modular, hex-arith, hex-basic
 - **hex-mv-factor**: hex-mv-hensel, hex-mv-gcd, hex-mv-poly, hex-berlekamp-zassenhaus, hex-poly, hex-poly-z, hex-poly-z-gcd, hex-poly-fp, hex-mod-arith, hex-modular, hex-arith, hex-basic
@@ -140,6 +174,11 @@ Each library with its immediate dependencies:
 - **hex-row-reduce**: hex-matrix
 - **hex-determinant**: hex-matrix
 - **hex-bareiss**: hex-determinant, hex-matrix
+- **hex-det** (planned): hex-bareiss, hex-char-poly, hex-row-reduce, hex-poly-fp, hex-resultant, hex-mv-gcd (plus hex-modular-matrix when implemented)
+- **hex-rank**: hex-bareiss, hex-determinant, hex-matrix, hex-arith, hex-basic
+- **hex-generic-rank** (planned): hex-rank, hex-mv-gcd, hex-bareiss, hex-determinant, hex-matrix, hex-basic
+- **hex-poly-det** (planned): hex-bareiss, hex-mv-gcd, hex-determinant, hex-matrix, hex-basic
+- **hex-determinantal-ideal**: hex-basic, hex-arith, hex-matrix, hex-determinant, hex-row-reduce, hex-mv-poly
 - **hex-char-poly**: hex-matrix, hex-poly
 - **hex-min-poly**: hex-matrix, hex-row-reduce, hex-poly
 - **hex-hermite**: hex-row-reduce, hex-arith, hex-determinant
@@ -151,7 +190,7 @@ Each library with its immediate dependencies:
 - **hex-mod-arith**: hex-arith
 - **hex-modular**: hex-arith
 - **hex-padics**: hex-arith, hex-modular, hex-primality, hex-basic
-- **hex-modular-matrix**: hex-modular, hex-matrix, hex-row-reduce, hex-determinant, hex-mod-arith, hex-arith, hex-basic
+- **hex-modular-matrix**: hex-modular, hex-matrix, hex-row-reduce, hex-determinant, hex-bareiss, hex-mod-arith, hex-arith, hex-basic
 - **hex-finite-field**: hex-arith, hex-mod-arith, hex-poly, hex-poly-fp, hex-matrix, hex-basic
 - **hex-gram-schmidt**: hex-row-reduce, hex-determinant, hex-bareiss
 - **hex-lll**: hex-gram-schmidt, hex-matrix, hex-basic
@@ -162,12 +201,19 @@ Each library with its immediate dependencies:
 - **hex-cyclotomic**: hex-poly-z, hex-int-factor, hex-poly
 - **hex-roots**: hex-poly-z
 - **hex-real-roots**: hex-poly-z
+- **hex-sturm** (planned): hex-poly, hex-real-roots
+- **hex-sign-det** (planned): hex-sturm, hex-poly, hex-matrix, hex-row-reduce, hex-rank
+- **hex-sign-det-mathlib** (planned): hex-sign-det, hex-sturm-mathlib, hex-poly-mathlib, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-rank-mathlib; Tau Ceti foundations (mathlib: true)
 - **hex-interval**: (none)
 - **hex-interval-algebraic**: hex-interval-mathlib, hex-real-roots-mathlib, hex-roots-mathlib (mathlib: true)
-- **hex-rcf**: hex-real-roots, hex-real-roots-mathlib, hex-poly-z, hex-poly-z-mathlib (mathlib: true)
+- **hex-real-formula** (planned): hex-mv-poly
+- **hex-virtual-subst** (planned): hex-real-formula, hex-mv-poly
+- **hex-rcf**: hex-real-roots, hex-real-roots-mathlib, hex-poly-z, hex-poly-z-mathlib (mathlib: true); the planned shared formula adapter additionally depends on hex-real-formula-mathlib. The optional real-coefficient adapter also consumes hex-real-closure and its companion (with ordered-fn, sturm, sign-det and real-algebraic evidence transitively); these are planned implementation dependencies, not base imports
 - **hex-resultant**: hex-poly
 - **hex-number-field**: hex-poly-z, hex-roots, hex-resultant, hex-berlekamp-zassenhaus, hex-matrix, hex-row-reduce
 - **hex-real-algebraic**: hex-number-field
+- **hex-real-closure** (planned): hex-poly, hex-sturm, hex-sign-det, hex-ordered-fn, hex-real-algebraic
+- **hex-real-closure-mathlib** (planned): hex-real-closure, hex-poly-mathlib, hex-sturm-mathlib, hex-sign-det-mathlib, hex-ordered-fn-mathlib, hex-real-algebraic-mathlib; Tau Ceti ordered real-closure existence (mathlib: true)
 - **hex-number-field-tower**: hex-number-field, hex-resultant, hex-berlekamp-zassenhaus, hex-row-reduce
 - **hex-berlekamp**: hex-poly-fp, hex-matrix, hex-row-reduce, hex-gfq-ring, hex-basic, hex-finite-field
 - **hex-hensel**: hex-poly-fp, hex-poly-z, hex-basic
@@ -182,20 +228,25 @@ Each library with its immediate dependencies:
 
 Mathlib companion libraries (each also depends on Mathlib):
 
+- **hex-real-formula-mathlib** (planned): hex-real-formula, hex-mv-poly-mathlib, hex-reflect-mathlib
+- **hex-virtual-subst-mathlib** (planned): hex-virtual-subst, hex-real-formula-mathlib, hex-mv-poly-mathlib, hex-rcf
 - **hex-mod-arith-mathlib**: hex-mod-arith
 - **hex-modular-mathlib**: hex-modular, hex-mod-arith-mathlib
 - **hex-padics-mathlib**: hex-padics, hex-primality-mathlib
 - **hex-modular-matrix-mathlib**: hex-modular-matrix, hex-matrix-mathlib, hex-determinant-mathlib, hex-row-reduce-mathlib, hex-modular-mathlib
 - **hex-primality-mathlib**: hex-primality
+- **hex-ecpp-mathlib** (active): hex-ecpp, hex-primality-mathlib, Mathlib
 - **hex-int-factor-mathlib**: hex-int-factor, hex-primality-mathlib
 - **hex-finite-field-mathlib**: hex-finite-field, hex-mod-arith-mathlib, hex-poly-mathlib
 - **hex-poly-mathlib**: hex-poly
 - **hex-rational-fn-mathlib**: hex-rational-fn, hex-poly-mathlib
 - **hex-sparse-poly-mathlib**: hex-sparse-poly, hex-poly-mathlib, hex-poly
 - **hex-mv-poly-mathlib**: hex-mv-poly, hex-poly-mathlib
+- **hex-reflect-mathlib**: hex-reflect, hex-mv-poly-mathlib
+- **hex-kronecker-mathlib**: hex-kronecker, hex-mv-poly-mathlib, hex-reflect, hex-reflect-mathlib, hex-matrix-mathlib
 - **hex-mv-gcd-mathlib**: hex-mv-gcd, hex-mv-poly-mathlib, hex-resultant-mathlib, hex-poly-mathlib
 - **hex-mv-hensel-mathlib**: hex-mv-hensel, hex-mv-poly-mathlib, hex-poly-mathlib, hex-poly-z-mathlib
-- **hex-mv-factor-mathlib**: hex-mv-factor, hex-mv-hensel-mathlib, hex-mv-gcd-mathlib, hex-mv-poly-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-poly-z-mathlib
+- **hex-mv-factor-mathlib**: hex-mv-factor, hex-mv-hensel-mathlib, hex-mv-gcd-mathlib, hex-mv-poly-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-poly-z-mathlib, hex-reflect-mathlib
 - **hex-truncated-series-mathlib**: hex-truncated-series
 - **hex-poly-z-mathlib**: hex-poly-z, hex-poly-mathlib
 - **hex-poly-z-gcd-mathlib**: hex-poly-z-gcd, hex-poly-z-mathlib, hex-poly-mathlib
@@ -211,6 +262,9 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-row-reduce-mathlib**: hex-row-reduce, hex-matrix-mathlib
 - **hex-determinant-mathlib**: hex-determinant, hex-bareiss, hex-matrix-mathlib
 - **hex-bareiss-mathlib**: hex-determinant-mathlib
+- **hex-det-mathlib** (planned): hex-det, hex-bareiss-mathlib, hex-char-poly-mathlib, hex-determinant-mathlib, hex-poly-mathlib, hex-poly-fp-mathlib, hex-mv-poly-mathlib, Mathlib (plus hex-modular-matrix-mathlib when implemented)
+- **hex-rank-mathlib**: hex-rank, hex-bareiss-mathlib, hex-determinant-mathlib, hex-matrix-mathlib
+- **hex-determinantal-ideal-mathlib**: hex-determinantal-ideal, hex-determinant-mathlib, hex-row-reduce-mathlib, hex-mv-poly-mathlib
 - **hex-char-poly-mathlib**: hex-char-poly, hex-matrix-mathlib, hex-poly-mathlib, hex-determinant-mathlib
 - **hex-min-poly-mathlib**: hex-min-poly, hex-matrix-mathlib, hex-poly-mathlib, hex-char-poly-mathlib
 - **hex-hermite-mathlib**: hex-hermite, hex-row-reduce-mathlib, hex-determinant-mathlib
@@ -293,6 +347,28 @@ The integer normal forms within it:
 hex-row-reduce ───┐
 hex-arith ─────────┼── hex-hermite ── hex-smith
 hex-determinant ───┘
+```
+
+`hex-determinantal-ideal` enumerates the minors of a matrix over any
+commutative ring and proves that the rank over a field is below `r` exactly
+when every `r × r` minor vanishes. Its proof uses the row-reduced echelon
+certificate from `hex-row-reduce` and Cauchy-Binet from `hex-determinant`,
+so both are computational dependencies, and `hex-mv-poly` supplies the
+polynomial matrices whose rank-drop loci are the intended application. It
+does not depend on `hex-bareiss`, on `hex-poly-smith`, or on the planned
+`hex-rank`: those compute a rank and only choose a default `r`. The
+reasoning is in
+[hex-determinantal-ideal §Scope and dependencies](../../HexDeterminantalIdeal/SPEC/hex-determinantal-ideal.md#scope-and-dependencies).
+
+```text
+hex-matrix ──────────────┐
+hex-determinant ─────────┤
+hex-row-reduce ──────────┼── hex-determinantal-ideal ──┐
+hex-mv-poly ─────────────┘                             │
+                                                       │
+hex-determinant-mathlib ─┐                             │
+hex-row-reduce-mathlib ──┼─────────────────────────────┴── hex-determinantal-ideal-mathlib
+hex-mv-poly-mathlib ─────┘
 ```
 
 `hex-char-poly` sits on the matrix family too, with `hex-poly` rather
@@ -464,6 +540,21 @@ hex-poly ──────────────────┘              
      └──────────────────────── hex-poly-mathlib ─────────┘
 ```
 
+`hex-kronecker` is the complementary dense-box identity form above
+`hex-mv-poly` and `hex-matrix`.  Its companion proves the `MvPolynomial`
+interpretation and owns reification and the `kronecker` tactic; certificate
+consumers depend on the pair, never conversely.
+
+```text
+hex-mv-poly ────┐
+hex-matrix ─────┴── hex-kronecker ──────────┐
+                                             ├── hex-kronecker-mathlib
+hex-mv-poly-mathlib ─────────────────────────┤
+hex-reflect ─────────────────────────────────┤
+hex-reflect-mathlib ─────────────────────────┤
+hex-matrix-mathlib ──────────────────────────┘
+```
+
 `hex-sparse-poly` is the second univariate representation. It sits on
 `hex-poly` at the `toDense` / `ofDense` conversion boundary and on
 `hex-basic` for the `List.foldl` algebra its canonicalisation proof
@@ -600,6 +691,12 @@ exponentiation its checkers replay. The predicate stays there rather
 than moving up, because `hex-mod-arith` builds `ZMod64.PrimeModulus`
 on it and depends only on `hex-arith`.
 
+The [hex-ecpp](../../HexECPP/SPEC/hex-ecpp.md) verifier also depends on
+`hex-primality` and `hex-arith`. Its separate Mathlib companion depends on
+`hex-primality-mathlib` and owns the required Hasse-bound infrastructure and
+unconditional primality theorem. Existing primality does not depend on ECPP;
+its certificates provide ECPP's terminal proofs.
+
 `hex-int-factor` sits on `hex-primality` in turn, and that direction is
 forced: a factorization certificate has to prove each listed factor
 prime, while a certificate search needs no proof at all, so the
@@ -686,6 +783,7 @@ for developments whose source-local move has not happened yet.
 - [hex-arith](../../HexArith/SPEC/hex-arith.md): extended GCD, Barrett/Montgomery reduction, binomial coefficients, Fermat's little theorem
 - [hex-primality.md](../../HexPrimality/SPEC/hex-primality.md): Miller-Rabin compositeness witnesses, Pocklington certificates, a kernel-reducible sieve and stored initial segment, and the Mathlib-free `primality` tactic
 - [hex-primality-mathlib.md](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md): `Nat.Prime` correspondence and segment transports, bare-tactic registration, and the opt-in `norm_num` proof policy
+- [hex-ecpp](../../HexECPP/SPEC/hex-ecpp.md) and [hex-ecpp-mathlib](../../HexECPPMathlib/SPEC/hex-ecpp-mathlib.md): certificate checker and primality bridge
 - [hex-int-factor.md](../../HexIntFactor/SPEC/hex-int-factor.md): integer factorization with complete prime-exponent certificates, the divisor-function API, multiplicative order and primitive roots (the Mathlib companion is specified in the same file)
 - [hex-matrix](https://github.com/leanprover/hex-matrix/blob/main/SPEC/hex-matrix.md) (released): dense matrices, arithmetic, elementary row/column operations, submatrix slicing, the Gram matrix
 - [hex-row-reduce](https://github.com/leanprover/hex-row-reduce/blob/main/SPEC/hex-row-reduce.md) (released): row reduction, rank, span, nullspace
@@ -695,6 +793,10 @@ for developments whose source-local move has not happened yet.
 - [hex-row-reduce-mathlib](https://github.com/leanprover/hex-row-reduce-mathlib/blob/main/SPEC/hex-row-reduce-mathlib.md) (released): rank/nullspace/span correspondence
 - [hex-determinant-mathlib](https://github.com/leanprover/hex-determinant-mathlib/blob/main/SPEC/hex-determinant-mathlib.md) (released): `det` agreement with `Matrix.det`
 - [hex-bareiss-mathlib](https://github.com/leanprover/hex-bareiss-mathlib/blob/main/SPEC/hex-bareiss-mathlib.md) (released): Bareiss determinant correctness
+- [hex-rank](../../HexRank/SPEC/hex-rank.md): rank over any integral domain with an adjugate-and-column-expression certificate, the rectangular fraction-free producer, and the rank profiles
+- [hex-rank-mathlib](../../HexRankMathlib/SPEC/hex-rank-mathlib.md): `Matrix.rank` soundness over any domain, `IsFractionRing` scalar extension, producer correctness, and `Echelon.Decomposition` conversions
+- [hex-determinantal-ideal](../../HexDeterminantalIdeal/SPEC/hex-determinantal-ideal.md): executable minors, determinantal-ideal generators, and the rank-versus-minors theorem with a Mathlib-free proof
+- [hex-determinantal-ideal-mathlib](../../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md): `Matrix.rank` versus minors under any ring homomorphism into a field, rank-drop loci, and invariance of determinantal ideals
 - [hex-char-poly.md](hex-char-poly.md): the characteristic polynomial by the division-free Samuelson-Berkowitz algorithm, with Cayley-Hamilton and the `Matrix.charpoly` correspondence (the Mathlib companion is specified in the same file)
 - [hex-min-poly.md](hex-min-poly.md): the matrix minimal polynomial from Krylov sequences, the vector order polynomial, the lcm over the standard basis, and a certificate carrying an independence witness for minimality (the Mathlib companion is specified in the same file)
 - [hex-hermite.md](hex-hermite.md): Hermite normal form over `Int`, unimodular transforms, integer lattice membership and kernel bases (the Mathlib companion is specified in the same file)
@@ -711,9 +813,15 @@ for developments whose source-local move has not happened yet.
 - [hex-poly-mathlib](../../HexPolyMathlib/SPEC/hex-poly-mathlib.md): `DensePoly R ≃+* Polynomial R`
 - [hex-rational-fn](../../HexRationalFn/SPEC/hex-rational-fn.md): canonical univariate fractions, cancellation algorithms, evaluation and certificate replay
 - [hex-rational-fn-mathlib](../../HexRationalFnMathlib/SPEC/hex-rational-fn-mathlib.md): equivalence with `RatFunc`, canonical components and operation correspondence
+- [hex-ordered-fn](hex-ordered-fn.md): ordinary rational-function arithmetic, caller approximation functions with separate width/containment proofs, infinitesimal signs and total-search contracts
+- [hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md): real and Hahn-model correspondence, enclosure soundness/progress and order laws
 - [hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md): canonical sparse univariate polynomials, the operations that keep sparsity, and the dense conversions (the Mathlib companion is specified in the same file)
 - [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md): canonical distributed multivariate polynomials with explicit monomial orders
 - [hex-mv-poly-mathlib](../../HexMvPolyMathlib/SPEC/hex-mv-poly-mathlib.md): `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
+- [hex-reflect](../../HexReflect/SPEC/hex-reflect.md): the `Lean.Meta.Sym.Arith` adapter, batch variable sealing, direct `Hex.MvPoly` conversion, provider protocol, conditions and budgets
+- [hex-reflect-mathlib](../../HexReflectMathlib/SPEC/hex-reflect-mathlib.md): Mathlib carrier translations and the `MvPolynomial` correspondence for reflected batches
+- [hex-kronecker](../../HexKronecker/SPEC/hex-kronecker.md): deterministic dense-box polynomial identity checks by Kronecker substitution
+- [hex-kronecker-mathlib](../../HexKroneckerMathlib/SPEC/hex-kronecker-mathlib.md): bounded-box soundness and the `kronecker` tactic over any commutative ring
 - [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md): multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
 - [hex-mv-hensel.md](../../HexMvHensel/SPEC/hex-mv-hensel.md): multivariate Hensel lifting against an evaluation ideal, its coprimality witness and leading-coefficient contract, reconstruction, and the checked-decomposition certificate (the Mathlib companion is specified in the same file)
 - [hex-mv-factor.md](../../HexMvFactor/SPEC/hex-mv-factor.md): factorization of `Z[x_1, ..., x_n]` by Wang's EEZ algorithm, the evaluation-point and leading-coefficient search, the checked product decomposition, and the separate irreducibility certificate (the Mathlib companion is specified in the same file)
@@ -733,15 +841,23 @@ for developments whose source-local move has not happened yet.
 - [hex-roots-mathlib](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md): Pellet's test on circles, the Mahler separation bound, soundness of refinement and `ZPoly.isolateComplexRoots?`
 - [hex-real-roots.md](../../HexRealRoots/SPEC/hex-real-roots.md): certified real root isolation for `Z[x]`, Sturm-count witnesses, Descartes search with Sturm fallback
 - [hex-real-roots-mathlib.md](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md): Sturm's theorem, chain correspondence, soundness and completeness of `ZPoly.isolateRealRoots?`
+- [hex-sturm](hex-sturm.md) (planned): ordered-field Sturm–Tarski frontend, coefficient evidence and root counts using the shared hex-real-roots query/replay kernel
+- [hex-sturm-mathlib](hex-sturm-mathlib.md) (planned): abstract ordered-field query correspondence, endpoint guards and coefficient-evidence composition using shared real-roots-mathlib replay soundness
+- [hex-sign-det](hex-sign-det.md) (planned): complete BKR sign tables, certified support reduction and Thom root descriptors; companion specified separately below
+- [hex-sign-det-mathlib](hex-sign-det-mathlib.md) (planned): certified exact counts and omitted-condition unrealizability, partial Thom completion, root identity/order and re-encoding correspondence
 - [hex-interval.md](../../HexInterval/SPEC/hex-interval.md): exact interval data, shared programs, and budgeted propagation search
 - [hex-interval-mathlib.md](hex-interval-mathlib.md): real semantics, verified propagators, proof replay, and the `interval` tactic
 - **hex-interval-algebraic** (planned): Mathlib-facing interval providers backed by certified real and complex polynomial root isolation; its provider contract is specified in [hex-interval.md](../../HexInterval/SPEC/hex-interval.md#specialized-algebraic-solvers-before-generic-propagation)
-- [hex-rcf.md](../../HexRCF/SPEC/hex-rcf.md): the `rcf` tactic for univariate real-closed-field sentences
+- [hex-real-formula](hex-real-formula.md) (planned): shared real-arithmetic syntax, semantics, and reifier; Mathlib companion specified in the same file
+- [hex-virtual-subst](hex-virtual-subst.md) (planned): quadratic QE and certificates; Mathlib companion and tactic specified in the same file
+- [hex-rcf.md](../../HexRCF/SPEC/hex-rcf.md): the `rcf` tactic for univariate real-closed-field sentences; [planned real coefficients](../../HexRCF/SPEC/hex-rcf.md#planned-real-coefficient-extension), shared frontend, certified replay and realization contracts
 - [hex-resultant](../../HexResultant/SPEC/hex-resultant.md): polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
 - [hex-resultant-mathlib](../../HexResultantMathlib/SPEC/hex-resultant-mathlib.md): executable resultant agreement, specialization, root-product, and discriminant theorems
 - [hex-number-field](../../HexNumberField/SPEC/hex-number-field.md): `QAdjoin`, factorization-lazy `AlgebraicRoot`, canonical `AlgebraicNumber`, conjugation, principal radicals, common-field coordinates, and algebraic-coefficient roots
 - [hex-number-field-mathlib](../../HexNumberFieldMathlib/SPEC/hex-number-field-mathlib.md): fixed-field correspondence, exactification, complex partial order, principal radicals, and algebraic closedness
 - [hex-real-algebraic](hex-real-algebraic.md): exact ordered real algebraic numbers, real roots, rounding, and approximation (the Mathlib companion is specified in the same file)
+- [hex-real-closure](hex-real-closure.md) (planned): selected-root algebraic towers, splitting and transport, characteristic-zero Yun decomposition, complete root isolation and shared samples
+- [hex-real-closure-mathlib](hex-real-closure-mathlib.md) (planned): selected-root correspondence, complete roots and multiplicities, compatible-union real-closedness, finite-sign realization and reconstruction
 - [hex-number-field-tower](../../HexNumberFieldTower/SPEC/hex-number-field-tower.md): successive extensions, Trager factorization, splitting fields, and flattening
 - [hex-number-field-tower-mathlib.md](../../HexNumberFieldTowerMathlib/SPEC/hex-number-field-tower-mathlib.md): semantic towers, factorization correctness, splitting, and primitive-element equivalence
 - [hex-berlekamp](../../HexBerlekamp/SPEC/hex-berlekamp.md): Berlekamp factoring, Rabin irreducibility test, and the `factor_poly` / `irreducibility` tactic drivers

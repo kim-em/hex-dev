@@ -39,6 +39,23 @@ check and decide how an untrusted solver supplies candidates. An in-Lean
 floating-point implementation and an FFI solver are equivalent from the
 trusted layer's point of view.
 
+### Determinantal ideals and rank loci
+
+[hex-determinantal-ideal](../HexDeterminantalIdeal/SPEC/hex-determinantal-ideal.md) specifies
+executable minors of every size over any commutative ring, the generating
+list of the determinantal ideal `I_r(A)`, and the theorem that a matrix over
+a field has rank below `r` exactly when every `r × r` minor vanishes, with a
+Mathlib-free proof through the row-reduced echelon certificate, Cauchy-Binet
+and the Laplace expansion. Its companion
+[hex-determinantal-ideal-mathlib](../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md)
+states the theorem for `Matrix.rank` under any ring homomorphism into a
+field, so the locus where a polynomial matrix's rank drops below `r` is the
+zero set of `I_r(A)`, and proves that `I_r(A)` is unchanged by invertible
+row and column operations. Fitting ideals, whose presentation independence
+is a theorem about modules rather than matrices, and Gröbner-basis questions
+about `I_r(A)` (membership, radical, dimension) remain future work. The
+pinned Mathlib has neither Fitting ideals nor a rank-versus-minors lemma.
+
 ### Sparse matrices
 
 Add a canonical sparse representation alongside the dense matrix type, with
@@ -257,23 +274,40 @@ decomposition from irreducible factorization.
 
 ### Gröbner bases
 
-`hex-groebner` should start with Buchberger's algorithm and the
-Gebauer-Möller pair criteria. Add F4 only if benchmarks justify it.
-Applications include ideal membership,
-intersection, quotient, elimination, implicitization, and radical membership
-through the Rabinowitsch trick.
+A Hex Gröbner engine is justified only at the performance of the open-source
+industrial engines. Lean's `grind` already contains a Gröbner-basis-based
+commutative-ring solver for small ideal-membership goals, exposed as the
+`grobner` tactic, and `linear_combination` checks any externally produced
+cofactor certificate (`polyrith`'s external service has been shut down), so a
+Buchberger implementation with pair criteria adds nothing that is not already
+available. The sources to
+follow are msolve (F4 over prime fields with a tracer and multi-modular
+reconstruction over `ℚ`, plus a signature-based variant), giac's modular F4,
+Singular's `std`, `slimgb`, and `sba`, GBLA for the specialized F4 linear
+algebra, and the Eder–Faugère survey of signature-based algorithms.
+
+That engine needs its own substrate: packed-exponent sparse polynomials over
+word-size prime fields, Macaulay-matrix construction with hybrid sparse and
+dense row reduction over `𝔽ₚ`, and a tracer-driven multi-modular lift.
+`hex-mv-poly`'s tree-map representation remains the certificate and kernel
+form, not the engine. Applications include ideal membership, intersection,
+quotient, elimination, implicitization, and radical membership through the
+Rabinowitsch trick.
 
 Ideal membership has a compact trusted boundary: return cofactors witnessing
-`p = sum_i h_i * g_i`. Non-membership requires more. A nonzero remainder is
+`p = sum_i h_i * g_i`, an identity `hex-kronecker` and `hex-reflect` already
+check in the kernel. Non-membership requires more. A nonzero remainder is
 conclusive only after the divisor set is certified to be a Gröbner basis and
-connected to the original generators, including the required S-pair
-criterion. Treat positive and negative decisions as separate certificate
-types with separate budgets.
+connected to the original generators: two-way cofactor identities, a
+reduction-to-zero trace for every S-pair, and the Buchberger criterion proved
+once. The pinned Mathlib has the multivariate division algorithm with respect
+to a monomial order and not the criterion. Treat positive and negative
+decisions as separate certificate types with separate budgets.
 
-The computational layer depends on `hex-mv-poly`; coefficient-domain
-hypotheses and monomial order must be explicit. Zero-dimensional solving and
-root reconstruction are downstream work rather than part of the first basis
-library.
+The computational layer depends on `hex-mv-poly` for the certificate form;
+coefficient-domain hypotheses and monomial order must be explicit.
+Zero-dimensional solving and root reconstruction are downstream work rather
+than part of the first basis library.
 
 ### Boolean polynomial systems
 
@@ -1100,7 +1134,8 @@ in the companion. Typed real and imaginary projections belong to the real
 library, keeping this dependency graph acyclic. These APIs are covered in the
 manual's number-field and real-algebraic chapters.
 
-Faster comparison by refinement on overlap, comparison of lazy roots, and
+Stored-interval comparison and bounded refinement fast paths are specified in
+the number-field library. General comparison of lazy roots and
 Tarski queries remain separate extensions behind the same order contract.
 An unconditional Mathlib-free law witness additionally needs proof
 infrastructure for exactification, canonical equality, and root separation.
@@ -1111,6 +1146,531 @@ centres, and no value-sortedness theorem establishes that cross-factor order.
 The new real-root API explicitly sorts with `realCompare`.
 This library provides exact real values for later sign determination and
 algebraic sample points without depending on a quantifier-elimination tactic.
+
+### Real closures of ordered fields
+
+This family extends exact real computation to the real closure of
+`ℚ(τ₁,…,τₘ)(ε₁,…,εₙ)`, with computable real constants `τᵢ` and successive
+positive infinitesimals `εᵢ`. Its design follows [de Moura–Passmore, CADE
+2013](https://www.cl.cam.ac.uk/~gp351/infinitesimals.pdf) and is tracked by
+[#10143](https://github.com/kim-em/hex-dev/issues/10143). The family section
+fixes shared contracts; the directives below write the individual SPECs. It
+does not register or implement these libraries.
+
+#### Existing components and library boundaries
+
+[hex-rational-fn](../HexRationalFn/SPEC/hex-rational-fn.md) already represents
+`K(X)` by coprime `DensePoly K` numerators and monic denominators, over
+`Lean.Grind.Field` with decidable equality. `HexPoly.Field` supplies division,
+gcd and extended gcd. `hex-real-closure` owns the implemented
+characteristic-zero Yun decomposition
+and its correspondence over interpreted coefficient representations. Complete
+ordered root production must combine this decomposition with isolation to
+return the specified multiplicities.
+[hex-real-roots](../HexRealRoots/SPEC/hex-real-roots.md#tarski-queries) owns
+integer Sturm chains and the implemented `ZPoly.tarskiQuery` and `IntTarskiCertificate`.
+Their abstract root-sum and replay soundness theorems are proved in the
+development `HexQuerySemantics` adapters using the pinned Tau Ceti foundation;
+publication in the split companions remains separate. Its ordinary root counts and
+`hex-rcf`'s derivative-seeded `SturmReplay` cannot certify general Tarski
+queries. Transcendental sign refinement consumes a caller-supplied approximation
+procedure. `hex-ordered-fn` owns the small exact finite-bound representation and
+arithmetic needed for polynomial evaluation; it has no dependency on
+`hex-interval` or its companion. An adapter to another enclosure library is
+separate future work, not a prerequisite or deliverable of this family.
+
+[hex-number-field](../HexNumberField/SPEC/hex-number-field.md) specifies
+fixed-field Tarski and approximation comparisons and fixed-embedding
+`NumberTower` signs. Neither its irreducible, complex-embedded towers nor
+`SimpleRealRoot`'s rational separation bounds model infinitesimals.
+[hex-real-algebraic](Libraries/hex-real-algebraic.md) remains the independent
+fast path over `ℚ`; this family must agree with its `realCompare` and
+`RealAlgebraicPoly.roots` rather than changing their semantics.
+
+Keep four computational libraries and four companions. Sturm queries have
+consumers needing no BKR matrix machinery, so `hex-sturm` and `hex-sign-det`
+remain separate. The two rational-function orders share their representation
+and arithmetic, so they stay in `hex-ordered-fn`, in separate modules.
+
+| Mathlib-free library | Responsibility | Mathlib companion |
+| --- | --- | --- |
+| [hex-sturm](Libraries/hex-sturm.md) | Ordered-field query frontend, coefficient operations, generic endpoints and root counts | `hex-sturm-mathlib`: frontend correspondence and replay composition |
+| [hex-sign-det](Libraries/hex-sign-det.md) | BKR sign determination, complete sign tables, Thom root identity and comparison | [hex-sign-det-mathlib](Libraries/hex-sign-det-mathlib.md): sign-table correctness, Thom identity and order correspondence |
+| [hex-ordered-fn](Libraries/hex-ordered-fn.md) | Transcendental and infinitesimal orders on `RationalFn`, approximation protocol | [hex-ordered-fn-mathlib](Libraries/hex-ordered-fn-mathlib.md): order laws, real evaluation and infinitesimal model |
+| [hex-real-closure](Libraries/hex-real-closure.md) | Algebraic extension arithmetic, dynamic splitting, root isolation, staged towers and exploration | [hex-real-closure-mathlib](Libraries/hex-real-closure-mathlib.md): selected-root semantics, field laws, root completeness and trivial-tower agreement |
+
+Arrows point from dependencies to consumers. Additional direct imports must
+respect this graph, including the existing transitive dependencies of each
+input library:
+
+```text
+hex-poly ──────────> hex-real-roots ──> hex-sturm ──> hex-sign-det
+    │                                      │               │
+    └─> hex-rational-fn ──> hex-ordered-fn   │               │
+                                  │        │               │
+                                  └────────┴───────────────> hex-real-closure
+hex-real-algebraic ────────────────────────────────────────> hex-real-closure
+```
+
+The additional matrix inputs to hex-sign-det are hex-matrix, hex-row-reduce
+and hex-rank; their companions supply the corresponding linear-algebra
+results. These existing inputs do not depend on the real-closure family.
+
+Each companion imports its computational library and the companions of the
+computational dependencies it uses, plus Mathlib. Only companions may import
+Tau Ceti. There is no reverse dependency from `hex-poly`, `hex-rational-fn`,
+`hex-real-roots` or `hex-real-algebraic` into this family. Neither
+`hex-interval` nor `hex-interval-mathlib` is an input to this family.
+CAD, coverings and tactic integration are downstream clients, never imports of
+these computational libraries. Reuse existing total `DensePoly` and
+`RationalFn` arithmetic over canonical prealgebraic fields. Algebraic
+coefficients use the [shared execution contract](real-closure-execution.md):
+canonical-zero representations and ordinary total operations reuse `DensePoly`;
+companions prove their noninjective interpretation and semantic field laws.
+The shared ordinary ordered-domain pseudo-division supplies the lower arithmetic.
+
+#### Execution policy and implementation boundary
+
+The [shared execution contract](real-closure-execution.md) fixes ordinary
+operation instances including natural casts, an explicit total sign, unique
+stored zero, and semantic polynomial equality through zero differences.
+For monic clean algebraic definitions retain the remainder already computed
+during zero testing; general non-monic definitions retain raw representatives.
+A checked irreducibility fact permits a remainder-only fast path but is never
+a requirement to factor every defining polynomial. Batch only inside justified
+ring-operation buffers; leading-zero tests in division remain mandatory.
+
+Persistent refinement creates a new immutable context and transports the
+requested dependency closure in predecessor order: later polynomials,
+endpoints, selected roots, values and evidence. Old contexts stay valid.
+Reject stale context bindings in the new context, including unchanged
+operand literals, unless explicit checked transport or recomputation is supplied.
+
+Experiments provide design evidence; the owning SPECs define APIs, proof
+hypotheses and acceptance criteria; production implementation follows those
+revised contracts. The initial rational selected-root arithmetic/sign and
+transport slice uses existing ℝ Sturm results, with no reverse import from
+hex-real-algebraic. It does not discharge abstract-field Sturm/BKR, general
+tower transport, or real-closure semantics. Implementation directives should
+bundle coherent computational/companion outcomes and preserve these proof
+gates; closing a SPEC or an experiment does not close its implementation.
+
+#### One Sturm–Tarski primitive
+
+The [hex-sturm SPEC](Libraries/hex-sturm.md) fixes the frontend API, failure
+and termination contracts, replay and evidence requirements, and coordinated
+prerequisite contracts in hex-poly and hex-real-roots. The shared clauses
+below also govern the other family directives. The
+[hex-sturm-mathlib SPEC](Libraries/hex-sturm-mathlib.md) fixes the companion
+statements and the shared theorem contract in hex-real-roots-mathlib.
+
+For semantic fields use Lean core's existing field/order classes, with
+compatible Mathlib instances in companions. Do not install them on raw
+selected-root representatives or on a bounded sign attempt.
+
+The [execution contract](real-closure-execution.md) separates ordinary total
+representation operations from semantic field laws. Canonical-zero storage
+lets the existing `DensePoly` kernels use honest structural `DecidableEq`;
+nonzero representations need not be canonical. Semantic identities and replay
+use zero differences. Companions prove noninjective interpretation, zero
+reflection and operation/sign preservation, then quotient field laws.
+Algebraic constructors and readers do not require those proofs to execute.
+There is no second Tarski primitive, fallible arithmetic record or benchmark
+import exception. Transcendental refinement keeps an erased caller progress
+premise; finite per-input benchmarks can prove it by a checked successful
+precision without claiming a universal transcendental field registration.
+
+Generalize the arithmetic primitive **in place below the family**: one
+positive-scaled signed-remainder/query-replay kernel in `hex-real-roots`, over
+an ordinary ordered commutative domain. It does not require division or a field, so integer
+arithmetic is an actual instance. `hex-sturm` owns the general ordered-field
+frontend: domain checks, squarefreeness, finite `K` and infinite endpoint
+operations, coefficient evidence composition and root-count APIs.
+`ZPoly.tarskiQuery` remains the integer/dyadic frontend of the same kernel,
+retaining optimized integer content and Horner operations. Both frontends
+share the initial reduction and remainder recurrence, not independent query
+implementations. A specialized backend must prove equality to that kernel.
+Clear denominators of rational `p` and `f` separately by positive integers;
+the rational/dyadic frontend must equal `ZPoly.tarskiQuery`, with a
+translation of its replay certificates.
+
+The shared abstract signed-remainder/replay soundness theorem lives in
+`hex-real-roots-mathlib`, importing the Tau Ceti foundation there. That
+companion retains ownership of `ZPoly.tarskiQuery_eq` and
+`IntTarskiCertificate.check_sound`, derived by integer specialization of the shared
+theorem. `hex-sturm-mathlib` consumes it to prove the general frontend's
+guards, endpoint operations and coefficient-evidence composition sound. Thus
+neither the primitive nor its foundational soundness proof is duplicated, and
+no upstream library imports the family. The two Sturm directives must specify
+this coordinated generalization of the existing real-roots SPECs.
+
+For nonzero squarefree `p`, the query of `f` on `(a,b)` is the integer sum of
+`sign(f(α))` over the distinct roots of `p` there. Endpoints are finite `K`
+values or `±∞`; finite endpoints must not be roots of `p`, and `a < b`.
+Nonzero constant `p` gives zero. Zero/nonsquarefree `p`, reversed intervals
+and root endpoints are rejected before shortcuts. `f=0`, a zero initial
+remainder and a nonconstant terminal gcd are valid cases. First reduce `f*p'`
+modulo `p`; all subsequent nonzero remainder degrees strictly decrease. Replay
+checks positive-scaled initial and three-term identities, the terminal zero
+remainder, domain guards, signs and variations, with leading-coefficient and
+degree parity signs at infinity. Coefficient signs themselves need
+certificates when coefficients are extension elements. A runtime comparison
+alone is not proof evidence.
+
+The root count is the query of `1`. Preserve today's separate half-open
+Sturm-count API, which admits a root at its upper endpoint. Leave the existing
+`Sturm.IsSturmChain` proofs over `Polynomial ℝ` intact; do not make their
+refactoring a prerequisite for this family. The shared
+signed-remainder/Cauchy-index theorem must include common factors; it is not a
+corollary of derivative-chain root counting.
+
+#### Sign determination and encoded roots
+
+The [hex-sign-det SPEC](Libraries/hex-sign-det.md) fixes the complete-table
+API, recursive support certificates, descriptor operations, failure and
+termination contracts, and production/replay evidence bounds. The shared
+clauses below continue to govern the other family directives.
+
+For squarefree nonzero `p`, an interval `I` and polynomials `q₁,…,qₛ`, return
+every realized sign vector `σ ∈ {-1,0,1}ˢ` with its positive root count. The
+empty polynomial list has the one empty condition with count equal to the root
+count, unless that count is zero. Counts concern distinct roots;
+multiplicities belong to squarefree decomposition in the root API.
+
+For exponent rows `e ∈ {0,1,2}ˢ`, let `M[e,σ] = ∏ᵢ σᵢ^eᵢ` (including `0^0 =
+1`) and `t[e] = TaQ(∏ᵢ qᵢ^eᵢ, p; I)`. The certificate carries the Tarski
+replays, nonnegative integral counts, `M*c=t`, and a checked invertibility
+witness (e.g. an integer matrix `A` and nonzero integer `d` with `A*M=d*Id`).
+
+BKR uses reduced matrices. Its additional **support-completeness invariant**
+is: every root of `p` in `I` realizes a listed candidate condition before the
+reduced system is solved. Leaves have complete ternary tables. At a recursive
+combination, completeness of both children puts every realized parent vector
+in their Cartesian product. Each pruning step must certify zero counts or use
+a proved support-preserving reduction; arbitrary omitted columns are
+forbidden. Carry the recursive tables and reduction evidence in the replay.
+Only then does invertibility establish all counts and justify dropping zero
+rows from the output. Total count agreement alone is not a substitute.
+
+A root descriptor contains `p`, an interval with possibly infinite endpoints,
+and signs of selected derivatives. Validity means **exactly one** root
+satisfies both interval and sign constraints. Full Thom encodings guarantee
+identity without a rational separation bound; partial encodings need a checked
+count-one condition. Complete partial derivative encodings by sign
+determination before comparing roots of the same polynomial by Thom's ordering
+rule; do not compare sign arrays lexicographically. Different defining
+polynomials require a common squarefree product and re-encoding, or an
+equivalent certified joint sign determination; matching raw vectors is not
+equality. This is the BKR sign-determination library, not a multivariate
+quantifier-elimination algorithm; see the [BKR
+analysis](../reports/decision-procedures-alignment.md#ben-orkozenreif).
+
+The [hex-sign-det-mathlib SPEC](Libraries/hex-sign-det-mathlib.md) fixes the
+imported moment, recursive reduction and Thom theorem shapes, local replay
+correspondence, descriptor completion and changed-polynomial transport. The
+shared support, coefficient and termination contracts here continue to govern
+the downstream tower directives.
+
+#### Ordered rational functions and termination
+
+The individual [hex-ordered-fn SPEC](Libraries/hex-ordered-fn.md) specifies
+ordinary exact fraction arithmetic, user approximation laws, sign proofs and
+executable total-search construction. The companion
+[hex-ordered-fn-mathlib SPEC](Libraries/hex-ordered-fn-mathlib.md) specifies
+real evaluation, the Hahn-series model, arithmetic correspondence and the
+laws supplied to that adapter. The clauses here remain the shared contract
+for both libraries and the downstream tower directives.
+
+For a new infinitesimal, require `0 < ε < a` for every positive `a` in the
+preceding field. The sign of `p(ε)/q(ε)` is the product of the signs of the
+lowest-degree nonzero coefficients of `p` and `q`; zero numerator is zero.
+Monicity does not make the denominator positive at `ε`. Iterating gives `ε₂`
+smaller than every positive element of `K(ε₁)`, including every positive power
+of `ε₁`.
+
+Choose the companion model `Lex (HahnSeries ℤ K)`, with constants at exponent
+zero and `ε` at exponent one, iterated for successive infinitesimals. The
+[pinned Mathlib](../lake-manifest.json) revision
+`1cf325a0cf67aca2b04d76b5380ff6a9e410aefa` provides the lexicographic ordered
+ring in `Mathlib/RingTheory/HahnSeries/Lex.lean` and the field structure in
+`Mathlib/RingTheory/HahnSeries/Summable.lean`. Reuse the existing `RatFunc`
+embedding into `LaurentSeries K` and `RatFunc.coe_X` in
+`Mathlib/RingTheory/LaurentSeries.lean`, composed with Hex's rational-function
+correspondence. Prove lowest-coefficient sign correspondence, order laws and
+the infinitesimal inequality in Hex. Obtaining a real closed ambient field for
+this model is a separate existence obligation described below; a Hahn field
+with exponent group `ℤ` is not itself real closed.
+
+For a real constant `τ`, the caller supplies `approx : Rat → Bounds`,
+plus separate containment and width proof functions. For every positive
+rational request `δ`, the returned interval must contain that specific `τ`
+and have width at most `δ`. Both guarantees are required; approximation
+execution itself calls only the data function. Requesting `δ=2^(-n)` gives
+the effective convergence schedule. Refinement must
+also enclose all preceding real coefficients. Refine numerator and denominator
+until their signs are separated from zero, handling formal zero first. The
+semantic hypothesis is transcendence over the **embedded preceding field**,
+not merely over `ℚ`. It makes evaluation injective and excludes denominator
+zeros. Store constant identities and oracle provenance, not arbitrary
+callbacks whose outputs the kernel would trust. The computational interface
+uses exact rational or dyadic finite endpoints with a checked order, and the
+few exact bound operations needed by Horner evaluation. The caller owns
+constant-specific approximation algorithms, containment proofs and effective
+progress; the generic companion proves their composition. No bundled π/e
+producer, interval solver, interval-library admission or analytic-provider
+benchmark is required. A future optional adapter may instantiate the same
+interface without changing the family import graph.
+
+The ordinary ordered-field sign operation searches for separation of a
+formally nonzero rational function. Algebraic equality detects formal zero
+before refinement. Correct enclosures, effective convergence and relative
+transcendence prove eventual separation. The computational library accepts
+the corresponding Prop termination law; the companion derives it from those
+semantic hypotheses. A well-founded search on this proof gives an executable
+total sign without a user threshold or guessed separation bound. The erased
+termination proof is not an oracle supplying a numerical answer.
+
+An optional finite `sign?` attempt reports a sign or `none`; its successful
+nonzero claims need containment, not transcendence. Exact evaluation
+identities, including a certified singleton `[0,0]`, may prove zero. This
+interface neither supplies a total field comparison nor propagates budgets
+through polynomial arithmetic. Without the hypotheses for an exact ordered
+field, clients can check finite enclosure/identity certificates but cannot
+invoke the generic tower decision procedure as if that field were available.
+`RationalFn K` retains its ordinary exact arithmetic over a lawful base `K`;
+there is no bounded rational-function arithmetic implementation.
+
+The pin contains only the analytic part of Lindemann–Weierstrass, not proofs
+of `Transcendental ℚ Real.pi` or `Transcendental ℚ (Real.exp 1)`. Treat those
+as explicit hypotheses for totality. Even proofs of both separately would not
+justify a total `ℚ(π,e)` adapter: adjoining the second constant requires
+relative transcendence (algebraic independence of the pair). The bounded,
+certified-enclosure API can still handle both constants together whenever its
+required signs are separated, and prove formal identities when all original
+denominator nonvanishing obligations are certified.
+
+#### Algebraic towers, normalization and sampling
+
+The [hex-real-closure SPEC](Libraries/hex-real-closure.md) fixes the staged
+context and selected-root APIs, Yun decomposition, splitting/transport, complete
+root isolation, shared samples, failures and evidence requirements. The clauses
+below remain shared contracts for the companion and downstream directives.
+The [hex-real-closure-mathlib SPEC](Libraries/hex-real-closure-mathlib.md)
+fixes relative and ambient-existence semantics, live splitting/enlargement
+transport, compatible-union proofs, finite-sign specialization and replay bounds.
+
+Enforce stages `transcendental ≺ infinitesimal ≺ algebraic` in the tower API.
+Creating a finite tower does not make it real closed; real closure is the
+union of finite compatible algebraic extensions, with new roots adjoined on
+demand. Each algebraic level has squarefree `p` and a valid selected-root
+descriptor. Elements have polynomial representatives `q(α)` with semantic
+equality at that root. Since `p` need not be irreducible, **do not install a
+field instance on `K[X]/(p)`** or use equality of remainder arrays as field
+equality. Equality of values is the certified zero sign of the difference at
+`α`. Executable elements have canonical zero and ordinary total operations,
+with structural equality kept distinct from semantic equality. The companion
+constructs the semantic quotient field and proves correspondence; executable
+contexts do not take its law proofs. An inverse may recompute a split purely; persisting splits
+is a context optimization whose denotation invariance must be proved.
+
+For inversion, establish `q(α) ≠ 0` first, then compute `g = gcd(p,q)`. If `g`
+is nonconstant, the selected root lies in `p/g`, since it is not a root of
+`g`. Replace the defining constraint with this smaller factor, re-encode the
+selected root using derivatives of the new polynomial (retaining the old
+descriptor as transport evidence), and use extended gcd there to obtain the
+inverse. Preserve denotations of all live elements and downstream levels under
+this refinement; versioned contexts or explicit transport must prevent stale
+certificates. Degree decrease bounds splitting. Specify zero inversion
+consistently with the field API and a checked nonzero wrapper.
+
+Clean representations preserve integral coefficients at the base and,
+recursively, denominator-one polynomials with clean coefficients. Use signed
+pseudo-remainders and positive scaling witnesses. Reduce algebraic expressions
+by monic clean defining polynomials when useful; do not eagerly reduce by
+non-monic defining polynomials or force them monic. Thus stored expressions
+may have degree above `deg p`. This is compatible with canonical `RationalFn`
+at transcendental/infinitesimal levels: a clean denominator-one polynomial is
+already in that normal form. Root search clears denominators with recorded
+nonzero/sign data; changes of scale must preserve query signs.
+
+Root isolation uses a new characteristic-zero Yun adapter to obtain squarefree
+factors and multiplicities, removes zero roots separately, and returns a
+complete ordered list with multiplicities. A finite dyadic Cauchy bound
+permits bisection as a fast path; it does **not** guarantee dyadic separation
+in a non-Archimedean field. Use a deterministic degree-based bound on
+bisection work, then full derivative sign determination on every unresolved
+interval. Bound estimation is itself bounded work: infinite, unavailable or
+unresolved dyadic bounds go directly to sign determination; no search for a
+finite bound may delay the fallback indefinitely. Roots encountered at split
+points are emitted once and excluded from subsequent open intervals. For
+example, at most `2*(deg p+1)` bisection nodes precede the fallback;
+correctness is independent of that policy because the finite BKR fallback
+handles all remaining roots. No user accuracy threshold controls completeness.
+The executable uses structural or internally size-bounded recursion. Prove
+adequacy and completeness under the lawful semantic interpretation. Degree
+descent, finite BKR recursion, bounded bisection and coefficient-sign progress
+are separate obligations; see the [execution contract](real-closure-execution.md).
+
+`hex-sign-det` owns single-polynomial root descriptors, their identity, order,
+sign evaluation and replay. `hex-real-closure` owns the tower-level sample
+interface built from these operations. The shared interface for CAD lifting
+and [coverings](Libraries/hex-coverings.md)
+exposes opaque contexts, coefficient embeddings, ordered roots with
+multiplicities, root equality/order, polynomial sign at a root, and
+section/sector sample construction with replay evidence. A sector request
+includes the finite family of polynomials whose signs must be preserved and
+its adjacent root boundaries. A sample `r+ε` or `±1/ε` must come with signs
+and a theorem realizing those finitely many signs at an ordinary point of the
+intended cell; an infinitesimal itself is not a real witness. A fresh
+infinitesimal after an algebraic sample requires rebuilding an enlarged
+infinitesimal base and transporting the selected algebraic roots into its real
+closure, preserving their order. It cannot simply append an out-of-stage
+extension. The simpler dyadic/midpoint backend remains available.
+[#10301](https://github.com/kim-em/hex-dev/issues/10301) measures these
+alternatives. The [coverings SPEC](Libraries/hex-coverings.md#literal-samples-and-checked-export)
+fixes a literal integer-polynomial and isolated-parameter replay format,
+with a selected-root coefficient adapter to the shared Sturm interface.
+This family can supply alternate sample producers and root/sign evidence
+through checked export and correspondence to that format.
+
+#### Proof ownership and public surface
+
+Consume the abstract real algebra requested by
+[#10300](https://github.com/kim-em/hex-dev/issues/10300) from Tau Ceti; do not
+rederive that foundation independently in Hex. The following are mathematical
+statement shapes, not claims that the named Lean declarations already exist.
+Let `R` have `[Field R] [LinearOrder R] [IsStrictOrderedRing R]` and
+`[IsRealClosed R]`, and let `ι : K →+* R` be an order-preserving embedding.
+Canonical fields retain the existing polynomial correspondence. For
+representation coefficients `E`, first interpret `DensePoly E` in `Polynomial K`
+with operation preservation and zero reflection; that map need not be
+injective. Then map along `ι`. Zero reflection, not representative uniqueness,
+preserves degree.
+
+| Owner/consumer | Imported statement from Tau Ceti | Correspondence proved in Hex |
+| --- | --- | --- |
+| Shared foundation in `hex-real-roots-mathlib`, consumed by `hex-sturm-mathlib` | Polynomial IVT on `[a,b]` and Rolle between distinct roots; signed-remainder/Cauchy-index identity equating variation drop to `∑ sign(f(α))` on root-free `(a,b)`, also at infinities and with a common gcd; root count as `f=1` | In real-roots: ordinary polynomial correspondence, positive pseudo-remainder/replay soundness, integer specialization and `IsRealClosed ℝ`. In sturm: field frontend, endpoint semantics and coefficient-certificate composition |
+| `hex-sign-det-mathlib` | Thom injectivity and root-order rule; for finite `Q`, actual-count moment identities and count recovery from an inverse and independently complete candidate support | Split-tree induction applies the imported recovery at each solve before pruning; literal matrix/replay checks imply exact counts and complete support; validity and comparison of partial descriptors, including different polynomials |
+| `hex-ordered-fn-mathlib` | No additional abstract real-closed-field theorem: uses Mathlib rational functions, real analysis and Hahn series | Real evaluation under relative transcendence; enclosure soundness and eventual success; Hahn embedding, sign rule and ordered-field laws |
+| `hex-real-closure-mathlib` | Existence of an algebraic real closed ordered extension of every ordered field (an explicit additional foundation requested alongside #10300); polynomial IVT/Rolle and Thom/sign determination through the preceding companions | Selected-root arithmetic and splitting transport, termination, ordered complete root lists, compatible-tower semantics and real-closedness of their algebraic union, trivial-tower agreement, finite-sign sector realization |
+
+The pinned Tau Ceti supplies polynomial IVT/Rolle, Sturm–Tarski, Thom
+identity/order, finite BKR counting and ordered algebraic real-closure
+existence. Hex's shared root-sum theorem and BKR/Thom interpretation consume
+these proofs; no admission exception applies. Use the shared
+`Real.instIsRealClosed` and the existing real-algebraic instance for concrete
+bases. For infinitesimal bases, `TauCeti.RealClosure.exists_realClosure`
+supplies an ordered real closed field `R` and an order-preserving embedding
+`ι : K →+* R`, with `R` algebraic over `ι(K)` in the same universe.
+The tower companion's `Ambient` construction consumes that theorem.
+Availability of these foundations does not establish totality of every Hex
+producer, native-tower coverage or nested real-sample realization; those are
+separate correspondence obligations of the owners above.
+
+Within that supplied ambient field, Hex proves the compatible-tower model:
+positive square roots and odd-degree roots lie in the algebraic union, and
+every element is algebraic over the fixed base. This is a relative
+construction, not a second absolute proof of existence of real closures.
+Finite-sign sector realization is also a Hex obligation, with its base field
+and embedding stated. For a real root `r` and a finite family of real
+polynomials, the signs at `r+ε` can already be realized near `r` using finite
+Taylor coefficients and real continuity; that fragment does not need
+real-closure existence for a Hahn field. Nested algebraic infinitesimal
+samples require the ambient model above. Nested replay costs are accepted: a
+level's coefficient-sign evidence may contain BKR/Tarski replays at lower
+levels. The SPECs must bound and benchmark these compositions, and `rcf` emits
+only evidence needed for the final real-valued coefficient or finite-sign
+realization claims. Foundation references are [Cohen–Mahboubi, LMCS
+2012](https://lmcs.episciences.org/844) and [Vermande, CPP
+2026](https://doi.org/10.1145/3779031.3779100). Companion SPECs distinguish the
+imported foundations from correctness of
+their executable consumers. Neither a roadmap nor a successful numerical
+fixture substitutes for the latter proofs.
+
+The exploration API offers caller-registered constants, staged infinitesimal
+construction, arithmetic, comparison, polynomial `roots` and a reconstructible `Repr`,
+modeled on [Z3's Python RCF
+API](https://github.com/Z3Prover/z3/blob/master/src/api/python/z3/z3rcf.py).
+Printed syntax includes the context, named constants, polynomial, interval and
+Thom signs needed to reconstruct a root; a registered oracle name must resolve
+to the same constant. Round trips preserve denotation and root identity, not
+incidental cache state. A caller can register `π` or `e` by supplying the same
+approximation/evidence interface; these are not bundled providers. Any total
+mode remains conditional as above. Generic infinitesimal examples
+are `#eval` demonstrations, with no nonstandard-analysis tactic claims.
+
+The downstream [`rcf` coefficient extension](../HexRCF/SPEC/hex-rcf.md#planned-real-coefficient-extension)
+is specified in the owning HexRCF SPEC: univariate sentences over `ℝ` with
+fixed real algebraic embeddings and authenticated caller-supplied constants,
+using the shared RealFormula frontend and kernel certificates with coefficient
+signs.
+Its optional import preserves the integer/rational fast path; the SPEC lists
+the actual implementation and semantic prerequisites without advancing a phase.
+That integration is new work; the integer-only replay cannot consume these
+contexts unchanged. Without transcendence proofs it can certify the fragment
+where every required nonzero sign is separated by caller-supplied certified
+enclosures and all zero signs have algebraic/identity proofs. For example `∀ x : ℝ, x² > π - 4` needs only a certified `π < 4` and
+nonnegativity of squares. No completeness claim covers unresolved relations
+between constants. Infinitesimal search samples require the finite-sign
+realization bridge before contributing evidence about `ℝ`.
+
+#### Sanity checks, conformance and evidence
+
+The paper's Example 3 factors as `ε²x⁵ − εx³ − εx² + 1 = (εx²−1)(εx³−1)`. Its
+three ordered real roots are `−ε^(-1/2)`, `ε^(-1/3)`, `ε^(-1/2)`. Both
+positive roots exceed every rational. For `p'''(x)=60ε²x²−6ε`, the sign at
+`ε^(-1/3)` is the sign of `6ε*(10ε^(1/3)−1)`, hence negative, while at
+`ε^(-1/2)` it is `54ε>0`. Thus `(0,+∞)` plus the third-derivative sign
+distinguishes them; interval overlap alone does not. Also `0<ε<1` implies
+`√ε>ε` by comparing squares, and for every positive integer `n`, `ε<1/n`
+implies `1/ε>n` (the nonpositive case is immediate). Test multiple
+infinitesimal levels, including `ε₂<ε₁^m` for every fixed positive integer
+`m`.
+
+Conformance uses Z3 `MkInfinitesimal`, `MkRoots` and comparisons; `Pi`/`E`
+comparisons apply only when a caller-supplied provider is available,
+with a pinned version and recorded fixture provenance. Reproduce the paper's
+`basic.py`, degree-15 MetiTarski and `y³+x³+1` cases from `nlsat.py`,
+`tower8.py`, and Rioboo/Strzeboński examples. Record any constant-provider
+inputs explicitly; their production is outside this family. Generic oracle
+contract tests use small supplied certified bounds and malformed or
+nonprogressing test procedures, not a new analytic library. Use python-flint
+and the existing `hex-real-algebraic` API for the rational-only cases. Require exact
+agreement of signs, sorted roots, multiplicities and arithmetic; printed
+decimals do not establish agreement. Test exhausted or invalid approximation
+inputs, root endpoints, shared gcds, dynamic splits and stale replay
+rejection, plus negative certificate cases with an omitted realizable sign
+condition.
+
+The trivial-tower backend delegates to `hex-real-algebraic` where applicable;
+its generic backend must additionally agree by correspondence theorem and
+conformance. Benchmarks separate query production, BKR matrices, coefficient
+signs, isolation and kernel replay. Phase 4 reports `tower8` isolation and a
+clean-versus-eager normalization ablation, including coefficient sizes and gcd
+work. The paper's 0.28 s versus 30-minute timeout is a historical observation,
+not a host-independent target. Follow the shared-host, alternating adjacent
+comparison discipline in [benchmarking.md](benchmarking.md), retain every
+completed sample, and keep all bench imports Mathlib-free.
+
+#### SPEC directives
+
+Each computational library and each companion has its own SPEC directive.
+The eight SPEC directives are complete. Implemented libraries keep their
+contracts in per-library directories, with compatibility links from
+`SPEC/Libraries/`; the tower contracts retain their current SPEC placement.
+Implementation and integration are coordinated by
+[#10331](https://github.com/kim-em/hex-dev/issues/10331). That issue records
+owners, remaining deliverables and assignment dependencies. The diagram above
+is the library import contract, not a worker schedule. Publication into split
+repositories is a separate deliverable; full CAD and coverings are downstream
+projects rather than family completion requirements.
+
+| Computational SPEC | Companion SPEC |
+| --- | --- |
+| [hex-sturm SPEC](Libraries/hex-sturm.md) ([#10311](https://github.com/kim-em/hex-dev/issues/10311)) | [hex-sturm-mathlib SPEC](Libraries/hex-sturm-mathlib.md) ([#10312](https://github.com/kim-em/hex-dev/issues/10312)) |
+| [hex-sign-det SPEC](Libraries/hex-sign-det.md) ([#10313](https://github.com/kim-em/hex-dev/issues/10313)) | [hex-sign-det-mathlib SPEC](Libraries/hex-sign-det-mathlib.md) ([#10314](https://github.com/kim-em/hex-dev/issues/10314)) |
+| [hex-ordered-fn #10315](https://github.com/kim-em/hex-dev/issues/10315) ([SPEC](Libraries/hex-ordered-fn.md)) | [hex-ordered-fn-mathlib #10316](https://github.com/kim-em/hex-dev/issues/10316) ([SPEC](Libraries/hex-ordered-fn-mathlib.md)) |
+| [hex-real-closure SPEC](Libraries/hex-real-closure.md) ([#10317](https://github.com/kim-em/hex-dev/issues/10317)) | [hex-real-closure-mathlib SPEC](Libraries/hex-real-closure-mathlib.md) ([#10318](https://github.com/kim-em/hex-dev/issues/10318)) |
 
 ### Lattice applications beyond factor recombination
 
@@ -1173,19 +1733,86 @@ Lean code are independently written.
 
 ### Cylindrical algebraic decomposition
 
-Extend the univariate real-closed-field decision procedure to quantifier
-elimination in a small number of variables. The intended components include a
-projection operator, multivariate subresultant chains in a distinguished
-variable, exact algebraic sample points, and sign determination for
-polynomials with algebraic coefficients.
+Extend the univariate decision procedure of `hex-rcf` to sentences and
+quantifier elimination in a small number of variables. The compiled pipeline
+decomposes into components that largely exist:
 
-Dependencies include `hex-mv-poly`, `hex-mv-factor`, `hex-resultant`,
-`hex-real-roots`, `hex-real-algebraic`, `hex-number-field`, and
-`hex-number-field-tower`. Scope the
-first version to two or three variables. Before fixing a public API, prototype
-the projection phase and a certificate that carries a complete cell
-decomposition with the sign-invariance evidence needed for a negative as well
-as a positive decision.
+- Projection. View a level-`k+1` polynomial as univariate in its main variable
+  over `MvPoly k` (`toUnivariate`). Collins' operator takes, for every
+  reductum `r` of every polynomial `p` (truncations of `p` by successive
+  leading terms, which cover the degree drops when leading coefficients
+  vanish), the coefficients of `r`, the principal subresultant coefficients of
+  `(r, r')`, and the principal subresultant coefficients of `(r, s)` for
+  reducta `s` of the other polynomials; the chains come from `hex-resultant`
+  over `MvPoly` coefficients (`hex-mv-gcd` supplies the exact-division law
+  and already runs that chain), after squarefree and irreducible basis
+  reduction from `hex-mv-gcd` and `hex-mv-factor`. Use Collins' operator
+  first. McCallum, Brown, and Lazard shrink the projection set but change the
+  theorem, its side conditions, and (for Lazard) the lifting step, so each is
+  a separately certified variant rather than a search-time option.
+- Base phase. `ZPoly.realAlgebraicRoots` and dyadic samples between roots.
+- Lifting. Substitute a sample point into each next-level polynomial to obtain
+  a `RealAlgebraicPoly`, take `RealAlgebraicPoly.roots`, and choose samples
+  between roots. Canonical `AlgebraicNumber` coordinates re-canonicalize at
+  every substitution, which is the known performance cliff; lazy
+  `AlgebraicRoot`s, `NumberTower` coordinates, and Thom encodings are the
+  alternatives. That choice is shared with
+  [#10142](https://github.com/kim-em/hex-dev/issues/10142) and
+  [#10143](https://github.com/kim-em/hex-dev/issues/10143) and should be made
+  once.
+- Sign evaluation at samples. Exact `RealAlgebraicNumber` arithmetic.
+- Cell semantics, sign rows, Boolean and quantifier folds. `hex-rcf`'s, by
+  induction on levels; cylindricity carries the fold across a quantifier
+  block boundary.
+
+Correctness has one deep theorem and a large amount of replayable arithmetic.
+The theorem is delineability: over a connected cell on which the projection
+set is sign-invariant, each level polynomial either vanishes identically on
+the cylinder over the cell or has real roots given by finitely many
+continuous functions of constant multiplicity that never cross. For Collins'
+operator it needs continuity of the complex roots of a polynomial in its
+coefficients (the pinned Mathlib has the monic equal-degree case,
+`Polynomial.exists_roots_norm_sub_lt_of_norm_coeff_sub_lt`; multiplicity
+control, root functions, and the degree-drop cases remain), the relation
+between the first nonvanishing principal subresultant coefficient and the
+degree of the gcd (`hex-resultant-mathlib` has the resultant-zero and
+specialization facts only), and connectedness of sections and sectors over
+connected cells. Over `ℝ` that connectedness is topological; over an
+arbitrary real closed field intervals are not connected and the statement
+must use semialgebraic connectedness, so the first target is `ℝ`. Vermande's
+Rocq/MathComp proof (CPP 2026), the first formal correctness proof of CAD, is
+the reference for the statement shapes. The theorem is independent of every
+implementation choice and is the long pole; it belongs in a Tau Ceti roadmap,
+and the Hex companion that consumes it will import Tau Ceti. Nothing in this
+entry can be certified without it.
+
+The certificate must convince the kernel that the sample points meet every
+sign-invariant cell of the atom polynomials and that the atom signs at the
+samples are as claimed. Sign claims replay per sample. Completeness is the
+delineability theorem applied to literal polynomials that the kernel has
+checked are the required subresultant coefficients and leading coefficients:
+replay the subresultant chains with their multiplication-only recurrence
+witnesses level by level, as `hex-rcf` replays Sturm chains. Root isolation
+at each level over algebraic coefficients is then a Sturm replay over `ℚ(α)`,
+or a Thom-encoding replay with Tarski queries; this component has no Hex
+precedent and is the likely limit on replay cost. `hex-rcf`'s univariate
+replay already costs seconds per goal, and a multivariate design budgets from
+that baseline.
+
+Sequencing: first the delineability theorem; in parallel an unverified
+compiled prototype of projection and lifting, measured on the standard small
+examples (Collins' circle and parabola pairs, Kahan's ellipse in the unit
+circle, a Davenport–Heintz family for the blowup) to fix the sample
+representation; then the certificate SPEC. Reserve full decompositions for
+quantifier elimination with alternations and for exploration. The tactic case
+(universal goals, and existential goals without alternation) should use
+[covering refutation](Libraries/hex-coverings.md), which shares the theorem,
+projection arithmetic, and lifting primitive but certifies only the cells a
+search visited.
+
+Dependencies: `hex-mv-poly`, `hex-mv-gcd`, `hex-mv-factor`, `hex-resultant`,
+`hex-real-roots`, `hex-real-algebraic`, `hex-number-field`, `hex-reflect`, and
+the shared [real-arithmetic formula language](Libraries/hex-real-formula.md).
 
 ## Cross-cutting infrastructure
 
@@ -1201,3 +1828,18 @@ The SPEC must decide content addressing, version skew, storage location, and
 resource limits for decoding and replay. `hex-conway`'s stored database and
 the interval certificate schema are useful first consumers, but neither
 should become a universal payload representation.
+
+Direct radical extraction, certified principal-root approximation, cyclotomic
+construction and recognition, and reduction of canonicalization's all-roots
+isolation cost have a complete
+[owning design](../HexNumberField/SPEC/hex-number-field.md#direct-certified-radicals-and-cyclotomic-embeddings), with
+[companion proof obligations](../HexNumberFieldMathlib/SPEC/hex-number-field-mathlib.md#direct-radical-proof-obligations)
+and [manual requirements](../HexManual/README.md#direct-radical-design-requirements).
+Implementation remains future work. The polynomial generator follows the
+[cyclotomic SPEC](Libraries/hex-cyclotomic.md); broader comparison work in
+[#10142](https://github.com/kim-em/hex-dev/issues/10142) remains separate.
+The [quadratic construction report](../reports/hex-number-field-quadratic.md)
+records the fix for the independent integer-root memory bug
+[#10156](https://github.com/kim-em/hex-dev/issues/10156) and the remaining
+trial-factorization allocation costs; preserve its regression when migrating
+canonical constructors.

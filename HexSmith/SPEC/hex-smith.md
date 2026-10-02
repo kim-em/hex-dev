@@ -805,3 +805,19 @@ Everything else arrives through `HexHermite`.
 - **Sparse relation matrices**, as above. The dense algorithm is
   correct on them and may be far from competitive, and the measurement
   under `presentation-smith` is what decides whether that matters.
+
+## Kernel certificates
+
+`HexSmith/Kernel.lean` owns the list certificate for the
+[smith frontend](../../HexSmithMathlib/SPEC/hex-smith-mathlib.md#the-smith-tactic).
+`SmithWitness` reshapes `snfCert` into list transforms and their inverses,
+a diagonal factor list and the intermediate product. `checkSmithList`
+checks dimensions, the positive divisibility chain, and the four products
+`left * A = intermediate`, `intermediate * right = diagonal`,
+`left * leftInv = I`, and `right * rightInv = I` by structural list recursion.
+The companion's soundness theorem transports any accepted witness to a
+row-presentation quotient equivalence, including the free complement and
+unit invariant factors. The kernel does not replay Smith reduction.
+
+Malformed-certificate regressions live in the Mathlib-free conformance driver;
+the companion owns proof tests and the fresh-module performance obligations.

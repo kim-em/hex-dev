@@ -67,13 +67,7 @@ theorem det_eq_foldl_laplace_last
       (List.finRange (n + 1)).foldl
         (fun acc row => acc + M[row][Fin.last n] * cofactor M row (Fin.last n)) 0 := by
   unfold det
-  rw [show permutationVectors (n + 1) =
-      List.flatMap
-        (fun v =>
-          (List.finRange (n + 1)).map fun i =>
-            insertAt (Fin.last n) (v.map Fin.castSucc) i)
-        (permutationVectors n) from rfl]
-  rw [List.foldl_add_flatMap]
+  rw [permutationVectors_succ, List.foldl_add_flatMap]
   have hmap :
       (permutationVectors n).foldl
         (fun acc v =>

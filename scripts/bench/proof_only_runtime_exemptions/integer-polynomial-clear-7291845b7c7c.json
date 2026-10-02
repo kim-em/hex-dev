@@ -1,0 +1,6 @@
+{
+  "path": "HexPolyZ/IntegerPolynomial.lean",
+  "baseline_blob": "c77677c6530fb8e8bcd7e44be9c4123f3a6e86aa",
+  "current_blob": "7291845b7c7c5e34c631bca28b8a4a651f8d7fb8",
+  "reason": "Adds clearDenominators as a public wrapper around the existing common-denominator and cleared-polynomial implementation, with positivity and exact rescaling theorems. Existing private helper bodies, primitive-part normalization and all factorization-service calls are unchanged. The measured factorization executable does not call the new wrapper. This exemption covers existing factorization measurements, not the new query frontend or denominator-clearing API."
+}

@@ -1,0 +1,6 @@
+{
+  "path": "HexArith/Montgomery/Context.lean",
+  "baseline_blob": "96432dfbfd48de30418e99c170115b5d57c21edc",
+  "current_blob": "8359a1647fec141464e5a36536c69e2152126c32",
+  "reason": "The timed factorization service uses compiled arithmetic and excludes module initialization and kernel replay. powModNatGo and powModWordOdd are unchanged from this baseline; powModBits preserves the original Nat fallback, with the two powMod references updated to that name. powModNat is a noncomputable kernel specification. The proved powModNat_eq_powMod compiler-simplification rule directs compiled callers to the same Montgomery dispatch and fallback. The fixed-window workers and their correctness proofs are not executed by the timed native factorization service. Kernel replay is measured separately in reports/hex-primality-windowed-replay.md."
+}

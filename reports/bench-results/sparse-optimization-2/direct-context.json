@@ -1,0 +1,14 @@
+{
+  "base_checkpoint": "counts",
+  "binary_sha256": "253547daa3c52ddeb2174d8875c456b7c32c470af4247c81bce4b5d19d2c4cec",
+  "sources": {
+    "HexGraph/Sparse/Pack.lean": "161d4695f753e59fe91f767acc37b941c1750ed4a19467161576244e633ee721",
+    "HexGraph/Sparse/Relabel.lean": "4f400aeb3622185f8c7975f3316ec0dd1c3760929365a0233d42e5473a6d0f80",
+    "HexGraph/Sparse/Normalize.lean": "a6935f458d1452f040e0c85c14c808c973fb1ddf97d4ddd9c540b2ef8cfc1aa5",
+    "HexGraphIso/Nauty/Sparse/Graph.lean": "ee6c85722a864011d085a7001044b94312408c11399d0171ca8f97be1da84bd7",
+    "HexGraphIso/Nauty/Sparse/Refine.lean": "2c2a09be8abcb8aeb55dc46186c51ae859aab71e3333ae74353b5a002b1f217a",
+    "HexGraphIso/Nauty/Sparse/Target.lean": "435caacdbb98e92cb3f936b95bc9d55d0e87e964cc934e0ea021a0757f3f810b",
+    "HexGraphIso/Nauty/Sparse/Search.lean": "46985a4299a12ba83d8d385a1e35a7ff5659e14bf17f4defac008a17fa8e5e69",
+    "HexGraphIso/Sparse/Run.lean": "a315af16603425752dfb2ed4cad7ebcb828df27d9adb0619be99ae0876fe23da"
+  }
+}

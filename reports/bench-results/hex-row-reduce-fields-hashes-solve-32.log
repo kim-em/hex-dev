@@ -1,0 +1,23 @@
+compare: 2 fixed benchmark(s) failed expectedHash check: Hex.RowReduceBench.Field.leanSolve32, Hex.RowReduceBench.Field.flintSolve32
+env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f589e37-dirty, 2026-09-12T21:52:03Z, host=chungus2
+Hex.RowReduceBench.Field.leanSolve32    [fixed] repeats=1
+  repeat 0  81.657 ms
+  median: 81.657 ms    min: 81.657 ms    max: 81.657 ms
+  hash: all repeats agree
+  observed hash: 0x790712b14bebe0c8
+  expected hash: FAIL — expected 0x2de9fc4d9d0ecd4, got 0x790712b14bebe0c8
+  peak RSS: 69_064 kB (across 1 ok repeat(s))
+
+Hex.RowReduceBench.Field.flintSolve32    [fixed] repeats=1
+  repeat 0  1.547 ms
+  median: 1.547 ms    min: 1.547 ms    max: 1.547 ms
+  hash: all repeats agree
+  observed hash: 0x790712b14bebe0c8
+  expected hash: FAIL — expected 0x2de9fc4d9d0ecd4, got 0x790712b14bebe0c8
+  peak RSS: 70_448 kB (across 1 ok repeat(s))
+
+relative median (baseline = Hex.RowReduceBench.Field.leanSolve32, the first CLI argument):
+  Hex.RowReduceBench.Field.leanSolve32: 1.000× (81.657 ms)
+  Hex.RowReduceBench.Field.flintSolve32: 0.019× (1.547 ms)
+agreement: all functions agree on output
+exported to reports/bench-results/hex-row-reduce-fields-hashes-solve-32.json

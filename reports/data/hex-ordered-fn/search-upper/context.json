@@ -1,0 +1,31 @@
+{
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10376/.lake/build/bin/hexorderedfn_bench",
+    "run",
+    "--filter",
+    "Hex.OrderedFnBench",
+    "--export-file",
+    "/tmp/issue-10376-search-upper/runtime.json",
+    "Hex.OrderedFnBench.refinement",
+    "Hex.OrderedFnBench.jointRefinement",
+    "Hex.OrderedFnBench.horner",
+    "Hex.OrderedFnBench.approximation"
+  ],
+  "cpu": 5,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "load_before": [
+    3.76220703125,
+    1.99853515625,
+    1.0810546875
+  ],
+  "lean_num_threads": "4",
+  "commit": "7b003d90b400dc6eaa9cdea28e9bba460193c3de",
+  "executable_sha256": "d15c1e0a37c76f5ef914e666bac8665e92bd85630a250217de533f3c8de7bfc1",
+  "returncode": 0,
+  "load_after": [
+    4.947265625,
+    19.11767578125,
+    13.16357421875
+  ]
+}

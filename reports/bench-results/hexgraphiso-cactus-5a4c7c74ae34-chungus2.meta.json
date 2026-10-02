@@ -1,0 +1,36 @@
+{
+  "fingerprint": "5a4c7c74ae34",
+  "cpu": 2,
+  "load_before": [
+    1.068359375,
+    9.87841796875,
+    11.55615234375
+  ],
+  "memory_limit_bytes": 17179869184,
+  "memory_swap_max_bytes": 0,
+  "build_workers": 2,
+  "tactic_workers": 1,
+  "full_build": {
+    "targets": 11938,
+    "memory_peak": "12.3G",
+    "swap": "0B"
+  },
+  "host_context": "Measurements ran sequentially after the capped full-repository build completed.",
+  "exit_code": 1,
+  "load_after": [
+    4.669921875,
+    7.61767578125,
+    10.39599609375
+  ],
+  "host": "chungus2",
+  "completed": false,
+  "reason": "Aggregate cgroup memory limit reached during neg-circ96-vs-2circ48",
+  "memory_peak": "16G",
+  "swap": "0B",
+  "completed_cactus_cases": 98,
+  "completed_pair_cases": 34,
+  "completed_tactic_cases": 32,
+  "label": "Sparse primitive proofs; bounded sequential validation; partial tactic sweep retained",
+  "date": "2026-09-10T10:33:37.462100+00:00",
+  "describe": "d55a63de6c1a"
+}

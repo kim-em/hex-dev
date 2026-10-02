@@ -74,7 +74,7 @@ theorem Loop.prepare_frame (ctx : Ctx n) (tcLevel : Nat) (l : Loop n) :
     else compareCodes l.node.level
       (visit ctx l.node.level l.node.numcells l.node.entry).2.1
       (visit ctx l.node.level l.node.numcells l.node.entry).2.2)
-  simp only [cheapCheck, apply_ite Search.lab, apply_ite Search.ptn, ite_self]
+  simp only [cheapCheck, apply_ite SearchState.lab, apply_ite SearchState.ptn, ite_self]
   rw [ht.1, ht.2.1]
   all_goals cases hf : l.first
   all_goals simp only [Bool.false_eq_true, ↓reduceIte]

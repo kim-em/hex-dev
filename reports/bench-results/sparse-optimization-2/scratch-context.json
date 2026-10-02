@@ -1,0 +1,7 @@
+{
+  "binary_sha256": "037cffe925b10b3a04498f068873e2e43aa53e1ebb449f0f48e59bbbb2a9552a",
+  "sources": {
+    "HexGraphIso/Nauty/Sparse/Refine.lean": "60ce7caec2a34a68266e52ff1009ed6638a0849ae7baeb7b33b4e0242e036f2b",
+    "HexGraphIso/Nauty/Sparse/Search.lean": "46f4c9492cec6a1d6cce20c4de6265ec48dd5ebddf9d38abac243f037a2e84dd"
+  }
+}

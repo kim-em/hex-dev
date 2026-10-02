@@ -69,17 +69,26 @@ initialize sinkRef : IO.Ref Nat ← IO.mkRef 0
 @[noinline] def blackBox (a : Nat) : IO Unit :=
   sinkRef.modify (· ^^^ a)
 
-private def timeMinNs (act : Unit → IO Nat) : IO Nat := do
+private structure Timing where
+  best : Nat
+  warmup : Nat
+  samples : Array Nat
+  doubled : Option Nat
+
+private def timeCalls (act : Unit → IO Nat) : IO Timing := do
   let w0 ← IO.monoNanosNow
   blackBox (← act ())  -- warmup
   let w1 ← IO.monoNanosNow
   -- one timed repetition suffices once a single call costs a second
   let effReps := if w1 - w0 > 1000000000 then 1 else reps
   let mut best : Nat := 0
+  let mut samples := #[]
+  let mut doubled := none
   for _ in [0 : effReps] do
     let t0 ← IO.monoNanosNow
     blackBox (← act ())
     let t1 ← IO.monoNanosNow
+    samples := samples.push (t1 - t0)
     if best == 0 || t1 - t0 < best then
       best := t1 - t0
   -- scaling self-check: a doubled batch must cost about double. If it
@@ -90,10 +99,14 @@ private def timeMinNs (act : Unit → IO Nat) : IO Nat := do
     blackBox (← act ())
     let t1 ← IO.monoNanosNow
     let two := t1 - t0
+    doubled := some two
     if two < best || two > 8 * best then
       IO.eprintln s!"cactus: WARNING scaling self-check failed \
         (1x best {best}ns, 2x batch {two}ns) — measurement suspect"
-  return best
+  return ⟨best, w1 - w0, samples, doubled⟩
+
+private def timeMinNs (act : Unit → IO Nat) : IO Nat :=
+  return (← timeCalls act).best
 
 /-- A cheap digest forcing full evaluation of a search result. -/
 private def runDigest {n : Nat} (r : Nauty.RunResult n) : Nat :=
@@ -452,11 +465,17 @@ private def runRead (col : Column) (name family : String)
         | _, _ => false
     let mut fields : List String := []
     if want .canon then
-      let ns ← timeMinNs fun _ => pure (digest (canonicalize G))
-      fields := s!"\"fast_ns\": {ns}" :: fields
+      let t ← timeCalls fun _ => pure (digest (canonicalize G))
+      fields := s!"\"fast_ns\": {t.best}" ::
+        s!"\"canon_warmup_ns\": {t.warmup}" ::
+        s!"\"canon_samples_ns\": {(Lean.toJson t.samples).compress}" ::
+        s!"\"canon_double_ns\": {(Lean.toJson t.doubled).compress}" :: fields
     if want .run then
-      let ns ← timeMinNs fun _ => pure (runDigest (Nauty.runColored G))
-      fields := s!"\"search_ns\": {ns}" :: fields
+      let t ← timeCalls fun _ => pure (runDigest (Nauty.runColored G))
+      fields := s!"\"search_ns\": {t.best}" ::
+        s!"\"search_warmup_ns\": {t.warmup}" ::
+        s!"\"search_samples_ns\": {(Lean.toJson t.samples).compress}" ::
+        s!"\"search_double_ns\": {(Lean.toJson t.doubled).compress}" :: fields
     if want .ffi then
       -- marshalled once, outside the timer
       let prep ← Hex.BenchOracle.Nauty.prepare n 1 (List.replicate n 0)

@@ -29,6 +29,22 @@ import HexPolyMathlib
 The package exposes the dense-polynomial conversions, their inverse laws, and
 the ring and Euclidean-operation correspondence used by downstream proofs.
 
+`HexPolyMathlib.Interpret.interpret` also supports noncanonical executable
+coefficients through an operation-preserving, zero-reflecting map into a
+field. It preserves degree, arithmetic, derivatives and Horner evaluation;
+both division outputs agree with Mathlib. The raw gcd is associated to
+Mathlib's normalized gcd, and interpreted xgcd coefficients satisfy the
+Bézout identity. `Interpret.sub_isZero` identifies zero-difference checks
+with semantic polynomial equality without assuming an injective coefficient
+map. `Interpret.monicize_leading` proves semantic monicity of the actual
+monicization output for every nonzero input.
+
+The pseudo-division correspondence preserves the recorded multiplier and
+relates both outputs to scaled field division. It proves reconstruction,
+strict remainder degree and positive sign correction. Plain `pseudoGcd` has
+exactly the common divisors of its inputs in the semantic field, including
+for integer and noncanonical source coefficients.
+
 # Verification
 
 Runtime-only clients should depend on `hex-poly`. This package is for theorem

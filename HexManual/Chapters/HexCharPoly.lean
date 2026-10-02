@@ -169,16 +169,21 @@ end HexCharPolyMathlibChapterExample
 
 The term and tactic currently support integer matrices only. The
 matrix, its dimension, and a polynomial appearing in a direct equality
-must be closed and definitionally transparent. Mathlib polynomial goals
+must be closed and definitionally transparent. The Mathlib frontend recognizes
+`!![…]`, `Matrix.of ![…]`, `fun i j => …`, and `Matrix.ofArray` literals,
+including literals behind a bounded number of transparent definitions.
+Mathlib polynomial goals
 may use `X`, `C`, integer numerals, addition, subtraction,
 multiplication, negation, and natural-literal powers; transparent named
 definitions built from those forms are unfolded.
 
 Compiled evaluation discovers the coefficients and intermediate
-values. The emitted term separately certifies the scalar dot products,
-matrix-vector products, Berkowitz steps, and final coefficients. For a
-Mathlib matrix it additionally certifies every materialized entry and
-then uses the correspondence theorem below. The compiled evaluator is
+values. The emitted term checks a Berkowitz certificate over integer lists,
+using packed matrix-vector products and one packed full convolution per
+Toeplitz step. The arithmetic certificate is kernel-checked once. The shared
+literal layer identifies Mathlib vector-chain literals with their row lists
+definitionally; function and array literals use one entrywise identification.
+The result then uses the correspondence theorem below. The compiled evaluator is
 not trusted, and Mathlib's noncomputable `Matrix.charpoly` is not
 evaluated.
 

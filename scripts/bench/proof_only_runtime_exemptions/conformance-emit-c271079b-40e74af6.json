@@ -1,0 +1,6 @@
+{
+  "path": "Hex/Conformance/Emit.lean",
+  "baseline_blob": "c271079bd9b688c504bdd9c4fd0b9a933ec22aad",
+  "current_blob": "40e74af6db3c1bf7993ec50e6d91346076a2dbef",
+  "reason": "Adds rational, residue and multivariate-polynomial matrix fixture serializers and exposes the existing emitLine helper for reuse by the row-reduce fixture driver. The emitLine body and all existing serializers are unchanged. These declarations serve only conformance fixture writers; hexbz_factor_service and its imported libraries do not import this module, so this transition cannot change the retained factorization measurements."
+}

@@ -9,7 +9,6 @@ module
 public import HexRCF.SignMatrixCheck
 public import HexRCF.Carrier
 public import HexRCF.CommonRoot
-public import Mathlib.Topology.Instances.Sign
 
 public section
 
@@ -50,35 +49,11 @@ theorem ofInt_spec (value : Int) :
 
 end Sign
 
-end Hex.RCF
-
-namespace Polynomial
-
-/-- The sign of a continuous polynomial evaluation is constant on a
-preconnected set containing no root of the polynomial. -/
-theorem sign_eq_of_noRoot {p : Polynomial ℝ} {s : Set ℝ}
-    (hs : IsPreconnected s) (hnz : ∀ z ∈ s, ¬p.IsRoot z)
-    {x y : ℝ} (hx : x ∈ s) (hy : y ∈ s) :
-    SignType.sign (p.eval x) = SignType.sign (p.eval y) := by
-  have hcont : ContinuousOn (SignType.sign ∘ fun z => p.eval z) s := by
-    refine (continuousOn_of_forall_continuousAt fun q hq => ?_).comp
-      p.continuousOn (Set.mapsTo_image (fun z => p.eval z) s)
-    obtain ⟨z, hz, rfl⟩ := hq
-    exact continuousAt_sign_of_ne_zero (fun hzero => hnz z hz hzero)
-  exact (hs.image _ hcont).subsingleton
-    (Set.mem_image_of_mem _ hx) (Set.mem_image_of_mem _ hy)
-
-end Polynomial
-
-namespace Hex.RCF
-
-open HexRealRootsMathlib Polynomial
-
 /-- Exact dyadic Horner evaluation computes the sign of the corresponding
 real-polynomial evaluation. -/
 theorem evalSign_spec (p : ZPoly) (x : Dyadic) :
     SignType.sign (((evalSign p x).toInt : Int) : ℝ) =
-      SignType.sign ((toPolyℝ p).eval (Dyadic.toReal x)) := by
+      SignType.sign ((toPolyℝ p).eval (HexRealRootsMathlib.Dyadic.toReal x)) := by
   rw [evalSign, Sign.ofInt_spec, ← toReal_evalDyadic]
   exact sign_dyadicSign _
 
@@ -102,14 +77,16 @@ theorem sign_eval_eq_open {carrier : ZPoly} {replay : SturmReplay}
     (cut : Fin (isolations.intervals.size + 1)) {x : ℝ}
     (hx : Cell.Sem (isolations.rootModel hreplay hstrict) (.open cut) x) :
     SignType.sign ((toPolyℝ atom).eval
-      (Dyadic.toReal (isolations.openPoint cut))) =
+      (HexRealRootsMathlib.Dyadic.toReal (isolations.openPoint cut))) =
       SignType.sign ((toPolyℝ atom).eval x) := by
   let model := isolations.rootModel hreplay hstrict
-  apply Polynomial.sign_eq_of_noRoot (Cell.isPreconnected_open model cut)
-  · intro z hz hatom
-    exact Cell.open_not_root model hz (hroot z hatom)
-  · exact Cell.openPoint_mem isolations hreplay hstrict cut
-  · exact hx
+  apply Cell.Region.sign_eq model.root model.strictMono (toPolyℝ atom)
+    (Or.inr (fun z hz => by
+      obtain ⟨i, hi, _⟩ := model.complete z (hroot z hz)
+      exact ⟨i, hi⟩)) (.open cut)
+  · rw [← Cell.sem_eq_region model]
+    exact Cell.openPoint_mem isolations hreplay hstrict cut
+  · rwa [← Cell.sem_eq_region model]
 
 /-- The exact dyadic sign is valid at every point of an open carrier cell. -/
 theorem evalSign_open_spec {carrier : ZPoly} {replay : SturmReplay}
@@ -211,12 +188,12 @@ theorem evalSign_commonLeft
 
 /-- Exact evaluation cannot report zero at a certified nonroot. -/
 theorem evalSign_ne_zero (p : ZPoly) (x : Dyadic)
-    (hroot : ¬(toPolyℝ p).IsRoot (Dyadic.toReal x)) :
+    (hroot : ¬(toPolyℝ p).IsRoot (HexRealRootsMathlib.Dyadic.toReal x)) :
     evalSign p x ≠ .zero := by
   intro hzero
   have hsign := evalSign_spec p x
   rw [hzero] at hsign
-  have heval : (toPolyℝ p).eval (Dyadic.toReal x) = 0 := by
+  have heval : (toPolyℝ p).eval (HexRealRootsMathlib.Dyadic.toReal x) = 0 := by
     apply sign_eq_zero_iff.mp
     simpa [Sign.toInt] using hsign.symm
   exact hroot heval
@@ -246,10 +223,10 @@ theorem openCellSign_spec {sentence : Sentence} {carrier : CarrierCert}
       intro z hz
       exact (carrier.isRoot_iff_atom hcarrier z).2 ⟨p, hpmem, hz⟩
     have hsample : Cell.Sem model (.open cut)
-        (Dyadic.toReal (isolations.openPoint cut)) :=
+        (HexRealRootsMathlib.Dyadic.toReal (isolations.openPoint cut)) :=
       Cell.openPoint_mem isolations hreplay hstrict cut
     have hnotroot : ¬(toPolyℝ p).IsRoot
-        (Dyadic.toReal (isolations.openPoint cut)) := by
+        (HexRealRootsMathlib.Dyadic.toReal (isolations.openPoint cut)) := by
       intro hpRoot
       exact Cell.open_not_root model hsample (hroot _ hpRoot)
     have hnonzero : evalSign p (isolations.openPoint cut) ≠ .zero :=
@@ -294,7 +271,7 @@ theorem signWith?_spec {sentence : Sentence} {carrier : CarrierCert}
     cases cell with
     | «open» cut =>
         have hsample : Cell.Sem model (.open cut)
-            (Dyadic.toReal (isolations.openPoint cut)) :=
+            (HexRealRootsMathlib.Dyadic.toReal (isolations.openPoint cut)) :=
           Cell.openPoint_mem isolations hreplay hstrict cut
         obtain ⟨sign, hsign, _⟩ :=
           openCellSign_spec hcarrier hstrict hp cut hsample
@@ -333,10 +310,10 @@ theorem signWith?_spec {sentence : Sentence} {carrier : CarrierCert}
           have hhasFalse' : common.hasRoot isolations.intervals[↑i] = false := by
             simpa using hhasFalse
           have hsample : Cell.Sem model (.open i.castSucc)
-              (Dyadic.toReal (isolations.openPoint i.castSucc)) :=
+              (HexRealRootsMathlib.Dyadic.toReal (isolations.openPoint i.castSucc)) :=
             Cell.openPoint_mem isolations hreplay hstrict i.castSucc
           have hnotroot : ¬(toPolyℝ p).IsRoot
-              (Dyadic.toReal (isolations.openPoint i.castSucc)) := by
+              (HexRealRootsMathlib.Dyadic.toReal (isolations.openPoint i.castSucc)) := by
             intro hpRoot
             exact Cell.open_not_root model hsample (hroot _ hpRoot)
           have hnonzero : evalSign p (isolations.openPoint i.castSucc) ≠ .zero :=

@@ -1,0 +1,35 @@
+[
+  {
+    "function": "Hex.RealRootsBench.runCancellation",
+    "degree": 32768,
+    "before_over_after": [
+      92.79062074683054,
+      93.60745596842189,
+      93.08892065384669,
+      95.55234791980038
+    ],
+    "median_ratio": 93.3481883111343
+  },
+  {
+    "function": "Hex.RealRootsBench.runCancellation",
+    "degree": 65536,
+    "before_over_after": [
+      175.01674247374478,
+      177.25363325509275,
+      175.37618344555003,
+      175.22853486132215
+    ],
+    "median_ratio": 175.3023591534361
+  },
+  {
+    "function": "Hex.SturmBench.runReplay",
+    "degree": 1024,
+    "before_over_after": [
+      1.0681731826390006,
+      1.0097262485636496,
+      0.9360480805584286,
+      0.9930505064168682
+    ],
+    "median_ratio": 1.001388377490259
+  }
+]

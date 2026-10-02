@@ -1,0 +1,18 @@
+lean-bench profile: perf record --clockid mono -F 199 -g -o /tmp/hex-kronecker-profile-jbt106zg/plain.data -- /tmp/hex-kronecker-10270-integration/.lake/build/bin/hexkronecker_bench _child --bench Hex.Kronecker.Bench.runPlain --param 15 --target-nanos 2000000000 --cache-mode warm
+WARNING: Kernel address maps (/proc/{kallsyms,modules}) are restricted,
+check /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.
+
+Samples in kernel functions may not be resolved if a suitable vmlinux
+file is not found in the buildid cache or in the vmlinux path.
+
+Samples in kernel modules won't be resolved at all.
+
+If some relocation was applied (e.g. kexec) symbols may be misresolved
+even with a suitable vmlinux or kallsyms file.
+
+Couldn't record kernel reference relocation symbol
+Symbol resolution may be skewed if relocation was used (e.g. kexec).
+Check /proc/kallsyms permission or run as root.
+{"schema_version":1,"kind":"parametric","function":"Hex.Kronecker.Bench.runPlain","param":15,"inner_repeats":4096,"total_nanos":1180114039,"per_call_nanos":288113.779053,"cache_mode":"warm","result_hash":"0x1","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":69300,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexkronecker_bench","git_commit":"658822cad7ea5a54b9398cd67f2a5c00af44f642","git_dirty":true,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.34.0","lean_version":"4.34.0","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-09-15T09:15:13Z","timestamp_unix_ms":1789463713253},"profile_kernel":true}
+[ perf record: Woken up 323 times to write data ]
+[ perf record: Captured and wrote 0.039 MB /tmp/hex-kronecker-profile-jbt106zg/plain.data (282 samples) ]

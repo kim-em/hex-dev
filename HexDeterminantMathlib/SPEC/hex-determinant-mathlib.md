@@ -1,12 +1,5 @@
 # hex-determinant-mathlib (depends on hex-determinant + hex-bareiss + hex-matrix-mathlib + Mathlib)
 
-## Correspondence-only classification
-
-This library is a `correspondence-only-layer`.
-
-Computational conformance owners: `HexDeterminant`, `HexBareiss`
-Computational performance owners: `HexDeterminant`, `HexBareiss`
-
 Mathlib layer for `hex-determinant`: proves that our executable Leibniz
 determinant corresponds to Mathlib's `Matrix.det`, assembles the Desnanot-Jacobi
 identity in the bordered-minor form the Bareiss correctness proof consumes, and
@@ -15,12 +8,54 @@ the tree consumes yet).
 
 **Determinant correspondence:**
 ```lean
-theorem det_eq (M : Hex.Matrix R n n) :
-    Hex.det M = Matrix.det (matrixEquiv M)
+theorem det_eq [CommRing R] (M : Hex.Matrix R n n) :
+    Hex.Matrix.det M = _root_.Matrix.det (matrixEquiv M)
 ```
 
 Through `det_eq`, Mathlib determinant theorems (Cramer's rule, Cauchy-Binet,
 adjugate identities) transfer to our executable determinant.
+
+The correspondence theorem is coefficient-generic. `MvPoly` obtains the
+required Mathlib `CommRing` from `HexMvPolyMathlib`, and `RationalFn` obtains a
+Mathlib `Field` from `HexRationalFnMathlib`, so those carrier specializations
+need no new determinant lemma. There is currently no global Mathlib `CommRing`
+instance for executable `DensePoly`; the computational carrier coverage does
+not wait for that separate bridge. Carrier conformance adds no specialized
+`det_eq` lemmas here.
+
+## Closing a `Matrix.det` goal in the kernel
+
+A closed Mathlib determinant goal is discharged by rewriting through `det_eq`
+and running the executable Leibniz determinant in the kernel:
+
+```lean
+open Hex Hex.Matrix HexMatrixMathlib
+
+def A : _root_.Matrix (Fin 3) (Fin 3) ℤ :=
+  !![2, 0, 1; 1, 3, 2; 0, 1, 1]
+
+theorem det_eq_three : A.det = 3 := by
+  rw [← matrixEquiv.apply_symm_apply A, ← det_eq]
+  decide +kernel
+```
+
+`matrixEquiv.apply_symm_apply` puts the literal in the image of `matrixEquiv`
+so that `det_eq` applies. `decide +kernel`, never `native_decide`: the proof
+depends only on `propext`, `Classical.choice`, and `Quot.sound`.
+
+This recipe is the `hex-determinant-recipe-kernel-proof` section of
+`HexManual/Chapters/HexDeterminant.lean`, following the shape of the rank
+recipe in `HexManual/Chapters/HexRowReduce.lean`. The same theorems are
+compile-checked in `Examples/DeterminantKernelProof.lean`, built by the
+`HexReleaseExamples` Lake target, so they cannot silently go stale. That is
+the release-examples library rather than `examples/`, which holds `lean_exe`
+demos with an `IO` entry point.
+
+The kernel run requires `Hex.Matrix.permutationVectors` to reduce downstream
+of its defining module, so the enumeration recursion uses
+`Hex.Vector.map'` from `HexBasic.OfFn` rather than core's `Vector.map`, whose
+delegation to the unexposed `Array.map` loop stalls across a module boundary.
+`HexBasic/ModuleBoundaryTests.lean` guards that.
 
 ## Module layout and export chain
 
@@ -48,16 +83,25 @@ umbrella's export surface. The module would still exist and stay directly
 importable as `HexDeterminantMathlib.DesnanotJacobi`, which is exactly what
 makes the regression easy to miss.
 
-`DesnanotJacobi.lean` was copied verbatim from commit `bbe9ab491bc1` of
+`DesnanotJacobi.lean` was copied from commit `bbe9ab491bc1` of
 https://github.com/leanprover-community/mathlib4/pull/37716
 ("feat(LinearAlgebra/Matrix/Determinant): Desnanot-Jacobi identity", by Slava
 Naprienko) and carries its own copyright header. It is no longer verbatim: it
 has since been migrated to the `module` / `public import` system and had two
-`simp` sets repaired across toolchain bumps. It is to be deleted in favour of
-the upstream module once that PR merges, and the upstream branch has itself
-moved on from the pinned commit, so expect to re-check the statement rather
-than assume a drop-in swap. Everything in the file except the final theorem is
-`private`.
+`simp` sets repaired across toolchain bumps. Everything in the file except the
+final theorem is `private`.
+
+When the upstream PR merges, compare the merged theorem's namespace,
+hypotheses, index maps, and factor order with this vendored
+`desnanot_jacobi` before deleting the file; the current upstream branch places
+the theorem in the `Matrix` namespace rather than the root namespace. Then
+update and re-check the three Hex theorems that directly invoke it:
+`desnanot_jacobi_deleteRowCol_endpoints`,
+`desnanot_jacobi_matrixEquiv_reindex`, and
+`desnanot_jacobi_borderedMinor_reindex`. Rebuild their downstream
+`desnanot_jacobi_borderedMinor` bridge and its Bareiss and integer
+Gram–Schmidt consumers before removing the vendored module or changing the
+`public import` export chain.
 
 ## Desnanot-Jacobi: the four public forms
 

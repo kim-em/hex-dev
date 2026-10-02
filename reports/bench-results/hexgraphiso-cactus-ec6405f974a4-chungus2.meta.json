@@ -1,0 +1,51 @@
+{
+  "fingerprint": "ec6405f974a4",
+  "host": "chungus2",
+  "date": "2026-09-09T13:51:43.902375+00:00",
+  "describe": "d55a63de6c1a",
+  "label": "Sparse proof foundations, automorphism checker, and stable initial partition",
+  "cpu": 36,
+  "affinity": [
+    36
+  ],
+  "load_before": [
+    1.5478515625,
+    1.10302734375,
+    1.4267578125
+  ],
+  "canonical": {
+    "rows": 98,
+    "load_after": [
+      1.58447265625,
+      1.1181640625,
+      1.43017578125
+    ]
+  },
+  "pairs": {
+    "rows": 34,
+    "load_after": [
+      1.58447265625,
+      1.1181640625,
+      1.43017578125
+    ]
+  },
+  "load_after": [
+    32.27587890625,
+    12.26904296875,
+    5.45849609375
+  ],
+  "timeout_cleanup": [
+    {
+      "pid": 1320460,
+      "time": 1788962230.6916184,
+      "reason": "Cleanup of Lean child orphaned after the plotter recorded its tactic timeout",
+      "command": [
+        "/home/kim/.elan/toolchains/leanprover--lean4---v4.34.0-rc2/bin/lean",
+        "/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/tmp1k3p2ol3.lean",
+        "--setup",
+        "/tmp/tmp.XXe7RbdM",
+        "-Dprofiler=true"
+      ]
+    }
+  ]
+}

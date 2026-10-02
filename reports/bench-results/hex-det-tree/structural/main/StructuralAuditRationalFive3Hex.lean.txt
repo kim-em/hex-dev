@@ -1,0 +1,14 @@
+import HexPolyDetMathlib.ProofProbe.StructuralRationalFive3Hex
+#print axioms HexPolyDetMathlib.ProofProbe.StructuralRationalFive3Hex.result
+run_meta do
+  let root := ``HexPolyDetMathlib.ProofProbe.StructuralRationalFive3Hex.result
+  let mut pending := [root]
+  let mut found := false
+  while let name :: rest := pending do
+    pending := rest
+    let some value := (← Lean.getConstInfo name).value? (allowOpaque := true)
+      | throwError "missing determinant proof"
+    for used in value.getUsedConstants do
+      if used == ``HexPolyDetMathlib.RatFactor.det then found := true
+      if root.isPrefixOf used then pending := used :: pending
+  unless found do throwError "intended structural route was not used"

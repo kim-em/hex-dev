@@ -1,0 +1,27 @@
+{
+  "cpu": 5,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "head": "d5a36ad7376474476db00e377bcbb086ddd5e614",
+  "load_before": [
+    4.9521484375,
+    5.67626953125,
+    7.5380859375
+  ],
+  "start_ns": 1789357053932716262,
+  "command": [
+    ".lake/build/bin/hexgenericrank_bench",
+    "run",
+    "--tag",
+    "symbolic",
+    "--export-file",
+    "/tmp/hex-10223-bench.json"
+  ],
+  "returncode": 0,
+  "end_ns": 1789357211425099434,
+  "load_after": [
+    24.62158203125,
+    17.1484375,
+    11.86328125
+  ]
+}

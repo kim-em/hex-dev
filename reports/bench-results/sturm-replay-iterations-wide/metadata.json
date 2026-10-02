@@ -1,0 +1,33 @@
+{
+  "cpu": 54,
+  "host": "chungus2",
+  "start": "2026-09-21T14:42:36.198023+00:00",
+  "load_start": [
+    3.2578125,
+    3.673828125,
+    4.17822265625
+  ],
+  "git_head": "b4756aeba33e45581625c13ab689914fb7620931",
+  "git_status": "",
+  "binary_sha256": "7c9570dd475b218f553e34f1edabc07b00d558a5bdcbd4bb83f5aa10ad471b8f",
+  "source_sha256": "4ff1304639c5599aa5fa180781f7264251b66a69dcc0a8c011c9ee6bd711e550",
+  "commands": [
+    {
+      "argv": [
+        "/tmp/hexsturm-replay-2048",
+        "run",
+        "Hex.SturmBench.runReplay",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-replay-iterations-wide/replay-bits.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "derivation_sha256": "917360e01db3f87daa2b8ec679dfa0ac84b2223f51deed027823779c658c57b5",
+  "end": "2026-09-21T15:28:19.659827+00:00",
+  "load_end": [
+    5.310546875,
+    5.2705078125,
+    4.9052734375
+  ]
+}

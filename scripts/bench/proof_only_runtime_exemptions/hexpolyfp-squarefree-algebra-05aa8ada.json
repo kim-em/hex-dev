@@ -1,0 +1,6 @@
+{
+  "path": "HexPolyFp/SquareFree/Algebra.lean",
+  "baseline_blob": "6d6ec6ffc6a30edaff0e5fe0ebb56f34b275f0d5",
+  "current_blob": "05aa8ada2b4c2e50e7123fac059d17bd00ba7c8c",
+  "reason": "Replaces a representation-unfolding proof that the leading coefficient is the final stored coefficient with the existing DensePoly.leadingCoeff_eq_coeff_last theorem. No executable definition or measured branch changes."
+}

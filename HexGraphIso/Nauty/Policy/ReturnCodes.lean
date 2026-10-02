@@ -164,7 +164,7 @@ theorem afterSweep_key (ctx : Ctx n) (bs : List Nat) (first : Bool)
 theorem recover_nonpos {st : Search n} (h : st.compCanon ≤ 0) (inf level : Nat) :
     (Nauty.recover inf level st).compCanon ≤ 0 := by
   unfold Nauty.recover recoverLevels recoverPtn
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.compCanon]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.compCanon]
   repeat' split
   all_goals first | exact h | omega
 

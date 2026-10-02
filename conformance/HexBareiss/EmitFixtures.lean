@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import Hex.Conformance.Emit
-import HexBareiss.Bareiss
+import HexBareiss.Fixtures
 
 /-!
 JSONL emit driver for the `hex-bareiss` oracle.
@@ -43,80 +43,6 @@ private def jsonInt (n : Int) : String := toString n
 private def emitSquare (n : Nat) (id : String) (M : Matrix Int n n) : IO Unit := do
   emitMatrixFixture lib id (matrixIntRows M)
   emitResult lib id "bareiss" (jsonInt (Matrix.bareiss M))
-
-/-- Build a square `Matrix Int n n` from a 2-D array of rows; missing entries
-default to `0`. -/
-private def mkSquare (n : Nat) (rows : Array (Array Int)) : Matrix Int n n :=
-  Matrix.ofFn fun i j =>
-    (rows.getD i.val #[]).getD j.val 0
-
-private def random4 : Matrix Int 4 4 :=
-  mkSquare 4 #[#[3, 1, 4, 1], #[5, 9, 2, 6], #[5, 3, 5, 8], #[9, 7, 9, 3]]
-
-private def singular4Def1 : Matrix Int 4 4 :=
-  mkSquare 4 #[#[2, 0, -1, 3], #[1, 5, 4, -2], #[0, 3, 7, 1],
-               #[3, 5, 3, 1]]
-
-private def singular4Def2 : Matrix Int 4 4 :=
-  mkSquare 4 #[#[1, 2, 3, 4], #[2, 1, 0, -1],
-               #[3, 3, 3, 3], #[5, 4, 3, 2]]
-
-private def triangular4 : Matrix Int 4 4 :=
-  mkSquare 4 #[#[2, 1, 4, 0], #[0, -3, 2, 1], #[0, 0, 5, 6], #[0, 0, 0, 7]]
-
-private def random6 : Matrix Int 6 6 :=
-  mkSquare 6 #[
-    #[ 3,  1, -2,  4,  0,  1],
-    #[ 0,  5,  1, -1,  3,  2],
-    #[ 2, -1,  4,  0,  1,  3],
-    #[ 1,  2,  0,  3, -2,  4],
-    #[-1,  0,  2,  1,  4,  0],
-    #[ 4,  3,  1,  2, -3,  5]
-  ]
-
-private def singular6Def1 : Matrix Int 6 6 :=
-  mkSquare 6 #[
-    #[ 1,  2,  3, -1,  0,  4],
-    #[ 0,  1, -2,  3,  1,  2],
-    #[ 4, -1,  0,  2,  3,  1],
-    #[ 2,  3,  1,  0,  4, -1],
-    #[ 1,  0,  4,  3, -2,  2],
-    #[ 1,  3,  1,  2,  1,  6]   -- = row0 + row1
-  ]
-
-private def triangular6 : Matrix Int 6 6 :=
-  mkSquare 6 #[
-    #[1,  2, -1,  3,  0,  1],
-    #[0,  2,  4, -2,  1,  3],
-    #[0,  0,  3,  1,  2, -1],
-    #[0,  0,  0,  4,  0,  2],
-    #[0,  0,  0,  0,  5,  3],
-    #[0,  0,  0,  0,  0,  6]
-  ]
-
-private def random8 : Matrix Int 8 8 :=
-  mkSquare 8 #[
-    #[ 2,  0,  1, -1,  3,  0,  4,  1],
-    #[ 1,  3,  0,  2, -1,  4,  1,  0],
-    #[ 0, -2,  3,  1,  4,  0,  2,  1],
-    #[ 4,  1, -1,  2,  0,  3,  1,  2],
-    #[-1,  2,  0,  1,  3,  1, -2,  4],
-    #[ 3,  0,  2, -1,  1,  4,  0,  1],
-    #[ 1,  4,  1,  0, -2,  2,  3,  0],
-    #[ 0,  1,  3,  4,  1, -1,  2,  3]
-  ]
-
-private def triangular8 : Matrix Int 8 8 :=
-  mkSquare 8 #[
-    #[1, 2, 0, 1, 3, -1, 0, 2],
-    #[0, 1, 3, -2, 0, 1, 4, 0],
-    #[0, 0, 2, 1, -1, 0, 3, 1],
-    #[0, 0, 0, 2, 0, 4, -1, 0],
-    #[0, 0, 0, 0, 3, 1, 0, 2],
-    #[0, 0, 0, 0, 0, 3, 2, -1],
-    #[0, 0, 0, 0, 0, 0, 4, 1],
-    #[0, 0, 0, 0, 0, 0, 0, 4]
-  ]
 
 private def emitAll : IO Unit := do
   emitSquare 4 "random/4x4"        random4

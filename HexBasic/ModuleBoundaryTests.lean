@@ -65,6 +65,11 @@ example : Array.ofFn' (n := 3) (fun i => i.val) = #[0, 1, 2] := by decide
 example : Vector.ofFn' (n := 4) (fun i => i.val * 2) = #v[0, 2, 4, 6] := by
   decide +kernel
 
+/-! # `Vector.map` (core delegates to the unexposed `Array.map` loop) -/
+
+example : Hex.Vector.map' (· + 1) (#v[1, 2, 3] : Vector Nat 3) = #v[2, 3, 4] := by
+  decide +kernel
+
 /-! # `zipWith` -/
 
 example : Array.zipWith' (· + ·) #[1, 2, 3] #[10, 20] = #[11, 22] := by decide +kernel

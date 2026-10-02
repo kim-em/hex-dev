@@ -56,6 +56,12 @@ h1, h2, h3 {
   color: #2d6a4f;
 }
 
+/* Keep figures within the reading column on narrow screens. */
+main img {
+  max-width: 100%;
+  height: auto;
+}
+
 /* ===== Links ===== */
 a {
   color: #40916c;

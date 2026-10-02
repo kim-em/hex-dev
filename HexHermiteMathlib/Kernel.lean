@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexHermiteMathlib.Span
+public import HexHermiteMathlib.Certificate
+public import HexHermiteMathlib.Remainder
 public import Mathlib.LinearAlgebra.Basis.Basic
 
 public section

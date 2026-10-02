@@ -1,4 +1,4 @@
-# hex-mv-poly-mathlib (depends on hex-mv-poly + hex-poly-mathlib + Mathlib)
+# hex-mv-poly-mathlib (depends on hex-mv-poly + hex-poly-mathlib + hex-mod-arith-mathlib + Mathlib)
 
 The Mathlib bridge for the canonical, Mathlib-free sparse multivariate
 polynomials in `hex-mv-poly`. It identifies
@@ -45,6 +45,38 @@ theorem coeff_toMvPolynomial [CommSemiring R] [DecidableEq R]
 
 Its inverse builds the canonical sparse form, so the two round trips are
 propositional equalities rather than quotient-level equivalences.
+
+## Kernel term-list denotation
+
+`HexMvPolyMathlib.Kernel.denote` composes the Mathlib-free canonical-list
+denotation with `equiv`:
+
+```lean
+noncomputable def Kernel.denote (p : Hex.MvPoly.Kernel.PolyList R) :
+    MvPolynomial (Fin n) R :=
+  equiv (Hex.MvPoly.Kernel.denote p)
+```
+
+It preserves the list multiplicative identity, addition, subtraction,
+multiplication, negation, and scalar
+multiplication by a constant. Consequently the canonical zero and equality
+theorems proved in `hex-mv-poly` transport to the exact `MvPolynomial`
+statements used by symbolic `rank`, `det`, and `rank_locus` consumers. The
+bridge is semantic only: no Mathlib value occurs in the closed Boolean
+certificate check, and matrix entries are related to nested term lists by
+mapping this denotation after replay.
+
+For positive-characteristic certificates, `KernelResidue.lean` supplies
+`Kernel.denoteMod p : PolyList Nat → MvPolynomial (Fin n) (ZMod p)`.
+Its `residueEquiv` composes the polynomial equivalence with the coefficient
+ring equivalence `HexModArithMathlib.ZMod64.equiv`. The modular arithmetic,
+zero and one, canonical equality tests, and producer round-trip laws
+transport through this
+composition under `Hex.ZMod64.Bounds p`. The natural-residue encoding,
+canonicality check, arithmetic, and producer conversions belong to
+`hex-mv-poly`; this companion owns only their Mathlib interpretation.
+`KernelResidueTests.lean` checks concrete uses of every arithmetic law and
+transports a natural-residue square certificate into a Mathlib identity.
 
 ## Evaluation
 

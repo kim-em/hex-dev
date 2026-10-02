@@ -37,12 +37,12 @@ theorem Loop.prepare_key (ctx : Ctx n) (tcLevel : Nat) (l : Loop n) (bs : List N
     (l.prepare ctx tcLevel).2.2.2.2.key ctx bs = l.node.entry.key ctx bs := by
   have hc : (l.prepare ctx tcLevel).2.2.2.2.canonlab = l.node.entry.canonlab := by
     dsimp only [Loop.prepare]
-    simp only [cheapCheck, apply_ite Search.canonlab, ite_self]
+    simp only [cheapCheck, apply_ite SearchState.canonlab, ite_self]
     rw [(chooseTarget_frame ..).2.2.2]
     split
     · rfl
     · exact (compareCodes_frame ..).2.2.2
-  simp only [Search.key, hc]
+  simp only [SearchState.key, hc]
 
 /-- Actual node preparation chooses the specification target or has
 already proved the whole node dominated by its incoming incumbent. -/
@@ -93,7 +93,7 @@ theorem Loop.choice {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
     · right
       have hk := hc.canonical.subtree_le (ctx := ctx) hneg tcLevel (n - l.node.level)
       refine ⟨incKey ctx bs c.canonlab, ?_, ?_⟩
-      · simp only [Search.key, hin.2.nonempty, ↓reduceIte, hcan]
+      · simp only [SearchState.key, hin.2.nonempty, ↓reduceIte, hcan]
       · rw [Frame.key, show n + 1 - l.node.level = n - l.node.level + 1 by omega]
         exact hk
     · left

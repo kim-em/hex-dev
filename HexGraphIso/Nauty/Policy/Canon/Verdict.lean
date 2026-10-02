@@ -22,16 +22,16 @@ variable {n : Nat}
 
 /-- Canonical fields affected by a leaf verdict. Admission and return
 bookkeeping preserve this projection. -/
-@[expose] def Search.canonical (st : Search n) :=
+@[expose] def SearchState.canonical (st : SearchState n κ) :=
   (st.canoncode, st.canonlevel, st.eqlevCanon, st.compCanon, st.canonlab,
     st.canong, st.samerows)
 
-private theorem pushAuto_canonical (st : Search n) (pair : VSet n × VSet n) :
+private theorem pushAuto_canonical (st : SearchState n κ) (pair : VSet n × VSet n) :
     (pushAuto st pair).canonical = st.canonical := by
   unfold pushAuto
   split <;> rfl
 
-private theorem admit_canonical (st : Search n) :
+private theorem admit_canonical (st : SearchState n κ) :
     (admit st).canonical = st.canonical := by
   unfold admit
   simp only [Id.run_pure]
@@ -39,43 +39,43 @@ private theorem admit_canonical (st : Search n) :
   rw [pushAuto_canonical]
   rfl
 
-private theorem pruneReturn_canonical (level : Nat) (st : Search n) :
+private theorem pruneReturn_canonical (level : Nat) (st : SearchState n κ) :
     (pruneReturn level st).2.canonical = st.canonical := by
   unfold pruneReturn
   simp only [Id.run_pure, apply_ite Id.run,
-    apply_ite (fun r : Exit × Search n => r.2.canonical)]
+    apply_ite (fun r : Exit × SearchState n κ => r.2.canonical)]
   split
   · exact pushAuto_canonical _ _
   · rfl
 
 /-- The canonical effect of a classified leaf, independent of its exit. -/
-@[expose] def resolve (level : Nat) (r : Leaf × Search n) : Search n :=
+@[expose] def resolve (level : Nat) (r : Leaf × SearchState n κ) : SearchState n κ :=
   match r.1 with
   | .better sr => install level sr r.2
   | _ => r.2
 
 /-- Only a better verdict changes canonical fields after classification. -/
-theorem leafExit_canonical (leaf : Leaf) (level : Nat) (st : Search n) :
+theorem leafExit_canonical (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     (leafExit leaf level st).2.canonical = (resolve level (leaf, st)).canonical := by
   unfold leafExit
   cases leaf <;> simp only [resolve, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun r : Exit × Search n => r.2.canonical), pruneReturn_canonical,
+    apply_ite (fun r : Exit × SearchState n κ => r.2.canonical), pruneReturn_canonical,
     admit_canonical]
   all_goals repeat' split
   all_goals first | exact admit_canonical _ | rfl
 
 /-- Canonical-field equality preserves the settled comparison machine. -/
-theorem Settled.canonical {cs bs : List Nat} {st out : Search n}
+theorem Settled.canonical {cs bs : List Nat} {st out : SearchState n κ}
     (h : Settled cs bs st) (he : out.canonical = st.canonical) : Settled cs bs out := by
   exact h.congr (congrArg Prod.fst he)
     (congrArg (fun r => r.2.1) he) (congrArg (fun r => r.2.2.1) he)
     (congrArg (fun r => r.2.2.2.1) he)
 
 /-- Canonical-field equality preserves every ghost incumbent. -/
-theorem key_canonical {ctx : Ctx n} {bs : List Nat} {st out : Search n}
+theorem key_canonical {ctx : Ctx n} {bs : List Nat} {st out : SearchState n κ}
     (he : out.canonical = st.canonical) : out.key ctx bs = st.key ctx bs := by
   have hl : out.canonlab = st.canonlab := congrArg (fun r => r.2.2.2.2.1) he
-  simp only [Search.key, incKey, hl]
+  simp only [SearchState.key, incKey, hl]
 
 /-- Canonical classification of a code-tied leaf at a shorter depth
 installs the candidate, since its sentinel precedes a real incumbent code. -/
@@ -299,7 +299,7 @@ theorem leaf_max {ctx : Ctx n} {cs bs : List Nat} {st : Search n}
   refine ⟨bs', hm.canonical he, ?_⟩
   change out.key ctx bs' = _
   rw [key_canonical he]
-  simp only [Search.key, hne, hbs, ↓reduceIte, incMax]
+  simp only [SearchState.key, hne, hbs, ↓reduceIte, incMax]
   exact congrArg some hmax
 
 /-- After a leaf action the executable incumbent is the maximum; the

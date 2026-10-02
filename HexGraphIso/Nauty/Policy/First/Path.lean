@@ -142,7 +142,7 @@ theorem firstPath_reference {ctx : Ctx n} {inf tcLevel fuel level numcells last 
 
 /-- The nonempty initial state has a successful first descent at the root bound. -/
 theorem initial_path (G : Colored n k) (hn0 : 0 < n) :
-    ∃ last leaf, Generic.FirstPath { g := rowsOf G } 100 (n + 2) 1
+    ∃ last leaf, Generic.FirstPath ({ g := rowsOf G } : Ctx n) 100 (n + 2) 1
       (initialPartition G).2.length
       (initial n (initialPartition G).1 (initialPartition G).2) last leaf := by
   apply firstPath_exists hn0 (Nat.le_refl _) (initial_ok G hn0)

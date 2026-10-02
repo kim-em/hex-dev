@@ -1,0 +1,6 @@
+{
+  "path": "HexMatrix/Packed.lean",
+  "baseline_blob": null,
+  "current_blob": "3ea57209dbac230acc5815fb7bfef848171c0b18",
+  "reason": "Extends the Kronecker-packed dot product primitives with signed rows, dotInt and the one-pass transpose for the kernel certificate checkers of the rank and det tactics; nothing on the factorization path imports or calls the module, and no measured operation or branch of the factorization sweep changes."
+}

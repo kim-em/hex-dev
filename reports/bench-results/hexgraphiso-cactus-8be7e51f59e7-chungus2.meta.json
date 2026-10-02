@@ -1,0 +1,29 @@
+{
+  "fingerprint": "8be7e51f59e7",
+  "host": "chungus2",
+  "date": "2026-09-09T23:15:08.854142+00:00",
+  "describe": "d55a63de6c1a",
+  "label": "Sparse canonical installation and sort progress proofs",
+  "cpu": 49,
+  "load_before": [
+    0.9365234375,
+    1.46240234375,
+    1.19482421875
+  ],
+  "load_after": [
+    3.8095703125,
+    2.62451171875,
+    1.841796875
+  ],
+  "plot_python": "/tmp/plotenv/bin/python",
+  "terminated_orphaned_tactic_processes": [
+    {
+      "pid": 3267698,
+      "command": "lean"
+    },
+    {
+      "pid": 3274120,
+      "command": "lean"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+Command: perf record -g --call-graph dwarf -- hexmodularmatrix_bench run Hex.ModularMatrixBench.runModularStructuredN128B8 --repeats 1 --min-total-seconds 0.001
+Unpinned diagnostic profile; not part of the timing comparison.
+Samples: 13846; lost samples: 23. Kernel addresses restricted.
+Self percentages (symbols above 2%):
+18.75% [.] lean_apply_2 - -
+8.75% [.] lean_apply_1 - -
+6.26% [.] lp_Hex_Hex_Matrix_rowAdd___redArg___lam__1 - -
+4.60% [.] l___private_Init_Data_Array_Basic_0__Array_ofFn_go___redArg - -
+4.07% [.] lean::lean_del_core_other(lean_object*, unsigned char, lean_object*) - -
+4.05% [.] lp_Hex_Hex_Matrix_deleteRowCol___redArg___lam__0 - -
+4.00% [.] lean_dec_ref_cold - -
+3.90% [.] lp_Hex_Hex_ZMod64_addImpl___boxed - -
+2.83% [.] mi_free - -
+2.74% [.] lp_Hex_Hex_Matrix_deleteRowCol___redArg___lam__0___boxed - -
+2.61% [.] mi_malloc_small - -
+2.42% [.] lp_Hex_Hex_ZMod64_mul___boxed - -
+2.37% [.] lp_Hex_Hex_Matrix_ofFn___redArg___lam__0___boxed - -
+2.17% [.] lp_Hex_Hex_Matrix_rowAdd___redArg___lam__1___boxed - -

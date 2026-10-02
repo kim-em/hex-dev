@@ -1,12 +1,5 @@
 # hex-gf2-mathlib (depends on hex-gf2 + hex-poly-fp + hex-gfq-field + Mathlib)
 
-## Correspondence-only classification
-
-This library is a `correspondence-only-layer`.
-
-Computational conformance owners: `HexGF2`, `HexGFqField`
-Computational performance owners: `HexGF2`, `HexGFqField`
-
 Relates hex-gf2's packed bitwise types to the generic finite field
 constructions, using Mathlib's `RingEquiv` so the results are accepted by
 Mathlib's equivalence APIs and compose with other `RingEquiv`s.
@@ -79,15 +72,3 @@ composes it with `FpPoly p ≃+* Polynomial (ZMod p)` from hex-poly-fp-mathlib t
 give `GF2Poly ≃+* Polynomial (ZMod 2)`, which is where a Mathlib user starts. It
 is `noncomputable`, since Mathlib's polynomial multiplication is; the packed
 side stays executable.
-
-## External comparators
-
-No external comparator is required.
-
-**Justification:** `correspondence-only-layer` per
-`SPEC/benchmarking.md §"Comparator naming"`. This library introduces no new
-arithmetic algorithm: it states correspondences between representations that
-hex-gf2 and hex-gfq-field implement, and those two are the computational
-performance owners, where the arithmetic is measured. The encoding and decoding
-functions it does define exist to state those correspondences, not as a
-computational surface anyone races.

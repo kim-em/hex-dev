@@ -1,0 +1,41 @@
+Hex.OrderedFnBench.successiveApproximation    expected complexity: (n + 2) * (7 * n + 55) / 2    [warm cache]
+  env: lean=4.34.1, os=linux, arch=x86_64, commit=6b751bc, 2026-09-27T09:10:32Z, host=chungus2
+  param  per-call    repeats  C
+      4  146.623 µs  ×2^14    C=548.244 [trial 1/3] †
+      6  227.735 µs  ×2^14    C=543.849 [trial 1/3]
+      8  307.867 µs  ×2^13    C=541.200 [trial 1/3]
+     10  521.755 µs  ×2^13    C=546.990 [trial 1/3]
+     12  766.369 µs  ×2^12    C=549.724 [trial 1/3]
+     14  812.551 µs  ×2^11    C=551.486 [trial 1/3]
+     16  883.355 µs  ×2^12    C=564.984 [trial 1/3]
+     18    1.097 ms  ×2^12    C=565.778 [trial 1/3]
+      4  136.512 µs  ×2^14    C=548.244 [trial 2/3] †
+      6  210.155 µs  ×2^14    C=543.849 [trial 2/3]
+      8  300.366 µs  ×2^13    C=541.200 [trial 2/3]
+     10  410.242 µs  ×2^13    C=546.990 [trial 2/3]
+     12  534.881 µs  ×2^13    C=549.724 [trial 2/3]
+     14  673.961 µs  ×2^12    C=551.486 [trial 2/3]
+     16  839.306 µs  ×2^12    C=564.984 [trial 2/3]
+     18    1.024 ms  ×2^12    C=565.778 [trial 2/3]
+      4  135.348 µs  ×2^14    C=548.244 [trial 3/3] †
+      6  211.013 µs  ×2^14    C=543.849 [trial 3/3]
+      8  296.960 µs  ×2^13    C=541.200 [trial 3/3]
+     10  407.304 µs  ×2^13    C=546.990 [trial 3/3]
+     12  524.076 µs  ×2^13    C=549.724 [trial 3/3]
+     14  675.018 µs  ×2^12    C=551.486 [trial 3/3]
+     16  849.170 µs  ×2^12    C=564.984 [trial 3/3]
+     18    1.015 ms  ×2^12    C=565.778 [trial 3/3]
+  verdict: consistent with declared complexity (cMin=541.200, cMax=565.778, β=+0.040)
+  per-spawn floor (harness self-measurement): 24.352 ms
+  peak RSS: 67_280 kB..68_744 kB (across 24 ok row(s))
+  trial summaries (3 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread 
+        4  3/3     136.512 µs  135.348 µs  146.623 µs  8.259% 
+        6  3/3     211.013 µs  210.155 µs  227.735 µs  8.331% 
+        8  3/3     300.366 µs  296.960 µs  307.867 µs  3.631% 
+       10  3/3     410.242 µs  407.304 µs  521.755 µs  27.898%
+       12  3/3     534.881 µs  524.076 µs  766.369 µs  45.298%
+       14  3/3     675.018 µs  673.961 µs  812.551 µs  20.531%
+       16  3/3     849.170 µs  839.306 µs  883.355 µs  5.187% 
+       18  3/3       1.024 ms    1.015 ms    1.097 ms  8.009% 
+exported to /tmp/issue-10376-successive-scalar-repeat/runtime.json

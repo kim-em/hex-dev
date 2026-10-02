@@ -1,0 +1,15 @@
+{
+  "source_directory": "/tmp/hexrank-large-prepareFull",
+  "source_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "completed_commands": [
+    "prepareFull"
+  ],
+  "sha256": {
+    "metadata.json": "3553243be36f3454c4bd94bc21faf8ad3c1ef56c21c62c9072e4f671e43a62fe",
+    "completion.json": "03ae399404a3832ebb6af89d95d428a9f742949f34d77a1dee8f9e3028d41076",
+    "prepareFull.json": "0db011becc8eb12ccb6fa802568633b759980a52fb558e196a14e521c0191c77",
+    "prepareFull.txt.gz": "5629a43f04a5bf79c274f3735a68c4ba86443ec0e57a75cab58a7331ac9f3298",
+    "source.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "commands.jsonl": "78506c1a179bcb2b646945615d5794fbcdbeb1e06e1ddac189ed4db18f263b9c"
+  }
+}

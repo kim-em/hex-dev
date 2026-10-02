@@ -787,4 +787,177 @@ theorem evalHorner_eq [Lean.Grind.CommSemiring R]
   unfold evalHorner eval
   exact eval₂Horner_eq id x p
 
+/-! # Evaluation laws -/
+
+section EvalLaws
+
+variable [Zero R] [Lean.Grind.Semiring S] (f : R → S) (x : Fin n → S)
+
+/-- Evaluation is the fold over the canonical support of mapped coefficients
+times monomial values. -/
+theorem eval₂_eq_foldl_monomials (p : MvPoly n R cmp) :
+    eval₂ f x p =
+      p.monomials.foldl (fun acc m => acc + f (coeff m p) * Mono.prod x m) 0 := by
+  rw [eval₂_eq, monomials, List.foldl_map]
+  apply List.foldl_congr
+  intro acc t ht
+  obtain ⟨m, c⟩ := t
+  rw [coeff_eq_of_mem_terms p ht]
+
+/-- Evaluation may be written as a fold over any duplicate-free list of
+monomials containing the support, provided `f` fixes zero. -/
+theorem eval₂_eq_foldl_of_superset (hf0 : f 0 = 0) (p : MvPoly n R cmp)
+    (L : List (Mono n)) (hL : L.Nodup) (hsub : ∀ m ∈ p.monomials, m ∈ L) :
+    eval₂ f x p = L.foldl (fun acc m => acc + f (coeff m p) * Mono.prod x m) 0 := by
+  rw [eval₂_eq_foldl_monomials]
+  have hnodup : (p.monomials ++ L.filter (fun m => decide (m ∉ p.monomials))).Nodup := by
+    rw [List.nodup_append]
+    refine ⟨monomials_nodup p, hL.filter _, ?_⟩
+    intro a ha b hb hab
+    subst hab
+    simp only [List.mem_filter, decide_eq_true_eq] at hb
+    exact hb.2 ha
+  have hperm : L.Perm (p.monomials ++ L.filter (fun m => decide (m ∉ p.monomials))) := by
+    refine (List.perm_ext_iff_of_nodup hL hnodup).mpr ?_
+    intro m
+    simp only [List.mem_append, List.mem_filter, decide_eq_true_eq]
+    constructor
+    · intro hm
+      by_cases hmp : m ∈ p.monomials
+      · exact Or.inl hmp
+      · exact Or.inr ⟨hm, hmp⟩
+    · intro hm
+      rcases hm with hm | ⟨hm, _⟩
+      · exact hsub m hm
+      · exact hm
+  have hzero : ∀ m ∈ L.filter (fun m => decide (m ∉ p.monomials)),
+      f (coeff m p) * Mono.prod x m = 0 := by
+    intro m hm
+    simp only [List.mem_filter, decide_eq_true_eq] at hm
+    rw [coeff_eq_zero_of_not_mem m p hm.2, hf0, Lean.Grind.Semiring.zero_mul]
+  rw [List.foldl_add_perm (fun m => f (coeff m p) * Mono.prod x m) hperm,
+    List.foldl_append, List.foldl_add_eq_self _ _ _ hzero]
+
+/-- The zero polynomial evaluates to zero. -/
+theorem eval₂_zero (hf0 : f 0 = 0) : eval₂ f x (0 : MvPoly n R cmp) = 0 := by
+  have hsub : ∀ m ∈ (0 : MvPoly n R cmp).monomials, m ∈ ([] : List (Mono n)) := by
+    intro m hm
+    rw [mem_monomials_iff, coeff_zero] at hm
+    exact absurd rfl hm
+  rw [eval₂_eq_foldl_of_superset f x hf0 0 [] List.nodup_nil hsub]
+  rfl
+
+/-- Adding a monomial adds its mapped value, for an additive `f` fixing
+zero. -/
+theorem eval₂_addMonomial [Add R] [BEq R] [LawfulBEq R] [DecidableEq R]
+    (hf0 : f 0 = 0) (hfadd : ∀ a b : R, f (a + b) = f a + f b)
+    (p : MvPoly n R cmp) (m : Mono n) (c : R) :
+    eval₂ f x (p.addMonomial m c) = eval₂ f x p + f c * Mono.prod x m := by
+  let L : List (Mono n) := p.monomials ++ (if m ∈ p.monomials then [] else [m])
+  have hL : L.Nodup := by
+    rw [List.nodup_append]
+    refine ⟨monomials_nodup p, ?_, ?_⟩
+    · split <;> simp
+    · intro a ha b hb hab
+      subst hab
+      split at hb
+      · simp at hb
+      · simp only [List.mem_singleton] at hb
+        subst hb
+        exact ‹a ∉ p.monomials› ha
+  have hmL : m ∈ L := by
+    simp only [L, List.mem_append]
+    by_cases hm : m ∈ p.monomials
+    · exact Or.inl hm
+    · simp [hm]
+  have hsubp : ∀ k ∈ p.monomials, k ∈ L := fun k hk => List.mem_append_left _ hk
+  have hsub : ∀ k ∈ (p.addMonomial m c).monomials, k ∈ L := by
+    intro k hk
+    rw [mem_monomials_iff, coeff_addMonomial] at hk
+    by_cases hkm : k = m
+    · subst hkm
+      exact hmL
+    · rw [ite_eq_right hkm] at hk
+      exact hsubp k ((mem_monomials_iff k p).mpr hk)
+  rw [eval₂_eq_foldl_of_superset f x hf0 _ L hL hsub,
+    eval₂_eq_foldl_of_superset f x hf0 p L hL hsubp]
+  have hstep : ∀ k ∈ L,
+      f (coeff k (p.addMonomial m c)) * Mono.prod x k =
+        f (coeff k p) * Mono.prod x k +
+          (if k = m then f c * Mono.prod x m else 0) := by
+    intro k _
+    rw [coeff_addMonomial]
+    by_cases hkm : k = m
+    · subst hkm
+      rw [ite_eq_left rfl, ite_eq_left rfl, hfadd, Lean.Grind.Semiring.right_distrib]
+    · rw [ite_eq_right hkm, ite_eq_right hkm, Lean.Grind.Semiring.add_zero]
+  rw [List.foldl_add_congr L _ _ 0 hstep, List.foldl_add_add,
+    List.foldl_add_single L 0 m (fun _ => f c * Mono.prod x m) hmL hL,
+    Lean.Grind.AddCommMonoid.zero_add]
+
+/-- Building a polynomial from a term list evaluates to the fold of the
+mapped terms, for an additive `f` fixing zero. -/
+theorem eval₂_ofTerms [Add R] [BEq R] [LawfulBEq R] [DecidableEq R]
+    (hf0 : f 0 = 0) (hfadd : ∀ a b : R, f (a + b) = f a + f b)
+    (ts : List (Mono n × R)) :
+    eval₂ f x (ofTerms ts : MvPoly n R cmp) =
+      ts.foldl (fun acc t => acc + f t.2 * Mono.prod x t.1) 0 := by
+  have aux : ∀ (us : List (Mono n × R)) (p : MvPoly n R cmp),
+      eval₂ f x (us.foldl (fun q t => addMonomial q t.1 t.2) p) =
+        us.foldl (fun acc t => acc + f t.2 * Mono.prod x t.1) (eval₂ f x p) := by
+    intro us
+    induction us with
+    | nil => intro p; rfl
+    | cons t us ih =>
+      intro p
+      rw [List.foldl_cons, List.foldl_cons, ih, eval₂_addMonomial f x hf0 hfadd]
+  rw [ofTerms, aux, eval₂_zero f x hf0]
+
+end EvalLaws
+
+section EvalAdd
+
+variable [Lean.Grind.Semiring R] [DecidableEq R] [Lean.Grind.Semiring S]
+  (f : R → S) (x : Fin n → S)
+
+/-- Evaluation is additive, for an additive `f` fixing zero. -/
+theorem eval₂_add
+    (hf0 : f 0 = 0) (hfadd : ∀ a b : R, f (a + b) = f a + f b)
+    (p q : MvPoly n R cmp) :
+    eval₂ f x (p + q) = eval₂ f x p + eval₂ f x q := by
+  let L : List (Mono n) :=
+    p.monomials ++ q.monomials.filter (fun m => decide (m ∉ p.monomials))
+  have hL : L.Nodup := by
+    rw [List.nodup_append]
+    refine ⟨monomials_nodup p, (monomials_nodup q).filter _, ?_⟩
+    intro a ha b hb hab
+    subst hab
+    simp only [List.mem_filter, decide_eq_true_eq] at hb
+    exact hb.2 ha
+  have hsubp : ∀ m ∈ p.monomials, m ∈ L := fun m hm => List.mem_append_left _ hm
+  have hsubq : ∀ m ∈ q.monomials, m ∈ L := by
+    intro m hm
+    by_cases hmp : m ∈ p.monomials
+    · exact List.mem_append_left _ hmp
+    · apply List.mem_append_right
+      exact List.mem_filter.mpr ⟨hm, by simpa using hmp⟩
+  have hsub : ∀ m ∈ (p + q).monomials, m ∈ L := by
+    intro m hm
+    rw [mem_monomials_iff, coeff_add] at hm
+    by_cases hmp : m ∈ p.monomials
+    · exact hsubp m hmp
+    · apply hsubq
+      rw [mem_monomials_iff]
+      intro hq
+      rw [coeff_eq_zero_of_not_mem m p hmp, hq, Lean.Grind.Semiring.add_zero] at hm
+      exact hm rfl
+  rw [eval₂_eq_foldl_of_superset f x hf0 _ L hL hsub,
+    eval₂_eq_foldl_of_superset f x hf0 p L hL hsubp,
+    eval₂_eq_foldl_of_superset f x hf0 q L hL hsubq, ← List.foldl_add_add]
+  apply List.foldl_add_congr
+  intro m _
+  rw [coeff_add, hfadd, Lean.Grind.Semiring.right_distrib]
+
+end EvalAdd
+
 end Hex.MvPoly

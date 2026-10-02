@@ -9,3 +9,6 @@ module
 public import HexSmithMathlib.Basis
 public import HexSmithMathlib.Chain
 public import HexSmithMathlib.Quotient
+public import HexSmithMathlib.Rank
+public import HexSmithMathlib.Kernel
+public import HexSmithMathlib.Tactic

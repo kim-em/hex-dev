@@ -1,0 +1,312 @@
+Hex.PrimalityBench.Stage2.Bits256.runCounters    expected complexity: operations q    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=504aae6-dirty, 2026-09-20T09:31:32Z, host=chungus2
+   param  per-call    repeats  C
+   2_039  162.509 µs  ×2^9     C=203.448 [trial 1/5]
+   4_093  277.257 µs  ×2^8     C=210.961 [trial 1/5]
+   8_191  482.001 µs  ×2^7     C=213.944 [trial 1/5]
+  16_381  889.403 µs  ×2^6     C=219.660 [trial 1/5]
+  32_749    1.609 ms  ×2^5     C=222.212 [trial 1/5]
+   2_039  161.722 µs  ×2^9     C=203.448 [trial 2/5]
+   4_093  281.368 µs  ×2^8     C=210.961 [trial 2/5]
+   8_191  510.935 µs  ×2^7     C=213.944 [trial 2/5]
+  16_381  891.471 µs  ×2^6     C=219.660 [trial 2/5]
+  32_749    1.684 ms  ×2^6     C=222.212 [trial 2/5]
+   2_039  162.555 µs  ×2^9     C=203.448 [trial 3/5]
+   4_093  278.467 µs  ×2^8     C=210.961 [trial 3/5]
+   8_191  484.258 µs  ×2^7     C=213.944 [trial 3/5]
+  16_381  881.737 µs  ×2^6     C=219.660 [trial 3/5]
+  32_749    1.643 ms  ×2^6     C=222.212 [trial 3/5]
+   2_039  163.779 µs  ×2^9     C=203.448 [trial 4/5]
+   4_093  275.007 µs  ×2^8     C=210.961 [trial 4/5]
+   8_191  484.796 µs  ×2^7     C=213.944 [trial 4/5]
+  16_381  877.820 µs  ×2^6     C=219.660 [trial 4/5]
+  32_749    1.633 ms  ×2^6     C=222.212 [trial 4/5]
+   2_039  188.192 µs  ×2^9     C=203.448 [trial 5/5]
+   4_093  278.256 µs  ×2^8     C=210.961 [trial 5/5]
+   8_191  487.172 µs  ×2^7     C=213.944 [trial 5/5]
+  16_381  892.298 µs  ×2^6     C=219.660 [trial 5/5]
+  32_749    1.632 ms  ×2^6     C=222.212 [trial 5/5]
+  verdict: consistent with declared complexity (cMin=203.448, cMax=222.212, β=+0.031)
+  per-spawn floor (harness self-measurement): 22.852 ms
+  peak RSS: 68_236 kB..69_160 kB (across 25 ok row(s))
+  trial summaries (5 trials per param; spread = (max-min)/median):
+     param  trials  median      min         max         spread 
+     2_039  5/5     162.555 µs  161.722 µs  188.192 µs  16.283%
+     4_093  5/5     278.256 µs  275.007 µs  281.368 µs  2.286% 
+     8_191  5/5     484.796 µs  482.001 µs  510.935 µs  5.968% 
+    16_381  5/5     889.403 µs  877.820 µs  892.298 µs  1.628% 
+    32_749  5/5       1.633 ms    1.609 ms    1.684 ms  4.616% 
+
+Hex.PrimalityBench.Stage2.Bits64.runCounters    expected complexity: operations q    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=504aae6-dirty, 2026-09-20T09:31:35Z, host=chungus2
+   param  per-call    repeats  C
+   2_039  139.787 µs  ×2^9     C=174.954 [trial 1/5]
+   4_093  241.405 µs  ×2^8     C=184.369 [trial 1/5]
+   8_191  425.266 µs  ×2^8     C=189.650 [trial 1/5]
+  16_381  793.637 µs  ×2^7     C=196.008 [trial 1/5]
+  32_749    1.466 ms  ×2^6     C=197.230 [trial 1/5]
+   2_039  140.743 µs  ×2^9     C=174.954 [trial 2/5]
+   4_093  247.924 µs  ×2^8     C=184.369 [trial 2/5]
+   8_191  431.188 µs  ×2^7     C=189.650 [trial 2/5]
+  16_381  774.005 µs  ×2^7     C=196.008 [trial 2/5]
+  32_749    1.422 ms  ×2^6     C=197.230 [trial 2/5]
+   2_039  141.152 µs  ×2^9     C=174.954 [trial 3/5]
+   4_093  249.323 µs  ×2^8     C=184.369 [trial 3/5]
+   8_191  429.746 µs  ×2^7     C=189.650 [trial 3/5]
+  16_381  794.534 µs  ×2^7     C=196.008 [trial 3/5]
+  32_749    1.450 ms  ×2^6     C=197.230 [trial 3/5]
+   2_039  136.041 µs  ×2^9     C=174.954 [trial 4/5]
+   4_093  240.718 µs  ×2^8     C=184.369 [trial 4/5]
+   8_191  418.337 µs  ×2^8     C=189.650 [trial 4/5]
+  16_381  794.951 µs  ×2^7     C=196.008 [trial 4/5]
+  32_749    1.438 ms  ×2^6     C=197.230 [trial 4/5]
+   2_039  139.381 µs  ×2^9     C=174.954 [trial 5/5]
+   4_093  243.182 µs  ×2^8     C=184.369 [trial 5/5]
+   8_191  437.276 µs  ×2^7     C=189.650 [trial 5/5]
+  16_381  769.211 µs  ×2^7     C=196.008 [trial 5/5]
+  32_749    1.475 ms  ×2^6     C=197.230 [trial 5/5]
+  verdict: consistent with declared complexity (cMin=174.954, cMax=197.230, β=+0.043)
+  per-spawn floor (harness self-measurement): 22.394 ms
+  peak RSS: 68_240 kB..69_144 kB (across 25 ok row(s))
+  trial summaries (5 trials per param; spread = (max-min)/median):
+     param  trials  median      min         max         spread
+     2_039  5/5     139.787 µs  136.041 µs  141.152 µs  3.656%
+     4_093  5/5     243.182 µs  240.718 µs  249.323 µs  3.539%
+     8_191  5/5     429.746 µs  418.337 µs  437.276 µs  4.407%
+    16_381  5/5     793.637 µs  769.211 µs  794.951 µs  3.243%
+    32_749  5/5       1.450 ms    1.422 ms    1.475 ms  3.661%
+
+Hex.PrimalityBench.Stage2.Bits512.runTrace    expected complexity: operations q    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=504aae6-dirty, 2026-09-20T09:31:37Z, host=chungus2
+   param  per-call    repeats  C
+   2_039  226.556 µs  ×2^8     C=281.634 [trial 1/5]
+   4_093  383.436 µs  ×2^8     C=292.044 [trial 1/5]
+   8_191  673.386 µs  ×2^7     C=301.553 [trial 1/5]
+  16_381    1.274 ms  ×2^6     C=310.313 [trial 1/5]
+  32_749    2.364 ms  ×2^5     C=321.124 [trial 1/5]
+   2_039  224.671 µs  ×2^8     C=281.634 [trial 2/5]
+   4_093  385.205 µs  ×2^7     C=292.044 [trial 2/5]
+   8_191  677.144 µs  ×2^7     C=301.553 [trial 2/5]
+  16_381    1.233 ms  ×2^6     C=310.313 [trial 2/5]
+  32_749    2.351 ms  ×2^5     C=321.124 [trial 2/5]
+   2_039  223.786 µs  ×2^8     C=281.634 [trial 3/5]
+   4_093  385.925 µs  ×2^8     C=292.044 [trial 3/5]
+   8_191  695.302 µs  ×2^7     C=301.553 [trial 3/5]
+  16_381    1.236 ms  ×2^6     C=310.313 [trial 3/5]
+  32_749    2.361 ms  ×2^5     C=321.124 [trial 3/5]
+   2_039  225.025 µs  ×2^8     C=281.634 [trial 4/5]
+   4_093  383.353 µs  ×2^7     C=292.044 [trial 4/5]
+   8_191  683.318 µs  ×2^7     C=301.553 [trial 4/5]
+  16_381    1.256 ms  ×2^6     C=310.313 [trial 4/5]
+  32_749    2.394 ms  ×2^5     C=321.124 [trial 4/5]
+   2_039  226.356 µs  ×2^8     C=281.634 [trial 5/5]
+   4_093  401.501 µs  ×2^7     C=292.044 [trial 5/5]
+   8_191  686.875 µs  ×2^7     C=301.553 [trial 5/5]
+  16_381    1.262 ms  ×2^6     C=310.313 [trial 5/5]
+  32_749    2.355 ms  ×2^5     C=321.124 [trial 5/5]
+  verdict: consistent with declared complexity (cMin=281.634, cMax=321.124, β=+0.047)
+  per-spawn floor (harness self-measurement): 22.169 ms
+  peak RSS: 68_252 kB..69_096 kB (across 25 ok row(s))
+  trial summaries (5 trials per param; spread = (max-min)/median):
+     param  trials  median      min         max         spread
+     2_039  5/5     225.025 µs  223.786 µs  226.556 µs  1.231%
+     4_093  5/5     385.205 µs  383.353 µs  401.501 µs  4.711%
+     8_191  5/5     683.318 µs  673.386 µs  695.302 µs  3.207%
+    16_381  5/5       1.256 ms    1.233 ms    1.274 ms  3.299%
+    32_749  5/5       2.361 ms    2.351 ms    2.394 ms  1.842%
+
+Hex.PrimalityBench.Stage2.Bits64.runTrace    expected complexity: operations q    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=504aae6-dirty, 2026-09-20T09:31:40Z, host=chungus2
+   param  per-call    repeats  C
+   2_039  139.680 µs  ×2^9     C=173.859 [trial 1/5]
+   4_093  243.496 µs  ×2^8     C=182.993 [trial 1/5]
+   8_191  435.687 µs  ×2^7     C=190.968 [trial 1/5]
+  16_381  796.608 µs  ×2^7     C=192.718 [trial 1/5]
+  32_749    1.427 ms  ×2^6     C=194.930 [trial 1/5]
+   2_039  139.957 µs  ×2^9     C=173.859 [trial 2/5]
+   4_093  241.970 µs  ×2^8     C=182.993 [trial 2/5]
+   8_191  432.732 µs  ×2^7     C=190.968 [trial 2/5]
+  16_381  765.953 µs  ×2^7     C=192.718 [trial 2/5]
+  32_749    1.424 ms  ×2^6     C=194.930 [trial 2/5]
+   2_039  136.747 µs  ×2^9     C=173.859 [trial 3/5]
+   4_093  240.163 µs  ×2^8     C=182.993 [trial 3/5]
+   8_191  426.283 µs  ×2^7     C=190.968 [trial 3/5]
+  16_381  778.579 µs  ×2^7     C=192.718 [trial 3/5]
+  32_749    1.442 ms  ×2^6     C=194.930 [trial 3/5]
+   2_039  138.913 µs  ×2^9     C=173.859 [trial 4/5]
+   4_093  241.291 µs  ×2^8     C=182.993 [trial 4/5]
+   8_191  455.722 µs  ×2^7     C=190.968 [trial 4/5]
+  16_381  780.315 µs  ×2^7     C=192.718 [trial 4/5]
+  32_749    1.433 ms  ×2^6     C=194.930 [trial 4/5]
+   2_039  138.545 µs  ×2^9     C=173.859 [trial 5/5]
+   4_093  241.368 µs  ×2^8     C=182.993 [trial 5/5]
+   8_191  429.835 µs  ×2^7     C=190.968 [trial 5/5]
+  16_381  798.057 µs  ×2^6     C=192.718 [trial 5/5]
+  32_749    1.478 ms  ×2^6     C=194.930 [trial 5/5]
+  verdict: consistent with declared complexity (cMin=173.859, cMax=194.930, β=+0.040)
+  per-spawn floor (harness self-measurement): 22.149 ms
+  peak RSS: 68_272 kB..69_136 kB (across 25 ok row(s))
+  trial summaries (5 trials per param; spread = (max-min)/median):
+     param  trials  median      min         max         spread
+     2_039  5/5     138.913 µs  136.747 µs  139.957 µs  2.311%
+     4_093  5/5     241.368 µs  240.163 µs  243.496 µs  1.381%
+     8_191  5/5     432.732 µs  426.283 µs  455.722 µs  6.803%
+    16_381  5/5     780.315 µs  765.953 µs  798.057 µs  4.114%
+    32_749  5/5       1.433 ms    1.424 ms    1.478 ms  3.774%
+
+Hex.PrimalityBench.Stage2.Bits128.runCounters    expected complexity: operations q    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=504aae6-dirty, 2026-09-20T09:31:42Z, host=chungus2
+   param  per-call    repeats  C
+   2_039  154.306 µs  ×2^9     C=183.640 [trial 1/5]
+   4_093  251.990 µs  ×2^8     C=190.082 [trial 1/5]
+   8_191  447.758 µs  ×2^7     C=195.602 [trial 1/5]
+  16_381  824.941 µs  ×2^7     C=198.488 [trial 1/5]
+  32_749    1.513 ms  ×2^6     C=201.134 [trial 1/5]
+   2_039  161.176 µs  ×2^9     C=183.640 [trial 2/5]
+   4_093  254.007 µs  ×2^8     C=190.082 [trial 2/5]
+   8_191  440.534 µs  ×2^7     C=195.602 [trial 2/5]
+  16_381  815.119 µs  ×2^7     C=198.488 [trial 2/5]
+  32_749    1.475 ms  ×2^6     C=201.134 [trial 2/5]
+   2_039  144.611 µs  ×2^9     C=183.640 [trial 3/5]
+   4_093  250.717 µs  ×2^8     C=190.082 [trial 3/5]
+   8_191  437.233 µs  ×2^7     C=195.602 [trial 3/5]
+  16_381  791.565 µs  ×2^7     C=198.488 [trial 3/5]
+  32_749    1.479 ms  ×2^6     C=201.134 [trial 3/5]
+   2_039  146.431 µs  ×2^9     C=183.640 [trial 4/5]
+   4_093  246.856 µs  ×2^8     C=190.082 [trial 4/5]
+   8_191  506.159 µs  ×2^7     C=195.602 [trial 4/5]
+  16_381  798.012 µs  ×2^6     C=198.488 [trial 4/5]
+  32_749    1.485 ms  ×2^6     C=201.134 [trial 4/5]
+   2_039  146.728 µs  ×2^9     C=183.640 [trial 5/5]
+   4_093  247.739 µs  ×2^8     C=190.082 [trial 5/5]
+   8_191  443.233 µs  ×2^7     C=195.602 [trial 5/5]
+  16_381  803.677 µs  ×2^7     C=198.488 [trial 5/5]
+  32_749    1.471 ms  ×2^6     C=201.134 [trial 5/5]
+  verdict: consistent with declared complexity (cMin=183.640, cMax=201.134, β=+0.032)
+  per-spawn floor (harness self-measurement): 23.076 ms
+  peak RSS: 68_372 kB..69_228 kB (across 25 ok row(s))
+  trial summaries (5 trials per param; spread = (max-min)/median):
+     param  trials  median      min         max         spread 
+     2_039  5/5     146.728 µs  144.611 µs  161.176 µs  11.290%
+     4_093  5/5     250.717 µs  246.856 µs  254.007 µs  2.852% 
+     8_191  5/5     443.233 µs  437.233 µs  506.159 µs  15.551%
+    16_381  5/5     803.677 µs  791.565 µs  824.941 µs  4.153% 
+    32_749  5/5       1.479 ms    1.471 ms    1.513 ms  2.825% 
+
+Hex.PrimalityBench.Stage2.Bits128.runTrace    expected complexity: operations q    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=504aae6-dirty, 2026-09-20T09:31:45Z, host=chungus2
+   param  per-call    repeats  C
+   2_039  145.940 µs  ×2^9     C=183.476 [trial 1/5]
+   4_093  251.322 µs  ×2^8     C=190.116 [trial 1/5]
+   8_191  439.595 µs  ×2^7     C=196.087 [trial 1/5]
+  16_381  803.365 µs  ×2^7     C=198.411 [trial 1/5]
+  32_749    1.461 ms  ×2^6     C=199.145 [trial 1/5]
+   2_039  150.468 µs  ×2^9     C=183.476 [trial 2/5]
+   4_093  244.994 µs  ×2^8     C=190.116 [trial 2/5]
+   8_191  444.332 µs  ×2^7     C=196.087 [trial 2/5]
+  16_381  805.042 µs  ×2^7     C=198.411 [trial 2/5]
+  32_749    1.464 ms  ×2^6     C=199.145 [trial 2/5]
+   2_039  146.450 µs  ×2^9     C=183.476 [trial 3/5]
+   4_093  250.762 µs  ×2^8     C=190.116 [trial 3/5]
+   8_191  454.143 µs  ×2^7     C=196.087 [trial 3/5]
+  16_381  791.281 µs  ×2^7     C=198.411 [trial 3/5]
+  32_749    1.464 ms  ×2^6     C=199.145 [trial 3/5]
+   2_039  147.206 µs  ×2^9     C=183.476 [trial 4/5]
+   4_093  250.269 µs  ×2^8     C=190.116 [trial 4/5]
+   8_191  439.498 µs  ×2^7     C=196.087 [trial 4/5]
+  16_381  798.941 µs  ×2^7     C=198.411 [trial 4/5]
+  32_749    1.471 ms  ×2^6     C=199.145 [trial 4/5]
+   2_039  146.597 µs  ×2^9     C=183.476 [trial 5/5]
+   4_093  253.992 µs  ×2^8     C=190.116 [trial 5/5]
+   8_191  446.387 µs  ×2^7     C=196.087 [trial 5/5]
+  16_381  807.871 µs  ×2^7     C=198.411 [trial 5/5]
+  32_749    1.465 ms  ×2^6     C=199.145 [trial 5/5]
+  verdict: consistent with declared complexity (cMin=183.476, cMax=199.145, β=+0.030)
+  per-spawn floor (harness self-measurement): 22.048 ms
+  peak RSS: 68_316 kB..69_224 kB (across 25 ok row(s))
+  trial summaries (5 trials per param; spread = (max-min)/median):
+     param  trials  median      min         max         spread
+     2_039  5/5     146.597 µs  145.940 µs  150.468 µs  3.089%
+     4_093  5/5     250.762 µs  244.994 µs  253.992 µs  3.589%
+     8_191  5/5     444.332 µs  439.498 µs  454.143 µs  3.296%
+    16_381  5/5     803.365 µs  791.281 µs  807.871 µs  2.065%
+    32_749  5/5       1.464 ms    1.461 ms    1.471 ms  0.739%
+
+Hex.PrimalityBench.Stage2.Bits512.runCounters    expected complexity: operations q    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=504aae6-dirty, 2026-09-20T09:31:48Z, host=chungus2
+   param  per-call    repeats  C
+   2_039  223.511 µs  ×2^8     C=280.431 [trial 1/5]
+   4_093  385.217 µs  ×2^8     C=292.052 [trial 1/5]
+   8_191  668.742 µs  ×2^7     C=300.313 [trial 1/5]
+  16_381    1.309 ms  ×2^6     C=306.244 [trial 1/5]
+  32_749    2.355 ms  ×2^5     C=321.089 [trial 1/5]
+   2_039  224.064 µs  ×2^8     C=280.431 [trial 2/5]
+   4_093  381.554 µs  ×2^7     C=292.052 [trial 2/5]
+   8_191  673.563 µs  ×2^7     C=300.313 [trial 2/5]
+  16_381    1.230 ms  ×2^6     C=306.244 [trial 2/5]
+  32_749    2.360 ms  ×2^5     C=321.089 [trial 2/5]
+   2_039  224.252 µs  ×2^8     C=280.431 [trial 3/5]
+   4_093  385.635 µs  ×2^8     C=292.052 [trial 3/5]
+   8_191  687.098 µs  ×2^7     C=300.313 [trial 3/5]
+  16_381    1.240 ms  ×2^6     C=306.244 [trial 3/5]
+  32_749    2.373 ms  ×2^5     C=321.089 [trial 3/5]
+   2_039  224.978 µs  ×2^8     C=280.431 [trial 4/5]
+   4_093  384.363 µs  ×2^8     C=292.052 [trial 4/5]
+   8_191  718.082 µs  ×2^7     C=300.313 [trial 4/5]
+  16_381    1.318 ms  ×2^6     C=306.244 [trial 4/5]
+  32_749    2.359 ms  ×2^5     C=321.089 [trial 4/5]
+   2_039  223.988 µs  ×2^8     C=280.431 [trial 5/5]
+   4_093  408.789 µs  ×2^7     C=292.052 [trial 5/5]
+   8_191  680.508 µs  ×2^7     C=300.313 [trial 5/5]
+  16_381    1.239 ms  ×2^6     C=306.244 [trial 5/5]
+  32_749    2.363 ms  ×2^5     C=321.089 [trial 5/5]
+  verdict: consistent with declared complexity (cMin=280.431, cMax=321.089, β=+0.046)
+  per-spawn floor (harness self-measurement): 22.646 ms
+  peak RSS: 68_320 kB..69_012 kB (across 25 ok row(s))
+  trial summaries (5 trials per param; spread = (max-min)/median):
+     param  trials  median      min         max         spread
+     2_039  5/5     224.064 µs  223.511 µs  224.978 µs  0.655%
+     4_093  5/5     385.217 µs  381.554 µs  408.789 µs  7.070%
+     8_191  5/5     680.508 µs  668.742 µs  718.082 µs  7.250%
+    16_381  5/5       1.240 ms    1.230 ms    1.318 ms  7.126%
+    32_749  5/5       2.360 ms    2.355 ms    2.373 ms  0.781%
+
+Hex.PrimalityBench.Stage2.Bits256.runTrace    expected complexity: operations q    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=504aae6-dirty, 2026-09-20T09:31:50Z, host=chungus2
+   param  per-call    repeats  C
+   2_039  161.240 µs  ×2^9     C=202.154 [trial 1/5]
+   4_093  277.205 µs  ×2^8     C=211.797 [trial 1/5]
+   8_191  483.996 µs  ×2^7     C=221.371 [trial 1/5]
+  16_381  892.033 µs  ×2^6     C=220.799 [trial 1/5]
+  32_749    1.631 ms  ×2^6     C=223.691 [trial 1/5]
+   2_039  161.966 µs  ×2^9     C=202.154 [trial 2/5]
+   4_093  275.716 µs  ×2^8     C=211.797 [trial 2/5]
+   8_191  512.240 µs  ×2^7     C=221.371 [trial 2/5]
+  16_381  912.034 µs  ×2^6     C=220.799 [trial 2/5]
+  32_749    1.663 ms  ×2^5     C=223.691 [trial 2/5]
+   2_039  164.404 µs  ×2^9     C=202.154 [trial 3/5]
+   4_093  279.360 µs  ×2^8     C=211.797 [trial 3/5]
+   8_191  501.627 µs  ×2^7     C=221.371 [trial 3/5]
+  16_381  903.844 µs  ×2^6     C=220.799 [trial 3/5]
+  32_749    1.644 ms  ×2^6     C=223.691 [trial 3/5]
+   2_039  160.127 µs  ×2^9     C=202.154 [trial 4/5]
+   4_093  279.740 µs  ×2^8     C=211.797 [trial 4/5]
+   8_191  491.331 µs  ×2^7     C=221.371 [trial 4/5]
+  16_381  892.849 µs  ×2^6     C=220.799 [trial 4/5]
+  32_749    1.625 ms  ×2^6     C=223.691 [trial 4/5]
+   2_039  161.520 µs  ×2^9     C=202.154 [trial 5/5]
+   4_093  281.205 µs  ×2^8     C=211.797 [trial 5/5]
+   8_191  505.059 µs  ×2^7     C=221.371 [trial 5/5]
+  16_381  894.013 µs  ×2^6     C=220.799 [trial 5/5]
+  32_749    1.667 ms  ×2^6     C=223.691 [trial 5/5]
+  verdict: consistent with declared complexity (cMin=202.154, cMax=223.691, β=+0.035)
+  per-spawn floor (harness self-measurement): 22.099 ms
+  peak RSS: 68_284 kB..69_004 kB (across 25 ok row(s))
+  trial summaries (5 trials per param; spread = (max-min)/median):
+     param  trials  median      min         max         spread
+     2_039  5/5     161.520 µs  160.127 µs  164.404 µs  2.648%
+     4_093  5/5     279.360 µs  275.716 µs  281.205 µs  1.965%
+     8_191  5/5     501.627 µs  483.996 µs  512.240 µs  5.631%
+    16_381  5/5     894.013 µs  892.033 µs  912.034 µs  2.237%
+    32_749  5/5       1.644 ms    1.625 ms    1.667 ms  2.553%
+exported to /home/kim/worktrees/hex-dev/hex-dev-pollard-stage-2/reports/bench-results/pminusone-stage2-scaling.native.json

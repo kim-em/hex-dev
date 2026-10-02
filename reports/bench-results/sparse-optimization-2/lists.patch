@@ -1,0 +1,20 @@
+--- a/HexGraphIso/Nauty/Sparse/Refine.lean
++++ b/HexGraphIso/Nauty/Sparse/Refine.lean
+@@ -196,7 +196,7 @@
+     if k != n && marks[k]! != stamp then
+       marks := marks.set! k stamp
+       touched := touched.push k
+-  touched := touched.qsort (· < ·)
++  touched := (Hex.List.sort touched.toList (· ≤ ·)).toArray
+   let mut s := { s with marks, vmarks := hitVertices, stamp }
+   s := s.hash touched.size
+   for first in touched do
+@@ -254,7 +254,7 @@
+           for l in [k:s.cellend[k]! + 1] do
+             hits := hits.set! s.lab[l]! 0
+         hits := hits.set! j (hits[j]! + 1)
+-  touched := touched.qsort (· < ·)
++  touched := (Hex.List.sort touched.toList (· ≤ ·)).toArray
+   let mut s := { s with marks, hits, stamp }
+   s := s.hash touched.size
+   for first in touched do s := splitCounts level first false s

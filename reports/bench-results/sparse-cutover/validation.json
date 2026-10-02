@@ -1,0 +1,44 @@
+{
+  "instances": 333,
+  "refreshed_instances": 102,
+  "complete_passes": 2,
+  "process_results": 408,
+  "timed_repetitions": 2040,
+  "statuses": {
+    "ok": 408
+  },
+  "canonical_node_checks": 204,
+  "merged_reconstructed": true,
+  "untouched_cells_identical": true,
+  "schedule_checked": true,
+  "paired_blocks": 4,
+  "paired_samples": 96,
+  "solved": {
+    "hex-canon": 282,
+    "hex-run": 282,
+    "hex-ffi": 299,
+    "iso-canon": 296,
+    "iso-whole": 296,
+    "nauty": 307,
+    "sparse": 318,
+    "traces": 308,
+    "hex-sparse-canon": 310,
+    "hex-sparse-run": 310,
+    "hex-sparse-build": 333,
+    "hex-sparse-output": 315
+  },
+  "ratios": {
+    "sparse_over_dense": {
+      "cases": 282,
+      "median": 0.24755747887117655
+    },
+    "sparse_over_isograph": {
+      "cases": 296,
+      "median": 0.7442226928305367
+    },
+    "sparse_over_C_sparse": {
+      "cases": 310,
+      "median": 17.857120344938956
+    }
+  }
+}

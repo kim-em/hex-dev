@@ -1,0 +1,30 @@
+registered benchmarks:
+  Hex.RankBench.runRowReduceLowRank8At1024    expected complexity: n * n
+  Hex.RankBench.runRowReduceDense    expected complexity: hadamardBound n
+  Hex.RankBench.runRankCertLowRank8At1024    expected complexity: n * n
+  Hex.RankBench.runRankCertDeficientMinusOne    expected complexity: hadamardBound n
+  Hex.RankBench.runCheckRankLowRank2At64    expected complexity: n * n
+  Hex.RankBench.runRowReduceLowRank8At64    expected complexity: n * n
+  Hex.RankBench.runRowReduceDeficientHalf    expected complexity: hadamardBound n
+  Hex.RankBench.runRowReduceLowRank2At64    expected complexity: n * n
+  Hex.RankBench.runCheckRankDense    expected complexity: hadamardBound n
+  Hex.RankBench.runRowReduceLowRank2At1024    expected complexity: n * n
+  Hex.RankBench.runCheckRankDeficientMinusOne    expected complexity: hadamardBound n
+  Hex.RankBench.runRowReduceDeficientHalfShifted    expected complexity: hadamardBound n
+  Hex.RankBench.runRankCertLowRank2At64    expected complexity: n * n
+  Hex.RankBench.runRankCertDense    expected complexity: hadamardBound n
+  Hex.RankBench.runRankCertDeficientHalfShifted    expected complexity: hadamardBound n
+  Hex.RankBench.runRowReduceDeficientMinusOne    expected complexity: hadamardBound n
+  Hex.RankBench.runCheckRankDeficientHalfShifted    expected complexity: hadamardBound n
+  Hex.RankBench.runCheckRankLowRank8At1024    expected complexity: n * n
+  Hex.RankBench.runMvCheck4    [fixed] repeats=5
+  Hex.RankBench.runRatPolyRank4    [fixed] repeats=5
+  Hex.RankBench.runMvDeficientRank8    [fixed] repeats=5
+  Hex.RankBench.runRatPolyCert8    [fixed] repeats=5
+  Hex.RankBench.runMvRank8    [fixed] repeats=5
+  Hex.RankBench.runRatPolyRank12    [fixed] repeats=5
+  Hex.RankBench.runMvRank4    [fixed] repeats=5
+  Hex.RankBench.runRatPolyCheck8    [fixed] repeats=5
+  Hex.RankBench.runMvCert4    [fixed] repeats=5
+  Hex.RankBench.runRatPolyRank8    [fixed] repeats=5
+  Hex.RankBench.runRatPolyDeficientRank8    [fixed] repeats=5

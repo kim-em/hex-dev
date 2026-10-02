@@ -1,0 +1,18 @@
+{
+  "cpu": 32,
+  "loadavg": [
+    32.11669921875,
+    12.59033203125,
+    5.67236328125
+  ],
+  "source_sha256": "14401c52876625d6995d4ddab162c75555159004df37122a480730230a85efb2",
+  "sympy": "1.14.0",
+  "schedule": "Five measured repeats per arm, discarded warmup, alternate arm order across points; all completed samples retained.",
+  "supporting_source_sha256": {
+    "conformance/HexCharPoly/Carriers.lean": "7ceea695c62dca1a95115490be75dcb9d377e333e2403075fca68856276d4328",
+    "scripts/oracle/matrix_carriers.py": "748906428edbe89dc7f17297b79bde8e1d498cdbb9b8f53d0c0785b00d3dd0f6"
+  },
+  "python": "3.14.6",
+  "sympy_ground_types": "flint",
+  "python_flint": "0.9.0"
+}

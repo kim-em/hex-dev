@@ -1,0 +1,89 @@
+{
+  "source_revision": "eed641caf0b9ba4e14d79ffcde69389fb7bb9e6e",
+  "binary_sha256": "8869976bfbdf280f8c2fd224ed814281f372017376ad0e47ce60058ffb6e79d9",
+  "source_sha256": {
+    "bench/HexRank/Bench.lean": "26228d15443ec6fff455fc38566c1b99115f6f276f1bad1f0f3ce57dbe8c179c",
+    "bench/HexRank/Bench/Quotient.lean": "f14eacded73c8a82ce2d19b8acf089458d5cd271a259da0936ae0ee2edd51478",
+    "scripts/oracle/rank_bench.py": "00df31595cca57a16e5f300336ffa50a8fbd35859ec908f031683af14cd44ed7",
+    "lakefile.lean": "9afa772036e71f800350a0e842801cc7c8b77e154ccac3c13fb180385fbda71f",
+    "HexRank/Polynomial.lean": "2ce7c7a04dfdecc9e32529f51a24e1c382a35a5021e4a1f0d540b06a78ee4b6a"
+  },
+  "cpu": 21,
+  "load_at_start": [
+    45.06787109375,
+    21.125,
+    20.50341796875
+  ],
+  "commands": [
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.lake/build/bin/hexrank_bench",
+        "list"
+      ],
+      "artifact": "verified-list.txt",
+      "sha256": "7e3a49f531dd7f3e204753c2ab0462f3bab7e80c21cc9a11d311c1849bb05fe2",
+      "exit_code": 0,
+      "wall_seconds": 0.0332033634185791,
+      "load_after": [
+        45.06787109375,
+        21.125,
+        20.50341796875
+      ]
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.lake/build/bin/hexrank_bench",
+        "verify"
+      ],
+      "artifact": "verified-smoke.txt",
+      "sha256": "b0c4a2da6c699b828090c42a04a2f8b213be76c40882077c2f1433b117dd9a8f",
+      "exit_code": 0,
+      "wall_seconds": 1.4373135566711426,
+      "load_after": [
+        45.06787109375,
+        21.125,
+        20.50341796875
+      ]
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.lake/build/bin/hexrank_bench",
+        "verify",
+        "Hex.RankBench.Comparison.RatPoly.Deficient.second4",
+        "Hex.RankBench.Comparison.RatPoly.Full.second8",
+        "Hex.RankBench.Comparison.Mv.Deficient.check4",
+        "Hex.RankBench.Comparison.Mv.Full.check4",
+        "Hex.RankBench.Comparison.Mv.Full.check8",
+        "Hex.RankBench.Comparison.Mv.Deficient.second8",
+        "Hex.RankBench.Comparison.RatPoly.Deficient.check4",
+        "Hex.RankBench.Comparison.Mv.Deficient.second12",
+        "Hex.RankBench.Comparison.RatPoly.Deficient.second8",
+        "Hex.RankBench.Comparison.Mv.Full.second4",
+        "Hex.RankBench.Comparison.Mv.Deficient.check8",
+        "Hex.RankBench.Comparison.RatPoly.Full.second12",
+        "Hex.RankBench.Comparison.Mv.Full.second12",
+        "Hex.RankBench.Comparison.RatPoly.Deficient.second12",
+        "Hex.RankBench.Comparison.RatPoly.Full.check8",
+        "Hex.RankBench.Comparison.Mv.Deficient.check12",
+        "Hex.RankBench.Comparison.Mv.Full.check12",
+        "Hex.RankBench.Comparison.RatPoly.Deficient.check8",
+        "Hex.RankBench.Comparison.RatPoly.Full.check12",
+        "Hex.RankBench.Comparison.RatPoly.Deficient.check12",
+        "Hex.RankBench.Comparison.RatPoly.Full.check4",
+        "Hex.RankBench.Comparison.Mv.Deficient.second4",
+        "Hex.RankBench.Comparison.Mv.Full.second8",
+        "Hex.RankBench.Comparison.RatPoly.Full.second4"
+      ],
+      "artifact": "verified-stages.txt",
+      "sha256": "791cb1553626a93f2423dd0d17d8ce0dd5234e5e89fbb87ab399fb5884e6b895",
+      "exit_code": 0,
+      "wall_seconds": 71.53161334991455,
+      "load_after": [
+        98.47265625,
+        42.28662109375,
+        27.91162109375
+      ]
+    }
+  ],
+  "purpose": "Registration correctness and operational smoke timing; no scientific performance verdict."
+}

@@ -12,21 +12,21 @@ public section
 
 namespace Hex.GraphIso.Nauty.Generation
 
-variable {n : Nat}
+variable {n : Nat} {κ : Type}
 
 /-- A canonical reference belonging to the current frame comes from a
 child already behind its cursor. An older ancestor reference has no local
 source obligation. -/
-structure CanonPast (level pos : Nat) (cursor : Option Nat) (st : Search n) : Prop where
+structure CanonPast (level pos : Nat) (cursor : Option Nat) (st : SearchState n κ) : Prop where
   cap : st.gcaCanon ≤ level
   source : st.gcaCanon = level → ¬ After cursor st.canonlab[pos]!
 
 /-- An ancestor reference imposes no source obligation at a fresh frame. -/
-theorem CanonPast.start {level pos : Nat} {st : Search n} (h : st.gcaCanon < level) :
+theorem CanonPast.start {level pos : Nat} {st : SearchState n κ} (h : st.gcaCanon < level) :
     CanonPast level pos none st := ⟨Nat.le_of_lt h, fun he => by omega⟩
 
 /-- Advancing a sweep cursor retains every older canonical source. -/
-theorem CanonPast.advance {level pos tv : Nat} {cursor : Option Nat} {st : Search n}
+theorem CanonPast.advance {level pos tv : Nat} {cursor : Option Nat} {st : SearchState n κ}
     (h : CanonPast level pos cursor st) (ha : After cursor tv) :
     CanonPast level pos (some tv) st := by
   refine ⟨h.cap, ?_⟩
@@ -41,7 +41,7 @@ theorem CanonPast.advance {level pos tv : Nat} {cursor : Option Nat} {st : Searc
     omega
 
 /-- The reference child is strictly earlier than the next visited child. -/
-theorem CanonPast.before {level pos tv : Nat} {cursor : Option Nat} {st : Search n}
+theorem CanonPast.before {level pos tv : Nat} {cursor : Option Nat} {st : SearchState n κ}
     {tcell : VSet n} (h : CanonPast level pos cursor st)
     (hnext : tcell.nextElem cursor = some tv) (he : st.gcaCanon = level) :
     st.canonlab[pos]! < tv := by
@@ -55,7 +55,7 @@ theorem CanonPast.before {level pos tv : Nat} {cursor : Option Nat} {st : Search
     omega
 
 /-- Updates to unrelated bookkeeping preserve the canonical source. -/
-theorem CanonPast.stateEq {level pos : Nat} {cursor : Option Nat} {st out : Search n}
+theorem CanonPast.stateEq {level pos : Nat} {cursor : Option Nat} {st out : SearchState n κ}
     (h : CanonPast level pos cursor st) (hgca : out.gcaCanon = st.gcaCanon)
     (hlab : out.canonlab = st.canonlab) : CanonPast level pos cursor out := by
   exact ⟨hgca ▸ h.cap, fun he => by rw [hlab]; exact h.source (hgca.symm.trans he)⟩

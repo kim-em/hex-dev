@@ -13,7 +13,6 @@ from libgraph import (
     load_lakefile_libs,
     load_libraries,
     may_import,
-    pascal_to_spec_path,
     reachable_dependencies,
     topological_order,
 )
@@ -25,25 +24,21 @@ IMPORT_RE = re.compile(
 LEAN_EXE_ROOT_RE = re.compile(r"^\s*root\s*:=\s*`([A-Za-z0-9_.]+)\s*$")
 LEAN_GLOB_MODULE_RE = re.compile(r"`([A-Z][A-Za-z0-9_.]+)")
 LEAN_LIB_RE = re.compile(r"^lean_lib\s+([A-Za-z0-9_]+)\b")
-LEAN_EXE_RE = re.compile(r"^lean_exe\s+([A-Za-z0-9_]+)\b")
 QUALIFIED_IMPORT_RE = re.compile(
     r"^\s*(?:(?:public|private)\s+)?(?:meta\s+)?import\s+(?:all\s+)?([A-Za-z0-9_.]+)\s*$"
 )
 IMPORT_ALL_RE = re.compile(
     r"^\s*(?:(?:public|private|meta)\s+)*import\s+all\s+([A-Za-z0-9_.]+)\s*$"
 )
-OWNER_RE = re.compile(
-    r"^Computational (conformance|performance) owners?:\s*(.+)$",
-    re.MULTILINE,
-)
-OWNER_NAME_RE = re.compile(r"`([A-Z][A-Za-z0-9_]*)`")
-RUNTIME_CHECK_RE = re.compile(r"^\s*#(?:eval|guard|reduce|run)\b")
 
 # Private constructors in these modules are an ordinary/public-import API
 # boundary. `import all` is a deliberate trusted-internals escape hatch, so
 # every owning exception must be an exact reviewed path rather than a suffix or
-# directory convention. There are currently no required exceptions.
+# directory convention. The ECM diagnostic observes private preparation costs.
 SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
+    "HexIntFactor.EcmStage2": frozenset({
+        Path("bench/HexPrimality/EcmDiagnostics/EcmPreparation.lean")}),
+    "HexSturm.Basic": frozenset(),
     "HexInterval.Executable": frozenset(),
     "HexInterval.Runtime": frozenset(),
     "HexInterval.RuntimeController": frozenset(),
@@ -56,15 +51,23 @@ SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
 }
 
 UMBRELLA_BUILD_TARGETS = {
+    "HexOrderedFnTests",
+    "HexRealClosureTests",
+    "HexRealClosureMathlibTests",
     "HexPolyFastKernels",
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
+    "HexRankBenchSupport",
+    "HexSignDetBenchSupport",
     "HexBerlekampKernelProbe",
     "HexPrimalityKernelProbe",
     "HexPrimalityElabProbe",
     "HexPrimalityElabProbeScientific",
+    "HexPrimalityConstructionProbe",
     "HexPrimalityMathlibProofProbe",
+    "HexECPPMathlibProofProbe",
     "HexIntFactorKernelProbe",
+    "HexIntFactorFieldConformance",
     "HexMvGcdKernelProbe",
     "HexMvGcdBenchSupport",
     "HexRationalFnBenchSupport",
@@ -77,6 +80,16 @@ UMBRELLA_BUILD_TARGETS = {
     "HexBerlekampMathlibProofProbe",
     "HexBerlekampMathlibProofProbeScientific",
     "HexIntervalExperiment",
+    "HexGenericRankTests",
+    "HexGenericRankMathlibProofProbe",
+    "HexDeterminantalIdealMathlibProofProbe",
+    "HexRankTests",
+    "HexRankMathlibProofProbe",
+    "HexCharPolyMathlibProofProbe",
+    "HexBareissMathlibProofProbe",
+    "HexPolyDetMathlibProofProbe",
+    "HexKroneckerTests",
+    "HexKroneckerMathlibProofProbe",
     "HexIntervalMathlibExperiment",
     "HexIntervalPntFks2Local",
     "HexIntervalPntFks2ConformanceLocal",
@@ -86,6 +99,10 @@ UMBRELLA_BUILD_TARGETS = {
     "HexRealRootsMathlibReplayProbeScientific",
     "HexRCFProofProbe",
     "HexRCFProofProbeScientific",
+    "HexRealFormulaProofProbe",
+    "HexRCFRealFormula",
+    "HexRCFRealCoefficients",
+    "HexQuerySemantics",
     "HexConformance",
     "HexFactorizationModules",
     "HexMvFactorizationTests",
@@ -93,7 +110,10 @@ UMBRELLA_BUILD_TARGETS = {
     "HexSparsePolyTests",
     "HexTruncatedSeriesTests",
     "HexSmithTests",
+    "HexStructuralTacticTests",
+    "HexStructuralTacticProofProbe",
     "HexLatticeEnumTests",
+    "HexDeterminantalIdealTests",
     "HexPermGroupTests",
     "HexGraphIsoTests",
     "HexCharPolyTests",
@@ -224,6 +244,33 @@ def project_lean_files(root: Path) -> list[Path]:
     return sorted(files)
 
 
+def check_adapter_imports(root: Path, files: list[Path], libraries) -> list[str]:
+    """Keep development-only modules out of library source and published umbrellas.
+
+    Check full module paths even for imports within the same library prefix.
+    Manuals and conformance may exercise adapters; library code may not depend
+    on sources omitted by release publishing.
+    """
+    modules = {
+        module_name_for(path.relative_to("adapters"))
+        for path in files if path.parts[0] == "adapters"
+    }
+    errors = []
+    for rel_path in files:
+        owner = rel_path.parts[0].removesuffix(".lean")
+        if owner not in libraries or owner == "HexManual":
+            continue
+        for line_no, line in enumerate((root / rel_path).read_text().splitlines(), start=1):
+            match = IMPORT_RE.match(line.split("--", 1)[0])
+            if not match:
+                continue
+            for module in match.group(1).split():
+                if module in modules:
+                    errors.append(f"{rel_path}:{line_no} imports development adapter {module} "
+                                  "from library source")
+    return errors
+
+
 def check_sealed_import_all(root: Path, files: list[Path]) -> list[str]:
     """Reject trusted-internals imports outside exact reviewed owning paths.
 
@@ -246,152 +293,6 @@ def check_sealed_import_all(root: Path, files: list[Path]) -> list[str]:
                     f"{rel_path}:{line_no} uses `import all {module}` outside its "
                     "exact trusted-internals allowlist"
                 )
-    return errors
-
-
-def check_correspondence_only(root: Path, libraries, lakefile: Path) -> list[str]:
-    """Check repository-owned state for explicitly correspondence-only layers."""
-    errors: list[str] = []
-    lake_text = lakefile.read_text(encoding="utf-8")
-    exe_names = {
-        match.group(1)
-        for line in lake_text.splitlines()
-        if (match := LEAN_EXE_RE.match(line))
-    }
-    build_modules = lean_glob_modules(lakefile, UMBRELLA_BUILD_TARGETS)
-    reachable = reachable_dependencies(libraries)
-
-    for name, info in libraries.items():
-        if not info.correspondence_only:
-            continue
-
-        conformance_dir = root / "conformance" / name
-        conformance_files = (
-            sorted(conformance_dir.rglob("*.lean"))
-            if conformance_dir.is_dir()
-            else []
-        )
-        if conformance_files:
-            errors.append(
-                f"{name} declares correspondence_only but owns conformance source "
-                f"{conformance_files[0].relative_to(root)}"
-            )
-        if re.search(
-            rf"`{re.escape(name)}\.[A-Za-z0-9_.]*Conformance\b", lake_text
-        ):
-            errors.append(
-                f"{name} declares correspondence_only but a Lake target names an owned "
-                "conformance module"
-            )
-
-        bench_dir = root / "bench" / name
-        bench_files = sorted(bench_dir.rglob("*.lean")) if bench_dir.is_dir() else []
-        if bench_files:
-            errors.append(
-                f"{name} declares correspondence_only but owns bench source "
-                f"{bench_files[0].relative_to(root)}"
-            )
-        normalized_name = re.sub(r"[^a-z0-9]", "", name.lower())
-        for exe_name in sorted(exe_names):
-            normalized_exe = re.sub(r"[^a-z0-9]", "", exe_name.lower())
-            if "bench" in normalized_exe and normalized_name in normalized_exe:
-                errors.append(
-                    f"{name} declares correspondence_only but owns compiled benchmark "
-                    f"target {exe_name}"
-                )
-                break
-        if re.search(rf"`{re.escape(name)}\.Bench(?:\b|\.)", lake_text):
-            errors.append(
-                f"{name} declares correspondence_only but a Lake target names "
-                f"{name}.Bench"
-            )
-
-        for module in sorted(
-            module for module in build_modules if module.startswith(f"{name}.")
-        ):
-            module_path = root / Path(*module.split(".")).with_suffix(".lean")
-            if not module_path.is_file():
-                continue
-            for line_no, line in enumerate(
-                module_path.read_text(encoding="utf-8").splitlines(), start=1
-            ):
-                if RUNTIME_CHECK_RE.match(line):
-                    errors.append(
-                        f"{name} declares correspondence_only but build-only module "
-                        f"{module} contains a runtime check at "
-                        f"{module_path.relative_to(root)}:{line_no}"
-                    )
-                    break
-
-        spec_dir = root / name / "SPEC"
-        specs = sorted(spec_dir.glob("*.md")) if spec_dir.is_dir() else []
-        # Source-less planned libraries keep their design in the central index.
-        if not info.is_active and not spec_dir.is_dir():
-            planned_spec = (
-                root / "SPEC" / "Libraries" / Path(pascal_to_spec_path(name)).name
-            )
-            specs = [planned_spec] if planned_spec.is_file() else []
-        if len(specs) != 1:
-            errors.append(
-                f"{name} declares correspondence_only but has {len(specs)} library SPECs; "
-                "expected exactly one"
-            )
-            continue
-        spec = specs[0]
-        text = spec.read_text(encoding="utf-8")
-        if "correspondence-only-layer" not in text:
-            errors.append(
-                f"{name} declares correspondence_only but {spec.relative_to(root)} does "
-                "not declare correspondence-only-layer"
-            )
-        owners: dict[str, list[str]] = {}
-        for kind, body in OWNER_RE.findall(text):
-            owners.setdefault(kind, []).extend(OWNER_NAME_RE.findall(body))
-        for kind in ("conformance", "performance"):
-            names = owners.get(kind, [])
-            if not names:
-                errors.append(
-                    f"{name} declares correspondence_only but {spec.relative_to(root)} "
-                    f"does not identify computational {kind} owners"
-                )
-                continue
-            for owner in names:
-                if owner not in libraries:
-                    errors.append(
-                        f"{name} names unknown computational {kind} owner {owner}"
-                    )
-                    continue
-                if libraries[owner].mathlib:
-                    errors.append(
-                        f"{name} names mathlib bridge {owner} as a computational "
-                        f"{kind} owner"
-                    )
-                    continue
-                if not may_import(name, owner, libraries, reachable):
-                    errors.append(
-                        f"{name} names computational {kind} owner {owner} outside its "
-                        "dependency closure"
-                    )
-                if kind == "conformance":
-                    owner_conformance = (
-                        root / "conformance" / owner / "Conformance.lean"
-                    )
-                    if info.is_active and not owner_conformance.is_file():
-                        errors.append(
-                            f"{name} names computational conformance owner {owner} "
-                            "without a core conformance module"
-                        )
-                # Phase 3 requires the owner declaration, while the owner's
-                # headline report becomes evidence only at the bridge's
-                # Phase-4 exit.
-                elif info.done_through >= 4:
-                    owner_slug = Path(pascal_to_spec_path(owner)).stem
-                    owner_report = root / "reports" / f"{owner_slug}-performance.md"
-                    if not owner_report.is_file():
-                        errors.append(
-                            f"{name} names computational performance owner {owner} "
-                            "without a headline report"
-                        )
     return errors
 
 
@@ -445,7 +346,6 @@ def main() -> int:
             )
 
     lakefile = root / "lakefile.lean"
-    errors.extend(check_correspondence_only(root, libraries, lakefile))
     build_roots = lean_exe_roots(lakefile) | lean_glob_modules(
         lakefile, UMBRELLA_BUILD_TARGETS
     )
@@ -453,6 +353,7 @@ def main() -> int:
 
     lean_files = project_lean_files(root)
     errors.extend(check_sealed_import_all(root, lean_files))
+    errors.extend(check_adapter_imports(root, lean_files, libraries))
 
     for rel_path in lean_files:
         owner = library_owner_for_path(rel_path, libraries)
@@ -477,7 +378,10 @@ def main() -> int:
                     if (
                         owner in libraries
                         and owner != "HexManual"
-                        and not may_import(owner, imported_root, libraries, reachable)
+                        and not may_import(
+                            owner, imported_root, libraries, reachable,
+                            adapter=rel_path.parts[0] == "adapters",
+                        )
                     ):
                         errors.append(
                             f"{rel_path}:{line_no} imports {imported_root} without a dependency path from {owner}"

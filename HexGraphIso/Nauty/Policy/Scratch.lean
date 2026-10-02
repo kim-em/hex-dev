@@ -17,15 +17,15 @@ public section
 
 namespace Hex.GraphIso.Nauty
 
-variable {n k : Nat}
+variable {n k : Nat} {κ : Type}
 
-private theorem admit_workperm (st : Search n) :
+private theorem admit_workperm (st : SearchState n κ) :
     (admit st).workperm = st.workperm := by
   unfold admit pushAuto
   simp only [Id.run_pure]
   split <;> rfl
 
-private theorem pruneReturn_workperm (level : Nat) (st : Search n) :
+private theorem pruneReturn_workperm (level : Nat) (st : SearchState n κ) :
     (pruneReturn level st).2.workperm = st.workperm := by
   unfold pruneReturn pushAuto
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
@@ -33,7 +33,7 @@ private theorem pruneReturn_workperm (level : Nat) (st : Search n) :
   all_goals rfl
 
 /-- Leaf actions retain the permutation written by classification. -/
-theorem leafExit_workperm (leaf : Leaf) (level : Nat) (st : Search n) :
+theorem leafExit_workperm (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     (leafExit leaf level st).2.workperm = st.workperm := by
   cases leaf <;> unfold leafExit
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
@@ -44,7 +44,7 @@ theorem leafExit_workperm (leaf : Leaf) (level : Nat) (st : Search n) :
     | exact pruneReturn_workperm level _
 
 /-- Leaf actions consume the scratch permutation without resizing it. -/
-theorem leafExit_workSize (leaf : Leaf) (level : Nat) (st : Search n) :
+theorem leafExit_workSize (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     (leafExit leaf level st).2.workperm.size = st.workperm.size :=
   congrArg Array.size (leafExit_workperm leaf level st)
 

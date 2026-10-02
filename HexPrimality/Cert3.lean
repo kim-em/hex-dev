@@ -11,32 +11,18 @@ public import HexArith.Nat.Prime
 public section
 
 /-!
-The cube-root Brillhart-Lehmer-Selfridge criterion at `m = 1`, as a pure
-arithmetic theorem over the checker's data.
+The Brillhart-Lehmer-Selfridge criterion with a bounded divisibility sieve.
 
-`pocklington3` concludes primality from `n - 1 = F · R` with `F` even and
-`R` odd, the cofactor decomposition `R = 2Fs + r` with `1 ≤ r < 2F`, the
-size bound `n < (F + 1)(2F² + (r - 1)F + 1)`, the discriminant condition on
-`r² - 8s`, and the Pocklington conclusion `F ∣ p - 1` for every prime
-divisor `p` of `n` (produced by the certificate checker's per-entry witness
-conditions, exactly as in the square-root arm).
+`pocklington3Sieve` uses `n - 1 = F · R`, `F` even, `R` odd, and `R = 2Fs + r`.
+Excluding divisors `lF+1` for `1 ≤ l < m` forces both factors of a hypothetical
+composite to have the form `Fa+1`, `Fb+1` with `a,b ≥ m`. Hence
+`(a+b)m ≤ ab+m²`. Together with `2s+m² < (2F+r)m+2`, parity, and the residue
+identity, this forces `a+b=r` and `ab=2s`. The discriminant is then a square,
+contradicting the checked nonsquare condition.
 
-The proof: a composite `n` splits as `q · (n / q)` with both divisors
-`≡ 1 (mod F)` (`divisor_mod_one`, strong induction through prime
-divisors), so `n = (Fa + 1)(Fb + 1)` with `a, b ≥ 1` and
-`abF + (a + b) = 2sF + r`. Modulo `F` this leaves `a + b` and `r` differing
-by a multiple `kF`, and parity forces `k` even: `a + b` is odd because `R`
-is odd and `F` even, hence `ab` is even, and `k ≡ ab ≡ 0 (mod 2)`. If
-`a + b < r` then `k ≥ 2` makes `r ≥ 2 + 2F`, against `r < 2F`; if
-`a + b > r` then `ab ≥ a + b - 1` and the size bound (which caps
-`2s ≤ 2F + r`) collide. So `a + b = r` and `ab = 2s` exactly, and
-`r² = (a - b)² + 8s` makes `r² - 8s` a perfect square unless `s = 0`
-(impossible: `ab ≥ 1`) or `r² < 8s` (impossible outright), which the
-discriminant condition rules out.
-
-Following Brillhart-Lehmer-Selfridge and the Grégoire-Théry-Werner
-formalisation as structure guides; a reimplementation from the published
-idea, not a copy.
+`pocklington3` retains the original sieve-free interface as the `m=1`
+specialization. Both theorems use the same per-factor Pocklington witnesses.
+Following Brillhart-Lehmer-Selfridge and the Grégoire-Théry-Werner formalisation.
 -/
 
 namespace Hex
@@ -104,16 +90,6 @@ private theorem discriminant_eq {a b r s : Nat} (hab : a ≤ b)
   have h3 : a * (a + c) = a * a + a * c := Nat.mul_add a a c
   omega
 
-/-- Positive integers satisfy `a + b ≤ ab + 1`. -/
-private theorem add_le_mul_succ {a b : Nat} (ha : 1 ≤ a) (hb : 1 ≤ b) :
-    a + b ≤ a * b + 1 := by
-  obtain ⟨a', rfl⟩ : ∃ a', a = a' + 1 := ⟨a - 1, by omega⟩
-  obtain ⟨b', rfl⟩ : ∃ b', b = b' + 1 := ⟨b - 1, by omega⟩
-  have h : (a' + 1) * (b' + 1) = a' * b' + a' + b' + 1 := by
-    rw [Nat.add_mul, Nat.mul_add, Nat.one_mul, Nat.mul_one]
-    omega
-  omega
-
 /-- The size bound caps the quotient decomposition: `2s ≤ 2F + r`. -/
 private theorem two_s_le {F r s n : Nat} (_hF : 2 ≤ F) (hr : 1 ≤ r)
     (hn : n - 1 = F * (2 * F * s + r)) (hn2 : 2 ≤ n)
@@ -161,16 +137,18 @@ private theorem two_s_le {F r s n : Nat} (_hF : 2 ≤ F) (hr : 1 ≤ r)
   rw [e2] at hbound
   omega
 
-/-- The cube-root Brillhart-Lehmer-Selfridge criterion at `m = 1`. The
+/-- The Brillhart-Lehmer-Selfridge criterion with excluded small divisors. The
 hypothesis `hdivmod` is what the per-entry witness conditions of the
 certificate checker produce (`pock_divisor_step` on the checker side); `R`
 odd is the weaker form of the classical `gcd(F, R) = 1` that the proof
 actually uses once `F` is even. -/
-theorem pocklington3 {n F r s : Nat} (hn3 : 3 ≤ n)
+theorem pocklington3Sieve {n F r s m : Nat} (hn3 : 3 ≤ n)
     (hF : F ∣ n - 1) (hFeven : F % 2 = 0) (hF0 : 0 < F)
     (hRodd : (n - 1) / F % 2 = 1)
-    (hdec : (n - 1) / F = 2 * F * s + r) (hr1 : 1 ≤ r) (hr2 : r < 2 * F)
-    (hbound : n < (F + 1) * (2 * F * F + (r - 1) * F + 1))
+    (hdec : (n - 1) / F = 2 * F * s + r) (_hr1 : 1 ≤ r) (hr2 : r < 2 * F)
+    (_hm : 1 ≤ m)
+    (hdivisors : ∀ l, 1 ≤ l → l < m → ¬ l * F + 1 ∣ n)
+    (hbound : 2 * s + m * m < (2 * F + r) * m + 2)
     (hdisc : s = 0 ∨ r * r < 8 * s ∨ ∀ t, t * t ≠ r * r - 8 * s) :
     (∀ p, Prime p → p ∣ n → F ∣ p - 1) → Prime n := by
   intro hdivmod
@@ -218,6 +196,16 @@ theorem pocklington3 {n F r s : Nat} (hn3 : 3 ≤ n)
         rw [h0, Nat.mul_zero] at this
         omega
       · exact h
+  have ham : m ≤ a := by
+    by_cases h : m ≤ a
+    · exact h
+    exfalso
+    exact hdivisors a ha1 (by omega) (by simpa [hqe, Nat.mul_comm] using hqn)
+  have hbm : m ≤ b := by
+    by_cases h : m ≤ b
+    · exact h
+    exfalso
+    exact hdivisors b hb1 (by omega) (by simpa [hbe, Nat.mul_comm] using hnq_dvd)
   -- The certificate equation: abF + (a + b) = 2Fs + r.
   have hne : n = (F * a + 1) * (F * b + 1) := by
     rw [← hqe, ← hbe]
@@ -265,9 +253,6 @@ theorem pocklington3 {n F r s : Nat} (hn3 : 3 ≤ n)
         rw [hb']
         simp [Nat.mul_assoc, Nat.mul_comm]
       omega
-  -- The size cap on 2s.
-  have h2s : 2 * s ≤ 2 * F + r :=
-    two_s_le hF2 hr1 hn1 (by omega) hbound
   -- a + b and r agree modulo F.
   have hmod : (a + b) % F = r % F := by
     have h1 : (a * b * F + (a + b)) % F = (a + b) % F := by
@@ -316,7 +301,7 @@ theorem pocklington3 {n F r s : Nat} (hn3 : 3 ≤ n)
         simp [Nat.mul_comm, Nat.mul_left_comm]
       have e2 : a * b * F = (a * b) * F := rfl
       omega
-    · -- a + b > r: k even ≥ 2 collides with ab ≥ a + b - 1 and 2s ≤ 2F + r.
+    · -- a + b > r: k even ≥ 2 contradicts the sieve-dependent size bound.
       exfalso
       have hdvd : F ∣ (a + b) - r :=
         Nat.dvd_of_mod_eq_zero (Nat.sub_mod_eq_zero_of_mod_eq hmod)
@@ -341,7 +326,15 @@ theorem pocklington3 {n F r s : Nat} (hn3 : 3 ≤ n)
       have hFk : 2 * F ≤ F * k := by
         have := Nat.mul_le_mul_left F hk2
         omega
-      have hab := add_le_mul_succ ha1 hb1
+      have hab : (a + b) * m ≤ a * b + m * m := by
+        obtain ⟨u, rfl⟩ : ∃ u, a = m + u := ⟨a - m, by omega⟩
+        obtain ⟨v, rfl⟩ : ∃ v, b = m + v := ⟨b - m, by omega⟩
+        simp only [Nat.add_mul, Nat.mul_add]
+        have hmu := Nat.mul_comm m u
+        have hmv := Nat.mul_comm m v
+        omega
+      have hsum : 2 * F + r ≤ a + b := by omega
+      have hmul := Nat.mul_le_mul_right m hsum
       omega
   -- The discriminant endgame.
   obtain ⟨hsum, hprod⟩ := hk0
@@ -356,6 +349,21 @@ theorem pocklington3 {n F r s : Nat} (hn3 : 3 ≤ n)
     rcases Nat.mul_eq_zero.mp (by omega : a * b = 0) with h | h <;> omega
   · omega
   · exact hnsq t (by omega)
+
+/-- The sieve-free specialization, retaining the original certificate interface. -/
+theorem pocklington3 {n F r s : Nat} (hn3 : 3 ≤ n)
+    (hF : F ∣ n - 1) (hFeven : F % 2 = 0) (hF0 : 0 < F)
+    (hRodd : (n - 1) / F % 2 = 1)
+    (hdec : (n - 1) / F = 2 * F * s + r) (hr1 : 1 ≤ r) (hr2 : r < 2 * F)
+    (hbound : n < (F + 1) * (2 * F * F + (r - 1) * F + 1))
+    (hdisc : s = 0 ∨ r * r < 8 * s ∨ ∀ t, t * t ≠ r * r - 8 * s) :
+    (∀ p, Prime p → p ∣ n → F ∣ p - 1) → Prime n := by
+  have hn1 : n - 1 = F * (2 * F * s + r) := by
+    rw [← hdec]
+    exact (Nat.mul_div_cancel' hF).symm
+  have hcap := two_s_le (show 2 ≤ F by omega) hr1 hn1 (by omega) hbound
+  exact pocklington3Sieve hn3 hF hFeven hF0 hRodd hdec hr1 hr2
+    (m := 1) (by decide) (by intros; omega) (by omega) hdisc
 
 end Nat
 

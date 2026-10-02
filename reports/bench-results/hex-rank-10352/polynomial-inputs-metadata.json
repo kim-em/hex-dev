@@ -1,0 +1,7 @@
+{
+  "source_revision": "01eeb439af779d7d6e3133a3ad1d1fe9b5555f9e",
+  "binary_sha256": "042f9585b8be8abdafa289468840c455391f0afef40d5b0e604369d9cbdfb543",
+  "payload_sha256": "aa179c639ae9ba0d4dde8ac6afbd9eb3ff20f0268bd0d18459ab3861893302d9",
+  "command": "HEX_RANK_BENCH_CAPTURE=/tmp/hexrank-polynomial-inputs.jsonl HEX_RANK_BENCH_PYTHON=/tmp/hexvenv/bin/python .lake/build/bin/hexrank_bench verify Hex.RankBench.Comparison.RatPoly.Full.second12 Hex.RankBench.Comparison.RatPoly.Deficient.second12 Hex.RankBench.Comparison.Mv.Full.second12 Hex.RankBench.Comparison.Mv.Deficient.second12",
+  "purpose": "Untimed exact input/certificate coefficient-growth audit; four successful verification cases."
+}

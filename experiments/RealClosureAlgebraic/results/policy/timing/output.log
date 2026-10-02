@@ -1,0 +1,3780 @@
+case=0 pair=0 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:49:58Z, host=chungus2
+policy_0_0    [fixed] repeats=1
+  repeat 0  114.810 µs  (×2^9, total 58.783 ms)
+  median: 114.810 µs    min: 114.810 µs    max: 114.810 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 62_020 kB (across 1 ok repeat(s))
+
+policy_1_0    [fixed] repeats=1
+  repeat 0  94.636 µs  (×2^10, total 96.908 ms)
+  median: 94.636 µs    min: 94.636 µs    max: 94.636 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 62_548 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_0, the first CLI argument):
+  policy_0_0: 1.000× (114.810 µs)
+  policy_1_0: 0.824× (94.636 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=0 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:49:59Z, host=chungus2
+policy_1_0    [fixed] repeats=1
+  repeat 0  94.556 µs  (×2^10, total 96.826 ms)
+  median: 94.556 µs    min: 94.556 µs    max: 94.556 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 62_548 kB (across 1 ok repeat(s))
+
+policy_0_0    [fixed] repeats=1
+  repeat 0  113.386 µs  (×2^9, total 58.054 ms)
+  median: 113.386 µs    min: 113.386 µs    max: 113.386 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 62_372 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_0, the first CLI argument):
+  policy_1_0: 1.000× (94.556 µs)
+  policy_0_0: 1.199× (113.386 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=0 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:00Z, host=chungus2
+policy_0_0    [fixed] repeats=1
+  repeat 0  114.820 µs  (×2^9, total 58.788 ms)
+  median: 114.820 µs    min: 114.820 µs    max: 114.820 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 62_948 kB (across 1 ok repeat(s))
+
+policy_1_0    [fixed] repeats=1
+  repeat 0  94.590 µs  (×2^10, total 96.861 ms)
+  median: 94.590 µs    min: 94.590 µs    max: 94.590 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 62_020 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_0, the first CLI argument):
+  policy_0_0: 1.000× (114.820 µs)
+  policy_1_0: 0.824× (94.590 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=0 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:01Z, host=chungus2
+policy_1_0    [fixed] repeats=1
+  repeat 0  94.729 µs  (×2^10, total 97.003 ms)
+  median: 94.729 µs    min: 94.729 µs    max: 94.729 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 61_948 kB (across 1 ok repeat(s))
+
+policy_0_0    [fixed] repeats=1
+  repeat 0  112.661 µs  (×2^9, total 57.683 ms)
+  median: 112.661 µs    min: 112.661 µs    max: 112.661 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 67_744 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_0, the first CLI argument):
+  policy_1_0: 1.000× (94.729 µs)
+  policy_0_0: 1.189× (112.661 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=0 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:02Z, host=chungus2
+policy_0_0    [fixed] repeats=1
+  repeat 0  113.879 µs  (×2^9, total 58.306 ms)
+  median: 113.879 µs    min: 113.879 µs    max: 113.879 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 68_300 kB (across 1 ok repeat(s))
+
+policy_1_0    [fixed] repeats=1
+  repeat 0  95.102 µs  (×2^10, total 97.385 ms)
+  median: 95.102 µs    min: 95.102 µs    max: 95.102 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 68_252 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_0, the first CLI argument):
+  policy_0_0: 1.000× (113.879 µs)
+  policy_1_0: 0.835× (95.102 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=0 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:02Z, host=chungus2
+policy_1_0    [fixed] repeats=1
+  repeat 0  94.628 µs  (×2^10, total 96.900 ms)
+  median: 94.628 µs    min: 94.628 µs    max: 94.628 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 68_420 kB (across 1 ok repeat(s))
+
+policy_0_0    [fixed] repeats=1
+  repeat 0  112.707 µs  (×2^9, total 57.706 ms)
+  median: 112.707 µs    min: 112.707 µs    max: 112.707 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 67_740 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_0, the first CLI argument):
+  policy_1_0: 1.000× (94.628 µs)
+  policy_0_0: 1.191× (112.707 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=1 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:03Z, host=chungus2
+policy_1_0    [fixed] repeats=1
+  repeat 0  94.363 µs  (×2^10, total 96.628 ms)
+  median: 94.363 µs    min: 94.363 µs    max: 94.363 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 68_504 kB (across 1 ok repeat(s))
+
+policy_2_0    [fixed] repeats=1
+  repeat 0  31.315 µs  (×2^11, total 64.134 ms)
+  median: 31.315 µs    min: 31.315 µs    max: 31.315 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 67_884 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_0, the first CLI argument):
+  policy_1_0: 1.000× (94.363 µs)
+  policy_2_0: 0.332× (31.315 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=1 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:04Z, host=chungus2
+policy_2_0    [fixed] repeats=1
+  repeat 0  31.301 µs  (×2^11, total 64.106 ms)
+  median: 31.301 µs    min: 31.301 µs    max: 31.301 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 68_404 kB (across 1 ok repeat(s))
+
+policy_1_0    [fixed] repeats=1
+  repeat 0  94.064 µs  (×2^10, total 96.322 ms)
+  median: 94.064 µs    min: 94.064 µs    max: 94.064 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 68_856 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_0, the first CLI argument):
+  policy_2_0: 1.000× (31.301 µs)
+  policy_1_0: 3.005× (94.064 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=1 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:05Z, host=chungus2
+policy_1_0    [fixed] repeats=1
+  repeat 0  94.192 µs  (×2^10, total 96.453 ms)
+  median: 94.192 µs    min: 94.192 µs    max: 94.192 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 68_748 kB (across 1 ok repeat(s))
+
+policy_2_0    [fixed] repeats=1
+  repeat 0  31.391 µs  (×2^11, total 64.290 ms)
+  median: 31.391 µs    min: 31.391 µs    max: 31.391 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 67_976 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_0, the first CLI argument):
+  policy_1_0: 1.000× (94.192 µs)
+  policy_2_0: 0.333× (31.391 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=1 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:06Z, host=chungus2
+policy_2_0    [fixed] repeats=1
+  repeat 0  31.638 µs  (×2^11, total 64.795 ms)
+  median: 31.638 µs    min: 31.638 µs    max: 31.638 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 68_076 kB (across 1 ok repeat(s))
+
+policy_1_0    [fixed] repeats=1
+  repeat 0  94.249 µs  (×2^10, total 96.512 ms)
+  median: 94.249 µs    min: 94.249 µs    max: 94.249 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 68_848 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_0, the first CLI argument):
+  policy_2_0: 1.000× (31.638 µs)
+  policy_1_0: 2.979× (94.249 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=1 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:07Z, host=chungus2
+policy_1_0    [fixed] repeats=1
+  repeat 0  96.743 µs  (×2^10, total 99.065 ms)
+  median: 96.743 µs    min: 96.743 µs    max: 96.743 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 67_880 kB (across 1 ok repeat(s))
+
+policy_2_0    [fixed] repeats=1
+  repeat 0  31.308 µs  (×2^11, total 64.120 ms)
+  median: 31.308 µs    min: 31.308 µs    max: 31.308 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 67_796 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_0, the first CLI argument):
+  policy_1_0: 1.000× (96.743 µs)
+  policy_2_0: 0.324× (31.308 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=1 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:07Z, host=chungus2
+policy_2_0    [fixed] repeats=1
+  repeat 0  31.261 µs  (×2^11, total 64.024 ms)
+  median: 31.261 µs    min: 31.261 µs    max: 31.261 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 67_984 kB (across 1 ok repeat(s))
+
+policy_1_0    [fixed] repeats=1
+  repeat 0  94.222 µs  (×2^10, total 96.483 ms)
+  median: 94.222 µs    min: 94.222 µs    max: 94.222 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 68_400 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_0, the first CLI argument):
+  policy_2_0: 1.000× (31.261 µs)
+  policy_1_0: 3.014× (94.222 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=2 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:08Z, host=chungus2
+policy_2_0    [fixed] repeats=1
+  repeat 0  31.375 µs  (×2^11, total 64.257 ms)
+  median: 31.375 µs    min: 31.375 µs    max: 31.375 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 67_696 kB (across 1 ok repeat(s))
+
+policy_3_0    [fixed] repeats=1
+  repeat 0  22.639 µs  (×2^12, total 92.733 ms)
+  median: 22.639 µs    min: 22.639 µs    max: 22.639 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 67_984 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_0, the first CLI argument):
+  policy_2_0: 1.000× (31.375 µs)
+  policy_3_0: 0.722× (22.639 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=2 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:09Z, host=chungus2
+policy_3_0    [fixed] repeats=1
+  repeat 0  22.642 µs  (×2^12, total 92.744 ms)
+  median: 22.642 µs    min: 22.642 µs    max: 22.642 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 68_352 kB (across 1 ok repeat(s))
+
+policy_2_0    [fixed] repeats=1
+  repeat 0  31.381 µs  (×2^11, total 64.270 ms)
+  median: 31.381 µs    min: 31.381 µs    max: 31.381 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 68_756 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_0, the first CLI argument):
+  policy_3_0: 1.000× (22.642 µs)
+  policy_2_0: 1.386× (31.381 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=2 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:10Z, host=chungus2
+policy_2_0    [fixed] repeats=1
+  repeat 0  31.367 µs  (×2^11, total 64.241 ms)
+  median: 31.367 µs    min: 31.367 µs    max: 31.367 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 68_560 kB (across 1 ok repeat(s))
+
+policy_3_0    [fixed] repeats=1
+  repeat 0  22.739 µs  (×2^12, total 93.141 ms)
+  median: 22.739 µs    min: 22.739 µs    max: 22.739 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 67_992 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_0, the first CLI argument):
+  policy_2_0: 1.000× (31.367 µs)
+  policy_3_0: 0.725× (22.739 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=2 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:11Z, host=chungus2
+policy_3_0    [fixed] repeats=1
+  repeat 0  22.581 µs  (×2^12, total 92.493 ms)
+  median: 22.581 µs    min: 22.581 µs    max: 22.581 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 67_984 kB (across 1 ok repeat(s))
+
+policy_2_0    [fixed] repeats=1
+  repeat 0  31.674 µs  (×2^11, total 64.869 ms)
+  median: 31.674 µs    min: 31.674 µs    max: 31.674 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 67_844 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_0, the first CLI argument):
+  policy_3_0: 1.000× (22.581 µs)
+  policy_2_0: 1.403× (31.674 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=2 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:12Z, host=chungus2
+policy_2_0    [fixed] repeats=1
+  repeat 0  31.314 µs  (×2^11, total 64.133 ms)
+  median: 31.314 µs    min: 31.314 µs    max: 31.314 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 68_424 kB (across 1 ok repeat(s))
+
+policy_3_0    [fixed] repeats=1
+  repeat 0  22.691 µs  (×2^12, total 92.944 ms)
+  median: 22.691 µs    min: 22.691 µs    max: 22.691 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 68_352 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_0, the first CLI argument):
+  policy_2_0: 1.000× (31.314 µs)
+  policy_3_0: 0.725× (22.691 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=0 pair=2 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:13Z, host=chungus2
+policy_3_0    [fixed] repeats=1
+  repeat 0  22.696 µs  (×2^12, total 92.966 ms)
+  median: 22.696 µs    min: 22.696 µs    max: 22.696 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 68_292 kB (across 1 ok repeat(s))
+
+policy_2_0    [fixed] repeats=1
+  repeat 0  31.544 µs  (×2^11, total 64.603 ms)
+  median: 31.544 µs    min: 31.544 µs    max: 31.544 µs
+  hash: all repeats agree
+  observed hash: 0x5b97dc2e4d1773ce
+  peak RSS: 67_744 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_0, the first CLI argument):
+  policy_3_0: 1.000× (22.696 µs)
+  policy_2_0: 1.390× (31.544 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=0 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:13Z, host=chungus2
+policy_0_1    [fixed] repeats=1
+  repeat 0  138.614 µs  (×2^9, total 70.971 ms)
+  median: 138.614 µs    min: 138.614 µs    max: 138.614 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_776 kB (across 1 ok repeat(s))
+
+policy_1_1    [fixed] repeats=1
+  repeat 0  121.637 µs  (×2^9, total 62.278 ms)
+  median: 121.637 µs    min: 121.637 µs    max: 121.637 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_072 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_1, the first CLI argument):
+  policy_0_1: 1.000× (138.614 µs)
+  policy_1_1: 0.878× (121.637 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=0 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:14Z, host=chungus2
+policy_1_1    [fixed] repeats=1
+  repeat 0  119.603 µs  (×2^9, total 61.237 ms)
+  median: 119.603 µs    min: 119.603 µs    max: 119.603 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_848 kB (across 1 ok repeat(s))
+
+policy_0_1    [fixed] repeats=1
+  repeat 0  138.230 µs  (×2^9, total 70.774 ms)
+  median: 138.230 µs    min: 138.230 µs    max: 138.230 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_416 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_1, the first CLI argument):
+  policy_1_1: 1.000× (119.603 µs)
+  policy_0_1: 1.156× (138.230 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=0 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:15Z, host=chungus2
+policy_0_1    [fixed] repeats=1
+  repeat 0  138.104 µs  (×2^9, total 70.709 ms)
+  median: 138.104 µs    min: 138.104 µs    max: 138.104 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_496 kB (across 1 ok repeat(s))
+
+policy_1_1    [fixed] repeats=1
+  repeat 0  119.910 µs  (×2^9, total 61.394 ms)
+  median: 119.910 µs    min: 119.910 µs    max: 119.910 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_392 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_1, the first CLI argument):
+  policy_0_1: 1.000× (138.104 µs)
+  policy_1_1: 0.868× (119.910 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=0 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:16Z, host=chungus2
+policy_1_1    [fixed] repeats=1
+  repeat 0  120.201 µs  (×2^9, total 61.543 ms)
+  median: 120.201 µs    min: 120.201 µs    max: 120.201 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_276 kB (across 1 ok repeat(s))
+
+policy_0_1    [fixed] repeats=1
+  repeat 0  138.624 µs  (×2^9, total 70.976 ms)
+  median: 138.624 µs    min: 138.624 µs    max: 138.624 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_744 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_1, the first CLI argument):
+  policy_1_1: 1.000× (120.201 µs)
+  policy_0_1: 1.153× (138.624 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=0 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:16Z, host=chungus2
+policy_0_1    [fixed] repeats=1
+  repeat 0  139.066 µs  (×2^9, total 71.202 ms)
+  median: 139.066 µs    min: 139.066 µs    max: 139.066 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_052 kB (across 1 ok repeat(s))
+
+policy_1_1    [fixed] repeats=1
+  repeat 0  120.385 µs  (×2^9, total 61.638 ms)
+  median: 120.385 µs    min: 120.385 µs    max: 120.385 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_728 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_1, the first CLI argument):
+  policy_0_1: 1.000× (139.066 µs)
+  policy_1_1: 0.866× (120.385 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=0 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:17Z, host=chungus2
+policy_1_1    [fixed] repeats=1
+  repeat 0  118.994 µs  (×2^9, total 60.925 ms)
+  median: 118.994 µs    min: 118.994 µs    max: 118.994 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_836 kB (across 1 ok repeat(s))
+
+policy_0_1    [fixed] repeats=1
+  repeat 0  137.337 µs  (×2^9, total 70.317 ms)
+  median: 137.337 µs    min: 137.337 µs    max: 137.337 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_228 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_1, the first CLI argument):
+  policy_1_1: 1.000× (118.994 µs)
+  policy_0_1: 1.154× (137.337 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=1 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:18Z, host=chungus2
+policy_1_1    [fixed] repeats=1
+  repeat 0  119.940 µs  (×2^9, total 61.410 ms)
+  median: 119.940 µs    min: 119.940 µs    max: 119.940 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_368 kB (across 1 ok repeat(s))
+
+policy_2_1    [fixed] repeats=1
+  repeat 0  44.347 µs  (×2^11, total 90.823 ms)
+  median: 44.347 µs    min: 44.347 µs    max: 44.347 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_080 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_1, the first CLI argument):
+  policy_1_1: 1.000× (119.940 µs)
+  policy_2_1: 0.370× (44.347 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=1 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:19Z, host=chungus2
+policy_2_1    [fixed] repeats=1
+  repeat 0  43.887 µs  (×2^11, total 89.883 ms)
+  median: 43.887 µs    min: 43.887 µs    max: 43.887 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_416 kB (across 1 ok repeat(s))
+
+policy_1_1    [fixed] repeats=1
+  repeat 0  119.545 µs  (×2^9, total 61.207 ms)
+  median: 119.545 µs    min: 119.545 µs    max: 119.545 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_088 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_1, the first CLI argument):
+  policy_2_1: 1.000× (43.887 µs)
+  policy_1_1: 2.724× (119.545 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=1 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:19Z, host=chungus2
+policy_1_1    [fixed] repeats=1
+  repeat 0  120.592 µs  (×2^9, total 61.743 ms)
+  median: 120.592 µs    min: 120.592 µs    max: 120.592 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_884 kB (across 1 ok repeat(s))
+
+policy_2_1    [fixed] repeats=1
+  repeat 0  43.956 µs  (×2^11, total 90.023 ms)
+  median: 43.956 µs    min: 43.956 µs    max: 43.956 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_692 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_1, the first CLI argument):
+  policy_1_1: 1.000× (120.592 µs)
+  policy_2_1: 0.365× (43.956 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=1 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:20Z, host=chungus2
+policy_2_1    [fixed] repeats=1
+  repeat 0  44.015 µs  (×2^11, total 90.144 ms)
+  median: 44.015 µs    min: 44.015 µs    max: 44.015 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_872 kB (across 1 ok repeat(s))
+
+policy_1_1    [fixed] repeats=1
+  repeat 0  119.329 µs  (×2^9, total 61.097 ms)
+  median: 119.329 µs    min: 119.329 µs    max: 119.329 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_228 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_1, the first CLI argument):
+  policy_2_1: 1.000× (44.015 µs)
+  policy_1_1: 2.711× (119.329 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=1 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:21Z, host=chungus2
+policy_1_1    [fixed] repeats=1
+  repeat 0  119.430 µs  (×2^9, total 61.148 ms)
+  median: 119.430 µs    min: 119.430 µs    max: 119.430 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_700 kB (across 1 ok repeat(s))
+
+policy_2_1    [fixed] repeats=1
+  repeat 0  43.710 µs  (×2^11, total 89.520 ms)
+  median: 43.710 µs    min: 43.710 µs    max: 43.710 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_080 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_1, the first CLI argument):
+  policy_1_1: 1.000× (119.430 µs)
+  policy_2_1: 0.366× (43.710 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=1 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:22Z, host=chungus2
+policy_2_1    [fixed] repeats=1
+  repeat 0  43.888 µs  (×2^11, total 89.883 ms)
+  median: 43.888 µs    min: 43.888 µs    max: 43.888 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_852 kB (across 1 ok repeat(s))
+
+policy_1_1    [fixed] repeats=1
+  repeat 0  119.359 µs  (×2^9, total 61.112 ms)
+  median: 119.359 µs    min: 119.359 µs    max: 119.359 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_076 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_1, the first CLI argument):
+  policy_2_1: 1.000× (43.888 µs)
+  policy_1_1: 2.720× (119.359 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=2 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:23Z, host=chungus2
+policy_2_1    [fixed] repeats=1
+  repeat 0  43.640 µs  (×2^11, total 89.375 ms)
+  median: 43.640 µs    min: 43.640 µs    max: 43.640 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_748 kB (across 1 ok repeat(s))
+
+policy_3_1    [fixed] repeats=1
+  repeat 0  32.699 µs  (×2^11, total 66.968 ms)
+  median: 32.699 µs    min: 32.699 µs    max: 32.699 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_852 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_1, the first CLI argument):
+  policy_2_1: 1.000× (43.640 µs)
+  policy_3_1: 0.749× (32.699 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=2 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:24Z, host=chungus2
+policy_3_1    [fixed] repeats=1
+  repeat 0  32.883 µs  (×2^11, total 67.346 ms)
+  median: 32.883 µs    min: 32.883 µs    max: 32.883 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_728 kB (across 1 ok repeat(s))
+
+policy_2_1    [fixed] repeats=1
+  repeat 0  43.738 µs  (×2^11, total 89.576 ms)
+  median: 43.738 µs    min: 43.738 µs    max: 43.738 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_084 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_1, the first CLI argument):
+  policy_3_1: 1.000× (32.883 µs)
+  policy_2_1: 1.330× (43.738 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=2 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:24Z, host=chungus2
+policy_2_1    [fixed] repeats=1
+  repeat 0  43.624 µs  (×2^11, total 89.343 ms)
+  median: 43.624 µs    min: 43.624 µs    max: 43.624 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_324 kB (across 1 ok repeat(s))
+
+policy_3_1    [fixed] repeats=1
+  repeat 0  32.835 µs  (×2^11, total 67.247 ms)
+  median: 32.835 µs    min: 32.835 µs    max: 32.835 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_344 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_1, the first CLI argument):
+  policy_2_1: 1.000× (43.624 µs)
+  policy_3_1: 0.753× (32.835 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=2 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:25Z, host=chungus2
+policy_3_1    [fixed] repeats=1
+  repeat 0  32.908 µs  (×2^11, total 67.397 ms)
+  median: 32.908 µs    min: 32.908 µs    max: 32.908 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_976 kB (across 1 ok repeat(s))
+
+policy_2_1    [fixed] repeats=1
+  repeat 0  43.861 µs  (×2^11, total 89.828 ms)
+  median: 43.861 µs    min: 43.861 µs    max: 43.861 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_852 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_1, the first CLI argument):
+  policy_3_1: 1.000× (32.908 µs)
+  policy_2_1: 1.333× (43.861 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=2 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:26Z, host=chungus2
+policy_2_1    [fixed] repeats=1
+  repeat 0  43.815 µs  (×2^11, total 89.734 ms)
+  median: 43.815 µs    min: 43.815 µs    max: 43.815 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_224 kB (across 1 ok repeat(s))
+
+policy_3_1    [fixed] repeats=1
+  repeat 0  32.856 µs  (×2^11, total 67.290 ms)
+  median: 32.856 µs    min: 32.856 µs    max: 32.856 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_716 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_1, the first CLI argument):
+  policy_2_1: 1.000× (43.815 µs)
+  policy_3_1: 0.750× (32.856 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=1 pair=2 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:27Z, host=chungus2
+policy_3_1    [fixed] repeats=1
+  repeat 0  32.904 µs  (×2^11, total 67.389 ms)
+  median: 32.904 µs    min: 32.904 µs    max: 32.904 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_972 kB (across 1 ok repeat(s))
+
+policy_2_1    [fixed] repeats=1
+  repeat 0  43.933 µs  (×2^11, total 89.976 ms)
+  median: 43.933 µs    min: 43.933 µs    max: 43.933 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_388 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_1, the first CLI argument):
+  policy_3_1: 1.000× (32.904 µs)
+  policy_2_1: 1.335× (43.933 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=0 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:28Z, host=chungus2
+policy_0_2    [fixed] repeats=1
+  repeat 0  92.448 µs  (×2^10, total 94.667 ms)
+  median: 92.448 µs    min: 92.448 µs    max: 92.448 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_096 kB (across 1 ok repeat(s))
+
+policy_1_2    [fixed] repeats=1
+  repeat 0  69.848 µs  (×2^10, total 71.525 ms)
+  median: 69.848 µs    min: 69.848 µs    max: 69.848 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_992 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_2, the first CLI argument):
+  policy_0_2: 1.000× (92.448 µs)
+  policy_1_2: 0.756× (69.848 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=0 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:29Z, host=chungus2
+policy_1_2    [fixed] repeats=1
+  repeat 0  70.695 µs  (×2^10, total 72.392 ms)
+  median: 70.695 µs    min: 70.695 µs    max: 70.695 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_032 kB (across 1 ok repeat(s))
+
+policy_0_2    [fixed] repeats=1
+  repeat 0  92.456 µs  (×2^10, total 94.675 ms)
+  median: 92.456 µs    min: 92.456 µs    max: 92.456 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_540 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_2, the first CLI argument):
+  policy_1_2: 1.000× (70.695 µs)
+  policy_0_2: 1.308× (92.456 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=0 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:29Z, host=chungus2
+policy_0_2    [fixed] repeats=1
+  repeat 0  92.205 µs  (×2^10, total 94.419 ms)
+  median: 92.205 µs    min: 92.205 µs    max: 92.205 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_224 kB (across 1 ok repeat(s))
+
+policy_1_2    [fixed] repeats=1
+  repeat 0  69.954 µs  (×2^10, total 71.633 ms)
+  median: 69.954 µs    min: 69.954 µs    max: 69.954 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_728 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_2, the first CLI argument):
+  policy_0_2: 1.000× (92.205 µs)
+  policy_1_2: 0.759× (69.954 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=0 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:30Z, host=chungus2
+policy_1_2    [fixed] repeats=1
+  repeat 0  69.964 µs  (×2^10, total 71.643 ms)
+  median: 69.964 µs    min: 69.964 µs    max: 69.964 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_408 kB (across 1 ok repeat(s))
+
+policy_0_2    [fixed] repeats=1
+  repeat 0  92.282 µs  (×2^10, total 94.498 ms)
+  median: 92.282 µs    min: 92.282 µs    max: 92.282 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_992 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_2, the first CLI argument):
+  policy_1_2: 1.000× (69.964 µs)
+  policy_0_2: 1.319× (92.282 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=0 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:31Z, host=chungus2
+policy_0_2    [fixed] repeats=1
+  repeat 0  92.124 µs  (×2^10, total 94.336 ms)
+  median: 92.124 µs    min: 92.124 µs    max: 92.124 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_296 kB (across 1 ok repeat(s))
+
+policy_1_2    [fixed] repeats=1
+  repeat 0  69.996 µs  (×2^10, total 71.677 ms)
+  median: 69.996 µs    min: 69.996 µs    max: 69.996 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_736 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_2, the first CLI argument):
+  policy_0_2: 1.000× (92.124 µs)
+  policy_1_2: 0.760× (69.996 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=0 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:32Z, host=chungus2
+policy_1_2    [fixed] repeats=1
+  repeat 0  69.810 µs  (×2^10, total 71.486 ms)
+  median: 69.810 µs    min: 69.810 µs    max: 69.810 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_748 kB (across 1 ok repeat(s))
+
+policy_0_2    [fixed] repeats=1
+  repeat 0  91.913 µs  (×2^10, total 94.119 ms)
+  median: 91.913 µs    min: 91.913 µs    max: 91.913 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_756 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_2, the first CLI argument):
+  policy_1_2: 1.000× (69.810 µs)
+  policy_0_2: 1.317× (91.913 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=1 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:33Z, host=chungus2
+policy_1_2    [fixed] repeats=1
+  repeat 0  70.355 µs  (×2^10, total 72.044 ms)
+  median: 70.355 µs    min: 70.355 µs    max: 70.355 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_136 kB (across 1 ok repeat(s))
+
+policy_2_2    [fixed] repeats=1
+  repeat 0  18.619 µs  (×2^12, total 76.265 ms)
+  median: 18.619 µs    min: 18.619 µs    max: 18.619 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_872 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_2, the first CLI argument):
+  policy_1_2: 1.000× (70.355 µs)
+  policy_2_2: 0.265× (18.619 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=1 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:34Z, host=chungus2
+policy_2_2    [fixed] repeats=1
+  repeat 0  18.729 µs  (×2^12, total 76.715 ms)
+  median: 18.729 µs    min: 18.729 µs    max: 18.729 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_392 kB (across 1 ok repeat(s))
+
+policy_1_2    [fixed] repeats=1
+  repeat 0  70.168 µs  (×2^10, total 71.853 ms)
+  median: 70.168 µs    min: 70.168 µs    max: 70.168 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_964 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_2, the first CLI argument):
+  policy_2_2: 1.000× (18.729 µs)
+  policy_1_2: 3.746× (70.168 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=1 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:35Z, host=chungus2
+policy_1_2    [fixed] repeats=1
+  repeat 0  70.700 µs  (×2^10, total 72.397 ms)
+  median: 70.700 µs    min: 70.700 µs    max: 70.700 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_228 kB (across 1 ok repeat(s))
+
+policy_2_2    [fixed] repeats=1
+  repeat 0  19.230 µs  (×2^12, total 78.769 ms)
+  median: 19.230 µs    min: 19.230 µs    max: 19.230 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_736 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_2, the first CLI argument):
+  policy_1_2: 1.000× (70.700 µs)
+  policy_2_2: 0.272× (19.230 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=1 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:35Z, host=chungus2
+policy_2_2    [fixed] repeats=1
+  repeat 0  18.808 µs  (×2^12, total 77.040 ms)
+  median: 18.808 µs    min: 18.808 µs    max: 18.808 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_872 kB (across 1 ok repeat(s))
+
+policy_1_2    [fixed] repeats=1
+  repeat 0  70.246 µs  (×2^10, total 71.932 ms)
+  median: 70.246 µs    min: 70.246 µs    max: 70.246 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_324 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_2, the first CLI argument):
+  policy_2_2: 1.000× (18.808 µs)
+  policy_1_2: 3.735× (70.246 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=1 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:36Z, host=chungus2
+policy_1_2    [fixed] repeats=1
+  repeat 0  70.679 µs  (×2^10, total 72.376 ms)
+  median: 70.679 µs    min: 70.679 µs    max: 70.679 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_228 kB (across 1 ok repeat(s))
+
+policy_2_2    [fixed] repeats=1
+  repeat 0  18.776 µs  (×2^12, total 76.908 ms)
+  median: 18.776 µs    min: 18.776 µs    max: 18.776 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_860 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_2, the first CLI argument):
+  policy_1_2: 1.000× (70.679 µs)
+  policy_2_2: 0.266× (18.776 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=1 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:37Z, host=chungus2
+policy_2_2    [fixed] repeats=1
+  repeat 0  18.704 µs  (×2^12, total 76.614 ms)
+  median: 18.704 µs    min: 18.704 µs    max: 18.704 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_556 kB (across 1 ok repeat(s))
+
+policy_1_2    [fixed] repeats=1
+  repeat 0  70.062 µs  (×2^10, total 71.744 ms)
+  median: 70.062 µs    min: 70.062 µs    max: 70.062 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_048 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_2, the first CLI argument):
+  policy_2_2: 1.000× (18.704 µs)
+  policy_1_2: 3.746× (70.062 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=2 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:38Z, host=chungus2
+policy_2_2    [fixed] repeats=1
+  repeat 0  18.790 µs  (×2^12, total 76.965 ms)
+  median: 18.790 µs    min: 18.790 µs    max: 18.790 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_740 kB (across 1 ok repeat(s))
+
+policy_3_2    [fixed] repeats=1
+  repeat 0  12.245 µs  (×2^12, total 50.158 ms)
+  median: 12.245 µs    min: 12.245 µs    max: 12.245 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_376 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_2, the first CLI argument):
+  policy_2_2: 1.000× (18.790 µs)
+  policy_3_2: 0.652× (12.245 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=2 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:39Z, host=chungus2
+policy_3_2    [fixed] repeats=1
+  repeat 0  12.246 µs  (×2^12, total 50.160 ms)
+  median: 12.246 µs    min: 12.246 µs    max: 12.246 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_692 kB (across 1 ok repeat(s))
+
+policy_2_2    [fixed] repeats=1
+  repeat 0  18.648 µs  (×2^12, total 76.384 ms)
+  median: 18.648 µs    min: 18.648 µs    max: 18.648 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_284 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_2, the first CLI argument):
+  policy_3_2: 1.000× (12.246 µs)
+  policy_2_2: 1.523× (18.648 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=2 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:39Z, host=chungus2
+policy_2_2    [fixed] repeats=1
+  repeat 0  18.722 µs  (×2^12, total 76.689 ms)
+  median: 18.722 µs    min: 18.722 µs    max: 18.722 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_736 kB (across 1 ok repeat(s))
+
+policy_3_2    [fixed] repeats=1
+  repeat 0  12.297 µs  (×2^12, total 50.371 ms)
+  median: 12.297 µs    min: 12.297 µs    max: 12.297 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_552 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_2, the first CLI argument):
+  policy_2_2: 1.000× (18.722 µs)
+  policy_3_2: 0.657× (12.297 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=2 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:40Z, host=chungus2
+policy_3_2    [fixed] repeats=1
+  repeat 0  12.287 µs  (×2^12, total 50.331 ms)
+  median: 12.287 µs    min: 12.287 µs    max: 12.287 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_264 kB (across 1 ok repeat(s))
+
+policy_2_2    [fixed] repeats=1
+  repeat 0  18.655 µs  (×2^12, total 76.413 ms)
+  median: 18.655 µs    min: 18.655 µs    max: 18.655 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_808 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_2, the first CLI argument):
+  policy_3_2: 1.000× (12.287 µs)
+  policy_2_2: 1.518× (18.655 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=2 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:41Z, host=chungus2
+policy_2_2    [fixed] repeats=1
+  repeat 0  18.739 µs  (×2^12, total 76.756 ms)
+  median: 18.739 µs    min: 18.739 µs    max: 18.739 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_800 kB (across 1 ok repeat(s))
+
+policy_3_2    [fixed] repeats=1
+  repeat 0  12.281 µs  (×2^12, total 50.304 ms)
+  median: 12.281 µs    min: 12.281 µs    max: 12.281 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_736 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_2, the first CLI argument):
+  policy_2_2: 1.000× (18.739 µs)
+  policy_3_2: 0.655× (12.281 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=2 pair=2 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:41Z, host=chungus2
+policy_3_2    [fixed] repeats=1
+  repeat 0  12.317 µs  (×2^12, total 50.451 ms)
+  median: 12.317 µs    min: 12.317 µs    max: 12.317 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_248 kB (across 1 ok repeat(s))
+
+policy_2_2    [fixed] repeats=1
+  repeat 0  18.685 µs  (×2^12, total 76.538 ms)
+  median: 18.685 µs    min: 18.685 µs    max: 18.685 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_836 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_2, the first CLI argument):
+  policy_3_2: 1.000× (12.317 µs)
+  policy_2_2: 1.517× (18.685 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=0 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:42Z, host=chungus2
+policy_0_3    [fixed] repeats=1
+  repeat 0  228.207 µs  (×2^8, total 58.421 ms)
+  median: 228.207 µs    min: 228.207 µs    max: 228.207 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_400 kB (across 1 ok repeat(s))
+
+policy_1_3    [fixed] repeats=1
+  repeat 0  189.334 µs  (×2^9, total 96.940 ms)
+  median: 189.334 µs    min: 189.334 µs    max: 189.334 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_796 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_3, the first CLI argument):
+  policy_0_3: 1.000× (228.207 µs)
+  policy_1_3: 0.830× (189.334 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=0 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:43Z, host=chungus2
+policy_1_3    [fixed] repeats=1
+  repeat 0  188.266 µs  (×2^9, total 96.392 ms)
+  median: 188.266 µs    min: 188.266 µs    max: 188.266 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_840 kB (across 1 ok repeat(s))
+
+policy_0_3    [fixed] repeats=1
+  repeat 0  228.025 µs  (×2^8, total 58.375 ms)
+  median: 228.025 µs    min: 228.025 µs    max: 228.025 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_728 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_3, the first CLI argument):
+  policy_1_3: 1.000× (188.266 µs)
+  policy_0_3: 1.211× (228.025 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=0 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:44Z, host=chungus2
+policy_0_3    [fixed] repeats=1
+  repeat 0  230.406 µs  (×2^8, total 58.984 ms)
+  median: 230.406 µs    min: 230.406 µs    max: 230.406 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_028 kB (across 1 ok repeat(s))
+
+policy_1_3    [fixed] repeats=1
+  repeat 0  187.836 µs  (×2^9, total 96.172 ms)
+  median: 187.836 µs    min: 187.836 µs    max: 187.836 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_224 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_3, the first CLI argument):
+  policy_0_3: 1.000× (230.406 µs)
+  policy_1_3: 0.815× (187.836 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=0 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:45Z, host=chungus2
+policy_1_3    [fixed] repeats=1
+  repeat 0  188.590 µs  (×2^9, total 96.558 ms)
+  median: 188.590 µs    min: 188.590 µs    max: 188.590 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_300 kB (across 1 ok repeat(s))
+
+policy_0_3    [fixed] repeats=1
+  repeat 0  229.236 µs  (×2^8, total 58.685 ms)
+  median: 229.236 µs    min: 229.236 µs    max: 229.236 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_228 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_3, the first CLI argument):
+  policy_1_3: 1.000× (188.590 µs)
+  policy_0_3: 1.216× (229.236 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=0 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:45Z, host=chungus2
+policy_0_3    [fixed] repeats=1
+  repeat 0  228.749 µs  (×2^8, total 58.560 ms)
+  median: 228.749 µs    min: 228.749 µs    max: 228.749 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_836 kB (across 1 ok repeat(s))
+
+policy_1_3    [fixed] repeats=1
+  repeat 0  187.959 µs  (×2^9, total 96.235 ms)
+  median: 187.959 µs    min: 187.959 µs    max: 187.959 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_752 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_3, the first CLI argument):
+  policy_0_3: 1.000× (228.749 µs)
+  policy_1_3: 0.822× (187.959 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=0 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:46Z, host=chungus2
+policy_1_3    [fixed] repeats=1
+  repeat 0  188.361 µs  (×2^9, total 96.441 ms)
+  median: 188.361 µs    min: 188.361 µs    max: 188.361 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_380 kB (across 1 ok repeat(s))
+
+policy_0_3    [fixed] repeats=1
+  repeat 0  227.952 µs  (×2^8, total 58.356 ms)
+  median: 227.952 µs    min: 227.952 µs    max: 227.952 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_296 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_3, the first CLI argument):
+  policy_1_3: 1.000× (188.361 µs)
+  policy_0_3: 1.210× (227.952 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=1 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:47Z, host=chungus2
+policy_1_3    [fixed] repeats=1
+  repeat 0  187.996 µs  (×2^9, total 96.254 ms)
+  median: 187.996 µs    min: 187.996 µs    max: 187.996 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_964 kB (across 1 ok repeat(s))
+
+policy_2_3    [fixed] repeats=1
+  repeat 0  61.969 µs  (×2^10, total 63.456 ms)
+  median: 61.969 µs    min: 61.969 µs    max: 61.969 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_416 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_3, the first CLI argument):
+  policy_1_3: 1.000× (187.996 µs)
+  policy_2_3: 0.330× (61.969 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=1 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:48Z, host=chungus2
+policy_2_3    [fixed] repeats=1
+  repeat 0  62.917 µs  (×2^10, total 64.428 ms)
+  median: 62.917 µs    min: 62.917 µs    max: 62.917 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_032 kB (across 1 ok repeat(s))
+
+policy_1_3    [fixed] repeats=1
+  repeat 0  187.946 µs  (×2^9, total 96.228 ms)
+  median: 187.946 µs    min: 187.946 µs    max: 187.946 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_372 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_3, the first CLI argument):
+  policy_2_3: 1.000× (62.917 µs)
+  policy_1_3: 2.987× (187.946 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=1 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:49Z, host=chungus2
+policy_1_3    [fixed] repeats=1
+  repeat 0  188.940 µs  (×2^9, total 96.737 ms)
+  median: 188.940 µs    min: 188.940 µs    max: 188.940 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_740 kB (across 1 ok repeat(s))
+
+policy_2_3    [fixed] repeats=1
+  repeat 0  61.708 µs  (×2^10, total 63.190 ms)
+  median: 61.708 µs    min: 61.708 µs    max: 61.708 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_344 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_3, the first CLI argument):
+  policy_1_3: 1.000× (188.940 µs)
+  policy_2_3: 0.327× (61.708 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=1 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:50Z, host=chungus2
+policy_2_3    [fixed] repeats=1
+  repeat 0  61.972 µs  (×2^10, total 63.460 ms)
+  median: 61.972 µs    min: 61.972 µs    max: 61.972 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_988 kB (across 1 ok repeat(s))
+
+policy_1_3    [fixed] repeats=1
+  repeat 0  187.425 µs  (×2^9, total 95.962 ms)
+  median: 187.425 µs    min: 187.425 µs    max: 187.425 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_988 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_3, the first CLI argument):
+  policy_2_3: 1.000× (61.972 µs)
+  policy_1_3: 3.024× (187.425 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=1 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:51Z, host=chungus2
+policy_1_3    [fixed] repeats=1
+  repeat 0  189.599 µs  (×2^9, total 97.075 ms)
+  median: 189.599 µs    min: 189.599 µs    max: 189.599 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_388 kB (across 1 ok repeat(s))
+
+policy_2_3    [fixed] repeats=1
+  repeat 0  62.184 µs  (×2^10, total 63.677 ms)
+  median: 62.184 µs    min: 62.184 µs    max: 62.184 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_832 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_3, the first CLI argument):
+  policy_1_3: 1.000× (189.599 µs)
+  policy_2_3: 0.328× (62.184 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=1 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:51Z, host=chungus2
+policy_2_3    [fixed] repeats=1
+  repeat 0  61.729 µs  (×2^10, total 63.211 ms)
+  median: 61.729 µs    min: 61.729 µs    max: 61.729 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_804 kB (across 1 ok repeat(s))
+
+policy_1_3    [fixed] repeats=1
+  repeat 0  187.929 µs  (×2^9, total 96.220 ms)
+  median: 187.929 µs    min: 187.929 µs    max: 187.929 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_848 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_3, the first CLI argument):
+  policy_2_3: 1.000× (61.729 µs)
+  policy_1_3: 3.044× (187.929 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=2 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:52Z, host=chungus2
+policy_2_3    [fixed] repeats=1
+  repeat 0  62.602 µs  (×2^10, total 64.105 ms)
+  median: 62.602 µs    min: 62.602 µs    max: 62.602 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_740 kB (across 1 ok repeat(s))
+
+policy_3_3    [fixed] repeats=1
+  repeat 0  45.425 µs  (×2^11, total 93.031 ms)
+  median: 45.425 µs    min: 45.425 µs    max: 45.425 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_540 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_3, the first CLI argument):
+  policy_2_3: 1.000× (62.602 µs)
+  policy_3_3: 0.726× (45.425 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=2 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:53Z, host=chungus2
+policy_3_3    [fixed] repeats=1
+  repeat 0  45.235 µs  (×2^11, total 92.642 ms)
+  median: 45.235 µs    min: 45.235 µs    max: 45.235 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_848 kB (across 1 ok repeat(s))
+
+policy_2_3    [fixed] repeats=1
+  repeat 0  62.630 µs  (×2^10, total 64.134 ms)
+  median: 62.630 µs    min: 62.630 µs    max: 62.630 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_872 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_3, the first CLI argument):
+  policy_3_3: 1.000× (45.235 µs)
+  policy_2_3: 1.385× (62.630 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=2 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:54Z, host=chungus2
+policy_2_3    [fixed] repeats=1
+  repeat 0  61.914 µs  (×2^10, total 63.400 ms)
+  median: 61.914 µs    min: 61.914 µs    max: 61.914 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_224 kB (across 1 ok repeat(s))
+
+policy_3_3    [fixed] repeats=1
+  repeat 0  44.777 µs  (×2^11, total 91.703 ms)
+  median: 44.777 µs    min: 44.777 µs    max: 44.777 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_756 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_3, the first CLI argument):
+  policy_2_3: 1.000× (61.914 µs)
+  policy_3_3: 0.723× (44.777 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=2 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:55Z, host=chungus2
+policy_3_3    [fixed] repeats=1
+  repeat 0  44.914 µs  (×2^11, total 91.985 ms)
+  median: 44.914 µs    min: 44.914 µs    max: 44.914 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_796 kB (across 1 ok repeat(s))
+
+policy_2_3    [fixed] repeats=1
+  repeat 0  62.132 µs  (×2^10, total 63.624 ms)
+  median: 62.132 µs    min: 62.132 µs    max: 62.132 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_876 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_3, the first CLI argument):
+  policy_3_3: 1.000× (44.914 µs)
+  policy_2_3: 1.383× (62.132 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=2 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:56Z, host=chungus2
+policy_2_3    [fixed] repeats=1
+  repeat 0  62.103 µs  (×2^10, total 63.594 ms)
+  median: 62.103 µs    min: 62.103 µs    max: 62.103 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_088 kB (across 1 ok repeat(s))
+
+policy_3_3    [fixed] repeats=1
+  repeat 0  45.029 µs  (×2^11, total 92.220 ms)
+  median: 45.029 µs    min: 45.029 µs    max: 45.029 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_716 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_3, the first CLI argument):
+  policy_2_3: 1.000× (62.103 µs)
+  policy_3_3: 0.725× (45.029 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=3 pair=2 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:56Z, host=chungus2
+policy_3_3    [fixed] repeats=1
+  repeat 0  45.160 µs  (×2^11, total 92.490 ms)
+  median: 45.160 µs    min: 45.160 µs    max: 45.160 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_836 kB (across 1 ok repeat(s))
+
+policy_2_3    [fixed] repeats=1
+  repeat 0  62.193 µs  (×2^10, total 63.686 ms)
+  median: 62.193 µs    min: 62.193 µs    max: 62.193 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_368 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_3, the first CLI argument):
+  policy_3_3: 1.000× (45.160 µs)
+  policy_2_3: 1.377× (62.193 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=0 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:57Z, host=chungus2
+policy_0_4    [fixed] repeats=1
+  repeat 0  121.711 µs  (×2^9, total 62.316 ms)
+  median: 121.711 µs    min: 121.711 µs    max: 121.711 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_744 kB (across 1 ok repeat(s))
+
+policy_1_4    [fixed] repeats=1
+  repeat 0  90.768 µs  (×2^10, total 92.947 ms)
+  median: 90.768 µs    min: 90.768 µs    max: 90.768 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_764 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_4, the first CLI argument):
+  policy_0_4: 1.000× (121.711 µs)
+  policy_1_4: 0.746× (90.768 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=0 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:58Z, host=chungus2
+policy_1_4    [fixed] repeats=1
+  repeat 0  91.313 µs  (×2^10, total 93.505 ms)
+  median: 91.313 µs    min: 91.313 µs    max: 91.313 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_076 kB (across 1 ok repeat(s))
+
+policy_0_4    [fixed] repeats=1
+  repeat 0  123.093 µs  (×2^9, total 63.024 ms)
+  median: 123.093 µs    min: 123.093 µs    max: 123.093 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_520 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_4, the first CLI argument):
+  policy_1_4: 1.000× (91.313 µs)
+  policy_0_4: 1.348× (123.093 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=0 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:50:59Z, host=chungus2
+policy_0_4    [fixed] repeats=1
+  repeat 0  122.031 µs  (×2^9, total 62.480 ms)
+  median: 122.031 µs    min: 122.031 µs    max: 122.031 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_948 kB (across 1 ok repeat(s))
+
+policy_1_4    [fixed] repeats=1
+  repeat 0  90.882 µs  (×2^10, total 93.064 ms)
+  median: 90.882 µs    min: 90.882 µs    max: 90.882 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_752 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_4, the first CLI argument):
+  policy_0_4: 1.000× (122.031 µs)
+  policy_1_4: 0.745× (90.882 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=0 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:00Z, host=chungus2
+policy_1_4    [fixed] repeats=1
+  repeat 0  90.630 µs  (×2^10, total 92.806 ms)
+  median: 90.630 µs    min: 90.630 µs    max: 90.630 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_040 kB (across 1 ok repeat(s))
+
+policy_0_4    [fixed] repeats=1
+  repeat 0  121.645 µs  (×2^9, total 62.283 ms)
+  median: 121.645 µs    min: 121.645 µs    max: 121.645 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_412 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_4, the first CLI argument):
+  policy_1_4: 1.000× (90.630 µs)
+  policy_0_4: 1.342× (121.645 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=0 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:00Z, host=chungus2
+policy_0_4    [fixed] repeats=1
+  repeat 0  122.209 µs  (×2^9, total 62.571 ms)
+  median: 122.209 µs    min: 122.209 µs    max: 122.209 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_060 kB (across 1 ok repeat(s))
+
+policy_1_4    [fixed] repeats=1
+  repeat 0  91.124 µs  (×2^10, total 93.312 ms)
+  median: 91.124 µs    min: 91.124 µs    max: 91.124 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_752 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_4, the first CLI argument):
+  policy_0_4: 1.000× (122.209 µs)
+  policy_1_4: 0.746× (91.124 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=0 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:01Z, host=chungus2
+policy_1_4    [fixed] repeats=1
+  repeat 0  91.005 µs  (×2^10, total 93.189 ms)
+  median: 91.005 µs    min: 91.005 µs    max: 91.005 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_076 kB (across 1 ok repeat(s))
+
+policy_0_4    [fixed] repeats=1
+  repeat 0  121.842 µs  (×2^9, total 62.383 ms)
+  median: 121.842 µs    min: 121.842 µs    max: 121.842 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_072 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_4, the first CLI argument):
+  policy_1_4: 1.000× (91.005 µs)
+  policy_0_4: 1.339× (121.842 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=1 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:02Z, host=chungus2
+policy_1_4    [fixed] repeats=1
+  repeat 0  90.817 µs  (×2^10, total 92.997 ms)
+  median: 90.817 µs    min: 90.817 µs    max: 90.817 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_036 kB (across 1 ok repeat(s))
+
+policy_2_4    [fixed] repeats=1
+  repeat 0  21.678 µs  (×2^12, total 88.797 ms)
+  median: 21.678 µs    min: 21.678 µs    max: 21.678 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_748 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_4, the first CLI argument):
+  policy_1_4: 1.000× (90.817 µs)
+  policy_2_4: 0.239× (21.678 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=1 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:03Z, host=chungus2
+policy_2_4    [fixed] repeats=1
+  repeat 0  21.579 µs  (×2^12, total 88.389 ms)
+  median: 21.579 µs    min: 21.579 µs    max: 21.579 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_844 kB (across 1 ok repeat(s))
+
+policy_1_4    [fixed] repeats=1
+  repeat 0  91.311 µs  (×2^10, total 93.503 ms)
+  median: 91.311 µs    min: 91.311 µs    max: 91.311 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_088 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_4, the first CLI argument):
+  policy_2_4: 1.000× (21.579 µs)
+  policy_1_4: 4.231× (91.311 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=1 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:04Z, host=chungus2
+policy_1_4    [fixed] repeats=1
+  repeat 0  90.901 µs  (×2^10, total 93.083 ms)
+  median: 90.901 µs    min: 90.901 µs    max: 90.901 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_392 kB (across 1 ok repeat(s))
+
+policy_2_4    [fixed] repeats=1
+  repeat 0  21.716 µs  (×2^12, total 88.951 ms)
+  median: 21.716 µs    min: 21.716 µs    max: 21.716 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_420 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_4, the first CLI argument):
+  policy_1_4: 1.000× (90.901 µs)
+  policy_2_4: 0.239× (21.716 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=1 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:05Z, host=chungus2
+policy_2_4    [fixed] repeats=1
+  repeat 0  21.751 µs  (×2^12, total 89.094 ms)
+  median: 21.751 µs    min: 21.751 µs    max: 21.751 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_744 kB (across 1 ok repeat(s))
+
+policy_1_4    [fixed] repeats=1
+  repeat 0  91.406 µs  (×2^10, total 93.601 ms)
+  median: 91.406 µs    min: 91.406 µs    max: 91.406 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_400 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_4, the first CLI argument):
+  policy_2_4: 1.000× (21.751 µs)
+  policy_1_4: 4.202× (91.406 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=1 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:06Z, host=chungus2
+policy_1_4    [fixed] repeats=1
+  repeat 0  91.359 µs  (×2^10, total 93.552 ms)
+  median: 91.359 µs    min: 91.359 µs    max: 91.359 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_296 kB (across 1 ok repeat(s))
+
+policy_2_4    [fixed] repeats=1
+  repeat 0  21.860 µs  (×2^12, total 89.539 ms)
+  median: 21.860 µs    min: 21.860 µs    max: 21.860 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_748 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_4, the first CLI argument):
+  policy_1_4: 1.000× (91.359 µs)
+  policy_2_4: 0.239× (21.860 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=1 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:07Z, host=chungus2
+policy_2_4    [fixed] repeats=1
+  repeat 0  21.747 µs  (×2^12, total 89.079 ms)
+  median: 21.747 µs    min: 21.747 µs    max: 21.747 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_740 kB (across 1 ok repeat(s))
+
+policy_1_4    [fixed] repeats=1
+  repeat 0  90.834 µs  (×2^10, total 93.014 ms)
+  median: 90.834 µs    min: 90.834 µs    max: 90.834 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_872 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_4, the first CLI argument):
+  policy_2_4: 1.000× (21.747 µs)
+  policy_1_4: 4.177× (90.834 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=2 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:08Z, host=chungus2
+policy_2_4    [fixed] repeats=1
+  repeat 0  21.534 µs  (×2^12, total 88.207 ms)
+  median: 21.534 µs    min: 21.534 µs    max: 21.534 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_320 kB (across 1 ok repeat(s))
+
+policy_3_4    [fixed] repeats=1
+  repeat 0  13.302 µs  (×2^12, total 54.486 ms)
+  median: 13.302 µs    min: 13.302 µs    max: 13.302 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_084 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_4, the first CLI argument):
+  policy_2_4: 1.000× (21.534 µs)
+  policy_3_4: 0.618× (13.302 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=2 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:08Z, host=chungus2
+policy_3_4    [fixed] repeats=1
+  repeat 0  13.240 µs  (×2^12, total 54.233 ms)
+  median: 13.240 µs    min: 13.240 µs    max: 13.240 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_096 kB (across 1 ok repeat(s))
+
+policy_2_4    [fixed] repeats=1
+  repeat 0  21.784 µs  (×2^12, total 89.229 ms)
+  median: 21.784 µs    min: 21.784 µs    max: 21.784 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_228 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_4, the first CLI argument):
+  policy_3_4: 1.000× (13.240 µs)
+  policy_2_4: 1.645× (21.784 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=2 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:09Z, host=chungus2
+policy_2_4    [fixed] repeats=1
+  repeat 0  21.602 µs  (×2^12, total 88.485 ms)
+  median: 21.602 µs    min: 21.602 µs    max: 21.602 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_340 kB (across 1 ok repeat(s))
+
+policy_3_4    [fixed] repeats=1
+  repeat 0  13.213 µs  (×2^12, total 54.124 ms)
+  median: 13.213 µs    min: 13.213 µs    max: 13.213 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_548 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_4, the first CLI argument):
+  policy_2_4: 1.000× (21.602 µs)
+  policy_3_4: 0.612× (13.213 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=2 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:10Z, host=chungus2
+policy_3_4    [fixed] repeats=1
+  repeat 0  13.243 µs  (×2^12, total 54.244 ms)
+  median: 13.243 µs    min: 13.243 µs    max: 13.243 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_988 kB (across 1 ok repeat(s))
+
+policy_2_4    [fixed] repeats=1
+  repeat 0  21.529 µs  (×2^12, total 88.185 ms)
+  median: 21.529 µs    min: 21.529 µs    max: 21.529 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_092 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_4, the first CLI argument):
+  policy_3_4: 1.000× (13.243 µs)
+  policy_2_4: 1.626× (21.529 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=2 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:11Z, host=chungus2
+policy_2_4    [fixed] repeats=1
+  repeat 0  21.633 µs  (×2^12, total 88.610 ms)
+  median: 21.633 µs    min: 21.633 µs    max: 21.633 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_872 kB (across 1 ok repeat(s))
+
+policy_3_4    [fixed] repeats=1
+  repeat 0  13.302 µs  (×2^12, total 54.485 ms)
+  median: 13.302 µs    min: 13.302 µs    max: 13.302 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_844 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_4, the first CLI argument):
+  policy_2_4: 1.000× (21.633 µs)
+  policy_3_4: 0.615× (13.302 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=4 pair=2 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:12Z, host=chungus2
+policy_3_4    [fixed] repeats=1
+  repeat 0  13.285 µs  (×2^12, total 54.416 ms)
+  median: 13.285 µs    min: 13.285 µs    max: 13.285 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 68_076 kB (across 1 ok repeat(s))
+
+policy_2_4    [fixed] repeats=1
+  repeat 0  21.616 µs  (×2^12, total 88.540 ms)
+  median: 21.616 µs    min: 21.616 µs    max: 21.616 µs
+  hash: all repeats agree
+  observed hash: 0xc85b4a4783033df5
+  peak RSS: 67_740 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_4, the first CLI argument):
+  policy_3_4: 1.000× (13.285 µs)
+  policy_2_4: 1.627× (21.616 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=0 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:12Z, host=chungus2
+policy_0_5    [fixed] repeats=1
+  repeat 0  314.138 µs  (×2^8, total 80.419 ms)
+  median: 314.138 µs    min: 314.138 µs    max: 314.138 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_744 kB (across 1 ok repeat(s))
+
+policy_1_5    [fixed] repeats=1
+  repeat 0  256.046 µs  (×2^8, total 65.548 ms)
+  median: 256.046 µs    min: 256.046 µs    max: 256.046 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_984 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_5, the first CLI argument):
+  policy_0_5: 1.000× (314.138 µs)
+  policy_1_5: 0.815× (256.046 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=0 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:13Z, host=chungus2
+policy_1_5    [fixed] repeats=1
+  repeat 0  255.440 µs  (×2^8, total 65.393 ms)
+  median: 255.440 µs    min: 255.440 µs    max: 255.440 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_412 kB (across 1 ok repeat(s))
+
+policy_0_5    [fixed] repeats=1
+  repeat 0  317.297 µs  (×2^8, total 81.228 ms)
+  median: 317.297 µs    min: 317.297 µs    max: 317.297 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_860 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_5, the first CLI argument):
+  policy_1_5: 1.000× (255.440 µs)
+  policy_0_5: 1.242× (317.297 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=0 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:14Z, host=chungus2
+policy_0_5    [fixed] repeats=1
+  repeat 0  313.197 µs  (×2^8, total 80.179 ms)
+  median: 313.197 µs    min: 313.197 µs    max: 313.197 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_992 kB (across 1 ok repeat(s))
+
+policy_1_5    [fixed] repeats=1
+  repeat 0  254.176 µs  (×2^8, total 65.069 ms)
+  median: 254.176 µs    min: 254.176 µs    max: 254.176 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_556 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_5, the first CLI argument):
+  policy_0_5: 1.000× (313.197 µs)
+  policy_1_5: 0.812× (254.176 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=0 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:15Z, host=chungus2
+policy_1_5    [fixed] repeats=1
+  repeat 0  256.274 µs  (×2^8, total 65.606 ms)
+  median: 256.274 µs    min: 256.274 µs    max: 256.274 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_716 kB (across 1 ok repeat(s))
+
+policy_0_5    [fixed] repeats=1
+  repeat 0  315.414 µs  (×2^8, total 80.746 ms)
+  median: 315.414 µs    min: 315.414 µs    max: 315.414 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_052 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_5, the first CLI argument):
+  policy_1_5: 1.000× (256.274 µs)
+  policy_0_5: 1.231× (315.414 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=0 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:15Z, host=chungus2
+policy_0_5    [fixed] repeats=1
+  repeat 0  313.125 µs  (×2^8, total 80.160 ms)
+  median: 313.125 µs    min: 313.125 µs    max: 313.125 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_752 kB (across 1 ok repeat(s))
+
+policy_1_5    [fixed] repeats=1
+  repeat 0  257.022 µs  (×2^8, total 65.798 ms)
+  median: 257.022 µs    min: 257.022 µs    max: 257.022 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_020 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_5, the first CLI argument):
+  policy_0_5: 1.000× (313.125 µs)
+  policy_1_5: 0.821× (257.022 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=0 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:16Z, host=chungus2
+policy_1_5    [fixed] repeats=1
+  repeat 0  256.720 µs  (×2^8, total 65.720 ms)
+  median: 256.720 µs    min: 256.720 µs    max: 256.720 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_072 kB (across 1 ok repeat(s))
+
+policy_0_5    [fixed] repeats=1
+  repeat 0  314.617 µs  (×2^8, total 80.542 ms)
+  median: 314.617 µs    min: 314.617 µs    max: 314.617 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_868 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_5, the first CLI argument):
+  policy_1_5: 1.000× (256.720 µs)
+  policy_0_5: 1.226× (314.617 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=1 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:17Z, host=chungus2
+policy_1_5    [fixed] repeats=1
+  repeat 0  256.546 µs  (×2^8, total 65.676 ms)
+  median: 256.546 µs    min: 256.546 µs    max: 256.546 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_368 kB (across 1 ok repeat(s))
+
+policy_2_5    [fixed] repeats=1
+  repeat 0  84.645 µs  (×2^10, total 86.677 ms)
+  median: 84.645 µs    min: 84.645 µs    max: 84.645 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_092 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_5, the first CLI argument):
+  policy_1_5: 1.000× (256.546 µs)
+  policy_2_5: 0.330× (84.645 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=1 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:18Z, host=chungus2
+policy_2_5    [fixed] repeats=1
+  repeat 0  85.900 µs  (×2^10, total 87.962 ms)
+  median: 85.900 µs    min: 85.900 µs    max: 85.900 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_984 kB (across 1 ok repeat(s))
+
+policy_1_5    [fixed] repeats=1
+  repeat 0  262.843 µs  (×2^8, total 67.288 ms)
+  median: 262.843 µs    min: 262.843 µs    max: 262.843 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_340 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_5, the first CLI argument):
+  policy_2_5: 1.000× (85.900 µs)
+  policy_1_5: 3.060× (262.843 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=1 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:19Z, host=chungus2
+policy_1_5    [fixed] repeats=1
+  repeat 0  264.670 µs  (×2^8, total 67.756 ms)
+  median: 264.670 µs    min: 264.670 µs    max: 264.670 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_072 kB (across 1 ok repeat(s))
+
+policy_2_5    [fixed] repeats=1
+  repeat 0  84.463 µs  (×2^10, total 86.491 ms)
+  median: 84.463 µs    min: 84.463 µs    max: 84.463 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_800 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_5, the first CLI argument):
+  policy_1_5: 1.000× (264.670 µs)
+  policy_2_5: 0.319× (84.463 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=1 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:20Z, host=chungus2
+policy_2_5    [fixed] repeats=1
+  repeat 0  84.302 µs  (×2^10, total 86.326 ms)
+  median: 84.302 µs    min: 84.302 µs    max: 84.302 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_404 kB (across 1 ok repeat(s))
+
+policy_1_5    [fixed] repeats=1
+  repeat 0  256.892 µs  (×2^8, total 65.765 ms)
+  median: 256.892 µs    min: 256.892 µs    max: 256.892 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_828 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_5, the first CLI argument):
+  policy_2_5: 1.000× (84.302 µs)
+  policy_1_5: 3.047× (256.892 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=1 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:20Z, host=chungus2
+policy_1_5    [fixed] repeats=1
+  repeat 0  258.561 µs  (×2^8, total 66.192 ms)
+  median: 258.561 µs    min: 258.561 µs    max: 258.561 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_736 kB (across 1 ok repeat(s))
+
+policy_2_5    [fixed] repeats=1
+  repeat 0  84.171 µs  (×2^10, total 86.192 ms)
+  median: 84.171 µs    min: 84.171 µs    max: 84.171 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_420 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_5, the first CLI argument):
+  policy_1_5: 1.000× (258.561 µs)
+  policy_2_5: 0.326× (84.171 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=1 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:21Z, host=chungus2
+policy_2_5    [fixed] repeats=1
+  repeat 0  84.456 µs  (×2^10, total 86.483 ms)
+  median: 84.456 µs    min: 84.456 µs    max: 84.456 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_192 kB (across 1 ok repeat(s))
+
+policy_1_5    [fixed] repeats=1
+  repeat 0  256.820 µs  (×2^8, total 65.746 ms)
+  median: 256.820 µs    min: 256.820 µs    max: 256.820 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_864 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_5, the first CLI argument):
+  policy_2_5: 1.000× (84.456 µs)
+  policy_1_5: 3.041× (256.820 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=2 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:22Z, host=chungus2
+policy_2_5    [fixed] repeats=1
+  repeat 0  84.207 µs  (×2^10, total 86.229 ms)
+  median: 84.207 µs    min: 84.207 µs    max: 84.207 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_308 kB (across 1 ok repeat(s))
+
+policy_3_5    [fixed] repeats=1
+  repeat 0  58.999 µs  (×2^10, total 60.415 ms)
+  median: 58.999 µs    min: 58.999 µs    max: 58.999 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_748 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_5, the first CLI argument):
+  policy_2_5: 1.000× (84.207 µs)
+  policy_3_5: 0.701× (58.999 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=2 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:23Z, host=chungus2
+policy_3_5    [fixed] repeats=1
+  repeat 0  59.002 µs  (×2^10, total 60.419 ms)
+  median: 59.002 µs    min: 59.002 µs    max: 59.002 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_724 kB (across 1 ok repeat(s))
+
+policy_2_5    [fixed] repeats=1
+  repeat 0  83.884 µs  (×2^10, total 85.898 ms)
+  median: 83.884 µs    min: 83.884 µs    max: 83.884 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_880 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_5, the first CLI argument):
+  policy_3_5: 1.000× (59.002 µs)
+  policy_2_5: 1.422× (83.884 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=2 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:24Z, host=chungus2
+policy_2_5    [fixed] repeats=1
+  repeat 0  84.077 µs  (×2^10, total 86.096 ms)
+  median: 84.077 µs    min: 84.077 µs    max: 84.077 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_732 kB (across 1 ok repeat(s))
+
+policy_3_5    [fixed] repeats=1
+  repeat 0  58.471 µs  (×2^10, total 59.875 ms)
+  median: 58.471 µs    min: 58.471 µs    max: 58.471 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_852 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_5, the first CLI argument):
+  policy_2_5: 1.000× (84.077 µs)
+  policy_3_5: 0.695× (58.471 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=2 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:24Z, host=chungus2
+policy_3_5    [fixed] repeats=1
+  repeat 0  58.479 µs  (×2^10, total 59.883 ms)
+  median: 58.479 µs    min: 58.479 µs    max: 58.479 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_760 kB (across 1 ok repeat(s))
+
+policy_2_5    [fixed] repeats=1
+  repeat 0  83.977 µs  (×2^10, total 85.993 ms)
+  median: 83.977 µs    min: 83.977 µs    max: 83.977 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_728 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_5, the first CLI argument):
+  policy_3_5: 1.000× (58.479 µs)
+  policy_2_5: 1.436× (83.977 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=2 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:25Z, host=chungus2
+policy_2_5    [fixed] repeats=1
+  repeat 0  84.903 µs  (×2^10, total 86.942 ms)
+  median: 84.903 µs    min: 84.903 µs    max: 84.903 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 67_880 kB (across 1 ok repeat(s))
+
+policy_3_5    [fixed] repeats=1
+  repeat 0  58.773 µs  (×2^10, total 60.184 ms)
+  median: 58.773 µs    min: 58.773 µs    max: 58.773 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_300 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_5, the first CLI argument):
+  policy_2_5: 1.000× (84.903 µs)
+  policy_3_5: 0.692× (58.773 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=5 pair=2 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:26Z, host=chungus2
+policy_3_5    [fixed] repeats=1
+  repeat 0  58.757 µs  (×2^10, total 60.167 ms)
+  median: 58.757 µs    min: 58.757 µs    max: 58.757 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_352 kB (across 1 ok repeat(s))
+
+policy_2_5    [fixed] repeats=1
+  repeat 0  84.634 µs  (×2^10, total 86.666 ms)
+  median: 84.634 µs    min: 84.634 µs    max: 84.634 µs
+  hash: all repeats agree
+  observed hash: 0x79fe834abf33d5ca
+  peak RSS: 68_704 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_5, the first CLI argument):
+  policy_3_5: 1.000× (58.757 µs)
+  policy_2_5: 1.440× (84.634 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=0 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:27Z, host=chungus2
+policy_0_6    [fixed] repeats=1
+  repeat 0  7.260 ms  (×2^3, total 58.078 ms)
+  median: 7.260 ms    min: 7.260 ms    max: 7.260 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 67_880 kB (across 1 ok repeat(s))
+
+policy_1_6    [fixed] repeats=1
+  repeat 0  2.699 ms  (×2^5, total 86.365 ms)
+  median: 2.699 ms    min: 2.699 ms    max: 2.699 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_080 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_6, the first CLI argument):
+  policy_0_6: 1.000× (7.260 ms)
+  policy_1_6: 0.372× (2.699 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=0 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:28Z, host=chungus2
+policy_1_6    [fixed] repeats=1
+  repeat 0  2.693 ms  (×2^5, total 86.190 ms)
+  median: 2.693 ms    min: 2.693 ms    max: 2.693 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_300 kB (across 1 ok repeat(s))
+
+policy_0_6    [fixed] repeats=1
+  repeat 0  7.209 ms  (×2^3, total 57.669 ms)
+  median: 7.209 ms    min: 7.209 ms    max: 7.209 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_088 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_6, the first CLI argument):
+  policy_1_6: 1.000× (2.693 ms)
+  policy_0_6: 2.676× (7.209 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=0 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:28Z, host=chungus2
+policy_0_6    [fixed] repeats=1
+  repeat 0  7.203 ms  (×2^3, total 57.621 ms)
+  median: 7.203 ms    min: 7.203 ms    max: 7.203 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 67_700 kB (across 1 ok repeat(s))
+
+policy_1_6    [fixed] repeats=1
+  repeat 0  2.687 ms  (×2^5, total 85.995 ms)
+  median: 2.687 ms    min: 2.687 ms    max: 2.687 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_752 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_6, the first CLI argument):
+  policy_0_6: 1.000× (7.203 ms)
+  policy_1_6: 0.373× (2.687 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=0 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:29Z, host=chungus2
+policy_1_6    [fixed] repeats=1
+  repeat 0  2.689 ms  (×2^5, total 86.058 ms)
+  median: 2.689 ms    min: 2.689 ms    max: 2.689 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_096 kB (across 1 ok repeat(s))
+
+policy_0_6    [fixed] repeats=1
+  repeat 0  7.208 ms  (×2^3, total 57.668 ms)
+  median: 7.208 ms    min: 7.208 ms    max: 7.208 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 67_704 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_6, the first CLI argument):
+  policy_1_6: 1.000× (2.689 ms)
+  policy_0_6: 2.680× (7.208 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=0 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:30Z, host=chungus2
+policy_0_6    [fixed] repeats=1
+  repeat 0  7.210 ms  (×2^3, total 57.682 ms)
+  median: 7.210 ms    min: 7.210 ms    max: 7.210 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 67_860 kB (across 1 ok repeat(s))
+
+policy_1_6    [fixed] repeats=1
+  repeat 0  2.653 ms  (×2^5, total 84.897 ms)
+  median: 2.653 ms    min: 2.653 ms    max: 2.653 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_552 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_6, the first CLI argument):
+  policy_0_6: 1.000× (7.210 ms)
+  policy_1_6: 0.368× (2.653 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=0 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:31Z, host=chungus2
+policy_1_6    [fixed] repeats=1
+  repeat 0  2.698 ms  (×2^5, total 86.345 ms)
+  median: 2.698 ms    min: 2.698 ms    max: 2.698 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 67_812 kB (across 1 ok repeat(s))
+
+policy_0_6    [fixed] repeats=1
+  repeat 0  7.177 ms  (×2^3, total 57.417 ms)
+  median: 7.177 ms    min: 7.177 ms    max: 7.177 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_072 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_6, the first CLI argument):
+  policy_1_6: 1.000× (2.698 ms)
+  policy_0_6: 2.660× (7.177 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=1 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:31Z, host=chungus2
+policy_1_6    [fixed] repeats=1
+  repeat 0  2.698 ms  (×2^5, total 86.334 ms)
+  median: 2.698 ms    min: 2.698 ms    max: 2.698 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_752 kB (across 1 ok repeat(s))
+
+policy_2_6    [fixed] repeats=1
+  repeat 0  754.928 µs  (×2^7, total 96.631 ms)
+  median: 754.928 µs    min: 754.928 µs    max: 754.928 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_096 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_6, the first CLI argument):
+  policy_1_6: 1.000× (2.698 ms)
+  policy_2_6: 0.280× (754.928 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=1 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:32Z, host=chungus2
+policy_2_6    [fixed] repeats=1
+  repeat 0  752.682 µs  (×2^7, total 96.343 ms)
+  median: 752.682 µs    min: 752.682 µs    max: 752.682 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_556 kB (across 1 ok repeat(s))
+
+policy_1_6    [fixed] repeats=1
+  repeat 0  2.658 ms  (×2^5, total 85.048 ms)
+  median: 2.658 ms    min: 2.658 ms    max: 2.658 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 67_992 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_6, the first CLI argument):
+  policy_2_6: 1.000× (752.682 µs)
+  policy_1_6: 3.531× (2.658 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=1 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:33Z, host=chungus2
+policy_1_6    [fixed] repeats=1
+  repeat 0  2.687 ms  (×2^5, total 85.989 ms)
+  median: 2.687 ms    min: 2.687 ms    max: 2.687 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_344 kB (across 1 ok repeat(s))
+
+policy_2_6    [fixed] repeats=1
+  repeat 0  754.209 µs  (×2^7, total 96.539 ms)
+  median: 754.209 µs    min: 754.209 µs    max: 754.209 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 67_796 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_6, the first CLI argument):
+  policy_1_6: 1.000× (2.687 ms)
+  policy_2_6: 0.281× (754.209 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=1 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:34Z, host=chungus2
+policy_2_6    [fixed] repeats=1
+  repeat 0  749.401 µs  (×2^7, total 95.923 ms)
+  median: 749.401 µs    min: 749.401 µs    max: 749.401 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 67_872 kB (across 1 ok repeat(s))
+
+policy_1_6    [fixed] repeats=1
+  repeat 0  2.689 ms  (×2^5, total 86.064 ms)
+  median: 2.689 ms    min: 2.689 ms    max: 2.689 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_064 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_6, the first CLI argument):
+  policy_2_6: 1.000× (749.401 µs)
+  policy_1_6: 3.589× (2.689 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=1 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:35Z, host=chungus2
+policy_1_6    [fixed] repeats=1
+  repeat 0  2.697 ms  (×2^5, total 86.313 ms)
+  median: 2.697 ms    min: 2.697 ms    max: 2.697 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 67_828 kB (across 1 ok repeat(s))
+
+policy_2_6    [fixed] repeats=1
+  repeat 0  750.177 µs  (×2^7, total 96.023 ms)
+  median: 750.177 µs    min: 750.177 µs    max: 750.177 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_228 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_6, the first CLI argument):
+  policy_1_6: 1.000× (2.697 ms)
+  policy_2_6: 0.278× (750.177 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=1 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:36Z, host=chungus2
+policy_2_6    [fixed] repeats=1
+  repeat 0  751.704 µs  (×2^7, total 96.218 ms)
+  median: 751.704 µs    min: 751.704 µs    max: 751.704 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 67_748 kB (across 1 ok repeat(s))
+
+policy_1_6    [fixed] repeats=1
+  repeat 0  2.662 ms  (×2^5, total 85.170 ms)
+  median: 2.662 ms    min: 2.662 ms    max: 2.662 ms
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_196 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_6, the first CLI argument):
+  policy_2_6: 1.000× (751.704 µs)
+  policy_1_6: 3.541× (2.662 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=2 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:37Z, host=chungus2
+policy_2_6    [fixed] repeats=1
+  repeat 0  750.376 µs  (×2^7, total 96.048 ms)
+  median: 750.376 µs    min: 750.376 µs    max: 750.376 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_384 kB (across 1 ok repeat(s))
+
+policy_3_6    [fixed] repeats=1
+  repeat 0  394.913 µs  (×2^7, total 50.549 ms)
+  median: 394.913 µs    min: 394.913 µs    max: 394.913 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 67_940 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_6, the first CLI argument):
+  policy_2_6: 1.000× (750.376 µs)
+  policy_3_6: 0.526× (394.913 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=2 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:38Z, host=chungus2
+policy_3_6    [fixed] repeats=1
+  repeat 0  389.422 µs  (×2^8, total 99.692 ms)
+  median: 389.422 µs    min: 389.422 µs    max: 389.422 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 67_792 kB (across 1 ok repeat(s))
+
+policy_2_6    [fixed] repeats=1
+  repeat 0  747.421 µs  (×2^7, total 95.670 ms)
+  median: 747.421 µs    min: 747.421 µs    max: 747.421 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_752 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_6, the first CLI argument):
+  policy_3_6: 1.000× (389.422 µs)
+  policy_2_6: 1.919× (747.421 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=2 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:39Z, host=chungus2
+policy_2_6    [fixed] repeats=1
+  repeat 0  747.438 µs  (×2^7, total 95.672 ms)
+  median: 747.438 µs    min: 747.438 µs    max: 747.438 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 67_876 kB (across 1 ok repeat(s))
+
+policy_3_6    [fixed] repeats=1
+  repeat 0  391.497 µs  (×2^7, total 50.112 ms)
+  median: 391.497 µs    min: 391.497 µs    max: 391.497 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_344 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_6, the first CLI argument):
+  policy_2_6: 1.000× (747.438 µs)
+  policy_3_6: 0.524× (391.497 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=2 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:40Z, host=chungus2
+policy_3_6    [fixed] repeats=1
+  repeat 0  392.805 µs  (×2^7, total 50.279 ms)
+  median: 392.805 µs    min: 392.805 µs    max: 392.805 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 67_840 kB (across 1 ok repeat(s))
+
+policy_2_6    [fixed] repeats=1
+  repeat 0  750.482 µs  (×2^7, total 96.062 ms)
+  median: 750.482 µs    min: 750.482 µs    max: 750.482 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_060 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_6, the first CLI argument):
+  policy_3_6: 1.000× (392.805 µs)
+  policy_2_6: 1.911× (750.482 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=2 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:40Z, host=chungus2
+policy_2_6    [fixed] repeats=1
+  repeat 0  752.416 µs  (×2^7, total 96.309 ms)
+  median: 752.416 µs    min: 752.416 µs    max: 752.416 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_416 kB (across 1 ok repeat(s))
+
+policy_3_6    [fixed] repeats=1
+  repeat 0  390.036 µs  (×2^8, total 99.849 ms)
+  median: 390.036 µs    min: 390.036 µs    max: 390.036 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_296 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_6, the first CLI argument):
+  policy_2_6: 1.000× (752.416 µs)
+  policy_3_6: 0.518× (390.036 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=6 pair=2 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:41Z, host=chungus2
+policy_3_6    [fixed] repeats=1
+  repeat 0  390.897 µs  (×2^8, total 100.070 ms)
+  median: 390.897 µs    min: 390.897 µs    max: 390.897 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_712 kB (across 1 ok repeat(s))
+
+policy_2_6    [fixed] repeats=1
+  repeat 0  752.058 µs  (×2^7, total 96.263 ms)
+  median: 752.058 µs    min: 752.058 µs    max: 752.058 µs
+  hash: all repeats agree
+  observed hash: 0x87485e24e509eda4
+  peak RSS: 68_088 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_6, the first CLI argument):
+  policy_3_6: 1.000× (390.897 µs)
+  policy_2_6: 1.924× (752.058 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=0 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:42Z, host=chungus2
+policy_0_7    [fixed] repeats=1
+  repeat 0  9.408 ms  (×2^3, total 75.267 ms)
+  median: 9.408 ms    min: 9.408 ms    max: 9.408 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_408 kB (across 1 ok repeat(s))
+
+policy_1_7    [fixed] repeats=1
+  repeat 0  3.823 ms  (×2^4, total 61.175 ms)
+  median: 3.823 ms    min: 3.823 ms    max: 3.823 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_856 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_7, the first CLI argument):
+  policy_0_7: 1.000× (9.408 ms)
+  policy_1_7: 0.406× (3.823 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=0 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:43Z, host=chungus2
+policy_1_7    [fixed] repeats=1
+  repeat 0  3.895 ms  (×2^4, total 62.326 ms)
+  median: 3.895 ms    min: 3.895 ms    max: 3.895 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_756 kB (across 1 ok repeat(s))
+
+policy_0_7    [fixed] repeats=1
+  repeat 0  9.442 ms  (×2^3, total 75.533 ms)
+  median: 9.442 ms    min: 9.442 ms    max: 9.442 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_420 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_7, the first CLI argument):
+  policy_1_7: 1.000× (3.895 ms)
+  policy_0_7: 2.424× (9.442 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=0 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:44Z, host=chungus2
+policy_0_7    [fixed] repeats=1
+  repeat 0  9.523 ms  (×2^3, total 76.185 ms)
+  median: 9.523 ms    min: 9.523 ms    max: 9.523 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_732 kB (across 1 ok repeat(s))
+
+policy_1_7    [fixed] repeats=1
+  repeat 0  3.874 ms  (×2^4, total 61.981 ms)
+  median: 3.874 ms    min: 3.874 ms    max: 3.874 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_752 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_7, the first CLI argument):
+  policy_0_7: 1.000× (9.523 ms)
+  policy_1_7: 0.407× (3.874 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=0 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:44Z, host=chungus2
+policy_1_7    [fixed] repeats=1
+  repeat 0  3.844 ms  (×2^4, total 61.504 ms)
+  median: 3.844 ms    min: 3.844 ms    max: 3.844 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_968 kB (across 1 ok repeat(s))
+
+policy_0_7    [fixed] repeats=1
+  repeat 0  9.530 ms  (×2^3, total 76.238 ms)
+  median: 9.530 ms    min: 9.530 ms    max: 9.530 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_092 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_7, the first CLI argument):
+  policy_1_7: 1.000× (3.844 ms)
+  policy_0_7: 2.479× (9.530 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=0 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:45Z, host=chungus2
+policy_0_7    [fixed] repeats=1
+  repeat 0  9.665 ms  (×2^3, total 77.317 ms)
+  median: 9.665 ms    min: 9.665 ms    max: 9.665 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_948 kB (across 1 ok repeat(s))
+
+policy_1_7    [fixed] repeats=1
+  repeat 0  3.947 ms  (×2^4, total 63.154 ms)
+  median: 3.947 ms    min: 3.947 ms    max: 3.947 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_516 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_7, the first CLI argument):
+  policy_0_7: 1.000× (9.665 ms)
+  policy_1_7: 0.408× (3.947 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=0 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:46Z, host=chungus2
+policy_1_7    [fixed] repeats=1
+  repeat 0  3.874 ms  (×2^4, total 61.979 ms)
+  median: 3.874 ms    min: 3.874 ms    max: 3.874 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_408 kB (across 1 ok repeat(s))
+
+policy_0_7    [fixed] repeats=1
+  repeat 0  9.332 ms  (×2^3, total 74.655 ms)
+  median: 9.332 ms    min: 9.332 ms    max: 9.332 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_988 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_7, the first CLI argument):
+  policy_1_7: 1.000× (3.874 ms)
+  policy_0_7: 2.409× (9.332 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=1 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:47Z, host=chungus2
+policy_1_7    [fixed] repeats=1
+  repeat 0  3.873 ms  (×2^4, total 61.972 ms)
+  median: 3.873 ms    min: 3.873 ms    max: 3.873 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_704 kB (across 1 ok repeat(s))
+
+policy_2_7    [fixed] repeats=1
+  repeat 0  1.097 ms  (×2^6, total 70.224 ms)
+  median: 1.097 ms    min: 1.097 ms    max: 1.097 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_228 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_7, the first CLI argument):
+  policy_1_7: 1.000× (3.873 ms)
+  policy_2_7: 0.283× (1.097 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=1 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:47Z, host=chungus2
+policy_2_7    [fixed] repeats=1
+  repeat 0  1.095 ms  (×2^6, total 70.111 ms)
+  median: 1.095 ms    min: 1.095 ms    max: 1.095 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_080 kB (across 1 ok repeat(s))
+
+policy_1_7    [fixed] repeats=1
+  repeat 0  3.888 ms  (×2^4, total 62.209 ms)
+  median: 3.888 ms    min: 3.888 ms    max: 3.888 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_352 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_7, the first CLI argument):
+  policy_2_7: 1.000× (1.095 ms)
+  policy_1_7: 3.549× (3.888 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=1 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:48Z, host=chungus2
+policy_1_7    [fixed] repeats=1
+  repeat 0  3.865 ms  (×2^4, total 61.834 ms)
+  median: 3.865 ms    min: 3.865 ms    max: 3.865 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_560 kB (across 1 ok repeat(s))
+
+policy_2_7    [fixed] repeats=1
+  repeat 0  1.084 ms  (×2^6, total 69.401 ms)
+  median: 1.084 ms    min: 1.084 ms    max: 1.084 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_856 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_7, the first CLI argument):
+  policy_1_7: 1.000× (3.865 ms)
+  policy_2_7: 0.281× (1.084 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=1 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:49Z, host=chungus2
+policy_2_7    [fixed] repeats=1
+  repeat 0  1.098 ms  (×2^6, total 70.292 ms)
+  median: 1.098 ms    min: 1.098 ms    max: 1.098 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_556 kB (across 1 ok repeat(s))
+
+policy_1_7    [fixed] repeats=1
+  repeat 0  3.871 ms  (×2^4, total 61.943 ms)
+  median: 3.871 ms    min: 3.871 ms    max: 3.871 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_844 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_7, the first CLI argument):
+  policy_2_7: 1.000× (1.098 ms)
+  policy_1_7: 3.525× (3.871 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=1 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:50Z, host=chungus2
+policy_1_7    [fixed] repeats=1
+  repeat 0  3.874 ms  (×2^4, total 61.981 ms)
+  median: 3.874 ms    min: 3.874 ms    max: 3.874 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_288 kB (across 1 ok repeat(s))
+
+policy_2_7    [fixed] repeats=1
+  repeat 0  1.085 ms  (×2^6, total 69.413 ms)
+  median: 1.085 ms    min: 1.085 ms    max: 1.085 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_780 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_7, the first CLI argument):
+  policy_1_7: 1.000× (3.874 ms)
+  policy_2_7: 0.280× (1.085 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=1 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:50Z, host=chungus2
+policy_2_7    [fixed] repeats=1
+  repeat 0  1.089 ms  (×2^6, total 69.722 ms)
+  median: 1.089 ms    min: 1.089 ms    max: 1.089 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_748 kB (across 1 ok repeat(s))
+
+policy_1_7    [fixed] repeats=1
+  repeat 0  3.879 ms  (×2^4, total 62.066 ms)
+  median: 3.879 ms    min: 3.879 ms    max: 3.879 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_800 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_7, the first CLI argument):
+  policy_2_7: 1.000× (1.089 ms)
+  policy_1_7: 3.561× (3.879 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=2 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:51Z, host=chungus2
+policy_2_7    [fixed] repeats=1
+  repeat 0  1.086 ms  (×2^6, total 69.481 ms)
+  median: 1.086 ms    min: 1.086 ms    max: 1.086 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_752 kB (across 1 ok repeat(s))
+
+policy_3_7    [fixed] repeats=1
+  repeat 0  575.628 µs  (×2^7, total 73.680 ms)
+  median: 575.628 µs    min: 575.628 µs    max: 575.628 µs
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_392 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_7, the first CLI argument):
+  policy_2_7: 1.000× (1.086 ms)
+  policy_3_7: 0.530× (575.628 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=2 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:52Z, host=chungus2
+policy_3_7    [fixed] repeats=1
+  repeat 0  582.107 µs  (×2^7, total 74.510 ms)
+  median: 582.107 µs    min: 582.107 µs    max: 582.107 µs
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_860 kB (across 1 ok repeat(s))
+
+policy_2_7    [fixed] repeats=1
+  repeat 0  1.086 ms  (×2^6, total 69.533 ms)
+  median: 1.086 ms    min: 1.086 ms    max: 1.086 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_556 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_7, the first CLI argument):
+  policy_3_7: 1.000× (582.107 µs)
+  policy_2_7: 1.866× (1.086 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=2 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:53Z, host=chungus2
+policy_2_7    [fixed] repeats=1
+  repeat 0  1.095 ms  (×2^6, total 70.094 ms)
+  median: 1.095 ms    min: 1.095 ms    max: 1.095 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_744 kB (across 1 ok repeat(s))
+
+policy_3_7    [fixed] repeats=1
+  repeat 0  577.047 µs  (×2^7, total 73.862 ms)
+  median: 577.047 µs    min: 577.047 µs    max: 577.047 µs
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_712 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_7, the first CLI argument):
+  policy_2_7: 1.000× (1.095 ms)
+  policy_3_7: 0.527× (577.047 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=2 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:53Z, host=chungus2
+policy_3_7    [fixed] repeats=1
+  repeat 0  575.968 µs  (×2^7, total 73.724 ms)
+  median: 575.968 µs    min: 575.968 µs    max: 575.968 µs
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_556 kB (across 1 ok repeat(s))
+
+policy_2_7    [fixed] repeats=1
+  repeat 0  1.089 ms  (×2^6, total 69.690 ms)
+  median: 1.089 ms    min: 1.089 ms    max: 1.089 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_404 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_7, the first CLI argument):
+  policy_3_7: 1.000× (575.968 µs)
+  policy_2_7: 1.891× (1.089 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=2 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:54Z, host=chungus2
+policy_2_7    [fixed] repeats=1
+  repeat 0  1.091 ms  (×2^6, total 69.827 ms)
+  median: 1.091 ms    min: 1.091 ms    max: 1.091 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_240 kB (across 1 ok repeat(s))
+
+policy_3_7    [fixed] repeats=1
+  repeat 0  575.753 µs  (×2^7, total 73.696 ms)
+  median: 575.753 µs    min: 575.753 µs    max: 575.753 µs
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_748 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_7, the first CLI argument):
+  policy_2_7: 1.000× (1.091 ms)
+  policy_3_7: 0.528× (575.753 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=7 pair=2 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:55Z, host=chungus2
+policy_3_7    [fixed] repeats=1
+  repeat 0  579.566 µs  (×2^7, total 74.185 ms)
+  median: 579.566 µs    min: 579.566 µs    max: 579.566 µs
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_948 kB (across 1 ok repeat(s))
+
+policy_2_7    [fixed] repeats=1
+  repeat 0  1.090 ms  (×2^6, total 69.773 ms)
+  median: 1.090 ms    min: 1.090 ms    max: 1.090 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_348 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_7, the first CLI argument):
+  policy_3_7: 1.000× (579.566 µs)
+  policy_2_7: 1.881× (1.090 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=0 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:56Z, host=chungus2
+policy_0_8    [fixed] repeats=1
+  repeat 0  4.798 ms  (×2^4, total 76.761 ms)
+  median: 4.798 ms    min: 4.798 ms    max: 4.798 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_076 kB (across 1 ok repeat(s))
+
+policy_1_8    [fixed] repeats=1
+  repeat 0  1.491 ms  (×2^6, total 95.452 ms)
+  median: 1.491 ms    min: 1.491 ms    max: 1.491 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 67_788 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_8, the first CLI argument):
+  policy_0_8: 1.000× (4.798 ms)
+  policy_1_8: 0.311× (1.491 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=0 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:57Z, host=chungus2
+policy_1_8    [fixed] repeats=1
+  repeat 0  1.511 ms  (×2^6, total 96.707 ms)
+  median: 1.511 ms    min: 1.511 ms    max: 1.511 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_276 kB (across 1 ok repeat(s))
+
+policy_0_8    [fixed] repeats=1
+  repeat 0  4.910 ms  (×2^4, total 78.563 ms)
+  median: 4.910 ms    min: 4.910 ms    max: 4.910 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_228 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_8, the first CLI argument):
+  policy_1_8: 1.000× (1.511 ms)
+  policy_0_8: 3.250× (4.910 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=0 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:58Z, host=chungus2
+policy_0_8    [fixed] repeats=1
+  repeat 0  4.842 ms  (×2^4, total 77.464 ms)
+  median: 4.842 ms    min: 4.842 ms    max: 4.842 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_076 kB (across 1 ok repeat(s))
+
+policy_1_8    [fixed] repeats=1
+  repeat 0  1.505 ms  (×2^6, total 96.343 ms)
+  median: 1.505 ms    min: 1.505 ms    max: 1.505 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_344 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_8, the first CLI argument):
+  policy_0_8: 1.000× (4.842 ms)
+  policy_1_8: 0.311× (1.505 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=0 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:58Z, host=chungus2
+policy_1_8    [fixed] repeats=1
+  repeat 0  1.506 ms  (×2^6, total 96.405 ms)
+  median: 1.506 ms    min: 1.506 ms    max: 1.506 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_808 kB (across 1 ok repeat(s))
+
+policy_0_8    [fixed] repeats=1
+  repeat 0  4.823 ms  (×2^4, total 77.173 ms)
+  median: 4.823 ms    min: 4.823 ms    max: 4.823 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_556 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_8, the first CLI argument):
+  policy_1_8: 1.000× (1.506 ms)
+  policy_0_8: 3.202× (4.823 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=0 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:51:59Z, host=chungus2
+policy_0_8    [fixed] repeats=1
+  repeat 0  4.808 ms  (×2^4, total 76.929 ms)
+  median: 4.808 ms    min: 4.808 ms    max: 4.808 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 67_876 kB (across 1 ok repeat(s))
+
+policy_1_8    [fixed] repeats=1
+  repeat 0  1.513 ms  (×2^6, total 96.811 ms)
+  median: 1.513 ms    min: 1.513 ms    max: 1.513 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_520 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_8, the first CLI argument):
+  policy_0_8: 1.000× (4.808 ms)
+  policy_1_8: 0.315× (1.513 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=0 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:00Z, host=chungus2
+policy_1_8    [fixed] repeats=1
+  repeat 0  1.508 ms  (×2^6, total 96.532 ms)
+  median: 1.508 ms    min: 1.508 ms    max: 1.508 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_028 kB (across 1 ok repeat(s))
+
+policy_0_8    [fixed] repeats=1
+  repeat 0  4.918 ms  (×2^4, total 78.687 ms)
+  median: 4.918 ms    min: 4.918 ms    max: 4.918 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 67_728 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_8, the first CLI argument):
+  policy_1_8: 1.000× (1.508 ms)
+  policy_0_8: 3.261× (4.918 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=1 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:01Z, host=chungus2
+policy_1_8    [fixed] repeats=1
+  repeat 0  1.484 ms  (×2^6, total 94.974 ms)
+  median: 1.484 ms    min: 1.484 ms    max: 1.484 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_080 kB (across 1 ok repeat(s))
+
+policy_2_8    [fixed] repeats=1
+  repeat 0  384.767 µs  (×2^8, total 98.500 ms)
+  median: 384.767 µs    min: 384.767 µs    max: 384.767 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_300 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_8, the first CLI argument):
+  policy_1_8: 1.000× (1.484 ms)
+  policy_2_8: 0.259× (384.767 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=1 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:02Z, host=chungus2
+policy_2_8    [fixed] repeats=1
+  repeat 0  384.723 µs  (×2^8, total 98.489 ms)
+  median: 384.723 µs    min: 384.723 µs    max: 384.723 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_088 kB (across 1 ok repeat(s))
+
+policy_1_8    [fixed] repeats=1
+  repeat 0  1.505 ms  (×2^6, total 96.350 ms)
+  median: 1.505 ms    min: 1.505 ms    max: 1.505 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_304 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_8, the first CLI argument):
+  policy_2_8: 1.000× (384.723 µs)
+  policy_1_8: 3.913× (1.505 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=1 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:03Z, host=chungus2
+policy_1_8    [fixed] repeats=1
+  repeat 0  1.489 ms  (×2^6, total 95.289 ms)
+  median: 1.489 ms    min: 1.489 ms    max: 1.489 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_344 kB (across 1 ok repeat(s))
+
+policy_2_8    [fixed] repeats=1
+  repeat 0  380.678 µs  (×2^8, total 97.454 ms)
+  median: 380.678 µs    min: 380.678 µs    max: 380.678 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_420 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_8, the first CLI argument):
+  policy_1_8: 1.000× (1.489 ms)
+  policy_2_8: 0.256× (380.678 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=1 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:04Z, host=chungus2
+policy_2_8    [fixed] repeats=1
+  repeat 0  384.760 µs  (×2^8, total 98.499 ms)
+  median: 384.760 µs    min: 384.760 µs    max: 384.760 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 67_880 kB (across 1 ok repeat(s))
+
+policy_1_8    [fixed] repeats=1
+  repeat 0  1.503 ms  (×2^6, total 96.161 ms)
+  median: 1.503 ms    min: 1.503 ms    max: 1.503 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_748 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_8, the first CLI argument):
+  policy_2_8: 1.000× (384.760 µs)
+  policy_1_8: 3.905× (1.503 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=1 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:05Z, host=chungus2
+policy_1_8    [fixed] repeats=1
+  repeat 0  1.486 ms  (×2^6, total 95.083 ms)
+  median: 1.486 ms    min: 1.486 ms    max: 1.486 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_092 kB (across 1 ok repeat(s))
+
+policy_2_8    [fixed] repeats=1
+  repeat 0  374.787 µs  (×2^8, total 95.945 ms)
+  median: 374.787 µs    min: 374.787 µs    max: 374.787 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_716 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_8, the first CLI argument):
+  policy_1_8: 1.000× (1.486 ms)
+  policy_2_8: 0.252× (374.787 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=1 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:06Z, host=chungus2
+policy_2_8    [fixed] repeats=1
+  repeat 0  380.091 µs  (×2^8, total 97.303 ms)
+  median: 380.091 µs    min: 380.091 µs    max: 380.091 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_848 kB (across 1 ok repeat(s))
+
+policy_1_8    [fixed] repeats=1
+  repeat 0  1.488 ms  (×2^6, total 95.234 ms)
+  median: 1.488 ms    min: 1.488 ms    max: 1.488 ms
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 67_952 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_8, the first CLI argument):
+  policy_2_8: 1.000× (380.091 µs)
+  policy_1_8: 3.915× (1.488 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=2 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:07Z, host=chungus2
+policy_2_8    [fixed] repeats=1
+  repeat 0  385.325 µs  (×2^8, total 98.643 ms)
+  median: 385.325 µs    min: 385.325 µs    max: 385.325 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 67_884 kB (across 1 ok repeat(s))
+
+policy_3_8    [fixed] repeats=1
+  repeat 0  194.286 µs  (×2^9, total 99.475 ms)
+  median: 194.286 µs    min: 194.286 µs    max: 194.286 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_032 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_8, the first CLI argument):
+  policy_2_8: 1.000× (385.325 µs)
+  policy_3_8: 0.504× (194.286 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=2 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:08Z, host=chungus2
+policy_3_8    [fixed] repeats=1
+  repeat 0  197.170 µs  (×2^8, total 50.476 ms)
+  median: 197.170 µs    min: 197.170 µs    max: 197.170 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_100 kB (across 1 ok repeat(s))
+
+policy_2_8    [fixed] repeats=1
+  repeat 0  381.691 µs  (×2^8, total 97.713 ms)
+  median: 381.691 µs    min: 381.691 µs    max: 381.691 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 67_968 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_8, the first CLI argument):
+  policy_3_8: 1.000× (197.170 µs)
+  policy_2_8: 1.936× (381.691 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=2 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:09Z, host=chungus2
+policy_2_8    [fixed] repeats=1
+  repeat 0  380.807 µs  (×2^8, total 97.487 ms)
+  median: 380.807 µs    min: 380.807 µs    max: 380.807 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 67_744 kB (across 1 ok repeat(s))
+
+policy_3_8    [fixed] repeats=1
+  repeat 0  195.174 µs  (×2^9, total 99.929 ms)
+  median: 195.174 µs    min: 195.174 µs    max: 195.174 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 67_768 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_8, the first CLI argument):
+  policy_2_8: 1.000× (380.807 µs)
+  policy_3_8: 0.513× (195.174 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=2 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:10Z, host=chungus2
+policy_3_8    [fixed] repeats=1
+  repeat 0  194.534 µs  (×2^9, total 99.601 ms)
+  median: 194.534 µs    min: 194.534 µs    max: 194.534 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 67_880 kB (across 1 ok repeat(s))
+
+policy_2_8    [fixed] repeats=1
+  repeat 0  380.501 µs  (×2^8, total 97.409 ms)
+  median: 380.501 µs    min: 380.501 µs    max: 380.501 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 67_764 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_8, the first CLI argument):
+  policy_3_8: 1.000× (194.534 µs)
+  policy_2_8: 1.956× (380.501 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=2 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:11Z, host=chungus2
+policy_2_8    [fixed] repeats=1
+  repeat 0  384.136 µs  (×2^8, total 98.339 ms)
+  median: 384.136 µs    min: 384.136 µs    max: 384.136 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 67_756 kB (across 1 ok repeat(s))
+
+policy_3_8    [fixed] repeats=1
+  repeat 0  194.261 µs  (×2^9, total 99.462 ms)
+  median: 194.261 µs    min: 194.261 µs    max: 194.261 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 67_748 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_8, the first CLI argument):
+  policy_2_8: 1.000× (384.136 µs)
+  policy_3_8: 0.506× (194.261 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=8 pair=2 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:12Z, host=chungus2
+policy_3_8    [fixed] repeats=1
+  repeat 0  193.769 µs  (×2^9, total 99.210 ms)
+  median: 193.769 µs    min: 193.769 µs    max: 193.769 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_404 kB (across 1 ok repeat(s))
+
+policy_2_8    [fixed] repeats=1
+  repeat 0  381.867 µs  (×2^8, total 97.758 ms)
+  median: 381.867 µs    min: 381.867 µs    max: 381.867 µs
+  hash: all repeats agree
+  observed hash: 0x242286a22ec0942a
+  peak RSS: 68_852 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_8, the first CLI argument):
+  policy_3_8: 1.000× (193.769 µs)
+  policy_2_8: 1.971× (381.867 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=0 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:13Z, host=chungus2
+policy_0_9    [fixed] repeats=1
+  repeat 0  13.253 ms  (×2^2, total 53.013 ms)
+  median: 13.253 ms    min: 13.253 ms    max: 13.253 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_792 kB (across 1 ok repeat(s))
+
+policy_1_9    [fixed] repeats=1
+  repeat 0  4.874 ms  (×2^4, total 77.986 ms)
+  median: 4.874 ms    min: 4.874 ms    max: 4.874 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_736 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_9, the first CLI argument):
+  policy_0_9: 1.000× (13.253 ms)
+  policy_1_9: 0.368× (4.874 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=0 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:14Z, host=chungus2
+policy_1_9    [fixed] repeats=1
+  repeat 0  4.960 ms  (×2^4, total 79.359 ms)
+  median: 4.960 ms    min: 4.960 ms    max: 4.960 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_804 kB (across 1 ok repeat(s))
+
+policy_0_9    [fixed] repeats=1
+  repeat 0  13.554 ms  (×2^2, total 54.215 ms)
+  median: 13.554 ms    min: 13.554 ms    max: 13.554 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_876 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_9, the first CLI argument):
+  policy_1_9: 1.000× (4.960 ms)
+  policy_0_9: 2.733× (13.554 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=0 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:15Z, host=chungus2
+policy_0_9    [fixed] repeats=1
+  repeat 0  13.439 ms  (×2^2, total 53.757 ms)
+  median: 13.439 ms    min: 13.439 ms    max: 13.439 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_704 kB (across 1 ok repeat(s))
+
+policy_1_9    [fixed] repeats=1
+  repeat 0  4.941 ms  (×2^4, total 79.060 ms)
+  median: 4.941 ms    min: 4.941 ms    max: 4.941 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_968 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_9, the first CLI argument):
+  policy_0_9: 1.000× (13.439 ms)
+  policy_1_9: 0.368× (4.941 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=0 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:15Z, host=chungus2
+policy_1_9    [fixed] repeats=1
+  repeat 0  4.941 ms  (×2^4, total 79.063 ms)
+  median: 4.941 ms    min: 4.941 ms    max: 4.941 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_724 kB (across 1 ok repeat(s))
+
+policy_0_9    [fixed] repeats=1
+  repeat 0  13.430 ms  (×2^2, total 53.720 ms)
+  median: 13.430 ms    min: 13.430 ms    max: 13.430 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_364 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_9, the first CLI argument):
+  policy_1_9: 1.000× (4.941 ms)
+  policy_0_9: 2.718× (13.430 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=0 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:16Z, host=chungus2
+policy_0_9    [fixed] repeats=1
+  repeat 0  13.388 ms  (×2^2, total 53.551 ms)
+  median: 13.388 ms    min: 13.388 ms    max: 13.388 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_712 kB (across 1 ok repeat(s))
+
+policy_1_9    [fixed] repeats=1
+  repeat 0  4.876 ms  (×2^4, total 78.016 ms)
+  median: 4.876 ms    min: 4.876 ms    max: 4.876 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_224 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_0_9, the first CLI argument):
+  policy_0_9: 1.000× (13.388 ms)
+  policy_1_9: 0.364× (4.876 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=0 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:17Z, host=chungus2
+policy_1_9    [fixed] repeats=1
+  repeat 0  4.946 ms  (×2^4, total 79.134 ms)
+  median: 4.946 ms    min: 4.946 ms    max: 4.946 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_556 kB (across 1 ok repeat(s))
+
+policy_0_9    [fixed] repeats=1
+  repeat 0  13.394 ms  (×2^2, total 53.577 ms)
+  median: 13.394 ms    min: 13.394 ms    max: 13.394 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 67_884 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_9, the first CLI argument):
+  policy_1_9: 1.000× (4.946 ms)
+  policy_0_9: 2.708× (13.394 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=1 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:18Z, host=chungus2
+policy_1_9    [fixed] repeats=1
+  repeat 0  4.956 ms  (×2^4, total 79.295 ms)
+  median: 4.956 ms    min: 4.956 ms    max: 4.956 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 68_556 kB (across 1 ok repeat(s))
+
+policy_2_9    [fixed] repeats=1
+  repeat 0  1.442 ms  (×2^6, total 92.280 ms)
+  median: 1.442 ms    min: 1.442 ms    max: 1.442 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_996 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_9, the first CLI argument):
+  policy_1_9: 1.000× (4.956 ms)
+  policy_2_9: 0.291× (1.442 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=1 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:19Z, host=chungus2
+policy_2_9    [fixed] repeats=1
+  repeat 0  1.453 ms  (×2^6, total 92.980 ms)
+  median: 1.453 ms    min: 1.453 ms    max: 1.453 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_216 kB (across 1 ok repeat(s))
+
+policy_1_9    [fixed] repeats=1
+  repeat 0  4.887 ms  (×2^4, total 78.193 ms)
+  median: 4.887 ms    min: 4.887 ms    max: 4.887 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_560 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_9, the first CLI argument):
+  policy_2_9: 1.000× (1.453 ms)
+  policy_1_9: 3.364× (4.887 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=1 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:20Z, host=chungus2
+policy_1_9    [fixed] repeats=1
+  repeat 0  4.949 ms  (×2^4, total 79.190 ms)
+  median: 4.949 ms    min: 4.949 ms    max: 4.949 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_552 kB (across 1 ok repeat(s))
+
+policy_2_9    [fixed] repeats=1
+  repeat 0  1.435 ms  (×2^6, total 91.864 ms)
+  median: 1.435 ms    min: 1.435 ms    max: 1.435 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_900 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_9, the first CLI argument):
+  policy_1_9: 1.000× (4.949 ms)
+  policy_2_9: 0.290× (1.435 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=1 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:21Z, host=chungus2
+policy_2_9    [fixed] repeats=1
+  repeat 0  1.436 ms  (×2^6, total 91.916 ms)
+  median: 1.436 ms    min: 1.436 ms    max: 1.436 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_548 kB (across 1 ok repeat(s))
+
+policy_1_9    [fixed] repeats=1
+  repeat 0  4.900 ms  (×2^4, total 78.403 ms)
+  median: 4.900 ms    min: 4.900 ms    max: 4.900 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 61_924 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_9, the first CLI argument):
+  policy_2_9: 1.000× (1.436 ms)
+  policy_1_9: 3.412× (4.900 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=1 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:22Z, host=chungus2
+policy_1_9    [fixed] repeats=1
+  repeat 0  4.996 ms  (×2^4, total 79.938 ms)
+  median: 4.996 ms    min: 4.996 ms    max: 4.996 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 61_900 kB (across 1 ok repeat(s))
+
+policy_2_9    [fixed] repeats=1
+  repeat 0  1.432 ms  (×2^6, total 91.622 ms)
+  median: 1.432 ms    min: 1.432 ms    max: 1.432 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_540 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_1_9, the first CLI argument):
+  policy_1_9: 1.000× (4.996 ms)
+  policy_2_9: 0.287× (1.432 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=1 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:23Z, host=chungus2
+policy_2_9    [fixed] repeats=1
+  repeat 0  1.438 ms  (×2^6, total 92.056 ms)
+  median: 1.438 ms    min: 1.438 ms    max: 1.438 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_344 kB (across 1 ok repeat(s))
+
+policy_1_9    [fixed] repeats=1
+  repeat 0  4.962 ms  (×2^4, total 79.386 ms)
+  median: 4.962 ms    min: 4.962 ms    max: 4.962 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 61_896 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_9, the first CLI argument):
+  policy_2_9: 1.000× (1.438 ms)
+  policy_1_9: 3.449× (4.962 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=2 block=0
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:24Z, host=chungus2
+policy_2_9    [fixed] repeats=1
+  repeat 0  1.458 ms  (×2^6, total 93.291 ms)
+  median: 1.458 ms    min: 1.458 ms    max: 1.458 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_140 kB (across 1 ok repeat(s))
+
+policy_3_9    [fixed] repeats=1
+  repeat 0  772.419 µs  (×2^7, total 98.870 ms)
+  median: 772.419 µs    min: 772.419 µs    max: 772.419 µs
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_188 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_9, the first CLI argument):
+  policy_2_9: 1.000× (1.458 ms)
+  policy_3_9: 0.530× (772.419 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=2 block=1
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:25Z, host=chungus2
+policy_3_9    [fixed] repeats=1
+  repeat 0  770.733 µs  (×2^7, total 98.654 ms)
+  median: 770.733 µs    min: 770.733 µs    max: 770.733 µs
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_372 kB (across 1 ok repeat(s))
+
+policy_2_9    [fixed] repeats=1
+  repeat 0  1.433 ms  (×2^6, total 91.723 ms)
+  median: 1.433 ms    min: 1.433 ms    max: 1.433 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_140 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_9, the first CLI argument):
+  policy_3_9: 1.000× (770.733 µs)
+  policy_2_9: 1.859× (1.433 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=2 block=2
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:26Z, host=chungus2
+policy_2_9    [fixed] repeats=1
+  repeat 0  1.436 ms  (×2^6, total 91.917 ms)
+  median: 1.436 ms    min: 1.436 ms    max: 1.436 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_136 kB (across 1 ok repeat(s))
+
+policy_3_9    [fixed] repeats=1
+  repeat 0  774.614 µs  (×2^7, total 99.151 ms)
+  median: 774.614 µs    min: 774.614 µs    max: 774.614 µs
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_224 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_9, the first CLI argument):
+  policy_2_9: 1.000× (1.436 ms)
+  policy_3_9: 0.539× (774.614 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=2 block=3
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:27Z, host=chungus2
+policy_3_9    [fixed] repeats=1
+  repeat 0  778.587 µs  (×2^7, total 99.659 ms)
+  median: 778.587 µs    min: 778.587 µs    max: 778.587 µs
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_396 kB (across 1 ok repeat(s))
+
+policy_2_9    [fixed] repeats=1
+  repeat 0  1.456 ms  (×2^6, total 93.187 ms)
+  median: 1.456 ms    min: 1.456 ms    max: 1.456 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_136 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_9, the first CLI argument):
+  policy_3_9: 1.000× (778.587 µs)
+  policy_2_9: 1.870× (1.456 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=2 block=4
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:28Z, host=chungus2
+policy_2_9    [fixed] repeats=1
+  repeat 0  1.471 ms  (×2^6, total 94.130 ms)
+  median: 1.471 ms    min: 1.471 ms    max: 1.471 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_432 kB (across 1 ok repeat(s))
+
+policy_3_9    [fixed] repeats=1
+  repeat 0  771.041 µs  (×2^7, total 98.693 ms)
+  median: 771.041 µs    min: 771.041 µs    max: 771.041 µs
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_028 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_2_9, the first CLI argument):
+  policy_2_9: 1.000× (1.471 ms)
+  policy_3_9: 0.524× (771.041 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json
+case=9 pair=2 block=5
+env: lean=4.34.0, os=linux, arch=x86_64, commit=4d09e9e-dirty, 2026-09-21T01:52:29Z, host=chungus2
+policy_3_9    [fixed] repeats=1
+  repeat 0  786.385 µs  (×2^6, total 50.329 ms)
+  median: 786.385 µs    min: 786.385 µs    max: 786.385 µs
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_196 kB (across 1 ok repeat(s))
+
+policy_2_9    [fixed] repeats=1
+  repeat 0  1.437 ms  (×2^6, total 91.942 ms)
+  median: 1.437 ms    min: 1.437 ms    max: 1.437 ms
+  hash: all repeats agree
+  observed hash: 0x3c094b1cb0d5f8e8
+  peak RSS: 62_564 kB (across 1 ok repeat(s))
+
+relative median (baseline = policy_3_9, the first CLI argument):
+  policy_3_9: 1.000× (786.385 µs)
+  policy_2_9: 1.827× (1.437 ms)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/policy/timing/current.json

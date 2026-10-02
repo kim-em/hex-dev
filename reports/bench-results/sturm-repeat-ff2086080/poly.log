@@ -1,0 +1,39 @@
+Hex.PolyBench.runPseudoGcd    expected complexity: n * n    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=ff20860-dirty, 2026-09-21T09:23:27Z, host=chungus2
+  param  per-call    repeats  C
+     16   13.306 µs  ×2^12    C=56.915 [trial 1/4] †
+     24   31.180 µs  ×2^10    C=51.508 [trial 1/4]
+     32   45.363 µs  ×2^11    C=45.679 [trial 1/4]
+     48   87.542 µs  ×2^10    C=40.895 [trial 1/4]
+     64  151.403 µs  ×2^9     C=38.203 [trial 1/4]
+     96  332.968 µs  ×2^8     C=37.358 [trial 1/4]
+     16   13.913 µs  ×2^12    C=56.915 [trial 2/4] †
+     24   27.681 µs  ×2^11    C=51.508 [trial 2/4]
+     32   44.344 µs  ×2^11    C=45.679 [trial 2/4]
+     48   85.635 µs  ×2^10    C=40.895 [trial 2/4]
+     64  160.405 µs  ×2^9     C=38.203 [trial 2/4]
+     96  312.613 µs  ×2^9     C=37.358 [trial 2/4]
+     16   15.564 µs  ×2^12    C=56.915 [trial 3/4] †
+     24   28.157 µs  ×2^11    C=51.508 [trial 3/4]
+     32   49.881 µs  ×2^11    C=45.679 [trial 3/4]
+     48  106.668 µs  ×2^9     C=40.895 [trial 3/4]
+     64  174.899 µs  ×2^9     C=38.203 [trial 3/4]
+     96  375.927 µs  ×2^8     C=37.358 [trial 3/4]
+     16   15.226 µs  ×2^12    C=56.915 [trial 4/4] †
+     24   31.474 µs  ×2^11    C=51.508 [trial 4/4]
+     32   48.187 µs  ×2^11    C=45.679 [trial 4/4]
+     48  100.903 µs  ×2^10    C=40.895 [trial 4/4]
+     64  152.550 µs  ×2^9     C=38.203 [trial 4/4]
+     96  355.622 µs  ×2^8     C=37.358 [trial 4/4]
+  verdict: inconclusive (cMin=37.358, cMax=51.508, β=-0.235, looks faster than declared by ~n^0.235)
+  per-spawn floor (harness self-measurement): 73.613 ms
+  peak RSS: 61_832 kB..68_576 kB (across 24 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread 
+       16  4/4      14.570 µs   13.306 µs   15.564 µs  15.496%
+       24  4/4      29.668 µs   27.681 µs   31.474 µs  12.785%
+       32  4/4      46.775 µs   44.344 µs   49.881 µs  11.839%
+       48  4/4      94.222 µs   85.635 µs  106.668 µs  22.322%
+       64  4/4     156.478 µs  151.403 µs  174.899 µs  15.015%
+       96  4/4     344.295 µs  312.613 µs  375.927 µs  18.389%
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-repeat-ff2086080/poly.json

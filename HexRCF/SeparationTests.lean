@@ -230,7 +230,7 @@ example : Separation.checkCmp quad replay left (Dyadic.ofInt (-1)) .lt = false :
 /-- Checked endpoint claims expose their semantic order in the kernel. -/
 example : ∃! root : ℝ, (HexRealRootsMathlib.toPolyℝ quad).IsRoot root ∧
     HexRealRootsMathlib.Literal.InInterval touching.intervals[0] root ∧
-    Separation.RootCmp.eq.Holds root (Dyadic.toReal (Dyadic.ofInt (-1))) :=
+    Separation.RootCmp.eq.Holds root (HexRealRootsMathlib.Dyadic.toReal (Dyadic.ofInt (-1))) :=
   Separation.checkCmp_sound (f := quad) (replay := replay) (cert := touching)
     (by decide) (by decide) ⟨0, by decide⟩ (Dyadic.ofInt (-1)) .eq (by decide)
 

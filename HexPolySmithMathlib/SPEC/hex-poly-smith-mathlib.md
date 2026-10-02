@@ -1,12 +1,5 @@
 # hex-poly-smith-mathlib
 
-## Correspondence-only classification
-
-This library is a `correspondence-only-layer`.
-
-Computational conformance owner: `HexPolySmith`
-Computational performance owner: `HexPolySmith`
-
 `hex-poly-smith-mathlib` is the Mathlib correspondence layer for
 `hex-poly-smith`. It depends on `hex-poly-smith`, `hex-poly-mathlib`,
 and `hex-matrix-mathlib`.
@@ -79,14 +72,11 @@ Mathlib-free `moduleStructure` projection removes them for executable output.
 
 ## Verification ownership
 
-This is a correspondence-only layer. It has no conformance module, benchmark
+This library has no conformance module, benchmark
 driver, or performance report. Runtime behavior transported by this library is
 covered by `HexPolySmith.Conformance`; performance belongs to
 `hex-poly-smith`. Building `HexPolySmithMathlib` checks every correspondence
 proof and the manual's worked use of the API.
-
-The layer's Phase 4 classification is `correspondence-only-layer`, with
-`hex-poly-smith` as its computational performance owner.
 
 ## Files
 

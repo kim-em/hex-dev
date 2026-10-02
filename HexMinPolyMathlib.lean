@@ -9,6 +9,8 @@ module
 public import HexMinPolyMathlib.Basic
 public import HexMinPolyMathlib.Order
 public import HexMinPolyMathlib.CharPoly
+public import HexMinPolyMathlib.Kernel
+public import HexMinPolyMathlib.Tactic
 
 public section
 

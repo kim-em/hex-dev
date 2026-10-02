@@ -1,0 +1,289 @@
+⚠ [3366/3397] Replayed HexMatrixMathlib.Packed
+warning: HexMatrixMathlib/Packed.lean:141:10: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: HexMatrixMathlib/Packed.lean:149:10: `if_neg` has been deprecated: Use `ite_eq_right` instead
+⚠ [3367/3397] Replayed HexMvPolyMathlib.Aeval
+warning: HexMvPolyMathlib/Aeval.lean:63:0: automatically included section variable(s) unused in theorem `HexMvPolyMathlib.eval₂_toMvPolynomial`:
+  [BEq R]
+  [LawfulBEq R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [BEq R] [LawfulBEq R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+✔ [3368/3397] Built HexKroneckerMathlib.Height (1.2s)
+✔ [3369/3397] Built HexKroneckerMathlib.Radix (1.1s)
+✔ [3370/3397] Built HexKroneckerMathlib.Injectivity (1.2s)
+✔ [3371/3397] Built HexKroneckerMathlib.Degree (1.2s)
+✔ [3372/3397] Built HexKroneckerMathlib.Preflight (1.3s)
+✔ [3373/3397] Built HexKroneckerMathlib.ExprSound (1.1s)
+✔ [3374/3397] Built HexKroneckerMathlib.Terms (1.3s)
+✔ [3375/3397] Built HexKroneckerMathlib.Bounds (1.1s)
+✔ [3376/3397] Built HexKroneckerMathlib.Translate (1.2s)
+✔ [3377/3397] Built HexKroneckerMathlib.TermsSound (1.1s)
+✔ [3378/3397] Built HexKroneckerMathlib.Tactic (1.8s)
+✔ [3379/3397] Built HexKroneckerMathlib.ModSound (1.2s)
+✔ [3380/3397] Built HexKroneckerMathlib.Residue (1.2s)
+✔ [3381/3397] Built HexKroneckerMathlib.MatrixModel (1.4s)
+✔ [3382/3397] Built HexKroneckerMathlib.MatrixBounds (1.2s)
+✔ [3383/3397] Built HexKroneckerMathlib.CommonBounds (1.4s)
+✔ [3384/3397] Built HexKroneckerMathlib.MatrixEval (1.3s)
+✔ [3385/3397] Built HexKroneckerMathlib.MulSound (1.4s)
+✔ [3386/3397] Built HexKroneckerMathlib.MatrixDenote (1.3s)
+✔ [3387/3397] Built HexKroneckerMathlib.MatrixQuotient (1.3s)
+✔ [3388/3397] Built HexKroneckerMathlib.MulModSound (1.5s)
+✔ [3389/3397] Built HexKroneckerMathlib (1.2s)
+ℹ [3390/3397] Built HexKroneckerMathlib.Tests (1.5s)
+info: HexKroneckerMathlib/Tests.lean:48:0: '_private.HexKroneckerMathlib.Tests.0.cubeUniform' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: HexKroneckerMathlib/Tests.lean:49:0: '_private.HexKroneckerMathlib.Tests.0.frobeniusSeven' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: HexKroneckerMathlib/Tests.lean:50:0: 'Hex.Kronecker.checkExprEq_sound' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: HexKroneckerMathlib/Tests.lean:51:0: 'Hex.Kronecker.checkTermsEq_sound' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: HexKroneckerMathlib/Tests.lean:52:0: 'Hex.Kronecker.checkMulTerms_sound' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: HexKroneckerMathlib/Tests.lean:53:0: 'Hex.Kronecker.checkExprEqMod_sound' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: HexKroneckerMathlib/Tests.lean:54:0: 'Hex.Kronecker.checkTermsEqMod_sound' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: HexKroneckerMathlib/Tests.lean:55:0: 'Hex.Kronecker.checkMulTermsMod_sound' depends on axioms: [propext, Classical.choice, Quot.sound]
+✔ [3392/3397] Built HexKroneckerMathlib.ProofProbe.DetN4K3D1Construction (1.9s)
+✔ [3393/3397] Built HexKroneckerMathlib.ProofProbe.GridK3D8Construction (3.1s)
+ℹ [3394/3397] Built HexKroneckerMathlib.ProofProbe.DetN4K3D1Kronecker (1.9s)
+info: bench/HexKroneckerMathlib/ProofProbe/DetN4K3D1Kronecker.lean:17:0: 'KroneckerProbe.DetN4K3D1.Kronecker.result' depends on axioms: [propext, Classical.choice, Quot.sound]
+ℹ [3395/3397] Built HexKroneckerMathlib.ProofProbe.GridK3D8TacticProfile (1.6s)
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:10:0: overlappingInstancesLinter took 0.226ms
+tacticAnalysis took 1.41ms
+linting took 13.1ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:11:0: elaboration took 0.021ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:11:0: overlappingInstancesLinter took 0.419ms
+tacticAnalysis took 0.532ms
+linting took 14.2ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:12:0: elaboration took 0.00986ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:12:0: overlappingInstancesLinter took 0.22ms
+tacticAnalysis took 1.4ms
+linting took 13ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:13:0: elaboration took 0.278ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:13:0: overlappingInstancesLinter took 0.13ms
+tacticAnalysis took 1.11ms
+linting took 13.4ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:15:0: elaboration took 0.0987ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:15:0: overlappingInstancesLinter took 0.301ms
+tacticAnalysis took 0.733ms
+linting took 13.4ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:16:0: attribute application took 0.00592ms
+instantiate metavars took 0.00398ms
+instantiate metavars took 0.000481ms
+let-to-have transformation took 0.00513ms
+attribute application took 0.00161ms
+attribute application took 0.000601ms
+elaboration took 0.786ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:16:0: tactic execution of Lean.Parser.Tactic.unfold took 0.283ms
+typeclass inference of CommRing took 0.126ms
+sym typeclass inference of HPow took 0.00109ms
+sym typeclass inference of HAdd took 0.000661ms
+sym typeclass inference of OfNat took 0.084ms
+sym canon took 0.715ms
+sym canon took 0.000621ms
+sym typeclass inference of Lean.Grind.CommRing took 0.0291ms
+sym typeclass inference of Lean.Grind.IsCharP took 0.155ms
+sym typeclass inference of Lean.Grind.NatModule took 0.093ms
+sym typeclass inference of Lean.Grind.NoNatZeroDivisors took 0.658ms
+sym typeclass inference of Lean.Grind.Field took 0.184ms
+sym typeclass inference of Lean.Grind.CommRing took 0.00532ms
+sym typeclass inference of HPow took 0.000641ms
+sym typeclass inference of HPow took 0.000411ms
+sym canon took 0.0153ms
+sym typeclass inference of HAdd took 0.000331ms
+sym canon took 0.00481ms
+sym canon took 0.000481ms
+sym canon took 0.00039ms
+sym canon took 0.00016ms
+sym typeclass inference of HMul took 0.000581ms
+sym typeclass inference of OfNat took 0.0549ms
+sym typeclass inference of OfNat took 0.0216ms
+sym typeclass inference of OfNat took 0.0161ms
+sym typeclass inference of OfNat took 0.0148ms
+sym typeclass inference of OfNat took 0.0135ms
+sym typeclass inference of OfNat took 0.0134ms
+sym typeclass inference of OfNat took 0.0141ms
+sym typeclass inference of OfNat took 0.0138ms
+sym typeclass inference of OfNat took 0.0144ms
+sym typeclass inference of OfNat took 0.0142ms
+sym typeclass inference of OfNat took 0.0135ms
+sym typeclass inference of OfNat took 0.0165ms
+sym typeclass inference of OfNat took 0.0237ms
+sym typeclass inference of OfNat took 0.0244ms
+sym canon took 0.998ms
+sym canon took 0.000531ms
+sym typeclass inference of Lean.Grind.CommRing took 0.00532ms
+sym canon took 0.000661ms
+sym typeclass inference of HMul took 0.00047ms
+sym canon took 0.00559ms
+sym canon took 0.000431ms
+sym canon took 0.00015ms
+sym canon took 0.00016ms
+sym canon took 0.00014ms
+sym canon took 0.000151ms
+sym canon took 0.00015ms
+sym canon took 0.00016ms
+sym canon took 0.00015ms
+sym canon took 0.00014ms
+sym canon took 0.000761ms
+sym canon took 0.000151ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.000141ms
+sym canon took 0.00015ms
+sym canon took 0.000151ms
+sym canon took 0.00019ms
+sym canon took 0.000151ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.000161ms
+sym canon took 0.00036ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00014ms
+sym canon took 0.00014ms
+sym canon took 0.00015ms
+sym canon took 0.00016ms
+sym canon took 0.00016ms
+sym canon took 0.00046ms
+sym canon took 0.00017ms
+sym canon took 0.00017ms
+sym canon took 0.000151ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.000151ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00014ms
+sym canon took 0.00015ms
+sym canon took 0.00014ms
+sym canon took 0.000151ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00019ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00018ms
+sym canon took 0.00015ms
+sym canon took 0.000151ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.000151ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00016ms
+sym canon took 0.000171ms
+sym canon took 0.00017ms
+sym canon took 0.00015ms
+sym canon took 0.00016ms
+sym canon took 0.00014ms
+sym canon took 0.000161ms
+sym canon took 0.00014ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00016ms
+sym canon took 0.00015ms
+sym canon took 0.000161ms
+sym canon took 0.00015ms
+sym canon took 0.00016ms
+sym canon took 0.000161ms
+sym canon took 0.000151ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00017ms
+sym canon took 0.000151ms
+sym canon took 0.00015ms
+sym canon took 0.00016ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00014ms
+sym canon took 0.000151ms
+sym canon took 0.00014ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.00014ms
+sym canon took 0.00015ms
+sym canon took 0.00016ms
+sym canon took 0.00015ms
+sym canon took 0.00015ms
+sym canon took 0.000151ms
+sym canon took 0.00015ms
+type checking took 109ms
+tactic execution of HexKroneckerMathlib.kroneckerTac took 30.6ms
+tactic execution of Lean.Parser.Tactic.tacticSeq1Indented took 0.0337ms
+tactic execution of Lean.Parser.Tactic.tacticSeq took 0.0199ms
+instantiate metavars took 0.00932ms
+instantiate metavars took 0.00021ms
+instantiate metavars took 0.00015ms
+instantiate metavars took 0.00013ms
+instantiate metavars took 0.000131ms
+share common exprs took 0.028ms
+fix level params took 0.00971ms
+let-to-have transformation took 0.00379ms
+attribute application took 0.00373ms
+attribute application took 0.000661ms
+process pre-definitions took 0.126ms
+elaboration took 0.418ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:16:8: type checking took 0.379ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:16:0: overlappingInstancesLinter took 0.504ms
+tacticAnalysis took 0.633ms
+linting took 2.51ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:19:0: 'KroneckerProbe.GridK3D8.TacticProfile.result' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:19:0: elaboration took 144ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:19:0: overlappingInstancesLinter took 0.0637ms
+tacticAnalysis took 0.331ms
+linting took 2.43ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:20:0: elaboration took 0.127ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:20:0: overlappingInstancesLinter took 0.0932ms
+tacticAnalysis took 0.418ms
+linting took 2.51ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:21:0: elaboration took 0.0176ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8TacticProfile.lean:21:0: overlappingInstancesLinter took 0.0899ms
+tacticAnalysis took 0.41ms
+linting took 2.47ms
+module linting took 0.00174ms
+info: stderr:
+parsing took 0.00712ms
+parsing took 0.00495ms
+parsing took 0.0362ms
+parsing took 0.00894ms
+parsing took 0.127ms
+parsing took 0.0342ms
+parsing took 0.038ms
+parsing took 0.00107ms
+.olean serialization took 52.4ms
+cumulative profiling times:
+	.olean serialization 52.4ms
+	attribute application 0.0116ms
+	elaboration 146ms
+	fix level params 0.00959ms
+	instantiate metavars 0.013ms
+	let-to-have transformation 0.00815ms
+	linting 90.1ms
+	module linting 0.00151ms
+	overlappingInstancesLinter 2.25ms
+	parsing 0.277ms
+	process pre-definitions 0.126ms
+	share common exprs 0.0273ms
+	sym canon 1.75ms
+	sym typeclass inference 1.48ms
+	tactic execution 30.9ms
+	tacticAnalysis 8.45ms
+	type checking 109ms
+	typeclass inference 0.125ms
+✔ [3396/3397] Built HexKroneckerMathlib.ProofProbe.GridK4D8Construction (36s)
+ℹ [3397/3397] Built HexKroneckerMathlib.ProofProbe.GridK4D8Kronecker (2.6s)
+info: bench/HexKroneckerMathlib/ProofProbe/GridK4D8Kronecker.lean:17:0: 'KroneckerProbe.GridK4D8.Kronecker.result' depends on axioms: [propext, Classical.choice, Quot.sound]
+Build completed successfully (3397 jobs).

@@ -22,7 +22,7 @@ inductive Allocation where
 
 private def allocationBudget : Allocation → PrimeCertBudget
   | .production => defaultPrimeCertBudget
-  | .elaboration => ⟨2, 1 <<< 15⟩
+  | .elaboration => ⟨2, 1 <<< 15, .off⟩
 
 private structure Observation where
   outcome : String

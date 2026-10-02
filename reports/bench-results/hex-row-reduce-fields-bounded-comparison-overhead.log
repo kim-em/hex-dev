@@ -1,0 +1,12 @@
+Hex.RowReduceBench.runFlintOverhead    [fixed] repeats=4
+  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=9c14175-dirty, 2026-09-12T21:57:01Z, host=chungus2
+  repeat 0  13.738 µs  (×2^14, total 225.092 ms)
+  repeat 1  13.828 µs  (×2^14, total 226.567 ms)
+  repeat 2  15.699 µs  (×2^14, total 257.222 ms)
+  repeat 3  16.152 µs  (×2^14, total 264.640 ms)
+  median: 15.699 µs    min: 13.738 µs    max: 16.152 µs
+  hash: all repeats agree
+  observed hash: 0x0
+  expected hash: matches
+  peak RSS: 68_644 kB..68_720 kB (across 4 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-overhead.json

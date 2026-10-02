@@ -1,0 +1,6 @@
+{
+  "path": "HexBareiss/Kernel.lean",
+  "baseline_blob": null,
+  "current_blob": "0f54e50e7192f5005537fcab7e3d4ba2ba2045cb",
+  "reason": "Generalizes the determinant-tactic witness and retained-transform producer; the integer detWitnessOfLists wrapper still instantiates integer arithmetic. None of detWitnessWith, detWitnessOfLists, detWitness, or the list/packed determinant certificate checkers is called by HexBerlekampZassenhaus, HexPolyZ, HexLLL, HexResultant, or bench/HexBench/FactorService. The broad factorization source manifest includes this module although its certificate API is outside the measured factorization call graph. Existing Bareiss determinant implementations and factorization declarations are unchanged."
+}

@@ -59,7 +59,16 @@ theorem ratRecon?_complete {a P Q : Int} {m : Nat} {y : Rat}
     (hy : (Int.ofNat y.den * a - y.num) % (m : Int) = 0)
     (hb : (y.num.natAbs : Int) ≤ P ∧ (y.den : Int) ≤ Q) :
     ratRecon? a m P Q = some y
+
+theorem ratReconVec?_complete {a y : Vector Int k} {m : Nat} {P Q d : Int}
+    (hm : 2 * P * Q < (m : Int)) (hP : 0 ≤ P) (hd : 0 < d) (hdQ : d ≤ Q)
+    (hy : ∀ i : Fin k, (d * a[i] - y[i]) % (m : Int) = 0 ∧ (y[i].natAbs : Int) ≤ P)
+    (hred : ∀ g : Int, (∀ i : Fin k, g ∣ y[i]) → g ∣ d → g ∣ 1) :
+    ratReconVec? a m P Q = some (y, d)
 ```
+
+The vector form is complete for pairs reduced as a whole; the SPEC records
+why that hypothesis is needed at composite moduli.
 
 The executable library is Mathlib-free. Correspondence with `ZMod`,
 Mathlib's Chinese remainder API, and `ℚ` belongs in

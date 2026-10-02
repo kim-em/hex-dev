@@ -1,0 +1,12 @@
+Hex.RowReduceBench.runFlintOverhead    [fixed] repeats=4
+  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=1f10e6e-dirty, 2026-09-12T21:26:04Z, host=chungus2
+  repeat 0  15.048 µs  (×2^14, total 246.556 ms)
+  repeat 1  13.303 µs  (×2^14, total 217.971 ms)
+  repeat 2  15.892 µs  (×2^14, total 260.386 ms)
+  repeat 3  13.173 µs  (×2^14, total 215.832 ms)
+  median: 15.048 µs    min: 13.173 µs    max: 15.892 µs
+  hash: all repeats agree
+  observed hash: 0x0
+  expected hash: matches
+  peak RSS: 62_568 kB..65_640 kB (across 4 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-cached-overhead.json

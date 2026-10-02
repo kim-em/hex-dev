@@ -1,0 +1,33 @@
+{
+  "cpu": 65,
+  "host": "chungus2",
+  "start": "2026-09-21T14:25:44.023322+00:00",
+  "load_start": [
+    3.28466796875,
+    3.6044921875,
+    4.32470703125
+  ],
+  "git_head": "205086d53f598fff1576ed7e7d87b00666baeee0",
+  "git_status": " M HexRealRootsMathlib/TarskiCount.lean\n M HexRealRootsMathlib/TarskiSum.lean\n M bench/HexSturm/Bench.lean\n M conformance/HexRealRootsMathlib/Conformance.lean\nD  reports/bench-results/sturm-query-bit-cost-wide/fixtures.jsonl\nD  reports/bench-results/sturm-query-bit-cost/fixtures.jsonl\n M reports/hex-sturm-performance.md\n M reports/sturm-bit-cost-models.md\n M scripts/bench/sturm_axes.py\n?? reports/bench-results/sturm-bit-cost-formulas/\n?? reports/bench-results/sturm-query-bit-cost-large/\n?? reports/bench-results/sturm-replay-bit-cost/\n?? reports/bench-results/sturm-replay-iterations/\n?? reports/bench-results/sturm-replay-profile/\n?? scripts/bench/sturm_bit_costs.py\n",
+  "binary_sha256": "c6c62672ed3e757c3ec6b6dcb2ff5245cc4393e45d8397168ced87bfa67ab409",
+  "source_sha256": "40c05a15ff9942d513597633f3378f83563add63b2c8b6653c1778387d5d0e3c",
+  "commands": [
+    {
+      "argv": [
+        "/tmp/hexsturm-allocation-cost",
+        "run",
+        "Hex.SturmBench.runRationalHigh",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-rational-bit-cost/rational-bits.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "derivation_sha256": "4b913fe4c19a42f7e47eb515e0e32499bbe9576117a7d95bbd76067069cb8369",
+  "end": "2026-09-21T14:36:25.646486+00:00",
+  "load_end": [
+    4.3623046875,
+    4.59130859375,
+    4.63330078125
+  ]
+}

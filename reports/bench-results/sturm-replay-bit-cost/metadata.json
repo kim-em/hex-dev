@@ -1,0 +1,33 @@
+{
+  "cpu": 87,
+  "host": "chungus2",
+  "start": "2026-09-21T14:09:19.519158+00:00",
+  "load_start": [
+    4.4384765625,
+    5.302734375,
+    5.00048828125
+  ],
+  "git_head": "205086d53f598fff1576ed7e7d87b00666baeee0",
+  "git_status": "?? reports/bench-results/sturm-query-bit-cost-large/\n",
+  "binary_sha256": "1ed06d59972edffef1195f8a41cc01330ca2c54ffdfb873ea756375f6b961f2c",
+  "source_sha256": "49752bd22e83aa26d86d728373768ac584c9cbbf09f6666ceab21e33a70c7ac7",
+  "commands": [
+    {
+      "argv": [
+        "/tmp/hexsturm-replay-bit-cost",
+        "run",
+        "Hex.SturmBench.runReplay",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-replay-bit-cost/replay-bits.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "derivation_sha256": "9b94f47cc47dfc7f8e5777ac9dacd0d7e33df542b6c19447c4bd2337d9b66dfc",
+  "end": "2026-09-21T14:14:55.126053+00:00",
+  "load_end": [
+    5.6025390625,
+    5.61279296875,
+    5.259765625
+  ]
+}

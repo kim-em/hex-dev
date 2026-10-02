@@ -1,0 +1,13 @@
+diff --git a/HexRank/Produce.lean b/HexRank/Produce.lean
+index 2fcd8cc5e..24a4d7193 100644
+--- a/HexRank/Produce.lean
++++ b/HexRank/Produce.lean
+@@ -6,7 +6,7 @@ Authors: Kim Morrison
+ 
+ module
+ 
+-public import HexRank.Reduce
++public import HexRank.ReduceImpl
+ 
+ public section
+ 

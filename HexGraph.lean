@@ -7,11 +7,12 @@ Authors: Kim Morrison
 module
 
 public import HexGraph.Basic
+public import HexGraph.Sparse.Relabel
 
 public section
 
 /-!
-`HexGraph` provides finite simple undirected graphs on `Fin n` with
+`HexGraph` provides dense and sparse finite simple undirected graphs on `Fin n` with
 executable symmetric irreflexive adjacency, a checked edge-list builder,
 neighbour arrays, and relabelling. The library is Mathlib-free.
 -/

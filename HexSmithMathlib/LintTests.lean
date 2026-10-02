@@ -17,8 +17,7 @@ This file intentionally uses legacy file syntax rather than `module`. Imported
 docstring metadata is not available to the linter through module imports,
 which would make every imported declaration appear undocumented.
 
-The run covers the Mathlib-free implementation and its correspondence-only
-Mathlib layer. Batteries' default linter set includes `docBlame`; the local
+The run covers the Mathlib-free implementation and its Mathlib companion. Batteries' default linter set includes `docBlame`; the local
 theorem linter below makes theorem docstring coverage build-enforced too.
 -/
 

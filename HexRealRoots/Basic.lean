@@ -57,16 +57,43 @@ def dyadicSign : Dyadic → Int
 
 namespace ZPoly
 
+/-- One Horner operation on an unnormalized numerator and binary precision.
+The pair `(a, k)` represents `a * 2^(-k)`. Zero accumulators discard the
+precision, so constants and exact cancellations do not shift by an unused
+endpoint exponent. Zero coefficients retain the signed precision without
+materializing powers of two, including at enormous integral endpoints. -/
+@[expose] def hornerDyadic (n e c : Int) (acc : Int × Int) : Int × Int :=
+  if acc.1 = 0 then (c, 0)
+  else
+    let k := acc.2 + e
+    if c = 0 then (n * acc.1, k)
+    else if 0 ≤ k then ((c <<< k.toNat) + n * acc.1, k)
+    else (c + ((n * acc.1) <<< (-k).toNat), 0)
+
 /-- Evaluate an integer polynomial at a dyadic point by Horner's rule,
 returning an exact `Dyadic` value.
 
-This is exact witness arithmetic: a plain fold over the coefficient
-array with no rounding, so the sign of `p(x)` at a dyadic `x` is exact.
-Coefficients are stored in ascending degree order, so folding from the
-right accumulates `c₀ + x·(c₁ + x·(⋯ + x·cₙ))`. -/
+At integer points, the array fold carries an integer numerator and binary
+precision, normalizing only the final result. At fractional points, ordinary
+dyadic arithmetic normalizes intermediate values to avoid accumulating
+cancellable powers of two.
+Coefficients are stored in ascending degree order. -/
 @[expose]
 def evalDyadic (p : ZPoly) (x : Dyadic) : Dyadic :=
-  p.toArray.foldr (fun c acc => Dyadic.ofInt c + x * acc) 0
+  let (n, e) := match x with
+    | .zero => (0, 0)
+    | .ofOdd n e _ => (n, e)
+  -- TODO: When the toolchain includes the fix for https://github.com/leanprover/lean4/issues/15264,
+  -- verify that Dyadic.ofIntWithPrec uses the faster trailing-zero counter.
+  -- On that toolchain, compare this split with normalized Horner at all points
+  -- using Hex.RealRootsBench.runCancellation and Hex.SturmBench.runReplay; simplify
+  -- if the integer specialization no longer helps. Keep intermediate fractional
+  -- normalization: a faster final count alone does not prevent numerator growth.
+  if 0 < e then
+    p.toArray.foldr (fun c acc => Dyadic.ofInt c + x * acc) 0
+  else
+    let (a, k) := p.toArray.foldr (hornerDyadic n e) (0, 0)
+    Dyadic.ofIntWithPrec a k
 
 end ZPoly
 

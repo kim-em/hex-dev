@@ -1,0 +1,12 @@
+{
+  "python": "/tmp/hexvenv/bin/python",
+  "matplotlib": "3.11.1",
+  "numpy": "2.5.3",
+  "LD_LIBRARY_PATH": "/nix/store/chqq8mpmpyfi9kgsngya71akv5xicn03-gcc-15.2.0-lib/lib",
+  "families": [
+    "dense-full-rank",
+    "low-rank-large-coefficients",
+    "rank-deficient-by-construction",
+    "polynomial"
+  ]
+}

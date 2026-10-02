@@ -1,0 +1,32 @@
+{
+  "command": [
+    "taskset",
+    "-c",
+    "0",
+    "perf",
+    "record",
+    "-q",
+    "-e",
+    "cycles:u",
+    "-F",
+    "999",
+    "-o",
+    "/tmp/sparse-after-tree1024-run.data",
+    "--",
+    "/tmp/hex-sparse-perf-baseline/iteration",
+    "/tmp/hex-sparse-corpus/tree1024.graph",
+    "run",
+    "51"
+  ],
+  "cpu": 0,
+  "binary_sha256": "60e859234a52808392fc28374ecd12ea70a915fc35afe601c25eb7a12822aa5c",
+  "started": 1788931412.5832338,
+  "load_after": [
+    0.71826171875,
+    1.2783203125,
+    2.5185546875
+  ],
+  "stdout": "{\"elapsed_ns\":2640324288,\"iterations\":51,\"mode\":\"run\",\"name\":\"tree1024\",\"ns_per_iteration\":51771064,\"sink\":1844348}\n",
+  "stderr": "",
+  "returncode": 0
+}

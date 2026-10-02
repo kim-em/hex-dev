@@ -3,20 +3,77 @@ from __future__ import annotations
 import sys
 import tempfile
 import unittest
-from collections import OrderedDict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from check_dag import (
-    check_correspondence_only,
+    check_adapter_imports,
     check_sealed_import_all,
     import_roots,
     import_closure_in_library,
     parse_imports,
 )
 from check_phase4 import check_headline_reports
-from libgraph import LibraryInfo, load_libraries
+from libgraph import (load_libraries, library_owner_for_path, may_import,
+                      reachable_dependencies)
+
+
+class AdapterOwnershipTest(unittest.TestCase):
+    def test_development_adapter_keeps_library_owner(self) -> None:
+        libraries = load_libraries()
+        self.assertEqual(
+            library_owner_for_path(Path("adapters/HexRCF/RealFormula.lean"), libraries),
+            "HexRCF",
+        )
+
+    def test_adapter_imports_do_not_expand_base_or_published_closure(self) -> None:
+        libraries = load_libraries()
+        closure = reachable_dependencies(libraries)
+        for dependency in ["HexRealAlgebraicMathlib", "HexNumberFieldMathlib"]:
+            self.assertTrue(may_import("HexRCF", dependency, libraries, closure, adapter=True))
+            self.assertFalse(may_import("HexRCF", dependency, libraries, closure))
+            self.assertNotIn(dependency, closure["HexRCF"])
+        self.assertFalse(may_import("HexPoly", "HexNumberFieldMathlib", libraries, closure,
+                                    adapter=True))
+        self.assertFalse(may_import("HexRCF", "HexGraphIso", libraries, closure, adapter=True))
+
+    def test_adapter_dependencies_must_exist(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = Path(directory) / "libraries.yml"
+            manifest.write_text("libraries:\n  HexCore:\n    deps: []\n"
+                                "    adapter_deps: [HexMissing]\n    mathlib: false\n"
+                                "    done_through: 0\n    status: active\n")
+            with self.assertRaisesRegex(ValueError, "unknown library HexMissing"):
+                load_libraries(manifest)
+
+
+class AdapterImportBoundaryTest(unittest.TestCase):
+    def test_library_imports_cannot_reach_adapters(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            sources = {
+                "adapters/HexCore/Optional.lean": "",
+                "HexCore.lean": "public import HexCore.Optional\n",
+                "HexCore/Proof.lean": "public meta import HexCore.Optional\n",
+                "HexCore/Private.lean": "private import all HexCore.Optional -- hidden facet\n",
+                "HexCore/Many.lean": "import HexCore.Safe HexCore.Optional\n",
+                "HexOther/Use.lean": "import HexCore.Optional\n",
+                "adapters/HexOther/Use.lean": "import HexCore.Optional\n",
+                "conformance/HexCore/Use.lean": "import HexCore.Optional\n",
+                "HexManual/Use.lean": "import HexCore.Optional\n",
+                "HexCore/Safe.lean": "import Mathlib.Basic\n",
+            }
+            for name, text in sources.items():
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(text)
+            errors = check_adapter_imports(root, list(map(Path, sources)),
+                                           {"HexCore", "HexOther", "HexManual"})
+            self.assertEqual(len(errors), 5)
+            self.assertTrue(all("development adapter HexCore.Optional" in e for e in errors))
+            self.assertFalse(any(e.startswith(("adapters/", "conformance/", "HexManual/"))
+                                 for e in errors))
 
 
 class MetaImportTest(unittest.TestCase):
@@ -141,311 +198,29 @@ class SealedImportAllTest(unittest.TestCase):
             )
 
 
-class CorrespondenceOnlyTest(unittest.TestCase):
-    def write_manifest(self, root: Path, bridge_fields: str) -> Path:
-        path = root / "libraries.yml"
-        path.write_text(
+class HeadlineReportTest(unittest.TestCase):
+    def write_manifest(self, root: Path, mathlib: bool) -> None:
+        (root / "libraries.yml").write_text(
             "libraries:\n"
-            "  HexCore:\n"
+            "  HexFoo:\n"
             "    deps: []\n"
-            "    mathlib: false\n"
-            "    done_through: 3\n"
-            "    status: active\n"
-            "  HexBridge:\n"
-            "    deps: [HexCore]\n"
-            "    mathlib: true\n"
-            f"{bridge_fields}",
+            f"    mathlib: {'true' if mathlib else 'false'}\n"
+            "    done_through: 4\n"
+            "    status: active\n",
             encoding="utf-8",
         )
-        return path
 
-    def test_registry_accepts_legal_classification(self) -> None:
+    def test_compiled_library_needs_report(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            manifest = self.write_manifest(
-                root,
-                "    correspondence_only: true\n"
-                "    done_through: 4\n"
-                "    status: active\n",
-            )
-            self.assertTrue(load_libraries(manifest)["HexBridge"].correspondence_only)
-
-    def test_registry_rejects_incompatible_classification(self) -> None:
-        cases = {
-            "non-mathlib": (
-                "    correspondence_only: true\n"
-                "    done_through: 4\n"
-                "    status: active\n",
-                "declares correspondence_only but mathlib is false",
-            ),
-            "proof probes": (
-                "    correspondence_only: true\n"
-                "    proof_probes: [bench/HexBridge/ProofProbe]\n"
-                "    done_through: 4\n"
-                "    status: active\n",
-                "declares correspondence_only and proof_probes",
-            ),
-            "phase4": (
-                "    correspondence_only: true\n"
-                "    done_through: 4\n"
-                "    status: active\n"
-                "    phase4:\n"
-                "      input_families:\n"
-                "        - name: owned\n"
-                "          description: owned surface\n",
-                "declares correspondence_only and a phase4 block",
-            ),
-        }
-        for label, (fields, message) in cases.items():
-            with self.subTest(label=label), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                manifest = self.write_manifest(root, fields)
-                if label == "non-mathlib":
-                    text = manifest.read_text(encoding="utf-8")
-                    manifest.write_text(
-                        text.replace(
-                            "  HexBridge:\n    deps: [HexCore]\n    mathlib: true",
-                            "  HexBridge:\n    deps: [HexCore]\n    mathlib: false",
-                        ),
-                        encoding="utf-8",
-                    )
-                with self.assertRaisesRegex(ValueError, message):
-                    load_libraries(manifest)
-
-    def correspondence_tree(
-        self, root: Path, *, bridge_phase: int = 4, owner_report: bool = True
-    ) -> OrderedDict[str, LibraryInfo]:
-        (root / "lakefile.lean").write_text("", encoding="utf-8")
-        core_conformance = root / "conformance" / "HexCore"
-        core_conformance.mkdir(parents=True)
-        (core_conformance / "Conformance.lean").write_text("", encoding="utf-8")
-        reports = root / "reports"
-        reports.mkdir()
-        if owner_report:
-            (reports / "hex-core-performance.md").write_text("", encoding="utf-8")
-        spec_dir = root / "HexBridge" / "SPEC"
-        spec_dir.mkdir(parents=True)
-        (spec_dir / "hex-bridge.md").write_text(
-            "# bridge\n\n"
-            "`correspondence-only-layer`\n\n"
-            "Computational conformance owner: `HexCore`\n"
-            "Computational performance owner: `HexCore`\n",
-            encoding="utf-8",
-        )
-        return OrderedDict(
-            HexCore=LibraryInfo("HexCore", (), False, 4, "active"),
-            HexBridge=LibraryInfo(
-                "HexBridge", ("HexCore",), True, bridge_phase, "active",
-                correspondence_only=True,
-            ),
-        )
-
-    def test_planned_correspondence_uses_central_spec_without_runtime_files(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            (root / "lakefile.lean").write_text("", encoding="utf-8")
-            spec = root / "SPEC/Libraries/hex-bridge.md"
-            spec.parent.mkdir(parents=True)
-            spec.write_text(
-                "# Planned correspondence\n\n"
-                "correspondence-only-layer\n\n"
-                "Computational conformance owner: `HexCore`\n"
-                "Computational performance owner: `HexCore`\n",
-                encoding="utf-8",
-            )
-            libraries = OrderedDict(
-                HexCore=LibraryInfo("HexCore", (), False, 0, "planned"),
-                HexBridge=LibraryInfo(
-                    "HexBridge", ("HexCore",), True, 0, "planned",
-                    correspondence_only=True,
-                ),
-            )
-            self.assertEqual(
-                check_correspondence_only(root, libraries, root / "lakefile.lean"), []
-            )
-            spec.write_text("# Missing owner declarations\n", encoding="utf-8")
-            errors = check_correspondence_only(root, libraries, root / "lakefile.lean")
-            self.assertTrue(any("does not declare correspondence-only-layer" in e for e in errors))
-            self.assertTrue(any("does not identify computational conformance owners" in e for e in errors))
-            spec.unlink()
-            errors = check_correspondence_only(root, libraries, root / "lakefile.lean")
-            self.assertTrue(any("has 0 library SPECs" in e for e in errors))
-
-    def test_phase3_accepts_performance_owner_without_report(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            libraries = self.correspondence_tree(
-                root, bridge_phase=3, owner_report=False
-            )
-            self.assertEqual(
-                check_correspondence_only(root, libraries, root / "lakefile.lean"), []
-            )
-
-    def test_phase4_rejects_performance_owner_without_report(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            libraries = self.correspondence_tree(root, owner_report=False)
-            errors = check_correspondence_only(
-                root, libraries, root / "lakefile.lean"
-            )
-            self.assertTrue(
-                any("without a headline report" in error for error in errors), errors
-            )
-
-    def test_phase4_accepts_performance_owner_with_report(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            libraries = self.correspondence_tree(root)
-            self.assertEqual(
-                check_correspondence_only(root, libraries, root / "lakefile.lean"), []
-            )
-
-    def test_repository_state_rejects_owned_targets_and_bad_spec(self) -> None:
-        cases = {
-            "conformance": (
-                Path("conformance/HexBridge/Conformance.lean"),
-                "owns conformance source conformance/HexBridge/Conformance.lean",
-            ),
-            "named conformance": (
-                Path("conformance/HexBridge/TransportConformance.lean"),
-                "owns conformance source conformance/HexBridge/TransportConformance.lean",
-            ),
-            "bench": (
-                Path("bench/HexBridge/Bench.lean"),
-                "owns bench source bench/HexBridge/Bench.lean",
-            ),
-        }
-        for label, (relative, message) in cases.items():
-            with self.subTest(label=label), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                libraries = self.correspondence_tree(root)
-                path = root / relative
-                path.parent.mkdir(parents=True)
-                path.write_text("", encoding="utf-8")
-                errors = check_correspondence_only(root, libraries, root / "lakefile.lean")
-                self.assertTrue(any(message in error for error in errors), errors)
-
-        lake_cases = {
-            "conformance target": (
-                "lean_lib HexConformance where\n"
-                "  globs := #[`HexBridge.TransportConformance].map Glob.one\n",
-                "a Lake target names an owned conformance module",
-            ),
-            "benchmark executable": (
-                "lean_exe hexbridge_bench where\n"
-                "  srcDir := \"bench\"\n"
-                "  root := `Other.Main\n",
-                "owns compiled benchmark target hexbridge_bench",
-            ),
-            "benchmark module": (
-                "lean_lib Other where\n"
-                "  globs := #[`HexBridge.Bench].map Glob.one\n",
-                "a Lake target names HexBridge.Bench",
-            ),
-        }
-        for label, (lake_text, message) in lake_cases.items():
-            with self.subTest(label=label), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                libraries = self.correspondence_tree(root)
-                lakefile = root / "lakefile.lean"
-                lakefile.write_text(lake_text, encoding="utf-8")
-                errors = check_correspondence_only(root, libraries, lakefile)
-                self.assertTrue(any(message in error for error in errors), errors)
-
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            libraries = self.correspondence_tree(root)
-            runtime_test = root / "HexBridge/RuntimeTests.lean"
-            runtime_test.write_text("#guard true\n", encoding="utf-8")
-            lakefile = root / "lakefile.lean"
-            lakefile.write_text(
-                "lean_lib HexReleaseTests where\n"
-                "  globs := #[`HexBridge.RuntimeTests].map Glob.one\n",
-                encoding="utf-8",
-            )
-            errors = check_correspondence_only(root, libraries, lakefile)
-            self.assertTrue(
-                any(
-                    "build-only module HexBridge.RuntimeTests contains a runtime check"
-                    in error
-                    for error in errors
-                ),
-                errors,
-            )
-
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            libraries = self.correspondence_tree(root)
-            spec = root / "HexBridge/SPEC/hex-bridge.md"
-            spec.write_text("# bridge\n", encoding="utf-8")
-            errors = check_correspondence_only(root, libraries, root / "lakefile.lean")
-            self.assertTrue(any("does not declare correspondence-only-layer" in e for e in errors))
-            self.assertTrue(any("does not identify computational conformance owners" in e for e in errors))
-            self.assertTrue(any("does not identify computational performance owners" in e for e in errors))
-
-    def test_repository_state_rejects_invalid_owners(self) -> None:
-        cases = {
-            "unknown": ("HexMissing", "unknown computational conformance owner"),
-            "mathlib": ("HexBridge", "mathlib bridge HexBridge"),
-        }
-        for label, (owner, message) in cases.items():
-            with self.subTest(label=label), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                libraries = self.correspondence_tree(root)
-                spec = root / "HexBridge/SPEC/hex-bridge.md"
-                text = spec.read_text(encoding="utf-8")
-                spec.write_text(
-                    text.replace(
-                        "Computational conformance owner: `HexCore`",
-                        f"Computational conformance owner: `{owner}`",
-                    ),
-                    encoding="utf-8",
-                )
-                errors = check_correspondence_only(
-                    root, libraries, root / "lakefile.lean"
-                )
-                self.assertTrue(any(message in error for error in errors), errors)
-
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            libraries = self.correspondence_tree(root)
-            libraries["HexOther"] = LibraryInfo(
-                "HexOther", (), False, 4, "active"
-            )
-            other_conformance = root / "conformance" / "HexOther"
-            other_conformance.mkdir()
-            (other_conformance / "Conformance.lean").write_text("", encoding="utf-8")
-            (root / "reports/hex-other-performance.md").write_text("", encoding="utf-8")
-            spec = root / "HexBridge/SPEC/hex-bridge.md"
-            text = spec.read_text(encoding="utf-8")
-            spec.write_text(
-                text.replace("`HexCore`", "`HexOther`"), encoding="utf-8"
-            )
-            errors = check_correspondence_only(
-                root, libraries, root / "lakefile.lean"
-            )
-            self.assertTrue(
-                any("outside its dependency closure" in error for error in errors),
-                errors,
-            )
-
-    def test_phase4_report_exemption_is_explicit(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            self.write_manifest(
-                root,
-                "    done_through: 4\n"
-                "    status: active\n",
-            )
+            self.write_manifest(root, mathlib=False)
             _, error = check_headline_reports(root)
-            self.assertIn("HexBridge: missing Phase-4 headline report", error)
+            self.assertIn("HexFoo: missing Phase-4 headline report", error)
 
-            self.write_manifest(
-                root,
-                "    correspondence_only: true\n"
-                "    done_through: 4\n"
-                "    status: active\n",
-            )
+    def test_mathlib_library_needs_no_report(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_manifest(root, mathlib=True)
             _, error = check_headline_reports(root)
             self.assertIsNone(error)
 

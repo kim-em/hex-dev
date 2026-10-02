@@ -37,7 +37,12 @@ universe u
 namespace Matrix
 variable {α : Type u}
 
-/-- Enumerate the permutations of `Fin n` as length-`n` vectors. -/
+/-- Enumerate the permutations of `Fin n` as length-`n` vectors.
+
+The recursion uses {name}`Hex.Vector.map'` rather than {name}`Vector.map` so
+that the enumeration, and hence the Leibniz determinant built on it, reduces
+in the kernel downstream of this module; core's {name}`Vector.map` delegates
+to the unexposed {name}`Array.map` loop and stalls there. -/
 @[expose]
 def permutationVectors : (n : Nat) → List (Vector (Fin n) n)
   | 0 => [#v[]]
@@ -45,8 +50,28 @@ def permutationVectors : (n : Nat) → List (Vector (Fin n) n)
       List.flatMap
         (fun v =>
           (List.finRange (n + 1)).map fun i =>
-            insertAt (Fin.last n) (v.map Fin.castSucc) i)
+            insertAt (Fin.last n) (Hex.Vector.map' Fin.castSucc v) i)
         (permutationVectors n)
+
+/-- The size-`n+1` enumeration, restated with core's {name}`Vector.map`.
+
+Symbolic proofs about the enumeration want this form. It is not the defining
+equation: {name}`Hex.Vector.map'` and {name}`Vector.map` are propositionally
+equal by {name}`Hex.Vector.map'_eq_map`, not definitionally, which is why
+unfolding {name}`Hex.Matrix.permutationVectors` no longer closes these goals by
+`rfl`.
+
+Rewriting with this leaves a term core's {name}`Vector.map` blocks in the
+kernel, so a proof that finishes with `decide +kernel` must leave
+{name}`Hex.Matrix.permutationVectors` folded rather than reach for it. -/
+theorem permutationVectors_succ {n : Nat} :
+    permutationVectors (n + 1) =
+      List.flatMap
+        (fun v =>
+          (List.finRange (n + 1)).map fun i =>
+            insertAt (Fin.last n) (v.map Fin.castSucc) i)
+        (permutationVectors n) := by
+  simp only [permutationVectors, Hex.Vector.map'_eq_map]
 
 /-- Count inversions in a permutation written as a list. -/
 @[expose]
@@ -815,13 +840,7 @@ theorem permutationVectors_complete {n : Nat} {perm : Vector (Fin n) n}
       let peeled := peelLastVector perm k hk hidx hnodup
       have hpeeled : peeled ∈ permutationVectors n := by
         exact ih (peelLastVector_nodup perm k hk hidx hnodup)
-      change perm ∈
-        List.flatMap
-          (fun v =>
-            (List.finRange (n + 1)).map fun i =>
-              insertAt (Fin.last n) (v.map Fin.castSucc) i)
-          (permutationVectors n)
-      rw [List.mem_flatMap]
+      rw [permutationVectors_succ, List.mem_flatMap]
       refine ⟨peeled, hpeeled, ?_⟩
       rw [List.mem_map]
       refine ⟨(⟨k, hk⟩ : Fin (n + 1)), List.mem_finRange (⟨k, hk⟩ : Fin (n + 1)), ?_⟩
@@ -962,7 +981,7 @@ theorem permutationVectors_nodup_list {n : Nat} :
   | zero =>
       simp [permutationVectors]
   | succ n ih =>
-      simp only [permutationVectors]
+      rw [permutationVectors_succ]
       exact permutationVectors_flatMap_nodup
         (permutationVectors n) ih
         (fun v hv => permutationVectors_nodup hv)

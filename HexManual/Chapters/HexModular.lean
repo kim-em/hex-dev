@@ -105,6 +105,10 @@ strict uniqueness bound, every admissible rational is found.
 
 {docstring Hex.Modular.ratReconVec?}
 
+{docstring Hex.Modular.ratReconVec?_spec}
+
+{docstring Hex.Modular.ratReconVec?_complete}
+
 The maximal-quotient variant is intentionally heuristic. Its theorem promises
 only the checked modular congruence, not recovery of a preferred rational.
 
@@ -177,3 +181,8 @@ tag := "hex-modular-cross-references"
   modulus stream used by modular algorithms.
 * `HexPolyZGcd`, `HexMvGcd`, and `HexMvHensel` consume this library's CRT,
   reconstruction, and multimodular-loop APIs.
+
+Bounded integer reconstruction uses {name}`Hex.Modular.CrtVec.push_congr`
+to preserve a target residue through an accepted push and
+{name}`Hex.Modular.CrtVec.eq_of_congr` to identify its balanced value once
+the modulus exceeds twice the target magnitude.

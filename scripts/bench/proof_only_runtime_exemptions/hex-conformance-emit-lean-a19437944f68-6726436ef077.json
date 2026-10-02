@@ -1,0 +1,6 @@
+{
+  "path": "Hex/Conformance/Emit.lean",
+  "baseline_blob": "a19437944f68af77594b2c623cdf6c2935f67e16",
+  "current_blob": "6726436ef077d960d853416e8f73ab834caea640",
+  "reason": "Combines the inherited, already-exempted fixture-emission helpers with the new emitMvPolyMatrixFixture record writer for the hex-determinantal-ideal conformance stream. The helper is called only by the hexdeterminantalideal_emit_fixtures driver; hexbz_factor_service and the libraries it imports do not import this module, so no measured computation changes."
+}

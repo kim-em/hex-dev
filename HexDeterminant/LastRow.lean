@@ -373,13 +373,7 @@ theorem det_eq_principalSubmatrix_mul_last
     (hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0) :
     det M = det (principalSubmatrix M n (Nat.le_succ n)) * M[Fin.last n][Fin.last n] := by
   unfold det
-  rw [show permutationVectors (n + 1) =
-      List.flatMap
-        (fun v =>
-          (List.finRange (n + 1)).map fun i =>
-            insertAt (Fin.last n) (v.map Fin.castSucc) i)
-        (permutationVectors n) by rfl]
-  rw [List.foldl_add_flatMap]
+  rw [permutationVectors_succ, List.foldl_add_flatMap]
   calc
     (permutationVectors n).foldl
         (fun acc v =>

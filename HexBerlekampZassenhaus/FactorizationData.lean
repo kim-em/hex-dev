@@ -454,7 +454,7 @@ theorem normalizeForFactor_eq_normalizeForFactorFast :
         (ZPoly.primitivePart (ZPoly.extractXPower (ZPoly.primitivePart f)).core) :=
       ZPoly.squareFreeRat_of_separableModP _ 499 prime_499 hadm hsep
     rw [ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_eq_of_squareFreeRat _ hcore_ne hsq,
-        ZPoly.primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeRat _ hcore_ne hsq]
+        ZPoly.PrimitiveSquareFreeDecomposition.repeatedPart_eq_one _ hcore_ne hsq]
   · simp only [ZPoly.contentPrimitive]
 
 private def contentFactorArray (content : Int) : Array ZPoly :=

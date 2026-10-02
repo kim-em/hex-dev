@@ -52,6 +52,19 @@ class ExactOracle(unittest.TestCase):
         self.checker = oracle.Checker(self.q)
         self.addCleanup(self.q.close)
 
+    def test_quadratic_roots(self):
+        upper = {"poly": [1099513724929, 0, 1099511627776], "re": [0, 1],
+                 "im": [1048577, 1048576], "prec": 60}
+        lower = copy.deepcopy(upper)
+        lower["im"][0] *= -1
+        data = {"roots": [lower, upper], "arithmetic": upper}
+        self.checker.check("quadraticRoots", data)
+        for roots in ([upper, upper], [lower], [upper, lower]):
+            with self.subTest(roots=roots), self.assertRaises(oracle.OracleMismatch):
+                self.checker.check("quadraticRoots", {**data, "roots": roots})
+        with self.assertRaises(oracle.OracleMismatch):
+            self.checker.check("quadraticRoots", {**data, "arithmetic": lower})
+
     def test_missing_general_roots_preserves_scalar_identity(self):
         self.q.general_roots = None
         self.assertEqual(self.q.compare(self.checker.value(rat(1)), self.q.number(1)), 0)
@@ -98,6 +111,17 @@ class ExactOracle(unittest.TestCase):
             wrong[key] = value
             with self.subTest(key=key), self.assertRaises(oracle.OracleMismatch):
                 self.checker.check("complex", wrong)
+
+    def test_unity_and_norm_mismatches(self):
+        i = {"poly": [1, 0, 1], "re": [0, 1], "im": [1, 1], "prec": 8}
+        self.checker.check("unity", {"angle": [5, 4], "root": i})
+        with self.assertRaises(oracle.OracleMismatch):
+            self.checker.check("unity", {"angle": [-1, 4], "root": i})
+        self.checker.check("norm", {"a": rat(-3), "normSq": rat(9), "abs": rat(3)})
+        for key, value in (("normSq", rat(3)), ("abs", rat(-3))):
+            d = {"a": rat(-3), "normSq": rat(9), "abs": rat(3), key: value}
+            with self.subTest(key=key), self.assertRaises(oracle.OracleMismatch):
+                self.checker.check("norm", d)
 
     def test_general_algebraic_coefficients(self):
         sqrt2 = {"poly": [-2, 0, 1], "re": [3, 2], "im": [0, 1], "prec": 2}

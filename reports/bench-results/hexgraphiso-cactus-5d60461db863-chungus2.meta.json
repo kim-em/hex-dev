@@ -1,0 +1,16 @@
+{
+  "fingerprint": "5d60461db863",
+  "host": "chungus2",
+  "date": "2026-09-09T13:20:45.955404+00:00",
+  "describe": "d55a63de6c1a",
+  "label": "Sparse proof foundations and native literal checker",
+  "cpu": 76,
+  "affinity": [
+    76
+  ],
+  "load_after": [
+    1.26171875,
+    2.3974609375,
+    2.0
+  ]
+}

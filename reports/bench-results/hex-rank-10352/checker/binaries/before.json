@@ -1,0 +1,13 @@
+{
+  "revision": "a29afca7a5824d544c8ddf8b59b8952ff8eb1592",
+  "binary_sha256": "f52a9e8f8ab3a932e7a4324af228c9543cc404b3146fa64b31507fd01d00fd46",
+  "source_sha256": {
+    "HexRank/Polynomial.lean": "2ce7c7a04dfdecc9e32529f51a24e1c382a35a5021e4a1f0d540b06a78ee4b6a",
+    "HexRank/PolyProduce.lean": "df0bc7c380cfa303f88de4d36570510db443d6e191c760efa3935bbf088224d5",
+    "bench/HexRank/Bench/Quotient.lean": "f14eacded73c8a82ce2d19b8acf089458d5cd271a259da0936ae0ee2edd51478",
+    "bench/HexRank/Bench.lean": "26228d15443ec6fff455fc38566c1b99115f6f276f1bad1f0f3ce57dbe8c179c",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "a2440490b8954368bd3de4d4e7142d0a75ef6b4e1cbe664c152a87e0715a0e56"
+  },
+  "runtime_patch": ""
+}

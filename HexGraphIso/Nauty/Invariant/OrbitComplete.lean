@@ -355,6 +355,78 @@ theorem stable_fold {α : Sort u} {f : Nat → α} : ∀ (maps : List (Array Nat
     · exact hedge
     · exact hedges δ hδ
 
+private theorem compress_fixed {o : Array Nat} (hd : Descending o n)
+    {i : Nat} (hi : i < n) (count j : Nat) :
+    (compress (o, count) i).1[j]! = j ↔ o[j]! = j := by
+  change (o.set! i o[o[i]!]!)[j]! = j ↔ o[j]! = j
+  by_cases he : i = j
+  · subst j
+    rw [Array.getElem!_set!_self _ _ _ (by rw [hd.1]; exact hi)]
+    constructor
+    · intro he
+      have hle := hd.2 i hi
+      have hp := hd.2 o[i]! (by omega)
+      omega
+    · intro he
+      rw [he]
+      exact he
+  · rw [Array.getElem!_set!_ne _ _ _ _ he]
+
+private theorem compressions_fixed : ∀ (xs : List Nat), (∀ i ∈ xs, i < n) →
+    ∀ (o : Array Nat) (count : Nat), Descending o n → ∀ j : Nat,
+      (xs.foldl compress (o, count)).1[j]! = j ↔ o[j]! = j := by
+  intro xs
+  induction xs with
+  | nil => intros; rfl
+  | cons i xs ih =>
+    intro hx o count hd j
+    have hi := hx i List.mem_cons_self
+    exact (ih (fun j hj => hx j (List.mem_cons_of_mem _ hj)) _ _ (compress_desc hd hi) j).trans
+      (compress_fixed hd hi count j)
+
+private theorem compressions_count : ∀ (xs : List Nat), (∀ i ∈ xs, i < n) →
+    ∀ (o : Array Nat) (count : Nat), Descending o n →
+      (xs.foldl compress (o, count)).2 = count + xs.countP (fun i => o[i]! == i) := by
+  intro xs
+  induction xs with
+  | nil => intros; simp
+  | cons i xs ih =>
+    intro hx o count hd
+    have hi := hx i List.mem_cons_self
+    have hpred : (fun j : Nat => (compress (o, count) i).1[j]! == j) = (fun j : Nat => o[j]! == j) := by
+      funext j
+      apply Bool.eq_iff_iff.mpr
+      simp only [beq_iff_eq]
+      exact compress_fixed hd hi count j
+    have hcount : (compress (o, count) i).2 = count + (if o[i]! == i then 1 else 0) := by
+      have he := congrFun hpred i
+      change ((o.set! i o[o[i]!]!)[i]! == i) = (o[i]! == i) at he
+      unfold compress
+      dsimp only
+      rw [he]
+      split <;> simp
+    rw [List.foldl_cons, ih (fun j hj => hx j (List.mem_cons_of_mem _ hj)) _ _ (compress_desc hd hi),
+      hcount, hpred, List.countP_cons]
+    split <;> omega
+
+/-- The count returned by the executed join and compression is exactly
+the number of roots in its returned array. This includes order zero. -/
+theorem count_orbjoin {o map : Array Nat} (hd : Descending o n)
+    (hm : ∀ i, i < n → map[i]! < n) :
+    (orbjoin o map n).2 = (List.range n).countP (fun i => (orbjoin o map n).1[i]! == i) := by
+  rw [orbjoin_eq]
+  let joined := (List.range n).foldl (join map n) o
+  have hj : Descending joined n := joins_desc hm (List.range n) (fun _ => List.mem_range.mp) o hd
+  have hc := compressions_count (List.range n) (fun _ => List.mem_range.mp) joined 0 hj
+  have hpred : (fun i : Nat => ((List.range n).foldl compress (joined, 0)).1[i]! == i) =
+      (fun i : Nat => joined[i]! == i) := by
+    funext i
+    apply Bool.eq_iff_iff.mpr
+    simp only [beq_iff_eq]
+    exact compressions_fixed (List.range n) (fun _ => List.mem_range.mp) joined 0 hj i
+  change ((List.range n).foldl compress (joined, 0)).2 = _
+  rw [hc, Nat.zero_add, hpred]
+
 end Orbit
 
 end Hex.GraphIso.Nauty

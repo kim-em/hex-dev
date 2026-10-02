@@ -1,0 +1,3 @@
+ℹ [3/3] Built HexCharPolyMathlib.ProofProbe.Dense16Candidate (6.1s)
+info: bench/HexCharPolyMathlib/ProofProbe/Dense16Candidate.lean:21:0: 'result' depends on axioms: [propext]
+Build completed successfully (3 jobs).

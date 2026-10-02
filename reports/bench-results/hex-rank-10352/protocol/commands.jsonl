@@ -1,0 +1,1 @@
+{"output_errors": [], "label": "overhead", "command": ["/tmp/hexrank-measured-bin/hexrank_bench", "run", "Hex.RankBench.runProtocolOverhead", "--export-file", "/tmp/hexrank-science-protocol/overhead.json"], "exit_code": 0, "started_epoch": 1789908992.785488, "wall_seconds": 4.697222471237183, "load_after": [12.375, 39.15771484375, 68.18115234375]}

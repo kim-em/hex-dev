@@ -1,0 +1,2 @@
+[ perf record: Woken up 628 times to write data ]
+[ perf record: Captured and wrote 39.788 MB /home/kim/worktrees/hex-dev/hex-dev-pollard-stage-2/reports/bench-results/pminusone-profile.json.attempt/perf.data (4946 samples) ]

@@ -392,7 +392,7 @@ theorem mahlerMeasure_le_circleAverage_norm (p : ℂ[X]) :
   have : IsFiniteMeasure (volume.restrict (uIoc 0 (2 * Real.pi))) := by
     rw [uIoc_of_le (by positivity)]
     infer_instance
-  have : NeZero (volume (uIoc 0 (2 * Real.pi))) := ⟨by simp⟩
+  have : NeZero (volume (uIoc 0 (2 * Real.pi))) := ⟨by simp [Real.pi_pos]⟩
   by_cases hp : p = 0
   · rw [hp, mahlerMeasure_zero]
     exact Real.circleAverage_nonneg_of_nonneg (fun z _ => norm_nonneg (eval z (0 : ℂ[X])))

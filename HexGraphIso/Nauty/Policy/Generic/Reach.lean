@@ -94,12 +94,12 @@ theorem Target.of_out {view : σ → Search n} {G : Colored n k}
   have hc := (hcell (mem_ne_empty hv)).1
   exact (hout.perm tc len hc).mem_iff.mp (hmem v hv)
 
-variable [Policy σ n]
+variable {γ : Type} [Policy σ n (γ := γ)]
 
 /-- Partition rules for the local policy operations. The child and
 refinement rules compose their own changes with the finer recursive
 effect; recovery restores the parent's level convention. -/
-structure ReachPolicy (G : Colored n k) (ctx : Ctx n) (inf tcLevel : Nat)
+structure ReachPolicy (G : Colored n k) (ctx : γ) (inf tcLevel : Nat)
     (view : σ → Search n) : Prop where
   visit : ∀ level numcells st, 1 ≤ level → SearchOk G level numcells (view st) →
     let r := Policy.visit ctx level numcells st
@@ -151,7 +151,7 @@ def reachContract (G : Colored n k) (view : σ → Search n) : Contract σ n whe
   sweepPost _ _ _ level _ _ _ _ _ _ st result :=
     SearchOut G level level (view st) (view result.2.2)
 
-variable {G : Colored n k} {ctx : Ctx n} {inf tcLevel : Nat}
+variable {G : Colored n k} {ctx : γ} {inf tcLevel : Nat}
   {view : σ → Search n}
 
 /-- Finishing a node's child sweep preserves its frame for every exit. -/

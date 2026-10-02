@@ -4,6 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
+import HexPolyFp.PrimeField
+import HexResultant.ExactDiv
+import HexMvGcd.Divide
+import HexMvGcd.Instances
+import HexBareiss.Fixtures
 import HexBareiss
 
 /-!
@@ -13,10 +18,14 @@ Run this file through the conformance Lake target (not direct `lake env lean`):
 the Bareiss guards need the native code generated for `Matrix.exactDiv`.
 
 Oracle: `scripts/oracle/matrix_flint.py` (`bareiss` op, via the
-`hexbareiss_emit_fixtures` stream)
+`hexbareiss_emit_fixtures` stream), and `scripts/oracle/matrix_carriers.py`
+(FLINT scalar / SymPy Berkowitz polynomial determinants through
+`hexbareiss_emit_carrier_fixtures`)
 Mode: always
 Covered operations:
 - the executable fraction-free Bareiss determinant `bareiss` and `bareissData`
+- `bareissWith Hex.exactDiv` at Rat, ZMod64, dense and multivariate polynomials
+- the common exact-quotient law with the specified carrier instances
 Covered properties:
 - committed Bareiss fixtures match their expected executable determinant values;
   the `bareiss = det` guards below are value-level fixture checks only, not a
@@ -25,6 +34,7 @@ Covered properties:
 Covered edge cases:
 - zero, singular, and pivoting (zero leading entry) inputs at the 2×2/3×3/6×6 bands
 - determinant behaviour under elementary row operations on a 6×6 fixture
+- empty/singleton matrices, modular reduction, and nonconstant polynomial pivots
 -/
 
 namespace Hex
@@ -159,4 +169,113 @@ relationship between the Bareiss algorithm and Leibniz determinant. -/
 #guard Matrix.bareiss (Matrix.rowScale bigInt ⟨2, by decide⟩ 4) = 4
 #guard Matrix.bareiss (Matrix.rowAdd bigInt ⟨0, by decide⟩ ⟨3, by decide⟩ 7) = 1
 
+#guard Matrix.bareissWith Hex.exactDiv singularInt = Matrix.bareiss singularInt
+#guard Matrix.bareissWith Hex.exactDiv pivotInt = Matrix.bareiss pivotInt
+#guard Matrix.bareissWith Hex.exactDiv bigInt = Matrix.bareiss bigInt
+#guard Matrix.bareissWith Hex.exactDiv bigZeroInt = Matrix.bareiss bigZeroInt
+#guard Matrix.bareissWith Hex.exactDiv bigSingularInt = Matrix.bareiss bigSingularInt
+#guard Matrix.bareissWith Hex.exactDiv bigPivotInt = Matrix.bareiss bigPivotInt
+#guard Matrix.bareissWith Hex.exactDiv (Matrix.rowSwap bigInt ⟨0, by decide⟩ ⟨5, by decide⟩) =
+  Matrix.bareiss (Matrix.rowSwap bigInt ⟨0, by decide⟩ ⟨5, by decide⟩)
+#guard Matrix.bareissWith Hex.exactDiv (Matrix.rowScale bigInt ⟨2, by decide⟩ 4) =
+  Matrix.bareiss (Matrix.rowScale bigInt ⟨2, by decide⟩ 4)
+#guard Matrix.bareissWith Hex.exactDiv (Matrix.rowAdd bigInt ⟨0, by decide⟩ ⟨3, by decide⟩ 7) =
+  Matrix.bareiss (Matrix.rowAdd bigInt ⟨0, by decide⟩ ⟨3, by decide⟩ 7)
+
 end Matrix
+end Hex
+
+namespace Hex.BareissCarriers
+
+instance : ZMod64.Bounds 101 := ⟨by decide, by decide⟩
+instance : ZMod64.PrimeModulus 101 := ZMod64.primeModulusOfPrime (by decide)
+abbrev Mod := ZMod64 101
+abbrev Mv (n : Nat) (R : Type) [Zero R] := MvPoly n R Mono.grevlex
+
+-- The same law term is instantiated with each provider below. Explicit
+-- arguments avoid the opaque FpPoly ring dictionary exported by MvGcd.
+set_option linter.unusedVariables false in
+private theorem quotientLaw (R : Type) [Lean.Grind.CommRing R]
+    [DecidableEq R] [Div R] [Hex.ExactDivLaws R] :
+    ∀ a b : R, b ≠ 0 → Hex.exactDiv (a * b) b = a :=
+  fun a b hb => Hex.exactDiv_mul_right a hb
+
+example := @quotientLaw Rat _ _ _ Hex.instExactDivLawsField
+example := @quotientLaw Mod _ _ _ Hex.instExactDivLawsField
+example := @quotientLaw (DensePoly Rat) _ _ _ (Hex.instExactDivLawsDensePoly (R := Rat))
+example := @quotientLaw (DensePoly Mod) _ _ _ (Hex.instExactDivLawsDensePoly (R := Mod))
+example := @quotientLaw (DensePoly Int) _ _ _ (Hex.instExactDivLawsDensePoly (R := Int))
+example (n : Nat) := @quotientLaw (Mv n Int) _ _ _ Hex.MvPoly.instExactDivLaws
+example (n : Nat) := @quotientLaw (Mv n Rat) _ _ _ Hex.MvPoly.instExactDivLaws
+
+/-- A tridiagonal matrix whose leading minors force nonconstant exact
+quotients from step one onwards when `x` is a polynomial. -/
+def tridiagonal {R : Type} [Zero R] [One R] [Add R] [Neg R]
+    (n : Nat) (x : R) : Matrix R n n :=
+  Matrix.ofFn fun i j =>
+    if i.val = j.val then x + 1
+    else if i.val + 1 = j.val then 1
+    else if j.val + 1 = i.val then -1 else 0
+
+/-- The same structural cases for every carrier, including both empty and
+singleton matrices. Singular cases duplicate a row; swap cases force pivoting. -/
+def cases {R : Type} [Zero R] [One R] [Add R] [Neg R] (x : R) :
+    List (String × (n : Nat) × Matrix R n n) :=
+  let m := tridiagonal 3 x
+  [("empty", ⟨0, Matrix.ofFn fun _ _ => 0⟩),
+   ("singleton", ⟨1, Matrix.ofFn fun _ _ => x⟩),
+   ("ordinary", ⟨3, m⟩),
+   ("swap", ⟨3, Matrix.ofFn fun i j =>
+      if i.val = 0 then (if j.val = 1 then x else 0)
+      else m[(i, j)]⟩),
+   ("singular", ⟨3, Matrix.ofFn fun i j =>
+      m[((if i.val = 1 then ⟨0, by decide⟩ else i), j)]⟩)]
+
+def ratCases := cases (3 / 2 : Rat)
+def modCases := cases (3 / 2 : Mod)
+def denseRatCases := cases (DensePoly.ofList [1 / 2, 2 / 3] : DensePoly Rat)
+def denseModCases := cases (DensePoly.ofList [102, 205] : DensePoly Mod)
+def zpolyCases := cases (DensePoly.ofList [2, 2] : DensePoly Int)
+def mvIntCases (n : Nat) (h : 2 ≤ n) :=
+  let x : Mv n Int := MvPoly.X ⟨0, by omega⟩
+  let y : Mv n Int := MvPoly.X ⟨1, by omega⟩
+  let z := if hn : 2 < n then MvPoly.X ⟨2, hn⟩ else 1
+  cases (2 * x * y + y * z + 1)
+def mvRatCases (n : Nat) (h : 2 ≤ n) :=
+  let x : Mv n Rat := MvPoly.X ⟨0, by omega⟩
+  let y : Mv n Rat := MvPoly.X ⟨1, by omega⟩
+  let z := if hn : 2 < n then MvPoly.X ⟨2, hn⟩ else 1
+  cases (MvPoly.C (2 / 3) * x * y + y * z + 1)
+
+def checkCases {R : Type} [Lean.Grind.CommRing R] [DecidableEq R] [Div R]
+    (cs : List (String × (n : Nat) × Matrix R n n)) : Bool :=
+  cs.all fun (_, ⟨_, m⟩) => decide (Matrix.bareissWith Hex.exactDiv m = Matrix.det m)
+
+#guard checkCases ratCases
+#guard checkCases modCases
+#guard checkCases denseRatCases
+#guard checkCases denseModCases
+#guard checkCases zpolyCases
+#guard checkCases (mvIntCases 2 (by decide))
+#guard checkCases (mvIntCases 3 (by decide))
+#guard checkCases (mvRatCases 2 (by decide))
+#guard checkCases (mvRatCases 3 (by decide))
+
+-- Reduction creates a zero leading entry and a nonzero replacement pivot.
+def reduction : Matrix Mod 3 3 := Matrix.ofFn fun i j =>
+  ((#[#[101, 102, 0], #[202, 0, 103], #[304, 0, 1]] : Array (Array Mod)).getD i.val #[]).getD j.val 0
+#guard Matrix.bareissWith Hex.exactDiv reduction = Matrix.det reduction
+#guard (Matrix.bareissDataWith Hex.exactDiv reduction).rowSwaps = 2
+#guard (304 : Mod) = 1
+
+end Hex.BareissCarriers
+
+#guard Hex.Matrix.bareissWith Hex.exactDiv Hex.BareissEmit.random4 = Hex.Matrix.bareiss Hex.BareissEmit.random4
+#guard Hex.Matrix.bareissWith Hex.exactDiv Hex.BareissEmit.singular4Def1 = Hex.Matrix.bareiss Hex.BareissEmit.singular4Def1
+#guard Hex.Matrix.bareissWith Hex.exactDiv Hex.BareissEmit.singular4Def2 = Hex.Matrix.bareiss Hex.BareissEmit.singular4Def2
+#guard Hex.Matrix.bareissWith Hex.exactDiv Hex.BareissEmit.triangular4 = Hex.Matrix.bareiss Hex.BareissEmit.triangular4
+#guard Hex.Matrix.bareissWith Hex.exactDiv Hex.BareissEmit.random6 = Hex.Matrix.bareiss Hex.BareissEmit.random6
+#guard Hex.Matrix.bareissWith Hex.exactDiv Hex.BareissEmit.singular6Def1 = Hex.Matrix.bareiss Hex.BareissEmit.singular6Def1
+#guard Hex.Matrix.bareissWith Hex.exactDiv Hex.BareissEmit.triangular6 = Hex.Matrix.bareiss Hex.BareissEmit.triangular6
+#guard Hex.Matrix.bareissWith Hex.exactDiv Hex.BareissEmit.random8 = Hex.Matrix.bareiss Hex.BareissEmit.random8
+#guard Hex.Matrix.bareissWith Hex.exactDiv Hex.BareissEmit.triangular8 = Hex.Matrix.bareiss Hex.BareissEmit.triangular8

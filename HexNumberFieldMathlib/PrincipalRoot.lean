@@ -12,6 +12,28 @@ public section
 namespace HexNumberFieldMathlib.PrincipalRoot
 open Complex Real
 
+/-- Principal roots divide the input argument by the positive index. -/
+theorem arg_root {z : ℂ} (hz : z ≠ 0) {n : Nat} (hn : n ≠ 0) :
+    (z ^ ((n : ℂ)⁻¹)).arg = z.arg / n := by
+  have hnpos : (0 : ℝ) < n := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn)
+  have hnge : (1 : ℝ) ≤ n := by exact_mod_cast Nat.one_le_iff_ne_zero.mpr hn
+  have hc : π / n ≤ π := div_le_self pi_pos.le hnge
+  have hlo : -(π / n) < z.arg / n := by
+    rw [← neg_div]
+    exact (div_lt_div_iff_of_pos_right hnpos).mpr (neg_pi_lt_arg z)
+  have hhi : z.arg / n ≤ π / n := div_le_div_of_nonneg_right (arg_le_pi z) hnpos.le
+  have him : (log z * (n : ℂ)⁻¹).im = z.arg / n := by
+    rw [← div_eq_mul_inv, show (n : ℂ) = ((n : ℝ) : ℂ) by simp,
+      Complex.div_ofReal_im, Complex.log_im]
+  rw [cpow_def_of_ne_zero hz, arg_exp, him]
+  apply (toIocMod_eq_self Real.two_pi_pos).mpr
+  constructor <;> linarith
+
+/-- A positive argument strictly below pi lies in the upper half plane. -/
+theorem im_pos {z : ℂ} (hz : z ≠ 0) (hlo : 0 < z.arg) (hhi : z.arg < π) : 0 < z.im := by
+  rw [← norm_mul_sin_arg z]
+  exact mul_pos (norm_pos_iff.mpr hz) (Real.sin_pos_of_pos_of_lt_pi hlo hhi)
+
 /-- The principal radical has argument in the expected half-open sector. -/
 theorem sector {z : ℂ} (hz : z ≠ 0) {n : Nat} (hn : n ≠ 0) :
     -(π / n) < (z ^ ((n : ℂ)⁻¹)).arg ∧ (z ^ ((n : ℂ)⁻¹)).arg ≤ π / n := by
@@ -44,9 +66,10 @@ theorem abs_arg_le {w v : ℂ} (hw : w ≠ 0) (hv : v ≠ 0)
 
 /-- Maximal real part, with the nonnegative imaginary side preferred on a tie,
 selects exactly Mathlib's principal nth root. -/
-theorem eq_of_max {z w : ℂ} {n : Nat} (hn : n ≠ 0) (hw : w ^ n = z)
-    (hre : ∀ v : ℂ, v ^ n = z → v.re ≤ w.re)
-    (him : ∀ v : ℂ, v ^ n = z → v.re = w.re → 0 ≤ v.im → 0 ≤ w.im) :
+theorem eq_of_re {z w : ℂ} {n : Nat} (hn : n ≠ 0) (hw : w ^ n = z)
+    (hre : (z ^ ((n : ℂ)⁻¹)).re ≤ w.re)
+    (him : (z ^ ((n : ℂ)⁻¹)).re = w.re →
+      0 ≤ (z ^ ((n : ℂ)⁻¹)).im → 0 ≤ w.im) :
     w = z ^ ((n : ℂ)⁻¹) := by
   by_cases hz : z = 0
   · have hwz : w = 0 := (pow_eq_zero_iff hn).mp (hw.trans hz)
@@ -59,7 +82,7 @@ theorem eq_of_max {z w : ℂ} {n : Nat} (hn : n ≠ 0) (hw : w ^ n = z)
   have hnorm : ‖w‖ = ‖v‖ := by
     apply (pow_left_inj₀ (norm_nonneg w) (norm_nonneg v) hn).mp
     simpa only [norm_pow] using congrArg norm (hw.trans hv.symm)
-  have harg := abs_arg_le hw0 hv0 hnorm (hre v hv)
+  have harg := abs_arg_le hw0 hv0 hnorm hre
   have hsector := sector hz hn
   change -(π / n) < v.arg ∧ v.arg ≤ π / n at hsector
   have habs : |v.arg| ≤ π / n := abs_le.mpr ⟨hsector.1.le, hsector.2⟩
@@ -80,9 +103,17 @@ theorem eq_of_max {z w : ℂ} {n : Nat} (hn : n ≠ 0) (hw : w ^ n = z)
       rw [← norm_mul_cos_arg v, ← norm_mul_cos_arg w, hnorm, hwa, hva, Real.cos_neg]
     have hvim : 0 ≤ v.im := arg_nonneg_iff.mp (by rw [hva]; exact hc.le)
     have hwim : w.im < 0 := arg_neg_iff.mp (by rw [hwa]; linarith)
-    exact (not_le_of_gt hwim) (him v hv hreq hvim)
+    exact (not_le_of_gt hwim) (him hreq hvim)
   have heq := pow_cpow_nat_inv hn hwlo hwsector.2
   rw [hw] at heq
   exact heq.symm
+
+/-- Maximal real part and the upper tie select the principal root. -/
+theorem eq_of_max {z w : ℂ} {n : Nat} (hn : n ≠ 0) (hw : w ^ n = z)
+    (hre : ∀ v : ℂ, v ^ n = z → v.re ≤ w.re)
+    (him : ∀ v : ℂ, v ^ n = z → v.re = w.re → 0 ≤ v.im → 0 ≤ w.im) :
+    w = z ^ ((n : ℂ)⁻¹) := by
+  exact eq_of_re hn hw (hre _ (cpow_nat_inv_pow z hn))
+    (him _ (cpow_nat_inv_pow z hn))
 
 end HexNumberFieldMathlib.PrincipalRoot

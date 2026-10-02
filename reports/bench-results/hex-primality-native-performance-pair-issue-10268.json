@@ -1,0 +1,174 @@
+{
+  "cpu": 3,
+  "host": "chungus2",
+  "samples": [
+    {
+      "status": "ok",
+      "seconds": 0.7560327060054988,
+      "returncode": 0,
+      "load_before": [
+        22.1337890625,
+        32.5673828125,
+        30.775390625
+      ],
+      "load_after": [
+        21.08203125,
+        32.17578125,
+        30.658203125
+      ],
+      "stdout": "{\"attempts\":29,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock3\\n      74058212732561358302231226437062788676166966415465897661863160754340907\\n      2028478494862525422475607\\n      22304740449229861598212\\n      2028478494862525422475606\\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\\n       (2, 0, Hex.Nat.PrimeCert.small 353),\\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\\n       (2,\\n        0,\\n        Hex.Nat.PrimeCert.pock3\\n          31757755568855353\\n          4028945\\n          289\\n          4028944\\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\\n           (2, 0, Hex.Nat.PrimeCert.small 223),\\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\",\"check_nanos\":530637,\"nanos\":706622023,\"status\":\"ok\"}\n",
+      "stderr": "",
+      "command": [
+        "/tmp/hex10268-performance-baseline/.lake/build/bin/hexprimality_policy_probe",
+        "construction",
+        "57896044618658097711785492504343953926634992332820282019728792003956564819949"
+      ],
+      "block": 0,
+      "phase": "native-executable",
+      "arm": "old",
+      "source": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nimport HexPrimality\nimport Lean.Data.Json\n\n/-!\nA deliberately small native timing probe for the production\nMiller--Rabin-plus-`isPrimeTrial` arm versus `primeCert?` dispatch policy. The\ncontrolled, counterbalanced runner lives in\n`scripts/bench/primality_policy_sweep.py`; keeping the clock here excludes\nprocess startup from the measured interval.\n-/\n\nnamespace Hex.PrimalityPolicyProbe\n\nopen Hex.Nat\n\ninductive Route where\n  | trial\n  | certificate\n\nprivate def verdict : Route \u2192 Nat \u2192 Except String Bool\n  | .trial, n =>\n      match defaultBases.find? (fun a => !(millerRabin n a)) with\n      | some _ => .ok false\n      | none => .ok (isPrimeTrial n)\n  | .certificate, n =>\n      match primeCert? n (Hex.Rand.ofSeed n) (defaultPrimeFuel n) with\n      | .ok _ => .ok true\n      | .error f =>\n          match f.stop with\n          | .composite => .ok false\n          | .exhausted => .error s!\"certificate search exhausted after {f.attempts} attempts\"\n\nprivate def runBatch (route : Route) (n repeats : Nat) : Except String Nat := do\n  let mut checksum := 0\n  for _ in [0:repeats] do\n    checksum := checksum + if (\u2190 verdict route n) then 1 else 0\n  return checksum\n\nprivate def parseRoute : String \u2192 Option Route\n  | \"trial\" => some .trial\n  | \"certificate\" => some .certificate\n  | _ => none\n\nprivate def usage : String :=\n  \"usage: hexprimality_policy_probe (trial|certificate) N REPEATS; or construction N\"\n\n/-- Native construction timing, excluding parsing, process startup, and\ncertificate formatting. The public construction route includes its self-check. -/\nprivate def runConstruction (n : Nat) : IO UInt32 := do\n  let input \u2190 IO.mkRef n\n  let n \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let result \u2190 IO.mkRef (Construction.run n (Hex.Rand.ofSeed n))\n  let result \u2190 result.get\n  let stop \u2190 IO.monoNanosNow\n  let fields := [(\"nanos\", Lean.toJson (stop - start))]\n  let fields \u2190 match result with\n    | .error f => pure (fields ++ [(\"status\", Lean.toJson \"exhausted\"),\n        (\"attempts\", Lean.toJson f.attempts)])\n    | .ok s => do\n        let cert \u2190 IO.mkRef s.cert.raw\n        let cert \u2190 cert.get\n        let checkStart \u2190 IO.monoNanosNow\n        let checked \u2190 IO.mkRef (checkPrime cert)\n        let checked \u2190 checked.get\n        let checkStop \u2190 IO.monoNanosNow\n        unless checked do throw (IO.userError \"invalid certificate\")\n        pure (fields ++ [(\"status\", Lean.toJson \"ok\"),\n          (\"attempts\", Lean.toJson s.attempts),\n          (\"check_nanos\", Lean.toJson (checkStop - checkStart)),\n          (\"certificate\", Lean.toJson (reprStr cert))])\n  IO.println (Lean.Json.mkObj fields).compress\n  return 0\n\ndef run (args : List String) : IO UInt32 := do\n  if let [\"construction\", nArg] := args then\n    let some n := nArg.toNat?\n      | IO.eprintln s!\"invalid natural: {nArg}\"; return 2\n    return \u2190 runConstruction n\n  let [routeArg, nArg, repeatsArg] := args\n    | IO.eprintln usage; return 2\n  let some route := parseRoute routeArg\n    | IO.eprintln usage; return 2\n  let some n := nArg.toNat?\n    | IO.eprintln s!\"invalid natural: {nArg}\"; return 2\n  let some repeats := repeatsArg.toNat?\n    | IO.eprintln s!\"invalid repeat count: {repeatsArg}\"; return 2\n  if repeats == 0 then\n    IO.eprintln \"REPEATS must be positive\"\n    return 2\n  -- One untimed call establishes the same warm native state for both arms.\n  match runBatch route n 1 with\n  | .error e => IO.eprintln e; return 1\n  | .ok _ => pure ()\n  let start \u2190 IO.monoNanosNow\n  let checksum \u2190 match runBatch route n repeats with\n    | .error e => throw <| IO.userError e\n    | .ok checksum => pure checksum\n  let stop \u2190 IO.monoNanosNow\n  IO.println <| \"{\" ++\n    s!\"\\\"route\\\":\\\"{routeArg}\\\",\\\"n\\\":{n},\\\"repeats\\\":{repeats},\" ++\n    s!\"\\\"total_nanos\\\":{stop - start},\\\"checksum\\\":{checksum}\" ++ \"}\"\n  return 0\n\nend Hex.PrimalityPolicyProbe\n\ndef main (args : List String) : IO UInt32 :=\n  Hex.PrimalityPolicyProbe.run args\n",
+      "source_bytes": 4097,
+      "olean_bytes": null,
+      "result": {
+        "attempts": 29,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "check_nanos": 530637,
+        "nanos": 706622023,
+        "status": "ok"
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 0.4627993570175022,
+      "returncode": 0,
+      "load_before": [
+        21.08203125,
+        32.17578125,
+        30.658203125
+      ],
+      "load_after": [
+        21.08203125,
+        32.17578125,
+        30.658203125
+      ],
+      "stdout": "{\"attempts\":29,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock3\\n      74058212732561358302231226437062788676166966415465897661863160754340907\\n      2028478494862525422475607\\n      22304740449229861598212\\n      2028478494862525422475606\\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\\n       (2, 0, Hex.Nat.PrimeCert.small 353),\\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\\n       (2,\\n        0,\\n        Hex.Nat.PrimeCert.pock3\\n          31757755568855353\\n          4028945\\n          289\\n          4028944\\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\\n           (2, 0, Hex.Nat.PrimeCert.small 223),\\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\",\"check_nanos\":527913,\"nanos\":414955136,\"status\":\"ok\"}\n",
+      "stderr": "",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/.lake/build/bin/hexprimality_policy_probe",
+        "construction",
+        "57896044618658097711785492504343953926634992332820282019728792003956564819949"
+      ],
+      "block": 0,
+      "phase": "native-executable",
+      "arm": "new",
+      "source": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nimport HexPrimality\nimport Lean.Data.Json\n\n/-!\nA deliberately small native timing probe for the production\nMiller--Rabin-plus-`isPrimeTrial` arm versus `primeCert?` dispatch policy. The\ncontrolled, counterbalanced runner lives in\n`scripts/bench/primality_policy_sweep.py`; keeping the clock here excludes\nprocess startup from the measured interval.\n-/\n\nnamespace Hex.PrimalityPolicyProbe\n\nopen Hex.Nat\n\ninductive Route where\n  | trial\n  | certificate\n\nprivate def verdict : Route \u2192 Nat \u2192 Except String Bool\n  | .trial, n =>\n      match defaultBases.find? (fun a => !(millerRabin n a)) with\n      | some _ => .ok false\n      | none => .ok (isPrimeTrial n)\n  | .certificate, n =>\n      match primeCert? n (Hex.Rand.ofSeed n) (defaultPrimeFuel n) with\n      | .ok _ => .ok true\n      | .error f =>\n          match f.stop with\n          | .composite => .ok false\n          | .exhausted => .error s!\"certificate search exhausted after {f.attempts} attempts\"\n\nprivate def runBatch (route : Route) (n repeats : Nat) : Except String Nat := do\n  let mut checksum := 0\n  for _ in [0:repeats] do\n    checksum := checksum + if (\u2190 verdict route n) then 1 else 0\n  return checksum\n\nprivate def parseRoute : String \u2192 Option Route\n  | \"trial\" => some .trial\n  | \"certificate\" => some .certificate\n  | _ => none\n\nprivate def usage : String :=\n  \"usage: hexprimality_policy_probe (trial|certificate) N REPEATS; or construction N\"\n\n/-- Native construction timing, excluding parsing, process startup, and\ncertificate formatting. The public construction route includes its self-check. -/\nprivate def runConstruction (n : Nat) : IO UInt32 := do\n  let input \u2190 IO.mkRef n\n  let n \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let result \u2190 IO.mkRef (Construction.run n (Hex.Rand.ofSeed n))\n  let result \u2190 result.get\n  let stop \u2190 IO.monoNanosNow\n  let fields := [(\"nanos\", Lean.toJson (stop - start))]\n  let fields \u2190 match result with\n    | .error f => pure (fields ++ [(\"status\", Lean.toJson \"exhausted\"),\n        (\"attempts\", Lean.toJson f.attempts)])\n    | .ok s => do\n        let cert \u2190 IO.mkRef s.cert.raw\n        let cert \u2190 cert.get\n        let checkStart \u2190 IO.monoNanosNow\n        let checked \u2190 IO.mkRef (checkPrime cert)\n        let checked \u2190 checked.get\n        let checkStop \u2190 IO.monoNanosNow\n        unless checked do throw (IO.userError \"invalid certificate\")\n        pure (fields ++ [(\"status\", Lean.toJson \"ok\"),\n          (\"attempts\", Lean.toJson s.attempts),\n          (\"check_nanos\", Lean.toJson (checkStop - checkStart)),\n          (\"certificate\", Lean.toJson (reprStr cert))])\n  IO.println (Lean.Json.mkObj fields).compress\n  return 0\n\ndef run (args : List String) : IO UInt32 := do\n  if let [\"construction\", nArg] := args then\n    let some n := nArg.toNat?\n      | IO.eprintln s!\"invalid natural: {nArg}\"; return 2\n    return \u2190 runConstruction n\n  let [routeArg, nArg, repeatsArg] := args\n    | IO.eprintln usage; return 2\n  let some route := parseRoute routeArg\n    | IO.eprintln usage; return 2\n  let some n := nArg.toNat?\n    | IO.eprintln s!\"invalid natural: {nArg}\"; return 2\n  let some repeats := repeatsArg.toNat?\n    | IO.eprintln s!\"invalid repeat count: {repeatsArg}\"; return 2\n  if repeats == 0 then\n    IO.eprintln \"REPEATS must be positive\"\n    return 2\n  -- One untimed call establishes the same warm native state for both arms.\n  match runBatch route n 1 with\n  | .error e => IO.eprintln e; return 1\n  | .ok _ => pure ()\n  let start \u2190 IO.monoNanosNow\n  let checksum \u2190 match runBatch route n repeats with\n    | .error e => throw <| IO.userError e\n    | .ok checksum => pure checksum\n  let stop \u2190 IO.monoNanosNow\n  IO.println <| \"{\" ++\n    s!\"\\\"route\\\":\\\"{routeArg}\\\",\\\"n\\\":{n},\\\"repeats\\\":{repeats},\" ++\n    s!\"\\\"total_nanos\\\":{stop - start},\\\"checksum\\\":{checksum}\" ++ \"}\"\n  return 0\n\nend Hex.PrimalityPolicyProbe\n\ndef main (args : List String) : IO UInt32 :=\n  Hex.PrimalityPolicyProbe.run args\n",
+      "source_bytes": 4097,
+      "olean_bytes": null,
+      "result": {
+        "attempts": 29,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "check_nanos": 527913,
+        "nanos": 414955136,
+        "status": "ok"
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 0.4588050540187396,
+      "returncode": 0,
+      "load_before": [
+        21.08203125,
+        32.17578125,
+        30.658203125
+      ],
+      "load_after": [
+        21.08203125,
+        32.17578125,
+        30.658203125
+      ],
+      "stdout": "{\"attempts\":29,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock3\\n      74058212732561358302231226437062788676166966415465897661863160754340907\\n      2028478494862525422475607\\n      22304740449229861598212\\n      2028478494862525422475606\\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\\n       (2, 0, Hex.Nat.PrimeCert.small 353),\\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\\n       (2,\\n        0,\\n        Hex.Nat.PrimeCert.pock3\\n          31757755568855353\\n          4028945\\n          289\\n          4028944\\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\\n           (2, 0, Hex.Nat.PrimeCert.small 223),\\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\",\"check_nanos\":543016,\"nanos\":419664029,\"status\":\"ok\"}\n",
+      "stderr": "",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/.lake/build/bin/hexprimality_policy_probe",
+        "construction",
+        "57896044618658097711785492504343953926634992332820282019728792003956564819949"
+      ],
+      "block": 1,
+      "phase": "native-executable",
+      "arm": "new",
+      "source": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nimport HexPrimality\nimport Lean.Data.Json\n\n/-!\nA deliberately small native timing probe for the production\nMiller--Rabin-plus-`isPrimeTrial` arm versus `primeCert?` dispatch policy. The\ncontrolled, counterbalanced runner lives in\n`scripts/bench/primality_policy_sweep.py`; keeping the clock here excludes\nprocess startup from the measured interval.\n-/\n\nnamespace Hex.PrimalityPolicyProbe\n\nopen Hex.Nat\n\ninductive Route where\n  | trial\n  | certificate\n\nprivate def verdict : Route \u2192 Nat \u2192 Except String Bool\n  | .trial, n =>\n      match defaultBases.find? (fun a => !(millerRabin n a)) with\n      | some _ => .ok false\n      | none => .ok (isPrimeTrial n)\n  | .certificate, n =>\n      match primeCert? n (Hex.Rand.ofSeed n) (defaultPrimeFuel n) with\n      | .ok _ => .ok true\n      | .error f =>\n          match f.stop with\n          | .composite => .ok false\n          | .exhausted => .error s!\"certificate search exhausted after {f.attempts} attempts\"\n\nprivate def runBatch (route : Route) (n repeats : Nat) : Except String Nat := do\n  let mut checksum := 0\n  for _ in [0:repeats] do\n    checksum := checksum + if (\u2190 verdict route n) then 1 else 0\n  return checksum\n\nprivate def parseRoute : String \u2192 Option Route\n  | \"trial\" => some .trial\n  | \"certificate\" => some .certificate\n  | _ => none\n\nprivate def usage : String :=\n  \"usage: hexprimality_policy_probe (trial|certificate) N REPEATS; or construction N\"\n\n/-- Native construction timing, excluding parsing, process startup, and\ncertificate formatting. The public construction route includes its self-check. -/\nprivate def runConstruction (n : Nat) : IO UInt32 := do\n  let input \u2190 IO.mkRef n\n  let n \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let result \u2190 IO.mkRef (Construction.run n (Hex.Rand.ofSeed n))\n  let result \u2190 result.get\n  let stop \u2190 IO.monoNanosNow\n  let fields := [(\"nanos\", Lean.toJson (stop - start))]\n  let fields \u2190 match result with\n    | .error f => pure (fields ++ [(\"status\", Lean.toJson \"exhausted\"),\n        (\"attempts\", Lean.toJson f.attempts)])\n    | .ok s => do\n        let cert \u2190 IO.mkRef s.cert.raw\n        let cert \u2190 cert.get\n        let checkStart \u2190 IO.monoNanosNow\n        let checked \u2190 IO.mkRef (checkPrime cert)\n        let checked \u2190 checked.get\n        let checkStop \u2190 IO.monoNanosNow\n        unless checked do throw (IO.userError \"invalid certificate\")\n        pure (fields ++ [(\"status\", Lean.toJson \"ok\"),\n          (\"attempts\", Lean.toJson s.attempts),\n          (\"check_nanos\", Lean.toJson (checkStop - checkStart)),\n          (\"certificate\", Lean.toJson (reprStr cert))])\n  IO.println (Lean.Json.mkObj fields).compress\n  return 0\n\ndef run (args : List String) : IO UInt32 := do\n  if let [\"construction\", nArg] := args then\n    let some n := nArg.toNat?\n      | IO.eprintln s!\"invalid natural: {nArg}\"; return 2\n    return \u2190 runConstruction n\n  let [routeArg, nArg, repeatsArg] := args\n    | IO.eprintln usage; return 2\n  let some route := parseRoute routeArg\n    | IO.eprintln usage; return 2\n  let some n := nArg.toNat?\n    | IO.eprintln s!\"invalid natural: {nArg}\"; return 2\n  let some repeats := repeatsArg.toNat?\n    | IO.eprintln s!\"invalid repeat count: {repeatsArg}\"; return 2\n  if repeats == 0 then\n    IO.eprintln \"REPEATS must be positive\"\n    return 2\n  -- One untimed call establishes the same warm native state for both arms.\n  match runBatch route n 1 with\n  | .error e => IO.eprintln e; return 1\n  | .ok _ => pure ()\n  let start \u2190 IO.monoNanosNow\n  let checksum \u2190 match runBatch route n repeats with\n    | .error e => throw <| IO.userError e\n    | .ok checksum => pure checksum\n  let stop \u2190 IO.monoNanosNow\n  IO.println <| \"{\" ++\n    s!\"\\\"route\\\":\\\"{routeArg}\\\",\\\"n\\\":{n},\\\"repeats\\\":{repeats},\" ++\n    s!\"\\\"total_nanos\\\":{stop - start},\\\"checksum\\\":{checksum}\" ++ \"}\"\n  return 0\n\nend Hex.PrimalityPolicyProbe\n\ndef main (args : List String) : IO UInt32 :=\n  Hex.PrimalityPolicyProbe.run args\n",
+      "source_bytes": 4097,
+      "olean_bytes": null,
+      "result": {
+        "attempts": 29,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "check_nanos": 543016,
+        "nanos": 419664029,
+        "status": "ok"
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 0.7305411340203136,
+      "returncode": 0,
+      "load_before": [
+        21.08203125,
+        32.17578125,
+        30.658203125
+      ],
+      "load_after": [
+        21.08203125,
+        32.17578125,
+        30.658203125
+      ],
+      "stdout": "{\"attempts\":29,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock3\\n      74058212732561358302231226437062788676166966415465897661863160754340907\\n      2028478494862525422475607\\n      22304740449229861598212\\n      2028478494862525422475606\\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\\n       (2, 0, Hex.Nat.PrimeCert.small 353),\\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\\n       (2,\\n        0,\\n        Hex.Nat.PrimeCert.pock3\\n          31757755568855353\\n          4028945\\n          289\\n          4028944\\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\\n           (2, 0, Hex.Nat.PrimeCert.small 223),\\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\",\"check_nanos\":530226,\"nanos\":691328603,\"status\":\"ok\"}\n",
+      "stderr": "",
+      "command": [
+        "/tmp/hex10268-performance-baseline/.lake/build/bin/hexprimality_policy_probe",
+        "construction",
+        "57896044618658097711785492504343953926634992332820282019728792003956564819949"
+      ],
+      "block": 1,
+      "phase": "native-executable",
+      "arm": "old",
+      "source": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nimport HexPrimality\nimport Lean.Data.Json\n\n/-!\nA deliberately small native timing probe for the production\nMiller--Rabin-plus-`isPrimeTrial` arm versus `primeCert?` dispatch policy. The\ncontrolled, counterbalanced runner lives in\n`scripts/bench/primality_policy_sweep.py`; keeping the clock here excludes\nprocess startup from the measured interval.\n-/\n\nnamespace Hex.PrimalityPolicyProbe\n\nopen Hex.Nat\n\ninductive Route where\n  | trial\n  | certificate\n\nprivate def verdict : Route \u2192 Nat \u2192 Except String Bool\n  | .trial, n =>\n      match defaultBases.find? (fun a => !(millerRabin n a)) with\n      | some _ => .ok false\n      | none => .ok (isPrimeTrial n)\n  | .certificate, n =>\n      match primeCert? n (Hex.Rand.ofSeed n) (defaultPrimeFuel n) with\n      | .ok _ => .ok true\n      | .error f =>\n          match f.stop with\n          | .composite => .ok false\n          | .exhausted => .error s!\"certificate search exhausted after {f.attempts} attempts\"\n\nprivate def runBatch (route : Route) (n repeats : Nat) : Except String Nat := do\n  let mut checksum := 0\n  for _ in [0:repeats] do\n    checksum := checksum + if (\u2190 verdict route n) then 1 else 0\n  return checksum\n\nprivate def parseRoute : String \u2192 Option Route\n  | \"trial\" => some .trial\n  | \"certificate\" => some .certificate\n  | _ => none\n\nprivate def usage : String :=\n  \"usage: hexprimality_policy_probe (trial|certificate) N REPEATS; or construction N\"\n\n/-- Native construction timing, excluding parsing, process startup, and\ncertificate formatting. The public construction route includes its self-check. -/\nprivate def runConstruction (n : Nat) : IO UInt32 := do\n  let input \u2190 IO.mkRef n\n  let n \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let result \u2190 IO.mkRef (Construction.run n (Hex.Rand.ofSeed n))\n  let result \u2190 result.get\n  let stop \u2190 IO.monoNanosNow\n  let fields := [(\"nanos\", Lean.toJson (stop - start))]\n  let fields \u2190 match result with\n    | .error f => pure (fields ++ [(\"status\", Lean.toJson \"exhausted\"),\n        (\"attempts\", Lean.toJson f.attempts)])\n    | .ok s => do\n        let cert \u2190 IO.mkRef s.cert.raw\n        let cert \u2190 cert.get\n        let checkStart \u2190 IO.monoNanosNow\n        let checked \u2190 IO.mkRef (checkPrime cert)\n        let checked \u2190 checked.get\n        let checkStop \u2190 IO.monoNanosNow\n        unless checked do throw (IO.userError \"invalid certificate\")\n        pure (fields ++ [(\"status\", Lean.toJson \"ok\"),\n          (\"attempts\", Lean.toJson s.attempts),\n          (\"check_nanos\", Lean.toJson (checkStop - checkStart)),\n          (\"certificate\", Lean.toJson (reprStr cert))])\n  IO.println (Lean.Json.mkObj fields).compress\n  return 0\n\ndef run (args : List String) : IO UInt32 := do\n  if let [\"construction\", nArg] := args then\n    let some n := nArg.toNat?\n      | IO.eprintln s!\"invalid natural: {nArg}\"; return 2\n    return \u2190 runConstruction n\n  let [routeArg, nArg, repeatsArg] := args\n    | IO.eprintln usage; return 2\n  let some route := parseRoute routeArg\n    | IO.eprintln usage; return 2\n  let some n := nArg.toNat?\n    | IO.eprintln s!\"invalid natural: {nArg}\"; return 2\n  let some repeats := repeatsArg.toNat?\n    | IO.eprintln s!\"invalid repeat count: {repeatsArg}\"; return 2\n  if repeats == 0 then\n    IO.eprintln \"REPEATS must be positive\"\n    return 2\n  -- One untimed call establishes the same warm native state for both arms.\n  match runBatch route n 1 with\n  | .error e => IO.eprintln e; return 1\n  | .ok _ => pure ()\n  let start \u2190 IO.monoNanosNow\n  let checksum \u2190 match runBatch route n repeats with\n    | .error e => throw <| IO.userError e\n    | .ok checksum => pure checksum\n  let stop \u2190 IO.monoNanosNow\n  IO.println <| \"{\" ++\n    s!\"\\\"route\\\":\\\"{routeArg}\\\",\\\"n\\\":{n},\\\"repeats\\\":{repeats},\" ++\n    s!\"\\\"total_nanos\\\":{stop - start},\\\"checksum\\\":{checksum}\" ++ \"}\"\n  return 0\n\nend Hex.PrimalityPolicyProbe\n\ndef main (args : List String) : IO UInt32 :=\n  Hex.PrimalityPolicyProbe.run args\n",
+      "source_bytes": 4097,
+      "olean_bytes": null,
+      "result": {
+        "attempts": 29,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "check_nanos": 530226,
+        "nanos": 691328603,
+        "status": "ok"
+      }
+    }
+  ],
+  "protocol": "two trial-major blocks, adjacent old/new arms with reversed order; all completed samples retained",
+  "versions": {
+    "old": {
+      "commit": "6bfa5b23230cf64faa5aac77bbd5dd55320a0c7d",
+      "toolchain": "leanprover/lean4:v4.34.0-rc2",
+      "diff_sha256": "5051af0ae9d1d7fe203aff9421dfcc12ac6e9d2a82f385623ad28b18e21ca886",
+      "sources": {
+        "HexPrimality/Sieve.lean": "b90317eda625ac9dc7333505e1756a76a041d4acd34555d4131ec49d0bac1489",
+        "HexPrimality/Table.lean": "420e4a89291b34717aebe1a3cd393e9857ae0309b816e5ba3b2e1b5d7b6bbe27",
+        "HexPrimality/Cert.lean": "e2fb751d95ac2536fa501b803ad8acb1d59679ee0c22237f1c17c45e96f91b79"
+      },
+      "probe_sha256": "1a0f1b4ee2b92cda8021cd1049fa490a0e0b9467723a79448100a502700dbaf0",
+      "executable_sha256": "c6a1108f60e5012259b4ad58604be173d3c3b6a255c9debee39169a5513a142f"
+    },
+    "new": {
+      "commit": "501d36870d93a417e50ba7f5d73c7c36188052d3",
+      "toolchain": "leanprover/lean4:v4.34.0-rc2",
+      "diff_sha256": "aebf95dd5974a35956016b14d5e455d5ed9f6d8ea88b6dfb0e889f44cae7f8b1",
+      "sources": {
+        "HexPrimality/Sieve.lean": "eec42eea6037a8609bb9411c8402adf0de59f641e8f26fd234a0c73778059c33",
+        "HexPrimality/Table.lean": "0ad2ed921318915fb37067b16ee8a27e16da8f9b2c7316247f3bc217e2990d2a",
+        "HexPrimality/Cert.lean": "d3a8ed3ae3d4a59ffec73bc69309be31d22d3364318b535089d19ea22f630f08"
+      },
+      "probe_sha256": "1a0f1b4ee2b92cda8021cd1049fa490a0e0b9467723a79448100a502700dbaf0",
+      "executable_sha256": "134789e31451c793de398d3b08233a434e53e699a0ac7fac9db974f4cf5197ef"
+    }
+  },
+  "execution_mode": "native executable; same PolicyProbe frontend built against old/new production libraries"
+}

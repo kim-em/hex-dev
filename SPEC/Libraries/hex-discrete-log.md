@@ -297,13 +297,8 @@ Use one coherent set of executable and Mathlib group operations; do not
 introduce a second incompatible power instance. The computational interface
 also admits a small noncyclic test group for detecting false subgroup tests.
 
-`HexDiscreteLogMathlib` is correspondence-only. Mark it
-`correspondence_only: true`, with absence class **correspondence-only-layer**,
-and put build-only examples in `HexDiscreteLogMathlib/Tests.lean`.
-
-Computational conformance owner: `HexDiscreteLog`.
-
-Computational performance owner: `HexDiscreteLog`.
+`HexDiscreteLogMathlib` has no runtime of its own; put its build-only
+examples in `HexDiscreteLogMathlib/Tests.lean`.
 
 A specialized discrete-log tactic is outside the first scope. Kernel replay
 examples exercise literal certificate checks and the correspondence theorem.

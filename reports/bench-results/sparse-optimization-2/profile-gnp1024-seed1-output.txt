@@ -1,0 +1,38 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 12933418106
+#
+# Overhead  Command          Shared Object             Symbol                                                                                                                                                                   
+# ........  ...............  ........................  .........................................................................................................................................................................
+#
+    30.86%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeTR_go___redArg
+    16.10%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lean_apply_2
+     8.80%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] l_List_reverseAux___redArg
+     6.65%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] l_Nat_decLe___boxed
+     5.92%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_splitRevAt_go___redArg
+     4.31%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] l_List_lengthTR___redArg
+     2.92%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] mi_malloc_small
+     2.82%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] mi_free
+     2.10%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lean_dec_ref_cold
+     2.08%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] l_List_foldl___at___00Array_appendList_spec__0___redArg
+     1.95%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run___redArg
+     1.68%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] l_List_eraseRepsBy_loop___redArg
+     1.46%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lean_array_to_list_impl
+     1.44%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lean_inc_heartbeat
+     1.34%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run_x27___redArg
+     1.23%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] l_List_toArrayAux___redArg
+     1.11%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)
+     0.92%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] l_Array_extract_loop___redArg
+     0.72%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lean_array_push
+     0.62%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex_List_mapTR_loop___at___00Hex_SparseGraph_relabel_spec__0
+     0.61%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex___private_HexGraphIso_SparseBench_0__Hex_GraphIsoSparseBench_graphDigest___redArg
+     0.55%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] l_List_MergeSort_Internal_splitRevInTwo___redArg
+
+
+#
+# (Tip: To show context switches in perf report sample context add --switch-events to perf record.)
+#

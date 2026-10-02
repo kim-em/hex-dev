@@ -50,7 +50,7 @@ theorem NodeInput.codes {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
       h.fuel h.frame.length hcodes hlt
     refine ⟨bs', fs', hr, ?_⟩
     intro b hb
-    simp only [Search.key, hbs, ↓reduceIte] at hb
+    simp only [SearchState.key, hbs, ↓reduceIte] at hb
     cases hb
 
 /-- Cleanup preserves a settled receipt, and recovery identifies the

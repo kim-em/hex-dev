@@ -28,6 +28,7 @@ public import HexBasic.ArrayDecEq
 
 public import HexBerlekampZassenhaus.FactorizationResult
 public meta import HexBerlekampZassenhaus.FactorizationResult
+import all HexPolyZ.Mignotte
 import all HexBerlekampZassenhaus.PrimeSelection
 import all HexBerlekampZassenhaus.FactorizationData
 import all HexBerlekampZassenhaus.Certificate
@@ -162,10 +163,30 @@ def splitIntegerRootFactorsAux :
           (#[factor] ++ rest.1, rest.2)
       | none => splitIntegerRootFactorsAux target roots fuel
 
-/-- Factor a quadratic by its integer roots when it is reducible over the integers. -/
+/-- For a polynomial of degree two, its at most two integer roots from the
+quadratic formula. Callers must establish `core.natDegree = 2`. The integer square
+root is computed by Newton iteration, so this does not enumerate divisors of
+the constant coefficient. Exact evaluation rejects nonintegral quotients;
+exact polynomial division in the caller checks every proposed factor. -/
+def quadraticRootCandidates (core : ZPoly) : List Int :=
+  let a := core.coeff 2
+  let b := core.coeff 1
+  let d := b * b - 4 * a * core.coeff 0
+  if d < 0 then [] else
+    -- Keep candidate discovery reducible for ordinary kernel proofs.
+    let s : Int := ZPoly.floorSqrt d.toNat
+    if s * s ≠ d then [] else
+      let r := (-b + s) / (2 * a)
+      let t := (-b - s) / (2 * a)
+      -- Also handle repeated roots for callers outside squarefree normalization.
+      (if r = t then [r] else [r, t]).filter fun x => core.eval x == 0
+
+/-- Factor a quadratic using its integer roots from the quadratic formula.
+A decline leaves the general modular factorization route available, including
+quadratics whose rational roots are both nonintegral. -/
 def quadraticIntegerRootFactors? (core : ZPoly) : Option (Array ZPoly) :=
   if core.natDegree = 2 then
-    let roots := integerRootCandidates core
+    let roots := quadraticRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     if split.1.size = 0 then
       none
@@ -177,6 +198,9 @@ def quadraticIntegerRootFactors? (core : ZPoly) : Option (Array ZPoly) :=
       none
   else
     none
+
+-- Kernel reduction of the positive-discriminant shortcut is part of its API.
+example : quadraticRootCandidates (DensePoly.ofCoeffs #[-6, 1, 1]) = [2, -3] := by decide
 
 /-- Integer values in `[-B, B]`, listed in increasing order. -/
 private def boundedIntegerList (B : Nat) : List Int :=

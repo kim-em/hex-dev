@@ -1,46 +1,16 @@
 #!/usr/bin/env python3
-"""Three-way canonical-labelling comparison: nauty, HexGraphIso, IsoGraph.
+"""Six-way canonical-labelling plots from retained per-instance measurements.
 
-Local tooling, not merge CI. Times three implementations of canonical
-labelling on **the same instances** — the deterministic families of
-``bench/HexGraphIso/Cactus.lean``, materialized once and handed to each
-side as the same adjacency matrix, so no side is measured on its own
-generator's labelling:
+C dense nauty, sparse nauty and Traces use the pinned 2.9.3 engines. Hex
+has separate dense and sparse implementations; IsoGraph is the sixth
+comparator. The sparse Hex executable is conformance tested, with search
+correctness and totality proved. Historical five-way samples remain unchanged in a separate
+archive; the merged file adds only the new sparse measurements.
 
-* pinned nauty 2.9.3, timed by the standalone driver
-  ``scripts/bench/ffi/nauty_corpus_bench.c`` rather than through the
-  in-process FFI comparator: the Lean binding pushes the adjacency into
-  a ``ByteArray`` a byte at a time and decodes the canonical upper
-  triangle into a ``String``, both O(n^2) inside the timed region, and
-  at these sizes that marshalling is a median 4x of what gets reported
-  as nauty's time,
-* ``Hex.GraphIso.canonicalize`` (compiled Lean, proved correct),
-* ``IsoGraph.Canon.canonical`` from https://github.com/Timeroot/IsoGraph
-  (compiled Lean, proved correct).
-
-Compiled binaries only: no tactic, kernel-replay or ``native_decide``
-tier appears here.
-
-The two libraries' entry points do not return the same thing, so the
-figures are drawn twice.  ``canonicalize`` returns the canonical graph
-*and* its label, and pays a dense relabelling for the graph;
-``canonical`` returns the packed certificate, the label and the
-automorphisms it found.  The like-for-like pairing is the one that
-matches those shapes: ``Nauty.runColored`` (packed rows plus label) on
-the hex side, and on the IsoGraph side the search charged the
-dense-to-native conversion that ``runColored`` pays through ``rowsOf``.
-
-Input is one merged JSON line per instance, with ``nauty_ns`` and
-``nauty_whole_ns`` (densenauty, without and with the dense-to-bitset
-conversion), ``fast_ns`` (``canonicalize``), ``search_ns``
-(``runColored``), ``iso_ns`` and ``iso_whole_ns`` (``canonical``,
-without and with the graph construction), and ``nauty_ffi_ns`` (the
-in-process comparator, for the marshalling column of the table).
-
-Usage:
-
-    python3 scripts/plots/hexgraphiso-comparison.py \\
-        --data merged.jsonl --machine "chungus2 (AMD EPYC 9455)"
+The main figures time native canonical entry points, excluding input
+construction. A supplementary figure shows search and input-conversion
+measurements with their different scopes explicitly named. Native sparse
+construction and output costs are tabulated separately.
 """
 from __future__ import annotations
 
@@ -54,39 +24,30 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 from scripts.bench.graphiso_archive import normalize  # noqa: E402
 
-# Categorical slots 1-3 of the reference palette, assigned by entity and
-# never by rank: the C reference, then the two Lean implementations.
-# Categorical slots of the reference palette, assigned by entity and never
-# by rank. Five series is past the point where any slot order clears the
-# palette's all-pairs separation floor, which is the pairlist a small
-# multiple is read on, so the set is chosen rather than taken in order:
-# of the eleven five-subsets of the eight slots that pass, this is the
-# only one whose worst pair is above the CVD *target* rather than inside
-# the floor band, so no series needs secondary encoding to be legible.
-# It excludes orange, which is why HexGraphIso is not the colour it was
-# in the earlier three-series figures. Re-run
-# `validate_palette.js "<these five>" --pairs all` before changing any
-# of them. Within that set the assignment is chosen too: its closest pair
-# is aqua against green, so those go either side of the C/Lean boundary
-# where the curves are an order of magnitude apart anyway, rather than
-# onto HexGraphIso against IsoGraph, which is the comparison a reader
-# most needs to separate.
+# Colours identify implementations; distinct markers and dashed sparse-Hex
+# lines provide secondary encoding when six colours are hard to distinguish.
+# Draw the dashed series above solid lines so near-coincident curves remain
+# visible through the gaps instead of hiding the dashed curve completely.
 NAUTY, SPARSE, TRACES = "#2a78d6", "#eda100", "#008300"
-HEX, ISO = "#4a3aa7", "#1baf7a"
+HEX, HEX_SPARSE, ISO = "#4a3aa7", "#d43b66", "#1baf7a"
 
 PUBLIC = [
     ("nauty 2.9.3 dense (C)", "nauty_ns", NAUTY, "o"),
     ("nauty 2.9.3 sparse (C)", "sparse_ns", SPARSE, "D"),
     ("Traces 2.9.3 (C)", "traces_ns", TRACES, "v"),
-    ("HexGraphIso canonicalize", "fast_ns", HEX, "s"),
-    ("IsoGraph canonical", "iso_ns", ISO, "^"),
+    ("Hex dense", "fast_ns", HEX, "s"),
+    ("Hex sparse", "hex_sparse_ns", HEX_SPARSE, "P"),
+    ("IsoGraph", "iso_ns", ISO, "^"),
 ]
 
 
 LIKE = [
-    ("nauty 2.9.3 dense + conversion", "nauty_whole_ns", NAUTY, "o"),
-    ("HexGraphIso runColored", "search_ns", HEX, "s"),
-    ("IsoGraph canonical + graph build", "iso_whole_ns", ISO, "^"),
+    ("C dense + matrix conversion", "nauty_whole_ns", NAUTY, "o"),
+    ("C sparse + matrix conversion", "sparse_whole_ns", SPARSE, "D"),
+    ("Traces + matrix conversion", "traces_whole_ns", TRACES, "v"),
+    ("Hex dense runColored", "search_ns", HEX, "s"),
+    ("Hex sparse runColored", "hex_sparse_search_ns", HEX_SPARSE, "P"),
+    ("IsoGraph + matrix conversion", "iso_whole_ns", ISO, "^"),
 ]
 
 
@@ -98,7 +59,8 @@ def _cactus(ax, rows: list[dict], series) -> None:
         # the legend reports the count.
         solved = sorted(r[key] / 1e9 for r in rows if r.get(key) is not None)
         ax.plot(range(1, len(solved) + 1), solved, marker=marker,
-                markersize=4, linewidth=2, color=color,
+                markersize=4, linewidth=2, color=color, linestyle="--" if key.startswith("hex_sparse") else "-",
+                zorder=3 if key.startswith("hex_sparse") else 2,
                 label=f"{label} ({len(solved)}/{len(rows)})")
     ax.set_yscale("log")
     ax.set_xlabel("instances canonicalized")
@@ -126,7 +88,8 @@ def _families(axes, rows: list[dict], series) -> list[str]:
             pts = [(r["n"], r[key] / 1e9) for r in group
                    if r.get(key) is not None]
             ax.plot([x for x, _ in pts], [y for _, y in pts],
-                    marker=marker, markersize=4, linewidth=2, color=color,
+                    marker=marker, markersize=4, linewidth=2, color=color, linestyle="--" if key.startswith("hex_sparse") else "-",
+                    zorder=3 if key.startswith("hex_sparse") else 2,
                     label=label)
             # a cross where the curve stops, so an unsolved family reads as
             # a wall rather than as a shorter line
@@ -134,6 +97,7 @@ def _families(axes, rows: list[dict], series) -> list[str]:
             if unsolved and pts:
                 ax.plot([min(unsolved)], [max(y for _, y in pts)], marker="x",
                         markersize=7, markeredgewidth=2, color=color,
+                        zorder=3 if key.startswith("hex_sparse") else 2,
                         linestyle="none")
         ax.set_xscale("log")
         ax.set_yscale("log")
@@ -161,56 +125,48 @@ def _save(fig, out_dir, stem: str) -> list:
     paths = [out_dir / f"{stem}.svg", out_dir / f"{stem}.png"]
     for path in paths:
         fig.savefig(path, dpi=110 if path.suffix == ".png" else None)
+        if path.suffix == ".svg":
+            path.write_text("\n".join(line.rstrip() for line in path.read_text().splitlines()) + "\n")
     return paths
 
 
-def _table(rows: list[dict]) -> str:
-    head = ("| family | n | nauty (median) | Hex `canonicalize` | "
-            "IsoGraph `canonical` | IsoGraph / Hex | Hex `runColored` | "
-            "IsoGraph + build | IsoGraph / Hex, matched | sparse | Traces "
-            "| Hex nodes | IsoGraph nodes |")
-    out = [head, "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
-
-    def row(label: str, group: list[dict], span: str) -> str:
-        med = statistics.median(r["nauty_ns"] for r in group
-                                if r.get("nauty_ns") is not None) / 1e6
-
-        def f(a: str, b: str) -> float:
-            # a ratio only over the instances both columns solved
-            both = [r[a] / r[b] for r in group
-                    if r.get(a) is not None and r.get(b) is not None]
-            return statistics.median(both) if both else float("nan")
-
-        return (f"| {label} | {span} | {med:.3f} ms "
-                f"| {f('fast_ns', 'nauty_ns'):.0f}× "
-                f"| {f('iso_ns', 'nauty_ns'):.1f}× "
-                f"| {f('iso_ns', 'fast_ns'):.2f}× "
-                f"| {f('search_ns', 'nauty_ns'):.0f}× "
-                f"| {f('iso_whole_ns', 'nauty_whole_ns'):.1f}× "
-                f"| {f('iso_whole_ns', 'lit_ns'):.2f}× "
-                f"| {f('sparse_ns', 'nauty_ns'):.2f}× "
-                f"| {f('traces_ns', 'nauty_ns'):.2f}× "
-                f"| {f('nodes', 'nauty_nodes'):.2f}× "
-                f"| {f('iso_nodes', 'nauty_nodes'):.2f}× |")
-
+def _table(rows: list[dict], hex_refresh: bool = False, sparse_refresh: bool = False,
+           sparse_refresh_below: int | None = None) -> str:
+    out = ["| family | n | C dense ms | C sparse ms | Traces ms | Hex dense / C dense | Hex sparse / C sparse | Hex sparse / Hex dense | IsoGraph / Hex sparse |",
+           "|---|---|---|---|---|---|---|---|---|"]
+    def median(group, key):
+        xs = [r[key] / 1e6 for r in group if r.get(key) is not None]
+        return f"{statistics.median(xs):.3f}" if xs else "—"
+    def ratio(group, a, b):
+        xs = [r[a] / r[b] for r in group if r.get(a) is not None and r.get(b) is not None]
+        return f"{statistics.median(xs):.2f}×" if xs else "—"
+    for family in _order(rows) + ["all"]:
+        group = rows if family == "all" else [r for r in rows if r['family'] == family]
+        cells = [family, f"{min(r['n'] for r in group)}–{max(r['n'] for r in group)}"]
+        cells += [median(group, key) for key in ['nauty_ns', 'sparse_ns', 'traces_ns']]
+        cells += [ratio(group, a, b) for a, b in [('fast_ns', 'nauty_ns'),
+                  ('hex_sparse_ns', 'sparse_ns'), ('hex_sparse_ns', 'fast_ns'),
+                  ('iso_ns', 'hex_sparse_ns')]]
+        out.append("| " + " | ".join(cells) + " |")
+    out += ["", "Ratios are medians of per-instance ratios on the intersection of solved cases. "
+            "C and IsoGraph samples are historical; " +
+            (f"Hex sparse below {sparse_refresh_below} vertices was refreshed; larger cases and Hex dense "
+             "are retained from the preceding comparison on the same shared host. " if sparse_refresh_below is not None else
+             "both Hex series were refreshed on the same shared host. " if hex_refresh else
+             "Hex dense samples are also historical; Hex sparse was refreshed on the same shared host. " if sparse_refresh else
+             "Hex sparse samples were added on the same shared host. ") +
+            "These observations are not an adjacent before/after experiment.", "",
+            "| family | native sparse build ms | sparse runColored ms | checked canonicalization ms | relabel alone ms |",
+            "|---|---|---|---|---|"]
     for family in _order(rows):
-        group = [r for r in rows if r["family"] == family]
-        span = f"{min(r['n'] for r in group)}–{max(r['n'] for r in group)}"
-        out.append(row(family, group, span))
-    out.append(row(f"**all {len(rows)}**", rows,
-                   f"{min(r['n'] for r in rows)}–{max(r['n'] for r in rows)}"))
-    out.append("")
-    out.append("Ratios are per-instance medians against standalone nauty "
-               "2.9.3 on the same instance; the sixth column is the "
-               "head-to-head on the public entry points and the ninth the "
-               "same head-to-head with the result shapes matched — "
-               "`runColored` against `canonical` charged the "
-               "dense-to-native conversion, neither of them building a "
-               "canonical graph to hand back. The last two are search-tree sizes against "
-               "nauty's: `canonicalize` transcribes nauty's search and "
-               "visits exactly its nodes on every instance, so its whole "
-               "distance from nauty is per-node cost, while IsoGraph is a "
-               "different search and its node count is what varies.")
+        group = [r for r in rows if r['family'] == family]
+        out.append("| " + " | ".join([family] + [median(group, key) for key in
+            ['hex_sparse_build_ns', 'hex_sparse_search_ns', 'hex_sparse_ns', 'hex_sparse_output_ns']]) + " |")
+    out += ["", "Each cost column uses its own solved subset. Build and relabel are measured independently; "
+            "their medians must not be subtracted from the canonicalization median."]
+    if sparse_refresh_below is not None:
+        out += ["", "Only sparse canonicalization and output below the stated order were remeasured; "
+                "native construction and search samples are retained from the preceding comparison."]
     return "\n".join(out)
 
 
@@ -218,7 +174,8 @@ def _solved(rows: list[dict]) -> str:
     """How far each implementation got in each family before the sweep's
     per-instance budget cut it off."""
     cols = [("nauty dense", "nauty_ns"), ("nauty sparse", "sparse_ns"),
-            ("Traces", "traces_ns"), ("Hex `canonicalize`", "fast_ns"),
+            ("Traces", "traces_ns"), ("Hex dense", "fast_ns"),
+            ("Hex sparse", "hex_sparse_ns"),
             ("IsoGraph `canonical`", "iso_ns")]
     out = ["| family | instances | " +
            " | ".join(f"{c} largest n solved" for c, _ in cols) + " |",
@@ -248,6 +205,15 @@ def main() -> int:
     parser.add_argument("--out-dir", type=Path,
                         default=REPO_ROOT / "reports/figures")
     parser.add_argument("--machine", default="")
+    parser.add_argument("--sparse-passes", type=int, choices=[1, 2], default=2,
+                        help="completed sparse measurement passes; one marks a preliminary figure")
+    parser.add_argument("--hex-refresh", action="store_true",
+                        help="both Hex variants were remeasured after the performance changes")
+    parser.add_argument("--sparse-refresh", action="store_true",
+                        help="Hex sparse was remeasured; the other five series were retained")
+    parser.add_argument("--sparse-refresh-below", type=int,
+                        help="Hex sparse canonicalization and output were remeasured below this order; "
+                             "other measurements were retained")
     args = parser.parse_args()
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -259,11 +225,20 @@ def main() -> int:
 
     rows = [normalize(json.loads(line)) for line in args.data.read_text().splitlines()
             if line]
-    caption = ("best of several reps after warm-up, over two passes, one "
-               "process per instance per implementation; the identical "
-               "adjacency matrix is handed to every one;\ncompiled binaries "
-               "only, no tactic or kernel replay; a curve stops where its "
-               "implementation first exceeded the per-instance budget")
+    pass_caption = ("two passes" if args.sparse_passes == 2 else
+                    "preliminary Hex series: one completed pass; comparators: two passes"
+                    if args.hex_refresh else
+                    "preliminary Hex sparse: one completed pass; historical series: two passes")
+    series_caption = (f"five historical series; Hex sparse remeasured below {args.sparse_refresh_below} vertices, larger instances retained"
+                      if args.sparse_refresh_below is not None else
+                      "four historical comparator series plus refreshed Hex dense and Hex sparse measurements"
+                      if args.hex_refresh else
+                      "five historical series plus refreshed Hex sparse measurements" if args.sparse_refresh else
+                      "five historical series plus new Hex sparse measurements")
+    caption = (f"best of repetitions after warm-up, {pass_caption}; identical labelled graphs, native input construction excluded; "
+               "five-second per-call budget with family give-up;\n"
+               f"{series_caption} on the same shared host; "
+               "Hex sparse passes C conformance; search correctness and totality proved")
     if args.machine:
         caption += f"; {args.machine}"
 
@@ -281,7 +256,7 @@ def main() -> int:
         written.extend(_save(fig, args.out_dir, stem))
         plt.close(fig)
 
-    def family_figure(series, stem: str, title: str):
+    def family_figure(series, stem: str, title: str, figure_caption=caption):
         families = _order(rows)
         cols = 4 if len(families) > 12 else 3
         nrows = (len(families) + cols - 1) // cols
@@ -295,10 +270,10 @@ def main() -> int:
             ax.set_xlabel("n (vertices)")
         handles, labels = axes[0].get_legend_handles_labels()
         fig.legend(handles, labels, loc="lower center",
-                   bbox_to_anchor=(0.5, 0.048), ncol=len(series), fontsize=9,
+                   bbox_to_anchor=(0.5, 0.048), ncol=3, fontsize=9,
                    frameon=False)
         fig.suptitle(title, fontsize=12)
-        fig.text(0.5, 0.006, caption, ha="center", fontsize=6.5,
+        fig.text(0.5, 0.006, figure_caption, ha="center", fontsize=6.5,
                  style="italic")
         fig.tight_layout(rect=(0, 0.10, 1, 0.97))
         written.extend(_save(fig, args.out_dir, stem))
@@ -307,7 +282,15 @@ def main() -> int:
     family_figure(PUBLIC, "hexgraphiso-comparison-families",
                   "canonical labelling by family, against vertex count")
 
-    table = _table(rows) + "\n\n" + _solved(rows)
+    search_caption = caption.replace("native input construction excluded",
+        "C and IsoGraph include matrix-to-native conversion; Hex sparse starts from CSR")
+    if args.sparse_refresh_below is not None:
+        search_caption = search_caption.replace(series_caption,
+            "all search and conversion measurements retained from the preceding comparison")
+    family_figure(LIKE, "hexgraphiso-comparison-search-families",
+                  "search and conversion costs (input representations differ; see report)", search_caption)
+
+    table = _table(rows, args.hex_refresh, args.sparse_refresh, args.sparse_refresh_below) + "\n\n" + _solved(rows)
     table_path = args.out_dir / "hexgraphiso-comparison-table.md"
     table_path.write_text(table + "\n")
     written.append(table_path)

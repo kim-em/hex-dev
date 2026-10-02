@@ -1,0 +1,258 @@
+{
+  "commit": "ec8f7c14f91432f97ac130595bce7600e41c1562",
+  "cpu": 1,
+  "affinity": [
+    1
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "load_start": [
+    3.60498046875,
+    3.68359375,
+    3.91259765625
+  ],
+  "binary_sha256": "cacf15c457b09633b1dc4db9339c6100d5ed3223f3c3c28353fd40af757f4ec3",
+  "source_sha256": "32715883205ee4ff12017eb9a73e0b3b7f991e950e2e910f6e757773c2fcea6d",
+  "start_utc": "2026-09-21T07:42:32Z",
+  "commands": [
+    {
+      "label": "complexity",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runInteger",
+        "Hex.SturmBench.runRational",
+        "Hex.SturmBench.runDomain",
+        "Hex.SturmBench.runInitial",
+        "Hex.SturmBench.runChain",
+        "Hex.SturmBench.runEndpoints",
+        "Hex.SturmBench.runSigns",
+        "Hex.SturmBench.runReplay",
+        "Hex.SturmBench.runClearing",
+        "Hex.SturmBench.runIntegerHigh",
+        "Hex.SturmBench.runRationalHigh",
+        "Hex.SturmBench.runInitialHigh",
+        "Hex.SturmBench.runReplayHigh",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/complexity.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "paired-degree-0-integer",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runInteger",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-degree-0-integer.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "paired-degree-0-rational",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runRational",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-degree-0-rational.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "paired-degree-1-rational",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runRational",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-degree-1-rational.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "paired-degree-1-integer",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runInteger",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-degree-1-integer.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "paired-degree-2-integer",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runInteger",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-degree-2-integer.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "paired-degree-2-rational",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runRational",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-degree-2-rational.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "paired-degree-3-rational",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runRational",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-degree-3-rational.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "paired-degree-3-integer",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runInteger",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-degree-3-integer.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "paired-query-degree-0-integer",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runIntegerHigh",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-query-degree-0-integer.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "paired-query-degree-0-rational",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runRationalHigh",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-query-degree-0-rational.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "paired-query-degree-1-rational",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runRationalHigh",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-query-degree-1-rational.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "paired-query-degree-1-integer",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runIntegerHigh",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-query-degree-1-integer.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "paired-query-degree-2-integer",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runIntegerHigh",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-query-degree-2-integer.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "paired-query-degree-2-rational",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runRationalHigh",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-query-degree-2-rational.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "paired-query-degree-3-rational",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runRationalHigh",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-query-degree-3-rational.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "label": "paired-query-degree-3-integer",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runIntegerHigh",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-query-degree-3-integer.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "cpuinfo": "processor\t: 1\nvendor_id\t: AuthenticAMD\ncpu family\t: 26\nmodel\t\t: 2\nmodel name\t: AMD EPYC 9455 48-Core Processor\nstepping\t: 1\nmicrocode\t: 0xb002162\ncpu MHz\t\t: 4441.763\ncache size\t: 1024 KB\nphysical id\t: 0\nsiblings\t: 96\ncore id\t\t: 1\ncpu cores\t: 48\napicid\t\t: 2\ninitial apicid\t: 2\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 16\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good amd_lbr_v2 nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba perfmon_v2 ibrs ibpb stibp ibrs_enhanced vmmcall fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk avx_vnni avx512_bf16 clzero irperf xsaveerptr rdpru wbnoinvd amd_ppin cppc arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif x2avic v_spec_ctrl vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid bus_lock_detect movdiri movdir64b overflow_recov succor smca fsrm avx512_vp2intersect flush_l1d sev sev_es debug_swap amd_lbr_pmc_freeze\nbugs\t\t: sysret_ss_attrs spectre_v1 spectre_v2 spec_store_bypass srso vmscape\nbogomips\t: 6290.49\nTLB size\t: 192 4K pages\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 57 bits virtual\npower management: ts ttp tm hwpstate cpb eff_freq_ro [13] [14]",
+  "oracle": "python-flint 0.9.0 / FLINT 3.6.0 exact qqbar: all 11 query values agree",
+  "load_end": [
+    4.18115234375,
+    3.8203125,
+    3.94873046875
+  ],
+  "end_utc": "2026-09-21T07:43:10Z"
+}

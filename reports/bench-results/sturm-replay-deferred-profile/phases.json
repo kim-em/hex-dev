@@ -1,0 +1,10 @@
+{
+  "method": "inclusive call-chain classification within timed kernel regions, endpoint first then recurrence products; remaining stacks unassigned",
+  "total_period": 3380657574,
+  "groups": {
+    "other_or_unresolved": {
+      "period": 3380657574,
+      "percent": 100.0
+    }
+  }
+}

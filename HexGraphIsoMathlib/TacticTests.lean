@@ -44,7 +44,7 @@ example : c5a ≃g c5b := by graph_iso
 example : IsEmpty (c5a ≃g p5) := by graph_iso
 example : ¬ Nonempty (c5a ≃g p5) := by graph_iso
 example : c5a ≃g c5b := by
-  graph_iso (maxSearchNodes := 200000) (maxKernelSteps := 10000000)
+  graph_iso (maxSearchNodes := 200000)
 
 /-! # The Petersen graph three ways, with distinct vertex types -/
 

@@ -1,0 +1,6 @@
+{
+  "path": "HexPrimality/Table.lean",
+  "baseline_blob": "42a92774972718ec4910a8423201beea2695c719",
+  "current_blob": "dd0164bfda7a0bd1f4b806c36f51154c90e03dda",
+  "reason": "The timed Hex factorization service reaches this module only through HexBerlekampZassenhaus/PrimeSelection.lean, which reads primeTable and uses primeTable_sorted, mem_primeTable_prime, and mem_primeTable_of_prime. Those definitions/statements/proofs and the table literal are byte-identical. The changed isTablePrime kernel lookup, its binary-search runtime twin, and the exposed final sieve bitset are not called by that timed factorization path. Module initialization is outside the per-request timers in bench/HexBench/FactorService.lean. This is runtime-neutral for the recorded factorization service, not a claim that primality replay is unchanged."
+}

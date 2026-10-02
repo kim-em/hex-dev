@@ -1,0 +1,6 @@
+{
+  "path": "HexPolyZ/IntegerPolynomial.lean",
+  "baseline_blob": "91bb4bff0d721850693af1eecaba1b04c9b514a9",
+  "current_blob": "c77677c6530fb8e8bcd7e44be9c4123f3a6e86aa",
+  "reason": "Exposes a list specification for toRatPoly so literal number-field coordinates reduce in the kernel. The new csimp theorem toRatPoly_eq redirects every compiled use to toRatPolyImpl, whose body is exactly the previous toRatPoly body: DensePoly.ofCoeffs (f.toArray.map fun coeff : Int => (coeff : Rat)). Generated C uses the Array.mapMUnsafe map and existing trailing-zero trimming; the list specification is noncomputable and is not executed. The other edits prove the specification/implementation equality and adapt coeff_toRatPoly. The measured integer-factorization operations therefore retain the same array conversion and normalization algorithm."
+}

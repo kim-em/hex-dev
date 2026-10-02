@@ -16,9 +16,14 @@ authored by Slava Naprienko, commit `bbe9ab491bc1`). The proof was
 copied verbatim from that commit and has since been migrated to the
 `module`/`public import` system and had two `simp` sets repaired across
 toolchain bumps, so it is no longer character-for-character upstream.
-Delete this file and import the upstream module once mathlib4 PR #37716
-merges; the upstream branch has moved on from `bbe9ab491bc1`, so re-check
-the statement rather than assuming a drop-in swap.
+When mathlib4 PR #37716 merges, compare the upstream theorem's namespace,
+hypotheses, index maps, and factor order before deleting this file; the PR
+head currently places it in the `Matrix` namespace. Re-check the direct
+consumers `desnanot_jacobi_deleteRowCol_endpoints`,
+`desnanot_jacobi_matrixEquiv_reindex`, and
+`desnanot_jacobi_borderedMinor_reindex`, then rebuild the downstream
+`desnanot_jacobi_borderedMinor` bridge and its Bareiss and integer
+Gram–Schmidt consumers before replacing this module's `public import`.
 -/
 module
 

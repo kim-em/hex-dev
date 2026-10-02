@@ -1,0 +1,2253 @@
+{
+  "schema": "primality-replay-pair/1",
+  "kind": "native",
+  "cpu": 37,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "protocol": "four fixed trial-major blocks, adjacent AB/BA; every completed sample retained",
+  "versions": {
+    "before": {
+      "commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+      "toolchain": "leanprover/lean4:v4.34.0",
+      "diff": "",
+      "checker_sha256": "9a9be0d357df6feefba6acb5a1a423c0b5202771e7cd97545be0bdeb61c83cdb"
+    },
+    "after": {
+      "commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+      "toolchain": "leanprover/lean4:v4.34.0",
+      "diff": "diff --git a/HexPrimality/Cert.lean b/HexPrimality/Cert.lean\nindex 0ae547b9b..ceb984296 100644\n--- a/HexPrimality/Cert.lean\n+++ b/HexPrimality/Cert.lean\n@@ -363,7 +363,7 @@ multiplications. (When `r\u00b2 \u2264 8s` the truncated subtraction makes the\n witness clause `w * w < 0` unsatisfiable, so the disjunct is simply never\n taken; the middle disjunct covers that region.) -/\n @[expose]\n-def checkPock3Arith (n r s w : Nat)\n+def checkPock3Arith.native (n r s w : Nat)\n     (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : Bool :=\n   decide (2 \u2264 n) && n % 2 == 1 && subjectsOk factors &&\n     match certProduct (n - 1) factors with\n@@ -378,6 +378,22 @@ def checkPock3Arith (n r s w : Nat)\n               decide (r * r - 8 * s < (w + 1) * (w + 1)))) &&\n           checkWitnesses n factors\n \n+/-- Kernel replay uses the bounded positive product and primitive comparisons.\n+Compiled checking retains the original arithmetic path. -/\n+@[expose]\n+noncomputable def checkPock3Arith (n r s w : Nat)\n+    (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : Bool :=\n+  (2 : Nat).ble n && (n.mod 2).beq 1 && subjectsOk factors &&\n+    (let F := pockProduct (n.sub 1) factors;\n+        (n - 1) % F == 0 && F % 2 == 0 && (n - 1) / F % 2 == 1 &&\n+          (n - 1) / F == 2 * F * s + r &&\n+          (1 : Nat).ble r && r.blt (2 * F) &&\n+          n.blt ((F + 1) * (2 * F * F + (r - 1) * F + 1)) &&\n+          (s == 0 || (r * r).blt (8 * s) ||\n+            ((w * w).blt (r * r - 8 * s) &&\n+              (r * r - 8 * s).blt ((w + 1) * (w + 1)))) &&\n+          checkWitnesses n factors)\n+\n /-- Maximum sieve bound in a checked certificate.\n This caps replay work for arbitrary untrusted literals, including rejected inputs. -/\n @[expose] def pocklingtonSieveCap : Nat := 64\n@@ -400,7 +416,7 @@ private theorem checkDivisors_spec (n F : Nat) : \u2200 k,\n \n /-- The general cube-root arithmetic check; the legacy node retains its sieve-free path. -/\n @[expose]\n-def checkPock3SieveArith (n r s w m : Nat)\n+def checkPock3SieveArith.native (n r s w m : Nat)\n     (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : Bool :=\n   decide (2 \u2264 n) && n % 2 == 1 && subjectsOk factors &&\n     match certProduct (n - 1) factors with\n@@ -416,6 +432,23 @@ def checkPock3SieveArith (n r s w m : Nat)\n               decide (r * r - 8 * s < (w + 1) * (w + 1)))) &&\n           checkWitnesses n factors\n \n+/-- Kernel replay uses the bounded positive product and primitive comparisons.\n+Compiled checking retains the original arithmetic path. -/\n+@[expose]\n+noncomputable def checkPock3SieveArith (n r s w m : Nat)\n+    (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : Bool :=\n+  (2 : Nat).ble n && (n.mod 2).beq 1 && subjectsOk factors &&\n+    (let F := pockProduct (n.sub 1) factors;\n+        (n - 1) % F == 0 && F % 2 == 0 && (n - 1) / F % 2 == 1 &&\n+          (n - 1) / F == 2 * F * s + r &&\n+          (1 : Nat).ble r && r.blt (2 * F) && (1 : Nat).ble m && m.ble pocklingtonSieveCap &&\n+          (2 * s + m * m).blt ((2 * F + r) * m + 2) &&\n+          checkDivisors n F (m - 1) &&\n+          (s == 0 || (r * r).blt (8 * s) ||\n+            ((w * w).blt (r * r - 8 * s) &&\n+              (r * r - 8 * s).blt ((w + 1) * (w + 1)))) &&\n+          checkWitnesses n factors)\n+\n /-! Accumulator lemmas -/\n \n /-- On success, the bounded accumulator computes the ordinary product. -/\n@@ -677,6 +710,44 @@ private theorem checkPockArith.eq_native (n : Nat) (factors : List (Nat \u00d7 Nat \n   funext n fs\n   exact checkPockArith.eq_native n fs\n \n+private theorem checkPock3Arith.eq_native (n r s w : Nat) (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) :\n+    checkPock3Arith n r s w factors = checkPock3Arith.native n r s w factors := by\n+  by_cases hs : subjectsOk factors = true\n+  \u00b7 have hp : \u2200 x \u2208 factors, 0 < x.2.2.subject := by\n+      intro x hx\n+      have := subjectsOk_forall hs x hx\n+      omega\n+    simp only [checkPock3Arith, pockProduct.eq_product _ _ hp]\n+    cases h : certProduct (n - 1) factors <;>\n+      apply Bool.eq_iff_iff.mpr <;>\n+      simp [checkPock3Arith.native, h, hs, Nat.blt_eq] <;> intros <;> rfl\n+  \u00b7 have hf : subjectsOk factors = false := Bool.eq_false_iff.mpr hs\n+    simp [checkPock3Arith, checkPock3Arith.native, hf]\n+\n+/-- The compiler uses the verified runtime implementation. -/\n+@[csimp] theorem checkPock3Arith_eq_native : @checkPock3Arith = @checkPock3Arith.native := by\n+  funext n r s w fs\n+  exact checkPock3Arith.eq_native n r s w fs\n+\n+private theorem checkPock3SieveArith.eq_native (n r s w m : Nat) (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) :\n+    checkPock3SieveArith n r s w m factors = checkPock3SieveArith.native n r s w m factors := by\n+  by_cases hs : subjectsOk factors = true\n+  \u00b7 have hp : \u2200 x \u2208 factors, 0 < x.2.2.subject := by\n+      intro x hx\n+      have := subjectsOk_forall hs x hx\n+      omega\n+    simp only [checkPock3SieveArith, pockProduct.eq_product _ _ hp]\n+    cases h : certProduct (n - 1) factors <;>\n+      apply Bool.eq_iff_iff.mpr <;>\n+      simp [checkPock3SieveArith.native, h, hs, Nat.blt_eq] <;> intros <;> rfl\n+  \u00b7 have hf : subjectsOk factors = false := Bool.eq_false_iff.mpr hs\n+    simp [checkPock3SieveArith, checkPock3SieveArith.native, hf]\n+\n+/-- The compiler uses the verified runtime implementation. -/\n+@[csimp] theorem checkPock3SieveArith_eq_native : @checkPock3SieveArith = @checkPock3SieveArith.native := by\n+  funext n r s w m fs\n+  exact checkPock3SieveArith.eq_native n r s w m fs\n+\n \n mutual\n \n@@ -1011,7 +1082,8 @@ private theorem checkPock3Arith_spec {n r s w : Nat}\n         n < (F + 1) * (2 * F * F + (r - 1) * F + 1) \u2227\n         (s = 0 \u2228 r * r < 8 * s \u2228 \u2200 t, t * t \u2260 r * r - 8 * s) \u2227\n         \u2200 x \u2208 factors, checkWitness n x.2.2.subject x.1 = true := by\n-  unfold checkPock3Arith at h\n+  rw [checkPock3Arith.eq_native] at h\n+  unfold checkPock3Arith.native at h\n   simp only [checkWitnesses.eq_native, checkWitnesses.native] at h\n   rw [Bool.and_eq_true, Bool.and_eq_true] at h\n   obtain \u27e8\u27e8h2, hodd\u27e9, hm\u27e9 := h\n@@ -1043,7 +1115,8 @@ private theorem checkPock3SieveArith_spec {n r s w m : Nat}\n         2 * s + m * m < (2 * F + r) * m + 2 \u2227\n         (s = 0 \u2228 r * r < 8 * s \u2228 \u2200 t, t * t \u2260 r * r - 8 * s) \u2227\n         \u2200 x \u2208 factors, checkWitness n x.2.2.subject x.1 = true := by\n-  unfold checkPock3SieveArith at h\n+  rw [checkPock3SieveArith.eq_native] at h\n+  unfold checkPock3SieveArith.native at h\n   simp only [checkWitnesses.eq_native, checkWitnesses.native] at h\n   rw [Bool.and_eq_true, Bool.and_eq_true] at h\n   obtain \u27e8\u27e8h2, hodd\u27e9, hm\u27e9 := h\ndiff --git a/HexPrimality/SPEC/hex-primality.md b/HexPrimality/SPEC/hex-primality.md\nindex 4b04287f7..046a13a0a 100644\n--- a/HexPrimality/SPEC/hex-primality.md\n+++ b/HexPrimality/SPEC/hex-primality.md\n@@ -1239,6 +1239,12 @@ a changed base starts a new group. Each public checker is a `noncomputable` kern\n binary search. The internal `pockProduct` sentinel is proved equivalent to\n `certProduct` for positive subjects; callers establish that precondition\n before using it, and the final arithmetic check rejects the zero sentinel.\n+Both cube-root arithmetic arms use this bounded product and primitive comparisons,\n+just as the square-root arm does. Their unconditional equality theorems retain\n+the original compiled arithmetic, including rejection on zero subjects,\n+overflowing exponents, invalid ordering, invalid interval witnesses, and sieve\n+bounds outside the cap. Optimizing replay must also check complete `primality?`\n+and native construction for regressions; a smaller kernel timer alone is insufficient.\n \n `checkPrime` is therefore written against `powModNat`. The bench\n family \"kernel replay\" below is what confirms the choice was the\n@@ -1527,16 +1533,15 @@ Imported library proofs remain dependencies. A negative control must be\n rejected. The retained `hex-primality-direct-kernel-checked-issue-10268.json` uses\n adjacent reversed systems and records every sample, source, and toolchain.\n Its matched-input plot shows growth hidden by fresh-build overhead; cactus\n-rank is not a bit-length axis. The compact-certificate comparison in\n-`reports/bench-results/hex-primality-small-replay/hex-compact-primecert-sieve-kernel.json`\n-measures Hex on Lean 4.34.0 at a median 5.18 ms for Curve25519, versus\n-PrimeCert on Lean 4.33.0 at 14.42 ms. Both receive supplied Curve448\n-certificates, and PrimeCert uses the same selected Pocklington factors as Hex,\n-with its certified sieve for larger table leaves.\n-All four samples per system and input are retained. Hex wins all eight inputs;\n-the margins range from 1.11\u00d7 to 3.46\u00d7 on this shared host.\n-These are supplied-proof replay measurements, not a comparison of certificate\n-construction; see the [replay report](../../reports/hex-primality-windowed-replay.md).\n+rank is not a bit-length axis. Comparisons must identify the PrimeCert revision:\n+its fixed-window modular exponentiation changes the replay comparison materially.\n+The current [component attribution](../../reports/hex-primality-replay-attribution.md)\n+separates supplied-proof kernel replay, fresh-module elaboration, certificate\n+search/rendering, complete `Nat.Prime` tactics, and native construction. Match\n+factor subsets and witness bases before attributing an implementation difference;\n+common-base certificates can require fewer powers than individually selected bases.\n+All completed samples remain evidence, with adjacent alternating before/after\n+arms. Results describe the recorded shared host, not portable performance promises.\n \n The fixed construction targets and the adjacent-arm Curve25519 phase and\n replay measurements are recorded in\ndiff --git a/bench/HexBench/PrimalityKernel.lean b/bench/HexBench/PrimalityKernel.lean\nindex 2ee8df412..75b7fe493 100644\n--- a/bench/HexBench/PrimalityKernel.lean\n+++ b/bench/HexBench/PrimalityKernel.lean\n@@ -67,4 +67,21 @@ theorem replayPock3Sieve :\n     checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 4\n       [(3, 19, .small 2)]) = true := by decide +kernel\n \n+-- The optimized cube-root paths must reject malformed products before witness\n+-- arithmetic, including bounds whose powers would be infeasible to construct.\n+example : checkPrime (.pock3 199 9 2 8\n+    [(3, 0, .small 0), (2, 0, .small 3)]) = false := by decide +kernel\n+example : checkPrime (.pock3 199 9 2 8\n+    [(3, 1048576, .small 2), (2, 0, .small 3)]) = false := by decide +kernel\n+example : checkPrime (.pock3 199 9 2 8\n+    [(2, 0, .small 3), (3, 0, .small 2)]) = false := by decide +kernel\n+example : checkPrime (.pock3 199 9 2 7\n+    [(3, 0, .small 2), (2, 0, .small 3)]) = false := by decide +kernel\n+example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 4\n+    [(0, 19, .small 2)]) = false := by decide +kernel\n+example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 65\n+    [(3, 19, .small 2)]) = false := by decide +kernel\n+example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 4\n+    [(3, 1048576, .small 2)]) = false := by decide +kernel\n+\n end HexBench.PrimalityKernel\ndiff --git a/reports/hex-primality-performance.md b/reports/hex-primality-performance.md\nindex 2ff3adeca..d9d873d8d 100644\n--- a/reports/hex-primality-performance.md\n+++ b/reports/hex-primality-performance.md\n@@ -1,5 +1,9 @@\n # HexPrimality Performance Report\n \n+The current supplied-certificate comparison against PrimeCert's fixed-window\n+implementation is in [the replay attribution](hex-primality-replay-attribution.md).\n+The comparator measurements below use an earlier PrimeCert revision.\n+\n ## Bench Targets\n \n The compiled suite owns each executable surface once.  The first six rows use\ndiff --git a/reports/hex-primality-windowed-replay.md b/reports/hex-primality-windowed-replay.md\nindex d8591f762..807bccad2 100644\n--- a/reports/hex-primality-windowed-replay.md\n+++ b/reports/hex-primality-windowed-replay.md\n@@ -1,10 +1,14 @@\n # Primality certificate replay\n \n-Hex checks all eight supplied certificates faster than PrimeCert in this\n-comparison, including every one of the 32 adjacent pairs. Curve25519 takes\n-**5.18 ms versus 14.42 ms**; Curve448 takes **10.17 ms versus 35.21 ms**.\n-The margins range from **1.11\u00d7 to 3.46\u00d7**. These are observations on a shared\n-host, with a small, structured corpus.\n+The comparison below uses PrimeCert's binary modular exponentiation at\n+`7d3a2de`. It does not describe PrimeCert's fixed-window implementation.\n+See [the current replay attribution](hex-primality-replay-attribution.md) for\n+that comparison, matched witness counts, cube-root checker improvements, and\n+complete-tactic regression measurements.\n+\n+In this binary-comparator snapshot, Hex checks all eight supplied certificates\n+faster: Curve25519 takes 5.18 ms versus 14.42 ms and Curve448 takes 10.17 ms\n+versus 35.21 ms on the recorded shared host.\n \n PrimeCert uses compact certificates with the same selected Pocklington factors\n as Hex, including its certified sieve API for table leaves above 997.\n@@ -52,7 +56,7 @@ kernel improvements.\n \n ![Full certificate kernel comparison](figures/hex-primality-kernel-direct.svg)\n \n-## Why replay is faster\n+## Hex replay design\n \n - `HexArith.powModNat` uses direct recursors and fixed windows: six bits through\n   `2^64`, four through `2^512`, three through `2^1024`, and narrower windows or\ndiff --git a/scripts/bench/primality_kernel_direct.py b/scripts/bench/primality_kernel_direct.py\nindex bd173ffb8..9a39f564f 100644\n--- a/scripts/bench/primality_kernel_direct.py\n+++ b/scripts/bench/primality_kernel_direct.py\n@@ -104,8 +104,10 @@ run_cmd do\n \n \n def main() -> None:\n+    global ROOT\n     parser = argparse.ArgumentParser(description=__doc__)\n     parser.add_argument('source_record', type=Path)\n+    parser.add_argument('--hex-checkout', type=Path, default=ROOT)\n     parser.add_argument('--primecert-checkout', type=Path, required=True)\n     parser.add_argument('--output', type=Path, required=True)\n     parser.add_argument('--blocks', type=int, default=2)\n@@ -122,6 +124,7 @@ def main() -> None:\n         parser.error('use a new output path and an even block count >= 2')\n     if args.upstream_power and not args.powers:\n         parser.error('--upstream-power requires --powers')\n+    ROOT = args.hex_checkout.resolve()\n     previous = json.loads(args.source_record.read_text())\n     pc = args.primecert_checkout.resolve()\n     cpu = pick()\n@@ -175,6 +178,19 @@ def main() -> None:\n         record['power_sources']['power-div']['primecert'] = (\n             'module\\npublic import Lean\\npublic meta import Lean\\npublic section\\n' + raw_div +\n             f'\\ntheorem result : powDiv 2 {exponent} {n} = 1 := by decide +kernel\\n')\n+        # Identical fixed-window code calibrates the kernels used by both packages.\n+        record['cases'].append(dict(name='power-window', n=n))\n+        window = \"\"\"\n+@[expose] noncomputable def powWindow (b m k : Nat) : Nat \u2192 Nat \u2192 Nat :=\n+  Nat.rec (fun _ => 0)\n+    (fun _ rec e =>\n+      (e.beq 0).rec\n+        ((((rec (e.div k)).pow k).mul (b.pow (e.mod k))).mod m)\n+        ((1 : Nat).mod m))\n+\"\"\"\n+        body = ('module\\npublic import Lean\\npublic meta import Lean\\npublic section\\n' + window +\n+                f'theorem result : powWindow 2 {n} 16 {int(exponent)+1} {exponent} = 1 := by decide +kernel\\n')\n+        record['power_sources']['power-window'] = dict(hex=body, primecert=body)\n         if args.upstream_power:\n             record['cases'].append(dict(name='power-upstream', n=n))\n             # lean4#13490, commit 86704eea9a8cf46d7f20f4eb2c293cdaae7ac2d7.\n",
+      "checker_sha256": "195261b1d13ae7db65d68ebf438f1f72d4e9104609e7533751ad5fe87eaebea2"
+    }
+  },
+  "sources": {
+    "construction": "",
+    "checker": ""
+  },
+  "primecert_sources": {},
+  "rows": [
+    {
+      "status": "ok",
+      "seconds": 6.277804290992208,
+      "returncode": 0,
+      "load_before": [
+        185.19140625,
+        152.07275390625,
+        78.9697265625
+      ],
+      "load_after": [
+        182.533203125,
+        152.0712890625,
+        79.3623046875
+      ],
+      "stdout": "Hex.PrimalityBench.runConstruction    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=cc2baf8-dirty, 2026-09-20T08:19:05Z, host=chungus2\n  repeat 0  804.578 ms\n  repeat 1  778.470 ms\n  repeat 2  790.573 ms\n  repeat 3  806.036 ms\n  repeat 4  834.445 ms\n  median: 804.578 ms    min: 778.470 ms    max: 834.445 ms\n  hash: all repeats agree\n  observed hash: 0x1d\n  expected hash: matches\n  peak RSS: 64_832 kB..65_144 kB (across 5 ok repeat(s))\nexported to /home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.0.construction.before.json\n",
+      "stderr": "",
+      "command": [
+        "/tmp/hex-10292-before/.lake/build/bin/hexprimality_bench",
+        "run",
+        "Hex.PrimalityBench.runConstruction",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.0.construction.before.json"
+      ],
+      "block": 0,
+      "case": "construction",
+      "arm": "before",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 804577852,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 0,
+                "peak_rss_kb": 64960,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 778470172,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 1,
+                "peak_rss_kb": 65132,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 790573174,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 2,
+                "peak_rss_kb": 65144,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 806035753,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 3,
+                "peak_rss_kb": 65076,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 834445441,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 4,
+                "peak_rss_kb": 64832,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1d",
+            "min_nanos": 778470172,
+            "median_nanos": 804577852,
+            "max_nanos": 834445441,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.PrimalityBench.runConstruction",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789892345097,
+              "timestamp_iso": "2026-09-20T08:19:05Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0",
+              "lean_toolchain": "leanprover/lean4:4.34.0",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+              "exe_name": "hexprimality_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.001,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1d"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789892345097,
+          "timestamp_iso": "2026-09-20T08:19:05Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 5.560591112007387,
+      "returncode": 0,
+      "load_before": [
+        182.533203125,
+        152.0712890625,
+        79.3623046875
+      ],
+      "load_after": [
+        180.408203125,
+        152.13671875,
+        79.7744140625
+      ],
+      "stdout": "Hex.PrimalityBench.runConstruction    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=cc2baf8-dirty, 2026-09-20T08:19:11Z, host=chungus2\n  repeat 0  732.872 ms\n  repeat 1  787.220 ms\n  repeat 2  787.248 ms\n  repeat 3  766.171 ms\n  repeat 4  774.821 ms\n  median: 774.821 ms    min: 732.872 ms    max: 787.248 ms\n  hash: all repeats agree\n  observed hash: 0x1d\n  expected hash: matches\n  peak RSS: 64_032 kB..66_972 kB (across 5 ok repeat(s))\nexported to /home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.0.construction.after.json\n",
+      "stderr": "",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/.lake/build/bin/hexprimality_bench",
+        "run",
+        "Hex.PrimalityBench.runConstruction",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.0.construction.after.json"
+      ],
+      "block": 0,
+      "case": "construction",
+      "arm": "after",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 732871645,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 0,
+                "peak_rss_kb": 64032,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 787219502,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 1,
+                "peak_rss_kb": 64672,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 787248266,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 2,
+                "peak_rss_kb": 66972,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 766170673,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 3,
+                "peak_rss_kb": 65520,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 774820924,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 4,
+                "peak_rss_kb": 64516,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1d",
+            "min_nanos": 732871645,
+            "median_nanos": 774820924,
+            "max_nanos": 787248266,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.PrimalityBench.runConstruction",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789892351171,
+              "timestamp_iso": "2026-09-20T08:19:11Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0",
+              "lean_toolchain": "leanprover/lean4:4.34.0",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+              "exe_name": "hexprimality_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.001,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1d"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789892351171,
+          "timestamp_iso": "2026-09-20T08:19:11Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 0.738823456922546,
+      "returncode": 0,
+      "load_before": [
+        180.408203125,
+        152.13671875,
+        79.7744140625
+      ],
+      "load_after": [
+        180.408203125,
+        152.13671875,
+        79.7744140625
+      ],
+      "stdout": "Hex.PrimalityBench.runCurveChecker    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=cc2baf8-dirty, 2026-09-20T08:19:16Z, host=chungus2\n  repeat 0  1.214 ms\n  repeat 1  1.200 ms\n  repeat 2  1.076 ms\n  repeat 3  1.063 ms\n  repeat 4  1.070 ms\n  median: 1.076 ms    min: 1.063 ms    max: 1.214 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 63_312 kB..66_072 kB (across 5 ok repeat(s))\nexported to /home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.0.checker.before.json\n",
+      "stderr": "",
+      "command": [
+        "/tmp/hex-10292-before/.lake/build/bin/hexprimality_bench",
+        "run",
+        "Hex.PrimalityBench.runCurveChecker",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.0.checker.before.json"
+      ],
+      "block": 0,
+      "case": "checker",
+      "arm": "before",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 1214190,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 0,
+                "peak_rss_kb": 64676,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1199808,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 1,
+                "peak_rss_kb": 64908,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1076476,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 2,
+                "peak_rss_kb": 63312,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1063126,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 3,
+                "peak_rss_kb": 63472,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1070186,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 4,
+                "peak_rss_kb": 66072,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1",
+            "min_nanos": 1063126,
+            "median_nanos": 1076476,
+            "max_nanos": 1214190,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.PrimalityBench.runCurveChecker",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789892356688,
+              "timestamp_iso": "2026-09-20T08:19:16Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0",
+              "lean_toolchain": "leanprover/lean4:4.34.0",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+              "exe_name": "hexprimality_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.001,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789892356688,
+          "timestamp_iso": "2026-09-20T08:19:16Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 0.7505151260411367,
+      "returncode": 0,
+      "load_before": [
+        180.408203125,
+        152.13671875,
+        79.7744140625
+      ],
+      "load_after": [
+        178.53369140625,
+        152.2177734375,
+        80.189453125
+      ],
+      "stdout": "Hex.PrimalityBench.runCurveChecker    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=cc2baf8-dirty, 2026-09-20T08:19:17Z, host=chungus2\n  repeat 0    1.113 ms\n  repeat 1    1.002 ms\n  repeat 2  618.331 \u00b5s  (\u00d72^1, total 1.237 ms)\n  repeat 3    1.076 ms\n  repeat 4    1.042 ms\n  median: 1.042 ms    min: 618.331 \u00b5s    max: 1.113 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 62_896 kB..66_176 kB (across 5 ok repeat(s))\nexported to /home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.0.checker.after.json\n",
+      "stderr": "",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/.lake/build/bin/hexprimality_bench",
+        "run",
+        "Hex.PrimalityBench.runCurveChecker",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.0.checker.after.json"
+      ],
+      "block": 0,
+      "case": "checker",
+      "arm": "after",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 1113270,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 0,
+                "peak_rss_kb": 62900,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1002456,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 1,
+                "peak_rss_kb": 65188,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1236663,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 2,
+                "peak_rss_kb": 63800,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1076455,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 3,
+                "peak_rss_kb": 62896,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1041594,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 4,
+                "peak_rss_kb": 66176,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1",
+            "min_nanos": 618331,
+            "median_nanos": 1041594,
+            "max_nanos": 1113270,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.PrimalityBench.runCurveChecker",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789892357358,
+              "timestamp_iso": "2026-09-20T08:19:17Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0",
+              "lean_toolchain": "leanprover/lean4:4.34.0",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+              "exe_name": "hexprimality_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.001,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789892357358,
+          "timestamp_iso": "2026-09-20T08:19:17Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 5.350547398091294,
+      "returncode": 0,
+      "load_before": [
+        178.53369140625,
+        152.2177734375,
+        80.189453125
+      ],
+      "load_after": [
+        176.64892578125,
+        152.26416015625,
+        80.59130859375
+      ],
+      "stdout": "Hex.PrimalityBench.runConstruction    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=cc2baf8-dirty, 2026-09-20T08:19:18Z, host=chungus2\n  repeat 0  749.017 ms\n  repeat 1  756.743 ms\n  repeat 2  766.674 ms\n  repeat 3  745.447 ms\n  repeat 4  747.018 ms\n  median: 749.017 ms    min: 745.447 ms    max: 766.674 ms\n  hash: all repeats agree\n  observed hash: 0x1d\n  expected hash: matches\n  peak RSS: 64_460 kB..65_436 kB (across 5 ok repeat(s))\nexported to /home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.1.construction.after.json\n",
+      "stderr": "",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/.lake/build/bin/hexprimality_bench",
+        "run",
+        "Hex.PrimalityBench.runConstruction",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.1.construction.after.json"
+      ],
+      "block": 1,
+      "case": "construction",
+      "arm": "after",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 749017337,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 0,
+                "peak_rss_kb": 64460,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 756743309,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 1,
+                "peak_rss_kb": 65436,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 766674178,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 2,
+                "peak_rss_kb": 64828,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 745446564,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 3,
+                "peak_rss_kb": 64664,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 747017672,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 4,
+                "peak_rss_kb": 64644,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1d",
+            "min_nanos": 745446564,
+            "median_nanos": 749017337,
+            "max_nanos": 766674178,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.PrimalityBench.runConstruction",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789892358139,
+              "timestamp_iso": "2026-09-20T08:19:18Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0",
+              "lean_toolchain": "leanprover/lean4:4.34.0",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+              "exe_name": "hexprimality_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.001,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1d"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789892358139,
+          "timestamp_iso": "2026-09-20T08:19:18Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 5.891871685977094,
+      "returncode": 0,
+      "load_before": [
+        176.64892578125,
+        152.26416015625,
+        80.59130859375
+      ],
+      "load_after": [
+        177.23779296875,
+        152.79150390625,
+        81.14697265625
+      ],
+      "stdout": "Hex.PrimalityBench.runConstruction    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=cc2baf8-dirty, 2026-09-20T08:19:23Z, host=chungus2\n  repeat 0  807.611 ms\n  repeat 1  826.042 ms\n  repeat 2  825.420 ms\n  repeat 3  831.280 ms\n  repeat 4  831.876 ms\n  median: 826.042 ms    min: 807.611 ms    max: 831.876 ms\n  hash: all repeats agree\n  observed hash: 0x1d\n  expected hash: matches\n  peak RSS: 64_364 kB..66_936 kB (across 5 ok repeat(s))\nexported to /home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.1.construction.before.json\n",
+      "stderr": "",
+      "command": [
+        "/tmp/hex-10292-before/.lake/build/bin/hexprimality_bench",
+        "run",
+        "Hex.PrimalityBench.runConstruction",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.1.construction.before.json"
+      ],
+      "block": 1,
+      "case": "construction",
+      "arm": "before",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 807611058,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 0,
+                "peak_rss_kb": 65196,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 826042168,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 1,
+                "peak_rss_kb": 64364,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 825419875,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 2,
+                "peak_rss_kb": 65204,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 831279661,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 3,
+                "peak_rss_kb": 65676,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 831875675,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 4,
+                "peak_rss_kb": 66936,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1d",
+            "min_nanos": 807611058,
+            "median_nanos": 826042168,
+            "max_nanos": 831875675,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.PrimalityBench.runConstruction",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789892363658,
+              "timestamp_iso": "2026-09-20T08:19:23Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0",
+              "lean_toolchain": "leanprover/lean4:4.34.0",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+              "exe_name": "hexprimality_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.001,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1d"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789892363658,
+          "timestamp_iso": "2026-09-20T08:19:23Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 0.9017711690394208,
+      "returncode": 0,
+      "load_before": [
+        177.23779296875,
+        152.79150390625,
+        81.14697265625
+      ],
+      "load_after": [
+        177.23779296875,
+        152.79150390625,
+        81.14697265625
+      ],
+      "stdout": "Hex.PrimalityBench.runCurveChecker    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=cc2baf8-dirty, 2026-09-20T08:19:29Z, host=chungus2\n  repeat 0    1.037 ms\n  repeat 1    1.035 ms\n  repeat 2  950.308 \u00b5s  (\u00d72^1, total 1.901 ms)\n  repeat 3    1.021 ms\n  repeat 4    1.011 ms\n  median: 1.021 ms    min: 950.308 \u00b5s    max: 1.037 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 62_824 kB..63_416 kB (across 5 ok repeat(s))\nexported to /home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.1.checker.after.json\n",
+      "stderr": "",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/.lake/build/bin/hexprimality_bench",
+        "run",
+        "Hex.PrimalityBench.runCurveChecker",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.1.checker.after.json"
+      ],
+      "block": 1,
+      "case": "checker",
+      "arm": "after",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 1036697,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 0,
+                "peak_rss_kb": 63416,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1034564,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 1,
+                "peak_rss_kb": 63008,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1900617,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 2,
+                "peak_rss_kb": 62992,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1020583,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 3,
+                "peak_rss_kb": 63080,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1011279,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 4,
+                "peak_rss_kb": 62824,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1",
+            "min_nanos": 950308,
+            "median_nanos": 1020583,
+            "max_nanos": 1036697,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.PrimalityBench.runCurveChecker",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789892369424,
+              "timestamp_iso": "2026-09-20T08:19:29Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0",
+              "lean_toolchain": "leanprover/lean4:4.34.0",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+              "exe_name": "hexprimality_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.001,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789892369424,
+          "timestamp_iso": "2026-09-20T08:19:29Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 0.756873180042021,
+      "returncode": 0,
+      "load_before": [
+        177.23779296875,
+        152.79150390625,
+        81.14697265625
+      ],
+      "load_after": [
+        177.23779296875,
+        152.79150390625,
+        81.14697265625
+      ],
+      "stdout": "Hex.PrimalityBench.runCurveChecker    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=cc2baf8-dirty, 2026-09-20T08:19:30Z, host=chungus2\n  repeat 0  1.015 ms  (\u00d72^1, total 2.031 ms)\n  repeat 1  1.241 ms\n  repeat 2  1.241 ms\n  repeat 3  1.223 ms\n  repeat 4  1.163 ms\n  median: 1.223 ms    min: 1.015 ms    max: 1.241 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 62_816 kB..63_856 kB (across 5 ok repeat(s))\nexported to /home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.1.checker.before.json\n",
+      "stderr": "",
+      "command": [
+        "/tmp/hex-10292-before/.lake/build/bin/hexprimality_bench",
+        "run",
+        "Hex.PrimalityBench.runCurveChecker",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.1.checker.before.json"
+      ],
+      "block": 1,
+      "case": "checker",
+      "arm": "before",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 2030931,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 0,
+                "peak_rss_kb": 63184,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1240759,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 1,
+                "peak_rss_kb": 63856,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1241070,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 2,
+                "peak_rss_kb": 63828,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1222963,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 3,
+                "peak_rss_kb": 63612,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1163094,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 4,
+                "peak_rss_kb": 62816,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1",
+            "min_nanos": 1015465,
+            "median_nanos": 1222963,
+            "max_nanos": 1241070,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.PrimalityBench.runCurveChecker",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789892370304,
+              "timestamp_iso": "2026-09-20T08:19:30Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0",
+              "lean_toolchain": "leanprover/lean4:4.34.0",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+              "exe_name": "hexprimality_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.001,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789892370304,
+          "timestamp_iso": "2026-09-20T08:19:30Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 5.946436502970755,
+      "returncode": 0,
+      "load_before": [
+        177.23779296875,
+        152.79150390625,
+        81.14697265625
+      ],
+      "load_after": [
+        175.857421875,
+        152.91162109375,
+        81.57080078125
+      ],
+      "stdout": "Hex.PrimalityBench.runConstruction    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=cc2baf8-dirty, 2026-09-20T08:19:31Z, host=chungus2\n  repeat 0  817.198 ms\n  repeat 1  834.972 ms\n  repeat 2  832.886 ms\n  repeat 3  841.869 ms\n  repeat 4  856.624 ms\n  median: 834.972 ms    min: 817.198 ms    max: 856.624 ms\n  hash: all repeats agree\n  observed hash: 0x1d\n  expected hash: matches\n  peak RSS: 64_532 kB..66_540 kB (across 5 ok repeat(s))\nexported to /home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.2.construction.before.json\n",
+      "stderr": "",
+      "command": [
+        "/tmp/hex-10292-before/.lake/build/bin/hexprimality_bench",
+        "run",
+        "Hex.PrimalityBench.runConstruction",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.2.construction.before.json"
+      ],
+      "block": 2,
+      "case": "construction",
+      "arm": "before",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 817198338,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 0,
+                "peak_rss_kb": 64616,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 834972384,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 1,
+                "peak_rss_kb": 64532,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 832885612,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 2,
+                "peak_rss_kb": 66540,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 841868586,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 3,
+                "peak_rss_kb": 65492,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 856623817,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 4,
+                "peak_rss_kb": 64696,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1d",
+            "min_nanos": 817198338,
+            "median_nanos": 834972384,
+            "max_nanos": 856623817,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.PrimalityBench.runConstruction",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789892371101,
+              "timestamp_iso": "2026-09-20T08:19:31Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0",
+              "lean_toolchain": "leanprover/lean4:4.34.0",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+              "exe_name": "hexprimality_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.001,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1d"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789892371101,
+          "timestamp_iso": "2026-09-20T08:19:31Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 5.4336485019885,
+      "returncode": 0,
+      "load_before": [
+        175.857421875,
+        152.91162109375,
+        81.57080078125
+      ],
+      "load_after": [
+        175.70849609375,
+        153.26220703125,
+        82.0673828125
+      ],
+      "stdout": "Hex.PrimalityBench.runConstruction    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=cc2baf8-dirty, 2026-09-20T08:19:37Z, host=chungus2\n  repeat 0  788.292 ms\n  repeat 1  746.040 ms\n  repeat 2  772.923 ms\n  repeat 3  744.252 ms\n  repeat 4  756.774 ms\n  median: 756.774 ms    min: 744.252 ms    max: 788.292 ms\n  hash: all repeats agree\n  observed hash: 0x1d\n  expected hash: matches\n  peak RSS: 64_544 kB..66_576 kB (across 5 ok repeat(s))\nexported to /home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.2.construction.after.json\n",
+      "stderr": "",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/.lake/build/bin/hexprimality_bench",
+        "run",
+        "Hex.PrimalityBench.runConstruction",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.2.construction.after.json"
+      ],
+      "block": 2,
+      "case": "construction",
+      "arm": "after",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 788292131,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 0,
+                "peak_rss_kb": 65428,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 746039612,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 1,
+                "peak_rss_kb": 64544,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 772922510,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 2,
+                "peak_rss_kb": 66312,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 744251862,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 3,
+                "peak_rss_kb": 65820,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 756773652,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 4,
+                "peak_rss_kb": 66576,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1d",
+            "min_nanos": 744251862,
+            "median_nanos": 756773652,
+            "max_nanos": 788292131,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.PrimalityBench.runConstruction",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789892377069,
+              "timestamp_iso": "2026-09-20T08:19:37Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0",
+              "lean_toolchain": "leanprover/lean4:4.34.0",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+              "exe_name": "hexprimality_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.001,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1d"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789892377069,
+          "timestamp_iso": "2026-09-20T08:19:37Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 0.8439590350026265,
+      "returncode": 0,
+      "load_before": [
+        175.70849609375,
+        153.26220703125,
+        82.0673828125
+      ],
+      "load_after": [
+        173.6494140625,
+        153.2080078125,
+        82.4326171875
+      ],
+      "stdout": "Hex.PrimalityBench.runCurveChecker    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=cc2baf8, 2026-09-20T08:19:42Z, host=chungus2\n  repeat 0    1.051 ms\n  repeat 1    1.092 ms\n  repeat 2    1.094 ms\n  repeat 3    1.002 ms\n  repeat 4  962.912 \u00b5s  (\u00d72^1, total 1.926 ms)\n  median: 1.051 ms    min: 962.912 \u00b5s    max: 1.094 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 62_912 kB..64_780 kB (across 5 ok repeat(s))\nexported to /home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.2.checker.before.json\n",
+      "stderr": "",
+      "command": [
+        "/tmp/hex-10292-before/.lake/build/bin/hexprimality_bench",
+        "run",
+        "Hex.PrimalityBench.runCurveChecker",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.2.checker.before.json"
+      ],
+      "block": 2,
+      "case": "checker",
+      "arm": "before",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 1050638,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 0,
+                "peak_rss_kb": 63080,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1091617,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 1,
+                "peak_rss_kb": 64704,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1093631,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 2,
+                "peak_rss_kb": 64780,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1002005,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 3,
+                "peak_rss_kb": 63720,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1925825,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 4,
+                "peak_rss_kb": 62912,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1",
+            "min_nanos": 962912,
+            "median_nanos": 1050638,
+            "max_nanos": 1093631,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.PrimalityBench.runCurveChecker",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789892382496,
+              "timestamp_iso": "2026-09-20T08:19:42Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0",
+              "lean_toolchain": "leanprover/lean4:4.34.0",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+              "exe_name": "hexprimality_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.001,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789892382496,
+          "timestamp_iso": "2026-09-20T08:19:42Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": false,
+          "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 1.1559348870068789,
+      "returncode": 0,
+      "load_before": [
+        173.6494140625,
+        153.2080078125,
+        82.4326171875
+      ],
+      "load_after": [
+        173.6494140625,
+        153.2080078125,
+        82.4326171875
+      ],
+      "stdout": "Hex.PrimalityBench.runCurveChecker    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=cc2baf8-dirty, 2026-09-20T08:19:43Z, host=chungus2\n  repeat 0  893.835 \u00b5s  (\u00d72^1, total 1.788 ms)\n  repeat 1  960.138 \u00b5s  (\u00d72^1, total 1.920 ms)\n  repeat 2  951.400 \u00b5s  (\u00d72^1, total 1.903 ms)\n  repeat 3  983.337 \u00b5s  (\u00d72^1, total 1.967 ms)\n  repeat 4  975.120 \u00b5s  (\u00d72^1, total 1.950 ms)\n  median: 960.138 \u00b5s    min: 893.835 \u00b5s    max: 983.337 \u00b5s\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 64_480 kB..68_320 kB (across 5 ok repeat(s))\nexported to /home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.2.checker.after.json\n",
+      "stderr": "",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/.lake/build/bin/hexprimality_bench",
+        "run",
+        "Hex.PrimalityBench.runCurveChecker",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.2.checker.after.json"
+      ],
+      "block": 2,
+      "case": "checker",
+      "arm": "after",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 1787670,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 0,
+                "peak_rss_kb": 64488,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1920276,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 1,
+                "peak_rss_kb": 65364,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1902801,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 2,
+                "peak_rss_kb": 68320,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1966675,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 3,
+                "peak_rss_kb": 65028,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1950241,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 4,
+                "peak_rss_kb": 64480,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1",
+            "min_nanos": 893835,
+            "median_nanos": 960138,
+            "max_nanos": 983337,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.PrimalityBench.runCurveChecker",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789892383361,
+              "timestamp_iso": "2026-09-20T08:19:43Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0",
+              "lean_toolchain": "leanprover/lean4:4.34.0",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+              "exe_name": "hexprimality_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.001,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789892383361,
+          "timestamp_iso": "2026-09-20T08:19:43Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 5.708501705084927,
+      "returncode": 0,
+      "load_before": [
+        173.6494140625,
+        153.2080078125,
+        82.4326171875
+      ],
+      "load_after": [
+        173.11669921875,
+        153.43701171875,
+        82.88720703125
+      ],
+      "stdout": "Hex.PrimalityBench.runConstruction    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=cc2baf8-dirty, 2026-09-20T08:19:44Z, host=chungus2\n  repeat 0  766.159 ms\n  repeat 1  772.381 ms\n  repeat 2  771.526 ms\n  repeat 3  795.589 ms\n  repeat 4  798.472 ms\n  median: 772.381 ms    min: 766.159 ms    max: 798.472 ms\n  hash: all repeats agree\n  observed hash: 0x1d\n  expected hash: matches\n  peak RSS: 64_876 kB..65_392 kB (across 5 ok repeat(s))\nexported to /home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.3.construction.after.json\n",
+      "stderr": "",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/.lake/build/bin/hexprimality_bench",
+        "run",
+        "Hex.PrimalityBench.runConstruction",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.3.construction.after.json"
+      ],
+      "block": 3,
+      "case": "construction",
+      "arm": "after",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 766158974,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 0,
+                "peak_rss_kb": 64876,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 772381326,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 1,
+                "peak_rss_kb": 65392,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 771525639,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 2,
+                "peak_rss_kb": 64936,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 795589257,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 3,
+                "peak_rss_kb": 65316,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 798472361,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 4,
+                "peak_rss_kb": 65152,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1d",
+            "min_nanos": 766158974,
+            "median_nanos": 772381326,
+            "max_nanos": 798472361,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.PrimalityBench.runConstruction",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789892384588,
+              "timestamp_iso": "2026-09-20T08:19:44Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0",
+              "lean_toolchain": "leanprover/lean4:4.34.0",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+              "exe_name": "hexprimality_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.001,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1d"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789892384588,
+          "timestamp_iso": "2026-09-20T08:19:44Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 5.493282221024856,
+      "returncode": 0,
+      "load_before": [
+        173.11669921875,
+        153.43701171875,
+        82.88720703125
+      ],
+      "load_after": [
+        171.66552734375,
+        153.46337890625,
+        83.27490234375
+      ],
+      "stdout": "Hex.PrimalityBench.runConstruction    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=cc2baf8, 2026-09-20T08:19:50Z, host=chungus2\n  repeat 0  787.502 ms\n  repeat 1  797.644 ms\n  repeat 2  787.310 ms\n  repeat 3  775.786 ms\n  repeat 4  762.277 ms\n  median: 787.310 ms    min: 762.277 ms    max: 797.644 ms\n  hash: all repeats agree\n  observed hash: 0x1d\n  expected hash: matches\n  peak RSS: 64_596 kB..67_712 kB (across 5 ok repeat(s))\nexported to /home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.3.construction.before.json\n",
+      "stderr": "",
+      "command": [
+        "/tmp/hex-10292-before/.lake/build/bin/hexprimality_bench",
+        "run",
+        "Hex.PrimalityBench.runConstruction",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.3.construction.before.json"
+      ],
+      "block": 3,
+      "case": "construction",
+      "arm": "before",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 787501910,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 0,
+                "peak_rss_kb": 64788,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 797643643,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 1,
+                "peak_rss_kb": 64612,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 787309714,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 2,
+                "peak_rss_kb": 64596,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 775785983,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 3,
+                "peak_rss_kb": 66688,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 762277420,
+                "status": "ok",
+                "result_hash": "0x1d",
+                "repeat_index": 4,
+                "peak_rss_kb": 67712,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1d",
+            "min_nanos": 762277420,
+            "median_nanos": 787309714,
+            "max_nanos": 797643643,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.PrimalityBench.runConstruction",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789892390226,
+              "timestamp_iso": "2026-09-20T08:19:50Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0",
+              "lean_toolchain": "leanprover/lean4:4.34.0",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+              "exe_name": "hexprimality_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.001,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1d"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789892390226,
+          "timestamp_iso": "2026-09-20T08:19:50Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": false,
+          "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 1.066215516999364,
+      "returncode": 0,
+      "load_before": [
+        171.66552734375,
+        153.46337890625,
+        83.27490234375
+      ],
+      "load_after": [
+        171.66552734375,
+        153.46337890625,
+        83.27490234375
+      ],
+      "stdout": "Hex.PrimalityBench.runCurveChecker    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=cc2baf8-dirty, 2026-09-20T08:19:55Z, host=chungus2\n  repeat 0    1.129 ms\n  repeat 1  891.286 \u00b5s  (\u00d72^1, total 1.783 ms)\n  repeat 2    1.027 ms\n  repeat 3    1.017 ms\n  repeat 4    1.111 ms\n  median: 1.027 ms    min: 891.286 \u00b5s    max: 1.129 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 62_756 kB..67_488 kB (across 5 ok repeat(s))\nexported to /home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.3.checker.after.json\n",
+      "stderr": "",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/.lake/build/bin/hexprimality_bench",
+        "run",
+        "Hex.PrimalityBench.runCurveChecker",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.3.checker.after.json"
+      ],
+      "block": 3,
+      "case": "checker",
+      "arm": "after",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 1129434,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 0,
+                "peak_rss_kb": 62756,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1782573,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 1,
+                "peak_rss_kb": 64552,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1027212,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 2,
+                "peak_rss_kb": 64480,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1016837,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 3,
+                "peak_rss_kb": 63508,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1110806,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 4,
+                "peak_rss_kb": 67488,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1",
+            "min_nanos": 891286,
+            "median_nanos": 1027212,
+            "max_nanos": 1129434,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.PrimalityBench.runCurveChecker",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789892395746,
+              "timestamp_iso": "2026-09-20T08:19:55Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0",
+              "lean_toolchain": "leanprover/lean4:4.34.0",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+              "exe_name": "hexprimality_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.001,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789892395746,
+          "timestamp_iso": "2026-09-20T08:19:55Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 0.8657837139908224,
+      "returncode": 0,
+      "load_before": [
+        171.66552734375,
+        153.46337890625,
+        83.27490234375
+      ],
+      "load_after": [
+        171.66552734375,
+        153.46337890625,
+        83.27490234375
+      ],
+      "stdout": "Hex.PrimalityBench.runCurveChecker    [fixed] repeats=5\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=cc2baf8, 2026-09-20T08:19:56Z, host=chungus2\n  repeat 0    1.039 ms\n  repeat 1    1.074 ms\n  repeat 2  744.503 \u00b5s  (\u00d72^1, total 1.489 ms)\n  repeat 3    1.095 ms\n  repeat 4    1.024 ms\n  median: 1.039 ms    min: 744.503 \u00b5s    max: 1.095 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 63_020 kB..64_704 kB (across 5 ok repeat(s))\nexported to /home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.3.checker.before.json\n",
+      "stderr": "",
+      "command": [
+        "/tmp/hex-10292-before/.lake/build/bin/hexprimality_bench",
+        "run",
+        "Hex.PrimalityBench.runCurveChecker",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10292/reports/bench-results/hex-primality-10292-native.3.checker.before.json"
+      ],
+      "block": 3,
+      "case": "checker",
+      "arm": "before",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 1039150,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 0,
+                "peak_rss_kb": 63104,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1074313,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 1,
+                "peak_rss_kb": 64704,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1489007,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 2,
+                "peak_rss_kb": 63020,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1094553,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 3,
+                "peak_rss_kb": 63860,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1024148,
+                "status": "ok",
+                "result_hash": "0x1",
+                "repeat_index": 4,
+                "peak_rss_kb": 63380,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1",
+            "min_nanos": 744503,
+            "median_nanos": 1039150,
+            "max_nanos": 1094553,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.PrimalityBench.runCurveChecker",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789892396811,
+              "timestamp_iso": "2026-09-20T08:19:56Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0",
+              "lean_toolchain": "leanprover/lean4:4.34.0",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+              "exe_name": "hexprimality_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.001,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789892396811,
+          "timestamp_iso": "2026-09-20T08:19:56Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": false,
+          "git_commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+          "exe_name": "hexprimality_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    }
+  ]
+}

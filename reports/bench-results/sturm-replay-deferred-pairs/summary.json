@@ -1,0 +1,37 @@
+{
+  "pairs": [
+    {
+      "block": 0,
+      "order": "AB",
+      "before_ns": 38043392507.0,
+      "after_ns": 776358851.0,
+      "speedup": 49.00232986073086
+    },
+    {
+      "block": 1,
+      "order": "BA",
+      "before_ns": 37987534545.0,
+      "after_ns": 772398771.0,
+      "speedup": 49.181246748772985
+    },
+    {
+      "block": 2,
+      "order": "AB",
+      "before_ns": 37922436255.0,
+      "after_ns": 767389577.0,
+      "speedup": 49.41745026463918
+    },
+    {
+      "block": 3,
+      "order": "BA",
+      "before_ns": 37609253360.0,
+      "after_ns": 776729512.0,
+      "speedup": 48.420013375261064
+    }
+  ],
+  "median_before_ns": 37954985400.0,
+  "median_after_ns": 774378811.0,
+  "median_paired_speedup": 49.09178830475192,
+  "minimum_paired_speedup": 48.420013375261064,
+  "maximum_paired_speedup": 49.41745026463918
+}

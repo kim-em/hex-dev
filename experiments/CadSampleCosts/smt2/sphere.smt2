@@ -1,0 +1,13 @@
+; Manual issue-10301 corpus. See reports/cad-sample-costs.md for the equations.
+(set-logic QF_NRA)
+(declare-fun x () Real)
+(declare-fun y () Real)
+(declare-fun z () Real)
+(assert (= (* 2 x x) 1))
+(assert (= (+ (* x x) (* y y)) (/ 5 6)))
+(assert (= (+ (* x x) (* y y) (* z z)) 1))
+(assert (> x 0))
+(assert (> y 0))
+(assert (> z 0))
+(check-sat-using (then simplify (using-params nlsat :cell_sample false :shuffle_vars false :reorder false :seed 0)))
+(get-info :all-statistics)

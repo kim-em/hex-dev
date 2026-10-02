@@ -168,14 +168,14 @@ theorem prepCap (level code : Nat) (st : Search n) :
     (compareCodes level code st).wsCap = st.wsCap := by
   rw [compareCodes]
   simp only [Id.run_pure, apply_ite Id.run,
-    apply_ite Search.wsCap, ite_self]
+    apply_ite SearchState.wsCap, ite_self]
 
 /-- Parent recovery does not change workspace capacity. -/
 theorem recoverCap (n inf level : Nat) (st : Search n) :
     (recover inf level st).wsCap = st.wsCap := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.wsCap, ite_self]
+    apply_ite SearchState.wsCap, ite_self]
 
 /-- First-leaf installation does not change workspace capacity. -/
 theorem firstCap (level : Nat) (st : Search n) :
@@ -208,7 +208,7 @@ theorem autosOk_pushAuto {g : Array (VSet n)} {ptn lab : Array Nat} {level : Nat
 
 /-- With a positive bounded workspace, `pushAuto` leaves the admitted
 pair in the slot read by `shortprune`, both before and at capacity. -/
-theorem pushAuto_back {st : Search n} {pair : VSet n × VSet n}
+theorem pushAuto_back {κ : Type} {st : SearchState n κ} {pair : VSet n × VSet n}
     (hcap : 0 < st.wsCap) :
     (pushAuto st pair).autos.back? = some pair := by
   unfold pushAuto

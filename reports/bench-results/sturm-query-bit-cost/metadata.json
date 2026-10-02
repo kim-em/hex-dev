@@ -1,0 +1,34 @@
+{
+  "cpu": 55,
+  "host": "chungus2",
+  "start": "2026-09-21T13:59:29.830815+00:00",
+  "load_start": [
+    3.81494140625,
+    3.525390625,
+    3.64453125
+  ],
+  "git_head": "48c4c2576472e86801154d273607368f1c483b7a",
+  "git_status": " M HexPolyZ/IntegerPolynomial.lean\n M HexRealRootsMathlib.lean\n M HexRealRootsMathlib/README.md\n M HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md\n M HexRealRootsMathlib/TarskiSum.lean\n M HexSturmMathlib/README.md\n M HexSturmMathlib/Rational.lean\n M HexSturmMathlib/SPEC/hex-sturm-mathlib.md\n M SPEC/benchmarking.md\n M bench/HexSturm/Bench.lean\n M conformance/HexRealRootsMathlib/Conformance.lean\n M conformance/HexSturmMathlib/Conformance.lean\n M reports/bench-results/sturm-axes/diagnostics-metadata.json\n M reports/hex-sturm-performance.md\n M scripts/bench/sturm_axes.py\n?? HexRealRootsMathlib/TarskiCount.lean\n?? reports/bench-results/sturm-coefficient-control/\n?? reports/sturm-bit-cost-models.md\n",
+  "binary_sha256": "854a20b5d2234712dcd7aaa87ea0d15d8f80ed78cb0168b5a9f83471fe28e7cb",
+  "source_sha256": "d3bfebdc3324201703633a7df0058bf77f8eccf288243bac86d65dd5ee15bd7a",
+  "commands": [
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runIntegerHigh",
+        "Hex.SturmBench.runInitialHigh",
+        "Hex.SturmBench.runReplayHigh",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-query-bit-cost/query-bits.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "end": "2026-09-21T13:59:41.781529+00:00",
+  "load_end": [
+    6.220703125,
+    4.03857421875,
+    3.8095703125
+  ]
+}

@@ -114,6 +114,7 @@ verified LLL gives confidence in attack results.
 - [Released-repo READMEs](readme.md)
 - [Testing](testing.md)
 - [Benchmarking](benchmarking.md)
+- [Matrix tactics](matrix-tactics.md) (placement, kernel certificates, the bar against Mathlib)
 - [CI](CI.md)
 - [Prior art](prior-art.md)
 - [Future work](future-work.md)

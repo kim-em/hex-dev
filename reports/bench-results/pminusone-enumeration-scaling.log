@@ -1,0 +1,45 @@
+Hex.PrimalityBench.runSieve    expected complexity: n * Nat.sqrt n    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=504aae6-dirty, 2026-09-20T10:05:42Z, host=chungus2
+   param  per-call    repeats  C
+   1_000   56.883 µs  ×2^10    C=1.883 [trial 1/5]
+   2_000   88.912 µs  ×2^10    C=1.032 [trial 1/5]
+   4_000  153.422 µs  ×2^9     C=0.616 [trial 1/5]
+   8_000  272.467 µs  ×2^8     C=0.388 [trial 1/5]
+  16_000  533.596 µs  ×2^7     C=0.273 [trial 1/5]
+  32_000    1.455 ms  ×2^6     C=0.258 [trial 1/5]
+   1_000   56.477 µs  ×2^10    C=1.883 [trial 2/5]
+   2_000   89.283 µs  ×2^10    C=1.032 [trial 2/5]
+   4_000  153.816 µs  ×2^9     C=0.616 [trial 2/5]
+   8_000  273.059 µs  ×2^8     C=0.388 [trial 2/5]
+  16_000  540.039 µs  ×2^7     C=0.273 [trial 2/5]
+  32_000    1.487 ms  ×2^6     C=0.258 [trial 2/5]
+   1_000   58.369 µs  ×2^10    C=1.883 [trial 3/5]
+   2_000   92.632 µs  ×2^10    C=1.032 [trial 3/5]
+   4_000  155.297 µs  ×2^9     C=0.616 [trial 3/5]
+   8_000  283.439 µs  ×2^8     C=0.388 [trial 3/5]
+  16_000  564.381 µs  ×2^7     C=0.273 [trial 3/5]
+  32_000    1.470 ms  ×2^6     C=0.258 [trial 3/5]
+   1_000   58.386 µs  ×2^10    C=1.883 [trial 4/5]
+   2_000   92.089 µs  ×2^10    C=1.032 [trial 4/5]
+   4_000  159.941 µs  ×2^9     C=0.616 [trial 4/5]
+   8_000  280.956 µs  ×2^8     C=0.388 [trial 4/5]
+  16_000  550.155 µs  ×2^7     C=0.273 [trial 4/5]
+  32_000    1.470 ms  ×2^6     C=0.258 [trial 4/5]
+   1_000   59.586 µs  ×2^10    C=1.883 [trial 5/5]
+   2_000   90.788 µs  ×2^10    C=1.032 [trial 5/5]
+   4_000  157.377 µs  ×2^9     C=0.616 [trial 5/5]
+   8_000  276.125 µs  ×2^8     C=0.388 [trial 5/5]
+  16_000  555.105 µs  ×2^7     C=0.273 [trial 5/5]
+  32_000    1.491 ms  ×2^6     C=0.258 [trial 5/5]
+  verdict: consistent with declared complexity (cMin=0.258, cMax=1.883, β=-0.593)
+  per-spawn floor (harness self-measurement): 24.928 ms
+  peak RSS: 68_240 kB..69_552 kB (across 30 ok row(s))
+  trial summaries (5 trials per param; spread = (max-min)/median):
+     param  trials  median      min         max         spread
+     1_000  5/5      58.369 µs   56.477 µs   59.586 µs  5.325%
+     2_000  5/5      90.788 µs   88.912 µs   92.632 µs  4.097%
+     4_000  5/5     155.297 µs  153.422 µs  159.941 µs  4.198%
+     8_000  5/5     276.125 µs  272.467 µs  283.439 µs  3.973%
+    16_000  5/5     550.155 µs  533.596 µs  564.381 µs  5.596%
+    32_000  5/5       1.470 ms    1.455 ms    1.491 ms  2.417%
+exported to /home/kim/worktrees/hex-dev/hex-dev-pollard-stage-2/reports/bench-results/pminusone-enumeration-scaling.native.json

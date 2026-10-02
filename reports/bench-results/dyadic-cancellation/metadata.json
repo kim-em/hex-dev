@@ -1,0 +1,746 @@
+{
+  "cpu": 52,
+  "host": "chungus2",
+  "start": "2026-09-22T03:16:41.414048+00:00",
+  "load_start": [
+    37.23388671875,
+    19.49853515625,
+    10.0322265625
+  ],
+  "git_head": "96ef6f0a6db786013d4ff78382f525c521a71d9f",
+  "git_status": "",
+  "binaries": {
+    "roots": {
+      "A": {
+        "path": "/tmp/10375-before-hexrealroots_bench",
+        "sha256": "9b523847fbcb6d36d9bd2f6591ba40cdefdfd33b96da81d319151aff33a6c7e3"
+      },
+      "B": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexrealroots_bench",
+        "sha256": "e381785cac88043fb7c6c61a3a0d302d3866c8af05f5730704ab499fd9c270bb"
+      }
+    },
+    "sturm": {
+      "A": {
+        "path": "/tmp/10375-before-hexsturm_bench",
+        "sha256": "02c4f8475b064569d242ef341f92ef4bcb6da8b2fe9991667d092893cb4f58f7"
+      },
+      "B": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "sha256": "0a7f2c7da688100f8d9a468bd72b616f6991b2f95073fb5d55ffcc91f9b7cb04"
+      }
+    }
+  },
+  "sources": {
+    "before.Basic.lean": "c41252bd32c2738135c333d5cf87809ac5be17ba381bcba0a00d19a8fd3883de",
+    "after.Basic.lean": "998ed31837dc5c899cc68ad88c7fba5ede2e50b7b9f0cc955d84ecc00f10effe",
+    "RealRoots.Bench.lean": "b3eec1620472202c46b892bf5724faf4bc0b6377c68e30f645b5d8799d4190e9",
+    "Sturm.Bench.lean": "a9ca523bde5f3a80d1087867f7b7e76b98243c105a63c2f6d06bf915fa7ec503",
+    "derivation.md": "6f21e6ba99937e8ddec2b2137a64b8f7cc597123a92765177c439754bf357267",
+    "capture.py": "90052ad88bdf62195bd02762b81b3bb20d95c6fbded490fbbf65c95d07e2e750",
+    "lean-toolchain": "8733782dc070a99b312039cda424f601b80f3be6f6f512627da5ba25adc27632"
+  },
+  "commands": [
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexrealroots_bench",
+        "run",
+        "Hex.RealRootsBench.runCancellation",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/dyadic-cancellation/scaling.json"
+      ],
+      "output": "scaling.log",
+      "start": "2026-09-22T03:16:41.887015+00:00",
+      "load_start": [
+        37.23388671875,
+        19.49853515625,
+        10.0322265625
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:43.406443+00:00",
+      "load_end": [
+        37.23388671875,
+        19.49853515625,
+        10.0322265625
+      ]
+    },
+    {
+      "argv": [
+        "/tmp/10375-before-hexrealroots_bench",
+        "_child",
+        "--bench",
+        "Hex.RealRootsBench.runCancellation",
+        "--param",
+        "32768",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "roots-32768-0-A.jsonl",
+      "start": "2026-09-22T03:16:43.406837+00:00",
+      "load_start": [
+        37.23388671875,
+        19.49853515625,
+        10.0322265625
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:43.572845+00:00",
+      "load_end": [
+        37.23388671875,
+        19.49853515625,
+        10.0322265625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexrealroots_bench",
+        "_child",
+        "--bench",
+        "Hex.RealRootsBench.runCancellation",
+        "--param",
+        "32768",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "roots-32768-0-B.jsonl",
+      "start": "2026-09-22T03:16:43.573358+00:00",
+      "load_start": [
+        37.23388671875,
+        19.49853515625,
+        10.0322265625
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:43.738955+00:00",
+      "load_end": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexrealroots_bench",
+        "_child",
+        "--bench",
+        "Hex.RealRootsBench.runCancellation",
+        "--param",
+        "32768",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "roots-32768-1-B.jsonl",
+      "start": "2026-09-22T03:16:43.739488+00:00",
+      "load_start": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:43.905031+00:00",
+      "load_end": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ]
+    },
+    {
+      "argv": [
+        "/tmp/10375-before-hexrealroots_bench",
+        "_child",
+        "--bench",
+        "Hex.RealRootsBench.runCancellation",
+        "--param",
+        "32768",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "roots-32768-1-A.jsonl",
+      "start": "2026-09-22T03:16:43.906507+00:00",
+      "load_start": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:44.072967+00:00",
+      "load_end": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ]
+    },
+    {
+      "argv": [
+        "/tmp/10375-before-hexrealroots_bench",
+        "_child",
+        "--bench",
+        "Hex.RealRootsBench.runCancellation",
+        "--param",
+        "32768",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "roots-32768-2-A.jsonl",
+      "start": "2026-09-22T03:16:44.073912+00:00",
+      "load_start": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:44.240657+00:00",
+      "load_end": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexrealroots_bench",
+        "_child",
+        "--bench",
+        "Hex.RealRootsBench.runCancellation",
+        "--param",
+        "32768",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "roots-32768-2-B.jsonl",
+      "start": "2026-09-22T03:16:44.241245+00:00",
+      "load_start": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:44.406973+00:00",
+      "load_end": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexrealroots_bench",
+        "_child",
+        "--bench",
+        "Hex.RealRootsBench.runCancellation",
+        "--param",
+        "32768",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "roots-32768-3-B.jsonl",
+      "start": "2026-09-22T03:16:44.407534+00:00",
+      "load_start": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:44.573948+00:00",
+      "load_end": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ]
+    },
+    {
+      "argv": [
+        "/tmp/10375-before-hexrealroots_bench",
+        "_child",
+        "--bench",
+        "Hex.RealRootsBench.runCancellation",
+        "--param",
+        "32768",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "roots-32768-3-A.jsonl",
+      "start": "2026-09-22T03:16:44.574561+00:00",
+      "load_start": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:44.740904+00:00",
+      "load_end": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ]
+    },
+    {
+      "argv": [
+        "/tmp/10375-before-hexrealroots_bench",
+        "_child",
+        "--bench",
+        "Hex.RealRootsBench.runCancellation",
+        "--param",
+        "65536",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "roots-65536-0-A.jsonl",
+      "start": "2026-09-22T03:16:44.741464+00:00",
+      "load_start": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:45.157138+00:00",
+      "load_end": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexrealroots_bench",
+        "_child",
+        "--bench",
+        "Hex.RealRootsBench.runCancellation",
+        "--param",
+        "65536",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "roots-65536-0-B.jsonl",
+      "start": "2026-09-22T03:16:45.157736+00:00",
+      "load_start": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:45.323889+00:00",
+      "load_end": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexrealroots_bench",
+        "_child",
+        "--bench",
+        "Hex.RealRootsBench.runCancellation",
+        "--param",
+        "65536",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "roots-65536-1-B.jsonl",
+      "start": "2026-09-22T03:16:45.324577+00:00",
+      "load_start": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:45.489858+00:00",
+      "load_end": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ]
+    },
+    {
+      "argv": [
+        "/tmp/10375-before-hexrealroots_bench",
+        "_child",
+        "--bench",
+        "Hex.RealRootsBench.runCancellation",
+        "--param",
+        "65536",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "roots-65536-1-A.jsonl",
+      "start": "2026-09-22T03:16:45.490421+00:00",
+      "load_start": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:45.906269+00:00",
+      "load_end": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ]
+    },
+    {
+      "argv": [
+        "/tmp/10375-before-hexrealroots_bench",
+        "_child",
+        "--bench",
+        "Hex.RealRootsBench.runCancellation",
+        "--param",
+        "65536",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "roots-65536-2-A.jsonl",
+      "start": "2026-09-22T03:16:45.906829+00:00",
+      "load_start": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:46.323209+00:00",
+      "load_end": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexrealroots_bench",
+        "_child",
+        "--bench",
+        "Hex.RealRootsBench.runCancellation",
+        "--param",
+        "65536",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "roots-65536-2-B.jsonl",
+      "start": "2026-09-22T03:16:46.323766+00:00",
+      "load_start": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:46.489842+00:00",
+      "load_end": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexrealroots_bench",
+        "_child",
+        "--bench",
+        "Hex.RealRootsBench.runCancellation",
+        "--param",
+        "65536",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "roots-65536-3-B.jsonl",
+      "start": "2026-09-22T03:16:46.490414+00:00",
+      "load_start": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:46.655808+00:00",
+      "load_end": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ]
+    },
+    {
+      "argv": [
+        "/tmp/10375-before-hexrealroots_bench",
+        "_child",
+        "--bench",
+        "Hex.RealRootsBench.runCancellation",
+        "--param",
+        "65536",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "roots-65536-3-A.jsonl",
+      "start": "2026-09-22T03:16:46.656488+00:00",
+      "load_start": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:47.072331+00:00",
+      "load_end": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ]
+    },
+    {
+      "argv": [
+        "/tmp/10375-before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runReplay",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "sturm-1024-0-A.jsonl",
+      "start": "2026-09-22T03:16:47.073042+00:00",
+      "load_start": [
+        36.734375,
+        19.68994140625,
+        10.14501953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:49.242080+00:00",
+      "load_end": [
+        37.396484375,
+        20.1103515625,
+        10.33251953125
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runReplay",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "sturm-1024-0-B.jsonl",
+      "start": "2026-09-22T03:16:49.242724+00:00",
+      "load_start": [
+        37.396484375,
+        20.1103515625,
+        10.33251953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:51.460999+00:00",
+      "load_end": [
+        37.396484375,
+        20.1103515625,
+        10.33251953125
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runReplay",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "sturm-1024-1-B.jsonl",
+      "start": "2026-09-22T03:16:51.461705+00:00",
+      "load_start": [
+        37.396484375,
+        20.1103515625,
+        10.33251953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:53.580872+00:00",
+      "load_end": [
+        37.396484375,
+        20.1103515625,
+        10.33251953125
+      ]
+    },
+    {
+      "argv": [
+        "/tmp/10375-before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runReplay",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "sturm-1024-1-A.jsonl",
+      "start": "2026-09-22T03:16:53.581478+00:00",
+      "load_start": [
+        37.396484375,
+        20.1103515625,
+        10.33251953125
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:55.649393+00:00",
+      "load_end": [
+        35.7626953125,
+        20.05859375,
+        10.36865234375
+      ]
+    },
+    {
+      "argv": [
+        "/tmp/10375-before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runReplay",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "sturm-1024-2-A.jsonl",
+      "start": "2026-09-22T03:16:55.650001+00:00",
+      "load_start": [
+        35.7626953125,
+        20.05859375,
+        10.36865234375
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:57.718751+00:00",
+      "load_end": [
+        35.7626953125,
+        20.05859375,
+        10.36865234375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runReplay",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "sturm-1024-2-B.jsonl",
+      "start": "2026-09-22T03:16:57.719349+00:00",
+      "load_start": [
+        35.7626953125,
+        20.05859375,
+        10.36865234375
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:16:59.886989+00:00",
+      "load_end": [
+        35.220703125,
+        20.20751953125,
+        10.46875
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runReplay",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "sturm-1024-3-B.jsonl",
+      "start": "2026-09-22T03:16:59.887703+00:00",
+      "load_start": [
+        35.220703125,
+        20.20751953125,
+        10.46875
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:17:01.956418+00:00",
+      "load_end": [
+        35.220703125,
+        20.20751953125,
+        10.46875
+      ]
+    },
+    {
+      "argv": [
+        "/tmp/10375-before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runReplay",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "output": "sturm-1024-3-A.jsonl",
+      "start": "2026-09-22T03:17:01.956990+00:00",
+      "load_start": [
+        35.220703125,
+        20.20751953125,
+        10.46875
+      ],
+      "exit_code": 0,
+      "end": "2026-09-22T03:17:04.025421+00:00",
+      "load_end": [
+        33.60107421875,
+        20.12060546875,
+        10.4931640625
+      ]
+    }
+  ],
+  "end": "2026-09-22T03:17:04.026085+00:00",
+  "load_end": [
+    33.60107421875,
+    20.12060546875,
+    10.4931640625
+  ]
+}

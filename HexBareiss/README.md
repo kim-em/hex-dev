@@ -59,11 +59,27 @@ def Q : Matrix Rat 2 2 := Matrix.ofFn fun i j =>
   without pivot search, for inputs whose leading pivots are already nonzero;
 - `borderedMinor`: the bordered minors that the correctness development uses to
   track the elimination invariant.
+- `DetWitness`, `checkDetList`, `checkDetRat` and `detWitness`: the kernel
+  determinant certificate (a fraction-free triangularization with its row
+  swaps and lower triangular transform, or a left kernel vector for a
+  singular matrix), its list-structured checkers for the kernel, and the
+  producer from the elimination on `[A | I]`; the `det` tactic of
+  [`hex-bareiss-mathlib`](https://github.com/leanprover/hex-bareiss-mathlib)
+  is built on it;
 
 The generic functions make their quotient operation explicit. The `Int`
 specialization calls the GMP-backed `lean_int_div_exact` primitive directly;
 exactness is certified separately by the correspondence proof, rather than by
 passing a divisibility proof through the executable loop.
+
+The development conformance and benchmark targets exercise `bareissWith
+Hex.exactDiv` over `Rat`, prime `ZMod64`, `DensePoly Rat`,
+`DensePoly (ZMod64 p)`, `DensePoly Int`, and grevlex multivariate polynomials
+over `Int` and `Rat`. Polynomial exact-division providers are imported by the
+integration targets from `HexResultant.ExactDiv` and `HexMvGcd.Divide`.
+Canonical fixtures are checked against FLINT and SymPy's exact Berkowitz
+determinant. Field-carrier timings do not establish Bareiss as the preferred
+field determinant algorithm.
 
 # Verification
 

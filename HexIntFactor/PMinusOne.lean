@@ -39,6 +39,22 @@ theorem pMinusOneFactor_spec {n base bound d : Nat}
     1 < d ∧ d < n ∧ d ∣ n :=
   pMinusOneStage1_spec h
 
+/-- Continue a saved stage-1 residue without repeating stage 1. -/
+def pMinusOneStage2Counted (n x B₁ B₂ : Nat) (r : Rand) : PMinusOne.Run :=
+  PMinusOne.stage2Counted n x B₁ B₂ r
+
+/-- Standalone two-stage search, including its single stage-1 execution. -/
+def pMinusOneSearchCounted (n a B₁ B₂ : Nat) (r : Rand) : PMinusOne.Run :=
+  PMinusOne.searchCounted n a B₁ B₂ r
+
+theorem pMinusOneStage2Counted_spec {n x B₁ B₂ d : Nat} {r : Rand}
+    (h : (pMinusOneStage2Counted n x B₁ B₂ r).result = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n := PMinusOne.stage2Counted_spec h
+
+theorem pMinusOneSearchCounted_spec {n a B₁ B₂ d : Nat} {r : Rand}
+    (h : (pMinusOneSearchCounted n a B₁ B₂ r).result = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n := PMinusOne.searchCounted_spec h
+
 end Nat
 
 end Hex

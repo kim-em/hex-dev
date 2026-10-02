@@ -7,20 +7,16 @@ complexity definitions from
 [cslib](https://github.com/leanprover/cslib). `HexPolyFast` remains free of
 Mathlib and cslib.
 
-## Complexity-layer classification
+## No executable surface
 
-The library will have classification `complexity_layer: true`.
-
-- Computational conformance owner: `HexPolyFast`.
-- Computational performance owner: `HexPolyFast`.
-
-A complexity layer contains proofs and definitions used by those proofs. It
-does not own executable polynomial operations, conformance targets, external
-oracles, benchmark targets, or a performance report. Its library entry names
-the computational owners whose tests and measurements cover the operations
-under study. This classification is defined in
-[benchmarking](../benchmarking.md#comparator-naming) and
-[testing](../testing.md#where-cross-check-content-lives).
+The library's API is definitions and theorems about operations owned by
+`HexPolyFast`. It therefore has no executable runtime contract, no
+conformance module, no external oracle, no bench targets, and no headline
+performance report, per
+[PLAN/Phase3.md §Mathlib libraries](../../PLAN/Phase3.md#mathlib-libraries)
+and [testing](../testing.md#banned-anti-patterns). The operations it
+analyses are benchmarked and conformance-tested by their Mathlib-free owner,
+`HexPolyFast`.
 
 The specified results concern base-ring additions, subtractions, and
 multiplications issued by the proof-facing workers. They do not estimate
@@ -246,21 +242,13 @@ specialization theorem, obliviousness theorem, and weighted bound.
   query response types, which excludes `ArithQuery R` for an arbitrary
   infinite ring.
 
-## External comparators
-
-No external comparator is required. The permitted reason is
-`complexity-layer`: this library has no benchmark target, and `HexPolyFast`
-owns the relevant performance measurements.
-
 ## Infrastructure
 
 Implementation of this planned library requires the following changes:
 
 - `lakefile.lean` requires cslib at the selected revision.
-- `libraries.yml` records `cslib: true`, `complexity_layer: true`, and the
-  computational owners. The schema parser and validators must accept these
-  fields and require zero benchmark and conformance targets for a complexity
-  layer.
+- `libraries.yml` records `mathlib: true` and `cslib: true`. The schema
+  parser and validators must accept the `cslib` field.
 - `scripts/libgraph.py` recognizes `Cslib` as an external import root.
   `scripts/check_dag.py` permits `Cslib.*` imports only in libraries marked
   `cslib: true` and applies the Mathlib-importing build restrictions to them.
@@ -273,8 +261,8 @@ chooses a release convention for cslib companions.
 
 ## Milestones
 
-1. **Query definitions and Karatsuba.** Add the cslib dependency and
-   complexity-layer metadata. Define `freeOps`, `CostOblivious`, and
+1. **Query definitions and Karatsuba.** Add the cslib dependency and the
+   `libraries.yml` entry. Define `freeOps`, `CostOblivious`, and
    `WeightedBound`. Refactor the proof-facing Karatsuba definition through
    `karatsubaWorker`, then prove specialization, obliviousness, and the
    dispatcher bound.
@@ -307,8 +295,6 @@ The eventual library entry has this shape:
     deps: [HexPolyFast]
     mathlib: true
     cslib: true
-    complexity_layer: true
-    computational_owners: [HexPolyFast]
     done_through: 0
     status: planned
 ```

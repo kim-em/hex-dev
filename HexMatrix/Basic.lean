@@ -61,6 +61,17 @@ instance {R : Type u} {n m : Nat} [BEq R] [LawfulBEq R] :
       change (a == a) = true
       exact beq_self_eq_true a
 
+/-- `DecidableEq (Matrix R n m)` that reduces in the kernel under the module
+system, routed through the buffer's `DecidableEq (Vector R (n * m))`. The
+derived instance above delegates to a generated `decEq` whose body is not
+exposed across a module boundary, so `decide +kernel` on a matrix equality
+sticks in any importing `module` file. Scoped like the `Vector` and `Array`
+instances of `HexBasic.ArrayDecEq`, and to be removed with them. -/
+scoped instance (priority := 1100) instDecidableEqMatrixKernel
+    {R : Type u} {n m : Nat} [DecidableEq R] : DecidableEq (Matrix R n m) := fun A B =>
+  decidable_of_iff (A.data = B.data)
+    ⟨fun h => by cases A; cases B; cases h; rfl, fun h => h ▸ rfl⟩
+
 end Hex
 
 namespace Vector
@@ -386,6 +397,19 @@ the rows, maps, and reflattens. -/
 def mapRows (M : Matrix R n m) (f : Vector R m → Vector R m') : Matrix R n m' :=
   ofRows (M.rows.map f)
 
+/-- Apply a function to every entry in the flat row-major buffer. -/
+@[inline, expose]
+def mapEntries {S : Type v} (M : Matrix R n m) (f : R → S) : Matrix S n m :=
+  ⟨M.data.map f⟩
+
+/-- Reading a mapped entry applies the function to the original entry. -/
+@[simp, grind =] theorem getElem_mapEntries {S : Type v}
+    (M : Matrix R n m) (f : R → S) (i : Fin n) (j : Fin m) :
+    (M.mapEntries f)[(i, j)] = f M[(i, j)] := by
+  have h := flatIdx_lt i.isLt j.isLt
+  change (M.data.map f)[i.val * m + j.val] = f M.data[i.val * m + j.val]
+  simp
+
 /-- Reading a row out of `rows` is `getRow`. The bridge between the
 `Vector (Vector R m) n` observation and the flat accessor. -/
 @[simp] theorem getElem_rows (M : Matrix R n m) (i : Nat) (hi : i < n) :
@@ -596,6 +620,19 @@ def transpose (M : Matrix R n m) : Matrix R m n :=
   apply ext_getElem
   intro i j
   rw [getElem_transpose, getElem_transpose]
+
+/-- Apply `f` to every entry. A single pass over the flat buffer; no row is
+materialized. -/
+@[expose]
+def map {S : Type v} (M : Matrix R n m) (f : R → S) : Matrix S n m :=
+  ⟨M.data.map f⟩
+
+/-- Entry access for an entrywise map. -/
+@[grind =] theorem getElem_map {S : Type v} (M : Matrix R n m) (f : R → S)
+    (i : Fin n) (j : Fin m) :
+    (M.map f)[i][j] = f M[i][j] := by
+  rw [getElem_eq_getRow, getElem_getRow, getElem_eq_getRow, getElem_getRow]
+  simp [map]
 
 /-- The all-zero matrix. -/
 @[expose]

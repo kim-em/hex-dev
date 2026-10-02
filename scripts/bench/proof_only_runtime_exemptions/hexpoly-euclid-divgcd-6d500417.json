@@ -1,0 +1,6 @@
+{
+  "path": "HexPoly/Euclid/DivGcd.lean",
+  "baseline_blob": "2c6c8c7de5586c6b4bb5a544647e634c49aa513c",
+  "current_blob": "6d50041774147bb8767cb726c4de1d5f87d51cbe",
+  "reason": "Replaces coeffs.getD (coeffs.size - 1) 0 with the extensionally equal coeffs.back?.getD 0 now that Array.back? is exposed. Array.back? inlines to the same final-index bounds check and read/default result, while the remaining edits only adapt proofs, so the measured factorization computation is unchanged."
+}

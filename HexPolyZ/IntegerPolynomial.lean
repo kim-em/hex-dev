@@ -259,17 +259,33 @@ theorem isUnit_of_eq_neg_one {f : ZPoly} (h : f = -1) : IsUnit f := by
 @[simp, grind .] theorem isUnit_neg_one : IsUnit (-1 : ZPoly) :=
   isUnit_of_eq_neg_one rfl
 
-/-- View an integer polynomial as a rational polynomial. -/
+/-- View an integer polynomial as a rational polynomial. The kernel reads
+the coefficient list; compiled code uses `toRatPolyImpl`. -/
 @[expose]
-def toRatPoly (f : ZPoly) : DensePoly Rat :=
+noncomputable def toRatPoly (f : ZPoly) : DensePoly Rat :=
+  DensePoly.ofList (f.toList.map fun coeff : Int => (coeff : Rat))
+
+/-- Array implementation of rational coefficient conversion. -/
+@[expose]
+def toRatPolyImpl (f : ZPoly) : DensePoly Rat :=
   DensePoly.ofCoeffs <| f.toArray.map fun coeff : Int => (coeff : Rat)
+
+/-- The executable array conversion agrees with the list specification. -/
+theorem toRatPoly_eq_impl (f : ZPoly) : toRatPoly f = toRatPolyImpl f := by
+  unfold toRatPoly toRatPolyImpl DensePoly.ofList DensePoly.toList
+  congr 1
+  rw [← Array.toList_map, Array.toArray_toList]
+
+@[csimp] theorem toRatPoly_eq : toRatPoly = toRatPolyImpl :=
+  funext toRatPoly_eq_impl
 
 /-- Coefficients of `toRatPoly f` are the rational casts of the coefficients of
 `f`. -/
 @[simp, grind =]
 theorem coeff_toRatPoly (f : ZPoly) (n : Nat) :
     (toRatPoly f).coeff n = (f.coeff n : Rat) := by
-  unfold toRatPoly
+  rw [toRatPoly_eq_impl]
+  unfold toRatPolyImpl
   rw [DensePoly.coeff_ofCoeffs]
   unfold DensePoly.coeff DensePoly.toArray
   by_cases hn : n < f.coeffs.size
@@ -604,6 +620,25 @@ private theorem toRatPoly_ratPolyPrimitivePartCleared (f : DensePoly Rat) :
   rw [list_getD_toArray_eq_coeff]
   exact ratCoeffToIntWithDen_cast (ratCommonDen f.toArray.toList) (f.coeff n)
     (ratCommonDen_dvd_coeff f n)
+
+/-- Clear rational denominators with a strictly positive integer multiplier.
+Unlike primitive-part normalization, this preserves the sign of the polynomial. -/
+def clearDenominators (f : DensePoly Rat) : Nat × ZPoly :=
+  (ratCommonDen f.toArray.toList, ratPolyPrimitivePartCleared f)
+
+/-- Clearing the unit polynomial preserves the unit and uses multiplier one. -/
+theorem clearDenominators_one : clearDenominators (1 : DensePoly Rat) = (1, (1 : ZPoly)) := by
+  rfl
+
+/-- The clearing multiplier is positive, including for the zero polynomial. -/
+theorem clearDenominators_pos (f : DensePoly Rat) : 0 < (clearDenominators f).1 :=
+  ratCommonDen_pos f.toArray.toList
+
+/-- The returned integer polynomial is exactly the input times the positive
+clearing multiplier, with no primitive-part or leading-sign adjustment. -/
+theorem toRatPoly_clearDenominators (f : DensePoly Rat) :
+    toRatPoly (clearDenominators f).2 = DensePoly.scale ((clearDenominators f).1 : Rat) f :=
+  toRatPoly_ratPolyPrimitivePartCleared f
 
 private theorem rat_scale_div_of_scale_eq {c d : Rat} (hd : d ≠ 0)
     {p q : DensePoly Rat}

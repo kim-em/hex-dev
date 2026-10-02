@@ -1,0 +1,6 @@
+{
+  "path": "HexSparsePoly/Dense.lean",
+  "baseline_blob": "f0a22d805ef0e7615295428962b58523c1514260",
+  "current_blob": "4d050161df70c5fd8dbd38465c2573e5bd85a51e",
+  "reason": "Replaces definitional leading-coefficient proofs with DensePoly.leadingCoeff_eq_coeff_last and handles the empty polynomial through existing extensional theorems. No executable definition or measured branch changes."
+}

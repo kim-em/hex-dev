@@ -101,7 +101,7 @@ theorem Loop.bound_dominated {ctx : Ctx n} {tcLevel : Nat} {l : Loop n} {bs fs :
     (hc : (l.prepare ctx tcLevel).2.2.2.2.compCanon < 0) :
     Generic.Covers (l.bound ctx tcLevel) ((l.prepare ctx tcLevel).2.2.2.2.key ctx bs) := by
   refine ⟨incKey ctx bs (l.prepare ctx tcLevel).2.2.2.2.canonlab, ?_, ?_⟩
-  · simp only [Search.key, h.nonempty, ↓reduceIte]
+  · simp only [SearchState.key, h.nonempty, ↓reduceIte]
   · have hv : ∀ v, keyLe (l.key ctx tcLevel v)
         (incKey ctx bs (l.prepare ctx tcLevel).2.2.2.2.canonlab) :=
       fun v => h.canonical.prefix_le hc _
@@ -178,7 +178,7 @@ theorem Loop.node_bound {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
         have hcc : c.compCanon = (l.prepare ctx tcLevel).2.2.2.2.compCanon := by
           dsimp only [Loop.prepare]
           simp only [hf, Bool.false_eq_true, ↓reduceIte, cheapCheck,
-            apply_ite Search.compCanon, ite_self]
+            apply_ite SearchState.compCanon, ite_self]
           rw [chooseTarget_fields]
         have hl : c.lab = (l.node.entry.refined ctx l.node.level l.node.numcells).lab :=
           (compareCodes_frame _ _ _).1

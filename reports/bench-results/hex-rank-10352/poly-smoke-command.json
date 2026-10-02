@@ -1,0 +1,9 @@
+{
+  "command": [
+    ".lake/build/bin/hexrank_bench",
+    "verify"
+  ],
+  "elapsed_seconds": 0.06589367892593145,
+  "exit_code": 0,
+  "bench_sha256": "fcc0a65d4635fd9d2b03237d06950321c5a92faa12029aada4e9a868638da9d7"
+}

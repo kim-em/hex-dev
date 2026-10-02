@@ -1,0 +1,34 @@
+{
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10376/.lake/build/bin/hexorderedfn_bench",
+    "run",
+    "--filter",
+    "Hex.OrderedFnBench",
+    "--export-file",
+    "/tmp/issue-10376-real-measure/runtime.json",
+    "Hex.OrderedFnBench.denominators",
+    "Hex.OrderedFnBench.compareHeight",
+    "Hex.OrderedFnBench.refinement",
+    "Hex.OrderedFnBench.jointRefinement",
+    "Hex.OrderedFnBench.horner",
+    "Hex.OrderedFnBench.realHeight",
+    "Hex.OrderedFnBench.approximation",
+    "Hex.OrderedFnBench.provider"
+  ],
+  "cpu": 44,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "load_before": [
+    4.9384765625,
+    6.6416015625,
+    16.05029296875
+  ],
+  "commit": "1c06686b749266a21ea01600b431871e7a93e210",
+  "executable_sha256": "2e162da6d0dbcb8cc45cefe06105c3f8ffae0577a2f4bca2dffd861638e962e2",
+  "returncode": 0,
+  "load_after": [
+    4.8837890625,
+    6.0732421875,
+    14.3515625
+  ]
+}

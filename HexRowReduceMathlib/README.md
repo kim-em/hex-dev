@@ -38,6 +38,67 @@ open HexMatrixMathlib
 #check @spanContains_iff_mem_span
 ```
 
+# Field inverse and complete solve
+
+`inverse?_eq_inv` identifies a successful executable inverse with Mathlib's
+`Matrix.inv`. `inverse?_eq_none` identifies failure with determinant zero;
+Mathlib's zero inverse at singular input is not an executable inverse witness.
+
+`solve?_spec` identifies the solution set with an affine translate of the
+kernel of `Matrix.mulVecLin`. `solve?_parameters` gives its unique basis
+coefficients, and `solve?_span` connects the returned columns to
+`nullspace_span_eq_ker`. `solve_error` transports the actual separating row;
+`solve?_none_witness` characterises failure by existence of a left-kernel
+separator. All statements include zero dimensions and rectangular systems.
+
+The companion uses Mathlib's `[Field F]` and its induced `Lean.Grind.Field F`.
+Select that instance before constructing matrices or calling elimination; the
+companion does not identify it with an independently installed executable
+field. `Examples/RowReduce.lean` in hex-dev checks rationals, rational functions,
+and entrywise transport from `ZMod64 p` to `ZMod p` without assuming a Mathlib
+field on `ZMod64 p`.
+
+# Inverse and solve tactics
+
+`inverse` and `solve` certify closed rational matrix literals. Each tactic
+accepts either orientation of its equation:
+
+```lean
+example : (!![1, 2; 3, 4] : Matrix (Fin 2) (Fin 2) ℚ)⁻¹ =
+    !![-2, 1; 3 / 2, -1 / 2] := by inverse
+
+example : (!![0, 1, 1] : Matrix (Fin 1) (Fin 3) ℚ).mulVec ![3, 0, 2] =
+    ![2] := by solve
+
+noncomputable def affine :=
+  solve% (!![0, 1, 1] : Matrix (Fin 1) (Fin 3) ℚ) ![2]
+```
+
+`inverse` also proves `A * B = 1`; singular inputs prove `A⁻¹ = 0` and
+decline product goals with a nonzero kernel vector. `inverse% A` returns
+an `InverseResult A`, containing either the literal inverse with both
+product identities, or a nonzero kernel vector with singularity proofs.
+
+`solve` checks any supplied solution, proves `∃ x, A.mulVec x = b`, or
+proves its negation with a separating row. `solve% A b` returns a
+`SolveResult A b`: either a particular solution and literal nullspace basis
+with unique affine coordinates, or a separator with `yᵀA = 0` and
+`yᵀb ≠ 0`. Particular solutions returned by the producer have zero free
+coordinates. Both term forms handle empty shapes.
+
+Arithmetic proof checking uses scaled integer lists and structural recursion.
+`HexMatrixMathlib.inverse_of_checkList`, `solve_of_checkList` and
+`solveResult_of_checkList` prove soundness for arbitrary passing certificates;
+their proofs do not replay elimination. The initial numeric handler accepts
+`ℚ`; other carriers are available to separately registered extensions.
+
+For function literals, give the matrix a named `Matrix`-typed definition
+before writing `A⁻¹`: Lean can select pointwise function inversion for a
+bare lambda. The tactic accepts matrix inversion and multiplication.
+The dimension limit is 32 per axis; the measured performance ladder covers
+square matrices through 16 and rectangular solve systems through 32 × 16
+or 16 × 32. The limit is not a runtime guarantee for other inputs.
+
 # Functionality
 
 The library transports the executable row-reduction data of an

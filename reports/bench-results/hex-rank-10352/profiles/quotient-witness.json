@@ -1,0 +1,586 @@
+{
+  "allocation_share_percent": 39.3,
+  "classified_percent": 91.7,
+  "diagnostics": {
+    "bench_pid": 4041853,
+    "bench_thread_name": "hexrank_bench",
+    "bench_thread_tid": "4041865",
+    "calibration": {
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "boundary_residual_raw_max_ms": null,
+          "boundary_residual_trimmed_max_ms": null,
+          "hit_count": 0,
+          "regions_without_samples": 257,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "boundary_residual_raw_max_ms": 1.0543090105056763,
+          "boundary_residual_trimmed_max_ms": 0.9981849193572998,
+          "hit_count": 2977,
+          "regions_without_samples": 0,
+          "within_residual_limit": true
+        }
+      },
+      "configured_max_residual_ms": 5.0,
+      "effective_max_residual_ms": 5.0,
+      "raw_max_residual_ms": 1.0543090105056763,
+      "residual_ms": 0.9981849193572998,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "sample_interval_ms": 1.001001,
+      "selected_mode": "relative-to-meta-start-ms",
+      "within_residual_limit": true
+    },
+    "calibration_max_residual_ms": 5.0,
+    "calibration_residual_ms": 0.9981849193572998,
+    "confidence": "passed",
+    "expected_samples_bench_thread": 2977.8,
+    "low_confidence_reasons": [],
+    "minimum_retained_samples": 100,
+    "off_bench_thread_samples_in_window": 0,
+    "regions_total": 257,
+    "rejected_samples_bench_thread": 26,
+    "retained_samples_bench_thread": 2977,
+    "samply_interval_ms": 1.001001,
+    "samply_meta_start_time_ms": 1789913246295.5718,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "schema": 2,
+    "sensitivity": {
+      "cases": {
+        "minus": {
+          "retained_samples": 2977,
+          "shift_ms": -5.0,
+          "top_leaf_functions": [
+            {
+              "function": 102,
+              "name": "0xae923",
+              "samples": 102
+            },
+            {
+              "function": 129,
+              "name": "0x4f49b91",
+              "samples": 84
+            },
+            {
+              "function": 194,
+              "name": "0xaef3c",
+              "samples": 69
+            }
+          ]
+        },
+        "nominal": {
+          "retained_samples": 2977,
+          "shift_ms": 0.0,
+          "top_leaf_functions": [
+            {
+              "function": 102,
+              "name": "0xae923",
+              "samples": 103
+            },
+            {
+              "function": 129,
+              "name": "0x4f49b91",
+              "samples": 85
+            },
+            {
+              "function": 194,
+              "name": "0xaef3c",
+              "samples": 69
+            }
+          ]
+        },
+        "plus": {
+          "retained_samples": 2972,
+          "shift_ms": 5.0,
+          "top_leaf_functions": [
+            {
+              "function": 102,
+              "name": "0xae923",
+              "samples": 103
+            },
+            {
+              "function": 129,
+              "name": "0x4f49b91",
+              "samples": 84
+            },
+            {
+              "function": 194,
+              "name": "0xaef3c",
+              "samples": 69
+            }
+          ]
+        }
+      },
+      "comparisons": {
+        "minus": {
+          "comparison_samples": 2977,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.003359086328518643,
+          "exchanged_samples": 10,
+          "failure_reasons": [],
+          "leaf_function_support_size": 809,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.025636673616915573,
+          "total_variation_distance": 0.0016795431642593211,
+          "verdict": "passed"
+        },
+        "plus": {
+          "comparison_samples": 2972,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.0016823687752355316,
+          "exchanged_samples": 5,
+          "failure_reasons": [],
+          "leaf_function_support_size": 808,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.01814713732509628,
+          "total_variation_distance": 0.001627551922297059,
+          "verdict": "passed"
+        }
+      },
+      "configured_max_total_variation_distance": 0.1,
+      "leaf_function_distributions_stable": true,
+      "maximum_sampling_noise_allowance": 0.5,
+      "minimum_comparison_samples": 100,
+      "reported_top_function_count": 3,
+      "sampling_noise_coefficient": 0.6,
+      "shift_ms": 5.0,
+      "verdict": "passed"
+    },
+    "sidecar_mono_anchor_ns": 884356588262781,
+    "spawn_anchor_mono_ns": 884356458701536,
+    "spawn_anchor_wall_ns": 1789913246257036993,
+    "stage": "complete",
+    "total_timed_ms": 2980.744545
+  },
+  "inclusive_hex": [
+    {
+      "function": "Hex.RankBench.Quotient.runProduce",
+      "percent": 100.0
+    },
+    {
+      "function": "_private.HexRank.Bench.Quotient.0_Hex.RankBench.Quotient.initFn_.lam_0.00_@.HexRank.Bench.Quotient.2020416748__hygCtx_.hyg.37__boxed",
+      "percent": 100.0
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.produce",
+      "percent": 99.93
+    },
+    {
+      "function": "_private.HexRank.PolyProduce.0_Hex.Matrix.PolyWitness.prepare",
+      "percent": 97.68
+    },
+    {
+      "function": "_private.HexRank.PolyProduce.0_Hex.Matrix.PolyWitness.eliminate",
+      "percent": 83.71
+    },
+    {
+      "function": "_private.HexRank.PolyProduce.0_Hex.Matrix.PolyWitness.inverse",
+      "percent": 31.78
+    },
+    {
+      "function": "Hex.DensePoly.xgcdLeftMonicAux",
+      "percent": 28.82
+    },
+    {
+      "function": "Hex.DensePoly.mulImpl",
+      "percent": 27.41
+    },
+    {
+      "function": "Hex.DensePoly.divMod",
+      "percent": 25.66
+    },
+    {
+      "function": "Hex.DensePoly.divModArray",
+      "percent": 17.06
+    },
+    {
+      "function": "_private.HexPoly.Euclid.DivGcd.0_Hex.DensePoly.divModArrayAuxImplGo",
+      "percent": 15.38
+    },
+    {
+      "function": "_private.HexPoly.Euclid.DivGcd.0_Hex.DensePoly.subtractScaledShiftImpl",
+      "percent": 11.32
+    },
+    {
+      "function": "Hex.DensePoly.subtractScaledShiftStep",
+      "percent": 11.19
+    },
+    {
+      "function": "Hex.DensePoly.subImpl",
+      "percent": 10.35
+    },
+    {
+      "function": "Hex.DensePoly.trimTrailingZerosGo",
+      "percent": 5.41
+    },
+    {
+      "function": "_private.HexRank.PolyProduce.0_Hex.Matrix.PolyWitness.dotPoly",
+      "percent": 5.34
+    },
+    {
+      "function": "Hex.DensePoly.addImpl",
+      "percent": 2.52
+    },
+    {
+      "function": "_private.HexRank.PolyProduce.0_Hex.Matrix.PolyWitness.produce.tryModuli",
+      "percent": 2.25
+    },
+    {
+      "function": "_private.HexRank.PolyProduce.0_Hex.Matrix.PolyWitness.finish",
+      "percent": 2.15
+    },
+    {
+      "function": "Hex.Matrix.checkRankPoly",
+      "percent": 1.88
+    },
+    {
+      "function": "Hex.DensePoly.instOfNat",
+      "percent": 1.04
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.lowerCheck",
+      "percent": 1.04
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.checkDot",
+      "percent": 0.97
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.nth",
+      "percent": 0.94
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.zeroDots",
+      "percent": 0.91
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.dot",
+      "percent": 0.74
+    },
+    {
+      "function": "Hex.DensePoly.arrayDegreeAux",
+      "percent": 0.57
+    }
+  ],
+  "leaf_categories": {
+    "allocation": 39.3,
+    "gmp": 17.97,
+    "lean-own-code": 8.3,
+    "lean-runtime": 26.13,
+    "other": 8.3
+  },
+  "profile": "/tmp/hexrank-quotient-profile/quotient-witness/filtered.json.gz",
+  "samples": 2977,
+  "symbols": "/tmp/hexrank-quotient-profile/quotient-witness/symbols.json",
+  "top_inclusive": [
+    {
+      "function": "lean-bench.LeanBench.Cli.runChildCmd",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.autoTune",
+      "percent": 100.0
+    },
+    {
+      "function": "Hex.RankBench.Quotient.runProduce",
+      "percent": 100.0
+    },
+    {
+      "function": "lean_apply_2",
+      "percent": 100.0
+    },
+    {
+      "function": "start_thread",
+      "percent": 100.0
+    },
+    {
+      "function": "__clone3",
+      "percent": 100.0
+    },
+    {
+      "function": "_ZN4lean7lthread3imp5_mainEPv",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench_.private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.kernelLoop",
+      "percent": 100.0
+    },
+    {
+      "function": "_private.HexRank.Bench.Quotient.0_Hex.RankBench.Quotient.initFn_.lam_0.00_@.HexRank.Bench.Quotient.2020416748__hygCtx_.hyg.37__boxed",
+      "percent": 100.0
+    },
+    {
+      "function": "_ZNSt3__110__function6__funcIZ13lean_run_mainE3$_0FvvEEclEv",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.runChildMode",
+      "percent": 100.0
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.produce",
+      "percent": 99.93
+    },
+    {
+      "function": "_private.HexRank.PolyProduce.0_Hex.Matrix.PolyWitness.prepare",
+      "percent": 97.68
+    },
+    {
+      "function": "_private.HexRank.PolyProduce.0_Hex.Matrix.PolyWitness.eliminate",
+      "percent": 83.71
+    },
+    {
+      "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+      "percent": 83.54
+    },
+    {
+      "function": "List.mapTR.loop",
+      "percent": 82.03
+    },
+    {
+      "function": "lean_nat_gcd",
+      "percent": 43.87
+    },
+    {
+      "function": "_private.Init.Data.Array.Basic.0_Array.mapMUnsafe.map",
+      "percent": 39.37
+    },
+    {
+      "function": "Rat.mul",
+      "percent": 36.58
+    },
+    {
+      "function": "_private.HexRank.PolyProduce.0_Hex.Matrix.PolyWitness.inverse",
+      "percent": 31.78
+    },
+    {
+      "function": "Hex.DensePoly.xgcdLeftMonicAux",
+      "percent": 28.82
+    },
+    {
+      "function": "_private.Init.Data.Array.Basic.0_Array.mapFinIdxMUnsafe.map",
+      "percent": 28.59
+    },
+    {
+      "function": "_ZN4lean3mpzC2Em",
+      "percent": 27.71
+    },
+    {
+      "function": "Hex.DensePoly.mulImpl",
+      "percent": 27.41
+    }
+  ],
+  "top_self": [
+    {
+      "function": "malloc@@GLIBC_2.2.5",
+      "percent": 10.18
+    },
+    {
+      "function": "free@@GLIBC_2.2.5",
+      "percent": 8.73
+    },
+    {
+      "function": "mi_free",
+      "percent": 7.26
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 5.88
+    },
+    {
+      "function": "__gmpz_add",
+      "percent": 5.74
+    },
+    {
+      "function": "Rat.mul",
+      "percent": 5.41
+    },
+    {
+      "function": "mi_malloc",
+      "percent": 4.87
+    },
+    {
+      "function": "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_",
+      "percent": 3.8
+    },
+    {
+      "function": "mi_malloc_small",
+      "percent": 3.16
+    },
+    {
+      "function": "__gmpz_init_set_ui",
+      "percent": 2.79
+    },
+    {
+      "function": "lean_alloc_object",
+      "percent": 2.12
+    },
+    {
+      "function": "__gmp_default_allocate",
+      "percent": 2.12
+    },
+    {
+      "function": "Hex.DensePoly.divMod",
+      "percent": 2.02
+    },
+    {
+      "function": "realloc@@GLIBC_2.2.5",
+      "percent": 1.91
+    },
+    {
+      "function": "List.foldl",
+      "percent": 1.85
+    },
+    {
+      "function": "__gmpz_gcd",
+      "percent": 1.85
+    },
+    {
+      "function": "_ZNK4lean3mpz10get_size_tEv",
+      "percent": 1.71
+    },
+    {
+      "function": "__gmpz_realloc",
+      "percent": 1.65
+    },
+    {
+      "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+      "percent": 1.24
+    },
+    {
+      "function": "_private.Init.Data.Array.Basic.0_Array.mapMUnsafe.map",
+      "percent": 1.24
+    },
+    {
+      "function": "lean_nat_gcd",
+      "percent": 1.18
+    },
+    {
+      "function": "__gmpz_mul_2exp",
+      "percent": 1.14
+    },
+    {
+      "function": "_ZN4lean3mpzC2Em",
+      "percent": 1.14
+    },
+    {
+      "function": "Hex.DensePoly.subImpl",
+      "percent": 1.11
+    },
+    {
+      "function": "Rat.sub",
+      "percent": 1.11
+    }
+  ],
+  "top_self_undecorated": [
+    {
+      "percent": 10.18,
+      "symbol": "malloc@@GLIBC_2.2.5"
+    },
+    {
+      "percent": 8.73,
+      "symbol": "free@@GLIBC_2.2.5"
+    },
+    {
+      "percent": 7.26,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 5.88,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 5.74,
+      "symbol": "__gmpz_add"
+    },
+    {
+      "percent": 5.41,
+      "symbol": "Rat.mul"
+    },
+    {
+      "percent": 4.87,
+      "symbol": "mi_malloc"
+    },
+    {
+      "percent": 3.8,
+      "symbol": "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_"
+    },
+    {
+      "percent": 3.16,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 2.79,
+      "symbol": "__gmpz_init_set_ui"
+    },
+    {
+      "percent": 2.12,
+      "symbol": "lean_alloc_object"
+    },
+    {
+      "percent": 2.12,
+      "symbol": "__gmp_default_allocate"
+    },
+    {
+      "percent": 1.91,
+      "symbol": "realloc@@GLIBC_2.2.5"
+    },
+    {
+      "percent": 1.91,
+      "symbol": "Hex.DensePoly.divMod_.at_.00Hex.DensePoly.mod_.at_.00_private.HexRank.PolyProduce.0_Hex.Matrix.PolyWitness.mulMod.spec_1.spec_9"
+    },
+    {
+      "percent": 1.85,
+      "symbol": "__gmpz_gcd"
+    },
+    {
+      "percent": 1.71,
+      "symbol": "_ZNK4lean3mpz10get_size_tEv"
+    },
+    {
+      "percent": 1.65,
+      "symbol": "__gmpz_realloc"
+    },
+    {
+      "percent": 1.24,
+      "symbol": "List.foldl_.at_.00Hex.DensePoly.mulImpl_.at_.00_private.HexRank.PolyProduce.0_Hex.Matrix.PolyWitness.mulMod.spec_0.spec_3"
+    },
+    {
+      "percent": 1.18,
+      "symbol": "lean_nat_gcd"
+    },
+    {
+      "percent": 1.14,
+      "symbol": "__gmpz_mul_2exp"
+    },
+    {
+      "percent": 1.14,
+      "symbol": "_ZN4lean3mpzC2Em"
+    },
+    {
+      "percent": 1.11,
+      "symbol": "Rat.sub"
+    },
+    {
+      "percent": 1.11,
+      "symbol": "__gmp_default_reallocate"
+    },
+    {
+      "percent": 1.01,
+      "symbol": "Option.instDecidableEq_.redArg"
+    },
+    {
+      "percent": 0.97,
+      "symbol": "lean_apply_1"
+    }
+  ],
+  "unresolved_leaf_percent": 0.5
+}

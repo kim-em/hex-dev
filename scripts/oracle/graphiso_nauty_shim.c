@@ -1,137 +1,272 @@
-/* Pinned-options densenauty shim for the HexGraphIso conformance oracle.
+/* Pinned nauty 2.9.3 oracle, dense by default, --sparse for sparsegraph.
  *
- * Compiled by scripts/oracle/graphiso_nauty.py against the hash-verified
- * nauty 2.9.3 source (SHA-256
- * 9fc4edae04f88a0f5883985be3b39cf7f898fd6cc96e96b9ee25452743cc1b5b).
- * The oracle uses 64-bit dense densenauty, m = SETWORDSNEEDED(n), and
- * DEFAULTOPTIONS_GRAPH, changing only the fields required for canonical
- * labelling and a caller-supplied partition, per
- * HexGraphIso/SPEC/hex-graph-iso.md section "nauty compatibility target".
- *
- * Protocol (one case per request, n >= 1):
- *   stdin:  "n k" / colour[0..n-1] / n rows of n chars '0'/'1' / ...
- *           terminated by "-1 -1"
- *   stdout: "lab <n ints> | tri <C(n,2) bits> | nodes <numnodes>
- *            | gens <numgenerators> <numgenerators * n ints>
- *            | orbits <n ints> | norbits <numorbits>
- *            | grp <grpsize1> <grpsize2>"
- *
- * The generators are collected through options.userautomproc, which
- * nauty calls once per emitted generator in discovery order, so the
- * list is the traversal's own output rather than a recomputation.
- * The group order is stats.grpsize1 * 10^stats.grpsize2.
- *
- * lab is initialized by increasing colour and then increasing original
- * vertex; ptn ends exactly at the last position of each colour cell; no
- * active set is passed, so densenauty activates every initial cell. The
- * upper-triangle bits are serialized in row-major order; raw C setwords
- * are never compared.
+ * Requests: n k, then n colours, then either n binary adjacency rows
+ * (dense) or an edge count and that many endpoint pairs (sparse).
+ * A negative n terminates the stream. Responses contain canonical labels,
+ * adjacency (tri or edges), all seven statistics, emitted generators,
+ * orbits, and level indices whose exact product is the group order.
+ * --trace writes read-only node diagnostics as JSONL to stderr.
+ * The vendored implementation is unmodified; callbacks only collect data.
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "nauty.h"
+#include <stdint.h>
+#include <limits.h>
+#include "nausparse.h"
 
-static int *genbuf = NULL;
-static size_t gencap = 0;   /* capacity in ints */
-static size_t ngens = 0;    /* generators collected */
+#define SORT_OF_SORT 3
+#define SORT_NAME oracle_sortindirect
+#define SORT_TYPE1 int
+#define SORT_TYPE2 int
+#include "sorttemplates.c"
 
-static void collectgen(int count, int *perm, int *orbits, int numorbits,
-                       int stabvertex, int nn) {
-    (void)count; (void)orbits; (void)numorbits; (void)stabvertex;
-    size_t need = (ngens + 1) * (size_t)nn;
-    if (need > gencap) {
-        size_t cap = gencap ? gencap * 2 : 1024;
-        while (cap < need) cap *= 2;
-        int *grown = realloc(genbuf, cap * sizeof(int));
-        if (!grown) { fprintf(stderr, "shim: out of memory\n"); exit(3); }
-        genbuf = grown;
-        gencap = cap;
-    }
-    for (int i = 0; i < nn; i++) genbuf[ngens * (size_t)nn + i] = perm[i];
-    ngens++;
+static int *genbuf, *indices;
+static size_t gencap, ngens, nindices;
+static unsigned long case_id;
+
+static void fail(const char *message) {
+    fprintf(stderr, "shim: %s\n", message);
+    exit(2);
 }
 
-int main(void) {
-    DYNALLSTAT(graph, g, g_sz);
-    DYNALLSTAT(graph, canong, canong_sz);
-    DYNALLSTAT(int, lab, lab_sz);
-    DYNALLSTAT(int, ptn, ptn_sz);
-    DYNALLSTAT(int, orbits, orbits_sz);
-    static DEFAULTOPTIONS_GRAPH(options);
-    statsblk stats;
-    int n, k;
-    char row[4100];
-    const int rowcap = (int)sizeof(row) - 1;
+static void *allocate(size_t count, size_t size) {
+    if (count > SIZE_MAX / size) fail("allocation overflow");
+    void *p = calloc(count ? count : 1, size);
+    if (!p) fail("out of memory");
+    return p;
+}
 
-    options.getcanon = TRUE;
-    options.digraph = FALSE;
-    options.defaultptn = FALSE;
-    options.writeautoms = FALSE;
-    options.writemarkers = FALSE;
-    options.tc_level = 100;
-    options.invarproc = NULL;
-    options.mininvarlevel = 0;
-    options.maxinvarlevel = 1;
-    options.invararg = 0;
-    options.schreier = FALSE;
-    options.userautomproc = collectgen;
+static void collectgen(int count, int *perm, int *orbits, int numorbits,
+                       int stabvertex, int n) {
+    (void)count; (void)orbits; (void)numorbits; (void)stabvertex;
+    if (ngens >= SIZE_MAX / sizeof(int) / (size_t)n - 1)
+        fail("generator buffer overflow");
+    size_t need = (ngens + 1) * (size_t)n;
+    if (need > gencap) {
+        int *grown = realloc(genbuf, need * sizeof(int));
+        if (!grown) fail("out of memory for generators");
+        genbuf = grown;
+        gencap = need;
+    }
+    memcpy(genbuf + ngens * (size_t)n, perm, (size_t)n * sizeof(int));
+    ++ngens;
+}
 
-    while (scanf("%d %d", &n, &k) == 2) {
-        if (n < 1) break;
-        if (n > rowcap) {
-            fprintf(stderr, "shim: n = %d exceeds the row buffer\n", n);
-            return 4;
+static void collectlevel(int *lab, int *ptn, int level, int *orbits,
+                         statsblk *stats, int tv, int index, int tcellsize,
+                         int numcells, int childcount, int n) {
+    (void)lab; (void)ptn; (void)level; (void)orbits; (void)stats;
+    (void)tv; (void)tcellsize; (void)childcount;
+    if (numcells == n) nindices = 0;
+    else {
+        if (index < 1 || nindices >= (size_t)n) fail("invalid level index");
+        indices[nindices++] = index;
+    }
+}
+
+static void trace_node(graph *g, int *lab, int *ptn, int level,
+                       int numcells, int tc, int code, int m, int n) {
+    (void)g; (void)m;
+    fprintf(stderr, "{\"case\":%lu,\"level\":%d,\"numcells\":%d,"
+                    "\"target\":%d,\"code\":%d,\"lab\":[",
+            case_id, level, numcells, tc, code);
+    for (int i = 0; i < n; ++i) fprintf(stderr, "%s%d", i ? "," : "", lab[i]);
+    fprintf(stderr, "],\"ptn\":[");
+    for (int i = 0; i < n; ++i) fprintf(stderr, "%s%d", i ? "," : "", ptn[i]);
+    fprintf(stderr, "]}\n");
+}
+
+static void read_sparse(sparsegraph *sg, int n) {
+    size_t ne;
+    if (scanf("%zu", &ne) != 1 || ne > SIZE_MAX / 2 / sizeof(int))
+        fail("invalid edge count");
+    int *pairs = allocate(2 * ne, sizeof(int));
+    SG_ALLOC(*sg, n, 2 * ne, "oracle sparse graph");
+    sg->nv = n;
+    for (int i = 0; i < n; ++i) sg->d[i] = 0;
+    for (size_t i = 0; i < ne; ++i) {
+        int a,b;
+        if (scanf("%d %d", &a, &b) != 2 || a < 0 || b < 0 || a >= n || b >= n || a == b)
+            fail("invalid edge");
+        if (sg->d[a] == INT_MAX || sg->d[b] == INT_MAX) fail("degree overflow");
+        ++sg->d[a]; ++sg->d[b]; pairs[2*i] = a; pairs[2*i+1] = b;
+    }
+    size_t *cursor = allocate(n, sizeof(size_t));
+    size_t pos = 0;
+    for (int i = 0; i < n; ++i) {
+        cursor[i] = sg->v[i] = pos;
+        pos += (size_t)sg->d[i];
+    }
+    for (size_t i = 0; i < ne; ++i) {
+        int a = pairs[2*i], b = pairs[2*i+1];
+        sg->e[cursor[a]++] = b; sg->e[cursor[b]++] = a;
+    }
+    free(cursor); free(pairs);
+    sortlists_sg(sg);
+    /* Normalize duplicate edges, preserving sorted contiguous rows. */
+    pos = 0;
+    for (int i = 0; i < n; ++i) {
+        size_t old = sg->v[i];
+        int degree = sg->d[i], previous = -1;
+        sg->v[i] = pos; sg->d[i] = 0;
+        for (int j = 0; j < degree; ++j) {
+            int v = sg->e[old + j];
+            if (v != previous) { sg->e[pos++] = v; ++sg->d[i]; }
+            previous = v;
         }
+    }
+    sg->nde = pos;
+}
+
+int main(int argc, char **argv) {
+    if (argc == 2 && !strcmp(argv[1], "--sort")) {
+        int size, start, len;
+        while (scanf("%d %d %d", &size, &start, &len) == 3) {
+            if (size < 0) break;
+            if (start < 0 || len < 0 || len > size || start > size - len)
+                fail("invalid sort interval");
+            int *x = allocate(size, sizeof(int)), *y = allocate(size, sizeof(int));
+            for (int i = 0; i < size; ++i)
+                if (scanf("%d", &x[i]) != 1 || x[i] < 0 || x[i] >= size)
+                    fail("invalid sort index");
+            for (int i = 0; i < size; ++i)
+                if (scanf("%d", &y[i]) != 1 || y[i] < 0) fail("invalid sort key");
+            oracle_sortindirect(x + start, y, len);
+            for (int i = 0; i < size; ++i) printf("%s%d", i ? " " : "", x[i]);
+            putchar('\n');
+            free(x); free(y);
+        }
+        return 0;
+    }
+    int sparse = 0, trace = 0, refinement = 0;
+    for (int i = 1; i < argc; ++i) {
+        if (!strcmp(argv[i], "--sparse")) sparse = 1;
+        else if (!strcmp(argv[i], "--trace")) trace = 1;
+        else if (!strcmp(argv[i], "--refine")) sparse = refinement = 1;
+        else fail("unknown option");
+    }
+    DEFAULTOPTIONS_GRAPH(dense_options);
+    DEFAULTOPTIONS_SPARSEGRAPH(sparse_options);
+    optionblk options = sparse ? sparse_options : dense_options;
+    options.getcanon = TRUE;
+    options.defaultptn = FALSE;
+    options.userautomproc = collectgen;
+    options.userlevelproc = collectlevel;
+    if (trace) options.usernodeproc = trace_node;
+    int n,k;
+    for (;;) {
+        int fields = scanf("%d %d", &n, &k);
+        if (fields == EOF) break;
+        if (fields != 2) fail("truncated graph header");
+        if (n < 0) break;
+        if (n < 1 || k < 1 || k > n) fail("invalid vertex or colour count");
         int m = SETWORDSNEEDED(n);
         nauty_check(WORDSIZE, m, n, NAUTYVERSIONID);
-        DYNALLOC2(graph, g, g_sz, m, n, "malloc");
-        DYNALLOC2(graph, canong, canong_sz, m, n, "malloc");
-        DYNALLOC1(int, lab, lab_sz, n, "malloc");
-        DYNALLOC1(int, ptn, ptn_sz, n, "malloc");
-        DYNALLOC1(int, orbits, orbits_sz, n, "malloc");
-        int *col = malloc(n * sizeof(int));
-        if (!col) { fprintf(stderr, "shim: out of memory\n"); return 3; }
-        for (int i = 0; i < n; i++)
-            if (scanf("%d", &col[i]) != 1) return 2;
-        EMPTYGRAPH(g, m, n);
-        for (int i = 0; i < n; i++) {
-            if (scanf("%4099s", row) != 1) return 2;
-            if ((int)strlen(row) != n) {
-                fprintf(stderr, "shim: adjacency row of length %zu for "
-                                "n = %d\n", strlen(row), n);
-                return 5;
-            }
-            for (int j = 0; j < n; j++)
-                if (row[j] == '1' && i < j) { ADDONEEDGE(g, i, j, m); }
-        }
+        int *lab = allocate(n, sizeof(int)), *ptn = allocate(n, sizeof(int));
+        int *orbits = allocate(n, sizeof(int)), *col = allocate(n, sizeof(int));
+        indices = allocate(n, sizeof(int));
+        for (int i = 0; i < n; ++i)
+            if (scanf("%d", &col[i]) != 1 || col[i] < 0 || col[i] >= k)
+                fail("invalid colour");
         int pos = 0;
-        for (int c = 0; c < k; c++) {
+        for (int c = 0; c < k; ++c) {
             int start = pos;
-            for (int v = 0; v < n; v++)
-                if (col[v] == c) lab[pos++] = v;
-            for (int i = start; i < pos; i++) ptn[i] = 1;
-            if (pos > start) ptn[pos-1] = 0;
+            for (int v = 0; v < n; ++v) if (col[v] == c) lab[pos++] = v;
+            if (pos == start) fail("empty colour cell");
+            for (int i = start; i < pos; ++i) ptn[i] = 1;
+            ptn[pos-1] = 0;
         }
-        ngens = 0;
-        densenauty(g, lab, ptn, orbits, &options, &stats, m, n, canong);
-        printf("lab");
-        for (int i = 0; i < n; i++) printf(" %d", lab[i]);
-        printf(" | tri ");
-        for (int i = 0; i < n; i++)
-            for (int j = i+1; j < n; j++)
-                printf("%d", ISELEMENT(GRAPHROW(canong, i, m), j) ? 1 : 0);
-        printf(" | nodes %lu", stats.numnodes);
-        printf(" | gens %lu", (unsigned long)ngens);
-        for (size_t t = 0; t < ngens; t++)
-            for (int i = 0; i < n; i++)
-                printf(" %d", genbuf[t * (size_t)n + i]);
-        printf(" | orbits");
-        for (int i = 0; i < n; i++) printf(" %d", orbits[i]);
-        printf(" | norbits %d", stats.numorbits);
-        printf(" | grp %.17g %d\n", stats.grpsize1, stats.grpsize2);
+        graph *g = NULL, *canong = NULL;
+        SG_DECL(sg); SG_DECL(sc);
+        if (sparse) read_sparse(&sg, n);
+        else {
+            g = allocate((size_t)m * n, sizeof(graph));
+            canong = allocate((size_t)m * n, sizeof(graph));
+            for (int i = 0; i < n; ++i) {
+                char ch;
+                for (int j = 0; j < n; ++j) {
+                    if (scanf(" %c", &ch) != 1 || (ch != '0' && ch != '1'))
+                        fail("invalid adjacency entry");
+                    if (ch == '1') ADDELEMENT(GRAPHROW(g, i, m), j);
+                }
+            }
+            for (int i = 0; i < n; ++i) {
+                if (ISELEMENT(GRAPHROW(g,i,m),i)) fail("loop");
+                for (int j = i+1; j < n; ++j)
+                    if (!!ISELEMENT(GRAPHROW(g,i,m),j) != !!ISELEMENT(GRAPHROW(g,j,m),i))
+                        fail("asymmetric adjacency");
+            }
+        }
+        if (refinement) {
+            int level, cells, code;
+            if (scanf("%d %d", &level, &cells) != 2 || level < 0 || cells < 1 || cells > n)
+                fail("invalid refinement parameters");
+            int *seen = allocate(n, sizeof(int)), *count = allocate(n, sizeof(int));
+            set *active = allocate(m, sizeof(set));
+            for (int i = 0; i < n; ++i)
+                if (scanf("%d", &lab[i]) != 1 || lab[i] < 0 || lab[i] >= n || seen[lab[i]]++)
+                    fail("invalid refinement labelling");
+            for (int i = 0; i < n; ++i)
+                if (scanf("%d", &ptn[i]) != 1 || ptn[i] < 0) fail("invalid partition entry");
+            if (ptn[n-1] > level) fail("unterminated partition");
+            int actual_cells = 0;
+            for (int i = 0; i < n; ++i) actual_cells += ptn[i] <= level;
+            if (cells != actual_cells) fail("incorrect partition cell count");
+            for (int i = 0; i < n; ++i) {
+                int activeFlag;
+                if (scanf("%d", &activeFlag) != 1 || (activeFlag != 0 && activeFlag != 1))
+                    fail("invalid active bit");
+                if (activeFlag) {
+                    if (i && ptn[i-1] > level) fail("active position is not a cell start");
+                    ADDELEMENT(active, i);
+                }
+            }
+            refine_sg((graph*)&sg, lab, ptn, level, &cells, count, active, &code, m, n);
+            printf("{\"lab\":[");
+            for (int i = 0; i < n; ++i) printf("%s%d", i ? "," : "", lab[i]);
+            printf("],\"ptn\":[");
+            for (int i = 0; i < n; ++i) printf("%s%d", i ? "," : "", ptn[i]);
+            printf("],\"active\":[");
+            for (int i = 0; i < n; ++i) printf("%s%d", i ? "," : "", !!ISELEMENT(active,i));
+            printf("],\"numcells\":%d,\"code\":%d,\"target\":%d}\n", cells, code,
+                targetcell_sg((graph*)&sg, lab, ptn, level, 100, FALSE, -1, m, n));
+            free(seen); free(count); free(active);
+            free(lab); free(ptn); free(orbits); free(col); free(indices);
+            SG_FREE(sg); SG_FREE(sc);
+            ++case_id;
+            continue;
+        }
+        ngens = nindices = 0;
+        statsblk stats;
+        if (sparse) sparsenauty(&sg, lab, ptn, orbits, &options, &stats, &sc);
+        else densenauty(g, lab, ptn, orbits, &options, &stats, m, n, canong);
+        if (stats.errstatus) fail("nauty error");
+        printf("lab"); for (int i = 0; i < n; ++i) printf(" %d", lab[i]);
+        if (sparse) {
+            sortlists_sg(&sc);
+            printf(" | edges %zu", sc.nde / 2);
+            for (int i = 0; i < n; ++i) for (int j = 0; j < sc.d[i]; ++j) {
+                int v = sc.e[sc.v[i]+j]; if (i < v) printf(" %d %d", i, v);
+            }
+        } else {
+            printf(" | tri ");
+            for (int i = 0; i < n; ++i) for (int j = i+1; j < n; ++j)
+                printf("%d", !!ISELEMENT(GRAPHROW(canong,i,m),j));
+        }
+        printf(" | nodes %lu | gens %zu", stats.numnodes, ngens);
+        for (size_t i = 0; i < ngens * (size_t)n; ++i) printf(" %d", genbuf[i]);
+        printf(" | orbits"); for (int i = 0; i < n; ++i) printf(" %d", orbits[i]);
+        printf(" | norbits %d | grp %.17g %d | indices", stats.numorbits, stats.grpsize1, stats.grpsize2);
+        for (size_t i = 0; i < nindices; ++i) printf(" %d", indices[i]);
+        printf(" | stats %d %d %lu %lu %d %lu %lu\n", stats.numorbits,
+               stats.numgenerators, stats.numnodes, stats.numbadleaves,
+               stats.maxlevel, stats.tctotal, stats.canupdates);
         fflush(stdout);
-        free(col);
+        free(lab); free(ptn); free(orbits); free(col); free(indices);
+        free(g); free(canong); SG_FREE(sg); SG_FREE(sc);
+        ++case_id;
     }
+    free(genbuf);
     return 0;
 }

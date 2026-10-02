@@ -77,9 +77,17 @@ def lakefile_texts_differ(before: str, after: str) -> bool:
     merge invalidated.
 
     So compare only the declarations the factorization binary is built from.
+    A newly added ``require`` is not one of them: Lake builds a package only
+    when something imports it, and any change it causes to the resolution of
+    an existing package appears in ``lake-manifest.json``, which is itself a
+    relevant path.
     """
     old_blocks = factorization_blocks(before)
-    new_blocks = factorization_blocks(after)
+    new_blocks = {
+        name: body
+        for name, body in factorization_blocks(after).items()
+        if name in old_blocks or not name.startswith("require ")
+    }
     if set(old_blocks) != set(new_blocks):
         return True
     return any(new_blocks[name] != body for name, body in old_blocks.items())

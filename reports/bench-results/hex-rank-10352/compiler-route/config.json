@@ -1,0 +1,68 @@
+{
+  "cpu": 8,
+  "load": [
+    113.1650390625,
+    87.67041015625,
+    70.94140625
+  ],
+  "blocks": 6,
+  "case": "Hex.RankBench.runMvCert12",
+  "order": [
+    [
+      0,
+      "before"
+    ],
+    [
+      0,
+      "after"
+    ],
+    [
+      1,
+      "after"
+    ],
+    [
+      1,
+      "before"
+    ],
+    [
+      2,
+      "before"
+    ],
+    [
+      2,
+      "after"
+    ],
+    [
+      3,
+      "after"
+    ],
+    [
+      3,
+      "before"
+    ],
+    [
+      4,
+      "before"
+    ],
+    [
+      4,
+      "after"
+    ],
+    [
+      5,
+      "after"
+    ],
+    [
+      5,
+      "before"
+    ]
+  ],
+  "roots": {
+    "before": "/home/kim/worktrees/hex-dev/hex-dev-issue-10352",
+    "after": "/tmp/hexrank-route-10352"
+  },
+  "binaries": {
+    "before": "ee0df6759d08ebc2d54faef72f87bc93300c9d6ebb6df63f66c28ae4799186c8",
+    "after": "85ed75fcc22aa4ba875b69f2b009b16f4e5e33ce44382fc0d01b4aace7ebcbfd"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "command": [
+    "taskset",
+    "-c",
+    "0",
+    "perf",
+    "record",
+    "-q",
+    "-e",
+    "cycles:u",
+    "-F",
+    "999",
+    "-o",
+    "/tmp/sparse-after-cfi59-run.data",
+    "--",
+    "/tmp/hex-sparse-perf-baseline/iteration",
+    "/tmp/hex-sparse-corpus/cfi59.graph",
+    "run",
+    "71"
+  ],
+  "cpu": 0,
+  "binary_sha256": "60e859234a52808392fc28374ecd12ea70a915fc35afe601c25eb7a12822aa5c",
+  "started": 1788931409.0984685,
+  "load_after": [
+    0.6064453125,
+    1.26611328125,
+    2.521484375
+  ],
+  "stdout": "{\"elapsed_ns\":3158096509,\"iterations\":71,\"mode\":\"run\",\"name\":\"cfi59\",\"ns_per_iteration\":44480232,\"sink\":1594475}\n",
+  "stderr": "",
+  "returncode": 0
+}

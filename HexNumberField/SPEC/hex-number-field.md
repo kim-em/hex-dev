@@ -130,7 +130,10 @@ requirement that the implementation literally use an `opaque` Lean declaration.
 Implementations use representation-private structures where constructors or
 recursors are needed internally.
 
-Every smart constructor normalizes the primitive polynomial. Zero uses the
+The shipped representation is described here; the required
+[direct radical design](hex-number-field.md#local-canonicalization-and-representation-migration)
+replaces all-roots provenance with a deterministic local normal form in a
+coordinated constructor migration. Every smart constructor normalizes the primitive polynomial. Zero uses the
 fixed certified `zeroRep`. Other values use `rawRep?` to re-isolate the
 polynomial with the fixed strategy at `separationDepth`. The private record
 stores an `OrientedIsolation`: a canonical real or upper-half-plane `base`,
@@ -572,8 +575,8 @@ def AlgebraicNumber.realCompare (a b : AlgebraicNumber) : Ordering
 `separationPrec p` is `mahlerPrec p + 2`. At that precision the approximation
 balls of two distinct roots of `p` are disjoint: `mahlerPrec p` separates
 distinct roots by more than four ball radii, and the two extra bits absorb the
-centre errors. Every operation here works at a fixed such precision; none
-refines without bound.
+centre errors. The reference comparison uses that fixed precision. Fast paths use bounded
+refinement and certified coordinate intervals; none refines without bound.
 
 `I` selects the upper root of `X² + 1`. Conjugation is the tag operation
 specified with the canonical representation below; it uses no approximation
@@ -581,9 +584,229 @@ balls. `mirrorBall` remains a public geometric helper for compatibility and
 for the retained search-strategy benchmark arm.
 
 `realCompare a b`, for real `a` and `b`, is `.eq` when `a == b` and otherwise
-orders the centres of the two approximation balls at
-`separationPrec (a.p * b.p)`, where the balls of distinct values are disjoint.
-The companion proves this is the order of their real parts.
+first compares the stored real-coordinate intervals. Only overlap triggers
+computation of the product-polynomial separation bound and geometric refinement,
+threading the refined representatives. Targets double from the smaller stored
+precision (clamped to one), capped at `separationPrec (a.p * b.p) + 1`.
+Structural fuel bounds the search; failure or inconclusive final intervals use
+the reference centre comparison at `separationPrec (a.p * b.p)`.
+The companion proves every successful interval decision and the complete
+operation agree with the order of the real parts. Canonical data is unchanged.
+
+## Real sign and comparison
+
+These new operations serve the
+[real-algebraic comparison contract](../../SPEC/Libraries/hex-real-algebraic.md#exact-comparison-strategies).
+`realCompare` and `realCompareExact` retain their existing definitions and
+correctness theorems. The declarations below are design obligations; they do
+not assert that the new sign algorithms or their proofs are implemented.
+They depend downward on `hex-real-roots` for Sturm/Tarski computation and on
+`hex-real-roots-mathlib` for its proofs. Neither dependency imports number
+fields or RCF. Reuse RCF's recurrence-checking design without importing
+`HexRCF` into a computational library.
+
+### Contracts, domains, and finite refinement
+
+Reuse the existing `AlgebraicRoot.isReal`, defined by the stored square's
+`meetsRealAxis` test in `IntegerRoots.lean`. Its rounded `radiusHi` bound is
+already covered by `HexRootsMathlib.RefinedIsolation.meetsRealAxis_iff` in
+`Conjugate.lean`; do not redefine the predicate or change the orientation tags.
+Distinct conjugate roots cannot pass this test; no factorization is needed.
+New lazy checked `compare?` rejects either nonreal input and returns `none` on certification
+failure. The total `compare` takes proofs that both `isReal` tests are true.
+Its `.eq` panic fallback is **unreachable-by-pipeline-invariant**, discharged
+by `compare?_isSome` for those hypotheses; it must never absorb nonreal input.
+Apply the same checked/total convention to lazy sign, canonical point, and
+fixed-field sign operations, using the operand's stored reality proof (the
+canonical generator's proof for fixed-field elements). Name the corresponding `_isSome` theorem for each checked implementation:
+`compareRat?_isSome`, `compareDyadic?_isSome`, `sign?_isSome`,
+`signTarski?_isSome`, `signApprox?_isSome`, `compareTarski?_isSome`, and
+`compareApprox?_isSome`. Successful
+signs are in `{-1,0,1}`. This library owns the Mathlib-free helper
+`Hex.orderOfSign (s : Int) : Ordering := compare s 0`, reused by the real and
+tower consumers.
+
+Every call to `rep.refineTo? t` uses the existing finite budget
+
+```text
+stopDepth p t = max t (separationDepth p) + 8
+fuelFor p t start = (stopDepth p t - start).toNat
+                 + (stopDepth p t - t).toNat + 1.
+```
+
+These are loop bounds, not bit-complexity claims. Root isolation uses this
+same budget from the Cauchy worklist's computable starting precision.
+Polynomial arithmetic, pseudo-division, coefficient folds and resultant
+construction have finite degree/array bounds; coefficient bit lengths still
+contribute to their cost. No sign API waits for a semantic inequality to make
+an unbounded refinement loop terminate.
+
+### Real isolating intervals and point comparison
+
+A refined complex disc containing a real selected root supplies a real
+isolating interval without refinement. For its square set `h = 2^(-prec)`
+and use `I = (re - 2*h, re + 2*h]`. The selected root is strictly inside
+because its coordinate error is at most `sqrt(2)*h`. Any other root in `I`
+would be within `(2+sqrt(2))*h` of it, contradicting the existing Mahler
+separation `> 4*sqrt(2)*h`. In particular neither endpoint is a root.
+Require `realInterval_spec` proving these statements, including the
+`sturmCount = 1` bridge to `RealRootIsolation`; this bridge is new, not an
+assumed coercion from complex discs. The interval is disposable query data,
+not a change to the stored representative. It also supplies the root-free
+endpoints required by the Tarski query below.
+
+`AlgebraicNumber.compareRat a q` compares the selected real root to a rational
+point. Reuse the derivative Sturm chain of `a.p`. If `q ≤ I.lower`, return
+`.gt`; if `I.upper < q`, return `.lt`. Otherwise form the single prefix count
+`N = V(I.lower) - V(q)` on `(I.lower,q]`. If `N=0`, return `.gt`. If `N=1`,
+return `.eq` exactly when `a.p(q)=0`, and `.lt` otherwise. Other counts are
+certification failure, excluded by `realInterval_spec`. At the included upper
+endpoint, the same rule works; exact equality is tested only inside the
+selected interval. The sign of `p(q)` alone does not identify which root is
+being compared.
+
+Use `hex-real-roots`' new `sturmVarAtRat` and mixed rational-endpoint count
+correspondence. For `q=u/v` with `v>0`, evaluate signs via the integer
+homogeneous Horner value `v^deg(p) * p(u/v)`, and do the same for every chain entry. Dyadic points
+use `evalDyadic` directly. `compareDyadic` specializes `compareRat` without
+converting an arbitrary rational to an inexact dyadic. One derivative chain
+has at most `deg p + 1` entries, strict-degree pseudo-remainder descent bounds
+its construction, and the prefix count uses two finite chain evaluations
+(the lower variation may be cached). There is no root refinement or
+factorization. This extracts the algorithm of
+[RCF endpoint classification](../../HexRCF/SeparationCheck.lean).
+
+The companion proves `compareRat_eq` and `compareDyadic_eq`, respectively
+`a.compareRat q = a.realCompare (ofRat q)` and
+`a.compareDyadic q = a.realCompare (ofRat q.toRat)`, with the reality proof
+arguments understood. Exact rational roots, including zero, return `.eq`.
+
+### Lazy comparison and the precision invariant
+
+`AlgebraicRoot.compare r s` computes the lazy difference `d` through `sub?`,
+then its sign, never exactifying either operand. `AlgebraicRoot.sign_eq`
+states `orderOfSign (sign d) = d.exact.realCompare 0`; `compare_eq` states
+`r.compare s = r.exact.realCompare s.exact`, with real-input hypotheses.
+Both compose the existing subtraction, exactification and zero-test semantic
+bridges with the following new sign proof.
+
+1. If `d.isZero`, return zero. This handles equal values represented by
+   different squarefree polynomials and different isolation widths.
+2. For `p=d.p` of degree one, return the sign of `-p.coeff 0`. Its leading
+   coefficient is positive, so this is exact even if the disc centre is zero.
+3. Otherwise ensure `rep.square.prec ≥ separationDepth p`, using at most one
+   `refineTo?` call if necessary and retaining its same-root proof. Read the
+   strict sign of the real centre only after establishing `signDepth_spec`
+   below. A zero centre in this branch is a failed invariant, not equality.
+
+The required precision is an invariant of the **representative used by the
+sign operation**, not of every arbitrary `AlgebraicRoot`. The public structure
+and `ofRefined` accept `RefinedIsolation`, whose field proves only
+`mahlerPrec p ≤ prec`. Canonical `toRoot` retains the canonical constructor's
+stronger depth; the public lazy constructors are the reason for the guard.
+Do not strengthen their type silently or claim every constructor enforces
+`separationDepth`. `ofEliminant?`, used by `sub?`, does request that depth;
+require `ofEliminant_prec` to expose the successful driver's precision
+postcondition. Thus an ordinary subtraction result needs no further
+refinement, while a general public `sign` call performs the bounded guard in
+step 3. Negation preserves the polynomial's separation depth and precision.
+
+`signDepth_spec` must prove, for a real nonzero selected root at this depth,
+that its real centre is nonzero and has its sign. For `n=deg p ≥ 2`,
+`H=coeffAbsMax p ≥ 1` and `L=ceilLog2 H`, the formula gives
+`separationDepth p ≥ L+12`. If `p(0) ≠ 0`, reciprocal Cauchy gives
+`|d| ≥ 1/(1+H) ≥ 2^(-(L+1))`; the disc radius is less than
+`2^(1-prec)`, which is strictly smaller than this lower bound. If `p(0)=0`,
+zero is a distinct root, and separation exceeds four disc radii; hence a real
+centre of the wrong sign would put `|d|` within one radius of zero, a
+contradiction. Equivalently the reciprocal bound can be applied after removing
+all powers of `X`. The proof must carry the selected-root reality and nonzero
+hypotheses; `!isZero` alone is not a geometric zero-exclusion certificate.
+
+For a linear polynomial, `mahlerPrec=3` and `separationDepth=12`, independently
+of height. The inputs `±2^-k` at `k=20,50,100` can have centre zero, which is
+why step 2 is mandatory. Subtracting `(a±2^-k)-a` for real quadratic `a`
+instead exercises the higher-degree sign bound for close operands: its lazy
+eliminant retains conjugate differences and need not be linear. The two
+families test different branches and both must return the strict order.
+
+Cost: one resultant of input degree product at most `deg(r.p)*deg(s.p)`,
+primitive squarefree normalization, one complete isolation of that eliminant,
+operand refinement to the operation-ball precision, and a constant number of
+coefficient/disc sign tests. The subtraction evaluator requests
+`separationDepth p + 4` on each operand. The general sign guard adds at most
+one bounded refinement; the `sub?` postcondition eliminates that cost here.
+This avoids two Berlekamp–Zassenhaus factorizations, and is a candidate win for
+one-off comparisons with costly irrelevant factors. Large degree products and
+repeated queries against already exactified operands can reverse the tradeoff;
+the comparison benchmarks decide it. Degree-one coefficient sign and the
+certified higher-degree centre rule preserve the one-resultant/one-isolation
+claim. A uniform reciprocal-Cauchy refinement strategy is an optional measured
+alternative, with its extra refinement charged explicitly.
+
+### Fixed-field sign
+
+For real canonical `a` and `f : QAdjoin a`, coefficients are already reduced
+modulo the irreducible `p=a.p`. Test coordinate zero first: this is exactly
+zero in the field, and no numerical threshold defines equality. A nonzero
+rational constant returns the sign of its numerator directly in both
+strategies. All strategies work in the chosen embedding of `a`, not across
+every conjugate.
+
+`QAdjoin.signTarski f` clears rational denominators with a positive common
+multiple `D`, obtaining `F=D*f.coeffs : ZPoly`, and calls
+`ZPoly.tarskiQuery p F I` on the root-free `realInterval` above. Its result is
+in `{-1,0,1}` because `I` contains exactly one root; the positive scale means
+it is the sign of `f(a)`. The low-level query and new generalized replay are
+specified by [hex-real-roots](../../HexRealRoots/SPEC/hex-real-roots.md#tarski-queries).
+There is no resultant, factorization or refinement in this strategy: one
+signed pseudo-remainder chain and two exact endpoint evaluations suffice.
+The query also handles zero `F` directly, so correctness does not depend on
+keeping the early coordinate-zero optimization.
+
+`QAdjoin.signApprox f` uses the nonzero evaluation eliminant
+`E(T) = Res_X(p(X), D*T-F(X))`. This contains the values `f(α)` at every
+conjugate `α` of `a`; normalization must not scale the **value** by `D`.
+Set `E₀ = E.normalizeEval` (remove powers of `X` and content) and
+`B = 1 + coeffAbsMax E₀`. Every nonzero evaluation has absolute value at
+least `1/B`. The eliminant is nonzero even for the zero element; the early
+coordinate test handles that case before removing zero roots.
+
+Set `C = Disambiguation.evalMajorant f.coeffs PolyQuot.ratAbsCeil p`.
+At input precision `k`, refine the generator to `k+1`, round each rational
+coefficient to a dyadic ball of radius at most `2^-k`, and use `evalRatBall`
+with Horner ball arithmetic. Require `signBall_bound`: the ball contains the
+selected real value and has radius at most `C*2^-k`. The generic majorant
+recurrence is existing code; its specialization to this sign evaluator is a
+new theorem. Use the finite schedule `0 .. P`, where
+
+```text
+P = evalDisambiguationLimit E C = ceilLog2 (2 * B * max 1 C) + 2.
+```
+
+At `P`, the radius is at most `1/(8B)`, strictly below `1/(3B)`; the real
+centre has the correct strict sign for nonzero `f`. Earlier success requires
+an enclosure wholly on one side of zero, never just a nonzero centre.
+The schedule has at most `P+1` evaluations, each using the explicit refinement
+fuel above; a single evaluation at `P` is also a valid benchmark arm. The
+existing `PolyQuot.approx` and `approx_radius` provide an alternative baseline:
+request output precision `ceilLog2 (3*B) + 1`, including that API's internal
+`approxGuardBits`. The majorant-first arm is specified to compare the direct
+input-precision budget with those existing guard bits; it is not needed merely
+to obtain a sign algorithm. Phase 4 must count the actual generator precision
+and setup of each arm before claiming the new route saves work.
+`signApprox?_isSome` proves endpoint success. Its cost includes the evaluation
+resultant and all Horner/refinement calls, not merely reading the last centre.
+
+Require `signTarski_eq` and `signApprox_eq`:
+`orderOfSign (signStrategy f) = f.toAlgebraicNumber.realCompare 0`.
+Also require `compareTarski_eq` and `compareApprox_eq` for sign of the reduced
+difference `f-g`, equating each result with
+`f.toAlgebraicNumber.realCompare g.toAlgebraicNumber`. The right-hand
+conversions are reference semantics, not part of the executable strategies.
+Expose both strategies; select defaults only from the consumer SPEC's
+Phase-4 degree/height evidence. Reduced coordinate zero, rational constants,
+and equal fixed-field operands require no refinement in either strategy.
 
 ## The nearest root
 
@@ -944,6 +1167,9 @@ def ofAlgebraics? (a : AlgebraicNumber) (bs : Array AlgebraicNumber) :
 structure Presentation where
   generator : AlgebraicNumber
   entries : Array (QAdjoin generator)
+def recoverShift? (theta alpha gamma : AlgebraicNumber) (shift : Int) :
+    Option (QAdjoin gamma × QAdjoin gamma)
+def fastPair? (theta alpha : AlgebraicNumber) : Option Presentation
 def common (bs : Array AlgebraicNumber) : Presentation
 end QAdjoin
 ```
@@ -954,7 +1180,13 @@ returns `none` exactly for unequal imaginary parts. Global executable `LT`,
 `LE` and their decisions match Mathlib's complex partial order: equal imaginary
 parts and ordered real parts. Structural equality and real-real comparisons
 are direct paths; differing orientation tags reject immediately; remaining
-cases test whether the difference is real and use `realCompare`. This last
+cases first reject disjoint imaginary-coordinate intervals. Unresolved cases
+try 16 and 64 additional bits relative to each stored precision, then test
+whether the exact difference is real and use `realCompare`. The `<` and `≤`
+decisions also reject impossible real-coordinate inequalities before asking
+whether imaginary parts are equal: `a.lower ≥ b.upper` rejects `<`, and
+`a.lower > b.upper` rejects `≤`. Inconclusive interval tests are distinct from
+incomparability; overlap never establishes equality. The exact fallback
 path performs an exact subtraction, including resultant construction,
 factorization and root isolation; it can cost as much as field arithmetic. There is no
 `Ord` or `LinearOrder` instance on the complex type. The companion supplies
@@ -963,9 +1195,16 @@ embedding into the scoped complex order.
 
 `AlgebraicNumber.nthRoot a n` agrees with `a.toComplex ^ ((n : ℂ)⁻¹)`;
 `sqrt a` is `nthRoot a 2`. Index zero returns one; positive indices at zero
-return zero. The general path solves `X^n - a`, caches each candidate's
-`a + a.conj`, then chooses maximal real part with nonnegative imaginary side
-preferred on a tie. Root completeness proves selection succeeds, and the
+return zero. The general path still solves `X^n - a`, but branch selection
+works on lazy roots. Positive real inputs retain real candidates; negative real
+inputs retain upper candidates; nonreal inputs retain their own imaginary side.
+Among retained candidates, certified real intervals select the maximum. Stored
+intervals precede two refinement rounds at 16 and 64 additional bits, with
+representatives threaded and cached. Only the winner is canonicalized on this
+path. Inconclusive selection uses the existing exact selector, which caches
+each candidate's doubled real part and prefers the upper side on a tie.
+Square roots usually have one candidate after the side test; positive real
+inputs select the positive real root. The real square-root API shares this path. Root completeness proves selection succeeds, and the
 companion proves the result lies in the principal argument sector
 `(-π/n, π/n]`. General radicals can be expensive. Conjugation commutes with
 this branch away from the negative real axis, not unconditionally.
@@ -974,9 +1213,14 @@ this branch away from the negative real axis, not unconditionally.
 `ofAlgebraics? a bs` shares the power table and preserves one option per input.
 `QAdjoin.common bs` returns a `Presentation` with one `generator` and an
 `entries : Array (QAdjoin generator)`, preserving input values, order and
-duplicates. Empty and all-zero inputs use generator zero. These wrappers
-reuse the existing certified primitive-element search and coordinate recovery;
-no independent field-search implementation is added.
+duplicates. Empty and all-zero inputs use generator zero. `recoverShift?`
+computes the linear gcd for a proposed generator `gamma = theta + shift * alpha`
+and accepts its coordinates only after exact comparison with both original
+algebraic numbers. The two-generator path tries shift one when its degree is
+the product of the input degrees; general cases use the existing certified
+primitive-element search and trace-based coordinate recovery. The tower
+flattening operation shares this checked linear-gcd recovery. There is no
+second field-search implementation.
 
 The real library owns `AlgebraicNumber.re`, `im`, and `ofReal`, with both
 projections returning `RealAlgebraicNumber`. It computes them through
@@ -988,3 +1232,716 @@ The number-field companion provides `IsAlgClosed AlgebraicNumber` and
 `IsAlgClosure ℚ AlgebraicNumber`, using the complete algebraic-coefficient
 root solver and algebraicity of every represented value. Neither instance
 introduces new axioms or admits unfinished proofs.
+
+## Roots of unity and complex norms
+
+```lean
+def AlgebraicNumber.rootOfUnity (q : Rat) : AlgebraicNumber
+-- Owned by hex-real-algebraic:
+def AlgebraicNumber.normSq (a : AlgebraicNumber) : RealAlgebraicNumber
+def AlgebraicNumber.abs (a : AlgebraicNumber) : RealAlgebraicNumber
+```
+
+`rootOfUnity q` denotes `exp (2 * π * I * q)` and has exact order `q.den`.
+Reduce the numerator modulo the positive denominator. Denominators 1, 2, and 4
+use constants. For other denominators `n`, isolate `X^n - 1` when `n` is odd,
+or `X^(n/2) + 1` when even. The upper root with greatest real part is
+`exp (2πI/n)`; select it lazily, then compute the requested power in its
+`QAdjoin`, converting once. Generator and conjugate cases reuse existing values.
+No generic algebraic-coefficient solver or integer-index factorization is used.
+The polynomial degree is still linear in the denominator; the cyclotomic route
+and general recognition are specified in the
+[direct radical design](hex-number-field.md#cyclotomic-construction-and-coprime-powers).
+Radicals of `-1`, `I`, and `-I` use their principal rational angles divided by
+the positive index. No representation metadata or global cache is added.
+
+`normSq` packs `a * a.conj` as a real value. `abs` uses its nonnegative square
+root, with the existing real absolute value for real inputs. The companion
+proves the norm correspondences, nonnegativity, zero characterization,
+conjugation invariance, multiplicativity, and `abs² = normSq`. These are named
+real-valued functions, not an `Abs AlgebraicNumber` instance.
+
+Conformance includes separated and touching intervals, close cross-factor and
+Mignotte pairs, same-imaginary nonreal pairs, unequal imaginary coordinates,
+forced fallback, branch-cut radicals, rational-angle periodicity and orders,
+and complex norm identities. FLINT qqbar supplies exact expected values.
+Benchmarks separate construction, selection, and complete extraction, retaining
+eight adjacent AB/BA blocks under the shared-host measurement policy.
+
+The [interval and radical measurements](../../bench-results/algebraic-fast-paths/README.md)
+separate preconstructed comparisons, lazy branch selection, and complete
+extraction. They include the same-imaginary fallback overhead as well as
+successful fast paths; every completed AB/BA block is retained.
+
+## Direct certified radicals and cyclotomic embeddings
+
+This is the required replacement design for principal radicals in
+[hex-number-field](hex-number-field.md), with proof ownership in the
+[companion SPEC](../../HexNumberFieldMathlib/SPEC/hex-number-field-mathlib.md#direct-radical-proof-obligations).
+It specifies future executable code, not shipped declarations. The existing
+`Radical.polynomial`/`AlgebraicPoly.roots` route remains the reference until
+this design's end-to-end proofs and evidence are complete. Comparison work in
+[#10142](https://github.com/kim-em/hex-dev/issues/10142) is separate.
+
+### Contracts and route ownership
+
+For `a : AlgebraicNumber` and `n : Nat`, retain
+`(a.nthRoot n).toComplex = a.toComplex ^ ((n : ℂ)⁻¹)` and
+`a.sqrt.toComplex = Complex.sqrt a.toComplex`. Test conventions in this order:
+index zero returns one, including `0.nthRoot 0`; index one returns the input;
+zero at a positive index returns zero; one returns one. For nonzero input and
+positive index the argument is in `(-π/n, π/n]`. Negative real inputs use
+argument `+π`: the principal cube root of `-8` is `1 + √3 I`, not `-2`.
+Conjugation commutes only away from the negative real axis (and in the
+appropriate trivial cases); no unconditional commuting law is introduced.
+
+The complete general route is integer substitution, certified principal
+approximation, one factorization, certification of one embedding, and local
+canonicalization. It must not call common-field discovery, norm or evaluation
+eliminants, `AlgebraicPoly.roots`, or exactify a list of candidates. Integer
+factorization remains necessary when the substituted polynomial is reducible.
+All routes below finish through the same canonical constructor. Improving
+approximation alone does not discharge this design.
+
+### Direct annihilator and retained work
+
+Let `p = a.p`, `d = p.natDegree`, `H = max 1 (coeffAbsMax p)`, and
+`h = ceilLog2 (H + 1)`. For `a ≠ 0` and `n > 1`, spread coefficient `p[i]`
+to position `n*i`, filling other entries with zero:
+
+```
+P = p.substPow n = p(X^n),    D = n*d,    height(P) = H.
+```
+
+Use the dense `substPow` prerequisite in the
+[cyclotomic SPEC](../../SPEC/Libraries/hex-cyclotomic.md#prerequisite-changes-in-other-libraries).
+Do not implement this spread as repeated dense composition. A sparse view may
+skip zeros during evaluation, but factorization adapters must account for the
+full dense allocation. The proof is `P(β) = p(β^n) = p(a) = 0` for the
+principal root `β`. Primitive content and positive leading coefficient are
+preserved. `p(0) ≠ 0`, separability of `p`, and
+`P' = n X^(n-1) p'(X^n)` imply that `P` is squarefree in characteristic zero.
+The nonzero-input hypothesis is essential; never apply this argument to `X`.
+
+Factor `P` once into primitive positive-leading irreducibles, keeping the
+product equality, multiplicities, and per-factor irreducibility evidence.
+Since `P` is squarefree the multiplicities are one. Use the existing bounded
+factorizer, including `factorTrial` with `defaultFactorCoeffBound` as its
+unconditional fallback. An independent conservative candidate bound is
+`B = 2^D*(D+1)*H`. Consider enumerating coefficients in `[-B,B]` for degrees
+at most `D`, testing exact division, and recursing on strictly smaller degrees. At most
+`D²*(2*B+1)^(D+1)` candidate tests bound such a fallback. This is a totality
+bound explaining finite search size, not a second executable fallback to
+implement alongside `factorTrial`; retain the production
+factorizer's bounded modular, lifting and recombination work as well. This factorization can be
+scheduled after approximation, but no losing factor's algebraic roots are
+constructed. Keep the substituted polynomial, separation bound, factor list,
+selected factor, selected enclosure, Taylor workspace, and certificates in a
+request-local work record. Clear losing workspaces as they are consumed. A
+batch of embeddings may share immutable polynomials and factor evidence;
+there is no global mutable cache and no cache data in structural equality.
+
+### Computable precision and enclosure algorithm
+
+All searches below use explicit natural-number budgets, not convergence as an
+unbounded loop. Conservative bounds establish totality; measured strategies
+may stop much earlier. A bound may be large without being a performance claim.
+
+A Cauchy bound and its reciprocal give rational numbers
+
+```
+R = 1 + max_{i<d} |p[i]/p[d]|,
+ρ = 1 / (1 + max_{1≤i≤d} |p[i]/p[0]|),
+0 < ρ ≤ |a| ≤ R.
+```
+
+For any squarefree nonconstant integer `f` use
+`δ(f) = 2^(-mahlerPrec f)` as a deliberately smaller strict lower bound for
+distinct-root distance; degree one uses this number without a pair obligation.
+This follows from the existing `mahlerPrec_separates`, not from an empirical
+root gap. Nonreal roots have `|im| > δ(f)/2`, by comparison with their
+conjugates. Thus side recognition needs no unknown distance to the cut.
+
+To enclose `β` to radius `2^-k`, use rational outward arithmetic throughout:
+
+1. Refine the input to radius at most `2^-b`, where
+   `b = k + ceilLog2(ceil C) + 16` and
+   `C = 256*(1+R)^2*(1+1/ρ)^2`. Retain the exact real/upper/lower tag;
+   a ball crossing the cut never changes that tag.
+   Since `ρ ≤ 1`, the precision bound gives `2^-b ≤ ρ/2^24`, so every point in the
+   refined ball has modulus at least `ρ/2` and the chart coverage below applies.
+   Input refinement uses
+   `RefinedIsolation.refineTo?` with its existing input-computable depth/fuel.
+2. Enclose `r = |a|` by rational bisection of `x²+y²`, intersecting the
+   squared-modulus bounds with `[ρ²,R²]` and the result with `[ρ,R]`.
+   Enclose the nonnegative real `t = r^(1/n)` by bisection on `[0,max 1 R]` using exact
+   comparisons of rational `n`th powers. Bisect at most
+   `ceilLog2(ceil(max 1 R)) + b + 4` times for absolute endpoint width
+   `2^(-b-4)`. Bound uncertainty in `r` using the same `ρ` lower bound;
+   interval root endpoints are each computed with that budget.
+3. Enclose the argument on the tagged branch. On the positive real axis it
+   is exactly zero; on the negative real axis use a certified interval for
+   `+π`. For nonreal input intersect the coordinate enclosure with its known
+   closed half plane. Use an `atan2` chart with a denominator certified in
+   absolute value at least `ρ/4`; one coordinate always supplies such a
+   chart after the stated refinement. When the imaginary coordinate is the
+   denominator the formula is `sgn(y)*π/2 - atan(x/y)`. When the real
+   coordinate is the denominator use `atan(y/x)` and the known half-plane
+   tag to add `+π` or `-π` if `x < 0`. This remains valid arbitrarily close
+   to the cut; real negative inputs never go through a two-sided chart.
+4. Evaluate rational endpoint bounds for `atan` monotonically. Reciprocal
+   reduction brings the endpoint into `[-1,1]`; the identity
+   `atan u = 2*atan(u/(1+sqrt(1+u²)))` brings its magnitude below `1/2`.
+   Rational square-root bisection with outward bounds supplies the argument.
+   The alternating series remainder is at most
+   `|v|^(2N+1)/(2N+1)`; choose `N = b+16`. Compute `π` using
+   `16*atan(1/5)-4*atan(1/239)` with the same certified remainders.
+5. Divide the angle interval by positive `n`; enclose sine and cosine by
+   their Taylor polynomials with rational interval remainders. For arguments
+   bounded by `4`, using `16*(b+16)` terms is a conservative explicit
+   factorial-tail budget. Multiply these intervals by the interval for `t`
+   and round outwards to a dyadic enclosure of radius at most `2^-k`.
+   Internal rounding is allocated a fixed fraction of the final error.
+
+The companion must prove the stated error budget (including chart changes,
+endpoint arithmetic, rounding and remainders), and encode integer ceilings
+without floating-point logarithms. In particular `C` bounds the radial and
+angular error amplification on each tagged half plane with `|z| ≥ ρ/2`;
+there is no claim of continuity across the cut. Increasing precision doubles
+bits up to the explicit `b` cap, then runs that final precision once.
+At most eight approximate Newton iterations may seed this algorithm; only
+checked enclosures are accepted. They cannot replace these guarantees or
+supply a branch certificate by a residual alone.
+
+#### Square-root specialization
+
+Avoid trigonometry for `n = 2`. Enclose `r = sqrt(x²+y²)` and use a stable
+component formula. When `r+x ≥ ρ/2` is certified, compute
+`u = sqrt((r+x)/2)`, `v = y/(2u)`. Otherwise certify `r-x ≥ ρ/2`, compute
+`|v| = sqrt((r-x)/2)`, choose its sign from the input side (positive on the
+negative real axis), and set `u = |y|/(2|v|)`. The real positive and negative
+axis cases use `sqrt(|x|)` directly. Overlapping applicability is harmless:
+both formulas denote the same principal root. After the input refinement
+above at least one safe denominator is certified; there is no equality test
+on a vanishing approximate component and no division by zero. The same `C`
+and bisection budgets suffice, with the formula identity and nonnegative-real
+branch as separate soundness lemmas. Certification and canonicalization below
+are still required.
+
+### One embedding and one factor
+
+Take `m(P) = mahlerPrec P + ceilLog2(max 2 D) + 16`,
+`s = 2^(-m(P))`, and approximate `β` to error at most `s/256`. Round the centre
+to the grid of spacing `s/32`. Run the existing exact three-radius,
+linear-term Pellet checker on the square of half-width `s` at that centre.
+The new quantitative completeness lemma must show this succeeds: the centre
+is within `s/32` of a simple root and every other root is more than `δ(P)`
+away. For the quantitative proof, write `P(X) = (X-β) Q(X)`, let
+`E = s/32`, `L = δ(P)-E`, and `A_i = binom(D-1,i)/L^i` (zero for
+`i > D-1`). At the chosen centre `c`, the Taylor coefficients of
+`Q(c+T)/Q(c)` have modulus at most `A_i`. With
+`η = E*A_1 < 1`, the constant coefficient of `P(c+T)/P'(c)` has
+modulus at most `E/(1-η)`; for `i ≥ 2` its coefficient has modulus at
+most `(A_(i-1)+E*A_i)/(1-η)`, while the linear coefficient is exactly one.
+The denominator correction is necessary because `P'(c)` differs from
+`Q(c)` when `c ≠ β`. For each tested upper radius `t < 6s`, use
+`A_i ≤ A_1^i` to bound the sum of the non-linear normalized terms by
+`(A_1*t² + E*(A_1*t)²)/((1-η)*(1-A_1*t))`. Together with the constant
+term, twice their total is less than `s`, hence less than the tested lower
+radius. The factor two accounts for the executable `lo`/`hi` estimates
+relative to complex modulus. Prove these rational inequalities from
+`s/δ(P) ≤ 1/(2^16*max 2 D)`. This supplies a
+`RefinedIsolation P` and identifies its root with the enclosed principal root.
+A root count without this overlap/separation argument would not identify the
+input embedding.
+
+Test the retained irreducible factors at the same centre and half-width,
+reusing the approximation and exact shift workspace. The unique factor
+vanishing at `β` passes the same one-root test since its roots are a subset
+of those of `P`; any passing factor in this disc must be that factor. At most
+`D` tests suffice. No factor's root list is generated. Carry the division and
+irreducibility certificate into the final constructor, transport the selected
+root to that factor, then run local canonicalization. The selected enclosure
+has more than the factor's needed separation geometrically; if its formal
+`RefinedIsolation` precision threshold is larger, refine just this root to
+that threshold using the factor's computed depth. A proof must connect this
+transport with `SimpleRoot`, not merely compare untyped overlapping balls.
+
+### Local canonicalization and representation migration
+
+The current `IsCanonical` literally means membership in the output of
+`isolateComplexRoots?` at `separationDepth`. It cannot justify inserting the
+enclosure above. Replace that predicate and the constructor together with the
+following deterministic normal form. Keep two disjoint arms: for `f = X`,
+the canonical base is exactly the existing `zeroRep`; for every other
+normalized irreducible `f`, use the local grid below. Thus zero's exceptional
+square does not also compete in the grid normal form.
+
+Set `m(f) = mahlerPrec f + ceilLog2(max 2 (degree f)) + 16`,
+`s = 2^(-m(f))`, and lattice spacing `g = s/32`. Consider all squares of
+half-width `s` centred at `(j*g,k*g)`, for integers `j,k`, whose **exact**
+three-radius linear Pellet checker passes and whose certified root is the
+chosen real or upper root. The canonical square is the lexicographically
+least pair `(j,k)` in this set. The set is finite: any such centre is within
+`radiusHi < 2s` of the root. It is nonempty: rounding the root to this fine
+grid has centre error at most `sqrt(2)*s/64 < s/32`, giving the
+quantitative Pellet success above. Lexicographic minimum is
+therefore well-defined even though the whole integer lattice has no minimum.
+
+The executable constructor finds it locally. Reflect a lower root to the
+upper half plane, refine that one root to error `≤ s/256`, and enumerate
+lattice centres in the rational bounding box of coordinate radius
+`radiusHi + s/256` about its approximate centre, where
+`radiusHi = (1449/1024)*s`. There are at most 92 centres per coordinate,
+so fewer than `100²` candidates independent of degree, height, or root magnitude.
+Enumerate in lexicographic order, run the fixed exact checker, and return
+the first success; do not compute or retain later successes. Every successful
+disc in this box contains the same
+root: its root is within `6s` of the target, less than `δ(f)`. Every successful
+disc containing the target has its centre in this box. Hence the minimum is
+independent of the input enclosure, its precision, strategy, or enumeration
+order. Points on grid lines or failed strict-checker boundaries require no
+special equality decision; nearby overlapping squares supply a success.
+
+Only the real or upper base is normalized. A nonreal base is wholly above the
+axis by the conjugate separation bound; a real base meets the axis. Preserve
+`OrientedIsolation`, the real/upper/lower tag, zero's distinguished base,
+constant-time conjugation, and reflected `AtomCertificate.conj` transport.
+The fixed checker and square determine the canonical certificate data; do not
+store a caller's successful soft/NK/reflection trace as the canonical base.
+Proof fields are irrelevant, but data-bearing certificate constructors are
+not. Canonical provenance now records least successful local-grid square,
+with completeness of the local enumeration, instead of an all-roots array.
+
+Keep `rep`, `x`, `rep_mk`, approximation, and `QAdjoin a` semantic contracts.
+Reprove `toComplex` injectivity, extensionality, `LawfulBEq`/`DecidableEq`, and
+root identity for the new normal form. All constructors must migrate together:
+constants, rational construction, `AlgebraicRoot.exact`, integer roots,
+`PolyQuot` conversion, radicals, and unity. All-roots callers already holding
+a list reuse each selected isolation; none re-isolates a polynomial per root.
+The current centre-based `rootKey` and its injectivity/adjacency proofs must
+be updated; root enumeration indices and nearest-root ties may change.
+Mathematical partial order, structural equality of equal values within the
+new version, and the represented values must not change. Byte-identical old
+hidden records and old enumeration indices are not promised.
+
+The current `AlgebraicNumber` printer in `Nearest.lean` emits `ZPoly.rootNear`
+with a rounded centre, and `QAdjoin` embeds that expression in `ofCoeffs`.
+Retaining this printer requires re-establishing its strict nearest-root
+margin from the new canonical square and `digitsFor` rounding bound, so
+ties cannot affect either new or previously emitted expressions.
+Alternatively, `Repr` emits a checked constructor for normalized polynomial, canonical grid
+square, side, and canonical evidence, or re-normalizes a checked supplied
+isolation. Never use an unchecked arbitrary enclosure or an old root index
+as provenance. Keep `PolyQuot.ofIsolation` for reflected raw roots. Old printed
+isolation expressions still denote their old root and normalize into the new
+form; decoding old cached canonical records requires validation and migration.
+Tests must elaborate generated expressions and compare the resulting values
+structurally, including lower roots and double conjugation.
+
+Regenerate and commit the affected emitter outputs in the migration PR:
+`conformance/HexRealAlgebraic/ReprChecks.lean` and the snapshots
+`conformance-fixtures/HexNumberField/number_field.jsonl`,
+`conformance-fixtures/HexRealAlgebraic/real_algebraic.jsonl`, and
+`conformance-fixtures/HexNumberFieldTower/number_field_tower.jsonl`.
+Update their `EmitFixtures.lean` producers, including printed class evidence,
+and build the generated guards. The existing CI compares the real-algebraic
+Repr output with its committed file; regeneration is part of migration.
+
+#### Reusing irreducibility evidence
+
+`ZPoly.CheckedIrreducible` currently stores `isIrreducible p = true`, whose
+runtime producer factorizes `p`. Introduce a Mathlib-free evidence predicate in `Prop` with
+three checked constructors: the existing Boolean check; membership in a
+retained certified factorization output (membership in the actual
+`factorize` result, not merely a list with the correct product); and equality
+with `cyclotomic F`
+for positive checked index `F`. Each requires positive polynomial degree.
+Replace the class's Boolean field with this evidence, retaining the class name
+and an adapter for old Boolean callers. The Boolean equality becomes a
+companion consequence, not a field all executable producers must compute.
+Audit every projection and constructor use across the library graph.
+Retain positive degree and add a Mathlib-free `primitive : ZPoly.Primitive p`
+field, proved or checked from the retained polynomial without factoring it.
+The old Boolean adapter derives this property by the current content proof.
+In particular, migrate `HexNumberFieldTower/Basic.lean`'s
+`positiveAssociate_primitive`, which projects `checked.is_true`, to the new
+primitive field. Other computational consumers must use evidence or explicit
+algebraic properties; no companion-only Boolean consequence may be imported
+to repair them.
+
+The retained-factor producer has the following schematic shape:
+
+```
+structure FactorWork (P : ZPoly) where
+  result : Hex.Factorization
+  result_eq : result = ZPoly.factorize P
+
+def factorWork (P : ZPoly) : FactorWork P := ⟨ZPoly.factorize P, rfl⟩
+```
+
+Bind `work := factorWork P` once. The evidence constructor takes this work,
+an entry `(q, multiplicity)` and the decidable proof
+`(q, multiplicity) ∈ work.result.factors`, plus `0 < q.natDegree`.
+Selection traverses that retained array and obtains membership from the
+array index (or a dependent membership check). `result_eq` transports the
+proof to the actual factorizer result; it is erased and is never tested by
+re-running `factorize`. A supplied work record must carry this equality, not
+merely pass a product check.
+Runtime work records hold the polynomial and factor data; the class stores
+only proof evidence, which is never eliminated into executable data.
+The companion proves each evidence constructor implies rational
+irreducibility; computational code does not import that companion.
+Do not simply assert that a modular irreducibility test will succeed on every
+irreducible polynomial. The selected factor and cyclotomic routes must not
+re-factorize to manufacture an obsolete evidence field.
+
+### Specialized inputs and dispatch
+
+All candidate optimizations return a checked result or an explicit miss.
+Dispatch order is conventions/constants, a supplied unity witness, rational
+and square-root specializations, then direct `p(X^n)`. Recognition of unity
+without supplied evidence is optional within a fixed budget; exhaustive
+recognition is a separate API. Composite-index planning is optional and must
+have a bounded plan and a measured advantage over one substitution.
+
+#### Rational and binomial radicals
+
+Detect a rational input from its degree-one minimal polynomial. For reduced
+`u/v` with `v > 0`, directly build `v*X^n-u`. Test perfect powers of `|u|` and
+`v` using integer root bisection plus exact powering, not integer prime
+factorization. Each search is bounded by operand bit length, with
+`O(log n)` multiplications per power comparison. If both are exact `n`th
+powers, a nonnegative rational input yields its rational root; a negative
+input yields the positive magnitude times `rootOfUnity (1/(2*n))`, with the
+axis branch retained even for odd indices.
+
+For partial powers, enumerate divisors `e` of `n` by trial division up to `n`
+(or use a supplied checked factorization), testing exact `e`th powers of both
+operands. If `|a| = c^e`, `c > 0`, and `n = e*m`, use the smaller binomial
+`X^m-c` for the positive magnitude. For negative `a`, retain angle `π/n`;
+never take a principal root of an arbitrary chosen negative `e`th root.
+Rational scaling or multiplication by the required unity value may itself
+require exactification; charge it explicitly. The unsplit binomial is always
+a complete finite fallback, and may be cheaper.
+
+A binomial is not presumed irreducible. Factor the reduced annihilator by the
+existing complete integer factorization and certify the selected factor as
+above, including cases such as `X^4-4` and `X^4+4`. No appeal to an incomplete
+perfect-power criterion replaces factorization. General inputs represented by
+a binomial minimal polynomial may combine exponents directly, but still need
+the input embedding in the principal enclosure. For `n = r*s`, `r,s > 0`,
+principal extraction obeys `(a.nthRoot r).nthRoot s = a.nthRoot (r*s)`:
+prove this via argument division and magnitude, not unrestricted `cpow_mul`.
+For executable decomposition of `n > 1`, only admit proper factors
+`r,s ≥ 2`; factors equal to one belong to the identity theorem, not a
+recursive planning step. Enumerate the finite divisor list of `n`, and bound
+the chosen plan by at most `floorLog2 n` nontrivial root extractions, with
+each leaf calling the direct core. Prime indices use the direct core.
+Estimate
+all intermediate degrees, heights, factorization and canonicalization costs;
+repeated canonicalization can erase the benefit. Rational perfect powers,
+reduced binomials, and composite plans each require route-agreement theorems
+and the same final canonical form, including their intermediate values.
+
+#### Cyclotomic construction and coprime powers
+
+Use [hex-cyclotomic](../../SPEC/Libraries/hex-cyclotomic.md), whose public
+constructor consumes `CheckedFactorization N` and computes `Φ_N` by a prime
+ladder and final exponent spread. It is specified but not implemented in this
+checkout. Do not invent a second cyclotomic polynomial generator here.
+A checked index is positive; index zero is rejected by the checked entry point
+and does not inherit Mathlib's polynomial convention `Φ₀ = 1`.
+
+For rational `q`, reduce to numerator `k` modulo denominator `N = q.den`.
+Then `gcd(k,N)=1` (including the order-one case). Reduce the turn to
+`(-1/2,1/2]` for trigonometric evaluation, so the angle has absolute value
+at most `π < 4`. Enclose `exp(2πi*k/N)` using the bounded rational-angle
+sine/cosine algorithm above, certify it as one root of `Φ_N`, and canonicalize locally. The cyclotomic
+irreducibility evidence directly supplies the minimal polynomial. No
+`QAdjoin` power conversion or Krylov minimal-polynomial computation is needed.
+The exported `rootOfUnity q` remains this constructor's rational-angle front
+end, with the same exponential value, periodicity, addition and order laws.
+Constants of orders 1, 2, 4 remain direct paths.
+
+To power a certified primitive `N`th root, retain its reduced angle and exact
+order in a **separate witness**, not in the canonical number. A checked index
+factorization is optional acceleration data in that witness. For a coprime
+power `j`, replace the angle by `j*k/N`, share `Φ_N` and its irreducibility
+evidence, and certify only the new embedding. For a noncoprime power reduce
+to order `M = N/gcd(j,N)`. If a checked factorization is available, project
+it to `M` and build `Φ_M`; otherwise use the total construction below.
+Do not claim the old polynomial is still minimal. Exponent zero gives
+one. The companion proves both the same-minimal-polynomial coprime theorem
+and the general order formula.
+
+For radicals of a unity value, first put its turn into `(-1/2,1/2]`, then
+divide by positive `n`, reduce the fraction, and construct that embedding.
+In particular `I.nthRoot 4 = rootOfUnity (1/16)`. A residue in `[0,1)` must
+not be divided before moving a lower-half-plane input to its principal turn.
+
+If no checked index is supplied, attempt the existing integer-factor search
+with its input-computable `defaultFuel N` budget and a fixed deterministic
+random seed. It is a partial search: `Hex.Nat.factor?` has no totality theorem, and `PrimeCert.small`
+only accepts stored table entries. A successful search supplies the checked
+input to cyclotomic construction. On exhaustion, construct `X^N-1` using
+the cyclotomic library's specified bare-index `ZPoly.xPowSubOne N`,
+enclose the requested rational-angle embedding, and run the one-factor
+certification and local canonicalization pipeline above with degree `N` and
+height one. Its squarefreeness follows from `N > 0`. This is a complete
+integer-polynomial fallback, with the same computed separation, factorization,
+and certification bounds; it uses no common field or algebraic-coefficient
+solver. The selected factor is `Φ_N` for a reduced turn, by its semantic
+primitive order. A budgeted cyclotomic-only entry point instead reports index
+factorization exhaustion. Neither entry point invents prime certificates or
+interprets exhaustion as non-unity. Measure the potentially large degree-`N`
+fallback and index-factor search separately; checked-index callers bypass it.
+The total API has a mathematical termination guarantee, not a practical
+resource guarantee for arbitrary denominators. In particular, an unsuccessful
+small-fuel index search can leave a huge degree-`N` allocation and expensive
+modular recombination. Under this fallback's Mahler bound, certification
+precision grows as `Θ(N*log(N+1))`, despite the geometric separation of unity
+roots being of order `1/N`. Document the measured usable index range for each
+route, including unsuccessful index searches. Resource-constrained callers
+use the budgeted API, which checks degree and workspace limits before dense
+construction and reports `unknown` or index-search exhaustion. Do not
+reinterpret those outcomes as a total negative answer. A larger index-search
+budget is optional acceleration; it supplies neither a complete prime-certificate
+producer nor a practical resource guarantee for the large binomial fallback.
+
+#### Exact recognition
+
+`unityOrder? a` is a total decision returning the exact order or `none` for a
+non-root-of-unity. Reject zero and nonmonic minimal polynomials. For the
+remaining monic `p = a.p`, compute `R₀ = 1` and
+`R_(j+1) = (X*R_j) mod p` using exact integer monic division. Search
+`1 ≤ j ≤ 2*d²` for the first `R_j = 1`. Retain only the current remainder,
+whose degree is less than `d`; never construct canonical powers of `a`.
+Polynomial evaluation and minimality give
+`R_j = 1 ↔ a.toComplex^j = 1`. The first success is its exact order.
+The negative result uses the new bound `N ≤ 2*φ(N)^2` for positive `N`:
+a primitive `N`th root has minimal polynomial `Φ_N` and degree `φ(N)=d`.
+Thus a negative answer is exhaustive, not a timeout or an approximate failure
+to lie on the unit circle. There are at most `2*d²` updates with degree at
+most `d` before reduction. This test needs no integer-index factorization or
+cyclotomic polynomial generation. Checked-index polynomial comparisons may
+accelerate positive recognition, but must retain the bounded modular fallback
+for a complete negative decision.
+
+If a rational angle witness is wanted, enumerate reduced `k` modulo this
+known `N`, enclose each corresponding root to the precision in one-embedding
+certification, and use separation against the supplied root of `a.p` to
+select its unique numerator. The order proof establishes `a.p = Φ_N`
+semantically; there is no need to generate that polynomial again. This takes
+at most `N` bounded enclosure tests, constructing no canonical candidates.
+`unity?` returns the reduced turn and exact order in an external witness tied
+to `a`. Its original irreducibility evidence suffices for coprime powers.
+Obtaining an optional checked integer factorization remains a partial search.
+A budgeted recognition returns `found`, `notUnity` only after exhaustion of
+the mathematical range, or `unknown` on resource exhaustion. Default `nthRoot`
+must not silently pay exhaustive recognition on every general algebraic input.
+
+### APIs, failures, and proof composition
+
+The following are proposed surfaces; dependent certificate fields are specified
+by their contracts, not by pretending these schematic signatures compile now.
+
+| Owner | Proposed API | Contract |
+| --- | --- | --- |
+| HexPoly | `DensePoly.substPow` | Direct coefficient spread, with index-zero collapse |
+| HexRoots | `RootEnclosure`, `certifyNear?` | Rational/dyadic enclosure; bounded one-root Pellet certificate |
+| HexNumberField | `Radical.annihilator a n` | `p(X^n)`; positive-index/nonzero hypotheses on the root and squarefree theorems |
+| HexNumberField | `Radical.enclose a n bits` | Principal enclosure with width/radius bound; no factorization |
+| HexNumberField | `Radical.factorRoot? work` | One selected irreducible factor and transported root, retaining evidence |
+| HexNumberField | `AlgebraicNumber.ofCertified?` | Normalized irreducible polynomial plus selected root to the new canonical form |
+| HexNumberField | `AlgebraicNumber.nthRoot`, `sqrt` | Existing total signatures and branches |
+| HexNumberField | `Unity.Witness a`, `Unity.power`, `Unity.radical` | External reduced-angle/order witness, optional checked factorization; reuse polynomial where justified |
+| HexNumberField | `Unity.ofChecked F k` | Positive checked index, arbitrary residue; reduce order before construction |
+| HexNumberField | `unityOrder?`, `unity?` | Total exact recognition, then optionally the selected angle |
+| HexNumberField | Budgeted counterparts | Typed exhaustion/unknown, never a fabricated value or false negative |
+
+Work records carry polynomial equalities, root membership, factor membership,
+and checked evidence, never a user assertion that an arbitrary ball is
+canonical. Malformed certificate input is rejected distinctly from an
+inconclusive budgeted search. Internal checked constructors in total APIs must
+have `_isSome` theorems at their computed budgets. Their `none` branches are
+`unreachable-by-pipeline-invariant`; no default zero, empirical fuel, or generic
+solver fallback supplies the direct route's totality proof. OS allocation
+failure is an operational failure, not a mathematical `none` or non-unity
+result. Resource-limited entry points must expose that distinction.
+
+The proof chain for every route is: annihilator/known minimal polynomial;
+principal enclosure and its computed error bound; bounded certificate success;
+unique embedding and factor; canonical existence/uniqueness; unchanged public
+Mathlib correspondence. Optimizations have independent soundness at any budget
+and an explicit complete fallback. The companion lists the missing lemmas.
+
+### Cost and required evidence
+
+Let `M(b)` denote integer multiplication cost, `F(D,h)` the measured/analysed
+integer factorization cost, `e ≤ D` the selected factor degree, `h_f` its height
+in bits, and `k` the requested approximation precision. Factor coefficient
+height can grow: a Landau–Mignotte bound gives `h_f = O(h+D+log D)`; do not
+substitute `h` for `h_f` without a proof. Root separation requires
+`O(D*(h+log D))` bits with the current Mahler bound.
+Since `D = n*d`, the certification precision is linear in the root index up
+to logarithmic factors and may dominate both approximation and exact Taylor
+arithmetic. Substitution removes eliminants but does not remove that cost.
+The evidence must sweep `n` and report actual precision independently of
+degree and height; requested output precision `k` alone understates the work.
+
+| Phase | Work and storage to report |
+| --- | --- |
+| Input preparation | Original canonical construction and input refinement, separately from extraction on preconstructed values |
+| Annihilator | `Θ(D)` dense slots, `O(D*h)` bits; sparse evaluation may skip zeros |
+| Approximation | Bisection iterations linear in the computed precision plus magnitude bits; powers use `O(log n)` multiplications; series term budgets above; rational numerator/denominator growth and peak workspace must be measured |
+| Factorization | One `F(D,h)` invocation in the general route; all modular factors, Hensel lifts, LLL/recombination storage included; no polynomial-time claim for the current implementation |
+| Certification/selection | At most the number of factors in linear Pellet tests; exact Taylor shift is quadratic in each factor degree using the current kernel; separation precision and temporary coefficient bit lengths included |
+| Canonicalization | One-root refinement plus fewer than `100²` fixed local tests of the selected degree `e`, stopping at the first success; current exact Taylor kernel gives `O(e²)` arithmetic per centre, at `O(h_f+e*(m(f)+log(1+R_f)))` coefficient bits; stream centres using one workspace |
+| Cyclotomic | Checked integer-index factorization, `Φ_N` generation at output degree `φ(N)` and actual coefficient height, one embedding certificate, one local canonicalization; coprime powers reuse generation and evidence |
+| Recognition/composite plans | Recognition uses at most `2*d²` degree-`d` monic remainder updates, `O(d)` coefficient operations per update and one retained remainder; bound its coefficient bits by `O(d²*(h+log(d+1)))`. Include optional index factorizations, rejected plans, and intermediate exactification costs |
+
+Bounds involving `m(f)` are precision bounds, not permission to allocate a
+Cauchy grid of `4^m` squares. Local canonicalization has a constant-sized
+centre window; large root magnitude changes coordinate bit length, not the
+number of visited cells. Polynomial factorization still needs its own memory
+analysis. Neither lower degree nor fast numerical approximation alone implies
+an end-to-end improvement. Fast soft checks may filter candidates, but the
+canonical success predicate and certificate must agree with the fixed exact
+checker; changing the normal form is a versioned migration.
+The exact success predicate excludes strategies whose successful squares differ,
+including the combined soft/Graeffe checker, unless they prove equivalence or
+only soundly reject candidates. Precomputed constants may carry the same fixed
+canonical evidence without repeating the search.
+
+Before landing the constructor migration, compare local canonicalization with
+the current `isolateComplexRoots?` run at `separationDepth` on the existing
+number-field constructor benchmarks. Include constants, rational numbers,
+`ZPoly.rootNear #p[-2,0,1] (1414/1000)`, easy low-height quadratics, and higher
+degrees/heights, measuring certificate counts and complete construction costs.
+Acceptance requires demonstrated end-to-end improvement on the targeted
+expensive constructions and no material reproducible regression on the common
+small constructors. An inconclusive result does not establish that bar; follow
+the shared-host rerun limit. If the bar fails, optimize enumeration or revise
+the normal form and its proofs before migration. Do not silently dispatch
+between two different canonical forms based on input or timing.
+
+Include the canonical integer-root construction
+`(#p[1099513724929, 0, 1099511627776] : ZPoly).algebraicRoots`, whose exact roots
+are `±(1048577/1048576)*I`. In
+[#10156](https://github.com/kim-em/hex-dev/issues/10156) this exhausted an 8 GiB
+process cap before comparison. The
+[quadratic construction report](../../reports/hex-number-field-quadratic.md)
+localizes that failure to the integer-root factorization shortcut's
+coefficient-sized divisor list and records the shipped quadratic-formula fix.
+The general trial-factorization backstop still allocates divisor lists and
+whole coefficient-vector search spaces; account for those allocations when
+the direct route reaches it. A finite search bound alone is not a memory bound.
+Measure squarefree normalization, factorization, all-roots isolation and each
+canonical construction separately, and heights around the smaller completing
+`#p[1050625, 0, 1048576]`. Include arithmetic construction of the same values
+as a separate arm. Reproduce only in a process-tree 8 GiB memory cap with swap
+disabled and one-CPU quota; retain failures and peak RSS/cgroup memory, not
+just successful runtimes. The new single-root route and the ordinary
+integer-root route must both be measured against the fixed baseline; retain
+the existing bounded-memory quadratic regression when replacing constructors.
+
+Use exact python-flint qqbar conformance, following the existing
+[oracle policy](../../SPEC/testing.md); Sage is not an oracle. Encode an output
+as its integer polynomial plus a certified selected root, reconstruct it in
+qqbar, and compare exactly with qqbar's principal radical or rational-angle
+value. Polynomial equality, a small residual, approximate agreement, or merely
+`result^n = input` cannot validate the branch. Pin and check the adapter's
+actual qqbar surface, including the zero-index convention implemented on the
+Hex side. Required cases include:
+
+- `I.nthRoot 4`, `-I`, `-1`, all zero/one conventions, and square-root agreement.
+- `-1 ± 2^-t I`, `-1` on the cut, positive real inputs, and imaginary-axis
+  inputs; vary `t`, force enclosures to initially cross the cut, and force
+  short-budget failures followed by the complete bound.
+- Reducible `p(X^n)`: rational perfect powers, `X^4-4`, `X^4+4`, partial
+  perfect powers, composite indices, and general nonrational inputs.
+- High-height real and nonreal inputs, the quadratic above, near-zero nonzero
+  inputs, and construction costs independently of preconstructed radicals.
+- Growing prime, prime-power, and highly composite unity orders; positive and
+  negative turns, periodicity, coprime/noncoprime/zero powers, exact positive
+  and negative recognition, and recognition budget exhaustion.
+- Structural agreement across every constructor, scaled/reducible input
+  polynomials, different initial enclosures, conjugation, generated Repr
+  elaboration, and old isolation-expression migration.
+
+Measure the old general route, current constant/unity shortcuts, direct route,
+square-root route, binomial reductions, and optional composite/cyclotomic
+routes with phases above reported separately. Record degree, height, index,
+precision, factor count, number of root certificates, calls to factorization,
+and canonicalization, plus allocation and peak live memory. Coprime power
+reuse must show zero minimal-polynomial computations and zero repeated
+factorizations. General direct extraction must show zero common-field,
+norm-eliminant and evaluation-eliminant calls. Dispatch thresholds come from
+retained end-to-end crossover evidence, including misses and negative
+recognition overhead; do not choose thresholds from approximation timings.
+
+Follow the [shared-host benchmark policy](../../SPEC/benchmarking.md): compiled
+Mathlib-free drivers, automatically selected CPU affinity where supported,
+fixed trial-major schedules, adjacent alternating AB/BA arms, all completed
+samples retained, at most one unchanged rerun of an inconclusive result.
+Extend existing conformance/oracle/bench jobs when implementing; do not add CI
+matrices. This SPEC issue adds no solver or benchmark implementation.
+
+### Dependency and delivery order
+
+The computational DAG remains Mathlib-free:
+
+```
+HexPoly ── substPow ──> HexPolyZ
+HexPolyZ + HexIntFactor ──> HexCyclotomic
+HexRoots + HexBerlekampZassenhaus ──> HexNumberField
+HexCyclotomic ──> HexNumberField ──> HexRealAlgebraic, HexNumberFieldTower
+```
+
+These are added prerequisites, not a complete replacement of existing edges.
+`HexRoots` owns generic near-root certificates and separation facts, without
+importing number fields. `HexNumberField` owns principal enclosures, selected
+factor construction, canonicalization, and unity witnesses; cyclotomic code
+knows nothing about algebraic numbers. Companions add the parallel
+`HexCyclotomicMathlib → HexNumberFieldMathlib` edge, with
+`HexRootsMathlib` and `HexBerlekampZassenhausMathlib` supplying transport proofs.
+The closed cyclotomic evidence constructor intentionally lives in the core
+`CheckedIrreducible` design: `HexNumberField.Basic` will import the cyclotomic
+API and all downstream libraries inherit its `HexIntFactor` dependency, even
+without unity calls. This is an explicit package/import-closure cost to check
+in build and release validation. An open constructor accepting an arbitrary
+provider's assertion is not a substitute for checked irreducibility evidence.
+There is no edge back from computational libraries to companions or from
+number fields to the real algebraic subtype. Real square-root wrappers reuse
+the complex implementation and keep their nonnegative real contracts.
+
+Implement in this order: shared substitution and generic near-root
+certificates; the cyclotomic library and companion; closed irreducibility
+evidence and local canonicalization with all migration proofs; direct factor
+selection and end-to-end radicals; unity reuse/recognition; optional plans
+after comparative measurements. Quantitative principal enclosures can proceed
+independently after the generic certificate interfaces. The cyclotomic library
+must precede the core class migration because its constructor appears in the
+closed evidence type. Update `libraries.yml`, Lake requirements, and the authoritative
+[release manifest](../../scripts/release/released.yml) only when these libraries
+and edges actually exist. Existing release pins are not changed by a design.
+Manual acceptance requirements live in
+[HexManual](../../HexManual/README.md#direct-radical-design-requirements).
+
+## Checked fixed presentations
+
+`AlgebraicNumber.ofNormalized` accepts the same normalized polynomial,
+irreducibility, square-freeness and selected-root data as `ofNormalized?`,
+plus a proof that its result is present. It returns that canonical number
+with the defining polynomial stored directly; `ofNormalized_p` is
+reflexivity. Thus a `QAdjoin` literal can expose its polynomial coefficients
+without replaying root isolation in the kernel. The canonicality evidence
+and selected isolation are transported from the successful result, so the
+sealed-constructor invariant is preserved. The Mathlib companion's
+`AlgebraicNumber.ofNormalized?_isSome` discharges the success obligation.
+
+`ZPoly.toRatPoly` uses a coefficient-list specification for kernel reduction
+and its original array implementation through a proved `@[csimp]` equality.
+This lets fixed-presentation arithmetic reduce in entry-identification
+checks while preserving compiled arithmetic.

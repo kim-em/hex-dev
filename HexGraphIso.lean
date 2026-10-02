@@ -9,7 +9,6 @@ module
 public import HexGraphIso.Perm
 public import HexGraphIso.Colored
 public import HexGraphIso.Iso
-public import HexGraphIso.Limits
 public import HexGraphIso.Nauty.Search.Bits
 public import HexGraphIso.Nauty.Search.VSet
 public import HexGraphIso.Nauty.Search.Refine
@@ -74,6 +73,7 @@ public import HexGraphIso.UncoloredComplete
 public import HexGraphIso.Random
 public import HexGraphIso.Tactic
 public import HexGraphIso.Families
+public import HexGraphIso.Sparse
 
 public section
 

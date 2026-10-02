@@ -24,11 +24,11 @@ def boundedContract (n bound : Nat) (P : σ → Prop) : Contract σ n where
   sweepPre _ _ first level _ _ tv1 cursor _ _ st := Past first tv1 cursor ∧ bound ≤ level ∧ P st
   sweepPost _ _ _ _ _ _ _ _ _ _ _ result := P result.2.2
 
-variable [Policy σ n]
+variable {γ : Type} [Policy σ n (γ := γ)]
 
 /-- Local preservation below an ancestor; comparison happens strictly below it,
 while recovery may return to the ancestor itself. -/
-structure BoundedPolicy (ctx : Ctx n) (inf tcLevel bound : Nat) (P : σ → Prop) : Prop where
+structure BoundedPolicy (ctx : γ) (inf tcLevel bound : Nat) (P : σ → Prop) : Prop where
   visit : ∀ level numcells st, P st → P (Policy.visit ctx level numcells st).2.2
   compare : ∀ level code st, bound < level → P st → P (Policy.compareCodes (n := n) level code st)
   target : ∀ level numcells st, bound < level → P st →
@@ -43,7 +43,7 @@ structure BoundedPolicy (ctx : Ctx n) (inf tcLevel bound : Nat) (P : σ → Prop
   afterSweep : ∀ first level size index st, bound ≤ level → P st →
     P (Policy.afterSweep (n := n) first level size index st)
 
-variable {ctx : Ctx n} {inf tcLevel bound : Nat} {P : σ → Prop}
+variable {ctx : γ} {inf tcLevel bound : Nat} {P : σ → Prop}
 
 /-- An off-path node preserves the state invariant. -/
 theorem BoundedPolicy.node_step (h : BoundedPolicy ctx inf tcLevel bound P)

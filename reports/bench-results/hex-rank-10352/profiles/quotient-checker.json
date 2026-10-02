@@ -1,0 +1,485 @@
+{
+  "allocation_share_percent": 0.4,
+  "classified_percent": 99.99,
+  "diagnostics": {
+    "bench_pid": 658050,
+    "bench_thread_name": "hexrank_bench",
+    "bench_thread_tid": "658065",
+    "calibration": {
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "boundary_residual_raw_max_ms": null,
+          "boundary_residual_trimmed_max_ms": null,
+          "hit_count": 0,
+          "regions_without_samples": 1,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "boundary_residual_raw_max_ms": 0.26766490936279297,
+          "boundary_residual_trimmed_max_ms": 0.141321063041687,
+          "hit_count": 9987,
+          "regions_without_samples": 0,
+          "within_residual_limit": true
+        }
+      },
+      "configured_max_residual_ms": 5.0,
+      "effective_max_residual_ms": 5.0,
+      "raw_max_residual_ms": 0.26766490936279297,
+      "residual_ms": 0.141321063041687,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "sample_interval_ms": 1.001001,
+      "selected_mode": "relative-to-meta-start-ms",
+      "within_residual_limit": true
+    },
+    "calibration_max_residual_ms": 5.0,
+    "calibration_residual_ms": 0.141321063041687,
+    "confidence": "passed",
+    "expected_samples_bench_thread": 9998.5,
+    "low_confidence_reasons": [],
+    "minimum_retained_samples": 100,
+    "off_bench_thread_samples_in_window": 0,
+    "regions_total": 1,
+    "rejected_samples_bench_thread": 153536,
+    "retained_samples_bench_thread": 9987,
+    "samply_interval_ms": 1.001001,
+    "samply_meta_start_time_ms": 1789916505030.9617,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "schema": 2,
+    "sensitivity": {
+      "cases": {
+        "minus": {
+          "retained_samples": 9984,
+          "shift_ms": -5.0,
+          "top_leaf_functions": [
+            {
+              "function": 2286,
+              "name": "0xd90a69",
+              "samples": 5238
+            },
+            {
+              "function": 45,
+              "name": "0xd90cbd",
+              "samples": 411
+            },
+            {
+              "function": 48,
+              "name": "0xd90cfa",
+              "samples": 399
+            }
+          ]
+        },
+        "nominal": {
+          "retained_samples": 9987,
+          "shift_ms": 0.0,
+          "top_leaf_functions": [
+            {
+              "function": 2286,
+              "name": "0xd90a69",
+              "samples": 5238
+            },
+            {
+              "function": 45,
+              "name": "0xd90cbd",
+              "samples": 411
+            },
+            {
+              "function": 48,
+              "name": "0xd90cfa",
+              "samples": 399
+            }
+          ]
+        },
+        "plus": {
+          "retained_samples": 9986,
+          "shift_ms": 5.0,
+          "top_leaf_functions": [
+            {
+              "function": 2286,
+              "name": "0xd90a69",
+              "samples": 5238
+            },
+            {
+              "function": 45,
+              "name": "0xd90cbd",
+              "samples": 411
+            },
+            {
+              "function": 48,
+              "name": "0xd90cfa",
+              "samples": 399
+            }
+          ]
+        }
+      },
+      "comparisons": {
+        "minus": {
+          "comparison_samples": 9984,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.0007011217948717949,
+          "exchanged_samples": 7,
+          "failure_reasons": [],
+          "leaf_function_support_size": 173,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.0029575612498471834,
+          "total_variation_distance": 0.000497521778311849,
+          "verdict": "passed"
+        },
+        "plus": {
+          "comparison_samples": 9986,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.0011015421590226317,
+          "exchanged_samples": 11,
+          "failure_reasons": [],
+          "leaf_function_support_size": 174,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.003717454427780818,
+          "total_variation_distance": 0.0005959479749069567,
+          "verdict": "passed"
+        }
+      },
+      "configured_max_total_variation_distance": 0.1,
+      "leaf_function_distributions_stable": true,
+      "maximum_sampling_noise_allowance": 0.5,
+      "minimum_comparison_samples": 100,
+      "reported_top_function_count": 3,
+      "sampling_noise_coefficient": 0.6,
+      "shift_ms": 5.0,
+      "verdict": "passed"
+    },
+    "sidecar_mono_anchor_ns": 887769270797278,
+    "spawn_anchor_mono_ns": 887615193011565,
+    "spawn_anchor_wall_ns": 1789916504991347182,
+    "stage": "complete",
+    "total_timed_ms": 10008.469883
+  },
+  "inclusive_hex": [
+    {
+      "function": "Hex.Matrix.PolyWitness.dot",
+      "percent": 74.21
+    },
+    {
+      "function": "Hex.Matrix.checkRankPoly",
+      "percent": 44.2
+    },
+    {
+      "function": "Hex.RankBench.Quotient.runCheck",
+      "percent": 43.89
+    },
+    {
+      "function": "_private.HexRank.Bench.Quotient.0_Hex.RankBench.Quotient.initFn_.lam_1.00_@.HexRank.Bench.Quotient.3507756407__hygCtx_.hyg.37__boxed",
+      "percent": 43.77
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.nth",
+      "percent": 24.74
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.zeroDots",
+      "percent": 19.67
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.checkDot",
+      "percent": 19.6
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.lowerCheck",
+      "percent": 19.41
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.mul",
+      "percent": 4.94
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.add",
+      "percent": 4.42
+    }
+  ],
+  "leaf_categories": {
+    "allocation": 0.4,
+    "lean-own-code": 99.24,
+    "lean-runtime": 0.35,
+    "other": 0.01
+  },
+  "profile": "/tmp/hexrank-checker-profile/quotient-checker/filtered.json.gz",
+  "samples": 9987,
+  "symbols": "/tmp/hexrank-checker-profile/quotient-checker/symbols.json",
+  "top_inclusive": [
+    {
+      "function": "Hex.Matrix.PolyWitness.dot",
+      "percent": 74.21
+    },
+    {
+      "function": "Hex.Matrix.checkRankPoly",
+      "percent": 44.2
+    },
+    {
+      "function": "Hex.RankBench.Quotient.runCheck",
+      "percent": 43.89
+    },
+    {
+      "function": "lean_apply_2",
+      "percent": 43.77
+    },
+    {
+      "function": "_private.HexRank.Bench.Quotient.0_Hex.RankBench.Quotient.initFn_.lam_1.00_@.HexRank.Bench.Quotient.3507756407__hygCtx_.hyg.37__boxed",
+      "percent": 43.77
+    },
+    {
+      "function": "lean-bench_.private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+      "percent": 43.64
+    },
+    {
+      "function": "lean-bench.LeanBench.kernelLoop",
+      "percent": 43.3
+    },
+    {
+      "function": "lean-bench.LeanBench.runChildMode",
+      "percent": 42.67
+    },
+    {
+      "function": "lean-bench.LeanBench.autoTune",
+      "percent": 42.34
+    },
+    {
+      "function": "lean-bench.LeanBench.Cli.runChildCmd",
+      "percent": 41.59
+    },
+    {
+      "function": "_ZNSt3__110__function6__funcIZ13lean_run_mainE3$_0FvvEEclEv",
+      "percent": 39.46
+    },
+    {
+      "function": "_ZN4lean7lthread3imp5_mainEPv",
+      "percent": 39.46
+    },
+    {
+      "function": "start_thread",
+      "percent": 39.35
+    },
+    {
+      "function": "__clone3",
+      "percent": 38.9
+    },
+    {
+      "function": "List.mapTR.loop",
+      "percent": 25.01
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.nth",
+      "percent": 24.74
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.zeroDots",
+      "percent": 19.67
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.checkDot",
+      "percent": 19.6
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.lowerCheck",
+      "percent": 19.41
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.mul",
+      "percent": 4.94
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.add",
+      "percent": 4.42
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 0.31
+    },
+    {
+      "function": "mi_malloc_small",
+      "percent": 0.2
+    },
+    {
+      "function": "mi_free",
+      "percent": 0.16
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.scale",
+      "percent": 0.06
+    }
+  ],
+  "top_self": [
+    {
+      "function": "Hex.Matrix.PolyWitness.dot",
+      "percent": 65.03
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.nth",
+      "percent": 24.74
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.mul",
+      "percent": 4.68
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.add",
+      "percent": 4.42
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.zeroDots",
+      "percent": 0.21
+    },
+    {
+      "function": "mi_malloc_small",
+      "percent": 0.2
+    },
+    {
+      "function": "mi_free",
+      "percent": 0.16
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 0.14
+    },
+    {
+      "function": "List.mapTR.loop",
+      "percent": 0.1
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.scale",
+      "percent": 0.06
+    },
+    {
+      "function": "List.lengthTR",
+      "percent": 0.04
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.eqMod",
+      "percent": 0.04
+    },
+    {
+      "function": "lean_inc_heartbeat",
+      "percent": 0.04
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.zeroMod",
+      "percent": 0.04
+    },
+    {
+      "function": "List.reverseAux",
+      "percent": 0.03
+    },
+    {
+      "function": "_ZL24mi_page_free_list_extendP9mi_page_smm",
+      "percent": 0.02
+    },
+    {
+      "function": "Hex.Matrix.PolyWitness.checkDot",
+      "percent": 0.02
+    },
+    {
+      "function": "0xffffffffbb7d9bc8",
+      "percent": 0.01
+    },
+    {
+      "function": "_Z15_mi_page_retireP9mi_page_s",
+      "percent": 0.01
+    },
+    {
+      "function": "_Z23_mi_arenas_page_abandonP9mi_page_sP10mi_theap_s",
+      "percent": 0.01
+    }
+  ],
+  "top_self_undecorated": [
+    {
+      "percent": 65.03,
+      "symbol": "Hex.Matrix.PolyWitness.dot"
+    },
+    {
+      "percent": 24.74,
+      "symbol": "Hex.Matrix.PolyWitness.nth_.redArg"
+    },
+    {
+      "percent": 4.68,
+      "symbol": "Hex.Matrix.PolyWitness.mul"
+    },
+    {
+      "percent": 4.42,
+      "symbol": "Hex.Matrix.PolyWitness.add"
+    },
+    {
+      "percent": 0.21,
+      "symbol": "Hex.Matrix.PolyWitness.zeroDots"
+    },
+    {
+      "percent": 0.2,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 0.16,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 0.14,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "Hex.Matrix.PolyWitness.scale"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "List.mapTR.loop_.at_.00Hex.Matrix.PolyWitness.pivotCols.spec_0"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "List.lengthTR_.redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "Hex.Matrix.PolyWitness.eqMod"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean_inc_heartbeat"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "Hex.Matrix.PolyWitness.zeroMod"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "List.reverseAux_.redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "List.mapTR.loop_.at_.00Hex.Matrix.PolyWitness.block.spec_0"
+    },
+    {
+      "percent": 0.02,
+      "symbol": "_ZL24mi_page_free_list_extendP9mi_page_smm"
+    },
+    {
+      "percent": 0.02,
+      "symbol": "Hex.Matrix.PolyWitness.checkDot"
+    },
+    {
+      "percent": 0.01,
+      "symbol": "List.mapTR.loop_.at_.00Hex.Matrix.PolyWitness.block.spec_1"
+    },
+    {
+      "percent": 0.01,
+      "symbol": "0xffffffffbb7d9bc8"
+    },
+    {
+      "percent": 0.01,
+      "symbol": "_Z15_mi_page_retireP9mi_page_s"
+    },
+    {
+      "percent": 0.01,
+      "symbol": "_Z23_mi_arenas_page_abandonP9mi_page_sP10mi_theap_s"
+    }
+  ],
+  "unresolved_leaf_percent": 0.01
+}

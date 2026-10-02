@@ -1441,11 +1441,7 @@ whenever `f` has positive size. This identifies the array `back?` slot with
 `leadingCoeff`, the workhorse for reading monicity off the top entry. -/
 private theorem coeff_last_eq_leadingCoeff (f : ZPoly) (hpos : 0 < f.size) :
     f.coeff (f.size - 1) = f.leadingCoeff := by
-  cases f with
-  | mk coeffs normalized =>
-      have hcoeffs : 0 < coeffs.size := by simpa [DensePoly.size] using hpos
-      have hidx : coeffs.size - 1 < coeffs.size := Nat.sub_one_lt (Nat.ne_of_gt hcoeffs)
-      simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
+  exact (DensePoly.leadingCoeff_eq_coeff_last f hpos).symm
 
 /-- A monic polynomial is nonempty: its `size` is positive. A zero-size `f` would
 have leading coefficient `0`, contradicting `leadingCoeff = 1`. This rules out the
@@ -1456,10 +1452,8 @@ private theorem monic_size_pos (f : ZPoly) (hmonic : DensePoly.Monic f) :
   · exact hpos
   · have hsize : f.size = 0 := Nat.eq_zero_of_not_pos hpos
     have hlead : f.leadingCoeff = 0 := by
-      cases f with
-      | mk coeffs normalized =>
-          simp only [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
-          simp [hsize, Array.getD] <;> rfl
+      have hf : f = 0 := (DensePoly.size_eq_zero_iff f).mp hsize
+      rw [hf, DensePoly.leadingCoeff_zero]
     have hlead_one : f.leadingCoeff = 1 :=
       DensePoly.leadingCoeff_eq_one_of_monic hmonic
     rw [hlead] at hlead_one

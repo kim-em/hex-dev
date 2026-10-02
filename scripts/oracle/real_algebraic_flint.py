@@ -180,6 +180,32 @@ class Checker:
     def check(self, operation: str, d: dict[str, Any]) -> None:
         q = self.q
         zero = q.number(0)
+        if operation == "quadraticRoots":
+            # Exact qqbar roots selected by the emitted canonical discs must
+            # have precisely the reported issue's rational coordinates.
+            roots = d["roots"]
+            require(len(roots) == 2, "quadratic must return two roots")
+            for record, sign in zip([*roots, d["arithmetic"]], [-1, 1, 1]):
+                require(record["poly"] == [1099513724929, 0, 1099511627776],
+                        "unexpected quadratic minimal polynomial")
+                value = self.complex_value(record)
+                real_part = q.to_real(q.unary("re", value, q.complex))
+                im = q.to_real(q.unary("im", value, q.complex))
+                require(real_part is not None and im is not None, "nonreal coordinate")
+                require(q.compare(real_part, zero) == 0 and
+                        q.compare(im, q.number(Fraction(sign * 1048577, 1048576))) == 0,
+                        "incorrect exact quadratic root")
+            return
+        if operation == "unity":
+            self.complex_equal(d["root"], q.root_of_unity(Fraction(*d["angle"])), "rootOfUnity")
+            return
+        if operation == "norm":
+            a = self.complex_value(d["a"])
+            modulus = q.to_real(q.unary("abs", a, q.complex))
+            require(modulus is not None, "nonreal modulus")
+            self.complex_equal(d["abs"], q.unary("abs", a, q.complex), "abs")
+            self.equal(d["normSq"], q.binary("mul", modulus, modulus), "normSq")
+            return
         if operation == "complex":
             a, b = self.complex_value(d["a"]), self.complex_value(d["b"])
             self.complex_equal(d["conj"], q.unary("conj", a, q.complex), "conj")
@@ -350,12 +376,16 @@ def integer_roots(d: dict[str, Any]) -> None:
         ctx.prec = saved
 
 
-OPERATIONS = {"complex", "order", "scalar", "arithmetic", "approx", "integerRoots", "algebraicRoots",
+OPERATIONS = {"quadraticRoots", "unity", "norm", "complex", "order", "scalar", "arithmetic", "approx", "integerRoots", "algebraicRoots",
               "reject", "rejectPolynomial", "repr"}
 REQUIRED_CASES = {
     **{op: names for op, names in [
+        ("unity", {"unity/0/1", "unity/1/2", "unity/1/4", "unity/-1/4", "unity/1/3",
+                   "unity/2/5", "unity/-1/6", "unity/7/6", "unity/1/8", "unity/1/16"}),
+        ("quadraticRoots", {"40-bit"}),
+        ("norm", {"zero", "negative", "unit", "gaussian", "irrational"}),
         ("complex", {"complex-zero", "complex-rational", "complex-cut", "complex-upper",
-                     "complex-lower", "complex-same-side", "complex-fourth", "complex-above-cut", "complex-below-cut"}),
+                     "complex-lower", "complex-same-side", "complex-fourth", "complex-above-cut", "complex-below-cut", "complex-sixteenth", "complex-close-imag", "complex-reverse-line"}),
         ("order", {"zero", "rational", "sqrt-signs", "sqrt-lower", "sqrt-upper", "negative-lower",
                    "negative-upper", "equal-sqrt", "equal-square", "equal-cancel", "cross-factor",
                    "mignotte-close", "mignotte-left-rational", "mignotte-right-rational"}),

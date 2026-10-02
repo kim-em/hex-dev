@@ -1,12 +1,5 @@
 # hex-poly-z-gcd-mathlib
 
-## Correspondence-only classification
-
-This library is a `correspondence-only-layer`.
-
-Computational conformance owner: `HexPolyZGcd`
-Computational performance owner: `HexPolyZGcd`
-
 ## Purpose
 
 This library transports the verified executable integer-polynomial gcd API

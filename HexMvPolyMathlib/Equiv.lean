@@ -152,7 +152,7 @@ theorem toMvPolynomial_eq_sum [CommSemiring R] [DecidableEq R]
 /-- Forward conversion preserves every coefficient. -/
 @[simp] theorem coeff_toMvPolynomial [CommSemiring R] [DecidableEq R]
     (m : Mono n) (p : MvPoly n R cmp) :
-    MvPolynomial.coeff (monoEquiv m) (toMvPolynomial p) = coeff m p := by
+    (toMvPolynomial p).coeff (monoEquiv m) = coeff m p := by
   rw [toMvPolynomial, MvPolynomial.coeff_sum]
   simp [MvPolynomial.coeff_monomial, monoEquiv.injective.eq_iff,
     mem_monomials_iff, eq_comm]
@@ -243,13 +243,13 @@ polynomial's finite support. -/
 def ofMvPolynomial [CommSemiring R] [DecidableEq R]
     (p : MvPolynomial (Fin n) R) : MvPoly n R cmp :=
   ofTerms <| p.support.toList.map fun d =>
-    (monoEquiv.symm d, MvPolynomial.coeff d p)
+    (monoEquiv.symm d, p.coeff d)
 
 /-- Backward conversion preserves every coefficient. -/
 @[simp] theorem coeff_ofMvPolynomial [CommSemiring R] [DecidableEq R]
     (m : Mono n) (p : MvPolynomial (Fin n) R) :
     coeff m (ofMvPolynomial (cmp := cmp) p) =
-      MvPolynomial.coeff (monoEquiv m) p := by
+      p.coeff (monoEquiv m) := by
   rw [ofMvPolynomial, coeff_ofTerms]
   rw [List.foldl_filter, List.foldl_map]
   simp only [Equiv.symm_apply_eq]
@@ -276,9 +276,9 @@ def ofMvPolynomial [CommSemiring R] [DecidableEq R]
         · have hqd : q ≠ d := Ne.symm hdq
           rw [ite_eq_right (by simp [hdq]), ih hds]
           simp [hqd]
-  rw [fold_pick (monoEquiv m) (fun d => MvPolynomial.coeff d p)
+  rw [fold_pick (monoEquiv m) (fun d => p.coeff d)
     p.support.toList p.support.nodup_toList]
-  by_cases hcoeff : MvPolynomial.coeff (monoEquiv m) p = 0
+  by_cases hcoeff : p.coeff (monoEquiv m) = 0
   · simp [hcoeff]
   · simp [hcoeff]
 

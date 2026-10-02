@@ -30,13 +30,13 @@ theorem classify_trace (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
     (classify ctx level numcells st).2.genTrace = st.genTrace := by
   unfold classify
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
-    apply_ite Search.genTrace, ite_self]
+    apply_ite SearchState.genTrace, ite_self]
 
-private theorem pruneReturn_trace (level : Nat) (st : Search n) :
+private theorem pruneReturn_trace {κ : Type} (level : Nat) (st : SearchState n κ) :
     (pruneReturn level st).2.genTrace = st.genTrace := by
   unfold pruneReturn
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd,
-    apply_ite Search.genTrace, pushAuto_trace, ite_self]
+    apply_ite SearchState.genTrace, pushAuto_trace, ite_self]
 
 /-- An internal classification returns the input state unchanged. -/
 theorem classify_internal_state {ctx : Ctx n} {level numcells : Nat} {st : Search n}
@@ -49,14 +49,14 @@ theorem classify_internal_state {ctx : Ctx n} {level numcells : Nat} {st : Searc
   simp only [hg, Bool.false_eq_true, ite_false, bne_iff_ne.mpr hnc, ite_true, Id.run_pure]
 
 /-- The two automorphism verdicts append exactly the scratch permutation. -/
-theorem leafExit_trace (leaf : Leaf) (level : Nat) (st : Search n) :
+theorem leafExit_trace {κ : Type} (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     (leafExit leaf level st).2.genTrace =
       match leaf with
       | .autoFirst | .autoCanon => st.genTrace.push st.workperm
       | _ => st.genTrace := by
   cases leaf <;> unfold leafExit
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd,
-    apply_ite Search.genTrace, admit_trace, pruneReturn_trace, ite_self,
+    apply_ite SearchState.genTrace, admit_trace, pruneReturn_trace, ite_self,
     install]
 
 /-- Only the two automorphism verdicts append a permutation. Both require a checked scratch value. -/

@@ -73,7 +73,8 @@ also sorted by exact value. Its zero polynomial returns `RealRootSet.all`;
 
 {name}`Hex.RealAlgebraicNumber.sqrt?` returns the nonnegative square root,
 or `none` for a negative argument. The total `sqrt` takes a proof of
-nonnegativity. This agrees with the complex principal square root on its
+nonnegativity. It shares the complex radical selector, exactifying only the
+winning lazy root when interval selection succeeds. This agrees with the complex principal square root on its
 domain, as proved by {name}`Hex.AlgebraicNumber.sqrt_ofReal`.
 
 ```lean
@@ -114,6 +115,28 @@ example (a b : AlgebraicNumber) : a ≤ b ↔ a.re ≤ b.re ∧ a.im = b.im :=
 
 end HexRealAlgebraicChapter
 ```
+
+# Complex norms
+
+{name}`Hex.AlgebraicNumber.normSq` and {name}`Hex.AlgebraicNumber.abs` return
+`RealAlgebraicNumber`. The squared norm is `a * a.conj`; the modulus is its
+nonnegative square root. For real inputs, modulus uses the existing real
+absolute value directly. General inputs use exact arithmetic and root finding.
+These functions belong to the real library so the computational dependencies
+remain acyclic.
+
+```lean
+#guard (3 + 4 * AlgebraicNumber.I).normSq == 25
+#guard (3 + 4 * AlgebraicNumber.I).abs == 5
+example (a : AlgebraicNumber) : a.abs ^ 2 = a.normSq :=
+  AlgebraicNumber.abs_sq a
+example (a b : AlgebraicNumber) : (a * b).abs = a.abs * b.abs :=
+  AlgebraicNumber.abs_mul a b
+```
+
+The companion identifies them with `Complex.normSq` and the complex norm,
+and proves nonnegativity, zero characterization, conjugation invariance,
+and multiplicativity.
 
 See {ref "hex-number-field-complex-api"}[complex conjugation and radicals] for
 branch conventions, and {ref "hex-number-field-common-field"}[common fields]

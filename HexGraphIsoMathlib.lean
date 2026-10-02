@@ -8,6 +8,9 @@ module
 
 public import HexGraphIsoMathlib.Basic
 public import HexGraphIsoMathlib.Encode
+public import HexGraphIsoMathlib.Sparse.Encode
+public import HexGraphIsoMathlib.Sparse.Canonical
+public import HexGraphIsoMathlib.Sparse.Automorphism
 public import HexGraphIsoMathlib.Automorphism
 public import HexGraphIsoMathlib.TacticSupport
 public import HexGraphIsoMathlib.Tactic

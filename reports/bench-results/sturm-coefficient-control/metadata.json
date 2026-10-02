@@ -1,0 +1,29 @@
+{
+  "cpu": 46,
+  "host": "chungus2",
+  "start": "2026-09-21T13:36:22.689739+00:00",
+  "load_start": [
+    4.44091796875,
+    3.99951171875,
+    4.099609375
+  ],
+  "git_head": "48c4c2576472e86801154d273607368f1c483b7a",
+  "git_status": " M bench/HexSturm/Bench.lean\n M scripts/bench/sturm_axes.py\n?? HexRealRootsMathlib/TarskiCount.lean\n",
+  "binary_sha256": "5912b8da6f2dbbc737ae2ba2906152d21f3ac4cdbe5e805d798c689c68680f28",
+  "source_sha256": "d82eb37c23d63755e833cbcefc89d92b73bbab29f32291099d3966389d216639",
+  "commands": [
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "coefficient-control"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "end": "2026-09-21T13:36:22.883406+00:00",
+  "load_end": [
+    4.44091796875,
+    3.99951171875,
+    4.099609375
+  ]
+}

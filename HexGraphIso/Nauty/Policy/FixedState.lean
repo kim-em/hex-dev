@@ -37,10 +37,10 @@ theorem fixed_visit {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
   h.refine hok.labSize hok.ptnSize (searchOk_end hn0 hok hlevel)
 
 /-- Comparison changes no fixed vertex or partition field. -/
-theorem compare_fixed (level code : Nat) (st : Search n) :
+theorem compare_fixed {κ : Type} (level code : Nat) (st : SearchState n κ) :
     (compareCodes level code st).fixedpts = st.fixedpts := by
   unfold compareCodes
-  simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.fixedpts, ite_self]
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.fixedpts, ite_self]
 
 /-- Target selection changes no fixed vertex. -/
 theorem target_fixed (first : Bool) (ctx : Ctx n) (tcLevel level numcells : Nat) (st : Search n) :
@@ -54,14 +54,14 @@ theorem classify_fixed (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
     (classify ctx level numcells st).2.fixedpts = st.fixedpts := by
   unfold classify
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
-    apply_ite Search.fixedpts, ite_self]
+    apply_ite SearchState.fixedpts, ite_self]
 
-private theorem admit_fixed (st : Search n) : (admit st).fixedpts = st.fixedpts := by
+private theorem admit_fixed {κ : Type} (st : SearchState n κ) : (admit st).fixedpts = st.fixedpts := by
   unfold admit pushAuto
   simp only [Id.run_pure]
   split <;> rfl
 
-private theorem prune_fixed (level : Nat) (st : Search n) :
+private theorem prune_fixed {κ : Type} (level : Nat) (st : SearchState n κ) :
     (pruneReturn level st).2.fixedpts = st.fixedpts := by
   unfold pruneReturn pushAuto
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
@@ -69,7 +69,7 @@ private theorem prune_fixed (level : Nat) (st : Search n) :
   all_goals rfl
 
 /-- Leaf actions leave the current individualized path unchanged. -/
-theorem leaf_fixed (leaf : Leaf) (level : Nat) (st : Search n) :
+theorem leaf_fixed {κ : Type} (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     (leafExit leaf level st).2.fixedpts = st.fixedpts := by
   cases leaf <;> unfold leafExit
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
@@ -77,19 +77,19 @@ theorem leaf_fixed (leaf : Leaf) (level : Nat) (st : Search n) :
   all_goals first | rfl | exact admit_fixed _ | exact prune_fixed level _
 
 /-- The cheap-boundary test changes no fixed vertex. -/
-theorem cheap_fixed (first : Bool) (level : Nat) (st : Search n) :
+theorem cheap_fixed {κ : Type} (first : Bool) (level : Nat) (st : SearchState n κ) :
     (cheapCheck first level st).fixedpts = st.fixedpts := by
   unfold cheapCheck
   split <;> rfl
 
 /-- Partition recovery keeps the caller's fixed-point bitset. -/
-theorem recover_fixed (inf level : Nat) (st : Search n) :
+theorem recover_fixed {κ : Type} (inf level : Nat) (st : SearchState n κ) :
     (Nauty.recover inf level st).fixedpts = st.fixedpts := by
   unfold Nauty.recover recoverLevels recoverPtn
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.fixedpts, ite_self]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.fixedpts, ite_self]
 
 /-- Sweep completion changes only counters. -/
-theorem afterSweep_fixed (first : Bool) (level size index : Nat) (st : Search n) :
+theorem afterSweep_fixed {κ : Type} (first : Bool) (level size index : Nat) (st : SearchState n κ) :
     (afterSweep first level size index st).fixedpts = st.fixedpts := by
   unfold afterSweep
   split <;> rfl

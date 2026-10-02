@@ -1,0 +1,15 @@
+{
+  "source_directory": "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/array-finishDeficient",
+  "source_patch_sha256": "48fe195476a3aaf6d387e53c1d3946ed900c9c7072a01cde3514cb4913989b5c",
+  "completed_commands": [
+    "finishDeficient"
+  ],
+  "sha256": {
+    "metadata.json": "2ea8233a1778ce3259fee27ec1bc49a569fe12c2049cf879dd962e67736cbb1b",
+    "completion.json": "f665d473c132267a38f7592d7cf5175f207ffc01ee38f7b544f7ba7e45c760ac",
+    "finishDeficient.json": "818840f09fa3b045a7e1abb12d3dde9b92df4093fe486d952e31658ac3b10611",
+    "finishDeficient.txt.gz": "ef65e22f75dfbc43c30ccce729e7a3fece9d564f1f1446038fdb428194325935",
+    "source.patch.gz": "fd715f13f77426b5395f9471bf14c37e0eb6d757fb49356b8ab6b4328fbc5853",
+    "commands.jsonl": "c6b4678b76e2bcd5815fd786f46e2af8f2e1eb2666237eb24c28b865b06d27c8"
+  }
+}

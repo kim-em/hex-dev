@@ -1,0 +1,195 @@
+{
+  "cpu": 63,
+  "host": "chungus2",
+  "load": [
+    9.72216796875,
+    14.63330078125,
+    12.236328125
+  ],
+  "plan": {
+    "paired_trials": 2,
+    "dimensions": [
+      16,
+      32
+    ],
+    "timeout_s": 300,
+    "schedule": "trial-major adjacent AB/BA",
+    "timeout_policy": "retain timeout and stop"
+  },
+  "source_sha256": {
+    "Cached": {
+      "HexCharPoly/Kernel.lean": "ffff246df5ffda7a9cea539042654db4d20efba4647b1f2d26ec02d1693cb718",
+      "HexCharPoly/CharPolyElab.lean": "1dc796264e0c091f992de5c3928c2a9d7ba6d7c08ac7592ddfe87407c8ba4d0c",
+      "HexCharPolyMathlib/Kernel.lean": "5c6db303d0e071bd3ca7a620a3bc60c4a0ac3076684c4e967bceec520daa9300",
+      "HexCharPolyMathlib/CharPolyElab.lean": "c27c1b0af7aacbabe9e69fd41a0fe99289e4e36eac2ec386bff47b354a8b1884"
+    },
+    "Uncached": {
+      "HexCharPoly/Kernel.lean": "c863f9b047f0fa4ac6d627160f649192c489408e760cb024f7df00bdecf5c8ae",
+      "HexCharPoly/CharPolyElab.lean": "5d35d67087a98d4e3ea115a8a62ad797a35c28681c691161d1309b237b6fb7e2",
+      "HexCharPolyMathlib/Kernel.lean": "5c6db303d0e071bd3ca7a620a3bc60c4a0ac3076684c4e967bceec520daa9300",
+      "HexCharPolyMathlib/CharPolyElab.lean": "b800887b77d2ba84a54f4ba36ce43f8889e5876defdab8f19f13992d6d122c12"
+    }
+  },
+  "samples": [
+    {
+      "trial": 0,
+      "n": 16,
+      "arm": "Cached",
+      "exit": 0,
+      "wall_s": 3.2217390370205976,
+      "load": [
+        9.72216796875,
+        14.63330078125,
+        12.236328125
+      ],
+      "kernel_s": 0.514,
+      "log": "0-16-Cached.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".trace": 4364,
+        ".olean": 543296,
+        ".ilean": 1128
+      }
+    },
+    {
+      "trial": 0,
+      "n": 16,
+      "arm": "Uncached",
+      "exit": 0,
+      "wall_s": 3.2240105670061894,
+      "load": [
+        9.583984375,
+        14.52294921875,
+        12.21337890625
+      ],
+      "kernel_s": 0.512,
+      "log": "0-16-Uncached.log",
+      "artifacts_bytes": {
+        ".olean": 445776,
+        ".ilean": 1128,
+        ".hash": 16,
+        ".trace": 4396
+      }
+    },
+    {
+      "trial": 0,
+      "n": 32,
+      "arm": "Cached",
+      "exit": 0,
+      "wall_s": 8.331744298979174,
+      "load": [
+        9.42724609375,
+        14.32470703125,
+        12.1728515625
+      ],
+      "kernel_s": 4.82,
+      "log": "0-32-Cached.log",
+      "artifacts_bytes": {
+        ".olean": 4566376,
+        ".ilean": 1128,
+        ".hash": 16,
+        ".trace": 4360
+      }
+    },
+    {
+      "trial": 0,
+      "n": 32,
+      "arm": "Uncached",
+      "exit": 0,
+      "wall_s": 8.434154290996958,
+      "load": [
+        9.392578125,
+        14.23583984375,
+        12.15576171875
+      ],
+      "kernel_s": 4.9,
+      "log": "0-32-Uncached.log",
+      "artifacts_bytes": {
+        ".olean": 3150040,
+        ".ilean": 1128,
+        ".hash": 16,
+        ".trace": 4394
+      }
+    },
+    {
+      "trial": 1,
+      "n": 16,
+      "arm": "Uncached",
+      "exit": 0,
+      "wall_s": 3.124070452991873,
+      "load": [
+        9.28076171875,
+        14.1318359375,
+        12.13330078125
+      ],
+      "kernel_s": 0.505,
+      "log": "1-16-Uncached.log",
+      "artifacts_bytes": {
+        ".olean": 445776,
+        ".ilean": 1128,
+        ".hash": 16,
+        ".trace": 4398
+      }
+    },
+    {
+      "trial": 1,
+      "n": 16,
+      "arm": "Cached",
+      "exit": 0,
+      "wall_s": 3.121021592989564,
+      "load": [
+        9.33837890625,
+        14.06298828125,
+        12.12158203125
+      ],
+      "kernel_s": 0.514,
+      "log": "1-16-Cached.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".trace": 4359,
+        ".olean": 543296,
+        ".ilean": 1128
+      }
+    },
+    {
+      "trial": 1,
+      "n": 32,
+      "arm": "Uncached",
+      "exit": 0,
+      "wall_s": 8.230763603991363,
+      "load": [
+        9.07080078125,
+        13.9287109375,
+        12.08837890625
+      ],
+      "kernel_s": 4.75,
+      "log": "1-32-Uncached.log",
+      "artifacts_bytes": {
+        ".olean": 3150040,
+        ".ilean": 1128,
+        ".hash": 16,
+        ".trace": 4394
+      }
+    },
+    {
+      "trial": 1,
+      "n": 32,
+      "arm": "Cached",
+      "exit": 0,
+      "wall_s": 8.584764352010097,
+      "load": [
+        9.06640625,
+        13.76611328125,
+        12.05517578125
+      ],
+      "kernel_s": 5.01,
+      "log": "1-32-Cached.log",
+      "artifacts_bytes": {
+        ".olean": 4566376,
+        ".ilean": 1128,
+        ".hash": 16,
+        ".trace": 4357
+      }
+    }
+  ]
+}

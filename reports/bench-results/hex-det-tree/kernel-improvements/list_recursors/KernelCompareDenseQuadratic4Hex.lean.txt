@@ -1,0 +1,18 @@
+import HexPolyDetMathlib.Tactic
+import Mathlib.Tactic.NormDet
+set_option maxHeartbeats 0
+set_option maxRecDepth 100000
+set_option profiler true
+set_option profiler.threshold 0
+set_option trace.HexMatrix.certificate false
+open Lean Elab Tactic
+elab "kernel_compare_call" t:tacticSeq : tactic => do
+  let start ← IO.monoNanosNow
+  withOptions (fun opts => opts.setBool `profiler false) (evalTactic t)
+  let elapsed := (← IO.monoNanosNow)-start
+  logInfo m!"CALL_NS {elapsed}"
+namespace HexPolyDetMathlib.ProofProbe.KernelCompareDenseQuadratic4Hex
+theorem result (x0 x1 : Int) : Matrix.det (R := Int) (!![(-1*(1)) + (3*(x1)) + (2*(x0^2)), (2*(1)) + (-1*(x1)) + (3*(x0^2)), (4*(1)) + (2*(x1)) + (-2*(x0^2)), (-3*(1)) + (2*(x1)) + (2*(x0^2)); (1*(1)) + (-1*(x1)) + (-3*(x0^2)), (4*(1)) + (3*(x1)) + (-2*(x0^2)), (1*(1)) + (-2*(x1)) + (3*(x0^2)), (-1*(1)) + (-1*(x1)) + (2*(x0^2)); (2*(1)) + (-2*(x1)) + (-1*(x0^2)), (1*(1)) + (-2*(x1)) + (-3*(x0^2)), (4*(1)) + (-2*(x1)) + (2*(x0^2)), (-1*(1)) + (-1*(x1)) + (-3*(x0^2)); (4*(1)) + (2*(x1)) + (-3*(x0^2)), (-1*(1)) + (-1*(x1)) + (1*(x0^2)), (-1*(1)) + (3*(x1)) + (1*(x0^2)), (-1*(1)) + (-2*(x1)) + (1*(x0^2))]) = ((190*(1)) + (-133*(x1)) + (-557*(x1^2)) + (-126*(x1^3)) + (54*(x1^4)) + (-608*(x0^2)) + (-432*(x0^2*x1)) + (635*(x0^2*x1^2)) + (-149*(x0^2*x1^3)) + (946*(x0^4)) + (548*(x0^4*x1)) + (-173*(x0^4*x1^2)) + (-385*(x0^6)) + (50*(x0^6*x1)) + (-25*(x0^8))) := by
+  kernel_compare_call
+    det
+end HexPolyDetMathlib.ProofProbe.KernelCompareDenseQuadratic4Hex

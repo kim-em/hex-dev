@@ -1,0 +1,2065 @@
+diff --git a/HexSignDet.lean b/HexSignDet.lean
+index 9b3f49e24..93ee74991 100644
+--- a/HexSignDet.lean
++++ b/HexSignDet.lean
+@@ -29,0 +30,2 @@ public import HexSignDet.Compare
++
++public import HexSignDet.Dag
+diff --git a/HexSignDet/Complete.lean b/HexSignDet/Complete.lean
+index 584373588..cea76516e 100644
+--- a/HexSignDet/Complete.lean
++++ b/HexSignDet/Complete.lean
+@@ -26,0 +27,36 @@ variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
++omit [One E] [Add E] [Sub E] [DecidableEq Ctx] in
++theorem RawDescriptor.full_queries (raw : RawDescriptor E Ctx) (signs : List Int) :
++    (raw.full signs).queries = (raw.full []).queries := rfl
++
++omit [One E] [Add E] [Sub E] [DecidableEq Ctx] in
++theorem RawDescriptor.full_queries_length (raw : RawDescriptor E Ctx) (signs : List Int) :
++    (raw.full signs).queries.length = raw.head.natDegree := by
++  simp only [queries, full, List.length_map, List.length_range]
++
++omit [One E] [Add E] [Sub E] [DecidableEq Ctx] [Mul E] [NatCast E] in
++/-- Canonical full slots need no repeated distinctness or range search once
++the checked table supplies the sign word's length and ternary entries. -/
++theorem RawDescriptor.full_wellFormed (raw : RawDescriptor E Ctx) (signs : List Int)
++    (hp : 0 < raw.head.natDegree) (hlen : signs.length = raw.head.natDegree)
++    (hs : signs.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1)) = true) :
++    (raw.full signs).wellFormed = true := by
++  change (decide (0 < raw.head.natDegree) &&
++    decide (((List.range raw.head.natDegree).map (· + 1)).length = signs.length) &&
++    decide ((List.range raw.head.natDegree).map (· + 1)).Nodup &&
++    ((List.range raw.head.natDegree).map (· + 1)).all
++      (fun i => decide (1 ≤ i ∧ i ≤ raw.head.natDegree)) &&
++    signs.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1))) = true
++  simp only [Bool.and_eq_true, decide_eq_true_eq]
++  refine ⟨⟨⟨⟨hp, ?_⟩, ?_⟩, ?_⟩, hs⟩
++  · simpa only [List.length_map, List.length_range] using hlen.symm
++  · apply decide_eq_true
++    apply (List.nodup_range (n := raw.head.natDegree)).map (· + 1)
++    intro i j hne he
++    exact hne (Nat.add_right_cancel he)
++  · apply List.all_eq_true.mpr
++    intro i hi
++    obtain ⟨j, hj, rfl⟩ := List.mem_map.mp hi
++    have hj := List.mem_range.mp hj
++    simp only [decide_eq_true_eq]
++    omega
++
+diff --git a/HexSignDet/Dag.lean b/HexSignDet/Dag.lean
+new file mode 100644
+index 000000000..bd53bcdcc
+--- /dev/null
++++ b/HexSignDet/Dag.lean
+@@ -0,0 +1,145 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDet.Descriptor
++
++public section
++
++namespace Hex.SignDet
++
++variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
++
++namespace Dag
++
++/-- A literal BKR node with optional references to its two children. References
++are checked against the already accepted prefix, so cycles and forward edges
++cannot be accepted. Ordered query slots remain part of each node. -/
++structure Entry (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
++  node : Node E Ctx
++  children : Option (Nat × Nat)
++
++end Dag
++
++/-- A topologically ordered graph of same-level BKR nodes. Every serialized
++entry is checked, including entries not reachable from the selected root.
++Coefficient-sign dependencies and their level ordering are separate inputs;
++this graph does not encode lower-level coefficient proofs. -/
++structure Dag (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
++  entries : Array (Dag.Entry E Ctx)
++  root : Nat
++
++namespace Dag
++
++variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
++
++/-- A memoized accepted subtree on the fixed caller context and root domain.
++Only the ordered query list varies within this graph. Proofs are erased at run
++time; tree values share the already accepted child values. -/
++structure Checked (sign : E → Int) (context : Ctx) (p : DensePoly E)
++    (a b : Endpoint E) where
++  value : Replay E Ctx
++  accepted : value.check sign context p a b value.node.queries = true
++
++/-- Check one node, reusing accepted children after exact list binding checks.
++The local node checker still validates every supplied query and matrix witness. -/
++@[expose] def step (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
++    (memo : Array (Checked sign context p a b)) (entry : Entry E Ctx) :
++    Option (Checked sign context p a b) := do
++  let n := entry.node
++  match entry.children with
++  | none =>
++    if h : (Replay.leaf n).check sign context p a b n.queries = true then
++      return ⟨.leaf n, h⟩
++    else none
++  | some (left, right) =>
++    let l ← memo[left]?
++    let r ← memo[right]?
++    if hl : l.value.node.queries = n.queries.take (n.queries.length / 2) then
++      if hr : r.value.node.queries = n.queries.drop (n.queries.length / 2) then
++        if h : (decide (1 < n.queries.length) &&
++            decide (n.system.columns.toList = product l.value.node.system.support
++              r.value.node.system.support) &&
++            decide (n.system.rows.toList = product l.value.node.rows r.value.node.rows) &&
++            n.check sign context p a b n.queries) = true then
++          return ⟨.split n l.value r.value, by
++            have hleft := l.accepted
++            have hright := r.accepted
++            rw [hl] at hleft
++            rw [hr] at hright
++            simp only [Bool.and_eq_true] at h
++            simp only [Replay.node, Replay.check, Bool.and_eq_true]
++            exact ⟨⟨⟨⟨⟨h.1.1.1, hleft⟩, hright⟩, h.1.1.2⟩, h.1.2⟩, h.2⟩⟩
++        else none
++      else none
++    else none
++
++/-- Validate all references and nodes once, then bind the selected root's exact
++query list. The returned evidence proves acceptance by the literal tree checker;
++no recursive replay is rerun on cache hits or on the final root. This does not
++assert root-count semantics, which still require the companion query bridge. -/
++@[expose] def replay? (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
++    (qs : List (DensePoly E)) (dag : Dag E Ctx) :
++    Option { t : Replay E Ctx // t.check sign context p a b qs = true } := do
++  let memo ← dag.entries.foldlM (init := #[]) fun memo entry => do
++    let next ← step sign context p a b memo entry
++    pure (memo.push next)
++  let root ← memo[dag.root]?
++  if h : root.value.node.queries = qs then
++    return ⟨root.value, by simpa only [h] using root.accepted⟩
++  else none
++
++/-- Boolean acceptance for supplied graph literals. -/
++@[expose] def check (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
++    (qs : List (DensePoly E)) (dag : Dag E Ctx) : Bool :=
++  (replay? sign context p a b qs dag).isSome
++
++/-- Every accepted graph has an accepted literal-tree expansion on exactly the
++caller-supplied context, head, interval and ordered query list. -/
++theorem check_replay {sign : E → Int} {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
++    {qs : List (DensePoly E)} {dag : Dag E Ctx}
++    (h : check sign context p a b qs dag = true) :
++    ∃ t, replay? sign context p a b qs dag = some t ∧ t.val.check sign context p a b qs = true := by
++  unfold check at h
++  cases he : replay? sign context p a b qs dag with
++  | none => simp [he] at h
++  | some t => exact ⟨t, rfl, t.property⟩
++
++/-- Extract a selected root from graph evidence without a second whole-tree
++replay. Raw shape, immutable context and the exact count-one condition are
++still checked. Invalid supplied evidence does not decide root nonexistence. -/
++@[expose] def descriptor? (sign : E → Int) (context : Ctx) (raw : RawDescriptor E Ctx)
++    (dag : Dag E Ctx) : Option (Descriptor E Ctx sign context) := do
++  let t ← replay? sign context raw.head raw.lower raw.upper raw.queries dag
++  if hw : raw.wellFormed = true then
++    if hctx : raw.context = context then
++      if hone : (t.val.table t.property).count raw.signs = 1 then
++        return Descriptor.ofTable raw t.val hw hctx t.property hone
++      else none
++    else none
++  else none
++
++/-- Graph descriptor extraction preserves the entire supplied raw descriptor. -/
++theorem descriptor_raw {sign : E → Int} {context : Ctx} {raw : RawDescriptor E Ctx}
++    {dag : Dag E Ctx} {d : Descriptor E Ctx sign context}
++    (h : descriptor? sign context raw dag = some d) : d.raw = raw := by
++  unfold descriptor? at h
++  cases ht : replay? sign context raw.head raw.lower raw.upper raw.queries dag with
++  | none => simp [ht, bind, Option.bind] at h
++  | some t =>
++    simp only [ht, bind, Option.bind] at h
++    split at h
++    · split at h
++      · split at h
++        · simp only [pure, Option.some.injEq] at h
++          subst d
++          exact Descriptor.ofTable_raw _ _ _ _ _ _
++        · simp at h
++      · simp at h
++    · simp at h
++
++end Dag
++end Hex.SignDet
+diff --git a/HexSignDet/Descriptor.lean b/HexSignDet/Descriptor.lean
+index 47846bbd4..d5fe645b1 100644
+--- a/HexSignDet/Descriptor.lean
++++ b/HexSignDet/Descriptor.lean
+@@ -43,0 +44,34 @@ def Descriptor.ofReplay? (sign : E → Int) (context : Ctx)
++/-- Reuse an already checked table with exact input bindings and count one.
++The proof arguments avoid rerunning the same replay during row extraction. -/
++def Descriptor.ofTable {sign : E → Int} {context : Ctx}
++    (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx)
++    (hw : raw.wellFormed = true) (hctx : raw.context = context)
++    (hc : evidence.check sign context raw.head raw.lower raw.upper raw.queries = true)
++    (hone : (evidence.table hc).count raw.signs = 1) : Descriptor E Ctx sign context :=
++  ⟨raw, evidence, by
++    simp only [RawDescriptor.check, hw, hctx, decide_true, Bool.true_and, hc]
++    apply decide_eq_true
++    exact (evidence.table_lookup hc raw.signs).symm.trans hone⟩
++
++theorem Descriptor.ofTable_raw {sign : E → Int} {context : Ctx}
++    (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx)
++    (hw : raw.wellFormed = true) (hctx : raw.context = context)
++    (hc : evidence.check sign context raw.head raw.lower raw.upper raw.queries = true)
++    (hone : (evidence.table hc).count raw.signs = 1) :
++    (ofTable raw evidence hw hctx hc hone).raw = raw := by
++  unfold ofTable
++  rfl
++
++/-- Reusing a checked table produces exactly the descriptor obtained by
++checking that same evidence again. -/
++theorem Descriptor.ofReplay_ofTable {sign : E → Int} {context : Ctx}
++    (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx)
++    (hw : raw.wellFormed = true) (hctx : raw.context = context)
++    (hc : evidence.check sign context raw.head raw.lower raw.upper raw.queries = true)
++    (hone : (evidence.table hc).count raw.signs = 1) :
++    ofReplay? sign context raw evidence = some (ofTable raw evidence hw hctx hc hone) := by
++  have ha : raw.check sign context evidence = true := by
++    simpa only [ofTable] using (ofTable raw evidence hw hctx hc hone).accepted
++  unfold ofReplay? ofTable
++  rw [dite_eq_left ha]
++
+diff --git a/HexSignDet/Produce.lean b/HexSignDet/Produce.lean
+index 8eccb7652..0ccc30b10 100644
+--- a/HexSignDet/Produce.lean
++++ b/HexSignDet/Produce.lean
+@@ -75,0 +76,18 @@ variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
++/-- Retain supplied preprocessing or build it on a positive-degree reduced
++path. Node construction and its companion statements use this same decision. -/
++@[expose] def nodePreparation (reduced : Bool) (domain : Sturm.PreparedDomain E)
++    (qs : List (DensePoly E)) (preparation : Option (QueryReduction E)) :
++    Option (QueryReduction E) :=
++  if useReduction reduced domain then
++    match preparation with
++    | some r => some r
++    | none => some (QueryReduction.build domain.sign domain.head qs)
++  else none
++
++/-- The actual per-row reduction, shared by construction and correspondence. -/
++@[expose] def nodeReduction (reduced : Bool) (domain : Sturm.PreparedDomain E)
++    (operands : List (DensePoly E)) (row : List Nat) : Option (Reduction E) :=
++  if useReduction reduced domain then
++    some (Reduction.build domain.sign domain.head operands row)
++  else none
++
+@@ -92,5 +110 @@ No roots, root counts or guessed sign conditions are supplied by a caller. -/
+-    let preparation := if useReduction reduced domain then
+-      match preparation with
+-      | some r => some r
+-      | none => some (QueryReduction.build domain.sign domain.head qs)
+-      else none
++    let preparation := nodePreparation reduced domain qs preparation
+@@ -98,4 +112 @@ No roots, root counts or guessed sign conditions are supplied by a caller. -/
+-    let reductions := es.map fun e =>
+-      if useReduction reduced domain then
+-        some (Reduction.build domain.sign domain.head operands e)
+-      else none
++    let reductions := es.map (nodeReduction reduced domain operands)
+@@ -115,0 +127,8 @@ No roots, root counts or guessed sign conditions are supplied by a caller. -/
++/-- The exact transported tensor inverse used when combining child supports. -/
++@[expose] def parentInverse (l r : Node E Ctx) :
++    Matrix Int (product l.rows r.rows).length (product l.rows r.rows).length :=
++  have hd : (product l.rows r.rows).length = l.basis.rank * r.basis.rank := by
++    rw [length_product]
++    simp [Node.rows]
++  hd.symm ▸ tensor l.basis.adj r.basis.adj
++
+@@ -131,7 +149,0 @@ preparation lets individual nodes construct their own reductions. -/
+-    have hd : (product l.node.rows r.node.rows).length = l.node.basis.rank * r.node.basis.rank := by
+-      rw [length_product]
+-      simp [Node.rows]
+-    -- The original support order and left inverse are justified by
+-    -- System.basis_columns and System.basis_inverse in the companion.
+-    let inverse : Matrix Int (product l.node.rows r.node.rows).length
+-        (product l.node.rows r.node.rows).length := hd.symm ▸ tensor l.node.basis.adj r.node.basis.adj
+@@ -140 +152 @@ preparation lets individual nodes construct their own reductions. -/
+-      (some (l.node.basis.denom * r.node.basis.denom, inverse)) preparation
++      (some (l.node.basis.denom * r.node.basis.denom, parentInverse l.node r.node)) preparation
+@@ -150,2 +162 @@ the balanced support tree and across all moment rows. -/
+-  let preparation := if useReduction reduced domain then
+-    some (QueryReduction.build domain.sign domain.head qs) else none
++  let preparation := nodePreparation reduced domain qs none
+diff --git a/HexSignDet/RootList.lean b/HexSignDet/RootList.lean
+index 43ad5672e..de31b2189 100644
+--- a/HexSignDet/RootList.lean
++++ b/HexSignDet/RootList.lean
+@@ -8 +8 @@ module
+-public import HexSignDet.Complete
++public import HexSignDet.ThomOrder
+@@ -55,3 +55,2 @@ theorem Thom.insert_perm {sign : E → Int} {context : Ctx}
+-/-- Finite insertion preserves strict sortedness under the stated comparator
+-laws. The companion must obtain those laws for realized encodings from Thom
+-order; this theorem does not assume or assert that foundation. -/
++/-- Finite insertion preserves strict sortedness by the proved comparator
++laws. Correspondence with the ordering of real roots remains separate. -/
+@@ -59,4 +57,0 @@ theorem Thom.insert_sorted {sign : E → Int} {context : Ctx}
+-    (htrans : ∀ a b c : Descriptor E Ctx sign context,
+-      a.fullOrder b = some .lt → b.fullOrder c = some .lt → a.fullOrder c = some .lt)
+-    (hreverse : ∀ a b : Descriptor E Ctx sign context,
+-      a.fullOrder b = some .gt → b.fullOrder a = some .lt)
+@@ -85 +80 @@ theorem Thom.insert_sorted {sign : E → Int} {context : Ctx}
+-        · exact htrans d e x hc (he x hx)
++        · exact Descriptor.fullOrder_trans hc (he x hx)
+@@ -97 +92 @@ theorem Thom.insert_sorted {sign : E → Int} {context : Ctx}
+-          · exact hreverse x e hc
++          · exact Descriptor.fullOrder_reverse hc
+@@ -99,0 +95,49 @@ theorem Thom.insert_sorted {sign : E → Int} {context : Ctx}
++/-- Extract a full count-one row from a shared checked table. Table invariants
++prove the sign shape and lookup; no derivative computation or replay is repeated. -/
++def Descriptor.ofFullRow {sign : E → Int} {context : Ctx}
++    (raw : RawDescriptor E Ctx) (t : Replay E Ctx)
++    (hp : 0 < raw.head.natDegree) (hctx : raw.context = context)
++    (hc : t.check sign context raw.head raw.lower raw.upper (raw.full []).queries = true)
++    (row : List Int × Nat) (hm : row ∈ (t.table hc).rows.toList) (hone : row.2 = 1) :
++    Descriptor E Ctx sign context :=
++  ofTable (raw.full row.1) t
++    (raw.full_wellFormed row.1 hp
++      (((t.table hc).wellFormed row hm).1.trans (raw.full_queries_length []))
++      (List.all_eq_true.mpr (fun s hs => decide_eq_true (((t.table hc).wellFormed row hm).2.1 s hs))))
++    hctx hc (((t.table hc).count_mem hm).trans hone)
++
++theorem Descriptor.ofFullRow_raw {sign : E → Int} {context : Ctx}
++    (raw : RawDescriptor E Ctx) (t : Replay E Ctx)
++    (hp : 0 < raw.head.natDegree) (hctx : raw.context = context)
++    (hc : t.check sign context raw.head raw.lower raw.upper (raw.full []).queries = true)
++    (row : List Int × Nat) (hm : row ∈ (t.table hc).rows.toList) (hone : row.2 = 1) :
++    (ofFullRow raw t hp hctx hc row hm hone).raw = raw.full row.1 := by
++  unfold ofFullRow
++  exact ofTable_raw _ _ _ _ _ _
++
++theorem Descriptor.ofReplay_ofFullRow {sign : E → Int} {context : Ctx}
++    (raw : RawDescriptor E Ctx) (t : Replay E Ctx)
++    (hp : 0 < raw.head.natDegree) (hctx : raw.context = context)
++    (hc : t.check sign context raw.head raw.lower raw.upper (raw.full []).queries = true)
++    (row : List Int × Nat) (hm : row ∈ (t.table hc).rows.toList) (hone : row.2 = 1) :
++    ofReplay? sign context (raw.full row.1) t = some (ofFullRow raw t hp hctx hc row hm hone) := by
++  unfold ofFullRow
++  exact ofReplay_ofTable _ _ _ _ _ _
++
++/-- Enumerate rows from one checked full table. Only the count-one guard and
++Thom insertion run per row; domain/query replay and derivative extraction are shared. -/
++def Descriptor.rootsFromTable {sign : E → Int} {context : Ctx}
++    (raw : RawDescriptor E Ctx) (t : Replay E Ctx)
++    (hp : 0 < raw.head.natDegree) (hctx : raw.context = context)
++    (hc : t.check sign context raw.head raw.lower raw.upper (raw.full []).queries = true) :
++    (rows : List (List Int × Nat)) →
++    (∀ row ∈ rows, row ∈ (t.table hc).rows.toList) →
++    Except BuildError (List (Descriptor E Ctx sign context))
++  | [], _ => .ok []
++  | row :: rows, hrows =>
++    if hone : row.2 = 1 then do
++      let rest ← rootsFromTable raw t hp hctx hc rows
++        (fun row hr => hrows row (List.mem_cons_of_mem _ hr))
++      Thom.insert (ofFullRow raw t hp hctx hc row (hrows row (by simp)) hone) rest
++    else .error .system
++
+@@ -114,0 +159,22 @@ def Descriptor.rootsFrom (sign : E → Int) (context : Ctx) (raw : RawDescriptor
++/-- Shared extraction is exactly the literal per-descriptor checking path,
++including its ordering and diagnostics, on rows of the accepted full table. -/
++theorem Descriptor.rootsFromTable_eq {sign : E → Int} {context : Ctx}
++    (raw : RawDescriptor E Ctx) (t : Replay E Ctx)
++    (hp : 0 < raw.head.natDegree) (hctx : raw.context = context)
++    (hc : t.check sign context raw.head raw.lower raw.upper (raw.full []).queries = true)
++    (rows : List (List Int × Nat)) (hrows : ∀ row ∈ rows, row ∈ (t.table hc).rows.toList) :
++    rootsFromTable raw t hp hctx hc rows hrows = rootsFrom sign context raw t rows := by
++  induction rows with
++  | nil => rfl
++  | cons row rows ih =>
++    obtain ⟨signs, count⟩ := row
++    by_cases hone : count = 1
++    · subst count
++      simp only [rootsFromTable, rootsFrom, ne_eq, not_true_eq_false,
++        ↓reduceDIte, ↓reduceIte]
++      rw [ofReplay_ofFullRow raw t hp hctx hc (signs, 1) (hrows _ (by simp)) rfl]
++      simp only [ih, bind, Except.bind]
++      cases rootsFrom sign context raw t rows <;> rfl
++    · simp only [rootsFromTable, rootsFrom, hone, ne_eq, not_false_eq_true,
++        ↓reduceDIte, ↓reduceIte]
++
+@@ -142,2 +208,30 @@ theorem Descriptor.rootsFrom_perm (sign : E → Int) (context : Ctx)
+-/-- Successful enumeration is strictly sorted under the finite comparator
+-laws. Their correspondence with real-root order is a separate companion gate. -/
++/-- Every extracted descriptor retains the caller's literal domain and the
++canonical full derivative slots. Sorting changes only its list position. -/
++theorem Descriptor.rootsFrom_raw (sign : E → Int) (context : Ctx)
++    (raw : RawDescriptor E Ctx) (t : Replay E Ctx) {rows : List (List Int × Nat)}
++    {out : List (Descriptor E Ctx sign context)}
++    (h : rootsFrom sign context raw t rows = .ok out) :
++    ∀ d ∈ out, ∃ signs, d.raw = raw.full signs := by
++  induction rows generalizing out with
++  | nil =>
++    have he : out = [] := by simpa [rootsFrom] using h.symm
++    simp [he]
++  | cons row rows ih =>
++    obtain ⟨signs, count⟩ := row
++    by_cases hn : count ≠ 1
++    · simp [rootsFrom, hn] at h
++    · cases hd : ofReplay? sign context (raw.full signs) t with
++      | none => simp [rootsFrom, hn, hd] at h
++      | some d =>
++        cases hr : rootsFrom sign context raw t rows with
++        | error err => simp [rootsFrom, hn, hd, hr] at h
++        | ok ds =>
++          have hi : Thom.insert d ds = .ok out := by simpa [rootsFrom, hn, hd, hr] using h
++          intro e he
++          have he := (Thom.insert_perm d hi).mem_iff.mp he
++          rcases List.mem_cons.mp he with rfl | he
++          · exact ⟨signs, ofReplay_raw hd⟩
++          · exact ih hr e he
++
++/-- Successful enumeration is strictly sorted by the actual finite comparator.
++Correspondence with real-root order is a separate companion gate. -/
+@@ -145,4 +238,0 @@ theorem Descriptor.rootsFrom_sorted (sign : E → Int) (context : Ctx)
+-    (htrans : ∀ a b c : Descriptor E Ctx sign context,
+-      a.fullOrder b = some .lt → b.fullOrder c = some .lt → a.fullOrder c = some .lt)
+-    (hreverse : ∀ a b : Descriptor E Ctx sign context,
+-      a.fullOrder b = some .gt → b.fullOrder a = some .lt)
+@@ -168 +258,25 @@ theorem Descriptor.rootsFrom_sorted (sign : E → Int) (context : Ctx)
+-          exact Thom.insert_sorted htrans hreverse d (ih hr) hi
++          exact Thom.insert_sorted d (ih hr) hi
++
++/-- Shared extraction preserves every input row, by its exact correspondence
++with the literal per-descriptor checking path. -/
++theorem Descriptor.rootsFromTable_perm {sign : E → Int} {context : Ctx}
++    (raw : RawDescriptor E Ctx) (t : Replay E Ctx)
++    (hp : 0 < raw.head.natDegree) (hctx : raw.context = context)
++    (hc : t.check sign context raw.head raw.lower raw.upper (raw.full []).queries = true)
++    {rows : List (List Int × Nat)} (hrows : ∀ row ∈ rows, row ∈ (t.table hc).rows.toList)
++    {out : List (Descriptor E Ctx sign context)}
++    (h : rootsFromTable raw t hp hctx hc rows hrows = .ok out) :
++    (out.map fun d => d.raw.signs).Perm (rows.map Prod.fst) :=
++  rootsFrom_perm sign context raw t ((rootsFromTable_eq raw t hp hctx hc rows hrows).symm.trans h)
++
++/-- Shared extraction retains the finite strict sortedness guarantee. -/
++theorem Descriptor.rootsFromTable_sorted {sign : E → Int} {context : Ctx}
++    (raw : RawDescriptor E Ctx) (t : Replay E Ctx)
++    (hp : 0 < raw.head.natDegree) (hctx : raw.context = context)
++    (hc : t.check sign context raw.head raw.lower raw.upper (raw.full []).queries = true)
++    {rows : List (List Int × Nat)} (hrows : ∀ row ∈ rows, row ∈ (t.table hc).rows.toList)
++    {out : List (Descriptor E Ctx sign context)}
++    (h : rootsFromTable raw t hp hctx hc rows hrows = .ok out) :
++    out.Pairwise (fun a b => a.fullOrder b = some .lt) :=
++  rootsFrom_sorted sign context raw t
++    ((rootsFromTable_eq raw t hp hctx hc rows hrows).symm.trans h)
+@@ -174 +288,2 @@ root domains return `none`; unproved producer/Thom invariants stay separate
+-internal diagnostics. Constants have an empty table and therefore no roots. -/
++internal diagnostics. Constants admit no well-formed full encoding; their
++branch retains the literal per-descriptor checking path. -/
+@@ -177 +292 @@ def Descriptor.buildRoots (sign : E → Int) (context : Ctx) (p : DensePoly E)
+-  match Sturm.prepare sign p a b with
++  match hd : Sturm.prepare sign p a b with
+@@ -183 +298,9 @@ def Descriptor.buildRoots (sign : E → Int) (context : Ctx) (p : DensePoly E)
+-    | .ok t => match rootsFrom sign context raw t.val (t.val.table t.property).rows.toList with
++    | .ok t =>
++      have bindings := Sturm.prepare_eq_some sign p a b domain hd
++      have hc : t.val.check sign context raw.head raw.lower raw.upper (raw.full []).queries = true := by
++        simpa only [bindings.1, bindings.2.1, bindings.2.2.1, bindings.2.2.2] using t.property
++      let table := t.val.table hc
++      let result := if hp : 0 < p.natDegree then
++        rootsFromTable raw t.val hp rfl hc table.rows.toList (fun _ hm => hm)
++        else rootsFrom sign context raw t.val table.rows.toList
++      match result with
+@@ -186,0 +310,68 @@ def Descriptor.buildRoots (sign : E → Int) (context : Ctx) (p : DensePoly E)
++/-- Successful public root construction extracts from its actual prepared
++BKR table. Both degree branches agree with literal per-descriptor replay. -/
++theorem Descriptor.buildRoots_spec {sign : E → Int} {context : Ctx} {p : DensePoly E}
++    {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
++    (h : buildRoots sign context p a b = .ok (some out)) :
++    let raw : RawDescriptor E Ctx := ⟨context, p, a, b, [], []⟩
++    ∃ domain, Sturm.prepare sign p a b = some domain ∧
++      ∃ t, buildPrepared context domain (raw.full []).queries = .ok t ∧
++        rootsFrom sign context raw t.val t.val.node.system.tableRows.toList = .ok out := by
++  dsimp only
++  unfold buildRoots at h
++  split at h
++  · cases h
++  · rename_i domain hd
++    dsimp only at h
++    split at h
++    · contradiction
++    · rename_i t ht
++      refine ⟨domain, hd, t, ht, ?_⟩
++      simp only [rootsFromTable_eq, dite_eq_ite, ite_self, Replay.table_rows] at h
++      split at h
++      · contradiction
++      · cases h
++        assumption
++
++/-- Every public result retains the requested context, polynomial, interval
++and canonical full derivative indices, including singleton output lists. -/
++theorem Descriptor.buildRoots_raw {sign : E → Int} {context : Ctx} {p : DensePoly E}
++    {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
++    (h : buildRoots sign context p a b = .ok (some out)) :
++    ∀ d ∈ out, ∃ signs,
++      d.raw = ({context, head := p, lower := a, upper := b, indices := [], signs := []} :
++        RawDescriptor E Ctx).full signs := by
++  obtain ⟨_, _, t, _, hs⟩ := buildRoots_spec h
++  exact rootsFrom_raw sign context _ t.val hs
++
++/-- Successful enumeration of a constant head must be empty: every returned
++full descriptor has a well-formed positive-degree head. This uses only shape. -/
++theorem Descriptor.buildRoots_constant {sign : E → Int} {context : Ctx} {p : DensePoly E}
++    {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
++    (hp : p.natDegree = 0) (h : buildRoots sign context p a b = .ok (some out)) : out = [] := by
++  apply List.eq_nil_iff_forall_not_mem.mpr
++  intro d hd
++  obtain ⟨signs, he⟩ := buildRoots_raw h d hd
++  have hw := (RawDescriptor.check_eq d.accepted).1
++  simp [he, RawDescriptor.wellFormed, RawDescriptor.full, hp] at hw
++
++/-- The public entry point preserves all full sign words of the actual
++produced table, including when the constant branch returns an empty list. -/
++theorem Descriptor.buildRoots_perm {sign : E → Int} {context : Ctx} {p : DensePoly E}
++    {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
++    (h : buildRoots sign context p a b = .ok (some out)) :
++    let raw : RawDescriptor E Ctx := ⟨context, p, a, b, [], []⟩
++    ∃ domain, Sturm.prepare sign p a b = some domain ∧
++      ∃ t, buildPrepared context domain (raw.full []).queries = .ok t ∧
++        (out.map fun d => d.raw.signs).Perm (t.val.node.system.tableRows.toList.map Prod.fst) := by
++  obtain ⟨domain, hd, t, ht, hs⟩ := buildRoots_spec h
++  exact ⟨domain, hd, t, ht, rootsFrom_perm sign context _ _ hs⟩
++
++/-- The public entry point is strictly sorted by its actual finite comparator,
++without caller-supplied order laws. Real-root order needs Thom semantics. -/
++theorem Descriptor.buildRoots_sorted {sign : E → Int} {context : Ctx}
++    {p : DensePoly E} {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
++    (h : buildRoots sign context p a b = .ok (some out)) :
++    out.Pairwise (fun a b => a.fullOrder b = some .lt) := by
++  obtain ⟨_, _, t, _, hs⟩ := buildRoots_spec h
++  exact rootsFrom_sorted sign context _ t.val hs
++
+diff --git a/HexSignDet/ThomOrder.lean b/HexSignDet/ThomOrder.lean
+new file mode 100644
+index 000000000..90bd84304
+--- /dev/null
++++ b/HexSignDet/ThomOrder.lean
+@@ -0,0 +1,173 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDet.Complete
++
++public section
++
++namespace Hex.SignDet.Thom
++
++/-- The strict rule either compares the common tails first or compares the
++current entries in the orientation selected by their equal next sign. -/
++theorem compareFrom_cons_lt (a b : Int) (as bs : List Int) :
++    compareFrom (a :: as) (b :: bs) = some .lt ↔
++      compareFrom as bs = some .lt ∨
++      (as = bs ∧ ((as.head? = some 1 ∧ a < b) ∨ (as.head? = some (-1) ∧ b < a))) := by
++  cases ht : compareFrom as bs with
++  | none =>
++    have hne : as ≠ bs := by intro h; subst bs; simp [compareFrom_self] at ht
++    simp [compareFrom, ht, hne]
++  | some order =>
++    cases order with
++    | lt => simp [compareFrom, ht]
++    | gt =>
++      have hne : as ≠ bs := by intro h; subst bs; simp [compareFrom_self] at ht
++      simp [compareFrom, ht, hne]
++    | eq =>
++      have he := compareFrom_eq ht
++      subst bs
++      by_cases hab : a = b
++      · subst b; simp [compareFrom, compareFrom_self]
++      · cases as with
++        | nil => simp [compareFrom, hab]
++        | cons next rest =>
++          by_cases hp : next = 1
++          · simp [compareFrom, compareFrom_self, hab, hp, Int.compare_eq_lt]
++          · by_cases hn : next = -1
++            · simp [compareFrom, compareFrom_self, hab, hn, Int.compare_eq_lt]
++            · simp [compareFrom, compareFrom_self, hab, hp, hn]
++
++/-- The finite strict comparison is transitive even before assigning root
++semantics to the vectors. Unorderable pairs do not supply a premise. -/
++theorem compareFrom_trans {as bs cs : List Int}
++    (hab : compareFrom as bs = some .lt) (hbc : compareFrom bs cs = some .lt) :
++    compareFrom as cs = some .lt := by
++  induction as generalizing bs cs with
++  | nil => cases bs <;> simp [compareFrom] at hab
++  | cons a as ih =>
++    cases bs with
++    | nil => simp [compareFrom] at hab
++    | cons b bs =>
++      cases cs with
++      | nil => simp [compareFrom] at hbc
++      | cons c cs =>
++        obtain hab | ⟨he, hhead⟩ := (compareFrom_cons_lt a b as bs).mp hab
++        · obtain hbc | ⟨he, _⟩ := (compareFrom_cons_lt b c bs cs).mp hbc
++          · exact (compareFrom_cons_lt a c as cs).mpr (Or.inl (ih hab hbc))
++          · subst cs
++            exact (compareFrom_cons_lt a c as bs).mpr (Or.inl hab)
++        · subst bs
++          obtain hbc | ⟨he, hnext⟩ := (compareFrom_cons_lt b c as cs).mp hbc
++          · exact (compareFrom_cons_lt a c as cs).mpr (Or.inl hbc)
++          · subst cs
++            apply (compareFrom_cons_lt a c as as).mpr
++            right
++            refine ⟨rfl, ?_⟩
++            rcases hhead with ⟨hp, hab⟩ | ⟨hn, hba⟩
++            · rcases hnext with ⟨_, hbc⟩ | ⟨hn, _⟩
++              · exact Or.inl ⟨hp, by omega⟩
++              · simp [hp] at hn
++            · rcases hnext with ⟨hp, _⟩ | ⟨_, hcb⟩
++              · simp [hn] at hp
++              · exact Or.inr ⟨hn, by omega⟩
++
++/-- Swapping the vectors swaps the returned finite ordering, including
++failure. Equal tails choose the same orientation for both directions. -/
++theorem compareFrom_swap (as bs : List Int) :
++    (compareFrom as bs).map Ordering.swap = compareFrom bs as := by
++  induction as generalizing bs with
++  | nil => cases bs <;> simp [compareFrom]
++  | cons a as ih =>
++    cases bs with
++    | nil => simp [compareFrom]
++    | cons b bs =>
++      have hi := ih bs
++      cases ht : compareFrom as bs with
++      | none =>
++        simp only [ht, Option.map_none] at hi
++        simp [compareFrom, ht, ← hi]
++      | some order =>
++        cases order with
++        | lt =>
++          simp only [ht, Option.map_some, Ordering.swap] at hi
++          simp [compareFrom, ht, ← hi]
++        | gt =>
++          simp only [ht, Option.map_some, Ordering.swap] at hi
++          simp [compareFrom, ht, ← hi]
++        | eq =>
++          have he := compareFrom_eq ht
++          subst bs
++          by_cases hab : a = b
++          · subst b; simp [compareFrom_self]
++          · cases as with
++            | nil => simp [compareFrom, hab, Ne.symm hab]
++            | cons next rest =>
++              by_cases hp : next = 1
++              · simp [compareFrom, compareFrom_self, hab, Ne.symm hab, hp, Int.compare_swap]
++              · by_cases hn : next = -1
++                · simp [compareFrom, compareFrom_self, hab, Ne.symm hab, hn, Int.compare_swap]
++                · simp [compareFrom, compareFrom_self, hab, Ne.symm hab, hp, hn]
++
++/-- Shape validation is preserved when composing two strict comparisons. -/
++theorem compareSigns_trans {as bs cs : List Int}
++    (hab : compareSigns as bs = some .lt) (hbc : compareSigns bs cs = some .lt) :
++    compareSigns as cs = some .lt := by
++  unfold compareSigns at hab hbc ⊢
++  split at hab
++  · contradiction
++  · split at hbc
++    · contradiction
++    · split
++      · simp_all only [Bool.or_eq_true, not_or, Bool.not_eq_true, Bool.false_eq_true, or_self]
++      · exact compareFrom_trans hab hbc
++
++/-- Shape checking is symmetric and preserves reversal of the finite rule. -/
++theorem compareSigns_swap (as bs : List Int) :
++    (compareSigns as bs).map Ordering.swap = compareSigns bs as := by
++  have hg : (as.isEmpty || bs.isEmpty ||
++      !as.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1)) ||
++      !bs.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1))) =
++      (bs.isEmpty || as.isEmpty ||
++      !bs.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1)) ||
++      !as.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1))) := by
++    simp only [Bool.or_assoc, Bool.or_left_comm, Bool.or_comm]
++  simp only [compareSigns, ← hg]
++  split
++  · rfl
++  · exact compareFrom_swap as bs
++
++end Hex.SignDet.Thom
++
++namespace Hex.SignDet
++
++variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
++  [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
++
++/-- Literal head and full-slot bindings compose with the finite order. -/
++theorem Descriptor.fullOrder_trans {sign : E → Int} {context : Ctx}
++    {a b c : Descriptor E Ctx sign context}
++    (hab : a.fullOrder b = some .lt) (hbc : b.fullOrder c = some .lt) :
++    a.fullOrder c = some .lt := by
++  obtain ⟨hab, hsigns⟩ := fullOrder_eq hab
++  obtain ⟨hbc, hnext⟩ := fullOrder_eq hbc
++  unfold fullOrder
++  rw [ite_eq_left ⟨hab.1.trans hbc.1, hab.2.1, hbc.2.2⟩]
++  exact Thom.compareSigns_trans hsigns hnext
++
++/-- Reversing a successful strict comparison reverses its finite result. -/
++theorem Descriptor.fullOrder_reverse {sign : E → Int} {context : Ctx}
++    {a b : Descriptor E Ctx sign context} (h : a.fullOrder b = some .gt) :
++    b.fullOrder a = some .lt := by
++  obtain ⟨hab, hsigns⟩ := fullOrder_eq h
++  have hs := Thom.compareSigns_swap a.raw.signs b.raw.signs
++  rw [hsigns] at hs
++  simp only [Option.map_some, Ordering.swap] at hs
++  unfold fullOrder
++  rw [ite_eq_left ⟨hab.1.symm, hab.2.2, hab.2.1⟩]
++  exact hs.symm
++
++end Hex.SignDet
+diff --git a/HexSignDetMathlib.lean b/HexSignDetMathlib.lean
+index 2a5bd2c3d..fea52e232 100644
+--- a/HexSignDetMathlib.lean
++++ b/HexSignDetMathlib.lean
+@@ -14,0 +15,2 @@ public import HexSignDetMathlib.ParentSystem
++public import HexSignDetMathlib.TreeChecks
++public import HexSignDetMathlib.NodeSolve
+diff --git a/HexSignDetMathlib/NodeChecks.lean b/HexSignDetMathlib/NodeChecks.lean
+new file mode 100644
+index 000000000..9ff4ad2c9
+--- /dev/null
++++ b/HexSignDetMathlib/NodeChecks.lean
+@@ -0,0 +1,102 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.NodeProducer
++public import HexSignDetMathlib.QueryReduction
++public import HexSturmMathlib.Domain
++
++public section
++
++namespace Hex.SignDet
++
++variable {E : Type u} {K : Type v} {Ctx : Type w} [Zero E] [DecidableEq E]
++variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E] [DecidableEq Ctx]
++variable [Field K] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K]
++variable (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0) (h1 : f (1 : E) = 1)
++variable (ha : ∀ a b, f (a + b) = f a + f b)
++variable (hs : ∀ a b, f (a - b) = f a - f b)
++variable (hm : ∀ a b, f (a * b) = f a * f b)
++variable (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
++variable (sign : E → Int) (hpos : ∀ a, sign a = 1 ↔ 0 < f a)
++variable (hneg : ∀ a, sign a < 0 ↔ f a < 0)
++
++include hz h1 ha hs hm hn hi hpos hneg in
++omit [DecidableEq Ctx] in
++/-- Node construction either retains the checked supplied preprocessing or
++builds valid preprocessing itself. The disabled path carries none. -/
++theorem buildNode_preparation (context : Ctx) (domain : Sturm.PreparedDomain E)
++    (hsign : domain.sign = sign)
++    (qs : List (DensePoly E)) (rows : List (List Nat)) (columns : List (List Int))
++    (reduced : Bool) (inverse : Option (Int × Matrix Int rows.length rows.length))
++    (preparation : Option (QueryReduction E)) {n : Node E Ctx}
++    (hp : (match preparation with | none => true | some r => r.check sign domain.head qs) = true)
++    (h : buildNode context domain qs rows columns reduced inverse preparation = .ok n) :
++    (match n.preparation with | none => true | some r => r.check sign domain.head qs) = true := by
++  subst sign
++  rw [(buildNode_evidence context domain qs rows columns reduced inverse preparation h).1]
++  unfold nodePreparation
++  by_cases hu : useReduction reduced domain = true
++  · simp only [hu, ↓reduceIte]
++    cases preparation with
++    | some r => exact hp
++    | none =>
++      apply QueryReduction.build_checks f hz h1 ha hs hm domain.sign hpos hn hi hneg
++      simp only [useReduction, Bool.and_eq_true, decide_eq_true_eq] at hu
++      exact hu.2
++  · simp [hu]
++
++include hz h1 ha hs hm hn hi hpos hneg in
++/-- Every successful node passes local replay under the generic coefficient
++laws and valid supplied preprocessing. This proves acceptance of the actual
++query certificates; it does not interpret their values as root sums. -/
++theorem buildNode_checks (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
++    (context : Ctx) (domain : Sturm.PreparedDomain E) (hsign : domain.sign = sign)
++    (qs : List (DensePoly E)) (rows : List (List Nat)) (columns : List (List Int))
++    (reduced : Bool) (inverse : Option (Int × Matrix Int rows.length rows.length))
++    (preparation : Option (QueryReduction E)) {n : Node E Ctx}
++    (hp : (match preparation with | none => true | some r => r.check sign domain.head qs) = true)
++    (h : buildNode context domain qs rows columns reduced inverse preparation = .ok n) :
++    n.check sign context domain.head domain.lower domain.upper qs = true := by
++  subst sign
++  obtain ⟨hctx, hhead, hlo, hhi, hqs, _, _, hsys, hb⟩ :=
++    buildNode_spec context domain qs rows columns reduced inverse preparation h
++  have he := buildNode_evidence context domain qs rows columns reduced inverse preparation h
++  have hprep := buildNode_preparation f hz h1 ha hs hm hn hi domain.sign hpos hneg
++    context domain rfl qs rows columns reduced inverse preparation hp h
++  apply Node.check_of_basis domain.sign context domain.head domain.lower domain.upper qs n
++    ⟨hctx, hhead, hlo, hhi, hqs⟩ hsys hb hprep
++  intro i
++  have hrow : n.system.rows[i].length = qs.length ∧ n.system.rows[i].all (· ≤ 2) = true := by
++    have hh := hsys
++    simp only [System.check, Bool.and_eq_true] at hh
++    have hx := List.all_eq_true.mp hh.1.1.1.1.1 n.system.rows[i]
++      (List.getElem_mem (by simp))
++    simpa only [Bool.and_eq_true, decide_eq_true_eq] using hx
++  have hlen : (QueryReduction.operands qs n.preparation).length = qs.length := by
++    cases hp : n.preparation with
++    | none => rfl
++    | some r =>
++      simp only [hp] at hprep
++      exact (QueryReduction.check_bounds hprep).1
++  simp only [checkMoment, Bool.and_eq_true]
++  constructor
++  · rw [(he.2 i).1]
++    unfold nodeReduction
++    by_cases hu : useReduction reduced domain = true
++    · simp only [hu, ↓reduceIte]
++      apply Reduction.build_checks f hz h1 ha hs hm hn hi domain.sign hpos hneg
++      · simp only [useReduction, Bool.and_eq_true, decide_eq_true_eq] at hu
++        exact hu.2
++      · exact hlen.trans hrow.1.symm
++      · exact hrow.2
++    · simp only [hu, Bool.false_eq_true, ↓reduceIte, Bool.and_eq_true, decide_eq_true_eq]
++      exact ⟨hlen.trans hrow.1.symm, hrow.2⟩
++  · rw [(he.2 i).2.2, (he.2 i).2.1]
++    exact HexSturmMathlib.certifyPrepared_checks f hz ha hs hm domain.sign hneg h1 hn hi
++      hpos hbound context domain rfl _
++
++end Hex.SignDet
+diff --git a/HexSignDetMathlib/NodeProducer.lean b/HexSignDetMathlib/NodeProducer.lean
+new file mode 100644
+index 000000000..b59ec5592
+--- /dev/null
++++ b/HexSignDetMathlib/NodeProducer.lean
+@@ -0,0 +1,168 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.RationalSolve
++public import HexSignDetMathlib.Basis
++
++public section
++
++namespace Hex.SignDet
++
++/-- Successful rational solving preserves the input orders and returns an
++accepted finite system, regardless of the supplied moment values. -/
++theorem solveSystem_spec {r arity : Nat} {rows : Vector (List Nat) r}
++    {columns : Vector (List Int) r} {values : Vector Int r} {s : System r}
++    (h : solveSystem arity rows columns values = .ok s) :
++    s.rows = rows ∧ s.columns = columns ∧ s.values = values ∧ s.check arity = true := by
++  unfold solveSystem at h
++  cases hi : Matrix.inverse? (Matrix.ofFn fun (i j : Fin r) =>
++      (entry rows[i] columns[j] : Rat)) with
++  | none => simp only [hi, bind, Except.bind] at h; contradiction
++  | some inv =>
++    simp only [hi, bind, Except.bind] at h
++    split at h
++    · contradiction
++    · split at h
++      · contradiction
++      · split at h
++        · rename_i hc
++          cases h
++          exact ⟨rfl, rfl, rfl, hc⟩
++        · contradiction
++
++/-- The scaled solver retains exactly the supplied matrix and denominator,
++and every successful return passes the finite system checker. -/
++theorem solveScaled_spec {r arity : Nat} {rows : Vector (List Nat) r}
++    {columns : Vector (List Int) r} {values : Vector Int r}
++    {denominator : Int} {inverse : Matrix Int r r} {s : System r}
++    (h : solveScaled arity rows columns values denominator inverse = .ok s) :
++    s.rows = rows ∧ s.columns = columns ∧ s.values = values ∧
++      s.denominator = denominator ∧ s.inverse = inverse ∧ s.check arity = true := by
++  unfold solveScaled at h
++  dsimp only at h
++  split at h
++  · contradiction
++  · split at h
++    · contradiction
++    · split at h
++      · contradiction
++      · split at h
++        · rename_i hc
++          cases h
++          exact ⟨rfl, rfl, rfl, rfl, rfl, hc⟩
++        · contradiction
++
++/-- Transporting a vector dimension preserves its ordered entries. -/
++theorem _root_.Vector.toList_transport {α : Type*} {m n : Nat} (h : m = n) (v : Vector α n) :
++    (h ▸ v : Vector α m).toList = v.toList := by
++  cases h
++  rfl
++
++variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
++  [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E]
++
++/-- Every returned node binds the supplied domain and query list, has a
++checked integer system, and retains the actual rank producer's certificate. -/
++theorem buildNode_spec (context : Ctx) (domain : Sturm.PreparedDomain E)
++    (qs : List (DensePoly E)) (rows : List (List Nat)) (columns : List (List Int))
++    (reduced : Bool) (inverse : Option (Int × Matrix Int rows.length rows.length))
++    (preparation : Option (QueryReduction E)) {n : Node E Ctx}
++    (h : buildNode context domain qs rows columns reduced inverse preparation = .ok n) :
++    n.context = context ∧ n.head = domain.head ∧ n.lower = domain.lower ∧
++      n.upper = domain.upper ∧ n.queries = qs ∧ n.system.rows.toList = rows ∧
++      n.system.columns.toList = columns ∧ n.system.check qs.length = true ∧
++      n.basis = Matrix.rankCert n.system.retainedMatrix := by
++  unfold buildNode at h
++  dsimp only at h
++  split at h
++  · rename_i hdim
++    split at h
++    · contradiction
++    · split at h
++      · contradiction
++      · split at h
++        · contradiction
++        · rename_i s hs
++          cases h
++          have hf : s.rows.toList = rows ∧ s.columns.toList = columns ∧
++              s.check qs.length = true := by
++            cases inverse with
++            | none =>
++              have hh := solveSystem_spec hs
++              refine ⟨?_, ?_, hh.2.2.2⟩
++              · rw [hh.1]; simp
++              · rw [hh.2.1]
++                simpa using Vector.toList_transport hdim (columns.toArray.toVector : Vector _ columns.length)
++            | some pair =>
++              have hh := solveScaled_spec hs
++              refine ⟨?_, ?_, hh.2.2.2.2.2⟩
++              · rw [hh.1]; simp
++              · rw [hh.2.1]
++                simpa using Vector.toList_transport hdim (columns.toArray.toVector : Vector _ columns.length)
++          exact ⟨rfl, rfl, rfl, rfl, rfl, hf.1, hf.2.1, hf.2.2, rfl⟩
++  · contradiction
++
++/-- Each returned moment is the prepared query of the actual indexed operand;
++the solver uses its literal value. Reductions are tied to the same row. -/
++theorem buildNode_evidence (context : Ctx) (domain : Sturm.PreparedDomain E)
++    (qs : List (DensePoly E)) (rows : List (List Nat)) (columns : List (List Int))
++    (reduced : Bool) (inverse : Option (Int × Matrix Int rows.length rows.length))
++    (preparation : Option (QueryReduction E)) {n : Node E Ctx}
++    (h : buildNode context domain qs rows columns reduced inverse preparation = .ok n) :
++    n.preparation = nodePreparation reduced domain qs preparation ∧
++    ∀ i : Fin n.size,
++      n.reductions[i] = nodeReduction reduced domain
++        (QueryReduction.operands qs n.preparation) n.system.rows[i] ∧
++      n.moments[i] = Sturm.certifyPrepared context domain
++        (queryPoly (QueryReduction.operands qs n.preparation) n.system.rows[i] n.reductions[i]) ∧
++      n.system.values[i] = n.moments[i].value := by
++  unfold buildNode at h
++  dsimp only at h
++  split at h
++  · split at h
++    · contradiction
++    · split at h
++      · contradiction
++      · split at h
++        · contradiction
++        · rename_i s hs
++          cases h
++          cases inverse with
++          | none =>
++            have hh := solveSystem_spec hs
++            refine ⟨rfl, fun i => ?_⟩
++            simp only [hh.1, hh.2.2.1, Fin.getElem_fin, Vector.getElem_map, Vector.getElem_ofFn]
++            trivial
++          | some pair =>
++            have hh := solveScaled_spec hs
++            refine ⟨rfl, fun i => ?_⟩
++            simp only [hh.1, hh.2.2.1, Fin.getElem_fin, Vector.getElem_map, Vector.getElem_ofFn]
++            trivial
++  · contradiction
++
++omit [Neg E] [Inv E] in
++/-- The actual retained rank certificate discharges every matrix guard in
++local replay. Polynomial query and preprocessing evidence remain explicit. -/
++theorem Node.check_of_basis [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
++    (p : DensePoly E) (lo hi : Endpoint E) (qs : List (DensePoly E)) (n : Node E Ctx)
++    (hb : n.context = context ∧ n.head = p ∧ n.lower = lo ∧ n.upper = hi ∧ n.queries = qs)
++    (hs : n.system.check qs.length = true)
++    (hr : n.basis = Matrix.rankCert n.system.retainedMatrix)
++    (hp : (match n.preparation with | none => true | some r => r.check sign p qs) = true)
++    (hm : ∀ i : Fin n.size, checkMoment sign context p lo hi
++      (QueryReduction.operands qs n.preparation) n.system.rows[i] n.system.values[i]
++      n.moments[i] n.reductions[i] = true) :
++    n.check sign context p lo hi qs = true := by
++  simp only [Node.check, Bool.and_eq_true, decide_eq_true_eq]
++  refine ⟨⟨⟨⟨hb, hs⟩, ?_⟩, ?_⟩,
++    ⟨⟨⟨?_, ?_⟩, hp⟩, List.all_eq_true.mpr (fun i _ => hm i)⟩⟩
++  · rw [hr]; exact n.system.basis_rank hs
++  · rw [hr]; exact n.system.basis_columns hs
++  · rw [hr]; exact n.system.basis_checks
++  · rw [hr]; exact n.system.basis_inverse
++
++end Hex.SignDet
+diff --git a/HexSignDetMathlib/NodeSolve.lean b/HexSignDetMathlib/NodeSolve.lean
+new file mode 100644
+index 000000000..5b6d0ae09
+--- /dev/null
++++ b/HexSignDetMathlib/NodeSolve.lean
+@@ -0,0 +1,148 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.NodeProducer
++public import HexSignDetMathlib.Solve
++public import HexSignDetMathlib.ParentSystem
++
++public section
++
++namespace Hex.SignDet
++
++variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
++  [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E]
++
++/-- A checked candidate system with the actual queried moment values makes
++node construction succeed. The finite system can be supplied by the complete
++leaf or child-product constructions; this lemma does not infer support or
++query semantics from its matrix equations. -/
++theorem buildNode_complete (context : Ctx) (domain : Sturm.PreparedDomain E)
++    (qs : List (DensePoly E)) (rows : List (List Nat)) (columns : List (List Int))
++    (reduced : Bool) (inverse : Option (Int × Matrix Int rows.length rows.length))
++    (preparation : Option (QueryReduction E)) (s : System rows.length)
++    (hrows : s.rows.toList = rows) (hcols : s.columns.toList = columns)
++    (hvalid : s.check qs.length = true)
++    (hinv : ∀ d a, inverse = some (d, a) → d = s.denominator ∧ a = s.inverse)
++    (hvalues :
++      let prep := nodePreparation reduced domain qs preparation
++      let operands := QueryReduction.operands qs prep
++      ∀ i : Fin rows.length,
++        (Sturm.certifyPrepared context domain (queryPoly operands s.rows[i]
++          (nodeReduction reduced domain operands s.rows[i]))).value =
++          s.values[i]) :
++    ∃ n, buildNode context domain qs rows columns reduced inverse preparation = .ok n ∧
++      n.system.counts.toList = s.counts.toList := by
++  have hdim : rows.length = columns.length := by
++    simpa using congrArg List.length hcols
++  have hes : rows.toArray.toVector = s.rows := by
++    apply Vector.toList_inj.mp
++    simpa using hrows.symm
++  have hcs : (hdim ▸ columns.toArray.toVector : Vector (List Int) rows.length) = s.columns := by
++    apply Vector.toList_inj.mp
++    exact (Vector.toList_transport hdim (columns.toArray.toVector : Vector _ columns.length)).trans
++      (by simpa using hcols.symm)
++  have hh := hvalid
++  simp only [System.check, Bool.and_eq_true] at hh
++  have hr : rows.all (fun e => decide (e.length = qs.length) && e.all (· ≤ 2)) = true := by
++    rw [← hrows]
++    exact hh.1.1.1.1.1
++  have hc : columns.all (fun c => decide (c.length = qs.length) &&
++      c.all (fun x => decide (x = -1 ∨ x = 0 ∨ x = 1))) = true := by
++    rw [← hcols]
++    exact hh.1.1.1.1.2
++  have hd : decide columns.Nodup = true := by
++    rw [← hcols]
++    exact hh.1.1.1.2
++  let prep := nodePreparation reduced domain qs preparation
++  let operands := QueryReduction.operands qs prep
++  let reductions := s.rows.map (nodeReduction reduced domain operands)
++  let certs : Vector (TarskiCertificate E E Ctx) rows.length := Vector.ofFn fun i =>
++    Sturm.certifyPrepared context domain (queryPoly operands s.rows[i] reductions[i])
++  have hv : certs.map (fun c => c.value) = s.values := by
++    apply Vector.ext
++    intro i hi
++    simpa only [certs, reductions, Fin.getElem_fin, Vector.getElem_map, Vector.getElem_ofFn] using
++      hvalues ⟨i, hi⟩
++  have solved : ∃ u, (match inverse with
++      | none => solveSystem qs.length s.rows s.columns s.values
++      | some (d, a) => solveScaled qs.length s.rows s.columns s.values d a) = .ok u ∧
++      u.counts = s.counts := by
++    cases inverse with
++    | none =>
++      obtain ⟨u, hu, _, _, _, hcounts, _⟩ := solveSystem_complete s hvalid
++      exact ⟨u, hu, hcounts⟩
++    | some pair =>
++      obtain ⟨d, a⟩ := pair
++      obtain ⟨hden, hadj⟩ := hinv d a rfl
++      exact ⟨s, by simpa only [hden, hadj] using solveScaled_eq s hvalid, rfl⟩
++  obtain ⟨u, hu, hcounts⟩ := solved
++  simp only [buildNode, hdim, ↓reduceDIte, hr, hc, hd, Bool.not_true,
++    Bool.false_or, Bool.false_eq_true, ↓reduceIte, hes, hcs]
++  change ∃ n : Node E Ctx, (match (match inverse with
++      | none => solveSystem qs.length s.rows s.columns (certs.map fun (c : TarskiCertificate E E Ctx) => c.value)
++      | some (d, a) => solveScaled qs.length s.rows s.columns (certs.map fun (c : TarskiCertificate E E Ctx) => c.value) d a) with
++      | .error err => Except.error err
++      | .ok u => Except.ok ({
++          context := context
++          head := domain.head
++          lower := domain.lower
++          upper := domain.upper
++          queries := qs
++          size := rows.length
++          system := u
++          moments := certs
++          reductions := reductions
++          preparation := prep
++          basis := Matrix.rankCert u.retainedMatrix} : Node E Ctx)) = Except.ok n ∧
++    n.system.counts.toList = s.counts.toList
++  rw [hv, hu]
++  exact ⟨_, rfl, congrArg Vector.toList hcounts⟩
++
++omit [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E] in
++/-- The finite child-product system has exactly the dimension and transported
++inverse supplied by `buildTreeFrom` to `buildNode_complete`. No permutation,
++new inverse search or root-sum premise is needed for this adapter. -/
++theorem Node.parent_system (l r : Node E Ctx) {a b : Nat}
++    (hl : l.system.check a = true) (hr : r.system.check b = true)
++    (hbl : l.basis = Matrix.rankCert l.system.retainedMatrix)
++    (hbr : r.basis = Matrix.rankCert r.system.retainedMatrix)
++    (xs : List (List Int))
++    (cl : ∀ x ∈ xs, x.take a ∈ l.system.support)
++    (cr : ∀ x ∈ xs, x.drop a ∈ r.system.support) :
++    ∃ s : System (product l.rows r.rows).length,
++      s.rows.toList = product l.rows r.rows ∧
++      s.columns.toList = product l.system.support r.system.support ∧
++      s.check (a + b) = true ∧
++      s.denominator = l.basis.denom * r.basis.denom ∧
++      s.inverse = parentInverse l r ∧
++      s.counts.toList = (counts (productVector l.basisCols r.basisCols) xs).toList ∧
++      s.values.toList = (SignDet.moments (productVector l.basisRows r.basisRows) xs).toList := by
++  have transport {m n : Nat} (h : m = n) (s : System m) (arity : Nat) :
++      (h ▸ s : System n).rows.toList = s.rows.toList ∧
++      (h ▸ s : System n).columns.toList = s.columns.toList ∧
++      (h ▸ s : System n).check arity = s.check arity ∧
++      (h ▸ s : System n).denominator = s.denominator ∧
++      (h ▸ s : System n).inverse = (h ▸ s.inverse : Matrix Int n n) ∧
++      (h ▸ s : System n).counts.toList = s.counts.toList ∧
++      (h ▸ s : System n).values.toList = s.values.toList := by
++    cases h
++    exact ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
++  have hd : (product l.rows r.rows).length = l.basis.rank * r.basis.rank := by
++    rw [length_product]
++    simp [Node.rows]
++  let s := System.mk (productVector l.basisRows r.basisRows)
++    (productVector l.basisCols r.basisCols)
++    (counts (productVector l.basisCols r.basisCols) xs)
++    (SignDet.moments (productVector l.basisRows r.basisRows) xs)
++    (tensor l.basis.adj r.basis.adj) (l.basis.denom * r.basis.denom)
++  obtain ⟨hrows, hcols, hcheck, hden, hinv, hcounts, hvalues⟩ := transport hd.symm s (a + b)
++  obtain ⟨rowsEq, colsEq, _⟩ := l.product_inverse r hl hr hbl hbr
++  exact ⟨hd.symm ▸ s, hrows.trans rowsEq, hcols.trans colsEq,
++    hcheck.trans (l.product_system r hl hr hbl hbr xs cl cr),
++    hden, hinv, hcounts, hvalues⟩
++
++end Hex.SignDet
+diff --git a/HexSignDetMathlib/TreeChecks.lean b/HexSignDetMathlib/TreeChecks.lean
+new file mode 100644
+index 000000000..a2747811b
+--- /dev/null
++++ b/HexSignDetMathlib/TreeChecks.lean
+@@ -0,0 +1,121 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.NodeChecks
++
++public section
++
++namespace Hex.SignDet
++
++variable {E : Type u} {K : Type v} {Ctx : Type w} [Zero E] [DecidableEq E]
++variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E] [DecidableEq Ctx]
++variable [Field K] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K]
++variable (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0) (h1 : f (1 : E) = 1)
++variable (ha : ∀ a b, f (a + b) = f a + f b)
++variable (hs : ∀ a b, f (a - b) = f a - f b)
++variable (hm : ∀ a b, f (a * b) = f a * f b)
++variable (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
++variable (sign : E → Int) (hpos : ∀ a, sign a = 1 ↔ 0 < f a)
++variable (hneg : ∀ a, sign a < 0 ↔ f a < 0)
++
++include hz h1 ha hs hm hn hi hpos hneg in
++/-- Every successful recursive construction passes the independent tree
++checker, including child evidence and exact Cartesian support bindings.
++This is algebraic producer acceptance, not semantic root-sum soundness. -/
++theorem buildTreeFrom_checks (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
++    (context : Ctx) (domain : Sturm.PreparedDomain E) (hsign : domain.sign = sign)
++    (qs : List (DensePoly E)) (reduced : Bool) (preparation : Option (QueryReduction E))
++    {t : Replay E Ctx}
++    (hp : (match preparation with | none => true | some r => r.check sign domain.head qs) = true)
++    (h : buildTreeFrom context domain qs reduced preparation = .ok t) :
++    t.check sign context domain.head domain.lower domain.upper qs = true := by
++  rw [buildTreeFrom] at h
++  split at h
++  · rename_i hsmall
++    simp only [bind, Except.bind] at h
++    split at h
++    · contradiction
++    · rename_i n hnode
++      cases h
++      have hh := buildNode_spec context domain qs (leafRows qs.length) (leafColumns qs.length)
++        reduced none preparation hnode
++      simp only [Replay.check, Bool.and_eq_true, decide_eq_true_eq]
++      exact ⟨⟨⟨hsmall, hh.2.2.2.2.2.2.1⟩, hh.2.2.2.2.2.1⟩,
++        buildNode_checks f hz h1 ha hs hm hn hi sign hpos hneg hbound
++          context domain hsign qs _ _ reduced none preparation hp hnode⟩
++  · rename_i hlarge
++    simp only [bind, Except.bind] at h
++    split at h
++    · contradiction
++    · rename_i l hl
++      split at h
++      · contradiction
++      · rename_i r hr
++        split at h
++        · contradiction
++        · rename_i n hnode
++          cases h
++          have hpl : (match preparation.map (fun r => r.slice 0 (qs.length / 2)) with
++              | none => true | some r => r.check sign domain.head (qs.take (qs.length / 2))) = true := by
++            cases preparation with
++            | none => rfl
++            | some prep => simpa using QueryReduction.slice_checks hp 0 (qs.length / 2)
++          have hpr : (match preparation.map
++                (fun r => r.slice (qs.length / 2) (qs.length - qs.length / 2)) with
++              | none => true | some r => r.check sign domain.head (qs.drop (qs.length / 2))) = true := by
++            cases preparation with
++            | none => rfl
++            | some prep =>
++              simpa only [Option.map_some, ← List.length_drop, List.take_length] using
++                QueryReduction.slice_checks hp (qs.length / 2) (qs.length - qs.length / 2)
++          have hleft := buildTreeFrom_checks hbound
++            context domain hsign _ reduced _ hpl hl
++          have hright := buildTreeFrom_checks hbound
++            context domain hsign _ reduced _ hpr hr
++          have hh := buildNode_spec context domain qs _ _ reduced _ preparation hnode
++          simp only [Replay.check, Bool.and_eq_true, decide_eq_true_eq]
++          exact ⟨⟨⟨⟨⟨by omega, hleft⟩, hright⟩, hh.2.2.2.2.2.2.1⟩, hh.2.2.2.2.2.1⟩,
++            buildNode_checks f hz h1 ha hs hm hn hi sign hpos hneg hbound
++              context domain hsign qs _ _ reduced _ preparation hp hnode⟩
++termination_by qs.length
++decreasing_by
++  all_goals simp only [List.length_take, List.length_drop]; omega
++
++include hz h1 ha hs hm hn hi hpos hneg in
++/-- Top-level shared preprocessing supplies the recursive check's invariant. -/
++theorem buildTree_checks (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
++    (context : Ctx) (domain : Sturm.PreparedDomain E) (hsign : domain.sign = sign)
++    (qs : List (DensePoly E)) (reduced : Bool) {t : Replay E Ctx}
++    (h : buildTree context domain qs reduced = .ok t) :
++    t.check sign context domain.head domain.lower domain.upper qs = true := by
++  subst sign
++  unfold buildTree nodePreparation at h
++  apply buildTreeFrom_checks f hz h1 ha hs hm hn hi domain.sign hpos hneg hbound
++    context domain rfl qs reduced _ _ h
++  by_cases hu : useReduction reduced domain = true
++  · simp only [hu, ↓reduceIte]
++    apply QueryReduction.build_checks f hz h1 ha hs hm domain.sign hpos hn hi hneg
++    simp only [useReduction, Bool.and_eq_true, decide_eq_true_eq] at hu
++    exact hu.2
++  · simp [hu]
++
++include hz h1 ha hs hm hn hi hpos hneg in
++/-- The final replay guard cannot introduce a diagnostic failure after the
++actual tree producer has succeeded. The retained proof checks the same tree. -/
++theorem buildPrepared_eq (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
++    (context : Ctx) (domain : Sturm.PreparedDomain E) (hsign : domain.sign = sign)
++    (qs : List (DensePoly E)) (reduced : Bool) {t : Replay E Ctx}
++    (h : buildTree context domain qs reduced = .ok t) :
++    ∃ hc, buildPrepared context domain qs reduced = .ok ⟨t, hc⟩ := by
++  have hc := buildTree_checks f hz h1 ha hs hm hn hi sign hpos hneg hbound
++    context domain hsign qs reduced h
++  rw [← hsign] at hc
++  refine ⟨hc, ?_⟩
++  simp only [buildPrepared, h, bind, Except.bind, hc, ↓reduceDIte]
++  rfl
++
++end Hex.SignDet
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D1/Accept.lean b/bench/HexSignDetMathlib/ProofProbe/D1/Accept.lean
+new file mode 100644
+index 000000000..d6f2f28b0
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D1/Accept.lean
+@@ -0,0 +1,29 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D1.Accept
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := graph 1
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Fresh ordinary-kernel replay of the supplied graph expression. -/
++theorem checked : check 1 evidence = true := by
++  simp only [check, Dag.check, Dag.replay?, Dag.step, evidence, graph, entries,
++    Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
++    TarskiCertificate.check, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#print axioms checked
++
++end Hex.SignDetMathlib.ProofProbe.D1.Accept
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D1/BadLiteral.lean b/bench/HexSignDetMathlib/ProofProbe/D1/BadLiteral.lean
+new file mode 100644
+index 000000000..6214b68dc
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D1/BadLiteral.lean
+@@ -0,0 +1,17 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D1.BadLiteral
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := stale 1
++
++end Hex.SignDetMathlib.ProofProbe.D1.BadLiteral
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D1/Literal.lean b/bench/HexSignDetMathlib/ProofProbe/D1/Literal.lean
+new file mode 100644
+index 000000000..aab0b92d7
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D1/Literal.lean
+@@ -0,0 +1,17 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D1.Literal
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := graph 1
++
++end Hex.SignDetMathlib.ProofProbe.D1.Literal
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D1/Reject.lean b/bench/HexSignDetMathlib/ProofProbe/D1/Reject.lean
+new file mode 100644
+index 000000000..8786333f1
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D1/Reject.lean
+@@ -0,0 +1,29 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D1.Reject
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := stale 1
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Fresh ordinary-kernel replay of the supplied graph expression. -/
++theorem checked : check 1 evidence = false := by
++  simp only [check, Dag.check, Dag.replay?, Dag.step, evidence, stale, entries,
++    Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
++    TarskiCertificate.check, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#print axioms checked
++
++end Hex.SignDetMathlib.ProofProbe.D1.Reject
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D3/Accept.lean b/bench/HexSignDetMathlib/ProofProbe/D3/Accept.lean
+new file mode 100644
+index 000000000..f70ceb5e8
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D3/Accept.lean
+@@ -0,0 +1,29 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D3.Accept
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := graph 3
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Fresh ordinary-kernel replay of the supplied graph expression. -/
++theorem checked : check 3 evidence = true := by
++  simp only [check, Dag.check, Dag.replay?, Dag.step, evidence, graph, entries,
++    Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
++    TarskiCertificate.check, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#print axioms checked
++
++end Hex.SignDetMathlib.ProofProbe.D3.Accept
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D3/BadLiteral.lean b/bench/HexSignDetMathlib/ProofProbe/D3/BadLiteral.lean
+new file mode 100644
+index 000000000..5597c1305
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D3/BadLiteral.lean
+@@ -0,0 +1,17 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D3.BadLiteral
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := stale 3
++
++end Hex.SignDetMathlib.ProofProbe.D3.BadLiteral
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D3/Literal.lean b/bench/HexSignDetMathlib/ProofProbe/D3/Literal.lean
+new file mode 100644
+index 000000000..ef8059bed
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D3/Literal.lean
+@@ -0,0 +1,17 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D3.Literal
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := graph 3
++
++end Hex.SignDetMathlib.ProofProbe.D3.Literal
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D3/Reject.lean b/bench/HexSignDetMathlib/ProofProbe/D3/Reject.lean
+new file mode 100644
+index 000000000..9dc21420a
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D3/Reject.lean
+@@ -0,0 +1,29 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D3.Reject
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := stale 3
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Fresh ordinary-kernel replay of the supplied graph expression. -/
++theorem checked : check 3 evidence = false := by
++  simp only [check, Dag.check, Dag.replay?, Dag.step, evidence, stale, entries,
++    Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
++    TarskiCertificate.check, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#print axioms checked
++
++end Hex.SignDetMathlib.ProofProbe.D3.Reject
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D5/Accept.lean b/bench/HexSignDetMathlib/ProofProbe/D5/Accept.lean
+new file mode 100644
+index 000000000..03d91c8fa
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D5/Accept.lean
+@@ -0,0 +1,29 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D5.Accept
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := graph 5
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Fresh ordinary-kernel replay of the supplied graph expression. -/
++theorem checked : check 5 evidence = true := by
++  simp only [check, Dag.check, Dag.replay?, Dag.step, evidence, graph, entries,
++    Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
++    TarskiCertificate.check, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#print axioms checked
++
++end Hex.SignDetMathlib.ProofProbe.D5.Accept
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D5/BadLiteral.lean b/bench/HexSignDetMathlib/ProofProbe/D5/BadLiteral.lean
+new file mode 100644
+index 000000000..62d055219
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D5/BadLiteral.lean
+@@ -0,0 +1,17 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D5.BadLiteral
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := stale 5
++
++end Hex.SignDetMathlib.ProofProbe.D5.BadLiteral
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D5/Literal.lean b/bench/HexSignDetMathlib/ProofProbe/D5/Literal.lean
+new file mode 100644
+index 000000000..c2c9bf1e4
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D5/Literal.lean
+@@ -0,0 +1,17 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D5.Literal
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := graph 5
++
++end Hex.SignDetMathlib.ProofProbe.D5.Literal
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D5/Reject.lean b/bench/HexSignDetMathlib/ProofProbe/D5/Reject.lean
+new file mode 100644
+index 000000000..020703aad
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D5/Reject.lean
+@@ -0,0 +1,29 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D5.Reject
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := stale 5
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Fresh ordinary-kernel replay of the supplied graph expression. -/
++theorem checked : check 5 evidence = false := by
++  simp only [check, Dag.check, Dag.replay?, Dag.step, evidence, stale, entries,
++    Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
++    TarskiCertificate.check, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#print axioms checked
++
++end Hex.SignDetMathlib.ProofProbe.D5.Reject
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D7/Accept.lean b/bench/HexSignDetMathlib/ProofProbe/D7/Accept.lean
+new file mode 100644
+index 000000000..8625af664
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D7/Accept.lean
+@@ -0,0 +1,29 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D7.Accept
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := graph 7
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Fresh ordinary-kernel replay of the supplied graph expression. -/
++theorem checked : check 7 evidence = true := by
++  simp only [check, Dag.check, Dag.replay?, Dag.step, evidence, graph, entries,
++    Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
++    TarskiCertificate.check, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#print axioms checked
++
++end Hex.SignDetMathlib.ProofProbe.D7.Accept
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D7/BadLiteral.lean b/bench/HexSignDetMathlib/ProofProbe/D7/BadLiteral.lean
+new file mode 100644
+index 000000000..e6c64c6c7
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D7/BadLiteral.lean
+@@ -0,0 +1,17 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D7.BadLiteral
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := stale 7
++
++end Hex.SignDetMathlib.ProofProbe.D7.BadLiteral
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D7/Literal.lean b/bench/HexSignDetMathlib/ProofProbe/D7/Literal.lean
+new file mode 100644
+index 000000000..8f75bd2ae
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D7/Literal.lean
+@@ -0,0 +1,17 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D7.Literal
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := graph 7
++
++end Hex.SignDetMathlib.ProofProbe.D7.Literal
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D7/Reject.lean b/bench/HexSignDetMathlib/ProofProbe/D7/Reject.lean
+new file mode 100644
+index 000000000..6b6120135
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D7/Reject.lean
+@@ -0,0 +1,29 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D7.Reject
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := stale 7
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Fresh ordinary-kernel replay of the supplied graph expression. -/
++theorem checked : check 7 evidence = false := by
++  simp only [check, Dag.check, Dag.replay?, Dag.step, evidence, stale, entries,
++    Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
++    TarskiCertificate.check, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#print axioms checked
++
++end Hex.SignDetMathlib.ProofProbe.D7.Reject
+diff --git a/bench/HexSignDetMathlib/ProofProbe/Inputs.lean b/bench/HexSignDetMathlib/ProofProbe/Inputs.lean
+new file mode 100644
+index 000000000..51291a1b9
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/Inputs.lean
+@@ -0,0 +1,45 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDet.Conformance
++public import HexSignDetMathlib
++public meta import HexSignDet.Dag
++public meta import HexSignDet.Conformance
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.Inputs
++open Hex.SignDet Hex.SignDet.Conformance
++
++/-- A schematic literal parent: the constant queries have their unique
++positive sign on the root in (0,2). No certificate producer is invoked. -/
++@[expose] def parent (arity : Nat) : Node Rat Nat :=
++  {singletonNode with
++    queries := List.replicate arity (DensePoly.C 2)
++    system := {literalSystem with
++      rows := #v[List.replicate arity 0]
++      columns := #v[List.replicate arity 1]
++      counts := #v[1], values := #v[1]}}
++
++@[expose] def entries : Nat → Array (Dag.Entry Rat Nat)
++  | 0 => #[⟨derivativeNode, none⟩]
++  | depth + 1 => (entries depth).push ⟨parent (2 ^ (depth + 1)), some (depth, depth)⟩
++
++/-- Both child references share the preceding accepted entry. This is a
++same-level proof graph, not a graph of nested coefficient-sign certificates. -/
++@[expose] def graph (depth : Nat) : Dag Rat Nat := ⟨entries depth, depth⟩
++
++@[expose] def stale : Nat → Dag Rat Nat
++  | 0 => ⟨#[⟨{derivativeNode with context := 8}, none⟩], 0⟩
++  | depth + 1 => ⟨(entries depth).push
++      ⟨{parent (2 ^ (depth + 1)) with context := 8}, some (depth, depth)⟩, depth + 1⟩
++
++@[expose] def check (depth : Nat) (evidence : Dag Rat Nat) : Bool :=
++  evidence.check Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper
++    (List.replicate (2 ^ depth) (DensePoly.C 2))
++
++end Hex.SignDetMathlib.ProofProbe.Inputs
+diff --git a/conformance/HexSignDet/Conformance.lean b/conformance/HexSignDet/Conformance.lean
+index b47b6d5f1..f86d6ce22 100644
+--- a/conformance/HexSignDet/Conformance.lean
++++ b/conformance/HexSignDet/Conformance.lean
+@@ -868,0 +869,52 @@ theorem derivative_kernel :
++/-- Literal first-derivative query: 4X² = 4(X²-1) + 4. -/
++@[expose] def firstQuery : TarskiCertificate Rat Rat Nat :=
++  {singletonQuery with
++    queryPoly := 2 * Sturm.Fixtures.x
++    remainders := {
++      chain := #[Sturm.Fixtures.p, 1]
++      degrees := #[2, 0]
++      initial := ⟨1, 4, 4⟩
++      steps := #[]
++      terminal := some (1, Sturm.Fixtures.p)}
++    lowerSigns := #[-1, 1]
++    upperSigns := #[1, 1]}
++
++/-- Literal square query: 8X³ = 8X(X²-1) + 8X. -/
++@[expose] def firstSquare : TarskiCertificate Rat Rat Nat :=
++  {singletonQuery with
++    queryPoly := 4 * Sturm.Fixtures.x * Sturm.Fixtures.x
++    remainders := {Sturm.Fixtures.literalChain with initial := ⟨1, 8 * Sturm.Fixtures.x, 8⟩}}
++
++@[expose] def firstNode : Node Rat Nat :=
++  {selectedNode with
++    queries := [2 * Sturm.Fixtures.x]
++    moments := #v[singletonQuery, firstQuery, firstSquare]}
++
++@[expose] def fullNode : Node Rat Nat :=
++  {singletonNode with
++    queries := [2 * Sturm.Fixtures.x, DensePoly.C 2]
++    system := {literalSystem with
++      rows := #v[[0, 0]], columns := #v[[1, 1]], counts := #v[1], values := #v[1]}}
++
++@[expose] def fullReplay : Replay Rat Nat :=
++  .split fullNode (.leaf firstNode) (.leaf derivativeNode)
++
++set_option maxRecDepth 32768 in
++/-- A full two-derivative tree replays in the ordinary kernel, including both
++leaf supports and the exact Cartesian parent. No producer is evaluated. -/
++theorem full_kernel : fullReplay.check Sturm.orderSign 7 singletonRaw.head
++    singletonRaw.lower singletonRaw.upper (singletonRaw.full []).queries = true := by
++  simp only [fullReplay, Replay.check, Node.check, checkMoment, queryPoly,
++    Sturm.check, TarskiCertificate.check, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++/-- Extract the unique full row using the shared literal replay proof. -/
++def sharedDescriptor : Descriptor Rat Nat Sturm.orderSign 7 :=
++  Descriptor.ofFullRow singletonRaw fullReplay (by decide +kernel) rfl full_kernel ([1, 1], 1)
++    (by rw [Replay.table_rows]; decide +kernel) rfl
++
++theorem shared_descriptor :
++    sharedDescriptor.raw.check Sturm.orderSign 7 sharedDescriptor.evidence = true :=
++  sharedDescriptor.accepted
++
+@@ -949,0 +1002,6 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
++/-- info: 'Hex.SignDet.Conformance.full_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms full_kernel
++/-- info: 'Hex.SignDet.Conformance.shared_descriptor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms shared_descriptor
+@@ -961,0 +1020,9 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
++/-- info: 'Hex.SignDet.Descriptor.rootsFromTable_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms Descriptor.rootsFromTable_eq
++/-- info: 'Hex.SignDet.Descriptor.rootsFromTable_perm' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms Descriptor.rootsFromTable_perm
++/-- info: 'Hex.SignDet.Descriptor.rootsFromTable_sorted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms Descriptor.rootsFromTable_sorted
+@@ -990,0 +1058,42 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
++/-- info: 'Hex.SignDet.Descriptor.buildRoots_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms Descriptor.buildRoots_spec
++/-- info: 'Hex.SignDet.Descriptor.buildRoots_perm' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms Descriptor.buildRoots_perm
++/-- info: 'Hex.SignDet.Descriptor.buildRoots_sorted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms Descriptor.buildRoots_sorted
++
++/-- info: 'Hex.SignDet.Descriptor.rootsFrom_raw' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms Descriptor.rootsFrom_raw
++/-- info: 'Hex.SignDet.Descriptor.buildRoots_raw' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms Descriptor.buildRoots_raw
++/-- info: 'Hex.SignDet.Descriptor.buildRoots_constant' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms Descriptor.buildRoots_constant
++
++/-- info: 'Hex.SignDet.Thom.compareFrom_cons_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms Thom.compareFrom_cons_lt
++/-- info: 'Hex.SignDet.Thom.compareFrom_trans' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms Thom.compareFrom_trans
++/-- info: 'Hex.SignDet.Thom.compareFrom_swap' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms Thom.compareFrom_swap
++/-- info: 'Hex.SignDet.Thom.compareSigns_trans' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms Thom.compareSigns_trans
++/-- info: 'Hex.SignDet.Thom.compareSigns_swap' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms Thom.compareSigns_swap
++/-- info: 'Hex.SignDet.Descriptor.fullOrder_trans' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms Descriptor.fullOrder_trans
++/-- info: 'Hex.SignDet.Descriptor.fullOrder_reverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms Descriptor.fullOrder_reverse
++
+diff --git a/lakefile.lean b/lakefile.lean
+index 5ff753bdb..83c4b66e9 100644
+--- a/lakefile.lean
++++ b/lakefile.lean
+@@ -1008 +1008 @@ lean_lib HexConformance where
+-    ++ #[`HexSignDet.Conformance, `HexSignDetMathlib.Conformance].map Glob.one
++    ++ #[`HexSignDet.Conformance, `HexSignDet.DagConformance, `HexSignDet.Infinitesimal, `HexSignDetMathlib.Conformance].map Glob.one
+@@ -1352,0 +1353,4 @@ lean_exe hexsigndet_emit_fixtures where
++lean_exe hexsigndet_emit_infinitesimal where
++  srcDir := "conformance"
++  root := `HexSignDet.EmitInfinitesimal
++
+@@ -1602,0 +1607,12 @@ lean_exe hexgramschmidt_bench where
++lean_exe hexsigndet_bench where
++  srcDir := "bench"
++  root := `HexSignDet.Bench
++
++lean_lib HexSignDetMathlibProofProbe where
++  srcDir := "bench"
++  globs := #[.submodules `HexSignDetMathlib.ProofProbe]
++
++lean_lib HexSignDetBenchSupport where
++  srcDir := "bench"
++  globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases]
++
+diff --git a/libraries.yml b/libraries.yml
+index bf64c5c09..5e0ca1b0d 100644
+--- a/libraries.yml
++++ b/libraries.yml
+@@ -1585,0 +1586 @@ libraries:
++    proof_probes: [bench/HexSignDetMathlib/ProofProbe]
+diff --git a/reports/sign-det-proof-model.md b/reports/sign-det-proof-model.md
+new file mode 100644
+index 000000000..96b14c33e
+--- /dev/null
++++ b/reports/sign-det-proof-model.md
+@@ -0,0 +1,43 @@
++# Same-level graph kernel replay
++
++The build-only probes under `bench/HexSignDetMathlib/ProofProbe` cover accepted
++and stale-context graphs at depths 1, 3, 5 and 7. Their query arities are 2,
++8, 32 and 128. The root head is X²−1 on (0,2), all queries are the constant
++2, and each parent has one candidate sign word. Both child edges refer to
++the preceding node. This gives depth+1 graph entries and twice-depth edges.
++The rejection fixture changes only the final node's context, after a valid
++prefix. It does not time a missing-root or empty-input shortcut.
++
++These are schematic literal certificates: their compact expressions use
++replication and arrays to express supplied rows, counts and witnesses.
++They invoke no prepared-domain, query, sign-table or rank producer. Each
++candidate module unfolds the actual graph/local/query checkers and closes
++its theorem with `decide +kernel`. It does not reuse an imported conformance
++acceptance theorem. The kernel therefore checks the literal data and its
++normalization. All eight accepted theorem declarations have exactly
++`propext`, `Classical.choice` and `Quot.sound` in their axiom inventories.
++
++Each replay module is paired with a separate fresh module declaring the
++identical certificate expression but no replay theorem. Accepted and rejected
++fixtures each have their own matching literal reference. Imported inputs
++and dependencies stay warm; only the measured module's artifacts are
++removed before `lake build +<module>:olean`. The shared fresh-module runner
++uses six rounds, rotating pair order and alternating adjacent arm order.
++Every completed pair and signed candidate-minus-reference delta is retained,
++together with source hashes, dirty-state checks, emitted artifact sizes,
++compiler output and axiom inspection. An automatically leased CPU is used
++without a host-idleness test. No null control or automatic rerun is required.
++
++The paired difference includes reduction of the compact certificate expression,
++proof elaboration and ordinary kernel checking. It is not pure compiled
++checker time and receives no LeanBench complexity verdict. Timeouts are
++operational safeguards; this suite declares no absolute performance budget.
++A runner `release_quality` flag establishes its provenance and complete
++samples, not full Phase-4 coverage or semantic correctness.
++
++This is one same-level graph family with constant coefficient/witness size
++and support one. It does not replace proof evidence for nested coefficient
++certificates, arbitrary root-sum soundness, increasing matrix/support or
++witness sizes, descriptor operations, or the final semantic theorems. Those
++remain separate requirements. The shared semantic bridge in #10389 and the
++separate Thom/BKR foundations are still needed for root-level conclusions.
+diff --git a/scripts/bench/sign_det_proofs.py b/scripts/bench/sign_det_proofs.py
+new file mode 100644
+index 000000000..1a4cf85d7
+--- /dev/null
++++ b/scripts/bench/sign_det_proofs.py
+@@ -0,0 +1,51 @@
++#!/usr/bin/env python3
++"""Matched fresh-module measurements of ordinary-kernel BKR graph replay.
++
++Literal and replay modules are rebuilt adjacently in six rotated rounds.
++Timeouts are operational; this suite declares no wall-time performance budget.
++"""
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[2]
++sys.path.insert(0, str(ROOT))
++from scripts.bench.fresh_module_sweep import ProbeModule, ProbePair, SweepSpec, run_cli
++from scripts.bench.structural_tactic_sweep import acquire_cpu
++
++AXIOMS = ("propext", "Classical.choice", "Quot.sound")
++PAIRS = tuple(
++    ProbePair(
++        name=f"depth-{depth}-{kind.lower()}",
++        reference=ProbeModule(f"HexSignDetMathlib.ProofProbe.D{depth}.{literal}"),
++        candidate=ProbeModule(f"HexSignDetMathlib.ProofProbe.D{depth}.{kind}", AXIOMS),
++        metadata={"family": "same-level-graph", "outcome": kind.lower(),
++                  "depth": depth, "query_arity": 2**depth,
++                  "graph_nodes": depth + 1, "graph_edges": 2*depth,
++                  "measurement_scope": "literal normalization plus ordinary-kernel replay",
++                  "semantic_root_soundness": "foundation gate remains open"})
++    for depth in (1, 3, 5, 7)
++    for kind, literal in (("Accept", "Literal"), ("Reject", "BadLiteral")))
++
++SPEC = SweepSpec(
++    description=__doc__ or "BKR graph proof probes", pairs=PAIRS,
++    probe_target="HexSignDetMathlibProofProbe",
++    schema="hex-sign-det-graph-proofs-v1",
++    measurement="paired-fresh-module-olean-wall",
++    output_stem="hex-sign-det-graph-proofs",
++    required_samples=6, retain_compiler_output=True,
++    extra_sources=(Path("libraries.yml"), Path("SPEC/benchmarking.md"),
++                   Path("reports/sign-det-proof-model.md"),
++                   Path("scripts/bench/structural_tactic_sweep.py")))
++
++
++def main():
++    cpu, lease = acquire_cpu()
++    try:
++        return run_cli(SPEC, Path(__file__),
++                       [*sys.argv[1:], "--shared-host", "--cpu", str(cpu)])
++    finally:
++        lease.close()
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())

@@ -29,26 +29,37 @@ tag := "hex-graph-iso-intro"
 %%%
 
 `HexGraphIso` computes canonical forms and isomorphisms of finite simple
-undirected graphs with ordered vertex colours. The canonical labelling
-algorithm used in `HexGraphIso` is an exact translation of the
-[nauty](https://users.cecs.anu.edu.au/~bdm/nauty/) 2.9.3 algorithm into Lean. (We
-use conformance testing, rather than a theorem, to ensure they are
-identical, and prove our theorems about the Lean translation.) The exact
-algorithm, including the output-relevant choices absent from the published
-literature, is specified in {ref "nauty-algorithm"}[The `nauty` canonical
-labelling algorithm]. The
-public names (`canonicalize`, `canon`, `label`, `isIso`) run that
-translation directly, and the theorems reach them because a proven
-certificate checker is shown to accept the translation's answer on
-every input. Two coloured graphs are isomorphic exactly when their
-canonical forms are equal
-({name Hex.GraphIso.iso_iff_canon_eq}`iso_iff_canon_eq`),
-and the
-`graph_iso` tactic closes both positive and negative isomorphism goals with the
-kernel performing the decisive replay: positive goals through the
-checked transporter, negative goals through the root refinement code
-when it separates the two graphs and through a checked canonical-key
-certificate otherwise.
+undirected graphs with ordered vertex colours. It implements both dense
+and sparse [nauty](https://users.cecs.anu.edu.au/~bdm/nauty/) 2.9.3 in Lean.
+Conformance tests compare each implementation with its corresponding C
+engine, including the search decisions and canonical labels. The Lean
+theorems prove totality and correctness of the implementations themselves.
+{ref "nauty-algorithm"}[The `nauty` canonical labelling algorithm]
+describes the dense algorithm and the rules that differ in sparse nauty.
+
+Import `HexGraphIso` for both native graph representations, their
+operations and `graph_iso`. The computational library does not depend
+on Mathlib. Import `HexGraphIsoMathlib` for the correspondence theorems
+and tactic support on Mathlib graphs.
+
+The graph type selects the implementation. {name Hex.Graph}`Graph` and
+{name Hex.GraphIso.Colored}`Colored` use dense nauty.
+{name Hex.SparseGraph}`SparseGraph` and
+{name Hex.GraphIso.Sparse.Colored}`Sparse.Colored` use sparse nauty.
+Both provide canonicalization, isomorphism search and automorphism
+groups. There is no automatic switch based on graph size or density.
+The {ref "hex-graph-iso-sparse"}[sparse examples] show the native edge
+constructor and explain when an explicit conversion is useful.
+
+Within either implementation, two coloured graphs are isomorphic
+exactly when their canonical forms are equal, by
+{name Hex.GraphIso.iso_iff_canon_eq}`iso_iff_canon_eq` or
+{name Hex.GraphIso.Sparse.iso_iff_canon_eq}`Sparse.iso_iff_canon_eq`.
+The public canonicalization functions execute the search directly,
+without producing or replaying a certificate. The `graph_iso` tactic
+produces kernel proofs: positive goals use a checked transporter,
+and negative goals use a separating root refinement code or checked
+canonical-key certificates. The same syntax supports both graph types.
 
 Colours are the general input, but a graph with no colours to speak of
 should not have to acquire one. The same operations and the same
@@ -196,7 +207,8 @@ open HexGraphIsoChapterExample
 
 #guard (Graph.autos petersen).order = 120
 #guard (Graph.autos petersen).numOrbits = 1
-#guard (Graph.autos petersen).orbits = #[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+#guard (Graph.autos petersen).orbits =
+  #[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 #guard ((Graph.autos petersen).gens.map
   fun p => (List.finRange 10).map fun i => (p.get i).val) =
     [[0, 1, 2, 7, 5, 4, 6, 3, 9, 8],
@@ -210,7 +222,8 @@ The list is data, but membership is a theorem: every permutation
 check the isomorphism surface runs.
 
 ```lean
-example (p : Perm 10) (h : p ∈ (Graph.autos petersen).gens) :
+example (p : Perm 10)
+    (h : p ∈ (Graph.autos petersen).gens) :
     Graph.IsIso petersen petersen p :=
   Graph.autos_isIso h
 
@@ -226,6 +239,216 @@ also proves that the reported orbit count and order are the cardinalities
 of the orbit quotient and the full automorphism group, respectively.
 Here `order = 120` is the group order. Conformance independently compares
 these values against nauty.
+
+# Sparse graphs
+%%%
+tag := "hex-graph-iso-sparse"
+%%%
+
+A graph given by a short edge list need not allocate an adjacency
+matrix. {name Hex.SparseGraph}`SparseGraph n` stores `n + 1` offsets
+and a flat array containing the neighbours of every vertex, using
+`O(n + |E|)` storage. Each row is sorted, duplicate-free and loopless,
+and each undirected edge occurs in both directions.
+
+{name Hex.SparseGraph.ofEdges}`SparseGraph.ofEdges` accepts pairs of
+vertices in `Fin n`, removes duplicate edges and drops loops.
+For external data with natural-number endpoints, use
+{name Hex.SparseGraph.ofEdges?}`SparseGraph.ofEdges?`: it rejects
+loops and out-of-range endpoints instead. Both constructors normalize
+edge orientation and row order. General input requires sorting, so the
+storage bound is not a claim that every construction takes linear time.
+
+## Canonicalization and isomorphism
+%%%
+tag := "hex-graph-iso-sparse-canon"
+%%%
+
+Here is the Petersen graph built directly from its fifteen edges.
+Relabelling swaps vertices `0` and `9`; the pentagonal prism replaces
+the inner star by a pentagon. All three values remain sparse throughout
+construction and search.
+
+```lean
+namespace HexGraphIsoSparseExample
+
+def petersen : SparseGraph 10 := SparseGraph.ofEdges
+  [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
+   (5, 7), (7, 9), (6, 9), (6, 8), (5, 8),
+   (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
+
+def swapEnds : Perm 10 :=
+  ⟨#v[9, 1, 2, 3, 4, 5, 6, 7, 8, 0], by decide, by decide⟩
+
+def renamed : SparseGraph 10 := petersen.relabel swapEnds
+
+def prism : SparseGraph 10 := SparseGraph.ofEdges
+  [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
+   (5, 6), (6, 7), (7, 8), (8, 9), (5, 9),
+   (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
+
+#guard SparseGraph.ofEdges? 3 [(0, 1), (1, 0)] =
+  some (SparseGraph.ofEdges [(0, 1)])
+#guard (SparseGraph.ofEdges? 3 [(0, 3)]).isNone
+#guard (SparseGraph.ofEdges? 3 [(1, 1)]).isNone
+
+#guard petersen ≠ renamed
+#guard SparseGraph.canon petersen =
+  SparseGraph.canon renamed
+#guard (SparseGraph.findIso petersen renamed).isSome
+#guard !(SparseGraph.isIso petersen prism)
+
+example : SparseGraph.Isomorphic petersen renamed := by
+  graph_iso
+
+example : ¬ SparseGraph.Isomorphic petersen prism := by
+  graph_iso
+```
+
+{name Hex.SparseGraph.canonicalize}`SparseGraph.canonicalize` returns
+the form and its label together. A label maps each new vertex to its
+old vertex. In contrast, the permutation returned by
+{name Hex.SparseGraph.findIso}`SparseGraph.findIso` maps vertices of
+the first input to vertices of the second. These operations are total,
+including on the empty graph. A result of `none` from isomorphism search
+means that the graphs are not isomorphic, by
+{name Hex.SparseGraph.findIso_eq_none_iff}`SparseGraph.findIso_eq_none_iff`.
+
+```lean
+example (G : SparseGraph 10) :
+    G.relabel (SparseGraph.label G).perm =
+      SparseGraph.canon G :=
+  SparseGraph.relabel_label G
+
+example (G H : SparseGraph 10) :
+    SparseGraph.Isomorphic G H ↔
+      SparseGraph.canon G = SparseGraph.canon H :=
+  SparseGraph.iso_iff_canon_eq G H
+
+example : SparseGraph.Isomorphic
+    (SparseGraph.empty 0) (SparseGraph.empty 0) := by
+  graph_iso
+```
+
+## Ordered colours and automorphisms
+%%%
+tag := "hex-graph-iso-sparse-autos"
+%%%
+
+Sparse coloured graphs use the same
+{name Hex.GraphIso.Coloring}`Coloring` as dense graphs. Marking a
+Petersen edge or a non-edge imposes exactly the constraints from the
+{ref "hex-graph-iso-colours"}[ordered-colour example].
+
+```lean
+def edgeMarkA : Sparse.Colored 10 2 :=
+  ⟨petersen, HexGraphIsoChapterExample.markPair 0 1⟩
+def edgeMarkB : Sparse.Colored 10 2 :=
+  ⟨petersen, HexGraphIsoChapterExample.markPair 2 3⟩
+def nonedgeMark : Sparse.Colored 10 2 :=
+  ⟨petersen, HexGraphIsoChapterExample.markPair 0 2⟩
+
+example : Sparse.Isomorphic edgeMarkA edgeMarkB := by
+  graph_iso
+
+example : ¬ Sparse.Isomorphic edgeMarkA nonedgeMark := by
+  graph_iso
+
+#guard (SparseGraph.autos petersen).order = 120
+#guard (SparseGraph.autos petersen).numOrbits = 1
+#guard (Sparse.autos edgeMarkA).order = 8
+
+example (p : Perm 10)
+    (h : p ∈ (SparseGraph.autos petersen).gens) :
+    SparseGraph.IsIso petersen petersen p :=
+  SparseGraph.autos_isIso h
+
+end HexGraphIsoSparseExample
+```
+
+{name Hex.GraphIso.Sparse.autos}`Sparse.autos` and
+{name Hex.SparseGraph.autos}`SparseGraph.autos` return generators,
+orbit representatives, the orbit count and an exact natural-number
+group order from one traversal. The generators generate every
+automorphism, by
+{name Hex.GraphIso.Sparse.autos_complete}`Sparse.autos_complete`.
+Equality of two orbit entries is equivalent to the existence of an
+automorphism carrying one vertex to the other, by
+{name Hex.GraphIso.Sparse.autos_sameOrbit}`Sparse.autos_sameOrbit`.
+The order is the product of the stabilizer indices accumulated during
+the search. Its cardinality theorem and the corresponding Mathlib
+operations appear in the
+{ref "hex-graph-iso-mathlib-sparse"}[sparse Mathlib section].
+
+## Choosing and converting representations
+%%%
+tag := "hex-graph-iso-representations"
+%%%
+
+Native sparse input avoids storing or scanning an adjacency matrix.
+For an existing dense graph,
+{name Hex.Graph.toSparse}`Graph.toSparse` scans its `n²` entries.
+{name Hex.SparseGraph.toDense}`SparseGraph.toDense` allocates a dense
+matrix. Both conversions preserve adjacency and isomorphism. To compare
+graphs stored differently, convert one so that both use the same engine.
+The {ref "hex-graph-iso-performance"}[performance comparison] shows
+how the choice affects different graph families.
+
+Canonicalization itself need not commute with conversion. For two
+disjoint edges, dense and sparse nauty choose different canonical
+adjacency matrices:
+
+```lean
+namespace HexGraphIsoRepresentationExample
+
+def matching : SparseGraph 4 :=
+  SparseGraph.ofEdges [(0, 3), (1, 2)]
+
+#guard (Graph.label matching.toDense).toArray =
+  #[0, 3, 1, 2]
+#guard (SparseGraph.label matching).toArray = #[0, 1, 2, 3]
+#guard (SparseGraph.canon matching).toDense ≠
+  Graph.canon matching.toDense
+
+end HexGraphIsoRepresentationExample
+```
+
+Each result is a canonical form for its own algorithm. When storing
+canonical forms as persistent keys, record which engine and options
+produced them. Traces defines another algorithm and is included in the
+performance comparison, but has no Lean implementation in this library.
+
+## Certificates and tactic limits
+%%%
+tag := "hex-graph-iso-certificates"
+%%%
+
+`graph_iso` operates on closed graph expressions and selects the dense
+or sparse checker from their types. A positive proof checks a literal
+vertex permutation. For a negative proof, a differing root refinement
+code suffices when available. Otherwise the tactic produces compact
+certificates for both sparse canonical keys and replays their literal
+checkers in the kernel. The sparse checker recomputes sparse refinement
+and comparisons. The direct canonicalization API does not perform this
+replay.
+
+The tactic accepts two optional limits. `maxSearchNodes` bounds search
+node visits, and `maxCertRecords` bounds certificate records. Both
+default to `100000`. Exceeding a limit makes the tactic fail; it does
+not establish non-isomorphism. They can be raised independently:
+
+```lean
+example : ¬ SparseGraph.Isomorphic
+    HexGraphIsoSparseExample.petersen
+    HexGraphIsoSparseExample.prism := by
+  graph_iso (maxSearchNodes := 200000)
+    (maxCertRecords := 200000)
+```
+
+These limits do not apply to the total canonicalization and isomorphism
+functions. Kernel replay has no estimated-cost cutoff or operation
+meter. Lean's ordinary heartbeat and recursion-depth options still
+apply to elaboration.
 
 # Latin-square isotopy as graph isomorphism
 %%%
@@ -447,19 +670,21 @@ columns, `6, 7, 8` the symbols, and `9 + 3 * i + j` the position
 namespace LatinAutomorphismExample
 
 def incidenceEdges : List (Nat × Nat) :=
-  (List.range 3).flatMap fun i => (List.range 3).flatMap fun j =>
+  (List.range 3).flatMap fun i =>
+    (List.range 3).flatMap fun j =>
     [(i, 9 + 3 * i + j), (3 + j, 9 + 3 * i + j),
      (6 + (i + j) % 3, 9 + 3 * i + j)]
 
 def incidence : Colored 18 4 where
-  graph := (Graph.ofEdges? 18 incidenceEdges).getD (Graph.empty 18)
+  graph := (Graph.ofEdges? 18 incidenceEdges).getD
+    (Graph.empty 18)
   coloring := (Coloring.ofVector? (Hex.Vector.ofFn' fun v =>
       if v.val < 3 then 0 else if v.val < 6 then 1
-      else if v.val < 9 then 2 else 3)).getD (Coloring.mod 18 4)
+      else if v.val < 9 then 2 else 3)).getD
+        (Coloring.mod 18 4)
 
--- the cyclic square of order three: eighteen isotopies, and four
--- orbits, one on each of the rows, the columns, the symbols and the
--- positions
+-- The cyclic square of order three has eighteen isotopies.
+-- The orbits are rows, columns, symbols and positions.
 #guard (autos incidence).order = 18
 #guard (autos incidence).numOrbits = 4
 #guard (autos incidence).orbits =
@@ -490,82 +715,86 @@ symbols.
 tag := "hex-graph-iso-performance"
 %%%
 
-The Lean implementation runs the same algorithm as nauty in the
-strictest sense: conformance testing pins the visited-node counters, so
-both programs traverse exactly the same search tree on every
-conformance case. Every timing difference is therefore a per-node
-constant factor of the implementation, never an algorithmic
-difference, and the one way that factor could grow with the vertex
-count would be a loop over vertices where nauty runs a word
-operation. The search keeps its vertex sets packed sixty-three to a
-word, so a least-squares fit of per-node cost against `n` on the
-benchmark corpus gives hex the same exponent as nauty on every family:
-`n^1.7` to `n^1.9` on grids, Paley graphs, circulants and random
-graphs, `n^1.3` on Kneser graphs and `n^1.0` on Johnson graphs, in
-each case within `0.2` of nauty's, and the hex/nauty ratio is `7.7`
-below 64 vertices and `7.1` above. CI refits every recorded sweep and
-fails when a family's hex exponent exceeds nauty's by more than `0.2`.
-The table shows the factor on four parametrised families: grids, where
-refinement discretizes quickly; Paley graphs, refinement's hard case
-among the sparse families; and the dense Latin-square and Kneser
-graphs. The `hex` column is `canonicalize`, which carries the theorems
-of this chapter as it stands: no certificate is produced or replayed
-on that path.
+The six-way comparison runs C dense nauty, C sparse nauty, C Traces,
+Hex dense, Hex sparse and Alex Meiburg's IsoGraph on the same 333
+labelled graphs from 20 families, through 3,072 vertices. It measures
+native canonicalization after input construction. For Hex sparse this
+includes parsing the returned label and producing normalized sparse
+canonical rows. It does not include certificate production or kernel
+replay.
+
+![Canonicalization time by graph family for all six implementations](https://kim-em.github.io/hex-dev/figures/hexgraphiso-comparison-families.svg)
+
+![Six-way cactus plot of canonicalization times](https://kim-em.github.io/hex-dev/figures/hexgraphiso-comparison-cactus.svg)
+
+Open the [family plot](https://kim-em.github.io/hex-dev/figures/hexgraphiso-comparison-families.svg)
+or [cactus plot](https://kim-em.github.io/hex-dev/figures/hexgraphiso-comparison-cactus.svg)
+at full size to inspect the individual curves.
+
+In the retained measurements, the implementations complete these numbers
+of instances within the five-second per-call cutoff:
 
 :::table +header
-* * graph
-  * vertices
-  * nauty (ms)
-  * hex (ms)
-* * `Families.grid 5 5`
-  * 25
-  * 0.014
-  * 0.084
-* * `Families.grid 15 15`
-  * 225
-  * 0.86
-  * 4.0
-* * `Families.paley 29`
-  * 29
-  * 0.019
-  * 0.14
-* * `Families.paley 229`
-  * 229
-  * 1.1
-  * 6.7
-* * `Families.latinSquare 5`
-  * 25
-  * 0.019
-  * 0.19
-* * `Families.latinSquare 13`
-  * 169
-  * 0.78
-  * 6.6
-* * `Families.kneser 7 2`
-  * 21
-  * 0.014
-  * 0.16
-* * `Families.kneser 22 2`
-  * 231
-  * 3.4
-  * 38
+* * implementation
+  * completed / 333
+* * C dense nauty
+  * 307
+* * C sparse nauty
+  * 318
+* * C Traces
+  * 308
+* * Hex dense
+  * 282
+* * Hex sparse
+  * 310
+* * IsoGraph
+  * 296
 :::
 
-Measured on chungus2, 2026-09-05, minimum over repeated runs;
-regenerate with `scripts/bench/graphiso_cactus_sweep.sh`. On
-ten-vertex pairs like the examples of this chapter, the kernel-checked
-`graph_iso` proof costs roughly 20 milliseconds on a positive goal and
-0.7 to 0.9 seconds on a negative one. That price is separate from the
-table and does not shrink with it: a kernel proof still replays a
-certificate inside the kernel, whereas `canonicalize` runs no replay
-at all. For breadth across the whole benchmark corpus, see the cactus
-plots in `reports/figures/` in the repository:
-`hexgraphiso-canon-cactus.svg` for canonical labelling over the
-deterministic families, and `hexgraphiso-pairs-cactus.svg` for the
-proof obligations. The latter plots the negative pairs only. For the
-reason just given the two polarities differ by well over an order of
-magnitude, so a single curve over both would describe neither; the
-figure's caption carries the positive median for comparison.
+On 282 cases completed by both Hex implementations, the median
+per-instance sparse/dense time ratio is `0.25`. On 296 cases completed
+by both Hex sparse and IsoGraph, the corresponding ratio is `0.73`.
+These ratios describe different solved subsets. The sparse measurements
+were refreshed while the other five series were retained from earlier
+sessions on the same shared host, so the ratios are observations about
+this corpus, not universal speed factors.
+
+The family plot shows where each algorithm does well. A cross marks
+where a series stops: a call exceeding five seconds stops that series
+on the family, and larger sizes are not attempted. Missing observations
+are not assigned the cutoff time. The cactus plot sorts each series'
+completed instances independently; farther right means more completed
+instances, while lower means less time. Neither plot claims a general
+complexity bound for graph isomorphism.
+
+The protocol uses two passes, a warmup and five timed calls per case
+(one when warmup exceeds one second), and reports the minimum completed
+call. The [comparison report](https://github.com/kim-em/hex-dev/blob/main/reports/graphiso-comparison.md)
+records the corpus, versions, input boundaries, stopping rules, raw
+outcomes and reproduction commands. Its
+[search and conversion figure](https://kim-em.github.io/hex-dev/figures/hexgraphiso-comparison-search-families.svg)
+and tables separate construction and relabelling costs. Constructing a
+sparse graph from edges avoids a dense intermediate; converting an
+existing matrix still requires reading that matrix.
+
+Conformance compares Hex dense with C dense, and Hex sparse with C
+sparse. The sparse comparison agrees on visited-node counts on every
+completed case. Its per-node scaling check passes the recorded `0.2`
+exponent tolerance on every family with enough matched sizes. This is
+evidence that the representation improvements preserve the intended
+search, rather than evidence that dense, sparse and Traces explore the
+same tree.
+
+Proof-producing use has separate costs. A call to `graph_iso` must
+construct a proof whose decisive checks run in the kernel. Positive
+transporter checks and negative certificate replays can have very
+different costs, and neither can be inferred from native
+canonicalization timings. The
+[validation report](https://github.com/kim-em/hex-dev/blob/main/reports/sparse-nauty-validation.md)
+links the separate automorphism, certificate-production, native-replay
+and imported kernel-proof measurements. The public totality and
+correctness theorems apply to the optimized sparse search used in the
+comparison.
 
 # The Mathlib correspondence
 %%%
@@ -676,3 +905,90 @@ of `Colored.Iso G G` itself.
 {docstring Hex.GraphIso.Mathlib.autNumOrbits_card}
 
 {docstring Hex.GraphIso.Mathlib.autOrder_card}
+
+## Choosing sparse search from Mathlib
+%%%
+tag := "hex-graph-iso-mathlib-sparse"
+%%%
+
+The direct `graph_iso` extension on Mathlib graphs uses the dense
+encoding. To select sparse nauty, apply
+{name Hex.GraphIso.Mathlib.Sparse.encode_iso_iff}`Sparse.encode_iso_iff`
+and then use `graph_iso` on the resulting native sparse goal. Both
+enumerations may be chosen independently. The theorem transports the
+answer back to the original coloured Mathlib graphs.
+
+Here two presentations of a five-cycle use steps of one and two in
+`Fin 5`. A path on the same five vertices supplies a negative example.
+The definitions and claims are on the Mathlib side; the sparse
+encoding appears only inside the proofs.
+
+```lean
+namespace HexGraphIsoSparseMathlibExample
+
+def cycle : SimpleGraph (Fin 5) :=
+  SimpleGraph.fromRel fun i j => j = i + 1
+def star : SimpleGraph (Fin 5) :=
+  SimpleGraph.fromRel fun i j => j = i + 2
+def path : SimpleGraph (Fin 5) :=
+  SimpleGraph.fromRel fun i j => j.val = i.val + 1
+
+instance : DecidableRel cycle.Adj := fun _ _ =>
+  decidable_of_iff _ (SimpleGraph.fromRel_adj ..).symm
+instance : DecidableRel star.Adj := fun _ _ =>
+  decidable_of_iff _ (SimpleGraph.fromRel_adj ..).symm
+instance : DecidableRel path.Adj := fun _ _ =>
+  decidable_of_iff _ (SimpleGraph.fromRel_adj ..).symm
+
+def uncoloured (G : SimpleGraph (Fin 5)) :
+    Hex.GraphIso.Mathlib.Colored (Fin 5) 1 :=
+  ⟨G, fun _ => 0, fun c => ⟨0, Subsingleton.elim _ c⟩⟩
+
+instance (G : SimpleGraph (Fin 5)) [DecidableRel G.Adj] :
+    DecidableRel (uncoloured G).graph.Adj :=
+  inferInstanceAs (DecidableRel G.Adj)
+
+example : (uncoloured cycle).Isomorphic
+    (uncoloured star) := by
+  apply (Sparse.encode_iso_iff
+    (Equiv.refl (Fin 5)) (Equiv.swap (0 : Fin 5) 4)).mpr
+  graph_iso
+
+example : ¬ (uncoloured cycle).Isomorphic
+    (uncoloured path) := by
+  rw [Sparse.encode_iso_iff
+    (Equiv.refl (Fin 5)) (Equiv.refl (Fin 5))]
+  graph_iso
+
+end HexGraphIsoSparseMathlibExample
+```
+
+{name Hex.GraphIso.Mathlib.Sparse.encode}`Sparse.encode` constructs
+sorted neighbour rows without allocating a dense matrix. Given only
+an arbitrary decidable adjacency relation, it still tests vertex pairs.
+For input already available as an edge list, the native
+{name Hex.SparseGraph.ofEdges}`SparseGraph.ofEdges` constructor avoids
+that quadratic enumeration.
+
+{name Hex.GraphIso.Mathlib.Sparse.iso_iff_canon_eq}`Sparse.iso_iff_canon_eq`
+characterizes Mathlib isomorphism by equality of the computed sparse
+forms, and
+{name Hex.GraphIso.Mathlib.Sparse.canon_encode_eq}`Sparse.canon_encode_eq`
+proves independence from the chosen enumeration. A successful
+isomorphism search can also be decoded directly with
+{name Hex.GraphIso.Mathlib.Sparse.isoOfFindIso}`Sparse.isoOfFindIso`.
+
+The automorphism operations have the same Mathlib interpretations as
+their dense counterparts.
+{name Hex.GraphIso.Mathlib.Sparse.autEquiv}`Sparse.autEquiv` identifies
+the colour-preserving Mathlib automorphism group with the executable
+sparse permutation subgroup.
+{name Hex.GraphIso.Mathlib.Sparse.autos_complete}`Sparse.autos_complete`
+states generation using {name Subgroup.closure}`Subgroup.closure`, and
+{name Hex.GraphIso.Mathlib.Sparse.autos_sameOrbit}`Sparse.autos_sameOrbit`
+identifies the computed representatives with the full group action.
+The numerical results are exact cardinalities:
+
+{docstring Hex.GraphIso.Mathlib.Sparse.autNumOrbits_card}
+
+{docstring Hex.GraphIso.Mathlib.Sparse.autOrder_card}

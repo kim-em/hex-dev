@@ -448,4 +448,72 @@ theorem le_foldl_max_of_mem (xs : List α) (g : α → Nat) {x : α} {init : Nat
     | inl h => subst h; exact Nat.le_trans (Nat.le_max_right _ _) (le_foldl_max_self xs g _)
     | inr h => exact ih h
 
+/-! # Multiplicative twins -/
+
+/-- A multiplicative fold-product whose every factor is `1` on `xs` returns
+the initial accumulator. -/
+theorem foldl_mul_eq_self [Lean.Grind.Semiring R] (xs : List α) (f : α → R) (z : R)
+    (h : ∀ x ∈ xs, f x = 1) :
+    xs.foldl (fun acc x => acc * f x) z = z := by
+  rw [foldl_mul_congr xs f (fun _ => 1) z h]
+  simp only [Lean.Grind.Semiring.mul_one]
+  exact foldl_const_step xs z
+
+section CommSemiring
+
+variable [Lean.Grind.CommSemiring R]
+
+/-- A multiplicative fold-product of a pointwise product splits into two
+fold-products, distributing the starting accumulator. -/
+theorem foldl_mul_mul_start (xs : List α) (f g : α → R) (a b : R) :
+    xs.foldl (fun acc x => acc * (f x * g x)) (a * b) =
+      xs.foldl (fun acc x => acc * f x) a * xs.foldl (fun acc x => acc * g x) b := by
+  induction xs generalizing a b with
+  | nil => rfl
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    calc xs.foldl (fun acc x => acc * (f x * g x)) (a * b * (f x * g x))
+        = xs.foldl (fun acc x => acc * (f x * g x)) ((a * f x) * (b * g x)) := by
+          congr 1; grind
+      _ = xs.foldl (fun acc x => acc * f x) (a * f x)
+            * xs.foldl (fun acc x => acc * g x) (b * g x) := ih (a * f x) (b * g x)
+
+/-- A multiplicative fold-product of a pointwise product from `1` splits into
+the product of the two separate folds from `1`. -/
+theorem foldl_mul_mul (xs : List α) (f g : α → R) :
+    xs.foldl (fun acc x => acc * (f x * g x)) 1 =
+      xs.foldl (fun acc x => acc * f x) 1 * xs.foldl (fun acc x => acc * g x) 1 := by
+  calc xs.foldl (fun acc x => acc * (f x * g x)) 1
+      = xs.foldl (fun acc x => acc * (f x * g x)) ((1 : R) * 1) := by
+        rw [Lean.Grind.Semiring.mul_one]
+    _ = xs.foldl (fun acc x => acc * f x) 1 * xs.foldl (fun acc x => acc * g x) 1 :=
+        foldl_mul_mul_start xs f g 1 1
+
+/-- A multiplicative fold-product over a `Nodup` list whose factor is `1`
+away from a single matching element collects exactly that factor. -/
+theorem foldl_mul_single [DecidableEq α]
+    (xs : List α) (z : R) (q : α) (f : α → R)
+    (hmem : q ∈ xs) (hnodup : xs.Nodup) :
+    xs.foldl (fun acc x => acc * (if x = q then f x else 1)) z = z * f q := by
+  induction xs generalizing z with
+  | nil => simp at hmem
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    by_cases hxq : x = q
+    · subst hxq
+      rw [ite_eq_left rfl]
+      have hxs_nomem : x ∉ xs := (List.nodup_cons.mp hnodup).1
+      apply foldl_mul_eq_self xs (fun y => if y = x then f y else 1) (z * f x)
+      intro y hy
+      have hyne : y ≠ x := fun heq => hxs_nomem (heq ▸ hy)
+      exact ite_eq_right hyne
+    · rw [ite_eq_right hxq, Lean.Grind.Semiring.mul_one]
+      have hmem' : q ∈ xs := by
+        cases List.mem_cons.mp hmem with
+        | inl h => exact absurd h.symm hxq
+        | inr h => exact h
+      exact ih z hmem' (List.nodup_cons.mp hnodup).2
+
+end CommSemiring
+
 end List

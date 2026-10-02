@@ -20,10 +20,6 @@
 #     - draft: SPEC incomplete. Same orchestration treatment as planned.
 #       Required: done_through == 0.
 #   Active libraries depend only on active libraries (load-time invariant).
-# - correspondence_only (optional, default false): explicit classification for
-#   a mathlib bridge that owns no conformance, compiled benchmark, or
-#   proof-probe surface. Flagged libraries declare their computational
-#   conformance and performance owners in their per-library SPEC.
 # - Phase 0 (monorepo bootstrap) is global; its completion is observable
 #   by the existence of lakefile.lean, scripts/check_dag.py, etc., not
 #   by any field in this file.
@@ -183,11 +179,59 @@ libraries:
   HexRationalFnMathlib:
     deps: [HexRationalFn, HexPolyMathlib]
     mathlib: true
-    correspondence_only: true
     done_through: 4
     status: active
+  HexOrderedFn:
+    deps: [HexRationalFn, HexPoly, HexPolyFast]
+    mathlib: false
+    done_through: 4
+    status: active
+    phase4:
+      comparators:
+        - tool: Z3 RCF
+          class: informational
+          rationale: "Z3 uses its own rational-function representation and cached signs, while Hex scans dense coefficients and composes caller approximations. The Python/FFI comparison covers subtraction followed by sign on prepared operands, with wrapper cost measured separately; it is an external reference, not a constant-factor acceptance threshold."
+      input_families:
+        - name: fraction-arithmetic
+          description: Canonical subtraction and normalization on identical ordered and unordered inputs.
+        - name: infinitesimal-order
+          description: Coefficient scans and comparisons varying degree, lowest index, height and successive depth.
+        - name: real-refinement
+          description: Total signs and approximations varying separation precision, coefficient refinement and real depth.
+        - name: horner-bounds
+          description: Exact rational enclosure arithmetic varying degree and endpoint bit size.
+        - name: finite-comparison
+          description: Finite attempts and exact endpoint decisions using the same bound operations as total searches.
+  HexOrderedFnMathlib:
+    deps: [HexOrderedFn, HexRationalFnMathlib, HexPolyMathlib]
+    mathlib: true
+    done_through: 4
+    status: active
+  HexRealFormula:
+    deps: [HexMvPoly]
+    mathlib: false
+    done_through: 1
+    status: active
+    phase4:
+      input_families:
+        - name: syntax
+          description: Expanded Boolean nodes, quantifier prefixes and bounds-checked DAGs, with fixed-size atoms.
+        - name: monomials
+          description: Independent normalized term-count ladders and ascending raw terms for checked decoding.
+        - name: arity
+          description: One monomial across a growing coordinate vector, with bounded coefficients and exponents.
+        - name: coefficient-bits
+          description: One growing odd integer coefficient evaluated at the fixed rational point 3/2.
+        - name: exponents
+          description: Literal-exponent ladders evaluated at one to isolate powering from coefficient growth.
+  HexRealFormulaMathlib:
+    deps: [HexRealFormula, HexMvPolyMathlib, HexReflectMathlib]
+    mathlib: true
+    proof_probes: [bench/HexRealFormulaMathlib/ProofProbe]
+    done_through: 1
+    status: active
   HexMvPoly:
-    deps: [HexPoly, HexBasic]
+    deps: [HexPoly, HexBasic, HexModArith]
     mathlib: false
     done_through: 4
     status: active
@@ -278,14 +322,19 @@ libraries:
   HexRowReduce:
     deps: [HexMatrix]
     mathlib: false
-    done_through: 4
+    done_through: 7
     status: active
     phase4:
       comparators:
+        - tool: "FLINT fmpq_mat.inv()/solve() via python-flint"
+          class: informational
+          rationale: "Complete inverse and unique square solve outputs on the same seeded rational inputs; general affine solutions and separating witnesses have no matching native callable."
         - tool: "FLINT fmpq_mat.rref rank via python-flint"
           class: informational
           rationale: "The rank result is identical and constant-size, so cached dense inputs permit a valid persistent-subprocess comparison. Full rowReduce is not paired because Hex additionally returns the row transform; nullspace and span witnesses have no native identical callable result in python-flint."
       input_families:
+        - name: field-inverse-solve
+          description: Seeded dense field systems over Rat, ZMod64 101, and RationalFn Rat; dimension and rational coefficient-height sweeps with full, n-1, and n/2 ranks, consistent and inconsistent RHSs, and tall/wide shapes.
         - name: dense-rational-rref
           description: Dense square rational I + J matrices with a pivot in every column and nonzero elimination above and below every pivot, plus a known row-span member.
         - name: rank-deficient-rational-nullspace
@@ -296,27 +345,136 @@ libraries:
     done_through: 7
     status: active
     phase4:
+      comparators:
+        - tool: "SymPy DomainMatrix.det()"
+          class: informational
+          rationale: "Scoped to runDetDenseInt, runDetDenseRat, runDetDenseMod, runDetMvInt, runDetMvRat and runDetRatFn. Persistent-subprocess comparisons are scheduled-only on identical exact-domain matrices. SymPy uses Bareiss while Hex enumerates Leibniz terms; protocol overhead and algorithm differences make these ratios informational. runLeibnizDet retains its structural-layer comparator absence."
       input_families:
         - name: leibniz-small-determinant
           description: Small structured integer matrices where the generic Leibniz determinant remains practical, cross-checked against the row-pivoted Bareiss determinant.
+        - name: determinant-dense-carriers
+          description: Dense ZZ[x], QQ[x] and GF(101)[x] matrices; dimension 2, 3, 4 at degree 2 and degree 1, 2, 4 at dimension 3, with every entry coefficient nonzero.
+        - name: determinant-multivariate-carriers
+          description: Sparse integer and rational three-variable matrices; dimension 2, 3, 4 at four terms and term count 2, 4, 8 at dimension 3, with fixed total degree four and grevlex encoding.
+        - name: determinant-rational-functions
+          description: QQ(x) matrices with nonconstant denominators; dimension 2, 3, 4 at numerator/denominator degree 2 and degree 1, 2, 4 at dimension 3, including normalization and cancellation.
   HexBareiss:
     deps: [HexArith, HexDeterminant, HexMatrix]
     mathlib: false
-    done_through: 4
+    done_through: 7
     status: active
     phase4:
       comparators:
         - tool: "FLINT fmpz_mat_det via python-flint"
           class: informational
           rationale: "FLINT's fmpz_mat_det uses multimodular reduction (determinant modulo many small primes, then CRT), which has a different asymptotic and constant-factor profile from the Hex row-pivoted Bareiss fraction-free elimination over Int. The ratio is recorded for orientation but is not a Phase-4 gate. Wired via a persistent-subprocess Python driver per SPEC/benchmarking.md §External comparators §Process call."
+        - tool: "FLINT fmpq_mat.det via python-flint"
+          class: informational
+          rationale: "Rational carrier dimension sweep; persistent subprocess and overhead-adjusted timings, scheduled-only. Field Bareiss is primarily a conformance surface."
+        - tool: "FLINT nmod_mat.det via python-flint"
+          class: informational
+          rationale: "Prime-field dimension sweep at p = 101; persistent subprocess and overhead-adjusted timings, scheduled-only."
+        - tool: "SymPy Berkowitz exact-domain determinant"
+          class: informational
+          rationale: "Dense Rat, prime-field and Int polynomial dimension/degree sweeps and grevlex multivariate Int/Rat dimension/support sweeps. Independent division-free recurrence, complete canonical answer hashes, persistent subprocess; scheduled-only."
       input_families:
         - name: structured-bareiss-determinant
           description: Deterministic tridiagonal integer matrices for row-pivoted Bareiss determinant scaling without arbitrary coefficient blow-up.
+        - name: scalar-carriers
+          description: Rational and prime-field tridiagonal matrices at dimensions 4, 8 and 16, prime 101.
+        - name: dense-polynomial-carriers
+          description: Tridiagonal matrices over Rat, ZMod64 101 and Int polynomials; dimensions 3, 4, 5 crossed with degrees 1, 2, 3 at two-coefficient support. Nonconstant leading minors force exact polynomial quotients.
+        - name: multivariate-carriers
+          description: Grevlex trivariate Int and Rat tridiagonal matrices; dimensions 3, 4, 5 crossed with 2, 3, 4 nonconstant terms (plus the diagonal constant), total degree two. Mixed monomials and nonconstant leading minors exercise exact division.
+  HexRank:
+    deps: [HexBareiss, HexDeterminant, HexMatrix, HexArith, HexBasic, HexPoly]
+    mathlib: false
+    done_through: 4
+    status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_mat.rank via python-flint
+          class: informational
+          rationale: FLINT selects fraction-free or multi-modular rank by size, so the ratio compares algorithms; no shared fixture history anchors a required ratio.
+        - tool: FLINT fmpq_mat.rank via python-flint
+          class: informational
+          rationale: The same comparison over the rationals.
+        - tool: SymPy DomainMatrix.rank over the exact polynomial domain
+          class: informational
+          rationale: SymPy chooses its own elimination and includes interpreter overhead; it orients the polynomial carriers only.
+      input_families:
+        - name: dense-full-rank
+          description: Square matrices of small random entries at full rank, n = 16 to 256.
+        - name: low-rank-large-coefficients
+          description: Products of n by r and r by n matrices at r = 2 and 8 with 64- and 1024-bit entries, n = 16 to 256.
+        - name: rank-deficient-by-construction
+          description: Square products of rank n - 1 and n / 2 with small entries, including pivot columns that are not the leading columns.
+        - name: polynomial
+          description: DensePoly Rat and MvPoly 2 Int matrices of dimension 4 to 12 at fixed support, full rank and rank deficient.
+  HexDet:
+    deps: [HexBareiss, HexCharPoly, HexRowReduce, HexPolyFp, HexResultant, HexMvGcd]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_mat.det() via python-flint
+          class: informational
+          rationale: FLINT uses its own determinant selection and process protocol; internal adjacent-arm comparisons determine Hex dispatch policies.
+        - tool: FLINT fmpq_mat.det() via python-flint
+          class: informational
+          rationale: FLINT uses its own rational determinant selection; internal elimination versus Bareiss comparisons determine the field policy.
+        - tool: FLINT nmod_mat.det() via python-flint
+          class: informational
+          rationale: FLINT uses its own modular determinant selection; internal comparisons at the identical prime determine the field policy.
+        - tool: SymPy Matrix.det(method="berkowitz") over exact polynomial domains
+          class: informational
+          rationale: Independent polynomial recurrence and Python process overhead provide conformance and timing context, not a dispatch cutoff.
+      input_families:
+        - name: integer
+          description: Dimension and coefficient-bit sweeps on dense, tridiagonal, triangular, singular, low-rank, and unimodular inputs; Bareiss, modular, and divisor comparisons. Initial Bareiss policy is unmeasured; record enabled constants and evidence in reports/hex-det-performance.md.
+        - name: field
+          description: Dimension, rational numerator and denominator size, and prime modulus; elimination versus Bareiss. Initial Bareiss policy is unmeasured; record enabled constants and evidence in reports/hex-det-performance.md.
+        - name: dense-poly
+          description: Dimension, degree, and coefficient size over Rat, prime ZMod64, and Int; Bareiss versus Berkowitz with nonconstant pivots. Initial Bareiss policy is unmeasured; evidence is in reports/hex-det-performance.md.
+        - name: mv-poly
+          description: Dimension, variable count, degree, support, and coefficient size over Int and Rat; Bareiss versus Berkowitz with nonconstant pivots. Initial Bareiss policy is unmeasured, and the first evidence in reports/hex-det-performance.md favours Berkowitz on the measured family.
+        - name: dispatch
+          description: Tiny cases and rings with zero divisors, plus both sides of measured cutoffs and modular fallback when enabled; dispatch versus its selected direct arm.
+  HexDetMathlib:
+    deps: [HexDet, HexBareissMathlib, HexCharPolyMathlib, HexDeterminantMathlib, HexPolyMathlib, HexPolyFpMathlib, HexMvPolyMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
   HexCharPoly:
     deps: [HexMatrix, HexPoly]
     mathlib: false
     done_through: 0
     status: active
+    phase4:
+      comparators:
+        - tool: "FLINT fmpz_mat.charpoly via python-flint"
+          class: informational
+          rationale: "The existing integer random-dense fixed rungs compare FLINT's selected characteristic-polynomial routine with Berkowitz."
+        - tool: "PARI charpoly flag 3 via cypari2"
+          class: informational
+          rationale: "The existing integer random-dense fixed rungs compare PARI's Berkowitz implementation through the persistent driver."
+        - tool: "SymPy DomainMatrix.det (Bareiss) on tI-A"
+          class: informational
+          rationale: "Exact symbolic determinant over the identical coefficient carrier, independent of Berkowitz. Persistent-subprocess fixed rungs are scheduled-only; structural-growth instrumentation is included in the Hex timing."
+      input_families:
+        - name: random-dense-charpoly
+          description: "Existing dense integer dimension and entry-bit-width ladders, with peak intermediate coefficient bit sizes."
+        - name: tridiagonal-charpoly
+          description: "Existing tridiagonal integer dimension ladder with small entries."
+        - name: structured-charpoly
+          description: "Existing companion and Jordan dimension ladder checked against closed-form characteristic polynomials."
+        - name: dense-polynomial-charpoly
+          description: "runCharDenseInt, runCharDenseRat, runCharDenseMod sweep dimension 2/3/4 at degree 1 and degree 1/2/3 at dimension 3; maximum stored coefficient-array size is observed."
+        - name: multivariate-charpoly
+          description: "runCharMvInt and runCharMvRat sweep dimension 2/3/4 at two terms and term count 2/4/6 at dimension 3, with arity three and total degree five fixed; maximum canonical term count is observed."
+        - name: rational-function-charpoly
+          description: "runCharRatFn sweeps dimension 2/3/4 at numerator/denominator degree 1 and degree 1/2/3 at dimension 3; maximum sum of canonical numerator/denominator sizes is observed."
   HexMinPoly:
     deps: [HexMatrix, HexRowReduce, HexPoly]
     mathlib: false
@@ -366,10 +524,24 @@ libraries:
   HexPolySmithMathlib:
     deps: [HexPolySmith, HexPolyMathlib, HexMatrixMathlib]
     mathlib: true
-    correspondence_only: true
     done_through: 7
     status: active
 
+  HexDeterminantalIdeal:
+    deps: [HexArith, HexMatrix, HexDeterminant, HexRowReduce, HexMvPoly]
+    mathlib: false
+    done_through: 3
+    status: active
+    phase4:
+      comparators:
+        - tool: "SymPy combinations and det loop"
+          class: informational
+          rationale: "SymPy chooses its own per-minor determinant algorithm (Bareiss or Berkowitz), so a ratio against the Leibniz sum compares algorithms, not implementations."
+      input_families:
+        - name: dense-int-minors
+          description: Square integer matrices of dimension 4 to 6 with small entries, every minor size r, isolating the enumeration count n.choose r squared times r factorial times r.
+        - name: symbolic-2var
+          description: 4 by 4 matrices of random linear forms in two indeterminates over Int at r in 2, 3, 4, adding polynomial arithmetic to the same enumeration.
   # ---------- Depth 1 ----------
   HexModArith:
     deps: [HexArith]
@@ -406,6 +578,42 @@ libraries:
           description: Fibonacci-shaped late Euclidean runs through 262144 bits and early-success cases through 100000 bits.
         - name: failure-cost
           description: Full Euclidean runs whose impossible numerator bound forces reconstruction failure through the final checks.
+  HexModularMatrix:
+    deps: [HexModular, HexMatrix, HexDeterminant, HexBareiss, HexModArith, HexArith, HexBasic, HexRank]
+    mathlib: false
+    done_through: 1
+    status: active
+    phase4:
+      comparators:
+        - tool: "FLINT fmpz_mat_det via python-flint"
+          class: gating
+          goal: "detViaDivisor faster than Hex.Matrix.bareiss by at least 4x at n = 512 on the shared tridiagonal fixture in the same run, with the FLINT ratio recorded and the 5x target at every eligible rung reviewed after the first measurement"
+        - tool: "FLINT fmpq_mat_solve via python-flint"
+          class: informational
+          rationale: "FLINT chooses between fraction-free, multi-modular and Dixon solves and does not expose a reusable decomposition."
+        - tool: "FLINT fmpz_mat_rank via python-flint"
+          class: informational
+          rationale: "No shared fixture history; FLINT and Hex use different crossover policies."
+      input_families:
+        - name: structured-determinant
+          description: Shared Bareiss tridiagonal fixture at dimensions 16 through 512.
+        - name: dense-random-determinant
+          description: Deterministic dense integer matrices at dimensions 32 through 256 and entry widths 8, 64 and 1024 bits.
+        - name: unimodular-determinant
+          description: Dense rank-one updates of the identity with determinant one and coefficient scale 2^64.
+        - name: solve
+          description: Integral and large-denominator single RHS systems at dimensions 32 through 256, with decomposition and lifting timed separately.
+        - name: repeated-solve
+          description: One decomposition and simultaneous solve for r = 1, 8, n versus r independent solves.
+        - name: rank
+          description: Square and rectangular matrices at low, nearly full and full rank, comparing certificate, public and direct integer paths.
+        - name: rank-bad-primes
+          description: Rank-deficient products with large coefficients scaled by two actual supply primes; two skips followed by successful recovery.
+  HexModularMatrixMathlib:
+    deps: [HexModularMatrix, HexMatrixMathlib, HexDeterminantMathlib, HexBareissMathlib, HexRankMathlib]
+    mathlib: true
+    done_through: 1
+    status: active
   HexGramSchmidt:
     deps: [HexRowReduce, HexDeterminant, HexBareiss]
     mathlib: false
@@ -518,15 +726,15 @@ libraries:
   HexPermGroupMathlib:
     deps: [HexPermGroup]
     mathlib: true
-    correspondence_only: true
     done_through: 7
     status: active
+    proof_probes: [bench/HexPermGroupMathlib/ProofProbe]
   HexGraphIso:
     deps: [HexBasic, HexMatrix, HexPermGroup]
     mathlib: false
     done_through: 7
     status: active
-    proof_probes: [bench/HexGraphIso/ProofProbe]
+    proof_probes: [bench/HexGraphIso/ProofProbe, bench/HexGraphIso/SparseProofProbe]
     phase4:
       comparators:
         - tool: "nauty 2.9.3 (vendored source, in-process FFI through Hex.BenchOracle.Nauty)"
@@ -541,6 +749,8 @@ libraries:
           description: Paley, Latin-square, Johnson and Kneser graphs, refinement's hard cases, including the classic (25, 12, 5, 6) negative pair at shared parameters.
         - name: grid-and-hypercube
           description: Grids and hypercubes, the sparse families on which refinement discretizes quickly.
+        - name: native-sparse-path
+          description: Paths prepared directly as edge lists at 1024 through 65536 vertices, measuring compressed construction against its linear model without a dense intermediate.
         - name: decision-pairs
           description: Positive and negative isomorphism pairs spanning cycle splittings, irregular cross-family negatives, and same-degree vertex-transitive negatives, carrying the two decision tiers and the kernel-checked tactic tier.
   HexGraphIsoMathlib:
@@ -625,7 +835,6 @@ libraries:
   HexLatticeEnumMathlib:
     deps: [HexLatticeEnum, HexLLLMathlib, HexGramSchmidtMathlib, HexMatrixMathlib]
     mathlib: true
-    correspondence_only: true
     done_through: 7
     status: active
   HexLLL:
@@ -811,7 +1020,6 @@ libraries:
   HexDiscreteLogMathlib:
     deps: [HexDiscreteLog, HexGFqMathlib, HexIntFactorMathlib]
     mathlib: true
-    correspondence_only: true
     done_through: 0
     status: planned
   HexBerlekampZassenhaus:
@@ -853,6 +1061,15 @@ libraries:
           description: Primes of 31 to 511 bits with n - 1 = k * 2^m and k factoring over the committed table, so decision, certificate-search, and checker rows share a deterministic rho-free certificate shape.
         - name: segment-enumeration
           description: Prime enumeration over [0, n) for n from 10^3 to 3.2 * 10^4 through the trial-division-backed primesIn.
+        - name: p-minus-one-stage2
+          description: Exact extra-prime base-order fixtures at 64, 128, 256, and 512 bits, separating setup, stage-1 exponentiation, prepared continuation, continuation with enumeration, and total search; endpoint and doubled-bound successes, full-scan misses, whole/recovery controls, and enabled/disabled construction comparisons.
+        - name: squfof-raw-splitting
+          description: Explicit bounded SQUFOF on varied-gap 32- to 64-bit semiprimes, retained balanced inputs and prime/power controls, with fixed multiplier and cap policies, raw Brent-rho comparison, and a forced-work recurrence-fuel ladder.
+  HexECPP:
+    deps: [HexPrimality, HexArith]
+    mathlib: false
+    done_through: 0
+    status: active
   HexIntFactor:
     deps: [HexPrimality, HexArith, HexBasic]
     mathlib: false
@@ -877,10 +1094,12 @@ libraries:
           description: Public divisors on prechecked products of the first 6, 8, 10, 12, 14 and 15 table primes, with exact divisor counts 64 through 32768; generation, merge sort and array materialization under the two-sided tau log2 tau model.
         - name: generalized-divisor-sums
           description: Certified prime-power inputs with a growing exponent and growing entry count, exercising the closed-form sigma route.
+        - name: p-minus-one-stage2-policy
+          description: The shared extra-prime family with larger prime factors at 128, 256, and 512 bits and seeds 0 through 4, comparing the actual (64,4096) continuation allocation against the disabled policy while retaining route participation, checked successes, full-scan misses, and table/balanced/smooth regressions.
 
   # ---------- Mathlib bridges ----------
   HexPolyMathlib:
-    deps: [HexPoly]
+    deps: [HexPoly, HexMatrixMathlib]
     mathlib: true
     done_through: 7
     status: active
@@ -891,9 +1110,9 @@ libraries:
         - name: euclidean-bridge-transport
           description: Polynomial Fibonacci quotient-chain fixtures over `Rat` carried through the executable `DensePoly.gcd`/`DensePoly.xgcd` plus the dense-to-Mathlib bridge.
   HexMvPolyMathlib:
-    deps: [HexMvPoly, HexPolyMathlib]
+    deps: [HexMvPoly, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
-    done_through: 4
+    done_through: 7
     status: active
     proof_probes: [bench/HexMvPolyMathlib/ProofProbe]
     phase4:
@@ -912,10 +1131,44 @@ libraries:
           description: Rename and substitution identities whose distinct source terms collide in the destination support.
         - name: kernel-sos-certificates
           description: Representative sum-of-squares certificate identities checked from a downstream module with decide +kernel.
+  HexReflect:
+    deps: [HexMvPoly, HexBasic]
+    mathlib: false
+    done_through: 1
+    status: active
+  HexReflectMathlib:
+    deps: [HexReflect, HexMvPolyMathlib, HexModArithMathlib]
+    mathlib: true
+    done_through: 1
+    status: active
+  HexKronecker:
+    deps: [HexMvPoly, HexMatrix]
+    mathlib: false
+    done_through: 4
+    status: active
+    phase4:
+      input_families:
+        - name: expression-checker
+          description: Unnormalized ring-expression trees across the specified atom-count and per-atom-degree grid, parameterized by the reported packed bit size.
+        - name: term-list-products
+          description: Sparse integer polynomial lists and rectangular row-by-column products across the same grid, including the nested signed-packing size.
+  HexKroneckerMathlib:
+    deps: [HexKronecker, HexMvPolyMathlib, HexReflect, HexReflectMathlib, HexMatrixMathlib]
+    mathlib: true
+    proof_probes: [bench/HexKroneckerMathlib/ProofProbe]
+    done_through: 4
+    status: active
+    phase4:
+      input_families:
+        - name: reflected-identities
+          description: Fresh-module comparisons with ring and grobner across the specified atom-count and degree grid.
+        - name: determinant-identities
+          description: Expanded determinants over a shared small atom set, varying matrix dimension, atom count, and entry degree.
+        - name: dense-box-declines
+          description: Matrices with independent linear entry atoms whose dense box must be rejected before packing.
   HexSparsePolyMathlib:
     deps: [HexSparsePoly, HexPolyMathlib, HexPoly]
     mathlib: true
-    correspondence_only: true
     done_through: 7
     status: active
   HexMatrixMathlib:
@@ -934,76 +1187,106 @@ libraries:
   HexRowReduceMathlib:
     deps: [HexMatrixMathlib, HexRowReduce]
     mathlib: true
-    correspondence_only: true
-    done_through: 3
+    proof_probes: [bench/HexRowReduceMathlib/ProofProbe]
+    done_through: 7
     status: active
   HexDeterminantMathlib:
     deps: [HexBareiss, HexDeterminant, HexMatrixMathlib]
     mathlib: true
-    correspondence_only: true
-    done_through: 3
+    done_through: 7
     status: active
   HexCharPolyMathlib:
     deps: [HexCharPoly, HexMatrixMathlib, HexPolyMathlib, HexDeterminantMathlib]
     mathlib: true
+    proof_probes: [bench/HexCharPolyMathlib/ProofProbe]
     done_through: 0
     status: active
   HexMinPolyMathlib:
     deps: [HexMinPoly, HexMatrixMathlib, HexPolyMathlib, HexCharPolyMathlib]
     mathlib: true
+    proof_probes: [bench/HexMinPolyMathlib/ProofProbe]
     done_through: 0
     status: active
   HexBareissMathlib:
-    deps: [HexDeterminantMathlib]
+    deps: [HexDeterminantMathlib, HexMatrixMathlib]
     mathlib: true
-    correspondence_only: true
+    proof_probes: [bench/HexBareissMathlib/ProofProbe]
+    done_through: 7
+    status: active
+  HexDeterminantalIdealMathlib:
+    deps: [HexDeterminantalIdeal, HexDeterminantMathlib, HexRowReduceMathlib, HexMvPolyMathlib, HexRankMathlib, HexReflect, HexReflectMathlib, HexMatrixMathlib]
+    mathlib: true
+    proof_probes: [bench/HexDeterminantalIdealMathlib/ProofProbe]
+    done_through: 3
+    status: active
+  HexRankMathlib:
+    deps: [HexRank, HexBareissMathlib, HexDeterminantMathlib, HexMatrixMathlib, HexNumberFieldMathlib]
+    mathlib: true
+    proof_probes: [bench/HexRankMathlib/ProofProbe]
+    done_through: 4
+    status: active
+  HexGenericRank:
+    deps: [HexRank, HexMvGcd, HexBareiss, HexDeterminant, HexMatrix, HexBasic]
+    mathlib: false
+    done_through: 4
+    status: active
+  HexGenericRankMathlib:
+    deps: [HexGenericRank, HexRankMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexDeterminantalIdealMathlib, HexMatrixMathlib]
+    mathlib: true
+    proof_probes: [bench/HexGenericRankMathlib/ProofProbe]
+    done_through: 4
+    status: active
+  HexPolyDet:
+    deps: [HexBareiss, HexMvGcd, HexDeterminant, HexMatrix, HexBasic]
+    mathlib: false
+    done_through: 3
+    status: active
+  HexPolyDetMathlib:
+    deps: [HexPolyDet, HexBareissMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexMatrixMathlib]
+    mathlib: true
+    proof_probes: [bench/HexPolyDetMathlib/ProofProbe]
     done_through: 3
     status: active
   HexModArithMathlib:
     deps: [HexModArith]
     mathlib: true
-    correspondence_only: true
-    done_through: 3
+    done_through: 7
     status: active
   HexGramSchmidtMathlib:
     deps: [HexGramSchmidt, HexBareissMathlib]
     mathlib: true
-    correspondence_only: true
-    done_through: 3
+    done_through: 7
     status: active
   HexPolyZMathlib:
-    deps: [HexPolyZ, HexHensel, HexPolyMathlib, HexModArithMathlib]
+    deps: [HexPolyZ, HexHensel, HexPolyMathlib, HexModArithMathlib, HexMatrixMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 7
     status: active
   HexPolyZGcdMathlib:
     deps: [HexPolyZGcd, HexPolyZMathlib, HexPolyMathlib]
     mathlib: true
-    correspondence_only: true
-    done_through: 3
+    done_through: 7
     status: active
   HexLLLMathlib:
     deps: [HexLLL, HexGramSchmidtMathlib, HexRowReduceMathlib]
     mathlib: true
-    correspondence_only: true
-    done_through: 3
+    done_through: 7
     status: active
   HexHermiteMathlib:
     deps: [HexHermite, HexRowReduceMathlib]
     mathlib: true
-    correspondence_only: true
+    proof_probes: [bench/HexHermiteMathlib/ProofProbe]
     done_through: 4
     status: active
   HexSmithMathlib:
     deps: [HexSmith, HexHermiteMathlib]
     mathlib: true
-    correspondence_only: true
-    done_through: 7
+    proof_probes: [bench/HexSmithMathlib/ProofProbe]
+    done_through: 4
     status: active
   HexPolyFpMathlib:
     deps: [HexPolyFp, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
-    correspondence_only: true
     # Extracted from HexBerlekampMathlib, so this entry started at 0: phases are
     # recorded here as they are established for this library in its own right,
     # not inherited from the library the code came from. Phase 2 is attested by
@@ -1023,19 +1306,16 @@ libraries:
   HexHenselMathlib:
     deps: [HexHensel, HexPolyMathlib]
     mathlib: true
-    correspondence_only: true
-    done_through: 3
+    done_through: 7
     status: active
   HexGF2Mathlib:
     deps: [HexGF2, HexPolyFp, HexGFqField, HexPolyFpMathlib]
     mathlib: true
-    correspondence_only: true
     done_through: 7
     status: active
   HexGFqMathlib:
     deps: [HexGFq, HexGF2Mathlib]
     mathlib: true
-    correspondence_only: true
     done_through: 7
     status: active
   HexPrimalityMathlib:
@@ -1054,10 +1334,15 @@ libraries:
           description: Factor-found composites from 25 through 512 bits, including a strong pseudoprime, parity and odd-factor ceiling inputs, and balanced 512-bit bounded exhaustion.
         - name: failure-policy
           description: Fresh modules for certificate exhaustion and immediate 513-bit rejection, with unsupported and non-numeral goal shapes pinned by ordinary conformance.
+  HexECPPMathlib:
+    deps: [HexECPP, HexPrimalityMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
+    proof_probes: [bench/HexECPPMathlib/ProofProbe]
   HexIntFactorMathlib:
     deps: [HexIntFactor, HexPrimalityMathlib]
     mathlib: true
-    correspondence_only: true
     done_through: 7
     status: active
   HexBerlekampZassenhausMathlib:
@@ -1069,7 +1354,6 @@ libraries:
   HexTruncatedSeriesMathlib:
     deps: [HexTruncatedSeries]
     mathlib: true
-    correspondence_only: true
     done_through: 7
     status: active
 
@@ -1096,7 +1380,6 @@ libraries:
   HexRootsMathlib:
     deps: [HexRoots, HexPolyZMathlib]
     mathlib: true
-    correspondence_only: true
     done_through: 7
     status: active
   HexResultant:
@@ -1188,7 +1471,6 @@ libraries:
   HexResultantMathlib:
     deps: [HexResultant, HexPolyMathlib]
     mathlib: true
-    correspondence_only: true
     done_through: 7
     status: active
   HexNumberField:
@@ -1219,7 +1501,6 @@ libraries:
   HexNumberFieldMathlib:
     deps: [HexNumberField, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRootsMathlib, HexPolyZMathlib]
     mathlib: true
-    correspondence_only: true
     done_through: 7
     status: active
   HexRealAlgebraic:
@@ -1228,9 +1509,8 @@ libraries:
     done_through: 1
     status: active
   HexRealAlgebraicMathlib:
-    deps: [HexRealAlgebraic, HexNumberFieldMathlib]
+    deps: [HexRealAlgebraic, HexNumberFieldMathlib, HexRealRootsMathlib]
     mathlib: true
-    correspondence_only: true
     done_through: 1
     status: active
   HexNumberFieldTower:
@@ -1255,7 +1535,6 @@ libraries:
   HexNumberFieldTowerMathlib:
     deps: [HexNumberFieldTower, HexNumberFieldMathlib, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRowReduceMathlib]
     mathlib: true
-    correspondence_only: true
     done_through: 7
     status: active
   HexRealRoots:
@@ -1283,8 +1562,48 @@ libraries:
     done_through: 7
     status: active
     proof_probes: [bench/HexRealRootsMathlib/ProofProbe]
+  HexSturm:
+    deps: [HexPoly, HexRealRoots]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      input_families:
+        - name: head-degree
+          description: Chebyshev heads T_n with query 1 on (-2,2), measuring the normal signed chain and endpoint passes as head degree grows.
+        - name: query-degree
+          description: Fixed head x²−2 with query x^m+1 on (-2,2), measuring initial reduction and replay as query degree grows.
+  HexSignDet:
+    deps: [HexSturm, HexPoly, HexMatrix, HexRowReduce, HexRank]
+    mathlib: false
+    done_through: 0
+    status: active
+  HexSignDetMathlib:
+    deps: [HexSignDet, HexSturmMathlib, HexPolyMathlib, HexMatrixMathlib, HexRankMathlib]
+    mathlib: true
+    proof_probes: [bench/HexSignDetMathlib/ProofProbe]
+    done_through: 0
+    status: active
+  HexRealClosure:
+    deps: [HexSignDet, HexSturm, HexPoly, HexRealAlgebraic, HexOrderedFn]
+    mathlib: false
+    done_through: 0
+    status: active
+  HexRealClosureMathlib:
+    deps: [HexRealClosure, HexSignDetMathlib, HexSturmMathlib, HexRealRootsMathlib, HexPolyMathlib, HexRealAlgebraicMathlib, HexOrderedFnMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
+  HexSturmMathlib:
+    deps: [HexSturm, HexPolyMathlib, HexRealRootsMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
   HexRCF:
-    deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
+    # The existing shared-formula dependency and pins are retained for compatibility.
+    deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib, HexRealFormulaMathlib]
+    # Extra imports are confined to adapters/HexRCF; published pins stay unchanged.
+    adapter_deps: [HexRealAlgebraicMathlib, HexSturm, HexSturmMathlib, HexNumberFieldMathlib, HexOrderedFnMathlib]
     mathlib: true
     done_through: 7
     status: active

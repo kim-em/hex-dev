@@ -1,0 +1,115 @@
+--- /dev/null
++++ b/HexGraph/Sparse/Normalize.lean
+@@ -0,0 +1,68 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexGraph.Sparse.Build
++
++@[expose] public section
++
++namespace Hex.SparseGraph.Builder
++
++/-- Map and normalize a compressed row. -/
++def mapRow (xs : Array (Fin n)) (f : Fin n → Fin n) : List (Fin n) :=
++  normalize (xs.toList.map f)
++
++private theorem get_marks (xs : List (Fin n)) (f : Fin n → Fin n)
++    (marks : Vector Bool n) (i : Fin n) :
++    (xs.foldl (fun a v => a.set (f v).val true) marks)[i.val] =
++      (marks[i.val] || decide (i ∈ xs.map f)) := by
++  induction xs generalizing marks with
++  | nil => simp
++  | cons v xs ih =>
++    rw [List.foldl_cons, ih]
++    by_cases h : f v = i <;>
++      simp [Vector.getElem_set, List.map_cons, List.mem_cons, h, Fin.val_inj,
++        eq_comm, Bool.or_assoc, Bool.or_left_comm]
++
++/-- Emit a row in vertex order using a temporary membership array. -/
++@[specialize] def countRow (xs : Array (Fin n)) (f : Fin n → Fin n) : List (Fin n) :=
++  let marks := xs.foldl (fun (a : Vector Bool n) v => a.set (f v).val true)
++    (Vector.replicate n false)
++  (List.finRange n).filter fun i => marks[i.val]
++
++private theorem mem_countRow (xs : Array (Fin n)) (f : Fin n → Fin n) (i : Fin n) :
++    i ∈ countRow xs f ↔ i ∈ xs.toList.map f := by
++  simp [countRow, ← Array.foldl_toList, get_marks]
++
++private theorem sorted_countRow (xs : Array (Fin n)) (f : Fin n → Fin n) :
++    (countRow xs f).Pairwise (· < ·) :=
++  (List.pairwise_lt_finRange n).filter _
++
++theorem countRow_eq (xs : Array (Fin n)) (f : Fin n → Fin n) :
++    countRow xs f = mapRow xs f := by
++  have hs := sorted_countRow xs f
++  have ht := sorted_normalize (xs.toList.map f)
++  apply List.Perm.eq_of_pairwise (le := (· < ·))
++    (fun a b _ _ hab hba => False.elim (Nat.lt_irrefl a.val (Nat.lt_trans hab hba))) hs ht
++  apply (List.perm_ext_iff_of_nodup
++    (hs.imp fun h => Fin.ne_of_lt h) (ht.imp fun h => Fin.ne_of_lt h)).mpr
++  intro i
++  simp [mem_countRow]
++
++/-- Use counting only when its vertex scan is bounded by eight times the
++row length. Sparse rows keep the existing merge sort. -/
++@[inline] def mapRowFast (xs : Array (Fin n)) (f : Fin n → Fin n) : List (Fin n) :=
++  if 128 ≤ n && n ≤ 8 * xs.size then countRow xs f
++  else normalize (xs.toList.map f)
++
++@[csimp] theorem mapRow_eq_fast : @mapRow = @mapRowFast := by
++  funext n xs f
++  unfold mapRowFast
++  split
++  · exact (countRow_eq xs f).symm
++  · rfl
++
++end Hex.SparseGraph.Builder
+--- a/HexGraph/Sparse/Relabel.lean
++++ b/HexGraph/Sparse/Relabel.lean
+@@ -5,7 +5,7 @@
+ -/
+ module
+ 
+-public import HexGraph.Sparse.Build
++public import HexGraph.Sparse.Normalize
+ public import HexPermGroup.Perm
+ 
+ public section
+@@ -19,11 +19,11 @@
+ @[expose] def relabel (G : SparseGraph n) (p : Perm n) : SparseGraph n :=
+   let q := p.inv
+   let rows := Vector.ofFn fun i =>
+-    Builder.normalize ((G.nbrs (p.get i)).toList.map q.get)
++    Builder.mapRow (G.nbrs (p.get i)) q.get
+   ofRows rows
+-    (fun i => by simp [rows, Builder.sorted_normalize])
++    (fun i => by simp [rows, Builder.mapRow, Builder.sorted_normalize])
+     (fun i j => by
+-      simp only [rows, Fin.getElem_fin, Vector.getElem_ofFn, Builder.mem_normalize,
++      simp only [rows, Builder.mapRow, Fin.getElem_fin, Vector.getElem_ofFn, Builder.mem_normalize,
+         List.mem_map, Array.mem_toList_iff]
+       constructor
+       · rintro ⟨v, hv, he⟩
+@@ -37,7 +37,7 @@
+         rw [hvi] at hv
+         exact (G.symm (p.get j) (p.get i)).mp hv)
+     (fun i => by
+-      simp only [rows, Fin.getElem_fin, Vector.getElem_ofFn, Builder.mem_normalize,
++      simp only [rows, Builder.mapRow, Fin.getElem_fin, Vector.getElem_ofFn, Builder.mem_normalize,
+         List.mem_map, Array.mem_toList_iff]
+       rintro ⟨v, hv, he⟩
+       have hvi : v = p.get i := by rw [← he, Perm.get_inv_get]
+@@ -48,7 +48,7 @@
+     (G.relabel p).adj i j = G.adj (p.get i) (p.get j) := by
+   rw [Bool.eq_iff_iff, ← mem_nbrs, ← mem_nbrs, ← Array.mem_toList_iff,
+     relabel, nbrs_ofRows]
+-  simp only [Fin.getElem_fin, Vector.getElem_ofFn, Builder.mem_normalize,
++  simp only [Builder.mapRow, Fin.getElem_fin, Vector.getElem_ofFn, Builder.mem_normalize,
+     List.mem_map, Array.mem_toList_iff]
+   constructor
+   · rintro ⟨v, hv, he⟩

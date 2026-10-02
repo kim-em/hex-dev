@@ -6,6 +6,8 @@ Authors: Kim Morrison
 module
 public import HexNumberField.Radical
 public import HexNumberFieldMathlib.Conjugate
+public import HexNumberFieldMathlib.Branch
+public import HexNumberFieldMathlib.Unity
 public import HexNumberFieldMathlib.Order
 public import HexNumberFieldMathlib.Polynomial
 public import HexNumberFieldMathlib.AlgebraicRoots
@@ -15,97 +17,6 @@ public section
 
 /-! The executable radicals select Mathlib's principal complex branches. -/
 namespace Hex.AlgebraicNumber.Radical
-
-private theorem rank_nonneg (a : AlgebraicNumber) :
-    0 ≤ rank a ↔ 0 ≤ a.toComplex.im := by
-  have h := a.isolation.sign
-  change match a.side with
-    | .real => a.toComplex.im = 0
-    | .upper => 0 < a.toComplex.im
-    | .lower => a.toComplex.im < 0 at h
-  unfold rank
-  cases hs : a.side <;> simp_all <;> linarith
-
-private theorem twiceRe_value (a : Candidate) :
-    a.twiceRe.toComplex = ((2 * a.value.toComplex.re : ℝ) : ℂ) := by
-  rw [a.correct, add_toComplex, conj_toComplex, Complex.add_conj]
-
-private theorem compare_value (a b : Candidate) :
-    realCompare a.twiceRe b.twiceRe =
-      compare (2 * a.value.toComplex.re) (2 * b.value.toComplex.re) := by
-  rw [realCompare_eq _ _ ((isReal_iff _).mpr (by rw [twiceRe_value]; rfl))
-    ((isReal_iff _).mpr (by rw [twiceRe_value]; rfl)), twiceRe_value, twiceRe_value]
-  rfl
-
-private def Dominates (a b : Candidate) : Prop :=
-  b.value.toComplex.re ≤ a.value.toComplex.re ∧
-    (b.value.toComplex.re = a.value.toComplex.re → rank b.value ≤ rank a.value)
-
-private theorem dominates_refl (a : Candidate) : Dominates a a := ⟨le_rfl, fun _ => le_rfl⟩
-
-private theorem dominates_trans {a b c : Candidate}
-    (hab : Dominates a b) (hbc : Dominates b c) : Dominates a c := by
-  refine ⟨hbc.1.trans hab.1, fun h => ?_⟩
-  have hb : b.value.toComplex.re = a.value.toComplex.re := by linarith [hab.1, hbc.1]
-  exact (hbc.2 (h.trans hb.symm)).trans (hab.2 hb)
-
-private theorem choose_spec (a b : Candidate) :
-    (choose a b = a ∨ choose a b = b) ∧
-      Dominates (choose a b) a ∧ Dominates (choose a b) b := by
-  have hc := compare_value a b
-  unfold choose
-  cases h : realCompare a.twiceRe b.twiceRe with
-  | lt =>
-    have hr := compare_lt_iff_lt.mp (h.symm.trans hc).symm
-    exact ⟨Or.inr rfl, ⟨by linarith, fun he => by linarith⟩, dominates_refl b⟩
-  | gt =>
-    have hr := compare_gt_iff_gt.mp (h.symm.trans hc).symm
-    exact ⟨Or.inl rfl, dominates_refl a, ⟨by linarith, fun he => by linarith⟩⟩
-  | eq =>
-    have hr := compare_eq_iff_eq.mp (h.symm.trans hc).symm
-    simp only
-    split
-    · rename_i hk
-      exact ⟨Or.inr rfl, ⟨by linarith, fun _ => hk.le⟩, dominates_refl b⟩
-    · rename_i hk
-      exact ⟨Or.inl rfl, dominates_refl a, ⟨by linarith, fun _ => le_of_not_gt hk⟩⟩
-
-private theorem fold_spec (rs : List RootCount) (a : Candidate) :
-    let b := rs.foldl (fun best root => choose best (candidate root)) a
-    (b = a ∨ ∃ r ∈ rs, b = candidate r) ∧
-      Dominates b a ∧ ∀ r ∈ rs, Dominates b (candidate r) := by
-  induction rs generalizing a with
-  | nil => exact ⟨Or.inl rfl, dominates_refl a, by simp⟩
-  | cons r rs ih =>
-    obtain ⟨hm, ha, hall⟩ := ih (choose a (candidate r))
-    obtain ⟨hc, hca, hcr⟩ := choose_spec a (candidate r)
-    refine ⟨?_, dominates_trans ha hca, ?_⟩
-    · rcases hm with hm | ⟨s, hs, hm⟩
-      · rcases hc with hc | hc
-        · exact Or.inl (hm.trans hc)
-        · exact Or.inr ⟨r, by simp, hm.trans hc⟩
-      · exact Or.inr ⟨s, List.mem_cons_of_mem _ hs, hm⟩
-    · intro s hs
-      rcases List.mem_cons.mp hs with rfl | hs
-      · exact dominates_trans ha hcr
-      · exact hall s hs
-
-private theorem select_spec (roots : Array RootCount) (hne : roots.toList ≠ []) :
-    ∃ c, select roots = some c ∧ (∃ r ∈ roots.toList, c = candidate r) ∧
-      ∀ r ∈ roots.toList, Dominates c (candidate r) := by
-  unfold select
-  cases h : roots.toList with
-  | nil => exact (hne h).elim
-  | cons r rs =>
-    obtain ⟨hm, ha, hall⟩ := fold_spec rs (candidate r)
-    refine ⟨_, rfl, ?_, ?_⟩
-    · rcases hm with hm | ⟨s, hs, hm⟩
-      · exact ⟨r, by simp, hm⟩
-      · exact ⟨s, List.mem_cons_of_mem _ hs, hm⟩
-    · intro s hs
-      rcases List.mem_cons.mp hs with rfl | hs
-      · exact ha
-      · exact hall s hs
 
 /-- The root solver receives exactly `X^n - a`. -/
 theorem polynomial_value (a : AlgebraicNumber) {n : Nat} (hn : n ≠ 0) :
@@ -176,6 +87,36 @@ theorem select_value (a : AlgebraicNumber) {n : Nat} (hn : n ≠ 0) :
         apply (rank_nonneg _).mpr
         rwa [hvalue, hrv]
 
+/-- The lazy branch selector returns the same principal value as the exact reference. -/
+theorem fast?_value (a : AlgebraicNumber) {n : Nat} (hn : 1 < n) (ha : a.toComplex ≠ 0)
+    {out : AlgebraicRoot} (h : fast? a (polynomial a n).roots.toArray = some out) :
+    out.toComplex = a.toComplex ^ ((n : ℂ)⁻¹) := by
+  have hn0 : n ≠ 0 := by omega
+  let f := polynomial a n
+  have hf : f.toPolynomial = Polynomial.X ^ n - Polynomial.C a.toComplex :=
+    polynomial_value a hn0
+  have hcontains (z : ℂ) : RootSet.Contains f.roots z ↔ z ^ n = a.toComplex := by
+    rw [AlgebraicPoly.contains_roots_iff, hf]
+    simp only [Polynomial.eval_sub, Polynomial.eval_pow, Polynomial.eval_X,
+      Polynomial.eval_C, sub_eq_zero]
+  cases hr : f.roots with
+  | all =>
+    have hz := (AlgebraicPoly.roots_all_iff f).mp hr
+    exact (Polynomial.X_pow_sub_C_ne_zero (Nat.pos_of_ne_zero hn0) a.toComplex
+      (hf.symm.trans hz)).elim
+  | finite roots =>
+    have hp := (hcontains (a.toComplex ^ ((n : ℂ)⁻¹))).mpr
+      (Complex.cpow_nat_inv_pow a.toComplex hn0)
+    rw [hr] at hp
+    have hall (r : RootCount) (hm : r ∈ roots.toList) : r.root.toComplex ^ n = a.toComplex := by
+      apply (hcontains _).mp
+      rw [hr]
+      exact ⟨r, hm, rfl⟩
+    have hh : fast? a roots = some out := by
+      change fast? a f.roots.toArray = some out at h
+      simpa only [hr, RootSet.toArray, RootSet.finite?, Option.getD_some] using h
+    exact fast?_sound a hn ha roots hall hp hh
+
 end Hex.AlgebraicNumber.Radical
 
 
@@ -196,9 +137,40 @@ namespace Hex.AlgebraicNumber
   by_cases ha1 : a == 1
   · have he := (beq_iff a 1).mp ha1
     simp [nthRoot, hn, hn1, ha, ha1, he]
-  obtain ⟨c, hc, hv⟩ := Radical.select_value a hn
-  simpa only [nthRoot, ite_eq_right hn, ite_eq_right hn1, ite_eq_right ha,
-    ite_eq_right ha1, hc, Option.map_some, Option.getD_some] using hv
+  by_cases hm : a == -1
+  · have he := (beq_iff a (-1)).mp hm
+    simp only [nthRoot, ite_eq_right hn, ite_eq_right hn1, ite_eq_right ha, ite_eq_right ha1, ite_eq_left hm]
+    rw [rootOfUnity_toComplex, he, neg_toComplex, one_toComplex,
+      Complex.cpow_def_of_ne_zero (by norm_num), Complex.log_neg_one]
+    congr 1
+    push_cast
+    ring
+  by_cases hi : a == I
+  · have he := (beq_iff a I).mp hi
+    simp only [nthRoot, ite_eq_right hn, ite_eq_right hn1, ite_eq_right ha, ite_eq_right ha1, ite_eq_right hm, ite_eq_left hi]
+    rw [rootOfUnity_toComplex, he, I_toComplex,
+      Complex.cpow_def_of_ne_zero Complex.I_ne_zero, Complex.log_I]
+    congr 1
+    push_cast
+    ring
+  by_cases hni : a == -I
+  · have he := (beq_iff a (-I)).mp hni
+    simp only [nthRoot, ite_eq_right hn, ite_eq_right hn1, ite_eq_right ha, ite_eq_right ha1, ite_eq_right hm,
+      ite_eq_right hi, ite_eq_left hni]
+    rw [rootOfUnity_toComplex, he, neg_toComplex, I_toComplex,
+      Complex.cpow_def_of_ne_zero (neg_ne_zero.mpr Complex.I_ne_zero), Complex.log_neg_I]
+    congr 1
+    push_cast
+    ring
+  simp only [nthRoot, ite_eq_right hn, ite_eq_right hn1, ite_eq_right ha, ite_eq_right ha1, ite_eq_right hm,
+    ite_eq_right hi, ite_eq_right hni]
+  split
+  · rename_i r hr
+    rw [AlgebraicRoot.exact_toComplex]
+    exact Radical.fast?_value a (by omega) (fun hz => ha ((isZero_iff a).mpr hz)) hr
+  · obtain ⟨c, hc, hv⟩ := Radical.select_value a hn
+    rw [hc]
+    exact hv
 
 /-- Every positive-index radical is a root of the expected equation. -/
 @[simp] theorem nthRoot_pow (a : AlgebraicNumber) {n : Nat} (hn : n ≠ 0) :

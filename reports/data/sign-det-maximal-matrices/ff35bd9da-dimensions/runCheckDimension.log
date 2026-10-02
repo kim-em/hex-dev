@@ -1,0 +1,51 @@
+Hex.SignDetBench.MaximalMatrix.runCheckDimension    expected complexity: r^3    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=ff35bd9, 2026-09-29T07:39:51Z, host=chungus2
+  param  per-call    repeats  C
+      3    2.248 µs  ×2^15    C=83.170 [trial 1/6] †
+      9   22.040 µs  ×2^12    C=29.910 [trial 1/6]
+     27  251.588 µs  ×2^8     C=12.869 [trial 1/6]
+     81    3.272 ms  ×2^5     C= 6.120 [trial 1/6]
+    243   51.385 ms  ×2^0     C= 3.585 [trial 1/6]
+    729  990.074 ms  ×2^0     C= 2.559 [trial 1/6]
+      3    2.227 µs  ×2^15    C=83.170 [trial 2/6] †
+      9   21.916 µs  ×2^12    C=29.910 [trial 2/6]
+     27  253.090 µs  ×2^8     C=12.869 [trial 2/6]
+     81    3.229 ms  ×2^5     C= 6.120 [trial 2/6]
+    243   51.609 ms  ×2^0     C= 3.585 [trial 2/6]
+    729  992.248 ms  ×2^0     C= 2.559 [trial 2/6]
+      3    2.247 µs  ×2^15    C=83.170 [trial 3/6] †
+      9   21.881 µs  ×2^12    C=29.910 [trial 3/6]
+     27  253.511 µs  ×2^8     C=12.869 [trial 3/6]
+     81    3.276 ms  ×2^5     C= 6.120 [trial 3/6]
+    243   51.058 ms  ×2^0     C= 3.585 [trial 3/6]
+    729  995.396 ms  ×2^0     C= 2.559 [trial 3/6]
+      3    2.238 µs  ×2^15    C=83.170 [trial 4/6] †
+      9   21.726 µs  ×2^12    C=29.910 [trial 4/6]
+     27  251.382 µs  ×2^8     C=12.869 [trial 4/6]
+     81    3.259 ms  ×2^5     C= 6.120 [trial 4/6]
+    243   51.458 ms  ×2^0     C= 3.585 [trial 4/6]
+    729  991.578 ms  ×2^0     C= 2.559 [trial 4/6]
+      3    2.266 µs  ×2^15    C=83.170 [trial 5/6] †
+      9   21.631 µs  ×2^12    C=29.910 [trial 5/6]
+     27  253.724 µs  ×2^8     C=12.869 [trial 5/6]
+     81    3.245 ms  ×2^5     C= 6.120 [trial 5/6]
+    243   51.874 ms  ×2^0     C= 3.585 [trial 5/6]
+    729  991.353 ms  ×2^0     C= 2.559 [trial 5/6]
+      3    2.243 µs  ×2^15    C=83.170 [trial 6/6] †
+      9   21.618 µs  ×2^12    C=29.910 [trial 6/6]
+     27  253.590 µs  ×2^8     C=12.869 [trial 6/6]
+     81    3.224 ms  ×2^5     C= 6.120 [trial 6/6]
+    243   51.424 ms  ×2^0     C= 3.585 [trial 6/6]
+    729  989.571 ms  ×2^0     C= 2.559 [trial 6/6]
+  verdict: inconclusive (cMin=2.559, cMax=29.910, β=-0.564, looks faster than declared by ~n^0.564)
+  per-spawn floor (harness self-measurement): 21.674 ms
+  peak RSS: 66_848 kB..123_372 kB (across 36 ok row(s))
+  trial summaries (6 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread
+        3  6/6       2.245 µs    2.227 µs    2.266 µs  1.736%
+        9  6/6      21.804 µs   21.618 µs   22.040 µs  1.938%
+       27  6/6     253.301 µs  251.382 µs  253.724 µs  0.924%
+       81  6/6       3.252 ms    3.224 ms    3.276 ms  1.571%
+      243  6/6      51.441 ms   51.058 ms   51.874 ms  1.587%
+      729  6/6     991.465 ms  989.571 ms  995.396 ms  0.588%
+exported to /home/kim/.local/state/hex/issue-10377-matrix-dimension/first-collection/runCheckDimension.json

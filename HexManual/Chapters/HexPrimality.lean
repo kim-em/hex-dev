@@ -37,6 +37,9 @@ project-local {name}`Hex.Nat.Prime` predicate. The companion library
 extends the `primality` tactic to goals stated with it, and registers
 an explicitly opted-in `norm_num` policy.
 
+Import `HexPrimality` for the Mathlib-free API and tactics, or
+`HexPrimalityMathlib` to use them with Mathlib's `Nat.Prime`.
+
 # Deciding primality
 %%%
 tag := "hex-primality-decide"
@@ -84,7 +87,7 @@ tag := "hex-primality-tactic"
 %%%
 
 The bare tactic closes a {name}`Hex.Nat.Prime` goal on a numeral; the
-search runs compiled at elaboration time and the kernel replays only
+search runs during elaboration and the kernel replays only
 the certificate check:
 
 ```lean
@@ -112,6 +115,155 @@ example : Hex.Nat.Prime 561 := primality 561
 ```leanOutput primalityComposite
 primality: 561 is not prime (Miller-Rabin witness 2)
 ```
+
+# Optional elliptic-curve certificates
+
+Import `HexECPPMathlib.Native` explicitly to use
+`primality? (method := ecpp)` for bounded native ECPP production through
+256 bits. An optional `(seed := 7)` makes proposal randomness reproducible.
+The producer takes no supplied curve, point, trace or factorization. It shares
+one finite allocation across recursive children and backtracking; exhaustion
+reports the unresolved subject and resource and is not a compositeness verdict.
+The complete allocation is defined by `Hex.ECPP.SearchBudget`.
+
+The suggestion freezes a compact certificate and its checked terminal Hex
+certificate. Replaying it imports `HexECPPMathlib.Compact` and uses `ecpp using`
+to obtain an unconditional kernel proof without rerunning CM search or PARI.
+In batch builds, `#ecpp_export (method := ecpp) Module.Name cert for n` writes
+that data to a new module. Existing destinations are preserved. Importing
+`HexECPPMathlib.Pari` also provides the explicit PARI production route.
+These optional imports do not change ordinary `primality`.
+
+# Reusable certificates with `primality?`
+%%%
+tag := "hex-primality-construction"
+%%%
+
+The explicitly requested construction tactic `primality?` uses a larger,
+finite search profile. It proves the Curve25519 field prime and offers a
+clickable `Try this:` replacement containing the complete checked certificate.
+This example checks the entire suggestion text, so changes to the generated
+certificate or its formatting are detected:
+
+```lean
+/--
+info: Try this:
+  [apply] exact
+    Hex.Nat.prime_of_checkPrimeAt (c :=
+      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949
+        [(2, 0,
+            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907
+              2028478494862525422475607 22304740449229861598212 2028478494862525422475606
+              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),
+                (2, 0, Hex.Nat.PrimeCert.small 57467),
+                (2, 0,
+                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944
+                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),
+                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])
+      (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime (2 ^ 255 - 19) := by
+  primality?
+
+```
+
+Apply the suggestion to keep certificate search out of subsequent builds. The
+replacement uses {name}`Hex.Nat.prime_of_checkPrimeAt` and `decide +kernel`;
+the kernel still replays the certificate. A standalone file containing the
+replacement needs only `import HexPrimality.Cert`. The goal retains the
+expression `2 ^ 255 - 19`. With `HexPrimalityMathlib` imported, `primality?`
+also handles `Nat.Prime` and suggests the corresponding bridge theorem.
+
+Construction supports inputs through 521 bits, recursive depth 32, and a
+shared limit of 1024 attempts. `primality? (maxAttempts := 29)` sets a smaller
+limit; Curve25519 succeeds at 29 and exhausts at 28. It uses
+stage-one Pollard `p - 1` up to 524288, bounded rho work, and deterministic
+small witnesses before random candidates. Every limit is finite; exhaustion
+reports the seed, attempts, and resource profile. Success depends on finding
+enough factors of predecessors for Pocklington, rather than on bit length
+alone. Construction first tries the factors found by table division before
+running the more expensive factor search. It can use a power of two alone and
+can trade up to 63 small-divisor checks for a smaller factored part of the
+predecessor. These checks are included in the reusable certificate and replayed
+by the kernel. The ordinary `primality` policy keeps its existing smaller budget.
+
+With the standard `import HexIntFactor`, plain `primality?` also discovers
+secp256k1, P-384 and Curve448. It preserves the first route's successful
+certificate; only exhaustion with attempts left triggers a complete retry with
+bounded ECM. Both routes share the same 1024 attempts and advancing random
+state. These three fields need an explicit finite Lean heartbeat allowance;
+`set_option maxHeartbeats 4000000` is tested, without a recursion-depth option.
+See the {ref "tutorial-field-primes"}[field-prime tutorial] for complete examples.
+An explicit `factor :=` provider or `using` certificate bypasses automatic selection.
+Use `primality? (factor := Hex.Nat.Construction.factorSearch)` for core-only
+construction. Automatic fallback also costs time on unsupported inputs: the
+507-bit fixture still exhausts, taking about 20.7 seconds instead of 0.9 seconds
+on the measured host. Native search runs synchronously, so a heartbeat overrun
+can be reported after it returns; heartbeats are not a wall-clock timeout.
+
+The Curve25519 result has three non-leaf certificate nodes and eight factor
+entries. Kernel replay reads the already verified sieve bitset for table
+leaves, and compiled prime enumeration reads 64 candidate bits at a time.
+Both changes are proved equal to their original implementations.
+
+The fixed-corpus comparison measured Curve25519 native decision at
+0.57 seconds and a fresh complete `primality?` build from its numeral at
+1.63 seconds, including Lake overhead and kernel replay. Paired runs using
+the original `2 ^ 255 - 19` expression took 2.17–2.29 seconds, compared with
+7.01–10.41 seconds before these optimizations. FLINT and PARI native decisions
+took 25.9 and 55.4 milliseconds respectively. The native timings use a
+standalone executable; the full tactic currently runs search through Lean’s
+interpreter before kernel checking. All completed samples are
+retained. These are host-specific observations, not latency guarantees. The
+[measurement report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-construction.md)
+records every sample, certificate sizes, and the comparison with the larger
+reference certificate.
+
+The fixed comparison corpus also includes standard cryptographic field
+primes. The current construction profile finds P-256 and the structured
+511/512-bit benchmark primes and P-521. The default profile exhausts on
+secp256k1, P-384 and Curve448. The explicit ECM provider constructs all three:
+see {ref "tutorial-field-primes"}[the field-prime tutorial] for complete
+examples and reusable proofs. P-521 uses 25 factor candidates and 170 attempts; the constructor
+admits at most 32 factors and still examines at most 4096 subsets. For the
+expression `2 ^ 521 - 1`, set local `maxRecDepth` to 1024 and
+`exponentiation.threshold` to 521; its numeral needs neither option.
+The [standard-field report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-fields.md)
+records the default profile's factoring barriers and separate construction, rendering,
+and replay measurements. This is not a general-purpose prover for
+arbitrary cryptographic-size primes.
+
+The first cactus plot compares native exact primality decisions with the
+complete `primality?` build. Native timings exclude Lean proof emission and
+kernel replay, imports, and input conversion. Hex uses certificate
+construction and a compiled self-check internally to decide primality;
+FLINT and PARI return exact decisions through their native algorithms. The
+dashed curve includes the full fresh Lake build: certificate construction,
+proof emission, imports, and kernel checking.
+
+![Native decision and complete Lean proof](https://kim-em.github.io/hex-dev/figures/hex-primality-complete-cactus.svg)
+
+Direct kernel measurements exclude imports, search, and proof elaboration.
+They check complete proof bodies, including expanded local auxiliary proofs.
+With PrimeCert’s fixed-window powering and the same selected Pocklington
+factors, supplied Curve25519 replay takes about 4.54 milliseconds for Hex
+and 3.54 milliseconds for PrimeCert on the recorded host. Curve448 takes
+9.30 and 6.44 milliseconds. PrimeCert uses common witness bases; a separate
+matched-base experiment distinguishes that certificate choice from checker cost.
+
+Complete automatic construction is a separate comparison. On the matched
+Curve25519 `Nat.Prime` goal, the repeated fresh-module experiment measures
+about 2.39 seconds for Hex `primality?` and 3.55 seconds for PrimeCert
+`prime_cert?`, including imports, construction, elaboration, and checking.
+These noisy shared-host observations are not portable performance promises.
+The [replay attribution](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-replay-attribution.md)
+records exact revisions, every sample, component costs, negative controls,
+and construction regression checks. Hex uses Lean 4.34.0 and PrimeCert uses
+Lean 4.33.0; identical-code calibration is reported separately.
+The kernel replay comparison uses a supplied Curve448 certificate in both systems.
+The explicit ECM route in {ref "tutorial-field-primes"}[the field-prime tutorial]
+constructs its own certificate. The corpus is small and structured.
 
 # The Mathlib correspondence
 %%%
@@ -192,21 +344,91 @@ reused by hex-int-factor, and validates every factor it returns:
 
 {docstring Hex.Nat.rhoFactor?_spec}
 
+# Deterministic bounded splitting
+%%%
+tag := "hex-primality-squfof"
+%%%
+
+{name}`Hex.Nat.Squfof.factor` searches for a proper divisor of an input below
+`2^64`, using exact arithmetic and no random seed. Its result includes the
+actual multiplier attempts, recurrence steps, and peak queue length. A
+reported divisor need not itself be prime; {name}`Hex.Nat.Squfof.factor_spec`
+proves that it is strictly between one and the input and divides the input.
+
+The combined forward/reverse budget is visible on a small example:
+
+```lean (name := squfofTrace)
+#eval let r := Hex.Nat.Squfof.factor 22117019
+        { multipliers := 1, steps := 25 }
+      let d := match r.outcome with
+        | .factor d => some d
+        | _ => none
+      (d, r.attempts, r.steps)
+```
+```leanOutput squfofTrace
+(some 4451, 1, 25)
+```
+
+One fewer step exhausts the selected search. Exhaustion is not a primality
+verdict:
+
+```lean (name := squfofExhausted)
+#eval (Hex.Nat.Squfof.factor 22117019
+  { multipliers := 1, steps := 24 }).outcome == .exhausted
+```
+```leanOutput squfofExhausted
+true
+```
+
+Very close factors can give an immediate square form even at 64 bits. This
+example has factors `4026531853` and `4026532019`:
+
+```lean (name := squfofClose)
+#eval let r := Hex.Nat.Squfof.factor 16212959431627901207
+        { multipliers := 1, steps := 128 }
+      let d := match r.outcome with
+        | .factor d => some d
+        | _ => none
+      (d, r.attempts, r.steps)
+```
+```leanOutput squfofClose
+(some 4026531853, 1, 2)
+```
+
+This close-factor example does not predict the cost of a general 64-bit
+composite. Primes, unsuitable forms, and resource exhaustion can produce no
+factor; inputs at or above `2^64` return `unsupported`. The complete checked
+factorization interface offers an explicit SQUFOF policy in
+{ref "hex-int-factor-squfof"}[the integer-factorization chapter].
+
 # The prime table and initial segments
 %%%
 tag := "hex-primality-table"
 %%%
 
 A committed table of the 9,592 primes below `10^5` anchors the small
-end: membership is binary search, and both directions of correctness
-are proved against a kernel-replayed sieve run (the batched
+end: compiled membership uses binary search, while kernel replay reads a
+bit from the verified final sieve state. Both lookup paths are proved equal
+at every input. Both directions of correctness are proved against a
+kernel-replayed sieve run (the batched
 verification is regenerated, never hand-edited, via the
 `#rebuild_primeTable` command).
 
 {docstring Hex.Nat.isTablePrime}
 
-Arbitrary initial segments come from trial division, with no upper
-bound tied to the table:
+The verified compiled sieve also provides a list of every prime strictly
+below a requested bound, including the exceptional primes 2 and 3. Its
+membership and strict ordering theorems are independent of the committed
+table. Pollard `p - 1` and ECM use this runtime source for their stage primes:
+
+{docstring Hex.Nat.primesBelow}
+
+{docstring Hex.Nat.mem_primesBelow}
+
+{docstring Hex.Nat.primesBelow_pairwise_lt}
+
+The interval API still uses trial division, with no upper bound tied to the
+table:
 
 ```lean (name := segmentEval)
 #eval Hex.Nat.primesIn 0 100
@@ -227,12 +449,13 @@ tag := "hex-primality-reach"
 What the certificate tier can do depends on how much of `n - 1` the
 untrusted search can factor:
 
-* The supported elaboration ceiling is 512 bits. The release probes include
+* Ordinary `primality` has a 512-bit ceiling; reusable `primality?`
+  construction has a 521-bit ceiling and constructs P-521. The release probes include
   table-smooth certificates from 31 through 511 bits and a 512-bit certificate
   whose search discovers an above-table factor with bounded rho work.
 * The bounded search reports exhaustion rather than claiming compositeness. A
   separate 512-bit probable-prime probe exercises this path, while a 513-bit
-  input is rejected before search begins.
+  input is rejected by ordinary `primality` before search begins.
 * Negative answers are conclusive only when a size check, table lookup, exact
   trial decision, or one of the thirteen fixed Miller-Rabin bases supplies a
   witness. Passing all fixed bases is not itself a primality result.

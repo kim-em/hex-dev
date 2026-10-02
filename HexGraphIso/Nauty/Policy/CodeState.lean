@@ -17,25 +17,25 @@ public section
 
 namespace Hex.GraphIso.Nauty
 
-variable {n : Nat}
+variable {n : Nat} {κ : Type}
 
 /-- The canonical comparison machine, including its ghost incumbent
 codes during an upward overwrite. -/
-abbrev Codes (cs bs : List Nat) (st : Search n) : Prop :=
+abbrev Codes (cs bs : List Nat) (st : SearchState n κ) : Prop :=
   CodeCmpInv n cs bs st.canoncode st.canonlevel st.eqlevCanon st.compCanon
 
 /-- The executable incumbent, read only when code storage is stable. -/
-@[expose] def Search.best (ctx : Ctx n) (st : Search n) : Option (Key n) :=
+@[expose] def SearchState.best (ctx : Ctx n) (st : SearchState n κ) : Option (Key n) :=
   if st.canonlevel = 0 then none else
     some ⟨(List.range' 1 st.canonlevel).map (fun i => st.canoncode[i]!) ++
       [codeSentinel], leafRows ctx st.canonlab⟩
 
 /-- The semantic incumbent represented by a ghost code sequence. -/
-@[expose] def Search.key (ctx : Ctx n) (bs : List Nat) (st : Search n) : Option (Key n) :=
+@[expose] def SearchState.key (ctx : Ctx n) (bs : List Nat) (st : SearchState n κ) : Option (Key n) :=
   if bs = [] then none else some (incKey ctx bs st.canonlab)
 
 /-- Stable code storage contains the ghost incumbent's entire code list. -/
-theorem code_read {cs bs : List Nat} {st : Search n} {comparison : Int}
+theorem code_read {cs bs : List Nat} {st : SearchState n κ} {comparison : Int}
     (h : CodeCmpInv n cs bs st.canoncode st.canonlevel st.eqlevCanon comparison)
     (hne : comparison ≠ 1) :
     (List.range' 1 st.canonlevel).map (fun i => st.canoncode[i]!) = bs := by
@@ -47,15 +47,15 @@ theorem code_read {cs bs : List Nat} {st : Search n} {comparison : Int}
   simpa only [Nat.add_comm, Nat.one_mul] using hc
 
 /-- The stable executable reading agrees with the semantic incumbent. -/
-theorem best_eq_key {ctx : Ctx n} {cs bs : List Nat} {st : Search n}
+theorem best_eq_key {ctx : Ctx n} {cs bs : List Nat} {st : SearchState n κ}
     {comparison : Int}
     (h : CodeCmpInv n cs bs st.canoncode st.canonlevel st.eqlevCanon comparison)
     (hne : comparison ≠ 1) : st.best ctx = st.key ctx bs := by
-  rw [Search.best, Search.key, code_read h hne, h.blen]
+  rw [SearchState.best, SearchState.key, code_read h hne, h.blen]
   cases bs <;> simp [incKey]
 
 /-- Comparing the next refinement code extends the current path. -/
-theorem Codes.compare {cs bs : List Nat} {st : Search n} {code : Nat}
+theorem Codes.compare {cs bs : List Nat} {st : SearchState n κ} {code : Nat}
     (h : Codes cs bs st) (hc : code < codeSentinel) (hlen : cs.length ≤ n) :
     Codes (cs ++ [code]) bs (compareCodes (cs.length + 1) code st) := by
   have h' := compareCodes_codeInv (st := st) h hc (by omega)
@@ -64,14 +64,14 @@ theorem Codes.compare {cs bs : List Nat} {st : Search n} {code : Nat}
 
 /-- Installing a leaf makes its path the canonical code sequence. The
 premise describes code comparison before the row verdict repurposes it. -/
-theorem Codes.install {cs bs : List Nat} {st : Search n} {comparison : Int}
+theorem Codes.install {cs bs : List Nat} {st : SearchState n κ} {comparison : Int}
     (h : CodeCmpInv n cs bs st.canoncode st.canonlevel st.eqlevCanon comparison)
     (hne : comparison ≠ -1) (hlen : cs.length ≤ n) (sr : Nat) :
     Codes cs cs (install cs.length sr st) :=
   install_codeInv h hne hlen
 
 /-- The first leaf seeds the canonical comparison machine. -/
-theorem firstterminal_codes {cs : List Nat} {st : Search n}
+theorem firstterminal_codes {cs : List Nat} {st : SearchState n κ}
     (hsize : st.canoncode.size = n + 2) (hlen : cs.length ≤ n)
     (hcodes : ∀ i, 1 ≤ i → i ≤ cs.length → st.firstcode[i]! = cs[i - 1]!)
     (hlt : ∀ c ∈ cs, c < codeSentinel) :
@@ -82,19 +82,19 @@ theorem firstterminal_codes {cs : List Nat} {st : Search n}
 
 /-- The first installed incumbent is the reached leaf, with no placeholder
 key before it. -/
-theorem firstterminal_best {ctx : Ctx n} {cs : List Nat} {st : Search n}
+theorem firstterminal_best {ctx : Ctx n} {cs : List Nat} {st : SearchState n κ}
     (hne : cs ≠ []) (hsize : st.canoncode.size = n + 2) (hlen : cs.length ≤ n)
     (hcodes : ∀ i, 1 ≤ i → i ≤ cs.length → st.firstcode[i]! = cs[i - 1]!)
     (hlt : ∀ c ∈ cs, c < codeSentinel) :
     (firstterminal cs.length st).best ctx = some (pathLeafKey ctx cs st.lab) := by
   rw [best_eq_key (firstterminal_codes hsize hlen hcodes hlt) (by change (0 : Int) ≠ 1; decide)]
-  simp only [Search.key, hne, ↓reduceIte]
+  simp only [SearchState.key, hne, ↓reduceIte]
   rfl
 
 /-- A completed leaf has either retained its code verdict or used a
 negative row verdict after full code agreement. Both forms recover to a
 canonical code machine at every earlier level. -/
-inductive Settled (cs bs : List Nat) (st : Search n) : Prop where
+inductive Settled (cs bs : List Nat) (st : SearchState n κ) : Prop where
   /-- The code comparison itself remains valid. -/
   | codes (machine : Codes cs bs st) (nonpos : st.compCanon ≤ 0)
   /-- Row rejection changed the comparison value, with all codes tied. -/
@@ -102,14 +102,14 @@ inductive Settled (cs bs : List Nat) (st : Search n) : Prop where
       (negative : st.compCanon < 0)
 
 /-- Either settled form exposes the same semantic incumbent. -/
-theorem Settled.read {ctx : Ctx n} {cs bs : List Nat} {st : Search n}
+theorem Settled.read {ctx : Ctx n} {cs bs : List Nat} {st : SearchState n κ}
     (h : Settled cs bs st) : st.best ctx = st.key ctx bs := by
   cases h with
   | codes hm hn => exact best_eq_key hm (by omega)
   | rows hm _ => exact best_eq_key hm (by decide)
 
 /-- A settled comparison can be reindexed across changes to other fields. -/
-theorem Settled.congr {cs bs : List Nat} {st out : Search n}
+theorem Settled.congr {cs bs : List Nat} {st out : SearchState n κ}
     (h : Settled cs bs st) (hc : out.canoncode = st.canoncode)
     (hl : out.canonlevel = st.canonlevel) (he : out.eqlevCanon = st.eqlevCanon)
     (hp : out.compCanon = st.compCanon) : Settled cs bs out := by
@@ -126,7 +126,7 @@ theorem Settled.congr {cs bs : List Nat} {st out : Search n}
 
 /-- Recovering either settled leaf verdict truncates the current path
 and restores the ordinary canonical comparison invariant. -/
-theorem Settled.recover {cs bs : List Nat} {st : Search n} {level : Nat}
+theorem Settled.recover {cs bs : List Nat} {st : SearchState n κ} {level : Nat}
     (h : Settled cs bs st) (hlen : level ≤ cs.length) (inf : Nat) :
     Codes (cs.take level) bs (Nauty.recover inf level st) := by
   cases h with

@@ -1,0 +1,369 @@
+{
+  "source_commit": "9c14175b0c3a18972896bdbd14151ddcc27c0908",
+  "source_sha256": {
+    "bench/HexRowReduce/Bench.lean": "2cbc832931b6abb022ff3d48a5790077076cde273c1d565cc9dce804f408c0ca",
+    "HexRowReduce/Inverse.lean": "78d35ec2bb92eb2df15e343d5973ed6e3b183f1696ed1a0f791824590d16ceb8",
+    "HexRowReduce/Solve.lean": "3b26df148fbe74a743dc02090a996bd8e3b51661b2bea89d777b40d76cad63cf",
+    "scripts/oracle/flint_bench_driver.py": "7fd6d0393e8fdd538d0c2b461e7cb5b20095c802db254c4d5c94ee90d3111de1",
+    "scripts/bench/row_reduce_fields.py": "d8629d38283fff5991825c6eb5d2e779633e4894aff2d0672837629bdf65833a",
+    "scripts/oracle/row_reduce_overhead.py": "c435a3180ea93767f6e3dd62e61a637a0ddcec943a023d74a098a9e4f84fe297"
+  },
+  "cpu": 12,
+  "hostname": "chungus2",
+  "load_before": "214.22 177.96 241.20 210/9250 829943",
+  "phase": "comparisons",
+  "schedule": "four adjacent AB/BA blocks",
+  "driver_override": null,
+  "commands": [
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanInverse8",
+        "Hex.RowReduceBench.Field.flintInverse8",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-inverse-8-0.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.7862892170087434
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.flintInverse8",
+        "Hex.RowReduceBench.Field.leanInverse8",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-inverse-8-1.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.6365204289904796
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanInverse8",
+        "Hex.RowReduceBench.Field.flintInverse8",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-inverse-8-2.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.568004987988388
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.flintInverse8",
+        "Hex.RowReduceBench.Field.leanInverse8",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-inverse-8-3.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.550853613007348
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanSolve8",
+        "Hex.RowReduceBench.Field.flintSolve8",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-solve-8-0.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.374138403974939
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.flintSolve8",
+        "Hex.RowReduceBench.Field.leanSolve8",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-solve-8-1.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.37088038699585
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanSolve8",
+        "Hex.RowReduceBench.Field.flintSolve8",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-solve-8-2.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.317652158992132
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.flintSolve8",
+        "Hex.RowReduceBench.Field.leanSolve8",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-solve-8-3.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.3346913130080793
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanInverse16",
+        "Hex.RowReduceBench.Field.flintInverse16",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-inverse-16-0.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.3830454619892407
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.flintInverse16",
+        "Hex.RowReduceBench.Field.leanInverse16",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-inverse-16-1.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.564573979994748
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanInverse16",
+        "Hex.RowReduceBench.Field.flintInverse16",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-inverse-16-2.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.5289161469845567
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.flintInverse16",
+        "Hex.RowReduceBench.Field.leanInverse16",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-inverse-16-3.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.303632238006685
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanSolve16",
+        "Hex.RowReduceBench.Field.flintSolve16",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-solve-16-0.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.7933005329978187
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.flintSolve16",
+        "Hex.RowReduceBench.Field.leanSolve16",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-solve-16-1.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.854087072017137
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanSolve16",
+        "Hex.RowReduceBench.Field.flintSolve16",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-solve-16-2.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.7712441539915744
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.flintSolve16",
+        "Hex.RowReduceBench.Field.leanSolve16",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-solve-16-3.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.892855338024674
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanInverse32",
+        "Hex.RowReduceBench.Field.flintInverse32",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-inverse-32-0.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.5837371659872588
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.flintInverse32",
+        "Hex.RowReduceBench.Field.leanInverse32",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-inverse-32-1.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.4613568390195724
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanInverse32",
+        "Hex.RowReduceBench.Field.flintInverse32",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-inverse-32-2.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.522003655991284
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.flintInverse32",
+        "Hex.RowReduceBench.Field.leanInverse32",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-inverse-32-3.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.4843841239926405
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanSolve32",
+        "Hex.RowReduceBench.Field.flintSolve32",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-solve-32-0.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.659937935997732
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.flintSolve32",
+        "Hex.RowReduceBench.Field.leanSolve32",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-solve-32-1.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.7536073779920116
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanSolve32",
+        "Hex.RowReduceBench.Field.flintSolve32",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-solve-32-2.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.7373404140234925
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.flintSolve32",
+        "Hex.RowReduceBench.Field.leanSolve32",
+        "--repeats",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-solve-32-3.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.6294154390052427
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "run",
+        "Hex.RowReduceBench.runFlintOverhead",
+        "--repeats",
+        "4",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-bounded-comparison-overhead.json"
+      ],
+      "exit_code": 0,
+      "seconds": 4.542181612981949
+    }
+  ],
+  "load_after": "221.99 190.66 239.90 186/9021 852154"
+}

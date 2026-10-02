@@ -15,10 +15,10 @@ public section
 
 namespace Hex.GraphIso.Nauty.Generic
 
-variable {n : Nat} {σ α : Type} [Policy σ n]
+variable {n : Nat} {σ α : Type} {γ : Type} [Policy σ n (γ := γ)]
 
 /-- Refine the first path, save its code, and select its target. -/
-def prepareFirst (ctx : Ctx n) (tcLevel level numcells : Nat) (st : σ) :
+def prepareFirst (ctx : γ) (tcLevel level numcells : Nat) (st : σ) :
     Nat × Int × VSet n × Nat × σ :=
   let r := Policy.visit ctx level numcells st
   (r.1, Policy.chooseTarget true ctx tcLevel level r.1
@@ -26,7 +26,7 @@ def prepareFirst (ctx : Ctx n) (tcLevel level numcells : Nat) (st : σ) :
 
 /-- An invariant established by the first child survives the entire sweep,
 including a return past the receiving frame. -/
-theorem sweep_first_stable {ctx : Ctx n} {inf tcLevel : Nat} {P : σ → Prop}
+theorem sweep_first_stable {ctx : γ} {inf tcLevel : Nat} {P : σ → Prop}
     {validCode : Nat → Prop} {validLeaf : Leaf → σ → Prop}
     (h : StablePolicy ctx inf tcLevel P validCode validLeaf)
     (hfirst : ∀ level tv st, P st → P (Policy.afterChildFirst (n := n) level tv st))
@@ -68,7 +68,7 @@ theorem sweep_first_stable {ctx : Ctx n} {inf tcLevel : Nat} {P : σ → Prop}
 
 /-- A successful first descent records each preparation and the child
 actually selected before any sibling search can run. -/
-inductive FirstPath (ctx : Ctx n) (tcLevel : Nat) :
+inductive FirstPath (ctx : γ) (tcLevel : Nat) :
     Nat → Nat → Nat → σ → Nat → σ → Prop where
   | leaf (fuel level numcells : Nat) (st : σ)
       (hdiscrete : (prepareFirst ctx tcLevel level numcells st).1 = n) :
@@ -89,10 +89,11 @@ inductive FirstPath (ctx : Ctx n) (tcLevel : Nat) :
       FirstPath ctx tcLevel (fuel + 1) level numcells st last leaf
 
 /-- An invariant established at the first leaf survives the full search. -/
-theorem FirstPath.stable {ctx : Ctx n} {inf tcLevel : Nat} {P : σ → Prop}
+theorem FirstPath.stable {ctx : γ} {inf tcLevel : Nat} {P : σ → Prop}
     {validCode : Nat → Prop} {validLeaf : Leaf → σ → Prop}
     (h : StablePolicy ctx inf tcLevel P validCode validLeaf)
     (hfirst : ∀ level tv st, P st → P (Policy.afterChildFirst (n := n) level tv st))
+    (hfinish : ∀ level size index st, P st → P (Policy.afterSweep (n := n) true level size index st))
     {fuel level numcells last : Nat} {st leaf : σ}
     (path : FirstPath ctx tcLevel fuel level numcells st last leaf)
     (hterminal : P (Policy.firstterminal (n := n) last leaf)) :
@@ -136,10 +137,10 @@ theorem FirstPath.stable {ctx : Ctx n} {inf tcLevel : Nat} {P : σ → Prop}
     cases exit with
     | fuel => exact href
     | unwind => exact href
-    | done => exact h.afterSweep true level _ index out href
+    | done => exact hfinish level _ index out href
 
 /-- The first child determines the reference retained by its entire sweep. -/
-theorem sweep_first_reference {ctx : Ctx n} {inf tcLevel : Nat} {project : σ → α}
+theorem sweep_first_reference {ctx : γ} {inf tcLevel : Nat} {project : σ → α}
     (h : ReferencePolicy ctx inf tcLevel project)
     (hfirst : ∀ level tv st,
       project (Policy.afterChildFirst (n := n) level tv st) = project st)
@@ -153,7 +154,7 @@ theorem sweep_first_reference {ctx : Ctx n} {inf tcLevel : Nat} {project : σ �
     fuel cfuel level numcells tc tv index cell st horbit rfl
 
 /-- The full search saves precisely the leaf reached by its first descent. -/
-theorem FirstPath.reference {ctx : Ctx n} {inf tcLevel : Nat} {project : σ → α}
+theorem FirstPath.reference {ctx : γ} {inf tcLevel : Nat} {project : σ → α}
     (h : ReferencePolicy ctx inf tcLevel project)
     (hfirst : ∀ level tv st,
       project (Policy.afterChildFirst (n := n) level tv st) = project st)
@@ -161,6 +162,7 @@ theorem FirstPath.reference {ctx : Ctx n} {inf tcLevel : Nat} {project : σ → 
     (path : FirstPath ctx tcLevel fuel level numcells st last leaf) :
     project (node true ctx inf tcLevel fuel level numcells st).2 =
       project (Policy.firstterminal (n := n) last leaf) :=
-  path.stable (h.stable _) (fun level tv st hin => (hfirst level tv st).trans hin) rfl
+  path.stable (h.stable _) (fun level tv st hin => (hfirst level tv st).trans hin)
+    (fun level size index st hin => (h.afterSweep true level size index st).trans hin) rfl
 
 end Hex.GraphIso.Nauty.Generic

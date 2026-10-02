@@ -148,85 +148,17 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_factor_irreducible
       exact trialDivisionPeel_residual_irreducible hcore_ne hcore_prim hcore_sq
         hsplit2_dvd_core hsplit2_pos hbound rfl hres_one
 
-/-- `positiveDivisors n` returns a duplicate-free list of natural divisors:
-the underlying source `List.range (n + 1)` is `Nodup`, and `List.filter`
-preserves this. -/
-private theorem positiveDivisors_nodup (n : Nat) :
-    (positiveDivisors n).Nodup := by
-  unfold positiveDivisors
-  exact (List.nodup_range : (List.range (n + 1)).Nodup).filter _
-
-/-- Helper: `Nodup` of the per-divisor pair-list flat-map is preserved as
-long as every divisor is positive. The positivity rules out `d = -d` and
-ensures `[d, -d]` and `[d', -d']` are disjoint for distinct positive
-`d ≠ d'`. -/
-private theorem nodup_flatMap_pos_divisor_pairs (ds : List Nat)
-    (hds_nodup : ds.Nodup) (hds_pos : ∀ d ∈ ds, 0 < d) :
-    (ds.flatMap fun d => [Int.ofNat d, -Int.ofNat d]).Nodup := by
-  induction ds with
-  | nil => simp
-  | cons d rest ih =>
-      simp only [List.flatMap_cons]
-      rcases List.nodup_cons.mp hds_nodup with ⟨hd_not_mem, hrest_nodup⟩
-      have hd_pos : 0 < d := hds_pos d (by simp)
-      have hrest_pos : ∀ d' ∈ rest, 0 < d' := by
-        intro d' hd'
-        exact hds_pos d' (by simp [hd'])
-      have ih' := ih hrest_nodup hrest_pos
-      rw [List.nodup_append]
-      refine ⟨?_, ih', ?_⟩
-      · -- `[Int.ofNat d, -Int.ofNat d].Nodup`
-        simp only [List.nodup_cons, List.mem_singleton, List.not_mem_nil,
-          List.nodup_nil, and_true, not_false_eq_true]
-        intro hself
-        have hd_int : (d : Int) > 0 := by exact_mod_cast hd_pos
-        have : (Int.ofNat d : Int) = -(Int.ofNat d : Int) := hself
-        have hcoe : (Int.ofNat d : Int) = (d : Int) := rfl
-        rw [hcoe] at this
-        omega
-      · -- Disjointness with the rest of the flatMap
-        intro a ha_pair b hb_rest hab
-        rcases List.mem_flatMap.mp hb_rest with ⟨d', hd'_mem, hb_mem⟩
-        have hd'_pos : 0 < d' := hrest_pos d' hd'_mem
-        have hd_ne_d' : d ≠ d' := by
-          intro hde
-          apply hd_not_mem
-          rw [hde]
-          exact hd'_mem
-        have hd_int : (d : Int) > 0 := by exact_mod_cast hd_pos
-        have hd'_int : (d' : Int) > 0 := by exact_mod_cast hd'_pos
-        have hd_int_ne : (d : Int) ≠ (d' : Int) := by
-          intro h
-          have : d = d' := by exact_mod_cast h
-          exact hd_ne_d' this
-        have hcoe : (Int.ofNat d : Int) = (d : Int) := rfl
-        have hcoe' : (Int.ofNat d' : Int) = (d' : Int) := rfl
-        -- Concretely unfold membership in the two-element list.
-        have ha_dec : a = Int.ofNat d ∨ a = -Int.ofNat d := by
-          simpa using ha_pair
-        have hb_dec : b = Int.ofNat d' ∨ b = -Int.ofNat d' := by
-          simpa using hb_mem
-        rcases ha_dec with ha | ha <;> rcases hb_dec with hb | hb <;>
-          (rw [ha, hcoe] at hab; rw [hb, hcoe'] at hab; omega)
-
-/-- `integerRootCandidates f` returns a duplicate-free list of candidate
-integer roots: positive divisors are distinct, and the per-divisor pair
-`[d, -d]` is duplicate-free for `d ≠ 0` (which `positiveDivisors` ensures by
-filtering out `d = 0`). The two pairs for distinct positive `d₁ ≠ d₂` share
-no elements either. Consumed by the pairwise non-association proof
-together with `splitIntegerRootFactorsAux_factors_form` to read off
-pairwise distinctness of the factor roots. -/
-private theorem integerRootCandidates_nodup (f : ZPoly) :
-    (integerRootCandidates f).Nodup := by
-  unfold integerRootCandidates
-  apply nodup_flatMap_pos_divisor_pairs
-  · exact positiveDivisors_nodup _
-  · intro d hd
-    unfold positiveDivisors at hd
-    rw [List.mem_filter] at hd
-    rcases hd with ⟨_hmem, hpred⟩
-    simp at hpred
-    omega
+/-- The quadratic formula candidates are distinct, including a double root. -/
+private theorem quadraticRootCandidates_nodup (core : ZPoly) :
+    (quadraticRootCandidates core).Nodup := by
+  unfold quadraticRootCandidates
+  dsimp only
+  split
+  · simp
+  · split
+    · simp
+    · apply List.Pairwise.filter
+      split <;> simp_all
 
 /-- Every factor emitted by `quadraticIntegerRootFactors? core` is a
 fixed point of `normalizeFactorSign`. For linear factors `linearFactorForRoot r`,
@@ -246,7 +178,7 @@ theorem quadraticIntegerRootFactors?_normalizeFactorSign
   unfold quadraticIntegerRootFactors? at hquad
   by_cases hdeg : core.natDegree = 2
   · simp only [hdeg, ite_true] at hquad
-    let roots := integerRootCandidates core
+    let roots := quadraticRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     have hsplit_norm :
         ∀ factor ∈ split.1.toList, normalizeFactorSign factor = factor := by
@@ -323,7 +255,7 @@ theorem quadraticIntegerRootFactors?_shouldRecord
   unfold quadraticIntegerRootFactors? at hquad
   by_cases hdeg : core.natDegree = 2
   · simp only [hdeg, ite_true] at hquad
-    let roots := integerRootCandidates core
+    let roots := quadraticRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     have hsplit_record :
         ∀ factor ∈ split.1.toList, shouldRecordPolynomialFactor factor = true := by
@@ -405,13 +337,13 @@ theorem quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual
     (hmem : factor ∈ factors.toList)
     (hnot_residual :
       factor ≠
-        (splitIntegerRootFactorsAux core (integerRootCandidates core)
-          (integerRootCandidates core).length).2) :
+        (splitIntegerRootFactorsAux core (quadraticRootCandidates core)
+          (quadraticRootCandidates core).length).2) :
     ZPoly.Irreducible factor := by
   unfold quadraticIntegerRootFactors? at hquad
   by_cases hdeg : core.natDegree = 2
   · simp only [hdeg, ite_true] at hquad
-    let roots := integerRootCandidates core
+    let roots := quadraticRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     by_cases hsize : split.1.size = 0
     · simp [roots, split, hsize] at hquad
@@ -451,7 +383,7 @@ polyProduct split.1 = core`.
 This helper exists for `_factor_irreducible_of_primitive` (the public
 combined wrapper); callers outside this file should prefer the wrapper
 because its signature avoids referencing the file-`private`
-`splitIntegerRootFactorsAux` and `integerRootCandidates`. -/
+`splitIntegerRootFactorsAux` and `quadraticRootCandidates`. -/
 private theorem quadraticIntegerRootFactors?_residual_irreducible
     {core : ZPoly} {factors : Array ZPoly}
     (hcore_pos : 0 < DensePoly.leadingCoeff core)
@@ -460,13 +392,13 @@ private theorem quadraticIntegerRootFactors?_residual_irreducible
     {factor : ZPoly}
     (hmem : factor ∈ factors.toList)
     (hres : factor =
-      (splitIntegerRootFactorsAux core (integerRootCandidates core)
-        (integerRootCandidates core).length).2) :
+      (splitIntegerRootFactorsAux core (quadraticRootCandidates core)
+        (quadraticRootCandidates core).length).2) :
     ZPoly.Irreducible factor := by
   unfold quadraticIntegerRootFactors? at hquad
   by_cases hdeg : core.natDegree = 2
   · simp only [hdeg, ite_true] at hquad
-    let roots := integerRootCandidates core
+    let roots := quadraticRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     by_cases hsize : split.1.size = 0
     · simp [roots, split, hsize] at hquad
@@ -678,7 +610,7 @@ to size two, where the `irreducible_of_size_two_primitive` companion of
 
 This is the public wrapper used by Mathlib-side callers: its
 signature avoids referencing the file-`private` `splitIntegerRootFactorsAux`
-and `integerRootCandidates` (the residual is identified internally via
+and `quadraticRootCandidates` (the residual is identified internally via
 case analysis). -/
 theorem quadraticIntegerRootFactors?_factor_irreducible_of_primitive
     {core : ZPoly} {factors : Array ZPoly}
@@ -690,8 +622,8 @@ theorem quadraticIntegerRootFactors?_factor_irreducible_of_primitive
     ZPoly.Irreducible factor := by
   by_cases hres :
       factor =
-        (splitIntegerRootFactorsAux core (integerRootCandidates core)
-          (integerRootCandidates core).length).2
+        (splitIntegerRootFactorsAux core (quadraticRootCandidates core)
+          (quadraticRootCandidates core).length).2
   · exact quadraticIntegerRootFactors?_residual_irreducible
       hcore_pos hcore_primitive hquad hmem hres
   · exact quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual
@@ -705,7 +637,7 @@ theorem quadraticIntegerRootFactors?_product
   unfold quadraticIntegerRootFactors? at hquad
   by_cases hdeg : core.natDegree = 2
   · simp only [hdeg, ite_true] at hquad
-    let roots := integerRootCandidates core
+    let roots := quadraticRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     have hsplit_prod :
         split.2 * Array.polyProduct split.1 = core := by
@@ -771,7 +703,7 @@ theorem quadraticIntegerRootFactors?_factor_size_eq_two
   unfold quadraticIntegerRootFactors? at hquad
   by_cases hdeg : core.natDegree = 2
   · simp only [hdeg, ite_true] at hquad
-    let roots := integerRootCandidates core
+    let roots := quadraticRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     obtain ⟨rs, _hsub, hshape⟩ :=
       splitIntegerRootFactorsAux_factors_form
@@ -1068,7 +1000,7 @@ square-free over `Rat[x]`.
 
 Linear-vs-linear pairs follow from `splitIntegerRootFactorsAux_factors_form`
 (the splitter records `linearFactorForRoot rᵢ` for distinct roots `rᵢ`
-forming a `Sublist` of `integerRootCandidates core`, which is `Nodup`) and
+forming a `Sublist` of `quadraticRootCandidates core`, which is `Nodup`) and
 `linearFactorForRoot_not_associated_of_ne`.
 
 Linear-vs-residual pairs are ruled out by case analysis on the
@@ -1100,9 +1032,9 @@ theorem quadraticIntegerRootFactors?_pairwise_not_associated
   unfold quadraticIntegerRootFactors? at hquad
   by_cases hdeg : core.natDegree = 2
   · simp only [hdeg, ite_true] at hquad
-    let roots := integerRootCandidates core
+    let roots := quadraticRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
-    have hroots_nodup : roots.Nodup := integerRootCandidates_nodup core
+    have hroots_nodup : roots.Nodup := quadraticRootCandidates_nodup core
     obtain ⟨rs, hsub, hshape⟩ :=
       splitIntegerRootFactorsAux_factors_form (target := core) (roots := roots)
         (fuel := roots.length) (factors := split.1) (residual := split.2) rfl

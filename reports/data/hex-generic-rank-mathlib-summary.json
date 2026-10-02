@@ -1,0 +1,417 @@
+{
+  "source_commit": "60668765c8c141bbbeabb17d78d4b277d72ac6a1",
+  "cpu": 7,
+  "validity": {
+    "exceptions": [],
+    "host_protocol": "shared-host-context-v1",
+    "release_quality": true
+  },
+  "cases": [
+    {
+      "case": "FiniteHypothesis",
+      "full_build_median_s": 2.902078173,
+      "full_build_max_s": 3.385373314,
+      "baseline_median_s": 2.670027457,
+      "paired_delta_median_s": 0.233195822,
+      "phase_medians_ms": {
+        "batch": 25.3,
+        "header kernel": 1.995,
+        "pivot kernel": 2.355,
+        "producer": 0.4845,
+        "upper kernel": 4.625
+      },
+      "proof_nodes": [
+        1849
+      ],
+      "artifacts": {
+        "ilean_bytes": 1211,
+        "olean_bytes": 100728,
+        "olean_private_bytes": null,
+        "olean_server_bytes": null,
+        "source_bytes": 471
+      },
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "case": "FiniteSideGoal",
+      "full_build_median_s": 2.862455244,
+      "full_build_max_s": 3.685734365,
+      "baseline_median_s": 2.693961162,
+      "paired_delta_median_s": 0.197930874,
+      "phase_medians_ms": {
+        "batch": 25.3,
+        "header kernel": 1.9849999999999999,
+        "pivot kernel": 2.36,
+        "producer": 0.4945,
+        "upper kernel": 4.585000000000001
+      },
+      "proof_nodes": [
+        1849
+      ],
+      "artifacts": {
+        "ilean_bytes": 1416,
+        "olean_bytes": 101144,
+        "olean_private_bytes": null,
+        "olean_server_bytes": null,
+        "source_bytes": 530
+      },
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "case": "Full2Generic",
+      "full_build_median_s": 2.897572192,
+      "full_build_max_s": 2.954147505,
+      "baseline_median_s": 2.695278494,
+      "paired_delta_median_s": 0.169213042,
+      "phase_medians_ms": {
+        "batch": 24.9,
+        "header kernel": 2.3449999999999998,
+        "pivot kernel": 3.635,
+        "producer": 0.8325,
+        "upper kernel": 5.74
+      },
+      "proof_nodes": [
+        1540
+      ],
+      "artifacts": {
+        "ilean_bytes": 1825,
+        "olean_bytes": 64960,
+        "olean_private_bytes": null,
+        "olean_server_bytes": null,
+        "source_bytes": 544
+      },
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "case": "Full2Hypothesis",
+      "full_build_median_s": 2.812415636,
+      "full_build_max_s": 3.097247577,
+      "baseline_median_s": 2.703543539,
+      "paired_delta_median_s": 0.143357094,
+      "phase_medians_ms": {
+        "batch": 5.725,
+        "header kernel": 2.0,
+        "pivot kernel": 3.68,
+        "producer": 0.839,
+        "upper kernel": 5.83
+      },
+      "proof_nodes": [
+        1374
+      ],
+      "artifacts": {
+        "ilean_bytes": 1205,
+        "olean_bytes": 77696,
+        "olean_private_bytes": null,
+        "olean_server_bytes": null,
+        "source_bytes": 463
+      },
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "case": "Full2SideGoal",
+      "full_build_median_s": 2.802061241,
+      "full_build_max_s": 2.830851974,
+      "baseline_median_s": 2.703877409,
+      "paired_delta_median_s": 0.092820263,
+      "phase_medians_ms": {
+        "batch": 5.789999999999999,
+        "header kernel": 1.975,
+        "pivot kernel": 3.645,
+        "producer": 0.8314999999999999,
+        "upper kernel": 5.69
+      },
+      "proof_nodes": [
+        1374
+      ],
+      "artifacts": {
+        "ilean_bytes": 1410,
+        "olean_bytes": 78208,
+        "olean_private_bytes": null,
+        "olean_server_bytes": null,
+        "source_bytes": 514
+      },
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "case": "Low2Generic",
+      "full_build_median_s": 2.965868514,
+      "full_build_max_s": 3.404055807,
+      "baseline_median_s": 2.703926926,
+      "paired_delta_median_s": 0.237700353,
+      "phase_medians_ms": {
+        "batch": 28.1,
+        "header kernel": 2.355,
+        "pivot kernel": 1.495,
+        "producer": 0.7155,
+        "upper kernel": 4.21
+      },
+      "proof_nodes": [
+        1603
+      ],
+      "artifacts": {
+        "ilean_bytes": 1925,
+        "olean_bytes": 67208,
+        "olean_private_bytes": null,
+        "olean_server_bytes": null,
+        "source_bytes": 606
+      },
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "case": "Low2Hypothesis",
+      "full_build_median_s": 2.798389405,
+      "full_build_max_s": 2.956083952,
+      "baseline_median_s": 2.711863312,
+      "paired_delta_median_s": 0.086526093,
+      "phase_medians_ms": {
+        "batch": 6.8149999999999995,
+        "header kernel": 1.98,
+        "pivot kernel": 1.52,
+        "producer": 0.681,
+        "upper kernel": 4.234999999999999
+      },
+      "proof_nodes": [
+        1409
+      ],
+      "artifacts": {
+        "ilean_bytes": 1203,
+        "olean_bytes": 79216,
+        "olean_private_bytes": null,
+        "olean_server_bytes": null,
+        "source_bytes": 471
+      },
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "case": "Low2SideGoal",
+      "full_build_median_s": 2.873254231,
+      "full_build_max_s": 3.399834779,
+      "baseline_median_s": 2.701010966,
+      "paired_delta_median_s": 0.147227834,
+      "phase_medians_ms": {
+        "batch": 6.8100000000000005,
+        "header kernel": 1.885,
+        "pivot kernel": 1.5,
+        "producer": 0.6845000000000001,
+        "upper kernel": 4.34
+      },
+      "proof_nodes": [
+        1409
+      ],
+      "artifacts": {
+        "ilean_bytes": 1408,
+        "olean_bytes": 79728,
+        "olean_private_bytes": null,
+        "olean_server_bytes": null,
+        "source_bytes": 522
+      },
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "case": "QuadraticGeneric",
+      "full_build_median_s": 2.953829825,
+      "full_build_max_s": 3.506028433,
+      "baseline_median_s": 2.834905199,
+      "paired_delta_median_s": 0.192896616,
+      "phase_medians_ms": {
+        "batch": 22.049999999999997,
+        "header kernel": 2.6950000000000003,
+        "pivot kernel": 4.0649999999999995,
+        "producer": 0.9604999999999999,
+        "upper kernel": 7.66
+      },
+      "proof_nodes": [
+        1640
+      ],
+      "artifacts": {
+        "ilean_bytes": 1833,
+        "olean_bytes": 58640,
+        "olean_private_bytes": null,
+        "olean_server_bytes": null,
+        "source_bytes": 542
+      },
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "case": "QuadraticHypothesis",
+      "full_build_median_s": 2.830728081,
+      "full_build_max_s": 3.421634109,
+      "baseline_median_s": 2.757910941,
+      "paired_delta_median_s": 0.117624449,
+      "phase_medians_ms": {
+        "batch": 4.995,
+        "header kernel": 2.115,
+        "pivot kernel": 3.9850000000000003,
+        "producer": 0.9125000000000001,
+        "upper kernel": 7.46
+      },
+      "proof_nodes": [
+        1526
+      ],
+      "artifacts": {
+        "ilean_bytes": 1213,
+        "olean_bytes": 83808,
+        "olean_private_bytes": null,
+        "olean_server_bytes": null,
+        "source_bytes": 469
+      },
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "case": "QuadraticSideGoal",
+      "full_build_median_s": 2.816574642,
+      "full_build_max_s": 3.314166099,
+      "baseline_median_s": 2.699701348,
+      "paired_delta_median_s": 0.168816132,
+      "phase_medians_ms": {
+        "batch": 5.005000000000001,
+        "header kernel": 2.195,
+        "pivot kernel": 4.01,
+        "producer": 0.9155,
+        "upper kernel": 7.46
+      },
+      "proof_nodes": [
+        1526
+      ],
+      "artifacts": {
+        "ilean_bytes": 1418,
+        "olean_bytes": 84352,
+        "olean_private_bytes": null,
+        "olean_server_bytes": null,
+        "source_bytes": 528
+      },
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "case": "VariableGeneric",
+      "full_build_median_s": 2.804970536,
+      "full_build_max_s": 3.059615197,
+      "baseline_median_s": 2.927586577,
+      "paired_delta_median_s": -0.10384843,
+      "phase_medians_ms": {
+        "batch": 18.4,
+        "header kernel": 1.64,
+        "pivot kernel": 1.41,
+        "producer": 0.4135,
+        "upper kernel": 1.96
+      },
+      "proof_nodes": [
+        1289
+      ],
+      "artifacts": {
+        "ilean_bytes": 1776,
+        "olean_bytes": 52808,
+        "olean_private_bytes": null,
+        "olean_server_bytes": null,
+        "source_bytes": 506
+      },
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "case": "VariableHypothesis",
+      "full_build_median_s": 2.802825644,
+      "full_build_max_s": 3.066159775,
+      "baseline_median_s": 2.699187253,
+      "paired_delta_median_s": 0.104162861,
+      "phase_medians_ms": {
+        "batch": 3.87,
+        "header kernel": 1.4049999999999998,
+        "pivot kernel": 1.46,
+        "producer": 0.4135,
+        "upper kernel": 2.0949999999999998
+      },
+      "proof_nodes": [
+        1190
+      ],
+      "artifacts": {
+        "ilean_bytes": 1211,
+        "olean_bytes": 69912,
+        "olean_private_bytes": null,
+        "olean_server_bytes": null,
+        "source_bytes": 452
+      },
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "case": "VariableSideGoal",
+      "full_build_median_s": 2.811413602,
+      "full_build_max_s": 3.202491026,
+      "baseline_median_s": 2.705421954,
+      "paired_delta_median_s": 0.105991647,
+      "phase_medians_ms": {
+        "batch": 3.91,
+        "header kernel": 1.395,
+        "pivot kernel": 1.4249999999999998,
+        "producer": 0.4075,
+        "upper kernel": 2.04
+      },
+      "proof_nodes": [
+        1190
+      ],
+      "artifacts": {
+        "ilean_bytes": 1416,
+        "olean_bytes": 70424,
+        "olean_private_bytes": null,
+        "olean_server_bytes": null,
+        "source_bytes": 503
+      },
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    }
+  ]
+}

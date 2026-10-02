@@ -1,0 +1,6 @@
+{
+  "path": "HexHensel/Quadratic.lean",
+  "baseline_blob": "9f6f4fa2bf9a55ff17447c4ad3b7d48691e273bd",
+  "current_blob": "6229243aea83e4956d9d929cefa779fde630c194",
+  "reason": "Replaces representation-unfolding proofs about the final stored coefficient and the empty polynomial with DensePoly.leadingCoeff_eq_coeff_last, DensePoly.size_eq_zero_iff, and DensePoly.leadingCoeff_zero. No executable definition or measured branch changes."
+}

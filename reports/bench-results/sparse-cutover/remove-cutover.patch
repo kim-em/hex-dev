@@ -1,0 +1,11 @@
+--- a/HexGraph/Sparse/Normalize.lean
++++ b/HexGraph/Sparse/Normalize.lean
+@@ -55,7 +55,7 @@
+ /-- Use counting only when its vertex scan is bounded by eight times the
+ row length. Sparse rows keep the existing merge sort. -/
+ @[inline] def mapRowFast (xs : Array (Fin n)) (f : Fin n → Fin n) : List (Fin n) :=
+-  if 128 ≤ n && n ≤ 8 * xs.size then countRow xs f
++  if n ≤ 8 * xs.size then countRow xs f
+   else normalize (xs.toList.map f)
+ 
+ @[csimp] theorem mapRow_eq_fast : @mapRow = @mapRowFast := by

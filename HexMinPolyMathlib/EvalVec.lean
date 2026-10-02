@@ -27,7 +27,7 @@ universe u
 variable {F : Type u} [Field F] [DecidableEq F] {n : Nat}
 
 omit [DecidableEq F] in
-private theorem vectorEquiv_krylovVec (A : Hex.Matrix F n n) (v : Vector F n)
+theorem vectorEquiv_krylovVec (A : Hex.Matrix F n n) (v : Vector F n)
     (j : Nat) :
     vectorEquiv (Hex.Matrix.krylovVec A v j) =
       ((matrixEquiv A) ^ j).mulVec (vectorEquiv v) := by
@@ -48,7 +48,7 @@ private theorem finset_sum_mulVec (s : Finset Nat)
       rw [Finset.sum_insert ha, Finset.sum_insert ha, Matrix.add_mulVec, ih]
 
 omit [DecidableEq F] in
-private theorem vectorEquiv_vecMul_krylov {r : Nat} (c : Vector F r)
+theorem vectorEquiv_vecMul_krylov {r : Nat} (c : Vector F r)
     (A : Hex.Matrix F n n) (v : Vector F n) :
     vectorEquiv (Hex.Matrix.vecMul c (Hex.Matrix.krylovMat A v r)) =
       ∑ j : Fin r, c[j] • vectorEquiv (Hex.Matrix.krylovVec A v j) := by

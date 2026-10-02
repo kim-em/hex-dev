@@ -143,11 +143,9 @@ Each library has up to three conformance-tree modules:
 - `conformance/HexFoo/Conformance.lean` (module `HexFoo.Conformance`) —
   the `core` profile, specified above. Every Mathlib-free library at
   `done_through ≥ 2` has one. A Mathlib-importing library has one when it owns
-  an executable runtime contract. A layer with `correspondence_only: true`
-  must not have one (see
-  [PLAN/Phase3.md §Correspondence-only mathlib layers](../PLAN/Phase3.md)). A
-  layer with `complexity_layer: true` also must not have one (see §Banned
-  anti-patterns).
+  an executable runtime contract; one whose API is theorems about operations
+  owned elsewhere must not (see §Banned anti-patterns and
+  [PLAN/Phase3.md §Mathlib libraries](../PLAN/Phase3.md)).
 - `conformance/HexFoo/CrossCheck.lean` (module `HexFoo.CrossCheck`) —
   the heavier cross-check sweeps: representation-correspondence
   campaigns, fast-vs-fast agreement over deterministic input streams,
@@ -182,6 +180,19 @@ on the repository style guide's banned-vocabulary list.
 
 ## Oracle discipline
 
+On pull requests, external-oracle execution is filtered to the libraries that
+own paths changed against the merge base. Ownership includes library source,
+`bench/<Lib>/`, `conformance/<Lib>/`, `conformance-fixtures/<Lib>/`, and the
+oracle scripts consumed by a library's tuple. Shared CI, Lake, GitHub workflow,
+`Hex/`, common-oracle infrastructure, and unclassified non-documentation paths
+select all libraries. The filter does not include downstream dependents: a
+`HexPoly` change runs the `HexPoly` oracle tuple, not every consumer of `HexPoly`.
+A library with no oracle tuple contributes no oracle execution on its own PR.
+This scoping applies only to oracle and bench execution; CI continues to build
+all conformance and emit-fixture targets.
+Pushes to `main` and manual runs execute the complete suite, catching any
+downstream fixture breakage omitted from a pull request run.
+
 Every operation in a library's SPEC API surface that is exercised by fixtures
 via `conformance/HexFoo/EmitFixtures.lean` MUST have an external-oracle
 cross-check that satisfies all three rules below. A SPEC declaration
@@ -213,9 +224,10 @@ the library at `done_through ≤ 2`.
 
 3. **Explicit non-coverage is a tracking obligation.** An emitted
    operation that has no external oracle (whether deferred or
-   genuinely blocked) must be paired with an open `directive`
-   issue, linked from both `conformance/HexFoo/EmitFixtures.lean` and the
-   corresponding oracle script's docstring. The library's `Conformance.lean`
+   genuinely blocked) must be tracked as an outstanding obligation in
+   the affected SPEC's open issue, linked from both
+   `conformance/HexFoo/EmitFixtures.lean` and the corresponding oracle script's
+   docstring. The library's `Conformance.lean`
    docstring must not claim the operation as covered. Self-consistency
    invariants are not a substitute for an external oracle and must
    not be advertised as conformance coverage.
@@ -326,23 +338,17 @@ MUST NOT appear in any `Conformance.lean`:
   theorem is `sorry`, delete the example. The example becomes
   meaningful only when the theorem it relies on has a real proof.
 
-- **Conformance files in correspondence-only `Hex*Mathlib` bridges.** A bridge
-  with `correspondence_only: true` is proof-only and has no executable runtime
-  to conform to, so no conformance source or target owned by that bridge should
-  exist. Any `#guard` or
+- **Conformance files in proof-only `Hex*Mathlib` libraries.** A Mathlib
+  library whose API is theorems about operations owned elsewhere has no
+  executable runtime to conform to, so no conformance source or target owned
+  by it should exist. Any `#guard` or
   `#eval` exercising the Mathlib-free executable belongs in the computational
   sibling (for example, checks on `Hex.Berlekamp.rabinTest` live in
   `HexBerlekamp/Conformance.lean`, never in
   `HexBerlekampMathlib/Conformance.lean`). A Mathlib-importing library that
-  itself owns an executable reifier, certificate checker, or tactic is not a
-  correspondence-only bridge and may have a dedicated conformance target when
+  itself owns an executable reifier, certificate checker, or tactic may have a
+  dedicated conformance target when
   its library SPEC defines that runtime contract and CI reachability.
-
-- **Conformance files in complexity layers.** A library with
-  `complexity_layer: true` contains operation-count definitions and proofs but
-  owns no executable operation. It has no conformance source, fixture stream,
-  or oracle. Its metadata names the computational conformance owners whose
-  tests cover the analysed operations.
 
 ## `#eval` vs `#eval!`
 
@@ -440,21 +446,15 @@ subsection. Default oracle assignments:
   (Lean ≡ PARI ≡ Lübeck). No random generation.
 
 The `-mathlib` libraries are not the primary target of external
-conformance testing. A layer explicitly classified by
-`correspondence_only: true` has no `core` profile at all: its coverage is the
-coverage of the
-computational owners it transports from, and a conformance module of
-its own is banned (see §Banned anti-patterns and
-[PLAN/Phase3.md §Correspondence-only mathlib layers](../PLAN/Phase3.md)).
+conformance testing. One whose API is theorems about operations owned
+elsewhere has no `core` profile at all: its coverage is the coverage of the
+Mathlib-free libraries implementing those operations, and a conformance module
+of its own is banned (see §Banned anti-patterns and
+[PLAN/Phase3.md §Mathlib libraries](../PLAN/Phase3.md)).
 A Mathlib-importing library that owns a runtime of its own, an
 executable reifier, certificate checker, or tactic, does have a `core`
 profile, exercising that runtime against the contract its library SPEC
 states rather than restating bridge theorems.
-
-A library with `complexity_layer: true` likewise has no conformance profile
-or external oracle. Its proofs concern workers owned by the computational
-libraries named in its metadata, and those owners retain the conformance
-fixtures.
 
 ## Profile sizes
 

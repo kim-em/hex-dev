@@ -1,0 +1,1727 @@
+{
+  "schema": "hex-primality-language/1",
+  "cpu": 4,
+  "host": "chungus2",
+  "protocol": "fixed trial-major schedule, reverse adjacent arms in odd blocks; retain all samples",
+  "fresh_timing": "Lake build of fresh module including imports and elaboration; no direct-kernel instrumentation",
+  "kernel_timing": "warm Kernel.check of fully expanded local proof against its goal, with negative controls",
+  "primecert_commit": "0803c2f6bd289c09704c7d352bb8fcf770cbb9b2",
+  "versions": {
+    "hex": {
+      "toolchain": "leanprover/lean4:v4.34.0",
+      "commit": "381f743a0126b59da197752d5af39c9fe925bab7"
+    },
+    "primecert": {
+      "toolchain": "leanprover/lean4:v4.33.0",
+      "commit": "0803c2f6bd289c09704c7d352bb8fcf770cbb9b2"
+    }
+  },
+  "samples": [
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1640416370,
+      "olean_bytes": 4096,
+      "host_before": {
+        "load_average": [
+          10.27880859375,
+          19.85791015625,
+          44.51318359375
+        ],
+        "lake_lean_processes": 5
+      },
+      "host_after": {
+        "load_average": [
+          10.3369140625,
+          19.71044921875,
+          44.3330078125
+        ],
+        "lake_lean_processes": 5
+      },
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (1.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 0,
+      "case": "Curve25519",
+      "arm": "search",
+      "kernel_nanos": 5297292,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (1.2s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 5297292\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1022652657,
+      "olean_bytes": 4096,
+      "host_before": {
+        "load_average": [
+          10.3369140625,
+          19.71044921875,
+          44.3330078125
+        ],
+        "lake_lean_processes": 7
+      },
+      "host_after": {
+        "load_average": [
+          10.3369140625,
+          19.71044921875,
+          44.3330078125
+        ],
+        "lake_lean_processes": 9
+      },
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (513ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 0,
+      "case": "Curve25519",
+      "arm": "literal",
+      "kernel_nanos": 5286146,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (657ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:30:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:30:0: DIRECT_KERNEL_NS 5286146\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:30:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1018363984,
+      "olean_bytes": 4096,
+      "host_before": {
+        "load_average": [
+          10.3369140625,
+          19.71044921875,
+          44.3330078125
+        ],
+        "lake_lean_processes": 8
+      },
+      "host_after": {
+        "load_average": [
+          10.47021484375,
+          19.58203125,
+          44.1591796875
+        ],
+        "lake_lean_processes": 7
+      },
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (546ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 0,
+      "case": "Curve25519",
+      "arm": "producer",
+      "kernel_nanos": 5293577,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (681ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:28:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:28:0: DIRECT_KERNEL_NS 5293577\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:28:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "PrimeCert.Comparator.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Language:olean"
+      ],
+      "wall_nanos": 1573274757,
+      "olean_bytes": 5536,
+      "host_before": {
+        "load_average": [
+          10.47021484375,
+          19.58203125,
+          44.1591796875
+        ],
+        "lake_lean_processes": 6
+      },
+      "host_after": {
+        "load_average": [
+          10.47021484375,
+          19.58203125,
+          44.1591796875
+        ],
+        "lake_lean_processes": 6
+      },
+      "stdout": "\u26a0 [1969/1969] Built PrimeCert.Comparator.Language (795ms)\nwarning: PrimeCert/Comparator/Language.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Language.lean:15:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Language.lean:16:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1969 jobs).\n",
+      "stderr": "",
+      "block": 0,
+      "case": "Curve25519",
+      "arm": "primecert",
+      "kernel_nanos": 15005681,
+      "kernel_stdout": "\u26a0 [1969/1969] Built PrimeCert.Comparator.Language (1.1s)\nwarning: PrimeCert/Comparator/Language.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Language.lean:15:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Language.lean:16:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\ninfo: PrimeCert/Comparator/Language.lean:28:0: DIRECT_KERNEL_NS 15005681\ninfo: PrimeCert/Comparator/Language.lean:28:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n PocklingtonPred.base,\n PrimeCert.pocklington3_certK,\n List.cons,\n PrimeCert.PrimePow,\n PrimeCert.PrimePow.mk,\n PrimeCert.Sieve.IsSieve.prime,\n PrimeCert.Sieve.sieveBits_1000000,\n PrimeCert.Sieve.isSieve_1000000,\n Eq.refl,\n Bool,\n Bool.true,\n PrimeCert.prime_223,\n List.nil,\n PrimeCert.Pocklington3CertMode.prime,\n PrimeCert.prime_3,\n PrimeCert.prime_353]\nwarning: PrimeCert/Comparator/Language.lean:51:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1969 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1112809076,
+      "olean_bytes": 4040,
+      "host_before": {
+        "load_average": [
+          10.7529296875,
+          19.4892578125,
+          43.9970703125
+        ],
+        "lake_lean_processes": 10
+      },
+      "host_after": {
+        "load_average": [
+          10.7529296875,
+          19.4892578125,
+          43.9970703125
+        ],
+        "lake_lean_processes": 13
+      },
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (568ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 0,
+      "case": "Repeated",
+      "arm": "literal",
+      "kernel_nanos": 378031,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (683ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 378031\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1086244431,
+      "olean_bytes": 4040,
+      "host_before": {
+        "load_average": [
+          10.7529296875,
+          19.4892578125,
+          43.9970703125
+        ],
+        "lake_lean_processes": 9
+      },
+      "host_after": {
+        "load_average": [
+          10.7529296875,
+          19.4892578125,
+          43.9970703125
+        ],
+        "lake_lean_processes": 8
+      },
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (534ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock 17 [(3, 3, Hex.Nat.PrimeCert.small 2)])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 0,
+      "case": "Repeated",
+      "arm": "producer",
+      "kernel_nanos": 356919,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (654ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock 17 [(3, 3, Hex.Nat.PrimeCert.small 2)])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 356919\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "PrimeCert.Comparator.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Language:olean"
+      ],
+      "wall_nanos": 1593644927,
+      "olean_bytes": 4160,
+      "host_before": {
+        "load_average": [
+          10.6123046875,
+          19.31494140625,
+          43.80908203125
+        ],
+        "lake_lean_processes": 7
+      },
+      "host_after": {
+        "load_average": [
+          10.6123046875,
+          19.31494140625,
+          43.80908203125
+        ],
+        "lake_lean_processes": 6
+      },
+      "stdout": "\u2714 [1969/1969] Built PrimeCert.Comparator.Language (781ms)\nBuild completed successfully (1969 jobs).\n",
+      "stderr": "",
+      "block": 0,
+      "case": "Repeated",
+      "arm": "primecert",
+      "kernel_nanos": 203893,
+      "kernel_stdout": "\u2139 [1969/1969] Built PrimeCert.Comparator.Language (990ms)\ninfo: PrimeCert/Comparator/Language.lean:23:0: DIRECT_KERNEL_NS 203893\ninfo: PrimeCert/Comparator/Language.lean:23:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Nat.pow,\n PocklingtonPred.base_pow,\n PrimeCert.prime_2,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (1969 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1081364798,
+      "olean_bytes": 4040,
+      "host_before": {
+        "load_average": [
+          10.6123046875,
+          19.31494140625,
+          43.80908203125
+        ],
+        "lake_lean_processes": 6
+      },
+      "host_after": {
+        "load_average": [
+          10.6123046875,
+          19.31494140625,
+          43.80908203125
+        ],
+        "lake_lean_processes": 7
+      },
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (519ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 0,
+      "case": "Sieve",
+      "arm": "literal",
+      "kernel_nanos": 890712,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (654ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 890712\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock3Sieve,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1025745244,
+      "olean_bytes": 4040,
+      "host_before": {
+        "load_average": [
+          10.7236328125,
+          19.193359375,
+          43.63818359375
+        ],
+        "lake_lean_processes": 6
+      },
+      "host_after": {
+        "load_average": [
+          10.7236328125,
+          19.193359375,
+          43.63818359375
+        ],
+        "lake_lean_processes": 5
+      },
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (516ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock3Sieve 197 1 6 0 2 [(2, 1, Hex.Nat.PrimeCert.small 2)])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 0,
+      "case": "Sieve",
+      "arm": "producer",
+      "kernel_nanos": 814669,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (652ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock3Sieve 197 1 6 0 2 [(2, 1, Hex.Nat.PrimeCert.small 2)])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 814669\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock3Sieve,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "PrimeCert.Comparator.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Language:olean"
+      ],
+      "wall_nanos": 1591322749,
+      "olean_bytes": 4160,
+      "host_before": {
+        "load_average": [
+          10.7236328125,
+          19.193359375,
+          43.63818359375
+        ],
+        "lake_lean_processes": 5
+      },
+      "host_after": {
+        "load_average": [
+          10.58544921875,
+          19.02392578125,
+          43.45166015625
+        ],
+        "lake_lean_processes": 5
+      },
+      "stdout": "\u2714 [1969/1969] Built PrimeCert.Comparator.Language (788ms)\nBuild completed successfully (1969 jobs).\n",
+      "stderr": "",
+      "block": 0,
+      "case": "Sieve",
+      "arm": "primecert",
+      "kernel_nanos": 337731,
+      "kernel_stdout": "\u2139 [1969/1969] Built PrimeCert.Comparator.Language (953ms)\ninfo: PrimeCert/Comparator/Language.lean:23:0: DIRECT_KERNEL_NS 337731\ninfo: PrimeCert/Comparator/Language.lean:23:0: DIRECT_DEPENDENCIES [PrimeCert.pocklington3_certK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n List.nil,\n PrimeCert.PrimePow,\n PrimeCert.Pocklington3CertMode.lt,\n of_decide_eq_true,\n Eq,\n Bool,\n PrimeCert.pocklington3_calculate,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (1969 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "PrimeCert.Comparator.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Language:olean"
+      ],
+      "wall_nanos": 1599895262,
+      "olean_bytes": 5536,
+      "host_before": {
+        "load_average": [
+          10.58544921875,
+          19.02392578125,
+          43.45166015625
+        ],
+        "lake_lean_processes": 10
+      },
+      "host_after": {
+        "load_average": [
+          10.58544921875,
+          19.02392578125,
+          43.45166015625
+        ],
+        "lake_lean_processes": 5
+      },
+      "stdout": "\u26a0 [1969/1969] Built PrimeCert.Comparator.Language (853ms)\nwarning: PrimeCert/Comparator/Language.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Language.lean:15:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Language.lean:16:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1969 jobs).\n",
+      "stderr": "",
+      "block": 1,
+      "case": "Curve25519",
+      "arm": "primecert",
+      "kernel_nanos": 14521791,
+      "kernel_stdout": "\u26a0 [1969/1969] Built PrimeCert.Comparator.Language (1.0s)\nwarning: PrimeCert/Comparator/Language.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Language.lean:15:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Language.lean:16:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\ninfo: PrimeCert/Comparator/Language.lean:28:0: DIRECT_KERNEL_NS 14521791\ninfo: PrimeCert/Comparator/Language.lean:28:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n PocklingtonPred.base,\n PrimeCert.pocklington3_certK,\n List.cons,\n PrimeCert.PrimePow,\n PrimeCert.PrimePow.mk,\n PrimeCert.Sieve.IsSieve.prime,\n PrimeCert.Sieve.sieveBits_1000000,\n PrimeCert.Sieve.isSieve_1000000,\n Eq.refl,\n Bool,\n Bool.true,\n PrimeCert.prime_223,\n List.nil,\n PrimeCert.Pocklington3CertMode.prime,\n PrimeCert.prime_3,\n PrimeCert.prime_353]\nwarning: PrimeCert/Comparator/Language.lean:51:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1969 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1073203525,
+      "olean_bytes": 4096,
+      "host_before": {
+        "load_average": [
+          11.41943359375,
+          19.05712890625,
+          43.3310546875
+        ],
+        "lake_lean_processes": 7
+      },
+      "host_after": {
+        "load_average": [
+          11.41943359375,
+          19.05712890625,
+          43.3310546875
+        ],
+        "lake_lean_processes": 5
+      },
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (545ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 1,
+      "case": "Curve25519",
+      "arm": "producer",
+      "kernel_nanos": 5185506,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (705ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:28:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:28:0: DIRECT_KERNEL_NS 5185506\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:28:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1068661997,
+      "olean_bytes": 4096,
+      "host_before": {
+        "load_average": [
+          11.41943359375,
+          19.05712890625,
+          43.3310546875
+        ],
+        "lake_lean_processes": 5
+      },
+      "host_after": {
+        "load_average": [
+          11.41943359375,
+          19.05712890625,
+          43.3310546875
+        ],
+        "lake_lean_processes": 6
+      },
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (511ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 1,
+      "case": "Curve25519",
+      "arm": "literal",
+      "kernel_nanos": 5258915,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (640ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:30:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:30:0: DIRECT_KERNEL_NS 5258915\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:30:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1516295271,
+      "olean_bytes": 4096,
+      "host_before": {
+        "load_average": [
+          12.02685546875,
+          19.05615234375,
+          43.2001953125
+        ],
+        "lake_lean_processes": 5
+      },
+      "host_after": {
+        "load_average": [
+          12.02685546875,
+          19.05615234375,
+          43.2001953125
+        ],
+        "lake_lean_processes": 5
+      },
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (1.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 1,
+      "case": "Curve25519",
+      "arm": "search",
+      "kernel_nanos": 5512370,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (1.2s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 5512370\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "PrimeCert.Comparator.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Language:olean"
+      ],
+      "wall_nanos": 1570450725,
+      "olean_bytes": 4160,
+      "host_before": {
+        "load_average": [
+          12.02685546875,
+          19.05615234375,
+          43.2001953125
+        ],
+        "lake_lean_processes": 5
+      },
+      "host_after": {
+        "load_average": [
+          12.10498046875,
+          18.95556640625,
+          43.03759765625
+        ],
+        "lake_lean_processes": 7
+      },
+      "stdout": "\u2714 [1969/1969] Built PrimeCert.Comparator.Language (815ms)\nBuild completed successfully (1969 jobs).\n",
+      "stderr": "",
+      "block": 1,
+      "case": "Repeated",
+      "arm": "primecert",
+      "kernel_nanos": 181920,
+      "kernel_stdout": "\u2139 [1969/1969] Built PrimeCert.Comparator.Language (968ms)\ninfo: PrimeCert/Comparator/Language.lean:23:0: DIRECT_KERNEL_NS 181920\ninfo: PrimeCert/Comparator/Language.lean:23:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Nat.pow,\n PocklingtonPred.base_pow,\n PrimeCert.prime_2,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (1969 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1060400967,
+      "olean_bytes": 4040,
+      "host_before": {
+        "load_average": [
+          12.10498046875,
+          18.95556640625,
+          43.03759765625
+        ],
+        "lake_lean_processes": 6
+      },
+      "host_after": {
+        "load_average": [
+          12.10498046875,
+          18.95556640625,
+          43.03759765625
+        ],
+        "lake_lean_processes": 5
+      },
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (537ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock 17 [(3, 3, Hex.Nat.PrimeCert.small 2)])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 1,
+      "case": "Repeated",
+      "arm": "producer",
+      "kernel_nanos": 315679,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (657ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock 17 [(3, 3, Hex.Nat.PrimeCert.small 2)])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 315679\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1043195785,
+      "olean_bytes": 4040,
+      "host_before": {
+        "load_average": [
+          12.09619140625,
+          18.83984375,
+          42.87060546875
+        ],
+        "lake_lean_processes": 5
+      },
+      "host_after": {
+        "load_average": [
+          12.09619140625,
+          18.83984375,
+          42.87060546875
+        ],
+        "lake_lean_processes": 7
+      },
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (520ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 1,
+      "case": "Repeated",
+      "arm": "literal",
+      "kernel_nanos": 361627,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (625ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 361627\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "PrimeCert.Comparator.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Language:olean"
+      ],
+      "wall_nanos": 1598377131,
+      "olean_bytes": 4160,
+      "host_before": {
+        "load_average": [
+          12.09619140625,
+          18.83984375,
+          42.87060546875
+        ],
+        "lake_lean_processes": 7
+      },
+      "host_after": {
+        "load_average": [
+          12.09619140625,
+          18.83984375,
+          42.87060546875
+        ],
+        "lake_lean_processes": 6
+      },
+      "stdout": "\u2714 [1969/1969] Built PrimeCert.Comparator.Language (798ms)\nBuild completed successfully (1969 jobs).\n",
+      "stderr": "",
+      "block": 1,
+      "case": "Sieve",
+      "arm": "primecert",
+      "kernel_nanos": 363460,
+      "kernel_stdout": "\u2139 [1969/1969] Built PrimeCert.Comparator.Language (955ms)\ninfo: PrimeCert/Comparator/Language.lean:23:0: DIRECT_KERNEL_NS 363460\ninfo: PrimeCert/Comparator/Language.lean:23:0: DIRECT_DEPENDENCIES [PrimeCert.pocklington3_certK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n List.nil,\n PrimeCert.PrimePow,\n PrimeCert.Pocklington3CertMode.lt,\n of_decide_eq_true,\n Eq,\n Bool,\n PrimeCert.pocklington3_calculate,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (1969 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1021731213,
+      "olean_bytes": 4040,
+      "host_before": {
+        "load_average": [
+          11.92822265625,
+          18.69287109375,
+          42.69384765625
+        ],
+        "lake_lean_processes": 6
+      },
+      "host_after": {
+        "load_average": [
+          11.92822265625,
+          18.69287109375,
+          42.69384765625
+        ],
+        "lake_lean_processes": 6
+      },
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (506ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock3Sieve 197 1 6 0 2 [(2, 1, Hex.Nat.PrimeCert.small 2)])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 1,
+      "case": "Sieve",
+      "arm": "producer",
+      "kernel_nanos": 794970,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (641ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock3Sieve 197 1 6 0 2 [(2, 1, Hex.Nat.PrimeCert.small 2)])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 794970\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock3Sieve,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1051550059,
+      "olean_bytes": 4040,
+      "host_before": {
+        "load_average": [
+          11.92822265625,
+          18.69287109375,
+          42.69384765625
+        ],
+        "lake_lean_processes": 5
+      },
+      "host_after": {
+        "load_average": [
+          11.92822265625,
+          18.69287109375,
+          42.69384765625
+        ],
+        "lake_lean_processes": 5
+      },
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (518ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 1,
+      "case": "Sieve",
+      "arm": "literal",
+      "kernel_nanos": 1015207,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (640ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 1015207\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock3Sieve,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1619947882,
+      "olean_bytes": 4096,
+      "host_before": {
+        "load_average": [
+          11.693359375,
+          18.53173828125,
+          42.5126953125
+        ],
+        "lake_lean_processes": 5
+      },
+      "host_after": {
+        "load_average": [
+          11.693359375,
+          18.53173828125,
+          42.5126953125
+        ],
+        "lake_lean_processes": 8
+      },
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (1.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 2,
+      "case": "Curve25519",
+      "arm": "search",
+      "kernel_nanos": 5601953,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (1.2s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 5601953\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1070687860,
+      "olean_bytes": 4096,
+      "host_before": {
+        "load_average": [
+          11.693359375,
+          18.53173828125,
+          42.5126953125
+        ],
+        "lake_lean_processes": 6
+      },
+      "host_after": {
+        "load_average": [
+          11.5576171875,
+          18.3896484375,
+          42.337890625
+        ],
+        "lake_lean_processes": 5
+      },
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (524ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 2,
+      "case": "Curve25519",
+      "arm": "literal",
+      "kernel_nanos": 5669003,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (659ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:30:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:30:0: DIRECT_KERNEL_NS 5669003\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:30:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1029045264,
+      "olean_bytes": 4096,
+      "host_before": {
+        "load_average": [
+          11.5576171875,
+          18.3896484375,
+          42.337890625
+        ],
+        "lake_lean_processes": 6
+      },
+      "host_after": {
+        "load_average": [
+          11.5576171875,
+          18.3896484375,
+          42.337890625
+        ],
+        "lake_lean_processes": 6
+      },
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (521ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 2,
+      "case": "Curve25519",
+      "arm": "producer",
+      "kernel_nanos": 5809501,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (663ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:28:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:28:0: DIRECT_KERNEL_NS 5809501\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:28:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "PrimeCert.Comparator.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Language:olean"
+      ],
+      "wall_nanos": 1561630510,
+      "olean_bytes": 5536,
+      "host_before": {
+        "load_average": [
+          11.5576171875,
+          18.3896484375,
+          42.337890625
+        ],
+        "lake_lean_processes": 7
+      },
+      "host_after": {
+        "load_average": [
+          11.4326171875,
+          18.25,
+          42.1640625
+        ],
+        "lake_lean_processes": 5
+      },
+      "stdout": "\u26a0 [1969/1969] Built PrimeCert.Comparator.Language (812ms)\nwarning: PrimeCert/Comparator/Language.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Language.lean:15:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Language.lean:16:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1969 jobs).\n",
+      "stderr": "",
+      "block": 2,
+      "case": "Curve25519",
+      "arm": "primecert",
+      "kernel_nanos": 14244118,
+      "kernel_stdout": "\u26a0 [1969/1969] Built PrimeCert.Comparator.Language (989ms)\nwarning: PrimeCert/Comparator/Language.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Language.lean:15:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Language.lean:16:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\ninfo: PrimeCert/Comparator/Language.lean:28:0: DIRECT_KERNEL_NS 14244118\ninfo: PrimeCert/Comparator/Language.lean:28:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n PocklingtonPred.base,\n PrimeCert.pocklington3_certK,\n List.cons,\n PrimeCert.PrimePow,\n PrimeCert.PrimePow.mk,\n PrimeCert.Sieve.IsSieve.prime,\n PrimeCert.Sieve.sieveBits_1000000,\n PrimeCert.Sieve.isSieve_1000000,\n Eq.refl,\n Bool,\n Bool.true,\n PrimeCert.prime_223,\n List.nil,\n PrimeCert.Pocklington3CertMode.prime,\n PrimeCert.prime_3,\n PrimeCert.prime_353]\nwarning: PrimeCert/Comparator/Language.lean:51:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1969 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1013689079,
+      "olean_bytes": 4040,
+      "host_before": {
+        "load_average": [
+          11.4326171875,
+          18.25,
+          42.1640625
+        ],
+        "lake_lean_processes": 5
+      },
+      "host_after": {
+        "load_average": [
+          11.4326171875,
+          18.25,
+          42.1640625
+        ],
+        "lake_lean_processes": 5
+      },
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (502ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 2,
+      "case": "Repeated",
+      "arm": "literal",
+      "kernel_nanos": 367295,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (680ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 367295\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1074339956,
+      "olean_bytes": 4040,
+      "host_before": {
+        "load_average": [
+          12.19921875,
+          18.2958984375,
+          42.05029296875
+        ],
+        "lake_lean_processes": 10
+      },
+      "host_after": {
+        "load_average": [
+          12.19921875,
+          18.2958984375,
+          42.05029296875
+        ],
+        "lake_lean_processes": 8
+      },
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (544ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock 17 [(3, 3, Hex.Nat.PrimeCert.small 2)])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 2,
+      "case": "Repeated",
+      "arm": "producer",
+      "kernel_nanos": 304342,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (645ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock 17 [(3, 3, Hex.Nat.PrimeCert.small 2)])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 304342\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "PrimeCert.Comparator.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Language:olean"
+      ],
+      "wall_nanos": 1583132652,
+      "olean_bytes": 4160,
+      "host_before": {
+        "load_average": [
+          12.19921875,
+          18.2958984375,
+          42.05029296875
+        ],
+        "lake_lean_processes": 9
+      },
+      "host_after": {
+        "load_average": [
+          12.19921875,
+          18.2958984375,
+          42.05029296875
+        ],
+        "lake_lean_processes": 9
+      },
+      "stdout": "\u2714 [1969/1969] Built PrimeCert.Comparator.Language (822ms)\nBuild completed successfully (1969 jobs).\n",
+      "stderr": "",
+      "block": 2,
+      "case": "Repeated",
+      "arm": "primecert",
+      "kernel_nanos": 191004,
+      "kernel_stdout": "\u2139 [1969/1969] Built PrimeCert.Comparator.Language (975ms)\ninfo: PrimeCert/Comparator/Language.lean:23:0: DIRECT_KERNEL_NS 191004\ninfo: PrimeCert/Comparator/Language.lean:23:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Nat.pow,\n PocklingtonPred.base_pow,\n PrimeCert.prime_2,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (1969 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1022247736,
+      "olean_bytes": 4040,
+      "host_before": {
+        "load_average": [
+          12.423828125,
+          18.24072265625,
+          41.90478515625
+        ],
+        "lake_lean_processes": 6
+      },
+      "host_after": {
+        "load_average": [
+          12.423828125,
+          18.24072265625,
+          41.90478515625
+        ],
+        "lake_lean_processes": 7
+      },
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (509ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 2,
+      "case": "Sieve",
+      "arm": "literal",
+      "kernel_nanos": 838785,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (655ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 838785\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock3Sieve,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1030136255,
+      "olean_bytes": 4040,
+      "host_before": {
+        "load_average": [
+          12.423828125,
+          18.24072265625,
+          41.90478515625
+        ],
+        "lake_lean_processes": 7
+      },
+      "host_after": {
+        "load_average": [
+          12.423828125,
+          18.24072265625,
+          41.90478515625
+        ],
+        "lake_lean_processes": 7
+      },
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (525ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock3Sieve 197 1 6 0 2 [(2, 1, Hex.Nat.PrimeCert.small 2)])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 2,
+      "case": "Sieve",
+      "arm": "producer",
+      "kernel_nanos": 860257,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (671ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock3Sieve 197 1 6 0 2 [(2, 1, Hex.Nat.PrimeCert.small 2)])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 860257\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock3Sieve,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "PrimeCert.Comparator.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Language:olean"
+      ],
+      "wall_nanos": 1581040791,
+      "olean_bytes": 4160,
+      "host_before": {
+        "load_average": [
+          12.47021484375,
+          18.1533203125,
+          41.74951171875
+        ],
+        "lake_lean_processes": 6
+      },
+      "host_after": {
+        "load_average": [
+          12.47021484375,
+          18.1533203125,
+          41.74951171875
+        ],
+        "lake_lean_processes": 6
+      },
+      "stdout": "\u2714 [1969/1969] Built PrimeCert.Comparator.Language (791ms)\nBuild completed successfully (1969 jobs).\n",
+      "stderr": "",
+      "block": 2,
+      "case": "Sieve",
+      "arm": "primecert",
+      "kernel_nanos": 378732,
+      "kernel_stdout": "\u2139 [1969/1969] Built PrimeCert.Comparator.Language (979ms)\ninfo: PrimeCert/Comparator/Language.lean:23:0: DIRECT_KERNEL_NS 378732\ninfo: PrimeCert/Comparator/Language.lean:23:0: DIRECT_DEPENDENCIES [PrimeCert.pocklington3_certK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n List.nil,\n PrimeCert.PrimePow,\n PrimeCert.Pocklington3CertMode.lt,\n of_decide_eq_true,\n Eq,\n Bool,\n PrimeCert.pocklington3_calculate,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (1969 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "PrimeCert.Comparator.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Language:olean"
+      ],
+      "wall_nanos": 1569826602,
+      "olean_bytes": 5536,
+      "host_before": {
+        "load_average": [
+          12.47021484375,
+          18.1533203125,
+          41.74951171875
+        ],
+        "lake_lean_processes": 5
+      },
+      "host_after": {
+        "load_average": [
+          12.43212890625,
+          18.05078125,
+          41.58935546875
+        ],
+        "lake_lean_processes": 5
+      },
+      "stdout": "\u26a0 [1969/1969] Built PrimeCert.Comparator.Language (797ms)\nwarning: PrimeCert/Comparator/Language.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Language.lean:15:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Language.lean:16:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1969 jobs).\n",
+      "stderr": "",
+      "block": 3,
+      "case": "Curve25519",
+      "arm": "primecert",
+      "kernel_nanos": 14433488,
+      "kernel_stdout": "\u26a0 [1969/1969] Built PrimeCert.Comparator.Language (1.0s)\nwarning: PrimeCert/Comparator/Language.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Language.lean:15:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Language.lean:16:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\ninfo: PrimeCert/Comparator/Language.lean:28:0: DIRECT_KERNEL_NS 14433488\ninfo: PrimeCert/Comparator/Language.lean:28:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n PocklingtonPred.base,\n PrimeCert.pocklington3_certK,\n List.cons,\n PrimeCert.PrimePow,\n PrimeCert.PrimePow.mk,\n PrimeCert.Sieve.IsSieve.prime,\n PrimeCert.Sieve.sieveBits_1000000,\n PrimeCert.Sieve.isSieve_1000000,\n Eq.refl,\n Bool,\n Bool.true,\n PrimeCert.prime_223,\n List.nil,\n PrimeCert.Pocklington3CertMode.prime,\n PrimeCert.prime_3,\n PrimeCert.prime_353]\nwarning: PrimeCert/Comparator/Language.lean:51:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1969 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1055362170,
+      "olean_bytes": 4096,
+      "host_before": {
+        "load_average": [
+          12.43212890625,
+          18.05078125,
+          41.58935546875
+        ],
+        "lake_lean_processes": 5
+      },
+      "host_after": {
+        "load_average": [
+          12.43212890625,
+          18.05078125,
+          41.58935546875
+        ],
+        "lake_lean_processes": 6
+      },
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (512ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 3,
+      "case": "Curve25519",
+      "arm": "producer",
+      "kernel_nanos": 5282768,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (652ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:28:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:28:0: DIRECT_KERNEL_NS 5282768\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:28:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1017786013,
+      "olean_bytes": 4096,
+      "host_before": {
+        "load_average": [
+          12.47802734375,
+          17.966796875,
+          41.435546875
+        ],
+        "lake_lean_processes": 7
+      },
+      "host_after": {
+        "load_average": [
+          12.47802734375,
+          17.966796875,
+          41.435546875
+        ],
+        "lake_lean_processes": 7
+      },
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (500ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 3,
+      "case": "Curve25519",
+      "arm": "literal",
+      "kernel_nanos": 5635873,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (662ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:30:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:30:0: DIRECT_KERNEL_NS 5635873\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:30:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1636701654,
+      "olean_bytes": 4096,
+      "host_before": {
+        "load_average": [
+          12.47802734375,
+          17.966796875,
+          41.435546875
+        ],
+        "lake_lean_processes": 5
+      },
+      "host_after": {
+        "load_average": [
+          12.47802734375,
+          17.966796875,
+          41.435546875
+        ],
+        "lake_lean_processes": 5
+      },
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (1.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 3,
+      "case": "Curve25519",
+      "arm": "search",
+      "kernel_nanos": 5629513,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (1.2s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 5629513\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "PrimeCert.Comparator.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Language:olean"
+      ],
+      "wall_nanos": 1569714655,
+      "olean_bytes": 4160,
+      "host_before": {
+        "load_average": [
+          12.279296875,
+          17.83447265625,
+          41.2666015625
+        ],
+        "lake_lean_processes": 5
+      },
+      "host_after": {
+        "load_average": [
+          12.279296875,
+          17.83447265625,
+          41.2666015625
+        ],
+        "lake_lean_processes": 5
+      },
+      "stdout": "\u2714 [1969/1969] Built PrimeCert.Comparator.Language (813ms)\nBuild completed successfully (1969 jobs).\n",
+      "stderr": "",
+      "block": 3,
+      "case": "Repeated",
+      "arm": "primecert",
+      "kernel_nanos": 152977,
+      "kernel_stdout": "\u2139 [1969/1969] Built PrimeCert.Comparator.Language (944ms)\ninfo: PrimeCert/Comparator/Language.lean:23:0: DIRECT_KERNEL_NS 152977\ninfo: PrimeCert/Comparator/Language.lean:23:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Nat.pow,\n PocklingtonPred.base_pow,\n PrimeCert.prime_2,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (1969 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1009388477,
+      "olean_bytes": 4040,
+      "host_before": {
+        "load_average": [
+          12.279296875,
+          17.83447265625,
+          41.2666015625
+        ],
+        "lake_lean_processes": 5
+      },
+      "host_after": {
+        "load_average": [
+          12.0166015625,
+          17.6875,
+          41.09326171875
+        ],
+        "lake_lean_processes": 5
+      },
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (519ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock 17 [(3, 3, Hex.Nat.PrimeCert.small 2)])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 3,
+      "case": "Repeated",
+      "arm": "producer",
+      "kernel_nanos": 306305,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (646ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock 17 [(3, 3, Hex.Nat.PrimeCert.small 2)])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 306305\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1017264247,
+      "olean_bytes": 4040,
+      "host_before": {
+        "load_average": [
+          12.0166015625,
+          17.6875,
+          41.09326171875
+        ],
+        "lake_lean_processes": 6
+      },
+      "host_after": {
+        "load_average": [
+          12.0166015625,
+          17.6875,
+          41.09326171875
+        ],
+        "lake_lean_processes": 6
+      },
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (518ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 3,
+      "case": "Repeated",
+      "arm": "literal",
+      "kernel_nanos": 353945,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (639ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 353945\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "PrimeCert.Comparator.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Language:olean"
+      ],
+      "wall_nanos": 1579327807,
+      "olean_bytes": 4160,
+      "host_before": {
+        "load_average": [
+          12.0166015625,
+          17.6875,
+          41.09326171875
+        ],
+        "lake_lean_processes": 6
+      },
+      "host_after": {
+        "load_average": [
+          11.77490234375,
+          17.54296875,
+          40.92041015625
+        ],
+        "lake_lean_processes": 4
+      },
+      "stdout": "\u2714 [1969/1969] Built PrimeCert.Comparator.Language (791ms)\nBuild completed successfully (1969 jobs).\n",
+      "stderr": "",
+      "block": 3,
+      "case": "Sieve",
+      "arm": "primecert",
+      "kernel_nanos": 406463,
+      "kernel_stdout": "\u2139 [1969/1969] Built PrimeCert.Comparator.Language (982ms)\ninfo: PrimeCert/Comparator/Language.lean:23:0: DIRECT_KERNEL_NS 406463\ninfo: PrimeCert/Comparator/Language.lean:23:0: DIRECT_DEPENDENCIES [PrimeCert.pocklington3_certK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n List.nil,\n PrimeCert.PrimePow,\n PrimeCert.Pocklington3CertMode.lt,\n of_decide_eq_true,\n Eq,\n Bool,\n PrimeCert.pocklington3_calculate,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (1969 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1061018137,
+      "olean_bytes": 4040,
+      "host_before": {
+        "load_average": [
+          11.77490234375,
+          17.54296875,
+          40.92041015625
+        ],
+        "lake_lean_processes": 4
+      },
+      "host_after": {
+        "load_average": [
+          11.77490234375,
+          17.54296875,
+          40.92041015625
+        ],
+        "lake_lean_processes": 4
+      },
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (504ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock3Sieve 197 1 6 0 2 [(2, 1, Hex.Nat.PrimeCert.small 2)])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 3,
+      "case": "Sieve",
+      "arm": "producer",
+      "kernel_nanos": 797573,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (663ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:9:5: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock3Sieve 197 1 6 0 2 [(2, 1, Hex.Nat.PrimeCert.small 2)])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 797573\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock3Sieve,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    },
+    {
+      "module": "HexPrimality.ProofProbe.Curve25519.Language",
+      "command": [
+        "taskset",
+        "-c",
+        "4",
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.Language:olean"
+      ],
+      "wall_nanos": 1065154909,
+      "olean_bytes": 4040,
+      "host_before": {
+        "load_average": [
+          11.77490234375,
+          17.54296875,
+          40.92041015625
+        ],
+        "lake_lean_processes": 4
+      },
+      "host_after": {
+        "load_average": [
+          11.79296875,
+          17.45068359375,
+          40.7646484375
+        ],
+        "lake_lean_processes": 4
+      },
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (505ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "block": 3,
+      "case": "Sieve",
+      "arm": "literal",
+      "kernel_nanos": 929319,
+      "kernel_stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Language (657ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_KERNEL_NS 929319\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Language.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock3Sieve,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "kernel_stderr": ""
+    }
+  ],
+  "native": [
+    {
+      "block": 0,
+      "arm": "construction",
+      "result": {
+        "attempts": 29,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "check_nanos": 524859,
+        "nanos": 413854895,
+        "status": "ok"
+      },
+      "load_before": [
+        10.58544921875,
+        19.02392578125,
+        43.45166015625
+      ],
+      "load_after": [
+        10.58544921875,
+        19.02392578125,
+        43.45166015625
+      ]
+    },
+    {
+      "block": 0,
+      "arm": "supplied",
+      "result": {
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "nanos": 552660,
+        "status": "ok"
+      },
+      "load_before": [
+        10.58544921875,
+        19.02392578125,
+        43.45166015625
+      ],
+      "load_after": [
+        10.58544921875,
+        19.02392578125,
+        43.45166015625
+      ]
+    },
+    {
+      "block": 1,
+      "arm": "supplied",
+      "result": {
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "nanos": 551789,
+        "status": "ok"
+      },
+      "load_before": [
+        11.693359375,
+        18.53173828125,
+        42.5126953125
+      ],
+      "load_after": [
+        11.693359375,
+        18.53173828125,
+        42.5126953125
+      ]
+    },
+    {
+      "block": 1,
+      "arm": "construction",
+      "result": {
+        "attempts": 29,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "check_nanos": 527162,
+        "nanos": 415606549,
+        "status": "ok"
+      },
+      "load_before": [
+        11.693359375,
+        18.53173828125,
+        42.5126953125
+      ],
+      "load_after": [
+        11.693359375,
+        18.53173828125,
+        42.5126953125
+      ]
+    },
+    {
+      "block": 2,
+      "arm": "construction",
+      "result": {
+        "attempts": 29,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "check_nanos": 518710,
+        "nanos": 414467093,
+        "status": "ok"
+      },
+      "load_before": [
+        12.47021484375,
+        18.1533203125,
+        41.74951171875
+      ],
+      "load_after": [
+        12.47021484375,
+        18.1533203125,
+        41.74951171875
+      ]
+    },
+    {
+      "block": 2,
+      "arm": "supplied",
+      "result": {
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "nanos": 556686,
+        "status": "ok"
+      },
+      "load_before": [
+        12.47021484375,
+        18.1533203125,
+        41.74951171875
+      ],
+      "load_after": [
+        12.47021484375,
+        18.1533203125,
+        41.74951171875
+      ]
+    },
+    {
+      "block": 3,
+      "arm": "supplied",
+      "result": {
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "nanos": 655372,
+        "status": "ok"
+      },
+      "load_before": [
+        11.79296875,
+        17.45068359375,
+        40.7646484375
+      ],
+      "load_after": [
+        11.79296875,
+        17.45068359375,
+        40.7646484375
+      ]
+    },
+    {
+      "block": 3,
+      "arm": "construction",
+      "result": {
+        "attempts": 29,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "check_nanos": 524378,
+        "nanos": 444967390,
+        "status": "ok"
+      },
+      "load_before": [
+        11.79296875,
+        17.45068359375,
+        40.7646484375
+      ],
+      "load_after": [
+        11.79296875,
+        17.45068359375,
+        40.7646484375
+      ]
+    }
+  ],
+  "sources": {
+    "Curve25519/search": {
+      "source": "module\npublic import HexPrimality.Elab\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\ntheorem result : Hex.Nat.Prime 57896044618658097711785492504343953926634992332820282019728792003956564819949 :=\n  by primality?\n",
+      "source_bytes": 294,
+      "proof_bytes": 13,
+      "sha256": "c526794089e2c250834b708353554f0e0549a0e3802cf23915e39e9f4b6c6c31"
+    },
+    "Curve25519/literal": {
+      "source": "module\npublic import HexPrimality.Elab\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\ntheorem result : Hex.Nat.Prime 57896044618658097711785492504343953926634992332820282019728792003956564819949 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])]) (by decide +kernel)\n",
+      "source_bytes": 1054,
+      "proof_bytes": 773,
+      "sha256": "232b1fe57e8b2a9e2db27352ba4fe046cb169edc5b7fc0ed80c96cb907dc7baf"
+    },
+    "Curve25519/producer": {
+      "source": "module\npublic import HexPrimality.Elab\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\ntheorem result : Hex.Nat.Prime 57896044618658097711785492504343953926634992332820282019728792003956564819949 :=\n  by primality? using (let two : Hex.Nat.PrimeCert := .small 2\n  let q := Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n    [(5, 2, two), (2, 0, .small 223), (2, 0, .small 4153)]\n  let r := Hex.Nat.PrimeCert.pock3\n    74058212732561358302231226437062788676166966415465897661863160754340907\n    2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n    [(2, 0, two), (2, 0, .small 353), (2, 0, .small 57467), (2, 0, q)]\n  .pock (2 ^ 255 - 19) [(2, 0, r)])\n",
+      "source_bytes": 771,
+      "proof_bytes": 490,
+      "sha256": "85ea6bded4599aaae62e6567b0bc15ad2c15318f954beff9feac28e37de3ae48"
+    },
+    "Curve25519/primecert": {
+      "source": "module\npublic import PrimeCert\npublic import PrimeCert.SieveBase\npublic meta import PrimeCert.Meta.SieveLookup\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime 57896044618658097711785492504343953926634992332820282019728792003956564819949 :=\n  prime_cert%\n  [small {2; 3; 223; 353},\n   sieve {4153; 57467},\n   pock3 (31757755568855353, 5, 3, 2 ^ 3 * 223 * 4153),\n   pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 3, 2 * 353 * 57467 * 31757755568855353),\n   pock (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 74058212732561358302231226437062788676166966415465897661863160754340907)]\n",
+      "source_bytes": 759,
+      "proof_bytes": 410,
+      "sha256": "4016b4ebb0337ba751c3c5648f8dd824e016df79cb9830d502cd8486c138e3f6"
+    },
+    "Repeated/literal": {
+      "source": "module\npublic import HexPrimality.Elab\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\ntheorem result : Hex.Nat.Prime 17 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock 17 [(3, 3, .small 2)]) (by decide +kernel)\n",
+      "source_bytes": 307,
+      "proof_bytes": 101,
+      "sha256": "6c118dc0795197b3cd903efd4b324966d8adbd7b8dcea86f3394f420df29e928"
+    },
+    "Repeated/producer": {
+      "source": "module\npublic import HexPrimality.Elab\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\ntheorem result : Hex.Nat.Prime 17 :=\n  by primality? using (let two : Hex.Nat.PrimeCert := .small 2; .pock 17 [(3, 4 - 1, two)])\n",
+      "source_bytes": 295,
+      "proof_bytes": 89,
+      "sha256": "978b13a3919c8d5bd70abf75eb11f9fcd6842c4da116e67d526b0c6e7bf4ee90"
+    },
+    "Repeated/primecert": {
+      "source": "module\npublic import PrimeCert\npublic import PrimeCert.SieveBase\npublic meta import PrimeCert.Meta.SieveLookup\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime 17 :=\n  prime_cert% [small 2, pock (17, 3, 2 ^ 4)]\n",
+      "source_bytes": 316,
+      "proof_bytes": 42,
+      "sha256": "de7db6078d7fa9c20ee380f1bd17d8976eca64f83fb2044607f2ef368faac425"
+    },
+    "Sieve/literal": {
+      "source": "module\npublic import HexPrimality.Elab\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\ntheorem result : Hex.Nat.Prime 197 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock3Sieve 197 1 6 0 2 [(2, 1, .small 2)]) (by decide +kernel)\n",
+      "source_bytes": 323,
+      "proof_bytes": 116,
+      "sha256": "ae352617546431edb8364dff027ec40324bbe3373066c88af459cbd32257a84f"
+    },
+    "Sieve/producer": {
+      "source": "module\npublic import HexPrimality.Elab\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\ntheorem result : Hex.Nat.Prime 197 :=\n  by primality? using (let two : Hex.Nat.PrimeCert := .small 2; .pock3Sieve 197 1 6 0 2 [(2, 1, two)])\n",
+      "source_bytes": 307,
+      "proof_bytes": 100,
+      "sha256": "382954e37ce5b0554ff8c692ca4789dd492b8327e82963d1b3a79a97e8552919"
+    },
+    "Sieve/primecert": {
+      "source": "module\npublic import PrimeCert\npublic import PrimeCert.SieveBase\npublic meta import PrimeCert.Meta.SieveLookup\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime 197 :=\n  PrimeCert.pocklington3_certK 197 2 2 2 [] .lt (by decide +kernel)\n",
+      "source_bytes": 340,
+      "proof_bytes": 65,
+      "sha256": "91bf7cc1ed0e3a28a537c18f786518cb72a3db4c2f3f274fac56f387e2390f7a"
+    }
+  },
+  "diff_sha256": "bbf5609118e1bc27caa6bccaab119461f0f19eeeab7f44b232fd26d5e4d554c6",
+  "script_sha256": "9926a6792ac2284b7a1c65519280e23f1104b177d6f6b8b734ef0a9ad2e033ed"
+}

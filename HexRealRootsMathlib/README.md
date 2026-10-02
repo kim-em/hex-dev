@@ -11,6 +11,15 @@ This package proves the half-open form of Sturm's theorem, connects the
 executable signed-remainder chain to `Polynomial ℝ`, proves soundness and
 completeness of the isolator, transports through squarefree cores, and presents
 the result as ordinary rational intervals with proof fields.
+It also exports `Real.instIsRealClosed`, constructed from real square roots
+and odd-degree polynomial root existence, through `HexRealRootsMathlib.RealClosed`
+and the umbrella import.
+
+The general Sturm–Tarski root-sum theorem and integer query semantics are
+proved in the monorepo’s `adapters/HexRealRootsMathlib/` modules, built by
+`HexQuerySemantics`. These modules are not yet published in this package.
+Their publication requires adding the companion managed paths and pinned
+Tau Ceti release dependency specified in [the SPEC](SPEC/hex-real-roots-mathlib.md).
 
 # Quickstart
 
@@ -55,7 +64,9 @@ of the chain certifies separability as well as the root count.
 The general Sturm theorems use only Mathlib types. `Sturm.IsSturmChain.sturm_Ioc`
 counts roots on `(a, b]`, including equal endpoints, and `Sturm.IsSturmChain.sturm`
 counts roots on the real line. Their hypothesis is that the multiset of real
-roots has no duplicates.
+roots has no duplicates. The variation counts use Mathlib’s `List.signVariations`;
+`HexRealRootsMathlib.signVar_eq_list` identifies the Mathlib-free executable counter
+with this API.
 
 The corresponding Mathlib sources can be checked with
 `python3 scripts/check_sturm_sync.py /path/to/mathlib` from `hex-dev`.
@@ -85,6 +96,50 @@ The result is `Hex.IsolatedRealRoots P n`, whose fields state:
 The interval vector is literal data, so endpoint extraction is often `rfl` and
 the semantic fields can be consumed directly by `simp`, `grind`, or ordinary
 proof terms.
+
+# Signed-query correspondence
+
+`TarskiInterpret` transports the shared producer and literal checker through
+zero-reflecting, possibly noninjective coefficient interpretations. It proves
+positive signed identities, degree bounds, sufficiency of the internal bound
+and acceptance of produced chains. `TarskiInteger.integer_certify_checks`
+proves acceptance and value agreement for produced integer/dyadic certificates.
+`TarskiGcd` identifies the terminal gcd and proves that the constant-tail check
+is equivalent to squarefreeness. Query production succeeds exactly when that
+condition and the executable endpoint guards hold. `TarskiDomain` completes the
+integer/dyadic endpoint interpretation, proves exact mathematical domain
+equivalence, and extracts that domain from accepted replay.
+
+`TarskiCompare` proves that arbitrary accepted chains for positively scaled
+inputs have equal lengths and entrywise positive scaling. `TarskiSigns` proves
+finite and infinite endpoint sign-array agreement and extracts the checked
+variation value.
+Together they support the rational/integer whole-`Option` agreement theorem
+in hex-sturm-mathlib without assuming root-sum semantics.
+
+The development adapters import the proved signed-remainder theorem and
+polynomial IVT/Rolle foundation from Tau Ceti. They prove general root-sum
+semantics, singleton-sign and arbitrary ordered-field count consequences.
+These semantic modules remain outside the published package; the algebraic
+replay results above are independent of them.
+
+`TarskiSum.lean` defines the mathematical sum over distinct roots in an open
+interval, allowing infinite endpoints. It proves singleton and constant cases,
+query `1` as cardinality, zero/divisible queries, removal of common-root zero
+contributions, and absolute-value/cardinality/degree bounds with existing
+algebra. These lemmas do not identify the executable query with that sum.
+`Tarski.check_singleton` and `Tarski.check_constant` separately prove zero
+answers for those accepted literal certificates without an analytic foundation.
+
+`TarskiCount.lean` connects checked integer derivative chains to the existing
+real Sturm theorem. Accepted query-one certificates count roots on finite
+dyadic intervals and on the whole real line; the actual integer producer is
+therefore nonnegative on query `1`. The rational companion transports the
+finite-interval result. `rootsIn_card` identifies the legacy half-open count
+with the open distinct-root set under the accepted domain;
+`integer_check_rootSum` and `integer_query_rootSum` give the actual query-one
+root-sum identity. Only the arbitrary ordered-field count theorem and
+its dependent general wrapper require the deferred foundation.
 
 # Verification
 

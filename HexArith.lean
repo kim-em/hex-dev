@@ -9,6 +9,7 @@ module
 public import HexArith.Nat.ModArith
 public import HexArith.Nat.Pow
 public import HexArith.Nat.Prime
+public import HexArith.Nat.Sqrt
 public import HexArith.Barrett.ReduceNat
 public import HexArith.Barrett.Reduce
 public import HexArith.Barrett.Context

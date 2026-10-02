@@ -78,6 +78,7 @@ class QQBar:
             # v3.6.0 fmpz_vec.h: resizable-vector API, distinct from _fmpz_vec_*.
             "fmpz_vec_init": (None, [ptr, signed]), "fmpz_vec_clear": (None, [ptr]),
             "qqbar_root_ui": (None, [ptr, ptr, C.c_ulong]),
+            "qqbar_root_of_unity": (None, [ptr, signed, C.c_ulong]),
             "fmpz_get_si": (signed, [ptr]), "qqbar_is_rational": (integer, [ptr]),
         }
         for name in ("neg", "inv", "sqrt", "floor", "ceil", "abs", "re", "im", "conj"):
@@ -154,6 +155,15 @@ class QQBar:
             return self.number(1, self.complex)
         result = self.allocate(self.complex)
         self.lib.qqbar_root_ui(result, value, n)
+        return result
+
+    def root_of_unity(self, angle: Fraction) -> int:
+        """Public qqbar API: exp(2*pi*i*p/q), with word-sized rational inputs."""
+        p, q = angle.numerator, angle.denominator
+        if not -(2**62) < p < 2**62 or not 0 < q < 2**62:
+            raise ValueError("rational turn outside safe FLINT word range")
+        result = self.allocate(self.complex)
+        self.lib.qqbar_root_of_unity(result, p, q)
         return result
 
     def compare(self, left: int, right: int, ctx: _Context | None = None) -> int:

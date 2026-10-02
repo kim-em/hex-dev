@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import dataclasses
+from contextlib import ExitStack
 import io
 import json
 import os
@@ -375,6 +376,37 @@ class PairingTests(unittest.TestCase):
             sweep.validate_axioms(
                 "case", "reference", sweep.ProbeModule("Baseline"), sample
             )
+
+    def test_axiom_namespace_excludes_imported_logs(self) -> None:
+        output = "\n".join([
+            "'Imported.checked' depends on axioms: [sorryAx]",
+            "'Probe.SemanticSibling.checked' depends on axioms: [sorryAx]",
+            "'Probe.Semantic.counts_roots' depends on axioms: [propext, Classical.choice, Quot.sound]",
+        ])
+        self.assertEqual(sweep.parse_axioms(output, "Probe.Semantic"),
+                         list(EXPECTED_AXIOMS))
+        self.assertIsNone(sweep.parse_axioms(output, "Probe.SemanticBaseline"))
+        self.assertEqual(sweep.parse_axioms(output), ["sorryAx"])
+
+    def test_axiom_namespace_checks_every_local_inventory(self) -> None:
+        output = "\n".join([
+            "'Probe.Semantic.first' depends on axioms: [propext]",
+            "'Probe.Semantic.second' depends on axioms: [propext, sorryAx]",
+        ])
+        self.assertEqual(sweep.parse_axioms(output, "Probe.Semantic"),
+                         ["propext", "sorryAx"])
+        self.assertEqual(sweep.parse_axioms(
+            "'Probe.Semantic.clean' does not depend on any axioms", "Probe.Semantic"), [])
+
+    def test_axiom_namespace_handles_primed_names(self) -> None:
+        self.assertEqual(sweep.parse_axioms(
+            "info: /tmp/other's/probe.lean:1:0: 'Probe.Semantic.checked'extra' depends on axioms: [sorryAx]",
+            "Probe.Semantic"), ["sorryAx"])
+
+    def test_namespace_axiom_validation_is_order_independent(self) -> None:
+        sweep.validate_axioms("case", "candidate", sweep.ProbeModule(
+            "Probe", EXPECTED_AXIOMS, "Probe.Semantic"),
+            {"axioms": list(reversed(EXPECTED_AXIOMS))})
 
     def test_rotation_is_stable(self) -> None:
         self.assertEqual(sweep.rotate(["a", "b", "c"], 1), ["b", "c", "a"])
@@ -1635,6 +1667,40 @@ class HarnessValidationTests(unittest.TestCase):
             ):
                 with self.assertRaisesRegex(RuntimeError, "reaches measured probe"):
                     sweep.validate_spec(spec)
+
+
+class SampleRetentionTests(unittest.TestCase):
+    def setup_capture(self, stack):
+        for name in ("remove_module_outputs", "host_state", "sampled_host_state",
+                     "cpu_ticks", "frequency_residency"):
+            stack.enter_context(mock.patch.object(sweep, name, return_value={}))
+        stack.enter_context(mock.patch.object(sweep, "runner_cpu_seconds", return_value=0.0))
+        events = []
+        return events, lambda module, sample: events.append((module, sample))
+
+    def test_timeout_observer_retains_partial_compiler_output(self):
+        with ExitStack() as stack:
+            events, observer = self.setup_capture(stack)
+            stack.enter_context(mock.patch.object(sweep, "run_timed", side_effect=
+                subprocess.TimeoutExpired(["lake"], 60, output=b"partial certificate trace")))
+            with self.assertRaisesRegex(RuntimeError, "timed out"):
+                sweep.build_sample("Probe.Slow", 60, sample_observer=observer)
+        self.assertEqual(events[0][0], "Probe.Slow")
+        self.assertEqual(events[0][1]["state"], "timeout")
+        self.assertEqual(events[0][1]["compiler_output"], "partial certificate trace")
+
+    def test_failed_build_observer_retains_elapsed_time_and_diagnostics(self):
+        with ExitStack() as stack:
+            events, observer = self.setup_capture(stack)
+            stack.enter_context(mock.patch.object(sweep, "run_timed", return_value=(
+                subprocess.CompletedProcess(["lake"], 1, stdout="certificate data", stderr="error"),
+                123456, {"peak_rss_kb": 42})))
+            stack.enter_context(mock.patch.object(sys, "stderr", io.StringIO()))
+            with self.assertRaisesRegex(RuntimeError, "probe failed"):
+                sweep.build_sample("Probe.Broken", 60, sample_observer=observer)
+        self.assertEqual(events[0][1]["wall_nanos"], 123456)
+        self.assertEqual(events[0][1]["compiler_output"], "certificate dataerror")
+        self.assertEqual(events[0][1]["peak_rss_kb"], 42)
 
 
 if __name__ == "__main__":

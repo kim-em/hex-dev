@@ -1,0 +1,6 @@
+{
+  "path": "Hex/BenchOracle/Carriers.lean",
+  "baseline_blob": null,
+  "current_blob": "21e0d7dfe2ef602d6c61b6c4e70c7d2233897efc",
+  "reason": "Adds the persistent external carrier comparator imported only by bench/HexBareiss/Bench.lean. No factorization runtime module imports or calls this helper, so adding it under the broad Hex/*.lean fingerprint does not alter the factorization service or its measurements."
+}

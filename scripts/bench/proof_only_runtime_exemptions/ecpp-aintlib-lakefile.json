@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "ffee9bc46edf5856435dd50093a3daa0f91b55db",
+  "current_blob": "3d20b94512e29fd0a067d3d8b6e6d37453ec3d19",
+  "reason": "The Lake declaration blocks relevant to hexbz_factor_service and their options are unchanged. The new AINTLIB requirement supplies Hasse to HexECPPMathlib outside the factorization service import graph. Other intervening Lake additions register independent real-closure and SQUFOF targets; none alters the measured factorization binary."
+}

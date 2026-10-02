@@ -1,0 +1,449 @@
+{
+  "allocation_share_percent": 36.34,
+  "classified_percent": 92.73,
+  "diagnostics": {
+    "bench_pid": 2024233,
+    "bench_thread_name": "hexrealformula_",
+    "bench_thread_tid": "2024246",
+    "calibration": {
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "boundary_residual_raw_max_ms": null,
+          "boundary_residual_trimmed_max_ms": null,
+          "hit_count": 0,
+          "regions_without_samples": 33,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "boundary_residual_raw_max_ms": 0.9875270128250122,
+          "boundary_residual_trimmed_max_ms": 0.9741979837417603,
+          "hit_count": 1197,
+          "regions_without_samples": 0,
+          "within_residual_limit": true
+        }
+      },
+      "configured_max_residual_ms": 5.0,
+      "effective_max_residual_ms": 5.0,
+      "raw_max_residual_ms": 0.9875270128250122,
+      "residual_ms": 0.9741979837417603,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "sample_interval_ms": 1.001001,
+      "selected_mode": "relative-to-meta-start-ms",
+      "within_residual_limit": true
+    },
+    "calibration_max_residual_ms": 5.0,
+    "calibration_residual_ms": 0.9741979837417603,
+    "confidence": "passed",
+    "expected_samples_bench_thread": 1197.6,
+    "low_confidence_reasons": [],
+    "minimum_retained_samples": 100,
+    "off_bench_thread_samples_in_window": 0,
+    "regions_total": 33,
+    "rejected_samples_bench_thread": 471,
+    "retained_samples_bench_thread": 1197,
+    "samply_interval_ms": 1.001001,
+    "samply_meta_start_time_ms": 1789901644589.8525,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "schema": 2,
+    "sensitivity": {
+      "cases": {
+        "minus": {
+          "retained_samples": 1193,
+          "shift_ms": -5.0,
+          "top_leaf_functions": [
+            {
+              "function": 25,
+              "name": "0x4caee69",
+              "samples": 47
+            },
+            {
+              "function": 120,
+              "name": "0x4caee33",
+              "samples": 47
+            },
+            {
+              "function": 135,
+              "name": "0x4cf64bc",
+              "samples": 43
+            }
+          ]
+        },
+        "nominal": {
+          "retained_samples": 1197,
+          "shift_ms": 0.0,
+          "top_leaf_functions": [
+            {
+              "function": 120,
+              "name": "0x4caee33",
+              "samples": 53
+            },
+            {
+              "function": 35,
+              "name": "0x4cf6748",
+              "samples": 42
+            },
+            {
+              "function": 135,
+              "name": "0x4cf64bc",
+              "samples": 42
+            }
+          ]
+        },
+        "plus": {
+          "retained_samples": 1195,
+          "shift_ms": 5.0,
+          "top_leaf_functions": [
+            {
+              "function": 120,
+              "name": "0x4caee33",
+              "samples": 50
+            },
+            {
+              "function": 35,
+              "name": "0x4cf6748",
+              "samples": 44
+            },
+            {
+              "function": 135,
+              "name": "0x4cf64bc",
+              "samples": 37
+            }
+          ]
+        }
+      },
+      "comparisons": {
+        "minus": {
+          "comparison_samples": 1193,
+          "effective_max_total_variation_distance": 0.28426749797393924,
+          "exchanged_fraction": 0.2749371332774518,
+          "exchanged_samples": 328,
+          "failure_reasons": [],
+          "leaf_function_support_size": 487,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.28426749797393924,
+          "total_variation_distance": 0.11604871356933827,
+          "verdict": "passed"
+        },
+        "plus": {
+          "comparison_samples": 1195,
+          "effective_max_total_variation_distance": 0.2916078701696062,
+          "exchanged_fraction": 0.2778242677824268,
+          "exchanged_samples": 332,
+          "failure_reasons": [],
+          "leaf_function_support_size": 508,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.2916078701696062,
+          "total_variation_distance": 0.11483240877647395,
+          "verdict": "passed"
+        }
+      },
+      "configured_max_total_variation_distance": 0.1,
+      "leaf_function_distributions_stable": true,
+      "maximum_sampling_noise_allowance": 0.5,
+      "minimum_comparison_samples": 100,
+      "reported_top_function_count": 3,
+      "sampling_noise_coefficient": 0.6,
+      "shift_ms": 5.0,
+      "verdict": "passed"
+    },
+    "sidecar_mono_anchor_ns": 872754932791122,
+    "spawn_anchor_mono_ns": 872754758357565,
+    "spawn_anchor_wall_ns": 1789901644556692842,
+    "stage": "complete",
+    "total_timed_ms": 1198.82051
+  },
+  "inclusive_hex": [
+    {
+      "function": "Hex.RealFormula.Kernel.Body.decode",
+      "percent": 100.0
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.denote",
+      "percent": 59.82
+    },
+    {
+      "function": "Hex.Mono.lex",
+      "percent": 11.86
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.monoFast",
+      "percent": 9.86
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.insert",
+      "percent": 4.93
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.normalize",
+      "percent": 4.34
+    },
+    {
+      "function": "Hex.MvPoly.monomial",
+      "percent": 1.75
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.expCmp",
+      "percent": 1.67
+    }
+  ],
+  "leaf_categories": {
+    "allocation": 36.34,
+    "lean-own-code": 13.37,
+    "lean-runtime": 43.02,
+    "other": 7.27
+  },
+  "profile": "/tmp/rf-perf-final-syntax-decode/filtered.json.gz",
+  "samples": 1197,
+  "symbols": "/tmp/rf-perf-final-syntax-decode/symbols.json",
+  "top_inclusive": [
+    {
+      "function": "Hex.RealFormula.Kernel.Body.decode",
+      "percent": 100.0
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.denote",
+      "percent": 59.82
+    },
+    {
+      "function": "Std.DTreeMap.Internal.Impl.foldlM",
+      "percent": 39.77
+    },
+    {
+      "function": "lean_apply_1",
+      "percent": 39.26
+    },
+    {
+      "function": "lean_apply_4",
+      "percent": 36.93
+    },
+    {
+      "function": "lean_apply_3",
+      "percent": 25.73
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 23.98
+    },
+    {
+      "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+      "percent": 18.21
+    },
+    {
+      "function": "lean_apply_2",
+      "percent": 15.04
+    },
+    {
+      "function": "_private.Init.Data.Array.Basic.0_Array.ofFn.go",
+      "percent": 13.87
+    },
+    {
+      "function": "Std.ExtTreeMap.mergeWith?",
+      "percent": 13.62
+    },
+    {
+      "function": "lean_alloc_object",
+      "percent": 13.53
+    },
+    {
+      "function": "mi_free",
+      "percent": 12.11
+    },
+    {
+      "function": "Hex.Mono.lex",
+      "percent": 11.86
+    },
+    {
+      "function": "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_",
+      "percent": 11.28
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.monoFast",
+      "percent": 9.86
+    },
+    {
+      "function": "mi_malloc_small",
+      "percent": 8.44
+    },
+    {
+      "function": "mi_malloc",
+      "percent": 7.52
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.insert",
+      "percent": 4.93
+    },
+    {
+      "function": "lean_array_to_list_impl",
+      "percent": 4.34
+    }
+  ],
+  "top_self": [
+    {
+      "function": "mi_free",
+      "percent": 12.11
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 8.77
+    },
+    {
+      "function": "mi_malloc_small",
+      "percent": 8.44
+    },
+    {
+      "function": "mi_malloc",
+      "percent": 7.52
+    },
+    {
+      "function": "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_",
+      "percent": 5.6
+    },
+    {
+      "function": "Hex.RealFormula.Kernel.Body.decode",
+      "percent": 5.1
+    },
+    {
+      "function": "lean_apply_1",
+      "percent": 4.18
+    },
+    {
+      "function": "lean_alloc_object",
+      "percent": 4.09
+    },
+    {
+      "function": "Std.ExtTreeMap.mergeWith?",
+      "percent": 3.43
+    },
+    {
+      "function": "Std.DTreeMap.Internal.Impl.foldlM",
+      "percent": 3.43
+    },
+    {
+      "function": "lean_apply_2",
+      "percent": 2.42
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.denote",
+      "percent": 2.26
+    },
+    {
+      "function": "List.toArrayAux",
+      "percent": 2.17
+    },
+    {
+      "function": "lean_array_to_list_impl",
+      "percent": 2.09
+    },
+    {
+      "function": "lean_array_push",
+      "percent": 2.01
+    },
+    {
+      "function": "lean_apply_4",
+      "percent": 1.92
+    },
+    {
+      "function": "_private.Init.Data.Array.Basic.0_Array.ofFn.go",
+      "percent": 1.75
+    },
+    {
+      "function": "lean_free_object",
+      "percent": 1.67
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.insert",
+      "percent": 1.67
+    },
+    {
+      "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+      "percent": 1.5
+    }
+  ],
+  "top_self_undecorated": [
+    {
+      "percent": 12.11,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 8.77,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 8.44,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 7.52,
+      "symbol": "mi_malloc"
+    },
+    {
+      "percent": 5.6,
+      "symbol": "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_"
+    },
+    {
+      "percent": 5.1,
+      "symbol": "Hex.RealFormula.Kernel.Body.decode"
+    },
+    {
+      "percent": 4.18,
+      "symbol": "lean_apply_1"
+    },
+    {
+      "percent": 4.09,
+      "symbol": "lean_alloc_object"
+    },
+    {
+      "percent": 3.26,
+      "symbol": "Std.DTreeMap.Internal.Impl.foldlM_.redArg"
+    },
+    {
+      "percent": 2.42,
+      "symbol": "lean_apply_2"
+    },
+    {
+      "percent": 2.26,
+      "symbol": "Hex.MvPoly.Kernel.denote_.at_.00Hex.RealFormula.Kernel.Body.decode.spec_2_.redArg"
+    },
+    {
+      "percent": 2.17,
+      "symbol": "List.toArrayAux_.redArg"
+    },
+    {
+      "percent": 2.09,
+      "symbol": "lean_array_to_list_impl"
+    },
+    {
+      "percent": 2.01,
+      "symbol": "lean_array_push"
+    },
+    {
+      "percent": 1.92,
+      "symbol": "lean_apply_4"
+    },
+    {
+      "percent": 1.75,
+      "symbol": "_private.Init.Data.Array.Basic.0_Array.ofFn.go_.redArg"
+    },
+    {
+      "percent": 1.67,
+      "symbol": "lean_free_object"
+    },
+    {
+      "percent": 1.67,
+      "symbol": "Hex.MvPoly.Kernel.insert_.at_.00Hex.MvPoly.Kernel.normalize_.at_.00Hex.RealFormula.Kernel.Body.decode.spec_1.spec_1"
+    },
+    {
+      "percent": 1.59,
+      "symbol": "Std.ExtTreeMap.mergeWith?_.redArg"
+    },
+    {
+      "percent": 1.5,
+      "symbol": "Std.DTreeMap.Internal.Impl.Const.alter_.redArg"
+    }
+  ],
+  "unresolved_leaf_percent": 0.0
+}

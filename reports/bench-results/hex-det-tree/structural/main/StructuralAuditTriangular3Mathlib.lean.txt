@@ -1,0 +1,2 @@
+import HexPolyDetMathlib.ProofProbe.StructuralTriangular3Mathlib
+#print axioms HexPolyDetMathlib.ProofProbe.StructuralTriangular3Mathlib.result

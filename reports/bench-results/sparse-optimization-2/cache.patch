@@ -1,0 +1,333 @@
+--- a/HexGraphIso/Nauty/Sparse/Refine.lean
++++ b/HexGraphIso/Nauty/Sparse/Refine.lean
+@@ -14,15 +14,33 @@
+ 
+ namespace Hex.GraphIso.Nauty.Sparse
+ 
+-/-- The working arrays of `refine_sg`. Generation marks replace C's
+-periodically cleared short arrays; only equality with the current stamp
+-is observed. -/
++/-- Arrays retained across refinement calls. Marks use a monotonically
++increasing generation; counts are cleared when their cell is first touched. -/
++structure Scratch where
++  cellstart : Array Nat := #[]
++  cellend : Array Nat := #[]
++  indexed : Bool := false
++  hits : Array Nat := #[]
++  marks : Array Nat := #[]
++  vmarks : Array Nat := #[]
++  stamp : Nat := 0
++deriving Inhabited
++
++def Scratch.fresh (n : Nat) : Scratch := {
++  cellstart := Array.replicate n n, cellend := Array.replicate n 0
++  hits := Array.replicate n 0
++  marks := Array.replicate n 0, vmarks := Array.replicate n 0 }
++
++/-- The working state of `refine_sg`. Only equality with the current
++generation stamp is observed. -/
+ structure RefineSt (n : Nat) where
+   lab : Array Nat
+   ptn : Array Nat
+   active : VSet n
+   queue : Array Nat
+   cellstart : Array Nat
++  cellend : Array Nat
++  indexed : Bool := false
+   hits : Array Nat
+   marks : Array Nat
+   vmarks : Array Nat
+@@ -33,6 +51,11 @@
+ 
+ namespace RefineSt
+ 
++def toScratch (s : RefineSt n) : Scratch := {
++  cellstart := s.cellstart, cellend := s.cellend, indexed := s.indexed
++  hits := s.hits, marks := s.marks
++  vmarks := s.vmarks, stamp := s.stamp }
++
+ def push (s : RefineSt n) (v : Nat) : RefineSt n :=
+   { s with active := s.active.insert v, queue := s.queue.push v }
+ 
+@@ -42,22 +65,26 @@
+ end RefineSt
+ 
+ /-- Vertex-to-cell indices, using `n` for vertices in singleton cells. -/
+-def cellstarts (n : Nat) (lab ptn : Array Nat) (level : Nat) : Array Nat := Id.run do
+-  let mut starts := Array.replicate n n
++def indexCells (n : Nat) (lab ptn : Array Nat) (level : Nat)
++    (starts ends : Array Nat) : Array Nat × Array Nat := Id.run do
++  let mut starts := starts
++  let mut ends := ends
+   let mut first := 0
+   for _ in [0:n] do
+     if first >= n then break
+     let last := cellEnd ptn level first
++    ends := ends.set! first last
+     if first < last then
+       for i in [first:last + 1] do starts := starts.set! lab[i]! first
++    else starts := starts.set! lab[first]! n
+     first := last + 1
+-  return starts
++  return (starts, ends)
+ 
+ /-- Divide one cell by counts or distances. The first two minimum
+ fragments use nauty's three-way insertion; later fragments use its exact
+ indirect sort. `distance` selects the distinct distance-branch code updates. -/
+ def splitCounts (level first : Nat) (distance : Bool) (s : RefineSt n) : RefineSt n := Id.run do
+-  let last := cellEnd s.ptn level first + 1
++  let last := s.cellend[first]! + 1
+   let mut s := s.hash first
+   let mut w1 := s.hits[s.lab[first]!]!
+   let mut v2 := first + 1
+@@ -106,6 +133,7 @@
+     for k in [v2:v3] do starts := starts.set! s.lab[k]! v2
+   s := { s with
+     cellstart := starts, numcells := s.numcells + 1
++    cellend := (s.cellend.set! first (v2 - 1)).set! v2 (v3 - 1)
+     ptn := s.ptn.set! (v2 - 1) level }
+   if last == v3 then
+     if v2 - first <= v3 - v2 && !s.active.mem first then return s.push first
+@@ -134,6 +162,7 @@
+       s := { s with cellstart := s.cellstart.set! s.lab[k + 1]! l }
+       k := k + 1
+     let size := k - l + 1
++    s := { s with cellend := s.cellend.set! l k }
+     if size == 1 then
+       s := { s with cellstart := s.cellstart.set! s.lab[l]! n }
+     else
+@@ -172,7 +201,7 @@
+   s := s.hash touched.size
+   for first in touched do
+     s := s.hash first
+-    let last := cellEnd s.ptn level first + 1
++    let last := s.cellend[first]! + 1
+     let mut lab := s.lab
+     s := { s with lab := #[] }
+     let mut v2 := first
+@@ -195,7 +224,9 @@
+     if v2 != v3 && v2 != first then
+       if v2 == first + 1 then starts := starts.set! lab[first]! n
+       if v3 == v2 + 1 then starts := starts.set! lab[v2]! n
+-      s := { s with numcells := s.numcells + 1, ptn := s.ptn.set! (v2 - 1) level }
++      s := { s with
++        numcells := s.numcells + 1, ptn := s.ptn.set! (v2 - 1) level
++        cellend := (s.cellend.set! first (v2 - 1)).set! v2 (v3 - 1) }
+       s := s.hash v2
+       if v2 - first <= v3 - v2 && !s.active.mem first then s := s.push first
+       else s := s.push v2
+@@ -210,7 +241,7 @@
+   let mut hits := s.hits
+   let s := { s with marks := #[], hits := #[] }
+   let mut touched := #[]
+-  let last := cellEnd s.ptn level split + 1
++  let last := s.cellend[split]! + 1
+   for i in [split:last] do
+     let vertex := s.lab[i]!
+     for e in [g.offsets[vertex]!:g.offsets[vertex + 1]!] do
+@@ -220,7 +251,7 @@
+         if marks[k]! != stamp then
+           marks := marks.set! k stamp
+           touched := touched.push k
+-          for l in [k:cellEnd s.ptn level k + 1] do
++          for l in [k:s.cellend[k]! + 1] do
+             hits := hits.set! s.lab[l]! 0
+         hits := hits.set! j (hits[j]! + 1)
+   touched := (Hex.List.sort touched.toList (· ≤ ·)).toArray
+@@ -231,8 +262,8 @@
+ 
+ /-- `refine_sg`, including its shallow distance split and preference for
+ singleton splitters among the first ten active entries. -/
+-def refine (g : Graph n) (level : Nat) (lab ptn : Array Nat)
+-    (active : VSet n) (numcells : Nat) : RefineSt n := Id.run do
++def refineWith (g : Graph n) (level : Nat) (lab ptn : Array Nat)
++    (active : VSet n) (numcells : Nat) (scratch : Scratch) : RefineSt n := Id.run do
+   -- Walk the packed set in the same ascending order as nauty's initial
+   -- active scan, without constructing and filtering a list of all vertices.
+   let mut initialQueue := #[]
+@@ -242,12 +273,14 @@
+     initialQueue := initialQueue.push i
+     next := active.nextElem (some i)
+   let mut s : RefineSt n := {
++    cellstart := scratch.cellstart, cellend := scratch.cellend, indexed := false
++    hits := scratch.hits, marks := scratch.marks
++    vmarks := scratch.vmarks, stamp := scratch.stamp
+     lab, ptn, active, queue := initialQueue
+-    cellstart := #[], hits := Array.replicate n 0, marks := Array.replicate n 0,
+-    vmarks := Array.replicate n 0,
+     numcells, longcode := numcells }
+   if initialQueue.isEmpty then return { s with longcode := cleanup s.longcode }
+-  s := { s with cellstart := cellstarts n lab ptn level }
++  let (starts, ends) := indexCells n lab ptn level s.cellstart s.cellend
++  s := { s with cellstart := starts, cellend := ends, indexed := true }
+   if level <= 2 && initialQueue.size == 1 && ptn[initialQueue[0]!]! <= level && numcells <= n / 8 then
+     let split := initialQueue[0]!
+     s := { s with
+@@ -256,7 +289,7 @@
+     let mut first := 0
+     for _ in [0:n] do
+       if first >= n then break
+-      let last := cellEnd ptn level first
++      let last := s.cellend[first]!
+       if first < last then s := splitCounts level first true s
+       first := last + 1
+   -- A split adds no more queue entries than new cells. With at most n
+@@ -277,4 +310,9 @@
+     else s := splitNontrivial g level split s
+   return { s with longcode := cleanup (mash s.longcode s.numcells) }
+ 
++/-- Standalone refinement with freshly initialized scratch storage. -/
++def refine (g : Graph n) (level : Nat) (lab ptn : Array Nat)
++    (active : VSet n) (numcells : Nat) : RefineSt n :=
++  refineWith g level lab ptn active numcells (.fresh n)
++
+ end Hex.GraphIso.Nauty.Sparse
+--- a/HexGraphIso/Nauty/Sparse/Search.lean
++++ b/HexGraphIso/Nauty/Sparse/Search.lean
+@@ -12,13 +12,28 @@
+ 
+ namespace Hex.GraphIso.Nauty.Sparse
+ 
+-abbrev State (n : Nat) := SearchState n (Graph n)
++/-- Canonical rows and scratch storage carried by the shared search.
++Scratch is independent of the partition nest restored during backtracking. -/
++structure Storage (n : Nat) extends Graph n where
++  scratch : Scratch
++deriving Inhabited
++
++def Storage.update (g : Graph n) (s : Storage n) (lab : Array Nat) (same : Nat) : Storage n :=
++  { s with toGraph := updatecan g s.toGraph lab same }
++
++def Storage.invalidate (s : Storage n) : Storage n :=
++  { s with scratch := { s.scratch with indexed := false } }
++
++abbrev State (n : Nat) := SearchState n (Storage n)
+ 
+ /-- Count the node and run the sparse refinement dispatch. -/
+ def visit (g : Graph n) (level numcells : Nat) (st : State n) : Nat × Nat × State n :=
+-  let r := refine g level st.lab st.ptn st.active numcells
++  let scratch := st.canong.scratch
++  let st : State n := { st with canong := { st.canong with scratch := default } }
++  let r := refineWith g level st.lab st.ptn st.active numcells scratch
+   (r.numcells, r.longcode, { st with
+     lab := r.lab, ptn := r.ptn, active := r.active
++    canong := { st.canong with scratch := r.toScratch }
+     numnodes := st.numnodes + 1 })
+ 
+ /-- The shared target guards, with `targetcell_sg` as the graph dispatch. -/
+@@ -32,7 +47,10 @@
+       else numcells < n && (st.eqlevFirst == level || st.compCanon >= 0)) then
+     let hinted := !first && st.compCanon < 0
+     let hint := if hinted then st.firsttc[level]! else -1
+-    let (pos, cell, count) := maketargetcell g st.lab st.ptn level tcLevel hint
++    let scratch := st.canong.scratch
++    st := { st with canong := { st.canong with scratch := default } }
++    let (pos, cell, count, scratch) := maketargetCached g st.lab st.ptn level tcLevel hint scratch
++    st := { st with canong := { st.canong with scratch } }
+     tc := Int.ofNat pos
+     tcell := cell
+     size := count
+@@ -54,8 +72,8 @@
+   if st.compCanon == 0 then
+     if level < st.canonlevel then st := { st with compCanon := 1 }
+     else
+-      st := { st with canong := updatecan g st.canong st.canonlab st.samerows, samerows := n }
+-      let (c, s) := testcanlab g st.canong st.lab
++      st := { st with canong := st.canong.update g st.canonlab st.samerows, samerows := n }
++      let (c, s) := testcanlab g st.canong.toGraph st.lab
+       st := { st with compCanon := c }
+       sr := s
+   if st.compCanon == 0 then
+@@ -73,13 +91,17 @@
+   classify := classify
+   leafExit := leafExit
+   cheapCheck := cheapCheck
+-  child := child
++  child first level tc tv st :=
++    let st := child first level tc tv st
++    { st with canong := st.canong.invalidate }
+   afterChildFirst := afterChildFirst
+   leaveChild tv st := { st with fixedpts := st.fixedpts.erase tv }
+   orbit st tv := st.orbits[tv]!
+   shortprune := shortprune
+   longprune tcell st := Nauty.longprune tcell st.fixedpts st.autos
+-  recover inf level st := recoverLevels level (recoverPtn inf level st)
++  recover inf level st :=
++    let st := recoverLevels level (recoverPtn inf level st)
++    { st with canong := st.canong.invalidate }
+   afterSweep first level size index st :=
+     let st := afterSweep first level size index st
+     if first then { st with order := st.order * index } else st
+@@ -93,7 +115,7 @@
+   firsttc := .replicate (n + 2) (-1)
+   firstlab := .replicate n 0
+   canonlab := .replicate n 0
+-  canong := g.blank
++  canong := { toGraph := g.blank, scratch := .fresh n }
+   workperm := .replicate n 0
+   numorbits := n }
+ 
+@@ -105,7 +127,7 @@
+ 
+ /-- Finish the pending canonical rows, preserving the raw sparse row order. -/
+ def finish (g : Graph n) (st : State n) : State n :=
+-  { st with canong := updatecan g st.canong st.canonlab st.samerows, samerows := n }
++  { st with canong := st.canong.update g st.canonlab st.samerows, samerows := n }
+ 
+ def run (g : Graph n) (lab : Array Nat) (ends : List Nat) : State n :=
+   finish g (runState g lab ends).2
+--- a/HexGraphIso/Nauty/Sparse/Target.lean
++++ b/HexGraphIso/Nauty/Sparse/Target.lean
+@@ -64,4 +64,52 @@
+   let last := cellEnd ptn level first
+   (first, worksetOf n lab first last, last - first + 1)
+ 
++/-- The same joins and tie order as `bestcell`, reusing the vertex-to-cell
++indices and endpoints maintained by refinement. -/
++def bestcellCached (g : Graph n) (lab : Array Nat) (scratch : Scratch) : Nat × Scratch := Id.run do
++  let mut hits := scratch.hits
++  let scratch := { scratch with hits := #[] }
++  let mut starts := #[]
++  let mut cursor := 0
++  for _ in [0:n] do
++    if cursor >= n then break
++    let last := scratch.cellend[cursor]!
++    if cursor < last then
++      starts := starts.push cursor
++      hits := hits.set! cursor 0
++    cursor := last + 1
++  if starts.isEmpty then return (n, { scratch with hits })
++  let mut best := starts[0]!
++  let mut maxcnt := 0
++  for first in starts do
++    let v := lab[first]!
++    for j in [g.offsets[v]!:g.offsets[v + 1]!] do
++      let k := scratch.cellstart[g.neighbors[j]!]!
++      if k != n then hits := hits.set! k (hits[k]! + 1)
++    let mut count := 0
++    for j in [g.offsets[v]!:g.offsets[v + 1]!] do
++      let k := scratch.cellstart[g.neighbors[j]!]!
++      if k != n then
++        if hits[k]! > 0 && hits[k]! < scratch.cellend[k]! - k + 1 then count := count + 1
++        hits := hits.set! k 0
++    if count > maxcnt then
++      best := first
++      maxcnt := count
++  return (best, { scratch with hits })
++
++/-- Use cached partition data only when it describes the current refinement.
++Empty-active entry and invalidated search states retain the standalone path. -/
++def maketargetCached (g : Graph n) (lab ptn : Array Nat) (level tcLevel : Nat)
++    (hint : Int) (scratch : Scratch) : Nat × VSet n × Nat × Scratch := Id.run do
++  if !scratch.indexed then
++    let (first, cell, size) := maketargetcell g lab ptn level tcLevel hint
++    return (first, cell, size, scratch)
++  let (first, scratch) :=
++    if hint >= 0 && ptn[hint.toNat]! > level &&
++        (hint == 0 || ptn[hint.toNat - 1]! <= level) then (hint.toNat, scratch)
++    else if level <= tcLevel then bestcellCached g lab scratch
++    else (targetcell g lab ptn level tcLevel hint, scratch)
++  let last := scratch.cellend[first]!
++  return (first, worksetOf n lab first last, last - first + 1, scratch)
++
+ end Hex.GraphIso.Nauty.Sparse

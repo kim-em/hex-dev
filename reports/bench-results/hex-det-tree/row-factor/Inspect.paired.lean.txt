@@ -1,0 +1,45 @@
+import HexPolyDetMathlib.ProofProbe.N4K2D2S4Hex
+import HexReflect.Session
+
+open Lean Meta Hex.PolyDet Hex.PolyDet.Packed
+set_option maxRecDepth 100000
+set_option maxHeartbeats 0
+
+-- Original resource-checking certificate, used only for adjacent attribution.
+def oldCheck (k n : Nat) (a : List (List (Hex.MvPoly.Kernel.PolyList Int)))
+    (w : Hex.Matrix.DetWitness (Hex.MvPoly.Kernel.PolyList Int)) : Bool :=
+  Packed.check (ops k) n a
+    (fun i t b c => Hex.Kronecker.checkMulTerms {} .plain k 1 (i+1) (i+1) [t] b [c])
+    (fun v => Hex.Kronecker.checkMulTerms {} .plain k 1 n n [v] a [List.replicate n []]) w
+
+def oldRows : List (List (Hex.MvPoly.Kernel.PolyList Int)) :=
+  ([[[([2,0], -3), ([1,0], -6), ([0,1], -9), ([0,0], -3)], [([2,0], -2), ([1,0], -4), ([0,1], -6), ([0,0], -2)], [([2,0], -3), ([1,0], -6), ([0,1], -9), ([0,0], -3)], [([2,0], 3), ([1,0], 6), ([0,1], 9), ([0,0], 3)]],
+[[([1,0], -1), ([0,2], -2), ([0,1], -3), ([0,0], -2)], [([1,0], 1), ([0,2], 2), ([0,1], 3), ([0,0], 2)], [([1,0], -3), ([0,2], -6), ([0,1], -9), ([0,0], -6)], [([1,0], -1), ([0,2], -2), ([0,1], -3), ([0,0], -2)]],
+[[([2,0], 9), ([1,0], 3), ([0,2], 9), ([0,1], 6)], [([2,0], 9), ([1,0], 3), ([0,2], 9), ([0,1], 6)], [([2,0], -6), ([1,0], -2), ([0,2], -6), ([0,1], -4)], [([2,0], -3), ([1,0], -1), ([0,2], -3), ([0,1], -2)]],
+[[([2,0], 3), ([1,0], 9), ([0,2], 3), ([0,1], 6)], [([2,0], 2), ([1,0], 6), ([0,2], 2), ([0,1], 4)], [([2,0], -1), ([1,0], -3), ([0,2], -1), ([0,1], -2)], [([2,0], -1), ([1,0], -3), ([0,2], -1), ([0,1], -2)]]] : List (List (Hex.MvPoly.Kernel.PolyList Int))).map
+    (List.map (fun p => Hex.PolyDet.toList
+      (Hex.MvPoly.Kernel.denote (n := 2) (cmp := Hex.Mono.grevlex) p)))
+
+run_meta do
+  let rows ← evalExpr (List (List (Hex.MvPoly.Kernel.PolyList Int)))
+    (toTypeExpr (List (List (Hex.MvPoly.Kernel.PolyList Int)))) (mkConst ``oldRows)
+  let some proof := (← getConstInfo `result).value? (allowOpaque := true) | throwError "no result"
+  lambdaTelescope proof fun _ e => do
+    let some body := (← getConstInfo e.getAppFn.constName!).value? (allowOpaque := true)
+      | throwError "no auxiliary proof"
+    logInfo m!"auxiliary nodes {Hex.Reflect.sourceNodeCount body 10000000}"
+    lambdaLetTelescope body fun _ e => do
+      let args := e.getAppArgs
+      let cert := args[args.size - 4]!
+      let w := cert.getAppArgs[4]!
+      let old ← mkAppM ``oldCheck #[toExpr (2 : Nat), toExpr (4 : Nat), toExpr rows, w]
+      let hp ← HexMatrixMathlib.Literal.decideProof (← mkEq old (mkConst ``Bool.true))
+      for order in [[("old", hp), ("new", cert)], [("new", cert), ("old", hp)]] do
+        for (name, h) in order do
+          let before ← IO.monoNanosNow
+          checkWithKernel h
+          logInfo m!"paired_certificate {name} ns {(← IO.monoNanosNow) - before}"
+      for arg in args.toList.drop (args.size - 3) do
+        let before ← IO.monoNanosNow
+        checkWithKernel arg
+        logInfo m!"entry_target {arg.getAppFn.constName?} ns {(← IO.monoNanosNow) - before}"

@@ -1,0 +1,41 @@
+{
+  "cpu": 56,
+  "host": {
+    "system": "Linux",
+    "node": "chungus2",
+    "release": "6.12.100",
+    "version": "#1-NixOS SMP PREEMPT_DYNAMIC Thu Jul 30 11:04:52 UTC 2026",
+    "machine": "x86_64",
+    "processor": ""
+  },
+  "load_start": [
+    5.7900390625,
+    15.58154296875,
+    39.80712890625
+  ],
+  "base": "4d09e9ea250549b6fa5d35c76f6bae2595944db0",
+  "lean_bench": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+  "toolchain": "leanprover/lean4:v4.34.0",
+  "hashes": {
+    "experiments/RealClosureAlgebraic/Algebraic.lean": "f21a9bb2683c653f5ad16a3e8f69aea21ed5c8b4afdcd21b279033dc8f00ab06",
+    "experiments/RealClosureAlgebraic/Bench.lean": "c0f3f32f3fbc107700ce1d8bd8113b04b6016d9f4c41000086fdda483f47c323",
+    "experiments/RealClosureAlgebraic/Check.lean": "23d298fff1de1a655b2d6da2a69065f54b994cfcd174a80558ea6352f2b3c244",
+    "experiments/RealClosureAlgebraic/Nested.lean": "17a26c96fee09df88e04a1dc02057b8e974689c4c182361ebebf4bfaf6be1504",
+    "experiments/RealClosureAlgebraic/Policy.lean": "e23532301fb0afbfb39c5450c74afad91f8c8eec7d911eaf1fd01126242c1e1f",
+    "experiments/RealClosureAlgebraic/PolicyBench.lean": "a0b8df2fd6a1124f078501a664b482e229b61deb475214200aec0e3ccaf7d1a1",
+    "experiments/RealClosureAlgebraic/PolicyCheck.lean": "fa5d10dcbe543f10c7966fb5782bec73a8faad4189c95a9c3160b2f9a0abd66b",
+    "experiments/RealClosureAlgebraic/PolicyTrace.lean": "43c7d8c937e5c718ea951ecf367ce85359708458593c70b849589531ec5ae714",
+    "experiments/RealClosureAlgebraic/Refinement.lean": "e2874ae212cca07d260cc9abd742ca05f43787cda156385094bef22db6af695f",
+    "experiments/RealClosureAlgebraic/Tests.lean": "9d87396b5653b46a2619ae8203e870e6bc88add3e8a3bd14b6526599d2ca7340",
+    "experiments/RealClosureAlgebraic/Transfer.lean": "6d3eda6898f62c2831ee7dbedb11f1228ef0fb30b68b63a95a7e539253f65af3",
+    "experiments/RealClosureAlgebraic/lakefile.toml": "f3362394a1ade06ea20bf3f0a83bcbd4c264876b967e3d9733c52364fca5a59d",
+    "experiments/RealClosureAlgebraic/POLICY-PROTOCOL.md": "ef25ba5ca79bfb7ae93154399f02b554f0de2702dc0b1db0364430d8a9e8f5a8",
+    "experiments/RealClosureAlgebraic/measure_policy.py": "415d6026526c4da453e668a3ac1d6901579b2623267e605a420a20e0ec0c0719"
+  },
+  "schedule": "10 cases x 3 adjacent policy pairs x 6 AB/BA blocks; 1 repeat, 50ms floor",
+  "load_end": [
+    6.6201171875,
+    12.328125,
+    34.97607421875
+  ]
+}

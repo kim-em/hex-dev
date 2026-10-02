@@ -1,0 +1,67 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 4K of event 'cycles:u'
+# Event count (approx.): 17899356325
+#
+# Overhead  Symbol                                                                                                                                                                     IPC   [IPC Coverage]
+# ........  .........................................................................................................................................................................  ....................
+#
+    14.23%  [.] l_List_decidableBAll___redArg                                                                                                                                          -      -
+    13.13%  [.] mi_free                                                                                                                                                                -      -
+    12.91%  [.] l_List_elem___redArg                                                                                                                                                   -      -
+    12.56%  [.] lean_array_to_list_impl                                                                                                                                                -      -
+    12.29%  [.] lean_apply_2                                                                                                                                                           -      -
+     6.59%  [.] lean_inc_heartbeat                                                                                                                                                     -      -
+     6.19%  [.] lean_apply_1                                                                                                                                                           -      -
+     6.12%  [.] l_instDecidableEqFin___boxed                                                                                                                                           -      -
+     5.23%  [.] lean_dec_ref_cold                                                                                                                                                      -      -
+     3.03%  [.] l_List_nodupDecidable___redArg___lam__0___boxed                                                                                                                        -      -
+     2.47%  [.] l_instBEqOfDecidableEq___redArg___lam__0___boxed                                                                                                                       -      -
+     1.06%  [.] lean_free_object                                                                                                                                                       -      -
+     0.77%  [.] mi_malloc_small                                                                                                                                                        -      -
+     0.72%  [.] mi_page_free_list_extend(mi_page_s*, unsigned long, unsigned long)                                                                                                     -      -
+     0.31%  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_HexGraphIso_SparseBench_0__Hex_GraphIsoSparseBench_read_spec__0___redArg  -      -
+     0.30%  [.] std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::push_back(char)                                                                 -      -
+     0.28%  [.] lean::validate_utf8(unsigned char const*, unsigned long, unsigned long&, unsigned long&)                                                                               -      -
+     0.19%  [.] lean_copy_expand_array                                                                                                                                                 -      -
+     0.17%  [.] mi_page_queue_find_free_ex(mi_theap_s*, mi_page_queue_s*, bool)                                                                                                        -      -
+     0.15%  [.] _mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)                                                                                          -      -
+     0.12%  [.] mi_page_extend_free(mi_theap_s*, mi_page_s*)                                                                                                                           -      -
+     0.10%  [.] mi_bitmap_setN(mi_bitmap_s*, unsigned long, unsigned long, unsigned long*)                                                                                             -      -
+     0.10%  [.] mi_bchunk_setN(mi_bchunk_s*, unsigned long, unsigned long, unsigned long*)                                                                                             -      -
+     0.10%  [.] lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)                                                                                                   -      -
+     0.07%  [.] mi_bchunk_try_find_and_clear(mi_bchunk_s*, unsigned long*)                                                                                                             -      -
+     0.07%  [.] _mi_page_retire(mi_page_s*)                                                                                                                                            -      -
+     0.07%  [.] lean::utf8_strlen(char const*, unsigned long)                                                                                                                          -      -
+     0.05%  [.] mi_page_queue_remove(mi_page_queue_s*, mi_page_s*)                                                                                                                     -      -
+     0.05%  [.] l_Lean_PersistentHashMap_insertAux___at___00Lean_PersistentHashMap_insert___at___00Lean_Parser_SyntaxNodeKindSet_insert_spec__0_spec__0___redArg                       -      -
+     0.05%  [.] mi_malloc                                                                                                                                                              -      -
+     0.05%  [.] mi_page_queue_push(mi_theap_s*, mi_page_queue_s*, mi_page_s*)                                                                                                          -      -
+     0.05%  [.] mi_bitmap_clearN(mi_bitmap_s*, unsigned long, unsigned long)                                                                                                           -      -
+     0.05%  [.] mi_arenas_page_regular_alloc(mi_theap_s*, unsigned long, unsigned long)                                                                                                -      -
+     0.05%  [.] mi_arena_schedule_purge(mi_arena_s*, unsigned long, unsigned long)                                                                                                     -      -
+     0.05%  [.] lean_mark_mt                                                                                                                                                           -      -
+     0.02%  [.] mi_bbitmap_setN(mi_bbitmap_s*, unsigned long, unsigned long)                                                                                                           -      -
+     0.02%  [.] mi_bbitmap_try_find_and_clear_generic(mi_bbitmap_s*, unsigned long, unsigned long, unsigned long*, bool (*)(mi_bchunk_s*, unsigned long, unsigned long*))              -      -
+     0.02%  [.] _mi_arenas_collect(bool, bool, mi_tld_s*)                                                                                                                              -      -
+     0.02%  [.] mi_arena_try_alloc_at(mi_arena_s*, unsigned long, bool, unsigned long, mi_memid_s*)                                                                                    -      -
+     0.02%  [.] l_List_lengthTR___redArg                                                                                                                                               -      -
+     0.02%  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__2___redArg                          -      -
+     0.02%  [.] lp_Hex_Hex_GraphIso_Nauty_cellEnd_go                                                                                                                                   -      -
+     0.02%  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__0___redArg                           -      -
+     0.02%  [.] lean_obj_once_cold                                                                                                                                                     -      -
+     0.02%  [.] l_Lean_Name_append                                                                                                                                                     -      -
+     0.02%  [.] lean_apply_4                                                                                                                                                           -      -
+     0.02%  [.] lean::validate_utf8_one(unsigned char const*, unsigned long, unsigned long&)                                                                                           -      -
+     0.00%  [k] 0xffffffffae201280                                                                                                                                                     -      -
+     0.00%  [.] init_cpu_features.constprop.0                                                                                                                                          -      -
+     0.00%  [k] 0xffffffffae1338bf                                                                                                                                                     -      -
+     0.00%  [.] _start                                                                                                                                                                 -      -
+
+
+#
+# (Tip: To show time in nanoseconds in record/report add --ns)
+#

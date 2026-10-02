@@ -22,7 +22,7 @@ Core conformance for `HexGraphIso`.
   `Graph.relabel`,
   `Perm.ofVector?`/`inv`/`comp`, `Label` round trips,
   `Coloring.ofVector?`, `Colored.relabel`, `checkIso`, `isIso`,
-  `findIso`, `checkIso?`, `canonicalize`,
+  `findIso`, `canonicalize`,
   `canon`, `label`, `Nauty.canonSpecKey`, `Nauty.specCanon`,
   `Nauty.runColored`,
   `Nauty.searchResult?`, `Nauty.certifyCanon?`, `autos`,
@@ -34,14 +34,14 @@ Core conformance for `HexGraphIso`.
   forms; verdict agreement between the declarative specification key and
   the nauty-compatible search; found transporters accepted by
   `checkIso`;
-  exhaustion returning `none`, never `false`; every returned
+  every returned
   automorphism generator accepted by `checkIso` against the graph
   itself, the orbit array constant on each orbit, and the group order
   of named examples.
 - **Covered edge cases:** the empty graph (`n = 0`, `k = 0`), a single
   vertex, discrete and one-cell colourings, complete and empty graphs,
   duplicate and reversed edges in the builder, out-of-range and loop
-  edges rejected, zero search and replay limits.
+  edges rejected.
 -/
 
 namespace Hex.GraphIso.Conformance
@@ -126,16 +126,6 @@ private def rot3 : Perm 3 :=
 #guard decide (ColorSorted (canon c4))
 -- invariance under a committed relabelling
 #guard canon (p3.relabel rot3.toLabel) == canon p3
-
-/-! # Bounded replay: exhaustion is `none`, never `false` -/
-
-#guard (checkIso? { maxKernelSteps := 0 } p3 p3' (Perm.id 3)).isNone
-#guard
-  match checkIso? {} p3 p3 (Perm.id 3) with
-  | some b => b
-  | none => false
--- within the replay limit the bounded check agrees with `checkIso`
-#guard checkIso? {} p3 p3' (Perm.id 3) == some (checkIso p3 p3' (Perm.id 3))
 
 /-! # Specification and nauty-compatible agreement
 

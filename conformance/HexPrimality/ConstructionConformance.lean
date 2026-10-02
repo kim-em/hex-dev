@@ -1,0 +1,454 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+import HexPrimality
+import HexPrimality.Curve25519Replay
+import HexPrimality.Curve448Replay
+import HexPrimality.CertificateProducer
+
+open Hex.Nat
+
+-- Kernel lookup must reject non-represented residues, composites, and primes
+-- outside the table; compiled lookup is separately covered by the same API.
+example : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 25, 57467, 99991, 99999, 100000, 100003].map
+    isTablePrime =
+    [false, false, true, true, false, true, false, true, false, false, true, false,
+      true, true, false, false, false] := by
+  decide +kernel
+
+/-- info: Try this:
+  [apply] exact Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.small 7) (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime 7 := by primality?
+
+/--
+info: Try this:
+  [apply] exact
+    Hex.Nat.prime_of_checkPrimeAt (c :=
+      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949
+        [(2, 0,
+            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907
+              2028478494862525422475607 22304740449229861598212 2028478494862525422475606
+              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),
+                (2, 0, Hex.Nat.PrimeCert.small 57467),
+                (2, 0,
+                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944
+                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),
+                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])
+      (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime (2 ^ 255 - 19) := by
+  primality?
+
+private def expected : PrimeCert :=
+  Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949
+        [(2, 0,
+            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907
+              2028478494862525422475607 22304740449229861598212 2028478494862525422475606
+              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),
+                (2, 0, Hex.Nat.PrimeCert.small 57467),
+                (2, 0,
+                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944
+                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),
+                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])]
+
+private def curveInput : Nat := 2^255 - 19
+
+#guard (match Construction.run curveInput (Hex.Rand.ofSeed curveInput) with
+  | .error _ => false
+  | .ok s => reprStr s.cert.raw == reprStr expected && s.attempts == 29 &&
+      s.rand == Hex.Rand.ofSeed curveInput && checkPrime s.cert.raw)
+
+#guard primesBelow 0 == []
+#guard primesBelow 1 == []
+#guard primesBelow 2 == []
+#guard primesBelow 3 == [2]
+#guard primesBelow 4 == [2, 3]
+#guard primesBelow 5 == [2, 3]
+#guard primesBelow 6 == [2, 3, 5]
+#guard [0, 1, 63, 64, 65, 127, 128, 129].all fun count =>
+  bitsToListGo (2 ^ 130 - 1) 0 count == (List.range count).map numOfIndex
+#guard bitsToListGo (1 <<< 128) 127 3 == [numOfIndex 128]
+#guard (List.range 200).all fun n =>
+  (primesBelow 200).contains n == isPrimeTrial n
+#guard (primesBelow 524288).length == 43390
+#guard (primesBelow 524288).getLast? == some 524287
+#guard primesBelow 524287 == (primesBelow 524288).dropLast
+#guard primesBelow 524289 == primesBelow 524288
+
+private def hardCofactor : Nat :=
+  (74058212732561358302231226437062788676166966415465897661863160754340907 - 1) /
+    (2 * 3 * 353 * 57467 * 253947789517)
+
+#guard pMinusOneStage1 hardCofactor 2 262144 == .noFactor
+#guard pMinusOneStage1 hardCofactor 2 524288 == .factor 31757755568855353
+#guard pMinusOneStage1 15 4 2 == .whole
+#guard (pMinusOneStage1Counted hardCofactor 2 524288 (Hex.Rand.ofSeed 9)).attempts == 1
+#guard (pMinusOneStage1Counted hardCofactor 2 524288 (Hex.Rand.ofSeed 9)).rand ==
+  Hex.Rand.ofSeed 9
+
+#guard (match Construction.run 100003 (Hex.Rand.ofSeed 19)
+    { constructionBudget with maxDepth := 0 } with
+  | .error f => f.stop == .exhausted && f.attempts == 0 && f.rand == Hex.Rand.ofSeed 19
+  | _ => false)
+
+private def malformed : FactorSearch := fun _ n r =>
+  ⟨⟨[(0, 1), (n + 1, 2 ^ 100)], 0⟩, r, 7, []⟩
+
+#guard (match Construction.run curveInput (Hex.Rand.ofSeed 19) (factor := malformed) with
+  | .error f => f.stop == .exhausted && f.attempts == 7 && f.rand == Hex.Rand.ofSeed 19
+  | _ => false)
+
+#guard !checkPrime (.pock curveInput [(2, 0, .small 4)])
+#guard !checkPrime (.pock3 31757755568855353 4028945 289 0
+  [(5, 2, .small 2), (2, 0, .small 223), (2, 0, .small 4153)])
+
+/--
+error: primality?: input has 522 bits; construction limit is 521 bits
+-/
+#guard_msgs in
+example : Hex.Nat.Prime 6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057152 := by primality?
+
+private def rejects (raw : PartialFactors) : Bool :=
+  match Construction.run curveInput (Hex.Rand.ofSeed 19)
+      (factor := fun _ _ r => ⟨raw, r, 7, []⟩) with
+  | .error f => f.stop == .exhausted && f.attempts == 7 && f.rand == Hex.Rand.ofSeed 19
+  | _ => false
+
+#guard rejects ⟨[(2, 2 ^ 100)], 1⟩
+#guard rejects ⟨[(2, 1), (2, 1)], 25000⟩
+#guard rejects ⟨[(2, 1)], 0⟩
+#guard rejects ⟨[(2, 1)], 50000⟩
+#guard rejects ⟨[(2, 0)], 100002⟩
+
+set_option pp.all true in
+/-- info: Try this:
+  [apply] exact Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.small 7) (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime 7 := by primality?
+
+namespace SuggestionContext
+open Hex.Nat
+-- The exact suggested text also elaborates under a namespace with opened APIs.
+example : Hex.Nat.Prime 7 := by
+  exact Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.small 7) (by decide +kernel)
+end SuggestionContext
+
+#guard (Construction.factorSearch constructionBudget.factor 0 (Hex.Rand.ofSeed 3)).raw.residual == 0
+#guard (Construction.factorSearch constructionBudget.factor 0 (Hex.Rand.ofSeed 3)).raw.factors.isEmpty
+
+namespace Shadow
+private def Hex.Nat.prime_of_checkPrimeAt : Nat := 0
+private def Hex.Nat.PrimeCert.small (n : Nat) : Nat := n
+
+/-- info: Try this:
+  [apply] exact _root_.Hex.Nat.prime_of_checkPrimeAt (c := _root_.Hex.Nat.PrimeCert.small 7) (by decide +kernel)
+-/
+#guard_msgs in
+example : _root_.Hex.Nat.Prime 7 := by primality?
+
+example : _root_.Hex.Nat.Prime 7 := by
+  exact _root_.Hex.Nat.prime_of_checkPrimeAt (c := _root_.Hex.Nat.PrimeCert.small 7) (by decide +kernel)
+end Shadow
+
+
+#guard (match Construction.run curveInput (Hex.Rand.ofSeed curveInput)
+    { constructionBudget with maxAttempts := 1 } with
+  | .error f => f.stop == .exhausted && f.attempts == 1 &&
+      f.rand == Hex.Rand.ofSeed curveInput
+  | _ => false)
+
+#guard (match Construction.run curveInput (Hex.Rand.ofSeed curveInput)
+    { constructionBudget with maxAttempts := 29 } with
+  | .ok s => s.attempts == 29 && reprStr s.cert.raw == reprStr expected
+  | _ => false)
+
+#guard (match Construction.run curveInput (Hex.Rand.ofSeed curveInput)
+    { constructionBudget with maxAttempts := 28 } with
+  | .error f => f.stop == .exhausted && f.attempts == 28
+  | _ => false)
+
+#guard (match Construction.run 100003 (Hex.Rand.ofSeed 100003)
+    { constructionBudget with maxSubsets := 1 } with
+  | .ok s => checkPrime s.cert.raw
+  | _ => false)
+
+-- HexPrimality-only imports: no automatic ECM registration is available.
+/--
+error: primality?: certificate construction for 57896044618658097711785492504343953926634992332820282019728792003956564819949 exhausted after 1 attempts (seed 57896044618658097711785492504343953926634992332820282019728792003956564819949; maximum 521 bits, recursive depth 32, total attempts 1, factor fuel 1024, p-minus-one bounds [64, 512, 4096, 32768, 262144, 524288] at bases [2, 3], 2 rho restarts with 32768 steps, ECM bounds [] and 0 curves, witness bases [2, 3, 5, 7, 11, 13, 17] then 32 random candidates, at most 32 factors and 4096 subsets, sieve bound at most 64); unresolved obligation 74058212732561358302231226437062788676166966415465897661863160754340907
+-/
+#guard_msgs in
+example : Hex.Nat.Prime (2 ^ 255 - 19) := by primality? (maxAttempts := 1)
+
+
+#guard (match Construction.run 2147483647 (Hex.Rand.ofSeed 2147483647)
+    { constructionBudget with maxAttempts := 1, witnessBases := [] } with
+  | .error f => f.stop == .exhausted && f.attempts == 1 &&
+      f.rand == (Hex.Rand.ofSeed 2147483647).next.2
+  | _ => false)
+
+-- General cube-root replay and rejection of omitted or false sieve obligations.
+example : Hex.Nat.Prime 197 := prime_of_checkPrimeAt
+  (c := .pock3Sieve 197 1 6 0 2 [(2, 1, .small 2)]) (by decide +kernel)
+#guard !checkPrime (.pock3Sieve 197 1 6 0 1 [(2, 1, .small 2)])
+#guard !checkPrime (.pock3Sieve 197 1 6 0 0 [(2, 1, .small 2)])
+#guard !checkPrime (.pock3Sieve 205 3 6 0 2 [(32, 1, .small 2)])
+#guard checkWitness 205 2 32
+#guard !checkDivisors 205 4 1
+example : Hex.Nat.Prime 9223372036904058881 := prime_of_checkPrimeAt
+  (c := .pock3Sieve 9223372036904058881 47 4194304 0 4 [(3, 19, .small 2)])
+  (by decide +kernel)
+
+-- An unusable provider proves the cheap partial-factor route never calls it.
+private def noFactors : FactorSearch := fun _ n r => ⟨⟨[], n⟩, r, 1000000, []⟩
+#guard (match Construction.run 9223372036904058881 (Hex.Rand.ofSeed 17)
+    (factor := noFactors) with
+  | .ok s => checkPrime s.cert.raw && s.attempts < 1000000 && s.rand == Hex.Rand.ofSeed 17
+  | _ => false)
+
+/--
+info: Try this:
+  [apply] exact
+    Hex.Nat.prime_of_checkPrimeAt (c :=
+      Hex.Nat.PrimeCert.pock3Sieve 9223372036904058881 47 4194304 0 4 [(3, 19, Hex.Nat.PrimeCert.small 2)])
+      (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime 9223372036904058881 := by primality?
+
+-- Only 2^20 is exposed by table division here. A lower sieve cap must exhaust
+-- when the provider declines further factoring, with no consumed factor attempts.
+private def decline : FactorSearch := fun _ n r => ⟨⟨[], n⟩, r, 0, []⟩
+example : Hex.Nat.Prime 9223372037728239617 := prime_of_checkPrimeAt
+  (c := .pock3Sieve 9223372037728239617 833 4194304 0 4 [(3, 19, .small 2)])
+  (by decide +kernel)
+#guard (match Construction.run 9223372037728239617 (Hex.Rand.ofSeed 17)
+    { constructionBudget with maxSieveBound := 4 } (factor := decline) with
+  | .ok s => checkPrime s.cert.raw && s.attempts == 2 && s.rand == Hex.Rand.ofSeed 17
+  | _ => false)
+#guard (match Construction.run 9223372037728239617 (Hex.Rand.ofSeed 17)
+    { constructionBudget with maxSieveBound := 3 } (factor := decline) with
+  | .error f => f.stop == .exhausted && f.attempts == 0 && f.rand == Hex.Rand.ofSeed 17
+  | _ => false)
+
+-- Arbitrary large literal bounds are rejected before recursive sieve replay.
+example : checkPrime (.pock3Sieve 197 1 6 0 1000000000 [(2, 1, .small 2)]) = false := by
+  decide +kernel
+#guard !checkPrime (.pock3Sieve 197 1 6 0 1000000000 [(2, 1, .small 2)])
+
+-- Both bounds satisfy the size inequality; only the checker cap rejects 65.
+example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 64
+    [(3, 19, .small 2)]) = true := by decide +kernel
+example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 65
+    [(3, 19, .small 2)]) = false := by decide +kernel
+#guard !checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 65 [(3, 19, .small 2)])
+
+-- Stage 2 shares the global attempt limit and preserves ordered diagnostics.
+private def stage2Subject : Nat := 4175126843 * 4294967291
+private def stage2Allocation (limit : Nat) : FactorSearchBudget := {
+  constructionBudget.factor with
+  smoothBounds := [64]
+  smoothBases := [2]
+  primeBudget := ⟨0, 0, .off⟩
+  factorFuel := 8
+  attemptLimit := some limit
+  pMinusOneStage2 := true }
+private def stage2Search (limit : Nat) :=
+  Construction.factorSearch (stage2Allocation limit) stage2Subject (Hex.Rand.ofSeed 5)
+#guard (stage2Search 0).attempts == 0 && (stage2Search 0).events.isEmpty
+#guard (stage2Search 0).rand == Hex.Rand.ofSeed 5
+#guard (stage2Search 1).attempts == 1 && (stage2Search 1).events.length == 2
+#guard (stage2Search 1).raw.residual == stage2Subject
+#guard (match (stage2Search 1).events with
+  | [.pMinusOne first, .pMinusOne skip] =>
+      first.reason == "ready-residue" && skip.reason == "budget" &&
+      skip.requestedB2 == some 512 && skip.candidates == 0 && skip.setupGcds == 0
+  | _ => false)
+#guard (stage2Search 3).attempts == 2 && (stage2Search 3).raw.residual == 1
+#guard (stage2Search 3).rand == Hex.Rand.ofSeed 5
+#guard (match (stage2Search 3).events with
+  | [.pMinusOne first, .pMinusOne next] =>
+      first.reason == "ready-residue" && next.requestedB2 == some 512 &&
+      next.outcome == .factor 4175126843
+  | _ => false)
+#guard (Construction.factorSearch { stage2Allocation 3 with pMinusOneStage2 := false }
+  stage2Subject (Hex.Rand.ofSeed 5)).events.isEmpty
+#guard (match (Construction.factorSearch { stage2Allocation 3 with smoothBounds := [4097] }
+    (3530931683 * 4294967291) (Hex.Rand.ofSeed 5)).events with
+  | [.pMinusOne _, .pMinusOne skip] => skip.reason == "policy-cap"
+  | _ => false)
+#guard (match (Construction.factorSearch { stage2Allocation 3 with smoothBounds := [0] }
+    stage2Subject (Hex.Rand.ofSeed 5)).events with
+  | [.pMinusOne _, .pMinusOne skip] => skip.reason == "empty-interval"
+  | _ => false)
+
+private def diagnosticProducer : FactorSearch := fun _ n r =>
+  ⟨⟨[], n⟩, r, 0, [.route "test" [("subject", toString n)]]⟩
+#guard (match Construction.run curveInput (Hex.Rand.ofSeed 19)
+    (factor := diagnosticProducer) with
+  | .error f => f.events == [.route "test" [("subject", toString (curveInput - 1))]]
+  | _ => false)
+
+-- The option reaches the construction policy; table proofs need no attempts.
+example : Hex.Nat.Prime 23 := by
+  primality? (maxAttempts := 0) (pMinusOneStage2 := true)
+/--
+info: Try this:
+  [apply] exact
+    Hex.Nat.prime_of_checkPrimeAt (c :=
+      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949
+        [(2, 0,
+            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907
+              2028478494862525422475607 22304740449229861598212 2028478494862525422475606
+              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),
+                (2, 0, Hex.Nat.PrimeCert.small 57467),
+                (2, 0,
+                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944
+                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),
+                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])
+      (by decide +kernel)
+-/
+#guard_msgs in
+theorem curveSupplied : Hex.Nat.Prime (2 ^ 255 - 19) := by
+  primality? using Hex.PrimalityProducer.curve
+
+/-- info: 'curveSupplied' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms curveSupplied
+
+#guard checkPrime (Hex.PrimalityProducer.fermat 0)
+
+
+/-- info: Try this:
+  [apply] exact
+    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock 17 [(3, 3, Hex.Nat.PrimeCert.small 2)])
+      (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime 17 := by primality? using fermat_cert% 2
+
+/-- info: Try this:
+  [apply] exact
+    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock 17 [(3, 3, Hex.Nat.PrimeCert.small 2)])
+      (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime 17 := by
+  primality? using (let two : PrimeCert := .small 2; pock_power% 17 from two ^ 4 base 3)
+
+/--
+info: Try this:
+  [apply] exact
+    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock3Sieve 197 1 6 0 2 [(2, 1, Hex.Nat.PrimeCert.small 2)])
+      (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime 197 := by
+  primality? using .pock3Sieve 197 1 6 0 2 [(2, 1, .small 2)]
+
+/-- error: primality? using: certificate subject is 7; expected 11 -/
+#guard_msgs in
+example : Hex.Nat.Prime 11 := by primality? using .small 7
+
+/-- error: primality? using: certificate for 4 failed checkPrime -/
+#guard_msgs in
+example : Hex.Nat.Prime 4 := by primality? using .small 4
+
+/-- error: primality? using: certificate for 17 failed checkPrime -/
+#guard_msgs in
+example : Hex.Nat.Prime 17 := by
+  primality? using .pock 17 [(3, 1, .small 2), (3, 1, .small 2)]
+
+/-- error: primality? using: certificate for 197 failed checkPrime -/
+#guard_msgs in
+example : Hex.Nat.Prime 197 := by
+  primality? using .pock3Sieve 197 1 6 0 65 [(2, 1, .small 2)]
+
+/-- error: primality? using: certificate for 17 failed checkPrime -/
+#guard_msgs in
+example : Hex.Nat.Prime 17 := by
+  primality? using .pock 17 [(3, 2 ^ 100, .small 2)]
+
+/-- error: certificate exponent must be positive -/
+#guard_msgs in
+example : Hex.Nat.Prime 17 := by
+  primality? using pock_power% 17 from (.small 2) ^ 0 base 3
+
+/--
+error: primality? using: the argument
+  c
+must not contain free or meta variables
+-/
+#guard_msgs in
+example (c : PrimeCert) : Hex.Nat.Prime 17 := by primality? using c
+
+-- Re-elaborate the pretty printer's output and render it again. This exercises
+-- data round-trip, not just string equality from printing the same expression.
+open Lean Elab Hex.PrimalityTactic in
+run_cmd Command.liftTermElabM do
+  for cert in [Hex.PrimalityProducer.curve, Hex.PrimalityProducer.fermat 2,
+      PrimeCert.pock3Sieve 197 1 6 0 2 [(2, 1, .small 2)]] do
+    let first ← certificateSyntax cert
+    let printed := (← PrettyPrinter.ppTerm first).pretty
+    let parsed ← match Parser.runParserCategory (← getEnv) `term printed with
+      | .ok parsed => pure parsed
+      | .error message => throwError "rendered certificate did not parse: {message}"
+    let roundtrip ← suppliedCertificate ⟨parsed⟩ cert.subject
+    unless reprStr cert == reprStr roundtrip do
+      throwError "certificate data changed during round-trip"
+    let second ← certificateSyntax roundtrip
+    unless (← PrettyPrinter.ppTerm first).pretty == (← PrettyPrinter.ppTerm second).pretty do
+      throwError "certificate rendering is not stable"
+
+/--
+error: Type mismatch
+  42
+has type
+  Nat
+but is expected to have type
+  PrimeCert
+-/
+#guard_msgs in
+example : Hex.Nat.Prime 17 := by primality? using (42 : Nat)
+
+-- The 521-bit boundary must reach construction; the next bit remains rejected.
+set_option maxRecDepth 1024 in
+set_option exponentiation.threshold 521 in
+/--
+info: Try this:
+  [apply] exact
+    Hex.Nat.prime_of_checkPrimeAt (c :=
+      Hex.Nat.PrimeCert.pock
+        6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057151
+        [(3, 0, Hex.Nat.PrimeCert.small 2), (3, 0, Hex.Nat.PrimeCert.small 3), (3, 1, Hex.Nat.PrimeCert.small 5),
+          (3, 0, Hex.Nat.PrimeCert.small 11), (3, 0, Hex.Nat.PrimeCert.small 17), (3, 0, Hex.Nat.PrimeCert.small 31),
+          (3, 0, Hex.Nat.PrimeCert.small 41), (3, 0, Hex.Nat.PrimeCert.small 53), (3, 0, Hex.Nat.PrimeCert.small 131),
+          (3, 0, Hex.Nat.PrimeCert.small 157), (2, 0, Hex.Nat.PrimeCert.small 521),
+          (3, 0, Hex.Nat.PrimeCert.small 1613), (3, 0, Hex.Nat.PrimeCert.small 2731),
+          (3, 0, Hex.Nat.PrimeCert.small 8191), (3, 0, Hex.Nat.PrimeCert.small 42641),
+          (3, 0, Hex.Nat.PrimeCert.small 51481), (3, 0, Hex.Nat.PrimeCert.small 61681),
+          (3, 0, Hex.Nat.PrimeCert.pock 409891 [(3, 0, Hex.Nat.PrimeCert.small 1051)]),
+          (3, 0, Hex.Nat.PrimeCert.pock 858001 [(3, 2, Hex.Nat.PrimeCert.small 5), (2, 0, Hex.Nat.PrimeCert.small 13)]),
+          (3, 0,
+            Hex.Nat.PrimeCert.pock 5746001 [(3, 1, Hex.Nat.PrimeCert.small 13), (3, 0, Hex.Nat.PrimeCert.small 17)]),
+          (3, 0,
+            Hex.Nat.PrimeCert.pock 7623851 [(3, 0, Hex.Nat.PrimeCert.small 37), (3, 0, Hex.Nat.PrimeCert.small 317)]),
+          (3, 0,
+            Hex.Nat.PrimeCert.pock 34110701 [(3, 0, Hex.Nat.PrimeCert.small 19), (3, 0, Hex.Nat.PrimeCert.small 1381)]),
+          (3, 0, Hex.Nat.PrimeCert.pock 308761441 [(3, 0, Hex.Nat.PrimeCert.small 49481)]),
+          (3, 0,
+            Hex.Nat.PrimeCert.pock 2400573761
+              [(3, 0, Hex.Nat.PrimeCert.small 347), (3, 0, Hex.Nat.PrimeCert.small 1663)]),
+          (3, 0,
+            Hex.Nat.PrimeCert.pock 108140989558681
+              [(3, 0, Hex.Nat.PrimeCert.small 1433), (3, 0, Hex.Nat.PrimeCert.small 23609)])])
+      (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime (2 ^ 521 - 1) := by primality?

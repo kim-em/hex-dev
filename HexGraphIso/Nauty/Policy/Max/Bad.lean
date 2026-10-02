@@ -47,7 +47,7 @@ theorem classify_eqlevCanon (ctx : Ctx n) (level numcells : Nat) (st : Search n)
     (classify ctx level numcells st).2.eqlevCanon = st.eqlevCanon := by
   unfold classify
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
-    apply_ite Search.eqlevCanon, ite_self]
+    apply_ite SearchState.eqlevCanon, ite_self]
 
 /-- A rejected leaf retains the sharp choice between the code comparison
 and the cheap boundary in its actual return target. -/
@@ -105,7 +105,7 @@ theorem NodeInput.bad_bound {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
     refine ⟨Generic.Bounded.refl _ _, ?_⟩
     rw [← hm.2]
     refine ⟨incKey ctx bs p.2.2.2.2.2.canonlab, ?_, ?_⟩
-    · simp only [Search.key, hc.nonempty, ↓reduceIte]
+    · simp only [SearchState.key, hc.nonempty, ↓reduceIte]
       rfl
     · rw [Frame.key, show n + 1 - f.level = n - f.level + 1 by omega]
       exact hle
@@ -166,7 +166,7 @@ theorem NodeInput.bad_result {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat
       have hcover : Generic.Covers (prefixKey (f.codes.take (target + 1)) tail)
           (p.2.2.2.2.2.key ctx bs) := by
         exact ⟨incKey ctx bs p.2.2.2.2.2.canonlab,
-          by simp only [Search.key, hcomp.nonempty, ↓reduceIte], hp⟩
+          by simp only [SearchState.key, hcomp.nonempty, ↓reduceIte], hp⟩
       have hbefore : p.2.2.2.2.2.key ctx bs = f.entry.key ctx bs := hm.2
       rw [hbefore] at hcover
       exact hcover.grow hb.grows

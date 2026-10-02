@@ -30,6 +30,25 @@ class PersistentFlintWarmupTests(unittest.TestCase):
         self.assertEqual(len(registrations), 1)
         self.assertEqual(failures, registrations)
 
+    def test_rank_adapter_requires_warmup(self) -> None:
+        source = ('def rankRequest := Hex.BenchOracle.Flint.PersistentComparator.spawn python #[]\n'
+                  'def adapter := rankRequest\n')
+        registrations, failures = self.check_source(
+            source + 'setup_fixed_benchmark adapter where { repeats := 6 }\n')
+        self.assertEqual(len(registrations), 1)
+        self.assertEqual(failures, registrations)
+        self.assertEqual(self.check_source(
+            source + 'setup_fixed_benchmark adapter where { warmupFirstIter := true }\n')[1], [])
+
+    def test_carrier_driver_requires_warmup(self) -> None:
+        source = "def runAdapter (_ : Unit) := carrierLine line\n"
+        cold = source + "setup_fixed_benchmark runAdapter where { repeats := 5 }\n"
+        registrations, failures = self.check_source(cold)
+        self.assertEqual(len(registrations), 1)
+        self.assertEqual(failures, registrations)
+        warm = source + "setup_fixed_benchmark runAdapter where { warmupFirstIter := true }\n"
+        self.assertEqual(self.check_source(warm)[1], [])
+
     def test_rejects_registration_without_where_clause(self) -> None:
         registrations, failures = self.check_source(
             "def runFlint (_ : Unit) := Hex.BenchOracle.Flint.runOp \"x\" \"y\" #[]\n"

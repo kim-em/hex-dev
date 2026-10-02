@@ -1,0 +1,350 @@
+[
+  {
+    "name": "smokeStructured",
+    "export": {
+      "results": [
+        {
+          "points": [
+            {
+              "total_nanos": 11042043,
+              "status": "ok",
+              "result_hash": "0xda",
+              "repeat_index": 0,
+              "peak_rss_kb": 67176,
+              "inner_repeats": 1,
+              "error": null,
+              "alloc_bytes": null
+            },
+            {
+              "total_nanos": 21163681,
+              "status": "ok",
+              "result_hash": "0xda",
+              "repeat_index": 1,
+              "peak_rss_kb": 67288,
+              "inner_repeats": 1,
+              "error": null,
+              "alloc_bytes": null
+            },
+            {
+              "total_nanos": 11427094,
+              "status": "ok",
+              "result_hash": "0xda",
+              "repeat_index": 2,
+              "peak_rss_kb": 66780,
+              "inner_repeats": 1,
+              "error": null,
+              "alloc_bytes": null
+            },
+            {
+              "total_nanos": 10862577,
+              "status": "ok",
+              "result_hash": "0xda",
+              "repeat_index": 3,
+              "peak_rss_kb": 66724,
+              "inner_repeats": 1,
+              "error": null,
+              "alloc_bytes": null
+            },
+            {
+              "total_nanos": 10190910,
+              "status": "ok",
+              "result_hash": "0xda",
+              "repeat_index": 4,
+              "peak_rss_kb": 67664,
+              "inner_repeats": 1,
+              "error": null,
+              "alloc_bytes": null
+            }
+          ],
+          "observed_hash": "0xda",
+          "min_nanos": 10190910,
+          "median_nanos": 11042043,
+          "max_nanos": 21163681,
+          "kind": "fixed",
+          "hashes_agree": true,
+          "hashable": true,
+          "function": "Hex.ModularMatrixBench.smokeStructured",
+          "expected_hash_check": {
+            "status": "unset"
+          },
+          "env": {
+            "timestamp_unix_ms": 1789247790808,
+            "timestamp_iso": "2026-09-12T21:16:30Z",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "os": "linux",
+            "lean_version": "4.34.0-rc2",
+            "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+            "lean_bench_version": "0.1.0",
+            "hostname": "chungus2",
+            "git_dirty": true,
+            "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+            "exe_name": "hexmodularmatrix_bench",
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "cpu_cores": 96,
+            "arch": "x86_64"
+          },
+          "config": {
+            "warmup_first_iter": false,
+            "warmup": true,
+            "repeats": 5,
+            "min_total_seconds": 0.001,
+            "max_seconds_per_call": 60,
+            "expected_hash": null
+          },
+          "budget_truncated": false
+        }
+      ],
+      "lean_bench_version": "0.1.0",
+      "export_schema_version": 1,
+      "env": {
+        "timestamp_unix_ms": 1789247790808,
+        "timestamp_iso": "2026-09-12T21:16:30Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": true,
+        "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+        "exe_name": "hexmodularmatrix_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      }
+    },
+    "log": "Hex.ModularMatrixBench.smokeStructured    [fixed] repeats=5\n  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f566403-dirty, 2026-09-12T21:16:30Z, host=chungus2\n  repeat 0  11.042 ms\n  repeat 1  21.164 ms\n  repeat 2  11.427 ms\n  repeat 3  10.863 ms\n  repeat 4  10.191 ms\n  median: 11.042 ms    min: 10.191 ms    max: 21.164 ms\n  hash: all repeats agree\n  observed hash: 0xda\n  peak RSS: 66_724 kB..67_664 kB (across 5 ok repeat(s))\nexported to /tmp/issue-10219-smokeStructured.json\n"
+  },
+  {
+    "name": "smokeDense",
+    "export": {
+      "results": [
+        {
+          "points": [
+            {
+              "total_nanos": 49371564,
+              "status": "ok",
+              "result_hash": "0xe9be599fac7e5bc0",
+              "repeat_index": 0,
+              "peak_rss_kb": 66712,
+              "inner_repeats": 1,
+              "error": null,
+              "alloc_bytes": null
+            },
+            {
+              "total_nanos": 120124242,
+              "status": "ok",
+              "result_hash": "0xe9be599fac7e5bc0",
+              "repeat_index": 1,
+              "peak_rss_kb": 67788,
+              "inner_repeats": 1,
+              "error": null,
+              "alloc_bytes": null
+            },
+            {
+              "total_nanos": 68370954,
+              "status": "ok",
+              "result_hash": "0xe9be599fac7e5bc0",
+              "repeat_index": 2,
+              "peak_rss_kb": 66852,
+              "inner_repeats": 1,
+              "error": null,
+              "alloc_bytes": null
+            },
+            {
+              "total_nanos": 81468968,
+              "status": "ok",
+              "result_hash": "0xe9be599fac7e5bc0",
+              "repeat_index": 3,
+              "peak_rss_kb": 66724,
+              "inner_repeats": 1,
+              "error": null,
+              "alloc_bytes": null
+            },
+            {
+              "total_nanos": 85479639,
+              "status": "ok",
+              "result_hash": "0xe9be599fac7e5bc0",
+              "repeat_index": 4,
+              "peak_rss_kb": 66748,
+              "inner_repeats": 1,
+              "error": null,
+              "alloc_bytes": null
+            }
+          ],
+          "observed_hash": "0xe9be599fac7e5bc0",
+          "min_nanos": 49371564,
+          "median_nanos": 81468968,
+          "max_nanos": 120124242,
+          "kind": "fixed",
+          "hashes_agree": true,
+          "hashable": true,
+          "function": "Hex.ModularMatrixBench.smokeDense",
+          "expected_hash_check": {
+            "status": "unset"
+          },
+          "env": {
+            "timestamp_unix_ms": 1789247791440,
+            "timestamp_iso": "2026-09-12T21:16:31Z",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "os": "linux",
+            "lean_version": "4.34.0-rc2",
+            "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+            "lean_bench_version": "0.1.0",
+            "hostname": "chungus2",
+            "git_dirty": true,
+            "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+            "exe_name": "hexmodularmatrix_bench",
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "cpu_cores": 96,
+            "arch": "x86_64"
+          },
+          "config": {
+            "warmup_first_iter": false,
+            "warmup": true,
+            "repeats": 5,
+            "min_total_seconds": 0.001,
+            "max_seconds_per_call": 60,
+            "expected_hash": null
+          },
+          "budget_truncated": false
+        }
+      ],
+      "lean_bench_version": "0.1.0",
+      "export_schema_version": 1,
+      "env": {
+        "timestamp_unix_ms": 1789247791440,
+        "timestamp_iso": "2026-09-12T21:16:31Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": true,
+        "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+        "exe_name": "hexmodularmatrix_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      }
+    },
+    "log": "Hex.ModularMatrixBench.smokeDense    [fixed] repeats=5\n  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f566403-dirty, 2026-09-12T21:16:31Z, host=chungus2\n  repeat 0   49.372 ms\n  repeat 1  120.124 ms\n  repeat 2   68.371 ms\n  repeat 3   81.469 ms\n  repeat 4   85.480 ms\n  median: 81.469 ms    min: 49.372 ms    max: 120.124 ms\n  hash: all repeats agree\n  observed hash: 0xe9be599fac7e5bc0\n  peak RSS: 66_712 kB..67_788 kB (across 5 ok repeat(s))\nexported to /tmp/issue-10219-smokeDense.json\n"
+  },
+  {
+    "name": "smokeUnimodular",
+    "export": {
+      "results": [
+        {
+          "points": [
+            {
+              "total_nanos": 90503904,
+              "status": "ok",
+              "result_hash": "0x2",
+              "repeat_index": 0,
+              "peak_rss_kb": 66708,
+              "inner_repeats": 1,
+              "error": null,
+              "alloc_bytes": null
+            },
+            {
+              "total_nanos": 100016197,
+              "status": "ok",
+              "result_hash": "0x2",
+              "repeat_index": 1,
+              "peak_rss_kb": 68064,
+              "inner_repeats": 1,
+              "error": null,
+              "alloc_bytes": null
+            },
+            {
+              "total_nanos": 71306990,
+              "status": "ok",
+              "result_hash": "0x2",
+              "repeat_index": 2,
+              "peak_rss_kb": 67248,
+              "inner_repeats": 1,
+              "error": null,
+              "alloc_bytes": null
+            },
+            {
+              "total_nanos": 136720426,
+              "status": "ok",
+              "result_hash": "0x2",
+              "repeat_index": 3,
+              "peak_rss_kb": 66872,
+              "inner_repeats": 1,
+              "error": null,
+              "alloc_bytes": null
+            },
+            {
+              "total_nanos": 74154295,
+              "status": "ok",
+              "result_hash": "0x2",
+              "repeat_index": 4,
+              "peak_rss_kb": 66880,
+              "inner_repeats": 1,
+              "error": null,
+              "alloc_bytes": null
+            }
+          ],
+          "observed_hash": "0x2",
+          "min_nanos": 71306990,
+          "median_nanos": 90503904,
+          "max_nanos": 136720426,
+          "kind": "fixed",
+          "hashes_agree": true,
+          "hashable": true,
+          "function": "Hex.ModularMatrixBench.smokeUnimodular",
+          "expected_hash_check": {
+            "status": "unset"
+          },
+          "env": {
+            "timestamp_unix_ms": 1789247792483,
+            "timestamp_iso": "2026-09-12T21:16:32Z",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "os": "linux",
+            "lean_version": "4.34.0-rc2",
+            "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+            "lean_bench_version": "0.1.0",
+            "hostname": "chungus2",
+            "git_dirty": true,
+            "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+            "exe_name": "hexmodularmatrix_bench",
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "cpu_cores": 96,
+            "arch": "x86_64"
+          },
+          "config": {
+            "warmup_first_iter": false,
+            "warmup": true,
+            "repeats": 5,
+            "min_total_seconds": 0.001,
+            "max_seconds_per_call": 60,
+            "expected_hash": null
+          },
+          "budget_truncated": false
+        }
+      ],
+      "lean_bench_version": "0.1.0",
+      "export_schema_version": 1,
+      "env": {
+        "timestamp_unix_ms": 1789247792483,
+        "timestamp_iso": "2026-09-12T21:16:32Z",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "os": "linux",
+        "lean_version": "4.34.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "chungus2",
+        "git_dirty": true,
+        "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+        "exe_name": "hexmodularmatrix_bench",
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "cpu_cores": 96,
+        "arch": "x86_64"
+      }
+    },
+    "log": "Hex.ModularMatrixBench.smokeUnimodular    [fixed] repeats=5\n  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f566403-dirty, 2026-09-12T21:16:32Z, host=chungus2\n  repeat 0   90.504 ms\n  repeat 1  100.016 ms\n  repeat 2   71.307 ms\n  repeat 3  136.720 ms\n  repeat 4   74.154 ms\n  median: 90.504 ms    min: 71.307 ms    max: 136.720 ms\n  hash: all repeats agree\n  observed hash: 0x2\n  peak RSS: 66_708 kB..68_064 kB (across 5 ok repeat(s))\nexported to /tmp/issue-10219-smokeUnimodular.json\n"
+  }
+]

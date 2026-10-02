@@ -1,0 +1,6 @@
+{
+  "path": "HexBareiss/Kernel.lean",
+  "baseline_blob": "0f54e50e7192f5005537fcab7e3d4ba2ba2045cb",
+  "current_blob": "47ed3d9fcf8120699abb5b11dbbbef7708f6f53c",
+  "reason": "Moves Hex.Matrix.rowLists to HexMatrix/Lists.lean, generalizing it to rectangular matrices and arbitrary entries with the same rows.toList.map Vector.toList body. The only existing executable caller in this file is detWitness, the determinant certificate producer; bench/HexBench/FactorService.lean measures ZPoly.factorize, whose factorization implementation does not call detWitness or rowLists. No Bareiss elimination or factorization runtime definition changes. The additional imports provide the relocated declaration, including for compile-time guards. This exemption covers the existing hex-factor runtime sweep only; rank-locus proof elaboration has its own measured sweep."
+}

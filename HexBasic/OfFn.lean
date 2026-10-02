@@ -24,6 +24,11 @@ array of known capacity rather than build a linked list and convert, so each
 carries a `@[csimp]` lemma redirecting the compiler back to the core version.
 The {name}`List` route is then paid only in the kernel, which is where it is
 needed.
+
+Remove the `Array.ofFn'` and `Vector.ofFn'` shims and migrate their
+callers to the core operations when the pinned toolchain reaches Lean
+v4.35.0-rc1, which includes
+<https://github.com/leanprover/lean4/pull/14989>.
 -/
 
 namespace Hex
@@ -86,8 +91,9 @@ only so that the kernel can reduce it. -/
 /-- An {name}`Array.map` equivalent that reduces in the kernel under the
 module system: core {name}`Array.map`'s implementation loop is not exposed,
 so `(a.map f)` stalls downstream exactly like {name}`Array.ofFn`.
-Retire once <https://github.com/leanprover/lean4/pull/14996> reaches the
-pinned toolchain. -/
+Remove this shim and migrate its callers to core {name}`Array.map` when the
+pinned toolchain reaches Lean v4.35.0-rc1, which includes
+<https://github.com/leanprover/lean4/pull/14996>. -/
 @[expose] def Array.map' {α : Type u} {β : Type v} (f : α → β)
     (a : Array α) : Array β :=
   (a.toList.map f).toArray
@@ -111,13 +117,44 @@ so that the kernel can reduce it. -/
 @[csimp] theorem Array.map'_eq_map' : @Array.map' = @_root_.Array.map := by
   funext α β f a; exact Array.map'_eq_map f a
 
+/-! # `Vector.map` -/
+
+/-- A {name}`Vector.map` equivalent that reduces in the kernel under the
+module system: core {name}`Vector.map` delegates to {name}`Array.map`, whose
+implementation loop is not exposed, so `(v.map f)` stalls downstream.
+Remove this shim and migrate its callers to core {name}`Vector.map` when the
+pinned toolchain reaches Lean v4.35.0-rc1, alongside
+{name}`Hex.Array.map'`. -/
+@[expose] def Vector.map' {α : Type u} {β : Type v} {n : Nat} (f : α → β)
+    (v : Vector α n) : Vector β n :=
+  ⟨Array.map' f v.toArray, by simp⟩
+
+@[simp] theorem Vector.map'_eq_map {α : Type u} {β : Type v} {n : Nat} (f : α → β)
+    (v : Vector α n) : Vector.map' f v = v.map f :=
+  _root_.Vector.toArray_inj.mp (by simp [Vector.map'])
+
+@[simp] theorem Vector.toArray_map' {α : Type u} {β : Type v} {n : Nat} (f : α → β)
+    (v : Vector α n) : (Vector.map' f v).toArray = Array.map' f v.toArray := rfl
+
+@[simp] theorem Vector.getElem_map' {α : Type u} {β : Type v} {n : Nat} (f : α → β)
+    (v : Vector α n) (i : Nat) (h : i < n) :
+    (Vector.map' f v)[i] = f v[i] := by
+  simp [Vector.map']
+
+/-- Compiled code uses the core {name}`Vector.map`; the {name}`List` route
+exists only so that the kernel can reduce it. -/
+@[csimp] theorem Vector.map'_eq_map' : @Vector.map' = @_root_.Vector.map := by
+  funext α β n f v; exact Vector.map'_eq_map f v
+
 /-! # `Array.zipWith` -/
 
 /-- An {name}`Array.zipWith` equivalent that reduces in the kernel under the
 module system: core {name}`Array.zipWith` runs its `zipWithMAux` loop by
 well-founded recursion, so `(Array.zipWith f a b)` stalls downstream
-exactly like {name}`Array.map`. Retire once core exposes a structurally
-recursive implementation. -/
+exactly like {name}`Array.map`. Remove this shim and migrate its callers to
+core {name}`Array.zipWith` when the pinned toolchain reaches Lean
+v4.35.0-rc1, which includes
+<https://github.com/leanprover/lean4/pull/15078>. -/
 @[expose] def Array.zipWith' {α : Type u} {β : Type v} {γ : Type w}
     (f : α → β → γ) (a : Array α) (b : Array β) : Array γ :=
   (List.zipWith f a.toList b.toList).toArray

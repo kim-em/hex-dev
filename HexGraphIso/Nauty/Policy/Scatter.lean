@@ -22,7 +22,7 @@ when the reference labelling is a permutation.
 
 namespace Hex.GraphIso.Nauty
 
-variable {n : Nat}
+variable {n : Nat} {κ : Type}
 
 private theorem forIn_fold (f : Nat → Array Nat → Array Nat) :
     ∀ (xs : List Nat) (a : Array Nat),
@@ -34,7 +34,7 @@ private theorem forIn_fold (f : Nat → Array Nat → Array Nat) :
     exact forIn_fold f xs (f i a)
 
 /-- Scattering updates only the permutation workspace. -/
-theorem scatter_eq (ref : Array Nat) (st : Search n) :
+theorem scatter_eq (ref : Array Nat) (st : SearchState n κ) :
     scatter ref st = { st with workperm := ((List.range n).foldl
       (fun a i => a.set! ref[i]! st.lab[i]!) st.workperm) } := by
   rw [scatter]
@@ -46,13 +46,13 @@ theorem scatter_eq (ref : Array Nat) (st : Search n) :
   rfl
 
 /-- Scattering preserves the allocated workspace size. -/
-theorem scatter_size (ref : Array Nat) (st : Search n) :
+theorem scatter_size (ref : Array Nat) (st : SearchState n κ) :
     (scatter ref st).workperm.size = st.workperm.size := by
   rw [scatter_eq]
   exact foldl_scatter_size ref st.lab _ _
 
 /-- Each reference vertex receives the corresponding current vertex. -/
-theorem scatter_get {ref : Array Nat} {st : Search n}
+theorem scatter_get {ref : Array Nat} {st : SearchState n κ}
     (hinj : ∀ i j, i < n → j < n → ref[i]! = ref[j]! → i = j)
     (hbound : ∀ i, i < n → ref[i]! < st.workperm.size)
     {i : Nat} (hi : i < n) :
@@ -61,7 +61,7 @@ theorem scatter_get {ref : Array Nat} {st : Search n}
   exact foldl_scatter_getElem hinj hbound (Nat.le_refl _) hi
 
 /-- A permutation reference assigns every position of the current labelling. -/
-theorem scatter_map {ref : Array Nat} {st : Search n}
+theorem scatter_map {ref : Array Nat} {st : SearchState n κ}
     (hwork : st.workperm.size = n)
     (href : ref.size = n) (hrefPerm : ref.toList.Perm (List.range n)) :
     ∀ i, i < n → (scatter ref st).workperm[ref[i]!]! = st.lab[i]! := by

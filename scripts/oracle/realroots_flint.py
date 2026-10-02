@@ -9,7 +9,7 @@ python-flint's ``fmpz_poly``.  It never calls the Lean isolator: the
 expected values come from FLINT/Arb, not from re-running the operation
 under test.
 
-Two tiers, all endpoint arithmetic in exact ``fractions.Fraction``:
+Isolation uses two tiers, with endpoint arithmetic in exact ``fractions.Fraction``:
 
 * **exact tier** — ``fmpz_poly.factor()`` yields the rational roots
   (the linear factors).  Every rational root must lie in exactly one
@@ -25,7 +25,11 @@ Two tiers, all endpoint arithmetic in exact ``fractions.Fraction``:
   strictly inside exactly one Lean interval, giving the interval ↔ real
   root bijection.
 
-Checks, per square-free fixture:
+Tarski fixtures use the pinned FLINT ``qqbar`` adapter for exact evaluation
+and signs at every real root, including irrational and common-factor roots.
+The domain guards are independently checked over ``fmpq_poly``.
+
+Checks, per square-free isolation fixture:
 
   (i)   ``root_count`` == ``len(isolations)`` == number of real roots;
   (ii)  bijection: each Lean interval holds exactly one real root and
@@ -237,6 +241,124 @@ def _match_intervals(
             )
 
 
+def _tarski_expected(coeffs: list[int], query: list[int], endpoints: list[list[int]]) -> int | None:
+    """Sum exact signs at independent FLINT qqbar roots, with exact domain guards."""
+    from scripts.oracle.real_algebraic_qqbar import QQBar
+
+    if len(endpoints) != 2 or any(len(row) != 2 for row in endpoints):
+        raise OracleMismatch("Tarski endpoints must be two dyadic pairs")
+    lower, upper = map(_dyadic_value, endpoints)
+
+    def evaluate(x: Fraction) -> Fraction:
+        value = Fraction(0)
+        for c in reversed(coeffs):
+            value = value * x + c
+        return value
+
+    if (_is_zero_poly(coeffs) or _nonsquarefree(coeffs) or not lower < upper
+            or evaluate(lower) == 0 or evaluate(upper) == 0):
+        return None
+    try:
+        with QQBar() as q:
+            lo, hi, zero = q.number(lower), q.number(upper), q.number(0)
+            roots = q.roots([q.number(c, q.integer) for c in coeffs], integer=True)
+            coefficients = [q.number(c) for c in reversed(query)]
+            total = 0
+            for root, multiplicity in roots:
+                if multiplicity != 1:
+                    raise OracleMismatch("squarefree qqbar root has unexpected multiplicity")
+                if q.compare(lo, root) < 0 and q.compare(root, hi) < 0:
+                    value = zero
+                    for c in coefficients:
+                        value = q.binary("add", q.binary("mul", value, root), c)
+                    sign = q.compare(value, zero)
+                    total += (sign > 0) - (sign < 0)
+            return total
+    except (ArithmeticError, RuntimeError, ValueError) as exc:
+        raise OracleMismatch(f"exact qqbar Tarski oracle failed: {exc}") from exc
+
+
+def _certificate_chain(cases: dict, lib: str, prefix: str, p: Any, f: Any) -> list[Any]:
+    """Check supplied positive identities independently with FLINT polynomial arithmetic."""
+    from flint import fmpz_poly
+
+    def fixture(suffix: str, kind: str, field: str) -> Any:
+        record = cases.get((lib, prefix + suffix))
+        if record is None or record["kind"] != kind:
+            raise OracleMismatch(f"missing certificate {prefix + suffix}")
+        return record[field]
+
+    rows = fixture("/chain", "matrix", "rows")
+    chain = [fmpz_poly(row) for row in rows]
+    if not chain or chain[0] != p or len(chain) > p.degree() + 1:
+        raise OracleMismatch(f"{prefix}: invalid chain head or length")
+    degrees = [s.degree() for s in chain]
+    if any(s.is_zero() for s in chain) or any(a <= b for a, b in zip(degrees, degrees[1:])):
+        raise OracleMismatch(f"{prefix}: zero entry or nondecreasing degree")
+    if fixture("/degrees", "matrix", "rows") != [degrees]:
+        raise OracleMismatch(f"{prefix}: incorrect literal degrees")
+
+    initial = fixture("/initial/scales", "matrix", "rows")
+    if len(initial) != 1 or len(initial[0]) != 2 or min(initial[0]) <= 0:
+        raise OracleMismatch(f"{prefix}: nonpositive or malformed initial scales")
+    u, v = initial[0]
+    q = fmpz_poly(fixture("/initial/quotient", "poly", "coeffs"))
+    second = chain[1] if len(chain) > 1 else fmpz_poly([])
+    if u * f * p.derivative() != q * p + v * second:
+        raise OracleMismatch(f"{prefix}: incorrect initial polynomial identity")
+
+    scales = fixture("/steps/scales", "matrix", "rows")
+    quotients = fixture("/steps/quotients", "matrix", "rows")
+    if len(scales) != max(0, len(chain) - 2) or len(quotients) != len(scales):
+        raise OracleMismatch(f"{prefix}: incorrect number of signed steps")
+    for i, (pair, coeffs) in enumerate(zip(scales, quotients)):
+        if len(pair) != 2 or min(pair) <= 0:
+            raise OracleMismatch(f"{prefix}: nonpositive or malformed step scales")
+        if pair[0] * chain[i] != fmpz_poly(coeffs) * chain[i + 1] - pair[1] * chain[i + 2]:
+            raise OracleMismatch(f"{prefix}: incorrect signed identity at step {i}")
+
+    terminal = fixture("/terminal/scale", "matrix", "rows")
+    q = fmpz_poly(fixture("/terminal/quotient", "poly", "coeffs"))
+    if len(chain) == 1:
+        if terminal or not q.is_zero():
+            raise OracleMismatch(f"{prefix}: singleton has terminal evidence")
+    else:
+        if len(terminal) != 1 or len(terminal[0]) != 1 or terminal[0][0] <= 0:
+            raise OracleMismatch(f"{prefix}: missing or nonpositive terminal scale")
+        if terminal[0][0] * chain[-2] != q * chain[-1]:
+            raise OracleMismatch(f"{prefix}: incorrect terminal polynomial identity")
+    return chain
+
+
+def _check_tarski_certificate(cases: dict, lib: str, case_id: str, coeffs: list[int],
+                             query: list[int], endpoints: list[list[int]], value: int) -> None:
+    from flint import fmpz_poly
+
+    p = fmpz_poly(coeffs)
+    sf = _certificate_chain(cases, lib, case_id + "/squarefree", p, fmpz_poly([1]))
+    if sf[-1].degree() != 0:
+        raise OracleMismatch("squarefreeness certificate has nonconstant tail")
+    chain = _certificate_chain(cases, lib, case_id + "/remainders", p, fmpz_poly(query))
+    signs = []
+    variations = []
+    for endpoint in map(_dyadic_value, endpoints):
+        row = []
+        for polynomial in chain:
+            evaluated = Fraction(0)
+            for c in reversed(polynomial.coeffs()):
+                evaluated = endpoint * evaluated + int(c)
+            row.append((evaluated > 0) - (evaluated < 0))
+        nonzero = [s for s in row if s]
+        signs.append(row)
+        variations.append(sum(a != b for a, b in zip(nonzero, nonzero[1:])))
+    for suffix, expected in (("/signs", signs), ("/variations", [variations])):
+        record = cases.get((lib, case_id + suffix))
+        if record is None or record["kind"] != "matrix" or record["rows"] != expected:
+            raise OracleMismatch(f"incorrect certificate {suffix}")
+    if variations[0] - variations[1] != value:
+        raise OracleMismatch("certificate variation drop differs from query value")
+
+
 def check(
     source: str | Path | None,
     *,
@@ -247,7 +369,7 @@ def check(
     cases, results = split_fixtures_results(read_fixtures(source))
     oracle_version = _flint_version()
     failures = 0
-    checked = {"exact": 0, "ball": 0, "reject": 0}
+    checked = {"exact": 0, "ball": 0, "reject": 0, "tarski": 0}
 
     # Group results by case so we see root_count, isolations, and
     # isolate_none together.
@@ -265,6 +387,23 @@ def check(
             continue
         coeffs = list(record["coeffs"])
         try:
+            if "tarski" in ops:
+                query = cases.get((lib, case_id + "/query"))
+                endpoints = cases.get((lib, case_id + "/endpoints"))
+                if (query is None or query["kind"] != "poly" or endpoints is None
+                        or endpoints["kind"] != "matrix"):
+                    raise OracleMismatch("missing Tarski query polynomial or endpoints")
+                expected = _tarski_expected(coeffs, list(query["coeffs"]), endpoints["rows"])
+                actual = ops["tarski"]
+                if actual is not None and type(actual) is not int:
+                    raise OracleMismatch(f"Tarski result must be an integer or null: {actual!r}")
+                if actual != expected:
+                    raise OracleMismatch(f"Tarski query mismatch: Lean={actual}, qqbar={expected}")
+                if actual is not None:
+                    _check_tarski_certificate(cases, lib, case_id, coeffs,
+                                             list(query["coeffs"]), endpoints["rows"], actual)
+                checked["tarski"] += 1
+                continue
             if "isolate_none" in ops:
                 # (iv) rejection: genuinely rejectable and Lean said none.
                 if ops["isolate_none"] is not True:
@@ -345,7 +484,7 @@ def check(
     print(
         f"realroots_flint.py: checked {checked['ball']} isolation case(s) "
         f"({checked['exact']} with rational roots), {checked['reject']} rejection "
-        f"case(s), {failures} failure(s)",
+        f"case(s), {checked['tarski']} exact Tarski case(s), {failures} failure(s)",
         file=sys.stderr,
     )
     return 1 if failures else 0

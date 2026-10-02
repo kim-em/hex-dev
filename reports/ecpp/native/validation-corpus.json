@@ -1,0 +1,117 @@
+{
+  "generation": "SHA256 of hex-native-ecpp-10489/validation/{bits}/{index}, set top bit, PARI nextprime; eight per bit size; supplies no search data",
+  "cases": [
+    {
+      "id": "validation-128-0",
+      "split": "validation",
+      "bits": 128,
+      "subject": 240239524026626487042862672952720816183,
+      "seed": 0
+    },
+    {
+      "id": "validation-128-1",
+      "split": "validation",
+      "bits": 128,
+      "subject": 241208388240944074644117997327544683819,
+      "seed": 1
+    },
+    {
+      "id": "validation-128-2",
+      "split": "validation",
+      "bits": 128,
+      "subject": 308480606969505749032377587581227036587,
+      "seed": 2
+    },
+    {
+      "id": "validation-128-3",
+      "split": "validation",
+      "bits": 128,
+      "subject": 270748371207261876705699019668345348689,
+      "seed": 3
+    },
+    {
+      "id": "validation-128-4",
+      "split": "validation",
+      "bits": 128,
+      "subject": 225287390721881124003220841201060220757,
+      "seed": 4
+    },
+    {
+      "id": "validation-128-5",
+      "split": "validation",
+      "bits": 128,
+      "subject": 309704791025752044353068968805387358399,
+      "seed": 5
+    },
+    {
+      "id": "validation-128-6",
+      "split": "validation",
+      "bits": 128,
+      "subject": 257779702621033332709806950282604535579,
+      "seed": 6
+    },
+    {
+      "id": "validation-128-7",
+      "split": "validation",
+      "bits": 128,
+      "subject": 319100507136661287286487743468587708551,
+      "seed": 7
+    },
+    {
+      "id": "validation-256-0",
+      "split": "validation",
+      "bits": 256,
+      "subject": 65970131381948202292137192428196524255466089723524206314382159099857042092309,
+      "seed": 0
+    },
+    {
+      "id": "validation-256-1",
+      "split": "validation",
+      "bits": 256,
+      "subject": 83967368498799373424082896225541434075102851691796424377325909104314643436691,
+      "seed": 1
+    },
+    {
+      "id": "validation-256-2",
+      "split": "validation",
+      "bits": 256,
+      "subject": 115534330506724831869320830568390565751824266178581284984323231534683088512447,
+      "seed": 2
+    },
+    {
+      "id": "validation-256-3",
+      "split": "validation",
+      "bits": 256,
+      "subject": 62292394365931544047797776457633686759431137965459163576482137057262342143951,
+      "seed": 3
+    },
+    {
+      "id": "validation-256-4",
+      "split": "validation",
+      "bits": 256,
+      "subject": 103486501344950896190452867069749997421755885175897313753651924906679932591353,
+      "seed": 4
+    },
+    {
+      "id": "validation-256-5",
+      "split": "validation",
+      "bits": 256,
+      "subject": 115219968303613180170318760115437973610941062152781770424416328511434156923419,
+      "seed": 5
+    },
+    {
+      "id": "validation-256-6",
+      "split": "validation",
+      "bits": 256,
+      "subject": 94075177923551805875951225594798780632700706499007898313795461848067245239757,
+      "seed": 6
+    },
+    {
+      "id": "validation-256-7",
+      "split": "validation",
+      "bits": 256,
+      "subject": 96590133568377947488922651108406533027621815589740576200326951544495709460191,
+      "seed": 7
+    }
+  ]
+}

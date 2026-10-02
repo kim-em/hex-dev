@@ -37,7 +37,7 @@ theorem received_trace (first : Bool) (inf level tv1 tv : Nat) (out : Search n) 
     (Nauty.recover inf level left).genTrace = out.genTrace := by
   intro middle left
   unfold Nauty.recover recoverLevels recoverPtn
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.genTrace, ite_self]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.genTrace, ite_self]
   dsimp only [left, middle]
   split <;> rfl
 

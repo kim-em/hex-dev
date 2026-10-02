@@ -45,7 +45,7 @@ theorem Comparison.prepare {ctx : Ctx n} {tcLevel numcells : Nat}
     have hl := (compareCodes_frame (cs.length + 1)
       (Nauty.visit ctx (cs.length + 1) numcells st).2.1
       (Nauty.visit ctx (cs.length + 1) numcells st).2.2).2.2.2
-    simp only [Search.key, hl]
+    simp only [SearchState.key, hl]
     rfl
 
 /-- Whole-call code comparisons retain the incoming path and monotonically

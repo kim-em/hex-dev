@@ -1,0 +1,31 @@
+Running as unit: hex-sparse-memory-diagnostic.service
+import took 505ms
+/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/sparse-validation/MemoryLimitProbe.lean:5:0: error: (kernel) excessive memory consumption detected
+type checking took 7.65s
+cumulative profiling times:
+	attribute application 0.0153ms
+	blocked 0.297ms
+	compilation (IR) 0.202ms
+	compilation (LCNF base) 1.84ms
+	compilation (LCNF impure) 0.762ms
+	compilation (LCNF mono) 0.908ms
+	elaboration 3.72ms
+	fix level params 0.0635ms
+	import 505ms
+	initialization 20.2ms
+	instantiate metavars 0.0128ms
+	interpretation 8.86ms
+	let-to-have transformation 0.00961ms
+	linting 0.842ms
+	module linting 0.00132ms
+	parsing 0.459ms
+	process pre-definitions 0.851ms
+	share common exprs 2.01ms
+	tactic execution 3.1ms
+	type checking 7.65s
+	typeclass inference 0.967ms
+          Finished with result: exit-code
+Main processes terminated with: code=exited, status=1/FAILURE
+               Service runtime: 9.290s
+             CPU time consumed: 9.270s
+                   Memory peak: 2.5G (swap: 0B)

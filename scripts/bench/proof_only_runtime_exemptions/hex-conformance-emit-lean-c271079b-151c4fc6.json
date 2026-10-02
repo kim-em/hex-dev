@@ -1,0 +1,6 @@
+{
+  "path": "Hex/Conformance/Emit.lean",
+  "baseline_blob": "c271079bd9b688c504bdd9c4fd0b9a933ec22aad",
+  "current_blob": "151c4fc69e2ae1918de6f0a7148fffda13e015ce",
+  "reason": "Combines the already-exempted determinant-dispatch fixture writers from #10205 with the emitMvPolyMatrixFixture record writer for the hex-determinantal-ideal conformance stream. Both are called only by emit-fixture drivers; hexbz_factor_service and the libraries it imports do not import this module, so no measured computation changes."
+}

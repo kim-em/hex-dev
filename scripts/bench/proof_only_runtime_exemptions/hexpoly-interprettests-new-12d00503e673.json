@@ -1,0 +1,6 @@
+{
+  "path": "HexPoly/InterpretTests.lean",
+  "baseline_blob": null,
+  "current_blob": "12d00503e673d18c10462acd5a73fa08d424cc30",
+  "reason": "Adds a verification-only fixture and ordinary-kernel/compiled regression probes to HexReleaseTests. The module is absent from the HexPoly umbrella and the factorization service does not import it. Its definitions and compile-time guards cannot be called by the measured factorization executable."
+}

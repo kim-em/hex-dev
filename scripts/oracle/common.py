@@ -18,6 +18,12 @@ JSONL fixture record shape (one record per line):
                      modulo the pinned prime.
 * ``matrix``     — ``{"kind": "matrix",     "lib": str, "case": str,
                       "rows": [[int...]...]}``
+* ``ratmatrix``  — ``{"kind": "ratmatrix",  "lib": str, "case": str,
+                      "rows": [[[num, den]...]...]}`` with positive
+                     denominators
+* ``modmatrix``  — ``{"kind": "modmatrix",  "lib": str, "case": str,
+                      "modulus": int, "rows": [[int...]...]}`` with
+                     canonical residues below the modulus
 * ``polymatrix`` — ``{"kind": "polymatrix", "lib": str, "case": str,
                      "field": {"p": int}|{"rat": true}, "rows": int,
                      "cols": int, "entries": <polynomial matrix>}``
@@ -31,6 +37,16 @@ JSONL fixture record shape (one record per line):
 * ``mvpoly``     — ``{"kind": "mvpoly",     "lib": str, "case": str,
                       "arity": int, "order": "lex"|"grlex"|"grevlex",
                       "terms": [[[exponent...], coefficient]...]}``
+* ``mvpolymatrix`` — ``{"kind": "mvpolymatrix", "lib": str, "case": str,
+                      "arity": int, "order": "lex"|"grlex"|"grevlex",
+                      "rows": int, "cols": int,
+                      "entries": [[<mvpoly terms>...]...], "r": int}``
+                     (a matrix of multivariate polynomials in the ``mvpoly``
+                      term encoding together with the minor size ``r``;
+                      ``entries`` holds exactly ``rows`` lists of exactly
+                      ``cols`` polynomials.  Matrices over ``Int`` are
+                      arity-0 polynomial matrices, so one stream covers
+                      integer and symbolic matrices.)
 * ``mvgcd``      — two multivariate term lists plus coefficient-domain data
 * ``mvsqf``      — one characteristic-zero multivariate term list
 * ``mvsquarefree`` — one modular multivariate term list and its modulus
@@ -115,8 +131,17 @@ VALID_FIXTURE_KINDS = frozenset(
     {
         "poly",
         "matrix",
+        "bareiss_carrier",
+        "poly_det",
+        "charpoly_carrier",
+        "generic_rank",
+        "det",
+        "ratmatrix",
+        "fieldmatrix",
+        "modmatrix",
         "polymatrix",
         "mvpoly",
+        "mvpolymatrix",
         "mvgcd",
         "mvsqf",
         "mvsquarefree",
@@ -144,6 +169,8 @@ VALID_FIXTURE_KINDS = frozenset(
         "divisorfn",
         "graphiso",
         "graphisoautos",
+        "graphisosparse",
+        "graphisosparseautos",
         "order",
         "cyclotomic",
     }
@@ -269,12 +296,12 @@ def _validate_prime_cert(cert: Any, path: str) -> None:
         if not _is_nat(cert.get("n")):
             raise FixtureError(f"{path}.n must be a nonnegative int: {cert!r}")
         return
-    if t not in {"pock", "pock3"}:
-        raise FixtureError(f"{path}.t must be small/pock/pock3: {cert!r}")
+    if t not in {"pock", "pock3", "pock3Sieve"}:
+        raise FixtureError(f"{path}.t must be small/pock/pock3/pock3Sieve: {cert!r}")
     if not _is_nat(cert.get("n")):
         raise FixtureError(f"{path}.n must be a nonnegative int: {cert!r}")
-    if t == "pock3":
-        for key in ("r", "s", "w"):
+    if t in {"pock3", "pock3Sieve"}:
+        for key in (("r", "s", "w", "m") if t == "pock3Sieve" else ("r", "s", "w")):
             if not _is_nat(cert.get(key)):
                 raise FixtureError(
                     f"{path}.{key} must be a nonnegative int: {cert!r}")
@@ -370,11 +397,26 @@ def _validate_graphiso_core(record: dict[str, Any]) -> None:
     lab = record.get("canonLab")
     if not isinstance(lab, list) or len(lab) != n or sorted(lab) != list(range(n)):
         raise FixtureError(f"graphiso.canonLab must be a permutation of 0..n-1: {record!r}")
-    tri = record.get("canonTri")
-    if not isinstance(tri, str) or len(tri) != n * (n - 1) // 2 or any(
-        c not in "01" for c in tri
-    ):
-        raise FixtureError(f"graphiso.canonTri must be C(n,2) bits: {record!r}")
+    if record["kind"] in ("graphisosparse", "graphisosparseautos"):
+        canonical = record.get("canonEdges")
+        if not isinstance(canonical, list) or not all(
+            isinstance(e, list) and len(e) == 2 and
+            all(_is_nat(v) for v in e) and 0 <= e[0] < e[1] < n
+            for e in canonical
+        ) or canonical != [list(e) for e in sorted(set(map(tuple, canonical)))]:
+            raise FixtureError("graphisosparse.canonEdges must be sorted unique edges")
+        fields = {"numorbits", "numgenerators", "numnodes", "numbadleaves",
+                  "maxlevel", "tctotal", "canupdates"}
+        stats = record.get("stats")
+        if not isinstance(stats, dict) or set(stats) != fields or not all(
+                _is_nat(x) for x in stats.values()):
+            raise FixtureError("graphisosparse.stats must contain all seven Nat statistics")
+    else:
+        tri = record.get("canonTri")
+        if not isinstance(tri, str) or len(tri) != n * (n - 1) // 2 or any(
+            c not in "01" for c in tri
+        ):
+            raise FixtureError(f"graphiso.canonTri must be C(n,2) bits: {record!r}")
     sizes = record.get("cellSizes")
     if not isinstance(sizes, list) or len(sizes) != k or sum(sizes) != n or not all(
         isinstance(s, int) and s > 0 for s in sizes
@@ -388,10 +430,68 @@ def _validate_fixture(record: dict[str, Any]) -> None:
     kind = record.get("kind")
     if kind not in VALID_FIXTURE_KINDS and kind != "result":
         raise FixtureError(f"unknown fixture kind: {kind!r}")
+    if kind == "det":
+        # Published HexDeterminant carrier records identify the library by kind.
+        _exact_keys(record, {"kind", "case", "carrier", "base", "arity", "modulus", "n",
+                             "matrix", "determinant"}, kind)
+        if any(not isinstance(record[k], str) for k in ("case", "carrier", "base")) or any(
+                not _is_nat(record[k]) for k in ("arity", "modulus", "n")):
+            raise FixtureError("invalid determinant carrier header")
+        rows = record["matrix"]
+        if not isinstance(rows, list) or len(rows) != record["n"] or any(
+                not isinstance(row, list) or len(row) != record["n"] for row in rows):
+            raise FixtureError("determinant carrier matrix must be square and match n")
+        return
     for key in ("lib", "case"):
         if not isinstance(record.get(key), str):
             raise FixtureError(f"missing/invalid {key!r} in {record!r}")
-    if kind == "poly":
+    if kind in {"bareiss_carrier", "poly_det"}:
+        # Complete per-library carrier records embed their canonical answer.
+        # Coefficient-domain validation belongs to matrix_carriers.Carrier.
+        expected = {"kind", "lib", "case", "carrier", "n", "arity", "p", "rows", "result"}
+        if kind == "poly_det":
+            expected |= {"checked", "entry_support"}
+        _exact_keys(record, expected, kind)
+        if not isinstance(record["carrier"], str) or not _is_nat(record["n"]) or not _is_nat(record["arity"]):
+            raise FixtureError("invalid matrix carrier header")
+        if not _is_int(record["p"]):
+            raise FixtureError("invalid matrix carrier modulus")
+        rows = record["rows"]
+        if not isinstance(rows, list) or len(rows) != record["n"] or any(
+                not isinstance(row, list) or len(row) != record["n"] for row in rows):
+            raise FixtureError("matrix carrier rows must be square and match n")
+    elif kind == "generic_rank":
+        _exact_keys(record, {"kind", "lib", "case", "carrier", "base", "arity", "modulus",
+                             "n", "m", "matrix", "support", "pivot_rows", "pivot_cols",
+                             "denom", "result"}, kind)
+        if record["carrier"] != "mv" or record["base"] not in {"ZZ", "QQ", "GF"}:
+            raise FixtureError("invalid generic-rank coefficient domain")
+        if any(not _is_nat(record[k]) for k in ("arity", "modulus", "n", "m", "result")):
+            raise FixtureError("invalid generic-rank dimensions or result")
+        if record["arity"] == 0:
+            raise FixtureError("generic-rank arity must be positive")
+        for key in ("matrix", "support"):
+            rows = record[key]
+            if not isinstance(rows, list) or len(rows) != record["n"] or any(
+                    not isinstance(row, list) or len(row) != record["m"] for row in rows):
+                raise FixtureError(f"generic-rank {key} shape does not match dimensions")
+        if any(not _is_nat(x) for row in record["support"] for x in row):
+            raise FixtureError("generic-rank supports must be natural numbers")
+        for key in ("pivot_rows", "pivot_cols"):
+            if not isinstance(record[key], list) or not all(_is_nat(x) for x in record[key]):
+                raise FixtureError("generic-rank pivot indices must be natural-number lists")
+    elif kind == "charpoly_carrier":
+        if record.get("schema") != 1 or not _is_nat(record.get("n")):
+            raise FixtureError("invalid charpoly_carrier schema or dimension")
+        if not isinstance(record.get("rows"), list) or not isinstance(record.get("value"), list):
+            raise FixtureError("charpoly_carrier rows/value must be arrays")
+        if not isinstance(record.get("carrier"), str) or record["carrier"] not in {"dense_int", "dense_rat", "dense_mod", "mv_int", "mv_rat", "rat_fn"}:
+            raise FixtureError("invalid charpoly_carrier coefficient carrier")
+        if not _is_int(record.get("arity")) or record["arity"] < 1:
+            raise FixtureError("charpoly_carrier arity must be positive")
+        if not _is_int(record.get("modulus")) or record["modulus"] < 2:
+            raise FixtureError("charpoly_carrier modulus must be an integer >= 2")
+    elif kind == "poly":
         coeffs = record.get("coeffs")
         if not isinstance(coeffs, list) or not all(isinstance(c, int) for c in coeffs):
             raise FixtureError(f"poly.coeffs must be List[int]: {record!r}")
@@ -412,9 +512,9 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             raise FixtureError(
                 f"poly.modFactorDegrees requires modFactorPrime: {record!r}"
             )
-    elif kind == "graphiso":
+    elif kind in ("graphiso", "graphisosparse"):
         _validate_graphiso_core(record)
-    elif kind == "graphisoautos":
+    elif kind in ("graphisoautos", "graphisosparseautos"):
         # a superset of a `graphiso` record: the canonical fields are
         # validated by the same rules, so a consumer that only knows
         # canonical forms can read the whole stream
@@ -460,6 +560,63 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             for row in rows
         ):
             raise FixtureError(f"matrix.rows must be List[List[int]]: {record!r}")
+    elif kind == "fieldmatrix":
+        n, m = record.get("n"), record.get("m")
+        rows, rhs = record.get("rows"), record.get("b")
+        carrier, modulus = record.get("carrier"), record.get("modulus")
+        if not _is_nat(n) or not _is_nat(m):
+            raise FixtureError("fieldmatrix requires explicit nonnegative dimensions")
+        if carrier not in ("Rat", "ZMod64", "RationalFn") or not _is_nat(modulus):
+            raise FixtureError("invalid fieldmatrix carrier")
+        if carrier == "ZMod64" and modulus < 2:
+            raise FixtureError("fieldmatrix modulus must be at least two")
+        def rational(q):
+            return (isinstance(q, list) and len(q) == 2 and
+                    all(_is_int(x) for x in q) and q[1] > 0)
+        def entry(q):
+            if carrier == "Rat":
+                return rational(q)
+            if carrier == "ZMod64":
+                return _is_nat(q) and q < modulus
+            return (isinstance(q, list) and len(q) == 2 and
+                    all(isinstance(cs, list) and all(rational(x) for x in cs) for cs in q)
+                    and len(q[1]) > 0 and any(x[0] != 0 for x in q[1]))
+        if (not isinstance(rows, list) or len(rows) != n or
+                any(not isinstance(row, list) or len(row) != m or
+                    not all(entry(x) for x in row) for row in rows) or
+                not isinstance(rhs, list) or len(rhs) != n or not all(entry(x) for x in rhs)):
+            raise FixtureError("invalid fieldmatrix entries or dimensions")
+    elif kind == "ratmatrix":
+        rows = record.get("rows")
+        if not isinstance(rows, list) or not all(
+            isinstance(row, list)
+            and all(
+                isinstance(entry, list)
+                and len(entry) == 2
+                and all(isinstance(x, int) for x in entry)
+                and entry[1] > 0
+                for entry in row
+            )
+            for row in rows
+        ):
+            raise FixtureError(
+                f"ratmatrix.rows must be List[List[[num, den]]] with positive "
+                f"denominators: {record!r}"
+            )
+    elif kind == "modmatrix":
+        modulus = record.get("modulus")
+        if not _is_int(modulus) or modulus < 2:
+            raise FixtureError(f"modmatrix.modulus must be at least two: {record!r}")
+        rows = record.get("rows")
+        if not isinstance(rows, list) or not all(
+            isinstance(row, list)
+            and all(isinstance(x, int) and 0 <= x < modulus for x in row)
+            for row in rows
+        ):
+            raise FixtureError(
+                f"modmatrix.rows must be canonical residues below the "
+                f"modulus: {record!r}"
+            )
     elif kind == "polymatrix":
         rows = record.get("rows")
         cols = record.get("cols")
@@ -558,6 +715,33 @@ def _validate_fixture(record: dict[str, Any]) -> None:
     elif kind == "mvpoly":
         arity = _validate_mv_header(record, kind)
         _validate_mv_terms(record.get("terms"), arity, "mvpoly.terms")
+    elif kind == "mvpolymatrix":
+        arity = _validate_mv_header(record, kind)
+        rows = record.get("rows")
+        cols = record.get("cols")
+        if not _is_nat(rows) or not _is_nat(cols):
+            raise FixtureError(
+                f"mvpolymatrix rows/cols must be nonnegative ints: {record!r}"
+            )
+        if not _is_nat(record.get("r")):
+            raise FixtureError(
+                f"mvpolymatrix.r must be a nonnegative int: {record!r}"
+            )
+        entries = record.get("entries")
+        if not isinstance(entries, list) or len(entries) != rows:
+            raise FixtureError(
+                f"mvpolymatrix.entries must hold exactly rows rows: {record!r}"
+            )
+        for index, row in enumerate(entries):
+            if not isinstance(row, list) or len(row) != cols:
+                raise FixtureError(
+                    f"mvpolymatrix.entries[{index}] must hold exactly cols "
+                    f"polynomials: {record!r}"
+                )
+            for column, terms in enumerate(row):
+                _validate_mv_terms(
+                    terms, arity, f"mvpolymatrix.entries[{index}][{column}]"
+                )
     elif kind == "mvgcd":
         _exact_keys(
             record,

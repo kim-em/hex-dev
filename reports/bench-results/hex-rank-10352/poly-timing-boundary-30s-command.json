@@ -1,0 +1,18 @@
+{
+  "command": [
+    ".lake/build/bin/hexrank_bench",
+    "run",
+    "Hex.RankBench.runRatPolyCheck8",
+    "Hex.RankBench.runMvCheck12",
+    "Hex.RankBench.runMvCert12",
+    "--export-file",
+    "reports/bench-results/hex-rank-10352/poly-timing-boundary-30s.json"
+  ],
+  "cpu": 15,
+  "load": [
+    48.33837890625,
+    26.7783203125,
+    51.16748046875
+  ],
+  "bench_sha256": "72e338bbaa3b7a78fb523b9df01ec978b0f5daad40e0272f74ee612ed00187a9"
+}

@@ -4,7 +4,7 @@ Part of [`hex`](https://github.com/kim-em/hex-dev), a computer algebra library
 for Lean 4. The project develops fast executable code with full verification
 through spec-driven development.
 
-`hex-smith-mathlib` is the correspondence-only Mathlib bridge for
+`hex-smith-mathlib` is the Mathlib companion to
 [`hex-smith`](https://github.com/leanprover/hex-smith). It builds on that
 package and `hex-hermite-mathlib`, transporting the verified executable result
 into Mathlib's Smith-basis and quotient-module interfaces without recomputing

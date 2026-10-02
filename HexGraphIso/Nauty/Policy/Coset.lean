@@ -24,7 +24,7 @@ namespace Hex.GraphIso.Nauty
 variable {n : Nat}
 
 /-- Leaf actions preserve the coset index selected by first-path descent. -/
-theorem leafExit_coset (leaf : Leaf) (level : Nat) (st : Search n) :
+theorem leafExit_coset {κ : Type} (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     (leafExit leaf level st).2.cosetindex = st.cosetindex := by
   cases leaf <;> unfold leafExit pruneReturn admit pushAuto install
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
@@ -32,23 +32,23 @@ theorem leafExit_coset (leaf : Leaf) (level : Nat) (st : Search n) :
   all_goals rfl
 
 /-- Local off-path operations retain the coset index. -/
-theorem compare_coset (level code : Nat) (st : Search n) :
+theorem compare_coset {κ : Type} (level code : Nat) (st : SearchState n κ) :
     (compareCodes level code st).cosetindex = st.cosetindex := by
   unfold compareCodes
-  simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.cosetindex, ite_self]
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.cosetindex, ite_self]
 
 /-- Classification changes scratch data without changing the coset index. -/
 theorem classify_coset (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
     (classify ctx level numcells st).2.cosetindex = st.cosetindex := by
   unfold classify
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
-    apply_ite Search.cosetindex, ite_self]
+    apply_ite SearchState.cosetindex, ite_self]
 
 /-- Recovery preserves the current coset index. -/
-theorem recover_coset (inf level : Nat) (st : Search n) :
+theorem recover_coset {κ : Type} (inf level : Nat) (st : SearchState n κ) :
     (Nauty.recover inf level st).cosetindex = st.cosetindex := by
   unfold Nauty.recover recoverLevels recoverPtn
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.cosetindex, ite_self]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.cosetindex, ite_self]
 
 private def cosetContract : Generic.Contract (Search n) n where
   nodePre _ first _ _ _ := first = false

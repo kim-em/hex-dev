@@ -1,0 +1,34 @@
+{
+  "cpu": 75,
+  "host": "chungus2",
+  "command": [
+    "taskset",
+    "-c",
+    "75",
+    ".lake/build/bin/hexgraphiso_bench",
+    "run",
+    "Hex.GraphIsoBench.runSparseBuild",
+    "--outer-trials",
+    "3",
+    "--target-inner-nanos",
+    "1000000000",
+    "--max-seconds-per-call",
+    "4.0",
+    "--export-file",
+    "reports/bench-results/hexgraphiso-sparse-build-release-batched.json"
+  ],
+  "load_before": [
+    4.53173828125,
+    4.05908203125,
+    7.5771484375
+  ],
+  "source_sha256": "ca3af28186865a304a0938e93a161157d40a829ec7589680ebc5300baa76ccb6",
+  "binary_sha256": "cef930224162880dbaa1b4526987372b47dd3c92a4e5653706a37a79cb81abda",
+  "reason": "The first run retained 21 successful rows but its batches were below the harness signal floor. This run increases batch duration on the same sizes and implementation.",
+  "returncode": 0,
+  "load_after": [
+    4.65283203125,
+    4.11865234375,
+    7.52099609375
+  ]
+}

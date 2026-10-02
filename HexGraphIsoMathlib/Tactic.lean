@@ -38,7 +38,7 @@ proof. A negative goal takes the negative path of the Mathlib-free
 tactic, which tries the root separator and then certificate replay, and
 decodes through the `not_encode_iso` theorems. Unequal cardinalities
 close through the `Fintype.card_congr` obstructions, and empty vertex
-types through the explicit empty isomorphism. The three logical limits
+types through the explicit empty isomorphism. The two logical limits
 of `graph_iso` mean the same thing here as on executable goals.
 -/
 
@@ -324,7 +324,7 @@ meta def proveShape (cfg : Hex.GraphIso.Tactic.Config) (target : Expr)
         throwError "graph_iso: the graphs are not isomorphic; the positive \
             goal is not provable"
     | some p =>
-        let (pE, isIso) ← Hex.GraphIso.Tactic.proveIsIso cfg sG.card encG encH
+        let (pE, isIso) ← Hex.GraphIso.Tactic.proveIsIso sG.card encG encH
           a b p nodes
         let core ← if shape.colored then
             mkAppM ``coloredIsoOfIsIso #[sG.equiv, sH.equiv, pE, isIso]

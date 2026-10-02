@@ -1,0 +1,29 @@
+{
+  "cpu": 54,
+  "load_before": "7.82 7.13 6.93 10/5899 852726\n",
+  "exe_sha256": "5544fc1e3a212346e3cbe50ddd432bfd313484ad1c7521bc41509dc16fc602da",
+  "command": [
+    "perf",
+    "record",
+    "-o",
+    "/tmp/issue10220-final-perf.data",
+    "-F",
+    "199",
+    "--call-graph",
+    "dwarf",
+    "--",
+    ".lake/build/bin/hexmodularmatrix_bench",
+    "run",
+    "Hex.ModularMatrixBench.runDivisorStructuredN512B8",
+    "--repeats",
+    "1",
+    "--min-total-seconds",
+    "0.001",
+    "--export-file",
+    "reports/data/hex-modular-matrix-divisor-prepared-profile.json"
+  ],
+  "stdout": "Hex.ModularMatrixBench.runDivisorStructuredN512B8    [fixed] repeats=1\n  env: lean=4.34.0, os=linux, arch=x86_64, commit=3d0dfd4-dirty, 2026-09-17T13:11:58Z, host=chungus2\n  repeat 0  282.106 ms\n  median: 282.106 ms    min: 282.106 ms    max: 282.106 ms\n  hash: all repeats agree\n  observed hash: 0x22d158c1fadc20d4\n  peak RSS: 156_308 kB (across 1 ok repeat(s))\nexported to reports/data/hex-modular-matrix-divisor-prepared-profile.json\n",
+  "stderr": "WARNING: Kernel address maps (/proc/{kallsyms,modules}) are restricted,\ncheck /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.\n\nSamples in kernel functions may not be resolved if a suitable vmlinux\nfile is not found in the buildid cache or in the vmlinux path.\n\nSamples in kernel modules won't be resolved at all.\n\nIf some relocation was applied (e.g. kexec) symbols may be misresolved\neven with a suitable vmlinux or kallsyms file.\n\nCouldn't record kernel reference relocation symbol\nSymbol resolution may be skewed if relocation was used (e.g. kexec).\nCheck /proc/kallsyms permission or run as root.\n[ perf record: Woken up 8 times to write data ]\n[ perf record: Captured and wrote 1.772 MB /tmp/issue10220-final-perf.data (211 samples) ]\n",
+  "exit_code": 0,
+  "load_after": "8.00 7.18 6.95 10/5922 853036\n"
+}

@@ -7,8 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealAlgebraicMathlib.Sqrt
-public import Mathlib.Analysis.Polynomial.Order
-public import Mathlib.FieldTheory.IsRealClosed.Basic
+public import HexRealRootsMathlib.RealClosed
 
 public section
 
@@ -21,25 +20,6 @@ theorem isSquare_of_nonneg {a : RealAlgebraicNumber} (ha : 0 ≤ a) : IsSquare a
   refine ⟨a.sqrt ha, ?_⟩
   simpa only [pow_two] using (sqrt_sq a ha).symm
 
-private theorem real_odd_root (p : Polynomial ℝ) (hp : Odd p.natDegree) :
-    ∃ x, p.IsRoot x := by
-  by_contra h
-  have hleft : ∀ y, p.IsRoot y → y < 0 := fun y hy => False.elim (h ⟨y, hy⟩)
-  have hright : ∀ y, p.IsRoot y → 0 < y := fun y hy => False.elim (h ⟨y, hy⟩)
-  have hsign : Int.negOnePow (p.natDegree : ℤ) = -1 :=
-    Int.negOnePow_odd _ (by exact_mod_cast hp)
-  rcases le_total 0 p.leadingCoeff with hlc | hlc
-  · have hpos := Polynomial.zero_lt_eval_of_roots_lt_of_leadingCoeff_nonneg hleft hlc
-    have hneg := Polynomial.zero_lt_negOnePow_mul_eval_of_lt_roots_of_leadingCoeff_nonneg hright hlc
-    rw [hsign] at hneg
-    norm_num at hneg
-    linarith
-  · have hneg := Polynomial.eval_lt_zero_of_roots_lt_of_leadingCoeff_nonpos hleft hlc
-    have hpos := Polynomial.negOnePow_mul_eval_lt_zero_of_lt_roots_of_leadingCoeff_nonpos hright hlc
-    rw [hsign] at hpos
-    norm_num at hpos
-    linarith
-
 /-- Every odd-degree polynomial has a canonical real root, supplied by the root driver. -/
 theorem exists_isRoot_of_odd_natDegree {p : Polynomial RealAlgebraicNumber}
     (hp : Odd p.natDegree) : ∃ a, p.IsRoot a := by
@@ -47,7 +27,8 @@ theorem exists_isRoot_of_odd_natDegree {p : Polynomial RealAlgebraicNumber}
   have hf : f.toPolynomial = p.map toRealHom := RealAlgebraicPoly.toPolynomial_ofPolynomial p
   have hd : f.toPolynomial.natDegree = p.natDegree := by
     rw [hf, Polynomial.natDegree_map]
-  obtain ⟨x, hx⟩ := real_odd_root f.toPolynomial (hd.symm ▸ hp)
+  obtain ⟨x, hx⟩ := IsRealClosed.exists_isRoot_of_odd_natDegree
+    (f := f.toPolynomial) (hd.symm ▸ hp)
   have hm := (RealAlgebraicPoly.contains_roots_iff f x).mpr hx
   cases hroots : f.roots with
   | all =>

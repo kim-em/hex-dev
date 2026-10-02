@@ -1,0 +1,369 @@
+{
+  "family": "syntax",
+  "function": "Hex.RealFormula.Bench.prefixRename",
+  "parameter": 2048,
+  "cpu": 0,
+  "load": [
+    133.01513671875,
+    72.34423828125,
+    51.18798828125
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "raw": "/tmp/rf-perf-syntax",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex-real-formula-lean-bench-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/rf-perf-syntax/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/rf-perf-syntax/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-hex-real-formula/.lake/build/bin/hexrealformula_bench",
+        "profile",
+        "Hex.RealFormula.Bench.prefixRename",
+        "--param",
+        "2048",
+        "--target-inner-nanos",
+        "1000000000",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/rf-perf-syntax/samply.json.gz",
+        "/tmp/rf-perf-syntax/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/rf-perf-syntax/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/rf-perf-syntax/samply.json.gz",
+        "--perf-script",
+        "/tmp/rf-perf-syntax/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/rf-perf-syntax/spawn-anchor.json",
+        "--output",
+        "/tmp/rf-perf-syntax/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "/tmp/hex-real-formula-lean-bench-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/rf-perf-syntax/normalized.json.gz",
+        "--sidecar",
+        "/tmp/rf-perf-syntax/timed-1850446.jsonl",
+        "--spawn-anchor",
+        "/tmp/rf-perf-syntax/spawn-anchor.json",
+        "--out",
+        "/tmp/rf-perf-syntax/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/rf-perf-syntax/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/rf-perf-syntax/filtered.json.gz",
+        "--output",
+        "/tmp/rf-perf-syntax/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/rf-perf-syntax/filtered.json.gz",
+        "--symbols",
+        "/tmp/rf-perf-syntax/symbols.json",
+        "--diagnostics",
+        "/tmp/rf-perf-syntax/diagnostics.json",
+        "--thread",
+        "hexrealformula_",
+        "--top",
+        "20",
+        "--output",
+        "reports/data/hex-real-formula/profiles/syntax.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "38cc81deee142bfae532f7d97da9ce982474eab41f19fdee2d693d4d8918696c",
+  "commit": "72a5c75ffecdec60d53375c458abcdc59823b571",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.1.5",
+  "status": "profiled",
+  "artifacts": {
+    "0.stdout": "07ea3c4c027576e76bdcb385e47031a16ecec65058ac0ed535d0fc619865bef4",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "59776cb6b77de0b684a480989fba8e2d68a9794c0993bec644924618d8d935eb",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "4dd633ce6dacab59e6b9d42eba3b7e4ae44f9daacce2ec4277cf200279ecbf9f",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "da4c1dcb9bbc066966ee50530fe6321bb34ce9aef28c747f1a5e5eea5bb94051",
+    "perf.data": "4bc854f973934d7fb765a0dd305adc840a99ab23dedef19ccd52c9b21f33112a",
+    "timed-1850446.jsonl": "c11f59de3083dc88d4f8275d895b41906ceab3633caf212272dee843ba35cab7",
+    "5.stdout": "94d9ad34ba95328720ca3f3cb84aa048a4bfc6c2c04804a284eaae8e0ba15957",
+    "5.stderr": "43e23cba4ecfecd6fbf177e300f2e8352e20a1c7f0ed14cb3243f998cf1456ab",
+    "samply.json.gz": "0d3388a740fec3c587ad97332f588f733ccd79232fa751b42af2dfe276e1f358",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "408749bae6a05564937893e6350c5abafcefc4232827ec0f02baf03b463543e8",
+    "7.stdout": "c259f1e06adc039af94b472a2ef6ee8c67fee1a6faff11cfbb8d464e666b680d",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "c259f1e06adc039af94b472a2ef6ee8c67fee1a6faff11cfbb8d464e666b680d",
+    "normalized.json.gz": "3535beab9d735ef3577ef476d60b4dd080eeb3823e185916eb40988e645b7992",
+    "8.stdout": "a4e053ab2fdc9a77d1781b8e90e00d81b711f4bdc3644d8a91d9f24313272cc4",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "4ce58f4951d7f5780ecfd86984d9d110f452d72a0698cb88e0a1664141fa9635",
+    "diagnostics.json": "7069913d553c119ec7de47f4546373aae9ad60cebbcff7173daebf041368851c",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "ff38fae15879eb228d2c664b8dfe848a3bb2ca391e14a28507178f99a65efb48",
+    "symbols.json": "074b66ff30e268a7938f30252919215f55f100d19ac3a7a0d5d34adeb847a2c5",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1850446,
+    "bench_thread_name": "hexrealformula_",
+    "bench_thread_tid": "1850450",
+    "regions_total": 4127,
+    "total_timed_ms": 626.360022,
+    "expected_samples_bench_thread": 625.7,
+    "retained_samples_bench_thread": 564,
+    "rejected_samples_bench_thread": 17,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1789900982599013612,
+    "spawn_anchor_mono_ns": 872092800678446,
+    "sidecar_mono_anchor_ns": 872093230348904,
+    "samply_meta_start_time_ms": 1789900982692.7302,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 1.605672001838684,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 1.605672001838684,
+      "raw_max_residual_ms": 3.5036749839782715,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 4127,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 564,
+          "regions_without_samples": 3563,
+          "boundary_residual_trimmed_max_ms": 1.605672001838684,
+          "boundary_residual_raw_max_ms": 3.5036749839782715,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.03257015109466544,
+          "leaf_function_support_size": 176,
+          "comparison_samples": 552,
+          "exchanged_samples": 30,
+          "exchanged_fraction": 0.05434782608695652,
+          "sampling_noise_allowance": 0.11169767459708807,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.11169767459708807,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.030311774588639658,
+          "leaf_function_support_size": 176,
+          "comparison_samples": 553,
+          "exchanged_samples": 29,
+          "exchanged_fraction": 0.05244122965641953,
+          "sampling_noise_allowance": 0.1096216790479429,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1096216790479429,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 552,
+          "top_leaf_functions": [
+            {
+              "function": 50,
+              "name": "0x4cf5688",
+              "samples": 38
+            },
+            {
+              "function": 37,
+              "name": "0x4cf5680",
+              "samples": 27
+            },
+            {
+              "function": 79,
+              "name": "0x4cf53fc",
+              "samples": 15
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 564,
+          "top_leaf_functions": [
+            {
+              "function": 50,
+              "name": "0x4cf5688",
+              "samples": 40
+            },
+            {
+              "function": 37,
+              "name": "0x4cf5680",
+              "samples": 28
+            },
+            {
+              "function": 79,
+              "name": "0x4cf53fc",
+              "samples": 15
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 553,
+          "top_leaf_functions": [
+            {
+              "function": 50,
+              "name": "0x4cf5688",
+              "samples": 39
+            },
+            {
+              "function": 37,
+              "name": "0x4cf5680",
+              "samples": 27
+            },
+            {
+              "function": 79,
+              "name": "0x4cf53fc",
+              "samples": 14
+            }
+          ]
+        }
+      }
+    }
+  }
+}

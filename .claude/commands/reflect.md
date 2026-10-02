@@ -26,8 +26,11 @@ Review the current conversation and identify areas where you **genuinely struggl
 1. Explain what happened and why it was problematic
 2. Determine whether this is a project-specific or general issue
 3. Propose specific, concise additions to the appropriate file:
-   - Project-specific issues → `.claude/CLAUDE.md` or `.claude/skills/`
+   - Project-specific issues → `.claude/skills/`
    - Agent workflow issues → config-dir skills or commands
+
+Changes to `AGENTS.md` (also read through `.claude/CLAUDE.md`) or
+`PLAN.md` are proposals for Kim unless explicitly authorized.
 
 ## Recognize Success
 

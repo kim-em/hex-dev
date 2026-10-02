@@ -1,0 +1,6 @@
+{
+  "path": "HexPolyFp/PrimeField.lean",
+  "baseline_blob": "2066432524a0c6fb262feafa383bfa2b9c29bbc7",
+  "current_blob": "c7677c041caf4f1182baf92a111b975fdbfb4b49",
+  "reason": "Retains the polynomial Degree import and imports HexModArith.Field. The integer-power definition, inverse lemmas and zmod64FieldOfPrime declaration bodies are moved verbatim to that module. This compatibility import exposes the same field operations and polynomial API to existing factorization consumers; there is no change to a computation or runtime hook."
+}

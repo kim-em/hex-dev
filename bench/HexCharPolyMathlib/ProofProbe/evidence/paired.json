@@ -1,0 +1,211 @@
+{
+  "cpu": 90,
+  "host": "chungus2",
+  "initial_load": [
+    51.6005859375,
+    56.6826171875,
+    42.416015625
+  ],
+  "samples": [
+    {
+      "sample": 0,
+      "arm": "Candidate",
+      "profile": false,
+      "wall_s": 5.913258332991973,
+      "exit": 0,
+      "load": [
+        51.23193359375,
+        56.521484375,
+        42.44091796875
+      ],
+      "log": "/tmp/charpoly-paired-0-Candidate.log",
+      "kernel": []
+    },
+    {
+      "sample": 0,
+      "arm": "Reference",
+      "profile": false,
+      "wall_s": 3.6213221149810124,
+      "exit": 0,
+      "load": [
+        51.1328125,
+        56.4130859375,
+        42.48193359375
+      ],
+      "log": "/tmp/charpoly-paired-0-Reference.log",
+      "kernel": []
+    },
+    {
+      "sample": 1,
+      "arm": "Reference",
+      "profile": false,
+      "wall_s": 4.330411031987751,
+      "exit": 0,
+      "load": [
+        51.1328125,
+        56.4130859375,
+        42.48193359375
+      ],
+      "log": "/tmp/charpoly-paired-1-Reference.log",
+      "kernel": []
+    },
+    {
+      "sample": 1,
+      "arm": "Candidate",
+      "profile": false,
+      "wall_s": 6.903420037007891,
+      "exit": 0,
+      "load": [
+        53.345703125,
+        56.712890625,
+        42.72900390625
+      ],
+      "log": "/tmp/charpoly-paired-1-Candidate.log",
+      "kernel": []
+    },
+    {
+      "sample": 2,
+      "arm": "Candidate",
+      "profile": false,
+      "wall_s": 6.578668309986824,
+      "exit": 0,
+      "load": [
+        54.119140625,
+        56.8173828125,
+        42.837890625
+      ],
+      "log": "/tmp/charpoly-paired-2-Candidate.log",
+      "kernel": []
+    },
+    {
+      "sample": 2,
+      "arm": "Reference",
+      "profile": false,
+      "wall_s": 3.727087075007148,
+      "exit": 0,
+      "load": [
+        54.99072265625,
+        56.95361328125,
+        42.95703125
+      ],
+      "log": "/tmp/charpoly-paired-2-Reference.log",
+      "kernel": []
+    },
+    {
+      "sample": 3,
+      "arm": "Reference",
+      "profile": false,
+      "wall_s": 4.229388687002938,
+      "exit": 0,
+      "load": [
+        55.71240234375,
+        57.07080078125,
+        43.0703125
+      ],
+      "log": "/tmp/charpoly-paired-3-Reference.log",
+      "kernel": []
+    },
+    {
+      "sample": 3,
+      "arm": "Candidate",
+      "profile": false,
+      "wall_s": 6.106479854992358,
+      "exit": 0,
+      "load": [
+        56.37646484375,
+        57.18603515625,
+        43.18310546875
+      ],
+      "log": "/tmp/charpoly-paired-3-Candidate.log",
+      "kernel": []
+    },
+    {
+      "sample": 4,
+      "arm": "Candidate",
+      "profile": false,
+      "wall_s": 6.288689604989486,
+      "exit": 0,
+      "load": [
+        57.7080078125,
+        57.44873046875,
+        43.34326171875
+      ],
+      "log": "/tmp/charpoly-paired-4-Candidate.log",
+      "kernel": []
+    },
+    {
+      "sample": 4,
+      "arm": "Reference",
+      "profile": false,
+      "wall_s": 3.9402359559899196,
+      "exit": 0,
+      "load": [
+        58.2919921875,
+        57.57421875,
+        43.4599609375
+      ],
+      "log": "/tmp/charpoly-paired-4-Reference.log",
+      "kernel": []
+    },
+    {
+      "sample": 5,
+      "arm": "Reference",
+      "profile": false,
+      "wall_s": 4.687321755016455,
+      "exit": 0,
+      "load": [
+        59.22998046875,
+        57.78076171875,
+        43.6025390625
+      ],
+      "log": "/tmp/charpoly-paired-5-Reference.log",
+      "kernel": []
+    },
+    {
+      "sample": 5,
+      "arm": "Candidate",
+      "profile": false,
+      "wall_s": 6.6544114599819295,
+      "exit": 0,
+      "load": [
+        59.4521484375,
+        57.85107421875,
+        43.70166015625
+      ],
+      "log": "/tmp/charpoly-paired-5-Candidate.log",
+      "kernel": []
+    },
+    {
+      "sample": 6,
+      "arm": "Candidate",
+      "profile": true,
+      "wall_s": 8.090990082011558,
+      "exit": 0,
+      "load": [
+        60.29248046875,
+        58.08642578125,
+        43.93017578125
+      ],
+      "log": "/tmp/charpoly-paired-6-Candidate.log",
+      "kernel": [
+        "2.57s"
+      ]
+    },
+    {
+      "sample": 6,
+      "arm": "Reference",
+      "profile": true,
+      "wall_s": 5.905658762989333,
+      "exit": 0,
+      "load": [
+        61.150390625,
+        58.30126953125,
+        44.07568359375
+      ],
+      "log": "/tmp/charpoly-paired-6-Reference.log",
+      "kernel": [
+        "269ms"
+      ]
+    }
+  ]
+}

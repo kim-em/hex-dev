@@ -1,0 +1,392 @@
+{
+  "base_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "host": "chungus2",
+  "generator_seed": "random.Random(10212+n)",
+  "entries": "randrange(-128,128)",
+  "diagnostic_profiles": [
+    {
+      "arm": "check",
+      "n": 8,
+      "cpu": 95,
+      "kernel": "126ms",
+      "raw_log": "charpoly-dense8.log"
+    },
+    {
+      "arm": "check",
+      "n": 16,
+      "cpu": 95,
+      "kernel": "2.45s",
+      "raw_log": "charpoly-dense16.log"
+    },
+    {
+      "arm": "check",
+      "n": 32,
+      "cpu": 95,
+      "kernel": "38.9s",
+      "raw_log": "charpoly-dense32.log"
+    },
+    {
+      "arm": "block",
+      "n": 4,
+      "cpu": 1,
+      "kernel": "20.6ms",
+      "raw_log": "charpoly-block-dense4.log"
+    },
+    {
+      "arm": "block",
+      "n": 8,
+      "cpu": 1,
+      "kernel": "177ms",
+      "raw_log": "charpoly-block-dense8.log"
+    },
+    {
+      "arm": "block",
+      "n": 16,
+      "cpu": 1,
+      "kernel": "3.32s",
+      "raw_log": "charpoly-block-dense16.log"
+    },
+    {
+      "arm": "block",
+      "n": 32,
+      "cpu": 1,
+      "kernel": "38.3s",
+      "raw_log": "charpoly-block-dense32.log"
+    },
+    {
+      "arm": "quoted",
+      "n": 8,
+      "cpu": 28,
+      "kernel": "87ms",
+      "raw_log": "charpoly-quoted-dense8.log"
+    },
+    {
+      "arm": "quoted",
+      "n": 16,
+      "cpu": 28,
+      "kernel": "1.94s",
+      "raw_log": "charpoly-quoted-dense16.log"
+    },
+    {
+      "arm": "quoted",
+      "n": 32,
+      "cpu": 28,
+      "kernel": "34.2s",
+      "raw_log": "charpoly-quoted-dense32.log"
+    },
+    {
+      "arm": "rank",
+      "n": 4,
+      "cpu": 55,
+      "kernel": "9.11ms",
+      "raw_log": "charpoly-rank-dense4.log"
+    },
+    {
+      "arm": "rank",
+      "n": 8,
+      "cpu": 55,
+      "kernel": "22.8ms",
+      "raw_log": "charpoly-rank-dense8.log"
+    },
+    {
+      "arm": "rank",
+      "n": 16,
+      "cpu": 55,
+      "kernel": "156ms",
+      "raw_log": "charpoly-rank-dense16.log"
+    },
+    {
+      "arm": "rank",
+      "n": 32,
+      "cpu": 55,
+      "kernel": "1.43s",
+      "raw_log": "charpoly-rank-dense32.log"
+    },
+    {
+      "arm": "computed",
+      "n": 8,
+      "cpu": 40,
+      "kernel": "337ms",
+      "raw_log": "charpoly-computed-dense8.log",
+      "initial_load": [
+        185.78369140625,
+        137.29150390625,
+        85.6484375
+      ]
+    },
+    {
+      "arm": "computed",
+      "n": 16,
+      "cpu": 40,
+      "kernel": "4.24s",
+      "raw_log": "charpoly-computed-dense16.log",
+      "initial_load": [
+        185.78369140625,
+        137.29150390625,
+        85.6484375
+      ]
+    }
+  ],
+  "paired_dense16": {
+    "cpu": 90,
+    "host": "chungus2",
+    "initial_load": [
+      51.6005859375,
+      56.6826171875,
+      42.416015625
+    ],
+    "samples": [
+      {
+        "sample": 0,
+        "arm": "Candidate",
+        "profile": false,
+        "wall_s": 5.913258332991973,
+        "exit": 0,
+        "load": [
+          51.23193359375,
+          56.521484375,
+          42.44091796875
+        ],
+        "log": "/tmp/charpoly-paired-0-Candidate.log",
+        "kernel": []
+      },
+      {
+        "sample": 0,
+        "arm": "Reference",
+        "profile": false,
+        "wall_s": 3.6213221149810124,
+        "exit": 0,
+        "load": [
+          51.1328125,
+          56.4130859375,
+          42.48193359375
+        ],
+        "log": "/tmp/charpoly-paired-0-Reference.log",
+        "kernel": []
+      },
+      {
+        "sample": 1,
+        "arm": "Reference",
+        "profile": false,
+        "wall_s": 4.330411031987751,
+        "exit": 0,
+        "load": [
+          51.1328125,
+          56.4130859375,
+          42.48193359375
+        ],
+        "log": "/tmp/charpoly-paired-1-Reference.log",
+        "kernel": []
+      },
+      {
+        "sample": 1,
+        "arm": "Candidate",
+        "profile": false,
+        "wall_s": 6.903420037007891,
+        "exit": 0,
+        "load": [
+          53.345703125,
+          56.712890625,
+          42.72900390625
+        ],
+        "log": "/tmp/charpoly-paired-1-Candidate.log",
+        "kernel": []
+      },
+      {
+        "sample": 2,
+        "arm": "Candidate",
+        "profile": false,
+        "wall_s": 6.578668309986824,
+        "exit": 0,
+        "load": [
+          54.119140625,
+          56.8173828125,
+          42.837890625
+        ],
+        "log": "/tmp/charpoly-paired-2-Candidate.log",
+        "kernel": []
+      },
+      {
+        "sample": 2,
+        "arm": "Reference",
+        "profile": false,
+        "wall_s": 3.727087075007148,
+        "exit": 0,
+        "load": [
+          54.99072265625,
+          56.95361328125,
+          42.95703125
+        ],
+        "log": "/tmp/charpoly-paired-2-Reference.log",
+        "kernel": []
+      },
+      {
+        "sample": 3,
+        "arm": "Reference",
+        "profile": false,
+        "wall_s": 4.229388687002938,
+        "exit": 0,
+        "load": [
+          55.71240234375,
+          57.07080078125,
+          43.0703125
+        ],
+        "log": "/tmp/charpoly-paired-3-Reference.log",
+        "kernel": []
+      },
+      {
+        "sample": 3,
+        "arm": "Candidate",
+        "profile": false,
+        "wall_s": 6.106479854992358,
+        "exit": 0,
+        "load": [
+          56.37646484375,
+          57.18603515625,
+          43.18310546875
+        ],
+        "log": "/tmp/charpoly-paired-3-Candidate.log",
+        "kernel": []
+      },
+      {
+        "sample": 4,
+        "arm": "Candidate",
+        "profile": false,
+        "wall_s": 6.288689604989486,
+        "exit": 0,
+        "load": [
+          57.7080078125,
+          57.44873046875,
+          43.34326171875
+        ],
+        "log": "/tmp/charpoly-paired-4-Candidate.log",
+        "kernel": []
+      },
+      {
+        "sample": 4,
+        "arm": "Reference",
+        "profile": false,
+        "wall_s": 3.9402359559899196,
+        "exit": 0,
+        "load": [
+          58.2919921875,
+          57.57421875,
+          43.4599609375
+        ],
+        "log": "/tmp/charpoly-paired-4-Reference.log",
+        "kernel": []
+      },
+      {
+        "sample": 5,
+        "arm": "Reference",
+        "profile": false,
+        "wall_s": 4.687321755016455,
+        "exit": 0,
+        "load": [
+          59.22998046875,
+          57.78076171875,
+          43.6025390625
+        ],
+        "log": "/tmp/charpoly-paired-5-Reference.log",
+        "kernel": []
+      },
+      {
+        "sample": 5,
+        "arm": "Candidate",
+        "profile": false,
+        "wall_s": 6.6544114599819295,
+        "exit": 0,
+        "load": [
+          59.4521484375,
+          57.85107421875,
+          43.70166015625
+        ],
+        "log": "/tmp/charpoly-paired-5-Candidate.log",
+        "kernel": []
+      },
+      {
+        "sample": 6,
+        "arm": "Candidate",
+        "profile": true,
+        "wall_s": 8.090990082011558,
+        "exit": 0,
+        "load": [
+          60.29248046875,
+          58.08642578125,
+          43.93017578125
+        ],
+        "log": "/tmp/charpoly-paired-6-Candidate.log",
+        "kernel": [
+          "2.57s"
+        ]
+      },
+      {
+        "sample": 6,
+        "arm": "Reference",
+        "profile": true,
+        "wall_s": 5.905658762989333,
+        "exit": 0,
+        "load": [
+          61.150390625,
+          58.30126953125,
+          44.07568359375
+        ],
+        "log": "/tmp/charpoly-paired-6-Reference.log",
+        "kernel": [
+          "269ms"
+        ]
+      }
+    ]
+  },
+  "source_sha256": {
+    "bench/HexCharPolyMathlib/ProofProbe/Support.lean": "f95b82dd0bd59669e4da412b0105fdfa47900b40e2817973e242325d773eff91",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense4Check.lean": "66fb2f8ccfe7e618f77d0f8dc99dd847ba985a3883a6bdba832c32329c6b26d8",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense8Check.lean": "0ebb5e7466a16545880d2b59dd5ed162595b225748a7ced2b8282d1d68bdf602",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense16Check.lean": "f34b276dfa055bb8d663bb563080ca52c68522ecef02c9e300b039155e01ab67",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense32Check.lean": "508e320dab1cbfa4e937776584a6908f398f94eee5c13e8e029e9844dd240201",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense4Rank.lean": "c278a17857de1498c26261527ac8a3c6d2bcc7503435be8fd0754d40e9faec41",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense8Rank.lean": "f396c0a0ff60268eba2ea2a38def5f96af859878ad65a75eedb95dd69fa7efcf",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense16Rank.lean": "534ff78459cef12ed667214183ef9d9bfdf6da11c355f1a31f9ef0d3dcf3dce5",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense32Rank.lean": "d541712d7ba01ce5bacb377bcf1524a41a9ce74af5f4de4bfb7cf4bfa842cf6c",
+    "bench/HexCharPolyMathlib/ProofProbe/BlockSupport.lean": "ea16b52aa7d2c867a0043630ca5da7d3b131f9f92745868d638c58f0da0df0dc",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense4Block.lean": "fcbc39a746f9259869a7e677c40439c0ca1f100e4fa572441ccf6a9e54b151a3",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense8Block.lean": "cc9e41f1f6a833ca28a12e8ee8baa9b1993d7b3e5141d9048f484dad15b23b52",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense16Block.lean": "5fcbdda373cc8858a8f3903e43d42865a05b032f4b36d007924edfdad5cb8d84",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense32Block.lean": "a98c319e394eb504c927adde297efd562ff07759d9ab8f8749b5e33fe27636ff",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense4Quoted.lean": "e5718638f28e5cb08fc8080151c29e072106d01236d7fb7665ee73cab4c8473a",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense8Quoted.lean": "510fca302ab499dd9949e52f003ce478b150ed05cd1e0b0f0d64102a69b94a7e",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense16Quoted.lean": "67b4d2427f81cb650bed204f17bd4f53a9de540ba99317979b50c9d91aee186b",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense32Quoted.lean": "1414ed3081f4408e3a54dd4650d625cc3802977785bdc1e95c8562e48f3e3b56",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense16Candidate.lean": "acac60dd1e076f5fa8ee47dec8e9d7599b5cddb145f47e4ca0377ddf5ccf474f",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense16Reference.lean": "212030e1ff7789c9e65526bbb3c8b01be020093d4afd474279b21edd354b662d",
+    "bench/HexCharPolyMathlib/ProofProbe/ComputedSupport.lean": "f765cc4cf8af71adbf5a7f7b737098cd5dd4e23d8f36ca9bcca1eefdfb8bdc19",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense4Computed.lean": "62b2ff3d53cf03e30188afb3f70bc445734979d607885704ad9920a38746d091",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense8Computed.lean": "37489e6dad119cc33d44933005b4d2a46237ba2f4be2c792870407d11e601702",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense16Computed.lean": "6bd6e16419926e487c5943facc4b52a597462a3c94104c934e8436390ccb4fa6",
+    "bench/HexCharPolyMathlib/ProofProbe/Dense32Computed.lean": "ae3e0fbc6935569808bb29733eb676796f10bf323899c7bf9994ad662d1f3935"
+  },
+  "computed_pair": {
+    "cpu": 49,
+    "initial_load": [
+      210.7880859375,
+      152.9345703125,
+      94.23681640625
+    ],
+    "computed": {
+      "kernel": "2.58s",
+      "wall_s": 8.939744250004878,
+      "log": "charpoly-computed-pair-Computed.log"
+    },
+    "rank": {
+      "kernel": "256ms",
+      "wall_s": 6.19057080798666,
+      "log": "charpoly-computed-pair-Rank.log"
+    }
+  },
+  "support_snapshots": {
+    "bench/HexCharPolyMathlib/ProofProbe/Support.lean": "Support.lean.txt",
+    "bench/HexCharPolyMathlib/ProofProbe/BlockSupport.lean": "BlockSupport.lean.txt",
+    "bench/HexCharPolyMathlib/ProofProbe/ComputedSupport.lean": "ComputedSupport.lean.txt"
+  }
+}

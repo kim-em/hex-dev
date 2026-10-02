@@ -1,0 +1,18 @@
+{
+  "raw_directory": "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/borrow-profile",
+  "sha256": {
+    "metadata.json": "efd3d7c1fa3c81c6e46c69ea83bad91770f787106b927b3f166e71a9cac61080",
+    "summary.json": "4d747148362661cbbb2617dd7b16e9a885a968b2dc2fc82f71c40d40c51aa034",
+    "diagnostics.json": "f8da6c689f2e3b01364185c40a9e2400b482977a13896193e737291a5505a748",
+    "timed.jsonl": "982b21ed3daa12dbf734e49c0db8268339aaa3914fb5160a6480a7afcef41e02",
+    "hot-loop.asm.gz": "899cc6008dd3ab63cf8dc2e917306d99cb871ab42c57e2bc5909335c1e0d058a"
+  },
+  "local_artifacts": {
+    "commands.txt": {
+      "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/borrow-profile/borrowed-checker/commands.txt",
+      "sha256": "365703272bb445a2281c1edda709a98f4148634dd6c4d2c4bfb58b3f8f08efb5",
+      "reason": "Verbose capture output includes raw perf sample timestamps; commands themselves are retained in metadata.json."
+    }
+  },
+  "uncompressed_hot_loop_sha256": "f5e4dbcb4fb7564a2722920b019b76bdaa5840c5f188c854a3af82b370f5cc7e"
+}

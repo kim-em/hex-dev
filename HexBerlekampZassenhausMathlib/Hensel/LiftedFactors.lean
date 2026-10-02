@@ -44,7 +44,8 @@ theorem zpoly_size_pos_of_monic {f : Hex.ZPoly}
   rcases Nat.eq_zero_or_pos f.coeffs.size with hcs_zero | hcs_pos
   · exfalso
     have hlc_zero : Hex.DensePoly.leadingCoeff f = (0 : Int) := by
-      simp [Hex.DensePoly.leadingCoeff, hcs_zero, Array.getD]; rfl
+      have hf : f = 0 := (Hex.DensePoly.size_eq_zero_iff f).mp hcs_zero
+      rw [hf, Hex.DensePoly.leadingCoeff_zero]
     rw [hlc_zero] at hlead
     exact absurd hlead (by decide)
   · exact hcs_pos

@@ -13,6 +13,7 @@ public import HexSmith.Diagonal
 public import HexSmith.Smith
 public import HexSmith.Structure
 public import HexSmith.Unique
+public import HexSmith.Kernel
 
 public section
 

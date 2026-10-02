@@ -1,0 +1,26 @@
+{
+  "base_commit": "245323c27beb29beb979ea0ecd49b1ee4ab611b9",
+  "after_commit": "96ef6f0a6db786013d4ff78382f525c521a71d9f",
+  "before_change": "Use before.Basic.lean in place of HexRealRoots/Basic.lean; all other computational and benchmark sources match the after commit. Copy both binaries before restoring Basic.lean and rebuilding the after arm.",
+  "before_source_sha256": "c41252bd32c2738135c333d5cf87809ac5be17ba381bcba0a00d19a8fd3883de",
+  "after_source_sha256": "998ed31837dc5c899cc68ad88c7fba5ede2e50b7b9f0cc955d84ecc00f10effe",
+  "logs": [
+    "before-build.log",
+    "after-build.log"
+  ],
+  "commands": {
+    "before": [
+      "lake",
+      "build",
+      "hexrealroots_bench",
+      "hexsturm_bench"
+    ],
+    "after": [
+      "lake",
+      "build",
+      "hexrealroots_bench",
+      "hexsturm_bench",
+      "HexRealRootsMathlib.TarskiTests"
+    ]
+  }
+}

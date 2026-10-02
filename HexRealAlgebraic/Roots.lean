@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealAlgebraic.Order
+public import HexNumberField.Radical
 
 public section
 
@@ -123,8 +124,7 @@ namespace RealAlgebraicNumber
 
 /-- Select the unique nonnegative root of the square-root polynomial. -/
 @[expose] def sqrtRoot? (a : RealAlgebraicNumber) : Option RealAlgebraicNumber :=
-  (((RealAlgebraicPoly.ofArray #[-a, 0, 1]).roots.toArray).find?
-    (fun r => decide (0 ≤ r.root))).map RealRootCount.root
+  if a < 0 then none else ofAlgebraic? a.toAlgebraic.sqrt
 
 /-- Return the nonnegative square root, or none for a negative argument. -/
 @[expose] def sqrt? (a : RealAlgebraicNumber) : Option RealAlgebraicNumber :=

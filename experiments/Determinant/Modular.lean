@@ -1,0 +1,71 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import Determinant.Schedules
+import Determinant.Owned
+
+namespace Determinant.Modular
+
+open Hex
+
+/-- Both IO barriers are necessary: Lean may move pure computation past a
+clock read when its result is only consumed afterward. -/
+@[noinline] def measure {A R : Type} (input : A) (compute : A → R) : IO (R × Nat) := do
+  let ref ← IO.mkRef input
+  let start ← IO.monoNanosNow
+  let a ← ref.get
+  let saved ← IO.mkRef (compute a)
+  let stop ← IO.monoNanosNow
+  return (← saved.get, stop - start)
+
+/-- The ordinary CRT loop with clocks around its existing operations.
+It uses precisely the prefix required by the strict bound, not every prime
+in the eagerly generated supply. Failed images are retained as counts. -/
+def stages (arm : String) (A : Matrix Int n n) : IO Unit := do
+  let (bound, boundTime) ← measure A Matrix.hadamardBound
+  let fuel := min 16384 (bound.log2 / 30 + 2)
+  let (supply, primeTime) ← measure fuel (ZMod64.primesBelow (2 ^ 31 - 1))
+  let mut state := Hex.Modular.CrtVec.init 1
+  let mut conversion := 0
+  let mut elimination := 0
+  let mut reconstruction := 0
+  let mut used := 0
+  let mut rejected := 0
+  let mut accepted := false
+  for p in supply do
+    let _ : ZMod64.Bounds p.m := p.bounds
+    let (reduced, t) ← measure A (fun A => A.mapEntries (ZMod64.intCast p.m))
+    conversion := conversion + t
+    let (d, t) ← measure reduced (if arm == "stages-word" then wordDet
+      else if arm == "stages-owned" then ownedDet
+      else if arm == "stages-flat" then Matrix.Dixon.flatDet? else Matrix.detMod?)
+    elimination := elimination + t
+    used := used + 1
+    match d with
+    | none => rejected := rejected + 1
+    | some d =>
+      let (next, t) ← measure (state, d) fun (s, d) =>
+        s.push (Vector.replicate 1 (d.toNat : Int)) p.m
+      reconstruction := reconstruction + t
+      match next with
+      | none => rejected := rejected + 1
+      | some s =>
+        state := s
+        if 2 * bound < state.modulus then
+          accepted := true
+          break
+  unless accepted do throw <| IO.userError "ordinary CRT supply exhausted"
+  let times := [("bound_ns", boundTime), ("prime_ns", primeTime),
+    ("conversion_ns", conversion), ("elimination_ns", elimination),
+    ("reconstruction_ns", reconstruction)]
+  IO.println <| (Lean.Json.mkObj <| times.map (fun (k, v) => (k, Lean.toJson v)) ++
+    [("arm", Lean.toJson arm), ("value", Lean.toJson (toString state.value[0])),
+     ("elapsed_ns", Lean.toJson (times.foldl (fun s p => s + p.2) 0)),
+     ("moduli_used", Lean.toJson ((supply.toList.take used).map (·.m))),
+     ("supplied", Lean.toJson supply.size), ("used", Lean.toJson used),
+     ("rejected", Lean.toJson rejected), ("bound_bits", Lean.toJson (bound.log2 + 1)),
+     ("modulus_bits", Lean.toJson (state.modulus.log2 + 1))]).compress
+
+end Determinant.Modular

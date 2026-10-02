@@ -9,7 +9,7 @@ them usable from a Mathlib goal.
 
 This SPEC is the first of three expanding the "Modular techniques" entry
 in [future-work](../../SPEC/future-work.md). The other two are
-[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md), which holds the
+[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md), which holds the
 multi-modular determinant, certified rank, and Dixon lifting, and
 [hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md), which holds the modular gcd for
 `ℤ[x]`. This library is what all three of them share.
@@ -27,7 +27,7 @@ than a check, derivable from `gcd(p, q) = 1` and the congruence. See
 ## Why this library exists
 
 **Three consumers, none of which should depend on the others.**
-[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) reconstructs an integer
+[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md) reconstructs an integer
 determinant from residues and a rational solution vector from a `p`-adic
 expansion. [hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md) reconstructs an integer
 polynomial coefficient vector from residues.
@@ -88,7 +88,7 @@ denominator; the modulus supply and its runtime primality test; and the
 loop combinator that adds moduli until a caller-supplied check accepts.
 
 Not in scope: `p`-adic lifting (that is Dixon's, and it lives with its
-consumer in [hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md)); the
+consumer in [hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md)); the
 coefficient bounds that tell a consumer how large a modulus it needs
 (a Hadamard bound is a matrix fact and a Mignotte bound is a polynomial
 fact, so each belongs with its own type); prime *choice* heuristics,
@@ -442,12 +442,46 @@ theorem ratReconVec?_spec : ratReconVec? a m P Q = some (y, d) →
     ∀ i, (d * a[i] - y[i]) % (m : Int) = 0 ∧ y[i].natAbs ≤ P
 ```
 
-The output is reduced as a whole (no integer divides `d` and every `yᵢ`)
+The output is reduced as a whole (no nonunit integer divides `d` and every `yᵢ`)
 but individual entries need not be in lowest terms, since `d` is the
 common denominator rather than each entry's own. Under `2PQ < m` the
 rational vector `y/d` is unique, by `ratRecon_unique` applied entrywise,
 which is exactly the case the uniqueness proof covers without a
 coprimality hypothesis.
+
+```lean
+theorem ratReconVec?_complete
+    (hm : 2 * P * Q < (m : Int)) (hP : 0 ≤ P) (hd : 0 < d) (hdQ : d ≤ Q)
+    (hy : ∀ i, (d * a[i] - y[i]) % (m : Int) = 0 ∧ (y[i].natAbs : Int) ≤ P)
+    (hred : ∀ g : Int, (∀ i, g ∣ y[i]) → g ∣ d → g ∣ 1) :
+    ratReconVec? a m P Q = some (y, d)
+```
+
+Completeness for the vector form is stated for a pair, not for a
+rational vector, and it needs the pair reduced as a whole. That
+hypothesis is not decoration. At `m = 18`, `a = (10)`, `P = 2`, `Q = 4`
+the pair `(2, 2)` satisfies the bound, the denominator bound and the
+congruence `2 · 10 - 2 ≡ 0`, but its reduced rational `1` has
+`1 · 10 - 1 = 9 ≢ 0 (mod 18)`, and no reduced rational within the bounds
+satisfies the congruence, so the reconstruction returns `none`. The cancellation
+that takes a congruence for `y/d` to one for its reduced form divides
+by `gcd(yᵢ, d)`, and that is only legitimate modulo `m` when the factor
+is coprime to `m`. Reducedness supplies exactly that: a prime dividing
+both `d` and `m` divides every `d · aᵢ - yᵢ`, hence every `yᵢ`, so a
+pair reduced as a whole has a denominator all of whose divisors are
+coprime to `m`. Dixon's caller has the pair reduced by construction,
+and its `d` divides a determinant the modulus is coprime to, which is
+the same fact seen from the other side.
+
+The proof follows the algorithm: the first coordinate's reduced rational
+is found by `ratRecon?_complete`; the loop keeps a denominator dividing
+`d` and numerators proportional to `y`, where an accepted fast-path
+value agrees with the target by `ratRecon_unique`, and an `lcm` step
+stays a divisor of `d`; the loop therefore ends at exactly `(y, d)`, since
+`d` is a multiple of the loop's denominator by a factor that divides every
+`yᵢ`, hence `1`; and the final gcd is `1` for the same reason. The
+conclusion is the exact pair rather than an `isSome`, which is what a
+consumer proving that its check passes needs.
 
 **What `Q` has to bound.** The postcondition asserts `d ≤ Q`, and `d` is
 the least common denominator of the whole vector, not of any one entry.
@@ -477,7 +511,7 @@ The soundness theorem is the congruence and nothing else, which is
 honest, and it is enough for a consumer whose check is exact (trial
 division for a gcd, one matrix-vector product for a linear solve). It is
 **not** enough for the multi-modular determinant, which has no cheap
-check, and [hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) says so in the one
+check, and [hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md) says so in the one
 place it matters. Monagan, "Maximal quotient rational reconstruction: an
 almost optimal algorithm for rational reconstruction" (ISSAC 2004), is
 the reference, and the failure probability analysis there is the reason
@@ -606,7 +640,7 @@ the modulus exceeds twice the bound never stops.
 
 Nothing in this library can fix that, and it is recorded here because it
 is the shared cause of three separate obligations elsewhere:
-[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md)'s determinant needs a
+[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md)'s determinant needs a
 fallback that does not use moduli at all, its rank certificate needs a
 lower-bound witness that is not restricted to small moduli, and
 [hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md)'s coprimality certificate needs a
@@ -838,7 +872,7 @@ Mathlib has `ZMod.chineseRemainder` for coprime moduli, so the
 correspondence for a two-modulus push is a transport. The `k`-modulus
 statement is an induction over the fold, and the reason to state it at all
 is that a Mathlib-facing consumer (the determinant correspondence in
-[hex-modular-matrix-mathlib](../../SPEC/Libraries/hex-modular-matrix.md)) wants to argue in
+[hex-modular-matrix-mathlib](../../HexModularMatrix/SPEC/hex-modular-matrix.md)) wants to argue in
 `ZMod` and land in `ℤ`.
 
 Rational reconstruction has no Mathlib counterpart to correspond with, so
@@ -858,38 +892,19 @@ operation.
 
 ## Prerequisite changes in other libraries
 
-Three relocations, each with a reason independent of this library.
+The modulus supply (`Modulus`, bundled `Prime`, and `primesBelow`) lives in
+hex-mod-arith. Integer square roots `floorSqrt` and `ceilSqrt` live in
+`HexArith/Nat/Sqrt.lean`; `HexPolyZ/Mignotte.lean` retains compatibility aliases.
+`ratReconWide?` needs `⌊√((m-1)/2)⌋`, and the Hadamard bound in
+[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md) uses
+`ceilSqrt` per row and column.
 
-**`Modulus`, the bundled `Prime`, and `primesBelow` belong in
-hex-mod-arith**, as "The supply" above sets out, and
-`SmallPrimeCandidate` from `HexBerlekampZassenhaus/PrimeSelection.lean`
-should become the special case of them rather than a parallel
-definition. Unlike the other two relocations, this one is a
-precondition: without it this library acquires a dependency on
-hex-mod-arith that its subject does not justify.
-
-**`zmod64FieldOfPrime` should move to hex-mod-arith.** The
-`Lean.Grind.Field (ZMod64 p)` instance and the `ZMod64.intPow` it needs
-live in `HexPolyFp/PrimeField.lean`. The instance is a statement about a
-hex-mod-arith type, its proof uses `ZMod64` lemmas and
-`Init.Grind.Ring.Field`, and the module's only polynomial import is
-`HexPolyFp.Degree`. As it stands, any library wanting to do linear
-algebra over `F_p` must depend on hex-poly-fp for one instance about a
-type it already has, which is what
-[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) would otherwise have to do.
-
-**`floorSqrt` and `ceilSqrt` should move to hex-arith.** They are
-Newton-iteration integer square roots defined in `HexPolyZ/Mignotte.lean`
-under the `Hex.ZPoly` namespace, where the Mignotte bound needed them.
-`ratReconWide?` needs `⌊√((m-1)/2)⌋` and the Hadamard bound in
-[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) needs `ceilSqrt` per column.
-An integer square root under a polynomial namespace is a naming error as
-well as a placement one.
-
-The second and third do not block starting work here, and until they
-land this library can name the existing paths. The first does block, in
-the weak sense that skipping it costs a dependency this SPEC's placement
-argument says should not exist.
+**`zmod64FieldOfPrime` should move to hex-mod-arith when needed.** The
+`Lean.Grind.Field (ZMod64 p)` instance and `ZMod64.intPow` live in
+`HexPolyFp/PrimeField.lean`. Their proofs concern hex-mod-arith types; a
+consumer needing field-based linear algebra should not acquire a polynomial
+dependency solely for that instance. Unit-pivot determinant elimination uses
+checked inverses and does not require it.
 
 ## Milestones
 
@@ -981,5 +996,5 @@ planned until its correspondence and decidability layer is implemented.
   [future-work](../../SPEC/future-work.md) proposes `Zp` and `Qp` at fixed
   precision, with Dixon named as a consumer. If that lands, the precision
   contract it specifies is the natural home for the lifting loop that
-  [hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) currently writes out. The
+  [hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md) currently writes out. The
   reconstruction and the CRT stay here either way.

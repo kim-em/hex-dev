@@ -1,0 +1,19 @@
+ℹ [3/3] Built HexCharPolyMathlib.ProofProbe.Dense8Block (1.8s)
+info: bench/HexCharPolyMathlib/ProofProbe/Dense8Block.lean:15:0: 'result' depends on axioms: [propext]
+info: stderr:
+cumulative profiling times:
+	.olean serialization 21.3ms
+	attribute application 0.0199ms
+	elaboration 488ms
+	fix level params 0.0838ms
+	instantiate metavars 0.356ms
+	let-to-have transformation 0.356ms
+	linting 6.57ms
+	module linting 0.0014ms
+	parsing 4.61ms
+	process pre-definitions 1.49ms
+	share common exprs 1.03ms
+	tactic execution 211ms
+	type checking 177ms
+	typeclass inference 42.4ms
+Build completed successfully (3 jobs).

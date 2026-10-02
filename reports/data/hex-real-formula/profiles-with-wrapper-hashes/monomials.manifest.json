@@ -1,0 +1,369 @@
+{
+  "family": "monomials",
+  "function": "Hex.RealFormula.Bench.decodeTerms",
+  "parameter": 8192,
+  "cpu": 29,
+  "load": [
+    113.1513671875,
+    72.60546875,
+    51.84130859375
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "raw": "/tmp/rf-perf-monomials",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex-real-formula-lean-bench-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/rf-perf-monomials/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/rf-perf-monomials/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-hex-real-formula/.lake/build/bin/hexrealformula_bench",
+        "profile",
+        "Hex.RealFormula.Bench.decodeTerms",
+        "--param",
+        "8192",
+        "--target-inner-nanos",
+        "1000000000",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/rf-perf-monomials/samply.json.gz",
+        "/tmp/rf-perf-monomials/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/rf-perf-monomials/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/rf-perf-monomials/samply.json.gz",
+        "--perf-script",
+        "/tmp/rf-perf-monomials/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/rf-perf-monomials/spawn-anchor.json",
+        "--output",
+        "/tmp/rf-perf-monomials/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "/tmp/hex-real-formula-lean-bench-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/rf-perf-monomials/normalized.json.gz",
+        "--sidecar",
+        "/tmp/rf-perf-monomials/timed-1855028.jsonl",
+        "--spawn-anchor",
+        "/tmp/rf-perf-monomials/spawn-anchor.json",
+        "--out",
+        "/tmp/rf-perf-monomials/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/rf-perf-monomials/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/rf-perf-monomials/filtered.json.gz",
+        "--output",
+        "/tmp/rf-perf-monomials/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/rf-perf-monomials/filtered.json.gz",
+        "--symbols",
+        "/tmp/rf-perf-monomials/symbols.json",
+        "--diagnostics",
+        "/tmp/rf-perf-monomials/diagnostics.json",
+        "--thread",
+        "hexrealformula_",
+        "--top",
+        "20",
+        "--output",
+        "reports/data/hex-real-formula/profiles/monomials.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "38cc81deee142bfae532f7d97da9ce982474eab41f19fdee2d693d4d8918696c",
+  "commit": "72a5c75ffecdec60d53375c458abcdc59823b571",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.1.5",
+  "status": "profiled",
+  "artifacts": {
+    "0.stdout": "07ea3c4c027576e76bdcb385e47031a16ecec65058ac0ed535d0fc619865bef4",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "59776cb6b77de0b684a480989fba8e2d68a9794c0993bec644924618d8d935eb",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "4dd633ce6dacab59e6b9d42eba3b7e4ae44f9daacce2ec4277cf200279ecbf9f",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "0fbabbabf1daa408faed9ace244aa68776341d10664fc4c5ee67a00a55ce38c6",
+    "perf.data": "db041dacd236ed031aa5fc7273bbb9b785804f17ff963be1bfb76b3ab7a7310b",
+    "timed-1855028.jsonl": "6546eb648ac0fe0801b8931e163b5b515da5e4c021dd5837289d7db1e494d784",
+    "5.stdout": "7d9682f0874aa640586b07e235bba328f257a1fc2bef43c58e16dedf6e184a28",
+    "5.stderr": "eca548ee31e18f580c24c08bfd39a7aa9f9e859fc5fb437048041022da7f9806",
+    "samply.json.gz": "8e008f049a733ae5ad35271c81b08e62320a2faa10e9f0ae8db2d6f631e70b14",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "408749bae6a05564937893e6350c5abafcefc4232827ec0f02baf03b463543e8",
+    "7.stdout": "fb0d8a1d32d5bccd9729eeeae8b2d4cf6cadc9b34fc2bfd5863a9f0f6266bb67",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "fb0d8a1d32d5bccd9729eeeae8b2d4cf6cadc9b34fc2bfd5863a9f0f6266bb67",
+    "normalized.json.gz": "395dac1fd306970fbb93e01c25388f039ca54b3de599e61676c6f9537bd4133a",
+    "8.stdout": "ffa12d7d72582fb922615af40ebc17fd93a0b5970b20bad20de098027b23bab8",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "46d023a2f23a4c8a1cf58b2ed517bf76ab6ff75e4fe648f03e6cf858a2621c12",
+    "diagnostics.json": "6b5e82341eed1601d98ce2da59835287e19ac359a3b879583e3a37da1a78d87d",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "a579e288d6c1f045ebcbdedfcc5dfd6a938b69b727d035aa7225d4c5ed15528d",
+    "symbols.json": "3eacbde776ced3d66ce4e43bd3a163bfbbf7eddd174dc2ab1faece641b5fe371",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1855028,
+    "bench_thread_name": "hexrealformula_",
+    "bench_thread_tid": "1855038",
+    "regions_total": 1,
+    "total_timed_ms": 720.305622,
+    "expected_samples_bench_thread": 719.6,
+    "retained_samples_bench_thread": 360,
+    "rejected_samples_bench_thread": 6,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1789901006991610256,
+    "spawn_anchor_mono_ns": 872117193275140,
+    "sidecar_mono_anchor_ns": 872117466692559,
+    "samply_meta_start_time_ms": 1789901007051.1748,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.2900969982147217,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.2900969982147217,
+      "raw_max_residual_ms": 0.3803969621658325,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 1,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 360,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.2900969982147217,
+          "boundary_residual_raw_max_ms": 0.3803969621658325,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.00555555555555555,
+          "leaf_function_support_size": 81,
+          "comparison_samples": 358,
+          "exchanged_samples": 2,
+          "exchanged_fraction": 0.00558659217877095,
+          "sampling_noise_allowance": 0.030167597765363128,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.007983193277310924,
+          "leaf_function_support_size": 81,
+          "comparison_samples": 357,
+          "exchanged_samples": 3,
+          "exchanged_fraction": 0.008403361344537815,
+          "sampling_noise_allowance": 0.03705110535302286,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 358,
+          "top_leaf_functions": [
+            {
+              "function": 35,
+              "name": "0xba79d0",
+              "samples": 38
+            },
+            {
+              "function": 37,
+              "name": "0x4b08a0f",
+              "samples": 35
+            },
+            {
+              "function": 32,
+              "name": "0xba7a1a",
+              "samples": 20
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 360,
+          "top_leaf_functions": [
+            {
+              "function": 35,
+              "name": "0xba79d0",
+              "samples": 38
+            },
+            {
+              "function": 37,
+              "name": "0x4b08a0f",
+              "samples": 35
+            },
+            {
+              "function": 32,
+              "name": "0xba7a1a",
+              "samples": 20
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 357,
+          "top_leaf_functions": [
+            {
+              "function": 35,
+              "name": "0xba79d0",
+              "samples": 38
+            },
+            {
+              "function": 37,
+              "name": "0x4b08a0f",
+              "samples": 35
+            },
+            {
+              "function": 32,
+              "name": "0xba7a1a",
+              "samples": 20
+            }
+          ]
+        }
+      }
+    }
+  }
+}

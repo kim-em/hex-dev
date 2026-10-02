@@ -1,0 +1,26 @@
+{
+  "command": [
+    "python3",
+    "scripts/bench/graphiso_sweep.py",
+    "--corpus",
+    "/tmp/hex-sparse-corpus",
+    "--isograph",
+    "/tmp/IsoGraph",
+    "--only",
+    "hex-canon:cfi,hex-canon:circulant-12,hex-canon:circulant-1248,hex-canon:cubic,hex-canon:grid,hex-canon:hadamard,hex-canon:hypercube,hex-canon:johnson,hex-canon:kneser,hex-canon:latin,hex-canon:lattice,hex-canon:multipede,hex-canon:paley,hex-canon:projective-plane,hex-canon:random,hex-canon:shrunken-multipede,hex-canon:sparse-random,hex-canon:steiner,hex-canon:tree,hex-canon:union,hex-run:cfi,hex-run:circulant-12,hex-run:circulant-1248,hex-run:cubic,hex-run:grid,hex-run:hadamard,hex-run:hypercube,hex-run:johnson,hex-run:kneser,hex-run:latin,hex-run:lattice,hex-run:multipede,hex-run:paley,hex-run:projective-plane,hex-run:random,hex-run:shrunken-multipede,hex-run:sparse-random,hex-run:steiner,hex-run:tree,hex-run:union,hex-sparse-canon:cfi,hex-sparse-canon:circulant-12,hex-sparse-canon:circulant-1248,hex-sparse-canon:cubic,hex-sparse-canon:grid,hex-sparse-canon:hadamard,hex-sparse-canon:hypercube,hex-sparse-canon:johnson,hex-sparse-canon:kneser,hex-sparse-canon:latin,hex-sparse-canon:lattice,hex-sparse-canon:multipede,hex-sparse-canon:paley,hex-sparse-canon:projective-plane,hex-sparse-canon:random,hex-sparse-canon:shrunken-multipede,hex-sparse-canon:sparse-random,hex-sparse-canon:steiner,hex-sparse-canon:tree,hex-sparse-canon:union,hex-sparse-run:cfi,hex-sparse-run:circulant-12,hex-sparse-run:circulant-1248,hex-sparse-run:cubic,hex-sparse-run:grid,hex-sparse-run:hadamard,hex-sparse-run:hypercube,hex-sparse-run:johnson,hex-sparse-run:kneser,hex-sparse-run:latin,hex-sparse-run:lattice,hex-sparse-run:multipede,hex-sparse-run:paley,hex-sparse-run:projective-plane,hex-sparse-run:random,hex-sparse-run:shrunken-multipede,hex-sparse-run:sparse-random,hex-sparse-run:steiner,hex-sparse-run:tree,hex-sparse-run:union,hex-sparse-build:cfi,hex-sparse-build:circulant-12,hex-sparse-build:circulant-1248,hex-sparse-build:cubic,hex-sparse-build:grid,hex-sparse-build:hadamard,hex-sparse-build:hypercube,hex-sparse-build:johnson,hex-sparse-build:kneser,hex-sparse-build:latin,hex-sparse-build:lattice,hex-sparse-build:multipede,hex-sparse-build:paley,hex-sparse-build:projective-plane,hex-sparse-build:random,hex-sparse-build:shrunken-multipede,hex-sparse-build:sparse-random,hex-sparse-build:steiner,hex-sparse-build:tree,hex-sparse-build:union,hex-sparse-output:cfi,hex-sparse-output:circulant-12,hex-sparse-output:circulant-1248,hex-sparse-output:cubic,hex-sparse-output:grid,hex-sparse-output:hadamard,hex-sparse-output:hypercube,hex-sparse-output:johnson,hex-sparse-output:kneser,hex-sparse-output:latin,hex-sparse-output:lattice,hex-sparse-output:multipede,hex-sparse-output:paley,hex-sparse-output:projective-plane,hex-sparse-output:random,hex-sparse-output:shrunken-multipede,hex-sparse-output:sparse-random,hex-sparse-output:steiner,hex-sparse-output:tree,hex-sparse-output:union",
+    "--passes",
+    "2",
+    "--merge-into",
+    "reports/bench-results/sparse-optimization/comparison-seed.jsonl",
+    "--out",
+    "reports/bench-results/hexgraphiso-comparison-optimized-chungus2.jsonl",
+    "--raw-out",
+    "reports/bench-results/hexgraphiso-optimized-chungus2.runs.jsonl"
+  ],
+  "started": 1788931529.8329883,
+  "binaries": {
+    "hexgraphiso_sparse_bench": "509d956a55d3fbdc8c0ce79c74a4a6cb707d47ef0803e4fc71de61f20b032420",
+    "hexgraphiso_cactus": "55af46b1bea272780a5b2766717048aa9e779471fcf64bf36a357950cecc8aa3",
+    "hexgraphiso_sparse_probe": "74c85e1fc65095de761901defa44dc3f6bfd044bdf7f5a0d12927dee4e414d33"
+  }
+}

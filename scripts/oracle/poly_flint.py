@@ -27,6 +27,10 @@ note the diff in their progress entry.
 
 Operations:
 
+* ``pseudoDiv`` and ``positivePseudoDiv`` compare the recorded multiplier
+  and both integer outputs with scaled ``fmpq_poly`` division. ``pseudoGcd``
+  compares its monic fraction-field associate with FLINT gcd.
+
 * ``mul`` and ``divmod`` are cross-checked over ``fmpz_poly`` (Z[x]).
   Lean's integer multiplication and exact integer division match
   FLINT's outputs verbatim.
@@ -97,6 +101,13 @@ def _fmpq_poly(coeffs):
         nums, dens = coeffs
         return fmpq_poly([fmpq(int(n), int(d)) for n, d in zip(nums, dens)])
     return fmpq_poly([fmpq(int(c), 1) for c in coeffs])
+
+
+def _integer_qq_coeffs(p) -> list[int]:
+    """Require exact integrality; never truncate a nonintegral oracle output."""
+    if any(c.q != 1 for c in p.coeffs()):
+        raise OracleMismatch(f"scaled pseudo-division output is not integral: {p}")
+    return [int(c.p) for c in p.coeffs()]
 
 
 def _monic_qq_coeffs(p) -> list[tuple[int, int]]:
@@ -173,6 +184,26 @@ def check(
                     _trim_zeros(list(rem.coeffs())),
                 ]
                 input_record = {"dividend": dividend, "divisor": divisor}
+            elif op in ("pseudoDiv", "positivePseudoDiv", "pseudoGcd"):
+                left = cases[(lib, f"{case_id}/left")]
+                right = cases[(lib, f"{case_id}/right")]
+                p = _fmpq_poly(_coeffs(left))
+                q = _fmpq_poly(_coeffs(right))
+                input_record = {"left": left, "right": right}
+                if op == "pseudoGcd":
+                    oracle_value = _monic_qq_coeffs(p.gcd(q))
+                    lean_value = _monic_qq_coeffs(_fmpq_poly(lean_value))
+                else:
+                    if q.degree() < 0:
+                        multiplier, quot, rem = 1, _fmpq_poly([]), p
+                    else:
+                        exponent = max(0, p.degree() - q.degree() + 1)
+                        multiplier = int(q.coeffs()[-1]) ** exponent
+                        if op == "positivePseudoDiv":
+                            multiplier = abs(multiplier)
+                        quot, rem = divmod(p, q)
+                        quot, rem = multiplier * quot, multiplier * rem
+                    oracle_value = [multiplier, _integer_qq_coeffs(quot), _integer_qq_coeffs(rem)]
             elif op == "gcd":
                 # Lean's `Hex.DensePoly Rat.gcd` returns a rational
                 # scalar associate of the true gcd; FLINT's

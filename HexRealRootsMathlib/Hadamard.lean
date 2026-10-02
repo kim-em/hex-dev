@@ -12,5 +12,5 @@ public section
 
 /-!
 Compatibility import for the sharp column-Hadamard inequality now shared by
-the real- and complex-root companions through `HexPolyZMathlib.Hadamard`.
+the real- and complex-root companions through `HexMatrixMathlib.Hadamard`.
 -/

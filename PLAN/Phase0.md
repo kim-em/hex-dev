@@ -10,9 +10,8 @@ spec and this document.
 The repository begins markdown-only (`SPEC/`, `PLAN.md`, `PLAN/`,
 `libraries.yml`, `AGENTS.md`, `.claude/CLAUDE.md`). Phase 0 is
 responsible for creating the infrastructure needed in the repository
-before we can start development work. Treat it as a single
-`--critical-path` feature issue handled by one worker; do not fan out
-into Phase 1 until the Phase 0 PR lands on `main`.
+before we can start development work. Complete the bootstrap in a single
+issue before starting Phase 1; the Phase 0 PR must land on `main` first.
 
 ## Steps
 
@@ -106,16 +105,14 @@ into Phase 1 until the Phase 0 PR lands on `main`.
      requires it).
    - Exit non-zero on any violation, printing all violations to stderr.
 
-   **Reusable DAG predicate (for the issue-graph guard):** factor the
-   reachability check into `scripts/libgraph.py` as a pure
+   **Reusable DAG predicate:** factor the reachability check into
+   `scripts/libgraph.py` as a pure
    `may_import(l_a, l_b, libraries) -> bool` (true iff `l_b == l_a` or
    `l_b` is in `l_a`'s transitive dependency closure). `check_dag.py`
-   uses it for the import-boundary check above; the issue-graph guard
-   uses it to reject and scrub inverted edges
+   uses it for the import-boundary check above. It also supports manual
+   review of issue dependencies
    ([Inverted dependencies are rejected](Conventions.md#inverted-dependencies-are-rejected)).
-   The predicate makes no GitHub calls: its caller passes in the
-   `library:` and `depends-on:` values it has already read. So the
-   issue-graph guard adds no CI job and no per-push GitHub API calls.
+   The predicate makes no GitHub calls.
 
 5. Write `scripts/status.py` — a Python script that queries
    `libraries.yml` and the phase-dependency table in

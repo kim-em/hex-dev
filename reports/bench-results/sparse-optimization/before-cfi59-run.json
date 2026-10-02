@@ -1,0 +1,32 @@
+{
+  "command": [
+    "taskset",
+    "-c",
+    "76",
+    "perf",
+    "record",
+    "-q",
+    "-e",
+    "cycles:u",
+    "-F",
+    "999",
+    "--call-graph",
+    "dwarf,8192",
+    "-o",
+    "/tmp/sparse-before-cfi59-run.data",
+    "--",
+    "/tmp/hex-sparse-perf-baseline/profile",
+    "/tmp/hex-sparse-corpus/cfi59.graph",
+    "run",
+    "25"
+  ],
+  "load": [
+    2.04345703125,
+    1.5361328125,
+    3.7138671875
+  ],
+  "started": 1788930677.7326298,
+  "stdout": "{\"elapsed_ns\":2803225374,\"iterations\":25,\"mode\":\"run\",\"name\":\"cfi59\",\"ns_per_iteration\":112129014,\"sink\":1594475}\n",
+  "stderr": "",
+  "returncode": 0
+}

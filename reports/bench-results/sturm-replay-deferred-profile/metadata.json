@@ -1,0 +1,41 @@
+{
+  "git_head": "e9206227fc9a67e64c03575ace96b754d9725679",
+  "git_status": " M HexRealRoots/Basic.lean\n M HexRealRoots/SPEC/hex-real-roots.md\n M HexRealRootsMathlib/ChainCorrespond.lean\n M conformance/HexRealRoots/Conformance.lean\n M conformance/HexRealRootsMathlib/Conformance.lean\n",
+  "cpu": 73,
+  "host": "chungus2",
+  "start": "2026-09-21T22:30:30.250168+00:00",
+  "load_start": [
+    4.970703125,
+    4.578125,
+    4.28125
+  ],
+  "argv": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+    "profile",
+    "Hex.SturmBench.runReplay",
+    "--param",
+    "1024",
+    "--target-inner-nanos",
+    "500000000",
+    "--profiler",
+    "perf record --clockid mono -F 1999 -g --call-graph dwarf -o /tmp/10375-replay-deferred.perf --"
+  ],
+  "binary_sha256": "c757aa62b156b51a7df758394388bc642430c5c3557406fb7c4ee694688dfd99",
+  "exit_code": 0,
+  "samples_command": [
+    "perf",
+    "script",
+    "--ns",
+    "-G",
+    "-F",
+    "pid,time,period,ip,sym",
+    "-i",
+    "/tmp/10375-replay-deferred.perf"
+  ],
+  "end": "2026-09-21T22:30:33.609886+00:00",
+  "load_end": [
+    4.970703125,
+    4.578125,
+    4.28125
+  ]
+}

@@ -5,6 +5,9 @@ Authors: Kim Morrison
 -/
 
 import HexIntFactor
+import HexIntFactor.PMinusOneFixtures
+import HexPrimality.PMinusOneMeasure
+import HexIntFactor.FieldBench
 import LeanBench
 
 /-! Native benchmark families for integer factorization and replay. -/
@@ -461,13 +464,13 @@ def reportControls : IO UInt32 := do
 private theorem boundedPowMul_exact (q acc : Nat) (hq : 0 < q)
     (hacc : 0 < acc) : ∀ e : Nat,
     boundedPowMul (acc * q ^ e) q acc e = some (acc * q ^ e)
-  | 0 => by simp [boundedPowMul]
+  | 0 => by simp
   | e + 1 => by
       have hpow : 0 < q ^ e := Nat.pow_pos hq
       have hle : q ≤ q ^ e * q := Nat.le_mul_of_pos_left q hpow
       have hmul : acc * q ≤ acc * q ^ (e + 1) := by
         simpa only [Nat.pow_succ] using Nat.mul_le_mul_left acc hle
-      rw [boundedPowMul, ite_eq_right (Nat.ne_of_gt hacc),
+      rw [boundedPowMul_succ, ite_eq_right (Nat.ne_of_gt hacc),
         ite_eq_right (Nat.ne_of_gt hq),
         ite_eq_left ((Nat.le_div_iff_mul_le hq).2 hmul)]
       simpa only [Nat.pow_succ, Nat.mul_assoc, Nat.mul_comm,
@@ -892,6 +895,44 @@ setup_fixed_benchmark runDownstreamOrder where
 setup_fixed_benchmark runDownstreamPrimitiveRoot where
   fixedConfig 0.02 0xf53a7f8b2ec1ebc6
 
+namespace Stage2
+
+@[noinline] def factor (n seed : Nat) (enabled : Bool) : Hex.PMinusOneMeasure.Result :=
+  match Internal.factorCounted? n (Hex.Rand.ofSeed seed) (defaultFuel n) enabled with
+  | .ok r =>
+      { checked := true, outcome := "factorization", value := r.factorization.raw.subject
+        attempts := r.attempts, rand := reprStr r.rand, events := r.events }
+  | .error r =>
+      { outcome := match r.stop with
+          | .zero => "zero"
+          | .incomplete => "incomplete"
+          | .rejected => "rejected"
+        value := r.snapshot.map (fun s => s.raw.residual) |>.getD n
+        attempts := r.attempts, rand := reprStr r.rand, events := r.events }
+
+initialize factorInput : IO.Ref (Nat × Nat × Bool) ← IO.mkRef (97, 0, false)
+initialize factorResult : IO.Ref (Option Hex.PMinusOneMeasure.Result) ← IO.mkRef none
+
+def runPolicy (_ : Unit) : IO Nat := do
+  let (n, seed, enabled) ← factorInput.get
+  let result := factor n seed enabled
+  factorResult.set (some result)
+  return if result.checked then result.value else 0
+
+setup_fixed_benchmark runPolicy where { repeats := 3, maxSecondsPerCall := 600.0 }
+
+def probe (args : List String) : IO UInt32 := do
+  match args with
+  | [n, seed, enabled] =>
+      factorInput.set (n.toNat!, seed.toNat!, enabled == "true")
+      let code ← LeanBench.runFixedChildMode `Hex.IntFactorBench.Stage2.runPolicy 0 0
+      if let some result ← factorResult.get then
+        IO.println (Lean.Json.mkObj [("type", Lean.toJson "result"), ("result", result.json)]).compress
+      return code
+  | _ => throw (IO.userError "stage2-factor N SEED ENABLED")
+
+end Stage2
+
 end Hex.IntFactorBench
 
 /- Attribution-only runners for representative mode-3 families whose
@@ -940,8 +981,53 @@ setup_benchmark runPower n => n where {
 
 end Hex.IntFactorProfile
 
+/-- Native full-factorization samples for explicitly selected SQUFOF policies.
+All certificate construction and checked acceptance are inside the timed region. -/
+private def squfofProbe (n seed fuel : Nat) (mode : String) (limits : Hex.Nat.Squfof.Limits) :
+    IO UInt32 := do
+  let policy : Hex.Nat.Squfof.Policy := match mode with
+    | "first" => .first limits
+    | "rescue" => .rescue limits
+    | _ => .off
+  let start ← IO.monoNanosNow
+  let ref ← IO.mkRef (Hex.Nat.Internal.factorCounted? n (Hex.Rand.ofSeed seed) fuel
+    (squfof := policy))
+  let result : Except Hex.Nat.FactorFailure (Hex.Nat.Internal.FactorSuccess n) ← ref.get
+  let stop ← IO.monoNanosNow
+  let (status, attempts, factors, events, rand) :
+      String × Nat × List (Nat × Nat) × List Hex.Nat.FactorEvent × Hex.Rand := match result with
+    | .ok s => ("complete", s.attempts,
+        s.factorization.raw.factors.map (fun e => (e.prime, e.exponent)), s.events, s.rand)
+    | .error f => (reprStr f.stop, f.attempts,
+        (f.snapshot.map (fun s => s.raw.factors.map (fun e => (e.prime, e.exponent)))).getD [],
+        f.events, f.rand)
+  let eventJson : List Lean.Json := events.map fun (e : Hex.Nat.FactorEvent) => match e with
+    | .route name fields => Lean.Json.mkObj [
+        ("route", Lean.toJson name),
+        ("fields", Lean.Json.mkObj (fields.map fun (entry : String × String) => (entry.1, Lean.toJson entry.2)))]
+    | .pMinusOne event => Lean.Json.mkObj [("pMinusOne", Lean.toJson (reprStr event))]
+  IO.println (Lean.Json.mkObj [
+    ("n", Lean.toJson n), ("mode", Lean.toJson mode), ("seed", Lean.toJson seed),
+    ("fuel", Lean.toJson fuel), ("multipliers", Lean.toJson limits.multipliers),
+    ("stepCap", Lean.toJson limits.steps), ("queueCapacity", Lean.toJson limits.queueCapacity),
+    ("status", Lean.toJson status), ("attempts", Lean.toJson attempts),
+    ("factors", Lean.toJson factors), ("events", Lean.toJson eventJson),
+    ("rand", Lean.toJson (reprStr rand)), ("nanos", Lean.toJson (stop - start))]).compress
+  return 0
+
 def main (args : List String) : IO UInt32 :=
   match args with
+  | ["squfof-factor", n, mode, multipliers, steps, queue, seed, fuel] => do
+      if !(["off", "first", "rescue"].contains mode) then
+        IO.eprintln "squfof-factor mode must be off, first, or rescue"
+        return 1
+      let [some n, some multipliers, some steps, some queue, some seed, some fuel] :=
+        [n, multipliers, steps, queue, seed, fuel].map String.toNat? | do
+          IO.eprintln "squfof-factor expects natural-number arguments"
+          return 1
+      squfofProbe n seed fuel mode
+        { multipliers, steps, queueCapacity := queue }
+  | "stage2-factor" :: args => Hex.IntFactorBench.Stage2.probe args
   | ["divisor-audit"] => Hex.IntFactorBench.auditDivisors
   | ["default-fuel"] => Hex.IntFactorBench.reportDefaultFuel
   | ["control-audit"] => Hex.IntFactorBench.reportControls

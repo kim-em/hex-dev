@@ -54,7 +54,7 @@ theorem krylovRightInverseCandidate_sound (A : Matrix F n n) (v : Vector F n) :
       (rowReduce_transform_mul N)
     rw [Matrix.takeRows_mul] at htransform
     change T * N = Matrix.takeRows D.echelon d hd at htransform
-    rw [rowReduce_takeRows_echelon_eq_identity N hd hRankN] at htransform
+    rw [rowReduce_head_identity N hd hRankN] at htransform
     exact htransform
   have hinv : krylovRightInverseCandidate A v d = Matrix.transpose T := by
     apply Matrix.ext_getElem

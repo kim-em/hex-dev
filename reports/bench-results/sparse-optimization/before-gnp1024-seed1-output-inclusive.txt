@@ -1,0 +1,34 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 11849475144
+#
+# Children      Self  Symbol                                                                                                                                                                                                                                                                               IPC   [IPC Coverage]
+# ........  ........  ...................................................................................................................................................................................................................................................................................  ....................
+#
+    29.73%    29.73%  [.] l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeTR_go___redArg                                                                                                                                                                                              -      -
+    16.09%    16.09%  [.] lean_apply_2                                                                                                                                                                                                                                                                     -      -
+     9.07%     9.07%  [.] l_List_reverseAux___redArg                                                                                                                                                                                                                                                       -      -
+     7.39%     7.39%  [.] l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_splitRevAt_go___redArg                                                                                                                                                                                           -      -
+     5.98%     5.98%  [.] l_Nat_decLe___boxed                                                                                                                                                                                                                                                              -      -
+     4.60%     4.60%  [.] l_List_lengthTR___redArg                                                                                                                                                                                                                                                         -      -
+     2.28%     2.28%  [.] mi_free                                                                                                                                                                                                                                                                          -      -
+     2.25%     2.25%  [.] l_List_foldl___at___00Array_appendList_spec__0___redArg                                                                                                                                                                                                                          -      -
+     1.89%     1.89%  [.] mi_malloc_small                                                                                                                                                                                                                                                                  -      -
+     1.86%     1.86%  [.] l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run_x27___redArg                                                                                                                                                                               -      -
+     1.73%     1.70%  [.] lean_dec_ref_cold                                                                                                                                                                                                                                                                -      -
+     1.67%     1.67%  [.] lean_array_to_list_impl                                                                                                                                                                                                                                                          -      -
+     1.63%     1.63%  [.] l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run___redArg                                                                                                                                                                                   -      -
+     1.47%     1.47%  [.] lean_inc_heartbeat                                                                                                                                                                                                                                                               -      -
+     1.21%     1.21%  [.] l_List_toArrayAux___redArg                                                                                                                                                                                                                                                       -      -
+     1.18%     1.18%  [.] lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)                                                                                                                                                                                                             -      -
+     1.08%     1.08%  [.] lean_array_push                                                                                                                                                                                                                                                                  -      -
+     1.04%     1.04%  [.] l_List_eraseRepsBy_loop___redArg                                                                                                                                                                                                                                                 -      -
+
+
+#
+# (Tip: To set sample time separation other than 100ms with --sort time use --time-quantum)
+#

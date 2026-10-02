@@ -1,0 +1,64 @@
+--- a/HexGraph/Sparse/Build.lean
++++ b/HexGraph/Sparse/Build.lean
+@@ -6,6 +6,7 @@
+ module
+ 
+ public import HexGraph.Sparse
++public import Init.Data.Array.Sort
+ import all Init.Data.List.Basic
+ 
+ @[expose] public section
+@@ -78,6 +79,18 @@
+ def normalize (xs : List (Fin n)) : List (Fin n) :=
+   unique (Hex.List.sort xs (fun a b => a ≤ b))
+ 
++/-- Map and normalize a compressed row. -/
++def mapRow (xs : Array (Fin n)) (f : Fin n → Fin n) : List (Fin n) :=
++  normalize (xs.toList.map f)
++
++/-- Keep mapped rows in arrays through sorting in compiled code. -/
++def mapRowArray (xs : Array (Fin n)) (f : Fin n → Fin n) : List (Fin n) :=
++  unique ((xs.map f).mergeSort (fun a b => a ≤ b)).toList
++
++@[csimp] theorem mapRow_eq_array : @mapRow = @mapRowArray := by
++  funext n xs f
++  simp [mapRow, mapRowArray, normalize, Hex.List.sort_eq, Array.toList_mergeSort]
++
+ @[simp] theorem mem_normalize (a : Fin n) (xs : List (Fin n)) :
+     a ∈ normalize xs ↔ a ∈ xs := by simp [normalize]
+ 
+--- a/HexGraph/Sparse/Relabel.lean
++++ b/HexGraph/Sparse/Relabel.lean
+@@ -19,11 +19,11 @@
+ @[expose] def relabel (G : SparseGraph n) (p : Perm n) : SparseGraph n :=
+   let q := p.inv
+   let rows := Vector.ofFn fun i =>
+-    Builder.normalize ((G.nbrs (p.get i)).toList.map q.get)
++    Builder.mapRow (G.nbrs (p.get i)) q.get
+   ofRows rows
+-    (fun i => by simp [rows, Builder.sorted_normalize])
++    (fun i => by simp [rows, Builder.mapRow, Builder.sorted_normalize])
+     (fun i j => by
+-      simp only [rows, Fin.getElem_fin, Vector.getElem_ofFn, Builder.mem_normalize,
++      simp only [rows, Builder.mapRow, Fin.getElem_fin, Vector.getElem_ofFn, Builder.mem_normalize,
+         List.mem_map, Array.mem_toList_iff]
+       constructor
+       · rintro ⟨v, hv, he⟩
+@@ -37,7 +37,7 @@
+         rw [hvi] at hv
+         exact (G.symm (p.get j) (p.get i)).mp hv)
+     (fun i => by
+-      simp only [rows, Fin.getElem_fin, Vector.getElem_ofFn, Builder.mem_normalize,
++      simp only [rows, Builder.mapRow, Fin.getElem_fin, Vector.getElem_ofFn, Builder.mem_normalize,
+         List.mem_map, Array.mem_toList_iff]
+       rintro ⟨v, hv, he⟩
+       have hvi : v = p.get i := by rw [← he, Perm.get_inv_get]
+@@ -48,7 +48,7 @@
+     (G.relabel p).adj i j = G.adj (p.get i) (p.get j) := by
+   rw [Bool.eq_iff_iff, ← mem_nbrs, ← mem_nbrs, ← Array.mem_toList_iff,
+     relabel, nbrs_ofRows]
+-  simp only [Fin.getElem_fin, Vector.getElem_ofFn, Builder.mem_normalize,
++  simp only [Builder.mapRow, Fin.getElem_fin, Vector.getElem_ofFn, Builder.mem_normalize,
+     List.mem_map, Array.mem_toList_iff]
+   constructor
+   · rintro ⟨v, hv, he⟩

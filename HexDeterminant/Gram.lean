@@ -294,6 +294,16 @@ private theorem selectedColumnTuplesUpTo_nodup (m : Nat) :
       · intro c _hc
         exact selectedColumnTuplesUpTo_nodup m n c.val
 
+/-- No strictly increasing tuple is longer than its index range, so the
+enumeration is empty once the tuple length exceeds the range. -/
+theorem selectedColumnTuples_eq_nil_of_lt {n m : Nat} (h : m < n) :
+    selectedColumnTuples n m = [] := by
+  rw [List.eq_nil_iff_forall_not_mem]
+  intro cols hmem
+  have hinc := (mem_selectedColumnTuples_iff cols).mp hmem
+  have hle := index_le_of_strictlyIncreasing cols hinc ⟨m, h⟩
+  exact absurd hle (Nat.not_le.mpr (cols[(⟨m, h⟩ : Fin n)]).isLt)
+
 /-- The strictly-increasing column-tuple enumeration has no duplicates. -/
 theorem selectedColumnTuples_nodup {n m : Nat} :
     (selectedColumnTuples n m).Nodup :=

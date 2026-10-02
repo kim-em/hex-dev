@@ -1,0 +1,186 @@
+{
+  "host": "chungus2",
+  "cpu_model": "AMD EPYC 9455 48-Core Processor",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "base_commit": "d55a63de6c1a4a2132afb6e315cca7a322aabb57",
+  "binary_sha256": {
+    "hexgraphiso_sparse_bench": "cb1a8dde1e149b7714c27ad90fa0cbcf0c91b627b8f0cf72abbe30c1215562bb",
+    "hexgraphiso_sparse_probe": "fc60cee08a7718b4d96c14af1fd79e86511df9fa7a91af672d9884a0406b51dc"
+  },
+  "source_sha256": {
+    "HexGraph/Basic.lean": "f3573b1fe7b2fdc057d57d02777620f3f1546b973b92848d6e900ad13e7eb952",
+    "HexGraph/Sparse.lean": "086026e916329a419ea487d65e6010fb04e4a1ef85d7368f803b7e219dcf306b",
+    "HexGraph/Sparse/Build.lean": "c6221717cd86c9cca8df007adfd06781b132266705c7841d48ec170072b3e7d3",
+    "HexGraph/Sparse/Normalize.lean": "6fd8049be817e73af4fc74186379be2aba8c4f66c222f6ed20b851e81a654d92",
+    "HexGraph/Sparse/Pack.lean": "161d4695f753e59fe91f767acc37b941c1750ed4a19467161576244e633ee721",
+    "HexGraph/Sparse/Relabel.lean": "4f400aeb3622185f8c7975f3316ec0dd1c3760929365a0233d42e5473a6d0f80",
+    "HexGraphIso/Nauty/Search/Generic.lean": "fc7731a0ee6dd5d90dd7e6fd2795a06e1bd9e1a2de132532b11825a1984d8538",
+    "HexGraphIso/Nauty/Search/State.lean": "ced9493834f3af3a8e9e67187f91baacc8ee6bcb30500d00d059ce302318cb56",
+    "HexGraphIso/Nauty/Sparse/Cells.lean": "48935f8e16a5a519fccba60fd102c4607697c9e51defc470a6fc7889d011030b",
+    "HexGraphIso/Nauty/Sparse/Graph.lean": "ee6c85722a864011d085a7001044b94312408c11399d0171ca8f97be1da84bd7",
+    "HexGraphIso/Nauty/Sparse/Refine.lean": "01de10d9a562a3e7a62ba7438b282932003cf7c3dc3b4d66a39c790079e72568",
+    "HexGraphIso/Nauty/Sparse/Search.lean": "46985a4299a12ba83d8d385a1e35a7ff5659e14bf17f4defac008a17fa8e5e69",
+    "HexGraphIso/Nauty/Sparse/Sort.lean": "f844631b876c8096773f20ad8f5523c178ddd35d11385d90f58a00feefa33221",
+    "HexGraphIso/Nauty/Sparse/Target.lean": "435caacdbb98e92cb3f936b95bc9d55d0e87e964cc934e0ea021a0757f3f810b",
+    "HexGraphIso/Sparse/Colored.lean": "2b1c617960a8b810fd561e74105b58df0605cf6b5d6d8aabd5c75d45f101e009",
+    "HexGraphIso/Sparse/Run.lean": "a315af16603425752dfb2ed4cad7ebcb828df27d9adb0619be99ae0876fe23da",
+    "HexPermGroup/Perm.lean": "9f37e6622f455439ce2db0ac783841e82c7fcdf4f14728ea79b9441263ff4fcb",
+    "bench/HexGraphIso/Cactus.lean": "42fe43c870b2741747950b9db7e427a0066d1f817b1e88102627a09d129eca83",
+    "bench/HexGraphIso/SparseBench.lean": "86e6c5dd720cbf065be72b94212a3dd6fc3bf674780ec781577702602d0a8387",
+    "conformance/HexGraphIso/SparseCases.lean": "1c17ef779fc0be41ef9f19918b8fc2cb9e45c308b25b62400a1eb579ca8a76d0",
+    "scripts/bench/graphiso_sparse_pairs.py": "7305005bab2a9b4521a48c916e2867b0c7d9ca0b5b971ab006ae466438544c1f",
+    "scripts/bench/graphiso_sweep.py": "f0f2f742b79285ee1c171ad71647d007a06a4b2a155c1fcbcef68619f27107a4",
+    "scripts/oracle/graphiso_sparse_check.py": "924cf3e053e2d06ec52c6e175510d8e91223f5f6831276d80e11faab93015f2a",
+    "scripts/plots/hexgraphiso-comparison.py": "01efa3039cb179d00f97ac69ecb2ff9a359395533ebd613de27a17350440d631",
+    "scripts/plots/hexgraphiso-sparse-optimization.py": "4d54e90f38ff321f31d946c59c833dae5ab6cbd4597612226877a70868d6c46a"
+  },
+  "sweep_context": {
+    "kind": "context",
+    "host": "chungus2",
+    "cpu": 46,
+    "time": 1788944357.1168497,
+    "load": [
+      2.55712890625,
+      2.048828125,
+      1.42041015625
+    ],
+    "arguments": {
+      "corpus": "/tmp/hex-sparse-cutover/corpus",
+      "isograph": "/tmp/IsoGraph",
+      "nauty": "/tmp/nautybench",
+      "out": "reports/bench-results/hexgraphiso-comparison-cutover-chungus2.jsonl",
+      "raw_out": "reports/bench-results/hexgraphiso-cutover-chungus2.runs.jsonl",
+      "budget": 5.0,
+      "kill": 20.0,
+      "kill_per_1000": 15.0,
+      "passes": 2,
+      "cpu": 46,
+      "no_pin": false,
+      "only": "hex-sparse-canon:cfi,hex-sparse-canon:circulant-12,hex-sparse-canon:circulant-1248,hex-sparse-canon:cubic,hex-sparse-canon:grid,hex-sparse-canon:hadamard,hex-sparse-canon:hypercube,hex-sparse-canon:johnson,hex-sparse-canon:kneser,hex-sparse-canon:latin,hex-sparse-canon:lattice,hex-sparse-canon:multipede,hex-sparse-canon:paley,hex-sparse-canon:projective-plane,hex-sparse-canon:random,hex-sparse-canon:shrunken-multipede,hex-sparse-canon:sparse-random,hex-sparse-canon:steiner,hex-sparse-canon:tree,hex-sparse-canon:union,hex-sparse-output:cfi,hex-sparse-output:circulant-12,hex-sparse-output:circulant-1248,hex-sparse-output:cubic,hex-sparse-output:grid,hex-sparse-output:hadamard,hex-sparse-output:hypercube,hex-sparse-output:johnson,hex-sparse-output:kneser,hex-sparse-output:latin,hex-sparse-output:lattice,hex-sparse-output:multipede,hex-sparse-output:paley,hex-sparse-output:projective-plane,hex-sparse-output:random,hex-sparse-output:shrunken-multipede,hex-sparse-output:sparse-random,hex-sparse-output:steiner,hex-sparse-output:tree,hex-sparse-output:union",
+      "merge_into": "reports/bench-results/sparse-cutover/comparison-seed.jsonl"
+    }
+  },
+  "scope": {
+    "refreshed_columns": [
+      "hex_sparse_ns",
+      "hex_sparse_output_ns",
+      "hex_sparse_nodes"
+    ],
+    "refreshed_instances": "sparse-cutover/affected-inputs.json",
+    "selection": "n < 128",
+    "retained_cells": "All other values are preserved from hexgraphiso-comparison-optimized2-chungus2.jsonl.",
+    "retained_provenance": "hexgraphiso-optimized2-chungus2.meta.json"
+  },
+  "conformance": {
+    "searches": 45491,
+    "refinements": 220,
+    "sorts": 130,
+    "output_sha256": "3c2e1316becbab2e85015f8fe47e6f8bcbb309bc0a54302d5225c52063ef0c57"
+  },
+  "build": {
+    "result": "pass",
+    "jobs": 2238,
+    "targets": [
+      "hexgraphiso_sparse_bench",
+      "hexgraphiso_sparse_probe",
+      "hexgraphiso_emit_sparse",
+      "HexGraphIso.SparseTests",
+      "HexGraphIsoMathlib"
+    ]
+  },
+  "fixtures": {
+    "records": 6233,
+    "unchanged": true,
+    "sha256": "68739394882dc0ecf9601ed8dde7ca59273f320cfe061d2d4bc8149615a3ff42",
+    "C_oracle": "pass"
+  },
+  "dense_cactus": {
+    "fingerprint": "d89b0d458615",
+    "host": "chungus2",
+    "date": "2026-09-09T09:03:39Z",
+    "describe": "d55a63de6c1a",
+    "label": "sparse output normalization without a minimum graph order",
+    "freshness_check": "pass"
+  },
+  "trust_surface": {
+    "files": 1312,
+    "result": "no axioms, sorries, or native_decide"
+  },
+  "proof_status": "Sparse representation, output normalization, direct packing, and tiny touched-set replacement proved; sparse search correctness and totality pending. Dense proof build passes.",
+  "results": {
+    "instances": 333,
+    "refreshed_instances": 102,
+    "complete_passes": 2,
+    "process_results": 408,
+    "timed_repetitions": 2040,
+    "statuses": {
+      "ok": 408
+    },
+    "canonical_node_checks": 204,
+    "merged_reconstructed": true,
+    "untouched_cells_identical": true,
+    "schedule_checked": true,
+    "paired_blocks": 4,
+    "paired_samples": 96,
+    "solved": {
+      "hex-canon": 282,
+      "hex-run": 282,
+      "hex-ffi": 299,
+      "iso-canon": 296,
+      "iso-whole": 296,
+      "nauty": 307,
+      "sparse": 318,
+      "traces": 308,
+      "hex-sparse-canon": 310,
+      "hex-sparse-run": 310,
+      "hex-sparse-build": 333,
+      "hex-sparse-output": 315
+    },
+    "ratios": {
+      "sparse_over_dense": {
+        "cases": 282,
+        "median": 0.24755747887117655
+      },
+      "sparse_over_isograph": {
+        "cases": 296,
+        "median": 0.7442226928305367
+      },
+      "sparse_over_C_sparse": {
+        "cases": 310,
+        "median": 17.857120344938956
+      }
+    }
+  },
+  "plotting": {
+    "matplotlib": "3.11.1",
+    "option": "--sparse-refresh-below 128",
+    "historical_series": 5,
+    "sparse_series": "canonicalization and output refreshed below 128 vertices; larger cases, construction, and search retained"
+  },
+  "artifacts": {
+    "hexgraphiso-comparison-optimized2-chungus2.jsonl": "de50b045343527a7308021d14381c93fb9f49a9e40076342d8e3bfa8bb08ef95",
+    "hexgraphiso-optimized2-chungus2.meta.json": "7dba94aabdf26f49395efe3bfb1e1134bea7091bda92cb45a0e61fff4d6738ef",
+    "hexgraphiso-comparison-cutover-chungus2.jsonl": "6102c7134c026248703afbb70963a76db3925401d9889450d83b131ca80ebbaf",
+    "hexgraphiso-cutover-chungus2.runs.jsonl": "9fc9cb56b7ce5d99f0ff81ee99fe371c22cc885c6ed8acfd797ad986aa757652",
+    "sparse-cutover/affected-inputs.json": "c8b10af7be7510c9a619b99431c42da3f2dd318c3ddba58b064d5d3600c5832b",
+    "sparse-cutover/after.json": "cb03d63cf03047b4e302fcd0f9144ef113be655ec99a51c96376643da75685f4",
+    "sparse-cutover/before.json": "a8b12385143eac6bcefddda5b048136836f73e99f616cbdb1ac2bfa1645afe87",
+    "sparse-cutover/comparison-seed.jsonl": "54851d939de58ebf0891eb291bd1ba5fb01d042c6a63bcb0ccebc0149ed4eb40",
+    "sparse-cutover/dense-cactus-context.json": "3ba6bbb387c6c17bac2018c694fdeaed227ca3c848e823fd354eae44eee2dbf4",
+    "sparse-cutover/fixture-validation.json": "08ef598a7b11828601a7e986b4918976af0329ac0abc926198efa7d28b60cf58",
+    "sparse-cutover/paired-summary.json": "2ab42adf48a619de4aaeff7bae3bab120e34a8332790e249c0c4987377d2e66f",
+    "sparse-cutover/pairs.jsonl": "8748c35ef0486c96ab7152beb4e23341af3701a06e22f13ff759d4ba55ec89cc",
+    "sparse-cutover/remove-cutover.patch": "fc1ce76be98cc99c75221cef4c8c3655ac471bd929babab606c0f4b294e03a09",
+    "sparse-cutover/sweep-invocation.json": "5caf2ac6735f991bef5019d5a4aa319f146760d4c104ecb0481625440e8c0c26",
+    "sparse-cutover/validation.json": "f1c03e95f856a7097ebff4c92afd4edf3b6747ece770b325075fb56fc26d1c0f"
+  },
+  "figures_sha256": {
+    "figures/hexgraphiso-comparison-cactus.svg": "ee5be51324f39bee5ea754efaf6174ef34a60e38879003189dc58e2625ee883c",
+    "figures/hexgraphiso-comparison-cactus.png": "9337cf54fb3fee11e213cdcd4cb965784eb2fd563383a3d276e2dd883251e85b",
+    "figures/hexgraphiso-comparison-families.svg": "888b3fcc4baf844dff85779fcec3f14e715cee91f74fbcfd172bff41fc7f06a9",
+    "figures/hexgraphiso-comparison-families.png": "44a028ab2a1a19f762d715d64e95bc2efdaad3be147106ed414294cf00bded39",
+    "figures/hexgraphiso-comparison-search-families.svg": "3aaa486d3732fd88817d89dfd4b4e324cc7c30f63f1c56f739b8eebe8681ca68",
+    "figures/hexgraphiso-comparison-search-families.png": "fab014559b27a40dc7ca86aaf3c3588263ba3b017235aa00b261d9d8ce17eaa1",
+    "figures/hexgraphiso-comparison-table.md": "7c798e3f8f49e73a23fe23803713c7f4f1dc9b6dfdcaf6f92b0dc0cc0f026239"
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "published_base": "ff87b54e39707af1604f9c27afc983eb313d2b1b",
+  "path_scope": [
+    "*.lean",
+    "lean-toolchain",
+    "lake-manifest.json",
+    "libraries.yml",
+    "scripts/bench/rank_*.py",
+    "scripts/bench/idle_core.py",
+    "scripts/oracle/rank_*.py",
+    "scripts/profile/normalize_perf.py",
+    "scripts/profile/elf_symbols.py",
+    "scripts/profile/summarize_profile.py"
+  ],
+  "snapshots": [
+    {
+      "revision": "2b0ff6bf5fbd033943c09c1b49893285497f90aa",
+      "patch": "2b0ff6bf5.patch.gz",
+      "sha256": "bb7e2f303e7ee4eb8e504e06248dd70587a45bc12a26bd3de57886536dbccc99",
+      "uncompressed_sha256": "329ee382f971b6157cb61472fa2725c41c1909a7f77523f8f186fa496c70b5c5"
+    },
+    {
+      "revision": "bbedb47226a2dae977434e4ea7da1ffdbaf93b00",
+      "patch": "bbedb4722.patch.gz",
+      "sha256": "25f89dc36fed43f867da16ba3bec608ff26190f43b97fa58734e4acce84c749b",
+      "uncompressed_sha256": "d3009528be6c234275fc6a1d4fce4e8f3dd49908a4206bec710b9d419a7fcad8"
+    },
+    {
+      "revision": "8a6e0acede303baa0fd4f4ef2a7ea7ee65180180",
+      "patch": "8a6e0aced.patch.gz",
+      "sha256": "009bbf0937df45468aedb0d9ee25434232938681be947dcf5b34fd1226646e5b",
+      "uncompressed_sha256": "2f4e90e10d6f69e98c4711619799ad3bf3a7cf069a028ad3cc475386df29ecb1"
+    },
+    {
+      "revision": "a2f2303e1b8e343fe7dfe83520acfaef15957181",
+      "patch": "a2f2303e1.patch.gz",
+      "sha256": "e83f20dd9fbe89a9d6f960c5a62ccaa3c609414ad573bf2cd641538fce32495d",
+      "uncompressed_sha256": "4d3b84d18024e0af987bddda2f03ed3a86be41e72bbf2028312acfbecbf345de"
+    },
+    {
+      "revision": "b3360aca1cc4abd3bd3c4fe6c3409bc51b3c3e9a",
+      "patch": "b3360aca1.patch.gz",
+      "sha256": "bad6ae653bb838186144bc5321e235548691710489b47f7008bccb4695f2d6af",
+      "uncompressed_sha256": "d6f792fa8c110875e9cb037ef2007de61cb1e84a8ca6a2ee6bbfad3fac9d3b6a"
+    },
+    {
+      "revision": "655570d5821b3e0fdd76e391d7435644472ff070",
+      "patch": "655570d58.patch.gz",
+      "sha256": "62707cd8fa3c0129d5cde67012b0b55938b9edb110a16860edcfa3fd204540ad",
+      "uncompressed_sha256": "662f44c402e6cc67ba77e6d11d01517b351ae1731647e38d95648e58f065b351"
+    },
+    {
+      "revision": "01eeb439af779d7d6e3133a3ad1d1fe9b5555f9e",
+      "patch": "01eeb439a.patch.gz",
+      "sha256": "387628db3ff49c873129ba56e386670392ff9a6b479ef615feaa947bbc11b5af",
+      "uncompressed_sha256": "5a4076cfd16e306994aa8e3e9fc022dbd53bf3104b344e95fa898f7fd25266f1"
+    },
+    {
+      "revision": "5e9bc6ab8e4d3c75ae55d07ff4f32f6c664264ce",
+      "patch": "5e9bc6ab8.patch.gz",
+      "sha256": "5962f87af7e3bfe206b6c10bde8ae3f12de17291964d636f74e6b96b69aa0253",
+      "uncompressed_sha256": "870dbba495a6a1b70c6d2f247cfb64df2b648d47a635d8c3675c1d0d8d520552"
+    },
+    {
+      "revision": "a29afca7a5824d544c8ddf8b59b8952ff8eb1592",
+      "published_base": "a29afca7a5824d544c8ddf8b59b8952ff8eb1592",
+      "patch": "a29afca7a.patch.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "revision": "1a9f17f84ea9389255d38df58c6663d210cd2f6e",
+      "published_base": "a29afca7a5824d544c8ddf8b59b8952ff8eb1592",
+      "patch": "1a9f17f84.patch.gz",
+      "sha256": "d5ca5d53a9cff6d044833d04c79f353608f0eb182ed975909a20f977d1515fbe",
+      "uncompressed_sha256": "a6ea2b74ee8775baf342ffcd6d16e9490512f446d5fbd2124e47676152cff6de"
+    },
+    {
+      "revision": "322d567bc657c472fce27acf9dfcb8a6ca54c1eb",
+      "published_base": "a29afca7a5824d544c8ddf8b59b8952ff8eb1592",
+      "patch": "322d567bc.patch.gz",
+      "sha256": "4e3659e24b2f2dd9333b7934b33c4e22aed12d0339266528828e78f950af6462",
+      "uncompressed_sha256": "4c6edbca8a63c343f141ff9be8ff68f1a826d3d1040d4f8187c9d17ffa636de5"
+    }
+  ],
+  "note": "The base is merged on main. Use scripts/bench/rank_reconstruct.py to apply one snapshot and, optionally, a run-specific dirty patch restricted to this source scope. Reports and CI configuration are not needed to reproduce the executable. The two extra 01eeb439a/5e9bc6ab8 snapshots cover the untimed coefficient-input capture base and its capture hook."
+}

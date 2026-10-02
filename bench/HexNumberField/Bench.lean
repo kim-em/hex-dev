@@ -60,6 +60,90 @@ def run : IO Unit := do
 
 end Hex.ConjugateBench
 
+/-! Fixed eight-block AB/BA measurements of comparison and radical strategies. -/
+namespace Hex.FastAlgebraicBench
+open Lean
+
+private def orderHash : Option Ordering → UInt64
+  | none => 0
+  | some .lt => 1
+  | some .eq => 2
+  | some .gt => 3
+
+private def valueHash (a : AlgebraicNumber) : UInt64 :=
+  a.p.natDegree.toUInt64 * 4 + (match a.side with | .real => 1 | .upper => 2 | .lower => 3)
+
+@[noinline] private def realOld (a b : AlgebraicNumber) : UInt64 := orderHash (some (a.realCompareExact b))
+@[noinline] private def realNew (a b : AlgebraicNumber) : UInt64 := orderHash (some (a.realCompare b))
+@[noinline] private def complexOld (a b : AlgebraicNumber) : UInt64 := orderHash (a.partialCompareExact b)
+@[noinline] private def complexNew (a b : AlgebraicNumber) : UInt64 := orderHash (a.partialCompare b)
+
+@[noinline] private def selectOld (roots : Array RootCount) : AlgebraicNumber :=
+  (AlgebraicNumber.Radical.select roots).map (·.value) |>.getD 0
+
+@[noinline] private def selectNew (a : AlgebraicNumber) (roots : Array RootCount) : AlgebraicNumber :=
+  match AlgebraicNumber.Radical.fast? a roots with
+  | some r => r.exact
+  | none => selectOld roots
+
+@[noinline] private def radicalOld (a : AlgebraicNumber) (n : Nat) : AlgebraicNumber :=
+  selectOld (AlgebraicNumber.Radical.polynomial a n).roots.toArray
+
+@[noinline] private def radicalNew (a : AlgebraicNumber) (n : Nat) : AlgebraicNumber := a.nthRoot n
+
+private def measure (case : String) (block : Nat) (arm : String) (iterations : Nat)
+    (f : Nat → UInt64) : IO Unit := do
+  let start ← IO.monoNanosNow
+  let mut sum : UInt64 := 0
+  for j in [:iterations] do sum := sum + f j
+  let elapsed := (← IO.monoNanosNow) - start
+  IO.println (Json.mkObj [("case", toJson case), ("block", toJson block),
+    ("arm", toJson arm), ("iterations", toJson iterations),
+    ("nanoseconds", toJson elapsed), ("checksum", toJson sum.toNat)]).compress
+
+private def paired (case : String) (iterations : Nat) (old new : Nat → UInt64) : IO Unit := do
+  for block in [:8] do
+    let a := measure case block "reference" iterations old
+    let b := measure case block "interval" iterations new
+    if block % 2 == 0 then a *> b else b *> a
+
+/-- Preconstruct comparison inputs; separate branch selection from complete extraction. -/
+def run : IO Unit := do
+  let start ← IO.monoNanosNow
+  let s := ZPoly.rootNear #p[-2, 0, 1] 1.4
+  let t := ZPoly.rootNear #p[-3, 0, 1] 1.7
+  let i := AlgebraicNumber.I
+  let same := 1 + i
+  IO.println (Json.mkObj [("case", toJson "comparison-inputs"),
+    ("arm", toJson "construction"), ("nanoseconds", toJson ((← IO.monoNanosNow) - start))]).compress
+  for (name, a, b, old, new) in #[
+      ("real-separated", s, t, realOld, realNew),
+      ("real-equal", s, s, realOld, realNew),
+      ("imag-separated", i, 2*i, complexOld, complexNew),
+      ("same-imaginary", i, same, complexOld, complexNew)] do
+    unless old a b == new a b && old b a == new b a do
+      throw (IO.userError s!"comparison arms disagree: {name}")
+    paired name 64 (fun j => if j % 2 == 0 then old a b else old b a)
+      (fun j => if j % 2 == 0 then new a b else new b a)
+  for (name, a, n) in #[("cube-negative", (-8 : AlgebraicNumber), 3),
+      ("unity-eighth", -1, 4)] do
+    let start ← IO.monoNanosNow
+    let roots := (AlgebraicNumber.Radical.polynomial a n).roots.toArray
+    IO.println (Json.mkObj [("case", toJson name), ("arm", toJson "root-construction"),
+      ("nanoseconds", toJson ((← IO.monoNanosNow) - start))]).compress
+    unless selectOld roots == selectNew a roots && radicalOld a n == radicalNew a n do
+      throw (IO.userError s!"radical arms disagree: {name}")
+    -- Reverse enumeration on alternate calls; selection must not depend on input order.
+    let inputs := #[roots, roots.reverse]
+    paired (name ++ "/selection") 2 (fun j => valueHash (selectOld inputs[j % 2]!))
+      (fun j => valueHash (selectNew a inputs[j % 2]!))
+    let args := #[(a, n), (a.conj, n)]
+    paired (name ++ "/complete") 2
+      (fun j => let (a, n) := args[j % 2]!; valueHash (radicalOld a n))
+      (fun j => let (a, n) := args[j % 2]!; valueHash (radicalNew a n))
+
+end Hex.FastAlgebraicBench
+
 /-!
 Benchmark registrations for `HexNumberField`.
 
@@ -2487,6 +2571,9 @@ end Hex.NumberFieldBench
 
 def main (args : List String) : IO UInt32 := do
   match args with
+  | ["algebraic-fast-compare"] =>
+      Hex.FastAlgebraicBench.run
+      return 0
   | ["conjugation-compare"] =>
       Hex.ConjugateBench.run
       return 0

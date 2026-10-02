@@ -1,0 +1,303 @@
+{
+  "allocation_share_percent": 1.11,
+  "classified_percent": 100.0,
+  "diagnostics": {
+    "bench_pid": 1857128,
+    "bench_thread_name": "hexrealformula_",
+    "bench_thread_tid": "1857161",
+    "calibration": {
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "boundary_residual_raw_max_ms": null,
+          "boundary_residual_trimmed_max_ms": null,
+          "hit_count": 0,
+          "regions_without_samples": 1031,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "boundary_residual_raw_max_ms": 3.3415950536727905,
+          "boundary_residual_trimmed_max_ms": 3.3204129934310913,
+          "hit_count": 361,
+          "regions_without_samples": 670,
+          "within_residual_limit": true
+        }
+      },
+      "configured_max_residual_ms": 5.0,
+      "effective_max_residual_ms": 5.0,
+      "raw_max_residual_ms": 3.3415950536727905,
+      "residual_ms": 3.3204129934310913,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "sample_interval_ms": 1.001001,
+      "selected_mode": "relative-to-meta-start-ms",
+      "within_residual_limit": true
+    },
+    "calibration_max_residual_ms": 5.0,
+    "calibration_residual_ms": 3.3204129934310913,
+    "confidence": "passed",
+    "expected_samples_bench_thread": 589.6,
+    "low_confidence_reasons": [],
+    "minimum_retained_samples": 100,
+    "off_bench_thread_samples_in_window": 0,
+    "regions_total": 1031,
+    "rejected_samples_bench_thread": 7,
+    "retained_samples_bench_thread": 361,
+    "samply_interval_ms": 1.001001,
+    "samply_meta_start_time_ms": 1789901015090.8354,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "schema": 2,
+    "sensitivity": {
+      "cases": {
+        "minus": {
+          "retained_samples": 360,
+          "shift_ms": -5.0,
+          "top_leaf_functions": [
+            {
+              "function": 45,
+              "name": "0x4c6a4c1",
+              "samples": 43
+            },
+            {
+              "function": 49,
+              "name": "0x4c6879f",
+              "samples": 34
+            },
+            {
+              "function": 76,
+              "name": "0x4c6a4ca",
+              "samples": 30
+            }
+          ]
+        },
+        "nominal": {
+          "retained_samples": 361,
+          "shift_ms": 0.0,
+          "top_leaf_functions": [
+            {
+              "function": 45,
+              "name": "0x4c6a4c1",
+              "samples": 43
+            },
+            {
+              "function": 49,
+              "name": "0x4c6879f",
+              "samples": 34
+            },
+            {
+              "function": 79,
+              "name": "0x4c68dab",
+              "samples": 31
+            }
+          ]
+        },
+        "plus": {
+          "retained_samples": 355,
+          "shift_ms": 5.0,
+          "top_leaf_functions": [
+            {
+              "function": 45,
+              "name": "0x4c6a4c1",
+              "samples": 41
+            },
+            {
+              "function": 49,
+              "name": "0x4c6879f",
+              "samples": 33
+            },
+            {
+              "function": 79,
+              "name": "0x4c68dab",
+              "samples": 31
+            }
+          ]
+        }
+      },
+      "comparisons": {
+        "minus": {
+          "comparison_samples": 360,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.013888888888888888,
+          "exchanged_samples": 5,
+          "failure_reasons": [],
+          "leaf_function_support_size": 46,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.03574601764921202,
+          "total_variation_distance": 0.007963988919667583,
+          "verdict": "passed"
+        },
+        "plus": {
+          "comparison_samples": 355,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.028169014084507043,
+          "exchanged_samples": 10,
+          "failure_reasons": [],
+          "leaf_function_support_size": 46,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.05126451004429217,
+          "total_variation_distance": 0.017666107448012176,
+          "verdict": "passed"
+        }
+      },
+      "configured_max_total_variation_distance": 0.1,
+      "leaf_function_distributions_stable": true,
+      "maximum_sampling_noise_allowance": 0.5,
+      "minimum_comparison_samples": 100,
+      "reported_top_function_count": 3,
+      "sampling_noise_coefficient": 0.6,
+      "shift_ms": 5.0,
+      "verdict": "passed"
+    },
+    "sidecar_mono_anchor_ns": 872125529431608,
+    "spawn_anchor_mono_ns": 872125249388506,
+    "spawn_anchor_wall_ns": 1789901015047723823,
+    "stage": "complete",
+    "total_timed_ms": 590.170874
+  },
+  "inclusive_hex": [
+    {
+      "function": "Hex.RealFormula.QF.evalRat",
+      "percent": 88.09
+    },
+    {
+      "function": "_private.HexRealFormula.Bench.0_Hex.RealFormula.Bench.initFn_.lam_1.00_@.HexRealFormula.Bench.725523864__hygCtx_.hyg.37__boxed",
+      "percent": 88.09
+    }
+  ],
+  "leaf_categories": {
+    "allocation": 1.11,
+    "gmp": 98.89
+  },
+  "profile": "/tmp/rf-perf-coefficient-bits/filtered.json.gz",
+  "samples": 361,
+  "symbols": "/tmp/rf-perf-coefficient-bits/symbols.json",
+  "top_inclusive": [
+    {
+      "function": "Std.DTreeMap.Internal.Impl.foldlM",
+      "percent": 88.09
+    },
+    {
+      "function": "_ZNSt3__110__function6__funcIZ13lean_run_mainE3$_0FvvEEclEv",
+      "percent": 88.09
+    },
+    {
+      "function": "Hex.RealFormula.QF.evalRat",
+      "percent": 88.09
+    },
+    {
+      "function": "lean-bench.LeanBench.autoTune",
+      "percent": 88.09
+    },
+    {
+      "function": "lean-bench.LeanBench.kernelLoop",
+      "percent": 88.09
+    },
+    {
+      "function": "start_thread",
+      "percent": 88.09
+    },
+    {
+      "function": "lean-bench.LeanBench.Cli.runChildCmd",
+      "percent": 88.09
+    },
+    {
+      "function": "lean-bench_.private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+      "percent": 88.09
+    },
+    {
+      "function": "_private.HexRealFormula.Bench.0_Hex.RealFormula.Bench.initFn_.lam_1.00_@.HexRealFormula.Bench.725523864__hygCtx_.hyg.37__boxed",
+      "percent": 88.09
+    },
+    {
+      "function": "__clone3",
+      "percent": 88.09
+    },
+    {
+      "function": "lean_apply_2",
+      "percent": 88.09
+    },
+    {
+      "function": "_ZN4lean7lthread3imp5_mainEPv",
+      "percent": 88.09
+    },
+    {
+      "function": "lean-bench.LeanBench.runChildMode",
+      "percent": 88.09
+    },
+    {
+      "function": "Rat.mul",
+      "percent": 75.07
+    },
+    {
+      "function": "__gmpz_gcd",
+      "percent": 41.0
+    },
+    {
+      "function": "__gmpn_gcd_1",
+      "percent": 41.0
+    },
+    {
+      "function": "lean_nat_gcd",
+      "percent": 41.0
+    },
+    {
+      "function": "__gmpn_mod_1_fat",
+      "percent": 41.0
+    },
+    {
+      "function": "0x8000",
+      "percent": 34.63
+    },
+    {
+      "function": "lean_int_big_div_exact",
+      "percent": 24.38
+    }
+  ],
+  "top_self": [
+    {
+      "function": "__gmpn_mod_1_fat",
+      "percent": 41.0
+    },
+    {
+      "function": "__gmpn_copyi_x86_64",
+      "percent": 23.27
+    },
+    {
+      "function": "__gmpn_divexact_1_x86_64",
+      "percent": 22.71
+    },
+    {
+      "function": "__gmpn_mul_1_x86_64",
+      "percent": 11.91
+    },
+    {
+      "function": "__memmove_avx512_unaligned_erms",
+      "percent": 1.11
+    }
+  ],
+  "top_self_undecorated": [
+    {
+      "percent": 41.0,
+      "symbol": "__gmpn_mod_1_fat"
+    },
+    {
+      "percent": 23.27,
+      "symbol": "__gmpn_copyi_x86_64"
+    },
+    {
+      "percent": 22.71,
+      "symbol": "__gmpn_divexact_1_x86_64"
+    },
+    {
+      "percent": 11.91,
+      "symbol": "__gmpn_mul_1_x86_64"
+    },
+    {
+      "percent": 1.11,
+      "symbol": "__memmove_avx512_unaligned_erms"
+    }
+  ],
+  "unresolved_leaf_percent": 0.0
+}

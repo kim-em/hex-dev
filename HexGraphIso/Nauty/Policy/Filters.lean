@@ -17,11 +17,11 @@ public section
 
 namespace Hex.GraphIso.Nauty
 
-variable {n : Nat}
+variable {n : Nat} {κ : Type}
 
 /-- The shared prune tail requests a short filter only after admitting
 its implicit pair at a level different from the saved boundary. -/
-theorem pruneReturn_short {level target : Nat} {st : Search n}
+theorem pruneReturn_short {level target : Nat} {st : SearchState n κ}
     (h : (pruneReturn level st).1 = .unwind target true) : level ≠ st.noncheaplevel := by
   intro he
   unfold pruneReturn at h
@@ -29,7 +29,7 @@ theorem pruneReturn_short {level target : Nat} {st : Search n}
 
 /-- The implicit prune tail returns no deeper than the parent of its
 saved cheap boundary, including the signed-to-natural conversion. -/
-theorem pruneReturn_bound {level target : Nat} {short : Bool} {st : Search n}
+theorem pruneReturn_bound {level target : Nat} {short : Bool} {st : SearchState n κ}
     (h : (pruneReturn level st).1 = .unwind target short) :
     target ≤ st.noncheaplevel - 1 := by
   unfold pruneReturn pushAuto at h
@@ -41,7 +41,7 @@ theorem pruneReturn_bound {level target : Nat} {short : Bool} {st : Search n}
   all_goals omega
 
 /-- Both implicit-pair leaf actions use the same bounded return target. -/
-theorem leafExit_cheap_bound {level target : Nat} {short : Bool} {st : Search n} {leaf : Leaf}
+theorem leafExit_cheap_bound {level target : Nat} {short : Bool} {st : SearchState n κ} {leaf : Leaf}
     (ha : leaf = .bad ∨ ∃ sr, leaf = .better sr)
     (h : (leafExit leaf level st).1 = .unwind target short) :
     target ≤ st.noncheaplevel - 1 := by
@@ -55,7 +55,7 @@ theorem leafExit_cheap_bound {level target : Nat} {short : Bool} {st : Search n}
 
 /-- With both saved ancestors below the node, every leaf return leaves
 that node. The implicit return also respects the saved cheap boundary. -/
-theorem leafExit_bound {level target : Nat} {short : Bool} {st : Search n} {leaf : Leaf}
+theorem leafExit_bound {level target : Nat} {short : Bool} {st : SearchState n κ} {leaf : Leaf}
     (hf : st.gcaFirst < level) (hc : st.gcaCanon < level)
     (hn : st.noncheaplevel ≤ level)
     (h : (leafExit leaf level st).1 = .unwind target short) : target < level := by
@@ -74,7 +74,7 @@ theorem leafExit_bound {level target : Nat} {short : Bool} {st : Search n} {leaf
     all_goals first | exact ht ▸ hf | exact ht ▸ hc
 
 /-- A short code-2 return targets the saved canonical ancestor. -/
-theorem leafExit_canon_target {level target : Nat} {st : Search n}
+theorem leafExit_canon_target {level target : Nat} {st : SearchState n κ}
     (h : (leafExit .autoCanon level st).1 = .unwind target true) :
     target = (leafExit .autoCanon level st).2.gcaCanon := by
   rw [autoCanon_ancestor]
@@ -86,7 +86,7 @@ theorem leafExit_canon_target {level target : Nat} {st : Search n}
 
 /-- A short return from a bad or better leaf satisfies the implicit-pair
 admission test used by that very leaf action. -/
-theorem leafExit_cheap_short {level target : Nat} {st : Search n} {leaf : Leaf}
+theorem leafExit_cheap_short {level target : Nat} {st : SearchState n κ} {leaf : Leaf}
     (ha : leaf = .bad ∨ ∃ sr, leaf = .better sr)
     (h : (leafExit leaf level st).1 = .unwind target true) : level ≠ st.noncheaplevel := by
   rcases ha with rfl | ⟨sr, rfl⟩
@@ -99,7 +99,7 @@ theorem leafExit_cheap_short {level target : Nat} {st : Search n} {leaf : Leaf}
 
 /-- Each short-prune request exposes the pair admitted by the same leaf
 action. Only code 2 and the implicit prune tail can set this flag. -/
-theorem leafExit_short_pair {st : Search n} (hcap : 0 < st.wsCap)
+theorem leafExit_short_pair {st : SearchState n κ} (hcap : 0 < st.wsCap)
     {leaf : Leaf} {level target : Nat}
     (hexit : (leafExit leaf level st).1 = .unwind target true) :
     (leaf = .autoCanon ∧

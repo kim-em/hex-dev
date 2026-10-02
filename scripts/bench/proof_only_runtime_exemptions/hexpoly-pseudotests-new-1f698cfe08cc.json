@@ -1,0 +1,6 @@
+{
+  "path": "HexPoly/PseudoTests.lean",
+  "baseline_blob": null,
+  "current_blob": "1f698cfe08cc7d5ff3e277e66ecb9c93607bdb3c",
+  "reason": "Adds ordinary-kernel and compiled regression probes for shared pseudo-division and plain pseudo-gcd. This verification-only module is absent from the computational umbrella and is not called by the measured integer-factorization service."
+}

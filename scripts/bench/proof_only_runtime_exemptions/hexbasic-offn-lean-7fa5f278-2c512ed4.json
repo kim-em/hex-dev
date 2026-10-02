@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic/OfFn.lean",
+  "baseline_blob": "7fa5f2789534fe0333160fa3005a7d003840cc4d",
+  "current_blob": "2c512ed44a2de6ed7d96551d4ca8233115f02f3f",
+  "reason": "Updates only docstrings to record Lean v4.35.0-rc1 as the removal point for the downstream Array.ofFn', Vector.ofFn', Array.map', and Array.zipWith' shims. No declaration or executable code changes."
+}

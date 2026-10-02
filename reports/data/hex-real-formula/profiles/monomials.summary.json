@@ -1,0 +1,316 @@
+{
+  "allocation_share_percent": 0.92,
+  "classified_percent": 100.0,
+  "diagnostics": {
+    "bench_pid": 2003538,
+    "bench_thread_name": "hexrealformula_",
+    "bench_thread_tid": "2003549",
+    "calibration": {
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "boundary_residual_raw_max_ms": null,
+          "boundary_residual_trimmed_max_ms": null,
+          "hit_count": 0,
+          "regions_without_samples": 1,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "boundary_residual_raw_max_ms": 1.8051199913024902,
+          "boundary_residual_trimmed_max_ms": 0.51180100440979,
+          "hit_count": 325,
+          "regions_without_samples": 0,
+          "within_residual_limit": true
+        }
+      },
+      "configured_max_residual_ms": 5.0,
+      "effective_max_residual_ms": 5.0,
+      "raw_max_residual_ms": 1.8051199913024902,
+      "residual_ms": 0.51180100440979,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "sample_interval_ms": 1.001001,
+      "selected_mode": "relative-to-meta-start-ms",
+      "within_residual_limit": true
+    },
+    "calibration_max_residual_ms": 5.0,
+    "calibration_residual_ms": 0.51180100440979,
+    "confidence": "passed",
+    "expected_samples_bench_thread": 517.5,
+    "low_confidence_reasons": [],
+    "minimum_retained_samples": 100,
+    "off_bench_thread_samples_in_window": 0,
+    "regions_total": 1,
+    "rejected_samples_bench_thread": 5,
+    "retained_samples_bench_thread": 325,
+    "samply_interval_ms": 1.001001,
+    "samply_meta_start_time_ms": 1789901583116.7039,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "schema": 2,
+    "sensitivity": {
+      "cases": {
+        "minus": {
+          "retained_samples": 323,
+          "shift_ms": -5.0,
+          "top_leaf_functions": [
+            {
+              "function": 25,
+              "name": "0xba8aa0",
+              "samples": 35
+            },
+            {
+              "function": 35,
+              "name": "0x4b09adf",
+              "samples": 27
+            },
+            {
+              "function": 38,
+              "name": "0xba8a90",
+              "samples": 24
+            }
+          ]
+        },
+        "nominal": {
+          "retained_samples": 325,
+          "shift_ms": 0.0,
+          "top_leaf_functions": [
+            {
+              "function": 25,
+              "name": "0xba8aa0",
+              "samples": 35
+            },
+            {
+              "function": 35,
+              "name": "0x4b09adf",
+              "samples": 27
+            },
+            {
+              "function": 38,
+              "name": "0xba8a90",
+              "samples": 24
+            }
+          ]
+        },
+        "plus": {
+          "retained_samples": 321,
+          "shift_ms": 5.0,
+          "top_leaf_functions": [
+            {
+              "function": 25,
+              "name": "0xba8aa0",
+              "samples": 34
+            },
+            {
+              "function": 35,
+              "name": "0x4b09adf",
+              "samples": 27
+            },
+            {
+              "function": 38,
+              "name": "0xba8a90",
+              "samples": 24
+            }
+          ]
+        }
+      },
+      "comparisons": {
+        "minus": {
+          "comparison_samples": 323,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.006191950464396285,
+          "exchanged_samples": 2,
+          "failure_reasons": [],
+          "leaf_function_support_size": 82,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.033642297726826316,
+          "total_variation_distance": 0.006153846153846145,
+          "verdict": "passed"
+        },
+        "plus": {
+          "comparison_samples": 321,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.018691588785046728,
+          "exchanged_samples": 6,
+          "failure_reasons": [],
+          "leaf_function_support_size": 83,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.058989659207699066,
+          "total_variation_distance": 0.013275820752456244,
+          "verdict": "passed"
+        }
+      },
+      "configured_max_total_variation_distance": 0.1,
+      "leaf_function_distributions_stable": true,
+      "maximum_sampling_noise_allowance": 0.5,
+      "minimum_comparison_samples": 100,
+      "reported_top_function_count": 3,
+      "sampling_noise_coefficient": 0.6,
+      "shift_ms": 5.0,
+      "verdict": "passed"
+    },
+    "sidecar_mono_anchor_ns": 872693515988703,
+    "spawn_anchor_mono_ns": 872693272515056,
+    "spawn_anchor_wall_ns": 1789901583070850803,
+    "stage": "complete",
+    "total_timed_ms": 518.016741
+  },
+  "inclusive_hex": [
+    {
+      "function": "Hex.MvPoly.Kernel.insert",
+      "percent": 98.15
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.expCmp",
+      "percent": 40.92
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.normalize",
+      "percent": 1.85
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.denote",
+      "percent": 1.85
+    },
+    {
+      "function": "Hex.Mono.lex",
+      "percent": 1.54
+    }
+  ],
+  "leaf_categories": {
+    "allocation": 0.92,
+    "lean-own-code": 78.77,
+    "lean-runtime": 20.31
+  },
+  "profile": "/tmp/rf-perf-final-monomials/filtered.json.gz",
+  "samples": 325,
+  "symbols": "/tmp/rf-perf-final-monomials/symbols.json",
+  "top_inclusive": [
+    {
+      "function": "Hex.MvPoly.Kernel.insert",
+      "percent": 98.15
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.expCmp",
+      "percent": 40.92
+    },
+    {
+      "function": "Nat.blt",
+      "percent": 20.0
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.normalize",
+      "percent": 1.85
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.denote",
+      "percent": 1.85
+    },
+    {
+      "function": "lean_apply_1",
+      "percent": 1.85
+    },
+    {
+      "function": "Std.DTreeMap.Internal.Impl.foldlM",
+      "percent": 1.85
+    },
+    {
+      "function": "lean_apply_3",
+      "percent": 1.85
+    },
+    {
+      "function": "lean_apply_4",
+      "percent": 1.85
+    },
+    {
+      "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+      "percent": 1.85
+    },
+    {
+      "function": "lean_apply_2",
+      "percent": 1.54
+    },
+    {
+      "function": "Hex.Mono.lex",
+      "percent": 1.54
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 0.62
+    },
+    {
+      "function": "mi_malloc_small",
+      "percent": 0.62
+    },
+    {
+      "function": "mi_free",
+      "percent": 0.31
+    },
+    {
+      "function": "lean_array_to_list_impl",
+      "percent": 0.31
+    }
+  ],
+  "top_self": [
+    {
+      "function": "Hex.MvPoly.Kernel.insert",
+      "percent": 57.23
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.expCmp",
+      "percent": 20.92
+    },
+    {
+      "function": "Nat.blt",
+      "percent": 20.0
+    },
+    {
+      "function": "Hex.Mono.lex",
+      "percent": 0.62
+    },
+    {
+      "function": "mi_malloc_small",
+      "percent": 0.62
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 0.31
+    },
+    {
+      "function": "mi_free",
+      "percent": 0.31
+    }
+  ],
+  "top_self_undecorated": [
+    {
+      "percent": 57.23,
+      "symbol": "Hex.MvPoly.Kernel.insert_.at_.00Hex.MvPoly.Kernel.normalize_.at_.00Hex.RealFormula.Kernel.Body.decode.spec_1.spec_1"
+    },
+    {
+      "percent": 20.92,
+      "symbol": "Hex.MvPoly.Kernel.expCmp"
+    },
+    {
+      "percent": 20.0,
+      "symbol": "Nat.blt"
+    },
+    {
+      "percent": 0.62,
+      "symbol": "Hex.Mono.lex_.boxed"
+    },
+    {
+      "percent": 0.62,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 0.31,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 0.31,
+      "symbol": "mi_free"
+    }
+  ],
+  "unresolved_leaf_percent": 0.0
+}

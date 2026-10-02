@@ -1,12 +1,5 @@
 # hex-resultant-mathlib (depends on hex-resultant + hex-poly-mathlib + Mathlib)
 
-## Correspondence-only classification
-
-This library is a `correspondence-only-layer`.
-
-Computational conformance owner: `HexResultant`
-Computational performance owner: `HexResultant`
-
 Mathlib companion for `hex-resultant`. It proves both the chain-level facts used
 for early number-field soundness and the full agreement of the executable
 subresultant algorithm with `Polynomial.resultant`.
@@ -327,17 +320,6 @@ HexResultantMathlib/
 
 The library is verified by building it. Executable conformance remains in
 `hex-resultant`.
-
-## External comparators
-
-No external comparator is required.
-
-**Justification:** `correspondence-only-layer` per
-`SPEC/benchmarking.md §"Comparator naming"`. The library introduces no
-resultant algorithm; it transports and characterises the executable
-subresultant chain implemented elsewhere. The computational performance
-owner is hex-resultant, where the chain, resultant, and discriminant
-bench targets and the FLINT comparator are measured.
 
 ## References
 

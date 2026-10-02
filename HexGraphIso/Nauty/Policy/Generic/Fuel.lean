@@ -56,8 +56,8 @@ theorem fuel_sweep_reach {G : Colored n k} {view : σ → Search n}
   fun first level numcells tc tv1 cursor cell index st hin =>
     (h first level numcells tc tv1 cursor cell index st hin).1
 
-variable {G : Colored n k} {ctx : Ctx n} {inf tcLevel : Nat} {view : σ → Search n}
-  [Policy σ n]
+variable {γ : Type} [Policy σ n (γ := γ)]
+variable {G : Colored n k} {ctx : γ} {inf tcLevel : Nat} {view : σ → Search n}
 
 /-- Completing a child sweep cannot create exhaustion. -/
 private theorem finish_safe {next : SweepFn σ n} {first : Bool}

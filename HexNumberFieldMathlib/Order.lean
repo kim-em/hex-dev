@@ -22,10 +22,10 @@ private theorem compare_sub (x y : ℝ) : compare 0 (y - x) = compare x y := by
   · rw [compare_gt_iff_gt.mpr (sub_neg.mpr h), compare_gt_iff_gt.mpr h]
 
 /-- Partial comparison detects exactly equal imaginary parts and compares real parts. -/
-theorem partialCompare_eq (a b : AlgebraicNumber) :
-    partialCompare a b = if a.toComplex.im = b.toComplex.im then
+theorem partialCompareExact_eq (a b : AlgebraicNumber) :
+    partialCompareExact a b = if a.toComplex.im = b.toComplex.im then
       some (compare a.toComplex.re b.toComplex.re) else none := by
-  unfold partialCompare
+  unfold partialCompareExact
   split
   · rename_i hab
     have h := (beq_iff a b).mp hab
@@ -60,19 +60,84 @@ theorem partialCompare_eq (a b : AlgebraicNumber) :
             simp [sub_toComplex, hi]
           simp [hi]
 
+/-- Successful imaginary-interval probes reject equality. -/
+theorem apartProbe_sound {p q : ZPoly} (a : RefinedIsolation p) (b : RefinedIsolation q)
+    (v : Unit) (h : apartProbe a.1.square b.1.square = some v) :
+    a.root.im ≠ b.root.im := by
+  unfold apartProbe at h
+  split at h
+  · exact Interval.imagApart_sound a b (by assumption)
+  · contradiction
+
+/-- The bounded partial comparator retains its exact semantics. -/
+theorem partialCompare_eq (a b : AlgebraicNumber) :
+    partialCompare a b = if a.toComplex.im = b.toComplex.im then
+      some (compare a.toComplex.re b.toComplex.re) else none := by
+  unfold partialCompare
+  split
+  · exact partialCompareExact_eq a b
+  · split
+    · rename_i v hv
+      have hn := Interval.search_sound apartProbe (fun z w _ => z.im ≠ w.im)
+        (fun a b v h => apartProbe_sound a b v h) _ a.rep b.rep hv
+      change a.toComplex.im ≠ b.toComplex.im at hn
+      simp [hn]
+    · exact partialCompareExact_eq a b
+
+/-- Predicate extraction from the reference comparison. -/
+theorem ordered_exact (strict : Bool) (a b : AlgebraicNumber) :
+    ordered strict (partialCompareExact a b) = true ↔
+      (if strict then a.toComplex.re < b.toComplex.re else a.toComplex.re ≤ b.toComplex.re) ∧
+        a.toComplex.im = b.toComplex.im := by
+  cases strict <;> by_cases hi : a.toComplex.im = b.toComplex.im <;>
+    simp [ordered, partialCompareExact_eq, hi, compare_gt_iff_gt, compare_lt_iff_lt, not_lt]
+
+/-- Rejection probes never reject a true complex comparison. -/
+theorem rejectProbe_sound (strict : Bool) {p q : ZPoly}
+    (a : RefinedIsolation p) (b : RefinedIsolation q) (v : Unit)
+    (h : rejectProbe strict a.1.square b.1.square = some v) :
+    ¬ ((if strict then a.root.re < b.root.re else a.root.re ≤ b.root.re) ∧
+      a.root.im = b.root.im) := by
+  cases strict <;> simp only [rejectProbe, Bool.false_eq_true, ↓reduceIte] at h ⊢
+  all_goals
+    split at h
+    · rename_i hc
+      intro ⟨hr, hi⟩
+      simp only [Bool.or_eq_true] at hc
+      rcases hc with him | hre
+      · exact Interval.imagApart_sound a b him hi
+      · first
+        | exact Interval.notLe_sound a b hre hr
+        | exact Interval.notLt_sound a b hre hr
+    · contradiction
+
+/-- Predicate-specific interval shortcuts preserve complex order. -/
+theorem orderBool_iff (strict : Bool) (a b : AlgebraicNumber) :
+    orderBool strict a b = true ↔
+      (if strict then a.toComplex.re < b.toComplex.re else a.toComplex.re ≤ b.toComplex.re) ∧
+        a.toComplex.im = b.toComplex.im := by
+  unfold orderBool
+  split
+  · exact ordered_exact strict a b
+  · split
+    · rename_i v hv
+      have hn := Interval.search_sound (rejectProbe strict)
+        (fun z w _ => ¬ ((if strict then z.re < w.re else z.re ≤ w.re) ∧ z.im = w.im))
+        (fun a b v h => rejectProbe_sound strict a b v h) _ a.rep b.rep hv
+      change ¬ ((if strict then a.toComplex.re < b.toComplex.re else a.toComplex.re ≤ b.toComplex.re) ∧
+        a.toComplex.im = b.toComplex.im) at hn
+      simp [hn]
+    · exact ordered_exact strict a b
+
 /-- The executable non-strict comparison has Mathlib's complex semantics. -/
 theorem le_iff (a b : AlgebraicNumber) :
     a ≤ b ↔ a.toComplex.re ≤ b.toComplex.re ∧ a.toComplex.im = b.toComplex.im := by
-  change (partialCompare a b).any (fun o => o != .gt) = true ↔ _
-  rw [partialCompare_eq]
-  split <;> simp_all [compare_gt_iff_gt, not_lt]
+  exact orderBool_iff false a b
 
 /-- The executable strict comparison has Mathlib's complex semantics. -/
 theorem lt_iff (a b : AlgebraicNumber) :
     a < b ↔ a.toComplex.re < b.toComplex.re ∧ a.toComplex.im = b.toComplex.im := by
-  change partialCompare a b = some .lt ↔ _
-  rw [partialCompare_eq]
-  split <;> simp_all [compare_lt_iff_lt]
+  exact orderBool_iff true a b
 
 instance : PartialOrder AlgebraicNumber where
   le := (· ≤ ·)

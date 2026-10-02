@@ -65,8 +65,8 @@ example : True := by
   trivial
 ```
 
-`char_poly A` computes with compiled code and emits a fine-grained certificate
-that the kernel rechecks.  Bare `char_poly` closes a direct characteristic-
+`char_poly A` computes with compiled code and emits a packed integer-list
+certificate that the kernel checks once.  Bare `char_poly` closes a direct characteristic-
 polynomial equality in either orientation, while the tactic form with an
 argument introduces a `poly` let and `charPoly_eq` hypothesis.  The input,
 dimension, and any polynomial in a direct equality must be closed and
@@ -81,7 +81,79 @@ determinant correspondence and Cayley--Hamilton live in
 `hex-char-poly-mathlib`; the computational package deliberately has no
 determinant dependency.
 
-## Verification and performance
+## Kernel certificate
+
+`HexCharPoly/Kernel.lean` owns `CharPolyKernel.Witness`,
+`checkCharPolyList`, the producer `produce`, and the core soundness theorem
+`charPoly_eq_of_checkList`. The witness carries each step's Toeplitz column,
+intermediate moment vectors, descending coefficients, full convolution
+products as lists of integers. `produce` obtains these values from the existing
+Berkowitz computation; the elaborator rechecks the result with compiled code
+before emitting a proof. The library precompiles its modules so the producer
+runs as native code when the frontend imports it.
+
+For a block `B` and moment vector `w`, pack each column of `B` in balanced
+base `2^K`. The identity `B * w = next` becomes one dot product of `w` with
+those packed columns, compared with the packed output vector. Each block's
+packed columns are checked once before its moment loop. For the Toeplitz
+step, the witness supplies the full convolution of the previous coefficient
+list with the new column. One packed integer multiplication checks this full
+product, and its first `k + 2` entries are checked against the next coefficient
+list. The unused high coefficients are also bounded and verified; this avoids
+an unchecked truncation or carry assumption. Scalar moments still use list dot
+products. Packing uses structural recursion and `Int.shiftLeft`, whose equality
+to multiplication by `2^K` is proved before applying digit injectivity.
+
+The witness supplies an absolute bound `b` and width `K`. The checker verifies
+all packed operand and output bounds and `2 * ((n + 1) * b^2 + b) < 2^K`.
+`Hex.Internal.packDigits_inj` then recovers each output entry from the packed
+identity: a sum of at most `n + 1` products has absolute value at most
+`(n + 1) * b^2`. Shapes, coefficient lists, and the complete trailing-block
+recursion are checked independently; no unproved property of the producer is
+needed for soundness.
+
+The arithmetic checker uses exposed structural recursion over lists and direct
+integer arithmetic. Matrix interpretation and coefficient reversal occur at
+the soundness boundary. The frontend adds the Boolean proof with synchronous
+`mkAuxLemma`, without an elaborator-side evaluation of that proof, and uses the
+resulting constant thereafter. Missing evaluation capabilities are `declined`;
+a producer recheck or kernel rejection is `failure`. A wrong requested
+polynomial is reported before certificate proofs are built.
+
+## Supported coefficient carriers
+
+`charPoly` is division-free and directly instantiates at every
+`[Lean.Grind.CommRing R] [DecidableEq R]`. The generic definition remains the
+only public entry point; support is pinned by the following conformance and
+benchmark matrix rather than by carrier-specific aliases:
+
+| carrier `R` | instance provider imported by the integration module | required fixture family | exact oracle |
+|---|---|---|---|
+| `DensePoly Int` | `HexPoly.Instances` | univariate integer-polynomial matrices with nonconstant trace, determinant and intermediate coefficients | SymPy over `ZZ[x,t]` |
+| `DensePoly Rat` | `HexPoly.Instances` | the same shapes with nonintegral coefficients | SymPy over `QQ[x,t]` |
+| `DensePoly (ZMod64 p)` | `HexPoly.Instances` and `HexModArith`, with `[ZMod64.Bounds p]` | the same shapes at a fixed prime below `2^31`, including characteristic reduction | SymPy over `GF(p, symmetric=False)[x,t]` |
+| `MvPoly n Int cmp` | `HexMvPoly.Ring` | sparse two- and three-variable integer-polynomial matrices with mixed monomials | SymPy over `ZZ[x0, ..., t]` |
+| `MvPoly n Rat cmp` | `HexMvPoly.Ring` | the same shapes with rational coefficients | SymPy over `QQ[x0, ..., t]` |
+| `RationalFn Rat` | `HexRationalFn.Field` | matrices whose entries and output coefficients require nonconstant reduced denominators | SymPy over `QQ(x)[t]` |
+
+Here `t` is a fresh characteristic-polynomial indeterminate, distinct from all
+entry variables. For `MvPoly`, the ring instance additionally requires
+`[BEq R]` and `[LawfulBEq R]`. Conformance fixes `Hex.Mono.grevlex`; its
+existing `Std.TransCmp` and `Std.LawfulEqCmp` instances determine the term
+order.
+
+Direct typechecking and guards live in the existing build-only
+`conformance/HexCharPoly/Conformance.lean`; a separate
+`EmitCarrierFixtures.lean` is an explicit emitter root; and carrier benchmarks
+are registered by the existing `bench/HexCharPoly/Bench.lean` executable root.
+Those modules may import `HexMvPoly`, `HexModArith`, and `HexRationalFn`
+alongside `HexCharPoly`; they do not change the published library's
+`deps: [HexMatrix, HexPoly]`. A reusable source declaration involving one of
+these carriers must instead live above both libraries. `scripts/check_dag.py`
+enforces the production graph from `libraries.yml`; the integration paths have
+no production owner, though its sealed-import check still scans them.
+
+## Conformance
 
 Integer conformance fixtures cover dimensions zero and one, zero and diagonal
 matrices, nilpotent and repeated-eigenvalue Jordan blocks, both triangular
@@ -92,6 +164,33 @@ reversing either list.  Lean guards check Cayley--Hamilton on every fixture and
 retain the explicit counterexample showing that a monic degree-`n` annihilator
 need not be the characteristic polynomial.
 
+`hexcharpoly_emit_carrier_fixtures` writes the six added families to the
+separate `conformance-fixtures/HexCharPoly/carriers.jsonl`: ascending arrays for
+nested `DensePoly`, ordered exponent-vector terms for `MvPoly`, and reduced
+numerator/monic-denominator pairs for `RationalFn`. Finite-field residues are
+normalized to `[0, p)`. Each family includes `n = 0` and `n = 1`, diagonal and
+triangular cases, a singular dense case, and a dense case with genuinely
+nonconstant output coefficients. The existing integer emitter and
+`matrix_flint.py` stream stay unchanged.
+
+The new `scripts/oracle/matrix_carriers.py` tuple does **not** call SymPy's
+characteristic-polynomial routine. It constructs a `DomainMatrix` for `tI - A`
+over the exact polynomial or fraction-field domain and calls
+`DomainMatrix.det()` (Bareiss), then compares every coefficient in canonical
+ascending order. Finite fields use `GF(p, symmetric=False)`. This is an
+independent route from Hex's Berkowitz recursion; no point sampling or
+expression simplifier decides equality. SymPy is already installed and
+preflighted by the existing single oracle job, so the extra
+emitter/fixture/oracle tuple introduces no dependency, workflow, job, or
+matrix.
+
+This is an independent division-free arm: its emit target and oracle records do
+not import or wait for the `bareissWith` carrier integration. Exact-division
+availability can therefore neither enable nor suppress characteristic-
+polynomial coverage.
+
+## Performance
+
 Benchmarks cover dense random dimension and bit-width ladders, small-entry
 tridiagonal matrices, and self-checking companion/Jordan families.  Random
 runs observe the peak bit size among Toeplitz columns and intermediate
@@ -99,3 +198,35 @@ coefficient vectors.  `lake exe hexcharpoly_bench growth` emits a JSONL row for
 every dimension and bit-width rung with elapsed nanoseconds and the observed
 peak side by side.  FLINT's selected characteristic-polynomial routine and
 PARI's flag-3 Berkowitz routine are informational external comparators.
+
+Each added carrier also has a required Mathlib-free lean-bench family. Dense
+univariate carriers sweep matrix dimension and entry degree; multivariate
+carriers sweep dimension and term count at fixed arity and total degree;
+rational functions sweep dimension and numerator/denominator degree. Every run
+observes the maximum canonical coefficient size or term count among the
+Toeplitz columns and coefficient vectors, using the carrier's structural size
+measure rather than an evaluation.
+
+| target family | external comparator | class |
+|---|---|---|
+| `runCharDenseInt`, `runCharDenseRat`, `runCharDenseMod` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain `tI-A` | informational |
+| `runCharMvInt`, `runCharMvRat` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain `tI-A` | informational |
+| `runCharRatFn` | SymPy `DomainMatrix.det()` (Bareiss) on the identical fraction-field `tI-A` | informational |
+
+These external comparisons are informational, never Phase-4 gates. They use the
+carrier driver's persistent-subprocess mode and are scheduled-only. Because the
+body is `IO`, each point of a dimension/degree or dimension/term-count sweep is
+a separate `setup_fixed_benchmark`; the SymPy `DomainMatrix.det()` method is
+pinned to Bareiss. The implementation PR records trivial-request overhead and
+overhead-adjusted ratios in
+`reports/hex-char-poly-performance.md §Comparator ratios`, updates
+`libraries.yml phase4.comparators` and `input_families`, and extends the
+existing single bench script. All result hashes cover the full canonical
+polynomial.
+
+For core `Hex.Matrix` inputs, literal identification retains one kernel check
+of `A.data.toList` against the row-list reconstruction. That boundary still
+reduces `Hex.Matrix`, `Vector` and finite indices; the arithmetic checker does
+not. The measured ladder covers the Mathlib frontend's definitional literal
+route. Core-input boundary optimization and measurements remain outside this
+change's scope.

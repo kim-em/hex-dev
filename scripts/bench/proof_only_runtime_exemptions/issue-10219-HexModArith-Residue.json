@@ -1,0 +1,6 @@
+{
+  "path": "HexModArith/Residue.lean",
+  "baseline_blob": "2e8dc7a9a8cd5682bb51842b51275eead3ec0055",
+  "current_blob": "cb1b75eb3131f20a17483aaa29b0fd78403ec315",
+  "reason": "Adds the checked inv? wrapper and a success theorem. Existing factorization callers still use the unchanged inv and ring operations; none calls inv?."
+}

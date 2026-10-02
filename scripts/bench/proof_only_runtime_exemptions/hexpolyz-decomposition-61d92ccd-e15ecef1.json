@@ -1,0 +1,6 @@
+{
+  "path": "HexPolyZ/Decomposition.lean",
+  "baseline_blob": "61d92ccd0ddb5055eeb82a9f81d033249a1bda92",
+  "current_blob": "e15ecef15c1ee71a3db1228bf52a84dd5d1c11e4",
+  "reason": "Renames the repeated-part theorem and its private rational-constant helper, updates their proof references, and adjusts a proof to the exposed toRatPoly specification. All edits are theorem names, proof terms, or documentation; the executable decomposition definitions and their compiler substitutions are unchanged."
+}

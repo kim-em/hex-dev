@@ -1,0 +1,23 @@
+{
+  "budget": {
+    "definition": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768 },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+    "maxAttempts": 1024,
+    "maxBits": 521,
+    "maxFactors": 32
+  },
+  "source_sha256": {
+    "HexPrimality/Construction.lean": "89734514c01806cfa4ce7aca85f5dcea560e8826bee56c40d10311a029780ee4",
+    "HexPrimality/Search.lean": "c05fe13d3714febba2c45d2a1d5b4f7c14ea6205133065f0c3ad1cdba610c293",
+    "bench/HexPrimality/PMinusOneMeasure.lean": "b417bf60aba1521bab22f3b1562f7c6e19cfe9ed6e91d97ef53647fd93b725fa"
+  },
+  "introspection": {
+    "command": [
+      ".lake/build/bin/hexprimality_bench",
+      "construction-budget"
+    ],
+    "source_commit": "cb05815fd729f8e881c609a45404f215cf404b41",
+    "executable_sha256": "f88bd3c0b13d2547cfe8fc3a2a93f4b2653776bbadbd187f5e113e59b23fbc0e",
+    "driver_sha256": "877f291461448d3670013895b5e7ce77bbec7ace76e211fce2e4b1f99653e7cf"
+  },
+  "interpretation": "Shared production budget; each policy arm changes only factor.pMinusOneStage2."
+}

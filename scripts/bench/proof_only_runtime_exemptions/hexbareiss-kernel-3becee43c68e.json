@@ -1,0 +1,6 @@
+{
+ "path": "HexBareiss/Kernel.lean",
+ "baseline_blob": null,
+ "current_blob": "3becee43c68ecdbcf4da16659dd6052014275d0d",
+ "reason": "Adds the kernel determinant certificate (DetWitness, its checkers and the producer detWitness) as a new module of HexBareiss; nothing on the factorization path calls it, and no measured operation or branch of the factorization sweep changes."
+}

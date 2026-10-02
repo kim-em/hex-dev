@@ -1,0 +1,16 @@
+{
+  "command": [
+    "cc",
+    "-O2",
+    "-shared",
+    "-fPIC",
+    "-fsanitize=undefined",
+    "-fno-sanitize-recover=all",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/experiments/Determinant/word_loop.c",
+    "-o",
+    "reports/bench-results/determinant-redesign/c-verification-runtime/word_loop.so"
+  ],
+  "exit_status": 0,
+  "stdout": "",
+  "stderr": ""
+}

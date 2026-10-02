@@ -548,7 +548,7 @@ private theorem squareFreeContributionReachable_of_monic
       have hlead : DensePoly.leadingCoeff f = f.coeff 0 := by
         have hlead_last :
             DensePoly.leadingCoeff f = f.coeff (f.size - 1) := by
-          simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
+          exact DensePoly.leadingCoeff_eq_coeff_last f hpos
         simpa [hsize] using hlead_last
       change f.coeff 0 = (DensePoly.C (1 : ZMod64 p)).coeff 0
       rw [← hlead, hmonic]

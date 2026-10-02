@@ -11,7 +11,7 @@ Piperno, released under the Apache 2.0 license.
 module
 
 public import HexGraphIso.Nauty.Search.Generic
-public import HexGraphIso.Limits
+public import HexGraphIso.Iso
 
 public section
 
@@ -69,7 +69,7 @@ nodes visited, the orbits, the generators reported, the leaves that
 were neither an automorphism nor an improvement, the greatest depth
 reached, the total size of the target cells chosen, and the number of
 times the best-so-far leaf was replaced. -/
-structure Search (n : Nat) where
+structure SearchState (n : Nat) (κ : Type) where
   lab : Array Nat
   ptn : Array Nat
   active : VSet n
@@ -87,7 +87,7 @@ structure Search (n : Nat) where
   firsttc : Array Int
   firstlab : Array Nat
   canonlab : Array Nat
-  canong : Array (VSet n)
+  canong : κ
   samerows : Nat := 0
   compCanon : Int := 0
   eqlevFirst : Nat := 0
@@ -106,6 +106,8 @@ structure Search (n : Nat) where
   numgenerators : Nat := 0
   numbadleaves : Nat := 0
   maxlevel : Nat := 1
+  /-- Exact stabilizer-index product, accumulated by policies that report it. -/
+  order : Nat := 1
   /-- No nauty counterpart: every accepted automorphism kept in full,
   in discovery order, for the certificate producer, alongside the
   bounded `(fix, mcr)` pairs of `autos`. `run` discards it. -/
@@ -114,10 +116,14 @@ structure Search (n : Nat) where
   workperm : Array Nat
 deriving Inhabited
 
-variable {n : Nat}
+/-- Dense nauty's specialization of the shared search state. -/
+abbrev Search (n : Nat) := SearchState n (Array (VSet n))
+
+
+variable {n : Nat} {κ : Type}
 
 /-- Record an automorphism pair in the bounded workspace. -/
-def pushAuto (st : Search n) (pair : VSet n × VSet n) : Search n :=
+def pushAuto (st : SearchState n κ) (pair : VSet n × VSet n) : SearchState n κ :=
   if st.autos.size == st.wsCap then
     { st with autos := st.autos.set! (st.wsCap - 1) pair }
   else
@@ -132,14 +138,14 @@ def pushAuto (st : Search n) (pair : VSet n × VSet n) : Search n :=
   return (rs.numcells, rs.longcode, st)
 
 /-- Record the refinement code on the first path. -/
-@[inline] def recordFirst (level refcode : Nat) (st : Search n) : Search n :=
+@[inline] def recordFirst (level refcode : Nat) (st : SearchState n κ) : SearchState n κ :=
   { st with firstcode := st.firstcode.set! level refcode }
 
 /-- The comparison bookkeeping of nauty's `othernode` between the
 refinement and the target-cell choice: the first-path level-code
 comparison and the best-so-far level-code comparison. -/
-def compareCodes (level : Nat) (code : Nat) (st : Search n) :
-    Search n := Id.run do
+def compareCodes (level : Nat) (code : Nat) (st : SearchState n κ) :
+    SearchState n κ := Id.run do
   let mut st := st
   if st.eqlevFirst == level - 1 ∧ code == st.firstcode[level]! then
     st := { st with eqlevFirst := level }
@@ -179,7 +185,7 @@ canonically smaller off-path node uses the first path's target hint. -/
 
 /-- nauty's `firstterminal`: install the first leaf as both the first-path
 data and the initial best-so-far leaf. -/
-def firstterminal (level : Nat) (st : Search n) : Search n := Id.run do
+def firstterminal (level : Nat) (st : SearchState n κ) : SearchState n κ := Id.run do
   let mut st := st
   st := { st with
     maxlevel := level
@@ -201,7 +207,7 @@ def firstterminal (level : Nat) (st : Search n) : Search n := Id.run do
 /-- Scatter the current labelling through a reference labelling. Detach
 the scratch field while filling it so each element update consumes just
 the array, rather than reconstructing the search record. -/
-@[inline] def scatter (refLab : Array Nat) (st : Search n) : Search n := Id.run do
+@[inline] def scatter (refLab : Array Nat) (st : SearchState n κ) : SearchState n κ := Id.run do
   let mut workperm := st.workperm
   let st := { st with workperm := #[] }
   for i in [0 : n] do
@@ -242,7 +248,7 @@ def classify (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
 
 /-- Record a permutation and its workspace pair, then join its orbits.
 The caller decides whether it counts as a new generator. -/
-@[inline] def admit (st : Search n) : Search n := Id.run do
+@[inline] def admit (st : SearchState n κ) : SearchState n κ := Id.run do
   let mut st := st
   st := { st with genTrace := st.genTrace.push st.workperm }
   st := pushAuto st (fmperm st.workperm n)
@@ -250,7 +256,7 @@ The caller decides whether it counts as a new generator. -/
   return { st with orbits, numorbits }
 
 /-- Install a better leaf, retaining its already compared row prefix. -/
-@[inline] def install (level sr : Nat) (st : Search n) : Search n :=
+@[inline] def install (level sr : Nat) (st : SearchState n κ) : SearchState n κ :=
   { st with
     canupdates := st.canupdates + 1
     canonlab := st.lab
@@ -261,7 +267,7 @@ The caller decides whether it counts as a new generator. -/
 
 /-- Return past a bad or newly installed leaf. The all-same level limits
 the return, and the noncheap level can extend it. -/
-def pruneReturn (level : Nat) (st : Search n) : Exit × Search n := Id.run do
+def pruneReturn (level : Nat) (st : SearchState n κ) : Exit × SearchState n κ := Id.run do
   let mut st := st
   let ispruneok := level != st.noncheaplevel
   if ispruneok then
@@ -278,7 +284,7 @@ def pruneReturn (level : Nat) (st : Search n) : Exit × Search n := Id.run do
 
 /-- Act on the five classifications. Code 2 without an orbit change
 still records its permutation and requests a short prune when needed. -/
-def leafExit (leaf : Leaf) (level : Nat) (st : Search n) : Exit × Search n := Id.run do
+def leafExit (leaf : Leaf) (level : Nat) (st : SearchState n κ) : Exit × SearchState n κ := Id.run do
   let mut st := st
   if leaf != .internal && level > st.maxlevel then
     st := { st with maxlevel := level }
@@ -301,31 +307,31 @@ def leafExit (leaf : Leaf) (level : Nat) (st : Search n) : Exit × Search n := I
   | .bad => return pruneReturn level { st with numbadleaves := st.numbadleaves + 1 }
 
 /-- Update the deepest noncheap level before descending. -/
-@[inline] def cheapCheck (first : Bool) (level : Nat) (st : Search n) : Search n :=
+@[inline] def cheapCheck (first : Bool) (level : Nat) (st : SearchState n κ) : SearchState n κ :=
   if (!first || st.noncheaplevel >= level) && !cheapautom st.ptn level n then
     { st with noncheaplevel := level + 1 }
   else st
 
 /-- Individualize a child vertex, recording every first-path coset index. -/
-@[inline] def child (first : Bool) (level tc tv : Nat) (st : Search n) : Search n :=
+@[inline] def child (first : Bool) (level tc tv : Nat) (st : SearchState n κ) : SearchState n κ :=
   let (lab, ptn, active) := breakout n st.lab st.ptn (level + 1) tc tv
   let st := { st with lab, ptn, active, fixedpts := st.fixedpts.insert tv }
   if first then { st with cosetindex := tv } else st
 
 /-- After the leftmost child, record its greatest common ancestor and
 the vertex fixed by the generators subsequently reported there. -/
-@[inline] def afterChildFirst (level tv1 : Nat) (st : Search n) : Search n :=
+@[inline] def afterChildFirst (level tv1 : Nat) (st : SearchState n κ) : SearchState n κ :=
   { st with gcaFirst := level, stabvertex := tv1 }
 
 /-- Decrement the all-same level only after a complete first-path sweep. -/
 @[inline] def afterSweep (first : Bool) (level tcellsize index : Nat)
-    (st : Search n) : Search n :=
+    (st : SearchState n κ) : SearchState n κ :=
   if first && tcellsize == index && st.allsamelevel == level + 1 then
     { st with allsamelevel := st.allsamelevel - 1 }
   else st
 
 /-- Reopen the partition below the receiving level, as in nauty’s `recover`. -/
-@[inline] def recoverPtn (inf level : Nat) (st : Search n) : Search n := Id.run do
+@[inline] def recoverPtn (inf level : Nat) (st : SearchState n κ) : SearchState n κ := Id.run do
   let mut ptn := st.ptn
   for i in [0 : n] do
     if ptn[i]! > level then
@@ -334,7 +340,7 @@ the vertex fixed by the generators subsequently reported there. -/
 
 /-- Clamp the four level counters in nauty’s order. Equality in the last clamp resets the
 comparison with the canonical code. -/
-@[inline] def recoverLevels (level : Nat) (st : Search n) : Search n := Id.run do
+@[inline] def recoverLevels (level : Nat) (st : SearchState n κ) : SearchState n κ := Id.run do
   let mut st := st
   if level < st.noncheaplevel then
     st := { st with noncheaplevel := level + 1 }
@@ -357,14 +363,19 @@ def longprune (tcell fixedpts : VSet n)
     tcell
 
 /-- Intersect with the most recently written workspace pair, as in nauty’s `shortprune`. -/
-@[inline] def shortprune (tcell : VSet n) (st : Search n) : VSet n :=
+@[inline] def shortprune (tcell : VSet n) (st : SearchState n κ) : VSet n :=
   match st.autos.back? with
   | some (_, mcr) => tcell.inter mcr
   | none => tcell
 
 /-- Restore the partition and comparison levels after a child returns. -/
-@[inline] def recover (inf level : Nat) (st : Search n) : Search n :=
+@[inline] def recover (inf level : Nat) (st : SearchState n κ) : SearchState n κ :=
   recoverLevels level (recoverPtn inf level st)
+
+/-- Recovery consists of the partition rescan followed by the level clamps. -/
+theorem recover_eq (inf level : Nat) (st : SearchState n κ) :
+    recoverLevels level (recoverPtn inf level st) = recover inf level st := by
+  simp only [recover]
 
 /-- The result of a canonical search on `n` vertices: the canonical
 labelling `canonlab` and the adjacency rows `canong` under it, together
