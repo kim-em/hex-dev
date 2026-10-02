@@ -1068,7 +1068,7 @@ libraries:
   HexECPP:
     deps: [HexPrimality, HexArith]
     mathlib: false
-    done_through: 0
+    done_through: 1
     status: active
     phase4:
       comparators:
@@ -1077,7 +1077,7 @@ libraries:
           rationale: "Same accepted subjects, different certificate formats and terminal contracts: Hex replays an explicit PrimeCert, while PARI admits its own integer leaf convention. Verification ratios give external context; the full Pocklington/ECM construction campaign compares bounded production capability separately."
       input_families:
         - name: transcript-length
-          description: Dense child scalars with fixed residues modulo seven vary the actual replay and inverse-transcript length; independently derived linear scalar work.
+          description: Dense child scalars with fixed residues modulo seven vary the actual replay and inverse-transcript length; linear modular-operation counts and independently derived quadratic compiled suffix-copy work.
         - name: row-vectors
           description: Fixed-width PARI row tokens vary byte and row counts for bounded parsing and parsed-input preflight; independently derived linear traversal work.
         - name: supplied-certificates
