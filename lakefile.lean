@@ -652,6 +652,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.IsolationTotal,
     `HexRealClosureMathlib.RootOrder, `HexRealClosureMathlib.RootFactors,
     `HexRealClosureMathlib.RootTotal, `HexRealClosureMathlib.TowerRoots,
+    `HexRealClosureMathlib.RootTransport,
     `HexRealClosureMathlib.TowerCoverage, `HexRealClosureMathlib.TowerNaturality,
     `HexRealClosureMathlib.Ambient, `HexRealClosureMathlib.AmbientTests,
     `HexRealClosureMathlib.BaseAlgebraicity, `HexRealClosureMathlib.BaseBound,
