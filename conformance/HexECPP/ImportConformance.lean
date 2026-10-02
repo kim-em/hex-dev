@@ -114,4 +114,13 @@ private def largeRows : List PariRow :=
   | .error e => e.row == 0 && e.kind == .exhausted
   | _ => false
 
+-- Lexical allocations locate the second row before JSON integer allocation.
+#guard match convertText { budget with maxDigits := 2 }
+    "[[7,-5,1,0,[1,2]],[7,-5,1,0,[123,2]]]" (.small 13) with
+  | .error e => e.row == 1 && e.kind == .exhausted && e.offset == some 31
+  | _ => false
+#guard match convertText budget "[[7,-5,1,0,[1,2]],]" (.small 13) with
+  | .error e => e.kind == .malformed && e.detail.isSome
+  | _ => false
+
 end Hex.ECPP.ImportConformance

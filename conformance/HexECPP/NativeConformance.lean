@@ -122,3 +122,7 @@ private def memoReplay : Bool :=
 #guard primeBits 0 (.small 2) == none
 #guard primeBits 1 (.small 2) == some 3
 #guard primeBits 1 (.pock 13 [(2, 0, .small 2)]) == none
+
+-- Complete portfolio exhaustion retains the distinct local retry diagnostic.
+#guard let result := Hex.ECPP.produce hard 0 { pointRetries := 0 }
+  result.state.stats.lastRetry.any (fun e => e.resource == .pointRetries)

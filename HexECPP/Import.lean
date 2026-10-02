@@ -58,10 +58,14 @@ deriving Repr, BEq
 
 /-- A conversion diagnostic with an original row index; the endpoint follows the rows. -/
 structure ImportError where
-  /-- Original zero-based vector index, with the endpoint after the last row. -/
+  /-- Original zero-based vector index; input-wide text errors use zero and may carry parser details. -/
   row : Nat
   /-- The allocation, format or arithmetic failure. -/
   kind : ImportErrorKind
+  /-- Zero-based ASCII offset for a text preflight failure, when available. -/
+  offset : Option Nat := none
+  /-- Generic parser diagnostic, including its source location. -/
+  detail : Option String := none
 deriving Repr
 
 /-- Supplied signed homogeneous coordinates; normalization requires a unit denominator. -/
@@ -95,6 +99,10 @@ structure PariCertificate where
   /-- Terminal subject requiring an accepted Hex primality certificate. -/
   endpoint : Nat
 deriving Repr
+
+/-- Subject represented by the outer row, or by the endpoint for an empty vector. -/
+def PariCertificate.subject (input : PariCertificate) : Nat :=
+  (input.rows.head?.map PariRow.n).getD input.endpoint
 
 /-- Reduce a supplied signed integer to a natural residue. -/
 def residue (n : Nat) (z : Int) : Nat := (z % (n : Int)).toNat
@@ -188,13 +196,13 @@ uses the index immediately after the last row. Text byte and digit limits
 are enforced separately by `parsePari`. -/
 def preflight (budget : ImportBudget) (input : PariCertificate) :
     Except ImportError Unit := do
-  if input.rows.length > budget.maxRows then throw ⟨0, .exhausted⟩
+  if input.rows.length > budget.maxRows then throw { row := 0, kind := .exhausted }
   if HexArith.bitLength input.endpoint > budget.maxIntegerBits then
-    throw ⟨input.rows.length, .exhausted⟩
+    throw { row := input.rows.length, kind := .exhausted }
   for (row, index) in input.rows.zipIdx do
     match checkRowLimits budget row with
     | .ok () => pure ()
-    | .error kind => throw ⟨index, kind⟩
+    | .error kind => throw { row := index, kind := kind }
 
 /-- Convert one row against its supplied child and check the local step.
 The complete child chain is checked at the public conversion boundary. -/
@@ -231,43 +239,45 @@ def convertRows (budget : ImportBudget) :
       let child ← convertRows budget (rowIndex + 1) rows child
       match convertRow budget row child with
       | .ok cert => pure cert
-      | .error kind => throw ⟨rowIndex, kind⟩
+      | .error kind => throw { row := rowIndex, kind := kind }
 
 /-- Convert a parsed PARI vector with a supplied accepted Hex terminal
 certificate. The terminal subject must match exactly. -/
 def convert (budget : ImportBudget) (input : PariCertificate)
     (leaf : Hex.Nat.PrimeCert) : Except ImportError Cert := do
   preflight budget input
-  if leaf.subject != input.endpoint then throw ⟨input.rows.length, .subjectMismatch⟩
-  if !Hex.Nat.checkPrime leaf then throw ⟨input.rows.length, .invalidEndpoint⟩
+  if leaf.subject != input.endpoint then throw { row := input.rows.length, kind := .subjectMismatch }
+  if !Hex.Nat.checkPrime leaf then throw { row := input.rows.length, kind := .invalidEndpoint }
   let cert ← convertRows budget 0 input.rows (.base leaf)
-  if !checkAt cert.subject cert then throw ⟨0, .invalidArithmetic⟩
+  if !checkAt input.subject cert then throw { row := 0, kind := .invalidArithmetic }
   pure cert
 
-/-- Scan the supplied text before a generic parser can allocate an
-arbitrary-size integer. PARI's integer vectors use only this ASCII subset. -/
-def scanDigits (budget : ImportBudget) :
-    List Char → Nat → Except ImportErrorKind Unit
-  | [], _ => pure ()
-  | c :: cs, digits =>
+/-- Scan integer digits and bracket nesting before JSON allocation. Commas
+at the outer vector level retain the failing row; text offsets locate lexical
+failures. The permitted PARI format uses at most three bracket levels. -/
+private def scanInput (budget : ImportBudget) :
+    List Char → Nat → Nat → Nat → Nat → Except ImportError Unit
+  | [], _, depth, row, offset =>
+      if depth == 0 then pure () else
+        throw { row := row, kind := .malformed, offset := some offset }
+  | c :: cs, digits, depth, row, offset => do
       if '0' ≤ c && c ≤ '9' then
-        if digits + 1 > budget.maxDigits then throw .exhausted
-        else scanDigits budget cs (digits + 1)
-      else if c == '[' || c == ']' || c == ',' || c == '-' ||
-          c == ' ' || c == '\n' || c == '\r' || c == '\t' then
-        scanDigits budget cs 0
-      else throw .unsupported
-
-/-- The row-vector format has at most three bracket levels. Check that bound
-before the generic JSON parser can recurse through adversarial nesting. -/
-private def scanNesting : List Char → Nat → Except ImportErrorKind Unit
-  | [], depth => if depth == 0 then pure () else throw .malformed
-  | c :: cs, depth =>
-      if c == '[' then
-        if depth >= 3 then throw .unsupported else scanNesting cs (depth + 1)
+        if digits + 1 > budget.maxDigits then
+          throw { row := row, kind := .exhausted, offset := some offset }
+        scanInput budget cs (digits + 1) depth row (offset + 1)
+      else if c == '[' then
+        if depth >= 3 then
+          throw { row := row, kind := .unsupported, offset := some offset }
+        scanInput budget cs 0 (depth + 1) row (offset + 1)
       else if c == ']' then
-        if depth == 0 then throw .malformed else scanNesting cs (depth - 1)
-      else scanNesting cs depth
+        if depth == 0 then
+          throw { row := row, kind := .malformed, offset := some offset }
+        scanInput budget cs 0 (depth - 1) row (offset + 1)
+      else if c == ',' || c == '-' || c == ' ' ||
+          c == '\n' || c == '\r' || c == '\t' then
+        let row := if c == ',' && depth == 1 then row + 1 else row
+        scanInput budget cs 0 depth row (offset + 1)
+      else throw { row := row, kind := .unsupported, offset := some offset }
 
 /-- Accept only a JSON integer, preserving its sign. -/
 private def jsonInt (j : Lean.Json) : Except ImportErrorKind Int :=
@@ -310,29 +320,28 @@ private def parseRow (j : Lean.Json) : Except ImportErrorKind PariRow := do
 /-- Decode a bounded vector while retaining each original row's location. -/
 private def parseLocated (budget : ImportBudget) (source : String) :
     Except ImportError PariCertificate := do
-  if source.utf8ByteSize > budget.maxInputBytes then throw ⟨0, .exhausted⟩
-  (scanDigits budget source.toList 0).mapError (⟨0, ·⟩)
-  (scanNesting source.toList 0).mapError (⟨0, ·⟩)
+  if source.utf8ByteSize > budget.maxInputBytes then throw { row := 0, kind := .exhausted }
+  scanInput budget source.toList 0 0 0 0
   let json ← match Lean.Json.parse source with
     | .ok j => pure j
-    | .error _ => throw ⟨0, .malformed⟩
+    | .error detail => throw { row := 0, kind := .malformed, detail := some detail }
   let input ← match json with
   | .num _ =>
-      let n ← (jsonNat json).mapError (⟨0, ·⟩)
+      let n ← (jsonNat json).mapError (fun kind => { row := 0, kind := kind })
       pure ⟨[], n⟩
   | .arr xs =>
-      if xs.size == 0 then throw ⟨0, .malformed⟩
-      if xs.size > budget.maxRows then throw ⟨0, .exhausted⟩
+      if xs.size == 0 then throw { row := 0, kind := .malformed }
+      if xs.size > budget.maxRows then throw { row := 0, kind := .exhausted }
       let rows ← xs.toList.zipIdx.mapM fun (j, index) => do
-        let row ← (parseRow j).mapError (⟨index, ·⟩)
-        (checkRowLimits budget row).mapError (⟨index, ·⟩)
+        let row ← (parseRow j).mapError (fun kind => { row := index, kind := kind })
+        (checkRowLimits budget row).mapError (fun kind => { row := index, kind := kind })
         pure row
-      let some last := rows.getLast? | throw ⟨0, .malformed⟩
+      let some last := rows.getLast? | throw { row := 0, kind := .malformed }
       let m : Int := (last.n : Int) + 1 - last.t
       if m ≤ 0 || last.s ≤ 0 || m % last.s != 0 then
-        throw ⟨rows.length - 1, .invalidArithmetic⟩
+        throw { row := rows.length - 1, kind := .invalidArithmetic }
       pure ⟨rows, (m / last.s).toNat⟩
-  | _ => throw ⟨0, .unsupported⟩
+  | _ => throw { row := 0, kind := .unsupported }
   preflight budget input
   pure input
 
@@ -350,20 +359,20 @@ def convertText (budget : ImportBudget) (source : String)
   convert budget input leaf
 
 /-- Complete a partial PARI endpoint with Hex's bounded, checked terminal
-certificate search. The supplied `fuel` is capped by the conversion budget. -/
+certificate search. Supplied `fuel` above the conversion allocation is rejected. -/
 def convertCounted (budget : ImportBudget)
     (primeBudget : Hex.Nat.PrimeCertBudget) (rand : Hex.Rand)
     (fuel : Nat) (input : PariCertificate) :
     Except ImportError (Cert × Hex.Rand) := do
   preflight budget input
-  if fuel > budget.maxEndpointFuel then throw ⟨input.rows.length, .exhausted⟩
+  if fuel > budget.maxEndpointFuel then throw { row := input.rows.length, kind := .exhausted }
   let result ← match Hex.Nat.Internal.primeCertCountedWith?
       primeBudget input.endpoint rand fuel with
     | .ok result => pure result
     | .error failure =>
         match failure.stop with
-        | .composite => throw ⟨input.rows.length, .invalidEndpoint⟩
-        | .exhausted => throw ⟨input.rows.length, .exhausted⟩
+        | .composite => throw { row := input.rows.length, kind := .invalidEndpoint }
+        | .exhausted => throw { row := input.rows.length, kind := .exhausted }
   let cert ← convert budget input result.cert.raw
   pure (cert, result.rand)
 
@@ -371,7 +380,7 @@ def convertCounted (budget : ImportBudget)
 checker; parsing and proposal generation are outside the proof boundary. -/
 theorem convert_ok {budget : ImportBudget} {input : PariCertificate}
     {leaf : Hex.Nat.PrimeCert} {c : Cert}
-    (h : convert budget input leaf = .ok c) : check c = true := by
+    (h : convert budget input leaf = .ok c) : checkAt input.subject c = true := by
   unfold convert at h
   cases hp : preflight budget input with
   | error e => simp [hp, bind, Except.bind] at h
@@ -389,7 +398,6 @@ theorem convert_ok {budget : ImportBudget} {input : PariCertificate}
           · simp [throw] at h
           · simp only [pure, Except.pure] at h
             cases h
-            apply checkAt_check (n := c.subject)
-            simpa using ‹(!checkAt c.subject c) ≠ true›
+            simpa using ‹(!checkAt input.subject c) ≠ true›
 
 end Hex.ECPP

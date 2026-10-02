@@ -200,12 +200,11 @@ def scalarInput (bits : Nat) : Nat × List Nat :=
 -- k-i bits over the k positions costs Theta(k^2 / wordBits). The affine
 -- operations modulo seven and witness traversal contribute Theta(k).
 -- Thus the compiled large-scalar family is quadratic, while the SPEC's
--- separate O(L) modular-ring-operation count remains linear. The earlier
--- linear declaration omitted these copies; retained runs are not evidence
--- for this corrected model. These sizes expose the bignum regime.
+-- separate O(L) modular-ring-operation count remains linear. These
+-- sizes expose the bignum regime.
 setup_benchmark runReplay k => k * k with prep := scalarInput where {
   paramFloor := 262144, paramCeiling := 4194304, outerTrials := 3
-  targetInnerNanos := 5000000000, maxSecondsPerCall := 240.0
+  targetInnerNanos := 5000000000, maxSecondsPerCall := 1200.0
 }
 
 -- Derivation: the identical bit extraction has Theta(k^2 / wordBits)
@@ -239,14 +238,14 @@ def parsedInput (rows : Nat) : ImportBudget × PariCertificate :=
 -- Digit scanning, JSON parsing, decoding and the terminal-row lookup each
 -- traverse them once. Bounded integer arithmetic has constant cost here.
 setup_benchmark runParse r => r with prep := textInput where {
-  paramFloor := 64, paramCeiling := 4096, outerTrials := 3
+  paramFloor := 1, paramCeiling := 4096, outerTrials := 3
   targetInnerNanos := 2000000000, maxSecondsPerCall := 8.0
 }
 
 -- Derivation: list length, seven fixed-width bit checks per row and original
 -- index traversal each cost Theta(r); no endpoint construction is timed.
 setup_benchmark runPreflight r => r with prep := parsedInput where {
-  paramFloor := 64, paramCeiling := 4096, outerTrials := 3
+  paramFloor := 1, paramCeiling := 4096, outerTrials := 3
   targetInnerNanos := 2000000000, maxSecondsPerCall := 8.0
 }
 

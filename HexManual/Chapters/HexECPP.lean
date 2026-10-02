@@ -40,6 +40,7 @@ or scalar in the raw certificate.
 
 ```lean
 open Hex.ECPP
+namespace HexECPPChapter
 
 def smallCertificate : Cert := .base (.small 17)
 #guard checkAt 17 smallCertificate
@@ -77,12 +78,13 @@ endpoint occupies the index immediately after the rows.
 #guard (convertText defaultImportBudget
   "17" (.small 17)).isOk
 
-#guard match convertCounted
+def importExhausted : Bool := match convertCounted
     { defaultImportBudget with maxIntegerBits := 2 }
     Hex.Nat.defaultPrimeCertBudget
     (Hex.Rand.ofSeed 1) 10 ⟨[], 15⟩ with
   | .error e => e.kind == .exhausted
   | _ => false
+#guard importExhausted
 ```
 
 Signed PARI coordinates are reduced during conversion. Homogeneous
@@ -108,12 +110,17 @@ exhaustion and an unresolved recursive child have distinct diagnostics.
 
 ```lean
 #guard (produce 17 0).result.toOption.any (checkAt 17)
-#guard match (produce 17 0 { maxBits := 4 }).result with
+def bitsExhausted : Bool :=
+  match (produce 17 0 { maxBits := 4 }).result with
   | .error e => e.resource == .inputBits
   | _ => false
-#guard match (produce 17 0 { maxDepth := 0 }).result with
+#guard bitsExhausted
+def depthExhausted : Bool := match (produce 17 0 { maxDepth := 0 }).result with
   | .error e => e.resource == .depth
   | _ => false
+#guard depthExhausted
+
+end HexECPPChapter
 ```
 
 Exhaustion is not a compositeness verdict. The supported native policy

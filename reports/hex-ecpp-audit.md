@@ -62,3 +62,41 @@ The complete corpora, successful raw certificates, kernel confirmations,
 independent PARI checks and exhausted outcomes remain in `reports/ecpp/native/`.
 Native 256-bit capability and supplied 512-bit replay have different contracts.
 No native 512-bit support or general success-rate promise follows from either.
+
+## Independent skeptical review
+
+The independent Opus audit and its follow-up are retained verbatim in
+`reports/ecpp/audit/phase2-{review,followup}.txt`. The follow-up found no
+remaining SPEC blocker. The author verified its findings against source
+and current-toolchain builds rather than treating the opinion as authority.
+
+Repeated child-chain checking, lost row diagnostics, parser nesting and
+certificate-size traversal findings are resolved in the computational
+modules. Conversion additionally binds its final check and `convert_ok` to
+`PariCertificate.subject`, rather than using the returned subject tautologically.
+Lexical failures now retain their row and ASCII offset; generic JSON failures
+retain the parser's location diagnostic. A single pre-parser scan replaces
+the duplicate public/private scans, with no external callers of the removed
+helper.
+
+A completed portfolio remains the final node-level failure after point
+retries, while `SearchStats.lastRetry` retains the distinct local retry
+location/resource. This permits continued search across twists/orders and
+still exposes local exhaustion. Smaller child obligations take priority over
+local retries because checked candidates require `q < n`; choosing among
+unrelated failed children is not constrained by the SPEC. Stateful `search`
+counters and diagnostics are cumulative by design; callers can reset stats
+while preserving the successful memo. `produce` always starts fresh.
+
+The review's proposed removal of checked curve guards and rejection of an
+entire twist after one failed point are optional optimizations, not missing
+infrastructure. The guards establish the current arithmetic invariant; a
+failed point over an arbitrary candidate modulus does not exclude every
+other point of that twist. Curve/group proofs remain companion obligations.
+The full-memo failure and over-limit endpoint fuel rejection implement the
+specified finite allocations. Their documentation states the actual policy.
+
+The Mathlib/Batteries declaration linter passes on the core's imported
+modules. `reports/ecpp/audit/lint.json` retains the exact temporary probe,
+source fingerprints, toolchain, command and successful result. The probe
+imports Mathlib for auditing only; no published computational module does.

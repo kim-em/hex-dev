@@ -108,28 +108,33 @@ structure SearchStats where
   scalarWork : Nat := 0
   /-- Checked proposals rejected when their recursive child could not be built. -/
   backtracks : Nat := 0
-  /-- First unresolved branch. Portfolio or child failure supersedes local retries. -/
+  /-- Retained failure. Smaller unresolved children and complete portfolios supersede local retries. -/
   unresolved : Option SearchError := none
+  /-- Last local retry exhaustion, retained even when the final diagnosis is portfolio exhaustion. -/
+  lastRetry : Option SearchError := none
 deriving Repr
 
 /-- The advanced random stream, cumulative counters and checked success memo. -/
 structure SearchState where
   /-- Advanced deterministic random stream. -/
   rand : Hex.Rand
-  /-- Cumulative counters and the first unresolved branch. -/
+  /-- Cumulative counters and diagnostics; stateful callers can reset them independently of the memo. -/
   stats : SearchStats := {}
   /-- Only successes are cached; a failed branch may depend on remaining depth. -/
   memo : List Cert := []
 deriving Repr
 
+/-- Search errors preserve the advanced random stream, memo and charged work. -/
 abbrev SearchM := ExceptT SearchError (StateM SearchState)
 
 /-- Abort on a shared allocation failure without rolling back state. -/
 private def fail (n : Nat) (resource : Resource) : SearchM α := throw ⟨n, resource⟩
 
-/-- Preserve the first unresolved branch, promoting child or portfolio failure over local retries. -/
+/-- Retain local retry diagnostics separately; a smaller unresolved child takes priority over a local retry. -/
 private def unresolved (n : Nat) (resource : Resource) : SearchM Unit :=
   modify fun s => { s with stats := { s.stats with
+    lastRetry := if resource == .pointRetries || resource == .nonresidueRetries then
+        some ⟨n, resource⟩ else s.stats.lastRetry
     unresolved := match s.stats.unresolved with
       | some e => if (e.resource == .pointRetries || e.resource == .nonresidueRetries) &&
           (n < e.subject || (n == e.subject &&
