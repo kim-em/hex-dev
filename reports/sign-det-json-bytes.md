@@ -56,7 +56,10 @@ mantissa/exponent representation is absent, so distinct stored number forms
 cannot collapse during printing. The independent `FastCheck.NumberForm` probe
 continues to demonstrate that problem for Lean JSON, outside the certificate
 codecs. Frames have the certificate JSON type, and literal conversion is the
-identity; no separate format-support conversion or premise is required.
+identity. The compatibility function `Literal.ofJson` wraps a shared value in
+`some`; its existing frame-binding premises therefore express literal equality.
+The root-isolation fixtures use this printer's layout. A layout change requires
+regenerating those fixtures; a HexSignDet-only oracle run does not check them.
 
 String-prefix parsing scans only through the current quoted string. The byte
 lexer, string scanner/reader, structural parser and token producer use verified

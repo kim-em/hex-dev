@@ -381,13 +381,16 @@ if [ "$failed" -ne 0 ]; then
 fi
 
 # Native context capacity covers the owning library and its JSON dependency.
-if { library_selected HexRealClosure || library_selected HexSignDet; } &&
-    ! (PYTHONPATH=scripts/oracle python3 -c \
+if library_selected HexRealClosure || library_selected HexSignDet; then
+  context_start=$SECONDS
+  if ! (PYTHONPATH=scripts/oracle python3 -c \
       'from pathlib import Path; from sign_det_json_stress import check_stack; check_stack(Path(".lake/build/bin/hexrealclosure_codec_bytes"))' &&
       ulimit -s 8192 && LEAN_MAIN_USE_THREAD=0 LEAN_STACK_SIZE_KB=8192 \
       .lake/build/bin/hexrealclosure_codec_bytes 1000000); then
-  echo "Conformance: native context codec capacity failed." >&2
-  exit 1
+    echo "Conformance: native context codec capacity failed." >&2
+    exit 1
+  fi
+  printf 'TIMING: HexRealClosure (hexrealclosure_codec_bytes) %ss\n' "$((SECONDS - context_start))"
 fi
 
 # Exercise the independent Lean/native binding in process against the same
