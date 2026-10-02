@@ -51,64 +51,77 @@ theorem Context.enlarge?_suffix_model
   exact Context.enlarge?_model base suffix rfl old model
 
 /-- Checked enlargement preserves an arbitrary lawful old tower model.
-Only agreement on the initial base is supplied; agreement at every root
-level follows from the actual native operations and descriptor constraints. -/
-theorem Context.enlarge?_preserves
+Given a compatible new-base conversion, only agreement on the initial
+base is supplied for the old root levels; their agreement follows from the
+actual native operations and descriptor constraints. -/
+theorem Context.enlarge?_preserves {context : Context registry}
     {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
     (base : BaseContext.Context registry B sign)
     (suffix : Suffix (Context.base base))
+    (target_eq : suffix.context = context)
     {K : Type u} [Field K] [LinearOrder K] [DecidableEq K]
     [IsStrictOrderedRing K] [IsRealClosed K]
     (initial : Tower.Model (Context.base base) K)
-    (old : Tower.Model suffix.context K)
-    (compatible : ∀ a, old.value (suffix.embed a) = initial.value a)
+    (old : Tower.Model context K)
+    (compatible : ∀ a, old.value
+      (_root_.cast (congrArg Context.Value target_eq) (suffix.embed a)) = initial.value a)
     (model : Conversion.Model (Conversion.infinitesimal base) initial) :
-    ∃ result : Conversion suffix.context, suffix.context.enlarge? = some result ∧
+    ∃ result : Conversion context, context.enlarge? = some result ∧
       Nonempty (Conversion.Model result old) := by
+  cases target_eq
   have identified := initial.extend_unique suffix old compatible
   rw [identified]
   exact Context.enlarge?_suffix_model base suffix initial model
 
 /-- An ordered ambient embedding of any compatible old tower model is
 preserved by the actual checked enlargement in the larger real closed field. -/
-theorem Context.enlarge?_mapped
+theorem Context.enlarge?_mapped {context : Context registry}
     {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
     (base : BaseContext.Context registry B sign)
     (suffix : Suffix (Context.base base))
+    (target_eq : suffix.context = context)
     {R : Type u} {K : Type v}
-    [Field R] [LinearOrder R] [DecidableEq R] [IsStrictOrderedRing R] [IsRealClosed R]
+    [Field R] [LinearOrder R]
     [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K]
-    (initial : Tower.Model (Context.base base) R) (old : Tower.Model suffix.context R)
-    (compatible : ∀ a, old.value (suffix.embed a) = initial.value a)
+    (initial : Tower.Model (Context.base base) R) (old : Tower.Model context R)
+    (compatible : ∀ a, old.value
+      (_root_.cast (congrArg Context.Value target_eq) (suffix.embed a)) = initial.value a)
     (embedding : R →+* K) (ordered : StrictMono embedding)
     (model : Conversion.Model (Conversion.infinitesimal base) (initial.map embedding ordered)) :
-    ∃ result : Conversion suffix.context, suffix.context.enlarge? = some result ∧
+    ∃ result : Conversion context, context.enlarge? = some result ∧
       Nonempty (Conversion.Model result (old.map embedding ordered)) := by
-  apply Context.enlarge?_preserves base suffix (initial.map embedding ordered)
+  cases target_eq
+  apply Context.enlarge?_preserves base suffix rfl (initial.map embedding ordered)
     (old.map embedding ordered) _ model
   intro a
   change embedding (old.value (suffix.embed a)) = embedding (initial.value a)
-  rw [compatible]
+  exact congrArg embedding (compatible a)
 
 open scoped Hex.OrderedFn.Infinitesimal in
 /-- An arbitrary old model extends through checked enlargement in an actual
 ordered algebraic ambient over its infinitesimal rational-function field.
-The source base interpretation is extracted from the old model; no agreement
+A reference base model in any independent ordered real closed field supplies
+existence for the native inclusion laws. The source base interpretation is
+extracted from the old model, which may live in any ordered field; no agreement
 at later roots or compatible new-base model is supplied by the caller. -/
-theorem Context.enlarge?_ambient
+theorem Context.enlarge?_ambient {context : Context registry}
     {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
     (base : BaseContext.Context registry B sign)
     (suffix : Suffix (Context.base base))
+    (target_eq : suffix.context = context)
     {R : Type u} [Field R] [LinearOrder R] [DecidableEq R]
-    [IsStrictOrderedRing R] [IsRealClosed R]
-    (reference : Tower.Model (Context.base base) R)
-    (old : Tower.Model suffix.context R)
+    [IsStrictOrderedRing R]
+    {S : Type w} [Field S] [LinearOrder S] [DecidableEq S]
+    [IsStrictOrderedRing S] [IsRealClosed S]
+    (witness : Tower.Model (Context.base base) S)
+    (old : Tower.Model context R)
     (ambient : Ambient (Hex.RationalFn R)) :
-    ∃ result : Conversion suffix.context, suffix.context.enlarge? = some result ∧
+    ∃ result : Conversion context, context.enlarge? = some result ∧
       Nonempty (Conversion.Model result (old.liftInfinitesimal ambient)) := by
+  cases target_eq
   letI : DecidableEq ambient.Carrier := Classical.decEq _
-  let initial := reference.pullback (reference.extend suffix) old suffix.embed
-    (reference.extend_embed suffix)
+  let initial := witness.comap (witness.extend suffix) old suffix.embed
+    (witness.extend_embed suffix)
   let f := initial.baseHom base
   have hsign : ∀ a, sign a = (SignType.sign (f a) : Int) := by
     intro a
@@ -129,7 +142,7 @@ theorem Context.enlarge?_ambient
   have converted : Conversion.Model (Conversion.infinitesimal base)
       (initial.map (Ambient.coefficientHom ambient)
         (Ambient.coefficientHom_strictMono ambient)) := same ▸ model
-  exact Context.enlarge?_mapped base suffix initial old (fun _ => rfl)
+  exact Context.enlarge?_mapped base suffix rfl initial old (fun _ => rfl)
     (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient) converted
 
 /-- The checked result uses the supplied enlarged base interpretation and
@@ -164,6 +177,29 @@ theorem Context.enlarge?_aligned
       (model.extend_target suffix rebuilt hrebuilt hresult)
   exact ⟨rebuilt, hrebuilt, henlarge,
     ⟨witness, halign⟩⟩
+
+/-- Preservation of an arbitrary old model retains the exact rebuilt
+descriptors and the supplied enlarged base interpretation at every root. -/
+theorem Context.enlarge?_interpreted {context : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base)) (target_eq : suffix.context = context)
+    {K : Type u} [Field K] [LinearOrder K] [DecidableEq K]
+    [IsStrictOrderedRing K] [IsRealClosed K]
+    (initial : Tower.Model (Context.base base) K) (old : Tower.Model context K)
+    (compatible : ∀ a, old.value
+      (_root_.cast (congrArg Context.Value target_eq) (suffix.embed a)) = initial.value a)
+    (model : Conversion.Model (Conversion.infinitesimal base) initial) :
+    ∃ rebuilt : Rebuilt (Conversion.infinitesimal base) suffix,
+      (Conversion.infinitesimal base).rebuild? suffix = some rebuilt ∧
+        context.enlarge? = some (rebuilt.result.cast target_eq) ∧
+        ∃ witness : Conversion.Model (rebuilt.result.cast target_eq) old,
+          HEq witness.target (model.target.extend rebuilt.suffix) := by
+  have identified : old = target_eq ▸ initial.extend suffix := by
+    cases target_eq
+    exact initial.extend_unique suffix old compatible
+  rw [identified]
+  exact Context.enlarge?_aligned base suffix target_eq initial model
 
 /-- A sign-compatible interpretation of the extracted staged base makes
 checked enlargement succeed for its stored root suffix. -/
@@ -234,3 +270,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Context.enlarge?_ambient' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Context.enlarge?_ambient
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlarge?_interpreted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.enlarge?_interpreted

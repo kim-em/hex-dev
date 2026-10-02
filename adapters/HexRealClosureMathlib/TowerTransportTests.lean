@@ -17,6 +17,24 @@ private abbrev base := Context.base (BaseContext.rational registry)
 private noncomputable def rational : Tower.Model base ℝ :=
   Tower.Model.base (BaseContext.rational registry) (Rat.castHom ℝ) ratSign
 
+/-- An arbitrary old model of a rational root tower enlarges without any
+agreement premise at its roots or a supplied new-base interpretation. -/
+example (suffix : Suffix base) (old : Tower.Model suffix.context ℝ) :
+    let ambient := Ambient.infinitesimal ℝ
+    ∃ result : Conversion suffix.context, suffix.context.enlarge? = some result ∧
+      Nonempty (Conversion.Model result (old.liftInfinitesimal ambient)) :=
+  Context.enlarge?_ambient (BaseContext.rational registry) suffix rfl rational old
+    (Ambient.infinitesimal ℝ)
+
+/-- The old model may live in a non-real-closed ordered field, while its
+reference base interpretation lives independently in the real numbers. -/
+example (old : Tower.Model base Rat) :
+    let ambient := Ambient.infinitesimal Rat
+    ∃ result : Conversion base, base.enlarge? = some result ∧
+      Nonempty (Conversion.Model result (old.liftInfinitesimal ambient)) :=
+  Context.enlarge?_ambient (BaseContext.rational registry) .nil rfl rational old
+    (Ambient.infinitesimal Rat)
+
 /-- Every validated rational-root suffix restricts to the relative algebraic union. -/
 noncomputable example (suffix : Suffix base) :
     Tower.Model suffix.context (Union.Carrier Rat ℝ) :=

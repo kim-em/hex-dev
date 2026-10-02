@@ -6,8 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.TowerTransport
-public import HexRealClosureMathlib.TowerRoots
-public import HexSignDetMathlib.Embedding
+public import HexRealClosureMathlib.TransportPolynomial
 
 public section
 
@@ -27,45 +26,6 @@ theorem value_ext (left right : Model context K)
   cases right
   cases funext agree
   rfl
-
-/-- Adjoining a validated root commutes with an ordered ambient embedding.
-The equality describes every actual stored child value, including general
-nonmonic representatives; no syntax injectivity is assumed. -/
-theorem map_adjoin (model : Model context K) (embedding : K →+* L)
-    (ordered : StrictMono embedding)
-    (descriptor : SignDet.Descriptor context.Value Signature context.sign context.signature)
-    (a : (context.adjoin descriptor).context.Value) :
-    ((model.map embedding ordered).adjoin descriptor).value a =
-      embedding ((model.adjoin descriptor).value a) := by
-  rw [(model.map embedding ordered).adjoin_value, model.adjoin_value,
-    (model.map embedding ordered).adjoin_generator, model.adjoin_generator]
-  rw [SignDet.interpret_embedding model.value model.zero_iff
-    (model.map embedding ordered).value (model.map embedding ordered).zero_iff
-    embedding (fun _ => rfl)]
-  rw [SignDet.Descriptor.root_map model.value model.zero_iff
-    (model.map embedding ordered).value (model.map embedding ordered).zero_iff
-    embedding ordered (fun _ => rfl) model.one model.add model.sub model.mul model.nat
-    (model.map embedding ordered).one (model.map embedding ordered).add
-    (model.map embedding ordered).sub (model.map embedding ordered).mul
-    (model.map embedding ordered).nat model.sign (model.map embedding ordered).sign]
-  exact Polynomial.eval_map_apply _ _
-
-/-- Rebuilding the interpretation of a finite validated root suffix commutes
-with the same ordered ambient embedding at every depth. -/
-theorem map_extend {source : Context registry} (model : Model source K)
-    (embedding : K →+* L) (ordered : StrictMono embedding) (suffix : Suffix source)
-    (a : suffix.context.Value) :
-    ((model.map embedding ordered).extend suffix).value a =
-      embedding ((model.extend suffix).value a) := by
-  induction suffix with
-  | nil => rfl
-  | root descriptor rest ih =>
-    have same : (model.map embedding ordered).adjoin descriptor =
-        (model.adjoin descriptor).map embedding ordered :=
-      value_ext _ _ (model.map_adjoin embedding ordered descriptor)
-    change (((model.map embedding ordered).adjoin descriptor).extend rest).value a = _
-    rw [same]
-    exact ih (model.adjoin descriptor) a
 
 omit [IsStrictOrderedRing K] [IsRealClosed K] in
 /-- Native polynomial evaluation in a child depends only on its predecessor
@@ -153,8 +113,10 @@ theorem adjoin_unique (model : Model context K)
   rw [model.child_value descriptor child compatible a, model.adjoin_value,
     model.child_generator descriptor child compatible]
 
-omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
-private theorem transfer_eq {source : Context registry} (reference other : Model source K)
+omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K]
+  [DecidableEq L] [IsStrictOrderedRing L] [IsRealClosed L] in
+private theorem transfer_eq {source : Context registry} (reference : Model source L)
+    (other : Model source K)
     (a b : source.Value) (equal : reference.value a = reference.value b) :
     other.value a = other.value b := by
   have zero : a - b = 0 := (reference.zero_iff _).mp (by
@@ -163,12 +125,14 @@ private theorem transfer_eq {source : Context registry} (reference other : Model
   rw [← other.sub, zero]
   exact (other.zero_iff 0).mpr rfl
 
-omit [IsStrictOrderedRing K] [IsRealClosed K] in
+omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K]
+  [DecidableEq L] [IsStrictOrderedRing L] [IsRealClosed L] in
 /-- Restrict an arbitrary target interpretation through a native inclusion.
-One compatible reference interpretation proves the executable inclusion laws;
-the resulting source model uses the supplied target's actual values. -/
-@[expose] noncomputable def pullback {source target : Context registry}
-    (original : Model source K) (reference other : Model target K)
+One compatible reference interpretation in an independent field proves the
+executable inclusion laws; the resulting source model uses the supplied
+target's actual values. -/
+@[expose] noncomputable def comap {source target : Context registry}
+    (original : Model source L) (reference : Model target L) (other : Model target K)
     (includeValue : source.Value → target.Value)
     (preserved : ∀ a, reference.value (includeValue a) = original.value a) :
     Model source K where
@@ -232,7 +196,7 @@ theorem extend_unique {source : Context registry} (original : Model source K)
   induction suffix with
   | nil => exact value_ext _ _ compatible
   | @root parent descriptor rest ih =>
-    let middle := (original.adjoin descriptor).pullback
+    let middle := (original.adjoin descriptor).comap
       ((original.adjoin descriptor).extend rest) other rest.embed
       ((original.adjoin descriptor).extend_embed rest)
     have parent_compatible : ∀ a,
@@ -242,6 +206,35 @@ theorem extend_unique {source : Context registry} (original : Model source K)
     have finished : other = middle.extend rest := ih middle other (fun _ => rfl)
     rw [same] at finished
     exact finished
+
+/-- Adjoining a validated root commutes with an ordered ambient embedding.
+The equality describes every actual stored child value, including general
+nonmonic representatives; no syntax injectivity is assumed. -/
+theorem map_adjoin (model : Model context K) (embedding : K →+* L)
+    (ordered : StrictMono embedding)
+    (descriptor : SignDet.Descriptor context.Value Signature context.sign context.signature)
+    (a : (context.adjoin descriptor).context.Value) :
+    ((model.map embedding ordered).adjoin descriptor).value a =
+      embedding ((model.adjoin descriptor).value a) := by
+  have same := (model.map embedding ordered).adjoin_unique descriptor
+    ((model.adjoin descriptor).map embedding ordered) (fun a => by
+      change embedding ((model.adjoin descriptor).value ((context.adjoin descriptor).embed a)) = _
+      rw [model.adjoin_embed]; rfl)
+  exact congrArg (fun interpreted : Model (context.adjoin descriptor).context L =>
+    interpreted.value a) same.symm
+
+/-- Rebuilding the interpretation of a finite validated root suffix commutes
+with the same ordered ambient embedding at every depth. -/
+theorem map_extend {source : Context registry} (model : Model source K)
+    (embedding : K →+* L) (ordered : StrictMono embedding) (suffix : Suffix source)
+    (a : suffix.context.Value) :
+    ((model.map embedding ordered).extend suffix).value a =
+      embedding ((model.extend suffix).value a) := by
+  have same := (model.map embedding ordered).extend_unique suffix
+    ((model.extend suffix).map embedding ordered) (fun a => by
+      change embedding ((model.extend suffix).value (suffix.embed a)) = _
+      rw [model.extend_embed]; rfl)
+  exact congrArg (fun interpreted : Model suffix.context L => interpreted.value a) same.symm
 
 omit [IsStrictOrderedRing K] [IsRealClosed K] in
 /-- The interpretation of a native base supplies its actual coefficient
@@ -259,7 +252,7 @@ field homomorphism, without an additional agreement hypothesis. -/
       map_add' := fun a b => model.add ⟨a⟩ ⟨b⟩
       map_mul' := fun a b => model.mul ⟨a⟩ ⟨b⟩ }
 
-omit [IsStrictOrderedRing K] [IsRealClosed K] in
+omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
 /-- The extracted coefficient homomorphism interprets each native base value. -/
 theorem baseHom_value {B : Type} [Lean.Grind.Field B] [DecidableEq B]
     {sign : B → Int} (base : BaseContext.Context registry B sign)
