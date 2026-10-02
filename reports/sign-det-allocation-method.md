@@ -71,15 +71,20 @@ python3 scripts/bench/sign_det_allocations.py \
 ```
 
 Pilot records are retained under
-`/home/kim/.local/state/hex/issue-10377-profiles/allocation-method-validated`.
+`/home/kim/.local/state/hex/issue-10377-profiles/allocation-final-validated-8e34be08d`.
+A portable copy of the metadata, counters, output and compressed raw events is
+in [the validation data](data/sign-det-allocations/validation/metadata.json).
+The regression suite checks hashes, allocator-frame attribution and native
+result agreement against these retained records.
 The degree-three comparison recorded 6,283,680 bytes at `lean_alloc_*` entry
 points, 624,384 bytes at direct mimalloc entry points and 10,490,208 bytes at
 GMP entry points. Reduced graph checking recorded
 1,672,112, 130,416 and 2,584,336 bytes respectively. These two validation
 observations used clean collector revision
-`b03612417e18dd84d5b6acf640adb7ea1461e7af` and retained uninstrumented result
-comparisons, source hashes and raw output. The earlier dirty pilot remains
-retained separately. They demonstrate working instrumentation;
+`8e34be08d9bce5636fc5478ce08ab4ed7915a6ec` and retained uninstrumented result
+comparisons, source hashes and raw output. Earlier pilot captures remain retained separately. The Lake build checked the
+benchmark through its ordinary incremental dependency rules; it did not force
+recompilation of every unchanged module. They demonstrate working instrumentation;
 they are not a scaling result or full Phase-4 evidence. Wider matrices,
 coefficient sizes, nested fields and all remaining performance requirements still
 require their specified evidence.
