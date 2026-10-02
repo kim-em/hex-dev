@@ -1,0 +1,91 @@
+I found no correctness or soundness problem that blocks merging this PR (https://github.com/kim-em/hex-dev/pull/10595). One finding (F1) blocks the Phase 4 attestation as written, and with it the `done_through: 7` bump. The code itself is sound.
+
+I reviewed `origin/main...HEAD`, including `b813ab8d2`, a commit that landed during the review (it adds `release-dry-run.json` and the matching audit lines). I could not run `lake build` or `gh`, so the PR body and live CI are unchecked. I made no changes.
+
+## Merge blocker
+
+**F1. Medium: the mode-1 scalar ladders can't catch the regression they exist to catch.** Location: `bench/HexECPP/Bench.lean:219-258` (`scalarInput`, `runReplay`, `runProposal`).
+- **The problem:** the ladder fixes the modulus at 7 and runs scalar lengths from 262,144 to 4,194,304 bits. Real callers use scalars of at most 512 bits (conversion) or 256 bits (native search), with 65 to 512-bit moduli.
+- **Why it matters:**
+  - `PLAN/Phase4.md` says the schedule "must cover the parameter values the downstream caller actually produces" and must vary every parameter the caller varies. Here the scalar range is far outside real use and the modulus does not vary at all.
+  - The declared model is `k * k`, coming from `Nat.testBit` copying the bignum on each shift. An implementation that accidentally did O(L²) modular operations would fit the same model, so this ladder cannot detect a break of the SPEC's O(L) modular-operation contract.
+  - The realistic range is covered only by three mode-3 fixed endpoints.
+- **Fix:** add or replace with a ladder in the realistic range where modulus bits grow with scalar bits (for example 64 to 4096), declared as roughly `k · M(k)`. A wrong-order regression would then show up as extra growth. Keep the bignum ladder as a labelled observation if wanted.
+
+## Findings
+
+**F2. Medium (performance): conversion and native search use the pure-Lean extended GCD.**
+- **Location:** `HexECPP/Import.lean:112-117`, where `inverse?` calls `HexArith.extGcd d n`.
+- **Evidence:** that is the pure-Lean `Nat` recursion at `HexArith/ExtGcd.lean:41`. Its own docstring says to use the GMP-backed `HexArith.Int.extGcd` (`@[extern "lean_hex_mpz_gcdext"]`, line 395).
+- **Impact:** the retained profile puts 75.87% of inclusive `runConvert512` time in `HexArith.extGcd`. Native search spends 68.81% in scalar proposal, which goes through the same `inverse?`. The report explains this cost away ("the shared arithmetic dependency already benchmarks extended GCD") instead of noticing the faster API.
+- **Fix:** call `HexArith.Int.extGcd (d : Int) (n : Int)`. The kernel checker never uses `inverse?`, and every proposal is still checked by `d * u % n == 1`, so soundness is unaffected. Then re-run the AB/BA comparison. HexArith is precompiled, so the `HexManual` `#guard`s should still evaluate.
+
+**F3. Medium-low: the report gives the wrong cause for the 65-bit conversion slowdown, and conversion checks every step twice.**
+- **Where the work is duplicated:**
+  - `convertRow` runs `checkStep` (`Import.lean:231`), then `convert` replays the whole chain again with `checkAt` (`:252`).
+  - The leaf's `checkPrime` also runs twice (`:250` and inside `checkAt`).
+  - On `origin/main`, a 1-row vector replayed its step only once.
+- **What the numbers show:**
+  - The measured slowdown is 0.856 − 0.856/1.196 ≈ 0.14 ms. That matches one 65-bit check (`runCheck65` median 0.145 ms).
+  - The report says "the small converter pays for preflight", but preflight is a few `bitLength` calls, i.e. microseconds. The extra replay is the cause.
+- **Fix:**
+  - Keep the per-row `checkStep`, which gives located diagnostics.
+  - Prove `convertRows` sound by induction using `check_step`, and drop the runtime final replay (keep only the subject comparison).
+  - Or remove `checkStep` and accept unlocated final failures.
+  - Either way, correct the explanation in `reports/hex-ecpp-performance.md:134`.
+- `produce` has the same 2× pattern (`point` runs `checkStep`, then `finish` runs `checkAt`), but search time hides it.
+
+**F4. Low-medium (conformance): no test checks the SPEC rule that a failed child outranks an earlier local retry.**
+- **Location:** `conformance/HexECPP/NativeConformance.lean:99-108`.
+- **Evidence:** `childRetry` plants a fake `⟨hard+2, pointRetries⟩` and calls `search` at depth 0 on `hard + 2`, which is not a real parent of `hard`. The SPEC rule ("A failed recursive child takes diagnostic priority over an earlier local retry failure") is never exercised by real recursion.
+- **Also unchanged:** priority still compares subjects by size (`Search.lean:140`) rather than tree depth, so the result can depend on sibling order. This was L2 in the follow-up review.
+- **Fix:** add a real case where a parent records a point or nonresidue retry and a later child fails (for example a reduced `maxDepth` with a seed known to retry first), and pin the final `⟨q, …⟩`.
+
+**F5. Low: the stateful public `search` returns memo entries without checking them.**
+- **Location:** `Search.lean:297`.
+- **Evidence:** `SearchState.memo` is a public field. A caller-supplied entry, or one built under a larger depth, is returned unchecked and can become the child of new steps. `checkStep` binds only `q`, not the child's own validity. Depth limits are also skipped on a memo hit.
+- **Impact:** `produce` is safe because `finish` checks. Only callers who trust `search` directly are exposed.
+- **Fix:** document that only `produce` results are guaranteed, or make the memo opaque, or record depth with each entry.
+
+**F6. Low: `convertCounted` searches for the endpoint before cheap row checks.**
+- **Location:** `Import.lean:369` runs before `:376`.
+- **Evidence:** exact division and q-chaining between rows are pure integer checks, but they still run only after a fuel-200 `primeCertCountedWith?` search. The search is bounded, so this costs time, not safety. Left over from L5 in the follow-up review.
+- **Fix:** move both checks into `preflight`.
+
+**F7. Low (Phase 4 report form): §Concerns is not empty.**
+- **Location:** `reports/hex-ecpp-performance.md:216-239`.
+- **Evidence:** the PLAN requires the Concerns subsection to be empty. It currently lists five retained runs under "no unresolved Concern".
+- **Fix:** move those notes to a "Retained runs" subsection.
+- **Related:** the CM and counted-conversion budgets are twice a baseline measured on this same implementation. That is fine, but it only guards against regression, not against being slow to begin with.
+
+**F8. Nits.**
+- The `HexManual/Chapters/HexECPP.lean:118` code line is over the 60-column Verso limit.
+- There is a stray blank line in `HexManual.lean` (draft section).
+- `released-ci.yml:222` has a trailing space after `lake build HexECPP`.
+- `check_ecpp_split.py` has a `setdefault` fallback that can never fire, and it writes the HexArith/TOML lakefiles by hand instead of using the sync's own output. So its evidence covers a simulated layout. The real `sync_released.py --dry-run` record covers the actual mapping.
+- The dry run shows a staged `--only hex-ecpp` would pin `v0.7.0` against the current released hex-arith/hex-primality heads. A real publish must be the full coordinated sync, as the audit already says.
+
+## Checked and correct
+- **Checker:** unchanged in substance. Every conversion and production success is checked against the subject at the public entry point, and `convert_ok` / `produce_ok` state this as theorems.
+- **Subject binding:** conversion now binds to `PariCertificate.subject`, not to the certificate's own subject (follow-up L3 is fixed).
+- **Preflight order:**
+  - Bytes, then the digit/nesting scan, then JSON, then per-field limits, then row count and endpoint bits, then fuel, then endpoint search.
+  - Row indices are preserved.
+  - Text errors carry a row (from depth-1 commas) and an offset. I checked by hand that `offset == some 31` is correct.
+- **Shared and local exhaustion:**
+  - Shared allocations stop the whole search immediately via throw.
+  - Running out of point retries rejects only that twist.
+  - A nonresidue failure at a node's start fails that node (the parent backtracks). For d=3 it skips that discriminant.
+  - Depth failures can be backtracked.
+  - `pointRetries` is never the final error by design. `lastRetry` keeps it, which settles follow-up L1 acceptably.
+  - Every allocation has a test that runs it out.
+- **Size counting:** `primeBits` / `certBits` now return `Option` instead of a hard-coded sentinel value.
+- **Code placement:** no Mathlib in the core. Making `HexArith.lt_two_pow_bitLength` public is the only change outside ECPP.
+- **Release config:**
+  - The manifest entry, pins and topological position are right, and the aggregate pin is updated.
+  - The mirror CI matches its siblings.
+  - The manual chapter is at the released level, and the README has the required sections.
+
+## Not done
+- No build, `#guard` run or bench run (Bash was partly denied).
+- Not read: the PR description (so I couldn't check the required Phase 4 paragraph on how benchmark claims differ from the SPEC's worst case), the companion `HexECPPMathlib`, and the Codex log.

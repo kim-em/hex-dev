@@ -1,0 +1,20 @@
+{
+  "source": "27fc4539f91f3716de8bbc53fcf411f38d446493",
+  "probe_source": "import HexECPP\nimport Mathlib.Tactic.Linter.Lint\n\n#lint in HexECPP\n",
+  "command": [
+    "lake",
+    "build",
+    "HexECPPMathlib.CoreAuditLint"
+  ],
+  "returncode": 0,
+  "output": "\u2139 [112/179] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10585/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [179/179] Built HexECPPMathlib.CoreAuditLint (872ms)\ninfo: HexECPPMathlib/CoreAuditLint.lean:4:0: -- Found 0 errors in 261 declarations (plus 439 automatically generated ones) in HexECPP with 11 linters\n\n\n-- All linting checks passed!\nBuild completed successfully (179 jobs).\n",
+  "source_hashes": {
+    "HexECPP/Affine.lean": "e1a749485731b258030c61ecdb769b697f6b1877434ec589a27a920c164e5c6b",
+    "HexECPP/CM.lean": "05a06a0dafb457e5831f0b6bba2abd2c9c9c2f5a8319772673e0140f858a8de3",
+    "HexECPP/Cert.lean": "1d3261fbe6c581e630811277c83ef36e44bcdce87b042ff4eac4e60409d73100",
+    "HexECPP/Data.lean": "98690924d6648202e8e2f43d118934eb0e4fb3899a3127aa02bf4ef605d5bd81",
+    "HexECPP/Import.lean": "acd09355df7cbed5c4271cfc780b8ed90ff1ca88ac8c22abed4f4f5dc8d6406d",
+    "HexECPP/Replay.lean": "365360db2a51992dfdd0c48e6e37a8bbc61e13bc57faa448abffd851c26856dc",
+    "HexECPP/Search.lean": "23cf4558d66c0db63ced586e22069fd4fe7a3e2a6eee9ab0990a9d67fddc0bb7"
+  }
+}

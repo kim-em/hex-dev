@@ -1,0 +1,25 @@
+{
+  "source": "d8c580a03facd5e2537175f08d744ed6e96ecff3",
+  "source_hashes": {
+    "HexECPP/README.md": "4de6c38bdf427125c153947f0408da3923e7dc3afb176208f82c149f2b8a570b",
+    "HexManual/Chapters/HexECPP.lean": "6b442bc5ff1eb52611e722725ecc3b5b8cc3380b4c003806bdd6ca692331d4f8",
+    "bench/HexECPP/Bench.lean": "39a1739166c4a2dee62540551c12c8afc8ca58c5bacc4540ef33c2d0a1618d38"
+  },
+  "commands": [
+    {
+      "command": "lake build HexECPP HexECPP.Conformance HexECPP.NativeConformance HexECPP.ImportConformance hexecpp_emit_fixtures hexecpp_bench",
+      "returncode": 0,
+      "summary": "Build completed successfully (259 jobs)."
+    },
+    {
+      "command": ".lake/build/bin/hexecpp_bench list",
+      "returncode": 0,
+      "stdout": "registered benchmarks:\n  Hex.ECPPBench.runPreflight    expected complexity: r\n  Hex.ECPPBench.runProposal    expected complexity: k * k\n  Hex.ECPPBench.runReplay    expected complexity: k * k\n  Hex.ECPPBench.runParse    expected complexity: r\n  runConvert512    [fixed] repeats=3\n  runNativeCheck    [fixed] repeats=5\n  runParse512    [fixed] repeats=3\n  runConvert65    [fixed] repeats=3\n  runSize512    [fixed] repeats=3\n  runCheck512    [fixed] repeats=3\n  runNative256    [fixed] repeats=5\n  runCountedConvert65    [fixed] repeats=5\n  runNativeExhaust    [fixed] repeats=5\n  runCM128    [fixed] repeats=5\n  runCheck256    [fixed] repeats=3\n  runNative128    [fixed] repeats=5\n  runCM256    [fixed] repeats=5\n  runCheck65    [fixed] repeats=3\n  runConvert256    [fixed] repeats=3\n  runNativeConvert    [fixed] repeats=5\n  runNativeHard    [fixed] repeats=5\n  runSize65    [fixed] repeats=3\n  runSize256    [fixed] repeats=3\n"
+    },
+    {
+      "command": ".lake/build/bin/hexecpp_bench verify",
+      "returncode": 0,
+      "stdout": "verifying 23 benchmark(s)...\n  [ok ] Hex.ECPPBench.runPreflight\n  [ok ] Hex.ECPPBench.runProposal\n  [ok ] Hex.ECPPBench.runReplay\n  [ok ] Hex.ECPPBench.runParse\n  [ok ] runConvert512  [fixed]\n  [ok ] runNativeCheck  [fixed]\n  [ok ] runParse512  [fixed]\n  [ok ] runConvert65  [fixed]\n  [ok ] runSize512  [fixed]\n  [ok ] runCheck512  [fixed]\n  [ok ] runNative256  [fixed]\n  [ok ] runCountedConvert65  [fixed]\n  [ok ] runNativeExhaust  [fixed]\n  [ok ] runCM128  [fixed]\n  [ok ] runCheck256  [fixed]\n  [ok ] runNative128  [fixed]\n  [ok ] runCM256  [fixed]\n  [ok ] runCheck65  [fixed]\n  [ok ] runConvert256  [fixed]\n  [ok ] runNativeConvert  [fixed]\n  [ok ] runNativeHard  [fixed]\n  [ok ] runSize65  [fixed]\n  [ok ] runSize256  [fixed]\nall 23 benchmark(s) passed\n"
+    }
+  ]
+}

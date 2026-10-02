@@ -72,9 +72,11 @@ def sqrt? (n z a : Nat) : Option Nat := do
             (HexArith.powMod a d n) (HexArith.powMod a ((d + 1) / 2) n)
       if rootValid n a r then some r else none
 
+/-- A class number one discriminant and its integer singular j-invariant. -/
 structure Invariant where
   /-- Absolute value of the negative discriminant. -/
   d : Nat
+  /-- Integer singular j-invariant of the discriminant. -/
   j : Int
 deriving Repr
 
@@ -87,6 +89,7 @@ def portfolio : List Invariant :=
 /-- Check the exact Cornacchia norm equation, independently of the search. -/
 def normValid (n d t v : Nat) : Bool := t * t + d * v * v == 4 * n
 
+/-- Bound Euclidean descent and check the final integer norm equation. -/
 private def cornacchia (m d : Nat) : Nat → Nat → Nat → Option (Nat × Nat)
   | 0, _, _ => none
   | fuel + 1, a, b =>

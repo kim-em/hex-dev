@@ -1,0 +1,19 @@
+{
+  "command": "lake build +HexECPPMathlib.CoreAuditLint:olean",
+  "probe_source": "import HexECPP\nimport Mathlib.Tactic.Linter.Lint\n\n#lint in HexECPP\n",
+  "output": [
+    "\u2139 [4909/5221] Built HexECPPMathlib.CoreAuditLint (958ms)",
+    "info: HexECPPMathlib/CoreAuditLint.lean:4:0: -- Found 0 errors in 261 declarations (plus 439 automatically generated ones) in HexECPP with 11 linters",
+    "-- All linting checks passed!"
+  ],
+  "source_hashes": {
+    "HexECPP/Affine.lean": "e1a749485731b258030c61ecdb769b697f6b1877434ec589a27a920c164e5c6b",
+    "HexECPP/CM.lean": "05a06a0dafb457e5831f0b6bba2abd2c9c9c2f5a8319772673e0140f858a8de3",
+    "HexECPP/Cert.lean": "1d3261fbe6c581e630811277c83ef36e44bcdce87b042ff4eac4e60409d73100",
+    "HexECPP/Data.lean": "98690924d6648202e8e2f43d118934eb0e4fb3899a3127aa02bf4ef605d5bd81",
+    "HexECPP/Import.lean": "acd09355df7cbed5c4271cfc780b8ed90ff1ca88ac8c22abed4f4f5dc8d6406d",
+    "HexECPP/Replay.lean": "365360db2a51992dfdd0c48e6e37a8bbc61e13bc57faa448abffd851c26856dc",
+    "HexECPP/Search.lean": "af40c52c431df4d3338ed059612963be8d70f31d675a72a744a105596e55a2c6"
+  },
+  "lean": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)"
+}

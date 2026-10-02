@@ -1,0 +1,83 @@
+**Verdict: no SPEC blocker remains in the seven HexECPP modules. The scaffolding now merits the Phase 2 attestation**, with the low-severity items below filed as follow-up issues. I found no placeholders, no data-level `sorry`/`axiom`/`native_decide`/`partial def`/`@[extern]`, no Mathlib imports, and none of the forbidden marker words (`scaffold`, `for now`, `placeholder`, etc.) anywhere in `HexECPP/`. `bit_mod_succ` doesn't duplicate a public core lemma: core's `mod_two_pow_succ` is `private`.
+
+I could not build: `lake build` was denied in this mode. Everything below comes from reading the source and the `#guard` tests, not from running them.
+
+## Your checklist, verified against the current source
+
+| Item | Result | Where |
+|---|---|---|
+| Preflight before endpoint search | ✓ Row count, endpoint bits and every row's integer bits are checked before the fuel check and before `primeCertCountedWith?`. Tests pin row indices and ordering, including with inadmissible fuel. | `Import.lean:189-197`, `:354-361`; `ImportConformance.lean:207-220` |
+| Bracket nesting before JSON | ✓ `scanDigits`, then `scanNesting` (depth ≤ 3, tail-recursive), then `Json.parse`. | `Import.lean:311-318`; `[[[[0]]]]` gives `unsupported` |
+| Row locations | ✓ For parse, limit, last-row division and per-row conversion errors. The endpoint uses `rows.length`. | `Import.lean:326-334`, `:227-234`; tests at `ImportConformance.lean:235-240` |
+| Local `checkStep` plus one final chain check | ✓ `convertRow` runs only `checkStep`, and `convert` runs `checkAt` once. In search, `point` runs `checkStep`, `produce` charges `replayWork` and `finish` runs `checkAt n` once. The earlier quadratic re-checking is gone. | `Import.lean:223,244`; `Search.lean:276-277,365,340` |
+| Child failure outranks an earlier local retry | ✓ for the SPEC's rule. A child's `nonresidueRetries` survives the parent's later portfolio, and a child failure replaces a parent's earlier `pointRetries`. See L1 and L2 for remaining nuances. | `Search.lean:131-138` |
+| Certificate-size traversal exhaustion | ✓ `primeBits` returns `none` when fuel runs out, and `remember` reports `.outputBits`. The hard-coded sentinel is gone. Fuel `maxDepth + 1 = 9` exactly covers the leaf profile, because `Construction.generate` with fuel `k` produces height ≤ `k+1`. | `Search.lean:215-241,250`; tests `NativeConformance.lean:122-124` |
+| `convert_ok` / `produce_ok` | ✓ Both exist and are proved. `produce_ok` gives `checkAt n c`. `convert_ok` gives only `check c` (L3). | `Import.lean:372`, `Search.lean:372` |
+| Memo reuse across calls | ✓ The public `search` with caller-held `SearchState` reuses successes with no new work or random draws. | `NativeConformance.lean:111-121` |
+
+The arithmetic matches SPEC items 1–5 exactly:
+- The opposite-point check comes before the doubling check, and witnesses are consumed in order with leftovers rejected.
+- `sizeBound` checks positivity before subtracting. Both of its strict boundaries are tested (`16,9` and `64,9`).
+- `(15:16:15)` mod 35 and `(7:2:7)` mod 49 are rejected.
+
+The CM curve families are also correct: twist families, the j=0 and j=1728 traces, both Cornacchia forms and the odd-root lift to `4n`.
+
+On your rulings:
+- I agree the `checkedAdd?` guards are acceptable. They never reject a legitimate addition: with a unit witness, the chord and tangent formulas preserve the curve equation as a commutative-ring identity, so the guard costs work but loses no completeness. Dropping them is an optional Phase 4 optimization, not a wrong-shape violation.
+- I also agree that the earlier F2 (reject a twist after one failed `qQ`) should not be acted on.
+
+## Remaining findings (none blocking)
+
+**L1. Low-medium: the SPEC contract. `Resource.pointRetries` can never be the final diagnostic.**
+- **Location:** `Search.lean:134-136` together with `:281` and `:324`.
+- **Evidence:** Every node that records `pointRetries` either succeeds or ends with `unresolved n .portfolio` at the same subject, and that rule replaces it. The tests pin this: `exhausted hard {pointRetries := 0} .portfolio` and `rejected`.
+- **Why it matters:** The SPEC (lines 236-239) says diagnostics *distinguish* exhausted local point retries from the complete portfolio. The rule "portfolio at the same node supersedes local retries" is the code's addition, not the SPEC's.
+- **Fix, either:**
+  - (a) At portfolio end, report `⟨n, pointRetries⟩` when no candidate at this node reached a child and at least one twist ran out of retries; or
+  - (b) Amend the SPEC so per-twist retry exhaustion counts as rejecting that candidate, and drop the constructor.
+
+**L2. Low: priority uses subject size as a stand-in for depth.**
+- **Location:** `Search.lean:135`.
+- **Evidence:**
+  - `n < e.subject` also holds for unrelated siblings. If two children both fail, the smaller one overrides an earlier `nonresidueRetries`, but a larger one does not, so the reported failure depends on numeric order rather than on the tree.
+  - The `childRetry` test uses a synthetic "ancestor" `hard + 2`, so no real parent-to-child failure is exercised.
+  - In stateful use, `stats.unresolved` carries over between calls, so a later failing call reports an earlier call's frozen diagnostic.
+- **Fix:** Record the depth with each diagnostic, and document that callers should reset `unresolved` between calls (or provide a helper that does). Add one real recursive failure test.
+
+**L3. Low: conversion's subject binding is vacuous and isn't stated as a theorem.**
+- **Location:** `Import.lean:244`, `:372-374`.
+- **Evidence:** `checkAt cert.subject cert` is a tautology. It is equivalent to the intended check only because `convertRows` happens to build row 0's `n`. Consumers (`Compact`, `Native`, `Elab`) re-check `checkAt n` themselves, so soundness is unaffected.
+- **Fix:** Bind to `input.rows.head?.map (·.n) |>.getD input.endpoint`, state that in `convert_ok`, and add `convertText_ok` and `convertCounted_ok` corollaries.
+
+**L4. Low: text-level failures report row 0.**
+- **Location:** `Import.lean:313-318`.
+- **Evidence:** A digit-limit, bad-character, nesting or JSON-syntax error inside row 7 reports `row = 0`, which looks the same as "row 0 failed". The SPEC asks for enough location to identify the failing row (line 178).
+- **Fix:** Give `ImportError` a location type that distinguishes the input text (byte offset), a row and the endpoint.
+
+**L5. Low: minor items.**
+- The `convertCounted` docstring says fuel is "capped", but the code rejects fuel over the limit (`Import.lean:352-353` vs `:359`).
+- For a directly constructed `PariCertificate`, the cheap row arithmetic (exact division, q chaining) still runs only after the endpoint search. Parsed input already checks the last row's division.
+- A full memo aborts a found success with `.memo`. This is consistent with the SPEC's allocation semantics, but stopping caching would be gentler. In stateful use, a memo hit can also return a chain deeper than the remaining depth.
+
+## Earlier review (`/tmp/hex-ecpp-phase2-opinion.txt`), now
+
+| Finding | Status |
+|---|---|
+| F1 | Resolved by your ruling. Optional. |
+| F2 | Withdrawn. |
+| F3 | Fixed. |
+| F4(b) | Fixed. |
+| F4(a) | Persists as L1. |
+| F5 | The memo is now useful across calls; the full-memo abort remains (L5). |
+| F6 | Fixed for rows; text-level errors remain (L4). |
+| F7 | Fixed. |
+| F8 | Fixed: the copy is deleted and `HexArith.lt_two_pow_bitLength` is used. |
+| F9 | Partly fixed: the limit preflight is done, the arithmetic is still late (L5). |
+| F10 | Belongs to the companion; not reviewed. |
+| F11 | Done, except the subject binding (L3). |
+| F12 | Fixed. |
+
+## Not done
+- No build or `#guard` run: the bash permission was denied.
+- I only skimmed the Codex log.
+- As you asked, I did not review performance certification or release readiness, or the companion's group-semantics proofs.

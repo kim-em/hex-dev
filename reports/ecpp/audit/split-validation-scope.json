@@ -1,0 +1,6 @@
+{
+  "source": "929c1d4f1e34d1525bbc1785cd1a2a7ae20361ad",
+  "split": "reports/ecpp/audit/split-final.json",
+  "dry_run": "reports/ecpp/audit/release-dry-run.json",
+  "contract": "Fresh build uses actual unmanaged repository skeletons and publication source/settings/toolchain transforms. Scratch local paths replace versioned require/lockfile pins for exact coordinated prerequisites. Full manifest validators, test-target/version-pin and lockfile rewrites are covered separately by the successful guarded GitHub workflow dry run. Later changes affect benchmark, conformance, profiles and reports; no mapped published core source changed."
+}

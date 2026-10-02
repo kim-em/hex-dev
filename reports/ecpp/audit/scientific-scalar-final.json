@@ -1,0 +1,91 @@
+{
+  "cpu": 57,
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "source": "524f5ebdbd20ac3e99eefd8363376e230d2233c9",
+  "source_hashes": {
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "a2440490b8954368bd3de4d4e7142d0a75ef6b4e1cbe664c152a87e0715a0e56",
+    "bench/HexECPP/Bench.lean": "4018fcd35e5e140c7d57bc56b7b1ea013c9aded3e7a2ff2eb5d12d198870dbfe",
+    "scripts/bench/ecpp_audit.py": "86366dd8af894eed42e8ec40fd85fe4272a49ebc17b079f6fce7a2897bf525cc",
+    "HexECPP/Affine.lean": "e1a749485731b258030c61ecdb769b697f6b1877434ec589a27a920c164e5c6b",
+    "HexECPP/CM.lean": "05a06a0dafb457e5831f0b6bba2abd2c9c9c2f5a8319772673e0140f858a8de3",
+    "HexECPP/Cert.lean": "1d3261fbe6c581e630811277c83ef36e44bcdce87b042ff4eac4e60409d73100",
+    "HexECPP/Data.lean": "98690924d6648202e8e2f43d118934eb0e4fb3899a3127aa02bf4ef605d5bd81",
+    "HexECPP/Import.lean": "1f8ef51119d1ce20085c50093edc68bc34450d542d1062ebe35af2b72736d132",
+    "HexECPP/Replay.lean": "365360db2a51992dfdd0c48e6e37a8bbc61e13bc57faa448abffd851c26856dc",
+    "HexECPP/Search.lean": "d3e52d16f3625bcd007260ff1efcc79edbfe8dd17cc0377a57929a78529fb21f"
+  },
+  "executable_sha256": "2af2a1610bbae91e6aa58dfbb9297c6f214fdcd9834e2a103167e1e7da689a00",
+  "lean": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "host_before": {
+    "loadavg": [
+      5.548828125,
+      11.57080078125,
+      27.49560546875
+    ]
+  },
+  "commands": [
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10585/.lake/build/bin/hexecpp_bench",
+        "run",
+        "Hex.ECPPBench.runReplay",
+        "--export-file",
+        "reports/ecpp/audit/scientific-scalar-final.artifacts/runReplay.json"
+      ],
+      "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10585",
+      "returncode": 0,
+      "stdout": "Hex.ECPPBench.runReplay    expected complexity: k * k    [warm cache]\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=524f5eb-dirty, 2026-10-02T07:15:43Z, host=chungus2\n      param  per-call    repeats  C\n    262_144  442.753 ms  \u00d72^3     C=0.011 [trial 1/3]\n    524_288    1.889 s   \u00d72^1     C=0.009 [trial 1/3]\n  1_048_576    6.490 s   \u00d72^0     C=0.007 [trial 1/3]\n  2_097_152   29.262 s   \u00d72^0     C=0.007 [trial 1/3]\n  4_194_304    \u2014         \u2014        C=\u2014     [killed at cap] [trial 1/3]\n    262_144  740.262 ms  \u00d72^2     C=0.011 [trial 2/3]\n    262_144  743.211 ms  \u00d72^2     C=0.011 [trial 3/3]\n    524_288    2.590 s   \u00d72^0     C=0.009 [trial 2/3]\n    524_288    2.572 s   \u00d72^1     C=0.009 [trial 3/3]\n  1_048_576    8.868 s   \u00d72^0     C=0.007 [trial 2/3]\n  1_048_576    7.711 s   \u00d72^0     C=0.007 [trial 3/3]\n  2_097_152   28.420 s   \u00d72^0     C=0.007 [trial 2/3]\n  2_097_152   32.376 s   \u00d72^0     C=0.007 [trial 3/3]\n  verdict: inconclusive (cMin=0.007, cMax=0.011, \u03b2=-0.250, looks faster than declared by ~n^0.250)\n  per-spawn floor (harness self-measurement): 27.149 ms\n  peak RSS: 75_424 kB..184_628 kB (across 12 ok row(s))\n  trial summaries (3 trials per param; spread = (max-min)/median):\n        param  trials  median      min         max         spread \n      262_144  3/3     740.262 ms  442.753 ms  743.211 ms  40.588%\n      524_288  3/3       2.572 s     1.889 s     2.590 s   27.273%\n    1_048_576  3/3       7.711 s     6.490 s     8.868 s   30.835%\n    2_097_152  3/3      29.262 s    28.420 s    32.376 s   13.521%\n  \u203c ladder stopped at param=4194304 after hitting the wallclock cap (`maxSecondsPerCall = 240.000s`); subsequent rungs in the schedule were skipped. Raise the cap if you need to reach further, or use `where { paramSchedule := .custom #[...] }` to pin a tractable rung set.\nexported to reports/ecpp/audit/scientific-scalar-final.artifacts/runReplay.json\n",
+      "stderr": "",
+      "loadavg": [
+        65.05224609375,
+        67.96044921875,
+        50.6142578125
+      ]
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10585/.lake/build/bin/hexecpp_bench",
+        "run",
+        "Hex.ECPPBench.runProposal",
+        "--export-file",
+        "reports/ecpp/audit/scientific-scalar-final.artifacts/runProposal.json"
+      ],
+      "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10585",
+      "returncode": 0,
+      "stdout": "Hex.ECPPBench.runProposal    expected complexity: k * k    [warm cache]\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=524f5eb-dirty, 2026-10-02T07:24:15Z, host=chungus2\n      param  per-call    repeats  C\n    262_144  589.107 ms  \u00d72^3     C=0.007 [trial 1/3] \u2020\n    524_288    2.300 s   \u00d72^1     C=0.006 [trial 1/3]\n  1_048_576    6.919 s   \u00d72^0     C=0.006 [trial 1/3]\n  2_097_152   24.929 s   \u00d72^0     C=0.006 [trial 1/3]\n  4_194_304  100.380 s   \u00d72^0     C=0.006 [trial 1/3]\n    262_144  482.881 ms  \u00d72^3     C=0.007 [trial 2/3] \u2020\n    262_144  475.167 ms  \u00d72^3     C=0.007 [trial 3/3] \u2020\n    524_288    1.686 s   \u00d72^1     C=0.006 [trial 2/3]\n    524_288    1.691 s   \u00d72^1     C=0.006 [trial 3/3]\n  1_048_576    6.280 s   \u00d72^0     C=0.006 [trial 2/3]\n  1_048_576    6.257 s   \u00d72^0     C=0.006 [trial 3/3]\n  2_097_152   24.468 s   \u00d72^0     C=0.006 [trial 2/3]\n  2_097_152   24.516 s   \u00d72^0     C=0.006 [trial 3/3]\n  4_194_304  100.041 s   \u00d72^0     C=0.006 [trial 2/3]\n  4_194_304  100.883 s   \u00d72^0     C=0.006 [trial 3/3]\n  verdict: consistent with declared complexity (cMin=0.006, cMax=0.006, \u03b2=-0.036)\n  per-spawn floor (harness self-measurement): 75.691 ms\n  peak RSS: 93_904 kB..488_976 kB (across 15 ok row(s))\n  trial summaries (3 trials per param; spread = (max-min)/median):\n        param  trials  median      min         max         spread \n      262_144  3/3     482.881 ms  475.167 ms  589.107 ms  23.596%\n      524_288  3/3       1.691 s     1.686 s     2.300 s   36.286%\n    1_048_576  3/3       6.280 s     6.257 s     6.919 s   10.542%\n    2_097_152  3/3      24.516 s    24.468 s    24.929 s   1.883% \n    4_194_304  3/3     100.380 s   100.041 s   100.883 s   0.839% \nexported to reports/ecpp/audit/scientific-scalar-final.artifacts/runProposal.json\n",
+      "stderr": "",
+      "loadavg": [
+        11.9580078125,
+        23.82763671875,
+        31.4697265625
+      ]
+    }
+  ],
+  "budgets_seconds": {
+    "runCheck65": 0.00032,
+    "runCheck256": 0.012,
+    "runCheck512": 0.045,
+    "runConvert65": 0.0016,
+    "runConvert256": 0.17,
+    "runConvert512": 1.05,
+    "runNative128": 0.125,
+    "runNative256": 1.45,
+    "runNativeHard": 3.3,
+    "runNativeCheck": 0.01,
+    "runNativeConvert": 0.14
+  },
+  "samples": [],
+  "host_after": {
+    "loadavg": [
+      11.9580078125,
+      23.82763671875,
+      31.4697265625
+    ]
+  },
+  "artifact_sha256": {
+    "runReplay.json": "51d679571e3c5bf967e37ea1a903b73922017d716cfd72ad55eddec5f74a16d5",
+    "runProposal.json": "666d3afeba65455c22367b28e57a06aafb1abfb8a4a112aba27b4b9304a69762"
+  }
+}

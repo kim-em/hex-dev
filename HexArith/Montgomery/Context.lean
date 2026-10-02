@@ -671,7 +671,8 @@ namespace HexArith
 def bitLength (n : Nat) : Nat :=
   if n = 0 then 0 else n.log2 + 1
 
-private theorem lt_two_pow_bitLength (n : Nat) : n < 2 ^ bitLength n := by
+/-- Every binary digit of a natural lies below its declared bit length. -/
+theorem lt_two_pow_bitLength (n : Nat) : n < 2 ^ bitLength n := by
   unfold bitLength
   by_cases hn : n = 0
   · simp [hn]
