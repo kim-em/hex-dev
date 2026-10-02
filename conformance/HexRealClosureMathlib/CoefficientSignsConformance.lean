@@ -41,8 +41,8 @@ private theorem child_checked :
   decide +kernel
 
 set_option maxRecDepth 32768 in
-/-- Supplied evidence must refer to the reduced query in its exact context.
-A wrong sign, the unreduced representative or a copied context rejects. -/
+/-- Evidence for a wrong sign, a different query or a foreign context rejects.
+The restoration bridge's type fixes its actual reduced query. -/
 theorem rejected_kernel :
     source.checkSigns [2 * Sturm.Fixtures.x] #v[-1] (.leaf firstNode) = false ∧
     source.checkSigns [stored] #v[1] (.leaf firstNode) = false ∧
@@ -87,6 +87,55 @@ theorem restore_checked :
     Element.restore? (context := context) stored 1 =
       some (Element.restore stored 1 sign_checked (by decide +kernel)) :=
   Element.restore?_eq _ _ _ _
+
+/-- Restoration also rejects a false sign through the existing executable API. -/
+theorem restore_rejected : Element.restore? (context := context) stored (-1) = none :=
+  Element.restore?_stale _ _ (by rw [sign_checked]; decide +kernel)
+
+private theorem canReduce : context.canReduce = true := by
+  rw [context.reduce_checked]
+  simp only [context, Context.root_adjoin, Context.clean_adjoin, source_raw, singletonRaw, ← Array.all_toList]
+  decide +kernel
+
+private theorem reduced : context.reduce stored = 2 * Sturm.Fixtures.x := by
+  rw [Context.reduce, dite_eq_left canReduce]
+  simp only [context, Context.root_adjoin, source_raw, stored, singletonRaw, DensePoly.divModMonic]
+  decide +kernel
+
+private theorem query_small :
+    context.queryPoly (2 * Sturm.Fixtures.x) = 2 * Sturm.Fixtures.x := by
+  simp only [Context.queryPoly, context, Context.root_adjoin, source_raw, singletonRaw]
+  decide +kernel
+
+theorem reduced_sign : context.signPoly (2 * Sturm.Fixtures.x) = 1 := by
+  simpa only [Context.signPoly, query_eq, query_small] using sign_checked
+
+/-- Actual packing reduces the stored input; proof-directed restoration can
+reuse the checked sign of that precise remainder. -/
+theorem packing_checked :
+    Element.ofPoly (context := context) stored =
+      Element.restore (2 * Sturm.Fixtures.x) 1 reduced_sign (by decide +kernel) := by
+  have checked : context.signPoly (context.reduce stored) = 1 := by
+    rw [reduced]
+    exact reduced_sign
+  simpa only [reduced] using Element.ofPoly_restore stored 1 checked (by decide +kernel)
+
+/-- Packing and literal restoration have different stored representatives. -/
+theorem packing_literal : (Element.ofPoly (context := context) stored).polynomial ≠ stored := by
+  rw [packing_checked, Element.restore_polynomial]
+  simp only [stored]
+  decide +kernel
+
+private theorem reduced_head : context.reduce Sturm.Fixtures.p = 0 := by
+  rw [Context.reduce, dite_eq_left canReduce]
+  simp only [context, Context.root_adjoin, source_raw, singletonRaw, DensePoly.divModMonic]
+  decide +kernel
+
+/-- A vanishing input packs to canonical zero through the constant sign path. -/
+theorem packing_zero : Element.ofPoly (context := context) Sturm.Fixtures.p = 0 := by
+  apply Element.ofPoly_eq_zero
+  rw [reduced_head, Context.signPoly_const context 0 (by decide +kernel)]
+  decide +kernel
 
 /-- info: 'Hex.RealClosure.Algebraic.CoefficientSignsConformance.sign_checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

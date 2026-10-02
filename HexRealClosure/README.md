@@ -844,13 +844,13 @@ from literal one does not enable monic storage.
 representative using a proof of `Context.signPoly p = sign`. It performs no
 sign query or normalization. `restore?_eq` proves equality with the existing
 independent executable check; canonical zero remains separate. `ofPoly_restore`
-and `ofPoly_zero` identify the actual packing result from a proved sign of its
+and `ofPoly_eq_zero` identify the actual packing result from a proved sign of its
 retained remainder. The companion's
 `Context.signPoly_checked` obtains that proof from supplied, accepted
 `SelectedSigns` evidence for the actual reduced query in this exact context.
 The ordinary-kernel example uses a degree-two stored representative whose
-query has degree one; wrong signs, unreduced queries and copied context keys
-reject. The byte coefficient decoder continues to use `restore?`.
+query has degree one; evidence for a different query or a foreign context rejects.
+The certificate type fixes the actual reduced query. The byte coefficient decoder continues to use `restore?`.
 
 Ordinary addition, subtraction, negation, multiplication, inversion and
 division operate on these values. Inversion computes the defining polynomial's

@@ -226,6 +226,16 @@ def restore (p : DensePoly E) (claimed : Int)
     (checked : context.signPoly p = claimed) (nonzero : claimed ≠ 0) : Element context :=
   ⟨some ⟨p, claimed, checked, nonzero⟩⟩
 
+private theorem stored_restore_proof (p : DensePoly E) (claimed : Int)
+    (checked : context.signPoly p = claimed) (nonzero : claimed ≠ 0) :
+    (restore p claimed checked nonzero).stored = some ⟨p, claimed, checked, nonzero⟩ := rfl
+
+/-- The stored fields retain the exact polynomial, sign and their context-bound proofs. -/
+theorem stored_restore (p : DensePoly E) (claimed : Int)
+    (checked : context.signPoly p = claimed) (nonzero : claimed ≠ 0) :
+    (restore p claimed checked nonzero).stored = some ⟨p, claimed, checked, nonzero⟩ :=
+  stored_restore_proof p claimed checked nonzero
+
 /-- Restore a literal nonzero stored form after checking its cached sign in
 this exact context. Certificate coefficients must retain their polynomial;
 arithmetic packing continues to use `ofPoly` and its reduction policy. -/
@@ -241,34 +251,34 @@ theorem restore?_eq (p : DensePoly E) (claimed : Int)
     restore? p claimed = some (restore p claimed checked nonzero) := by
   simp [restore?, restore, checked, nonzero]
 
-private theorem stored_restore_proof (p : DensePoly E) (claimed : Int)
+private theorem stored_restore?_proof (p : DensePoly E) (claimed : Int)
     (hc : context.signPoly p = claimed) (hn : claimed ≠ 0) :
     (restore? (context := context) p claimed).map Element.stored =
       some (some ⟨p, claimed, hc, hn⟩) := by
   simp [restore?, restore, hc, hn]
 
-theorem stored_restore (p : DensePoly E) (claimed : Int)
+theorem stored_restore? (p : DensePoly E) (claimed : Int)
     (hc : context.signPoly p = claimed) (hn : claimed ≠ 0) :
     (restore? (context := context) p claimed).map Element.stored =
-      some (some ⟨p, claimed, hc, hn⟩) := stored_restore_proof p claimed hc hn
+      some (some ⟨p, claimed, hc, hn⟩) := stored_restore?_proof p claimed hc hn
 
 /-- Every existing nonzero restores literally, including representatives that
 are semantically equal but structurally different. -/
-private theorem restore_stored_proof (a : Element context) (p : Nonzero context)
+private theorem restore?_stored_proof (a : Element context) (p : Nonzero context)
     (h : a.stored = some p) : restore? p.polynomial p.sign = some a := by
   rcases a with ⟨stored⟩
   cases h
   simp [restore?, restore, p.checked, p.nonzero]
 
-theorem restore_stored (a : Element context) (p : Nonzero context)
+theorem restore?_stored (a : Element context) (p : Nonzero context)
     (h : a.stored = some p) : restore? p.polynomial p.sign = some a :=
-  restore_stored_proof a p h
+  restore?_stored_proof a p h
 
-theorem restore_zero (p : DensePoly E) :
+theorem restore?_zero (p : DensePoly E) :
     restore? (context := context) p 0 = none := by
   simp [restore?]
 
-theorem restore_stale (p : DensePoly E) (claimed : Int)
+theorem restore?_stale (p : DensePoly E) (claimed : Int)
     (h : context.signPoly p ≠ claimed) :
     restore? (context := context) p claimed = none := by
   simp [restore?, h]
@@ -307,7 +317,7 @@ theorem ofPoly_restore (p : DensePoly E) (claimed : Int)
 
 /-- A proved zero sign of the actual retained remainder identifies the
 canonical zero branch of packing. -/
-theorem ofPoly_zero (p : DensePoly E)
+theorem ofPoly_eq_zero (p : DensePoly E)
     (checked : context.signPoly (context.reduce p) = 0) :
     ofPoly (context := context) p = 0 := by
   apply ext
