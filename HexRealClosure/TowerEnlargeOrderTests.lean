@@ -40,7 +40,10 @@ private def run : IO Unit := do
   check base [1, (NatCast.natCast (10 ^ 40) : base.Value)⁻¹, -1, 0]
   let some enlarged := base.enlargeWithParameter?
     | throw (IO.userError "first native infinitesimal failed")
-  check enlarged.conversion.context [enlarged.parameter, -enlarged.parameter,
+  let eps := enlarged.parameter
+  let eps2 := eps * eps
+  let eps4 := eps2 * eps2
+  check enlarged.conversion.context [eps, eps4 * eps, -eps,
     (NatCast.natCast (10 ^ 40) : enlarged.conversion.context.Value)⁻¹]
   let previous := enlarged.conversion.context
   let z : DensePoly previous.Value := DensePoly.ofCoeffs #[0, 1]
@@ -50,7 +53,8 @@ private def run : IO Unit := do
     | throw (IO.userError "root over an existing infinitesimal failed")
   let stagedRoot := previous.adjoin infinitesimalRoot
   let gamma := stagedRoot.generator
-  check stagedRoot.context [stagedRoot.embed enlarged.parameter, gamma, gamma - 1,
+  check stagedRoot.context [stagedRoot.embed enlarged.parameter,
+    stagedRoot.embed (eps4 * eps), gamma, gamma - 1,
     (gamma - 1)⁻¹, -gamma, 0]
   let two : base.Value := 1 + 1
   let x : DensePoly base.Value := DensePoly.ofCoeffs #[0, 1]

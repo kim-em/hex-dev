@@ -1394,7 +1394,10 @@ and staged-order results with dependency closure. The interpretation ingredients
    `Conversion.parameter` supplies the new base parameter,
    and `Rebuilt.parameter` uses the cached initial inclusion carried by
    `rebuild?` through every actual child. It reuses each child’s native
-   embedding without encoding or parsing its descriptor frame again. `infinitesimalMapped_parameter` and `Rebuilt.parameter_value`
+   embedding without encoding or parsing that converted child’s descriptor
+   frame again. Origin extraction and recursive source indices still re-adjoin
+   old descriptors and can repeat their frame encoding; this is not a
+   depth-scaling cost claim for the producer as a whole. `infinitesimalMapped_parameter` and `Rebuilt.parameter_value`
    identify that stored value with the same ambient indeterminate used by
    the sign-preserving new-base interpretation. `enlargeWithParameter?_model`
    carries an arbitrary old ordered-field model, the exact target alignment

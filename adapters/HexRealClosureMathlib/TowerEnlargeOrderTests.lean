@@ -94,4 +94,49 @@ example (suffix : Suffix base) (old : Model suffix.context ℝ) :
     Context.enlargeWithParameter?_algebraic rationalBase suffix rational old ambient
   exact ⟨rebuilt.enlargement rationalBase rfl, enlarged, ⟨model⟩, positive, small⟩
 
+private abbrev nestedBase := rationalBase.infinitesimal
+private abbrev nested := Context.base nestedBase
+private noncomputable def nestedReference : Model nested (Ambient.infinitesimal Rat).Carrier := by
+  classical
+  let wide := Ambient.infinitesimal Rat
+  let f := Ambient.nativeHom HexRationalFnMathlib.ratField_eq wide
+  exact Model.base nestedBase f
+    (fun q => Ambient.nativeHom_sign HexRationalFnMathlib.ratField_eq wide q)
+
+/-- A lawful reference for the native ℚ(ε) base supplies actual enlargement
+and its returned parameter through every validated root over that base. -/
+example (suffix : Suffix nested) :
+    ∃ result : Enlargement suffix.context,
+      suffix.context.enlargeWithParameter? = some result ∧
+      result.conversion.context.sign result.parameter = 1 ∧
+      ∀ a, suffix.context.sign a = 1 → result.conversion.context.sign
+        (result.parameter - result.conversion.value a) = -1 := by
+  classical
+  exact Context.enlargeWithParameter?_ordered nestedBase suffix rfl nestedReference
+
+/-- Over a non-Archimedean base, inequalities are supplied only for initial
+base values. Algebraicity extends them to the selected root and all its values. -/
+example (descriptor : SignDet.Descriptor nested.Value Signature nested.sign nested.signature)
+    {L : Type} [Field L] [LinearOrder L] [IsStrictOrderedRing L]
+    (embedding : (Ambient.infinitesimal Rat).Carrier →+* L) (ordered : StrictMono embedding)
+    (parameter : L)
+    (small : ∀ a : nested.Value, 0 < nestedReference.value a →
+      parameter < embedding (nestedReference.value a)) :
+    ∀ a, 0 < (nestedReference.adjoin descriptor).value a →
+      parameter < embedding ((nestedReference.adjoin descriptor).value a) := by
+  classical
+  apply Model.suffix_infinitesimal nestedBase (.root descriptor .nil) nestedReference
+    (nestedReference.adjoin descriptor) embedding ordered parameter
+  intro b positive
+  let a : nested.Value := by
+    change BaseContext.Element nestedBase
+    exact ⟨b⟩
+  change parameter < embedding ((nestedReference.adjoin descriptor).value
+    ((nested.adjoin descriptor).embed a))
+  rw [Model.adjoin_embed]
+  apply small
+  change 0 < (nestedReference.adjoin descriptor).value
+    ((nested.adjoin descriptor).embed a) at positive
+  rwa [Model.adjoin_embed] at positive
+
 end Hex.RealClosure.Tower.EnlargeOrder.Tests
