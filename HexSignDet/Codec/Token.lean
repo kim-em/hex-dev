@@ -150,8 +150,8 @@ theorem dropSpace_emit (token : Token) (suffix : List Char) :
     | negSucc n => simp [emit, write, Int.repr_eq_ite, String.toList_append]
   | string s => simp [emit, write, Str.write]
 
-/-- A finite lexer for untrusted certificate text. The caller chooses fuel;
-byte decoding uses the actual number of input characters plus one. -/
+/-- Finite reference lexer used in proofs. Native byte decoding uses
+`lexLoop`; this reference retains one stack frame per token. -/
 @[expose] def lex : Nat → List Char → Option (List Token)
   | 0, _ => none
   | fuel + 1, input => do
@@ -202,10 +202,44 @@ private theorem writeTokens_length (tokens : List Token) :
       List.length_cons] at *
     omega
 
+/-- Tail-recursive token accumulation avoids one native stack frame per
+input token. The public byte lexer uses this loop. -/
+@[expose] def lexLoop : Nat → List Char → List Token → Option (List Token)
+  | 0, _, _ => none
+  | fuel + 1, input, reversed => do
+    let rest := input.dropWhile Char.isWhitespace
+    if rest.isEmpty then return reversed.reverse
+    else do
+      let (token, rest) ← read rest
+      lexLoop fuel rest (token :: reversed)
+
+private theorem lexLoop_eq (fuel : Nat) (input : List Char) (reversed : List Token) :
+    lexLoop fuel input reversed = (lex fuel input).map (fun tokens => reversed.reverse ++ tokens) := by
+  induction fuel generalizing input reversed with
+  | zero => rfl
+  | succ fuel ih =>
+    simp only [lexLoop, lex]
+    cases (input.dropWhile Char.isWhitespace).isEmpty with
+    | true => simp
+    | false =>
+      simp only [Bool.false_eq_true, ↓reduceIte]
+      cases read (input.dropWhile Char.isWhitespace) with
+      | none => simp [bind, Option.bind]
+      | some pair =>
+        obtain ⟨token, rest⟩ := pair
+        simp only [bind, Option.bind, ih]
+        cases lex fuel rest <;> simp [List.reverse_cons, List.append_assoc]
+
+/-- The accumulator lexer agrees with the finite reference on all inputs,
+including malformed token sequences and insufficient fuel. -/
+theorem lexLoop_spec (fuel : Nat) (input : List Char) :
+    lexLoop fuel input [] = lex fuel input := by
+  simpa using lexLoop_eq fuel input []
+
 /-- Validate UTF-8 and lex integer-only JSON certificate bytes. -/
 @[expose] def readBytes (input : ByteArray) : Option (List Token) := do
   let text ← String.fromUTF8? input
-  lex (text.toList.length + 1) text.toList
+  lexLoop (text.toList.length + 1) text.toList []
 
 @[expose] def writeBytes (tokens : List Token) : ByteArray :=
   (String.ofList (writeTokens tokens)).toUTF8
@@ -217,7 +251,9 @@ theorem readBytes_write (tokens : List Token) :
   unfold readBytes writeBytes
   rw [Decimal.fromUTF8_toUTF8]
   simp only [bind, Option.bind, String.toList_ofList]
-  exact lex_writeTokens tokens _ (by have hn := writeTokens_length tokens; omega)
+  rw [lexLoop_eq]
+  rw [lex_writeTokens tokens _ (by have hn := writeTokens_length tokens; omega)]
+  rfl
 
 /-- info: 'Hex.SignDet.Codec.Token.readBytes_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

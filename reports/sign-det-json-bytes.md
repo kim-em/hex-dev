@@ -50,19 +50,59 @@ though a JSON printer normalizes them. The existing `FastCheck.NumberForm`
 counterexample remains applicable. No certificate-byte completeness claim
 follows merely from the backend theorem.
 
-String-prefix parsing scans only through the current quoted string, rather
-than rescanning the whole remaining input for each string token. A proved
-prefix-scan law preserves the universal byte roundtrip. The native corpus also
-includes 3,000 empty strings, a 25,000-element flat array, a 12,000-character
-string and a 4,096-digit integer. The oracle runs the driver with an 8 MiB
-stack limit. These cases pass; they establish an observed envelope of 75,000 input bytes,
-25,000 array elements and 12,000 string characters, not suitability at the
-16 MiB certificate ceiling. Recursion depth grows with token count or string
-length in lexing, string scanning/reading, array and object tails, token
-printing and derived equality. Stack overflow is expected well below that
-ceiling; it aborts the process rather than returning a parse error. The input
-also becomes a character list and then a token list, increasing memory use,
-and nested token concatenation can copy data at each level. Production
-integration must address these costs and retain the existing byte/depth/digit
-pre-scan. The low-level decimal word readers accept leading zeros; JSON token
-parsing separately rejects them.
+String-prefix parsing scans only through the current quoted string. The byte
+lexer, string scanner/reader, structural parser and token producer use verified
+accumulator loops: their outputs are proved equal to the original finite
+recursive definitions. Native recursion follows array/object nesting rather
+than width or string length. The universal byte theorem checks these actual
+loops in the ordinary kernel.
+
+The native subprocess environment disables Lean's separate main thread and
+sets `LEAN_STACK_SIZE_KB=8192` alongside the 8 MiB OS stack limit. The independent
+324-case corpus runs with that enforced stack limit. It includes 3,000
+empty strings, a 25,000-element array, a 12,000-character string and a
+4,096-digit integer. A separate file-mode capacity check avoids the line
+transport and retains the existing lexical byte/depth/digit checks:
+
+```sh
+python3 scripts/oracle/sign_det_json_stress.py
+```
+
+With the same 8 MiB stack, the compiled parser/printer handles a quoted ASCII
+string occupying 16 MiB, a million escaped characters, a two-million-element array, 300,000
+object fields with duplicate keys, nesting depth 128 and a 4,096-digit integer.
+Python independently compares the input and output values of the parse/print
+composition; file mode does not inspect constructors independently. The
+324-case line-mode oracle separately does that inspection. The CI oracle runs smaller probes (a 4 MiB string, a million array
+elements, a million object fields, 500,000 escaped characters and depth 128) plus byte/depth/digit rejection probes.
+Each rejection checks its diagnostic and that no output file was produced.
+These are capacity
+observations, not timing/scaling evidence or exhaustive coverage of every
+input permitted by the limits. They do not exercise derived structural
+equality or `Repr` on wide values, or the line driver's recursive constructor
+inspection and equality. Depth allowances larger than 128 are unvalidated. The character list, token list and result
+still increase memory use; token concatenation can copy data at each nesting
+level. The printer adds whitespace and may produce more bytes than the input,
+including 16 MiB plus one byte for the ceiling-size string. The escaped-string
+probe grows from 2,000,002 to 6,000,003 bytes; arrays grow from 4,000,001 to
+8,000,002 bytes; duplicate object fields grow from 1,800,001 to 3,000,002 bytes.
+The driver also checks the printed output against the default lexical guard;
+the ceiling-size string's extra byte is rejected. A larger output can
+require a larger decoding byte allowance. Final certificate integration must
+account for that expansion and provide a guarded public decoding entry point.
+The low-level `Json.readBytes` is intentionally unguarded; certificate consumers
+must use `Codec.checkBytes` first. These probes do not measure peak memory;
+character-list storage alone can require hundreds of megabytes near the byte
+ceiling. Combined high depth and width and complete memory attribution remain
+integration checks. The low-level decimal word readers accept leading
+zeros; JSON token parsing separately rejects them.
+
+All full-size cases listed above and the smaller CI suite pass with the
+constrained main thread. The stress runner first executes a deliberately
+non-tail recursive canary in the same binary. It must finish on Lean's default
+thread and abort with a stack-overflow diagnostic under the constrained setup.
+This detects runtime flags being ignored; core dumps are disabled for the canary.
+The [pinned runtime source](https://github.com/leanprover/lean4/blob/v4.35.0-rc3/src/runtime/thread.cpp)
+sets a 1 GiB default thread stack on 64-bit hosts. An OS stack limit alone does
+not constrain that explicitly allocated thread stack. These capacity checks
+measure no running-time law or peak memory.
