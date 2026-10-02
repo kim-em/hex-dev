@@ -115,7 +115,8 @@ def bitsExhausted : Bool :=
   | .error e => e.resource == .inputBits
   | _ => false
 #guard bitsExhausted
-def depthExhausted : Bool := match (produce 17 0 { maxDepth := 0 }).result with
+def depthExhausted : Bool :=
+  match (produce 17 0 { maxDepth := 0 }).result with
   | .error e => e.resource == .depth
   | _ => false
 #guard depthExhausted

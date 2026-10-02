@@ -18,6 +18,7 @@ from cpu_lease import cpu_lease
 
 CASES = [('transcript-length', 'Hex.ECPPBench.runReplay', 4096),
          ('row-vectors', 'Hex.ECPPBench.runParse', 4096),
+         ('scalar-modulus-widths', 'Hex.ECPPBench.runSizedProposal', 512),
          ('supplied-certificates', 'runConvert512', 0),
          ('native-production', 'runNativeHard', 0)]
 

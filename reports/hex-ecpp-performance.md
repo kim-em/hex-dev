@@ -131,7 +131,7 @@ and identical result hashes. [regression-current.json](ecpp/audit/regression-cur
 retains every child sample and command; [regression-current-summary.json](ecpp/audit/regression-current-summary.json)
 derives the paired medians without recollection. Checker ratios are
 0.987/1.001/1.006; conversion ratios are 1.196/0.883/0.824; ordinary native
-production ratios are 0.982/0.976. The small converter pays for preflight;
+production ratios are 0.982/0.976. The small converter performs an additional full public-boundary replay;
 larger conversion benefits from local-step checking and one final chain replay.
 Every operation remains inside its independently declared ceiling. Parser
 ratio is 1.017, native check 1.018 and native conversion 0.899.
@@ -213,10 +213,9 @@ construction also have fixed targets. No dominant timed phase is left outside
 the inventory. Allocation percentages explain retained integer/list traffic;
 they do not constitute a correctness or asymptotic failure.
 
-## Concerns
+## Retained runs
 
-No unresolved phase-blocking Concern remains. Completed unsuccessful runs are
-retained, with their limited evidentiary roles explicit:
+Completed unsuccessful runs are retained, with their limited evidentiary roles explicit:
 
 - `scientific.json` and `scientific-final.json`: eager native fixture startup
   polluted the spawn floor. Lazy replay fixture warmup fixes that instrumentation.
@@ -239,3 +238,8 @@ Earlier records are observations, not retroactively passing verdicts. The
 successful current ladders and declared budgets are the Phase 4 evidence.
 Shared-host variation, synthetic fixed-modulus scalar scope, finite native
 capability and different PARI terminal contracts are explicit practical limits.
+
+## Concerns
+
+Representative modulus/scalar coverage and the inverse-backend change are
+under validation; Phase 4 is rolled back until their evidence passes.

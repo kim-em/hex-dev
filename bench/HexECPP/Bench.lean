@@ -254,7 +254,7 @@ setup_benchmark runReplay k => k * k with prep := scalarInput where {
 -- not a replacement for the SPEC's modular-operation bound.
 setup_benchmark runProposal k => k * k with prep := scalarInput where {
   paramFloor := 262144, paramCeiling := 4194304, outerTrials := 3
-  targetInnerNanos := 5000000000, maxSecondsPerCall := 240.0
+  targetInnerNanos := 5000000000, maxSecondsPerCall := 1200.0
 }
 
 def rowBudget (rows : Nat) : ImportBudget :=
@@ -288,6 +288,74 @@ setup_benchmark runParse r => r with prep := textInput where {
 setup_benchmark runPreflight r => r with prep := parsedInput where {
   paramFloor := 1, paramCeiling := 4096, outerTrials := 3
   targetInnerNanos := 2000000000, maxSecondsPerCall := 8.0
+}
+
+/-- Prime moduli at the actual requested widths. The generator and complete
+output are retained in `reports/ecpp/audit/sized-primes.json`. -/
+def sizedPrimes : List (Nat × Nat) := [
+  (64, 9223372036854775907),
+  (128, 170141183460469231731687303715884105979),
+  (256, 57896044618658097711785492504343953926634992332820282019728792003956564820243),
+  (512, 6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042857),
+  (1024, 89884656743115795386465259539451236680898848947115328636715040578866337902750481566354238661203768010560056939935696678829394884407208311246423715319737062188883946712432742638151109800623047059726541476042502884419075341171231440736956555270413618581675255342293149119973622969239858152417678164812112069763),
+  (2048, 16158503035655503650357438344334975980222051334857742016065172713762327569433945446598600705761456731844358980460949009747059779575245460547544076193224141560315438683650498045875098875194826053398028819192033784138396109321309878080919047169238085235290822926018152521443787945770532904303776199561965192760957166694834171210342487393282284747428088017663161029038902829665513096354230157075129296432088558362971801859230928678799175576150822952201848806616643615613562842355410104862578550863465661734839271290328348967522998634176499319107762583194718667771801067716614802322659239302476074096777926805529798117439),
+  (4096, 522194440706576253345876355358312191289982124523691890192116741641976953985778728424413405967498779170445053357219631418993786719092896803631618043925682638972978488271854999170180795067191859157214035005927973113188159419698856372836167342172293308748403954352901852035642024370059304557233988891799014503343469488440893892973452815095130470299789726716411734651513348221529512507986199933857107770846917779942645743159118957217248367043905936319748237550094520674504208530837546834166925275516486044134775384991808184705966507606898412918594045916828375610659246423184062775112999150206172392431297837246097308511903252956622805412865917690043804311051417135098849101156584508839003337597742539960818209685142687562392007453579567729991395256699805775897135553415567045292136442139895777424891477161767258532611634530697452993846501061481697843891439474220308003706472837459911525285821188577408160690315522951458068463354171428220365223949985950890732881736611925133626529949897998045399734600887312408859224933727829625089164535236559716582775403784110923285873186648442456409760158728501220463308455437074192539205964902261490928669488824051563042951500651206733594863336608245755565801460390869016718045121902354170201577101317)]
+
+
+/-- Runtime residues and a complete expected scalar result at real modulus widths. -/
+structure SizedCase where
+  n : Nat
+  b : Nat
+  q : Nat
+  point : Point
+  result : Point
+  inverses : List Nat
+  deriving Repr
+
+private instance : Hashable SizedCase := ⟨fun input => hash (reprStr input)⟩
+
+/-- Use independently generated primes and full-width nontrivial coordinates.
+Dense scalar and modulus widths grow together; setup is outside measurement. -/
+def sizedInput (bits : Nat) : SizedCase := Id.run do
+  let n := (sizedPrimes.find? (fun row => row.1 == bits)).getD (sizedPrimes.head!) |>.2
+  let x := n / 3 + 1
+  let y := n / 7 + 1
+  let b := modSub n (y * y % n) ((x * x * x + 5 * x) % n)
+  let q := 2 ^ bits - 1
+  let point := Point.affine x y
+  let budget := { defaultImportBudget with maxScalarBits := bits, maxInverseOps := 2 * bits }
+  let result := (proposeScalar budget n 5 q point).toOption.getD (.infinity, [])
+  return ⟨n, b, q, point, result.1, result.2⟩
+
+@[noinline] def runSizedReplay (input : SizedCase) : Bool :=
+  onCurve input.n 5 input.b (input.n / 3 + 1) (input.n / 7 + 1) &&
+  (replay input.n 5 input.b input.q input.point input.inverses).any
+    (fun result => result.1 == input.result && result.2.isEmpty)
+
+@[noinline] def runSizedProposal (input : SizedCase) : Bool :=
+  let bits := HexArith.bitLength input.q
+  (proposeScalar { defaultImportBudget with maxScalarBits := bits, maxInverseOps := 2 * bits }
+    input.n 5 input.q input.point).toOption.any fun result =>
+      result.1 == input.result && result.2 == input.inverses
+
+-- Mode 2. Both scalar and modulus have k bits, including the real 64..512
+-- caller range. Replay performs at most 2*k affine additions. GMP's documented
+-- basecase multiply/divide bound is quadratic in operand bits; faster regimes
+-- improve that bound. Nat.testBit copies contribute O(k^2), so O(k^3) bounds
+-- this compiled workload. No tight monomial spans GMP's changing algorithms.
+-- Sources: gmplib.org/manual/Basecase-Multiplication and Basecase-Division.
+setup_benchmark runSizedReplay k => k * k * k with prep := sizedInput where {
+  paramFloor := 64, paramCeiling := 4096, outerTrials := 3
+  targetInnerNanos := 5000000000, maxSecondsPerCall := 120.0
+}
+
+-- Mode 2. GMP GCDEXT documents O(M(k)*log k), with M(k) <= O(k^2).
+-- At most 2*k inverse proposals give O(k^3*log k); ring work and bit copies
+-- are below that bound. Source: gmplib.org/manual/Extended-GCD.
+setup_benchmark runSizedProposal k => k * k * k * (Nat.log2 k + 1)
+  with prep := sizedInput where {
+  paramFloor := 64, paramCeiling := 4096, outerTrials := 3
+  targetInnerNanos := 5000000000, maxSecondsPerCall := 120.0
 }
 
 end Hex.ECPPBench

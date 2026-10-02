@@ -21,7 +21,7 @@ trial division, subsets, worklists, witness sampling and per-attempt work;
 unused reservations are never refunded. Root calls execute at most a quadratic
 number of modular operations in the admitted bit size; scalar work counts the
 maximum additions in the existing bit schedule. Exhaustion is not a verdict
-of compositeness. Only raw subject-bound checked certificates are returned.
+of compositeness. The public `produce` boundary returns only subject-bound checked certificates.
 -/
 
 namespace Hex.ECPP
@@ -287,7 +287,10 @@ private def point (budget : SearchBudget) (n q cofactor z a b : Nat) :
   return none
 
 /-- Structurally bounded recursion; failure of a child resumes the parent's
-remaining CM orders, without resetting any allocation or random state. -/
+remaining CM orders, without resetting any allocation or random state.
+This stateful worker requires a memo of previously checked successes admitted
+under the same allocations and sufficient remaining depth. Caller-supplied
+states are not validated here; `produce` starts fresh and checks its result. -/
 def search (budget : SearchBudget) : Nat → Nat → SearchM (Option Cert)
   | 0, n => do
       unresolved n .depth

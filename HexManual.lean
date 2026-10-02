@@ -191,7 +191,6 @@ These libraries are still incubating in the
 split out for release yet, so their APIs may still change. They are grouped
 here to keep the reference chapters above focused on the released libraries.
 
-
 {include 2 HexManual.Chapters.HexRealAlgebraic}
 
 {include 2 HexManual.Chapters.HexTruncatedSeries}

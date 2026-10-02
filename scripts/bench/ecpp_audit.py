@@ -16,7 +16,8 @@ from cpu_lease import cpu_lease
 ROOT = Path(__file__).resolve().parents[2]
 BENCH = ROOT / ".lake/build/bin/hexecpp_bench"
 FAMILIES = ["Hex.ECPPBench.runReplay", "Hex.ECPPBench.runProposal",
-            "Hex.ECPPBench.runParse", "Hex.ECPPBench.runPreflight"]
+            "Hex.ECPPBench.runParse", "Hex.ECPPBench.runPreflight",
+            "Hex.ECPPBench.runSizedReplay", "Hex.ECPPBench.runSizedProposal"]
 # Operation-specific ceilings: twice the retained endpoint medians, rounded
 # upward. Existing reports/ecpp/{compiled,native/compiled-updated}.json supply
 # the baselines; bootstrap-operations.json supplies the previously unregistered
