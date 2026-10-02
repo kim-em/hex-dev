@@ -229,6 +229,25 @@ def powerRegistration : Registration ((Real.sin 1) ^ 65) where
     simpa using abs_le.mp h
 
 def compositeBounds (_ : Rat) : Bounds := ⟨2, 3, by decide⟩
+
+noncomputable abbrev root2 : ℝ := Real.sqrt 2
+def aliasRegistration : Registration root2 := squareRegistration
+
+def cubeRegistration : Registration CubeTwo.realAlgebraic.toReal where
+  version := 1
+  approximation := suppliedBounds
+  containment δ _ := by
+    simp only [Contains, suppliedBounds, Rat.cast_ofNat]
+    have hp : CubeTwo.realAlgebraic.toReal ^ 3 = (2 : ℝ) := by
+      rw [CubeTwo.realAlgebraic_toReal]
+      simpa only [one_div, Nat.cast_ofNat] using
+        (Real.rpow_inv_natCast_pow (x := (2 : ℝ)) (n := 3)
+          (by norm_num) (by decide))
+    constructor
+    · apply (show Odd 3 by decide).pow_le_pow.mp
+      norm_num [hp]
+    · apply (show Odd 3 by decide).pow_le_pow.mp
+      norm_num [hp]
 def compositeRegistration : Registration (1 + Real.sqrt 2) where
   version := 1
   approximation := compositeBounds
@@ -287,6 +306,27 @@ run_elab do
         (Elab.Tactic.evalTactic (← `(tactic| rcf)) *> Elab.Tactic.pruneSolvedGoals)
     unless (← action.run' {} {}).isEmpty do throwError "registered algebraic composite failed"
     Hex.RCF.checkAxioms `registeredCompositeRegression (← instantiateMVars goal)
+    attr.add ``aliasRegistration stx .global
+    let aliasTarget := q(∀ x : ℝ, x ^ 2 - 2 * Real.sqrt 2 * x + 2 ≥ 0)
+    if ← Registration.deferExact aliasTarget then
+      throwError "stored reducible alias replaced the goal's exact syntax"
+    let goal ← mkFreshExprMVar aliasTarget
+    let action : Elab.TermElabM (List MVarId) := Elab.Term.withSynthesize do
+      Elab.Tactic.run goal.mvarId! <| Elab.Tactic.withoutRecover
+        (Elab.Tactic.evalTactic (← `(tactic| rcf)) *> Elab.Tactic.pruneSolvedGoals)
+    unless (← action.run' {} {}).isEmpty do throwError "stored reducible alias regression failed"
+    Hex.RCF.checkAxioms `registeredAliasRegression (← instantiateMVars goal)
+    attr.add ``cubeRegistration stx .global
+    let cubeTarget := q(∀ x : ℝ, x ^ 2 - 2 * CubeTwo.realAlgebraic.toReal * x +
+      CubeTwo.realAlgebraic.toReal ^ 2 ≥ 0)
+    if ← Registration.deferExact cubeTarget then
+      throwError "registered Hex algebraic value lost exact eligibility"
+    let goal ← mkFreshExprMVar cubeTarget
+    let action : Elab.TermElabM (List MVarId) := Elab.Term.withSynthesize do
+      Elab.Tactic.run goal.mvarId! <| Elab.Tactic.withoutRecover
+        (Elab.Tactic.evalTactic (← `(tactic| rcf)) *> Elab.Tactic.pruneSolvedGoals)
+    unless (← action.run' {} {}).isEmpty do throwError "registered Hex cubic regression failed"
+    Hex.RCF.checkAxioms `registeredHexRegression (← instantiateMVars goal)
     attr.add ``quotientRegistration stx .global
     let prepared ← Finite.prepare q(∀ x : ℝ, x ^ 2 + 2 + Real.sin (1 / supplied) > 0)
     unless prepared.source.coefficients == #[q(Real.sin (1 / supplied))] &&

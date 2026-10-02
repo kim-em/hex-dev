@@ -107,7 +107,7 @@ def entries : MetaM (Array (Name × Expr)) := do
   return entries
 
 /-- Providers occurring in the supplied sources, in registry order. Whole-subject
-matching precedes descent. Reject duplicate matches only in this used subset. -/
+matching precedes descent; validation is separate so eligibility stays read-only. -/
 def matching (entries : Array (Name × Expr)) (sources : Array Expr) :
     MetaM (Array (Name × Expr)) := do
   let mut names : Array Name := #[]
@@ -137,6 +137,16 @@ private def exactRoot (exponent : Expr) : MetaM Bool := do
   let some value := result | return false
   return value.num == 1 && value.den ≤ (Hex.Reflect.Budget.default).exponent
 
+private def exactLiteral (value : Expr) : MetaM Bool := do
+  let value : Q(ℝ) := value
+  let result ← observing? do
+    let ⟨value, _, _, _⟩ ← Mathlib.Meta.NormNum.deriveRat value
+      (_inst := q(inferInstance))
+    return value
+  let some value := result | return false
+  return value.num.natAbs.log2 + 1 + value.den.log2 + 1 ≤
+    (Hex.Reflect.Budget.default).coefficientBits
+
 private partial def exactSyntax (e : Expr) : MetaM Bool := do
   let e := e.consumeMData
   let (op, args) := e.getAppFnArgs
@@ -159,7 +169,7 @@ private partial def exactSyntax (e : Expr) : MetaM Bool := do
     let some n ← getNatValue? args[1]! | return false
     return n.log2 + 1 ≤ (Hex.Reflect.Budget.default).coefficientBits
   if [``Nat.cast, ``Int.cast, ``Rat.cast, ``RatCast.ratCast,
-      ``OfScientific.ofScientific].contains op then return true
+      ``OfScientific.ofScientific].contains op then return ← exactLiteral e
   return false
 
 /-- Select the supplied frontend before exact reification for opaque registered
@@ -167,14 +177,23 @@ subjects outside its scalar syntax/envelope. This is an eligibility check, not
 fallback after a solver, budget or replay failure. Small algebraic composites
 retain the existing exact path. Checked alias discovery uses the base API. -/
 def deferExact (target : Expr) : MetaM Bool := do
+  let entries ← candidates
+  if entries.isEmpty then return false
   let saved ← saveState
   try
     let mut closed := target
     for id in (Lean.collectFVars {} target).fvarIds do
       if let some binding ← Hex.RCF.Reify.closeCoefficient? (mkFVar id) then
         closed := closed.replaceFVar (mkFVar id) binding.value
-    let selected ← matching (← candidates) #[closed]
-    selected.anyM fun (_, value) => return !(← exactSyntax value)
+    -- Reducible matching may unfold a stored alias. Eligibility must inspect
+    -- the syntax in the goal, which the exact frontend will actually parse.
+    let (_, defer) ← (Meta.transformWithCache (m := StateRefT Bool MetaM)
+      closed {} (pre := fun e => do
+        unless ← entries.anyM (fun (_, subject) => sameSubject e subject) do
+          return .continue
+        unless ← exactSyntax e do modify fun _ => true
+        return .done e) (skipInstances := true)).run false
+    return defer
   finally saved.restore
 
 end Hex.RCF.RealCoefficients.Registration
