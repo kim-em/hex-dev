@@ -25,10 +25,11 @@ counts; printing and parsing are ordinary executable operations.
 The independent Python oracle sends 324 byte strings to the compiled parser.
 Its corpus includes 256 deterministic generated values, large integers,
 Unicode/control strings, duplicate object fields, nesting, malformed syntax,
-unpaired surrogates and invalid UTF-8. Python's standard parser determines the
-expected typed values while retaining object fields and duplicates, with
+unpaired surrogates and invalid UTF-8. Python's standard parser checks both the printed values and an independent
+constructor inspection of the parsed Lean value, retaining object fields and
+duplicates with
 explicit rejection of noninteger numbers and nonscalar
-Unicode strings. Nine oracle tests include rejection of incorrect answers, Boolean/integer
+Unicode strings. Ten oracle tests include rejection of incorrect answers, Boolean/integer
 confusion, changed field order, collapsed duplicates and invalid expectations. Ordinary-kernel checking of the
 universal theorem is separate from these executable conformance checks.
 
@@ -54,9 +55,14 @@ than rescanning the whole remaining input for each string token. A proved
 prefix-scan law preserves the universal byte roundtrip. The native corpus also
 includes 3,000 empty strings, a 25,000-element flat array, a 12,000-character
 string and a 4,096-digit integer. The oracle runs the driver with an 8 MiB
-stack limit. These cases pass; they do not establish behavior at the existing
-16 MiB certificate-byte ceiling. Non-tail recursion in strings, lexing and
-array tails still needs assessment at that ceiling before production
-integration. The existing certificate byte/depth/digit pre-scan must remain
-in front of any replacement parser. The low-level decimal word readers accept
-leading zeros; JSON token parsing separately rejects them.
+stack limit. These cases pass; they establish an observed envelope of 75,000 input bytes,
+25,000 array elements and 12,000 string characters, not suitability at the
+16 MiB certificate ceiling. Recursion depth grows with token count or string
+length in lexing, string scanning/reading, array and object tails, token
+printing and derived equality. Stack overflow is expected well below that
+ceiling; it aborts the process rather than returning a parse error. The input
+also becomes a character list and then a token list, increasing memory use,
+and nested token concatenation can copy data at each level. Production
+integration must address these costs and retain the existing byte/depth/digit
+pre-scan. The low-level decimal word readers accept leading zeros; JSON token
+parsing separately rejects them.

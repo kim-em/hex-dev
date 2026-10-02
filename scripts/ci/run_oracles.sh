@@ -194,6 +194,7 @@ run_tuple() {
       echo "FAIL: $lib :: integer-only JSON byte conformance"
       return 1
     fi
+    echo "OK: $lib :: integer-only JSON byte conformance"
     return 0
   fi
 

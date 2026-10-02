@@ -100,8 +100,10 @@ def check_answer(record, answer):
         return
     if not record["accept"]:
         raise ValueError("valid negative oracle input")
-    if not isinstance(answer, list) or len(answer) != 2 or answer[0] != "ok":
+    if not isinstance(answer, list) or len(answer) != 3 or answer[0] != "ok":
         raise ValueError("valid input rejected")
+    if tagged(answer[2]) != tagged(json.loads(json.dumps(wanted))):
+        raise ValueError("parsed constructors changed the value")
     if expected(answer[1].encode("utf-8")) != wanted:
         raise ValueError("printer changed the parsed value")
 
@@ -114,6 +116,13 @@ def check(fixture, executable):
         if (type(record.get("accept")) is not bool or not isinstance(record.get("bytes"), list)
                 or any(type(b) is not int or not 0 <= b < 256 for b in record["bytes"])):
             raise ValueError("malformed byte conformance record")
+    generated = corpus()
+    for i in list(range(18)) + list(range(274, 324)):
+        if {k: records[i][k] for k in ("bytes", "accept")} != generated[i]:
+            raise ValueError(f"fixed corpus case {i} changed")
+    _, hard_stack = resource.getrlimit(resource.RLIMIT_STACK)
+    if hard_stack != resource.RLIM_INFINITY and hard_stack < 8 * 1024 * 1024:
+        raise ValueError("native conformance requires an 8 MiB hard stack allowance")
     transport = "".join(json.dumps(r["bytes"]) + "\n" for r in records)
     def stack_limit():
         _, hard = resource.getrlimit(resource.RLIMIT_STACK)
