@@ -745,10 +745,14 @@ both the converted coefficient context and the complete old root context;
 values and the ordered root list in one shared ambient model.
 `Context.roots_collected_sorted` specializes this agreement to the strictly
 ordered output of complete root finding for every compatible collection model.
+`Context.roots_collected_ordered` gives the native all-pairs sign comparisons
+for that output without requiring a caller-supplied collection model.
 Entries retain input order, so callers can zip them with the original positive
 multiplicity labels. Collection retains each original defining polynomial;
-collecting conjugates or duplicate roots can multiply representation degrees.
-The constructor currently does not deflate by previously collected roots.
+collecting k roots represented by degree-n polynomials gives degree n^k
+for the resulting tower (n^n when collecting all n roots). Arithmetic in
+reducible levels uses zero-divisor splitting. The constructor currently does
+not deflate by previously collected roots.
 
 Run `lake build HexRealClosure.RootCollectionTests` for a runnable mixed-field
 example: √2 and the positive root of `3(X²-3)` enter one context, where their

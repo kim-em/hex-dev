@@ -176,9 +176,9 @@ single collected arithmetic context. -/
 theorem Context.roots_collected_ordered (original : Model parent K) (p : DensePoly parent.Value)
     {entries : List (RootEntry parent)} (returned : parent.roots p = .finite entries) :
     let collection := parent.collect (entries.map (·.root))
-    ∀ model : Collection.Model collection original,
-      collection.values.Pairwise (fun a b => collection.input.context.sign (b - a) = 1) := by
-  intro collection model
+    collection.values.Pairwise (fun a b => collection.input.context.sign (b - a) = 1) := by
+  intro collection
+  obtain ⟨model⟩ := (Context.collect_success original (entries.map (·.root))).2
   have ordered := Context.roots_collected_sorted original p returned model
   rw [List.pairwise_map] at ordered
   apply ordered.imp
