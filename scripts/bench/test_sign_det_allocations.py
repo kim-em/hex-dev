@@ -71,6 +71,28 @@ class AllocationValidationTests(unittest.TestCase):
             capture.check_events(check["counters"], json.loads(raw),
                                  Path(meta["compile_commands"][i][-1]))
 
+    def check_callback_source(self, meta):
+        import gzip
+        import hashlib
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        base = Path(__file__).resolve().parents[2] / "reports/data/sign-det-allocations"
+        generated = gzip.decompress((base / "joint-25b179f5c/generated-joint.c.gz").read_bytes())
+        self.assertEqual({hashlib.sha256(generated).hexdigest()},
+                         {c["generated_c_sha256"] for c in meta["callbacks"].values()})
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary) / ".lake/build/ir/HexSignDet"
+            directory.mkdir(parents=True)
+            source = directory / "Joint.c"
+            source.write_bytes(generated)
+            with patch.object(capture, "ROOT", Path(temporary)):
+                for function, recorded in meta["callbacks"].items():
+                    symbol, result_type, path = capture.callback_type(function)
+                    self.assertEqual(symbol, recorded["symbol"])
+                    self.assertEqual(result_type, recorded["result_type"])
+                    self.assertEqual(path, source)
+
     def test_retained_clean_capture(self):
         import gzip
         import hashlib
@@ -122,6 +144,7 @@ class AllocationValidationTests(unittest.TestCase):
         self.assertEqual(meta["functions"], ["Hex.SignDetBench.Joint." + name for name in
                          ["runCompletion", "runComparison", "runCheckReduced", "runCheckDirect"]])
         self.check_self_checks(root, meta)
+        self.check_callback_source(meta)
         timing_root = root.parents[1] / "sign-det-joint-timing/394c3c548"
         expected_answers = {}
         for name in ["runCompletion", "runComparison"]:
@@ -213,6 +236,7 @@ class AllocationValidationTests(unittest.TestCase):
         for name, expected in meta["collector_sha256"].items():
             self.assertEqual(capture.digest(root / "collector-sources" / name), expected)
         self.check_self_checks(root, meta)
+        self.check_callback_source(meta)
         rows = [json.loads(line) for line in (root / "samples.jsonl").read_text().splitlines()]
         self.assertEqual(rows, meta["samples"])
         schedule = [(trial, n, f) for trial in range(1, trials + 1)
@@ -281,7 +305,14 @@ class AllocationValidationTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         row = rows[0]
         self.assertEqual(row["counters"]["gmp_requests"], 386473472)
-        self.assertGreaterEqual(row["counters"]["gmp_requests"], 385922080)
+        earlier = Path(__file__).resolve().parents[2] / "reports/data/sign-det-joint-timing/allocation-394c3c548/reanalysis.json"
+        reanalysis = json.loads(earlier.read_text())
+        self.assertGreaterEqual(row["counters"]["gmp_requests"], reanalysis["exact_callback_stack_calls"])
+        self.assertEqual(row["counters"]["gmp_requests"] -
+                         reanalysis["callback_calls_upper_bound_within_filtered_stacks"], 393644)
+        actual = [row["counters"][kind + "_bytes"] for kind in capture.KINDS]
+        self.assertEqual(actual, [1012179032, 37090608, 3784472776])
+        self.assertEqual(sum(actual), 4833742416)
         timing = Path(__file__).resolve().parents[2] / "reports/data/sign-det-joint-timing/394c3c548/runComparison.json"
         hashes = {point["result_hash"] for result in json.loads(timing.read_text())["results"]
                   for point in result["points"] if point["param"] == 31 and point["status"] == "ok"}
@@ -303,13 +334,14 @@ class AllocationValidationTests(unittest.TestCase):
         reconstruction = json.loads((root / "source-reconstruction.json").read_text())
         patch = root / "committed-source.patch"
         self.assertEqual(capture.digest(patch), reconstruction["patch_sha256"])
+        repo = Path(__file__).resolve().parents[2]
         with tempfile.TemporaryDirectory() as temporary:
             env = dict(os.environ, GIT_INDEX_FILE=str(Path(temporary) / "index"))
-            subprocess.run(["git", "read-tree", reconstruction["base"]], env=env, check=True)
-            subprocess.run(["git", "apply", "--cached", str(patch)], env=env, check=True)
+            subprocess.run(["git", "read-tree", reconstruction["base"]], env=env, cwd=repo, check=True)
+            subprocess.run(["git", "apply", "--cached", str(patch)], env=env, cwd=repo, check=True)
             self.assertEqual(set(reconstruction["paths"]), set(meta["source_sha256"]))
             for name, expected in meta["source_sha256"].items():
-                content = subprocess.check_output(["git", "show", ":" + name], env=env)
+                content = subprocess.check_output(["git", "show", ":" + name], env=env, cwd=repo)
                 self.assertEqual(hashlib.sha256(content).hexdigest(), expected, name)
         post = json.loads((root / "post-capture-build-identity.json").read_text())
         self.assertEqual(post["binary_sha256"], meta["binary_sha256"])

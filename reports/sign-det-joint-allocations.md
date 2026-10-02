@@ -85,10 +85,13 @@ Lean entry points contribute 1,012,179,032 bytes and direct mimalloc entry point
 ordinary degree-31 benchmark. This single observation is a cross-tool check,
 not a scaling estimate. The earlier heaptrack capture attributed a lower bound
 of 385,922,080 GMP requests to that callback; the present count exceeds that
-bound. The two source revisions have identical `bench/HexSignDet/Joint.lean`,
-but may differ in other implementation modules. Consistency of these counts
-does not prove complete interception or identical allocation behavior between
-revisions. Each supplementary collection retains its own three controlled
+bound. Within its substring-filtered stacks, heaptrack also gives an upper
+bound of 386,079,828 calls, 393,644 below the new count. That is not an upper
+bound for the whole callback: unwinding can omit the matched helper as well
+as the callback frame. The binaries differ. Their `bench/HexSignDet/Joint.lean`
+is identical, but replay cache-binding checks, root-list and selected-sign
+implementation modules differ. The cross-tool comparison is therefore
+inconclusive across revisions and establishes no coverage guarantee. Each supplementary collection retains its own three controlled
 ABI fixtures, logs, metadata and losslessly compressed raw events.
 
 The direct-call audit records direct calls to symbols whose names start with
@@ -103,7 +106,11 @@ the counters, so their agreement verifies attribution, not independent allocator
 coverage. Instrumented elapsed times and RSS are retained but include Valgrind
 and preparation overhead and are not used as timing or live-memory evidence.
 
-Reproduce with the committed driver and installed Valgrind headers:
+Reproduce with the committed driver and installed Valgrind headers. The driver
+checks instrumented/native answer agreement only. These retained answers are
+checked afterward by the regression suite against the independently validated
+ordinary benchmark answers; a newly collected dataset also needs an independent
+answer check before interpreting it as a successful computation:
 
 ```sh
 python3 scripts/bench/sign_det_allocations.py \
@@ -127,8 +134,8 @@ hash without depending on the continued existence of the branch commit.
 A separate [post-capture inspection](data/sign-det-allocations/joint-25b179f5c/post-capture-build-identity.json)
 records the executable and owned build-cache realpaths, device/inode identity
 and unchanged executable hash. It is a later observation, not a retroactive
-start-of-run check. The project build directory belongs to this isolated
-worktree; package caches can be shared. Before/after binary hashes bind the
+start-of-run check. The project build directory belongs to the measured
+`hex-dev-issue-10377-allocation` worktree; package caches can be shared. Before/after binary hashes bind the
 captured executable itself. Retained disassembly confirms that both
 `lean::alloc_mpz` and `lean_alloc_mpz` call the wrapped
 `lean_alloc_small_object_core` in this binary. This resolves that specific

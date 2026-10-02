@@ -45,8 +45,9 @@ values and report 280 DHAT units in six events. Run all three with the driver
 
 The driver requires every wrapped allocator symbol to be defined in the actual
 executable and retains the allocator symbol inventory. A disassembly audit
-rejects unwrapped direct mimalloc client calls outside allocator internals.
-This is not a complete indirect-call or foreign-allocation detector. Before interpreting a
+rejects unwrapped direct `mi_*` calls from callers outside `mi_`/`_mi_`
+routines. It does not inspect `_mi_*`, libc allocation or `operator new`
+targets, and is not a complete indirect-call or foreign-allocation detector. Before interpreting a
 capture as complete coverage, also audit the measured binary's
 allocation entry points and generated/inlined paths. The wrappers count the
 listed client requests; allocator backing pages, arbitrary foreign malloc

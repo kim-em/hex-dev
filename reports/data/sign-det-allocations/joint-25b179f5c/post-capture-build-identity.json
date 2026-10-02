@@ -1,5 +1,5 @@
 {
-  "scope": "post-capture inspection, not a start-of-run observation",
+  "scope": "post-capture inspection repeated after all 55 captures, not a start-of-run observation",
   "binary_sha256": "3beb9e7ca54d5748da0a157e6eea416b2b0307f264d380651f2f066f4858bb28",
   "executable_realpath": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-allocation/.lake/build/bin/hexsigndet_bench",
   "build_cache_realpath": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-allocation/.lake/build",
@@ -10,5 +10,6 @@
   "disassembly": {
     "cpp-alloc-mpz.disassembly.txt": "b3f934efd52f6fc6df03e51e8ff625741303252b292e69969e4e18d4a3bfde3e",
     "c-alloc-mpz.disassembly.txt": "351126bc9bbe56f1402df2fec8366bbac01aa98669f39b0b4c3b8d30d5669f67"
-  }
+  },
+  "inspection_time_utc": "2026-10-02T06:40:29.494146+00:00"
 }
