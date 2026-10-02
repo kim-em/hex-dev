@@ -100,3 +100,14 @@ The Mathlib/Batteries declaration linter passes on the core's imported
 modules. `reports/ecpp/audit/lint.json` retains the exact temporary probe,
 source fingerprints, toolchain, command and successful result. The probe
 imports Mathlib for auditing only; no published computational module does.
+
+## Phase 3 evidence
+
+`audit/conformance.json` records the current-toolchain builds, benchmark
+registration checks and all 6,457 independent oracle cases.
+`audit/native-corpora.json` reconciles all 32 frozen subjects: 27 accepted
+certificates have exactly the retained complete rows and terminal witnesses,
+and the five exhausted outcomes agree. The existing kernel replays therefore
+remain applicable; unchanged successful measurements are reused. All resource
+limits and the local/portfolio/child priority regressions build in the existing
+conformance targets. No operation or edge-case coverage obligation remains.
