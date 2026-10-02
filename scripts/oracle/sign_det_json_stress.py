@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+"""Native JSON width/string probes, independent of the line transport.
+
+These are capacity checks under the ordinary 8 MiB stack, not timing evidence.
+The byte ceiling is exercised by a string; width probes do not assert exhaustive
+coverage of all inputs below the ceiling.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+import resource
+import subprocess
+import tempfile
+
+from sign_det_json_bytes import expected
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def cases():
+    yield "string-byte-ceiling", b'"' + b"x" * (16777216 - 2) + b'"'
+    yield "escaped-string", b'"' + b"\\n" * 1000000 + b'"'
+    yield "array-width", b"[" + b"0," * 1999999 + b"0]"
+    yield "object-width-duplicates", b"{" + b'"x":0,' * 299999 + b'"x":0}'
+    yield "nesting-limit", b"[" * 128 + b"0" + b"]" * 128
+    yield "integer-digit-limit", b"1" + b"0" * 4095
+
+
+def stack_limit():
+    _, hard = resource.getrlimit(resource.RLIMIT_STACK)
+    if hard != resource.RLIM_INFINITY and hard < 8 * 1024 * 1024:
+        raise ValueError("requires an 8 MiB hard stack allowance")
+    resource.setrlimit(resource.RLIMIT_STACK, (8 * 1024 * 1024, hard))
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--exe", type=Path,
+                        default=ROOT / ".lake/build/bin/hexsigndet_json_bytes")
+    args = parser.parse_args()
+    with tempfile.TemporaryDirectory(prefix="hex-json-stress-") as directory:
+        source = Path(directory) / "source.json"
+        target = Path(directory) / "printed.json"
+        for name, raw in cases():
+            source.write_bytes(raw)
+            target.unlink(missing_ok=True)
+            completed = subprocess.run([str(args.exe), "--file", str(source), str(target)],
+                                       capture_output=True, preexec_fn=stack_limit)
+            if completed.returncode != 0:
+                raise RuntimeError(f"{name}: exit {completed.returncode}: "
+                                   + completed.stderr.decode("utf-8", errors="replace"))
+            printed = target.read_bytes()
+            if expected(raw) != expected(printed):
+                raise ValueError(name + ": parsed/printed value changed")
+            print(f"{name}: {len(raw)} input bytes, {len(printed)} output bytes, passed",
+                  flush=True)
+
+
+if __name__ == "__main__":
+    main()

@@ -79,6 +79,42 @@ partial definition or assumed parser success is used by its roundtrip law. -/
       return (c :: cs, suffix)
   | _, [] => none
 
+/-- Accumulate a quoted body without retaining one native frame per character. -/
+@[expose] def readBodyLoop : Nat → List Char → List Char → Option (List Char × List Char)
+  | 0, _, _ => none
+  | fuel + 1, c :: rest, reversed =>
+    if c = '"' then some (reversed.reverse, rest)
+    else if c = '\\' then do
+      let (c, rest) ← readEscape rest
+      readBodyLoop fuel rest (c :: reversed)
+    else if c.toNat < 32 then none
+    else readBodyLoop fuel rest (c :: reversed)
+  | _, [], _ => none
+
+private theorem readBodyLoop_eq (fuel : Nat) (input reversed : List Char) :
+    readBodyLoop fuel input reversed =
+      (readBody fuel input).map (fun (cs, suffix) => (reversed.reverse ++ cs, suffix)) := by
+  induction fuel generalizing input reversed with
+  | zero => rfl
+  | succ fuel ih =>
+    cases input with
+    | nil => rfl
+    | cons c rest =>
+      simp only [readBodyLoop, readBody]
+      split
+      · simp
+      · split
+        · cases readEscape rest with
+          | none => rfl
+          | some pair =>
+            obtain ⟨c, rest⟩ := pair
+            simp only [bind, Option.bind, ih]
+            cases readBody fuel rest <;> simp [List.reverse_cons, List.append_assoc]
+        · split
+          · rfl
+          · rw [ih]
+            cases readBody fuel rest <;> simp [List.reverse_cons, List.append_assoc]
+
 private theorem hex_digit (n : Nat) (h : n < 16) : hex n.digitChar = some n := by
   match n with
   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 =>
@@ -169,6 +205,40 @@ rescanning the entire remaining JSON input for every string token. -/
       | _ :: rest => 2 + scanBody rest
     else 1 + scanBody rest
 
+/-- Count a quoted prefix with constant native stack usage. -/
+@[expose] def scanLoop : List Char → Nat → Nat
+  | [], count => count
+  | c :: rest, count =>
+    if c = '"' then count + 1
+    else if c = '\\' then
+      match rest with
+      | [] => count + 1
+      | _ :: rest => scanLoop rest (count + 2)
+    else scanLoop rest (count + 1)
+
+private theorem scanLoop_eq (input : List Char) (count : Nat) :
+    scanLoop input count = count + scanBody input := by
+  cases input with
+  | nil => rfl
+  | cons c rest =>
+    rw [scanLoop.eq_def (c :: rest) count, scanBody.eq_def (c :: rest)]
+    dsimp only
+    by_cases hq : c = '"'
+    · simp only [hq, ↓reduceIte]
+    · simp only [hq, ↓reduceIte]
+      by_cases hb : c = '\\'
+      · simp only [hb, ↓reduceIte]
+        cases rest with
+        | nil => rfl
+        | cons d rest =>
+          change scanLoop rest (count + 2) = count + (2 + scanBody rest)
+          rw [scanLoop_eq rest (count + 2)]
+          omega
+      · simp only [hb, ↓reduceIte]
+        rw [scanLoop_eq rest (count + 1)]
+        omega
+termination_by input.length
+
 private theorem digit_not_delimiter (n : Nat) (h : n < 16) :
     n.digitChar ≠ '"' ∧ n.digitChar ≠ '\\' := by
   have hd := hex_digit n h
@@ -209,7 +279,7 @@ private theorem scanBody_write (cs : List Char) (suffix : List Char) :
 counts the quoted prefix, so later strings are not repeatedly scanned. -/
 @[expose] def readPrefix (input : List Char) : Option (String × List Char) :=
   match input with
-  | '"' :: rest => (readBody (scanBody rest) rest).map fun (cs, suffix) =>
+  | '"' :: rest => (readBodyLoop (scanLoop rest 0) rest []).map fun (cs, suffix) =>
       (String.ofList cs, suffix)
   | _ => none
 
@@ -218,7 +288,10 @@ theorem readPrefix_write (text : String) (suffix : List Char) :
   have hn := writeBody_length text.toList
   simp only [write, String.toList_ofList, List.cons_append, List.append_assoc,
     List.nil_append, readPrefix]
-  rw [scanBody_write]
+  rw [scanLoop_eq]
+  simp only [Nat.zero_add]
+  rw [scanBody_write, readBodyLoop_eq]
+  simp only [List.reverse_nil, List.nil_append]
   rw [readBody_write text.toList suffix _ (by omega)]
   simp
 

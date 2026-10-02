@@ -50,7 +50,9 @@ and the root index is in range. The proof follows the actual decoder's left
 fold and includes unreachable entries. Arbitrary user codecs need not be lawful,
 and no graph-level JSON byte-parser roundtrip theorem is claimed.
 The standalone total backend in `Codec.Value` proves `Codec.Json.readBytes_write`
-for every finite integer-only JSON value. It is not yet connected to these
+for every finite integer-only JSON value. Its proved accumulator loops keep
+width and string length from growing the parser/printer native stack; nesting
+still uses recursive calls. It is not yet connected to these
 coefficient codecs or graph operations.
 
 The structured codec law does not imply a byte roundtrip, even when the printer

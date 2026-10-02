@@ -50,19 +50,32 @@ though a JSON printer normalizes them. The existing `FastCheck.NumberForm`
 counterexample remains applicable. No certificate-byte completeness claim
 follows merely from the backend theorem.
 
-String-prefix parsing scans only through the current quoted string, rather
-than rescanning the whole remaining input for each string token. A proved
-prefix-scan law preserves the universal byte roundtrip. The native corpus also
-includes 3,000 empty strings, a 25,000-element flat array, a 12,000-character
-string and a 4,096-digit integer. The oracle runs the driver with an 8 MiB
-stack limit. These cases pass; they establish an observed envelope of 75,000 input bytes,
-25,000 array elements and 12,000 string characters, not suitability at the
-16 MiB certificate ceiling. Recursion depth grows with token count or string
-length in lexing, string scanning/reading, array and object tails, token
-printing and derived equality. Stack overflow is expected well below that
-ceiling; it aborts the process rather than returning a parse error. The input
-also becomes a character list and then a token list, increasing memory use,
-and nested token concatenation can copy data at each level. Production
-integration must address these costs and retain the existing byte/depth/digit
-pre-scan. The low-level decimal word readers accept leading zeros; JSON token
-parsing separately rejects them.
+String-prefix parsing scans only through the current quoted string. The byte
+lexer, string scanner/reader, structural parser and token producer use verified
+accumulator loops: their outputs are proved equal to the original finite
+recursive definitions. Native recursion follows array/object nesting rather
+than width or string length. The universal byte theorem checks these actual
+loops in the ordinary kernel.
+
+The independent 324-case corpus runs with an 8 MiB stack. It includes 3,000
+empty strings, a 25,000-element array, a 12,000-character string and a
+4,096-digit integer. A separate file-mode capacity check avoids the line
+transport and retains the existing lexical byte/depth/digit checks:
+
+```sh
+python3 scripts/oracle/sign_det_json_stress.py
+```
+
+With the same 8 MiB stack, the compiled parser/printer handles a 16 MiB ASCII
+string, a million escaped characters, a two-million-element array, 300,000
+object fields with duplicate keys, nesting depth 128 and a 4,096-digit integer.
+Python independently compares the input and output values. These are capacity
+observations, not timing/scaling evidence or exhaustive coverage of every
+input permitted by the limits. They do not exercise derived structural
+equality on wide parsed values. The character list, token list and result
+still increase memory use; token concatenation can copy data at each nesting
+level. The printer adds whitespace and may produce more bytes than the input,
+including 16 MiB plus one byte for the ceiling-size string. A larger output can
+require a larger decoding byte allowance. Final certificate integration must
+account for that expansion. The low-level decimal word readers accept leading
+zeros; JSON token parsing separately rejects them.
