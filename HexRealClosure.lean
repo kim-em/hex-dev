@@ -14,6 +14,7 @@ public import HexRealClosure.IsolationRoots
 public import HexRealClosure.RootOrder
 public import HexRealClosure.ZeroFactor
 public import HexRealClosure.RootFactors
+public import HexRealClosure.CompleteRoots
 public import HexRealClosure.BaseCodec
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog

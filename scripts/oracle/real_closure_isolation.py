@@ -139,6 +139,8 @@ def verify_assembly(row, index):
     require(all(a != b for i, a in enumerate(selected) for b in selected[i+1:]),
             "assembled root duplicated")
     require(sorted(selected) == sorted(roots), "assembled root coverage differs from exact RCF")
+    require(all(a < b for a, b in zip(selected, selected[1:])),
+            "assembled roots are not strictly increasing")
     if index == 18:
         require((rcf.one, 2) in points,
                 "nonzero cut-point fixture did not exercise a bisection point")
@@ -308,6 +310,8 @@ def verify_nested(row, assembly_row):
                                       for b in emitted[i+1:]) and
             sorted(emitted) == sorted(expected_roots),
             "nested assembly roots missing or duplicated")
+    require(all(a < b for a, b in zip(emitted, emitted[1:])),
+            "nested assembled roots are not strictly increasing")
 
 
 def verify(rows):

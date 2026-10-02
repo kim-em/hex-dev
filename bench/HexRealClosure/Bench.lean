@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import HexRealClosure.Element
 import HexRealClosure.AlgebraicContext
-import HexRealClosure.RootFactors
+import HexRealClosure.CompleteRoots
 import LeanBench
 
 namespace Hex.RealClosure.Bench
@@ -273,6 +273,24 @@ def runAssembly : Unit → IO UInt64 := fun _ => do
   | _ => throw (IO.userError "assembly benchmark: producer failed")
 
 setup_fixed_benchmark runAssembly where {
+  repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
+}
+
+/-- Functional timing anchor for the complete root operation, including its
+global comparisons and sorting. This anchor makes no asymptotic claim; Phase-4
+scaling evidence is supplied separately. Labels are checked in root order. -/
+def runRoots : Unit → IO UInt64 := fun _ => do
+  let some p ← repeatedRef.get
+    | throw (IO.userError "complete roots benchmark: missing input")
+  match Roots.roots Sturm.orderSign (10378 : Nat) p with
+  | .finite entries =>
+    if entries.map (·.multiplicity) == [3, 2, 3, 5] then
+      return 1
+    else
+      throw (IO.userError "complete roots benchmark: incorrect ordered labels")
+  | .all => throw (IO.userError "complete roots benchmark: unexpected all-roots result")
+
+setup_fixed_benchmark runRoots where {
   repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
 }
 

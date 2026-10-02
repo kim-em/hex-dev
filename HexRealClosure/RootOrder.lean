@@ -40,8 +40,7 @@ variable [Div E]
 /-- Compare the actual output forms. Point comparisons use one difference;
 mixed comparisons use the shared selected-sign producer, and two descriptors
 use its common-product comparison. No failure is interpreted as equality.
-Strict mathematical order for the last case still needs the upstream Thom
-order theorem. -/
+The companion proves producer success and mathematical order in all cases. -/
 @[expose] def Root.compare {sign : E → Int} {context : Ctx} :
     Root sign context → Root sign context → Except SignDet.BuildError Ordering
   | .point a, .point b => signOrder (sign (a - b))
@@ -61,69 +60,90 @@ order theorem. -/
       | .error error => .error error
       | .ok comparison => .ok comparison.order
 
-/-- Insert one output root using the actual comparator. Equal roots are an
-internal error: squarefree completion and coprime factor lists must be distinct. -/
-def Root.insert {sign : E → Int} {context : Ctx} (root : Root sign context) :
-    List (Root sign context) → Except SignDet.BuildError (List (Root sign context))
+/-- Insert an entry by its selected root, retaining the entire entry.
+Equal roots remain an internal duplicate diagnostic. -/
+@[expose] def Root.insertBy {sign : E → Int} {context : Ctx} {A : Type x}
+    (key : A → Root sign context) (root : A) :
+    List A → Except SignDet.BuildError (List A)
   | [] => .ok [root]
   | first :: rest =>
-      match root.compare first with
+      match (key root).compare (key first) with
       | .error error => .error error
       | .ok .lt => .ok (root :: first :: rest)
       | .ok .eq => .error .system
       | .ok .gt =>
-        match root.insert rest with
+        match Root.insertBy key root rest with
         | .error error => .error error
         | .ok result => .ok (first :: result)
 
 /-- Successful insertion preserves every supplied root exactly once. -/
-theorem Root.insert_perm {sign : E → Int} {context : Ctx} (root : Root sign context)
-    {roots out : List (Root sign context)} (accepted : root.insert roots = .ok out) :
+theorem Root.insertBy_perm {sign : E → Int} {context : Ctx} {A : Type x}
+    (key : A → Root sign context) (root : A)
+    {roots out : List A} (accepted : Root.insertBy key root roots = .ok out) :
     out.Perm (root :: roots) := by
   induction roots generalizing out with
-  | nil => simpa [Root.insert] using accepted.symm
+  | nil => simpa [Root.insertBy] using accepted.symm
   | cons first rest ih =>
-    cases compared : root.compare first with
-    | error error => simp [Root.insert, compared] at accepted
+    cases compared : (key root).compare (key first) with
+    | error error => simp [Root.insertBy, compared] at accepted
     | ok order =>
       cases order with
-      | eq => simp [Root.insert, compared] at accepted
+      | eq => simp [Root.insertBy, compared] at accepted
       | lt =>
         have same : out = root :: first :: rest := by
-          simpa [Root.insert, compared] using accepted.symm
+          simpa [Root.insertBy, compared] using accepted.symm
         rw [same]
       | gt =>
-        cases inserted : root.insert rest with
-        | error error => simp [Root.insert, compared, inserted] at accepted
+        cases inserted : Root.insertBy key root rest with
+        | error error => simp [Root.insertBy, compared, inserted] at accepted
         | ok result =>
           have same : out = first :: result := by
-            simpa [Root.insert, compared, inserted] using accepted.symm
+            simpa [Root.insertBy, compared, inserted] using accepted.symm
           rw [same]
           exact (List.Perm.cons first (ih inserted)).trans (List.Perm.swap _ _ _)
 
-/-- Finite insertion sorting, preserving internal comparison diagnostics. -/
-def Root.sort {sign : E → Int} {context : Ctx} :
-    List (Root sign context) → Except SignDet.BuildError (List (Root sign context))
+/-- Finite sorting by selected roots retains payloads and comparison diagnostics. -/
+@[expose] def Root.sortBy {sign : E → Int} {context : Ctx} {A : Type x}
+    (key : A → Root sign context) : List A → Except SignDet.BuildError (List A)
   | [] => .ok []
   | root :: rest =>
-      match Root.sort rest with
+      match Root.sortBy key rest with
       | .error error => .error error
-      | .ok result => root.insert result
+      | .ok result => Root.insertBy key root result
 
 /-- Successful sorting is a permutation of the actual input. Mathematical
 strict sortedness is separate from this computational preservation theorem. -/
-theorem Root.sort_perm {sign : E → Int} {context : Ctx}
-    {roots out : List (Root sign context)} (accepted : Root.sort roots = .ok out) :
+theorem Root.sortBy_perm {sign : E → Int} {context : Ctx} {A : Type x}
+    (key : A → Root sign context)
+    {roots out : List A} (accepted : Root.sortBy key roots = .ok out) :
     out.Perm roots := by
   induction roots generalizing out with
-  | nil => simpa [Root.sort] using accepted.symm
+  | nil => simpa [Root.sortBy] using accepted.symm
   | cons root rest ih =>
-    cases sorted : Root.sort rest with
-    | error error => simp [Root.sort, sorted] at accepted
+    cases sorted : Root.sortBy key rest with
+    | error error => simp [Root.sortBy, sorted] at accepted
     | ok result =>
-      have inserted : root.insert result = .ok out := by
-        simpa [Root.sort, sorted] using accepted
-      exact (root.insert_perm inserted).trans (List.Perm.cons root (ih sorted))
+      have inserted : Root.insertBy key root result = .ok out := by
+        simpa [Root.sortBy, sorted] using accepted
+      exact (Root.insertBy_perm key root inserted).trans (List.Perm.cons root (ih sorted))
+
+/-- Insert one root using the same sorter as multiplicity entries. -/
+@[expose] def Root.insert {sign : E → Int} {context : Ctx} (root : Root sign context)
+    (roots : List (Root sign context)) : Except SignDet.BuildError (List (Root sign context)) :=
+  Root.insertBy id root roots
+
+theorem Root.insert_perm {sign : E → Int} {context : Ctx} (root : Root sign context)
+    {roots out : List (Root sign context)} (accepted : root.insert roots = .ok out) :
+    out.Perm (root :: roots) := Root.insertBy_perm id root accepted
+
+/-- Sort roots with the actual comparator, retaining diagnostic failures. -/
+@[expose] def Root.sort {sign : E → Int} {context : Ctx}
+    (roots : List (Root sign context)) : Except SignDet.BuildError (List (Root sign context)) :=
+  Root.sortBy id roots
+
+theorem Root.sort_perm {sign : E → Int} {context : Ctx}
+    {roots out : List (Root sign context)} (accepted : Root.sort roots = .ok out) :
+    out.Perm roots := Root.sortBy_perm id accepted
 
 /-- Collect the actual point and descriptor output before ordering. -/
 @[expose] def Output.entries {sign : E → Int} {context : Ctx}

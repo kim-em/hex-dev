@@ -126,7 +126,7 @@ class IsolationTests(unittest.TestCase):
         self.rejects(lambda rows: rows[12]["output"]["entries"].clear())
 
     def test_assembly_false_selected_interval(self):
-        self.rejects(lambda rows: rows[13]["output"]["entries"][1]["root"].update(
+        self.rejects(lambda rows: rows[13]["output"]["entries"][0]["root"].update(
             lower=[1, [0, 1]]), "assembled descriptor does not select one root")
 
     def test_assembly_impossible_infinite_endpoint(self):
@@ -134,8 +134,12 @@ class IsolationTests(unittest.TestCase):
             lower=[2]), "assembled descriptor does not select one root")
 
     def test_assembly_boolean_derivative_slot(self):
-        self.rejects(lambda rows: rows[13]["output"]["entries"][1]["root"].update(
+        self.rejects(lambda rows: rows[13]["output"]["entries"][0]["root"].update(
             indices=[True, 2]), "wrong assembled derivative slots")
+
+    def test_assembly_unordered_roots(self):
+        self.rejects(lambda rows: rows[13]["output"]["entries"].reverse(),
+                     "assembled roots are not strictly increasing")
 
     def test_assembly_false_all(self):
         self.rejects(lambda rows: rows[11].update(output={"kind": "all"}))
@@ -190,8 +194,12 @@ class IsolationTests(unittest.TestCase):
                      "malformed nested assembly row")
 
     def test_nested_assembly_ambiguous_descriptor(self):
-        self.rejects(lambda rows: rows[17]["output"]["entries"][1]["root"].update(
+        self.rejects(lambda rows: rows[17]["output"]["entries"][0]["root"].update(
             upper=[1, [[4, 1]]]), "nested assembly descriptor is ambiguous")
+
+    def test_nested_assembly_unordered_roots(self):
+        self.rejects(lambda rows: rows[17]["output"]["entries"].reverse(),
+                     "nested assembled roots are not strictly increasing")
 
 
 if __name__ == "__main__":
