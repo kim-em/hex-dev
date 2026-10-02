@@ -10,6 +10,7 @@ public import HexRealClosure.TowerEnlargement
 public import HexRealClosureMathlib.TowerRestriction
 public import HexRealClosureMathlib.BaseBound
 public import HexRealClosureMathlib.BaseAlgebraicity
+import all HexRealClosure.TowerEnlargement
 
 public section
 

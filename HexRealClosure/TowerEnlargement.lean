@@ -16,12 +16,13 @@ variable {registry : BaseContext.Registry}
 /-- The actual checked enlargement and its new native parameter. Both use
 one rebuilt suffix; accessing the parameter performs no further validation. -/
 structure Enlargement (source : Context registry) : Type 1 where
+  private mk ::
   conversion : Conversion source
   parameter : conversion.context.Value
 
 /-- Package the cached parameter of one rebuilt suffix in its aligned source
 context, with the ownership of the actual returned conversion. -/
-@[expose] def Rebuilt.enlargement {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+def Rebuilt.enlargement {B : Type} [Lean.Grind.Field B] [DecidableEq B]
     {sign : B → Int} (base : BaseContext.Context registry B sign)
     {suffix : Suffix (Context.base base)} {source : Context registry}
     (rebuilt : Rebuilt (Conversion.infinitesimal base) suffix)
