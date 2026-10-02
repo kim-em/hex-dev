@@ -157,11 +157,59 @@ private theorem writeBody_length (cs : List Char) : cs.length ≤ (writeBody cs)
 @[expose] def write (text : String) : String :=
   String.ofList ('"' :: writeBody text.toList ++ ['"'])
 
+/-- Count through the next unescaped quotation mark only. This avoids
+rescanning the entire remaining JSON input for every string token. -/
+@[expose] def scanBody : List Char → Nat
+  | [] => 0
+  | c :: rest =>
+    if c = '"' then 1
+    else if c = '\\' then
+      match rest with
+      | [] => 1
+      | _ :: rest => 2 + scanBody rest
+    else 1 + scanBody rest
+
+private theorem digit_not_delimiter (n : Nat) (h : n < 16) :
+    n.digitChar ≠ '"' ∧ n.digitChar ≠ '\\' := by
+  have hd := hex_digit n h
+  constructor
+  · intro he; rw [he] at hd; simp [hex] at hd
+  · intro he; rw [he] at hd; simp [hex] at hd
+
+private theorem scanBody_write (cs : List Char) (suffix : List Char) :
+    scanBody (writeBody cs ++ '"' :: suffix) = (writeBody cs).length + 1 := by
+  induction cs with
+  | nil =>
+    simp only [writeBody, List.flatMap_nil, List.nil_append, List.length_nil]
+    rw [scanBody.eq_def]
+    rfl
+  | cons c cs ih =>
+    rw [show writeBody (c :: cs) = writeChar c ++ writeBody cs by simp [writeBody]]
+    rw [List.append_assoc, List.length_append]
+    by_cases hq : c = '"'
+    · subst c
+      simp [writeChar, ih, scanBody.eq_def]
+      omega
+    by_cases hb : c = '\\'
+    · subst c
+      simp [writeChar, ih, scanBody.eq_def]
+      omega
+    by_cases hc : c.toNat < 32
+    · have hh := digit_not_delimiter (c.toNat / 16) (by omega)
+      have hl := digit_not_delimiter (c.toNat % 16) (Nat.mod_lt _ (by decide))
+      simp [writeChar, ih, scanBody.eq_def, hq, hb, hc, hh.1, hh.2, hl.1, hl.2]
+      omega
+    · simp only [writeChar, hq, hb, hc, ↓reduceIte, List.cons_append, List.nil_append,
+        List.length_cons, List.length_nil]
+      rw [scanBody.eq_def]
+      simp [hq, hb, ih]
+      omega
+
 /-- Read a quoted prefix, retaining all following characters. The parser fuel
-comes from the actual input length, so it cannot exhaust on a printed string. -/
+counts the quoted prefix, so later strings are not repeatedly scanned. -/
 @[expose] def readPrefix (input : List Char) : Option (String × List Char) :=
   match input with
-  | '"' :: rest => (readBody input.length rest).map fun (cs, suffix) =>
+  | '"' :: rest => (readBody (scanBody rest) rest).map fun (cs, suffix) =>
       (String.ofList cs, suffix)
   | _ => none
 
@@ -170,10 +218,8 @@ theorem readPrefix_write (text : String) (suffix : List Char) :
   have hn := writeBody_length text.toList
   simp only [write, String.toList_ofList, List.cons_append, List.append_assoc,
     List.nil_append, readPrefix]
-  have hf : text.toList.length < ('"' :: (writeBody text.toList ++ '"' :: suffix)).length := by
-    simp only [List.length_cons, List.length_append]
-    omega
-  rw [readBody_write text.toList suffix _ hf]
+  rw [scanBody_write]
+  rw [readBody_write text.toList suffix _ (by omega)]
   simp
 
 @[expose] def writeBytes (text : String) : ByteArray := (write text).toUTF8

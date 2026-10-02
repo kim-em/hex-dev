@@ -6,6 +6,7 @@ import argparse
 import json
 from pathlib import Path
 import random
+import resource
 import subprocess
 import sys
 
@@ -55,6 +56,10 @@ def corpus():
             b'{"x":1,"x":2}', b'"\\ud83d\\ude00"', b'"\\uD83D\\uDE00"',
             b'"\\b\\f\\n\\r\\t\\/\\\\\\\""', b'"\\u0000\\u001f\\uFFFF"',
             b"[" * 48 + b"0" + b"]" * 48]
+    good.extend([json.dumps([""] * 3000).encode("utf-8"),
+                 json.dumps([1] * 25000).encode("utf-8"),
+                 json.dumps("x" * 12000).encode("utf-8"),
+                 ("1" + "0" * 4095).encode("ascii")])
     rng = random.Random(10377)
     strings = ["", "\\\"/", "\x00\x01\x08\x0c\n\r\t\x1f", "λ雪😀", "\uffff\U0010ffff"]
 
@@ -103,9 +108,20 @@ def check_answer(record, answer):
 
 def check(fixture, executable):
     records = [json.loads(line) for line in fixture.read_text().splitlines()]
+    if len(records) != 324 or [r.get("id") for r in records] != list(range(324)):
+        raise ValueError("incomplete or reordered conformance corpus")
+    for record in records:
+        if (type(record.get("accept")) is not bool or not isinstance(record.get("bytes"), list)
+                or any(type(b) is not int or not 0 <= b < 256 for b in record["bytes"])):
+            raise ValueError("malformed byte conformance record")
     transport = "".join(json.dumps(r["bytes"]) + "\n" for r in records)
+    def stack_limit():
+        _, hard = resource.getrlimit(resource.RLIMIT_STACK)
+        resource.setrlimit(resource.RLIMIT_STACK, (8 * 1024 * 1024, hard))
+
     completed = subprocess.run([str(executable)], input=transport, text=True,
-                               capture_output=True, encoding="utf-8", check=True)
+                               capture_output=True, encoding="utf-8", check=True,
+                               preexec_fn=stack_limit)
     lines = completed.stdout.splitlines()
     if len(lines) != len(records):
         raise ValueError("wrong result count: " + str(len(lines)))
@@ -124,8 +140,8 @@ def main():
     parser.add_argument("--emit-fixtures", action="store_true")
     args = parser.parse_args()
     if args.emit_fixtures:
-        for record in corpus():
-            print(json.dumps(record, separators=(",", ":")))
+        for i, record in enumerate(corpus()):
+            print(json.dumps({"id": i, **record}, separators=(",", ":")))
     else:
         check(args.check, args.exe)
 

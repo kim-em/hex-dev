@@ -22,7 +22,7 @@ trailing commas and trailing tokens are rejected. Negative zero is accepted
 and prints as zero. Recursion fuel comes from finite input character and token
 counts; printing and parsing are ordinary executable operations.
 
-The independent Python oracle sends 320 byte strings to the compiled parser.
+The independent Python oracle sends 324 byte strings to the compiled parser.
 Its corpus includes 256 deterministic generated values, large integers,
 Unicode/control strings, duplicate object fields, nesting, malformed syntax,
 unpaired surrogates and invalid UTF-8. Python's standard parser determines the
@@ -49,12 +49,14 @@ though a JSON printer normalizes them. The existing `FastCheck.NumberForm`
 counterexample remains applicable. No certificate-byte completeness claim
 follows merely from the backend theorem.
 
-Integration must also address large-input robustness. String-prefix parsing
-currently scans the remaining character list for fuel at each string token,
-which can give quadratic work on arrays of many short strings. Non-tail
-recursion in strings, lexing and array tails also requires a native stack
-check on large inputs. The existing certificate byte/depth/digit pre-scan must
-remain in front of any replacement parser; the backend theorem alone does
-not establish resource bounds or suitability at those maximum limits.
-The low-level decimal word readers accept leading zeros; JSON token parsing
-separately rejects them.
+String-prefix parsing scans only through the current quoted string, rather
+than rescanning the whole remaining input for each string token. A proved
+prefix-scan law preserves the universal byte roundtrip. The native corpus also
+includes 3,000 empty strings, a 25,000-element flat array, a 12,000-character
+string and a 4,096-digit integer. The oracle runs the driver with an 8 MiB
+stack limit. These cases pass; they do not establish behavior at the existing
+16 MiB certificate-byte ceiling. Non-tail recursion in strings, lexing and
+array tails still needs assessment at that ceiling before production
+integration. The existing certificate byte/depth/digit pre-scan must remain
+in front of any replacement parser. The low-level decimal word readers accept
+leading zeros; JSON token parsing separately rejects them.
