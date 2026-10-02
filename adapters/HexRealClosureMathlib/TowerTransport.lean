@@ -214,6 +214,13 @@ private theorem cast_value {context other : Context registry} (h : context = oth
   rfl
 
 omit [DecidableEq K] in
+private theorem cast_element_value {context other : Context registry} (h : context = other)
+    (original : Hex.RealClosure.Tower.Model context K) (a : context.Value) :
+    (h ▸ original).value (_root_.cast (congrArg Context.Value h) a) = original.value a := by
+  cases h
+  rfl
+
+omit [DecidableEq K] in
 /-- Identity interprets every value in the unchanged source model. -/
 noncomputable def identity (original : Hex.RealClosure.Tower.Model source K) :
     Model (Conversion.identity source) original where
@@ -727,6 +734,33 @@ noncomputable def infinitesimalMapped {B : Type} [Lean.Grind.Field B] [Decidable
     Ambient.mappedNativeHom_C compatible f ambient a
   exact infinitesimalHom context old new hOld hNew hcomp
 
+/-- The actual new-base target maps its native parameter to the ambient
+infinitesimal. The context cast aligns it with the returned conversion. -/
+theorem infinitesimalMapped_X {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (context : BaseContext.Context registry B sign)
+    (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* R)
+    (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
+    (ambient : Ambient (Hex.RationalFn R)) :
+    (infinitesimalMapped context f hsign ambient).target.value
+      (_root_.cast (congrArg Context.Value (Conversion.infinitesimal_spec context).1.symm)
+        (BaseContext.Element.infinitesimal context)) =
+      ambient.inclusion (Hex.RationalFn.X : Hex.RationalFn R) := by
+  letI : Field B := HexPolyMathlib.fieldOfGrind
+  let g := Ambient.mappedNativeHom HexPolyMathlib.toGrind_fieldOfGrind f ambient
+  have hnew (q : Hex.RationalFn B) :
+      Hex.OrderedFn.Infinitesimal.sign sign q = (SignType.sign (g q) : Int) :=
+    Ambient.mappedNativeHom_sign HexPolyMathlib.toGrind_fieldOfGrind f sign hsign ambient q
+  let new := Hex.RealClosure.Tower.Model.base context.infinitesimal g hnew
+  change ((Conversion.infinitesimal_spec context).1.symm ▸ new).value
+    (_root_.cast (congrArg Context.Value (Conversion.infinitesimal_spec context).1.symm)
+      (BaseContext.Element.infinitesimal context)) = _
+  calc
+    _ = new.value (BaseContext.Element.infinitesimal context) :=
+      cast_element_value (Conversion.infinitesimal_spec context).1.symm new _
+    _ = g Hex.RationalFn.X :=
+      Hex.RealClosure.Tower.Model.base_value context.infinitesimal g hnew _
+    _ = _ := Ambient.mappedNativeHom_X HexPolyMathlib.toGrind_fieldOfGrind f ambient
+
 /-- Every finite validated root suffix over a sign-compatible base embeds
 through the common enlarged ambient field and rebuilds successfully. -/
 theorem rebuild_mapped {B : Type} [Lean.Grind.Field B] [DecidableEq B]
@@ -743,6 +777,10 @@ end Hex.RealClosure.Tower.Conversion.Model
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.infinitesimalMapped' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.infinitesimalMapped
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.infinitesimalMapped_X' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.infinitesimalMapped_X
 
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuild_mapped' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

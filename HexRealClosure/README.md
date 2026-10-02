@@ -1332,8 +1332,8 @@ of an arbitrary old suffix model through the native inclusion.
 interpretation through `infinitesimalMapped`, using that restriction.
 `enlarge?_ambient` is its simpler existence corollary.
 
-General `Context.enlarge` still requires algebraic restriction, staged-order
-packaging and dependency closure. The interpretation ingredients are:
+General `Context.enlarge` still requires assembling the algebraic restriction
+and staged-order results with dependency closure. The interpretation ingredients are:
 
 1. Relating an arbitrary old model to a chosen `B`-algebra map, proving
    agreement on its base coefficients and algebraicity of every value. For a
@@ -1378,11 +1378,21 @@ packaging and dependency closure. The interpretation ingredients are:
    in an independent real closed field for the restriction proof;
    `enlarge?_hom` supplies this reference from a sign-compatible base map.
    The old model can live in any ordered field and determines the resulting
-   coefficient homomorphism. The algebraic restriction and staged
-   order still need packaging with the final dependency-closed API.
-4. **Remaining:** applying the local algebraic bound to the computational
-   `B(ε)` levels and
-   proving their staged order agrees with the enlarged ambient interpretation.
+   coefficient homomorphism. `Model.suffixRestrict` constructs the actual
+   relative algebraic-union model of an arbitrary old model in a real closed
+   field. Inclusion preserves every old value; `suffixRestrict_baseHom`
+   identifies its initial coefficient map, and `suffixRestrict_algebraic`
+   proves the resulting infinitesimal ambient is algebraic over the mapped
+   native `B(ε)` field, without requiring the whole old ambient to be
+   algebraic over `B`.
+4. `Context.enlarge?_ordered` proves the actual returned context contains a
+   positive native parameter below every positive old value carried through
+   its conversion. `Conversion.parameter` supplies the new base parameter,
+   and `Rebuilt.parameter` includes it through every actual rebuilt root
+   level. `infinitesimalMapped_parameter` and `Rebuilt.parameter_value`
+   identify that stored value with the same ambient indeterminate used by
+   the sign-preserving new-base interpretation. This holds for arbitrary
+   ordered old fields and for the restricted algebraic-union model above.
 5. **Remaining:** gathering a dependency-closed collection of live contexts
    and assembling
    the total checked constructor with its value and order preservation
@@ -1766,7 +1776,10 @@ old model in a real closed field uses `Suffix.restrict` and `Model.baseHom` to
 extract its base map, using a reference interpretation in a real closed field
 for existence of the native inclusion laws;
 `Model.base_baseHom` and `Model.suffix_algebraic` derive agreement and
-algebraicity for that map. Packaging the restriction in the total
+algebraicity for that map. `Model.suffixRestrict` constructs its actual union
+model, preserving every old value and identifying the coefficient map.
+`suffixRestrict_algebraic` proves algebraicity of the next infinitesimal ambient
+over the native new base. Packaging these results in the total
 `Context.enlarge` constructor remains open.
 
 For any supplied native input model, `Model.roots_iff_union` identifies the
@@ -1776,5 +1789,13 @@ root context there, preserving its native operations and signs.
 `Context.enlarge?_constructed` preserves the old model lifted into the
 infinitesimal ambient and identifies the converted target with the new-base
 model extended through the actual rebuilt suffix. The total `Context.enlarge` constructor must
-still package the algebraic restriction and staged order and gather all
-requested live contexts into one compatible native context.
+still assemble the proved algebraic restriction and native parameter order
+with all requested live contexts in one compatible native context.
+
+Run `lake build HexRealClosure.TowerEnlargeOrderTests` for actual enlargement
+through √2 and √√2. The test compares the new parameter with old generators,
+positive differences and inverses, verifies sign preservation, and checks that
+the returned signature retains the old root depth and adds exactly one
+infinitesimal level. The companion consumer tests use an arbitrary old
+rational tower model inside ℝ, its relative algebraic restriction, and the
+actual selected-root enlargement result.
