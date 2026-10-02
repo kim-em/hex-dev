@@ -161,6 +161,17 @@ theorem Context.evalPoly_reduce (context : Context E Ctx coeffSign parent) (p : 
       hzero, zero_mul, zero_add] using he
   · rfl
 
+include hz h1 ha hs hm hnat hsign hn hi in
+/-- A supplied checked selected-sign certificate on the actual reduced query
+proves the exact scalar fact needed to restore a coefficient. The producer is
+not a premise: correctness of the total sign operation identifies its result
+with the same root value proved by the supplied replay. -/
+theorem Context.signPoly_checked (context : Context E Ctx coeffSign parent)
+    (p : DensePoly E) (signs : SignDet.SelectedSigns context.root [context.queryPoly p]) :
+    context.signPoly p = signs.value := by
+  rw [Context.signPoly, context.signQuery_spec f hz h1 ha hs hm hnat hsign hn hi]
+  exact (signs.value_at_root f hz h1 ha hs hm hnat hsign).symm
+
 theorem Context.evalPoly_zero (context : Context E Ctx coeffSign parent) :
     context.evalPoly f hz h1 ha hs hm hnat hsign 0 = 0 := by
   simp [evalPoly]

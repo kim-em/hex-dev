@@ -840,6 +840,16 @@ Nonmonic or unclean definitions retain the raw representative. A leading
 coefficient that denotes one but differs structurally
 from literal one does not enable monic storage.
 
+`Element.restore p sign proof nonzero` retains an exact nonzero stored
+representative using a proof of `Context.signPoly p = sign`. It performs no
+sign query or normalization. `restore?_eq` proves equality with the existing
+independent executable check; canonical zero remains separate. The companion's
+`Context.signPoly_checked` obtains that proof from supplied, accepted
+`SelectedSigns` evidence for the actual reduced query in this exact context.
+The ordinary-kernel example uses a degree-two stored representative whose
+query has degree one; wrong signs, unreduced queries and copied context keys
+reject. The byte coefficient decoder continues to use `restore?`.
+
 Ordinary addition, subtraction, negation, multiplication, inversion and
 division operate on these values. Inversion computes the defining polynomial's
 local gcd with the operand, takes the complementary factor, and scales the

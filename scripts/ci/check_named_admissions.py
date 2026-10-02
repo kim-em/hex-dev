@@ -225,6 +225,7 @@ def check() -> None:
              "HexRealClosureMathlib.AlgebraicClean", "HexRealClosureMathlib.AlgebraicValue",
              "HexRealClosureMathlib.AlgebraicTransport", "HexRealClosureMathlib.AlgebraicYun",
               "HexRealClosureMathlib.AlgebraicReencode",
+              "HexRealClosureMathlib.CoefficientSignsConformance",
               "HexRealClosure.AlgebraicReencodeTests",
               "HexRealClosureMathlib.AlgebraicRoots",
              "HexRealClosureMathlib.BaseClean", "HexRealClosureMathlib.AlgebraicTower",

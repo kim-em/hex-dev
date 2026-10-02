@@ -219,19 +219,33 @@ instance : Zero (Element context) := ⟨zero⟩
 private theorem stored_zero_proof : (0 : Element context).stored = none := rfl
 theorem stored_zero : (0 : Element context).stored = none := stored_zero_proof
 
+/-- Restore the exact stored polynomial using a proved sign in this immutable
+context. The proof is erased; this constructor performs no sign query and no
+normalization. Zero retains its existing separate canonical representation. -/
+def restore (p : DensePoly E) (claimed : Int)
+    (checked : context.signPoly p = claimed) (nonzero : claimed ≠ 0) : Element context :=
+  ⟨some ⟨p, claimed, checked, nonzero⟩⟩
+
 /-- Restore a literal nonzero stored form after checking its cached sign in
 this exact context. Certificate coefficients must retain their polynomial;
 arithmetic packing continues to use `ofPoly` and its reduction policy. -/
 def restore? (p : DensePoly E) (claimed : Int) : Option (Element context) :=
   if hc : context.signPoly p = claimed then
-    if hn : claimed ≠ 0 then some ⟨some ⟨p, claimed, hc, hn⟩⟩ else none
+    if hn : claimed ≠ 0 then some (restore p claimed hc hn) else none
   else none
+
+/-- Proof-directed restoration gives the same literal result as the existing
+independent executable sign check. -/
+theorem restore?_eq (p : DensePoly E) (claimed : Int)
+    (checked : context.signPoly p = claimed) (nonzero : claimed ≠ 0) :
+    restore? p claimed = some (restore p claimed checked nonzero) := by
+  simp [restore?, restore, checked, nonzero]
 
 private theorem stored_restore_proof (p : DensePoly E) (claimed : Int)
     (hc : context.signPoly p = claimed) (hn : claimed ≠ 0) :
     (restore? (context := context) p claimed).map Element.stored =
       some (some ⟨p, claimed, hc, hn⟩) := by
-  simp [restore?, hc, hn]
+  simp [restore?, restore, hc, hn]
 
 theorem stored_restore (p : DensePoly E) (claimed : Int)
     (hc : context.signPoly p = claimed) (hn : claimed ≠ 0) :
@@ -244,7 +258,7 @@ private theorem restore_stored_proof (a : Element context) (p : Nonzero context)
     (h : a.stored = some p) : restore? p.polynomial p.sign = some a := by
   rcases a with ⟨stored⟩
   cases h
-  simp [restore?, p.checked, p.nonzero]
+  simp [restore?, restore, p.checked, p.nonzero]
 
 theorem restore_stored (a : Element context) (p : Nonzero context)
     (h : a.stored = some p) : restore? p.polynomial p.sign = some a :=
@@ -301,6 +315,27 @@ theorem polynomial_zero : (0 : Element context).polynomial = 0 := by
 
 theorem sign_zero : (0 : Element context).sign = 0 := by
   simp only [sign, stored_zero]
+
+private theorem restore_polynomial_proof (p : DensePoly E) (claimed : Int)
+    (checked : context.signPoly p = claimed) (nonzero : claimed ≠ 0) :
+    (restore p claimed checked nonzero).polynomial = p := rfl
+
+/-- Restoration retains the supplied representative, even when a monic
+remainder would have a different literal form. -/
+theorem restore_polynomial (p : DensePoly E) (claimed : Int)
+    (checked : context.signPoly p = claimed) (nonzero : claimed ≠ 0) :
+    (restore p claimed checked nonzero).polynomial = p :=
+  restore_polynomial_proof p claimed checked nonzero
+
+private theorem restore_sign_proof (p : DensePoly E) (claimed : Int)
+    (checked : context.signPoly p = claimed) (nonzero : claimed ≠ 0) :
+    (restore p claimed checked nonzero).sign = claimed := rfl
+
+/-- Reading a proved restored sign performs no selected-root query. -/
+theorem restore_sign (p : DensePoly E) (claimed : Int)
+    (checked : context.signPoly p = claimed) (nonzero : claimed ≠ 0) :
+    (restore p claimed checked nonzero).sign = claimed :=
+  restore_sign_proof p claimed checked nonzero
 
 theorem sign_eq_zero (a : Element context) : a.sign = 0 ↔ a = 0 := by
   constructor

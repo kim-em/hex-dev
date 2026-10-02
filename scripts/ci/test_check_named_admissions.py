@@ -150,6 +150,7 @@ class AdmissionScannerTests(unittest.TestCase):
                 "adapters/HexRealClosureMathlib/IsolationFactor.lean",
                 "adapters/HexRealClosureMathlib/IsolationRoots.lean",
                 "conformance/HexRealClosure/IsolationConformance.lean",
+                "conformance/HexRealClosureMathlib/CoefficientSignsConformance.lean",
                 "adapters/HexRealClosureMathlib/RootOrder.lean",
                 "HexRealClosure/RootOrderTests.lean",
                 "HexRealClosure/RootFactorsTests.lean",
