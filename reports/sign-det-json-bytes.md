@@ -19,7 +19,8 @@ parser validates UTF-8, accepts ordinary Unicode and valid UTF-16 escape pairs,
 and rejects lone surrogates. Fractional and exponent number syntax are outside
 this wire format. Leading zeros, malformed delimiters, missing values, trailing
 commas and trailing tokens are rejected. Negative zero is accepted and prints as
-zero. Recursion fuel comes from finite input character and token counts;
+zero. Certificate byte lengths include the token separators; they cannot be
+compared directly with compact Lean JSON byte lengths. Recursion fuel comes from finite input character and token counts;
 printing and parsing are ordinary executable operations.
 
 The independent Python oracle sends 324 byte strings to the compiled parser. Its

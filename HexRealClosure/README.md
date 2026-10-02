@@ -573,7 +573,7 @@ that these retained valid domains cannot return the absent-domain result. That
 branch remains a diagnostic guard, using the internal system error rather than
 a descriptor-replay error.
 
-`hexrealclosure_isolation_conformance` emits eighteen actual executions. The pinned
+`hexrealclosure_isolation_conformance` emits nineteen actual executions. The pinned
 Z3 RCF oracle independently checks inputs, finite-bound policy, node caps,
 scalar-preserving deflation, cell counts, selected derivative words, literal
 descriptor contexts, complete root coverage and absence of duplicates. Cases include nonmonic input,

@@ -22,7 +22,7 @@ private def object (fields : List (String × Json)) : Json :=
 private def printJson (value : Json) : IO Unit := do
   let some text := String.fromUTF8? value.writeBytes
     | throw (IO.userError "JSON printer emitted invalid UTF-8")
-  IO.println text
+  IO.println text.trimAsciiEnd.toString
 
 private def rational (a : Rat) : Json := .arr #[Json.of a.num, Json.of a.den]
 
