@@ -8,9 +8,6 @@ import HexGenericRankMathlib
 import Mathlib.Algebra.Field.ZMod
 
 set_option maxHeartbeats 0
-set_option profiler true
-set_option profiler.threshold 1000000
-set_option trace.Hex.genericRank true
 
 open Matrix MvPolynomial in
 theorem result : (!![X (0 : Fin 1) ^ 3 - X 0] :

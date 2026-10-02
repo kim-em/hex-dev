@@ -50,8 +50,8 @@
 #       See SPEC/benchmarking.md §"Anti-patterns" entry on best-case
 #       inputs and SPEC/profiling.md §"Coverage requirement".
 # - proof_probes (optional): explicit repository-relative paths below
-#   bench/<Library>/ containing build-only proof-elaboration or kernel-replay
-#   probes. Mathlib-free libraries may declare probes, but only mathlib: true
+#   bench/<Library>/ containing CI-built proof examples. A larger paired fresh-module suite
+#   is justified only by a named SPEC decision that its measurements can affect. Mathlib-free libraries may declare probes, but only mathlib: true
 #   owners receive an exception for Mathlib imports. Files elsewhere in the
 #   same bench/<Library>/ tree remain ordinary computational-bench sources. A
 #   path

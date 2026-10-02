@@ -22,7 +22,7 @@ import time
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scripts.bench.structural_tactic_sweep import acquire_cpu
+from scripts.bench.cpu_lease import cpu_lease as acquire_cpu
 
 NAMES = ['comparison', 'denominators', 'compareHeight']
 PARAMS = [128, 256, 512, 1024, 2048, 4096, 8192, 16384]

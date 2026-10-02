@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run shared-host real-formula evidence through the existing benchmark harnesses."""
+"""Run shared-host real-formula evidence through the LeanBench compiled benchmark harness."""
 
 from __future__ import annotations
 
@@ -16,51 +16,17 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.bench.fresh_module_sweep import ProbeModule, ProbePair, SweepSpec, run_cli
-
-AXIOMS = ("propext", "Classical.choice", "Quot.sound")
-BASELINE = ProbeModule("HexRealFormulaMathlib.ProofProbe.Baseline")
-SPEC = SweepSpec(
-    description="Shared real-formula reification and generated-proof builds",
-    pairs=tuple(
-        ProbePair(name.lower(), BASELINE,
-                  ProbeModule(f"HexRealFormulaMathlib.ProofProbe.{name}", AXIOMS),
-                  {"component": component})
-        for name, component in [
-            ("Parameterized", "parameterized-reification-and-kernel-proof"),
-            ("Alternation", "biconditional-prenex-reification-and-kernel-proof"),
-        ]
-    ),
-    probe_target="HexRealFormulaProofProbe",
-    schema="hex-real-formula-proof-probes-v1",
-    measurement="adjacent-fresh-module-builds",
-    output_stem="hex-real-formula-proofs",
-    required_samples=4,
-    retain_compiler_output=True,
-)
+from scripts.bench.cpu_lease import cpu_lease
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("track", choices=["compiled", "proofs"])
+    parser.add_argument("track", choices=["compiled"])
     parser.add_argument("--output", type=Path, required=True)
     args, forwarded = parser.parse_known_args()
     os.chdir(ROOT)
-    cpus = sorted(os.sched_getaffinity(0))
-    offset = os.getpid() % len(cpus)
-    for cpu in cpus[offset:] + cpus[:offset]:
-        lease = open(f"/tmp/hex-bench-cpu-{cpu}.lock", "a")
-        try:
-            fcntl.flock(lease, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            break
-        except BlockingIOError:
-            lease.close()
-    else:
-        raise RuntimeError("all measurement CPU leases are held")
+    cpu, lease = cpu_lease()
     try:
-        if args.track == "proofs":
-            return run_cli(SPEC, Path(__file__), [
-                "--shared-host", "--cpu", str(cpu), "--output", str(args.output), *forwarded])
         os.sched_setaffinity(0, {cpu})
         args.output.parent.mkdir(parents=True, exist_ok=True)
         command = [".lake/build/bin/hexrealformula_bench", "run", "--filter",

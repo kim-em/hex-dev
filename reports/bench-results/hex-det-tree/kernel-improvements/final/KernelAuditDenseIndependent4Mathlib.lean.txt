@@ -1,2 +1,0 @@
-import HexPolyDetMathlib.ProofProbe.KernelQuietDenseIndependent4Mathlib
-#print axioms HexPolyDetMathlib.ProofProbe.KernelQuietDenseIndependent4Mathlib.result

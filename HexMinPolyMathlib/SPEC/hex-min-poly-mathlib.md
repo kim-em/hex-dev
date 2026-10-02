@@ -35,47 +35,18 @@ The tactic below adds a proof-performance surface to this companion.
 
 The existing correspondence is a proof-only Mathlib layer; its computational
 performance owner is `hex-min-poly`. The tactic has
-companion conformance and `proof_probes`, with fresh-module evidence rather than a Mathlib-importing benchmark executable.
+companion conformance and `proof_probes`, with CI-built examples.
 
 ## Frontend implementation and validation
 
-The frontend is implemented in `HexMinPolyMathlib/Tactic.lean`, with list
-certificates owned by `HexMinPoly/Kernel.lean`. The soundness theorems accept
-arbitrary checked witnesses. Existing correspondence evidence applies only
-to that API; frontend conformance and performance have separate obligations.
-`libraries.yml` registers `bench/HexMinPolyMathlib/ProofProbe` and caps
-`done_through` at `3` until complete proof evidence passes (an already lower
-phase remains lower). The ordinary build includes the frontend tests through
-`HexStructuralTacticTests`.
+Representative example files under `bench/HexMinPolyMathlib/ProofProbe` exercise
+cyclic, repeated-block, nilpotent and rational minimal polynomials. CI builds
+them through `HexStructuralTacticProofProbe` on every PR. These examples and the
+ordinary library/conformance tests establish correctness; this proof surface has
+no paired timing decision, timing ladder, absolute build-time gate, profile or
+headline-report requirement. The computational owner's LeanBench obligations
+remain separate.
 
-`scripts/bench/structural_tactic_probes.py` generates the complete named ladders
-with seed 10238, plus one 16×16 `Matrix.ofArray` fixture exercising the
-entrywise identification route for this owner. A regression compares every
-committed probe source with the generator. `scripts/bench/structural_tactic_sweep.py` runs six adjacent
-import-baseline/candidate pairs per fixture, rotating pairs and alternating
-arm order on one automatically leased CPU. An external append-only journal
-retains each completed arm and partial timeout output. Certificate sizes,
-entry heights, axiom audits and cumulative kernel profiles are included in
-the measured modules. Comparator status is
-**no-comparable-surface-in-named-comparator**.
-
-Proof tests live in `HexMinPolyMathlib/Tests.lean`, built with the ordinary
-library; malformed list certificates also belong in the algorithm library's
-Mathlib-free conformance driver. Proof probes are fresh modules, not runtime
-oracle drivers or Mathlib-importing benchmark executables. Each frontend uses
-`HexMinPolyMathlib/Tactic.lean`; result records and list soundness belong
-in `HexMinPolyMathlib/Kernel.lean`. No library name changes.
-
-For the named families below, shipping requires complete clean-tree evidence
-under the `absolute_only` mode of
-[SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files).
-Preregister six rounds and a per-candidate absolute build budget of 60 seconds
-on the measurement host for every stated rung. Every candidate sample must
-meet it; report the median and kernel-only time as well. A timeout, incomplete
-pair, budget failure or provenance mismatch blocks the frontend's performance
-sign-off. This is an operational shipping gate, not an asymptotic or portable
-wall-time claim. Retain slow completed samples; do not trim the ladder to get
-a passing verdict. Any budget revision requires an explicit SPEC amendment.
 
 ## The `min_poly` tactic
 
@@ -247,17 +218,10 @@ nonmonic output and zero denominators. Use mutations known to violate the
 identity (not changes to unused data). Audit accepted theorem axioms: only
 `propext`, `Classical.choice`, `Quot.sound`, never `sorryAx` or native trust.
 
-Reserve `bench/HexMinPolyMathlib/ProofProbe` in `libraries.yml` when the
-frontend is implemented. Named seeded families are `cyclic` (companion
-matrices), `repeated-block` (identical blocks, minimal degree below dimension),
-`nilpotent` (Jordan blocks), and `rational-dense`; dimensions `2, 4, 8, 16`
-and input heights `8, 32` bits, plus `0 × 0` as a correctness probe.
-Mathlib has no corresponding tactic, so no comparator ratio or superiority
-claim is required. Per [fresh-module evidence](../../SPEC/benchmarking.md#proof-probe-example-files),
-record six complete samples paired with import-only baselines, adjacent and
-alternating orientation, raw absolute build times and their median, baseline
-deltas, one kernel-only profile per family, certificate entry counts and
-serialized bytes, largest numerator/denominator bit lengths, emitted artifact
-sizes and axiom sets. Retain provenance, all completed samples and timeouts;
-preregister operational caps without treating them as portable performance
-claims. Executable producer/checker benchmarks remain in HexMinPoly.
+Representative example files under `bench/HexMinPolyMathlib/ProofProbe` exercise
+cyclic, repeated-block, nilpotent and rational minimal polynomials. CI builds
+them through `HexStructuralTacticProofProbe` on every PR. These examples and the
+ordinary library/conformance tests establish correctness; this proof surface has
+no paired timing decision, timing ladder, absolute build-time gate, profile or
+headline-report requirement. The computational owner's LeanBench obligations
+remain separate.

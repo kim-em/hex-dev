@@ -19,6 +19,3 @@ theorem result : Matrix.rank (R := ℚ) !![(1 : ℚ) / 2, (-9 : ℚ) / 2, (-3 : 
 /-- info: 'result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms result
-
--- Preserve the axiom inventory consumed by the optional diagnostic sweeps.
-#print axioms result

@@ -55,26 +55,15 @@ dominated by GMP arithmetic. Mode 1 was used wherever a controlled family
 admits an independent tight derivation; no timing-fitted declaration or
 mode-3 compiled escape hatch is used.
 
-### Proof consumer
+### Proof examples
 
-Literal certificate-check equalities have their own fresh-module track under
-[ProofProbe](../bench/HexRationalFn/ProofProbe/Support.lean), built by
-`HexRationalFnKernelProbe`. The accepted witnesses have degrees 5, 17, and 65;
-the rejected degree-65 certificate changes the final Bézout identity.
-The literal payload is a warm import. The measured operation is theorem
-elaboration plus kernel checking, not certificate generation or literal
-construction.
-
-Each substantive probe has a preregistered five-second **absolute fresh-module**
-budget and six rotated, alternating reference/candidate pairs. Import-only and
-same-replay null controls are measured first in the declared order. There is
-no LeanBench registration, compiled complexity verdict, or sampling-profile
-requirement for this proof surface.
-
-`HexRationalFnMathlib` is correspondence-only: its SPEC names
-`HexRationalFn` as the computational conformance/performance owner and declares
-the `correspondence-only-layer` comparator absence. It owns neither a compiled
-benchmark surface nor a proof/tactic performance surface.
+Representative example files under `bench/HexRationalFn/ProofProbe` exercise
+accepted literal Bezout replay and a corrupted identity. CI builds them through
+`HexRationalFnKernelProbe` on every PR. These examples and the ordinary
+library/conformance tests establish correctness; this proof surface has no
+paired timing decision, timing ladder, absolute build-time gate, profile or
+headline-report requirement. The computational owner's LeanBench obligations
+remain separate.
 
 ## Verdicts
 
@@ -187,51 +176,6 @@ tails allocate nothing. Its semantic equality is proved for every fuel, and the
 new ratio sweep above passes for both odd and even short lengths. The
 unbalanced profile confirms that balanced block products, not output copying,
 dominate.
-
-### Fresh-module proof results
-
-The [complete proof export](bench-results/hex-rational-fn-kernel-replay-83d22022-chungus2-cpu22.json)
-has `measurement_state: complete`, `release_quality: true`, and no validity
-exceptions. It records the full local import closure's SHA-256 hashes,
-toolchain/dependency checkout identities, cache/import boundary, compiler
-artifacts, axiom sets, raw rotated samples, resource counters, and every
-rejected attempt/preflight window.
-
-```sh
-python3 scripts/bench/rationalfn_kernel_replay.py \
-  --shared-host --expected-host chungus2 --cpu 22 --samples 6 \
-  --max-pair-retries 32 --output /tmp/kernel-replay.json
-```
-
-Each timed arm is `lake build +MODULE:olean` after its own outputs are removed;
-`lake build +MODULE:deps` warms only imports. CPU 22 and SMT sibling 70 are
-checked together. The accepted run contains 72 arm-frequency observations,
-2.69% frequency spread, one rejected pair attempt, and no exhausted pair.
-The effective interference ceiling includes the protocol's three-tick
-accounting allowance; the largest accepted effective ratio is 4.46%, not a
-claim that every short arm achieved the nominal 0.2% ratio.
-
-The null controls' signed deltas in milliseconds, in recorded round order, are:
-
-- Import: 6.852, -31.584, -30.132, -0.797, -3.809, 159.286; median -2.303,
-  IQR 28.491, range 190.870, IQR/build magnitude 4.02%.
-- Replay: 4.333, -5.845, 57.912, -9.863, 6.022, -55.723; median -0.756,
-  IQR 14.458, range 113.635, IQR/build magnitude 1.82%.
-
-They describe paired noise; the preregistered absolute-only verdict uses
-each candidate's maximum raw build time, not a baseline-subtracted estimate.
-
-| Probe | Reference median ms | Candidate median ms | Candidate maximum ms | Budget ms | Candidate .olean bytes |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Replay4 | 689.535 | 779.114 | 1075.234 | 5000 | 7432 |
-| Replay16 | 726.329 | 802.122 | 1010.709 | 5000 | 7440 |
-| Replay64 | 692.759 | 793.046 | 1012.960 | 5000 | 7440 |
-| Reject64 | 694.578 | 803.541 | 874.809 | 5000 | 13352 |
-
-The import-only .olean is 1640 bytes. All certificate theorems report exactly
-`[propext, Classical.choice, Quot.sound]`; there is no `sorryAx`,
-`native_decide`, added axiom, or trusted external checker. These times are
-not added to compiled timings and make no witness-size asymptotic claim.
 
 ## Comparator ratios
 
@@ -410,13 +354,6 @@ integer-pair widths are 32771/32773 bits. Both represent the same rational
 function. The intermediate size fields use a minimum width of one bit for a
 zero polynomial; final `sizes` fields use zero for empty arrays.
 
-### Proof-track comparator replacement
-
-Kernel replay has no FLINT protocol comparator. Its matched import baseline,
-same-module controls, raw build budgets, and artifacts are the separate
-comparison evidence in §Verdicts. There is no synthetic ratio combining
-kernel-build and compiled-operation times.
-
 ## Profile
 
 ### Compiled timed regions
@@ -509,11 +446,5 @@ promise of exactly that much retained time. Raw compressed profiles,
 presymbolication sidecars and diagnostics are also archived locally under
 `.lake/profiles/rational-fn-83d22022/`; analytical summaries and raw hashes are
 committed. No large sampled stack dump is required in the source tree.
-
-### Proof-track replacement
-
-Sampling does not measure the advertised kernel-checking surface. Its
-replacement is the fresh-module export and trust/provenance record in
-§Verdicts; compiled `check` and kernel reduction are never conflated.
 
 ## Concerns

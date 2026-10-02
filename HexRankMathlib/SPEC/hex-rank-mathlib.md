@@ -31,9 +31,7 @@ theorems and decidability instances use build-only correctness examples in
 Under [Phase 4](../../PLAN/Phase4.md), these CI builds are the required proof
 track evidence. There is no compiled executable, tactic complexity verdict,
 required timing sweep, comparator ratio, profile or headline report for this
-library. The retained `eval_rank` comparisons below and the separate
-[carrier report](../../reports/hex-rank-carriers-performance.md) are build-cost
-diagnostics at their recorded revisions; they do not gate this proof track.
+library. Representative integer and field-carrier examples below are built by CI.
 
 Throughout, `e` is `HexMatrixMathlib.matrixEquiv`, `A : Hex.Matrix R n m`,
 `c : Hex.Matrix.RankCert R n m`, and `B`, `C`, `P`, `U`, `d`, `r` are as
@@ -512,77 +510,13 @@ turn, and reported as a false target, a producer bug, or an entry the
 kernel cannot reduce. Accepted theorems depend on `propext`,
 `Classical.choice` and `Quot.sound` only.
 
-**Diagnostic comparison.** The unmodified pinned `eval_rank` supplies a
-reference for the retained build-cost investigation, not a Phase-4 ratio gate. The
-fresh-module probes `bench/HexRankMathlib/ProofProbe/{Dense8,Dense16,
-Deficient16,Dense32,LowRank32}{Hex,Mathlib}.lean` prove the same literal
-by `rank` and by `eval_rank`, each against its import-only baseline
-(`Baseline`, `MathlibBaseline`); `scripts/bench/rank_tactic_sweep.py`
-runs them through `fresh_module_sweep.py` (six samples, adjacent pairs,
-alternating orientation). Each arm's delta is an absolute estimate of its
-proof cost, literal elaboration included; the family's comparator ratio
-is the ratio of the two medians and is only as resolved as the smaller
-delta. Medians from
-`reports/bench-results/hex-rank-mathlib-tactic-probes-10216-rebased.json`
-(shared host, one CPU, both arms with `!![…]` elaboration inside the
-delta):
-
-| family | `eval_rank` | `rank` | ratio |
-|---|---|---|---|
-| dense `8 × 8` | 0.29 s | 0.11 s | 2.6 |
-| dense `16 × 16` | 1.95 s | 0.20 s | 9.6 |
-| dense `16 × 16`, rank 14 | 1.90 s | 0.28 s | 6.8 |
-| dense `32 × 32` | 15.11 s | 0.91 s | 16.6 |
-| `32 × 32`, rank 2 | 16.11 s | 0.57 s | 28.1 |
-
-Proof time against dimension, for the full-rank, rank `n − 2`, rank
-`n / 2` and rank `2` families up to a ten-second cap per run, in three
-arms (`eval_rank`, `rank`, and `rank -packing` for the plain checker on
-the same certificate) plus, with `--mathlib-root`, the `eval_rank` of
-another Mathlib checkout as a fourth arm (the record names its commit and
-label; the current record measures the open Mathlib pull request #43438,
-which replaces the `Echelon.Decomposition` check by list-based
-certificates), is recorded
-by `scripts/bench/rank_tactic_size_sweep.py` (profiler totals per file,
-imports excluded, the median of three runs per point with the range kept)
-and plotted by `scripts/plots/hex-rank-mathlib-tactic-size.py` to
-`reports/figures/hex-rank-mathlib-tactic-size.svg`. The dimension record is
-`reports/bench-results/hex-rank-mathlib-tactic-size-f9e81ced8335-chungus2.json`.
-It measures the integer-only frontend at that revision, excluding the additional
-carrier handlers and their imports. Full module costs and import baselines for
-the additional carriers are in the
-[carrier performance report](../../reports/hex-rank-carriers-performance.md).
-With the ten-second cap (a family stops for an arm after the first
-dimension whose median exceeds the cap, that dimension kept, and the
-ladders end at `n = 48` and, for rank `2`, `n = 128`),
-the pinned Mathlib's `eval_rank` reaches `n = 24` at full rank and rank
-`n / 2` (`6.5` and `8.4 s`; at `n = 28` two of the three runs complete, in
-`10.7` and `10.8 s`, and the third exceeds the wall limit), `n = 20` at rank `n − 2`
-(`3.8 s`, the next dimension exceeding the wall limit) and
-`n = 24` at rank `2` (`6.4 s`); the `eval_rank` of #43438 reaches `n = 48` at full rank, rank
-`n − 2` and rank `n / 2` (`7.3`, `8.2` and `8.0 s`) and `n = 64` at rank `2`
-(`8.1 s`); `rank` reaches `n = 48` at full rank (`1.3 s`, of which the
-kernel is `0.5 s`), rank `n − 2` (`1.7 s`, kernel `0.9 s`) and rank
-`n / 2` (`2.2 s`, kernel `1.3 s`), and `n = 128` at rank `2` (`6.5 s`, of which
-the kernel is `0.9 s` and the literal's elaboration and the entries'
-evaluation most of the rest); `rank -packing` reaches the same dimensions
-at `1.9`, `2.1`, `3.9` and `6.3 s`.
-
-Median kernel shares recorded by the same size sweep are:
-
-| family | `eval_rank` | `eval_rank` at #43438 | `rank` | `rank -packing` |
-|---|---|---|---|---|
-| dense `8 × 8`, rank 8 | 138 ms | 32 ms | 14 ms | 14 ms |
-| dense `16 × 16`, rank 16 | 1.24 s | 167 ms | 47 ms | 51 ms |
-| dense `16 × 16`, rank 14 | 1.11 s | 178 ms | 74 ms | 59 ms |
-| dense `32 × 32`, rank 32 | not run | 1.04 s | 194 ms | 315 ms |
-| `32 × 32`, rank 2 | timeout | 459 ms | 130 ms | 166 ms |
-
-A timeout entry has no profiler breakdown because the corresponding proof
-exceeded the sweep's wall limit (the import baseline plus the cap plus one
-second), and a
-"not run" entry is a dimension the arm never reached because its family
-had already stopped.
+Representative example files under `bench/HexRankMathlib/ProofProbe` exercise
+full and deficient integer ranks and rational, quadratic and number-field
+carriers. CI builds them through `HexRankMathlibProofProbe` on every PR. These
+examples and the ordinary library/conformance tests establish correctness; this
+proof surface has no paired timing decision, timing ladder, absolute build-time
+gate, profile or headline-report requirement. The computational owner's
+LeanBench obligations remain separate.
 
 ### Additional entry models
 
@@ -640,25 +574,7 @@ invoking the kernel; use the checked constructor for such presentations.
 
 Tests include quadratic and cubic presentations, a nonmonic primitive
 polynomial, fractional coordinates, empty and rectangular shapes, and forged
-lower/upper certificates. The six-sample carrier sweep is
-`scripts/bench/rank_carrier_sweep.py --shared-host`; CPU selection uses a
-nonblocking placement lease. It compares rational and quadratic full-rank
-8 × 8 and rank-14 16 × 16 matrices to `eval_rank`, and records the absolute
-cost of an 8 × 8 closed-algebraic block fixture. The quadratic comparator
-imports Mathlib's `Echelon.Zsqrtd` registration explicitly.
-The [carrier performance report](../../reports/hex-rank-carriers-performance.md)
-records all six trials and representative kernel-attribution profiles.
-
-Closed carrier proofs use the literal layer’s `addClosedProof`, avoiding a
-preliminary elaborator type check. Proofs that depend on local instances are
-closed by `mkAuxTheorem` before insertion.
-
-Each handler obtains an equality and derives bounds with `Eq.le`, `Eq.ge`
-and transitivity, using a kernel-decided comparison of natural numbers.
-
-Rank goals on `Hex.Matrix` inputs are a later obligation of this
-library; the witness cannot certify the executable's own value without a Mathlib-free
-rank theory.
+lower/upper certificates. The carrier examples build in CI with ordinary kernel replay.
 
 ## Decidability
 

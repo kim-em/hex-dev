@@ -7,9 +7,6 @@ Authors: Kim Morrison
 import HexDeterminantalIdealMathlib
 
 set_option maxHeartbeats 0
-set_option profiler true
-set_option profiler.threshold 1000000
-set_option trace.Hex.rankLocus true
 
 -- symbolic full.n2.k2.d2.s4, threshold 2.
 noncomputable def result (x0 x1 : ℚ) :=

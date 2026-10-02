@@ -939,7 +939,7 @@ rungs enables the chain on those rungs only.
 ### Packed-arm comparison
 
 The packed implementation reruns the shared families in
-[the recorded report](hex-poly-det-mathlib-performance.md),
+[CI-built proof examples](../SPEC/proof-examples.md),
 retaining its infeasible cases, failures and declines. For every certificate
 case compare forced term lists and forced packed checking on the same
 witness and proposition. Fix the sparse/packed crossover table from those
@@ -1154,7 +1154,7 @@ instance; it may decline identities that require coefficient reduction.
 The handler and term form ship through the opt-in exception. The symbolic
 simproc remains outside the default chain. The complete 840-sample schedule
 and 14 profiles, including every failure and timeout, are retained in
-[the report](hex-poly-det-mathlib-performance.md) and its linked
+[CI-built proof examples](../SPEC/proof-examples.md) and its linked
 raw data. N-prefixed rows below are the correlated row-scaled family
 (except N2K4D1S1); these ratios do not describe independent dense entries.
 Times are fresh-module, baseline-subtracted medians in milliseconds. All six
@@ -1251,7 +1251,7 @@ The table is fixed before the automatic comparison. No effect-size threshold
 was preregistered; small median differences and their spreads are reported
 without treating them as robust wins. Both
 full 2,064-observation schedules and all 14 family profiles are retained in the
-[packed report](hex-poly-det-mathlib-performance.md#historical-list-entry-packed-certificate-comparison).
+[CI-built proof examples](../SPEC/proof-examples.md).
 The report includes the complete 172-case ladder, 57 infeasible support requests,
 quotient generation, preflight, conversion, packing, multiplication, synchronous
 kernel checks, identification, elaboration and historical Mathlib fallback costs.

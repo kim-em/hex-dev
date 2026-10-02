@@ -1,2 +1,0 @@
-import HexPolyDetMathlib.ProofProbe.StructuralRationalTenMathlib
-#print axioms HexPolyDetMathlib.ProofProbe.StructuralRationalTenMathlib.result

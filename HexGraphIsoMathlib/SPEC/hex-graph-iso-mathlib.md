@@ -388,11 +388,13 @@ They include:
 - positive and negative coloured cases at `n = 10`;
 - a scheduled negative CFI pair with separately recorded limits.
 
-Fresh-module probes separate import, reification, compiled search, literal
-elaboration, kernel replay, and whole-tactic cost as required by
-[benchmarking.md](../../SPEC/benchmarking.md). This Mathlib library has no ordinary
-computational benchmark target. The canonical algorithm and external nauty
-comparison remain in the Mathlib-free benchmark driver.
+Representative example files under `bench/HexGraphIsoMathlib/ProofProbe`
+exercise positive and negative Mathlib graph replay. CI builds them through
+`HexGraphIsoMathlibProofProbe` on every PR. These examples and the ordinary
+library/conformance tests establish correctness; this proof surface has no
+paired timing decision, timing ladder, absolute build-time gate, profile or
+headline-report requirement. The computational owner's LeanBench obligations
+remain separate.
 
 ## Sparse correspondence
 

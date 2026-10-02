@@ -384,7 +384,7 @@ advertised proof-search operations.
 | `splitWith`, `split` | Compiled: `RationalFnWorkloads.polynomialPart`, with a nonzero remainder and bounded short divisor. |
 | `powWith`, natural powers | Compiled: `RationalFnWorkloads.square` varies base degree at exponent two; `power` varies exponent and output degree over the prime field. |
 | `certifyWith`, executable `check`, executable `ofCert?` | Compiled: `RationalFnFamilies.generate`, `accept`; `RationalFnScaling.replay`, `reject`. |
-| Kernel replay of literal certificate-check equalities | Proof: `bench/HexRationalFn/ProofProbe`, externally measured by `scripts/bench/rationalfn_kernel_replay.py`; no LeanBench timing is used. |
+| Kernel replay of literal certificate-check equalities | Proof: `bench/HexRationalFn/ProofProbe`, built by CI; no LeanBench timing is used. |
 
 Default wrappers and their `With` variants execute the same algorithm with the
 selected lawful plan. Fixed schoolbook/Karatsuba and cancelled/naive comparison
@@ -396,15 +396,13 @@ cofactor and quotient-rule sizes are emitted with the matched FLINT fixtures.
 The long Euclidean chain over `ZMod64 7` separately covers the generic half-gcd
 phase without coupling degree to rational coefficient growth.
 
-Each kernel probe has a five-second absolute fresh-module build budget, six
-rotated reference/candidate samples, an import-only baseline, and cheap and
-replay same-module noise controls. The accepted witnesses have degrees 5, 17,
-and 65; the rejection probe changes the last checked Bezout identity. Literal
-payloads are in a warm imported support module, so the reported build time is
-certificate theorem elaboration and kernel replay, not certificate search or
-payload generation. Standard logical axioms are recorded from `#print axioms`;
-no additional axiom, native decision procedure, or trusted external checker is
-introduced.
+Representative example files under `bench/HexRationalFn/ProofProbe` exercise
+accepted literal Bezout replay and a corrupted identity. CI builds them through
+`HexRationalFnKernelProbe` on every PR. These examples and the ordinary
+library/conformance tests establish correctness; this proof surface has no
+paired timing decision, timing ladder, absolute build-time gate, profile or
+headline-report requirement. The computational owner's LeanBench obligations
+remain separate.
 
 ## Conformance
 

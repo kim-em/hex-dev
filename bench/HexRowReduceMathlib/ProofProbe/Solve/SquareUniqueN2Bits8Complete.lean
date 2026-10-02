@@ -7,9 +7,6 @@ import HexRowReduceMathlib.Tactic
 
 set_option maxHeartbeats 0
 set_option maxRecDepth 100000
-set_option profiler true
-set_option profiler.threshold 1000000
-set_option trace.HexMatrix.certificate true
 
 noncomputable def result := solve% (!![(6 / 11), (6 / 11); (6 / 11), (37 / 33)] : Matrix (Fin 2) (Fin 2) ℚ) ![(2 / 11), (-1 / 99)]
 

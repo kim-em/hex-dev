@@ -810,9 +810,8 @@ coefficient type is itself computable. A tactic can therefore restrict
 itself to coefficients it can normalise, or prove
 `p : ℝ[X] = algebraMap ℚ[X] ℝ[X] p'` and compute in the `ℚ` model. The
 Mathlib-free representation and its companion support the second route
-without making the computational library depend on Mathlib. The existing
-kernel proof probes compare the reference tree with a sorted-list proxy;
-certificate consumers use the separate `Kernel.PolyList` API specified above.
+without making the computational library depend on Mathlib. Certificate consumers use the `Kernel.PolyList` API specified above;
+CI-built examples and `KernelTests.lean` check ordinary kernel reduction.
 
 ## Conformance
 
@@ -920,12 +919,13 @@ integer matrix timing cited there motivates this discipline; it is not a
 measurement of reference `MvPoly` arithmetic. `KernelTests.lean` measures
 the actual list-form certificate path on a small closed identity.
 
-The native driver lives at `bench/HexMvPoly/Bench.lean`. Kernel probes
-live below `bench/HexMvPolyMathlib/ProofProbe/`, contain no `main`,
-import no `LeanBench`, and are registered through
-`HexMvPolyMathlib.proof_probes`. Those probes still measure the reference
-tree and the `Mono`-keyed sorted-list proxy, not `Kernel.PolyList`; they do
-not establish performance or a scaling budget for the new list API.
+Representative example files under `bench/HexMvPolyMathlib/ProofProbe` exercise
+ordinary kernel polynomial cancellation, powers and coefficient lookup. CI
+builds them through `HexMvPolyMathlibProofProbe` on every PR. These examples and
+the ordinary library/conformance tests establish correctness; this proof surface
+has no paired timing decision, timing ladder, absolute build-time gate, profile
+or headline-report requirement. The computational owner's LeanBench obligations
+remain separate.
 
 Because the native registration names two comparators, Phase 4 also
 commits the five required comparator plots under
@@ -969,7 +969,7 @@ HexMvPolyMathlib.lean
           rationale: "CompPoly uses the same ExtTreeMap representation behind a Mathlib-dependent API; the comparison records integration and implementation overhead rather than gating release."
         - tool: "canonical sorted-list MvSparsePoly proxy"
           class: informational
-          rationale: "The pinned Mathlib revision has no MvSparsePoly, so a local canonical sorted-list proxy records compiled throughput for the alternative algorithmic shape. The registered kernel proof probes compare that proxy with the reference tree; KernelTests separately checks the actual PolyList certificate path."
+          rationale: "The pinned Mathlib revision has no MvSparsePoly, so a local canonical sorted-list proxy records compiled throughput for the alternative algorithmic shape. KernelTests checks the actual PolyList certificate path."
       input_families:
         - name: sparse-addition
           description: Disjoint and interleaved sparse supports across lexicographic, graded lexicographic, and graded reverse lexicographic order.

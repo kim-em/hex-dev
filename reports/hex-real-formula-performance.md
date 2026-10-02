@@ -3,7 +3,7 @@
 The Mathlib-free core has 34 compiled registrations covering structural operations,
 validated serialization, and exact rational evaluation. All 34 agree with their
 declared two-sided scaling models. Reification, semantic proofs, and the RCF
-adapter use the separate [fresh-module proof report](hex-real-formula-mathlib-performance.md).
+adapter use CI-built parameterized and alternation proof examples.
 
 This is implementation evidence, not a claim that the repository's independent
 review and phase-admission process is complete. Both new libraries are registered
@@ -164,5 +164,5 @@ is intentionally quadratic on ascending raw terms. The measurements do not bound
 arbitrary biconditional/prenex or DAG expansion: those operations remain
 output-sensitive and the frontend enforces expansion and proof budgets.
 The compiled measurements carry dirty-checkout provenance with exact snapshots;
-clean-build proof evidence is reported separately. Neither evidence set substitutes
+proof examples build in CI. Neither evidence set substitutes
 for the repository's independent review gates.

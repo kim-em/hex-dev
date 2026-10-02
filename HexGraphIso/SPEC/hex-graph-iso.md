@@ -1199,18 +1199,17 @@ pull request's head commit.
 accumulated sweeps, in recorded-date order with fixed axes, into
 `reports/figures/hexgraphiso-cactus-animation.gif`.
 
-The tactic has fresh-module probes for reification, compiled search, literal
-elaboration, kernel replay, and the complete tactic. Before release, the
-following cases must close within their logical limits:
+Representative example files under `bench/HexGraphIso/ProofProbe` exercise
+positive/negative dense and ordered-colour replay. CI builds them through
+`HexGraphIsoProofProbe` on every PR. These examples and the ordinary
+library/conformance tests establish correctness; this proof surface has no
+paired timing decision, timing ladder, absolute build-time gate, profile or
+headline-report requirement. The computational owner's LeanBench obligations
+remain separate.
 
-- a positive random `n = 12` pair related by a recorded relabelling;
-- a negative pair from the two recorded `G(12, 1/2)` seeds;
-- positive and negative ordered-colour pairs at `n = 10`;
-- a scheduled negative CFI pair under separately recorded larger limits.
-
-Measured wallclock requirements are added only after these probes exist and
-must satisfy the repository's matched fresh-build protocol. Compile-time toy
-examples alone do not complete the tactic milestone.
+Sparse examples in `bench/HexGraphIso/SparseProofProbe` cover the same four
+positive/negative and ordered-colour forms and build through
+`HexGraphIsoSparseProofProbe`. CFI correctness remains in the conformance corpus.
 
 ## Release conditions
 
@@ -2272,15 +2271,14 @@ search and sparse literal checkers.
 
 `HexGraphIsoMathlib.SparseTacticTests` checks correspondence-based sparse
 replay across an import boundary, including ordered colours, an empty graph
-and a changed enumeration. Fresh-module sparse proof probes live under
-`bench/HexGraphIso/SparseProofProbe`; their external runner retains adjacent
-import baselines, whole-build and kernel times, peak RSS, axiom sets and source
-hashes.
+and a changed enumeration. Sparse proof examples live under
+`bench/HexGraphIso/SparseProofProbe` and build in CI.
 
-The imported CFI proof closes with the ordinary sparse `graph_iso` route.
-Four fresh builds use only `propext`, `Classical.choice` and `Quot.sound`;
-the raw samples and adjacent import baselines are retained in
-`reports/bench-results/hexgraphiso-sparse-replay-unlimited.jsonl`.
+The imported CFI proofs use ordinary dense and sparse `graph_iso` replay.
+They are standalone correctness diagnostics under
+`conformance/HexGraphIso/Diagnostics`, built manually with
+`lake build HexGraphIsoCfiDiagnostics` because the cases are expensive.
+
 
 Sparse certificates and checker entrypoints distinguish sparse keys from
 dense keys. The checker recomputes sparse refinement and comparisons and

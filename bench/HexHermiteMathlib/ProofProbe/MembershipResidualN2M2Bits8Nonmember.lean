@@ -7,9 +7,6 @@ import HexHermiteMathlib.Tactic
 
 set_option maxHeartbeats 0
 set_option maxRecDepth 100000
-set_option profiler true
-set_option profiler.threshold 1000000
-set_option trace.HexMatrix.certificate true
 
 theorem result : (![-4, -3] : Fin 2 → ℤ) ∉
     Submodule.span ℤ (Set.range !![2, 2; -2, -2]) := by hermite

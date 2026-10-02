@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT))
 from scripts.bench.sign_det_compare import archive_sources
 from scripts.bench.sign_det_height import FUNCTIONS, validate, validate_phases, validate_export
 from scripts.bench.sign_det_sparse import source_hashes
-from scripts.bench.structural_tactic_sweep import acquire_cpu
+from scripts.bench.cpu_lease import cpu_lease as acquire_cpu
 
 
 def digest(path):

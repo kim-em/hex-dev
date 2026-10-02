@@ -8,12 +8,11 @@ import HexGraphIsoMathlib
 import Mathlib.Data.Fintype.Powerset
 
 /-!
-Shared inputs for the Mathlib-route `graph_iso` fresh-module probes
+Shared inputs for the Mathlib-route `graph_iso` CI-built examples
 (SPEC/hex-graph-iso-mathlib § Tests): the generalized Petersen and
 Kneser graphs of the manual chapter on their genuinely different
 vertex types, and the recorded random `n = 12` pair as `SimpleGraph`s
-over `Fin 12`. Each probe case imports this module and nothing else
-beyond it, measured against `MathlibBaseline`'s matched import cost.
+over `Fin 12`. The CI-built proof examples import this shared input module.
 -/
 
 namespace Hex.GraphIso.MathlibProofProbe

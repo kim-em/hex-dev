@@ -2087,7 +2087,7 @@ def run_retained_cli(
     spec: SweepSpec, caller_file: Path, argv: Sequence[str] | None = None,
 ) -> int:
     """Retain every completed arm in an external, incrementally flushed sidecar."""
-    from scripts.bench.structural_tactic_sweep import acquire_cpu
+    from scripts.bench.cpu_lease import cpu_lease as acquire_cpu
 
     arguments = list(sys.argv[1:] if argv is None else argv)
     args = parse_args(spec.description, arguments, default_samples=spec.required_samples or 4)
