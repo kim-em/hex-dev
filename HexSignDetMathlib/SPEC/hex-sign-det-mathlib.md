@@ -470,8 +470,9 @@ matrix/replay checking,
 completion, sign-at-root, cross-polynomial re-encoding and nested evidence,
 including rejection cases and axiom audits. Every declared proof-example root
 must be built by CI. `ProofProbe` contains the representative CI examples;
-optional larger correctness fixtures live in `Diagnostics`, outside the declared
-proof-example root. Ordinary theorem applications and law proofs do not require
+additional correctness fixtures live in `Diagnostics`, outside the declared
+proof-example root, and are built by CI. Memory-intensive depth-three nested
+fixtures have a separate manual target outside that root. Ordinary theorem applications and law proofs do not require
 dedicated timing sweeps.
 
 Runtime production, Tarski queries, coefficient signs, matrix solving and gcd

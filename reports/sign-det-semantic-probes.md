@@ -38,9 +38,13 @@ to contain only `propext`, `Classical.choice` and `Quot.sound`.
 
 These are diagnostic observations, with no complexity verdict or absolute
 performance budget. They do not establish all Phase-4 requirements. The
-current CI target retains a representative depth-one example and the other
-correctness cases remain optional diagnostics; timing records use the archived
-source snapshots.
+current CI targets build the representative depth-three example and all retained
+same-level correctness cases; timing records use the archived source snapshots.
+The [source archive](data/sign-det-semantics/source-archive.json) reconstructs both
+measured revisions from retained main ancestor
+`d77347db4d57512d083fcb2d4120ae9069a2b02b` plus stored file overrides. All 442
+recorded source hashes match those reconstructions, including the collection
+driver and import-only timing baselines.
 
 ## Graph-bound observations
 

@@ -1,12 +1,12 @@
 # Same-level graph kernel replay
 
 The measurements below use the retained source snapshots. Current CI builds a
-representative depth-one replay/semantic example; larger correctness fixtures
-remain optional diagnostics. The source archives retain the removed collection
+representative depth-three replay/semantic example and all retained same-level
+correctness fixtures. The source archives retain the removed collection
 drivers and their import-only timing baselines.
 
-The build-only probes under `bench/HexSignDetMathlib/ProofProbe` cover accepted
-and stale-context graphs at depths 1, 3, 5 and 7. Their query arities are 2,
+The correctness fixtures under `conformance/HexSignDetMathlib/Diagnostics`
+cover accepted and stale-context graphs at depths 1, 3, 5 and 7. Their query arities are 2,
 8, 32 and 128. The root head is X²−1 on (0,2), all queries are the constant
 2, and each parent has one candidate sign word. Both child edges refer to
 the preceding node. This gives depth+1 graph entries and twice-depth edges.

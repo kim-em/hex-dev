@@ -5,8 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSignDetMathlib.Diagnostics.D1.Semantic
-public import HexSignDetMathlib.Diagnostics.D1.Reject
+public import HexSignDetMathlib.Diagnostics.D3.Semantic
+public import HexSignDetMathlib.Diagnostics.D3.Reject
 
-/-! CI proof examples for replay. Imported examples use the ordinary
+/-! Shared BKR graph replay and mathematical root counts. Imported examples use the ordinary
 Lean kernel and guard their theorem axiom inventories. -/

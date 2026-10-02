@@ -36,6 +36,7 @@ BUILD_ONLY_LIBS = {
     "HexSignDetBenchSupport",
     "HexSignDetMathlibProofProbe",
     "HexSignDetMathlibDiagnostics",
+    "HexSignDetMathlibDepthThree",
     "HexBerlekampKernelProbe",
     "HexPrimalityKernelProbe",
     "HexPrimalityElabProbe",

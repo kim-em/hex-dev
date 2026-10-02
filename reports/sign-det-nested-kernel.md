@@ -82,12 +82,12 @@ bound in depth or shared coefficient-sign evidence in these probes.
 
 The declared CI target `HexSignDetMathlibProofProbe` uses a representative
 one-level set for nested acceptance, arithmetic and stale-context rejection,
-fraction-product rejection and normalization-certificate checking. Larger
-correctness fixtures remain under `HexSignDetMathlib.Diagnostics`, outside
-the declared proof-example root. Individual optional fixtures can be built
-with Lake; the depth-three acceptance module retains its observed roughly
-18 GiB resident-memory requirement. Those larger fixtures are diagnostics,
-not an additional CI proof-example requirement.
+fraction acceptance/product rejection, an arithmetic rejection cause and
+normalization-certificate checking. All one- and two-level correctness fixtures
+under `HexSignDetMathlib.Diagnostics` are also built by the existing CI job,
+outside the declared proof-example root. Only depth-three nested fixtures use
+the separate manual target `HexSignDetMathlibDepthThree`; the acceptance module
+retains its observed roughly 18 GiB resident-memory requirement.
 
 ## Measurement protocol
 

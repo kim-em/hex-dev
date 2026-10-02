@@ -33,5 +33,4 @@ theorem counts_roots : ∃ t,
 #guard_msgs (whitespace := lax) in
 #print axioms counts_roots
 
-
 end Hex.SignDetMathlib.Diagnostics.D5.Semantic

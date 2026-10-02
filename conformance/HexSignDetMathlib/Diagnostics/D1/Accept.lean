@@ -28,5 +28,4 @@ theorem checked : check 1 evidence = true := by
 #guard_msgs in
 #print axioms checked
 
-
 end Hex.SignDetMathlib.Diagnostics.D1.Accept
