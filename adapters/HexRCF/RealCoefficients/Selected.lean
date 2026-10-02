@@ -45,24 +45,59 @@ theorem algebraic_p (p : ZPoly) (s : DyadicSquare)
   exact AlgebraicNumber.ofNormalized_p p prim pos_lc pos_degree checked
     squarefree (Field.literalRep p s hw hp) _
 
+theorem normalized_toComplex (p : ZPoly)
+    (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
+    (pos_degree : 0 < p.natDegree) (checked : ZPoly.CheckedIrreducible p)
+    (squarefree : HasOnlySimpleRoots p) (rep : RefinedIsolation p)
+    (h : (AlgebraicNumber.ofNormalized? p prim pos_lc pos_degree checked
+      squarefree rep).isSome) :
+    (AlgebraicNumber.ofNormalized p prim pos_lc pos_degree checked squarefree
+      rep h).toComplex = rep.root := by
+  unfold AlgebraicNumber.ofNormalized
+  have hr := AlgebraicNumber.ofNormalized?_toComplex p prim pos_lc pos_degree
+    checked squarefree rep (Option.some_get h).symm
+  let a := (AlgebraicNumber.ofNormalized? p prim pos_lc pos_degree checked
+    squarefree rep).get h
+  let hpoly : a.p = p := AlgebraicNumber.ofNormalized?_p p prim pos_lc pos_degree
+    checked squarefree rep (Option.some_get h).symm
+  change (hpoly ▸ a.isolation).rep.root = _
+  exact (cast_root hpoly a.isolation).trans hr
+
 theorem algebraic_toComplex (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
     (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
     (pos_degree : 0 < p.natDegree) (checked : ZPoly.CheckedIrreducible p)
     (squarefree : HasOnlySimpleRoots p) :
     (algebraic p s hw hp prim pos_lc pos_degree checked squarefree).toComplex =
-      (Field.literalRep p s hw hp).root := by
-  unfold algebraic AlgebraicNumber.ofNormalized
-  let h := AlgebraicNumber.ofNormalized?_isSome p prim pos_lc pos_degree
-    checked squarefree (Field.literalRep p s hw hp)
-  have hr := AlgebraicNumber.ofNormalized?_toComplex p prim pos_lc pos_degree
-    checked squarefree (Field.literalRep p s hw hp) (Option.some_get h).symm
-  let a := (AlgebraicNumber.ofNormalized? p prim pos_lc pos_degree checked
-    squarefree (Field.literalRep p s hw hp)).get h
-  let hpoly : a.p = p := AlgebraicNumber.ofNormalized?_p p prim pos_lc pos_degree
-    checked squarefree (Field.literalRep p s hw hp) (Option.some_get h).symm
-  change (hpoly ▸ a.isolation).rep.root = _
-  exact (cast_root hpoly a.isolation).trans hr
+      (Field.literalRep p s hw hp).root :=
+  normalized_toComplex p prim pos_lc pos_degree checked squarefree
+    (Field.literalRep p s hw hp) _
+
+/-- Authenticate the selected embedding of a checked normalized construction
+using only its original isolation square. Canonicalization is not replayed. -/
+theorem normalized_toReal (p : ZPoly)
+    (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
+    (pos_degree : 0 < p.natDegree) (checked : ZPoly.CheckedIrreducible p)
+    (squarefree : HasOnlySimpleRoots p) (rep : RefinedIsolation p)
+    (h : (AlgebraicNumber.ofNormalized? p prim pos_lc pos_degree checked
+      squarefree rep).isSome)
+    (hreal : (AlgebraicNumber.ofNormalized p prim pos_lc pos_degree checked
+      squarefree rep h).isReal = true)
+    (s : DyadicSquare) (hw : atomWitness p s)
+    (hp : (mahlerPrec p : Int) ≤ s.prec) (hs : rep.1.square = s) :
+    (Field.literalRep p s hw hp).root.re =
+      (RealAlgebraicNumber.ofAlgebraic
+        (AlgebraicNumber.ofNormalized p prim pos_lc pos_degree checked
+          squarefree rep h) hreal).toReal := by
+  subst s
+  have hr : (Field.literalRep p rep.1.square hw hp).root = rep.root := by
+    change HexRootsMathlib.SimpleRoot.rootOf
+      (SimpleRoot.mk (Field.literalRep p rep.1.square hw hp)) = _
+    rw [Field.literalRep_mk, HexRootsMathlib.SimpleRoot.ofSquare_mk]
+    rfl
+  change _ = (AlgebraicNumber.ofNormalized p prim pos_lc pos_degree checked
+    squarefree rep h).toComplex.re
+  rw [normalized_toComplex, hr]
 
 /-- The real version retains the selected complex root, rather than taking
 an arbitrary conjugate or projecting a nonreal value. -/

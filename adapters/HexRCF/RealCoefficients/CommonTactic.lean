@@ -32,23 +32,10 @@ private meta def naturalSquareRoot? (source : Expr) : MetaM (Option Nat) := do
   unless ← isDefEq base q(($nExpr : ℝ)) do return none
   return some n
 
-private partial def sourceAtoms (e : Expr) (seen : Array Expr) : Array Expr :=
-  if e.isAppOfArity ``Real.sqrt 1 ||
-      e.isAppOfArity ``RealAlgebraicNumber.toReal 1 then
-    if seen.contains e then seen else seen.push e
-  else
-    match e with
-    | .app fn arg => sourceAtoms arg (sourceAtoms fn seen)
-    | .forallE _ type body _ | .lam _ type body _ =>
-        sourceAtoms body (sourceAtoms type seen)
-    | .letE _ type value body _ =>
-        sourceAtoms body (sourceAtoms value (sourceAtoms type seen))
-    | .mdata _ body | .proj _ _ body => sourceAtoms body seen
-    | _ => seen
-
 private inductive SourceKind where
   | radical (degree : Nat)
   | selected (args : Array Expr)
+  | normalized (proof : Expr)
   deriving Inhabited
 
 private structure SourcePlan where
@@ -100,6 +87,41 @@ private meta def coefficientProof (value expression : Expr) : MetaM Expr := do
     throwError "rcf: source field coefficients differ from their literal encoding"
   return ← instantiateMVars candidate
 
+private meta def normalizedArgs? (argument : Expr) :
+    MetaM (Option (Array Expr × Expr)) := do
+  if (← selectedArgs? argument).isSome then return none
+  let some real ← unfoldHead? argument
+      (·.isAppOfArity ``RealAlgebraicNumber.ofAlgebraic 2) | return none
+  let realArgs := real.getAppArgs
+  let some algebraic ← unfoldHead? realArgs[0]!
+      (·.isAppOfArity ``AlgebraicNumber.ofNormalized 8) | return none
+  return some (algebraic.getAppArgs, realArgs[1]!)
+
+private meta def sourceRoot? (argument : Expr) :
+    MetaM (Option (RealAlgebraicNumber × ZPoly × DyadicSquare × SourceKind)) := do
+  if let some args ← selectedArgs? argument then
+    return some (← FieldRuntime.evalReal argument,
+      ← FieldRuntime.evalZPoly args[0]!, ← FieldRuntime.evalSquare args[1]!,
+      .selected args)
+  let some (args, hreal) ← normalizedArgs? argument | return none
+  let p ← FieldRuntime.evalZPoly args[0]!
+  let sourceP : Q(ZPoly) ← pure args[0]!
+  let rep : Q(RefinedIsolation $sourceP) ← pure args[6]!
+  let square := q(($rep).1.square)
+  let s ← FieldRuntime.evalSquare square
+  let pExpr : Q(ZPoly) ← FieldLiteral.zpolyExpr p
+  let sExpr : Q(DyadicSquare) ← FieldLiteral.squareExpr s
+  -- These proofs authenticate the producer's printable proposal against the
+  -- original constructor data. Neither the canonical representative nor its
+  -- isolation search is reduced in the quotation.
+  let hs ← if ← isDefEq square sExpr then mkEqRefl square
+    else coefficientProof square sExpr
+  let hw ← mkDecideProof (q(atomWitness $pExpr $sExpr) : Q(Prop))
+  let hp ← mkDecideProof (q((mahlerPrec $pExpr : Int) ≤ ($sExpr).prec) : Q(Prop))
+  let proof ← mkAppM ``Selected.normalized_toReal
+    (args ++ #[hreal, sExpr, hw, hp, hs])
+  return some (← FieldRuntime.evalReal argument, p, s, .normalized proof)
+
 private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
   let identity : DensePoly Rat := DensePoly.ofList [0, 1]
   if let some degree ← naturalSquareRoot? source then
@@ -112,19 +134,19 @@ private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
       .radical degree⟩
   unless source.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return none
   let argument := source.appArg!
-  if let some args ← selectedArgs? argument then
-    let anchorValue ← FieldRuntime.evalReal argument
+  let field? ← fieldArgs? argument
+  if field?.isNone then
+    let some (anchorValue, sourceP, sourceSquare, kind) ← sourceRoot? argument |
+      return none
     let anchorReal ← mkAppM ``RealAlgebraicNumber.toReal #[argument]
     let fieldExpr ← FieldLiteral.ratPolyExpr identity
     let sourceProof ← mkAppM ``CommonPresentation.generator_eval #[anchorReal]
-    let sourceP ← FieldRuntime.evalZPoly args[0]!
-    let sourceSquare ← FieldRuntime.evalSquare args[1]!
     return some ⟨anchorReal, anchorValue, sourceP, sourceSquare,
       identity, fieldExpr, sourceProof,
-      .selected args⟩
-  let some (isSelectedField, anchorExpr, fieldValue) ← fieldArgs? argument | return none
-  let some args ← selectedArgs? anchorExpr | return none
-  let anchorValue ← FieldRuntime.evalReal anchorExpr
+      kind⟩
+  let some (isSelectedField, anchorExpr, fieldValue) := field? | return none
+  let some (anchorValue, sourceP, sourceSquare, kind) ← sourceRoot? anchorExpr |
+    return none
   let anchorReal ← mkAppM ``RealAlgebraicNumber.toReal #[anchorExpr]
   let coeffs ← mkAppM ``PolyQuot.coeffs #[fieldValue]
   let field ← FieldRuntime.evalRatPoly coeffs
@@ -133,6 +155,8 @@ private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
   -- so this reduces field arithmetic without replaying root isolation.
   let hcoeff ← coefficientProof coeffs fieldExpr
   let sourceProof ← if isSelectedField then
+    let .selected args := kind |
+      throwError "rcf: selected field has no selected generator"
     mkAppM ``Selected.field_eval
       #[args[0]!, args[1]!, args[2]!, args[3]!, args[4]!,
         args[5]!, args[6]!, args[7]!, args[8]!, args[9]!,
@@ -141,11 +165,9 @@ private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
     let sourceValue ← mkAppM ``CommonPresentation.ofField_eval
       #[anchorExpr, fieldValue, fieldExpr, hcoeff]
     mkAppM ``Eq.symm #[sourceValue]
-  let sourceP ← FieldRuntime.evalZPoly args[0]!
-  let sourceSquare ← FieldRuntime.evalSquare args[1]!
   return some ⟨anchorReal, anchorValue, sourceP, sourceSquare,
     field, fieldExpr, sourceProof,
-    .selected args⟩
+    kind⟩
 
 private def oneQuantifier {n : Nat} (formula : RealFormula.Prenex n) :
     Option (RealFormula.Quantifier × RealFormula.QF (n + 1)) :=
@@ -207,7 +229,7 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
                 throwError "rcf: source radical has a different defining polynomial"
               let nExpr : Q(ℕ) := mkNatLit degree
               pure q(SquareRoot.polynomial $nExpr)
-          | .selected _ => FieldLiteral.zpolyExpr sourceP
+          | .selected _ | .normalized _ => FieldLiteral.zpolyExpr sourceP
         let sourceWitness ← mkDecideProof
           (q(atomWitness $sourcePExpr $sourceSquareExpr) : Q(Prop))
         let sourcePrecision ← mkDecideProof
@@ -224,6 +246,7 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
           | .selected args => do
               let sourceValue ← mkAppM ``Selected.real_toReal args
               mkAppM ``Eq.symm #[sourceValue]
+          | .normalized proof => pure proof
         sourcePExprs := sourcePExprs.push sourcePExpr
         sourceSquareExprs := sourceSquareExprs.push sourceSquareExpr
         sourceWitnesses := sourceWitnesses.push sourceWitness
@@ -366,13 +389,23 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
   else throwError "rcf: common square failed its root witness"
 
 @[rcf_handler] meta def handle : Handler := fun target => do
-  if (sourceAtoms target #[]).size < 2 then return .declined
   if ← Registration.deferExact target then return .declined
   let source ← match ← Reify.prepare target with
     | .ok source => pure source
     | .error (.unsupported _ _) => return .declined
     | .error error => return .failed (Hex.RealFormula.Reify.Error.toMessageData error)
-  if source.coefficients.size < 2 then return .declined
+  if source.coefficients.isEmpty then return .declined
+  if source.coefficients.size == 1 then
+    -- Eligibility is determined before executable coefficient construction or
+    -- replay. Existing single-generator inputs retain their earlier handler.
+    let coefficient := source.coefficients[0]!
+    unless coefficient.isAppOfArity ``RealAlgebraicNumber.toReal 1 do
+      return .declined
+    let argument := coefficient.appArg!
+    let anchor ← match ← fieldArgs? argument with
+      | some (_, anchor, _) => pure anchor
+      | none => pure argument
+    if (← normalizedArgs? anchor).isNone then return .declined
   let mut plans : Array SourcePlan := #[]
   for coefficient in source.coefficients do
     let some plan ← sourcePlan? coefficient | return .declined
