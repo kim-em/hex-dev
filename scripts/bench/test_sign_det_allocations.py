@@ -432,7 +432,8 @@ class AllocationValidationTests(unittest.TestCase):
         names = {line.split()[-1] for line in symbols.read_text().splitlines()}
         full = gzip.decompress((root / "defined-symbols.txt.gz").read_bytes())
         self.assertEqual(hashlib.sha256(full).hexdigest(), inspection["defined_symbols_sha256"])
-        self.assertEqual(inspection["command"][:2], ["nm", "--defined-only"])
+        self.assertEqual(inspection["command"],
+                         ["nm", "--defined-only", meta["samples"][0]["command"][0]])
         token = inspection["filter_contains"]
         self.assertEqual(symbols.read_text().splitlines(),
                          [line for line in full.decode().splitlines() if token in line])

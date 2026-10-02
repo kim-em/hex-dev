@@ -61,13 +61,13 @@ has state `failed`. Its first native and instrumented answers agree, but the
 wrapper records no callback or allocation events, so the collector rejects the
 capture through its one-callback counter check. A separate adversarial test
 checks rejection when a callback is recorded but all request counts are zero;
-truly zero-allocation callbacks are outside this capture method. The generated C contains those
+truly zero-allocation callbacks are outside this capture method. The generated C contains the `runSolveDimension` and `runCheckDimension`
 forwarding definitions. A
 [post-capture inspection](data/sign-det-allocations/matrix-dimension-failed-25b179f5c/post-capture-inspection.json)
 of the executable with the same recorded hash retains its callback symbol
-inventory, its full unfiltered output, exact command and tool version: the dimension forwarding functions are absent, while `runSolve`
-and `runCheck` are present. This later observation does not replace the
-original capture metadata. The successful schedule selects the actual `runSolve` and `runCheck`
+inventory, its full unfiltered output, exact command and tool version. The
+dimension forwarding functions are absent; `runSolve` and `runCheck` are
+present. This later observation does not replace the original capture metadata. The successful schedule selects the actual `runSolve` and `runCheck`
 callbacks and expresses the same dimensions using their query-count parameter.
 The failed attempt remains retained, including its logs and raw empty event
 file; it supplies no allocation observation. No unchanged measurement is
