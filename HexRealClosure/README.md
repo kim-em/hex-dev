@@ -849,8 +849,11 @@ retained remainder. The companion's
 `Context.signPoly_checked` obtains that proof from supplied, accepted
 `SelectedSigns` evidence for the actual reduced query in this exact context.
 The ordinary-kernel example uses a degree-two stored representative whose
-query has degree one; evidence for a different query or a foreign context rejects.
-The certificate type fixes the actual reduced query. The byte coefficient decoder continues to use `restore?`.
+query has degree one. Evidence for a wrong sign, a different query or a
+mismatched context key rejects; the certificate type fixes the actual reduced
+query. The examples also check rejected restoration, packing to the actual
+remainder, and packing a vanishing input to canonical zero. The byte coefficient
+decoder continues to use `restore?`.
 
 Ordinary addition, subtraction, negation, multiplication, inversion and
 division operate on these values. Inversion computes the defining polynomial's

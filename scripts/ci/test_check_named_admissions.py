@@ -320,12 +320,13 @@ class AdmissionScannerTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/" + library):
                         audit.check()
                     additional.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
-                    shadow = root / "adapters" / library / "Nested/AnotherConformance.lean"
-                    shadow.parent.mkdir(parents=True, exist_ok=True)
-                    shadow.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
-                    with self.assertRaisesRegex(ValueError, "conformance module .* is shadowed"):
-                        audit.check()
-                    shadow.unlink()
+                    for prefix in (root / "adapters", root):
+                        shadow = prefix / library / "Nested/AnotherConformance.lean"
+                        shadow.parent.mkdir(parents=True, exist_ok=True)
+                        shadow.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                        with self.assertRaisesRegex(ValueError, "conformance module " + library + ".* is shadowed"):
+                            audit.check()
+                        shadow.unlink()
                     additional.unlink()
                 adapter_shadow = root / "HexSignDetMathlib/RootProducer.lean"
                 adapter_shadow.parent.mkdir(parents=True, exist_ok=True)

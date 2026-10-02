@@ -41,8 +41,8 @@ private theorem child_checked :
   decide +kernel
 
 set_option maxRecDepth 32768 in
-/-- Evidence for a wrong sign, a different query or a foreign context rejects.
-The restoration bridge's type fixes its actual reduced query. -/
+/-- Evidence for a wrong sign, a different query or a mismatched context key rejects.
+`Context.signPoly_checked` fixes its actual reduced query. -/
 theorem rejected_kernel :
     source.checkSigns [2 * Sturm.Fixtures.x] #v[-1] (.leaf firstNode) = false ∧
     source.checkSigns [stored] #v[1] (.leaf firstNode) = false ∧

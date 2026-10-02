@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit all development adapters and sign-determination conformance import cones.
+"""Audit adapter, sign-determination and real-closure companion conformance cones.
 
 RCF conformance (including intentional negative admission probes) and Sturm
 semantic replay conformance remain kernel-checked tests outside this source
