@@ -9,6 +9,7 @@ public import HexRealClosure.TowerRoots
 public import HexRealClosureMathlib.TowerModel
 public import HexRealClosureMathlib.RootTotal
 public import HexRealClosureMathlib.TransportPolynomial
+public import HexRealClosureMathlib.TowerTransport
 
 public section
 
@@ -49,6 +50,15 @@ theorem Root.embed_value (root : Root parent) (model : Model parent K) (a : pare
   | selected descriptor extension built =>
     cases built
     exact model.adjoin_embed descriptor a
+
+/-- The recorded native coefficient conversion has an actual compatible
+target model; its executable constructor takes no semantic premises. -/
+noncomputable def Root.conversionModel (root : Root parent) (model : Model parent K) :
+    Conversion.Model root.conversion model := by
+  cases root with
+  | point value => exact Conversion.Model.identity model
+  | selected descriptor extension built =>
+    exact Conversion.Model.includeRoot model descriptor extension built
 
 /-- Embedding a polynomial preserves its actual coefficient interpretation. -/
 theorem Root.embedPoly_value (root : Root parent) (model : Model parent K)
@@ -158,6 +168,10 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Root.embed_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Root.embed_value
+
+/-- info: 'Hex.RealClosure.Tower.Root.conversionModel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Root.conversionModel
 
 /-- info: 'Hex.RealClosure.Tower.Root.signAt_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

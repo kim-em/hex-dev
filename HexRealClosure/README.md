@@ -696,6 +696,10 @@ retains the input context. A selected descriptor caches the actual extension
 returned by `ctx.adjoin`, including its generator and predecessor embedding.
 The old contexts and values remain valid.
 
+`root.conversion` packages the coefficient inclusion as a native `Conversion`,
+retaining the cached child and composing with later transports.
+`Root.conversionModel` proves preservation in the same ambient field.
+
 `root.embedPoly p` enters every coefficient into the root's context, and
 `root.signAt p` evaluates there using ordinary native arithmetic.
 `root.compare other` is a total comparison through the compatible selections

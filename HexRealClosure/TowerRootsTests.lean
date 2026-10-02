@@ -27,6 +27,10 @@ private def check {parent : Context registry} (p : DensePoly parent.Value)
     require (root.signAt p == 0) "native root value is not a root after coefficient embedding"
     require (root.context.sign (root.embed 1 - 1) == 0) "native coefficient embedding changed one"
     require (root.context.sign (root.embed 0) == 0) "native coefficient embedding changed zero"
+    let conversion := root.conversion
+    let composed := conversion.comp (Conversion.identity conversion.context)
+    require (composed.context.sign (composed.value 1 - 1) == 0)
+      "composed native root inclusion changed one"
     if root.context.sign root.value != 0 then
       require (root.context.sign (root.value * root.value⁻¹ - 1) == 0)
         "native selected root arithmetic failed"

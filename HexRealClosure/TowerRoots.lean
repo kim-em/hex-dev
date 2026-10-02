@@ -7,6 +7,7 @@ module
 
 public import HexRealClosure.CompleteRoots
 public import HexRealClosure.TowerPolynomial
+public import HexRealClosure.TowerTransport
 
 public section
 
@@ -57,6 +58,22 @@ theorem Root.selection_ofSelection (parent : Context registry)
   match root with
   | .point _ => id
   | .selected _ extension _ => extension.embed
+
+/-- The explicit coefficient inclusion as a recorded native conversion.
+It retains the actual cached extension and composes with other transports. -/
+@[expose] def Root.conversion {parent : Context registry} (root : Root parent) :
+    Conversion parent :=
+  match root with
+  | .point _ => Conversion.identity parent
+  | .selected descriptor extension built =>
+    Conversion.includeRoot parent descriptor extension built
+
+theorem Root.conversion_context {parent : Context registry} (root : Root parent) :
+    root.conversion.context = root.context := by
+  cases root with
+  | point value => exact (Conversion.identity_spec parent).1
+  | selected descriptor extension built =>
+    exact (Conversion.includeRoot_spec parent descriptor extension built).1
 
 /-- Embed every coefficient into the context owning this root. -/
 @[expose] def Root.embedPoly {parent : Context registry} (root : Root parent)

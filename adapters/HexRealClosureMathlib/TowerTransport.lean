@@ -306,6 +306,21 @@ theorem comp_target {next : Conversion conversion.context}
 
 variable [IsStrictOrderedRing K] [IsRealClosed K]
 
+/-- The actual cached root extension interprets its recorded coefficient
+inclusion in the same ordered real closed field as the predecessor. -/
+noncomputable def includeRoot (original : Hex.RealClosure.Tower.Model source K)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (extension : Extension source descriptor) (built : extension = source.adjoin descriptor) :
+    Model (Conversion.includeRoot source descriptor extension built) original := by
+  cases built
+  have spec := Conversion.includeRoot_spec source descriptor (source.adjoin descriptor) rfl
+  exact
+    { target := spec.1.symm ▸ original.adjoin descriptor
+      value := by
+        intro x
+        rw [cast_value _ _ _ _ spec.2]
+        exact original.adjoin_embed descriptor x }
+
 /-- Start a semantic conversion at the actual checked refinement. The witness
 supplies the target model and preservation for every source-owned value. -/
 noncomputable def refine {parent : Context registry}
