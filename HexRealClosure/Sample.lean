@@ -76,7 +76,7 @@ multiplicities in `Context.roots`; cell boundaries need each distinct value once
 
 /-- Sort the collected boundaries and remove semantic duplicate roots. -/
 @[expose] def boundaries (context : Context registry) (values : List context.Value) : List context.Value :=
-  values.foldl (fun sorted value => insert context value sorted) []
+  values.reverse.foldl (fun sorted value => insert context value sorted) []
 
 /-- A complete polynomial family in one native arithmetic context. The erased
 bindings retain the actual root producer, collection and boundary sorting. -/
@@ -129,6 +129,62 @@ def Partition.sectors {polynomials : List parent.Poly} (family : Partition paren
 outside that list is rejected, rather than accepting incomplete boundaries. -/
 def Partition.sector? {polynomials : List parent.Poly} (family : Partition parent polynomials)
     (index : Nat) : Option (Sample parent) := family.sectors[index]?
+
+/-- The actual section and sector cells in the common coefficient context. -/
+def Partition.cells {polynomials : List parent.Poly} (family : Partition parent polynomials) :
+    List (Cell family.collection.input.context) :=
+  family.values.map Cell.section ++
+    (Sample.sectors family.collection.input.context family.values).map Prod.snd
+
+private theorem between_length (context : Context registry) (lower : context.Value)
+    (rest : List context.Value) : (between context lower rest).length = rest.length + 1 := by
+  induction rest generalizing lower with
+  | nil => rfl
+  | cons upper rest ih => simp [between, ih, Nat.add_comm, Nat.add_left_comm]
+
+/-- There is one section per distinct boundary. -/
+theorem Partition.sections_length {polynomials : List parent.Poly} (family : Partition parent polynomials) :
+    family.sections.length = family.values.length := by
+  simp only [Partition.sections, List.length_map]
+
+/-- Every finite ordered boundary list has both exterior sectors. -/
+theorem Partition.sectors_length {polynomials : List parent.Poly} (family : Partition parent polynomials) :
+    family.sectors.length = family.values.length + 1 := by
+  simp only [Partition.sectors, List.length_map]
+  cases family.values with
+  | nil => rfl
+  | cons first rest =>
+    simpa only [Sample.sectors, List.length_cons] using
+      congrArg (fun n => n + 1) (between_length family.collection.input.context first rest)
+
+/-- Every returned section retains the same actual coefficient conversion. -/
+theorem Partition.sections_input {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    {sample : Sample parent} (present : sample ∈ family.sections) :
+    sample.input = family.collection.input := by
+  obtain ⟨value, _, rfl⟩ := List.mem_map.mp present
+  rfl
+
+/-- Every returned sector retains the same actual coefficient conversion. -/
+theorem Partition.sectors_input {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    {sample : Sample parent} (present : sample ∈ family.sectors) :
+    sample.input = family.collection.input := by
+  obtain ⟨point, _, rfl⟩ := List.mem_map.mp present
+  rfl
+
+/-- Every sector position from zero through the final exterior ray succeeds. -/
+theorem Partition.sector?_success {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    (index : Nat) (valid : index ≤ family.values.length) :
+    ∃ sample, family.sector? index = some sample := by
+  have bounds : index < family.sectors.length := by
+    rw [family.sectors_length]
+    exact Nat.lt_succ_iff.mpr valid
+  exact ⟨family.sectors[index]'bounds, List.getElem?_eq_some_iff.mpr ⟨bounds, rfl⟩⟩
+
+/-- Only positions beyond the complete sector family are rejected. -/
+theorem Partition.sector?_none {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    (index : Nat) : family.sector? index = none ↔ family.values.length < index := by
+  rw [Partition.sector?, List.getElem?_eq_none_iff, family.sectors_length]
+  omega
 
 end Sample
 end Hex.RealClosure.Tower

@@ -25,6 +25,22 @@ private def run : IO Unit := do
   for s in family.sections ++ family.sectors do
     require (s.cell.contains s.value) "sample is outside its own cell"
   require (family.sector? 3).isNone "invalid sector index accepted"
+  let linear := x - DensePoly.C (1 : base.Value)
+  let duplicates := [linear, x * x - DensePoly.C (1 : base.Value), linear * linear]
+  let duplicateFamily := partition base duplicates
+  require (duplicateFamily.sections.length == 2 && duplicateFamily.sectors.length == 3)
+    "equal or repeated roots were retained as separate boundaries"
+  require (duplicateFamily.sections.map (fun s => s.signs duplicates) == [[-1, 0, 1], [0, 0, 0]])
+    "wrong repeated-root section signs"
+  require (duplicateFamily.sectors.map (fun s => s.signs duplicates) ==
+    [[-1, 1, 1], [-1, -1, 1], [1, 1, 1]]) "wrong duplicate-family sector signs"
+  let some descriptor := SignDet.Descriptor.validate base.sign base.signature
+      { context := base.signature, head := quadratic,
+        lower := .finite 1, upper := .finite (1 + 1), indices := [], signs := [] }
+    | throw (IO.userError "sample section descriptor failed")
+  let selected := Tower.Sample.section base descriptor
+  require (selected.cell.contains selected.value && selected.signs [quadratic, x] == [0, 1])
+    "selected section lost membership or its input coefficients"
   let wholeQs := [DensePoly.C (1 + 1 : base.Value), 0]
   let whole := partition base wholeQs
   require (whole.sections.isEmpty && whole.sectors.length == 1) "root-free family has boundaries"
@@ -41,6 +57,20 @@ private def run : IO Unit := do
     "wrong infinitesimal sector signs"
   for s in closeFamily.sections ++ closeFamily.sectors do
     require (s.cell.contains s.value) "infinitesimal sample is outside its cell"
+  let some closeDescriptor := SignDet.Descriptor.validate inf.sign inf.signature
+      { context := inf.signature, head := y * y - DensePoly.C (1 + epsilon),
+        lower := .finite 1, upper := .finite (1 + 1), indices := [], signs := [] }
+    | throw (IO.userError "infinitesimal selected parent failed")
+  let parent := inf.adjoin closeDescriptor
+  let z : parent.context.Poly := DensePoly.ofCoeffs #[0, 1]
+  let gap := (z - DensePoly.C (1 : parent.context.Value)) * (z - DensePoly.C parent.generator)
+  let parentFamily := partition parent.context [gap]
+  require (parentFamily.sections.length == 2 && parentFamily.sectors.length == 3)
+    "selected parent lost its infinitesimal gap"
+  require (parentFamily.sectors.map (fun s => s.signs [gap]) == [[1], [-1], [1]])
+    "wrong signs between a selected root and an infinitesimally close value"
+  for s in parentFamily.sections ++ parentFamily.sectors do
+    require (s.cell.contains s.value) "selected-parent sample is outside its cell"
   IO.println "native section and sector samples passed"
 
 #eval run

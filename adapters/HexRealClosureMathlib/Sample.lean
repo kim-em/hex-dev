@@ -111,7 +111,8 @@ private theorem fold_mem (model : Model context K) (values sorted : List context
 /-- Boundary sorting retains precisely the same interpreted root values. -/
 theorem boundaries_mem (model : Model context K) (values : List context.Value) (x : K) :
     x ∈ (boundaries context values).map model.value ↔ x ∈ values.map model.value := by
-  simpa only [boundaries, List.map_nil, List.not_mem_nil, false_or] using fold_mem model values [] x
+  simpa only [boundaries, List.map_nil, List.not_mem_nil, false_or, List.map_reverse,
+    List.mem_reverse] using fold_mem model values.reverse [] x
 
 private theorem fold_sorted (model : Model context K) (values sorted : List context.Value)
     (ordered : sorted.Pairwise (fun a b => model.value a < model.value b)) :
@@ -124,7 +125,7 @@ private theorem fold_sorted (model : Model context K) (values sorted : List cont
 /-- Every boundary occurs once in strict interpreted order. -/
 theorem boundaries_sorted (model : Model context K) (values : List context.Value) :
     (boundaries context values).Pairwise (fun a b => model.value a < model.value b) :=
-  fold_sorted model values [] (by simp)
+  fold_sorted model values.reverse [] (by simp)
 
 omit [DecidableEq K] in
 private theorem bounded_mem (model : Model context K) (a b : context.Value)
@@ -220,6 +221,77 @@ theorem signs_correct (sample : Tower.Sample parent) (original : Model parent K)
     original.value (p.coeff i)
   rw [coefficient, model.value]
 
+private def afterCells (context : Context registry) (lower : context.Value)
+    (rest : List context.Value) : List (Cell context) :=
+  rest.map Cell.section ++ (between context lower rest).map Prod.snd
+
+private theorem afterCells_cons (lower upper : context.Value) (rest : List context.Value)
+    (cell : Cell context) :
+    cell ∈ afterCells context lower (upper :: rest) ↔
+      cell = (bounded context lower upper).2 ∨ cell = .section upper ∨
+        cell ∈ afterCells context upper rest := by
+  simp only [afterCells, between, List.map_cons, List.mem_append, List.mem_cons]
+  tauto
+
+omit [DecidableEq K] in
+private theorem afterCells_above (model : Model context K) (lower : context.Value)
+    (rest : List context.Value)
+    (ordered : (lower :: rest).Pairwise (fun a b => model.value a < model.value b))
+    (cell : Cell context) (member : cell ∈ afterCells context lower rest)
+    (x : K) (inside : cell.Mem model x) : model.value lower < x := by
+  rcases List.mem_append.mp member with sectionMember | sectorMember
+  · obtain ⟨boundary, present, rfl⟩ := List.mem_map.mp sectionMember
+    exact inside ▸ (List.pairwise_cons.mp ordered).1 boundary present
+  · obtain ⟨point, present, equal⟩ := List.mem_map.mp sectorMember
+    rw [← equal] at inside
+    exact (between_correct model lower rest ordered point present).2.1 x inside
+
+private theorem afterCells_unique (model : Model context K) (lower : context.Value)
+    (rest : List context.Value)
+    (ordered : (lower :: rest).Pairwise (fun a b => model.value a < model.value b))
+    (x : K) (above : model.value lower < x) :
+    ∃! cell, cell ∈ afterCells context lower rest ∧ cell.Mem model x := by
+  induction rest generalizing lower with
+  | nil =>
+    simp only [afterCells, between, List.map_nil, List.nil_append, List.map_cons,
+      List.mem_singleton]
+    refine ⟨(rightRay context lower).2, ⟨rfl, ?_⟩, fun _ h => h.1⟩
+    simpa only [rightRay, Cell.Mem, and_true] using above
+  | cons upper rest ih =>
+    have tail := (List.pairwise_cons.mp ordered).2
+    by_cases less : x < model.value upper
+    · refine ⟨(bounded context lower upper).2,
+        ⟨(afterCells_cons lower upper rest _).mpr (Or.inl rfl), ⟨above, less⟩⟩, ?_⟩
+      rintro other ⟨member, inside⟩
+      rcases (afterCells_cons lower upper rest other).mp member with same | same | later
+      · exact same
+      · subst other
+        change model.value upper = x at inside
+        exact False.elim ((lt_irrefl _) (inside ▸ less))
+      · exact False.elim ((not_lt_of_ge less.le)
+          (afterCells_above model upper rest tail other later x inside))
+    · by_cases equal : x = model.value upper
+      · refine ⟨.section upper,
+          ⟨(afterCells_cons lower upper rest _).mpr (Or.inr (Or.inl rfl)), equal.symm⟩, ?_⟩
+        rintro other ⟨member, inside⟩
+        rcases (afterCells_cons lower upper rest other).mp member with same | same | later
+        · subst other
+          exact False.elim ((lt_irrefl _) (equal ▸ inside.2))
+        · exact same
+        · exact False.elim ((lt_irrefl _) (equal ▸
+            afterCells_above model upper rest tail other later x inside))
+      · have greater : model.value upper < x := by order
+        obtain ⟨cell, member, unique⟩ := ih upper tail greater
+        refine ⟨cell, ⟨(afterCells_cons lower upper rest _).mpr (Or.inr (Or.inr member.1)),
+          member.2⟩, ?_⟩
+        rintro other ⟨member, inside⟩
+        rcases (afterCells_cons lower upper rest other).mp member with same | same | later
+        · subst other
+          exact False.elim ((not_lt_of_ge greater.le) inside.2)
+        · subst other
+          exact False.elim (equal inside.symm)
+        · exact unique other ⟨later, inside⟩
+
 variable [IsRealClosed K]
 
 /-- A section carries the selected root through its actual cached conversion. -/
@@ -285,6 +357,56 @@ theorem Partition.coverage {polynomials : List parent.Poly} (family : Partition 
   rw [family.ordered, boundaries_mem, model.values, sources]
   exact roots_mem original polynomials x
 
+/-- The actual returned sections and sectors partition the common ambient field:
+every point belongs to exactly one cell, including both exterior rays. -/
+theorem Partition.cells_unique {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    (original : Model parent K) (model : Collection.Model family.collection original) (x : K) :
+    ∃! cell, cell ∈ family.cells ∧ cell.Mem model.input.target x := by
+  let context := family.collection.input.context
+  let target := model.input.target
+  cases values : family.values with
+  | nil =>
+    simp only [Partition.cells, values, List.map_nil, List.nil_append, Sample.sectors,
+      List.map_cons, List.mem_singleton]
+    exact ⟨.sector .negInf .posInf, ⟨rfl, trivial, trivial⟩, fun _ h => h.1⟩
+  | cons first rest =>
+    have ordered : (first :: rest).Pairwise (fun a b => target.value a < target.value b) := by
+      simpa only [values] using family.sorted original model
+    have membership (cell : Cell context) : cell ∈ family.cells ↔
+        cell = (leftRay context first).2 ∨ cell = .section first ∨
+          cell ∈ afterCells context first rest := by
+      simp only [Partition.cells, values, Sample.sectors, List.map_cons,
+        List.mem_append, List.mem_cons, afterCells]
+      tauto
+    by_cases less : x < target.value first
+    · refine ⟨(leftRay context first).2, ⟨(membership _).mpr (Or.inl rfl), trivial, less⟩, ?_⟩
+      rintro other ⟨member, inside⟩
+      rcases (membership other).mp member with same | same | later
+      · exact same
+      · subst other
+        exact False.elim ((lt_irrefl _) (inside ▸ less))
+      · exact False.elim ((not_lt_of_ge less.le)
+          (afterCells_above target first rest ordered other later x inside))
+    · by_cases equal : x = target.value first
+      · refine ⟨.section first, ⟨(membership _).mpr (Or.inr (Or.inl rfl)), equal.symm⟩, ?_⟩
+        rintro other ⟨member, inside⟩
+        rcases (membership other).mp member with same | same | later
+        · subst other
+          exact False.elim ((lt_irrefl _) (equal ▸ inside.2))
+        · exact same
+        · exact False.elim ((lt_irrefl _) (equal ▸
+            afterCells_above target first rest ordered other later x inside))
+      · have greater : target.value first < x := by order
+        obtain ⟨cell, member, unique⟩ := afterCells_unique target first rest ordered x greater
+        refine ⟨cell, ⟨(membership _).mpr (Or.inr (Or.inr member.1)), member.2⟩, ?_⟩
+        rintro other ⟨member, inside⟩
+        rcases (membership other).mp member with same | same | later
+        · subst other
+          exact False.elim ((not_lt_of_ge greater.le) inside.2)
+        · subst other
+          exact False.elim (equal inside.symm)
+        · exact unique other ⟨later, inside⟩
+
 /-- Every returned sector has an actual compatible interpretation, passes native
 strict membership, and contains no root of any nonzero input polynomial. -/
 theorem Partition.sectors_correct {polynomials : List parent.Poly}
@@ -292,6 +414,7 @@ theorem Partition.sectors_correct {polynomials : List parent.Poly}
     (model : Collection.Model family.collection original) (sample : Tower.Sample parent)
     (present : sample ∈ family.sectors) :
     ∃ realization : Conversion.Model sample.input original,
+      HEq realization model.input ∧
       sample.cell.contains sample.value = true ∧
       sample.cell.Mem realization.target (realization.target.value sample.value) ∧
       ∀ x, sample.cell.Mem realization.target x → ∀ p ∈ polynomials,
@@ -300,7 +423,7 @@ theorem Partition.sectors_correct {polynomials : List parent.Poly}
   obtain ⟨point, member, rfl⟩ := List.mem_map.mp present
   obtain ⟨inside, excluded⟩ := sector_coordinates_correct model.input.target family.values
     (family.sorted original model) point member
-  refine ⟨model.input, (Cell.contains_correct model.input.target _ _).mpr inside, inside, ?_⟩
+  refine ⟨model.input, HEq.rfl, (Cell.contains_correct model.input.target _ _).mpr inside, inside, ?_⟩
   intro x contained p polynomial nonzero root
   have boundary := (family.coverage original model x).mpr ⟨p, polynomial, nonzero, root⟩
   obtain ⟨value, present, equal⟩ := List.mem_map.mp boundary
@@ -313,6 +436,7 @@ theorem Partition.sections_correct {polynomials : List parent.Poly}
     (model : Collection.Model family.collection original) (sample : Tower.Sample parent)
     (present : sample ∈ family.sections) :
     ∃ realization : Conversion.Model sample.input original,
+      HEq realization model.input ∧
       sample.cell.contains sample.value = true ∧
       sample.cell.Mem realization.target (realization.target.value sample.value) ∧
       ∃ p ∈ polynomials,
@@ -320,7 +444,7 @@ theorem Partition.sections_correct {polynomials : List parent.Poly}
         (HexPolyMathlib.Interpret.interpret original.value original.zero_iff p).IsRoot
           (realization.target.value sample.value) := by
   obtain ⟨value, member, rfl⟩ := List.mem_map.mp present
-  refine ⟨model.input, ?_, rfl, ?_⟩
+  refine ⟨model.input, HEq.rfl, ?_, rfl, ?_⟩
   · exact (Cell.contains_correct model.input.target _ _).mpr rfl
   · exact (family.coverage original model _).mp (List.mem_map.mpr ⟨value, member, rfl⟩)
 
@@ -343,6 +467,10 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Sample.Partition.coverage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Sample.Partition.coverage
+
+/-- info: 'Hex.RealClosure.Tower.Sample.Partition.cells_unique' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Sample.Partition.cells_unique
 
 /-- info: 'Hex.RealClosure.Tower.Sample.Partition.sectors_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

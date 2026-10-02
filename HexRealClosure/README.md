@@ -1,37 +1,5 @@
 # Selected-root arithmetic and immutable bases
 
-## Sections and sectors
-
-`Tower.Sample.section` constructs a section from a validated descriptor and
-retains its cached root context, ordinary native value, and coefficient
-conversion. `Sample.signs` evaluates a polynomial family through that actual
-conversion. `Cell.contains` checks section equality or strict sector membership
-using native comparison.
-
-`Sample.partition context polynomials` obtains all finite roots of each
-nonzero polynomial, collects their complete root contexts into one arithmetic
-context, sorts the values, and removes equal boundaries. Zero polynomials
-contribute no boundary. `Partition.sections` returns each distinct boundary;
-`Partition.sectors` returns the two exterior rays and all intervening open
-sectors. Bounded samples use the midpoint of adjacent native values, and ray
-samples use offsets by one. The root-free whole line uses zero. This construction
-works for infinitesimally close roots without requiring a separating rational.
-`Partition.sector?` rejects an index outside this complete list.
-
-The companion `HexRealClosureMathlib.Sample` proves exact boundary coverage,
-strict ordering, coefficient-preserving sign evaluation, and correctness of
-each returned section and sector under every compatible collection model.
-Every sector sample passes native strict membership, and no root of a nonzero
-input polynomial lies in its open sector. The proofs use the actual complete
-root and collection producers; no caller-supplied root coverage or sample sign
-agreement is required. Tests include rational roots, zero and constant
-polynomials, and roots at two infinitesimally close native values.
-
-The API produces ordinary values in their native contexts. Joint specialization
-of nested selected roots and successive infinitesimals to one ordinary real
-assignment, independent sample conformance, and the full performance evaluation
-remain separate obligations.
-
 `Root.validate` checks a `Hex.SignDet.RawDescriptor Rat Nat` against its exact
 version tag. The tag is a `Nat` and does not yet own a defining polynomial or
 dependency graph. An `Expression d` stores a rational polynomial evaluated at the
@@ -1590,6 +1558,48 @@ identities. The native checker replays the complete polynomial certificates;
 the Python checker does not independently replay every pseudo-remainder step.
 This fixture establishes exporter/checker integration; it does not prove the
 general simultaneous ordinary-real realization theorem or Phase-4 performance.
+### Sections and sectors
+
+`Tower.Sample.section` constructs a section from a validated descriptor and
+retains its cached root context, ordinary native value, and coefficient
+conversion. `Sample.signs` evaluates a polynomial family through that actual
+conversion. `Cell.contains` checks section equality or strict sector membership
+using native comparison.
+
+`Sample.partition context polynomials` obtains all finite roots of each nonzero
+polynomial, collects their complete root contexts into one arithmetic context,
+sorts the values, and removes equal boundaries. Zero polynomials contribute no
+boundary. `Partition.sections` returns each distinct boundary;
+`Partition.sectors` returns the two exterior rays and all intervening open
+sectors. Bounded samples use the midpoint of adjacent native values, and ray
+samples use offsets by one. The root-free whole line uses zero. This
+construction works for infinitesimally close roots without requiring a
+separating rational. `Partition.sector?` rejects an index outside this complete
+list.
+
+The companion `HexRealClosureMathlib.Sample` proves exact boundary coverage,
+strict ordering, exact cell coverage and uniqueness, coefficient-preserving
+sign evaluation, and correctness of each returned section and sector under
+every compatible collection model. Every sector sample passes native strict
+membership, and no root of a nonzero input polynomial lies in its open sector.
+The proofs use the actual complete root and collection producers; no
+caller-supplied root coverage or sample sign agreement is required. Tests
+include rational roots, zero and constant polynomials, repeated and equal
+roots, selected sections, and an already selected-root parent with an
+infinitesimally close boundary.
+
+All samples use one common collection context, which adjoins every selected
+root before boundary deduplication. This can increase tower depth and
+intermediate extension degrees; duplicate descriptors are not shared. Boundary
+insertion processes the roots in reverse order, making an already ascending
+input linear in comparisons; the worst case remains quadratic. Sector sign
+constancy over general real closed fields still needs its polynomial
+intermediate-value theorem.
+
+The API produces ordinary values in their native contexts. Joint specialization
+of nested selected roots and successive infinitesimals to one ordinary real
+assignment, independent sample conformance, and the full performance evaluation
+remain separate obligations.
 
 ## Ordered algebraic ambient models
 
