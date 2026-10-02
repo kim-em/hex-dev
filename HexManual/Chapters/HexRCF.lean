@@ -509,7 +509,19 @@ The square below selects its positive real root. The
 {name}`Hex.RCF.RealCoefficients.Selected.real_rootNear` theorem identifies that
 root with the ordinary {name}`Hex.ZPoly.rootNear` value at the real projection
 of the square's centre. The tactic can use the selected root when it is named
-by a `def` in the same file.
+by a `def` in the same file. It also accepts the existing checked
+{name}`Hex.AlgebraicNumber.ofNormalized` constructor directly, followed by
+{name}`Hex.RealAlgebraicNumber.ofAlgebraic` with a reality proof. The original
+isolation square authenticates the chosen root. Elaboration executes
+canonicalization. Before common-field search, the adapter checks a direct root
+witness on the original square. The kernel authenticates its literal square
+and polynomial identities rather than replaying canonicalization.
+Both identities must reduce in the kernel, including across imports.
+A transported certificate without a direct witness is currently rejected.
+The example below computes `α² − 1` in the field
+of the selected root of `X³ − X − 1` and uses its proved real conversion.
+The constructor data must be executable and visible to the frontend; an
+arbitrary opaque algebraic value has no implicit reconstruction rule.
 
 The two-square-root examples below combine `Real.sqrt 2` and `Real.sqrt 3`
 in one common field and check that each field coordinate names the intended
@@ -599,6 +611,44 @@ example :
     plasticChecked plasticSquarefree (by decide)
 
 example : ∀ x : ℝ, x + plasticRoot.toReal > x := by
+  rcf
+
+private abbrev plasticRep :
+    Hex.RefinedIsolation plasticPolynomial :=
+  Field.literalRep plasticPolynomial plasticSquare
+    (by decide) (by decide)
+
+private abbrev plasticAlgebraic : Hex.AlgebraicNumber :=
+  Hex.AlgebraicNumber.ofNormalized plasticPolynomial
+    (by rfl) (by decide)
+    (by decide) plasticChecked plasticSquarefree
+    plasticRep
+    (Hex.AlgebraicNumber.ofNormalized?_isSome _ _ _ _ _ _ _)
+
+private def normalizedPlastic : Hex.RealAlgebraicNumber :=
+  Hex.RealAlgebraicNumber.ofAlgebraic plasticAlgebraic (by
+    apply (Hex.AlgebraicNumber.isReal_iff _).mpr
+    exact (congrArg Complex.im
+      (Selected.normalized_toComplex
+      plasticPolynomial (by rfl) (by decide) (by decide)
+      plasticChecked plasticSquarefree plasticRep _)).trans
+      (Field.literalRep_real _ _ _ _ (by decide)))
+
+private abbrev plasticCoordinate :
+    Hex.QAdjoin normalizedPlastic.toAlgebraic :=
+  normalizedPlastic.toAlgebraic.toQAdjoin ^ 2 - 1
+
+private abbrev plasticCoefficient :
+    Hex.RealAlgebraicNumber :=
+  Coefficients.ofField normalizedPlastic plasticCoordinate
+
+example : ∀ x : ℝ,
+    x ^ 2 + plasticCoefficient.toReal > 0 := by
+  rcf
+
+example : ∃ x : ℝ,
+    x ^ 2 = normalizedPlastic.toReal ∧
+    1 < x ∧ x < normalizedPlastic.toReal := by
   rcf
 
 example : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 > 0 := by

@@ -108,3 +108,14 @@ fixed coefficient valuation and equivalence to the original goal. The optional
 adapter is validated through the default `HexRCFRealCoefficients` Lake target
 and is not yet published to the split repository. See the
 [SPEC](SPEC/hex-rcf.md#planned-real-coefficient-extension).
+
+The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
+constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
+`QAdjoin` coordinates converted through `Coefficients.ofField`. It binds the
+original isolation square to the literal selected-root replay, preserving the
+chosen embedding. Elaboration executes canonicalization; the kernel reduces
+the original polynomial and square identities, rather than canonicalization.
+These identities must reduce across imports. A transported isolation certificate
+without a directly checkable root witness is currently rejected before search.
+This extends source conversion; general reconstruction and algebraic-only
+producer completeness remain required.
