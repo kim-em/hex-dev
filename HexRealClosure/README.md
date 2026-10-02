@@ -1243,7 +1243,8 @@ a sign-compatible ordered-field map. `Model.adjoin_unique` identifies any
 compatible child model with the actual descriptor-based interpretation;
 `extend_unique` propagates this identification through an entire finite suffix.
 `Context.enlarge?_preserves` consequently preserves an arbitrary old model
-from agreement on the initial base and a compatible new-base conversion,
+in a real closed field from agreement on the initial base and a compatible
+new-base conversion,
 without further agreement premises at the root levels. Computing suffix
 contexts during extraction can reconstruct old frames; no depth-scaling cost
 is claimed for this constructor.
@@ -1691,13 +1692,17 @@ model. `Tower.Model.baseRestrict` combines this algebraicity proof with the
 existing `restrictUnion` construction. For a canonical base model and any
 validated finite suffix, it preserves every interpreted value after inclusion
 and agrees with the prescribed base map at every suffix depth. An arbitrary
-old model must supply its agreement with the chosen base map and algebraicity
-of its values; applying the restriction in `Context.enlarge` remains open.
+old model in a real closed field uses `Suffix.restrict` and `Model.baseHom` to
+extract its base map from a reference base interpretation;
+`Model.base_baseHom` and `Model.suffix_algebraic` derive agreement and
+algebraicity for that map. Packaging the restriction in the total
+`Context.enlarge` constructor remains open.
 
 For any supplied native input model, `Model.roots_iff_union` identifies the
 actual complete-root presentations with the relative algebraic union of its
 entire value field. `Root.unionModel` interprets every value of each returned
-root context there, preserving its native operations and signs. Identifying
-arbitrary old models with the models rebuilt by `Context.enlarge`, and gathering
-all requested live contexts into one compatible native context, remain tower
-integration requirements.
+root context there, preserving its native operations and signs.
+`Context.enlarge?_constructed` identifies an arbitrary old model with the
+actual checked rebuilt target. The total `Context.enlarge` constructor must
+still package the algebraic restriction and staged order and gather all
+requested live contexts into one compatible native context.
