@@ -389,7 +389,7 @@ libraries:
   HexRank:
     deps: [HexBareiss, HexDeterminant, HexMatrix, HexArith, HexBasic, HexPoly]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
@@ -1223,7 +1223,7 @@ libraries:
     deps: [HexRank, HexBareissMathlib, HexDeterminantMathlib, HexMatrixMathlib, HexNumberFieldMathlib]
     mathlib: true
     proof_probes: [bench/HexRankMathlib/ProofProbe]
-    done_through: 3
+    done_through: 4
     status: active
   HexGenericRank:
     deps: [HexRank, HexMvGcd, HexBareiss, HexDeterminant, HexMatrix, HexBasic]
@@ -1581,7 +1581,7 @@ libraries:
   HexSignDetMathlib:
     deps: [HexSignDet, HexSturmMathlib, HexPolyMathlib, HexMatrixMathlib, HexRankMathlib]
     mathlib: true
-    proof_probes: [bench/HexSignDetMathlib/ProofProbe, bench/HexSignDetMathlib/NestedProofProbe]
+    proof_probes: [bench/HexSignDetMathlib/ProofProbe]
     done_through: 0
     status: active
   HexRealClosure:

@@ -30,7 +30,8 @@ REQUIRED_CASES = {"infinitesimal/" + name for name in (
     "square/repeated", "square/root-endpoint", "square/cancelled", "nested/whole",
     "nested/singleton", "descriptor/nested/singleton", "descriptor/nested/stale-context",
     "reencode/nested/reencode", "reencode/nested/refinement", "descriptor/square/negative-head", "compare/square/scaled-equal",
-    "compare/passmore/shared-cubic", "square/zero-root", "square/constant", "square/root-free",
+    "compare/passmore/shared-cubic", "compare/square/same-head-overlap",
+    "square/zero-root", "square/constant", "square/root-free",
     "nested/reversed", "nested/root-endpoint", "descriptor/passmore/absent",
     "descriptor/passmore/malformed", "descriptor/nested/reversed",
 )}
@@ -228,8 +229,12 @@ class RCF:
         require(self.squarefree(head) and not self.remainder(product, head) and
                 not self.remainder(head, left) and not self.remainder(head, right),
                 "common head is not a squarefree root union")
-        require(out.get("order") == ("lt" if a < b else "gt" if a > b else "eq"),
+        expected = "lt" if a < b else "gt" if a > b else "eq"
+        require(out.get("order") == expected,
                 "comparison differs from exact Z3 root order")
+        reverse = {"lt": "gt", "gt": "lt", "eq": "eq"}[expected]
+        require(out.get("totalOrder") == expected and out.get("reverseOrder") == reverse,
+                "total comparison differs from exact Z3 root order")
         derivatives = self.derivatives(head)
         require(sign_vector(out.get("leftSigns"), len(derivatives)) and
                 sign_vector(out.get("rightSigns"), len(derivatives)), "malformed common-root encodings")

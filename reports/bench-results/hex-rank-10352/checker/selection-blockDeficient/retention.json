@@ -1,0 +1,15 @@
+{
+  "source_directory": "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/selection-blockDeficient",
+  "source_patch_sha256": "ade43426a997fb9513b8ac3a120938fa77d4caad8f0f5c72ea79eaeeee25205f",
+  "completed_commands": [
+    "blockDeficient"
+  ],
+  "sha256": {
+    "metadata.json": "fe9dc424fe6ec00bca2b2880d60c4899cfae2bc310c2afab4923f7777cc56edf",
+    "completion.json": "db6677f9f964c3fc628ae4de99a322d245dd3b3bacde0f9f83397838c157e36f",
+    "blockDeficient.json": "1b26320af9fe67093b5bda41cac798efdce5748fb5b9c5dab175dec614bbf67c",
+    "blockDeficient.txt.gz": "99746754fd0cec788b7d3fd5686251fb673fa5971957ad1dada35f25be2078fe",
+    "source.patch.gz": "247338e4dabe5373ab43b95f8a8e1865831d64af9af7dd67d7fcac91b950c3d9",
+    "commands.jsonl": "58e91ab931def0891dcf04ea14790ccf0e907d8cbf905eb4b45cee7ab6d487ae"
+  }
+}

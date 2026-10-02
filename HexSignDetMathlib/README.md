@@ -234,9 +234,9 @@ uses the common full derivative word and count-one descriptors.
 the original selected roots, using their root-preserving re-encodings and the
 actual full-word comparator theorem.
 The executable API retains its internal diagnostics for arbitrary coefficient
-operations. The companion rules out selected-sign, completion and enumeration
-errors under lawful coefficients. The domain-exact total table wrappers are
-available; common-product comparison production remains a separate obligation.
+operations. The companion rules out selected-sign, completion, enumeration and
+comparison errors under lawful coefficients. The domain-exact total table
+wrappers are available.
 
 `Descriptor.buildSigns_success` proves that the actual selected-sign producer
 succeeds for every validated descriptor and finite ordered query list under
@@ -331,9 +331,21 @@ coefficient storage without rational separators or a field instance on stored
 coefficients. Conformance checks the actual foundation and bridge axiom
 inventories with the ordinary kernel.
 
-Common-product comparison production, the
-remaining total public interfaces, certificate byte roundtrips and Phase-4
-evidence remain required. Root-sum/replay soundness follows from the shared
+`HexSignDetMathlib.ComparisonProducer` proves that the actual common-product
+comparison succeeds for every pair of validated descriptors in one context.
+`CommonProduct.build_success` proves acceptance of the actual gcd/division
+record and identifies its head with the least common multiple up to a unit.
+`build_squarefree` supplies squarefreeness from the two source domains.
+`Descriptor.buildReencoding_full` proves that successful production supplies
+canonical full words, a property not assumed for arbitrary accepted re-encodings.
+`Descriptor.compare_success` excludes the total operation's diagnostic fallback;
+`compare_correct` and `compare_eq_iff`, `compare_lt_iff`, `compare_gt_iff` give
+its mathematical meaning for the original roots. The generic laws explicitly
+include preservation of ordinary division and do not impose a field instance
+or injective interpretation on stored coefficients.
+
+The remaining certificate interfaces and byte roundtrips, independent
+conformance/examples and Phase-4 evidence remain required. Root-sum/replay soundness follows from the shared
 proved theorem; finite BKR proofs consume Tau Ceti moment/count recovery, and
 root identity and strict comparison consume Tau Ceti Thom theorems.
 See the

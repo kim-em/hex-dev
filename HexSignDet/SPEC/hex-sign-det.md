@@ -281,7 +281,7 @@ the companion proves their semantic meanings.
 | `complete d` | Full descriptor of the same root, total on `Descriptor K`. |
 | `roots p I` | Complete strictly increasing descriptor list, or `none` for an invalid domain. Constants give an empty list; multiplicities belong downstream. |
 | `signAt d q` | Total integer sign of `q` at the selected root. Joint sign determination filters to count one; the singleton-interval shortcut additionally needs one root in the interval. |
-| `compare d₁ d₂` | Total `Ordering` of roots over the same coefficient field, using completion and joint re-encoding where necessary. |
+| `compare d₁ d₂` | Total `Ordering` of roots over the same coefficient field, using completion and joint re-encoding where necessary. Its internal-error branch emits a `panic!` diagnostic and returns `eq`; the companion proves this branch unreachable under lawful coefficient interpretations. |
 | `reencode d h I'` | `Option (Descriptor K)`; succeeds exactly when the target domain is valid and the selected root belongs to it. |
 | `certify` / `Replay.check` | Produce and check Tarski/BKR result certificates for tables or descriptor conclusions. Checking returns `Bool`; malformed or false certificates return `false`. |
 

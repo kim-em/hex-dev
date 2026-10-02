@@ -616,6 +616,7 @@ lean_lib HexQuerySemantics where
     `HexSignDetMathlib.ReencodingProducer, `HexSignDetMathlib.RootList,
     `HexSignDetMathlib.ReencodingRefinement, `HexSignDetMathlib.Thom,
     `HexSignDetMathlib.ThomReencoding, `HexSignDetMathlib.ThomRoots,
+    `HexSignDetMathlib.ComparisonProducer,
     `HexRealClosureMathlib.Specialize, `HexRealClosureMathlib.SpecializeTests,
     `HexRealClosureMathlib.TransportPolynomial, `HexRealClosureMathlib.TransportProduct,
     `HexRealClosureMathlib.TransportArithmetic, `HexRealClosureMathlib.TransportQuery, `HexRealClosureMathlib.TransportTests,
@@ -1107,11 +1108,15 @@ lean_lib HexSignDetMathlibProofProbe where
   srcDir := "bench"
   globs := #[.submodules `HexSignDetMathlib.ProofProbe]
 
--- Depth-three kernel reductions run manually to keep their large memory demand
--- out of the shared hosted build. Depth-one/two probes remain in the CI target above.
-lean_lib HexSignDetMathlibNestedProofProbe where
-  srcDir := "bench"
-  globs := #[.submodules `HexSignDetMathlib.NestedProofProbe]
+-- Correctness diagnostics remain CI-built outside the benchmark root.
+lean_lib HexSignDetMathlibDiagnostics where
+  srcDir := "conformance"
+  globs := #[.submodules `HexSignDetMathlib.Diagnostics]
+
+-- Depth-three kernel reductions retain their separate manual target.
+lean_lib HexSignDetMathlibDepthThree where
+  srcDir := "conformance"
+  globs := #[.submodules `HexSignDetMathlib.DepthThree]
 
 lean_lib HexRealFormulaProofProbe where
   srcDir := "bench"
@@ -1167,6 +1172,7 @@ lean_lib HexConformance where
       `HexSignDetMathlib.RootListConformance, `HexSignDetMathlib.RefinementConformance,
       `HexSignDetMathlib.ThomConformance, `HexSignDetMathlib.ThomRootsConformance,
       `HexSignDetMathlib.GraphSignsConformance,
+      `HexSignDetMathlib.ComparisonConformance,
       `HexSignDetMathlib.ConvertConformance].map Glob.one
 
     ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests].map Glob.one

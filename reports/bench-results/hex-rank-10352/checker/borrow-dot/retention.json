@@ -1,0 +1,15 @@
+{
+  "source_directory": "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/borrow-dot",
+  "source_patch_sha256": "9a2de919e674870cee4f4b5297d0105e5a5f54c94547dc5e85821b5c798ee299",
+  "completed_commands": [
+    "dot"
+  ],
+  "sha256": {
+    "metadata.json": "bda903b29f9b594926b5d899e0f39282a7d95ceb7111ac94c9b29429c4618210",
+    "completion.json": "bb447e1c32390c204e5ca26f6e025c8acd4a579ae98457f223609f9d3e3ece31",
+    "dot.json": "d55792f21b622df46a29bac41e57ae019a08eea71ba58120980d5971c71f6761",
+    "dot.txt.gz": "a1e73c108bb8ef1e19ca6272d54d018d68869c318d8b0e19da0c9d1cd110ee75",
+    "source.patch.gz": "fd67402a645df90ffb011a7d84bc3d3c5d84709f75e366bde24b381dc0722c92",
+    "commands.jsonl": "5861a807fad574d849beae7b907667f8338bcf167937735182d2dabb44184596"
+  }
+}

@@ -34,8 +34,9 @@ def main():
             hashlib.sha256(patch).hexdigest() != entry['uncompressed_sha256']):
         raise ValueError('archived source hash mismatch')
     subprocess.run(['git', 'worktree', 'add', '--detach', str(args.destination.resolve()),
-                    manifest['published_base']], cwd=ROOT, check=True)
-    subprocess.run(['git', 'apply'], input=patch, cwd=args.destination, check=True)
+                    entry.get('published_base', manifest['published_base'])], cwd=ROOT, check=True)
+    if patch:
+        subprocess.run(['git', 'apply'], input=patch, cwd=args.destination, check=True)
     if args.run:
         compressed = args.run / 'source.patch.gz'
         dirty = gzip.decompress(compressed.read_bytes()) if compressed.exists() else (args.run / 'source.patch').read_bytes()

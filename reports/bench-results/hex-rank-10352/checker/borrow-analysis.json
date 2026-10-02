@@ -1,0 +1,644 @@
+{
+  "scientific": [
+    {
+      "case": "Hex.RankBench.Quotient.checkFull",
+      "raw": "reports/bench-results/hex-rank-10352/checker/borrow-checkFull/checkFull.json",
+      "verdict": "inconclusive",
+      "slope": 0.463279,
+      "samples": 42,
+      "sizes": [
+        128,
+        192,
+        256,
+        384,
+        512,
+        768,
+        1024
+      ],
+      "largest_rung_median_seconds": 9.884431937999999,
+      "trial_summaries": [
+        {
+          "relative_spread": 0.051304,
+          "param": 128,
+          "ok_count": 6,
+          "min_per_call_nanos": 7372444.960938,
+          "median_per_call_nanos": 7563502.833984,
+          "max_per_call_nanos": 7760485.3125
+        },
+        {
+          "relative_spread": 0.069596,
+          "param": 192,
+          "ok_count": 6,
+          "min_per_call_nanos": 24161279.65625,
+          "median_per_call_nanos": 24508636.875,
+          "max_per_call_nanos": 25866977.625
+        },
+        {
+          "relative_spread": 0.076568,
+          "param": 256,
+          "ok_count": 6,
+          "min_per_call_nanos": 61295554.875,
+          "median_per_call_nanos": 62057092.921875,
+          "max_per_call_nanos": 66047147.875
+        },
+        {
+          "relative_spread": 0.037283,
+          "param": 384,
+          "ok_count": 6,
+          "min_per_call_nanos": 246297879.875,
+          "median_per_call_nanos": 249127603.9375,
+          "max_per_call_nanos": 255586170.875
+        },
+        {
+          "relative_spread": 0.069384,
+          "param": 512,
+          "ok_count": 6,
+          "min_per_call_nanos": 609788619.5,
+          "median_per_call_nanos": 618250836,
+          "max_per_call_nanos": 652685522.5
+        },
+        {
+          "relative_spread": 0.447164,
+          "param": 768,
+          "ok_count": 6,
+          "min_per_call_nanos": 2030015657,
+          "median_per_call_nanos": 2095562073.5,
+          "max_per_call_nanos": 2967075963
+        },
+        {
+          "relative_spread": 1.113207,
+          "param": 1024,
+          "ok_count": 6,
+          "min_per_call_nanos": 7780305813,
+          "median_per_call_nanos": 9884431938,
+          "max_per_call_nanos": 18783727768
+        }
+      ]
+    },
+    {
+      "case": "Hex.RankBench.Quotient.finishFull",
+      "raw": "reports/bench-results/hex-rank-10352/checker/borrow-finishFull/finishFull.json",
+      "verdict": "consistent_with_declared_complexity",
+      "slope": -0.0688,
+      "samples": 42,
+      "sizes": [
+        128,
+        192,
+        256,
+        384,
+        512,
+        768,
+        1024
+      ],
+      "largest_rung_median_seconds": 3.4863227869999998,
+      "trial_summaries": [
+        {
+          "relative_spread": 0.087445,
+          "param": 128,
+          "ok_count": 6,
+          "min_per_call_nanos": 7631684.351562,
+          "median_per_call_nanos": 7833287.8125,
+          "max_per_call_nanos": 8316666.527344
+        },
+        {
+          "relative_spread": 0.075366,
+          "param": 192,
+          "ok_count": 6,
+          "min_per_call_nanos": 25025944.515625,
+          "median_per_call_nanos": 25576666.59375,
+          "max_per_call_nanos": 26953560.3125
+        },
+        {
+          "relative_spread": 0.054945,
+          "param": 256,
+          "ok_count": 6,
+          "min_per_call_nanos": 59279094.09375,
+          "median_per_call_nanos": 59728708.40625,
+          "max_per_call_nanos": 62560885.65625
+        },
+        {
+          "relative_spread": 0.062371,
+          "param": 384,
+          "ok_count": 6,
+          "min_per_call_nanos": 192902508.375,
+          "median_per_call_nanos": 194055687.5,
+          "max_per_call_nanos": 205005910.375
+        },
+        {
+          "relative_spread": 0.058243,
+          "param": 512,
+          "ok_count": 6,
+          "min_per_call_nanos": 446838943.5,
+          "median_per_call_nanos": 458542808.125,
+          "max_per_call_nanos": 473545911.5
+        },
+        {
+          "relative_spread": 0.051378,
+          "param": 768,
+          "ok_count": 6,
+          "min_per_call_nanos": 1440850077,
+          "median_per_call_nanos": 1470363365.5,
+          "max_per_call_nanos": 1516393802
+        },
+        {
+          "relative_spread": 0.175887,
+          "param": 1024,
+          "ok_count": 6,
+          "min_per_call_nanos": 3393109286,
+          "median_per_call_nanos": 3486322787,
+          "max_per_call_nanos": 4006308410
+        }
+      ]
+    },
+    {
+      "case": "Hex.RankBench.Quotient.produceFull",
+      "raw": "reports/bench-results/hex-rank-10352/checker/borrow-produceFull/produceFull.json",
+      "verdict": "consistent_with_declared_complexity",
+      "slope": 0.087571,
+      "samples": 42,
+      "sizes": [
+        128,
+        192,
+        256,
+        384,
+        512,
+        768,
+        1024
+      ],
+      "largest_rung_median_seconds": 132.6172019235,
+      "trial_summaries": [
+        {
+          "relative_spread": 0.02397,
+          "param": 128,
+          "ok_count": 6,
+          "min_per_call_nanos": 250081470.75,
+          "median_per_call_nanos": 252673451.1875,
+          "max_per_call_nanos": 256138027.75
+        },
+        {
+          "relative_spread": 0.026296,
+          "param": 192,
+          "ok_count": 6,
+          "min_per_call_nanos": 730538589,
+          "median_per_call_nanos": 736448765.5,
+          "max_per_call_nanos": 749904314
+        },
+        {
+          "relative_spread": 0.043731,
+          "param": 256,
+          "ok_count": 6,
+          "min_per_call_nanos": 1610409075,
+          "median_per_call_nanos": 1632481820.5,
+          "max_per_call_nanos": 1681798349
+        },
+        {
+          "relative_spread": 0.104525,
+          "param": 384,
+          "ok_count": 6,
+          "min_per_call_nanos": 5025740638,
+          "median_per_call_nanos": 5320168146,
+          "max_per_call_nanos": 5581830009
+        },
+        {
+          "relative_spread": 0.195056,
+          "param": 512,
+          "ok_count": 6,
+          "min_per_call_nanos": 11648538986,
+          "median_per_call_nanos": 12431742563,
+          "max_per_call_nanos": 14073427234
+        },
+        {
+          "relative_spread": 0.318391,
+          "param": 768,
+          "ok_count": 6,
+          "min_per_call_nanos": 45949074978,
+          "median_per_call_nanos": 47209857543.5,
+          "max_per_call_nanos": 60980271254
+        },
+        {
+          "relative_spread": 0.232617,
+          "param": 1024,
+          "ok_count": 6,
+          "min_per_call_nanos": 116161807697,
+          "median_per_call_nanos": 132617201923.5,
+          "max_per_call_nanos": 147010847518
+        }
+      ]
+    },
+    {
+      "case": "Hex.RankBench.Quotient.checkDeficient",
+      "raw": "reports/bench-results/hex-rank-10352/checker/borrow-checkDeficient/checkDeficient.json",
+      "verdict": "consistent_with_declared_complexity",
+      "slope": -0.099936,
+      "samples": 42,
+      "sizes": [
+        128,
+        192,
+        256,
+        384,
+        512,
+        768,
+        1024
+      ],
+      "largest_rung_median_seconds": 1.7432827095,
+      "trial_summaries": [
+        {
+          "relative_spread": 0.497697,
+          "param": 128,
+          "ok_count": 6,
+          "min_per_call_nanos": 4034978.806641,
+          "median_per_call_nanos": 4363557.200195,
+          "max_per_call_nanos": 6206707.25
+        },
+        {
+          "relative_spread": 0.257005,
+          "param": 192,
+          "ok_count": 6,
+          "min_per_call_nanos": 12936187.25,
+          "median_per_call_nanos": 13560536.351563,
+          "max_per_call_nanos": 16421316.6875
+        },
+        {
+          "relative_spread": 0.18166,
+          "param": 256,
+          "ok_count": 6,
+          "min_per_call_nanos": 29403824.90625,
+          "median_per_call_nanos": 31954165.59375,
+          "max_per_call_nanos": 35208627.9375
+        },
+        {
+          "relative_spread": 0.114223,
+          "param": 384,
+          "ok_count": 6,
+          "min_per_call_nanos": 96386099.375,
+          "median_per_call_nanos": 101370196.625,
+          "max_per_call_nanos": 107964873.125
+        },
+        {
+          "relative_spread": 0.349858,
+          "param": 512,
+          "ok_count": 6,
+          "min_per_call_nanos": 235807159.25,
+          "median_per_call_nanos": 242314017.375,
+          "max_per_call_nanos": 320582716
+        },
+        {
+          "relative_spread": 0.624009,
+          "param": 768,
+          "ok_count": 6,
+          "min_per_call_nanos": 752512148,
+          "median_per_call_nanos": 763561078,
+          "max_per_call_nanos": 1228980803
+        },
+        {
+          "relative_spread": 0.151755,
+          "param": 1024,
+          "ok_count": 6,
+          "min_per_call_nanos": 1669204568,
+          "median_per_call_nanos": 1743282709.5,
+          "max_per_call_nanos": 1933757237
+        }
+      ]
+    },
+    {
+      "case": "Hex.RankBench.Quotient.finishDeficient",
+      "raw": "reports/bench-results/hex-rank-10352/checker/borrow-finishDeficient/finishDeficient.json",
+      "verdict": "consistent_with_declared_complexity",
+      "slope": -0.050461,
+      "samples": 42,
+      "sizes": [
+        128,
+        192,
+        256,
+        384,
+        512,
+        768,
+        1024
+      ],
+      "largest_rung_median_seconds": 1.822234237,
+      "trial_summaries": [
+        {
+          "relative_spread": 0.194168,
+          "param": 128,
+          "ok_count": 6,
+          "min_per_call_nanos": 4020718.052734,
+          "median_per_call_nanos": 4085790.203125,
+          "max_per_call_nanos": 4814049.632812
+        },
+        {
+          "relative_spread": 0.166258,
+          "param": 192,
+          "ok_count": 6,
+          "min_per_call_nanos": 12306410.59375,
+          "median_per_call_nanos": 13249235.3125,
+          "max_per_call_nanos": 14509207.59375
+        },
+        {
+          "relative_spread": 0.188459,
+          "param": 256,
+          "ok_count": 6,
+          "min_per_call_nanos": 28028049.453125,
+          "median_per_call_nanos": 30804681.984375,
+          "max_per_call_nanos": 33833470.515625
+        },
+        {
+          "relative_spread": 0.216776,
+          "param": 384,
+          "ok_count": 6,
+          "min_per_call_nanos": 94766040.4375,
+          "median_per_call_nanos": 108685588.3125,
+          "max_per_call_nanos": 118326467.375
+        },
+        {
+          "relative_spread": 0.253772,
+          "param": 512,
+          "ok_count": 6,
+          "min_per_call_nanos": 217883031.75,
+          "median_per_call_nanos": 247684162,
+          "max_per_call_nanos": 280738352.5
+        },
+        {
+          "relative_spread": 0.639295,
+          "param": 768,
+          "ok_count": 6,
+          "min_per_call_nanos": 760476924.5,
+          "median_per_call_nanos": 808565481.25,
+          "max_per_call_nanos": 1277388873
+        },
+        {
+          "relative_spread": 0.367699,
+          "param": 1024,
+          "ok_count": 6,
+          "min_per_call_nanos": 1715596055,
+          "median_per_call_nanos": 1822234237,
+          "max_per_call_nanos": 2385629012
+        }
+      ]
+    },
+    {
+      "case": "Hex.RankBench.Quotient.produceDeficient",
+      "raw": "reports/bench-results/hex-rank-10352/checker/borrow-produceDeficient/produceDeficient.json",
+      "verdict": "consistent_with_declared_complexity",
+      "slope": -0.126417,
+      "samples": 42,
+      "sizes": [
+        128,
+        192,
+        256,
+        384,
+        512,
+        768,
+        1024
+      ],
+      "largest_rung_median_seconds": 33.3958443445,
+      "trial_summaries": [
+        {
+          "relative_spread": 0.241539,
+          "param": 128,
+          "ok_count": 6,
+          "min_per_call_nanos": 88735004.125,
+          "median_per_call_nanos": 90934430.0625,
+          "max_per_call_nanos": 110699252.1875
+        },
+        {
+          "relative_spread": 0.164008,
+          "param": 192,
+          "ok_count": 6,
+          "min_per_call_nanos": 263519263.5,
+          "median_per_call_nanos": 270245832.0625,
+          "max_per_call_nanos": 307841641.5
+        },
+        {
+          "relative_spread": 0.35337,
+          "param": 256,
+          "ok_count": 6,
+          "min_per_call_nanos": 578806756,
+          "median_per_call_nanos": 598310225.75,
+          "max_per_call_nanos": 790231776.5
+        },
+        {
+          "relative_spread": 0.257969,
+          "param": 384,
+          "ok_count": 6,
+          "min_per_call_nanos": 1823477623,
+          "median_per_call_nanos": 2014723465,
+          "max_per_call_nanos": 2343213736
+        },
+        {
+          "relative_spread": 0.430903,
+          "param": 512,
+          "ok_count": 6,
+          "min_per_call_nanos": 4116106580,
+          "median_per_call_nanos": 4413250963,
+          "max_per_call_nanos": 6017791299
+        },
+        {
+          "relative_spread": 0.068478,
+          "param": 768,
+          "ok_count": 6,
+          "min_per_call_nanos": 13639708358,
+          "median_per_call_nanos": 14076063439.5,
+          "max_per_call_nanos": 14603607134
+        },
+        {
+          "relative_spread": 0.744392,
+          "param": 1024,
+          "ok_count": 6,
+          "min_per_call_nanos": 32391084447,
+          "median_per_call_nanos": 33395844344.5,
+          "max_per_call_nanos": 57250667699
+        }
+      ]
+    },
+    {
+      "case": "Hex.RankBench.Quotient.dot",
+      "raw": "reports/bench-results/hex-rank-10352/checker/borrow-dot/dot.json",
+      "verdict": "consistent_with_declared_complexity",
+      "slope": -0.01122,
+      "samples": 54,
+      "sizes": [
+        1024,
+        1536,
+        2048,
+        3072,
+        4096,
+        6144,
+        8192,
+        12288,
+        16384
+      ],
+      "largest_rung_median_seconds": 5.8547326308999996e-05,
+      "trial_summaries": [
+        {
+          "relative_spread": 0.060493,
+          "param": 1024,
+          "ok_count": 6,
+          "min_per_call_nanos": 3631.556301,
+          "median_per_call_nanos": 3836.397201,
+          "max_per_call_nanos": 3863.631077
+        },
+        {
+          "relative_spread": 0.020549,
+          "param": 1536,
+          "ok_count": 6,
+          "min_per_call_nanos": 5659.690037,
+          "median_per_call_nanos": 5687.288116,
+          "max_per_call_nanos": 5776.557571
+        },
+        {
+          "relative_spread": 0.139909,
+          "param": 2048,
+          "ok_count": 6,
+          "min_per_call_nanos": 6658.044937,
+          "median_per_call_nanos": 7563.501142,
+          "max_per_call_nanos": 7716.249245
+        },
+        {
+          "relative_spread": 0.166271,
+          "param": 3072,
+          "ok_count": 6,
+          "min_per_call_nanos": 9974.314339,
+          "median_per_call_nanos": 11276.259232,
+          "max_per_call_nanos": 11849.225792
+        },
+        {
+          "relative_spread": 0.356332,
+          "param": 4096,
+          "ok_count": 6,
+          "min_per_call_nanos": 14131.035408,
+          "median_per_call_nanos": 15077.19234,
+          "max_per_call_nanos": 19503.515892
+        },
+        {
+          "relative_spread": 0.682075,
+          "param": 6144,
+          "ok_count": 6,
+          "min_per_call_nanos": 20388.888321,
+          "median_per_call_nanos": 22480.01603,
+          "max_per_call_nanos": 35721.939667
+        },
+        {
+          "relative_spread": 0.665369,
+          "param": 8192,
+          "ok_count": 6,
+          "min_per_call_nanos": 29064.539581,
+          "median_per_call_nanos": 29789.919289,
+          "max_per_call_nanos": 48885.836273
+        },
+        {
+          "relative_spread": 0.787073,
+          "param": 12288,
+          "ok_count": 6,
+          "min_per_call_nanos": 44618.030029,
+          "median_per_call_nanos": 44981.922943,
+          "max_per_call_nanos": 80022.107971
+        },
+        {
+          "relative_spread": 0.842861,
+          "param": 16384,
+          "ok_count": 6,
+          "min_per_call_nanos": 53229.642151,
+          "median_per_call_nanos": 58547.326309,
+          "max_per_call_nanos": 102576.898682
+        }
+      ]
+    }
+  ],
+  "all_scientific_consistent": false,
+  "largest_rung_check_over_produce": {
+    "Full": 0.07453355820085705,
+    "Deficient": 0.052200587938933285
+  },
+  "context": {
+    "directory": "reports/bench-results/hex-rank-10352/checker/context",
+    "arms": [
+      "check",
+      "finish"
+    ],
+    "pairs": [
+      {
+        "block": 0,
+        "check_seconds": 15.21508183,
+        "finish_seconds": 5.455750242,
+        "second_over_first": 0.35857514951005687
+      },
+      {
+        "block": 1,
+        "check_seconds": 11.466424363,
+        "finish_seconds": 5.16429121,
+        "second_over_first": 0.45038375054949115
+      },
+      {
+        "block": 2,
+        "check_seconds": 18.197515849,
+        "finish_seconds": 4.784230446,
+        "second_over_first": 0.2629056891994907
+      },
+      {
+        "block": 3,
+        "check_seconds": 19.761894449,
+        "finish_seconds": 4.785631379,
+        "second_over_first": 0.2421646057947731
+      },
+      {
+        "block": 4,
+        "check_seconds": 10.634426169,
+        "finish_seconds": 4.743402666,
+        "second_over_first": 0.4460421832470197
+      },
+      {
+        "block": 5,
+        "check_seconds": 9.000558794,
+        "finish_seconds": 4.755113362,
+        "second_over_first": 0.5283131270882736
+      }
+    ],
+    "median_paired_second_over_first": 0.4023086663785383
+  },
+  "implementation": {
+    "directory": "reports/bench-results/hex-rank-10352/checker/borrow-pairs",
+    "arms": [
+      "before",
+      "after"
+    ],
+    "pairs": [
+      {
+        "block": 0,
+        "before_seconds": 19.859030574,
+        "after_seconds": 14.482619876,
+        "second_over_first": 0.7292712412136095
+      },
+      {
+        "block": 1,
+        "before_seconds": 14.636913821,
+        "after_seconds": 7.505585641,
+        "second_over_first": 0.5127847121864939
+      },
+      {
+        "block": 2,
+        "before_seconds": 17.22212275,
+        "after_seconds": 7.239154057,
+        "second_over_first": 0.42034040530805067
+      },
+      {
+        "block": 3,
+        "before_seconds": 11.687573387,
+        "after_seconds": 21.34171438,
+        "second_over_first": 1.8260175721110958
+      },
+      {
+        "block": 4,
+        "before_seconds": 7.489479754,
+        "after_seconds": 6.465072144,
+        "second_over_first": 0.8632204580761591
+      },
+      {
+        "block": 5,
+        "before_seconds": 19.433855166,
+        "after_seconds": 12.171794532,
+        "second_over_first": 0.6263190925336753
+      }
+    ],
+    "median_paired_second_over_first": 0.6777951668736424
+  }
+}

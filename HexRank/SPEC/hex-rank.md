@@ -875,8 +875,18 @@ rank are accepted.
 `HexRank/Polynomial.lean` provides `PolyWitness` and `checkRankPoly` for
 integer polynomial entries with a fixed defining polynomial `f`. It keeps
 the integer `RankWitness` path unchanged. Coefficients are lists in ascending
-degree order; all checking arithmetic is structural recursion over lists
+degree order; the kernel checking arithmetic is structural recursion over lists
 using direct `Int` primitives.
+
+Native compilation uses proved replacements: `dot_eq_impl` borrows list rows
+and accumulates their dot product tail recursively; `lowerCheck_eq_impl`
+converts each lower-triangle row to an array once and reuses it for repeated
+dot products. Conversion belongs to checking, not witness preparation.
+`dotArray_toArray` and the checker equality hold for all list shapes, including
+malformed witnesses. The reference definitions and kernel proof path are
+unchanged. The compiled `Quotient.check*`, `dot`, `dotArray`, `block*` and
+`pivotCols*` registrations cover this native path and its dominant primitives;
+kernel replay belongs to the companion's CI-built proof probes.
 
 In addition to the pivot indices, triangular transform and exact row
 coefficients, the witness carries polynomial quotients for every checked
