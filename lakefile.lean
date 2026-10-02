@@ -1164,7 +1164,7 @@ lean_lib HexConformance where
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
-    ++ #[`HexSignDet.CommonField, `HexSignDet.Conformance, `HexSignDet.CrossCheck, `HexSignDet.FastCheck, `HexSignDet.Infinitesimal, `HexSignDetMathlib.Conformance, `HexSignDetMathlib.RootSemantics,
+    ++ #[`HexSignDet.CommonField, `HexSignDet.Conformance, `HexSignDet.CrossCheck, `HexSignDet.FastCheck, `HexSignDet.JsonBytes, `HexSignDet.Infinitesimal, `HexSignDetMathlib.Conformance, `HexSignDetMathlib.RootSemantics,
       `HexSignDetMathlib.SelectedProducerConformance,
       `HexSignDetMathlib.CompletionConformance,
       `HexSignDetMathlib.QueryHandleConformance,
@@ -1526,6 +1526,10 @@ lean_exe hexsigndet_emit_fixtures where
 lean_exe hexsigndet_emit_common_fields where
   srcDir := "conformance"
   root := `HexSignDet.EmitCommonFields
+
+lean_exe hexsigndet_json_bytes where
+  srcDir := "conformance"
+  root := `HexSignDet.JsonBytesDriver
 
 lean_exe hexsigndet_emit_nested_fields where
   srcDir := "conformance"

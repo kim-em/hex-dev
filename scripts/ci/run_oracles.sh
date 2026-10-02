@@ -55,6 +55,7 @@ ORACLES=(
   "HexMinPoly|hexminpoly_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexMinPoly/minpoly.jsonl"
   "HexGramSchmidt|hexgramschmidt_emit_fixtures|scripts/oracle/gs_flint.py|conformance-fixtures/HexGramSchmidt/gram_schmidt.jsonl"
   "HexRealRoots|hexrealroots_emit_fixtures|scripts/oracle/realroots_flint.py|conformance-fixtures/HexRealRoots/realroots.jsonl"
+  "HexSignDet|hexsigndet_json_bytes|scripts/oracle/sign_det_json_bytes.py|conformance-fixtures/HexSignDet/json-bytes.jsonl"
   "HexSignDet|hexsigndet_emit_fixtures|scripts/oracle/sign_det_flint.py|conformance-fixtures/HexSignDet/sign_det.jsonl"
   "HexSignDet|hexsigndet_emit_common_fields|scripts/oracle/sign_det_common_fields.py|conformance-fixtures/HexSignDet/common-fields.jsonl"
   "HexRCF|hexrcf_emit_fixtures|scripts/oracle/rcf_flint.py|conformance-fixtures/HexRCF/rcf.jsonl"
@@ -185,6 +186,13 @@ run_tuple() {
   echo "=========================================================="
   echo ">>> $lib :: emit=$emit oracle=$oracle"
   echo "=========================================================="
+
+  # The byte-parser oracle supplies untrusted inputs to the compiled driver.
+  if [ "$oracle" = "scripts/oracle/sign_det_json_bytes.py" ]; then
+    python3 -m unittest scripts.oracle.test_sign_det_json_bytes || return 1
+    python3 "$oracle" --check "$fixture" --exe ".lake/build/bin/$emit"
+    return $?
+  fi
 
   # This compiled-input oracle runs the committed corpus through the measured
   # native executable; its input fixture is checked by independent division.
