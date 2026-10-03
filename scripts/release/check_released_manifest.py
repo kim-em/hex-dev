@@ -561,6 +561,19 @@ def main() -> int:
                     lake_declaration((REPO_ROOT / "lakefile.lean").read_text(), name)
                 except RuntimeError as exc:
                     fail(f"{repo}: {exc}")
+            retired = entry.get("retired_lake_declarations", [])
+            if (not isinstance(retired, list)
+                    or not all(isinstance(name, str) for name in retired)
+                    or set(retired) & set(helpers)
+                    or (retired and entry.get("lakefile") != "lean")):
+                fail(f"{repo}: retired_lake_declarations must be distinct names "
+                     "outside lake_declarations, for a Lean Lake file")
+            for name in retired:
+                try:
+                    lake_declaration((REPO_ROOT / "lakefile.lean").read_text(), name)
+                except RuntimeError:
+                    continue
+                fail(f"{repo}: retired Lake declaration {name} is still in lakefile.lean")
             test_modules = entry.get("test_modules", [])
             if (
                 not isinstance(test_modules, list)

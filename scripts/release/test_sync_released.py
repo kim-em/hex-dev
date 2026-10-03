@@ -1051,6 +1051,17 @@ class LakeDeclarationTests(unittest.TestCase):
         self.assertEqual(self.rewrite(), [])
 
 
+    def test_retired_declarations_leave_the_mirror(self) -> None:
+        self.entry["lake_declarations"] = []
+        self.entry["retired_lake_declarations"] = ["oldffi", "absent"]
+        self.target.write_text("import Lake\n\ntarget oldffi pkg : FilePath := do\n"
+                               "  pure default\n\nlean_lib Carrier where\n")
+        self.assertEqual(self.rewrite(),
+                         ["  retired build declaration oldffi (lakefile.lean)"])
+        self.assertEqual(self.target.read_text(), "import Lake\n\nlean_lib Carrier where\n")
+        self.assertEqual(self.rewrite(), [])
+
+
 class LibBuildSettingTests(unittest.TestCase):
     """The mirror's `lean_lib` must be built the way hex-dev builds it.
 

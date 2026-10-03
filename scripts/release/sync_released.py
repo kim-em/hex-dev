@@ -944,9 +944,14 @@ def lake_declaration(text: str, name: str) -> tuple[int, int]:
 
 
 def rewrite_lake_declarations(entry: dict, clone: Path) -> list[str]:
-    """Copy selected build declarations from the source-of-truth Lake file."""
+    """Copy selected build declarations from the source-of-truth Lake file.
+
+    Names under `retired_lake_declarations` are deleted from the mirror, so a
+    recipe this monorepo dropped does not linger there as dead code.
+    """
     names = entry.get("lake_declarations", [])
-    if not names:
+    retired = entry.get("retired_lake_declarations", [])
+    if not names and not retired:
         return []
     if (entry.get("lakefile") != "lean" or not isinstance(names, list)
             or not all(isinstance(name, str) for name in names)
@@ -973,6 +978,13 @@ def rewrite_lake_declarations(entry: dict, clone: Path) -> list[str]:
         if text[dst_start:dst_end] != definition:
             text = text[:dst_start] + definition + text[dst_end:]
             notes.append(f"  build declaration {name} (lakefile.lean)")
+    for name in retired:
+        try:
+            dst_start, dst_end = lake_declaration(text, name)
+        except RuntimeError:
+            continue
+        text = text[:dst_start] + text[dst_end:]
+        notes.append(f"  retired build declaration {name} (lakefile.lean)")
     if notes:
         path.write_text(text, encoding="utf-8")
     return notes
