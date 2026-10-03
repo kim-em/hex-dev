@@ -1,7 +1,8 @@
 # Direct rational recognition: cost derivation
 
-At `b=8192,16384,32768,65536`, let `A=2^b-1`, `D=2^b+1` and `q=A/D`.
-The positive odd integers differ by two and have gcd one. The canonical
+At `b=262144,524288,1048576,2097152`, let `A=(2^b-1)/3`, `D=2^b+1`
+and `q=A/D`. Even b makes A an odd integer and D=3*A+2; Euclidean reduction
+gives remainders 2,1,0 and hence gcd one. The canonical
 minimal polynomial is therefore `D*X-A`: degree stays one while coefficient
 height grows. Preparation constructs the existing canonical value and checks
 its degree and recognized rational against the independent `q`. Preparation
@@ -32,6 +33,20 @@ normalizing-implementation measurements remain retained at their exact sources;
 they do not admit this changed implementation. Their derivation omitted an
 explicit structural-output-hash analysis, which is supplied above for the new
 measurement. No historical declaration or failed/inconclusive result is edited.
+
+This fixture approaches 1/3 rather than a dyadic boundary. The earlier fixture
+approaches one with separation 2/(2^b+1), making canonical dyadic preparation
+expensive. That historical height-and-boundary family and all its completed
+observations remain retained; the new family isolates coefficient-height growth
+for recognition and rational rounding, whose timed bodies do not use separation.
+No claim about the boundary preparation cost is waived by this choice.
+
+`runRationalQuotient` is the previous coefficient-quotient expression on the
+same prepared input, as a comparison control. Its denominator D=3*A+2 yields
+the bounded Euclidean remainders above. Single-limb reduction, normalization
+and output hashing give its independently derived Θ(b) model. Comparing it
+with the actual `toRat?` therefore joins identical inputs and complete outputs;
+no cross-source fixture change is presented as an improvement.
 
 Scientific settings are the compiled four-rung custom ladder, four fixed
 trial-major outer trials and a 100 ms tuning target. A 600-second child cap
