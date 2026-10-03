@@ -15,6 +15,9 @@ import HexECPP.Fixture17
 example : Nat.Prime 17 := by
   ecpp using Hex.ECPP.Fixture17.disguised
 
+example : Nat.Prime 17 := by
+  ecpp using (let c := Hex.ECPP.Fixture17.cert; c)
+
 example : True := by
   fail_if_success
     have : Nat.Prime 18446744073709551629 := by

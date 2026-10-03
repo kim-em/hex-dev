@@ -3,11 +3,15 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
+module
 
-import HexECPPMathlib.Soundness
-import HexECPP.Import
-import HexPrimality.Elab
-import Lean.Elab.Tactic
+public import HexECPPMathlib.Soundness
+public import HexECPP.Import
+public meta import HexECPP.Import
+public import HexECPPMathlib.Policy
+public meta import HexECPPMathlib.Policy
+public import HexPrimality.Elab
+public import Lean.Elab.Tactic
 
 /-!
 # Explicit ECPP certificate bridge
@@ -17,6 +21,8 @@ only certificate, list, and pair constructors and natural-number literals.
 The elaborator evaluates that data, reifies it as constructors, and leaves the
 checker equation to kernel reduction.
 -/
+
+@[expose] public section
 
 open Lean Elab Meta
 
@@ -40,20 +46,22 @@ meta def convertSupplied (source : String) : MetaM (Except ImportError Cert) := 
 private meta def certType : Expr := mkConst ``Hex.ECPP.Cert
 private meta def natType : Expr := mkConst ``Nat
 
+-- Raw literals avoid an OfNat wrapper at every inverse witness. The reader
+-- checks the same numeral values and retains its fixed syntax-node ceiling.
 private meta def reifyNats : List Nat → Expr
   | [] => mkApp (mkConst ``List.nil [.zero]) natType
   | x :: xs => mkApp3 (mkConst ``List.cons [.zero]) natType
-      (mkNatLit x) (reifyNats xs)
+      (mkRawNatLit x) (reifyNats xs)
 
+/-- Reify a bounded raw proposal as kernel-checkable constructor data. Call
+`validateCert` first when the proposal has not already passed replay preflight. -/
 meta def reifyCert : Cert → Expr
   | .base c => mkApp (mkConst ``Hex.ECPP.Cert.base) (Hex.PrimalityTactic.reifyPrimeCert c)
   | .step n a b x y d ws child =>
-      mkAppN (mkConst ``Hex.ECPP.Cert.step) #[mkNatLit n, mkNatLit a,
-        mkNatLit b, mkNatLit x, mkNatLit y, mkNatLit d,
+      mkAppN (mkConst ``Hex.ECPP.Cert.step) #[mkRawNatLit n, mkRawNatLit a,
+        mkRawNatLit b, mkRawNatLit x, mkRawNatLit y, mkRawNatLit d,
         reifyNats ws, reifyCert child]
 
-/-- Numeral ceiling admitted by the fresh-module kernel replay probes. -/
-def maxBits : Nat := 512
 private meta def maxSyntaxNodes : Nat := 131072
 private meta def maxInverseWitnesses : Nat := 1024
 private meta def maxCertNodes : Nat := 32
@@ -69,13 +77,25 @@ private meta def dataConstant (name : Name) : Bool :=
   name == ``Hex.Nat.PrimeCert.pock3Sieve ||
   name == ``List.nil || name == ``List.cons || name == ``Prod.mk
 
-/-- Inspect constructor syntax and exposed data definitions before evaluation.
-The shared fuel also bounds nested definitions and list syntax. -/
-private meta partial def checkData (e : Expr) (fuel : Nat) : MetaM Nat := do
+/-- A persistent substitution scope for constructor-data let bindings. -/
+private meta inductive DataContext where
+  | nil
+  | cons (value : Expr) (scope tail : DataContext)
+
+-- Lookup consumes traversal fuel as well, bounding deeply nested references.
+private meta def DataContext.lookup : DataContext → Nat → Nat → Option (Expr × DataContext × Nat)
+  | .nil, _, _ | _, _, 0 => none
+  | .cons value scope _, 0, fuel + 1 => some (value, scope, fuel)
+  | .cons _ _ tail, i + 1, fuel + 1 => tail.lookup i fuel
+
+/-- Audit all syntax, then charge expanded occurrences through a persistent
+scope. Each pass has finite fuel, including nested definitions and lookups. -/
+private meta partial def checkData (e : Expr) (fuel : Nat)
+    (context : DataContext := .nil) (expandLets : Bool := false) : MetaM Nat := do
   if fuel == 0 then throwError "ecpp: certificate syntax exceeds {maxSyntaxNodes} nodes"
   let fuel := fuel - 1
   match e with
-  | .app f a => checkData a (← checkData f fuel)
+  | .app f a => checkData a (← checkData f fuel context expandLets) context expandLets
   | .lit (.natVal n) =>
       if HexArith.bitLength n > maxBits then
         throwError "ecpp: a certificate numeral exceeds {maxBits} bits"
@@ -86,38 +106,82 @@ private meta partial def checkData (e : Expr) (fuel : Nat) : MetaM Nat := do
       if (Compiler.getImplementedBy? env name).isSome then
         throwError "ecpp: `{name}` has a compiled implementation; use constructor data"
       unless env.hasExposedBody name do
-        throwError "ecpp: `{name}` is not an exposed data definition"
+        throwError "ecpp: `{privateToUserName name}` is not an exposed data definition"
       let some (.defnInfo info) := env.find? name
         | throwError "ecpp: `{name}` is not a data definition"
-      try checkData info.value fuel
+      try checkData info.value fuel .nil expandLets
       catch ex => throwError "ecpp: in exposed `{name}`: {ex.toMessageData}"
-  | .mdata _ body => checkData body fuel
+  | .mdata _ body => checkData body fuel context expandLets
   | .letE _ ty val body _ =>
-      checkData body (← checkData val (← checkData ty fuel))
-  | .bvar _ => return fuel
+      if expandLets then
+        -- Persistent closures avoid repeated substitution of a large body.
+        checkData body fuel (.cons val context context) true
+      else
+        -- Audit all values, including unused ones, before expanding occurrences.
+        checkData body (← checkData val (← checkData ty fuel) context) context
+  | .bvar i =>
+      if !expandLets then return fuel
+      let some (value, scope, fuel) := context.lookup i fuel
+        | throwError "ecpp: certificate syntax exceeds {maxSyntaxNodes} nodes"
+      checkData value fuel scope true
   | .sort _ => return fuel
   | _ => throwError "ecpp: certificate must be constructor data; got {e}"
 
-private meta partial def countPrimeCert : Hex.Nat.PrimeCert → Nat
-  | .small _ => 1
+-- Consume fuel while visiting nodes, including repeated children in a shared
+-- tree. Exhaustion must stop traversal before reification or checker evaluation.
+private meta partial def primeCertFuel (fuel : Nat) (cert : Hex.Nat.PrimeCert) : Option Nat := do
+  let fuel ← match fuel with | 0 => none | n + 1 => some n
+  match cert with
+  | .small _ => return fuel
   | .pock _ fs | .pock3 _ _ _ _ fs | .pock3Sieve _ _ _ _ _ fs =>
-      1 + (fs.map fun (_, _, c) => countPrimeCert c).sum
+      let mut fuel := fuel
+      for (_, _, child) in fs do
+        fuel ← primeCertFuel fuel child
+      return fuel
 
-private meta def countCert : Cert → Nat
-  | .base c => 1 + countPrimeCert c
-  | .step _ _ _ _ _ _ _ child => 1 + countCert child
+private meta def certFuel : Nat → Cert → Option Nat
+  | 0, _ => none
+  | fuel + 1, .base c => primeCertFuel fuel c
+  | fuel + 1, .step _ _ _ _ _ _ _ child => certFuel fuel child
 
 private meta def checkCertBudget : Cert → MetaM Unit
   | .base _ => pure ()
   | .step n _ _ _ _ _ ws child => do
       if HexArith.bitLength n > maxBits then
         throwError "ecpp: certificate subject exceeds {maxBits} bits"
-      if ws.length > maxInverseWitnesses then
+      if (ws.take (maxInverseWitnesses + 1)).length > maxInverseWitnesses then
         throwError "ecpp: inverse transcript exceeds {maxInverseWitnesses} witnesses"
       checkCertBudget child
 
-private meta unsafe def evalCertUnsafe (e : Expr) : MetaM Cert :=
-  evalExpr Cert certType e
+/-- Expand audited data with persistent scopes, bounding substitution work. -/
+private meta partial def expandData (e : Expr) (fuel : Nat)
+    (context : DataContext := .nil) : MetaM (Expr × Nat) := do
+  if fuel == 0 then throwError "ecpp: certificate syntax exceeds {maxSyntaxNodes} nodes"
+  let fuel := fuel - 1
+  match e with
+  | .app f a =>
+      let (f, fuel) ← expandData f fuel context
+      let (a, fuel) ← expandData a fuel context
+      return (mkApp f a, fuel)
+  | .const name levels =>
+      if dataConstant name then return (e, fuel)
+      let some (.defnInfo info) := (← getEnv).find? name
+        | throwError "ecpp: `{name}` is not a data definition"
+      expandData (info.value.instantiateLevelParams info.levelParams levels) fuel
+  | .mdata _ body => expandData body fuel context
+  | .letE _ _ val body _ => expandData body fuel (.cons val context context)
+  | .bvar i =>
+      let some (value, scope, fuel) := context.lookup i fuel
+        | throwError "ecpp: certificate syntax exceeds {maxSyntaxNodes} nodes"
+      expandData value fuel scope
+  | .lit _ | .sort _ => return (e, fuel)
+  | _ => throwError "ecpp: certificate must be constructor data; got {e}"
+
+private meta unsafe def evalCertUnsafe (e : Expr) : MetaM Cert := do
+  -- Audits precede evaluation. Expanding definitions and lets with persistent
+  -- scopes avoids quadratic substitution and needs no meta import of data.
+  let (data, _) ← expandData e maxSyntaxNodes
+  evalExpr Cert certType data
 
 @[implemented_by evalCertUnsafe]
 private meta opaque evalCert (e : Expr) : MetaM Cert
@@ -128,8 +192,9 @@ meta def readCert (e : Expr) : MetaM Cert := do
   Hex.PrimalityTactic.checkClosed "ecpp using" e
   if e.hasSorry then throwError "ecpp: certificate contains an unfinished proof"
   discard <| checkData e maxSyntaxNodes
+  discard <| checkData e maxSyntaxNodes (expandLets := true)
   let cert ← evalCert e
-  if countCert cert > maxCertNodes then
+  if (certFuel maxCertNodes cert).isNone then
     throwError "ecpp: certificate exceeds {maxCertNodes} total nodes"
   checkCertBudget cert
   unless check cert do
@@ -138,10 +203,10 @@ meta def readCert (e : Expr) : MetaM Cert := do
 
 /-- Validate a raw proposal against the finite replay policy. -/
 meta def validateCert (cert : Cert) : MetaM Unit := do
-  discard <| checkData (reifyCert cert) maxSyntaxNodes
-  if countCert cert > maxCertNodes then
+  if (certFuel maxCertNodes cert).isNone then
     throwError "ecpp: certificate exceeds {maxCertNodes} total nodes"
   checkCertBudget cert
+  discard <| checkData (reifyCert cert) maxSyntaxNodes
   unless check cert do
     throwError "ecpp: certificate failed check"
 
@@ -166,6 +231,7 @@ private meta def proveUsing (stx : Term) (n : Nat) (nE : Expr) : Term.TermElabM 
 /-- Produce `Nat.Prime n` from an explicit, checked ECPP certificate. -/
 syntax (name := ecppUsingTac) "ecpp" " using " term : tactic
 
+/-- Elaborate explicit certificate replay for a closed Mathlib primality goal. -/
 @[tactic ecppUsingTac] meta def evalEcppUsing : Tactic.Tactic := fun stx => do
   match stx with
   | `(tactic| ecpp using $source) => do

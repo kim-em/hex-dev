@@ -388,19 +388,44 @@ GitHub UI (https://github.com/settings/personal-access-tokens); this
 inventory is the durable record of that state, kept current by rule:
 whoever widens a token records the change here in the same working
 session. A fine-grained token selects at most 50 repositories.
+When preparing a new mirror, the agent must choose one token using this
+inventory and the 50-repository limit, record the allocation, and give the
+user clickable [token settings](https://github.com/settings/personal-access-tokens)
+and [Leanprover approval](https://github.com/organizations/leanprover/settings/personal-access-token-requests)
+links. Name the selected token explicitly; do not offer alternatives or ask
+the user to track allocations or capacity. Keep requested allocations distinct
+from confirmed selections and approved grants. If the token's numeric ID is
+available, link directly to its edit page.
+
 Snapshot verified against the live tokens on 2026-09-03 (routing
 measured by a branch-only debug step on the sync workflow counting
 `route_tokens`' output; selections confirmed from the UI) and updated
 from the UI on 2026-09-05 for the number-field batch.
 
-`hex-publishing` carries every repository in `released.yml` except the
-eight listed as released under `hex-publishing-2` below: 48 of 50. The
+`hex-publishing` carries the previously released repositories in
+`released.yml` except the ten existing mirrors listed under
+`hex-publishing-2` below: 48 of 50. The ECPP repositories are allocated to
+`hex-publishing-2`, as listed below. The
 number-field batch (`hex-number-field`, `hex-number-field-mathlib`,
 `hex-number-field-tower`, `hex-number-field-tower-mathlib`, `hex-rcf`)
 is on this token.
 
-`hex-publishing-2` carries 44 of 50:
+`hex-publishing-2` has 48 confirmed selected repositories and two further
+allocated slots, filling its 50-repository limit:
 
+`hex-ecpp` and `hex-ecpp-mathlib` are selected. Their Leanprover organization
+approval is pending; the token owner cannot approve
+their own request. The new `hex-lattice-enum` and
+`hex-lattice-enum-mathlib` empty repositories are also selected on this token
+and awaiting organization approval. These additions bring the recorded
+selection to 48 of 50. Both lattice libraries are at Phase 7; repository
+reservation alone does not publish their sources or admit them into the
+release manifest.
+
+- selected for publication, approval pending: `hex-ecpp`,
+  `hex-ecpp-mathlib`, `hex-lattice-enum`, `hex-lattice-enum-mathlib`;
+- existing mirrors allocated, selections pending: `hex-perm-group`,
+  `hex-perm-group-mathlib`;
 - released: `hex-primality`, `hex-primality-mathlib`,
   `hex-sparse-poly`, `hex-sparse-poly-mathlib`, `hex-resultant`,
   `hex-resultant-mathlib`, `hex-graph-iso`, `hex-graph-iso-mathlib`;
@@ -420,17 +445,25 @@ is on this token.
   `hex-truncated-series`, `hex-truncated-series-mathlib`,
   `hex-char-poly`, `hex-char-poly-mathlib`.
 
-Both tokens have a pending organization-owner approval
-(https://github.com/organizations/leanprover/settings/personal-access-token-requests)
-for adding the Workflows read-and-write permission, which the sync needs
-to write each mirror's managed `.github/workflows/ci.yml`. Until it is
-approved, a real sync cannot push a workflow file to any mirror.
+The ECPP and lattice additions on `hex-publishing-2` are awaiting
+[organization-owner approval](https://github.com/organizations/leanprover/settings/personal-access-token-requests).
+The token owner cannot approve their own request. Each publishing token needs
+Contents and Workflows read/write; the latter permits changes to the mirrors'
+managed `.github/workflows/ci.yml`. Keep selected repositories and approved
+write grants distinct in this inventory.
 
 `hex-publishing-2` additionally holds organization-level permissions;
 `hex-publishing` holds none.
 
-With `hex-publishing` at 48 and `hex-publishing-2` at 44, the next
-batch larger than two repositories needs a third token
+`hex-perm-group` and `hex-perm-group-mathlib` are allocated to
+`hex-publishing-2`. The [last real publishing preflight](https://github.com/kim-em/hex-dev/actions/runs/34687426921)
+reported no Contents write grant for either repository on either token.
+Their baseline entries and release tags do not prove publishing-token
+coverage; failed preflights can still advance the baseline branch. The error
+cannot distinguish an unselected repository from a pending or read-only
+grant. Confirm their selections and organization approval before publishing.
+Once selected, this token has 50 repositories. Allocate any larger new batch
+to a third token
 (`hex-publishing-3`, a new `RELEASED_SYNC_PAT_3` secret, and one line in
 `.github/workflows/sync-released.yml` and `sync_released.py`'s token
 list). The sync's per-repository routing makes the split invisible to
@@ -450,3 +483,26 @@ sync. The baseline lives on the unprotected `release-sync-baseline`
 branch, which the workflow reads and advances on every real run;
 `scripts/release/synced.json` is the seed used before that branch
 exists.
+
+## Bootstrapping a split mirror
+
+A new manifest entry needs an existing public repository and a publishing
+write grant before it can join the release graph. Its initial unmanaged
+skeleton contains the Lake configuration, `lean-toolchain`, license,
+`.gitignore` and a `lake-manifest.json` generated by `lake update`. The
+companion template in
+[`scripts/release/skeletons/hex-ecpp-mathlib`](../scripts/release/skeletons/hex-ecpp-mathlib)
+provides the Lake files, lock and toolchain, with explicit Mathlib and AINTLIB
+requirements and the native IO sidecar. Copy the root license and add the
+mirror’s `.gitignore` separately.
+Keep Mathlib last when resolving this template so its compatible transitive
+pins win over AINTLIB's older dependency lock; the sync preserves that order
+when adding Hex requirements.
+
+Add the repository to either fine-grained publishing token with Contents and
+Workflows read/write, and approve the organization grant. The managed mirror
+CI, library sources, README and SPEC are then supplied by the ordinary sync.
+Validate a standalone build and published trust-test target against compatible
+published upstreams, followed by the guarded dry run against the live release
+baseline. A local prospective source split does not discharge that upstream
+publication gate. Initial skeleton preparation does not publish the library.

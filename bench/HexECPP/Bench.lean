@@ -161,6 +161,44 @@ setup_fixed_benchmark runNativeCheck where {
 setup_fixed_benchmark runNativeConvert where {
   repeats := 5, warmupFirstIter := true, expectedHash := some (hash (1 : Nat)) }
 
+initialize native512Ref : IO.Ref Nat ← IO.mkRef 12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457
+initialize native512CertRef : IO.Ref (Option Cert) ← IO.mkRef none
+
+private def native512Cert : IO Cert := do
+  if let some c ← native512CertRef.get then return c
+  let n ← native512Ref.get
+  let .ok c := (produce n 0 public512Budget).result
+    | throw (IO.userError "native 512-bit fixture exhausted")
+  native512CertRef.set (some c)
+  return c
+
+/-- Fixed heldout-512-ordinary-0, seed zero. Mode 3: search branches and
+terminal shape do not admit a tight subject-width wall-time model. The
+five-second ceiling is declared before bench collection, above twice the
+retained whole-route search measurements. -/
+@[noinline] def runNative512 (_ : Unit) : IO Nat := do
+  let n ← native512Ref.get
+  return if (produce n 0 public512Budget).result.toOption.any (checkAt n) then 1 else 0
+
+/-- Warmed native 512-bit checking; 80 ms is above twice the retained
+29.5 ms checking observation and is distinct from the subprocess cap. -/
+@[noinline] def runNative512Check (_ : Unit) : IO Nat := do
+  return if checkAt (← native512Ref.get) (← native512Cert) then 1 else 0
+
+/-- Warmed native 512-bit conversion; 300 ms is above twice the retained
+112.4 ms observation. Production stays outside this timed operation. -/
+@[noinline] def runNative512Convert (_ : Unit) : IO Nat := do
+  let c ← native512Cert
+  return if (convertText defaultImportBudget (frozenRows c) (terminal c)).toOption.any
+    (checkAt c.subject) then 1 else 0
+
+setup_fixed_benchmark runNative512 where {
+  repeats := 5, expectedHash := some (hash (1 : Nat)) }
+setup_fixed_benchmark runNative512Check where {
+  repeats := 5, warmupFirstIter := true, expectedHash := some (hash (1 : Nat)) }
+setup_fixed_benchmark runNative512Convert where {
+  repeats := 5, warmupFirstIter := true, expectedHash := some (hash (1 : Nat)) }
+
 /-- Square root, Cornacchia norm and the complete exceptional twist portfolio,
 checked by their integer equations on runtime inputs. -/
 private def cmProposals (n d : Nat) : Bool := Id.run do

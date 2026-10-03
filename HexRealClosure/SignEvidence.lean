@@ -183,32 +183,44 @@ theorem ofSigns_bindings [Hashable E] [Hashable Ctx]
     rw [← same, (RawDescriptor.check_eq context.root.accepted).2.1]
     exact node_bindings (Replay.check_node checked.accepted)
 
-/-- Producer output satisfies the graph parser's root and child-reference
-bounds and literal bindings. Node-shape premises remain separate obligations. -/
+/-- Every node encoded from checked joint signs meets the parser's dimensions
+and reduction-index bounds. -/
+theorem ofSigns_shape [Hashable E] [Hashable Ctx]
+    (context : Context E Ctx coeffSign parent) {queries : List (DensePoly E)}
+    (signs : SelectedSigns context.root queries) :
+    ∀ entry ∈ (ofSigns signs).graph.entries, Codec.Shape entry.node := by
+  obtain ⟨accepted, _⟩ := signs.check_eq
+  have replay := Dag.replay_encode accepted
+  cases hv : (Dag.encode signs.evidence).validate? coeffSign parent context.root.raw.head
+      context.root.raw.lower context.root.raw.upper with
+  | none => simp [Dag.replay?, hv, bind, Option.bind] at replay
+  | some memo => exact Codec.Shape.of_validate hv
+
+/-- Producer output satisfies every graph parser bound and literal binding.
+Only lawful coefficient and context codecs are required. -/
 theorem codec_ofSigns [Hashable E] [Hashable Ctx]
     (value : ValueCodec E) (ctx : ValueCodec Ctx) (hv : value.Lawful) (hc : ctx.Lawful)
     (context : Context E Ctx coeffSign parent) {queries : List (DensePoly E)}
-    (signs : SelectedSigns context.root queries)
-    (shape : ∀ e ∈ (ofSigns signs).graph.entries, Codec.Shape e.node) :
+    (signs : SelectedSigns context.root queries) :
     (codec value ctx context.root.raw).decode
       ((codec value ctx context.root.raw).encode (ofSigns signs)) = .ok (ofSigns signs) :=
   codec_roundtrip value ctx hv hc context.root.raw (ofSigns signs)
-    (Dag.encode_root signs.evidence) shape (ofSigns_bindings context signs)
+    (Dag.encode_root signs.evidence) (ofSigns_shape context signs) (ofSigns_bindings context signs)
     (Dag.encode_bounds signs.evidence)
 
-/-- The producer packet survives actual bytes under the parser's lexical
-limits and the remaining node-shape and coefficient-coverage premises. -/
+/-- The producer packet survives actual bytes under lawful coefficient and
+context codecs, provided its printed bytes pass the lexical policy, including
+syntax prechecks. -/
 theorem bytes_ofSigns [Hashable E] [Hashable Ctx]
     (value : ValueCodec E) (ctx : ValueCodec Ctx) (hv : value.Lawful) (hc : ctx.Lawful)
     (context : Context E Ctx coeffSign parent) {queries : List (DensePoly E)}
     (signs : SelectedSigns context.root queries)
-    (shape : ∀ e ∈ (ofSigns signs).graph.entries, Codec.Shape e.node)
     (limits : Codec.Limits)
     (bytes : Codec.checkBytes limits
       ((codec value ctx context.root.raw).encodeBytes (ofSigns signs)) = .ok ()) :
     (codec value ctx context.root.raw).decodeBytes
       ((codec value ctx context.root.raw).encodeBytes (ofSigns signs)) limits = .ok (ofSigns signs) :=
-  ValueCodec.decode_encode_of _ _ (codec_ofSigns value ctx hv hc context signs shape) limits bytes
+  ValueCodec.decode_encode_of _ _ (codec_ofSigns value ctx hv hc context signs) limits bytes
 
 end SignEvidence
 

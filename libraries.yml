@@ -1083,7 +1083,7 @@ libraries:
         - name: supplied-certificates
           description: Complete accepted 65-, 256- and 512-bit supplied chains measure checking and conversion under distinct operation-specific fixed budgets.
         - name: native-production
-          description: Frozen 128- and 256-bit native subjects, including the longest validation chain, separate production, frozen conversion and checking; retained whole-corpus verdicts include exhaustion.
+          description: Frozen 128-, 256- and 512-bit native subjects, including the longest validation chain and independently generated 512-bit holdout, separate production, frozen conversion and checking; retained whole-corpus verdicts include exhaustion and full-construction comparisons.
   HexIntFactor:
     deps: [HexPrimality, HexArith, HexBasic]
     mathlib: false
@@ -1336,7 +1336,7 @@ libraries:
   HexECPPMathlib:
     deps: [HexECPP, HexPrimalityMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 7
     status: active
     proof_probes: [bench/HexECPPMathlib/ProofProbe]
   HexIntFactorMathlib:
