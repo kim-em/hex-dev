@@ -572,6 +572,14 @@ The default is `rcf.algebraic.intervalSigns=true`; the false arm remains a
 comparison control. Direct coordinate quotation remains off by default: its
 two separate comparisons did not establish a gain.
 
+`rcf.algebraic.singleReplay` is also false by default. It compares one Boolean
+certificate replay goal with separately checked conjuncts; source authentication
+and the final proof check remain separate. A four-round comparison of the same
+three examples did not establish a speedup. Combined replay produced smaller
+private proof files but used more peak memory. The
+[report and retained samples](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-replay-proofs.md)
+record every completed arm and the exact source and import identities.
+
 For these reconstructed inputs, closed arithmetic is compiled into the common
 field after authenticating its source values. A quotient is recorded as a
 rational coordinate polynomial and checked by its multiplication identity;
