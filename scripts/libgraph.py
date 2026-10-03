@@ -15,8 +15,8 @@ import tomllib
 # (it ships inside `leanprover/hex-graph-iso` via `extra_paths`; a second
 # consumer is the trigger to promote it to a library of its own).
 KNOWN_EXCEPTIONS = {"Hex", "HexManual", "HexAggregateCheck", "HexGraph"}
-# Build-only lean_libs that build the per-library bench/conformance drivers under
-# `bench/` and `conformance/`. They are not project libraries (no libraries.yml
+# Build-only lean_libs for drivers, proof probes and examples under
+# `bench/`, `conformance/` and `examples/`. They are not project libraries (no libraries.yml
 # entry, no repo-root file); exempt them from the Lake-config alignment check only.
 BUILD_ONLY_LIBS = {
     "RealClosureConsumer",

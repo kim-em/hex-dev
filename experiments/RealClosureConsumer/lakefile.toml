@@ -1,12 +1,10 @@
 name = "realClosureConsumer"
 version = "0.1.0"
-defaultTargets = ["RealClosureConsumer"]
+defaultTargets = ["Consumer"]
 
 [[require]]
 name = "Hex"
 path = "../.."
 
 [[lean_lib]]
-name = "RealClosureConsumer"
-srcDir = "../../examples"
-globs = ["RealClosureConsumer.+"]
+name = "Consumer"

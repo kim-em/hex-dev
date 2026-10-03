@@ -10,10 +10,16 @@ advance phases, or admit new release-manifest entries. The accompanying
 ## Public imports and source ownership
 
 Regenerate the source inventory with
-`python3 scripts/audit_real_closure_packages.py > reports/real-closure-package-inventory.json`.
+`python3 scripts/audit_real_closure_packages.py --base-revision b2575e89cebb8b2d4cdc0f80f4ef13915e7870d5 > reports/real-closure-package-inventory.json`.
 It records declared dependencies separately from imports reachable through
 current public umbrellas and the development semantic modules, including
-external import roots. It neither creates package trees nor publishes them.
+external import roots. The digest covers the generator and its source inputs;
+unresolved local library imports are errors. The base revision can be supplied
+explicitly, including in a clone without `origin/main`. Separate
+`candidateRCFPackages` records describe base HexRCF plus RealFormula and the
+proposed optional coefficient package using current imports. Companion
+migrations still introduce the Tau Ceti installation dependency described
+below. The generator neither creates package trees nor publishes them.
 
 The eight family libraries are HexOrderedFn/Mathlib, HexSturm/Mathlib,
 HexSignDet/Mathlib and HexRealClosure/Mathlib. The computational packages
@@ -102,11 +108,15 @@ published packages:
   the public import `HexRCF.RealCoefficients`; no second copy of `HexRCF.lean`.
 - Integrate `HexRCF.RealFormula` into base HexRCF when RealFormulaMathlib is
   publishable. Its existing SPEC ownership and imports need no tower; shared
-  formula consumers should not install the tower just for this bridge.
+  formula consumers should not install the tower just for this module.
 - Use the coefficient adapter's existing Lake declaration with explicit module globs.
   The optional package and base package share the `HexRCF` namespace but own
   disjoint modules. The optional package requires base `hex-rcf` and the
-  delivered tower/sign/ordered companions. Base `hex-rcf` never requires it.
+  companions in its separate candidate inventory record, including the
+  real-algebraic, Sturm and number-field companions. Its imports require
+  RealFormulaMathlib and `HexRCF.RealFormula`, so publication also requires
+  RealFormula/Mathlib and Reflect/Mathlib eligibility and that module's
+  availability in base HexRCF. Base `hex-rcf` never requires it.
 - Keep the coefficient-extension contract in the owning HexRCF SPEC. Specify
   the optional package there before implementation. Maintain a package README
   describing certified caller inputs, finite refusal and joint-realization
@@ -165,11 +175,12 @@ manifest state:
    Phase-4 readiness, followed by their own Phases 5–7. Rank/Mathlib are 4
    with [#10352](https://github.com/kim-em/hex-dev/issues/10352) complete, but still require their own Phases 5–7. RealFormula/
    Mathlib and Reflect/Mathlib are 1 and need their remaining Phases 2–7.
-   HexPolyFast is 4 and also needs Phases 5–7; RationalFn/Mathlib remain separate
-   inputs. HexTruncatedSeries and HexModular are 7 but have no manifest entries,
-   so their publication/bootstrap still needs preparation when required by
-   the admitted graph. The inventory lists both declared and actual import
-   closures and each input's phase; absence from a public import is not a
+   HexPolyFast and RationalFn/Mathlib are 4 and need their own Phases 5–7.
+   HexTruncatedSeries is 7 and imported by OrderedFn through RationalFn; it
+   needs a manifest entry and mirror bootstrap. HexModular is also 7 and
+   absent from the manifest; it remains required by the declared graph even
+   though current family public imports do not reach it. The inventory lists
+   both declared and actual import closures and each input's phase; absence from a public import is not a
    license to bypass the current manifest pin rule.
 3. Preserve [#9809](https://github.com/kim-em/hex-dev/issues/9809)'s ownership of HexPolyFp performance (recorded phase 3).
    Existing published inputs are not automatically promoted by publishing a
@@ -189,14 +200,17 @@ manifest state:
    lock and consumer build must be ready in the same migration; otherwise the
    next unrelated sync would publish sources needing an undeclared package.
    `validate_external_imports` now rejects a missing Tau Ceti requirement, but
-   does not add one. Do not hand-edit an existing published mirror. Reconcile
+   does not add one. The migration PR must also pass candidate-package
+   validation of that requirement before merging, using the existing
+   staging/consumer tooling once available; a sync-time rejection alone is
+   insufficient. Do not hand-edit an existing published mirror. Reconcile
    exact-path private-import rules for moved modules; TarskiFoundation currently
    uses `import all HexRealRootsMathlib.TarskiSum`.
    Obtain maintainer-created new mirrors and skeletons under
    [BOOTSTRAP.md](../scripts/release/BOOTSTRAP.md). Declare the direct Tau Ceti
    requirements above and pinned Hex requirements in new skeletons. Update
    aggregate coverage only for the agreed package boundary.
-6. Use [#10476](https://github.com/kim-em/hex-dev/issues/10476) to build staged trees and a fresh consumer with candidate pins,
+6. Use [#10476](https://github.com/kim-em/hex-dev/pull/10476) to build staged trees and a fresh consumer with candidate pins,
    including Tarski, BKR/Thom, ordered extensions, tower roots/exploration and
    the optional tactic. Then run the **full** sync dry run and reconcile any
    diverged mirror baseline. Current `--dry-run` does not stage packages.

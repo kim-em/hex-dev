@@ -1,6 +1,6 @@
 {
   "sourceBaseRevision": "b2575e89cebb8b2d4cdc0f80f4ef13915e7870d5",
-  "sourceInputSHA256": "fe001eceb8605b9551142005792bf3c829c149077cfeed2245b224a34482d626",
+  "sourceInputSHA256": "d1fe598b84165750579fcd62ca5d2aa71761e3076c3e4a5b0e6c27c046f99954",
   "scope": "Preparation snapshot; declared dependency closures differ from current public and development semantic import closures. Not staged split-package validation.",
   "toolchain": "leanprover/lean4:v4.35.0-rc3",
   "externalPins": [
@@ -1679,6 +1679,150 @@
         "adapters/HexRCF/RealCoefficients/Tactic.lean",
         "adapters/HexRCF/RealCoefficients.lean",
         "adapters/HexRCF/RealFormula.lean"
+      ]
+    }
+  ],
+  "candidateRCFPackages": [
+    {
+      "package": "hex-rcf",
+      "moduleEntrypoints": [
+        "HexRCF",
+        "HexRCF.RealFormula"
+      ],
+      "declaredHexInputs": [
+        "HexRealRoots",
+        "HexRealRootsMathlib",
+        "HexPolyZ",
+        "HexPolyZMathlib",
+        "HexRealFormulaMathlib"
+      ],
+      "importHexClosure": [
+        "HexArith",
+        "HexBasic",
+        "HexHensel",
+        "HexMatrixMathlib",
+        "HexModArith",
+        "HexModArithMathlib",
+        "HexMvPoly",
+        "HexMvPolyMathlib",
+        "HexPoly",
+        "HexPolyFp",
+        "HexPolyMathlib",
+        "HexPolyZ",
+        "HexPolyZMathlib",
+        "HexRealFormula",
+        "HexRealFormulaMathlib",
+        "HexRealRoots",
+        "HexRealRootsMathlib",
+        "HexReflect",
+        "HexReflectMathlib"
+      ],
+      "importUnpublishedHexClosure": [
+        "HexRealFormula",
+        "HexRealFormulaMathlib",
+        "HexReflect",
+        "HexReflectMathlib"
+      ],
+      "importExternalRoots": [
+        "Mathlib",
+        "Qq"
+      ]
+    },
+    {
+      "package": "hex-rcf-real-coefficients",
+      "moduleEntrypoints": [
+        "HexRCF.RealCoefficients"
+      ],
+      "declaredHexInputs": [
+        "HexRCF",
+        "HexRealAlgebraicMathlib",
+        "HexSturm",
+        "HexSturmMathlib",
+        "HexNumberFieldMathlib",
+        "HexOrderedFnMathlib",
+        "HexRealClosureMathlib"
+      ],
+      "importHexClosure": [
+        "HexArith",
+        "HexBareiss",
+        "HexBareissMathlib",
+        "HexBasic",
+        "HexBerlekamp",
+        "HexBerlekampMathlib",
+        "HexBerlekampZassenhaus",
+        "HexBerlekampZassenhausMathlib",
+        "HexDeterminant",
+        "HexDeterminantMathlib",
+        "HexGramSchmidt",
+        "HexGramSchmidtMathlib",
+        "HexHensel",
+        "HexHenselMathlib",
+        "HexLLL",
+        "HexLLLMathlib",
+        "HexMatrix",
+        "HexMatrixMathlib",
+        "HexModArith",
+        "HexModArithMathlib",
+        "HexMvPoly",
+        "HexMvPolyMathlib",
+        "HexNumberField",
+        "HexNumberFieldMathlib",
+        "HexOrderedFn",
+        "HexOrderedFnMathlib",
+        "HexPoly",
+        "HexPolyFp",
+        "HexPolyFpMathlib",
+        "HexPolyMathlib",
+        "HexPolyZ",
+        "HexPolyZMathlib",
+        "HexPrimality",
+        "HexRCF",
+        "HexRank",
+        "HexRankMathlib",
+        "HexRealAlgebraic",
+        "HexRealAlgebraicMathlib",
+        "HexRealClosure",
+        "HexRealClosureMathlib",
+        "HexRealFormula",
+        "HexRealFormulaMathlib",
+        "HexRealRoots",
+        "HexRealRootsMathlib",
+        "HexReflect",
+        "HexReflectMathlib",
+        "HexResultant",
+        "HexResultantMathlib",
+        "HexRoots",
+        "HexRootsMathlib",
+        "HexRowReduce",
+        "HexRowReduceMathlib",
+        "HexSignDet",
+        "HexSignDetMathlib",
+        "HexSturm",
+        "HexSturmMathlib"
+      ],
+      "importUnpublishedHexClosure": [
+        "HexOrderedFn",
+        "HexOrderedFnMathlib",
+        "HexRank",
+        "HexRankMathlib",
+        "HexRealAlgebraic",
+        "HexRealAlgebraicMathlib",
+        "HexRealClosure",
+        "HexRealClosureMathlib",
+        "HexRealFormula",
+        "HexRealFormulaMathlib",
+        "HexReflect",
+        "HexReflectMathlib",
+        "HexSignDet",
+        "HexSignDetMathlib",
+        "HexSturm",
+        "HexSturmMathlib"
+      ],
+      "importExternalRoots": [
+        "Batteries",
+        "Mathlib",
+        "Qq",
+        "TauCeti"
       ]
     }
   ]
