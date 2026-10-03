@@ -67,7 +67,10 @@ extraction and truncated/cyclic graphs.
 `SelectedSigns.ofMemo?` also checks the descriptor prefix and unique extending
 row. Several selections can reuse one validated memo without rerunning its
 query or matrix checks. Context, head and endpoints are fixed in the memo's
-type. Validation checks every entry, including unreachable entries; selection
+type. `SelectedSigns.readMemo?` supports independently constructed descriptors:
+`Dag.bindDomain?` first checks literal head and endpoint equality and transports
+only the proofs, preserving every stored tree. Different bindings reject.
+Validation checks every entry, including unreachable entries; selection
 rejects an absent index or a different query list. `Dag.selectedSigns_memo`
 proves literal agreement with the existing one-result interface.
 

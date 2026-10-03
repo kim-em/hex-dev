@@ -69,6 +69,42 @@ theorem SelectedSigns.ofMemo_evidence {sign : E → Int} {context : Ctx}
       exact ⟨t, rfl, rfl, rfl⟩
     · simp at h
 
+/-- Select from a memo with independently supplied domain indices. Literal
+head/endpoint checks establish the descriptor bindings before extraction. -/
+@[expose] def SelectedSigns.readMemo? {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (qs : List (DensePoly E))
+    (values : Vector Int qs.length) {p : DensePoly E} {a b : Endpoint E}
+    (memo : Array (Dag.Checked sign context p a b)) (root : Nat) :
+    Option (SelectedSigns d qs) := do
+  let bound ← Dag.bindDomain? sign context memo d.raw.head d.raw.lower d.raw.upper
+  SelectedSigns.ofMemo? d qs values bound root
+
+/-- A descriptor already on the memo domain has the original result exactly. -/
+theorem SelectedSigns.readMemo_same {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (qs : List (DensePoly E))
+    (values : Vector Int qs.length)
+    (memo : Array (Dag.Checked sign context d.raw.head d.raw.lower d.raw.upper))
+    (root : Nat) :
+    SelectedSigns.readMemo? d qs values memo root =
+      SelectedSigns.ofMemo? d qs values memo root := by
+  simp only [readMemo?, Dag.bindDomain_self, bind, Option.bind]
+
+/-- Successful dynamic binding uses the actual accepted memo, followed by the
+same exact selected-sign extraction. No domain or graph checker is repeated. -/
+theorem SelectedSigns.readMemo_evidence {sign : E → Int} {context : Ctx}
+    {d : Descriptor E Ctx sign context} {qs : List (DensePoly E)}
+    {values : Vector Int qs.length} {p : DensePoly E} {a b : Endpoint E}
+    {memo : Array (Dag.Checked sign context p a b)} {root : Nat} {s : SelectedSigns d qs}
+    (h : SelectedSigns.readMemo? d qs values memo root = some s) :
+    ∃ bound, Dag.bindDomain? sign context memo d.raw.head d.raw.lower d.raw.upper = some bound ∧
+      SelectedSigns.ofMemo? d qs values bound root = some s := by
+  unfold readMemo? at h
+  cases hb : Dag.bindDomain? sign context memo d.raw.head d.raw.lower d.raw.upper with
+  | none => simp [hb, bind, Option.bind] at h
+  | some bound =>
+    simp only [hb, bind, Option.bind] at h
+    exact ⟨bound, rfl, h⟩
+
 namespace Dag
 
 /-- Replay a supplied graph for the selected descriptor's formal derivatives

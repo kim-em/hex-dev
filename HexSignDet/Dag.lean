@@ -137,6 +137,68 @@ theorem step_cache (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : E
     step sign context p a b memo entry shared = step sign context p a b memo entry := by
   simp only [step_eq]
 
+/-- A checked step retains the exact supplied node at the new memo index. -/
+theorem step_node (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
+    (memo : Array (Checked sign context p a b)) (entry : Entry E Ctx)
+    (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
+      (EndpointSigns.ofSign sign))) (next : Checked sign context p a b)
+    (h : step sign context p a b memo entry shared = some next) :
+    next.value.node = entry.node := by
+  rw [step_eq] at h
+  cases hc : entry.children with
+  | none =>
+    simp only [hc] at h
+    split at h
+    · simp only [pure, Option.some.injEq] at h
+      subst next
+      rfl
+    · simp at h
+  | some children =>
+    rcases children with ⟨left, right⟩
+    simp only [hc] at h
+    cases hl : memo[left]? with
+    | none => simp [hl, bind, Option.bind] at h
+    | some l =>
+      simp only [hl, bind, Option.bind] at h
+      cases hr : memo[right]? with
+      | none => simp [hr, bind, Option.bind] at h
+      | some r =>
+        simp only [hr, bind, Option.bind] at h
+        split at h
+        · split at h
+          · split at h
+            · simp only [pure, Option.some.injEq] at h
+              subst next
+              rfl
+            · simp at h
+          · simp at h
+        · simp at h
+
+private theorem fold_nodes (sign : E → Int) (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E)
+    (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
+      (EndpointSigns.ofSign sign))) (entries : List (Entry E Ctx))
+    (memo result : Array (Checked sign context p a b))
+    (h : entries.foldlM (fun memo entry => do
+      let next ← step sign context p a b memo entry shared
+      pure (memo.push next)) memo = some result) :
+    result.toList.map (fun t => t.value.node) =
+      memo.toList.map (fun t => t.value.node) ++ entries.map Entry.node := by
+  induction entries generalizing memo result with
+  | nil =>
+    simp only [List.foldlM_nil, pure, Option.some.injEq] at h
+    subst result
+    simp
+  | cons entry entries ih =>
+    simp only [List.foldlM_cons] at h
+    cases hs : step sign context p a b memo entry shared with
+    | none => simp [hs, bind, Option.bind] at h
+    | some next =>
+      simp only [hs, bind, Option.bind, pure] at h
+      have hn := step_node sign context p a b memo entry shared next hs
+      simpa only [Array.toList_push, List.map_append, List.map_cons, List.map_nil,
+        List.append_assoc, List.singleton_append, hn] using ih (memo.push next) result h
+
 /-- Select the first domain only after its exact caller input bindings pass.
 Foreign inputs do not trigger coefficient-sign replay. The witness itself is
 validated by the shared domain checker rather than compared with itself. -/
@@ -160,6 +222,35 @@ the graph's root index is checked when a caller selects a result. -/
     let next ← step sign context p a b memo entry shared
     pure (memo.push next)
 
+/-- Every accepted memo index corresponds to the original serialized entry
+index, including entries not reachable from the graph's selected root. -/
+theorem validate_nodes (sign : E → Int) (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E) (dag : Dag E Ctx) (memo : Array (Checked sign context p a b))
+    (h : dag.validate? sign context p a b = some memo) :
+    memo.map (fun t => t.value.node) = dag.entries.map Entry.node := by
+  unfold validate? at h
+  rw [← Array.foldlM_toList] at h
+  have hn := fold_nodes sign context p a b (dag.cache sign context p a b)
+    dag.entries.toList #[] memo h
+  apply Array.toList_inj.mp
+  simpa only [Array.toList_map, Array.toList_empty, List.map_nil, List.nil_append] using hn
+
+/-- Accepted validation supplies exactly one memo entry per serialized entry. -/
+theorem validate_size (sign : E → Int) (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E) (dag : Dag E Ctx) (memo : Array (Checked sign context p a b))
+    (h : dag.validate? sign context p a b = some memo) : memo.size = dag.entries.size := by
+  simpa only [Array.size_map] using congrArg Array.size
+    (validate_nodes sign context p a b dag memo h)
+
+/-- Successful lookups at a given index retain that entry's exact literal node. -/
+theorem validate_get (sign : E → Int) (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E) (dag : Dag E Ctx) (memo : Array (Checked sign context p a b))
+    (h : dag.validate? sign context p a b = some memo) (i : Nat)
+    (entry : Entry E Ctx) (t : Checked sign context p a b)
+    (he : dag.entries[i]? = some entry) (ht : memo[i]? = some t) : t.value.node = entry.node := by
+  have hn := congrArg (fun nodes => nodes[i]?) (validate_nodes sign context p a b dag memo h)
+  simpa only [Array.getElem?_map, he, ht, Option.map_some, Option.some.injEq] using hn
+
 /-- Choosing a different result index does not change graph validation. -/
 theorem validate_root (sign : E → Int) (context : Ctx) (p : DensePoly E)
     (a b : Endpoint E) (dag : Dag E Ctx) (root : Nat) :
@@ -176,6 +267,44 @@ No graph, query or matrix checker is rerun. -/
   if h : selected.value.node.queries = qs then
     return ⟨selected.value, by simpa only [h] using selected.accepted⟩
   else none
+
+/-- Rebind a memo only after literal equality of the defining polynomial and
+both endpoints. This permits independently constructed descriptors to reuse
+evidence without a hand-written dependent cast. Context identity stays fixed. -/
+@[expose] def bindDomain? (sign : E → Int) (context : Ctx) {p : DensePoly E}
+    {a b : Endpoint E} (memo : Array (Checked sign context p a b))
+    (head : DensePoly E) (lower upper : Endpoint E) :
+    Option (Array (Checked sign context head lower upper)) :=
+  if hp : p = head then
+    if ha : a = lower then
+      if hb : b = upper then some (hp ▸ ha ▸ hb ▸ memo)
+      else none
+    else none
+  else none
+
+/-- Rebinding to the same domain preserves the entire memo literally. -/
+theorem bindDomain_self (sign : E → Int) (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E) (memo : Array (Checked sign context p a b)) :
+    bindDomain? sign context memo p a b = some memo := by
+  simp [bindDomain?]
+
+/-- Checked domain rebinding preserves every literal tree, or rejects an
+unequal head or endpoint. Proof transport never changes the stored data. -/
+theorem bindDomain_values (sign : E → Int) (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E) (memo : Array (Checked sign context p a b))
+    (head : DensePoly E) (lower upper : Endpoint E) :
+    (bindDomain? sign context memo head lower upper).map (fun m => m.map Checked.value) =
+      if p = head ∧ a = lower ∧ b = upper then some (memo.map Checked.value) else none := by
+  by_cases hp : p = head
+  · subst head
+    by_cases ha : a = lower
+    · subst lower
+      by_cases hb : b = upper
+      · subst upper
+        simp [bindDomain?]
+      · simp [bindDomain?, hb]
+    · simp [bindDomain?, ha]
+  · simp [bindDomain?, hp]
 
 /-- Validate all references and nodes once, then bind the selected root's exact
 query list. The returned evidence proves acceptance by the literal tree checker;

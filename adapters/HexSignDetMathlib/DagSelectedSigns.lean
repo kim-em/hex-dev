@@ -46,4 +46,16 @@ theorem memo_values {context : Ctx} (d : Descriptor E Ctx sign context)
   obtain ⟨_, _, hv, _⟩ := SelectedSigns.ofMemo_evidence h
   simpa only [hv] using s.values_at_root f hz h1 ha hs hm hnat hsign
 
+include h1 ha hs hm hnat hsign in
+/-- Independently supplied domain bindings are checked before the same
+mathematical selected-root sign conclusion is obtained from a shared memo. -/
+theorem readMemo_values {context : Ctx} (d : Descriptor E Ctx sign context)
+    (qs : List (DensePoly E)) (values : Vector Int qs.length)
+    {p : DensePoly E} {a b : Endpoint E}
+    (memo : Array (Checked sign context p a b)) (root : Nat) (s : SelectedSigns d qs)
+    (h : SelectedSigns.readMemo? d qs values memo root = some s) :
+    values.toList = signsAt f hz qs (d.root f hz h1 ha hs hm hnat hsign) := by
+  obtain ⟨bound, _, accepted⟩ := SelectedSigns.readMemo_evidence h
+  exact memo_values f hz h1 ha hs hm hnat hsign d qs values bound root s accepted
+
 end Hex.SignDet.Dag

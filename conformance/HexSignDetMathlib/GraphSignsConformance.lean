@@ -13,6 +13,8 @@ public meta import HexSignDet.DagSelectedSigns
 public meta import HexSignDet.CrossCheck
 public meta import HexSignDet.DagEncode
 
+import all HexSignDet.Descriptor
+
 public section
 
 /-! Selected-root signs from supplied graphs. Computational conformance owner:
@@ -92,11 +94,18 @@ query. Selecting a memo entry never starts another graph check. -/
     (SelectedSigns.ofMemo? source fullNode.queries #v[1, 1] memo 2).isSome &&
     (SelectedSigns.ofMemo? source firstNode.queries #v[-1] memo 0).isNone &&
     (SelectedSigns.ofMemo? source derivativeNode.queries #v[1] memo 0).isNone &&
-    (SelectedSigns.ofMemo? source firstNode.queries #v[1] memo 3).isNone
+    (SelectedSigns.ofMemo? source firstNode.queries #v[1] memo 3).isNone &&
+    (SelectedSigns.readMemo? prefixed [DensePoly.C 2] #v[1] memo 2).isSome &&
+    (SelectedSigns.readMemo? prefixed [DensePoly.C 2] #v[-1] memo 2).isNone &&
+    (SelectedSigns.readMemo? prefixed [DensePoly.C 2] #v[1] memo 1).isNone &&
+    (Dag.bindDomain? Sturm.orderSign 7 memo (DensePoly.C 2) source.raw.lower source.raw.upper).isNone &&
+    (Dag.bindDomain? Sturm.orderSign 7 memo source.raw.head .negInf source.raw.upper).isNone &&
+    (Dag.bindDomain? Sturm.orderSign 7 memo source.raw.head source.raw.lower (.finite 3)).isNone
 
 set_option maxRecDepth 32768 in
 theorem memo_kernel : memoPass = true := by
-  simp only [memoPass, SelectedSigns.ofMemo?, Dag.select?, Dag.validate?, source_raw, Dag.step_eq, full,
+  simp only [memoPass, SelectedSigns.readMemo?, SelectedSigns.ofMemo?, Dag.bindDomain?,
+    Dag.select?, Dag.validate?, source, prefixed, Descriptor.ofTable, Dag.step_eq, full,
     Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
     TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
@@ -111,6 +120,7 @@ theorem memo_rejected :
     (full.validate? Sturm.orderSign 8 singletonRaw.head singletonRaw.lower singletonRaw.upper).isNone = true ∧
     (full.validate? Sturm.orderSign 7 (DensePoly.C 2) singletonRaw.lower singletonRaw.upper).isNone = true ∧
     (full.validate? Sturm.orderSign 7 singletonRaw.head .negInf singletonRaw.upper).isNone = true ∧
+    (full.validate? Sturm.orderSign 7 singletonRaw.head singletonRaw.lower (.finite 3)).isNone = true ∧
     (({full with entries := full.entries.set! 0 (⟨firstNode, some (1, 1)⟩)}).validate?
       Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper).isNone = true ∧
     (invalidExtra.validate? Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper).isNone = true := by
@@ -323,3 +333,15 @@ end Hex.SignDetMathlib.GraphSignsConformance
 /-- info: 'Hex.SignDet.Dag.memo_values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Dag.memo_values
+
+/-- info: 'Hex.SignDet.Dag.readMemo_values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Dag.readMemo_values
+
+/-- info: 'Hex.SignDetMathlib.GraphSignsConformance.memo_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDetMathlib.GraphSignsConformance.memo_kernel
+
+/-- info: 'Hex.SignDetMathlib.GraphSignsConformance.memo_rejected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDetMathlib.GraphSignsConformance.memo_rejected
