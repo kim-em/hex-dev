@@ -415,6 +415,8 @@ lean_lib HexECPPMathlibPariIO where
   precompileModules := true
   moreLinkObjs := #[hexecpppariio]
 
+-- The release aggregate also builds these modules. Its manifest equality
+-- check requires that registration; all owners use the same Lean settings.
 lean_lib HexECPPMathlibTests where
   globs := #[.one `HexECPPMathlib.Tests, .one `HexECPPMathlib.LintTests]
 
@@ -817,7 +819,8 @@ lean_lib HexPrimalityMathlibProofProbe where
 
 lean_lib HexECPPMathlibProofProbe where
   srcDir := "bench"
-  globs := #[`HexECPPMathlib.ProofProbe.Native128_0,
+  globs := #[`HexECPPMathlib.ProofProbe.NativeGeneration,
+    `HexECPPMathlib.ProofProbe.Native128_0,
     `HexECPPMathlib.ProofProbe.NativeBaseline,
     `HexECPPMathlib.ProofProbe.NativeReify,
     `HexECPPMathlib.ProofProbe.NativeDirect,

@@ -152,7 +152,8 @@ repos:
     build_modules: [HexECPPMathlib.Native, HexECPPMathlib.Pari]
     pins: [hex-basic, hex-arith, hex-primality, hex-ecpp, hex-primality-mathlib]
     lakefile: lean
-    lake_declarations: [hexecpppariio, HexECPPMathlibPariIO]
+    lake_declarations: [hexecpppariio, HexECPPMathlib, HexECPPMathlibPariIO]
+    dependency_caches: [AINTLIB]
 
   - repo: leanprover/hex-poly
     component: Dense univariate polynomials

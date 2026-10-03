@@ -98,34 +98,8 @@ def graphiso_blocks(text: str) -> dict[str, str]:
     return relevant
 
 
-# These exact AINTLIB commits declare the module roots below. Unknown revisions
-# may add roots and must be independently reviewed before using this rule.
-AUDITED_AINT_REVISIONS = frozenset({
-    '3808ce862c09ad5b4de0c76f10ba00946ed2eff3',
-    'a5c3affa17bb17d13bbfd2e6c828dc978af65657',
-})
-AUDITED_AINT_ROOTS = frozenset({
-    '.mathlib-quality',
-    'AINTLIB',
-    'Adic spaces',
-    'BernoulliRegular',
-    'CebotarevDensity',
-    'Common',
-    'DedekindResidue',
-    'DedekindResidueBlueprint',
-    'DedekindResidueBlueprintMain',
-    'FltRegular',
-    'HasseWeil',
-    'LeanModularForms',
-    'LeanModularFormsBlueprint',
-    'LeanModularFormsBlueprintMain',
-    'LeanModularFormsSMOBlueprint',
-    'LeanModularFormsSMOBlueprintMain',
-    'LutzNagell',
-    'ModularCurves',
-    'ModuleSystemTests',
-    'PadicLFunctions',
-})
+AUDITED_AINT_REVISIONS = freshness.AUDITED_AINT_REVISIONS
+AUDITED_AINT_ROOTS = freshness.AUDITED_AINT_ROOTS
 
 
 def lakefile_texts_differ(before: str, after: str) -> bool:
@@ -134,15 +108,8 @@ def lakefile_texts_differ(before: str, after: str) -> bool:
     new_blocks = graphiso_blocks(after)
     # AINTLIB supplies Hasse's theorem to the separate ECPP bridge. It has no
     # runtime path to the cactus executable when that import closure excludes it.
-    def fixed_hasse(body: str) -> bool:
-        match = re.fullmatch(
-                r'require AINTLIB from git\s*'
-                r'"https://github\.com/CBirkbeck/AINTLIB\.git"\s*@\s*'
-                r'"([0-9a-f]{40})"',
-                freshness.strip_lean_comments(body).strip())
-        return match is not None and match[1] in AUDITED_AINT_REVISIONS
-    if (("require AINTLIB" not in old_blocks or fixed_hasse(old_blocks["require AINTLIB"]))
-            and fixed_hasse(new_blocks.get("require AINTLIB", ""))
+    if (("require AINTLIB" not in old_blocks or freshness.audited_aint_revision(old_blocks["require AINTLIB"]))
+            and freshness.audited_aint_revision(new_blocks.get("require AINTLIB", ""))
             and (prefixes := graph_import_prefixes()) is not None
             and not (AUDITED_AINT_ROOTS & prefixes)):
         old_blocks.pop("require AINTLIB", None)
@@ -183,79 +150,13 @@ TARGET = re.compile(
     rf"lean_(exe|lib) ({NAME}) where\n"
     r'  srcDir := "(bench|conformance)"\n'
     rf"  (root|roots|globs) := (`{MODULE}|#\[\s*`{MODULE}(?:\s*,\s*`{MODULE})*\s*,?\s*\])\n")
-IMPORT = re.compile(
-    rf"[ \t]*(?:(?:public|private|meta)[ \t]+)*import[ \t]+(?:all[ \t]+)?"
-    rf"({MODULE}(?:[ \t]+{MODULE})*)[ \t]*")
-IMPORT_START = re.compile(r"[ \t]*(?:(?:public|private|meta)[ \t]+)*import\b")
-
-
 def index_lean_sources() -> tuple[dict[Path, list[str]], set[str]]:
-    """Tracked Lean modules by path suffix, using the index's exact blobs."""
-    sources: dict[Path, list[str]] = {}
-    local_prefixes: set[str] = set()
-    listing = freshness.git("ls-files", "-s", "--", "*.lean")
-    for line in listing.splitlines():
-        metadata, separator, path_text = line.partition("\t")
-        if not separator:
-            raise ValueError("git ls-files returned a malformed Lean source entry")
-        _mode, blob, stage = metadata.split()
-        if stage != "0":
-            raise ValueError(f"{path_text} is unmerged in the index")
-        path = Path(path_text)
-        parts = path.with_suffix("").parts
-        for start, part in enumerate(parts):
-            if re.fullmatch(NAME, part):
-                suffix = Path(*parts[start:]).with_suffix(".lean")
-                sources.setdefault(suffix, []).append(blob)
-                # Every component might be the first module component after a
-                # source directory. Extra entries only make resolution more
-                # conservative when an import has no tracked source.
-                local_prefixes.add(part)
-    return sources, local_prefixes
+    return freshness.index_lean_sources()
 
 
 def graph_import_prefixes() -> set[str] | None:
-    """Over-approximate the graph driver's and tactic's imported namespaces.
-
-    Inspect every tracked source whose path suffix matches an imported module,
-    so every declared source directory is covered and ambiguity only widens
-    the closure. Read the index's blobs, matching the source fingerprint.
-    Nonlocal imports still contribute their namespace. Unsupported import
-    syntax and unresolved local modules fail closed.
-    """
-    prefixes = {"HexGraphIso"} | TOOLCHAIN_NAMESPACES
-    try:
-        sources, local_prefixes = index_lean_sources()
-    except ValueError:
-        return None
-    stack = ["HexGraphIso", "HexGraphIso.Cactus"]
-    seen = set()
-    while stack:
-        module = stack.pop()
-        if module in seen:
-            continue
-        seen.add(module)
-        relative = Path(*module.split(".")).with_suffix(".lean")
-        blobs = sources.get(relative, [])
-        if not blobs:
-            prefix = module.split(".")[0]
-            # A nested Init.lean does not make the toolchain Init namespace
-            # local. Tracked sources in these namespaces are still followed.
-            if prefix in local_prefixes and prefix not in TOOLCHAIN_NAMESPACES:
-                return None
-            continue
-        for blob in blobs:
-            for line in freshness.strip_lean_comments(
-                    freshness.blob_text(blob)).splitlines():
-                if not IMPORT_START.match(line):
-                    continue
-                match = IMPORT.fullmatch(line)
-                if match is None:
-                    return None
-                for imported_module in match[1].split():
-                    prefixes.add(imported_module.split(".")[0])
-                    stack.append(imported_module)
-    return prefixes
+    return freshness.lean_import_prefixes(
+        ["HexGraphIso", "HexGraphIso.Cactus"], index_lean_sources)
 
 
 def independent_target_additions(before: str, after: str, prefixes: set[str],

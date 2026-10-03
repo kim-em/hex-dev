@@ -249,5 +249,8 @@ replay take the proof track. `libraries.yml` declares the explicit
 routes additionally have protocol conformance that builds generated source
 and replays the exact certificate suggestion in fresh modules. The surface
 inventory is `reports/ecpp/companion-proof-surface.md`. Existing replay and
-native corpus evidence is retained; the computational partner owns compiled
+native corpus evidence is retained. `NativeGeneration` runs the native tactic
+on a representative 128-bit subject. PARI generation/export uses the protocol
+script as its evidence because GP is optional; replay probes alone do not
+attest generation. The computational partner owns compiled
 performance claims and profiles.

@@ -1,6 +1,0 @@
-{
-  "path": "lakefile.lean",
-  "baseline_blob": "d6ea39caa225a28e286472ef3eac764fb4bf54a3",
-  "current_blob": "9cae4763499746d3ae8813ff879f7c4adaa614e4",
-  "reason": "The package options, hexbz_factor_service, its measured libraries and their native object targets are unchanged from the extended-GCD sweep baseline. The AINTLIB revision supplies module-compatible Hasse proofs outside the factor-service import closure. Other edits register conformance, proof and release-test targets, and optional ECPP build roots in HexFactorizationModules, outside that closure. The new PARI pipe object is linked only by its IO sidecar, which the factor service does not import; it is not an extern_lib or package-wide link input. Compiler pins, factorization arithmetic and the measured runtime link inputs are unchanged."
-}

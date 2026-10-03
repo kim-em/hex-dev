@@ -770,6 +770,23 @@ class SyncReleasedTests(unittest.TestCase):
             '  "https://github.com/leanprover/hex-basic.git" @ "v0.1.0"\n\n'
             "@[default_target]", text)
 
+    def test_new_hex_requirement_preserves_mathlib_last(self) -> None:
+        lib = self.repo / "HexProbe"
+        lib.mkdir()
+        (lib / "Basic.lean").write_text("import HexBasic\n")
+        path = self.repo / "lakefile.lean"
+        path.write_text('import Lake\npackage probe where\n'
+            'require AINTLIB from git "https://github.com/CBirkbeck/AINTLIB.git" @ "pin"\n'
+            'require mathlib from git "https://github.com/leanprover-community/mathlib4.git" @ "pin"\n'
+            'lean_lib HexProbe\n')
+        entry = {"repo": "leanprover/hex-probe", "lib": "HexProbe",
+                 "lakefile": "lean", "readme": False, "pins": ["hex-basic"]}
+        sync_released.rewrite_requires(entry, self.repo, {"hex-basic": "a" * 40},
+            {}, "v0.1.0", {"hex-basic": {"lib": "HexBasic", "lakefile": "toml"}})
+        text = path.read_text()
+        self.assertLess(text.index("require AINTLIB"), text.index("require HexBasic"))
+        self.assertLess(text.index("require HexBasic"), text.index("require mathlib"))
+
     def test_missing_root_toolchain_fails_closed(self) -> None:
         (self.repo / "lean-toolchain").unlink()
         with self.assertRaisesRegex(RuntimeError, "no root lean-toolchain"):

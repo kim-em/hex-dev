@@ -91,8 +91,11 @@ guards. The release dependency closure contains the core
 and primality bridge, with no HexIntFactor prerequisite.
 
 Publication requires a fresh standalone build against the published core,
-the published trust-test target and a guarded publishing dry run. The core
-mirror currently contains only its bootstrap skeleton, and the companion
-mirror is not yet bootstrapped. Local source-split preparation does not
-satisfy the build-against-published-core gate. Those publication obligations
-remain in issue 10586 after source phase completion.
+the published trust-test target and a guarded publishing dry run. The companion mirror contains its approved initial Lake skeleton, including
+the exact dependency lock. A guarded dry run against the live release baseline
+plus the actual new bootstrap heads passes without a force override or push.
+The core mirror currently contains only its bootstrap skeleton. Local
+source-split preparation does not satisfy the build-against-published-core
+gate. Both new repositories also need approved publishing-token grants for
+Contents and Workflows read/write before a real release. Those publication
+obligations remain in issue 10586 after source phase completion.

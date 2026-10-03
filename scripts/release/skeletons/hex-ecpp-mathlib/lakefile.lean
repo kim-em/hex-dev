@@ -1,7 +1,8 @@
 import Lake
 open Lake DSL System
 
-package HexECPPMathlib
+package HexECPPMathlib where
+  leanOptions := #[⟨`doc.verso, true⟩, ⟨`doc.verso.suggestions, false⟩]
 
 require HexBasic from git
   "https://github.com/leanprover/hex-basic.git" @ "a7de08cb8ff56c86e43ddb909e16df78e672a303"

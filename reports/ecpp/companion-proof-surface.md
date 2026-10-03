@@ -5,15 +5,15 @@ compiled benchmarks and scientific performance evidence. There is no
 Mathlib-linked benchmark executable or companion timed-region profile.
 
 `libraries.yml` declares `bench/HexECPPMathlib/ProofProbe`; the
-`HexECPPMathlibProofProbe` Lake target lists all twenty modules in that root
+`HexECPPMathlibProofProbe` Lake target lists all twenty-one modules in that root
 and the existing single CI job builds that target on every PR.
 
 | Public surface | CI proof probes | Executable or protocol checks |
 | --- | --- | --- |
 | `ecpp using` literal/exposed data | `Ecpp17`, `Direct65`, `NativeDirect` | `Conformance`, `ModuleImports`, `Reject`; subject substitution, closed terms, hidden data and compiled replacements |
 | `ecpp_cert%` compact reification | `Reify65`, `NativeReify`, `Replay65`, `Replay256`, `Replay512` | `CompactFixtures`, `CompactReject`, `NodeBudget`; malformed text, inverse transcript, node and syntax allocations |
-| Native suggestion/generation | Frozen native corpus probes `Native128_0`, `Native256_0`–`Native256_2`, `NativeHoldout`, `NativeValidation`, `NativeUpdated` | `NativeConformance`, `NativeFixtures`, `scripts/ci/check_ecpp_native.py`; exact generated suggestions replayed in fresh modules, search exhaustion, exclusive exports and language-server policy |
-| PARI suggestion/generation/export | `Replay65`, `Replay256`, `Replay512` replay supplied compact rows | `scripts/ci/check_ecpp_pari.py`; actual generated suggestion text, fresh exported importing module, absent GP and duplicate export; `PariProcess` covers budgets, cancellation, timeout and pipe-holding descendants |
+| Native suggestion/generation | `NativeGeneration` runs the native tactic; frozen replay uses `Native128_0`, `Native256_0`–`Native256_2`, `NativeHoldout`, `NativeValidation`, `NativeUpdated` | `NativeConformance`, `NativeFixtures`, `scripts/ci/check_ecpp_native.py`; exact generated suggestions replayed in fresh modules, search exhaustion, exclusive exports and language-server policy |
+| PARI suggestion/generation/export | `Replay65`, `Replay256`, `Replay512` cover frozen replay only; generation/export evidence is the protocol | `scripts/ci/check_ecpp_pari.py`; actual generated suggestion text, fresh exported importing module, absent GP and duplicate export; `PariProcess` covers budgets, cancellation, timeout and pipe-holding descendants |
 | Frozen replay | `Replay65`, `Replay256`, `Replay512`, native frozen corpus | Both protocol scripts replay with GP/search absent; `HexECPPMathlib.Tests.ModuleReplay` imports an exposed certificate from a module |
 | Soundness/correspondence | `Ecpp17`, replay probes | `HasseAudit`, `SoundnessAudit`, `CompositeDivisors`; published `HexECPPMathlib.Tests` guards upstream Hasse and both headline theorem dependencies |
 
