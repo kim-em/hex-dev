@@ -102,6 +102,11 @@ checks frozen bound/subject/version bindings and coverage of used providers,
 then validates enclosure, guard and final proofs in the ordinary kernel.
 Nonseparating bounds leave guards unresolved. This mode is bounded proof search,
 not a complete named-constant field solver.
+The [named-constant regressions](../conformance/HexRCF/NamedConstants.lean)
+and manual supply fixed bounds from existing Mathlib π/e theorems, then prove
+the required inequalities, existential witness and guarded inverse. Separate
+[coarse-bound tests](../conformance/HexRCF/CoarseConstants.lean) retain refusal
+when the supplied evidence leaves a divisor sign unresolved.
 
 `Hex.RCF.RealCoefficients.Reify.prepare` produces the shared source schema,
 fixed coefficient valuation and equivalence to the original goal. The optional

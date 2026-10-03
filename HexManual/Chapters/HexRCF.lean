@@ -8,6 +8,8 @@ import VersoManual
 
 import HexRCF
 import HexRCF.RealCoefficients
+import Mathlib.Analysis.Real.Pi.Bounds
+import Mathlib.Analysis.Complex.ExponentialBounds
 import HexRealClosure
 import HexSignDet
 import HexSignDetMathlib.SelectedProducer
@@ -1966,6 +1968,52 @@ has the separate type
 Convergence and relative transcendence are separate hypotheses for total
 search. This fixed bound makes no such claim. Finite proofs from containment
 need neither hypothesis.
+
+For the named constants below, the caller uses existing Mathlib theorems
+to supply `π ∈ [3, 63/20]` and `exp 1 ∈ [5/2, 11/4]`. These bounds suffice
+for the displayed finite proofs, including the original nonzero divisor
+`4 − π`. The imports are `Mathlib.Analysis.Real.Pi.Bounds` and
+`Mathlib.Analysis.Complex.ExponentialBounds`. These constant callbacks do
+not certify arbitrary requested widths or a convergent search.
+
+```lean
+private def callerPiBounds (_ : Rat) : Bounds :=
+  ⟨3, mkRat 63 20, by norm_num⟩
+private def callerExpBounds (_ : Rat) : Bounds :=
+  ⟨mkRat 5 2, mkRat 11 4, by norm_num⟩
+
+@[rcf_constant] private def callerPi :
+    Registration Real.pi where
+  version := 1
+  approximation := callerPiBounds
+  containment δ _ := by
+    norm_num [Contains, callerPiBounds]
+    constructor
+    · exact Real.pi_gt_three.le
+    · linarith [Real.pi_lt_d2]
+
+@[rcf_constant] private def callerExp :
+    Registration (Real.exp 1) where
+  version := 1
+  approximation := callerExpBounds
+  containment δ _ := by
+    norm_num [Contains, callerExpBounds]
+    constructor
+    · linarith [Real.exp_one_gt_d9]
+    · linarith [Real.exp_one_lt_d9]
+
+example : ∀ x : ℝ, x ^ 2 > Real.pi - 4 := by rcf
+example : ∀ x : ℝ, x ^ 2 + Real.exp 1 > 2 := by rcf
+example : ∃ x : ℝ,
+    x = Real.exp 1 ∧ 2 < x ∧ x < 3 := by rcf
+example : ∀ x : ℝ,
+    x ^ 2 + 1 / (4 - Real.pi) > 0 := by rcf
+
+/-- error: rcf: original divisor is zero -/
+#guard_msgs in
+example : ∀ x : ℝ,
+    x ^ 2 + 0 / (Real.pi - Real.pi) ≥ 0 := by rcf
+```
 
 All original divisors are checked before cancellation, coefficient abstraction
 or proof search. Thus even an erased division by `sin 1 - sin 1` is invalid.
