@@ -17,6 +17,35 @@ public section
 namespace Hex.RCF.RealCoefficients.FieldBuild
 variable {p : ZPoly} {root : SimpleRoot p} [ZPoly.CheckedIrreducible p]
 
+/-- The normalized radical proposal used by the bounded frontend succeeds for
+every shared carrier at the actual selected real field embedding. This is
+radical production, not progress of the bounded isolation search. -/
+theorem monic_progress {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root) (real : rep.root.im = 0)
+    (context : Ctx) (values : Fin n → PolyQuot p root) (formula : RealFormula.QF (n + 1)) :
+    ∃ cert, RadicalCert.buildMonic context (FieldCarrier.product values formula) = some cert := by
+  exact RadicalCert.buildMonic_success_real (Field.value rep)
+    (Field.value_eq_zero rep hrep real) (Field.value_one rep hrep real)
+    (Field.value_add rep hrep real) (Field.value_sub rep hrep real)
+    (Field.value_mul rep hrep real) (Field.value_div rep hrep real)
+    (Field.value_inv rep hrep real) (Field.value_natCast rep hrep real)
+    context _ (FieldCarrier.product_ne_zero values formula)
+
+/-- An actual normalized proposal has a squarefree core at that same selected
+embedding; squarefreeness is not an assumption on the certificate. -/
+theorem monic_squarefree {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root) (real : rep.root.im = 0)
+    (context : Ctx) (values : Fin n → PolyQuot p root) (formula : RealFormula.QF (n + 1))
+    (cert : RadicalCert (PolyQuot p root) Ctx)
+    (produced : RadicalCert.buildMonic context (FieldCarrier.product values formula) = some cert) :
+    Squarefree (HexPolyMathlib.Interpret.interpret
+      (Field.value rep) (Field.value_eq_zero rep hrep real) cert.core) := by
+  exact RadicalCert.buildMonic_squarefree (Field.value rep)
+    (Field.value_eq_zero rep hrep real) (Field.value_sub rep hrep real)
+    (Field.value_mul rep hrep real) (Field.value_div rep hrep real)
+    (Field.value_inv rep hrep real) (Field.value_natCast rep hrep real)
+    context _ cert produced
+
 /-- Every coordinate over the checked selected real root has a canonical
 real-algebraic search value. -/
 theorem canonical_isSome (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)

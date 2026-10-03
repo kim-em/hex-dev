@@ -57,7 +57,9 @@ def isolateWithin [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
 
 /-- Frontend production with explicit finite search resources. The complete
 `produce` API remains separate; the tactic uses this bounded path and reports
-exhaustion without dispatching another handler. Neither path enters quotation. -/
+exhaustion without dispatching another handler. The raw default preserves the
+existing direct-call behavior; the tactic explicitly passes its `monicCore`
+option, whose default is true. Neither path enters quotation. -/
 def produceWithin [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
     [ZPoly.CheckedIrreducible p] (real : s.meetsRealAxis = true)

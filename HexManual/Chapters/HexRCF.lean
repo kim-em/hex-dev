@@ -575,8 +575,9 @@ two separate comparisons did not establish a gain.
 `rcf.algebraic.singleReplay` is also false by default. It compares one Boolean
 certificate replay goal with separately checked conjuncts; source authentication
 and the final proof check remain separate. A four-round comparison of the same
-three examples did not establish a speedup. Combined replay produced smaller
-private proof files but used more peak memory. The
+three examples used raw carriers and did not establish a speedup. The probes
+now explicitly pin that mode; the pin was added after the retained measurement.
+Combined replay produced smaller private proof files but used more peak memory. The
 [report and retained samples](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-replay-proofs.md)
 record every completed arm and the exact source and import identities.
 
@@ -587,9 +588,13 @@ positive scaling. All twelve pairs in a four-round comparison favored this
 mode on the same three examples, with lower peak memory. The
 [report and retained samples](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-carrier-proofs.md)
 describe these full-build observations. Successful proposals have checked
-soundness and a proved monic core. Producer progress and interpreted
-squarefreeness follow from zero-reflecting, operation-preserving coefficient
-semantics. The false mode retains raw cores as a comparison control. This
+soundness and a proved monic core. Radical proposal progress and interpreted
+squarefreeness are proved at the actual selected field embedding, using
+zero-reflecting coefficient semantics that preserve arithmetic and inversion.
+These are radical laws; bounded isolation can still exhaust. The complete
+library producer retains raw cores and its existing progress laws. Direct
+`produceWithin` calls also retain their raw default; the tactic passes its
+monic option explicitly. The false mode retains raw cores as a comparison control. This
 normalization does not remove the common-field authentication limitation.
 
 For these reconstructed inputs, closed arithmetic is compiled into the common
@@ -1929,8 +1934,9 @@ This frontend calls the existing fixed-field root driver directly and retains
 its selected coordinates, avoiding a redundant common-field reconstruction.
 Exhaustion reports `rcf: algebraic interval refinement budget exhausted` and
 is terminal. Rejected construction/replay has a different terminal diagnostic.
-The complete library producer and its progress/decision laws are unaffected
-by the frontend budget. Increasing the limits permits further refinement;
+The complete library producer retains raw cores and its progress/decision laws
+are unaffected by the frontend budget or the tactic's monic default. Increasing
+the limits permits further refinement;
 it does not bypass kernel replay. Lean cancellation is checked before and
 after native production. Individual native root computations run until they
 return and do not check Lean's cancellation token or elaboration heartbeats.

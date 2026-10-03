@@ -61,6 +61,38 @@ theorem rational_progress (input : DensePoly Rat) (nonzero : input ≠ 0) :
 #guard_msgs in
 #print axioms RadicalCert.buildMonic_squarefree
 
+/-- info: 'Hex.RCF.RealCoefficients.FieldBuild.monic_progress' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms FieldBuild.monic_progress
+
+/-- info: 'Hex.RCF.RealCoefficients.FieldBuild.monic_squarefree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms FieldBuild.monic_squarefree
+
+private instance : SquareTwo.polynomial.CheckedIrreducible := SquareTwo.checked
+private abbrev hw : atomWitness SquareTwo.polynomial SquareTwo.square := by decide
+private abbrev hp : (mahlerPrec SquareTwo.polynomial : Int) ≤ SquareTwo.square.prec := by decide
+private abbrev root := SimpleRoot.ofSquare SquareTwo.polynomial SquareTwo.square hw hp
+private theorem real : SquareTwo.square.meetsRealAxis = true := by decide
+private def values : Fin 1 → PolyQuot SquareTwo.polynomial root := fun _ =>
+  SquareTwo.coordinate SquareTwo.square hw hp
+private def scaled : RealFormula.QF 2 :=
+  .atom ⟨3 * (MvPoly.X 1 ^ 2 - MvPoly.X 0), .eq⟩
+
+-- Exercise the actual bounded producer, rather than just its rational radical
+-- helper. The two modes retain the same source product and differ in the core.
+private def bounded (monic : Bool) :=
+  FieldBuild.produceWithin SquareTwo.polynomial SquareTwo.square hw hp real
+    values scaled () 256 5 (monicCore := monic)
+#guard match bounded true with
+  | .ok data => data.radical.core.leadingCoeff == 1 &&
+      data.radical.check () (FieldCarrier.product values scaled)
+  | .error _ => false
+#guard match bounded false with
+  | .ok data => data.radical.core.leadingCoeff != 1 &&
+      data.radical.check () (FieldCarrier.product values scaled)
+  | .error _ => false
+
 theorem negative_leading : ∀ x : ℝ, -(x ^ 2 + Real.sqrt 2) < 0 := by rcf
 
 theorem repeated : ∀ x : ℝ, (x - Real.sqrt 2) ^ 4 ≥ 0 := by rcf
@@ -72,7 +104,7 @@ theorem leading_cancellation : ∀ x : ℝ,
     (Real.sqrt 2 - Real.sqrt 2) * x ^ 4 + x ^ 2 + Real.sqrt 2 > 0 := by rcf
 
 set_option rcf.algebraic.monicCore false in
-theorem raw_negative_leading : ∀ x : ℝ, -(x ^ 2 + Real.sqrt 2) < 0 := by rcf
+theorem raw_negative_leading : ∃ x : ℝ, -(x ^ 2 - Real.sqrt 2) = 0 ∧ 1 < x ∧ x < 2 := by rcf
 
 set_option rcf.algebraic.monicCore false in
 theorem raw_common_root : ∃ x : ℝ,

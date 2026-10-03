@@ -352,14 +352,14 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
           LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
           FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
           TarskiCertificate.check_eq, SignedRemainderChain.check,
-          ← Array.all_toList, Array.toList_range]; decide +kernel))
+          ← Array.all_toList, Array.toList_range]; try (decide +kernel)))
     | .existsReal => `(tactic|
         (simp only [FieldBuild.Result.checkExists_eq, FieldBuild.Result.checkEvidence,
           Field.checkSignTable,
           LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
           FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
           TarskiCertificate.check_eq, SignedRemainderChain.check,
-          ← Array.all_toList, Array.toList_range]; decide +kernel))
+          ← Array.all_toList, Array.toList_range]; try (decide +kernel)))
   else match quantifier with
     | .forallReal => `(tactic|
         (simp only [FieldBuild.Result.checkForall_eq, FieldBuild.Result.checkEvidence,

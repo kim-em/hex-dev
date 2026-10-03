@@ -11,6 +11,10 @@ The measured source is clean `f223f9abf25ede4a658edf6f2c5c1422e14b98b4` on
 `chungus2`, with one Lean thread on automatically leased CPU 40 (SMT sibling
 88). Four trial-major rounds rotate the three pairs, measure adjacent arms and
 alternate AB/BA. All 24 arms completed and are retained without filtering.
+Both arms used raw carriers, before the monic option existed. The probes now
+explicitly pin `rcf.algebraic.monicCore false`; that pin was added after the
+measurement and does not change its carrier mode. This comparison is not a
+measurement of the current monic default.
 
 | Goal | Split median (s) | Combined median (s) | Median paired change (s) |
 | --- | ---: | ---: | ---: |
@@ -35,7 +39,9 @@ Every fresh-module proof audit contains only `propext`, `Classical.choice` and
 `Quot.sound`. The probes require actual interval entries and the same
 `PolyQuot.reduce` coordinate constructor in both arms. Separate conformance
 proofs exercise combined replay on universal, existential, guarded and
-half-open-domain goals, and check false and zero-divisor refusals. The option
+half-open-domain goals. With combined replay enabled, they also check false
+verdict and zero-divisor refusals before replay. Those refusals do not test a
+failing combined kernel replay. The option
 changes proof assembly, not the trusted checker or solver dispatch.
 
 The maximum recorded Lean/Lake process count is 9, SMT sibling busy ratio
