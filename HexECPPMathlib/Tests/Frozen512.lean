@@ -7,8 +7,6 @@ module
 
 public import HexECPPMathlib.Compact
 
-set_option maxHeartbeats 0
-
 @[expose]
 public def Hex.ECPP.Tests.certificate512 : Hex.ECPP.Cert :=
   ecpp_cert%

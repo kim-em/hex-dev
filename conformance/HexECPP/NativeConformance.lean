@@ -178,6 +178,7 @@ private def tinyOutput := produce 17 0 { public512Budget with maxNodes := some 1
 #guard exhausted 17 { maxNodes := some 1 } .nodes
 #guard (produce 17 0 { public512Budget with maxRows := some 0 }).result.toOption.any (checkAt 17)
 #guard exhausted hard { native512Budget with maxPolynomialWork := 0 } .polynomialWork
+#guard exhausted hard { native512Budget with maxRootWork := 0 } .rootWork
 #guard exhausted hard { order := some { orderBudget with attemptLimit := none } } .factorPolicy
 
 -- A checked memo cannot bypass tighter remaining output or recursion limits.

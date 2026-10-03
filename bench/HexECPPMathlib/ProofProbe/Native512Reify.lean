@@ -11,12 +11,8 @@ import HexECPPMathlib.Tests.Frozen512
 open Lean Elab Command Meta
 
 run_cmd liftTermElabM do
-  let start ← IO.monoNanosNow
   let e := Hex.ECPP.reifyCert Hex.ECPP.Tests.certificate512
   let ty ← inferType e
   unless ty.isConstOf ``Hex.ECPP.Cert do
     throwError "native reification changed the certificate type"
-  let reified ← IO.monoNanosNow
   Hex.ECPP.validateCert Hex.ECPP.Tests.certificate512
-  let validated ← IO.monoNanosNow
-  logInfo m!"NATIVE512_REIFY_NS={reified - start} VALIDATE_NS={validated - reified}"

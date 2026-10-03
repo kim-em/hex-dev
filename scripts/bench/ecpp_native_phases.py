@@ -49,10 +49,6 @@ def main() -> None:
             sample = dict(rebuilt=build_line is not None, build_line=build_line,
                           trial=trial, module=module, wall_ns=time.monotonic_ns() - start,
                           returncode=result.returncode, loadavg=list(os.getloadavg()))
-            timing = re.search(r"NATIVE512_REIFY_NS=(\d+) VALIDATE_NS=(\d+)", result.stdout)
-            if timing:
-                sample.update(reification_and_type_ns=int(timing[1]),
-                              replay_preflight_ns=int(timing[2]))
             for line in result.stderr.splitlines():
                 if line.startswith("HEX_RSS_KB="):
                     sample["rss_kb"] = int(line.split("=")[1])

@@ -43,6 +43,8 @@ def certificate : Cert := .base (.small 17)
 - `CM.sqrt?`, `CM.norm?`, and `CM.curves` supply bounded CM proposals.
   The 512-bit policy adds 33 fixed linear or quadratic class polynomials to
   the original nine discriminants; proposed roots and certificates are checked.
+  Fifteen non-fundamental entries overlap existing group orders and supply
+  additional curve/factoring proposals within the shared allocation.
 - `produce` uses deterministic seeds and shared allocations across backtracking.
   It returns a checked certificate or a resource diagnostic; exhaustion does
   not establish compositeness. The default policy admits 256 bits;

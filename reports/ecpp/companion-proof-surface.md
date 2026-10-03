@@ -31,7 +31,14 @@ The 512-bit extension adds `Tests.Native512` for the exact full generated
 suggestion, `Tests.Frozen512` for verbatim replay with generation absent, and
 `Native512Baseline`, `Native512Reify`, `Native512Direct` for separate fresh-module
 phase measurements in [native512/proof-phases-v2.json](native512/proof-phases-v2.json).
-The protocol script also exercises 512-bit generation and exclusive export.
+The 512-bit protocol script is retained as manually collected generation/export
+evidence. CI builds the two acceptance modules once each, without duplicating
+the protocol script's three generation calls and three frozen proofs.
+Measured endpoint evidence admits these guards under SPEC/CI.md: each module
+completed in 12–16 seconds locally; together they add roughly 30 seconds to the
+existing single build job, outside the separately capped Bench verify step.
+The full protocol takes roughly one to three minutes in the retained
+shared-host observations and remains manual. Both acceptance modules use the default heartbeat allocation.
 
 Replay admits 512-bit subjects and 32 total certificate nodes. Native search
 defaults to 256-bit subjects; the explicit 512-bit policy enforces at most
