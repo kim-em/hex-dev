@@ -908,7 +908,8 @@ the row; a missing index or mismatched query/sign returns `none`. The companion'
 coefficient interpretation proves agreement with the native scalar sign.
 The function is inlined so that the interpretation and field instances occur
 only in erased proofs, including when the ambient field is noncomputable.
-The core coefficient reader still takes only supplied sign facts.
+Computing the reduced query uses ordinary predecessor arithmetic. The core
+coefficient reader still takes only supplied sign facts.
 
 `SignFactsConformance` uses one checked graph row to restore both `X²−1+2X`
 and `2X` at the selected root `X=1`, retaining their distinct stored forms.

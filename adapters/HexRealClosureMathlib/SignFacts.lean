@@ -29,7 +29,8 @@ variable (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
 row must supply the actual reduced query, descriptor prefix and claimed sign.
 The interpretation laws prove correspondence; they do not produce evidence.
 Inlining removes the interpretation and field instances before compilation,
-since they occur only in the erased proof of the returned fact. -/
+since they occur only in the erased proof of the returned fact. Computing the
+reduced query uses the predecessor's ordinary coefficient operations. -/
 @[expose, macro_inline] def Context.readSignFact? (context : Context E Ctx coeffSign parent)
     (p : DensePoly E) (claimed : Int) {head : DensePoly E} {lower upper : Endpoint E}
     (memo : Array (SignDet.Dag.Checked coeffSign parent head lower upper)) (index : Nat) :
@@ -55,8 +56,9 @@ theorem Context.readSignFact_fields (context : Context E Ctx coeffSign parent)
   · cases Option.some.inj h
     exact ⟨rfl, rfl⟩
 
-/-- Acceptance is exactly that of the supplied memo selection. No native sign
-producer, replacement certificate or default sign is used on either branch. -/
+/-- Acceptance is exactly that of the supplied memo selection. Selection adds
+no call to this context's sign producer and supplies no replacement evidence
+or default sign. Predecessor arithmetic retains its existing implementation. -/
 theorem Context.readSignFact_accept (context : Context E Ctx coeffSign parent)
     (p : DensePoly E) (claimed : Int) {head : DensePoly E} {lower upper : Endpoint E}
     (memo : Array (SignDet.Dag.Checked coeffSign parent head lower upper)) (index : Nat) :
