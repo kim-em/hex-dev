@@ -62,13 +62,34 @@ def main() -> None:
             (scratch / "Peer.lean").write_text(
                 "module\n\npublic import HexECPPMathlib.Compact\n\n"
                 "theorem suggestedNat : Nat.Prime (13 - 1 + 1) := by\n"
-                '  ecpp using (ecpp_cert% "13" using Hex.Nat.PrimeCert.small 13)\n')
+                '  ecpp using (ecpp_cert% "13" using Hex.Nat.PrimeCert.small 13)\n'
+                "namespace First\nprivate theorem sameName : Nat.Prime 13 := by\n"
+                '  ecpp using (ecpp_cert% "13" using Hex.Nat.PrimeCert.small 13)\n'
+                "end First\nnamespace Second\nprivate theorem sameName : Nat.Prime 17 := by\n"
+                '  ecpp using (ecpp_cert% "17" using Hex.Nat.PrimeCert.small 17)\n'
+                "end Second\n")
             (scratch / "PeerTwo.lean").write_text(
                 "module\n\npublic import HexECPPMathlib.Compact\n\n"
                 "theorem suggestedNat : Nat.Prime (17 - 1 + 1) := by\n"
                 '  ecpp using (ecpp_cert% "17" using Hex.Nat.PrimeCert.small 17)\n')
+            # Prefix concatenation alone is ambiguous: these private theorem
+            # prefixes plus module names coincide without a delimiter.
+            (scratch / "Main.lean").write_text(
+                "module\n\npublic import HexECPPMathlib.Compact\n\n"
+                f"namespace p.sameName.{module}\n"
+                "private theorem sameName : Nat.Prime 13 := by\n"
+                '  ecpp using (ecpp_cert% "13" using Hex.Nat.PrimeCert.small 13)\n'
+                f"end p.sameName.{module}\n")
+            nested = scratch / "sameName" / Path(*module.split("."))
+            nested.mkdir(parents=True)
+            (nested / "Main.lean").write_text(
+                "module\n\npublic import HexECPPMathlib.Compact\n\n"
+                "namespace p\nprivate theorem sameName : Nat.Prime 17 := by\n"
+                '  ecpp using (ecpp_cert% "17" using Hex.Nat.PrimeCert.small 17)\n'
+                "end p\n")
             (scratch / "Combined.lean").write_text(
-                f"module\n\npublic import {module}.Frozen\npublic import {module}.Peer\npublic import {module}.PeerTwo\n")
+                f"module\n\npublic import {module}.Frozen\npublic import {module}.Peer\npublic import {module}.PeerTwo\n"
+                f"public import {module}.Main\npublic import {module}.sameName.{module}.Main\n")
             build(module + ".Combined", env)
             # An exclusive export fails before running search and preserves the file.
             (scratch / "Again.lean").write_text(

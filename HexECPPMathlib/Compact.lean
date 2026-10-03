@@ -26,6 +26,7 @@ namespace Hex.ECPP
 /-- Compact, self-contained source for an ECPP certificate. -/
 syntax (name := compactCertTerm) "ecpp_cert% " str " using " term : term
 
+/-- Decode compact rows and an explicit terminal into bounded exposed raw data. -/
 @[term_elab compactCertTerm] meta def elabCompactCert : Term.TermElab := fun stx _ =>
   withOptions (maxRecDepth.set · 65536) do
   let `(term| ecpp_cert% $source:str using $leaf:term) := stx
@@ -45,12 +46,19 @@ syntax (name := compactCertTerm) "ecpp_cert% " str " using " term : term
   -- Exposed auxiliary data needs a public, globally unique name even when the
   -- enclosing declaration is private. Include the module before asking the
   -- generator to check conflicts; removing privacy afterward loses uniqueness.
-  let namePrefix := (← getDeclNGen).namePrefix
+  let generator ← getDeclNGen
   let moduleName := (← getEnv).mainModule
-  let namePrefix := if isPrivateName namePrefix then
-      privateToUserName namePrefix ++ moduleName
-    else namePrefix
-  let name ← withExporting <| withDeclNameForAuxNaming namePrefix <| Term.mkAuxName `ecpp
+  let namePrefix := if isPrivateName generator.namePrefix then
+      privateToUserName generator.namePrefix ++ .num (`_ecpp ++ moduleName) 0
+    else generator.namePrefix
+  let name ← try
+      -- Retain the branch indices used by parallel elaboration. The numeric
+      -- component delimits the module suffix from user-written namespaces.
+      setDeclNGen { generator with namePrefix := namePrefix }
+      withExporting <| Term.mkAuxName `ecpp
+    finally
+      let advanced ← getDeclNGen
+      setDeclNGen { advanced with namePrefix := generator.namePrefix }
   let decl := Declaration.defnDecl {
     name := name
     levelParams := []

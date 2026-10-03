@@ -9,6 +9,7 @@ public import HexECPPMathlib.Compact
 public import HexECPP.Search
 public meta import HexECPP.Search
 public import Lean.Meta.Tactic.TryThis
+public import Mathlib.Tactic.Linter.TacticDocumentation
 
 /-!
 # Explicit native ECPP production
@@ -44,10 +45,17 @@ meta def generate (n : Nat) (seed : Nat := 0) (budget : SearchBudget := {}) :
   checkWithKernel proof
   return (source, frozen)
 
+/-- Explicit bounded native ECPP production with a kernel-checked frozen suggestion.
+The optional seed controls untrusted proposal search, not proof acceptance. -/
+tactic_extension Hex.PrimalityTactic.primalitySuggestTac
+
+@[inherit_doc Hex.PrimalityTactic.primalitySuggestTac,
+  tactic_alt Hex.PrimalityTactic.primalitySuggestTac]
 syntax (name := nativeSuggestTac) "primality?" " (" &"method" " := " &"ecpp" ")"
   (" (" &"seed" " := " num ")")? : tactic
 
 set_option hygiene false in
+/-- Solve the closed subject and suggest its exact compact replay term. -/
 @[tactic nativeSuggestTac] meta def suggest : Tactic.Tactic := fun stx => do
   let `(tactic| primality? (method := ecpp) $[(seed := $seed:num)]?) := stx
     | throwUnsupportedSyntax
@@ -77,9 +85,11 @@ set_option hygiene false in
     Tactic.replaceMainGoal []
     Meta.Tactic.TryThis.addSuggestion stx replacement
 
+/-- Export a new module containing a kernel-checked native ECPP certificate. -/
 syntax (name := nativeExportCmd) "#ecpp_export" " (" &"method" " := " &"ecpp" ") "
   (" (" &"seed" " := " num ")")? ident ident " for " term : command
 
+/-- Run native generation for the explicit batch-only exclusive export command. -/
 @[command_elab nativeExportCmd] meta def exportCert : Command.CommandElab := fun stx => do
   let `(command| #ecpp_export (method := ecpp) $[(seed := $seed:num)]? $mod:ident $decl:ident for $term:term) := stx
     | throwUnsupportedSyntax

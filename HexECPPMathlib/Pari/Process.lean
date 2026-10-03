@@ -21,9 +21,13 @@ namespace Hex.ECPP.Pari
 
 /-- Finite process limits; parser and proof limits apply independently. -/
 structure ProcessBudget where
+  /-- Elapsed time allowed for GP and pipe collection after spawning. -/
   timeoutMs : Nat := 30000
+  /-- Maximum collected stdout bytes, including framing. -/
   maxOutputBytes : Nat := 16448
+  /-- Maximum collected stderr bytes. Nonempty stderr rejects the result. -/
   maxErrorBytes : Nat := 4096
+  /-- Initial GP stack size in bytes; startup configuration is ignored. -/
   stackBytes : Nat := 64000000
 deriving Repr
 
@@ -46,14 +50,21 @@ private def stop {cfg : IO.Process.StdioConfig} (child : IO.Process.Child cfg)
     (cancel : _root_.IO.CancelToken) : _root_.IO Unit := do
   -- Keep the leader unreaped until both readers finish. A descendant may
   -- escape the group while retaining a pipe, so SIGKILL alone is insufficient.
-  try IO.killGroup child.pid
-  finally
-    cancel.set
-    -- Polling readers observe cancellation independently of EOF, including
-    -- pipes held outside the process group. Collect failures before reaping.
-    discard <| IO.wait stdout
-    discard <| IO.wait stderr
-  try discard <| child.wait catch _ => pure ()
+  let killError ← try
+    IO.killGroup child.pid
+    pure none
+  catch err => pure (some err)
+  cancel.set
+  -- Polling readers observe cancellation independently of EOF, including
+  -- pipes held outside the process group. Collect failures before reaping.
+  discard <| IO.wait stdout
+  discard <| IO.wait stderr
+  if let some err := killError then
+    -- Reap an exited leader even if signalling failed. Waiting unconditionally
+    -- after a failed kill could block on a live process and defeat the budget.
+    try discard <| child.tryWait catch _ => pure ()
+    throw err
+  discard <| child.wait
 
 private def requestFile (n : Nat) : IO System.FilePath := do
   let (handle, path) ← IO.FS.createTempFile
@@ -113,14 +124,20 @@ private def runFile (n : Nat) (request : System.FilePath) (budget : ProcessBudge
             throw <| IO.userError s!"PARI: {n} is not prime"
           return payload
       IO.sleep 25
-  finally
-    unless ← completed.get do stop child stdout stderr readerCancel
+  catch err =>
+    unless ← completed.get do
+      try stop child stdout stderr readerCancel
+      catch cleanupError =>
+        throw <| IO.userError s!"{err}; PARI cleanup failed: {cleanupError}"
+    throw err
 
 /-- Run only the evaluated natural numeral, without a shell or user startup file.
 Null stdin preserves the original process-group handle. The private GP input
 file is removed on every exit path. The executable is injectable for tests. -/
 def run (n : Nat) (budget : ProcessBudget := {}) (executable : String := "gp")
     (cancel : Option IO.CancelToken := none) : IO String := do
+  if System.Platform.isWindows then
+    throw <| IO.userError "PARI: process generation requires POSIX"
   if HexArith.bitLength n > maxBits then
     throw <| IO.userError s!"PARI: subject exceeds the {maxBits}-bit replay limit"
   let request ← requestFile n

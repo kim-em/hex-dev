@@ -27,8 +27,10 @@ ownership within that closure. The check also compares the Lake declarations
 that build the cactus executable, allowing edits confined to unrelated build
 helpers, plus a literal HexBasic precompile flag when HexGraphIso already
 forces that dependency to load natively through Lake shared-library dependencies.
-An AINTLIB requirement is independent when it is newly added at a fixed git
-revision and the graph driver's import closure contains no AINTLIB module.
+An AINTLIB requirement addition or revision change is independent when both
+requirements use the audited fixed git revisions (or the old one is absent),
+and the measured import closure excludes every root declared at those commits. All other
+graph build declarations must still match.
 The exact proof-only Tau Ceti Thom revision advance is independent when the
 measured import closure excludes TauCeti; other revision changes remain stale.
 Prose under the library tree is edited often enough, and cannot move
@@ -96,21 +98,54 @@ def graphiso_blocks(text: str) -> dict[str, str]:
     return relevant
 
 
+# These exact AINTLIB commits declare the module roots below. Unknown revisions
+# may add roots and must be independently reviewed before using this rule.
+AUDITED_AINT_REVISIONS = frozenset({
+    '3808ce862c09ad5b4de0c76f10ba00946ed2eff3',
+    'a5c3affa17bb17d13bbfd2e6c828dc978af65657',
+})
+AUDITED_AINT_ROOTS = frozenset({
+    '.mathlib-quality',
+    'AINTLIB',
+    'Adic spaces',
+    'BernoulliRegular',
+    'CebotarevDensity',
+    'Common',
+    'DedekindResidue',
+    'DedekindResidueBlueprint',
+    'DedekindResidueBlueprintMain',
+    'FltRegular',
+    'HasseWeil',
+    'LeanModularForms',
+    'LeanModularFormsBlueprint',
+    'LeanModularFormsBlueprintMain',
+    'LeanModularFormsSMOBlueprint',
+    'LeanModularFormsSMOBlueprintMain',
+    'LutzNagell',
+    'ModularCurves',
+    'ModuleSystemTests',
+    'PadicLFunctions',
+})
+
+
 def lakefile_texts_differ(before: str, after: str) -> bool:
     """Whether a lakefile edit changes the cactus executable's build."""
     old_blocks = graphiso_blocks(before)
     new_blocks = graphiso_blocks(after)
     # AINTLIB supplies Hasse's theorem to the separate ECPP bridge. It has no
     # runtime path to the cactus executable when that import closure excludes it.
-    hasse = new_blocks.get("require AINTLIB", "")
-    if ("require AINTLIB" not in old_blocks
-            and re.fullmatch(
+    def fixed_hasse(body: str) -> bool:
+        match = re.fullmatch(
                 r'require AINTLIB from git\s*'
                 r'"https://github\.com/CBirkbeck/AINTLIB\.git"\s*@\s*'
-                r'"[0-9a-f]{40}"',
-                freshness.strip_lean_comments(hasse).strip())
+                r'"([0-9a-f]{40})"',
+                freshness.strip_lean_comments(body).strip())
+        return match is not None and match[1] in AUDITED_AINT_REVISIONS
+    if (("require AINTLIB" not in old_blocks or fixed_hasse(old_blocks["require AINTLIB"]))
+            and fixed_hasse(new_blocks.get("require AINTLIB", ""))
             and (prefixes := graph_import_prefixes()) is not None
-            and "AINTLIB" not in prefixes and "HasseWeil" not in prefixes):
+            and not (AUDITED_AINT_ROOTS & prefixes)):
+        old_blocks.pop("require AINTLIB", None)
         del new_blocks["require AINTLIB"]
     # This exact Tau Ceti advance adds only the two Thom proof modules. It
     # retains the compiler and all existing dependency revisions. Permit the

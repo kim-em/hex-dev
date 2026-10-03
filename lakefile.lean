@@ -27,7 +27,7 @@ require «lean-bench» from git
 -- Switch back to a pinned upstream main commit once that PR merges.
 require AINTLIB from git
   "https://github.com/CBirkbeck/AINTLIB.git" @
-    "refs/pull/8598/head"
+    "a5c3affa17bb17d13bbfd2e6c828dc978af65657"
 
 -- Abstract Sturm–Tarski semantics for the development query adapters.
 require TauCeti from git
@@ -391,6 +391,7 @@ lean_lib HexBerlekampZassenhausMathlib where
 lean_lib HexPrimalityMathlib where
 
 lean_lib HexECPPMathlib where
+  roots := #[`HexECPPMathlib, `HexECPPMathlib.Native, `HexECPPMathlib.Pari]
 
 -- Lake selects the last matching library. Keep the Mathlib-free IO sidecar
 -- after the bridge so only this module needs a shared native library.
@@ -399,6 +400,9 @@ lean_lib HexECPPMathlibPariIO where
   globs := #[.one `HexECPPMathlib.Pari.IO]
   precompileModules := true
   moreLinkObjs := #[hexecpppariio]
+
+lean_lib HexECPPMathlibTests where
+  globs := #[.one `HexECPPMathlib.Tests, .one `HexECPPMathlib.LintTests]
 
 @[default_target]
 lean_lib HexIntFactorMathlib where
@@ -1266,7 +1270,7 @@ lean_exe hex_interval_pnt_fks2_local where
 -- examples and regression tests are compiled through this separate target so
 -- removing them from an umbrella cannot silently remove them from CI.
 lean_lib HexReleaseTests where
-  globs := #[`HexArith.ExtendedGcdTests, `HexPoly.InterpretTests, `HexPoly.PseudoTests,
+  globs := #[`HexArith.ExtendedGcdTests, `HexECPPMathlib.Tests, `HexPoly.InterpretTests, `HexPoly.PseudoTests,
     `HexPolyMathlib.InterpretTests, `HexPolyMathlib.PseudoTests,
     `HexMatrixMathlib.Tests,
     `HexPolyMathlib.LiteralTests,
@@ -1366,7 +1370,8 @@ lean_lib HexMvFactorizationTests where
 -- Complete development imports for the two factorization packages. Their
 -- ordinary umbrellas deliberately expose only the supported release API.
 lean_lib HexFactorizationModules where
-  globs := #[`HexBerlekampZassenhaus.All,
+  globs := #[`HexECPPMathlib.Native, `HexECPPMathlib.Pari,
+    `HexBerlekampZassenhaus.All,
     `HexBerlekampZassenhausMathlib.All]
 
 -- Monorepo-only lint regression for the sparse-poly pair; the kernel

@@ -21,6 +21,8 @@ order divides the cardinality of its finite group.
 namespace Hex.ECPP
 
 set_option linter.style.haveILetI false in
+/-- A nonzero point annihilated by a prime has that order, which divides the
+cardinality of its finite group. -/
 theorem prime_order_dvd_card {G : Type*} [AddGroup G] [Fintype G]
     {q : ℕ} (hq : q.Prime) {Q : G} (hne : Q ≠ 0) (hzero : q • Q = 0) :
     q ∣ Fintype.card G := by
@@ -29,6 +31,7 @@ theorem prime_order_dvd_card {G : Type*} [AddGroup G] [Fintype G]
   rw [← hord]
   exact addOrderOf_dvd_card
 
+/-- A prime annihilating a nonzero point is at most the finite group order. -/
 theorem prime_order_le_card {G : Type*} [AddGroup G] [Fintype G]
     {q : ℕ} (hq : q.Prime) {Q : G} (hne : Q ≠ 0) (hzero : q • Q = 0) :
     q ≤ Fintype.card G := by

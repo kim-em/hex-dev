@@ -672,6 +672,16 @@ class SyncReleasedTests(unittest.TestCase):
             encoding="utf-8")
         sync_released.validate_external_imports(entry, self.repo)
 
+    def test_hasse_requires_aintlib_even_with_mathlib(self) -> None:
+        mathlib = '[[require]]\nname = "mathlib"\nrev = "0"\n'
+        entry = self._external_import_entry(
+            mathlib, "module\npublic import HasseWeil.HasseBound\n")
+        with self.assertRaisesRegex(RuntimeError, "imports HasseWeil"):
+            sync_released.validate_external_imports(entry, self.repo)
+        (self.repo / "lakefile.toml").write_text(
+            mathlib + '[[require]]\nname = "AINTLIB"\nrev = "0"\n')
+        sync_released.validate_external_imports(entry, self.repo)
+
     def test_direct_imports_gain_direct_requires_in_toml(self) -> None:
         lib = self.repo / "HexProbe"
         lib.mkdir()
@@ -1033,6 +1043,22 @@ class LakeDeclarationTests(unittest.TestCase):
         self.assertEqual(self.rewrite(),
                          ["  build declaration compileArchive (lakefile.lean)"])
         self.assertEqual(self.target.read_text(), "import Lake\n\n" + replacement)
+
+
+    def test_carries_native_sidecar_settings_without_precompiling_bridge(self) -> None:
+        self.entry["lake_declarations"] = ["PipeIO"]
+        replacement = (
+            "lean_lib PipeIO where\n"
+            "  globs := #[.one `Bridge.Pipe.IO]\n"
+            "  precompileModules := true\n"
+            "  moreLinkObjs := #[compileArchive]\n\n"
+        )
+        self.source.write_text("import Lake\n\n" + replacement)
+        bridge = "lean_lib Bridge\n\n"
+        self.target.write_text("import Lake\n\n" + bridge + "lean_lib PipeIO\n")
+        self.assertEqual(len(self.rewrite()), 1)
+        self.assertEqual(self.target.read_text(), "import Lake\n\n" + bridge + replacement)
+        self.assertEqual(self.rewrite(), [])
 
 
 class LibBuildSettingTests(unittest.TestCase):

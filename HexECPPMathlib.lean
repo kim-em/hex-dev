@@ -13,8 +13,6 @@ public import HexECPPMathlib.Order
 public import HexECPPMathlib.Soundness
 public import HexECPPMathlib.Elab
 public import HexECPPMathlib.Compact
-public import HexECPPMathlib.Pari
-public import HexECPPMathlib.Native
 
 /-! Prime-field semantics, Hasse bound, and unconditional ECPP soundness. -/
 

@@ -28,7 +28,7 @@
    "rev": "a5c3affa17bb17d13bbfd2e6c828dc978af65657",
    "name": "AINTLIB",
    "manifestFile": "lake-manifest.json",
-   "inputRev": "refs/pull/8598/head",
+   "inputRev": "a5c3affa17bb17d13bbfd2e6c828dc978af65657",
    "inherited": false,
    "configFile": "lakefile.toml"},
   {"url": "https://github.com/kim-em/lean-bench.git",

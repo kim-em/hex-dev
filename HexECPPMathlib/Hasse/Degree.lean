@@ -28,7 +28,9 @@ namespace Hex.ECPP
 
 open WeierstrassCurve
 
-noncomputable instance {F : Type*} [CommRing F] [Fintype F]
+/-- Over a finite ring, the nonsingular affine points and infinity form a
+finite type, via Mathlib's nonsingular-point equivalence. -/
+noncomputable instance pointFintype {F : Type*} [CommRing F] [Fintype F]
     (W : WeierstrassCurve.Affine F) : Fintype W.Point := by
   classical
   letI : Fintype (WithZero {xy : F × F // W.Nonsingular xy.fst xy.snd}) :=
