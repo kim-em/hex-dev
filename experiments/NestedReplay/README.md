@@ -65,3 +65,31 @@ instrumentation, checked child certificates and literal context bindings,
 ordinary-kernel proofs connecting cached operations to native arithmetic,
 and broader examples and cost evidence. The fact lookup here is a linear
 list scan; this experiment does not prescribe the production data structure.
+
+## Small-example observations
+
+The retained [six pairs](results/summary.json) have median times of 1.68 ms
+for fact replay and 2.36 ms for ordinary replay per check. The median of the
+six within-pair ordinary/fact-replay ratios is 1.396; all six favour fact
+replay. The ratio range is 1.333–1.588. These are observations of this one
+instrumented example on the recorded shared host, not a general speedup or
+scaling result. Neither serialization nor kernel proof checking is measured.
+All completed paired runs and the additional functional probes are retained.
+No unchanged measurement rerun was performed.
+
+Construction and production collect 176 distinct facts at the first
+coefficient level and 36 at the second. Fact replay uses 40 and 31 distinct
+keys respectively. Per check, fact replay executes 1,032 and 450 packing
+wrappers, all lookup hits. Ordinary replay executes 1,903 and 450 wrappers;
+302 and 98 of its sign evaluations have nonconstant inputs. Such an input
+may use the existing interval shortcut, so these are not root-search counts.
+The difference in lower-level packing counts reflects work inside ordinary
+sign evaluation.
+
+Both modes record used keys and counters. Their IO instrumentation and
+linear list lookup contribute to these times; neither arm estimates a
+production implementation's cost. The default construction/production fact
+sets already suffice for replay; the retained producer-only probe confirms
+this without a collection replay. Omitting an actually used nonconstant
+fact at either coefficient level rejects with exit 17 and no replacement
+sign evaluation.
