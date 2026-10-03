@@ -775,17 +775,41 @@ class SyncReleasedTests(unittest.TestCase):
         lib.mkdir()
         (lib / "Basic.lean").write_text("import HexBasic\n")
         path = self.repo / "lakefile.lean"
-        path.write_text('import Lake\npackage probe where\n'
-            'require AINTLIB from git "https://github.com/CBirkbeck/AINTLIB.git" @ "pin"\n'
-            'require mathlib from git "https://github.com/leanprover-community/mathlib4.git" @ "pin"\n'
-            'lean_lib HexProbe\n')
         entry = {"repo": "leanprover/hex-probe", "lib": "HexProbe",
                  "lakefile": "lean", "readme": False, "pins": ["hex-basic"]}
+        for declaration in (
+            'require mathlib from git "https://github.com/leanprover-community/mathlib4.git" @ "pin"',
+            'require «mathlib» from git "https://github.com/leanprover-community/mathlib4.git" @ "pin"',
+            'require "leanprover-community" / "mathlib" @ git "pin"',
+        ):
+            with self.subTest(declaration=declaration):
+                path.write_text('import Lake\npackage probe where\n'
+                    'require AINTLIB from git "https://github.com/CBirkbeck/AINTLIB.git" @ "pin"\n'
+                    '-- Keep Mathlib last.\n' + declaration + '\nlean_lib HexProbe\n')
+                sync_released.rewrite_requires(entry, self.repo, {"hex-basic": "a" * 40},
+                    {}, "v0.1.0", {"hex-basic": {"lib": "HexBasic", "lakefile": "toml"}})
+                text = path.read_text()
+                self.assertLess(text.index("require AINTLIB"), text.index("require HexBasic"))
+                self.assertLess(text.index("require HexBasic"), text.index("-- Keep Mathlib last."))
+                self.assertIn('-- Keep Mathlib last.\n' + declaration, text)
+
+    def test_new_toml_hex_requirement_preserves_mathlib_last(self) -> None:
+        lib = self.repo / "HexProbe"
+        lib.mkdir()
+        (lib / "Basic.lean").write_text("import HexBasic\n")
+        path = self.repo / "lakefile.toml"
+        path.write_text('name = "probe"\n[[require]]\nname = "AINTLIB"\n'
+            'git = "https://github.com/CBirkbeck/AINTLIB.git"\nrev = "pin"\n'
+            '[[require]]\nname = "mathlib"\n'
+            'git = "https://github.com/leanprover-community/mathlib4.git"\nrev = "pin"\n'
+            '[[lean_lib]]\nname = "HexProbe"\n')
+        entry = {"repo": "leanprover/hex-probe", "lib": "HexProbe",
+                 "lakefile": "toml", "readme": False, "pins": ["hex-basic"]}
         sync_released.rewrite_requires(entry, self.repo, {"hex-basic": "a" * 40},
             {}, "v0.1.0", {"hex-basic": {"lib": "HexBasic", "lakefile": "toml"}})
         text = path.read_text()
-        self.assertLess(text.index("require AINTLIB"), text.index("require HexBasic"))
-        self.assertLess(text.index("require HexBasic"), text.index("require mathlib"))
+        self.assertLess(text.index('name = "AINTLIB"'), text.index('name = "HexBasic"'))
+        self.assertLess(text.index('name = "HexBasic"'), text.index('name = "mathlib"'))
 
     def test_missing_root_toolchain_fails_closed(self) -> None:
         (self.repo / "lean-toolchain").unlink()

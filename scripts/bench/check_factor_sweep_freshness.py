@@ -24,6 +24,7 @@ from __future__ import annotations
 from collections import Counter
 import hashlib
 import json
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -48,13 +49,15 @@ def factorization_blocks(text: str) -> dict[str, str]:
     """The lakefile declarations that can affect the factorization binary.
 
     That is the package options, the dependencies, the factorization service
-    executable, and the libraries it is built from -- the same set of libraries
-    the hex-factor relevant paths already name as factorization source. Every
-    other declaration builds a different target and cannot reach this one.
+    executable, its imported libraries, and every package-wide native archive.
+    Follow their local build helpers and custom targets, including the
+    library-scoped objects in moreLinkObjs. Unrelated targets remain outside
+    this set.
     """
     libs = set(freshness.FACTOR_LIBRARIES)
     relevant = {}
-    for name, body in freshness.lakefile_blocks(text).items():
+    blocks = freshness.lakefile_blocks(text)
+    for name, body in blocks.items():
         kind, _, decl = name.partition(" ")
         if kind in ("package", "require"):
             relevant[name] = body
@@ -62,8 +65,21 @@ def factorization_blocks(text: str) -> dict[str, str]:
             relevant[name] = body
         elif kind == "lean_lib" and decl in libs:
             relevant[name] = body
-        elif kind == "def" and decl in FACTOR_BUILD_DEFS:
+        elif kind == "extern_lib" or (kind == "def" and decl in FACTOR_BUILD_DEFS):
             relevant[name] = body
+    helpers = {name: body for name, body in blocks.items()
+               if name.partition(" ")[0] in {"def", "target", "input_file",
+                   "module_facet", "library_facet", "package_facet"}}
+    pending = list(relevant.values())
+    while pending:
+        body = pending.pop()
+        for name, helper in helpers.items():
+            if name in relevant:
+                continue
+            declaration = name.partition(" ")[2]
+            if re.search(r"(?<![\w'])" + re.escape(declaration) + r"(?![\w'])", body):
+                relevant[name] = helper
+                pending.append(helper)
     return relevant
 
 
@@ -80,7 +96,8 @@ def lakefile_texts_differ(before: str, after: str) -> bool:
     A newly added ``require`` is not one of them: Lake builds a package only
     when something imports it, and any change it causes to the resolution of
     an existing package appears in ``lake-manifest.json``, which is itself a
-    relevant path.
+    relevant path. Dependency-wide native archives must also be audited before
+    admitting a dependency pin transition.
     """
     old_blocks = factorization_blocks(before)
     new_blocks = {
