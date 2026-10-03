@@ -6,6 +6,8 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.BaseContext
+public import HexRealClosure.BaseInclusion
+public meta import HexRealClosure.BaseInclusion
 public import HexRealClosure.AlgebraicContext
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
@@ -402,5 +404,28 @@ example (r : Registry) (k₁ k₂ : ConstantKey)
     exact Element.read_write a
 
 end TwoConstants
+
+private def prefixInclusions : IO Unit := do
+  let source := (rational registry).infinitesimal
+  let target := (realContext 1).infinitesimal.infinitesimal
+  let some inclusion := Tower.BaseInclusion.make? (.pack source) (.pack target)
+    | throw (IO.userError "proper real-prefix inclusion failed")
+  let epsilon : (Tower.Context.ofBase (.pack source)).Value :=
+    Element.infinitesimal (rational registry)
+  let expected : (Tower.Context.ofBase (.pack target)).Value :=
+    (Element.infinitesimal (realContext 1)).embed
+  unless inclusion.value epsilon == expected do
+    throw (IO.userError "adjoining a real constant moved the earlier infinitesimal")
+  let targetContext := Tower.Context.ofBase (.pack target)
+  let delta : targetContext.Value := Element.infinitesimal (realContext 1).infinitesimal
+  unless targetContext.sign (delta - inclusion.value epsilon) == -1 do
+    throw (IO.userError "proper real-prefix inclusion changed infinitesimal order")
+  unless (Tower.BaseInclusion.make? (.pack (realContext 1))
+      (.pack (realContext 2).infinitesimal)).isNone do
+    throw (IO.userError "base inclusion accepted unrelated real-prefix paths")
+  unless (Tower.BaseInclusion.make? (.pack target) (.pack source)).isNone do
+    throw (IO.userError "base inclusion accepted a shorter real prefix")
+
+#eval prefixInclusions
 
 end Hex.RealClosure.BaseContext.RealTests
