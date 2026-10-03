@@ -10,13 +10,17 @@ performance deliverable.
 
 ## Bench targets
 
-`bench/HexRealAlgebraic/Bench.lean` registers 67 cases. `lake exe
+`bench/HexRealAlgebraic/Bench.lean` registers 71 cases. `lake exe
 hexrealalgebraic_bench list` lists them; `verify` checks their runtime wiring and
 hashes. The existing CI job builds and verifies this executable. The retained
 [local verification log](bench-results/prerequisite-verify-budget.log) records
 44 Sturm and 67 real-algebraic cases, completing in 37 seconds against the
 600-second local script default; CI sets a 360-second cap. The real executable
 took 32 seconds and exceeded the 30-second per-library soft threshold.
+The subsequent [direct-recognition verification](bench-results/prerequisite-direct-recognition-verification.json)
+records all 71 current real cases and 44 Sturm cases passing, with 129 validated
+Sturm coefficient fixtures; it measures only the owned executables, not the
+repo-wide CI budget.
 [Required CI](https://github.com/kim-em/hex-dev/actions/runs/36972953823)
 records 60 seconds for this executable and 336 seconds total under the shared
 360-second cap. The later pre-rebase [required CI](https://github.com/kim-em/hex-dev/actions/runs/36983780557)
@@ -48,6 +52,7 @@ final source without weakening the cap.
 | Checked/proved constructors, casts, rational recognition | `runConstructors`, `runCasts`, `runRational` | Fixed baseline anchors |
 | Arithmetic and scalar dictionaries | `runAdd`, `runSub`, `runMul`, `runDiv`, `runNeg`, `runInv`, `runNatPow`, `runIntPow`, `runScalars`; corresponding bare controls; `runHard*` | Canonical baseline and adjacent wrapper controls; mode/budget incomplete |
 | Equality, comparison, order, sign, abs, conjugation | `runEquality`, `runCompare`, `runCompareExact`, `runOrder`, `runSign`, `runAbs`, `runConj`, `runCloseCompare`, `runCloseExact` | Fixed branch/hash/comparison anchors; separation models incomplete |
+| Rational degree-one leaf height | `runRationalRecognition`, `runRationalFloor`, `runRationalCeil`, `runRationalQuotient` | Independently derived mode-1 candidates; first-rung canonical preparation exceeds the declared operational cap; no current admission |
 | Floor, ceiling, approximation, representation | `runRounding`, `runApprox`, `runRepr` | Baseline anchors; ceiling has proved before/after improvement |
 | Square roots | `runSqrt`, `runSqrtTotal` | Baseline/branch checks on pre-change source; degree/height scaling incomplete |
 | Polynomial constructors and root-set projections/membership | `runPolyConstructors`, `runMembership`, `runRootSet` | Mode-1 family passes |
@@ -117,6 +122,44 @@ now uses floor plus one. The companion proves rational-recognition completeness,
 `ceil_toReal`, `ceil_eq`, and dictionary coherence. Conformance covers either
 side of ±1. This resolves the unnecessary negation in ceiling; it does not
 assert general negation, inversion or rational-construction performance.
+
+### Rational recognition and leaf height
+
+`toRat?` constructs a core `Rat` directly from the canonical primitive linear
+polynomial. Erased positivity and coprimality proofs replace normalization
+through a quotient. `toRat?_formula` proves equality with the former expression;
+the companion's existing soundness and completeness contract remains guarded
+by ordinary-kernel axiom tests. Higher-degree inputs still return `none`.
+
+The [historical height family](bench-results/real-algebraic-rational-height/)
+retains all 72 initial points and their three inconclusive verdicts. The
+[larger-height observations](bench-results/real-algebraic-rational-height/higher/)
+retain 48 points: former recognition and floor pass their declared linear
+models, while ceiling remains inconclusive. These observations describe the
+former quotient implementation, not the direct constructor. Its retained
+[diagnostic recognition profile](bench-results/real-algebraic-rational-height/real-rational-recognition.manifest.json)
+identifies GMP normalization work; neither it nor the former timings admits
+the changed implementation.
+
+The new [premeasurement derivation](bench-results/real-algebraic-rational-height/direct/derivation.md)
+accounts for the pinned runtime's integer-negation copy and structural output
+hash. The family keeps degree one, grows coefficient height, and approaches
+1/3. Recognition, rational floor, rational ceiling and the former-quotient
+comparison control have independently derived linear models. The control
+uses the same canonical input and complete result. No controlled improvement
+ratio or current scaling verdict has been obtained.
+
+The first rung's [preparation diagnostic](bench-results/real-algebraic-rational-height/direct/preparation-diagnostic/README.md)
+produced no timed observation and was terminated after 969.496897 seconds.
+The native worker backtrace places it in the factorization prime planner's
+coefficient-norm square root in HexArith. Both completed perf attachments and
+the exact executable are retained persistently, including their failed Lean
+caller unwinding. They are preparation diagnostics, not operation-only profile
+attribution. The 600-second child guard has not been established as runnable;
+the four-rung declaration remains unmeasured and unadmitted. This prerequisite
+concern is recorded on [#10577](https://github.com/kim-em/hex-dev/issues/10577#issuecomment-5971054259);
+it is distinct from HexPolyFp's #9809 concerns. No transitive implementation or
+phase metadata is changed by this evidence.
 
 ## Comparator ratios
 

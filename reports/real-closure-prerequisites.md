@@ -47,7 +47,9 @@ current-call scaling check; it does not close the four-library Phase-4 gaps.
 RealAlgebraicNumber operations remain independent of HexSturm, HexSignDet and
 HexRealClosure. Rational recognition uses the canonical linear polynomial;
 conformance cases retain degree one through arithmetic, including zero
-and a denominator of 2^100.
+and a denominator of 2^100. `toRat?_formula` proves that constructing the
+recognized rational directly from primitive coefficients preserves the former
+quotient result. The existing companion recognition contract is unchanged.
 
 The forward comparison-strategy extension at the end of
 [Exact comparison strategies](../SPEC/Libraries/hex-real-algebraic.md#exact-comparison-strategies)
@@ -92,11 +94,23 @@ The transitive HexPolyFp performance concerns belong to
 [#9809](https://github.com/kim-em/hex-dev/issues/9809); no unrelated counter is
 promoted by this assignment.
 
+The rational-height benchmark also discovered a transitive preparation concern:
+its first canonical input exceeded the declared operational child cap, and a
+native backtrace places the worker in HexArith's square root for the factorization
+prime planner's coefficient-norm bound. [The retained diagnostic](bench-results/real-algebraic-rational-height/direct/preparation-diagnostic/README.md)
+states the exact source, failed probe and attribution limits. The related original
+HexArith performance issue [#721](https://github.com/kim-em/hex-dev/issues/721) is
+closed; no current owner was found. This is not a HexPolyFp #9809 concern, and no
+unrelated implementation or phase metadata is changed here. The rational-height
+declaration remains unmeasured and does not supply Phase-4 admission.
+
 ## Verification
 
 Local Lake builds pass for all four libraries and `HexQuerySemantics`.
 The expanded real-algebraic conformance module and `HexRealAlgebraicMathlibTests`
-compile. The axiom guards admit exactly `propext`, `Classical.choice`, and
+compile. [The direct-recognition verification](bench-results/prerequisite-direct-recognition-verification.json)
+records a full default build, full conformance build, semantic headline guards
+and all 71 real / 44 Sturm benchmark smoke cases. The axiom guards admit exactly `propext`, `Classical.choice`, and
 `Quot.sound`; no new axiom, admission or native_decide is introduced.
 The Mathlib-free benchmark target compiles and all shipped-API verification cases pass.
 [Retained fixed-case baseline observations](bench-results/real-algebraic-readiness-baseline/results.json)
