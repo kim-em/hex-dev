@@ -875,9 +875,13 @@ ordinary-kernel evaluation from completing that branch. Compiled evaluation of
 that function runs the existing sign producer. Accordingly, these APIs support
 kernel proof assembly; they do not provide a strict compiled checker for
 untrusted cross-level certificates. `SignFact.read` itself has no such fallback.
-The equality proofs cover only the listed operations. Inversion, division,
-`ofCoeff` and other ordinary operations retain their existing implementation,
-which may invoke a sign producer during kernel evaluation.
+The equality proofs cover only the listed operations. Numerals, inversion,
+division, `ofCoeff`, equality and comparison retain their existing implementation,
+which may invoke a sign producer during kernel evaluation. Installing
+`cachedNatCast` controls explicit natural-number casts, not numeral instances.
+The examples use `import all HexRealClosure.Algebraic` to make the stored
+constructors available for `decide +kernel`. The public equality and restoration
+lemmas can be applied without that implementation import.
 
 `PackingConformance` checks literal restoration, exact keys, context types and
 canonical zero in the ordinary kernel. `NestedSignsConformance` checks a second
