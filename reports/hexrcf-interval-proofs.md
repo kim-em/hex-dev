@@ -44,12 +44,22 @@ quotation remains independently off by default.
 | Reciprocal goal certificate | 125 | 125 | 0 |
 | Cubic coefficient | 125 | 125 | 0 |
 
-The separate syntax audit inspects the completed measured proofs and reachable
+The separate syntax audit inspects the six proof artifacts retained after the
+final measured arms and reachable
 auxiliary declarations from each source module; imported library bodies remain
 leaves. It finds one distinct literal table expression in the further and cubic
 proofs and two in the reciprocal proof. It records hashes of all six proof
-artifacts and verifies they were unchanged during the audit. These are literal
+modules and verifies they were unchanged during the audit. The compiler log
+reports all six probes as `Replayed`, not rebuilt. The audit source and Lake
+target were added in `c61035768`; their tree, source hashes, command and retained
+compiler log are recorded separately from measured source `3728fa082`.
+The collector checks matching probe sources and artifact hashes. The timing
+records contain sizes, not per-arm hashes, so this audit does not bind a hash
+to each of the 24 arms. These are literal
 entry counts, not expanded work, heap identities or allocation measurements.
+
+Later common-field certificate assembly adds a kernel-checked auxiliary
+declaration. Its costs are outside the measured snapshot above.
 
 Reference/Horner private olean sizes are 844,256/628,448,
 889,704/683,424 and 943,008/610,912 bytes. Median reference/Horner peak RSS is
@@ -69,6 +79,7 @@ are separate decisions. Signed Sturm-chain normalization already uses positive
 absolute-leading-coefficient scaling; arbitrary monic scaling is not equivalent.
 
 - [Collector](../scripts/bench/hexrcf_interval_proofs.py)
+- [Structural audit collector](../scripts/bench/hexrcf_interval_audit.py)
 - [Matched proofs and syntax audit](../bench/HexRCF/ProofProbe/Intervals)
 - [Complete results](bench-results/hex-rcf-interval-proofs-3728fa082-chungus2.json)
 - [Retained incremental samples](bench-results/hex-rcf-interval-proofs-3728fa082-chungus2.json.samples.jsonl)

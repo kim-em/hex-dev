@@ -125,7 +125,12 @@ computed presentation. The
 a supplied multi-prime certificate beyond the frontend witness languages.
 The certificate construction and fresh goal proofs use ordinary public imports.
 For a new common defining polynomial, quotation also tries the owner's public
-multi-prime certificate API. This finite certificate search may decline.
+multi-prime certificate API. These certificate languages do not cover every
+irreducible common defining polynomial; refusal need not disappear with a
+larger search bound and does not imply reducibility.
+The fresh regression also proves a goal combining a selected root of
+`X³ − 4X + 2` with `√37`, creating a new degree-six defining polynomial
+certified through the multi-prime route.
 It binds the original isolation square to the literal selected-root replay, preserving the
 chosen embedding. Elaboration executes canonicalization; the kernel reduces
 the original polynomial and square identities, rather than canonicalization.

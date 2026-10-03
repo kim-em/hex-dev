@@ -1,6 +1,45 @@
 {
-  "schema": "hex-rcf-interval-sign-counts-v1",
+  "schema": "hex-rcf-interval-sign-counts-v2",
   "measured_source_commit": "3728fa0828ec8b8fa5612269ef3b364d4144a1fe",
+  "audit_source_commit": "c6103576890f899018cfeda621c86dd4e19a4b61",
+  "audit_source_tree": "79d2e0ce7af1c8a016e50cd7704b1e0e4e9ade6b",
+  "audit_source_sha256": {
+    "bench/HexRCF/ProofProbe/Intervals/Audit.lean": "68e7d0e64c40f37fd057aacb48f4c3b14aedb3690c7751fb3f141641cad733ec",
+    "lakefile.lean": "f04630a759b87042b47896c5562d11048c142c910b849717ca5b68482a4d4d61",
+    "bench/HexRCF/ProofProbe/Intervals/FurtherQuery.lean": "3d6a5734b831ad5d3d561cc87cd8f3c40bcc9847ec35d3c975f6f1d113f3ca99",
+    "bench/HexRCF/ProofProbe/Intervals/FurtherHorner.lean": "a6e18b38fa4f65eae5c9c1f3ffbe3e87de225a611c0fa5472232eb21783aec49",
+    "bench/HexRCF/ProofProbe/Intervals/ReciprocalQuery.lean": "959358bbbd4be81557eed1f21e2605fe98042a1ec69c29455c23319ddfc5f22f",
+    "bench/HexRCF/ProofProbe/Intervals/ReciprocalHorner.lean": "2ae0d1a314c5ad05b3c526fabd4134700daf2eb556c9927b15807f2e6da3b567",
+    "bench/HexRCF/ProofProbe/Intervals/CubicQuery.lean": "daebb6c9cb1e910a850398321b64ac5b4ec2c967f10ff4aba1e86b70b30470d9",
+    "bench/HexRCF/ProofProbe/Intervals/CubicHorner.lean": "68e6f7e4fe4483d4708b1c8eaf04b5fd22414a2da3e04832113ecc6fa338c483"
+  },
+  "audit_build_command": [
+    "lake",
+    "build",
+    "HexRCF.ProofProbe.Intervals.Audit"
+  ],
+  "compiler_log_sha256": "3529fb43a15353e026532f5dd38d68d4d93d03f9da175433283469eb076f5113",
+  "compiler_reports_replayed_probes": {
+    "FurtherQuery": true,
+    "FurtherHorner": true,
+    "ReciprocalQuery": true,
+    "ReciprocalHorner": true,
+    "CubicQuery": true,
+    "CubicHorner": true
+  },
+  "collector_sha256": "eea7be15fb278bfbc489bf032466e69080c62643cc24848dfa3890c4e98495f3",
+  "collector_arguments": [
+    "--measured-commit",
+    "3728fa082",
+    "--audit-commit",
+    "c61035768",
+    "--compiler-log",
+    "reports/data/hexrcf-interval-signs/3728fa082/compiler.log",
+    "--expected-hashes",
+    "reports/data/hexrcf-interval-signs/3728fa082/audit.json",
+    "--output",
+    "reports/data/hexrcf-interval-signs/3728fa082"
+  ],
   "proof_artifact_sha256": {
     ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/FurtherQuery.olean": "9d1cb3192d9cace377c6a4a77d701d1042791ed07ac15b0567e965c361d1b857",
     ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/FurtherQuery.olean.private": "b588dbf4ddbf8b27008da587c4c567359f6526b4b94da845e877be0ea3a31914",
@@ -28,6 +67,7 @@
     ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/CubicHorner.ilean": "af3940930781e410691cd32687d6af75d222941729017c3886a6834534e55213"
   },
   "proof_artifacts_unchanged": true,
+  "artifact_scope": "Six artifacts retained after the final timing arms; no per-arm hash claim.",
   "convention": "Distinct table syntax in each proof and reachable declarations from the same source module; imported library bodies are leaves. No physical-sharing or runtime-work claim.",
   "proofs": [
     {

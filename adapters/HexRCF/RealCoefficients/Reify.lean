@@ -39,7 +39,7 @@ structure Source where
   /-- Fully instantiated original goal, before division preprocessing or
   coefficient abstraction. -/
   original : Expr
-  /-- Checked source lowering, before coefficient abstraction. -/
+  /-- Sentence after checked source lowering and division normalization. -/
   sentence : Expr
   /-- Ordinary-kernel equivalence between the lowered sentence and the source. -/
   sentenceProof : Expr

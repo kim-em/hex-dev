@@ -619,10 +619,8 @@ private meta def proveRational (source : Reify.Source) : MetaM Expr := do
   let proof ← Hex.RCF.proveGoal source.sentence
   mkAppM ``Iff.mp #[source.sentenceProof, proof]
 
-private meta partial def gather (source : Expr) (leaves : Array Expr) :
+private meta partial def gatherCore (source : Expr) (leaves : Array Expr) :
     MetaM (Option (Array Expr)) := do
-  let lowered ← Reify.lowerSources #[] source
-  if lowered != source then return ← gather lowered leaves
   if ← eligible source then
     return some (if leaves.contains source then leaves else leaves.push source)
   let e := source.consumeMData
@@ -630,19 +628,25 @@ private meta partial def gather (source : Expr) (leaves : Array Expr) :
   let op := e.getAppFn.constName?
   if [``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv].any (op == some ·) &&
       args.size == 6 then
-    let some left ← gather args[4]! leaves | return none
-    return ← gather args[5]! left
+    let some left ← gatherCore args[4]! leaves | return none
+    return ← gatherCore args[5]! left
   if [``Neg.neg, ``Inv.inv].any (op == some ·) && args.size == 3 then
-    return ← gather args[2]! leaves
+    return ← gatherCore args[2]! leaves
   if e.isAppOfArity ``HPow.hPow 6 then
     if (← inferType args[5]!).isConstOf ``Nat then
-      return ← gather args[4]! leaves
+      return ← gatherCore args[4]! leaves
   let rational ← observing? do
     let q : Q(ℝ) := e
     let _ ← Mathlib.Meta.NormNum.deriveRat q (_inst := q(inferInstance))
     pure ()
   if rational.isSome then return some leaves
   return none
+
+-- Registered subjects are handled before this frontend. Lower the entire
+-- scalar once, rather than lowering each suffix again during its traversal.
+private meta def gather (source : Expr) (leaves : Array Expr) :
+    MetaM (Option (Array Expr)) := do
+  gatherCore (← Reify.lowerSources #[] source) leaves
 
 @[rcf_handler] meta def handle : Handler := fun target => do
   unless ← candidate target do return .declined

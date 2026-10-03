@@ -586,8 +586,9 @@ quartic with a multi-prime certificate. The fresh goal proofs use ordinary
 imports, including certificate construction and replay through the owner's
 public API. For a new common polynomial, the frontend tries quadratic-norm and free
 witness certificates, then the owner's multi-prime certificate producer and
-ordinary-kernel quotation. The finite searches may decline; their failure
-does not imply reducibility.
+ordinary-kernel quotation. These certificate languages do not cover every
+irreducible common defining polynomial. Increasing a search bound need not
+resolve a refusal, and their failure does not imply reducibility.
 The cubic example below verifies
 `x / α = (α² − 1) * x` at the selected positive root of `X³ − X − 1`.
 The same example also uses the ordinary `QAdjoin.toAlgebraicNumber`
@@ -894,6 +895,46 @@ original divisor obligations before normalization. Closed values built with
 `abbrev` or `@[expose] def` so the defining expression remains visible. For
 supported sentences, a divisor must be proved nonzero before certificate
 construction.
+
+The next construction selects the positive root near 1.675 of `X³ − 4X + 2`.
+Combining it with `√37` creates a degree-six common defining polynomial.
+The frontend's single-witness and quadratic-norm producers decline that new
+polynomial; the public multi-prime certificate route authenticates it before
+the goal's root and sign checks.
+
+```lean
+private abbrev certificatePolynomial : Hex.ZPoly :=
+  Hex.DensePoly.ofList [2, -4, 0, 1]
+private abbrev certificateSquare : Hex.DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 112416129 26, 0, 24⟩
+
+private theorem certificateChecked :
+    certificatePolynomial.CheckedIrreducible :=
+  Field.checkedIrreducible certificatePolynomial
+    (.eisenstein 2 0)
+    (by decide +kernel) (by decide)
+
+private theorem certificateSquarefree :
+    Hex.HasOnlySimpleRoots certificatePolynomial := by
+  let : certificatePolynomial.CheckedIrreducible :=
+    certificateChecked
+  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable
+    certificatePolynomial (by decide)).mpr
+    (Hex.ZPoly.CheckedIrreducible.separable
+      certificatePolynomial)
+
+private abbrev certificateRoot : Hex.RealAlgebraicNumber :=
+  Selected.real certificatePolynomial certificateSquare
+    (by decide +kernel) (by decide) (by rfl)
+    (by decide) (by decide) certificateChecked
+    certificateSquarefree (by decide +kernel)
+
+set_option maxRecDepth 8192 in
+set_option maxHeartbeats 5000000 in
+example : ∀ x : ℝ,
+    x ^ 2 + certificateRoot.toReal + Real.sqrt 37 > 0 := by
+  rcf
+```
 
 The algebraic examples use the proved generic accepted-query soundness theorem
 `HexRealRootsMathlib.Tarski.check_rootSum`. Their fixed-field certificate checks
