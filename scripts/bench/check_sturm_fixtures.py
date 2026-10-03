@@ -20,10 +20,35 @@ from scripts.oracle.realroots_flint import (  # noqa: E402
 )
 
 
+def center_query(cert: dict) -> tuple[list[int], list[int], list[list[int]]]:
+    """Translate every finite query by an integer before qqbar root isolation.
+
+    This preserves the complete root sum and its domain. Centering avoids
+    making the oracle isolate a tight root cluster at an enormous offset.
+    FLINT composes both polynomials; certificate identities are still checked
+    independently on their original inputs.
+    """
+    from flint import fmpz_poly
+
+    head, query = fmpz_poly(cert["head"]), fmpz_poly(cert["query"])
+    degree = head.degree()
+    shift = -int(head[degree - 1]) // (degree * int(head[degree])) if degree > 0 else 0
+    linear = fmpz_poly([shift, 1])
+    endpoints = []
+    for mantissa, precision in (cert["lower"], cert["upper"]):
+        if precision >= 0:
+            endpoints.append([mantissa - shift * 2**precision, precision])
+        else:
+            endpoints.append([mantissa * 2**(-precision) - shift, 0])
+    return ([int(c) for c in head(linear).coeffs()],
+            [int(c) for c in query(linear).coeffs()], endpoints)
+
+
 def check_query(row: dict) -> None:
     cert = row["certificate"]
     endpoints = [cert["lower"], cert["upper"]]
-    expected = _tarski_expected(cert["head"], cert["query"], endpoints)
+    head, query, centered_endpoints = center_query(cert)
+    expected = _tarski_expected(head, query, centered_endpoints)
     if expected is None or cert["value"] != expected:
         raise ValueError("query differs from exact qqbar root sum")
     records = {}
@@ -76,6 +101,9 @@ def check_poly(row: dict) -> None:
 
 
 def main() -> None:
+    # Trusted locally generated certificates can contain coefficients larger
+    # than Python's default decimal conversion limit.
+    sys.set_int_max_str_digits(0)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("fixtures", type=Path, nargs="+")
     args = parser.parse_args()

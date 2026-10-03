@@ -23,7 +23,8 @@ congruence across field representations, with finite or infinite endpoints,
 and acceptance of literal certificate translations by denominator clearing
 and integer-to-rational embedding. The shared root-sum theorem supplies replay semantics, `rootCount` and
 singleton/sign bounds. Remaining Phase-4 evidence is required.
-No release or phase completion is claimed.
+The authoritative phase attestations are recorded in `libraries.yml`.
+No release is claimed.
 
 `HexSturm` depends on `HexPoly` and `HexRealRoots`, with no Mathlib or
 Batteries import. Its namespace is `Hex.Sturm`. Its substantive work is
@@ -363,3 +364,6 @@ Follow the shared-host fixed trial-major and adjacent alternating `AB`/`BA`
 schedules, retain every completed sample, and allow at most one unchanged
 rerun of an inconclusive result. No performance measurements or phase
 advancement follow merely from this contract.
+
+Phase attestation is recorded in `libraries.yml`; the readiness audit gives
+the conformance/correctness evidence and remaining requirements.

@@ -241,8 +241,8 @@ sqrt? : RealAlgebraicNumber → Option RealAlgebraicNumber
 sqrt (a : RealAlgebraicNumber) (h : 0 ≤ a) : RealAlgebraicNumber
 ```
 
-`sqrt? a` returns `none` exactly when `a < 0`. Otherwise solve `X² - a` with
-the real-root API and select its unique nonnegative root. At zero it returns
+`sqrt? a` returns `none` exactly when `a < 0`. Otherwise delegate to the underlying algebraic principal square root,
+the unique nonnegative real root of `X² - a`. At zero it returns
 zero. The proof-taking total form uses the same computation; classify its
 fallback as unreachable by `sqrt?_isSome` under `0 ≤ a`. Also name and prove
 the internal root-selection success lemma `sqrtRoot?_isSome` under that
@@ -310,6 +310,10 @@ that integer. Thus an enclosure touching or crossing an integer never
 causes a refinement loop or an arbitrary rounding decision. Prove the
 enclosure and width bounds, the candidate bound, and the final floor
 inequalities; expose the companion's `FloorRing` using these algorithms.
+For a value with `toRat? = none`, completeness of rational recognition excludes
+integers, so its ceiling is `floor a + 1`. This avoids constructing and
+canonicalizing `-a`. The companion proves `ceil_eq` and uses the executable
+ceiling directly in `FloorRing`.
 
 `approx (a : RealAlgebraicNumber) (prec : Int := 64) : Dyadic` returns the
 real centre of `a.toAlgebraic.approx prec`. The companion proves
@@ -403,7 +407,7 @@ The real companion supplies the additional bridges:
 | Integer real roots | `mem_realAlgebraicRoots_iff`, `realAlgebraicRoots_nodup`, `realAlgebraicRoots_sorted`, `realAlgebraicRoots_eq_empty`, [IntegerRoots](../../HexRealAlgebraicMathlib/IntegerRoots.lean) |
 | Square roots | `sqrt?_isSome`, `sqrt?_eq_none`, `sqrt_nonneg`, `sqrt_sq`, `sqrt_unique`, `sqrt_square`, `sqrt_toReal`, [Sqrt](../../HexRealAlgebraicMathlib/Sqrt.lean) |
 | Real-closedness | `isSquare_of_nonneg`, `exists_isRoot_of_odd_natDegree`, `instIsRealClosed`, [RealClosed](../../HexRealAlgebraicMathlib/RealClosed.lean) |
-| Rational recognition and rounding | `toRat?_eq_some`, [Rational](../../HexRealAlgebraicMathlib/Rational.lean); `floor_bounds`, `ceil_bounds`, `floor_toReal`, `ceil_toReal`, `FloorRing`, [Rounding](../../HexRealAlgebraicMathlib/Rounding.lean) |
+| Rational recognition and rounding | `toRat?_eq_some`, [Rational](../../HexRealAlgebraicMathlib/Rational.lean); `floor_bounds`, `ceil_bounds`, `floor_toReal`, `ceil_toReal`, `ceil_eq`, `FloorRing`, [Rounding](../../HexRealAlgebraicMathlib/Rounding.lean) |
 | Approximation | `approx_error`, `approx_bound`, `approx_enclosure`, [Approx](../../HexRealAlgebraicMathlib/Approx.lean) |
 | Representation | `Display.decimalValue_error`, `Display.digitsFor_bound`, `reprTerm_eq`, `repr_isSome`, `repr_roundtrip`, [Repr](../../HexRealAlgebraicMathlib/Repr.lean) |
 

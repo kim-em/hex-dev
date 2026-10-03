@@ -13,8 +13,20 @@ Conformance fixtures and any performance measurements belong to
 `HexRealAlgebraic`. This companion has no separate oracle, benchmark, checker,
 reifier, or proof-generation interface. Its regression modules check theorems,
 axiom dependencies, and dictionary coherence during compilation.
+`lake build HexRealAlgebraicMathlibTests` builds those ordinary-kernel guards
+from `HexRealAlgebraicMathlib/Tests.lean`. Phase eligibility follows the core's
+direct dependencies and attestation in `libraries.yml`; it does not require
+a separate timing report for this theorem-only companion.
 
 ## Array and comparison correspondence
+
+This section specifies the forward comparison-strategy extension owned by
+HexNumberField and HexNumberFieldTower. These new array and transport
+obligations are unimplemented and excluded from the shipped surface's current
+phase attestations, as specified at the end of the shared exact-comparison
+contract. The implemented `compare_eq` and polynomial-root correspondence
+remain required and are proved in the modules named above.
+
 
 The [exact comparison contract](../../SPEC/Libraries/hex-real-algebraic.md#exact-comparison-strategies)
 adds `sort_perm` and `sort_sorted`, identifying the array sort with a permutation
@@ -37,5 +49,8 @@ reducible polynomial is part of the computational cost.
 The number-field companion owns `realCompare_eq_exact` and all point, lazy,
 and fixed-field correspondence. This companion transports those equations
 through the real subtype and retains its existing `compare_eq`, order laws,
-and executable dictionaries. The new array obligations have conformance and
+and executable dictionaries. When implemented, the new array obligations will need conformance and
 performance evidence in `HexRealAlgebraic`; no proof-generation API is added.
+
+Phase attestation is recorded in `libraries.yml`; the readiness audit gives
+the conformance/correctness evidence and remaining requirements.

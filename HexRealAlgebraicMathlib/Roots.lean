@@ -116,7 +116,7 @@ theorem realRoots_noDuplicates (roots : RootSet) (h : roots.NoDuplicates) :
     rw [← AlgebraicRoot.exact_toComplex a.root, ← AlgebraicRoot.exact_toComplex b.root,
       ← (realRoot?_sound a s hs).1, ← (realRoot?_sound b t ht).1, hst]
 
-/-- A nonzero real polynomial has distinct roots in strictly increasing order. -/
+/-- The finite real-root view has distinct roots in strictly increasing order. -/
 theorem roots_sorted (f : RealAlgebraicPoly) :
     f.roots.toArray.toList.Pairwise (fun a b => a.root < b.root) := by
   exact ((realRoots_sorted f.toAlgebraic.roots).and

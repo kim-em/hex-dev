@@ -1,0 +1,372 @@
+{
+  "family": "hard-neg",
+  "function": "Hex.RealAlgebraicBench.runHardNeg",
+  "parameter": 0,
+  "cpu": 8,
+  "load": [
+    4.37890625,
+    5.82421875,
+    8.45361328125
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/tmp/issue-10577-perf/hard-neg",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex10577-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/issue-10577-perf/hard-neg/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_PROFILE_KERNEL=1",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10577-perf/hard-neg/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "profile",
+        "Hex.RealAlgebraicBench.runHardNeg",
+        "--param",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--max-seconds-per-call",
+        "60",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/issue-10577-perf/hard-neg/samply.json.gz",
+        "/tmp/issue-10577-perf/hard-neg/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/issue-10577-perf/hard-neg/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/issue-10577-perf/hard-neg/samply.json.gz",
+        "--perf-script",
+        "/tmp/issue-10577-perf/hard-neg/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/hard-neg/spawn-anchor.json",
+        "--output",
+        "/tmp/issue-10577-perf/hard-neg/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "/tmp/hex10577-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/issue-10577-perf/hard-neg/normalized.json.gz",
+        "--sidecar",
+        "/tmp/issue-10577-perf/hard-neg/timed-1278191.jsonl",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/hard-neg/spawn-anchor.json",
+        "--out",
+        "/tmp/issue-10577-perf/hard-neg/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/hard-neg/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/issue-10577-perf/hard-neg/filtered.json.gz",
+        "--output",
+        "/tmp/issue-10577-perf/hard-neg/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/issue-10577-perf/hard-neg/filtered.json.gz",
+        "--symbols",
+        "/tmp/issue-10577-perf/hard-neg/symbols.json",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/hard-neg/diagnostics.json",
+        "--thread",
+        "hexrealalgebrai",
+        "--top",
+        "20",
+        "--output",
+        "reports/bench-results/prerequisite-readiness-profiles/hard-arithmetic/hard-neg.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "d9a1f72c4cc6fa592f3ebaeec3d96eb5c41794dedb9828b7e0b2b60a8532808b",
+  "commit": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1278191,
+    "bench_thread_name": "hexrealalgebrai",
+    "bench_thread_tid": "1278194",
+    "regions_total": 65,
+    "total_timed_ms": 1710.037742,
+    "expected_samples_bench_thread": 1708.3,
+    "retained_samples_bench_thread": 1707,
+    "rejected_samples_bench_thread": 200,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1790917966908945266,
+    "spawn_anchor_mono_ns": 327958669554778,
+    "sidecar_mono_anchor_ns": 327959036379456,
+    "samply_meta_start_time_ms": 1790917966940.9458,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.9824009537696838,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.9824009537696838,
+      "raw_max_residual_ms": 0.9842139482498169,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 65,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 1707,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.9824009537696838,
+          "boundary_residual_raw_max_ms": 0.9842139482498169,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.002929115407147041,
+          "leaf_function_support_size": 667,
+          "comparison_samples": 1707,
+          "exchanged_samples": 10,
+          "exchanged_fraction": 0.005858230814294083,
+          "sampling_noise_allowance": 0.040597159136677434,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.002686456610197725,
+          "leaf_function_support_size": 666,
+          "comparison_samples": 1702,
+          "exchanged_samples": 5,
+          "exchanged_fraction": 0.002937720329024677,
+          "sampling_noise_allowance": 0.02876926782106204,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 1707,
+          "top_leaf_functions": [
+            {
+              "function": 140,
+              "name": "0x4b0a5d3",
+              "samples": 126
+            },
+            {
+              "function": 49,
+              "name": "0x4b73d51",
+              "samples": 56
+            },
+            {
+              "function": 143,
+              "name": "0xae90c",
+              "samples": 40
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 1707,
+          "top_leaf_functions": [
+            {
+              "function": 140,
+              "name": "0x4b0a5d3",
+              "samples": 126
+            },
+            {
+              "function": 49,
+              "name": "0x4b73d51",
+              "samples": 56
+            },
+            {
+              "function": 143,
+              "name": "0xae90c",
+              "samples": 40
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 1702,
+          "top_leaf_functions": [
+            {
+              "function": 140,
+              "name": "0x4b0a5d3",
+              "samples": 125
+            },
+            {
+              "function": 49,
+              "name": "0x4b73d51",
+              "samples": 56
+            },
+            {
+              "function": 143,
+              "name": "0xae90c",
+              "samples": 40
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "d40df5947dd338826ff79a6a053ccdc7edeaecd28d6667f6a092758534fc7d11",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "3a4f78a74cce0d385cd8c09b89fa953186c6367fcb01cc769ff857a2fa007a9e",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "55541f48980e1afb8cc2a56f114bb4fcf8922323902b2b9738e13252ba05833f",
+    "perf.data": "96cd77b274294017c19c513c0b86bc3d1552d3f8f22c9944ba2aa3f6cef3edc0",
+    "timed-1278191.jsonl": "63c89034bb0e978bd279d3e7d4a9c8fe1192b1735461de7cb5ed736b53ad7a7c",
+    "5.stdout": "f8b8ae0ec55a5340f9fca073ccda8b239468b63d77e0b2102d27e57c7d4b0657",
+    "5.stderr": "2278303116c5969365938b1de438d2d7a6d4f698ab741f1c2164d1fefefe1295",
+    "samply.json.gz": "1bd0349d06324ad1f22ff57606c8a22eed9cdd0284169283a3301760491c9a76",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "7.stdout": "e6a259bd95a752c45e7461cbe5e058afd29da15b7be29bd3267cd47333c37d8a",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "e6a259bd95a752c45e7461cbe5e058afd29da15b7be29bd3267cd47333c37d8a",
+    "normalized.json.gz": "b49f95245a5556d188001ce05a5335fe38e497d37b35c5e3a95b519ede57f431",
+    "8.stdout": "9448a848118310dec389d571e07d7a5e75f20ae4163d95bde95bc9aba7e8212b",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "3fa2a85a8c56ac103687d0f0a0d089fafe942870dfe34300812704b3aaa27abb",
+    "diagnostics.json": "4ce4977b771312e1d4b9920883cbeb86496d60a0ac62923c365a568b9334d677",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "4c9226e65a1e3135f648580075ea94c74838fa1b2e3c38b46dc5e785791de5eb",
+    "symbols.json": "9307f3fe6632c6f6669a83b97a021ec3a936d68a393ee127bc198dfa6e3ac74d",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

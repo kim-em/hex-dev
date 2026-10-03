@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexSturm
+import HexSturm.Frontend
 import LeanBench
 import Lean.Data.Json
 
@@ -36,8 +37,8 @@ integer and rational query-degree registrations use multiword coefficients.
 
 Input preparation and metadata collection are outside timed bodies. Output
 hashes include actual coefficients and certificate scalars, not just dimensions.
-These tracks do not supply the missing root-sum theorem or extension-depth
-proof evidence required for complete Phase 4.
+Root-sum correctness is supplied by the development semantic adapters.
+These tracks do not supply downstream extension-depth performance evidence.
 -/
 
 /-! Untimed observations of the actual generic kernel instantiated with integer
@@ -214,89 +215,141 @@ def runRationalHigh := runRational
 def runInitialHigh := runInitial
 def runReplayHigh := runReplay
 
--- Declared cost-model: O(n²), two normal derivative chains and endpoint Horner passes.
-setup_benchmark runInteger n => n ^ 2
-  with prep := degreeInput
+/-- The standard successive-coefficient formula for `T_n`, avoiding the
+quadratic number of polynomial updates in the untimed recurrence builder.
+The fixture-validation command checks that identity at small degrees. -/
+def chebyshevFast (n : Nat) : ZPoly := Id.run do
+  if n = 0 then return 1
+  let mut coefficients := Array.replicate (n + 1) (0 : Int)
+  let mut c : Int := 2 ^ (n - 1)
+  for j in List.range (n / 2 + 1) do
+    coefficients := coefficients.set! (n - 2 * j) c
+    if j < n / 2 then
+      c := -c * (n - 2 * j : Nat) * (n - 2 * j - 1 : Nat) /
+        (4 * (j + 1) * (n - j - 1) : Nat)
+  return ofCoeffs coefficients
+
+def headInput (n : Nat) : Input :=
+  let p := chebyshevFast n
+  { p := p, f := 1, rp := ZPoly.toRatPoly p, rf := 1, cert := none }
+
+def runInitialWide := runInitial
+def runClearingWide := runClearing
+
+/- Cost-model derivation, mode 1: query one has no initial cancellation; the derivative materializes
+n coefficients with Θ(n) total-width progression and multiplies by word-size
+indices. The output alone has Θ(n²) bits. This ladder makes limb work dominate
+per-coefficient dispatch. Preparation builds only the polynomial. -/
+setup_benchmark runInitialWide n => n ^ 2
+  with prep := headInput
   where {
-    paramSchedule := .custom #[8, 10, 12, 16, 20]
-    paramFloor := 8
-    paramCeiling := 20
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
--- Declared cost-model: O(n²), the same normal chains with positive field normalization.
-setup_benchmark runRational n => n ^ 2
-  with prep := degreeInput
+
+/- Cost-model derivation, mode 1: clearing the fixed denominator six traverses and materializes
+Θ(n²) coefficient bits with big-by-small arithmetic; scalar lcm work is fixed.
+The same head-only preparation avoids constructing a cubic-bit chain. -/
+setup_benchmark runClearingWide n => n ^ 2
+  with prep := headInput
   where {
-    paramSchedule := .custom #[8, 10, 12, 16, 20]
-    paramFloor := 8
-    paramCeiling := 20
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
--- Declared cost-model: O(n²), one normal derivative chain for squarefreeness.
-setup_benchmark runDomain n => n ^ 2
+
+-- Declared cost-model: mode 2, O(n⁴) binary work; O(n²) scalar operations on O(n)-bit integers.
+setup_benchmark runInteger n => n ^ 4
   with prep := degreeInput
   where {
-    paramSchedule := .custom #[8, 10, 12, 16, 20]
-    paramFloor := 8
-    paramCeiling := 20
+    paramSchedule := .custom #[128, 256, 512, 1024]
+    paramFloor := 128
+    paramCeiling := 1024
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
--- Declared cost-model: O(n), F=1 needs no initial cancellation; derivative and hashing visit n coefficients.
-setup_benchmark runInitial n => n
+-- Declared cost-model: mode 2, O(n⁴) binary work; growing Rat numerators/denominators and GMP normalization.
+setup_benchmark runRational n => n ^ 4
   with prep := degreeInput
   where {
-    paramSchedule := .custom #[8, 10, 12, 16, 20]
-    paramFloor := 8
-    paramCeiling := 20
+    paramSchedule := .custom #[128, 256, 512, 1024]
+    paramFloor := 128
+    paramCeiling := 1024
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
--- Declared cost-model: O(n²), two cancellations per normal-chain step; coefficient hashing is O(n²).
-setup_benchmark runChain n => n ^ 2
+-- Declared cost-model: mode 2, O(n⁴) binary work; the normal derivative chain has growing coefficients.
+setup_benchmark runDomain n => n ^ 4
   with prep := degreeInput
   where {
-    paramSchedule := .custom #[8, 10, 12, 16, 20]
-    paramFloor := 8
-    paramCeiling := 20
+    paramSchedule := .custom #[128, 256, 512, 1024]
+    paramFloor := 128
+    paramCeiling := 1024
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
--- Declared cost-model: O(n²), the sum of normal-chain entry lengths, at two fixed endpoints.
-setup_benchmark runEndpoints n => n ^ 2
+-- Declared cost-model: mode 1, Θ(n²) binary work; derivative and hashing scan n growing coefficients.
+setup_benchmark runInitial n => n ^ 2
   with prep := degreeInput
   where {
-    paramSchedule := .custom #[8, 10, 12, 16, 20]
-    paramFloor := 8
-    paramCeiling := 20
+    paramSchedule := .custom #[128, 256, 512, 1024]
+    paramFloor := 128
+    paramCeiling := 1024
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
+  }
+-- Declared cost-model: mode 2, O(n⁴) binary work; coefficient operations multiply O(n)-bit integers.
+setup_benchmark runChain n => n ^ 4
+  with prep := degreeInput
+  where {
+    paramSchedule := .custom #[128, 256, 512, 1024]
+    paramFloor := 128
+    paramCeiling := 1024
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+-- Declared cost-model: mode 1, Θ(n³) binary work; fixed-endpoint Horner traverses Θ(n³) stored coefficient bits.
+setup_benchmark runEndpoints n => n ^ 3
+  with prep := degreeInput
+  where {
+    paramSchedule := .custom #[128, 256, 512, 1024]
+    paramFloor := 128
+    paramCeiling := 1024
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
   }
 -- Declared cost-model: O(n²), one sign and one hash visit per stored chain coefficient.
 setup_benchmark runSigns n => n ^ 2
   with prep := degreeInput
   where {
-    paramSchedule := .custom #[8, 10, 12, 16, 20]
-    paramFloor := 8
-    paramCeiling := 20
+    paramSchedule := .custom #[128, 256, 512, 1024]
+    paramFloor := 128
+    paramCeiling := 1024
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
 -- Mode 2: O(n⁴) binary-work upper bound. Recurrence replay makes O(n²)
 -- products on O(n)-bit integers; GMP uses at most schoolbook work. Deferred
@@ -314,17 +367,17 @@ setup_benchmark runReplay n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 1800
   }
--- Declared cost-model: O(n), a fixed denominator (six) bounds each scalar lcm and division.
-setup_benchmark runClearing n => n
+-- Mode 1, Θ(n²) bit work: fixed-denominator clearing visits n O(n)-bit coefficients.
+setup_benchmark runClearing n => n ^ 2
   with prep := degreeInput
   where {
-    paramSchedule := .custom #[8, 10, 12, 16, 20]
-    paramFloor := 8
-    paramCeiling := 20
+    paramSchedule := .custom #[128, 256, 512, 1024]
+    paramFloor := 128
+    paramCeiling := 1024
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
 -- Declared cost-model: Θ(m²) bit work: the producer materializes the quadratic-bit initial quotient; the remaining chain has fixed degree.
 setup_benchmark runIntegerHigh m => m ^ 2
@@ -533,9 +586,44 @@ unsafe def diagnostics : IO UInt32 := do
     IO.println (← SturmDiagnostics.inspect "query-degree" n i.p i.f (-2) 2).compress
   return 0
 
+def validateHeads : IO UInt32 := do
+  for n in [:129] do
+    unless chebyshevFast n == chebyshev n do
+      throw (IO.userError s!"Chebyshev coefficient formula disagrees at degree {n}")
+  IO.println "Chebyshev coefficient formula: 129 degrees agree"
+  return 0
+
+/-- Serialize the growing-operand families for an independent exact oracle.
+Preparation, replay and both frontends must agree with the analytic root count. -/
+def axisFixtures : IO UInt32 := do
+  for bits in #[256, 2048] do
+    let cases := #[
+      ("odd-coefficients", Hex.SturmFrontendBench.coefficientInput bits, (1 : Int)),
+      ("odd-endpoints", Hex.SturmFrontendBench.endpointInput bits, (8 : Int)),
+      ("odd-fractional-endpoints", Hex.SturmFrontendBench.fractionalInput bits, (8 : Int))]
+    for (family, i, expected) in cases do
+      let some c := IntTarskiCertificate.certify i.p 1 i.interval
+        | throw (IO.userError s!"{family}/{bits}: rejected domain")
+      unless c.value == expected && IntTarskiCertificate.check i.p 1 i.interval expected c &&
+          Sturm.query Sturm.orderSign (ZPoly.toRatPoly i.p) 1
+            (.finite i.interval.lower.toRat) (.finite i.interval.upper.toRat) == some expected do
+        throw (IO.userError s!"{family}/{bits}: count or replay disagreement")
+      IO.println (Lean.Json.mkObj [("family", Lean.toJson family),
+        ("parameter", Lean.toJson bits), ("certificate", certJson c)]).compress
+    let i := Hex.SturmFrontendBench.translatedInput bits
+    let some c := i.integer | throw (IO.userError "translated domain rejected")
+    unless c.value == 8 && Hex.SturmFrontendBench.runCount i == some 8 &&
+        Hex.SturmFrontendBench.runFieldReplay i && Hex.SturmFrontendBench.runCachedReplay i do
+      throw (IO.userError "translated count or checked-cache replay disagreement")
+    IO.println (Lean.Json.mkObj [("family", Lean.toJson "translated-chebyshev"),
+      ("parameter", Lean.toJson bits), ("certificate", certJson c)]).compress
+  return 0
+
 end Hex.SturmBench
 
 unsafe def main (args : List String) : IO UInt32 :=
+  if args == ["check-head-fixtures"] then Hex.SturmBench.validateHeads else
+  if args == ["axis-fixtures"] then Hex.SturmBench.axisFixtures else
   if args == ["diagnostics"] then Hex.SturmBench.diagnostics else
   if args == ["coefficient-control"] then Hex.SturmBench.axes true else
   if args == ["axes"] then Hex.SturmBench.axes false else

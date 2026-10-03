@@ -1,0 +1,372 @@
+{
+  "family": "hard-sub",
+  "function": "Hex.RealAlgebraicBench.runHardSub",
+  "parameter": 0,
+  "cpu": 20,
+  "load": [
+    4.73681640625,
+    5.986328125,
+    8.5625
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/tmp/issue-10577-perf/hard-sub",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex10577-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/issue-10577-perf/hard-sub/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_PROFILE_KERNEL=1",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10577-perf/hard-sub/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "profile",
+        "Hex.RealAlgebraicBench.runHardSub",
+        "--param",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--max-seconds-per-call",
+        "60",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/issue-10577-perf/hard-sub/samply.json.gz",
+        "/tmp/issue-10577-perf/hard-sub/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/issue-10577-perf/hard-sub/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/issue-10577-perf/hard-sub/samply.json.gz",
+        "--perf-script",
+        "/tmp/issue-10577-perf/hard-sub/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/hard-sub/spawn-anchor.json",
+        "--output",
+        "/tmp/issue-10577-perf/hard-sub/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "/tmp/hex10577-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/issue-10577-perf/hard-sub/normalized.json.gz",
+        "--sidecar",
+        "/tmp/issue-10577-perf/hard-sub/timed-1275257.jsonl",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/hard-sub/spawn-anchor.json",
+        "--out",
+        "/tmp/issue-10577-perf/hard-sub/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/hard-sub/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/issue-10577-perf/hard-sub/filtered.json.gz",
+        "--output",
+        "/tmp/issue-10577-perf/hard-sub/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/issue-10577-perf/hard-sub/filtered.json.gz",
+        "--symbols",
+        "/tmp/issue-10577-perf/hard-sub/symbols.json",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/hard-sub/diagnostics.json",
+        "--thread",
+        "hexrealalgebrai",
+        "--top",
+        "20",
+        "--output",
+        "reports/bench-results/prerequisite-readiness-profiles/hard-arithmetic/hard-sub.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "d9a1f72c4cc6fa592f3ebaeec3d96eb5c41794dedb9828b7e0b2b60a8532808b",
+  "commit": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1275257,
+    "bench_thread_name": "hexrealalgebrai",
+    "bench_thread_tid": "1275260",
+    "regions_total": 1,
+    "total_timed_ms": 6526.031176,
+    "expected_samples_bench_thread": 6519.5,
+    "retained_samples_bench_thread": 6516,
+    "rejected_samples_bench_thread": 6609,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1790917945077122734,
+    "spawn_anchor_mono_ns": 327936837732046,
+    "sidecar_mono_anchor_ns": 327943620112220,
+    "samply_meta_start_time_ms": 1790917945111.115,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.3744199872016907,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.3744199872016907,
+      "raw_max_residual_ms": 0.414667010307312,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 1,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 6516,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.3744199872016907,
+          "boundary_residual_raw_max_ms": 0.414667010307312,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.000767341927562922,
+          "leaf_function_support_size": 1209,
+          "comparison_samples": 6516,
+          "exchanged_samples": 10,
+          "exchanged_fraction": 0.001534683855125844,
+          "sampling_noise_allowance": 0.01431852634801117,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.0007421213512308086,
+          "leaf_function_support_size": 1208,
+          "comparison_samples": 6511,
+          "exchanged_samples": 5,
+          "exchanged_fraction": 0.0007679311933650745,
+          "sampling_noise_allowance": 0.0101283108566063,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 6516,
+          "top_leaf_functions": [
+            {
+              "function": 101,
+              "name": "0xae90c",
+              "samples": 369
+            },
+            {
+              "function": 201,
+              "name": "0xae923",
+              "samples": 288
+            },
+            {
+              "function": 107,
+              "name": "0xaef3c",
+              "samples": 164
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 6516,
+          "top_leaf_functions": [
+            {
+              "function": 101,
+              "name": "0xae90c",
+              "samples": 369
+            },
+            {
+              "function": 201,
+              "name": "0xae923",
+              "samples": 288
+            },
+            {
+              "function": 107,
+              "name": "0xaef3c",
+              "samples": 164
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 6511,
+          "top_leaf_functions": [
+            {
+              "function": 101,
+              "name": "0xae90c",
+              "samples": 369
+            },
+            {
+              "function": 201,
+              "name": "0xae923",
+              "samples": 288
+            },
+            {
+              "function": 107,
+              "name": "0xaef3c",
+              "samples": 164
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "d40df5947dd338826ff79a6a053ccdc7edeaecd28d6667f6a092758534fc7d11",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "3a4f78a74cce0d385cd8c09b89fa953186c6367fcb01cc769ff857a2fa007a9e",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "bcd09b6c9e787b4c42a9e8a89e7449937b96c6cb22991e69f72a8a0462f71cf4",
+    "perf.data": "392bf871e33729e54f72324fc3c39bc4e5deb4cb4400a2a07c89de1c066c7687",
+    "timed-1275257.jsonl": "7a31be07d6722d358f495055a935280395a1676a67a4747279e753f048deafcd",
+    "5.stdout": "aed7084299bce17a3d3de2ae20a4462b74d9dd35b06b0bd9c39465274f80530d",
+    "5.stderr": "cb04f3cc0521fa1268f9bd7acc65c0b845996bb717eb9f147816eecc48a0717a",
+    "samply.json.gz": "930f6c53d56f18824d59cfc8bafbb760a6346cdd022ae3d56e06645f9d1c41d1",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "7.stdout": "ec217f4cf609c14b0fbee21c015a17910ecb72418a69a2c2e6580ea797293aac",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "ec217f4cf609c14b0fbee21c015a17910ecb72418a69a2c2e6580ea797293aac",
+    "normalized.json.gz": "5037ba54e2033ecb6c7df300f5e0c863530fb507ca13d410739ffceea75578ae",
+    "8.stdout": "e42991fda086db9279e8272ffeb49594c4ecfd3b1a14ffe08c36ad60b0735a5d",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "15c860b23c12150987f95454277a2fcd3dcffb9d59876e55f17574c8a796286d",
+    "diagnostics.json": "15f1ad0239caf9375b51301c0d9dcb8d1d3d29fb0bc73539244efac7b6bd117e",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "10d1a5ad6c5a06d5eef39559abb33b1ab4a6e4ce4b0d4ba85920d5d90692572b",
+    "symbols.json": "0a0eac2ea21fb1a60b49ccd2c7045829ae3e8f27ababab1d37d1c4de58cc1db8",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
