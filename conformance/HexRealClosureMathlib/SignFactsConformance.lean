@@ -10,7 +10,6 @@ public meta import HexRealClosureMathlib.SignFacts
 public import HexRealClosureMathlib.SignCodecConformance
 public meta import HexRealClosureMathlib.SignCodecConformance
 public meta import HexSignDet.CrossCheck
-public meta import HexSignDetMathlib.GraphSignsConformance
 import all HexRealClosure.Algebraic
 import all HexSignDet.Descriptor
 import all HexPoly.Euclid.DivGcd
@@ -23,9 +22,12 @@ public section
 namespace Hex.RealClosure.Algebraic.SignFactsConformance
 
 open Hex.SignDet Hex.SignDet.Conformance
-open Hex.SignDetMathlib.GraphSignsConformance
 open Hex.SignDet.CrossCheck
 open CoefficientSignsConformance PackingConformance
+
+/-- The existing count-one descriptor with one derivative sign retained. -/
+@[expose] def partialRaw : RawDescriptor Rat Nat :=
+  {singletonRaw with indices := [1], signs := [1]}
 
 theorem rational_sign (x : Rat) :
     Sturm.orderSign x = (SignType.sign (x : ℝ) : Int) := by
