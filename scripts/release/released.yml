@@ -113,6 +113,7 @@ repos:
   - repo: leanprover/hex-arith
     component: Exact word arithmetic
     lib: HexArith
+    test_modules: [HexArith.ExtendedGcdTests]
     umbrella: true
     spec: hex-arith
     pins: []

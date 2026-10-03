@@ -100,9 +100,9 @@ tag := "hex-arith-extgcd"
 
 The extended Euclidean algorithm returns a triple `(g, s, t)` with
 `g = gcd a b` and the Bezout certificate `s · a + t · b = g`. The pure
-`Nat` version is the reference implementation; an `Int` variant routes
-through GMP's `mpz_gcdext` via `@[extern]`, and a `UInt64` variant
-takes machine-word inputs. All three share the same name in their
+`Nat` version is the reference implementation; the `Int` variant uses a
+proved compiler rewrite to the GMP-backed `Nat.extendedGcd` primitive on
+nonnegative inputs, and a `UInt64` variant takes machine-word inputs. All three share the same name in their
 respective namespaces.
 
 {docstring HexArith.extGcd}
@@ -113,8 +113,11 @@ that destructure the returned triple.
 
 {docstring HexArith.extGcd_spec}
 
-The `Int` variant runs the same recurrence over `Int`, with the GMP
-`mpz_gcdext` extern as its trusted runtime replacement.
+The `Int` variant retains the signed recurrence. Its proved runtime rewrite
+reverses nonnegative inputs to the natural primitive and swaps the coefficients,
+preserving the exact logical result; negative inputs use the signed recurrence.
+The natural primitive uses compiled Lean for zero, equal and small inputs and
+GMP for larger unequal inputs.
 
 {docstring HexArith.Int.extGcd}
 
@@ -278,7 +281,7 @@ tag := "hex-arith-cross-references"
   Barrett and Montgomery reducers documented here. The polynomial and
   finite-field libraries reach these routines transitively through it.
 * The wide-word multiply and carry primitives are `@[extern]`-backed by
-  the C sources in `HexArith/ffi/` (`wide_arith.c`, `mpz_gcdext.c`), and
+  `HexArith/ffi/wide_arith.c`, and
   the {ref "hex-arith-wide"}[`Nat`-level laws] above are the
   specification those bindings are proved against. The library's meaning
   does not depend on the native code being linked.

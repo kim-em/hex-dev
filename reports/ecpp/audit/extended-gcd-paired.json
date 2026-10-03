@@ -1,0 +1,2163 @@
+{
+  "cpu": 5,
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "source": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+  "source_hashes": {
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "a2440490b8954368bd3de4d4e7142d0a75ef6b4e1cbe664c152a87e0715a0e56",
+    "bench/HexECPP/Bench.lean": "47508d39b999fef343e3850ade5f395e087115b170bb89d7c24b9850ac9201b7",
+    "scripts/bench/ecpp_audit.py": "b558eeb167169230e4b62dbb100d2f6000e942db9b4f5de87cb7139ffa12b278",
+    "HexECPP/Affine.lean": "e1a749485731b258030c61ecdb769b697f6b1877434ec589a27a920c164e5c6b",
+    "HexECPP/CM.lean": "05a06a0dafb457e5831f0b6bba2abd2c9c9c2f5a8319772673e0140f858a8de3",
+    "HexECPP/Cert.lean": "1d3261fbe6c581e630811277c83ef36e44bcdce87b042ff4eac4e60409d73100",
+    "HexECPP/Data.lean": "98690924d6648202e8e2f43d118934eb0e4fb3899a3127aa02bf4ef605d5bd81",
+    "HexECPP/Import.lean": "3763bfe5d9cab83cf2b9f558343ceea06e70b98894a49690ec3f2f75c9cc89a1",
+    "HexECPP/Replay.lean": "365360db2a51992dfdd0c48e6e37a8bbc61e13bc57faa448abffd851c26856dc",
+    "HexECPP/Search.lean": "23cf4558d66c0db63ced586e22069fd4fe7a3e2a6eee9ab0990a9d67fddc0bb7"
+  },
+  "executable_sha256": "78ef7d8d795d00ce272eaea511cfdb686fae43f0c2c8230b78edf2c6bf5b0c3a",
+  "lean": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "host_before": {
+    "loadavg": [
+      28.72607421875,
+      27.8291015625,
+      24.07080078125
+    ]
+  },
+  "commands": [
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "list"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "registered benchmarks:\n  Hex.ECPPBench.runPreflight    expected complexity: r\n  Hex.ECPPBench.runProposal    expected complexity: k * k\n  Hex.ECPPBench.runSizedProposal    expected complexity: k * k * k\n  Hex.ECPPBench.runModulusProposal    expected complexity: bits * bits\n  Hex.ECPPBench.runReplay    expected complexity: k * k\n  Hex.ECPPBench.runSizedReplay    expected complexity: k * k * k\n  Hex.ECPPBench.runScalarReplay    expected complexity: bits\n  Hex.ECPPBench.runParse    expected complexity: r\n  Hex.ECPPBench.runScalarProposal    expected complexity: bits\n  Hex.ECPPBench.runModulusReplay    expected complexity: bits * bits\n  runConvert512    [fixed] repeats=3\n  runNativeCheck    [fixed] repeats=5\n  runParse512    [fixed] repeats=3\n  runConvert65    [fixed] repeats=3\n  runSize512    [fixed] repeats=3\n  runCheck512    [fixed] repeats=3\n  runNative256    [fixed] repeats=5\n  runCountedConvert65    [fixed] repeats=5\n  runNativeExhaust    [fixed] repeats=5\n  runCM128    [fixed] repeats=5\n  runCheck256    [fixed] repeats=3\n  runNative128    [fixed] repeats=5\n  runCM256    [fixed] repeats=5\n  runCheck65    [fixed] repeats=3\n  runConvert256    [fixed] repeats=3\n  runNativeConvert    [fixed] repeats=5\n  runNativeHard    [fixed] repeats=5\n  runSize65    [fixed] repeats=3\n  runSize256    [fixed] repeats=3\n",
+      "stderr": "",
+      "loadavg": [
+        28.66748046875,
+        27.83203125,
+        24.09228515625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runConvert65",
+        "--fixed",
+        "--repeat-index",
+        "0",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert65\",\"repeat_index\":0,\"inner_repeats\":16,\"total_nanos\":15733480,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":67220,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:33Z\",\"timestamp_unix_ms\":1791004413881}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.66748046875,
+        27.83203125,
+        24.09228515625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runConvert65",
+        "--fixed",
+        "--repeat-index",
+        "0",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert65\",\"repeat_index\":0,\"inner_repeats\":16,\"total_nanos\":11003376,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":66244,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:34Z\",\"timestamp_unix_ms\":1791004414219}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.66748046875,
+        27.83203125,
+        24.09228515625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runConvert256",
+        "--fixed",
+        "--repeat-index",
+        "0",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert256\",\"repeat_index\":0,\"inner_repeats\":1,\"total_nanos\":83027393,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":67380,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:34Z\",\"timestamp_unix_ms\":1791004414544}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.66748046875,
+        27.83203125,
+        24.09228515625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runConvert256",
+        "--fixed",
+        "--repeat-index",
+        "0",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert256\",\"repeat_index\":0,\"inner_repeats\":1,\"total_nanos\":30548678,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":66896,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:34Z\",\"timestamp_unix_ms\":1791004414938}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.66748046875,
+        27.83203125,
+        24.09228515625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runConvert512",
+        "--fixed",
+        "--repeat-index",
+        "0",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert512\",\"repeat_index\":0,\"inner_repeats\":1,\"total_nanos\":445294143,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":66468,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:35Z\",\"timestamp_unix_ms\":1791004415392}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.66748046875,
+        27.83203125,
+        24.09228515625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runConvert512",
+        "--fixed",
+        "--repeat-index",
+        "0",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert512\",\"repeat_index\":0,\"inner_repeats\":1,\"total_nanos\":109597352,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":66756,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:36Z\",\"timestamp_unix_ms\":1791004416108}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.66748046875,
+        27.83203125,
+        24.09228515625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runNative128",
+        "--fixed",
+        "--repeat-index",
+        "0",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNative128\",\"repeat_index\":0,\"inner_repeats\":1,\"total_nanos\":60401373,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":66084,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:36Z\",\"timestamp_unix_ms\":1791004416619}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.66748046875,
+        27.83203125,
+        24.09228515625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runNative128",
+        "--fixed",
+        "--repeat-index",
+        "0",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNative128\",\"repeat_index\":0,\"inner_repeats\":1,\"total_nanos\":29416218,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":66772,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:36Z\",\"timestamp_unix_ms\":1791004416985}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.66748046875,
+        27.83203125,
+        24.09228515625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runNative256",
+        "--fixed",
+        "--repeat-index",
+        "0",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNative256\",\"repeat_index\":0,\"inner_repeats\":1,\"total_nanos\":775907507,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":62784,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:37Z\",\"timestamp_unix_ms\":1791004417119}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.66748046875,
+        27.83203125,
+        24.09228515625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runNative256",
+        "--fixed",
+        "--repeat-index",
+        "0",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNative256\",\"repeat_index\":0,\"inner_repeats\":1,\"total_nanos\":192922916,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":66896,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:38Z\",\"timestamp_unix_ms\":1791004418267}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.45361328125,
+        27.80126953125,
+        24.1025390625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runNativeHard",
+        "--fixed",
+        "--repeat-index",
+        "0",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNativeHard\",\"repeat_index\":0,\"inner_repeats\":1,\"total_nanos\":1737498273,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":63884,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:38Z\",\"timestamp_unix_ms\":1791004418684}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.45361328125,
+        27.80126953125,
+        24.1025390625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runNativeHard",
+        "--fixed",
+        "--repeat-index",
+        "0",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNativeHard\",\"repeat_index\":0,\"inner_repeats\":1,\"total_nanos\":536771735,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":63344,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:40Z\",\"timestamp_unix_ms\":1791004420757}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.45361328125,
+        27.80126953125,
+        24.1025390625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runConvert65",
+        "--fixed",
+        "--repeat-index",
+        "1",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert65\",\"repeat_index\":1,\"inner_repeats\":16,\"total_nanos\":11644337,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":62948,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:41Z\",\"timestamp_unix_ms\":1791004421625}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.45361328125,
+        27.80126953125,
+        24.1025390625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runConvert65",
+        "--fixed",
+        "--repeat-index",
+        "1",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert65\",\"repeat_index\":1,\"inner_repeats\":16,\"total_nanos\":13529381,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":66564,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:41Z\",\"timestamp_unix_ms\":1791004421989}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.45361328125,
+        27.80126953125,
+        24.1025390625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runConvert256",
+        "--fixed",
+        "--repeat-index",
+        "1",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert256\",\"repeat_index\":1,\"inner_repeats\":1,\"total_nanos\":27029229,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":62620,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:42Z\",\"timestamp_unix_ms\":1791004422316}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.45361328125,
+        27.80126953125,
+        24.1025390625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runConvert256",
+        "--fixed",
+        "--repeat-index",
+        "1",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert256\",\"repeat_index\":1,\"inner_repeats\":1,\"total_nanos\":70332038,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":73264,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:42Z\",\"timestamp_unix_ms\":1791004422714}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.45361328125,
+        27.80126953125,
+        24.1025390625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runConvert512",
+        "--fixed",
+        "--repeat-index",
+        "1",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert512\",\"repeat_index\":1,\"inner_repeats\":1,\"total_nanos\":131635579,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":64864,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:43Z\",\"timestamp_unix_ms\":1791004423043}}\n",
+      "stderr": "",
+      "loadavg": [
+        29.45849609375,
+        28.0205078125,
+        24.193359375
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runConvert512",
+        "--fixed",
+        "--repeat-index",
+        "1",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert512\",\"repeat_index\":1,\"inner_repeats\":1,\"total_nanos\":441610680,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":66828,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:43Z\",\"timestamp_unix_ms\":1791004423469}}\n",
+      "stderr": "",
+      "loadavg": [
+        29.45849609375,
+        28.0205078125,
+        24.193359375
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runNative128",
+        "--fixed",
+        "--repeat-index",
+        "1",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNative128\",\"repeat_index\":1,\"inner_repeats\":1,\"total_nanos\":29238956,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":62920,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:44Z\",\"timestamp_unix_ms\":1791004424347}}\n",
+      "stderr": "",
+      "loadavg": [
+        29.45849609375,
+        28.0205078125,
+        24.193359375
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runNative128",
+        "--fixed",
+        "--repeat-index",
+        "1",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNative128\",\"repeat_index\":1,\"inner_repeats\":1,\"total_nanos\":65834580,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":65912,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:44Z\",\"timestamp_unix_ms\":1791004424684}}\n",
+      "stderr": "",
+      "loadavg": [
+        29.45849609375,
+        28.0205078125,
+        24.193359375
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runNative256",
+        "--fixed",
+        "--repeat-index",
+        "1",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNative256\",\"repeat_index\":1,\"inner_repeats\":1,\"total_nanos\":189363167,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":63208,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:45Z\",\"timestamp_unix_ms\":1791004425074}}\n",
+      "stderr": "",
+      "loadavg": [
+        29.45849609375,
+        28.0205078125,
+        24.193359375
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runNative256",
+        "--fixed",
+        "--repeat-index",
+        "1",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNative256\",\"repeat_index\":1,\"inner_repeats\":1,\"total_nanos\":745527718,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":66560,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:45Z\",\"timestamp_unix_ms\":1791004425578}}\n",
+      "stderr": "",
+      "loadavg": [
+        29.45849609375,
+        28.0205078125,
+        24.193359375
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runNativeHard",
+        "--fixed",
+        "--repeat-index",
+        "1",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNativeHard\",\"repeat_index\":1,\"inner_repeats\":1,\"total_nanos\":563970594,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":61280,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:46Z\",\"timestamp_unix_ms\":1791004426627}}\n",
+      "stderr": "",
+      "loadavg": [
+        29.45849609375,
+        28.0205078125,
+        24.193359375
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runNativeHard",
+        "--fixed",
+        "--repeat-index",
+        "1",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNativeHard\",\"repeat_index\":1,\"inner_repeats\":1,\"total_nanos\":1678708936,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":66908,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:47Z\",\"timestamp_unix_ms\":1791004427487}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.86083984375,
+        27.92041015625,
+        24.18115234375
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runConvert65",
+        "--fixed",
+        "--repeat-index",
+        "2",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert65\",\"repeat_index\":2,\"inner_repeats\":16,\"total_nanos\":13651152,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":65984,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:49Z\",\"timestamp_unix_ms\":1791004429403}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.86083984375,
+        27.92041015625,
+        24.18115234375
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runConvert65",
+        "--fixed",
+        "--repeat-index",
+        "2",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert65\",\"repeat_index\":2,\"inner_repeats\":16,\"total_nanos\":11198004,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":66840,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:49Z\",\"timestamp_unix_ms\":1791004429585}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.86083984375,
+        27.92041015625,
+        24.18115234375
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runConvert256",
+        "--fixed",
+        "--repeat-index",
+        "2",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert256\",\"repeat_index\":2,\"inner_repeats\":1,\"total_nanos\":72110655,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":65380,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:49Z\",\"timestamp_unix_ms\":1791004429792}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.86083984375,
+        27.92041015625,
+        24.18115234375
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runConvert256",
+        "--fixed",
+        "--repeat-index",
+        "2",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert256\",\"repeat_index\":2,\"inner_repeats\":1,\"total_nanos\":33112619,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":67436,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:50Z\",\"timestamp_unix_ms\":1791004430126}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.86083984375,
+        27.92041015625,
+        24.18115234375
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runConvert512",
+        "--fixed",
+        "--repeat-index",
+        "2",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert512\",\"repeat_index\":2,\"inner_repeats\":1,\"total_nanos\":442481821,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":65056,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:50Z\",\"timestamp_unix_ms\":1791004430472}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.86083984375,
+        27.92041015625,
+        24.18115234375
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runConvert512",
+        "--fixed",
+        "--repeat-index",
+        "2",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runConvert512\",\"repeat_index\":2,\"inner_repeats\":1,\"total_nanos\":109955272,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":67676,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:51Z\",\"timestamp_unix_ms\":1791004431201}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.86083984375,
+        27.92041015625,
+        24.18115234375
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runNative128",
+        "--fixed",
+        "--repeat-index",
+        "2",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNative128\",\"repeat_index\":2,\"inner_repeats\":1,\"total_nanos\":59661485,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":66292,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:51Z\",\"timestamp_unix_ms\":1791004431686}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.86083984375,
+        27.92041015625,
+        24.18115234375
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runNative128",
+        "--fixed",
+        "--repeat-index",
+        "2",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNative128\",\"repeat_index\":2,\"inner_repeats\":1,\"total_nanos\":31007267,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":66028,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:52Z\",\"timestamp_unix_ms\":1791004432075}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.86083984375,
+        27.92041015625,
+        24.18115234375
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runNative256",
+        "--fixed",
+        "--repeat-index",
+        "2",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNative256\",\"repeat_index\":2,\"inner_repeats\":1,\"total_nanos\":741983992,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":62696,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:52Z\",\"timestamp_unix_ms\":1791004432501}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.63134765625,
+        27.88818359375,
+        24.19140625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runNative256",
+        "--fixed",
+        "--repeat-index",
+        "2",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNative256\",\"repeat_index\":2,\"inner_repeats\":1,\"total_nanos\":223247471,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":66944,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:53Z\",\"timestamp_unix_ms\":1791004433532}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.63134765625,
+        27.88818359375,
+        24.19140625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench_before",
+        "_child",
+        "--bench",
+        "runNativeHard",
+        "--fixed",
+        "--repeat-index",
+        "2",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNativeHard\",\"repeat_index\":2,\"inner_repeats\":1,\"total_nanos\":1633774445,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":65680,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench_before\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:54Z\",\"timestamp_unix_ms\":1791004434064}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.63134765625,
+        27.88818359375,
+        24.19140625
+      ]
+    },
+    {
+      "command": [
+        "/tmp/hex-extended-gcd/.lake/build/bin/hexecpp_bench",
+        "_child",
+        "--bench",
+        "runNativeHard",
+        "--fixed",
+        "--repeat-index",
+        "2",
+        "--min-total-nanos",
+        "10000000"
+      ],
+      "cwd": "/tmp/hex-extended-gcd",
+      "returncode": 0,
+      "stdout": "{\"schema_version\":1,\"kind\":\"fixed\",\"function\":\"runNativeHard\",\"repeat_index\":2,\"inner_repeats\":1,\"total_nanos\":544138837,\"result_hash\":\"0x1\",\"status\":\"ok\",\"error\":null,\"alloc_bytes\":null,\"peak_rss_kb\":66516,\"env\":{\"arch\":\"x86_64\",\"cpu_cores\":96,\"cpu_model\":\"AMD EPYC 9455 48-Core Processor\",\"exe_name\":\"hexecpp_bench\",\"git_commit\":\"a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9\",\"git_dirty\":true,\"hostname\":\"chungus2\",\"lean_bench_version\":\"0.1.0\",\"lean_toolchain\":\"leanprover/lean4:4.35.0-rc3\",\"lean_version\":\"4.35.0-rc3\",\"os\":\"linux\",\"platform_target\":\"x86_64-unknown-linux-gnu\",\"timestamp_iso\":\"2026-10-03T05:13:56Z\",\"timestamp_unix_ms\":1791004436078}}\n",
+      "stderr": "",
+      "loadavg": [
+        28.63134765625,
+        27.88818359375,
+        24.19140625
+      ]
+    }
+  ],
+  "budgets_seconds": {
+    "runCheck65": 0.00032,
+    "runCheck256": 0.012,
+    "runCheck512": 0.045,
+    "runConvert65": 0.0016,
+    "runConvert256": 0.17,
+    "runConvert512": 1.05,
+    "runNative128": 0.125,
+    "runNative256": 1.45,
+    "runNativeHard": 3.3,
+    "runNativeCheck": 0.01,
+    "runNativeConvert": 0.14,
+    "runParse512": 0.0016,
+    "runNativeExhaust": 0.075,
+    "runCM128": 0.00023,
+    "runCM256": 0.0002,
+    "runCountedConvert65": 0.0021
+  },
+  "samples": [
+    {
+      "trial": 0,
+      "arm": "A",
+      "target": "runConvert65",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert65",
+        "repeat_index": 0,
+        "inner_repeats": 16,
+        "total_nanos": 15733480,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 67220,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:33Z",
+          "timestamp_unix_ms": 1791004413881
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "arm": "B",
+      "target": "runConvert65",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert65",
+        "repeat_index": 0,
+        "inner_repeats": 16,
+        "total_nanos": 11003376,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 66244,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:34Z",
+          "timestamp_unix_ms": 1791004414219
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "arm": "A",
+      "target": "runConvert256",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert256",
+        "repeat_index": 0,
+        "inner_repeats": 1,
+        "total_nanos": 83027393,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 67380,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:34Z",
+          "timestamp_unix_ms": 1791004414544
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "arm": "B",
+      "target": "runConvert256",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert256",
+        "repeat_index": 0,
+        "inner_repeats": 1,
+        "total_nanos": 30548678,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 66896,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:34Z",
+          "timestamp_unix_ms": 1791004414938
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "arm": "A",
+      "target": "runConvert512",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert512",
+        "repeat_index": 0,
+        "inner_repeats": 1,
+        "total_nanos": 445294143,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 66468,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:35Z",
+          "timestamp_unix_ms": 1791004415392
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "arm": "B",
+      "target": "runConvert512",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert512",
+        "repeat_index": 0,
+        "inner_repeats": 1,
+        "total_nanos": 109597352,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 66756,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:36Z",
+          "timestamp_unix_ms": 1791004416108
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "arm": "A",
+      "target": "runNative128",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNative128",
+        "repeat_index": 0,
+        "inner_repeats": 1,
+        "total_nanos": 60401373,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 66084,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:36Z",
+          "timestamp_unix_ms": 1791004416619
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "arm": "B",
+      "target": "runNative128",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNative128",
+        "repeat_index": 0,
+        "inner_repeats": 1,
+        "total_nanos": 29416218,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 66772,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:36Z",
+          "timestamp_unix_ms": 1791004416985
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "arm": "A",
+      "target": "runNative256",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNative256",
+        "repeat_index": 0,
+        "inner_repeats": 1,
+        "total_nanos": 775907507,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 62784,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:37Z",
+          "timestamp_unix_ms": 1791004417119
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "arm": "B",
+      "target": "runNative256",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNative256",
+        "repeat_index": 0,
+        "inner_repeats": 1,
+        "total_nanos": 192922916,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 66896,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:38Z",
+          "timestamp_unix_ms": 1791004418267
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "arm": "A",
+      "target": "runNativeHard",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNativeHard",
+        "repeat_index": 0,
+        "inner_repeats": 1,
+        "total_nanos": 1737498273,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 63884,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:38Z",
+          "timestamp_unix_ms": 1791004418684
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "arm": "B",
+      "target": "runNativeHard",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNativeHard",
+        "repeat_index": 0,
+        "inner_repeats": 1,
+        "total_nanos": 536771735,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 63344,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:40Z",
+          "timestamp_unix_ms": 1791004420757
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "arm": "B",
+      "target": "runConvert65",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert65",
+        "repeat_index": 1,
+        "inner_repeats": 16,
+        "total_nanos": 11644337,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 62948,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:41Z",
+          "timestamp_unix_ms": 1791004421625
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "arm": "A",
+      "target": "runConvert65",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert65",
+        "repeat_index": 1,
+        "inner_repeats": 16,
+        "total_nanos": 13529381,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 66564,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:41Z",
+          "timestamp_unix_ms": 1791004421989
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "arm": "B",
+      "target": "runConvert256",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert256",
+        "repeat_index": 1,
+        "inner_repeats": 1,
+        "total_nanos": 27029229,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 62620,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:42Z",
+          "timestamp_unix_ms": 1791004422316
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "arm": "A",
+      "target": "runConvert256",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert256",
+        "repeat_index": 1,
+        "inner_repeats": 1,
+        "total_nanos": 70332038,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 73264,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:42Z",
+          "timestamp_unix_ms": 1791004422714
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "arm": "B",
+      "target": "runConvert512",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert512",
+        "repeat_index": 1,
+        "inner_repeats": 1,
+        "total_nanos": 131635579,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 64864,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:43Z",
+          "timestamp_unix_ms": 1791004423043
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "arm": "A",
+      "target": "runConvert512",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert512",
+        "repeat_index": 1,
+        "inner_repeats": 1,
+        "total_nanos": 441610680,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 66828,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:43Z",
+          "timestamp_unix_ms": 1791004423469
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "arm": "B",
+      "target": "runNative128",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNative128",
+        "repeat_index": 1,
+        "inner_repeats": 1,
+        "total_nanos": 29238956,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 62920,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:44Z",
+          "timestamp_unix_ms": 1791004424347
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "arm": "A",
+      "target": "runNative128",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNative128",
+        "repeat_index": 1,
+        "inner_repeats": 1,
+        "total_nanos": 65834580,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 65912,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:44Z",
+          "timestamp_unix_ms": 1791004424684
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "arm": "B",
+      "target": "runNative256",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNative256",
+        "repeat_index": 1,
+        "inner_repeats": 1,
+        "total_nanos": 189363167,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 63208,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:45Z",
+          "timestamp_unix_ms": 1791004425074
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "arm": "A",
+      "target": "runNative256",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNative256",
+        "repeat_index": 1,
+        "inner_repeats": 1,
+        "total_nanos": 745527718,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 66560,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:45Z",
+          "timestamp_unix_ms": 1791004425578
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "arm": "B",
+      "target": "runNativeHard",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNativeHard",
+        "repeat_index": 1,
+        "inner_repeats": 1,
+        "total_nanos": 563970594,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 61280,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:46Z",
+          "timestamp_unix_ms": 1791004426627
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "arm": "A",
+      "target": "runNativeHard",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNativeHard",
+        "repeat_index": 1,
+        "inner_repeats": 1,
+        "total_nanos": 1678708936,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 66908,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:47Z",
+          "timestamp_unix_ms": 1791004427487
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "arm": "A",
+      "target": "runConvert65",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert65",
+        "repeat_index": 2,
+        "inner_repeats": 16,
+        "total_nanos": 13651152,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 65984,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:49Z",
+          "timestamp_unix_ms": 1791004429403
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "arm": "B",
+      "target": "runConvert65",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert65",
+        "repeat_index": 2,
+        "inner_repeats": 16,
+        "total_nanos": 11198004,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 66840,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:49Z",
+          "timestamp_unix_ms": 1791004429585
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "arm": "A",
+      "target": "runConvert256",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert256",
+        "repeat_index": 2,
+        "inner_repeats": 1,
+        "total_nanos": 72110655,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 65380,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:49Z",
+          "timestamp_unix_ms": 1791004429792
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "arm": "B",
+      "target": "runConvert256",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert256",
+        "repeat_index": 2,
+        "inner_repeats": 1,
+        "total_nanos": 33112619,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 67436,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:50Z",
+          "timestamp_unix_ms": 1791004430126
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "arm": "A",
+      "target": "runConvert512",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert512",
+        "repeat_index": 2,
+        "inner_repeats": 1,
+        "total_nanos": 442481821,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 65056,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:50Z",
+          "timestamp_unix_ms": 1791004430472
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "arm": "B",
+      "target": "runConvert512",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runConvert512",
+        "repeat_index": 2,
+        "inner_repeats": 1,
+        "total_nanos": 109955272,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 67676,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:51Z",
+          "timestamp_unix_ms": 1791004431201
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "arm": "A",
+      "target": "runNative128",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNative128",
+        "repeat_index": 2,
+        "inner_repeats": 1,
+        "total_nanos": 59661485,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 66292,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:51Z",
+          "timestamp_unix_ms": 1791004431686
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "arm": "B",
+      "target": "runNative128",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNative128",
+        "repeat_index": 2,
+        "inner_repeats": 1,
+        "total_nanos": 31007267,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 66028,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:52Z",
+          "timestamp_unix_ms": 1791004432075
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "arm": "A",
+      "target": "runNative256",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNative256",
+        "repeat_index": 2,
+        "inner_repeats": 1,
+        "total_nanos": 741983992,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 62696,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:52Z",
+          "timestamp_unix_ms": 1791004432501
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "arm": "B",
+      "target": "runNative256",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNative256",
+        "repeat_index": 2,
+        "inner_repeats": 1,
+        "total_nanos": 223247471,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 66944,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:53Z",
+          "timestamp_unix_ms": 1791004433532
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "arm": "A",
+      "target": "runNativeHard",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNativeHard",
+        "repeat_index": 2,
+        "inner_repeats": 1,
+        "total_nanos": 1633774445,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 65680,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench_before",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:54Z",
+          "timestamp_unix_ms": 1791004434064
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "arm": "B",
+      "target": "runNativeHard",
+      "data": {
+        "schema_version": 1,
+        "kind": "fixed",
+        "function": "runNativeHard",
+        "repeat_index": 2,
+        "inner_repeats": 1,
+        "total_nanos": 544138837,
+        "result_hash": "0x1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 66516,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexecpp_bench",
+          "git_commit": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-03T05:13:56Z",
+          "timestamp_unix_ms": 1791004436078
+        }
+      }
+    }
+  ],
+  "baseline_executable_sha256": "88a8ccd3944e1709c876d15ea5aaaa8dcfb10faa8061c387f14879a6cd5cb2b9",
+  "baseline_source": "a6bf9819c4c2283b40dbd0802e84981ea0a9e9c9",
+  "new_targets_without_prior_registration": [
+    "runCheck65",
+    "runCheck256",
+    "runCheck512",
+    "runNativeCheck",
+    "runNativeConvert",
+    "runParse512",
+    "runNativeExhaust",
+    "runCM128",
+    "runCM256",
+    "runCountedConvert65"
+  ],
+  "regression_ratios": {
+    "runConvert65": {
+      "paired_ratios": [
+        0.6993605991808551,
+        0.8606703440460431,
+        0.8202973639147817
+      ],
+      "median": 0.8202973639147817
+    },
+    "runConvert256": {
+      "paired_ratios": [
+        0.3679349296201556,
+        0.3843089119641322,
+        0.4591917657660993
+      ],
+      "median": 0.3843089119641322
+    },
+    "runConvert512": {
+      "paired_ratios": [
+        0.24612349774382727,
+        0.29808060574984285,
+        0.24849669925761764
+      ],
+      "median": 0.24849669925761764
+    },
+    "runNative128": {
+      "paired_ratios": [
+        0.4870124061583832,
+        0.4441276301906992,
+        0.5197200002648275
+      ],
+      "median": 0.4870124061583832
+    },
+    "runNative256": {
+      "paired_ratios": [
+        0.24864164125170657,
+        0.2539988285184053,
+        0.3008790936287477
+      ],
+      "median": 0.2539988285184053
+    },
+    "runNativeHard": {
+      "paired_ratios": [
+        0.3089336797286129,
+        0.3359549603302999,
+        0.33305627876925203
+      ],
+      "median": 0.33305627876925203
+    }
+  },
+  "host_after": {
+    "loadavg": [
+      28.63134765625,
+      27.88818359375,
+      24.19140625
+    ]
+  },
+  "artifact_sha256": {},
+  "comparison": {
+    "A": "ECPP inverse generation using existing HexArith.extGcd on Nat",
+    "B": "ECPP inverse generation using the proved HexArith.Int.extGcd route to the Nat.extendedGcd backport",
+    "other_arithmetic": "Both binaries include the same HexArith backport and signed compiler rewrite; only the ECPP inverse producer call differs."
+  },
+  "arithmetic_source_hashes": {
+    "HexArith/Nat/ExtendedGcd.lean": "7ef196c765ee36ef5dd916b37b417c0aa77cf167f141277c4c6c3f66c6834ad4",
+    "HexArith/ExtGcd.lean": "6c71112e1fa6e64ef7c2a680b668144cc0fd34d714f3af852babda117472a13f",
+    "HexArith/ffi/extended_gcd.c": "b3df25d0a98f90164234639995648f17f7b5357e1fc1f1bf28deab76364d6942"
+  }
+}
