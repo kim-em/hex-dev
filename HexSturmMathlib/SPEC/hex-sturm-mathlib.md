@@ -42,7 +42,7 @@ accepted certificates has no producer-success hypothesis. All these results
 use only Lean's standard logical axioms. Independent scaffolding reviews are
 retained in `status/`; ordinary-kernel correctness checks are complete. Phase
 attestation is recorded in `libraries.yml`. Phase 4 still requires core
-eligibility and a named headline correctness theorem with its bridge-target
+eligibility and the headline correctness theorem's bridge-target
 availability reconciled against the development-adapter boundary. The `HexSturmMathlibTests` target builds
 the ordinary companion checks under `HexSturmMathlib/Tests`. Semantic axiom
 guards live beside their development-only imports under `adapters/` and build
@@ -185,7 +185,7 @@ it cannot establish this signed sum.
 
 Theorems below use the `HexSturmMathlib` namespace. Domain, representation
 and rational/integer correspondence live in the companion library. Root-sum
-semantics (`query_spec`, `query_sound`, `queryPrepared_sound`,
+semantics (`query_iff`, `query_spec`, `query_sound`, `queryPrepared_sound`,
 `countPrepared_sound`, `countPrepared_nonneg`, `check_sound`, `rootCount_eq`,
 `query_bound`, `query_sign`) and exact natural-count conversion live in the
 monorepo's `HexQuerySemantics` adapter target, not the released companion
@@ -198,6 +198,7 @@ in the lawful semantic field described above.
 | `withEndpoints_isSome` | Retargeting a prepared head succeeds exactly when `Domain(P;a,b)` holds at the new endpoints. The core `PreparedDomain.withEndpoints_bindings` theorem separately preserves the literal head, sign and squarefree chain. |
 | `withEndpoints_domain` | The actual retargeted object has a valid domain at the requested endpoints. |
 | `query_spec` | `query p f a b = some q` implies `Domain(P;a,b)` and `q = TaQ(F,P;a,b)` for every supplied `R,ι,hι`. |
+| `query_iff` | `query p f a b = some q` if and only if `Domain(P;a,b)` and `q = TaQ(F,P;a,b)` for every supplied `R,ι,hι`. |
 | `queryPrepared_sound` | The prepared query computes the same mathematical sum for its bound domain and any `f`. |
 | `countPrepared_sound` | The actual prepared query-one operation equals `Roots(P;a,b).card`, interpreted as an integer. |
 | `countPrepared_nonneg` | The actual prepared integer count is nonnegative under the lawful coefficient interpretation, before conversion to `Nat`. |
@@ -220,6 +221,27 @@ this guard and must not be rejected. The bound and singleton theorems concern
 semantic root sets; they do not introduce root enumeration into the runtime.
 
 `query_sound` is the value-only projection of the combined `query_spec` contract.
+
+## Headline correctness theorem
+
+`HexSturmMathlib.query_iff` in `Soundness.lean` is the headline for the ordinary
+Sturm query. It characterizes the complete returned `Option`: a particular
+integer is returned exactly when the domain holds and it is the signed sum
+over the distinct roots in the open interval. Thus failure occurs exactly
+outside the domain. The lawful interpretation hypotheses permit noninjective
+coefficient storage without field or order instances on the storage, and any
+ordered real closed semantic field.
+
+`query_isSome`, `query_spec` and `query_sound` compose into this theorem.
+Prepared-query, natural-count, arbitrary-certificate and transport results in
+the table are independently required public contracts: they describe stored
+domains, exact natural conversion, supplied evidence and representation changes
+which the ordinary query does not expose. They retain their ordinary-kernel
+axiom guards. The headline itself and its noninjective-storage instantiation
+have guards in `adapters/HexSturmMathlib/Tests/Replay/Semantics.lean`.
+It builds through `HexQuerySemantics`; reconciliation of this development-only
+bridge target with the Phase-4 policy remains required, and split-package
+integration remains owned by #10575. Naming the theorem is not Phase-4 attestation.
 
 ### Root-count boundary
 

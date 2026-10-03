@@ -711,6 +711,16 @@ comparator coverage remains tracked under #10577.
 
 ## Profile
 
+[Retained representative captures](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)
+on clean source `62399ddd0` supply 548 replay samples and 526 prepared-query
+samples. Both pass sample-count, calibration and ±5 ms sensitivity checks.
+Replay has 99.82% inclusive certificate-check share, including 77.74% signed
+chain checking, with 46.35% allocation self share. The prepared high-degree
+query has 92.02% signed-chain-build share, including 87.45% pseudo-division,
+with 27.19% allocation self share. Raw perf/samply files, kernel sidecars,
+symbols and checksums are retained in persistent storage. This supplies
+representative attribution without admitting the unresolved model candidates.
+
 [The profile inventory](bench-results/prerequisite-readiness-profiles/inventory.json)
 includes every successful and failed capture, binary fingerprints, commands,
 historical raw-profile locations and filtered summaries. Hashing, fixture preparation
@@ -720,7 +730,8 @@ diagnostics pass the ≥100-sample, ≤5 ms calibration and ±5 ms sensitivity c
 all 38 prerequisite-readiness raw capture directories unavailable at their
 recorded local paths. Their committed manifests, summaries, diagnostics and
 timing samples remain intact, but these raw perf/samply files cannot currently
-be reprocessed. Complete Phase-4 raw-attribution retention is not established.
+be reprocessed. Those historical candidate profiles do not supply current raw
+attribution if their complexity models are later admitted.
 
 The fractional-endpoint capture at 32768 bits retains 1542 samples, a
 1.001 ms calibration residual and passing ±5 ms sensitivity. It has 98.31%
@@ -756,6 +767,10 @@ frontend profiles are separate evidence for prepared, cached and transport paths
 
 ## Concerns
 
-- [#10577](https://github.com/kim-em/hex-dev/issues/10577): recover the prerequisite-readiness raw captures or provide the required retained representative attribution. Existing completed samples and summaries remain retained; their missing raw artifacts are an additional Phase-4 evidence gap.
+- The historical raw captures were lost after a reboot. Their summaries remain
+  diagnostics and cannot be reprocessed. The [retained representative captures](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)
+  supply fresh replay and prepared-query attribution with raw perf/samply data,
+  sidecars and checksums in persistent storage. Both pass calibration and
+  ±5 ms sensitivity checks; they do not admit the unresolved model candidates.
 
 - [#10577](https://github.com/kim-em/hex-dev/issues/10577): reconcile all advertised frontend operations with registrations/comparators, resolve the retained coefficient-sign characterization, and finish dependency-ordered Phase-4 attestation. The admitted family evidence and unadmitted candidates above do not close this audit.

@@ -10,15 +10,15 @@ independent per-library scaffolding reviews in `status/`. Phase 3 has compiled
 operation/property/edge checks for both cores, ordinary-kernel companion builds
 and axiom guards. Required CI on the final revision must pass before merge.
 Phase 4 remains incomplete for both cores;
-the theorem-only companions need their cores at Phase 4 and their headline
-correctness/bridge requirements discharged before recording it.
+the theorem-only companions need their cores at Phase 4 and the Sturm headline's
+bridge-target availability reconciled before recording it.
 
 | Library | Implemented/proved coverage | Phase requirements still to discharge | Evidence |
 | --- | --- | --- | --- |
 | HexSturm | Shared ordered-domain kernel; guarded queries and exact-domain natural counts; prepared domains, retargeting, counts, cached replay and literal certificate transport | Phase 4: comparator/registration reconciliation, admissible characterization and retained concerns | `HexSturm/Basic.lean`, `Transport.lean`, `conformance/HexSturm/Conformance.lean`, [performance report](hex-sturm-performance.md) |
-| HexSturmMathlib | Domain equivalence, prepared bindings, producer acceptance, representation congruence and rational/integer whole-Option agreement; root-sum semantics, count equality and bounds in development adapters | Phase 4: core eligibility and named headline correctness/bridge-target reconciliation; no dedicated performance deliverable for this theorem-only layer | `Domain`, `Compare`, `Rational`, `DenominatorClearing`, `IntCast`; `adapters/HexSturmMathlib/Soundness.lean`; ordinary-kernel `HexSturmMathlibTests` |
+| HexSturmMathlib | Domain equivalence, prepared bindings, producer acceptance, representation congruence and rational/integer whole-Option agreement; exact query iff, count equality and bounds in development adapters | Phase 4: core eligibility and headline bridge-target reconciliation; no dedicated performance deliverable for this theorem-only layer | `Domain`, `Compare`, `Rational`, `DenominatorClearing`, `IntCast`; `adapters/HexSturmMathlib/Soundness.lean`; ordinary-kernel `HexSturmMathlibTests` |
 | HexRealAlgebraic | Real subtype, rational recognition and toRat?-first rounding, canonical arithmetic/order, rounding, square roots, fixed-field coordinate signs, integer and algebraic-coefficient real roots, complex norms | Phase 4: canonical fixed operations need admissible models/budgets; root/leaf, separation and rounding sweeps remain | `conformance/HexRealAlgebraic`, pinned FLINT/qqbar oracle and fixtures; `bench/HexRealAlgebraic/Bench.lean` |
-| HexRealAlgebraicMathlib | Arithmetic/order and closure, law/dictionary coherence, rational recognition, rounding, approximation, Repr round trip, fixed-field sign correspondence, roots completeness/multiplicity/strict order and real closedness | Phase 4: core eligibility and named headline correctness/bridge-target reconciliation; no dedicated performance deliverable for this theorem-only layer | `HexRealAlgebraicMathlib/Instances.lean`, `Roots.lean`, `RealClosed.lean`, `HexRealAlgebraicMathlib/Tests.lean` |
+| HexRealAlgebraicMathlib | Arithmetic/order and closure, law/dictionary coherence, rational recognition, rounding, approximation, Repr round trip, fixed-field sign correspondence, combined roots contract and real closedness | Phase 4: core eligibility; no dedicated performance deliverable for this theorem-only layer | `HexRealAlgebraicMathlib/Instances.lean`, `Roots.lean`, `RealClosed.lean`, `HexRealAlgebraicMathlib/Tests.lean` |
 
 ## Semantic availability
 
@@ -59,9 +59,13 @@ not exempt the implemented `realCompare` or `RealAlgebraicPoly.roots` surface.
 
 `PLAN/Conventions.md` requires a named end-to-end headline correctness theorem
 in the Mathlib bridge for Phase-4 attestation. The existing correspondence
-results remain available, but neither pair's current SPEC names a single
-headline theorem covering its public postconditions. Naming/composition and
-ordinary-kernel audits of those headlines remain under #10577. The Sturm
+results compose into the named headlines `HexSturmMathlib.query_iff` and
+`Hex.RealAlgebraicPoly.roots_spec`. Their SPECs state the semantic clauses and
+the independently required public contracts for prepared queries, supplied
+certificates, scalar operations and representation changes. Ordinary-kernel
+guards admit only the three standard logical axioms; a noninjective-storage
+query instantiation also builds without field or order instances on storage.
+The real root headline builds in the companion target. The Sturm
 semantic results currently build through `HexQuerySemantics` under `adapters/`;
 Phase-4 evidence must reconcile their bridge-target availability with that
 policy. Split-package integration remains with #10575 and is not asserted by
@@ -111,9 +115,11 @@ recording and final revision before merge.
 [The raw-artifact availability check](bench-results/prerequisite-profile-availability.json)
 finds 38 prerequisite-readiness capture directories unavailable at their recorded
 local paths. Committed manifests, summaries, diagnostics and completed timing
-samples remain retained. Recovering the raw captures or supplying required
-retained representative attribution remains under #10577; no complete Phase-4
-raw-retention claim is made.
+samples remain retained. [Three required representative captures](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)
+now supply replay, prepared-query and canonical-addition attribution with raw
+perf/samply data, kernel sidecars and 126 matching artifact checksums in
+persistent storage. They pass calibration and sensitivity checks; they do not
+replace completed measurements or admit unresolved complexity models.
 The [real-algebraic performance report](hex-real-algebraic-performance.md) and
 the Sturm report distinguish valid family passes from failed hypotheses,
 controls and fixed observations without budgets. Phase 4 remains incomplete.

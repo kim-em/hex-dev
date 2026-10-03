@@ -10,6 +10,17 @@ attestation; the [performance report](../../reports/hex-real-algebraic-performan
 lists the remaining Phase-4 requirements. The forward comparison-strategy
 extension is excluded from the implemented surface, as the shared SPEC states.
 
+## Headline correctness theorem
+
+`Hex.RealAlgebraicPoly.roots_spec` is the bridge headline for the implemented
+root driver. It combines universal roots exactly for zero, real-root
+completeness, executable membership, strict ordering and positive exact
+multiplicities. The
+[companion contract](../../HexRealAlgebraicMathlib/SPEC/hex-real-algebraic-mathlib.md#headline-correctness-theorem)
+also identifies the independently required scalar and representation contracts,
+including the implemented comparison API. The forward comparison extension
+remains excluded; naming this theorem does not advance Phase 4.
+
 ## Shared comparison and complex norm operations
 
 Real order inherits the stored-interval and bounded adaptive refinement paths

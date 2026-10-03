@@ -137,6 +137,15 @@ reconciliation with the implemented surface and its actual matching APIs.
 
 ## Profile
 
+[Retained representative attribution](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)
+on clean source `62399ddd0` has 6592 kernel-window samples for canonical hard
+addition. Calibration residual is 0.046 ms, and sample-count and ±5 ms
+sensitivity checks pass. Root isolation has 91.88% inclusive share, refinement
+90.61%, and allocation 42.38% self share. Raw perf/samply data, kernel sidecars,
+symbols and checksums are retained in persistent storage. This supplies the
+required representative attribution, not an operation-specific budget or a
+replacement for the completed timing samples below.
+
 [The complete profile inventory](bench-results/prerequisite-readiness-profiles/inventory.json)
 records manifests, native-kernel sidecars, executable hashes, filtered summaries
 and local perf/samply locations. Failed or low-confidence captures remain in
@@ -186,7 +195,9 @@ in the linked summaries.
 
 ## Concerns
 
-- [#10577](https://github.com/kim-em/hex-dev/issues/10577): recover the 38 raw captures or supply the required retained representative attribution. Their saved summaries remain diagnostics; no blanket rerun replaces the completed evidence.
+- The earlier 38 raw captures were lost after a reboot. Their saved summaries
+  remain diagnostics and cannot be reprocessed; the new representative capture
+  supplies retained attribution without a blanket rerun of completed evidence.
 
 - [#10577](https://github.com/kim-em/hex-dev/issues/10577): finish operation-specific mode/budget justification and comparators, genuine root/leaf parameter families, separation/point and rounding sweeps, and square-root/rational-construction characterization. The shipped `compare_eq` and root completeness/multiplicity/sorting theorems are available independently of this timing work.
 

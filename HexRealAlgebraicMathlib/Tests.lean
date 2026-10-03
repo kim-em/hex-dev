@@ -40,6 +40,10 @@ These are correctness checks; they do not measure executable performance. -/
 #guard_msgs in
 #print axioms Hex.RealAlgebraicPoly.roots_positive
 
+/-- info: 'Hex.RealAlgebraicPoly.roots_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealAlgebraicPoly.roots_spec
+
 /-- info: 'Hex.ZPoly.mem_realAlgebraicRoots_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.ZPoly.mem_realAlgebraicRoots_iff
