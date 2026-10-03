@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.RootCollection
+public import HexRealClosure.RootList
 public import HexRealClosure.TowerCatalog
 public import HexRealClosure.TowerOrder
 
@@ -291,6 +292,210 @@ theorem Partition.sectorBetween?_mem {polynomials : List parent.Poly} (family : 
     simp only [Partition.sectorBetween?, found, Option.map_some, Option.some.injEq] at returned
     subst sample
     exact List.mem_map.mpr ⟨point, List.mem_of_find?_eq_some found, rfl⟩
+
+
+/-- A section or sector retaining root handles in their original contexts.
+Only the finite boundaries of a requested cell enter its arithmetic context. -/
+inductive Region (parent : Context registry) : Type 1 where
+  | section (root : Root parent)
+  | whole
+  | left (upper : Root parent)
+  | right (lower : Root parent)
+  | between (lower upper : Root parent)
+
+/-- A sector's original finite boundary handles; sections have no open interval. -/
+@[expose] def Region.endpoints? : Region parent → Option (Endpoint (Root parent) × Endpoint (Root parent))
+  | .section _ => none
+  | .whole => some (.negInf, .posInf)
+  | .left upper => some (.negInf, .finite upper)
+  | .right lower => some (.finite lower, .posInf)
+  | .between lower upper => some (.finite lower, .finite upper)
+
+/-- Construct the ordinary native value for one cell. Sections reuse the cached
+root child; rays use one root; bounded sectors collect exactly two roots.
+Membership of a bounded midpoint requires the lower root to precede the upper. -/
+def Region.sample : Region parent → Tower.Sample parent
+  | .section root => Tower.Sample.ofRoot root
+  | .whole => Tower.Sample.mk (Conversion.identity parent) 0 (.sector .negInf .posInf)
+  | .left root => Tower.Sample.mk root.conversion (root.convertedValue - 1)
+      (.sector .negInf (.finite root.convertedValue))
+  | .right root => Tower.Sample.mk root.conversion (root.convertedValue + 1)
+      (.sector (.finite root.convertedValue) .posInf)
+  | .between lower upper =>
+      let pair := parent.collect [lower, upper]
+      let a := pair.values.headD 0
+      let b := (pair.values.drop 1).headD 0
+      Tower.Sample.mk pair.input ((a + b) / (1 + 1)) (.sector (.finite a) (.finite b))
+
+/-- A complete family ordered and deduplicated before any shared arithmetic
+context is constructed. Each returned sample has its own immutable context. -/
+structure Family (parent : Context registry) (polynomials : List parent.Poly) : Type 1 where
+  private mk ::
+  boundaries : List (Root parent)
+  produced : boundaries = Root.sort (roots parent polynomials)
+
+/-- Find complete roots and retain one native root handle per distinct value. -/
+def family (parent : Context registry) (polynomials : List parent.Poly) : Family parent polynomials :=
+  Family.mk (Root.sort (roots parent polynomials)) rfl
+
+@[expose] def afterRegions (lower : Root parent) : List (Root parent) → List (Region parent)
+  | [] => [.right lower]
+  | upper :: rest => .between lower upper :: afterRegions upper rest
+
+/-- The complete sector list described by original root handles. -/
+@[expose] def Family.regions {polynomials : List parent.Poly} (family : Family parent polynomials) :
+    List (Region parent) :=
+  match family.boundaries with
+  | [] => [.whole]
+  | first :: rest => .left first :: afterRegions first rest
+
+/-- One section per distinct root, with its cached root context. -/
+def Family.sections {polynomials : List parent.Poly} (family : Family parent polynomials) :
+    List (Tower.Sample parent) := family.boundaries.map Tower.Sample.ofRoot
+
+/-- Construct each sector using only its own finite boundaries. -/
+def Family.sectors {polynomials : List parent.Poly} (family : Family parent polynomials) :
+    List (Tower.Sample parent) := family.regions.map Region.sample
+
+/-- All sections and sectors, described independently of their local contexts. -/
+def Family.cells {polynomials : List parent.Poly} (family : Family parent polynomials) :
+    List (Region parent) := family.boundaries.map Region.section ++ family.regions
+
+/-- The complete cell list describes exactly the returned ordinary samples. -/
+theorem Family.cells_eq {polynomials : List parent.Poly} (family : Family parent polynomials) :
+    family.sections ++ family.sectors = family.cells.map Region.sample := by
+  simp [Family.sections, Family.sectors, Family.cells, Region.sample, List.map_append,
+    List.map_map, Function.comp_def]
+
+/-- Select the region before constructing its sample. Requesting one sector
+constructs neither other midpoints nor a common context for all roots. -/
+def Family.sector? {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (index : Nat) : Option (Tower.Sample parent) := family.regions[index]?.map Region.sample
+
+private def sameRoot (a b : Root parent) : Bool := decide (a.compare b = .eq)
+
+private def matchesRegion (lower upper : Endpoint (Root parent)) : Region parent → Bool
+  | .whole => match lower, upper with | .negInf, .posInf => true | _, _ => false
+  | .left b => match lower, upper with | .negInf, .finite a => sameRoot a b | _, _ => false
+  | .right a => match lower, upper with | .finite b, .posInf => sameRoot a b | _, _ => false
+  | .between a b => match lower, upper with
+      | .finite c, .finite d => sameRoot c a && sameRoot d b
+      | _, _ => false
+  | .section _ => false
+
+/-- Check semantic endpoint equality against adjacent complete root handles,
+then construct just the accepted sector. Non-adjacent requests are rejected. -/
+def Family.sectorBetween? {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (lower upper : Endpoint (Root parent)) : Option (Tower.Sample parent) :=
+  (family.regions.find? (matchesRegion lower upper)).map Region.sample
+
+private theorem afterRegions_length (lower : Root parent) (rest : List (Root parent)) :
+    (afterRegions lower rest).length = rest.length + 1 := by
+  induction rest generalizing lower with
+  | nil => rfl
+  | cons upper rest ih => simp [afterRegions, ih, Nat.add_comm, Nat.add_left_comm]
+
+/-- There is one section for each distinct boundary. -/
+theorem Family.sections_length {polynomials : List parent.Poly} (family : Family parent polynomials) :
+    family.sections.length = family.boundaries.length := by simp [Family.sections]
+
+/-- The complete family has one more sector than finite boundaries. -/
+theorem Family.sectors_length {polynomials : List parent.Poly} (family : Family parent polynomials) :
+    family.sectors.length = family.boundaries.length + 1 := by
+  simp only [Family.sectors, List.length_map]
+  cases boundaries : family.boundaries with
+  | nil => simp [Family.regions, boundaries]
+  | cons first rest =>
+    simpa only [Family.regions, boundaries, List.length_cons] using
+      congrArg (fun n => n + 1) (afterRegions_length first rest)
+
+/-- A root-free family has the whole-line sector. -/
+theorem Family.wholeLine_mem {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (empty : family.boundaries = []) : Region.whole ∈ family.regions := by
+  simp [Family.regions, empty]
+
+/-- The first root has its exterior left ray. -/
+theorem Family.leftRay_mem {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (first : Root parent) (rest : List (Root parent)) (boundaries : family.boundaries = first :: rest) :
+    Region.left first ∈ family.regions := by simp [Family.regions, boundaries]
+
+/-- The last root has its exterior right ray. -/
+theorem Family.rightRay_mem {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (before : List (Root parent)) (last : Root parent) (boundaries : family.boundaries = before ++ [last]) :
+    Region.right last ∈ family.regions := by
+  have tail : ∀ first earlier, Region.right last ∈ afterRegions first (earlier ++ [last]) := by
+    intro first earlier
+    induction earlier generalizing first with
+    | nil => simp [afterRegions]
+    | cons next rest ih =>
+      simp only [List.cons_append, afterRegions, List.mem_cons]
+      exact Or.inr (ih next)
+  cases before with
+  | nil => simp [Family.regions, boundaries, afterRegions]
+  | cons first rest =>
+    simp only [Family.regions, boundaries, List.cons_append, List.mem_cons]
+    exact Or.inr (tail first rest)
+
+/-- Adjacent roots of the complete family define an actual bounded sector. -/
+theorem Family.bounded_mem {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (before after : List (Root parent)) (lower upper : Root parent)
+    (boundaries : family.boundaries = before ++ lower :: upper :: after) :
+    Region.between lower upper ∈ family.regions := by
+  have tail : ∀ first earlier, Region.between lower upper ∈
+      afterRegions first (earlier ++ lower :: upper :: after) := by
+    intro first earlier
+    induction earlier generalizing first with
+    | nil => simp [afterRegions]
+    | cons next rest ih =>
+      simp only [List.cons_append, afterRegions, List.mem_cons]
+      exact Or.inr (ih next)
+  cases before with
+  | nil => simp [Family.regions, boundaries, afterRegions]
+  | cons first rest =>
+    simp only [Family.regions, boundaries, List.cons_append, List.mem_cons]
+    exact Or.inr (tail first rest)
+
+/-- Every sector position from zero through the final ray succeeds. -/
+theorem Family.sector?_success {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (index : Nat) (valid : index ≤ family.boundaries.length) :
+    ∃ sample, family.sector? index = some sample := by
+  have bounds : index < family.regions.length := by
+    have count := family.sectors_length
+    simp only [Family.sectors, List.length_map] at count
+    rw [count]
+    omega
+  refine ⟨(family.regions[index]'bounds).sample, ?_⟩
+  simp only [Family.sector?, List.getElem?_eq_getElem bounds, Option.map_some]
+
+/-- Only positions beyond the complete sector family are rejected. -/
+theorem Family.sector?_none {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (index : Nat) : family.sector? index = none ↔ family.boundaries.length < index := by
+  have count := family.sectors_length
+  simp only [Family.sectors, List.length_map] at count
+  rw [Family.sector?, Option.map_eq_none_iff, List.getElem?_eq_none_iff, count]
+  omega
+
+/-- The selected sector is one of the actual complete family samples. -/
+theorem Family.sector?_mem {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (index : Nat) (sample : Tower.Sample parent) (returned : family.sector? index = some sample) :
+    sample ∈ family.sectors := by
+  cases found : family.regions[index]? with
+  | none => simp [Family.sector?, found] at returned
+  | some region =>
+    simp only [Family.sector?, found, Option.map_some, Option.some.injEq] at returned
+    subst sample
+    exact List.mem_map.mpr ⟨region, List.mem_of_getElem? found, rfl⟩
+
+/-- Successful endpoint requests select one of the actual complete sectors. -/
+theorem Family.sectorBetween?_mem {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (lower upper : Endpoint (Root parent)) (sample : Tower.Sample parent)
+    (returned : family.sectorBetween? lower upper = some sample) : sample ∈ family.sectors := by
+  cases found : family.regions.find? (matchesRegion lower upper) with
+  | none => simp [Family.sectorBetween?, found] at returned
+  | some region =>
+    simp only [Family.sectorBetween?, found, Option.map_some, Option.some.injEq] at returned
+    subst sample
+    exact List.mem_map.mpr ⟨region, List.mem_of_find?_eq_some found, rfl⟩
 
 end Sample
 end Hex.RealClosure.Tower

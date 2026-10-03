@@ -424,10 +424,14 @@ A complete family partition may construct this evidence itself; checked
 boundary requests must still reject non-adjacent pairs. An indexed interface
 may additionally select sectors from that validated complete partition.
 The result includes the sample context, input embedding, strict membership
-and signs of every member of `Q` at the sample. A midpoint in a common root
-context handles bounded sectors; `a+1`, `b-1` and `0` handle rays and the whole
+and signs of every member of `Q` at the sample. A midpoint in a context containing the two boundary roots
+handles bounded sectors; `a+1`, `b-1` and `0` handle rays and the whole
 line. Dyadic samples are an optional Archimedean backend, not a generic
-separation requirement.
+separation requirement. Order and deduplicate the original root handles
+before building arithmetic contexts. A section reuses its root context, a ray
+uses one boundary, and a bounded sample collects only its two boundaries.
+Each result retains its own input embedding; cell coverage and sign invariance
+are interpreted in a common ambient field.
 
 An infinitesimal backend may use `r+ε` or `±1/ε`. After algebraics exist,
 `Context.enlarge` rebuilds the infinitesimal base before those levels,
