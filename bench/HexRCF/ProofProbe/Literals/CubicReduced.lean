@@ -7,6 +7,7 @@ module
 
 public import HexRCF.RealCoefficients
 public meta import HexRCF.RealCoefficients
+public meta import HexRCF.ProofProbe.Literals.Support
 public section
 
 namespace Hex.RCF.ProofProbe.Literals.CubicReduced
@@ -21,5 +22,11 @@ theorem witness : ∃ x : ℝ, x ^ 2 = (2 : ℝ) ^ (1 / 3 : ℝ) ∧
 #guard_msgs in
 #print axioms witness
 
+run_meta do
+  unless ← usesConstructor `Hex.RCF.ProofProbe.Literals.CubicReduced.witness
+      ``Hex.PolyQuot.mk 4 do
+    throwError "literal probe did not use its selected quotation constructor"
+
+-- The collector inventories this unguarded output for every fresh build.
 #print axioms witness
 end Hex.RCF.ProofProbe.Literals.CubicReduced

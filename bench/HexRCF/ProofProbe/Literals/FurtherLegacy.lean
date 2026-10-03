@@ -7,6 +7,7 @@ module
 
 public import HexRCF.RealCoefficients
 public meta import HexRCF.RealCoefficients
+public meta import HexRCF.ProofProbe.Literals.Support
 public section
 
 namespace Hex.RCF.ProofProbe.Literals.FurtherLegacy
@@ -20,5 +21,11 @@ theorem witness : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by rcf
 #guard_msgs in
 #print axioms witness
 
+run_meta do
+  unless ← usesConstructor `Hex.RCF.ProofProbe.Literals.FurtherLegacy.witness
+      ``Hex.PolyQuot.reduce 3 do
+    throwError "literal probe did not use its selected quotation constructor"
+
+-- The collector inventories this unguarded output for every fresh build.
 #print axioms witness
 end Hex.RCF.ProofProbe.Literals.FurtherLegacy

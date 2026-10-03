@@ -31,7 +31,7 @@ register_option rcf.algebraic.maxDoublings : Nat := {
 -- A comparison control for literal quotation, with the same replay checker
 -- and soundness theorem in both modes. This does not change solver dispatch.
 register_option rcf.algebraic.reducedLiterals : Bool := {
-  defValue := true
+  defValue := false
   descr := "quote fixed-field coordinates directly instead of reducing them again"
 }
 

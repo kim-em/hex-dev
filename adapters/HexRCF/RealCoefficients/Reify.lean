@@ -81,6 +81,7 @@ private partial def castGuards (e : Expr) : ScanM Unit := do
   let divisor := if op == ``HDiv.hDiv && args.size == 6 then some args[5]!
     else if op == ``Inv.inv && args.size == 3 then some args[2]! else none
   if let some d := divisor then
+    unless isClosed d do reject e "division inside a literal cast must have a closed divisor"
     unless (← inferType d).isConstOf ``Rat do
       reject e "division inside a literal cast must be rational"
     let d : Q(ℚ) := d
@@ -112,12 +113,17 @@ private partial def scalar (registered : Array Expr) (source : Expr) : ScanM Uni
     -- branches, including an unused fallback. Conversion does not erase them.
     let _ ← Meta.transformWithCache e.appArg! {} (pre := fun part => do
       if ← isProof part then return .done part
-      if let some divisor ← Conversion.divisor? part then modify (·.push divisor)
+      if let some divisor ← Conversion.divisor? part then
+        unless isClosed divisor do
+          reject part "division in a converted coefficient must have a closed divisor"
+        modify (·.push divisor)
       else
         let (op, args) := part.getAppFnArgs
         let divisor := if op == ``HDiv.hDiv && args.size == 6 then some args[5]!
           else if op == ``Inv.inv && args.size == 3 then some args[2]! else none
         if let some d := divisor then
+          unless isClosed d do
+            reject part "division in a converted coefficient must have a closed divisor"
           if (← inferType d).isConstOf ``Rat then
             let d : Q(ℚ) := d
             modify (·.push q(($d : ℝ)))
@@ -134,6 +140,12 @@ private partial def scalar (registered : Array Expr) (source : Expr) : ScanM Uni
         if op == ``HPow.hPow && args.size == 6 then
           if (← inferType args[5]!).isConstOf ``Int then
             reject part "integer powers in converted coefficients are unsupported"
+        if [``Hex.RealAlgebraicNumber.intPow, ``Hex.AlgebraicNumber.intPow,
+            ``Hex.PolyQuot.intPow].contains op then
+          reject part "integer powers in converted coefficients are unsupported"
+        if [``Hex.AlgebraicNumber.div, ``Hex.AlgebraicNumber.inv,
+            ``Hex.PolyQuot.div, ``Hex.PolyQuot.inv].contains op then
+          reject part "raw carrier division in converted coefficients is unsupported"
       if part.isAppOfArity ``Hex.RealAlgebraicNumber.ofRat 1 ||
           part.isAppOfArity ``Hex.AlgebraicNumber.ofRat 1 then
         let value : Q(ℚ) := part.appArg!
@@ -281,16 +293,29 @@ private partial def lowerCore (registered : Array Expr) (source : Expr) :
 def lowerSources (registered : Array Expr) (source : Expr) : MetaM Expr :=
   Prod.fst <$> (lowerCore registered source).run #[]
 
-/-- Lower with an equality of the exact source, for guards and alias proofs.
-Consumers compose this equality with proofs about the lowered real expression. -/
+private def addCasts (theorems : SimpTheorems := {}) : MetaM SimpTheorems := do
+  let mut theorems := theorems
+  for name in #[``Nat.cast_ofNat, ``Nat.cast_zero, ``Nat.cast_one, ``Int.cast_ofNat] do
+    theorems ← theorems.addConst name
+  return theorems
+
+private def castGoals (goals : List MVarId) : MetaM (List MVarId) := do
+  let context ← Simp.mkContext (simpTheorems := #[← addCasts])
+    (congrTheorems := ← getSimpCongrTheorems)
+  let mut remaining := []
+  for id in goals do
+    let (next, _) ← simpTarget id context
+    if let some id := next then
+      remaining := remaining ++
+        (← Lean.Elab.runTactic' id (← `(tactic| try with_reducible rfl)))
+  return remaining
+
 private def lowerProof (source lowered : Expr) (proofs : Array Expr) : MetaM Expr := do
   if source == lowered then return ← mkEqRefl source
   let mut theorems : SimpTheorems := {}
   for proof in proofs do
     theorems ← theorems.add (.other (← mkFreshId)) #[] proof
-  for name in #[``Hex.RealAlgebraicNumber.ofRat_toReal,
-      ``Nat.cast_ofNat, ``Nat.cast_zero, ``Nat.cast_one, ``Int.cast_ofNat] do
-    theorems ← theorems.addConst name
+  theorems ← addCasts (← theorems.addConst ``Hex.RealAlgebraicNumber.ofRat_toReal)
   let candidate ← mkFreshExprMVar (← mkEq source lowered)
   let context ← Simp.mkContext (simpTheorems := #[theorems])
     (congrTheorems := ← getSimpCongrTheorems)
@@ -381,10 +406,8 @@ private def prepareCore (registered : Array Expr) (original : Expr) (config : He
   Hex.RealFormula.Reify.charge .sourceNodes (Hex.Reflect.sourceNodeCount source (cap + 1))
   let divisors ← preflight registered source
   let (rationalized, conversions) ← liftM ((lowerCore registered source).run #[])
-  for proof in conversions do
-    Hex.RealFormula.Reify.accountProof proof
   let lowering ← liftM (lowerProof source rationalized conversions)
-  Hex.RealFormula.Reify.accountProof lowering
+  if rationalized != source then Hex.RealFormula.Reify.accountProof lowering
   if rationalized != source then
     -- A known zero guard is terminal before the shared reifier can turn its
     -- rational denominator into a syntax decline. Other guards remain for the
@@ -434,17 +457,7 @@ private def prepareCore (registered : Array Expr) (original : Expr) (config : He
       let goals ← Lean.Elab.runTactic' goal.mvarId!
         (← `(tactic| (dsimp [Hex.RealFormula.append]; simp only
           [div_eq_mul_inv, one_mul, Hex.RealAlgebraicNumber.ofRat_toReal])))
-      let mut casts : SimpTheorems := {}
-      for name in #[``Nat.cast_ofNat, ``Nat.cast_zero, ``Nat.cast_one,
-          ``Int.cast_ofNat] do casts ← casts.addConst name
-      let context ← Simp.mkContext (simpTheorems := #[casts])
-        (congrTheorems := ← getSimpCongrTheorems)
-      let mut remaining := []
-      for id in goals do
-        let (next, _) ← simpTarget id context
-        if let some id := next then
-          let rest ← Lean.Elab.runTactic' id (← `(tactic| try with_reducible rfl))
-          remaining := remaining ++ rest
+      let remaining ← castGoals goals
       unless remaining.isEmpty do
         throwThe Hex.RealFormula.Reify.Error (.internal
           s!"failed to reconstruct the original source: {← ppExpr (← remaining[0]!.getType)}")
@@ -457,8 +470,8 @@ private def prepareCore (registered : Array Expr) (original : Expr) (config : He
       let sentenceMatch ← mkFreshExprMVar
         (← mkAppM ``Iff #[sentence, mkApp result.source valuation])
       let sourceGoals ← Lean.Elab.runTactic' sentenceMatch.mvarId!
-        (← `(tactic| (dsimp [Hex.RealFormula.append]; simp only
-          [Nat.cast_ofNat, Nat.cast_zero, Nat.cast_one, Int.cast_ofNat])))
+        (← `(tactic| try dsimp [Hex.RealFormula.append]))
+      let sourceGoals ← castGoals sourceGoals
       unless sourceGoals.isEmpty do
         throwThe Hex.RealFormula.Reify.Error (.internal
           "lowered sentence differs from the reflected source")

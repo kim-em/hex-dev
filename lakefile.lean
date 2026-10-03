@@ -1060,6 +1060,7 @@ lean_lib HexRCFBenchSupport where
 lean_lib HexRCFProofProfile where
   srcDir := "bench"
   globs := #[`HexRCF.ProofProbe.Profiling,
+    `HexRCF.ProofProbe.Literals.Support,
     `HexRCF.ProofProbe.Literals.FurtherLegacy, `HexRCF.ProofProbe.Literals.FurtherReduced,
     `HexRCF.ProofProbe.Literals.ReciprocalLegacy, `HexRCF.ProofProbe.Literals.ReciprocalReduced,
     `HexRCF.ProofProbe.Literals.CubicLegacy, `HexRCF.ProofProbe.Literals.CubicReduced].map Glob.one

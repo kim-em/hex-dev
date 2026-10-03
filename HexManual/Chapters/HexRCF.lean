@@ -909,8 +909,9 @@ Supported projections include selected real values, rational values, real
 does not provide a general procedure for arbitrary complex expressions or
 opaque conversion code. Original rational, real-algebraic and supported
 real-field divisors remain obligations, including divisors inside an unused
-`getD` fallback, before any branch is simplified. Division over other carriers
-and integer powers inside conversions are rejected.
+`getD` fallback, before any branch is simplified. Division over other carriers,
+raw `PolyQuot.div`/`inv`, integer powers and divisions depending on a binder
+inside conversions are rejected.
 
 A fresh-module comparison of the cubic reciprocal uses identical imports and
 shared source setup for `Coefficients.ofField` and direct

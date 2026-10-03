@@ -105,6 +105,15 @@ theorem coerced_divisor : ∀ x : ℝ,
       (↑(RealAlgebraicNumber.ofRat 2) : AlgebraicNumber)).getD
         (RealAlgebraicNumber.ofRat 0)).toReal + Real.sqrt 2 > 0 := by rcf
 
+theorem field_divisor : ∀ x : ℝ,
+    x ^ 2 + ((RealAlgebraicNumber.ofAlgebraic?
+      ((CubeTwo.realAlgebraic.toAlgebraic.toQAdjoin ^ 2 - 1) / 2).toAlgebraicNumber).getD
+        (RealAlgebraicNumber.ofRat 0)).toReal > 0 := by rcf
+
+set_option rcf.algebraic.reducedLiterals true in
+theorem reduced_quotation : ∀ x : ℝ,
+    x ^ 2 + CubeTwo.realAlgebraic.toReal > 0 := by rcf
+
 run_meta do
   let subject : Q(ℝ) := q(Real.sin ((RealAlgebraicNumber.ofAlgebraic? AlgebraicNumber.I).getD
     (RealAlgebraicNumber.ofRat (3 / 2))).toReal)
@@ -169,7 +178,16 @@ run_meta do
         ((CubeTwo.realAlgebraic.toAlgebraic / 0).re)).toReal > 0),
     q(∀ x : ℝ,
       x ^ 2 + ((RealAlgebraicNumber.ofAlgebraic? CubeTwo.realAlgebraic.toAlgebraic).getD
-        ((CubeTwo.realAlgebraic - CubeTwo.realAlgebraic) ^ (-1 : ℤ))).toReal > 0)]
+        ((CubeTwo.realAlgebraic - CubeTwo.realAlgebraic) ^ (-1 : ℤ))).toReal > 0),
+    q(∀ x : ℝ,
+      x ^ 2 + ((RealAlgebraicNumber.ofAlgebraic? CubeTwo.realAlgebraic.toAlgebraic).getD
+        (RealAlgebraicNumber.intPow CubeTwo.realAlgebraic (-1))).toReal > 0),
+    q(∀ x : ℝ,
+      x ^ 2 + ((RealAlgebraicNumber.ofAlgebraic? CubeTwo.realAlgebraic.toAlgebraic).getD
+        ((AlgebraicNumber.inv CubeTwo.realAlgebraic.toAlgebraic).re)).toReal > 0),
+    q(∀ x : ℝ,
+      x ^ 2 + ((RealAlgebraicNumber.ofAlgebraic? CubeTwo.realAlgebraic.toAlgebraic).getD
+        ((fun y : RealAlgebraicNumber => y / y) CubeTwo.realAlgebraic)).toReal > 0)]
   for source in sources do
     let .error (.unsupported _ _) ← Reify.prepare source |
       throwError "unsupported discarded-branch arithmetic was admitted"
@@ -274,5 +292,13 @@ example : True := by
 /-- info: 'Hex.RCF.CheckedConversions.coerced_divisor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms coerced_divisor
+
+/-- info: 'Hex.RCF.CheckedConversions.field_divisor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms field_divisor
+
+/-- info: 'Hex.RCF.CheckedConversions.reduced_quotation' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms reduced_quotation
 
 end Hex.RCF.CheckedConversions

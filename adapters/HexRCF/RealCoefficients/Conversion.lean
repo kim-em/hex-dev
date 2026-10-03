@@ -77,37 +77,6 @@ theorem cast_int (n : Int) : (n : RealAlgebraicNumber).toReal = (n : ℝ) := by
   change (RealAlgebraicNumber.ofRat (n : Rat)).toReal = _
   rw [RealAlgebraicNumber.ofRat_toReal, Rat.cast_intCast]
 
-theorem numeral_value (n : Nat) :
-    (OfNat.ofNat (n + 2) : RealAlgebraicNumber).toReal = ((n + 2 : Nat) : ℝ) := by
-  change (RealAlgebraicNumber.ofRat ((n + 2 : Nat) : Rat)).toReal = _
-  rw [RealAlgebraicNumber.ofRat_toReal, Rat.cast_natCast]
-
--- Named constructors need their own rewrite keys in source normalization;
--- their mathematical content is the existing owner's interpretation laws.
-theorem direct_add (a b : RealAlgebraicNumber) :
-    (RealAlgebraicNumber.add a b).toReal = a.toReal + b.toReal :=
-  RealAlgebraicNumber.add_toReal a b
-
-theorem direct_sub (a b : RealAlgebraicNumber) :
-    (RealAlgebraicNumber.sub a b).toReal = a.toReal - b.toReal :=
-  RealAlgebraicNumber.sub_toReal a b
-
-theorem direct_mul (a b : RealAlgebraicNumber) :
-    (RealAlgebraicNumber.mul a b).toReal = a.toReal * b.toReal :=
-  RealAlgebraicNumber.mul_toReal a b
-
-theorem direct_div (a b : RealAlgebraicNumber) :
-    (RealAlgebraicNumber.div a b).toReal = a.toReal / b.toReal :=
-  RealAlgebraicNumber.div_toReal a b
-
-theorem direct_neg (a : RealAlgebraicNumber) :
-    (RealAlgebraicNumber.neg a).toReal = -a.toReal :=
-  RealAlgebraicNumber.neg_toReal a
-
-theorem direct_inv (a : RealAlgebraicNumber) :
-    (RealAlgebraicNumber.inv a).toReal = a.toReal⁻¹ :=
-  RealAlgebraicNumber.inv_toReal a
-
 public meta section
 
 open Lean Meta Qq
