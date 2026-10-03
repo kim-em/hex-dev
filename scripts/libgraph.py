@@ -560,7 +560,8 @@ def _validate_phase4_input_family(
     return Phase4InputFamily(name=entry["name"], description=entry["description"])
 
 
-LEAN_LIB_RE = re.compile(r"^\s*lean_lib\s+([A-Za-z0-9_«»]+)\s+where\s*$")
+# `where` is optional: Lake accepts a bare `lean_lib Foo` with default settings.
+LEAN_LIB_RE = re.compile(r"^\s*lean_lib\s+([A-Za-z0-9_«»]+)(?:\s+where)?\s*$")
 TOML_NAME_RE = re.compile(r'^\s*name\s*=\s*"([^"]+)"\s*$')
 
 
