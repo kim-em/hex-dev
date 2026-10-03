@@ -253,5 +253,13 @@
     ],
     "endpoint_trials": 4,
     "schedule": "adjacent before/after; alternate AB/BA"
+  },
+  "diagnosis_protocol": {
+    "split": "tuning only",
+    "trials": 2,
+    "schedule": "trial-major; adjacent core/public arms alternate AB/BA using (trial + case index) parity",
+    "controls": "once per arm",
+    "producer": "exact baseline Search.lean blob required",
+    "holdout_arms": "not run"
   }
 }
