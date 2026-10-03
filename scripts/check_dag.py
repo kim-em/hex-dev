@@ -67,6 +67,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexPrimalityConstructionProbe",
     "HexPrimalityMathlibProofProbe",
     "HexECPPMathlibProofProbe",
+    "HexECPPMathlibPariIO",
     "HexIntFactorKernelProbe",
     "HexIntFactorTests",
     "HexIntFactorFieldConformance",

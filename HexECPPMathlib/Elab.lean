@@ -97,26 +97,39 @@ private meta partial def checkData (e : Expr) (fuel : Nat) : MetaM Nat := do
       catch ex => throwError "ecpp: in exposed `{name}`: {ex.toMessageData}"
   | .mdata _ body => checkData body fuel
   | .letE _ ty val body _ =>
-      checkData body (← checkData val (← checkData ty fuel))
-  | .bvar _ => return fuel
+      -- Charge every occurrence after substitution, rather than treating bound
+      -- variables as free nodes. Shared data must fit its expanded allocation.
+      -- Audit an unused value separately; a used value is already traversed at
+      -- each occurrence. Charging it again would double ordinary list tails.
+      let fuel ← checkData ty fuel
+      if body.hasLooseBVar 0 then checkData (body.instantiate1 val) fuel
+      else checkData body (← checkData val fuel)
   | .sort _ => return fuel
   | _ => throwError "ecpp: certificate must be constructor data; got {e}"
 
-private meta partial def countPrimeCert : Hex.Nat.PrimeCert → Nat
-  | .small _ => 1
+-- Consume fuel while visiting nodes, including repeated children in a shared
+-- tree. Exhaustion must stop traversal before reification or checker evaluation.
+private meta partial def primeCertFuel (fuel : Nat) (cert : Hex.Nat.PrimeCert) : Option Nat := do
+  let fuel ← match fuel with | 0 => none | n + 1 => some n
+  match cert with
+  | .small _ => return fuel
   | .pock _ fs | .pock3 _ _ _ _ fs | .pock3Sieve _ _ _ _ _ fs =>
-      1 + (fs.map fun (_, _, c) => countPrimeCert c).sum
+      let mut fuel := fuel
+      for (_, _, child) in fs do
+        fuel ← primeCertFuel fuel child
+      return fuel
 
-private meta def countCert : Cert → Nat
-  | .base c => 1 + countPrimeCert c
-  | .step _ _ _ _ _ _ _ child => 1 + countCert child
+private meta def certFuel : Nat → Cert → Option Nat
+  | 0, _ => none
+  | fuel + 1, .base c => primeCertFuel fuel c
+  | fuel + 1, .step _ _ _ _ _ _ _ child => certFuel fuel child
 
 private meta def checkCertBudget : Cert → MetaM Unit
   | .base _ => pure ()
   | .step n _ _ _ _ _ ws child => do
       if HexArith.bitLength n > maxBits then
         throwError "ecpp: certificate subject exceeds {maxBits} bits"
-      if ws.length > maxInverseWitnesses then
+      if (ws.take (maxInverseWitnesses + 1)).length > maxInverseWitnesses then
         throwError "ecpp: inverse transcript exceeds {maxInverseWitnesses} witnesses"
       checkCertBudget child
 
@@ -136,7 +149,7 @@ meta def readCert (e : Expr) : MetaM Cert := do
   if e.hasSorry then throwError "ecpp: certificate contains an unfinished proof"
   discard <| checkData e maxSyntaxNodes
   let cert ← evalCert e
-  if countCert cert > maxCertNodes then
+  if (certFuel maxCertNodes cert).isNone then
     throwError "ecpp: certificate exceeds {maxCertNodes} total nodes"
   checkCertBudget cert
   unless check cert do
@@ -145,10 +158,10 @@ meta def readCert (e : Expr) : MetaM Cert := do
 
 /-- Validate a raw proposal against the finite replay policy. -/
 meta def validateCert (cert : Cert) : MetaM Unit := do
-  discard <| checkData (reifyCert cert) maxSyntaxNodes
-  if countCert cert > maxCertNodes then
+  if (certFuel maxCertNodes cert).isNone then
     throwError "ecpp: certificate exceeds {maxCertNodes} total nodes"
   checkCertBudget cert
+  discard <| checkData (reifyCert cert) maxSyntaxNodes
   unless check cert do
     throwError "ecpp: certificate failed check"
 

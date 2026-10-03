@@ -34,15 +34,15 @@ meta def generate (n : Nat) (seed : Nat := 0) (budget : SearchBudget := {}) :
   let c ← match (produce n seed budget).result with
     | .ok c => pure c
     | .error e => throwError "native ECPP: no certificate; stopped at {repr e.resource}; unresolved subject {e.subject}; seed {seed}"
+  validateCert c
   let source := frozenRows c
   -- The public compact representation must itself fit its conversion budget.
-  match convertText defaultImportBudget source (terminalCert c) with
+  let frozen ← match convertText defaultImportBudget source (terminalCert c) with
   | .error e => throwError "native ECPP: frozen conversion failed at row {e.row}: {repr e.kind}"
-  | .ok frozen =>
-    unless checkAt n frozen do throwError "native ECPP: frozen certificate failed checkAt"
-  let proof ← certProof c n (mkNatLit n)
+  | .ok frozen => pure frozen
+  let proof ← certProof frozen n (mkNatLit n)
   checkWithKernel proof
-  return (source, c)
+  return (source, frozen)
 
 syntax (name := nativeSuggestTac) "primality?" " (" &"method" " := " &"ecpp" ")"
   (" (" &"seed" " := " num ")")? : tactic
