@@ -300,7 +300,8 @@ lean_lib HexRealClosureTests where
     .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerRootsTests,
     .one `HexRealClosure.RootCollectionTests, .one `HexRealClosure.TowerPresentationTests,
     .one `HexRealClosure.LocalSampleTests,
-    .one `HexRealClosure.TrivialTests, .one `HexRealClosure.TowerEnlargeOrderTests,
+    .one `HexRealClosure.TrivialTests, .one `HexRealClosure.TrivialTowerTests,
+    .one `HexRealClosure.TowerEnlargeOrderTests,
     .one `HexRealClosure.TowerTransportTests]
 
 -- Native CI capacity probes for the actual certificate/context codecs.
@@ -660,7 +661,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.ZeroFactor, `HexRealClosureMathlib.IsolationRoots,
     `HexRealClosureMathlib.IsolationTotal,
     `HexRealClosureMathlib.RootOrder, `HexRealClosureMathlib.RootFactors,
-    `HexRealClosureMathlib.Trivial,
+    `HexRealClosureMathlib.Trivial, `HexRealClosureMathlib.TrivialTower, `HexRealClosureMathlib.TrivialTowerTests,
     `HexRealClosureMathlib.RootTotal, `HexRealClosureMathlib.TowerRoots,
     `HexRealClosureMathlib.RootTransport,
     `HexRealClosureMathlib.RootCollection, `HexRealClosureMathlib.RootList,
@@ -1623,6 +1624,13 @@ lean_exe hexnumberfield_bench where
 lean_exe hexrealclosure_bench where
   srcDir := "bench"
   root := `HexRealClosure.Bench
+
+lean_exe hexrealclosure_trivial_tests where
+  root := `HexRealClosure.TrivialTowerTests
+
+lean_exe hexrealclosure_trivial_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.TrivialConformance
 
 lean_exe hexrealclosure_bounds_conformance where
   srcDir := "conformance"
