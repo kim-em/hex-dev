@@ -21,7 +21,7 @@ Five pairs favour interval signs; one favours canonical conversion. The
 recorded paired median favours interval signs, with substantial variation; these
 six pairs do not establish a general direction or effect size.
 The ratio of separate arm medians (1.345) is not the paired statistic. Every
-completed sample is retained, including the slower interval pair. Host load is
+completed sample is retained. Host load is
 recorded context and was not used to exclude samples or request a rerun. On
 the 96-CPU host, the recorded end-of-run one-minute load averages ranged from about 4 to
 94. These observations do not establish the cause of timing variation.
@@ -48,9 +48,8 @@ output hash and exact median/ratio agreement. `oracle.log` retains the oracle
 result and FLINT version. Zero unchanged reruns is reported by the operator;
 the runner's hardcoded `reruns` field does not prove that historical claim.
 
-The measured source matches squash `990282187` on every file changed by
-PR #10641. Reproduction uses the exact measured source, requiring about 22.5
-minutes for the twelve samples at the recorded times. That source
+Reproduction uses the exact measured source. The twelve recorded samples total
+about 22.5 minutes on this host, excluding build and oracle time. That source
 is retained on a separate evidence branch, so a PR rebase cannot remove its
 remote reference:
 
