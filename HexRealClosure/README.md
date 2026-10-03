@@ -1563,6 +1563,27 @@ model and fixed-owner inclusion model without a caller-supplied coefficient
 agreement. These base factories do not yet construct the complete coherent
 owner and cache family for `Shared.gather?`.
 
+`RealPrefix.Model.prefix?` retrieves the actual validated interpretation for
+an earlier ordered real-prefix path from a target provider history. It succeeds
+exactly on prefixes and returns that prefix's original handle. A
+`PackedContext.Realization` retains the provider interpretation through the
+actual infinitesimal stages. `RealPrefix.Model.staged` constructs such a
+realization, and `following.restrict? source` reconstructs a compatible source
+realization from the target alone. Its success condition is the same ordered
+prefix and nondecreasing-depth check as the native coefficient inclusion.
+
+The development adapter `BaseFactory` packages this path as
+`BaseInclusion.Model.derive following inclusion targetModel`: callers supply
+the target realization, checked inclusion and target model; the factory derives
+the source realization, coefficient homomorphism, sign preservation and value
+agreement. `owner.model? following targetModel` extends that source base model
+through the owner's actual stored descriptors into the same target field. It
+succeeds exactly when the owner's base passes the native compatibility check.
+`Context.model?_adjoin` and `model?_embed` identify the parent and child results
+and prove agreement on the native parent embedding. These owner models are
+inputs to the remaining cache-coherence proof; they do not by themselves certify
+the maps returned by `Shared.gather?`.
+
 Registration caches checked inclusions for every original algebraic predecessor.
 Parent/child registration, sibling branches, and repeated owners reuse their
 common roots. Reuse checks exact native provenance, including the staged base
