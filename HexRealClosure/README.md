@@ -1107,7 +1107,8 @@ checked child joint table. `codec_ofSigns_covered`, `bytes_ofSigns_covered` and
 `Context.decodeEvidence_covered` prove exact producer/reader correspondence
 under finite literal coverage. `Context.decodeEvidence_nested` composes the
 checked lower joint table with the actual upper byte decoder, deriving the
-upper reader's coverage from the lower facts. Its predecessor reader also
+upper reader's coverage from the lower facts. The child table may contain
+additional keys for other packets at the same level. Its predecessor reader also
 needs only finite coverage, so the theorem can be applied across further
 levels. Complete readers may still use their global
 laws. Byte roundtrips additionally require the printed packet to pass

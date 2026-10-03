@@ -200,7 +200,7 @@ def nestedPass : Bool :=
 /-- Both levels are actual producer output. The lower request list is
 collected from every literal of the produced upper packet, rather than a
 handwritten fixture list. Arithmetic during checking still uses native ops. -/
-def producedNestedPass : Bool :=
+def producedNestedPass (shared : Bool := false) : Bool :=
   (do
     let upperSigns ← (NestedSignsConformance.next.buildSigns
       [NestedSignsConformance.unitPoly, NestedSignsConformance.nextQuery,
@@ -208,9 +208,10 @@ def producedNestedPass : Bool :=
     let upper := SignEvidence.ofSigns upperSigns
     let coefficients := SignEvidence.coefficients NestedSignsConformance.next.root.raw upper
     let keys := Element.signKeys coefficients
-    let lower ← (context.buildEvidence keys).toOption
+    let requested := if shared then keys ++ [DensePoly.C (37 : Rat)] else keys
+    let lower ← (context.buildEvidence requested).toOption
     let lowerCodec := SignEvidence.codec ValueCodec.rat ValueCodec.nat source.raw
-    let facts ← (decode ValueCodec.rat keys (lowerCodec.encodeBytes lower)).toOption
+    let facts ← (decode ValueCodec.rat requested (lowerCodec.encodeBytes lower)).toOption
     let reader := Element.signCodec ValueCodec.rat facts.toList
     let wire := SignEvidence.codec reader ValueCodec.nat NestedSignsConformance.next.root.raw
     let decoded ← (decodeUpper reader upper.queries (wire.encodeBytes upper)).toOption
@@ -219,7 +220,7 @@ def producedNestedPass : Bool :=
     let missing := Element.signCodec ValueCodec.rat
       (facts.toList.filter fun fact => fact.polynomial != stored)
     let everyOmission := facts.toList.all fun fact =>
-      fact.polynomial == 0 ||
+      !keys.contains fact.polynomial || fact.polynomial == 0 ||
         (decodeUpper (Element.signCodec ValueCodec.rat
           (facts.toList.filter fun other => other.polynomial != fact.polynomial))
           upper.queries (wire.encodeBytes upper)).toOption.isNone
@@ -232,6 +233,7 @@ def producedNestedPass : Bool :=
       (decodeUpper missing upper.queries (wire.encodeBytes upper)).toOption.isNone)) == some true
 
 #guard producedNestedPass
+#guard producedNestedPass true
 
 @[expose] def upperKernelSigns :
     SelectedSigns NestedSignsConformance.next.root [NestedSignsConformance.unitPoly] :=

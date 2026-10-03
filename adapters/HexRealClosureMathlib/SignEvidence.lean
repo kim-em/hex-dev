@@ -62,6 +62,19 @@ theorem Context.signFacts_key (context : Context E Ctx coeffSign parent)
   exact (Context.signFacts_fields f hz h1 ha hs hm hnat hsign hn hi
     context signs ⟨i, bound⟩).1.trans same
 
+/-- A child joint table containing every collected key proves finite-reader
+coverage. It may also contain keys needed by other packets at that level. -/
+theorem Context.signFacts_coversKeys (context : Context E Ctx coeffSign parent)
+    (value : ValueCodec E) (coefficients : List (Element context))
+    (hv : value.Covers (Element.predecessors coefficients))
+    {keys : List (DensePoly E)} (signs : SelectedSigns context.root keys)
+    (included : ∀ p ∈ Element.signKeys coefficients, p ∈ keys) :
+    (Element.signCodec value
+      (context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs).toList).Covers coefficients :=
+  Element.signCodec_covers value _ coefficients hv
+    (fun p hp => Context.signFacts_key f hz h1 ha hs hm hnat hsign hn hi
+      context signs p (included p hp))
+
 /-- A child joint table proves finite-reader coverage for all algebraic
 literals requested by the executable key collector. The predecessor reader
 needs coverage only of the coefficients stored in those literals. -/
@@ -71,8 +84,8 @@ theorem Context.signFacts_covers (context : Context E Ctx coeffSign parent)
     (signs : SelectedSigns context.root (Element.signKeys coefficients)) :
     (Element.signCodec value
       (context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs).toList).Covers coefficients :=
-  Element.signCodec_covers value _ coefficients hv
-    (Context.signFacts_key f hz h1 ha hs hm hnat hsign hn hi context signs)
+  Context.signFacts_coversKeys f hz h1 ha hs hm hnat hsign hn hi
+    context value coefficients hv signs (fun _ hp => hp)
 
 /-- Check the supplied child graph once and derive all its requested facts.
 Missing or false evidence returns `none`. This packet's producer is not
@@ -193,7 +206,8 @@ variable (gsign : ∀ a, Element.sign a = (SignType.sign (g a) : Int))
 variable (gn : ∀ a, g (-a) = -g a) (gi : ∀ a, g a⁻¹ = (g a)⁻¹)
 
 /-- Compose a checked lower joint table with the actual upper byte decoder.
-The lower table covers the keys collected from the upper producer's packet.
+The lower table contains the keys collected from the upper producer's packet
+and may share one joint table with other packets at the same level.
 The upper graph still checks with ordinary coefficient arithmetic. -/
 theorem Context.decodeEvidence_nested
     (upper : Context (Element lower) UpperCtx Element.sign upperParent)
@@ -201,8 +215,9 @@ theorem Context.decodeEvidence_nested
     {queries : List (DensePoly (Element lower))} (signs : SelectedSigns upper.root queries)
     (hv : value.Covers (Element.predecessors
       (SignEvidence.coefficients upper.root.raw (SignEvidence.ofSigns signs))))
-    (lowerSigns : SelectedSigns lower.root
-      (Element.signKeys (SignEvidence.coefficients upper.root.raw (SignEvidence.ofSigns signs))))
+    {keys : List (DensePoly E)} (lowerSigns : SelectedSigns lower.root keys)
+    (included : ∀ p ∈ Element.signKeys
+      (SignEvidence.coefficients upper.root.raw (SignEvidence.ofSigns signs)), p ∈ keys)
     (hc : ctx.Covers (SignEvidence.contexts upper.root.raw (SignEvidence.ofSigns signs)))
     (limits : Codec.Limits)
     (bytes : Codec.checkBytes limits
@@ -220,8 +235,8 @@ theorem Context.decodeEvidence_nested
         ctx upper.root.raw).encodeBytes (SignEvidence.ofSigns signs)) limits =
       .ok (upper.signFacts g gz g1 ga gs gm gnat gsign gn gi signs) := by
   apply Context.decodeEvidence_covered g gz g1 ga gs gm gnat gsign gn gi
-  · exact Context.signFacts_covers f hz h1 ha hs hm hnat hsign hn hi lower value _
-      hv lowerSigns
+  · exact Context.signFacts_coversKeys f hz h1 ha hs hm hnat hsign hn hi lower value _
+      hv lowerSigns included
   · exact hc
   · exact bytes
 
@@ -294,3 +309,7 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.Context.decodeEvidence_nested' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Context.decodeEvidence_nested
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.signFacts_coversKeys' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.signFacts_coversKeys
