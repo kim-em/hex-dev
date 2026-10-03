@@ -16,6 +16,11 @@ open Hex RealCoefficients Lean Meta Qq
 set_option maxRecDepth 8192
 set_option maxHeartbeats 2400000
 
+-- Observe the API's own rollback, including runtime failures. Do not let the
+-- test's exception observer backtrack on its behalf.
+private meta def attempt (action : MetaM α) : MetaM (Option α) :=
+  tryCatchRuntimeEx (some <$> action) (fun _ => pure none)
+
 elab "prepared_probe" : tactic => do
   let goal ← Lean.Elab.Tactic.getMainGoal
   let target ← goal.getType
@@ -113,19 +118,38 @@ run_meta do
   let .ok prepared ← Coefficients.prepare target | throwError "guarded preparation failed"
   unless prepared.divisorProofs.size == 1 do
     throwError "preparation lost an original divisor"
+  -- The result type agrees, but the unused argument is ill typed. Public
+  -- guard preflight must check this even when its caller disables kernel TC.
+  let malformed := mkApp
+    (mkLambda `unused .default (mkConst ``False) prepared.divisorProofs[0]!)
+    (mkConst ``True.intro)
+  let invalid := {prepared with divisorProofs := #[malformed]}
   let before := (← getMCtx).mvarCounter
-  let wrong ← observing? do
+  let invalidGuard ← withOptions (debug.skipKernelTC.set · true) do
+    attempt invalid.checkDomains
+  unless invalidGuard.isNone do throwError "direct guard preflight skipped kernel checking"
+  unless (← getMCtx).mvarCounter == before do
+    throwError "failed direct guard preflight leaked metavariables"
+  let scalar : Q(ℝ) ← mkFreshExprMVar q(ℝ)
+  let unresolved ← mkFreshExprMVar q($scalar ≠ 0)
+  let unbound := {prepared with divisorProofs := #[unresolved]}
+  let failed ← attempt unbound.checkDomains
+  unless failed.isNone do throwError "direct guard preflight accepted an unresolved proof"
+  unless (← scalar.mvarId!.isAssigned) == false do
+    throwError "failed direct guard preflight leaked a unification assignment"
+  let before := (← getMCtx).mvarCounter
+  let wrong ← attempt do
     prepared.transport (Lean.mkConst ``True.intro)
   unless wrong.isNone do throwError "transport accepted a proof of the wrong sentence"
   unless (← getMCtx).mvarCounter == before do
     throwError "failed transport leaked metavariables"
   let mismatched := {prepared with divisorIdentities := #[Lean.mkConst ``True.intro]}
-  let invalidIdentity ← observing? mismatched.proveReplay
+  let invalidIdentity ← attempt mismatched.proveReplay
   unless invalidIdentity.isNone do throwError "incorrect original divisor identity was accepted"
   unless (← getMCtx).mvarCounter == before do
     throwError "failed divisor identity leaked metavariables"
   let missing := {prepared with divisorProofs := #[]}
-  let rejected ← observing? missing.prove
+  let rejected ← attempt missing.prove
   unless rejected.isNone do throwError "missing original divisor was accepted"
   unless (← getMCtx).mvarCounter == before do
     throwError "failed divisor preflight leaked metavariables"
@@ -135,7 +159,7 @@ run_meta do
   let zeroDivisor : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 0 / (Real.sqrt 2 - Real.sqrt 2) ≥ 0)
   for (target, decline) in [(rational, true), (zeroDivisor, false)] do
     let before := (← getMCtx).mvarCounter
-    let outcome ← observing? (Coefficients.prepare target)
+    let outcome ← attempt (Coefficients.prepare target)
     if decline then
       match outcome with
       | some (.error (.unsupported _ _)) => pure ()
@@ -149,7 +173,7 @@ run_meta do
   let target : Q(Prop) := q(∀ x : ℝ, x ^ 2 = Real.sqrt 2)
   let .ok prepared ← Coefficients.prepare target | throwError "false-sentence preparation failed"
   let before := (← getMCtx).mvarCounter
-  let rejected ← observing? prepared.proveReplay
+  let rejected ← attempt prepared.proveReplay
   unless rejected.isNone do throwError "finite false verdict became a proof"
   unless (← getMCtx).mvarCounter == before do
     throwError "false finite verdict leaked metavariables"

@@ -60,7 +60,7 @@ private meta def restoreOnFailure (action : MetaM α) : MetaM α := do
 
 /-- Check every retained original divisor proof before any constant, zero,
 empty-domain, or certificate-production shortcut. -/
-meta def checkDomains (prepared : Environment) : MetaM Unit := do
+meta def checkDomains (prepared : Environment) : MetaM Unit := restoreOnFailure do
   unless prepared.divisorProofs.size == prepared.source.divisors.size &&
       prepared.divisors.length == prepared.source.divisors.size &&
       prepared.divisorExpressions.size == prepared.source.divisors.size &&
