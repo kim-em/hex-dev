@@ -173,8 +173,8 @@ termination; the returned certificate still passes the fixed-coordinate checker.
 The preferred search, head conversion and root solving each run once.
 Refinement checks only interval gaps; the accepted replay is built once.
 Quotation must emit the literal certificate and recheck it in the ordinary
-kernel; kernel reduction of this compiled search is not required. This does
-not assert termination of the full formula certificate producer. -/
+kernel; kernel reduction of this compiled search is not required. This entry
+point constructs the checked root envelope. -/
 def isolateUsing [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root) (real : rep.root.im = 0)
     (context : Ctx) (head : DensePoly (PolyQuot p root)) (nonzero : head ≠ 0)
@@ -367,11 +367,7 @@ theorem build_progress [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
     (Field.value_natCast rep hrep hr) (proposalSign rep hrep) (proposalSign_spec rep hrep hr)
     FieldDecision.point context radical.core isolations isolation built
     (FieldSpecialize.literalPolynomial values) formula
-  let keys := SignInputs.isolation FieldDecision.point radical.core isolation ++
-    SignInputs.rootQueries FieldDecision.point radical.core isolation
-      (rootSigns.entries.map fun row i => row.evidence[i]) ++
-    SignInputs.openSamples FieldDecision.point isolation
-      (formula.polys.map (FieldSpecialize.literalPolynomial values)) ++ extraSignKeys
+  let keys := signKeys values formula radical.core isolation rootSigns extraSignKeys
   obtain ⟨signs, signed⟩ := buildTable_success p s hw hp real keys
   refine ⟨⟨radical, isolation, rootSigns, signs⟩, ?_⟩
   simp only [rep, product] at produced isolated queried
@@ -422,19 +418,23 @@ def produce [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
     {Ctx : Type u} [DecidableEq Ctx]
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
     (formula : RealFormula.QF (n + 1)) (context : Ctx)
-    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := []) :
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := [])
+    (depth : Nat := 256) :
     {data : Result p s hw hp Ctx (n + 1) // data.checkEvidence values formula context = true ∧
       ∀ key ∈ signKeys values formula data.radical.core data.isolation data.rootSigns extraSignKeys,
         (data.signs.lookup? key).isSome = true} := by
   let rep := Field.literalRep p s hw hp
   let hrep := Field.literalRep_mk p s hw hp
   have hr : rep.root.im = 0 := Field.literalRep_real p s hw hp real
-  let sign := Field.literalSign p s hw hp
+  let prepared := Field.prepareSign p s hw hp real
+  let sign := fun a : PolyQuot p (SimpleRoot.ofSquare p s hw hp) =>
+    Sturm.queryPrepared prepared.val a.coeffs
+  have signSpec := Field.prepareSign_spec p s hw hp real
   have same : sign = proposalSign rep hrep := by
     funext a
-    exact (Field.literalSign_spec p s hw hp real a).trans
+    exact (signSpec a).trans
       (proposalSign_spec rep hrep hr a).symm
-  let envelope := isolateFormulaUsing rep hrep hr context values formula sign same 256
+  let envelope := isolateFormulaUsing rep hrep hr context values formula sign same depth
   let queries := FieldRootSigns.Table.build sign FieldDecision.point
     context envelope.fst.val.core envelope.snd.val
     (FieldSpecialize.literalPolynomial values) formula
@@ -447,7 +447,7 @@ def produce [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
       (Field.value_add rep hrep hr) (Field.value_sub rep hrep hr)
       (Field.value_mul rep hrep hr) (Field.value_neg rep hrep hr)
       (Field.value_inv rep hrep hr) (Field.value_natCast rep hrep hr)
-      sign (Field.literalSign_spec p s hw hp real) FieldDecision.point context
+      sign signSpec FieldDecision.point context
       envelope.fst.val.core isolations envelope.snd.val isolationBuilt
       (FieldSpecialize.literalPolynomial values) formula
     rw [show queries = some table from built]; rfl

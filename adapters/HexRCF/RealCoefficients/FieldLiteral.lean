@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public meta import HexRCF.RealCoefficients.FieldDecisionProgress
+public meta import HexRCF.RealCoefficients.FieldBuildBudget
 public meta import HexRealAlgebraicMathlib.Laws
 public meta import Lean
 
@@ -16,6 +17,16 @@ public meta section
 namespace Hex.RCF.RealCoefficients.FieldLiteral
 
 open Hex Lean Meta
+
+register_option rcf.algebraic.directDepth : Nat := {
+  defValue := 256
+  descr := "maximum direct algebraic interval bisection depth"
+}
+
+register_option rcf.algebraic.maxDoublings : Nat := {
+  defValue := 8
+  descr := "maximum canonical algebraic interval refinement attempts"
+}
 
 private def arrayLit (ty : Expr) (xs : List Expr) : Expr :=
   let nil := mkApp (mkConst ``List.nil [Level.zero]) ty
@@ -330,10 +341,12 @@ meta def proveWithCertificate {p : ZPoly} {s : DyadicSquare}
   return ← quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula
     quantifier extraSignKeys validate data
 
-/-- Produce and quote a complete fixed-field certificate, refining root
-intervals by the proved algebraic progress laws. Accepted false verdicts and
-literal replay failures remain terminal. Search never occurs in the proof. -/
-meta def proveTotalWithCertificate {p : ZPoly} {s : DyadicSquare}
+/-- Produce and quote a fixed-field certificate within explicit frontend
+search budgets. The complete library producer is separate. Accepted false,
+exhaustion and invalid replay remain terminal; search is absent from proofs.
+Cancellation is checked before and after native production. Individual native
+root computations do not check Lean cancellation or elaboration heartbeats. -/
+meta def proveRefiningWithCertificate {p : ZPoly} {s : DyadicSquare}
     {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
     [ZPoly.CheckedIrreducible p] {n : Nat}
     (pExpr rootExpr valuesExpr formulaExpr : Expr)
@@ -343,9 +356,17 @@ meta def proveTotalWithCertificate {p : ZPoly} {s : DyadicSquare}
     (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit := fun _ => pure ()) :
     MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
   if real : s.meetsRealAxis = true then
-    let data := (FieldBuild.produce p s hw hp real values formula () extraSignKeys).val
-    quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula
-      quantifier extraSignKeys validate data
+    let options ← getOptions
+    Core.checkInterrupted
+    let result := FieldBuild.produceWithin p s hw hp real values formula ()
+      (rcf.algebraic.directDepth.get options) (rcf.algebraic.maxDoublings.get options) extraSignKeys
+    Core.checkInterrupted
+    match result with
+    | .error .exhausted => throwError "rcf: algebraic interval refinement budget exhausted"
+    | .error .invalidReplay => throwError "rcf: algebraic certificate construction or replay failed"
+    | .ok data =>
+        return ← quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula
+          quantifier extraSignKeys validate data
   else throwError "rcf: selected square does not name a real coefficient field"
 
 /-- Construct the checked fixed-field proof when no additional sign queries
@@ -360,13 +381,13 @@ meta def prove {p : ZPoly} {s : DyadicSquare}
   return (← proveWithCertificate pExpr rootExpr valuesExpr formulaExpr values formula
     quantifier precision).1
 
-/-- Quote the complete algebraic field producer with no extra presentation keys. -/
-meta def proveTotal {p : ZPoly} {s : DyadicSquare}
+/-- Quote a refining algebraic field search with no extra presentation keys. -/
+meta def proveRefining {p : ZPoly} {s : DyadicSquare}
     {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
     [ZPoly.CheckedIrreducible p] {n : Nat}
     (pExpr rootExpr valuesExpr formulaExpr : Expr)
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
     (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier) : MetaM Expr := do
-  return (← proveTotalWithCertificate pExpr rootExpr valuesExpr formulaExpr values formula quantifier).1
+  return (← proveRefiningWithCertificate pExpr rootExpr valuesExpr formulaExpr values formula quantifier).1
 
 end Hex.RCF.RealCoefficients.FieldLiteral

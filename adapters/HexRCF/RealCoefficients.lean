@@ -38,6 +38,7 @@ public import HexRCF.RealCoefficients.FieldBuild
 public import HexRCF.RealCoefficients.FieldSignProgress
 public import HexRCF.RealCoefficients.FieldBuildProgress
 public import HexRCF.RealCoefficients.FieldDecisionProgress
+public import HexRCF.RealCoefficients.FieldBuildBudget
 public meta import HexRCF.RealCoefficients.FieldLiteral
 public meta import HexRCF.RealCoefficients.FieldCompile
 public meta import HexRCF.RealCoefficients.FieldRuntime

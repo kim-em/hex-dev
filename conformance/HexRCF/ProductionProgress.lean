@@ -92,6 +92,36 @@ theorem existential_decision : ∃ verdict, fourthRoot.val.anyValue values furth
   (FieldBuild.signKeys values nonnegative positive.val.radical.core
     positive.val.isolation positive.val.rootSigns).dedup.length
 
+-- Force the prepared-sign canonical fallback with two rational carrier roots.
+private def separated : RealFormula.QF 2 :=
+  .or (.atom ⟨MvPoly.X 1, .eq⟩) (.atom ⟨4 * MvPoly.X 1 - 1, .eq⟩)
+private def fallback := FieldBuild.produce SquareTwo.polynomial SquareTwo.square hw hp
+  real values separated () (depth := 0)
+#guard fallback.val.isolation.isolations.intervals.size == 2
+#guard fallback.val.anyValue values separated == some true
+#guard fallback.val.allValue values separated == some false
+
+private def bounded := FieldBuild.produceWithin SquareTwo.polynomial SquareTwo.square hw hp
+  real values separated () 0 5
+#guard match bounded with
+  | .ok data => data.isolation.isolations.intervals.size == 2 &&
+      data.anyValue values separated == some true
+  | .error _ => false
+#guard match FieldBuild.produceWithin SquareTwo.polynomial SquareTwo.square hw hp
+    real values separated () 0 0 with
+  | .error .exhausted => true
+  | _ => false
+
+private def prepared := Field.prepareSign SquareTwo.polynomial SquareTwo.square hw hp real
+private def capturedSign (key : PolyQuot SquareTwo.polynomial root) : Int :=
+  Sturm.queryPrepared prepared.val key.coeffs
+#guard match FieldBuild.isolateWithin
+    (Field.literalRep SquareTwo.polynomial SquareTwo.square hw hp)
+    (Field.literalRep_mk SquareTwo.polynomial SquareTwo.square hw hp)
+    capturedSign () (0 : DensePoly (PolyQuot SquareTwo.polynomial root)) 0 1 with
+  | .error .invalidReplay => true
+  | _ => false
+
 end Hex.RCF.ProductionProgressTests
 
 /-- info: 'Hex.RCF.RealCoefficients.LiteralSign.Table.build_bindings' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -160,3 +190,10 @@ end Hex.RCF.ProductionProgressTests
 /-- info: '_private.HexRCF.ProductionProgress.0.Hex.RCF.ProductionProgressTests.existential_decision' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.ProductionProgressTests.existential_decision
+
+/-- info: 'Hex.RCF.RealCoefficients.Field.prepareSign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RealCoefficients.Field.prepareSign
+/-- info: 'Hex.RCF.RealCoefficients.Field.prepareSign_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RealCoefficients.Field.prepareSign_spec

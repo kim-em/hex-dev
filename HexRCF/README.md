@@ -130,5 +130,7 @@ producer: it reduces repeated roots, refines complete root intervals, records
 all required literal signs and evaluates the shared formula on ordinary real
 cells. Compiled decision laws cover both verdicts; only a true verdict with
 ordinary-kernel replay produces a goal proof. The bounded builder remains
-available. This does not give total registered-constant search or an unlimited
-proof elaboration budget.
+available. The tactic also bounds direct bisection and fallback refinement
+through `rcf.algebraic.directDepth` and `rcf.algebraic.maxDoublings`, with
+terminal exhaustion and replay diagnostics. This does not give total
+registered-constant search or an unlimited proof elaboration budget.

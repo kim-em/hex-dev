@@ -4,10 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 module
+
 public import HexRCF.RealCoefficients.Field
 public import HexRootsMathlib.MahlerPrec
 public import HexSturmMathlib.Soundness
+
 public section
+
 namespace Hex.RCF.RealCoefficients.Field
 private theorem literal_unique (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
@@ -111,8 +114,8 @@ theorem literal_domain (p : ZPoly) (s : DyadicSquare)
     rw [roots]
     exact Finset.card_singleton value
 
-/-- Prepare the defining rational polynomial once. Search signs are Tarski
-queries at the same selected root, without isolating each coordinate again.
+/-- Search signs are rational Tarski queries at the same selected root,
+without isolating each coordinate as a separate algebraic number.
 The absent-domain fallback is unreachable for a checked real literal. -/
 @[expose] def literalSign (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec) :
@@ -183,5 +186,36 @@ theorem literalSign_spec (p : ZPoly) (s : DyadicSquare)
       simpa only [roots, Finset.mem_singleton] using mem
     rw [HexRealRootsMathlib.Tarski.rootSum_singleton _ _ _ _ x roots, ← same] at meaning
     simpa only [literalSign, prepared, ← value_realPoly] using meaning
+
+/-- Construct the prepared domain as data, so compiled callers can capture it
+once in their sign closure. A function-valued definition alone is eta-expanded
+by Lean and does not provide this caching guarantee. -/
+def prepareSign (p : ZPoly) (s : DyadicSquare)
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    [ZPoly.CheckedIrreducible p] (real : s.meetsRealAxis = true) :
+    {domain : Sturm.PreparedDomain Rat //
+      Sturm.prepare Sturm.orderSign (ZPoly.toRatPoly p)
+        (.finite (s.re - s.radiusHi).toRat) (.finite (s.re + s.radiusHi).toRat) = some domain} := by
+  have available : (Sturm.prepare Sturm.orderSign (ZPoly.toRatPoly p)
+      (.finite (s.re - s.radiusHi).toRat) (.finite (s.re + s.radiusHi).toRat)).isSome = true := by
+    have oneSign := literalSign_spec p s hw hp real
+      (1 : PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    rw [value_one (literalRep p s hw hp) (literalRep_mk p s hw hp)
+      (literalRep_real p s hw hp real)] at oneSign
+    cases prepared : Sturm.prepare Sturm.orderSign (ZPoly.toRatPoly p)
+        (.finite (s.re - s.radiusHi).toRat) (.finite (s.re + s.radiusHi).toRat) with
+    | none => simp only [literalSign, prepared] at oneSign; norm_num at oneSign
+    | some domain => rfl
+  exact ⟨_, Option.eq_some_of_isSome available⟩
+
+/-- A captured prepared sign domain gives the selected real sign. -/
+theorem prepareSign_spec (p : ZPoly) (s : DyadicSquare)
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    [ZPoly.CheckedIrreducible p] (real : s.meetsRealAxis = true)
+    (a : PolyQuot p (SimpleRoot.ofSquare p s hw hp)) :
+    Sturm.queryPrepared (prepareSign p s hw hp real).val a.coeffs =
+      (SignType.sign (value (literalRep p s hw hp) a) : Int) := by
+  simpa only [literalSign, (prepareSign p s hw hp real).property] using
+    literalSign_spec p s hw hp real a
 
 end Hex.RCF.RealCoefficients.Field

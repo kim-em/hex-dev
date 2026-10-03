@@ -1643,7 +1643,7 @@ including zero, inside an interval of positive width.
 {name}`Hex.RCF.RealCoefficients.rootInterval_progress` proves that every
 precision schedule tending to infinity eventually reaches any positive width
 request. These points and endpoints are ordinary real numbers. The algebraic
-tactic now doubles fallback precision until the checked root intervals separate.
+tactic doubles fallback precision until the checked root intervals separate.
 
 {name}`Hex.RCF.RealCoefficients.proposeIsolations_isSome_iff` establishes
 finite proposal production for exactly the nonzero dense heads. The canonical
@@ -1701,14 +1701,15 @@ including repeated/common roots, zero atoms and formulas without atoms.
 The shared formula keeps its guard atoms, whose nonzero endpoint polynomials
 enter the carrier. Squarefreeness is derived before isolation; it is not an
 extra admission required from the caller.
-The tactic consumes this root envelope through
+The complete library pipeline consumes this root envelope through
 {name}`Hex.RCF.RealCoefficients.FieldBuild.produce`. This compiled producer
 constructs the radical, complete root isolations, every atom query and a finite
 rational sign table, returning checker acceptance and a recorded hit for every
 replay or open-cell sign operand. Exact duplicate coordinate keys share one
 sign-table entry. The chosen literal square fixes the rational count-one
-interval used for all coordinate signs.
-{name}`Hex.RCF.RealCoefficients.Field.literalSign_spec` proves that prepared
+interval used for all coordinate signs. The producer captures a prepared domain
+as data before building its sign closure.
+{name}`Hex.RCF.RealCoefficients.Field.prepareSign_spec` proves that prepared
 rational Tarski queries give the selected real embedding's signs. Search does
 not isolate a new algebraic number for each coordinate sign.
 {name}`Hex.RCF.RealCoefficients.FieldBuild.build_progress` also proves success
@@ -1725,18 +1726,32 @@ literal certificate and the exact original-goal equivalence. General nested
 joint realization and the remaining adapter evidence obligations are separate.
 
 ```lean
-example : ∀ x : ℝ, x ^ 2 - 2 * Real.sqrt 2 * x + 2 ≥ 0 := by rcf
+example : ∀ x : ℝ,
+    x ^ 2 - 2 * Real.sqrt 2 * x + 2 ≥ 0 := by rcf
 
-example : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by rcf
+example : ∃ x : ℝ,
+    x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by rcf
 ```
 
 The first example has a repeated root at the selected positive square root;
 the second produces a further algebraic root and checks simultaneous sign
 conditions on that section. Both use the optional algebraic handler, with
-ordinary real sectors between its root sections. The complete producer first
-tries 256 levels of exact field bisection; the existing bounded isolation API
-retains its 128-level default. Exhausting that proposal depth uses the proved
-canonical complete-root proposal rather than accepting an unchecked interval.
+ordinary real sectors between its root sections. The complete `produce` API
+accepts a direct bisection depth, defaulting to 256, before its proved canonical
+fallback. The existing bounded isolation API retains its 128-level default.
+The direct proposal can also fail at its bounded bracketing, pivot or gap
+searches; no unchecked interval is accepted.
+
+The tactic uses `produceWithin` with `rcf.algebraic.directDepth` (default 256)
+and `rcf.algebraic.maxDoublings` (default 8). The latter bounds fallback
+interval attempts at precisions 1, 2, 4, …; a zero limit disables fallback.
+Exhaustion reports `rcf: algebraic interval refinement budget exhausted` and
+is terminal. Rejected construction/replay has a different terminal diagnostic.
+The complete library producer and its progress/decision laws are unaffected
+by the frontend budget. Increasing the limits permits further refinement;
+it does not bypass kernel replay. Lean cancellation is checked before and
+after native production. Individual native root computations run until they
+return and do not check Lean's cancellation token or elaboration heartbeats.
 
 
 # Caller-supplied finite bounds

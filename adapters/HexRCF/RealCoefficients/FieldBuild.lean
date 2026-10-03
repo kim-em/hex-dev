@@ -289,6 +289,17 @@ quantifier verdict. A valid envelope can still describe a false sentence. -/
           (data.rootSigns.value data.isolation.total) cell)) == some true
 
 omit [ZPoly.CheckedIrreducible p] in
+/-- Universal replay uses exactly the common evidence envelope before its fold. -/
+theorem checkForall_eq (data : Result p s hw hp Ctx (n + 1))
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1)) (context : Ctx) :
+    data.checkForall values formula context =
+      (data.checkEvidence values formula context &&
+        OptionFold.allArray (Cell.all data.isolation.isolations.intervals.size)
+          (fun cell => formula.evalSigns (FieldDecision.cellSign data.sign values data.isolation
+            (data.rootSigns.value data.isolation.total) cell)) == some true) := rfl
+
+omit [ZPoly.CheckedIrreducible p] in
 /-- The universal verdict already checked the sign table used by presentation
 replay. -/
 theorem checkForall_signTable (data : Result p s hw hp Ctx (n + 1))
@@ -333,6 +344,17 @@ theorem checkForall_sound (data : Result p s hw hp Ctx (n + 1))
       (fun cell => formula.evalSigns
         (FieldDecision.cellSign data.sign values data.isolation
           (data.rootSigns.value data.isolation.total) cell)) == some true
+
+omit [ZPoly.CheckedIrreducible p] in
+/-- Existential replay uses the same common evidence envelope. -/
+theorem checkExists_eq (data : Result p s hw hp Ctx (n + 1))
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1)) (context : Ctx) :
+    data.checkExists values formula context =
+      (data.checkEvidence values formula context &&
+        OptionFold.anyArray (Cell.all data.isolation.isolations.intervals.size)
+          (fun cell => formula.evalSigns (FieldDecision.cellSign data.sign values data.isolation
+            (data.rootSigns.value data.isolation.total) cell)) == some true) := rfl
 
 omit [ZPoly.CheckedIrreducible p] in
 /-- The existential verdict uses the same checked sign table. -/

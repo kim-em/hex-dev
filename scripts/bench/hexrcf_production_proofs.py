@@ -3,7 +3,8 @@
 
 Question: how much ordinary-kernel proof construction does each observed
 production case require? Both fresh modules use identical imports and the
-complete fixed-field producer. Four adjacent alternating AB/BA rounds retain
+fixed-field tactic with finite refinement budgets. Four adjacent alternating
+AB/BA rounds retain
 all completed arms. These different formulas do not isolate a root-count or
 precision scaling law, and this build-only probe is not a numerical benchmark.
 """
@@ -27,7 +28,7 @@ SPEC = SweepSpec(
         ProbeModule("HexRCF.ProofProbe.Production.Close", AXIOMS, NAMESPACE),
         ProbeModule("HexRCF.ProofProbe.Production.Further", AXIOMS, NAMESPACE),
         {"component": "ordinary-kernel-fixed-field-production",
-         "field_degree": 2, "source_coefficients": 1,
+         "field_degree": 2, "selected_generators": 1,
          "left_root_gap": "2^-132", "left_sections": 2,
          "right_sections": 4, "right_condition": "x^2=sqrt(2), 1<x<2",
          "comparison_kind": "different-formulas-not-causal-scaling"},
@@ -38,7 +39,8 @@ SPEC = SweepSpec(
     output_stem="hex-rcf-production-proofs",
     required_samples=4,
     retain_compiler_output=True,
-    extra_sources=(Path("adapters/HexRCF/RealCoefficients/FieldSignProgress.lean"),
+    extra_sources=(Path("adapters/HexRCF/RealCoefficients/FieldBuildBudget.lean"),
+                   Path("adapters/HexRCF/RealCoefficients/FieldSignProgress.lean"),
                    Path("adapters/HexRCF/RealCoefficients/FieldBuildProgress.lean"),
                    Path("adapters/HexRCF/RealCoefficients/FieldLiteral.lean")),
 )
