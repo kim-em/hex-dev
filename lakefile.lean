@@ -583,7 +583,7 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.RootAliases, `HexRCF.RealCoefficients.Conversion,
     `HexRCF.RealCoefficients.Interpret,
     `HexRCF.RealCoefficients.Formula, `HexRCF.RealCoefficients.Field,
-    `HexRCF.RealCoefficients.LiteralSign, `HexRCF.RealCoefficients.SquareRoot,
+    `HexRCF.RealCoefficients.LiteralSign, `HexRCF.RealCoefficients.IntervalSign, `HexRCF.RealCoefficients.SquareRoot,
     `HexRCF.RealCoefficients.CommonTactic,
     `HexRCF.RealCoefficients.CommonPresentation,
     `HexRCF.RealCoefficients.FieldSpecialize,
@@ -1079,7 +1079,10 @@ lean_lib HexRCFProofProfile where
     `HexRCF.ProofProbe.Literals.Support,
     `HexRCF.ProofProbe.Literals.FurtherLegacy, `HexRCF.ProofProbe.Literals.FurtherReduced,
     `HexRCF.ProofProbe.Literals.ReciprocalLegacy, `HexRCF.ProofProbe.Literals.ReciprocalReduced,
-    `HexRCF.ProofProbe.Literals.CubicLegacy, `HexRCF.ProofProbe.Literals.CubicReduced].map Glob.one
+    `HexRCF.ProofProbe.Literals.CubicLegacy, `HexRCF.ProofProbe.Literals.CubicReduced,
+    `HexRCF.ProofProbe.Intervals.FurtherQuery, `HexRCF.ProofProbe.Intervals.FurtherHorner,
+    `HexRCF.ProofProbe.Intervals.ReciprocalQuery, `HexRCF.ProofProbe.Intervals.ReciprocalHorner,
+    `HexRCF.ProofProbe.Intervals.CubicQuery, `HexRCF.ProofProbe.Intervals.CubicHorner].map Glob.one
 
 lean_lib HexRCFProofProbe where
   srcDir := "bench"

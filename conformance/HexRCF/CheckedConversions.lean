@@ -221,6 +221,9 @@ example : True := by
       CubeTwo.realAlgebraic).toReal = x)
     expect "rcf: the universal sentence is false"
 
+set_option rcf.algebraic.intervalSigns true in
+theorem interval_quotation : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by rcf
+
 /-- info: 'Hex.RCF.CheckedConversions.selected_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms selected_value
@@ -302,3 +305,7 @@ example : True := by
 #print axioms reduced_quotation
 
 end Hex.RCF.CheckedConversions
+
+/-- info: 'Hex.RCF.CheckedConversions.interval_quotation' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RCF.CheckedConversions.interval_quotation

@@ -35,6 +35,11 @@ register_option rcf.algebraic.reducedLiterals : Bool := {
   descr := "quote fixed-field coordinates directly instead of reducing them again"
 }
 
+register_option rcf.algebraic.intervalSigns : Bool := {
+  defValue := false
+  descr := "quote exact Horner signs on the authenticated generator interval"
+}
+
 private def arrayLit (ty : Expr) (xs : List Expr) : Expr :=
   let nil := mkApp (mkConst ``List.nil [Level.zero]) ty
   let list := xs.foldr
@@ -211,10 +216,26 @@ meta def signTableExpr {p : ZPoly} {root : SimpleRoot p}
     (pExpr rootExpr : Expr) (table : LiteralSign.Table (PolyQuot p root)) : MetaM Expr := do
   let ty ← inferType (← fieldExpr pExpr rootExpr (0 : PolyQuot p root))
   let entryTy ← mkAppM ``LiteralSign.Entry #[ty]
-  let entries ← table.entries.mapM fun entry => do
+  let entriesRuntime ← if rcf.algebraic.intervalSigns.get (← getOptions) then
+      pure table.entries
+    else do
+      let some domain := Sturm.prepare Sturm.orderSign table.head
+          (.finite table.lower) (.finite table.upper) |
+        throwError "rcf: literal sign interval could not be prepared"
+      table.entries.mapM fun entry => do
+        if entry.evidence.isSome then return entry
+        let evidence := Sturm.certifyPrepared () domain entry.key.coeffs
+        unless evidence.value == entry.value &&
+            Sturm.check Sturm.orderSign () table.head entry.key.coeffs
+              (.finite table.lower) (.finite table.upper) entry.value evidence do
+          throwError "rcf: literal sign query disagrees with its checked enclosure"
+        return { entry with evidence := some evidence }
+  let evidenceTy ← inferType (← tarskiExpr ratExpr table.count)
+  let entries ← entriesRuntime.mapM fun entry => do
+    let evidence ← entry.evidence.mapM (tarskiExpr ratExpr)
     mkAppM ``LiteralSign.Entry.mk
       #[← fieldExpr pExpr rootExpr entry.key, mkIntLit entry.value,
-        ← tarskiExpr ratExpr entry.evidence]
+        optionLit evidenceTy evidence]
   mkAppM ``LiteralSign.Table.mk
     #[← denseExpr ratExpr table.head, ← ratExpr table.lower,
       ← ratExpr table.upper, ← tarskiExpr ratExpr table.count,
@@ -315,7 +336,7 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
     | .forallReal => `(tactic|
         (simp only [FieldBuild.Result.checkForall_eq, FieldBuild.Result.checkEvidence,
           Field.checkSignTable,
-          LiteralSign.Table.check, RadicalCert.check,
+          LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
           FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
           TarskiCertificate.check_eq, SignedRemainderChain.check,
           ← Array.all_toList, Array.toList_range, Bool.and_eq_true];
@@ -323,7 +344,7 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
     | .existsReal => `(tactic|
         (simp only [FieldBuild.Result.checkExists_eq, FieldBuild.Result.checkEvidence,
           Field.checkSignTable,
-          LiteralSign.Table.check, RadicalCert.check,
+          LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
           FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
           TarskiCertificate.check_eq, SignedRemainderChain.check,
           ← Array.all_toList, Array.toList_range, Bool.and_eq_true];

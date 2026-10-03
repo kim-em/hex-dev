@@ -26,11 +26,13 @@ private meta def kernelDecide (goal : Expr) : MetaM Expr := do
   let remaining ← Lean.Elab.runTactic' candidate.mvarId!
     (← `(tactic|
       (simp only [CommonPresentation.checkPresentation, Field.checkSignTable,
-        LiteralSign.Table.check, Sturm.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
+        LiteralSign.Table.check, LiteralSign.Entry.check, Sturm.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
         ← Array.all_toList, Array.toList_range, Bool.and_eq_true];
-       repeat' apply And.intro; all_goals decide +kernel)))
+       repeat' (any_goals (apply And.intro)); all_goals decide +kernel)))
   unless remaining.isEmpty do
-    throwError "rcf: literal source replay did not close"
+    let goals ← remaining.mapM fun goal => goal.withContext do
+      return ← ppExpr (← goal.getType)
+    throwError "rcf: literal source replay did not close: {MessageData.joinSep goals m!"\n"}"
   return ← instantiateMVars candidate
 
 private meta def naturalSquareRoot? (source : Expr) : MetaM (Option Nat) := do

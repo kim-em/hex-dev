@@ -7,10 +7,11 @@ module
 
 public import HexSturmMathlib.Soundness
 public import HexRealRootsMathlib.RealClosed
+public import HexRCF.RealCoefficients.IntervalSign
 
 public section
 
-/-! Rational Tarski queries for signs at a selected literal real root. -/
+/-! Exact interval bounds and rational Tarski queries for a selected literal real root. -/
 
 namespace Hex.RCF.RealCoefficients.LiteralSign
 
@@ -71,16 +72,77 @@ theorem checked_one (p q : DensePoly Rat) (lower upper : Rat)
   rw [Tarski.rootSum_singleton _ _ _ _ r hr, ← hxr] at querySpec
   exact querySpec
 
-/-- A literal sign for one value of a fixed real number field. The query
-polynomial is determined by the key's rational coordinates, not copied from
-the certificate. -/
+/-- A literal sign for one value of a fixed real number field. Coordinates
+come from the key. Absent query evidence selects exact interval evaluation;
+present query evidence must pass its own binding and replay checks. -/
 structure Entry (D : Type u) where
   key : D
   value : Int
-  evidence : TarskiCertificate Rat Rat Unit
+  evidence : Option (TarskiCertificate Rat Rat Unit)
 
-/-- Exact rational queries supporting finitely many field signs. The same
-count-one interval is used for every entry. -/
+namespace Entry
+
+/-- Replay interval entries with exact Horner arithmetic on the authenticated
+generator enclosure; query entries retain their full rational certificate. -/
+@[expose] def check {D : Type u} (entry : Entry D) (head : DensePoly Rat)
+    (lower upper : Rat) (query : D → DensePoly Rat) : Bool :=
+  match entry.evidence with
+  | none => decide (IntervalSign.sign? (query entry.key) lower upper = some entry.value)
+  | some evidence => Sturm.check Sturm.orderSign () head (query entry.key)
+      (.finite lower) (.finite upper) entry.value evidence
+
+/-- Both evidence branches identify the same real sign. A malformed query
+certificate is rejected rather than replaced with interval evidence. -/
+theorem check_spec {D : Type u} (entry : Entry D) (head : DensePoly Rat)
+    (lower upper : Rat) (query : D → DensePoly Rat) (x : ℝ)
+    (hx : (realPoly head).IsRoot x)
+    (hl : (lower : ℝ) < x) (hu : x < (upper : ℝ))
+    (count : TarskiCertificate Rat Rat Unit)
+    (hc : Sturm.check Sturm.orderSign () head 1 (.finite lower) (.finite upper)
+      1 count = true) (accepted : entry.check head lower upper query = true) :
+    entry.value = (SignType.sign ((realPoly (query entry.key)).eval x) : Int) := by
+  unfold check at accepted
+  cases evidence : entry.evidence with
+  | none =>
+      rw [evidence] at accepted
+      exact IntervalSign.sign_spec (query entry.key) lower upper x hl.le hu.le
+        entry.value (of_decide_eq_true accepted)
+  | some certificate =>
+      rw [evidence] at accepted
+      exact checked_one head (query entry.key) lower upper x hx hl hu
+        count certificate entry.value hc accepted
+
+/-- Prefer a separated exact enclosure; otherwise retain the complete
+rational Sturm query. Inconclusive intervals never assert equality to zero. -/
+@[expose] def build {D : Type u} (domain : Sturm.PreparedDomain Rat)
+    (lower upper : Rat) (key : D) (query : D → DensePoly Rat) : Entry D :=
+  match IntervalSign.sign? (query key) lower upper with
+  | some value => ⟨key, value, none⟩
+  | none =>
+      let evidence := Sturm.certifyPrepared () domain (query key)
+      ⟨key, evidence.value, some evidence⟩
+
+@[simp] theorem build_key {D : Type u} (domain : Sturm.PreparedDomain Rat)
+    (lower upper : Rat) (key : D) (query : D → DensePoly Rat) :
+    (build domain lower upper key query).key = key := by
+  unfold build
+  cases IntervalSign.sign? (query key) lower upper <;> rfl
+
+theorem build_checked {D : Type u} (domain : Sturm.PreparedDomain Rat)
+    (head : DensePoly Rat) (lower upper : Rat) (key : D) (query : D → DensePoly Rat)
+    (accepted : Sturm.check Sturm.orderSign () head (query key)
+      (.finite lower) (.finite upper) (Sturm.certifyPrepared () domain (query key)).value
+      (Sturm.certifyPrepared () domain (query key)) = true) :
+    (build domain lower upper key query).check head lower upper query = true := by
+  cases sign : IntervalSign.sign? (query key) lower upper with
+  | none => simpa only [build, sign, check] using accepted
+  | some value => simp only [build, sign, check, decide_true]
+
+end Entry
+
+
+/-- Exact interval signs or rational queries for finitely many field values.
+The same authenticated count-one interval is used for every entry. -/
 structure Table (D : Type u) where
   head : DensePoly Rat
   lower : Rat
@@ -96,9 +158,7 @@ variable {D : Type u} [DecidableEq D]
 @[expose] def check (table : Table D) (query : D → DensePoly Rat) : Bool :=
   Sturm.check Sturm.orderSign () table.head 1
     (.finite table.lower) (.finite table.upper) 1 table.count &&
-  table.entries.all fun entry =>
-    Sturm.check Sturm.orderSign () table.head (query entry.key)
-      (.finite table.lower) (.finite table.upper) entry.value entry.evidence
+  table.entries.all fun entry => entry.check table.head table.lower table.upper query
 
 /-- Look up a sign only when the finite table records this key. -/
 @[expose] def lookup? (table : Table D) (a : D) : Option Int :=
@@ -129,8 +189,8 @@ theorem sign_spec (table : Table D) (query : D → DensePoly Rat)
       have heq : entry.key = a := of_decide_eq_true
         (List.find?_some (p := fun row : Entry D => decide (row.key = a)) hfind)
       have hquery := List.all_eq_true.mp h.2 entry hm
-      have hs := checked_one table.head (query entry.key) table.lower table.upper
-        x hx hl hu table.count entry.evidence entry.value h.1 hquery
+      have hs := entry.check_spec table.head table.lower table.upper query
+        x hx hl hu table.count h.1 hquery
       rw [heq, ← heval] at hs
       exact hs
   | none => simp only [hfind, Option.map_none]
@@ -149,8 +209,9 @@ theorem lookup_spec (table : Table D) (query : D → DensePoly Rat)
   rw [hit] at hs
   exact hs
 
-/-- Reuse one prepared rational root interval for all requested field signs.
-The result is returned only after the exact table checker accepts it. -/
+/-- Prefer exact Horner signs on one prepared rational root interval and
+retain a Sturm query when an enclosure is inconclusive. The result is
+returned only after the complete literal table checker accepts it. -/
 @[expose] def build (head : DensePoly Rat) (lower upper : Rat)
     (keys : List D) (query : D → DensePoly Rat) : Option (Table D) :=
   match Sturm.prepare Sturm.orderSign head (.finite lower) (.finite upper) with
@@ -158,10 +219,7 @@ The result is returned only after the exact table checker accepts it. -/
   | some domain =>
       let count : TarskiCertificate Rat Rat Unit :=
         Sturm.certifyPrepared () domain (1 : DensePoly Rat)
-      let entries : List (Entry D) := keys.map fun key =>
-        let evidence : TarskiCertificate Rat Rat Unit :=
-          Sturm.certifyPrepared () domain (query key)
-        (⟨key, evidence.value, evidence⟩ : Entry D)
+      let entries : List (Entry D) := keys.map (Entry.build domain lower upper · query)
       let table : Table D := ⟨head, lower, upper, count, entries⟩
       if table.check query then some table else none
 
@@ -209,20 +267,16 @@ theorem build_lookup (head : DensePoly Rat) (lower upper : Rat)
     dsimp only at produced
     split at produced
     · cases Option.some.inj produced
-      let evidence := Sturm.certifyPrepared () domain (query key)
-      let entry : Entry D := ⟨key, evidence.value, evidence⟩
-      have present : entry ∈ keys.map (fun key =>
-          let evidence := Sturm.certifyPrepared () domain (query key)
-          (⟨key, evidence.value, evidence⟩ : Entry D)) := List.mem_map.mpr ⟨key, requested, rfl⟩
-      unfold lookup?
-      cases found : (keys.map (fun key =>
-          let evidence := Sturm.certifyPrepared () domain (query key)
-          (⟨key, evidence.value, evidence⟩ : Entry D))).find?
-            (fun row => decide (row.key = key)) with
+      let entries := keys.map (Entry.build domain lower upper · query)
+      have present : Entry.build domain lower upper key query ∈ entries :=
+        List.mem_map.mpr ⟨key, requested, rfl⟩
+      change ∃ value, (entries.find? (fun row => decide (row.key = key))).map Entry.value = some value
+      cases found : entries.find? (fun row => decide (row.key = key)) with
       | none =>
-        have missing := List.find?_eq_none.mp found entry present
-        simp [entry] at missing
-      | some row => exact ⟨row.value, by simp only [Option.map_some]⟩
+        have missing := List.find?_eq_none.mp found _ present
+        simp only [Entry.build_key, decide_true] at missing
+        exact False.elim (missing trivial)
+      | some row => exact ⟨row.value, rfl⟩
     · contradiction
 
 omit [DecidableEq D] in
@@ -277,9 +331,7 @@ theorem build_success (head : DensePoly Rat) (lower upper : Rat)
       rw [show realPoly (1 : DensePoly Rat) = 1 from interpret_one f hz h1,
         Tarski.rootSum_one, card] at meaning
       exact meaning
-    let entries : List (Entry D) := keys.map fun key =>
-      let evidence := Sturm.certifyPrepared () domain (query key)
-      ⟨key, evidence.value, evidence⟩
+    let entries : List (Entry D) := keys.map (Entry.build domain lower upper · query)
     let table : Table D := ⟨head, lower, upper, count, entries⟩
     have checked : table.check query = true := by
       simp only [Table.check, Bool.and_eq_true]
@@ -289,7 +341,7 @@ theorem build_success (head : DensePoly Rat) (lower upper : Rat)
       · intro entry mem
         obtain ⟨key, _, same⟩ := List.mem_map.mp mem
         subst entry
-        exact bound (query key)
+        exact Entry.build_checked domain head lower upper key query (bound (query key))
     refine ⟨table, ?_⟩
     unfold build
     rw [prepared]
