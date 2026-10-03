@@ -25,6 +25,12 @@ These are historical verification observations on their recorded sources, not
 scientific budgets or current-base headroom assertions. The rebased verification
 is recorded separately in [the rebase evidence](bench-results/prerequisite-rebase-verification.json).
 
+[Completed CI on `62399ddd0`](bench-results/prerequisite-required-ci-62399ddd0.json)
+passes all required checks, including the exact oracles. Benchmark verification
+uses 349 of 360 seconds, with 63 seconds for this executable and only 11 seconds
+of total headroom. This observation precedes the conversion/API rebase onto
+`c74bc64a0`; it does not attest the rebased source or establish stable headroom.
+
 The fixed verifier already invokes each runner once in-process, without warmup
 or tuning. The hard add/subtract registrations and their bare controls account
 for about 26 of the 32 local seconds. There is no repeat-count or tuning setting
@@ -33,8 +39,8 @@ canonical fixed input with an easier smoke input, and the scientific inputs
 and their expected hashes are preserved. The operational warning and remaining
 canonical-arithmetic cost remain under #10577. The full CI cap remains enforced;
 no increase or verification bypass is introduced. The retained 336-second run
-had only 24 seconds of headroom. The later pre-rebase observation was lower;
-shared-host and CI variance remain concerns, and required CI must pass on the
+had only 24 seconds of headroom; the latest completed pre-rebase run has 11.
+Shared-host and CI variance remain concerns, and required CI must pass on the
 final source without weakening the cap.
 
 | Shipped surface | Registrations | Evidence status |

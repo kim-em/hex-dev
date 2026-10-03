@@ -10,6 +10,10 @@ public import HexRealRootsMathlib.TarskiTests
 
 public section
 
+/-- info: 'HexSturmMathlib.rootCount_sturm' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexSturmMathlib.rootCount_sturm
+
 /-! Universal instantiations of field frontend domain and replay correspondence.
 Computational conformance owner: `HexSturm`.
 No runtime comparison is used to prove a semantic query value. -/

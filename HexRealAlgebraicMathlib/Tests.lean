@@ -83,3 +83,7 @@ These are correctness checks; they do not measure executable performance. -/
 /-- info: 'Hex.RealAlgebraicNumber.ceil_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealAlgebraicNumber.ceil_eq
+
+/-- info: 'Hex.RealAlgebraicNumber.sqrt?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealAlgebraicNumber.sqrt?_isSome

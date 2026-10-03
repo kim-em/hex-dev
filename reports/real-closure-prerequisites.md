@@ -99,9 +99,11 @@ The Mathlib-free benchmark target compiles and all shipped-API verification case
 are not performance attestation: their 30-second operational caps are not
 justified regression budgets. Independent review tokens are present; compiled conformance and the pinned
 83-case core and 92-case local exact oracles pass with no skipped operations.
-[The rebase verification record](bench-results/prerequisite-rebase-verification.json)
-separates historical checks and failed runs from checks on the current base,
-including inherited field-sign conformance and ordinary-kernel axiom guards.
+[The earlier rebase verification record](bench-results/prerequisite-rebase-verification.json)
+retains checks and failed runs on its recorded bases, including inherited
+field-sign conformance and ordinary-kernel axiom guards.
+[The conversion/API rebase verification](bench-results/prerequisite-conversion-rebase-verification.json)
+identifies checks on base `c74bc64a0`, including both companion test targets.
 The square-root simplification has 83 fresh exact-oracle cases with zero skips;
 fresh fixtures match the committed file byte for byte. Required CI on
 [PR #10580](https://github.com/kim-em/hex-dev/pull/10580) checks the phase

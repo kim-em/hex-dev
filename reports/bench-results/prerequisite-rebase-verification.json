@@ -1,56 +1,6 @@
 {
-  "scope": "Phase 3 only; Phase 4 incomplete. Required CI must pass on the corrected revision before merge.",
-  "current_api_source_commit": "4a4dd07f9b85458ef4ecce288047470edd400b51",
-  "current_base_commit": "9498f1e2dee9aa95017170509258a6b0174d8310",
-  "current_source_note": "Results identify the executable/proof source preceding subsequent documentation-only coverage declarations and evidence records. Final required CI identifies the final committed source.",
-  "local_on_current_base": {
-    "scope": "Rebased branch includes existing main changes to fixed-field sign wrappers and sign request conformance. Required full CI pending.",
-    "named_admission_scan": {
-      "result": "success",
-      "cones": 262,
-      "local_modules": 1033,
-      "measured_on": "4a4dd07f9b85458ef4ecce288047470edd400b51"
-    },
-    "full_conformance_build": {
-      "result": "success",
-      "jobs": 14891,
-      "measured_on": "4a4dd07f9b85458ef4ecce288047470edd400b51"
-    },
-    "dag_check": "success",
-    "phase_check": "success",
-    "bench_budget_unit_tests": {
-      "result": "success",
-      "cases": 3
-    },
-    "initial_default_build": {
-      "result": "failed",
-      "measured_on": "4a4dd07f9b85458ef4ecce288047470edd400b51",
-      "context": "Overlapping local Lake builds raced on generated artifacts; subsequent builds must run serially.",
-      "errors": [
-        "failed to load header from HexSignDet/Codec/EvidenceLaws.setup.json: offset 0: unexpected end of input",
-        "no such file or directory: HexRCF/RealCoefficients/FieldBuildBudget.olean"
-      ]
-    },
-    "serial_default_build": {
-      "result": "success",
-      "jobs": 15537,
-      "measured_on": "4a4dd07f9b85458ef4ecce288047470edd400b51",
-      "scope": "Full default targets, including HexManual; no overlapping Lake build."
-    },
-    "coverage_declaration_build": {
-      "result": "success",
-      "target": "HexRealAlgebraic.Conformance",
-      "jobs": 656,
-      "scope": "Working tree with the documentation-only signField coverage declaration; operation/test bodies unchanged."
-    },
-    "field_sign_independent_review": {
-      "result": "no Phase-2/Phase-3 blockers",
-      "source_base_commit": "9498f1e2dee9aa95017170509258a6b0174d8310",
-      "record": "status/reviews/issue-10577-opus-field-sign-addendum.md",
-      "scope": "Inherited computational wrapper, correspondence, conformance and axiom guards; Phase 4 remains incomplete."
-    }
-  },
-  "required_ci_on_final_revision": "Pending; must pass before merge. No completed benchmark verification on this base yet.",
+  "scope": "Retained historical Phase-3 verification on the explicitly recorded bases. Phase 4 remains incomplete. Current conversion/API rebase checks are in prerequisite-conversion-rebase-verification.json.",
+  "required_ci_on_final_revision": "Run 37122795812 passed on source 62399ddd0; retained in prerequisite-required-ci-62399ddd0.json. Required CI for the conversion/API rebase is separate and must pass before merge.",
   "historical_pre_rebase": {
     "source_commit": "63bc7163715b50eb09cc8c5a9248ac295194c100",
     "base_commit": "293d981ea323119da549e8bcf9f5be7e18d62971",
@@ -122,5 +72,55 @@
     "benchmark_verify_seconds": 217,
     "hard_cap_seconds": 360,
     "real_algebraic_seconds": 36
+  },
+  "recorded_api_source_commit": "4a4dd07f9b85458ef4ecce288047470edd400b51",
+  "recorded_base_commit": "9498f1e2dee9aa95017170509258a6b0174d8310",
+  "source_note": "Results identify the executable/proof source preceding subsequent documentation-only coverage declarations and evidence records. Final required CI identifies the final committed source.",
+  "local_on_recorded_base": {
+    "scope": "Checks on base 9498f1e2, including merged field-sign changes. Required CI on 62399ddd0 subsequently passed in run 37122795812; it does not attest the later conversion/API rebase.",
+    "named_admission_scan": {
+      "result": "success",
+      "cones": 262,
+      "local_modules": 1033,
+      "measured_on": "4a4dd07f9b85458ef4ecce288047470edd400b51"
+    },
+    "full_conformance_build": {
+      "result": "success",
+      "jobs": 14891,
+      "measured_on": "4a4dd07f9b85458ef4ecce288047470edd400b51"
+    },
+    "dag_check": "success",
+    "phase_check": "success",
+    "bench_budget_unit_tests": {
+      "result": "success",
+      "cases": 3
+    },
+    "initial_default_build": {
+      "result": "failed",
+      "measured_on": "4a4dd07f9b85458ef4ecce288047470edd400b51",
+      "context": "Overlapping local Lake builds raced on generated artifacts; subsequent builds must run serially.",
+      "errors": [
+        "failed to load header from HexSignDet/Codec/EvidenceLaws.setup.json: offset 0: unexpected end of input",
+        "no such file or directory: HexRCF/RealCoefficients/FieldBuildBudget.olean"
+      ]
+    },
+    "serial_default_build": {
+      "result": "success",
+      "jobs": 15537,
+      "measured_on": "4a4dd07f9b85458ef4ecce288047470edd400b51",
+      "scope": "Full default targets, including HexManual; no overlapping Lake build."
+    },
+    "coverage_declaration_build": {
+      "result": "success",
+      "target": "HexRealAlgebraic.Conformance",
+      "jobs": 656,
+      "scope": "Working tree with the documentation-only signField coverage declaration; operation/test bodies unchanged."
+    },
+    "field_sign_independent_review": {
+      "result": "no Phase-2/Phase-3 blockers",
+      "source_base_commit": "9498f1e2dee9aa95017170509258a6b0174d8310",
+      "record": "status/reviews/issue-10577-opus-field-sign-addendum.md",
+      "scope": "Inherited computational wrapper, correspondence, conformance and axiom guards; Phase 4 remains incomplete."
+    }
   }
 }
