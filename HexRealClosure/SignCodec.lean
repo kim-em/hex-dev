@@ -40,6 +40,28 @@ partial codec need not roundtrip values absent from the finite facts. -/
       | none => throw "stored sign fact missing or mismatched"
     | _ => throw "wrong stored value field count"
 
+/-- Membership supplies literal lookup coverage; duplicate keys have the same
+sign because every fact proves the sign of the same polynomial. -/
+theorem SignFact.find_of_mem (facts : List (SignFact context)) (f : SignFact context)
+    (hf : f ∈ facts) : SignFact.find facts f.polynomial = some ⟨f.sign, f.checked⟩ := by
+  induction facts with
+  | nil => simp at hf
+  | cons g gs ih =>
+    simp only [List.mem_cons] at hf
+    rcases hf with rfl | hf
+    · simp [SignFact.find]
+    · by_cases hg : g.polynomial = f.polynomial
+      · have hs : g.sign = f.sign := (hg ▸ g.checked).symm.trans f.checked
+        simp [SignFact.find, hg, hs]
+      · simpa [SignFact.find, hg] using ih hf
+
+/-- A stored nonzero fact can be restored using list membership alone. -/
+theorem SignFact.read_of_mem (facts : List (SignFact context)) (f : SignFact context)
+    (hf : f ∈ facts) (hn : f.sign ≠ 0) :
+    SignFact.read facts f.polynomial f.sign =
+      some (Element.restore f.polynomial f.sign f.checked hn) := by
+  simp [SignFact.read, SignFact.find_of_mem facts f hf, hn]
+
 /-- The encoder preserves the existing wire format exactly. -/
 theorem Element.signCodec_encode (value : ValueCodec E) (facts : List (SignFact context))
     (a : Element context) :
@@ -79,6 +101,15 @@ theorem Element.signCodec_sound (value : ValueCodec E) (facts : List (SignFact c
             rw [SignFact.read_sound facts polynomial claimed a hr]
             rfl
     · simp at h
+
+/-- Refinement composes across extension levels: a successful strict read
+agrees with the native decoder built over any refining predecessor reader. -/
+theorem Element.signCodec_refines (strict complete : ValueCodec E)
+    (h : strict.Refines complete) (facts : List (SignFact context)) :
+    (Element.signCodec strict facts).Refines (Element.codec complete) := by
+  intro j a ha
+  exact Element.codec_refines strict complete h j a
+    (Element.signCodec_sound strict facts j a ha)
 
 /-- Exact roundtrip on a value whose nonzero literal is covered by the finite
 facts. Canonical zero requires no fact; no global coverage premise is hidden. -/

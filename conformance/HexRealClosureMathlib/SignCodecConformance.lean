@@ -44,6 +44,19 @@ theorem literal_reader :
       .error "stored sign fact missing or mismatched" := by
   decide +kernel
 
+/- Malformed syntax and a matching zero sign fact must also reject. -/
+set_option maxRecDepth 32768 in
+theorem malformed_reader :
+    (Element.signCodec ValueCodec.rat zeroFacts).decode
+      (.arr #[Codec.poly ValueCodec.rat Sturm.Fixtures.p, .number 0]) =
+        .error "stored sign fact missing or mismatched" ∧
+    reader.decode (.arr #[.number 0]) = .error "wrong stored value field count" ∧
+    (reader.decode (.number 0)).toOption = none ∧
+    reader.decode (.arr #[.arr #[ValueCodec.rat.encode 0], .number 1]) =
+      .error "noncanonical polynomial vector" ∧
+    (reader.decode (.arr #[Codec.poly ValueCodec.rat stored, .arr #[]])).toOption = none := by
+  decide +kernel
+
 /- A JSON byte roundtrip still passes through the strict literal reader. -/
 #guard reader.decodeBytes literalJson.writeBytes == .ok literal
 #guard (Element.signCodec ValueCodec.rat ([] : List (SignFact context))).decodeBytes
@@ -77,9 +90,30 @@ theorem nested_roundtrip :
       decide +kernel
     rw [hc] at hx
     simp only [Array.mem_def, List.mem_cons, List.not_mem_nil, or_false] at hx
-    rcases hx with rfl | rfl <;> decide +kernel
+    rcases hx with rfl | rfl
+    · apply Element.signCodec_roundtrip ValueCodec.rat lowerFacts
+      · exact fun x _ => ValueCodec.rat_lawful x
+      · left; decide +kernel
+    · apply Element.signCodec_roundtrip ValueCodec.rat lowerFacts
+      · exact fun x _ => ValueCodec.rat_lawful x
+      · right; decide +kernel
   · right
     decide +kernel
+
+/-- Composed strict reads preserve the literal accepted by fully native readers
+at both levels, for arbitrary JSON inputs. -/
+theorem nested_sound (j : Codec.Json) (a : Element NestedSignsConformance.next)
+    (h : topReader.decode j = .ok a) :
+    (Element.codec (Element.codec ValueCodec.rat)).decode j = .ok a := by
+  exact Element.signCodec_refines lowerReader (Element.codec ValueCodec.rat)
+    (Element.signCodec_sound ValueCodec.rat lowerFacts) topFacts j a h
+
+set_option maxRecDepth 32768 in
+theorem missing_lower :
+    (Element.signCodec (Element.signCodec ValueCodec.rat ([] : List (SignFact context)))
+      topFacts).decode (topReader.encode NestedSignsConformance.nextLiteral) =
+        .error "stored sign fact missing or mismatched" := by
+  decide +kernel
 
 #guard topReader.decodeBytes (topReader.encodeBytes NestedSignsConformance.nextLiteral) ==
   .ok NestedSignsConformance.nextLiteral
@@ -100,5 +134,9 @@ theorem nested_roundtrip :
 /-- info: 'Hex.RealClosure.Algebraic.SignCodecConformance.nested_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms nested_roundtrip
+
+/-- info: 'Hex.RealClosure.Algebraic.SignCodecConformance.nested_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms nested_sound
 
 end Hex.RealClosure.Algebraic.SignCodecConformance

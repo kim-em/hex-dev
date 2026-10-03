@@ -893,6 +893,8 @@ stored coefficients to roundtrip through the predecessor reader and the
 nonzero stored literal to occur in the facts. The corresponding byte theorem
 uses the shared parser/printer and its existing lexical limits. Successful
 reads agree literally with the independent native coefficient decoder.
+`Element.signCodec_refines` composes that agreement through predecessor readers;
+`SignCodecConformance.nested_sound` applies it to two successive fields.
 `SignCodecConformance` checks two successive strict readers, retained
 representatives, missing lower-level facts, altered signs and truncated bytes.
 These coefficient readers do not encode or validate a dependency graph.

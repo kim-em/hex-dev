@@ -105,10 +105,7 @@ theorem ValueCodec.decode_encode (codec : ValueCodec α) (law : codec.Lawful) (v
     (limits : Codec.Limits)
     (bound : Codec.checkBytes limits (codec.encodeBytes value) = .ok ()) :
     codec.decodeBytes (codec.encodeBytes value) limits = .ok value := by
-  unfold ValueCodec.decodeBytes ValueCodec.encodeBytes at *
-  rw [Codec.parse_write _ _ bound]
-  simp only [bind, Except.bind]
-  exact law value
+  exact codec.decode_encode_of value (law value) limits bound
 
 /-- info: 'Hex.SignDet.ValueCodec.decode_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
