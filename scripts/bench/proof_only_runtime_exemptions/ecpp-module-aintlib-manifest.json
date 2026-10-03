@@ -1,6 +1,6 @@
 {
   "path": "lake-manifest.json",
-  "baseline_blob": "60a00fff506e825068a077b409c59636f483d4ef",
+  "baseline_blob": "30db00b2a65d7236a7b49480a563b1a3944e3963",
   "current_blob": "f318a8e6337ebe496a4cc9966500da5e3b523d5e",
   "reason": "Relative to the measured manifest, only the AINTLIB entry changes and TauCeti is added. Both provide optional proof theory outside the Mathlib-free factorization service import graph. All existing compiler, arithmetic and runtime dependency pins are unchanged; neither change reaches the measured factorization implementation or native link inputs."
 }
