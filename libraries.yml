@@ -1336,7 +1336,7 @@ libraries:
   HexECPPMathlib:
     deps: [HexECPP, HexPrimalityMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 7
     status: active
     proof_probes: [bench/HexECPPMathlib/ProofProbe]
   HexIntFactorMathlib:

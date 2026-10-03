@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from scripts.bench import check_factor_sweep_freshness as guard
 from scripts.bench import sweep_freshness as freshness
@@ -83,6 +84,42 @@ class LakefileAffectsRuntime(unittest.TestCase):
         after = BASE.replace('@ git "main"', '@ git "stable"', 1)
         self.assertNotEqual(after, BASE)
         self.assertTrue(guard.lakefile_texts_differ(BASE, after))
+
+    def test_package_native_archives_and_transitive_helpers_affect_runtime(self):
+        before = BASE + '\nprivate def compileFlags := "-O3"\n' + \
+            'private def archiveObject := compileFlags\n' + \
+            'extern_lib otherffi pkg := archiveObject\n'
+        self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
+        self.assertTrue(guard.lakefile_texts_differ(BASE, before))
+        self.assertTrue(guard.lakefile_texts_differ(before, BASE))
+
+    def test_library_scoped_link_target_and_helpers_affect_runtime(self):
+        before = BASE.replace('lean_lib HexPoly where\n',
+            'lean_lib HexPoly where\n  moreLinkObjs := #[polyffi]\n') + \
+            '\nprivate def compileFlags := "-O3"\n' + \
+            'target polyffi pkg := compileFlags\n'
+        self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
+        unrelated = before + '\ntarget unrelated pkg := "-O3"\n'
+        self.assertFalse(guard.lakefile_texts_differ(unrelated, unrelated.replace(
+            'target unrelated pkg := "-O3"', 'target unrelated pkg := "-O0"')))
+
+    def test_audited_proof_pin_keeps_all_runtime_checks(self):
+        old_pin = "3808ce862c09ad5b4de0c76f10ba00946ed2eff3"
+        new_pin = "ab1451487da02cd4483d0e2cdb2cc9e44bbbac17"
+        before = BASE + ('\nrequire AINTLIB from git\n'
+            '  "https://github.com/CBirkbeck/AINTLIB.git" @ "' + old_pin + '"\n')
+        after = before.replace(old_pin, new_pin)
+        with patch.object(freshness, "lean_import_prefixes", return_value={"HexPoly"}):
+            self.assertFalse(guard.lakefile_texts_differ(before, after))
+            for bad in (after.replace(new_pin, "main"),
+                        after.replace(new_pin, "b" * 40),
+                        after.replace("CBirkbeck", "other"),
+                        after.replace('hexArithOTarget := "cc"', 'hexArithOTarget := "clang"'),
+                        after.replace("`autoImplicit, false", "`autoImplicit, true")):
+                self.assertTrue(guard.lakefile_texts_differ(before, bad))
+        for closure in (None, *({root} for root in freshness.AUDITED_AINT_ROOTS)):
+            with patch.object(freshness, "lean_import_prefixes", return_value=closure):
+                self.assertTrue(guard.lakefile_texts_differ(before, after))
 
     def test_no_change_is_not_a_runtime_change(self):
         self.assertFalse(guard.lakefile_texts_differ(BASE, BASE))

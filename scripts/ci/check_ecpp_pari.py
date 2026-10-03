@@ -73,14 +73,14 @@ def main() -> None:
                 gp.chmod(0o755)
             env = dict(os.environ, PATH=str(tools_path) + os.pathsep + os.environ["PATH"])
             (scratch_path / "Generate.lean").write_text(
-                "import HexECPPMathlib.Pari\n\n"
+                "module\n\nimport HexECPPMathlib.Pari\n\n"
                 f"#ecpp_export {module}.Certificate cert for {n}\n\n"
                 f"theorem result : Nat.Prime ({n} - 1 + 1) := by\n  primality? (method := pari)\n\n"
                 "#print axioms result\n"
                 f"example : Hex.Nat.Prime ({n} - 1 + 1) := by primality? (method := pari)\n")
             output = build(module + ".Generate", env)
             assert "Try this:" in output and "ecpp_cert%" in output
-            assert "[propext, Classical.choice, Quot.sound]" in output
+            assert "[propext, Classical.choice, Quot.sound]" in " ".join(output.split())
             suggestions = re.findall(
                 r'Try this:\n  \[apply\] (.*?)(?=\n(?:info:|warning:|error:|✔|ℹ|Build|Some)|\Z)',
                 output, re.S)
@@ -88,11 +88,13 @@ def main() -> None:
             assert len(suggestions) == 2, output
             certificate = scratch_path / "Certificate.lean"
             frozen = certificate.read_bytes()
+            assert frozen.startswith(b"module\n"), frozen
+            assert b"@[expose] public def" in b" ".join(frozen.split()), frozen
             assert b"ecpp_cert%" in frozen and b"method := pari" not in frozen
             assert len(frozen) < 17000
             # The export command refuses to overwrite a file, before calling GP.
             (scratch_path / "Again.lean").write_text(
-                "import HexECPPMathlib.Pari\n"
+                "module\n\nimport HexECPPMathlib.Pari\n"
                 f"#ecpp_export {module}.Certificate cert for {n}\n")
             build(module + ".Again", env, expected_error="already exists")
             assert certificate.read_bytes() == frozen
@@ -102,22 +104,22 @@ def main() -> None:
                           f"Path({str(accessed)!r}).touch()\nraise SystemExit(99)\n")
             gp.chmod(0o755)
             (scratch_path / "Frozen.lean").write_text(
-                f"import {module}.Certificate\n\n"
+                f"module\n\npublic import {module}.Certificate\n\n"
                 f"theorem result : Nat.Prime {n} := by\n"
                 f"  ecpp using {module}.Certificate.cert\n\n#print axioms result\n"
                 f"theorem suggestedNat : Nat.Prime ({n} - 1 + 1) := by\n  " + suggestions[0].strip() + "\n\n"
                 f"theorem suggestedCore : Hex.Nat.Prime ({n} - 1 + 1) := by\n  " + suggestions[1].strip() + "\n")
             output = build(module + ".Frozen", env)
-            assert "[propext, Classical.choice, Quot.sound]" in output
+            assert "[propext, Classical.choice, Quot.sound]" in " ".join(output.split())
             assert not accessed.exists(), "frozen proof invoked GP"
             (scratch_path / "Editor.lean").write_text(
-                "import HexECPPMathlib.Pari\nset_option Elab.inServer true in\n"
+                "module\n\nimport HexECPPMathlib.Pari\nset_option Elab.inServer true in\n"
                 f"#ecpp_export {module}.EditorOutput cert for 5\n")
             build(module + ".Editor", env)
             assert not accessed.exists(), "editor export invoked GP"
             assert not (scratch_path / "EditorOutput.lean").exists()
             (scratch_path / "InvalidNames.lean").write_text(
-                'import HexECPPMathlib.Pari\n#ecpp_export «../escape» cert for 17\n'
+                'module\n\nimport HexECPPMathlib.Pari\n#ecpp_export «../escape» cert for 17\n'
                 f'#ecpp_export {module}.Unused invalid.name for 17\n')
             output = build(module + ".InvalidNames", env, expected_error="ASCII identifier components")
             assert "without a namespace" in output

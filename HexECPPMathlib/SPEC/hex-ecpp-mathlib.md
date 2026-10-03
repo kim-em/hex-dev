@@ -93,6 +93,9 @@ definition needed by replay must be `@[expose]`. Restrict the accepted term
 form to constructor data and exposed data constants; reject arbitrary
 computations. Bound traversal, unfolding, numeral size and total certificate
 nodes, including embedded `PrimeCert` data, before evaluating the checker.
+Constructor-data let bindings charge every occurrence after substitution.
+Shared terminal trees are traversed with a decreasing node allocation before
+reification or checker evaluation.
 It evaluates `checkAt` using compiled code as an untrusted preflight, reifies the certificate, and emits
 `natPrime_of_checkAt` with kernel-replayed acceptance. The emitted Boolean
 proof must reduce through exposed Lean definitions and existing approved
@@ -119,6 +122,7 @@ enclosing term small without requiring users to change recursion options.
 The auxiliary body has no compiled replacement or proof assumptions.
 No PARI invocation or terminal certificate search runs during replay.
 
+PARI generation is POSIX-only and rejects other platforms before spawning.
 Users explicitly import `HexECPPMathlib.Pari` to enable
 `primality? (method := pari)` for `Nat.Prime` and `Hex.Nat.Prime` goals. The
 generator runs `gp` from PATH with `-q -f`, passing only the evaluated natural
@@ -128,9 +132,15 @@ exit path. It uses no shell and ignores GP startup files. The initial PARI
 stack is 64000000 bytes; GP startup preferences cannot
 enable automatic stack growth. The process is limited to 30000 milliseconds,
 16448 stdout bytes and 4096 stderr bytes. On POSIX, cancellation and exhaustion
-terminate the process group with KILL and reap the child. Collect both pipe
+terminate the process group with KILL and reap the child. If the OS rejects
+the kill, collect readers and attempt a nonblocking reap, then report cleanup
+failure alongside the original error; do not wait indefinitely for a live
+process. Collect both pipe
 readers before reaping the leader, and never wait or kill that PID again after
-reaping it. Missing
+reaping it. Readers poll fresh, nonblocking POSIX pipe descriptors and observe
+cooperative cancellation independently of EOF, including pipes retained by
+descendants outside the original process group. The small Mathlib-free IO
+sidecar is precompiled; the mathematical bridge is not. Missing
 executables, process failures, framing errors, conversion diagnostics and
 timeout are reported distinctly. Conversion failure alone proves no
 compositeness.
@@ -144,9 +154,10 @@ no automatic fallback or `norm_num` handler is registered.
 
 `#ecpp_export MyCertificates.Prime cert for n` writes
 `MyCertificates/Prime.lean`, relative to the process working directory. The
-file imports `HexECPPMathlib.Compact` and contains one certificate declaration
-named `MyCertificates.Prime.cert`. After generation, remove the command, put
-the file under the project's Lean source root, import `MyCertificates.Prime`,
+file uses the module system, publicly imports `HexECPPMathlib.Compact`, and
+contains one `@[expose] public` certificate declaration named
+`MyCertificates.Prime.cert`. After generation, remove the command, put
+the file under the project's Lean source root, use `public import MyCertificates.Prime`,
 and use `ecpp using MyCertificates.Prime.cert`. Parent directories may be
 created; existing files are never overwritten. The command runs only in batch
 builds: the language server displays instructions to run `lake build +Module`
@@ -217,3 +228,29 @@ kernel-checks the unconditional proof before suggesting or exporting compact
 frozen data. It introduces no registration on ordinary `primality` and no
 CM proof dependency. The native search ceiling is admitted separately from
 the supplied-certificate replay ceiling.
+
+Native row depth and replay node counts are separate allocations. The bridge
+clamps native row depth to the converter's 20-row ceiling. Replay additionally
+counts every embedded terminal `PrimeCert` node and its ECPP base wrapper:
+rows + 1 + terminal nodes must be at most 32. A shallow terminal tree can
+therefore exhaust replay even when both search depth limits were respected.
+Generation passes the complete proposal through `certProof` and its replay
+preflight before any suggestion or export; this exhaustion is a clean resource
+failure. Conformance includes an accepted 31-node terminal with its base
+wrapper, both literal and compact replay, and rejection when a row raises the
+total to 33.
+
+## Proof-track evidence
+
+This Mathlib companion has no compiled benchmark track. Literal `ecpp using`,
+compact `ecpp_cert%`, native/PARI suggestions and source export, and frozen
+replay take the proof track. `libraries.yml` declares the explicit
+`bench/HexECPPMathlib/ProofProbe` root built by CI; the public generation/export
+routes additionally have protocol conformance that builds generated source
+and replays the exact certificate suggestion in fresh modules. The surface
+inventory is `reports/ecpp/companion-proof-surface.md`. Existing replay and
+native corpus evidence is retained. `NativeGeneration` runs the native tactic
+on a representative 128-bit subject. PARI generation/export uses the protocol
+script as its evidence because GP is optional; replay probes alone do not
+attest generation. The computational partner owns compiled
+performance claims and profiles.

@@ -3,14 +3,17 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
+module
 
-import HexECPPMathlib.Reduction
-import HexECPPMathlib.Order
-import HexPrimalityMathlib.Prime
+public import HexECPPMathlib.Reduction
+public import HexECPPMathlib.Order
+public import HexPrimalityMathlib.Prime
 
 /-!
 # Scalar correspondence and unconditional ECPP soundness
 -/
+
+@[expose] public section
 
 namespace Hex.ECPP
 
