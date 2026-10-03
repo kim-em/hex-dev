@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexArith.Nat.ExtendedGcd
 public import HexArith.Nat.ModArith
 public import HexArith.Nat.Pow
 public import HexArith.Nat.Prime
