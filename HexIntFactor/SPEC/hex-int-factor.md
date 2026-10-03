@@ -330,11 +330,13 @@ supplied certificates need not have identical syntax, but every supplied one
 must be accepted for its base. Otherwise run bounded native `PrimeCert`
 completion once for that distinct base, threading randomness on success and
 failure. Composite bases and bases whose primality cannot be completed remain
-in the residual with distinct diagnostics. The initial importer does not split
-composite proposals further. Retain the canonical validated unresolved
+in the residual with distinct diagnostics. Zero completion attempts are reported
+as `skipped`, separately from attempted but unfinished completion. The initial
+importer does not split composite proposals further. Retain the canonical validated unresolved
 base/multiplicity pairs, their completion failure kinds, and the unlisted
 quotient as untrusted hints in the result. Independently check that their
-bounded product reconstructs the checked residual; these hints are never
+bounded product reconstructs the checked residual and, with the certified
+product, the requested subject; these hints are never
 prime-power evidence. Multiply their validated powers into the unlisted
 quotient with the same subject bound. Sort and merge only certified entries.
 Check the final partial candidate with `checkPartial`; residual one is checked
@@ -360,7 +362,7 @@ events retained. This is an existing pure callback, not an IO hook.
 Entry and node limits bound the number of completion calls and certificate
 replays. These are finite caller-selected allocations, not promises that every
 admitted base can be certified. With zero completion attempts the importer
-skips native construction entirely and records unfinished completion for
+skips native construction entirely and records skipped completion for
 uncertified bases, including table-range bases; supplied certificates remain
 usable. Adding external proposals for `p−1` or PARI `primecert(p, 1)` is a
 possible later optimization, excluded from the initial factor-list protocol.
@@ -406,9 +408,10 @@ The initial producer supports POSIX platforms.
 fallback allocations. After unavailable, failed, malformed or rejected external
 production it runs native search on the original positive subject. After a
 checked partial import it preserves the validated residual pieces: run native
-factorization separately on composite pieces (factor the base, then scale its
-multiplicities) and on the unlisted quotient, preserving certified entries and
-advanced randomness. Bases whose bounded construction already exhausted stay
+factorization separately on composite or skipped pieces (factor the base, then
+scale its multiplicities) and on the unlisted quotient, preserving certified entries and
+advanced randomness. Skipped completion may use this separately allocated
+native stage. Bases whose bounded construction already exhausted stay
 unresolved; do not repeat a weaker certificate search or merge them back into
 an integer that would need rediscovery. A probable-prime test alone never
 certifies a piece or removes it from the residual.
@@ -425,7 +428,9 @@ At one, return the checked empty certificate without spawning.
 
 Merge checked residual progress by adding exponents for overlapping certified
 bases and replay the final complete/partial checker against the original
-subject. Retain backend/import/completion diagnostics alongside the eventual
+subject. Keep native attempt/event traces. When a native entry exceeds certificate
+limits, retain admissible entries and leave the others in the residual.
+Retain backend/import/completion diagnostics alongside the eventual
 native incomplete or rejected outcome and checked progress. A native rejection
 remains distinct from exhaustion; retain the rejected candidate diagnostics
 and prefer the previously checked snapshot. Explicit cancellation cleans up

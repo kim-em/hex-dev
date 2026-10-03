@@ -192,6 +192,7 @@ inductive Diagnostic where
   | importer (error : ImportError)
   | completion (piece : ResidualPiece)
   | native (subject : Nat) (stop : FactorStop)
+  | nativeProgress (subject attempts : Nat) (events : List FactorEvent)
   | mergeError (subject : Nat) (error : ImportError)
   | cancelled
 deriving Repr
@@ -211,7 +212,40 @@ private def isCancelled (cancel : Option IO.CancelToken) : IO Bool := do
   | none => return false
   | some token => token.isSet
 
-/-- Native fallback is one finite stage: at most one call per validated composite
+/-- Merge one untrusted native outcome into checked progress. Rejections preserve
+previous data. Evidence exceeding import limits stays in the residual while
+other admissible entries can still be retained. Attempt traces survive merging. -/
+def mergeNative (b : ImportBudget) (n base exponent : Nat) (value : CheckedFactors n)
+    (found : Except FactorFailure (Internal.FactorSuccess base)) : Result n := Id.run do
+  let (rand, powers, diagnostics, failures, rejected) :
+      Hex.Rand × List PrimePower × List Diagnostic × List (Nat × FactorFailure) × Bool :=
+    match found with
+    | .ok success => (success.rand, success.factorization.raw.factors,
+        [Diagnostic.nativeProgress base success.attempts success.events], [], false)
+    | .error failure => (failure.rand,
+        (failure.snapshot.map (fun (s : PartialSnapshot) => s.raw.factors)).getD [],
+        [Diagnostic.native base failure.stop,
+          Diagnostic.nativeProgress base failure.attempts failure.events],
+        [(base, failure)], failure.stop == FactorStop.rejected)
+  if rejected then return ⟨some value, rand, diagnostics, none, failures⟩
+  let mut diagnostics := diagnostics
+  let mut kept : List PrimePower := []
+  for entry in powers do
+    if !FactorImport.certificateFits b entry.cert then
+      diagnostics := diagnostics ++ [.mergeError base .certificateBounds]
+    else if entry.exponent * exponent > b.maxExponent then
+      diagnostics := diagnostics ++ [.mergeError base .invalidExponent]
+    else
+      kept := { entry with exponent := entry.exponent * exponent } :: kept
+  let combined := Internal.mergePowers kept.reverse value.raw.factors
+  let proposal : FactorProposal := ⟨n, combined.map fun e =>
+    ((e.prime : Int), (e.exponent : Int), some e.cert)⟩
+  match importFactors { b with completion := { b.completion with maxAttempts := 0 } }
+      n proposal rand with
+  | .ok progress => return ⟨some progress.value, rand, diagnostics, none, failures⟩
+  | .error err => return ⟨some value, rand, diagnostics ++ [.mergeError base err], none, failures⟩
+
+/-- Native fallback is one finite stage: at most one call per validated composite or skipped
 piece and one for the unlisted quotient. Exhausted prime construction is retained,
 never retried with the weaker ordinary native allocation. -/
 def fallback (b : ImportBudget) (native : NativeBudget) (n : Nat)
@@ -223,32 +257,17 @@ def fallback (b : ImportBudget) (native : NativeBudget) (n : Nat)
   let mut failures := []
   let pieces := (if saved.unlisted > 1 then [(saved.unlisted, 1)] else []) ++
     (saved.unresolved.filterMap fun p =>
-      if p.stop == .composite then some (p.base, p.exponent) else none)
+      if p.stop == .composite || p.stop == .skipped then some (p.base, p.exponent) else none)
   for (base, exponent) in pieces do
     if ← isCancelled cancel then
       return ⟨some value, rand, diagnostics ++ [.cancelled], some saved, failures⟩
     let found := Internal.factorCountedWith? native.primeBudget native.primeFuel
       base rand native.factorFuel false .off
-    let powers ← match found with
-      | .ok success =>
-          rand := success.rand
-          pure success.factorization.raw.factors
-      | .error failure =>
-          rand := failure.rand
-          diagnostics := diagnostics ++ [.native base failure.stop]
-          failures := failures ++ [(base, failure)]
-          -- Preserve previous checked data on rejection; retain the candidate.
-          if failure.stop == .rejected then continue
-          pure ((failure.snapshot.map (·.raw.factors)).getD [])
-    let powers := powers.map fun e => { e with exponent := e.exponent * exponent }
-    let combined := Internal.mergePowers powers value.raw.factors
-    -- Supplied native evidence and aggregate multiplicities pass import bounds.
-    let proposal : FactorProposal := ⟨n, combined.map fun e =>
-      ((e.prime : Int), (e.exponent : Int), some e.cert)⟩
-    match importFactors { b with completion := { b.completion with maxAttempts := 0 } }
-        n proposal rand with
-    | .ok progress => value := progress.value
-    | .error err => diagnostics := diagnostics ++ [.mergeError base err]
+    let progress := mergeNative b n base exponent value found
+    value := progress.value.getD value
+    rand := progress.rand
+    diagnostics := diagnostics ++ progress.diagnostics
+    failures := failures ++ progress.nativeFailures
   if ← isCancelled cancel then diagnostics := diagnostics ++ [.cancelled]
   return ⟨some value, rand, diagnostics, some saved, failures⟩
 

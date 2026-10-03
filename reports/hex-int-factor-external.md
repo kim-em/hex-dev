@@ -5,8 +5,12 @@ The frozen corpus has five complete and two partial checked results. Cases 0,
 of four exhausts. Cases 1 and 2 complete natively at four but exhaust at one;
 these native successes are retained. Case 5 is `2^255 - 19`: discovery succeeds,
 but its supported `PrimeCert` construction exhausts 128 attempts and leaves the
-whole subject as a checked residual. Case 6 disables completion with zero
-attempts and retains both discovered bases as unresolved hints.
+whole subject as a checked residual. Case 6 measures the pure importer with completion disabled at zero attempts
+and retains both discovered bases as unresolved hints. The external-assisted
+route may separately spend its native fallback allocation on skipped bases;
+that policy is distinct from retrying a completed but exhausted construction.
+A nonempty checked partial for `12 = 2² · 3` is additionally frozen as a pure
+import/replay regression in `Frozen/Partial12.lean`.
 
 ## Inputs and allocations
 
@@ -63,16 +67,17 @@ embedded or trusted.
 ## Verification and publication
 
 `HexIntFactorTests` builds parser/import/fallback coverage, exact complete and
-partial `#guard_msgs` source text, and all seven frozen modules. The existing
+partial `#guard_msgs` source text, and all measured frozen modules plus the nonempty partial regression. The existing
 integer-factor oracle consumes the frozen corpus and checks primality and exact
-products independently. The local [independent check](hex-int-factor-external-oracle.json)
-uses python-flint 0.9.0 primality and Python exact products for all seven results. `scripts/ci/check_intfactor_pari.py --gp /path/to/gp`
+products independently. The local [independent check](hex-int-factor-external-oracle-schema.json)
+uses python-flint 0.9.0 primality and Python exact products for the seven measured
+results and the additional nonempty partial regression. `scripts/ci/check_intfactor_pari.py --gp /path/to/gp`
 checks actual small-GP production, exact suggested source, complete/partial
 fresh replay, subject-substitution rejection, opaque-data rejection, exclusive
 creation and editor gating. Replay proofs depend only on core `propext`; no
 `native_decide`, new axiom, search proof or producer proof is involved.
 
-[The fresh split client](hex-int-factor-external-split.json) uses publication
+[The fresh split client](hex-int-factor-external-split-partial.json) uses publication
 source/settings transforms and staged upstream prerequisites, with no Mathlib
 or project build cache. HexIntFactor is not yet listed in `released.yml`, so its
 skeleton and `build_modules`/`test_modules` entry are prospective; upstream

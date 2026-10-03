@@ -86,7 +86,7 @@ meta def source (name : Name) (n : Nat) (value : CheckedFactors n)
   return text
 
 private meta def subject (term : Term) : TermElabM Nat :=
-  withOptions (fun o => maxHeartbeats.set (maxRecDepth.set o 8192) 2000000) do
+  withOptions (maxRecDepth.set · 8192) do
   let e ← Term.elabTermEnsuringType term (mkConst ``Nat)
   Term.synthesizeSyntheticMVarsNoPostponing
   let e ← instantiateMVars e
@@ -104,6 +104,8 @@ private meta def generate (n : Nat) : MetaM (CheckedFactors n) := do
   for diagnostic in result.diagnostics do
     match diagnostic with
     | .cancelled => throwError "integer factorization: cancelled"
+    | .nativeProgress subject attempts _ =>
+        logInfo m!"integer factorization: native fallback for {subject} used {attempts} attempts"
     | _ => logInfo m!"integer factorization: {repr diagnostic}"
   let some value := result.value | throwError "integer factorization: no checked result"
   return value

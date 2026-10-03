@@ -23,7 +23,7 @@ LIBRARIES = {'HexBasic': [], 'HexArith': [],
 ENTRY = dict(repo='prospective/hex-int-factor', lib='HexIntFactor', umbrella=True, spec='hex-int-factor', lakefile='lean',
              build_modules=['HexIntFactor.Pari', 'HexIntFactor.Export', 'HexIntFactor.Replay'],
              test_modules=['HexIntFactor.ImportTests', 'HexIntFactor.PariTests',
-                           'HexIntFactor.ExportTests'] + [f'HexIntFactor.Frozen.Case{i}' for i in range(7)])
+                           'HexIntFactor.ExportTests'] + [f'HexIntFactor.Frozen.Case{i}' for i in range(7)] + ['HexIntFactor.Frozen.Partial12'])
 
 
 def main():
@@ -79,9 +79,11 @@ def main():
         '[[lean_lib]]\nname = "Replay"\n')
     (client / 'Replay.lean').write_text('module\n'
         'public import HexIntFactor.Frozen.Case3\npublic import HexIntFactor.Frozen.Case5\n'
+        'public import HexIntFactor.Frozen.Partial12\n'
         'public section\n'
         'example : Hex.Nat.checkFactorization Hex.IntFactorFrozen.case3 = true := by decide +kernel\n'
         'example : Hex.Nat.checkPartial Hex.IntFactorFrozen.case5 = true := by decide +kernel\n'
+        'example : Hex.Nat.checkPartial Hex.IntFactorFrozen.partial12 = true := by decide +kernel\n'
         '#print axioms Hex.IntFactorFrozen.case3_checked\n')
     result = subprocess.run(['lake', 'build'], cwd=client, text=True, capture_output=True,
         env=dict(os.environ, HEX_INT_FACTOR_GP='/no-gp-in-split-client'))

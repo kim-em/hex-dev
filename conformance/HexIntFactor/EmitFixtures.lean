@@ -13,6 +13,7 @@ import HexIntFactor.Frozen.Case3
 import HexIntFactor.Frozen.Case4
 import HexIntFactor.Frozen.Case5
 import HexIntFactor.Frozen.Case6
+import HexIntFactor.Frozen.Partial12
 
 /-! Deterministic JSONL fixtures for integer factorization. -/
 
@@ -151,3 +152,4 @@ def main : IO Unit := do
   emitFrozen 4 ⟨Hex.IntFactorFrozen.case4.subject, Hex.IntFactorFrozen.case4.factors, 1⟩
   emitFrozen 5 Hex.IntFactorFrozen.case5
   emitFrozen 6 Hex.IntFactorFrozen.case6
+  emitFrozen 7 Hex.IntFactorFrozen.partial12

@@ -53,7 +53,7 @@ deriving Repr, BEq
 
 /-- No primality claim accompanies an unfinished residual piece. -/
 inductive CompletionStop where
-  | composite | unfinished | certificateBounds
+  | composite | skipped | unfinished | certificateBounds
 deriving Repr, BEq
 
 /-- Validated arithmetic hints; their bases are not certified prime powers. -/
@@ -196,7 +196,8 @@ def prepare (b : ImportBudget) (n : Nat) (proposal : FactorProposal) (r : Hex.Ra
   let mut events := []
   for entry in entries do
     let mut cert := entry.cert
-    let mut stop := CompletionStop.unfinished
+    let mut stop := if b.completion.maxAttempts == 0 then
+      CompletionStop.skipped else CompletionStop.unfinished
     let mut used := 0
     let mut obligation := none
     let mut trace := []
@@ -243,6 +244,12 @@ def prepare (b : ImportBudget) (n : Nat) (proposal : FactorProposal) (r : Hex.Ra
       | throw .invalidArithmetic
     reconstructed := next
   unless reconstructed == residual do throw .invalidArithmetic
+  let mut certified := 1
+  for entry in factors do
+    let some next := boundedPowMul n entry.prime certified entry.exponent
+      | throw .invalidArithmetic
+    certified := next
+  unless n % certified == 0 && n / certified == reconstructed do throw .invalidArithmetic
   return ⟨⟨n, factors.reverse, residual⟩, rand, unlisted, unresolved, attempts, events⟩
 
 end FactorImport

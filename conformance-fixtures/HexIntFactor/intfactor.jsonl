@@ -842,3 +842,5 @@
 {"kind":"result","lib":"HexIntFactor","case":"frozen/5","op":"frozen","value":{"factors":[],"residual":57896044618658097711785492504343953926634992332820282019728792003956564819949}}
 {"kind":"frozen","lib":"HexIntFactor","case":"frozen/6","n":1000036000099}
 {"kind":"result","lib":"HexIntFactor","case":"frozen/6","op":"frozen","value":{"factors":[],"residual":1000036000099}}
+{"kind":"frozen","lib":"HexIntFactor","case":"frozen/7","n":12}
+{"kind":"result","lib":"HexIntFactor","case":"frozen/7","op":"frozen","value":{"factors":[[2,2]],"residual":3}}

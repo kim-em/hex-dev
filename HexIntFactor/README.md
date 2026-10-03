@@ -79,7 +79,9 @@ certificate to avoid repeating search.
 contains a signed subject and `(base, exponent, optionalPrimeCert)` entries.
 Unsorted and repeated entries are validated before canonicalization. Every
 accepted prime power carries a checked `PrimeCert`; omitted factors, composite
-bases and unfinished primality completion remain in a checked residual.
+bases and unfinished primality completion remain in a checked residual. Zero
+completion attempts report skipped work, which the external-assisted route may
+handle with its separate native allocation. Exhausted completion stays unresolved.
 
 ```lean
 import HexIntFactor.Import

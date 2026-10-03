@@ -522,7 +522,8 @@ class SyncReleasedTests(unittest.TestCase):
             "build_modules": ["HexIntFactor.Pari", "HexIntFactor.Export", "HexIntFactor.Replay"],
             "test_modules": ["HexIntFactor.ImportTests", "HexIntFactor.PariTests",
                              "HexIntFactor.ExportTests"] +
-                            [f"HexIntFactor.Frozen.Case{i}" for i in range(7)],
+                            [f"HexIntFactor.Frozen.Case{i}" for i in range(7)] +
+                            ["HexIntFactor.Frozen.Partial12"],
         }
         (self.repo / "lakefile.lean").write_text(
             "import Lake\nopen Lake DSL\npackage factor\n"

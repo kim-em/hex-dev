@@ -39,13 +39,17 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gp", help="also test a real GP executable")
     args = parser.parse_args()
+    if args.gp is not None and (not args.gp or not Path(args.gp).is_file() or
+                                not os.access(args.gp, os.X_OK)):
+        parser.error("--gp requires an existing executable")
     env = dict(os.environ, HEX_INT_FACTOR_GP="/hex-no-factorizer-on-replay")
     with scratch_modules() as scratch:
         module = "HexIntFactor." + scratch.name
         # Extract the exact complete and partial suggestions pinned by #guard_msgs.
         tests = (ROOT / "HexIntFactor/ExportTests.lean").read_text()
         suggestions = re.findall(r"info: (module\n.*?⟨certificate, rfl, by decide \+kernel⟩)\n-/", tests, re.S)
-        assert len(suggestions) == 2
+        assert len(suggestions) == 3
+        suggestions = suggestions[:2]
         for name, text, checked in zip(("Complete", "Partial"), suggestions,
                                        ("CheckedFactorization", "CheckedPartialFactorization")):
             (scratch / f"{name}.lean").write_text(text + "\n")
@@ -91,6 +95,7 @@ def main() -> None:
                 f"#int_factor_export {module}.RealCertificate cert for 72\n"
                 "#int_factor for 12\n")
             output = build(module + ".Real", real_env)
+            assert "integer factorization:" not in output, output
             match = re.search(r"Frozen certificate:\n(.*?⟨certificate, rfl, by decide \+kernel⟩)", output, re.S)
             assert match and match.group(1) == suggestions[0]
             build(module + ".RealCertificate", env)

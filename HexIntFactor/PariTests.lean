@@ -45,7 +45,9 @@ private def frame (n : Nat) (entries : String) :=
 private def checks : IO Unit := do
   let missing ← factor 12 (Hex.Rand.ofSeed 12) (executable := "/hex-missing-gp")
   unless missing.value.any (fun v => v.raw.residual == 1 && checkPartial v.raw) &&
-      !missing.diagnostics.isEmpty do throw <| IO.userError "missing-backend fallback failed"
+      missing.diagnostics.any (fun d => match d with
+        | .producer (.process .missing) => true | _ => false) do
+    throw <| IO.userError "missing-backend fallback failed"
   let bounded ← factor 1000036000099 (Hex.Rand.ofSeed 12)
     (native := { factorFuel := 0 }) (executable := "/hex-missing-gp")
   unless bounded.value.any (fun v => v.raw.residual == 1000036000099 && checkPartial v.raw) &&
@@ -57,6 +59,40 @@ private def checks : IO Unit := do
   unless joined.value.any (fun v => v.raw.residual == 1 &&
       v.raw.factors.map (fun e => (e.prime, e.exponent)) == [(2, 2), (3, 1)]) do
     throw <| IO.userError "overlapping powers were not merged"
+  let .ok composite := importFactors {} 144 ⟨144, [(12, 2, none)]⟩ (Hex.Rand.ofSeed 144)
+    | throw <| IO.userError "could not prepare composite proposal"
+  let split ← fallback {} {} 144 composite
+  unless split.value.any (fun v => v.raw.residual == 1 &&
+      v.raw.factors.map (fun e => (e.prime, e.exponent)) == [(2, 4), (3, 2)]) do
+    throw <| IO.userError "composite multiplicities were not scaled"
+  let .ok skipped := importFactors { completion := { maxAttempts := 0 } }
+      1000036000099 ⟨1000036000099, [(1000003, 1, none), (1000033, 1, none)]⟩
+      (Hex.Rand.ofSeed 1729) | throw <| IO.userError "skipped preparation failed"
+  let resumed ← fallback {} {} 1000036000099 skipped
+  unless resumed.value.any (fun v => v.raw.residual == 1 && checkPartial v.raw) do
+    throw <| IO.userError "skipped completion did not use its separate native allocation"
+  let rejected : FactorFailure := {
+    stop := .rejected, attempts := 7, rand := Hex.Rand.ofSeed 99
+    culprit := some ⟨6, [⟨2, .small 3⟩], 1⟩ }
+  let preserved := mergeNative {} 12 6 1 partialData.value (.error rejected)
+  unless preserved.value.any (fun v => v.raw.residual == partialData.value.raw.residual) &&
+      preserved.rand.state == rejected.rand.state && preserved.nativeFailures.length == 1 &&
+      preserved.diagnostics.any (fun d => match d with
+        | .native 6 .rejected => true | _ => false) do
+    throw <| IO.userError "native rejection erased checked data or diagnostics"
+  let .ok full := importFactors {} 3000009
+      ⟨3000009, [(3, 1, none), (1000003, 1, none)]⟩ (Hex.Rand.ofSeed 3000009)
+      | throw <| IO.userError "mixed certificate preparation failed"
+  let .complete full := full.value | throw <| IO.userError "mixed certificates incomplete"
+  let .ok empty := importFactors {} 3000009 ⟨3000009, []⟩ (Hex.Rand.ofSeed 3000009)
+      | throw <| IO.userError "empty preparation failed"
+  let boundedCerts := mergeNative { maxCertNodes := 1 } 3000009 3000009 1 empty.value
+    (.ok { factorization := full, attempts := 4, rand := Hex.Rand.ofSeed 101 })
+  unless boundedCerts.value.any (fun v => v.raw.residual == 1000003 &&
+      v.raw.factors.map (·.prime) == [3] && checkPartial v.raw) &&
+      boundedCerts.diagnostics.any (fun d => match d with
+        | .mergeError _ .certificateBounds => true | _ => false) do
+    throw <| IO.userError "certificate limit discarded admissible native progress"
   let token ← IO.CancelToken.new
   token.set
   let cancelled ← factor 12 (Hex.Rand.ofSeed 12)

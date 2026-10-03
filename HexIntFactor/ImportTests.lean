@@ -78,14 +78,14 @@ private def rejects (kind : ImportError) (n : Nat) (p : FactorProposal)
       r.value.raw.factors.map (·.prime) == [3] && checkPartial r.value.raw
   | _ => false
 #guard match importFactors noSearch 12 ⟨12, [(2, 2, some (.small 2)), (3, 1, none)]⟩ seed with
-  | .ok r => r.value.raw.residual == 3 && r.unresolved.any (·.stop == .unfinished) &&
+  | .ok r => r.value.raw.residual == 3 && r.unresolved.any (·.stop == .skipped) &&
       r.attempts == 0 && r.rand.state == seed.state && checkPartial r.value.raw
   | _ => false
 #guard match importFactors noSearch 12 ⟨12, []⟩ seed with
   | .ok r => r.value.raw.residual == 12 && r.unlisted == 12 && r.unresolved.isEmpty
   | _ => false
 #guard match importFactors noSearch 2 ⟨2, [(2, 1, none)]⟩ seed with
-  | .ok r => r.value.raw.residual == 2 && r.unresolved.any (·.stop == .unfinished)
+  | .ok r => r.value.raw.residual == 2 && r.unresolved.any (·.stop == .skipped)
   | _ => false
 
 example : checkFactorization ⟨72, [⟨3, .small 2⟩, ⟨2, .small 3⟩]⟩ = true := by decide +kernel

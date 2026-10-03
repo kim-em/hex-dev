@@ -288,7 +288,7 @@ lean_lib HexIntFactorTests where
     `HexIntFactor.Frozen.Case3,
     `HexIntFactor.Frozen.Case4,
     `HexIntFactor.Frozen.Case5,
-    `HexIntFactor.Frozen.Case6
+    `HexIntFactor.Frozen.Case6, `HexIntFactor.Frozen.Partial12
     ].map Glob.one
 
 lean_lib HexBerlekampZassenhaus where
