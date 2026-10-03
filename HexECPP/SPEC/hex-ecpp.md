@@ -302,9 +302,11 @@ entry point. `SearchBudget` defaults retain the existing 128/256-bit policy;
 `#ecpp_export (method := ecpp) (bits := 512)`, with the existing optional seed.
 The only accepted explicit `bits` values are 256 and 512; the option selects
 the corresponding allocation independently of the subject's actual size.
-Omitting `bits` retains the 256-bit allocation. Neither entry point changes
-ordinary `primality` dispatch, accepts subjects above 512 bits, or invokes
-external factorization or certificate generation.
+Omitting `bits` retains the 256-bit allocation. These companion entry points
+reject subjects above their selected limit and invoke no external
+factorization or certificate generation. Ordinary `primality` dispatch is
+unchanged. Direct `produce` callers retain their explicit-budget API; there
+is no native support claim above 512 bits.
 
 The initial 512-bit allocation is:
 
