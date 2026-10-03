@@ -51,3 +51,40 @@ arbitrary monic scaling would not preserve its signs.
 - [Reference and candidate modules](../bench/HexRCF/ProofProbe/Literals)
 - [Complete results](bench-results/hex-rcf-literal-proofs-427d008a7-chungus2.json)
 - [Incremental retained samples](bench-results/hex-rcf-literal-proofs-427d008a7-chungus2.json.samples.jsonl)
+
+## Array-length degree evidence
+
+The second candidate proves the degree bound from the literal array length
+using `DensePoly.size_ofCoeffs_le`, rather than deciding the coordinate
+polynomial degree. The source is `c09bb526d`, with the public multi-prime
+quotation import and proof-path assertions in all six probes. Each assertion
+checks the quoted constructor through the theorem's local auxiliary
+declarations. This comparison is separate from the earlier source snapshot.
+
+The same fixed four-round schedule completed all 24 arms on automatically
+leased CPU 91 with sibling 43 and one Lean thread. Source and dependency
+checkouts were clean; provenance is complete and release-quality without
+exceptions. Every completed sample is retained. No unchanged rerun was used.
+
+| Goal | Reference median, s | Candidate median, s | Median paired candidate minus reference, s |
+| --- | ---: | ---: | ---: |
+| Further square root | 22.072 | 22.360 | +0.304 |
+| Reciprocal square root | 21.750 | 22.155 | +0.345 |
+| Cubic coefficient | 25.713 | 26.058 | +0.386 |
+
+All twelve paired margins are positive. In trial order, further-root margins
+are +0.351, +0.309, +0.166 and +0.299 seconds; reciprocal margins are +0.378,
++0.305, +0.669 and +0.312; cubic margins are +0.407, +0.365, +0.302 and +0.559.
+The collector again reports `no-comparable-control`. These observations give
+no evidence for selecting direct quotation as the production default.
+`rcf.algebraic.reducedLiterals` remains false by default.
+
+Reference/candidate private olean sizes are 835,584/856,960,
+880,264/900,520 and 934,432/954,944 bytes. The candidate adds approximately
+20–21 KiB per proof. Median reference/candidate peak RSS is
+4,817,508/4,820,106, 4,764,070/4,769,936 and 5,125,378/5,129,448 KiB.
+All theorem dependency audits contain only the three standard axioms.
+These end-to-end fresh-module measurements do not isolate kernel time.
+
+- [Array-length comparison results](bench-results/hex-rcf-literal-proofs-c09bb526d-chungus2.json)
+- [Retained samples](bench-results/hex-rcf-literal-proofs-c09bb526d-chungus2.json.samples.jsonl)
