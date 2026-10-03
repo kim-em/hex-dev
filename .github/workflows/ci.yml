@@ -374,6 +374,7 @@ jobs:
           lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests \
             HexPolyDetMathlib.Tests \
             HexPrimality.ProofProbe.PMinusOne.Support
+          lake exe hexarith_extgcd_tests
           python3 scripts/ci/check_rank_compiler.py
       - name: Verify Conway generation and compiled certificates
         if: steps.classify.outputs.docs_only != 'true'
