@@ -280,7 +280,8 @@ retain every verdict, and report whole-corpus success and exhaustion rates.
 The admitted default native route remains bounded to 256 bits. The opt-in
 512-bit contract below requires separate capability and public-interface
 evidence. If the class number one portfolio cannot establish this
-gain, extend it with an attributed finite table of low-degree class
+gain at the newly admitted size, extend it with an attributed finite table of
+low-degree class
 polynomials and bounded root finding before claiming completion.
 
 Measure native search, conversion, compiled checking, compact and expanded
@@ -299,6 +300,8 @@ entry point. `SearchBudget` defaults retain the existing 128/256-bit policy;
 512 bits. The optional companion exposes that allocation with
 `primality? (method := ecpp) (bits := 512)` and
 `#ecpp_export (method := ecpp) (bits := 512)`, with the existing optional seed.
+The only accepted explicit `bits` values are 256 and 512; the option selects
+the corresponding allocation independently of the subject's actual size.
 Omitting `bits` retains the 256-bit allocation. Neither entry point changes
 ordinary `primality` dispatch, accepts subjects above 512 bits, or invokes
 external factorization or certificate generation.
@@ -319,6 +322,15 @@ The initial 512-bit allocation is:
 | Memoized successes | 128 |
 | Local point/nonresidue retries | 8 / 64 |
 
+The public 512-bit allocation additionally has a 20-row and 32-total-node
+limit. Its recursive search depth is at most 21, since a base consumes one
+depth level: 20 ECPP steps require 21 levels. The 256-bit default retains its
+current behavior. Diagnosis records both the current public clamp (depth 20,
+at most 19 rows) and this explicit 512-bit allocation. For public production,
+count rows and embedded terminal nodes during search; candidates exceeding
+the remaining allowance fail with charged work and permit backtracking.
+Memo reuse must respect the remaining depth, row and node allowances.
+
 Every factor package is explicit in the allocation and the campaign manifest.
 The initial terminal package uses the existing 64-attempt profile, depth at
 most eight and no greater than the remaining native depth, 16 factors,
@@ -331,13 +343,23 @@ change is a search-policy change, recorded separately from the top-level bit
 limit. Package reservations, failed proposals and unused allowances are
 charged before invocation and never refunded. Changes to these finite
 profiles require a versioned, frozen allocation manifest before measurement.
+Charges derive from the selected packages, including an explicit finite
+`some k` order-attempt limit; no implicit unlimited-attempt profile is
+admitted. Terminal output traversal derives its fuel from the selected
+terminal depth, rather than the previous fixed `leafBudget` constant.
 
 Diagnose the current producer first with an experimental allocation that
 changes only `SearchBudget.maxBits` to 512, retaining the nine-discriminant
-portfolio and its fixed 256-bit terminal package. Report separately missing
-CM norm/portfolio coverage, order-factorization failures, unresolved recursive
+portfolio and its fixed 256-bit terminal package. Restrict diagnosis and
+tuning, including construction comparisons, to tuning subjects and controls;
+neither holdout arm runs before the implementation/allocation freeze.
+Report separately missing CM norm/portfolio coverage, order-factorization
+failures, unresolved recursive
 children, root/nonresidue/point retries, output exhaustion, frozen-conversion
-and replay-preflight failures, and arithmetic cost. Retain cumulative work,
+and replay-preflight failures, and arithmetic cost. Record bits dropped at
+each step and rows used; treat insufficient descent under the row ceiling
+as a factor-package/recursive-depth restriction, distinct from CM coverage.
+The order-factor package is an explicit tuning lever. Retain cumulative work,
 the unresolved subject and advanced random state for every outcome. Raising
 fuel or changing only a size guard does not establish the supported extension.
 
@@ -347,8 +369,14 @@ attributed finite table of Hilbert class polynomials, and
 `HexECPP/CM/Roots.lean` owns bounded modular root proposals for that table.
 The initial additional portfolio has at most 64 entries of degree at most
 four; each root call permits at most 32 splitting attempts and 1048576
-modular operations. Freeze the actual ordered table, coefficients, source
-revision and root allocation before tuning. Independently reproduce/check
+modular operations. Charge calls to the shared root counter, splitting
+attempts to a shared 1048576-attempt allocation, and polynomial modular
+operations to a shared 16777216-operation allocation. Splitting draws use
+the shared random stream and remain advanced after rejection. Charge each
+discriminant and order candidate to the existing shared candidate allowance;
+record the actual portfolio size and candidates needed per explored level.
+Freeze the actual ordered table, coefficients, source revision and root
+allocation before tuning. Independently reproduce/check
 its coefficients and discriminants against an attributed upstream source.
 No general class-polynomial generator is admitted. Roots, norm equations,
 curve proposals and inverse witnesses are checked by arithmetic, including
@@ -375,21 +403,31 @@ and a coordinated companion SPEC change.
 Before tuning, commit reproducible prime subjects, independent primality
 checks, allocations, seeds, comparison arms and success criteria. The initial
 corpus has eight tuning and eight disjoint holdout subjects, each containing
-six ordinary and two deliberately difficult 512-bit primes. For each split,
-stratum and index, SHA512 of
-`hex-native-ecpp-10636/v1/{split}/{stratum}/{index}/{counter}` selects a
-512-bit starting integer by setting its top bit; PARI `nextprime` proposes
+six ordinary and two deliberately difficult 512-bit primes. The input to
+SHA512 is
+`hex-native-ecpp-10636/v1/{split}/{stratum}/{index}/{counter}`
+encoded as UTF-8 with no newline, decimal indices/counters without leading
+zeros, literal splits `tuning`/`holdout` and strata `ordinary`/`difficult`.
+Use indices 0–5 within the ordinary stratum and 0–1 within the difficult
+stratum. Interpret the 64-byte digest as an unsigned big-endian integer, and
+set its top bit
+to obtain a 512-bit starting integer. PARI `nextprime` proposes
 the subject and `isprime` independently verifies it. Advance `counter` from
 zero for rejected overflow/duplicate subjects. Difficult subjects additionally
-have at most two of the nine original discriminants with Kronecker symbol
-one; advance the counter until that fixed coverage criterion holds. Record
-all rejected candidates and the oracle version. The native seed is the case
-index, fixed before tuning. Corpus generation supplies no certificate,
-factorization, trace, root, curve or point to native search.
+have at most two of the nine original negative discriminants with
+`kronecker(-d, n) = 1`; advance the counter until that fixed coverage criterion
+holds. Record all rejected candidates and the oracle version. The native seed
+is the case
+index within the split (ordinary 0–5, difficult 6–7), fixed before tuning.
+Corpus generation supplies no certificate, factorization, trace, root, curve
+or point to native search.
 
 Freeze composite and size-boundary controls alongside the prime corpus,
 including squares/products and inputs on both sides of the 256/512-bit
-boundaries. Preserve all existing 128/256-bit corpora and frozen fixtures.
+boundaries. Composites must never produce an accepted certificate; a subject
+above the selected bit limit must report `inputBits` without search. In-range
+controls report their actual bounded outcome, with no completeness promise.
+Preserve all existing 128/256-bit corpora and frozen fixtures.
 Run every subject under the recorded finite allocation and retain success,
 exhaustion and public replay outcomes. Freeze the selected implementation and
 allocation before evaluating the holdout. An unsuccessful holdout remains
@@ -400,8 +438,10 @@ Acceptance requires genuine recursive ECPP successes on held-out 512-bit
 subjects, with at least two distinct held-out subjects where the full current
 `primality?` construction route, including applicable factor extensions,
 exhausts under its recorded finite allocation. A terminal-only Pocklington
-success does not count. Compare against the actual construction schedule and
-its ordinary subject-derived seed, record its source and complete allocation,
+success does not count: a counted success contains at least one ECPP step
+with a recursively certified child, rather than only `Cert.base`.
+Compare against the actual construction schedule and its ordinary
+subject-derived seed, record its source and complete allocation,
 and disclose allocation differences. Every advertised success requires
 independent step-arithmetic and subject-primality checks, successful public
 generation, and fresh-module kernel replay. Report every corpus outcome and
@@ -416,7 +456,12 @@ contains public, exposed constructor data, passes kernel checking before an
 exclusive source write, and replays through the compact interface alone.
 Coordinate native policy and acceptance tests in
 `HexECPPMathlib/Native.lean` with the companion's existing audit/release work;
-the core acquires no dependency on that downstream library.
+the implementation PR updates the companion's native-elaboration SPEC and
+builds on the module/export fixes in #10625 after that PR lands. The core
+SPEC change can land independently. Full 512-bit generation guards initially
+live in manually built acceptance modules; promote them into CI only after
+measured endpoint evidence establishes their fit in its wallclock budget.
+The core acquires no dependency on that downstream library.
 
 Retain separate native-search, inverse/row-conversion, compiled-checking,
 compact/expanded output-size, reification and fresh-kernel-replay evidence.
@@ -498,6 +543,9 @@ conformance/oracle script; add no workflow or matrix.
 
 `HexECPP/{Data,Affine,Replay,Cert,Import}.lean` owns the executable checker,
 conversion, and their arithmetic invariants. It imports no Mathlib module.
+`HexECPP/CM.lean` and `HexECPP/Search.lean` own native proposals and bounded
+production; the optional low-degree table and root modules are assigned in
+the 512-bit contract above.
 The [bridge SPEC](../../HexECPPMathlib/SPEC/hex-ecpp-mathlib.md) owns Hasse,
 reduction, group-law correspondence, unconditional soundness, and elaboration.
 Source registration does not by itself imply release or phase progress.
