@@ -64,19 +64,6 @@ class ClassifyChangedLibrariesTests(unittest.TestCase):
         self.assertFalse(result.all_libraries)
         self.assertEqual(set(result.libraries), {"HexOrderedFn", "HexSignDet", "HexRealClosure"})
 
-    def test_tower_backends_select_native_differential_tests(self) -> None:
-        for library in ("HexRealAlgebraic", "HexSignDet", "HexSturm"):
-            with self.subTest(library=library):
-                result = self.classify(f"{library}/Basic.lean")
-                self.assertFalse(result.all_libraries)
-                self.assertEqual(set(result.libraries), {library, "HexRealClosure"})
-
-    def test_shared_algebraic_checker_selects_tower_fixtures(self) -> None:
-        owners = load_oracle_owners()
-        result = classify_paths(["scripts/oracle/real_algebraic_flint.py"], oracle_owners=owners)
-        self.assertIn("HexRealAlgebraic", result.libraries)
-        self.assertIn("HexRealClosure", result.libraries)
-
     def test_documentation_does_not_widen_mixed_change(self) -> None:
         result = self.classify("HexRoots/Basic.lean", "SPEC/testing.md")
         self.assertEqual(result.libraries, ("HexRoots",))

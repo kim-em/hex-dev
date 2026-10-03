@@ -709,8 +709,9 @@ private def algebraicLinearRoots? : Option RootSet := do
 
 end Hex
 
--- Coordinate recovery accepts an existing containing field and rejects a
--- proposed rational field before the unchanged primitive-search fallback.
+-- An existing containing field is accepted. Direct rational coordinate
+-- recovery rejects √2; the public producer rejects that proposal by degree
+-- before using the unchanged primitive-search fallback.
 #guard
     match Hex.rootsSqrtTwoExact?, Hex.AlgebraicPoly.Common.rational? 2 with
     | some sqrtTwo, some two =>
@@ -732,4 +733,15 @@ end Hex
           (Hex.AlgebraicPoly.Common.mul? sqrtTwo sqrtThree >>=
             Hex.AlgebraicPoly.Common.trace? 2) == some 0 &&
           (Hex.AlgebraicPoly.Common.presentationAt? sqrtTwo #[sqrtTwo, sqrtThree]).isNone
+    | _, _ => false
+
+-- Equal degrees pass the proposal's divisibility check. Exact coordinate
+-- recovery rejects √3 in ℚ(√2), and the public producer finds their degree-four field.
+#guard
+    match Hex.rootsSqrtTwoExact?, Hex.rootsSqrtThreeExact? with
+    | some sqrtTwo, some sqrtThree =>
+        match Hex.AlgebraicPoly.Common.presentation? #[sqrtTwo, sqrtThree] with
+        | some extended =>
+            extended.generator.p.natDegree = 4 && extended.coefficients.size = 2
+        | none => false
     | _, _ => false

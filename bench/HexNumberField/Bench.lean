@@ -174,7 +174,9 @@ The parametric ladders carry the Phase-4 asymptotic evidence:
 * `runMergeRootListLadder`: the duplicate-removal fold across the two Yun
   components of the repeated-factor fixed-field family;
 * `runCommonPresentationLadder`: the public common-field construction
-  behind `AlgebraicPoly.roots?`, separated per the Attribution rule.
+  behind `AlgebraicPoly.roots?`, separated per the Attribution rule;
+* `runContainedPresentation`: checked coordinates when the first coefficient
+  already generates a field containing every coefficient.
 
 Informational PARI comparator (`SPEC/benchmarking.md` §External comparators
 §Process call): PARI's `t_POLMOD` arithmetic (`Mod(a, m) * Mod(b, m)` and

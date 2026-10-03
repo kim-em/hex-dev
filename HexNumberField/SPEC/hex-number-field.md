@@ -927,7 +927,9 @@ up to `2 * degree gamma - 2` and checks every coefficient through
 recovered exactly. `presentation?` first tries the first nonzero coefficient
 as generator through this check, first rejecting the proposal if any
 coefficient degree does not divide the generator degree. If it fails, `primitive?` supplies the
-generator for a second `presentationAt?` call. Empty and all-zero arrays
+generator for a second `presentationAt?` call. A proposal rejected after
+coordinate recovery adds at most one such checked presentation attempt to
+the unchanged primitive search and final coordinate phase. Empty and all-zero arrays
 return `none`; public root and collection APIs handle their separate zero
 conventions before calling this producer. When the first coefficient's field
 contains all coefficients, the old maximum-degree search retained that same
