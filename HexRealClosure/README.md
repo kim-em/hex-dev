@@ -1437,6 +1437,10 @@ Parent/child registration, sibling branches, and repeated owners reuse their
 common roots. Reuse checks exact native provenance, including the staged base
 and complete root descriptors. The cache also retains native target predecessors,
 so contexts built from a returned shared target reuse those ancestors.
+Across different infinitesimal depths, an independently enlarged owner reuses
+a root only when its exact context is already a target predecessor. Registering
+the enlarged owner first, or into a deeper staged base, can add an equivalent
+algebraic level; the returned value maps still preserve the selected root.
 `Shared.add?_maps` describes the returned old-owner inclusions and
 the appended original-owner map. A new target updates the predecessor cache
 through the same inclusion used for the retained owners.
@@ -1452,7 +1456,8 @@ must pass the returned target's checked readers; old packets with a different
 literal binding are rejected.
 
 Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext`
-for mixed infinitesimal depths, parent/child and sibling registration, repeated
+for staged value transport, the mixed-depth reuse limitation in both
+registration orders, parent/child and sibling registration, repeated
 owners, root-level counts, original equations,
 owner-map agreement, polynomial transport, parameter order and stale packets.
 The checked inclusions also have ordinary-kernel value, polynomial and comparison

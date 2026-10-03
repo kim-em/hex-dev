@@ -21,35 +21,38 @@ private def replayDecEq {E : Type} [Zero E] [DecidableEq E]
     | .split a l r, .split b s t =>
       if nodes : a = b then
         letI := replayDecEq l s
-        letI := replayDecEq r t
-        decidable_of_iff (l = s ∧ r = t) (by simp [nodes])
+        if leftChildren : l = s then
+          letI := replayDecEq r t
+          if rightChildren : r = t then
+            isTrue (by cases nodes; cases leftChildren; cases rightChildren; rfl)
+          else isFalse (by intro same; cases same; exact rightChildren rfl)
+        else isFalse (by intro same; cases same; exact leftChildren rfl)
       else isFalse (by intro same; cases same; exact nodes rfl)
 
 private instance {E : Type} [Zero E] [DecidableEq E] :
     DecidableEq (SignDet.Replay E Signature) := replayDecEq
 
-private instance {E : Type} [Zero E] [DecidableEq E] :
-    DecidableEq (SignDet.RawDescriptor E Signature) := fun left right =>
-  decidable_of_iff (left.context = right.context ∧ left.head = right.head ∧
-    left.lower = right.lower ∧ left.upper = right.upper ∧
-    left.indices = right.indices ∧ left.signs = right.signs) (by
-      cases left
-      cases right
-      simp)
-
 private def descriptorDecEq {E : Type} [Zero E] [DecidableEq E] [One E] [Add E]
     [Sub E] [Mul E] [NatCast E] {sign : E → Int} {binding : Signature} :
     DecidableEq (SignDet.Descriptor E Signature sign binding) := fun left right =>
-  decidable_of_iff (left.raw = right.raw ∧ left.evidence = right.evidence) (by
+  decidable_of_iff (left.raw.head = right.raw.head ∧
+    left.raw.lower = right.raw.lower ∧ left.raw.upper = right.raw.upper ∧
+    left.raw.indices = right.raw.indices ∧ left.raw.signs = right.raw.signs ∧
+    left.evidence = right.evidence) (by
     constructor
     · intro data
-      cases left
-      cases right
-      rcases data with ⟨rfl, rfl⟩
+      have contexts : left.raw.context = right.raw.context :=
+        (SignDet.RawDescriptor.check_eq left.accepted).2.1.trans
+          (SignDet.RawDescriptor.check_eq right.accepted).2.1.symm
+      rcases left with ⟨⟨lc, lh, ll, lu, li, ls⟩, le, la⟩
+      rcases right with ⟨⟨rc, rh, rl, ru, ri, rs⟩, re, ra⟩
+      dsimp only at data contexts
+      rcases data with ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+      cases contexts
       rfl
     · intro same
-      exact ⟨congrArg SignDet.Descriptor.raw same,
-        congrArg SignDet.Descriptor.evidence same⟩)
+      cases same
+      exact ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩)
 
 variable {registry : BaseContext.Registry}
 

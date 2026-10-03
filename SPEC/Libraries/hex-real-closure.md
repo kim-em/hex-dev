@@ -152,7 +152,11 @@ Parent/child owners and sibling branches therefore retain one common ancestor
 level when they share exact native predecessors. The cache retains target-side
 predecessors too, including those rebuilt during enlargement, so a context built
 from a returned target can reuse its ancestry. Every new target updates all
-earlier owner and predecessor maps.
+earlier owner and predecessor maps. Reuse currently requires exact native
+predecessor identity. Independent enlargement images at different staged depths
+can still introduce equivalent algebraic levels when their contexts are not
+prefixes of the shared target; normalization across those images remains required
+for complete dependency transport.
 Original values remain indexed by their original contexts;
 `Shared.value` and `Shared.polynomial` select the checked map by its original
 owner index. The native base compatibility check uses the full real-prefix key

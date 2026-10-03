@@ -62,6 +62,10 @@ def run : IO Unit := do
     | throw (IO.userError "enlarged shared-target registration failed")
   require (sameTarget.input.context.signature.roots.length == 1)
     "registration duplicated the enlarged shared target"
+  require (sameTarget.input.context.equal
+    (sameTarget.value ⟨0, by simp [owners]⟩ alpha)
+    (sameTarget.value ⟨3, by simp [owners]⟩ (next.value 0 alpha)))
+    "shared-target owner map disagrees with the retained original owner"
   let a' := next.value 0 alpha
   let e' := next.value 1 epsilon
   let d' := next.value 2 delta
@@ -139,6 +143,34 @@ def run : IO Unit := do
     | throw (IO.userError "original/enlarged owner registration failed")
   require (mixedOwners.input.context.signature.roots.length == 1)
     "registration duplicated an owner and its exact enlarged target"
+  require (mixedOwners.input.context.equal (mixedOwners.value 0 alpha)
+    (mixedOwners.value 1 (enlargedOwner.value alpha)))
+    "original and enlarged owner maps selected different roots"
+  let some reverseMixed := Shared.gather? (.pack first)
+      [enlargedOwner.context, extension.context]
+    | throw (IO.userError "enlarged/original owner registration failed")
+  require (reverseMixed.input.context.signature.roots.length == 2)
+    "reverse mixed-owner reuse limitation changed"
+  require (reverseMixed.input.context.equal
+    (reverseMixed.value 0 (enlargedOwner.value alpha)) (reverseMixed.value 1 alpha))
+    "reverse mixed-owner maps selected different roots"
+  let some deeperMixed := Shared.gather? (.pack second)
+      [enlargedOwner.context, extension.context]
+    | throw (IO.userError "intermediate-depth owner registration failed")
+  require (deeperMixed.input.context.signature.roots.length == 2)
+    "intermediate-depth reuse limitation changed"
+  require (deeperMixed.input.context.equal
+    (deeperMixed.value 0 (enlargedOwner.value alpha)) (deeperMixed.value 1 alpha))
+    "intermediate-depth maps selected different roots"
+  let some enlargedBranches := registered.add? sibling.context
+    | throw (IO.userError "sibling registration after enlargement failed")
+  require (enlargedBranches.input.context.signature.roots.length == 3)
+    "sibling registration after enlargement duplicated a common ancestor"
+  require (enlargedBranches.input.context.equal
+    (enlargedBranches.value ⟨4, by simp [owners]⟩ sibling.generator *
+      enlargedBranches.value ⟨4, by simp [owners]⟩ sibling.generator)
+    (enlargedBranches.value ⟨0, by simp [owners]⟩ alpha + 1))
+    "enlarged sibling lost its transported coefficient dependency"
   let z : DensePoly next.input.context.Value := DensePoly.ofCoeffs #[0, 1]
   let some newDescriptor := SignDet.Descriptor.validate next.input.context.sign
       next.input.context.signature
@@ -150,6 +182,11 @@ def run : IO Unit := do
     | throw (IO.userError "registration of derived shared-target context failed")
   require (derived.input.context.signature.roots.length == 2)
     "derived shared-target registration duplicated an ancestor"
+  require (derived.input.context.equal
+    (derived.value ⟨3, by simp [owners]⟩ newChild.generator *
+      derived.value ⟨3, by simp [owners]⟩ newChild.generator)
+    (derived.value ⟨0, by simp [owners]⟩ alpha))
+    "derived shared-target root lost its retained coefficient dependency"
 
 end Hex.RealClosure.Tower.LiveTests
 
