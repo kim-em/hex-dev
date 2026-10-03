@@ -738,4 +738,304 @@ setup_benchmark runEmbedSparse n => n
     maxSecondsPerCall := 600
   }
 
+/-- A short-chain degree family with two real roots at every even rung. -/
+structure SparseInput where
+  head : ZPoly
+  frontend : Input
+
+instance : Inhabited SparseInput := ⟨⟨0, default⟩⟩
+
+instance : Hashable SparseInput where
+  hash i := hash i.head.toArray
+
+def sparseInput (degree : Nat) : SparseInput :=
+  let n := max degree 2
+  let p : ZPoly := ofCoeffs
+    ((Array.replicate (n + 1) (0 : Int)).set! 0 (-1) |>.set! n 2)
+  let bounds : DyadicInterval := ⟨Dyadic.ofInt (-1), Dyadic.ofInt 1, by decide⟩
+  let i := fromHead p bounds
+  let expected : Int := if n % 2 = 0 then 2 else 1
+  if ZPoly.tarskiQuery p 1 bounds == some expected &&
+      Sturm.query Sturm.orderSign i.p 1 (.finite (-1)) (.finite 1) == some expected &&
+      i.domain.any (fun d => d.squarefree.chain.size == 3) then
+    ⟨p, i⟩
+  else panic! "short-chain fixture failed its degree/count/chain checks"
+
+def runSparseDomain (i : SparseInput) : Bool :=
+  (Sturm.prepare Sturm.orderSign i.frontend.p (.finite (-1)) (.finite 1)).isSome
+
+def runSparseQuery (i : SparseInput) : Option Int :=
+  Sturm.query Sturm.orderSign i.frontend.p 1 (.finite (-1)) (.finite 1)
+
+def runSparseInteger (i : SparseInput) : Option Int :=
+  ZPoly.tarskiQuery i.head 1 i.frontend.bounds
+
+def runSparsePrepared (i : SparseInput) : Option Int := runPrepared i.frontend
+
+def runSparseCount (i : SparseInput) : Option Nat := runCount i.frontend
+
+def runSparsePreparedCount (i : SparseInput) : Option Int := runPreparedCount i.frontend
+
+def runSparseCertificate (i : SparseInput) : Option UInt64 := runCertificate i.frontend
+
+def runSparsePreparedCertificate (i : SparseInput) : Option UInt64 :=
+  runPreparedCertificate i.frontend
+
+def runSparseCountCertificate (i : SparseInput) : Option UInt64 := runCountCertificate i.frontend
+
+def runSparseReplay (i : SparseInput) : Bool := runFieldReplay i.frontend
+
+def runSparseCachedReplay (i : SparseInput) : Bool := runCachedReplay i.frontend
+
+def runSparseClear (i : SparseInput) : Option UInt64 := runClear i.frontend
+
+def runSparseEmbed (i : SparseInput) : Option UInt64 := runEmbed i.frontend
+
+/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
+so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
+literal identities, denominator clearing and full output hashes traverse
+Θ(n) entries. The single 2n normalization factor is word-size on this
+fixed ladder. Preparation and checked-cache validation are outside timing.
+This short-chain family does not cover growing chain length or bit height. -/
+setup_benchmark runSparseDomain n => n
+  with prep := sparseInput
+  where {
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
+so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
+literal identities, denominator clearing and full output hashes traverse
+Θ(n) entries. The single 2n normalization factor is word-size on this
+fixed ladder. Preparation and checked-cache validation are outside timing.
+This short-chain family does not cover growing chain length or bit height. -/
+setup_benchmark runSparseQuery n => n
+  with prep := sparseInput
+  where {
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
+so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
+literal identities, denominator clearing and full output hashes traverse
+Θ(n) entries. The single 2n normalization factor is word-size on this
+fixed ladder. Preparation and checked-cache validation are outside timing.
+This short-chain family does not cover growing chain length or bit height. -/
+setup_benchmark runSparseInteger n => n
+  with prep := sparseInput
+  where {
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
+so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
+literal identities, denominator clearing and full output hashes traverse
+Θ(n) entries. The single 2n normalization factor is word-size on this
+fixed ladder. Preparation and checked-cache validation are outside timing.
+This short-chain family does not cover growing chain length or bit height. -/
+setup_benchmark runSparsePrepared n => n
+  with prep := sparseInput
+  where {
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
+so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
+literal identities, denominator clearing and full output hashes traverse
+Θ(n) entries. The single 2n normalization factor is word-size on this
+fixed ladder. Preparation and checked-cache validation are outside timing.
+This short-chain family does not cover growing chain length or bit height. -/
+setup_benchmark runSparseCount n => n
+  with prep := sparseInput
+  where {
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
+so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
+literal identities, denominator clearing and full output hashes traverse
+Θ(n) entries. The single 2n normalization factor is word-size on this
+fixed ladder. Preparation and checked-cache validation are outside timing.
+This short-chain family does not cover growing chain length or bit height. -/
+setup_benchmark runSparsePreparedCount n => n
+  with prep := sparseInput
+  where {
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
+so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
+literal identities, denominator clearing and full output hashes traverse
+Θ(n) entries. The single 2n normalization factor is word-size on this
+fixed ladder. Preparation and checked-cache validation are outside timing.
+This short-chain family does not cover growing chain length or bit height. -/
+setup_benchmark runSparseCertificate n => n
+  with prep := sparseInput
+  where {
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
+so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
+literal identities, denominator clearing and full output hashes traverse
+Θ(n) entries. The single 2n normalization factor is word-size on this
+fixed ladder. Preparation and checked-cache validation are outside timing.
+This short-chain family does not cover growing chain length or bit height. -/
+setup_benchmark runSparsePreparedCertificate n => n
+  with prep := sparseInput
+  where {
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
+so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
+literal identities, denominator clearing and full output hashes traverse
+Θ(n) entries. The single 2n normalization factor is word-size on this
+fixed ladder. Preparation and checked-cache validation are outside timing.
+This short-chain family does not cover growing chain length or bit height. -/
+setup_benchmark runSparseCountCertificate n => n
+  with prep := sparseInput
+  where {
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
+so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
+literal identities, denominator clearing and full output hashes traverse
+Θ(n) entries. The single 2n normalization factor is word-size on this
+fixed ladder. Preparation and checked-cache validation are outside timing.
+This short-chain family does not cover growing chain length or bit height. -/
+setup_benchmark runSparseReplay n => n
+  with prep := sparseInput
+  where {
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
+so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
+literal identities, denominator clearing and full output hashes traverse
+Θ(n) entries. The single 2n normalization factor is word-size on this
+fixed ladder. Preparation and checked-cache validation are outside timing.
+This short-chain family does not cover growing chain length or bit height. -/
+setup_benchmark runSparseCachedReplay n => n
+  with prep := sparseInput
+  where {
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
+so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
+literal identities, denominator clearing and full output hashes traverse
+Θ(n) entries. The single 2n normalization factor is word-size on this
+fixed ladder. Preparation and checked-cache validation are outside timing.
+This short-chain family does not cover growing chain length or bit height. -/
+setup_benchmark runSparseClear n => n
+  with prep := sparseInput
+  where {
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
+so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
+literal identities, denominator clearing and full output hashes traverse
+Θ(n) entries. The single 2n normalization factor is word-size on this
+fixed ladder. Preparation and checked-cache validation are outside timing.
+This short-chain family does not cover growing chain length or bit height. -/
+setup_benchmark runSparseEmbed n => n
+  with prep := sparseInput
+  where {
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
 end Hex.SturmFrontendBench
