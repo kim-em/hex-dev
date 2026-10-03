@@ -228,8 +228,8 @@ kernel-replayed native successes in 32 cases and seven 256-bit capability
 gains over the full construction route. [audit/native-corpora.json](ecpp/audit/native-corpora.json)
 reconciles the complete current certificates and all exhausted outcomes.
 No new measurement of the unchanged construction comparator is needed.
-Neither result establishes native production above 256 bits or unconditional
-success for all admitted subjects. Scalar/parser synthetic families have no
+These 128/256-bit results do not establish success for all admitted subjects.
+The separately frozen 512-bit extension is measured below. Scalar/parser synthetic families have no
 same-contract external ECPP endpoint; their independent cost derivations and
 oracle conformance serve separate purposes from PARI certificate validation.
 
@@ -346,4 +346,52 @@ successful current ladders and declared budgets are the Phase 4 evidence.
 Shared-host variation, synthetic fixed-modulus scalar scope, finite native
 capability and different PARI terminal contracts are explicit practical limits.
 
-## Concerns
+## Explicit 512-bit native production
+
+The `native-production` family now includes the independently generated 512-bit
+corpus and frozen finite policy in [native512/README.md](ecpp/native512/README.md).
+The eight-case holdout has four genuine ECPP successes (17–20 elliptic steps),
+against exhaustion of full current construction including ECM on all eight.
+Every accepted certificate has independent arithmetic/prime checks and fresh
+kernel replay; the actual elaborator separately confirms construction exhaustion.
+All unsuccessful native outcomes, raw outputs and adjacent NC/CN timings are
+retained. These are capability gains, not a claim of complete 512-bit coverage or
+a same-result construction latency comparison. Default 256-bit dispatch is unchanged.
+
+| Fixed endpoint | Median ms | Declared budget ms | Result |
+|---|---:|---:|---|
+| `runNative512` | 1560.326 | 5000 | pass |
+| `runNative512Convert` | 142.405 | 300 | pass |
+| `runNative512Check` | 28.417 | 80 | pass |
+
+Five repetitions on the shared host, selected CPU and source digests are retained
+in [endpoints-v2.json](ecpp/native512/endpoints-v2.json). Conversion and checking
+use the warmed complete holdout ordinary-0 certificate. The full-corpus driver
+also records compact/expanded output rendering separately from these operations.
+The representative [512-bit profile](ecpp/native512/profile-v2-profile-native-production-512.json)
+has 7820 samples with 96.92% classified: GMP 56.74%, allocation 32.23%, Lean runtime
+6.79%, Lean own code 1.16%, other 3.08%. Order factorization and scalar proposals
+account for 35.49% and 27.31% inclusive samples respectively; inclusive shares
+overlap. This attribution supports the existing arithmetic and factorization
+cost model; it does not justify automatic dispatch.
+
+[regression-v2.json](ecpp/native512/regression-v2.json) retains four adjacent AB/BA
+trials over every existing 128/256-bit subject. Results, certificates, original
+resource counters and random states agree exactly, with median search ratios
+1.002 and 0.999. Shared-host variation is retained without discarded samples.
+The computational implementation and allocations were frozen before any holdout
+arm; later public reification uses raw natural literals to fit the unchanged
+syntax ceiling, without changing search. Public fresh-module generation/replay
+timings and the initial rejected representation are retained alongside the core
+measurements and are distinct from compiled search/check/convert timings.
+
+The companion proof track separates matched import/numeral, reification with
+preflight, and fresh kernel replay in externally timed build-only modules:
+[proof-phases-v2.json](ecpp/native512/proof-phases-v2.json). Four fixed trial-major
+schedules give median wall times 5.346 s, 4.878 s and 23.436 s respectively.
+They include Lake/import overhead; the reification phase is within variation
+of the baseline, so their difference does not estimate its isolated cost.
+The later in-process-clock diagnostic is retained as rejected evidence in
+`proof-phases-timed-v2.json`; its setup violates the proof-probe timing policy
+and its internal timestamps do not attest a phase obligation. The final probe
+uses external timing only.

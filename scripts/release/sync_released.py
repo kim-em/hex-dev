@@ -848,7 +848,7 @@ def rewrite_lib_settings(entry: dict, clone: Path) -> list[str]:
 def lake_declaration(text: str, name: str) -> tuple[int, int]:
     """Locate an unindented named Lake declaration and its indented body.
 
-    Managed declarations use `def`, `target`, or `extern_lib` without
+    Managed declarations use `def`, `target`, `extern_lib`, or `lean_lib` without
     attributes. Supporting both target forms lets the sync migrate an old
     package-wide `extern_lib` into a library-scoped custom `target`. Refuse
     missing or ambiguous declarations rather than modifying the wrong recipe.
@@ -856,7 +856,7 @@ def lake_declaration(text: str, name: str) -> tuple[int, int]:
     if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_']*", name):
         raise RuntimeError(f"invalid Lake declaration name: {name!r}")
     matches = list(re.finditer(
-        r"(?m)^(?:private |public )?(?:def|target|extern_lib) "
+        r"(?m)^(?:private |public )?(?:def|target|extern_lib|lean_lib) "
         + re.escape(name) + r"(?=\s|\()[^\n]*\n",
         text,
     ))
@@ -1455,7 +1455,8 @@ def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
     always correct and never redundant enough to matter, so the sync appends
     the missing ones at the shared release version: a `[[require]]` block before the
     first target in `lakefile.toml`, or a `require ... from git` after the
-    last one in `lakefile.lean`.
+    last one in `lakefile.lean`, before Mathlib when it is present so its
+    compatible transitive pins remain authoritative.
     """
     notes: list[str] = []
     pins = entry.get("pins") or []
@@ -1483,7 +1484,10 @@ def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
         block = "".join(
             f'[[require]]\nname = "{lib}"\ngit = "{url}"\nrev = "{version}"\n\n'
             for dep, lib, url in additions)
-        anchor = re.search(r"(?m)^\[\[(?:lean_lib|lean_exe)\]\]", text)
+        mathlib = next((match for match in re.finditer(
+            r"(?ms)^\[\[require\]\]\s*\n.*?(?=^\[|\Z)", text)
+            if re.search(r'^name\s*=\s*"mathlib"\s*$', match[0], re.M)), None)
+        anchor = mathlib or re.search(r"(?m)^\[\[(?:lean_lib|lean_exe)\]\]", text)
         if anchor:
             text = text[:anchor.start()] + block + text[anchor.start():]
         else:
@@ -1493,7 +1497,21 @@ def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
             f'\nrequire {lib} from git\n  "{url}" @ "{version}"\n'
             for dep, lib, url in additions)
         requires = list(re.finditer(r"(?m)^require\b.*(?:\n[ \t]+.*)*\n", text))
-        if requires:
+        mathlib = next((match for match in requires
+            if "github.com/leanprover-community/mathlib4" in match[0]
+            or re.match(r'^require\s+(?:«?mathlib»?(?=\s)|'
+                        r'"leanprover-community"\s*/\s*"mathlib")', match[0], re.I)), None)
+        if mathlib:
+            end = mathlib.start()
+            # Keep any ordering comment attached to the Mathlib requirement.
+            while end > 0:
+                previous = text.rfind("\n", 0, end - 1) + 1
+                line = text[previous:end].strip()
+                if line and not line.startswith("--"):
+                    break
+                end = previous
+            block += "\n"
+        elif requires:
             end = requires[-1].end()
         else:
             package = re.search(r"(?ms)^package\b.*?(?=^\S|\Z)", text)
@@ -1508,10 +1526,11 @@ def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
 def validate_external_imports(entry: dict, clone: Path) -> None:
     """Require the mirror's Lake file to provide checked external import roots.
 
-    The monorepo provides Batteries, Mathlib and Tau Ceti; a mirror only has
-    what its own Lake file requires. Scan synced sources for those roots and
-    fail before pushing when a corresponding requirement is absent. Mathlib
-    also provides Batteries, but does not provide Tau Ceti.
+    The monorepo provides Batteries, Mathlib, Tau Ceti and AINTLIB; a mirror
+    only has what its own Lake file requires. Scan synced sources for these
+    roots and fail before pushing when a corresponding provider is absent.
+    Mathlib also provides Batteries; Tau Ceti and HasseWeil require their
+    own direct dependencies.
     """
     if entry.get("pins_only"):
         return
@@ -1524,9 +1543,11 @@ def validate_external_imports(entry: dict, clone: Path) -> None:
         provided.add("Batteries")
     if re.search(r'(?i)tauceti\.git|name\s*=\s*"TauCeti"|require\s+TauCeti\b', text):
         provided.add("TauCeti")
+    if re.search(r'(?i)AINTLIB\.git|name\s*=\s*"AINTLIB"|require\s+AINTLIB\b', text):
+        provided.add("HasseWeil")
     roots: dict[str, str] = {}
     pattern = re.compile(
-        r"^\s*(?:(?:public|private|meta)\s+)*import\s+(?:all\s+)?(Batteries|Mathlib|TauCeti)\b",
+        r"^\s*(?:(?:public|private|meta)\s+)*import\s+(?:all\s+)?(Batteries|Mathlib|TauCeti|HasseWeil)\b",
         re.M)
     for src, dest_rel, is_dir in managed_paths(entry):
         dest = clone / dest_rel

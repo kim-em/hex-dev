@@ -25,7 +25,7 @@ require «lean-bench» from git
 -- Hasse's theorem is imported from the axiom-clean formalization in AINTLIB.
 require AINTLIB from git
   "https://github.com/CBirkbeck/AINTLIB.git" @
-    "3808ce862c09ad5b4de0c76f10ba00946ed2eff3"
+    "ab1451487da02cd4483d0e2cdb2cc9e44bbbac17"
 
 -- Abstract Sturm–Tarski semantics for the development query adapters.
 require TauCeti from git
@@ -88,6 +88,19 @@ target hexmodarithffi pkg : FilePath := do
   let name := nameToStaticLib "hexmodarithffi"
   let oTarget ← zmod64MulOTarget pkg
   buildStaticLib (pkg.staticLibDir / name) #[oTarget]
+
+target hexecpppariio pkg : FilePath := do
+  let oFile := pkg.dir / defaultBuildDir / "HexECPPMathlib" / "ffi" / "pari_pipe.o"
+  let srcTarget ← inputTextFile <| pkg.dir / "HexECPPMathlib" / "ffi" / "pari_pipe.c"
+  let oTarget ← buildFileAfterDep oFile srcTarget fun srcFile => do
+    createParentDirs oFile
+    proc {
+      cmd := "cc"
+      args := #["-c", "-o", oFile.toString, srcFile.toString,
+        "-I", (← getLeanIncludeDir).toString, "-fPIC", "-O2", "-std=c11"]
+      env := #[("TMPDIR", some (← IO.FS.realPath (oFile.parent.getD ".")).toString)]
+    }
+  buildStaticLib (pkg.staticLibDir / nameToStaticLib "hexecpppariio") #[oTarget]
 
 private def hexlllProviderOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexLLL" / "ffi" / "lean_hexlll_provider.o"
@@ -320,7 +333,7 @@ lean_lib HexRealClosureTests where
     .one `HexRealClosure.LocalSampleTests, .one `HexRealClosure.LiveContextTests,
     .one `HexRealClosure.TrivialTests, .one `HexRealClosure.TrivialTowerTests,
     .one `HexRealClosure.TowerEnlargeOrderTests,
-    .one `HexRealClosure.TowerTransportTests]
+    .one `HexRealClosure.TowerTransportTests, .one `HexRealClosure.BaseInclusionTests]
 
 -- Native CI capacity probes for the actual certificate/context codecs.
 lean_exe hexrealclosure_codec_bytes where
@@ -401,6 +414,20 @@ lean_lib HexBerlekampZassenhausMathlib where
 lean_lib HexPrimalityMathlib where
 
 lean_lib HexECPPMathlib where
+  roots := #[`HexECPPMathlib, `HexECPPMathlib.Native, `HexECPPMathlib.Pari]
+
+-- Lake selects the last matching library. Keep the Mathlib-free IO sidecar
+-- after the bridge so only this module needs a shared native library.
+lean_lib HexECPPMathlibPariIO where
+  roots := #[`HexECPPMathlib.Pari.IO]
+  globs := #[.one `HexECPPMathlib.Pari.IO]
+  precompileModules := true
+  moreLinkObjs := #[hexecpppariio]
+
+-- The release aggregate also builds these modules. Its manifest equality
+-- check requires that registration; all owners use the same Lean settings.
+lean_lib HexECPPMathlibTests where
+  globs := #[.one `HexECPPMathlib.Tests, .one `HexECPPMathlib.LintTests]
 
 @[default_target]
 lean_lib HexIntFactorMathlib where
@@ -681,6 +708,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.SpecializeDescriptor,
     `HexRealClosureMathlib.Algebraic, `HexRealClosureMathlib.AlgebraicClean,
     `HexRealClosureMathlib.TowerModel, `HexRealClosureMathlib.TowerModelTests,
+    `HexRealClosureMathlib.BaseModel,
     `HexRealClosureMathlib.TowerAlgebraic, `HexRealClosureMathlib.TowerRefinement,
     `HexRealClosureMathlib.TowerTransport, `HexRealClosureMathlib.TowerTransportTests,
     `HexRealClosureMathlib.TowerInclusion, `HexRealClosureMathlib.LiveContext,
@@ -809,7 +837,11 @@ lean_lib HexPrimalityMathlibProofProbe where
 
 lean_lib HexECPPMathlibProofProbe where
   srcDir := "bench"
-  globs := #[`HexECPPMathlib.ProofProbe.Native128_0,
+  globs := #[`HexECPPMathlib.ProofProbe.NativeGeneration,
+    `HexECPPMathlib.ProofProbe.Native512Baseline,
+    `HexECPPMathlib.ProofProbe.Native512Reify,
+    `HexECPPMathlib.ProofProbe.Native512Direct,
+    `HexECPPMathlib.ProofProbe.Native128_0,
     `HexECPPMathlib.ProofProbe.NativeBaseline,
     `HexECPPMathlib.ProofProbe.NativeReify,
     `HexECPPMathlib.ProofProbe.NativeDirect,
@@ -1280,6 +1312,9 @@ lean_lib HexConformance where
       `HexIntervalMathlib.MixedInstantiationConformance,
       `HexIntervalMathlib.ExactBranchConformance].map Glob.one
 
+    ++ #[`HexECPPMathlib.CompositeDivisors, `HexECPPMathlib.NodeBudget,
+      `HexECPPMathlib.ModuleImports].map Glob.one
+
 -- The expensive complete-family Mathlib proofs are owned only by this
 -- non-default library. They are excluded from both merge-gating
 -- `HexIntervalMathlibExperiment` and `HexConformance`.
@@ -1319,7 +1354,7 @@ lean_exe hex_interval_pnt_fks2_local where
 -- examples and regression tests are compiled through this separate target so
 -- removing them from an umbrella cannot silently remove them from CI.
 lean_lib HexReleaseTests where
-  globs := #[`HexArith.ExtendedGcdTests, `HexPoly.InterpretTests, `HexPoly.PseudoTests,
+  globs := #[`HexArith.ExtendedGcdTests, `HexECPPMathlib.Tests, `HexPoly.InterpretTests, `HexPoly.PseudoTests,
     `HexPolyMathlib.InterpretTests, `HexPolyMathlib.PseudoTests,
     `HexMatrixMathlib.Tests,
     `HexPolyMathlib.LiteralTests,
@@ -1419,7 +1454,8 @@ lean_lib HexMvFactorizationTests where
 -- Complete development imports for the two factorization packages. Their
 -- ordinary umbrellas deliberately expose only the supported release API.
 lean_lib HexFactorizationModules where
-  globs := #[`HexBerlekampZassenhaus.All,
+  globs := #[`HexECPPMathlib.Native, `HexECPPMathlib.Pari,
+    `HexBerlekampZassenhaus.All,
     `HexBerlekampZassenhausMathlib.All]
 
 -- Monorepo-only lint regression for the sparse-poly pair; the kernel
@@ -2247,3 +2283,8 @@ lean_lib HexCharPolyMathlibMeasurements where
     `HexCharPolyMathlib.ProofProbe.Dense32Packed,
     `HexCharPolyMathlib.ProofProbe.Dense16Candidate,
     `HexCharPolyMathlib.ProofProbe.Dense16Reference].map Glob.one
+
+-- Fixed CM data and bounded roots for the independent analytic oracle.
+lean_exe hexecpp_emit_class_polynomials where
+  srcDir := "conformance"
+  root := `HexECPP.EmitClassPolynomials

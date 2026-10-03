@@ -107,6 +107,29 @@ predecessor reader, then check its graph and exact required key list. -/
   | none => throw "child sign evidence rejected"
   | some facts => return facts
 
+/-- Printing a packet produced from checked joint signs, parsing it and
+checking its graph returns exactly the original scalar facts, provided the
+printed bytes pass the lexical precheck. JSON parser success and node bounds
+are proved. At algebraic levels, `Element.codec` recomputes stored signs to
+provide its global roundtrip law; strict partial readers are not covered here. -/
+theorem Context.decodeEvidence_ofSigns [Hashable E] [Hashable Ctx]
+    (context : Context E Ctx coeffSign parent)
+    (value : ValueCodec E) (ctx : ValueCodec Ctx) (hv : value.Lawful) (hc : ctx.Lawful)
+    {queries : List (DensePoly E)} (signs : SelectedSigns context.root queries)
+    (limits : Codec.Limits)
+    (bytes : Codec.checkBytes limits
+      ((SignEvidence.codec value ctx context.root.raw).encodeBytes
+        (SignEvidence.ofSigns signs)) = .ok ()) :
+    context.decodeEvidence f hz h1 ha hs hm hnat hsign hn hi value ctx queries
+      ((SignEvidence.codec value ctx context.root.raw).encodeBytes
+        (SignEvidence.ofSigns signs)) limits =
+      .ok (context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs) := by
+  unfold Context.decodeEvidence
+  dsimp only
+  rw [SignEvidence.bytes_ofSigns value ctx hv hc context signs limits bytes]
+  simp only [bind, Except.bind,
+    Context.readEvidence_ofSigns f hz h1 ha hs hm hnat hsign hn hi, pure, Except.pure]
+
 /-- Success refers to the actual decoded bytes and accepted graph. No claim
 about the printer, a cached sign or a second certificate replaces that check. -/
 theorem Context.decodeEvidence_evidence (context : Context E Ctx coeffSign parent)
@@ -154,6 +177,10 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.Context.decodeEvidence_evidence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Context.decodeEvidence_evidence
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.decodeEvidence_ofSigns' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.decodeEvidence_ofSigns
 
 /-- info: 'Hex.RealClosure.Algebraic.Context.buildEvidence_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

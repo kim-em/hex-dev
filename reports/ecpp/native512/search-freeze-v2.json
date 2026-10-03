@@ -1,0 +1,28 @@
+{
+  "version": "hex-native-ecpp-10636/search-v2",
+  "source": "b5e809caa7ec23e426acaff7117dec55221c77bd",
+  "files": {
+    "HexECPP/Search.lean": "258b97b093a73b8cd0c94a9ddae410bd53681aeef8fc73b2a85016409d5f6d78",
+    "HexECPP/CM.lean": "05a06a0dafb457e5831f0b6bba2abd2c9c9c2f5a8319772673e0140f858a8de3",
+    "HexECPP/CM/ClassPolynomials.lean": "8f50cc32e4d275de8641ac16abc2fb99652e6b8863d68237bd373d4284b2b3d9",
+    "HexECPP/CM/Roots.lean": "c933d44ba1461ae71f88e342346380bbcc877eb28e8bdd125f3fbeed924545fe",
+    "HexPrimality/Construction.lean": "8520eecc2ece080bc62faa355a6c947d209192f3197faafe7d745ae4a3ae286d",
+    "HexIntFactor/Construction.lean": "b865a7e0772cab211296d01b0679bc372e4ca84f2648e55e48a5c46ab3726abe",
+    "HexArith/ExtGcd.lean": "794aa255afc108edac9c6c496bae91a09fc59392bc919284613bd29407406ee7",
+    "HexArith/Nat/ExtendedGcd.lean": "1089e6a151576bf50637e56a45a61106f2e3e9a117e572015f9799c23115a138",
+    "HexArith/ffi/extended_gcd.c": "5fda07487cda13b932d68cd8a63e13f548dc0c974db17c60d3a18bd70a91657e",
+    "bench/HexECPP/Native.lean": "ca22fb6d23aadd950078f26daa63707cd8c5b3a6a7bea7b167feb97959a43fac",
+    "bench/HexECPP/Compare.lean": "02b42d20de927c3106a321b0e45f7f5a9830aa86d73d057291ba386638772740",
+    "scripts/bench/ecpp_native512_compare.py": "47c114456ef9b9f2c6f46a29b64dba84c872216ade7f9278d3fec989cf961fab",
+    "reports/ecpp/native512/corpus-v1.json": "f637736faaa474ef32ab61b9a146f52c3d6c83e96b730dbef0dc14f87669bce2",
+    "reports/ecpp/native512/allocations-v2.json": "01e82586f77f4851d4e3bda80b54c9921121559d700b1da352fa581b8fcd9276",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "executables": {
+    "hexecpp_native": "ad963c7318bff6054533dfb6c4d30def9bf7c3d724194f6fea225770e3728ae4",
+    "hexecpp_compare": "386a08a6e5d00dc5ac04406dc4f4200a9bf74d2c8b64477550c0022907e0b9bc"
+  },
+  "profile": "public512Budget; native512_v2 allocation",
+  "holdout_status": "Neither native nor construction holdout arm has run. Subsequent endpoint wiring must preserve this search and allocation.",
+  "lean": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)"
+}
