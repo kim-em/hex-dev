@@ -109,7 +109,7 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
             curl -sSfL -o elan-init.ps1 https://raw.githubusercontent.com/leanprover/elan/master/elan-init.ps1
-            powershell -ExecutionPolicy Bypass -File elan-init.ps1 -NoPrompt 1 -DefaultToolchain none
+            powershell -ExecutionPolicy Bypass -Command '& ./elan-init.ps1 -NoPrompt $true -DefaultToolchain none'
             echo "$USERPROFILE/.elan/bin" >> "$GITHUB_PATH"
           else
             curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
