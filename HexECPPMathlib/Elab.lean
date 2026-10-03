@@ -3,11 +3,15 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
+module
 
-import HexECPPMathlib.Soundness
-import HexECPP.Import
-import HexPrimality.Elab
-import Lean.Elab.Tactic
+public import HexECPPMathlib.Soundness
+public import HexECPP.Import
+public meta import HexECPP.Import
+public import HexECPPMathlib.Policy
+public meta import HexECPPMathlib.Policy
+public import HexPrimality.Elab
+public import Lean.Elab.Tactic
 
 /-!
 # Explicit ECPP certificate bridge
@@ -17,6 +21,8 @@ only certificate, list, and pair constructors and natural-number literals.
 The elaborator evaluates that data, reifies it as constructors, and leaves the
 checker equation to kernel reduction.
 -/
+
+@[expose] public section
 
 open Lean Elab Meta
 
@@ -52,8 +58,6 @@ meta def reifyCert : Cert → Expr
         mkNatLit b, mkNatLit x, mkNatLit y, mkNatLit d,
         reifyNats ws, reifyCert child]
 
-/-- Numeral ceiling admitted by the fresh-module kernel replay probes. -/
-def maxBits : Nat := 512
 private meta def maxSyntaxNodes : Nat := 131072
 private meta def maxInverseWitnesses : Nat := 1024
 private meta def maxCertNodes : Nat := 32
@@ -116,8 +120,11 @@ private meta def checkCertBudget : Cert → MetaM Unit
         throwError "ecpp: inverse transcript exceeds {maxInverseWitnesses} witnesses"
       checkCertBudget child
 
-private meta unsafe def evalCertUnsafe (e : Expr) : MetaM Cert :=
-  evalExpr Cert certType e
+private meta unsafe def evalCertUnsafe (e : Expr) : MetaM Cert := do
+  -- Only constructor data survives the preceding exposed-body audit. Unfold it
+  -- before compilation so importing a data certificate needs no meta import.
+  let data ← withTransparency .all <| reduce e
+  evalExpr Cert certType data
 
 @[implemented_by evalCertUnsafe]
 private meta opaque evalCert (e : Expr) : MetaM Cert

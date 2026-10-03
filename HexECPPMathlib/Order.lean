@@ -3,10 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
+module
 
-import HexECPPMathlib.Hasse
-import HexECPP.Replay
-import Mathlib.GroupTheory.OrderOfElement
+public import HexECPPMathlib.Hasse
+public import HexECPP.Replay
+public import Mathlib.GroupTheory.OrderOfElement
 
 /-!
 # Exact prime point order
@@ -14,6 +15,8 @@ import Mathlib.GroupTheory.OrderOfElement
 A nonidentity point annihilated by a prime scalar has exactly that order. The
 order divides the cardinality of its finite group.
 -/
+
+@[expose] public section
 
 namespace Hex.ECPP
 

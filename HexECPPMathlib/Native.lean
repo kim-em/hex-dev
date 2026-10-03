@@ -3,10 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
+module
 
-import HexECPPMathlib.Compact
-import HexECPP.Search
-import Lean.Meta.Tactic.TryThis
+public import HexECPPMathlib.Compact
+public import HexECPP.Search
+public meta import HexECPP.Search
+public import Lean.Meta.Tactic.TryThis
 
 /-!
 # Explicit native ECPP production
@@ -15,6 +17,8 @@ Native search takes only a subject, seed and finite allocation. Suggestions
 and exports freeze replay inputs and an explicit terminal PrimeCert. Neither
 CM search nor an external program runs while replaying frozen output.
 -/
+
+@[expose] public section
 
 open Lean Elab Meta
 

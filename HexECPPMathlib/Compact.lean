@@ -3,9 +3,10 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
+module
 
-import HexECPPMathlib.Elab
-import Lean.Elab.Command
+public import HexECPPMathlib.Elab
+public import Lean.Elab.Command
 
 /-!
 # Compact frozen ECPP certificates
@@ -15,6 +16,8 @@ constructors during elaboration. It does not run PARI or search for a terminal
 prime. The explicit Hex terminal certificate and all generated inverse
 witnesses are checked by the ordinary checker and replayed in the kernel.
 -/
+
+@[expose] public section
 
 open Lean Elab Meta
 
@@ -39,7 +42,9 @@ syntax (name := compactCertTerm) "ecpp_cert% " str " using " term : term
   validateCert cert
   -- Keep the enclosing term small so its type can be inferred under the
   -- user's ordinary recursion limit. The exposed body is only raw data.
-  let name ← Term.mkAuxName `ecpp
+  -- The name generator checks conflicts across private and public names.
+  -- A private enclosing theorem must still produce exposed certificate data.
+  let name := privateToUserName (← Term.mkAuxName `ecpp)
   let decl := Declaration.defnDecl {
     name := name
     levelParams := []
@@ -93,13 +98,13 @@ meta def exportCertificate (mod decl : TSyntax `ident) (term : Term)
     generator n
   let fullName := modName ++ declName
   let literal ← Command.liftTermElabM <| compactSyntax source cert
-  let definition ← `(command| def $(mkIdent fullName):ident : Hex.ECPP.Cert := $literal)
+  let definition ← `(command| @[expose] public def $(mkIdent fullName):ident : Hex.ECPP.Cert := $literal)
   let rendered ← Command.liftTermElabM <| PrettyPrinter.ppCommand definition
-  let body := s!"import HexECPPMathlib.Compact\n\n{rendered}\n"
+  let body := s!"module\n\npublic import HexECPPMathlib.Compact\n\n{rendered}\n"
   if let some parent := path.parent then IO.FS.createDirAll parent
   let handle ← IO.FS.Handle.mk path .writeNew
   handle.putStr body
   handle.flush
-  logInfo m!"Wrote {path}. Add `import {modName}` at the top of your file, then use `ecpp using {fullName}`. Remove the export command after generation."
+  logInfo m!"Wrote {path}. Add `public import {modName}` at the top of your file, then use `ecpp using {fullName}`. Remove the export command after generation."
 
 end Hex.ECPP

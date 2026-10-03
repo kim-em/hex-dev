@@ -144,9 +144,10 @@ no automatic fallback or `norm_num` handler is registered.
 
 `#ecpp_export MyCertificates.Prime cert for n` writes
 `MyCertificates/Prime.lean`, relative to the process working directory. The
-file imports `HexECPPMathlib.Compact` and contains one certificate declaration
-named `MyCertificates.Prime.cert`. After generation, remove the command, put
-the file under the project's Lean source root, import `MyCertificates.Prime`,
+file uses the module system, publicly imports `HexECPPMathlib.Compact`, and
+contains one `@[expose] public` certificate declaration named
+`MyCertificates.Prime.cert`. After generation, remove the command, put
+the file under the project's Lean source root, use `public import MyCertificates.Prime`,
 and use `ecpp using MyCertificates.Prime.cert`. Parent directories may be
 created; existing files are never overwritten. The command runs only in batch
 builds: the language server displays instructions to run `lake build +Module`
