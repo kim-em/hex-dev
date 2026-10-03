@@ -62,3 +62,8 @@ memory and artifact sizes. Reproduce from a clean checkout with
 The wrapper automatically leases a CPU without waiting for a quiet host.
 Dependencies alone are warmed. These Mathlib-importing probes are build-only
 members of the on-demand target, with no new CI job or runtime benchmark.
+
+The comparison predates indexed sign retrieval. Its probes now explicitly pin
+`rcf.algebraic.indexSigns false`; this later pin preserves the measured linear
+lookup mode while changing current source hashes. The archived commit and
+hashes remain the identities of the retained experiment.

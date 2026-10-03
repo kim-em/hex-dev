@@ -54,7 +54,7 @@ register_option rcf.algebraic.monicCore : Bool := {
 }
 
 register_option rcf.algebraic.indexSigns : Bool := {
-  defValue := false
+  defValue := true
   descr := "retrieve fixed-field replay signs through a checked positional index"
 }
 

@@ -20,6 +20,8 @@ public import HexRCF.RealCoefficients.Formula
 public import HexRCF.RealCoefficients.Field
 public import HexRCF.RealCoefficients.CommonPresentation
 public import HexRCF.RealCoefficients.LiteralSign
+public import HexRCF.RealCoefficients.SignIndex
+public import HexRCF.RealCoefficients.FieldIndex
 public import HexRCF.RealCoefficients.FieldSpecialize
 public import HexRCF.RealCoefficients.SignInputs
 public import HexRCF.RealCoefficients.FieldCarrier

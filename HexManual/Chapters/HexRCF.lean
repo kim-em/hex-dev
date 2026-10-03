@@ -599,6 +599,22 @@ library producer retains raw cores and its existing progress laws. Direct
 monic option explicitly. The false mode retains raw cores as a comparison control. This
 normalization does not remove the common-field authentication limitation.
 
+`rcf.algebraic.indexSigns` is true by default. It retrieves field signs
+through a frozen tree of positions in the original checked evidence table.
+Every hit checks its array bounds and exact key. A missing route uses the
+original table lookup, so malformed routing cannot lose a recorded sign;
+an absent original entry still fails preflight. The kernel checks the same
+sign evidence and uses a proved checker equivalence before the existing
+soundness theorem. It does not sort keys during replay.
+Two separate four-round comparisons favored indexed lookup in every pair
+on the further-root, reciprocal and cubic examples. The preserved-hit mode's
+median paired reductions were 3.774, 3.493 and 3.527 seconds, with lower peak
+memory and larger private proof files. These are full fresh-module costs,
+not isolated lookup timing or an asymptotic claim. The
+[report and retained samples](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-index-proofs.md)
+include every completed arm and their source identities. The false mode keeps
+linear retrieval; older comparison probes explicitly pin that mode.
+
 For these reconstructed inputs, closed arithmetic is compiled into the common
 field after authenticating its source values. A quotient is recorded as a
 rational coordinate polynomial and checked by its multiplication identity;

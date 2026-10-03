@@ -99,3 +99,8 @@ absolute-leading-coefficient scaling; arbitrary monic scaling is not equivalent.
 - [Retained incremental samples](bench-results/hex-rcf-interval-proofs-3728fa082-chungus2.json.samples.jsonl)
 - [Entry split and unchanged proof hashes](data/hexrcf-interval-signs/3728fa082/audit.json)
 - [Audit compiler output](data/hexrcf-interval-signs/3728fa082/compiler.log)
+
+The comparison predates indexed sign retrieval. Its probes now explicitly pin
+`rcf.algebraic.indexSigns false`; this later pin preserves the measured linear
+lookup mode while changing current source hashes. The archived commit and
+hashes remain the identities of the retained experiment.
