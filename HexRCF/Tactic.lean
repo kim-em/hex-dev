@@ -202,6 +202,17 @@ private meta def proveRational (target : Expr) (reflected : Reify.SentenceResult
     throwError "rcf: internal final proof mismatch"
   return proof
 
+/-- Prove a rational goal without dispatching coefficient handlers. Unsupported
+syntax and unsuccessful proof attempts restore the metavariable state. -/
+meta def proveRationalGoal (target : Expr) : MetaM Expr := do
+  let saved ← saveState
+  let (proof, _) ← tryFinally' (do
+    match ← (Reify.recognizeSentence target).run with
+    | .ok reflected => proveRational target reflected
+    | .error reason => throwError reason.message)
+    (fun result => unless result.isSome do saved.restore)
+  return proof
+
 /-- Prove a rational goal, or dispatch only a typed closed-coefficient decline.
 Every unsuccessful attempt restores its metavariable state, including runtime
 exceptions. Existing rational search and replay remain terminal. -/

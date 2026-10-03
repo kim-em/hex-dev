@@ -21,32 +21,40 @@ from scripts.bench.fresh_module_sweep import (  # noqa: E402
     source_hashes,
 )
 
-TARGET = "HexRCF.ProofProbe.Production.Sharing"
-NAMESPACE = "Hex.RCF.ProofProbe.Production."
-PROOFS = {NAMESPACE + "closeSections": "Close", NAMESPACE + "furtherSection": "Further"}
-SPEC = SweepSpec(
-    description=__doc__,
-    pairs=(ProbePair("syntax", ProbeModule(TARGET), ProbeModule(TARGET), {}),),
-    probe_target="HexRCFProofProbe",
-    schema="hex-rcf-production-sharing-v1",
-    measurement="deterministic-expression-audit",
-    output_stem="hex-rcf-production-sharing",
-)
+SUITES = {
+    "production": ("HexRCF.ProofProbe.Production.Sharing", {
+        "Hex.RCF.ProofProbe.Production.closeSections": "Production/Close",
+        "Hex.RCF.ProofProbe.Production.furtherSection": "Production/Further",
+    }),
+    "scaling": ("HexRCF.ProofProbe.Scaling.Sharing", {
+        "Hex.RCF.ProofProbe.Scaling." + module + ".positive": "Scaling/" + module
+        for module in ("Degree2", "Degree4", "Atoms1", "Atoms4", "Bits32", "Bits128")
+    }),
+}
 
 
-def collect(output: Path) -> None:
-    before = source_hashes(SPEC, Path(__file__))
+def collect(output: Path, suite: str) -> None:
+    target, proofs = SUITES[suite]
+    spec = SweepSpec(
+        description=__doc__,
+        pairs=(ProbePair("syntax", ProbeModule(target), ProbeModule(target), {}),),
+        probe_target="HexRCFProofProbe",
+        schema="hex-rcf-" + suite + "-sharing-v1",
+        measurement="deterministic-expression-audit",
+        output_stem="hex-rcf-" + suite + "-sharing",
+    )
+    before = source_hashes(spec, Path(__file__))
     repository = checkout_state(ROOT)
     dependencies = dependency_checkouts()
     output.mkdir(parents=True, exist_ok=False)
     result = subprocess.run(
-        ["lake", "build", TARGET], cwd=ROOT, capture_output=True, text=True,
+        ["lake", "build", target], cwd=ROOT, capture_output=True, text=True,
     )
     compiler = result.stdout + result.stderr
     (output / "compiler.log").write_text(compiler)
     if result.returncode:
         raise RuntimeError(f"Lake build failed; retained {output / 'compiler.log'}")
-    after = source_hashes(SPEC, Path(__file__))
+    after = source_hashes(spec, Path(__file__))
     if before != after:
         raise RuntimeError("audit source files changed during the build")
     rows = {}
@@ -56,14 +64,14 @@ def collect(output: Path) -> None:
             continue
         row = json.loads(match[1])
         proof = row.get("proof")
-        if proof not in PROOFS:
+        if proof not in proofs:
             continue
         if proof in rows:
             raise RuntimeError(f"duplicate proof audit: {proof}")
         if not (0 < row["unique_syntax_nodes"] <= row["local_expression_tree_nodes"]
                 <= row["expanded_local_reference_nodes"]):
             raise RuntimeError(f"inconsistent counts: {proof}")
-        module = "HexRCF/ProofProbe/Production/" + PROOFS[proof]
+        module = "HexRCF/ProofProbe/" + proofs[proof]
         artifacts = {}
         for suffix in (".olean", ".olean.private", ".olean.server"):
             path = ROOT / ".lake/build/lib/lean" / (module + suffix)
@@ -73,11 +81,11 @@ def collect(output: Path) -> None:
             }
         row["module_artifacts"] = artifacts
         rows[proof] = row
-    if set(rows) != set(PROOFS):
-        raise RuntimeError(f"missing proof audits: {set(PROOFS) - set(rows)}")
+    if set(rows) != set(proofs):
+        raise RuntimeError(f"missing proof audits: {set(proofs) - set(rows)}")
     data = {
-        "schema": SPEC.schema,
-        "measurement": SPEC.measurement,
+        "schema": spec.schema,
+        "measurement": spec.measurement,
         "repository": repository,
         "dependencies": dependencies,
         "source_hashes": before,
@@ -88,7 +96,7 @@ def collect(output: Path) -> None:
             "expanded_local_reference_nodes": "trees with local declaration type/body substituted at each reference",
             "excluded": "imported declaration bodies, universe-level nodes, binder-name nodes, runtime work, heap identity",
         },
-        "proofs": [rows[proof] for proof in PROOFS],
+        "proofs": [rows[proof] for proof in proofs],
     }
     (output / "audit.json").write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
     print(output / "audit.json")
@@ -97,4 +105,6 @@ def collect(output: Path) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
-    collect(parser.parse_args().output)
+    parser.add_argument("--suite", choices=tuple(SUITES), default="production")
+    args = parser.parse_args()
+    collect(args.output, args.suite)

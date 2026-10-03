@@ -102,6 +102,11 @@ checks frozen bound/subject/version bindings and coverage of used providers,
 then validates enclosure, guard and final proofs in the ordinary kernel.
 Nonseparating bounds leave guards unresolved. This mode is bounded proof search,
 not a complete named-constant field solver.
+The [named-constant regressions](../conformance/HexRCF/NamedConstants.lean)
+and manual supply fixed bounds from existing Mathlib π/e theorems, then prove
+the required inequalities, existential witness and guarded inverse. Separate
+[coarse-bound tests](../conformance/HexRCF/CoarseConstants.lean) retain refusal
+when the supplied evidence leaves a divisor sign unresolved.
 
 `Hex.RCF.RealCoefficients.Reify.prepare` produces the shared source schema,
 fixed coefficient valuation and equivalence to the original goal. The optional
@@ -124,8 +129,13 @@ computed presentation. The
 [fresh-module proofs](../conformance/HexRCF/CertificationProofs.lean) exercise
 a supplied multi-prime certificate beyond the frontend witness languages.
 The certificate construction and fresh goal proofs use ordinary public imports.
-The frontend does not yet invoke the owner's multi-prime quotation for a new
-common defining polynomial.
+For a new common defining polynomial, quotation also tries the owner's public
+multi-prime certificate API. These certificate languages do not cover every
+irreducible common defining polynomial; refusal need not disappear with a
+larger search bound and does not imply reducibility.
+The fresh regression also proves a goal combining a selected root of
+`X³ − 4X + 2` with `√37`, creating a new degree-six defining polynomial
+certified through the multi-prime route.
 It binds the original isolation square to the literal selected-root replay, preserving the
 chosen embedding. Elaboration executes canonicalization; the kernel reduces
 the original polynomial and square identities, rather than canonicalization.

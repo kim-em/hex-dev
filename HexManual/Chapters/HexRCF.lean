@@ -8,6 +8,8 @@ import VersoManual
 
 import HexRCF
 import HexRCF.RealCoefficients
+import Mathlib.Analysis.Real.Pi.Bounds
+import Mathlib.Analysis.Complex.ExponentialBounds
 import HexRealClosure
 import HexSignDet
 import HexSignDetMathlib.SelectedProducer
@@ -491,6 +493,32 @@ including divisors erased by cancellation, zero multiplication or an empty
 domain. The higher-root `Real.rpow` alias retains its earlier polynomial path;
 closed division involving that alias is not yet supported.
 
+Visible `RealAlgebraicNumber.ofRat` constructors also retain their proved
+rational value. They use the rational decision path after checked source
+lowering; mixed expressions may still use the algebraic path. Divisions inside
+the rational constructor's input remain original guard obligations. A known
+zero guard reports `rcf: original closed divisor is zero`, including when
+zero multiplication or an empty domain would otherwise hide it.
+
+```lean
+example : ∀ x : ℝ,
+    x ^ 2 + (Hex.RealAlgebraicNumber.ofRat (3 / 2)).toReal > 0 := by
+  rcf
+
+example : ∀ x : ℝ,
+    x ^ 2 / (Hex.RealAlgebraicNumber.ofRat 2).toReal + Real.sqrt 2 + Real.sqrt 3 > 0 := by
+  rcf
+
+example : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt (Hex.RealAlgebraicNumber.ofRat 2).toReal > 0 := by
+  rcf
+```
+
+The last example proves the radicand's equality to `2` before identifying its
+square root with the positive selected root. Square roots of rational
+constructors with zero or negative values reduce through the rational path;
+they do not select a positive algebraic root.
+
 These examples use the selected real root of `X³ − 2`. The adapter records an
 isolating square and verifies its root witness. It reconstructs Hex's
 {name}`Hex.AlgebraicNumber` and {name}`Hex.RealAlgebraicNumber` through the
@@ -527,6 +555,23 @@ of the selected root of `X³ − X − 1` and uses its proved real conversion.
 The constructor data must be executable and visible to the frontend; an
 arbitrary opaque algebraic value has no implicit reconstruction rule.
 
+Field signs first try exact rational Horner bounds on the authenticated
+generator interval. A strictly separated bound proves its sign; exactly
+`[0,0]` proves zero. Other zero-containing bounds retain a full rational Sturm
+query. Replay checks the recorded branch, and never rescues malformed query
+evidence with interval evaluation. The complete algebraic producer still
+succeeds on its proved input surface. Linear sign lookup remains a cost.
+
+A four-round matched comparison on the further-root, reciprocal-root and cubic
+examples favored interval quotation in all twelve pairs, with median paired
+margins 4.513, 4.752 and 13.553 seconds. The reference reconstructs full queries
+after interval production, so this measures quotation-mode selection, not a
+speedup against older code or isolated kernel time. Shared-host variation and
+all completed samples are retained in `reports/hexrcf-interval-proofs.md`.
+The default is `rcf.algebraic.intervalSigns=true`; the false arm remains a
+comparison control. Direct coordinate quotation remains off by default: its
+two separate comparisons did not establish a gain.
+
 For these reconstructed inputs, closed arithmetic is compiled into the common
 field after authenticating its source values. A quotient is recorded as a
 rational coordinate polynomial and checked by its multiplication identity;
@@ -542,9 +587,11 @@ This supports source proofs beyond the frontend's
 single-witness and quadratic-norm search languages, including a checked real
 quartic with a multi-prime certificate. The fresh goal proofs use ordinary
 imports, including certificate construction and replay through the owner's
-public API. The frontend does not yet invoke multi-prime certification for
-a new common polynomial. Such polynomials still require
-a supported ordinary-kernel irreducibility certificate.
+public API. For a new common polynomial, the frontend tries quadratic-norm and free
+witness certificates, then the owner's multi-prime certificate producer and
+ordinary-kernel quotation. These certificate languages do not cover every
+irreducible common defining polynomial. Increasing a search bound need not
+resolve a refusal, and their failure does not imply reducibility.
 The cubic example below verifies
 `x / α = (α² − 1) * x` at the selected positive root of `X³ − X − 1`.
 The same example also uses the ordinary `QAdjoin.toAlgebraicNumber`
@@ -852,11 +899,82 @@ original divisor obligations before normalization. Closed values built with
 supported sentences, a divisor must be proved nonzero before certificate
 construction.
 
+The next construction selects the positive root near 1.675 of `X³ − 4X + 2`.
+Combining it with `√37` creates a degree-six common defining polynomial.
+The frontend's single-witness and quadratic-norm producers decline that new
+polynomial; the public multi-prime certificate route authenticates it before
+the goal's root and sign checks.
+
+```lean
+private abbrev certificatePolynomial : Hex.ZPoly :=
+  Hex.DensePoly.ofList [2, -4, 0, 1]
+private abbrev certificateSquare : Hex.DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 112416129 26, 0, 24⟩
+
+private theorem certificateChecked :
+    certificatePolynomial.CheckedIrreducible :=
+  Field.checkedIrreducible certificatePolynomial
+    (.eisenstein 2 0)
+    (by decide +kernel) (by decide)
+
+private theorem certificateSquarefree :
+    Hex.HasOnlySimpleRoots certificatePolynomial := by
+  let : certificatePolynomial.CheckedIrreducible :=
+    certificateChecked
+  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable
+    certificatePolynomial (by decide)).mpr
+    (Hex.ZPoly.CheckedIrreducible.separable
+      certificatePolynomial)
+
+private abbrev certificateRoot : Hex.RealAlgebraicNumber :=
+  Selected.real certificatePolynomial certificateSquare
+    (by decide +kernel) (by decide) (by rfl)
+    (by decide) (by decide) certificateChecked
+    certificateSquarefree (by decide +kernel)
+
+set_option maxRecDepth 8192 in
+set_option maxHeartbeats 5000000 in
+example : ∀ x : ℝ,
+    x ^ 2 + certificateRoot.toReal + Real.sqrt 37 > 0 := by
+  rcf
+```
+
 The algebraic examples use the proved generic accepted-query soundness theorem
 `HexRealRootsMathlib.Tarski.check_rootSum`. Their fixed-field certificate checks
 and chosen-root identifications use only Lean's standard logical axioms.
 See {ref "hex-number-field"}[HexNumberField] and
 {ref "hex-real-algebraic"}[HexRealAlgebraic] for the underlying number APIs.
+
+Visible checked conversions preserve the actual option branch.
+`RealAlgebraicNumber.ofAlgebraic?` succeeds for a selected real or rational value,
+or an element of `QAdjoin a.toAlgebraic` for a real algebraic generator `a`.
+When applied to `AlgebraicNumber.I`, it returns
+`none`, so `getD` denotes its stated fallback. An explicit `.re` projection
+instead denotes the real part; the real part of `I` is zero.
+
+```lean
+example : ∃ x : ℝ,
+    x = ((Hex.RealAlgebraicNumber.ofAlgebraic? Hex.AlgebraicNumber.I).getD
+      (Hex.RealAlgebraicNumber.ofRat (3 / 2))).toReal ∧ 1 < x ∧ x < 2 := by rcf
+
+example : ∀ x : ℝ,
+    x ^ 2 + Hex.AlgebraicNumber.I.re.toReal ≥ 0 := by rcf
+
+example : ∀ x : ℝ,
+    x ^ 2 + (4 : Hex.RealAlgebraicNumber).toReal +
+      ((-3 : Int) : Hex.RealAlgebraicNumber).toReal > 0 := by rcf
+```
+
+The frontend also lowers visible real-algebraic arithmetic, inverses, natural
+powers and integer casts using the number library's interpretation theorems.
+Supported projections include selected real values, rational values, real
+`QAdjoin` coordinates and sums of supported projections. This recognition
+does not provide a general procedure for arbitrary complex expressions or
+opaque conversion code. Original rational, real-algebraic and supported
+real-field divisors remain obligations, including divisors inside an unused
+`getD` fallback, before any branch is simplified. Division over other carriers,
+raw `PolyQuot.div`/`inv`, integer powers and divisions depending on a binder
+inside conversions are rejected.
 
 A fresh-module comparison of the cubic reciprocal uses identical imports and
 shared source setup for `Coefficients.ofField` and direct
@@ -875,6 +993,19 @@ snapshot. Each measurement is tied to its recorded source; later routing and
 environment cleanup are outside those measurements. They do not isolate the
 cost of checking separate source and target sign tables or establish general
 extension performance or total algebraic search.
+
+A separate [fixed-field input report](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-scaling-proofs.md)
+retains 24 matched-import builds varying variable degree, atom count and integer
+coefficient width independently. These root-free carriers do not measure
+precision or nested depth. A representative two-field further-root proof,
+`∃ x : ℝ, x² = Real.sqrt 2 ∧ 1 < x ∧ x < Real.sqrt 3`, takes 43.672 seconds
+at its recorded source on leased CPU 14, including build and profiler overhead.
+That source used full Sturm-query quotation and predates interval signs; this
+profile does not attribute the cost of the current default.
+Its exclusive kernel type-checking category totals 30.1 seconds; the smaller
+literal-replay category excludes those child checks. The report retains source
+identities, memory, serialized sizes, unique syntax and expanded-reference
+counts. It does not claim a complexity law or complete Phase-4 attestation.
 
 # Simultaneous signs and repeated roots over a cubic field
 %%%
@@ -1546,7 +1677,10 @@ The converted coordinates can also be coefficients of a new sign/root problem.
 Write a = √2 and b = √3 in that common field. At the roots of
 `(x − a)(x − b)`, the ordered queries `x − a`, `x − b`, and `a − b` have
 signs `(0,−,−)` and `(+,0,−)`, each once. The impossible pattern `(0,0,−)`
-has count zero. The sign function below evaluates a field coordinate on the
+has count zero. The same check enumerates a before b and compares roots
+selected by `x − a` and `x − b`. Both derivative words are `[+]`; their
+equality does not identify roots of different defining polynomials.
+The sign function below evaluates a field coordinate on the
 common generator's certified enclosure, refining it when needed.
 
 ```lean
@@ -1564,10 +1698,23 @@ private def commonFieldTablePass
     let head := qa * qb
     let some table := determine sign 7 head .negInf .posInf
       [qa, qb, DensePoly.C (a - b)] | return false
+    let .ok (some roots) :=
+      Descriptor.buildRoots sign 7 head .negInf .posInf
+      | return false
+    let some left := Descriptor.validate sign 7
+      ⟨7, qa, .negInf, .posInf, [1], [1]⟩
+      | return false
+    let some right := Descriptor.validate sign 7
+      ⟨7, qb, .negInf, .posInf, [1], [1]⟩
+      | return false
     return common.generator.p.natDegree == 4 &&
       table.rows.toList ==
       [([0, -1, -1], 1), ([1, 0, -1], 1)] &&
-      table.count [0, 0, -1] == 0
+      table.count [0, 0, -1] == 0 &&
+      roots.map (fun d => d.signAt qa) == [0, 1] &&
+      roots.map (fun d => d.signAt qb) == [-1, 0] &&
+      left.compare right == .lt &&
+      right.compare left == .gt
   else return false
 
 #guard commonFieldTablePass
@@ -1827,21 +1974,66 @@ Convergence and relative transcendence are separate hypotheses for total
 search. This fixed bound makes no such claim. Finite proofs from containment
 need neither hypothesis.
 
+For the named constants below, the caller uses existing Mathlib theorems
+to supply `π ∈ [3, 63/20]` and `exp 1 ∈ [5/2, 11/4]`. These bounds suffice
+for the displayed finite proofs, including the original nonzero divisor
+`4 − π`. The imports are `Mathlib.Analysis.Real.Pi.Bounds` and
+`Mathlib.Analysis.Complex.ExponentialBounds`. These constant callbacks do
+not certify arbitrary requested widths or a convergent search.
+
+```lean
+private def callerPiBounds (_ : Rat) : Bounds :=
+  ⟨3, mkRat 63 20, by norm_num⟩
+private def callerExpBounds (_ : Rat) : Bounds :=
+  ⟨mkRat 5 2, mkRat 11 4, by norm_num⟩
+
+@[rcf_constant] private def callerPi :
+    Registration Real.pi where
+  version := 1
+  approximation := callerPiBounds
+  containment δ _ := by
+    norm_num [Contains, callerPiBounds]
+    constructor
+    · exact Real.pi_gt_three.le
+    · linarith [Real.pi_lt_d2]
+
+@[rcf_constant] private def callerExp :
+    Registration (Real.exp 1) where
+  version := 1
+  approximation := callerExpBounds
+  containment δ _ := by
+    norm_num [Contains, callerExpBounds]
+    constructor
+    · linarith [Real.exp_one_gt_d9]
+    · linarith [Real.exp_one_lt_d9]
+
+example : ∀ x : ℝ, x ^ 2 > Real.pi - 4 := by rcf
+example : ∀ x : ℝ, x ^ 2 + Real.exp 1 > 2 := by rcf
+example : ∃ x : ℝ,
+    x = Real.exp 1 ∧ 2 < x ∧ x < 3 := by rcf
+example : ∀ x : ℝ,
+    x ^ 2 + 1 / (4 - Real.pi) > 0 := by rcf
+
+/-- error: rcf: original closed divisor is zero -/
+#guard_msgs in
+example : ∀ x : ℝ,
+    x ^ 2 + 0 / (Real.pi - Real.pi) ≥ 0 := by rcf
+```
+
 All original divisors are checked before cancellation, coefficient abstraction
 or proof search. Thus even an erased division by `sin 1 - sin 1` is invalid.
 The supplied interval also cannot certify that `sin 1` is nonzero: a bound
 containing zero proves neither equality to zero nor a strict sign.
 
 ```lean
-/-- error: rcf: original divisor is zero -/
+/-- error: rcf: original closed divisor is zero -/
 #guard_msgs in
 example : ∀ x : ℝ,
     x ^ 2 + 2 + Real.sin 1 +
       0 / (Real.sin 1 - Real.sin 1) > 0 := by
   rcf
 
-/-- error: rcf: original divisor remains unresolved
-in supplied bounds -/
+/-- error: rcf: original closed divisor remains unresolved in supplied bounds -/
 #guard_msgs in
 example : ∀ x : ℝ,
     x ^ 2 + 2 + Real.sin 1 + 0 / Real.sin 1 > 0 := by

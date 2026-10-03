@@ -76,6 +76,7 @@ BUILD_ONLY_LIBS = {
     "HexRealRootsMathlibReplayProbe",
     "HexRCFBenchSupport",
     "HexRCFProofProbe",
+    "HexRCFProofProfile",
     "HexRealFormulaProofProbe",
     "HexRCFRealFormula",
     "HexRCFRealCoefficients",

@@ -9,6 +9,7 @@ public meta import HexRCF.RealCoefficients.Tactic
 public meta import HexRCF.RealCoefficients.SquareRoot
 public meta import HexRCF.RealCoefficients.CommonPresentation
 public meta import HexBerlekampZassenhaus.QuadraticNormRecover
+public meta import HexBerlekampZassenhausMathlib.FactorTactic
 
 public meta import HexRCF.RealCoefficients.FieldCompile
 
@@ -21,34 +22,83 @@ namespace Hex.RCF.RealCoefficients.CommonTactic
 
 open Hex Lean Meta Qq
 
+/-- Quote a checked irreducibility proof for a literal common polynomial.
+The runtime input selects finite evidence; the kernel checks that evidence
+against the supplied expression before returning the class proof. -/
+meta def certify (p : ZPoly) (pExpr : Q(ZPoly)) (degree : Expr) : MetaM Expr := do
+  let candidate ← match QuadraticNormCertificate.certify? p with
+    | some cert => do
+        let certExpr : Q(QuadraticNormCertificate) ←
+          FieldLiteral.quadraticCertExpr cert
+        let hcert ← mkDecideProof
+          (q(($certExpr).check $pExpr = true) : Q(Prop))
+        mkAppM ``Field.checkedIrreducibleQuadraticNorm
+          #[pExpr, certExpr, hcert, degree]
+    | none => do
+        match HexBerlekampZassenhaus.FactorTactic.searchWitness p with
+        | some witness =>
+            let witnessExpr : Q(ZPoly.IrredWitness) :=
+              HexBerlekampZassenhaus.FactorTactic.reifyWitness witness
+            unless ZPoly.checkIrredWitness p witness do
+              throwError "rcf: computed irreducibility witness failed its check"
+            let hwitness ← mkDecideProof
+              (q(ZPoly.checkIrredWitness $pExpr $witnessExpr = true) : Q(Prop))
+            mkAppM ``Field.checkedIrreducible
+              #[pExpr, witnessExpr, hwitness, degree]
+        | none =>
+            let some certificate := certifyIrreducible? p |
+              throwError "rcf: no checked irreducibility witness for this common field"
+            unless HexBerlekampZassenhausMathlib.checkMultiPrimeCert p certificate do
+              throwError "rcf: computed multi-prime certificate failed its check"
+            let proof ← HexBerlekampZassenhausMathlib.FactorTactic.zpolyIrredProof
+              pExpr (.multi certificate)
+            let equivalence ← mkAppM ``ZPoly.isIrreducible_iff #[pExpr]
+            let checked ← mkAppM ``Iff.mpr #[equivalence, proof]
+            mkAppM ``ZPoly.CheckedIrreducible.mk #[checked, degree]
+  let target ← mkAppM ``ZPoly.CheckedIrreducible #[pExpr]
+  mkAuxTheorem target candidate (zetaDelta := true) (cache := false)
+
 private meta def kernelDecide (goal : Expr) : MetaM Expr := do
   let candidate ← mkFreshExprMVar goal
   let remaining ← Lean.Elab.runTactic' candidate.mvarId!
     (← `(tactic|
       (simp only [CommonPresentation.checkPresentation, Field.checkSignTable,
-        LiteralSign.Table.check, Sturm.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
+        LiteralSign.Table.check, LiteralSign.Entry.check, Sturm.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
         ← Array.all_toList, Array.toList_range, Bool.and_eq_true];
-       repeat' apply And.intro; all_goals decide +kernel)))
+       repeat' (any_goals (apply And.intro)); all_goals decide +kernel)))
   unless remaining.isEmpty do
-    throwError "rcf: literal source replay did not close"
+    let goals ← remaining.mapM fun goal => goal.withContext do
+      return ← ppExpr (← goal.getType)
+    throwError "rcf: literal source replay did not close: {MessageData.joinSep goals m!"\n"}"
   return ← instantiateMVars candidate
 
 private meta def naturalSquareRoot? (source : Expr) : MetaM (Option Nat) := do
   unless source.isAppOfArity ``Real.sqrt 1 do return none
-  let base : Q(ℝ) := source.appArg!
+  let base : Q(ℝ) ← Reify.lowerSources #[] source.appArg!
   let result ← observing? do
     let ⟨value, _, _, _⟩ ← Mathlib.Meta.NormNum.deriveRat base
       (_inst := q(inferInstance))
     pure value
   let some value := result | return none
   unless value.den == 1 && 0 < value.num do return none
-  let n := value.num.toNat
-  let nExpr : Q(ℕ) := mkNatLit n
-  unless ← isDefEq base q(($nExpr : ℝ)) do return none
-  return some n
+  return some value.num.toNat
+
+/-- Prove the original radicand equality before using the selected positive root. -/
+private meta def rootAlias (source : Expr) (radicand : Nat) : MetaM Expr := do
+  let (base, equality) ← Reify.lowerWithProof #[] source.appArg!
+  let base : Q(ℝ) := base
+  let n : Q(ℕ) := mkNatLit radicand
+  let candidate ← mkFreshExprMVar q($base = ($n : ℝ))
+  let remaining ← Lean.Elab.runTactic' candidate.mvarId!
+    (← `(tactic| norm_num [RealAlgebraicNumber.ofRat_toReal]))
+  unless remaining.isEmpty do
+    throwError "rcf: square-root radicand has no checked natural value"
+  let proof ← mkEqTrans equality (← instantiateMVars candidate)
+  checkWithKernel proof
+  return ← mkEqSymm (← mkAppM ``congrArg #[mkConst ``Real.sqrt, proof])
 
 private inductive SourceKind where
-  | radical (degree : Nat)
+  | radical (radicand : Nat) (aliasProof : Expr)
   | selected (args : Array Expr) (checked : Expr)
   | normalized (selected checked : Expr)
   deriving Inhabited
@@ -67,7 +117,7 @@ private structure SourcePlan where
 private instance : Inhabited SourcePlan where
   default := ⟨default, RealAlgebraicNumber.ofRat 0,
     DensePoly.ofList [], ⟨0, 0, 0⟩,
-    DensePoly.ofList [], default, default, .radical 1⟩
+    DensePoly.ofList [], default, default, .radical 1 default⟩
 
 private meta def unfoldHead? (e : Expr) (predicate : Expr → Bool) : MetaM (Option Expr) := do
   let mut current := e
@@ -160,13 +210,15 @@ private meta def candidate (target : Expr) : MetaM Bool := do
   if atoms.size ≥ 2 then return true
   let some atom := atoms[0]? | return false
   if atom.isAppOfArity ``Real.sqrt 1 then
-    return (← naturalSquareRoot? atom).isSome
+    if (← naturalSquareRoot? atom).isSome then return true
+    return (← Reify.lowerSources #[] atom) != atom
   return atom.isAppOfArity ``RealAlgebraicNumber.toReal 1
 
 /-- Preserve single-coefficient priority only when every original divisor
 is rational. Rational normalization restores its temporary metavariable state. -/
 private meta def rationalGuards (divisors : Array Expr) : MetaM Bool := do
-  for divisor in divisors do
+  for original in divisors do
+    let divisor ← Reify.lowerSources #[] original
     if !(sourceAtoms divisor #[]).isEmpty then return false
     let value : Q(ℝ) := divisor
     let result ← (do
@@ -243,9 +295,9 @@ private meta def sourceRoot? (argument : Expr) :
 
 private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
   let identity : DensePoly Rat := DensePoly.ofList [0, 1]
-  if let some degree ← naturalSquareRoot? source then
+  if let some radicand ← naturalSquareRoot? source then
     let (_, _, anchorValue) ← FieldRuntime.coefficient source
-    let sourceP := SquareRoot.polynomial degree
+    let sourceP := SquareRoot.polynomial radicand
     let sourceSquare := if anchorValue.toAlgebraic.p == sourceP then
         anchorValue.toAlgebraic.rep.1.square
       else
@@ -262,7 +314,7 @@ private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
     let sourceProof ← mkAppM ``CommonPresentation.generator_eval #[source]
     return some ⟨source, anchorValue, sourceP, sourceSquare,
       identity, fieldExpr, sourceProof,
-      .radical degree⟩
+      .radical radicand (← rootAlias source radicand)⟩
   unless source.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return none
   let argument := source.appArg!
   let field? ← fieldArgs? argument
@@ -306,17 +358,18 @@ private def oneQuantifier {n : Nat} (formula : RealFormula.Prenex n) :
   | .quant q (.matrix qf) => some (q, qf)
   | _ => none
 
-private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans : Array SourcePlan) : MetaM Expr := do
+private meta def assemble (source : Reify.Source) (leafSources : Array Expr) (plans : Array SourcePlan) : MetaM Expr := do
   let anchors := plans.map (·.anchorValue)
   -- Several source coordinates may use the same selected generator. Search
   -- once for each generator, then restore the original source order. Every
   -- resulting coordinate still passes the polynomial and enclosure checks.
   let distinct := anchors.foldl (fun seen anchor =>
     if seen.contains anchor then seen else seen.push anchor) #[]
-  let common : QAdjoin.Presentation := if distinct.size = 1 then
+  let common := profileit "rcf common field" (← getOptions) fun _ =>
+    (if distinct.size = 1 then
       let generator := distinct[0]!.toAlgebraic
       ⟨generator, #[generator.toQAdjoin]⟩
-    else QAdjoin.common (distinct.map RealAlgebraicNumber.toAlgebraic)
+    else QAdjoin.common (distinct.map RealAlgebraicNumber.toAlgebraic) : QAdjoin.Presentation)
   unless common.entries.size == distinct.size do
     throwError "rcf: common-field presentation failed"
   unless common.generator.isReal do
@@ -366,10 +419,10 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
           throwError "rcf: source square count differs from the coordinates"
         let sourceSquareExpr : Q(DyadicSquare) ← FieldLiteral.squareExpr sourceSquare
         let sourcePExpr : Q(ZPoly) ← match plans[i]!.kind with
-          | .radical degree => do
-              unless sourceP == SquareRoot.polynomial degree do
+          | .radical radicand _ => do
+              unless sourceP == SquareRoot.polynomial radicand do
                 throwError "rcf: source radical has a different defining polynomial"
-              let nExpr : Q(ℕ) := mkNatLit degree
+              let nExpr : Q(ℕ) := mkNatLit radicand
               pure q(SquareRoot.polynomial $nExpr)
           | .selected _ _ | .normalized _ _ => FieldLiteral.zpolyExpr sourceP
         let sourceWitness ← mkDecideProof
@@ -377,14 +430,15 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
         let sourcePrecision ← mkDecideProof
           (q((mahlerPrec $sourcePExpr : Int) ≤ ($sourceSquareExpr).prec) : Q(Prop))
         let selected ← match plans[i]!.kind with
-          | .radical degree => do
-              let nExpr : Q(ℕ) := mkNatLit degree
+          | .radical radicand aliasProof => do
+              let nExpr : Q(ℕ) := mkNatLit radicand
               let hreal ← mkDecideProof
                 (q(($sourceSquareExpr).meetsRealAxis = true) : Q(Prop))
               let hpositive ← Tactic.positiveLowerBound sourceSquareExpr
-              mkAppM ``SquareRoot.selected
+              let selected ← mkAppM ``SquareRoot.selected
                 #[nExpr, sourceSquareExpr, sourceWitness, sourcePrecision,
                   hreal, hpositive]
+              mkEqTrans selected aliasProof
           | .selected args _ => do
               let sourceValue ← mkAppM ``Selected.real_toReal args
               mkAppM ``Eq.symm #[sourceValue]
@@ -412,7 +466,7 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
       for plan in plans do
         if plan.sourcePolynomial != p then continue
         let checked ← match plan.kind with
-          | .radical _ => pure none
+          | .radical _ _ => pure none
           | .selected _ checked | .normalized _ checked => pure (some checked)
         if let some checked := checked then
           unless (← inferType checked) == instType do
@@ -421,25 +475,7 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
           break
       let irred ← match sourceIrred with
         | some checked => pure checked
-        | none => match QuadraticNormCertificate.certify? p with
-            | some cert => do
-                let certExpr : Q(QuadraticNormCertificate) ←
-                  FieldLiteral.quadraticCertExpr cert
-                let hcert ← mkDecideProof
-                  (q(($certExpr).check $pExpr = true) : Q(Prop))
-                mkAppM ``Field.checkedIrreducibleQuadraticNorm
-                  #[pExpr, certExpr, hcert, hdegree]
-            | none => do
-                let some witness := HexBerlekampZassenhaus.FactorTactic.searchWitness p |
-                  throwError "rcf: no checked irreducibility witness for this common field"
-                let witnessExpr : Q(ZPoly.IrredWitness) :=
-                  HexBerlekampZassenhaus.FactorTactic.reifyWitness witness
-                unless ZPoly.checkIrredWitness p witness do
-                  throwError "rcf: computed irreducibility witness failed its check"
-                let hwitness ← mkDecideProof
-                  (q(ZPoly.checkIrredWitness $pExpr $witnessExpr = true) : Q(Prop))
-                mkAppM ``Field.checkedIrreducible
-                  #[pExpr, witnessExpr, hwitness, hdegree]
+        | none => certify p pExpr hdegree
       -- Runtime field operations use the canonical generator's instance;
       -- quotation retains an exactly matching source instance or checks a
       -- literal irreducibility witness for the new presentation.
@@ -520,11 +556,13 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
         let hrExpr ← mkAppM ``Field.literalRep_real
           #[pExpr, sExpr, hwExpr, hpExpr, hrealExpr]
         for divisor in source.divisors do
-          let compiled ← FieldCompile.compile pExpr rootExpr repExpr hrepExpr hrExpr leaf divisor
+          let (lowered, equality) ← Reify.lowerWithProof #[] divisor
+          let compiled ← FieldCompile.compile pExpr rootExpr repExpr hrepExpr hrExpr leaf lowered
+          let originalProof ← mkEqTrans compiled.proof (← mkEqSymm equality)
           if compiled.value = 0 then
             throwError "rcf: original closed divisor is zero"
           let reflect ← mkAppM ``Field.value_ne_zero
-            #[repExpr, hrepExpr, hrExpr, compiled.expression, divisor, compiled.proof]
+            #[repExpr, hrepExpr, hrExpr, compiled.expression, divisor, originalProof]
           let coeffs ← mkAppM ``PolyQuot.coeffs #[compiled.expression]
           let zeroPoly ← FieldLiteral.ratPolyExpr (0 : DensePoly Rat)
           let goal ← mkAppM ``Ne #[coeffs, zeroPoly]
@@ -573,7 +611,17 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
     else throwError "rcf: common square has insufficient precision"
   else throwError "rcf: common square failed its root witness"
 
-private meta partial def gather (source : Expr) (leaves : Array Expr) :
+private meta def prove (source : Reify.Source) (leafSources : Array Expr)
+    (plans : Array SourcePlan) : MetaM Expr := do
+  profileitM Exception "rcf algebraic frontend" (← getOptions)
+    (assemble source leafSources plans)
+
+private meta def proveRational (source : Reify.Source) : MetaM Expr := do
+  Tactic.checkGuards source
+  let proof ← Hex.RCF.proveRationalGoal source.sentence
+  mkAppM ``Iff.mp #[source.sentenceProof, proof]
+
+private meta partial def gatherCore (source : Expr) (leaves : Array Expr) :
     MetaM (Option (Array Expr)) := do
   if ← eligible source then
     return some (if leaves.contains source then leaves else leaves.push source)
@@ -582,19 +630,25 @@ private meta partial def gather (source : Expr) (leaves : Array Expr) :
   let op := e.getAppFn.constName?
   if [``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv].any (op == some ·) &&
       args.size == 6 then
-    let some left ← gather args[4]! leaves | return none
-    return ← gather args[5]! left
+    let some left ← gatherCore args[4]! leaves | return none
+    return ← gatherCore args[5]! left
   if [``Neg.neg, ``Inv.inv].any (op == some ·) && args.size == 3 then
-    return ← gather args[2]! leaves
+    return ← gatherCore args[2]! leaves
   if e.isAppOfArity ``HPow.hPow 6 then
     if (← inferType args[5]!).isConstOf ``Nat then
-      return ← gather args[4]! leaves
+      return ← gatherCore args[4]! leaves
   let rational ← observing? do
     let q : Q(ℝ) := e
     let _ ← Mathlib.Meta.NormNum.deriveRat q (_inst := q(inferInstance))
     pure ()
   if rational.isSome then return some leaves
   return none
+
+-- Registered subjects are handled before this frontend. Lower the entire
+-- scalar once, rather than lowering each suffix again during its traversal.
+private meta def gather (source : Expr) (leaves : Array Expr) :
+    MetaM (Option (Array Expr)) := do
+  gatherCore (← Reify.lowerSources #[] source) leaves
 
 @[rcf_handler] meta def handle : Handler := fun target => do
   unless ← candidate target do return .declined
@@ -603,19 +657,25 @@ private meta partial def gather (source : Expr) (leaves : Array Expr) :
     | .ok source => pure source
     | .error (.unsupported _ _) => return .declined
     | .error error => return .failed (Hex.RealFormula.Reify.Error.toMessageData error)
-  if source.coefficients.size == 1 &&
-      (← Tactic.handlesCoefficient source.coefficients[0]!) &&
-      (← rationalGuards source.divisors) then return .declined
+  if source.coefficients.isEmpty && (← rationalGuards source.divisors) then
+    -- Checked constructor lowering retains all original guards.
+    -- False, replay and resource failures from the base remain terminal.
+    return .proved (← proveRational source)
+  if source.coefficients.size == 1 then
+    if (← Tactic.handlesCoefficient source.coefficients[0]!) &&
+        (← rationalGuards source.divisors) then return .declined
   let mut leaves := #[]
   for scalar in source.coefficients ++ source.divisors do
     let some next ← gather scalar leaves | return .declined
     leaves := next
-  if leaves.isEmpty then return .declined
-  let mut plans : Array SourcePlan := #[]
-  for scalar in leaves do
-    let some plan ← sourcePlan? scalar |
-      throwError "rcf: internal: eligible leaf has no plan"
-    plans := plans.push plan
+  if leaves.isEmpty then return .proved (← proveRational source)
+  let plans ← profileitM Exception "rcf source authentication" (← getOptions) do
+    let mut plans : Array SourcePlan := #[]
+    for scalar in leaves do
+      let some plan ← sourcePlan? scalar |
+        throwError "rcf: internal: eligible leaf has no plan"
+      plans := plans.push plan
+    pure plans
   return .proved (← prove source leaves plans)
 
 end Hex.RCF.RealCoefficients.CommonTactic
