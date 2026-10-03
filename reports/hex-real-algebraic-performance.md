@@ -73,14 +73,13 @@ final source without weakening the cap.
 | Checked/proved constructors, casts, rational recognition | `runConstructors`, `runCasts`, `runRational` | Fixed baseline anchors |
 | Arithmetic and scalar dictionaries | `runAdd`, `runSub`, `runMul`, `runDiv`, `runNeg`, `runInv`, `runNatPow`, `runIntPow`, `runScalars`; corresponding bare controls; `runHard*` | Canonical baseline and adjacent wrapper controls; mode/budget incomplete |
 | Equality, comparison, order, sign, abs, conjugation | `runEquality`, `runCompare`, `runCompareExact`, `runOrder`, `runSign`, `runAbs`, `runConj`, `runCloseCompare`, `runCloseExact` | Fixed branch/hash/comparison anchors; separation models incomplete |
-| Fixed-field coordinate sign | `runFieldSign` | Complete exact-result anchor for constants and nonconstant coordinates in the positive square-root-of-two embedding; operation-specific mode/budget remains required |
+| Fixed-field coordinate sign | `runFieldSign` | Complete result vector on constant and nonconstant paths in the positive square-root-of-two embedding. [Inherited owner evidence](../bench-results/field-sign/README.md) concerns a pre-refactoring executable; current operation-specific mode/budget remains required |
 | Rational degree-one leaf height | `runRationalRecognition`, `runRationalFloor`, `runRationalCeil`, `runRationalQuotient` | Independently derived mode-1 candidates; first-rung canonical preparation exceeds the declared operational cap; no current admission |
 | Floor, ceiling, approximation, representation | `runRounding`, `runApprox`, `runRepr` | Baseline anchors; ceiling has proved before/after improvement |
 | Square roots | `runSqrt`, `runSqrtTotal` | Baseline/branch checks on pre-change source; degree/height scaling incomplete |
 | Polynomial constructors and root-set projections/membership | `runPolyConstructors`, `runMembership`, `runRootSet` | Mode-1 family passes |
 | Polynomial roots and integer roots | `runRoots`, `runRepeatedRoots`, `runEightRoots`, `runIntegerRoots`, `runFilterRoots`, `runSortRoots`, `runExactifyRoots` | Fixed whole-path anchors, valid merge-sort family, diagnostic repeated exactification control |
 | Complex norms, absolute value, real/imaginary parts | `runNorm`, `runComplexAbs`, `runProjections` | Fixed baseline/branch anchors |
-| Fixed-field coordinate sign | Inherited `signField`; owner field-sign fixtures and comparison | [Owner evidence](../bench-results/field-sign/README.md) concerns a recorded pre-refactoring executable, not current-call scaling; no Phase-4 pass |
 | External comparison/protocol | `runQqbarCompare`, `runQqbarCloseCompare`, `runQqbarProtocol` | Informational persistent python-flint/FLINT qqbar comparison |
 
 `runLeafChecks` does not drive the leaf problem with its array parameter.
@@ -177,8 +176,11 @@ The native worker backtrace places it in the factorization prime planner's
 coefficient-norm square root in HexArith. Both completed perf attachments and
 the exact executable are retained persistently, including their failed Lean
 caller unwinding. They are preparation diagnostics, not operation-only profile
-attribution. The 600-second child guard has not been established as runnable;
-the four-rung declaration remains unmeasured and unadmitted. This prerequisite
+attribution. The diagnostic invoked `_child` directly, bypassing parent
+supervision. Ordinary `run` caps the entire child, including preparation,
+through `LeanBench.spawnWithCap` at `maxSecondsPerCall` plus `killGraceMs`.
+No supervised scientific run was attempted; the four-rung declaration remains
+unmeasured and unadmitted. This prerequisite
 concern is recorded on [#10577](https://github.com/kim-em/hex-dev/issues/10577#issuecomment-5971054259);
 it is distinct from HexPolyFp's #9809 concerns. No transitive implementation or
 phase metadata is changed by this evidence.
