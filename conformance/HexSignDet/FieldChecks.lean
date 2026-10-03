@@ -19,8 +19,8 @@ Every public sign-determination operation (descriptor validation and selected
 signs, completion, query handles, root lists, tables, comparison, re-encoding,
 refinement, Thom re-encoding to a new defining polynomial, conversion, and
 supplied graph signs) runs here over `ℚ(∛2)` in its real embedding, with
-coefficient signs computed from the canonical real algebraic value of each
-coordinate. A common quartic field for two independent quadratic
+coefficient signs computed by certified interval evaluation in the
+selected generator embedding. A common quartic field for two independent quadratic
 irrationalities, a noninjective rational coefficient carrier and nested
 infinitesimal fields exercise the cases those carriers distinguish.
 The driver is Mathlib-free; the semantic theorems instantiated at the cubic
@@ -40,7 +40,9 @@ abbrev CubicField := QAdjoin generator
 def alpha : CubicField := generator.toQAdjoin
 
 /-- Coordinate signs use the generator's selected real embedding. -/
-def fieldSign (a : CubicField) : Int := CommonField.sign a
+def fieldSign (a : CubicField) : Int :=
+  if real : generator.isReal = true then a.signApprox real
+  else Hex.panicWith 0 "FieldChecks: nonreal cubic generator"
 
 def xPoly : DensePoly CubicField := DensePoly.ofList [0, 1]
 

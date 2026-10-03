@@ -470,7 +470,7 @@ are canonical real numbers unless a row explicitly says otherwise.
 | `compareDyadic_eq` | `a.compareDyadic q = a.realCompare (ofRat q.toRat)` | Same chain/count bound, dyadic integer arithmetic |
 | `AlgebraicRoot.compare_eq` | `r.compare s = r.exact.realCompare s.exact` for real lazy roots | One subtraction resultant and one isolation at its computable separation depth, followed by zero and certified sign; a supplied shallower representative is refined once to that depth |
 | `QAdjoin.signTarski_eq` | `orderOfSign (signTarski f) = A(f).realCompare 0` for a real generator | One query on `(p, F*p')`, where `F` clears the positive denominators of `f`; at most `deg p + 1` chain entries after the initial reduction |
-| `QAdjoin.signApprox_eq` | `orderOfSign (signApprox f) = A(f).realCompare 0` | One evaluation resultant; at most `P + 1` ball evaluations, `P = evalDisambiguationLimit E C` from the eliminant and Horner majorant |
+| `QAdjoin.signApprox_eq` | `orderOfSign (signApprox f) = A(f).realCompare 0` | Optional certified early probes, then one evaluation resultant and a finite endpoint. The direct evaluator uses `P = evalDisambiguationLimit E C`; the guarded `PolyQuot.approx` evaluator uses an output precision at least `ceilLog2 (3*B) + 1` |
 | `QAdjoin.compareTarski_eq`, `compareApprox_eq` | `compareTarski f g = A(f).realCompare A(g)` and likewise for approximation | Sign of the reduced fixed-field difference `f-g`, with the respective sign bound |
 
 Reality hypotheses and checked/total wrappers are specified by the owner;
@@ -491,6 +491,11 @@ precision bound, never an open-ended search for a nonzero centre. Phase 4
 chooses dispatch by degree and coefficient height. Until that evidence exists,
 expose the explicit strategies without claiming a winning threshold or
 replacing the canonical reference with an unmeasured policy.
+
+`RealAlgebraicNumber.signField a f` wraps `QAdjoin.signApprox f a.property`.
+It uses the same generator embedding and finite algorithm, without another
+canonical conversion. `signField_spec` gives its mathematical sign and
+`signField_eq` agrees with the canonical real-algebraic sign.
 
 ### Towers and arrays
 

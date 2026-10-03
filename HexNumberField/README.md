@@ -15,6 +15,13 @@ canonical minimal-polynomial form with decidable equality. It builds on
 and the matrix stack; its Mathlib counterpart is
 [`hex-number-field-mathlib`](https://github.com/leanprover/hex-number-field-mathlib).
 
+For a real generator `a`, `QAdjoin.signApprox? f` decides the sign of the
+coordinate `f` by certified interval evaluation. It rejects nonreal generators.
+`QAdjoin.signApprox f h` is total when `h : a.isReal = true`; its companion
+proves that the internal fallback is unreachable and that its result agrees
+with canonical comparison to zero. Neither operation constructs a canonical
+algebraic number for each sign query.
+
 # Quickstart
 
 ```toml
