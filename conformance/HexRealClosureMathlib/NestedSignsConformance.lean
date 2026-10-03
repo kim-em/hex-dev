@@ -249,47 +249,58 @@ theorem graph_checked :
     Element.cachedNatCast_eq reduction reduction_eq facts] at h
   exact h
 
+/-- Accepted graph checking preserves every literal node at its original
+memo index. This follows from the general graph theorem without another check. -/
+theorem graph_memo :
+    (graph.validate? Element.sign 8 linearHead linearRaw.lower linearRaw.upper).map
+      (fun memo => memo.map (fun checked => checked.value.node)) =
+        some #[linearNode, queryNode] := by
+  obtain ⟨t, ht, _⟩ := Dag.check_replay graph_checked
+  unfold Dag.replay? at ht
+  cases hv : graph.validate? Element.sign 8 linearHead linearRaw.lower linearRaw.upper with
+  | none => simp [hv] at ht
+  | some memo =>
+    simp only [Option.map_some, Option.some.injEq]
+    have nodes := Dag.validate_nodes _ _ _ _ _ _ memo hv
+    have shape : graph.entries.map Dag.Entry.node = #[linearNode, queryNode] := by
+      decide +kernel
+    exact nodes.trans shape
+
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 1000000 in
-/-- The kernel retains both literal nodes at their original indices, so
-several selections can use one checked graph. -/
-theorem graph_memo_cached :
+/-- Two selections use the same accepted memo and bind their own ordered
+query lists. No second graph validation is performed. -/
+theorem graph_selections :
     letI := Element.cachedOne reduction reduction_eq facts
     letI := Element.cachedAdd reduction reduction_eq facts
     letI := Element.cachedSub reduction reduction_eq facts
     letI := Element.cachedMul reduction reduction_eq facts
     letI := Element.cachedNatCast reduction reduction_eq facts
-    (graph.validate? Element.sign 8 linearHead linearRaw.lower linearRaw.upper).map
-      (fun memo => memo.map (fun checked => checked.value.node)) =
-        some #[linearNode, queryNode] := by
+    (do
+      let memo ← graph.validate? Element.sign 8 linearHead linearRaw.lower linearRaw.upper
+      pure ((Dag.select? Element.sign 8 linearHead linearRaw.lower linearRaw.upper
+        memo 0 []).isSome &&
+        (Dag.select? Element.sign 8 linearHead linearRaw.lower linearRaw.upper
+          memo 1 [unitPoly]).isSome)) = some true := by
   simp only [Dag.validate?, Dag.step_cache, Dag.step_eq, Replay.check, Node.check_eq,
     checkMoment_eq, queryPoly, Sturm.check, TarskiCertificate.check_eq,
     SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
   decide +kernel
 
-theorem graph_memo :
-    (graph.validate? Element.sign 8 linearHead linearRaw.lower linearRaw.upper).map
-      (fun memo => memo.map (fun checked => checked.value.node)) =
-        some #[linearNode, queryNode] := by
-  have h := graph_memo_cached
-  rw [Element.cachedOne_eq reduction reduction_eq facts,
-    Element.cachedAdd_eq reduction reduction_eq facts,
-    Element.cachedSub_eq reduction reduction_eq facts,
-    Element.cachedMul_eq reduction reduction_eq facts,
-    Element.cachedNatCast_eq reduction reduction_eq facts] at h
-  exact h
-
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 1000000 in
-/-- A false unreachable entry still rejects the whole graph. Forward edges,
-missing selected entries, changed endpoints and mismatched root queries also
-reject when checked with supplied lower-level facts. -/
+/-- An unreachable entry with a corrupted moment rejects after its literal
+bindings pass. Foreign contexts, self references, missing selected entries,
+changed endpoints and mismatched root query lists also reject. -/
 theorem graph_rejected :
     letI := Element.cachedOne reduction reduction_eq facts
     letI := Element.cachedAdd reduction reduction_eq facts
     letI := Element.cachedSub reduction reduction_eq facts
     letI := Element.cachedMul reduction reduction_eq facts
     letI := Element.cachedNatCast reduction reduction_eq facts
+    (⟨#[⟨{linearNode with moments := #v[{linearCount with lowerVariations := 0}]}, none⟩,
+        ⟨queryNode, none⟩], 1⟩ : Dag (Element context) Nat).check Element.sign 8 linearHead
+        linearRaw.lower linearRaw.upper [unitPoly] = false ∧
     (⟨#[⟨{linearNode with context := 9}, none⟩, ⟨queryNode, none⟩], 1⟩ :
       Dag (Element context) Nat).check Element.sign 8 linearHead
         linearRaw.lower linearRaw.upper [unitPoly] = false ∧

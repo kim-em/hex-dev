@@ -182,9 +182,11 @@ resource check. These readers do not themselves serialize or validate a graph
 of coefficient-proof dependencies.
 
 `Element.pack` takes a reduction function proved equal to the context's actual
-storage reduction. Constant remainders use the predecessor sign directly;
-nonconstant remainders use exact keys in the supplied sign facts. A zero sign
-packs to canonical zero. Missing nonconstant keys reach `Element.missing`, an
+storage reduction. Supplied sign facts are looked up by the exact retained
+remainder, including constants. A constant remainder without a supplied fact
+uses the ordinary predecessor sign. Both paths pack a zero sign to canonical
+zero. List-based lookup has cost proportional to the supplied fact list,
+including for constants. Missing nonconstant keys reach `Element.missing`, an
 opaque function that blocks kernel reduction and executes ordinary native
 packing when compiled. This optional proof-assembly support does not satisfy
 the strict compiled certificate-replay contract by itself.

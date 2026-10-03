@@ -157,8 +157,16 @@ theorem constant_cached :
     ((Element.cachedNatCast id opaque_reduction constantFacts).natCast 3).sign = 1 := by
   decide +kernel
 
+/-- Subtraction reaches canonical zero using the exact constant-zero key,
+without evaluating the opaque predecessor sign. -/
+theorem constant_zero :
+    let three := (Element.cachedNatCast id opaque_reduction constantFacts).natCast 3
+    let zero := (Element.cachedSub id opaque_reduction constantFacts).sub three three
+    zero.polynomial = 0 ∧ zero.sign = 0 := by
+  decide +kernel
+
 /-- A supplied proof restores agreement with the ordinary total operations. -/
-theorem constant_native : (3 : Element opaqueContext).sign = 1 := by
+theorem constant_native : ((3 : Nat) : Element opaqueContext).sign = 1 := by
   have h := constant_cached.2.2
   rw [Element.cachedNatCast_eq id opaque_reduction constantFacts] at h
   exact h

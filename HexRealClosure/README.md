@@ -872,15 +872,19 @@ opaque termination proof. Both paths preserve canonical zero. `cachedAdd`, `cach
 `cachedMul`, `cachedNeg`, `cachedOne` and `cachedNatCast` supply ordinary operations
 proved exactly equal to the existing operations. These equalities let a caller
 check a literal certificate using the supplied facts and transfer the resulting
-acceptance proof to the existing checker.
+acceptance proof to the existing checker. Each list-based lookup scans the
+supplied facts, including for constants; its cost grows with that list.
 
-`PackingConformance.constant_native` checks this path with an executable
+`PackingConformance.constant_cached` checks this path with an executable
 predecessor sign function that is opaque to kernel reduction and proved equal
-to rational sign. Removing its constant fact blocks kernel evaluation.
-`NestedSignsConformance.graph_memo` checks a two-entry graph with lower-root
-facts and preserves the stored nodes at their original indices. The graph
-probes also reject an invalid unreachable entry, a forward edge, an absent root
-index, changed endpoints and a wrong selected query list. They use ordinary
+to rational sign. Emptying the fact list blocks kernel evaluation of constant
+packing. Subtraction with supplied facts produces canonical zero.
+`NestedSignsConformance.graph_checked` checks a two-entry graph with lower-root
+facts; `graph_memo` derives preservation of its literal memo indices.
+`graph_selections` selects two different query lists from one validated memo.
+The graph probes reject an unreachable entry with a corrupted moment, a
+self reference, an absent root index, changed endpoints and a wrong selected
+query list. They use ordinary
 kernel checking and the existing cache-agreement theorems.
 
 An absent nonconstant fact reaches an opaque packing function. This prevents
