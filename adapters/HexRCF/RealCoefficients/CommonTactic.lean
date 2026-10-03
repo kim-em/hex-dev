@@ -609,9 +609,15 @@ private meta partial def gather (source : Expr) (leaves : Array Expr) :
     | .ok source => pure source
     | .error (.unsupported _ _) => return .declined
     | .error error => return .failed (Hex.RealFormula.Reify.Error.toMessageData error)
-  if source.coefficients.size == 1 &&
-      (← Tactic.handlesCoefficient source.coefficients[0]!) &&
-      (← rationalGuards source.divisors) then return .declined
+  if source.coefficients.isEmpty then
+    -- Checked rational constructor lowering retains all original guards.
+    -- False, replay and resource failures from the base remain terminal.
+    Tactic.checkGuards source
+    let proof ← Hex.RCF.proveGoal source.sentence
+    return .proved (← mkAppM ``Iff.mp #[source.sentenceProof, proof])
+  if source.coefficients.size == 1 then
+    if (← Tactic.handlesCoefficient source.coefficients[0]!) &&
+        (← rationalGuards source.divisors) then return .declined
   let mut leaves := #[]
   for scalar in source.coefficients ++ source.divisors do
     let some next ← gather scalar leaves | return .declined

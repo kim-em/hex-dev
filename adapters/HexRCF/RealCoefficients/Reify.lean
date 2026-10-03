@@ -37,6 +37,10 @@ structure Source where
   /-- Fully instantiated original goal, before division preprocessing or
   coefficient abstraction. -/
   original : Expr
+  /-- Checked source lowering, before coefficient abstraction. -/
+  sentence : Expr
+  /-- Ordinary-kernel equivalence between the lowered sentence and the source. -/
+  sentenceProof : Expr
   /-- Closed real coefficient expressions in first-occurrence order. -/
   coefficients : Array Expr
   /-- Original divisors after checked alias substitution; each must separately
@@ -101,7 +105,12 @@ private partial def scalar (registered : Array Expr) (source : Expr) : ScanM Uni
         else reject part "division inside a registered subject must be real or rational"
       return .continue) (skipInstances := true)
     return ()
-  if e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 then return ()
+  if e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 then
+    if e.appArg!.isAppOfArity ``Hex.RealAlgebraicNumber.ofRat 1 then
+      let value : Q(ℚ) := e.appArg!.appArg!
+      castGuards value
+      let _ ← Hex.RealFormula.Reify.arithmetic #[] q(($value : ℝ))
+    return ()
   if e.isConstOf ``Real.pi then return ()
   if e.isAppOfArity ``Real.exp 1 then
     let argument := e.appArg!.consumeMData
@@ -215,11 +224,21 @@ private partial def hasNamedSource (registered : Array Expr) (e : Expr) : MetaM 
       e.isConstOf ``Real.pi || e.isAppOfArity ``Real.exp 1 then return true
   e.getAppArgs.anyM (hasNamedSource registered)
 
+/-- Lower visible rational algebraic constructors using their proved real
+interpretation, preserving exact registered whole subjects. -/
+private def lowerRationals (registered : Array Expr) (source : Expr) : MetaM Expr := do
+  let (lowered, _) ← Meta.transformWithCache source {} (pre := fun e => do
+    if ← registered.anyM (Registration.sameSubject e) then return .done e
+    if e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 &&
+        e.appArg!.isAppOfArity ``Hex.RealAlgebraicNumber.ofRat 1 then
+      let value : Q(ℚ) := e.appArg!.appArg!
+      return .done q(($value : ℝ))
+    return .continue) (skipInstances := true)
+  return lowered
+
 /-- Replace variable-dependent division by multiplication with a closed
-reciprocal. Rational reciprocals use the shared reifier's `1 / b`
-grammar. Named reciprocals retain inverse syntax so repeated coefficients
-are abstracted once. Original guards were collected before this conversion. -/
-private def normalize (registered : Array Expr) (source : Expr) : MetaM Expr :=
+reciprocal. Original guards were collected before this conversion. -/
+private def normalize (registered : Array Expr) (source : Expr) : MetaM Expr := do
   Prod.fst <$> Meta.transformWithCache source {} (pre := fun e => do
     if isClosed e && (← isReal e) then return .done e
     if e.isAppOfArity ``HDiv.hDiv 6 && (← isReal e) then
@@ -292,7 +311,26 @@ private def prepareCore (registered : Array Expr) (original : Expr) (config : He
   let cap := (← get).budget.remaining.sourceNodes
   Hex.RealFormula.Reify.charge .sourceNodes (Hex.Reflect.sourceNodeCount source (cap + 1))
   let divisors ← preflight registered source
-  let normalized ← normalize registered source
+  let rationalized ← lowerRationals registered source
+  if rationalized != source then
+    -- A known zero guard is terminal before the shared reifier can turn its
+    -- rational denominator into a syntax decline. Other guards remain for the
+    -- consuming handler, including unresolved algebraic/registered signs.
+    for divisor in divisors do
+      let divisor : Q(ℝ) ← lowerRationals registered divisor
+      let outcome ← liftM (do
+        let saved ← saveState
+        try
+          let ⟨value, _, _, proof⟩ ← Mathlib.Meta.NormNum.deriveRat divisor
+            (_inst := q(inferInstance))
+          pure (some (value, ← instantiateMVars proof))
+        catch _ => pure none
+        finally saved.restore : MetaM (Option (Rat × Expr)))
+      if let some (value, proof) := outcome then
+        checkWithKernel proof
+        Hex.RealFormula.Reify.accountProof proof
+        if value == 0 then throwError "rcf: original closed divisor is zero"
+  let normalized ← normalize registered rationalized
   let coefficients ← collect registered normalized
   let state ← get
   let outcome ← liftM <| withParameters coefficients 0 #[] fun parameters =>
@@ -317,12 +355,17 @@ private def prepareCore (registered : Array Expr) (original : Expr) (config : He
       let specialized := mkApp result.proof valuation
       let normalizedProofType ← mkAppM ``Iff #[mkApp result.source valuation, source]
       let goal ← mkFreshExprMVar normalizedProofType
-      let goals ← Lean.Elab.runTactic' goal.mvarId! (← `(tactic| (dsimp [Hex.RealFormula.append]; simp only [div_eq_mul_inv, one_mul])))
+      let goals ← Lean.Elab.runTactic' goal.mvarId! (← `(tactic| (dsimp [Hex.RealFormula.append]; simp only [div_eq_mul_inv, one_mul, Hex.RealAlgebraicNumber.ofRat_toReal])))
       unless goals.isEmpty do
         throwThe Hex.RealFormula.Reify.Error (.internal "failed to reconstruct the original source")
-      let sourceProof ← mkAppM ``Iff.trans #[specialized, ← instantiateMVars goal]
       let aliasIff ← mkAppM ``Iff.of_eq #[← mkEqSymm aliasProof]
-      let proof ← instantiateMVars (← mkAppM ``Iff.trans #[sourceProof, aliasIff])
+      let sentenceProof ← instantiateMVars
+        (← mkAppM ``Iff.trans #[← instantiateMVars goal, aliasIff])
+      let sentence := normalized
+      let sentenceType ← mkAppM ``Iff #[sentence, original]
+      unless ← isDefEq (← inferType sentenceProof) sentenceType do
+        throwThe Hex.RealFormula.Reify.Error (.internal "lowered sentence equivalence has the wrong target")
+      let proof ← instantiateMVars (← mkAppM ``Iff.trans #[specialized, sentenceProof])
       let formula ← instantiateMVars result.formula
       let expected ← mkAppM ``Iff
         #[← mkAppM ``Hex.RealFormula.Prenex.toProp #[formula, valuation], original]
@@ -332,7 +375,7 @@ private def prepareCore (registered : Array Expr) (original : Expr) (config : He
         throwThe Hex.RealFormula.Reify.Error (.internal "temporary coefficient escaped into proof")
       Hex.RealFormula.Reify.accountProof proof
       return {
-        original, coefficients, divisors, formula
+        original, sentence, sentenceProof, coefficients, divisors, formula
         valuation := ← instantiateMVars valuation
         proof, usage := (← get).budget.consumed } : FrontendM Source).run state).run
   match outcome with

@@ -490,6 +490,19 @@ including divisors erased by cancellation, zero multiplication or an empty
 domain. The higher-root `Real.rpow` alias retains its earlier polynomial path;
 closed division involving that alias is not yet supported.
 
+Visible `RealAlgebraicNumber.ofRat` constructors also retain their proved
+rational value. They use the rational decision path after checked source
+lowering; mixed expressions may still use the algebraic path. Divisions inside
+the rational constructor's input remain original guard obligations. A known
+zero guard reports `rcf: original closed divisor is zero`, including when
+zero multiplication or an empty domain would otherwise hide it.
+
+```lean
+example : ∀ x : ℝ,
+    x ^ 2 + (Hex.RealAlgebraicNumber.ofRat (3 / 2)).toReal > 0 := by
+  rcf
+```
+
 These examples use the selected real root of `X³ − 2`. The adapter records an
 isolating square and verifies its root witness. It reconstructs Hex's
 {name}`Hex.AlgebraicNumber` and {name}`Hex.RealAlgebraicNumber` through the
