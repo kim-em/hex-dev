@@ -3,7 +3,8 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRealClosure.SignFacts
+import HexRealClosure.SignCodec
+import HexSignDet.Codec
 import HexSignDet.DagEncode
 
 open Hex Hex.RealClosure.Algebraic Hex.SignDet
@@ -24,6 +25,7 @@ structure Counts where
   signs : Nat := 0
   nonconstantSigns : Nat := 0
   hits : Nat := 0
+  inverses : Nat := 0
   deriving Repr
 
 variable {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E] [Neg E]
@@ -35,11 +37,13 @@ structure Store (context : Context E Nat sign parent) where
   mode : IO.Ref Mode
   facts : IO.Ref (List (SignFact context))
   used : IO.Ref (List (DensePoly E))
+  literals : IO.Ref (List (DensePoly E))
+  track : IO.Ref Bool
   counts : IO.Ref Counts
 
 unsafe def Store.create (context : Context E Nat sign parent) (level : Nat)
     (mode : IO.Ref Mode) : IO (Store context) := do
-  return ⟨level, mode, ← IO.mkRef [], ← IO.mkRef [], ← IO.mkRef {}⟩
+  return ⟨level, mode, ← IO.mkRef [], ← IO.mkRef [], ← IO.mkRef [], ← IO.mkRef true, ← IO.mkRef {}⟩
 
 @[noinline] unsafe def pack (context : Context E Nat sign parent)
     (store : Store context) (p : DensePoly E) : Element context :=
@@ -47,7 +51,7 @@ unsafe def Store.create (context : Context E Nat sign parent) (level : Nat)
     let kept := context.reduce p
     store.counts.modify fun c => {c with calls := c.calls + 1}
     let mode ← store.mode.get
-    if mode != .collect then
+    if mode != .collect && (← store.track.get) then
       store.used.modify fun ps => if kept ∈ ps then ps else kept :: ps
     if mode == .replay then
       match SignFact.find (← store.facts.get) kept with
@@ -73,7 +77,7 @@ unsafe def Store.create (context : Context E Nat sign parent) (level : Nat)
   | .ok value => value
   | .error e =>
     letI : Inhabited (Element context) := ⟨0⟩
-    panic! s!"prototype IO failure: {e}"
+    panic! s!"prototype IO failure (runner aborts on panic): {e}"
 
 @[instance_reducible] unsafe def one (c : Context E Nat sign parent) (s : Store c) : One (Element c) :=
   ⟨pack c s 1⟩
@@ -96,11 +100,13 @@ than silently entering ordinary packing through an uninstrumented operation. -/
     if (← s.mode.get) == .replay then
       IO.eprintln s!"UNSUPPORTED inverse level={s.level}"
       IO.Process.exit 18
-    return Element.inv a) with
+    s.counts.modify fun counts => {counts with inverses := counts.inverses + 1}
+    if a == 0 then return 0
+    return pack c s a.inverseCandidate) with
   | .ok value => value
   | .error e =>
     letI : Inhabited (Element c) := ⟨0⟩
-    panic! s!"prototype IO failure: {e}"
+    panic! s!"prototype IO failure (runner aborts on panic): {e}"
 
 @[instance_reducible] unsafe def inv (c : Context E Nat sign parent) (s : Store c) : Inv (Element c) :=
   ⟨inverse c s⟩
@@ -120,8 +126,32 @@ unsafe def reset {context : Context E Nat sign parent} (s : Store context) : IO 
   s.counts.set {}
   s.used.set []
 
-unsafe def removeFact {context : Context E Nat sign parent} (s : Store context) : IO Unit := do
-  let some victim := (← s.used.get).find? (fun p => 1 < p.size)
+/-- Read every nonzero literal through the existing strict recursive codec.
+This still trusts in-memory producer facts, not independently replayed children. -/
+@[noinline] unsafe def literalCodec (c : Context E Nat sign parent) (s : Store c)
+    (base : ValueCodec E) (nonce : Nat := 1) : ValueCodec (Element c) where
+  encode := (Element.codec base).encode
+  decode j := match unsafeIO (do
+    if nonce == 0 then IO.Process.exit 19
+    match (Element.signCodec base (← s.facts.get)).decode j with
+    | .error error =>
+      IO.eprintln s!"LITERAL_REJECTED level={s.level}: {error}; no replacement sign evaluation"
+      IO.Process.exit 17
+    | .ok a =>
+      if a != 0 then
+        s.literals.modify fun ps => if a.polynomial ∈ ps then ps else a.polynomial :: ps
+      return Except.ok a) with
+    | .ok result => result
+    | .error e => .error s!"prototype IO error: {e}"
+
+private def demand (result : Except String α) : IO α :=
+  match result with
+  | .ok a => pure a
+  | .error e => throw (IO.userError e)
+
+unsafe def removeFact {context : Context E Nat sign parent} (s : Store context) (literal := false) : IO Unit := do
+  let keys ← if literal then s.literals.get else s.used.get
+  let some victim := keys.find? (fun p => 1 < p.size)
     | throw (IO.userError "no nonconstant replay fact to remove")
   s.facts.modify fun fs => fs.filter (fun f => f.polynomial != victim)
   IO.println s!"removed one actually used nonconstant level={s.level} fact"
@@ -133,7 +163,58 @@ identical graph and caller inputs. -/
     (p : DensePoly E) (a b : Endpoint E) (qs : List (DensePoly E)) : Bool :=
   nonce != 0 && g.check s id p a b qs
 
+/-- A separate tower using the unmodified library instances, with no IO counters. -/
+def plain : IO (Nat → Bool) := do
+  let d1 ← root Sturm.orderSign 7 (DensePoly.ofCoeffs #[-2, 0, 1] : DensePoly Rat) 1 2
+  let c1 := Context.adjoin d1 (fun _ => true)
+  letI : Hashable (Element c1) := ⟨fun _ => 0⟩
+  do
+    let a := Element.ofPoly (context := c1) (DensePoly.ofCoeffs #[0, 1])
+    let d2 ← root Element.sign 8 (DensePoly.ofCoeffs #[-(a + (2 : Element c1)), 0, 1]) (1 : Element c1) 3
+    let c2 := Context.adjoin d2 (fun _ => true)
+    letI : Hashable (Element c2) := ⟨fun _ => 0⟩
+    do
+      let b := Element.ofPoly (context := c2) (DensePoly.ofCoeffs #[0, 1])
+      let d3 ← root Element.sign 9 (DensePoly.ofCoeffs #[-(b + (2 : Element c2)), 0, 1]) (1 : Element c2) 3
+      let q : DensePoly (Element c2) := DensePoly.ofCoeffs #[-b, 1]
+      let signs ← match d3.buildSigns [q, q] with
+        | .ok result => pure result
+        | .error _ => throw (IO.userError "plain producer failed")
+      if signs.values.toList != [1, 1] then throw (IO.userError "plain signs differ")
+      let graph := Dag.encode signs.evidence
+      return fun nonce => checkGraph nonce graph Element.sign 9 d3.raw.head
+        d3.raw.lower d3.raw.upper (d3.raw.queries ++ [q, q])
+
+/-- Different representatives and conjugate contexts must not share literals. -/
+unsafe def keyProbes : IO Unit := do
+  let mode ← IO.mkRef Mode.collect
+  let head : DensePoly Rat := DensePoly.ofCoeffs #[-4, 0, 2]
+  let positive ← root Sturm.orderSign 7 head 1 2
+  let negative ← root Sturm.orderSign 7 head (-2) (-1)
+  let cp := Context.adjoin positive (fun _ => true)
+  let cn := Context.adjoin negative (fun _ => true)
+  if cp.canReduce || cn.canReduce then throw (IO.userError "nonmonic reduction was enabled")
+  let sp ← Store.create cp 1 mode
+  let sn ← Store.create cn 1 mode
+  let x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
+  let a := pack cp sp x
+  let b := pack cn sn x
+  let alias := Element.ofPoly (context := cp) (x + head)
+  if a.sign != 1 || b.sign != -1 || alias.sign != 1 || alias.polynomial == a.polynomial then
+    throw (IO.userError "key-probe setup failed")
+  let vp := Element.signCodec ValueCodec.rat (← sp.facts.get)
+  let vn := Element.signCodec ValueCodec.rat (← sn.facts.get)
+  if (vp.decode (vp.encode alias)).isOk then
+    throw (IO.userError "a semantically equal absent literal was accepted")
+  if (vn.decode (vp.encode a)).isOk then
+    throw (IO.userError "a conjugate context accepted the opposite cached sign")
+  IO.println "noncanonicalAliasRejected=true conjugateLiteralRejected=true"
+
 unsafe def main (args : List String) : IO UInt32 := do
+  if args.contains "--keys-only" then
+    keyProbes
+    return 0
+  let plainCheck ← plain
   let mode ← IO.mkRef Mode.collect
   let d1 ← root Sturm.orderSign 7 (DensePoly.ofCoeffs #[-2, 0, 1] : DensePoly Rat) 1 2
   let c1 := Context.adjoin d1 (fun _ => true)
@@ -176,13 +257,45 @@ unsafe def main (args : List String) : IO UInt32 := do
       let graph := Dag.encode signs.evidence
       IO.println s!"productionNanos={(← IO.monoNanosNow) - productionStarted}"
       IO.println s!"thirdRootAndProductionNanos={(← IO.monoNanosNow) - constructionStarted}"
-      let check := fun (nonce : Nat) => checkGraph nonce graph Element.sign 9 d3.raw.head
-        d3.raw.lower d3.raw.upper (d3.raw.queries ++ queries)
-      IO.println s!"graphNodes={graph.entries.size} selectedSigns={signs.values.toList}"
+      let nativeCodec := Element.codec (context := c2) (Element.codec (context := c1) ValueCodec.rat)
+      let graphBytes := graph.encodeBytes nativeCodec ValueCodec.nat
       IO.println "factsAfterProduction"
       report s1
       report s2
+      mode.set .replay
+      let codec1 := literalCodec c1 s1 ValueCodec.rat
+      let codec2 := literalCodec c2 s2 codec1
+      -- Validate immutable context inputs and the prebuilt One values as well.
+      let _ ← demand (Codec.readPoly codec1 (Codec.poly codec1 d2.raw.head))
+      let _ ← demand (Codec.readEndpoint codec1 (Codec.endpoint codec1 d2.raw.lower))
+      let _ ← demand (Codec.readEndpoint codec1 (Codec.endpoint codec1 d2.raw.upper))
+      let _ ← demand (codec1.decode (codec1.encode (1 : Element c1)))
+      let _ ← demand (codec2.decode (codec2.encode (1 : Element c2)))
+      let readInputs : Nat → IO (Dag (Element c2) Nat × DensePoly (Element c2) ×
+          Endpoint (Element c2) × Endpoint (Element c2) × List (DensePoly (Element c2))) :=
+          fun nonce => do
+        let codec1 := literalCodec c1 s1 ValueCodec.rat nonce
+        let codec2 := literalCodec c2 s2 codec1 nonce
+        let head ← demand (Codec.readPoly codec2 (Codec.poly nativeCodec d3.raw.head))
+        let lower ← demand (Codec.readEndpoint codec2 (Codec.endpoint nativeCodec d3.raw.lower))
+        let upper ← demand (Codec.readEndpoint codec2 (Codec.endpoint nativeCodec d3.raw.upper))
+        let qs ← demand (Codec.readList (Codec.readPoly codec2)
+          (Codec.list (Codec.poly nativeCodec) (d3.raw.queries ++ queries)))
+        let decoded ← demand (Codec.decodeGraph codec2 ValueCodec.nat 9 head lower upper graphBytes)
+        if decoded.encodeBytes nativeCodec ValueCodec.nat != graphBytes then
+          throw (IO.userError "strict decoding changed a literal")
+        return (decoded, head, lower, upper, qs)
+      let (decoded, head, lower, upper, qs) ← readInputs 1
+      IO.println s!"nonconstantFacts1={(← s1.facts.get).countP (fun f => 1 < f.polynomial.size)} nonconstantFacts2={(← s2.facts.get).countP (fun f => 1 < f.polynomial.size)}"
+      IO.println s!"literalKeys1={(← s1.literals.get).length} literalKeys2={(← s2.literals.get).length}"
+      if args.contains "--omit-literal" then
+        removeFact s2 true
+        let _ ← readInputs 2
+        throw (IO.userError "missing literal fact was accepted")
+      let check := fun (nonce : Nat) => checkGraph nonce decoded (Element.sign (context := c2)) 9 head lower upper qs
+      IO.println s!"graphNodes={graph.entries.size} selectedSigns={signs.values.toList}"
       if args.contains "--collect-replay" then
+        mode.set .collect
         let started ← IO.monoNanosNow
         if !check 1 then throw (IO.userError "collection replay rejected")
         let elapsed := (← IO.monoNanosNow) - started
@@ -210,31 +323,37 @@ unsafe def main (args : List String) : IO UInt32 := do
         reset s2
         if check 3 then throw (IO.userError "omitted fact was accepted")
         return 1
-      -- Both timed arms record the same used-key list and wrapper counters.
-      -- Each changing nonce forces a new native check rather than reusing a Bool.
+      reset s1
+      reset s2
+      mode.set .ordinary
+      if !check 4 then throw (IO.userError "ordinary preflight rejected")
+      let ordinaryCounts1 ← s1.counts.get
+      let ordinaryCounts2 ← s2.counts.get
+      s1.track.set false
+      s2.track.set false
       let repetitions := 200
       let arms := if args.contains "--ordinary-first" then
-        [Mode.ordinary, Mode.replay] else [Mode.replay, Mode.ordinary]
-      for arm in arms do
+        ["plain", "ordinary", "cached"] else ["cached", "ordinary", "plain"]
+      for label in arms do
         reset s1
         reset s2
-        mode.set arm
+        mode.set (if label == "cached" then .replay else .ordinary)
         let started ← IO.monoNanosNow
         for i in [:repetitions] do
-          if !check (10 + i) then throw (IO.userError "timed replay rejected")
+          let accepted := if label == "plain" then plainCheck (10 + i) else check (10 + i)
+          if !accepted then throw (IO.userError "timed replay rejected")
         let elapsed := (← IO.monoNanosNow) - started
-        let label := if arm == .replay then "cached" else "ordinary"
         IO.println s!"arm={label} repetitions={repetitions} nanos={elapsed}"
         let counts1 ← s1.counts.get
         let counts2 ← s2.counts.get
-        if counts1.calls == 0 || counts2.calls == 0 then
-          throw (IO.userError "compiler eliminated timed replay instrumentation")
-        if arm == .replay then
-          if counts1.signs != 0 || counts2.signs != 0 then
-            throw (IO.userError "timed replay performed replacement signs")
-          if counts1.calls != cachedCounts1.calls * repetitions ||
-              counts2.calls != cachedCounts2.calls * repetitions then
+        if label != "plain" then
+          let expected1 := if label == "cached" then cachedCounts1 else ordinaryCounts1
+          let expected2 := if label == "cached" then cachedCounts2 else ordinaryCounts2
+          if counts1.calls != expected1.calls * repetitions ||
+              counts2.calls != expected2.calls * repetitions then
             throw (IO.userError "native compiler shared a timed replay result")
+        if label == "cached" && (counts1.signs != 0 || counts2.signs != 0) then
+          throw (IO.userError "timed replay performed replacement signs")
         report s1
         report s2
       return 0

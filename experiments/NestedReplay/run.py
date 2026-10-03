@@ -18,10 +18,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts" / "bench"))
 from cpu_lease import cpu_lease
 
-ARM = re.compile(r"arm=(cached|ordinary) repetitions=(\d+) nanos=(\d+)")
+ARM = re.compile(r"arm=(cached|ordinary|plain) repetitions=(\d+) nanos=(\d+)")
 COUNTS = re.compile(
     r"level=(\d+) facts=(\d+) used=(\d+) \{ calls := (\d+), signs := (\d+), "
-    r"nonconstantSigns := (\d+), hits := (\d+) \}"
+    r"nonconstantSigns := (\d+), hits := (\d+), inverses := (\d+) \}"
 )
 
 
@@ -35,13 +35,16 @@ def parse_arms(output: str) -> list[dict]:
         if match := ARM.fullmatch(line):
             arms.append(dict(arm=match[1], repetitions=int(match[2]), nanos=int(match[3]), levels=[]))
         elif arms and (match := COUNTS.fullmatch(line)):
-            names = ["level", "facts", "used", "calls", "signs", "nonconstantSigns", "hits"]
+            names = ["level", "facts", "used", "calls", "signs", "nonconstantSigns", "hits", "inverses"]
             arms[-1]["levels"].append(dict(zip(names, map(int, match.groups()))))
-    assert len(arms) == 2, "expected both timed arms"
+    assert len(arms) == 3, "expected all three timed arms"
     for arm in arms:
         assert [c["level"] for c in arm["levels"]] == [1, 2]
         assert arm["repetitions"] == 200 and arm["nanos"] > 0
         for c in arm["levels"]:
+            if arm["arm"] == "plain":
+                assert c["calls"] == c["signs"] == c["hits"] == c["inverses"] == 0
+                continue
             assert c["calls"] >= arm["repetitions"], "native checker was shared/eliminated"
             if arm["arm"] == "cached":
                 assert c["signs"] == c["nonconstantSigns"] == 0
@@ -78,12 +81,16 @@ def main() -> None:
 
         def run(name: str, flags: list[str]) -> subprocess.CompletedProcess:
             command = ["taskset", "-c", str(cpu), str(binary), *flags]
-            result = subprocess.run(command, capture_output=True, text=True, cwd=ROOT)
+            result = subprocess.run(command, capture_output=True, text=True, cwd=ROOT,
+                                    env={**os.environ, "LEAN_ABORT_ON_PANIC": "1"})
             (args.output / f"{name}.stdout").write_text(result.stdout)
             (args.output / f"{name}.stderr").write_text(result.stderr)
             (args.output / f"{name}.json").write_text(json.dumps(dict(command=command, exit=result.returncode)) + "\n")
             return result
 
+        keys = run("exact-keys", ["--keys-only"])
+        assert keys.returncode == 0
+        assert "noncanonicalAliasRejected=true conjugateLiteralRejected=true" in keys.stdout
         omitted = run("omitted", ["--omit"])
         assert omitted.returncode == 17, "missing actually-used fact did not reject"
         assert "MISSING level=2; no replacement sign evaluation" in omitted.stderr
@@ -93,15 +100,20 @@ def main() -> None:
         assert lower_omitted.returncode == 17
         assert "MISSING level=1; no replacement sign evaluation" in lower_omitted.stderr
         assert "signs := 0, nonconstantSigns := 0" in lower_omitted.stderr
-        producer = run("producer-only", [])
-        assert producer.returncode in [0, 17], "unexpected producer-only result"
-        if producer.returncode == 0:
-            parse_arms(producer.stdout)
-        else:
-            assert "MISSING" in producer.stderr and "signs := 0" in producer.stderr
+        literal_omitted = run("omitted-literal", ["--omit-literal"])
+        assert literal_omitted.returncode == 17
+        assert "LITERAL_REJECTED level=2" in literal_omitted.stderr
+        collection = run("collection-pass", ["--collect-replay"])
+        assert collection.returncode == 0
+        parse_arms(collection.stdout)
+        collection_counts = [tuple(map(int, match.groups()))
+                             for line in collection.stdout.splitlines()
+                             if (match := COUNTS.fullmatch(line))]
+        assert [c[1] for c in collection_counts[:2]] == [c[1] for c in collection_counts[2:4]], \
+            "collection replay discovered additional keys"
         samples = []
         for pair in range(args.pairs):
-            order = ["cached", "ordinary"] if pair % 2 == 0 else ["ordinary", "cached"]
+            order = ["cached", "ordinary", "plain"] if pair % 2 == 0 else ["plain", "ordinary", "cached"]
             started = time.monotonic_ns()
             result = run(f"pair-{pair}", [] if pair % 2 == 0 else ["--ordinary-first"])
             duration = time.monotonic_ns() - started
@@ -117,11 +129,12 @@ def main() -> None:
         ratios = [next(a["nanos"] for a in s["arms"] if a["arm"] == "ordinary") /
                   next(a["nanos"] for a in s["arms"] if a["arm"] == "cached") for s in samples]
         summary = dict(
-            producerOnlyAccepted=producer.returncode == 0, omissionExit=omitted.returncode,
+            producerOnlyAccepted=True, omissionExits={"arithmeticLevel2": omitted.returncode,
+                "arithmeticLevel1": lower_omitted.returncode, "literalLevel2": literal_omitted.returncode},
             pairRatiosOrdinaryOverCached=ratios, pairedMedian=statistics.median(ratios),
             medianNanosPerReplay={arm: statistics.median(
                 a["nanos"] / a["repetitions"] for s in samples for a in s["arms"] if a["arm"] == arm
-            ) for arm in ["cached", "ordinary"]},
+            ) for arm in ["cached", "ordinary", "plain"]},
         )
         (args.output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
         print(json.dumps(summary, indent=2))

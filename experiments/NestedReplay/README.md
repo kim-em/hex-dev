@@ -1,34 +1,40 @@
 # Nested sign replay experiment
 
-This native Lean experiment tests whether the existing BKR certificate checker
-can reuse intermediate coefficient signs at two predecessor levels, rejecting
-a missing fact before computing its replacement. It uses the existing root
-descriptors, arithmetic reduction, sign producer and shared graph checker.
+This native Lean experiment tests automatic collection and reuse of coefficient
+signs at two predecessor levels, including signs inside serialized inputs. It
+uses the existing root descriptors, arithmetic reduction, BKR sign producer,
+strict coefficient codecs and shared graph checker.
 
-The selected positive roots are
+The selected positive roots satisfy `a² = 2`, `b² = a + 2` and `c² = b + 2`.
+The coefficient domains are ℚ, ℚ(a) and ℚ(a)(b). Two identical queries at c
+are `X - b`, both positive: `1 < a < 2` implies `1 < b < 2`, so
+`b² - b - 2 = (b - 2)(b + 1) < 0` and therefore `c > b`. The existing
+encoder shares the identical leaf, leaving two graph entries.
 
-```
-a² = 2,       b² = a + 2,       c² = b + 2.
-```
+Local wrappers record each exact reduced polynomial and computed sign during
+construction and production. Inverse candidates use the existing inverse
+algorithm and are packed through the same collector. During replay, packing
+uses exact lookup and preserves canonical zero; a missing key exits with
+status 17 before replacement sign evaluation. Inversion is outside the
+replay vocabulary and rejects with status 18. Rational bottom-level arithmetic
+remains ordinary.
 
-The coefficient domains are ℚ, ℚ(a) and ℚ(a)(b). The two identical queries at
-c are `X - b`. Their signs are both positive: `1 < a < 2` implies `1 < b < 2`,
-so `b² - b - 2 = (b - 2)(b + 1) < 0` and hence `c > b`. The existing encoder
-shares the identical leaf, leaving two graph entries.
+Before checking, the graph is serialized and decoded recursively with the
+existing `Element.signCodec`. Every nonzero input coefficient, including
+stored scale factors, must match a fact for its exact polynomial and claimed
+sign. The context's immutable predecessor coefficients and prebuilt One
+values are checked too. Re-encoding must give identical graph bytes.
+These facts remain trusted in-memory producer outputs; independently checked
+child certificates and kernel proofs are outside this prototype.
 
-`Main.lean` installs local diagnostic wrappers around packing into each
-coefficient extension. During construction and certificate production they
-record the exact reduced polynomial and its computed sign. During replay they
-look up those exact keys, preserve canonical zero, and exit with status 17 on
-a miss. No missing key falls back to `Context.signPoly`. Inversion is outside
-the replay vocabulary and exits with status 18 if attempted during replay.
-Ordinary arithmetic at the rational bottom level remains available.
-
-The default run uses only facts collected during construction and production.
-`--collect-replay` additionally runs the checker in collection mode, allowing
-a comparison of the fact sets. `--omit` removes an actually used nonconstant
-fact at the second coefficient level; `--omit-level-one` does so at the first.
-Both must reject. No list of intermediate signs is supplied by hand.
+The default run uses only construction/production facts. `--collect-replay`
+also checks in collection mode; the driver verifies that this discovers no
+extra keys. `--omit` and `--omit-level-one` remove actually used nonconstant
+arithmetic facts at either level. `--omit-literal` removes a nonconstant
+input fact before a fresh decode. Each rejects without replacement sign work.
+A separate `--keys-only` probe uses a nonmonic head, different stored
+representatives of the same value, and conjugate ±√2 contexts. An absent
+representative and a copied opposite-sign literal both reject.
 
 Build and check with:
 
@@ -37,59 +43,40 @@ lake -d experiments/NestedReplay build
 python3 experiments/NestedReplay/run.py /tmp/nested-replay-check
 ```
 
-The output directory must not exist. The driver retains native stdout/stderr,
-exit codes, source and binary hashes, CPU placement, counts and timings. A
-six-pair comparison uses one automatically leased CPU and adjacent arms in
-alternating order:
+The output directory must not exist. The driver sets `LEAN_ABORT_ON_PANIC=1`,
+retains stdout/stderr and exits, and records source/binary hashes, CPU placement,
+counts and timings. Six blocks use one automatically leased CPU and reverse
+the order of three adjacent arms on alternating blocks:
 
 ```sh
 python3 experiments/NestedReplay/run.py /tmp/nested-replay-pairs --pairs 6
 ```
 
-Each timed arm checks the same graph 200 times. Both record used keys and
-wrapper counters. Changing positive nonces prevent sharing the complete
-Boolean result between runs; the checker ignores the nonce's value. Cached
-call counts must equal 200 times the preliminary check's counts. Counts
-describe executed diagnostic wrappers, including constant sign evaluations;
-they are not counts of Tarski queries or formal complexity bounds.
+Each arm checks its graph 200 times. The fact and ordinary arms record call
+counters but disable used-key collection during timing. The plain arm builds
+a separate equivalent tower with unmodified library instances and no wrapper
+instrumentation. Changing positive nonces prevent whole-result sharing; both
+instrumented arms must execute exactly 200 times their preliminary check's
+packing calls. Input decoding, construction and production are outside the
+replay timer. The plain arm also uses prebuilt input data.
 
-This is a runtime experiment using local `unsafe` IO instrumentation. Its
-in-memory facts are trusted outputs of the same producer, not independently
-verified serialized child certificates. Exiting a diagnostic process is not
-a proved total rejection interface. No kernel proof is assembled here, and
-the prototype adds no public arithmetic API, field instance or query kernel.
-It does not establish the full nested replay contract or Phase-4 performance.
+Counts describe executed wrappers, including constants and inverse-result
+packing, rather than Tarski queries or formal complexity bounds. Nonconstant
+sign evaluation may use the existing interval shortcut. Facts for constants
+are deliberately required in this experiment. The public `Element.pack`
+native fallback still recomputes missing signs; a production strict mode
+would require changing that behavior.
 
-Production work still needs automatic evidence collection without unsafe
-instrumentation, checked child certificates and literal context bindings,
-ordinary-kernel proofs connecting cached operations to native arithmetic,
-and broader examples and cost evidence. The fact lookup here is a linear
-list scan; this experiment does not prescribe the production data structure.
+The IO instrumentation is local `unsafe` diagnostic code, with no public API,
+field instance, query kernel or SPEC change. Process exits are not a proved
+total rejection interface. Production work still needs safe automatic
+evidence collection, checked child certificates with literal context bindings,
+ordinary-kernel correspondence and assembly, and broader cost evidence.
+The linear fact-list scan here does not prescribe a production data structure.
 
-## Small-example observations
-
-The retained [six pairs](results/summary.json) have median times of 1.68 ms
-for fact replay and 2.36 ms for ordinary replay per check. The median of the
-six within-pair ordinary/fact-replay ratios is 1.396; all six favour fact
-replay. The ratio range is 1.333–1.588. These are observations of this one
-instrumented example on the recorded shared host, not a general speedup or
-scaling result. Neither serialization nor kernel proof checking is measured.
-All completed paired runs and the additional functional probes are retained.
-No unchanged measurement rerun was performed.
-
-Construction and production collect 176 distinct facts at the first
-coefficient level and 36 at the second. Fact replay uses 40 and 31 distinct
-keys respectively. Per check, fact replay executes 1,032 and 450 packing
-wrappers, all lookup hits. Ordinary replay executes 1,903 and 450 wrappers;
-302 and 98 of its sign evaluations have nonconstant inputs. Such an input
-may use the existing interval shortcut, so these are not root-search counts.
-The difference in lower-level packing counts reflects work inside ordinary
-sign evaluation.
-
-Both modes record used keys and counters. Their IO instrumentation and
-linear list lookup contribute to these times; neither arm estimates a
-production implementation's cost. The default construction/production fact
-sets already suffice for replay; the retained producer-only probe confirms
-this without a collection replay. Omitting an actually used nonconstant
-fact at either coefficient level rejects with exit 17 and no replacement
-sign evaluation.
+The arithmetic-only observations in [results](results/summary.json) refer to
+the source revision recorded there. Their timers include used-key collection,
+and their inputs retain producer-computed signs. They are not measurements of
+the current full-input experiment or evidence for a production speedup.
+All completed observations remain retained. This experiment does not complete
+Phase-4 performance requirements.
