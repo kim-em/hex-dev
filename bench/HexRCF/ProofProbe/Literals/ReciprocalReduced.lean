@@ -14,6 +14,9 @@ namespace Hex.RCF.ProofProbe.Literals.ReciprocalReduced
 set_option maxRecDepth 8192
 set_option maxHeartbeats 2400000
 set_option rcf.algebraic.monicCore false
+set_option rcf.algebraic.indexSigns false
+set_option rcf.algebraic.intervalSigns false
+set_option rcf.algebraic.singleReplay false
 set_option rcf.algebraic.reducedLiterals true
 
 theorem witness : ∃ x : ℝ, x ^ 2 = 1 / (Real.sqrt 2 + 1) ∧ 0 < x ∧ x < 1 := by rcf

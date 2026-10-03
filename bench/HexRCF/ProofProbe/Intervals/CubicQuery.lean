@@ -16,6 +16,7 @@ set_option maxRecDepth 8192
 set_option maxHeartbeats 2400000
 set_option rcf.algebraic.monicCore false
 set_option rcf.algebraic.reducedLiterals false
+set_option rcf.algebraic.indexSigns false
 set_option rcf.algebraic.intervalSigns false
 
 theorem witness : ∃ x : ℝ, x ^ 2 = (2 : ℝ) ^ (1 / 3 : ℝ) ∧
