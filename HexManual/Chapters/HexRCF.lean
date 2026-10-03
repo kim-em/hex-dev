@@ -874,6 +874,17 @@ environment cleanup are outside those measurements. They do not isolate the
 cost of checking separate source and target sign tables or establish general
 extension performance or total algebraic search.
 
+A separate [fixed-field input report](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-scaling-proofs.md)
+retains 24 matched-import builds varying variable degree, atom count and integer
+coefficient width independently. These root-free carriers do not measure
+precision or nested depth. A representative two-field further-root proof,
+`∃ x : ℝ, x² = Real.sqrt 2 ∧ 1 < x ∧ x < Real.sqrt 3`, takes 43.672 seconds
+at its recorded source on leased CPU 14, including build and profiler overhead.
+Its exclusive kernel type-checking category totals 30.1 seconds; the smaller
+literal-replay category excludes those child checks. The report retains source
+identities, memory, serialized sizes, unique syntax and expanded-reference
+counts. It does not claim a complexity law or complete Phase-4 attestation.
+
 # Simultaneous signs and repeated roots over a cubic field
 %%%
 tag := "hex-rcf-cubic-signs"

@@ -1,0 +1,8 @@
+{
+  "schema": "hex-rcf-profile-diagnostic-v1",
+  "base": "99865444095dd7c057cb2ef9ca73b78a4fc4d337",
+  "source": "source.patch plus Profiling.lean",
+  "scope": "development verification, unpinned, dirty checkout; not a shared-host attribution sample",
+  "limitation": "profileitM do pure evaluated native production before the timer; common-field and production category values do not measure those operations",
+  "retention": "complete original compiler output retained; no sample discarded"
+}
