@@ -5,6 +5,8 @@ Run Lake's private-body audit, or parse a retained successful audit log. With
 --expected-hashes, fail if any of the six retained proof artifacts differs.
 Those hashes identify the last retained artifact for each probe, not every
 timed arm. This structural inspection is separate from timing collection.
+Retained-log mode cannot verify the historical build tree. It labels that
+source binding as asserted; live builds capture their checkout before running.
 """
 import argparse
 import hashlib
@@ -50,14 +52,23 @@ def collect(args: argparse.Namespace) -> None:
         if before != expected:
             raise RuntimeError("retained proof artifacts differ from the expected capture")
     command = ["lake", "build", TARGET]
+    capture = None
     if args.compiler_log:
         compiler = args.compiler_log.read_bytes()
+        source_binding = "asserted-retrospectively; historical build tree was not captured"
     else:
         if git("rev-parse", "HEAD").decode().strip() != audit_commit:
             raise RuntimeError("build mode requires HEAD to equal --audit-commit")
         for path in sources:
             if digest((ROOT / path).read_bytes()) != source_hashes[path]:
                 raise RuntimeError(f"uncommitted audit-source change: {path}")
+        capture = {
+            "head": git("rev-parse", "HEAD").decode().strip(),
+            "head_tree": git("rev-parse", "HEAD^{tree}").decode().strip(),
+            "status_sha256": digest(git("status", "--porcelain=v1", "--untracked-files=all")),
+            "tracked_diff_sha256": digest(git("diff", "HEAD", "--binary")),
+        }
+        source_binding = "verified audit/probe files; checkout captured before live build"
         result = subprocess.run(command, cwd=ROOT, capture_output=True)
         compiler = result.stdout + result.stderr
         args.output.mkdir(parents=True, exist_ok=True)
@@ -88,18 +99,22 @@ def collect(args: argparse.Namespace) -> None:
     replayed = {module: bool(re.search(r"Replayed HexRCF\.ProofProbe\.Intervals\."
                                       + module + r"\b", log)) for module in MODULES}
     data = {
-        "schema": "hex-rcf-interval-sign-counts-v2",
+        "schema": "hex-rcf-interval-sign-counts-v3",
         "measured_source_commit": measured,
         "audit_source_commit": audit_commit,
         "audit_source_tree": git("rev-parse", f"{audit_commit}^{{tree}}").decode().strip(),
         "audit_source_sha256": source_hashes,
+        "source_binding": source_binding,
+        "build_checkout_capture": capture,
         "audit_build_command": command,
         "compiler_log_sha256": digest(compiler),
         "compiler_reports_replayed_probes": replayed,
         "collector_sha256": digest(Path(__file__).read_bytes()),
         "collector_arguments": sys.argv[1:],
         "proof_artifact_sha256": after,
-        "proof_artifacts_unchanged": True,
+        "proof_artifacts_unchanged_during_collection": True,
+        "artifact_log_binding": ("asserted for retained log; current hashes verified against supplied capture"
+                                 if args.compiler_log else "verified before and after live build"),
         "artifact_scope": "Six artifacts retained after the final timing arms; no per-arm hash claim.",
         "convention": "Distinct table syntax in each proof and reachable declarations from the same source module; imported library bodies are leaves. No physical-sharing or runtime-work claim.",
         "proofs": [rows[name] for name in names],

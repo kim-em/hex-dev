@@ -10,6 +10,7 @@ public import HexRCF.CertificationInputs
 public meta import HexRCF.RealCoefficients
 public meta import HexRCF.CertificationInputs
 public meta import Lean.Elab.Tactic
+public meta import HexRCF.ProofEvidence
 
 public section
 namespace Hex.RCF.CertificationProofs
@@ -96,6 +97,11 @@ set_option maxRecDepth 8192 in
 set_option maxHeartbeats 5000000 in
 theorem common_multiprime : ∀ x : ℝ,
     x ^ 2 + cubicRoot.toReal + Real.sqrt 37 > 0 := by rcf
+
+run_meta do
+  unless ← Hex.RCF.ProofEvidence.contains ``common_multiprime
+      (·.isConstOf ``HexBerlekampZassenhausMathlib.zpolyIrreducible_of_checkMultiPrimeCert) do
+    throwError "common-field proof did not retain its multi-prime certificate"
 
 abbrev quadraticRoot : RealAlgebraicNumber :=
   Selected.real SquareTwo.polynomial SquareTwo.square (by decide) (by decide)

@@ -36,12 +36,12 @@ set_option Elab.async false
     · linarith [Real.exp_pos (1 : ℝ)]
     · linarith [Real.exp_one_lt_three]
 
-/-- error: rcf: original divisor remains unresolved in supplied bounds -/
+/-- error: rcf: original closed divisor remains unresolved in supplied bounds -/
 #guard_msgs in
 example : ∀ x : ℝ,
     x ^ 2 + 0 / (Real.pi ^ 2 - Real.exp 1 ^ 3) ≥ 0 := by rcf
 
-/-- error: rcf: original divisor remains unresolved in supplied bounds -/
+/-- error: rcf: original closed divisor remains unresolved in supplied bounds -/
 #guard_msgs in
 example : ∀ x : ℝ, x ^ 2 + 0 / Real.pi ≥ 0 := by rcf
 

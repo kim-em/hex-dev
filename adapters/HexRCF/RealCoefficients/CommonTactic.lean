@@ -556,11 +556,13 @@ private meta def assemble (source : Reify.Source) (leafSources : Array Expr) (pl
         let hrExpr ← mkAppM ``Field.literalRep_real
           #[pExpr, sExpr, hwExpr, hpExpr, hrealExpr]
         for divisor in source.divisors do
-          let compiled ← FieldCompile.compile pExpr rootExpr repExpr hrepExpr hrExpr leaf divisor
+          let (lowered, equality) ← Reify.lowerWithProof #[] divisor
+          let compiled ← FieldCompile.compile pExpr rootExpr repExpr hrepExpr hrExpr leaf lowered
+          let originalProof ← mkEqTrans compiled.proof (← mkEqSymm equality)
           if compiled.value = 0 then
             throwError "rcf: original closed divisor is zero"
           let reflect ← mkAppM ``Field.value_ne_zero
-            #[repExpr, hrepExpr, hrExpr, compiled.expression, divisor, compiled.proof]
+            #[repExpr, hrepExpr, hrExpr, compiled.expression, divisor, originalProof]
           let coeffs ← mkAppM ``PolyQuot.coeffs #[compiled.expression]
           let zeroPoly ← FieldLiteral.ratPolyExpr (0 : DensePoly Rat)
           let goal ← mkAppM ``Ne #[coeffs, zeroPoly]
@@ -616,7 +618,7 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr)
 
 private meta def proveRational (source : Reify.Source) : MetaM Expr := do
   Tactic.checkGuards source
-  let proof ← Hex.RCF.proveGoal source.sentence
+  let proof ← Hex.RCF.proveRationalGoal source.sentence
   mkAppM ``Iff.mp #[source.sentenceProof, proof]
 
 private meta partial def gatherCore (source : Expr) (leaves : Array Expr) :
@@ -655,7 +657,7 @@ private meta def gather (source : Expr) (leaves : Array Expr) :
     | .ok source => pure source
     | .error (.unsupported _ _) => return .declined
     | .error error => return .failed (Hex.RealFormula.Reify.Error.toMessageData error)
-  if source.coefficients.isEmpty then
+  if source.coefficients.isEmpty && (← rationalGuards source.divisors) then
     -- Checked constructor lowering retains all original guards.
     -- False, replay and resource failures from the base remain terminal.
     return .proved (← proveRational source)

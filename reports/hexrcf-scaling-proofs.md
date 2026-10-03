@@ -93,6 +93,8 @@ source `da312db57a8b443ec156beb2176740f72d6addb5`, leased CPU 14 and one Lean
 thread. The ordinary-import theorem is
 `∃ x : ℝ, x² = √2 ∧ 1 < x ∧ x < √3`. It joins two independently constructed
 fields, computes a further root, and checks ordinary real root/sector samples.
+This revision used full Sturm-query quotation, before interval-sign quotation
+was introduced. These category times do not describe the current default.
 Its standard-axiom audit passes. It has no symbolic infinitesimal realization
 phase; no absent `Sample.realizeReplay` computation is charged as zero.
 

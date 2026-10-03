@@ -43,11 +43,11 @@ theorem exp_square : ∀ x : ℝ, x ^ 2 + Real.exp 1 > 2 := by rcf
 theorem exp_witness : ∃ x : ℝ, x = Real.exp 1 ∧ 2 < x ∧ x < 3 := by rcf
 theorem pi_inverse : ∀ x : ℝ, x ^ 2 + 1 / (4 - Real.pi) > 0 := by rcf
 
-/-- error: rcf: original divisor is zero -/
+/-- error: rcf: original closed divisor is zero -/
 #guard_msgs in
 example : ∀ x : ℝ, x ^ 2 + 0 / (Real.pi - Real.pi) ≥ 0 := by rcf
 
-/-- error: rcf: original divisor is zero -/
+/-- error: rcf: original closed divisor is zero -/
 #guard_msgs in
 example : ∀ x : ℝ,
     x ^ 2 + (Real.pi - Real.pi) / (Real.pi - Real.pi) ≥ 0 := by rcf
@@ -69,7 +69,7 @@ example : True := by
     have : ∀ x : ℝ, x ^ 2 + unknown > 0 := by rcf
   trivial
 
-/-- error: rcf: original divisor remains unresolved in supplied bounds -/
+/-- error: rcf: original closed divisor remains unresolved in supplied bounds -/
 #guard_msgs in
 example : ∀ x : ℝ, x ^ 2 + 0 / unknown ≥ 0 := by rcf
 

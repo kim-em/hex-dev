@@ -1,5 +1,5 @@
 {
-  "schema": "hex-rcf-interval-sign-counts-v2",
+  "schema": "hex-rcf-interval-sign-counts-v3",
   "measured_source_commit": "3728fa0828ec8b8fa5612269ef3b364d4144a1fe",
   "audit_source_commit": "c6103576890f899018cfeda621c86dd4e19a4b61",
   "audit_source_tree": "79d2e0ce7af1c8a016e50cd7704b1e0e4e9ade6b",
@@ -13,6 +13,8 @@
     "bench/HexRCF/ProofProbe/Intervals/CubicQuery.lean": "daebb6c9cb1e910a850398321b64ac5b4ec2c967f10ff4aba1e86b70b30470d9",
     "bench/HexRCF/ProofProbe/Intervals/CubicHorner.lean": "68e6f7e4fe4483d4708b1c8eaf04b5fd22414a2da3e04832113ecc6fa338c483"
   },
+  "source_binding": "asserted-retrospectively; historical build tree was not captured",
+  "build_checkout_capture": null,
   "audit_build_command": [
     "lake",
     "build",
@@ -27,7 +29,7 @@
     "CubicQuery": true,
     "CubicHorner": true
   },
-  "collector_sha256": "eea7be15fb278bfbc489bf032466e69080c62643cc24848dfa3890c4e98495f3",
+  "collector_sha256": "9188d825e02a57e222e94122da05dd17399b8d0a3e6869c13b9cca923d26620e",
   "collector_arguments": [
     "--measured-commit",
     "3728fa082",
@@ -36,7 +38,7 @@
     "--compiler-log",
     "reports/data/hexrcf-interval-signs/3728fa082/compiler.log",
     "--expected-hashes",
-    "reports/data/hexrcf-interval-signs/3728fa082/audit.json",
+    "reports/data/hexrcf-interval-signs/3728fa082/artifact-hashes.json",
     "--output",
     "reports/data/hexrcf-interval-signs/3728fa082"
   ],
@@ -66,7 +68,8 @@
     ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/CubicHorner.olean.server": "be683a6dc2d88db758323ef3e7ed3728e6c33f00d29a5a09e03ef3d8677d5842",
     ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/CubicHorner.ilean": "af3940930781e410691cd32687d6af75d222941729017c3886a6834534e55213"
   },
-  "proof_artifacts_unchanged": true,
+  "proof_artifacts_unchanged_during_collection": true,
+  "artifact_log_binding": "asserted for retained log; current hashes verified against supplied capture",
   "artifact_scope": "Six artifacts retained after the final timing arms; no per-arm hash claim.",
   "convention": "Distinct table syntax in each proof and reachable declarations from the same source module; imported library bodies are leaves. No physical-sharing or runtime-work claim.",
   "proofs": [

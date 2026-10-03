@@ -1414,6 +1414,16 @@ sentence fragment. Prove construction correctness and certificate acceptance;
 the tactic closes only true sentences. Its execution limits do not weaken
 the completeness theorem for the underlying mathematical procedure.
 
+The current frontend does not yet implement that full completeness contract.
+Its available common-polynomial irreducibility certificates can reject an
+irreducible algebraic presentation: the pinned degree-eight example and its
+prime-factor patterns are recorded in
+[`CertificationProofs.lean`](../../conformance/HexRCF/CertificationProofs.lean).
+This is a certificate-language gap, not an elaborator resource limit. The
+[owning implementation issue](https://github.com/kim-em/hex-dev/issues/10358#issuecomment-5968366163)
+records the concrete owner prerequisite. Finite accepted proofs remain sound;
+no total algebraic acceptance claim is warranted until the gap is closed.
+
 A total transcendental tower requires correct convergent user-supplied
 approximations and transcendence of each constant over its **embedded
 predecessor field**, together with the proved terminating sign construction.

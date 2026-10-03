@@ -999,6 +999,8 @@ coefficient width independently. These root-free carriers do not measure
 precision or nested depth. A representative two-field further-root proof,
 `∃ x : ℝ, x² = Real.sqrt 2 ∧ 1 < x ∧ x < Real.sqrt 3`, takes 43.672 seconds
 at its recorded source on leased CPU 14, including build and profiler overhead.
+That source used full Sturm-query quotation and predates interval signs; this
+profile does not attribute the cost of the current default.
 Its exclusive kernel type-checking category totals 30.1 seconds; the smaller
 literal-replay category excludes those child checks. The report retains source
 identities, memory, serialized sizes, unique syntax and expanded-reference
@@ -2009,7 +2011,7 @@ example : ∃ x : ℝ,
 example : ∀ x : ℝ,
     x ^ 2 + 1 / (4 - Real.pi) > 0 := by rcf
 
-/-- error: rcf: original divisor is zero -/
+/-- error: rcf: original closed divisor is zero -/
 #guard_msgs in
 example : ∀ x : ℝ,
     x ^ 2 + 0 / (Real.pi - Real.pi) ≥ 0 := by rcf
@@ -2021,15 +2023,14 @@ The supplied interval also cannot certify that `sin 1` is nonzero: a bound
 containing zero proves neither equality to zero nor a strict sign.
 
 ```lean
-/-- error: rcf: original divisor is zero -/
+/-- error: rcf: original closed divisor is zero -/
 #guard_msgs in
 example : ∀ x : ℝ,
     x ^ 2 + 2 + Real.sin 1 +
       0 / (Real.sin 1 - Real.sin 1) > 0 := by
   rcf
 
-/-- error: rcf: original divisor remains unresolved
-in supplied bounds -/
+/-- error: rcf: original closed divisor remains unresolved in supplied bounds -/
 #guard_msgs in
 example : ∀ x : ℝ,
     x ^ 2 + 2 + Real.sin 1 + 0 / Real.sin 1 > 0 := by

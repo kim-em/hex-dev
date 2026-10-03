@@ -9,6 +9,7 @@ public import HexRCF.RealCoefficients
 public meta import HexRCF.RealCoefficients
 public meta import Lean.Elab.Command
 public meta import Lean.Elab.Term
+public meta import HexRCF.ProofEvidence
 
 public section
 
@@ -56,6 +57,13 @@ theorem radical_conversion : ∀ x : ℝ,
 theorem checked_rational : ∃ x : ℝ,
     x = ((RealAlgebraicNumber.ofAlgebraic? (AlgebraicNumber.ofRat (3 / 2))).getD
       CubeTwo.realAlgebraic).toReal ∧ 1 < x ∧ x < 2 := by rcf
+
+theorem unused_algebraic_divisor : ∀ x : ℝ,
+    x ^ 2 + ((RealAlgebraicNumber.ofAlgebraic? (AlgebraicNumber.ofRat 1)).getD
+      (1 / CubeTwo.realAlgebraic)).toReal > 0 := by rcf
+
+theorem converted_radical_divisor : ∀ x : ℝ,
+    x ^ 2 / Real.sqrt (RealAlgebraicNumber.ofRat 2).toReal + 1 > 0 := by rcf
 
 theorem field_conversion : ∀ x : ℝ,
     x ^ 2 + ((RealAlgebraicNumber.ofAlgebraic?
@@ -154,6 +162,12 @@ local elab "refuse_conversion " source:term " expect " expected:str : tactic => 
 
 example : True := by
   refuse_conversion (∀ x : ℝ,
+    x ^ 2 + ((RealAlgebraicNumber.ofAlgebraic? (AlgebraicNumber.ofRat 1)).getD
+      (0 / (CubeTwo.realAlgebraic - CubeTwo.realAlgebraic))).toReal > 0)
+    expect "rcf: original closed divisor is zero"
+
+example : True := by
+  refuse_conversion (∀ x : ℝ,
     x ^ 2 + ((RealAlgebraicNumber.ofAlgebraic? CubeTwo.realAlgebraic.toAlgebraic).getD
       ((1 / 0 : ℚ) • CubeTwo.realAlgebraic)).toReal > 0)
     expect "rcf: original closed divisor is zero"
@@ -224,6 +238,19 @@ example : True := by
 -- Keep the full-query comparison mode covered alongside the default interval mode.
 set_option rcf.algebraic.intervalSigns false in
 theorem interval_quotation : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by rcf
+
+run_meta do
+  let usesInterval ← ProofEvidence.contains ``interval_quotation fun e =>
+    e.isAppOfArity ``LiteralSign.Entry.mk 4 &&
+      e.getAppArgs[3]!.isAppOfArity ``Option.none 1
+  unless !usesInterval do throwError "full-query control quoted interval evidence"
+
+/-- info: 'Hex.RCF.CheckedConversions.unused_algebraic_divisor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms unused_algebraic_divisor
+/-- info: 'Hex.RCF.CheckedConversions.converted_radical_divisor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms converted_radical_divisor
 
 /-- info: 'Hex.RCF.CheckedConversions.selected_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

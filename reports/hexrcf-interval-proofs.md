@@ -49,11 +49,18 @@ final measured arms and reachable
 auxiliary declarations from each source module; imported library bodies remain
 leaves. It finds one distinct literal table expression in the further and cubic
 proofs and two in the reciprocal proof. It records hashes of all six proof
-modules and verifies they were unchanged during the audit. The compiler log
-reports all six probes as `Replayed`, not rebuilt. The audit source and Lake
-target were added in `c61035768`; their tree, source hashes, command and retained
-compiler log are recorded separately from measured source `3728fa082`.
-The collector checks matching probe sources and artifact hashes. The timing
+modules. The retained compiler log reports all six probes as `Replayed`, not
+rebuilt. The audit source and Lake target are recorded as the versions in
+`c61035768`, separately from measured source `3728fa082`. The original audit
+did not capture HEAD, working-tree status or a tracked diff. Its full build tree
+and the association between that historical log and these artifact hashes are
+therefore asserted retrospectively, not verified. In particular the log does
+not establish a clean build at `c61035768`; adapter sources changed between
+the measured and recorded audit revisions.
+The collector verifies matching probe source files and current artifact hashes
+against a separate retained hash capture. Retained-log mode cannot verify the
+historical build tree. Live-build mode captures HEAD, status and diff hashes
+before running Lake. The timing
 records contain sizes, not per-arm hashes, so this audit does not bind a hash
 to each of the 24 arms. These are literal
 entry counts, not expanded work, heap identities or allocation measurements.
