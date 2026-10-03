@@ -114,6 +114,29 @@ adapter is validated through the default `HexRCFRealCoefficients` Lake target
 and is not yet published to the split repository. See the
 [SPEC](SPEC/hex-rcf.md#planned-real-coefficient-extension).
 
+The explicit fixed-field API also separates preparation and finite replay.
+`Coefficients.prepare` authenticates the supported exact algebraic sources,
+coefficient order and all original divisors; `Environment.proveReplay` builds
+and quotes an ordinary proof through `Replay.check_sound`. `Specialize.prepare`
+and `FieldSpecialize.prepare` retain every shared atom, with proved evaluation
+and semantic degree. `Replay.Input` binds the complete formula, quantifier,
+coefficient order, divisor order and context; its type fixes the polynomial and
+selected root. `Replay.build` uses the bounded producer and preflights original
+divisors, while `Replay.check` only reads frozen evidence. It returns structured
+binding/divisor/evidence/unresolved errors or an accepted Boolean verdict.
+False does not produce a proof. `Replay.buildTotal` uses the existing total
+exact-field producer and guarantees an accepted verdict for nonzero original
+divisors; zero divisors are rejected before production. `buildTotal_spec` proves
+this result independently of direct proposal depth. `Environment.proveTotalReplay`
+quotes the resulting evidence without embedding the search. The tactic keeps
+its bounded default. This exact-field result does not make general source
+recognition or irreducibility quotation complete. The fresh
+[prepared API regressions](../conformance/HexRCF/PreparedCoefficients.lean) and
+[finite replay regressions](../conformance/HexRCF/FiniteReplay.lean) test proof
+transport, state restoration, exact bindings, discarded guards and strict
+verdicts. This API covers the documented fixed-field fragment; registrations
+use the separate finite-bound interface, and general towers remain incomplete.
+
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
 `QAdjoin` coordinates converted through `Coefficients.ofField` or directly through
@@ -157,3 +180,7 @@ available. The tactic also bounds direct bisection and fallback refinement
 through `rcf.algebraic.directDepth` and `rcf.algebraic.maxDoublings`, with
 terminal exhaustion and replay diagnostics. This does not give total
 registered-constant search or an unlimited proof elaboration budget.
+
+The [adapter evidence record](../reports/hexrcf-adapter-evidence.md) maps the
+implemented interfaces to conformance, fresh proof examples and retained cost
+experiments, and states the remaining completion limits.
