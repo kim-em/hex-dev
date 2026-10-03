@@ -110,8 +110,8 @@ and corrupt programs/chains/action/search/block/normal certificates.
 
 namespace Hex.PermGroup.Conformance
 
-private def cycle : Perm 3 := ⟨#v[1, 2, 0], by decide, by decide⟩
-private def swap : Perm 3 := ⟨#v[1, 0, 2], by decide, by decide⟩
+private def cycle : Perm 3 := Perm.mk #v[1, 2, 0]
+private def swap : Perm 3 := Perm.mk #v[1, 0, 2]
 private def generators : Array (Perm 3) := #[cycle, swap]
 
 -- Declared degrees and fixed points are retained; raw input is never reduced.
@@ -300,7 +300,7 @@ private def fullOrbit : Orbit 3 where
     ⟨#[.generator 0, .comp 0 0], 1⟩]
 
 private theorem fullOrbit_valid : fullOrbit.Valid generators 0 := by decide +kernel
-private def swap12 : Perm 3 := ⟨#v[0, 2, 1], by decide, by decide⟩
+private def swap12 : Perm 3 := Perm.mk #v[0, 2, 1]
 
 -- Neither original generator fixes zero. Filtering that array misses the
 -- nonidentity stabilizer element supplied by the complete Schreier family.
@@ -519,8 +519,8 @@ example : (Orbit.ofSymmetric symmetric 0 symmetric_inv).val.reps.toArray =
 example : checkOrbit (#[] : Array (Perm 3)) 2
     (Orbit.ofSymmetric #[] 2 (by simp)).val = true := by decide +kernel
 
-private def left5 : Perm 5 := ⟨#v[1, 0, 3, 2, 4], by decide, by decide⟩
-private def right5 : Perm 5 := ⟨#v[0, 2, 1, 4, 3], by decide, by decide⟩
+private def left5 : Perm 5 := Perm.mk #v[1, 0, 3, 2, 4]
+private def right5 : Perm 5 := Perm.mk #v[0, 2, 1, 4, 3]
 private def path5 : Array (Perm 5) := #[left5, right5]
 private theorem path5_inv : ∀ p ∈ path5, p.inv ∈ path5 := by decide +kernel
 
@@ -1580,16 +1580,16 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
   let generatedSwap := Group.ofGenerators #[swap]
   let _ ← checkBudget (Search.Centralizer.constraint rotations generatedSwap) searchBudget
     (rotations.centralizerPermWith searchBudget swap) trivialGroup
-  let exchange : Perm 4 := ⟨#v[2, 3, 0, 1], by decide, by decide⟩
-  let left : Perm 4 := ⟨#v[1, 0, 2, 3], by decide, by decide⟩
-  let right : Perm 4 := ⟨#v[0, 1, 3, 2], by decide, by decide⟩
+  let exchange : Perm 4 := Perm.mk #v[2, 3, 0, 1]
+  let left : Perm 4 := Perm.mk #v[1, 0, 2, 3]
+  let right : Perm 4 := Perm.mk #v[0, 1, 3, 2]
   let exchanging := Group.ofGenerators #[exchange]
   let blocks := Group.ofGenerators #[left, right]
   unless (exchanging.normalizer blocks).sameGroup exchanging do
     throw (IO.userError "normalizer refinement gave fixed colors to interchangeable orbits")
   let _ ← checkBudget (Search.Normalizer.constraint exchanging blocks) searchBudget
     (exchanging.normalizerWith searchBudget blocks) exchanging
-  let rotation : Perm 4 := ⟨#v[1, 2, 3, 0], by decide, by decide⟩
+  let rotation : Perm 4 := Perm.mk #v[1, 2, 3, 0]
   let symmetric := Group.ofGenerators #[rotation, left]
   let cyclic := Group.ofGenerators #[rotation]
   let normalizer := symmetric.normalizer cyclic
@@ -1721,7 +1721,7 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
       throw (IO.userError "negative transporter failed to stop before its unavailable orbit test")
   | .complete _ _ => throw (IO.userError "unfinished negative transporter was reported as complete")
 
-private def blockCycle : Perm 4 := ⟨#v[1, 2, 3, 0], by decide, by decide⟩
+private def blockCycle : Perm 4 := Perm.mk #v[1, 2, 3, 0]
 private def oppositeBlocks : Partition 4 := ⟨#v[0, 1, 0, 1], by decide, by decide⟩
 private def partialBlocks : Partition 4 := ⟨#v[0, 1, 0, 3], by decide, by decide⟩
 
@@ -1765,7 +1765,7 @@ example : Blocks.check #[] [(0, 0)] (Partition.discrete 1) [] = true := by decid
 
 -- Generator commutators alone miss part of the derived subgroup of S₄.
 #eval do
-  let transposition : Perm 4 := ⟨#v[1, 0, 2, 3], by decide, by decide⟩
+  let transposition : Perm 4 := Perm.mk #v[1, 0, 2, 3]
   let group := Group.ofGenerators #[blockCycle, transposition]
   unless (Derived.seedGroup group).order < group.derived.order &&
       group.derivedSeries.certificate.orders group == [24, 12, 4, 1] do
@@ -1773,9 +1773,9 @@ example : Blocks.check #[] [(0, 0)] (Partition.discrete 1) [] = true := by decid
 
 -- A₅ is a nontrivial perfect group; S₅ reaches that fixed point after one step.
 #eval do
-  let five : Perm 5 := ⟨#v[1, 2, 3, 4, 0], by decide, by decide⟩
-  let three : Perm 5 := ⟨#v[1, 2, 0, 3, 4], by decide, by decide⟩
-  let swap : Perm 5 := ⟨#v[1, 0, 2, 3, 4], by decide, by decide⟩
+  let five : Perm 5 := Perm.mk #v[1, 2, 3, 4, 0]
+  let three : Perm 5 := Perm.mk #v[1, 2, 0, 3, 4]
+  let swap : Perm 5 := Perm.mk #v[1, 0, 2, 3, 4]
   let candidates := (permutations (List.range 5)).map List.toArray
   for (input, orders) in [(#[five, three], [60, 60]), (#[five, swap], [120, 60, 60])] do
     let group := Group.ofGenerators input
@@ -1798,11 +1798,11 @@ example : Blocks.check #[] [(0, 0)] (Partition.discrete 1) [] = true := by decid
           count := count + 1
   unless count == 100 do throw (IO.userError "direct product degree-zero or small-factor cases were omitted")
   checkDirectProduct indexedGroup indexedGroup
-  let fixedSwap : Perm 4 := ⟨#v[1, 0, 2, 3], by decide, by decide⟩
+  let fixedSwap : Perm 4 := Perm.mk #v[1, 0, 2, 3]
   checkDirectProduct (Group.ofGenerators #[fixedSwap]) swapGroup
 
 -- Destination-indexed action: the swap in block zero acts after the top swap.
-private def swap2 : Perm 2 := ⟨#v[1, 0], by decide, by decide⟩
+private def swap2 : Perm 2 := Perm.mk #v[1, 0]
 example : (Perm.Wreath.perm (by decide : 0 < 2)
     (fun j : Fin 2 => if j = 0 then swap2 else Perm.id 2) swap2).vec = #v[2, 3, 1, 0] := by decide +kernel
 

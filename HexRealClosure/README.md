@@ -840,6 +840,21 @@ Nonmonic or unclean definitions retain the raw representative. A leading
 coefficient that denotes one but differs structurally
 from literal one does not enable monic storage.
 
+`Element.restore p sign proof nonzero` retains an exact nonzero stored
+representative using a proof of `Context.signPoly p = sign`. It performs no
+sign query or normalization. `restore?_eq` proves equality with the existing
+independent executable check; canonical zero remains separate. `ofPoly_restore`
+and `ofPoly_eq_zero` identify the actual packing result from a proved sign of its
+retained remainder. The companion's
+`Context.signPoly_checked` obtains that proof from supplied, accepted
+`SelectedSigns` evidence for the actual reduced query in this exact context.
+The ordinary-kernel example uses a degree-two stored representative whose
+query has degree one. Evidence for a wrong sign, a different query or a
+mismatched context key rejects; the certificate type fixes the actual reduced
+query. The examples also check rejected restoration, packing to the actual
+remainder, and packing a vanishing input to canonical zero. The byte coefficient
+decoder continues to use `restore?`.
+
 Ordinary addition, subtraction, negation, multiplication, inversion and
 division operate on these values. Inversion computes the defining polynomial's
 local gcd with the operand, takes the complementary factor, and scales the
@@ -1454,6 +1469,33 @@ payload is trusted as a root.
 Executable guards count the extracted levels in the base and a one-root
 context and rebuild the extracted one-root suffix. The existing four-root
 transport fixture includes a deeper count check and runs outside routine CI.
+
+## Native scalar signs and nested replay
+
+Native selected-root arithmetic reduces high-degree sign queries by the existing
+positive pseudo-remainder while retaining the clean-storage policy. Constant
+queries use the predecessor sign directly. A linear query can use its finite
+endpoint signs when they agree strictly or one endpoint value is zero. If the
+prepared interval contains exactly one head root, one prepared Sturm query gives
+the scalar sign. The prepared root count is cached when the immutable context
+is constructed; a constant or zero reduced query uses its predecessor sign.
+Intervals with several roots retain the existing selected-sign
+BKR producer and Thom constraints. Companion proofs preserve the same
+selected-root interpretation over arbitrary ordered real closed fields.
+
+The isolation conformance emitter includes an actual two-level algebraic tower
+over two successive infinitesimals: α² = 2 + ε₁ and β² = α + ε₂, with both roots
+selected in (1, 2). It exports checked selected-sign certificates for each query
+as separate per-query certificates at each common selected root, byte-replays them through the native DAG reader,
+and reconstructs every stored value from the empty catalog. It checks inverses,
+a defining-equation zero, and rejection of stale contexts, false consumer signs,
+cycles and false integer denominators. A query crossing the second root interval
+checks the scalar Sturm shortcut over the actual infinitesimal coefficients. The independent pinned Z3 real-closed-field
+checker verifies the selected roots, signs, context equations and integer table
+identities. The native checker replays the complete polynomial certificates;
+the Python checker does not independently replay every pseudo-remainder step.
+This fixture establishes exporter/checker integration; it does not prove the
+general simultaneous ordinary-real realization theorem or Phase-4 performance.
 
 ## Ordered algebraic ambient models
 

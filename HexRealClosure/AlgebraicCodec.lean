@@ -52,7 +52,7 @@ theorem Element.codec_lawful (value : ValueCodec E) (h : value.Lawful) :
       pure, Except.pure]
   | some p =>
     simp [Element.codec, hs, Codec.Json.getArr_arr, bind, Except.bind, pure, Except.pure,
-      Codec.read_poly value h, Element.restore_stored a p hs]
+      Codec.read_poly value h, Element.restore?_stored a p hs]
 
 end Hex.RealClosure.Algebraic
 

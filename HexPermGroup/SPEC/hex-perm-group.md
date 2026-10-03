@@ -73,6 +73,10 @@ entries, every entry must be below `n`, and entries must be distinct. Do not
 silently reduce out-of-range images modulo `n` or infer the degree from the
 largest moved point.
 
+The two proof fields of `Perm` default to `by decide`, so a permutation with a
+literal image vector is written `Perm.mk #v[1, 2, 0]` or
+`{ vec := #v[1, 2, 0] }` with no proof terms.
+
 Compiled checked construction uses linear time and linear auxiliary storage
 in the degree: scatter a candidate inverse and check both inverse identities.
 Prove equality with the duplicate-free, complete-array specification so the

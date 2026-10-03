@@ -1089,7 +1089,8 @@ lean_lib HexConformance where
       `HexSignDetMathlib.CommonFieldConformance,
       `HexSignDetMathlib.ConvertConformance].map Glob.one
 
-    ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests].map Glob.one
+    ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests,
+      `HexRealClosureMathlib.CoefficientSignsConformance].map Glob.one
 
     ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
     ++ #[.submodules `HexSturmMathlib.Replay]
@@ -1580,6 +1581,10 @@ lean_exe hexrealclosure_bench where
 lean_exe hexrealclosure_bounds_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.BoundsConformance
+
+lean_lib HexRealClosureConformanceSupport where
+  srcDir := "conformance"
+  globs := #[.one `HexRealClosure.NestedReplay]
 
 lean_exe hexrealclosure_isolation_conformance where
   srcDir := "conformance"
