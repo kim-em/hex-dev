@@ -1089,7 +1089,8 @@ lean_lib HexConformance where
       `HexSignDetMathlib.CommonFieldConformance,
       `HexSignDetMathlib.ConvertConformance].map Glob.one
 
-    ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests].map Glob.one
+    ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests,
+      `HexRealClosureMathlib.CoefficientSignsConformance].map Glob.one
 
     ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
     ++ #[.submodules `HexSturmMathlib.Replay]

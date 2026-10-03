@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit all development adapters and sign-determination conformance import cones.
+"""Audit adapter, sign-determination and real-closure companion conformance cones.
 
 RCF conformance (including intentional negative admission probes) and Sturm
 semantic replay conformance remain kernel-checked tests outside this source
@@ -228,17 +228,18 @@ def check() -> None:
              "HexRealClosureMathlib.SpecializeTests", "HexRealClosureMathlib.Algebraic",
              "HexRealClosureMathlib.AlgebraicClean", "HexRealClosureMathlib.AlgebraicValue",
              "HexRealClosureMathlib.AlgebraicTransport", "HexRealClosureMathlib.AlgebraicYun",
-              "HexRealClosureMathlib.AlgebraicReencode",
-              "HexRealClosure.AlgebraicReencodeTests",
-              "HexRealClosureMathlib.AlgebraicRoots",
+             "HexRealClosureMathlib.AlgebraicReencode",
+             "HexRealClosureMathlib.CoefficientSignsConformance",
+             "HexRealClosure.AlgebraicReencodeTests",
+             "HexRealClosureMathlib.AlgebraicRoots",
              "HexRealClosureMathlib.BaseClean", "HexRealClosureMathlib.AlgebraicTower",
              "HexRealClosureMathlib.Union", "HexRealClosureMathlib.UnionTests",
              "HexRealClosureMathlib.QAdjoin"] + [
         ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
         for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [
-        "HexSignDetMathlib." + ".".join(path.relative_to(
-            ROOT / "conformance/HexSignDetMathlib").with_suffix("").parts)
-        for path in sorted((ROOT / "conformance/HexSignDetMathlib").rglob("*.lean"))]
+        ".".join(path.relative_to(ROOT / "conformance").with_suffix("").parts)
+        for library in ("HexSignDetMathlib", "HexRealClosureMathlib")
+        for path in sorted((ROOT / "conformance" / library).rglob("*.lean"))]
     # Named roots remain mandatory; the glob also audits unnamed conformance
     # modules, including their own declarations and imported dependencies.
     roots = list(dict.fromkeys(roots))
@@ -246,11 +247,11 @@ def check() -> None:
         module = ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
         if module_file(module) != path:
             raise ValueError(f"adapter module {module} is shadowed by another source file")
-    for path in sorted((ROOT / "conformance/HexSignDetMathlib").rglob("*.lean")):
-        module = "HexSignDetMathlib." + ".".join(path.relative_to(
-            ROOT / "conformance/HexSignDetMathlib").with_suffix("").parts)
-        if module_file(module) != path:
-            raise ValueError(f"conformance module {module} is shadowed by another source file")
+    for library in ("HexSignDetMathlib", "HexRealClosureMathlib"):
+        for path in sorted((ROOT / "conformance" / library).rglob("*.lean")):
+            module = ".".join(path.relative_to(ROOT / "conformance").with_suffix("").parts)
+            if module_file(module) != path:
+                raise ValueError(f"conformance module {module} is shadowed by another source file")
     paths = set().union(*(import_cone(module) for module in roots))
     if BRIDGE not in paths:
         raise ValueError(f"the optional adapter no longer imports {BRIDGE}")

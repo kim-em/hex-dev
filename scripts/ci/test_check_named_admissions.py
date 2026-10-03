@@ -150,6 +150,7 @@ class AdmissionScannerTests(unittest.TestCase):
                 "adapters/HexRealClosureMathlib/IsolationFactor.lean",
                 "adapters/HexRealClosureMathlib/IsolationRoots.lean",
                 "conformance/HexRealClosure/IsolationConformance.lean",
+                "conformance/HexRealClosureMathlib/CoefficientSignsConformance.lean",
                 "adapters/HexRealClosureMathlib/RootOrder.lean",
                 "HexRealClosure/RootOrderTests.lean",
                 "HexRealClosure/RootFactorsTests.lean",
@@ -316,19 +317,21 @@ class AdmissionScannerTests(unittest.TestCase):
                     audit.check()
                 completion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
 
-                additional = root / "conformance/HexSignDetMathlib/Nested/AnotherConformance.lean"
-                additional.parent.mkdir()
-                additional.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
-                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/Nested/AnotherConformance"):
-                    audit.check()
-                additional.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
-                shadow = root / "adapters/HexSignDetMathlib/Nested/AnotherConformance.lean"
-                shadow.parent.mkdir(parents=True, exist_ok=True)
-                shadow.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
-                with self.assertRaisesRegex(ValueError, "conformance module .* is shadowed"):
-                    audit.check()
-                shadow.unlink()
-                additional.unlink()
+                for library in ("HexSignDetMathlib", "HexRealClosureMathlib"):
+                    additional = root / "conformance" / library / "Nested/AnotherConformance.lean"
+                    additional.parent.mkdir(parents=True, exist_ok=True)
+                    additional.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/" + library):
+                        audit.check()
+                    additional.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                    for prefix in (root / "adapters", root):
+                        shadow = prefix / library / "Nested/AnotherConformance.lean"
+                        shadow.parent.mkdir(parents=True, exist_ok=True)
+                        shadow.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                        with self.assertRaisesRegex(ValueError, "conformance module " + library + ".* is shadowed"):
+                            audit.check()
+                        shadow.unlink()
+                    additional.unlink()
                 adapter_shadow = root / "HexSignDetMathlib/RootProducer.lean"
                 adapter_shadow.parent.mkdir(parents=True, exist_ok=True)
                 adapter_shadow.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
