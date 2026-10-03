@@ -134,14 +134,15 @@ theorem isolateAt_build [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq C
     exact buildProposed_build _ _ _ _ _ direct
 
 /-- Prepare the rational defining polynomial once and certify the finite sign
-arguments that replay will read. The selected square fixes the root and both
+arguments that replay will read, deduplicating exact coordinate keys. The
+selected square fixes the root and both
 open rational endpoints. -/
-def buildTable (p : ZPoly) (s : DyadicSquare)
+@[expose] def buildTable (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
     (keys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp))) :
     Option (LiteralSign.Table (PolyQuot p (SimpleRoot.ofSquare p s hw hp))) := do
   let table ← LiteralSign.Table.build (ZPoly.toRatPoly p)
-    (s.re - s.radiusHi).toRat (s.re + s.radiusHi).toRat keys PolyQuot.coeffs
+    (s.re - s.radiusHi).toRat (s.re + s.radiusHi).toRat keys.dedup PolyQuot.coeffs
   if Field.checkSignTable p s hw hp table then some table else none
 
 /-- A produced table passes the full literal-context binding check. -/
@@ -163,6 +164,52 @@ theorem buildTable_checked (p : ZPoly) (s : DyadicSquare)
           exact hc
       · simp at h
 
+/-- Every sign read by isolation, root queries and open-cell evaluation,
+plus the caller's original divisor keys. Exact duplicates may be retained. -/
+@[expose] def signKeys {Ctx : Type u}
+    (values : Fin n → PolyQuot p root) (formula : RealFormula.QF (n + 1))
+    (head : DensePoly (PolyQuot p root)) (isolation : IsolationReplay (PolyQuot p root) Ctx)
+    (rootSigns : FieldRootSigns.Table (PolyQuot p root) Ctx (n + 1)
+      isolation.isolations.intervals.size) (extra : List (PolyQuot p root) := []) :
+    List (PolyQuot p root) :=
+  SignInputs.isolation FieldDecision.point head isolation ++
+    SignInputs.rootQueries FieldDecision.point head isolation
+      (rootSigns.entries.map fun row i => row.evidence[i]) ++
+    SignInputs.openSamples FieldDecision.point isolation
+      (formula.polys.map (FieldSpecialize.literalPolynomial values)) ++ extra
+
+/-- Retain the literal rational builder binding beneath the field-context check. -/
+theorem buildTable_build (p : ZPoly) (s : DyadicSquare)
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    (keys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    (table : LiteralSign.Table (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    (produced : buildTable p s hw hp keys = some table) :
+    LiteralSign.Table.build (ZPoly.toRatPoly p)
+      (s.re - s.radiusHi).toRat (s.re + s.radiusHi).toRat keys.dedup PolyQuot.coeffs = some table := by
+  unfold buildTable at produced
+  simp only [bind, Option.bind] at produced
+  split at produced
+  · contradiction
+  · rename_i candidate built
+    dsimp only at produced
+    split at produced
+    · cases Option.some.inj produced
+      exact built
+    · contradiction
+
+/-- No requested sign is supplied by the semantic fallback in a produced table. -/
+theorem buildTable_lookup (p : ZPoly) (s : DyadicSquare)
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    (keys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    (table : LiteralSign.Table (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    (produced : buildTable p s hw hp keys = some table)
+    (key : PolyQuot p (SimpleRoot.ofSquare p s hw hp)) (requested : key ∈ keys) :
+    (table.lookup? key).isSome = true := by
+  obtain ⟨value, found⟩ := LiteralSign.Table.build_lookup _ _ _ _ _ table
+    (buildTable_build p s hw hp keys table produced) key
+    (by simpa only [List.mem_dedup] using requested)
+  rw [found]; rfl
+
 /-- Literal evidence produced over one fixed coordinate field. The final
 Boolean checks are replayed using the finite rational sign table, rather than
 assuming the search oracle's signs. -/
@@ -177,7 +224,7 @@ structure Result (p : ZPoly) (s : DyadicSquare)
 
 /-- Build all literal field evidence. Finite sign keys come from the exact
 arguments read by the checked isolation and root-query certificates. -/
-def build [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
+@[expose] def build [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
     [ZPoly.CheckedIrreducible p] {Ctx : Type u} [DecidableEq Ctx]
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
@@ -198,13 +245,7 @@ def build [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
           (FieldSpecialize.literalPolynomial values) formula with
       | none => none
       | some rootSigns =>
-        let keys :=
-          SignInputs.isolation FieldDecision.point radical.core isolation ++
-          SignInputs.rootQueries FieldDecision.point radical.core isolation
-            (rootSigns.entries.map fun row i => row.evidence[i]) ++
-          SignInputs.openSamples FieldDecision.point isolation
-            (formula.polys.map (FieldSpecialize.literalPolynomial values)) ++
-          extraSignKeys
+        let keys := signKeys values formula radical.core isolation rootSigns extraSignKeys
         match buildTable p s hw hp keys with
         | none => none
         | some signs => some ⟨radical, isolation, rootSigns, signs⟩
@@ -220,6 +261,18 @@ finite key set. -/
 @[expose] noncomputable def sign (data : Result p s hw hp Ctx n)
     (a : PolyQuot p (SimpleRoot.ofSquare p s hw hp)) : Int :=
   data.signs.sign (Field.value (Field.literalRep p s hw hp)) a
+
+/-- Check the fixed-field environment and all literal evidence before the
+quantifier verdict. A valid envelope can still describe a false sentence. -/
+@[expose] noncomputable def checkEvidence (data : Result p s hw hp Ctx (n + 1))
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1)) (context : Ctx) : Bool :=
+  Field.checkSignTable p s hw hp data.signs &&
+    data.radical.check context (FieldCarrier.product values formula) &&
+    data.isolation.check data.sign FieldDecision.point context data.radical.core &&
+    data.rootSigns.check data.sign FieldDecision.point context data.radical.core
+      (FieldReplay.intervals data.isolation)
+      (FieldSpecialize.literalPolynomial values) formula
 
 @[expose] noncomputable def checkForall (data : Result p s hw hp Ctx (n + 1))
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))

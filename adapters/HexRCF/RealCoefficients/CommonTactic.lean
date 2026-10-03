@@ -523,8 +523,8 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
         let formulaWhnf ← whnf source.formula
         let matrixExpr ← whnf formulaWhnf.getAppArgs.back!
         let qfExpr := matrixExpr.getAppArgs.back!
-        let (fixedProof, _, _, _) ← FieldLiteral.proveWithCertificate
-          pExpr rootExpr targetExpr qfExpr targetValues qf quantifier 8
+        let (fixedProof, _, _, _) ← FieldLiteral.proveTotalWithCertificate
+          pExpr rootExpr targetExpr qfExpr targetValues qf quantifier
         let targetFin := mkApp (mkConst ``Fin) (mkNatLit m)
         let targetEqGoal ← withLocalDeclD `i targetFin fun i => do
           let interpreted ← mkAppM ``Field.value #[repExpr, mkApp targetExpr i]

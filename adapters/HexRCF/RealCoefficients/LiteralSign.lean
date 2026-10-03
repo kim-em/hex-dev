@@ -151,7 +151,7 @@ theorem lookup_spec (table : Table D) (query : D → DensePoly Rat)
 
 /-- Reuse one prepared rational root interval for all requested field signs.
 The result is returned only after the exact table checker accepts it. -/
-def build (head : DensePoly Rat) (lower upper : Rat)
+@[expose] def build (head : DensePoly Rat) (lower upper : Rat)
     (keys : List D) (query : D → DensePoly Rat) : Option (Table D) :=
   match Sturm.prepare Sturm.orderSign head (.finite lower) (.finite upper) with
   | none => none
@@ -181,6 +181,120 @@ theorem build_checked (head : DensePoly Rat) (lower upper : Rat)
           cases Option.some.inj h
           exact hc
       · simp at h
+
+omit [DecidableEq D] in
+/-- The returned table retains the producer's original rational domain. -/
+theorem build_bindings (head : DensePoly Rat) (lower upper : Rat)
+    (keys : List D) (query : D → DensePoly Rat) (table : Table D)
+    (produced : build head lower upper keys query = some table) :
+    table.head = head ∧ table.lower = lower ∧ table.upper = upper := by
+  unfold build at produced
+  split at produced
+  · contradiction
+  · dsimp only at produced
+    split at produced
+    · cases Option.some.inj produced
+      exact ⟨rfl, rfl, rfl⟩
+    · contradiction
+
+/-- Every requested key has a literal finite hit, including repeated keys. -/
+theorem build_lookup (head : DensePoly Rat) (lower upper : Rat)
+    (keys : List D) (query : D → DensePoly Rat) (table : Table D)
+    (produced : build head lower upper keys query = some table)
+    (key : D) (requested : key ∈ keys) : ∃ value, table.lookup? key = some value := by
+  unfold build at produced
+  split at produced
+  · contradiction
+  · rename_i domain prepared
+    dsimp only at produced
+    split at produced
+    · cases Option.some.inj produced
+      let evidence := Sturm.certifyPrepared () domain (query key)
+      let entry : Entry D := ⟨key, evidence.value, evidence⟩
+      have present : entry ∈ keys.map (fun key =>
+          let evidence := Sturm.certifyPrepared () domain (query key)
+          (⟨key, evidence.value, evidence⟩ : Entry D)) := List.mem_map.mpr ⟨key, requested, rfl⟩
+      unfold lookup?
+      cases found : (keys.map (fun key =>
+          let evidence := Sturm.certifyPrepared () domain (query key)
+          (⟨key, evidence.value, evidence⟩ : Entry D))).find?
+            (fun row => decide (row.key = key)) with
+      | none =>
+        have missing := List.find?_eq_none.mp found entry present
+        simp [entry] at missing
+      | some row => exact ⟨row.value, by simp only [Option.map_some]⟩
+    · contradiction
+
+omit [DecidableEq D] in
+/-- Every rational count-one domain yields a checked table for every finite key list. -/
+theorem build_success (head : DensePoly Rat) (lower upper : Rat)
+    (keys : List D) (query : D → DensePoly Rat)
+    (valid : HexSturmMathlib.Domain (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) head (.finite lower) (.finite upper))
+    (card : (Tarski.rootsIn (realPoly head)
+      (.finite (lower : ℝ)) (.finite (upper : ℝ))).card = 1) :
+    ∃ table, build head lower upper keys query = some table := by
+  classical
+  let f : Rat → ℝ := fun r => (r : ℝ)
+  have hz : ∀ a : Rat, f a = 0 ↔ a = 0 := fun _ => Rat.cast_eq_zero
+  have h1 : f 1 = 1 := by norm_num [f]
+  have ha : ∀ a b : Rat, f (a + b) = f a + f b := fun _ _ => Rat.cast_add _ _
+  have hs : ∀ a b : Rat, f (a - b) = f a - f b := fun _ _ => Rat.cast_sub _ _
+  have hm : ∀ a b : Rat, f (a * b) = f a * f b := fun _ _ => Rat.cast_mul _ _
+  have hn : ∀ a : Rat, f (-a) = -f a := Rat.cast_neg
+  have hi : ∀ a : Rat, f a⁻¹ = (f a)⁻¹ := Rat.cast_inv
+  have hnat : ∀ n : Nat, f (n : Rat) = (n : ℝ) := by intro n; norm_num [f]
+  have hsign : ∀ a : Rat, Sturm.orderSign a = (SignType.sign (f a) : Int) := by
+    intro a
+    rw [HexSturmMathlib.orderSign_eq]
+    rcases lt_trichotomy a 0 with hneg | hzero | hpos
+    · have hr : (a : ℝ) < 0 := by exact_mod_cast hneg
+      simp [sign_neg hneg, sign_neg hr, f]
+    · subst a; simp [f]
+    · have hr : (0 : ℝ) < a := by exact_mod_cast hpos
+      simp [sign_pos hpos, sign_pos hr, f]
+  have signs := HexSturmMathlib.sign_spec f Sturm.orderSign hsign
+  have available := (HexSturmMathlib.prepare_isSome f hz ha hs hm
+    Sturm.orderSign (fun a => (signs a).2.1) (fun a => (signs a).2.2.1)
+    h1 hn hi hnat (fun a => (signs a).1) head (.finite lower) (.finite upper)).mpr valid
+  cases prepared : Sturm.prepare Sturm.orderSign head (.finite lower) (.finite upper) with
+  | none => simp [prepared] at available
+  | some domain =>
+    obtain ⟨signEq, headEq, loEq, upperEq⟩ := Sturm.prepare_eq_some _ _ _ _ domain prepared
+    have accepted (q : DensePoly Rat) := HexSturmMathlib.certifyPrepared_checks f hz ha hs hm
+      Sturm.orderSign (fun a => (signs a).2.1) h1 hn hi (fun a => (signs a).1)
+      (fun a => (signs a).2.2.2) () domain signEq q
+    have bound (q : DensePoly Rat) : Sturm.check Sturm.orderSign () head q
+        (.finite lower) (.finite upper) (Sturm.certifyPrepared () domain q).value
+        (Sturm.certifyPrepared () domain q) = true := by
+      simpa only [headEq, loEq, upperEq] using accepted q
+    let count := Sturm.certifyPrepared () domain (1 : DensePoly Rat)
+    have countValue : count.value = 1 := by
+      have meaning := (HexSturmMathlib.check_sound f hz h1 ha hs hm hnat
+        Sturm.orderSign hsign () head 1 (.finite lower) (.finite upper) count.value count (bound 1)).2
+      change count.value = Tarski.rootSum (realPoly head) (realPoly 1)
+        (.finite (lower : ℝ)) (.finite (upper : ℝ)) at meaning
+      rw [show realPoly (1 : DensePoly Rat) = 1 from interpret_one f hz h1,
+        Tarski.rootSum_one, card] at meaning
+      exact meaning
+    let entries : List (Entry D) := keys.map fun key =>
+      let evidence := Sturm.certifyPrepared () domain (query key)
+      ⟨key, evidence.value, evidence⟩
+    let table : Table D := ⟨head, lower, upper, count, entries⟩
+    have checked : table.check query = true := by
+      simp only [Table.check, Bool.and_eq_true]
+      refine ⟨?_, List.all_eq_true.mpr ?_⟩
+      · change Sturm.check Sturm.orderSign () head 1 (.finite lower) (.finite upper) 1 count = true
+        rw [← countValue]; exact bound 1
+      · intro entry mem
+        obtain ⟨key, _, same⟩ := List.mem_map.mp mem
+        subst entry
+        exact bound (query key)
+    refine ⟨table, ?_⟩
+    unfold build
+    rw [prepared]
+    change (if table.check query then some table else none) = some table
+    simp only [checked, ite_eq_left]
 
 end Table
 
