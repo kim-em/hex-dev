@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.TowerEnlarge
+public import HexRealClosure.BaseEmbedding
 public import HexRealClosureMathlib.BaseFactory
 
 public section
@@ -34,6 +35,62 @@ noncomputable def Origin.model? {context : Context registry} (origin : Origin co
 noncomputable def Context.model? (context : Context registry)
     (following : base.Realization) (target : Tower.Model (Context.ofBase base) R) :
     Option (Tower.Model context R) := context.origin.model? following target
+
+private theorem Context.model?_baseMap_proof
+    (source : BaseContext.PackedContext registry)
+    (following : base.Realization) (target : Tower.Model (Context.ofBase base) R)
+    (inclusion : BaseInclusion source base)
+    (produced : BaseInclusion.make? source base = some inclusion) :
+    (Context.ofBase source).model? following target =
+      some (BaseInclusion.Model.derive following inclusion target).source := by
+  cases source with
+  | pack original =>
+    change (Context.base original).model? following target = _
+    rw [Context.model?, Context.origin_base]
+    simp only [Origin.model?]
+    rw [produced]
+    rfl
+
+/-- A successful coefficient inclusion supplies exactly the source model
+used by the canonical owner factory at that base. -/
+theorem Context.model?_baseMap
+    (source : BaseContext.PackedContext registry)
+    (following : base.Realization) (target : Tower.Model (Context.ofBase base) R)
+    (inclusion : BaseInclusion source base)
+    (produced : BaseInclusion.make? source base = some inclusion) :
+    (Context.ofBase source).model? following target =
+      some (BaseInclusion.Model.derive following inclusion target).source :=
+  Context.model?_baseMap_proof source following target inclusion produced
+
+private theorem Context.model?_base_proof
+    (following : base.Realization) (target : Tower.Model (Context.ofBase base) R) :
+    (Context.ofBase base).model? following target = some target := by
+  cases base with
+  | pack original =>
+    change (Context.base original).model? following target = some target
+    rw [Context.model?, Context.origin_base]
+    simp only [Origin.model?]
+    cases produced : BaseInclusion.make? (.pack original) (.pack original) with
+    | none =>
+      have success := (BaseInclusion.make?_isSome (.pack original) (.pack original)).mpr
+        ⟨List.prefix_refl _, Nat.le_refl _⟩
+      rw [produced] at success
+      cases success
+    | some inclusion =>
+      change some (BaseInclusion.Model.derive following inclusion target).source = some target
+      apply congrArg some
+      apply Model.value_ext
+      intro a
+      have preserved := (BaseInclusion.Model.derive following inclusion target).value a
+      rw [BaseInclusion.Model.derive_target] at preserved
+      exact preserved.symm.trans (congrArg target.value (inclusion.self_value a))
+
+/-- At the declared target base, the owner factory returns the supplied
+interpretation itself. Staged identity maps retain every native coefficient. -/
+theorem Context.model?_base
+    (following : base.Realization) (target : Tower.Model (Context.ofBase base) R) :
+    (Context.ofBase base).model? following target = some target :=
+  Context.model?_base_proof following target
 
 private theorem Model.extend_snoc {source : Context registry} (model : Model source R)
     (suffix : Suffix source)
@@ -120,3 +177,11 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Context.model?_embed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Context.model?_embed
+
+/-- info: 'Hex.RealClosure.Tower.Context.model?_base' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.model?_base
+
+/-- info: 'Hex.RealClosure.Tower.Context.model?_baseMap' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.model?_baseMap
