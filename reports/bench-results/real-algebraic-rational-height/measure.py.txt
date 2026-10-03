@@ -1,0 +1,23 @@
+from pathlib import Path
+import hashlib,json,os,platform,subprocess,sys,time
+sys.path.insert(0,'scripts/bench')
+from cpu_lease import cpu_lease
+root=Path.cwd()
+out=root/'reports/bench-results/real-algebraic-rational-height'
+exe=root/'.lake/build/bin/hexrealalgebraic_bench'
+cpu,lease=cpu_lease()
+os.sched_setaffinity(0,{cpu})
+names=['Hex.RealAlgebraicBench.runRationalRecognition','Hex.RealAlgebraicBench.runRationalFloor','Hex.RealAlgebraicBench.runRationalCeil']
+command=[str(exe),'run',*names,'--export-file',str(out/'results.json')]
+record={'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'dirty':bool(subprocess.check_output(['git','status','--porcelain'],text=True)), 'host':platform.node(),'platform':platform.platform(),'cpu':cpu,'load_before':os.getloadavg(),'command':command,'schedule':'Each registered six-rung ladder uses four trial-major samples; no per-run sampling override.','source_sha256':{p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in ['bench/HexRealAlgebraic/Bench.lean','HexRealAlgebraic/Order.lean','reports/bench-results/real-algebraic-rational-height/derivation.md']},'executable_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),'lean_bench_commit':subprocess.check_output(['git','-C','.lake/packages/lean-bench','rev-parse','HEAD'],text=True).strip(),'lake_version':subprocess.check_output(['lake','--version'],text=True).strip()}
+for src in ['bench/HexRealAlgebraic/Bench.lean','HexRealAlgebraic/Order.lean']:
+    (out/(src.replace('/','-')+'.txt')).write_bytes((root/src).read_bytes())
+(out/'measure.py.txt').write_bytes(Path(__file__).read_bytes())
+record['started_monotonic']=time.monotonic()
+with (out/'run.log').open('w') as log:
+    result=subprocess.run(command,stdout=log,stderr=subprocess.STDOUT)
+record['exit_code']=result.returncode
+record['elapsed_seconds']=time.monotonic()-record['started_monotonic']
+record['load_after']=os.getloadavg()
+(out/'metadata.json').write_text(json.dumps(record,indent=2)+'\n')
+print(json.dumps({'exit_code':result.returncode,'cpu':cpu,'elapsed_seconds':record['elapsed_seconds']}))
