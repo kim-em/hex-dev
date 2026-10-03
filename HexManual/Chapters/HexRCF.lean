@@ -580,6 +580,16 @@ private proof files but used more peak memory. The
 [report and retained samples](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-replay-proofs.md)
 record every completed arm and the exact source and import identities.
 
+`rcf.algebraic.monicCore` is false by default. Its true mode normalizes the
+proposed carrier core while retaining the original polynomial product and
+checking both radical identities. Signed Sturm chains keep their existing
+positive scaling. All twelve pairs in a four-round comparison favored this
+mode on the same three examples, with lower peak memory. The
+[report and retained samples](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-carrier-proofs.md)
+describe these full-build observations. Successful proposals have checked
+soundness and a proved monic core; universal producer progress for this
+normalization is still required before enabling it by default.
+
 For these reconstructed inputs, closed arithmetic is compiled into the common
 field after authenticating its source values. A quotient is recorded as a
 rational coordinate polynomial and checked by its multiplication identity;
