@@ -47,6 +47,11 @@ register_option rcf.algebraic.singleReplay : Bool := {
   descr := "check the full fixed-field certificate in one kernel decision goal"
 }
 
+register_option rcf.algebraic.monicCore : Bool := {
+  defValue := false
+  descr := "normalize the proposed carrier core before checked root isolation"
+}
+
 private def arrayLit (ty : Expr) (xs : List Expr) : Expr :=
   let nil := mkApp (mkConst ``List.nil [Level.zero]) ty
   let list := xs.foldr
@@ -424,6 +429,7 @@ meta def proveRefiningWithCertificate {p : ZPoly} {s : DyadicSquare}
     let result := profileit "rcf certificate production" options fun _ =>
       FieldBuild.produceWithin p s hw hp real values formula ()
         (rcf.algebraic.directDepth.get options) (rcf.algebraic.maxDoublings.get options) extraSignKeys
+        (rcf.algebraic.monicCore.get options)
     Core.checkInterrupted
     match result with
     | .error .exhausted => throwError "rcf: algebraic interval refinement budget exhausted; increase rcf.algebraic.maxDoublings or rcf.algebraic.directDepth"

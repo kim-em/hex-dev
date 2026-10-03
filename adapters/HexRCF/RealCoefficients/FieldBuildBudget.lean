@@ -65,14 +65,18 @@ def produceWithin [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
     (formula : RealFormula.QF (n + 1)) (context : Ctx)
     (depth doublings : Nat)
-    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := []) :
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := [])
+    (monicCore : Bool := false) :
     Except BuildError (Result p s hw hp Ctx (n + 1)) := do
   let prepared := Field.prepareSign p s hw hp real
   let sign := fun a : PolyQuot p (SimpleRoot.ofSquare p s hw hp) =>
     Sturm.queryPrepared prepared.val a.coeffs
   let rep := Field.literalRep p s hw hp
   let hrep := Field.literalRep_mk p s hw hp
-  let some radical := RadicalCert.build context (FieldCarrier.product values formula) |
+  let product := FieldCarrier.product values formula
+  let proposal := if monicCore then RadicalCert.buildMonic context product
+    else RadicalCert.build context product
+  let some radical := proposal |
     .error .invalidReplay
   let isolation ← isolateWithin rep hrep sign context radical.core depth doublings
   let some rootSigns := FieldRootSigns.Table.build sign FieldDecision.point

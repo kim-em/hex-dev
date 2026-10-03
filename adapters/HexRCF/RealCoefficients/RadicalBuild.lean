@@ -7,6 +7,7 @@ module
 
 public import HexRCF.RealCoefficients.RadicalCheck
 public import HexPoly.Euclid
+public import HexPoly.Lcm
 
 public section
 
@@ -96,6 +97,49 @@ def build (context : Ctx) (product : DensePoly E) : Option (RadicalCert E Ctx) :
     let core := (DensePoly.divMod product gcd).1
     let quotient := (DensePoly.divMod product core).1
     search context product core quotient (List.range (product.natDegree + 1))
+
+/-- Normalize only the proposed carrier core. The original product and both
+divisibility identities remain bound to the certificate checker. Signed Sturm
+chains are constructed separately and retain their positive-scaling convention. -/
+def buildMonic [Inv E] (context : Ctx) (product : DensePoly E) :
+    Option (RadicalCert E Ctx) :=
+  if product.isZero then none
+  else
+    let gcd := DensePoly.gcd product product.derivativeImpl
+    let core := DensePoly.monicize (DensePoly.divMod product gcd).1
+    let quotient := (DensePoly.divMod product core).1
+    search context product core quotient (List.range (product.natDegree + 1))
+
+/-- Monic proposals undergo the same literal checks as the existing producer. -/
+theorem buildMonic_checked [Inv E] (context : Ctx) (product : DensePoly E)
+    (cert : RadicalCert E Ctx) (produced : buildMonic context product = some cert) :
+    cert.check context product = true := by
+  unfold buildMonic at produced
+  split at produced
+  · contradiction
+  · exact search_checked context product _ _ _ cert produced
+
+/-- Successful normalization retains precisely the monic derivative-gcd quotient. -/
+theorem buildMonic_core [Inv E] (context : Ctx) (product : DensePoly E)
+    (cert : RadicalCert E Ctx) (produced : buildMonic context product = some cert) :
+    cert.core = DensePoly.monicize
+      (DensePoly.divMod product (DensePoly.gcd product product.derivativeImpl)).1 := by
+  unfold buildMonic at produced
+  split at produced
+  · contradiction
+  · exact search_core context product _ _ _ cert produced
+
+/-- With lawful field operations, every accepted normalized core is monic. -/
+theorem buildMonic_monic {K : Type u} [Lean.Grind.Field K] [DecidableEq K] [NatCast K]
+    (context : Ctx) (product : DensePoly K) (cert : RadicalCert K Ctx)
+    (produced : buildMonic context product = some cert) : cert.core.Monic := by
+  rw [buildMonic_core context product cert produced]
+  apply DensePoly.monicize_monic
+  intro zero
+  have nonzero := core_ne_zero context product cert
+    (buildMonic_checked context product cert produced)
+  rw [buildMonic_core context product cert produced, zero, DensePoly.monicize_zero] at nonzero
+  exact nonzero rfl
 
 /-- A successful producer result is accepted by the exact replay checker. -/
 theorem build_checked (context : Ctx) (product : DensePoly E)
