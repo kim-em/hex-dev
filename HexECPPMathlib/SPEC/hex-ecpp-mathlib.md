@@ -218,3 +218,14 @@ kernel-checks the unconditional proof before suggesting or exporting compact
 frozen data. It introduces no registration on ordinary `primality` and no
 CM proof dependency. The native search ceiling is admitted separately from
 the supplied-certificate replay ceiling.
+
+Native row depth and replay node counts are separate allocations. The bridge
+clamps native row depth to the converter's 20-row ceiling. Replay additionally
+counts every embedded terminal `PrimeCert` node and its ECPP base wrapper:
+rows + 1 + terminal nodes must be at most 32. A shallow terminal tree can
+therefore exhaust replay even when both search depth limits were respected.
+Generation passes the complete proposal through `certProof` and its replay
+preflight before any suggestion or export; this exhaustion is a clean resource
+failure. Conformance includes an accepted 31-node terminal with its base
+wrapper, both literal and compact replay, and rejection when a row raises the
+total to 33.

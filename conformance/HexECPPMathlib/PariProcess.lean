@@ -51,6 +51,15 @@ private def processChecks : IO Unit := do
   fake "trap '' TERM\nsleep 20 &\nwait" timeoutCheck
   -- Reaping the leader before these pipes close used to cause ECHILD.
   fake "sleep 20 &\nprintf 'HEX_ECPP_BEGIN\\n17\\nHEX_ECPP_END\\n'" timeoutCheck
+  -- Cancel after the process has had time to create a pipe-holding child.
+  fake "trap '' TERM\nsleep 20 &\nwait" fun path => do
+    let token ← IO.CancelToken.new
+    let cancellation ← IO.asTask (do IO.sleep 125; token.set) .dedicated
+    let start ← IO.monoMsNow
+    fails "cancelled" (run 17 (executable := path) (cancel := some token))
+    discard <| IO.wait cancellation
+    if (← IO.monoMsNow) - start ≥ 15000 then
+      throw <| IO.userError "cancellation cleanup waited for the sleeping descendant"
   fake "sleep 20" fun path => do
     let token ← IO.CancelToken.new
     token.set
