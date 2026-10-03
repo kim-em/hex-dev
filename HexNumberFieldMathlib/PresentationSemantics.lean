@@ -96,7 +96,9 @@ theorem presentation?_sound (coefficients : Array AlgebraicNumber)
   · rename_i proposed hproposed
     obtain ⟨generator, _, hchecked⟩ := Option.bind_eq_some_iff.mp hproposed
     cases Option.some.inj h
-    exact presentationAt?_sound generator coefficients hchecked
+    split at hchecked
+    · exact presentationAt?_sound generator coefficients hchecked
+    · cases hchecked
   · obtain ⟨generator, _, hchecked⟩ := Option.bind_eq_some_iff.mp h
     exact presentationAt?_sound generator coefficients hchecked
 

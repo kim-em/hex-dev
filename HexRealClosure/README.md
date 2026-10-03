@@ -741,7 +741,7 @@ the qqbar fixtures use the monic cubic/quadratic tower. The full native
 comparison also runs the canonical backend's common-field presentation, whose
 checked containing-field attempt and primitive-search fallback are described
 in the [number-field SPEC](../HexNumberField/SPEC/hex-number-field.md).
-All seven fixtures use the containing-field branch. Separate number-field
+The six nonzero fixtures use the containing-field branch. Separate number-field
 checks cover rejected membership and fallback. CI applies a one-hour
 operational limit to this driver. Manual execution has no such limit, and
 these checks do not constitute the required scientific performance evaluation.

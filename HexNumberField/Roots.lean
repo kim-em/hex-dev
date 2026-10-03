@@ -485,7 +485,9 @@ coefficient; otherwise use the bounded primitive-element search. -/
 def presentation? (coefficients : Array AlgebraicNumber) : Option Presentation :=
   let proposed := do
     let first ← (coefficients.filter fun a => !a.isZero)[0]?
-    presentationAt? first coefficients
+    if coefficients.all (fun a => degree first % degree a == 0) then
+      presentationAt? first coefficients
+    else none
   match proposed with
   | some presentation => some presentation
   | none => do
@@ -608,6 +610,20 @@ private def rootsSqrtTwoExact? : Option AlgebraicNumber :=
   else
     none
 
+private def rootsSqrtThreePoly : ZPoly := DensePoly.ofList [-3, 0, 1]
+
+private def rootsSqrtThreeRep : RefinedIsolation rootsSqrtThreePoly :=
+  ⟨⟨⟨Dyadic.ofIntWithPrec 222 7, 0, 8⟩, .ofWitness (by decide)⟩, by decide⟩
+
+private def rootsSqrtThreeExact? : Option AlgebraicNumber :=
+  if hirred : ZPoly.isIrreducible rootsSqrtThreePoly = true then
+    letI : ZPoly.CheckedIrreducible rootsSqrtThreePoly := ⟨hirred, by decide⟩
+    let root := SimpleRoot.mk rootsSqrtThreeRep
+    let generator := PolyQuot.reduce rootsSqrtThreePoly root
+      (DensePoly.ofList ([0, 1] : List Rat))
+    generator.toAlgebraicNumber? rootsSqrtThreeRep rfl
+  else none
+
 private def algebraicLinearRoots? : Option RootSet := do
   let sqrtTwo ← rootsSqrtTwoExact?
   let negSqrtTwo ← AlgebraicPoly.Common.scale? (-1) sqrtTwo
@@ -705,4 +721,15 @@ end Hex
             contained.generator == sqrtTwo && contained.coefficients.size = 2 &&
               extended.generator.p.natDegree = 2 && extended.coefficients.size = 2
         | _, _, _ => false
+    | _, _ => false
+
+-- Both trace products have the required degree and zero trace, but their
+-- recovered coordinate is zero rather than √3. Exact equality rejects it.
+#guard
+    match Hex.rootsSqrtTwoExact?, Hex.rootsSqrtThreeExact? with
+    | some sqrtTwo, some sqrtThree =>
+        Hex.AlgebraicPoly.Common.trace? 2 sqrtThree == some 0 &&
+          (Hex.AlgebraicPoly.Common.mul? sqrtTwo sqrtThree >>=
+            Hex.AlgebraicPoly.Common.trace? 2) == some 0 &&
+          (Hex.AlgebraicPoly.Common.presentationAt? sqrtTwo #[sqrtTwo, sqrtThree]).isNone
     | _, _ => false

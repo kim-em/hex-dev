@@ -925,7 +925,8 @@ the recovered coordinate by canonical algebraic equality before returning it.
 up to `2 * degree gamma - 2` and checks every coefficient through
 `coordinates?`. It returns a presentation only if all selected values are
 recovered exactly. `presentation?` first tries the first nonzero coefficient
-as generator through this check. If it fails, `primitive?` supplies the
+as generator through this check, first rejecting the proposal if any
+coefficient degree does not divide the generator degree. If it fails, `primitive?` supplies the
 generator for a second `presentationAt?` call. Empty and all-zero arrays
 return `none`; public root and collection APIs handle their separate zero
 conventions before calling this producer. When the first coefficient's field
