@@ -220,8 +220,17 @@ run_tuple() {
 
   local emit_command=(".lake/build/bin/$emit")
   if [ "$oracle" = "scripts/oracle/real_closure_trivial.py" ]; then
-    if ! LEAN_ABORT_ON_PANIC=1 .lake/build/bin/hexrealclosure_trivial_tests; then
-      echo "FAIL: native rational-tower backend differential tests" >&2
+    # Operational CI bound; manual validation retains the complete driver
+    # without a limit. This does not set a scientific performance budget.
+    if timeout 3600 env LEAN_ABORT_ON_PANIC=1 .lake/build/bin/hexrealclosure_trivial_tests; then
+      :
+    else
+      local native_status=$?
+      if [ "$native_status" -eq 124 ]; then
+        echo "TIMEOUT: native rational-tower backend differential tests exceeded 3600 seconds" >&2
+      else
+        echo "FAIL: native rational-tower backend differential tests (exit $native_status)" >&2
+      fi
       return 1
     fi
     emit_command=(env LEAN_ABORT_ON_PANIC=1 "${emit_command[@]}")

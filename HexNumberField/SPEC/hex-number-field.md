@@ -891,6 +891,8 @@ def powers? (gamma : AlgebraicNumber) (last : Nat) :
 def trace? (ambient : Nat) (a : AlgebraicNumber) : Option Rat
 def coordinates? (gamma a : AlgebraicNumber)
     (powers : Array AlgebraicNumber) : Option (QAdjoin gamma)
+def presentationAt? (generator : AlgebraicNumber) (coefficients : Array AlgebraicNumber) :
+    Option Presentation
 def presentation? (coefficients : Array AlgebraicNumber) :
     Option Presentation
 ```
@@ -919,9 +921,18 @@ and returns `(ambient / m)` times the conjugate sum
 power-basis coordinate of `a` through the nondegenerate trace pairing (Gram
 matrix of power traces against the traces of `a * gamma^k`), then validates
 the recovered coordinate by canonical algebraic equality before returning it.
-`presentation?` composes the above: find a primitive generator, take its
-powers up to `2 * degree - 2`, embed every coefficient, and return the
-validated fixed-field `Presentation`.
+`presentationAt? gamma coefficients` shares the proposed generator's powers
+up to `2 * degree gamma - 2` and checks every coefficient through
+`coordinates?`. It returns a presentation only if all selected values are
+recovered exactly. `presentation?` first tries the first nonzero coefficient
+as generator through this check. If it fails, `primitive?` supplies the
+generator for a second `presentationAt?` call. Empty and all-zero arrays
+return `none`; public root and collection APIs handle their separate zero
+conventions before calling this producer. When the first coefficient's field
+contains all coefficients, the old maximum-degree search retained that same
+first coefficient (shift zero wins degree ties), so the chosen generator is
+unchanged. The fallback retains the bounded primitive search and selected
+embedding checks.
 
 ## Totalization
 

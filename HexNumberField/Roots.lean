@@ -468,16 +468,29 @@ def coordinates? (gamma a : AlgebraicNumber)
       coordinate gamma.rep gamma.rep_mk
     if recovered == a then some coordinate else none
 
-/-- Construct and validate one primitive fixed-field presentation for an
-algebraic coefficient array. -/
+/-- Check an entire coefficient array in one proposed field, sharing its
+power table and validating every recovered coordinate at the selected embedding. -/
 @[expose]
-def presentation? (coefficients : Array AlgebraicNumber) :
+def presentationAt? (generator : AlgebraicNumber) (coefficients : Array AlgebraicNumber) :
     Option Presentation := do
-  let generator ← primitive? coefficients
   let d := degree generator
   let powers ← powers? generator (2 * d - 2)
   let embedded ← coefficients.mapM fun a => coordinates? generator a powers
   some ⟨generator, embedded⟩
+
+/-- Construct and validate one primitive fixed-field presentation for an
+algebraic coefficient array. First try the field of the first nonzero
+coefficient; otherwise use the bounded primitive-element search. -/
+@[expose]
+def presentation? (coefficients : Array AlgebraicNumber) : Option Presentation :=
+  let proposed := do
+    let first ← (coefficients.filter fun a => !a.isZero)[0]?
+    presentationAt? first coefficients
+  match proposed with
+  | some presentation => some presentation
+  | none => do
+    let generator ← primitive? coefficients
+    presentationAt? generator coefficients
 
 end Hex.AlgebraicPoly.Common
 
@@ -679,3 +692,17 @@ private def algebraicLinearRoots? : Option RootSet := do
     | _, _ => false
 
 end Hex
+
+-- Coordinate recovery accepts an existing containing field and rejects a
+-- proposed rational field before the unchanged primitive-search fallback.
+#guard
+    match Hex.rootsSqrtTwoExact?, Hex.AlgebraicPoly.Common.rational? 2 with
+    | some sqrtTwo, some two =>
+        match Hex.AlgebraicPoly.Common.presentation? #[sqrtTwo, two],
+            Hex.AlgebraicPoly.Common.presentationAt? two #[two, sqrtTwo],
+            Hex.AlgebraicPoly.Common.presentation? #[two, sqrtTwo] with
+        | some contained, none, some extended =>
+            contained.generator == sqrtTwo && contained.coefficients.size = 2 &&
+              extended.generator.p.natDegree = 2 && extended.coefficients.size = 2
+        | _, _, _ => false
+    | _, _ => false

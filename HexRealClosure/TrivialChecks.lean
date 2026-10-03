@@ -27,11 +27,25 @@ private def same (a b : RealRootSet) : Bool :=
 
 def check {parent : Tower.Context registry} (source : Map parent) (_ : Array RealAlgebraicNumber)
     (name : String) (p : DensePoly parent.Value) : IO Unit := do
+  let start ← IO.monoMsNow
   IO.eprintln s!"Checking native roots: {name}"
   let produced := parent.roots p
+  IO.eprintln s!"Native roots ready: {name}, {match produced with
+    | .all => "all" | .finite entries => toString entries.length}"
+  let nativeEnd ← IO.monoMsNow
+  let converted := source.output produced
+  IO.eprintln s!"Converted roots ready: {name}, {match converted with
+    | .all => "all" | .finite entries => toString entries.size}"
+  let convertedEnd ← IO.monoMsNow
   IO.eprintln s!"Checking canonical backend: {name}"
-  require (same (source.output produced) (source.polynomial p).roots)
+  let expected := (source.polynomial p).roots
+  IO.eprintln s!"Canonical roots ready: {name}, {match expected with
+    | .all => "all" | .finite entries => toString entries.size}"
+  let backendEnd ← IO.monoMsNow
+  require (same converted expected)
     s!"native algebraic-coefficient roots differ from canonical backend: {name}"
+  IO.eprintln s!"Verified {name}: native {nativeEnd - start} ms, conversion {
+    convertedEnd - nativeEnd} ms, backend {backendEnd - convertedEnd} ms"
   match produced with
   | .all => pure ()
   | .finite entries =>
@@ -75,12 +89,26 @@ def runWith (check : {parent : Tower.Context registry} → Map parent → Array 
   let rational := Map.rational registry
   let cubicRoot : Tower.Root base := .selected cubic extension rfl
   let nonmonicRoot : Tower.Root base := .selected nonmonic oldExtension rfl
-  require (rational.compareRoots cubicRoot nonmonicRoot == cubicRoot.compare nonmonicRoot)
+  let identity := rational.compareRoots cubicRoot nonmonicRoot
+  require (identity == .eq && identity == cubicRoot.compare nonmonicRoot)
     "canonical comparison lost root identity across different child contexts"
-  require (rational.compareRoots cubicRoot (.point two) == cubicRoot.compare (.point two))
+  let reverse := rational.compareRoots nonmonicRoot cubicRoot
+  require (reverse == .eq && reverse == nonmonicRoot.compare cubicRoot)
+    "reversed selected-root identity differs"
+  let before := rational.compareRoots cubicRoot (.point two)
+  require (before == .lt && before == cubicRoot.compare (.point two))
     "canonical selected-versus-point comparison differs"
-  require (rational.compareRoots (.point two) cubicRoot == (Tower.Root.point two).compare cubicRoot)
+  let after := rational.compareRoots (.point two) cubicRoot
+  require (after == .gt && after == (Tower.Root.point two).compare cubicRoot)
     "canonical point-versus-selected comparison differs"
+  let some quadratic := SignDet.Descriptor.validate base.sign base.signature
+      { context := base.signature, head := x * x - DensePoly.C two,
+        lower := .finite 1, upper := .finite two, indices := [], signs := [] }
+    | throw (IO.userError "rational quadratic-root descriptor failed")
+  let quadraticRoot := Tower.Root.ofSelection base (.selected quadratic)
+  let distinct := rational.compareRoots cubicRoot quadraticRoot
+  require (distinct == .lt && distinct == cubicRoot.compare quadraticRoot)
+    "strict order of distinct selected roots differs"
   let two : parent.Value := 1 + 1
   require (parent.equal (a * a * a) two) "native cubic equation failed"
   require (source.value (a * a * a) == 2) "canonical cubic equation failed"

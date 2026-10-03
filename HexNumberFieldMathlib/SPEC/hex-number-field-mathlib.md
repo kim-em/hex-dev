@@ -410,7 +410,7 @@ HexNumberFieldMathlib/
   Yun.lean                   : Yun multiplicity correspondence
   Primitive.lean             : bounded primitive-element search soundness
   Presentation.lean          : checked common-field arithmetic totality
-  PresentationSemantics.lean : assembly of total primitive presentations
+  PresentationSemantics.lean : checked proposed-field presentations and total primitive fallback
   Coordinates.lean           : trace-pairing coordinate recovery
 ```
 

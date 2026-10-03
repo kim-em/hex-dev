@@ -79,6 +79,10 @@ APIs (`roots?`) for both fixed-field and algebraic-coefficient polynomials.
   algebraic-coefficient root solver.
 - `QAdjoin.ofAlgebraic?` and `ofAlgebraics?` recover coordinates in a chosen
   field; `QAdjoin.common` returns one generator and coordinates for a collection.
+- Common polynomial presentations first check the field of the first nonzero
+  coefficient with one shared power table. A failed membership check uses the
+  bounded primitive-element search; every coordinate is checked at its selected
+  embedding. See [common presentations](SPEC/hex-number-field.md#common-field-construction).
 - The incubating `HexRealAlgebraic` extension supplies typed `.re` and `.im`
   projections and exact total order on the real subtype.
 

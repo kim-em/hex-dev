@@ -737,7 +737,14 @@ using a nonmonic reducible defining polynomial selecting a cubic irrational,
 a dependent quadratic root selected by a Thom sign, nonlinear
 algebraic-coefficient polynomials, nonreal conjugates, point roots and repeated
 roots. The nonmonic reducible predecessor is a separate native check;
-the qqbar fixtures use the monic cubic/quadratic tower.
+the qqbar fixtures use the monic cubic/quadratic tower. The full native
+comparison also runs the canonical backend's common-field presentation, whose
+checked containing-field attempt and primitive-search fallback are described
+in the [number-field SPEC](../HexNumberField/SPEC/hex-number-field.md).
+All seven fixtures use the containing-field branch. Separate number-field
+checks cover rejected membership and fallback. CI applies a one-hour
+operational limit to this driver. Manual execution has no such limit, and
+these checks do not constitute the required scientific performance evaluation.
 Run `lake build HexRealClosureMathlib.TrivialTowerTests` for ordinary-import
 consumers and kernel axiom guards. The native example also checks a value
 read/write round trip and stale-context rejection. The shared driver feeds

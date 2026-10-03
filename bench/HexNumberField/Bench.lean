@@ -2293,7 +2293,9 @@ def runCommonPresentationLadder (input : AlgPolyInput) : UInt64 :=
   | none => 1
 
 /- Cost model. The public common-field construction behind
-`AlgebraicPoly.roots?`, separated per the Attribution rule: `primitive?`
+`AlgebraicPoly.roots?`, separated per the Attribution rule: the first rational
+coefficient's field is checked and rejected upon the quadratic coefficient.
+This proposed-field check has constant cost in this ladder. `primitive?`
 folds `extend?` over the `n + 1` coefficients, and with a single quadratic
 irrational among rationals every `extend?` tests a constant number of
 shifts (`choose(2, 2) + 1 = 2`) with bounded-degree canonical arithmetic,
@@ -2305,8 +2307,8 @@ the coefficient count. -/
 setup_benchmark runCommonPresentationLadder n => n
   with prep := prepAlgPolyInput
   where {
-    -- `presentation?` carries a fixed start-up cost (the generator's powers
-    -- and the first `extend?` shifts) worth roughly four coefficients, so the
+    -- `presentation?` carries a fixed start-up cost (the rejected rational
+    -- field check, the generator's powers and the first `extend?` shifts), so the
     -- bottom of the ladder is start-up dominated. The schedule keeps those
     -- rungs — they are the range `runAlgebraicRootsLadder` actually calls this
     -- at — and extends to 128 so the linear term dominates the fit.
