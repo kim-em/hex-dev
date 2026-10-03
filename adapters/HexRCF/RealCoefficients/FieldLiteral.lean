@@ -35,8 +35,9 @@ register_option rcf.algebraic.reducedLiterals : Bool := {
   descr := "quote fixed-field coordinates directly instead of reducing them again"
 }
 
+-- The false arm retains full-query quotation as a reproducible comparison control.
 register_option rcf.algebraic.intervalSigns : Bool := {
-  defValue := false
+  defValue := true
   descr := "quote exact Horner signs on the authenticated generator interval"
 }
 

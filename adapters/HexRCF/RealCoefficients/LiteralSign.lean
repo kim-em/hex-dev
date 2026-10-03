@@ -112,7 +112,7 @@ theorem check_spec {D : Type u} (entry : Entry D) (head : DensePoly Rat)
       exact checked_one head (query entry.key) lower upper x hx hl hu
         count certificate entry.value hc accepted
 
-/-- Prefer a separated exact enclosure; otherwise retain the complete
+/-- Prefer an exact enclosure sign, including singleton zero; otherwise retain the complete
 rational Sturm query. Inconclusive intervals never assert equality to zero. -/
 @[expose] def build {D : Type u} (domain : Sturm.PreparedDomain Rat)
     (lower upper : Rat) (key : D) (query : D → DensePoly Rat) : Entry D :=
@@ -139,7 +139,6 @@ theorem build_checked {D : Type u} (domain : Sturm.PreparedDomain Rat)
   | some value => simp only [build, sign, check, decide_true]
 
 end Entry
-
 
 /-- Exact interval signs or rational queries for finitely many field values.
 The same authenticated count-one interval is used for every entry. -/

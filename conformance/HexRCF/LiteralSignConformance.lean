@@ -39,6 +39,9 @@ private def mixedTable? : Option (LiteralSign.Table (DensePoly Rat)) :=
       table.entries.map (·.value) == [1, -1, 0, 0] &&
       table.entries.map (·.evidence.isSome) == [false, false, false, true] &&
       table.lookup? quadratic == some 0 &&
+      !({ table with entries :=
+        (⟨coordinate, 1, some table.count⟩ : LiteralSign.Entry (DensePoly Rat)) ::
+          table.entries.tail }).check id &&
       !({ table with entries := table.entries.map fun (entry : LiteralSign.Entry (DensePoly Rat)) =>
         { entry with evidence := none } }).check id &&
       !({ table with entries := table.entries.map fun (entry : LiteralSign.Entry (DensePoly Rat)) =>

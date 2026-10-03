@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Matched ordinary-kernel proof costs for literal interval sign evidence.
 
-Each pair has the same imports, quantified goal, reduced-coordinate quotation
+Each pair has the same imports, quantified goal, `PolyQuot.reduce` quotation
 control, solver and checker. The reference quotes a full rational Sturm query
 for every field sign; the candidate quotes exact Horner signs on the same
 certified generator interval, retaining query evidence when inconclusive.

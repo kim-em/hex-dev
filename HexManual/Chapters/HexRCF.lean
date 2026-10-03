@@ -552,6 +552,23 @@ of the selected root of `X³ − X − 1` and uses its proved real conversion.
 The constructor data must be executable and visible to the frontend; an
 arbitrary opaque algebraic value has no implicit reconstruction rule.
 
+Field signs first try exact rational Horner bounds on the authenticated
+generator interval. A strictly separated bound proves its sign; exactly
+`[0,0]` proves zero. Other zero-containing bounds retain a full rational Sturm
+query. Replay checks the recorded branch, and never rescues malformed query
+evidence with interval evaluation. The complete algebraic producer still
+succeeds on its proved input surface. Linear sign lookup remains a cost.
+
+A four-round matched comparison on the further-root, reciprocal-root and cubic
+examples favored interval quotation in all twelve pairs, with median paired
+margins 4.513, 4.752 and 13.553 seconds. The reference reconstructs full queries
+after interval production, so this measures quotation-mode selection, not a
+speedup against older code or isolated kernel time. Shared-host variation and
+all completed samples are retained in `reports/hexrcf-interval-proofs.md`.
+The default is `rcf.algebraic.intervalSigns=true`; the false arm remains a
+comparison control. Direct coordinate quotation remains off by default: its
+two separate comparisons did not establish a gain.
+
 For these reconstructed inputs, closed arithmetic is compiled into the common
 field after authenticating its source values. A quotient is recorded as a
 rational coordinate polynomial and checked by its multiplication identity;

@@ -1082,7 +1082,7 @@ lean_lib HexRCFProofProfile where
     `HexRCF.ProofProbe.Literals.CubicLegacy, `HexRCF.ProofProbe.Literals.CubicReduced,
     `HexRCF.ProofProbe.Intervals.FurtherQuery, `HexRCF.ProofProbe.Intervals.FurtherHorner,
     `HexRCF.ProofProbe.Intervals.ReciprocalQuery, `HexRCF.ProofProbe.Intervals.ReciprocalHorner,
-    `HexRCF.ProofProbe.Intervals.CubicQuery, `HexRCF.ProofProbe.Intervals.CubicHorner].map Glob.one
+    `HexRCF.ProofProbe.Intervals.CubicQuery, `HexRCF.ProofProbe.Intervals.CubicHorner, `HexRCF.ProofProbe.Intervals.Audit].map Glob.one
 
 lean_lib HexRCFProofProbe where
   srcDir := "bench"
