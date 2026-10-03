@@ -96,6 +96,7 @@ ORACLES=(
   "HexNumberFieldTower|hexnumberfieldtower_emit_fixtures|scripts/oracle/number_field_tower_pari.py|conformance-fixtures/HexNumberFieldTower/number_field_tower.jsonl"
   # Exact Python integer/Fraction formula evaluation
   "HexRealFormula|hexrealformula_emit_fixtures|scripts/oracle/real_formula.py|conformance-fixtures/HexRealFormula/formula.jsonl"
+  "HexRealClosure|hexrealclosure_trivial_conformance|scripts/oracle/real_closure_trivial.py|conformance-fixtures/HexRealClosure/trivial.jsonl"
   "HexRealClosure|hexrealclosure_bounds_conformance|scripts/oracle/real_closure_bounds.py|conformance-fixtures/HexRealClosure/bounds.jsonl"
   "HexRealClosure|hexrealclosure_deflation_conformance|scripts/oracle/real_closure_deflation.py|conformance-fixtures/HexRealClosure/deflation.jsonl"
   "HexRealClosure|hexrealclosure_isolation_conformance|scripts/oracle/real_closure_isolation.py|conformance-fixtures/HexRealClosure/isolation.jsonl"
@@ -214,7 +215,11 @@ run_tuple() {
     return 0
   fi
 
-  if ! ".lake/build/bin/$emit" >"$fresh"; then
+  local emit_command=(".lake/build/bin/$emit")
+  if [ "$oracle" = "scripts/oracle/real_closure_trivial.py" ]; then
+    emit_command=(env LEAN_ABORT_ON_PANIC=1 "${emit_command[@]}")
+  fi
+  if ! "${emit_command[@]}" >"$fresh"; then
     echo "FAIL: $lib :: $emit exited non-zero"
     return 1
   fi
@@ -272,6 +277,12 @@ run_tuple() {
     fi
   fi
 
+  if [ "$oracle" = "scripts/oracle/real_closure_trivial.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_real_closure_trivial; then
+      echo "FAIL: native trivial-root oracle mutation tests" >&2
+      return 1
+    fi
+  fi
   if [ "$oracle" = "scripts/oracle/real_closure_bounds.py" ]; then
     if ! python3 -m unittest scripts.oracle.test_real_closure_bounds; then
       echo "FAIL: $lib :: finite-bound oracle rejection checks failed"

@@ -714,9 +714,46 @@ Run `lake build HexRealClosureMathlib.Trivial` for the companion proofs.
 The conversion still
 performs canonical root selection for each selected generic descriptor;
 this agreement is not a claim of equal runtime cost or generic-path scaling.
-The full trivial-fragment contract still requires algebraic tower coefficients,
-comparison of tower values, arithmetic agreement and conversion round trips.
-Those obligations and independent python-flint cross-checks remain in
+
+`Trivial.Map.ofSuffix suffix` converts an entire validated algebraic tower over
+`BaseContext.rational registry`. Each selected canonical generator is found
+once through the independent `RealAlgebraicPoly.roots` API and retained in the
+conversion closure; all later coefficients use canonical Horner arithmetic.
+This factory is defined only for the rational base and its root suffixes.
+It does not specialize real constants or infinitesimals.
+
+`HexRealClosureMathlib.TrivialTower` proves success of every selected-root
+search from the actual validated descriptor and derives agreement through
+all levels of that factory. `Map.ofSuffix_roots` identifies the entire converted
+native root set with the existing backend result, including `all`, increasing
+roots and exact positive multiplicities, for arbitrary stored tower
+coefficients. Companion theorems preserve zero, one, natural casts, addition,
+subtraction, multiplication, negation, total inversion, division, native
+semantic equality, comparison and signs. Raw nonzero expressions can have
+different literal representations; the conversion identifies their values.
+
+Run `lake build HexRealClosure.TrivialTowerTests` for executable comparisons
+using a nonmonic reducible defining polynomial selecting a cubic irrational,
+a dependent quadratic root selected by a Thom sign, nonlinear
+algebraic-coefficient polynomials, nonreal conjugates, point roots and repeated
+roots.
+Run `lake build HexRealClosureMathlib.TrivialTowerTests` for ordinary-import
+consumers and kernel axiom guards. The native example also checks a value
+read/write round trip and stale-context rejection. The shared driver feeds
+`hexrealclosure_trivial_conformance`, which exports the actual generic roots
+after conversion; `scripts/oracle/real_closure_trivial.py` checks them against
+independent exact python-flint qqbar roots and multiplicities. The committed
+seven-case fixture covers zero, a constant, a dependent linear polynomial,
+mixed coefficients with repeated roots, nonlinear heads, nonreal conjugates
+and a point root. The oracle independently reconstructs both selected generators and evaluates
+every original recursive coefficient, including its cached sign, before
+checking the converted root output. It does not replay native certificate graphs.
+`Map.ofSuffix` caches the generators of the input tower. Individual
+`Map.root` conversions and `compareRoots` searches still enumerate the
+converted head's roots per requested handle; `Map.output` does not yet share
+those searches between entries with the same factor. The required performance
+evaluation must account for that cost. The remaining whole-family independent
+coverage audit stays in
 [#10378](https://github.com/kim-em/hex-dev/issues/10378).
 
 ### Native complete roots
