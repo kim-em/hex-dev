@@ -106,6 +106,12 @@ The square-root simplification has 83 fresh exact-oracle cases with zero skips;
 fresh fixtures match the committed file byte for byte. Required CI on
 [PR #10580](https://github.com/kim-em/hex-dev/pull/10580) checks the phase
 recording and final revision before merge.
+[The raw-artifact availability check](bench-results/prerequisite-profile-availability.json)
+finds 38 prerequisite-readiness capture directories unavailable at their recorded
+local paths. Committed manifests, summaries, diagnostics and completed timing
+samples remain retained. Recovering the raw captures or supplying required
+retained representative attribution remains under #10577; no complete Phase-4
+raw-retention claim is made.
 The [real-algebraic performance report](hex-real-algebraic-performance.md) and
 the Sturm report distinguish valid family passes from failed hypotheses,
 controls and fixed observations without budgets. Phase 4 remains incomplete.

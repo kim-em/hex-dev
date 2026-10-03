@@ -134,9 +134,13 @@ reconciliation with the implemented surface and its actual matching APIs.
 [The complete profile inventory](bench-results/prerequisite-readiness-profiles/inventory.json)
 records manifests, native-kernel sidecars, executable hashes, filtered summaries
 and local perf/samply locations. Failed or low-confidence captures remain in
-the inventory. Raw profiles are retained locally; they are not committed.
-All eight canonical arithmetic captures pass the sample-count, calibration and
-±5 ms sensitivity criteria.
+the inventory. [The artifact check](bench-results/prerequisite-profile-availability.json)
+finds all 38 raw capture directories unavailable at their recorded local paths.
+The committed manifests, summaries and diagnostics remain intact; their raw
+perf/samply files are not committed and cannot currently be reprocessed.
+The recorded diagnostics for all eight canonical arithmetic captures pass the
+sample-count, calibration and ±5 ms sensitivity criteria. These historical
+summaries do not establish complete Phase-4 raw-artifact retention.
 
 | Canonical operation | Own % | GMP % | Allocation % | Runtime % | Samples |
 | --- | --- | --- | --- | --- | --- |
@@ -175,6 +179,8 @@ remains recorded. Full diagnostics, including residuals and sensitivity, are
 in the linked summaries.
 
 ## Concerns
+
+- [#10577](https://github.com/kim-em/hex-dev/issues/10577): recover the 38 raw captures or supply the required retained representative attribution. Their saved summaries remain diagnostics; no blanket rerun replaces the completed evidence.
 
 - [#10577](https://github.com/kim-em/hex-dev/issues/10577): finish operation-specific mode/budget justification and comparators, genuine root/leaf parameter families, separation/point and rounding sweeps, and square-root/rational-construction characterization. The shipped `compare_eq` and root completeness/multiplicity/sorting theorems are available independently of this timing work.
 

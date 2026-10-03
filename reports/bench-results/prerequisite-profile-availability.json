@@ -1,0 +1,201 @@
+{
+  "source_commit": "ec066870a99727ed754b06796efc4134b5a4dda0",
+  "host": "chungus2",
+  "inventory": "reports/bench-results/prerequisite-readiness-profiles/inventory.json",
+  "method": "Path.exists() for each recorded capture directory; bounded recovery search in /home/kim and /var/tmp found no matching archive or capture. Some inaccessible paths were excluded.",
+  "captures_checked": 38,
+  "missing_at_recorded_path": 38,
+  "records": [
+    {
+      "family": "root-arrays",
+      "path": "/tmp/issue-10577-perf/root-arrays-large",
+      "exists": false
+    },
+    {
+      "family": "canonical-real",
+      "path": "/tmp/issue-10577-perf/canonical-real",
+      "exists": false
+    },
+    {
+      "family": "ceiling",
+      "path": "/tmp/issue-10577-perf/ceiling-short",
+      "exists": false
+    },
+    {
+      "family": "ceiling",
+      "path": "/tmp/issue-10577-perf/ceiling",
+      "exists": false
+    },
+    {
+      "family": "close-comparison",
+      "path": "/tmp/issue-10577-perf/close-comparison",
+      "exists": false
+    },
+    {
+      "family": "sturm-integer-1024",
+      "path": "/tmp/issue-10577-perf/sturm-integer-1024",
+      "exists": false
+    },
+    {
+      "family": "sturm-odd-cubic",
+      "path": "/tmp/issue-10577-perf/sturm-odd-cubic",
+      "exists": false
+    },
+    {
+      "family": "sturm-odd-endpoints",
+      "path": "/tmp/issue-10577-perf/sturm-odd-endpoints",
+      "exists": false
+    },
+    {
+      "family": "sturm-signs-1024",
+      "path": "/tmp/issue-10577-perf/sturm-signs-1024",
+      "exists": false
+    },
+    {
+      "family": "sturm-translated-cachedreplay",
+      "path": "/tmp/issue-10577-perf/sturm-translated-cachedreplay",
+      "exists": false
+    },
+    {
+      "family": "sturm-translated-certificate",
+      "path": "/tmp/issue-10577-perf/sturm-translated-certificate",
+      "exists": false
+    },
+    {
+      "family": "sturm-translated-clear",
+      "path": "/tmp/issue-10577-perf/sturm-translated-clear",
+      "exists": false
+    },
+    {
+      "family": "sturm-translated-count",
+      "path": "/tmp/issue-10577-perf/sturm-translated-count",
+      "exists": false
+    },
+    {
+      "family": "sturm-translated-countcertificate",
+      "path": "/tmp/issue-10577-perf/sturm-translated-countcertificate",
+      "exists": false
+    },
+    {
+      "family": "sturm-translated-fieldreplay",
+      "path": "/tmp/issue-10577-perf/sturm-translated-fieldreplay",
+      "exists": false
+    },
+    {
+      "family": "sturm-translated-infinite",
+      "path": "/tmp/issue-10577-perf/sturm-translated-infinite",
+      "exists": false
+    },
+    {
+      "family": "sturm-translated-prepared",
+      "path": "/tmp/issue-10577-perf/sturm-translated-prepared",
+      "exists": false
+    },
+    {
+      "family": "sturm-translated-preparedcertificate",
+      "path": "/tmp/issue-10577-perf/sturm-translated-preparedcertificate",
+      "exists": false
+    },
+    {
+      "family": "sturm-translated-preparedcount",
+      "path": "/tmp/issue-10577-perf/sturm-translated-preparedcount",
+      "exists": false
+    },
+    {
+      "family": "hard-add",
+      "path": "/tmp/issue-10577-perf/hard-add",
+      "exists": false
+    },
+    {
+      "family": "hard-div",
+      "path": "/tmp/issue-10577-perf/hard-div",
+      "exists": false
+    },
+    {
+      "family": "hard-intpow",
+      "path": "/tmp/issue-10577-perf/hard-intpow",
+      "exists": false
+    },
+    {
+      "family": "hard-inv",
+      "path": "/tmp/issue-10577-perf/hard-inv",
+      "exists": false
+    },
+    {
+      "family": "hard-mul",
+      "path": "/tmp/issue-10577-perf/hard-mul",
+      "exists": false
+    },
+    {
+      "family": "hard-natpow",
+      "path": "/tmp/issue-10577-perf/hard-natpow",
+      "exists": false
+    },
+    {
+      "family": "hard-neg",
+      "path": "/tmp/issue-10577-perf/hard-neg",
+      "exists": false
+    },
+    {
+      "family": "hard-sub",
+      "path": "/tmp/issue-10577-perf/hard-sub",
+      "exists": false
+    },
+    {
+      "family": "rational-recognition",
+      "path": "/tmp/issue-10577-perf/rational-recognition",
+      "exists": false
+    },
+    {
+      "family": "real-polynomial-roots",
+      "path": "/tmp/issue-10577-perf/real-polynomial-roots",
+      "exists": false
+    },
+    {
+      "family": "root-arrays",
+      "path": "/tmp/issue-10577-perf/root-arrays",
+      "exists": false
+    },
+    {
+      "family": "root-exactification",
+      "path": "/tmp/issue-10577-perf/root-exactification",
+      "exists": false
+    },
+    {
+      "family": "root-sorting",
+      "path": "/tmp/issue-10577-perf/root-sorting",
+      "exists": false
+    },
+    {
+      "family": "sturm-coefficient",
+      "path": "/tmp/issue-10577-perf/sturm-coefficient",
+      "exists": false
+    },
+    {
+      "family": "sturm-endpoint",
+      "path": "/tmp/issue-10577-perf/sturm-endpoint",
+      "exists": false
+    },
+    {
+      "family": "sturm-head",
+      "path": "/tmp/issue-10577-perf/sturm-head",
+      "exists": false
+    },
+    {
+      "family": "sturm-query",
+      "path": "/tmp/issue-10577-perf/sturm-query",
+      "exists": false
+    },
+    {
+      "family": "sturm-wide",
+      "path": "/tmp/issue-10577-perf/sturm-wide",
+      "exists": false
+    },
+    {
+      "family": "sturm-odd-fractional",
+      "path": "/tmp/issue-10577-perf/sturm-odd-fractional",
+      "exists": false
+    }
+  ],
+  "scope": "Raw artifact availability only. Completed diagnostics and measurements are not deleted or replaced; Phase 4 remains incomplete."
+}

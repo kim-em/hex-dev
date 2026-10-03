@@ -7,10 +7,11 @@
       "parameter": 32768,
       "executable_sha256": "c56a92df8768359135ff9d71cdc90ff471754d880b57bb01e6e984a184dcead3",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/root-arrays-large",
       "summary": "array-capture/root-arrays.summary.json",
       "confidence": "passed",
-      "samples": 406
+      "samples": 406,
+      "raw_recorded_path": "/tmp/issue-10577-perf/root-arrays-large",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "canonical-real.manifest.json",
@@ -19,10 +20,11 @@
       "parameter": 0,
       "executable_sha256": "7f135972cf6b5d2f88af677c78a42d4b9b07de8a3492e8aa42ebebd6a7830563",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/canonical-real",
       "summary": "canonical-real.summary.json",
       "confidence": "passed",
-      "samples": 1915
+      "samples": 1915,
+      "raw_recorded_path": "/tmp/issue-10577-perf/canonical-real",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "ceil-short/ceiling.manifest.json",
@@ -31,10 +33,11 @@
       "parameter": 0,
       "executable_sha256": "5737696b97d268c9d6fcb46658d6f757a78c4d241bc01ab59fa3ee4877cd437f",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/ceiling-short",
       "summary": "ceil-short/ceiling.summary.json",
       "confidence": "passed",
-      "samples": 138
+      "samples": 138,
+      "raw_recorded_path": "/tmp/issue-10577-perf/ceiling-short",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "ceiling.manifest.json",
@@ -43,7 +46,8 @@
       "parameter": 0,
       "executable_sha256": "5737696b97d268c9d6fcb46658d6f757a78c4d241bc01ab59fa3ee4877cd437f",
       "status": "failed",
-      "raw_retained_locally": "/tmp/issue-10577-perf/ceiling"
+      "raw_recorded_path": "/tmp/issue-10577-perf/ceiling",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "close-comparison.manifest.json",
@@ -52,10 +56,11 @@
       "parameter": 0,
       "executable_sha256": "80b5e8d338c1eac3ee85a277fc973c3490e4dfd9cc31f2030b81707ed3ac201d",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/close-comparison",
       "summary": "close-comparison.summary.json",
       "confidence": "passed",
-      "samples": 1346
+      "samples": 1346,
+      "raw_recorded_path": "/tmp/issue-10577-perf/close-comparison",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "growing-operands/sturm-integer-1024.manifest.json",
@@ -64,10 +69,11 @@
       "parameter": 1024,
       "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-integer-1024",
       "summary": "growing-operands/sturm-integer-1024.summary.json",
       "confidence": "passed",
-      "samples": 2751
+      "samples": 2751,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-integer-1024",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "growing-operands/sturm-odd-cubic.manifest.json",
@@ -76,10 +82,11 @@
       "parameter": 32768,
       "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-odd-cubic",
       "summary": "growing-operands/sturm-odd-cubic.summary.json",
       "confidence": "passed",
-      "samples": 1641
+      "samples": 1641,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-odd-cubic",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "growing-operands/sturm-odd-endpoints.manifest.json",
@@ -88,10 +95,11 @@
       "parameter": 32768,
       "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-odd-endpoints",
       "summary": "growing-operands/sturm-odd-endpoints.summary.json",
       "confidence": "passed",
-      "samples": 1605
+      "samples": 1605,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-odd-endpoints",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "growing-operands/sturm-signs-1024.manifest.json",
@@ -100,10 +108,11 @@
       "parameter": 1024,
       "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-signs-1024",
       "summary": "growing-operands/sturm-signs-1024.summary.json",
       "confidence": "passed",
-      "samples": 1621
+      "samples": 1621,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-signs-1024",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "growing-operands/sturm-translated-cachedreplay.manifest.json",
@@ -112,10 +121,11 @@
       "parameter": 32768,
       "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-translated-cachedreplay",
       "summary": "growing-operands/sturm-translated-cachedreplay.summary.json",
       "confidence": "passed",
-      "samples": 1463
+      "samples": 1463,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-translated-cachedreplay",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "growing-operands/sturm-translated-certificate.manifest.json",
@@ -124,10 +134,11 @@
       "parameter": 32768,
       "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-translated-certificate",
       "summary": "growing-operands/sturm-translated-certificate.summary.json",
       "confidence": "passed",
-      "samples": 1203
+      "samples": 1203,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-translated-certificate",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "growing-operands/sturm-translated-clear.manifest.json",
@@ -136,10 +147,11 @@
       "parameter": 32768,
       "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-translated-clear",
       "summary": "growing-operands/sturm-translated-clear.summary.json",
       "confidence": "passed",
-      "samples": 1542
+      "samples": 1542,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-translated-clear",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "growing-operands/sturm-translated-count.manifest.json",
@@ -148,10 +160,11 @@
       "parameter": 32768,
       "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-translated-count",
       "summary": "growing-operands/sturm-translated-count.summary.json",
       "confidence": "passed",
-      "samples": 1149
+      "samples": 1149,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-translated-count",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "growing-operands/sturm-translated-countcertificate.manifest.json",
@@ -160,10 +173,11 @@
       "parameter": 32768,
       "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-translated-countcertificate",
       "summary": "growing-operands/sturm-translated-countcertificate.summary.json",
       "confidence": "passed",
-      "samples": 1599
+      "samples": 1599,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-translated-countcertificate",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "growing-operands/sturm-translated-fieldreplay.manifest.json",
@@ -172,10 +186,11 @@
       "parameter": 32768,
       "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-translated-fieldreplay",
       "summary": "growing-operands/sturm-translated-fieldreplay.summary.json",
       "confidence": "passed",
-      "samples": 1749
+      "samples": 1749,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-translated-fieldreplay",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "growing-operands/sturm-translated-infinite.manifest.json",
@@ -184,10 +199,11 @@
       "parameter": 32768,
       "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-translated-infinite",
       "summary": "growing-operands/sturm-translated-infinite.summary.json",
       "confidence": "passed",
-      "samples": 1200
+      "samples": 1200,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-translated-infinite",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "growing-operands/sturm-translated-prepared.manifest.json",
@@ -196,10 +212,11 @@
       "parameter": 32768,
       "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-translated-prepared",
       "summary": "growing-operands/sturm-translated-prepared.summary.json",
       "confidence": "passed",
-      "samples": 1895
+      "samples": 1895,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-translated-prepared",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "growing-operands/sturm-translated-preparedcertificate.manifest.json",
@@ -208,10 +225,11 @@
       "parameter": 32768,
       "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-translated-preparedcertificate",
       "summary": "growing-operands/sturm-translated-preparedcertificate.summary.json",
       "confidence": "passed",
-      "samples": 1404
+      "samples": 1404,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-translated-preparedcertificate",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "growing-operands/sturm-translated-preparedcount.manifest.json",
@@ -220,10 +238,11 @@
       "parameter": 32768,
       "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-translated-preparedcount",
       "summary": "growing-operands/sturm-translated-preparedcount.summary.json",
       "confidence": "passed",
-      "samples": 1551
+      "samples": 1551,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-translated-preparedcount",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "hard-arithmetic/hard-add.manifest.json",
@@ -232,10 +251,11 @@
       "parameter": 0,
       "executable_sha256": "d9a1f72c4cc6fa592f3ebaeec3d96eb5c41794dedb9828b7e0b2b60a8532808b",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/hard-add",
       "summary": "hard-arithmetic/hard-add.summary.json",
       "confidence": "passed",
-      "samples": 6580
+      "samples": 6580,
+      "raw_recorded_path": "/tmp/issue-10577-perf/hard-add",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "hard-arithmetic/hard-div.manifest.json",
@@ -244,10 +264,11 @@
       "parameter": 0,
       "executable_sha256": "d9a1f72c4cc6fa592f3ebaeec3d96eb5c41794dedb9828b7e0b2b60a8532808b",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/hard-div",
       "summary": "hard-arithmetic/hard-div.summary.json",
       "confidence": "passed",
-      "samples": 1338
+      "samples": 1338,
+      "raw_recorded_path": "/tmp/issue-10577-perf/hard-div",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "hard-arithmetic/hard-intpow.manifest.json",
@@ -256,10 +277,11 @@
       "parameter": 0,
       "executable_sha256": "d9a1f72c4cc6fa592f3ebaeec3d96eb5c41794dedb9828b7e0b2b60a8532808b",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/hard-intpow",
       "summary": "hard-arithmetic/hard-intpow.summary.json",
       "confidence": "passed",
-      "samples": 2197
+      "samples": 2197,
+      "raw_recorded_path": "/tmp/issue-10577-perf/hard-intpow",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "hard-arithmetic/hard-inv.manifest.json",
@@ -268,10 +290,11 @@
       "parameter": 0,
       "executable_sha256": "d9a1f72c4cc6fa592f3ebaeec3d96eb5c41794dedb9828b7e0b2b60a8532808b",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/hard-inv",
       "summary": "hard-arithmetic/hard-inv.summary.json",
       "confidence": "passed",
-      "samples": 3284
+      "samples": 3284,
+      "raw_recorded_path": "/tmp/issue-10577-perf/hard-inv",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "hard-arithmetic/hard-mul.manifest.json",
@@ -280,10 +303,11 @@
       "parameter": 0,
       "executable_sha256": "d9a1f72c4cc6fa592f3ebaeec3d96eb5c41794dedb9828b7e0b2b60a8532808b",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/hard-mul",
       "summary": "hard-arithmetic/hard-mul.summary.json",
       "confidence": "passed",
-      "samples": 1407
+      "samples": 1407,
+      "raw_recorded_path": "/tmp/issue-10577-perf/hard-mul",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "hard-arithmetic/hard-natpow.manifest.json",
@@ -292,10 +316,11 @@
       "parameter": 0,
       "executable_sha256": "d9a1f72c4cc6fa592f3ebaeec3d96eb5c41794dedb9828b7e0b2b60a8532808b",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/hard-natpow",
       "summary": "hard-arithmetic/hard-natpow.summary.json",
       "confidence": "passed",
-      "samples": 1783
+      "samples": 1783,
+      "raw_recorded_path": "/tmp/issue-10577-perf/hard-natpow",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "hard-arithmetic/hard-neg.manifest.json",
@@ -304,10 +329,11 @@
       "parameter": 0,
       "executable_sha256": "d9a1f72c4cc6fa592f3ebaeec3d96eb5c41794dedb9828b7e0b2b60a8532808b",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/hard-neg",
       "summary": "hard-arithmetic/hard-neg.summary.json",
       "confidence": "passed",
-      "samples": 1707
+      "samples": 1707,
+      "raw_recorded_path": "/tmp/issue-10577-perf/hard-neg",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "hard-arithmetic/hard-sub.manifest.json",
@@ -316,10 +342,11 @@
       "parameter": 0,
       "executable_sha256": "d9a1f72c4cc6fa592f3ebaeec3d96eb5c41794dedb9828b7e0b2b60a8532808b",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/hard-sub",
       "summary": "hard-arithmetic/hard-sub.summary.json",
       "confidence": "passed",
-      "samples": 6516
+      "samples": 6516,
+      "raw_recorded_path": "/tmp/issue-10577-perf/hard-sub",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "rational-recognition.manifest.json",
@@ -328,10 +355,11 @@
       "parameter": 0,
       "executable_sha256": "c0d6f210a80e61e5ab761dc4cd9f318f38fa6ed64d5cda7a7e853c09a194f5ef",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/rational-recognition",
       "summary": "rational-recognition.summary.json",
       "confidence": "passed",
-      "samples": 1437
+      "samples": 1437,
+      "raw_recorded_path": "/tmp/issue-10577-perf/rational-recognition",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "real-polynomial-roots.manifest.json",
@@ -340,10 +368,11 @@
       "parameter": 0,
       "executable_sha256": "c0d6f210a80e61e5ab761dc4cd9f318f38fa6ed64d5cda7a7e853c09a194f5ef",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/real-polynomial-roots",
       "summary": "real-polynomial-roots.summary.json",
       "confidence": "passed",
-      "samples": 2001
+      "samples": 2001,
+      "raw_recorded_path": "/tmp/issue-10577-perf/real-polynomial-roots",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "root-arrays.manifest.json",
@@ -352,7 +381,8 @@
       "parameter": 256,
       "executable_sha256": "80b5e8d338c1eac3ee85a277fc973c3490e4dfd9cc31f2030b81707ed3ac201d",
       "status": "failed",
-      "raw_retained_locally": "/tmp/issue-10577-perf/root-arrays"
+      "raw_recorded_path": "/tmp/issue-10577-perf/root-arrays",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "root-exactification.manifest.json",
@@ -361,10 +391,11 @@
       "parameter": 32,
       "executable_sha256": "5737696b97d268c9d6fcb46658d6f757a78c4d241bc01ab59fa3ee4877cd437f",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/root-exactification",
       "summary": "root-exactification.summary.json",
       "confidence": "passed",
-      "samples": 1863
+      "samples": 1863,
+      "raw_recorded_path": "/tmp/issue-10577-perf/root-exactification",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "root-sorting.manifest.json",
@@ -373,10 +404,11 @@
       "parameter": 32768,
       "executable_sha256": "5737696b97d268c9d6fcb46658d6f757a78c4d241bc01ab59fa3ee4877cd437f",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/root-sorting",
       "summary": "root-sorting.summary.json",
       "confidence": "passed",
-      "samples": 2429
+      "samples": 2429,
+      "raw_recorded_path": "/tmp/issue-10577-perf/root-sorting",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "sturm-coefficient.manifest.json",
@@ -385,10 +417,11 @@
       "parameter": 32768,
       "executable_sha256": "d81094975c9e126f7bc3c3935ca06cf3c8d5c1bb65b72f59d9c82d09891f125e",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-coefficient",
       "summary": "sturm-coefficient.summary.json",
       "confidence": "passed",
-      "samples": 1415
+      "samples": 1415,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-coefficient",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "sturm-endpoint.manifest.json",
@@ -397,10 +430,11 @@
       "parameter": 32768,
       "executable_sha256": "d81094975c9e126f7bc3c3935ca06cf3c8d5c1bb65b72f59d9c82d09891f125e",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-endpoint",
       "summary": "sturm-endpoint.summary.json",
       "confidence": "passed",
-      "samples": 1680
+      "samples": 1680,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-endpoint",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "sturm-head.manifest.json",
@@ -409,10 +443,11 @@
       "parameter": 20,
       "executable_sha256": "feddb153b88861710dd379b300edc1818b2e115ebaf24cad25691457a5fd911e",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-head",
       "summary": "sturm-head.summary.json",
       "confidence": "passed",
-      "samples": 1089
+      "samples": 1089,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-head",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "sturm-query.manifest.json",
@@ -421,10 +456,11 @@
       "parameter": 65536,
       "executable_sha256": "bdf258956a26dd05af56af2afb1342ea09e8f7c2a6f72bbf72284c5246b12bdd",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-query",
       "summary": "sturm-query.summary.json",
       "confidence": "passed",
-      "samples": 2498
+      "samples": 2498,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-query",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "sturm-wide.manifest.json",
@@ -433,10 +469,11 @@
       "parameter": 512,
       "executable_sha256": "d81094975c9e126f7bc3c3935ca06cf3c8d5c1bb65b72f59d9c82d09891f125e",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-wide",
       "summary": "sturm-wide.summary.json",
       "confidence": "passed",
-      "samples": 1944
+      "samples": 1944,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-wide",
+      "raw_available_at_recorded_path": false
     },
     {
       "manifest": "growing-operands/sturm-odd-fractional.manifest.json",
@@ -445,10 +482,12 @@
       "parameter": 32768,
       "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
       "status": "profiled",
-      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-odd-fractional",
       "summary": "growing-operands/sturm-odd-fractional.summary.json",
       "confidence": "passed",
-      "samples": 1542
+      "samples": 1542,
+      "raw_recorded_path": "/tmp/issue-10577-perf/sturm-odd-fractional",
+      "raw_available_at_recorded_path": false
     }
-  ]
+  ],
+  "raw_retention_note": "These are historical capture locations. Raw artifacts are currently unavailable at the recorded paths on chungus2; committed manifests, summaries, diagnostics and completed timing samples remain retained. No claim of complete Phase-4 raw-profile retention is made."
 }

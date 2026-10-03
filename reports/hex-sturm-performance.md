@@ -713,10 +713,14 @@ comparator coverage remains tracked under #10577.
 
 [The profile inventory](bench-results/prerequisite-readiness-profiles/inventory.json)
 includes every successful and failed capture, binary fingerprints, commands,
-local raw-profile locations and filtered summaries. Hashing, fixture preparation
-and process startup are excluded by the kernel sidecar. All growing-operand
-captures pass the ≥100-sample, ≤5 ms calibration and ±5 ms sensitivity checks.
-Raw perf/samply data are retained locally, not committed.
+historical raw-profile locations and filtered summaries. Hashing, fixture preparation
+and process startup are excluded by the kernel sidecar. Recorded growing-operand
+diagnostics pass the ≥100-sample, ≤5 ms calibration and ±5 ms sensitivity checks.
+[The artifact check](bench-results/prerequisite-profile-availability.json) finds
+all 38 prerequisite-readiness raw capture directories unavailable at their
+recorded local paths. Their committed manifests, summaries, diagnostics and
+timing samples remain intact, but these raw perf/samply files cannot currently
+be reprocessed. Complete Phase-4 raw-attribution retention is not established.
 
 The fractional-endpoint capture at 32768 bits retains 1542 samples, a
 1.001 ms calibration residual and passing ±5 ms sensitivity. It has 98.31%
@@ -751,5 +755,7 @@ above continue to apply to their unchanged shared integer kernels. The
 frontend profiles are separate evidence for prepared, cached and transport paths.
 
 ## Concerns
+
+- [#10577](https://github.com/kim-em/hex-dev/issues/10577): recover the prerequisite-readiness raw captures or provide the required retained representative attribution. Existing completed samples and summaries remain retained; their missing raw artifacts are an additional Phase-4 evidence gap.
 
 - [#10577](https://github.com/kim-em/hex-dev/issues/10577): reconcile all advertised frontend operations with registrations/comparators, resolve the retained coefficient-sign characterization, and finish dependency-ordered Phase-4 attestation. The admitted family evidence and unadmitted candidates above do not close this audit.
