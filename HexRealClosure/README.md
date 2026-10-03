@@ -1082,22 +1082,37 @@ entries. Compiled decoding also erases a deliberately noncomputable semantic
 interpretation. A fixture second-level graph decodes through proved facts
 obtained by checking a first-level packet;
 removing a lower literal, an endpoint fact or an upper key rejects. The ordinary
-kernel probe uses a literal child certificate and the general correspondence
-proofs. Axiom audits include the actual producer success theorem, scalar fact
-construction, and the theorem connecting acceptance to the actual decoded bytes.
+kernel probes use literal child certificates and the general correspondence
+proofs. `upper_roundtrip` checks a complete upper packet with a strict finite
+predecessor reader; its coverage of every stored literal is proved by ordinary
+kernel computation. The compiled `producedNestedPass` instead builds both
+levels with the actual producer. It automatically collects the upper packet's
+coefficient keys, builds and checks the lower packet, and decodes the upper
+packet through its finite facts. Removing the defining-head literal's child
+fact rejects. Axiom audits include the actual producer success theorem, scalar
+fact construction, the finite-reader roundtrip and the theorem connecting
+acceptance to the actual decoded bytes.
 
 This API takes an explicit key list. It does not yet collect all intermediate
 packing keys automatically, rebuild algebraic contexts from child packets or
-supply a single graph of dependencies between field levels. Literal packet
-structured roundtrips require lawful coefficient and context codecs; byte
-roundtrips additionally require the printed packet to pass
+supply a single graph of dependencies between field levels.
+`SignEvidence.coefficients` and `SignEvidence.contexts` collect the finite
+literal support of a packet, including its full root binding and every stored
+node. `Element.signKeys` retains distinct polynomial keys in first-occurrence
+order, and `Element.predecessors` collects their stored predecessor coefficients.
+`Context.signFacts_covers` derives finite algebraic-reader coverage from a
+checked child joint table. `codec_ofSigns_covered`, `bytes_ofSigns_covered` and
+`Context.decodeEvidence_covered` prove exact producer/reader correspondence
+under finite literal coverage. Complete readers may still use their global
+laws. Byte roundtrips additionally require the printed packet to pass
 `Codec.checkBytes limits`, including its syntax prechecks. The actual encoder's root and backward-reference bounds,
 node dimensions, reduction indices and literal node/moment bindings are
 proved. `Context.decodeEvidence_ofSigns` proves that printing, parsing and
-checking such a packet returns exactly its scalar facts. At algebraic levels,
-`Element.codec` provides the roundtrip law by recomputing stored signs. Strict
-partial predecessor readers still require a separate finite-coverage roundtrip
-theorem. A general proof that sufficiently large lexical limits accept every
+checking such a packet returns exactly its scalar facts. `Element.codec`
+provides its global roundtrip law by recomputing stored signs; the finite-reader
+theorems permit `Element.signCodec` without that recomputation during literal
+decoding. Graph arithmetic retains its ordinary coefficient operations.
+A general proof that sufficiently large lexical limits accept every
 printed packet is also separate; the concrete kernel fixture passes the
 compiled precheck. Semantic
 acceptance of arbitrary bytes is independent of that roundtrip. Collection,

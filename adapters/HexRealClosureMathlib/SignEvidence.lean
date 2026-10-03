@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.SignEvidence
+public import HexRealClosure.SignCodec
 public import HexRealClosureMathlib.SignFacts
 
 public section
@@ -47,6 +48,31 @@ theorem Context.signFacts_fields (context : Context E Ctx coeffSign parent)
     (context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs)[i.val].sign =
       signs.values[i.val] := by
   simp [Context.signFacts]
+
+/-- Every requested literal key appears among the facts derived from its
+checked joint row. Repeated keys retain their original vector slots. -/
+theorem Context.signFacts_key (context : Context E Ctx coeffSign parent)
+    {queries : List (DensePoly E)} (signs : SelectedSigns context.root queries)
+    (p : DensePoly E) (hp : p ∈ queries) :
+    ∃ fact ∈ (context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs).toList,
+      fact.polynomial = p := by
+  obtain ⟨i, bound, same⟩ := List.mem_iff_getElem.mp hp
+  let facts := context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs
+  refine ⟨facts[i], Vector.mem_toList_iff.mpr (Vector.mem_of_getElem rfl), ?_⟩
+  exact (Context.signFacts_fields f hz h1 ha hs hm hnat hsign hn hi
+    context signs ⟨i, bound⟩).1.trans same
+
+/-- A child joint table proves finite-reader coverage for all algebraic
+literals requested by the executable key collector. The predecessor reader
+needs coverage only of the coefficients stored in those literals. -/
+theorem Context.signFacts_covers (context : Context E Ctx coeffSign parent)
+    (value : ValueCodec E) (coefficients : List (Element context))
+    (hv : value.Covers (Element.predecessors coefficients))
+    (signs : SelectedSigns context.root (Element.signKeys coefficients)) :
+    (Element.signCodec value
+      (context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs).toList).Covers coefficients :=
+  Element.signCodec_covers value _ coefficients hv
+    (Context.signFacts_key f hz h1 ha hs hm hnat hsign hn hi context signs)
 
 /-- Check the supplied child graph once and derive all its requested facts.
 Missing or false evidence returns `none`. This packet's producer is not
@@ -130,6 +156,28 @@ theorem Context.decodeEvidence_ofSigns [Hashable E] [Hashable Ctx]
   simp only [bind, Except.bind,
     Context.readEvidence_ofSigns f hz h1 ha hs hm hnat hsign hn hi, pure, Except.pure]
 
+/-- Printing, parsing and checking a produced packet returns the exact
+original scalar facts with a finite predecessor reader. Its literal support
+is collected from the actual packet; no global decoder law is required. -/
+theorem Context.decodeEvidence_covered [Hashable E] [Hashable Ctx]
+    (context : Context E Ctx coeffSign parent) (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    {queries : List (DensePoly E)} (signs : SelectedSigns context.root queries)
+    (hv : value.Covers (SignEvidence.coefficients context.root.raw (SignEvidence.ofSigns signs)))
+    (hc : ctx.Covers (SignEvidence.contexts context.root.raw (SignEvidence.ofSigns signs)))
+    (limits : Codec.Limits)
+    (bytes : Codec.checkBytes limits
+      ((SignEvidence.codec value ctx context.root.raw).encodeBytes
+        (SignEvidence.ofSigns signs)) = .ok ()) :
+    context.decodeEvidence f hz h1 ha hs hm hnat hsign hn hi value ctx queries
+      ((SignEvidence.codec value ctx context.root.raw).encodeBytes
+        (SignEvidence.ofSigns signs)) limits =
+      .ok (context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs) := by
+  unfold Context.decodeEvidence
+  dsimp only
+  rw [SignEvidence.bytes_ofSigns_covered value ctx context signs hv hc limits bytes]
+  simp only [bind, Except.bind,
+    Context.readEvidence_ofSigns f hz h1 ha hs hm hnat hsign hn hi, pure, Except.pure]
+
 /-- Success refers to the actual decoded bytes and accepted graph. No claim
 about the printer, a cached sign or a second certificate replaces that check. -/
 theorem Context.decodeEvidence_evidence (context : Context E Ctx coeffSign parent)
@@ -185,3 +233,11 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.Context.buildEvidence_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Context.buildEvidence_success
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.decodeEvidence_covered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.decodeEvidence_covered
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.signFacts_covers' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.signFacts_covers
