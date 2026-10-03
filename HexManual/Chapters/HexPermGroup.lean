@@ -57,7 +57,8 @@ translate its results into statements about `Equiv.Perm (Fin n)`.
 
 A permutation `p : Perm n` ({name}`Hex.Perm`) is the vector of the images of
 `0, 1, …, n - 1`, together with proofs that every point occurs exactly once.
-For small examples these proofs are `by decide`. Composition follows Mathlib:
+These proofs default to `by decide`, so a permutation given by a literal
+vector is written `Perm.mk #v[…]`. Composition follows Mathlib:
 `p.comp q` applies `q` first, so `(p.comp q) x = p (q x)`.
 
 {name}`Hex.PermGroup.Group.ofGenerators` takes an array of permutations and
@@ -70,10 +71,8 @@ open Hex Hex.PermGroup
 
 namespace HexPermGroupChapter
 
-def rotation : Perm 4 :=
-  ⟨#v[1, 2, 3, 0], by decide, by decide⟩
-def reflection : Perm 4 :=
-  ⟨#v[0, 3, 2, 1], by decide, by decide⟩
+def rotation : Perm 4 := Perm.mk #v[1, 2, 3, 0]
+def reflection : Perm 4 := Perm.mk #v[0, 3, 2, 1]
 def square : Group 4 :=
   Group.ofGenerators #[rotation, reflection]
 
@@ -147,8 +146,8 @@ the stabilizer. When `H` is not normal the left and right cosets differ;
 cosets into representatives of the right cosets.
 
 ```lean
-def swap3 : Perm 3 := ⟨#v[1, 0, 2], by decide, by decide⟩
-def cycle3 : Perm 3 := ⟨#v[1, 2, 0], by decide, by decide⟩
+def swap3 : Perm 3 := Perm.mk #v[1, 0, 2]
+def cycle3 : Perm 3 := Perm.mk #v[1, 2, 0]
 def symmetric3 : Group 3 :=
   Group.ofGenerators #[swap3, cycle3]
 def pointFixer : Group 3 := symmetric3.stabilizer 2
@@ -219,7 +218,7 @@ The symmetric group on four points has derived series
 
 ```lean
 def symmetric4 : Group 4 := Group.ofGenerators
-  #[⟨#v[1, 0, 2, 3], by decide, by decide⟩, rotation]
+  #[Perm.mk #v[1, 0, 2, 3], rotation]
 def derivedOrders :=
   symmetric4.derivedSeries.certificate.orders symmetric4
 #guard derivedOrders = [24, 12, 4, 1]
@@ -237,7 +236,7 @@ of each generator of `G` in each block, followed by the generators of `H`.
 order 2 is the dihedral group of order 8 again:
 
 ```lean
-def c2Swap : Perm 2 := ⟨#v[1, 0], by decide, by decide⟩
+def c2Swap : Perm 2 := Perm.mk #v[1, 0]
 def c2 : Group 2 := Group.ofGenerators #[c2Swap]
 def c2wr2 := c2.wreathProduct c2 (by decide)
 #guard c2wr2.order = 8
