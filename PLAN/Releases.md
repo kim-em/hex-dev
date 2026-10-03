@@ -115,10 +115,18 @@ Per release:
 
 `HexManual` is a Verso document. `lake build HexManual` only *typechecks*
 it -- every `{docstring}`, `{ref}`, `#eval`/`leanOutput`, and `#guard` is
-checked as the chapters elaborate. To produce the browsable site, the
-`hexmanual` executable (`Main.lean`) renders it to static HTML:
+checked as the chapters elaborate. To produce the browsable site, run
+`Main.lean` in the interpreter, which renders it to static HTML:
 
-    lake exe hexmanual --output _out
+    lake build HexManual HexManual.Theme
+    lake env lean --run Main.lean --output _out
+
+The `hexmanual` executable produces the same site, but building it compiles
+Mathlib and every Hex library imported by the manual to C: about 9,800
+compiled objects, which took about 60 build-minutes on the 4-core Pages
+runner. On a 96-core machine, building the executable took 164 s and
+rendering with it 70 s, against 45 s for the interpreted render. Verso's own
+modules are precompiled, so the interpreted render still runs Verso natively.
 
 The multi-page site lands in `_out/html-multi`; open its `index.html`, or
 serve it with `python3 -m http.server -d _out/html-multi`.

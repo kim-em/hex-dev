@@ -72,8 +72,14 @@ jobs:
           key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
           restore-keys: |
             lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+      # Render through the interpreter. Verso's own modules are precompiled,
+      # so rendering runs native code, while nothing imported by `Main`
+      # (Mathlib and every Hex library) has to be compiled to C, which the
+      # `hexmanual` executable needs and which took most of a deploy.
       - name: Render the manual
-        run: lake exe hexmanual --output _out
+        run: |
+          lake build HexManual HexManual.Theme
+          lake env lean --run Main.lean --output _out
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
