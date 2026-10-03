@@ -410,14 +410,22 @@ number-field batch (`hex-number-field`, `hex-number-field-mathlib`,
 `hex-number-field-tower`, `hex-number-field-tower-mathlib`, `hex-rcf`)
 is on this token.
 
-`hex-publishing-2` carries 44 of 50:
+`hex-publishing-2` has 46 recorded selected repositories and two further
+allocated slots, against its 50-repository limit:
 
-The new `hex-ecpp` and `hex-ecpp-mathlib` repositories are allocated to this
-token. Add both selected repositories with Contents and Workflows read/write
-and approve the Leanprover organization grant before the next publishing
-run. Their selections and approval are pending confirmation; this allocation
-uses two of the six slots in the recorded inventory.
+`hex-ecpp` and `hex-ecpp-mathlib` are selected. Their Leanprover organization
+approval is pending; the token owner cannot approve
+their own request. The new `hex-lattice-enum` and
+`hex-lattice-enum-mathlib` empty repositories are allocated to this same token
+so they can join that approval request. Their selections are not yet
+confirmed. Adding the lattice pair brings the recorded allocation to 48 of
+50. Both libraries are at Phase 7; repository reservation alone does not
+publish their sources or admit them into the release manifest.
 
+- selected for publication, approval pending: `hex-ecpp`,
+  `hex-ecpp-mathlib`;
+- empty repositories reserved, selections pending: `hex-lattice-enum`,
+  `hex-lattice-enum-mathlib`;
 - released: `hex-primality`, `hex-primality-mathlib`,
   `hex-sparse-poly`, `hex-sparse-poly-mathlib`, `hex-resultant`,
   `hex-resultant-mathlib`, `hex-graph-iso`, `hex-graph-iso-mathlib`;
@@ -446,8 +454,12 @@ approved, a real sync cannot push a workflow file to any mirror.
 `hex-publishing-2` additionally holds organization-level permissions;
 `hex-publishing` holds none.
 
-With `hex-publishing` at 48 and `hex-publishing-2` at 44, the next
-batch larger than two repositories needs a third token
+The published `hex-perm-group` and `hex-perm-group-mathlib` repositories
+are absent from the older routing inventory. Their token placement needs
+reconciliation from a successful publishing preflight or the token settings.
+Reserve two further slots on `hex-publishing-2` until that placement is known;
+with the lattice pair this conservatively budgets all 50 slots. Allocate any
+larger new batch to a third token
 (`hex-publishing-3`, a new `RELEASED_SYNC_PAT_3` secret, and one line in
 `.github/workflows/sync-released.yml` and `sync_released.py`'s token
 list). The sync's per-repository routing makes the split invisible to
