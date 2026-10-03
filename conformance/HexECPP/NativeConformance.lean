@@ -175,6 +175,7 @@ private def tinyOutput := produce 17 0 { public512Budget with maxNodes := some 1
 #guard tinyOutput.result.toOption.isNone
 #guard tinyOutput.state.stats.outputRejects > 0
 #guard tinyOutput.state.stats.factorWork ≥ leafBudget.maxAttempts
+#guard exhausted 17 { maxNodes := some 1 } .nodes
 #guard (produce 17 0 { public512Budget with maxRows := some 0 }).result.toOption.any (checkAt 17)
 #guard exhausted hard { native512Budget with maxPolynomialWork := 0 } .polynomialWork
 #guard exhausted hard { order := some { orderBudget with attemptLimit := none } } .factorPolicy

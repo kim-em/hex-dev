@@ -2259,3 +2259,8 @@ lean_lib HexCharPolyMathlibMeasurements where
     `HexCharPolyMathlib.ProofProbe.Dense32Packed,
     `HexCharPolyMathlib.ProofProbe.Dense16Candidate,
     `HexCharPolyMathlib.ProofProbe.Dense16Reference].map Glob.one
+
+-- Fixed CM data and bounded roots for the independent analytic oracle.
+lean_exe hexecpp_emit_class_polynomials where
+  srcDir := "conformance"
+  root := `HexECPP.EmitClassPolynomials
