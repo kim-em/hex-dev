@@ -36,8 +36,10 @@ arithmetic for odd word-sized moduli (`powModWordOdd`) and to
 every arithmetic primitive the checkers below need. Extended GCD is
 search infrastructure rather than a checker primitive: `HexArith.extGcd`
 (`HexArith/ExtGcd.lean:41`) is the pure `Nat` routine and
-`HexArith.Int.extGcd` (`:396`) reaches GMP's `mpz_gcdext` through an
-`@[extern]`. The namespace is `HexArith`, not `Hex`.
+`HexArith.Int.extGcd` preserves its signed Lean definition and uses a
+proved compiler rewrite to the GMP-backed `Nat.extendedGcd` primitive
+on nonnegative inputs. The temporary primitive backport is removed once
+Hex's pinned toolchain includes lean4#15160. The namespace is `HexArith`, not `Hex`.
 
 `primeTable` contains every prime below its exclusive bound `100000`, in
 ascending order, with soundness and completeness theorems. The `primality`

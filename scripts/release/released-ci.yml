@@ -125,7 +125,7 @@ workflows:
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
-            run: lake build HexArith
+            run: lake build HexArith HexArithTests
           - name: Assert Mathlib-free
             run: |
               if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then

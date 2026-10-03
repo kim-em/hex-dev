@@ -218,10 +218,12 @@ Run `lake build hexrealclosure_bounds_conformance`, then
 `.lake/build/bin/hexrealclosure_bounds_conformance | python3 scripts/oracle/real_closure_bounds.py`.
 
 A failed bound search is a request for whole-line BKR completion. It never
-means that the polynomial has no roots. The bounded bisection and complete
-isolation driver and automatic extraction of a tower suffix from requested
-expressions remain unimplemented. Checked conversion through an explicitly
-supplied finite suffix is described below.
+means that the polynomial has no roots. Bounded bisection and complete isolation
+are described elsewhere in this README. Assembly of the full requested live
+dependency closure remains open; checked conversion through a finite suffix
+and `Context.origin` extraction of one context’s stored base and root suffix
+are available. Selecting the dependency closure from requested expressions
+remains open.
 
 `deflate? p a` removes the factor `X-a` with the shared monic polynomial division.
 `linearFactor a` stores the literal leading coefficient one, and the constructor
@@ -318,8 +320,8 @@ from the exact first-level bounds, relative transcendence over that whole field,
 second-level sign/zero/order correspondence, embedding comparisons, key order
 and reader round trips. These base contexts do not yet contain algebraic levels.
 Selected-root storage and checked reconstruction of algebraic prefixes are
-provided below. Full dependency transport, complete isolation and exploration
-remain part of the tower implementation.
+provided below, together with complete isolation. Full dependency transport
+and exploration remain part of the tower implementation.
 
 ### Polynomials in a base context
 
@@ -427,8 +429,8 @@ infinitesimal order check the linear-factor cases. The oracle checks the
 midpoint, exact removed value, active and returned heads, returned endpoints
 and independently computed counts; their sum also satisfies root coverage. Its rejection tests detect stale heads, scalar loss, missing or
 invented cut roots, incorrect nested ordering and invalid input acceptance.
-These cases exercise one bisection node; complete isolation and simultaneous
-ordinary-real realization remain separate requirements.
+These cases exercise one bisection node; the complete isolation API is described
+below. Simultaneous ordinary-real realization remains a separate requirement.
 
 ### Capped bisection frontier
 
@@ -484,9 +486,9 @@ still prepare both quotient domains and recompute every pending domain and
 count, including count-zero cells. No timing improvement is claimed.
 
 The frontier feeds descriptor completion and the complete generic root producer
-below. Native root entries with extension contexts and coefficient embeddings,
-automatic dependency transport, native compatible real-closed union coverage
-and simultaneous ordinary-real realization remain requirements of the full tower.
+below. Native root entries, their coefficient embeddings and the compatible
+presentation quotient are described below. Automatic dependency transport and
+simultaneous ordinary-real realization remain requirements of the full tower.
 
 ### Bound selection and whole-line dispatch
 
@@ -855,6 +857,63 @@ query. The examples also check rejected restoration, packing to the actual
 remainder, and packing a vanishing input to canonical zero. The byte coefficient
 decoder continues to use `restore?`.
 
+The module `HexRealClosure.SignFacts` provides finite,
+proof-bearing sign facts. Each fact fixes the exact polynomial representation
+and its algebraic context. `SignFact.read` restores a nonzero literal only when
+its key and claimed sign match a supplied fact; absent keys, zero claims and
+wrong signs return `none`. Its `read_sound` theorem identifies the result of
+the ordinary executable decoder.
+
+`Element.pack` uses a proved copy of the actual reduction function and supplied
+sign facts for nonconstant retained remainders. Constants use the predecessor's
+ordinary sign operation, including canonical zero. `cachedAdd`, `cachedSub`,
+`cachedMul`, `cachedNeg`, `cachedOne` and `cachedNatCast` supply ordinary operations
+proved exactly equal to the existing operations. These equalities let a caller
+check a literal certificate using the supplied facts and transfer the resulting
+acceptance proof to the existing checker.
+
+An absent nonconstant fact reaches an opaque packing function. This prevents
+ordinary-kernel evaluation from completing that branch. Compiled evaluation of
+that function runs the existing sign producer. Accordingly, these APIs support
+kernel proof assembly; they do not provide a strict compiled checker for
+untrusted cross-level certificates. `SignFact.read` itself has no such fallback.
+The equality proofs cover only the listed operations. Numerals, inversion,
+division, `ofCoeff`, equality and comparison retain their existing implementation,
+which may invoke a sign producer during kernel evaluation. Installing
+`cachedNatCast` controls explicit natural-number casts, not numeral instances.
+The examples use `import all HexRealClosure.Algebraic` to make the stored
+constructors available for `decide +kernel`. The public equality and restoration
+lemmas can be applied without that implementation import.
+
+`Element.signCodec value facts` retains the existing stored-value wire format
+and reads nonzero coefficients from exact sign facts in this context. Missing
+or mismatched facts reject instead of recomputing this context's sign. The
+supplied predecessor codec governs lower-level decoding; composing strict
+readers makes each covered level avoid sign production. Zero needs no fact.
+A finite reader is partial, so its roundtrip proof requires only the actual
+stored coefficients to roundtrip through the predecessor reader and the
+nonzero stored literal to occur in the facts. `SignFact.read_of_key` derives
+that coverage from list membership and equality of the exact polynomial key. The corresponding byte theorem
+uses the shared parser/printer and its existing lexical limits. Successful
+reads agree literally with the independent native coefficient decoder.
+`Element.signCodec_refines` composes that agreement through predecessor readers;
+`SignCodecConformance.nested_sound` applies it to two successive extension levels.
+`SignCodecConformance` checks two successive strict readers, retained
+representatives, missing lower-level facts, altered signs and truncated bytes.
+These coefficient readers do not encode or validate a dependency graph.
+
+`PackingConformance` checks literal restoration, exact keys, context types and
+canonical zero in the ordinary kernel. `NestedSignsConformance` checks a second
+root defined by `a * Y - 1`, where `a` is stored as `X² - 1 + 2X` at the first
+selected root `X = 1`. Supplied child evidence establishes the coefficient and
+endpoint signs. The second root is `1/2`; its descriptor and the positive sign
+of `Y` are checked using those facts, then transferred to the actual native
+operations. Wrong signs, context identifiers and intervals reject. Removing a
+needed child fact prevents kernel evaluation. Compiled checks independently
+confirm descriptor and selected-sign acceptance. These small examples exercise
+nested proof assembly; serialized cross-level dependency graphs and strict
+compiled replay remain separate obligations.
+
 Ordinary addition, subtraction, negation, multiplication, inversion and
 division operate on these values. Inversion computes the defining polynomial's
 local gcd with the operand, takes the complementary factor, and scales the
@@ -966,10 +1025,12 @@ Tarski foundation. Their axiom guards contain only the three standard kernel
 axioms, and the audited import cones contain no admissions. These interpretations are
 conditional on an ambient ordered real closed field, not an existence proof.
 
-The remaining tower work includes dependency closure across multiple live
-contexts, context enlargement and transport, complete ordered root isolation
-and multiplicities, rational delegation agreement, and identification of native
-presentations with the compatible real-closed union.
+The remaining tower work includes dependency-closed enlargement and transport
+across multiple live contexts and full algebraic-coefficient rational delegation
+agreement. Complete ordered roots and multiplicities, the checked
+`Context.enlarge?` producer for one context, and identification of native
+presentations with the compatible real-closed union are described elsewhere
+in this README.
 Each native algebraic context prepares and retains the shared selected-root
 query domain once, eagerly during context construction. `Context.buildSigns`
 reuses it for singleton and joint queries; `buildSigns_eq` proves exact
@@ -1042,9 +1103,9 @@ three actual algebraic levels, use their explicit embeddings, read old values
 after extensions, restore an unreduced noncanonical coefficient, and reject
 stale or unknown bindings, forged signs, zero claims, trailing zeros and
 malformed base payloads. The core roundtrip proofs introduce no admission.
-Automatic discovery of a dependent suffix, complete isolation and
-identification with the real-closed union remain open; checked refinement
-and conversion through an explicitly supplied suffix are described below.
+Automatic discovery of a dependent suffix remains open. Complete isolation,
+checked suffix conversion and identification with the real-closed union are
+described elsewhere in this README.
 
 Run `lake build HexRealClosure.FrameFormatTests` for total construction over a
 non-monic reducible rational definition, followed by a definition with
@@ -1131,8 +1192,8 @@ and image-field inclusions. The semantic root results use the proved
 relative to a supplied real-closed
 ambient field and base embedding. The companions below prove compatibility for
 a checked final-root change and conversion through a validated finite suffix.
-Identification with the real-closed algebraic union remains open. No tower
-performance claim is made.
+The presentation quotient below identifies all finite native towers with the
+real-closed algebraic union. No tower performance claim is made.
 
 ### Yun decomposition over native tower coefficients
 
@@ -1157,8 +1218,8 @@ root levels, including a noncanonical coefficient representing one, and check
 a gap between multiplicity labels 1 and 3, including their computed gcd.
 Kernel examples apply replay, squarefreeness and completeness at three
 arbitrary validated root levels.
-The proofs use only the standard three axioms. Complete root isolation and
-the remaining conformance and performance evaluation remain open.
+The proofs use only the standard three axioms. Complete root isolation is
+available; the remaining conformance and performance evaluation remain open.
 
 ### Checked persistent root refinement
 
@@ -1280,8 +1341,9 @@ a validated rational-root context. Generic coefficient and comparison transfer
 and root construction use the proved root-sum theorem and only the standard
 three axioms. General base enlargement is itemized below. Automatic extraction
 of a suffix from requested expressions or a catalog, uncached reader
-completeness, and identification of native presentations with the real-closed
-algebraic union remain open. No performance result is claimed.
+completeness and full dependency-closed enlargement remain open. The presentation
+quotient below identifies finite native values with the real-closed algebraic
+union. No performance result is claimed.
 
 ### Infinitesimal base conversion
 
@@ -1470,6 +1532,93 @@ Executable guards count the extracted levels in the base and a one-root
 context and rebuild the extracted one-root suffix. The existing four-root
 transport fixture includes a deeper count check and runs outside routine CI.
 
+### Sections and sectors
+
+`Tower.Sample.section` constructs a section from a validated descriptor and
+retains its cached root context, ordinary native value and coefficient
+conversion. `Sample.signs` evaluates a polynomial family through that actual
+conversion. `Cell.contains` checks section equality or strict sector membership
+using native comparison.
+
+`Sample.family context polynomials` obtains the complete roots of each nonzero
+polynomial. It sorts and deduplicates their native root handles before
+constructing any shared arithmetic context. Zero polynomials contribute no
+boundary. `Family.sections` reuses each root's cached context. `Family.sectors`
+constructs the two exterior rays and each intervening bounded sector in their
+own immutable contexts: a ray needs one boundary root, and a bounded sector
+collects exactly its two boundary roots. Midpoints of adjacent native values
+handle bounded sectors; offsets by one handle rays; zero handles the root-free
+whole line. Infinitesimally close roots need no separating rational.
+
+`Family.sector?_eq` identifies an indexed result with its original region.
+`Family.mem_cells` connects original boundary and sector labels to the complete
+cell list, and `Region.sample_section` identifies the cached section sample.
+`Context.Poly` is a reducible alias of `DensePoly context.Value`, allowing its
+existing polynomial operations through the public interface.
+
+`Family.sector?` selects a cell label before constructing its sample and rejects
+indices beyond the complete family. `Family.sectorBetween?` compares requested
+root handles with the adjacent complete boundary list, then constructs only
+the accepted sector. It accepts semantically equal endpoints represented by
+different valid descriptors and rejects reversed, missing and non-adjacent
+boundaries. Finite endpoints remain owned by their original root contexts.
+`Region.sample` constructs a candidate for an explicitly supplied region; its
+bounded-sector membership requires strictly ordered endpoints. `Family`
+producers discharge this condition. `Region.endpoints?` exposes a sector's original endpoints; `Family.cells`
+describes exactly the returned section and sector samples.
+
+`HexRealClosureMathlib.LocalSample` proves complete boundary coverage, strict
+ordering and unique cell membership for every point of any compatible real
+closed ordered field. Each actual local sample has a coefficient-preserving
+interpretation, passes native cell membership and computes the sign of every
+input polynomial throughout its entire sector, including zero polynomials.
+The proofs use the actual complete root producers and local conversions;
+callers supply no root-coverage or sign-agreement hypotheses. Checked endpoint
+requests retain the exact interpreted requested interval, and every actual
+adjacent sector succeeds. `Family.cell_signs` states the computed signs directly
+in terms of original-model cell membership; `Family.sectorBetween?_signs` does
+the same for requested intervals. These compose with unique cell coverage
+without identifying separate existential interpretations. `Family.sections_correct`
+retains each actual section boundary and its computed signs. Public membership
+lemmas cover bounded sectors, both
+rays and the whole line. Ordinary-import consumer tests exercise these APIs.
+
+Native tests cover irrational duplicate roots, the three real roots of an
+irreducible cubic, a mixed quadratic/quartic family, zero and constant
+polynomials, invalid boundary requests and an infinitesimal gap. The local
+contexts include at most two added root levels. Sorting uses native root
+comparison over the original predecessor; reverse insertion takes linearly
+many comparisons on ascending input and quadratically many in the worst case.
+An indexed request traverses the region list. Endpoint requests search that
+list using native root comparisons; requesting every sector by endpoints can
+repeat quadratically many comparisons, but constructs each accepted midpoint
+only when it is requested.
+
+`Sample.partition` provides a separate complete partition for callers needing
+one common arithmetic context for all roots. Its `Partition` samples and
+checked requests have the same membership and constant-sign guarantees in
+`HexRealClosureMathlib.Sample`. It collects all roots before deduplication,
+which can increase depth and extension degrees; duplicate descriptors are not
+shared. Its boundary requests construct all sector midpoints before searching.
+The local `Family` interface avoids collecting unrelated roots for a sample.
+
+`hexrealclosure_sample_conformance` exports six actual families with their
+complete contexts, converted input coefficients, sample values, cells and sign
+vectors. The independent pinned Z3 RCF oracle checks the complete distinct
+boundary lists, every section and sector, strict membership and computed signs.
+It includes an infinitesimal gap over a selected algebraic predecessor.
+Twenty-three oracle tests check valid fixtures and reject changes to boundaries,
+points, contexts, transported coefficients and signs. The emitter also rebuilds
+every local context and reads each stored point through the checked native reader.
+Run `lake build hexrealclosure_sample_conformance`, then
+`.lake/build/bin/hexrealclosure_sample_conformance | python3 scripts/oracle/real_closure_samples.py`.
+The oracle checks exact semantics; it does not independently replay polynomial
+certificate graphs or certify canonical fraction syntax.
+
+Joint specialization of nested selected roots and successive infinitesimals
+to one ordinary real assignment and the full performance evaluation remain
+separate obligations.
+
 ## Native scalar signs and nested replay
 
 Native selected-root arithmetic reduces high-degree sign queries by the existing
@@ -1539,8 +1688,8 @@ the semantic ε is positive and below every positive old coefficient, while
 `liftInfinitesimal_X_lt` applies that bound to interpreted tower values. The
 remaining dependency-closed transport obligations are listed above.
 
-Identifying native tower presentations with the algebraic union remains
-separate from restricting a semantic ambient field in item 1 above.
+The native presentation quotient below identifies finite native tower values
+with the algebraic union; item 1 above restricts the semantic ambient field.
 Descriptor construction and simultaneous realization of finite sign
 conditions at one ordinary real point also remain open.
 
@@ -1867,3 +2016,70 @@ the returned signature retains the old root depth and adds exactly one
 infinitesimal level. The companion consumer tests use an arbitrary old
 rational tower model inside ℝ, its relative algebraic restriction, and the
 actual selected-root enlargement result.
+
+### Native finite presentations
+
+The Mathlib-free module `HexRealClosure.TowerPresentation` exposes the stored
+presentation and its computable construction/refinement wrappers. The companion
+`HexRealClosureMathlib.Presentation` provides interpretation and quotient proofs.
+
+`Tower.Presentation` retains a validated finite root suffix over one immutable
+native input context and an actual stored value of its final context.
+`Presentation.denote` uses the original coefficient model extended through
+those exact selected descriptors. `toUnion_surjective` proves that these
+presentations cover every element of the relative algebraic union of the input's
+whole mathematical field. It consumes actual complete native root production;
+no caller supplies root coverage or chooses a single chain to stand for all towers.
+
+`Presentation.Quotient model` identifies exactly equal denotations. Its
+`ringEquiv` and `algEquiv` identify it with the relative algebraic union, preserving
+field operations and the prescribed base map. `inclusion_lt` and `toValue_lt`
+prove agreement with ambient order. `value_algebraic`
+proves algebraicity over that base, and `realClosed` proves real-closedness.
+The native zero, one, natural-number casts, addition, subtraction, multiplication, negation,
+total inversion and division agree with operations on classes. Signs agree with
+the same order; raw nonzero representations acquire no literal field laws.
+Native coefficient inclusion through any suffix preserves its class, and
+`converted_value` proves coherence given an aligned checked conversion model.
+`refined_value` and `refined_suffix` discharge that alignment for the actual
+root-refinement producer, including reconstruction of every later root level.
+`Presentation.refine` packages refinement given the preceding and later suffixes;
+`refined_at` proves class preservation without exposing the ownership casts.
+The caller supplies this decomposition rather than a numeric root position.
+`prepend_embed` packages inclusion coherence from any intermediate root context.
+`refine?` runs the checked later-level reconstruction, and `refine?_success`
+proves that it returns a presentation with the same class on valid input.
+`equal_spec` links executable equality in a common suffix to class equality.
+When the ambient field is algebraic over the input field,
+`denote_surjective` proves that presentations cover the whole ambient field,
+and `ambientEquiv` gives the resulting equivalence with the prescribed base map.
+
+`common_suffix` supplies one validated suffix and native representatives whose
+classes match any finite list of original presentations in order. It uses
+complete native root production at successive compatible predecessor fields.
+The representatives support actual native arithmetic and equality in that suffix.
+
+`common_values` also places any finite list of presentation values in one actual
+native collection with a common ambient interpretation. It uses complete root
+production followed by the checked root-collection producer, and retains the
+values in input order, together with their original root-production witnesses.
+These semantic finite-value constructions do not select
+or transport the full requested live dependency DAG during general enlargement.
+That executable assembly, joint ordinary-real realization and Phase-4 tower
+performance remain separate obligations.
+
+The quotient fixes one ambient model and its base embedding. It lives in
+`Type 1`, since the native presentation stores a packed context;
+`Union.Carrier model.field K` retains the ambient universe for consumers that
+need a carrier in that universe. The algebra equivalence connects the two.
+
+Ordinary-import consumers derive cancellation for actual stored multiplication
+and inversion from a nonzero native sign, check total inversion of zero, and
+identify equal values at different finite depths. Kernel axiom guards report
+only the standard three axioms. The Mathlib-free `TowerPresentationTests`
+refines the middle root of a three-level tower whose original defining
+polynomial uses an algebraic predecessor coefficient. It rebuilds the later
+level, checks the refined quadratic, order, inverse and prefix retention,
+and rejects the old packet. Run
+`lake build HexRealClosureMathlib.PresentationTests` and
+`lake build HexRealClosure.TowerPresentationTests`.

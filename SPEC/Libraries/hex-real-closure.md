@@ -164,6 +164,38 @@ polynomial algorithms are reused. The performance evidence must distinguish
 storage policy, a smaller defining polynomial after a split, and an
 irreducibility fast path, rather than attributing all three to one change.
 
+Proof assembly may reuse a finite list of `SignFact context` values. Each fact
+binds its exact stored polynomial and claimed sign to a proof of the actual
+`Context.signPoly` result in that context. `SignFact.read` restores a nonzero
+literal only on an exact key/sign match; missing keys and zero claims reject.
+It preserves the result of the ordinary independent coefficient decoder.
+
+`Element.signCodec` reads the existing stored-value wire format using those
+proved facts. Canonical zero needs no fact. A nonzero literal requires its exact
+polynomial/sign key in the fixed context; missing or mismatched facts reject
+without producing a sign at that level. The supplied predecessor codec controls
+lower-level decoding, so finite strict readers can be composed across levels.
+Their roundtrip proofs require coverage of the stored value and its actual
+coefficient entries, not a claim that a finite table covers every element.
+Byte roundtrips consume the shared parser/printer and its actual lexical
+resource check. These readers do not themselves serialize or validate a graph
+of coefficient-proof dependencies.
+
+`Element.pack` takes a reduction function proved equal to the context's actual
+storage reduction. Constant remainders use the predecessor sign directly;
+nonconstant remainders use exact keys in the supplied sign facts. A zero sign
+packs to canonical zero. Missing nonconstant keys reach `Element.missing`, an
+opaque function that blocks kernel reduction and executes ordinary native
+packing when compiled. This optional proof-assembly support does not satisfy
+the strict compiled certificate-replay contract by itself.
+
+The cached `One`, `Add`, `Sub`, `Mul`, `Neg` and `NatCast` operations must be
+proved literally equal to the ordinary operations. They provide no alternative
+field instance or fallible arithmetic record. Uncovered operations and numeral
+instances retain their ordinary implementations; installing a cached explicit
+natural-number cast does not replace numeral instances. Public projection and
+operation-equality lemmas remain available without exposing stored constructors.
+
 A persistent split rebuilds the full requested dependency closure in
 predecessor order. Transport each later defining polynomial, interval endpoint,
 selected-root descriptor and live value; re-encode root signs for the new
@@ -388,11 +420,18 @@ adjacent boundaries `a<b` (possibly infinite), a finite polynomial family `Q`,
 and evidence that no nonzero member of `Q` has a root in `(a,b)`. Zero
 polynomials are allowed and have constant zero sign. Supply boundary order
 and completeness of the boundary root list, not just two chosen roots.
+A complete family partition may construct this evidence itself; checked
+boundary requests must still reject non-adjacent pairs. An indexed interface
+may additionally select sectors from that validated complete partition.
 The result includes the sample context, input embedding, strict membership
-and signs of every member of `Q` at the sample. A midpoint in a common root
-context handles bounded sectors; `a+1`, `b-1` and `0` handle rays and the whole
+and signs of every member of `Q` at the sample. A midpoint in a context containing the two boundary roots
+handles bounded sectors; `a+1`, `b-1` and `0` handle rays and the whole
 line. Dyadic samples are an optional Archimedean backend, not a generic
-separation requirement.
+separation requirement. Order and deduplicate the original root handles
+before building arithmetic contexts. A section reuses its root context, a ray
+uses one boundary, and a bounded sample collects only its two boundaries.
+Each result retains its own input embedding; cell coverage and sign invariance
+are interpreted in a common ambient field.
 
 An infinitesimal backend may use `r+ε` or `±1/ε`. After algebraics exist,
 `Context.enlarge` rebuilds the infinitesimal base before those levels,
