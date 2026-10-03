@@ -14,6 +14,7 @@ open Hex.RCF.ProofProbe.Literals
 namespace Hex.RCF.ProofProbe.Replay.CubicSingle
 set_option maxRecDepth 8192
 set_option maxHeartbeats 2400000
+set_option rcf.algebraic.monicCore false
 set_option rcf.algebraic.reducedLiterals false
 set_option rcf.algebraic.intervalSigns true
 set_option rcf.algebraic.singleReplay true

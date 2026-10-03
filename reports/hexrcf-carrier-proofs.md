@@ -39,10 +39,15 @@ negative leading coefficients, repeated and common roots, leading cancellation,
 zero and constant products, and context/quotient corruption. An exact producer
 fixture distinguishes the normalized core from the raw core. The proved
 `buildMonic_checked`, `buildMonic_core` and `buildMonic_monic` laws bind successful
-proposals to the existing checker and normalized core. Those success laws do
-not prove universal producer progress. `rcf.algebraic.monicCore` remains false
-by default pending that proof; the true mode is available as a checked bounded
-experiment. A rejected proposal remains terminal, without solver fallback.
+proposals to the existing checker and normalized core. `buildMonic_success`
+and `buildMonic_success_real` prove actual producer progress for nonzero inputs
+under zero-reflecting, operation-preserving characteristic-zero semantics;
+`buildMonic_squarefree` proves the interpreted core is squarefree. Fresh ordinary
+kernel audits cover these laws and a rational-base instantiation. The measured
+comparison and these proofs support `rcf.algebraic.monicCore=true` as the default.
+The false arm remains a comparison control. A rejected proposal remains
+terminal, without solver fallback. This does not prove total common-field
+authentication or bounded root-isolation success for the entire tactic.
 
 The maximum recorded Lean/Lake process count is 6, SMT sibling busy ratio
 0.0123, and measurement-CPU foreign ratio 0.00188. These are retained host

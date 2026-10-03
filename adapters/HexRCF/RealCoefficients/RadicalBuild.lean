@@ -168,19 +168,25 @@ theorem build_nonzero (context : Ctx) (product : DensePoly E) (cert : RadicalCer
   simp only [build, show (0 : DensePoly E).isZero = true from rfl, ite_eq_left] at produced
   contradiction
 
-/-- The two actual quotient identities at the maximum allowed exponent ensure
-that the existing bounded search produces a certificate. This is an assembly
-law; mathematical progress must establish the hypotheses under interpretation. -/
-theorem build_fromIdentities (context : Ctx) (product : DensePoly E) (nonzero : product ≠ 0)
+/-- Monic construction also rejects the zero product before proposing a core. -/
+theorem buildMonic_nonzero [Inv E] (context : Ctx) (product : DensePoly E)
+    (cert : RadicalCert E Ctx) (produced : buildMonic context product = some cert) :
+    product ≠ 0 := by
+  intro zero
+  subst product
+  simp only [buildMonic, show (0 : DensePoly E).isZero = true from rfl,
+    ite_eq_left] at produced
+  contradiction
+
+private theorem search_fromIdentities (context : Ctx) (product core : DensePoly E)
     (identities :
-      let core := (DensePoly.divMod product (DensePoly.gcd product product.derivativeImpl)).1
       let quotient := (DensePoly.divMod product core).1
       let cofactor := (DensePoly.divMod (DensePoly.natPow core (product.natDegree + 1)) quotient).1
       (product - core * quotient).isZero = true ∧
         (DensePoly.natPow core (product.natDegree + 1) - quotient * cofactor).isZero = true)
-    (coreNe : (DensePoly.divMod product (DensePoly.gcd product product.derivativeImpl)).1 ≠ 0) :
-    ∃ cert, build context product = some cert := by
-  let core := (DensePoly.divMod product (DensePoly.gcd product product.derivativeImpl)).1
+    (coreNe : core ≠ 0) :
+    ∃ cert, search context product core (DensePoly.divMod product core).1
+      (List.range (product.natDegree + 1)) = some cert := by
   let quotient := (DensePoly.divMod product core).1
   have accepted : (candidate context core quotient product.natDegree).check context product = true := by
     have notZero : core.isZero = false := by
@@ -194,6 +200,21 @@ theorem build_fromIdentities (context : Ctx) (product : DensePoly E) (nonzero : 
       identities.2
     simp only [candidate, check, first, second, notZero, Bool.not_false,
       Bool.and_true, Nat.le_refl, decide_true]
+  exact search_success context product core quotient (List.range (product.natDegree + 1))
+    product.natDegree (List.mem_range.mpr (Nat.lt_succ_self _)) accepted
+
+/-- The two actual quotient identities at the maximum allowed exponent ensure
+that the existing bounded search produces a certificate. This is an assembly
+law; mathematical progress must establish the hypotheses under interpretation. -/
+theorem build_fromIdentities (context : Ctx) (product : DensePoly E) (nonzero : product ≠ 0)
+    (identities :
+      let core := (DensePoly.divMod product (DensePoly.gcd product product.derivativeImpl)).1
+      let quotient := (DensePoly.divMod product core).1
+      let cofactor := (DensePoly.divMod (DensePoly.natPow core (product.natDegree + 1)) quotient).1
+      (product - core * quotient).isZero = true ∧
+        (DensePoly.natPow core (product.natDegree + 1) - quotient * cofactor).isZero = true)
+    (coreNe : (DensePoly.divMod product (DensePoly.gcd product product.derivativeImpl)).1 ≠ 0) :
+    ∃ cert, build context product = some cert := by
   have notZero : product.isZero = false := by
     cases result : product.isZero with
     | false => rfl
@@ -201,7 +222,28 @@ theorem build_fromIdentities (context : Ctx) (product : DensePoly E) (nonzero : 
         ((DensePoly.isZero_eq_true_iff product).mp result)))
   unfold build
   simp only [notZero, Bool.false_eq_true, ↓reduceIte]
-  exact search_success context product core quotient (List.range (product.natDegree + 1))
-    product.natDegree (List.mem_range.mpr (Nat.lt_succ_self _)) accepted
+  exact search_fromIdentities context product _ identities coreNe
+
+/-- The normalized producer uses the same bounded identity search. -/
+theorem buildMonic_fromIdentities [Inv E] (context : Ctx) (product : DensePoly E)
+    (nonzero : product ≠ 0)
+    (identities :
+      let core := DensePoly.monicize
+        (DensePoly.divMod product (DensePoly.gcd product product.derivativeImpl)).1
+      let quotient := (DensePoly.divMod product core).1
+      let cofactor := (DensePoly.divMod (DensePoly.natPow core (product.natDegree + 1)) quotient).1
+      (product - core * quotient).isZero = true ∧
+        (DensePoly.natPow core (product.natDegree + 1) - quotient * cofactor).isZero = true)
+    (coreNe : DensePoly.monicize
+      (DensePoly.divMod product (DensePoly.gcd product product.derivativeImpl)).1 ≠ 0) :
+    ∃ cert, buildMonic context product = some cert := by
+  have notZero : product.isZero = false := by
+    cases result : product.isZero with
+    | false => rfl
+    | true => exact False.elim (nonzero ((DensePoly.size_eq_zero_iff product).mp
+        ((DensePoly.isZero_eq_true_iff product).mp result)))
+  unfold buildMonic
+  simp only [notZero, Bool.false_eq_true, ↓reduceIte]
+  exact search_fromIdentities context product _ identities coreNe
 
 end Hex.RCF.RealCoefficients.RadicalCert

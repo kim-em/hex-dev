@@ -48,7 +48,7 @@ register_option rcf.algebraic.singleReplay : Bool := {
 }
 
 register_option rcf.algebraic.monicCore : Bool := {
-  defValue := false
+  defValue := true
   descr := "normalize the proposed carrier core before checked root isolation"
 }
 
