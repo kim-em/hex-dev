@@ -58,7 +58,8 @@ The wrapper automatically leases a CPU; it does not wait for a quiet host.
 Dependencies alone are warmed. These Mathlib-importing probes are build-only
 members of the on-demand target, with no new CI job or runtime benchmark.
 
-Indexed lookup, generator-interval refinement and carrier normalization remain
-separate work. Signed Sturm chains already use positive scaling; making them
+Indexed lookup and generator-interval refinement remain separate work. Carrier
+normalization has its own retained comparison in
+[the carrier report](hexrcf-carrier-proofs.md). Signed Sturm chains already use positive scaling; making them
 arbitrarily monic can change their sign semantics. This comparison does not
 evaluate those changes.

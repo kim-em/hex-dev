@@ -6,6 +6,11 @@ the same quantified formula, solver, finite certificate checker and soundness
 theorem. The reference quotes `PolyQuot.reduce`; the candidate quotes
 `PolyQuot.mk` with a separate ordinary-kernel degree proof for every literal.
 The `rcf.algebraic.reducedLiterals` comparison control selects the quotation.
+Both retained comparisons used raw carriers before the monic option existed.
+The probes now pin `rcf.algebraic.monicCore false`; that pin was added after
+the measurements. Current probe hashes differ from their archived source
+hashes while preserving the measured carrier mode. These comparisons do not
+measure the current monic default.
 
 The retained source is `427d008a7` on shared host `chungus2`, Lean
 `v4.35.0-rc3`, automatically leased CPU 69 with sibling 21 and one Lean thread.

@@ -563,12 +563,14 @@ evidence with interval evaluation. The complete algebraic producer still
 succeeds on its proved input surface. Linear sign lookup remains a cost.
 
 A four-round matched comparison on the further-root, reciprocal-root and cubic
-examples favored interval quotation in all twelve pairs, with median paired
+examples used raw carriers and favored interval quotation in all twelve pairs,
+with median paired
 margins 4.513, 4.752 and 13.553 seconds. The reference reconstructs full queries
 after interval production, so this measures quotation-mode selection, not a
 speedup against older code or isolated kernel time. Shared-host variation and
 all completed samples are retained in `reports/hexrcf-interval-proofs.md`.
-The default is `rcf.algebraic.intervalSigns=true`; the false arm remains a
+Those probes now pin raw carriers explicitly; the pin was added after the
+measurement. The default is `rcf.algebraic.intervalSigns=true`; the false arm remains a
 comparison control. Direct coordinate quotation remains off by default: its
 two separate comparisons did not establish a gain.
 

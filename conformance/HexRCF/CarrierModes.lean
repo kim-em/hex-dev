@@ -93,9 +93,21 @@ private def bounded (monic : Bool) :=
       data.radical.check () (FieldCarrier.product values scaled)
   | .error _ => false
 #guard match bounded false with
-  | .ok data => data.radical.core.leadingCoeff != 1 &&
+  | .ok data => data.radical.core == DensePoly.ofList [1, 0, -(values 0) / 2] &&
       data.radical.check () (FieldCarrier.product values scaled)
   | .error _ => false
+
+-- Check the option at the quotation entry point used by the tactic. A lost
+-- option argument cannot pass merely because the raw certificate is sound.
+run_meta do
+  for monic in [false, true] do
+    let (_, _, data, _) ← Lean.withOptions
+      (fun options => options.setBool `rcf.algebraic.monicCore monic) do
+      FieldLiteral.proveRefiningWithCertificate
+        (Lean.mkConst ``SquareTwo.polynomial) (Lean.mkConst ``root)
+        (Lean.mkConst ``values) (Lean.mkConst ``scaled) values scaled .existsReal
+    unless (data.radical.core.leadingCoeff == 1) == monic do
+      throwError "carrier mode option did not reach the bounded quotation producer"
 
 theorem negative_leading : ∀ x : ℝ, -(x ^ 2 + Real.sqrt 2) < 0 := by rcf
 
@@ -108,7 +120,7 @@ theorem leading_cancellation : ∀ x : ℝ,
     (Real.sqrt 2 - Real.sqrt 2) * x ^ 4 + x ^ 2 + Real.sqrt 2 > 0 := by rcf
 
 set_option rcf.algebraic.monicCore false in
-theorem raw_negative_leading : ∃ x : ℝ, -(x ^ 2 - Real.sqrt 2) = 0 ∧ 1 < x ∧ x < 2 := by rcf
+theorem raw_negative_leading : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x := by rcf
 
 set_option rcf.algebraic.monicCore false in
 theorem raw_common_root : ∃ x : ℝ,

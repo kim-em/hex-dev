@@ -6,7 +6,12 @@ suffices. Inconclusive bounds retain Sturm evidence. Singleton zero is exact
 evidence; any wider bound containing zero declines. The same count-one interval,
 keys, values, solver, checker and soundness theorem are used in both arms.
 Both keep `PolyQuot.reduce` quotation. The probes inspect actual quoted entry
-constructors through their local auxiliary declarations.
+constructors through their local auxiliary declarations. Both arms measured raw
+carriers before the monic option existed. The probes now pin
+`rcf.algebraic.monicCore false`; that line was added after the retained
+measurement. Current probe hashes therefore differ from the archived source
+hashes, while preserving its carrier mode. This is not a measurement of the
+current monic default.
 
 The named decision is which quotation mode to select in the new implementation.
 The reference also runs the interval-preferring builder, then reconstructs
