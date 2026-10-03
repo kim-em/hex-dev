@@ -349,7 +349,8 @@ with the same root value proved by the supplied replay. -/
 theorem Context.signPoly_checked (context : Context E Ctx coeffSign parent)
     (p : DensePoly E) (signs : SignDet.SelectedSigns context.root [context.queryPoly p]) :
     context.signPoly p = signs.value := by
-  rw [Context.signPoly, context.signQuery_spec f hz h1 ha hs hm hnat hsign hn hi]
+  rw [context.signPoly_spec f hz h1 ha hs hm hnat hsign hn hi,
+    ← context.queryPoly_sign f hz h1 ha hs hm hnat hsign hn p]
   exact (signs.value_at_root f hz h1 ha hs hm hnat hsign).symm
 
 theorem Context.evalPoly_zero (context : Context E Ctx coeffSign parent) :
