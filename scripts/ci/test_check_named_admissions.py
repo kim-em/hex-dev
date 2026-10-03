@@ -115,6 +115,10 @@ class AdmissionScannerTests(unittest.TestCase):
             union = root / "adapters/HexRealClosureMathlib/Union.lean"
             union_tests = root / "adapters/HexRealClosureMathlib/UnionTests.lean"
             root_probes = [root / name for name in (
+                "examples/RealClosureConsumer/Query.lean",
+                "examples/RealClosureConsumer/Sign.lean",
+                "examples/RealClosureConsumer/Ordered.lean",
+                "examples/RealClosureConsumer/Tower.lean",
                 "HexRealClosure/TowerCatalog.lean",
                 "HexRealClosure/TowerTests.lean",
                 "HexRealClosure/RootFrame.lean",
