@@ -633,48 +633,52 @@ def runRationalRecognition (i : RationalLeaf) : Option Rat := i.value.toRat?
 def runRationalFloor (i : RationalLeaf) : Int := i.value.floor
 def runRationalCeil (i : RationalLeaf) : Int := i.value.ceil
 
--- Mode-1 candidate, derived before measurement: for (2^b-1)/(2^b+1),
--- normalization of the two linear coefficients has a bounded Euclidean
--- quotient sequence (difference 2, then a one-word divisor). The multiprecision
--- subtraction/reduction reads Θ(b) bits. Rational floor/ceil additionally
--- divide a smaller numerator by the denominator; this costs at most Θ(b).
--- This family concerns degree-one recognition and rational rounding only.
-setup_benchmark runRationalRecognition bits => bits
+-- Mode-1 derivation before measurement: the canonical linear polynomial for
+-- q=(2^b-1)/(2^b+1) has primitive coefficients. Recognition constructs the
+-- reduced Rat directly. Negating its borrowed b-bit constant coefficient
+-- copies Θ(b) bits in the pinned runtime. Positive-denominator natAbs and
+-- record construction add no higher-order work. Rat's structural output hash
+-- also performs linear-size Int arithmetic; it does not increase the order.
+-- Floor/ceil retain that recognition cost and add at most linear division.
+-- These rational-only models do not cover construction or nonrational rounding.
+-- The 600-second child cap allows canonical preparation outside timed bodies;
+-- it is an operational safeguard, not a regression budget.
+setup_benchmark runRationalRecognition b => b
   with prep := rationalLeaf
   where {
-    paramSchedule := .custom #[256, 512, 1024, 2048, 4096, 8192]
-    paramFloor := 256
-    paramCeiling := 8192
+    paramSchedule := .custom #[8192, 16384, 32768, 65536]
+    paramFloor := 8192
+    paramCeiling := 65536
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
 
 -- The same independently derived linear bit-volume model, with rational floor.
-setup_benchmark runRationalFloor bits => bits
+setup_benchmark runRationalFloor b => b
   with prep := rationalLeaf
   where {
-    paramSchedule := .custom #[256, 512, 1024, 2048, 4096, 8192]
-    paramFloor := 256
-    paramCeiling := 8192
+    paramSchedule := .custom #[8192, 16384, 32768, 65536]
+    paramFloor := 8192
+    paramCeiling := 65536
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
 
 -- The same independently derived linear bit-volume model, with rational ceiling.
-setup_benchmark runRationalCeil bits => bits
+setup_benchmark runRationalCeil b => b
   with prep := rationalLeaf
   where {
-    paramSchedule := .custom #[256, 512, 1024, 2048, 4096, 8192]
-    paramFloor := 256
-    paramCeiling := 8192
+    paramSchedule := .custom #[8192, 16384, 32768, 65536]
+    paramFloor := 8192
+    paramCeiling := 65536
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
 
 end Hex.RealAlgebraicBench
