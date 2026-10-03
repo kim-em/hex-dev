@@ -63,6 +63,7 @@ theorem, rather than recomputed while selecting the supplied evidence. -/
     {head : DensePoly E} {lower upper : Endpoint E}
     (memo : Array (SignDet.Dag.Checked coeffSign parent head lower upper))
     (request : SignRequest E) : Option (SignFact context) :=
+  let request := request
   match h : request.signs? context memo with
   | none => none
   | some signs => some ⟨request.polynomial, request.sign, by
@@ -80,6 +81,7 @@ theorem Context.readRequest_fields (context : Context E Ctx coeffSign parent)
     (h : context.readRequest? f hz h1 ha hs hm hnat hsign hn hi memo request = some fact) :
     fact.polynomial = request.polynomial ∧ fact.sign = request.sign := by
   unfold Context.readRequest? at h
+  dsimp only at h
   split at h
   · contradiction
   · cases Option.some.inj h
@@ -93,6 +95,7 @@ theorem Context.readRequest_accept (context : Context E Ctx coeffSign parent)
     (context.readRequest? f hz h1 ha hs hm hnat hsign hn hi memo request).isSome =
       (request.signs? context memo).isSome := by
   unfold Context.readRequest?
+  dsimp only
   split <;> simp_all
 
 /-- Resolve every ordered reference against one accepted memo. A missing or

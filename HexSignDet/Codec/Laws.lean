@@ -181,7 +181,7 @@ theorem read_endpoint {E : Type} [Zero E] [DecidableEq E]
     Except.pure, h, Functor.map, Except.map]
 
 /-- An endpoint roundtrip needs only its actual finite coefficient. -/
-theorem read_endpoint_of (value : ValueCodec E) (endpoint : Endpoint E)
+theorem read_endpoint_of {E : Type} (value : ValueCodec E) (endpoint : Endpoint E)
     (covered : ∀ x, endpoint = .finite x → value.decode (value.encode x) = .ok x) :
     Codec.readEndpoint value (Codec.endpoint value endpoint) = .ok endpoint := by
   cases endpoint with

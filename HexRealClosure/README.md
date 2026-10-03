@@ -942,8 +942,9 @@ checks each requested supplementary query slot. The companion proves agreement w
 total scalar sign using the selected-sign and scalar-sign correspondence
 theorems. `Context.decodeRequests` decodes the bytes and resolves every ordered
 reference against one memo; any missing entry or wrong sign rejects the whole
-list. A pointwise theorem preserves the request order and each literal
-polynomial/sign pair. Its interpretation arguments occur only in erased proofs. The core
+list. Derivative-prefix slots alone are not supplementary query requests.
+A pointwise theorem preserves the request order and each literal
+polynomial/sign pair. The reader's interpretation arguments occur only in erased proofs. The core
 `SignRequest.signs?` reader has no interpretation arguments.
 
 `SignRequestsConformance` restores two different stored polynomials, rejects

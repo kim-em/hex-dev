@@ -67,7 +67,7 @@ prefix. Lookup computes no native query reduction. -/
   let bound ← Dag.bindDomain? coeffSign parent memo context.root.raw.head
     context.root.raw.lower context.root.raw.upper
   let entry ← bound[request.entry]?
-  let prefixLength := context.root.raw.queries.length
+  let prefixLength := context.root.raw.indices.length
   let queries := entry.value.node.queries.drop prefixLength
   let row ← (entry.value.node.system.tableRows.toList.filter fun row =>
     decide (row.1.take prefixLength = context.root.raw.signs)).head?
