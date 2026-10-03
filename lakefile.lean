@@ -1471,6 +1471,11 @@ lean_exe hexsigndet_emit_infinitesimal where
   srcDir := "conformance"
   root := `HexSignDet.EmitInfinitesimal
 
+-- Compiled sign-determination checks over genuine number fields. Mathlib-free.
+lean_exe hexsigndet_field_checks where
+  srcDir := "conformance"
+  root := `HexSignDet.FieldChecks
+
 lean_exe hexrealformula_emit_fixtures where
   srcDir := "conformance"
   root := `HexRealFormula.EmitFixtures
