@@ -55,6 +55,23 @@ noncomputable def Model.derive
       exact (targetModel.baseHom_value target (inclusion.value a)).symm.trans
         (Tower.Model.base_value source f correct a).symm
 
+private theorem Model.derive_target_proof
+    {source target : BaseContext.PackedContext registry}
+    (following : target.Realization) (inclusion : BaseInclusion source target)
+    (targetModel : Tower.Model (Context.ofBase target) R) :
+    (Model.derive following inclusion targetModel).target = targetModel := by
+  cases source
+  cases target
+  rfl
+
+/-- The source factory retains the supplied target interpretation itself. -/
+theorem Model.derive_target
+    {source target : BaseContext.PackedContext registry}
+    (following : target.Realization) (inclusion : BaseInclusion source target)
+    (targetModel : Tower.Model (Context.ofBase target) R) :
+    (Model.derive following inclusion targetModel).target = targetModel :=
+  Model.derive_target_proof following inclusion targetModel
+
 end Hex.RealClosure.Tower.BaseInclusion
 
 /-- info: 'Hex.RealClosure.Tower.BaseInclusion.Model.derive' depends on axioms: [propext, Classical.choice, Quot.sound] -/

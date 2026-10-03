@@ -98,6 +98,31 @@ theorem rationalFunctions_value (map : FieldEmbedding K L) (a : Hex.RationalFn K
       Hex.RationalFn.mapCoeffs map.value map.zero map.one map.sub map.mul map.div map.inv a :=
   rationalFunctions_value_proof map a
 
+/-- Native coefficient embeddings are determined by their actual value maps. -/
+theorem value_ext (first next : FieldEmbedding K L)
+    (agree : ∀ a, first.value a = next.value a) : first = next := by
+  cases first
+  cases next
+  cases funext agree
+  rfl
+
+/-- Retaining the formal variable over an identity coefficient map preserves
+both canonical numerator and denominator. -/
+theorem rationalFunctions_identity :
+    (identity K).rationalFunctions = identity (Hex.RationalFn K) := by
+  apply value_ext
+  intro a
+  rw [rationalFunctions_value, identity_value]
+  apply Hex.RationalFn.ext
+  · rw [Hex.RationalFn.mapCoeffs_num]
+    apply Hex.DensePoly.ext_coeff
+    intro i
+    rw [Hex.DensePoly.Interpret.map_coeff, identity_value]
+  · rw [Hex.RationalFn.mapCoeffs_den]
+    apply Hex.DensePoly.ext_coeff
+    intro i
+    rw [Hex.DensePoly.Interpret.map_coeff, identity_value]
+
 private theorem lowestIndex_map (map : FieldEmbedding K L) (p : Hex.DensePoly K) :
     Hex.OrderedFn.Infinitesimal.lowestIndex
       (Hex.DensePoly.Interpret.map map.value map.zero p) =
