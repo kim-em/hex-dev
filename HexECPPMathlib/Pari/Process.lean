@@ -37,10 +37,15 @@ private def readBounded (handle : IO.FS.Handle) (limit : Nat) : IO String := do
       throw <| IO.userError s!"PARI output exceeds {limit} bytes"
     data := data ++ chunk
 
-private def stop {cfg : IO.Process.StdioConfig} (child : IO.Process.Child cfg) : IO Unit := do
+private def stop {cfg : IO.Process.StdioConfig} (child : IO.Process.Child cfg)
+    (stdout stderr : Task (Except IO.Error String)) : IO Unit := do
   -- Lean's process runtime kills the session with SIGKILL. Keep the child
   -- unreaped until its pipes close, so its PID cannot be reused before cleanup.
   try child.kill catch _ => pure ()
+  -- KILL closes pipes held by the session, including its descendants. Collect
+  -- both finite reader tasks (including failures) before releasing the PID.
+  discard <| IO.wait stdout
+  discard <| IO.wait stderr
   try discard <| child.wait catch _ => pure ()
 
 private def requestFile (n : Nat) : IO System.FilePath := do
@@ -84,10 +89,10 @@ private def runFile (n : Nat) (request : System.FilePath) (budget : ProcessBudge
       -- Do not reap the leader while a descendant still holds either pipe.
       -- Once reaped, there must be no subsequent wait or kill of this PID.
       if outDone && errDone then
+        let output ← IO.ofExcept (← IO.wait stdout)
+        let errors ← IO.ofExcept (← IO.wait stderr)
         if let some status ← child.tryWait then
           completed.set true
-          let output ← IO.ofExcept stdout.get
-          let errors ← IO.ofExcept stderr.get
           if status == 255 && (errors.splitOn "could not execute external process").length > 1 then
             throw <| IO.userError s!"PARI: cannot start `{executable}`; install PARI/GP and put `gp` on PATH"
           if status != 0 || !errors.trimAscii.toString.isEmpty then
@@ -101,7 +106,7 @@ private def runFile (n : Nat) (request : System.FilePath) (budget : ProcessBudge
           return payload
       IO.sleep 25
   finally
-    unless ← completed.get do stop child
+    unless ← completed.get do stop child stdout stderr
 
 /-- Run only the evaluated natural numeral, without a shell or user startup file.
 Null stdin preserves the original process-group handle. The private GP input
