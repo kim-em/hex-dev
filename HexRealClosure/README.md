@@ -282,6 +282,37 @@ corresponding native Hahn model. `Element.infinitesimal_orderSign` gives sign
 agreement for the next step, so it can be repeated at arbitrary finite depth.
 The new infinitesimal is positive and below every positive predecessor element.
 
+The companion's `RealContext.Interpretation` binds a real embedding, computed
+signs and coefficient containment to one actual native prefix.
+`Interpretation.rational` initializes it; `Interpretation.register` derives the
+new prefix's search progress and coefficient agreement from the parent model
+and the new provider's containment, width and relative transcendence.
+`Interpretation.hom_unique` proves that the prefix's shrinking native bounds
+determine the embedding uniquely.
+
+`RealPrefix.Model` retains the actual native chain together with all its
+provider-derived predecessor interpretations. Start with `Model.rational`
+and extend through `Model.register`. The registration requires the new
+provider's analytic premises; it derives predecessor agreement and progress.
+`Model.register_map` proves that the actual native predecessor-inclusion
+producer succeeds and preserves every coefficient's real value.
+The development adapter `HexRealClosureMathlib.BaseModel` packages the same
+prefix interpretation as a `Tower.Model`; its `towerModel_value` theorem
+identifies every stored base coefficient with the original real embedding.
+`RealChain.Realization.embedding` follows that producer's actual maps through
+all stored real steps. `Chain.Realization.embedding_sign` adds the staged
+infinitesimals, preserving each old formal variable and every native sign.
+
+The standalone `Tower.BaseInclusion.make?` caches a native coefficient map
+when the source's ordered real-key path is a prefix of the target's path and
+its infinitesimal depth is no greater. It preserves and reflects canonical
+zero and preserves the native field operations, including total inversion.
+Its companion `BaseInclusion.sign` derives sign preservation from the two
+provider-derived staged realizations. This includes proper real prefixes;
+the shared tower assembly's base check below still requires identical
+complete real prefixes. Integrating the broader inclusion into complete
+live tower transport remains required.
+
 `BaseContext.Context.real` finishes that prefix. `Context.infinitesimal` then
 adds any number of successive positive infinitesimals. The types prevent
 adding another real constant after this step. These carriers use the existing
@@ -1443,7 +1474,7 @@ comparison results, and inclusion of the whole original image field.
 all original owner contexts. Use `Shared.gather?` with the actual validated
 context handles, then `Shared.value index value` or
 `Shared.polynomial index polynomial` to enter that target. The owner index
-keeps the original value or polynomial type. The native checked base inclusion
+keeps the original value or polynomial type. The shared assembly's base check
 accepts identical complete real-prefix paths and nondecreasing infinitesimal depth;
 decreasing depth and a different prefix are rejected.
 

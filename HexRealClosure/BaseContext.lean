@@ -638,12 +638,57 @@ def RealChain.embedding? {K : Type} [Lean.Grind.Field K] [DecidableEq K]
       (parent.embedding? source).map fun previous =>
         previous.comp (FieldEmbedding.constants B)
 
+/-- The checked producer retains the exact prefix as the identity map. -/
+theorem RealChain.embedding?_self {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    {approx : K → Rat → OrderedFn.Oracle.Bounds} {sign : K → Int}
+    (target : RealChain registry K approx sign) :
+    target.embedding? (.pack (RealContext.ofChain target)) =
+      some (FieldEmbedding.identity K) := by
+  rw [RealChain.embedding?]
+  simp only [RealPrefix.keys_pack, RealContext.keys, RealContext.ofChain_chain,
+    ↓reduceDIte]
+
+/-- A nonempty predecessor cannot enter the rational base. -/
+theorem RealChain.embedding?_base (source : RealPrefix registry)
+    (different : source.keys ≠ (RealChain.base (registry := registry)).keys) :
+    RealChain.base.embedding? source = none := by
+  rw [RealChain.embedding?]
+  simp only [different, ↓reduceDIte]
+
+/-- A proper real-prefix map follows the actual stored predecessor. -/
+theorem RealChain.embedding?_step {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    {approx : K → Rat → OrderedFn.Oracle.Bounds} {sign : K → Int}
+    (parent : RealChain registry K approx sign)
+    (key : ConstantKey) (bounds : Rat → Bounds) (registered : registry key = some bounds)
+    (sp : ∀ f : RationalFn K, Acc (Next (Real.attempt ⟨approx, bounds⟩ f)) 0)
+    (ap : ∀ (f : RationalFn K) (δ : Rat),
+      Acc (Next (Real.approxAttempt ⟨approx, bounds⟩ f (Real.requestWidth δ))) 0)
+    (source : RealPrefix registry)
+    (different : source.keys ≠ (parent.step key bounds registered sp ap).keys) :
+    (parent.step key bounds registered sp ap).embedding? source =
+      (parent.embedding? source).map (fun previous =>
+        previous.comp (FieldEmbedding.constants K)) := by
+  rw [RealChain.embedding?]
+  simp only [different, ↓reduceDIte]
+
 /-- Check real-prefix ancestry using the target's existing providers and
 progress proofs. No provider is looked up again or approximated here. -/
 def RealPrefix.embedding? (source target : RealPrefix registry) :
     Option (FieldEmbedding source.Carrier target.Carrier) := by
   cases target with
   | pack context => exact context.chain.embedding? source
+
+private theorem RealPrefix.embedding?_ofChain_proof {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {approx : K → Rat → Bounds} {sign : K → Int}
+    (source : RealPrefix registry) (target : RealChain registry K approx sign) :
+    source.embedding? (.pack (RealContext.ofChain target)) = target.embedding? source := rfl
+
+/-- Packing an actual real chain retains its checked coefficient map. -/
+theorem RealPrefix.embedding?_ofChain {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {approx : K → Rat → Bounds} {sign : K → Int}
+    (source : RealPrefix registry) (target : RealChain registry K approx sign) :
+    source.embedding? (.pack (RealContext.ofChain target)) = target.embedding? source :=
+  RealPrefix.embedding?_ofChain_proof source target
 
 private theorem prefix_snoc {A : Type} (source target : List A) (last : A)
     (different : source ≠ target ++ [last]) :
@@ -684,6 +729,12 @@ theorem RealChain.embedding?_isSome {K : Type} [Lean.Grind.Field K] [DecidableEq
         source.keys <+: parent.keys ++ [key]
       exact ih.trans (prefix_snoc source.keys parent.keys key same).symm
 
+/-- Checked packed real-prefix inclusion succeeds exactly for an ordered path. -/
+theorem RealPrefix.embedding?_isSome (source target : RealPrefix registry) :
+    (source.embedding? target).isSome = true ↔ source.keys <+: target.keys := by
+  cases target with
+  | pack context => exact context.chain.embedding?_isSome source
+
 @[expose, reducible] def PackedContext.Carrier (entry : PackedContext registry) : Type := by
   cases entry with
   | @pack K => exact K
@@ -723,6 +774,64 @@ def Chain.embedding? {K : Type} [Lean.Grind.Field K] [DecidableEq K]
         | @Chain.infinitesimal _ S sf se ss sourceParent =>
           (parent.embedding? (.pack (Context.ofChain sourceParent))).map fun previous =>
             previous.rationalFunctions
+
+/-- Real-stage transport uses the actual real-prefix producer. -/
+private theorem Chain.embedding?_real_proof {K S : Type}
+    [Lean.Grind.Field K] [DecidableEq K] [Lean.Grind.Field S] [DecidableEq S]
+    {approx : K → Rat → Bounds} {sign : K → Int}
+    {sourceApprox : S → Rat → Bounds} {sourceSign : S → Int}
+    (target : RealChain registry K approx sign)
+    (source : RealChain registry S sourceApprox sourceSign) :
+    (Chain.real target).embedding? (.pack (Context.ofChain (.real source))) =
+      target.embedding? (.pack (RealContext.ofChain source)) := rfl
+
+theorem Chain.embedding?_real {K S : Type}
+    [Lean.Grind.Field K] [DecidableEq K] [Lean.Grind.Field S] [DecidableEq S]
+    {approx : K → Rat → Bounds} {sign : K → Int}
+    {sourceApprox : S → Rat → Bounds} {sourceSign : S → Int}
+    (target : RealChain registry K approx sign)
+    (source : RealChain registry S sourceApprox sourceSign) :
+    (Chain.real target).embedding? (.pack (Context.ofChain (.real source))) =
+      target.embedding? (.pack (RealContext.ofChain source)) := Chain.embedding?_real_proof target source
+
+/-- A staged infinitesimal cannot be included into a real-only target. -/
+private theorem Chain.embedding?_real_inf_proof {K S : Type}
+    [Lean.Grind.Field K] [DecidableEq K] [Lean.Grind.Field S] [DecidableEq S]
+    {approx : K → Rat → Bounds} {sign : K → Int} {sourceSign : S → Int}
+    (target : RealChain registry K approx sign) (source : Chain registry S sourceSign) :
+    (Chain.real target).embedding? (.pack (Context.ofChain (.infinitesimal source))) = none := rfl
+
+theorem Chain.embedding?_real_inf {K S : Type}
+    [Lean.Grind.Field K] [DecidableEq K] [Lean.Grind.Field S] [DecidableEq S]
+    {approx : K → Rat → Bounds} {sign : K → Int} {sourceSign : S → Int}
+    (target : RealChain registry K approx sign) (source : Chain registry S sourceSign) :
+    (Chain.real target).embedding? (.pack (Context.ofChain (.infinitesimal source))) = none := Chain.embedding?_real_inf_proof target source
+
+/-- An additional target infinitesimal is a constant inclusion of the entire
+previous native map. -/
+theorem Chain.embedding?_extra {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    {sign : K → Int} (target : Chain registry K sign) (source : PackedContext registry)
+    (deeper : source.signature.infinitesimals < target.signature.infinitesimals + 1) :
+    target.infinitesimal.embedding? source =
+      (target.embedding? source).map (fun previous =>
+        previous.comp (FieldEmbedding.constants K)) := by
+  rw [Chain.embedding?.eq_def]
+  simp only [deeper, ↓reduceIte]
+
+/-- Aligned infinitesimal levels retain their formal variables while embedding
+the actual predecessor coefficients. -/
+theorem Chain.embedding?_aligned {K S : Type}
+    [Lean.Grind.Field K] [DecidableEq K] [Lean.Grind.Field S] [DecidableEq S]
+    {sign : K → Int} {sourceSign : S → Int}
+    (target : Chain registry K sign) (source : Chain registry S sourceSign)
+    (aligned : ¬ (PackedContext.pack (Context.ofChain source.infinitesimal)).signature.infinitesimals <
+      target.signature.infinitesimals + 1) :
+    target.infinitesimal.embedding? (.pack (Context.ofChain source.infinitesimal)) =
+      (target.embedding? (.pack (Context.ofChain source))).map
+        (fun previous => previous.rationalFunctions) := by
+  rw [Chain.embedding?.eq_def]
+  simp only [aligned, ↓reduceIte]
+  rfl
 
 private theorem signature_real {K : Type} [Lean.Grind.Field K] [DecidableEq K]
     {approx : K → Rat → Bounds} {sign : K → Int}
@@ -802,6 +911,18 @@ def PackedContext.embedding? {registry : Registry} (source target : PackedContex
     Option (FieldEmbedding source.Carrier target.Carrier) := by
   cases target with
   | pack context => exact context.chain.embedding? source
+
+private theorem PackedContext.embedding?_ofChain_proof {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (source : PackedContext registry) (target : Chain registry K sign) :
+    source.embedding? (.pack (Context.ofChain target)) = target.embedding? source := rfl
+
+/-- Packing an actual chain retains the coefficient map returned by its producer. -/
+theorem PackedContext.embedding?_ofChain {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (source : PackedContext registry) (target : Chain registry K sign) :
+    source.embedding? (.pack (Context.ofChain target)) = target.embedding? source :=
+  PackedContext.embedding?_ofChain_proof source target
 
 /-- Native packed inclusion has exactly the staged-chain compatibility boundary. -/
 theorem PackedContext.embedding?_isSome {registry : Registry}

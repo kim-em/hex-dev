@@ -132,5 +132,41 @@ theorem rationalFunctions_sign (map : FieldEmbedding K L)
   simp only [Hex.RationalFn.mapCoeffs_num, Hex.RationalFn.mapCoeffs_den,
     Hex.DensePoly.Interpret.map_eq_zero, lowestCoeff_map, preserved]
 
+private theorem lowestCoeff_C (a : K) :
+    Hex.OrderedFn.Infinitesimal.lowestCoeff (Hex.DensePoly.C a) = a := by
+  by_cases zero : a = 0
+  · subst a
+    have empty : Hex.DensePoly.C (0 : K) = (0 : Hex.DensePoly K) :=
+      congrArg Hex.RationalFn.num (Hex.RationalFn.C_zero (K := K))
+    rw [empty]
+    simp only [Hex.OrderedFn.Infinitesimal.lowestCoeff]
+    exact Hex.DensePoly.coeff_zero _
+  · have index : Hex.OrderedFn.Infinitesimal.lowestIndex (Hex.DensePoly.C a) = 0 := by
+      simp [Hex.OrderedFn.Infinitesimal.lowestIndex, Hex.DensePoly.coeffs_C_of_ne_zero zero,
+        Array.findIdx, zero]
+    simp only [Hex.OrderedFn.Infinitesimal.lowestCoeff, index, Hex.DensePoly.coeff_C,
+      ↓reduceIte]
+
+/-- Constant inclusion into a new infinitesimal retains each predecessor sign. -/
+theorem constants_sign (baseSign : K → Int) (zero : baseSign 0 = 0)
+    (one : baseSign 1 = 1) (a : K) :
+    Hex.OrderedFn.Infinitesimal.sign baseSign ((constants K).value a) = baseSign a := by
+  rw [constants_value]
+  unfold Hex.OrderedFn.Infinitesimal.sign
+  change (if Hex.DensePoly.C a = 0 then 0 else
+    baseSign (Hex.OrderedFn.Infinitesimal.lowestCoeff (Hex.DensePoly.C a)) *
+      baseSign (Hex.OrderedFn.Infinitesimal.lowestCoeff (1 : Hex.DensePoly K))) = baseSign a
+  have unit : (1 : Hex.DensePoly K) = Hex.DensePoly.C (1 : K) := rfl
+  rw [lowestCoeff_C, unit, lowestCoeff_C, one, Int.mul_one]
+  by_cases empty : a = 0
+  · subst a
+    simp only [zero, ite_self]
+  · have nonzero : Hex.DensePoly.C a ≠ 0 := by
+      intro h
+      apply empty
+      have coefficients := congrArg (fun p : Hex.DensePoly K => p.coeff 0) h
+      simpa only [Hex.DensePoly.coeff_C, Hex.DensePoly.coeff_zero, ↓reduceIte] using coefficients
+    simp only [nonzero, ↓reduceIte]
+
 end FieldEmbedding
 end Hex.RealClosure.BaseContext
