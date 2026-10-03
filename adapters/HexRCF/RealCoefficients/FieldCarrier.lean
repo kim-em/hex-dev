@@ -22,7 +22,7 @@ variable {p : ZPoly} {root : SimpleRoot p} [ZPoly.CheckedIrreducible p]
 is omitted because its sign is already identically zero. -/
 @[expose] def product (values : Fin n → PolyQuot p root)
     (formula : QF (n + 1)) : DensePoly (PolyQuot p root) :=
-  ((formula.polys.map (FieldSpecialize.literalPolynomial values)).filter
+  ((FieldSpecialize.prepare values formula).filter
     (fun q => !q.isZero)).foldr (· * ·) 1
 
 noncomputable local instance : Field (PolyQuot p root) := Hex.PolyQuot.field p root
