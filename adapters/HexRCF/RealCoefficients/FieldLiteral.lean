@@ -82,9 +82,10 @@ meta def fieldExpr {p : ZPoly} {root : SimpleRoot p}
   let coeffs ← denseExpr ratExpr value.coeffs
   if !(rcf.algebraic.reducedLiterals.get (← getOptions)) then
     return ← mkAppM ``PolyQuot.reduce #[pExpr, rootExpr, coeffs]
-  let degree ← mkAppM ``DensePoly.natDegree #[coeffs]
   let modulusDegree ← mkAppM ``DensePoly.natDegree #[pExpr]
-  let bound ← mkDecideProof (← mkLt degree modulusDegree)
+  let bound ← mkDecideProof
+    (← mkLt (mkNatLit (value.coeffs.toArray.size - 1)) modulusDegree)
+  let bound ← mkAppM ``Coefficients.degree_bound #[coeffs.appArg!, pExpr, bound]
   mkAppOptM ``PolyQuot.mk #[some pExpr, some rootExpr, some coeffs, some bound]
 
 /-- The defining integer polynomial as printable coefficient data. -/
