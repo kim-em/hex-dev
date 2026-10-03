@@ -1091,16 +1091,7 @@ lean_lib HexConformance where
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
     ++ #[`HexSignDet.CommonField, `HexSignDet.Conformance, `HexSignDet.CrossCheck, `HexSignDet.FastCheck, `HexSignDet.JsonBytes, `HexSignDet.Infinitesimal, `HexSignDetMathlib.Conformance, `HexSignDetMathlib.RootSemantics,
-      `HexSignDetMathlib.SelectedProducerConformance,
-      `HexSignDetMathlib.CompletionConformance,
-      `HexSignDetMathlib.QueryHandleConformance,
-      `HexSignDetMathlib.TableConformance, `HexSignDetMathlib.ReencodingConformance,
-      `HexSignDetMathlib.RootListConformance, `HexSignDetMathlib.RefinementConformance,
-      `HexSignDetMathlib.ThomConformance, `HexSignDetMathlib.ThomRootsConformance,
-      `HexSignDetMathlib.GraphSignsConformance,
-      `HexSignDetMathlib.ComparisonConformance,
-      `HexSignDetMathlib.CommonFieldConformance,
-      `HexSignDetMathlib.ConvertConformance].map Glob.one
+      `HexSignDetMathlib.FieldConformance].map Glob.one
 
     ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests,
       `HexRealClosureMathlib.CoefficientSignsConformance,

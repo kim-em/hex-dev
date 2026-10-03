@@ -29,7 +29,7 @@ namespace Hex.SignDet.FieldChecks
 
 open Hex Hex.SignDet
 
-/-! ## The cubic field `ℚ(∛2)` -/
+/-! # The cubic field `ℚ(∛2)` -/
 
 /-- The real cube root of two. Irreducible so that elaboration never
 evaluates root isolation. -/
@@ -67,7 +67,7 @@ def raw : RawDescriptor CubicField Nat :=
 /-- Three roots −∛2, 0, ∛2. -/
 def cubicHead : DensePoly CubicField := head * xPoly
 
-/-! ## Selected signs -/
+/-! # Selected signs -/
 
 /-- The derivative word selects +∛2 rather than −∛2. Query order and
 repetitions are retained, a nonzero cubic query vanishes at the root, and
@@ -99,7 +99,7 @@ def totalSignsPasses : Bool :=
       d.signAt (xPoly.natPow 3 - DensePoly.C 2) == 0 && d.signAt 0 == 0
   | none => false
 
-/-! ## Completion -/
+/-! # Completion -/
 
 /-- The second derivative sign of the three-root cubic selects +∛2. -/
 def positive : RawDescriptor CubicField Nat :=
@@ -130,7 +130,7 @@ def completesAs (raw : RawDescriptor CubicField Nat) (word : List Int) : Bool :=
           !({raw with signs := raw.signs.map (fun s => if s = 0 then 1 else -s)}).completes out.raw) &&
         !({raw with indices := [0]}).completes out.raw
 
-/-! ## Query handles -/
+/-! # Query handles -/
 
 /-- Joint and singleton calls through a prepared handle agree with the
 expected signs; fresh descriptors reject evidence copied from this one. -/
@@ -165,7 +165,7 @@ def preparedPasses : Bool :=
               | some otherHandle => !otherHandle.checkSigns qs s.values s.evidence)
       | _, _ => false
 
-/-! ## Root lists -/
+/-! # Root lists -/
 
 /-- Successful enumeration with full words, literal bindings, context-bound
 evidence and strictly increasing Thom order. -/
@@ -206,7 +206,7 @@ def infinitesimalRootsPasses : Bool :=
       decide (roots.Pairwise (fun d e => d.fullOrder e = some .lt))
   | _ => false
 
-/-! ## Tables -/
+/-! # Tables -/
 
 /-- The checked, total and prepared table paths agree; one nonzero query
 vanishes at a head root, and absent words count zero. -/
@@ -226,7 +226,7 @@ def tablePasses : Bool :=
           actual.count word == 0 && prepared.count word == 0)
     | _, _ => false
 
-/-! ## Common number field of two quadratic irrationalities -/
+/-! # Common number field of two quadratic irrationalities -/
 
 def commonInputs : Array AlgebraicNumber := #[
   ZPoly.rootNear #p[-2, 0, 1] 1.4,
@@ -283,7 +283,7 @@ def rejectsNonreal : Bool :=
   | .ok message => message == "nonreal generator"
   | .error _ => false
 
-/-! ## Re-encoding and absence -/
+/-! # Re-encoding and absence -/
 
 /-- An absence result requires successful source validation, rather than an
 internal error being mistaken for absence of the selected root. -/
@@ -375,7 +375,7 @@ def infinitesimalRefinementPasses : Bool :=
           sign 7 d.evidence
     | _ => false
 
-/-! ## Noninjective coefficient storage -/
+/-! # Noninjective coefficient storage -/
 
 /-- The same polynomial rebuilt with different nonzero stored coefficients.
 A zero difference permits re-encoding, while copied evidence still fails the
@@ -403,12 +403,14 @@ def changedHeadPasses : Bool :=
           d.checkReencoding r.target target source.lower source.upper r.evidence
       | _ => false
 
-/-! ## Comparison -/
+/-! # Comparison -/
 
 /-- Every stage succeeds; both literal bindings and joint replays are checked,
 and the total operation is exercised in both argument orders. -/
-def compares (left right : RawDescriptor CubicField Nat) (expected : Ordering) : Bool :=
-  match Descriptor.validate fieldSign 7 left, Descriptor.validate fieldSign 7 right with
+def compares {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E] [Mul E]
+    [NatCast E] [Neg E] [Inv E] [Div E] (sign : E → Int)
+    (left right : RawDescriptor E Nat) (expected : Ordering) : Bool :=
+  match Descriptor.validate sign 7 left, Descriptor.validate sign 7 right with
   | some l, some r =>
     match l.buildComparison r with
     | .ok c =>
@@ -424,6 +426,8 @@ def compares (left right : RawDescriptor CubicField Nat) (expected : Ordering) :
           c.rightEncoding.evidence
     | _ => false
   | _, _ => false
+
+def ratX : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
 
 /-- +∛2 selected by an empty word on (0,2). -/
 def cubicPositive : RawDescriptor CubicField Nat :=
@@ -441,7 +445,7 @@ def commonProductPasses : Bool :=
   passes 0 0 0 true && passes 0 (x - 1) 0 true && passes 2 3 0 false &&
     passes (x * x - 1) (x - 1) 2 false
 
-/-! ## Supplied graph signs -/
+/-! # Supplied graph signs -/
 
 open Hex.SignDet.Conformance Hex.SignDet.CrossCheck in
 /-- One validated graph memo supplies two singleton queries and their joint
@@ -506,7 +510,7 @@ def graphProducedPasses : Bool :=
       | some replayed => replayed.values.toList == [1, 0, 0, 1, -1] &&
         sameEvidence replayed.evidence original.evidence
 
-/-! ## Conversion -/
+/-! # Conversion -/
 
 /-- A context-only conversion over the cubic field rebuilds child queries even
 though head, bounds and word are identical; stale children reject. -/
@@ -619,7 +623,7 @@ def rationalizesPasses : Bool :=
       target.signAt (DensePoly.ofList [-1, 0, 1]) == 0
     | _ => false
 
-/-! ## Driver -/
+/-! # Driver -/
 
 def checks : List (String × (Unit → Bool)) := [
   ("selected signs: derivative word, query order, stale bindings", fun _ => selectedPasses),
@@ -659,10 +663,11 @@ def checks : List (String × (Unit → Bool)) := [
     fun _ => thomReencoded head [1, 1] false),
   ("noninjective storage: changed head re-encoding", fun _ => changedHeadPasses),
   ("comparison: shared root of different heads",
-    fun _ => compares cubicPositive ⟨7, xPoly - DensePoly.C alpha, .negInf, .posInf, [1], [1]⟩ .eq),
+    fun _ => compares fieldSign cubicPositive
+      ⟨7, xPoly - DensePoly.C alpha, .negInf, .posInf, [1], [1]⟩ .eq),
   ("comparison: root at the other descriptor's endpoint",
-    fun _ => compares cubicPositive
-      ⟨7, (xPoly - DensePoly.C alpha) * (xPoly - DensePoly.C 2), .finite (3/2), .finite 3, [], []⟩ .lt),
+    fun _ => compares Sturm.orderSign ⟨7, ratX * ratX - 1, .finite 0, .finite 2, [], []⟩
+      ⟨7, (ratX - 1) * (ratX - 2), .finite (3/2), .finite 3, [], []⟩ .lt),
   ("comparison: common product of zero, constant and shared factors",
     fun _ => commonProductPasses),
   ("graph signs: memo slots and rejections", fun _ => graphMemoPasses),
