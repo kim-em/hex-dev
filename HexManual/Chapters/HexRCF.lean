@@ -1540,9 +1540,7 @@ private def commonFieldTablePass
     (common : Hex.QAdjoin.Presentation) : Bool := Id.run do
   if real : common.generator.isReal = true then
     let sign : Hex.QAdjoin common.generator → Int :=
-      Hex.RealAlgebraicNumber.signField
-        (Hex.RealAlgebraicNumber.ofAlgebraic
-          common.generator real)
+      fun value => value.signApprox real
     let some a := common.entries[0]? | return false
     let some b := common.entries[1]? | return false
     let x : DensePoly (Hex.QAdjoin common.generator) :=
@@ -1567,7 +1565,7 @@ Here the common generator has degree four. Coefficient arithmetic uses actual
 uses interval evaluation for nonconstant coordinates. If its first two probes are
 inconclusive, an integer polynomial satisfied by the coordinate gives a proven
 precision bound for the final interval probe.
-The theorem {name}`Hex.RealAlgebraicNumber.signField_spec` proves that it returns
+The theorem {name}`Hex.QAdjoin.signApprox_spec` proves that it returns
 the sign in the selected real embedding. The more extensive enumeration,
 comparison, re-encoding and replay checks run in the conformance suite against
 an independent exact algebraic-number oracle.

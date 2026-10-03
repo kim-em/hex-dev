@@ -5,13 +5,13 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealAlgebraic.FieldSign
+public import HexNumberField.RealSign
 public import HexNumberFieldMathlib.Roots
 public import HexNumberFieldMathlib.CommonField
 
 public section
 
-namespace Hex.RealAlgebraicNumber
+namespace Hex.QAdjoin
 
 /-- A real-part enclosure narrower than half the value's magnitude determines its sign. -/
 theorem ballSign?_isSome (ball : DyadicComplexBall) (z : ℂ)
@@ -45,18 +45,18 @@ theorem ballSign?_isSome (ball : DyadicComplexBall) (z : ℂ)
     unfold ballSign?
     split <;> rfl
 
-namespace FieldSign
+namespace SignApprox
 
 /-- The evaluation eliminant is nonzero and vanishes at the selected coordinate. -/
-theorem eliminant_spec (generator : RealAlgebraicNumber)
-    (value : QAdjoin generator.toAlgebraic) :
+theorem eliminant_spec (generator : AlgebraicNumber)
+    (value : QAdjoin generator) :
     eliminant generator value ≠ 0 ∧
       (HexRootsMathlib.toPolyℂ (eliminant generator value)).IsRoot
-        (PolyQuot.toComplex value generator.toAlgebraic.rep
-          generator.toAlgebraic.rep_mk) := by
-  let rep := generator.toAlgebraic.rep
-  let h := generator.toAlgebraic.rep_mk
-  let f : DensePoly (PolyQuot generator.toAlgebraic.p generator.toAlgebraic.x) :=
+        (PolyQuot.toComplex value generator.rep
+          generator.rep_mk) := by
+  let rep := generator.rep
+  let h := generator.rep_mk
+  let f : DensePoly (PolyQuot generator.p generator.x) :=
     DensePoly.ofList [-value, 1]
   let z := PolyQuot.toComplex value rep h
   have nonzero : !f.isZero := by
@@ -69,7 +69,7 @@ theorem eliminant_spec (generator : RealAlgebraicNumber)
           ((DensePoly.ofList [-value, 1]).coeff 1) rep h = 1
         simpa [DensePoly.coeff_ofList, List.getD] using PolyQuot.map_one rep h
       have zero : PolyQuot.toComplex (Zero.zero : PolyQuot
-          generator.toAlgebraic.p generator.toAlgebraic.x) rep h = 0 :=
+          generator.p generator.x) rep h = 0 :=
         PolyQuot.map_zero rep h
       rw [one, zero] at mapped
       exact one_ne_zero mapped
@@ -90,7 +90,7 @@ theorem eliminant_spec (generator : RealAlgebraicNumber)
         simpa [List.getD, Polynomial.coeff_X] using PolyQuot.map_one rep h
       | succ n =>
         have zero : PolyQuot.toComplex (Zero.zero : PolyQuot
-            generator.toAlgebraic.p generator.toAlgebraic.x) rep h = 0 :=
+            generator.p generator.x) rep h = 0 :=
           PolyQuot.map_zero rep h
         simpa [List.getD, Polynomial.coeff_X, show n + 1 + 1 ≠ 1 by omega] using
           zero
@@ -100,11 +100,11 @@ theorem eliminant_spec (generator : RealAlgebraicNumber)
     rw [linear, Polynomial.eval_sub, Polynomial.eval_X, Polynomial.eval_C, sub_self]
 
 /-- The finite endpoint always separates a nonconstant coordinate from zero. -/
-theorem endpoint?_isSome (generator : RealAlgebraicNumber)
-    (value : QAdjoin generator.toAlgebraic) (large : 1 < value.coeffs.size) :
+theorem endpoint?_isSome (generator : AlgebraicNumber)
+    (value : QAdjoin generator) (realGenerator : generator.isReal = true) (large : 1 < value.coeffs.size) :
     (endpoint? generator value).isSome = true := by
-  let rep := generator.toAlgebraic.rep
-  let h := generator.toAlgebraic.rep_mk
+  let rep := generator.rep
+  let h := generator.rep_mk
   let z := PolyQuot.toComplex value rep h
   let q := eliminant generator value
   let precision := evalDisambiguationLimit q 1
@@ -117,7 +117,7 @@ theorem endpoint?_isSome (generator : RealAlgebraicNumber)
     subst value
     change 1 < (0 : DensePoly Rat).size at large
     simp at large
-  have real : z.im = 0 := QAdjoin.value_real value generator.property
+  have real : z.im = 0 := QAdjoin.value_real value realGenerator
   have cast : z = (z.re : ℂ) := Complex.ext rfl (by simp [real])
   have lower := ZPoly.normalizeEval_root_norm_lower
     (eliminant_spec generator value).1 nonzero (eliminant_spec generator value).2
@@ -141,6 +141,6 @@ theorem endpoint?_isSome (generator : RealAlgebraicNumber)
     exact (norm_nonneg _).trans norm
   exact ballSign?_isSome ball z mem (by linarith)
 
-end FieldSign
+end SignApprox
 
-end Hex.RealAlgebraicNumber
+end Hex.QAdjoin

@@ -1,6 +1,8 @@
 """Adversarial checks of the independent algebraic-coefficient oracle."""
 import copy
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -128,6 +130,43 @@ class CommonFieldOracle(unittest.TestCase):
             path.write_text(json.dumps(next(iter(self.records.values()))) + "\n")
             with self.assertRaisesRegex(OracleMismatch, "missing common-field cases"):
                 oracle.check(path, Path(tmp), "local", 10377)
+
+
+class FieldSignOracle(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.data = json.loads((oracle.DEFAULT_FIXTURE.parent / "field-signs.jsonl").read_text())
+
+    def test_exact_close_values(self):
+        oracle.check_scalar_data(copy.deepcopy(self.data))
+
+    def test_changed_sign(self):
+        data = copy.deepcopy(self.data)
+        data[0]["values"][0]["sign"] *= -1
+        with self.assertRaisesRegex(OracleMismatch, "wrong scalar sign"):
+            oracle.check_scalar_data(data)
+
+    def test_changed_coordinate(self):
+        data = copy.deepcopy(self.data)
+        data[1]["values"][0]["coordinates"][0][0] += 1
+        with self.assertRaisesRegex(OracleMismatch, "wrong cancellation family value"):
+            oracle.check_scalar_data(data)
+
+    def test_stdin_reports_a_changed_sign(self):
+        data = copy.deepcopy(self.data)
+        data[0]["values"][0]["sign"] *= -1
+        result = subprocess.run(
+            [sys.executable, str(oracle.ROOT / "scripts/oracle/sign_det_field_signs.py")],
+            input=json.dumps(data), text=True, capture_output=True, cwd=oracle.ROOT)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("FAIL HexSignDet field-sign oracle: wrong scalar sign", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
+    def test_missing_values(self):
+        data = copy.deepcopy(self.data)
+        data[0]["values"].pop()
+        with self.assertRaisesRegex(OracleMismatch, "missing close-value coordinates"):
+            oracle.check_scalar_data(data)
 
 
 if __name__ == "__main__":

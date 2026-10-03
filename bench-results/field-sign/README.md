@@ -7,6 +7,8 @@ reference/interval ratio was 42.567. These are observations on the recorded
 shared host, including generator construction and process startup.
 
 `scalars/` retains all twelve observations, metadata, exact outputs and summary.
+Its source hashes identify the implementation before the number-field API
+refactoring; the reported times refer to that measured binary.
 Six adjacent blocks alternate reference/interval and interval/reference on one
 automatically leased CPU. No completed sample was excluded and there was no
 rerun. All outputs agree byte for byte. An independent FLINT qqbar evaluation

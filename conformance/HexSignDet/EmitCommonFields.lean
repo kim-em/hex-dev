@@ -9,8 +9,8 @@ import Hex.Conformance.Emit
 open Hex
 
 def main (args : List String) : IO Unit := do
-  if args == ["--scalars"] || args == ["--scalars", "--legacy"] then
-    IO.println (Hex.SignDet.CommonField.scalarFixtures (args == ["--scalars", "--legacy"])).compress
+  if args == ["--scalars"] || (args == ["--scalars", "--legacy"] || args == ["--legacy", "--scalars"]) then
+    IO.println (Hex.SignDet.CommonField.scalarFixtures ((args == ["--scalars", "--legacy"] || args == ["--legacy", "--scalars"]))).compress
     return
   unless args.isEmpty || args == ["--legacy"] do
     throw (IO.userError "usage: hexsigndet_emit_common_fields [--scalars] [--legacy]")

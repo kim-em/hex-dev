@@ -51,31 +51,4 @@ private def selectedPass (input : AlgebraicNumber) : Bool :=
 #guard selectedPass (ZPoly.rootNear #p[-2, 0, 1] (-1.4))
 #guard selectedPass (ZPoly.rootNear #p[-2, 0, 0, 1] 1.3)
 
-/-- Exercise the finite endpoint on a nonconstant coordinate too small for both early probes. -/
-private def fallbackPass (negative : Bool) : Bool :=
-  let input := ZPoly.rootNear #p[-2, 0, 0, 1] 1.3
-  if real : input.isReal = true then
-    let generator := ofAlgebraic input real
-    let positive := (input.toQAdjoin - 1) ^ 80
-    let value := if negative then -positive else positive
-    value.coeffs.size > 1 && FieldSign.initial? generator value == none &&
-      FieldSign.refined? generator value == none &&
-      (FieldSign.endpoint? generator value).isSome &&
-      generator.signField value == (if negative then -1 else 1)
-  else false
-
-#guard fallbackPass false
-#guard fallbackPass true
-
-private def refinedPass : Bool :=
-  let input := ZPoly.rootNear #p[-2, 0, 1] 1.4
-  if real : input.isReal = true then
-    let generator := ofAlgebraic input real
-    let value := (3 - 2 * input.toQAdjoin) ^ 8
-    FieldSign.initial? generator value == none &&
-      FieldSign.refined? generator value == some 1 && generator.signField value == 1
-  else false
-
-#guard refinedPass
-
 end Hex.RealAlgebraicNumber.FieldSignConformance

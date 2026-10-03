@@ -30,7 +30,7 @@ the nonnegative square root or `none` for negative input; `sqrt a h` takes a
 proof of nonnegativity. `Repr` emits an ordinary checked Lean expression that
 reconstructs the value.
 
-`signField generator value` determines the sign of a `QAdjoin` coordinate in
+`signField generator value` wraps `QAdjoin.signApprox` and determines the sign of a `QAdjoin` coordinate in
 its chosen real embedding. It handles constants directly and otherwise uses
 certified interval evaluation, with a finite precision bound derived from an
 integer polynomial satisfied by the value. The companion proves agreement

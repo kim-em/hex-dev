@@ -1471,6 +1471,10 @@ lean_exe hexsigndet_emit_fixtures where
   srcDir := "conformance"
   root := `HexSignDet.EmitFixtures
 
+lean_exe hexsigndet_emit_field_signs where
+  srcDir := "conformance"
+  root := `HexSignDet.EmitFieldSigns
+
 lean_exe hexsigndet_emit_common_fields where
   srcDir := "conformance"
   root := `HexSignDet.EmitCommonFields

@@ -57,6 +57,7 @@ ORACLES=(
   "HexRealRoots|hexrealroots_emit_fixtures|scripts/oracle/realroots_flint.py|conformance-fixtures/HexRealRoots/realroots.jsonl"
   "HexSignDet|hexsigndet_json_bytes|scripts/oracle/sign_det_json_bytes.py|conformance-fixtures/HexSignDet/json-bytes.jsonl"
   "HexSignDet|hexsigndet_emit_fixtures|scripts/oracle/sign_det_flint.py|conformance-fixtures/HexSignDet/sign_det.jsonl"
+  "HexSignDet|hexsigndet_emit_field_signs|scripts/oracle/sign_det_field_signs.py|conformance-fixtures/HexSignDet/field-signs.jsonl"
   "HexSignDet|hexsigndet_emit_common_fields|scripts/oracle/sign_det_common_fields.py|conformance-fixtures/HexSignDet/common-fields.jsonl"
   "HexRCF|hexrcf_emit_fixtures|scripts/oracle/rcf_flint.py|conformance-fixtures/HexRCF/rcf.jsonl"
   "HexRoots|hexroots_emit_fixtures|scripts/oracle/roots_flint.py|conformance-fixtures/HexRoots/roots.jsonl"
@@ -251,8 +252,13 @@ run_tuple() {
     fi
   fi
 
-  if [ "$oracle" = "scripts/oracle/sign_det_common_fields.py" ]; then
-    if ! python3 -m unittest scripts.oracle.test_sign_det_common_fields; then
+  if [ "$oracle" = "scripts/oracle/sign_det_common_fields.py" ] ||
+      [ "$oracle" = "scripts/oracle/sign_det_field_signs.py" ]; then
+    local test_class=CommonFieldOracle
+    if [ "$oracle" = "scripts/oracle/sign_det_field_signs.py" ]; then
+      test_class=FieldSignOracle
+    fi
+    if ! python3 -m unittest "scripts.oracle.test_sign_det_common_fields.$test_class"; then
       echo "FAIL: $lib :: common-field oracle rejection checks failed"
       return 1
     fi

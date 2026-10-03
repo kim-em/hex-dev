@@ -231,6 +231,11 @@ def check(source, failure_dir, profile, seed):
 def check_scalars(source):
     """Independently evaluate each measured close-value coordinate with qqbar."""
     data = json.loads(Path(source).read_text())
+    return check_scalar_data(data)
+
+
+def check_scalar_data(data):
+    """Check the selected embedding, prescribed coordinates, and every reported sign."""
     require(isinstance(data, list) and len(data) == 2, "missing scalar fields")
     total = 0
     with QQBar() as q:

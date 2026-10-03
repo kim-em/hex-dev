@@ -122,3 +122,10 @@ lake build hexsigndet_json_bytes
 python3 scripts/oracle/sign_det_json_bytes.py
 python3 -m unittest scripts.oracle.test_sign_det_json_bytes
 ```
+
+`field-signs.jsonl` records twenty close-value signs in quadratic and cubic
+fields, including both signs of each prescribed power. Regenerate it with
+`lake build hexsigndet_emit_field_signs` followed by
+`.lake/build/bin/hexsigndet_emit_field_signs > conformance-fixtures/HexSignDet/field-signs.jsonl`.
+The independent qqbar oracle checks the selected generator, reduced coordinates,
+prescribed powers and signs; CI also checks rejection of modified evidence.

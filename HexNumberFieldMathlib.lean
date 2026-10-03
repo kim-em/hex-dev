@@ -19,6 +19,8 @@ public import HexNumberFieldMathlib.AlgebraicallyClosed
 public import HexNumberFieldMathlib.Radical
 public import HexNumberFieldMathlib.RootOrder
 
+public import HexNumberFieldMathlib.RealSign
+
 public section
 
 /-!
