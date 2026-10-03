@@ -444,8 +444,10 @@ jobs:
           lake -d experiments/RealClosureRepresentation build representationPrototype HexRationalFn.Field
           lake -d experiments/RealClosureAlgebraic build \
             Tests Transfer algebraicCheck algebraicBench policyCheck policyBench policyTrace refinementCheck
+          lake -d experiments/NestedReplay build
           experiments/RealClosureRepresentation/.lake/build/bin/representationPrototype
           probe_dir=$(mktemp -d)
+          python3 experiments/NestedReplay/run.py "$probe_dir/nested-replay"
           experiments/RealClosureAlgebraic/.lake/build/bin/algebraicCheck > "$probe_dir/algebraic.jsonl"
           python3 experiments/RealClosureAlgebraic/verify.py < "$probe_dir/algebraic.jsonl"
           experiments/RealClosureAlgebraic/.lake/build/bin/policyCheck > "$probe_dir/checks.jsonl"
