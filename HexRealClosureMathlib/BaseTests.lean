@@ -6,6 +6,10 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.BaseContext
+public import HexRealClosureMathlib.BaseProvider
+public import HexRealClosureMathlib.BaseStagedRealization
+public import HexRealClosure.BaseInclusion
+public meta import HexRealClosure.BaseInclusion
 public import HexRealClosure.AlgebraicContext
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
@@ -30,6 +34,35 @@ private abbrev prefixContext := RealContext.rational registry
 
 private theorem present (version : Nat) : (registry (key version)).isSome = true := by
   simp [registry, key]
+
+private noncomputable abbrev rationalModel := RealPrefix.Model.rational registry
+
+private theorem providerTranscendence :
+    letI : Field rationalModel.context.Carrier := HexPolyMathlib.fieldOfGrind
+    Real.RelativeTranscendence rationalModel.interpretation.hom (liouvilleNumber 2) := by
+  let : Field Rat := HexPolyMathlib.fieldOfGrind
+  change Real.RelativeTranscendence (Rat.castHom ℝ) (liouvilleNumber 2)
+  exact OrderedFn.LiouvilleTests.transcendence
+
+private theorem providerContained (δ : Rat) (_positive : 0 < δ) :
+    Contains ((registry (key 1)).get (present 1) δ) (liouvilleNumber 2) :=
+  OrderedFn.LiouvilleTests.provider_contains δ
+
+private theorem providerWidth (δ : Rat) (positive : 0 < δ) :
+    ((registry (key 1)).get (present 1) δ).width ≤ δ :=
+  OrderedFn.LiouvilleTests.provider_width δ positive
+
+/-- This constructs the full native prefix and its coherent predecessor model
+using only the actual Liouville provider's analytic premises. -/
+private noncomputable def providerModel := rationalModel.register (key 1) (present 1)
+  (liouvilleNumber 2) providerContained providerWidth providerTranscendence
+
+example : providerModel.context.keys = [key 1] := by
+  exact (RealPrefix.Model.register_keys rationalModel (key 1) (present 1) (liouvilleNumber 2)
+    providerContained providerWidth providerTranscendence).trans (by
+      simp only [rationalModel, RealPrefix.Model.rational, RealPrefix.Model.context,
+        RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys,
+        List.nil_append])
 
 private theorem cast_source (F G : Lean.Grind.Field Rat) (h : F = G)
     (he : @Real.Registration Rat F inferInstance = @Real.Registration Rat G inferInstance)
@@ -402,5 +435,28 @@ example (r : Registry) (k₁ k₂ : ConstantKey)
     exact Element.read_write a
 
 end TwoConstants
+
+private def prefixInclusions : IO Unit := do
+  let source := (rational registry).infinitesimal
+  let target := (realContext 1).infinitesimal.infinitesimal
+  let some inclusion := Tower.BaseInclusion.make? (.pack source) (.pack target)
+    | throw (IO.userError "proper real-prefix inclusion failed")
+  let epsilon : (Tower.Context.ofBase (.pack source)).Value :=
+    Element.infinitesimal (rational registry)
+  let expected : (Tower.Context.ofBase (.pack target)).Value :=
+    (Element.infinitesimal (realContext 1)).embed
+  unless inclusion.value epsilon == expected do
+    throw (IO.userError "adjoining a real constant moved the earlier infinitesimal")
+  let targetContext := Tower.Context.ofBase (.pack target)
+  let delta : targetContext.Value := Element.infinitesimal (realContext 1).infinitesimal
+  unless targetContext.sign (delta - inclusion.value epsilon) == -1 do
+    throw (IO.userError "proper real-prefix inclusion changed infinitesimal order")
+  unless (Tower.BaseInclusion.make? (.pack (realContext 1))
+      (.pack (realContext 2).infinitesimal)).isNone do
+    throw (IO.userError "base inclusion accepted unrelated real-prefix paths")
+  unless (Tower.BaseInclusion.make? (.pack target) (.pack source)).isNone do
+    throw (IO.userError "base inclusion accepted a shorter real prefix")
+
+#eval prefixInclusions
 
 end Hex.RealClosure.BaseContext.RealTests
