@@ -77,3 +77,15 @@ end Hex.RealClosure.Trivial.Tests
 /-- info: 'Hex.RealClosure.Trivial.Map.Model.sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Trivial.Map.Model.sign
+
+/-- info: 'Hex.RealClosure.Trivial.compare_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Trivial.compare_eq
+
+/-- info: 'Hex.RealClosure.Trivial.roots_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Trivial.roots_eq
+
+/-- info: 'Hex.RealClosure.Trivial.Map.Model.compare' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Trivial.Map.Model.compare

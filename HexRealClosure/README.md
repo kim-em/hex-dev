@@ -743,7 +743,9 @@ consumers and kernel axiom guards. The native example also checks a value
 read/write round trip and stale-context rejection. The shared driver feeds
 `hexrealclosure_trivial_conformance`, which exports the actual generic roots
 after conversion; `scripts/oracle/real_closure_trivial.py` checks them against
-independent exact python-flint qqbar roots and multiplicities. The committed
+independent exact python-flint qqbar arithmetic: factor division and
+quadratic/cubic binomial root formulas give complete roots and multiplicities
+for the seven committed inputs. Other residuals use the general qqbar root finder. The committed
 seven-case fixture covers zero, a constant, a dependent linear polynomial,
 mixed coefficients with repeated roots, nonlinear heads, nonreal conjugates
 and a point root. The emitted root kinds check actual point and selected-root
@@ -757,7 +759,8 @@ It does not replay native certificate graphs.
 converted head's roots per requested handle; `Map.output` does not yet share
 those searches between entries with the same factor. The required performance
 evaluation must account for that cost. The remaining whole-family independent
-coverage audit stays in
+coverage audit, and conversion back into native presentations with proved
+round trips, stay in
 [#10378](https://github.com/kim-em/hex-dev/issues/10378).
 
 ### Native complete roots

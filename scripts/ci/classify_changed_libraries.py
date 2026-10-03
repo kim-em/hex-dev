@@ -152,6 +152,12 @@ def classify_paths(
         selected.update(("HexSignDet", "HexRealClosure"))
         reasons.append("HexOrderedFn -> HexSignDet/HexRealClosure infinitesimal conformance")
 
+    # Native tower differential tests consume these executable backends,
+    # and their fixtures include canonical real-algebraic isolation data.
+    if selected & {"HexRealAlgebraic", "HexSignDet", "HexSturm"}:
+        selected.add("HexRealClosure")
+        reasons.append("real-algebraic/sign-query backends -> HexRealClosure differential conformance")
+
     if not selected:
         return Classification((), True, "no changed path mapped to a library")
 

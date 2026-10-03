@@ -27,7 +27,9 @@ private def same (a b : RealRootSet) : Bool :=
 
 def check {parent : Tower.Context registry} (source : Map parent) (_ : Array RealAlgebraicNumber)
     (name : String) (p : DensePoly parent.Value) : IO Unit := do
+  IO.eprintln s!"Checking native roots: {name}"
   let produced := parent.roots p
+  IO.eprintln s!"Checking canonical backend: {name}"
   require (same (source.output produced) (source.polynomial p).roots)
     s!"native algebraic-coefficient roots differ from canonical backend: {name}"
   match produced with
@@ -70,6 +72,15 @@ def runWith (check : {parent : Tower.Context registry} → Map parent → Array 
   let parent := extension.context
   let a := extension.generator
   let source := (Map.rational registry).adjoin cubic
+  let rational := Map.rational registry
+  let cubicRoot : Tower.Root base := .selected cubic extension rfl
+  let nonmonicRoot : Tower.Root base := .selected nonmonic oldExtension rfl
+  require (rational.compareRoots cubicRoot nonmonicRoot == cubicRoot.compare nonmonicRoot)
+    "canonical comparison lost root identity across different child contexts"
+  require (rational.compareRoots cubicRoot (.point two) == cubicRoot.compare (.point two))
+    "canonical selected-versus-point comparison differs"
+  require (rational.compareRoots (.point two) cubicRoot == (Tower.Root.point two).compare cubicRoot)
+    "canonical point-versus-selected comparison differs"
   let two : parent.Value := 1 + 1
   require (parent.equal (a * a * a) two) "native cubic equation failed"
   require (source.value (a * a * a) == 2) "canonical cubic equation failed"

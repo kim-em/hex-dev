@@ -4,7 +4,8 @@
 The emitter runs the native root producer over two actual validated levels,
 then exports canonical polynomial/disc identities for coefficients and roots.
 The existing qqbar checker independently identifies those values and computes
-all roots and multiplicities of the converted coefficient polynomial. This is
+all roots and multiplicities using exact synthetic division and binomial
+root arithmetic for these seven inputs (general qqbar roots for other residuals). This is
 differential conformance after conversion. Independently reconstructed cubic
 and quadratic generators also check every original recursive coefficient and
 its cached sign against the emitted canonical value. Native certificate graphs
@@ -64,25 +65,30 @@ class TrivialChecker(Checker):
     imaginary interval. Native certificate graphs are not accepted as proofs.
     """
 
+    def __init__(self, q: QQBar) -> None:
+        super().__init__(q)
+        self.real_values: dict[str, int] = {}
+        self.real_roots: dict[tuple[int, ...], list[tuple[int, int]]] = {}
+
     def value(self, record: dict[str, Any]) -> int:
         import json
         from flint import fmpz_poly
         key = json.dumps(record, sort_keys=True)
-        if key in self.values:
-            return self.values[key]
+        if key in self.real_values:
+            return self.real_values[key]
         polynomial, real, imaginary, width = disc(record)
         require(abs(imaginary) <= width, "real operand square excludes the real axis")
-        if tuple(polynomial) not in self.roots:
+        if tuple(polynomial) not in self.real_roots:
             unit, factors = fmpz_poly(polynomial).factor()
             require(int(unit) == 1 and len(factors) == 1 and factors[0][1] == 1,
                     "serialized polynomial is not primitive irreducible")
-            self.roots[tuple(polynomial)] = self.q.roots(
+            self.real_roots[tuple(polynomial)] = self.q.roots(
                 [self.q.number(c, self.q.integer) for c in polynomial], integer=True)
         lower, upper = self.q.number(real - width), self.q.number(real + width)
-        matches = [value for value, _ in self.roots[tuple(polynomial)]
+        matches = [value for value, _ in self.real_roots[tuple(polynomial)]
                    if self.q.compare(lower, value) <= 0 and self.q.compare(value, upper) <= 0]
         require(len(matches) == 1, "real isolation square did not select exactly one root")
-        self.values[key] = matches[0]
+        self.real_values[key] = matches[0]
         return matches[0]
 
 
@@ -120,7 +126,9 @@ def polynomial_roots(q: QQBar, coefficients: list[int], generators: list[int]) -
     follow the standard binomial cases. Other residuals use general qqbar roots.
     Candidates come from the independently reconstructed generators and zero,
     never from emitted roots. Exact synthetic division proves each removed
-    factor and its multiplicity. FLINT computes the complete remaining roots.
+    factor and its multiplicity. Exact FLINT square/cube-root arithmetic handles
+    the binomial residuals in the committed cases; its general root finder
+    handles any other remaining polynomial.
     """
     zero = q.number(0)
     polynomial = list(coefficients)
