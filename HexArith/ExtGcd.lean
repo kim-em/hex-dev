@@ -36,7 +36,7 @@ Pure natural-number extended GCD.
 
 The result `(g, s, t)` satisfies `g = Nat.gcd a b` and
 `s * a + t * b = g` after coercing the inputs to `Int`. Use
-the GMP-backed `HexArith.Int.extGcd` entry point for integer inputs and
+`HexArith.Int.extGcd` for integer inputs and
 `HexArith.UInt64.extGcd` for `UInt64` inputs.
 -/
 @[expose]

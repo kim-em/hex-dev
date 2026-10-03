@@ -295,12 +295,12 @@ def euclidUntil (m a P : Int) : Row
 ```
 
 `euclidUntil` is the only new arithmetic in this library, and it is more
-than a wrapper. `HexArith.Int.extGcd` is an `@[extern]` binding that
-returns the final triple, so no intermediate row is reachable through it:
-`euclidUntil` needs either its own extern primitive or a refactoring of
-the existing one to take a stopping predicate. Which of those is right is
-an implementation question, and it is the one open question in this
-library that costs real work rather than a decision.
+than a wrapper. `HexArith.Int.extGcd` returns only the final triple. Its
+proved `@[csimp]` rewrite uses `Nat.extendedGcd` for nonnegative inputs,
+so intermediate rows are not exposed through the public result:
+`euclidUntil` needs either its own primitive or a refactoring of the Euclidean
+loop to take a stopping predicate. Choosing and proving that implementation
+is the remaining arithmetic design question.
 
 ### The signature is checked, so soundness is free
 
