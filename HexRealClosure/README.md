@@ -1532,6 +1532,93 @@ Executable guards count the extracted levels in the base and a one-root
 context and rebuild the extracted one-root suffix. The existing four-root
 transport fixture includes a deeper count check and runs outside routine CI.
 
+### Sections and sectors
+
+`Tower.Sample.section` constructs a section from a validated descriptor and
+retains its cached root context, ordinary native value and coefficient
+conversion. `Sample.signs` evaluates a polynomial family through that actual
+conversion. `Cell.contains` checks section equality or strict sector membership
+using native comparison.
+
+`Sample.family context polynomials` obtains the complete roots of each nonzero
+polynomial. It sorts and deduplicates their native root handles before
+constructing any shared arithmetic context. Zero polynomials contribute no
+boundary. `Family.sections` reuses each root's cached context. `Family.sectors`
+constructs the two exterior rays and each intervening bounded sector in their
+own immutable contexts: a ray needs one boundary root, and a bounded sector
+collects exactly its two boundary roots. Midpoints of adjacent native values
+handle bounded sectors; offsets by one handle rays; zero handles the root-free
+whole line. Infinitesimally close roots need no separating rational.
+
+`Family.sector?_eq` identifies an indexed result with its original region.
+`Family.mem_cells` connects original boundary and sector labels to the complete
+cell list, and `Region.sample_section` identifies the cached section sample.
+`Context.Poly` is a reducible alias of `DensePoly context.Value`, allowing its
+existing polynomial operations through the public interface.
+
+`Family.sector?` selects a cell label before constructing its sample and rejects
+indices beyond the complete family. `Family.sectorBetween?` compares requested
+root handles with the adjacent complete boundary list, then constructs only
+the accepted sector. It accepts semantically equal endpoints represented by
+different valid descriptors and rejects reversed, missing and non-adjacent
+boundaries. Finite endpoints remain owned by their original root contexts.
+`Region.sample` constructs a candidate for an explicitly supplied region; its
+bounded-sector membership requires strictly ordered endpoints. `Family`
+producers discharge this condition. `Region.endpoints?` exposes a sector's original endpoints; `Family.cells`
+describes exactly the returned section and sector samples.
+
+`HexRealClosureMathlib.LocalSample` proves complete boundary coverage, strict
+ordering and unique cell membership for every point of any compatible real
+closed ordered field. Each actual local sample has a coefficient-preserving
+interpretation, passes native cell membership and computes the sign of every
+input polynomial throughout its entire sector, including zero polynomials.
+The proofs use the actual complete root producers and local conversions;
+callers supply no root-coverage or sign-agreement hypotheses. Checked endpoint
+requests retain the exact interpreted requested interval, and every actual
+adjacent sector succeeds. `Family.cell_signs` states the computed signs directly
+in terms of original-model cell membership; `Family.sectorBetween?_signs` does
+the same for requested intervals. These compose with unique cell coverage
+without identifying separate existential interpretations. `Family.sections_correct`
+retains each actual section boundary and its computed signs. Public membership
+lemmas cover bounded sectors, both
+rays and the whole line. Ordinary-import consumer tests exercise these APIs.
+
+Native tests cover irrational duplicate roots, the three real roots of an
+irreducible cubic, a mixed quadratic/quartic family, zero and constant
+polynomials, invalid boundary requests and an infinitesimal gap. The local
+contexts include at most two added root levels. Sorting uses native root
+comparison over the original predecessor; reverse insertion takes linearly
+many comparisons on ascending input and quadratically many in the worst case.
+An indexed request traverses the region list. Endpoint requests search that
+list using native root comparisons; requesting every sector by endpoints can
+repeat quadratically many comparisons, but constructs each accepted midpoint
+only when it is requested.
+
+`Sample.partition` provides a separate complete partition for callers needing
+one common arithmetic context for all roots. Its `Partition` samples and
+checked requests have the same membership and constant-sign guarantees in
+`HexRealClosureMathlib.Sample`. It collects all roots before deduplication,
+which can increase depth and extension degrees; duplicate descriptors are not
+shared. Its boundary requests construct all sector midpoints before searching.
+The local `Family` interface avoids collecting unrelated roots for a sample.
+
+`hexrealclosure_sample_conformance` exports six actual families with their
+complete contexts, converted input coefficients, sample values, cells and sign
+vectors. The independent pinned Z3 RCF oracle checks the complete distinct
+boundary lists, every section and sector, strict membership and computed signs.
+It includes an infinitesimal gap over a selected algebraic predecessor.
+Twenty-three oracle tests check valid fixtures and reject changes to boundaries,
+points, contexts, transported coefficients and signs. The emitter also rebuilds
+every local context and reads each stored point through the checked native reader.
+Run `lake build hexrealclosure_sample_conformance`, then
+`.lake/build/bin/hexrealclosure_sample_conformance | python3 scripts/oracle/real_closure_samples.py`.
+The oracle checks exact semantics; it does not independently replay polynomial
+certificate graphs or certify canonical fraction syntax.
+
+Joint specialization of nested selected roots and successive infinitesimals
+to one ordinary real assignment and the full performance evaluation remain
+separate obligations.
+
 ## Native scalar signs and nested replay
 
 Native selected-root arithmetic reduces high-degree sign queries by the existing
