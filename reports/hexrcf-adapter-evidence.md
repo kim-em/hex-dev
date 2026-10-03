@@ -26,6 +26,8 @@ Mathlib and are never executable benchmark roots.
 | Shared atom specialization | [FieldSpecializeConformance](../conformance/HexRCF/FieldSpecializeConformance.lean): `Specialize.prepare`/`FieldSpecialize.prepare` preserve every atom, including zero and domain guards. Evaluation and semantic degree are proved after coefficient cancellation. The carrier filters zero polynomials only after traversal. |
 | Fixed-field finite construction and replay | [FiniteReplay](../conformance/HexRCF/FiniteReplay.lean): exact formula/quantifier/coefficient/divisor/context bindings, complete recorded sign operands, malformed evidence, diagnostic false and preflight-before-search. `Replay.check_domains`, `check_spec`, `check_sound`, `check_original` and `build_spec` use actual real interpretation laws. Bounded production can exhaust. `buildTotal_checked`/`buildTotal_spec` connect the existing complete exact-field producer to finite acceptance for nonzero original divisors, independently of direct proposal depth; false remains diagnostic. |
 | Original-goal API proof generation | [PreparedCoefficients](../conformance/HexRCF/PreparedCoefficients.lean) and [Prepared probes](../bench/HexRCF/ProofProbe/Prepared): successful guarded and Ioc proofs use `Replay.check_sound`; proof inspection excludes producer calls. A fresh total-production probe sets direct proposal depth to zero and still quotes an accepted Ioc proof. Wrong transport, omitted guards, incorrect identities and false verdicts fail. Preparation/transport restore state on unsuccessful exits, including runtime exceptions. |
+| Checked sign retrieval | [SignIndex](../conformance/HexRCF/SignIndex.lean): indexed hits are checked against the original table position and exact key. Missing or malformed routing falls back to the original lookup, preserving every original hit. Actual quoted-tree and linear/indexed proof regressions exercise both routes, including frozen replay failures and state restoration. |
+| Generator-window proposals and replay | [GeneratorWindow](../conformance/HexRCF/GeneratorWindow.lean): checked containment and two count-one certificates identify the same selected real root. Production can rebuild all sign entries on the tighter interval; frozen quotation never refines. Malformed, stale, wrong-conjugate and endpoint-root evidence fails, and both lookup modes restore state on replay failure. |
 | Root and cell correctness | [FieldRootsConformance](../conformance/HexRCF/FieldRootsConformance.lean), [ProductionProgress](../conformance/HexRCF/ProductionProgress.lean), [AlgebraicProgress](../conformance/HexRCF/AlgebraicProgress.lean), [CarrierModes](../conformance/HexRCF/CarrierModes.lean): selected-field root correspondence, complete carrier roots, squarefree normalization, repeated/common roots and leading cancellation. Samples are ordinary real sections/sectors. General joint nested realization is not supplied by these tests. |
 | Caller-registered finite bounds | [NamedConstants](../conformance/HexRCF/NamedConstants.lean), [RegisteredConstants](../conformance/HexRCF/RegisteredConstants.lean), [CoarseConstants](../conformance/HexRCF/CoarseConstants.lean): actual caller-supplied containment proves the specified π/e goals and inverse guard. Missing, stale, cyclic, swapped or nonseparating evidence is rejected/refused. This finite path does not construct a total named-constant field or prove joint independence. |
 | Manual | [Existing rcf chapter](../HexManual/Chapters/HexRCF.lean): full Hex source constructions, aliases, common fields, root operations, caller registrations and the explicit prepared/build/check/soundness path. Examples remain actual Lake-built proofs. |
@@ -53,6 +55,8 @@ Targeted retained experiments answer concrete implementation questions:
 | Repeated source construction and root proposal work | [Production](hexrcf-production-proofs.md), [production sharing](hexrcf-production-sharing.md) | Selected-field production and syntax sharing observations on the recorded inputs; no physical heap-sharing claim. |
 | Quotient coordinate quotation | [Literal quotation](hexrcf-literal-proofs.md) | Two changed-source comparisons did not establish a gain; reduced-coordinate quotation remains off. |
 | Full queries versus exact interval sign evidence | [Interval quotation](hexrcf-interval-proofs.md) | The fixed-goal comparison favors interval quotation. Its reconstructed-query control and historical provenance limitations are explicit. |
+| Indexed sign retrieval | [Index comparison](hexrcf-index-proofs.md) | Two retained fixed-goal studies favor indexed retrieval; the default is enabled. These measure whole fresh-module cost, with exact measured-source and later shipping-source identities stated separately. |
+| Generator-window refinement | [Window comparison](hexrcf-window-proofs.md) | All 32 fixed-schedule arms are retained. The low-precision fixture removes three full queries at a proof-size cost; the study establishes no useful whole-module speedup, so refinement defaults to zero. |
 | Carrier normalization | [Carrier comparison](hexrcf-carrier-proofs.md) | The retained fixed-goal pairs favor monic carriers; the ordinary-kernel normalization laws retain the original product. Signed chains are not arbitrarily made monic. |
 | One replay goal versus split conjuncts | [Replay comparison](hexrcf-replay-proofs.md) | The retained comparison did not establish a gain; combined replay stays off. |
 | Degree, source atoms and coefficient width | [Input costs and attribution](hexrcf-scaling-proofs.md) | Independent two-point observations in a no-real-root regime, with serialized/expanded syntax and a representative phase profile. These are not asymptotic verdicts or precision/depth evidence. |
@@ -74,13 +78,15 @@ The planned extension remains incomplete in these specific respects:
   degree-eight quartic/√2 example in `CertificationInputs` cannot be repaired
   just by trying more good primes. A diagnostic group calculation is not a
   Lean irreducibility proof.
-- Authenticated generator-interval refinement remains separate work. Exact
-  interval signs currently use the bound defining their selected literal root,
-  with checked rational Sturm evidence when the bound is inconclusive.
 - General tower/context integration, complete ordered root/enlargement APIs
   and one ordinary real realization of every finite joint nested constraint
   require the actual owner interfaces. Ordered real-closure existence alone
-  does not discharge the joint realization conclusion.
+  does not discharge the joint realization conclusion. The merged
+  `BaseInclusion.sign` and provider-derived `RealPrefix.Model.towerModel`
+  establish base-prefix transport and model packaging; they do not establish
+  one ordinary real point satisfying a nested tower sample’s complete finite
+  set of conditions. Their availability is not a reason to wait for whole-issue
+  closure or unrelated measurements.
 - Algebraic frontend completeness and total acceptance of every supported source
   are not proved by the exact-field total producer. It starts with an already
   authenticated fixed-field environment; frontend irreducibility quotation
