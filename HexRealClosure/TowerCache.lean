@@ -83,7 +83,7 @@ structure CacheResult (previous original : Context registry) : Type 1 where
   base_eq : target.origin.base = previous.origin.base
 
 /-- Traverse original dependencies in order, reusing their cached inclusions.
-Only a previously unseen root is adjoined to the shared target. -/
+Only a previously unseen exact predecessor is adjoined to the shared target. -/
 def InclusionCache.rebuild? {target source : Context registry}
     (cache : InclusionCache target) (initial : Inclusion source target)
     (suffix : Suffix source) : Option (CacheResult target suffix.context) :=
@@ -114,7 +114,7 @@ def InclusionCache.rebuild? {target source : Context registry}
             later.base_eq.trans (by
               rw [Context.origin_adjoin, Origin.snoc_base])⟩
 
-/-- A previously registered root is reused in the same target, with its exact
+/-- An exactly registered predecessor is reused in the same target, with its exact
 cached map and without adding another algebraic level. -/
 theorem InclusionCache.rebuild?_cached {target source : Context registry}
     (cache : InclusionCache target) (initial : Inclusion source target)

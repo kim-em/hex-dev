@@ -184,6 +184,8 @@ def run : IO Unit := do
   require (sameRoot.input.context.equal (sameRoot.value 0 alpha)
     (sameRoot.value 1 alternative.generator))
     "alternative descriptors did not retain the same selected real root"
+  require (sameRoot.input.context.sign (sameRoot.value 0 alpha) == 1)
+    "alternative presentations selected the negative conjugate"
   let some independentDescriptor := SignDet.Descriptor.validate base.sign base.signature
       { context := base.signature, head := x * x - DensePoly.C (two + 1),
         lower := .finite 1, upper := .finite two, indices := [], signs := [] }
@@ -197,6 +199,8 @@ def run : IO Unit := do
   require (positioned.input.context.equal (positioned.value 1 alpha)
     (positioned.value 2 (enlargedOwner.value alpha)))
     "mixed owner position changed its selected real root"
+  require (positioned.input.context.sign (positioned.value 1 alpha) == 1)
+    "mixed owner position selected the negative conjugate"
   let v : DensePoly independent.context.Value := DensePoly.ofCoeffs #[0, 1]
   let some laterAlpha := SignDet.Descriptor.validate independent.context.sign
       independent.context.signature
@@ -220,6 +224,9 @@ def run : IO Unit := do
   require (reordered.input.context.equal (reordered.value 0 alphaBeta.generator)
     (reordered.value 1 (betaAlpha.embed independent.generator)))
     "reordered presentation changed beta"
+  require (reordered.input.context.sign (reordered.value 0 (alphaBeta.embed alpha)) == 1 &&
+    reordered.input.context.sign (reordered.value 0 alphaBeta.generator) == 1)
+    "reordered presentations selected negative conjugates"
   let z : DensePoly next.input.context.Value := DensePoly.ofCoeffs #[0, 1]
   let some newDescriptor := SignDet.Descriptor.validate next.input.context.sign
       next.input.context.signature

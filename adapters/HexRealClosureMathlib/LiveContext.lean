@@ -107,6 +107,24 @@ theorem Inclusions.Models.extend_original {source destination : Context registry
       rfl
     | succ n => exact ih ⟨n, Nat.lt_of_succ_lt_succ valid⟩
 
+/-- Lifting a coherent family retains each original owner with exactly the
+same ordered field embedding, in its original index position. -/
+theorem Inclusions.Models.map_original {destination : Context registry}
+    {contexts : List (Context registry)} {maps : Inclusions destination contexts}
+    {target : Tower.Model destination R} (models : Inclusions.Models target maps)
+    {L : Type w} [Field L] [LinearOrder L]
+    (embedding : R →+* L) (ordered : StrictMono embedding)
+    (index : Fin contexts.length) :
+    ((models.map embedding ordered).get index).1 =
+      (models.get index).1.map embedding ordered := by
+  induction models with
+  | nil => nomatch index
+  | cons original model aligned later ih =>
+    rcases index with ⟨index, valid⟩
+    cases index with
+    | zero => rfl
+    | succ n => exact ih ⟨n, Nat.lt_of_succ_lt_succ valid⟩
+
 /-- Each retained original value has its original interpretation in the one
 common target model. -/
 theorem Inclusions.Models.value {destination : Context registry}
@@ -222,17 +240,24 @@ theorem Shared.enlarge?_models (shared : Shared base owners)
       shared.enlarge? = some enlarged ∧
         ∃ model : Inclusion.Model enlarged.previous (old.liftInfinitesimal ambient),
           model.target.value enlarged.parameter = ambient.inclusion Hex.RationalFn.X ∧
-          Nonempty (Inclusions.Models model.target enlarged.shared.maps) ∧
+          (∃ following : Inclusions.Models model.target enlarged.shared.maps,
+            ∀ index : Fin owners.length, (following.get index).1 =
+              (models.get index).1.liftInfinitesimal ambient) ∧
           ∀ (index : Fin owners.length) (a : (owners[index]).Value),
             model.target.value (enlarged.shared.value index a) =
               Ambient.coefficientHom ambient ((models.get index).1.value a) := by
   obtain ⟨enlarged, produced, model, parameter⟩ :=
     shared.enlarge?_parameter witness old ambient
   refine ⟨enlarged, produced, model, parameter, ?_, ?_⟩
-  · have lifted : Inclusions.Models (old.liftInfinitesimal ambient) shared.maps :=
+  · let lifted : Inclusions.Models (old.liftInfinitesimal ambient) shared.maps :=
       models.map (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient)
     rw [shared.enlarge?_maps enlarged produced]
-    exact ⟨lifted.extend model⟩
+    refine ⟨lifted.extend model, ?_⟩
+    intro index
+    rw [Inclusions.Models.extend_original]
+    simpa only [lifted, Model.liftInfinitesimal] using
+      models.map_original (Ambient.coefficientHom ambient)
+        (Ambient.coefficientHom_strictMono ambient) index
   · intro index a
     rw [shared.enlarge?_value enlarged produced, model.value, Model.liftInfinitesimal_value]
     exact congrArg (Ambient.coefficientHom ambient) (models.value index a)
@@ -330,3 +355,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Inclusions.Models.extend_original' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Inclusions.Models.extend_original
+
+/-- info: 'Hex.RealClosure.Tower.Inclusions.Models.map_original' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Inclusions.Models.map_original

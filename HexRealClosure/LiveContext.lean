@@ -82,7 +82,7 @@ def Shared.empty (base : BaseContext.PackedContext registry) : Shared base [] :=
       rfl, ⟨[]⟩⟩
 
 /-- Register one requested context, reusing cached original predecessors and
-rebuilding unseen roots. Update all previous checked inclusions together. -/
+rebuilding unseen exact predecessors. Update all previous checked inclusions together. -/
 def Shared.addOrigin? {base : BaseContext.PackedContext registry}
     {owners : List (Context registry)} (shared : Shared base owners)
     {source : Context registry} (origin : Origin source) :
