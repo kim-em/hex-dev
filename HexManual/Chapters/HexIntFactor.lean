@@ -7,6 +7,8 @@ Authors: Kim Morrison
 import VersoManual
 import HexIntFactor
 import HexIntFactorMathlib
+import HexIntFactor.Frozen.Case3
+import HexIntFactor.Frozen.Case5
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -196,6 +198,83 @@ Specialized entry points expose the split routes for callers that need route
 control or diagnostics. `factorPower?` adds a checked cyclotomic pre-split for
 numbers of the form `b ^ n − 1` or `b ^ n + 1`; failed subproblems may fall
 back to generic search, while checker rejection is propagated.
+
+# Optional external production and frozen replay
+%%%
+tag := "hex-int-factor-external"
+%%%
+
+The pure {name}`Hex.Nat.importFactors` API accepts signed integer
+factor/multiplicity proposals for an explicitly requested subject. It validates
+products before sorting and merging duplicates. Missing factors and uncertified
+bases remain in a checked residual. Supplied certificates are checked; labels
+such as “probable prime” are never evidence.
+
+```lean
+open Hex Hex.Nat
+
+namespace HexIntFactorChapter
+
+def completeImport : Bool := match importFactors {} 72
+    ⟨72, [(3, 2, none), (2, 3, none)]⟩ (Rand.ofSeed 72) with
+  | .ok result => result.value.raw.residual == 1 &&
+      result.value.raw.factors.map
+        (fun e => (e.prime, e.exponent)) == [(2, 3), (3, 2)]
+  | .error _ => false
+
+def partialImport : Bool := match importFactors
+    { completion := { maxAttempts := 0 } } 12
+    ⟨12, [(2, 2, some (.small 2)), (3, 1, none)]⟩
+    (Rand.ofSeed 12) with
+  | .ok result => result.value.raw.residual == 3 &&
+      checkPartial result.value.raw
+  | .error _ => false
+
+#guard completeImport
+#guard partialImport
+
+end HexIntFactorChapter
+```
+
+Install PARI/GP separately to opt into production. A batch source file importing
+`HexIntFactor.Export` can contain `#int_factor for 72`, or
+`#int_factor_export MyFactors.Product cert for 72` to exclusively create
+`MyFactors/Product.lean`. Run `lake build +YourModule`, then remove the
+production command. Set the environment variable `HEX_INT_FACTOR_GP` to select
+an executable. The language server gives batch instructions and performs no
+production or file writing. Ordinary native APIs use no external process.
+
+Generated modules publicly import only `HexIntFactor.Replay` and expose both
+raw data and a subject-indexed checked value. These committed examples build
+without GP or any factor search:
+
+```lean
+open Hex.Nat
+
+example : CheckedFactorization
+    (926510094425921 * 1363620137403810529 *
+      2305843009213693951 * 18446744069414584321) :=
+  Hex.IntFactorFrozen.case3_checked
+
+example : CheckedPartialFactorization (2 ^ 255 - 19) :=
+  Hex.IntFactorFrozen.case5_checked
+```
+
+The first subject has a complete checked result even though the recorded native
+worklist allocation of four exhausts. For the second, GP discovers the base but
+native primality completion exhausts its 128-attempt allocation. Its frozen
+residual therefore carries no primality claim. Discovery and certification have
+separate allocations and diagnostics.
+
+The initial producer supports POSIX platforms, subjects through 256 bits,
+64 entries, 78 digits per number, exponents through 256, a 30-second process
+limit, and bounded output. Import also bounds certificate syntax and depth.
+Missing GP or rejected proposals trigger a separate finite native fallback;
+certified partial progress and backend diagnostics survive. Larger inputs may
+exhaust either discovery or certificate completion; there is no blanket promise
+of 60-digit factorization. Source generation is capped at 262144 bytes. The
+capability report records discovery, parsing, completion, checking, source size,
+and fresh-module replay separately.
 
 # Opt-in SQUFOF
 %%%

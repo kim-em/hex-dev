@@ -274,8 +274,22 @@ lean_lib HexECPP where
   precompileModules := true
 
 lean_lib HexIntFactor where
+  globs := #[`HexIntFactor, `HexIntFactor.Pari, `HexIntFactor.Export,
+    `HexIntFactor.Replay].map Glob.one
   -- The registered construction provider must also execute natively.
   precompileModules := true
+
+lean_lib HexIntFactorTests where
+  globs := #[`HexIntFactor.ImportTests, `HexIntFactor.PariTests,
+    `HexIntFactor.ExportTests,
+    `HexIntFactor.Frozen.Case0,
+    `HexIntFactor.Frozen.Case1,
+    `HexIntFactor.Frozen.Case2,
+    `HexIntFactor.Frozen.Case3,
+    `HexIntFactor.Frozen.Case4,
+    `HexIntFactor.Frozen.Case5,
+    `HexIntFactor.Frozen.Case6, `HexIntFactor.Frozen.Partial12
+    ].map Glob.one
 
 lean_lib HexBerlekampZassenhaus where
 
