@@ -308,10 +308,10 @@ when the source's ordered real-key path is a prefix of the target's path and
 its infinitesimal depth is no greater. It preserves and reflects canonical
 zero and preserves the native field operations, including total inversion.
 Its companion `BaseInclusion.sign` derives sign preservation from the two
-provider-derived staged realizations. This includes proper real prefixes;
-the shared tower assembly's base check below still requires identical
-complete real prefixes. Integrating the broader inclusion into complete
-live tower transport remains required.
+provider-derived staged realizations. This includes proper real prefixes,
+which the shared tower assembly also accepts through `Inclusion.base?`.
+The shared-assembly section below describes this transport and the remaining
+coherent owner and cache factory.
 
 `BaseContext.Context.real` finishes that prefix. `Context.infinitesimal` then
 adds any number of successive positive infinitesimals. The types prevent
@@ -1572,8 +1572,7 @@ against every old positive value. Existing serialized values and polynomials
 must pass the returned target's checked readers; old packets with a different
 literal binding are rejected.
 
-Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext
-HexRealClosureMathlib.BaseTests HexRealClosureMathlib.BaseMapModel`
+Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext HexRealClosureMathlib.BaseTests HexRealClosureMathlib.BaseMapModel`
 for staged value transport, the mixed-depth reuse limitation in both
 registration orders, alternative intervals, reordered chains, unrelated-root
 position, parent/child and sibling registration, repeated owners, root-level

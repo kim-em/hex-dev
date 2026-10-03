@@ -132,6 +132,7 @@ private def gatheredPrefix : Option (Array Int) := do
   match Tower.Shared.gather? (.pack mixed.infinitesimal) [child.context, target] with
   | none => none
   | some shared =>
+    if shared.input.context.signature.roots.length != 1 then none else
     let root := shared.value 0 child.generator
     let retained := shared.value 0 (child.embed e)
     let expected : target.Value := epsilon.embed

@@ -53,6 +53,23 @@ noncomputable def Model.ofTarget
     (inclusion.value a)).symm.trans
     (Tower.Model.base_value (BaseContext.Context.ofChain source) f correct a).symm
 
+/-- Construct both base interpretations in the target's derived ordered
+real-closed ambient. No ambient or coefficient interpretation is supplied. -/
+noncomputable def Model.ofRealizations
+    {K S : Type} [Lean.Grind.Field K] [DecidableEq K]
+    [Lean.Grind.Field S] [DecidableEq S] {sign : K → Int} {sourceSign : S → Int}
+    (source : BaseContext.Chain registry S sourceSign)
+    (target : BaseContext.Chain registry K sign)
+    (original : source.Realization registry) (following : target.Realization registry)
+    (inclusion : BaseInclusion (.pack (BaseContext.Context.ofChain source))
+      (.pack (BaseContext.Context.ofChain target))) :
+    letI : Field K := HexPolyMathlib.fieldOfGrind
+    letI := following.ordered.order
+    Model (R := following.ordered.ambient.Carrier) inclusion := by
+  letI : Field K := HexPolyMathlib.fieldOfGrind
+  letI : LinearOrder K := following.ordered.order
+  exact Model.ofTarget source target original following inclusion following.ordered.towerModel
+
 /-- The derived common-field interpretations certify the actual native base
 conversion, including its retained target and cached value map. -/
 noncomputable def Model.conversion {inclusion : BaseInclusion source target}
@@ -84,3 +101,7 @@ end Hex.RealClosure.Tower.BaseInclusion
 /-- info: 'Hex.RealClosure.Tower.BaseInclusion.Model.inclusion' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.BaseInclusion.Model.inclusion
+
+/-- info: 'Hex.RealClosure.Tower.BaseInclusion.Model.ofRealizations' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.BaseInclusion.Model.ofRealizations

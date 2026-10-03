@@ -134,12 +134,22 @@ def Inclusion.extendBase (base : BaseContext.PackedContext registry) (n : Nat) :
   ⟨Conversion.extendBase base n, Conversion.extendBase_context base n⟩
 
 /-- Check the complete real-prefix path and infinitesimal order before
-including a staged base. A proper original prefix is retained in the target;
+including a staged base. The original prefix is retained in the target;
 unrelated paths and decreasing depth are rejected. -/
 def Inclusion.base? (source target : BaseContext.PackedContext registry) :
     Option (Inclusion (Context.ofBase source) (Context.ofBase target)) :=
   (BaseInclusion.make? source target).map fun inclusion =>
     ⟨Conversion.base inclusion, (Conversion.base_spec inclusion).1⟩
+
+private theorem Inclusion.base?_eq_proof (source target : BaseContext.PackedContext registry) :
+    Inclusion.base? source target = (BaseInclusion.make? source target).map
+      (fun inclusion => ⟨Conversion.base inclusion, (Conversion.base_spec inclusion).1⟩) := rfl
+
+/-- Expose the actual checked coefficient map used by shared gathering. -/
+theorem Inclusion.base?_eq (source target : BaseContext.PackedContext registry) :
+    Inclusion.base? source target = (BaseInclusion.make? source target).map
+      (fun inclusion => ⟨Conversion.base inclusion, (Conversion.base_spec inclusion).1⟩) :=
+  Inclusion.base?_eq_proof source target
 
 /-- Staged-base compatibility is checked on the full real-prefix path and
 on the required order of the retained infinitesimals. -/
