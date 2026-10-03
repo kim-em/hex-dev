@@ -623,7 +623,7 @@ instance : Hashable RationalLeaf where
   hash i := hash (checksum i.value, i.rational)
 
 def rationalLeaf (bits : Nat) : RationalLeaf :=
-  let power := 2 ^ bits
+  let power := 2 ^ (Nat.max bits 2)
   let q : Rat := (((power - 1) / 3 : Nat) : Rat) / ((power + 1 : Nat) : Rat)
   let a := ofRat q
   if a.toAlgebraic.p.natDegree == 1 && a.toRat? == some q then
@@ -649,8 +649,10 @@ def runRationalCeil (i : RationalLeaf) : Int := i.value.ceil
 -- also performs linear-size Int arithmetic; it does not increase the order.
 -- Floor/ceil retain that recognition cost and add at most linear division.
 -- These rational-only models do not cover construction or nonrational rounding.
--- The 600-second child cap allows canonical preparation outside timed bodies;
--- it is an operational safeguard, not a regression budget.
+-- The 600-second child cap is an operational safeguard, not a regression
+-- budget. The retained first-rung preparation probe exceeded it; this ladder
+-- remains unmeasured and unadmitted. Verify's parameters 0 and 1 use two bits
+-- so that their fixtures exercise nonzero rational recognition and rounding.
 setup_benchmark runRationalRecognition b => b
   with prep := rationalLeaf
   where {
@@ -691,7 +693,7 @@ setup_benchmark runRationalCeil b => b
 
 -- Comparison control: D mod A=2, A mod 2=1, so the former normalization
 -- has a bounded Euclidean quotient sequence. Single-limb division, reduction
--- and the actual structural result hash require Θ(b) limb work on this family.
+-- and the actual structural result hash require linear Θ(b) limb work on this family.
 setup_benchmark runRationalQuotient b => b
   with prep := rationalLeaf
   where {
