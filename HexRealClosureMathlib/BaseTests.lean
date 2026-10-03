@@ -10,6 +10,8 @@ public import HexRealClosureMathlib.BaseProvider
 public import HexRealClosureMathlib.BaseStagedRealization
 public import HexRealClosure.BaseInclusion
 public meta import HexRealClosure.BaseInclusion
+public import HexRealClosure.LiveContext
+public meta import HexRealClosure.LiveContext
 public import HexRealClosure.AlgebraicContext
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
@@ -115,6 +117,32 @@ private def stagedRoot : Option (Array Int) := do
     (root - 2).sign, (root⁻¹).sign, (root * root⁻¹ - 1).sign]
 
 #guard stagedRoot == some #[1, 0, 1, -1, 1, 0]
+
+/-- Gathering rebuilds an algebraic dependency over a proper real-prefix
+enlargement while retaining the old infinitesimal and its defining equation. -/
+private def gatheredPrefix : Option (Array Int) := do
+  let original := Tower.Context.base (BaseContext.rational registry).infinitesimal
+  let e : original.Value := Element.infinitesimal (BaseContext.rational registry)
+  let x : DensePoly original.Value := DensePoly.ofCoeffs #[0, 1]
+  let descriptor ← SignDet.Descriptor.validate original.sign original.signature
+    { context := original.signature, head := x * x - DensePoly.C (2 + e),
+      lower := .finite 1, upper := .finite 2, indices := [], signs := [] }
+  let child := original.adjoin descriptor
+  let target := Tower.Context.base mixed.infinitesimal
+  match Tower.Shared.gather? (.pack mixed.infinitesimal) [child.context, target] with
+  | none => none
+  | some shared =>
+    let root := shared.value 0 child.generator
+    let retained := shared.value 0 (child.embed e)
+    let expected : target.Value := epsilon.embed
+    let next : target.Value := Element.infinitesimal mixed
+    some #[shared.input.context.sign root,
+      shared.input.context.sign (root * root - (2 + retained)),
+      shared.input.context.sign (retained - shared.value 1 expected),
+      shared.input.context.sign (shared.value 1 next - retained),
+      shared.input.context.sign retained]
+
+#guard gatheredPrefix == some #[1, 0, 0, -1, 1]
 
 private theorem source_correct (version : Nat) :
     ApproximationCorrect (Rat.castHom ℝ) (liouvilleNumber 2)

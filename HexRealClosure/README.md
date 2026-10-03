@@ -1526,8 +1526,20 @@ all original owner contexts. Use `Shared.gather?` with the actual validated
 context handles, then `Shared.value index value` or
 `Shared.polynomial index polynomial` to enter that target. The owner index
 keeps the original value or polynomial type. The shared assembly's base check
-accepts identical complete real-prefix paths and nondecreasing infinitesimal depth;
-decreasing depth and a different prefix are rejected.
+accepts an ordered original real-prefix path in the target and nondecreasing
+infinitesimal depth; unrelated paths and decreasing depth are rejected.
+`Inclusion.base?` uses the cached native `BaseInclusion` coefficient map for this
+check, so the same conversion rebuilds dependent roots over a proper real-prefix
+enlargement. Earlier infinitesimals retain their positions before any new ones.
+
+The development companion `BaseOrder` derives an ordered coefficient field
+from a provider-derived `Chain.Realization`, then constructs its real-closed
+ambient and base tower model. `BaseInclusion.Model.ofTarget` in `BaseMapModel`
+extracts an existing target model's coefficient homomorphism and composes the
+checked native map. It derives the source model, sign preservation, conversion
+model and fixed-owner inclusion model without a caller-supplied coefficient
+agreement. These base factories do not yet construct the complete coherent
+owner and cache family for `Shared.gather?`.
 
 Registration caches checked inclusions for every original algebraic predecessor.
 Parent/child registration, sibling branches, and repeated owners reuse their
@@ -1560,7 +1572,8 @@ against every old positive value. Existing serialized values and polynomials
 must pass the returned target's checked readers; old packets with a different
 literal binding are rejected.
 
-Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext`
+Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext
+HexRealClosureMathlib.BaseTests HexRealClosureMathlib.BaseMapModel`
 for staged value transport, the mixed-depth reuse limitation in both
 registration orders, alternative intervals, reordered chains, unrelated-root
 position, parent/child and sibling registration, repeated owners, root-level

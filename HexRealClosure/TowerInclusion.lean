@@ -134,35 +134,20 @@ def Inclusion.extendBase (base : BaseContext.PackedContext registry) (n : Nat) :
   ⟨Conversion.extendBase base n, Conversion.extendBase_context base n⟩
 
 /-- Check the complete real-prefix path and infinitesimal order before
-including a staged base. Different prefixes and decreasing depth are rejected;
-a successful inclusion uses the actual native constant embeddings. -/
+including a staged base. A proper original prefix is retained in the target;
+unrelated paths and decreasing depth are rejected. -/
 def Inclusion.base? (source target : BaseContext.PackedContext registry) :
     Option (Inclusion (Context.ofBase source) (Context.ofBase target)) :=
-  if keys : source.signature.constants = target.signature.constants then
-    if depth : source.depth ≤ target.depth then
-      let n := target.depth - source.depth
-      let same : source.extend n = target := BaseContext.PackedContext.signature_inj (by
-        rw [BaseContext.PackedContext.extend_signature]
-        exact (congrArg (fun constants => BaseContext.Signature.mk constants
-          (source.signature.infinitesimals + n)) keys).trans
-            (congrArg (BaseContext.Signature.mk target.signature.constants)
-              (Nat.add_sub_of_le depth)))
-      some ⟨Conversion.extendBase source n,
-        (Conversion.extendBase_context source n).trans (congrArg Context.ofBase same)⟩
-    else none
-  else none
+  (BaseInclusion.make? source target).map fun inclusion =>
+    ⟨Conversion.base inclusion, (Conversion.base_spec inclusion).1⟩
 
 /-- Staged-base compatibility is checked on the full real-prefix path and
 on the required order of the retained infinitesimals. -/
 theorem Inclusion.base?_isSome (source target : BaseContext.PackedContext registry) :
     (Inclusion.base? source target).isSome = true ↔
-      source.signature.constants = target.signature.constants ∧ source.depth ≤ target.depth := by
-  simp only [Inclusion.base?]
-  split
-  · split
-    · simp_all
-    · simp_all
-  · simp_all
+      source.signature.constants <+: target.signature.constants ∧ source.depth ≤ target.depth := by
+  simp only [Inclusion.base?, Option.isSome_map]
+  exact BaseInclusion.make?_isSome source target
 
 end Hex.RealClosure.Tower
 
