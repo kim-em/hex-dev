@@ -484,9 +484,9 @@ still prepare both quotient domains and recompute every pending domain and
 count, including count-zero cells. No timing improvement is claimed.
 
 The frontier feeds descriptor completion and the complete generic root producer
-below. Native root entries with extension contexts and coefficient embeddings,
-automatic dependency transport, native compatible real-closed union coverage
-and simultaneous ordinary-real realization remain requirements of the full tower.
+below. Native root entries, their coefficient embeddings and the compatible
+presentation quotient are described below. Automatic dependency transport and
+simultaneous ordinary-real realization remain requirements of the full tower.
 
 ### Bound selection and whole-line dispatch
 
@@ -1082,9 +1082,9 @@ three actual algebraic levels, use their explicit embeddings, read old values
 after extensions, restore an unreduced noncanonical coefficient, and reject
 stale or unknown bindings, forged signs, zero claims, trailing zeros and
 malformed base payloads. The core roundtrip proofs introduce no admission.
-Automatic discovery of a dependent suffix, complete isolation and
-identification with the real-closed union remain open; checked refinement
-and conversion through an explicitly supplied suffix are described below.
+Automatic discovery of a dependent suffix remains open. Complete isolation,
+checked suffix conversion and identification with the real-closed union are
+described below.
 
 Run `lake build HexRealClosure.FrameFormatTests` for total construction over a
 non-monic reducible rational definition, followed by a definition with
@@ -1171,8 +1171,8 @@ and image-field inclusions. The semantic root results use the proved
 relative to a supplied real-closed
 ambient field and base embedding. The companions below prove compatibility for
 a checked final-root change and conversion through a validated finite suffix.
-Identification with the real-closed algebraic union remains open. No tower
-performance claim is made.
+The presentation quotient below identifies all finite native towers with the
+real-closed algebraic union. No tower performance claim is made.
 
 ### Yun decomposition over native tower coefficients
 
@@ -1320,8 +1320,9 @@ a validated rational-root context. Generic coefficient and comparison transfer
 and root construction use the proved root-sum theorem and only the standard
 three axioms. General base enlargement is itemized below. Automatic extraction
 of a suffix from requested expressions or a catalog, uncached reader
-completeness, and identification of native presentations with the real-closed
-algebraic union remain open. No performance result is claimed.
+completeness and full dependency-closed enlargement remain open. The presentation
+quotient below identifies finite native values with the real-closed algebraic
+union. No performance result is claimed.
 
 ### Infinitesimal base conversion
 
@@ -1579,8 +1580,8 @@ the semantic ε is positive and below every positive old coefficient, while
 `liftInfinitesimal_X_lt` applies that bound to interpreted tower values. The
 remaining dependency-closed transport obligations are listed above.
 
-Identifying native tower presentations with the algebraic union remains
-separate from restricting a semantic ambient field in item 1 above.
+The native presentation quotient below identifies finite native tower values
+with the algebraic union; item 1 above restricts the semantic ambient field.
 Descriptor construction and simultaneous realization of finite sign
 conditions at one ordinary real point also remain open.
 
@@ -1907,3 +1908,37 @@ the returned signature retains the old root depth and adds exactly one
 infinitesimal level. The companion consumer tests use an arbitrary old
 rational tower model inside ℝ, its relative algebraic restriction, and the
 actual selected-root enlargement result.
+
+### Native finite presentations
+
+`Tower.Presentation` retains a validated finite root suffix over one immutable
+native input context and an actual stored value of its final context.
+`Presentation.denote` uses the original coefficient model extended through
+those exact selected descriptors. `toUnion_surjective` proves that these
+presentations cover every element of the relative algebraic union of the input's
+whole mathematical field. It consumes actual complete native root production;
+no caller supplies root coverage or chooses a single chain to stand for all towers.
+
+`Presentation.Quotient model` identifies exactly equal denotations. Its
+`ringEquiv` and `algEquiv` identify it with the relative algebraic union, preserving
+field operations, ambient order and the prescribed base map. `value_algebraic`
+proves algebraicity over that base, and `realClosed` proves real-closedness.
+The native zero, one, casts, addition, subtraction, multiplication, negation,
+total inversion and division agree with operations on classes. Signs agree with
+the same order; raw nonzero representations acquire no literal field laws.
+Native coefficient inclusion through any suffix preserves its class, and
+`converted_value` proves coherence of checked compatible conversions.
+
+`common_values` places any finite list of presentation values in one actual
+native collection with a common ambient interpretation. It uses complete root
+production followed by the checked root-collection producer, and retains the
+values in input order. This semantic finite-value construction does not select
+or transport the full requested live dependency DAG during general enlargement.
+That executable assembly, joint ordinary-real realization and Phase-4 tower
+performance remain separate obligations.
+
+Ordinary-import consumers derive cancellation for actual stored multiplication
+and inversion from a nonzero native sign, check total inversion of zero, and
+identify equal values at different finite depths. Kernel axiom guards report
+only the standard three axioms. Run
+`lake build HexRealClosureMathlib.PresentationTests`.
