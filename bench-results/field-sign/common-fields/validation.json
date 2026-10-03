@@ -12,5 +12,11 @@
   "frozenExecutableSha256": "50566938ab18c9a860652c4d4d4c0046412a5fbb80fa69af7330d80724b213aa",
   "completedSamples": 12,
   "unchangedRerunsReportedByOperator": 0,
-  "oracleCommand": "uv run --with python-flint==0.9.0 python scripts/oracle/sign_det_common_fields.py fixtures.jsonl --profile local"
+  "oracleCommand": "uv run --with python-flint==0.9.0 python scripts/oracle/sign_det_common_fields.py fixtures.jsonl --profile local",
+  "sourceHashesMatchRecorded": true,
+  "binaryHashesMatchRecorded": true,
+  "sourceArchiveRef": "refs/heads/evidence/issue-10377-field-sign-615fc66",
+  "oracleSourceRevision": "615fc667c8427f8cc0f98aca21d64587a32b2d27",
+  "oracleSourceSha256": "ef4faf360d4fe70bc694608330dc76987e89b937a1dc8c10799f222d3401d212",
+  "toolchain": "leanprover/lean4:v4.35.0-rc3"
 }

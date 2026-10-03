@@ -19,11 +19,11 @@ startup; they do not isolate coefficient callback cost.
 
 Five pairs favour interval signs; one favours canonical conversion. The
 recorded paired median favours interval signs, with substantial variation; these
-six pairs do not establish a general effect size.
+six pairs do not establish a general direction or effect size.
 The ratio of separate arm medians (1.345) is not the paired statistic. Every
 completed sample is retained, including the slower interval pair. Host load is
 recorded context and was not used to exclude samples or request a rerun. On
-the 96-CPU host, the recorded one-minute load averages ranged from about 4 to
+the 96-CPU host, the recorded end-of-run one-minute load averages ranged from about 4 to
 94. The two slowest interval runs (117.1s and 123.6s) ended at load averages
 84 and 88; the canonical arm in the reversed pair ended at load 21. These
 observations do not establish the cause of timing variation.
@@ -34,7 +34,10 @@ The frozen binary was built from clean commit
 records the binary hash, five relevant source hashes, toolchain and shared-host
 CPU placement; the clean revision fixes all other sources. `validation.json`
 records matching hashes of the frozen executable and the built executable at
-that unchanged checkout, as well as verification of all five source hashes. One automatically leased CPU was used for all adjacent arms;
+that unchanged checkout, as well as recomputed values matching all five source
+hashes. The runner reads revision/source metadata from its checkout, not from
+the supplied binary; the built/frozen hash match supplies that additional
+binding. One automatically leased CPU was used for all adjacent arms;
 pair order alternated AB/BA. Earlier scalar observations refer to a different
 implementation and must not be attributed to this binary.
 
@@ -47,11 +50,13 @@ output hash and exact median/ratio agreement. `oracle.log` retains the oracle
 result and FLINT version. Zero unchanged reruns is reported by the operator;
 the runner's hardcoded `reruns` field does not prove that historical claim.
 
-Merge the implementation before using these reproduction commands. To obtain
-the exact recorded source, fetch the PR history and use a separate worktree:
+The evidence PR is held until its implementation merges. Reproduction uses
+the exact measured source regardless of the later squash commit. That source
+is retained on a separate evidence branch, so a PR rebase cannot remove its
+remote reference:
 
 ```sh
-git fetch origin pull/10641/head
+git fetch origin evidence/issue-10377-field-sign-615fc66
 git worktree add --detach ../field-sign-measured 615fc667c8427f8cc0f98aca21d64587a32b2d27
 cd ../field-sign-measured
 lake build hexsigndet_emit_common_fields
