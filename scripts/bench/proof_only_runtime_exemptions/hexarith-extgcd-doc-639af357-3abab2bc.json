@@ -1,6 +1,0 @@
-{
-  "path": "HexArith/ExtGcd.lean",
-  "baseline_blob": "639af357365cfb74ff0c6f0d45a27a7b3e582973",
-  "current_blob": "3abab2bcf7aa198bf63809e38b43fa037db68407",
-  "reason": "Removes an unqualified GMP description from the natural extended-GCD API docstring. The only edit is inside a documentation comment; every definition, proof, compiler rewrite and C adapter is byte-for-byte unchanged, so the measured factorization executable is unaffected."
-}

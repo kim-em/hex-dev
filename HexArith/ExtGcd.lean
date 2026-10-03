@@ -437,7 +437,7 @@ the intermediate `extGcd_fst` step.
   rw [extGcd_bezout_proj, extGcd_fst]
 
 /--
-Combined correctness theorem for the GMP-backed integer extended GCD surface.
+Combined correctness theorem for the public integer extended GCD.
 
 The proved compiler rewrite uses the GMP-backed natural-number primitive on
 nonnegative inputs, while preserving the same public triple used by proofs.
