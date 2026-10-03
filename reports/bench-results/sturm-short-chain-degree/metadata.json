@@ -1,0 +1,216 @@
+{
+  "source_commit": "c5efa57cbb00e06114ff05ee819bce4591c56c40",
+  "dirty_before_outputs": false,
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "cpu": 59,
+  "load_before": [
+    1.6669921875,
+    7.48095703125,
+    10.99560546875
+  ],
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+    "run",
+    "Hex.SturmFrontendBench.runSparseDomain",
+    "Hex.SturmFrontendBench.runSparseQuery",
+    "Hex.SturmFrontendBench.runSparseInteger",
+    "Hex.SturmFrontendBench.runSparsePrepared",
+    "Hex.SturmFrontendBench.runSparseCount",
+    "Hex.SturmFrontendBench.runSparsePreparedCount",
+    "Hex.SturmFrontendBench.runSparseCertificate",
+    "Hex.SturmFrontendBench.runSparsePreparedCertificate",
+    "Hex.SturmFrontendBench.runSparseCountCertificate",
+    "Hex.SturmFrontendBench.runSparseReplay",
+    "Hex.SturmFrontendBench.runSparseCachedReplay",
+    "Hex.SturmFrontendBench.runSparseClear",
+    "Hex.SturmFrontendBench.runSparseEmbed",
+    "--export-file",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-short-chain-degree/results.json"
+  ],
+  "schedule": "Compiled four-rung ladder and four fixed trial-major outer trials. No scientific setting override. Paired comparisons have one trial per adjacent arm, four alternating AB/BA blocks.",
+  "source_sha256": {
+    "bench/HexSturm/Frontend.lean": "26cd53004f0a6cf3142b87825e5d78b1f08afacb28256ba712786b12ad295d9f",
+    "bench/HexSturm/Bench.lean": "7751900fd74a8276480eb0c2e2cd4a13fb0d45aa6eb53dd0ecd92f01a3abdb7c",
+    "HexSturm/Basic.lean": "e94705d172a585b5d9c718941e1e8251a145ee6bb152cbaaf695d0d0e3a20beb",
+    "HexRealRoots/SignedRemainderChain.lean": "be56bd454a976838e2a3d87b7126100d26de92af686b556c4f31e9e36cd7e874",
+    "HexPoly/PseudoDiv.lean": "379f8cd699847db6e9648e5341be10f23a315ed83b733d33e192029e6f574a6e",
+    "reports/bench-results/sturm-short-chain-degree/derivation.md": "1bbc28ffd8921d54860f218cdb7076d0fdb48c2ccbabf90af288bfc5b589f442"
+  },
+  "executable_sha256": "5ce4e65bd7f34a0f1bbff0d9b94808a5999e853c25387316737de4a32ff388c0",
+  "lean_bench_commit": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+  "lake_version": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "retained_executable": "/home/kim/.local/state/hex/issue-10577-profiles/binaries/hexsturm_bench-5ce4e65bd7f34a0f1bbff0d9b94808a5999e853c25387316737de4a32ff388c0",
+  "exit_code": 0,
+  "pairs": [
+    {
+      "block": 0,
+      "order": [
+        "Query",
+        "Integer"
+      ],
+      "arm": "Query",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmFrontendBench.runSparseQuery",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-short-chain-degree/pair-0-Query.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 4.603630926001642
+    },
+    {
+      "block": 0,
+      "order": [
+        "Query",
+        "Integer"
+      ],
+      "arm": "Integer",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmFrontendBench.runSparseInteger",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-short-chain-degree/pair-0-Integer.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.9750909810027224
+    },
+    {
+      "block": 1,
+      "order": [
+        "Integer",
+        "Query"
+      ],
+      "arm": "Integer",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmFrontendBench.runSparseInteger",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-short-chain-degree/pair-1-Integer.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 4.000012656004401
+    },
+    {
+      "block": 1,
+      "order": [
+        "Integer",
+        "Query"
+      ],
+      "arm": "Query",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmFrontendBench.runSparseQuery",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-short-chain-degree/pair-1-Query.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 4.526571084003081
+    },
+    {
+      "block": 2,
+      "order": [
+        "Query",
+        "Integer"
+      ],
+      "arm": "Query",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmFrontendBench.runSparseQuery",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-short-chain-degree/pair-2-Query.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 4.551363216000027
+    },
+    {
+      "block": 2,
+      "order": [
+        "Query",
+        "Integer"
+      ],
+      "arm": "Integer",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmFrontendBench.runSparseInteger",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-short-chain-degree/pair-2-Integer.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 4.0007020689954516
+    },
+    {
+      "block": 3,
+      "order": [
+        "Integer",
+        "Query"
+      ],
+      "arm": "Integer",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmFrontendBench.runSparseInteger",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-short-chain-degree/pair-3-Integer.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.9281483459999436
+    },
+    {
+      "block": 3,
+      "order": [
+        "Integer",
+        "Query"
+      ],
+      "arm": "Query",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmFrontendBench.runSparseQuery",
+        "--outer-trials",
+        "1",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-short-chain-degree/pair-3-Query.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 4.551200656998844
+    }
+  ],
+  "elapsed_seconds": 249.280241870998,
+  "load_after": [
+    4.0712890625,
+    5.24609375,
+    9.208984375
+  ],
+  "source_sha256_after": {
+    "bench/HexSturm/Frontend.lean": "26cd53004f0a6cf3142b87825e5d78b1f08afacb28256ba712786b12ad295d9f",
+    "bench/HexSturm/Bench.lean": "7751900fd74a8276480eb0c2e2cd4a13fb0d45aa6eb53dd0ecd92f01a3abdb7c",
+    "HexSturm/Basic.lean": "e94705d172a585b5d9c718941e1e8251a145ee6bb152cbaaf695d0d0e3a20beb",
+    "HexRealRoots/SignedRemainderChain.lean": "be56bd454a976838e2a3d87b7126100d26de92af686b556c4f31e9e36cd7e874",
+    "HexPoly/PseudoDiv.lean": "379f8cd699847db6e9648e5341be10f23a315ed83b733d33e192029e6f574a6e",
+    "reports/bench-results/sturm-short-chain-degree/derivation.md": "1bbc28ffd8921d54860f218cdb7076d0fdb48c2ccbabf90af288bfc5b589f442"
+  },
+  "executable_sha256_after": "5ce4e65bd7f34a0f1bbff0d9b94808a5999e853c25387316737de4a32ff388c0",
+  "tracked_sources_unchanged": true,
+  "generated_output_scope": "Generated evidence makes the harness git_dirty flag true; recorded tracked sources and executable are independently checked."
+}
