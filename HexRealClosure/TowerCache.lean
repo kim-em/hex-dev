@@ -68,6 +68,30 @@ def InclusionCache.find? {target : Context registry}
     (cache : InclusionCache target) (source : Context registry) : Option (Inclusion source target) :=
   findInclusion source cache.entries
 
+private theorem findInclusion_mem {target source : Context registry}
+    (entries : List (Σ owner : Context registry, Inclusion owner target))
+    (found : Inclusion source target)
+    (produced : findInclusion source entries = some found) :
+    (⟨source, found⟩ : Σ owner : Context registry, Inclusion owner target) ∈ entries := by
+  induction entries with
+  | nil => simp [findInclusion] at produced
+  | cons entry rest ih =>
+    rcases entry with ⟨owner, inclusion⟩
+    by_cases same : source = owner
+    · subst owner
+      simp only [findInclusion] at produced
+      cases Option.some.inj produced
+      exact List.mem_cons_self
+    · simp only [findInclusion, dite_eq_right same] at produced
+      exact List.mem_cons_of_mem _ (ih produced)
+
+/-- A cache hit is an actual stored inclusion for the exact source context. -/
+theorem InclusionCache.find?_mem {target source : Context registry}
+    (cache : InclusionCache target) (found : Inclusion source target)
+    (produced : cache.find? source = some found) :
+    (⟨source, found⟩ : Σ owner : Context registry, Inclusion owner target) ∈ cache.entries :=
+  findInclusion_mem cache.entries found produced
+
 /-- Inserting an owner makes its exact checked inclusion available. -/
 theorem InclusionCache.find?_insert {source target : Context registry}
     (cache : InclusionCache target) (next : Inclusion source target) :
@@ -84,7 +108,7 @@ structure CacheResult (previous original : Context registry) : Type 1 where
 
 /-- Traverse original dependencies in order, reusing their cached inclusions.
 Only a previously unseen exact predecessor is adjoined to the shared target. -/
-def InclusionCache.rebuild? {target source : Context registry}
+@[expose] def InclusionCache.rebuild? {target source : Context registry}
     (cache : InclusionCache target) (initial : Inclusion source target)
     (suffix : Suffix source) : Option (CacheResult target suffix.context) :=
   match suffix with
@@ -114,6 +138,74 @@ def InclusionCache.rebuild? {target source : Context registry}
             later.base_eq.trans (by
               rw [Context.origin_adjoin, Origin.snoc_base])⟩
 
+/-- Reusing a cached child follows its actual stored inclusion through the
+remaining original suffix. -/
+theorem InclusionCache.rebuild?_hit {target source : Context registry}
+    (cache : InclusionCache target) (initial : Inclusion source target)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (rest : Suffix (source.adjoin descriptor).context)
+    (found : Inclusion (source.adjoin descriptor).context target)
+    (present : cache.find? (source.adjoin descriptor).context = some found) :
+    cache.rebuild? initial (.root descriptor rest) = cache.rebuild? found rest := by
+  simp only [InclusionCache.rebuild?, present]
+  rfl
+
+/-- A new root updates every cache entry through its actual target inclusion
+before continuing through the remaining original suffix. -/
+private theorem InclusionCache.rebuild?_miss_proof {target source : Context registry}
+    (cache : InclusionCache target) (initial : Inclusion source target)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (rest : Suffix (source.adjoin descriptor).context)
+    (missing : cache.find? (source.adjoin descriptor).context = none)
+    (converted : SignDet.Descriptor target.Value Signature target.sign target.signature)
+    (checked : SignDet.Descriptor.validate target.sign target.signature
+      (source.mapDescriptor target initial.value descriptor) = some converted) :
+    cache.rebuild? initial (.root descriptor rest) =
+      let child := target.adjoin converted
+      let previous : Inclusion target child.context :=
+        ⟨Conversion.includeRoot target converted child rfl,
+          (Conversion.includeRoot_spec target converted child rfl).1⟩
+      let next : Inclusion (source.adjoin descriptor).context child.context :=
+        ⟨initial.native.adjoinCached descriptor converted checked child rfl,
+          (initial.native.adjoinCached_spec descriptor converted checked child rfl).1⟩
+      let updated := ((cache.extend previous).insert next).insert (Inclusion.identity child.context)
+      (updated.rebuild? next rest).map fun later =>
+        ⟨later.target, previous.comp later.inclusion, later.original, later.cache,
+          later.base_eq.trans (by rw [Context.origin_adjoin, Origin.snoc_base])⟩ := by
+  simp only [InclusionCache.rebuild?, missing]
+  split
+  · rename_i rejected
+    rw [checked] at rejected
+    contradiction
+  · rename_i actual accepted
+    have same : actual = converted := Option.some.inj (accepted.symm.trans checked)
+    subst actual
+    split <;> rename_i recursiveProduced <;>
+      simp only [recursiveProduced, Option.map]
+
+/-- A new validated root updates the cache before the remaining rebuild. -/
+theorem InclusionCache.rebuild?_miss {target source : Context registry}
+    (cache : InclusionCache target) (initial : Inclusion source target)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (rest : Suffix (source.adjoin descriptor).context)
+    (missing : cache.find? (source.adjoin descriptor).context = none)
+    (converted : SignDet.Descriptor target.Value Signature target.sign target.signature)
+    (checked : SignDet.Descriptor.validate target.sign target.signature
+      (source.mapDescriptor target initial.value descriptor) = some converted) :
+    cache.rebuild? initial (.root descriptor rest) =
+      let child := target.adjoin converted
+      let previous : Inclusion target child.context :=
+        ⟨Conversion.includeRoot target converted child rfl,
+          (Conversion.includeRoot_spec target converted child rfl).1⟩
+      let next : Inclusion (source.adjoin descriptor).context child.context :=
+        ⟨initial.native.adjoinCached descriptor converted checked child rfl,
+          (initial.native.adjoinCached_spec descriptor converted checked child rfl).1⟩
+      let updated := ((cache.extend previous).insert next).insert (Inclusion.identity child.context)
+      (updated.rebuild? next rest).map fun later =>
+        ⟨later.target, previous.comp later.inclusion, later.original, later.cache,
+          later.base_eq.trans (by rw [Context.origin_adjoin, Origin.snoc_base])⟩ :=
+  cache.rebuild?_miss_proof initial descriptor rest missing converted checked
+
 /-- An exactly registered predecessor is reused in the same target, with its exact
 cached map and without adding another algebraic level. -/
 theorem InclusionCache.rebuild?_cached {target source : Context registry}
@@ -135,3 +227,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.InclusionCache.rebuild?_cached' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.InclusionCache.rebuild?_cached
+
+/-- info: 'Hex.RealClosure.Tower.InclusionCache.find?_mem' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.InclusionCache.find?_mem

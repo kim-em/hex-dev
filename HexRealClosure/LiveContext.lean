@@ -98,6 +98,73 @@ def Shared.addOrigin? {base : BaseContext.PackedContext registry}
       return ⟨combined, (shared.maps.extend rebuilt.inclusion).snoc newest,
         rebuilt.base_eq.trans shared.base_eq, rebuilt.cache⟩
 
+private theorem Shared.empty_input_proof (base : BaseContext.PackedContext registry) :
+    (Shared.empty base).input = Conversion.identity (Context.ofBase base) := rfl
+
+/-- The empty collection begins with the actual native identity conversion. -/
+theorem Shared.empty_input (base : BaseContext.PackedContext registry) :
+    (Shared.empty base).input = Conversion.identity (Context.ofBase base) :=
+  Shared.empty_input_proof base
+
+private theorem Shared.empty_entries_proof (base : BaseContext.PackedContext registry) :
+    (Shared.empty base).cache.entries = [] := rfl
+
+/-- The initial collection has no original predecessor cache entries. -/
+theorem Shared.empty_entries (base : BaseContext.PackedContext registry) :
+    (Shared.empty base).cache.entries = [] := Shared.empty_entries_proof base
+
+private theorem Shared.empty_maps_proof (base : BaseContext.PackedContext registry) :
+    HEq (Shared.empty base).maps
+      (Inclusions.nil (target := (Shared.empty base).input.context)) := HEq.rfl
+
+/-- The initial collection has no original owner maps. -/
+theorem Shared.empty_maps (base : BaseContext.PackedContext registry) :
+    HEq (Shared.empty base).maps
+      (Inclusions.nil (target := (Shared.empty base).input.context)) :=
+  Shared.empty_maps_proof base
+
+set_option backward.isDefEq.respectTransparency false in
+private theorem Shared.addOrigin?_spec_proof {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (original : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base original)) {source : Context registry}
+    (same : suffix.context = source)
+    (previous : Inclusion (Context.base original) (Context.ofBase base))
+    (baseProduced : Inclusion.base? (.pack original) base = some previous)
+    (rebuilt : CacheResult shared.input.context suffix.context)
+    (produced : shared.cache.rebuild?
+      (previous.comp (Inclusion.mk shared.input rfl)) suffix = some rebuilt) :
+    ∃ result, shared.addOrigin? (.pack original suffix same) = some result ∧
+      result.input = ((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native ∧
+      HEq result.maps ((shared.maps.extend rebuilt.inclusion).snoc (_root_.cast (congrArg (fun context => Inclusion context rebuilt.target) same) rebuilt.original)) ∧
+      HEq result.cache rebuilt.cache := by
+  cases same
+  refine ⟨⟨((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native,
+    (shared.maps.extend rebuilt.inclusion).snoc rebuilt.original,
+    rebuilt.base_eq.trans shared.base_eq, rebuilt.cache⟩, ?_, rfl, HEq.rfl, HEq.rfl⟩
+  simp only [Shared.addOrigin?, baseProduced, bind, Option.bind, pure]
+  rw [produced]
+
+/-- Actual registration combines the returned predecessor inclusion with
+all retained owners and the exact returned cache. -/
+theorem Shared.addOrigin?_spec {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (original : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base original)) {source : Context registry}
+    (same : suffix.context = source)
+    (previous : Inclusion (Context.base original) (Context.ofBase base))
+    (baseProduced : Inclusion.base? (.pack original) base = some previous)
+    (rebuilt : CacheResult shared.input.context suffix.context)
+    (produced : shared.cache.rebuild?
+      (previous.comp (Inclusion.mk shared.input rfl)) suffix = some rebuilt) :
+    ∃ result, shared.addOrigin? (.pack original suffix same) = some result ∧
+      result.input = ((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native ∧
+      HEq result.maps ((shared.maps.extend rebuilt.inclusion).snoc (_root_.cast (congrArg (fun context => Inclusion context rebuilt.target) same) rebuilt.original)) ∧
+      HEq result.cache rebuilt.cache :=
+  shared.addOrigin?_spec_proof original suffix same previous baseProduced rebuilt produced
+
 /-- Register a validated context using its actual stored base and complete
 root suffix, without caller-supplied coefficient or semantic agreement. -/
 def Shared.add? {base : BaseContext.PackedContext registry}
@@ -167,6 +234,54 @@ def Shared.collect? {base : BaseContext.PackedContext registry}
 def Shared.gather? (base : BaseContext.PackedContext registry)
     (owners : List (Context registry)) : Option (Shared base owners) :=
   (Shared.empty base).collect? owners
+
+private theorem Shared.add?_eq_proof {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (source : Context registry) : shared.add? source = shared.addOrigin? source.origin := rfl
+
+/-- Registration consumes the context's actual stored origin. -/
+theorem Shared.add?_eq {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (source : Context registry) : shared.add? source = shared.addOrigin? source.origin := Shared.add?_eq_proof shared source
+
+private theorem Shared.collect?_nil_proof {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners) :
+    shared.collect? [] = some (_root_.cast
+      (congrArg (Shared base) (List.append_nil owners).symm) shared) := rfl
+
+/-- The empty collection step only transports its owner-list index. -/
+theorem Shared.collect?_nil {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners) :
+    shared.collect? [] = some (_root_.cast
+      (congrArg (Shared base) (List.append_nil owners).symm) shared) := Shared.collect?_nil_proof shared
+
+private theorem Shared.collect?_cons_proof {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (source : Context registry) (rest : List (Context registry)) :
+    shared.collect? (source :: rest) = do
+      let added ← shared.add? source
+      let result ← added.collect? rest
+      return _root_.cast (congrArg (Shared base)
+        (List.append_assoc owners [source] rest)) result := rfl
+
+/-- Collection registers the next original owner before visiting the rest. -/
+theorem Shared.collect?_cons {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (source : Context registry) (rest : List (Context registry)) :
+    shared.collect? (source :: rest) = do
+      let added ← shared.add? source
+      let result ← added.collect? rest
+      return _root_.cast (congrArg (Shared base)
+        (List.append_assoc owners [source] rest)) result := Shared.collect?_cons_proof shared source rest
+
+private theorem Shared.gather?_eq_proof (base : BaseContext.PackedContext registry)
+    (owners : List (Context registry)) :
+    Shared.gather? base owners = (Shared.empty base).collect? owners := rfl
+
+/-- Gathering uses the declared base and the actual owner collection. -/
+theorem Shared.gather?_eq (base : BaseContext.PackedContext registry)
+    (owners : List (Context registry)) :
+    Shared.gather? base owners = (Shared.empty base).collect? owners := Shared.gather?_eq_proof base owners
 
 /-- One enlargement of the shared target, retaining every original owner and
 returning the new positive parameter in that same target. -/
@@ -367,3 +482,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Shared.enlarge?_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Shared.enlarge?_value
+
+/-- info: 'Hex.RealClosure.Tower.Shared.addOrigin?_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.addOrigin?_spec
