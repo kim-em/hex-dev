@@ -10,16 +10,6 @@ public import HexBerlekampZassenhausMathlib.FactorTactic
 public meta import HexBerlekampZassenhausMathlib.FactorTactic
 public meta import Lean.Elab.Command
 public meta import Lean.Elab.Term
-import all HexBerlekampZassenhaus.Certificate
-import all HexBerlekampZassenhausMathlib.FactorTransport
-import all Init.Data.Array.Basic
-import all Init.Data.Fin.Fold
-import all Init.Data.Fin.Basic
-import all Init.Data.Fin.Iterate
-import all Init.Data.List.Basic
-import all Init.Data.List.Range
-import all Init.Data.Nat.Fold
-import all Init.Data.Range.Basic
 
 public section
 namespace Hex.RCF.CertificationInputs
@@ -35,8 +25,8 @@ run_meta do
 #guard (QuadraticNormCertificate.certify? polynomial).isNone
 #guard (certifyIrreducible? polynomial).isSome
 
-example : Decidable.decide (Nat.Prime 11) = true := by decide +kernel
-example : Decidable.decide (Nat.Prime 5) = true := by decide +kernel
+example : Decidable.decide (Nat.Prime 11) = true := by cbv
+example : Decidable.decide (Nat.Prime 5) = true := by cbv
 
 local elab "quartic_certificate" : term => do
   let p : ZPoly := DensePoly.ofList [-2, -7, -1, 4, 1]
@@ -46,13 +36,13 @@ local elab "quartic_certificate" : term => do
 @[expose] def certificate : ZPolyIrreducibilityCertificate := quartic_certificate
 #guard HexBerlekampZassenhausMathlib.checkMultiPrimeCert polynomial certificate
 example : certificate.perPrime.all (fun d => Decidable.decide (_root_.Nat.Prime d.p)) = true :=
-  by decide +kernel
-example : Decidable.decide (polynomial.content = 1) = true := by decide +kernel
-example : checkIrreducibleCertLinear polynomial certificate = true := by decide +kernel
+  by cbv
+example : Decidable.decide (polynomial.content = 1) = true := by cbv
+example : checkIrreducibleCertLinear polynomial certificate = true := by cbv
 
 theorem irreducible : polynomial.Irreducible := by
   exact HexBerlekampZassenhausMathlib.zpolyIrreducible_of_checkMultiPrimeCert
-    polynomial certificate (by decide +kernel)
+    polynomial certificate (by cbv)
 theorem checked : polynomial.CheckedIrreducible :=
   ⟨(ZPoly.isIrreducible_iff polynomial).mpr irreducible, by decide⟩
 theorem squarefree : HasOnlySimpleRoots polynomial := by

@@ -123,8 +123,9 @@ computed presentation. The
 [quartic constructor](../conformance/HexRCF/CertificationInputs.lean) and
 [fresh-module proofs](../conformance/HexRCF/CertificationProofs.lean) exercise
 a supplied multi-prime certificate beyond the frontend witness languages.
-The fresh goal proofs use ordinary imports; constructing this certificate
-currently needs private checker imports pending the owner's public API.
+The certificate construction and fresh goal proofs use ordinary public imports.
+The frontend does not yet invoke the owner's multi-prime quotation for a new
+common defining polynomial.
 It binds the original isolation square to the literal selected-root replay, preserving the
 chosen embedding. Elaboration executes canonicalization; the kernel reduces
 the original polynomial and square identities, rather than canonicalization.
