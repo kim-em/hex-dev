@@ -333,7 +333,10 @@ cache saved on the default branch is available to pull requests. Saving
 an approximately 1 GB snapshot from every PR run therefore churns the
 repository's 10 GB cache quota without providing shared reuse. PRs and
 the Pages workflow restore the latest compatible `main` snapshot and
-let Lake rebuild their source delta.
+let Lake rebuild their source delta. Every restore of this cache MUST list
+exactly the paths the save step lists: `actions/cache` includes the path list
+in each entry's version, so a restore with a different list matches no saved
+snapshot and rebuilds everything.
 
 The cached Lean and IR directories cover every root-package module namespace,
 not only `Hex*`; in particular, the `Examples.*` release modules must survive a

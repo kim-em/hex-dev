@@ -58,12 +58,17 @@ jobs:
           test -d "$lean_prefix/lib/lean"
           echo "LD_LIBRARY_PATH=$lean_prefix/lib/lean:${LD_LIBRARY_PATH:-}" \
             >> "$GITHUB_ENV"
-      - name: Restore .lake/build (Hex modules only)
+      # The path list must match the CI workflow's save step exactly:
+      # actions/cache folds the paths into each entry's version, so a
+      # different list never matches any saved snapshot.
+      - name: Restore .lake/build (project and AINTLIB modules)
         uses: actions/cache/restore@v4
         with:
           path: |
-            .lake/build/lib/lean/Hex*
-            .lake/build/ir/Hex*
+            .lake/build/lib/lean
+            .lake/build/ir
+            .lake/packages/AINTLIB/.lake/build/lib/lean
+            .lake/packages/AINTLIB/.lake/build/ir
           key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
           restore-keys: |
             lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
