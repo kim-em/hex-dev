@@ -276,7 +276,7 @@ q * a ≡ p (mod m),   |p| ≤ P,   0 < q ≤ Q,   gcd(p, q) = 1.
 
 ### The stopping rule needs a truncated Euclidean run
 
-`Hex.Int.extGcd` returns the gcd and one Bézout pair. Rational
+`HexArith.Int.extGcd` returns the gcd and one Bézout pair. Rational
 reconstruction needs the *intermediate* rows of the same computation: run
 the extended Euclidean algorithm on `(m, a)` producing
 `rⱼ = sⱼ·m + tⱼ·a`, and stop at the first `j` with `rⱼ ≤ P`. So the
@@ -295,12 +295,12 @@ def euclidUntil (m a P : Int) : Row
 ```
 
 `euclidUntil` is the only new arithmetic in this library, and it is more
-than a wrapper. `HexArith.Int.extGcd` is an `@[extern]` binding that
-returns the final triple, so no intermediate row is reachable through it:
-`euclidUntil` needs either its own extern primitive or a refactoring of
-the existing one to take a stopping predicate. Which of those is right is
-an implementation question, and it is the one open question in this
-library that costs real work rather than a decision.
+than a wrapper. `HexArith.Int.extGcd` returns only the final triple, so its
+public result does not expose intermediate rows. On nonnegative inputs its
+proved `@[csimp]` rewrite uses `Nat.extendedGcd`, whose GMP implementation has
+no stopping predicate. `euclidUntil` therefore needs a truncated Euclidean
+loop in Lean or a new native primitive with a stopping predicate. Choosing
+and proving that implementation is the remaining arithmetic design question.
 
 ### The signature is checked, so soundness is free
 
