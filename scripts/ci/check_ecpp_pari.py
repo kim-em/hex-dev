@@ -32,10 +32,10 @@ def scratch_modules():
                 shutil.rmtree(folder / "HexECPPMathlib" / path.name, ignore_errors=True)
 
 
-def build(module: str, env: dict[str, str], *, expected_error: str | None = None) -> str:
+def build(module: str, env: dict[str, str], *, expected_error: str | None = None, timeout: int = 120) -> str:
     result = subprocess.run(
         ["lake", "build", f"+{module}:olean"], cwd=ROOT, env=env,
-        text=True, capture_output=True, timeout=120,
+        text=True, capture_output=True, timeout=timeout,
     )
     output = result.stdout + result.stderr
     if expected_error is None:

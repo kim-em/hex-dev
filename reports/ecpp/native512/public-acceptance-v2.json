@@ -1,0 +1,56 @@
+{
+  "campaign_sha256": "97f4c3eb943202d7e1b7431199da695bd19d88fb2395f0c861c4cb4c7aebbd03",
+  "distinct_gains": 4,
+  "records": [
+    {
+      "id": "holdout-512-ordinary-0",
+      "subject": 12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457,
+      "seed": 0,
+      "artifact": "public-ordinary-0-raw-v2.json",
+      "artifact_sha256": "f3a2c09e20fddabe7646f1aac8376ed7f8d1982481305d258cda646b33876e49",
+      "rows_sha256": "34dcef5503e86f7342d3e659ac1e3f4b5e7392f4724bdd309e41fe13ae9a1d3f",
+      "frozen_rows_match_search_freeze": true,
+      "fresh_kernel_without_generation_or_gp": true
+    },
+    {
+      "id": "holdout-512-ordinary-3",
+      "subject": 7065189838482317911507479868798535730570068332444669726683537376311597879857917999853299197262244131953963424316801120147570853989595570812519051510818097,
+      "seed": 3,
+      "artifact": "public-ordinary-3-v2.json",
+      "artifact_sha256": "59c503c6dd462e70c188291e1a5c01c77418a41cc40de2dd1e33fb0a42408e78",
+      "rows_sha256": "b0ba0bc8a40ca3fae35868ab10d5319c26331e159ad845d00ac207f224257331",
+      "frozen_rows_match_search_freeze": true,
+      "fresh_kernel_without_generation_or_gp": true
+    },
+    {
+      "id": "holdout-512-ordinary-5",
+      "subject": 8032821287539556212074164696549123017250509133319140340031237667965920416426063738961807763024706672875406191540699841025469370062473964579267558803022279,
+      "seed": 5,
+      "artifact": "public-ordinary-5-v2.json",
+      "artifact_sha256": "ea580b39da5ac24e97a3bc132f172a866a05a221f0e3ca4554ee1a74afdf7bf3",
+      "rows_sha256": "73536fa7c4bf10ae576bb9176c3653e23656d9949f8d0ae4ab51ab97be663422",
+      "frozen_rows_match_search_freeze": true,
+      "fresh_kernel_without_generation_or_gp": true
+    },
+    {
+      "id": "holdout-512-difficult-0",
+      "subject": 7983226596738841058766325436315975273752711604126516516644200892341180092058466758226580125510711294302178552878759289723290167401444678034498033356114163,
+      "seed": 6,
+      "artifact": "public-difficult-0-v2.json",
+      "artifact_sha256": "1bb907e063cec7c5274f6efd5c165c60aa91d32cb02d973715f9ea22879fff0a",
+      "rows_sha256": "0a14afe9d06c2d5afbca5a65035f633ee7ac0c251faf153769dbce330a8591b8",
+      "frozen_rows_match_search_freeze": true,
+      "fresh_kernel_without_generation_or_gp": true
+    },
+    {
+      "id": "holdout-512-ordinary-0",
+      "subject": 12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457,
+      "seed": 0,
+      "artifact": "public-final-ordinary-0-v2.json",
+      "artifact_sha256": "1caaced49207352572379d757c464e89faf4d22436454ac8adb694d52bc1c141",
+      "rows_sha256": "34dcef5503e86f7342d3e659ac1e3f4b5e7392f4724bdd309e41fe13ae9a1d3f",
+      "frozen_rows_match_search_freeze": true,
+      "fresh_kernel_without_generation_or_gp": true
+    }
+  ]
+}

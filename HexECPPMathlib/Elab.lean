@@ -46,18 +46,20 @@ meta def convertSupplied (source : String) : MetaM (Except ImportError Cert) := 
 private meta def certType : Expr := mkConst ``Hex.ECPP.Cert
 private meta def natType : Expr := mkConst ``Nat
 
+-- Raw literals avoid an OfNat wrapper at every inverse witness. The reader
+-- checks the same numeral values and retains its fixed syntax-node ceiling.
 private meta def reifyNats : List Nat → Expr
   | [] => mkApp (mkConst ``List.nil [.zero]) natType
   | x :: xs => mkApp3 (mkConst ``List.cons [.zero]) natType
-      (mkNatLit x) (reifyNats xs)
+      (mkRawNatLit x) (reifyNats xs)
 
 /-- Reify a bounded raw proposal as kernel-checkable constructor data. Call
 `validateCert` first when the proposal has not already passed replay preflight. -/
 meta def reifyCert : Cert → Expr
   | .base c => mkApp (mkConst ``Hex.ECPP.Cert.base) (Hex.PrimalityTactic.reifyPrimeCert c)
   | .step n a b x y d ws child =>
-      mkAppN (mkConst ``Hex.ECPP.Cert.step) #[mkNatLit n, mkNatLit a,
-        mkNatLit b, mkNatLit x, mkNatLit y, mkNatLit d,
+      mkAppN (mkConst ``Hex.ECPP.Cert.step) #[mkRawNatLit n, mkRawNatLit a,
+        mkRawNatLit b, mkRawNatLit x, mkRawNatLit y, mkRawNatLit d,
         reifyNats ws, reifyCert child]
 
 private meta def maxSyntaxNodes : Nat := 131072

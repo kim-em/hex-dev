@@ -5,7 +5,7 @@ compiled benchmarks and scientific performance evidence. There is no
 Mathlib-linked benchmark executable or companion timed-region profile.
 
 `libraries.yml` declares `bench/HexECPPMathlib/ProofProbe`; the
-`HexECPPMathlibProofProbe` Lake target lists all twenty-one modules in that root
+`HexECPPMathlibProofProbe` Lake target explicitly lists the modules in that root
 and the existing single CI job builds that target on every PR.
 
 | Public surface | CI proof probes | Executable or protocol checks |
@@ -27,9 +27,15 @@ The protocol scripts build the generated certificate source and replay the
 exact returned `Try this:` text. Proof existence alone is insufficient. The
 published test target additionally pins an exact native suggestion with
 `#guard_msgs`, checks frozen module replay and runs the companion API linter.
+The 512-bit extension adds `Tests.Native512` for the exact full generated
+suggestion, `Tests.Frozen512` for verbatim replay with generation absent, and
+`Native512Baseline`, `Native512Reify`, `Native512Direct` for separate fresh-module
+phase measurements in [native512/proof-phases-v2.json](native512/proof-phases-v2.json).
+The protocol script also exercises 512-bit generation and exclusive export.
 
 Replay admits 512-bit subjects and 32 total certificate nodes. Native search
-admits 256-bit subjects and at most twenty ECPP rows. An embedded terminal
+defaults to 256-bit subjects; the explicit 512-bit policy enforces at most
+twenty ECPP rows and 32 total nodes during backtracking. An embedded terminal
 `PrimeCert` consumes its full tree allocation as well; row depth and total
 nodes are independent. `NodeBudget` tests acceptance at 32 nodes, rejection
 at 33, shared constructor-data preflight and shared expression expansion.

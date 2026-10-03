@@ -6,6 +6,8 @@ Authors: Kim Morrison
 
 import HexECPPMathlib
 import HexECPPMathlib.Tests.ModuleReplay
+import HexECPPMathlib.Tests.Frozen512
+import HexECPPMathlib.Tests.Native512
 import HexECPPMathlib.LintTests
 
 /-! # Published companion trust checks
