@@ -9,6 +9,7 @@ public meta import HexRCF.RealCoefficients.Tactic
 public meta import HexRCF.RealCoefficients.SquareRoot
 public meta import HexRCF.RealCoefficients.CommonPresentation
 public meta import HexBerlekampZassenhaus.QuadraticNormRecover
+public meta import HexBerlekampZassenhausMathlib.FactorTactic
 
 public meta import HexRCF.RealCoefficients.FieldCompile
 
@@ -20,6 +21,42 @@ original guards in their checked common field before goal certificate search. -/
 namespace Hex.RCF.RealCoefficients.CommonTactic
 
 open Hex Lean Meta Qq
+
+/-- Quote a checked irreducibility proof for a literal common polynomial.
+The runtime input selects finite evidence; the kernel checks that evidence
+against the supplied expression before returning the class proof. -/
+meta def certify (p : ZPoly) (pExpr : Q(ZPoly)) (degree : Expr) : MetaM Expr := do
+  let candidate ← match QuadraticNormCertificate.certify? p with
+    | some cert => do
+        let certExpr : Q(QuadraticNormCertificate) ←
+          FieldLiteral.quadraticCertExpr cert
+        let hcert ← mkDecideProof
+          (q(($certExpr).check $pExpr = true) : Q(Prop))
+        mkAppM ``Field.checkedIrreducibleQuadraticNorm
+          #[pExpr, certExpr, hcert, degree]
+    | none => do
+        match HexBerlekampZassenhaus.FactorTactic.searchWitness p with
+        | some witness =>
+            let witnessExpr : Q(ZPoly.IrredWitness) :=
+              HexBerlekampZassenhaus.FactorTactic.reifyWitness witness
+            unless ZPoly.checkIrredWitness p witness do
+              throwError "rcf: computed irreducibility witness failed its check"
+            let hwitness ← mkDecideProof
+              (q(ZPoly.checkIrredWitness $pExpr $witnessExpr = true) : Q(Prop))
+            mkAppM ``Field.checkedIrreducible
+              #[pExpr, witnessExpr, hwitness, degree]
+        | none =>
+            let some certificate := certifyIrreducible? p |
+              throwError "rcf: no checked irreducibility witness for this common field"
+            unless HexBerlekampZassenhausMathlib.checkMultiPrimeCert p certificate do
+              throwError "rcf: computed multi-prime certificate failed its check"
+            let proof ← HexBerlekampZassenhausMathlib.FactorTactic.zpolyIrredProof
+              pExpr (.multi certificate)
+            let equivalence ← mkAppM ``ZPoly.isIrreducible_iff #[pExpr]
+            let checked ← mkAppM ``Iff.mpr #[equivalence, proof]
+            mkAppM ``ZPoly.CheckedIrreducible.mk #[checked, degree]
+  let target ← mkAppM ``ZPoly.CheckedIrreducible #[pExpr]
+  mkAuxTheorem target candidate (zetaDelta := true) (cache := false)
 
 private meta def kernelDecide (goal : Expr) : MetaM Expr := do
   let candidate ← mkFreshExprMVar goal
@@ -438,25 +475,7 @@ private meta def assemble (source : Reify.Source) (leafSources : Array Expr) (pl
           break
       let irred ← match sourceIrred with
         | some checked => pure checked
-        | none => match QuadraticNormCertificate.certify? p with
-            | some cert => do
-                let certExpr : Q(QuadraticNormCertificate) ←
-                  FieldLiteral.quadraticCertExpr cert
-                let hcert ← mkDecideProof
-                  (q(($certExpr).check $pExpr = true) : Q(Prop))
-                mkAppM ``Field.checkedIrreducibleQuadraticNorm
-                  #[pExpr, certExpr, hcert, hdegree]
-            | none => do
-                let some witness := HexBerlekampZassenhaus.FactorTactic.searchWitness p |
-                  throwError "rcf: no checked irreducibility witness for this common field"
-                let witnessExpr : Q(ZPoly.IrredWitness) :=
-                  HexBerlekampZassenhaus.FactorTactic.reifyWitness witness
-                unless ZPoly.checkIrredWitness p witness do
-                  throwError "rcf: computed irreducibility witness failed its check"
-                let hwitness ← mkDecideProof
-                  (q(ZPoly.checkIrredWitness $pExpr $witnessExpr = true) : Q(Prop))
-                mkAppM ``Field.checkedIrreducible
-                  #[pExpr, witnessExpr, hwitness, hdegree]
+        | none => certify p pExpr hdegree
       -- Runtime field operations use the canonical generator's instance;
       -- quotation retains an exactly matching source instance or checks a
       -- literal irreducibility witness for the new presentation.

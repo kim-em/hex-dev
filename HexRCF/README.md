@@ -124,8 +124,8 @@ computed presentation. The
 [fresh-module proofs](../conformance/HexRCF/CertificationProofs.lean) exercise
 a supplied multi-prime certificate beyond the frontend witness languages.
 The certificate construction and fresh goal proofs use ordinary public imports.
-The frontend does not yet invoke the owner's multi-prime quotation for a new
-common defining polynomial.
+For a new common defining polynomial, quotation also tries the owner's public
+multi-prime certificate API. This finite certificate search may decline.
 It binds the original isolation square to the literal selected-root replay, preserving the
 chosen embedding. Elaboration executes canonicalization; the kernel reduces
 the original polynomial and square identities, rather than canonicalization.

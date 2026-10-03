@@ -35,6 +35,51 @@ theorem further_root : ∃ x : ℝ,
 theorem normalized_positive : ∀ x : ℝ,
     x ^ 2 + (normalized.toReal ^ 2 + 1) > 0 := by rcf
 
+open Lean Meta Qq in
+local elab "commonCertificate%" : term => do
+  let p : ZPoly := DensePoly.ofList [-2, -7, -1, 4, 1]
+  let degree ← mkDecideProof q(0 < polynomial.natDegree)
+  CommonTactic.certify p q(polynomial) degree
+
+open Lean Meta Qq in
+local elab "wrongCommon%" : term => do
+  let saved ← saveState
+  let rejected ← try
+    let p : ZPoly := DensePoly.ofList [-2, -7, -1, 4, 1]
+    let expression := q(polynomial + 1)
+    let degree ← mkDecideProof q(0 < (polynomial + 1).natDegree)
+    let _ ← CommonTactic.certify p expression degree
+    pure false
+  catch _ => pure true
+  saved.restore
+  unless rejected do throwError "common certificate proved the wrong polynomial"
+  return q(True.intro)
+
+example : True := wrongCommon%
+
+theorem common_certificate : polynomial.CheckedIrreducible := commonCertificate%
+
+abbrev quadraticRoot : RealAlgebraicNumber :=
+  Selected.real SquareTwo.polynomial SquareTwo.square (by decide) (by decide)
+    (by rfl) (by decide) (by decide) SquareTwo.checked SquareTwo.squarefree (by decide)
+
+-- The current bounded owner certificate producer declines this actual
+-- degree-eight presentation. Record the exact input, rather than treating
+-- a failed certificate search as a mathematical reducibility claim.
+run_meta do
+  let common := QAdjoin.common #[realAlgebraic.toAlgebraic, quadraticRoot.toAlgebraic]
+  let p := common.generator.p
+  unless p.natDegree == 8 do throwError "expected the degree-eight common field"
+  unless (QuadraticNormCertificate.certify? p).isNone &&
+      (HexBerlekampZassenhaus.FactorTactic.searchWitness p).isNone &&
+      (certifyIrreducible? p).isNone do
+    throwError "expected the documented bounded certificate refusal"
+  Lean.logInfo m!"common polynomial coefficients: {p.toArray}"
+  Lean.logInfo m!"common polynomial content: {p.content}"
+  for prime in smallPrimeCandidates do
+    if let some data := probePrimeData? p prime then
+      Lean.logInfo m!"prime {prime.m}: {data.factorsModP.map (·.natDegree)}"
+
 -- Exercise failures without leaving failed declarations or proof admissions.
 local elab "expect_certificate_error " message:str : tactic => do
   let saved ← Lean.Elab.Tactic.saveState
@@ -53,6 +98,10 @@ example (_impossible : False) : ∀ x : ℝ, x ^ 2 + realAlgebraic.toReal < 0 :=
 example (_impossible : False) : ∀ x : ℝ,
     x ^ 2 + 0 / (realAlgebraic.toReal - realAlgebraic.toReal) ≥ 0 := by
   expect_certificate_error "rcf: original closed divisor is zero"
+
+example (_impossible : False) : ∀ x : ℝ,
+    x ^ 2 + realAlgebraic.toReal + quadraticRoot.toReal > 0 := by
+  expect_certificate_error "rcf: no checked irreducibility witness for this common field"
 
 end Hex.RCF.CertificationProofs
 
@@ -75,3 +124,7 @@ end Hex.RCF.CertificationProofs
 /-- info: 'Hex.RCF.CertificationProofs.normalized_positive' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.CertificationProofs.normalized_positive
+
+/-- info: 'Hex.RCF.CertificationProofs.common_certificate' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.CertificationProofs.common_certificate

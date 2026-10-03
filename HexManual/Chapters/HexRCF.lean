@@ -584,9 +584,10 @@ This supports source proofs beyond the frontend's
 single-witness and quadratic-norm search languages, including a checked real
 quartic with a multi-prime certificate. The fresh goal proofs use ordinary
 imports, including certificate construction and replay through the owner's
-public API. The frontend does not yet invoke multi-prime certification for
-a new common polynomial. Such polynomials still require
-a supported ordinary-kernel irreducibility certificate.
+public API. For a new common polynomial, the frontend tries quadratic-norm and free
+witness certificates, then the owner's multi-prime certificate producer and
+ordinary-kernel quotation. The finite searches may decline; their failure
+does not imply reducibility.
 The cubic example below verifies
 `x / α = (α² − 1) * x` at the selected positive root of `X³ − X − 1`.
 The same example also uses the ordinary `QAdjoin.toAlgebraicNumber`
