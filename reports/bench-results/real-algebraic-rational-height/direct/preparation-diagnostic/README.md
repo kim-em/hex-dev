@@ -7,6 +7,13 @@ not a scientific scaling run. Its command, source and executable hashes,
 CPU affinity, load observations and exit status are retained in
 `../fixture-probe/metadata.json`. No completed sample is discarded.
 
+The probe invoked `_child` directly and bypassed parent supervision. Ordinary
+`run` uses `LeanBench.spawnWithCap` around the entire child, including fixture
+preparation, with `maxSecondsPerCall` plus `killGraceMs`. The probe's elapsed
+time does not show that a supervised run can evade its deadline. Exact source
+snapshots are retained beside the probe metadata. The later smoke-only
+`Nat.max bits 2` change leaves the 262144-bit preparation formula identical.
+
 Both completed perf attachments are retained at the persistent root recorded
 in `artifacts.json`, together with the exact executable and checksums. The
 20-second captures used 999 Hz / 8 KiB and 99 Hz / 65528-byte DWARF stacks.

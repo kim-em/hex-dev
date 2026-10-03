@@ -13,7 +13,9 @@
       "native_median_us": 103.68340625,
       "external_median_us": 205.9753125,
       "median_paired_external_over_native": 1.981379755123324,
-      "all_hashes_match": true
+      "all_hashes_match": true,
+      "protocol_overhead_fraction_at_median": 0.03269323841904597,
+      "median_paired_protocol_adjusted_external_over_native": 1.9164815179037764
     },
     {
       "fixture": "Count",
@@ -21,7 +23,9 @@
       "native_median_us": 101.9166875,
       "external_median_us": 110.09475,
       "median_paired_external_over_native": 1.0823833302344101,
-      "all_hashes_match": true
+      "all_hashes_match": true,
+      "protocol_overhead_fraction_at_median": 0.059893864148835435,
+      "median_paired_protocol_adjusted_external_over_native": 1.0176709216788427
     },
     {
       "fixture": "Mixed",
@@ -29,7 +33,9 @@
       "native_median_us": 86.48478125,
       "external_median_us": 232.745,
       "median_paired_external_over_native": 2.691171800637682,
-      "all_hashes_match": true
+      "all_hashes_match": true,
+      "protocol_overhead_fraction_at_median": 0.02893295237276848,
+      "median_paired_protocol_adjusted_external_over_native": 2.6133082800469563
     },
     {
       "fixture": "Mixed",
@@ -37,7 +43,9 @@
       "native_median_us": 86.4619375,
       "external_median_us": 147.8698125,
       "median_paired_external_over_native": 1.7190671826531687,
-      "all_hashes_match": true
+      "all_hashes_match": true,
+      "protocol_overhead_fraction_at_median": 0.04459328032217529,
+      "median_paired_protocol_adjusted_external_over_native": 1.6424110768082705
     },
     {
       "fixture": "Negative",
@@ -45,7 +53,9 @@
       "native_median_us": 113.3705625,
       "external_median_us": 259.596125,
       "median_paired_external_over_native": 2.2840225775715552,
-      "all_hashes_match": true
+      "all_hashes_match": true,
+      "protocol_overhead_fraction_at_median": 0.0259402947559406,
+      "median_paired_protocol_adjusted_external_over_native": 2.224773773450442
     },
     {
       "fixture": "Negative",
@@ -53,7 +63,9 @@
       "native_median_us": 114.76290625,
       "external_median_us": 160.646875,
       "median_paired_external_over_native": 1.399889763598063,
-      "all_hashes_match": true
+      "all_hashes_match": true,
+      "protocol_overhead_fraction_at_median": 0.04104655008072831,
+      "median_paired_protocol_adjusted_external_over_native": 1.3424290656969409
     },
     {
       "fixture": "Common",
@@ -61,7 +73,9 @@
       "native_median_us": 97.6184375,
       "external_median_us": 16421.5175,
       "median_paired_external_over_native": 168.3509486982693,
-      "all_hashes_match": true
+      "all_hashes_match": true,
+      "protocol_overhead_fraction_at_median": 0.00041007172449196606,
+      "median_paired_protocol_adjusted_external_over_native": 168.28229800079816
     },
     {
       "fixture": "Common",
@@ -69,7 +83,9 @@
       "native_median_us": 99.72784375,
       "external_median_us": 447.880125,
       "median_paired_external_over_native": 4.488035047220549,
-      "all_hashes_match": true
+      "all_hashes_match": true,
+      "protocol_overhead_fraction_at_median": 0.014722689469643245,
+      "median_paired_protocol_adjusted_external_over_native": 4.421907220237582
     }
   ],
   "pairs": [
@@ -86,7 +102,9 @@
       "external_nanos": 210144.0,
       "native_inner_repeats": 16,
       "external_inner_repeats": 8,
-      "external_over_native": 2.090459859587517
+      "external_over_native": 2.090459859587517,
+      "protocol_overhead_fraction": 0.03204469316278361,
+      "protocol_adjusted_external_over_native": 2.023471714817919
     },
     {
       "fixture": "Count",
@@ -101,7 +119,9 @@
       "external_nanos": 208271.25,
       "native_inner_repeats": 16,
       "external_inner_repeats": 8,
-      "external_over_native": 1.9819642997337825
+      "external_over_native": 1.9819642997337825,
+      "protocol_overhead_fraction": 0.0323328351848851,
+      "protocol_adjusted_external_over_native": 1.917881774688164
     },
     {
       "fixture": "Count",
@@ -116,7 +136,9 @@
       "external_nanos": 202980.875,
       "native_inner_repeats": 16,
       "external_inner_repeats": 8,
-      "external_over_native": 1.9807952105128657
+      "external_over_native": 1.9807952105128657,
+      "protocol_overhead_fraction": 0.033175539321130626,
+      "protocol_adjusted_external_over_native": 1.9150812611193888
     },
     {
       "fixture": "Count",
@@ -131,7 +153,9 @@
       "external_nanos": 203679.375,
       "native_inner_repeats": 16,
       "external_inner_repeats": 8,
-      "external_over_native": 1.9417939101865127
+      "external_over_native": 1.9417939101865127,
+      "protocol_overhead_fraction": 0.033061766808740456,
+      "protocol_adjusted_external_over_native": 1.877594772737294
     },
     {
       "fixture": "Count",
@@ -146,7 +170,9 @@
       "external_nanos": 111174.8125,
       "native_inner_repeats": 16,
       "external_inner_repeats": 16,
-      "external_over_native": 1.0837910573073462
+      "external_over_native": 1.0837910573073462,
+      "protocol_overhead_fraction": 0.05931199569147014,
+      "protocol_adjusted_external_over_native": 1.019509246785879
     },
     {
       "fixture": "Count",
@@ -161,7 +187,9 @@
       "external_nanos": 109978.0,
       "native_inner_repeats": 16,
       "external_inner_repeats": 16,
-      "external_over_native": 1.076901233298572
+      "external_over_native": 1.076901233298572,
+      "protocol_overhead_fraction": 0.05995744603466148,
+      "protocol_adjusted_external_over_native": 1.0123329857184122
     },
     {
       "fixture": "Count",
@@ -176,7 +204,9 @@
       "external_nanos": 110211.5,
       "native_inner_repeats": 16,
       "external_inner_repeats": 16,
-      "external_over_native": 1.0840579817059715
+      "external_over_native": 1.0840579817059715,
+      "protocol_overhead_fraction": 0.059830416971005745,
+      "protocol_adjusted_external_over_native": 1.0191983406397562
     },
     {
       "fixture": "Count",
@@ -191,7 +221,9 @@
       "external_nanos": 109944.8125,
       "native_inner_repeats": 16,
       "external_inner_repeats": 16,
-      "external_over_native": 1.0809756031614743
+      "external_over_native": 1.0809756031614743,
+      "protocol_overhead_fraction": 0.05997554454877078,
+      "protocol_adjusted_external_over_native": 1.016143502717929
     },
     {
       "fixture": "Mixed",
@@ -206,7 +238,9 @@
       "external_nanos": 232617.375,
       "native_inner_repeats": 16,
       "external_inner_repeats": 8,
-      "external_over_native": 2.697843901201457
+      "external_over_native": 2.697843901201457,
+      "protocol_overhead_fraction": 0.028948826372062707,
+      "protocol_adjusted_external_over_native": 2.6197444865266477
     },
     {
       "fixture": "Mixed",
@@ -221,7 +255,9 @@
       "external_nanos": 232682.375,
       "native_inner_repeats": 16,
       "external_inner_repeats": 8,
-      "external_over_native": 2.687243576602926
+      "external_over_native": 2.687243576602926,
+      "protocol_overhead_fraction": 0.02894073949520242,
+      "protocol_adjusted_external_over_native": 2.6094727602923045
     },
     {
       "fixture": "Mixed",
@@ -236,7 +272,9 @@
       "external_nanos": 233119.25,
       "native_inner_repeats": 16,
       "external_inner_repeats": 8,
-      "external_over_native": 2.597629761074846
+      "external_over_native": 2.597629761074846,
+      "protocol_overhead_fraction": 0.028886503366839074,
+      "protocol_adjusted_external_over_native": 2.522593320235756
     },
     {
       "fixture": "Mixed",
@@ -251,7 +289,9 @@
       "external_nanos": 232807.625,
       "native_inner_repeats": 16,
       "external_inner_repeats": 8,
-      "external_over_native": 2.695100024672439
+      "external_over_native": 2.695100024672439,
+      "protocol_overhead_fraction": 0.02892516943978961,
+      "protocol_adjusted_external_over_native": 2.6171437998016076
     },
     {
       "fixture": "Mixed",
@@ -266,7 +306,9 @@
       "external_nanos": 150226.375,
       "native_inner_repeats": 16,
       "external_inner_repeats": 8,
-      "external_over_native": 1.7402317391732454
+      "external_over_native": 1.7402317391732454,
+      "protocol_overhead_fraction": 0.043893757005053206,
+      "protocol_adjusted_external_over_native": 1.663846430081494
     },
     {
       "fixture": "Mixed",
@@ -281,7 +323,9 @@
       "external_nanos": 146714.875,
       "native_inner_repeats": 16,
       "external_inner_repeats": 8,
-      "external_over_native": 1.686907455860784
+      "external_over_native": 1.686907455860784,
+      "protocol_overhead_fraction": 0.04494431801819686,
+      "protocol_adjusted_external_over_native": 1.6110905506973094
     },
     {
       "fixture": "Mixed",
@@ -296,7 +340,9 @@
       "external_nanos": 148661.625,
       "native_inner_repeats": 16,
       "external_inner_repeats": 8,
-      "external_over_native": 1.7397422188024336
+      "external_over_native": 1.7397422188024336,
+      "protocol_overhead_fraction": 0.04435576430702947,
+      "protocol_adjusted_external_over_native": 1.6625746229902443
     },
     {
       "fixture": "Mixed",
@@ -311,7 +357,9 @@
       "external_nanos": 147078.0,
       "native_inner_repeats": 16,
       "external_inner_repeats": 8,
-      "external_over_native": 1.6983921465039038
+      "external_over_native": 1.6983921465039038,
+      "protocol_overhead_fraction": 0.04483335373067352,
+      "protocol_adjusted_external_over_native": 1.6222475306262965
     },
     {
       "fixture": "Negative",
@@ -326,7 +374,9 @@
       "external_nanos": 258418.0,
       "native_inner_repeats": 16,
       "external_inner_repeats": 4,
-      "external_over_native": 2.2758919444959718
+      "external_over_native": 2.2758919444959718,
+      "protocol_overhead_fraction": 0.026058556292518322,
+      "protocol_adjusted_external_over_native": 2.216585486144634
     },
     {
       "fixture": "Negative",
@@ -341,7 +391,9 @@
       "external_nanos": 258966.5,
       "native_inner_repeats": 16,
       "external_inner_repeats": 4,
-      "external_over_native": 2.287784664228035
+      "external_over_native": 2.287784664228035,
+      "protocol_overhead_fraction": 0.026003363369393337,
+      "protocol_adjusted_external_over_native": 2.228294568293188
     },
     {
       "fixture": "Negative",
@@ -356,7 +408,9 @@
       "external_nanos": 271452.5,
       "native_inner_repeats": 16,
       "external_inner_repeats": 4,
-      "external_over_native": 2.4331931276036474
+      "external_over_native": 2.4331931276036474,
+      "protocol_overhead_fraction": 0.024807286726038626,
+      "protocol_adjusted_external_over_native": 2.372832208027357
     },
     {
       "fixture": "Negative",
@@ -371,7 +425,9 @@
       "external_nanos": 260225.75,
       "native_inner_repeats": 16,
       "external_inner_repeats": 4,
-      "external_over_native": 2.2802604909150754
+      "external_over_native": 2.2802604909150754,
+      "protocol_overhead_fraction": 0.02587753133577288,
+      "protocol_adjusted_external_over_native": 2.2212529786076955
     },
     {
       "fixture": "Negative",
@@ -386,7 +442,9 @@
       "external_nanos": 168830.25,
       "native_inner_repeats": 16,
       "external_inner_repeats": 8,
-      "external_over_native": 1.317308175278661
+      "external_over_native": 1.317308175278661,
+      "protocol_overhead_fraction": 0.03905698179088167,
+      "protocol_adjusted_external_over_native": 1.2658580938638229
     },
     {
       "fixture": "Negative",
@@ -401,7 +459,9 @@
       "external_nanos": 160626.875,
       "native_inner_repeats": 16,
       "external_inner_repeats": 8,
-      "external_over_native": 1.4100110714752054
+      "external_over_native": 1.4100110714752054,
+      "protocol_overhead_fraction": 0.04105166087555398,
+      "protocol_adjusted_external_over_native": 1.3521277751382288
     },
     {
       "fixture": "Negative",
@@ -416,7 +476,9 @@
       "external_nanos": 160666.875,
       "native_inner_repeats": 16,
       "external_inner_repeats": 8,
-      "external_over_native": 1.3897684557209207
+      "external_over_native": 1.3897684557209207,
+      "protocol_overhead_fraction": 0.04104144055829803,
+      "protocol_adjusted_external_over_native": 1.332730356255653
     },
     {
       "fixture": "Negative",
@@ -431,7 +493,9 @@
       "external_nanos": 160197.5,
       "native_inner_repeats": 16,
       "external_inner_repeats": 8,
-      "external_over_native": 1.4192257369352728
+      "external_over_native": 1.4192257369352728,
+      "protocol_overhead_fraction": 0.04116169103762543,
+      "protocol_adjusted_external_over_native": 1.360808005638897
     },
     {
       "fixture": "Common",
@@ -446,7 +510,9 @@
       "external_nanos": 16416996.0,
       "native_inner_repeats": 16,
       "external_inner_repeats": 1,
-      "external_over_native": 169.0716645651137
+      "external_over_native": 169.0716645651137,
+      "protocol_overhead_fraction": 0.0004101846647218529,
+      "protocol_adjusted_external_over_native": 169.0023139610701
     },
     {
       "fixture": "Common",
@@ -461,7 +527,9 @@
       "external_nanos": 16602190.0,
       "native_inner_repeats": 16,
       "external_inner_repeats": 1,
-      "external_over_native": 168.4082448292302
+      "external_over_native": 168.4082448292302,
+      "protocol_overhead_fraction": 0.000405609139517136,
+      "protocol_adjusted_external_over_native": 168.33993690595742
     },
     {
       "fixture": "Common",
@@ -476,7 +544,9 @@
       "external_nanos": 16426039.0,
       "native_inner_repeats": 16,
       "external_inner_repeats": 1,
-      "external_over_native": 168.2936525673084
+      "external_over_native": 168.2936525673084,
+      "protocol_overhead_fraction": 0.0004099588464388767,
+      "protocol_adjusted_external_over_native": 168.2246590956389
     },
     {
       "fixture": "Common",
@@ -491,7 +561,9 @@
       "external_nanos": 16416254.0,
       "native_inner_repeats": 16,
       "external_inner_repeats": 1,
-      "external_over_native": 168.141718865527
+      "external_over_native": 168.141718865527,
+      "protocol_overhead_fraction": 0.0004102032047018766,
+      "protocol_adjusted_external_over_native": 168.07274659360428
     },
     {
       "fixture": "Common",
@@ -506,7 +578,9 @@
       "external_nanos": 447969.0,
       "native_inner_repeats": 16,
       "external_inner_repeats": 4,
-      "external_over_native": 4.585010558152359
+      "external_over_native": 4.585010558152359,
+      "protocol_overhead_fraction": 0.014719768555413433,
+      "protocol_adjusted_external_over_native": 4.517520263912229
     },
     {
       "fixture": "Common",
@@ -521,7 +595,9 @@
       "external_nanos": 447791.25,
       "native_inner_repeats": 16,
       "external_inner_repeats": 4,
-      "external_over_native": 4.386288417812421
+      "external_over_native": 4.386288417812421,
+      "protocol_overhead_fraction": 0.014725611543325154,
+      "protocol_adjusted_external_over_native": 4.3216976384547285
     },
     {
       "fixture": "Common",
@@ -536,7 +612,9 @@
       "external_nanos": 449261.0,
       "native_inner_repeats": 16,
       "external_inner_repeats": 4,
-      "external_over_native": 4.55458076452735
+      "external_over_native": 4.55458076452735,
+      "protocol_overhead_fraction": 0.014677436946452063,
+      "protocol_adjusted_external_over_native": 4.487731192538477
     },
     {
       "fixture": "Common",
@@ -551,7 +629,9 @@
       "external_nanos": 445758.25,
       "native_inner_repeats": 16,
       "external_inner_repeats": 4,
-      "external_over_native": 4.421489329913748
+      "external_over_native": 4.421489329913748,
+      "protocol_overhead_fraction": 0.014792771642476612,
+      "protocol_adjusted_external_over_native": 4.356083247936687
     }
   ],
   "protocol_controls": {
@@ -566,5 +646,6 @@
       "result_hash": "0xb86baf9ace1766b1"
     }
   },
-  "boundary": "Inputs and backend contexts prepared; root API, filtering, exact evaluation, sign sum, temporary cleanup and persistent JSON transport timed. One untimed warmup per child. No driver root cache; backend contexts may retain internal caches. Fixed valid-domain inputs only, no literal certificate/proof comparison."
+  "boundary": "Inputs and backend contexts prepared; root API, filtering, exact evaluation, sign sum, temporary cleanup and persistent JSON transport timed. One untimed warmup per child. No driver root cache; backend contexts may retain internal caches. Fixed valid-domain inputs only, no literal certificate/proof comparison.",
+  "adjustment_method": "Subtract the comparator protocol-control median from each paired external observation before dividing by its adjacent native observation; retain every raw ratio. This is a framing-adjusted estimate, not isolation of a pure algorithm body."
 }

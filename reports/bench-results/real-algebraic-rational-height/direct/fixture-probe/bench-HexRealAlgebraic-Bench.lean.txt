@@ -106,31 +106,6 @@ private def observations : LeanBench.FixedBenchmarkConfig := {
   warmupFirstIter := true
 }
 
-private structure FieldInput where
-  generator : RealAlgebraicNumber
-  values : Array (QAdjoin generator.toAlgebraic)
-
-initialize fieldRef : IO.Ref (Option FieldInput) ← IO.mkRef none
-
-private def fieldInput : IO FieldInput := do
-  if let some input ← fieldRef.get then return input
-  let (a, _) ← pairRef.get
-  let x := a.toAlgebraic.toQAdjoin
-  let input : FieldInput := ⟨a, #[0, 1, -1, x, -x, x - 1, 1 - x, x + 2, x ^ 3 - 2]⟩
-  fieldRef.set (some input)
-  return input
-
-/-- The shipped fixed-field sign wrapper on constants and nonconstant coordinates
-in the positive square-root-of-two embedding. Scientific warmup prepares the
-coordinates; smoke verification includes that first preparation. -/
-def runFieldSign : Unit → IO (Array Int) := fun _ => do
-  let input ← fieldInput
-  return input.values.map input.generator.signField
-
--- Complete exact-result anchor for the implemented signField API, not a cost model or budget.
-setup_fixed_benchmark runFieldSign where { observations with
-  expectedHash := some (hash (#[0, 1, -1, 1, -1, 1, -1, 1, 1] : Array Int)) }
-
 def runConstructors : Unit → IO UInt64 := fun _ => do
   let (a, _) ← pairRef.get
   return hash (optionChecksum (ofAlgebraic? a.toAlgebraic),
@@ -648,7 +623,7 @@ instance : Hashable RationalLeaf where
   hash i := hash (checksum i.value, i.rational)
 
 def rationalLeaf (bits : Nat) : RationalLeaf :=
-  let power := 2 ^ (Nat.max bits 2)
+  let power := 2 ^ bits
   let q : Rat := (((power - 1) / 3 : Nat) : Rat) / ((power + 1 : Nat) : Rat)
   let a := ofRat q
   if a.toAlgebraic.p.natDegree == 1 && a.toRat? == some q then
@@ -674,10 +649,8 @@ def runRationalCeil (i : RationalLeaf) : Int := i.value.ceil
 -- also performs linear-size Int arithmetic; it does not increase the order.
 -- Floor/ceil retain that recognition cost and add at most linear division.
 -- These rational-only models do not cover construction or nonrational rounding.
--- The 600-second child cap is an operational safeguard, not a regression
--- budget. The retained first-rung preparation probe exceeded it; this ladder
--- remains unmeasured and unadmitted. Verify's parameters 0 and 1 use two bits
--- so that their fixtures exercise nonzero rational recognition and rounding.
+-- The 600-second child cap allows canonical preparation outside timed bodies;
+-- it is an operational safeguard, not a regression budget.
 setup_benchmark runRationalRecognition b => b
   with prep := rationalLeaf
   where {
@@ -718,7 +691,7 @@ setup_benchmark runRationalCeil b => b
 
 -- Comparison control: D mod A=2, A mod 2=1, so the former normalization
 -- has a bounded Euclidean quotient sequence. Single-limb division, reduction
--- and the actual structural result hash require linear Θ(b) limb work on this family.
+-- and the actual structural result hash require Θ(b) limb work on this family.
 setup_benchmark runRationalQuotient b => b
   with prep := rationalLeaf
   where {

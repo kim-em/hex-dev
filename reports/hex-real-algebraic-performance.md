@@ -10,7 +10,7 @@ performance deliverable.
 
 ## Bench targets
 
-`bench/HexRealAlgebraic/Bench.lean` registers 71 cases. `lake exe
+`bench/HexRealAlgebraic/Bench.lean` registers 72 cases. `lake exe
 hexrealalgebraic_bench list` lists them; `verify` checks their runtime wiring and
 hashes. The existing CI job builds and verifies this executable. The retained
 [local verification log](bench-results/prerequisite-verify-budget.log) records
@@ -43,6 +43,13 @@ not the subsequent direct-recognition/headline/benchmark changes. The unchanged
 cap remains a gate; neither a portable timing budget nor stable headroom is
 inferred from the completed pass.
 
+[Required CI on `273ee7ef4`](bench-results/prerequisite-required-ci-273ee7ef4.json)
+passes the builds and conformance/oracle gates and every owned result/hash
+check, but fails the repo-wide smoke cap at 366/360 seconds. Its real executable
+takes 62 seconds and Sturm takes 2. The complete failed run and all 57
+per-library durations remain retained. This is an operational gate failure,
+not a scientific scaling verdict; the final revision still requires green CI.
+
 The fixed verifier already invokes each runner once in-process, without warmup
 or tuning. The hard add/subtract registrations and their bare controls account
 for about 26 of the 32 local seconds. There is no repeat-count or tuning setting
@@ -61,6 +68,7 @@ final source without weakening the cap.
 | Checked/proved constructors, casts, rational recognition | `runConstructors`, `runCasts`, `runRational` | Fixed baseline anchors |
 | Arithmetic and scalar dictionaries | `runAdd`, `runSub`, `runMul`, `runDiv`, `runNeg`, `runInv`, `runNatPow`, `runIntPow`, `runScalars`; corresponding bare controls; `runHard*` | Canonical baseline and adjacent wrapper controls; mode/budget incomplete |
 | Equality, comparison, order, sign, abs, conjugation | `runEquality`, `runCompare`, `runCompareExact`, `runOrder`, `runSign`, `runAbs`, `runConj`, `runCloseCompare`, `runCloseExact` | Fixed branch/hash/comparison anchors; separation models incomplete |
+| Fixed-field coordinate sign | `runFieldSign` | Complete exact-result anchor for constants and nonconstant coordinates in the positive square-root-of-two embedding; operation-specific mode/budget remains required |
 | Rational degree-one leaf height | `runRationalRecognition`, `runRationalFloor`, `runRationalCeil`, `runRationalQuotient` | Independently derived mode-1 candidates; first-rung canonical preparation exceeds the declared operational cap; no current admission |
 | Floor, ceiling, approximation, representation | `runRounding`, `runApprox`, `runRepr` | Baseline anchors; ceiling has proved before/after improvement |
 | Square roots | `runSqrt`, `runSqrtTotal` | Baseline/branch checks on pre-change source; degree/height scaling incomplete |
@@ -252,6 +260,15 @@ in the linked summaries.
   supplies retained attribution without a blanket rerun of completed evidence.
 
 - [#10577](https://github.com/kim-em/hex-dev/issues/10577): finish operation-specific mode/budget justification and comparators, genuine root/leaf parameter families, separation/point and rounding sweeps, and square-root/rational-construction characterization. The shipped `compare_eq` and root completeness/multiplicity/sorting theorems are available independently of this timing work.
+
+- [The precise #10577 prerequisite diagnostic](https://github.com/kim-em/hex-dev/issues/10577#issuecomment-5971054259)
+  records excessive canonical rational preparation through HexArith's
+  bit-length-sensitive square-root initialization and degree-one factorization
+  in `HexNumberField/Roots.lean` / `Convert.lean`. Related square-root work
+  [#721](https://github.com/kim-em/hex-dev/issues/721) is closed. The isolated
+  proved initializer proposal is outside this PR pending scope agreement;
+  rational-height declarations remain unadmitted, and no unrelated phase
+  metadata is changed.
 
 The checked square-root wrapper delegates directly to `sqrtRoot?`, removing
 the duplicate negative-input check. Existing selector soundness and nonnegative

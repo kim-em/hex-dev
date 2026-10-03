@@ -29,5 +29,21 @@
     4.640625,
     4.525390625,
     7.408203125
-  ]
+  ],
+  "retained_source_snapshots": {
+    "bench/HexRealAlgebraic/Bench.lean": {
+      "snapshot": "bench-HexRealAlgebraic-Bench.lean.txt",
+      "sha256": "67ae515423e02e123121b94aada00bf4d2f2179d63cf597bf41fd2a422bf6aad"
+    },
+    "HexRealAlgebraic/Order.lean": {
+      "snapshot": "HexRealAlgebraic-Order.lean.txt",
+      "sha256": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a"
+    },
+    "reports/bench-results/real-algebraic-rational-height/direct/derivation.md": {
+      "snapshot": "reports-bench-results-real-algebraic-rational-height-direct-derivation.md.txt",
+      "sha256": "6436897c5cb7c248e543b837328d05c5611e7d50d272d68d7110d1c6355dbfcf"
+    }
+  },
+  "current_preparation_scope": "The later smoke fix uses Nat.max bits 2 instead of bits in the same rational formula. At parameter 262144 those expressions are identical; canonical construction, recognition and transitive square-root implementation are unchanged. The new fixed-field sign registration does not alter rational preparation.",
+  "guard_scope": "The diagnostic invoked _child directly, bypassing parent supervision. Ordinary run uses LeanBench.spawnWithCap around the whole child, including preparation, and kills at maxSecondsPerCall plus killGraceMs. The 969-second manual diagnostic is not evidence that a supervised run can evade its cap."
 }
