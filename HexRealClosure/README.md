@@ -883,7 +883,7 @@ packing. Subtraction with supplied facts produces canonical zero.
 facts; `graph_memo` derives preservation of its literal memo indices.
 `graph_selections` selects two different query lists from one validated memo.
 The graph probes reject an unreachable entry with a corrupted moment, a
-self reference, an absent root index, changed endpoints and a wrong selected
+foreign context, a self reference, an absent root index, changed endpoints and a wrong selected
 query list. They use ordinary
 kernel checking and the existing cache-agreement theorems.
 

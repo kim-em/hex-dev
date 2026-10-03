@@ -219,9 +219,8 @@ theorem query_checked : root.checkSigns [unitPoly] #v[1] (.leaf queryNode) = tru
     Element.cachedNatCast_eq reduction reduction_eq facts] at h
   simpa only [Descriptor.checkSigns, root_raw] using h
 
-/-- The shared checker validates both stored entries before selecting the
-second entry. Its coefficient signs come from the same finite lower-root facts
-as the individual tree checks. -/
+/-- Two leaf entries sharing a selected-root domain, with the selected query
+in the second entry. -/
 @[expose] def graph : Dag (Element context) Nat :=
   ⟨#[⟨linearNode, none⟩, ⟨queryNode, none⟩], 1⟩
 
@@ -263,29 +262,38 @@ theorem graph_memo :
     simp only [Option.map_some, Option.some.injEq]
     have nodes := Dag.validate_nodes _ _ _ _ _ _ memo hv
     have shape : graph.entries.map Dag.Entry.node = #[linearNode, queryNode] := by
-      decide +kernel
+      simp [graph]
     exact nodes.trans shape
 
-set_option maxRecDepth 32768 in
-set_option maxHeartbeats 1000000 in
 /-- Two selections use the same accepted memo and bind their own ordered
-query lists. No second graph validation is performed. -/
+query lists. The proof uses the already proved memo rather than replaying it. -/
 theorem graph_selections :
-    letI := Element.cachedOne reduction reduction_eq facts
-    letI := Element.cachedAdd reduction reduction_eq facts
-    letI := Element.cachedSub reduction reduction_eq facts
-    letI := Element.cachedMul reduction reduction_eq facts
-    letI := Element.cachedNatCast reduction reduction_eq facts
     (do
       let memo ← graph.validate? Element.sign 8 linearHead linearRaw.lower linearRaw.upper
       pure ((Dag.select? Element.sign 8 linearHead linearRaw.lower linearRaw.upper
         memo 0 []).isSome &&
         (Dag.select? Element.sign 8 linearHead linearRaw.lower linearRaw.upper
           memo 1 [unitPoly]).isSome)) = some true := by
-  simp only [Dag.validate?, Dag.step_cache, Dag.step_eq, Replay.check, Node.check_eq,
-    checkMoment_eq, queryPoly, Sturm.check, TarskiCertificate.check_eq,
-    SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
-  decide +kernel
+  have nodes := graph_memo
+  cases hv : graph.validate? Element.sign 8 linearHead linearRaw.lower linearRaw.upper with
+  | none => simp [hv] at nodes
+  | some memo =>
+    simp only [hv, Option.map_some, Option.some.injEq] at nodes
+    have left : (memo[0]?).map (fun t => t.value.node) = some linearNode := by
+      rw [← Array.getElem?_map, nodes]
+      rfl
+    have right : (memo[1]?).map (fun t => t.value.node) = some queryNode := by
+      rw [← Array.getElem?_map, nodes]
+      rfl
+    cases hl : memo[0]? with
+    | none => simp [hl] at left
+    | some l =>
+      simp only [hl, Option.map_some, Option.some.injEq] at left
+      cases hr : memo[1]? with
+      | none => simp [hr] at right
+      | some r =>
+        simp only [hr, Option.map_some, Option.some.injEq] at right
+        simp [Dag.select?, hl, hr, left, right, linearNode, queryNode]
 
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 1000000 in
