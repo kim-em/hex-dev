@@ -76,6 +76,22 @@
       "result": "passed",
       "tests": 4,
       "skipped": 0
+    },
+    {
+      "command": "python3 scripts/check_copyright_headers.py",
+      "result": "passed"
+    },
+    {
+      "command": "python3 scripts/check_file_line_counts.py",
+      "result": "passed"
+    },
+    {
+      "command": "python3 -m unittest scripts/ci/test_check_benches_mathlib_free.py scripts/ci/test_check_bench_verify_budget.py scripts/ci/test_classify_changed_libraries.py scripts/ci/test_check_persistent_flint_warmup.py",
+      "result": "passed"
+    },
+    {
+      "command": "python3 scripts/ci/check_persistent_flint_warmup.py",
+      "result": "passed"
     }
   ],
   "axiom_allowlist": [
@@ -133,6 +149,28 @@
       "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-opus-rebase-eabbeea9f/issue-10577-opus-rebase-phase4.log",
       "bytes": 72,
       "sha256": "69830ea3cbad0449c6624c2923010828b5db32597fadc13cbaa9d65b8e37e625"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-final-source-lints-82a66787f/issue-10577-final-copyright.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-final-source-lints-82a66787f/issue-10577-final-line-counts.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-final-source-lints-82a66787f/issue-10577-final-bench-lint-tests.log",
+      "bytes": 162,
+      "sha256": "42adf9b18af0ec5cf3589cf1d09045a20cdbc4cd472a7152b3a83592faf7b3c1"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-final-source-lints-82a66787f/issue-10577-final-flint-warmup.log",
+      "bytes": 93,
+      "sha256": "378b6baf4cda472890f3e49da529baea184d1d3eb0fde50a77e3c65221bf3657"
     }
-  ]
+  ],
+  "source_scope_note": "git diff eabbeea9f..82a66787f touches only reports/. All tested implementation/source hashes remain identical after the documentary field-sign table/cap wording corrections and added verification record; no Lean rerun or new scientific sample is needed for those reports-only changes. Final required CI remains a separate full gate.",
+  "main_base_ci": "CI run 37156463288 on exact upstream base 4f8745e646e6bfd52717cb433fdf73ea872a831e is pending; no main benchmark breakdown or causal overage attribution is available yet. Existing measurements are retained rather than rerun to manufacture a baseline."
 }
