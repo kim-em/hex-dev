@@ -13,6 +13,8 @@ public meta import HexSignDet.DagSelectedSigns
 public meta import HexSignDet.CrossCheck
 public meta import HexSignDet.DagEncode
 
+import all HexSignDet.Descriptor
+
 public section
 
 /-! Selected-root signs from supplied graphs. Computational conformance owner:
@@ -81,6 +83,53 @@ theorem graph_kernel :
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
+/-- One graph check supplies two different singleton queries and their joint
+query. Selecting a memo entry never starts another graph check. -/
+@[expose] def memoPass : Bool :=
+  match full.validate? Sturm.orderSign 7 source.raw.head source.raw.lower source.raw.upper with
+  | none => false
+  | some memo =>
+    (SelectedSigns.ofMemo? source firstNode.queries #v[1] memo 0).isSome &&
+    (SelectedSigns.ofMemo? source derivativeNode.queries #v[1] memo 1).isSome &&
+    (SelectedSigns.ofMemo? source fullNode.queries #v[1, 1] memo 2).isSome &&
+    (SelectedSigns.ofMemo? source firstNode.queries #v[-1] memo 0).isNone &&
+    (SelectedSigns.ofMemo? source derivativeNode.queries #v[1] memo 0).isNone &&
+    (SelectedSigns.ofMemo? source firstNode.queries #v[1] memo 3).isNone &&
+    (SelectedSigns.readMemo? prefixed [DensePoly.C 2] #v[1] memo 2).isSome &&
+    (SelectedSigns.readMemo? prefixed [DensePoly.C 2] #v[-1] memo 2).isNone &&
+    (SelectedSigns.readMemo? prefixed [DensePoly.C 2] #v[1] memo 1).isNone &&
+    (Dag.bindDomain? Sturm.orderSign 7 memo (DensePoly.C 2) source.raw.lower source.raw.upper).isNone &&
+    (Dag.bindDomain? Sturm.orderSign 7 memo source.raw.head .negInf source.raw.upper).isNone &&
+    (Dag.bindDomain? Sturm.orderSign 7 memo source.raw.head source.raw.lower (.finite 3)).isNone
+
+set_option maxRecDepth 32768 in
+theorem memo_kernel : memoPass = true := by
+  simp only [memoPass, SelectedSigns.readMemo?, SelectedSigns.ofMemo?, Dag.bindDomain?,
+    Dag.select?, Dag.validate?, source, prefixed, Descriptor.ofTable, Dag.step_eq, full,
+    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
+    TarskiCertificate.check_eq, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+#guard memoPass
+
+set_option maxRecDepth 32768 in
+/-- Memo creation rejects wrong fixed bindings, cyclic children and false
+unreachable evidence before any result can be extracted. -/
+theorem memo_rejected :
+    (full.validate? Sturm.orderSign 8 singletonRaw.head singletonRaw.lower singletonRaw.upper).isNone = true ∧
+    (full.validate? Sturm.orderSign 7 (DensePoly.C 2) singletonRaw.lower singletonRaw.upper).isNone = true ∧
+    (full.validate? Sturm.orderSign 7 singletonRaw.head .negInf singletonRaw.upper).isNone = true ∧
+    (full.validate? Sturm.orderSign 7 singletonRaw.head singletonRaw.lower (.finite 3)).isNone = true ∧
+    (({full with entries := full.entries.set! 0 (⟨firstNode, some (1, 1)⟩)}).validate?
+      Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper).isNone = true ∧
+    (invalidExtra.validate? Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper).isNone = true := by
+  simp only [Dag.validate?, Dag.step_eq, full, invalidExtra, invalidNode,
+    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
+    TarskiCertificate.check_eq, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
 set_option maxRecDepth 32768 in
 /-- Wrong sign claims, reordered queries, foreign contexts, forward/self
 references and false unreachable evidence reject in the ordinary kernel. -/
@@ -143,6 +192,29 @@ def wholeLinePass : Bool :=
         s.evidence.node.system.tableRows.toList.any (fun row => row.1 == [-1, -1])
 
 #guard wholeLinePass
+
+/-- Opposite Thom signs select the two roots of X²−1 on the whole line.
+One checked graph supplies the sign of X at both independently built roots. -/
+def siblingsPass : Bool :=
+  let positive := {partialRaw with lower := .negInf, upper := .posInf}
+  let negative := {positive with signs := [-1]}
+  match Descriptor.validate Sturm.orderSign 7 positive,
+      Descriptor.validate Sturm.orderSign 7 negative with
+  | some pos, some neg =>
+    match pos.buildSigns [Sturm.Fixtures.x] with
+    | .error _ => false
+    | .ok s =>
+      let graph := Dag.encode s.evidence
+      match graph.validate? Sturm.orderSign 7 pos.raw.head pos.raw.lower pos.raw.upper with
+      | none => false
+      | some memo =>
+        (SelectedSigns.readMemo? pos [Sturm.Fixtures.x] #v[1] memo graph.root).isSome &&
+        (SelectedSigns.readMemo? neg [Sturm.Fixtures.x] #v[-1] memo graph.root).isSome &&
+        (SelectedSigns.readMemo? neg [Sturm.Fixtures.x] #v[1] memo graph.root).isNone
+  | _, _ => false
+
+#guard siblingsPass
+
 
 /-- Compare literal trees through their injective shared encoding. -/
 private def sameEvidence (left right : Replay Rat Nat) : Bool :=
@@ -280,3 +352,19 @@ def producedPass (qs : List (DensePoly Rat)) (expected : List Int) : Bool :=
 #print axioms Dag.selectedSigns_values
 
 end Hex.SignDetMathlib.GraphSignsConformance
+
+/-- info: 'Hex.SignDet.Dag.memo_values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Dag.memo_values
+
+/-- info: 'Hex.SignDet.Dag.readMemo_values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Dag.readMemo_values
+
+/-- info: 'Hex.SignDetMathlib.GraphSignsConformance.memo_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDetMathlib.GraphSignsConformance.memo_kernel
+
+/-- info: 'Hex.SignDetMathlib.GraphSignsConformance.memo_rejected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDetMathlib.GraphSignsConformance.memo_rejected

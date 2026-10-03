@@ -443,6 +443,13 @@ claimed vector against the unique extending row of count one and agrees with
 supplied tree preserves acceptance and rejection of the exact claimed signs;
 accepted evidence retains its literal signs and tree.
 
+One validated graph may supply several selected-sign results from its checked
+entries. Each selection retains the exact entry index, ordered queries and
+claimed row. Independently constructed descriptors may share these entries
+only after checking literal equality of their defining polynomial and both
+interval endpoints; context identity stays fixed. Rebinding transports proofs
+and preserves the stored trees. It does not rerun query or matrix checks.
+
 `Dag.encode` uses exact equality for sharing; hashes only narrow lookup.
 Expansion recovers every encoded tree literally, and graph checking preserves
 both acceptance and rejection of that tree. Encoding visits every input tree
