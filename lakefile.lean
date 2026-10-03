@@ -47,7 +47,10 @@ private def zmod64MulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexModArith" / "ffi" / "zmod64_mul.o"
   let srcTarget ← inputTextFile <| pkg.dir / "HexModArith" / "ffi" / "zmod64_mul.c"
   buildFileAfterDep oFile srcTarget fun srcFile => do
-    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3"]
+    -- `LEAN_EXPORTING` makes `LEAN_EXPORT` a dllexport on Windows, as Lake
+    -- does for Lean's own C; a carrier DLL otherwise hides these symbols.
+    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3",
+      "-DLEAN_EXPORTING"]
     -- Mathlib's sandbox permits writes in the build directory, but not /tmp.
     -- Set TMPDIR for this compiler process only, including compiler wrappers.
     createParentDirs oFile
@@ -67,7 +70,10 @@ private def hexArithOTarget (pkg : Package) (src : String) : FetchM (Job FilePat
   let oFile := pkg.dir / defaultBuildDir / "HexArith" / "ffi" / s!"{stem}.o"
   let srcTarget ← inputTextFile <| pkg.dir / "HexArith" / "ffi" / src
   buildFileAfterDep oFile srcTarget fun srcFile => do
-    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3"]
+    -- `LEAN_EXPORTING` makes `LEAN_EXPORT` a dllexport on Windows, as Lake
+    -- does for Lean's own C; a carrier DLL otherwise hides these symbols.
+    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3",
+      "-DLEAN_EXPORTING"]
     -- Mathlib's sandbox permits writes in the build directory, but not /tmp.
     -- Set TMPDIR for this compiler process only, including compiler wrappers.
     createParentDirs oFile
