@@ -15,10 +15,15 @@ import tomllib
 # (it ships inside `leanprover/hex-graph-iso` via `extra_paths`; a second
 # consumer is the trigger to promote it to a library of its own).
 KNOWN_EXCEPTIONS = {"Hex", "HexManual", "HexAggregateCheck", "HexGraph"}
-# Build-only lean_libs that build the per-library bench/conformance drivers under
-# `bench/` and `conformance/`. They are not project libraries (no libraries.yml
+# Native carrier lean_libs: each takes the modules binding a library's C code,
+# plus the objects, so Windows can link them (PLAN/Conventions.md). They are part
+# of the library named by their prefix and are published inside its repository.
+NATIVE_CARRIER_LIBS = {"HexArithNative", "HexModArithNative"}
+# Build-only lean_libs for drivers, proof probes and examples under
+# `bench/`, `conformance/` and `examples/`. They are not project libraries (no libraries.yml
 # entry, no repo-root file); exempt them from the Lake-config alignment check only.
 BUILD_ONLY_LIBS = {
+    "RealClosureConsumer",
     "HexOrderedFnTests",
     "HexRealClosureTests",
     "HexRealClosureConformanceSupport",
@@ -636,6 +641,7 @@ def check_lakefile_alignment(libraries: OrderedDict[str, LibraryInfo], lakefile_
         - external_library_names
         - KNOWN_EXCEPTIONS
         - BUILD_ONLY_LIBS
+        - NATIVE_CARRIER_LIBS
     ):
         errors.append(f"Lake config library {name} missing from libraries.yml")
     for name in sorted(KNOWN_EXCEPTIONS):

@@ -23,7 +23,7 @@ variable {context : Context E Ctx coeffSign parent}
 /-- Exact stored coefficient encoding: `[]` is the unique zero, while a
 nonzero is `[polynomial, cachedSign]`. Decoding checks every predecessor
 coefficient, rejects trailing zeros, and recomputes the claimed sign. -/
-def Element.codec (value : ValueCodec E) : ValueCodec (Element context) where
+@[expose] def Element.codec (value : ValueCodec E) : ValueCodec (Element context) where
   encode a := match a.stored with
     | none => .arr #[]
     | some p => .arr #[Codec.poly value p.polynomial, Codec.Json.of p.sign]
@@ -38,6 +38,30 @@ def Element.codec (value : ValueCodec E) : ValueCodec (Element context) where
       | some a => return a
       | none => throw "stored sign rejected"
     | _ => throw "wrong stored value field count"
+
+/-- Changing the predecessor reader preserves every accepted literal when it
+preserves each accepted predecessor coefficient. -/
+theorem Element.codec_refines (strict complete : ValueCodec E)
+    (h : strict.Refines complete) :
+    (Element.codec (context := context) strict).Refines (Element.codec complete) := by
+  intro j a ha
+  unfold Element.codec at ha ⊢
+  dsimp only at ha ⊢
+  cases hf : j.getArr? with
+  | error e => simp [hf, bind, Except.bind] at ha
+  | ok fields =>
+    simp only [hf, bind, Except.bind] at ha ⊢
+    split at ha
+    · rename_i hs
+      simpa only [hs] using ha
+    · rename_i p s hs
+      cases hp : Codec.readPoly strict p with
+      | error e => simp [hp] at ha
+      | ok polynomial =>
+        have hc := Codec.readPoly_refines strict complete h p polynomial hp
+        simp only [hp, hc] at ha ⊢
+        exact ha
+    · simp at ha
 
 /-- This roundtrip is literal, so it also preserves certificate bindings to
 noncanonical representatives. It requires no field laws on raw values. -/

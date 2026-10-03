@@ -37,6 +37,12 @@ theorem Suffix.append_context {source : Context registry}
   | nil => rfl
   | root descriptor rest ih => exact ih later
 
+/-- Reindexing a suffix preserves its final native context. -/
+theorem Suffix.cast_context {left right : Context registry} (h : left = right)
+    (suffix : Suffix left) : (h ▸ suffix).context = suffix.context := by
+  cases h
+  rfl
+
 /-- Concatenation respects an equality between the first suffix's target and
 the second suffix's source. -/
 theorem Suffix.append_cast_context {source other : Context registry}

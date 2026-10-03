@@ -47,7 +47,10 @@ private def zmod64MulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexModArith" / "ffi" / "zmod64_mul.o"
   let srcTarget ← inputTextFile <| pkg.dir / "HexModArith" / "ffi" / "zmod64_mul.c"
   buildFileAfterDep oFile srcTarget fun srcFile => do
-    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3"]
+    -- `LEAN_EXPORTING` makes `LEAN_EXPORT` a dllexport on Windows, as Lake
+    -- does for Lean's own C; a carrier DLL otherwise hides these symbols.
+    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3",
+      "-DLEAN_EXPORTING"]
     -- Mathlib's sandbox permits writes in the build directory, but not /tmp.
     -- Set TMPDIR for this compiler process only, including compiler wrappers.
     createParentDirs oFile
@@ -67,7 +70,10 @@ private def hexArithOTarget (pkg : Package) (src : String) : FetchM (Job FilePat
   let oFile := pkg.dir / defaultBuildDir / "HexArith" / "ffi" / s!"{stem}.o"
   let srcTarget ← inputTextFile <| pkg.dir / "HexArith" / "ffi" / src
   buildFileAfterDep oFile srcTarget fun srcFile => do
-    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3"]
+    -- `LEAN_EXPORTING` makes `LEAN_EXPORT` a dllexport on Windows, as Lake
+    -- does for Lean's own C; a carrier DLL otherwise hides these symbols.
+    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3",
+      "-DLEAN_EXPORTING"]
     -- Mathlib's sandbox permits writes in the build directory, but not /tmp.
     -- Set TMPDIR for this compiler process only, including compiler wrappers.
     createParentDirs oFile
@@ -77,15 +83,15 @@ private def hexArithOTarget (pkg : Package) (src : String) : FetchM (Job FilePat
       env := #[("TMPDIR", some (← IO.FS.realPath (oFile.parent.getD ".")).toString)]
     }
 
-target hexarithffi pkg : FilePath := do
-  let name := nameToStaticLib "hexarithffi"
-  let oTargets ← #[ "wide_arith.c", "mpz_gcdext.c" ].mapM (hexArithOTarget pkg)
-  buildStaticLib (pkg.staticLibDir / name) oTargets
+-- Object files rather than an archive: a library's shared form keeps every
+-- object it is given, while an archive contributes only referenced members.
+target hexarithWideO pkg : FilePath := hexArithOTarget pkg "wide_arith.c"
 
-target hexmodarithffi pkg : FilePath := do
-  let name := nameToStaticLib "hexmodarithffi"
-  let oTarget ← zmod64MulOTarget pkg
-  buildStaticLib (pkg.staticLibDir / name) #[oTarget]
+-- TODO(lean4#15160): remove extended_gcd.c after the pinned toolchain provides
+-- Nat.extendedGcd: https://github.com/leanprover/lean4/pull/15160
+target hexarithGcdO pkg : FilePath := hexArithOTarget pkg "extended_gcd.c"
+
+target hexmodarithO pkg : FilePath := zmod64MulOTarget pkg
 
 private def hexlllProviderOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexLLL" / "ffi" / "lean_hexlll_provider.o"
@@ -138,7 +144,21 @@ lean_lib HexTruncatedSeriesMathlib where
 
 lean_lib HexArith where
   precompileModules := true
-  moreLinkObjs := #[hexarithffi]
+
+-- The C objects ride on a separate library that owns the modules binding them.
+-- Lake links a module's native library against the whole shared library of any
+-- *other* library it imports, objects included, but never adds its own
+-- library's `moreLinkObjs`; Windows resolves every symbol at link time, so the
+-- objects must sit in a different library from the modules that import them.
+-- Declared after `HexArith`, because Lake gives a module to the last library
+-- that claims it. These modules import nothing from `HexArith`, and
+-- `extended_gcd.c` calls back into `HexArith.Nat.ExtendedGcd`, so both sides
+-- of that callback live in one shared library.
+lean_lib HexArithNative where
+  roots := #[`HexArith.UInt64.Wide, `HexArith.Nat.ExtendedGcd]
+  precompileModules := true
+  moreLinkObjs := #[hexarithWideO, hexarithGcdO]
+  -- TODO(lean4#15160): remove -lgmp with the local extended_gcd.c adapter.
   moreLinkArgs := #["-lgmp"]
 
 lean_lib HexPoly where
@@ -192,8 +212,12 @@ lean_lib HexSparsePoly where
 
 lean_lib HexModArith where
   precompileModules := true
-  moreLinkObjs := #[hexmodarithffi]
-  moreLinkArgs := #["-lgmp"]
+
+-- Carries `zmod64_mul.c` for the modules that bind it; see `HexArithNative`.
+lean_lib HexModArithNative where
+  roots := #[`HexModArith.WordMod, `HexModArith.Residue]
+  precompileModules := true
+  moreLinkObjs := #[hexmodarithO]
 
 lean_lib HexModular where
 
@@ -294,7 +318,7 @@ lean_lib HexRealClosure where
 lean_lib HexRealClosureTests where
   globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.RootOrderTests,
     .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerRootsTests,
-    .one `HexRealClosure.RootCollectionTests,
+    .one `HexRealClosure.RootCollectionTests, .one `HexRealClosure.TowerPresentationTests,
     .one `HexRealClosure.TrivialTests, .one `HexRealClosure.TowerEnlargeOrderTests,
     .one `HexRealClosure.TowerTransportTests]
 
@@ -445,8 +469,10 @@ lean_lib HexLatticeEnumTests where
 lean_lib HexLLL where
   precompileModules := true
   extraDepTargets := #[`hexlllffi]
+  -- `dlopen` lives in libdl on Linux, in libc on macOS, and is absent on
+  -- Windows, where the provider uses LoadLibrary instead.
   moreLinkArgs :=
-    if System.Platform.isOSX then
+    if System.Platform.isOSX || System.Platform.isWindows then
       #[]
     else
       #["-ldl"]
@@ -656,7 +682,9 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.RootTotal, `HexRealClosureMathlib.TowerRoots,
     `HexRealClosureMathlib.RootTransport,
     `HexRealClosureMathlib.RootCollection,
-    `HexRealClosureMathlib.TowerCoverage, `HexRealClosureMathlib.TowerNaturality,
+    `HexRealClosureMathlib.TowerCoverage, `HexRealClosureMathlib.Presentation,
+    `HexRealClosureMathlib.PresentationTests,
+    `HexRealClosureMathlib.TowerNaturality,
     `HexRealClosureMathlib.Ambient, `HexRealClosureMathlib.AmbientTests,
     `HexRealClosureMathlib.BaseAlgebraicity, `HexRealClosureMathlib.BaseBound,
     `HexRealClosureMathlib.EnlargementTests,
@@ -667,6 +695,13 @@ lean_lib HexQuerySemantics where
 
 lean_exe hexrealclosure_root_order_tests where
   root := `HexRealClosure.RootOrderTests
+
+-- Ordinary-import consumers of merged family APIs, also built as an isolated
+-- local downstream project in experiments/RealClosureConsumer.
+@[default_target]
+lean_lib RealClosureConsumer where
+  srcDir := "examples"
+  globs := #[.submodules `RealClosureConsumer]
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
@@ -1094,7 +1129,8 @@ lean_lib HexConformance where
     ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests,
       `HexRealClosureMathlib.CoefficientSignsConformance,
       `HexRealClosureMathlib.PackingConformance,
-      `HexRealClosureMathlib.NestedSignsConformance].map Glob.one
+      `HexRealClosureMathlib.NestedSignsConformance,
+      `HexRealClosureMathlib.SignCodecConformance].map Glob.one
 
     ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
     ++ #[.submodules `HexSturmMathlib.Replay]
@@ -1216,7 +1252,7 @@ lean_exe hex_interval_pnt_fks2_local where
 -- examples and regression tests are compiled through this separate target so
 -- removing them from an umbrella cannot silently remove them from CI.
 lean_lib HexReleaseTests where
-  globs := #[`HexPoly.InterpretTests, `HexPoly.PseudoTests,
+  globs := #[`HexArith.ExtendedGcdTests, `HexPoly.InterpretTests, `HexPoly.PseudoTests,
     `HexPolyMathlib.InterpretTests, `HexPolyMathlib.PseudoTests,
     `HexMatrixMathlib.Tests,
     `HexPolyMathlib.LiteralTests,
@@ -1226,6 +1262,8 @@ lean_lib HexReleaseTests where
     `HexBerlekampMathlib.FactorPolyTests,
     `HexBerlekampZassenhaus.FactorTacticTests,
     `HexBerlekampZassenhausMathlib.FactorPolyTests,
+    `HexBerlekampZassenhausMathlib.PublicReplayTests,
+    `HexBerlekampZassenhausMathlib.QuotationTests,
     `HexBerlekampZassenhausMathlib.IrreducibilityTests,
     `HexRealRoots.ReplayTest,
     `HexRealRoots.TarskiTests,
@@ -1266,6 +1304,11 @@ lean_lib HexReleaseTests where
     -- a name array mapped through Glob.one: an array literal this long is
     -- elaborated in chunks, on which the name-to-glob coercion fails
     |>.map Glob.one
+
+-- TODO(lean4#15160): after removing the backport, keep the Hex signed API
+-- regression coverage and remove copied upstream primitive cases.
+lean_exe hexarith_extgcd_tests where
+  root := `HexArith.ExtendedGcdTests
 
 -- Build-only regression roots for the structural matrix frontends.
 @[default_target]

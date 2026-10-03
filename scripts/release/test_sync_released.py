@@ -653,6 +653,25 @@ class SyncReleasedTests(unittest.TestCase):
             "import Mathlib.Tactic\nimport Batteries.Data.Vector\n")
         sync_released.validate_external_imports(entry, self.repo)
 
+    def test_tauceti_import_requires_its_own_provider(self) -> None:
+        entry = self._external_import_entry(
+            '[[require]]\nname = "mathlib"\n',
+            "public import TauCeti.Algebra.Polynomial.Sturm.Infinity\n")
+        with self.assertRaisesRegex(RuntimeError, "imports TauCeti"):
+            sync_released.validate_external_imports(entry, self.repo)
+        lakefile = self.repo / "lakefile.toml"
+        lakefile.write_text(lakefile.read_text() +
+                            '[[require]]\nname = "TauCeti"\n', encoding="utf-8")
+        sync_released.validate_external_imports(entry, self.repo)
+
+    def test_tauceti_lean_requirement_provides_import(self) -> None:
+        entry = self._external_import_entry("", "import TauCeti.Data.Matrix.OccCount\n")
+        entry["lakefile"] = "lean"
+        (self.repo / "lakefile.lean").write_text(
+            'require TauCeti from git "https://github.com/TauCetiProject/TauCeti.git" @ "pin"\n',
+            encoding="utf-8")
+        sync_released.validate_external_imports(entry, self.repo)
+
     def test_direct_imports_gain_direct_requires_in_toml(self) -> None:
         lib = self.repo / "HexProbe"
         lib.mkdir()
@@ -1016,6 +1035,33 @@ class LakeDeclarationTests(unittest.TestCase):
         self.assertEqual(self.target.read_text(), "import Lake\n\n" + replacement)
 
 
+    def test_appends_a_carrier_library_after_the_mirror_library(self) -> None:
+        self.entry["lake_declarations"] = ["CarrierNative"]
+        carrier = ("lean_lib CarrierNative where\n"
+                   "  roots := #[`Carrier.Wide]\n"
+                   "  moreLinkObjs := #[wideO]\n\n")
+        self.source.write_text("import Lake\n\nlean_lib Carrier where\n\n" + carrier)
+        self.target.write_text("import Lake\n\nlean_lib Carrier where\n"
+                               "  precompileModules := true\n")
+        self.assertEqual(self.rewrite(),
+                         ["  added build declaration CarrierNative (lakefile.lean)"])
+        self.assertEqual(self.target.read_text(),
+                         "import Lake\n\nlean_lib Carrier where\n"
+                         "  precompileModules := true\n\n" + carrier)
+        self.assertEqual(self.rewrite(), [])
+
+
+    def test_retired_declarations_leave_the_mirror(self) -> None:
+        self.entry["lake_declarations"] = []
+        self.entry["retired_lake_declarations"] = ["oldffi", "absent"]
+        self.target.write_text("import Lake\n\ntarget oldffi pkg : FilePath := do\n"
+                               "  pure default\n\nlean_lib Carrier where\n")
+        self.assertEqual(self.rewrite(),
+                         ["  retired build declaration oldffi (lakefile.lean)"])
+        self.assertEqual(self.target.read_text(), "import Lake\n\nlean_lib Carrier where\n")
+        self.assertEqual(self.rewrite(), [])
+
+
 class LibBuildSettingTests(unittest.TestCase):
     """The mirror's `lean_lib` must be built the way hex-dev builds it.
 
@@ -1101,7 +1147,7 @@ class LibBuildSettingTests(unittest.TestCase):
         lakefile = self.repo / "lakefile.lean"
         lakefile.write_text(
             "@[default_target]\nlean_lib Consumer where\n"
-            "  moreLinkArgs := #[]\n\nlean_exe check where\n"
+            "  srcDir := \".\"\n\nlean_exe check where\n"
             "  root := `Consumer.Check\n",
             encoding="utf-8")
         entry = {"lib": "Consumer", "lakefile": "lean"}
@@ -1109,9 +1155,40 @@ class LibBuildSettingTests(unittest.TestCase):
                          ["  precompileModules on lean_lib Consumer "
                           "(lakefile.lean)"])
         self.assertIn("lean_lib Consumer where\n  precompileModules := true\n"
-                      "  moreLinkArgs := #[]\n",
+                      "  srcDir := \".\"\n",
                       lakefile.read_text(encoding="utf-8"))
         self.assertEqual(self.rewrite(entry), [])
+
+    def test_lean_mirror_link_arguments_follow_the_monorepo(self) -> None:
+        lakefile = self.repo / "lakefile.lean"
+        lakefile.write_text(
+            "lean_lib Linked where\n  precompileModules := true\n"
+            "  extraDepTargets := #[`consumerffi]\n  moreLinkArgs :=\n"
+            "    if System.Platform.isOSX then\n      #[\"-lold\"]\n"
+            "    else\n      #[]\n\nlean_exe check where\n  root := `Check\n",
+            encoding="utf-8")
+        entry = {"lib": "Linked", "lakefile": "lean"}
+        self.assertEqual(self.rewrite(entry),
+                         ["  moreLinkArgs on lean_lib Linked (lakefile.lean)"])
+        self.assertEqual(
+            lakefile.read_text(encoding="utf-8"),
+            "lean_lib Linked where\n  precompileModules := true\n"
+            "  extraDepTargets := #[`consumerffi]\n"
+            '  moreLinkArgs := if System.Platform.isOSX then #[] else #["-ldl"]\n'
+            "\nlean_exe check where\n  root := `Check\n")
+        self.assertEqual(self.rewrite(entry), [])
+
+    def test_lean_mirror_drops_retired_link_settings(self) -> None:
+        lakefile = self.repo / "lakefile.lean"
+        lakefile.write_text(
+            "lean_lib Consumer where\n  precompileModules := true\n"
+            "  moreLinkObjs := #[retiredffi]\n  moreLinkArgs :=\n    #[\"-lgmp\"]\n",
+            encoding="utf-8")
+        self.assertEqual(self.rewrite({"lib": "Consumer", "lakefile": "lean"}), [
+            "  removed moreLinkObjs on lean_lib Consumer (lakefile.lean)",
+            "  removed moreLinkArgs on lean_lib Consumer (lakefile.lean)"])
+        self.assertEqual(lakefile.read_text(encoding="utf-8"),
+                         "lean_lib Consumer where\n  precompileModules := true\n")
 
     def test_a_bare_lean_lib_gains_a_settings_block(self) -> None:
         lakefile = self.repo / "lakefile.lean"
@@ -1171,7 +1248,7 @@ class LibBuildSettingTests(unittest.TestCase):
         lakefile = self.repo / "lakefile.lean"
         lakefile.write_text(
             "lean_lib Plain where\n  precompileModules := true\n"
-            "  moreLinkArgs := #[]\n\nlean_exe check where\n"
+            "  srcDir := \".\"\n\nlean_exe check where\n"
             "  root := `Plain.Check\n",
             encoding="utf-8")
         entry = {"lib": "Plain", "lakefile": "lean"}
@@ -1179,7 +1256,7 @@ class LibBuildSettingTests(unittest.TestCase):
             "  removed precompileModules on lean_lib Plain (lakefile.lean)"])
         self.assertEqual(
             lakefile.read_text(encoding="utf-8"),
-            "lean_lib Plain where\n  moreLinkArgs := #[]\n\nlean_exe check where\n"
+            "lean_lib Plain where\n  srcDir := \".\"\n\nlean_exe check where\n"
             "  root := `Plain.Check\n")
 
     def test_an_emptied_lean_lib_drops_its_where(self) -> None:
@@ -1194,10 +1271,12 @@ class LibBuildSettingTests(unittest.TestCase):
 
     def test_a_missing_link_setting_stops_the_publication(self) -> None:
         lakefile = self.repo / "lakefile.lean"
+        # moreLinkArgs is written into Lean mirrors, but extraDepTargets names
+        # skeleton targets and cannot be.
         lakefile.write_text(
-            "lean_lib Linked where\n  extraDepTargets := #[`consumerffi]\n",
+            "lean_lib Linked where\n  precompileModules := true\n",
             encoding="utf-8")
-        with self.assertRaisesRegex(RuntimeError, "must set moreLinkArgs"):
+        with self.assertRaisesRegex(RuntimeError, "must set extraDepTargets"):
             self.rewrite({"lib": "Linked", "lakefile": "lean"})
 
     def test_a_missing_mirror_library_stops_the_publication(self) -> None:

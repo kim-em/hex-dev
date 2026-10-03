@@ -8,8 +8,9 @@ types.
 
 ## Native build
 
-The `hexmodarithffi` Lake target compiles `zmod64_mul.c` with `cc`, Lean’s
-include directory, `-fPIC`, and `-O3`. It sets `TMPDIR` to the object directory
+The `hexmodarithO` Lake target compiles `zmod64_mul.c` with `cc`, Lean’s
+include directory, `-fPIC`, and `-O3`, and the `HexModArithNative` carrier
+library links it (see `PLAN/Conventions.md` on native code). It sets `TMPDIR` to the object directory
 for that compiler process, keeping temporary files inside `.lake/build` when
 a downstream sandbox forbids writes to `/tmp`. The release sync copies the
 recipe from the monorepo Lake file.

@@ -62,7 +62,10 @@
 # root module. The sync refuses to publish when the skeleton is stale.
 # `lake_declarations` lists named build declarations copied from the monorepo
 # Lake file into the corresponding declarations in a Lean mirror skeleton. It
-# can migrate a package-wide `extern_lib` to a library-scoped custom `target`.
+# can migrate a package-wide `extern_lib` to a library-scoped custom `target`,
+# and appends a declaration the mirror lacks (such as a native carrier
+# `lean_lib`). `retired_lake_declarations` names declarations to delete from
+# the mirror once this monorepo has dropped them.
 # `pins` lists the upstream repos whose git rev is rewritten in this repo's root
 # lakefile (matched by their github URL); `lakefile` is that file's format.
 # The mirror's `lean_lib` build settings are deliberately *not* recorded here:
@@ -113,11 +116,13 @@ repos:
   - repo: leanprover/hex-arith
     component: Exact word arithmetic
     lib: HexArith
+    test_modules: [HexArith.ExtendedGcdTests]
     umbrella: true
     spec: hex-arith
     pins: []
     lakefile: lean
-    lake_declarations: [hexArithOTarget, hexarithffi]
+    lake_declarations: [hexArithOTarget, hexarithWideO, hexarithGcdO, HexArithNative]
+    retired_lake_declarations: [hexarithffi]
 
   - repo: leanprover/hex-primality
     component: Certified primality
@@ -159,7 +164,8 @@ repos:
     spec: hex-mod-arith
     pins: [hex-arith]
     lakefile: lean
-    lake_declarations: [zmod64MulOTarget, hexmodarithffi]
+    lake_declarations: [zmod64MulOTarget, hexmodarithO, HexModArithNative]
+    retired_lake_declarations: [hexmodarithffi]
 
   - repo: leanprover/hex-mv-poly
     component: Sparse multivariate polynomials
@@ -484,6 +490,8 @@ repos:
     lib: HexBerlekampZassenhausMathlib
     test_modules:
       - HexBerlekampZassenhausMathlib.FactorPolyTests
+      - HexBerlekampZassenhausMathlib.PublicReplayTests
+      - HexBerlekampZassenhausMathlib.QuotationTests
       - HexBerlekampZassenhausMathlib.IrreducibilityTests
     build_modules: [HexBerlekampZassenhausMathlib.All]
     umbrella: true

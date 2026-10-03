@@ -6,6 +6,8 @@ Authors: Kim Morrison
 
 module
 
+public import HexArith.Nat.ExtendedGcd
+
 public section
 
 /-!
@@ -388,11 +390,11 @@ namespace Int
 /--
 Public extended GCD on integers.
 
-Trusted runtime contract: the `lean_hex_mpz_gcdext` attachment may replace this
-pure Lean reference with a GMP-backed implementation that returns the same
-`(g, s, t)` triple, where `g = Int.gcd a b` and `s * a + t * b = g`.
+The logical definition retains the signed Euclidean algorithm. A proved
+compiler rewrite uses `Nat.extendedGcd` on nonnegative inputs, preserving
+this definition's exact coefficients; negative inputs use the signed algorithm.
 -/
-@[expose, extern "lean_hex_mpz_gcdext"]
+@[expose]
 def extGcd (a b : @& Int) : Nat × Int × Int :=
   Hex.pureIntExtGcd a b
 
@@ -437,8 +439,8 @@ the intermediate `extGcd_fst` step.
 /--
 Combined correctness theorem for the GMP-backed integer extended GCD surface.
 
-The executable may run through the `mpz_gcdext` extern, while this theorem
-characterises the same public triple used by proofs.
+The proved compiler rewrite uses the GMP-backed natural-number primitive on
+nonnegative inputs, while preserving the same public triple used by proofs.
 -/
 @[simp] theorem extGcd_spec (a b : Int) :
     let (g, s, t) := extGcd a b
@@ -483,6 +485,48 @@ theorem extGcd_zero_left_s_ofNat (p : Nat) (hp : 0 < p) :
       simp
       rw [Hex.pureIntExtGcd.go.eq_def]
       simp [show ¬ (↑p + 1 : Int) < 0 by omega]
+
+-- TODO(lean4#15160): when adopting the core primitive, recheck this bridge
+-- against its exposed definition and coefficient conventions. Delete the
+-- local Nat backport in the same commit as the toolchain upgrade.
+/-- The natural and signed Euclidean loops agree on nonnegative remainders,
+with exchanged columns because the natural primitive takes reversed inputs. -/
+private theorem go_ofNat (b a : Nat) : ∀ s s' t t' : Int,
+    Hex.pureIntExtGcd.go (a : Int) (b : Int) s s' t t' =
+      let r := Nat.extendedGcd.go b t' s' a t s
+      (r.gcd, r.coeffB, r.coeffA) := by
+  induction b, a using Nat.gcd.induction with
+  | H0 a =>
+      intro s s' t t'
+      simp [Hex.pureIntExtGcd.go, Nat.extendedGcd.go, show ¬ (a : Int) < 0 by omega]
+  | H1 b a hb ih =>
+      intro s s' t t'
+      cases b with
+      | zero => omega
+      | succ b =>
+          rw [Hex.pureIntExtGcd.go.eq_def, Nat.extendedGcd.go]
+          simp only [Nat.succ_ne_zero, dite_false]
+          exact ih _ _ _ _
+
+/-- Runtime implementation using the natural primitive on nonnegative inputs.
+Reversing the inputs and coefficients preserves the signed reference's exact
+zero, equal-input, and coefficient conventions. -/
+@[expose]
+def extGcdImpl (a b : Int) : Nat × Int × Int :=
+  match a, b with
+  | .ofNat a, .ofNat b =>
+      let r := Nat.extendedGcd b a
+      (r.gcd, r.coeffB, r.coeffA)
+  | _, _ => Hex.pureIntExtGcd a b
+
+/-- The native natural-number route returns exactly the signed reference's
+triple, rather than merely another valid Bezout certificate. -/
+@[csimp]
+theorem extGcd_eq_extGcdImpl : @extGcd = @extGcdImpl := by
+  funext a b
+  cases a <;> cases b
+  · exact go_ofNat _ _ 1 0 0 1
+  all_goals rfl
 
 end Int
 

@@ -111,12 +111,11 @@ LAKEFILE = REPO_ROOT / "lakefile.lean"
 # native target to the library that uses it, without exporting the target to
 # every executable in a downstream package.
 #
-# `extraDepTargets` and `moreLinkArgs` are validated but never written.
-# The former can name targets defined only in the mirror's own unmanaged Lake
-# skeleton, while the latter may be an arbitrary Lean expression (HexLLL's is
-# a platform conditional) with no `lakefile.toml` form. Synthesizing either
-# could produce a Lake file that does not elaborate, so the sync reports a
-# missing setting and refuses to publish instead.
+# `moreLinkArgs` may be an arbitrary Lean expression (HexLLL's is a platform
+# conditional), so it is written verbatim into Lean Lake files only; a TOML
+# mirror that lacks it stops the publication. `extraDepTargets` is validated
+# but never written, because it can name targets defined only in the mirror's
+# own unmanaged Lake skeleton.
 WRITTEN_LIB_SETTINGS = ("precompileModules", "moreLinkObjs")
 CHECKED_LIB_SETTINGS = ("extraDepTargets", "moreLinkArgs")
 BUILD_LIB_SETTINGS = WRITTEN_LIB_SETTINGS + CHECKED_LIB_SETTINGS
@@ -704,6 +703,45 @@ def _lean_settings(body: str) -> dict[str, str]:
     return settings
 
 
+def _lean_setting_span(lines: list[str], name: str) -> tuple[int, int] | None:
+    """The line range of one setting, with its continuation lines."""
+    start = next((i for i, line in enumerate(lines)
+                  if re.match(rf"[ \t]+{re.escape(name)}[ \t]*:=", line)), None)
+    if start is None:
+        return None
+    stop = start + 1
+    while stop < len(lines) and lines[stop].strip() and not re.match(
+            r"[ \t]+[A-Za-z][A-Za-z0-9_']*[ \t]*:=", lines[stop]):
+        stop += 1
+    return start, stop
+
+
+def _remove_lean_setting(body: str, name: str) -> str:
+    """Drop one setting (and its continuation lines) from a `lean_lib` body."""
+    lines = body.split("\n")
+    span = _lean_setting_span(lines, name)
+    if span is None:
+        return body
+    return "\n".join(lines[:span[0]] + lines[span[1]:])
+
+
+def _set_lean_setting(body: str, name: str, value: str) -> str:
+    """Replace (or append) one setting of an indented Lean `lean_lib` body."""
+    lines = body.split("\n")
+    start = next((i for i, line in enumerate(lines)
+                  if re.match(rf"[ \t]+{re.escape(name)}[ \t]*:=", line)), None)
+    if start is None:
+        end = len(lines)
+        while end > 0 and not lines[end - 1].strip():
+            end -= 1
+        return "\n".join(lines[:end] + [f"  {name} := {value}"] + lines[end:])
+    stop = start + 1
+    while stop < len(lines) and lines[stop].strip() and not re.match(
+            r"[ \t]+[A-Za-z][A-Za-z0-9_']*[ \t]*:=", lines[stop]):
+        stop += 1
+    return "\n".join(lines[:start] + [f"  {name} := {value}"] + lines[stop:])
+
+
 def lean_lib_settings(text: str) -> dict[str, dict[str, str]]:
     """Every `lean_lib` in a Lean Lake file, mapped to its assigned settings."""
     libs: dict[str, dict[str, str]] = {}
@@ -780,6 +818,25 @@ def rewrite_lib_settings(entry: dict, clone: Path) -> list[str]:
         body_start = block.end()
         body = text[body_start:_block_end(text, body_start)]
         present = _lean_settings(body)
+    notes: list[str] = []
+    if not toml:
+        # Link settings this monorepo no longer gives the library leave the
+        # mirror too; a stale `moreLinkObjs` would name a retired target.
+        for setting in ("moreLinkObjs", "moreLinkArgs"):
+            if setting in present and setting not in required:
+                body = _remove_lean_setting(body, setting)
+                text = text[:body_start] + body + text[_block_end(text, body_start):]
+                present = _lean_settings(body)
+                notes.append(f"  removed {setting} on lean_lib {lib} ({lakefile.name})")
+    if "moreLinkArgs" in required and not toml:
+        # Written verbatim, so a platform conditional changed here (for
+        # example to leave `-ldl` off Windows) reaches the mirror.
+        expected = required["moreLinkArgs"]
+        if present.get("moreLinkArgs") != expected:
+            body = _set_lean_setting(body, "moreLinkArgs", expected)
+            text = text[:body_start] + body + text[_block_end(text, body_start):]
+            present = _lean_settings(body)
+            notes.append(f"  moreLinkArgs on lean_lib {lib} ({lakefile.name})")
     for setting in CHECKED_LIB_SETTINGS:
         if setting in required and setting not in present:
             raise RuntimeError(
@@ -788,7 +845,6 @@ def rewrite_lib_settings(entry: dict, clone: Path) -> list[str]:
                 "it, because it names targets defined only in this repository's "
                 "own Lake skeleton"
             )
-    notes: list[str] = []
     if "precompileModules" not in required and "precompileModules" in present:
         # Dropping the flag here must reach the mirror too: every downstream
         # user pays for a precompiled library, so the mirror may not keep one
@@ -867,15 +923,16 @@ def rewrite_lib_settings(entry: dict, clone: Path) -> list[str]:
 def lake_declaration(text: str, name: str) -> tuple[int, int]:
     """Locate an unindented named Lake declaration and its indented body.
 
-    Managed declarations use `def`, `target`, or `extern_lib` without
-    attributes. Supporting both target forms lets the sync migrate an old
-    package-wide `extern_lib` into a library-scoped custom `target`. Refuse
+    Managed declarations use `def`, `target`, `extern_lib` or `lean_lib`
+    without attributes. Supporting both target forms lets the sync migrate an
+    old package-wide `extern_lib` into a library-scoped custom `target`, and
+    `lean_lib` carries a native carrier library (see `HexArithNative`). Refuse
     missing or ambiguous declarations rather than modifying the wrong recipe.
     """
     if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_']*", name):
         raise RuntimeError(f"invalid Lake declaration name: {name!r}")
     matches = list(re.finditer(
-        r"(?m)^(?:private |public )?(?:def|target|extern_lib) "
+        r"(?m)^(?:private |public )?(?:def|target|extern_lib|lean_lib) "
         + re.escape(name) + r"(?=\s|\()[^\n]*\n",
         text,
     ))
@@ -887,9 +944,14 @@ def lake_declaration(text: str, name: str) -> tuple[int, int]:
 
 
 def rewrite_lake_declarations(entry: dict, clone: Path) -> list[str]:
-    """Copy selected build declarations from the source-of-truth Lake file."""
+    """Copy selected build declarations from the source-of-truth Lake file.
+
+    Names under `retired_lake_declarations` are deleted from the mirror, so a
+    recipe this monorepo dropped does not linger there as dead code.
+    """
     names = entry.get("lake_declarations", [])
-    if not names:
+    retired = entry.get("retired_lake_declarations", [])
+    if not names and not retired:
         return []
     if (entry.get("lakefile") != "lean" or not isinstance(names, list)
             or not all(isinstance(name, str) for name in names)
@@ -901,11 +963,28 @@ def rewrite_lake_declarations(entry: dict, clone: Path) -> list[str]:
     notes = []
     for name in names:
         src_start, src_end = lake_declaration(source, name)
-        dst_start, dst_end = lake_declaration(text, name)
         definition = source[src_start:src_end].rstrip() + "\n\n"
+        try:
+            dst_start, dst_end = lake_declaration(text, name)
+        except RuntimeError:
+            if re.search(r"(?m)^(?:private |public )?(?:def|target|extern_lib|lean_lib) "
+                         + re.escape(name) + r"(?=\s|\()", text):
+                raise
+            # A declaration new to this mirror is appended, which also places a
+            # carrier `lean_lib` after the library it takes modules from.
+            text = text.rstrip() + "\n\n" + definition
+            notes.append(f"  added build declaration {name} (lakefile.lean)")
+            continue
         if text[dst_start:dst_end] != definition:
             text = text[:dst_start] + definition + text[dst_end:]
             notes.append(f"  build declaration {name} (lakefile.lean)")
+    for name in retired:
+        try:
+            dst_start, dst_end = lake_declaration(text, name)
+        except RuntimeError:
+            continue
+        text = text[:dst_start] + text[dst_end:]
+        notes.append(f"  retired build declaration {name} (lakefile.lean)")
     if notes:
         path.write_text(text, encoding="utf-8")
     return notes
@@ -1525,13 +1604,12 @@ def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
 
 
 def validate_external_imports(entry: dict, clone: Path) -> None:
-    """Require the mirror's Lake file to provide every non-Hex import root.
+    """Require the mirror's Lake file to provide checked external import roots.
 
-    Inside the monorepo every library can import Batteries or Mathlib because
-    the root Lake file requires both; a mirror only has what its own Lake file
-    requires. Scan the synced library sources for `Batteries` and `Mathlib`
-    import roots and fail before anything is pushed when the mirror requires
-    neither the package nor Mathlib (which brings Batteries with it).
+    The monorepo provides Batteries, Mathlib and Tau Ceti; a mirror only has
+    what its own Lake file requires. Scan synced sources for those roots and
+    fail before pushing when a corresponding requirement is absent. Mathlib
+    also provides Batteries, but does not provide Tau Ceti.
     """
     if entry.get("pins_only"):
         return
@@ -1542,9 +1620,11 @@ def validate_external_imports(entry: dict, clone: Path) -> None:
         provided.update({"Mathlib", "Batteries"})
     if re.search(r'(?i)batteries\.git|name\s*=\s*"batteries"|require\s+batteries\b', text):
         provided.add("Batteries")
+    if re.search(r'(?i)tauceti\.git|name\s*=\s*"TauCeti"|require\s+TauCeti\b', text):
+        provided.add("TauCeti")
     roots: dict[str, str] = {}
     pattern = re.compile(
-        r"^\s*(?:(?:public|private|meta)\s+)*import\s+(?:all\s+)?(Batteries|Mathlib)\b",
+        r"^\s*(?:(?:public|private|meta)\s+)*import\s+(?:all\s+)?(Batteries|Mathlib|TauCeti)\b",
         re.M)
     for src, dest_rel, is_dir in managed_paths(entry):
         dest = clone / dest_rel
