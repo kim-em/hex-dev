@@ -42,6 +42,9 @@ comparison of implementations.
 | 5 | 255 | exhausted | exhausted | 33.66 | 488.554 | 12.35 | partial | 590 | 1.264 |
 | 6 | 40 | complete | exhausted | 34.14 | 0.021 | 8.80 | partial | 398 | 1.267 |
 
+Source byte counts describe emitted source; committed fixtures additionally
+carry the repository license header.
+
 The GP interval includes process startup, discovery, bounded output collection
 and the producer's 25 ms polling cadence. Parsing takes approximately 0.02–0.06
 ms on this corpus. Completion includes arithmetic preflight/canonicalization;
