@@ -350,7 +350,7 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
   let index := if indexed then LiteralSign.Index.build data.signs.entries.toArray Field.keyOrder
     else LiteralSign.Index.empty
   if indexed then
-    unless keys.all (fun key => (index.lookup data.signs.entries.toArray Field.keyOrder key).isSome) do
+    unless keys.all (fun key => (data.signs.lookupIndex Field.keyOrder index key).isSome) do
       throwError "rcf: fixed-field sign index omitted a replay or cell sign"
   let routing ← mkAppOptM ``Field.keyOrder #[some pExpr, some rootExpr]
   let quotedIndex := indexExpr index
