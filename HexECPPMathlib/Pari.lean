@@ -10,6 +10,7 @@ public import HexECPPMathlib.Pari.Process
 public meta import HexECPPMathlib.Pari.Process
 public import Lean.Elab.Command
 public import Lean.Meta.Tactic.TryThis
+public import Mathlib.Tactic.Linter.TacticDocumentation
 
 /-!
 # Explicit PARI certificate production
@@ -50,9 +51,16 @@ meta def generate (n : Nat) : MetaM (String × Cert) := do
   checkWithKernel proof
   return (source, frozen)
 
+/-- Explicit bounded PARI generation with a kernel-checked frozen suggestion.
+PARI proposes data; replay uses only the Lean checker and soundness theorem. -/
+tactic_extension Hex.PrimalityTactic.primalitySuggestTac
+
+@[inherit_doc Hex.PrimalityTactic.primalitySuggestTac,
+  tactic_alt Hex.PrimalityTactic.primalitySuggestTac]
 syntax (name := pariSuggestTac) "primality?" " (" &"method" " := " &"pari" ")" : tactic
 
 set_option hygiene false in
+/-- Solve the closed subject and suggest its exact compact replay term. -/
 @[tactic pariSuggestTac] meta def suggest : Tactic.Tactic := fun stx => do
   let goal ← Tactic.getMainGoal
   goal.withContext <| withOptions (maxRecDepth.set · 65536) do
@@ -80,6 +88,7 @@ Creation is exclusive: existing files are never overwritten. -/
 syntax (name := pariExportCmd) "#ecpp_export " ident ident " for " term : command
 
 set_option hygiene false in
+/-- Run PARI generation for the explicit batch-only exclusive export command. -/
 @[command_elab pariExportCmd] meta def exportCert : Command.CommandElab := fun stx => do
   let `(command| #ecpp_export $mod:ident $decl:ident for $term:term) := stx
     | throwUnsupportedSyntax

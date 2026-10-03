@@ -51,6 +51,8 @@ private meta def reifyNats : List Nat → Expr
   | x :: xs => mkApp3 (mkConst ``List.cons [.zero]) natType
       (mkNatLit x) (reifyNats xs)
 
+/-- Reify a bounded raw proposal as kernel-checkable constructor data. Call
+`validateCert` first when the proposal has not already passed replay preflight. -/
 meta def reifyCert : Cert → Expr
   | .base c => mkApp (mkConst ``Hex.ECPP.Cert.base) (Hex.PrimalityTactic.reifyPrimeCert c)
   | .step n a b x y d ws child =>
@@ -73,13 +75,25 @@ private meta def dataConstant (name : Name) : Bool :=
   name == ``Hex.Nat.PrimeCert.pock3Sieve ||
   name == ``List.nil || name == ``List.cons || name == ``Prod.mk
 
-/-- Inspect constructor syntax and exposed data definitions before evaluation.
-The shared fuel also bounds nested definitions and list syntax. -/
-private meta partial def checkData (e : Expr) (fuel : Nat) : MetaM Nat := do
+/-- A persistent substitution scope for constructor-data let bindings. -/
+private meta inductive DataContext where
+  | nil
+  | cons (value : Expr) (scope tail : DataContext)
+
+-- Lookup consumes traversal fuel as well, bounding deeply nested references.
+private meta def DataContext.lookup : DataContext → Nat → Nat → Option (Expr × DataContext × Nat)
+  | .nil, _, _ | _, _, 0 => none
+  | .cons value scope _, 0, fuel + 1 => some (value, scope, fuel)
+  | .cons _ _ tail, i + 1, fuel + 1 => tail.lookup i fuel
+
+/-- Audit all syntax, then charge expanded occurrences through a persistent
+scope. Each pass has finite fuel, including nested definitions and lookups. -/
+private meta partial def checkData (e : Expr) (fuel : Nat)
+    (context : DataContext := .nil) (expandLets : Bool := false) : MetaM Nat := do
   if fuel == 0 then throwError "ecpp: certificate syntax exceeds {maxSyntaxNodes} nodes"
   let fuel := fuel - 1
   match e with
-  | .app f a => checkData a (← checkData f fuel)
+  | .app f a => checkData a (← checkData f fuel context expandLets) context expandLets
   | .lit (.natVal n) =>
       if HexArith.bitLength n > maxBits then
         throwError "ecpp: a certificate numeral exceeds {maxBits} bits"
@@ -90,20 +104,24 @@ private meta partial def checkData (e : Expr) (fuel : Nat) : MetaM Nat := do
       if (Compiler.getImplementedBy? env name).isSome then
         throwError "ecpp: `{name}` has a compiled implementation; use constructor data"
       unless env.hasExposedBody name do
-        throwError "ecpp: `{name}` is not an exposed data definition"
+        throwError "ecpp: `{privateToUserName name}` is not an exposed data definition"
       let some (.defnInfo info) := env.find? name
         | throwError "ecpp: `{name}` is not a data definition"
-      try checkData info.value fuel
+      try checkData info.value fuel .nil expandLets
       catch ex => throwError "ecpp: in exposed `{name}`: {ex.toMessageData}"
-  | .mdata _ body => checkData body fuel
+  | .mdata _ body => checkData body fuel context expandLets
   | .letE _ ty val body _ =>
-      -- Charge every occurrence after substitution, rather than treating bound
-      -- variables as free nodes. Shared data must fit its expanded allocation.
-      -- Audit an unused value separately; a used value is already traversed at
-      -- each occurrence. Charging it again would double ordinary list tails.
-      let fuel ← checkData ty fuel
-      if body.hasLooseBVar 0 then checkData (body.instantiate1 val) fuel
-      else checkData body (← checkData val fuel)
+      if expandLets then
+        -- Persistent closures avoid repeated substitution of a large body.
+        checkData body fuel (.cons val context context) true
+      else
+        -- Audit all values, including unused ones, before expanding occurrences.
+        checkData body (← checkData val (← checkData ty fuel) context) context
+  | .bvar i =>
+      if !expandLets then return fuel
+      let some (value, scope, fuel) := context.lookup i fuel
+        | throwError "ecpp: certificate syntax exceeds {maxSyntaxNodes} nodes"
+      checkData value fuel scope true
   | .sort _ => return fuel
   | _ => throwError "ecpp: certificate must be constructor data; got {e}"
 
@@ -133,10 +151,34 @@ private meta def checkCertBudget : Cert → MetaM Unit
         throwError "ecpp: inverse transcript exceeds {maxInverseWitnesses} witnesses"
       checkCertBudget child
 
+/-- Expand audited data with persistent scopes, bounding substitution work. -/
+private meta partial def expandData (e : Expr) (fuel : Nat)
+    (context : DataContext := .nil) : MetaM (Expr × Nat) := do
+  if fuel == 0 then throwError "ecpp: certificate syntax exceeds {maxSyntaxNodes} nodes"
+  let fuel := fuel - 1
+  match e with
+  | .app f a =>
+      let (f, fuel) ← expandData f fuel context
+      let (a, fuel) ← expandData a fuel context
+      return (mkApp f a, fuel)
+  | .const name levels =>
+      if dataConstant name then return (e, fuel)
+      let some (.defnInfo info) := (← getEnv).find? name
+        | throwError "ecpp: `{name}` is not a data definition"
+      expandData (info.value.instantiateLevelParams info.levelParams levels) fuel
+  | .mdata _ body => expandData body fuel context
+  | .letE _ _ val body _ => expandData body fuel (.cons val context context)
+  | .bvar i =>
+      let some (value, scope, fuel) := context.lookup i fuel
+        | throwError "ecpp: certificate syntax exceeds {maxSyntaxNodes} nodes"
+      expandData value fuel scope
+  | .lit _ | .sort _ => return (e, fuel)
+  | _ => throwError "ecpp: certificate must be constructor data; got {e}"
+
 private meta unsafe def evalCertUnsafe (e : Expr) : MetaM Cert := do
-  -- Only constructor data survives the preceding exposed-body audit. Unfold it
-  -- before compilation so importing a data certificate needs no meta import.
-  let data ← withTransparency .all <| reduce e
+  -- Audits precede evaluation. Expanding definitions and lets with persistent
+  -- scopes avoids quadratic substitution and needs no meta import of data.
+  let (data, _) ← expandData e maxSyntaxNodes
   evalExpr Cert certType data
 
 @[implemented_by evalCertUnsafe]
@@ -148,6 +190,7 @@ meta def readCert (e : Expr) : MetaM Cert := do
   Hex.PrimalityTactic.checkClosed "ecpp using" e
   if e.hasSorry then throwError "ecpp: certificate contains an unfinished proof"
   discard <| checkData e maxSyntaxNodes
+  discard <| checkData e maxSyntaxNodes (expandLets := true)
   let cert ← evalCert e
   if (certFuel maxCertNodes cert).isNone then
     throwError "ecpp: certificate exceeds {maxCertNodes} total nodes"
@@ -186,6 +229,7 @@ private meta def proveUsing (stx : Term) (n : Nat) (nE : Expr) : Term.TermElabM 
 /-- Produce `Nat.Prime n` from an explicit, checked ECPP certificate. -/
 syntax (name := ecppUsingTac) "ecpp" " using " term : tactic
 
+/-- Elaborate explicit certificate replay for a closed Mathlib primality goal. -/
 @[tactic ecppUsingTac] meta def evalEcppUsing : Tactic.Tactic := fun stx => do
   match stx with
   | `(tactic| ecpp using $source) => do

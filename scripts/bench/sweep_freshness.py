@@ -558,10 +558,6 @@ GRAPHISO = Family(
         "hexgraphiso-pairs-cactus.svg",
         "hexgraphiso-tactic-times.json",
     ),
-    # Reviewed dependency edits may name an exact Lake blob transition.
-    # Written exemptions cannot cover graph sources or compiler pins.
-    exemptions=ROOT / "scripts" / "bench" / "proof_only_runtime_exemptions",
-    exemption_paths=("lakefile.lean",),
     regenerate="scripts/bench/graphiso_cactus_sweep.sh",
 )
 

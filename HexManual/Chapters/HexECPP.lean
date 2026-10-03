@@ -6,6 +6,9 @@ Authors: Kim Morrison
 
 import VersoManual
 import HexECPP
+import HexECPPMathlib
+import HexECPPMathlib.Native
+import HexECPPMathlib.Pari
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -137,7 +140,83 @@ charges and backtracking statistics in the returned search state.
 # The Mathlib correspondence
 
 `HexECPPMathlib` owns interpretation over every prime divisor of the
-candidate modulus, affine and scalar correspondence, the Hasse bound and
-the resulting primality theorem. Its companion phase audits and
-correspondence documentation are tracked separately. The executable
-checker and conversion guarantees above are available without that bridge.
+candidate modulus, affine and scalar correspondence, and the proved
+Hasse bound imported from AINTLIB. Raw checker acceptance is the only
+premise of the unconditional primality theorems.
+
+{docstring Hex.ECPP.natPrime_of_check}
+{docstring Hex.ECPP.natPrime_of_checkAt}
+
+```lean
+namespace HexECPPMathlibChapter
+
+example (c : Hex.ECPP.Cert)
+    (h : Hex.ECPP.check c = true) : Nat.Prime c.subject :=
+  Hex.ECPP.natPrime_of_check h
+
+@[expose] def certificate : Hex.ECPP.Cert :=
+  .step 17 2 3 3 6 6 [10, 13, 3, 13]
+    (.base (.small 11))
+
+example : Nat.Prime 17 := by ecpp using certificate
+example : Nat.Prime 17 := by
+  ecpp using
+    (ecpp_cert% "[[17,7,1,2,[3,6]]]" using (.small 11))
+```
+
+The starting point and every accepted addition represent actual group
+points over each prime divisor, even when the parent modulus is
+composite. A nonzero point annihilated by the prime child has that exact
+order. Its order divides the finite point count, and the Hasse bound
+together with the checker's strict inequalities excludes small prime
+divisors. Recursive acceptance then proves primality.
+
+{docstring Hex.ECPP.startingPoint_rep}
+{docstring Hex.ECPP.add_rep}
+{docstring Hex.ECPP.hasse_sq_zmod}
+{docstring Hex.ECPP.rationalPointsEquivFixed}
+{docstring Hex.ECPP.rationalPointsEquivKer}
+
+Import `HexECPPMathlib.Native` explicitly to produce a certificate.
+The native route takes a closed subject and optional seed. Its exact
+suggestion is checked below, followed by replay of that suggested text.
+
+```lean
+/-- info: Try this:
+  [apply] ecpp using
+    (ecpp_cert% "17" using Hex.Nat.PrimeCert.small 17)
+-/
+#guard_msgs (whitespace := lax) in
+example : Nat.Prime 17 := by
+  primality? (method := ecpp)
+
+example : Nat.Prime 17 := by
+  ecpp using (ecpp_cert% "17" using (.small 17))
+
+end HexECPPMathlibChapter
+```
+
+Replay admits supplied certificates through 512 bits. Native production
+is separately admitted through 256 bits and may exhaust its finite
+allocation. A successful proposal must also fit replay: the 32-node
+ceiling counts every elliptic step, the ECPP base wrapper and all nodes
+of its terminal primality certificate. Native row depth alone does not
+ensure this. Exhaustion is not a compositeness verdict.
+
+For source export, import `HexECPPMathlib.Native` and put
+`#ecpp_export (method := ecpp) MyCertificates.Prime cert for 17`
+in a module built with `lake build`. The command kernel-checks the frozen
+certificate before exclusively creating `MyCertificates/Prime.lean`.
+Remove the export command and add `public import MyCertificates.Prime`;
+`ecpp using MyCertificates.Prime.cert` then replays the frozen data.
+The exported module publicly imports only `HexECPPMathlib.Compact`.
+Replay does not invoke native search or GP. The language server displays
+batch-build instructions instead of writing files.
+
+The optional `HexECPPMathlib.Pari` import provides
+`primality? (method := pari)` and
+`#ecpp_export MyCertificates.Prime cert for 17`. This generator calls
+PARI/GP on POSIX under finite time and output allocations, then completes
+and kernel-checks the proposed certificate. It uses the same frozen
+export/replay workflow. GP is needed only during generation. Ordinary
+`primality` behavior and `norm_num` dispatch do not change.

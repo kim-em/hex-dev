@@ -68,6 +68,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexPrimalityMathlibProofProbe",
     "HexECPPMathlibProofProbe",
     "HexECPPMathlibPariIO",
+    "HexECPPMathlibTests",
     "HexIntFactorKernelProbe",
     "HexIntFactorTests",
     "HexIntFactorFieldConformance",
@@ -140,13 +141,20 @@ def parse_imports(path: Path) -> list[str]:
     return imports
 
 
-def lean_exe_roots(lakefile: Path) -> set[str]:
-    r"""Module names declared as ``lean_exe ... root := `X.Y.Z`/``."""
+def lean_build_roots(lakefile: Path) -> set[str]:
+    """Explicit executable roots and library entry modules, including opt-ins."""
     roots: set[str] = set()
+    in_roots = False
     for line in lakefile.read_text(encoding="utf-8").splitlines():
         match = LEAN_EXE_ROOT_RE.match(line)
         if match:
             roots.add(match.group(1))
+        if line.strip().startswith("roots := #["):
+            in_roots = True
+        if in_roots:
+            roots.update(LEAN_GLOB_MODULE_RE.findall(line))
+            if "]" in line:
+                in_roots = False
     return roots
 
 
@@ -356,7 +364,7 @@ def main() -> int:
             )
 
     lakefile = root / "lakefile.lean"
-    build_roots = lean_exe_roots(lakefile) | lean_glob_modules(
+    build_roots = lean_build_roots(lakefile) | lean_glob_modules(
         lakefile, UMBRELLA_BUILD_TARGETS
     )
     for target, modules in OPTIONAL_BUILD_MODULES.items():

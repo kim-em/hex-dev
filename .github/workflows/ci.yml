@@ -374,6 +374,7 @@ jobs:
         run: |
           lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests \
             HexPolyDetMathlib.Tests \
+            HexECPPMathlibTests \
             HexPrimality.ProofProbe.PMinusOne.Support
           lake exe hexarith_extgcd_tests
           python3 scripts/ci/check_rank_compiler.py

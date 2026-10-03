@@ -122,6 +122,7 @@ enclosing term small without requiring users to change recursion options.
 The auxiliary body has no compiled replacement or proof assumptions.
 No PARI invocation or terminal certificate search runs during replay.
 
+PARI generation is POSIX-only and rejects other platforms before spawning.
 Users explicitly import `HexECPPMathlib.Pari` to enable
 `primality? (method := pari)` for `Nat.Prime` and `Hex.Nat.Prime` goals. The
 generator runs `gp` from PATH with `-q -f`, passing only the evaluated natural
@@ -131,7 +132,10 @@ exit path. It uses no shell and ignores GP startup files. The initial PARI
 stack is 64000000 bytes; GP startup preferences cannot
 enable automatic stack growth. The process is limited to 30000 milliseconds,
 16448 stdout bytes and 4096 stderr bytes. On POSIX, cancellation and exhaustion
-terminate the process group with KILL and reap the child. Collect both pipe
+terminate the process group with KILL and reap the child. If the OS rejects
+the kill, collect readers and attempt a nonblocking reap, then report cleanup
+failure alongside the original error; do not wait indefinitely for a live
+process. Collect both pipe
 readers before reaping the leader, and never wait or kill that PID again after
 reaping it. Readers poll fresh, nonblocking POSIX pipe descriptors and observe
 cooperative cancellation independently of EOF, including pipes retained by
@@ -235,3 +239,15 @@ preflight before any suggestion or export; this exhaustion is a clean resource
 failure. Conformance includes an accepted 31-node terminal with its base
 wrapper, both literal and compact replay, and rejection when a row raises the
 total to 33.
+
+## Proof-track evidence
+
+This Mathlib companion has no compiled benchmark track. Literal `ecpp using`,
+compact `ecpp_cert%`, native/PARI suggestions and source export, and frozen
+replay take the proof track. `libraries.yml` declares the explicit
+`bench/HexECPPMathlib/ProofProbe` root built by CI; the public generation/export
+routes additionally have protocol conformance that builds generated source
+and replays the exact certificate suggestion in fresh modules. The surface
+inventory is `reports/ecpp/companion-proof-surface.md`. Existing replay and
+native corpus evidence is retained; the computational partner owns compiled
+performance claims and profiles.

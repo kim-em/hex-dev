@@ -33,15 +33,16 @@ private def timeoutCheck (path : String) : IO Unit := do
     throw <| IO.userError "process cleanup waited for the sleeping descendant"
 
 private def escapedCheck (path : String) (timeout : Bool) : IO Unit := do
-  let pidFile := System.FilePath.mk (path ++ ".pid")
+  let readyFile := System.FilePath.mk (path ++ ".ready")
+  let stopFile := System.FilePath.mk (path ++ ".stop")
   let token ← IO.CancelToken.new
   let task ← IO.asTask (run 17 { timeoutMs := if timeout then 1500 else 30000 }
     path (some token)) .dedicated
   try
     let start ← IO.monoMsNow
-    -- The descendant records its PID only after creating a new session. This
+    -- The descendant records readiness after creating a new session. This
     -- makes the test exercise escaped pipes rather than a startup race.
-    while !(← pidFile.pathExists) do
+    while !(← readyFile.pathExists) do
       if (← IO.monoMsNow) - start ≥ 1000 then
         throw <| IO.userError "escaped pipe-holder did not start"
       IO.sleep 10
@@ -52,18 +53,18 @@ private def escapedCheck (path : String) (timeout : Bool) : IO Unit := do
       IO.sleep 10
     fails (if timeout then "timed out" else "cancelled") (IO.ofExcept (← IO.wait task))
   finally
-    -- The test owns this separate, still-sleeping process group. Clean it up
-    -- even if a regression trips the watchdog, releasing pipes for the task.
-    if ← pidFile.pathExists then
-      let text ← IO.FS.readFile pidFile
-      let some pid := text.trimAscii.toString.toNat?
-        | throw <| IO.userError "invalid escaped pipe-holder PID"
-      if pid == 0 || pid > 2147483647 then
-        throw <| IO.userError "invalid escaped pipe-holder PID"
-      Hex.ECPP.Pari.IO.killGroup pid.toUInt32
-      IO.FS.removeFile pidFile
+    -- Ask the escaped holder to exit through a private file, avoiding signals
+    -- to a process which the harness cannot keep unreaped. This also releases
+    -- the pipes if a reader regression trips the watchdog.
+    IO.FS.writeFile stopFile ""
     token.set
     discard <| IO.wait task
+    if ← readyFile.pathExists then IO.FS.removeFile readyFile
+    let stopStart ← IO.monoMsNow
+    while ← stopFile.pathExists do
+      if (← IO.monoMsNow) - stopStart ≥ 1000 then
+        throw <| IO.userError "escaped pipe-holder did not acknowledge shutdown"
+      IO.sleep 10
 
 private def processChecks : IO Unit := do
   fails "cannot start" (run 17 (executable := "/hex-missing-gp"))
@@ -97,7 +98,7 @@ private def processChecks : IO Unit := do
     let token ← IO.CancelToken.new
     token.set
     fails "cancelled" (run 17 (executable := path) (cancel := some token))
-  let escaped := "python3 -c 'import os,sys,time; os.setsid(); open(sys.argv[1]+\".tmp\",\"w\").write(str(os.getpid())); os.replace(sys.argv[1]+\".tmp\",sys.argv[1]); time.sleep(20)' \"$0.pid\" &\nwait"
+  let escaped := "python3 -c 'import os,sys,time\nos.setsid()\nopen(sys.argv[1]+\".ready\",\"w\").close()\ndeadline=time.monotonic()+20\nwhile not os.path.exists(sys.argv[1]+\".stop\") and time.monotonic()<deadline:\n time.sleep(0.025)\nif os.path.exists(sys.argv[1]+\".stop\"):\n os.unlink(sys.argv[1]+\".stop\")\n' \"$0\" &\nwait"
   fake escaped (fun path => escapedCheck path false)
   fake escaped (fun path => escapedCheck path true)
 

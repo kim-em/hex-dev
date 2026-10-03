@@ -66,6 +66,10 @@ LEAN_EXPORT lean_obj_res hex_ecpp_kill_group(uint32_t pid) {
            The leader is still owned and unreaped, preventing PID reuse. */
         if (kill((pid_t)pid, SIGKILL) == -1 && errno != ESRCH)
             return pipe_error(strerror(errno));
+        /* setsid and fork may race the fallback. The unreaped leader still
+           reserves this group ID, so a second group kill cannot hit reuse. */
+        if (kill(-(pid_t)pid, SIGKILL) == -1 && errno != ESRCH)
+            return pipe_error(strerror(errno));
     }
     return lean_io_result_mk_ok(lean_box(0));
 #endif

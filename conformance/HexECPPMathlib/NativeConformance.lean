@@ -8,6 +8,16 @@ import HexECPPMathlib.Native
 
 /-! Explicit opt-in dispatch, bounded exhaustion and unsupported goals. -/
 
+/-- info: Try this:
+  [apply] ecpp using (ecpp_cert% "17" using Hex.Nat.PrimeCert.small 17)
+-/
+#guard_msgs in
+example : Nat.Prime 17 := by primality? (method := ecpp)
+
+-- Replay the exact suggested text without invoking the producer.
+example : Nat.Prime 17 := by
+  ecpp using (ecpp_cert% "17" using Hex.Nat.PrimeCert.small 17)
+
 /-- error: primality? (method := ecpp): expected a Nat.Prime or Hex.Nat.Prime goal -/
 #guard_msgs in
 example : True := by primality? (method := ecpp)

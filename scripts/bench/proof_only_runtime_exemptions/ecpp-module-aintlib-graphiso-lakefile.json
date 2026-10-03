@@ -1,6 +1,0 @@
-{
-  "path": "lakefile.lean",
-  "baseline_blob": "d35576abf4621ae3dae400edbe0f26291cd3ccab",
-  "current_blob": "d8dfe0f4a4ae6aa419d1b1a98f7c3cd254e9f6b3",
-  "reason": "The only changed cactus build declaration is the AINTLIB requirement for the ECPP Hasse proof. The graph driver import closure excludes both AINTLIB and HasseWeil. The package options, graph libraries, nauty object targets and cactus executable declaration are unchanged. Selecting the temporary module-system proof branch cannot alter the measured graph implementation or native link inputs. The added PARI pipe object target is linked only by its Mathlib-free IO sidecar, which neither measured executable imports; it is not an extern_lib or a package-wide link input."
-}

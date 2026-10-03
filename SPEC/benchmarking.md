@@ -1133,6 +1133,15 @@ enforced figure family uses one mechanism, declared in
   target or EOF, preventing attributes, scoped options, or existing fields
   from moving onto a new declaration. Names must be new, and all remaining
   configuration must be unchanged. Unsupported syntax fails closed.
+  The graph checker also compares the package, compiler flags, native targets,
+  executable and library blocks that build its driver. It permits the
+  HexBasic precompile flag only when the graph already loads that dependency
+  natively. An audited fixed AINTLIB Git revision may change only when the measured
+  closure excludes every module root declared at both commits; unknown revisions
+  require a new root inventory. All other graph build blocks
+  must still match. The separately checked Tau Ceti Thom pin transition likewise
+  requires an import closure excluding TauCeti. Mutable refs, unknown closures
+  and changes to compiler or native link inputs remain stale.
 
 Key on content, not on the measuring commit. A commit key has to stay
 resolvable forever, which holds for data recorded on `main` by a

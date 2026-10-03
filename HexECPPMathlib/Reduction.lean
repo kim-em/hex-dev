@@ -28,7 +28,8 @@ open WeierstrassCurve
 def shortCurve (p a b : ℕ) : WeierstrassCurve (ZMod p) :=
   ⟨0, 0, 0, a, b⟩
 
-instance shortCurve_isShortNF (p a b : ℕ) : (shortCurve p a b).IsShortNF :=
+/-- The checker's short curve has zero coefficients `a₁`, `a₂` and `a₃`. -/
+instance shortCurveIsShortNF (p a b : ℕ) : (shortCurve p a b).IsShortNF :=
   ⟨rfl, rfl, rfl⟩
 
 /-- The checker coprimality guard excludes characteristics two and three. -/
@@ -43,11 +44,14 @@ theorem prime_divisor_gt_three {p n : ℕ} (prime : p.Prime) (hp : p ∣ n)
   · obtain ⟨k, rfl⟩ := hp
     rcases hmod with hmod | hmod <;> omega
 
+/-- Reduction modulo a multiple of `p` preserves the residue in `ZMod p`. -/
 theorem cast_mod {p n : ℕ} (hp : p ∣ n) (t : ℕ) :
     ((t % n : ℕ) : ZMod p) = t := by
   exact (ZMod.natCast_eq_natCast_iff _ _ p).mpr
     ((Nat.mod_modEq t n).of_dvd hp)
 
+/-- The checker's natural modular subtraction is field subtraction after
+reduction at any prime divisor. -/
 theorem cast_modSub {p n : ℕ} (hp : p ∣ n) (hn : 0 < n) (a b : ℕ) :
     ((modSub n a b : ℕ) : ZMod p) = (a : ZMod p) - b := by
   have hle : b % n ≤ a % n + n := by
