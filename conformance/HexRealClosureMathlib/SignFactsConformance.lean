@@ -9,6 +9,7 @@ public import HexRealClosureMathlib.SignFacts
 public meta import HexRealClosureMathlib.SignFacts
 public import HexRealClosureMathlib.SignCodecConformance
 public meta import HexRealClosureMathlib.SignCodecConformance
+public import HexSignDet.CrossCheck
 public meta import HexSignDet.CrossCheck
 import all HexRealClosure.Algebraic
 import all HexSignDet.Descriptor
