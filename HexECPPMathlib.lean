@@ -3,16 +3,17 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
+module
 
-import HexECPPMathlib.Hasse.Degree
-import HexECPPMathlib.Hasse.Frobenius
-import HexECPPMathlib.Hasse
-import HexECPPMathlib.Reduction
-import HexECPPMathlib.Order
-import HexECPPMathlib.Soundness
-import HexECPPMathlib.Elab
-import HexECPPMathlib.Compact
-import HexECPPMathlib.Pari
-import HexECPPMathlib.Native
+public import HexECPPMathlib.Hasse.Degree
+public import HexECPPMathlib.Hasse.Frobenius
+public import HexECPPMathlib.Hasse
+public import HexECPPMathlib.Reduction
+public import HexECPPMathlib.Order
+public import HexECPPMathlib.Soundness
+public import HexECPPMathlib.Elab
+public import HexECPPMathlib.Compact
 
 /-! Prime-field semantics, Hasse bound, and unconditional ECPP soundness. -/
+
+@[expose] public section

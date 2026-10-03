@@ -18,6 +18,7 @@ from check_dag import (
     import_closure_in_library,
     parse_imports,
     main,
+    lean_build_roots,
 )
 from check_phase4 import check_headline_reports
 from libgraph import (load_libraries, library_owner_for_path, may_import,
@@ -138,6 +139,17 @@ class MetaImportTest(unittest.TestCase):
 
 
 class ImportAllClosureTest(unittest.TestCase):
+    def test_optional_library_entries_are_explicit_roots(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            lakefile = Path(directory) / "lakefile.lean"
+            lakefile.write_text(
+                "lean_lib HexCore where\n"
+                "  roots := #[`HexCore,\n    `HexCore.Optional]\n"
+                "  globs := #[.submodules `HexCore]\n"
+                "lean_exe smoke where\n  root := `Smoke\n")
+            self.assertEqual(lean_build_roots(lakefile),
+                             {"HexCore", "HexCore.Optional", "Smoke"})
+
     def test_private_facets_are_build_dependencies(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

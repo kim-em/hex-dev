@@ -3,10 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
+module
 
-import HexECPPMathlib.Compact
-import HexECPP.Search
-import Lean.Meta.Tactic.TryThis
+public import HexECPPMathlib.Compact
+public import HexECPP.Search
+public meta import HexECPP.Search
+public import Lean.Meta.Tactic.TryThis
+public import Mathlib.Tactic.Linter.TacticDocumentation
 
 /-!
 # Explicit native ECPP production
@@ -15,6 +18,8 @@ Native search takes only a subject, seed and finite allocation. Suggestions
 and exports freeze replay inputs and an explicit terminal PrimeCert. Neither
 CM search nor an external program runs while replaying frozen output.
 -/
+
+@[expose] public section
 
 open Lean Elab Meta
 
@@ -30,20 +35,27 @@ meta def generate (n : Nat) (seed : Nat := 0) (budget : SearchBudget := {}) :
   let c ← match (produce n seed budget).result with
     | .ok c => pure c
     | .error e => throwError "native ECPP: no certificate; stopped at {repr e.resource}; unresolved subject {e.subject}; seed {seed}"
+  validateCert c
   let source := frozenRows c
   -- The public compact representation must itself fit its conversion budget.
-  match convertText defaultImportBudget source (terminalCert c) with
+  let frozen ← match convertText defaultImportBudget source (terminalCert c) with
   | .error e => throwError "native ECPP: frozen conversion failed at row {e.row}: {repr e.kind}"
-  | .ok frozen =>
-    unless checkAt n frozen do throwError "native ECPP: frozen certificate failed checkAt"
-  let proof ← certProof c n (mkNatLit n)
+  | .ok frozen => pure frozen
+  let proof ← certProof frozen n (mkNatLit n)
   checkWithKernel proof
-  return (source, c)
+  return (source, frozen)
 
+/-- Explicit bounded native ECPP production with a kernel-checked frozen suggestion.
+The optional seed controls untrusted proposal search, not proof acceptance. -/
+tactic_extension Hex.PrimalityTactic.primalitySuggestTac
+
+@[inherit_doc Hex.PrimalityTactic.primalitySuggestTac,
+  tactic_alt Hex.PrimalityTactic.primalitySuggestTac]
 syntax (name := nativeSuggestTac) "primality?" " (" &"method" " := " &"ecpp" ")"
   (" (" &"seed" " := " num ")")? : tactic
 
 set_option hygiene false in
+/-- Solve the closed subject and suggest its exact compact replay term. -/
 @[tactic nativeSuggestTac] meta def suggest : Tactic.Tactic := fun stx => do
   let `(tactic| primality? (method := ecpp) $[(seed := $seed:num)]?) := stx
     | throwUnsupportedSyntax
@@ -73,9 +85,11 @@ set_option hygiene false in
     Tactic.replaceMainGoal []
     Meta.Tactic.TryThis.addSuggestion stx replacement
 
+/-- Export a new module containing a kernel-checked native ECPP certificate. -/
 syntax (name := nativeExportCmd) "#ecpp_export" " (" &"method" " := " &"ecpp" ") "
   (" (" &"seed" " := " num ")")? ident ident " for " term : command
 
+/-- Run native generation for the explicit batch-only exclusive export command. -/
 @[command_elab nativeExportCmd] meta def exportCert : Command.CommandElab := fun stx => do
   let `(command| #ecpp_export (method := ecpp) $[(seed := $seed:num)]? $mod:ident $decl:ident for $term:term) := stx
     | throwUnsupportedSyntax

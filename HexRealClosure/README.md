@@ -916,12 +916,27 @@ wrong signs return `none`. Its `read_sound` theorem identifies the result of
 the ordinary executable decoder.
 
 `Element.pack` uses a proved copy of the actual reduction function and supplied
-sign facts for nonconstant retained remainders. Constants use the predecessor's
-ordinary sign operation, including canonical zero. `cachedAdd`, `cachedSub`,
+sign facts for the exact retained remainders, including constants. When no
+constant fact is supplied, it uses the predecessor's ordinary sign operation.
+Supplied constant facts allow kernel checking when that operation depends on an
+opaque termination proof. Both paths preserve canonical zero. `cachedAdd`, `cachedSub`,
 `cachedMul`, `cachedNeg`, `cachedOne` and `cachedNatCast` supply ordinary operations
 proved exactly equal to the existing operations. These equalities let a caller
 check a literal certificate using the supplied facts and transfer the resulting
-acceptance proof to the existing checker.
+acceptance proof to the existing checker. Each list-based lookup scans the
+supplied facts, including for constants; its cost grows with that list.
+
+`PackingConformance.constant_cached` checks this path with an executable
+predecessor sign function that is opaque to kernel reduction and proved equal
+to rational sign. Emptying the fact list blocks kernel evaluation of constant
+packing. Subtraction with supplied facts produces canonical zero.
+`NestedSignsConformance.graph_checked` checks a two-entry graph with lower-root
+facts; `graph_memo` derives preservation of its literal memo indices.
+`graph_selections` selects two different query lists from one validated memo.
+The graph probes reject an unreachable entry with a corrupted moment, a
+foreign context, a self reference, an absent root index, changed endpoints and a wrong selected
+query list. They use ordinary
+kernel checking and the existing cache-agreement theorems.
 
 An absent nonconstant fact reaches an opaque packing function. This prevents
 ordinary-kernel evaluation from completing that branch. Compiled evaluation of
