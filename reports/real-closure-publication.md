@@ -10,9 +10,11 @@ advance phases, or admit new release-manifest entries. The accompanying
 ## Public imports and source ownership
 
 The eight family libraries are HexOrderedFn/Mathlib, HexSturm/Mathlib,
-HexSignDet/Mathlib and HexRealClosure/Mathlib. The computational directories
-stay independent of Mathlib, Tau Ceti and the companions. Development semantic
-modules keep their existing ownership:
+HexSignDet/Mathlib and HexRealClosure/Mathlib. The computational packages
+stay independent of Mathlib, Tau Ceti and the companions, including transitive
+dependencies. Tau Ceti requirements belong only in Mathlib proof packages.
+The inventory records each library's `mathlib` classification. Development
+semantic modules keep their existing ownership:
 
 | Development source | Intended package and public import | Current availability |
 | --- | --- | --- |
@@ -54,7 +56,11 @@ hex (aggregate) -> hex-rcf / hex-real-roots-mathlib -> TauCeti
 ```
 
 The existing manifest already pins `hex-real-roots-mathlib` from base
-`hex-rcf` and from the aggregate. Thus even a rational-only base consumer would
+`hex-rcf` and from the aggregate. **HexRCF is a Mathlib proof/tactic package**:
+`libraries.yml` declares `mathlib: true`, and its released manifest entry
+declares `mathlib_only: true`. Its name is an existing exception to the
+companion naming convention; it is not a computational library. The aggregate
+also includes Mathlib companions. Thus even a rational-only base tactic consumer would
 resolve Tau Ceti after that companion's packaging changes. This is a package
 dependency impact; it does not mean rational `rcf` needs a tower at execution
 or imports its algorithms. The independent computational real-algebraic fast
@@ -75,10 +81,12 @@ and locks; they do not create a missing Tau Ceti declaration in a skeleton.
 
 ## Optional real-coefficient adapter proposal
 
-Proposed installable boundary, requiring user decision before release wiring:
+Proposed installable boundary, requiring user decision before changing the
+published packages:
 
 - Keep `hex-rcf` and `import HexRCF` as the existing rational tactic package.
-- Publish an optional `hex-rcf-real-coefficients` package containing
+- Publish an optional Mathlib proof/tactic package, provisionally named
+  `hex-rcf-real-coefficients`, containing
   `HexRCF.RealFormula` and `HexRCF.RealCoefficients` and its submodules. Preserve
   the public import `HexRCF.RealCoefficients`; no second copy of `HexRCF.lean`.
 - Use the existing two adapter Lake declarations with explicit module globs.

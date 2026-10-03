@@ -33,7 +33,8 @@
         "HexPolyFast",
         "HexRationalFn",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": false
     },
     {
       "library": "HexOrderedFnMathlib",
@@ -50,7 +51,8 @@
         "HexRationalFn",
         "HexRationalFnMathlib",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexSturm",
@@ -64,7 +66,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": false
     },
     {
       "library": "HexSturmMathlib",
@@ -80,7 +83,8 @@
         "HexPolyFast",
         "HexSturm",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexSignDet",
@@ -99,7 +103,8 @@
         "HexRank",
         "HexSturm",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": false
     },
     {
       "library": "HexSignDetMathlib",
@@ -121,7 +126,8 @@
         "HexSturm",
         "HexSturmMathlib",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexRealClosure",
@@ -144,7 +150,8 @@
         "HexSignDet",
         "HexSturm",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": false
     },
     {
       "library": "HexRealClosureMathlib",
@@ -176,7 +183,8 @@
         "HexSturm",
         "HexSturmMathlib",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexRealRootsMathlib",
@@ -190,7 +198,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexRCF",
@@ -211,7 +220,8 @@
         "HexReflect",
         "HexReflectMathlib",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexRealAlgebraic",
@@ -224,7 +234,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": false
     },
     {
       "library": "HexRealAlgebraicMathlib",
@@ -240,7 +251,8 @@
         "HexPolyFast",
         "HexRealAlgebraic",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexRank",
@@ -254,7 +266,8 @@
         "HexBasic",
         "HexPoly"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexRankMathlib",
@@ -272,7 +285,8 @@
         "HexPolyFast",
         "HexRank",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexRealFormula",
@@ -281,7 +295,8 @@
       "directHexDependencies": [
         "HexMvPoly"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexRealFormulaMathlib",
@@ -296,7 +311,8 @@
         "HexRealFormula",
         "HexReflect",
         "HexReflectMathlib"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexReflect",
@@ -306,7 +322,8 @@
         "HexMvPoly",
         "HexBasic"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexReflectMathlib",
@@ -319,7 +336,8 @@
       ],
       "unpublishedHexClosure": [
         "HexReflect"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexPolyFp",
@@ -335,7 +353,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": false
     },
     {
       "library": "HexPolyMathlib",
@@ -345,7 +364,8 @@
         "HexPoly",
         "HexMatrixMathlib"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": true
     },
     {
       "library": "HexMatrixMathlib",
@@ -354,7 +374,8 @@
       "directHexDependencies": [
         "HexMatrix"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": true
     },
     {
       "library": "HexMatrix",
@@ -363,21 +384,24 @@
       "directHexDependencies": [
         "HexBasic"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexBasic",
       "phase": 7,
       "publishedRepo": "leanprover/hex-basic",
       "directHexDependencies": [],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexPoly",
       "phase": 4,
       "publishedRepo": "leanprover/hex-poly",
       "directHexDependencies": [],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexRationalFnMathlib",
@@ -391,7 +415,8 @@
         "HexPolyFast",
         "HexRationalFn",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexRationalFn",
@@ -404,7 +429,8 @@
       "unpublishedHexClosure": [
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": false
     },
     {
       "library": "HexPolyFast",
@@ -416,7 +442,8 @@
       ],
       "unpublishedHexClosure": [
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": false
     },
     {
       "library": "HexTruncatedSeries",
@@ -425,7 +452,8 @@
       "directHexDependencies": [
         "HexBasic"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexNumberFieldMathlib",
@@ -442,7 +470,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexPolyZMathlib",
@@ -459,7 +488,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexModArithMathlib",
@@ -468,7 +498,8 @@
       "directHexDependencies": [
         "HexModArith"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": true
     },
     {
       "library": "HexModArith",
@@ -477,14 +508,16 @@
       "directHexDependencies": [
         "HexArith"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexArith",
       "phase": 7,
       "publishedRepo": "leanprover/hex-arith",
       "directHexDependencies": [],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexHensel",
@@ -499,7 +532,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": false
     },
     {
       "library": "HexPolyZ",
@@ -517,7 +551,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": false
     },
     {
       "library": "HexModular",
@@ -526,7 +561,8 @@
       "directHexDependencies": [
         "HexArith"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexRootsMathlib",
@@ -540,7 +576,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexRoots",
@@ -553,7 +590,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": false
     },
     {
       "library": "HexBerlekampZassenhausMathlib",
@@ -571,7 +609,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexLLLMathlib",
@@ -582,7 +621,8 @@
         "HexGramSchmidtMathlib",
         "HexRowReduceMathlib"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": true
     },
     {
       "library": "HexRowReduceMathlib",
@@ -592,7 +632,8 @@
         "HexMatrixMathlib",
         "HexRowReduce"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": true
     },
     {
       "library": "HexRowReduce",
@@ -601,7 +642,8 @@
       "directHexDependencies": [
         "HexMatrix"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexGramSchmidtMathlib",
@@ -611,7 +653,8 @@
         "HexGramSchmidt",
         "HexBareissMathlib"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": true
     },
     {
       "library": "HexBareissMathlib",
@@ -621,7 +664,8 @@
         "HexDeterminantMathlib",
         "HexMatrixMathlib"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": true
     },
     {
       "library": "HexDeterminantMathlib",
@@ -632,7 +676,8 @@
         "HexDeterminant",
         "HexMatrixMathlib"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": true
     },
     {
       "library": "HexDeterminant",
@@ -641,7 +686,8 @@
       "directHexDependencies": [
         "HexMatrix"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexBareiss",
@@ -652,7 +698,8 @@
         "HexDeterminant",
         "HexMatrix"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexGramSchmidt",
@@ -663,7 +710,8 @@
         "HexDeterminant",
         "HexBareiss"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexLLL",
@@ -674,7 +722,8 @@
         "HexMatrix",
         "HexBasic"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexHenselMathlib",
@@ -688,7 +737,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexBerlekampMathlib",
@@ -704,7 +754,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexPolyFpMathlib",
@@ -719,7 +770,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": true
     },
     {
       "library": "HexBerlekamp",
@@ -736,7 +788,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": false
     },
     {
       "library": "HexGFqRing",
@@ -749,7 +802,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": false
     },
     {
       "library": "HexBerlekampZassenhaus",
@@ -765,7 +819,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": false
     },
     {
       "library": "HexPrimality",
@@ -775,7 +830,8 @@
         "HexArith",
         "HexBasic"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexResultantMathlib",
@@ -785,7 +841,8 @@
         "HexResultant",
         "HexPolyMathlib"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": true
     },
     {
       "library": "HexResultant",
@@ -796,7 +853,8 @@
         "HexBasic",
         "HexDeterminant"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     },
     {
       "library": "HexNumberField",
@@ -814,7 +872,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": false
     },
     {
       "library": "HexRealRoots",
@@ -827,7 +886,8 @@
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
-      ]
+      ],
+      "mathlib": false
     },
     {
       "library": "HexMvPolyMathlib",
@@ -838,7 +898,8 @@
         "HexPolyMathlib",
         "HexModArithMathlib"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": true
     },
     {
       "library": "HexMvPoly",
@@ -849,7 +910,8 @@
         "HexBasic",
         "HexModArith"
       ],
-      "unpublishedHexClosure": []
+      "unpublishedHexClosure": [],
+      "mathlib": false
     }
   ],
   "adapters": [
