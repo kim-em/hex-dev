@@ -208,8 +208,9 @@ theorem codec_ofSigns [Hashable E] [Hashable Ctx]
     (Dag.encode_root signs.evidence) (ofSigns_shape context signs) (ofSigns_bindings context signs)
     (Dag.encode_bounds signs.evidence)
 
-/-- The producer packet survives actual bytes under the parser's lexical
-limits and lawful coefficient and context codecs. -/
+/-- The producer packet survives actual bytes under lawful coefficient and
+context codecs, provided its printed bytes pass the lexical policy, including
+syntax prechecks. -/
 theorem bytes_ofSigns [Hashable E] [Hashable Ctx]
     (value : ValueCodec E) (ctx : ValueCodec Ctx) (hv : value.Lawful) (hc : ctx.Lawful)
     (context : Context E Ctx coeffSign parent) {queries : List (DensePoly E)}

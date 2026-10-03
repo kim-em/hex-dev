@@ -108,8 +108,10 @@ predecessor reader, then check its graph and exact required key list. -/
   | some facts => return facts
 
 /-- Printing a packet produced from checked joint signs, parsing it and
-checking its graph returns exactly the original scalar facts. No parser
-success or node-shape certificate is supplied by the caller. -/
+checking its graph returns exactly the original scalar facts, provided the
+printed bytes pass the lexical precheck. JSON parser success and node bounds
+are proved. At algebraic levels, `Element.codec` recomputes stored signs to
+provide its global roundtrip law; strict partial readers are not covered here. -/
 theorem Context.decodeEvidence_ofSigns [Hashable E] [Hashable Ctx]
     (context : Context E Ctx coeffSign parent)
     (value : ValueCodec E) (ctx : ValueCodec Ctx) (hv : value.Lawful) (hc : ctx.Lawful)
