@@ -1057,7 +1057,8 @@ lean_lib HexRCFBenchSupport where
 
 lean_lib HexRCFProofProbe where
   srcDir := "bench"
-  globs := #[`HexRCF.ProofProbe.Examples,
+  globs := #[`HexRCF.ProofProbe.SyntaxFixture, `HexRCF.ProofProbe.Syntax,
+    `HexRCF.ProofProbe.Examples,
     `HexRCF.ProofProbe.Registered.Unused,
     `HexRCF.ProofProbe.Registered.Support,
     `HexRCF.ProofProbe.Registered.Tactic,
@@ -1065,7 +1066,7 @@ lean_lib HexRCFProofProbe where
     `HexRCF.ProofProbe.Division.Direct,
     `HexRCF.ProofProbe.Production.Close, `HexRCF.ProofProbe.Production.Further,
     `HexRCF.ProofProbe.Production.Sharing,
-    `HexRCF.ProofProbe.Scaling.Degree2, `HexRCF.ProofProbe.Scaling.Degree4, `HexRCF.ProofProbe.Scaling.Atoms1, `HexRCF.ProofProbe.Scaling.Atoms4, `HexRCF.ProofProbe.Scaling.Bits32, `HexRCF.ProofProbe.Scaling.Bits128].map Glob.one
+    `HexRCF.ProofProbe.Scaling.Degree2, `HexRCF.ProofProbe.Scaling.Degree4, `HexRCF.ProofProbe.Scaling.Atoms1, `HexRCF.ProofProbe.Scaling.Atoms4, `HexRCF.ProofProbe.Scaling.Bits32, `HexRCF.ProofProbe.Scaling.Bits128, `HexRCF.ProofProbe.Scaling.Sharing].map Glob.one
 
 -- Conformance #guard drivers live under `conformance/` and are built by this
 -- library (mirroring the released conformance sub-projects). Alongside each

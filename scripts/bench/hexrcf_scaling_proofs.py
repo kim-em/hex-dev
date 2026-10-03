@@ -30,14 +30,14 @@ SPEC = SweepSpec(
     pairs=(
         ProbePair("degree", probe("Degree2"), probe("Degree4"), {
             "changed_dimension": "maximum_variable_exponent",
-            "reference": 2, "candidate": 4,
+            "reference_value": 2, "candidate_value": 4,
             "atoms": 1, "integer_coefficient_bits": 1,
             "selected_field_degree": 2, "source_coefficients": 1,
             "real_root_sections": 0,
         }),
         ProbePair("atoms", probe("Atoms1"), probe("Atoms4"), {
             "changed_dimension": "distinct_atoms",
-            "reference": 1, "candidate": 4,
+            "reference_value": 1, "candidate_value": 4,
             "maximum_variable_exponent": 2, "integer_coefficient_bits": 2,
             "selected_field_degree": 2, "source_coefficients": 1,
             "real_root_sections": 0,
@@ -45,7 +45,7 @@ SPEC = SweepSpec(
         }),
         ProbePair("coefficient-width", probe("Bits32"), probe("Bits128"), {
             "changed_dimension": "integer_coefficient_bits",
-            "reference": 32, "candidate": 128,
+            "reference_value": 32, "candidate_value": 128,
             "maximum_variable_exponent": 2, "atoms": 1,
             "selected_field_degree": 2, "source_coefficients": 1,
             "real_root_sections": 0,
