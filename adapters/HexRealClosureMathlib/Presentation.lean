@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
+public import HexRealClosure.TowerPresentation
 public import HexRealClosureMathlib.TowerCoverage
 public import HexRealClosureMathlib.RootCollection
 public import Mathlib.Data.Quot
@@ -17,12 +18,6 @@ public section
 namespace Hex.RealClosure.Tower
 
 variable {registry : BaseContext.Registry} {parent : Context registry}
-
-/-- A stored value in a finite validated algebraic tower over a fixed native
-coefficient context. The suffix retains every selected descriptor in order. -/
-structure Presentation (parent : Context registry) : Type 1 where
-  suffix : Suffix parent
-  value : suffix.context.Value
 
 variable {K : Type u} [Field K] [LinearOrder K] [DecidableEq K]
 variable [IsStrictOrderedRing K] [IsRealClosed K]
@@ -45,14 +40,6 @@ theorem Presentation.algebraic (a : Presentation parent) (model : Model parent K
 @[expose] noncomputable def Presentation.toUnion (a : Presentation parent)
     (model : Model parent K) : Union.Carrier model.field K :=
   ⟨a.denote model, (Union.mem_iff _).mpr (a.algebraic model)⟩
-
-/-- Any value in an actual root context gives a finite native presentation. -/
-def Root.presentation (root : Root parent) (a : root.context.Value) : Presentation parent := by
-  cases root with
-  | point value => exact ⟨.nil, a⟩
-  | selected descriptor extension built =>
-    cases built
-    exact ⟨.root descriptor .nil, a⟩
 
 theorem Root.presentation_denote (root : Root parent) (a : root.context.Value)
     (model : Model parent K) :
@@ -262,13 +249,6 @@ theorem Presentation.refined_suffix (model : Model parent K)
       (Model.extend_heq same first.target (model.adjoin encoding.target)
         (Conversion.Model.refine_heq model encoding) rebuilt.suffix)) a
 
-/-- Prefix a native presentation with an earlier validated suffix. Context
-casts remain inside this constructor. -/
-@[expose] def Presentation.prepend (first : Suffix parent)
-    (a : Presentation first.context) : Presentation parent :=
-  ⟨first.append a.suffix,
-    _root_.cast (congrArg Context.Value (first.append_context a.suffix).symm) a.value⟩
-
 /-- Prefixing a presentation composes its actual native interpretation. -/
 theorem Presentation.prepend_denote (model : Model parent K) (first : Suffix parent)
     (a : Presentation first.context) :
@@ -276,23 +256,6 @@ theorem Presentation.prepend_denote (model : Model parent K) (first : Suffix par
   exact Model.value_cast (first.append_context a.suffix).symm
     ((model.extend first).extend a.suffix) (model.extend (first.append a.suffix))
     (model.extend_append first a.suffix) a.value
-
-/-- Reencode a selected root at any position and retain every reconstructed
-later level. The returned presentation includes the original preceding suffix. -/
-@[expose] def Presentation.refine (first : Suffix parent)
-    {descriptor : SignDet.Descriptor first.context.Value Signature
-      first.context.sign first.context.signature}
-    {head : DensePoly first.context.Value} {lower upper : Endpoint first.context.Value}
-    (encoding : SignDet.Reencoding descriptor head lower upper)
-    (later : Suffix (first.context.adjoin descriptor).context)
-    (rebuilt : Rebuilt (Conversion.refine first.context encoding) later)
-    (a : later.context.Value) : Presentation parent :=
-  let same := (Conversion.refine_spec first.context encoding).1.trans
-    (congrArg Extension.context (first.context.refine encoding).canonical)
-  let right : Suffix first.context := .root encoding.target (same ▸ rebuilt.suffix)
-  (Presentation.mk right (_root_.cast (congrArg Context.Value
-    (rebuilt.context_eq.symm.trans (Suffix.cast_context same rebuilt.suffix).symm))
-    (rebuilt.result.value a))).prepend first
 
 /-- Actual refinement at an arbitrary root position preserves the original
 presentation class, including all preceding and reconstructed later levels. -/
@@ -311,18 +274,6 @@ theorem Presentation.refined_at (model : Model parent K) (first : Suffix parent)
   exact (Presentation.toValue_eq (model.extend first) _ _).mp
     (Presentation.refined_suffix (model.extend first) encoding later rebuilt a)
 
-/-- Reconstruct the requested later levels once and package the actual refined
-presentation. Invalid reconstruction is reported at this checked boundary. -/
-@[expose] def Presentation.refine? (first : Suffix parent)
-    {descriptor : SignDet.Descriptor first.context.Value Signature
-      first.context.sign first.context.signature}
-    {head : DensePoly first.context.Value} {lower upper : Endpoint first.context.Value}
-    (encoding : SignDet.Reencoding descriptor head lower upper)
-    (later : Suffix (first.context.adjoin descriptor).context)
-    (a : later.context.Value) : Option (Presentation parent) :=
-  ((Conversion.refine first.context encoding).rebuild? later).map
-    (fun rebuilt => Presentation.refine first encoding later rebuilt a)
-
 /-- Valid native refinement succeeds at every position and retains the original
 class; no target-alignment or reconstruction witness is supplied by the caller. -/
 theorem Presentation.refine?_success (model : Model parent K) (first : Suffix parent)
@@ -338,6 +289,16 @@ theorem Presentation.refine?_success (model : Model parent K) (first : Suffix pa
   refine ⟨Presentation.refine first encoding later rebuilt a, ?_,
     Presentation.refined_at model first encoding later rebuilt a⟩
   simp only [Presentation.refine?, returned, Option.map_some]
+
+/-- Inclusion from any intermediate root context preserves the presentation
+class after retaining its original preceding suffix. -/
+theorem Presentation.prepend_embed (model : Model parent K) (first : Suffix parent)
+    (later : Suffix first.context) (a : first.context.Value) :
+    ((Presentation.mk later (later.embed a)).prepend first).toValue model =
+      (Presentation.mk first a).toValue model := by
+  apply (Presentation.toValue_eq model _ _).mpr
+  rw [Presentation.prepend_denote]
+  exact (model.extend first).extend_embed later a
 
 /-- Executable equality in a common native suffix is precisely equality of
 its mathematical value classes. -/
@@ -636,3 +597,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Presentation.refine?_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Presentation.refine?_success
+
+/-- info: 'Hex.RealClosure.Tower.Presentation.prepend_embed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Presentation.prepend_embed

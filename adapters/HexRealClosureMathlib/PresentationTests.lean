@@ -25,6 +25,11 @@ example (suffix : Suffix parent) (a : parent.Value) :
       algebraMap model.field (Presentation.Quotient model) (model.toValue a) := by
   rw [Presentation.embed_value, Presentation.base_value]
 
+/-- Including an intermediate value through later roots preserves its class. -/
+example (first : Suffix parent) (later : Suffix first.context) (a : first.context.Value) :
+    ((Presentation.mk later (later.embed a)).prepend first).toValue model =
+      (Presentation.mk first a).toValue model := Presentation.prepend_embed model first later a
+
 /-- Actual native multiplication and total inversion satisfy cancellation on
 classes whenever the executable native sign is nonzero. -/
 example (suffix : Suffix parent) (a : suffix.context.Value)

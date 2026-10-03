@@ -295,7 +295,7 @@ lean_lib HexRealClosure where
 lean_lib HexRealClosureTests where
   globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.RootOrderTests,
     .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerRootsTests,
-    .one `HexRealClosure.RootCollectionTests,
+    .one `HexRealClosure.RootCollectionTests, .one `HexRealClosure.TowerPresentationTests,
     .one `HexRealClosure.TrivialTests, .one `HexRealClosure.TowerEnlargeOrderTests,
     .one `HexRealClosure.TowerTransportTests]
 

@@ -1006,10 +1006,11 @@ Tarski foundation. Their axiom guards contain only the three standard kernel
 axioms, and the audited import cones contain no admissions. These interpretations are
 conditional on an ambient ordered real closed field, not an existence proof.
 
-The remaining tower work includes dependency closure across multiple live
-contexts, context enlargement and transport, complete ordered root isolation
-and multiplicities, rational delegation agreement, and identification of native
-presentations with the compatible real-closed union.
+The remaining tower work includes dependency-closed enlargement and transport
+across multiple live contexts and full algebraic-coefficient rational delegation
+agreement. Complete ordered roots and multiplicities, single-context enlargement
+and identification of native presentations with the compatible real-closed union
+are described below.
 Each native algebraic context prepares and retains the shared selected-root
 query domain once, eagerly during context construction. `Context.buildSigns`
 reuses it for singleton and joint queries; `buildSigns_eq` proves exact
@@ -1911,6 +1912,10 @@ actual selected-root enlargement result.
 
 ### Native finite presentations
 
+The Mathlib-free module `HexRealClosure.TowerPresentation` exposes the stored
+presentation and its computable construction/refinement wrappers. The companion
+`HexRealClosureMathlib.Presentation` provides interpretation and quotient proofs.
+
 `Tower.Presentation` retains a validated finite root suffix over one immutable
 native input context and an actual stored value of its final context.
 `Presentation.denote` uses the original coefficient model extended through
@@ -1931,8 +1936,10 @@ Native coefficient inclusion through any suffix preserves its class, and
 `converted_value` proves coherence given an aligned checked conversion model.
 `refined_value` and `refined_suffix` discharge that alignment for the actual
 root-refinement producer, including reconstruction of every later root level.
-`Presentation.refine` packages refinement at any position after an earlier suffix;
+`Presentation.refine` packages refinement given the preceding and later suffixes;
 `refined_at` proves class preservation without exposing the ownership casts.
+The caller supplies this decomposition rather than a numeric root position.
+`prepend_embed` packages inclusion coherence from any intermediate root context.
 `refine?` runs the checked later-level reconstruction, and `refine?_success`
 proves that it returns a presentation with the same class on valid input.
 `equal_spec` links executable equality in a common suffix to class equality.
