@@ -1,0 +1,181 @@
+{
+  "host": "chungus2",
+  "cpu": 50,
+  "source": "f3bda04341e11f66fe5590d3f5444799db4870db",
+  "lean": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "source_hashes": {
+    "Native512Baseline": "838490dbdd28acd937ca8b6aa343014111d9a85bc6d1325a68e2f86c4ee0d0f6",
+    "Native512Reify": "9bf9d2969870a3c78696b9929c24834470e7db2fe44cf4076bfc42f5e77bd670",
+    "Native512Direct": "5d2ab12d97ebf011d01e4d053d34ba80e7ae19fc2f4ec5b833fa3368a9cc80eb"
+  },
+  "samples": [
+    {
+      "rebuilt": true,
+      "build_line": "\u2714 [3734/3734] Built HexECPPMathlib.ProofProbe.Native512Baseline (2.6s)",
+      "trial": 0,
+      "module": "HexECPPMathlib.ProofProbe.Native512Baseline",
+      "wall_ns": 7252480191,
+      "returncode": 0,
+      "loadavg": [
+        94.94873046875,
+        106.1337890625,
+        67.7646484375
+      ],
+      "rss_kb": 4146168
+    },
+    {
+      "rebuilt": true,
+      "build_line": "\u2714 [3734/3734] Built HexECPPMathlib.ProofProbe.Native512Reify (3.3s)",
+      "trial": 0,
+      "module": "HexECPPMathlib.ProofProbe.Native512Reify",
+      "wall_ns": 7655945099,
+      "returncode": 0,
+      "loadavg": [
+        95.673828125,
+        106.09814453125,
+        67.95947265625
+      ],
+      "rss_kb": 4161928
+    },
+    {
+      "rebuilt": true,
+      "build_line": "\u2714 [3734/3734] Built HexECPPMathlib.ProofProbe.Native512Direct (27s)",
+      "trial": 0,
+      "module": "HexECPPMathlib.ProofProbe.Native512Direct",
+      "wall_ns": 33105177379,
+      "returncode": 0,
+      "loadavg": [
+        95.3359375,
+        105.27099609375,
+        69.119140625
+      ],
+      "rss_kb": 5234508
+    },
+    {
+      "rebuilt": true,
+      "build_line": "\u2714 [3734/3734] Built HexECPPMathlib.ProofProbe.Native512Baseline (2.0s)",
+      "trial": 1,
+      "module": "HexECPPMathlib.ProofProbe.Native512Baseline",
+      "wall_ns": 5238826309,
+      "returncode": 0,
+      "loadavg": [
+        92.10546875,
+        104.43603515625,
+        69.04296875
+      ],
+      "rss_kb": 4148204
+    },
+    {
+      "rebuilt": true,
+      "build_line": "\u2714 [3734/3734] Built HexECPPMathlib.ProofProbe.Native512Reify (2.0s)",
+      "trial": 1,
+      "module": "HexECPPMathlib.ProofProbe.Native512Reify",
+      "wall_ns": 4928658150,
+      "returncode": 0,
+      "loadavg": [
+        88.5732421875,
+        103.4990234375,
+        68.9296875
+      ],
+      "rss_kb": 4163740
+    },
+    {
+      "rebuilt": true,
+      "build_line": "\u2714 [3734/3734] Built HexECPPMathlib.ProofProbe.Native512Direct (19s)",
+      "trial": 1,
+      "module": "HexECPPMathlib.ProofProbe.Native512Direct",
+      "wall_ns": 21753377100,
+      "returncode": 0,
+      "loadavg": [
+        74.9384765625,
+        99.4189453125,
+        68.3232421875
+      ],
+      "rss_kb": 5271328
+    },
+    {
+      "rebuilt": true,
+      "build_line": "\u2714 [3734/3734] Built HexECPPMathlib.ProofProbe.Native512Baseline (1.9s)",
+      "trial": 2,
+      "module": "HexECPPMathlib.ProofProbe.Native512Baseline",
+      "wall_ns": 4565043138,
+      "returncode": 0,
+      "loadavg": [
+        71.1796875,
+        98.23291015625,
+        68.1064453125
+      ],
+      "rss_kb": 4146120
+    },
+    {
+      "rebuilt": true,
+      "build_line": "\u2714 [3734/3734] Built HexECPPMathlib.ProofProbe.Native512Reify (1.0s)",
+      "trial": 2,
+      "module": "HexECPPMathlib.ProofProbe.Native512Reify",
+      "wall_ns": 4626565831,
+      "returncode": 0,
+      "loadavg": [
+        67.4814453125,
+        97.01708984375,
+        67.87451171875
+      ],
+      "rss_kb": 4160752
+    },
+    {
+      "rebuilt": true,
+      "build_line": "\u2714 [3734/3734] Built HexECPPMathlib.ProofProbe.Native512Direct (21s)",
+      "trial": 2,
+      "module": "HexECPPMathlib.ProofProbe.Native512Direct",
+      "wall_ns": 24011496029,
+      "returncode": 0,
+      "loadavg": [
+        60.498046875,
+        93.07666015625,
+        67.34912109375
+      ],
+      "rss_kb": 5236748
+    },
+    {
+      "rebuilt": true,
+      "build_line": "\u2714 [3734/3734] Built HexECPPMathlib.ProofProbe.Native512Baseline (2.5s)",
+      "trial": 3,
+      "module": "HexECPPMathlib.ProofProbe.Native512Baseline",
+      "wall_ns": 5454143741,
+      "returncode": 0,
+      "loadavg": [
+        58.7763671875,
+        92.1787109375,
+        67.19677734375
+      ],
+      "rss_kb": 4138724
+    },
+    {
+      "rebuilt": true,
+      "build_line": "\u2714 [3734/3734] Built HexECPPMathlib.ProofProbe.Native512Reify (2.0s)",
+      "trial": 3,
+      "module": "HexECPPMathlib.ProofProbe.Native512Reify",
+      "wall_ns": 4827593393,
+      "returncode": 0,
+      "loadavg": [
+        57.9130859375,
+        91.44482421875,
+        67.09326171875
+      ],
+      "rss_kb": 4163952
+    },
+    {
+      "rebuilt": true,
+      "build_line": "\u2714 [3734/3734] Built HexECPPMathlib.ProofProbe.Native512Direct (19s)",
+      "trial": 3,
+      "module": "HexECPPMathlib.ProofProbe.Native512Direct",
+      "wall_ns": 22860148403,
+      "returncode": 0,
+      "loadavg": [
+        54.2392578125,
+        88.49951171875,
+        66.646484375
+      ],
+      "rss_kb": 5076768
+    }
+  ]
+}

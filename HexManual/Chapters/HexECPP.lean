@@ -128,9 +128,11 @@ end HexECPPChapter
 ```
 
 Exhaustion is not a compositeness verdict. The supported native policy
-admits subjects through 256 bits. Supplied-certificate checking and
-conversion have separate evidence through 512 bits; that does not extend
-native search to those sizes. Callers can inspect cumulative resource
+admits subjects through 256 bits by default. Explicit
+{name}`Hex.ECPP.native512Budget` admits 512 bits with 33 additional fixed
+linear or quadratic class polynomials. {name}`Hex.ECPP.public512Budget`
+also accounts for public replay row and node limits during backtracking.
+Production above 512 bits is unsupported. Callers can inspect cumulative resource
 charges and backtracking statistics in the returned search state.
 
 {docstring Hex.ECPP.produce}
@@ -178,7 +180,9 @@ divisors. Recursive acceptance then proves primality.
 {docstring Hex.ECPP.rationalPointsEquivKer}
 
 Import `HexECPPMathlib.Native` explicitly to produce a certificate.
-The native route takes a closed subject and optional seed. Its exact
+The native route takes a closed subject, optional `bits` policy (256 or 512,
+default 256) and optional seed. Use `primality? (method := ecpp) (bits := 512)
+(seed := 0)` to select bounded 512-bit production. Its exact
 suggestion is checked below, followed by replay of that suggested text.
 
 ```lean
@@ -197,15 +201,16 @@ end HexECPPMathlibChapter
 ```
 
 Replay admits supplied certificates through 512 bits. Native production
-is separately admitted through 256 bits and may exhaust its finite
-allocation. A successful proposal must also fit replay: the 32-node
+defaults to 256 bits and explicitly admits 512 bits with `(bits := 512)`.
+It may exhaust its finite allocation. A successful proposal must also fit replay: the 32-node
 ceiling counts every elliptic step, the ECPP base wrapper and all nodes
-of its terminal primality certificate. Native row depth alone does not
-ensure this. Exhaustion is not a compositeness verdict.
+of its terminal primality certificate. The 512-bit producer checks these row and node limits during
+backtracking, and generation validates the exact frozen data before publication. Exhaustion is not a compositeness verdict.
 
 For source export, import `HexECPPMathlib.Native` and put
 `#ecpp_export (method := ecpp) MyCertificates.Prime cert for 17`
-in a module built with `lake build`. The command kernel-checks the frozen
+in a module built with `lake build`; add `(bits := 512)` before the optional
+seed to select the 512-bit policy. The command kernel-checks the frozen
 certificate before exclusively creating `MyCertificates/Prime.lean`.
 Remove the export command and add `public import MyCertificates.Prime`;
 `ecpp using MyCertificates.Prime.cert` then replays the frozen data.

@@ -831,6 +831,9 @@ lean_lib HexPrimalityMathlibProofProbe where
 lean_lib HexECPPMathlibProofProbe where
   srcDir := "bench"
   globs := #[`HexECPPMathlib.ProofProbe.NativeGeneration,
+    `HexECPPMathlib.ProofProbe.Native512Baseline,
+    `HexECPPMathlib.ProofProbe.Native512Reify,
+    `HexECPPMathlib.ProofProbe.Native512Direct,
     `HexECPPMathlib.ProofProbe.Native128_0,
     `HexECPPMathlib.ProofProbe.NativeBaseline,
     `HexECPPMathlib.ProofProbe.NativeReify,
@@ -2259,3 +2262,8 @@ lean_lib HexCharPolyMathlibMeasurements where
     `HexCharPolyMathlib.ProofProbe.Dense32Packed,
     `HexCharPolyMathlib.ProofProbe.Dense16Candidate,
     `HexCharPolyMathlib.ProofProbe.Dense16Reference].map Glob.one
+
+-- Fixed CM data and bounded roots for the independent analytic oracle.
+lean_exe hexecpp_emit_class_polynomials where
+  srcDir := "conformance"
+  root := `HexECPP.EmitClassPolynomials
