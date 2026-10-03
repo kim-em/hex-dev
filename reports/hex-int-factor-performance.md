@@ -669,3 +669,14 @@ construction evidence and ordinary factorization's allocation.
 ## Concerns
 
 None.
+
+## external-production-and-import
+
+The optional checked external route has separate discovery, parsing, primality
+completion, compiled acceptance, export and fresh replay observations in
+[the capability report](hex-int-factor-external.md). Its subjects and native
+allocations were frozen before measurement. All outcomes are retained: three
+complete results exhaust the recorded native fuel-four allocation; a 255-bit
+base is discovered but exhausts its supported certificate completion budget.
+This optional producer does not change native dispatch or the comparator claims
+above.

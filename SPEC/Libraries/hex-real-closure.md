@@ -137,6 +137,41 @@ literal identity/equality checks. A context owns an immutable predecessor DAG.
 Splitting or enlargement returns a new context plus explicit transport;
 old handles remain valid only in their old context.
 
+### Shared live contexts
+
+`Tower.Inclusion source target` retains the actual checked conversion and its
+proved target ownership. Values and polynomials enter the target through this
+inclusion. Composition applies the cached maps in order; identity retains the
+original context.
+
+`Tower.Shared base owners` retains an immutable list of original contexts and
+one checked inclusion for each original owner into a shared target. Registration
+visits the owner's validated suffix in predecessor order, reuses cached checked
+inclusions for original predecessors, and adjoins only previously unseen exact
+native predecessors.
+Parent/child owners and sibling branches therefore retain one common ancestor
+level when they share exact native predecessors. The cache retains target-side
+predecessors too, including those rebuilt during enlargement, so a context built
+from a returned target can reuse its ancestry. Every new target updates all
+earlier owner and predecessor maps. Exact predecessor reuse checks the actual
+native chain, descriptor and replay. Value-level root deduplication must also
+reconcile reordered chains, alternative descriptors and evidence, and independent
+enlargement images across staged depths. This bounds algebraic-degree growth and
+retains the root identity required by the shared sample interface.
+Original values remain indexed by their original contexts;
+`Shared.value` and `Shared.polynomial` select the checked map by its original
+owner index. The native base compatibility check uses the full real-prefix key
+path and nondecreasing infinitesimal depth, rather than a hash or a carrier type.
+
+`Shared.enlarge?` reconstructs the shared suffix once over the next staged base.
+Its result retains the existing checked conversion/parameter packet, a new
+shared target and all original-owner maps. Reading the parameter performs no
+new descriptor validation. Every returned map is the old map followed by the
+one shared inclusion, and old contexts remain valid. Registry reconstruction
+uses the separate validated-prefix catalog for the exact predecessor's progress
+premises. Inclusion across larger real prefixes must respect those registered
+predecessors and the complete staged order.
+
 ## Validated construction, packing and persistent refinement
 
 `Context.adjoin` accepts an opaque descriptor validated in its exact

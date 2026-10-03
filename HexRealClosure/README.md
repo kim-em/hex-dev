@@ -1439,6 +1439,54 @@ The generic
 canonical zero, dense-polynomial degree and interpretation, actual native
 comparison results, and inclusion of the whole original image field.
 
+`Tower.Shared base owners` assembles an immutable shared target while retaining
+all original owner contexts. Use `Shared.gather?` with the actual validated
+context handles, then `Shared.value index value` or
+`Shared.polynomial index polynomial` to enter that target. The owner index
+keeps the original value or polynomial type. The native checked base inclusion
+accepts identical complete real-prefix paths and nondecreasing infinitesimal depth;
+decreasing depth and a different prefix are rejected.
+
+Registration caches checked inclusions for every original algebraic predecessor.
+Parent/child registration, sibling branches, and repeated owners reuse their
+common roots. Reuse checks exact native provenance, including the staged base
+and complete root descriptors. The cache also retains native target predecessors,
+so contexts built from a returned shared target reuse those ancestors.
+Across different infinitesimal depths, an independently enlarged owner reuses
+a root when its exact context is already cached as a target predecessor or an
+earlier owner's predecessor. Registering
+the enlarged owner first, or into a deeper staged base, can add an equivalent
+algebraic level; the returned value maps still preserve the selected root.
+Owners selecting the same real number through reordered chains, different
+isolating intervals or different replay evidence can also add equivalent levels
+at one staged depth. Reuse currently recognizes exact native predecessors.
+`Shared.add?_maps` describes the returned old-owner inclusions and
+the appended original-owner map. A new target updates the predecessor cache
+through the same sequence of root inclusions used for retained owners.
+
+`shared.enlarge?` returns a new shared target, a checked inclusion `previous`
+from the old shared target, and its cached positive `parameter`. All retained
+owner maps use this one inclusion, and accessing the parameter rebuilds no root.
+`Shared.enlarge?_models` carries an existing coherent collection of owner
+models into one common ambient and identifies its actual infinitesimal and every
+input owner's interpreted values. The result includes a coherent family whose
+original models are exactly the prescribed lifts of the input family. A factory
+producing that coherent collection
+from `gather?`, and a proof that compatible registration succeeds, remain required;
+`Shared.enlarge?_ordered` gives positivity and comparison
+against every old positive value. Existing serialized values and polynomials
+must pass the returned target's checked readers; old packets with a different
+literal binding are rejected.
+
+Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext`
+for staged value transport, the mixed-depth reuse limitation in both
+registration orders, alternative intervals, reordered chains, unrelated-root
+position, parent/child and sibling registration, repeated owners, root-level
+counts, original equations,
+owner-map agreement, polynomial transport, parameter order and stale packets.
+The checked inclusions also have ordinary-kernel value, polynomial and comparison
+proofs; the all-owner enlargement proof uses the actual cached checked packet.
+
 Run `lake build HexRealClosure.TowerConversionTests HexRealClosure.TowerTransportTests HexRealClosureMathlib.TowerTransportTests`.
 The routine native fixture checks a changed nonmonic reducible definition, a
 later linear root, identity, two successive definition changes composed with

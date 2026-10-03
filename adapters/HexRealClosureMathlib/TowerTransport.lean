@@ -622,6 +622,26 @@ theorem rebuild_target (suffix : Suffix source) (rebuilt : Rebuilt conversion su
       (model.target.extend rebuilt.suffix) :=
   Classical.choose_spec (model.align_exists rebuilt.checked)
 
+/-- The cached inclusion of the complete starting target preserves its
+interpretation through the actual rebuilt suffix. -/
+noncomputable def rebuildInput (suffix : Suffix source)
+    (rebuilt : Rebuilt conversion suffix) : Model rebuilt.input model.target where
+  target := rebuilt.input_spec.1.symm ▸
+    (rebuilt.context_eq ▸ model.target.extend rebuilt.suffix)
+  value a := by
+    rw [cast_value _ _ _ _ rebuilt.input_spec.2, rebuilt.include_eq a, cast_element_value]
+    exact model.target.extend_embed rebuilt.suffix a
+
+/-- Both returned conversions use the same interpretation of every rebuilt
+root; the cached starting-context inclusion introduces no second model. -/
+theorem rebuildInput_target (suffix : Suffix source)
+    (rebuilt : Rebuilt conversion suffix) :
+    HEq (model.rebuildInput suffix rebuilt).target (model.rebuild suffix rebuilt).target := by
+  exact ((rebuilt.context_eq ▸ model.target.extend rebuilt.suffix).cast_heq
+    rebuilt.input_spec.1.symm).trans
+      (((model.target.extend rebuilt.suffix).cast_heq rebuilt.context_eq).trans
+        (model.rebuild_target suffix rebuilt).symm)
+
 private theorem extend_aligned (suffix : Suffix source) (result : Conversion suffix.context)
     (h : conversion.extend? suffix = some result) :
     ∃ witness : Model result (original.extend suffix),
@@ -906,6 +926,14 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.extend' depends on axioms: [propex
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuild_target' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.rebuild_target
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuildInput' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.rebuildInput
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuildInput_target' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.rebuildInput_target
 
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuildComp' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

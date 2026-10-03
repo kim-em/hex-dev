@@ -70,6 +70,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexECPPMathlibPariIO",
     "HexECPPMathlibTests",
     "HexIntFactorKernelProbe",
+    "HexIntFactorTests",
     "HexIntFactorFieldConformance",
     "HexMvGcdKernelProbe",
     "HexMvGcdBenchSupport",
@@ -100,6 +101,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexRealRootsMathlibReplayProbe",
     "HexRCFBenchSupport",
     "HexRCFProofProbe",
+    "HexRCFProofProfile",
     "HexRealFormulaProofProbe",
     "HexRCFRealFormula",
     "HexRCFRealCoefficients",
@@ -120,6 +122,13 @@ UMBRELLA_BUILD_TARGETS = {
     "HexGraphIsoCfiDiagnostics",
     "HexCharPolyTests",
     "HexReleaseExamples",
+}
+
+
+# SPEC-assigned optional public modules build with their owning library while
+# staying outside its ordinary umbrella. Only these exact modules are allowed.
+OPTIONAL_BUILD_MODULES = {
+    "HexIntFactor": {"HexIntFactor.Pari", "HexIntFactor.Export"},
 }
 
 
@@ -358,6 +367,8 @@ def main() -> int:
     build_roots = lean_build_roots(lakefile) | lean_glob_modules(
         lakefile, UMBRELLA_BUILD_TARGETS
     )
+    for target, modules in OPTIONAL_BUILD_MODULES.items():
+        build_roots |= lean_glob_modules(lakefile, {target}) & modules
     errors.extend(check_umbrella_completeness(root, libraries, build_roots))
 
     lean_files = project_lean_files(root)

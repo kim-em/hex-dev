@@ -6,11 +6,14 @@ Authors: Kim Morrison
 
 module
 
+public import HexBerlekampZassenhausMathlib.FactorTactic
+
 public import HexRCF.RealCoefficients.Registration
 public meta import HexRCF.RealCoefficients.Finite
 public meta import HexRCF.RealCoefficients.Reify
 public meta import HexRCF.RealCoefficients.Interpret
 public import HexRCF.RealCoefficients.RootAliases
+public import HexRCF.RealCoefficients.Conversion
 public import HexRCF.RealCoefficients.Coefficients
 public import HexRCF.RealCoefficients.Specialize
 public import HexRCF.RealCoefficients.Formula

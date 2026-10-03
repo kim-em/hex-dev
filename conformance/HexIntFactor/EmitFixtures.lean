@@ -6,6 +6,14 @@ Authors: Kim Morrison
 
 import Hex.Conformance.Emit
 import HexIntFactor
+import HexIntFactor.Frozen.Case0
+import HexIntFactor.Frozen.Case1
+import HexIntFactor.Frozen.Case2
+import HexIntFactor.Frozen.Case3
+import HexIntFactor.Frozen.Case4
+import HexIntFactor.Frozen.Case5
+import HexIntFactor.Frozen.Case6
+import HexIntFactor.Frozen.Partial12
 
 /-! Deterministic JSONL fixtures for integer factorization. -/
 
@@ -111,6 +119,14 @@ private def conwayCases : List (Nat × Nat) :=
   [3, 5, 7, 11, 13].flatMap fun p =>
     List.range 6 |>.map fun i => (p, i + 1)
 
+private def emitFrozen (index : Nat) (raw : PartialFactorization) : IO Unit := do
+  let case := "frozen/" ++ toString index
+  emitFixture "frozen" case (",\"n\":" ++ toString raw.subject)
+  unless checkPartial raw do throw <| IO.userError (case ++ ": replay rejected")
+  emitResult lib case "frozen"
+    ("{\"factors\":" ++ powersJson raw.factors ++
+      ",\"residual\":" ++ toString raw.residual ++ "}")
+
 def main : IO Unit := do
   for (tag, n) in factorCases do emitFactor tag n
   for p in primesBelowHundred do emitFactor ("below100/" ++ toString p) p
@@ -128,3 +144,12 @@ def main : IO Unit := do
       emitCyclotomic b (i + 1) .plus
   for (p, n) in conwayCases do
     emitCyclotomicAs "conway" p n .minus
+
+  emitFrozen 0 ⟨Hex.IntFactorFrozen.case0.subject, Hex.IntFactorFrozen.case0.factors, 1⟩
+  emitFrozen 1 ⟨Hex.IntFactorFrozen.case1.subject, Hex.IntFactorFrozen.case1.factors, 1⟩
+  emitFrozen 2 ⟨Hex.IntFactorFrozen.case2.subject, Hex.IntFactorFrozen.case2.factors, 1⟩
+  emitFrozen 3 ⟨Hex.IntFactorFrozen.case3.subject, Hex.IntFactorFrozen.case3.factors, 1⟩
+  emitFrozen 4 ⟨Hex.IntFactorFrozen.case4.subject, Hex.IntFactorFrozen.case4.factors, 1⟩
+  emitFrozen 5 Hex.IntFactorFrozen.case5
+  emitFrozen 6 Hex.IntFactorFrozen.case6
+  emitFrozen 7 Hex.IntFactorFrozen.partial12
