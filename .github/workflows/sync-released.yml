@@ -69,7 +69,12 @@ jobs:
         run: |
           python3 scripts/release/sync_released.py --dry-run \
             --baseline /tmp/baseline.json --stage "$RUNNER_TEMP/stage"
-          tar -C "$RUNNER_TEMP" -cf "$RUNNER_TEMP/stage.tar" stage
+          # The consumer jobs check nothing out: some history file names (e.g.
+          # under progress/) contain `:`, which Windows git refuses even in a
+          # sparse checkout. They need only these paths, shipped alongside.
+          mkdir "$RUNNER_TEMP/hex-dev"
+          cp -r scripts Examples "$RUNNER_TEMP/hex-dev/"
+          tar -C "$RUNNER_TEMP" -cf "$RUNNER_TEMP/stage.tar" stage hex-dev
       - uses: actions/upload-artifact@v4
         with:
           name: release-stage
@@ -87,13 +92,6 @@ jobs:
     # builds support it; make it required by deleting this line.
     continue-on-error: ${{ matrix.os == 'windows-latest' }}
     steps:
-      # Sparse: some history file names (e.g. under progress/) contain `:`,
-      # which Windows cannot check out, and the check needs only these paths.
-      - uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            scripts/release
-            Examples
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -119,7 +117,7 @@ jobs:
           fi
       - name: Build a downstream project against the stage
         shell: bash
-        run: python scripts/release/consumer_check.py "$RUNNER_TEMP/stage"
+        run: python "$RUNNER_TEMP/hex-dev/scripts/release/consumer_check.py" "$RUNNER_TEMP/stage"
 
   sync:
     needs: consumer
