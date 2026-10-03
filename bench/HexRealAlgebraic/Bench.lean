@@ -611,6 +611,72 @@ setup_fixed_benchmark runHardBareNatPow where { observations with maxSecondsPerC
 setup_fixed_benchmark runHardIntPow where { observations with maxSecondsPerCall := 60, expectedHash := some 0xee54fcb23d356212 }
 setup_fixed_benchmark runHardBareIntPow where { observations with maxSecondsPerCall := 60, expectedHash := some 0xee54fcb23d356212 }
 
+/-- A single degree-one leaf with growing coefficient height. The numerator
+and denominator are odd, differ by two, and are coprime. Preparation includes
+canonical construction and checks recognition against the independent rational. -/
+structure RationalLeaf where
+  value : RealAlgebraicNumber
+  rational : Rat
+
+instance : Hashable RationalLeaf where
+  hash i := hash (checksum i.value, i.rational)
+
+def rationalLeaf (bits : Nat) : RationalLeaf :=
+  let power := 2 ^ bits
+  let q : Rat := ((power - 1 : Nat) : Rat) / ((power + 1 : Nat) : Rat)
+  let a := ofRat q
+  if a.toAlgebraic.p.natDegree == 1 && a.toRat? == some q then
+    ⟨a, q⟩
+  else Hex.panicWith ⟨0, 0⟩ "rational-leaf fixture failed its degree/recognition check"
+
+def runRationalRecognition (i : RationalLeaf) : Option Rat := i.value.toRat?
+def runRationalFloor (i : RationalLeaf) : Int := i.value.floor
+def runRationalCeil (i : RationalLeaf) : Int := i.value.ceil
+
+-- Mode-1 candidate, derived before measurement: for (2^b-1)/(2^b+1),
+-- normalization of the two linear coefficients has a bounded Euclidean
+-- quotient sequence (difference 2, then a one-word divisor). The multiprecision
+-- subtraction/reduction reads Θ(b) bits. Rational floor/ceil additionally
+-- divide a smaller numerator by the denominator; this costs at most Θ(b).
+-- This family concerns degree-one recognition and rational rounding only.
+setup_benchmark runRationalRecognition bits => bits
+  with prep := rationalLeaf
+  where {
+    paramSchedule := .custom #[256, 512, 1024, 2048, 4096, 8192]
+    paramFloor := 256
+    paramCeiling := 8192
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 3
+  }
+
+-- The same independently derived linear bit-volume model, with rational floor.
+setup_benchmark runRationalFloor bits => bits
+  with prep := rationalLeaf
+  where {
+    paramSchedule := .custom #[256, 512, 1024, 2048, 4096, 8192]
+    paramFloor := 256
+    paramCeiling := 8192
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 3
+  }
+
+-- The same independently derived linear bit-volume model, with rational ceiling.
+setup_benchmark runRationalCeil bits => bits
+  with prep := rationalLeaf
+  where {
+    paramSchedule := .custom #[256, 512, 1024, 2048, 4096, 8192]
+    paramFloor := 256
+    paramCeiling := 8192
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 3
+  }
+
 end Hex.RealAlgebraicBench
 
 unsafe def main (args : List String) : IO UInt32 := LeanBench.Cli.dispatch args
