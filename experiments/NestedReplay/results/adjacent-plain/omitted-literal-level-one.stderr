@@ -1,0 +1,2 @@
+LITERAL_REJECTED level=1: stored sign fact missing or mismatched; no replacement sign evaluation
+counts={ calls := 188, signs := 0, nonconstantSigns := 0, hits := 188, inverses := 0 }

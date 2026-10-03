@@ -106,3 +106,26 @@ All six blocks, exact-key probes, collection-pass results and three missing
 fact probes are retained with source/binary hashes and exit status. Decoder
 and kernel costs, checked child-proof costs, production collection overhead
 against a plain producer, broad scaling and memory remain unmeasured.
+
+## Adjacent comparison with unmodified arithmetic
+
+The [adjacent plain/fact comparison](results/adjacent-plain/summary.json)
+records median replay times of 2.00 ms with facts, 2.44 ms with unmodified
+arithmetic and 2.65 ms with instrumented ordinary arithmetic. The median
+within-block plain/fact ratio is 1.217 (range 1.188–1.280). The plain and
+fact arms are adjacent in alternating order, and all arms record exactly
+200 checker entries. Used-key collection is disabled during timing.
+
+These observations include the common entry counter; the fact arm also
+includes packing counters and linear lookup. Its facts are supplied before
+timing. Construction, collection, byte decoding, context reconstruction,
+child validation and kernel proof checking are excluded. This one tiny
+example establishes no production speedup or scaling verdict. Every completed
+block is retained, with no unchanged rerun. Earlier data sets use their
+recorded source revisions and different instrumentation and order; their
+absolute times must not be attributed to this executable.
+
+The retained functional probes cover missing input and arithmetic facts at
+both levels, exact noncanonical keys, opposite cached signs, unsupported
+inversion and absence of extra keys in a collection replay. The driver
+builds the executable before recording hashes and sampling.
