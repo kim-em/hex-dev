@@ -182,7 +182,12 @@ equality. Compiled factorization searches for:
 
 The emitted term contains reified data, coefficientwise product
 checks, certificate checks, and conversion theorems. The compiled
-factorizer itself is not in the emitted proof.
+factorizer itself is not in the emitted proof. Non-bang multi-prime
+quotation and literal replay work with ordinary imports of
+`HexBerlekampZassenhausMathlib` or its `FactorTactic` module. The
+`CertificateReplay.checkProof` helper produces a kernel-checked equality
+for a reified Boolean check using public reduction equations; literal
+`checkMultiPrimeCert` and cover goals can also be discharged with `cbv`.
 
 The stronger `irreducibility!` and `factor_poly!` forms may use kernel
 evaluation of the decidable factorization theorem on small inputs.
@@ -197,7 +202,13 @@ The library owns an executable runtime: the `factor_poly` /
 checks their emitted terms replay.
 `conformance/HexBerlekampZassenhausMathlib/Conformance.lean` is the
 `core` conformance profile, built by the `HexConformance` library on
-every CI run. It exercises the tactic entry points on committed
+every CI run. `HexBerlekampZassenhausMathlib/PublicReplayTests.lean`,
+built separately through `HexReleaseTests` in the existing CI job, uses
+only ordinary public imports. It searches and quotes a new 11/5
+multi-prime certificate, checks both integer polynomial interfaces and
+mixed factor covers, rejects malformed data and incorrect input binding,
+and audits the emitted theorem axioms. Its imports are isolated from
+privileged bang tests. The core profile exercises the tactic entry points on committed
 `Polynomial ℤ` and `Hex.ZPoly` fixtures across the certificate languages
 (single-prime witness, Eisenstein handover, multi-prime degree
 obstruction, kernel fallback), pins hand-derived factor lists and factor
