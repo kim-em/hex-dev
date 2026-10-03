@@ -295,7 +295,8 @@ meta def reifyMultiList
       (← Hex.CertificateSyntax.reifyZPoly q) (Hex.CertificateSyntax.reifyCertificate cert))
 
 /-- Replay a literal mixed cover. Free-only covers retain direct reduction;
-multi-prime covers use public reduction equations through `cbv`. -/
+multi-prime covers use guarded kernel reduction when available, otherwise
+public reduction equations through `cbv`. -/
 meta def coverProof (factors certified multiPrime : Expr) (hasMulti : Bool) : MetaM Expr := do
   if !hasMulti then return Hex.CertificateSyntax.reflTrue
   let pairTy := mkApp2 (mkConst ``Prod [.zero, .zero]) zpolyTy

@@ -186,7 +186,8 @@ factorizer itself is not in the emitted proof. Non-bang multi-prime
 quotation and literal replay work with ordinary imports of
 `HexBerlekampZassenhausMathlib` or its `FactorTactic` module. The
 `CertificateReplay.checkProof` helper produces a kernel-checked equality
-for a reified Boolean check using public reduction equations; literal
+for a reified Boolean check using guarded kernel reduction when available,
+otherwise public reduction equations; literal
 `checkMultiPrimeCert` and cover goals can also be discharged with `cbv`.
 Importing the replay support registers core's public
 `Array.all_eq_not_any_not` equation globally for `cbv`; it changes no
