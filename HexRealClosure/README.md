@@ -1021,6 +1021,43 @@ The graphs are produced outside replay. This format references one supplied
 memo at a time. It does not implement a global graph of field levels or make
 graph validation avoid the predecessor arithmetic's native sign production.
 
+`HexRealClosure.SignEvidence` supplies a whole child packet instead of
+requiring callers to assemble a graph and sign references separately.
+`Context.buildEvidence keys` runs the existing prepared BKR producer on that
+exact ordered list of polynomial keys, then encodes its checked tree as one
+shared graph. Repeated requests retain separate sign slots; repeated literal
+nodes share an entry. Zero and empty request lists are supported.
+`SignEvidence.check?` independently checks the graph and its selected row,
+requiring the caller's complete key list. Missing, extra, reordered or
+substituted keys reject, even if substituted polynomials have equal values.
+The generic `check_ofSigns` theorem proves that checking a produced packet
+returns the original joint signs exactly.
+
+`SignEvidence.codec value ctx raw` stores the full selected-root binding,
+ordered keys, sign vector and shared graph in one versioned byte packet.
+`Context.decodeEvidence` in the companion decodes and checks those bytes, then
+returns a proved sign fact for every key, in order. Its semantic arguments occur
+only in erased proofs. No child producer fills missing evidence. The returned
+facts can be used by `Element.signCodec` at the next coefficient level.
+Graph checking uses the supplied coefficient arithmetic; avoiding searches
+inside that arithmetic requires separate coverage of its packing operations.
+
+Run `lake build HexRealClosureMathlib.SignEvidenceConformance` for direct
+rational sign comparisons, shared repeated queries, zero and empty cases,
+changed root bindings and rejected corrupt unselected entries. A second-level
+packet decodes through proved facts obtained by checking a first-level packet;
+removing a lower literal, an endpoint fact or an upper key rejects. The ordinary
+kernel probe uses a literal child certificate and the general correspondence
+proofs. Axiom audits include the actual producer success theorem and arbitrary
+byte acceptance theorem.
+
+This API takes an explicit key list. It does not yet collect all intermediate
+packing keys automatically, rebuild algebraic contexts from child packets or
+supply a single graph of dependencies between field levels. Literal packet
+roundtrips under lawful predecessor codecs are proved separately from semantic
+acceptance through partial predecessor readers. Collection, context rebuilding
+and kernel assembly costs need their own measurements.
+
 `PackingConformance` checks literal restoration, exact keys, context types and
 canonical zero in the ordinary kernel. `NestedSignsConformance` checks a second
 root defined by `a * Y - 1`, where `a` is stored as `X² - 1 + 2X` at the first
