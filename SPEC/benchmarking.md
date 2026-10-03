@@ -1120,6 +1120,9 @@ enforced figure family uses one mechanism, declared in
   The factorization checker separately compares the package, dependencies,
   measured executable, and libraries that build the Hex factor service, so
   additions of unrelated Lake targets do not invalidate its measurement.
+  It also accepts the audited AINTLIB pin transition only when the actual
+  factor-service import closure excludes every inventoried AINTLIB root;
+  all measured build declarations must still match.
   The graph-isomorphism checker also recognizes only additions of plain,
   non-default Lake targets whose literal `srcDir` is `bench` or `conformance`
   and whose `root`/`roots`/`globs` fields contain only literal modules. Their

@@ -56,15 +56,18 @@ private def escapedCheck (path : String) (timeout : Bool) : IO Unit := do
     -- Ask the escaped holder to exit through a private file, avoiding signals
     -- to a process which the harness cannot keep unreaped. This also releases
     -- the pipes if a reader regression trips the watchdog.
+    let holderReady ← readyFile.pathExists
     IO.FS.writeFile stopFile ""
     token.set
     discard <| IO.wait task
     if ← readyFile.pathExists then IO.FS.removeFile readyFile
     let stopStart ← IO.monoMsNow
-    while ← stopFile.pathExists do
+    while holderReady && (← stopFile.pathExists) do
       if (← IO.monoMsNow) - stopStart ≥ 1000 then
+        IO.FS.removeFile stopFile
         throw <| IO.userError "escaped pipe-holder did not acknowledge shutdown"
       IO.sleep 10
+    if ← stopFile.pathExists then IO.FS.removeFile stopFile
 
 private def processChecks : IO Unit := do
   fails "cannot start" (run 17 (executable := "/hex-missing-gp"))

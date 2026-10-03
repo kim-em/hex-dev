@@ -172,6 +172,17 @@ class ReleasedCiTests(unittest.TestCase):
 
         return released_ci_workflows()["hex-basic"]
 
+    def test_explicit_external_dependency_cache_is_checked(self) -> None:
+        from scripts.release.sync_released import released_ci_workflows
+        workflow = released_ci_workflows()["hex-ecpp-mathlib"]
+        self.check(workflow, dependency_caches=["AINTLIB"])
+        with self.assertRaisesRegex(ValueError, "cache paths differ"):
+            self.check(workflow)
+        with self.assertRaisesRegex(ValueError, "unique package names"):
+            self.check(workflow, dependency_caches=["AINTLIB", "AINTLIB"])
+        with self.assertRaisesRegex(ValueError, "unlocked package"):
+            self.check(workflow, dependency_caches=["missing"])
+
     def check(self, workflow: str, **entry_fields) -> None:
         entries = [{"repo": "leanprover/hex-example", **entry_fields}]
         with patch(

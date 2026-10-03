@@ -76,20 +76,28 @@ def main() -> None:
             # prefixes plus module names coincide without a delimiter.
             (scratch / "Main.lean").write_text(
                 "module\n\npublic import HexECPPMathlib.Compact\n\n"
+                "set_option backward.privateInPublic true\n"
+                "set_option backward.privateInPublic.warn false\n"
                 f"namespace p.sameName.{module}\n"
-                "private theorem sameName : Nat.Prime 13 := by\n"
-                '  ecpp using (ecpp_cert% "13" using Hex.Nat.PrimeCert.small 13)\n'
+                "private def sameName : Hex.ECPP.Cert :=\n"
+                '  (ecpp_cert% "13" using Hex.Nat.PrimeCert.small 13)\n'
+                "@[expose] public def certificate : Hex.ECPP.Cert := sameName\n"
                 f"end p.sameName.{module}\n")
             nested = scratch / "sameName" / Path(*module.split("."))
             nested.mkdir(parents=True)
             (nested / "Main.lean").write_text(
                 "module\n\npublic import HexECPPMathlib.Compact\n\n"
-                "namespace p\nprivate theorem sameName : Nat.Prime 17 := by\n"
-                '  ecpp using (ecpp_cert% "17" using Hex.Nat.PrimeCert.small 17)\n'
+                "set_option backward.privateInPublic true\n"
+                "set_option backward.privateInPublic.warn false\n"
+                "namespace p\nprivate def sameName : Hex.ECPP.Cert :=\n"
+                '  (ecpp_cert% "17" using Hex.Nat.PrimeCert.small 17)\n'
+                "@[expose] public def certificate : Hex.ECPP.Cert := sameName\n"
                 "end p\n")
             (scratch / "Combined.lean").write_text(
                 f"module\n\npublic import {module}.Frozen\npublic import {module}.Peer\npublic import {module}.PeerTwo\n"
-                f"public import {module}.Main\npublic import {module}.sameName.{module}.Main\n")
+                f"public import {module}.Main\npublic import {module}.sameName.{module}.Main\n"
+                f"example : Nat.Prime 13 := by ecpp using p.sameName.{module}.certificate\n"
+                "example : Nat.Prime 17 := by ecpp using p.certificate\n")
             build(module + ".Combined", env)
             # An exclusive export fails before running search and preserves the file.
             (scratch / "Again.lean").write_text(

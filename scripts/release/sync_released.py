@@ -1455,7 +1455,8 @@ def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
     always correct and never redundant enough to matter, so the sync appends
     the missing ones at the shared release version: a `[[require]]` block before the
     first target in `lakefile.toml`, or a `require ... from git` after the
-    last one in `lakefile.lean`.
+    last one in `lakefile.lean`, before Mathlib when it is present so its
+    compatible transitive pins remain authoritative.
     """
     notes: list[str] = []
     pins = entry.get("pins") or []
@@ -1493,7 +1494,10 @@ def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
             f'\nrequire {lib} from git\n  "{url}" @ "{version}"\n'
             for dep, lib, url in additions)
         requires = list(re.finditer(r"(?m)^require\b.*(?:\n[ \t]+.*)*\n", text))
-        if requires:
+        mathlib = re.search(r"(?mi)^require\s+mathlib\b", text)
+        if mathlib:
+            end = mathlib.start()
+        elif requires:
             end = requires[-1].end()
         else:
             package = re.search(r"(?ms)^package\b.*?(?=^\S|\Z)", text)
