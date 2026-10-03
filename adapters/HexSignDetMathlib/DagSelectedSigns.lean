@@ -34,4 +34,16 @@ theorem selectedSigns_values {context : Ctx} (d : Descriptor E Ctx sign context)
   obtain ⟨_, _, hv, _⟩ := selectedSigns_evidence h
   simpa only [hv] using s.values_at_root f hz h1 ha hs hm hnat hsign
 
+include h1 ha hs hm hnat hsign in
+/-- Each result selected from a shared checked memo gives the mathematical
+signs at the descriptor's root, in the exact requested order. -/
+theorem memo_values {context : Ctx} (d : Descriptor E Ctx sign context)
+    (qs : List (DensePoly E)) (values : Vector Int qs.length)
+    (memo : Array (Checked sign context d.raw.head d.raw.lower d.raw.upper))
+    (root : Nat) (s : SelectedSigns d qs)
+    (h : SelectedSigns.ofMemo? d qs values memo root = some s) :
+    values.toList = signsAt f hz qs (d.root f hz h1 ha hs hm hnat hsign) := by
+  obtain ⟨_, _, hv, _⟩ := SelectedSigns.ofMemo_evidence h
+  simpa only [hv] using s.values_at_root f hz h1 ha hs hm hnat hsign
+
 end Hex.SignDet.Dag

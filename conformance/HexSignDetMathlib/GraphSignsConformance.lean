@@ -81,6 +81,45 @@ theorem graph_kernel :
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
+/-- One graph check supplies two different singleton queries and their joint
+query. Selecting a memo entry never starts another graph check. -/
+@[expose] def memoPass : Bool :=
+  match full.validate? Sturm.orderSign 7 source.raw.head source.raw.lower source.raw.upper with
+  | none => false
+  | some memo =>
+    (SelectedSigns.ofMemo? source firstNode.queries #v[1] memo 0).isSome &&
+    (SelectedSigns.ofMemo? source derivativeNode.queries #v[1] memo 1).isSome &&
+    (SelectedSigns.ofMemo? source fullNode.queries #v[1, 1] memo 2).isSome &&
+    (SelectedSigns.ofMemo? source firstNode.queries #v[-1] memo 0).isNone &&
+    (SelectedSigns.ofMemo? source derivativeNode.queries #v[1] memo 0).isNone &&
+    (SelectedSigns.ofMemo? source firstNode.queries #v[1] memo 3).isNone
+
+set_option maxRecDepth 32768 in
+theorem memo_kernel : memoPass = true := by
+  simp only [memoPass, SelectedSigns.ofMemo?, Dag.select?, Dag.validate?, source_raw, Dag.step_eq, full,
+    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
+    TarskiCertificate.check_eq, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+#guard memoPass
+
+set_option maxRecDepth 32768 in
+/-- Memo creation rejects wrong fixed bindings, cyclic children and false
+unreachable evidence before any result can be extracted. -/
+theorem memo_rejected :
+    (full.validate? Sturm.orderSign 8 singletonRaw.head singletonRaw.lower singletonRaw.upper).isNone = true ∧
+    (full.validate? Sturm.orderSign 7 (DensePoly.C 2) singletonRaw.lower singletonRaw.upper).isNone = true ∧
+    (full.validate? Sturm.orderSign 7 singletonRaw.head .negInf singletonRaw.upper).isNone = true ∧
+    (({full with entries := full.entries.set! 0 (⟨firstNode, some (1, 1)⟩)}).validate?
+      Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper).isNone = true ∧
+    (invalidExtra.validate? Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper).isNone = true := by
+  simp only [Dag.validate?, Dag.step_eq, full, invalidExtra, invalidNode,
+    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
+    TarskiCertificate.check_eq, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
 set_option maxRecDepth 32768 in
 /-- Wrong sign claims, reordered queries, foreign contexts, forward/self
 references and false unreachable evidence reject in the ordinary kernel. -/
@@ -280,3 +319,7 @@ def producedPass (qs : List (DensePoly Rat)) (expected : List Int) : Bool :=
 #print axioms Dag.selectedSigns_values
 
 end Hex.SignDetMathlib.GraphSignsConformance
+
+/-- info: 'Hex.SignDet.Dag.memo_values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Dag.memo_values

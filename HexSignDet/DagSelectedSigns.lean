@@ -32,6 +32,43 @@ unique extending row. No tree replay is repeated. -/
     simp only [Descriptor.checkSigns, RawDescriptor.checkSigns, hw, hctx,
       decide_true, Bool.true_and, hc, hr]
 
+/-- Read selected signs from one entry of an already checked graph. The
+unique extending row and exact query prefix still have to match. -/
+@[expose] def SelectedSigns.ofMemo? {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (qs : List (DensePoly E))
+    (values : Vector Int qs.length)
+    (memo : Array (Dag.Checked sign context d.raw.head d.raw.lower d.raw.upper))
+    (root : Nat) : Option (SelectedSigns d qs) := do
+  let t ← Dag.select? sign context d.raw.head d.raw.lower d.raw.upper memo root
+    (d.raw.queries ++ qs)
+  if hr : t.val.node.system.tableRows.toList.filter
+      (fun row => decide (row.1.take d.raw.queries.length = d.raw.signs)) =
+        [(d.raw.signs ++ values.toList, 1)] then
+    return SelectedSigns.ofTable d qs values t.val t.property hr
+  else none
+
+/-- A successful memo selection retains the supplied sign vector and the
+literal tree returned by the exact index/query lookup. -/
+theorem SelectedSigns.ofMemo_evidence {sign : E → Int} {context : Ctx}
+    {d : Descriptor E Ctx sign context} {qs : List (DensePoly E)}
+    {values : Vector Int qs.length}
+    {memo : Array (Dag.Checked sign context d.raw.head d.raw.lower d.raw.upper)}
+    {root : Nat} {s : SelectedSigns d qs}
+    (h : SelectedSigns.ofMemo? d qs values memo root = some s) :
+    ∃ t, Dag.select? sign context d.raw.head d.raw.lower d.raw.upper memo root
+        (d.raw.queries ++ qs) = some t ∧ s.values = values ∧ s.evidence = t.val := by
+  unfold ofMemo? at h
+  cases ht : Dag.select? sign context d.raw.head d.raw.lower d.raw.upper memo root
+      (d.raw.queries ++ qs) with
+  | none => simp [ht, bind, Option.bind] at h
+  | some t =>
+    simp only [ht, bind, Option.bind] at h
+    split at h
+    · simp only [pure, Option.some.injEq] at h
+      subst s
+      exact ⟨t, rfl, rfl, rfl⟩
+    · simp at h
+
 namespace Dag
 
 /-- Replay a supplied graph for the selected descriptor's formal derivatives
@@ -47,6 +84,16 @@ returned selected-sign evidence reuses the checked graph's literal tree. -/
         [(d.raw.signs ++ values.toList, 1)] then
     return SelectedSigns.ofTable d qs values t.val t.property hr
   else none
+
+/-- Selecting from a checked memo agrees exactly with checking the graph
+for that selected root, including rejection and the literal returned evidence. -/
+theorem selectedSigns_memo {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (qs : List (DensePoly E))
+    (values : Vector Int qs.length) (dag : Dag E Ctx)
+    (memo : Array (Checked sign context d.raw.head d.raw.lower d.raw.upper))
+    (h : dag.validate? sign context d.raw.head d.raw.lower d.raw.upper = some memo) :
+    SelectedSigns.ofMemo? d qs values memo dag.root = dag.selectedSigns? d qs values := by
+  simp only [selectedSigns?, replay?, h, bind, Option.bind, SelectedSigns.ofMemo?]
 
 /-- Successful selected-sign extraction preserves every supplied sign and the
 actual checked graph replay, without producing replacement query evidence. -/

@@ -149,6 +149,34 @@ validated by the shared domain checker rather than compared with itself. -/
         TarskiCertificate.Domain.replay? sign (EndpointSigns.ofSign sign) cert.domain
       else none
 
+/-- Check every entry once and retain the accepted prefix for multiple root
+selections. The fixed context, head and endpoints are part of the result type;
+the graph's root index is checked when a caller selects a result. -/
+@[expose] def validate? (sign : E → Int) (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E) (dag : Dag E Ctx) :
+    Option (Array (Checked sign context p a b)) :=
+  let shared := dag.cache sign context p a b
+  dag.entries.foldlM (init := #[]) fun memo entry => do
+    let next ← step sign context p a b memo entry shared
+    pure (memo.push next)
+
+/-- Choosing a different result index does not change graph validation. -/
+theorem validate_root (sign : E → Int) (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E) (dag : Dag E Ctx) (root : Nat) :
+    ({dag with root := root}).validate? sign context p a b =
+      dag.validate? sign context p a b := rfl
+
+/-- Bind an already checked node to its index and exact ordered queries.
+No graph, query or matrix checker is rerun. -/
+@[expose] def select? (sign : E → Int) (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E) (memo : Array (Checked sign context p a b))
+    (root : Nat) (qs : List (DensePoly E)) :
+    Option {t : Replay E Ctx // t.check sign context p a b qs = true} := do
+  let selected ← memo[root]?
+  if h : selected.value.node.queries = qs then
+    return ⟨selected.value, by simpa only [h] using selected.accepted⟩
+  else none
+
 /-- Validate all references and nodes once, then bind the selected root's exact
 query list. The returned evidence proves acceptance by the literal tree checker;
 no recursive replay is rerun on cache hits or on the final root. This does not
@@ -156,14 +184,8 @@ assert root-count semantics, which still require the companion query bridge. -/
 @[expose] def replay? (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
     (qs : List (DensePoly E)) (dag : Dag E Ctx) :
     Option { t : Replay E Ctx // t.check sign context p a b qs = true } := do
-  let shared := dag.cache sign context p a b
-  let memo ← dag.entries.foldlM (init := #[]) fun memo entry => do
-    let next ← step sign context p a b memo entry shared
-    pure (memo.push next)
-  let root ← memo[dag.root]?
-  if h : root.value.node.queries = qs then
-    return ⟨root.value, by simpa only [h] using root.accepted⟩
-  else none
+  let memo ← dag.validate? sign context p a b
+  select? sign context p a b memo dag.root qs
 
 /-- Domain sharing across graph nodes preserves the original prefix replay,
 including the exact returned tree, literal bindings and every rejection. -/
@@ -177,7 +199,7 @@ theorem replay_eq (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : En
   if h : root.value.node.queries = qs then
     return ⟨root.value, by simpa only [h] using root.accepted⟩
   else none) := by
-  simp only [replay?, step_cache]
+  simp only [replay?, validate?, select?, step_cache]
 
 /-- Boolean acceptance for supplied graph literals. -/
 @[expose] def check (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
