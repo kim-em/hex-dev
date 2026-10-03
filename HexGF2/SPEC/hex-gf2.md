@@ -1,4 +1,4 @@
-# hex-gf2 (GF(2) packed arithmetic, depends on hex-basic)
+# hex-gf2 (GF(2) packed arithmetic, currently depends on hex-basic)
 
 Packed bitwise representation of polynomials over F_2. Addition is
 XOR, multiplication uses carry-less multiply. Substantially faster
@@ -34,11 +34,11 @@ it costs one scan of the top word and makes equality of elements equality of
 word arrays (`GF2Poly.ext_words`).
 
 - Addition: word-by-word XOR
-- Multiplication: schoolbook or Karatsuba on 64-bit blocks, where
-  each block multiply uses carry-less multiply via `@[extern]`
-  calling a C wrapper that uses CLMUL on x86 (with compile-time
-  feature detection) and a portable shift-and-XOR fallback on other
-  architectures.
+- Multiplication: currently schoolbook on 64-bit blocks. The planned
+  multiplication ladder adds word Karatsuba and packed Schönhage dispatch.
+  Each base block product uses carry-less multiplication through `@[extern]`.
+  The C implementation uses CLMUL when it is enabled at compile time and a
+  portable shift-and-XOR implementation otherwise.
 - Division with remainder (for polynomial GCD, modular reduction)
 - GCD and extended GCD over `GF2Poly`
 - Shift operations (multiply/divide by x^k)
@@ -106,6 +106,133 @@ compilations rather than one:
 `hex_clmul_uses_intrinsic` so both halves can address the paths
 individually; `HEX_CLMUL_NO_LEAN` drops the export wrapper so the
 self-test needs no Lean runtime.
+
+## Multiplication ladder
+
+This section specifies a planned extension. The current `GF2Poly.mul` is the
+word-schoolbook convolution `mulWords`, and its existing theorems use that
+definition. The extension retains `GF2Poly.mul` as the logical definition and
+adds a proof-backed `@[csimp]` replacement selected by operand word count:
+
+1. `mulWords` below the first crossover;
+2. Karatsuba split at word boundaries between the two crossovers;
+3. packed Schönhage multiplication above the second crossover.
+
+The base products in both recursive rungs use the existing carry-less word
+product. The committed crossover table is determined only by within-Hex
+comparisons between adjacent rungs, following
+[hex-poly-fast §Benchmarking and production dispatch](../../HexPolyFast/SPEC/hex-poly-fast.md).
+A new rung is selected only for cells in which it wins outside the recorded
+uncertainty band. Dispatch does not change the logical definition or any
+coefficient theorem.
+
+### Dense correspondence
+
+The correctness proof converts packed polynomials to dense polynomials over
+`ZMod64 2`. The new Mathlib-free API is:
+
+```lean
+def GF2Poly.toDense : GF2Poly → DensePoly (ZMod64 2)
+def GF2Poly.ofDense : DensePoly (ZMod64 2) → GF2Poly
+```
+
+The coefficient theorem says that coefficient `i` of `toDense p` is the
+element of `ZMod64 2` represented by bit `i % 64` in word `i / 64`.
+Round-trip theorems account for normalization of the dense and packed
+representations. Addition, multiplication, and the triadic carrier operations
+commute with these conversions.
+
+The names `FpPoly 2` and the equivalence `GF2Poly ≃+* FpPoly 2` remain in
+hex-gf2-mathlib, which already depends on hex-poly-fp. `HexGF2` does not
+import `FpPoly`. The generic Schönhage plan is instantiated at coefficient
+ring `ZMod64 2`, not at coefficient ring `GF2Poly`.
+
+### Packed Schönhage kernel
+
+The planned packed kernel follows the generic algorithm in
+[hex-poly-fast §Schönhage's radix-3 algorithm](../../HexPolyFast/SPEC/hex-poly-fast.md)
+with the same `SchoenhageSchedule`, transform indices, and recursive
+half-lengths. In characteristic two, subtraction is XOR and the inverse of
+three is `1`. Transform addition, subtraction, and twiddle operations are
+therefore packed linear operations. Pointwise multiplication is not a linear
+operation. Its base cases use carry-less word multiplication.
+
+The packed carrier holds a residue modulo `y^(2L) + y^L + 1` in
+`ceil(2L / 64)` words with the unused top bits of the last word zero.
+The selected `L` is not rounded to a word boundary. Brent, Gaudry, Thomé, and
+Zimmermann §3.2 permits non-word-aligned `L`, and the schedule must be used
+without changing its arithmetic constraints.
+
+Packed multiplication by `y^j` implements the exact triadic reduction. For a
+set bit at exponent `i`, it sets `r = (i + j) % (3 * L)`. If `r < 2 * L`, it
+XORs the bit into exponent `r`. Otherwise it XORs the bit into exponents
+`r - L` and `r - 2 * L`. This rule is applied directly. A single rewrite at
+exponent `2L` is insufficient because `i + j` can exceed `3L`.
+
+The required packed operations are:
+
+- overlap-safe XOR addition and subtraction;
+- multiplication by `y^j` using the rule above, including shifts across word
+  boundaries and masking of the final word;
+- conversion between `GF2Poly` blocks and packed triadic values;
+- pointwise multiplication through the recursive packed dispatcher.
+
+Each operation has an unpacking theorem identifying it with the corresponding
+operation on `Triadic (ZMod64 2) L`. Correctness is proved in four stages:
+
+1. packed carrier operations agree with generic triadic operations;
+2. the packed forward and inverse transforms agree elementwise with the
+   generic radix-3 transforms;
+3. the packed recursive product agrees under `toDense` with
+   `schoenhagePlan` instantiated over `ZMod64 2`;
+4. the packed result has the carry-less convolution coefficients specified by
+   `GF2Poly.mul`.
+
+The fourth theorem supplies the `@[csimp]` correctness proof. None of the
+dense values occur in the packed computation.
+
+No operation-count theorem is claimed for the packed kernel. The
+coefficient-operation bound in
+[hex-poly-fast-cslib](../../SPEC/Libraries/hex-poly-fast-cslib.md) applies to
+the generic worker. One packed XOR represents 64 coefficient additions, and
+the packed base product uses CLMUL. A possible hex-gf2-cslib library would
+need a separate word-operation model.
+
+### Conformance and benchmarks for the ladder
+
+The conformance stream will add shared-input cases that force each rung,
+cases immediately below and above both crossovers, and packed carrier cases
+with `L % 64 ≠ 0`. The registered conformance oracle remains python-flint at
+`scripts/oracle/gf2_flint.py`. It recomputes the full product over `F_2` from
+the serialized inputs. The NTL `GF2X` program is a checksum-based benchmark
+comparator and is not a conformance oracle.
+
+The benchmark family will extend far enough to bracket both within-Hex
+crossovers on the reference host. Schoolbook versus Karatsuba measurements
+determine the first table entry. Karatsuba versus packed Schönhage
+measurements determine the second. NTL/gf2x remains informational and gives
+context for the resulting large-degree performance. Its ratios do not select
+either Hex crossover.
+
+## Milestones
+
+1. **Dense correspondence and dependencies.** Add the specified
+   `HexFiniteField`, `HexPoly`, `HexPolyFast`, and `HexModArith` monorepo
+   dependencies. Define `toDense` and `ofDense`, then prove coefficient,
+   round-trip, and operation theorems.
+2. **Word Karatsuba.** Implement the word-boundary recursion, prove its result
+   equal to `mulWords`, and add forced-rung conformance and benchmark cases.
+3. **Packed Schönhage.** Implement the non-word-aligned carrier operations,
+   transforms, recursive product, and the four stages of correctness above.
+4. **Dispatch.** Measure adjacent rungs, commit the crossover table, and add
+   the proof-backed `@[csimp]` dispatcher. Extend the python-flint fixtures and
+   retain NTL/gf2x as an informational comparator.
+
+`hex-poly-fast` depends on `hex-truncated-series`. Neither library is yet
+listed in `scripts/release/released.yml`. The released hex-gf2 mirror can add
+the planned dependencies only after hex-truncated-series and hex-poly-fast
+have been published in dependency order. Development and the combined build
+inside this monorepo do not depend on that publication step.
 
 **GF(2^n) elements.** Elements of `GF(2^n)` are polynomials of degree
 < n over F_2, reduced modulo an irreducible of degree n. This library
@@ -233,11 +360,13 @@ NTL is the speed reference for hand-tuned `GF(2)[x]` arithmetic. The measured
 NTL 11.6.0 build links gf2x 1.3.0 for large multiplication; NTL's `GF2X`
 source uses tuned base cases and Karatsuba/gf2x multiplication, crossover-based
 division and remainder, and switches its GCD to `HalfGCD` above the configured
-crossover. Hex uses packed schoolbook
-multiplication, long division and remainder, and Euclidean GCD.
-Those operations therefore have different complexity classes at
-the upper end of the ladder; their ratios orient future optimization
-but do not gate Phase 4. Addition has the same linear packed-word
+crossover. Hex currently implements packed schoolbook multiplication, long
+division and remainder, and Euclidean GCD. §Multiplication ladder specifies
+planned Karatsuba and Schönhage rungs with the same multiplication complexity
+class as gf2x. Until those rungs are implemented, the upper multiplication
+cells compare different complexity classes. The division and GCD cells
+continue to do so. These ratios provide context and do not determine the Hex
+dispatch table or Phase 4. Addition has the same linear packed-word
 kernel shape, but the hex-framed driver measures serialization rather
 than raw NTL addition, so its paired registrations are correctness and
 protocol anchors rather than performance evidence. The comparator is
