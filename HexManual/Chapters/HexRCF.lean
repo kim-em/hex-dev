@@ -1643,7 +1643,7 @@ including zero, inside an interval of positive width.
 {name}`Hex.RCF.RealCoefficients.rootInterval_progress` proves that every
 precision schedule tending to infinity eventually reaches any positive width
 request. These points and endpoints are ordinary real numbers. The algebraic
-tactic doubles fallback precision until the checked root intervals separate.
+tactic doubles fallback precision within its configured refinement budget.
 
 {name}`Hex.RCF.RealCoefficients.proposeIsolations_isSome_iff` establishes
 finite proposal production for exactly the nonzero dense heads. The canonical
@@ -1743,8 +1743,10 @@ The direct proposal can also fail at its bounded bracketing, pivot or gap
 searches; no unchecked interval is accepted.
 
 The tactic uses `produceWithin` with `rcf.algebraic.directDepth` (default 256)
-and `rcf.algebraic.maxDoublings` (default 8). The latter bounds fallback
+and `rcf.algebraic.maxDoublings` (default 10). The latter bounds fallback
 interval attempts at precisions 1, 2, 4, …; a zero limit disables fallback.
+This frontend calls the existing fixed-field root driver directly and retains
+its selected coordinates, avoiding a redundant common-field reconstruction.
 Exhaustion reports `rcf: algebraic interval refinement budget exhausted` and
 is terminal. Rejected construction/replay has a different terminal diagnostic.
 The complete library producer and its progress/decision laws are unaffected

@@ -46,6 +46,14 @@ prepared-sign data and finite tactic refinement budgets. Its raw metadata key
 `source_coefficients: 1` counts selected generators, not frontend coefficient
 expressions; the current runner calls it `selected_generators`.
 
+The later default-budget increase, help diagnostic and direct fixed-field
+fallback are outside both measured source identities. Both measured goals
+succeed through their direct proposals. A separate forced-fallback regression
+for the same `2^-132` source exposed redundant common-field reconstruction;
+the frontend now calls the existing number-field root driver with its selected
+coordinates. The seven-theorem conformance module including that fallback
+built in 33 seconds on this host; this is a development observation, not
+a fixed-schedule causal comparison.
 These source revisions were measured separately and do not form an adjacent
 before/after experiment. No performance improvement is inferred across them.
 Host context is retained: the earlier snapshot observed up to 82 Lean/Lake

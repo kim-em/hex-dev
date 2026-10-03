@@ -24,7 +24,7 @@ register_option rcf.algebraic.directDepth : Nat := {
 }
 
 register_option rcf.algebraic.maxDoublings : Nat := {
-  defValue := 8
+  defValue := 10
   descr := "maximum canonical algebraic interval refinement attempts"
 }
 
@@ -299,14 +299,16 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
   let candidate ← mkFreshExprMVar proofType
   let script ← match quantifier with
     | .forallReal => `(tactic|
-        (simp only [FieldBuild.Result.checkForall, Field.checkSignTable,
+        (simp only [FieldBuild.Result.checkForall_eq, FieldBuild.Result.checkEvidence,
+          Field.checkSignTable,
           LiteralSign.Table.check, RadicalCert.check,
           FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
           TarskiCertificate.check_eq, SignedRemainderChain.check,
           ← Array.all_toList, Array.toList_range, Bool.and_eq_true];
           repeat' (any_goals (apply And.intro)); all_goals try (decide +kernel)))
     | .existsReal => `(tactic|
-        (simp only [FieldBuild.Result.checkExists, Field.checkSignTable,
+        (simp only [FieldBuild.Result.checkExists_eq, FieldBuild.Result.checkEvidence,
+          Field.checkSignTable,
           LiteralSign.Table.check, RadicalCert.check,
           FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
           TarskiCertificate.check_eq, SignedRemainderChain.check,
@@ -362,7 +364,7 @@ meta def proveRefiningWithCertificate {p : ZPoly} {s : DyadicSquare}
       (rcf.algebraic.directDepth.get options) (rcf.algebraic.maxDoublings.get options) extraSignKeys
     Core.checkInterrupted
     match result with
-    | .error .exhausted => throwError "rcf: algebraic interval refinement budget exhausted"
+    | .error .exhausted => throwError "rcf: algebraic interval refinement budget exhausted; increase rcf.algebraic.maxDoublings or rcf.algebraic.directDepth"
     | .error .invalidReplay => throwError "rcf: algebraic certificate construction or replay failed"
     | .ok data =>
         return ← quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula

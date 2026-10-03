@@ -21,7 +21,7 @@ inductive BuildError where
 
 variable {p : ZPoly} {root : SimpleRoot p} [ZPoly.CheckedIrreducible p]
 
-/-- Bounded interval refinement with shared conversion and complete root solving.
+/-- Bounded interval refinement with cached selected-field root solving.
 The direct proposal and final accepted replay are each built once. A rejected
 replay is terminal; only absence of a direct proposal starts canonical search. -/
 def isolateWithin [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
@@ -37,8 +37,9 @@ def isolateWithin [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
   | some intervals => replay intervals
   | none =>
     if doublings = 0 then .error .exhausted else
-    let roots := (head.toArray.mapM (canonical? rep hrep)).bind fun coefficients =>
-      (RealAlgebraicPoly.ofArray coefficients).roots.finite?
+    -- Reuse the existing field coordinates instead of reconstructing a common
+    -- field from separately converted coefficients.
+    let roots := (RealAlgebraicPoly.realRoots (PolyQuot.roots head rep hrep)).finite?
     let rec refine : Nat → Nat → Except BuildError IsolationCert
       | 0, _ => .error .exhausted
       | fuel + 1, precision =>

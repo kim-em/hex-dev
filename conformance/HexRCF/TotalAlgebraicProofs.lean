@@ -58,9 +58,13 @@ set_option rcf.algebraic.directDepth 0 in
 theorem canonical_sections : ∃ x : ℝ, x = Real.sqrt 2 ∧ x ≠ 0 := by rcf
 
 set_option rcf.algebraic.directDepth 0 in
+theorem canonical_close_sections : ∃ x : ℝ, x = Real.sqrt 2 ∧
+    x < Real.sqrt 2 + 1 / (5444517870735015415413993718908291383296 : ℝ) := by rcf
+
+set_option rcf.algebraic.directDepth 0 in
 set_option rcf.algebraic.maxDoublings 0 in
 example (_impossible : False) : ∃ x : ℝ, x = Real.sqrt 2 ∧ x ≠ 0 := by
-  expect_rcf_error "rcf: algebraic interval refinement budget exhausted"
+  expect_rcf_error "rcf: algebraic interval refinement budget exhausted; increase rcf.algebraic.maxDoublings or rcf.algebraic.directDepth"
 
 end Hex.RCF.TotalAlgebraicProofs
 
@@ -83,3 +87,7 @@ end Hex.RCF.TotalAlgebraicProofs
 /-- info: '_private.HexRCF.TotalAlgebraicProofs.0.Hex.RCF.TotalAlgebraicProofs.canonical_sections' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.TotalAlgebraicProofs.canonical_sections
+
+/-- info: '_private.HexRCF.TotalAlgebraicProofs.0.Hex.RCF.TotalAlgebraicProofs.canonical_close_sections' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.TotalAlgebraicProofs.canonical_close_sections
