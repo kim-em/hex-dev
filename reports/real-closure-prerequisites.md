@@ -110,7 +110,9 @@ Local Lake builds pass for all four libraries and `HexQuerySemantics`.
 The expanded real-algebraic conformance module and `HexRealAlgebraicMathlibTests`
 compile. [The direct-recognition verification](bench-results/prerequisite-direct-recognition-verification.json)
 records a full default build, full conformance build, semantic headline guards
-and all 71 real / 44 Sturm benchmark smoke cases. The axiom guards admit exactly `propext`, `Classical.choice`, and
+and its 71 real / 44 Sturm benchmark smoke cases. [Merged-base follow-up checks](bench-results/prerequisite-followup-merged-base-verification.json)
+cover the current 71 cases in each executable, both ordinary-kernel companion
+test targets and the new short-chain and external-query registrations. The axiom guards admit exactly `propext`, `Classical.choice`, and
 `Quot.sound`; no new axiom, admission or native_decide is introduced.
 The Mathlib-free benchmark target compiles and all shipped-API verification cases pass.
 [Retained fixed-case baseline observations](bench-results/real-algebraic-readiness-baseline/results.json)
@@ -123,9 +125,11 @@ field-sign conformance and ordinary-kernel axiom guards.
 [The conversion/API rebase verification](bench-results/prerequisite-conversion-rebase-verification.json)
 identifies checks on base `c74bc64a0`, including both companion test targets.
 The square-root simplification has 83 fresh exact-oracle cases with zero skips;
-fresh fixtures match the committed file byte for byte. Required CI on
-[PR #10580](https://github.com/kim-em/hex-dev/pull/10580) checks the phase
-recording and final revision before merge.
+fresh fixtures match the committed file byte for byte. [Required CI for the merged
+Phase-3 PR #10580](bench-results/prerequisite-required-ci-4a028ba84.json)
+passes on its recorded source, using exactly 360 seconds of the 360-second
+benchmark-verification cap. It does not attest the follow-up changes; their
+required CI must pass separately without weakening that cap.
 [The raw-artifact availability check](bench-results/prerequisite-profile-availability.json)
 finds 38 prerequisite-readiness capture directories unavailable at their recorded
 local paths. Committed manifests, summaries, diagnostics and completed timing
