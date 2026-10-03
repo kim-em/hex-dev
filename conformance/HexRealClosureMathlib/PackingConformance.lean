@@ -33,7 +33,7 @@ open CoefficientSignsConformance
 private theorem clean : context.canReduce = true := by
   rw [context.reduce_checked]
   simp only [context, Context.root_adjoin, Context.clean_adjoin,
-    Hex.SignDetMathlib.GraphSignsConformance.source_raw,
+    CoefficientSignsConformance.source_raw,
     Hex.SignDet.Conformance.singletonRaw, ← Array.all_toList]
   decide +kernel
 
@@ -46,7 +46,7 @@ theorem reduction_eq : reduction = context.reduce := by
   funext p
   rw [Context.reduce, dite_eq_left clean]
   simp only [context, Context.root_adjoin,
-    Hex.SignDetMathlib.GraphSignsConformance.source_raw,
+    CoefficientSignsConformance.source_raw,
     Hex.SignDet.Conformance.singletonRaw, reduction]
 
 theorem literal_sign : literal.sign = 1 := by
@@ -110,12 +110,12 @@ theorem literal_decoding :
   decide +kernel
 
 @[expose] def foreign :=
-  Context.adjoin Hex.SignDetMathlib.GraphSignsConformance.source (fun _ => false)
+  Context.adjoin CoefficientSignsConformance.source (fun _ => false)
 
 set_option maxRecDepth 32768 in
 private theorem foreign_query : foreign.queryPoly Sturm.Fixtures.p = 0 := by
   simp only [Context.queryPoly, Context.queryRemainder, foreign, Context.root_adjoin,
-    Hex.SignDetMathlib.GraphSignsConformance.source_raw,
+    CoefficientSignsConformance.source_raw,
     Hex.SignDet.Conformance.singletonRaw, DensePoly.pseudoDivMod,
     ← Array.foldl_toList, Array.toList_range]
   decide +kernel
@@ -132,7 +132,7 @@ private theorem foreign_reduce : (fun p : DensePoly Rat => p) = foreign.reduce :
   have hc : foreign.canReduce = false := by
     rw [foreign.reduce_checked]
     simp only [foreign, Context.root_adjoin, Context.clean_adjoin,
-      Hex.SignDetMathlib.GraphSignsConformance.source_raw,
+      CoefficientSignsConformance.source_raw,
       Hex.SignDet.Conformance.singletonRaw, ← Array.all_toList]
     decide +kernel
   rw [Context.reduce, dite_eq_right (by rw [hc]; decide)]

@@ -7,7 +7,7 @@ module
 
 public import HexRealClosureMathlib.Algebraic
 public import HexRealRootsMathlib.RealClosed
-public import HexSignDetMathlib.GraphSignsConformance
+public import HexSignDet.Conformance
 public meta import HexRealClosure.Algebraic
 public meta import HexSignDet.Conformance
 
@@ -19,8 +19,21 @@ these examples. Cross-level graph serialization is a separate interface. -/
 namespace Hex.RealClosure.Algebraic.CoefficientSignsConformance
 
 open Hex.SignDet Hex.SignDet.Conformance
-open Hex.SignDetMathlib.GraphSignsConformance
 open scoped Hex
+
+/-- A count-one source descriptor from the existing literal kernel replay. -/
+@[expose] def source : Descriptor Rat Nat Sturm.orderSign 7 := by
+  have h := RawDescriptor.check_eq selected_kernel.1
+  have hc : (Replay.leaf singletonNode).check Sturm.orderSign 7 singletonRaw.head
+      singletonRaw.lower singletonRaw.upper singletonRaw.queries = true := by
+    obtain ⟨hc, _⟩ := h.2.2
+    exact hc
+  exact Descriptor.ofTable singletonRaw (.leaf singletonNode) h.1 h.2.1 hc (by
+    obtain ⟨_, hone⟩ := h.2.2
+    exact hone)
+
+theorem source_raw : source.raw = singletonRaw := by
+  simp only [source, Descriptor.ofTable_raw]
 
 @[expose] def context := Context.adjoin source (fun _ => true)
 @[expose] def stored : DensePoly Rat := Sturm.Fixtures.p + 2 * Sturm.Fixtures.x
