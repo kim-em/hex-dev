@@ -7,6 +7,7 @@ module
 
 public import HexRealClosure.SignRequests
 public import HexSignDet.Codec.GraphLaws
+public import HexSignDet.Codec.FiniteGraph
 public import HexSignDet.DagReplay
 public import HexSignDet.DagBounds
 import all HexSignDet.Codec
@@ -29,6 +30,17 @@ structure SignEvidence (E Ctx : Type) [Zero E] [DecidableEq E] where
 
 namespace SignEvidence
 variable {E Ctx : Type} [Zero E] [DecidableEq E] [DecidableEq Ctx]
+
+/-- The literal coefficients required to decode a packet, including its
+selected-root binding and every stored graph entry. Duplicates are retained. -/
+@[expose] def coefficients (raw : RawDescriptor E Ctx) (evidence : SignEvidence E Ctx) : List E :=
+  Codec.Coefficients.poly raw.head ++ Codec.Coefficients.endpoint raw.lower ++
+    Codec.Coefficients.endpoint raw.upper ++ evidence.queries.flatMap Codec.Coefficients.poly ++
+    Codec.Coefficients.graph evidence.graph
+
+/-- The exact contexts required by the root binding and all graph entries. -/
+@[expose] def contexts (raw : RawDescriptor E Ctx) (evidence : SignEvidence E Ctx) : List Ctx :=
+  raw.context :: Codec.graphContexts evidence.graph
 
 /-- The packet contains one full root binding and one shared graph. Readers
 must supply that exact root and the required ordered keys. -/
@@ -65,6 +77,32 @@ theorem codec_roundtrip (value : ValueCodec E) (ctx : ValueCodec Ctx)
     evidence.graph root shape subjects bounds
   simp [codec, Codec.tuple, Codec.Json.getArr_arr, SignRequests.readBinding, binding,
     Codec.read_list _ _ (Codec.read_poly value hv),
+    Codec.read_vector _ _ Codec.read_int evidence.values, graph,
+    bind, Except.bind, pure, Except.pure]
+
+/-- A finite predecessor reader need only cover the packet's stored literals.
+This includes scales, quotients, endpoints and unreachable graph entries. -/
+theorem codec_covered (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    (raw : RawDescriptor E Ctx) (evidence : SignEvidence E Ctx)
+    (hv : value.Covers (coefficients raw evidence)) (hc : ctx.Covers (contexts raw evidence))
+    (root : evidence.graph.root < evidence.graph.entries.size)
+    (shape : ∀ e ∈ evidence.graph.entries, Codec.Shape e.node)
+    (subjects : ∀ e ∈ evidence.graph.entries,
+      Codec.bindings raw.context raw.head raw.lower raw.upper e.node = true)
+    (bounds : ∀ (i : Nat) (h : i < evidence.graph.entries.size),
+      ∀ pair ∈ evidence.graph.entries[i].children, pair.1 < i ∧ pair.2 < i) :
+    (codec value ctx raw).decode ((codec value ctx raw).encode evidence) = .ok evidence := by
+  simp only [coefficients, ValueCodec.covers_append, ValueCodec.covers_flatMap] at hv
+  simp only [contexts, ValueCodec.covers_cons] at hc
+  have poly := fun p h => Codec.read_poly_covered value p (hv.1.2 p h)
+  have binding := SignRequests.readRoot_binding value ctx raw hc.1
+    (fun x hx => hv.1.1.1.1 x (by simpa [Codec.Coefficients.poly] using hx))
+    (fun x hx => hv.1.1.1.2 x (by simp [Codec.Coefficients.endpoint, hx]))
+    (fun x hx => hv.1.1.2 x (by simp [Codec.Coefficients.endpoint, hx]))
+  have graph := Codec.read_graph_covered value ctx raw.context raw.head raw.lower raw.upper
+    evidence.graph hv.2 hc.2 root shape subjects bounds
+  simp [codec, Codec.tuple, Codec.Json.getArr_arr, SignRequests.readBinding, binding,
+    Codec.read_list_of _ _ evidence.queries poly,
     Codec.read_vector _ _ Codec.read_int evidence.values, graph,
     bind, Except.bind, pure, Except.pure]
 
@@ -207,6 +245,36 @@ theorem codec_ofSigns [Hashable E] [Hashable Ctx]
   codec_roundtrip value ctx hv hc context.root.raw (ofSigns signs)
     (Dag.encode_root signs.evidence) (ofSigns_shape context signs) (ofSigns_bindings context signs)
     (Dag.encode_bounds signs.evidence)
+
+/-- Checked production supplies all parser shape and binding premises;
+partial predecessor readers require only finite literal coverage. -/
+theorem codec_ofSigns_covered [Hashable E] [Hashable Ctx]
+    (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    (context : Context E Ctx coeffSign parent) {queries : List (DensePoly E)}
+    (signs : SelectedSigns context.root queries)
+    (hv : value.Covers (coefficients context.root.raw (ofSigns signs)))
+    (hc : ctx.Covers (contexts context.root.raw (ofSigns signs))) :
+    (codec value ctx context.root.raw).decode
+      ((codec value ctx context.root.raw).encode (ofSigns signs)) = .ok (ofSigns signs) :=
+  codec_covered value ctx context.root.raw (ofSigns signs) hv hc
+    (Dag.encode_root signs.evidence) (ofSigns_shape context signs) (ofSigns_bindings context signs)
+    (Dag.encode_bounds signs.evidence)
+
+/-- Actual printing and parsing preserve producer output under finite
+predecessor coverage and the existing lexical precheck. -/
+theorem bytes_ofSigns_covered [Hashable E] [Hashable Ctx]
+    (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    (context : Context E Ctx coeffSign parent) {queries : List (DensePoly E)}
+    (signs : SelectedSigns context.root queries)
+    (hv : value.Covers (coefficients context.root.raw (ofSigns signs)))
+    (hc : ctx.Covers (contexts context.root.raw (ofSigns signs)))
+    (limits : Codec.Limits)
+    (bytes : Codec.checkBytes limits
+      ((codec value ctx context.root.raw).encodeBytes (ofSigns signs)) = .ok ()) :
+    (codec value ctx context.root.raw).decodeBytes
+      ((codec value ctx context.root.raw).encodeBytes (ofSigns signs)) limits = .ok (ofSigns signs) :=
+  ValueCodec.decode_encode_of _ _
+    (codec_ofSigns_covered value ctx context signs hv hc) limits bytes
 
 /-- The producer packet survives actual bytes under lawful coefficient and
 context codecs, provided its printed bytes pass the lexical policy, including
