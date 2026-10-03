@@ -7,10 +7,42 @@ module
 
 public import HexRealClosure.SignRequests
 public import HexRealClosureMathlib.SignFacts
+import all Init.Data.Array.BasicAux
 
 public section
 
 namespace Hex.RealClosure.Algebraic
+
+private theorem mapM_slots {α β : Type} (f : α → Option β) (xs : Array α)
+    (ys : {a : Array β // a.size = xs.size}) (h : xs.mapM' f = some ys) :
+    ∀ i (hi : i < xs.size), f xs[i] = some (ys.val[i]'(by omega)) := by
+  let rec loop (i : Nat) (acc : {a : Array β // a.size = i}) (hle : i ≤ xs.size)
+      (slots : ∀ j (hj : j < i),
+        f (xs[j]'(by omega)) = some (acc.val[j]'(by omega)))
+      (run : Array.mapM'.go f xs i acc hle = some ys) :
+      ∀ j (hj : j < xs.size), f xs[j] = some (ys.val[j]'(by omega)) := by
+    by_cases done : i = xs.size
+    · have same : acc.val = ys.val := by
+        have values := congrArg (Option.map Subtype.val) run
+        cases done
+        simpa [Array.mapM'.go] using values
+      intro j hj
+      simpa only [same] using slots j (by omega)
+    · rw [Array.mapM'.go] at run
+      simp only [dite_eq_right done, bind, Option.bind] at run
+      cases hf : f (xs[i]'(by omega)) with
+      | none => simp [hf] at run
+      | some b =>
+        simp only [hf] at run
+        apply loop (i + 1) ⟨acc.val.push b, by simp [acc.property]⟩ (by omega) _ run
+        intro j hj
+        by_cases previous : j < i
+        · simpa [Array.getElem_push, acc.property, previous] using slots j previous
+        · have same : j = i := by omega
+          subst j
+          simpa [Array.getElem_push, acc.property] using hf
+  termination_by xs.size - i
+  exact loop 0 ⟨#[], rfl⟩ (by omega) (by omega) h
 
 variable {E Ctx : Type} {K : Type v} [Zero E] [DecidableEq E]
 variable [One E] [Add E] [Neg E] [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]
@@ -34,11 +66,12 @@ theorem, rather than recomputed while selecting the supplied evidence. -/
   match h : request.signs? context memo with
   | none => none
   | some signs => some ⟨request.polynomial, request.sign, by
-      have actual : context.signPoly request.polynomial = signs.value := by
-        rw [context.signPoly_spec f hz h1 ha hs hm hnat hsign hn hi,
-          Context.evalPoly, Context.rootValue]
-        exact (signs.value_at_root f hz h1 ha hs hm hnat hsign).symm
-      exact actual.trans (SignRequest.signs_value h)⟩
+      rw [context.signPoly_spec f hz h1 ha hs hm hnat hsign hn hi,
+        Context.evalPoly, Context.rootValue]
+      have values := signs.signs.values_at_root f hz h1 ha hs hm hnat hsign
+      have slot := congrArg (fun xs : List Int => xs[signs.index.val]?) values
+      have bound : signs.index.val < signs.queries.length := signs.index.isLt
+      simpa [Hex.SignDet.signsAt, bound, signs.query, signs.sign] using slot.symm⟩
 
 theorem Context.readRequest_fields (context : Context E Ctx coeffSign parent)
     {head : DensePoly E} {lower upper : Endpoint E}
@@ -71,8 +104,23 @@ individual facts' erased proofs. -/
     (memo : Array (SignDet.Dag.Checked coeffSign parent head lower upper))
     (requests : Array (SignRequest E)) :
     Option {facts : Array (SignFact context) // facts.size = requests.size} :=
+  let context := context
+  let memo := memo
   requests.mapM' fun request =>
     context.readRequest? f hz h1 ha hs hm hnat hsign hn hi memo request
+
+/-- Every returned slot retains the corresponding request, in the same order. -/
+theorem Context.readRequests_fields (context : Context E Ctx coeffSign parent)
+    {head : DensePoly E} {lower upper : Endpoint E}
+    (memo : Array (SignDet.Dag.Checked coeffSign parent head lower upper))
+    (requests : Array (SignRequest E))
+    (facts : {a : Array (SignFact context) // a.size = requests.size})
+    (h : context.readRequests? f hz h1 ha hs hm hnat hsign hn hi memo requests = some facts)
+    (i : Nat) (indexLt : i < requests.size) :
+    (facts.val[i]'(by omega)).polynomial = requests[i].polynomial ∧
+      (facts.val[i]'(by omega)).sign = requests[i].sign := by
+  exact context.readRequest_fields f hz h1 ha hs hm hnat hsign hn hi memo
+    requests[i] facts.val[i] (mapM_slots _ requests facts h i indexLt)
 
 /-- Decode requests bound to the exact selected-root subject, then resolve
 all of them against the supplied checked memo. The predecessor codec controls
@@ -83,6 +131,8 @@ lower-level decoding; this function adds no graph or query production. -/
     (memo : Array (SignDet.Dag.Checked coeffSign parent head lower upper))
     (input : ByteArray) (limits : SignDet.Codec.Limits := {}) :
     Except String (Array (SignFact context)) := do
+  let context := context
+  let memo := memo
   let requests ← (SignRequests.codec value ctx context.root.raw).decodeBytes input limits
   match context.readRequests? f hz h1 ha hs hm hnat hsign hn hi memo requests with
   | none => throw "sign request missing or mismatched"

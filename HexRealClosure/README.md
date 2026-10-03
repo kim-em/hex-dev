@@ -934,11 +934,16 @@ proofs use the shared byte parser and the predecessor reader's coverage of the
 actual stored coefficients.
 
 `Context.readRequest?` selects the original stored query directly, without
-computing a native query reduction. The companion proves agreement with the
+computing a native query reduction. The graph must contain the original stored
+queries; a graph containing only their reduced representatives is a different
+input. Several requests can reference one joint table entry, including a
+nonempty derivative prefix. The reader extracts its unique count-one row and
+checks each requested supplementary query slot. The companion proves agreement with the
 total scalar sign using the selected-sign and scalar-sign correspondence
 theorems. `Context.decodeRequests` decodes the bytes and resolves every ordered
 reference against one memo; any missing entry or wrong sign rejects the whole
-list. Its interpretation arguments occur only in erased proofs. The core
+list. A pointwise theorem preserves the request order and each literal
+polynomial/sign pair. Its interpretation arguments occur only in erased proofs. The core
 `SignRequest.signs?` reader has no interpretation arguments.
 
 `SignRequestsConformance` restores two different stored polynomials, rejects

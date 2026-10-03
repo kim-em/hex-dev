@@ -62,6 +62,8 @@ def bytesPass : Bool :=
       (decode memo (changed {source.raw with context := 8})).toOption.isNone &&
       (decode memo (changed {source.raw with head := 2 * source.raw.head})).toOption.isNone &&
       (decode memo (changed {source.raw with upper := .finite 3})).toOption.isNone &&
+      (decode memo (changed {source.raw with lower := .finite (-1)})).toOption.isNone &&
+      (decode memo (changed {source.raw with signs := [1]})).toOption.isNone &&
       (decode memo (changed {source.raw with indices := [1], signs := [1]})).toOption.isNone &&
       (decode memo (bytes.extract 0 (bytes.size - 2))).toOption.isNone &&
       empty.isEmpty &&
@@ -69,6 +71,37 @@ def bytesPass : Bool :=
         ((Element.codec ValueCodec.rat).encode literal)).toOption.isNone)) == some true
 
 #guard bytesPass
+
+@[expose] def readAt (selected : Context Rat Nat Sturm.orderSign 7)
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (memo : Array (Dag.Checked Sturm.orderSign 7 head lower upper)) (request : SignRequest Rat) :
+    Option (SignFact selected) :=
+  selected.readRequest? (fun q : Rat => (q : ℝ))
+    (fun _ => Rat.cast_eq_zero) (by simp)
+    (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
+    (fun _ _ => Rat.cast_mul _ _) (fun _ => by simp) rational_sign
+    (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _) memo request
+
+/-- Both roots have a derivative prefix. All signs come from the same joint
+entry; its individual child entries do not contain the complete prefix. -/
+def jointPass : Bool :=
+  (do
+    let raw := {partialRaw with lower := .negInf, upper := .posInf}
+    let positive ← Descriptor.validate Sturm.orderSign 7 raw
+    let negative ← Descriptor.validate Sturm.orderSign 7 {raw with signs := [-1]}
+    let supplied ← (positive.buildSigns [stored, Sturm.Fixtures.x - 1]).toOption
+    let graph := Dag.encode supplied.evidence
+    let memo ← graph.validate? Sturm.orderSign 7 raw.head raw.lower raw.upper
+    let pos := Context.adjoin positive (fun _ => true)
+    let neg := Context.adjoin negative (fun _ => true)
+    pure ((readAt pos memo ⟨stored, 1, graph.root⟩).isSome &&
+      (readAt pos memo ⟨Sturm.Fixtures.x - 1, 0, graph.root⟩).isSome &&
+      (readAt neg memo ⟨stored, -1, graph.root⟩).isSome &&
+      (readAt neg memo ⟨Sturm.Fixtures.x - 1, -1, graph.root⟩).isSome &&
+      (readAt pos memo ⟨stored, -1, graph.root⟩).isNone &&
+      (readAt pos memo ⟨stored + 1, 1, graph.root⟩).isNone)) == some true
+
+#guard jointPass
 
 @[expose] def decodeUpper (value : ValueCodec (Element context))
     (memo : Array (Dag.Checked Element.sign 8 NestedSignsConformance.root.raw.head
@@ -130,7 +163,7 @@ def nestedBytesPass : Bool :=
     let lowerFacts ← (decode lowerMemo (reader.encodeBytes requests)).toOption
     let lowerReader := Element.signCodec ValueCodec.rat
       (lowerFacts.toList ++ [SignCodecConformance.oneFact, negOneFact])
-    let polynomial := DensePoly.ofCoeffs #[NestedSignsConformance.rational 0, literal]
+    let polynomial := DensePoly.ofCoeffs #[NestedSignsConformance.rational 0, small]
     let upperSigns ← (NestedSignsConformance.next.buildSigns [polynomial]).toOption
     let leaf ← match upperSigns.evidence with
       | .leaf node => some node
@@ -146,11 +179,14 @@ def nestedBytesPass : Bool :=
     let encoded := (Element.codec (Element.codec ValueCodec.rat)).encode
       (Element.ofPoly polynomial : Element NestedSignsConformance.next)
     let restored ← (valueReader.decode encoded).toOption
+    let storedFact ← lowerFacts[0]?
     let missing := Element.signCodec ValueCodec.rat
-      [SignCodecConformance.oneFact, negOneFact]
+      [storedFact, SignCodecConformance.oneFact, negOneFact]
     let wrong : Array (SignRequest (Element context)) := #[⟨polynomial, -1, 0⟩]
     pure (restored.polynomial == polynomial && Element.sign restored == 1 &&
       upperFacts.size == 1 &&
+      (SignRequests.readBinding missing ValueCodec.nat NestedSignsConformance.root.raw
+        (SignRequests.binding lowerReader ValueCodec.nat NestedSignsConformance.root.raw)).toOption.isSome &&
       (decodeUpper missing upperMemo bytes).toOption.isNone &&
       (decodeUpper lowerReader upperMemo (upperWire.encodeBytes wrong)).toOption.isNone)) == some true
 
@@ -171,6 +207,14 @@ def nestedBytesPass : Bool :=
 /-- info: 'Hex.RealClosure.Algebraic.Context.decodeRequests_evidence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Context.decodeRequests_evidence
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.readRequests_fields' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Context.readRequests_fields
+
+/-- info: 'Hex.RealClosure.Algebraic.SignRequests.codec_bytes_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms SignRequests.codec_bytes_roundtrip
 
 /-- info: 'Hex.RealClosure.Algebraic.SignRequestsConformance.nestedBytesPass' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

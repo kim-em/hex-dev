@@ -49,22 +49,41 @@ variable {E Ctx : Type} [Zero E] [DecidableEq E]
 variable [One E] [Add E] [Neg E] [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]
 variable [DecidableEq Ctx] {coeffSign : E → Int} {parent : Ctx}
 
-/-- Bind directly to the original stored query. Lookup computes no native
-query reduction; any preparation witnesses belong to the checked graph. -/
+/-- One literal query slot in a checked joint table at the selected root. -/
+structure Checked (context : Context E Ctx coeffSign parent) (request : SignRequest E) where
+  queries : List (DensePoly E)
+  signs : SelectedSigns context.root queries
+  index : Fin queries.length
+  query : queries[index.val] = request.polynomial
+  sign : signs.values[index.val] = request.sign
+
+/-- Extract the full selected row, then bind one original stored query slot.
+Several requests can share a joint entry, including a nonempty derivative
+prefix. Lookup computes no native query reduction. -/
 @[expose] def signs? (request : SignRequest E) (context : Context E Ctx coeffSign parent)
     {head : DensePoly E} {lower upper : Endpoint E}
     (memo : Array (Dag.Checked coeffSign parent head lower upper)) :
-    Option (SelectedSigns context.root [request.polynomial]) :=
-  SelectedSigns.readMemo? context.root [request.polynomial] #v[request.sign] memo request.entry
-
-theorem signs_value {request : SignRequest E} {context : Context E Ctx coeffSign parent}
-    {head : DensePoly E} {lower upper : Endpoint E}
-    {memo : Array (Dag.Checked coeffSign parent head lower upper)}
-    {signs : SelectedSigns context.root [request.polynomial]}
-    (h : request.signs? context memo = some signs) : signs.value = request.sign := by
-  obtain ⟨bound, _, accepted⟩ := SelectedSigns.readMemo_evidence h
-  obtain ⟨_, _, values, _⟩ := SelectedSigns.ofMemo_evidence accepted
-  simp [SelectedSigns.value, values]
+    Option (Checked context request) := do
+  let bound ← Dag.bindDomain? coeffSign parent memo context.root.raw.head
+    context.root.raw.lower context.root.raw.upper
+  let entry ← bound[request.entry]?
+  let prefixLength := context.root.raw.queries.length
+  let queries := entry.value.node.queries.drop prefixLength
+  let row ← (entry.value.node.system.tableRows.toList.filter fun row =>
+    decide (row.1.take prefixLength = context.root.raw.signs)).head?
+  let values := row.1.drop prefixLength
+  if hv : values.length = queries.length then
+    let vector : Vector Int queries.length := ⟨values.toArray, by simpa using hv⟩
+    let signs ← SelectedSigns.ofMemo? context.root queries vector bound request.entry
+    let index := queries.findIdx (fun p => decide (p = request.polynomial))
+    if hi : index < queries.length then
+      if hq : queries[index] = request.polynomial then
+        if hs : signs.values[index] = request.sign then
+          return ⟨queries, signs, ⟨index, hi⟩, hq, hs⟩
+        else none
+      else none
+    else none
+  else none
 
 end SignRequest
 
@@ -107,19 +126,10 @@ theorem readBinding_checked (value : ValueCodec E) (ctx : ValueCodec Ctx)
     simp only [hr, bind, Except.bind] at h
     split at h
     · rename_i same
-      simpa only [same] using hr
+      simp only [same]
     · contradiction
 
-private theorem read_endpoint_of (value : ValueCodec E) (endpoint : Endpoint E)
-    (covered : ∀ x, endpoint = .finite x → value.decode (value.encode x) = .ok x) :
-    Codec.readEndpoint value (Codec.endpoint value endpoint) = .ok endpoint := by
-  cases endpoint with
-  | negInf => rfl
-  | posInf => rfl
-  | finite x =>
-    simp [Codec.readEndpoint, Codec.endpoint, Codec.Json.getArr_arr, covered x rfl,
-      bind, Except.bind, pure, Except.pure, Functor.map, Except.map]
-
+omit [DecidableEq Ctx] in
 /-- A root subject needs coverage only of its stored head, endpoints and
 actual full context value. No global law for a partial coefficient reader is
 assumed. -/
@@ -131,8 +141,8 @@ theorem readRoot_binding (value : ValueCodec E) (ctx : ValueCodec Ctx)
     (upper : ∀ x, raw.upper = .finite x → value.decode (value.encode x) = .ok x) :
     readRoot value ctx (binding value ctx raw) = .ok raw := by
   simp [readRoot, binding, Codec.tuple, Codec.Json.getArr_arr, context,
-    Codec.read_poly_of value raw.head head, read_endpoint_of value raw.lower lower,
-    read_endpoint_of value raw.upper upper, Codec.read_list _ _ Codec.read_nat,
+    Codec.read_poly_of value raw.head head, Codec.read_endpoint_of value raw.lower lower,
+    Codec.read_endpoint_of value raw.upper upper, Codec.read_list _ _ Codec.read_nat,
     Codec.read_list _ _ Codec.read_int, bind, Except.bind, pure, Except.pure]
 
 /-- Version 1 stores one complete root binding followed by ordered sign

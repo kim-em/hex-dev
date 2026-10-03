@@ -180,6 +180,17 @@ theorem read_endpoint {E : Type} [Zero E] [DecidableEq E]
   cases e <;> simp [readEndpoint, endpoint, Json.getArr_arr, bind, Except.bind, pure,
     Except.pure, h, Functor.map, Except.map]
 
+/-- An endpoint roundtrip needs only its actual finite coefficient. -/
+theorem read_endpoint_of (value : ValueCodec E) (endpoint : Endpoint E)
+    (covered : ∀ x, endpoint = .finite x → value.decode (value.encode x) = .ok x) :
+    Codec.readEndpoint value (Codec.endpoint value endpoint) = .ok endpoint := by
+  cases endpoint with
+  | negInf => rfl
+  | posInf => rfl
+  | finite x =>
+    simp [Codec.readEndpoint, Codec.endpoint, Codec.Json.getArr_arr, covered x rfl,
+      bind, Except.bind, Functor.map, Except.map]
+
 /-- The standard JSON array instances use the same ordered traversal. -/
 theorem read_jsonArray {α : Type} [Json.To α] [Json.From α]
     (h : ∀ x : α, Json.decode (Json.of x) = .ok x) (a : Array α) :
