@@ -357,7 +357,7 @@ private def outputFailure (budget : SearchBudget) (depth : Nat) (c : Cert) : Opt
   let terminal := budget.terminal.getD leafBudget
   let some bits := certBitsAt (terminal.maxDepth + 1) c | return .outputBits
   if bits > budget.maxOutputBits then return .outputBits
-  if !budget.backtrackOutput then none else do
+  if !budget.backtrackOutput && budget.maxRows.isNone && budget.maxNodes.isNone then none else do
     let some (rows, nodes, height) := certShape (terminal.maxDepth + 1) c | return .nodes
     let ancestors := budget.maxDepth - depth
     if rows >= depth || height > min terminal.maxDepth (depth - rows) + 1 then return .depth
@@ -425,7 +425,8 @@ def search (budget : SearchBudget) : Nat → Nat → SearchM (Option Cert)
   | depth + 1, n => do
       if HexArith.bitLength n > budget.maxBits then fail n .inputBits
       if let some c := (← get).memo.find? (fun c => c.subject == n &&
-          (!budget.backtrackOutput || (outputFailure budget (depth + 1) c).isNone)) then
+          ((!budget.backtrackOutput && budget.maxRows.isNone && budget.maxNodes.isNone) ||
+            (outputFailure budget (depth + 1) c).isNone)) then
         return some c
       if let some c ← leaf budget (depth + 1) n then
         if let some c ← remember budget (depth + 1) n c then return some c

@@ -195,7 +195,7 @@ jobs:
         if: steps.classify.outputs.docs_only != 'true'
         run: |
           python3 -m pip install --user -r scripts/conway/requirements.txt \
-            python-flint==0.9.0 z3-solver==4.15.4.0 sympy==1.14.0 gmpy2 cypari2 conway-polynomials matplotlib==3.11.1
+            python-flint==0.9.0 z3-solver==4.15.4.0 sympy==1.14.0 mpmath==1.3.0 gmpy2 cypari2 conway-polynomials matplotlib==3.11.1
           python3 -m unittest scripts/oracle/test_hermite_bench_drivers.py
           python3 -m unittest scripts/oracle/test_matrix_carriers.py scripts/oracle/test_rank_bench.py scripts/oracle/test_rank_stages.py
           python3 -m unittest scripts/bench/test_rank_measure.py scripts/bench/test_rank_analyze.py scripts/bench/test_rank_checker_analyze.py
@@ -411,7 +411,7 @@ jobs:
             hexbz_emit_fixtures hexpolyz_emit_fixtures \
             hexgf2_emit_fixtures hexgfq_emit_fixtures \
             hexgfqring_emit_fixtures hexgfqfield_emit_fixtures \
-            hexhensel_emit_fixtures hexprimality_emit_fixtures hexecpp_emit_fixtures \
+            hexhensel_emit_fixtures hexprimality_emit_fixtures hexecpp_emit_fixtures hexecpp_emit_class_polynomials \
             hexintfactor_emit_fixtures \
             hexconway_emit_fixtures \
             hexrowreduce_emit_fixtures hexdeterminant_emit_fixtures \
