@@ -111,12 +111,11 @@ LAKEFILE = REPO_ROOT / "lakefile.lean"
 # native target to the library that uses it, without exporting the target to
 # every executable in a downstream package.
 #
-# `extraDepTargets` and `moreLinkArgs` are validated but never written.
-# The former can name targets defined only in the mirror's own unmanaged Lake
-# skeleton, while the latter may be an arbitrary Lean expression (HexLLL's is
-# a platform conditional) with no `lakefile.toml` form. Synthesizing either
-# could produce a Lake file that does not elaborate, so the sync reports a
-# missing setting and refuses to publish instead.
+# `moreLinkArgs` may be an arbitrary Lean expression (HexLLL's is a platform
+# conditional), so it is written verbatim into Lean Lake files only; a TOML
+# mirror that lacks it stops the publication. `extraDepTargets` is validated
+# but never written, because it can name targets defined only in the mirror's
+# own unmanaged Lake skeleton.
 WRITTEN_LIB_SETTINGS = ("precompileModules", "moreLinkObjs")
 CHECKED_LIB_SETTINGS = ("extraDepTargets", "moreLinkArgs")
 BUILD_LIB_SETTINGS = WRITTEN_LIB_SETTINGS + CHECKED_LIB_SETTINGS
@@ -704,6 +703,23 @@ def _lean_settings(body: str) -> dict[str, str]:
     return settings
 
 
+def _set_lean_setting(body: str, name: str, value: str) -> str:
+    """Replace (or append) one setting of an indented Lean `lean_lib` body."""
+    lines = body.split("\n")
+    start = next((i for i, line in enumerate(lines)
+                  if re.match(rf"[ \t]+{re.escape(name)}[ \t]*:=", line)), None)
+    if start is None:
+        end = len(lines)
+        while end > 0 and not lines[end - 1].strip():
+            end -= 1
+        return "\n".join(lines[:end] + [f"  {name} := {value}"] + lines[end:])
+    stop = start + 1
+    while stop < len(lines) and lines[stop].strip() and not re.match(
+            r"[ \t]+[A-Za-z][A-Za-z0-9_']*[ \t]*:=", lines[stop]):
+        stop += 1
+    return "\n".join(lines[:start] + [f"  {name} := {value}"] + lines[stop:])
+
+
 def lean_lib_settings(text: str) -> dict[str, dict[str, str]]:
     """Every `lean_lib` in a Lean Lake file, mapped to its assigned settings."""
     libs: dict[str, dict[str, str]] = {}
@@ -780,6 +796,16 @@ def rewrite_lib_settings(entry: dict, clone: Path) -> list[str]:
         body_start = block.end()
         body = text[body_start:_block_end(text, body_start)]
         present = _lean_settings(body)
+    notes: list[str] = []
+    if "moreLinkArgs" in required and not toml:
+        # Written verbatim, so a platform conditional changed here (for
+        # example to leave `-ldl` off Windows) reaches the mirror.
+        expected = required["moreLinkArgs"]
+        if present.get("moreLinkArgs") != expected:
+            body = _set_lean_setting(body, "moreLinkArgs", expected)
+            text = text[:body_start] + body + text[_block_end(text, body_start):]
+            present = _lean_settings(body)
+            notes.append(f"  moreLinkArgs on lean_lib {lib} ({lakefile.name})")
     for setting in CHECKED_LIB_SETTINGS:
         if setting in required and setting not in present:
             raise RuntimeError(
@@ -788,7 +814,6 @@ def rewrite_lib_settings(entry: dict, clone: Path) -> list[str]:
                 "it, because it names targets defined only in this repository's "
                 "own Lake skeleton"
             )
-    notes: list[str] = []
     if "precompileModules" not in required and "precompileModules" in present:
         # Dropping the flag here must reach the mirror too: every downstream
         # user pays for a precompiled library, so the mirror may not keep one

@@ -445,8 +445,10 @@ lean_lib HexLatticeEnumTests where
 lean_lib HexLLL where
   precompileModules := true
   extraDepTargets := #[`hexlllffi]
+  -- `dlopen` lives in libdl on Linux, in libc on macOS, and is absent on
+  -- Windows, where the provider uses LoadLibrary instead.
   moreLinkArgs :=
-    if System.Platform.isOSX then
+    if System.Platform.isOSX || System.Platform.isWindows then
       #[]
     else
       #["-ldl"]

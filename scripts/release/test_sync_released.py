@@ -1113,6 +1113,25 @@ class LibBuildSettingTests(unittest.TestCase):
                       lakefile.read_text(encoding="utf-8"))
         self.assertEqual(self.rewrite(entry), [])
 
+    def test_lean_mirror_link_arguments_follow_the_monorepo(self) -> None:
+        lakefile = self.repo / "lakefile.lean"
+        lakefile.write_text(
+            "lean_lib Linked where\n  precompileModules := true\n"
+            "  extraDepTargets := #[`consumerffi]\n  moreLinkArgs :=\n"
+            "    if System.Platform.isOSX then\n      #[\"-lold\"]\n"
+            "    else\n      #[]\n\nlean_exe check where\n  root := `Check\n",
+            encoding="utf-8")
+        entry = {"lib": "Linked", "lakefile": "lean"}
+        self.assertEqual(self.rewrite(entry),
+                         ["  moreLinkArgs on lean_lib Linked (lakefile.lean)"])
+        self.assertEqual(
+            lakefile.read_text(encoding="utf-8"),
+            "lean_lib Linked where\n  precompileModules := true\n"
+            "  extraDepTargets := #[`consumerffi]\n"
+            '  moreLinkArgs := if System.Platform.isOSX then #[] else #["-ldl"]\n'
+            "\nlean_exe check where\n  root := `Check\n")
+        self.assertEqual(self.rewrite(entry), [])
+
     def test_a_bare_lean_lib_gains_a_settings_block(self) -> None:
         lakefile = self.repo / "lakefile.lean"
         lakefile.write_text(
@@ -1194,10 +1213,12 @@ class LibBuildSettingTests(unittest.TestCase):
 
     def test_a_missing_link_setting_stops_the_publication(self) -> None:
         lakefile = self.repo / "lakefile.lean"
+        # moreLinkArgs is written into Lean mirrors, but extraDepTargets names
+        # skeleton targets and cannot be.
         lakefile.write_text(
-            "lean_lib Linked where\n  extraDepTargets := #[`consumerffi]\n",
+            "lean_lib Linked where\n  precompileModules := true\n",
             encoding="utf-8")
-        with self.assertRaisesRegex(RuntimeError, "must set moreLinkArgs"):
+        with self.assertRaisesRegex(RuntimeError, "must set extraDepTargets"):
             self.rewrite({"lib": "Linked", "lakefile": "lean"})
 
     def test_a_missing_mirror_library_stops_the_publication(self) -> None:
