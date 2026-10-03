@@ -343,7 +343,11 @@ snapshot and rebuilds everything.
 The cached Lean and IR directories cover every root-package module namespace,
 not only `Hex*`; in particular, the `Examples.*` release modules must survive a
 restore. Dependency packages keep their own build directories and are not part
-of this cache.
+of this cache. The Pages workflow caches the builds of the non-Mathlib packages
+it compiles (Verso and its relatives, TauCeti, and Batteries' compiled objects,
+which Verso's precompiled modules need) in a separate entry keyed only on the
+runner and the `lean-toolchain` and `lake-manifest.json` hash, saved after a
+successful build when that key has no entry yet.
 
 Every build workflow installs the exact `lean-toolchain` pin through
 `scripts/ci/setup_lean_toolchain.sh`, which downloads the canonical GitHub
