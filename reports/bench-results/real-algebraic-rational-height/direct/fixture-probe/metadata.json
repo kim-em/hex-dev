@@ -1,0 +1,33 @@
+{
+  "source_commit": "a7e5fb9ebe61344b7af1d6bfe6c16ca1e6b7d35a",
+  "purpose": "Single fixture-preparation probe, not a scientific scaling verdict or comparison.",
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+    "_child",
+    "--bench",
+    "Hex.RealAlgebraicBench.runRationalRecognition",
+    "--param",
+    "262144",
+    "--target-nanos",
+    "1000000"
+  ],
+  "cpu": 75,
+  "load_before": [
+    2.4892578125,
+    3.1748046875,
+    13.134765625
+  ],
+  "executable_sha256": "63ae5576437c4608455713991c2a6bd9b2ba8f8874dfea70c6fdcf96c6475acb",
+  "source_sha256": {
+    "bench/HexRealAlgebraic/Bench.lean": "67ae515423e02e123121b94aada00bf4d2f2179d63cf597bf41fd2a422bf6aad",
+    "HexRealAlgebraic/Order.lean": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+    "reports/bench-results/real-algebraic-rational-height/direct/derivation.md": "6436897c5cb7c248e543b837328d05c5611e7d50d272d68d7110d1c6355dbfcf"
+  },
+  "exit_code": -15,
+  "elapsed_seconds": 969.4968965089975,
+  "load_after": [
+    4.640625,
+    4.525390625,
+    7.408203125
+  ]
+}

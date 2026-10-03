@@ -35,11 +35,14 @@ explicit structural-output-hash analysis, which is supplied above for the new
 measurement. No historical declaration or failed/inconclusive result is edited.
 
 This fixture approaches 1/3 rather than a dyadic boundary. The earlier fixture
-approaches one with separation 2/(2^b+1), making canonical dyadic preparation
-expensive. That historical height-and-boundary family and all its completed
-observations remain retained; the new family isolates coefficient-height growth
-for recognition and rational rounding, whose timed bodies do not use separation.
-No claim about the boundary preparation cost is waived by this choice.
+approaches one with separation 2/(2^b+1). That historical family and all its
+completed observations remain retained. Moving to 1/3 did not remove expensive
+canonical preparation: the retained native backtrace places the worker in the
+factorization prime planner's coefficient-norm square root. The first-rung
+preparation probe was terminated after 969.496897 seconds without producing a
+kernel observation. See `preparation-diagnostic/README.md`. No scientific
+verdict admits this declaration; the cause is separate from the timed bodies'
+coefficient-height model and cannot be waived by changing the fixture.
 
 `runRationalQuotient` is the previous coefficient-quotient expression on the
 same prepared input, as a comparison control. Its denominator D=3*A+2 yields
@@ -50,8 +53,8 @@ no cross-source fixture change is presented as an improvement.
 
 Scientific settings are the compiled four-rung custom ladder, four fixed
 trial-major outer trials and a 100 ms tuning target. A 600-second child cap
-allows expensive canonical preparation; it is an operational guard, not a
-scientific budget. Every completed sample and result is retained. Before/after
+is an operational guard, not a scientific budget; the preparation diagnostic
+exceeded it and therefore does not establish that this ladder is runnable. Every completed sample and result is retained. Before/after
 comparisons use adjacent arms in four alternating AB/BA blocks, matching actual
 output hashes at each parameter, on one automatically leased CPU. No quiet-core
 preflight, host-load rejection or retry-until-pass is used.
