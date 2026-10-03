@@ -1,0 +1,11 @@
+{
+  "scope": "post-capture input validation; hashes are not capture-time provenance",
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-allocation/.lake/build/bin/hexsigndet_bench",
+    "inspect-height-phases"
+  ],
+  "exit_code": 0,
+  "log_sha256": "1c228271e03ddebce10ab57c744c94e7daf0048ac13907182d3927ccd43edaa6",
+  "binary_sha256": "3beb9e7ca54d5748da0a157e6eea416b2b0307f264d380651f2f066f4858bb28",
+  "source_unchanged": true
+}

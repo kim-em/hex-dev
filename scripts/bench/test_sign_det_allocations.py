@@ -253,6 +253,18 @@ class AllocationValidationTests(unittest.TestCase):
             self.assertEqual(capture.digest(root / "collector-sources" / name), expected)
         self.check_self_checks(root, meta)
         self.check_callback_source(meta, module, generated_path)
+        self.assertEqual(len(meta["compile_commands"]), 3 + len(functions))
+        wrappers = {}
+        for i, function in enumerate(functions):
+            command = meta["compile_commands"][3 + i]
+            callback = meta["callbacks"][function]
+            self.assertIn("-DSIGN_DET_CALLBACK=" + callback["symbol"], command)
+            self.assertIn("-DSIGN_DET_RESULT=" + callback["result_type"], command)
+            self.assertEqual(sum(arg.startswith("-DSIGN_DET_CALLBACK=") for arg in command), 1)
+            self.assertEqual(sum(arg.startswith("-DSIGN_DET_RESULT=") for arg in command), 1)
+            self.assertEqual(command[-2], "-o")
+            self.assertTrue(command[-3].endswith("/scripts/bench/sign_det_allocations.c"))
+            wrappers[function] = command[-1]
         rows = [json.loads(line) for line in (root / "samples.jsonl").read_text().splitlines()]
         self.assertEqual(rows, meta["samples"])
         schedule = [(trial, n, f) for trial in range(1, trials + 1)
@@ -274,6 +286,7 @@ class AllocationValidationTests(unittest.TestCase):
             self.assertEqual(hashlib.sha256(raw).hexdigest(), row["dhat_sha256"])
             wrapper = next(arg.removeprefix("env LD_PRELOAD=").split()[0]
                            for arg in row["command"] if arg.startswith("env LD_PRELOAD="))
+            self.assertEqual(wrapper, wrappers[row["function"]])
             capture.check_events(row["counters"], json.loads(raw), wrapper)
             self.assertEqual(capture.counters(log.read_text()), row["counters"])
             key = row["function"], row["parameter"]
@@ -281,6 +294,141 @@ class AllocationValidationTests(unittest.TestCase):
                 self.assertEqual(row["counters"], observations[key])
             observations[key] = row["counters"]
         return meta, rows
+
+    def test_retained_height_capture(self):
+        import json
+        from pathlib import Path
+        functions = ["Hex.SignDetBench.Height.runReduce", "Hex.SignDetBench.Height.runCheck"]
+        heights = [8192, 16384, 32768, 65536, 131072, 262144, 524288]
+        meta, rows = self.check_supplement("height-25b179f5c", functions, heights, 3, 65,
+            module="Height", generated_path="height-25b179f5c/generated-height.c.gz")
+        root = Path(__file__).resolve().parents[2] / "reports/data/sign-det-allocations/height-25b179f5c"
+        inspection = json.loads((root / "height-inspection.json").read_text())
+        self.assertEqual(inspection["scope"], "post-capture input validation; hashes are not capture-time provenance")
+        self.assertEqual(inspection["exit_code"], 0)
+        self.assertEqual(inspection["revision"], meta["revision"])
+        self.assertEqual(inspection["git_status"], "")
+        self.assertLessEqual(inspection["started_utc"], inspection["finished_utc"])
+        self.assertEqual(inspection["source_sha256_before"], meta["source_sha256"])
+        self.assertEqual(inspection["source_sha256_after"], meta["source_sha256_after"])
+        self.assertEqual(inspection["binary_sha256_before"], meta["binary_sha256"])
+        self.assertEqual(inspection["binary_sha256_after"], meta["binary_sha256_after"])
+        self.assertEqual(capture.digest(root / "inspect-height.py"), inspection["script_sha256"])
+        self.assertEqual(inspection["command"], [rows[0]["command"][0], "inspect-height-phases"])
+        log = root / "height-inspection.log"
+        self.assertEqual(capture.digest(log), inspection["log_sha256"])
+        # The inspector prints only after phaseValid checks the actual data.
+        # The descriptive height fields alone are not that input validation.
+        inputs = [json.loads(line) for line in log.read_text().splitlines()]
+        self.assertEqual([row["height"] for row in inputs], heights)
+        for row in inputs:
+            self.assertEqual(row["coefficient"], "2^height-1")
+            self.assertEqual(row["head"], "X^3-1")
+            self.assertEqual(row["queryDegrees"], [2, 1, 0])
+            self.assertEqual(row["steps"], 3)
+            self.assertEqual(row["coefficientBits"], row["height"])
+            self.assertEqual(row["coefficientBytes"], (row["height"] + 7) // 8)
+        observations = {}
+        for row in rows:
+            input_row = next(i for i in inputs if i["height"] == row["parameter"])
+            key = "productionResultHash" if row["function"] == functions[0] else "replayResultHash"
+            self.assertEqual(row["result_hash"], hex(input_row[key]))
+            observations[row["function"], row["parameter"]] = row["counters"]
+        self.assertEqual(len(rows), 42)
+        import gzip
+        import hashlib
+        timing = root.parents[2] / "data/sign-det-height/e3e380d81"
+        timing_meta = json.loads((timing / "metadata.json").read_text())
+        timing_source = gzip.decompress((root / "timing-height.lean.gz").read_bytes())
+        measured_source = gzip.decompress((root / "measured-height.lean.gz").read_bytes())
+        self.assertEqual(hashlib.sha256(timing_source).hexdigest(),
+                         timing_meta["source_sha256"]["bench/HexSignDet/Height.lean"])
+        self.assertEqual(hashlib.sha256(measured_source).hexdigest(),
+                         meta["source_sha256"]["bench/HexSignDet/Height.lean"])
+        self.assertEqual(timing_source.count(b"(hash (runReduce i))"), 1)
+        self.assertEqual(timing_source.replace(b"(hash (runReduce i))", b"(hash (reductionHash i.reduction))"),
+                         measured_source)
+        before = timing_meta["source_sha256"]
+        after = meta["source_sha256"]
+        changed = {key: {"timing_sha256": before.get(key), "allocation_sha256": after.get(key)}
+                   for key in sorted(before.keys() | after.keys()) if before.get(key) != after.get(key)}
+        self.assertEqual(json.loads((root / "changed-sources.json").read_text()), changed)
+        expected = {}
+        for operation in ("Height.runReduce", "Height.runCheck"):
+            results = json.loads((timing / (operation + ".json")).read_text())["results"]
+            for result in results:
+                for point in result["points"]:
+                    if point["status"] != "ok":
+                        continue
+                    key = result["function"], point["param"]
+                    if key in expected:
+                        self.assertEqual(expected[key], point["result_hash"])
+                    expected[key] = point["result_hash"]
+        self.assertEqual(set(expected), set(observations))
+        for row in rows:
+            self.assertEqual(row["result_hash"], expected[row["function"], row["parameter"]])
+        for i, function in enumerate(functions):
+            wrapper = gzip.decompress((root / f"wrapper-{i}.so.gz").read_bytes())
+            self.assertEqual(hashlib.sha256(wrapper).hexdigest(), meta["callbacks"][function]["wrapper_sha256"])
+            self.assertIn(meta["callbacks"][function]["symbol"].encode(), wrapper)
+        initial = json.loads((root / "height-inspection.initial.json").read_text())
+        initial_log = root / "height-inspection.initial.log"
+        self.assertEqual(capture.digest(initial_log), initial["log_sha256"])
+        self.assertEqual(initial_log.read_bytes(), log.read_bytes())
+        self.assertEqual(initial["binary_sha256"], meta["binary_sha256"])
+        disassembly = json.loads((root / "gmp-disassembly.json").read_text())
+        self.assertEqual(disassembly["binary_sha256_before"], meta["binary_sha256"])
+        self.assertEqual(disassembly["binary_sha256_after"], meta["binary_sha256_after"])
+        self.assertEqual(capture.digest(root / "inspect-gmp.py"), disassembly["script_sha256"])
+        self.assertLessEqual(disassembly["started_utc"], disassembly["finished_utc"])
+        for item in disassembly["outputs"]:
+            output = root / item["file"]
+            self.assertEqual(capture.digest(output), item["sha256"])
+            self.assertEqual(item["command"][-1], rows[0]["command"][0])
+            self.assertEqual(item["command"][:-1],
+                             ["objdump", "-d", "--disassemble=" + output.stem])
+        import re
+        for symbol in ("__gmpz_gcd", "__gmpn_gcd"):
+            assembly = (root / (symbol + ".asm")).read_text()
+            matches = list(re.finditer(r"cmp\s+\$0x7f00[^\n]*\n(?:[^\n]*\n){0,3}[^\n]*\bja\s+([0-9a-f]+)", assembly))
+            self.assertTrue(matches)
+            self.assertEqual(len(matches), len(re.findall(
+                r"call\s+[0-9a-f]+\s+<__gmp_tmp_reentrant_alloc>", assembly)))
+            lines = assembly.splitlines()
+            for match in matches:
+                target = next(i for i, line in enumerate(lines) if line.lstrip().startswith(match[1] + ":"))
+                self.assertRegex("\n".join(lines[target:target + 9]),
+                                 r"call\s+[0-9a-f]+\s+<__gmp_tmp_reentrant_alloc>")
+        # Retained stacks identify the extra heap scratch requests on this binary.
+        for i, row in enumerate(rows):
+            dhat = json.loads(gzip.decompress((root / f"{i:03d}.dhat.json.gz").read_bytes()))
+            points = [point for point in dhat["pps"] if any(
+                "__gmp_tmp_reentrant_alloc" in dhat["ftbl"][frame] for frame in point["fs"])]
+            for point in points:
+                frames = [dhat["ftbl"][frame] for frame in point["fs"]]
+                temporary = next(j for j, frame in enumerate(frames) if "__gmp_tmp_reentrant_alloc" in frame)
+                self.assertLess(temporary + 1, len(frames))
+                self.assertTrue("__gmpz_gcd" in frames[temporary + 1] or
+                                "__gmpn_gcd" in frames[temporary + 1])
+            count = sum(point["tbk"] for point in points)
+            if row["function"] == functions[0]:
+                self.assertEqual(count, 0 if row["parameter"] <= 65536 else
+                                 3 if row["parameter"] == 131072 else 9)
+                self.assertEqual(row["counters"]["gmp_requests"] - count, 285)
+            else:
+                self.assertEqual(count, 0)
+        report = (root.parents[2] / "sign-det-height-allocations.md").read_text()
+        operations = {"Normalization": functions[0], "Checking": functions[1]}
+        table = []
+        for line in report.splitlines():
+            cells = [cell.strip() for cell in line.split("|")]
+            if len(cells) == 8 and cells[1].isdigit() and cells[2] in operations:
+                key = operations[cells[2]], int(cells[1])
+                actual = [observations[key][kind + "_bytes"] for kind in capture.KINDS]
+                self.assertEqual([int(cell.replace(",", "")) for cell in cells[3:7]], actual + [sum(actual)])
+                table.append(key)
+        self.assertEqual(set(table), set(observations))
+        self.assertEqual(len(table), len(observations))
 
     def test_retained_production_capture(self):
         import json

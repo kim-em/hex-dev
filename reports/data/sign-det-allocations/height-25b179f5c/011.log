@@ -1,0 +1,16 @@
+lean-bench profile: env LD_PRELOAD=/home/kim/.local/state/hex/issue-10377-profiles/allocation-height-25b179f5c/wrapper-1.so /nix/store/mf7rzpknxwg0q1wf0nm8gfzikapg00h1-valgrind-3.27.1/bin/valgrind --tool=dhat --mode=ad-hoc --dhat-out-file=/home/kim/.local/state/hex/issue-10377-profiles/allocation-height-25b179f5c/011.dhat.json -- /home/kim/worktrees/hex-dev/hex-dev-issue-10377-allocation/.lake/build/bin/hexsigndet_bench _child --bench Hex.SignDetBench.Height.runCheck --param 262144 --target-nanos 1000000000 --cache-mode cold
+==1231361== DHAT, a dynamic heap analysis tool
+==1231361== Copyright (C) 2010-2024, and GNU GPL'd, by Mozilla Foundation et al.
+==1231361== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==1231361== Command: /home/kim/worktrees/hex-dev/hex-dev-issue-10377-allocation/.lake/build/bin/hexsigndet_bench _child --bench Hex.SignDetBench.Height.runCheck --param 262144 --target-nanos 1000000000 --cache-mode cold
+==1231361== 
+SIGN_DET_ALLOCATIONS {"callbacks":1,"overflow":0,"lean_requests":147,"lean_bytes":3512,"mimalloc_requests":6,"mimalloc_bytes":240,"gmp_requests":518,"gmp_bytes":5476000}
+{"schema_version":1,"kind":"parametric","function":"Hex.SignDetBench.Height.runCheck","param":262144,"inner_repeats":1,"total_nanos":265084653,"per_call_nanos":265084653.000000,"cache_mode":"cold","result_hash":"0xed69533a88494964","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":292468,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexsigndet_bench","git_commit":"25b179f5c8f2143cd77753cd8c802d364aefd958","git_dirty":false,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.35.0-rc3","lean_version":"4.35.0-rc3","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-10-02T18:14:15Z","timestamp_unix_ms":1790964855382},"profile_kernel":true}
+==1231361== 
+==1231361== Total:     5,479,752 units in 671 events
+==1231361== 
+==1231361== To view the resulting profile, open
+==1231361==   file:///nix/store/mf7rzpknxwg0q1wf0nm8gfzikapg00h1-valgrind-3.27.1/libexec/valgrind/dh_view.html
+==1231361== in a web browser, click on "Load...", and then select the file
+==1231361==   /home/kim/.local/state/hex/issue-10377-profiles/allocation-height-25b179f5c/011.dhat.json
+==1231361== The text at the bottom explains the abbreviations used in the output.
