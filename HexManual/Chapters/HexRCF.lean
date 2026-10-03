@@ -21,6 +21,7 @@ import HexRationalFn
 import HexOrderedFn.Infinitesimal
 import HexSignDetMathlib.ComparisonProducer
 import HexSignDetMathlib.Convert
+import HexRealAlgebraicMathlib.FieldSign
 
 import HexSignDetMathlib.QueryHandle
 
@@ -1531,25 +1532,17 @@ The converted coordinates can also be coefficients of a new sign/root problem.
 Write a = √2 and b = √3 in that common field. At the roots of
 `(x − a)(x − b)`, the ordered queries `x − a`, `x − b`, and `a − b` have
 signs `(0,−,−)` and `(+,0,−)`, each once. The impossible pattern `(0,0,−)`
-has count zero. The same check enumerates a before b, then compares roots
-selected by the different linear polynomials `x − a` and `x − b`.
-Both linear derivative words are `[+]`; their equality does not identify
-the roots because the defining polynomials differ.
+has count zero. The sign function below evaluates a field coordinate on the
+common generator's certified enclosure, refining it when needed.
 
 ```lean
-private def independentSign
-    {generator : Hex.AlgebraicNumber}
-    (a : Hex.QAdjoin generator) : Int :=
-  match Hex.RealAlgebraicNumber.ofAlgebraic?
-      a.toAlgebraicNumber with
-  | some value => value.sign
-  | none =>
-      Hex.panicWith 0 "nonreal common-field coefficient"
-
-private def independentSignsPass : Bool := Id.run do
-  let common := Hex.QAdjoin.common independentInputs
-  if common.generator.isReal then
-    let sign := independentSign
+private def commonFieldTablePass
+    (common : Hex.QAdjoin.Presentation) : Bool := Id.run do
+  if real : common.generator.isReal = true then
+    let sign : Hex.QAdjoin common.generator → Int :=
+      Hex.RealAlgebraicNumber.signField
+        (Hex.RealAlgebraicNumber.ofAlgebraic
+          common.generator real)
     let some a := common.entries[0]? | return false
     let some b := common.entries[1]? | return false
     let x : DensePoly (Hex.QAdjoin common.generator) :=
@@ -1559,29 +1552,23 @@ private def independentSignsPass : Bool := Id.run do
     let head := qa * qb
     let some table := determine sign 7 head .negInf .posInf
       [qa, qb, DensePoly.C (a - b)] | return false
-    let builtRoots :=
-      Descriptor.buildRoots sign 7 head .negInf .posInf
-    let .ok (some roots) := builtRoots | return false
-    let some left := Descriptor.validate sign 7
-      ⟨7, qa, .negInf, .posInf, [1], [1]⟩ | return false
-    let some right := Descriptor.validate sign 7
-      ⟨7, qb, .negInf, .posInf, [1], [1]⟩ | return false
     return table.rows.toList ==
       [([0, -1, -1], 1), ([1, 0, -1], 1)] &&
-      table.count [0, 0, -1] == 0 &&
-      roots.map (fun d => d.signAt qa) == [0, 1] &&
-      roots.map (fun d => d.signAt qb) == [-1, 0] &&
-      left.compare right == .lt && right.compare left == .gt
+      table.count [0, 0, -1] == 0
   else return false
 
-#guard independentSignsPass
+#guard commonFieldTablePass
+  (Hex.QAdjoin.common independentInputs)
 ```
 
 Here the common generator has degree four. Coefficient arithmetic uses actual
-`QAdjoin` coordinates. The coefficient sign function converts each coordinate
-to its selected real algebraic value. The companion checks the same conversion
-formula against the proved real embedding for any real-generated field, then
-specializes table, selected-root sign and comparison correctness to that field.
+`QAdjoin` coordinates. The sign function handles rational constants directly,
+uses interval evaluation for nonconstant coordinates, and retains exact algebraic
+conversion when its finite interval probes are inconclusive.
+The theorem {name}`Hex.RealAlgebraicNumber.signField_spec` proves that it returns
+the sign in the selected real embedding. The more extensive enumeration,
+comparison, re-encoding and replay checks run in the conformance suite against
+an independent exact algebraic-number oracle.
 The value-preservation theorem {name}`Hex.QAdjoin.common_get` connects the
 coordinates to the independently selected original algebraic numbers.
 The table, selected-sign, and comparison correctness theorems apply to that

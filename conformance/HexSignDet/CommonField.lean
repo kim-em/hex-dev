@@ -60,8 +60,8 @@ private def error (message : String) : Json :=
 /-- Emit actual algorithm outputs and exact common-field coordinates. The
 independent oracle reconstructs the selected generator and both input values;
 no expected signs, counts, derivative words or orders are used here. -/
-def fixture (inputs : Array AlgebraicNumber) : Json := Id.run do
-  let common := QAdjoin.common inputs
+def fixtureAt (inputs : Array AlgebraicNumber) (common : QAdjoin.Presentation)
+    (sign : QAdjoin common.generator → Int) : Json := Id.run do
   if !common.generator.isReal then return error "nonreal generator"
   let some a := common.entries[0]? | return error "missing first coordinate"
   let some b := common.entries[1]? | return error "missing second coordinate"
@@ -123,5 +123,16 @@ def fixture (inputs : Array AlgebraicNumber) : Json := Id.run do
     ("inputs", toJson (inputs.map algebraic)),
     ("coordinates", toJson (common.entries.map coordinates)),
     ("head", poly head), ("queries", toJson (qs.map poly)), ("result", result)]
+
+/-- Use the generator's certified enclosure for signs in the independent oracle fixtures. -/
+def fixture (inputs : Array AlgebraicNumber) : Json :=
+  let common := QAdjoin.common inputs
+  if real : common.generator.isReal = true then
+    fixtureAt inputs common (RealAlgebraicNumber.ofAlgebraic common.generator real).signField
+  else error "nonreal generator"
+
+/-- Canonical-conversion arm for a fixed before/after comparison. -/
+def fixtureLegacy (inputs : Array AlgebraicNumber) : Json :=
+  fixtureAt inputs (QAdjoin.common inputs) sign
 
 end Hex.SignDet.CommonField

@@ -20,6 +20,7 @@ public import HexRCF.RealCoefficients.CubeTwo
 public import HexRCF.RealCoefficients.FieldSpecialize
 public import HexRealRootsMathlib.RealClosed
 public import HexRealRootsMathlib.TarskiTests
+public import HexRealAlgebraicMathlib.FieldSign
 public import HexRealAlgebraicMathlib.Order
 public import HexRealAlgebraicMathlib.RealClosed
 
@@ -40,7 +41,7 @@ abbrev CubicField := QAdjoin generator.toAlgebraic
 
 /-- Ordinary real-algebraic conversion computes the selected cubic field's
 sign; the conversion retains its real embedding. -/
-def fieldSign (a : CubicField) : Int := (Coefficients.ofField generator a).sign
+def fieldSign (a : CubicField) : Int := generator.signField a
 
 abbrev rep := generator.toAlgebraic.rep
 theorem real : rep.root.im = 0 :=
@@ -50,7 +51,9 @@ theorem binding : SimpleRoot.mk rep = generator.toAlgebraic.x :=
 
 theorem sign_spec (a : CubicField) :
     fieldSign a = (SignType.sign (Field.value rep a) : Int) := by
-  rw [fieldSign, RealAlgebraicNumber.sign_eq, Field.ofField_value]
+  have same : fieldSign a = (Coefficients.ofField generator a).sign :=
+    RealAlgebraicNumber.signField_eq generator a (Coefficients.ofField generator a).property
+  rw [same, RealAlgebraicNumber.sign_eq, Field.ofField_value]
   by_cases hn : Field.value rep a < 0
   · simp only [hn, ↓reduceIte, sign_eq_neg_one_iff.mpr hn]
     rfl
