@@ -47,7 +47,7 @@ end HexPermGroupM11
 
 The same tactic proves that a given permutation does or does not lie in such a
 subgroup, and that a list of permutations generates the whole symmetric group;
-see {ref "hex-perm-group-proofs"}[Proofs about Mathlib permutation groups].
+see {ref "hex-perm-group-proofs"}[The Mathlib correspondence].
 
 `HexPermGroup` itself does not depend on Mathlib. Import it for computation, and
 import `HexPermGroupMathlib` for the tactic and for the theorems that
@@ -258,7 +258,7 @@ def baseTopIsId : Bool :=
 end HexPermGroupChapter
 ```
 
-# Proofs about Mathlib permutation groups
+# The Mathlib correspondence
 %%%
 tag := "hex-perm-group-proofs"
 %%%
