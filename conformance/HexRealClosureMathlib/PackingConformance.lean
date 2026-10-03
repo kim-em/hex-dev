@@ -6,7 +6,9 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.CoefficientSignsConformance
-public import HexRealClosureMathlib.SignFacts
+public meta import HexRealClosureMathlib.CoefficientSignsConformance
+public meta import HexRealClosure.SignFacts
+public import HexRealClosure.SignFacts
 import all HexRealClosure.Algebraic
 import all HexPoly.Euclid.DivGcd
 
@@ -67,11 +69,36 @@ theorem canonical_zero :
     ((Element.cachedNatCast reduction reduction_eq ([] : List (SignFact context))).natCast 3).sign = 1 := by
   decide +kernel
 
-theorem strict_missing : True := by
+set_option maxRecDepth 32768 in
+example :
+    ((Element.cachedAdd reduction reduction_eq ([] : List (SignFact context))).add small 0) =
+      (Element.missing (small.polynomial + (0 : Element context).polynomial)).val := by
+  change Element.pack reduction reduction_eq []
+    (small.polynomial + (0 : Element context).polynomial) = _
+  apply Element.pack_missing
+  · decide +kernel
+  · decide +kernel
+
+set_option maxRecDepth 32768 in
+example : Element.pack reduction reduction_eq literalFacts stored = (Element.missing stored).val := by
+  apply Element.pack_missing
+  · decide +kernel
+  · decide +kernel
+
+set_option maxRecDepth 32768 in
+example : True := by
   fail_if_success
     have : ((Element.cachedAdd reduction reduction_eq ([] : List (SignFact context))).add small 0).sign = 1 := by
       decide +kernel
   trivial
+
+#guard ((Element.cachedAdd reduction reduction_eq ([] : List (SignFact context))).add small 0).sign == 1
+
+set_option maxRecDepth 32768 in
+example :
+    ((Element.cachedNeg reduction reduction_eq ([] : List (SignFact context))).neg
+      (Element.cachedOne reduction reduction_eq ([] : List (SignFact context))).one).sign = -1 := by
+  decide +kernel
 
 theorem literal_decoding :
     SignFact.read facts (2 * Sturm.Fixtures.x) 1 = some small ∧
@@ -85,7 +112,40 @@ theorem literal_decoding :
 @[expose] def foreign :=
   Context.adjoin Hex.SignDetMathlib.GraphSignsConformance.source (fun _ => false)
 
-theorem foreign_context : True := by
+set_option maxRecDepth 32768 in
+private theorem foreign_query : foreign.queryPoly Sturm.Fixtures.p = 0 := by
+  simp only [Context.queryPoly, Context.queryRemainder, foreign, Context.root_adjoin,
+    Hex.SignDetMathlib.GraphSignsConformance.source_raw,
+    Hex.SignDet.Conformance.singletonRaw, DensePoly.pseudoDivMod,
+    ← Array.foldl_toList, Array.toList_range]
+  decide +kernel
+
+theorem foreign_zero : foreign.signPoly Sturm.Fixtures.p = 0 := by
+  rw [Context.signPoly, foreign_query, foreign.signQuery_const 0 (by decide +kernel)]
+  decide +kernel
+
+@[expose] def zeroFacts : List (SignFact foreign) :=
+  [⟨Sturm.Fixtures.p, 0, foreign_zero⟩]
+
+private theorem foreign_reduce : (fun p : DensePoly Rat => p) = foreign.reduce := by
+  funext p
+  have hc : foreign.canReduce = false := by
+    rw [foreign.reduce_checked]
+    simp only [foreign, Context.root_adjoin, Context.clean_adjoin,
+      Hex.SignDetMathlib.GraphSignsConformance.source_raw,
+      Hex.SignDet.Conformance.singletonRaw, ← Array.all_toList]
+    decide +kernel
+  rw [Context.reduce, dite_eq_right (by rw [hc]; decide)]
+
+/- A nonconstant retained representative that vanishes at the selected root
+packs to canonical zero using a supplied zero sign. -/
+set_option maxRecDepth 32768 in
+example :
+    1 < Sturm.Fixtures.p.size ∧
+    Element.pack (fun p => p) foreign_reduce zeroFacts Sturm.Fixtures.p = 0 := by
+  decide +kernel
+
+example : True := by
   fail_if_success
     have : List (SignFact foreign) := facts
   trivial

@@ -6,7 +6,6 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.Algebraic
-import all HexRealClosure.Algebraic
 
 public section
 
@@ -95,6 +94,13 @@ fact stops ordinary-kernel evaluation at `Element.missing`. -/
     | some f =>
       if hn : f.val = 0 then 0
       else Element.restore kept f.val f.property hn
+
+/-- A missing nonconstant fact reaches exactly the opaque packing boundary. -/
+theorem Element.pack_missing (reduce : DensePoly E → DensePoly E)
+    (hr : reduce = context.reduce) (facts : List (SignFact context)) (p : DensePoly E)
+    (hc : ¬ (reduce p).size ≤ 1) (hf : SignFact.find facts (reduce p) = none) :
+    Element.pack reduce hr facts p = (Element.missing p).val := by
+  simp only [Element.pack, dite_eq_right hc, hf]
 
 /-- Cached packing agrees literally with the actual native reduction policy. -/
 theorem Element.pack_eq (reduce : DensePoly E → DensePoly E)

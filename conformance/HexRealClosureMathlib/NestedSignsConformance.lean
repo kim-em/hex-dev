@@ -292,7 +292,25 @@ theorem rejected_cached :
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
-theorem missing_dependency : True := by
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+example :
+    letI := Element.cachedAdd reduction reduction_eq PackingConformance.facts
+    letI := Element.cachedMul reduction reduction_eq PackingConformance.facts
+    rational (-1) + literal * rational 1 = (Element.missing endpointQuery).val := by
+  let input := (rational (-1)).polynomial +
+    ((Element.cachedMul reduction reduction_eq PackingConformance.facts).mul literal
+      (rational 1)).polynomial
+  change Element.pack reduction reduction_eq PackingConformance.facts input = _
+  have hp : input = endpointQuery := by decide +kernel
+  rw [← hp]
+  apply Element.pack_missing
+  · decide +kernel
+  · decide +kernel
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+example : True := by
   fail_if_success
     have :
         letI := Element.cachedOne reduction reduction_eq PackingConformance.facts

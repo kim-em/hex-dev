@@ -855,7 +855,7 @@ query. The examples also check rejected restoration, packing to the actual
 remainder, and packing a vanishing input to canonical zero. The byte coefficient
 decoder continues to use `restore?`.
 
-The companion module `HexRealClosureMathlib.SignFacts` provides finite,
+The module `HexRealClosure.SignFacts` provides finite,
 proof-bearing sign facts. Each fact fixes the exact polynomial representation
 and its algebraic context. `SignFact.read` restores a nonzero literal only when
 its key and claimed sign match a supplied fact; absent keys, zero claims and
@@ -875,6 +875,9 @@ ordinary-kernel evaluation from completing that branch. Compiled evaluation of
 that function runs the existing sign producer. Accordingly, these APIs support
 kernel proof assembly; they do not provide a strict compiled checker for
 untrusted cross-level certificates. `SignFact.read` itself has no such fallback.
+The equality proofs cover only the listed operations. Inversion, division,
+`ofCoeff` and other ordinary operations retain their existing implementation,
+which may invoke a sign producer during kernel evaluation.
 
 `PackingConformance` checks literal restoration, exact keys, context types and
 canonical zero in the ordinary kernel. `NestedSignsConformance` checks a second
