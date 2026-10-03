@@ -57,7 +57,9 @@ at the separation precision of the product of the minimal polynomials.
 ## Verification
 
 ```sh
-lake build HexRealAlgebraic.Conformance HexRealAlgebraic.ReprChecks hexrealalgebraic_conformance
+lake build HexRealAlgebraic.Conformance HexRealAlgebraic.ReprChecks \
+  HexRealAlgebraic.FieldSignConformance HexRealAlgebraicMathlib.FieldSignConformance \
+  hexrealalgebraic_conformance
 .lake/build/bin/hexrealalgebraic_conformance
 lake build hexrealalgebraic_emit_fixtures
 .lake/build/bin/hexrealalgebraic_emit_fixtures > /tmp/real-algebraic.jsonl

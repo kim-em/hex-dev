@@ -8,7 +8,8 @@ or distribution attestation.
 All four record Phases 1–3. Phase 1 reuses the implemented APIs; Phase 2 has
 independent per-library scaffolding reviews in `status/`. Phase 3 has compiled
 operation/property/edge checks for both cores, ordinary-kernel companion builds
-and axiom guards, and required PR CI. Phase 4 remains incomplete for both cores;
+and axiom guards. Required CI on the final revision must pass before merge.
+Phase 4 remains incomplete for both cores;
 the theorem-only companions need their cores at Phase 4 and their headline
 correctness/bridge requirements discharged before recording it.
 
@@ -16,8 +17,8 @@ correctness/bridge requirements discharged before recording it.
 | --- | --- | --- | --- |
 | HexSturm | Shared ordered-domain kernel; guarded queries and exact-domain natural counts; prepared domains, retargeting, counts, cached replay and literal certificate transport | Phase 4: comparator/registration reconciliation, admissible characterization and retained concerns | `HexSturm/Basic.lean`, `Transport.lean`, `conformance/HexSturm/Conformance.lean`, [performance report](hex-sturm-performance.md) |
 | HexSturmMathlib | Domain equivalence, prepared bindings, producer acceptance, representation congruence and rational/integer whole-Option agreement; root-sum semantics, count equality and bounds in development adapters | Phase 4: core eligibility and named headline correctness/bridge-target reconciliation; no dedicated performance deliverable for this theorem-only layer | `Domain`, `Compare`, `Rational`, `DenominatorClearing`, `IntCast`; `adapters/HexSturmMathlib/Soundness.lean`; ordinary-kernel `HexSturmMathlibTests` |
-| HexRealAlgebraic | Real subtype, rational recognition and toRat?-first rounding, canonical arithmetic/order, rounding, square roots, integer and algebraic-coefficient real roots, complex norms | Phase 4: canonical fixed operations need admissible models/budgets; root/leaf, separation and rounding sweeps remain | `conformance/HexRealAlgebraic`, pinned FLINT/qqbar oracle and fixtures; `bench/HexRealAlgebraic/Bench.lean` |
-| HexRealAlgebraicMathlib | Arithmetic/order and closure, law/dictionary coherence, rational recognition, rounding, approximation, Repr round trip, roots completeness/multiplicity/strict order and real closedness | Phase 4: core eligibility and named headline correctness/bridge-target reconciliation; no dedicated performance deliverable for this theorem-only layer | `HexRealAlgebraicMathlib/Instances.lean`, `Roots.lean`, `RealClosed.lean`, `HexRealAlgebraicMathlib/Tests.lean` |
+| HexRealAlgebraic | Real subtype, rational recognition and toRat?-first rounding, canonical arithmetic/order, rounding, square roots, fixed-field coordinate signs, integer and algebraic-coefficient real roots, complex norms | Phase 4: canonical fixed operations need admissible models/budgets; root/leaf, separation and rounding sweeps remain | `conformance/HexRealAlgebraic`, pinned FLINT/qqbar oracle and fixtures; `bench/HexRealAlgebraic/Bench.lean` |
+| HexRealAlgebraicMathlib | Arithmetic/order and closure, law/dictionary coherence, rational recognition, rounding, approximation, Repr round trip, fixed-field sign correspondence, roots completeness/multiplicity/strict order and real closedness | Phase 4: core eligibility and named headline correctness/bridge-target reconciliation; no dedicated performance deliverable for this theorem-only layer | `HexRealAlgebraicMathlib/Instances.lean`, `Roots.lean`, `RealClosed.lean`, `HexRealAlgebraicMathlib/Tests.lean` |
 
 ## Semantic availability
 
@@ -35,6 +36,13 @@ them. `RealAlgebraicPoly.contains_roots_iff`, `roots_all_iff`,
 `roots_multiplicity` and `roots_sorted` prove the required real-polynomial
 contracts, including zero's universal root set. The new ordinary-kernel axiom
 guards check the dependencies of these named correspondence theorems.
+
+Main's merged [#10641](https://github.com/kim-em/hex-dev/pull/10641) also supplies
+`RealAlgebraicNumber.signField` and its `signField_spec` / `signField_eq`
+correspondence. The existing computational field-sign conformance and companion
+axiom guards remain registered after the rebase. Its [retained comparison](../bench-results/field-sign/README.md)
+identifies the measured pre-refactoring source and explicitly supplies no
+current-call scaling check; it does not close the four-library Phase-4 gaps.
 
 RealAlgebraicNumber operations remain independent of HexSturm, HexSignDet and
 HexRealClosure. Rational recognition uses the canonical linear polynomial;
@@ -57,7 +65,9 @@ ordinary-kernel audits of those headlines remain under #10577. The Sturm
 semantic results currently build through `HexQuerySemantics` under `adapters/`;
 Phase-4 evidence must reconcile their bridge-target availability with that
 policy. Split-package integration remains with #10575 and is not asserted by
-these monorepo results. Available mathematical proofs do not depend on that
+these monorepo results. In particular, the companion replay tests import the
+conformance fixture module `HexSturm.Fixtures`; split-package test wiring must
+provide it when those libraries are published. Available mathematical proofs do not depend on that
 publication work.
 
 ## Dependencies and downstream owners
@@ -89,13 +99,13 @@ The Mathlib-free benchmark target compiles and all shipped-API verification case
 are not performance attestation: their 30-second operational caps are not
 justified regression budgets. Independent review tokens are present; compiled conformance and the pinned
 83-case core and 92-case local exact oracles pass with no skipped operations.
-The rebased full local build (15412 jobs), final conformance/adapters/executable
-build (15051 jobs), companion correctness/axiom build (9824 jobs), and
-67-case benchmark verification pass. The square-root guard simplification has
-two additional targeted benchmark checks and 83 fresh exact-oracle cases with
-zero skips; fresh fixtures match the committed file byte-for-byte. Required CI
-on [PR #10580](https://github.com/kim-em/hex-dev/pull/10580) checks the phase
-recording and the final revision.
+[The rebase verification record](bench-results/prerequisite-rebase-verification.json)
+separates historical checks and failed runs from checks on the current base,
+including inherited field-sign conformance and ordinary-kernel axiom guards.
+The square-root simplification has 83 fresh exact-oracle cases with zero skips;
+fresh fixtures match the committed file byte for byte. Required CI on
+[PR #10580](https://github.com/kim-em/hex-dev/pull/10580) checks the phase
+recording and final revision before merge.
 The [real-algebraic performance report](hex-real-algebraic-performance.md) and
 the Sturm report distinguish valid family passes from failed hypotheses,
 controls and fixed observations without budgets. Phase 4 remains incomplete.

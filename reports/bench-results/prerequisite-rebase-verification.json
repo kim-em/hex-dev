@@ -1,38 +1,119 @@
 {
-  "source_commit": "63bc7163715b50eb09cc8c5a9248ac295194c100",
-  "base_commit": "293d981ea323119da549e8bcf9f5be7e18d62971",
-  "local": {
-    "default_lake_build": {
-      "jobs": 15525,
-      "result": "success"
+  "scope": "Phase 3 only; Phase 4 incomplete. Required CI must pass on the corrected revision before merge.",
+  "current_api_source_commit": "4a4dd07f9b85458ef4ecce288047470edd400b51",
+  "current_base_commit": "9498f1e2dee9aa95017170509258a6b0174d8310",
+  "current_source_note": "Results identify the executable/proof source preceding subsequent documentation-only coverage declarations and evidence records. Final required CI identifies the final committed source.",
+  "local_on_current_base": {
+    "scope": "Rebased branch includes existing main changes to fixed-field sign wrappers and sign request conformance. Required full CI pending.",
+    "named_admission_scan": {
+      "result": "success",
+      "cones": 262,
+      "local_modules": 1033,
+      "measured_on": "4a4dd07f9b85458ef4ecce288047470edd400b51"
     },
-    "owned_lake_build": {
-      "jobs": 10851,
-      "result": "success"
-    },
-    "bench_budget_unit_tests": {
-      "cases": 3,
-      "result": "success"
-    },
-    "pinned_oracle_unit_tests": {
-      "cases": 19,
-      "skips": 0,
-      "result": "success"
+    "full_conformance_build": {
+      "result": "success",
+      "jobs": 14891,
+      "measured_on": "4a4dd07f9b85458ef4ecce288047470edd400b51"
     },
     "dag_check": "success",
     "phase_check": "success",
-    "admission_scan": {
+    "bench_budget_unit_tests": {
+      "result": "success",
+      "cases": 3
+    },
+    "initial_default_build": {
       "result": "failed",
-      "reason": "missing local import HexSignDetMathlib.GraphSignsConformance",
-      "source": "conformance/HexRealClosureMathlib/SignFactsConformance.lean",
-      "existing_owner_repair": "#10632 / #10641"
+      "measured_on": "4a4dd07f9b85458ef4ecce288047470edd400b51",
+      "context": "Overlapping local Lake builds raced on generated artifacts; subsequent builds must run serially.",
+      "errors": [
+        "failed to load header from HexSignDet/Codec/EvidenceLaws.setup.json: offset 0: unexpected end of input",
+        "no such file or directory: HexRCF/RealCoefficients/FieldBuildBudget.olean"
+      ]
+    },
+    "serial_default_build": {
+      "result": "success",
+      "jobs": 15537,
+      "measured_on": "4a4dd07f9b85458ef4ecce288047470edd400b51",
+      "scope": "Full default targets, including HexManual; no overlapping Lake build."
+    },
+    "coverage_declaration_build": {
+      "result": "success",
+      "target": "HexRealAlgebraic.Conformance",
+      "jobs": 656,
+      "scope": "Working tree with the documentation-only signField coverage declaration; operation/test bodies unchanged."
+    },
+    "field_sign_independent_review": {
+      "result": "no Phase-2/Phase-3 blockers",
+      "source_base_commit": "9498f1e2dee9aa95017170509258a6b0174d8310",
+      "record": "status/reviews/issue-10577-opus-field-sign-addendum.md",
+      "scope": "Inherited computational wrapper, correspondence, conformance and axiom guards; Phase 4 remains incomplete."
     }
   },
-  "required_ci": {
-    "url": "https://github.com/kim-em/hex-dev/actions/runs/37119197374",
-    "result": "failed",
-    "failed_step": "Check dependency DAG and trusted-internals imports",
-    "same_upstream_stale_import": true
+  "required_ci_on_final_revision": "Pending; must pass before merge. No completed benchmark verification on this base yet.",
+  "historical_pre_rebase": {
+    "source_commit": "63bc7163715b50eb09cc8c5a9248ac295194c100",
+    "base_commit": "293d981ea323119da549e8bcf9f5be7e18d62971",
+    "local": {
+      "default_lake_build": {
+        "jobs": 15525,
+        "result": "success"
+      },
+      "owned_lake_build": {
+        "jobs": 10851,
+        "result": "success"
+      },
+      "bench_budget_unit_tests": {
+        "cases": 3,
+        "result": "success"
+      },
+      "pinned_oracle_unit_tests": {
+        "cases": 19,
+        "skips": 0,
+        "result": "success"
+      },
+      "dag_check": "success",
+      "phase_check": "success",
+      "admission_scan": {
+        "result": "failed",
+        "reason": "missing local import HexSignDetMathlib.GraphSignsConformance",
+        "source": "conformance/HexRealClosureMathlib/SignFactsConformance.lean",
+        "existing_owner_repair": "https://github.com/kim-em/hex-dev/pull/10641"
+      },
+      "fresh_exact_oracle": {
+        "result": "success",
+        "cases": 83,
+        "skips": 0,
+        "fixture_byte_match": true,
+        "producer_completed_before_check": true,
+        "measured_on": "33e12a7f90f9712d0d1465fd2ff1fb09e7a4384f: historical pre-rebase SHA; captured from the uncommitted working tree whose Lean content equals this commit",
+        "covers": "HexRealAlgebraic fresh emitted fixture surface; no claim about SignFactsConformance"
+      }
+    },
+    "failed_required_ci": {
+      "url": "https://github.com/kim-em/hex-dev/actions/runs/37119197374",
+      "result": "failed",
+      "failed_step": "Check dependency DAG and trusted-internals imports",
+      "same_upstream_stale_import": true,
+      "source_commit": "63bc7163715b50eb09cc8c5a9248ac295194c100"
+    },
+    "scope": "Historical checks on a pre-rebase SHA; the stale import failure is retained."
+  },
+  "owner_repair": {
+    "source_pr": "https://github.com/kim-em/hex-dev/pull/10641",
+    "path": "conformance/HexRealClosureMathlib/SignFactsConformance.lean",
+    "scope": "Inherited from main after rebasing; no owner implementation or conformance file remains changed by this PR.",
+    "full_conformance_build": {
+      "jobs": 14772,
+      "result": "success",
+      "measured_on": "33e12a7f90f9712d0d1465fd2ff1fb09e7a4384f: historical pre-rebase SHA; captured from the uncommitted working tree whose Lean content equals this commit"
+    },
+    "named_admission_scan": {
+      "result": "success",
+      "message": "259 scanned adapter/conformance import cones: 1024 local modules, no admissions in these cones",
+      "measured_on": "33e12a7f90f9712d0d1465fd2ff1fb09e7a4384f: historical pre-rebase SHA; captured from the uncommitted working tree whose Lean content equals this commit"
+    },
+    "source_commit": "990282187211bb82a3a766d1f01d789dfbbb91a6"
   },
   "prior_required_ci": {
     "url": "https://github.com/kim-em/hex-dev/actions/runs/36983780557",
@@ -41,27 +122,5 @@
     "benchmark_verify_seconds": 217,
     "hard_cap_seconds": 360,
     "real_algebraic_seconds": 36
-  },
-  "scope": "Phase 3 only; Phase 4 incomplete. Required CI must pass on the corrected revision before merge.",
-  "owner_repair": {
-    "source_pr": "https://github.com/kim-em/hex-dev/pull/10632",
-    "source_head": "81c736a2",
-    "path": "conformance/HexRealClosureMathlib/SignFactsConformance.lean",
-    "scope": "Exact existing owner conformance-only import/fixture correction; no owner implementation changes.",
-    "full_conformance_build": {
-      "jobs": 14772,
-      "result": "success"
-    },
-    "named_admission_scan": {
-      "result": "success",
-      "message": "259 scanned adapter/conformance import cones: 1024 local modules, no admissions in these cones"
-    },
-    "fresh_exact_oracle": {
-      "result": "success",
-      "cases": 83,
-      "skips": 0,
-      "fixture_byte_match": true,
-      "producer_completed_before_check": true
-    }
   }
 }

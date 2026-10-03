@@ -47,6 +47,7 @@ final source without weakening the cap.
 | Polynomial constructors and root-set projections/membership | `runPolyConstructors`, `runMembership`, `runRootSet` | Mode-1 family passes |
 | Polynomial roots and integer roots | `runRoots`, `runRepeatedRoots`, `runEightRoots`, `runIntegerRoots`, `runFilterRoots`, `runSortRoots`, `runExactifyRoots` | Fixed whole-path anchors, valid merge-sort family, diagnostic repeated exactification control |
 | Complex norms, absolute value, real/imaginary parts | `runNorm`, `runComplexAbs`, `runProjections` | Fixed baseline/branch anchors |
+| Fixed-field coordinate sign | Inherited `signField`; owner field-sign fixtures and comparison | [Owner evidence](../bench-results/field-sign/README.md) concerns a recorded pre-refactoring executable, not current-call scaling; no Phase-4 pass |
 | External comparison/protocol | `runQqbarCompare`, `runQqbarCloseCompare`, `runQqbarProtocol` | Informational persistent python-flint/FLINT qqbar comparison |
 
 `runLeafChecks` does not drive the leaf problem with its array parameter.

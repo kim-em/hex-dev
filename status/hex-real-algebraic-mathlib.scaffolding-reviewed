@@ -20,3 +20,11 @@ are created under this assignment.
 
 The ceiling and count rewrite is independently checked in
 status/reviews/issue-10577-opus-final.md and issue-10577-opus-confirmation.md.
+
+Independent inherited-API addendum on main base
+9498f1e2dee9aa95017170509258a6b0174d8310 (including #10641) reviews
+`signField`, `signField_spec` and `signField_eq`, their delegation and
+correspondence, both field-sign conformance modules and their ordinary-kernel
+axiom guards. Findings and source scope are retained in
+status/reviews/issue-10577-opus-field-sign-addendum.md. No Phase-2 or Phase-3
+blocker remains for that added surface; no Phase-4 timing claim is made.

@@ -14,16 +14,18 @@ required (local).
 Covered operations:
 - Checked/proof-taking construction, casts, field arithmetic, powers and scalars.
 - Comparison, extrema, sign, abs, conjugation and square roots.
+- Fixed-field coordinate signs (`signField`), checked in `FieldSignConformance`.
 - Polynomial construction/conversion, roots and root-set membership/projection; integer roots.
 - Rounding, rational recognition, dyadic approximation and Repr round trips.
 - Complex normSq/abs and real/imaginary projections.
 Covered properties:
 - Exact order and arithmetic identities, equal construction paths and positive-root selection.
 - Root multiplicities and approximation enclosures.
+- Fixed-field signs agree with canonical signs across positive and negative embeddings.
 Covered edge cases:
 - Zero, division by zero, negative rationals, empty/constant polynomials and trailing zeros.
 - Nonreal roots/coefficients, close roots, irrational coefficients and repeated roots.
-This module and `ReprChecks` elaborate in CI. The emitter runs `Checks.run`,
+This module, `ReprChecks` and `FieldSignConformance` elaborate in CI. The emitter runs `Checks.run`,
 including Mignotte and degree-eight fixtures; local fixtures add degree twelve
 and deterministic randomized construction paths.
 -/
