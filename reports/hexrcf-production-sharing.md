@@ -33,14 +33,16 @@ Missing local bodies and local dependency cycles are errors. Private imports
 are used only for inspection of completed proofs; the proof modules themselves
 use ordinary imports.
 
-Distinct nodes use structural `Expr` equality, not physical heap identity.
+Distinct nodes use `Expr.eqv`, which ignores binder names and annotations,
+rather than physical heap identity.
 Local expression tree nodes count each reachable declaration once, with
 constants as leaves, but expand repeated expression subtrees. Expanded local
 references additionally substitute a local declaration's type and body at
 every occurrence of its constant. Universe levels and binder names are not
-separate nodes. The counter memoizes exact natural-number cardinalities rather
+separate nodes. Each literal expression counts as one node regardless of its
+value's bit width. The counter memoizes exact natural-number cardinalities rather
 than allocating those expanded trees. Small application checks and a depth-40
-shared expression check pin the counting rules: 41 distinct nodes represent
+shared expression check pin the tree and distinct-node rules: 41 distinct nodes represent
 `2^41 - 1` tree nodes.
 
 Most of the large counts here arise from expansion of repeated expression
@@ -57,7 +59,9 @@ Reproduce the deterministic audit with an unused output directory:
 python3 scripts/bench/hexrcf_production_sharing.py --output reports/data/hexrcf-production-sharing/local
 ```
 
-The collector builds through Lake, retains its complete output, and rejects a
+The collector builds through Lake and retains its complete output. Lake may
+replay previously computed deterministic counts when its input hashes match;
+the retained log here is replayed output. The collector rejects a
 source change during the build or a missing/duplicate proof result. It records
 the checkout state, so a dirty reproduction remains visibly distinct. There
 is no host timing schedule or discarded timing sample in this structural audit.
