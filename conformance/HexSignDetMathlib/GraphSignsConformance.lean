@@ -193,6 +193,29 @@ def wholeLinePass : Bool :=
 
 #guard wholeLinePass
 
+/-- Opposite Thom signs select the two roots of X²−1 on the whole line.
+One checked graph supplies the sign of X at both independently built roots. -/
+def siblingsPass : Bool :=
+  let positive := {partialRaw with lower := .negInf, upper := .posInf}
+  let negative := {positive with signs := [-1]}
+  match Descriptor.validate Sturm.orderSign 7 positive,
+      Descriptor.validate Sturm.orderSign 7 negative with
+  | some pos, some neg =>
+    match pos.buildSigns [Sturm.Fixtures.x] with
+    | .error _ => false
+    | .ok s =>
+      let graph := Dag.encode s.evidence
+      match graph.validate? Sturm.orderSign 7 pos.raw.head pos.raw.lower pos.raw.upper with
+      | none => false
+      | some memo =>
+        (SelectedSigns.readMemo? pos [Sturm.Fixtures.x] #v[1] memo graph.root).isSome &&
+        (SelectedSigns.readMemo? neg [Sturm.Fixtures.x] #v[-1] memo graph.root).isSome &&
+        (SelectedSigns.readMemo? neg [Sturm.Fixtures.x] #v[1] memo graph.root).isNone
+  | _, _ => false
+
+#guard siblingsPass
+
+
 /-- Compare literal trees through their injective shared encoding. -/
 private def sameEvidence (left right : Replay Rat Nat) : Bool :=
   let l := Dag.encode left

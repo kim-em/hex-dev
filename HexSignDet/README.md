@@ -73,6 +73,14 @@ only the proofs, preserving every stored tree. Different bindings reject.
 Validation checks every entry, including unreachable entries; selection
 rejects an absent index or a different query list. `Dag.selectedSigns_memo`
 proves literal agreement with the existing one-result interface.
+`Dag.validate_nodes`, `Dag.validate_size` and `Dag.validate_get` preserve entry
+indices and nodes. `Dag.validate_expands` also preserves the full literal
+subtrees and child references at every accepted index.
+
+The conformance examples also select the roots −1 and +1 of `X² − 1` on the
+whole line using opposite first-derivative signs. One validated graph then
+supplies `sign X = −1` and `sign X = +1` at those independently constructed
+descriptors; substituting the positive sign at the negative root rejects.
 
 `Dag.selectedSigns?` checks a supplied graph for the descriptor's derivative
 queries followed by the caller's ordered query list. It accepts exactly the
