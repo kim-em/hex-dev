@@ -501,7 +501,20 @@ zero multiplication or an empty domain would otherwise hide it.
 example : ∀ x : ℝ,
     x ^ 2 + (Hex.RealAlgebraicNumber.ofRat (3 / 2)).toReal > 0 := by
   rcf
+
+example : ∀ x : ℝ,
+    x ^ 2 / (Hex.RealAlgebraicNumber.ofRat 2).toReal + Real.sqrt 2 + Real.sqrt 3 > 0 := by
+  rcf
+
+example : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt (Hex.RealAlgebraicNumber.ofRat 2).toReal > 0 := by
+  rcf
 ```
+
+The last example proves the radicand's equality to `2` before identifying its
+square root with the positive selected root. Square roots of rational
+constructors with zero or negative values reduce through the rational path;
+they do not select a positive algebraic root.
 
 These examples use the selected real root of `X³ − 2`. The adapter records an
 isolating square and verifies its root witness. It reconstructs Hex's

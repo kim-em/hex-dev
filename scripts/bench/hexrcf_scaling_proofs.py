@@ -2,7 +2,7 @@
 """Matched proof costs for three independent fixed-field input changes.
 
 Question: how do polynomial degree, distinct atom count and integer coefficient
-width change actual ordinary-kernel quotation cost on the same selected field?
+width change actual end-to-end module build time on the same selected field?
 Each pair changes one input dimension. All carriers have no real roots; this
 isolates that regime and does not measure root separation or tower depth.
 Four adjacent alternating AB/BA rounds retain every completed arm.
@@ -36,7 +36,7 @@ SPEC = SweepSpec(
             "real_root_sections": 0,
         }),
         ProbePair("atoms", probe("Atoms1"), probe("Atoms4"), {
-            "changed_dimension": "distinct_atoms",
+            "changed_dimension": "source_comparison_atoms",
             "reference_value": 1, "candidate_value": 4,
             "maximum_variable_exponent": 2, "integer_coefficient_bits": 2,
             "selected_field_degree": 2, "source_coefficients": 1,
@@ -52,7 +52,7 @@ SPEC = SweepSpec(
         }),
     ),
     probe_target="HexRCFProofProbe",
-    schema="hex-rcf-scaling-proofs-v1",
+    schema="hex-rcf-scaling-proofs-v2",
     measurement="adjacent-independent-input-olean-wall-v1",
     output_stem="hex-rcf-scaling-proofs",
     required_samples=4,

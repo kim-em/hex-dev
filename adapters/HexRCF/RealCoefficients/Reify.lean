@@ -226,10 +226,10 @@ private partial def hasNamedSource (registered : Array Expr) (e : Expr) : MetaM 
 
 /-- Lower visible rational algebraic constructors using their proved real
 interpretation, preserving exact registered whole subjects. -/
-private def lowerRationals (registered : Array Expr) (source : Expr) : MetaM Expr := do
+def lowerRationals (registered : Array Expr) (source : Expr) : MetaM Expr := do
   let (lowered, _) ← Meta.transformWithCache source {} (pre := fun e => do
     if ← registered.anyM (Registration.sameSubject e) then return .done e
-    if e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 &&
+    if isClosed e && e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 &&
         e.appArg!.isAppOfArity ``Hex.RealAlgebraicNumber.ofRat 1 then
       let value : Q(ℚ) := e.appArg!.appArg!
       return .done q(($value : ℝ))
@@ -321,13 +321,16 @@ private def prepareCore (registered : Array Expr) (original : Expr) (config : He
       let outcome ← liftM (do
         let saved ← saveState
         try
-          let ⟨value, _, _, proof⟩ ← Mathlib.Meta.NormNum.deriveRat divisor
-            (_inst := q(inferInstance))
-          pure (some (value, ← instantiateMVars proof))
-        catch _ => pure none
+          let recognized ← (do
+            try
+              let ⟨value, _, _, proof⟩ ← Mathlib.Meta.NormNum.deriveRat divisor
+                (_inst := q(inferInstance))
+              pure (some (value, ← instantiateMVars proof))
+            catch _ => pure none : MetaM (Option (Rat × Expr)))
+          if let some (_, proof) := recognized then checkWithKernel proof
+          return recognized
         finally saved.restore : MetaM (Option (Rat × Expr)))
       if let some (value, proof) := outcome then
-        checkWithKernel proof
         Hex.RealFormula.Reify.accountProof proof
         if value == 0 then throwError "rcf: original closed divisor is zero"
   let normalized ← normalize registered rationalized
@@ -402,7 +405,9 @@ the final composed proof. They are not just bounds on the initial input size.
 Exponent and coefficient-bit limits retain the shared maximum-limit semantics.
 
 Unsupported syntax and
-budget limits return structured errors. Unexpected elaboration/kernel errors and
+budget limits return structured errors. A known zero original divisor exposed
+by rational-constructor lowering raises a terminal input error before schema
+construction. Unexpected elaboration/kernel errors and
 Lean runtime failures remain terminal exceptions, with state restored; callers
 must not reclassify them as solver declines. -/
 def prepare (source : Expr) (config : Hex.RealFormula.Reify.Config := {})

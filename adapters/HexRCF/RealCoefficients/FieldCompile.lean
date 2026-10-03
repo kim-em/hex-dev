@@ -60,6 +60,13 @@ meta partial def compile {p : ZPoly} {root : SimpleRoot p}
   let args := e.getAppArgs
   let op := e.getAppFn.constName?
   let sourceQ : Q(ℝ) ← pure source
+  if e.isAppOfArity ``RealAlgebraicNumber.toReal 1 &&
+      e.appArg!.isAppOfArity ``RealAlgebraicNumber.ofRat 1 then
+    let rational : Q(ℚ) := e.appArg!.appArg!
+    let compiled ← compile pExpr rootExpr rep hrep hr leaf q(($rational : ℝ))
+    let interpretation ← mkAppM ``RealAlgebraicNumber.ofRat_toReal #[rational]
+    let proof ← mkEqTrans compiled.proof (← mkEqSymm interpretation)
+    return ← checked rep source ⟨compiled.value, compiled.expression, proof⟩
   if [``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv].any (op == some ·) &&
       args.size == 6 then
     let left : Q(ℝ) ← pure args[4]!

@@ -1,8 +1,8 @@
 # Fixed-field input costs and proof attribution
 
-The implementation question is whether increasing source degree, distinct atoms
-or integer coefficient width independently increases ordinary-kernel quotation
-cost on a fixed selected field. Six fresh proof modules use matching optional
+The implementation question is whether increasing source degree, source comparison atoms
+or integer coefficient width independently increases end-to-end module build
+time on a fixed selected field. Six fresh proof modules use matching optional
 adapter imports and the same positive square root of 2. Each pair changes one
 input dimension. Every carrier has no real roots; these comparisons measure
 that regime, not root separation, growing number-field degree or tower depth.
@@ -16,17 +16,24 @@ retain all 24 completed builds from clean source
 trial-major rounds rotate the three pairs; adjacent arms alternate AB/BA.
 Lake startup, dependency replay, abstraction, quotation and checking are included.
 No host observation removes a sample; there was no rerun.
+The original v1 records used `reference`/`candidate` metadata keys that the
+harness replaced with module records; the dimension values are recoverable
+from the retained module identities and source hashes. The current runner
+uses `reference_value`/`candidate_value` and schema v2. The original v1 data
+is retained unchanged.
 
 | Changed input | Reference / candidate | Median build seconds | Median paired difference seconds | Median peak RSS KiB |
 | --- | --- | --- | ---: | --- |
 | Variable degree | 2 / 4 | 8.514 / 8.558 | 0.007 | 3,479,900 / 3,486,484 |
-| Distinct atoms | 1 / 4 | 8.519 / 8.937 | 0.412 | 3,484,632 / 3,496,516 |
+| Source comparison atoms | 1 / 4 | 8.519 / 8.937 | 0.412 | 3,484,632 / 3,496,516 |
 | Integer coefficient bits | 32 / 128 | 8.602 / 8.482 | 0.021 | 3,485,872 / 3,485,502 |
 
 The four paired differences are respectively `[-0.316, 0.117, -0.052, 0.066]`,
 `[0.468, -0.018, 0.544, 0.357]` and `[-0.069, 0.290, -0.171, 0.111]` seconds.
-The atom pair adds three constant positivity atoms, preserving carrier degree
-and maximum coefficient width. Its three positive margins are observations,
+The atom pair adds three syntactically different constant positivity
+comparisons, preserving carrier degree and maximum coefficient width. Its
+one/four counts refer to source comparisons, not normalized sign-table keys
+or independent sign questions. Its three positive margins are observations,
 not a resolved complexity law. The harness reports `no-comparable-control` for
 all pairs. There is no speedup claim from the coefficient-width medians.
 Host context includes up to 19 concurrent Lean/Lake processes; maximum sibling
@@ -115,15 +122,13 @@ an asymptotic bound. Reusing quoted evidence and reducing repeated kernel
 checking are concrete performance questions for subsequent changes.
 
 Native production/common-field calls use pure `profileit` thunks, confirmed in
-generated C to enclose their operations. Meta phases use `profileitM`. Profiling
-is disabled by default. An initial unpinned development build incorrectly used
-`profileitM` around `pure`, which evaluated native work before its timer. Its
-[full log](data/hexrcf-phase-profile/initial-diagnostic/compiler.log),
+generated C to enclose their operations. Meta phases use `profileitM`. Profiling is disabled by default in the adapters. A separate unpinned
+[diagnostic log](data/hexrcf-phase-profile/initial-diagnostic/compiler.log),
 [source patch](data/hexrcf-phase-profile/initial-diagnostic/source.patch),
 [probe](data/hexrcf-phase-profile/initial-diagnostic/Profiling.lean) and
-[scope](data/hexrcf-phase-profile/initial-diagnostic/scope.json) are retained.
-Those native category values are not attribution evidence and are not pooled
-with the committed-source sample.
+[scope](data/hexrcf-phase-profile/initial-diagnostic/scope.json) are retained
+with native work outside their measured categories; those category values
+are excluded from the representative attribution and are not pooled with it.
 
 Reproduce the paired builds with `python3 scripts/bench/hexrcf_scaling_proofs.py`
 from a clean checkout. Inspect syntax using

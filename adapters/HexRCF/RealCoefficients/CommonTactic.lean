@@ -35,20 +35,30 @@ private meta def kernelDecide (goal : Expr) : MetaM Expr := do
 
 private meta def naturalSquareRoot? (source : Expr) : MetaM (Option Nat) := do
   unless source.isAppOfArity ``Real.sqrt 1 do return none
-  let base : Q(ℝ) := source.appArg!
+  let base : Q(ℝ) ← Reify.lowerRationals #[] source.appArg!
   let result ← observing? do
     let ⟨value, _, _, _⟩ ← Mathlib.Meta.NormNum.deriveRat base
       (_inst := q(inferInstance))
     pure value
   let some value := result | return none
   unless value.den == 1 && 0 < value.num do return none
-  let n := value.num.toNat
-  let nExpr : Q(ℕ) := mkNatLit n
-  unless ← isDefEq base q(($nExpr : ℝ)) do return none
-  return some n
+  return some value.num.toNat
+
+/-- Prove the original radicand equality before using the selected positive root. -/
+private meta def rootAlias (source : Expr) (radicand : Nat) : MetaM Expr := do
+  let base : Q(ℝ) := source.appArg!
+  let n : Q(ℕ) := mkNatLit radicand
+  let candidate ← mkFreshExprMVar q($base = ($n : ℝ))
+  let remaining ← Lean.Elab.runTactic' candidate.mvarId!
+    (← `(tactic| norm_num [RealAlgebraicNumber.ofRat_toReal]))
+  unless remaining.isEmpty do
+    throwError "rcf: square-root radicand has no checked natural value"
+  let proof ← instantiateMVars candidate
+  checkWithKernel proof
+  return ← mkEqSymm (← mkAppM ``congrArg #[mkConst ``Real.sqrt, proof])
 
 private inductive SourceKind where
-  | radical (degree : Nat)
+  | radical (radicand : Nat) (aliasProof : Expr)
   | selected (args : Array Expr) (checked : Expr)
   | normalized (selected checked : Expr)
   deriving Inhabited
@@ -67,7 +77,7 @@ private structure SourcePlan where
 private instance : Inhabited SourcePlan where
   default := ⟨default, RealAlgebraicNumber.ofRat 0,
     DensePoly.ofList [], ⟨0, 0, 0⟩,
-    DensePoly.ofList [], default, default, .radical 1⟩
+    DensePoly.ofList [], default, default, .radical 1 default⟩
 
 private meta def unfoldHead? (e : Expr) (predicate : Expr → Bool) : MetaM (Option Expr) := do
   let mut current := e
@@ -160,13 +170,15 @@ private meta def candidate (target : Expr) : MetaM Bool := do
   if atoms.size ≥ 2 then return true
   let some atom := atoms[0]? | return false
   if atom.isAppOfArity ``Real.sqrt 1 then
-    return (← naturalSquareRoot? atom).isSome
+    if (← naturalSquareRoot? atom).isSome then return true
+    return (← Reify.lowerRationals #[] atom) != atom
   return atom.isAppOfArity ``RealAlgebraicNumber.toReal 1
 
 /-- Preserve single-coefficient priority only when every original divisor
 is rational. Rational normalization restores its temporary metavariable state. -/
 private meta def rationalGuards (divisors : Array Expr) : MetaM Bool := do
-  for divisor in divisors do
+  for original in divisors do
+    let divisor ← Reify.lowerRationals #[] original
     if !(sourceAtoms divisor #[]).isEmpty then return false
     let value : Q(ℝ) := divisor
     let result ← (do
@@ -243,9 +255,9 @@ private meta def sourceRoot? (argument : Expr) :
 
 private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
   let identity : DensePoly Rat := DensePoly.ofList [0, 1]
-  if let some degree ← naturalSquareRoot? source then
+  if let some radicand ← naturalSquareRoot? source then
     let (_, _, anchorValue) ← FieldRuntime.coefficient source
-    let sourceP := SquareRoot.polynomial degree
+    let sourceP := SquareRoot.polynomial radicand
     let sourceSquare := if anchorValue.toAlgebraic.p == sourceP then
         anchorValue.toAlgebraic.rep.1.square
       else
@@ -262,7 +274,7 @@ private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
     let sourceProof ← mkAppM ``CommonPresentation.generator_eval #[source]
     return some ⟨source, anchorValue, sourceP, sourceSquare,
       identity, fieldExpr, sourceProof,
-      .radical degree⟩
+      .radical radicand (← rootAlias source radicand)⟩
   unless source.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return none
   let argument := source.appArg!
   let field? ← fieldArgs? argument
@@ -367,10 +379,10 @@ private meta def assemble (source : Reify.Source) (leafSources : Array Expr) (pl
           throwError "rcf: source square count differs from the coordinates"
         let sourceSquareExpr : Q(DyadicSquare) ← FieldLiteral.squareExpr sourceSquare
         let sourcePExpr : Q(ZPoly) ← match plans[i]!.kind with
-          | .radical degree => do
-              unless sourceP == SquareRoot.polynomial degree do
+          | .radical radicand _ => do
+              unless sourceP == SquareRoot.polynomial radicand do
                 throwError "rcf: source radical has a different defining polynomial"
-              let nExpr : Q(ℕ) := mkNatLit degree
+              let nExpr : Q(ℕ) := mkNatLit radicand
               pure q(SquareRoot.polynomial $nExpr)
           | .selected _ _ | .normalized _ _ => FieldLiteral.zpolyExpr sourceP
         let sourceWitness ← mkDecideProof
@@ -378,14 +390,15 @@ private meta def assemble (source : Reify.Source) (leafSources : Array Expr) (pl
         let sourcePrecision ← mkDecideProof
           (q((mahlerPrec $sourcePExpr : Int) ≤ ($sourceSquareExpr).prec) : Q(Prop))
         let selected ← match plans[i]!.kind with
-          | .radical degree => do
-              let nExpr : Q(ℕ) := mkNatLit degree
+          | .radical radicand aliasProof => do
+              let nExpr : Q(ℕ) := mkNatLit radicand
               let hreal ← mkDecideProof
                 (q(($sourceSquareExpr).meetsRealAxis = true) : Q(Prop))
               let hpositive ← Tactic.positiveLowerBound sourceSquareExpr
-              mkAppM ``SquareRoot.selected
+              let selected ← mkAppM ``SquareRoot.selected
                 #[nExpr, sourceSquareExpr, sourceWitness, sourcePrecision,
                   hreal, hpositive]
+              mkEqTrans selected aliasProof
           | .selected args _ => do
               let sourceValue ← mkAppM ``Selected.real_toReal args
               mkAppM ``Eq.symm #[sourceValue]
@@ -413,7 +426,7 @@ private meta def assemble (source : Reify.Source) (leafSources : Array Expr) (pl
       for plan in plans do
         if plan.sourcePolynomial != p then continue
         let checked ← match plan.kind with
-          | .radical _ => pure none
+          | .radical _ _ => pure none
           | .selected _ checked | .normalized _ checked => pure (some checked)
         if let some checked := checked then
           unless (← inferType checked) == instType do
@@ -579,8 +592,15 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr)
   profileitM Exception "rcf algebraic frontend" (← getOptions)
     (assemble source leafSources plans)
 
+private meta def proveRational (source : Reify.Source) : MetaM Expr := do
+  Tactic.checkGuards source
+  let proof ← Hex.RCF.proveGoal source.sentence
+  mkAppM ``Iff.mp #[source.sentenceProof, proof]
+
 private meta partial def gather (source : Expr) (leaves : Array Expr) :
     MetaM (Option (Array Expr)) := do
+  let lowered ← Reify.lowerRationals #[] source
+  if lowered != source then return ← gather lowered leaves
   if ← eligible source then
     return some (if leaves.contains source then leaves else leaves.push source)
   let e := source.consumeMData
@@ -612,9 +632,7 @@ private meta partial def gather (source : Expr) (leaves : Array Expr) :
   if source.coefficients.isEmpty then
     -- Checked rational constructor lowering retains all original guards.
     -- False, replay and resource failures from the base remain terminal.
-    Tactic.checkGuards source
-    let proof ← Hex.RCF.proveGoal source.sentence
-    return .proved (← mkAppM ``Iff.mp #[source.sentenceProof, proof])
+    return .proved (← proveRational source)
   if source.coefficients.size == 1 then
     if (← Tactic.handlesCoefficient source.coefficients[0]!) &&
         (← rationalGuards source.divisors) then return .declined
@@ -622,7 +640,7 @@ private meta partial def gather (source : Expr) (leaves : Array Expr) :
   for scalar in source.coefficients ++ source.divisors do
     let some next ← gather scalar leaves | return .declined
     leaves := next
-  if leaves.isEmpty then return .declined
+  if leaves.isEmpty then return .proved (← proveRational source)
   let plans ← profileitM Exception "rcf source authentication" (← getOptions) do
     let mut plans : Array SourcePlan := #[]
     for scalar in leaves do
