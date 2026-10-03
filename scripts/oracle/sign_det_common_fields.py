@@ -9,6 +9,7 @@ Tarski moments, matrix solutions, candidate supports or Thom rule are reused.
 from __future__ import annotations
 
 import argparse
+import json
 from collections import Counter
 from functools import cmp_to_key
 from pathlib import Path
@@ -227,10 +228,54 @@ def check(source, failure_dir, profile, seed):
     return int(failures != 0)
 
 
+def check_scalars(source):
+    """Independently evaluate each measured close-value coordinate with qqbar."""
+    data = json.loads(Path(source).read_text())
+    require(isinstance(data, list) and len(data) == 2, "missing scalar fields")
+    total = 0
+    with QQBar() as q:
+        zero = q.number(0)
+        for field, polynomial, powers in zip(
+                data, ([-2, 0, 1], [-2, 0, 0, 1]),
+                ([4, 8, 16, 32, 64, 128], [8, 16, 32, 80])):
+            raw = field["generator"]
+            require(raw["polynomial"] == polynomial, "wrong scalar generator")
+            lower, upper = q.number(rational(raw["lower"])), q.number(rational(raw["upper"]))
+            roots = q.roots([q.number(c, q.integer) for c in polynomial], integer=True)
+            hits = [r for r, multiplicity in roots if multiplicity == 1 and
+                    q.compare(lower, r) < 0 and q.compare(r, upper) < 0]
+            require(len(hits) == 1, "scalar interval does not select one root")
+            generator = hits[0]
+            require(q.compare(generator, zero) > 0, "wrong scalar embedding")
+            require(len(field["values"]) == 2 * len(powers), "missing close-value coordinates")
+            base = (q.binary("sub", q.number(3), q.binary("mul", q.number(2), generator))
+                    if polynomial == [-2, 0, 1] else
+                    q.binary("sub", generator, q.number(1)))
+            for index, row in enumerate(field["values"]):
+                value = zero
+                for coefficient in reversed(row["coordinates"]):
+                    value = q.binary("add", q.binary("mul", value, generator),
+                                     q.number(rational(coefficient)))
+                comparison = q.compare(value, zero)
+                expected = (comparison > 0) - (comparison < 0)
+                prescribed = q.number(1)
+                for _ in range(powers[index // 2]):
+                    prescribed = q.binary("mul", prescribed, base)
+                if index % 2:
+                    prescribed = q.unary("neg", prescribed)
+                require(q.compare(value, prescribed) == 0, "wrong cancellation family value")
+                require(type(row["sign"]) is int and row["sign"] == expected,
+                        "wrong scalar sign")
+                total += 1
+    print(f"HexSignDet: {total} exact close-value signs, 0 failures ({VERSION})")
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source", nargs="?")
     parser.add_argument("--check", action="store_true")
+    parser.add_argument("--scalars", action="store_true")
     parser.add_argument("--profile", default="ci", choices=("ci", "local"))
     parser.add_argument("--seed", type=int, default=10377)
     parser.add_argument("--failure-dir", type=Path, default=ROOT / "conformance-failures")
@@ -238,6 +283,9 @@ def main():
     try:
         with QQBar():
             pass
+        if args.scalars:
+            require(args.source is not None, "--scalars requires a source file")
+            return check_scalars(args.source)
         return check(args.source or (DEFAULT_FIXTURE if args.check else None),
                      args.failure_dir, args.profile, args.seed)
     except (OracleMismatch, Unavailable, OSError, ImportError) as exc:

@@ -1,58 +1,55 @@
-# Native fixed-field sign comparison
+# Field-coordinate sign strategies
 
-The interval strategy reduced median end-to-end time for the three common-field
-oracle fixtures from 110.044 s to 86.252 s on the recorded shared host: a ratio
-of 1.276, or a 21.6% reduction in elapsed time. These are host-specific
-observations, not portable latency bounds or evidence of asymptotic complexity.
+The eliminant-bounded interval operation is substantially faster on the recorded
+close-value family. Median end-to-end time for twenty signs was 54.805 ms,
+compared with 2.334 s for canonical conversion. The median within-block
+reference/interval ratio was 42.567. These are observations on the recorded
+shared host, including generator construction and process startup.
 
-Both arms run the same executable and the same fixture algorithm. The reference
-converts each field coordinate to a canonical real algebraic number before
-determining its sign. The interval arm uses `RealAlgebraicNumber.signField`:
-constants are handled directly; nonconstant coordinates are evaluated on the
-generator's certified enclosure, then on a refined enclosure if needed. Exact
-conversion remains the fallback after both probes are inconclusive.
+`scalars/` retains all twelve observations, metadata, exact outputs and summary.
+Six adjacent blocks alternate reference/interval and interval/reference on one
+automatically leased CPU. No completed sample was excluded and there was no
+rerun. All outputs agree byte for byte. An independent FLINT qqbar evaluation
+accepted all twenty coordinate signs.
 
-The fixtures include a degree-four common field for independently selected
-positive roots of `X²−2` and `X²−3`, both input orders, and a cubic field for
-the positive roots of `X³−2` and `X³−4`. They exercise simultaneous signs,
-root enumeration, selected-root signs, comparison, common-product re-encoding,
-equality across expressions, and rejection of copied or stale evidence.
-Input construction, serialization and process startup are included in each
-observation. This suite is broader than the manual's sign-table example.
+The quadratic family evaluates both signs of `(3−2√2)^n` for
+`n = 4, 8, 16, 32, 64, 128`. Its reduced power-basis coordinates have large
+opposing coefficients while the selected value approaches zero. The cubic
+family evaluates both signs of `(∛2−1)^n` for `n = 8, 16, 32, 80`.
+This exercises cancellation and tiny values, including the final bounded
+precision probe. It is a fixed family comparison, not a general degree/height
+dispatch threshold or a Phase-4 scaling gate.
 
-All twelve completed observations are retained in `samples.jsonl`. Six adjacent
-blocks alternate reference/interval and interval/reference. The process and its
-children run on one automatically leased CPU; load observations are recorded
-as context. No sample was excluded and there was no rerun. Every observation
-produced identical bytes, with SHA-256
-`59838a9da9649c10170d58af62a12fe5cb74ff77ab835516a50b16e5a8a2e56b`.
-The independent FLINT qqbar oracle accepted all three cases with zero failures.
+The interval arm handles constants directly, first reads the stored generator
+enclosure, then requests a modest refinement. If both probes are inconclusive,
+it computes an integer norm eliminant of `T−value` and derives a finite output
+precision from its reciprocal-Cauchy lower bound. The correctness and endpoint
+success proofs cover every branch. The executable interval arm performs no
+canonical algebraic-number conversion.
 
-`metadata.json` records the binary hash, source hashes, toolchain, baseline
-revision and host placement. The measured executable was built from the
-recorded baseline plus the hashed interval-sign and fixture sources. The source
-hashes identify those changes even though the baseline revision predates their
-commit. The paired comparison concerns the two strategies in that executable.
+`canonical-fallback/` retains observations for the explicitly identified
+two-probe strategy whose final fallback canonicalizes the value. Its source and
+binary hashes define that separate comparison; its timings do not describe the
+eliminant-bounded endpoint. All completed observations remain available.
 
-One explanatory native profile collected 8,392 user CPU-clock samples at 99 Hz,
-with zero lost samples. Flat self samples include `malloc` (14.60%), `cfree`
-(9.64%), GMP integer initialization (5.77%), Lean small-object allocation
-(4.33%), and dyadic addition (2.75%). The stack data did not give reliable caller
-attribution for these allocations, so this profile cannot establish how often
-the interval fallback ran or assign the remaining cost to a particular phase.
-It is not a Phase-4 attribution or memory gate.
-
-Build the executable with `lake build hexsigndet_emit_common_fields`, then run:
+Build and run the close-value comparison with:
 
 ```sh
+lake build hexsigndet_emit_common_fields
 python3 scripts/bench/field_sign_paired.py \
-  .lake/build/bin/hexsigndet_emit_common_fields new-output-directory
+  .lake/build/bin/hexsigndet_emit_common_fields new-output-directory --mode scalars
 uv run --with python-flint==0.9.0 python \
   scripts/oracle/sign_det_common_fields.py \
-  new-output-directory/fixtures.jsonl --profile local
+  new-output-directory/fixtures.jsonl --scalars --profile local
 ```
 
-The output directory must be new. The measurement driver fails if either arm
-fails or their output bytes differ. Sign caching across callbacks, the claimed
-interpreter bottleneck, and the remaining coefficient-size/nested-field scaling
-obligations are not established by this fixed comparison.
+The output directory must be new. Metadata records the executable hash,
+computational source hashes, baseline revision, dirty-tree state, toolchain and
+host placement. The source hashes identify the measured code even when its
+changes are not committed at measurement time. The paired statistic uses the
+six within-block ratios; separate arm medians are also retained.
+
+These observations establish neither a sign cache across callbacks nor the
+claimed interpreter bottleneck. The broader common-field fixtures, allocation,
+nested-field scaling and ordinary-kernel proof-checking costs have separate
+evidence obligations.

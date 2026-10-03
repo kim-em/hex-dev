@@ -9,8 +9,11 @@ import Hex.Conformance.Emit
 open Hex
 
 def main (args : List String) : IO Unit := do
+  if args == ["--scalars"] || args == ["--scalars", "--legacy"] then
+    IO.println (Hex.SignDet.CommonField.scalarFixtures (args == ["--scalars", "--legacy"])).compress
+    return
   unless args.isEmpty || args == ["--legacy"] do
-    throw (IO.userError "usage: hexsigndet_emit_common_fields [--legacy]")
+    throw (IO.userError "usage: hexsigndet_emit_common_fields [--scalars] [--legacy]")
   for (name, inputs) in [
       ("independent-quadratics", #[ZPoly.rootNear #p[-2, 0, 1] 1.4,
         ZPoly.rootNear #p[-3, 0, 1] 1.7]),

@@ -1552,7 +1552,8 @@ private def commonFieldTablePass
     let head := qa * qb
     let some table := determine sign 7 head .negInf .posInf
       [qa, qb, DensePoly.C (a - b)] | return false
-    return table.rows.toList ==
+    return common.generator.p.natDegree == 4 &&
+      table.rows.toList ==
       [([0, -1, -1], 1), ([1, 0, -1], 1)] &&
       table.count [0, 0, -1] == 0
   else return false
@@ -1562,9 +1563,10 @@ private def commonFieldTablePass
 ```
 
 Here the common generator has degree four. Coefficient arithmetic uses actual
-`QAdjoin` coordinates. The sign function handles rational constants directly,
-uses interval evaluation for nonconstant coordinates, and retains exact algebraic
-conversion when its finite interval probes are inconclusive.
+`QAdjoin` coordinates. The sign function handles rational constants directly and
+uses interval evaluation for nonconstant coordinates. If its first two probes are
+inconclusive, an integer polynomial satisfied by the coordinate gives a proven
+precision bound for the final interval probe.
 The theorem {name}`Hex.RealAlgebraicNumber.signField_spec` proves that it returns
 the sign in the selected real embedding. The more extensive enumeration,
 comparison, re-encoding and replay checks run in the conformance suite against

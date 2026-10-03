@@ -106,6 +106,10 @@ python3 scripts/oracle/sign_det_common_fields.py --check
 python3 -m unittest scripts.oracle.test_sign_det_common_fields
 ```
 
+The emitter uses the certified interval field sign. Its `--legacy` option runs
+the same fixtures with canonical conversion for each sign callback; the paired
+measurement driver compares these explicit strategies and checks identical output.
+
 `json-bytes.jsonl` contains integer-only JSON byte inputs for the total
 `Codec.Json` backend. The compiled `hexsigndet_json_bytes` driver parses the
 enclosed bytes; Python's standard JSON parser independently checks acceptance

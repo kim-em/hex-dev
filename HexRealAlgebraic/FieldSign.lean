@@ -7,6 +7,7 @@ module
 
 public import HexRealAlgebraic.Order
 public import HexNumberField.Convert
+public import HexNumberField.Roots
 
 public section
 
@@ -18,9 +19,37 @@ namespace Hex.RealAlgebraicNumber
   else if ball.re < -ball.radius then some (-1)
   else none
 
+namespace FieldSign
+
+/-- Read the existing enclosure with a minimum of sixteen coefficient bits. -/
+@[expose] def initial? (generator : RealAlgebraicNumber)
+    (value : QAdjoin generator.toAlgebraic) : Option Int :=
+  let rep := generator.toAlgebraic.rep
+  ballSign? (PolyQuot.evalRatBall value.coeffs rep.1.square
+    (Max.max (16 : Int) rep.1.square.prec))
+
+/-- A modest absolute-precision probe before constructing an evaluation eliminant. -/
+@[expose] def refined? (generator : RealAlgebraicNumber)
+    (value : QAdjoin generator.toAlgebraic) : Option Int :=
+  ballSign? (value.approx generator.toAlgebraic.rep generator.toAlgebraic.rep_mk 32).2
+
+/-- An integer polynomial vanishing at the selected coordinate value. -/
+@[expose] def eliminant (generator : RealAlgebraicNumber)
+    (value : QAdjoin generator.toAlgebraic) : ZPoly :=
+  PolyQuot.Roots.normEliminant (DensePoly.ofList [-value, 1])
+
+/-- The finite reciprocal-Cauchy endpoint for the existing guarded approximation. -/
+@[expose] def endpoint? (generator : RealAlgebraicNumber)
+    (value : QAdjoin generator.toAlgebraic) : Option Int :=
+  let precision := evalDisambiguationLimit (eliminant generator value) 1
+  ballSign? (value.approx generator.toAlgebraic.rep generator.toAlgebraic.rep_mk
+    (precision : Int)).2
+
+end FieldSign
+
 /-- Decide a real field coordinate using its existing generator enclosure.
-Only an inconclusive probe refines the generator. The canonical conversion
-remains the exact fallback when both finite probes are inconclusive. -/
+Only inconclusive probes refine the generator. The final probe uses a finite
+precision derived from an evaluation eliminant, without canonical conversion. -/
 @[expose] def signField (generator : RealAlgebraicNumber)
     (value : QAdjoin generator.toAlgebraic) : Int :=
   let polynomial := value.coeffs
@@ -28,16 +57,14 @@ remains the exact fallback when both finite probes are inconclusive. -/
     let q := polynomial.coeff 0
     if q < 0 then -1 else if q = 0 then 0 else 1
   else
-    let representative := generator.toAlgebraic.rep
-    let precision := Max.max (16 : Int) representative.1.square.prec
-    match ballSign? (PolyQuot.evalRatBall polynomial representative.1.square precision) with
+    match FieldSign.initial? generator value with
     | some sign => sign
     | none =>
-      match ballSign? (value.approx representative generator.toAlgebraic.rep_mk 32).2 with
+      match FieldSign.refined? generator value with
       | some sign => sign
       | none =>
-        match ofAlgebraic? value.toAlgebraicNumber with
-        | some result => result.sign
-        | none => Hex.panicWith 0 "signField: nonreal coordinate of a real generator"
+        match FieldSign.endpoint? generator value with
+        | some sign => sign
+        | none => Hex.panicWith 0 "signField: finite precision endpoint failed"
 
 end Hex.RealAlgebraicNumber

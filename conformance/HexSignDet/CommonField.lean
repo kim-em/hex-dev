@@ -135,4 +135,29 @@ def fixture (inputs : Array AlgebraicNumber) : Json :=
 def fixtureLegacy (inputs : Array AlgebraicNumber) : Json :=
   fixtureAt inputs (QAdjoin.common inputs) sign
 
+/-- Small values from cancellation in quadratic and cubic fields. -/
+def scalarRows (generator : RealAlgebraicNumber)
+    (base : QAdjoin generator.toAlgebraic) (powers : List Nat) (legacy : Bool) : Json :=
+  let sign := if legacy then sign else generator.signField
+  let values := powers.flatMap fun power =>
+    let value := base ^ power
+    [value, -value]
+  Json.mkObj [("generator", algebraic generator.toAlgebraic),
+    ("values", toJson (values.map fun value =>
+      Json.mkObj [("coordinates", coordinates value), ("sign", toJson (sign value))]))]
+
+/-- Fixed close-value comparison cases; powers and both signs are retained explicitly. -/
+def scalarFixtures (legacy : Bool) : Json :=
+  let quadratic := ZPoly.rootNear #p[-2, 0, 1] 1.4
+  let cubic := ZPoly.rootNear #p[-2, 0, 0, 1] 1.3
+  if quadraticReal : quadratic.isReal = true then
+    if cubicReal : cubic.isReal = true then
+      toJson #[
+        scalarRows (RealAlgebraicNumber.ofAlgebraic quadratic quadraticReal)
+          ((3 - 2 * quadratic.toQAdjoin) : QAdjoin quadratic) [4, 8, 16, 32, 64, 128] legacy,
+        scalarRows (RealAlgebraicNumber.ofAlgebraic cubic cubicReal)
+          ((cubic.toQAdjoin - 1) : QAdjoin cubic) [8, 16, 32, 80] legacy]
+    else error "nonreal cubic generator"
+  else error "nonreal quadratic generator"
+
 end Hex.SignDet.CommonField

@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealAlgebraic.FieldSign
+public import HexRealAlgebraicMathlib.FieldSignBound
 public import HexRealAlgebraicMathlib.Order
 public import HexNumberFieldMathlib.Approx
 public import HexNumberFieldMathlib.CommonField
@@ -76,10 +77,6 @@ theorem signField_spec (generator : RealAlgebraicNumber)
       (SignType.sign
         (PolyQuot.toComplex value generator.toAlgebraic.rep
           generator.toAlgebraic.rep_mk).re : Int) := by
-  have real : value.toAlgebraicNumber.isReal = true := by
-    rw [AlgebraicNumber.isReal_iff, QAdjoin.toAlgebraicNumber,
-      PolyQuot.toAlgebraicNumber_toComplex]
-    exact QAdjoin.value_real value generator.property
   unfold signField
   dsimp only
   split
@@ -102,23 +99,21 @@ theorem signField_spec (generator : RealAlgebraicNumber)
     simpa [DensePoly.coeff_C] using castSign.symm
   · split
     · rename_i sign accepted
-      apply ballSign?_spec _ _ _ _ accepted
+      apply ballSign?_spec _ _ _ _ (by simpa only [FieldSign.initial?] using accepted)
       exact DyadicComplexBall.evalRatBall_mem _ _ _
         (DyadicComplexBall.mem_toBall
           (HexRootsMathlib.RefinedIsolation.root_mem_closedDisc _))
     · split
       · rename_i sign accepted
-        exact ballSign?_spec _ _ _ (PolyQuot.approx_sound value _ _ _) accepted
-      · rw [ofAlgebraic?, dite_eq_left real]
-        dsimp only
-        rw [sign_eq]
-        have selected :
-            (ofAlgebraic value.toAlgebraicNumber real).toReal =
-              (PolyQuot.toComplex value generator.toAlgebraic.rep
-                generator.toAlgebraic.rep_mk).re := by
-          exact congrArg Complex.re (PolyQuot.toAlgebraicNumber_toComplex value _ _)
-        rw [selected]
-        exact scalarSign_eq _
+        exact ballSign?_spec _ _ _ (PolyQuot.approx_sound value _ _ _)
+          (by simpa only [FieldSign.refined?] using accepted)
+      · split
+        · rename_i sign accepted
+          exact ballSign?_spec _ _ _ (PolyQuot.approx_sound value _ _ _)
+            (by simpa only [FieldSign.endpoint?] using accepted)
+        · rename_i rejected
+          have success := FieldSign.endpoint?_isSome generator value (by omega)
+          simp only [rejected, Option.isSome_none, Bool.false_eq_true] at success
 
 /-- The fast sign equals the existing canonical sign for every real field coordinate. -/
 theorem signField_eq (generator : RealAlgebraicNumber)
