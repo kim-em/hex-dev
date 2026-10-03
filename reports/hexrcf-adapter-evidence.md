@@ -59,6 +59,13 @@ Targeted retained experiments answer concrete implementation questions:
 | One replay goal versus split conjuncts | [Replay comparison](hexrcf-replay-proofs.md) | The retained comparison did not establish a gain; combined replay stays off. |
 | Degree, source atoms and coefficient width | [Input costs and attribution](hexrcf-scaling-proofs.md) | Independent two-point observations in a no-real-root regime, with serialized/expanded syntax and a representative phase profile. These are not asymptotic verdicts or precision/depth evidence. |
 
+The consumed signed-remainder producer already uses
+[`Sturm.normalize`](../HexSturm/Basic.lean), which divides by the positive
+absolute leading coefficient. Negative-leading remainders retain their signs,
+with literal positive scale witnesses checked during replay. Carrier monicization
+does not replace that normalization or assert that every intermediate field gcd
+computation is monic.
+
 Each report states its measured source/import identities and host context,
 retains completed samples and distinguishes changed-source studies. Scientific
 comparisons use fixed trial-major schedules with adjacent alternating AB/BA
