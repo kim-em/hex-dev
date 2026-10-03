@@ -19,7 +19,11 @@ hashes. The existing CI job builds and verifies this executable. The retained
 took 32 seconds and exceeded the 30-second per-library soft threshold.
 [Required CI](https://github.com/kim-em/hex-dev/actions/runs/36972953823)
 records 60 seconds for this executable and 336 seconds total under the shared
-360-second cap. This is verification evidence, not a scientific budget.
+360-second cap. The later pre-rebase [required CI](https://github.com/kim-em/hex-dev/actions/runs/36983780557)
+records 36 seconds for this executable and 217 seconds total under the same cap.
+These are historical verification observations on their recorded sources, not
+scientific budgets or current-base headroom assertions. The rebased verification
+is recorded separately in [the rebase evidence](bench-results/prerequisite-rebase-verification.json).
 
 The fixed verifier already invokes each runner once in-process, without warmup
 or tuning. The hard add/subtract registrations and their bare controls account
@@ -29,7 +33,9 @@ canonical fixed input with an easier smoke input, and the scientific inputs
 and their expected hashes are preserved. The operational warning and remaining
 canonical-arithmetic cost remain under #10577. The full CI cap remains enforced;
 no increase or verification bypass is introduced. The retained 336-second run
-has only 24 seconds of headroom, a concrete CI-variance concern.
+had only 24 seconds of headroom. The later pre-rebase observation was lower;
+shared-host and CI variance remain concerns, and required CI must pass on the
+final source without weakening the cap.
 
 | Shipped surface | Registrations | Evidence status |
 | --- | --- | --- |

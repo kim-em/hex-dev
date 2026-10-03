@@ -1,0 +1,67 @@
+{
+  "source_commit": "63bc7163715b50eb09cc8c5a9248ac295194c100",
+  "base_commit": "293d981ea323119da549e8bcf9f5be7e18d62971",
+  "local": {
+    "default_lake_build": {
+      "jobs": 15525,
+      "result": "success"
+    },
+    "owned_lake_build": {
+      "jobs": 10851,
+      "result": "success"
+    },
+    "bench_budget_unit_tests": {
+      "cases": 3,
+      "result": "success"
+    },
+    "pinned_oracle_unit_tests": {
+      "cases": 19,
+      "skips": 0,
+      "result": "success"
+    },
+    "dag_check": "success",
+    "phase_check": "success",
+    "admission_scan": {
+      "result": "failed",
+      "reason": "missing local import HexSignDetMathlib.GraphSignsConformance",
+      "source": "conformance/HexRealClosureMathlib/SignFactsConformance.lean",
+      "existing_owner_repair": "#10632 / #10641"
+    }
+  },
+  "required_ci": {
+    "url": "https://github.com/kim-em/hex-dev/actions/runs/37119197374",
+    "result": "failed",
+    "failed_step": "Check dependency DAG and trusted-internals imports",
+    "same_upstream_stale_import": true
+  },
+  "prior_required_ci": {
+    "url": "https://github.com/kim-em/hex-dev/actions/runs/36983780557",
+    "source_commit": "04c9224033c58e13666798414695d13ab48e5c92",
+    "result": "success",
+    "benchmark_verify_seconds": 217,
+    "hard_cap_seconds": 360,
+    "real_algebraic_seconds": 36
+  },
+  "scope": "Phase 3 only; Phase 4 incomplete. Required CI must pass on the corrected revision before merge.",
+  "owner_repair": {
+    "source_pr": "https://github.com/kim-em/hex-dev/pull/10632",
+    "source_head": "81c736a2",
+    "path": "conformance/HexRealClosureMathlib/SignFactsConformance.lean",
+    "scope": "Exact existing owner conformance-only import/fixture correction; no owner implementation changes.",
+    "full_conformance_build": {
+      "jobs": 14772,
+      "result": "success"
+    },
+    "named_admission_scan": {
+      "result": "success",
+      "message": "259 scanned adapter/conformance import cones: 1024 local modules, no admissions in these cones"
+    },
+    "fresh_exact_oracle": {
+      "result": "success",
+      "cases": 83,
+      "skips": 0,
+      "fixture_byte_match": true,
+      "producer_completed_before_check": true
+    }
+  }
+}
