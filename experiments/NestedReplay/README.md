@@ -31,7 +31,8 @@ child certificates and kernel proofs are outside this prototype.
 The default run uses only construction/production facts. `--collect-replay`
 also checks in collection mode; the driver verifies that this discovers no
 extra keys. `--omit` and `--omit-level-one` remove actually used nonconstant
-arithmetic facts at either level. `--omit-literal` removes a nonconstant
+arithmetic facts at either level. `--omit-literal-level-one` removes a
+first-level input fact, and `--inverse-only` tests the replay inversion guard. `--omit-literal` removes a nonconstant
 input fact before a fresh decode. Each rejects without replacement sign work.
 A separate `--keys-only` probe uses a nonmonic head, different stored
 representatives of the same value, and conjugate ±√2 contexts. An absent
@@ -129,3 +130,17 @@ The retained functional probes cover missing input and arithmetic facts at
 both levels, exact noncanonical keys, opposite cached signs, unsupported
 inversion and absence of extra keys in a collection replay. The driver
 builds the executable before recording hashes and sampling.
+
+The two full-input data sets have a substantial unexplained timing shift:
+the earlier record has medians 1.20/1.35/1.49 ms (fact/plain/instrumented),
+versus 2.00/2.44/2.65 ms in the adjacent record. The earlier within-block
+plain/fact median is about 1.126; the adjacent record gives 1.217. Source,
+instrumentation, arm order and leased CPU differ, so the within-run ranges do
+not describe this variation. No cause is established and no stable effect
+size should be inferred. This does not require a further measurement or
+optimization campaign to establish feasibility.
+
+The executable also compares the plain and instrumented towers' exact graph
+bytes and encoded head, endpoints and queries before checking. The retained
+adjacent observations predate this additional preflight guard; their source
+revision is recorded in metadata. The guard adds no timed arithmetic.

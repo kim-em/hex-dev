@@ -158,6 +158,8 @@ unsafe def removeFact {context : Context E Nat sign parent} (s : Store context) 
   IO.println s!"removed one actually used nonconstant {if literal then "input" else "arithmetic"} level={s.level} fact"
 
 initialize entries : IO.Ref Nat ← IO.mkRef 0
+initialize plainGraph : IO.Ref ByteArray ← IO.mkRef ⟨#[]⟩
+initialize plainInputs : IO.Ref Codec.Json ← IO.mkRef (.arr #[])
 
 /-- A changing nonce prevents the native compiler from sharing the entire
 Boolean replay result across mode changes. Every positive nonce checks the
@@ -189,6 +191,11 @@ unsafe def plain : IO (Nat → Bool) := do
         | .error _ => throw (IO.userError "plain producer failed")
       if signs.values.toList != [1, 1] then throw (IO.userError "plain signs differ")
       let graph := Dag.encode signs.evidence
+      let codec := Element.codec (context := c2) (Element.codec (context := c1) ValueCodec.rat)
+      plainGraph.set (graph.encodeBytes codec ValueCodec.nat)
+      plainInputs.set (.arr #[Codec.poly codec d3.raw.head,
+        Codec.endpoint codec d3.raw.lower, Codec.endpoint codec d3.raw.upper,
+        Codec.list (Codec.poly codec) (d3.raw.queries ++ [q, q])])
       return fun nonce => checkGraph nonce graph Element.sign 9 d3.raw.head
         d3.raw.lower d3.raw.upper (d3.raw.queries ++ [q, q])
 
@@ -270,6 +277,11 @@ unsafe def main (args : List String) : IO UInt32 := do
       IO.println s!"thirdRootAndProductionNanos={(← IO.monoNanosNow) - constructionStarted}"
       let nativeCodec := Element.codec (context := c2) (Element.codec (context := c1) ValueCodec.rat)
       let graphBytes := graph.encodeBytes nativeCodec ValueCodec.nat
+      let inputs := Codec.Json.arr #[Codec.poly nativeCodec d3.raw.head,
+        Codec.endpoint nativeCodec d3.raw.lower, Codec.endpoint nativeCodec d3.raw.upper,
+        Codec.list (Codec.poly nativeCodec) (d3.raw.queries ++ queries)]
+      if graphBytes != (← plainGraph.get) || inputs != (← plainInputs.get) then
+        throw (IO.userError "plain and instrumented graphs or caller inputs differ")
       IO.println "factsAfterProduction"
       report s1
       report s2

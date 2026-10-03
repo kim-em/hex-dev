@@ -145,9 +145,9 @@ def main() -> None:
         ordinary_over_plain = [next(a["nanos"] for a in s["arms"] if a["arm"] == "ordinary") /
                                next(a["nanos"] for a in s["arms"] if a["arm"] == "plain") for s in samples]
         summary = dict(
-            producerOnlyAccepted=all(a["entries"] == 200 for s in samples for a in s["arms"]), omissionExits={"arithmeticLevel2": omitted.returncode,
+            allTimedEntriesChecked=all(a["entries"] == 200 for s in samples for a in s["arms"]), omissionExits={"arithmeticLevel2": omitted.returncode,
                 "arithmeticLevel1": lower_omitted.returncode, "literalLevel2": literal_omitted.returncode, "literalLevel1": literal_lower.returncode},
-            pairRatiosOrdinaryOverCached=ratios,
+            blockRatiosOrdinaryOverCached=ratios,
             plainOverCached=plain_over_cached, ordinaryOverPlain=ordinary_over_plain,
             pairedMedianPlainOverCached=statistics.median(plain_over_cached),
             unsupportedInverseExit=inverse.returncode,
