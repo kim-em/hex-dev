@@ -3,10 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
+module
 
-import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
-import Mathlib.Data.Fintype.Option
-import HasseWeil.HasseBound
+public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
+public import Mathlib.Data.Fintype.Option
+public import HasseWeil.HasseBound
 
 /-!
 # Finite affine elliptic-curve points
@@ -21,11 +22,15 @@ substantial degree/Frobenius infrastructure used here; the independent
 fixed-point correspondence used by ECPP is in `Frobenius.lean`.
 -/
 
+@[expose] public section
+
 namespace Hex.ECPP
 
 open WeierstrassCurve
 
-noncomputable instance {F : Type*} [CommRing F] [Fintype F]
+/-- Over a finite ring, the nonsingular affine points and infinity form a
+finite type, via Mathlib's nonsingular-point equivalence. -/
+noncomputable instance pointFintype {F : Type*} [CommRing F] [Fintype F]
     (W : WeierstrassCurve.Affine F) : Fintype W.Point := by
   classical
   letI : Fintype (WithZero {xy : F × F // W.Nonsingular xy.fst xy.snd}) :=

@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.TowerRefinement
+public import HexRealClosure.BaseInclusion
 
 public section
 
@@ -13,11 +14,15 @@ namespace Hex.RealClosure.Tower
 
 variable {registry : BaseContext.Registry}
 
-/-- A finite derivation of native conversion from identity, a new base
-infinitesimal, a root inclusion, a checked root refinement, and rebuilt later levels.
+/-- A finite derivation of native conversion from identity, a checked base
+inclusion, a new infinitesimal, a root inclusion, a checked root refinement,
+and rebuilt later levels.
 This is erased provenance, not a semantic arithmetic law record. -/
 inductive Transport : (source target : Context registry) → (source.Value → target.Value) → Prop
   | identity (context : Context registry) : Transport context context id
+  | base {source target : BaseContext.PackedContext registry}
+      (inclusion : BaseInclusion source target) :
+      Transport (Context.ofBase source) (Context.ofBase target) inclusion.value
   | infinitesimal {K : Type} [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
       (context : BaseContext.Context registry K sign) :
       Transport (Context.base context) (Context.base context.infinitesimal)
@@ -63,6 +68,18 @@ structure Conversion (source : Context registry) : Type 1 where
 /-- Start conversion without changing the context. -/
 def Conversion.identity (source : Context registry) : Conversion source :=
   ⟨source, id, .identity source⟩
+
+/-- Retain the checked native coefficient map across real-prefix enlargement
+and ordered infinitesimal transport. -/
+@[expose] def Conversion.base {source target : BaseContext.PackedContext registry}
+    (inclusion : BaseInclusion source target) : Conversion (Context.ofBase source) :=
+  ⟨Context.ofBase target, inclusion.value, .base inclusion⟩
+
+/-- The base conversion keeps the declared target and cached coefficient map. -/
+theorem Conversion.base_spec {source target : BaseContext.PackedContext registry}
+    (inclusion : BaseInclusion source target) :
+    (Conversion.base inclusion).context = Context.ofBase target ∧
+      HEq (Conversion.base inclusion).value inclusion.value := ⟨rfl, HEq.rfl⟩
 
 /-- Include a predecessor in one actual cached root extension. This records
 the native coefficient embedding for subsequent common-context transport. -/

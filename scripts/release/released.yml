@@ -63,6 +63,9 @@
 # `lake_declarations` lists named build declarations copied from the monorepo
 # Lake file into the corresponding declarations in a Lean mirror skeleton. It
 # can migrate a package-wide `extern_lib` to a library-scoped custom `target`.
+# `dependency_caches` lists additional external build outputs restored and
+# saved by managed CI. Only AINTLIB is admitted; Mathlib and its dependencies
+# use the upstream cache. Names must be locked, and workflow paths must match.
 # `pins` lists the upstream repos whose git rev is rewritten in this repo's root
 # lakefile (matched by their github URL); `lakefile` is that file's format.
 # The mirror's `lean_lib` build settings are deliberately *not* recorded here:
@@ -143,6 +146,17 @@ repos:
     spec: hex-primality-mathlib
     pins: [hex-basic, hex-arith, hex-primality]
     lakefile: toml
+
+  - repo: leanprover/hex-ecpp-mathlib
+    lib: HexECPPMathlib
+    umbrella: true
+    spec: hex-ecpp-mathlib
+    test_modules: [HexECPPMathlib.Tests]
+    build_modules: [HexECPPMathlib.Native, HexECPPMathlib.Pari]
+    pins: [hex-basic, hex-arith, hex-primality, hex-ecpp, hex-primality-mathlib]
+    lakefile: lean
+    lake_declarations: [hexecpppariio, HexECPPMathlib, HexECPPMathlibPariIO]
+    dependency_caches: [AINTLIB]
 
   - repo: leanprover/hex-poly
     component: Dense univariate polynomials
@@ -630,5 +644,5 @@ repos:
   - repo: leanprover/hex
     pins_only: true
     readme_template: scripts/release/hex-README.md
-    pins: [hex-basic, hex-arith, hex-primality, hex-ecpp, hex-primality-mathlib, hex-poly, hex-mv-poly, hex-mod-arith, hex-sparse-poly, hex-poly-mathlib, hex-sparse-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gf2-mathlib, hex-gfq, hex-gfq-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-perm-group, hex-perm-group-mathlib, hex-graph-iso, hex-graph-iso-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field, hex-number-field-mathlib, hex-number-field-tower, hex-number-field-tower-mathlib, hex-rcf]
+    pins: [hex-basic, hex-arith, hex-primality, hex-ecpp, hex-primality-mathlib, hex-ecpp-mathlib, hex-poly, hex-mv-poly, hex-mod-arith, hex-sparse-poly, hex-poly-mathlib, hex-sparse-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gf2-mathlib, hex-gfq, hex-gfq-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-perm-group, hex-perm-group-mathlib, hex-graph-iso, hex-graph-iso-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field, hex-number-field-mathlib, hex-number-field-tower, hex-number-field-tower-mathlib, hex-rcf]
     lakefile: toml

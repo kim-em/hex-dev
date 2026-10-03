@@ -32,6 +32,43 @@ private def timeoutCheck (path : String) : IO Unit := do
   if (← IO.monoMsNow) - start ≥ 15000 then
     throw <| IO.userError "process cleanup waited for the sleeping descendant"
 
+private def escapedCheck (path : String) (timeout : Bool) : IO Unit := do
+  let readyFile := System.FilePath.mk (path ++ ".ready")
+  let stopFile := System.FilePath.mk (path ++ ".stop")
+  let token ← IO.CancelToken.new
+  let task ← IO.asTask (run 17 { timeoutMs := if timeout then 1500 else 30000 }
+    path (some token)) .dedicated
+  try
+    let start ← IO.monoMsNow
+    -- The descendant records readiness after creating a new session. This
+    -- makes the test exercise escaped pipes rather than a startup race.
+    while !(← readyFile.pathExists) do
+      if (← IO.monoMsNow) - start ≥ 1000 then
+        throw <| IO.userError "escaped pipe-holder did not start"
+      IO.sleep 10
+    unless timeout do token.set
+    while !(← IO.hasFinished task) do
+      if (← IO.monoMsNow) - start ≥ 4000 then
+        throw <| IO.userError "cleanup hung on an escaped pipe-holder"
+      IO.sleep 10
+    fails (if timeout then "timed out" else "cancelled") (IO.ofExcept (← IO.wait task))
+  finally
+    -- Ask the escaped holder to exit through a private file, avoiding signals
+    -- to a process which the harness cannot keep unreaped. This also releases
+    -- the pipes if a reader regression trips the watchdog.
+    let holderReady ← readyFile.pathExists
+    IO.FS.writeFile stopFile ""
+    token.set
+    discard <| IO.wait task
+    if ← readyFile.pathExists then IO.FS.removeFile readyFile
+    let stopStart ← IO.monoMsNow
+    while holderReady && (← stopFile.pathExists) do
+      if (← IO.monoMsNow) - stopStart ≥ 1000 then
+        IO.FS.removeFile stopFile
+        throw <| IO.userError "escaped pipe-holder did not acknowledge shutdown"
+      IO.sleep 10
+    if ← stopFile.pathExists then IO.FS.removeFile stopFile
+
 private def processChecks : IO Unit := do
   fails "cannot start" (run 17 (executable := "/hex-missing-gp"))
   fake "test \"$1\" = '-q' && test \"$2\" = '-f' || exit 3\ncat >/dev/null\nprintf 'HEX_ECPP_BEGIN\\n17\\nHEX_ECPP_END\\n'" fun path => do
@@ -51,9 +88,21 @@ private def processChecks : IO Unit := do
   fake "trap '' TERM\nsleep 20 &\nwait" timeoutCheck
   -- Reaping the leader before these pipes close used to cause ECHILD.
   fake "sleep 20 &\nprintf 'HEX_ECPP_BEGIN\\n17\\nHEX_ECPP_END\\n'" timeoutCheck
+  -- Cancel after the process has had time to create a pipe-holding child.
+  fake "trap '' TERM\nsleep 20 &\nwait" fun path => do
+    let token ← IO.CancelToken.new
+    let cancellation ← IO.asTask (do IO.sleep 125; token.set) .dedicated
+    let start ← IO.monoMsNow
+    fails "cancelled" (run 17 (executable := path) (cancel := some token))
+    discard <| IO.wait cancellation
+    if (← IO.monoMsNow) - start ≥ 15000 then
+      throw <| IO.userError "cancellation cleanup waited for the sleeping descendant"
   fake "sleep 20" fun path => do
     let token ← IO.CancelToken.new
     token.set
     fails "cancelled" (run 17 (executable := path) (cancel := some token))
+  let escaped := "python3 -c 'import os,sys,time\nos.setsid()\nopen(sys.argv[1]+\".ready\",\"w\").close()\ndeadline=time.monotonic()+20\nwhile not os.path.exists(sys.argv[1]+\".stop\") and time.monotonic()<deadline:\n time.sleep(0.025)\nif os.path.exists(sys.argv[1]+\".stop\"):\n os.unlink(sys.argv[1]+\".stop\")\n' \"$0\" &\nwait"
+  fake escaped (fun path => escapedCheck path false)
+  fake escaped (fun path => escapedCheck path true)
 
 #eval processChecks
