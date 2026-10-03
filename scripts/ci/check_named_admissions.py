@@ -171,11 +171,8 @@ def check() -> None:
         raise ValueError("the optional rcf adapter module is missing")
     roots = ["RealClosureConsumer.Query", "RealClosureConsumer.Sign",
              "RealClosureConsumer.Ordered", "RealClosureConsumer.Tower",
-             "HexRCF.RealCoefficients", "HexSignDetMathlib.SelectedProducerConformance",
-             "HexSignDetMathlib.CompletionConformance", "HexSignDetMathlib.QueryHandleConformance",
-             "HexSignDetMathlib.TableConformance", "HexSignDetMathlib.ReencodingConformance",
-             "HexSignDetMathlib.RootListConformance", "HexSignDetMathlib.RefinementConformance",
-             "HexSignDetMathlib.ConvertConformance", "HexRealClosure.BaseTests",
+             "HexRCF.RealCoefficients", "HexSignDetMathlib.FieldConformance",
+             "HexSignDet.FieldChecks", "HexRealClosure.BaseTests",
              "HexRealClosure.QAdjoinTests",
              "HexRealClosure.TowerCatalog", "HexRealClosure.TowerTests",
              "HexRealClosure.RootFrame", "HexRealClosure.RootFrameTests",
