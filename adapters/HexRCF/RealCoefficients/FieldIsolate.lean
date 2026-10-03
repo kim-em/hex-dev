@@ -103,10 +103,11 @@ private def separate? (sign : E → Int) (point : Dyadic → E)
       let tail ← separate? sign point head total fuel (right' :: rest)
       some (left' :: tail)
 
-/-- A bounded bisection search over exact root counts. Failure leaves the
-caller free to use another proposal strategy. -/
+/-- A bounded bisection search over exact root counts. `depth` bounds nested
+bisection; the default preserves the existing 128-level attempt. Failure
+returns no proposal. Every returned interval is still checked by replay. -/
 def propose? (sign : E → Int) (point : Dyadic → E)
-    (head : DensePoly E) : Option IsolationCert :=
+    (head : DensePoly E) (depth : Nat := 128) : Option IsolationCert :=
   match Sturm.prepare sign head .negInf .posInf with
   | none => none
   | some domain =>
@@ -116,7 +117,7 @@ def propose? (sign : E → Int) (point : Dyadic → E)
       else if total.value == 0 then some ⟨#[]⟩
       else do
         let (lower, upper) ← bracket? sign point head total 32 0
-        let intervals ← visit? sign point head total 128 lower upper total.value
+        let intervals ← visit? sign point head total depth lower upper total.value
         let intervals ← separate? sign point head total intervals.length intervals
         some ⟨intervals.toArray⟩
 

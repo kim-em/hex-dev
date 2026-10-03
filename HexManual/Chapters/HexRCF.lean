@@ -1642,8 +1642,8 @@ most `4 · 2⁻precision`. The extra dyadic margin keeps exact rational roots,
 including zero, inside an interval of positive width.
 {name}`Hex.RCF.RealCoefficients.rootInterval_progress` proves that every
 precision schedule tending to infinity eventually reaches any positive width
-request. These points and endpoints are ordinary real numbers. The current
-tactic attempts precision eight; it does not yet run this refinement schedule.
+request. These points and endpoints are ordinary real numbers. The algebraic
+tactic doubles fallback precision within its configured refinement budget.
 
 {name}`Hex.RCF.RealCoefficients.proposeIsolations_isSome_iff` establishes
 finite proposal production for exactly the nonzero dense heads. The canonical
@@ -1662,7 +1662,7 @@ complete sorted root list and the literal Sturm checker.
 guarantee over original fixed-field coordinates at a checked selected real
 embedding, including the canonical fallback after bounded direct search fails.
 Canonical conversion preserves the exact interpreted polynomial.
-The corresponding `isolate` entry points search successive precisions and
+The corresponding `isolate` entry points double successive precisions and
 return isolation evidence together with its checker acceptance proof and
 exact binding to the builder that produced the shared squarefree chain.
 The preferred fixed-field search, head conversion and complete root
@@ -1671,7 +1671,8 @@ the accepted Sturm replay evidence is built once after the gaps pass.
 These are compiled producers. A quoted proof must recheck the emitted literal
 certificate in the ordinary kernel.
 Their termination follows from these progress laws for nonzero squarefree
-inputs; they do not change the tactic's fixed-precision attempt.
+inputs. The bounded `build`/`isolateAt` interfaces remain available for callers
+that choose an explicit precision.
 
 {name}`Hex.RCF.RealCoefficients.FieldRootSigns.Table.build_success` proves
 that atom-query production succeeds after isolation construction succeeds.
@@ -1700,10 +1701,63 @@ including repeated/common roots, zero atoms and formulas without atoms.
 The shared formula keeps its guard atoms, whose nonzero endpoint polynomials
 enter the carrier. Squarefreeness is derived before isolation; it is not an
 extra admission required from the caller.
-This constructs a checked root envelope. The complete fixed-field sign-table,
-decision-certificate pipeline and total algebraic tactic search remain separate
-obligations. The current
-tactic still tries only its fixed precision.
+The complete library pipeline consumes this root envelope through
+{name}`Hex.RCF.RealCoefficients.FieldBuild.produce`. This compiled producer
+constructs the radical, complete root isolations, every atom query and a finite
+rational sign table, returning checker acceptance and a recorded hit for every
+replay or open-cell sign operand. Exact duplicate coordinate keys share one
+sign-table entry. The chosen literal square fixes the rational count-one
+interval used for all coordinate signs. The producer captures a prepared domain
+as data before building its sign closure.
+{name}`Hex.RCF.RealCoefficients.Field.prepareSign_spec` proves that prepared
+rational Tarski queries give the selected real embedding's signs. Search does
+not isolate a new algebraic number for each coordinate sign.
+{name}`Hex.RCF.RealCoefficients.FieldBuild.build_progress` also proves success
+of the bounded builder along every cofinal precision schedule.
+
+The `Result.allValue` and `Result.anyValue` compiled folds use only recorded
+signs. Their `forall_decision` and `exists_decision` theorems prove that the
+strict Boolean result is defined and agrees with the real quantified formula.
+A valid envelope for a false sentence yields a false diagnostic; it is never
+assigned as a proof. These laws cover fixed-field algebraic decision after
+source authentication. They do not assert total registered-constant search or
+unbounded elaboration of every quoted proof. Kernel quotation still checks the
+literal certificate and the exact original-goal equivalence. General nested
+joint realization and the remaining adapter evidence obligations are separate.
+
+```lean
+example : ∀ x : ℝ,
+    x ^ 2 - 2 * Real.sqrt 2 * x + 2 ≥ 0 := by rcf
+
+example : ∃ x : ℝ,
+    x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by rcf
+```
+
+The first example has a repeated root at the selected positive square root;
+the second produces a further algebraic root and checks simultaneous sign
+conditions on that section. Both use the optional algebraic handler, with
+ordinary real sectors between its root sections. The complete `produce` API
+accepts a direct bisection depth, defaulting to 256, before its proved canonical
+fallback, which still converts coefficients and reconstructs a common field.
+This complete library path can be slower than the frontend fixed-field fallback
+for tightly separated roots. The existing bounded isolation API retains its
+128-level default.
+The direct proposal can also fail at its bounded bracketing, pivot or gap
+searches; no unchecked interval is accepted.
+
+The tactic uses `produceWithin` with `rcf.algebraic.directDepth` (default 256)
+and `rcf.algebraic.maxDoublings` (default 10). The latter bounds fallback
+interval attempts at precisions 1, 2, 4, …; a zero limit disables fallback.
+This frontend calls the existing fixed-field root driver directly and retains
+its selected coordinates, avoiding a redundant common-field reconstruction.
+Exhaustion reports `rcf: algebraic interval refinement budget exhausted` and
+is terminal. Rejected construction/replay has a different terminal diagnostic.
+The complete library producer and its progress/decision laws are unaffected
+by the frontend budget. Increasing the limits permits further refinement;
+it does not bypass kernel replay. Lean cancellation is checked before and
+after native production. Individual native root computations run until they
+return and do not check Lean's cancellation token or elaboration heartbeats.
+
 
 # Caller-supplied finite bounds
 %%%

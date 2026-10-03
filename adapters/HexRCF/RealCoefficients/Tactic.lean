@@ -98,7 +98,7 @@ private meta def proveSelected (source : Reify.Source) (args : Array Expr)
           if hd : 0 < p.natDegree then
             letI : p.CheckedIrreducible := ⟨hi, hd⟩
             withLocalDecl `inst .instImplicit instType fun inst => do
-              let result ← FieldLiteral.prove pExpr rootExpr valuesExpr qfExpr
+              let result ← FieldLiteral.proveRefining pExpr rootExpr valuesExpr qfExpr
                 (fun _ : Fin 1 => value) qf quantifier
               pure (mkApp (← mkLambdaFVars #[inst] result) checkedIrred)
           else throwError "rcf: selected polynomial has zero degree"
@@ -180,7 +180,7 @@ private meta def proveNamedRoot (source : Reify.Source) : MetaM Expr := do
         #[pExpr, witness, irred, degree]
       let instType ← mkAppM ``ZPoly.CheckedIrreducible #[pExpr]
       let proof ← withLocalDecl `inst .instImplicit instType fun inst => do
-        let result ← FieldLiteral.prove pExpr rootExpr valuesExpr qfExpr
+        let result ← FieldLiteral.proveRefining pExpr rootExpr valuesExpr qfExpr
           (fun _ : Fin 1 => value) qf quantifier
         return mkApp (← mkLambdaFVars #[inst] result) irreducible
       let hreal ← mkDecideProof (q(($sExpr).meetsRealAxis = true) : Q(Prop))
