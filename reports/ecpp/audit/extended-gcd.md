@@ -45,7 +45,14 @@ benchmark smoke checks and all 110 release-tool unit tests pass.
 
 Once #15160 lands and the pinned toolchain provides `Nat.extendedGcd`, remove
 `HexArith/Nat/ExtendedGcd.lean`, `HexArith/ffi/extended_gcd.c`, the local fallback
-export, the object's build entry and copied primitive tests. Import the core
+export, the object's build entry, HexArith's explicit `-lgmp` link flag and
+copied primitive tests. Remove the local GMP ABI/runtime contract from the SPEC. Import the core
 module and recheck the proved bridge against the landed API. Retain Hex's signed
 compatibility tests and the ECPP consumer call. Removal comments live beside
-these code and build locations as well as in the arithmetic SPEC.
+these code and build locations as well as in the arithmetic SPEC. Make the removal
+in the same commit as the toolchain upgrade to avoid duplicate core declarations.
+
+The current-source polynomial-factorization sweep covers all 392 corpus rows,
+with 383 solved and nine timeouts. Its successful row set is unchanged from the
+previous retained Hex sweep; the shared performance-freshness checker compares
+its factor-degree results with the retained external-system records.
