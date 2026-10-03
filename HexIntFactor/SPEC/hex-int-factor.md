@@ -396,20 +396,9 @@ Process limits are separate: 30000 ms, 16448 stdout bytes, 4096 stderr bytes,
 and a fixed initial GP stack with automatic growth disabled. Cancellation,
 timeout, excess output, non-UTF-8/malformed framing, missing executable,
 nonzero exit or nonempty stderr, invalid arithmetic, and primality-completion
-exhaustion have distinct diagnostics. The wall-clock deadline includes pipe
-completion, including when the leader has exited but descendants hold pipes.
-Adapt and attribute `HexECPPMathlib.Pari` and its `PariProcess` tests without
-importing HexECPP or HexECPPMathlib. On supported POSIX platforms retain the
-original session/process-group handle, use KILL on cancellation/exhaustion,
-on a kill path first send KILL, then join both dedicated bounded readers,
-and only then reap exactly once. The process-group cleanup assumption bounds
-reader joining: no supported descendant escapes the group or inherits these
-pipes outside it. Do not copy the older ECPP kill path's early `wait`. Do not reap the
-leader while descendants hold its pipes; after reaping, never kill or wait on
-that PID again. This contract covers descendants remaining in the created
-process group; an executable that deliberately escapes that group is outside
-the supported producer contract. No platform may silently claim these cleanup
-guarantees when its process runtime does not implement them.
+exhaustion have distinct diagnostics. Direct invocation and bounded output
+reading follow `HexECPPMathlib.Pari` without importing HexECPP or HexECPPMathlib.
+The initial producer supports POSIX platforms.
 
 ### Explicit fallback and diagnostic preservation
 
@@ -455,23 +444,22 @@ an exposed raw complete or partial certificate named
 `MyCertificates.Factors.cert_checked`, also `@[expose]`. The checked declaration pins the literal
 requested subject and uses core `by decide +kernel` for the ordinary checker.
 Emit `set_option maxHeartbeats 2000000` and `set_option maxRecDepth 8192`
-in the generated module, and validate under precisely those options.
+in the generated module.
 All `PrimeCert` constructors are frozen explicitly: replay requires neither GP
 nor factor/certificate search and has no producer or converter proof dependency.
 The same source formatter drives suggestions and export. Text is deterministic
 for fixed checked data and producer outcome; GP availability, timeouts and
 versions may change that outcome. Complete and partial suggestions have exact
-certificate-text `#guard_msgs` regressions driven by the pure importer or an
-injected fake executable, never ambient GP; fresh modules
+certificate-text `#guard_msgs` regressions driven by the pure importer and
+fixed proposal data, never ambient GP; fresh modules
 compile those verbatim and reject subject substitution or unexposed data.
 
 Evaluate only closed transparent natural expressions. Before any suggestion or
 write, structurally bound and compiled-check the certificate, reify it, and
-kernel-check the actual subject-indexed acceptance proof, with finite proof
-heartbeats, recursion and source-size limits. The initial source ceiling is
-262144 bytes and proof limits are 2000000 heartbeats and recursion depth 8192.
-Proof exhaustion is a distinct export failure; it never publishes unchecked
-source. Validate ASCII module/declaration names and destination before production.
+check the actual subject-indexed acceptance proof using Lean’s existing
+`checkWithKernel` API. The initial source ceiling is 262144 bytes; generated
+modules use 2000000 elaboration heartbeats and recursion depth 8192. Acceptance
+failure never publishes source. Validate ASCII module/declaration names and destination before production.
 Create parent directories only after successful kernel checking; create files
 exclusively (`writeNew`), never overwrite, including concurrent creation races.
 
@@ -497,9 +485,7 @@ syntax, optional executable installation, support bounds and failure modes.
 
 Conformance covers degenerate subjects, powers, duplicates/order, composites,
 wrong products/subjects, omissions, negative/zero exponents, all bounds and
-supplied-certificate rejection/exhaustion. Adapt the audited ECPP fake-process
-suite for missing GP, exit failure, malformed/truncated framing, excess streams,
-cancellation/timeouts and pipe-holding descendants. Small optional real-GP tests
+supplied-certificate rejection/exhaustion. Small optional real-GP tests
 exercise the protocol; use one GP thread in recorded shared-host measurements.
 Committed replay never factors live. Explicit Lake/CI targets build Pari, Export
 and Replay even though they are outside the umbrella; prospective release

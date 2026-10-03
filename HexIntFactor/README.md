@@ -73,6 +73,60 @@ For bounded construction of secp256k1, P-384 and Curve448 certificates, import
 primality and factorization portfolios unchanged. Apply its emitted literal
 certificate to avoid repeating search.
 
+# Optional external production
+
+`importFactors budget subject proposal rand` is a pure importer. A proposal
+contains a signed subject and `(base, exponent, optionalPrimeCert)` entries.
+Unsorted and repeated entries are validated before canonicalization. Every
+accepted prime power carries a checked `PrimeCert`; omitted factors, composite
+bases and unfinished primality completion remain in a checked residual.
+
+```lean
+import HexIntFactor.Import
+open Hex Hex.Nat
+
+#guard match importFactors {} 72
+    ⟨72, [(3, 2, none), (2, 3, none)]⟩ (Rand.ofSeed 72) with
+  | .ok r => r.value.raw.residual == 1
+  | .error _ => false
+```
+
+Install PARI/GP separately, then put this explicit production command in a
+batch module:
+
+```lean
+import HexIntFactor.Export
+#int_factor_export MyFactors.Product cert for 72
+```
+
+Run `lake build +YourModule`. The command creates `MyFactors/Product.lean`
+exclusively; remove the command afterwards. `#int_factor for 72` instead prints
+the complete source for copying. `HEX_INT_FACTOR_GP` selects the executable;
+otherwise the producer runs `gp` directly with a private request file.
+The language server gives batch instructions and performs no production or
+writing. Ordinary native APIs retain their default behavior.
+
+Later modules need only `import MyFactors.Product` and can use
+`MyFactors.Product.cert_checked : Hex.Nat.CheckedFactorization 72`.
+Frozen source imports only `HexIntFactor.Replay`, with exposed raw data and
+acceptance tied to the requested subject. Replay needs neither GP nor search.
+The [manual](https://github.com/kim-em/hex-dev/blob/main/HexManual/Chapters/HexIntFactor.lean)
+builds the pure-import and frozen complete/partial examples.
+
+The initial POSIX producer limits subjects to 256 bits, entries to 64, decimal
+fields to 78 digits, exponents to 256, stdout to 16448 bytes, stderr to 4096
+bytes and runtime to 30 seconds. Import separately limits primality-certificate
+syntax to 4096 nodes and depth 64, and allocates 128 native construction attempts
+per distinct uncertified base. Export caps source at 262144 bytes.
+
+Discovery does not certify primality. Missing GP, process/parse failure, invalid
+arithmetic and unfinished certification have distinct diagnostics. Backend
+failure invokes native search under a separate finite allocation; partial
+certified progress is retained. Exhausted prime completion remains unresolved.
+See the [capability and cost report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-int-factor-external.md)
+for all frozen subjects and outcomes, including a discovered 255-bit base whose
+completion exhausts. These examples make no general 60-digit capability claim.
+
 # Verification
 
 Every accepted complete certificate has positive subject, canonical positive

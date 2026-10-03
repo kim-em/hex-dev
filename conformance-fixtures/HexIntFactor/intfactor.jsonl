@@ -828,3 +828,17 @@
 {"kind":"result","lib":"HexIntFactor","case":"cyclotomic/conway/13/5/minus","op":"cyclotomic","value":[[1,12],[5,30941]]}
 {"kind":"cyclotomic","lib":"HexIntFactor","case":"cyclotomic/conway/13/6/minus","b":13,"n":6,"sign":"minus"}
 {"kind":"result","lib":"HexIntFactor","case":"cyclotomic/conway/13/6/minus","op":"cyclotomic","value":[[1,12],[2,14],[3,183],[6,157]]}
+{"kind":"frozen","lib":"HexIntFactor","case":"frozen/0","n":1263407822267091861725148110322209}
+{"kind":"result","lib":"HexIntFactor","case":"frozen/0","op":"frozen","value":{"factors":[[926510094425921,1],[1363620137403810529,1]],"residual":1}}
+{"kind":"frozen","lib":"HexIntFactor","case":"frozen/1","n":2136386824197929408955547135303871}
+{"kind":"result","lib":"HexIntFactor","case":"frozen/1","op":"frozen","value":{"factors":[[926510094425921,1],[2305843009213693951,1]],"residual":1}}
+{"kind":"frozen","lib":"HexIntFactor","case":"frozen/2","n":42535295865117307778430344311653531707}
+{"kind":"result","lib":"HexIntFactor","case":"frozen/2","op":"frozen","value":{"factors":[[2305843009213693951,1],[18446744073709551557,1]],"residual":1}}
+{"kind":"frozen","lib":"HexIntFactor","case":"frozen/3","n":53739425505922110098241478198196257576470600960682015825098539243996639}
+{"kind":"result","lib":"HexIntFactor","case":"frozen/3","op":"frozen","value":{"factors":[[926510094425921,1],[1363620137403810529,1],[2305843009213693951,1],[18446744069414584321,1]],"residual":1}}
+{"kind":"frozen","lib":"HexIntFactor","case":"frozen/4","n":5865086737153646739775266298177935466733017070941921214531039}
+{"kind":"result","lib":"HexIntFactor","case":"frozen/4","op":"frozen","value":{"factors":[[2013265921,1],[926510094425921,1],[1363620137403810529,1],[2305843009213693951,1]],"residual":1}}
+{"kind":"frozen","lib":"HexIntFactor","case":"frozen/5","n":57896044618658097711785492504343953926634992332820282019728792003956564819949}
+{"kind":"result","lib":"HexIntFactor","case":"frozen/5","op":"frozen","value":{"factors":[],"residual":57896044618658097711785492504343953926634992332820282019728792003956564819949}}
+{"kind":"frozen","lib":"HexIntFactor","case":"frozen/6","n":1000036000099}
+{"kind":"result","lib":"HexIntFactor","case":"frozen/6","op":"frozen","value":{"factors":[],"residual":1000036000099}}

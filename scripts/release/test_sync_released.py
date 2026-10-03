@@ -514,6 +514,35 @@ class SyncReleasedTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "must define executable"):
             sync_released.validate_skeleton(entry, self.repo)
 
+    def test_intfactor_optional_modules_and_frozen_data_are_managed(self) -> None:
+        # Prospective publication: HexIntFactor is not a released.yml entry yet.
+        entry = {
+            "repo": "prospective/hex-int-factor", "lib": "HexIntFactor",
+            "umbrella": True, "spec": "hex-int-factor", "lakefile": "lean",
+            "build_modules": ["HexIntFactor.Pari", "HexIntFactor.Export", "HexIntFactor.Replay"],
+            "test_modules": ["HexIntFactor.ImportTests", "HexIntFactor.PariTests",
+                             "HexIntFactor.ExportTests"] +
+                            [f"HexIntFactor.Frozen.Case{i}" for i in range(7)],
+        }
+        (self.repo / "lakefile.lean").write_text(
+            "import Lake\nopen Lake DSL\npackage factor\n"
+            "lean_lib HexIntFactor where\n"
+            "  globs := #[`HexIntFactor, `HexIntFactor.Pari, `HexIntFactor.Export, "
+            "`HexIntFactor.Replay].map Glob.one\n")
+        with patch.object(sync_released, "apply_ci_workflow", return_value=[]):
+            sync_released.apply_paths(entry, self.repo)
+        sync_released.rewrite_lib_settings(entry, self.repo)
+        sync_released.rewrite_test_target(entry, self.repo)
+        sync_released.validate_skeleton(entry, self.repo)
+        for module in entry["build_modules"] + entry["test_modules"]:
+            path = self.repo / (module.replace(".", "/") + ".lean")
+            self.assertTrue(path.is_file(), module)
+        text = (self.repo / "HexIntFactor/Frozen/Case3.lean").read_text()
+        self.assertIn("public import HexIntFactor.Replay", text)
+        self.assertNotIn("HexIntFactor.Export", text)
+        self.assertFalse((self.repo / "bench").joinpath("HexIntFactor").exists())
+        self.assertTrue((self.repo / "SPEC/hex-int-factor.md").is_file())
+
     def test_release_skeleton_requires_declared_lake_format(self) -> None:
         (self.repo / "lakefile.lean").write_text("import Lake\n", encoding="utf-8")
         with self.assertRaisesRegex(RuntimeError, "lakefile.toml"):
