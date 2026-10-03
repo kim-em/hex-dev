@@ -1152,6 +1152,46 @@ class LibBuildSettingTests(unittest.TestCase):
         self.assertEqual(self.rewrite({"lib": "Plain", "lakefile": "toml"}), [])
         self.assertEqual(lakefile.read_text(encoding="utf-8"), original)
 
+    def test_toml_mirror_loses_a_dropped_precompilation(self) -> None:
+        lakefile = self.repo / "lakefile.toml"
+        lakefile.write_text(
+            '[[lean_lib]]\nname = "Plain"\nprecompileModules = true\n\n'
+            '[[lean_lib]]\nname = "PlainTests"\nprecompileModules = true\n',
+            encoding="utf-8")
+        entry = {"lib": "Plain", "lakefile": "toml"}
+        self.assertEqual(self.rewrite(entry), [
+            "  removed precompileModules on lean_lib Plain (lakefile.toml)"])
+        self.assertEqual(
+            lakefile.read_text(encoding="utf-8"),
+            '[[lean_lib]]\nname = "Plain"\n\n'
+            '[[lean_lib]]\nname = "PlainTests"\nprecompileModules = true\n')
+        self.assertEqual(self.rewrite(entry), [])
+
+    def test_lean_mirror_loses_a_dropped_precompilation(self) -> None:
+        lakefile = self.repo / "lakefile.lean"
+        lakefile.write_text(
+            "lean_lib Plain where\n  precompileModules := true\n"
+            "  moreLinkArgs := #[]\n\nlean_exe check where\n"
+            "  root := `Plain.Check\n",
+            encoding="utf-8")
+        entry = {"lib": "Plain", "lakefile": "lean"}
+        self.assertEqual(self.rewrite(entry), [
+            "  removed precompileModules on lean_lib Plain (lakefile.lean)"])
+        self.assertEqual(
+            lakefile.read_text(encoding="utf-8"),
+            "lean_lib Plain where\n  moreLinkArgs := #[]\n\nlean_exe check where\n"
+            "  root := `Plain.Check\n")
+
+    def test_an_emptied_lean_lib_drops_its_where(self) -> None:
+        lakefile = self.repo / "lakefile.lean"
+        lakefile.write_text(
+            "@[default_target]\nlean_lib Plain where\n  precompileModules := true\n"
+            "\nlean_lib Other where\n",
+            encoding="utf-8")
+        self.rewrite({"lib": "Plain", "lakefile": "lean"})
+        self.assertEqual(lakefile.read_text(encoding="utf-8"),
+                         "@[default_target]\nlean_lib Plain\n\nlean_lib Other where\n")
+
     def test_a_missing_link_setting_stops_the_publication(self) -> None:
         lakefile = self.repo / "lakefile.lean"
         lakefile.write_text(

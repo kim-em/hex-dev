@@ -288,3 +288,12 @@ would just be wrapping the same underlying word-level operations.
 `none` for a nonunit. `inv?_eq_some` proves the inverse equation on success
 for every supported modulus, without primality. `toNat_intCast` identifies
 the canonical representative of an integer cast with its integer remainder.
+
+## Native code
+
+`lean_lib HexModArith` sets `precompileModules := true` because the library binds
+native implementations with `@[extern]`: `ZMod64` multiplication, powering and inversion, and the word-level `addModWord` and `subModWord`. Lean's interpreter cannot run
+an `@[extern]` declaration, so without the flag a downstream `#eval`, `#guard`
+or tactic that evaluates one fails with "Could not find native implementation
+of external declaration". The release consumer check exercises this from a
+downstream package before every publish.

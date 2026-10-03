@@ -566,3 +566,12 @@ again.
 and `ceilSqrt`, with zero equations, `floorSqrt_sq_le`, `le_ceilSqrt_sq`,
 and `ceilSqrt_le` for comparison with a known square bound. The polynomial
 Mignotte module retains compatibility aliases.
+
+## Native code
+
+`lean_lib HexArith` sets `precompileModules := true` because the library binds
+native implementations with `@[extern]`: `HexArith.Int.exactDiv`, the `UInt64` wide-arithmetic primitives (`mulHi`, `mulFull`, `addCarry`, `subBorrow`), the GMP-backed `extGcd`, and the Montgomery primitives (`toMont`, `fromMont`, `mulMont`, `montgomeryReduce`). Lean's interpreter cannot run
+an `@[extern]` declaration, so without the flag a downstream `#eval`, `#guard`
+or tactic that evaluates one fails with "Could not find native implementation
+of external declaration". The release consumer check exercises this from a
+downstream package before every publish.

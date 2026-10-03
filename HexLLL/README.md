@@ -34,9 +34,9 @@ open Hex
 #check @certCheck
 ```
 
-These commands work in the Lean interpreter. Running the native reducer on a
-concrete basis requires a compiled executable because its exact division
-operation is supplied by native code.
+These commands work in the Lean interpreter. `HexLLL` and its native
+dependencies are built with `precompileModules`, so `#eval` can also run the
+reducer on a concrete basis.
 
 # Functionality
 

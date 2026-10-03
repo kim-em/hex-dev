@@ -170,3 +170,12 @@ machine, CPU placement, input corpus, repetitions, timeout, and
 external reducer revision. Raw external reduction, Lean exact
 reduction, Lean-certified external reduction, and the corresponding
 verified Isabelle measurements remain separate series.
+
+## Native code
+
+`lean_lib HexLLL` sets `precompileModules := true` because the library binds
+native implementations with `@[extern]`: the external reducer entry points (`lean_hexlll_provider_available`, `lean_hexlll_provider_reduce`, `lean_hexlll_load_provider`), which `lll` consults first. Lean's interpreter cannot run
+an `@[extern]` declaration, so without the flag a downstream `#eval`, `#guard`
+or tactic that evaluates one fails with "Could not find native implementation
+of external declaration". The release consumer check exercises this from a
+downstream package before every publish.
