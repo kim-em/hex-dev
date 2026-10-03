@@ -1153,7 +1153,6 @@ libraries:
   HexKroneckerMathlib:
     deps: [HexKronecker, HexMvPolyMathlib, HexReflect, HexReflectMathlib, HexMatrixMathlib]
     mathlib: true
-    proof_probes: [bench/HexKroneckerMathlib/ProofProbe]
     done_through: 4
     status: active
     phase4:

@@ -1867,10 +1867,6 @@ lean_exe hexkronecker_bench where
   srcDir := "bench"
   root := `HexKronecker.Bench
 
-lean_lib HexKroneckerMathlibProofProbe where
-  srcDir := "bench"
-  globs := #[.submodules `HexKroneckerMathlib.ProofProbe]
-
 lean_exe hexpolyfp_emit_fixtures where
   srcDir := "conformance"
   root := `HexPolyFp.EmitFixtures

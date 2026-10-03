@@ -66,7 +66,6 @@ BUILD_ONLY_LIBS = {
     "HexPolyDetMathlibProofProbe",
     "HexPolyDetMathlibDiagnostics",
     "HexKroneckerTests",
-    "HexKroneckerMathlibProofProbe",
     "HexIntervalMathlibExperiment",
     "HexIntervalPntFks2Local",
     "HexIntervalPntFks2ConformanceLocal",
