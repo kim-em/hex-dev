@@ -109,6 +109,71 @@ theorem literal_decoding :
     SignFact.read literalFacts stored 1 = some literal := by
   decide +kernel
 
+/-- The sign function is lawful and executable, but opaque to kernel
+reduction. Its equality proof is used to certify facts, not to evaluate them. -/
+opaque opaqueSign : {f : Rat → Int // f = Sturm.orderSign} := ⟨Sturm.orderSign, rfl⟩
+
+@[expose] def opaqueRoot : Hex.SignDet.Descriptor Rat Nat opaqueSign.val 7 := by
+  have accepted : Hex.SignDet.Conformance.singletonRaw.check opaqueSign.val 7
+      (.leaf Hex.SignDet.Conformance.singletonNode) = true := by
+    rw [opaqueSign.property]
+    exact Hex.SignDet.Conformance.selected_kernel.1
+  have h := Hex.SignDet.RawDescriptor.check_eq accepted
+  have hc : (Hex.SignDet.Replay.leaf Hex.SignDet.Conformance.singletonNode).check
+      opaqueSign.val 7 Hex.SignDet.Conformance.singletonRaw.head
+      Hex.SignDet.Conformance.singletonRaw.lower Hex.SignDet.Conformance.singletonRaw.upper
+      Hex.SignDet.Conformance.singletonRaw.queries = true := by
+    obtain ⟨hc, _⟩ := h.2.2
+    exact hc
+  exact Hex.SignDet.Descriptor.ofTable _ _ h.1 h.2.1 hc (by
+    obtain ⟨_, hone⟩ := h.2.2
+    exact hone)
+
+theorem opaque_root_raw : opaqueRoot.raw = Hex.SignDet.Conformance.singletonRaw := by
+  simp only [opaqueRoot, Hex.SignDet.Descriptor.ofTable_raw]
+
+@[expose] def opaqueContext := Context.adjoin opaqueRoot (fun _ => false)
+
+theorem opaque_reduction : (id : DensePoly Rat → DensePoly Rat) = opaqueContext.reduce := by
+  funext p
+  exact (opaqueContext.reduce_unclean p (by
+    simp only [opaqueContext, Context.root_adjoin, Context.clean_adjoin, opaque_root_raw,
+      Hex.SignDet.Conformance.singletonRaw, ← Array.all_toList]
+    decide +kernel)).symm
+
+@[expose] def constantFacts : List (SignFact opaqueContext) :=
+  [⟨DensePoly.C 3, 1, by
+    rw [Context.signPoly_const _ _ (by decide +kernel), opaqueSign.property]
+    decide +kernel⟩,
+   ⟨DensePoly.C 0, 0, by
+    rw [Context.signPoly_const _ _ (by decide +kernel), opaqueSign.property]
+    decide +kernel⟩]
+
+/-- Supplied signs handle constant packing without reducing the predecessor's
+sign function, including canonical zero and arithmetic instance reuse. -/
+theorem constant_cached :
+    (Element.pack id opaque_reduction constantFacts (DensePoly.C 3)).sign = 1 ∧
+    (Element.pack id opaque_reduction constantFacts (DensePoly.C 0)).sign = 0 ∧
+    ((Element.cachedNatCast id opaque_reduction constantFacts).natCast 3).sign = 1 := by
+  decide +kernel
+
+/-- A supplied proof restores agreement with the ordinary total operations. -/
+theorem constant_native : (3 : Element opaqueContext).sign = 1 := by
+  have h := constant_cached.2.2
+  rw [Element.cachedNatCast_eq id opaque_reduction constantFacts] at h
+  exact h
+
+example : True := by
+  fail_if_success
+    have : (Element.pack id opaque_reduction ([] : List (SignFact opaqueContext))
+        (DensePoly.C 3)).sign = 1 := by
+      decide +kernel
+  trivial
+
+/-- info: 'Hex.RealClosure.Algebraic.PackingConformance.constant_native' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms constant_native
+
 @[expose] def foreign :=
   Context.adjoin CoefficientSignsConformance.source (fun _ => false)
 

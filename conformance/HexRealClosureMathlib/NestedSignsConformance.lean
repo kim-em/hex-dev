@@ -219,6 +219,94 @@ theorem query_checked : root.checkSigns [unitPoly] #v[1] (.leaf queryNode) = tru
     Element.cachedNatCast_eq reduction reduction_eq facts] at h
   simpa only [Descriptor.checkSigns, root_raw] using h
 
+/-- The shared checker validates both stored entries before selecting the
+second entry. Its coefficient signs come from the same finite lower-root facts
+as the individual tree checks. -/
+@[expose] def graph : Dag (Element context) Nat :=
+  ⟨#[⟨linearNode, none⟩, ⟨queryNode, none⟩], 1⟩
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+theorem graph_cached :
+    letI := Element.cachedOne reduction reduction_eq facts
+    letI := Element.cachedAdd reduction reduction_eq facts
+    letI := Element.cachedSub reduction reduction_eq facts
+    letI := Element.cachedMul reduction reduction_eq facts
+    letI := Element.cachedNatCast reduction reduction_eq facts
+    graph.check Element.sign 8 linearHead linearRaw.lower linearRaw.upper [unitPoly] = true := by
+  simp only [Dag.check, Dag.replay_eq, Dag.step_eq, Replay.check, Node.check_eq,
+    checkMoment_eq, queryPoly, Sturm.check, TarskiCertificate.check_eq,
+    SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+theorem graph_checked :
+    graph.check Element.sign 8 linearHead linearRaw.lower linearRaw.upper [unitPoly] = true := by
+  have h := graph_cached
+  rw [Element.cachedOne_eq reduction reduction_eq facts,
+    Element.cachedAdd_eq reduction reduction_eq facts,
+    Element.cachedSub_eq reduction reduction_eq facts,
+    Element.cachedMul_eq reduction reduction_eq facts,
+    Element.cachedNatCast_eq reduction reduction_eq facts] at h
+  exact h
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+/-- The kernel retains both literal nodes at their original indices, so
+several selections can use one checked graph. -/
+theorem graph_memo_cached :
+    letI := Element.cachedOne reduction reduction_eq facts
+    letI := Element.cachedAdd reduction reduction_eq facts
+    letI := Element.cachedSub reduction reduction_eq facts
+    letI := Element.cachedMul reduction reduction_eq facts
+    letI := Element.cachedNatCast reduction reduction_eq facts
+    (graph.validate? Element.sign 8 linearHead linearRaw.lower linearRaw.upper).map
+      (fun memo => memo.map (fun checked => checked.value.node)) =
+        some #[linearNode, queryNode] := by
+  simp only [Dag.validate?, Dag.step_cache, Dag.step_eq, Replay.check, Node.check_eq,
+    checkMoment_eq, queryPoly, Sturm.check, TarskiCertificate.check_eq,
+    SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+theorem graph_memo :
+    (graph.validate? Element.sign 8 linearHead linearRaw.lower linearRaw.upper).map
+      (fun memo => memo.map (fun checked => checked.value.node)) =
+        some #[linearNode, queryNode] := by
+  have h := graph_memo_cached
+  rw [Element.cachedOne_eq reduction reduction_eq facts,
+    Element.cachedAdd_eq reduction reduction_eq facts,
+    Element.cachedSub_eq reduction reduction_eq facts,
+    Element.cachedMul_eq reduction reduction_eq facts,
+    Element.cachedNatCast_eq reduction reduction_eq facts] at h
+  exact h
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+/-- A false unreachable entry still rejects the whole graph. Forward edges,
+missing selected entries, changed endpoints and mismatched root queries also
+reject when checked with supplied lower-level facts. -/
+theorem graph_rejected :
+    letI := Element.cachedOne reduction reduction_eq facts
+    letI := Element.cachedAdd reduction reduction_eq facts
+    letI := Element.cachedSub reduction reduction_eq facts
+    letI := Element.cachedMul reduction reduction_eq facts
+    letI := Element.cachedNatCast reduction reduction_eq facts
+    (⟨#[⟨{linearNode with context := 9}, none⟩, ⟨queryNode, none⟩], 1⟩ :
+      Dag (Element context) Nat).check Element.sign 8 linearHead
+        linearRaw.lower linearRaw.upper [unitPoly] = false ∧
+    (⟨#[⟨linearNode, some (0, 0)⟩, ⟨queryNode, none⟩], 1⟩ :
+      Dag (Element context) Nat).check Element.sign 8 linearHead
+        linearRaw.lower linearRaw.upper [unitPoly] = false ∧
+    ({graph with root := 2}).check Element.sign 8 linearHead
+      linearRaw.lower linearRaw.upper [unitPoly] = false ∧
+    graph.check Element.sign 8 linearHead linearRaw.lower
+      (.finite (rational 2)) [unitPoly] = false ∧
+    ({graph with root := 0}).check Element.sign 8 linearHead
+      linearRaw.lower linearRaw.upper [unitPoly] = false := by
+  simp only [Dag.check, Dag.replay_eq, Dag.step_eq, Replay.check, Node.check_eq,
+    checkMoment_eq, queryPoly, Sturm.check, TarskiCertificate.check_eq,
+    SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
 noncomputable def embedding : Element context → ℝ :=
   Element.denote (fun q : Rat => (q : ℝ)) (fun _ => Rat.cast_eq_zero) (by simp)
     (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
@@ -323,6 +411,35 @@ example : True := by
         ← Array.all_toList, Array.toList_range]
       decide +kernel
   trivial
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+/-- Removing the sign of the exact endpoint polynomial blocks graph proof
+assembly, just as it blocks the individual tree check. -/
+example : True := by
+  fail_if_success
+    have :
+        letI := Element.cachedOne reduction reduction_eq PackingConformance.facts
+        letI := Element.cachedAdd reduction reduction_eq PackingConformance.facts
+        letI := Element.cachedSub reduction reduction_eq PackingConformance.facts
+        letI := Element.cachedMul reduction reduction_eq PackingConformance.facts
+        letI := Element.cachedNatCast reduction reduction_eq PackingConformance.facts
+        graph.check Element.sign 8 linearHead linearRaw.lower linearRaw.upper [unitPoly] = true := by
+      simp only [Dag.check, Dag.replay_eq, Dag.step_eq, Replay.check, Node.check_eq,
+        checkMoment_eq, queryPoly, Sturm.check, TarskiCertificate.check_eq,
+        SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
+      decide +kernel
+  trivial
+
+#guard graph.check Element.sign 8 linearHead linearRaw.lower linearRaw.upper [unitPoly]
+
+/-- info: 'Hex.RealClosure.Algebraic.NestedSignsConformance.graph_checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms graph_checked
+
+/-- info: 'Hex.RealClosure.Algebraic.NestedSignsConformance.graph_memo' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms graph_memo
 
 #guard linearRaw.check Element.sign 8 (.leaf linearNode)
 #guard root.checkSigns [unitPoly] #v[1] (.leaf queryNode)
