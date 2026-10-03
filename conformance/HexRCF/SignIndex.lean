@@ -52,6 +52,12 @@ def table? : Option (Table Nat) := Table.build polynomial 1 2 [0, 1, 2] query
 #guard table?.map (fun table => table.lookupIndex compare
   (Index.build table.entries.toArray compare) 3) == some none
 
+-- Every original recorded hit survives malformed cache routing.
+#guard table?.map (fun table => table.lookupIndex compare .empty 0) == some (some (-1))
+#guard table?.map (fun table => table.lookupIndex (fun _ _ => .eq)
+  (.node 99 .empty .empty) 1) == some (some 0)
+#guard table?.map (fun table => table.lookupIndex compare .empty 3) == some none
+
 set_option maxRecDepth 8192
 set_option maxHeartbeats 2400000
 set_option rcf.algebraic.indexSigns true
@@ -71,6 +77,10 @@ run_meta do
       (`Hex.RCF.SignIndexTests.combined, ``FieldBuild.Result.checkExistsIndex_eq)] do
     unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf route) do
       throwError "indexed proof regression did not use indexed replay"
+
+/-- info: 'Hex.RCF.RealCoefficients.LiteralSign.Table.lookupIndex_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Table.lookupIndex_isSome
 
 /-- info: 'Hex.RCF.RealCoefficients.LiteralSign.Index.lookup_entry' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
