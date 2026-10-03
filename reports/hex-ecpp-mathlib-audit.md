@@ -81,9 +81,9 @@ fresh importing modules, frozen replay and exclusive export behavior.
 ## Standalone publication gates
 
 The prepared Lake skeleton directly requires Mathlib and AINTLIB at the
-compatible monorepo commits; AINTLIB supplies `HasseWeil`. The temporary
-AINTLIB commit comes from upstream PR 8598 and must switch to a pinned upstream
-main commit after merging. Mathlib is required last so a fresh Lake update selects its compatible
+compatible monorepo commits; AINTLIB supplies `HasseWeil`. AINTLIB is pinned to upstream main commit
+`ab1451487da02cd4483d0e2cdb2cc9e44bbbac17`, which provides the module-compatible
+Hasse import boundary. Mathlib is required last so a fresh Lake update selects its compatible
 transitive revisions rather than AINTLIB's older dependency lock. A local
 source-split build of the prospective closure passes the companion and its
 published test target, including frozen importing-module replay and axiom

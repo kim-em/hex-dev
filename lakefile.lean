@@ -23,11 +23,9 @@ require «lean-bench» from git
   "https://github.com/kim-em/lean-bench.git" @ "master"
 
 -- Hasse's theorem is imported from the axiom-clean formalization in AINTLIB.
--- Temporarily use cleanup/module-system via https://github.com/CBirkbeck/AINTLIB/pull/8598.
--- Switch back to a pinned upstream main commit once that PR merges.
 require AINTLIB from git
   "https://github.com/CBirkbeck/AINTLIB.git" @
-    "a5c3affa17bb17d13bbfd2e6c828dc978af65657"
+    "ab1451487da02cd4483d0e2cdb2cc9e44bbbac17"
 
 -- Abstract Sturm–Tarski semantics for the development query adapters.
 require TauCeti from git

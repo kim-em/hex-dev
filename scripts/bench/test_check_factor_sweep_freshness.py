@@ -87,7 +87,7 @@ class LakefileAffectsRuntime(unittest.TestCase):
 
     def test_audited_proof_pin_keeps_all_runtime_checks(self):
         old_pin = "3808ce862c09ad5b4de0c76f10ba00946ed2eff3"
-        new_pin = "a5c3affa17bb17d13bbfd2e6c828dc978af65657"
+        new_pin = "ab1451487da02cd4483d0e2cdb2cc9e44bbbac17"
         before = BASE + ('\nrequire AINTLIB from git\n'
             '  "https://github.com/CBirkbeck/AINTLIB.git" @ "' + old_pin + '"\n')
         after = before.replace(old_pin, new_pin)
