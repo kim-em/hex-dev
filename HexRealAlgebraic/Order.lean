@@ -48,12 +48,63 @@ instance : Max RealAlgebraicNumber := ⟨max⟩
 @[expose] def abs (a : RealAlgebraicNumber) : RealAlgebraicNumber :=
   if a < 0 then -a else a
 
-/-- Recognize a rational by its linear canonical minimal polynomial. -/
+/-- The coefficients of a primitive linear minimal polynomial are coprime. -/
+private theorem linear_coprime (a : RealAlgebraicNumber)
+    (degree : a.toAlgebraic.p.natDegree = 1) :
+    (a.toAlgebraic.p.coeff 0).natAbs.Coprime (a.toAlgebraic.p.coeff 1).natAbs := by
+  have size := DensePoly.natDegree_eq_size_sub_one a.toAlgebraic.p
+  have hsize : a.toAlgebraic.p.size = 2 := by omega
+  let d := (a.toAlgebraic.p.coeff 0).natAbs.gcd (a.toAlgebraic.p.coeff 1).natAbs
+  have divides : (d : Int) ∣ ZPoly.content a.toAlgebraic.p := by
+    apply ZPoly.dvd_content_of_nat_dvd_coeff
+    intro n
+    cases n with
+    | zero => exact Int.ofNat_dvd_left.mpr (Nat.gcd_dvd_left ..)
+    | succ n =>
+      cases n with
+      | zero => exact Int.ofNat_dvd_left.mpr (Nat.gcd_dvd_right ..)
+      | succ n =>
+        rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega)]
+        change (d : Int) ∣ (0 : Int)
+        exact Int.dvd_zero _
+  rw [a.toAlgebraic.prim] at divides
+  exact Nat.dvd_one.mp (Int.ofNat_dvd.mp divides)
+
+private theorem linear_pos (a : RealAlgebraicNumber)
+    (degree : a.toAlgebraic.p.natDegree = 1) : 0 < a.toAlgebraic.p.coeff 1 := by
+  have size := DensePoly.natDegree_eq_size_sub_one a.toAlgebraic.p
+  have hsize : a.toAlgebraic.p.size = 2 := by omega
+  have last := DensePoly.leadingCoeff_eq_coeff_last a.toAlgebraic.p (by omega)
+  rw [hsize] at last
+  simpa only [last] using a.toAlgebraic.pos_lc
+
+/-- Recognize a rational by its linear canonical minimal polynomial. Its
+primitive coefficients already supply a reduced numerator and denominator;
+the erased proofs avoid another runtime gcd and rational division. -/
 @[expose] def toRat? (a : RealAlgebraicNumber) : Option Rat :=
   let p := a.toAlgebraic.p
-  if p.natDegree = 1 then
-    some (-(p.coeff 0 : Rat) / (p.coeff 1 : Rat))
+  if degree : p.natDegree = 1 then
+    some {
+      num := -p.coeff 0
+      den := (p.coeff 1).natAbs
+      den_nz := by
+        exact Int.natAbs_ne_zero.mpr (Int.ne_of_gt (linear_pos a degree))
+      reduced := by simpa only [Int.natAbs_neg] using linear_coprime a degree }
   else none
+
+/-- Rational recognition preserves the coefficient quotient of the canonical
+linear polynomial. The runtime constructor only omits redundant normalization. -/
+theorem toRat?_formula (a : RealAlgebraicNumber) :
+    a.toRat? = if a.toAlgebraic.p.natDegree = 1 then
+      some (-(a.toAlgebraic.p.coeff 0 : Rat) / (a.toAlgebraic.p.coeff 1 : Rat))
+    else none := by
+  dsimp only [toRat?]
+  split
+  · rename_i degree
+    congr 1
+    rw [Rat.mk_eq_divInt, Int.natAbs_of_nonneg (Int.le_of_lt (linear_pos a degree)),
+      Rat.divInt_eq_div, Rat.intCast_neg]
+  · rfl
 
 /-- The floor of the lower endpoint of the precision-two enclosure. -/
 @[expose] def floorLower (a : RealAlgebraicNumber) : Int :=
