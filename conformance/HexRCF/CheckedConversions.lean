@@ -10,6 +10,7 @@ public meta import HexRCF.RealCoefficients
 public meta import Lean.Elab.Command
 public meta import Lean.Elab.Term
 public meta import HexRCF.ProofEvidence
+public meta import Mathlib.Tactic.NormNum.RealSqrt
 
 public section
 
@@ -64,6 +65,9 @@ theorem unused_algebraic_divisor : ∀ x : ℝ,
 
 theorem converted_radical_divisor : ∀ x : ℝ,
     x ^ 2 / Real.sqrt (RealAlgebraicNumber.ofRat 2).toReal + 1 > 0 := by rcf
+
+theorem rational_radicals : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt (1 / 4) + Real.sqrt (9 / 4) > 0 := by rcf
 
 theorem field_conversion : ∀ x : ℝ,
     x ^ 2 + ((RealAlgebraicNumber.ofAlgebraic?
@@ -239,11 +243,28 @@ example : True := by
 set_option rcf.algebraic.intervalSigns false in
 theorem interval_quotation : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by rcf
 
+theorem default_quotation : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by rcf
+
 run_meta do
   let usesInterval ← ProofEvidence.contains ``interval_quotation fun e =>
     e.isAppOfArity ``LiteralSign.Entry.mk 4 &&
       e.getAppArgs[3]!.isAppOfArity ``Option.none 1
   unless !usesInterval do throwError "full-query control quoted interval evidence"
+  unless ← ProofEvidence.contains ``interval_quotation (fun e =>
+      e.isAppOfArity ``LiteralSign.Entry.mk 4 &&
+        e.getAppArgs[3]!.isAppOfArity ``Option.some 2) do
+    throwError "full-query control quoted no query entries"
+  unless ← ProofEvidence.contains ``default_quotation (fun e =>
+      e.isAppOfArity ``LiteralSign.Entry.mk 4 &&
+        e.getAppArgs[3]!.isAppOfArity ``Option.none 1) do
+    throwError "default quotation quoted no interval entries"
+
+/-- info: 'Hex.RCF.CheckedConversions.rational_radicals' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms rational_radicals
+/-- info: 'Hex.RCF.CheckedConversions.default_quotation' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms default_quotation
 
 /-- info: 'Hex.RCF.CheckedConversions.unused_algebraic_divisor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

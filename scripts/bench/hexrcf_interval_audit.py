@@ -45,8 +45,14 @@ def collect(args: argparse.Namespace) -> None:
                       for module in MODULES for suffix in
                       (".olean", ".olean.private", ".olean.server", ".ilean")]
     before = {path: digest((ROOT / path).read_bytes()) for path in artifact_paths}
+    expected_capture = None
     if args.expected_hashes:
-        expected = json.loads(args.expected_hashes.read_text())
+        capture_bytes = args.expected_hashes.read_bytes()
+        expected = json.loads(capture_bytes)
+        expected_capture = {
+            "sha256": digest(capture_bytes),
+            "origin": expected.get("origin", "not recorded"),
+        }
         # Accept either a standalone hash capture or a previous audit record.
         expected = expected.get("proof_artifact_sha256", expected)
         if before != expected:
@@ -62,11 +68,18 @@ def collect(args: argparse.Namespace) -> None:
         for path in sources:
             if digest((ROOT / path).read_bytes()) != source_hashes[path]:
                 raise RuntimeError(f"uncommitted audit-source change: {path}")
+        status = git("status", "--porcelain=v1", "--untracked-files=all")
+        diff = git("diff", "HEAD", "--binary")
+        args.output.mkdir(parents=True, exist_ok=True)
+        (args.output / "build-status.txt").write_bytes(status)
+        (args.output / "build-diff.patch").write_bytes(diff)
         capture = {
             "head": git("rev-parse", "HEAD").decode().strip(),
             "head_tree": git("rev-parse", "HEAD^{tree}").decode().strip(),
-            "status_sha256": digest(git("status", "--porcelain=v1", "--untracked-files=all")),
-            "tracked_diff_sha256": digest(git("diff", "HEAD", "--binary")),
+            "status_file": "build-status.txt",
+            "status_sha256": digest(status),
+            "tracked_diff_file": "build-diff.patch",
+            "tracked_diff_sha256": digest(diff),
         }
         source_binding = "verified audit/probe files; checkout captured before live build"
         result = subprocess.run(command, cwd=ROOT, capture_output=True)
@@ -103,6 +116,7 @@ def collect(args: argparse.Namespace) -> None:
         "measured_source_commit": measured,
         "audit_source_commit": audit_commit,
         "audit_source_tree": git("rev-parse", f"{audit_commit}^{{tree}}").decode().strip(),
+        "audit_tree_binding": "Tree of the recorded audit reference commit; retained-log mode does not establish the historical build tree.",
         "audit_source_sha256": source_hashes,
         "source_binding": source_binding,
         "build_checkout_capture": capture,
@@ -111,10 +125,14 @@ def collect(args: argparse.Namespace) -> None:
         "compiler_reports_replayed_probes": replayed,
         "collector_sha256": digest(Path(__file__).read_bytes()),
         "collector_arguments": sys.argv[1:],
+        "expected_artifact_capture": expected_capture,
         "proof_artifact_sha256": after,
         "proof_artifacts_unchanged_during_collection": True,
-        "artifact_log_binding": ("asserted for retained log; current hashes verified against supplied capture"
-                                 if args.compiler_log else "verified before and after live build"),
+        "artifact_log_binding": (
+            ("asserted for retained log; current hashes verified against supplied capture"
+             if args.expected_hashes else
+             "asserted for retained log; no expected artifact capture supplied")
+            if args.compiler_log else "verified before and after live build"),
         "artifact_scope": "Six artifacts retained after the final timing arms; no per-arm hash claim.",
         "convention": "Distinct table syntax in each proof and reachable declarations from the same source module; imported library bodies are leaves. No physical-sharing or runtime-work claim.",
         "proofs": [rows[name] for name in names],

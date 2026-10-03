@@ -44,8 +44,8 @@ quotation remains independently off by default.
 | Reciprocal goal certificate | 125 | 125 | 0 |
 | Cubic coefficient | 125 | 125 | 0 |
 
-The separate syntax audit inspects the six proof artifacts retained after the
-final measured arms and reachable
+The separate syntax audit inspects six proof artifacts asserted retrospectively
+to have been retained after the final measured arms, and reachable
 auxiliary declarations from each source module; imported library bodies remain
 leaves. It finds one distinct literal table expression in the further and cubic
 proofs and two in the reciprocal proof. It records hashes of all six proof
@@ -59,7 +59,9 @@ not establish a clean build at `c61035768`; adapter sources changed between
 the measured and recorded audit revisions.
 The collector verifies matching probe source files and current artifact hashes
 against a separate retained hash capture. Retained-log mode cannot verify the
-historical build tree. Live-build mode captures HEAD, status and diff hashes
+historical build tree. The hash file was extracted from the previously committed
+audit record; it is not an independent capture tied to the timing arms.
+Live-build mode captures HEAD and retains status/diff contents and their hashes
 before running Lake. The timing
 records contain sizes, not per-arm hashes, so this audit does not bind a hash
 to each of the 24 arms. These are literal

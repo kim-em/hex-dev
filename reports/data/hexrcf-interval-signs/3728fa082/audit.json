@@ -3,6 +3,7 @@
   "measured_source_commit": "3728fa0828ec8b8fa5612269ef3b364d4144a1fe",
   "audit_source_commit": "c6103576890f899018cfeda621c86dd4e19a4b61",
   "audit_source_tree": "79d2e0ce7af1c8a016e50cd7704b1e0e4e9ade6b",
+  "audit_tree_binding": "Tree of the recorded audit reference commit; retained-log mode does not establish the historical build tree.",
   "audit_source_sha256": {
     "bench/HexRCF/ProofProbe/Intervals/Audit.lean": "68e7d0e64c40f37fd057aacb48f4c3b14aedb3690c7751fb3f141641cad733ec",
     "lakefile.lean": "f04630a759b87042b47896c5562d11048c142c910b849717ca5b68482a4d4d61",
@@ -29,7 +30,7 @@
     "CubicQuery": true,
     "CubicHorner": true
   },
-  "collector_sha256": "9188d825e02a57e222e94122da05dd17399b8d0a3e6869c13b9cca923d26620e",
+  "collector_sha256": "59424b3e1f70793c0d008058d6c2e19f051fa0c74c4d6d0c62dffd4d512f9468",
   "collector_arguments": [
     "--measured-commit",
     "3728fa082",
@@ -42,6 +43,10 @@
     "--output",
     "reports/data/hexrcf-interval-signs/3728fa082"
   ],
+  "expected_artifact_capture": {
+    "sha256": "222dd12e6bb5b35240066d461cb62e832690ec9bdb33af6a79cafd4beb24b52b",
+    "origin": "Extracted from reports/data/hexrcf-interval-signs/3728fa082/audit.json at commit 9a9067441f22735b21cc2b40178fde72d6a68930; not an independent timing-arm capture."
+  },
   "proof_artifact_sha256": {
     ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/FurtherQuery.olean": "9d1cb3192d9cace377c6a4a77d701d1042791ed07ac15b0567e965c361d1b857",
     ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/FurtherQuery.olean.private": "b588dbf4ddbf8b27008da587c4c567359f6526b4b94da845e877be0ea3a31914",
