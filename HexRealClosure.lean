@@ -19,6 +19,7 @@ public import HexRealClosure.Trivial
 public import HexRealClosure.BaseCodec
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
+public import HexRealClosure.SignCodec
 public import HexRealClosure.SignFacts
 public import HexRealClosure.AlgebraicContext
 public import HexRealClosure.AlgebraicReencode
@@ -29,6 +30,7 @@ public import HexRealClosure.TowerOrder
 public import HexRealClosure.TowerRefinement
 public import HexRealClosure.TowerTransport
 public import HexRealClosure.TowerSuffix
+public import HexRealClosure.TowerPresentation
 public import HexRealClosure.TowerEnlarge
 public import HexRealClosure.TowerEnlargement
 public import HexRealClosure.TowerRoots
