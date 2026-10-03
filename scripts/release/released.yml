@@ -118,7 +118,7 @@ repos:
     spec: hex-arith
     pins: []
     lakefile: lean
-    lake_declarations: [hexArithOTarget, hexarithffi]
+    lake_declarations: [hexArithOTarget, hexarithWideO, hexarithGcdO, HexArithNative]
 
   - repo: leanprover/hex-primality
     component: Certified primality
@@ -160,7 +160,7 @@ repos:
     spec: hex-mod-arith
     pins: [hex-arith]
     lakefile: lean
-    lake_declarations: [zmod64MulOTarget, hexmodarithffi]
+    lake_declarations: [zmod64MulOTarget, hexmodarithO, HexModArithNative]
 
   - repo: leanprover/hex-mv-poly
     component: Sparse multivariate polynomials

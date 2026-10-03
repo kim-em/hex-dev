@@ -703,6 +703,28 @@ def _lean_settings(body: str) -> dict[str, str]:
     return settings
 
 
+def _lean_setting_span(lines: list[str], name: str) -> tuple[int, int] | None:
+    """The line range of one setting, with its continuation lines."""
+    start = next((i for i, line in enumerate(lines)
+                  if re.match(rf"[ \t]+{re.escape(name)}[ \t]*:=", line)), None)
+    if start is None:
+        return None
+    stop = start + 1
+    while stop < len(lines) and lines[stop].strip() and not re.match(
+            r"[ \t]+[A-Za-z][A-Za-z0-9_']*[ \t]*:=", lines[stop]):
+        stop += 1
+    return start, stop
+
+
+def _remove_lean_setting(body: str, name: str) -> str:
+    """Drop one setting (and its continuation lines) from a `lean_lib` body."""
+    lines = body.split("\n")
+    span = _lean_setting_span(lines, name)
+    if span is None:
+        return body
+    return "\n".join(lines[:span[0]] + lines[span[1]:])
+
+
 def _set_lean_setting(body: str, name: str, value: str) -> str:
     """Replace (or append) one setting of an indented Lean `lean_lib` body."""
     lines = body.split("\n")
@@ -797,6 +819,15 @@ def rewrite_lib_settings(entry: dict, clone: Path) -> list[str]:
         body = text[body_start:_block_end(text, body_start)]
         present = _lean_settings(body)
     notes: list[str] = []
+    if not toml:
+        # Link settings this monorepo no longer gives the library leave the
+        # mirror too; a stale `moreLinkObjs` would name a retired target.
+        for setting in ("moreLinkObjs", "moreLinkArgs"):
+            if setting in present and setting not in required:
+                body = _remove_lean_setting(body, setting)
+                text = text[:body_start] + body + text[_block_end(text, body_start):]
+                present = _lean_settings(body)
+                notes.append(f"  removed {setting} on lean_lib {lib} ({lakefile.name})")
     if "moreLinkArgs" in required and not toml:
         # Written verbatim, so a platform conditional changed here (for
         # example to leave `-ldl` off Windows) reaches the mirror.
@@ -892,15 +923,16 @@ def rewrite_lib_settings(entry: dict, clone: Path) -> list[str]:
 def lake_declaration(text: str, name: str) -> tuple[int, int]:
     """Locate an unindented named Lake declaration and its indented body.
 
-    Managed declarations use `def`, `target`, or `extern_lib` without
-    attributes. Supporting both target forms lets the sync migrate an old
-    package-wide `extern_lib` into a library-scoped custom `target`. Refuse
+    Managed declarations use `def`, `target`, `extern_lib` or `lean_lib`
+    without attributes. Supporting both target forms lets the sync migrate an
+    old package-wide `extern_lib` into a library-scoped custom `target`, and
+    `lean_lib` carries a native carrier library (see `HexArithNative`). Refuse
     missing or ambiguous declarations rather than modifying the wrong recipe.
     """
     if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_']*", name):
         raise RuntimeError(f"invalid Lake declaration name: {name!r}")
     matches = list(re.finditer(
-        r"(?m)^(?:private |public )?(?:def|target|extern_lib) "
+        r"(?m)^(?:private |public )?(?:def|target|extern_lib|lean_lib) "
         + re.escape(name) + r"(?=\s|\()[^\n]*\n",
         text,
     ))
@@ -926,8 +958,18 @@ def rewrite_lake_declarations(entry: dict, clone: Path) -> list[str]:
     notes = []
     for name in names:
         src_start, src_end = lake_declaration(source, name)
-        dst_start, dst_end = lake_declaration(text, name)
         definition = source[src_start:src_end].rstrip() + "\n\n"
+        try:
+            dst_start, dst_end = lake_declaration(text, name)
+        except RuntimeError:
+            if re.search(r"(?m)^(?:private |public )?(?:def|target|extern_lib|lean_lib) "
+                         + re.escape(name) + r"(?=\s|\()", text):
+                raise
+            # A declaration new to this mirror is appended, which also places a
+            # carrier `lean_lib` after the library it takes modules from.
+            text = text.rstrip() + "\n\n" + definition
+            notes.append(f"  added build declaration {name} (lakefile.lean)")
+            continue
         if text[dst_start:dst_end] != definition:
             text = text[:dst_start] + definition + text[dst_end:]
             notes.append(f"  build declaration {name} (lakefile.lean)")
