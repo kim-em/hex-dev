@@ -1058,14 +1058,14 @@ construction, and the theorem connecting acceptance to the actual decoded bytes.
 This API takes an explicit key list. It does not yet collect all intermediate
 packing keys automatically, rebuild algebraic contexts from child packets or
 supply a single graph of dependencies between field levels. Literal packet
-roundtrips under lawful predecessor codecs are conditional on node shape;
-the actual encoder's root and backward-reference bounds and checked nodes'
-literal bindings are proved. Deriving the remaining node-shape premises and
-proving finite coverage for
-partial predecessor readers are still required for a universal producer-to-byte
-roundtrip. Semantic acceptance of arbitrary bytes is independent of that
-roundtrip. Collection, context rebuilding
-and kernel assembly costs need their own measurements.
+roundtrips under lawful coefficient and context codecs need only the caller's
+lexical byte limits. The actual encoder's root and backward-reference bounds,
+node dimensions, reduction indices and literal node/moment bindings are
+proved. `Context.decodeEvidence_ofSigns` proves that printing, parsing and
+checking such a packet returns exactly its scalar facts. Partial predecessor
+readers still require a separate finite-coverage roundtrip theorem. Semantic
+acceptance of arbitrary bytes is independent of that roundtrip. Collection,
+context rebuilding and kernel assembly costs need their own measurements.
 
 `PackingConformance` checks literal restoration, exact keys, context types and
 canonical zero in the ordinary kernel. `NestedSignsConformance` checks a second

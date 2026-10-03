@@ -92,6 +92,8 @@ def bytesChecks : Option (List (String × Bool)) := do
       ("direct rational evaluation", facts.toList.map SignFact.sign == keys.map (fun p => Sturm.orderSign (p.eval 1))),
       ("empty requests", emptyFacts.toList.isEmpty),
       ("shared leaf", packet.graph.entries.size == 4),
+      ("shared preprocessing present", packet.graph.entries.all (fun e => e.node.preparation.isSome)),
+      ("moment reductions present", packet.graph.entries.all (fun e => e.node.reductions.toArray.all Option.isSome)),
       ("false signs", (decode ValueCodec.rat keys (codec.encodeBytes badSigns)).toOption.isNone),
       ("missing key", (decode ValueCodec.rat keys.tail bytes).toOption.isNone),
       ("extra key", (decode ValueCodec.rat (keys ++ [0]) bytes).toOption.isNone),
@@ -192,6 +194,27 @@ def nestedPass : Bool :=
 
 @[expose] def kernelPacket : SignEvidence Rat Nat := SignEvidence.ofSigns kernelSigns
 
+/-- The actual producer packet roundtrips without caller-supplied dimension
+or reduction-index premises, for every checked rational joint row. -/
+theorem rational_roundtrip {queries : List (DensePoly Rat)}
+    (signs : SelectedSigns context.root queries) :
+    (SignEvidence.codec ValueCodec.rat ValueCodec.nat context.root.raw).decode
+      ((SignEvidence.codec ValueCodec.rat ValueCodec.nat context.root.raw).encode
+        (SignEvidence.ofSigns signs)) = .ok (SignEvidence.ofSigns signs) :=
+  SignEvidence.codec_ofSigns _ _ ValueCodec.rat_lawful ValueCodec.nat_lawful context signs
+
+/-- The ordinary-kernel child fixture also survives the real byte codec.
+The premise is its lexical resource limit, not parser or checker success. -/
+theorem kernel_bytes (limits : Codec.Limits)
+    (bound : Codec.checkBytes limits
+      ((SignEvidence.codec ValueCodec.rat ValueCodec.nat context.root.raw).encodeBytes
+        kernelPacket) = .ok ()) :
+    (SignEvidence.codec ValueCodec.rat ValueCodec.nat context.root.raw).decodeBytes
+      ((SignEvidence.codec ValueCodec.rat ValueCodec.nat context.root.raw).encodeBytes
+        kernelPacket) limits = .ok kernelPacket :=
+  SignEvidence.bytes_ofSigns _ _ ValueCodec.rat_lawful ValueCodec.nat_lawful
+    context kernelSigns limits bound
+
 /-- General graph correspondence and scalar correspondence apply to the
 actual literal child certificate. No producer availability premise is added. -/
 theorem kernel_checked : (read kernelPacket.queries kernelPacket).isSome = true := by
@@ -207,3 +230,7 @@ end Hex.RealClosure.Algebraic.SignEvidenceConformance
 /-- info: 'Hex.RealClosure.Algebraic.SignEvidenceConformance.kernel_checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.SignEvidenceConformance.kernel_checked
+
+/-- info: 'Hex.RealClosure.Algebraic.SignEvidenceConformance.kernel_bytes' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.SignEvidenceConformance.kernel_bytes
