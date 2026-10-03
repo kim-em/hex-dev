@@ -12,12 +12,14 @@ public meta import HexBerlekampZassenhaus.ChoosePrimeData
 public meta import HexBerlekampZassenhaus.CertificateSyntax
 public meta import HexPolyZMathlib.PolyParse
 public meta import HexBerlekampZassenhausMathlib.FactorTransport
+public meta import HexBerlekampZassenhausMathlib.CertificateReplay
 public import HexBerlekamp.FactorPolyElab
 public import HexBerlekampZassenhaus.FactorTactic
 public import HexBerlekampZassenhaus.ChoosePrimeData
 public import HexBerlekampZassenhaus.CertificateSyntax
 public import HexPolyZMathlib.PolyParse
 public import HexBerlekampZassenhausMathlib.FactorTransport
+public import HexBerlekampZassenhausMathlib.CertificateReplay
 
 public section
 
@@ -40,8 +42,9 @@ search, per-factor irreducibility is certified by a free-layer
 `Hex.ZPoly.IrredWitness` where one exists and by a multi-prime certificate
 (`Hex.certifyIrreducible?`) otherwise, and the emitted terms apply the
 kernel-decidable assemblers `Hex.FactoredPoly.ofZ` / `irreducible_ofZ` to
-reified literal data with every certification slot discharged by
-`Eq.refl true`. The factorizer never appears in emitted terms.
+reified literal data. Multi-prime slots use theorem-backed `cbv` replay;
+the other slots reduce by `Eq.refl true`. The factorizer never appears in
+emitted terms.
 
 Balanced factors that are not Eisenstein at any small shift (the free
 layer certifies e.g. `X⁴+1` that way) and whose modular factorizations also
@@ -291,6 +294,26 @@ meta def reifyMultiList
     return mkApp4 (mkConst ``Prod.mk [.zero, .zero]) zpolyTy certTy
       (← Hex.CertificateSyntax.reifyZPoly q) (Hex.CertificateSyntax.reifyCertificate cert))
 
+/-- Replay a literal mixed cover. Free-only covers retain direct reduction;
+multi-prime covers use guarded kernel reduction when available, otherwise
+public reduction equations through `cbv`. -/
+meta def coverProof (factors certified multiPrime : Expr) (hasMulti : Bool) : MetaM Expr := do
+  if !hasMulti then return Hex.CertificateSyntax.reflTrue
+  let pairTy := mkApp2 (mkConst ``Prod [.zero, .zero]) zpolyTy
+    (mkConst ``Hex.ZPolyIrreducibilityCertificate)
+  let checkFn := mkConst ``checkMultiPrimeCert
+  let checkFn ← withLocalDeclD `entry pairTy fun entry => do
+    let f ← mkAppM ``Prod.fst #[entry]
+    let cert ← mkAppM ``Prod.snd #[entry]
+    mkLambdaFVars #[entry] (mkApp2 checkFn f cert)
+  let multiCheck ← mkAppM ``List.all #[multiPrime, checkFn]
+  let hmulti ← try
+    CertificateReplay.checkProof multiCheck
+  catch ex =>
+    throwError "coverProof: multi-prime certificate replay failed\n{ex.toMessageData}"
+  return mkApp6 (mkConst ``CertificateReplay.checkCover) factors certified multiPrime
+    Hex.CertificateSyntax.reflTrue hmulti Hex.CertificateSyntax.reflTrue
+
 /-- The untrusted factor search shared by both `factor_poly` arms: factors
 with repetition in nondecreasing size order, plus the scalar, self-checked
 against the input. -/
@@ -342,7 +365,7 @@ meta def searchOne (tactic : String) (fE : Expr) (f : Hex.ZPoly) :
                 \nis not irreducible over ℤ: factor_poly finds {count} \
                 irreducible factors (with multiplicity), scalar {φ.scalar}"
 
-/-- Emit `irreducible_ofZ P fLit certified multiPrime (Eq.refl true) hP` for a
+/-- Emit `irreducible_ofZ P fLit certified multiPrime hcheck hP` for a
 single-polynomial witness of either kind. -/
 meta def emitIrreducibleOfZ (tactic : String) (P fLit hP : Expr)
     (f : Hex.ZPoly) (w : OneWitness) : MetaM Expr := do
@@ -353,22 +376,29 @@ meta def emitIrreducibleOfZ (tactic : String) (P fLit hP : Expr)
   unless checkMultiPrimeCover [f] certified multiPrime do
     throwError "{tactic}: internal error: the singleton certificate cover \
         fails checkMultiPrimeCover; please report this"
+  let certifiedE ← reifyCertifiedList certified
+  let multiE ← reifyMultiList multiPrime
+  let factorsE := Hex.FactorTactic.listLit zpolyTy [fLit]
+  let hcheck ← coverProof factorsE certifiedE multiE (!multiPrime.isEmpty)
   return mkApp6 (mkConst ``HexBerlekampZassenhausMathlib.irreducible_ofZ)
-    P fLit (← reifyCertifiedList certified) (← reifyMultiList multiPrime)
-    Hex.CertificateSyntax.reflTrue hP
+    P fLit certifiedE multiE hcheck hP
 
 /-- Emit the free-layer proof `Hex.ZPoly.Irreducible fE` for a witness of
-either kind. -/
+either kind. On the multi-prime route, `fE` must be a reified literal or a
+closed term evaluable through exposed bodies and public reduction equations.
+The conclusion refers to `fE` as supplied. -/
 meta def zpolyIrredProof (fE : Expr) (w : OneWitness) : MetaM Expr :=
   match w with
   | .free wit =>
       return mkApp3 (mkConst ``Hex.ZPoly.irreducible_of_checkIrredWitness)
         fE (reifyWitness wit) Hex.CertificateSyntax.reflTrue
-  | .multi cert =>
-      return mkApp6 (mkConst
-          ``HexBerlekampZassenhausMathlib.zpolyIrreducible_of_checkIrreducibleCertLinear)
-        fE (Hex.CertificateSyntax.reifyCertificate cert) Hex.CertificateSyntax.reflTrue
-        Hex.CertificateSyntax.reflTrue Hex.CertificateSyntax.reflTrue Hex.CertificateSyntax.reflTrue
+  | .multi cert => do
+      let certE := Hex.CertificateSyntax.reifyCertificate cert
+      let hcheck ← try
+        CertificateReplay.checkProof (mkApp2 (mkConst ``checkMultiPrimeCert) fE certE)
+      catch ex =>
+        throwError "zpolyIrredProof: multi-prime certificate replay failed\n{ex.toMessageData}"
+      return mkApp3 (mkConst ``zpolyIrreducible_of_checkMultiPrimeCert) fE certE hcheck
 
 /-- The `factor_poly` arm for `Polynomial ℤ`: parse with proof, factorize as
 untrusted search, certify the cover, and emit a reified
@@ -382,10 +412,12 @@ meta def elabFactorInt (tactic : String) (e : Expr) :
   | .ok (certified, multiPrime) =>
       let factorsE := Hex.FactorTactic.listLit zpolyTy
         (← factors.mapM fun q => Hex.CertificateSyntax.reifyZPoly q)
+      let certifiedE ← reifyCertifiedList certified
+      let multiE ← reifyMultiList multiPrime
+      let hcheck ← coverProof factorsE certifiedE multiE (!multiPrime.isEmpty)
       return .success (mkAppN (mkConst ``Hex.FactoredPoly.ofZ)
-        #[e, fLit, toExpr scalar, factorsE, ← reifyCertifiedList certified,
-          ← reifyMultiList multiPrime, Hex.CertificateSyntax.reflTrue,
-          Hex.CertificateSyntax.reflTrue, hP])
+        #[e, fLit, toExpr scalar, factorsE, certifiedE, multiE,
+          Hex.CertificateSyntax.reflTrue, hcheck, hP])
 
 /-- The `irreducibility` arm for `Polynomial ℤ`. -/
 meta def elabIrredInt (tactic : String) (e : Expr) :
@@ -416,10 +448,12 @@ meta def factorZPolyStrong (fE : Expr) : Term.TermElabM ExtensionResult := do
         #[← mkAppM ``Hex.DensePoly.C #[scalarE], ← mkAppM ``List.prod #[factorsE]]
       let hmulE := mkApp6 (mkConst ``Hex.DensePoly.eq_of_beqCoeffs [Level.zero])
         intE zeroE decE lhsE fE Hex.CertificateSyntax.reflTrue
+      let certifiedE ← reifyCertifiedList certified
+      let multiE ← reifyMultiList multiPrime
+      let hcheck ← coverProof factorsE certifiedE multiE (!multiPrime.isEmpty)
       let hirredE := mkApp4
         (mkConst ``HexBerlekampZassenhausMathlib.irreducible_of_checkMultiPrimeCover)
-        factorsE (← reifyCertifiedList certified) (← reifyMultiList multiPrime)
-        Hex.CertificateSyntax.reflTrue
+        factorsE certifiedE multiE hcheck
       return .success (mkApp5 (mkConst ``Hex.ZPoly.Factored.mk)
         fE scalarE factorsE hmulE hirredE)
 
@@ -428,10 +462,13 @@ meta def factorZPolyStrong (fE : Expr) : Term.TermElabM ExtensionResult := do
 the free extension declined. -/
 meta def irredZPolyStrong (fE : Expr) : Term.TermElabM ExtensionResult := do
   let f ← evalZPoly "irreducibility" fE
-  discard <| checkTransparent "irreducibility" f fE
+  let fLit ← checkTransparent "irreducibility" f fE
   match ← searchOne "irreducibility" fE f with
   | .error why => return .declined why
-  | .ok w => return .success (← zpolyIrredProof fE w)
+  | .ok w =>
+      let proof ← zpolyIrredProof fLit w
+      let expected := mkApp (mkConst ``Hex.ZPoly.Irreducible) fE
+      return .success (← mkExpectedTypeHint proof expected)
 
 /-- Match `HexPolyZMathlib.toPolynomial f` (or the unfolded
 `HexPolyMathlib.toPolynomial` at `R = ℤ`) and return `f`. -/
@@ -467,10 +504,10 @@ meta def goalIrredInt (goal : MVarId) : Tactic.TacticM ExtensionResult := do
       let fE := tgt.appArg!
       Hex.FactorTactic.checkClosed "irreducibility" fE
       let f ← evalZPoly "irreducibility" fE
-      discard <| checkTransparent "irreducibility" f fE
+      let fLit ← checkTransparent "irreducibility" f fE
       match ← searchOne "irreducibility" fE f with
       | .error why => return .declined why
-      | .ok w => closeGoal tgt (← zpolyIrredProof fE w)
+      | .ok w => closeGoal tgt (← zpolyIrredProof fLit w)
     else
       let tgtW ← whnfR tgt
       let_expr Irreducible M _inst arg := tgtW | return .notApplicable

@@ -1,0 +1,6 @@
+{
+  "path": "HexBerlekampZassenhaus/Certificate.lean",
+  "baseline_blob": "e2800da2586a8ed479985bd08743a7a83ee4d865",
+  "current_blob": "e23e93a2003f4b81951d08a22b40af35f51a0cef",
+  "reason": "Adds only expose attributes to degreeSum, containsDegree, checkDegreeObstructions and the four linear certificate replay helpers. Definition bodies, signatures, compiler redirects and certificate search are unchanged. These attributes export reduction bodies for downstream proof quotation and do not change the compiled integer factorization measured by the factor sweep."
+}

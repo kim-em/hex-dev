@@ -484,6 +484,8 @@ repos:
     lib: HexBerlekampZassenhausMathlib
     test_modules:
       - HexBerlekampZassenhausMathlib.FactorPolyTests
+      - HexBerlekampZassenhausMathlib.PublicReplayTests
+      - HexBerlekampZassenhausMathlib.QuotationTests
       - HexBerlekampZassenhausMathlib.IrreducibilityTests
     build_modules: [HexBerlekampZassenhausMathlib.All]
     umbrella: true
