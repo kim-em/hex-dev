@@ -670,6 +670,13 @@ lean_lib HexQuerySemantics where
 lean_exe hexrealclosure_root_order_tests where
   root := `HexRealClosure.RootOrderTests
 
+-- Ordinary-import consumers of merged family APIs, also built as an isolated
+-- local downstream project in experiments/RealClosureConsumer.
+@[default_target]
+lean_lib RealClosureConsumer where
+  srcDir := "examples"
+  globs := #[.submodules `RealClosureConsumer]
+
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
 

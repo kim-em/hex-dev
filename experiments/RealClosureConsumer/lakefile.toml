@@ -1,0 +1,12 @@
+name = "realClosureConsumer"
+version = "0.1.0"
+packagesDir = "../../.lake/packages"
+defaultTargets = ["RealClosureConsumer"]
+
+[[require]]
+name = "Hex"
+path = "../.."
+
+[[lean_lib]]
+name = "RealClosureConsumer"
+srcDir = "../../examples"

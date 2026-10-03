@@ -169,7 +169,9 @@ def import_cone(start: str) -> set[Path]:
 def check() -> None:
     if module_file("HexRCF.RealCoefficients") is None:
         raise ValueError("the optional rcf adapter module is missing")
-    roots = ["HexRCF.RealCoefficients", "HexSignDetMathlib.SelectedProducerConformance",
+    roots = ["RealClosureConsumer.Query", "RealClosureConsumer.Sign",
+             "RealClosureConsumer.Ordered", "RealClosureConsumer.Tower",
+             "HexRCF.RealCoefficients", "HexSignDetMathlib.SelectedProducerConformance",
              "HexSignDetMathlib.CompletionConformance", "HexSignDetMathlib.QueryHandleConformance",
              "HexSignDetMathlib.TableConformance", "HexSignDetMathlib.ReencodingConformance",
              "HexSignDetMathlib.RootListConformance", "HexSignDetMathlib.RefinementConformance",
