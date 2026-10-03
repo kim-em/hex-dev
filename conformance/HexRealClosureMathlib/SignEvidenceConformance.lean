@@ -79,6 +79,10 @@ def bytesChecks : Option (List (String × Bool)) := do
     let headEntries := packet.graph.entries.set! 0
       {first with node := {first.node with head := 2 * first.node.head}}
     let changedHead := {packet with graph := {packet.graph with entries := headEntries}}
+    let momentEntry := {first with node := {first.node with
+      moments := first.node.moments.map fun cert => {cert with context := 8}}}
+    let momentPacket := {packet with graph := {packet.graph with
+      entries := packet.graph.entries.set! 0 momentEntry}}
     let stale := fun raw => (SignEvidence.codec ValueCodec.rat ValueCodec.nat raw).encodeBytes packet
     pure [
       ("noncomputable interpretation erases",
@@ -97,6 +101,7 @@ def bytesChecks : Option (List (String × Bool)) := do
       ("cyclic references", (decode ValueCodec.rat keys (codec.encodeBytes cyclic)).toOption.isNone),
       ("foreign graph context", (decode ValueCodec.rat keys (codec.encodeBytes foreign)).toOption.isNone),
       ("changed graph head", (decode ValueCodec.rat keys (codec.encodeBytes changedHead)).toOption.isNone),
+      ("foreign moment context", (decode ValueCodec.rat keys (codec.encodeBytes momentPacket)).toOption.isNone),
       ("foreign context", (decode ValueCodec.rat keys (stale {source.raw with context := 8})).toOption.isNone),
       ("changed head", (decode ValueCodec.rat keys (stale {source.raw with head := 2 * source.raw.head})).toOption.isNone),
       ("changed endpoint", (decode ValueCodec.rat keys (stale {source.raw with upper := .finite 3})).toOption.isNone),

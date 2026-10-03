@@ -70,7 +70,7 @@ theorem encode_root (tree : Replay E Ctx) : (encode tree).root < (encode tree).e
   exact bound
 
 /-- Every encoded child points strictly backward in the actual entry array.
-This includes entries not reachable from the selected root. -/
+This holds for every entry, independent of replay validity. -/
 theorem encode_bounds (tree : Replay E Ctx) (i : Nat)
     (hi : i < (encode tree).entries.size) :
     ∀ pair ∈ (encode tree).entries[i].children, pair.1 < i ∧ pair.2 < i := by

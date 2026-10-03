@@ -12,6 +12,7 @@ public import HexSignDet.DagBounds
 import all HexSignDet.Codec
 import all HexSignDet.Codec.Basic
 import all HexSignDet.Codec.Json
+import all HexSignDet.Codec.Node
 
 public section
 
@@ -141,20 +142,73 @@ theorem check_ofSigns [Hashable E] [Hashable Ctx]
   · rename_i different
     exact (different rfl).elim
 
+omit [Neg E] [Inv E] [Div E] in
+private theorem node_bindings {sign : E → Int} {parent : Ctx}
+    {head : DensePoly E} {lower upper : Endpoint E} {queries : List (DensePoly E)}
+    {node : Node E Ctx} (h : node.check sign parent head lower upper queries = true) :
+    Codec.bindings parent head lower upper node = true := by
+  obtain ⟨subject, _⟩ := Node.check_bindings h
+  simp only [Codec.bindings, subject.1, subject.2.1, subject.2.2.1,
+    subject.2.2.2.1, and_self, decide_true, Bool.true_and]
+  apply List.all_eq_true.mpr
+  intro cert mem
+  obtain ⟨i, hi, same⟩ := Vector.mem_iff_getElem.mp (Vector.mem_toList_iff.mp mem)
+  subst cert
+  have checked := Sturm.check_bindings sign parent head _ lower upper _ node.moments[i]
+    (checkMoment_query (Node.check_moment h ⟨i, hi⟩))
+  simp only [checked.1, checked.2.1, checked.2.2.2.1, checked.2.2.2.2.1,
+    and_self, decide_true]
+
+/-- The actual encoder retains every node and moment's literal root-domain
+binding from checked production. No coefficient interpretation is needed. -/
+theorem ofSigns_bindings [Hashable E] [Hashable Ctx]
+    (context : Context E Ctx coeffSign parent) {queries : List (DensePoly E)}
+    (signs : SelectedSigns context.root queries) :
+    ∀ entry ∈ (ofSigns signs).graph.entries,
+      Codec.bindings context.root.raw.context context.root.raw.head
+        context.root.raw.lower context.root.raw.upper entry.node = true := by
+  obtain ⟨accepted, _⟩ := signs.check_eq
+  have replay := Dag.replay_encode accepted
+  cases hv : (Dag.encode signs.evidence).validate? coeffSign parent context.root.raw.head
+      context.root.raw.lower context.root.raw.upper with
+  | none => simp [Dag.replay?, hv, bind, Option.bind] at replay
+  | some memo =>
+    intro entry he
+    have nodes := Dag.validate_nodes coeffSign parent context.root.raw.head
+      context.root.raw.lower context.root.raw.upper (Dag.encode signs.evidence) memo hv
+    have member : entry.node ∈ (Dag.encode signs.evidence).entries.map Dag.Entry.node :=
+      Array.mem_map.mpr ⟨entry, he, rfl⟩
+    rw [← nodes] at member
+    obtain ⟨checked, _, same⟩ := Array.mem_map.mp member
+    rw [← same, (RawDescriptor.check_eq context.root.accepted).2.1]
+    exact node_bindings (Replay.check_node checked.accepted)
+
 /-- Producer output satisfies the graph parser's root and child-reference
-bounds. Node shape and literal-binding premises are separate obligations. -/
+bounds and literal bindings. Node-shape premises remain separate obligations. -/
 theorem codec_ofSigns [Hashable E] [Hashable Ctx]
     (value : ValueCodec E) (ctx : ValueCodec Ctx) (hv : value.Lawful) (hc : ctx.Lawful)
     (context : Context E Ctx coeffSign parent) {queries : List (DensePoly E)}
     (signs : SelectedSigns context.root queries)
-    (shape : ∀ e ∈ (ofSigns signs).graph.entries, Codec.Shape e.node)
-    (subjects : ∀ e ∈ (ofSigns signs).graph.entries,
-      Codec.bindings context.root.raw.context context.root.raw.head
-        context.root.raw.lower context.root.raw.upper e.node = true) :
+    (shape : ∀ e ∈ (ofSigns signs).graph.entries, Codec.Shape e.node) :
     (codec value ctx context.root.raw).decode
       ((codec value ctx context.root.raw).encode (ofSigns signs)) = .ok (ofSigns signs) :=
   codec_roundtrip value ctx hv hc context.root.raw (ofSigns signs)
-    (Dag.encode_root signs.evidence) shape subjects (Dag.encode_bounds signs.evidence)
+    (Dag.encode_root signs.evidence) shape (ofSigns_bindings context signs)
+    (Dag.encode_bounds signs.evidence)
+
+/-- The producer packet survives actual bytes under the parser's lexical
+limits and the remaining node-shape and coefficient-coverage premises. -/
+theorem bytes_ofSigns [Hashable E] [Hashable Ctx]
+    (value : ValueCodec E) (ctx : ValueCodec Ctx) (hv : value.Lawful) (hc : ctx.Lawful)
+    (context : Context E Ctx coeffSign parent) {queries : List (DensePoly E)}
+    (signs : SelectedSigns context.root queries)
+    (shape : ∀ e ∈ (ofSigns signs).graph.entries, Codec.Shape e.node)
+    (limits : Codec.Limits)
+    (bytes : Codec.checkBytes limits
+      ((codec value ctx context.root.raw).encodeBytes (ofSigns signs)) = .ok ()) :
+    (codec value ctx context.root.raw).decodeBytes
+      ((codec value ctx context.root.raw).encodeBytes (ofSigns signs)) limits = .ok (ofSigns signs) :=
+  ValueCodec.decode_encode_of _ _ (codec_ofSigns value ctx hv hc context signs shape) limits bytes
 
 end SignEvidence
 
@@ -178,3 +232,7 @@ theorem Context.buildEvidence_of_success [Hashable E] [Hashable Ctx]
   simp [buildEvidence, h, Functor.map, Except.map]
 
 end Hex.RealClosure.Algebraic
+
+/-- info: 'Hex.RealClosure.Algebraic.SignEvidence.bytes_ofSigns' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.SignEvidence.bytes_ofSigns

@@ -1046,8 +1046,10 @@ inside that arithmetic requires separate coverage of its packing operations.
 
 Run `lake build HexRealClosureMathlib.SignEvidenceConformance` for direct
 rational sign comparisons, shared repeated queries, zero and empty cases,
-changed root bindings and rejected corrupt unselected entries. A second-level
-packet decodes through proved facts obtained by checking a first-level packet;
+changed header, node and moment bindings, cycles, and corrupt unselected
+entries. Compiled decoding also erases a deliberately noncomputable semantic
+interpretation. A fixture second-level graph decodes through proved facts
+obtained by checking a first-level packet;
 removing a lower literal, an endpoint fact or an upper key rejects. The ordinary
 kernel probe uses a literal child certificate and the general correspondence
 proofs. Axiom audits include the actual producer success theorem, scalar fact
@@ -1056,9 +1058,10 @@ construction, and the theorem connecting acceptance to the actual decoded bytes.
 This API takes an explicit key list. It does not yet collect all intermediate
 packing keys automatically, rebuild algebraic contexts from child packets or
 supply a single graph of dependencies between field levels. Literal packet
-roundtrips under lawful predecessor codecs are conditional on node shape and
-literal bindings; the actual encoder's root and backward-reference bounds are
-proved. Deriving the remaining node premises and proving finite coverage for
+roundtrips under lawful predecessor codecs are conditional on node shape;
+the actual encoder's root and backward-reference bounds and checked nodes'
+literal bindings are proved. Deriving the remaining node-shape premises and
+proving finite coverage for
 partial predecessor readers are still required for a universal producer-to-byte
 roundtrip. Semantic acceptance of arbitrary bytes is independent of that
 roundtrip. Collection, context rebuilding
