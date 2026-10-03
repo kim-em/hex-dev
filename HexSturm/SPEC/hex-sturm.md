@@ -46,6 +46,16 @@ construction and isolation in `hex-real-closure`; coefficient orders and
 approximation protocols in `hex-ordered-fn`. There is no root-search,
 Archimedean separation, CAD, coverings, or tactic completeness claim here.
 
+## Headline correctness theorem
+
+The bridge headline is `HexSturmMathlib.query_iff`: an ordinary query returns
+an integer exactly when its domain holds and that integer is the signed sum
+over the distinct roots in the open interval. Its
+[companion contract](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md#headline-correctness-theorem)
+states the lawful-interpretation hypotheses, the independently required
+prepared/count/replay/transport contracts, and the development-adapter boundary.
+The theorem's availability does not waive the remaining Phase-4 requirements.
+
 ## Coefficients and evidence
 
 Use the shared [execution contract](../../SPEC/real-closure-execution.md).
