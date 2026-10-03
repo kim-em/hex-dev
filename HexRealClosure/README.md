@@ -926,6 +926,35 @@ through both coefficient readers; removing a required lower-level fact rejects.
 Wrong signs, unrelated queries, domains and absent indices reject.
 This connection does not itself serialize dependencies between field levels.
 
+`HexRealClosure.SignRequests` serializes ordered polynomial/sign references to
+entries in an already checked graph. Its versioned byte format binds the full
+selected-root description: context value, defining polynomial, both endpoints,
+derivative indices and derivative signs. Changing any part rejects. Roundtrip
+proofs use the shared byte parser and the predecessor reader's coverage of the
+actual stored coefficients.
+
+`Context.readRequest?` selects the original stored query directly, without
+computing a native query reduction. The graph must contain the original stored
+queries; a graph containing only their reduced representatives is a different
+input. Several requests can reference one joint table entry, including a
+nonempty derivative prefix. The reader extracts its unique count-one row and
+checks each requested supplementary query slot. The companion proves agreement with the
+total scalar sign using the selected-sign and scalar-sign correspondence
+theorems. `Context.decodeRequests` decodes the bytes and resolves every ordered
+reference against one memo; any missing entry or wrong sign rejects the whole
+list. Derivative-prefix slots alone are not supplementary query requests.
+A pointwise theorem preserves the request order and each literal
+polynomial/sign pair. The reader's interpretation arguments occur only in erased proofs. The core
+`SignRequest.signs?` reader has no interpretation arguments.
+
+`SignRequestsConformance` restores two different stored polynomials, rejects
+stale root bindings and bad references, and chains request packets through two
+coefficient levels. The upper packet needs a nonconstant lower-level sign fact
+to decode its own defining polynomial and query; removing that fact rejects.
+The graphs are produced outside replay. This format references one supplied
+memo at a time. It does not implement a global graph of field levels or make
+graph validation avoid the predecessor arithmetic's native sign production.
+
 `PackingConformance` checks literal restoration, exact keys, context types and
 canonical zero in the ordinary kernel. `NestedSignsConformance` checks a second
 root defined by `a * Y - 1`, where `a` is stored as `X² - 1 + 2X` at the first
