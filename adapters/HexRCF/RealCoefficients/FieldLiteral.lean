@@ -7,6 +7,7 @@ module
 
 public meta import HexRCF.RealCoefficients.FieldDecisionProgress
 public meta import HexRCF.RealCoefficients.FieldBuildBudget
+public meta import HexRCF.RealCoefficients.FieldIndex
 public meta import HexRealAlgebraicMathlib.Laws
 public meta import Lean
 
@@ -51,6 +52,17 @@ register_option rcf.algebraic.monicCore : Bool := {
   defValue := true
   descr := "normalize the proposed carrier core before checked root isolation"
 }
+
+register_option rcf.algebraic.indexSigns : Bool := {
+  defValue := false
+  descr := "retrieve fixed-field replay signs through a checked positional index"
+}
+
+private def indexExpr : LiteralSign.Index → Expr
+  | .empty => mkConst ``LiteralSign.Index.empty
+  | .node position left right =>
+      mkApp3 (mkConst ``LiteralSign.Index.node) (mkNatLit position)
+        (indexExpr left) (indexExpr right)
 
 private def arrayLit (ty : Expr) (xs : List Expr) : Expr :=
   let nil := mkApp (mkConst ``List.nil [Level.zero]) ty
@@ -334,43 +346,46 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
   | _, some true => pure ()
   let certificate ← profileitM Exception "rcf literal quotation" (← getOptions) do
     resultExpr pExpr rootExpr formulaExpr formula data
-  let verdictName := match quantifier with
-    | .forallReal => ``FieldBuild.Result.checkForall
-    | .existsReal => ``FieldBuild.Result.checkExists
+  let indexed := rcf.algebraic.indexSigns.get (← getOptions)
+  let index := if indexed then LiteralSign.Index.build data.signs.entries.toArray Field.keyOrder
+    else LiteralSign.Index.empty
+  if indexed then
+    unless keys.all (fun key => (index.lookup data.signs.entries.toArray Field.keyOrder key).isSome) do
+      throwError "rcf: fixed-field sign index omitted a replay or cell sign"
+  let routing ← mkAppOptM ``Field.keyOrder #[some pExpr, some rootExpr]
+  let quotedIndex := indexExpr index
+  let verdictName := match indexed, quantifier with
+    | true, .forallReal => ``FieldBuild.Result.checkForallIndex
+    | true, .existsReal => ``FieldBuild.Result.checkExistsIndex
+    | false, .forallReal => ``FieldBuild.Result.checkForall
+    | false, .existsReal => ``FieldBuild.Result.checkExists
   let soundName := match quantifier with
     | .forallReal => ``FieldBuild.Result.checkForall_sound
     | .existsReal => ``FieldBuild.Result.checkExists_sound
-  let verdict ← mkAppM verdictName
-    #[certificate, valuesExpr, formulaExpr, mkConst ``Unit.unit]
+  let arguments := if indexed then
+    #[certificate, routing, quotedIndex, valuesExpr, formulaExpr, mkConst ``Unit.unit]
+    else #[certificate, valuesExpr, formulaExpr, mkConst ``Unit.unit]
+  let verdict ← mkAppM verdictName arguments
   let proofType ← mkAppM ``Eq #[verdict, mkConst ``Bool.true]
   let candidate ← mkFreshExprMVar proofType
+  let checker := mkIdent (match indexed, quantifier with
+    | true, .forallReal => ``FieldBuild.Result.checkForallIndex
+    | true, .existsReal => ``FieldBuild.Result.checkExistsIndex
+    | false, .forallReal => ``FieldBuild.Result.checkForall_eq
+    | false, .existsReal => ``FieldBuild.Result.checkExists_eq)
+  let evidence := mkIdent (if indexed then ``FieldBuild.Result.checkEvidenceIndex
+    else ``FieldBuild.Result.checkEvidence)
   let script ← if rcf.algebraic.singleReplay.get (← getOptions) then
-    match quantifier with
-    | .forallReal => `(tactic|
-        (simp only [FieldBuild.Result.checkForall_eq, FieldBuild.Result.checkEvidence,
+    `(tactic|
+        (simp only [$checker:ident, $evidence:ident,
           Field.checkSignTable,
           LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
           FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
           TarskiCertificate.check_eq, SignedRemainderChain.check,
           ← Array.all_toList, Array.toList_range]; try (decide +kernel)))
-    | .existsReal => `(tactic|
-        (simp only [FieldBuild.Result.checkExists_eq, FieldBuild.Result.checkEvidence,
-          Field.checkSignTable,
-          LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
-          FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
-          TarskiCertificate.check_eq, SignedRemainderChain.check,
-          ← Array.all_toList, Array.toList_range]; try (decide +kernel)))
-  else match quantifier with
-    | .forallReal => `(tactic|
-        (simp only [FieldBuild.Result.checkForall_eq, FieldBuild.Result.checkEvidence,
-          Field.checkSignTable,
-          LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
-          FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
-          TarskiCertificate.check_eq, SignedRemainderChain.check,
-          ← Array.all_toList, Array.toList_range, Bool.and_eq_true];
-          repeat' (any_goals (apply And.intro)); all_goals try (decide +kernel)))
-    | .existsReal => `(tactic|
-        (simp only [FieldBuild.Result.checkExists_eq, FieldBuild.Result.checkEvidence,
+  else
+    `(tactic|
+        (simp only [$checker:ident, $evidence:ident,
           Field.checkSignTable,
           LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
           FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
@@ -382,6 +397,18 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
   unless remaining.isEmpty do
     throwError "rcf: fixed-field certificate replay did not prove a true verdict"
   let checked ← instantiateMVars candidate
+  let checked ← if indexed then do
+    let signTableName := match quantifier with
+      | .forallReal => ``FieldBuild.Result.checkForallIndex_signTable
+      | .existsReal => ``FieldBuild.Result.checkExistsIndex_signTable
+    let sameName := match quantifier with
+      | .forallReal => ``FieldBuild.Result.checkForallIndex_eq
+      | .existsReal => ``FieldBuild.Result.checkExistsIndex_eq
+    let signed ← mkAppM signTableName (arguments.push checked)
+    let same ← mkAppM sameName (arguments.push signed)
+    let reverse ← mkAppM ``Eq.symm #[same]
+    mkAppM ``Eq.trans #[reverse, checked]
+  else pure checked
   let proof ← mkAppM soundName
     #[certificate, valuesExpr, formulaExpr, mkConst ``Unit.unit, checked]
   check proof
