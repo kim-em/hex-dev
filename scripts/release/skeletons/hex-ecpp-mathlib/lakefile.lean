@@ -19,11 +19,10 @@ require HexECPP from git
 require HexPrimalityMathlib from git
   "https://github.com/leanprover/hex-primality-mathlib.git" @ "3de013793db15f7d0f390360334006bc6fbfda13"
 
--- Temporary module-system branch; switch to pinned upstream main after
--- https://github.com/CBirkbeck/AINTLIB/pull/8598 merges.
+-- AINTLIB supplies Hasse's theorem and supports module clients.
 require AINTLIB from git
   "https://github.com/CBirkbeck/AINTLIB.git" @
-    "a5c3affa17bb17d13bbfd2e6c828dc978af65657"
+    "ab1451487da02cd4483d0e2cdb2cc9e44bbbac17"
 
 -- Keep Mathlib last so its compatible transitive pins win over AINTLIB
 -- when resolving a fresh lockfile.

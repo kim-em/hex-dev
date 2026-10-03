@@ -684,6 +684,7 @@ TOOLCHAIN_NAMESPACES = {"Init", "Lean", "Std", "Lake"}
 AUDITED_AINT_REVISIONS = frozenset({
     '3808ce862c09ad5b4de0c76f10ba00946ed2eff3',
     'a5c3affa17bb17d13bbfd2e6c828dc978af65657',
+    'ab1451487da02cd4483d0e2cdb2cc9e44bbbac17',
 })
 AUDITED_AINT_ROOTS = frozenset({
     '.mathlib-quality',
