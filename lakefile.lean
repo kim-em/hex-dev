@@ -2061,13 +2061,6 @@ lean_exe hexconway_bench where
 @[default_target]
 lean_lib HexManual where
 
--- Renders `HexManual` to static HTML (see `Main.lean`). Not a
--- `default_target`, and not what the Pages workflow uses: it runs
--- `lake env lean --run Main.lean`, which renders the same site without
--- compiling Mathlib and the Hex libraries to C (see PLAN/Releases.md).
-lean_exe hexmanual where
-  root := `Main
-
 lean_exe hexlatticeenum_bench where
   srcDir := "bench"
   root := `HexLatticeEnum.Bench

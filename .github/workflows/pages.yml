@@ -74,8 +74,8 @@ jobs:
             lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
       # Render through the interpreter. Verso's own modules are precompiled,
       # so rendering runs native code, while nothing imported by `Main`
-      # (Mathlib and every Hex library) has to be compiled to C, which the
-      # `hexmanual` executable needs and which took most of a deploy.
+      # (Mathlib and every Hex library) has to be compiled to C, as a native
+      # executable would require.
       - name: Render the manual
         run: |
           lake build HexManual HexManual.Theme
