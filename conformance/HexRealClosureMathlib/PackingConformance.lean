@@ -165,6 +165,43 @@ theorem constant_zero :
     zero.polynomial = 0 ∧ zero.sign = 0 := by
   decide +kernel
 
+@[expose] def reciprocalFacts : List (SignFact opaqueContext) :=
+  constantFacts ++
+    [⟨DensePoly.C (1 / 3 : Rat), 1, by
+      rw [Context.signPoly_const _ _ (by decide +kernel), opaqueSign.property]
+      decide +kernel⟩,
+     ⟨DensePoly.C 1, 1, by
+      rw [Context.signPoly_const _ _ (by decide +kernel), opaqueSign.property]
+      decide +kernel⟩]
+
+set_option maxRecDepth 32768 in
+/-- The inverse polynomial is computed by the existing gcd/Bézout code. -/
+theorem constant_inverseCandidate :
+    ((Element.cachedNatCast id opaque_reduction reciprocalFacts).natCast 3).inverseCandidate =
+      DensePoly.C (1 / 3 : Rat) := by
+  simp only [Element.inverseCandidate, Element.inverseFactor,
+    opaqueContext, Context.root_adjoin, opaque_root_raw]
+  decide +kernel
+
+set_option maxRecDepth 32768 in
+/-- Reciprocal and quotient packing consume supplied constant facts even when
+ordinary predecessor sign evaluation is opaque to the kernel. -/
+theorem constant_inverse :
+    let three := @NatCast.natCast (Element opaqueContext)
+      (Element.cachedNatCast id opaque_reduction reciprocalFacts) 3
+    let inverse := @Inv.inv (Element opaqueContext)
+      (Element.cachedInv id opaque_reduction reciprocalFacts) three
+    let quotient := @Div.div (Element opaqueContext)
+      (Element.cachedDiv id opaque_reduction reciprocalFacts) three three
+    inverse.polynomial = DensePoly.C (1 / 3 : Rat) ∧ inverse.sign = 1 ∧
+      quotient.polynomial = DensePoly.C 1 ∧ quotient.sign = 1 ∧
+      (@Inv.inv (Element opaqueContext)
+        (Element.cachedInv id opaque_reduction reciprocalFacts) 0).polynomial = 0 := by
+  dsimp only
+  unfold Element.cachedDiv Element.cachedInv
+  simp only [constant_inverseCandidate]
+  decide +kernel
+
 /-- A supplied proof restores agreement with the ordinary total operations. -/
 theorem constant_native : ((3 : Nat) : Element opaqueContext).sign = 1 := by
   have h := constant_cached.2.2
@@ -232,5 +269,9 @@ example : True := by
 /-- info: 'Hex.RealClosure.Algebraic.SignFact.read_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms SignFact.read_sound
+
+/-- info: 'Hex.RealClosure.Algebraic.PackingConformance.constant_inverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms constant_inverse
 
 end Hex.RealClosure.Algebraic.PackingConformance

@@ -2344,3 +2344,15 @@ level, checks the refined quadratic, order, inverse and prefix retention,
 and rejects the old packet. Run
 `lake build HexRealClosureMathlib.PresentationTests` and
 `lake build HexRealClosure.TowerPresentationTests`.
+
+`Algebraic.Element.cachedInv` and `cachedDiv` pack reciprocal and quotient
+results with supplied facts for the actual retained polynomial. They agree
+literally with the ordinary total operations for every fact list. Inversion
+retains the existing inverse-polynomial computation; its gcd and predecessor
+arithmetic are unchanged. `Algebraic.Dag.validateCached?` validates an entire
+supplied graph with coefficient operations using supplied facts, then transports
+the memo to the ordinary graph interface. The exact acceptance, rejection,
+literal entries and indices are preserved. Missing nonconstant facts block
+ordinary-kernel reduction, but compiled evaluation retains the native fallback.
+These interfaces support proof assembly; they do not establish a compiled
+checker that avoids lower-level sign searches.

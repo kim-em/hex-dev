@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
+public import HexRealClosure.SignReplay
+public meta import HexRealClosure.SignReplay
 public import HexRealClosureMathlib.PackingConformance
 public meta import HexRealClosureMathlib.PackingConformance
 public import HexRealClosureMathlib.AlgebraicTower
@@ -265,6 +267,16 @@ theorem graph_memo :
       simp [graph]
     exact nodes.trans shape
 
+/-- The new memo interface retains both literal entries and their original
+indices after coefficient-operation transport. -/
+theorem graph_cachedMemo :
+    (Dag.validateCached? reduction reduction_eq facts 8 linearHead
+      linearRaw.lower linearRaw.upper graph).map
+      (fun memo => memo.map (fun checked => checked.value.node)) =
+        some #[linearNode, queryNode] := by
+  rw [Dag.validateCached_eq]
+  exact graph_memo
+
 /-- Two selections use the same accepted memo and bind their own ordered
 query lists. The proof uses the already proved memo rather than replaying it. -/
 theorem graph_selections :
@@ -471,5 +483,9 @@ example : True := by
 /-- info: 'Hex.RealClosure.Algebraic.NestedSignsConformance.next_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms next_sign
+
+/-- info: 'Hex.RealClosure.Algebraic.NestedSignsConformance.graph_cachedMemo' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms graph_cachedMemo
 
 end Hex.RealClosure.Algebraic.NestedSignsConformance
