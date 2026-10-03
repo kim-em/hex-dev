@@ -2063,12 +2063,6 @@ lean_exe hexconway_bench where
 @[default_target]
 lean_lib HexManual where
 
--- Renders `HexManual` to static HTML (see `Main.lean`). Not a
--- `default_target`: the site is built explicitly by the Pages workflow
--- (`.github/workflows/pages.yml`) and on demand via `lake exe hexmanual`.
-lean_exe hexmanual where
-  root := `Main
-
 lean_exe hexlatticeenum_bench where
   srcDir := "bench"
   root := `HexLatticeEnum.Bench

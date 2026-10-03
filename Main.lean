@@ -31,8 +31,9 @@ def config : RenderConfig where
   extraFiles := [("reports/figures", "figures")]
 
 /--
-Entry point for the `hexmanual` executable. Renders the `HexManual` document
-to static HTML. Pass `--output <dir>` to choose the destination (defaults to
-`_out`); the browsable site lands in `<dir>/html-multi`.
+Renders the `HexManual` document to static HTML when run with
+`lake env lean --run Main.lean`. Pass `--output <dir>` to choose the
+destination (defaults to `_out`); the browsable site lands in
+`<dir>/html-multi`.
 -/
 def main := manualMain (%doc HexManual) (config := config)

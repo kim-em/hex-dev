@@ -115,10 +115,15 @@ Per release:
 
 `HexManual` is a Verso document. `lake build HexManual` only *typechecks*
 it -- every `{docstring}`, `{ref}`, `#eval`/`leanOutput`, and `#guard` is
-checked as the chapters elaborate. To produce the browsable site, the
-`hexmanual` executable (`Main.lean`) renders it to static HTML:
+checked as the chapters elaborate. To produce the browsable site, run
+`Main.lean` in the interpreter, which renders it to static HTML:
 
-    lake exe hexmanual --output _out
+    lake build HexManual HexManual.Theme
+    lake env lean --run Main.lean --output _out
+
+Rendering through the interpreter avoids compiling Mathlib and every Hex
+library imported by the manual to C, which a native executable requires.
+Verso's own modules are precompiled, so the render still runs Verso natively.
 
 The multi-page site lands in `_out/html-multi`; open its `index.html`, or
 serve it with `python3 -m http.server -d _out/html-multi`.
