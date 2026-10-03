@@ -421,7 +421,7 @@ def verify_collection(row):
 
 
 def verify_nested_replay(row):
-    """Check the actual native tower, joint query signs and stored inverses.
+    """Check the actual native tower, per-query signs and stored inverses.
 
     Lean independently replays serialized descriptor and selected-sign graphs.
     This oracle evaluates their mathematical domains and consumer queries in
@@ -461,19 +461,19 @@ def verify_nested_replay(row):
         roots.append(candidates[0])
     alpha, beta = roots
     require(isinstance(row["selected"], list) and len(row["selected"]) == 2,
-            "nested replay missing a joint sign family")
+            "nested replay missing a selected-sign family")
     first_queries = [[-rcf.one, rcf.one]]
     second_queries = [[-rcf.one, rcf.one], [-2 * rcf.one, rcf.one]]
     for index, (entry, expected_queries, point) in enumerate(zip(
             row["selected"], [first_queries, second_queries], roots)):
         require(isinstance(entry, dict) and set(entry) == {"queries", "values", "certificates"},
-                "malformed nested joint signs")
+                "malformed nested selected signs")
         queries = [[native_value(rcf, c, roots[:index], 2) for c in q]
                    for q in entry["queries"]]
         require(queries == expected_queries, "wrong nested consumer queries")
         expected_signs = [sign(rcf.eval(q, point)) for q in queries]
         require(entry["values"] == expected_signs and
-                all(type(s) is int for s in entry["values"]), "nested joint signs differ")
+                all(type(s) is int for s in entry["values"]), "nested selected signs differ")
         require(isinstance(entry["certificates"], list) and
                 len(entry["certificates"]) == len(queries), "nested certificates missing")
         for certificate, query, expected_sign in zip(entry["certificates"], queries, expected_signs):
@@ -540,12 +540,13 @@ def verify_nested_replay(row):
                             for q in graph[2][graph[1]][0][4]]
             require(root_queries == [query],
                     "nested graph query binding differs")
-    require(isinstance(row["values"], list) and len(row["values"]) == 7,
+    require(isinstance(row["values"], list) and len(row["values"]) == 8,
             "nested replay lost a stored value")
     values = [native_value(rcf, raw, roots, 2) for raw in row["values"]]
     require(values[:4] == [beta, alpha, epsilon, delta], "nested stored values changed")
     require(values[4] * (beta - rcf.one) == rcf.one and
-            values[5] * (alpha - rcf.one) == rcf.one and values[6] == 0,
+            values[5] * (alpha - rcf.one) == rcf.one and values[6] == 0 and
+            values[7] == beta - (6 * rcf.one).__div__(5 * rcf.one) and sign(values[7]) == -1,
             "nested guard inversion or defining equation changed")
     require(row["signs"] == [sign(value) for value in values] and
             all(type(s) is int for s in row["signs"]), "nested stored signs changed")

@@ -6,19 +6,23 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.RootFrame
-public import Lean.Data.Json.Printer
+public import HexSignDet.Codec
 
 public section
 
 namespace Hex.RealClosure.NestedReplay
-open Lean SignDet Tower
+open SignDet Tower
+open SignDet.Codec (Json)
+
+private def object (fields : List (String × Json)) : Json :=
+  .object (fields.foldr (fun entry rest => .cons entry.1 entry.2 rest) .nil)
 
 private def registry : BaseContext.Registry := fun _ => none
 
 private def selected {ctx : Context registry}
     (d : Descriptor ctx.Value Signature ctx.sign ctx.signature)
-    (qs : List (DensePoly ctx.Value)) : IO Json :=
-  letI : Hashable ctx.Value := ⟨fun a => hash (ctx.codec.encode a).compress⟩
+    (qs : List (DensePoly ctx.Value)) : IO (List Int × Json) :=
+  letI : Hashable ctx.Value := ⟨fun a => hash (ctx.codec.encode a)⟩
   letI : Hashable Signature := ⟨fun _ => 0⟩
   do
     let .ok signs := d.buildSigns qs
@@ -30,12 +34,8 @@ private def selected {ctx : Context registry}
     unless replayed.values == signs.values do
       throw (IO.userError "nested selected-sign replay changed values")
     unless (Dag.decodeSigns ctx.codec (contextCodec ctx.signature) d qs
-        (signs.values.map (fun s => -s)) bytes).toOption.isNone do
+        (signs.values.map (fun s => if s = 0 then 1 else -s)) bytes).toOption.isNone do
       throw (IO.userError "nested replay accepted false consumer signs")
-    if 1 < qs.length then
-      unless (Dag.decodeSigns ctx.codec (contextCodec ctx.signature) d qs.reverse
-          (signs.values.reverse.cast (by simp)) bytes).toOption.isNone do
-        throw (IO.userError "nested replay accepted reordered consumer queries")
     let stale := { graph with entries := graph.entries.modify 0 fun entry =>
       { entry with node := { entry.node with context :=
         { ctx.signature with base :=
@@ -45,29 +45,29 @@ private def selected {ctx : Context registry}
     let falseDenominator := { graph with entries := graph.entries.modify graph.root fun entry =>
       { entry with node := { entry.node with system :=
         { entry.node.system with denominator := 0 } } } }
-    for bad in #[stale, cyclic, falseDenominator] do
+    let wrongDenominator := { graph with entries := graph.entries.modify graph.root fun entry =>
+      { entry with node := { entry.node with system :=
+        { entry.node.system with denominator :=
+          if entry.node.system.denominator = -1 then 2 else entry.node.system.denominator + 1 } } } }
+    for bad in #[stale, cyclic, falseDenominator, wrongDenominator] do
       let raw := bad.encodeBytes ctx.codec (contextCodec ctx.signature)
       unless (Dag.decodeSigns ctx.codec (contextCodec ctx.signature) d qs signs.values raw).toOption.isNone do
         throw (IO.userError "nested replay accepted stale, cyclic or false integer evidence")
-    return Json.mkObj [
+    return (signs.values.toList, object [
       ("queries", .arr (qs.toArray.map (Codec.poly ctx.codec))),
-      ("values", toJson signs.values.toList),
-      ("graph", Codec.graph ctx.codec (contextCodec ctx.signature) graph)]
+      ("values", Json.of signs.values.toList),
+      ("graph", Codec.graph ctx.codec (contextCodec ctx.signature) graph)])
 
 private def selectedFamily {ctx : Context registry}
     (d : Descriptor ctx.Value Signature ctx.sign ctx.signature)
     (qs : List (DensePoly ctx.Value)) : IO Json := do
   let certificates ← qs.toArray.mapM fun q => selected d [q]
-  let values ← certificates.mapM fun certificate => do
-    let .ok raw := certificate.getObjVal? "values"
-      | throw (IO.userError "nested certificate has no values")
-    let .ok signs := raw.getArr?
-      | throw (IO.userError "nested certificate values are not an array")
-    unless signs.size == 1 do throw (IO.userError "nested certificate does not have one query")
-    return signs[0]!
-  return Json.mkObj [
+  let values ← certificates.mapM fun (signs, _) => do
+    unless signs.length == 1 do throw (IO.userError "nested certificate does not have one query")
+    return Json.of signs[0]!
+  return object [
     ("queries", .arr (qs.toArray.map (Codec.poly ctx.codec))),
-    ("values", .arr values), ("certificates", .arr certificates)]
+    ("values", .arr values), ("certificates", .arr (certificates.map Prod.snd))]
 
 /-- Produce two native selected-root levels over two successive infinitesimals,
 export their actual descriptor and signs at each common selected root, and replay
@@ -100,11 +100,24 @@ def emit : IO Unit := do
   let secondQueries : List (DensePoly first.context.Value) :=
     [y - DensePoly.C (1 : first.context.Value),
       y - DensePoly.C ((1 : first.context.Value) + 1)]
+  let scalar := Algebraic.Context.adjoin secondDescriptor first.context.isClean
+  for q in secondQueries do
+    unless scalar.signPoly q == scalar.signQuery (scalar.queryPoly q) do
+      throw (IO.userError "nested scalar sign differs from checked producer")
+  let crossing := y - DensePoly.C ((1 : first.context.Value) + 1 / (1 + 1 + 1 + 1 + 1))
+  unless (scalar.intervalSign? crossing).isNone && scalar.singleSign? crossing == some (-1) &&
+      scalar.signPoly crossing == -1 do
+    throw (IO.userError "nested count-one crossing sign failed")
   let secondSigns ← selectedFamily secondDescriptor secondQueries
   let values := #[beta, second.embed alpha, second.embed (first.embed epsilon),
     second.embed (first.embed delta), (beta - 1)⁻¹,
     second.embed ((alpha - 1)⁻¹),
-    beta * beta - second.embed (alpha + first.embed delta)]
+    beta * beta - second.embed (alpha + first.embed delta),
+    beta - (1 + 1 / (1 + 1 + 1 + 1 + 1))]
+  unless second.context.sign ((beta - 1) * (beta - 1)⁻¹ - 1) == 0 &&
+      second.context.sign (second.embed ((alpha - 1) * (alpha - 1)⁻¹ - 1)) == 0 &&
+      second.context.sign (beta * beta - second.embed (alpha + first.embed delta)) == 0 do
+    throw (IO.userError "nested inverse or defining-equation identity failed")
   let .ok restored := (Catalog.empty registry).reconstruct second.context.signature
     | throw (IO.userError "nested context reconstruction failed")
   for a in values do
@@ -113,15 +126,18 @@ def emit : IO Unit := do
       | throw (IO.userError "nested value reconstruction failed")
     unless restored.val.sign b == second.context.sign a do
       throw (IO.userError "nested restored sign changed")
-    unless (restored.val.write b).value.compress == packet.value.compress do
+    unless (restored.val.write b).value == packet.value do
       throw (IO.userError "nested restored payload changed")
   unless (first.context.read (second.context.write beta)).toOption.isNone do
     throw (IO.userError "nested stale reader accepted a later value")
-  IO.println (Json.mkObj [
-    ("case", .str "nested infinitesimal algebraic replay"), ("mode", .str "nested-replay"),
+  let payload := object [
+    ("case", .string "nested infinitesimal algebraic replay"), ("mode", .string "nested-replay"),
     ("context", second.context.signature.literal.toJson),
     ("selected", .arr #[firstSigns, secondSigns]),
     ("values", .arr (values.map second.context.codec.encode)),
-    ("signs", .arr (values.map (fun a => toJson (second.context.sign a))))]).compress
+    ("signs", .arr (values.map (fun a => Json.of (second.context.sign a))))]
+  let some text := String.fromUTF8? payload.writeBytes
+    | throw (IO.userError "nested JSON printer emitted invalid UTF-8")
+  IO.println text.trimAsciiEnd.toString
 
 end Hex.RealClosure.NestedReplay

@@ -272,10 +272,15 @@ theorem Context.singleSign?_spec (context : Context E Ctx coeffSign parent)
     split at accepted
     · rename_i single
       have equal := Option.some.inj accepted
+      have binding : context.rootCount = some (Sturm.countPrepared handle.domain) := by
+        rw [context.count_checked, cached]
+        rfl
+      have count_eq : Sturm.countPrepared handle.domain = 1 :=
+        Option.some.inj (binding.symm.trans single)
       obtain ⟨operation, head, lower, upper⟩ := handle.bindings
       have count := HexSturmMathlib.countPrepared_sound f hz h1 ha hs hm hnat
         coeffSign hsign hn hi handle.domain operation
-      rw [head, lower, upper, single] at count
+      rw [head, lower, upper, count_eq] at count
       have cardinal : (Tarski.rootsIn (interpret f hz context.root.raw.head)
           (context.root.raw.lower.map f) (context.root.raw.upper.map f)).card = 1 := by
         exact_mod_cast count.symm
@@ -295,12 +300,13 @@ theorem Context.signPoly_spec (context : Context E Ctx coeffSign parent) (p : De
     context.signPoly p =
       (SignType.sign (context.evalPoly f hz h1 ha hs hm hnat hsign p) : Int) := by
   unfold Context.signPoly
+  dsimp only
   split
   · rename_i small
-    rw [context.evalPoly_const f hz h1 ha hs hm hnat hsign p small]
+    rw [← context.queryPoly_sign f hz h1 ha hs hm hnat hsign hn,
+      context.evalPoly_const f hz h1 ha hs hm hnat hsign (context.queryPoly p) small]
     exact hsign _
-  · dsimp only
-    cases accepted : context.intervalSign? (context.queryPoly p) with
+  · cases accepted : context.intervalSign? (context.queryPoly p) with
     | none =>
       cases direct : context.singleSign? (context.queryPoly p) with
       | none =>
