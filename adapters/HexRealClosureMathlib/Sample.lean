@@ -17,7 +17,7 @@ variable {registry : BaseContext.Registry} {context parent : Context registry} {
 variable [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K]
 
 /-- Membership in the interpreted section or open sector. -/
-def Cell.Mem (model : Model context K) (cell : Cell context) (x : K) : Prop :=
+@[expose] def Cell.Mem (model : Model context K) (cell : Cell context) (x : K) : Prop :=
   match cell with
   | .section root => model.value root = x
   | .sector lower upper =>

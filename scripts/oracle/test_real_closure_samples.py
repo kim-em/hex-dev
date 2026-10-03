@@ -90,6 +90,28 @@ class SampleTests(unittest.TestCase):
     def test_missing_zero_polynomial(self):
         self.rejects(lambda rows: rows[3]["polynomials"].pop(), "family input")
 
+    def test_extra_ray_root(self):
+        def mutate(rows):
+            rows[0]["sectors"][0]["context"] = copy.deepcopy(rows[0]["sectors"][1]["context"])
+        self.rejects(mutate, "not local to its boundaries")
+
+    def test_stale_parent_prefix(self):
+        def mutate(rows):
+            rows[5]["sectors"][0]["context"][2][0][2] = [1, [1, [[0, 2, 1]], [[0, 1, 1]]]]
+            rows[5]["sectors"][0]["context"][2][0][3] = [2]
+            rows[5]["sectors"][0]["context"][2][0][4] = []
+            rows[5]["sectors"][0]["context"][2][0][5] = []
+        self.rejects(mutate, "does not select one root|not local to its boundaries")
+
+    def test_different_selected_child(self):
+        def mutate(rows):
+            frame = rows[0]["sections"][0]["context"][2][0]
+            frame[2] = [1, [0, 0, 1]]
+            frame[3] = [2]
+            frame[4] = []
+            frame[5] = []
+        self.rejects(mutate, "cached sign differs|section boundary differs")
+
 
 if __name__ == "__main__":
     unittest.main()

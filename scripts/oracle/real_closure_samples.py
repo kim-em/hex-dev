@@ -29,6 +29,8 @@ def polynomial_roots(rcf, p):
 
     This avoids Z3 RCF comparing redundant extensions for a polynomial with
     both a rational root and an already selected non-Archimedean root.
+    The workaround covers these fixtures; other rational factors can still
+    trigger that Z3 limitation and need exact deflation before root extraction.
     """
     p = p.copy()
     roots = []
@@ -154,9 +156,12 @@ def verify_sample(reader, parent_context, original, sample, expected_cell):
             "malformed sample record")
     context = sample["context"]
     roots = reader.context(context)
+    local_bound = (1 if expected_cell[0] == "section" else
+                   sum(endpoint[0] == 0 for endpoint in expected_cell[1:]))
     require(context[:2] == parent_context[:2] and
             context[2][:len(parent_context[2])] == parent_context[2] and
-            len(context[2]) <= len(parent_context[2]) + 2, "sample context is not local to its boundaries")
+            len(context[2]) <= len(parent_context[2]) + local_bound,
+            "sample context is not local to its boundaries")
     require(isinstance(sample["polynomials"], list), "malformed sample converted polynomials")
     converted = [reader.poly(p, roots) for p in sample["polynomials"]]
     require(converted == original, "sample coefficient conversion changed values")

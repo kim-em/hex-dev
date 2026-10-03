@@ -17,6 +17,40 @@ variable {polynomials : List parent.Poly} (family : Family parent polynomials) (
 example (x : K) : ∃! region, region ∈ family.cells ∧ region.Mem original x :=
   family.cells_unique original x
 
+/-- Unique cell coverage and computed signs compose through the original model. -/
+example (x : K) : ∃! region, region ∈ family.cells ∧ region.Mem original x ∧
+    region.sample.cell.contains region.sample.value = true ∧
+    region.sample.signs polynomials = polynomials.map (fun p => (SignType.sign
+      ((HexPolyMathlib.Interpret.interpret original.value original.zero_iff p).eval x) : Int)) := by
+  obtain ⟨region, ⟨present, inside⟩, unique⟩ := family.cells_unique original x
+  obtain ⟨checked, signs⟩ := family.cell_signs original region present
+  refine ⟨region, ⟨present, inside, checked, signs x inside⟩, ?_⟩
+  rintro other ⟨present, inside, _, _⟩
+  exact unique other ⟨present, inside⟩
+
+example (upper : Root parent) (sample : Tower.Sample parent)
+    (returned : family.sectorBetween? .negInf (.finite upper) = some sample)
+    (x : K) (inside : x < upper.denote original) :
+    sample.signs polynomials = polynomials.map (fun p => (SignType.sign
+      ((HexPolyMathlib.Interpret.interpret original.value original.zero_iff p).eval x) : Int)) :=
+  family.sectorBetween?_signs original .negInf (.finite upper) sample returned x ⟨trivial, inside⟩
+
+example (lower upper : Root parent) (sample : Tower.Sample parent)
+    (returned : family.sectorBetween? (.finite lower) (.finite upper) = some sample)
+    (x : K) (left : lower.denote original < x) (right : x < upper.denote original) :
+    sample.signs polynomials = polynomials.map (fun p => (SignType.sign
+      ((HexPolyMathlib.Interpret.interpret original.value original.zero_iff p).eval x) : Int)) :=
+  family.sectorBetween?_signs original (.finite lower) (.finite upper) sample returned x ⟨left, right⟩
+
+example (root : Root parent) : (Region.section root).Ordered original := trivial
+
+example (sample : Tower.Sample parent) (present : sample ∈ family.sections) :
+    ∃ root ∈ family.boundaries, sample = Tower.Sample.ofRoot root ∧
+      sample.cell.contains sample.value = true ∧
+      sample.signs polynomials = polynomials.map (fun p => (SignType.sign
+        ((HexPolyMathlib.Interpret.interpret original.value original.zero_iff p).eval
+          (root.denote original)) : Int)) := family.sections_correct original sample present
+
 example (sample : Tower.Sample parent) (present : sample ∈ family.sectors) :
     ∃ realization : Conversion.Model sample.input original,
       sample.cell.contains sample.value = true ∧ ∀ x, sample.cell.Mem realization.target x →

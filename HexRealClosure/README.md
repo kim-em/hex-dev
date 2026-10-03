@@ -1582,7 +1582,9 @@ root handles with the adjacent complete boundary list, then constructs only
 the accepted sector. It accepts semantically equal endpoints represented by
 different valid descriptors and rejects reversed, missing and non-adjacent
 boundaries. Finite endpoints remain owned by their original root contexts.
-`Region.endpoints?` exposes a sector's original endpoints; `Family.cells`
+`Region.sample` constructs a candidate for an explicitly supplied region; its
+bounded-sector membership requires strictly ordered endpoints. `Family`
+producers discharge this condition. `Region.endpoints?` exposes a sector's original endpoints; `Family.cells`
 describes exactly the returned section and sector samples.
 
 `HexRealClosureMathlib.LocalSample` proves complete boundary coverage, strict
@@ -1593,7 +1595,12 @@ input polynomial throughout its entire sector, including zero polynomials.
 The proofs use the actual complete root producers and local conversions;
 callers supply no root-coverage or sign-agreement hypotheses. Checked endpoint
 requests retain the exact interpreted requested interval, and every actual
-adjacent sector succeeds. Public membership lemmas cover bounded sectors, both
+adjacent sector succeeds. `Family.cell_signs` states the computed signs directly
+in terms of original-model cell membership; `Family.sectorBetween?_signs` does
+the same for requested intervals. These compose with unique cell coverage
+without identifying separate existential interpretations. `Family.sections_correct`
+retains each actual section boundary and its computed signs. Public membership
+lemmas cover bounded sectors, both
 rays and the whole line. Ordinary-import consumer tests exercise these APIs.
 
 Native tests cover irrational duplicate roots, the three real roots of an
@@ -1620,7 +1627,7 @@ complete contexts, converted input coefficients, sample values, cells and sign
 vectors. The independent pinned Z3 RCF oracle checks the complete distinct
 boundary lists, every section and sector, strict membership and computed signs.
 It includes an infinitesimal gap over a selected algebraic predecessor.
-Twenty oracle tests check valid fixtures and reject changes to boundaries,
+Twenty-three oracle tests check valid fixtures and reject changes to boundaries,
 points, contexts, transported coefficients and signs. The emitter also rebuilds
 every local context and reads each stored point through the checked native reader.
 Run `lake build hexrealclosure_sample_conformance`, then

@@ -17,7 +17,7 @@ variable {registry : BaseContext.Registry} {parent : Context registry} {K : Type
 variable [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K]
 
 /-- Interpret a cell's original boundary handles in one common ambient field. -/
-def Region.Mem (original : Model parent K) : Region parent → K → Prop
+@[expose] def Region.Mem (original : Model parent K) : Region parent → K → Prop
   | .section root, x => root.denote original = x
   | .whole, _ => True
   | .left upper, x => x < upper.denote original
@@ -25,7 +25,7 @@ def Region.Mem (original : Model parent K) : Region parent → K → Prop
   | .between lower upper, x => lower.denote original < x ∧ x < upper.denote original
 
 /-- A bounded sector must have strictly ordered boundaries. -/
-def Region.Ordered (original : Model parent K) : Region parent → Prop
+@[expose] def Region.Ordered (original : Model parent K) : Region parent → Prop
   | .between lower upper => lower.denote original < upper.denote original
   | _ => True
 
@@ -189,18 +189,19 @@ theorem Family.regions_correct {polynomials : List parent.Poly} (family : Family
     · obtain ⟨valid, property⟩ := afterRegions_correct original first rest ordered region later
       exact ⟨valid, fun x inside root member => (property x inside).2 root member⟩
 
-/-- Each actual local sector sample preserves the original coefficients, lies
-in its own cell, and has one sign vector throughout that entire root-free cell. -/
-theorem Family.sector_signs {polynomials : List parent.Poly} (family : Family parent polynomials)
-    (original : Model parent K) (sample : Tower.Sample parent) (present : sample ∈ family.sectors) :
-    ∃ realization : Conversion.Model sample.input original,
-      sample.cell.contains sample.value = true ∧ ∀ x, sample.cell.Mem realization.target x →
-        sample.signs polynomials = polynomials.map (fun p => (SignType.sign
+/-- One actual local sector interpretation supplies both the original interval
+and its constant computed sign vector. -/
+theorem Family.region_signs {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (original : Model parent K) (region : Region parent) (present : region ∈ family.regions) :
+    ∃ realization : Conversion.Model region.sample.input original,
+      region.sample.cell.contains region.sample.value = true ∧
+      (∀ x, region.sample.cell.Mem realization.target x ↔ region.Mem original x) ∧
+      ∀ x, region.Mem original x →
+        region.sample.signs polynomials = polynomials.map (fun p => (SignType.sign
           ((HexPolyMathlib.Interpret.interpret original.value original.zero_iff p).eval x) : Int)) := by
-  obtain ⟨region, member, rfl⟩ := List.mem_map.mp present
-  obtain ⟨ordered, excludes⟩ := family.regions_correct original region member
+  obtain ⟨ordered, excludes⟩ := family.regions_correct original region present
   obtain ⟨realization, checked, cell⟩ := region.sample_correct original ordered
-  refine ⟨realization, checked, ?_⟩
+  refine ⟨realization, checked, cell, ?_⟩
   have inside := (Cell.contains_correct realization.target _ _).mp checked
   intro x contained
   rw [signs_correct region.sample original realization polynomials]
@@ -209,12 +210,55 @@ theorem Family.sector_signs {polynomials : List parent.Poly} (family : Family pa
   by_cases zero : HexPolyMathlib.Interpret.interpret original.value original.zero_iff p = 0
   · simp only [zero, Polynomial.eval_zero]
   · apply congrArg (fun s : SignType => (s : Int))
-    apply region.sample.cell.sign_eq realization.target _ inside contained
+    apply region.sample.cell.sign_eq realization.target _ inside ((cell x).mpr contained)
     intro y hy vanishes
     have root := (family.coverage original y).mpr ⟨p, polynomial, zero, vanishes⟩
     obtain ⟨boundary, present, value⟩ := List.mem_map.mp root
     exact excludes y ((cell y).mp hy) boundary present value
 
+/-- Each returned sector has one compatible local interpretation for membership
+and sign evaluation. -/
+theorem Family.sector_signs {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (original : Model parent K) (sample : Tower.Sample parent) (present : sample ∈ family.sectors) :
+    ∃ realization : Conversion.Model sample.input original,
+      sample.cell.contains sample.value = true ∧ ∀ x, sample.cell.Mem realization.target x →
+        sample.signs polynomials = polynomials.map (fun p => (SignType.sign
+          ((HexPolyMathlib.Interpret.interpret original.value original.zero_iff p).eval x) : Int)) := by
+  obtain ⟨region, member, rfl⟩ := List.mem_map.mp present
+  obtain ⟨realization, checked, cell, signs⟩ := family.region_signs original region member
+  exact ⟨realization, checked, fun x inside => signs x ((cell x).mp inside)⟩
+
+/-- Every actual section retains its original selected boundary and computes
+the input signs at that boundary. -/
+theorem Family.sections_correct {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (original : Model parent K) (sample : Tower.Sample parent) (present : sample ∈ family.sections) :
+    ∃ root ∈ family.boundaries, sample = Tower.Sample.ofRoot root ∧
+      sample.cell.contains sample.value = true ∧
+      sample.signs polynomials = polynomials.map (fun p => (SignType.sign
+        ((HexPolyMathlib.Interpret.interpret original.value original.zero_iff p).eval
+          (root.denote original)) : Int)) := by
+  obtain ⟨root, member, rfl⟩ := List.mem_map.mp present
+  obtain ⟨realization, checked, _, value⟩ := ofRoot_correct root original
+  refine ⟨root, member, rfl, checked, ?_⟩
+  rw [signs_correct _ original realization polynomials, value]
+
+/-- Every cell sample is a member of its native cell and computes the input
+signs at every original-model point belonging to that cell. -/
+theorem Family.cell_signs {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (original : Model parent K) (region : Region parent) (present : region ∈ family.cells) :
+    region.sample.cell.contains region.sample.value = true ∧
+      ∀ x, region.Mem original x → region.sample.signs polynomials = polynomials.map (fun p =>
+        (SignType.sign ((HexPolyMathlib.Interpret.interpret original.value original.zero_iff p).eval x) : Int)) := by
+  rcases List.mem_append.mp present with sectionMember | sectorMember
+  · obtain ⟨root, member, rfl⟩ := List.mem_map.mp sectionMember
+    obtain ⟨realization, checked, _, value⟩ := ofRoot_correct root original
+    refine ⟨checked, ?_⟩
+    intro x inside
+    change root.denote original = x at inside
+    change (Tower.Sample.ofRoot root).signs polynomials = _
+    rw [signs_correct _ original realization polynomials, value, inside]
+  · obtain ⟨realization, checked, _, signs⟩ := family.region_signs original region sectorMember
+    exact ⟨checked, signs⟩
 
 private def afterRootCells (lower : Root parent) (rest : List (Root parent)) : List (Region parent) :=
   rest.map Region.section ++ afterRegions lower rest
@@ -330,7 +374,7 @@ theorem Family.cells_unique {polynomials : List parent.Poly} (family : Family pa
 
 
 /-- The requested open interval, interpreting each endpoint in its original root context. -/
-def Requested (original : Model parent K) (lower upper : Endpoint (Root parent)) (x : K) : Prop :=
+@[expose] def Requested (original : Model parent K) (lower upper : Endpoint (Root parent)) (x : K) : Prop :=
   (match lower with
     | .negInf => True
     | .finite root => root.denote original < x
@@ -369,6 +413,23 @@ theorem Family.sectorBetween?_correct {polynomials : List parent.Poly} (family :
     exact ⟨realization, checked, fun x => (same x).trans
       (matchesRegion_correct original lower upper region x accepted)⟩
 
+/-- An accepted request computes the input signs at every point of the exact
+requested original-model interval, without combining unrelated witnesses. -/
+theorem Family.sectorBetween?_signs {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (original : Model parent K) (lower upper : Endpoint (Root parent)) (sample : Tower.Sample parent)
+    (returned : family.sectorBetween? lower upper = some sample) (x : K)
+    (inside : Requested original lower upper x) :
+    sample.signs polynomials = polynomials.map (fun p => (SignType.sign
+      ((HexPolyMathlib.Interpret.interpret original.value original.zero_iff p).eval x) : Int)) := by
+  cases found : family.regions.find? (matchesRegion lower upper) with
+  | none => simp [Family.sectorBetween?, found] at returned
+  | some region =>
+    simp only [Family.sectorBetween?, found, Option.map_some, Option.some.injEq] at returned
+    subst sample
+    obtain ⟨realization, checked, cell, signs⟩ :=
+      family.region_signs original region (List.mem_of_find?_eq_some found)
+    exact signs x ((matchesRegion_correct original lower upper region x
+      (List.find?_some found)).mpr inside)
 
 private theorem matchesRegion_eq (original : Model parent K) (lower upper : Endpoint (Root parent))
     (region : Region parent) (a b : Endpoint (Root parent))
@@ -409,6 +470,22 @@ end Hex.RealClosure.Tower.Sample
 /-- info: 'Hex.RealClosure.Tower.Sample.Family.sector_signs' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Sample.Family.sector_signs
+
+/-- info: 'Hex.RealClosure.Tower.Sample.Family.region_signs' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Sample.Family.region_signs
+
+/-- info: 'Hex.RealClosure.Tower.Sample.Family.cell_signs' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Sample.Family.cell_signs
+
+/-- info: 'Hex.RealClosure.Tower.Sample.Family.sections_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Sample.Family.sections_correct
+
+/-- info: 'Hex.RealClosure.Tower.Sample.Family.sectorBetween?_signs' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Sample.Family.sectorBetween?_signs
 
 /-- info: 'Hex.RealClosure.Tower.Sample.Family.cells_unique' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
