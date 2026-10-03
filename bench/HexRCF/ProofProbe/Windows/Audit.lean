@@ -5,27 +5,31 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRCF.ProofProbe.Intervals.FurtherQuery
-import all HexRCF.ProofProbe.Intervals.FurtherQuery
-public import HexRCF.ProofProbe.Intervals.FurtherHorner
-import all HexRCF.ProofProbe.Intervals.FurtherHorner
-public import HexRCF.ProofProbe.Intervals.ReciprocalQuery
-import all HexRCF.ProofProbe.Intervals.ReciprocalQuery
-public import HexRCF.ProofProbe.Intervals.ReciprocalHorner
-import all HexRCF.ProofProbe.Intervals.ReciprocalHorner
-public import HexRCF.ProofProbe.Intervals.CubicQuery
-import all HexRCF.ProofProbe.Intervals.CubicQuery
-public import HexRCF.ProofProbe.Intervals.CubicHorner
-import all HexRCF.ProofProbe.Intervals.CubicHorner
+public import HexRCF.ProofProbe.Windows.FixedOriginal
+import all HexRCF.ProofProbe.Windows.FixedOriginal
+public import HexRCF.ProofProbe.Windows.FixedRefined
+import all HexRCF.ProofProbe.Windows.FixedRefined
+public import HexRCF.ProofProbe.Windows.FurtherOriginal
+import all HexRCF.ProofProbe.Windows.FurtherOriginal
+public import HexRCF.ProofProbe.Windows.FurtherRefined
+import all HexRCF.ProofProbe.Windows.FurtherRefined
+public import HexRCF.ProofProbe.Windows.ReciprocalOriginal
+import all HexRCF.ProofProbe.Windows.ReciprocalOriginal
+public import HexRCF.ProofProbe.Windows.ReciprocalRefined
+import all HexRCF.ProofProbe.Windows.ReciprocalRefined
+public import HexRCF.ProofProbe.Windows.CubicOriginal
+import all HexRCF.ProofProbe.Windows.CubicOriginal
+public import HexRCF.ProofProbe.Windows.CubicRefined
+import all HexRCF.ProofProbe.Windows.CubicRefined
 public meta import Lean
 public meta section
-namespace Hex.RCF.ProofProbe.Intervals.Audit
+namespace Hex.RCF.ProofProbe.Windows.Audit
 open Lean Meta
 
 private meta structure Counts where
   expressions : ExprMap Unit := {}
   declarations : NameHashSet := {}
-  tables : List (Nat × Nat) := []
+  tables : List (Nat × Nat × Bool) := []
 
 /-- Count the explicit entry list without expanding proof or library bodies. -/
 private meta partial def entries (list : Expr) : MetaM (Nat × Nat) := do
@@ -47,7 +51,11 @@ mutual
     modify fun s => { s with expressions := s.expressions.insert e () }
     if e.isAppOfArity `Hex.RCF.RealCoefficients.LiteralSign.Table.mk 7 then
       let split ← entries e.getAppArgs[5]!
-      modify fun s => { s with tables := split :: s.tables }
+      let window := e.getAppArgs[6]!
+      unless window.isAppOfArity ``Option.none 1 || window.isAppOfArity ``Option.some 2 do
+        throwError "generator window is not a literal option constructor"
+      modify fun s => { s with tables :=
+        (split.1, split.2, window.isAppOfArity ``Option.some 2) :: s.tables }
     match e with
     | .app f a => expression owner f; expression owner a
     | .lam _ t b _ | .forallE _ t b _ => expression owner t; expression owner b
@@ -74,14 +82,16 @@ private meta def measure (name : Name) : MetaM Json := do
     ("proof", toJson name.toString),
     ("local_declarations", toJson counts.declarations.size),
     ("distinct_table_syntax", toJson counts.tables.length),
-    ("tables", toJson (counts.tables.reverse.map fun (interval, query) =>
-      Json.mkObj [("interval_entries", toJson interval), ("query_entries", toJson query)]))]
+    ("tables", toJson (counts.tables.reverse.map fun (interval, query, refined) =>
+      Json.mkObj [("interval_entries", toJson interval), ("query_entries", toJson query), ("refined_window", toJson refined)]))]
 
 run_meta do
-  logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Intervals.FurtherQuery.witness).compress}"
-  logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Intervals.FurtherHorner.witness).compress}"
-  logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Intervals.ReciprocalQuery.witness).compress}"
-  logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Intervals.ReciprocalHorner.witness).compress}"
-  logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Intervals.CubicQuery.witness).compress}"
-  logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Intervals.CubicHorner.witness).compress}"
-end Hex.RCF.ProofProbe.Intervals.Audit
+  logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Windows.FixedOriginal.witness).compress}"
+  logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Windows.FixedRefined.witness).compress}"
+  logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Windows.FurtherOriginal.witness).compress}"
+  logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Windows.FurtherRefined.witness).compress}"
+  logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Windows.ReciprocalOriginal.witness).compress}"
+  logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Windows.ReciprocalRefined.witness).compress}"
+  logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Windows.CubicOriginal.witness).compress}"
+  logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Windows.CubicRefined.witness).compress}"
+end Hex.RCF.ProofProbe.Windows.Audit

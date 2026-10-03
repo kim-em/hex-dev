@@ -616,6 +616,18 @@ not isolated lookup timing or an asymptotic claim. The
 include every completed arm and their source identities. The false mode keeps
 linear retrieval; older comparison probes explicitly pin that mode.
 
+`rcf.algebraic.signRefinements` is zero by default. Setting it to a positive
+natural number bounds producer attempts to tighten the generator interval when
+Horner signs are inconclusive. The certificate retains the original generator
+and checks that the tighter count-one interval selects the same real root.
+Replay checks frozen data and never runs refinement. Inconclusive signs keep
+full query evidence; invalid proposed evidence is terminal. The
+[retained comparison](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-window-proofs.md)
+found no useful whole-module speedup at a four-step budget, even though the
+lower-precision fixed-field case removed full queries. This mode therefore
+remains optional. Its individual native calls share the cancellation limits
+of the other native producers.
+
 For these reconstructed inputs, closed arithmetic is compiled into the common
 field after authenticating its source values. A quotient is recorded as a
 rational coordinate polynomial and checked by its multiplication identity;
