@@ -10,6 +10,7 @@ public meta import HexRCF.RealCoefficients.FieldBuildBudget
 public meta import HexRCF.RealCoefficients.FieldIndex
 public meta import HexRealAlgebraicMathlib.Laws
 public meta import Lean
+public meta import HexRCF.Tactic
 
 public meta section
 
@@ -349,9 +350,6 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
   let indexed := rcf.algebraic.indexSigns.get (← getOptions)
   let index := if indexed then LiteralSign.Index.build data.signs.entries.toArray Field.keyOrder
     else LiteralSign.Index.empty
-  if indexed then
-    unless keys.all (fun key => (data.signs.lookupIndex Field.keyOrder index key).isSome) do
-      throwError "rcf: fixed-field sign index omitted a replay or cell sign"
   let routing ← mkAppOptM ``Field.keyOrder #[some pExpr, some rootExpr]
   let quotedIndex := indexExpr index
   let verdictName := match indexed, quantifier with
@@ -413,6 +411,30 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
     #[certificate, valuesExpr, formulaExpr, mkConst ``Unit.unit, checked]
   check proof
   return (proof, certificate, data, checked)
+
+/-- Replay a supplied frozen result without production. Original extra operands
+must already be recorded. Errors restore caller state and remain terminal;
+accepted false is diagnostic. The returned fixed-field proof is checked in the
+ordinary kernel and rejects every nonstandard axiom dependency. -/
+meta def replay {p : ZPoly} {s : DyadicSquare}
+    {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
+    [ZPoly.CheckedIrreducible p] {n : Nat}
+    (pExpr rootExpr valuesExpr formulaExpr : Expr)
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
+    (data : FieldBuild.Result p s hw hp Unit (n + 1))
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := []) : MetaM Expr := do
+  let saved ← saveState
+  let (proof, _) ← tryFinally' (withOptions (fun options =>
+      debug.skipKernelTC.set (Elab.async.set options false) false) do
+    let (proof, _, _, _) ← quoteCertificate pExpr rootExpr valuesExpr formulaExpr
+      values formula quantifier extraSignKeys (fun _ => pure ()) data
+    let proof := ShareCommon.shareCommon' proof
+    Hex.RCF.checkAxioms `Hex.RCF.RealCoefficients.FieldLiteral.replay proof
+    checkWithKernel proof
+    return proof)
+    (fun result => unless result.isSome do saved.restore)
+  return proof
 
 /-- Construct a checked proof for a fixed-field existential or universal
 sentence. Search runs in meta code; the resulting term contains only literal

@@ -560,7 +560,8 @@ generator interval. A strictly separated bound proves its sign; exactly
 `[0,0]` proves zero. Other zero-containing bounds retain a full rational Sturm
 query. Replay checks the recorded branch, and never rescues malformed query
 evidence with interval evaluation. The complete algebraic producer still
-succeeds on its proved input surface. Linear sign lookup remains a cost.
+succeeds on its proved input surface. Indexed sign retrieval below reduces
+fresh-module build time on the recorded examples.
 
 A four-round matched comparison on the further-root, reciprocal-root and cubic
 examples used raw carriers and favored interval quotation in all twelve pairs,

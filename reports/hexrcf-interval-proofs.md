@@ -87,9 +87,11 @@ is 0.7275 and measurement-CPU foreign ratio is 0.0533. These are retained host
 context, not reasons to discard completed observations. Absolute timings from
 other source snapshots or CPUs are not pooled with this comparison.
 
-Indexed lookup and interval refinement remain outstanding from #10633. Carrier
-normalization, rational-literal construction and shared replay work from #10634
-are separate decisions. Signed Sturm-chain normalization already uses positive
+Indexed lookup and carrier normalization have separate retained comparisons in
+[the index report](hexrcf-index-proofs.md) and
+[the carrier report](hexrcf-carrier-proofs.md). Generator-interval refinement
+remains outstanding from #10633. Rational-literal construction and shared
+replay from #10634 retain their own comparison controls. Signed Sturm-chain normalization already uses positive
 absolute-leading-coefficient scaling; arbitrary monic scaling is not equivalent.
 
 - [Collector](../scripts/bench/hexrcf_interval_proofs.py)

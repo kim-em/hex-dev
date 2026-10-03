@@ -75,6 +75,20 @@ archived measurements and preserve their original retrieval mode.
 - [Preserved-hit full report](bench-results/hex-rcf-index-proofs-50a37279c-chungus2.json)
 - [Preserved-hit incremental records](bench-results/hex-rcf-index-proofs-50a37279c-chungus2.json.samples.jsonl)
 
+The exact measured sources are retained on the durable
+[evidence branch](https://github.com/kim-em/hex-dev/tree/evidence/hexrcf-index-50a37279c).
+The [first source](https://github.com/kim-em/hex-dev/commit/dd2482e41d3054b670a9b3fe019cc9ea144ee08c)
+and [preserved-hit source](https://github.com/kim-em/hex-dev/commit/50a37279c8ed6984b6466a6c37fa16ab45b50dd8)
+are based on `94de7ff076fee5fd85452aec3462cf3cf8b57d77`.
+Their changes map to integration commits `1b327cce5` and `e4d79d4b3`
+in [PR #10661](https://github.com/kim-em/hex-dev/pull/10661).
+The shipped branch is a changed-source descendant: it includes merged
+#10658/#10580/#10656 changes, the replay-script conflict resolution,
+default/control pins and additional coverage. Its tests preserve the terminal
+combined-replay failure diagnostic. The retained timings belong to the exact
+measured sources, not to this later integrated tree; no measurements are pooled
+across those source identities.
+
 Reproduce with `python3 scripts/bench/hexrcf_index_proofs.py --output
 <external-json-path>` from a clean checkout. Use a retained source commit for
 its exact source/import hashes; later defaults and historical-control pins
