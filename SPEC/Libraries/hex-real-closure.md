@@ -147,16 +147,18 @@ original context.
 `Tower.Shared base owners` retains an immutable list of original contexts and
 one checked inclusion for each original owner into a shared target. Registration
 visits the owner's validated suffix in predecessor order, reuses cached checked
-inclusions for original predecessors, and adjoins only previously unseen roots.
+inclusions for original predecessors, and adjoins only previously unseen exact native predecessors.
 Parent/child owners and sibling branches therefore retain one common ancestor
 level when they share exact native predecessors. The cache retains target-side
 predecessors too, including those rebuilt during enlargement, so a context built
 from a returned target can reuse its ancestry. Every new target updates all
 earlier owner and predecessor maps. Reuse currently requires exact native
-predecessor identity. Independent enlargement images at different staged depths
-can still introduce equivalent algebraic levels when their contexts are not
-prefixes of the shared target; normalization across those images remains required
-for complete dependency transport.
+predecessor identity. Owners selecting the same real number through reordered chains, alternative
+descriptors or replay evidence can introduce equivalent algebraic levels at one
+staged depth. Independent enlargement images can also duplicate levels, including
+when the enlarged owner is registered first or an intermediate-depth owner enters
+a deeper staged base. Normalization across these equivalent presentations remains
+required for complete dependency transport.
 Original values remain indexed by their original contexts;
 `Shared.value` and `Shared.polynomial` select the checked map by its original
 owner index. The native base compatibility check uses the full real-prefix key

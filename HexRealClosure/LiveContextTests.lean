@@ -155,12 +155,12 @@ def run : IO Unit := do
     (reverseMixed.value 0 (enlargedOwner.value alpha)) (reverseMixed.value 1 alpha))
     "reverse mixed-owner maps selected different roots"
   let some deeperMixed := Shared.gather? (.pack second)
-      [enlargedOwner.context, extension.context]
+      [extension.context, enlargedOwner.context]
     | throw (IO.userError "intermediate-depth owner registration failed")
   require (deeperMixed.input.context.signature.roots.length == 2)
     "intermediate-depth reuse limitation changed"
   require (deeperMixed.input.context.equal
-    (deeperMixed.value 0 (enlargedOwner.value alpha)) (deeperMixed.value 1 alpha))
+    (deeperMixed.value 0 alpha) (deeperMixed.value 1 (enlargedOwner.value alpha)))
     "intermediate-depth maps selected different roots"
   let some enlargedBranches := registered.add? sibling.context
     | throw (IO.userError "sibling registration after enlargement failed")
@@ -171,6 +171,55 @@ def run : IO Unit := do
       enlargedBranches.value ⟨4, by simp [owners]⟩ sibling.generator)
     (enlargedBranches.value ⟨0, by simp [owners]⟩ alpha + 1))
     "enlarged sibling lost its transported coefficient dependency"
+  let some alternativeDescriptor := SignDet.Descriptor.validate base.sign base.signature
+      { context := base.signature, head := x * x - DensePoly.C two,
+        lower := .finite 1, upper := .finite ((1 + 1 + 1) / (1 + 1)),
+        indices := [], signs := [] }
+    | throw (IO.userError "alternative root interval failed")
+  let alternative := base.adjoin alternativeDescriptor
+  let some sameRoot := Shared.gather? (.pack rational) [extension.context, alternative.context]
+    | throw (IO.userError "alternative root presentation registration failed")
+  require (sameRoot.input.context.signature.roots.length == 2)
+    "alternative descriptor reuse limitation changed"
+  require (sameRoot.input.context.equal (sameRoot.value 0 alpha)
+    (sameRoot.value 1 alternative.generator))
+    "alternative descriptors did not retain the same selected real root"
+  let some independentDescriptor := SignDet.Descriptor.validate base.sign base.signature
+      { context := base.signature, head := x * x - DensePoly.C (two + 1),
+        lower := .finite 1, upper := .finite two, indices := [], signs := [] }
+    | throw (IO.userError "independent root descriptor failed")
+  let independent := base.adjoin independentDescriptor
+  let some positioned := Shared.gather? (.pack first)
+      [independent.context, extension.context, enlargedOwner.context]
+    | throw (IO.userError "mixed owner registration after independent root failed")
+  require (positioned.input.context.signature.roots.length == 3)
+    "mixed owner position reuse limitation changed"
+  require (positioned.input.context.equal (positioned.value 1 alpha)
+    (positioned.value 2 (enlargedOwner.value alpha)))
+    "mixed owner position changed its selected real root"
+  let v : DensePoly independent.context.Value := DensePoly.ofCoeffs #[0, 1]
+  let some laterAlpha := SignDet.Descriptor.validate independent.context.sign
+      independent.context.signature
+      { context := independent.context.signature, head := v * v - DensePoly.C (1 + 1),
+        lower := .finite 1, upper := .finite (1 + 1), indices := [], signs := [] }
+    | throw (IO.userError "reordered alpha descriptor failed")
+  let betaAlpha := independent.context.adjoin laterAlpha
+  let some laterBeta := SignDet.Descriptor.validate extension.context.sign
+      extension.context.signature
+      { context := extension.context.signature, head := y * y - DensePoly.C (1 + 1 + 1),
+        lower := .finite 1, upper := .finite (1 + 1), indices := [], signs := [] }
+    | throw (IO.userError "reordered beta descriptor failed")
+  let alphaBeta := extension.context.adjoin laterBeta
+  let some reordered := Shared.gather? (.pack rational) [alphaBeta.context, betaAlpha.context]
+    | throw (IO.userError "reordered independent roots registration failed")
+  require (reordered.input.context.signature.roots.length == 4)
+    "reordered root presentation reuse limitation changed"
+  require (reordered.input.context.equal (reordered.value 0 (alphaBeta.embed alpha))
+    (reordered.value 1 betaAlpha.generator))
+    "reordered presentation changed alpha"
+  require (reordered.input.context.equal (reordered.value 0 alphaBeta.generator)
+    (reordered.value 1 (betaAlpha.embed independent.generator)))
+    "reordered presentation changed beta"
   let z : DensePoly next.input.context.Value := DensePoly.ofCoeffs #[0, 1]
   let some newDescriptor := SignDet.Descriptor.validate next.input.context.sign
       next.input.context.signature

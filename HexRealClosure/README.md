@@ -1441,15 +1441,20 @@ Across different infinitesimal depths, an independently enlarged owner reuses
 a root only when its exact context is already a target predecessor. Registering
 the enlarged owner first, or into a deeper staged base, can add an equivalent
 algebraic level; the returned value maps still preserve the selected root.
+Owners selecting the same real number through reordered chains, different
+isolating intervals or different replay evidence can also add equivalent levels
+at one staged depth. Reuse currently recognizes exact native predecessors.
 `Shared.add?_maps` describes the returned old-owner inclusions and
 the appended original-owner map. A new target updates the predecessor cache
-through the same inclusion used for the retained owners.
+through the same sequence of root inclusions used for retained owners.
 
 `shared.enlarge?` returns a new shared target, a checked inclusion `previous`
 from the old shared target, and its cached positive `parameter`. All retained
 owner maps use this one inclusion, and accessing the parameter rebuilds no root.
-`Shared.enlarge?_models` proves preservation in one common ambient and identifies
-its actual infinitesimal and every input owner's interpreted values;
+`Shared.enlarge?_models` carries an existing coherent collection of owner
+models into one common ambient and identifies its actual infinitesimal and every
+input owner's interpreted values. A factory producing that coherent collection
+from `gather?`, and a proof that compatible registration succeeds, remain required;
 `Shared.enlarge?_ordered` gives positivity and comparison
 against every old positive value. Existing serialized values and polynomials
 must pass the returned target's checked readers; old packets with a different
