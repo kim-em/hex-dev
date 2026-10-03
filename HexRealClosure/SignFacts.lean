@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.Algebraic
+public import HexSignDet.DagSelectedSigns
 
 public section
 
@@ -22,6 +23,23 @@ structure SignFact (context : Context E Ctx coeffSign parent) where
   checked : context.signPoly polynomial = sign
 
 variable {context : Context E Ctx coeffSign parent}
+
+/-- Select supplied evidence for the scalar operation's actual reduced query.
+All executable query/domain/row checks stay in the Mathlib-free core. -/
+@[expose] def Context.readSigns? (context : Context E Ctx coeffSign parent)
+    (p : DensePoly E) (claimed : Int) {head : DensePoly E} {lower upper : Endpoint E}
+    (memo : Array (SignDet.Dag.Checked coeffSign parent head lower upper)) (index : Nat) :
+    Option (SignDet.SelectedSigns context.root [context.queryPoly p]) :=
+  SignDet.SelectedSigns.readMemo? context.root [context.queryPoly p] #v[claimed] memo index
+
+theorem Context.readSigns_value {context : Context E Ctx coeffSign parent}
+    {p : DensePoly E} {claimed : Int} {head : DensePoly E} {lower upper : Endpoint E}
+    {memo : Array (SignDet.Dag.Checked coeffSign parent head lower upper)} {index : Nat}
+    {signs : SignDet.SelectedSigns context.root [context.queryPoly p]}
+    (h : context.readSigns? p claimed memo index = some signs) : signs.value = claimed := by
+  obtain ⟨bound, _, accepted⟩ := SignDet.SelectedSigns.readMemo_evidence h
+  obtain ⟨_, _, values, _⟩ := SignDet.SelectedSigns.ofMemo_evidence accepted
+  simp [SignDet.SelectedSigns.value, values]
 
 /-- Literal lookup retains the proof belonging to that precise key. -/
 @[expose] def SignFact.find (facts : List (SignFact context)) (p : DensePoly E) :

@@ -35,14 +35,11 @@ reduced query uses the predecessor's ordinary coefficient operations. -/
     (p : DensePoly E) (claimed : Int) {head : DensePoly E} {lower upper : Endpoint E}
     (memo : Array (SignDet.Dag.Checked coeffSign parent head lower upper)) (index : Nat) :
     Option (SignFact context) :=
-  match h : SignDet.SelectedSigns.readMemo? context.root [context.queryPoly p]
-      #v[claimed] memo index with
+  match h : context.readSigns? p claimed memo index with
   | none => none
   | some signs => some ⟨p, claimed, by
-      obtain ⟨bound, _, accepted⟩ := SignDet.SelectedSigns.readMemo_evidence h
-      obtain ⟨_, _, values, _⟩ := SignDet.SelectedSigns.ofMemo_evidence accepted
       have checked := context.signPoly_checked f hz h1 ha hs hm hnat hsign hn hi p signs
-      simpa [SignDet.SelectedSigns.value, values] using checked⟩
+      exact checked.trans (Context.readSigns_value h)⟩
 
 theorem Context.readSignFact_fields (context : Context E Ctx coeffSign parent)
     (p : DensePoly E) (claimed : Int) {head : DensePoly E} {lower upper : Endpoint E}
@@ -65,7 +62,7 @@ theorem Context.readSignFact_accept (context : Context E Ctx coeffSign parent)
     (context.readSignFact? f hz h1 ha hs hm hnat hsign hn hi p claimed memo index).isSome =
       (SignDet.SelectedSigns.readMemo? context.root [context.queryPoly p]
         #v[claimed] memo index).isSome := by
-  unfold Context.readSignFact?
+  unfold Context.readSignFact? Context.readSigns?
   split <;> simp_all
 
 end Hex.RealClosure.Algebraic

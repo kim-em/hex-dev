@@ -35,14 +35,20 @@ theorem rational_sign (x : Rat) :
 
 /-- The interpretation appears only in erased correctness proofs. The
 executable reader selects supplied graph rows rather than producing signs. -/
-@[expose] def readFact (p : DensePoly Rat) (s : Int)
-    (memo : Array (Dag.Checked Sturm.orderSign 7 source.raw.head
-      source.raw.lower source.raw.upper)) (index : Nat) : Option (SignFact context) :=
-  context.readSignFact? (fun q : Rat => (q : ℝ))
+@[expose] def readAt (selected : Context Rat Nat Sturm.orderSign 7)
+    (p : DensePoly Rat) (s : Int) {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (memo : Array (Dag.Checked Sturm.orderSign 7 head lower upper)) (index : Nat) :
+    Option (SignFact selected) :=
+  selected.readSignFact? (fun q : Rat => (q : ℝ))
     (fun _ => Rat.cast_eq_zero) (by simp)
     (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
     (fun _ _ => Rat.cast_mul _ _) (fun _ => by simp) rational_sign
     (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _) p s memo index
+
+@[expose] def readFact (p : DensePoly Rat) (s : Int)
+    (memo : Array (Dag.Checked Sturm.orderSign 7 source.raw.head
+      source.raw.lower source.raw.upper)) (index : Nat) : Option (SignFact context) :=
+  readAt context p s memo index
 
 /-- Distinct stored representatives use the same checked reduced-query row;
 the decoder preserves each original polynomial literally. -/
@@ -63,6 +69,118 @@ the decoder preserves each original polynomial literally. -/
       (readFact stored 1 #[] 0).isNone)) == some true
 
 #guard sharedReaderPass
+
+/-- A nonempty derivative prefix selects either root in one shared whole-line
+table. The unrelated finite interval rejects at the domain binding check. -/
+def siblingsPass : Bool :=
+  let positive := {partialRaw with lower := .negInf, upper := .posInf}
+  let negative := {positive with signs := [-1]}
+  match Descriptor.validate Sturm.orderSign 7 positive,
+      Descriptor.validate Sturm.orderSign 7 negative with
+  | some pos, some neg =>
+    match pos.buildSigns [2 * Sturm.Fixtures.x] with
+    | .error _ => false
+    | .ok signs =>
+      let graph := Dag.encode signs.evidence
+      match graph.validate? Sturm.orderSign 7 pos.raw.head pos.raw.lower pos.raw.upper with
+      | none => false
+      | some memo =>
+        let posContext := Context.adjoin pos (fun _ => true)
+        let negContext := Context.adjoin neg (fun _ => true)
+        (readAt posContext (2 * Sturm.Fixtures.x) 1 memo graph.root).isSome &&
+        (readAt negContext (2 * Sturm.Fixtures.x) (-1) memo graph.root).isSome &&
+        (readAt posContext (2 * Sturm.Fixtures.x) (-1) memo graph.root).isNone &&
+        (readAt negContext (2 * Sturm.Fixtures.x) 1 memo graph.root).isNone &&
+        (readAt context (2 * Sturm.Fixtures.x) 1 memo graph.root).isNone
+  | _, _ => false
+
+#guard siblingsPass
+
+/-- A valid table on another literal defining polynomial cannot be borrowed. -/
+def headMismatchPass : Bool :=
+  let raw := {partialRaw with head := 2 * Sturm.Fixtures.p}
+  match Descriptor.validate Sturm.orderSign 7 raw with
+  | none => false
+  | some other =>
+    match other.buildSigns [2 * Sturm.Fixtures.x] with
+    | .error _ => false
+    | .ok signs =>
+      let graph := Dag.encode signs.evidence
+      match graph.validate? Sturm.orderSign 7 other.raw.head other.raw.lower other.raw.upper with
+      | none => false
+      | some memo => (readAt context (2 * Sturm.Fixtures.x) 1 memo graph.root).isNone
+
+#guard headMismatchPass
+
+noncomputable abbrev upperEmbedding : Element context → ℝ :=
+  Element.denote (fun q : Rat => (q : ℝ)) (fun _ => Rat.cast_eq_zero) (by simp)
+    (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
+    (fun _ _ => Rat.cast_mul _ _) (fun _ => by simp) rational_sign
+
+/-- Promote actual checked evidence at the second coefficient level. -/
+@[expose] def readUpperFact (p : DensePoly (Element context)) (claimed : Int)
+    (memo : Array (Dag.Checked Element.sign 8 NestedSignsConformance.root.raw.head
+      NestedSignsConformance.root.raw.lower NestedSignsConformance.root.raw.upper))
+    (index : Nat) : Option (SignFact NestedSignsConformance.next) :=
+  NestedSignsConformance.next.readSignFact? upperEmbedding
+    (Element.denote_eq_zero (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_one (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_add (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_sub (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_mul (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_nat (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.sign_spec (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_neg (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_inv (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _)
+      (fun _ _ => Rat.cast_div _ _)) p claimed memo index
+
+/-- Both readers receive facts from supplied checked graphs. Removing the
+lower constant fact rejects the upper literal during coefficient decoding. -/
+def nestedPass : Bool :=
+  (do
+    let lowerMemo ← full.validate? Sturm.orderSign 7 source.raw.head source.raw.lower source.raw.upper
+    let lowerFact ← readFact stored 1 lowerMemo 0
+    let lowerReader := Element.signCodec ValueCodec.rat [lowerFact, SignCodecConformance.oneFact]
+    let graph : Dag (Element context) Nat := ⟨#[⟨NestedSignsConformance.queryNode, none⟩], 0⟩
+    let upperMemo ← graph.validate? Element.sign 8 NestedSignsConformance.root.raw.head
+      NestedSignsConformance.root.raw.lower NestedSignsConformance.root.raw.upper
+    let upperFact ← readUpperFact NestedSignsConformance.nextQuery 1 upperMemo graph.root
+    let reader := Element.signCodec lowerReader [upperFact]
+    let bytes := (reader.encode NestedSignsConformance.nextLiteral).writeBytes
+    let restored ← (reader.decodeBytes bytes).toOption
+    let missing := Element.signCodec (Element.signCodec ValueCodec.rat [lowerFact]) [upperFact]
+    pure (restored == NestedSignsConformance.nextLiteral &&
+      (missing.decodeBytes bytes).toOption.isNone &&
+      (readUpperFact NestedSignsConformance.nextQuery (-1) upperMemo graph.root).isNone)) == some true
+
+#guard nestedPass
 
 set_option maxRecDepth 32768 in
 @[expose] def leafMemo : Array (Dag.Checked Sturm.orderSign 7 source.raw.head
@@ -121,5 +239,9 @@ theorem literal_fact_kernel :
  Quot.sound] -/
 #guard_msgs in
 #print axioms literal_fact_kernel
+
+/-- info: 'Hex.RealClosure.Algebraic.SignFactsConformance.nestedPass' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms nestedPass
 
 end Hex.RealClosure.Algebraic.SignFactsConformance

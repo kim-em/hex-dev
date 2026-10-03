@@ -900,7 +900,9 @@ reads agree literally with the independent native coefficient decoder.
 representatives, missing lower-level facts, altered signs and truncated bytes.
 These coefficient readers do not encode or validate a dependency graph.
 
-`HexRealClosureMathlib.SignFacts` connects a checked graph memo to those readers.
+`Context.readSigns?` performs memo selection in the Mathlib-free core, with no
+interpretation arguments. `HexRealClosureMathlib.SignFacts` connects its result
+to the proved sign facts consumed by coefficient readers.
 `Context.readSignFact?` selects the row for the context's actual reduced query,
 checks the claimed sign, and returns a proved sign fact keyed by the original
 stored polynomial. It checks the literal head and interval before selecting
@@ -915,7 +917,11 @@ coefficient reader still takes only supplied sign facts.
 and `2X` at the selected root `X=1`, retaining their distinct stored forms.
 The compiled example checks the actual graph and strict coefficient decoder;
 ordinary-kernel proofs check the supplied row, its sign correspondence and
-the literal result. Wrong signs, unrelated queries and absent indices reject.
+the stored polynomial and sign fields. A whole-line example shares a memo
+between the positive and negative roots, including their derivative prefixes.
+A second extension obtains its own fact from a checked graph and decodes
+through both coefficient readers; removing a required lower-level fact rejects.
+Wrong signs, unrelated queries, domains and absent indices reject.
 This connection does not itself serialize dependencies between field levels.
 
 `PackingConformance` checks literal restoration, exact keys, context types and
