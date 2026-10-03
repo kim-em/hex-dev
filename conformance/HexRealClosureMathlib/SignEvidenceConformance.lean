@@ -223,8 +223,12 @@ def producedNestedPass : Bool :=
         (decodeUpper (Element.signCodec ValueCodec.rat
           (facts.toList.filter fun other => other.polynomial != fact.polynomial))
           upper.queries (wire.encodeBytes upper)).toOption.isNone
+    let prepared := upper.graph.entries.any fun e =>
+      e.node.preparation.any fun p => !p.steps.isEmpty
+    let reduced := upper.graph.entries.any fun e =>
+      e.node.reductions.toArray.any fun r => r.any fun p => !p.steps.isEmpty
     pure (decoded.toList.map SignFact.sign == [1, 1, 0, 1] && literals && everyOmission &&
-      keys.length < coefficients.length &&
+      prepared && reduced && keys.length < coefficients.length &&
       (decodeUpper missing upper.queries (wire.encodeBytes upper)).toOption.isNone)) == some true
 
 #guard producedNestedPass

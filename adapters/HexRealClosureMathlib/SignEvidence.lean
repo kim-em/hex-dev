@@ -137,7 +137,8 @@ predecessor reader, then check its graph and exact required key list. -/
 checking its graph returns exactly the original scalar facts, provided the
 printed bytes pass the lexical precheck. JSON parser success and node bounds
 are proved. At algebraic levels, `Element.codec` recomputes stored signs to
-provide its global roundtrip law; strict partial readers are not covered here. -/
+provide its global roundtrip law. Strict partial readers use
+`Context.decodeEvidence_covered` instead. -/
 theorem Context.decodeEvidence_ofSigns [Hashable E] [Hashable Ctx]
     (context : Context E Ctx coeffSign parent)
     (value : ValueCodec E) (ctx : ValueCodec Ctx) (hv : value.Lawful) (hc : ctx.Lawful)
@@ -158,7 +159,8 @@ theorem Context.decodeEvidence_ofSigns [Hashable E] [Hashable Ctx]
 
 /-- Printing, parsing and checking a produced packet returns the exact
 original scalar facts with a finite predecessor reader. Its literal support
-is collected from the actual packet; no global decoder law is required. -/
+is collected from the actual packet; no global decoder law is required.
+Graph checking retains ordinary coefficient arithmetic. -/
 theorem Context.decodeEvidence_covered [Hashable E] [Hashable Ctx]
     (context : Context E Ctx coeffSign parent) (value : ValueCodec E) (ctx : ValueCodec Ctx)
     {queries : List (DensePoly E)} (signs : SelectedSigns context.root queries)
@@ -177,6 +179,53 @@ theorem Context.decodeEvidence_covered [Hashable E] [Hashable Ctx]
   rw [SignEvidence.bytes_ofSigns_covered value ctx context signs hv hc limits bytes]
   simp only [bind, Except.bind,
     Context.readEvidence_ofSigns f hz h1 ha hs hm hnat hsign hn hi, pure, Except.pure]
+
+section Nested
+variable (lower : Context E Ctx coeffSign parent)
+variable {UpperCtx : Type} [DecidableEq UpperCtx] [Hashable E] [Hashable UpperCtx]
+variable {upperParent : UpperCtx}
+variable (g : Element lower → K) (gz : ∀ a, g a = 0 ↔ a = 0)
+variable (g1 : g 1 = 1) (ga : ∀ a b, g (a + b) = g a + g b)
+variable (gs : ∀ a b, g (a - b) = g a - g b)
+variable (gm : ∀ a b, g (a * b) = g a * g b)
+variable (gnat : ∀ n : Nat, g (n : Element lower) = (n : K))
+variable (gsign : ∀ a, Element.sign a = (SignType.sign (g a) : Int))
+variable (gn : ∀ a, g (-a) = -g a) (gi : ∀ a, g a⁻¹ = (g a)⁻¹)
+
+/-- Compose a checked lower joint table with the actual upper byte decoder.
+The lower table covers the keys collected from the upper producer's packet.
+The upper graph still checks with ordinary coefficient arithmetic. -/
+theorem Context.decodeEvidence_nested
+    (upper : Context (Element lower) UpperCtx Element.sign upperParent)
+    (value : ValueCodec E) (ctx : ValueCodec UpperCtx)
+    {queries : List (DensePoly (Element lower))} (signs : SelectedSigns upper.root queries)
+    (hv : value.Covers (Element.predecessors
+      (SignEvidence.coefficients upper.root.raw (SignEvidence.ofSigns signs))))
+    (lowerSigns : SelectedSigns lower.root
+      (Element.signKeys (SignEvidence.coefficients upper.root.raw (SignEvidence.ofSigns signs))))
+    (hc : ctx.Covers (SignEvidence.contexts upper.root.raw (SignEvidence.ofSigns signs)))
+    (limits : Codec.Limits)
+    (bytes : Codec.checkBytes limits
+      ((SignEvidence.codec
+        (Element.signCodec value
+          (lower.signFacts f hz h1 ha hs hm hnat hsign hn hi lowerSigns).toList)
+        ctx upper.root.raw).encodeBytes (SignEvidence.ofSigns signs)) = .ok ()) :
+    upper.decodeEvidence g gz g1 ga gs gm gnat gsign gn gi
+      (Element.signCodec value
+        (lower.signFacts f hz h1 ha hs hm hnat hsign hn hi lowerSigns).toList)
+      ctx queries
+      ((SignEvidence.codec
+        (Element.signCodec value
+          (lower.signFacts f hz h1 ha hs hm hnat hsign hn hi lowerSigns).toList)
+        ctx upper.root.raw).encodeBytes (SignEvidence.ofSigns signs)) limits =
+      .ok (upper.signFacts g gz g1 ga gs gm gnat gsign gn gi signs) := by
+  apply Context.decodeEvidence_covered g gz g1 ga gs gm gnat gsign gn gi
+  · exact Context.signFacts_covers f hz h1 ha hs hm hnat hsign hn hi lower value _
+      hv lowerSigns
+  · exact hc
+  · exact bytes
+
+end Nested
 
 /-- Success refers to the actual decoded bytes and accepted graph. No claim
 about the printer, a cached sign or a second certificate replaces that check. -/
@@ -241,3 +290,7 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.Context.signFacts_covers' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Context.signFacts_covers
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.decodeEvidence_nested' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.decodeEvidence_nested
