@@ -129,7 +129,14 @@ theorem normalized_selected : ∀ x : ℝ,
   rcf
 
 -- Executability alone does not authenticate a hidden isolation square.
-/-- error: rcf: normalized source square must reduce to its literal encoding in the kernel -/
+/--
+error: rcf: normalized source square must reduce to its literal encoding in the kernel
+(kernel) declaration type mismatch, '_private.HexRCF.NormalizedCoefficients.0._example._proof_2' has type
+  { re := Dyadic.ofInt 645 >>> 9, im := Dyadic.ofInt 0, prec := 12 } =
+    { re := Dyadic.ofInt 645 >>> 9, im := Dyadic.ofInt 0, prec := 12 }
+but it is expected to have type
+  (↑RCF.NormalizedInputs.hiddenRep).square = { re := Dyadic.ofInt 645 >>> 9, im := Dyadic.ofInt 0, prec := 12 }
+-/
 #guard_msgs in
 example : ∀ x : ℝ, x ^ 2 + Hex.RCF.NormalizedInputs.hidden.toReal > 0 := by
   rcf

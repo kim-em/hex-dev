@@ -199,8 +199,9 @@ private meta def bindLiteral (goal : Expr) (literal : Expr)
         debug.skipKernelTC.set (Elab.async.set opts false) false) do
       mkAuxTheorem goal (← mkEqRefl literal) (zetaDelta := true) (cache := false)
   catch error =>
-    if error.isInterrupt || error.isMaxHeartbeat || error.isMaxRecDepth then throw error
-    throwError "rcf: {kind} source {label} must reduce to its literal encoding in the kernel"
+    -- Core rethrows interrupt/runtime exceptions; retain kernel error details,
+    -- including deterministic timeout and deep-recursion failures.
+    throwError "rcf: {kind} source {label} must reduce to its literal encoding in the kernel\n{error.toMessageData}"
 
 private meta def transportChecked (checked equality : Expr) : MetaM Expr := do
   let types ← mkAppM ``congrArg #[mkConst ``ZPoly.CheckedIrreducible, equality]
@@ -415,7 +416,7 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
           | .selected _ checked | .normalized _ checked => pure (some checked)
         if let some checked := checked then
           unless (← inferType checked) == instType do
-            throwError "rcf: transported source irreducibility has a different literal polynomial"
+            throwError "rcf: internal: transported source irreducibility has a different literal polynomial"
           sourceIrred := some checked
           break
       let irred ← match sourceIrred with

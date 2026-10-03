@@ -36,7 +36,7 @@ theorem normalized_positive : ∀ x : ℝ,
     x ^ 2 + (normalized.toReal ^ 2 + 1) > 0 := by rcf
 
 -- Exercise failures without leaving failed declarations or proof admissions.
-elab "expect_certificate_error " message:str : tactic => do
+local elab "expect_certificate_error " message:str : tactic => do
   let saved ← Lean.Elab.Tactic.saveState
   let observed ← try
     Lean.Elab.Tactic.evalTactic (← `(tactic| rcf))

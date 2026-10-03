@@ -1063,7 +1063,8 @@ lean_lib HexRCFProofProbe where
     `HexRCF.ProofProbe.Registered.Tactic,
     `HexRCF.ProofProbe.Division.Support, `HexRCF.ProofProbe.Division.Wrapped,
     `HexRCF.ProofProbe.Division.Direct,
-    `HexRCF.ProofProbe.Production.Close, `HexRCF.ProofProbe.Production.Further].map Glob.one
+    `HexRCF.ProofProbe.Production.Close, `HexRCF.ProofProbe.Production.Further,
+    `HexRCF.ProofProbe.Production.Sharing].map Glob.one
 
 -- Conformance #guard drivers live under `conformance/` and are built by this
 -- library (mirroring the released conformance sub-projects). Alongside each

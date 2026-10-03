@@ -536,7 +536,8 @@ isolation-square checks still authenticate every proposed source coordinate.
 If the common defining polynomial exactly matches an authenticated source's
 polynomial, quotation reuses its supplied `CheckedIrreducible` proof. The
 kernel proves equality of the original and literal polynomials and transports
-the source instance along that equality; runtime equality alone is insufficient. This supports source proofs beyond the frontend's
+the source instance along that equality; runtime equality alone is insufficient.
+This supports source proofs beyond the frontend's
 single-witness and quadratic-norm search languages, including a checked real
 quartic with a multi-prime certificate. The fresh goal proofs use ordinary
 imports, while constructing that certificate currently needs private checker
