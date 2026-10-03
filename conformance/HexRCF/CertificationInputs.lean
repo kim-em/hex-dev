@@ -6,24 +6,14 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients
-public import HexBerlekampZassenhausMathlib.FactorTactic
-public meta import HexBerlekampZassenhausMathlib.FactorTactic
+public meta import HexRCF.RealCoefficients
 public meta import Lean.Elab.Command
 public meta import Lean.Elab.Term
-import all HexBerlekampZassenhaus.Certificate
-import all HexBerlekampZassenhausMathlib.FactorTransport
-import all Init.Data.Array.Basic
-import all Init.Data.Fin.Fold
-import all Init.Data.Fin.Basic
-import all Init.Data.Fin.Iterate
-import all Init.Data.List.Basic
-import all Init.Data.List.Range
-import all Init.Data.Nat.Fold
-import all Init.Data.Range.Basic
 
 public section
 namespace Hex.RCF.CertificationInputs
 open RealCoefficients
+open Lean Meta Qq
 
 abbrev polynomial : ZPoly := DensePoly.ofList [-2, -7, -1, 4, 1]
 abbrev square : DyadicSquare := ⟨Dyadic.ofInt 2909722875 >>> (31 : Int), 0, 26⟩
@@ -46,13 +36,20 @@ local elab "quartic_certificate" : term => do
 @[expose] def certificate : ZPolyIrreducibilityCertificate := quartic_certificate
 #guard HexBerlekampZassenhausMathlib.checkMultiPrimeCert polynomial certificate
 example : certificate.perPrime.all (fun d => Decidable.decide (_root_.Nat.Prime d.p)) = true :=
-  by decide +kernel
+  by cbv
 example : Decidable.decide (polynomial.content = 1) = true := by decide +kernel
-example : checkIrreducibleCertLinear polynomial certificate = true := by decide +kernel
+example : checkIrreducibleCertLinear polynomial certificate = true := by cbv
+
+example : HexBerlekampZassenhausMathlib.checkMultiPrimeCert polynomial certificate = true :=
+  by cbv
+
+local elab "quartic_irreducibility" : term => do
+  let p : ZPoly := DensePoly.ofList [-2, -7, -1, 4, 1]
+  let some cert := certifyIrreducible? p | throwError "no quartic certificate"
+  HexBerlekampZassenhausMathlib.FactorTactic.zpolyIrredProof q(polynomial) (.multi cert)
 
 theorem irreducible : polynomial.Irreducible := by
-  exact HexBerlekampZassenhausMathlib.zpolyIrreducible_of_checkMultiPrimeCert
-    polynomial certificate (by decide +kernel)
+  exact quartic_irreducibility
 theorem checked : polynomial.CheckedIrreducible :=
   ⟨(ZPoly.isIrreducible_iff polynomial).mpr irreducible, by decide⟩
 theorem squarefree : HasOnlySimpleRoots polynomial := by
@@ -77,6 +74,10 @@ theorem squarefree : HasOnlySimpleRoots polynomial := by
       (Field.literalRep polynomial square (by decide) (by decide)) _)).trans
       (Field.literalRep_real _ _ _ _ (by decide)))
 
+set_option maxRecDepth 8192 in
+set_option maxHeartbeats 2000000 in
+theorem positive : ∀ x : ℝ, x ^ 2 + realAlgebraic.toReal > 0 := by rcf
+
 end Hex.RCF.CertificationInputs
 
 /-- info: 'Hex.RCF.CertificationInputs.irreducible' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -90,3 +91,7 @@ end Hex.RCF.CertificationInputs
 /-- info: 'Hex.RCF.CertificationInputs.squarefree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.CertificationInputs.squarefree
+
+/-- info: 'Hex.RCF.CertificationInputs.positive' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RCF.CertificationInputs.positive

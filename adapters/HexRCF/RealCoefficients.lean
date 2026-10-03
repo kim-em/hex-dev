@@ -6,6 +6,8 @@ Authors: Kim Morrison
 
 module
 
+public import HexBerlekampZassenhausMathlib.FactorTactic
+
 public import HexRCF.RealCoefficients.Registration
 public meta import HexRCF.RealCoefficients.Finite
 public meta import HexRCF.RealCoefficients.Reify
