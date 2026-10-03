@@ -79,7 +79,9 @@ private def hexArithOTarget (pkg : Package) (src : String) : FetchM (Job FilePat
 
 target hexarithffi pkg : FilePath := do
   let name := nameToStaticLib "hexarithffi"
-  let oTargets ← #[ "wide_arith.c", "mpz_gcdext.c" ].mapM (hexArithOTarget pkg)
+  -- TODO(lean4#15160): remove extended_gcd.c after the pinned toolchain provides
+  -- Nat.extendedGcd: https://github.com/leanprover/lean4/pull/15160
+  let oTargets ← #[ "wide_arith.c", "extended_gcd.c" ].mapM (hexArithOTarget pkg)
   buildStaticLib (pkg.staticLibDir / name) oTargets
 
 target hexmodarithffi pkg : FilePath := do
@@ -140,6 +142,7 @@ lean_lib HexTruncatedSeriesMathlib where
 lean_lib HexArith where
   precompileModules := true
   moreLinkObjs := #[hexarithffi]
+  -- TODO(lean4#15160): remove -lgmp with the local extended_gcd.c adapter.
   moreLinkArgs := #["-lgmp"]
 
 lean_lib HexPoly where
@@ -295,7 +298,8 @@ lean_lib HexRealClosure where
 lean_lib HexRealClosureTests where
   globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.RootOrderTests,
     .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerRootsTests,
-    .one `HexRealClosure.RootCollectionTests,
+    .one `HexRealClosure.RootCollectionTests, .one `HexRealClosure.TowerPresentationTests,
+    .one `HexRealClosure.LocalSampleTests,
     .one `HexRealClosure.TrivialTests, .one `HexRealClosure.TowerEnlargeOrderTests,
     .one `HexRealClosure.TowerTransportTests]
 
@@ -658,8 +662,13 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.Trivial,
     `HexRealClosureMathlib.RootTotal, `HexRealClosureMathlib.TowerRoots,
     `HexRealClosureMathlib.RootTransport,
-    `HexRealClosureMathlib.RootCollection,
-    `HexRealClosureMathlib.TowerCoverage, `HexRealClosureMathlib.TowerNaturality,
+    `HexRealClosureMathlib.RootCollection, `HexRealClosureMathlib.RootList,
+    `HexRealClosureMathlib.Sample, `HexRealClosureMathlib.LocalSample,
+    `HexRealClosureMathlib.LocalSampleTests,
+    `HexRealClosureMathlib.SampleTests,
+    `HexRealClosureMathlib.TowerCoverage, `HexRealClosureMathlib.Presentation,
+    `HexRealClosureMathlib.PresentationTests,
+    `HexRealClosureMathlib.TowerNaturality,
     `HexRealClosureMathlib.Ambient, `HexRealClosureMathlib.AmbientTests,
     `HexRealClosureMathlib.BaseAlgebraicity, `HexRealClosureMathlib.BaseBound,
     `HexRealClosureMathlib.EnlargementTests,
@@ -670,6 +679,13 @@ lean_lib HexQuerySemantics where
 
 lean_exe hexrealclosure_root_order_tests where
   root := `HexRealClosure.RootOrderTests
+
+-- Ordinary-import consumers of merged family APIs, also built as an isolated
+-- local downstream project in experiments/RealClosureConsumer.
+@[default_target]
+lean_lib RealClosureConsumer where
+  srcDir := "examples"
+  globs := #[.submodules `RealClosureConsumer]
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
@@ -1073,9 +1089,18 @@ lean_lib HexRCFProofProbe where
 -- implementation-vs-testing boundary stays legible; they elaborate their
 -- `#guard`s in the same `lake build`. EmitFixtures drivers are the
 -- `*_emit_fixtures` exes below, carrying `srcDir := "conformance"`.
+/-- Libraries whose conformance modules are not built while they are parked.
+HexInterval is parked: none of its libraries, executables or conformance
+modules are built in CI. Remove a prefix here to restore its conformance. -/
+def parkedConformancePrefixes : List String := ["HexInterval"]
+
+def isParkedGlob : Glob → Bool
+  | .one n | .submodules n | .andSubmodules n =>
+    parkedConformancePrefixes.any (n.getRoot.toString.startsWith ·)
+
 lean_lib HexConformance where
   srcDir := "conformance"
-  globs := #[
+  globs := Array.filter (fun g => !isParkedGlob g) <| #[
 `HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexBerlekampZassenhausMathlib.Conformance, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexGraphIso.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexIntervalMathlib.IntervalConformance, `HexInterval.CenterConformance, `HexInterval.ScaleConformance, `HexInterval.PropagatorConformance, `HexInterval.ScopeConformance, `HexInterval.StructuralMatcherConformance, `HexInterval.MatcherSchedulerConformance, `HexInterval.NestedBranchConformance, `HexInterval.StructureViewConformance, `HexInterval.PolicyConformance, `HexInterval.PolicyFrontierConformance, `HexInterval.PolicyDriverConformance, `HexInterval.PackageRegistryConformance, `HexInterval.DyadicIntervalConformance, `HexInterval.DyadicRulesConformance, `HexInterval.PayloadArenaConformance, `HexInterval.PayloadSessionConformance, `HexInterval.PolicySessionConformance, `HexInterval.PolicyFunctionConformance, `HexInterval.SemanticReplayConformance, `HexInterval.ChronologicalReplayConformance, `HexInterval.GenericInstanceReconstructionConformance, `HexInterval.ProofEmitterConformance, `HexInterval.TraceReplayConformance, `HexInterval.SinTenIntervalConformance, `HexIntervalMathlib.DyadicIntervalConformance, `HexIntervalMathlib.CenteredConformance, `HexIntervalMathlib.SineSignConformance, `HexIntervalMathlib.SineProofConformance, `HexIntervalMathlib.SineTacticConformance, `HexIntervalMathlib.ProofRegistryConformance, `HexIntervalMathlib.ExpSignConformance, `HexIntervalMathlib.ReluConformance, `HexIntervalMathlib.RefuteConformance, `HexIntervalMathlib.PntLogTableConformance, `HexIntervalMathlib.PntNestedLogConformance, `HexIntervalMathlib.PntExpTailConformance, `HexIntervalMathlib.PntTable12Conformance, `HexIntervalMathlib.PntTable12OrdinaryConformance, `HexIntervalAlgebraic.PolynomialDispatchConformance, `HexIntervalMathlib.PntTable12LogConformance, `HexIntervalMathlib.PntFks2ShardConformance, `HexIntervalMathlib.LogTablePrecisionConformance, `HexIntervalMathlib.IntegralCanaryConformance, `HexIntervalMathlib.PntBKLNWExpConformance, `HexIntervalMathlib.PntBKLNWPowConformance, `HexIntervalMathlib.PntPrimeLogSmallConformance, `HexIntervalMathlib.PntDusartExpConformance, `HexIntervalMathlib.SinTenConformance, `HexIntervalMathlib.SinTenIntervalConformance, `HexIntervalMathlib.CosBillionConformance, `HexHermite.Conformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRealFormula.Conformance, `HexRealFormulaMathlib.Conformance, `HexRealFormulaMathlib.Arithmetic, `HexMvPolyFixtures, `HexMvPoly.Conformance, `HexMvPolyMathlib.Conformance, `HexSparsePolyFixtures, `HexSparsePoly.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexDeterminantalIdealFixtures, `HexDeterminantalIdeal.Conformance, `HexDeterminant.Carriers, `HexBareiss.Fixtures, `HexBareiss.Conformance, `HexModularMatrix.Fixtures, `HexModularMatrix.Conformance, `HexDet.Conformance, `HexDet.Carriers, `HexCharPoly.Fixtures, `HexCharPoly.Carriers, `HexCharPoly.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexModular.Conformance, `HexPolyZGcd.Conformance, `HexMvGcd.Conformance, `HexNumberField.Conformance, `HexNumberFieldTower.Conformance, `HexPoly.Conformance, `HexPrimality.CertificateProducer, `HexPrimality.ConstructionConformance, `HexPrimality.ConstructionRetry, `HexPrimality.ConstructionRegistration, `HexPrimality.Curve25519Replay, `HexPrimality.Curve448Replay, `HexPrimality.SqufofConformance, `HexPrimality.Conformance, `HexECPP.NativeConformance, `HexECPP.Conformance, `HexECPP.Fixture17, `HexECPP.PolicyProbe, `HexECPP.Fixture65, `HexECPP.Fixture256, `HexECPP.Fixture512, `HexECPP.PariFixtures, `HexECPP.ImportConformance, `HexECPPMathlib.NativeConformance, `HexECPPMathlib.NativeFixtures, `HexECPPMathlib.Conformance, `HexECPPMathlib.CompactFixtures, `HexECPPMathlib.CompactReject, `HexECPPMathlib.PariProcess, `HexECPPMathlib.Reject, `HexECPPMathlib.HasseAudit, `HexECPPMathlib.SoundnessAudit, `HexPrimalityMathlib.Conformance, `HexPrimalityMathlibConformance.OptIn, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRCF.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexResultant.Conformance, `HexRoots.Conformance].map Glob.one ++
     #[`HexPolyDet.Conformance, `HexRank.Conformance, `HexGenericRank.Conformance, `HexGenericRank.Fixtures, `HexRowReduce.FieldFixtures, `HexRealFormulaMathlib.ReifierConformance, `HexRCF.RealFormulaConformance, `HexRCF.RealCoefficientsConformance, `HexRCF.AlgebraicProgress, `HexRCF.IsolationProgress, `HexRCF.RadicalProgress, `HexRCF.ProductionProgress, `HexRCF.FieldRootsConformance, `HexRCF.CertificationInputs, `HexRCF.CertificationProofs, `HexRCF.TotalAlgebraicProofs, `HexRCF.AlgebraicDivision, `HexRCF.NormalizedCoefficients, `HexRCF.NormalizedInputs, `HexRCF.RegisteredConstants, `HexRCF.RealCoefficientTactic, `HexRCF.RealCoefficientCommonField, `HexRCF.CommonFieldPresentation, `HexRCF.RootAliasesConformance, `HexRCF.FormulaConformance, `HexRCF.LiteralSignConformance, `HexRCF.FieldSpecializeConformance, `HexRCF.AdmissionConformance, `HexRCF.IsolationConformance].map Glob.one
 
@@ -1096,7 +1121,10 @@ lean_lib HexConformance where
       `HexSignDetMathlib.ConvertConformance].map Glob.one
 
     ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests,
-      `HexRealClosureMathlib.CoefficientSignsConformance].map Glob.one
+      `HexRealClosureMathlib.CoefficientSignsConformance,
+      `HexRealClosureMathlib.PackingConformance,
+      `HexRealClosureMathlib.NestedSignsConformance,
+      `HexRealClosureMathlib.SignCodecConformance].map Glob.one
 
     ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
     ++ #[.submodules `HexSturmMathlib.Replay]
@@ -1218,7 +1246,7 @@ lean_exe hex_interval_pnt_fks2_local where
 -- examples and regression tests are compiled through this separate target so
 -- removing them from an umbrella cannot silently remove them from CI.
 lean_lib HexReleaseTests where
-  globs := #[`HexPoly.InterpretTests, `HexPoly.PseudoTests,
+  globs := #[`HexArith.ExtendedGcdTests, `HexPoly.InterpretTests, `HexPoly.PseudoTests,
     `HexPolyMathlib.InterpretTests, `HexPolyMathlib.PseudoTests,
     `HexMatrixMathlib.Tests,
     `HexPolyMathlib.LiteralTests,
@@ -1228,6 +1256,8 @@ lean_lib HexReleaseTests where
     `HexBerlekampMathlib.FactorPolyTests,
     `HexBerlekampZassenhaus.FactorTacticTests,
     `HexBerlekampZassenhausMathlib.FactorPolyTests,
+    `HexBerlekampZassenhausMathlib.PublicReplayTests,
+    `HexBerlekampZassenhausMathlib.QuotationTests,
     `HexBerlekampZassenhausMathlib.IrreducibilityTests,
     `HexRealRoots.ReplayTest,
     `HexRealRoots.TarskiTests,
@@ -1268,6 +1298,11 @@ lean_lib HexReleaseTests where
     -- a name array mapped through Glob.one: an array literal this long is
     -- elaborated in chunks, on which the name-to-glob coercion fails
     |>.map Glob.one
+
+-- TODO(lean4#15160): after removing the backport, keep the Hex signed API
+-- regression coverage and remove copied upstream primitive cases.
+lean_exe hexarith_extgcd_tests where
+  root := `HexArith.ExtendedGcdTests
 
 -- Build-only regression roots for the structural matrix frontends.
 @[default_target]
@@ -1592,6 +1627,10 @@ lean_lib HexRealClosureConformanceSupport where
   srcDir := "conformance"
   globs := #[.one `HexRealClosure.NestedReplay]
 
+lean_exe hexrealclosure_sample_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.SampleConformance
+
 lean_exe hexrealclosure_isolation_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.IsolationConformance
@@ -1866,10 +1905,6 @@ lean_exe hexkronecker_emit_fixtures where
 lean_exe hexkronecker_bench where
   srcDir := "bench"
   root := `HexKronecker.Bench
-
-lean_lib HexKroneckerMathlibProofProbe where
-  srcDir := "bench"
-  globs := #[.submodules `HexKroneckerMathlib.ProofProbe]
 
 lean_exe hexpolyfp_emit_fixtures where
   srcDir := "conformance"

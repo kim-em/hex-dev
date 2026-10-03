@@ -169,7 +169,9 @@ def import_cone(start: str) -> set[Path]:
 def check() -> None:
     if module_file("HexRCF.RealCoefficients") is None:
         raise ValueError("the optional rcf adapter module is missing")
-    roots = ["HexRCF.RealCoefficients", "HexSignDetMathlib.SelectedProducerConformance",
+    roots = ["RealClosureConsumer.Query", "RealClosureConsumer.Sign",
+             "RealClosureConsumer.Ordered", "RealClosureConsumer.Tower",
+             "HexRCF.RealCoefficients", "HexSignDetMathlib.SelectedProducerConformance",
              "HexSignDetMathlib.CompletionConformance", "HexSignDetMathlib.QueryHandleConformance",
              "HexSignDetMathlib.TableConformance", "HexSignDetMathlib.ReencodingConformance",
              "HexSignDetMathlib.RootListConformance", "HexSignDetMathlib.RefinementConformance",
@@ -185,7 +187,8 @@ def check() -> None:
              "HexRealClosureMathlib.TowerRefinement", "HexRealClosure.TowerRefinement",
              "HexRealClosure.TowerPolynomial", "HexRealClosure.TowerRefinementTests",
              "HexRealClosure.TowerTransport", "HexRealClosure.TowerTransportTests",
-             "HexRealClosure.TowerConversionTests", "HexRealClosure.QueryReductionTests",
+             "HexRealClosure.TowerConversionTests", "HexRealClosure.TowerPresentationTests",
+             "HexRealClosure.QueryReductionTests",
              "HexRealClosureMathlib.TowerTransport", "HexRealClosureMathlib.TowerTransportTests",
              "HexRealClosureMathlib.BaseTests", "HexRealClosure.BaseCatalogTests",
              "HexRealClosure.BisectionTests", "HexRealClosure.DeflationConformance",
@@ -205,6 +208,9 @@ def check() -> None:
              "HexRealClosure.RootTransport", "HexRealClosureMathlib.RootTransport",
              "HexRealClosure.RootCollection", "HexRealClosureMathlib.RootCollection",
              "HexRealClosure.RootCollectionTests",
+             "HexRealClosure.Sample", "HexRealClosure.SampleTests", "HexRealClosureMathlib.Sample",
+             "HexRealClosureMathlib.SampleTests", "HexRealClosure.LocalSampleTests",
+             "HexRealClosure.SampleConformance",
              "HexRealClosureMathlib.TowerCoverage",
              "HexRealClosureMathlib.TowerNaturality",
              "HexRealClosureMathlib.TowerEnlargeOrder",

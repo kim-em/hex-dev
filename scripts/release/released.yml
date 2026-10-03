@@ -113,6 +113,7 @@ repos:
   - repo: leanprover/hex-arith
     component: Exact word arithmetic
     lib: HexArith
+    test_modules: [HexArith.ExtendedGcdTests]
     umbrella: true
     spec: hex-arith
     pins: []
@@ -484,6 +485,8 @@ repos:
     lib: HexBerlekampZassenhausMathlib
     test_modules:
       - HexBerlekampZassenhausMathlib.FactorPolyTests
+      - HexBerlekampZassenhausMathlib.PublicReplayTests
+      - HexBerlekampZassenhausMathlib.QuotationTests
       - HexBerlekampZassenhausMathlib.IrreducibilityTests
     build_modules: [HexBerlekampZassenhausMathlib.All]
     umbrella: true

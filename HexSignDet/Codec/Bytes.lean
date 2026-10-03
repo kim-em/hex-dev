@@ -87,6 +87,17 @@ def ValueCodec.decodeBytes (codec : ValueCodec α) (input : ByteArray)
     (limits : Codec.Limits := {}) : Except String α := do
   codec.decode (← Codec.parse limits input)
 
+/-- A roundtrip for one covered value survives the actual shared byte
+printer/parser under the caller's existing lexical resource policy. -/
+theorem ValueCodec.decode_encode_of (codec : ValueCodec α) (value : α)
+    (law : codec.decode (codec.encode value) = .ok value) (limits : Codec.Limits)
+    (bound : Codec.checkBytes limits (codec.encodeBytes value) = .ok ()) :
+    codec.decodeBytes (codec.encodeBytes value) limits = .ok value := by
+  unfold ValueCodec.decodeBytes ValueCodec.encodeBytes at *
+  rw [Codec.parse_write _ _ bound]
+  simp only [bind, Except.bind]
+  exact law
+
 /-- Every lawful value codec survives the actual shared printer/parser, under
 its caller's lexical resource policy. No representation-normalization premise
 is needed because integer-only JSON has one representation per number. -/
@@ -94,10 +105,7 @@ theorem ValueCodec.decode_encode (codec : ValueCodec α) (law : codec.Lawful) (v
     (limits : Codec.Limits)
     (bound : Codec.checkBytes limits (codec.encodeBytes value) = .ok ()) :
     codec.decodeBytes (codec.encodeBytes value) limits = .ok value := by
-  unfold ValueCodec.decodeBytes ValueCodec.encodeBytes at *
-  rw [Codec.parse_write _ _ bound]
-  simp only [bind, Except.bind]
-  exact law value
+  exact codec.decode_encode_of value (law value) limits bound
 
 /-- info: 'Hex.SignDet.ValueCodec.decode_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

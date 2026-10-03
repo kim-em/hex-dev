@@ -115,6 +115,10 @@ class AdmissionScannerTests(unittest.TestCase):
             union = root / "adapters/HexRealClosureMathlib/Union.lean"
             union_tests = root / "adapters/HexRealClosureMathlib/UnionTests.lean"
             root_probes = [root / name for name in (
+                "examples/RealClosureConsumer/Query.lean",
+                "examples/RealClosureConsumer/Sign.lean",
+                "examples/RealClosureConsumer/Ordered.lean",
+                "examples/RealClosureConsumer/Tower.lean",
                 "HexRealClosure/TowerCatalog.lean",
                 "HexRealClosure/TowerTests.lean",
                 "HexRealClosure/RootFrame.lean",
@@ -135,6 +139,7 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosure/TowerTransport.lean",
                 "HexRealClosure/TowerTransportTests.lean",
                 "HexRealClosure/TowerConversionTests.lean",
+                "HexRealClosure/TowerPresentationTests.lean",
                 "HexRealClosure/QueryReductionTests.lean",
                 "adapters/HexRealClosureMathlib/TowerTransport.lean",
                 "adapters/HexRealClosureMathlib/TowerTransportTests.lean",
@@ -166,6 +171,12 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosure/RootTransport.lean",
                 "HexRealClosure/RootCollection.lean",
                 "HexRealClosure/RootCollectionTests.lean",
+                "HexRealClosure/Sample.lean",
+                "HexRealClosure/SampleTests.lean",
+                "HexRealClosure/LocalSampleTests.lean",
+                "conformance/HexRealClosure/SampleConformance.lean",
+                "adapters/HexRealClosureMathlib/Sample.lean",
+                "adapters/HexRealClosureMathlib/SampleTests.lean",
                 "adapters/HexRealClosureMathlib/RootTransport.lean",
                 "adapters/HexRealClosureMathlib/RootCollection.lean",
                 "adapters/HexRealClosureMathlib/TowerCoverage.lean",

@@ -30,6 +30,16 @@ declines, the selector eventually uses trial division.
 `DirectFactorTrace`. The trace records the `FactorMethod`, a possible
 typed classical decline, and classical-search measurements.
 
+## Certificate replay
+
+`checkIrreducibleCertLinear` replays the existing multi-prime certificate
+using incremental Rabin pow chains. Its metadata helpers, degree-obstruction
+checks, and `isGoodPrime` have exposed public bodies for downstream
+reduction. The Mathlib bridge combines this checker with the primality,
+primitive-content and positive-degree checks, and supplies theorem-backed
+literal quotation under ordinary public imports. Certificate replay checks
+recorded data without running certificate search or integer factorization.
+
 ## Factorization result
 
 ```lean
