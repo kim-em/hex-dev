@@ -65,6 +65,7 @@ live context. All coefficient ancestry is retained by the validated source
 contexts; rebuilding visits it in predecessor order. -/
 structure Shared (base : BaseContext.PackedContext registry)
     (owners : List (Context registry)) : Type 1 where
+  private mk ::
   input : Conversion (Context.ofBase base)
   maps : Inclusions input.context owners
   base_eq : input.context.origin.base = base
@@ -91,7 +92,7 @@ def Shared.addOrigin? {base : BaseContext.PackedContext registry}
     exact do
       let previous ← Inclusion.base? (.pack original) base
       let starting := previous.comp (Inclusion.mk shared.input rfl)
-      let rebuilt ← (shared.cache.insert starting).rebuild? starting suffix
+      let rebuilt ← shared.cache.rebuild? starting suffix
       let combined := ((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native
       let newest : Inclusion source rebuilt.target := source_eq ▸ rebuilt.original
       return ⟨combined, (shared.maps.extend rebuilt.inclusion).snoc newest,
@@ -121,7 +122,7 @@ theorem Shared.addOrigin?_maps {base : BaseContext.PackedContext registry}
     | none => simp [Shared.addOrigin?, base_eq] at produced
     | some previous =>
       let starting := previous.comp (Inclusion.mk shared.input rfl)
-      cases rebuilt_eq : (shared.cache.insert starting).rebuild? starting suffix with
+      cases rebuilt_eq : shared.cache.rebuild? starting suffix with
       | none => simp [Shared.addOrigin?, base_eq, starting, rebuilt_eq] at produced
       | some rebuilt =>
         simp only [starting] at rebuilt_eq
@@ -218,8 +219,13 @@ def Shared.enlargeOrigin? {base : BaseContext.PackedContext registry}
             rw [(Conversion.infinitesimal_spec original).1, Context.origin_base]))
       let target : Inclusion shared.input.context next.context :=
         ⟨converted, same.symm⟩
+      have native_eq : rebuilt.suffix.context = next.context :=
+        rebuilt.context_eq.trans (rebuilt.input_spec.1.symm.trans
+          (rebuilt.input.cast_spec (Conversion.infinitesimal_spec original).1).1.symm)
+      let native : InclusionCache next.context := native_eq ▸ rebuilt.suffix.prefixes.cache
       let enlarged : Shared (.pack original.infinitesimal) owners :=
-        ⟨next, shared.maps.extend target, returned_base, shared.cache.extend target⟩
+        ⟨next, shared.maps.extend target, returned_base,
+          native.append (shared.cache.extend target)⟩
       return ⟨enlarged, rebuilt.enlargement original source_eq,
         (rebuilt.enlargement_conversion original source_eq).symm ▸ same.symm⟩
 

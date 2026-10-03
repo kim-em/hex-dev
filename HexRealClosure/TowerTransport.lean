@@ -47,7 +47,9 @@ inductive Transport : (source target : Context registry) → (source.Value → t
       Transport source target (fun x => next (first x))
 
 /-- An immutable target context and its actual native conversion from a source.
-The erased proof records the native steps used to construct it. -/
+The erased proof records the native steps used to construct it. The transport
+constructors certify the exact source, target and value map; a public record
+constructor cannot supply an unrelated map or omit its native provenance. -/
 structure Conversion (source : Context registry) : Type 1 where
   context : Context registry
   value : source.Value → context.Value

@@ -1434,7 +1434,10 @@ decreasing depth and a different prefix are rejected.
 
 Registration caches checked inclusions for every original algebraic predecessor.
 Parent/child registration, sibling branches, and repeated owners reuse their
-common roots. `Shared.add?_maps` describes the returned old-owner inclusions and
+common roots. Reuse checks exact native provenance, including the staged base
+and complete root descriptors. The cache also retains native target predecessors,
+so contexts built from a returned shared target reuse those ancestors.
+`Shared.add?_maps` describes the returned old-owner inclusions and
 the appended original-owner map. A new target updates the predecessor cache
 through the same inclusion used for the retained owners.
 

@@ -58,6 +58,10 @@ def run : IO Unit := do
   let next := enlarged.shared
   require (next.input.context.signature.roots.length == 1)
     "enlargement duplicated an algebraic dependency"
+  let some sameTarget := next.add? next.input.context
+    | throw (IO.userError "enlarged shared-target registration failed")
+  require (sameTarget.input.context.signature.roots.length == 1)
+    "registration duplicated the enlarged shared target"
   let a' := next.value 0 alpha
   let e' := next.value 1 epsilon
   let d' := next.value 2 delta
@@ -124,6 +128,28 @@ def run : IO Unit := do
     "sibling root lost its common coefficient dependency"
   require ((shared.add? (Context.base second.infinitesimal)).isNone)
     "registration accepted an original base deeper than the declared target"
+  let some sameOriginalTarget := shared.add? shared.input.context
+    | throw (IO.userError "shared-target registration failed")
+  require (sameOriginalTarget.input.context.signature.roots.length == 1)
+    "registration duplicated the shared target"
+  let some enlargedOwner := extension.context.enlarge?
+    | throw (IO.userError "original owner enlargement failed")
+  let some mixedOwners := Shared.gather? (.pack first)
+      [extension.context, enlargedOwner.context]
+    | throw (IO.userError "original/enlarged owner registration failed")
+  require (mixedOwners.input.context.signature.roots.length == 1)
+    "registration duplicated an owner and its exact enlarged target"
+  let z : DensePoly next.input.context.Value := DensePoly.ofCoeffs #[0, 1]
+  let some newDescriptor := SignDet.Descriptor.validate next.input.context.sign
+      next.input.context.signature
+      { context := next.input.context.signature, head := z * z - DensePoly.C a',
+        lower := .finite 0, upper := .finite (1 + 1), indices := [], signs := [] }
+    | throw (IO.userError "root over enlarged shared target failed")
+  let newChild := next.input.context.adjoin newDescriptor
+  let some derived := next.add? newChild.context
+    | throw (IO.userError "registration of derived shared-target context failed")
+  require (derived.input.context.signature.roots.length == 2)
+    "derived shared-target registration duplicated an ancestor"
 
 end Hex.RealClosure.Tower.LiveTests
 

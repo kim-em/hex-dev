@@ -11,15 +11,19 @@ public section
 
 namespace Hex.RealClosure.Tower
 
-private def replayDecEq {E : Type} [Zero E] [DecidableEq E] :
-    (left right : SignDet.Replay E Signature) → Decidable (left = right)
-  | .leaf a, .leaf b => decidable_of_iff (a = b) (by simp)
-  | .leaf _, .split _ _ _ => isFalse (by intro h; cases h)
-  | .split _ _ _, .leaf _ => isFalse (by intro h; cases h)
-  | .split a l r, .split b s t =>
-    letI := replayDecEq l s
-    letI := replayDecEq r t
-    decidable_of_iff (a = b ∧ l = s ∧ r = t) (by simp)
+private def replayDecEq {E : Type} [Zero E] [DecidableEq E]
+    (left right : SignDet.Replay E Signature) : Decidable (left = right) :=
+  withPtrEqDecEq left right fun _ =>
+    match left, right with
+    | .leaf a, .leaf b => decidable_of_iff (a = b) (by simp)
+    | .leaf _, .split _ _ _ => isFalse (by intro h; cases h)
+    | .split _ _ _, .leaf _ => isFalse (by intro h; cases h)
+    | .split a l r, .split b s t =>
+      if nodes : a = b then
+        letI := replayDecEq l s
+        letI := replayDecEq r t
+        decidable_of_iff (l = s ∧ r = t) (by simp [nodes])
+      else isFalse (by intro same; cases same; exact nodes rfl)
 
 private instance {E : Type} [Zero E] [DecidableEq E] :
     DecidableEq (SignDet.Replay E Signature) := replayDecEq
@@ -33,11 +37,25 @@ private instance {E : Type} [Zero E] [DecidableEq E] :
       cases right
       simp)
 
+private def descriptorDecEq {E : Type} [Zero E] [DecidableEq E] [One E] [Add E]
+    [Sub E] [Mul E] [NatCast E] {sign : E → Int} {binding : Signature} :
+    DecidableEq (SignDet.Descriptor E Signature sign binding) := fun left right =>
+  decidable_of_iff (left.raw = right.raw ∧ left.evidence = right.evidence) (by
+    constructor
+    · intro data
+      cases left
+      cases right
+      rcases data with ⟨rfl, rfl⟩
+      rfl
+    · intro same
+      exact ⟨congrArg SignDet.Descriptor.raw same,
+        congrArg SignDet.Descriptor.evidence same⟩)
+
 variable {registry : BaseContext.Registry}
 
 /-- Check native context identity, including every descriptor and replay.
 The returned equality aligns the original coefficient types. -/
-def Chain.equal? {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Neg E]
+def Chain.same? {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Neg E]
     [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]
     {sign : E → Int} {clean : E → Bool} {codec : SignDet.ValueCodec E}
     {binding : Signature} (left : Chain registry E sign clean codec binding)
@@ -57,18 +75,14 @@ def Chain.equal? {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Neg E]
       cases other with
       | base => exact none
       | root previous selected otherFrame otherEncoded =>
-        exact match Chain.equal? parent (.pack previous) with
+        exact match Chain.same? parent (.pack previous) with
           | none => none
           | some ⟨same⟩ => by
             cases same
-            exact if data : descriptor.raw = selected.raw ∧
-                descriptor.evidence = selected.evidence then
+            letI := withPtrEqDecEq descriptor selected
+              (fun _ => descriptorDecEq descriptor selected)
+            exact if descriptors : descriptor = selected then
               some ⟨by
-                have descriptors : descriptor = selected := by
-                  cases descriptor
-                  cases selected
-                  rcases data with ⟨rfl, rfl⟩
-                  rfl
                 cases descriptors
                 have frames : frame = otherFrame :=
                   Option.some.inj (encoded.symm.trans otherEncoded)
@@ -76,39 +90,39 @@ def Chain.equal? {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Neg E]
                 rfl⟩
             else none
 
-def Context.equal? (left right : Context registry) : Option (PLift (left = right)) := by
+def Context.same? (left right : Context registry) : Option (PLift (left = right)) := by
   cases left with
-  | pack chain => exact chain.equal? right
+  | pack chain => exact chain.same? right
 
-theorem Chain.equal?_self {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Neg E]
+theorem Chain.same?_self {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Neg E]
     [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]
     {sign : E → Int} {clean : E → Bool} {codec : SignDet.ValueCodec E}
     {binding : Signature} (chain : Chain registry E sign clean codec binding) :
-    chain.equal? (.pack chain) = some ⟨rfl⟩ := by
+    chain.same? (.pack chain) = some ⟨rfl⟩ := by
   induction chain with
-  | base context => simp [Chain.equal?]
-  | root parent descriptor frame encoded ih => simp [Chain.equal?, ih]
+  | base context => simp [Chain.same?]
+  | root parent descriptor frame encoded ih => simp [Chain.same?, ih]
 
 /-- Every immutable context is recognized as its own original owner. -/
-theorem Context.equal?_self (context : Context registry) :
-    context.equal? context = some ⟨rfl⟩ := by
+theorem Context.same?_self (context : Context registry) :
+    context.same? context = some ⟨rfl⟩ := by
   cases context with
-  | pack chain => exact chain.equal?_self
+  | pack chain => exact chain.same?_self
 
 /-- Native context equality has a sound pointer shortcut; otherwise every
 actual predecessor, descriptor and replay is compared. -/
 instance : DecidableEq (Context registry) := fun left right =>
   withPtrEqDecEq left right fun _ =>
-    match checked : left.equal? right with
+    match checked : left.same? right with
     | some ⟨same⟩ => isTrue same
     | none => isFalse (by
       intro same
       cases same
-      rw [Context.equal?_self] at checked
+      rw [Context.same?_self] at checked
       cases checked)
 
 end Hex.RealClosure.Tower
 
-/-- info: 'Hex.RealClosure.Tower.Context.equal?_self' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Context.same?_self' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Tower.Context.equal?_self
+#print axioms Hex.RealClosure.Tower.Context.same?_self

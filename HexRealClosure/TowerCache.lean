@@ -30,6 +30,32 @@ structure InclusionCache (target : Context registry) : Type 1 where
     (cache : InclusionCache target) (next : Inclusion source target) : InclusionCache target :=
   ⟨⟨source, next⟩ :: cache.entries⟩
 
+/-- Retain two collections of checked predecessors in the same target. -/
+@[expose] def InclusionCache.append {target : Context registry}
+    (first second : InclusionCache target) : InclusionCache target :=
+  ⟨first.entries ++ second.entries⟩
+
+/-- Checked inclusions of an actual suffix's native predecessors. -/
+structure Suffix.Prefixes {source : Context registry} (suffix : Suffix source) : Type 1 where
+  inclusion : Inclusion source suffix.context
+  cache : InclusionCache suffix.context
+
+/-- Retain every native predecessor of a suffix, including its final target.
+All maps use the actual coefficient inclusions of its stored descriptors. -/
+def Suffix.prefixes {source : Context registry} (suffix : Suffix source) : suffix.Prefixes :=
+  match suffix with
+  | .nil =>
+    let inclusion := Inclusion.identity source
+    ⟨inclusion, (InclusionCache.mk []).insert inclusion⟩
+  | .root descriptor rest =>
+    let child := source.adjoin descriptor
+    let first : Inclusion source child.context :=
+      ⟨Conversion.includeRoot source descriptor child rfl,
+        (Conversion.includeRoot_spec source descriptor child rfl).1⟩
+    let later := rest.prefixes
+    let inclusion := first.comp later.inclusion
+    ⟨inclusion, later.cache.insert inclusion⟩
+
 private def findInclusion {target : Context registry} (source : Context registry) :
     List (Σ owner : Context registry, Inclusion owner target) → Option (Inclusion source target)
   | [] => none
@@ -79,7 +105,8 @@ def InclusionCache.rebuild? {target source : Context registry}
         let next : Inclusion original child.context :=
           ⟨initial.native.adjoinCached descriptor converted checked child rfl,
             (initial.native.adjoinCached_spec descriptor converted checked child rfl).1⟩
-        let updated := (cache.extend previous).insert next
+        let updated := ((cache.extend previous).insert next).insert
+          (Inclusion.identity child.context)
         match updated.rebuild? next rest with
         | none => none
         | some later =>
