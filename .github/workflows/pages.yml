@@ -62,6 +62,7 @@ jobs:
       # actions/cache folds the paths into each entry's version, so a
       # different list never matches any saved snapshot.
       - name: Restore .lake/build (project and AINTLIB modules)
+        id: hex-build-cache
         uses: actions/cache/restore@v4
         with:
           path: |
@@ -69,17 +70,31 @@ jobs:
             .lake/build/ir
             .lake/packages/AINTLIB/.lake/build/lib/lean
             .lake/packages/AINTLIB/.lake/build/ir
-          key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-
             lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
       # Render through the interpreter. Verso's own modules are precompiled,
       # so rendering runs native code, while nothing imported by `Main`
       # (Mathlib and every Hex library) has to be compiled to C, as a native
       # executable would require.
+      - name: Build the manual
+        run: lake build HexManual HexManual.Theme
+      # Save the build like a `main` CI run does, so the next deploy restores
+      # this one's oleans and rebuilds only what changed since it, not since
+      # the last `main` CI snapshot, which lags `main` by a CI run.
+      - name: Save .lake/build (project and AINTLIB modules)
+        if: ${{ !cancelled() && steps.hex-build-cache.outcome == 'success' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .lake/build/lib/lean
+            .lake/build/ir
+            .lake/packages/AINTLIB/.lake/build/lib/lean
+            .lake/packages/AINTLIB/.lake/build/ir
+          key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Render the manual
-        run: |
-          lake build HexManual HexManual.Theme
-          lake env lean --run Main.lean --output _out
+        run: lake env lean --run Main.lean --output _out
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
