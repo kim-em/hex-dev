@@ -255,8 +255,9 @@ jobs:
             .lake/build/ir
             .lake/packages/AINTLIB/.lake/build/lib/lean
             .lake/packages/AINTLIB/.lake/build/ir
-          key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-
             lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
       # --- Lake artifact cache (dormant unless the LAKE_CACHE_*_PUBLIC repo
       # variables are set). A rev-precise, cross-runner fallback to the
@@ -315,7 +316,7 @@ jobs:
       - name: Define the hex-dev cache + build target sets
         if: steps.classify.outputs.docs_only != 'true'
         run: |
-          echo "HEX_LIB_TARGETS=HexBasic HexTruncatedSeries HexTruncatedSeriesMathlib HexArith HexPoly HexPolyFast HexRationalFn HexRationalFnMathlib HexOrderedFn HexOrderedFnMathlib HexOrderedFnTests HexRationalFnKernelProbe HexPolyFastKernels HexMvPoly HexModArith HexGF2 HexPolyZ HexRoots HexResultant HexInterval HexIntervalExperiment HexIntervalMathlib HexIntervalMathlibExperiment HexIntervalReplayProbe HexIntervalMathlibReplayProbe HexRealRootsMathlibReplayProbe HexSturm HexSignDet HexSignDetMathlib HexSignDetMathlibProofProbe HexSignDetMathlibDiagnostics HexSturmMathlib HexRealClosure HexRealClosureMathlib HexRealClosureTests HexRealClosureMathlibTests HexRCFProofProbe HexRealFormula HexRealFormulaMathlib HexRCFRealFormula HexRCFRealCoefficients HexQuerySemantics HexRealFormulaProofProbe HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexPrimality HexECPP HexECPPMathlib HexIntFactor HexPrimalityKernelProbe HexPrimalityElabProbe HexPrimalityMathlibProofProbe HexECPPMathlibProofProbe HexIntFactorKernelProbe HexMvGcdKernelProbe HexBerlekampZassenhaus HexRealRoots HexMatrix HexRowReduce HexDeterminant HexBareiss HexModularMatrix HexModularMatrixMathlib HexRank HexDet HexHermite HexSmith HexCharPoly HexMinPoly HexPolySmith HexGramSchmidt HexLatticeEnum HexLatticeEnumMathlib HexLatticeEnumTests HexPermGroup HexPermGroupMathlib HexPermGroupTests HexLLL HexMatrixMathlib HexRankMathlib HexRankTests HexRankMathlibProofProbe HexGenericRank HexGenericRankMathlib HexGenericRankTests HexGenericRankMathlibProofProbe HexBareissMathlibProofProbe HexPolyDet HexPolyDetMathlib HexHermiteMathlib HexSmithMathlib HexSmithTests HexDetMathlib HexCharPolyMathlib HexMinPolyMathlib HexStructuralTacticTests HexStructuralTacticProofProbe HexPolySmithMathlib HexDeterminantalIdeal HexDeterminantalIdealMathlib HexDeterminantalIdealTests HexDeterminantalIdealMathlibProofProbe HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib HexBerlekampZassenhausMathlibProofProbe HexBerlekampMathlibProofProbe HexPrimalityMathlib HexIntFactorMathlib HexPolyFpMathlib HexFactorizationModules HexRealRootsMathlib HexGF2Mathlib HexGFqMathlib HexMvPolyMathlib HexMvPolyMathlibProofProbe HexMvPolyBenchSupport HexReflect HexReflectMathlib HexKronecker HexKroneckerMathlib HexKroneckerTests HexRCF HexRootsMathlib HexResultantMathlib HexNumberField HexNumberFieldMathlib HexRealAlgebraic HexRealAlgebraicMathlib HexNumberFieldTower HexNumberFieldTowerMathlib HexReleaseTests HexReleaseExamples HexAggregateCheck HexGraphIsoProofProbe HexGraphIsoSparseProofProbe HexGraphIsoMathlibProofProbe HexPermGroupMathlibProofProbe HexPolyDetMathlibProofProbe HexCharPolyMathlibProofProbe" >> "$GITHUB_ENV"
+          echo "HEX_LIB_TARGETS=HexBasic HexTruncatedSeries HexTruncatedSeriesMathlib HexArith HexPoly HexPolyFast HexRationalFn HexRationalFnMathlib HexOrderedFn HexOrderedFnMathlib HexOrderedFnTests HexRationalFnKernelProbe HexPolyFastKernels HexMvPoly HexModArith HexGF2 HexPolyZ HexRoots HexResultant HexInterval HexIntervalExperiment HexIntervalMathlib HexIntervalMathlibExperiment HexIntervalReplayProbe HexIntervalMathlibReplayProbe HexRealRootsMathlibReplayProbe HexSturm HexSignDet HexSignDetMathlib HexSignDetMathlibProofProbe HexSignDetMathlibDiagnostics HexSturmMathlib HexRealClosure HexRealClosureMathlib HexRealClosureTests HexRealClosureMathlibTests HexRCFProofProbe HexRealFormula HexRealFormulaMathlib HexRCFRealFormula HexRCFRealCoefficients HexQuerySemantics RealClosureConsumer HexRealFormulaProofProbe HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexPrimality HexECPP HexECPPMathlib HexIntFactor HexPrimalityKernelProbe HexPrimalityElabProbe HexPrimalityMathlibProofProbe HexECPPMathlibProofProbe HexIntFactorKernelProbe HexMvGcdKernelProbe HexBerlekampZassenhaus HexRealRoots HexMatrix HexRowReduce HexDeterminant HexBareiss HexModularMatrix HexModularMatrixMathlib HexRank HexDet HexHermite HexSmith HexCharPoly HexMinPoly HexPolySmith HexGramSchmidt HexLatticeEnum HexLatticeEnumMathlib HexLatticeEnumTests HexPermGroup HexPermGroupMathlib HexPermGroupTests HexLLL HexMatrixMathlib HexRankMathlib HexRankTests HexRankMathlibProofProbe HexGenericRank HexGenericRankMathlib HexGenericRankTests HexGenericRankMathlibProofProbe HexBareissMathlibProofProbe HexPolyDet HexPolyDetMathlib HexHermiteMathlib HexSmithMathlib HexSmithTests HexDetMathlib HexCharPolyMathlib HexMinPolyMathlib HexStructuralTacticTests HexStructuralTacticProofProbe HexPolySmithMathlib HexDeterminantalIdeal HexDeterminantalIdealMathlib HexDeterminantalIdealTests HexDeterminantalIdealMathlibProofProbe HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib HexBerlekampZassenhausMathlibProofProbe HexBerlekampMathlibProofProbe HexPrimalityMathlib HexIntFactorMathlib HexPolyFpMathlib HexFactorizationModules HexRealRootsMathlib HexGF2Mathlib HexGFqMathlib HexMvPolyMathlib HexMvPolyMathlibProofProbe HexMvPolyBenchSupport HexReflect HexReflectMathlib HexKronecker HexKroneckerMathlib HexKroneckerTests HexRCF HexRootsMathlib HexResultantMathlib HexNumberField HexNumberFieldMathlib HexRealAlgebraic HexRealAlgebraicMathlib HexNumberFieldTower HexNumberFieldTowerMathlib HexReleaseTests HexReleaseExamples HexAggregateCheck HexGraphIsoProofProbe HexGraphIsoSparseProofProbe HexGraphIsoMathlibProofProbe HexPermGroupMathlibProofProbe HexPolyDetMathlibProofProbe HexCharPolyMathlibProofProbe" >> "$GITHUB_ENV"
           echo "HEX_EXE_TARGETS=hextruncatedseries_bench hexarith_bench hexpoly_bench hexpolyfast_bench hexrationalfn_bench hexorderedfn_bench hexpolysmith_bench hexmvpoly_bench hexrealformula_bench hexreflect_bench hexmvgcd_bench hexsparsepoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexmodular_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexprimality_bench hexecpp_bench hexprimality_squfof_measure hexprimality_policy_probe hexprimality_field_probe hexprimality_fuel_probe hexintfactor_bench hexintfactor_field_bench hexberlekamp_bench hexbz_bench hexconway_bench hexconway_replay hexmatrix_bench hexgraphiso_bench hexpermgroup_bench hexstrassen_compare hexrowreduce_bench hexdeterminant_bench hexdeterminantalideal_bench hexbareiss_bench hexpolydet_bench hexmodularmatrix_bench hexrank_bench hexgenericrank_bench hexdet_bench hexcharpoly_bench hexminpoly_bench hexgramschmidt_bench hexlatticeenum_bench hexhermite_bench hexsmith_bench hexsigndet_bench hexsturm_bench hexrealclosure_bench hexrealclosure_codec_bytes hexrealroots_bench hexrcf_bench hexroots_bench hexresultant_bench hexnumberfield_bench hexnumberfieldtower_bench tower_factor_diff hexinterval_decision_bench hexroots_demo hex_interval_representation_spike hex_interval_center_spike hex_interval_scale_spike hex_interval_scheduler_spike hex_interval_policy_frontier_spike hex_arith_floor hexlll_bench hexlll_gram_bench hexlll_external_reduction hexbz_factor_service" >> "$GITHUB_ENV"
       - name: Decide whether to collect Conway rebuild evidence
         id: conway-rebuild
@@ -452,6 +453,27 @@ jobs:
       - name: Build HexManual
         if: steps.classify.outputs.build_manual == 'true'
         run: lake build HexManual
+      # Save main's build as soon as the build steps end, before the
+      # verification tails and whether or not anything failed. Lake rebuilds
+      # any restored module whose inputs changed, so oleans from a red or
+      # partial build are safe to reuse, and every PR restores the newest
+      # snapshot: saving only after a fully green run left PRs rebuilding
+      # hours of main whenever main was red or verification was slow.
+      # The key carries the run and attempt, because cache entries are
+      # immutable: a rerun of the same commit must be able to save a more
+      # complete snapshot, which restore then prefers as the newest match.
+      # Pull-request caches are scoped to their merge ref and cannot help
+      # another PR, so only main saves.
+      - name: Save .lake/build (project and AINTLIB modules; main only)
+        if: ${{ !cancelled() && steps.hex-build-cache.outcome == 'success' && github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.hex-build-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .lake/build/lib/lean
+            .lake/build/ir
+            .lake/packages/AINTLIB/.lake/build/lib/lean
+            .lake/packages/AINTLIB/.lake/build/ir
+          key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
       # --- Parallel verification tails (single job, in-job parallel steps) ---
       # Both tails only read the already-built .lake/build; they write to
       # disjoint outputs, so they are safe to run concurrently. Each touches a
@@ -571,19 +593,6 @@ jobs:
           [ -f "$RUNNER_TEMP/bench.ok" ] || { echo "::error::Bench verify did not complete successfully"; rc=1; }
           [ -f "$RUNNER_TEMP/conformance.ok" ] || { echo "::error::Conformance/oracles did not complete successfully"; rc=1; }
           exit $rc
-      # Save only a fully verified main snapshot. Pull-request caches are scoped
-      # to their merge ref and cannot help another PR, so saving one per PR would
-      # churn the repository's cache quota without providing shared reuse.
-      - name: Save .lake/build (project and AINTLIB modules; main only)
-        if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.hex-build-cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            .lake/build/lib/lean
-            .lake/build/ir
-            .lake/packages/AINTLIB/.lake/build/lib/lean
-            .lake/packages/AINTLIB/.lake/build/ir
-          key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
       # Publish only after every verification gate passes. R2 remains a
       # cross-runner fallback for a GitHub cache miss and for external consumers.
       - name: Publish hex-dev oleans to the Lake cache (main only)

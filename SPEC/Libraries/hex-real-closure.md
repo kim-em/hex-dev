@@ -170,6 +170,17 @@ binds its exact stored polynomial and claimed sign to a proof of the actual
 literal only on an exact key/sign match; missing keys and zero claims reject.
 It preserves the result of the ordinary independent coefficient decoder.
 
+`Element.signCodec` reads the existing stored-value wire format using those
+proved facts. Canonical zero needs no fact. A nonzero literal requires its exact
+polynomial/sign key in the fixed context; missing or mismatched facts reject
+without producing a sign at that level. The supplied predecessor codec controls
+lower-level decoding, so finite strict readers can be composed across levels.
+Their roundtrip proofs require coverage of the stored value and its actual
+coefficient entries, not a claim that a finite table covers every element.
+Byte roundtrips consume the shared parser/printer and its actual lexical
+resource check. These readers do not themselves serialize or validate a graph
+of coefficient-proof dependencies.
+
 `Element.pack` takes a reduction function proved equal to the context's actual
 storage reduction. Constant remainders use the predecessor sign directly;
 nonconstant remainders use exact keys in the supplied sign facts. A zero sign

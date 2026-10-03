@@ -3,16 +3,21 @@ from __future__ import annotations
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr
+from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from check_dag import (
+    KNOWN_EXCEPTIONS,
     check_adapter_imports,
     check_sealed_import_all,
     import_roots,
     import_closure_in_library,
     parse_imports,
+    main,
 )
 from check_phase4 import check_headline_reports
 from libgraph import (load_libraries, library_owner_for_path, may_import,
@@ -74,6 +79,35 @@ class AdapterImportBoundaryTest(unittest.TestCase):
             self.assertTrue(all("development adapter HexCore.Optional" in e for e in errors))
             self.assertFalse(any(e.startswith(("adapters/", "conformance/", "HexManual/"))
                                  for e in errors))
+
+
+class ExternalProofDependencyTest(unittest.TestCase):
+    def test_tau_ceti_requires_a_mathlib_library(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "libraries.yml").write_text(
+                "libraries:\n"
+                "  HexCore:\n    deps: []\n    mathlib: false\n"
+                "    done_through: 0\n    status: active\n"
+                "  HexCoreMathlib:\n    deps: [HexCore]\n    mathlib: true\n"
+                "    done_through: 0\n    status: active\n")
+            names = {"HexCore", "HexCoreMathlib"} | KNOWN_EXCEPTIONS
+            for name in names:
+                (root / f"{name}.lean").write_text("")
+            (root / "lakefile.lean").write_text(
+                "\n".join(f"lean_lib {name} where" for name in sorted(names)))
+            (root / "HexCoreMathlib.lean").write_text(
+                "public import TauCeti.Algebra.Polynomial.Sturm.Infinity\n")
+            with patch("check_dag.__file__", str(root / "scripts/check_dag.py")):
+                self.assertEqual(main(), 0)
+                for dependency in ["TauCeti", "Mathlib"]:
+                    with self.subTest(dependency=dependency):
+                        (root / "HexCore.lean").write_text(f"public import {dependency}.Basic\n")
+                        errors = StringIO()
+                        with redirect_stderr(errors):
+                            self.assertEqual(main(), 1)
+                        self.assertIn(f"imports {dependency} but HexCore is not a mathlib bridge",
+                                      errors.getvalue())
 
 
 class MetaImportTest(unittest.TestCase):
