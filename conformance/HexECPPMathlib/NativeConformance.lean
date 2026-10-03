@@ -31,7 +31,13 @@ example : Nat.Prime 9 := by primality? (method := ecpp)
 run_cmd Lean.Elab.Command.liftTermElabM do
   discard <| Hex.ECPP.Native.generate 17 9 { maxFactorWork := 0 }
 
-/-- error: native ECPP: native production is admitted only through 256 bits -/
+-- Explicit custom budgets through the supported ceiling are admitted.
+run_cmd Lean.Elab.Command.liftTermElabM do
+  let (_, cert) ← Hex.ECPP.Native.generate 17 0 { maxBits := 512 }
+  unless Hex.ECPP.checkAt 17 cert do
+    throwError "native generation changed the admitted subject"
+
+/-- error: native ECPP: native production is admitted only through 512 bits -/
 #guard_msgs in
 run_cmd Lean.Elab.Command.liftTermElabM do
-  discard <| Hex.ECPP.Native.generate 17 0 { maxBits := 512 }
+  discard <| Hex.ECPP.Native.generate 17 0 { maxBits := 513 }
