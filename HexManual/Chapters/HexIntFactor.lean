@@ -213,20 +213,27 @@ such as “probable prime” are never evidence.
 ```lean
 open Hex Hex.Nat
 
-#guard match importFactors {} 72
+namespace HexIntFactorChapter
+
+def completeImport : Bool := match importFactors {} 72
     ⟨72, [(3, 2, none), (2, 3, none)]⟩ (Rand.ofSeed 72) with
   | .ok result => result.value.raw.residual == 1 &&
       result.value.raw.factors.map
         (fun e => (e.prime, e.exponent)) == [(2, 3), (3, 2)]
   | .error _ => false
 
-#guard match importFactors
+def partialImport : Bool := match importFactors
     { completion := { maxAttempts := 0 } } 12
     ⟨12, [(2, 2, some (.small 2)), (3, 1, none)]⟩
     (Rand.ofSeed 12) with
   | .ok result => result.value.raw.residual == 3 &&
       checkPartial result.value.raw
   | .error _ => false
+
+#guard completeImport
+#guard partialImport
+
+end HexIntFactorChapter
 ```
 
 Install PARI/GP separately to opt into production. A batch source file importing
