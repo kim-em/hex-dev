@@ -18,19 +18,24 @@ private def real (a : RealAlgebraicNumber) : Json :=
 
 private def emit {registry : BaseContext.Registry} {parent : Tower.Context registry}
     (source : Map parent) (generators : Array RealAlgebraicNumber) (name : String) (p : DensePoly parent.Value) : IO Unit := do
-  let roots := source.roots p
+  let roots := parent.roots p
   let native ← p.toArray.mapM fun a => do
     let some text := String.fromUTF8? (parent.codec.encode a).writeBytes
       | throw (IO.userError "native coefficient JSON is not UTF-8")
     IO.ofExcept (Json.parse text)
-  let value := Json.mkObj [("schema", toJson (1 : Nat)),
+  let value := Json.mkObj [("schema", toJson (2 : Nat)),
     ("generators", Json.arr (generators.map real)),
     ("nativeCoefficients", Json.arr native),
     ("coefficients", Json.arr (p.toArray.map fun a => real (source.value a))),
     ("roots", match roots with
       | .all => Json.null
-      | .finite entries => Json.arr (entries.map fun e =>
-          Json.mkObj [("root", real e.root), ("multiplicity", toJson e.multiplicity)]))]
+      | .finite entries => Json.arr ((entries.map fun original =>
+          let e := source.entry original
+          Json.mkObj [("root", real e.root), ("multiplicity", toJson e.multiplicity),
+            ("kind", toJson (match original.root with
+              | .point _ => "point"
+              | .selected _ _ _ => "selected"))]).toArray))]
+
   Hex.Conformance.Emit.emitResult "HexRealClosure" name "trivialRoots" value.compress
 
 def main : IO Unit := Trivial.Checks.runWith emit

@@ -61,3 +61,19 @@ end Hex.RealClosure.Trivial.Tests
 /-- info: 'Hex.RealClosure.Trivial.Map.Model.value_inv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Trivial.Map.Model.value_inv
+
+/-- info: 'Hex.RealClosure.Trivial.Map.Model.root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Trivial.Map.Model.root
+
+/-- info: 'Hex.RealClosure.Trivial.Map.Model.compareRoots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Trivial.Map.Model.compareRoots
+
+/-- info: 'Hex.RealClosure.Trivial.Map.Model.equal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Trivial.Map.Model.equal
+
+/-- info: 'Hex.RealClosure.Trivial.Map.Model.sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Trivial.Map.Model.sign

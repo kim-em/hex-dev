@@ -732,11 +732,12 @@ subtraction, multiplication, negation, total inversion, division, native
 semantic equality, comparison and signs. Raw nonzero expressions can have
 different literal representations; the conversion identifies their values.
 
-Run `lake build HexRealClosure.TrivialTowerTests` for executable comparisons
+Run `lake exe hexrealclosure_trivial_tests` for compiled executable comparisons
 using a nonmonic reducible defining polynomial selecting a cubic irrational,
 a dependent quadratic root selected by a Thom sign, nonlinear
 algebraic-coefficient polynomials, nonreal conjugates, point roots and repeated
-roots.
+roots. The nonmonic reducible predecessor is a separate native check;
+the qqbar fixtures use the monic cubic/quadratic tower.
 Run `lake build HexRealClosureMathlib.TrivialTowerTests` for ordinary-import
 consumers and kernel axiom guards. The native example also checks a value
 read/write round trip and stale-context rejection. The shared driver feeds
@@ -745,9 +746,12 @@ after conversion; `scripts/oracle/real_closure_trivial.py` checks them against
 independent exact python-flint qqbar roots and multiplicities. The committed
 seven-case fixture covers zero, a constant, a dependent linear polynomial,
 mixed coefficients with repeated roots, nonlinear heads, nonreal conjugates
-and a point root. The oracle independently reconstructs both selected generators and evaluates
-every original recursive coefficient, including its cached sign, before
-checking the converted root output. It does not replay native certificate graphs.
+and a point root. The emitted root kinds check actual point and selected-root
+production. The oracle independently reconstructs both selected generators and
+evaluates every original recursive coefficient, including its cached sign,
+before checking the converted root output. Twenty-two tests cover valid output
+and mutations; parser checks still run when optional FLINT support is absent.
+It does not replay native certificate graphs.
 `Map.ofSuffix` caches the generators of the input tower. Individual
 `Map.root` conversions and `compareRoots` searches still enumerate the
 converted head's roots per requested handle; `Map.output` does not yet share

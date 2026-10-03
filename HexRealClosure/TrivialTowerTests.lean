@@ -6,6 +6,6 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.TrivialChecks
-public meta import HexRealClosure.TrivialChecks
 
-#eval Hex.RealClosure.Trivial.Checks.runWith Hex.RealClosure.Trivial.Checks.check
+public def main : IO Unit :=
+  Hex.RealClosure.Trivial.Checks.runWith Hex.RealClosure.Trivial.Checks.check

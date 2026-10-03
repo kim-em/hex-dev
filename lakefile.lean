@@ -1618,6 +1618,9 @@ lean_exe hexrealclosure_bench where
   srcDir := "bench"
   root := `HexRealClosure.Bench
 
+lean_exe hexrealclosure_trivial_tests where
+  root := `HexRealClosure.TrivialTowerTests
+
 lean_exe hexrealclosure_trivial_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.TrivialConformance

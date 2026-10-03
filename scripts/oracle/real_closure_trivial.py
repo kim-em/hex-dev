@@ -22,7 +22,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.oracle.common import OracleMismatch, read_fixtures, write_failure
-from scripts.oracle.real_algebraic_flint import Checker, preflight, require
+from scripts.oracle.real_algebraic_flint import Checker, preflight, require, disc
 from scripts.oracle.real_algebraic_qqbar import QQBar, Unavailable, VERSION
 
 DEFAULT = ROOT / "conformance-fixtures/HexRealClosure/trivial.jsonl"
@@ -38,7 +38,7 @@ def validate_records(records: list[dict[str, Any]]) -> None:
         name, data = record.get("case"), record.get("value")
         require(isinstance(name, str) and name not in seen, "invalid or duplicate fixture name")
         seen.add(name)
-        require(isinstance(data, dict) and type(data.get("schema")) is int and data["schema"] == 1,
+        require(isinstance(data, dict) and type(data.get("schema")) is int and data["schema"] == 2,
                 "unsupported fixture schema")
         require(isinstance(data.get("coefficients"), list) and
                 isinstance(data.get("nativeCoefficients"), list) and
@@ -51,7 +51,39 @@ def validate_records(records: list[dict[str, Any]]) -> None:
             for entry in roots:
                 require(isinstance(entry, dict) and type(entry.get("multiplicity")) is int and
                         entry["multiplicity"] > 0, "invalid positive multiplicity")
+                require(entry.get("kind") in ("point", "selected"), "invalid native root kind")
     require(REQUIRED <= seen, f"missing required cases: {sorted(REQUIRED - seen)}")
+
+
+class TrivialChecker(Checker):
+    """Identify real operands directly in the emitted isolating square.
+
+    Exact interval comparisons avoid constructing squared distances to every
+    nonreal conjugate. FLINT verifies irreducibility and enumerates real roots;
+    exactly one must lie in the square's real interval, with zero in its
+    imaginary interval. Native certificate graphs are not accepted as proofs.
+    """
+
+    def value(self, record: dict[str, Any]) -> int:
+        import json
+        from flint import fmpz_poly
+        key = json.dumps(record, sort_keys=True)
+        if key in self.values:
+            return self.values[key]
+        polynomial, real, imaginary, width = disc(record)
+        require(abs(imaginary) <= width, "real operand square excludes the real axis")
+        if tuple(polynomial) not in self.roots:
+            unit, factors = fmpz_poly(polynomial).factor()
+            require(int(unit) == 1 and len(factors) == 1 and factors[0][1] == 1,
+                    "serialized polynomial is not primitive irreducible")
+            self.roots[tuple(polynomial)] = self.q.roots(
+                [self.q.number(c, self.q.integer) for c in polynomial], integer=True)
+        lower, upper = self.q.number(real - width), self.q.number(real + width)
+        matches = [value for value, _ in self.roots[tuple(polynomial)]
+                   if self.q.compare(lower, value) <= 0 and self.q.compare(value, upper) <= 0]
+        require(len(matches) == 1, "real isolation square did not select exactly one root")
+        self.values[key] = matches[0]
+        return matches[0]
 
 
 def native_value(q: QQBar, data: Any, generators: list[int]) -> int:
@@ -80,17 +112,73 @@ def native_value(q: QQBar, data: Any, generators: list[int]) -> int:
     return value
 
 
+def polynomial_roots(q: QQBar, coefficients: list[int], generators: list[int]) -> list[tuple[int, int]]:
+    """Remove exact known generator factors before general qqbar root finding.
+
+    Linear and pure quadratic/cubic residuals use FLINT's exact division,
+    principal square root and cube root; their real roots and multiplicities
+    follow the standard binomial cases. Other residuals use general qqbar roots.
+    Candidates come from the independently reconstructed generators and zero,
+    never from emitted roots. Exact synthetic division proves each removed
+    factor and its multiplicity. FLINT computes the complete remaining roots.
+    """
+    zero = q.number(0)
+    polynomial = list(coefficients)
+    while polynomial and q.compare(polynomial[-1], zero) == 0:
+        polynomial.pop()
+    roots: list[tuple[int, int]] = []
+    for candidate in generators + [zero]:
+        multiplicity = 0
+        while len(polynomial) > 1:
+            quotient = [polynomial[-1]]
+            for coefficient in reversed(polynomial[1:-1]):
+                quotient.append(q.binary("add", coefficient,
+                    q.binary("mul", candidate, quotient[-1])))
+            remainder = q.binary("add", polynomial[0],
+                q.binary("mul", candidate, quotient[-1]))
+            if q.compare(remainder, zero) != 0:
+                break
+            polynomial = list(reversed(quotient))
+            multiplicity += 1
+        if multiplicity:
+            roots.append((candidate, multiplicity))
+    if len(polynomial) == 2:
+        roots.append((q.binary("div", q.unary("neg", polynomial[0]), polynomial[1]), 1))
+    elif len(polynomial) in (3, 4) and all(q.compare(c, zero) == 0 for c in polynomial[1:-1]):
+        radicand = q.binary("div", q.unary("neg", polynomial[0]), polynomial[-1])
+        sign = q.compare(radicand, zero)
+        if len(polynomial) == 3:
+            if sign > 0:
+                root = q.unary("sqrt", radicand)
+                roots.extend([(root, 1), (q.unary("neg", root), 1)])
+            elif sign == 0:
+                roots.append((zero, 2))
+        else:
+            magnitude = radicand if sign >= 0 else q.unary("neg", radicand)
+            complex_root = q.nth_root(magnitude, 3)
+            root = q.to_real(complex_root)
+            require(root is not None, "positive cube root is nonreal")
+            roots.append((root if sign >= 0 else q.unary("neg", root), 3 if sign == 0 else 1))
+    elif len(polynomial) > 1:
+        roots.extend(q.roots(polynomial))
+    return roots
+
+
 def check_record(checker: Checker, record: dict[str, Any]) -> None:
     q, data = checker.q, record["value"]
+    if record["case"] == "point root at zero":
+        require(data["roots"] is not None and any(r["kind"] == "point" for r in data["roots"]),
+                "missing native point root")
+    if record["case"] in ("nonlinear algebraic head", "cubic with nonreal conjugates"):
+        require(bool(data["roots"]) and all(r["kind"] == "selected" for r in data["roots"]),
+                "missing native selected roots")
     zero, one = q.number(0), q.number(1)
-    cubic = q.roots([q.number(-2, q.integer), q.number(0, q.integer),
-                     q.number(0, q.integer), q.number(1, q.integer)], integer=True)
-    require(len(cubic) == 1 and q.compare(cubic[0][0], one) > 0, "cubic generator oracle failed")
-    a = cubic[0][0]
-    quadratic = q.roots([q.unary("neg", a), zero, one])
-    positive = [v for v, _ in quadratic if q.compare(v, zero) > 0]
-    require(len(positive) == 1, "quadratic Thom generator oracle failed")
-    generators = [a, positive[0]]
+    if record["case"] == "point root at zero":
+        require(any(r["kind"] == "point" and q.compare(checker.value(r["root"]), zero) == 0
+                    for r in data["roots"]), "missing native point root at zero")
+    a = q.to_real(q.nth_root(q.number(2, q.complex), 3))
+    require(a is not None and q.compare(a, one) > 0, "cubic generator oracle failed")
+    generators = [a, q.unary("sqrt", a)]
     for actual, expected in zip(data["generators"], generators):
         checker.equal(actual, expected, "selected generator")
     for actual, native in zip(data["coefficients"], data["nativeCoefficients"]):
@@ -98,7 +186,23 @@ def check_record(checker: Checker, record: dict[str, Any]) -> None:
     if record["case"] == "constant":
         require(any(len(c["poly"]) >= 3 for c in data["coefficients"]),
                 "fixture has no irrational coefficient")
-    checker.check("algebraicRoots", data)
+    coefficients = [checker.value(c) for c in data["coefficients"]]
+    all_zero = all(q.compare(c, zero) == 0 for c in coefficients)
+    require((data["roots"] is None) is all_zero, "incorrect universal root set")
+    if all_zero:
+        return
+    expected = polynomial_roots(q, coefficients, generators)
+    actual = [(checker.value(r["root"]), r["multiplicity"]) for r in data["roots"]]
+    require(len(actual) == len(expected), "incorrect algebraic real-root count")
+    hits = [0] * len(expected)
+    for value, multiplicity in actual:
+        matches = [i for i, (root, label) in enumerate(expected)
+                   if q.compare(value, root) == 0 and multiplicity == label]
+        require(len(matches) == 1, "incorrect algebraic root or multiplicity")
+        hits[matches[0]] += 1
+    require(all(hit == 1 for hit in hits), "duplicate or missing algebraic root")
+    require(all(q.compare(a[0], b[0]) < 0 for a, b in zip(actual, actual[1:])),
+            "algebraic roots are not strictly ordered")
 
 
 def main() -> int:
@@ -118,7 +222,7 @@ def main() -> int:
             print(f"SKIP HexRealClosure trivial: {VERSION} algebraic roots unavailable")
             return 0
         with QQBar() as q:
-            checker = Checker(q)
+            checker = TrivialChecker(q)
             for record in records:
                 try:
                     check_record(checker, record)

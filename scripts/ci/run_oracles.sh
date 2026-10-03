@@ -172,6 +172,9 @@ for entry in "${FILTERED_ORACLES[@]}"; do
   IFS='|' read -r _ emit _ _ <<<"$entry"
   emits+=("$emit")
 done
+if library_selected HexRealClosure; then
+  emits+=("hexrealclosure_trivial_tests")
+fi
 if library_selected HexRealClosure || library_selected HexSignDet; then
   emits+=("hexrealclosure_codec_bytes")
 fi
@@ -217,6 +220,10 @@ run_tuple() {
 
   local emit_command=(".lake/build/bin/$emit")
   if [ "$oracle" = "scripts/oracle/real_closure_trivial.py" ]; then
+    if ! LEAN_ABORT_ON_PANIC=1 .lake/build/bin/hexrealclosure_trivial_tests; then
+      echo "FAIL: native rational-tower backend differential tests" >&2
+      return 1
+    fi
     emit_command=(env LEAN_ABORT_ON_PANIC=1 "${emit_command[@]}")
   fi
   if ! "${emit_command[@]}" >"$fresh"; then

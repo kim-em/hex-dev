@@ -27,8 +27,20 @@ private def same (a b : RealRootSet) : Bool :=
 
 def check {parent : Tower.Context registry} (source : Map parent) (_ : Array RealAlgebraicNumber)
     (name : String) (p : DensePoly parent.Value) : IO Unit := do
-  require (same (source.roots p) (source.polynomial p).roots)
+  let produced := parent.roots p
+  require (same (source.output produced) (source.polynomial p).roots)
     s!"native algebraic-coefficient roots differ from canonical backend: {name}"
+  match produced with
+  | .all => pure ()
+  | .finite entries =>
+    if name == "point root at zero" then
+      require (entries.any fun e => match e.root with
+        | .point value => parent.equal value 0
+        | .selected _ _ _ => false) "point fixture did not produce a point root at zero"
+    if name == "nonlinear algebraic head" || name == "cubic with nonreal conjugates" then
+      require (!entries.isEmpty && entries.all fun e => match e.root with
+        | .point _ => false
+        | .selected _ _ _ => true) "nonlinear fixture did not produce selected roots"
 
 def runWith (check : {parent : Tower.Context registry} → Map parent → Array RealAlgebraicNumber → String →
     DensePoly parent.Value → IO Unit) : IO Unit := do
@@ -52,8 +64,8 @@ def runWith (check : {parent : Tower.Context registry} → Map parent → Array 
   let head := x * x * x - DensePoly.C two
   let some cubic := SignDet.Descriptor.validate base.sign base.signature
       { context := base.signature, head := head,
-        lower := .finite 1, upper := .finite two, indices := [], signs := [] }
-    | throw (IO.userError "nonmonic reducible cubic-root descriptor failed")
+        lower := .finite 1, upper := .posInf, indices := [], signs := [] }
+    | throw (IO.userError "cubic-root descriptor failed")
   let extension := base.adjoin cubic
   let parent := extension.context
   let a := extension.generator
@@ -67,7 +79,7 @@ def runWith (check : {parent : Tower.Context registry} → Map parent → Array 
   let y : DensePoly parent.Value := DensePoly.ofCoeffs #[0, 1]
   let some next := SignDet.Descriptor.validate parent.sign parent.signature
       { context := parent.signature, head := y * y - DensePoly.C a,
-        lower := .finite (-two), upper := .finite two, indices := [1], signs := [1] }
+        lower := .negInf, upper := .finite a, indices := [1], signs := [1] }
     | throw (IO.userError "dependent quadratic Thom descriptor failed")
   let suffix : Tower.Suffix base := .root cubic (.root next .nil)
   let converted := Map.ofSuffix suffix
@@ -85,6 +97,8 @@ def runWith (check : {parent : Tower.Context registry} → Map parent → Array 
   require (converted.value reread == converted.value (b / old))
     "checked reader lost canonical embedding"
   require ((child.read (parent.write a)).toOption.isNone) "stale predecessor value was accepted"
+  require (converted.compareRoots (.point 0) (.point 1) ==
+    (Tower.Root.point (parent := child) 0).compare (.point 1)) "native root comparison differs"
   let z : DensePoly child.Value := DensePoly.ofCoeffs #[0, 1]
   let generators := #[converted.value old, converted.value b]
   check converted generators "zero" 0
