@@ -32,11 +32,18 @@ or general guarded-domain/proof surface comparisons.
 | Common | Z3 | 99.728 | 447.880 | 4.488035 |
 
 Protocol medians are 6.734 µs for FLINT and 6.594 µs for Z3, with the same
-count payload hash. They are framing controls; no control-subtracted body
-estimate is inferred. Ratios compare these precise boundaries on this source
+count payload hash. Z3 Count's overhead is 5.989% of its external median,
+above the policy's 5% adjustment threshold. Subtracting the Z3 protocol median
+from each paired external observation gives a median adjusted ratio of
+**1.017671**, alongside its raw **1.082383**. [Analysis](analysis.json) retains
+both ratios for every pair. This framing adjustment does not isolate a pure
+algorithm body. Ratios compare these precise boundaries on this source
 and host, not a portable algorithm ranking. The common-factor query is zero
 at every root: the shared Sturm reduction and external root/evaluation methods
-perform different work while returning the same full query.
+perform different work while returning the same full query. The FLINT driver
+uses generic real-qqbar Horner evaluation through `gr_mul` and `gr_add` at each
+root. Its Common ratio describes that driver; optimized polynomial evaluation
+with minimal-polynomial reduction is a different comparator implementation.
 
 The exact endpoint unit tests cover positive, negative, mixed and zero sums,
 repeated FLINT temporary-value cleanup, unsupported-version rejection,

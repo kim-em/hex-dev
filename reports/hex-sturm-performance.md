@@ -736,11 +736,17 @@ FLINT 1.981380,2.691172,2.284023,168.350949 and Z3
 1.082383,1.719067,1.399890,4.488035 in that query order.
 The [raw exports and metadata](bench-results/sturm-external-comparisons/) retain
 the source, commands, order, inner counts and every observation. Protocol
-controls have medians 6.734/6.594 µs; no subtraction is inferred.
+controls have medians 6.734/6.594 µs. Z3 Count exceeds the 5% framing-overhead
+threshold (5.989%); its per-pair protocol-adjusted median ratio is 1.017671,
+alongside the raw 1.082383. Both ratios remain in the analysis; this adjustment
+does not isolate a pure algorithm body.
 
 Inputs and coefficient contexts are prepared. Timed requests call root
 production, filter the open interval, evaluate the complete query and sum
-exact signs, including JSON transport and temporary cleanup. No roots are
+exact signs, including JSON transport and temporary cleanup. FLINT uses generic
+real-qqbar Horner evaluation via `gr_mul`/`gr_add`; the 168.350949 Common ratio
+describes that method, rather than an optimized polynomial-evaluation endpoint
+with minimal-polynomial reduction. No roots are
 cached by the driver; backend contexts may retain internal caches, and the
 harness performs an untimed warmup. These are informational fixed valid-domain
 endpoints, not complexity admissions, portable speed claims or isolated
