@@ -14,7 +14,7 @@ public import HexBerlekamp.IrreducibilityElab
 public import HexBerlekampZassenhaus.FactorTactic
 public import HexBerlekampZassenhausMathlib.FactorTactic
 public import HexBerlekampZassenhausMathlib.KernelFactorTactic
--- Privileged imports support the bang forms' full kernel factorization.
+-- These existing probes retain privileged executable imports.
 -- Ordinary multi-prime replay is tested independently, with only public
 -- imports, in `HexBerlekampZassenhausMathlib.PublicReplayTests`.
 import all HexArith.ExtGcd

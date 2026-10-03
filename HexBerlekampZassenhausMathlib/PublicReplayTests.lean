@@ -21,9 +21,6 @@ namespace HexBerlekampZassenhausMathlib.PublicReplayTests
 open Hex
 open Polynomial
 
-set_option maxRecDepth 100000
-set_option maxHeartbeats 16000000
-
 @[expose] def quartic : ZPoly := DensePoly.ofList [-2, -7, -1, 4, 1]
 
 #guard HexBerlekampZassenhaus.FactorTactic.searchWitness quartic |>.isNone
@@ -62,6 +59,10 @@ theorem polynomial_irreducible : Irreducible ((X : Polynomial ℤ) ^ 4 +
     4 * X ^ 3 - X ^ 2 - 7 * X - 2) := by
   irreducibility
 
+theorem sum_irreducible : ZPoly.Irreducible
+    (DensePoly.ofList [-2, -7, -1] + DensePoly.ofList [0, 0, 0, 4, 1]) := by
+  irreducibility
+
 /-- A mixed free/multi-prime cover through the `Hex.ZPoly` consumer. -/
 noncomputable def zFactored : ZPoly.Factored (DensePoly.ofList [-1, 1] * quartic) :=
   factor_poly (DensePoly.ofList [-1, 1] * quartic)
@@ -74,6 +75,12 @@ noncomputable def pFactored : Hex.FactoredPoly
   factor_poly ((X - 1) * (X ^ 4 + 4 * X ^ 3 - X ^ 2 - 7 * X - 2) : Polynomial ℤ)
 
 example : pFactored.factors.length = 2 := by rfl
+
+/-- A nontrivial single-prime witness alongside the multi-prime factor. -/
+noncomputable def mixedFactored : ZPoly.Factored (DensePoly.ofList [-2, 0, 1] * quartic) :=
+  factor_poly (DensePoly.ofList [-2, 0, 1] * quartic)
+
+example : mixedFactored.factors = [DensePoly.ofList [-2, 0, 1], quartic] := by rfl
 
 -- Missing degree evidence, an out-of-range block index, malformed modular
 -- factor metadata, and a certificate bound to a different input all reject.
@@ -179,3 +186,11 @@ end HexBerlekampZassenhausMathlib.PublicReplayTests
 #guard_msgs (whitespace := lax) in
 #print axioms HexBerlekampZassenhausMathlib.PublicReplayTests.prime_constant
 
+
+/-- info: 'HexBerlekampZassenhausMathlib.PublicReplayTests.sum_irreducible' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms HexBerlekampZassenhausMathlib.PublicReplayTests.sum_irreducible
+
+/-- info: 'HexBerlekampZassenhausMathlib.PublicReplayTests.mixedFactored' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms HexBerlekampZassenhausMathlib.PublicReplayTests.mixedFactored

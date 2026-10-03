@@ -188,6 +188,9 @@ quotation and literal replay work with ordinary imports of
 `CertificateReplay.checkProof` helper produces a kernel-checked equality
 for a reified Boolean check using public reduction equations; literal
 `checkMultiPrimeCert` and cover goals can also be discharged with `cbv`.
+Importing the replay support registers core's public
+`Array.all_eq_not_any_not` equation globally for `cbv`; it changes no
+compiled checker or factorization operations.
 
 The stronger `irreducibility!` and `factor_poly!` forms may use kernel
 evaluation of the decidable factorization theorem on small inputs.
@@ -208,7 +211,11 @@ only ordinary public imports. It searches and quotes a new 11/5
 multi-prime certificate, checks both integer polynomial interfaces and
 mixed factor covers, rejects malformed data and incorrect input binding,
 and audits the emitted theorem axioms. Its imports are isolated from
-privileged bang tests. The core profile exercises the tactic entry points on committed
+privileged bang tests. `QuotationTests.lean` independently checks the
+ordinary `FactorTactic` import, direct quotation, wrong input binding,
+nonprimitive content and a composite prime. Both consumers use default
+Lean resource options. The core profile exercises the tactic entry points
+on committed
 `Polynomial ℤ` and `Hex.ZPoly` fixtures across the certificate languages
 (single-prime witness, Eisenstein handover, multi-prime degree
 obstruction, kernel fallback), pins hand-derived factor lists and factor

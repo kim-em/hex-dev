@@ -25,7 +25,7 @@ certificate `Hex.ZPolyIrreducibilityCertificate` for balanced factors with no
 single-prime witness. `checkMultiPrimeCover` is the bulk Boolean check
 covering a factor list by both kinds at once; `Hex.FactoredPoly.ofZ` and
 `irreducible_ofZ` are the assemblers the extension emits, taking only Boolean
-checks on reified literals (discharged by `Eq.refl true` in emitted terms)
+checks on reified literals (multi-prime slots use theorem-backed replay)
 plus one parser-built translation equality `toPolynomial f = P`. The factorizer
 and certificate generators never appear in emitted terms.
 -/
