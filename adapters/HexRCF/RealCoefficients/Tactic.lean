@@ -35,12 +35,18 @@ meta def positiveLowerBound (s : Q(DyadicSquare)) : MetaM Expr := do
 meta def checkGuards (source : Reify.Source) : MetaM Unit := do
   for divisor in source.divisors do
     let divisor : Q(ℝ) := divisor
-    let goal : Q(Prop) := q($divisor ≠ 0)
+    let (lowered, equality) ← Reify.lowerWithProof #[] divisor
+    let lowered : Q(ℝ) := lowered
+    let goal : Q(Prop) := q($lowered ≠ 0)
     let proof ← mkFreshExprMVar goal
-    let remaining ← Lean.Elab.runTactic' proof.mvarId! (← `(tactic| norm_num))
+    let remaining ← Lean.Elab.runTactic' proof.mvarId! (← `(tactic| norm_num
+      [RealAlgebraicNumber.ofRat_toReal]))
     unless remaining.isEmpty do
       throwError "rcf: could not prove a closed divisor nonzero"
-    check (← instantiateMVars proof)
+    let proof ← mkAppM ``ne_of_eq_of_ne #[equality, ← instantiateMVars proof]
+    unless ← isDefEq (← inferType proof) q($divisor ≠ 0) do
+      throwError "rcf: closed-divisor proof has the wrong target"
+    checkWithKernel proof
 
 private meta def selectedArgs? (coefficient : Expr) :
     MetaM (Option (Array Expr × Option Expr)) := do

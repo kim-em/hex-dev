@@ -28,6 +28,13 @@ register_option rcf.algebraic.maxDoublings : Nat := {
   descr := "maximum fixed-field enclosure attempts at precisions 1, 2, 4, ... bits"
 }
 
+-- A comparison control for literal quotation, with the same replay checker
+-- and soundness theorem in both modes. This does not change solver dispatch.
+register_option rcf.algebraic.reducedLiterals : Bool := {
+  defValue := true
+  descr := "quote fixed-field coordinates directly instead of reducing them again"
+}
+
 private def arrayLit (ty : Expr) (xs : List Expr) : Expr :=
   let nil := mkApp (mkConst ``List.nil [Level.zero]) ty
   let list := xs.foldr
@@ -73,7 +80,12 @@ private def denseExpr {E : Type} [Zero E] [DecidableEq E]
 meta def fieldExpr {p : ZPoly} {root : SimpleRoot p}
     (pExpr rootExpr : Expr) (value : PolyQuot p root) : MetaM Expr := do
   let coeffs ← denseExpr ratExpr value.coeffs
-  mkAppM ``PolyQuot.reduce #[pExpr, rootExpr, coeffs]
+  if !(rcf.algebraic.reducedLiterals.get (← getOptions)) then
+    return ← mkAppM ``PolyQuot.reduce #[pExpr, rootExpr, coeffs]
+  let degree ← mkAppM ``DensePoly.natDegree #[coeffs]
+  let modulusDegree ← mkAppM ``DensePoly.natDegree #[pExpr]
+  let bound ← mkDecideProof (← mkLt degree modulusDegree)
+  mkAppOptM ``PolyQuot.mk #[some pExpr, some rootExpr, some coeffs, some bound]
 
 /-- The defining integer polynomial as printable coefficient data. -/
 meta def zpolyExpr (p : ZPoly) : MetaM Expr :=

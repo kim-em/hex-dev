@@ -882,6 +882,36 @@ and chosen-root identifications use only Lean's standard logical axioms.
 See {ref "hex-number-field"}[HexNumberField] and
 {ref "hex-real-algebraic"}[HexRealAlgebraic] for the underlying number APIs.
 
+Visible checked conversions preserve the actual option branch.
+`RealAlgebraicNumber.ofAlgebraic?` succeeds for a selected real or rational value,
+or an element of `QAdjoin a.toAlgebraic` for a real algebraic generator `a`.
+When applied to `AlgebraicNumber.I`, it returns
+`none`, so `getD` denotes its stated fallback. An explicit `.re` projection
+instead denotes the real part; the real part of `I` is zero.
+
+```lean
+example : ∃ x : ℝ,
+    x = ((Hex.RealAlgebraicNumber.ofAlgebraic? Hex.AlgebraicNumber.I).getD
+      (Hex.RealAlgebraicNumber.ofRat (3 / 2))).toReal ∧ 1 < x ∧ x < 2 := by rcf
+
+example : ∀ x : ℝ,
+    x ^ 2 + Hex.AlgebraicNumber.I.re.toReal ≥ 0 := by rcf
+
+example : ∀ x : ℝ,
+    x ^ 2 + (4 : Hex.RealAlgebraicNumber).toReal +
+      ((-3 : Int) : Hex.RealAlgebraicNumber).toReal > 0 := by rcf
+```
+
+The frontend also lowers visible real-algebraic arithmetic, inverses, natural
+powers and integer casts using the number library's interpretation theorems.
+Supported projections include selected real values, rational values, real
+`QAdjoin` coordinates and sums of supported projections. This recognition
+does not provide a general procedure for arbitrary complex expressions or
+opaque conversion code. Original rational, real-algebraic and supported
+real-field divisors remain obligations, including divisors inside an unused
+`getD` fallback, before any branch is simplified. Division over other carriers
+and integer powers inside conversions are rejected.
+
 A fresh-module comparison of the cubic reciprocal uses identical imports and
 shared source setup for `Coefficients.ofField` and direct
 `QAdjoin.toAlgebraicNumber` conversion. At source `b10ded789`, Lean

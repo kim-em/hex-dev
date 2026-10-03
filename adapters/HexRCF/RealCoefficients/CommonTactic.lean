@@ -35,7 +35,7 @@ private meta def kernelDecide (goal : Expr) : MetaM Expr := do
 
 private meta def naturalSquareRoot? (source : Expr) : MetaM (Option Nat) := do
   unless source.isAppOfArity ``Real.sqrt 1 do return none
-  let base : Q(ℝ) ← Reify.lowerRationals #[] source.appArg!
+  let base : Q(ℝ) ← Reify.lowerSources #[] source.appArg!
   let result ← observing? do
     let ⟨value, _, _, _⟩ ← Mathlib.Meta.NormNum.deriveRat base
       (_inst := q(inferInstance))
@@ -46,14 +46,15 @@ private meta def naturalSquareRoot? (source : Expr) : MetaM (Option Nat) := do
 
 /-- Prove the original radicand equality before using the selected positive root. -/
 private meta def rootAlias (source : Expr) (radicand : Nat) : MetaM Expr := do
-  let base : Q(ℝ) := source.appArg!
+  let (base, equality) ← Reify.lowerWithProof #[] source.appArg!
+  let base : Q(ℝ) := base
   let n : Q(ℕ) := mkNatLit radicand
   let candidate ← mkFreshExprMVar q($base = ($n : ℝ))
   let remaining ← Lean.Elab.runTactic' candidate.mvarId!
     (← `(tactic| norm_num [RealAlgebraicNumber.ofRat_toReal]))
   unless remaining.isEmpty do
     throwError "rcf: square-root radicand has no checked natural value"
-  let proof ← instantiateMVars candidate
+  let proof ← mkEqTrans equality (← instantiateMVars candidate)
   checkWithKernel proof
   return ← mkEqSymm (← mkAppM ``congrArg #[mkConst ``Real.sqrt, proof])
 
@@ -171,14 +172,14 @@ private meta def candidate (target : Expr) : MetaM Bool := do
   let some atom := atoms[0]? | return false
   if atom.isAppOfArity ``Real.sqrt 1 then
     if (← naturalSquareRoot? atom).isSome then return true
-    return (← Reify.lowerRationals #[] atom) != atom
+    return (← Reify.lowerSources #[] atom) != atom
   return atom.isAppOfArity ``RealAlgebraicNumber.toReal 1
 
 /-- Preserve single-coefficient priority only when every original divisor
 is rational. Rational normalization restores its temporary metavariable state. -/
 private meta def rationalGuards (divisors : Array Expr) : MetaM Bool := do
   for original in divisors do
-    let divisor ← Reify.lowerRationals #[] original
+    let divisor ← Reify.lowerSources #[] original
     if !(sourceAtoms divisor #[]).isEmpty then return false
     let value : Q(ℝ) := divisor
     let result ← (do
@@ -599,7 +600,7 @@ private meta def proveRational (source : Reify.Source) : MetaM Expr := do
 
 private meta partial def gather (source : Expr) (leaves : Array Expr) :
     MetaM (Option (Array Expr)) := do
-  let lowered ← Reify.lowerRationals #[] source
+  let lowered ← Reify.lowerSources #[] source
   if lowered != source then return ← gather lowered leaves
   if ← eligible source then
     return some (if leaves.contains source then leaves else leaves.push source)
@@ -630,7 +631,7 @@ private meta partial def gather (source : Expr) (leaves : Array Expr) :
     | .error (.unsupported _ _) => return .declined
     | .error error => return .failed (Hex.RealFormula.Reify.Error.toMessageData error)
   if source.coefficients.isEmpty then
-    -- Checked rational constructor lowering retains all original guards.
+    -- Checked constructor lowering retains all original guards.
     -- False, replay and resource failures from the base remain terminal.
     return .proved (← proveRational source)
   if source.coefficients.size == 1 then

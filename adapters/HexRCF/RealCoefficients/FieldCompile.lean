@@ -7,6 +7,7 @@ module
 
 public meta import HexRCF.RealCoefficients.FieldLiteral
 public meta import HexRCF.RealCoefficients.Interpret
+public meta import HexRCF.RealCoefficients.Conversion
 
 public meta section
 
@@ -60,6 +61,10 @@ meta partial def compile {p : ZPoly} {root : SimpleRoot p}
   let args := e.getAppArgs
   let op := e.getAppFn.constName?
   let sourceQ : Q(ℝ) ← pure source
+  if let some (value, equality) ← Conversion.step? source then
+    let compiled ← compile pExpr rootExpr rep hrep hr leaf value
+    let proof ← mkEqTrans compiled.proof (← mkEqSymm equality)
+    return ← checked rep source ⟨compiled.value, compiled.expression, proof⟩
   if e.isAppOfArity ``RealAlgebraicNumber.toReal 1 &&
       e.appArg!.isAppOfArity ``RealAlgebraicNumber.ofRat 1 then
     let rational : Q(ℚ) := e.appArg!.appArg!
