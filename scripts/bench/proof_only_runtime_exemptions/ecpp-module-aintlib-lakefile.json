@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "c211b00fbbab54951663446800976ce3a0078956",
+  "current_blob": "d8dfe0f4a4ae6aa419d1b1a98f7c3cd254e9f6b3",
+  "reason": "The only changed factorization build declaration is the AINTLIB requirement. It selects the module-system Hasse proof dependency for HexECPPMathlib, which is outside the Mathlib-free hexbz_factor_service import graph. The package options, measured libraries, their native object targets and factorization executable declaration are unchanged. Other edits register independent conformance and real-closure targets. The added PARI pipe object target is linked only by its Mathlib-free IO sidecar, which neither measured executable imports; it is not an extern_lib or a package-wide link input."
+}

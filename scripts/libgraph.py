@@ -44,6 +44,7 @@ BUILD_ONLY_LIBS = {
     "HexPrimalityConstructionProbe",
     "HexPrimalityMathlibProofProbe",
     "HexECPPMathlibProofProbe",
+    "HexECPPMathlibPariIO",
     "HexIntFactorKernelProbe",
     "HexIntFactorFieldConformance",
     "HexMvGcdKernelProbe",

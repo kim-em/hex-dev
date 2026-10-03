@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexArith.Montgomery.Context
+public import Init
 
 /-! # Shared ECPP replay policy
 

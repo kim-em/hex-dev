@@ -10,6 +10,7 @@ import tempfile
 import unittest
 import unittest.mock
 from pathlib import Path
+from dataclasses import replace
 
 from scripts.bench import check_graphiso_sweep_freshness as graphiso_guard
 from scripts.bench import sweep_freshness as freshness
@@ -142,6 +143,23 @@ class Assess(unittest.TestCase):
         (directory / f"{path.replace('/', '-')}.json").write_text(json.dumps({
             "path": path, "baseline_blob": baseline,
             "current_blob": current, "reason": "runtime-neutral"}))
+
+    def test_graphiso_lake_exemption_cannot_cover_algorithm_change(self):
+        family = replace(freshness.GRAPHISO, name="test-graph",
+                         exemptions=self.root / "exemptions")
+        baseline = listing(("lakefile.lean", "a" * 40),
+                           ("HexGraphIso/Canon.lean", "0" * 40))
+        current = listing(("lakefile.lean", "b" * 40),
+                          ("HexGraphIso/Canon.lean", "1" * 40))
+        digest = freshness.record(family, baseline)
+        self.exempt("lakefile.lean", "a" * 40, "b" * 40)
+        self.exempt("HexGraphIso/Canon.lean", "0" * 40, "1" * 40)
+        verdict = freshness.assess(
+            family, [freshness.Observation(digest, "data.jsonl")], listing=current)
+        self.assertFalse(verdict.fresh)
+        self.assertEqual([d.path for d in verdict.exempted], ["lakefile.lean"])
+        self.assertIn("HexGraphIso/Canon.lean", verdict.errors[0])
+        self.assertFalse(family.permits_exemption("lean-toolchain"))
 
     def test_a_matching_fingerprint_is_fresh(self):
         digest = self.record(self.CURRENT)

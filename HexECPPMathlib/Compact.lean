@@ -42,9 +42,15 @@ syntax (name := compactCertTerm) "ecpp_cert% " str " using " term : term
   validateCert cert
   -- Keep the enclosing term small so its type can be inferred under the
   -- user's ordinary recursion limit. The exposed body is only raw data.
-  -- The name generator checks conflicts across private and public names.
-  -- A private enclosing theorem must still produce exposed certificate data.
-  let name := privateToUserName (← Term.mkAuxName `ecpp)
+  -- Exposed auxiliary data needs a public, globally unique name even when the
+  -- enclosing declaration is private. Include the module before asking the
+  -- generator to check conflicts; removing privacy afterward loses uniqueness.
+  let namePrefix := (← getDeclNGen).namePrefix
+  let moduleName := (← getEnv).mainModule
+  let namePrefix := if isPrivateName namePrefix then
+      privateToUserName namePrefix ++ moduleName
+    else namePrefix
+  let name ← withExporting <| withDeclNameForAuxNaming namePrefix <| Term.mkAuxName `ecpp
   let decl := Declaration.defnDecl {
     name := name
     levelParams := []

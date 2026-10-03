@@ -42,9 +42,13 @@ meta def generate (n : Nat) : MetaM (String × Cert) := do
   let cert ← match ← convertSupplied source with
     | .ok cert => pure cert
     | .error err => throwError "PARI conversion: row {err.row}: {repr err.kind}"
-  let proof ← certProof cert n (mkNatLit n)
+  validateCert cert
+  let frozen ← match convertText defaultImportBudget source (terminalCert cert) with
+    | .ok frozen => pure frozen
+    | .error err => throwError "PARI frozen conversion: row {err.row}: {repr err.kind}"
+  let proof ← certProof frozen n (mkNatLit n)
   checkWithKernel proof
-  return (source, cert)
+  return (source, frozen)
 
 syntax (name := pariSuggestTac) "primality?" " (" &"method" " := " &"pari" ")" : tactic
 

@@ -57,6 +57,19 @@ def main() -> None:
                 f"theorem suggestedCore : Hex.Nat.Prime ({n} - 1 + 1) := by\n  " + suggestions[1].strip() + "\n")
             output = build(module + ".Frozen", env)
             assert "[propext, Classical.choice, Quot.sound]" in " ".join(output.split()), output
+            # Private theorem names may repeat across independently built modules.
+            # Importing the modules together must preserve their certificate data.
+            (scratch / "Peer.lean").write_text(
+                "module\n\npublic import HexECPPMathlib.Compact\n\n"
+                "theorem suggestedNat : Nat.Prime (13 - 1 + 1) := by\n"
+                '  ecpp using (ecpp_cert% "13" using Hex.Nat.PrimeCert.small 13)\n')
+            (scratch / "PeerTwo.lean").write_text(
+                "module\n\npublic import HexECPPMathlib.Compact\n\n"
+                "theorem suggestedNat : Nat.Prime (17 - 1 + 1) := by\n"
+                '  ecpp using (ecpp_cert% "17" using Hex.Nat.PrimeCert.small 17)\n')
+            (scratch / "Combined.lean").write_text(
+                f"module\n\npublic import {module}.Frozen\npublic import {module}.Peer\npublic import {module}.PeerTwo\n")
+            build(module + ".Combined", env)
             # An exclusive export fails before running search and preserves the file.
             (scratch / "Again.lean").write_text(
                 "module\n\nimport HexECPPMathlib.Native\n"

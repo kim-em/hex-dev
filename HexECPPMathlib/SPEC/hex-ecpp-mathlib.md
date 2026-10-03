@@ -93,6 +93,9 @@ definition needed by replay must be `@[expose]`. Restrict the accepted term
 form to constructor data and exposed data constants; reject arbitrary
 computations. Bound traversal, unfolding, numeral size and total certificate
 nodes, including embedded `PrimeCert` data, before evaluating the checker.
+Constructor-data let bindings charge every occurrence after substitution.
+Shared terminal trees are traversed with a decreasing node allocation before
+reification or checker evaluation.
 It evaluates `checkAt` using compiled code as an untrusted preflight, reifies the certificate, and emits
 `natPrime_of_checkAt` with kernel-replayed acceptance. The emitted Boolean
 proof must reduce through exposed Lean definitions and existing approved
@@ -130,7 +133,10 @@ enable automatic stack growth. The process is limited to 30000 milliseconds,
 16448 stdout bytes and 4096 stderr bytes. On POSIX, cancellation and exhaustion
 terminate the process group with KILL and reap the child. Collect both pipe
 readers before reaping the leader, and never wait or kill that PID again after
-reaping it. Missing
+reaping it. Readers poll fresh, nonblocking POSIX pipe descriptors and observe
+cooperative cancellation independently of EOF, including pipes retained by
+descendants outside the original process group. The small Mathlib-free IO
+sidecar is precompiled; the mathematical bridge is not. Missing
 executables, process failures, framing errors, conversion diagnostics and
 timeout are reported distinctly. Conversion failure alone proves no
 compositeness.

@@ -91,6 +91,19 @@ target hexmodarithffi pkg : FilePath := do
   let oTarget ← zmod64MulOTarget pkg
   buildStaticLib (pkg.staticLibDir / name) #[oTarget]
 
+target hexecpppariio pkg : FilePath := do
+  let oFile := pkg.dir / defaultBuildDir / "HexECPPMathlib" / "ffi" / "pari_pipe.o"
+  let srcTarget ← inputTextFile <| pkg.dir / "HexECPPMathlib" / "ffi" / "pari_pipe.c"
+  let oTarget ← buildFileAfterDep oFile srcTarget fun srcFile => do
+    createParentDirs oFile
+    proc {
+      cmd := "cc"
+      args := #["-c", "-o", oFile.toString, srcFile.toString,
+        "-I", (← getLeanIncludeDir).toString, "-fPIC", "-O2", "-std=c11"]
+      env := #[("TMPDIR", some (← IO.FS.realPath (oFile.parent.getD ".")).toString)]
+    }
+  buildStaticLib (pkg.staticLibDir / nameToStaticLib "hexecpppariio") #[oTarget]
+
 private def hexlllProviderOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexLLL" / "ffi" / "lean_hexlll_provider.o"
   let srcTarget ← inputTextFile <| pkg.dir / "HexLLL" / "ffi" / "lean_hexlll_provider.c"
@@ -378,6 +391,14 @@ lean_lib HexBerlekampZassenhausMathlib where
 lean_lib HexPrimalityMathlib where
 
 lean_lib HexECPPMathlib where
+
+-- Lake selects the last matching library. Keep the Mathlib-free IO sidecar
+-- after the bridge so only this module needs a shared native library.
+lean_lib HexECPPMathlibPariIO where
+  roots := #[`HexECPPMathlib.Pari.IO]
+  globs := #[.one `HexECPPMathlib.Pari.IO]
+  precompileModules := true
+  moreLinkObjs := #[hexecpppariio]
 
 @[default_target]
 lean_lib HexIntFactorMathlib where

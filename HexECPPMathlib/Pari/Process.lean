@@ -6,6 +6,8 @@ Authors: Kim Morrison
 module
 
 public import HexECPPMathlib.Policy
+public import HexECPPMathlib.Pari.IO
+public import HexArith.Montgomery.Context
 
 /-! # Bounded PARI process protocol
 
@@ -25,10 +27,12 @@ structure ProcessBudget where
   stackBytes : Nat := 64000000
 deriving Repr
 
-private def readBounded (handle : IO.FS.Handle) (limit : Nat) : IO String := do
+private def readBounded (handle : IO.FS.Handle) (limit : Nat)
+    (cancel : _root_.IO.CancelToken) : _root_.IO String := do
   let mut data := ByteArray.empty
   repeat
-    let chunk ← handle.read 4096
+    if ← cancel.isSet then throw <| IO.userError "PARI: pipe collection stopped"
+    let some chunk ← IO.pollRead handle | continue
     if chunk.isEmpty then
       let some text := String.fromUTF8? data
         | throw <| IO.userError "PARI output is not UTF-8"
@@ -38,14 +42,17 @@ private def readBounded (handle : IO.FS.Handle) (limit : Nat) : IO String := do
     data := data ++ chunk
 
 private def stop {cfg : IO.Process.StdioConfig} (child : IO.Process.Child cfg)
-    (stdout stderr : Task (Except IO.Error String)) : IO Unit := do
-  -- Lean's process runtime kills the session with SIGKILL. Keep the child
-  -- unreaped until its pipes close, so its PID cannot be reused before cleanup.
-  try child.kill catch _ => pure ()
-  -- KILL closes pipes held by the session, including its descendants. Collect
-  -- both finite reader tasks (including failures) before releasing the PID.
-  discard <| IO.wait stdout
-  discard <| IO.wait stderr
+    (stdout stderr : Task (Except IO.Error String))
+    (cancel : _root_.IO.CancelToken) : _root_.IO Unit := do
+  -- Keep the leader unreaped until both readers finish. A descendant may
+  -- escape the group while retaining a pipe, so SIGKILL alone is insufficient.
+  try IO.killGroup child.pid
+  finally
+    cancel.set
+    -- Polling readers observe cancellation independently of EOF, including
+    -- pipes held outside the process group. Collect failures before reaping.
+    discard <| IO.wait stdout
+    discard <| IO.wait stderr
   try discard <| child.wait catch _ => pure ()
 
 private def requestFile (n : Nat) : IO System.FilePath := do
@@ -70,8 +77,9 @@ private def runFile (n : Nat) (request : System.FilePath) (budget : ProcessBudge
       setsid := true }
   catch err =>
     throw <| IO.userError s!"PARI: cannot start `{executable}`; install PARI/GP and put `gp` on PATH ({err})"
-  let stdout ← IO.asTask (readBounded child.stdout budget.maxOutputBytes) .dedicated
-  let stderr ← IO.asTask (readBounded child.stderr budget.maxErrorBytes) .dedicated
+  let readerCancel ← IO.CancelToken.new
+  let stdout ← IO.asTask (readBounded child.stdout budget.maxOutputBytes readerCancel) .dedicated
+  let stderr ← IO.asTask (readBounded child.stderr budget.maxErrorBytes readerCancel) .dedicated
   let start ← IO.monoMsNow
   let completed ← IO.mkRef false
   try
@@ -106,7 +114,7 @@ private def runFile (n : Nat) (request : System.FilePath) (budget : ProcessBudge
           return payload
       IO.sleep 25
   finally
-    unless ← completed.get do stop child stdout stderr
+    unless ← completed.get do stop child stdout stderr readerCancel
 
 /-- Run only the evaluated natural numeral, without a shell or user startup file.
 Null stdin preserves the original process-group handle. The private GP input
