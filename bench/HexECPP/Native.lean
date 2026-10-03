@@ -20,6 +20,20 @@ private def steps : Cert → Nat
   | .base _ => 0
   | .step _ _ _ _ _ _ _ c => 1 + steps c
 
+private def primeNodes : Nat → Hex.Nat.PrimeCert → Option Nat
+  | 0, _ => none
+  | _ + 1, .small _ => some 1
+  | fuel + 1, .pock _ fs
+  | fuel + 1, .pock3 _ _ _ _ fs
+  | fuel + 1, .pock3Sieve _ _ _ _ _ fs => do
+      let nodes ← fs.mapM fun (_, _, child) => primeNodes fuel child
+      pure (1 + nodes.sum)
+
+private def descent : Cert → List (Nat × Nat)
+  | .base _ => []
+  | .step n _ _ _ _ _ _ child =>
+      (HexArith.bitLength n, HexArith.bitLength child.subject) :: descent child
+
 private def stats (s : SearchStats) : Lean.Json := Lean.Json.mkObj [
   ("candidates", toJson s.candidates), ("roots", toJson s.roots),
   ("nonresidues", toJson s.nonresidues), ("points", toJson s.points),
@@ -40,11 +54,15 @@ where toJson := Lean.toJson
 def main (args : List String) : IO UInt32 := do
   let (n, seed, budget) ← match args with
     | [n, seed] => pure (n, seed, ({} : SearchBudget))
+    | [n, seed, "diagnose512"] => pure (n, seed, { maxBits := 512 })
+    | [n, seed, "diagnose512-public"] =>
+        pure (n, seed, { maxBits := 512, maxDepth := 20 })
     | [n, seed, depth, candidates] =>
         let some depth := depth.toNat? | throw <| IO.userError "invalid depth"
         let some candidates := candidates.toNat? | throw <| IO.userError "invalid candidates"
         pure (n, seed, { maxDepth := depth, maxCandidates := candidates })
-    | _ => throw <| IO.userError "usage: hexecpp_native SUBJECT SEED [DEPTH CANDIDATES]"
+    | _ => throw <| IO.userError (
+        "usage: hexecpp_native SUBJECT SEED [DEPTH CANDIDATES | diagnose512 | diagnose512-public]")
   let some n := n.toNat? | throw <| IO.userError "invalid subject"
   let some seed := seed.toNat? | throw <| IO.userError "invalid seed"
   let start ← IO.monoNanosNow
@@ -67,6 +85,8 @@ def main (args : List String) : IO UInt32 := do
       let checkTime := (← IO.monoNanosNow) - start
       pure [("verdict", Lean.toJson "success"), ("checked", Lean.toJson valid),
         ("steps", Lean.toJson (steps c)), ("data_bits", Lean.toJson (certBits c)),
+        ("descent_bits", Lean.toJson (descent c)),
+        ("terminal_nodes", Lean.toJson (primeNodes (leafBudget.maxDepth + 1) leaf)),
         ("rows", Lean.toJson source), ("leaf", Lean.toJson (reprStr leaf)),
         ("expanded", Lean.toJson (reprStr c)),
         ("conversion_ns", Lean.toJson convertTime), ("check_ns", Lean.toJson checkTime),
