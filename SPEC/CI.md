@@ -319,7 +319,12 @@ toolchain or dependency graph are not useful enough to justify their
 download. The final key component is the commit SHA, with the
 dependency-scoped prefix used as `restore-keys`.
 
-Only a fully verified `main` push saves a snapshot. Pull-request caches
+Every `main` push saves a snapshot as soon as its build steps end, before
+the verification steps and whether or not any step failed. Restored oleans
+are safe for the same reason a stale cache is: Lake rebuilds every module
+whose inputs changed. Waiting for a fully green run would leave pull
+requests rebuilding everything merged since the last green `main`, which is
+hours of work whenever `main` is red or verification is slow. Pull-request caches
 are scoped to that PR's merge ref and cannot seed another PR, while a
 cache saved on the default branch is available to pull requests. Saving
 an approximately 1 GB snapshot from every PR run therefore churns the
@@ -340,8 +345,8 @@ may lose prerelease artifacts that remain present in the canonical release.
 The helper owns no whole-`.lake` cache; the explicit Hex cache below owns this
 policy and Mathlib's cache is managed separately. The public R2/Lake artifact
 cache is a fallback only when the GitHub cache has no compatible match.
-Successful trusted `main` builds publish to both backends after all
-verification gates pass.
+The GitHub snapshot is saved as above; the R2 artifact cache is published
+by successful trusted `main` builds after all verification gates pass.
 
 Coverage:
 
