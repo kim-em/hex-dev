@@ -10,3 +10,4 @@ path = "../.."
 [[lean_lib]]
 name = "RealClosureConsumer"
 srcDir = "../../examples"
+globs = ["RealClosureConsumer.+"]

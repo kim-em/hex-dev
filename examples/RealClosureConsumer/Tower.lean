@@ -30,7 +30,7 @@ theorem tower_roots (model : Model parent K) (p : DensePoly parent.Value)
   cases returned : parent.roots p with
   | all => exact False.elim (nonzero ((Context.roots_all model p).mp returned))
   | finite out =>
-    refine ⟨out, returned, ?_, Context.roots_sorted model p returned, ?_⟩
+    refine ⟨out, rfl, ?_, Context.roots_sorted model p returned, ?_⟩
     · exact (Context.roots?_success model p).trans (congrArg Except.ok returned)
     · exact fun x label => Context.roots_spec model p returned x label
 
