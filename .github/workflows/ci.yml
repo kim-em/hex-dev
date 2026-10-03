@@ -433,6 +433,8 @@ jobs:
           .lake/build/bin/hexsigndet_field_checks
           python3 scripts/ci/check_ecpp_pari.py
           python3 scripts/ci/check_ecpp_native.py
+          python3 scripts/ci/check_ecpp_native.py --bits 512 --seed 0 \
+            --subject 12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457
       - name: Check real-closure architecture experiments
         if: steps.classify.outputs.docs_only != 'true'
         env:

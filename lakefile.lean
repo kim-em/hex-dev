@@ -801,6 +801,9 @@ lean_lib HexPrimalityMathlibProofProbe where
 lean_lib HexECPPMathlibProofProbe where
   srcDir := "bench"
   globs := #[`HexECPPMathlib.ProofProbe.NativeGeneration,
+    `HexECPPMathlib.ProofProbe.Native512Baseline,
+    `HexECPPMathlib.ProofProbe.Native512Reify,
+    `HexECPPMathlib.ProofProbe.Native512Direct,
     `HexECPPMathlib.ProofProbe.Native128_0,
     `HexECPPMathlib.ProofProbe.NativeBaseline,
     `HexECPPMathlib.ProofProbe.NativeReify,

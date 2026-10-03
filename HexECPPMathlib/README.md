@@ -63,11 +63,15 @@ the pinned AINTLIB development. Guarded dependency audits permit only
 `propext`, `Classical.choice` and `Quot.sound`. Search and external proposals
 are untrusted; suggestions and exports are kernel-checked before publication.
 
-Replay is admitted through 512 bits; native production is separately admitted
-through 256 bits and can exhaust its finite search allocation. Replay allows
+Replay and explicitly selected native production are admitted through 512 bits.
+Native generation defaults to 256 bits; select `primality? (method := ecpp)
+(bits := 512) (seed := 0)` or `#ecpp_export (method := ecpp) (bits := 512)
+(seed := 0) MyCertificates.Prime cert for n` for the finite 512-bit policy.
+Only 256 and 512 are accepted policy choices. Search can exhaust its allocation. Replay allows
 32 total certificate nodes, counting the ECPP base and every terminal node,
-with independent syntax and inverse-transcript limits. Respecting native row
-depth alone does not guarantee that a generated certificate fits replay.
+with independent syntax and inverse-transcript limits. The 512-bit search accounts for the 20-row and 32-node ceilings while
+backtracking; generation also validates the exact frozen representation before
+suggesting or exporting it.
 Exhaustion proves nothing about compositeness. There is no automatic ECPP
 fallback or `norm_num` registration.
 

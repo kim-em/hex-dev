@@ -6,7 +6,7 @@ built with spec-driven development.
 
 `HexECPP` provides arithmetic checking of elliptic-curve primality
 certificates, bounded PARI certificate conversion, and opt-in native CM
-production through 256 bits. It depends on `HexArith` and `HexPrimality`.
+production through 512 bits with an explicit finite policy. It depends on `HexArith` and `HexPrimality`.
 The [HexECPPMathlib companion](https://github.com/kim-em/hex-dev/tree/main/HexECPPMathlib)
 owns curve semantics, the Hasse bound, and the unconditional primality implication.
 
@@ -41,9 +41,13 @@ def certificate : Cert := .base (.small 17)
   enforce explicit parsing, integer, row, scalar, inverse and endpoint allocations.
 - `proposeScalar` generates checked affine inverse transcripts.
 - `CM.sqrt?`, `CM.norm?`, and `CM.curves` supply bounded CM proposals.
+  The 512-bit policy adds 33 fixed linear or quadratic class polynomials to
+  the original nine discriminants; proposed roots and certificates are checked.
 - `produce` uses deterministic seeds and shared allocations across backtracking.
   It returns a checked certificate or a resource diagnostic; exhaustion does
-  not establish compositeness. Native production above 256 bits is unsupported.
+  not establish compositeness. The default policy admits 256 bits;
+  `native512Budget` admits 512 bits, and `public512Budget` additionally enforces
+  the public replay row and node ceilings. Production above 512 bits is unsupported.
 
 # Verification
 

@@ -21,17 +21,19 @@ MODULES = ["NativeBaseline", "NativeReify", "NativeDirect", "Native256_0"]
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "reports/ecpp/native/phases.json")
+    parser.add_argument("--native512", action="store_true")
     args = parser.parse_args()
+    modules = ["Native512Baseline", "Native512Reify", "Native512Direct"] if args.native512 else MODULES
     if args.output.exists():
         parser.error("output already exists; preserve completed phase measurements")
     cpu, lease = cpu_lease()
     report = dict(host=os.uname().nodename, cpu=cpu,
                   source=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
                   lean=subprocess.check_output(["lake", "--version"], cwd=ROOT, text=True).strip(),
-                  source_hashes={name: hashlib.sha256((ROOT / "bench/HexECPPMathlib/ProofProbe" / (name + ".lean")).read_bytes()).hexdigest() for name in MODULES},
+                  source_hashes={name: hashlib.sha256((ROOT / "bench/HexECPPMathlib/ProofProbe" / (name + ".lean")).read_bytes()).hexdigest() for name in modules},
                   samples=[])
     for trial in range(4):
-        for name in MODULES:
+        for name in modules:
             module = "HexECPPMathlib.ProofProbe." + name
             relative = Path(*module.split("."))
             for suffix in (".olean", ".olean.private", ".olean.server", ".ilean", ".trace", ".olean.hash"):
@@ -47,6 +49,10 @@ def main() -> None:
             sample = dict(rebuilt=build_line is not None, build_line=build_line,
                           trial=trial, module=module, wall_ns=time.monotonic_ns() - start,
                           returncode=result.returncode, loadavg=list(os.getloadavg()))
+            timing = re.search(r"NATIVE512_REIFY_NS=(\d+) VALIDATE_NS=(\d+)", result.stdout)
+            if timing:
+                sample.update(reification_and_type_ns=int(timing[1]),
+                              replay_preflight_ns=int(timing[2]))
             for line in result.stderr.splitlines():
                 if line.startswith("HEX_RSS_KB="):
                     sample["rss_kb"] = int(line.split("=")[1])

@@ -227,16 +227,23 @@ producer is owned by the computational SPEC. It validates raw data and
 kernel-checks the unconditional proof before suggesting or exporting compact
 frozen data. It introduces no registration on ordinary `primality` and no
 CM proof dependency. The native search ceiling is admitted separately from
-the supplied-certificate replay ceiling.
+the supplied-certificate replay ceiling. Both native public commands accept
+optional `(bits := 256)` or `(bits := 512)` before the optional seed; omission
+selects 256, and other policy values fail before search. The 512-bit policy is
+`Hex.ECPP.public512Budget`; no ordinary primality dispatch changes.
 
 Native row depth and replay node counts are separate allocations. The bridge
-clamps native row depth to the converter's 20-row ceiling. Replay additionally
+clamps the default native depth to the converter's 20-row ceiling. For the
+512-bit policy it allows a terminal call after 20 rows (search depth 21), and
+enforces at most 20 rows and 32 total nodes during search and memo reuse. Replay additionally
 counts every embedded terminal `PrimeCert` node and its ECPP base wrapper:
 rows + 1 + terminal nodes must be at most 32. A shallow terminal tree can
 therefore exhaust replay even when both search depth limits were respected.
 Generation passes the complete proposal through `certProof` and its replay
 preflight before any suggestion or export; this exhaustion is a clean resource
-failure. Conformance includes an accepted 31-node terminal with its base
+failure. Reified ECPP natural fields and inverse lists use raw natural
+literals, avoiding frontend `OfNat` wrappers while preserving the values and
+the unchanged 131072-node inspection ceiling. Conformance includes an accepted 31-node terminal with its base
 wrapper, both literal and compact replay, and rejection when a row raises the
 total to 33.
 
