@@ -26,6 +26,14 @@ structure Inclusion (source target : Context registry) : Type 1 where
     (inclusion : Inclusion source target) (a : source.Value) : target.Value :=
   _root_.cast (congrArg Context.Value inclusion.context_eq) (inclusion.conversion.value a)
 
+/-- Retain an inclusion's declared target and its checked native map. -/
+@[expose] def Inclusion.native {source target : Context registry}
+    (inclusion : Inclusion source target) : Conversion source :=
+  Conversion.ofTransport inclusion.value (by
+    rcases inclusion with ⟨conversion, same⟩
+    cases same
+    exact conversion.checked)
+
 /-- Convert all coefficients with the same checked inclusion. -/
 @[expose] def Inclusion.polynomial {source target : Context registry}
     (inclusion : Inclusion source target) (p : source.Poly) : target.Poly :=

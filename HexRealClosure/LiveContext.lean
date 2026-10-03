@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.TowerInclusion
+public import HexRealClosure.TowerCache
 public import HexRealClosure.TowerEnlargement
 
 public section
@@ -68,6 +68,7 @@ structure Shared (base : BaseContext.PackedContext registry)
   input : Conversion (Context.ofBase base)
   maps : Inclusions input.context owners
   base_eq : input.context.origin.base = base
+  cache : InclusionCache input.context
 
 /-- Begin in the actual declared staged base. -/
 def Shared.empty (base : BaseContext.PackedContext registry) : Shared base [] :=
@@ -77,10 +78,10 @@ def Shared.empty (base : BaseContext.PackedContext registry) : Shared base [] :=
     | pack base =>
       change (Context.base base).origin.base = BaseContext.PackedContext.pack base
       rw [Context.origin_base]
-      rfl⟩
+      rfl, ⟨[]⟩⟩
 
-/-- Rebuild all validated ancestors of one requested live context over the
-current shared target, updating every previous checked inclusion together. -/
+/-- Register one requested context, reusing cached original predecessors and
+rebuilding unseen roots. Update all previous checked inclusions together. -/
 def Shared.addOrigin? {base : BaseContext.PackedContext registry}
     {owners : List (Context registry)} (shared : Shared base owners)
     {source : Context registry} (origin : Origin source) :
@@ -90,28 +91,11 @@ def Shared.addOrigin? {base : BaseContext.PackedContext registry}
     exact do
       let previous ← Inclusion.base? (.pack original) base
       let starting := previous.comp (Inclusion.mk shared.input rfl)
-      let rebuilt ← starting.conversion.rebuild? suffix
-      let next := rebuilt.input.cast starting.context_eq
-      let combined := shared.input.comp next
-      let following : Inclusion shared.input.context combined.context :=
-        ⟨next, (shared.input.comp_spec next).1.symm⟩
-      let converted := rebuilt.result.cast source_eq
-      let same : converted.context = combined.context :=
-        (rebuilt.result.cast_spec source_eq).1.trans
-          ((rebuilt.input_spec).1.symm.trans
-            ((rebuilt.input.cast_spec starting.context_eq).1.symm.trans
-              (shared.input.comp_spec next).1.symm))
-      let newest : Inclusion source combined.context := ⟨converted, same⟩
-      have returned_base : combined.context.origin.base = base := by
-        have target : combined.context = rebuilt.result.context :=
-          (shared.input.comp_spec next).1.trans
-            ((rebuilt.input.cast_spec starting.context_eq).1.trans rebuilt.input_spec.1)
-        exact (congrArg (fun context => context.origin.base) target).trans
-          ((congrArg (fun context => context.origin.base) rebuilt.context_eq.symm).trans
-            (rebuilt.suffix.base_eq.trans
-              ((congrArg (fun context => context.origin.base) starting.context_eq).trans
-                shared.base_eq)))
-      return ⟨combined, (shared.maps.extend following).snoc newest, returned_base⟩
+      let rebuilt ← (shared.cache.insert starting).rebuild? starting suffix
+      let combined := ((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native
+      let newest : Inclusion source rebuilt.target := source_eq ▸ rebuilt.original
+      return ⟨combined, (shared.maps.extend rebuilt.inclusion).snoc newest,
+        rebuilt.base_eq.trans shared.base_eq, rebuilt.cache⟩
 
 /-- Register a validated context using its actual stored base and complete
 root suffix, without caller-supplied coefficient or semantic agreement. -/
@@ -119,6 +103,41 @@ def Shared.add? {base : BaseContext.PackedContext registry}
     {owners : List (Context registry)} (shared : Shared base owners)
     (source : Context registry) : Option (Shared base (owners ++ [source])) :=
   shared.addOrigin? source.origin
+
+/-- Registration extends every old owner through one shared inclusion and
+appends the requested original context's checked inclusion. -/
+theorem Shared.addOrigin?_maps {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    {source : Context registry} (origin : Origin source)
+    (result : Shared base (owners ++ [source]))
+    (produced : shared.addOrigin? origin = some result) :
+    ∃ previous : Inclusion shared.input.context result.input.context,
+      ∃ newest : Inclusion source result.input.context,
+        result.maps = (shared.maps.extend previous).snoc newest := by
+  cases origin with
+  | pack original suffix source_eq =>
+    cases source_eq
+    cases base_eq : Inclusion.base? (.pack original) base with
+    | none => simp [Shared.addOrigin?, base_eq] at produced
+    | some previous =>
+      let starting := previous.comp (Inclusion.mk shared.input rfl)
+      cases rebuilt_eq : (shared.cache.insert starting).rebuild? starting suffix with
+      | none => simp [Shared.addOrigin?, base_eq, starting, rebuilt_eq] at produced
+      | some rebuilt =>
+        simp only [starting] at rebuilt_eq
+        simp only [Shared.addOrigin?, base_eq, bind, Option.bind, rebuilt_eq, pure] at produced
+        cases Option.some.inj produced
+        exact ⟨rebuilt.inclusion, rebuilt.original, rfl⟩
+
+/-- The public registration API retains the original owner order and maps. -/
+theorem Shared.add?_maps {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (source : Context registry) (result : Shared base (owners ++ [source]))
+    (produced : shared.add? source = some result) :
+    ∃ previous : Inclusion shared.input.context result.input.context,
+      ∃ newest : Inclusion source result.input.context,
+        result.maps = (shared.maps.extend previous).snoc newest :=
+  shared.addOrigin?_maps source.origin result produced
 
 /-- Transport one original value through its returned checked map. -/
 @[expose] def Shared.value {base : BaseContext.PackedContext registry}
@@ -200,7 +219,7 @@ def Shared.enlargeOrigin? {base : BaseContext.PackedContext registry}
       let target : Inclusion shared.input.context next.context :=
         ⟨converted, same.symm⟩
       let enlarged : Shared (.pack original.infinitesimal) owners :=
-        ⟨next, shared.maps.extend target, returned_base⟩
+        ⟨next, shared.maps.extend target, returned_base, shared.cache.extend target⟩
       return ⟨enlarged, rebuilt.enlargement original source_eq,
         (rebuilt.enlargement_conversion original source_eq).symm ▸ same.symm⟩
 
@@ -314,6 +333,10 @@ theorem Shared.enlarge?_isSome {base : BaseContext.PackedContext registry}
   simpa only [Option.isSome_map] using congrArg Option.isSome shared.enlarge?_conversion
 
 end Hex.RealClosure.Tower
+
+/-- info: 'Hex.RealClosure.Tower.Shared.add?_maps' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.add?_maps
 
 /-- info: 'Hex.RealClosure.Tower.Shared.enlarge?' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

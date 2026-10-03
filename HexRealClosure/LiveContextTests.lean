@@ -36,6 +36,8 @@ def run : IO Unit := do
   let owners := [extension.context, Context.base first, Context.base second]
   let some shared := Shared.gather? (.pack second) owners
     | throw (IO.userError "compatible live-context assembly failed")
+  require (shared.input.context.signature.roots.length == 1)
+    "registration duplicated the selected root"
   let a := shared.value 0 alpha
   let e := shared.value 1 epsilon
   let d := shared.value 2 delta
@@ -54,6 +56,8 @@ def run : IO Unit := do
   let some enlarged := shared.enlarge?
     | throw (IO.userError "shared-context enlargement failed")
   let next := enlarged.shared
+  require (next.input.context.signature.roots.length == 1)
+    "enlargement duplicated an algebraic dependency"
   let a' := next.value 0 alpha
   let e' := next.value 1 epsilon
   let d' := next.value 2 delta
@@ -88,12 +92,38 @@ def run : IO Unit := do
   let child := extension.context.adjoin dependent
   let some registered := next.add? child.context
     | throw (IO.userError "dependent root registration after enlargement failed")
+  require (registered.input.context.signature.roots.length == 2)
+    "parent/child registration duplicated their common root"
   let retained := registered.value ⟨0, by simp [owners]⟩ alpha
   let b := registered.value ⟨3, by simp [owners]⟩ child.generator
   require (registered.input.context.equal (b * b) retained)
     "registered root did not retain its transported coefficient dependency"
   require (registered.input.context.sign b == 1)
     "registration selected a different dependent root"
+  let some reversed := Shared.gather? (.pack rational) [child.context, extension.context]
+    | throw (IO.userError "child/parent registration failed")
+  require (reversed.input.context.signature.roots.length == 2)
+    "child/parent registration did not reuse the cached predecessor"
+  let some repeated := reversed.add? child.context
+    | throw (IO.userError "repeated owner registration failed")
+  require (repeated.input.context.signature.roots.length == 2)
+    "repeated owner registration adjoined its roots again"
+  let some siblingDescriptor := SignDet.Descriptor.validate extension.context.sign
+      extension.context.signature
+      { context := extension.context.signature, head := y * y - DensePoly.C (alpha + 1),
+        lower := .finite 1, upper := .finite (1 + 1), indices := [], signs := [] }
+    | throw (IO.userError "sibling live-root descriptor failed")
+  let sibling := extension.context.adjoin siblingDescriptor
+  let some branches := Shared.gather? (.pack rational) [child.context, sibling.context]
+    | throw (IO.userError "sibling registration failed")
+  require (branches.input.context.signature.roots.length == 3)
+    "sibling registration duplicated their common ancestor"
+  let alpha' := branches.value 0 (child.embed alpha)
+  let siblingRoot := branches.value 1 sibling.generator
+  require (branches.input.context.equal (siblingRoot * siblingRoot) (alpha' + 1))
+    "sibling root lost its common coefficient dependency"
+  require ((shared.add? (Context.base second.infinitesimal)).isNone)
+    "registration accepted an original base deeper than the declared target"
 
 end Hex.RealClosure.Tower.LiveTests
 

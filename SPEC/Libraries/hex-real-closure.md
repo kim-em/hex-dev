@@ -146,8 +146,11 @@ original context.
 
 `Tower.Shared base owners` retains an immutable list of original contexts and
 one checked inclusion for each original owner into a shared target. Registration
-rebuilds the owner's complete validated suffix in predecessor order and updates
-all earlier maps. Original values remain indexed by their original contexts;
+visits the owner's validated suffix in predecessor order, reuses cached checked
+inclusions for original predecessors, and adjoins only previously unseen roots.
+Parent/child owners and sibling branches therefore retain one common ancestor
+level. Every new target updates all earlier owner and predecessor maps.
+Original values remain indexed by their original contexts;
 `Shared.value` and `Shared.polynomial` select the checked map by its original
 owner index. The native base compatibility check uses the full real-prefix key
 path and nondecreasing infinitesimal depth, rather than a hash or a carrier type.

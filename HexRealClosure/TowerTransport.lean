@@ -49,10 +49,14 @@ inductive Transport : (source target : Context registry) → (source.Value → t
 /-- An immutable target context and its actual native conversion from a source.
 The erased proof records the native steps used to construct it. -/
 structure Conversion (source : Context registry) : Type 1 where
-  private mk ::
   context : Context registry
   value : source.Value → context.Value
   checked : Transport source context value
+
+/-- Package a native conversion with its finite transport derivation. -/
+@[expose] def Conversion.ofTransport {source target : Context registry}
+    (value : source.Value → target.Value) (checked : Transport source target value) :
+    Conversion source := ⟨target, value, checked⟩
 
 /-- Start conversion without changing the context. -/
 def Conversion.identity (source : Context registry) : Conversion source :=

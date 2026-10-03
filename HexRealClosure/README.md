@@ -1429,20 +1429,28 @@ all original owner contexts. Use `Shared.gather?` with the actual validated
 context handles, then `Shared.value index value` or
 `Shared.polynomial index polynomial` to enter that target. The owner index
 keeps the original value or polynomial type. The native checked base inclusion
-accepts identical complete real-prefix paths and increasing infinitesimal depth;
+accepts identical complete real-prefix paths and nondecreasing infinitesimal depth;
 decreasing depth and a different prefix are rejected.
+
+Registration caches checked inclusions for every original algebraic predecessor.
+Parent/child registration, sibling branches, and repeated owners reuse their
+common roots. `Shared.add?_maps` describes the returned old-owner inclusions and
+the appended original-owner map. A new target updates the predecessor cache
+through the same inclusion used for the retained owners.
 
 `shared.enlarge?` returns a new shared target, a checked inclusion `previous`
 from the old shared target, and its cached positive `parameter`. All retained
 owner maps use this one inclusion, and accessing the parameter rebuilds no root.
 `Shared.enlarge?_models` proves preservation in one common ambient and identifies
-its actual infinitesimal; `Shared.enlarge?_ordered` gives positivity and comparison
+its actual infinitesimal and every input owner's interpreted values;
+`Shared.enlarge?_ordered` gives positivity and comparison
 against every old positive value. Existing serialized values and polynomials
 must pass the returned target's checked readers; old packets with a different
 literal binding are rejected.
 
 Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext`
-for mixed infinitesimal depths, dependent-root registration, original equations,
+for mixed infinitesimal depths, parent/child and sibling registration, repeated
+owners, root-level counts, original equations,
 owner-map agreement, polynomial transport, parameter order and stale packets.
 The checked inclusions also have ordinary-kernel value, polynomial and comparison
 proofs; the all-owner enlargement proof uses the actual cached checked packet.

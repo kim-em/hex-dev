@@ -222,14 +222,20 @@ theorem Shared.enlarge?_models (shared : Shared base owners)
       shared.enlarge? = some enlarged ∧
         ∃ model : Inclusion.Model enlarged.previous (old.liftInfinitesimal ambient),
           model.target.value enlarged.parameter = ambient.inclusion Hex.RationalFn.X ∧
-          Nonempty (Inclusions.Models model.target enlarged.shared.maps) := by
+          Nonempty (Inclusions.Models model.target enlarged.shared.maps) ∧
+          ∀ (index : Fin owners.length) (a : (owners[index]).Value),
+            model.target.value (enlarged.shared.value index a) =
+              Ambient.coefficientHom ambient ((models.get index).1.value a) := by
   obtain ⟨enlarged, produced, model, parameter⟩ :=
     shared.enlarge?_parameter witness old ambient
-  refine ⟨enlarged, produced, model, parameter, ?_⟩
-  have lifted : Inclusions.Models (old.liftInfinitesimal ambient) shared.maps :=
-    models.map (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient)
-  rw [shared.enlarge?_maps enlarged produced]
-  exact ⟨lifted.extend model⟩
+  refine ⟨enlarged, produced, model, parameter, ?_, ?_⟩
+  · have lifted : Inclusions.Models (old.liftInfinitesimal ambient) shared.maps :=
+      models.map (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient)
+    rw [shared.enlarge?_maps enlarged produced]
+    exact ⟨lifted.extend model⟩
+  · intro index a
+    rw [shared.enlarge?_value enlarged produced, model.value, Model.liftInfinitesimal_value]
+    exact congrArg (Ambient.coefficientHom ambient) (models.value index a)
 
 private theorem sign_cast {left right : Context registry} (same : left = right)
     (a : left.Value) :
