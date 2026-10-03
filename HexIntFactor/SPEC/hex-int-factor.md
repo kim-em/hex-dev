@@ -330,11 +330,13 @@ supplied certificates need not have identical syntax, but every supplied one
 must be accepted for its base. Otherwise run bounded native `PrimeCert`
 completion once for that distinct base, threading randomness on success and
 failure. Composite bases and bases whose primality cannot be completed remain
-in the residual with distinct diagnostics. The initial importer does not split
-composite proposals further. Retain the canonical validated unresolved
+in the residual with distinct diagnostics. Zero completion attempts are reported
+as `skipped`, separately from attempted but unfinished completion. The initial
+importer does not split composite proposals further. Retain the canonical validated unresolved
 base/multiplicity pairs, their completion failure kinds, and the unlisted
 quotient as untrusted hints in the result. Independently check that their
-bounded product reconstructs the checked residual; these hints are never
+bounded product reconstructs the checked residual and, with the certified
+product, the requested subject; these hints are never
 prime-power evidence. Multiply their validated powers into the unlisted
 quotient with the same subject bound. Sort and merge only certified entries.
 Check the final partial candidate with `checkPartial`; residual one is checked
@@ -360,7 +362,7 @@ events retained. This is an existing pure callback, not an IO hook.
 Entry and node limits bound the number of completion calls and certificate
 replays. These are finite caller-selected allocations, not promises that every
 admitted base can be certified. With zero completion attempts the importer
-skips native construction entirely and records unfinished completion for
+skips native construction entirely and records skipped completion for
 uncertified bases, including table-range bases; supplied certificates remain
 usable. Adding external proposals for `p−1` or PARI `primecert(p, 1)` is a
 possible later optimization, excluded from the initial factor-list protocol.
@@ -396,20 +398,9 @@ Process limits are separate: 30000 ms, 16448 stdout bytes, 4096 stderr bytes,
 and a fixed initial GP stack with automatic growth disabled. Cancellation,
 timeout, excess output, non-UTF-8/malformed framing, missing executable,
 nonzero exit or nonempty stderr, invalid arithmetic, and primality-completion
-exhaustion have distinct diagnostics. The wall-clock deadline includes pipe
-completion, including when the leader has exited but descendants hold pipes.
-Adapt and attribute `HexECPPMathlib.Pari` and its `PariProcess` tests without
-importing HexECPP or HexECPPMathlib. On supported POSIX platforms retain the
-original session/process-group handle, use KILL on cancellation/exhaustion,
-on a kill path first send KILL, then join both dedicated bounded readers,
-and only then reap exactly once. The process-group cleanup assumption bounds
-reader joining: no supported descendant escapes the group or inherits these
-pipes outside it. Do not copy the older ECPP kill path's early `wait`. Do not reap the
-leader while descendants hold its pipes; after reaping, never kill or wait on
-that PID again. This contract covers descendants remaining in the created
-process group; an executable that deliberately escapes that group is outside
-the supported producer contract. No platform may silently claim these cleanup
-guarantees when its process runtime does not implement them.
+exhaustion have distinct diagnostics. Direct invocation and bounded output
+reading follow `HexECPPMathlib.Pari` without importing HexECPP or HexECPPMathlib.
+The initial producer supports POSIX platforms.
 
 ### Explicit fallback and diagnostic preservation
 
@@ -417,9 +408,10 @@ guarantees when its process runtime does not implement them.
 fallback allocations. After unavailable, failed, malformed or rejected external
 production it runs native search on the original positive subject. After a
 checked partial import it preserves the validated residual pieces: run native
-factorization separately on composite pieces (factor the base, then scale its
-multiplicities) and on the unlisted quotient, preserving certified entries and
-advanced randomness. Bases whose bounded construction already exhausted stay
+factorization separately on composite or skipped pieces (factor the base, then
+scale its multiplicities) and on the unlisted quotient, preserving certified entries and
+advanced randomness. Skipped completion may use this separately allocated
+native stage. Bases whose bounded construction already exhausted stay
 unresolved; do not repeat a weaker certificate search or merge them back into
 an integer that would need rediscovery. A probable-prime test alone never
 certifies a piece or removes it from the residual.
@@ -436,7 +428,9 @@ At one, return the checked empty certificate without spawning.
 
 Merge checked residual progress by adding exponents for overlapping certified
 bases and replay the final complete/partial checker against the original
-subject. Retain backend/import/completion diagnostics alongside the eventual
+subject. Keep native attempt/event traces. When a native entry exceeds certificate
+limits, retain admissible entries and leave the others in the residual.
+Retain backend/import/completion diagnostics alongside the eventual
 native incomplete or rejected outcome and checked progress. A native rejection
 remains distinct from exhaustion; retain the rejected candidate diagnostics
 and prefer the previously checked snapshot. Explicit cancellation cleans up
@@ -455,23 +449,22 @@ an exposed raw complete or partial certificate named
 `MyCertificates.Factors.cert_checked`, also `@[expose]`. The checked declaration pins the literal
 requested subject and uses core `by decide +kernel` for the ordinary checker.
 Emit `set_option maxHeartbeats 2000000` and `set_option maxRecDepth 8192`
-in the generated module, and validate under precisely those options.
+in the generated module.
 All `PrimeCert` constructors are frozen explicitly: replay requires neither GP
 nor factor/certificate search and has no producer or converter proof dependency.
 The same source formatter drives suggestions and export. Text is deterministic
 for fixed checked data and producer outcome; GP availability, timeouts and
 versions may change that outcome. Complete and partial suggestions have exact
-certificate-text `#guard_msgs` regressions driven by the pure importer or an
-injected fake executable, never ambient GP; fresh modules
+certificate-text `#guard_msgs` regressions driven by the pure importer and
+fixed proposal data, never ambient GP; fresh modules
 compile those verbatim and reject subject substitution or unexposed data.
 
 Evaluate only closed transparent natural expressions. Before any suggestion or
 write, structurally bound and compiled-check the certificate, reify it, and
-kernel-check the actual subject-indexed acceptance proof, with finite proof
-heartbeats, recursion and source-size limits. The initial source ceiling is
-262144 bytes and proof limits are 2000000 heartbeats and recursion depth 8192.
-Proof exhaustion is a distinct export failure; it never publishes unchecked
-source. Validate ASCII module/declaration names and destination before production.
+check the actual subject-indexed acceptance proof using Lean’s existing
+`checkWithKernel` API. The initial source ceiling is 262144 bytes; generated
+modules use 2000000 elaboration heartbeats and recursion depth 8192. Acceptance
+failure never publishes source. Validate ASCII module/declaration names and destination before production.
 Create parent directories only after successful kernel checking; create files
 exclusively (`writeNew`), never overwrite, including concurrent creation races.
 
@@ -497,9 +490,7 @@ syntax, optional executable installation, support bounds and failure modes.
 
 Conformance covers degenerate subjects, powers, duplicates/order, composites,
 wrong products/subjects, omissions, negative/zero exponents, all bounds and
-supplied-certificate rejection/exhaustion. Adapt the audited ECPP fake-process
-suite for missing GP, exit failure, malformed/truncated framing, excess streams,
-cancellation/timeouts and pipe-holding descendants. Small optional real-GP tests
+supplied-certificate rejection/exhaustion. Small optional real-GP tests
 exercise the protocol; use one GP thread in recorded shared-host measurements.
 Committed replay never factors live. Explicit Lake/CI targets build Pari, Export
 and Replay even though they are outside the umbrella; prospective release

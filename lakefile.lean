@@ -274,8 +274,22 @@ lean_lib HexECPP where
   precompileModules := true
 
 lean_lib HexIntFactor where
+  globs := #[`HexIntFactor, `HexIntFactor.Pari, `HexIntFactor.Export,
+    `HexIntFactor.Replay].map Glob.one
   -- The registered construction provider must also execute natively.
   precompileModules := true
+
+lean_lib HexIntFactorTests where
+  globs := #[`HexIntFactor.ImportTests, `HexIntFactor.PariTests,
+    `HexIntFactor.ExportTests,
+    `HexIntFactor.Frozen.Case0,
+    `HexIntFactor.Frozen.Case1,
+    `HexIntFactor.Frozen.Case2,
+    `HexIntFactor.Frozen.Case3,
+    `HexIntFactor.Frozen.Case4,
+    `HexIntFactor.Frozen.Case5,
+    `HexIntFactor.Frozen.Case6, `HexIntFactor.Frozen.Partial12
+    ].map Glob.one
 
 lean_lib HexBerlekampZassenhaus where
 
@@ -299,8 +313,9 @@ lean_lib HexRealClosureTests where
   globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.RootOrderTests,
     .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerRootsTests,
     .one `HexRealClosure.RootCollectionTests, .one `HexRealClosure.TowerPresentationTests,
-    .one `HexRealClosure.LocalSampleTests,
-    .one `HexRealClosure.TrivialTests, .one `HexRealClosure.TowerEnlargeOrderTests,
+    .one `HexRealClosure.LocalSampleTests, .one `HexRealClosure.LiveContextTests,
+    .one `HexRealClosure.TrivialTests, .one `HexRealClosure.TrivialTowerTests,
+    .one `HexRealClosure.TowerEnlargeOrderTests,
     .one `HexRealClosure.TowerTransportTests]
 
 -- Native CI capacity probes for the actual certificate/context codecs.
@@ -647,7 +662,9 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.SpecializeDescriptor,
     `HexRealClosureMathlib.Algebraic, `HexRealClosureMathlib.AlgebraicClean,
     `HexRealClosureMathlib.TowerModel, `HexRealClosureMathlib.TowerModelTests,
-    `HexRealClosureMathlib.TowerAlgebraic, `HexRealClosureMathlib.TowerRefinement, `HexRealClosureMathlib.TowerTransport, `HexRealClosureMathlib.TowerTransportTests,
+    `HexRealClosureMathlib.TowerAlgebraic, `HexRealClosureMathlib.TowerRefinement,
+    `HexRealClosureMathlib.TowerTransport, `HexRealClosureMathlib.TowerTransportTests,
+    `HexRealClosureMathlib.TowerInclusion, `HexRealClosureMathlib.LiveContext,
     `HexRealClosureMathlib.TowerYun,
     `HexRealClosureMathlib.AlgebraicValue, `HexRealClosureMathlib.BaseClean, `HexRealClosureMathlib.AlgebraicTower,
     `HexRealClosureMathlib.SelectedRoot,
@@ -661,7 +678,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.ZeroFactor, `HexRealClosureMathlib.IsolationRoots,
     `HexRealClosureMathlib.IsolationTotal,
     `HexRealClosureMathlib.RootOrder, `HexRealClosureMathlib.RootFactors,
-    `HexRealClosureMathlib.Trivial,
+    `HexRealClosureMathlib.Trivial, `HexRealClosureMathlib.TrivialTower, `HexRealClosureMathlib.TrivialTowerTests,
     `HexRealClosureMathlib.RootTotal, `HexRealClosureMathlib.TowerRoots,
     `HexRealClosureMathlib.RootTransport,
     `HexRealClosureMathlib.RootCollection, `HexRealClosureMathlib.RootList,
@@ -1650,6 +1667,13 @@ lean_exe hexnumberfield_bench where
 lean_exe hexrealclosure_bench where
   srcDir := "bench"
   root := `HexRealClosure.Bench
+
+lean_exe hexrealclosure_trivial_tests where
+  root := `HexRealClosure.TrivialTowerTests
+
+lean_exe hexrealclosure_trivial_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.TrivialConformance
 
 lean_exe hexrealclosure_bounds_conformance where
   srcDir := "conformance"

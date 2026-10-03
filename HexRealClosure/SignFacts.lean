@@ -97,21 +97,22 @@ opaque Element.missing (p : DensePoly E) :
 
 /-- Pack with supplied signs of the exact retained remainders. A proved
 reduction function avoids evaluating the context constructor in the kernel.
-Constant remainders use the ordinary predecessor sign; a missing nonconstant
-fact stops ordinary-kernel evaluation at `Element.missing`. -/
+Supplied facts cover constant and nonconstant remainders. Without a supplied
+constant fact, packing uses the ordinary predecessor sign; a missing
+nonconstant fact stops ordinary-kernel evaluation at `Element.missing`. -/
 @[expose] def Element.pack (reduce : DensePoly E → DensePoly E)
     (_hr : reduce = context.reduce) (facts : List (SignFact context)) (p : DensePoly E) : Element context :=
   let kept := reduce p
-  if hc : kept.size ≤ 1 then
-    let s := coeffSign (kept.coeff 0)
-    if hn : s = 0 then 0
-    else Element.restore kept s (context.signPoly_const kept hc) hn
-  else
-    match SignFact.find facts kept with
-    | none => (Element.missing p).val
-    | some f =>
-      if hn : f.val = 0 then 0
-      else Element.restore kept f.val f.property hn
+  match SignFact.find facts kept with
+  | some f =>
+    if hn : f.val = 0 then 0
+    else Element.restore kept f.val f.property hn
+  | none =>
+    if hc : kept.size ≤ 1 then
+      let s := coeffSign (kept.coeff 0)
+      if hn : s = 0 then 0
+      else Element.restore kept s (context.signPoly_const kept hc) hn
+    else (Element.missing p).val
 
 /-- A missing nonconstant fact reaches exactly the opaque packing boundary. -/
 theorem Element.pack_missing (reduce : DensePoly E → DensePoly E)
@@ -136,20 +137,22 @@ theorem Element.pack_eq (reduce : DensePoly E → DensePoly E)
     exact hc
   unfold pack
   dsimp only
-  split
-  · rename_i hc
+  cases hf : SignFact.find facts (reduce p) with
+  | some f =>
+    simp only
     split
     · rename_i hn
-      exact zero_eq ((context.signPoly_const _ hc).trans hn)
-    · exact restore_eq _ (context.signPoly_const _ hc) (by assumption)
-  · cases hf : SignFact.find facts (reduce p) with
-    | none => simpa only using (Element.missing p).property
-    | some f =>
-      simp only
+      exact zero_eq (f.property.trans hn)
+    · exact restore_eq _ f.property (by assumption)
+  | none =>
+    simp only
+    split
+    · rename_i hc
       split
       · rename_i hn
-        exact zero_eq (f.property.trans hn)
-      · exact restore_eq _ f.property (by assumption)
+        exact zero_eq ((context.signPoly_const _ hc).trans hn)
+      · exact restore_eq _ (context.signPoly_const _ hc) (by assumption)
+    · simpa only using (Element.missing p).property
 
 @[expose, instance_reducible] def Element.cachedAdd (reduce : DensePoly E → DensePoly E)
     (hr : reduce = context.reduce) (facts : List (SignFact context)) : Add (Element context) :=

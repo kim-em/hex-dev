@@ -58,6 +58,23 @@ jobs:
           test -d "$lean_prefix/lib/lean"
           echo "LD_LIBRARY_PATH=$lean_prefix/lib/lean:${LD_LIBRARY_PATH:-}" \
             >> "$GITHUB_ENV"
+      # Dependency packages other than Mathlib build from source on every
+      # run: Verso and its relatives, TauCeti, and the compiled objects of
+      # Batteries, which Verso's precompiled modules need (the Mathlib cache
+      # supplies Batteries' oleans but no compiled code). Their builds change
+      # only with the manifest or toolchain, so cache them under that hash.
+      - name: Restore dependency package builds
+        id: deps-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .lake/packages/verso/.lake/build
+            .lake/packages/subverso/.lake/build
+            .lake/packages/illuminate/.lake/build
+            .lake/packages/MD4Lean/.lake/build
+            .lake/packages/TauCeti/.lake/build
+            .lake/packages/batteries/.lake/build/ir
+          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
       # The path list must match the CI workflow's save step exactly:
       # actions/cache folds the paths into each entry's version, so a
       # different list never matches any saved snapshot.
@@ -79,7 +96,22 @@ jobs:
       # (Mathlib and every Hex library) has to be compiled to C, as a native
       # executable would require.
       - name: Build the manual
+        id: build
         run: lake build HexManual HexManual.Theme
+      # Saved only after a successful build: the key is fixed until the
+      # manifest changes, so an incomplete entry would persist.
+      - name: Save dependency package builds
+        if: ${{ steps.build.outcome == 'success' && steps.deps-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .lake/packages/verso/.lake/build
+            .lake/packages/subverso/.lake/build
+            .lake/packages/illuminate/.lake/build
+            .lake/packages/MD4Lean/.lake/build
+            .lake/packages/TauCeti/.lake/build
+            .lake/packages/batteries/.lake/build/ir
+          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
       # Save the build like a `main` CI run does, so the next deploy restores
       # this one's oleans and rebuilds only what changed since it, not since
       # the last `main` CI snapshot, which lags `main` by a CI run.

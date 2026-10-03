@@ -55,6 +55,8 @@ changes are not committed at measurement time. The paired statistic uses the
 six within-block ratios; separate arm medians are also retained.
 
 These observations establish neither a sign cache across callbacks nor the
-claimed interpreter bottleneck. The broader common-field fixtures, allocation,
-nested-field scaling and ordinary-kernel proof-checking costs have separate
-evidence obligations.
+claimed interpreter bottleneck. [Common-field consumer observations](common-fields/README.md) retain a
+separate comparison of the generic API at its recorded source revision,
+including the per-call reality check and all twelve completed samples.
+Allocation, nested-field scaling and ordinary-kernel proof-checking costs
+retain separate evidence obligations.

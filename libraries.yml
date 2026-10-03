@@ -1110,6 +1110,8 @@ libraries:
           description: Certified prime-power inputs with a growing exponent and growing entry count, exercising the closed-form sigma route.
         - name: p-minus-one-stage2-policy
           description: The shared extra-prime family with larger prime factors at 128, 256, and 512 bits and seeds 0 through 4, comparing the actual (64,4096) continuation allocation against the disabled policy while retaining route participation, checked successes, full-scan misses, and table/balanced/smooth regressions.
+        - name: external-production-and-import
+          description: Frozen subjects and finite native allocations separate optional GP discovery, bounded parsing, PrimeCert completion, compiled acceptance, source bytes and fresh computational replay; every success and exhaustion is retained.
 
   # ---------- Mathlib bridges ----------
   HexPolyMathlib:

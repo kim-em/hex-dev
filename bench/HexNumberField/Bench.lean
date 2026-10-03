@@ -174,7 +174,9 @@ The parametric ladders carry the Phase-4 asymptotic evidence:
 * `runMergeRootListLadder`: the duplicate-removal fold across the two Yun
   components of the repeated-factor fixed-field family;
 * `runCommonPresentationLadder`: the public common-field construction
-  behind `AlgebraicPoly.roots?`, separated per the Attribution rule.
+  behind `AlgebraicPoly.roots?`, separated per the Attribution rule;
+* `runContainedPresentation`: checked coordinates when the first coefficient
+  already generates a field containing every coefficient.
 
 Informational PARI comparator (`SPEC/benchmarking.md` §External comparators
 §Process call): PARI's `t_POLMOD` arithmetic (`Mod(a, m) * Mod(b, m)` and
@@ -2292,8 +2294,38 @@ def runCommonPresentationLadder (input : AlgPolyInput) : UInt64 :=
   | some presentation => polyChecksum presentation.generator.p
   | none => 1
 
+def prepContainedPresentation (n : Nat) : AlgPolyInput :=
+  let input := prepAlgPolyInput n
+  let coefficients := input.f.coeffs
+  ⟨AlgebraicPoly.ofArray <| (Array.range coefficients.size).map fun i =>
+    if i == 0 then coefficients[1]!
+    else if i == 1 then coefficients[0]!
+    else coefficients[i]!⟩
+
+def runContainedPresentation (input : AlgPolyInput) : UInt64 :=
+  runCommonPresentationLadder input
+
+/- The first coefficient is √2 and every later coefficient is rational.
+The proposed field therefore contains the whole array. Its degree-two power
+table has constant size; each coefficient uses a fixed number of trace-pairing
+operations and exact coordinate checks. The wall model is linear in the
+coefficient count, with preparation outside the measured call. -/
+setup_benchmark runContainedPresentation n => n
+  with prep := prepContainedPresentation
+  where {
+    paramFloor := 2
+    paramCeiling := 128
+    paramSchedule := .custom #[2, 4, 8, 16, 32, 64, 128]
+    maxSecondsPerCall := 60.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.35
+  }
+
 /- Cost model. The public common-field construction behind
-`AlgebraicPoly.roots?`, separated per the Attribution rule: `primitive?`
+`AlgebraicPoly.roots?`, separated per the Attribution rule: a linear scan finds
+the first nonzero coefficient, and the proposed rational field is rejected
+by the quadratic coefficient's degree before coordinate recovery. `primitive?`
 folds `extend?` over the `n + 1` coefficients, and with a single quadratic
 irrational among rationals every `extend?` tests a constant number of
 shifts (`choose(2, 2) + 1 = 2`) with bounded-degree canonical arithmetic,
@@ -2305,8 +2337,8 @@ the coefficient count. -/
 setup_benchmark runCommonPresentationLadder n => n
   with prep := prepAlgPolyInput
   where {
-    -- `presentation?` carries a fixed start-up cost (the generator's powers
-    -- and the first `extend?` shifts) worth roughly four coefficients, so the
+    -- `presentation?` carries a fixed start-up cost (the rejected rational
+    -- field check, the generator's powers and the first `extend?` shifts), so the
     -- bottom of the ladder is start-up dominated. The schedule keeps those
     -- rungs — they are the range `runAlgebraicRootsLadder` actually calls this
     -- at — and extends to 128 so the linear term dominates the fit.

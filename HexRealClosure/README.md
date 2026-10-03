@@ -714,9 +714,60 @@ Run `lake build HexRealClosureMathlib.Trivial` for the companion proofs.
 The conversion still
 performs canonical root selection for each selected generic descriptor;
 this agreement is not a claim of equal runtime cost or generic-path scaling.
-The full trivial-fragment contract still requires algebraic tower coefficients,
-comparison of tower values, arithmetic agreement and conversion round trips.
-Those obligations and independent python-flint cross-checks remain in
+
+`Trivial.Map.ofSuffix suffix` converts an entire validated algebraic tower over
+`BaseContext.rational registry`. Each selected canonical generator is found
+once through the independent `RealAlgebraicPoly.roots` API and retained in the
+conversion closure; all later coefficients use canonical Horner arithmetic.
+This factory is defined only for the rational base and its root suffixes.
+It does not specialize real constants or infinitesimals.
+
+`HexRealClosureMathlib.TrivialTower` proves success of every selected-root
+search from the actual validated descriptor and derives agreement through
+all levels of that factory. `Map.ofSuffix_roots` identifies the entire converted
+native root set with the existing backend result, including `all`, increasing
+roots and exact positive multiplicities, for arbitrary stored tower
+coefficients. Companion theorems preserve zero, one, natural casts, addition,
+subtraction, multiplication, negation, total inversion, division, native
+semantic equality, comparison and signs. Raw nonzero expressions can have
+different literal representations; the conversion identifies their values.
+
+Run `lake exe hexrealclosure_trivial_tests` for compiled executable comparisons
+using a nonmonic reducible defining polynomial selecting a cubic irrational,
+a dependent quadratic root selected by a Thom sign, nonlinear
+algebraic-coefficient polynomials, nonreal conjugates, point roots and repeated
+roots. The nonmonic reducible predecessor is a separate native check;
+the qqbar fixtures use the monic cubic/quadratic tower. The full native
+comparison also runs the canonical backend's common-field presentation, whose
+checked containing-field attempt and primitive-search fallback are described
+in the [number-field SPEC](../HexNumberField/SPEC/hex-number-field.md).
+The six nonzero fixtures use the containing-field branch. Separate number-field
+checks cover rejected membership and fallback. CI applies a one-hour
+operational limit to this driver. Manual execution has no such limit, and
+these checks do not constitute the required scientific performance evaluation.
+Run `lake build HexRealClosureMathlib.TrivialTowerTests` for ordinary-import
+consumers and kernel axiom guards. The native example also checks a value
+read/write round trip and stale-context rejection. The shared driver feeds
+`hexrealclosure_trivial_conformance`, which exports the actual generic roots
+after conversion; `scripts/oracle/real_closure_trivial.py` checks them against
+independent exact python-flint qqbar arithmetic: factor division and
+quadratic/cubic binomial root formulas give complete roots and multiplicities
+for the seven committed inputs. Other residuals use the general qqbar root finder. The committed
+seven-case fixture covers zero, a constant, a dependent linear polynomial,
+mixed coefficients with repeated roots, nonlinear heads, nonreal conjugates
+and a point root. The emitted root kinds check actual point and selected-root
+production. The oracle independently reconstructs both selected generators and
+evaluates every original recursive coefficient, including its cached sign,
+before checking the converted root output. Twenty-two tests cover valid output
+and mutations; parser checks still run when optional FLINT support is absent.
+It does not replay native certificate graphs.
+`Map.ofSuffix` caches the generators of the input tower. Individual
+`Map.root` conversions and `compareRoots` searches still enumerate the
+converted head's roots per requested handle; `Map.output` does not yet share
+those searches between entries with the same factor. The required performance
+evaluation must account for that cost. The remaining whole-family independent
+coverage audit, and conversion back into native presentations with proved
+round trips, stay in
 [#10378](https://github.com/kim-em/hex-dev/issues/10378).
 
 ### Native complete roots
@@ -865,12 +916,27 @@ wrong signs return `none`. Its `read_sound` theorem identifies the result of
 the ordinary executable decoder.
 
 `Element.pack` uses a proved copy of the actual reduction function and supplied
-sign facts for nonconstant retained remainders. Constants use the predecessor's
-ordinary sign operation, including canonical zero. `cachedAdd`, `cachedSub`,
+sign facts for the exact retained remainders, including constants. When no
+constant fact is supplied, it uses the predecessor's ordinary sign operation.
+Supplied constant facts allow kernel checking when that operation depends on an
+opaque termination proof. Both paths preserve canonical zero. `cachedAdd`, `cachedSub`,
 `cachedMul`, `cachedNeg`, `cachedOne` and `cachedNatCast` supply ordinary operations
 proved exactly equal to the existing operations. These equalities let a caller
 check a literal certificate using the supplied facts and transfer the resulting
-acceptance proof to the existing checker.
+acceptance proof to the existing checker. Each list-based lookup scans the
+supplied facts, including for constants; its cost grows with that list.
+
+`PackingConformance.constant_cached` checks this path with an executable
+predecessor sign function that is opaque to kernel reduction and proved equal
+to rational sign. Emptying the fact list blocks kernel evaluation of constant
+packing. Subtraction with supplied facts produces canonical zero.
+`NestedSignsConformance.graph_checked` checks a two-entry graph with lower-root
+facts; `graph_memo` derives preservation of its literal memo indices.
+`graph_selections` selects two different query lists from one validated memo.
+The graph probes reject an unreachable entry with a corrupted moment, a
+foreign context, a self reference, an absent root index, changed endpoints and a wrong selected
+query list. They use ordinary
+kernel checking and the existing cache-agreement theorems.
 
 An absent nonconstant fact reaches an opaque packing function. This prevents
 ordinary-kernel evaluation from completing that branch. Compiled evaluation of
@@ -1372,6 +1438,54 @@ The generic
 `zero`, `degree`, `polynomial`, `equal`, `compare` and `mono` results preserve
 canonical zero, dense-polynomial degree and interpretation, actual native
 comparison results, and inclusion of the whole original image field.
+
+`Tower.Shared base owners` assembles an immutable shared target while retaining
+all original owner contexts. Use `Shared.gather?` with the actual validated
+context handles, then `Shared.value index value` or
+`Shared.polynomial index polynomial` to enter that target. The owner index
+keeps the original value or polynomial type. The native checked base inclusion
+accepts identical complete real-prefix paths and nondecreasing infinitesimal depth;
+decreasing depth and a different prefix are rejected.
+
+Registration caches checked inclusions for every original algebraic predecessor.
+Parent/child registration, sibling branches, and repeated owners reuse their
+common roots. Reuse checks exact native provenance, including the staged base
+and complete root descriptors. The cache also retains native target predecessors,
+so contexts built from a returned shared target reuse those ancestors.
+Across different infinitesimal depths, an independently enlarged owner reuses
+a root when its exact context is already cached as a target predecessor or an
+earlier owner's predecessor. Registering
+the enlarged owner first, or into a deeper staged base, can add an equivalent
+algebraic level; the returned value maps still preserve the selected root.
+Owners selecting the same real number through reordered chains, different
+isolating intervals or different replay evidence can also add equivalent levels
+at one staged depth. Reuse currently recognizes exact native predecessors.
+`Shared.add?_maps` describes the returned old-owner inclusions and
+the appended original-owner map. A new target updates the predecessor cache
+through the same sequence of root inclusions used for retained owners.
+
+`shared.enlarge?` returns a new shared target, a checked inclusion `previous`
+from the old shared target, and its cached positive `parameter`. All retained
+owner maps use this one inclusion, and accessing the parameter rebuilds no root.
+`Shared.enlarge?_models` carries an existing coherent collection of owner
+models into one common ambient and identifies its actual infinitesimal and every
+input owner's interpreted values. The result includes a coherent family whose
+original models are exactly the prescribed lifts of the input family. A factory
+producing that coherent collection
+from `gather?`, and a proof that compatible registration succeeds, remain required;
+`Shared.enlarge?_ordered` gives positivity and comparison
+against every old positive value. Existing serialized values and polynomials
+must pass the returned target's checked readers; old packets with a different
+literal binding are rejected.
+
+Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext`
+for staged value transport, the mixed-depth reuse limitation in both
+registration orders, alternative intervals, reordered chains, unrelated-root
+position, parent/child and sibling registration, repeated owners, root-level
+counts, original equations,
+owner-map agreement, polynomial transport, parameter order and stale packets.
+The checked inclusions also have ordinary-kernel value, polynomial and comparison
+proofs; the all-owner enlargement proof uses the actual cached checked packet.
 
 Run `lake build HexRealClosure.TowerConversionTests HexRealClosure.TowerTransportTests HexRealClosureMathlib.TowerTransportTests`.
 The routine native fixture checks a changed nonmonic reducible definition, a
