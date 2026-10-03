@@ -92,7 +92,7 @@ theorem existential_decision : ∃ verdict, fourthRoot.val.anyValue values furth
   (FieldBuild.signKeys values nonnegative positive.val.radical.core
     positive.val.isolation positive.val.rootSigns).dedup.length
 
--- Force the prepared-sign canonical fallback with two rational carrier roots.
+-- Force the total producer's canonical fallback with prepared signs.
 private def separated : RealFormula.QF 2 :=
   .or (.atom ⟨MvPoly.X 1, .eq⟩) (.atom ⟨4 * MvPoly.X 1 - 1, .eq⟩)
 private def fallback := FieldBuild.produce SquareTwo.polynomial SquareTwo.square hw hp
@@ -101,6 +101,7 @@ private def fallback := FieldBuild.produce SquareTwo.polynomial SquareTwo.square
 #guard fallback.val.anyValue values separated == some true
 #guard fallback.val.allValue values separated == some false
 
+-- The bounded frontend retains the existing fixed-field root presentation.
 private def bounded := FieldBuild.produceWithin SquareTwo.polynomial SquareTwo.square hw hp
   real values separated () 0 5
 #guard match bounded with

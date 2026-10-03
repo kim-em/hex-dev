@@ -1738,7 +1738,10 @@ the second produces a further algebraic root and checks simultaneous sign
 conditions on that section. Both use the optional algebraic handler, with
 ordinary real sectors between its root sections. The complete `produce` API
 accepts a direct bisection depth, defaulting to 256, before its proved canonical
-fallback. The existing bounded isolation API retains its 128-level default.
+fallback, which still converts coefficients and reconstructs a common field.
+This complete library path can be slower than the frontend fixed-field fallback
+for tightly separated roots. The existing bounded isolation API retains its
+128-level default.
 The direct proposal can also fail at its bounded bracketing, pivot or gap
 searches; no unchecked interval is accepted.
 

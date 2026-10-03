@@ -30,7 +30,7 @@ set_option maxHeartbeats 1600000
 
 -- A source goal with two carrier roots closer than the old bounded direct
 -- bisection depth. The prepared-sign producer can separate them directly;
--- the separate IsolationProgress module exercises actual canonical fallback.
+-- fixed-field fallback is forced below; IsolationProgress also tests conversion.
 theorem close_sections : ∃ x : ℝ,
     x = Real.sqrt 2 ∧ x < Real.sqrt 2 + 1 / (5444517870735015415413993718908291383296 : ℝ) := by
   rcf
@@ -55,11 +55,18 @@ example (_impossible : False) : ∀ _x : ℝ, 0 / (Real.sqrt 2 - Real.sqrt 2) = 
 
 -- A quoted proof through the same prepared-sign fallback used by the tactic.
 set_option rcf.algebraic.directDepth 0 in
-theorem canonical_sections : ∃ x : ℝ, x = Real.sqrt 2 ∧ x ≠ 0 := by rcf
+theorem fallback_sections : ∃ x : ℝ, x = Real.sqrt 2 ∧ x ≠ 0 := by rcf
 
 set_option rcf.algebraic.directDepth 0 in
-theorem canonical_close_sections : ∃ x : ℝ, x = Real.sqrt 2 ∧
+theorem fallback_close_sections : ∃ x : ℝ, x = Real.sqrt 2 ∧
     x < Real.sqrt 2 + 1 / (5444517870735015415413993718908291383296 : ℝ) := by rcf
+
+-- Eight attempts stop at precision 128 and cannot separate these sections.
+set_option rcf.algebraic.directDepth 0 in
+set_option rcf.algebraic.maxDoublings 8 in
+example (_impossible : False) : ∃ x : ℝ, x = Real.sqrt 2 ∧
+    x < Real.sqrt 2 + 1 / (5444517870735015415413993718908291383296 : ℝ) := by
+  expect_rcf_error "rcf: algebraic interval refinement budget exhausted; increase rcf.algebraic.maxDoublings or rcf.algebraic.directDepth"
 
 set_option rcf.algebraic.directDepth 0 in
 set_option rcf.algebraic.maxDoublings 0 in
@@ -84,10 +91,10 @@ end Hex.RCF.TotalAlgebraicProofs
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.TotalAlgebraicProofs.closed_guard
 
-/-- info: '_private.HexRCF.TotalAlgebraicProofs.0.Hex.RCF.TotalAlgebraicProofs.canonical_sections' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: '_private.HexRCF.TotalAlgebraicProofs.0.Hex.RCF.TotalAlgebraicProofs.fallback_sections' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RCF.TotalAlgebraicProofs.canonical_sections
+#print axioms Hex.RCF.TotalAlgebraicProofs.fallback_sections
 
-/-- info: '_private.HexRCF.TotalAlgebraicProofs.0.Hex.RCF.TotalAlgebraicProofs.canonical_close_sections' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: '_private.HexRCF.TotalAlgebraicProofs.0.Hex.RCF.TotalAlgebraicProofs.fallback_close_sections' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RCF.TotalAlgebraicProofs.canonical_close_sections
+#print axioms Hex.RCF.TotalAlgebraicProofs.fallback_close_sections

@@ -25,7 +25,7 @@ register_option rcf.algebraic.directDepth : Nat := {
 
 register_option rcf.algebraic.maxDoublings : Nat := {
   defValue := 10
-  descr := "maximum canonical algebraic interval refinement attempts"
+  descr := "maximum fixed-field enclosure attempts at precisions 1, 2, 4, ... bits"
 }
 
 private def arrayLit (ty : Expr) (xs : List Expr) : Expr :=

@@ -9,7 +9,7 @@ does not isolate precision, degree or root-count scaling.
 A development build of the close-section goal exposed repeated canonical
 conversion of coordinate values while computing search signs. Search now captures
 a prepared rational Sturm domain as data and applies Tarski queries at the same
-selected root. The direct isolation attempt uses depth 256; canonical fallback
+selected root. The direct isolation attempt uses depth 256; fallback
 uses cached roots and doubles enclosure precision. The tactic bounds refinement
 and keeps exhaustion distinct from invalid replay. The total library producer
 has its separate acceptance and progress proofs. Quotation checks literal

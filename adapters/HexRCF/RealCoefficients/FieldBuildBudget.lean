@@ -23,7 +23,7 @@ variable {p : ZPoly} {root : SimpleRoot p} [ZPoly.CheckedIrreducible p]
 
 /-- Bounded interval refinement with cached selected-field root solving.
 The direct proposal and final accepted replay are each built once. A rejected
-replay is terminal; only absence of a direct proposal starts canonical search. -/
+replay is terminal; only absence of a direct proposal starts fixed-field root search. -/
 def isolateWithin [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
     (sign : PolyQuot p root → Int) (context : Ctx)
@@ -39,7 +39,8 @@ def isolateWithin [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     if doublings = 0 then .error .exhausted else
     -- Reuse the existing field coordinates instead of reconstructing a common
     -- field from separately converted coefficients.
-    let roots := (RealAlgebraicPoly.realRoots (PolyQuot.roots head rep hrep)).finite?
+    let roots := (PolyQuot.roots? head rep hrep).bind fun roots =>
+      (RealAlgebraicPoly.realRoots roots).finite?
     let rec refine : Nat → Nat → Except BuildError IsolationCert
       | 0, _ => .error .exhausted
       | fuel + 1, precision =>
