@@ -890,11 +890,12 @@ supplied predecessor codec governs lower-level decoding; composing strict
 readers makes each covered level avoid sign production. Zero needs no fact.
 A finite reader is partial, so its roundtrip proof requires only the actual
 stored coefficients to roundtrip through the predecessor reader and the
-nonzero stored literal to occur in the facts. The corresponding byte theorem
+nonzero stored literal to occur in the facts. `SignFact.read_of_key` derives
+that coverage from list membership and equality of the exact polynomial key. The corresponding byte theorem
 uses the shared parser/printer and its existing lexical limits. Successful
 reads agree literally with the independent native coefficient decoder.
 `Element.signCodec_refines` composes that agreement through predecessor readers;
-`SignCodecConformance.nested_sound` applies it to two successive fields.
+`SignCodecConformance.nested_sound` applies it to two successive extension levels.
 `SignCodecConformance` checks two successive strict readers, retained
 representatives, missing lower-level facts, altered signs and truncated bytes.
 These coefficient readers do not encode or validate a dependency graph.

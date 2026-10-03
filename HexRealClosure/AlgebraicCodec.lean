@@ -23,7 +23,7 @@ variable {context : Context E Ctx coeffSign parent}
 /-- Exact stored coefficient encoding: `[]` is the unique zero, while a
 nonzero is `[polynomial, cachedSign]`. Decoding checks every predecessor
 coefficient, rejects trailing zeros, and recomputes the claimed sign. -/
-def Element.codec (value : ValueCodec E) : ValueCodec (Element context) where
+@[expose] def Element.codec (value : ValueCodec E) : ValueCodec (Element context) where
   encode a := match a.stored with
     | none => .arr #[]
     | some p => .arr #[Codec.poly value p.polynomial, Codec.Json.of p.sign]

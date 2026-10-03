@@ -8,7 +8,6 @@ module
 public import HexRealClosure.SignFacts
 public import HexRealClosure.AlgebraicCodec
 public import HexSignDet.Codec.Bytes
-import all HexRealClosure.AlgebraicCodec
 
 public section
 
@@ -61,6 +60,35 @@ theorem SignFact.read_of_mem (facts : List (SignFact context)) (f : SignFact con
     SignFact.read facts f.polynomial f.sign =
       some (Element.restore f.polynomial f.sign f.checked hn) := by
   simp [SignFact.read, SignFact.find_of_mem facts f hf, hn]
+
+/-- A nonzero stored element is covered whenever its exact key occurs in the
+facts. The sign follows from the stored and supplied proofs. -/
+theorem SignFact.read_of_key (facts : List (SignFact context)) (a : Element context)
+    (ha : a ≠ 0) (f : SignFact context) (hf : f ∈ facts)
+    (hp : f.polynomial = a.polynomial) :
+    SignFact.read facts a.polynomial a.sign = some a := by
+  cases hs : a.stored with
+  | none => exact (ha (Element.ext (hs.trans Element.stored_zero.symm))).elim
+  | some p =>
+    have hp' : f.polynomial = p.polynomial := by
+      simpa only [Element.polynomial, hs] using hp
+    have hc := f.checked
+    rw [hp'] at hc
+    have hsign : f.sign = p.sign := hc.symm.trans p.checked
+    have hn : f.sign ≠ 0 := by simpa only [hsign] using p.nonzero
+    have hrestore : Element.restore f.polynomial f.sign f.checked hn = a := by
+      apply Element.ext
+      rw [Element.stored_restore, hs]
+      congr 1
+      rcases f with ⟨q, s, checked⟩
+      rcases p with ⟨r, t, checked', nonzero⟩
+      dsimp only at hp' hsign ⊢
+      subst r
+      subst t
+      rfl
+    have hr := SignFact.read_of_mem facts f hf hn
+    rw [hrestore] at hr
+    simpa only [Element.polynomial, Element.sign, hs, hp', hsign] using hr
 
 /-- The encoder preserves the existing wire format exactly. -/
 theorem Element.signCodec_encode (value : ValueCodec E) (facts : List (SignFact context))

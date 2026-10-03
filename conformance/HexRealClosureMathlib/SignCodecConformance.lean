@@ -31,7 +31,7 @@ open CoefficientSignsConformance PackingConformance
 
 /- Exact literal restoration needs no producer, including canonical zero.
 Changing the sign, removing the fact or supplying a semantically equal but
-structurally different representative rejects. -/
+structurally different representative absent from the facts rejects. -/
 set_option maxRecDepth 32768 in
 theorem literal_reader :
     reader.decode literalJson = .ok literal ∧
@@ -57,6 +57,13 @@ theorem malformed_reader :
     (reader.decode (.arr #[Codec.poly ValueCodec.rat stored, .arr #[]])).toOption = none := by
   decide +kernel
 
+set_option maxRecDepth 32768 in
+/-- Repeated exact keys preserve the restored literal. -/
+theorem duplicate_reader :
+    (Element.signCodec ValueCodec.rat (literalFacts ++ literalFacts)).decode literalJson =
+      .ok literal := by
+  decide +kernel
+
 /- A JSON byte roundtrip still passes through the strict literal reader. -/
 #guard reader.decodeBytes literalJson.writeBytes == .ok literal
 #guard (Element.signCodec ValueCodec.rat ([] : List (SignFact context))).decodeBytes
@@ -65,15 +72,19 @@ theorem malformed_reader :
 #guard reader.decodeBytes (literalJson.writeBytes.extract 0 (literalJson.writeBytes.size - 1)) == .ok literal
 #guard (reader.decodeBytes (literalJson.writeBytes.extract 0 (literalJson.writeBytes.size - 2))).toOption.isNone
 
-@[expose] def lowerFacts : List (SignFact context) :=
-  literalFacts ++ [⟨DensePoly.C 1, 1, by
+@[expose] def oneFact : SignFact context :=
+  ⟨DensePoly.C 1, 1, by
     rw [context.signPoly_const _ (by decide +kernel)]
-    decide +kernel⟩]
+    decide +kernel⟩
+
+@[expose] def lowerFacts : List (SignFact context) := literalFacts ++ [oneFact]
 
 @[expose] def lowerReader := Element.signCodec ValueCodec.rat lowerFacts
 
-@[expose] def topFacts : List (SignFact NestedSignsConformance.next) :=
-  [⟨NestedSignsConformance.nextQuery, 1, NestedSignsConformance.next_sign⟩]
+@[expose] def nextFact : SignFact NestedSignsConformance.next :=
+  ⟨NestedSignsConformance.nextQuery, 1, NestedSignsConformance.next_sign⟩
+
+@[expose] def topFacts : List (SignFact NestedSignsConformance.next) := [nextFact]
 
 @[expose] def topReader := Element.signCodec lowerReader topFacts
 
@@ -96,9 +107,14 @@ theorem nested_roundtrip :
       · left; decide +kernel
     · apply Element.signCodec_roundtrip ValueCodec.rat lowerFacts
       · exact fun x _ => ValueCodec.rat_lawful x
-      · right; decide +kernel
+      · right
+        apply SignFact.read_of_key lowerFacts _ (by decide +kernel) oneFact
+        · simp [lowerFacts]
+        · decide +kernel
   · right
-    decide +kernel
+    apply SignFact.read_of_key topFacts _ (by decide +kernel) nextFact
+    · simp [topFacts]
+    · decide +kernel
 
 /-- Composed strict reads preserve the literal accepted by fully native readers
 at both levels, for arbitrary JSON inputs. -/
