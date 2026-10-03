@@ -198,7 +198,8 @@ theorem Conversion.adjoinCached_spec {source : Context registry}
           (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map conversion.value))) :=
   conversion.adjoinCached_spec_proof descriptor converted h extension built
 
-/-- One native conversion step constructs its validated converted child. -/
+/-- One native conversion step after descriptor validation. Both suffix
+traversals use this exact converted descriptor and packing closure. -/
 def Conversion.adjoinChecked {source : Context registry} (conversion : Conversion source)
     (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
     (converted : SignDet.Descriptor conversion.context.Value Signature
@@ -206,13 +207,7 @@ def Conversion.adjoinChecked {source : Context registry} (conversion : Conversio
     (h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
       (source.mapDescriptor conversion.context conversion.value descriptor) = some converted) :
     Conversion (source.adjoin descriptor).context :=
-  let extension := conversion.context.adjoin converted
-  let pack := extension.pack
-  ⟨extension.context,
-    fun x => pack
-      (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map conversion.value)),
-    .adjoin conversion.checked descriptor converted
-      (SignDet.Descriptor.build_raw (SignDet.Descriptor.validate_eq_some.mp h))⟩
+  conversion.adjoinCached descriptor converted h (conversion.context.adjoin converted) rfl
 
 private theorem Conversion.adjoinChecked_context_proof {source : Context registry}
     (conversion : Conversion source)
@@ -432,6 +427,9 @@ structure Rebuilt {source : Context registry} (initial : Conversion source)
   suffix : Suffix initial.context
   context_eq : suffix.context = result.context
   checked : Rebuilds initial original result suffix
+  includeValue : initial.context.Value → result.context.Value
+  include_eq : ∀ a, includeValue a =
+    _root_.cast (congrArg Context.Value context_eq) (suffix.embed a)
 
 /-- A rebuilt nonempty suffix starts with a validated converted root. -/
 theorem Rebuilt.root_shape {source : Context registry} {initial : Conversion source}
@@ -442,7 +440,7 @@ theorem Rebuilt.root_shape {source : Context registry} {initial : Conversion sou
         initial.context.sign initial.context.signature,
       ∃ tail : Suffix (initial.context.adjoin converted).context,
         rebuilt.suffix = .root converted tail := by
-  rcases rebuilt with ⟨result, suffix, context_eq, checked⟩
+  rcases rebuilt with ⟨result, suffix, context_eq, checked, _, _⟩
   cases checked with
   | root _ _ _ converted h tail =>
     exact ⟨converted, _, rfl⟩
@@ -452,21 +450,26 @@ suffix supplies checked executable inputs for another refinement. -/
 def Conversion.rebuild? {source : Context registry} (conversion : Conversion source)
     (suffix : Suffix source) : Option (Rebuilt conversion suffix) :=
   match suffix with
-  | .nil => some ⟨conversion, .nil, rfl, .nil conversion⟩
+  | .nil => some ⟨conversion, .nil, rfl, .nil conversion, id, fun _ => rfl⟩
   | .root descriptor rest =>
     match h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
         (source.mapDescriptor conversion.context conversion.value descriptor) with
     | none => none
     | some converted =>
+      let child := conversion.context.adjoin converted
       let next : Conversion (source.adjoin descriptor).context :=
-        conversion.adjoinChecked descriptor converted h
+        conversion.adjoinCached descriptor converted h child rfl
       match next.rebuild? rest with
       | none => none
       | some rebuilt =>
         let same := conversion.adjoinChecked_context descriptor converted h
         some ⟨rebuilt.result, .root converted (same ▸ rebuilt.suffix),
           by cases same; exact rebuilt.context_eq,
-          .root conversion descriptor rest converted h rebuilt.checked⟩
+          .root conversion descriptor rest converted h rebuilt.checked,
+          fun a => rebuilt.includeValue (child.embed a), by
+            intro a
+            cases same
+            exact rebuilt.include_eq (child.embed a)⟩
 
 /-- Retaining rebuilt descriptors does not change the final native conversion
 returned by the existing suffix traversal. -/
@@ -477,15 +480,15 @@ theorem Conversion.rebuild_result {source : Context registry}
   | nil => rfl
   | root descriptor rest ih =>
     rename_i current
-    simp only [Conversion.rebuild?, Conversion.extend?, Conversion.adjoin?]
+    simp only [Conversion.rebuild?, Conversion.extend?, Conversion.adjoin?, Conversion.adjoinChecked]
     split
     · rfl
     · rename_i converted h
       let next : Conversion (current.adjoin descriptor).context :=
-        conversion.adjoinChecked descriptor converted h
+        conversion.adjoinCached descriptor converted h (conversion.context.adjoin converted) rfl
       cases hr : next.rebuild? rest with
-      | none => simpa only [hr, Option.map, next, Suffix.context] using ih next
-      | some rebuilt => simpa only [hr, Option.map, next, Suffix.context] using ih next
+      | none => simpa only [hr, Option.map, next, Suffix.context, Conversion.adjoinChecked] using ih next
+      | some rebuilt => simpa only [hr, Option.map, next, Suffix.context, Conversion.adjoinChecked] using ih next
 
 end Hex.RealClosure.Tower
 

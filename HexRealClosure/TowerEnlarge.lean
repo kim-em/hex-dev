@@ -13,6 +13,29 @@ namespace Hex.RealClosure.Tower
 
 variable {registry : BaseContext.Registry}
 
+/-- The actual new infinitesimal with the ownership of its native base conversion. -/
+@[expose] def Conversion.parameter {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign) :
+    (Conversion.infinitesimal base).context.Value :=
+  _root_.cast (congrArg Context.Value (Conversion.infinitesimal_spec base).1.symm)
+    (BaseContext.Element.infinitesimal base)
+
+/-- Include the new base parameter through every actual rebuilt algebraic
+level, with ownership in the returned native target context. -/
+@[expose] def Rebuilt.parameter {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    {suffix : Suffix (Context.base base)}
+    (rebuilt : Rebuilt (Conversion.infinitesimal base) suffix) : rebuilt.result.context.Value :=
+  rebuilt.includeValue (Conversion.parameter base)
+
+/-- The cached initial inclusion agrees with the returned validated suffix. -/
+theorem Rebuilt.parameter_eq {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    {suffix : Suffix (Context.base base)}
+    (rebuilt : Rebuilt (Conversion.infinitesimal base) suffix) :
+    rebuilt.parameter base = _root_.cast (congrArg Context.Value rebuilt.context_eq)
+      (rebuilt.suffix.embed (Conversion.parameter base)) := rebuilt.include_eq _
+
 /-- Rebuild one packed tower over an additional positive infinitesimal. The
 stored predecessor chain supplies the base and the exact validated root
 suffix. Each root is revalidated in its new predecessor; failure is explicit.
@@ -168,3 +191,11 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Suffix.origin_exact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Suffix.origin_exact
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.parameter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Conversion.parameter
+
+/-- info: 'Hex.RealClosure.Tower.Rebuilt.parameter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Rebuilt.parameter

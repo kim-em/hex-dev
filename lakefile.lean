@@ -296,7 +296,8 @@ lean_lib HexRealClosureTests where
   globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.RootOrderTests,
     .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerRootsTests,
     .one `HexRealClosure.RootCollectionTests,
-    .one `HexRealClosure.TrivialTests, .one `HexRealClosure.TowerTransportTests]
+    .one `HexRealClosure.TrivialTests, .one `HexRealClosure.TowerEnlargeOrderTests,
+    .one `HexRealClosure.TowerTransportTests]
 
 -- Native CI capacity probes for the actual certificate/context codecs.
 lean_exe hexrealclosure_codec_bytes where
@@ -660,6 +661,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.EnlargementTests,
     `HexRealClosureMathlib.Union, `HexRealClosureMathlib.TowerUnion,
     `HexRealClosureMathlib.TowerRestriction, `HexRealClosureMathlib.TowerEnlarge,
+    `HexRealClosureMathlib.TowerEnlargeOrder, `HexRealClosureMathlib.TowerEnlargeOrderTests,
     `HexRealClosureMathlib.UnionTests].map Glob.one
 
 lean_exe hexrealclosure_root_order_tests where
