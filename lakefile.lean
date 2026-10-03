@@ -295,7 +295,7 @@ lean_lib HexRealClosure where
 lean_lib HexRealClosureTests where
   globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.RootOrderTests,
     .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerRootsTests,
-    .one `HexRealClosure.RootCollectionTests,
+    .one `HexRealClosure.RootCollectionTests, .one `HexRealClosure.TowerPresentationTests,
     .one `HexRealClosure.TrivialTests, .one `HexRealClosure.TowerEnlargeOrderTests,
     .one `HexRealClosure.TowerTransportTests]
 
@@ -658,7 +658,9 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.RootTotal, `HexRealClosureMathlib.TowerRoots,
     `HexRealClosureMathlib.RootTransport,
     `HexRealClosureMathlib.RootCollection,
-    `HexRealClosureMathlib.TowerCoverage, `HexRealClosureMathlib.TowerNaturality,
+    `HexRealClosureMathlib.TowerCoverage, `HexRealClosureMathlib.Presentation,
+    `HexRealClosureMathlib.PresentationTests,
+    `HexRealClosureMathlib.TowerNaturality,
     `HexRealClosureMathlib.Ambient, `HexRealClosureMathlib.AmbientTests,
     `HexRealClosureMathlib.BaseAlgebraicity, `HexRealClosureMathlib.BaseBound,
     `HexRealClosureMathlib.EnlargementTests,

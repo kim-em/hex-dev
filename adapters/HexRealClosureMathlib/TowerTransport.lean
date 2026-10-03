@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.TowerTransport
+public import HexRealClosure.TowerSuffix
 public import HexRealClosureMathlib.TowerRefinement
 public import HexRealClosureMathlib.TowerAlgebraic
 public import HexRealClosureMathlib.Ambient
@@ -25,6 +25,22 @@ variable [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRe
   match suffix with
   | .nil => original
   | .root descriptor rest => (original.adjoin descriptor).extend rest
+
+/-- Aligned predecessor interpretations extend to aligned suffix interpretations. -/
+theorem extend_heq {left right : Context registry} (h : left = right)
+    (source : Model left K) (target : Model right K) (aligned : HEq source target)
+    (suffix : Suffix left) : HEq (source.extend suffix) (target.extend (h ▸ suffix)) := by
+  cases h
+  cases eq_of_heq aligned
+  rfl
+
+/-- Concatenating native suffixes composes their actual selected-root interpretations. -/
+theorem extend_append {source : Context registry} (model : Model source K)
+    (first : Suffix source) (later : Suffix first.context) :
+    HEq (model.extend (first.append later)) ((model.extend first).extend later) := by
+  induction first with
+  | nil => rfl
+  | root descriptor rest ih => exact ih (model.adjoin descriptor) later
 
 /-- The actual embeddings through a validated suffix preserve each original
 mathematical value. -/
@@ -488,9 +504,9 @@ noncomputable def adjoin (result : Conversion (source.adjoin descriptor).context
 
 private theorem extend_cast_heq {left right : Context registry} (h : left = right)
     (target : Hex.RealClosure.Tower.Model right K) (suffix : Suffix left) :
-    HEq ((h.symm ▸ target).extend suffix) (target.extend (h ▸ suffix)) := by
-  cases h
-  rfl
+    HEq ((h.symm ▸ target).extend suffix) (target.extend (h ▸ suffix)) :=
+  Hex.RealClosure.Tower.Model.extend_heq h (h.symm ▸ target) target
+    (target.cast_heq h.symm) suffix
 
 /-- Interpret the exact rebuilt suffix in the target model of the starting
 conversion, while preserving the old final values. -/
