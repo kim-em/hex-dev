@@ -108,6 +108,7 @@ Executable good-prime predicate for the Berlekamp-Zassenhaus computation.
 It checks that the modulus is at least `3`, that the integer leading coefficient
 survives reduction modulo `p`, and that the modular image is square-free.
 -/
+@[expose]
 def isGoodPrime (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : Bool :=
   let fModP := ZPoly.modP p f
   3 <= p &&

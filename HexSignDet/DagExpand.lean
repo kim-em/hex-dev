@@ -155,6 +155,16 @@ private theorem fold_expands (entries : List (Entry E Ctx))
       rw [step_expands hs]
       simpa only [bind, Option.bind, pure, Array.map_push] using ih h
 
+/-- Validation retains the literal expansion of every serialized entry,
+including non-root entries and their exact child references. -/
+theorem validate_expands {dag : Dag E Ctx} {memo : Array (Checked sign context p a b)}
+    (h : dag.validate? sign context p a b = some memo) :
+    Expansion.run dag.entries = some (memo.map Checked.value) := by
+  simp only [validate?, step_cache] at h
+  unfold Expansion.run
+  rw [← Array.foldlM_toList] at h ⊢
+  simpa using fold_expands dag.entries.toList h
+
 /-- An accepted graph expands to exactly the tree returned by checked replay.
 This applies to arbitrary supplied graph literals, including shared children. -/
 theorem replay_expands {dag : Dag E Ctx} {qs : List (DensePoly E)}
@@ -168,10 +178,9 @@ theorem replay_expands {dag : Dag E Ctx} {qs : List (DensePoly E)}
     rw [hm] at h
     simp [bind, Option.bind] at h
   | some memo =>
-    have hexp : Expansion.run dag.entries = some (memo.map Checked.value) := by
-      unfold Expansion.run
-      rw [← Array.foldlM_toList] at hm ⊢
-      simpa using fold_expands dag.entries.toList hm
+    have hv : dag.validate? sign context p a b = some memo := by
+      simpa only [validate?, step_cache] using hm
+    have hexp := validate_expands hv
     rw [hm] at h
     simp only [bind, Option.bind] at h
     cases hr : memo[dag.root]? with

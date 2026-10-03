@@ -1506,13 +1506,12 @@ def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
 
 
 def validate_external_imports(entry: dict, clone: Path) -> None:
-    """Require the mirror's Lake file to provide every non-Hex import root.
+    """Require the mirror's Lake file to provide checked external import roots.
 
-    Inside the monorepo every library can import Batteries or Mathlib because
-    the root Lake file requires both; a mirror only has what its own Lake file
-    requires. Scan the synced library sources for `Batteries` and `Mathlib`
-    import roots and fail before anything is pushed when the mirror requires
-    neither the package nor Mathlib (which brings Batteries with it).
+    The monorepo provides Batteries, Mathlib and Tau Ceti; a mirror only has
+    what its own Lake file requires. Scan synced sources for those roots and
+    fail before pushing when a corresponding requirement is absent. Mathlib
+    also provides Batteries, but does not provide Tau Ceti.
     """
     if entry.get("pins_only"):
         return
@@ -1523,9 +1522,11 @@ def validate_external_imports(entry: dict, clone: Path) -> None:
         provided.update({"Mathlib", "Batteries"})
     if re.search(r'(?i)batteries\.git|name\s*=\s*"batteries"|require\s+batteries\b', text):
         provided.add("Batteries")
+    if re.search(r'(?i)tauceti\.git|name\s*=\s*"TauCeti"|require\s+TauCeti\b', text):
+        provided.add("TauCeti")
     roots: dict[str, str] = {}
     pattern = re.compile(
-        r"^\s*(?:(?:public|private|meta)\s+)*import\s+(?:all\s+)?(Batteries|Mathlib)\b",
+        r"^\s*(?:(?:public|private|meta)\s+)*import\s+(?:all\s+)?(Batteries|Mathlib|TauCeti)\b",
         re.M)
     for src, dest_rel, is_dir in managed_paths(entry):
         dest = clone / dest_rel

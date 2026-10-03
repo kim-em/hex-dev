@@ -79,7 +79,9 @@ private def hexArithOTarget (pkg : Package) (src : String) : FetchM (Job FilePat
 
 target hexarithffi pkg : FilePath := do
   let name := nameToStaticLib "hexarithffi"
-  let oTargets ← #[ "wide_arith.c", "mpz_gcdext.c" ].mapM (hexArithOTarget pkg)
+  -- TODO(lean4#15160): remove extended_gcd.c after the pinned toolchain provides
+  -- Nat.extendedGcd: https://github.com/leanprover/lean4/pull/15160
+  let oTargets ← #[ "wide_arith.c", "extended_gcd.c" ].mapM (hexArithOTarget pkg)
   buildStaticLib (pkg.staticLibDir / name) oTargets
 
 target hexmodarithffi pkg : FilePath := do
@@ -140,6 +142,7 @@ lean_lib HexTruncatedSeriesMathlib where
 lean_lib HexArith where
   precompileModules := true
   moreLinkObjs := #[hexarithffi]
+  -- TODO(lean4#15160): remove -lgmp with the local extended_gcd.c adapter.
   moreLinkArgs := #["-lgmp"]
 
 lean_lib HexPoly where
@@ -295,7 +298,7 @@ lean_lib HexRealClosure where
 lean_lib HexRealClosureTests where
   globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.RootOrderTests,
     .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerRootsTests,
-    .one `HexRealClosure.RootCollectionTests,
+    .one `HexRealClosure.RootCollectionTests, .one `HexRealClosure.TowerPresentationTests,
     .one `HexRealClosure.TrivialTests, .one `HexRealClosure.TowerEnlargeOrderTests,
     .one `HexRealClosure.TowerTransportTests]
 
@@ -658,7 +661,9 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.RootTotal, `HexRealClosureMathlib.TowerRoots,
     `HexRealClosureMathlib.RootTransport,
     `HexRealClosureMathlib.RootCollection,
-    `HexRealClosureMathlib.TowerCoverage, `HexRealClosureMathlib.TowerNaturality,
+    `HexRealClosureMathlib.TowerCoverage, `HexRealClosureMathlib.Presentation,
+    `HexRealClosureMathlib.PresentationTests,
+    `HexRealClosureMathlib.TowerNaturality,
     `HexRealClosureMathlib.Ambient, `HexRealClosureMathlib.AmbientTests,
     `HexRealClosureMathlib.BaseAlgebraicity, `HexRealClosureMathlib.BaseBound,
     `HexRealClosureMathlib.EnlargementTests,
@@ -669,6 +674,13 @@ lean_lib HexQuerySemantics where
 
 lean_exe hexrealclosure_root_order_tests where
   root := `HexRealClosure.RootOrderTests
+
+-- Ordinary-import consumers of merged family APIs, also built as an isolated
+-- local downstream project in experiments/RealClosureConsumer.
+@[default_target]
+lean_lib RealClosureConsumer where
+  srcDir := "examples"
+  globs := #[.submodules `RealClosureConsumer]
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
@@ -1105,7 +1117,8 @@ lean_lib HexConformance where
     ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests,
       `HexRealClosureMathlib.CoefficientSignsConformance,
       `HexRealClosureMathlib.PackingConformance,
-      `HexRealClosureMathlib.NestedSignsConformance].map Glob.one
+      `HexRealClosureMathlib.NestedSignsConformance,
+      `HexRealClosureMathlib.SignCodecConformance].map Glob.one
 
     ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
     ++ #[.submodules `HexSturmMathlib.Replay]
@@ -1227,7 +1240,7 @@ lean_exe hex_interval_pnt_fks2_local where
 -- examples and regression tests are compiled through this separate target so
 -- removing them from an umbrella cannot silently remove them from CI.
 lean_lib HexReleaseTests where
-  globs := #[`HexPoly.InterpretTests, `HexPoly.PseudoTests,
+  globs := #[`HexArith.ExtendedGcdTests, `HexPoly.InterpretTests, `HexPoly.PseudoTests,
     `HexPolyMathlib.InterpretTests, `HexPolyMathlib.PseudoTests,
     `HexMatrixMathlib.Tests,
     `HexPolyMathlib.LiteralTests,
@@ -1237,6 +1250,8 @@ lean_lib HexReleaseTests where
     `HexBerlekampMathlib.FactorPolyTests,
     `HexBerlekampZassenhaus.FactorTacticTests,
     `HexBerlekampZassenhausMathlib.FactorPolyTests,
+    `HexBerlekampZassenhausMathlib.PublicReplayTests,
+    `HexBerlekampZassenhausMathlib.QuotationTests,
     `HexBerlekampZassenhausMathlib.IrreducibilityTests,
     `HexRealRoots.ReplayTest,
     `HexRealRoots.TarskiTests,
@@ -1277,6 +1292,11 @@ lean_lib HexReleaseTests where
     -- a name array mapped through Glob.one: an array literal this long is
     -- elaborated in chunks, on which the name-to-glob coercion fails
     |>.map Glob.one
+
+-- TODO(lean4#15160): after removing the backport, keep the Hex signed API
+-- regression coverage and remove copied upstream primitive cases.
+lean_exe hexarith_extgcd_tests where
+  root := `HexArith.ExtendedGcdTests
 
 -- Build-only regression roots for the structural matrix frontends.
 @[default_target]
