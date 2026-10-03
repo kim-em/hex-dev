@@ -3,9 +3,10 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
+module
 
-import HexECPPMathlib.Hasse
-import Mathlib.FieldTheory.Finite.Basic
+public import HexECPPMathlib.Hasse
+public import Mathlib.FieldTheory.Finite.Basic
 
 /-!
 # Frobenius on elliptic-curve points
@@ -14,6 +15,8 @@ For a curve defined over `ZMod p`, Frobenius on any extension field acts
 coordinatewise on its affine points. Its fixed points are precisely the
 points coming from the base field.
 -/
+
+@[expose] public section
 
 namespace Hex.ECPP
 

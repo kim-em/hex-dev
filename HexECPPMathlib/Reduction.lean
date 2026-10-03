@@ -3,12 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
+module
 
-import HexECPP.Cert
-import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
-import Mathlib.AlgebraicGeometry.EllipticCurve.NormalForms
-import Mathlib.Algebra.Field.ZMod
-import Mathlib.Data.ZMod.Basic
+public import HexECPP.Cert
+public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
+public import Mathlib.AlgebraicGeometry.EllipticCurve.NormalForms
+public import Mathlib.Algebra.Field.ZMod
+public import Mathlib.Data.ZMod.Basic
 
 /-!
 # Reduction to prime fields
@@ -16,6 +17,8 @@ import Mathlib.Data.ZMod.Basic
 An accepted arithmetic step can be interpreted over every prime divisor of
 its candidate. These lemmas transport its modular residues into `ZMod p`.
 -/
+
+@[expose] public section
 
 namespace Hex.ECPP
 
