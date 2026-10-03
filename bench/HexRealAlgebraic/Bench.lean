@@ -611,9 +611,10 @@ setup_fixed_benchmark runHardBareNatPow where { observations with maxSecondsPerC
 setup_fixed_benchmark runHardIntPow where { observations with maxSecondsPerCall := 60, expectedHash := some 0xee54fcb23d356212 }
 setup_fixed_benchmark runHardBareIntPow where { observations with maxSecondsPerCall := 60, expectedHash := some 0xee54fcb23d356212 }
 
-/-- A single degree-one leaf with growing coefficient height. The numerator
-and denominator are odd, differ by two, and are coprime. Preparation includes
-canonical construction and checks recognition against the independent rational. -/
+/-- A single degree-one leaf with growing coefficient height. At the even
+scientific parameters, the odd numerator `A=(2^b-1)/3` and denominator `D=2^b+1`
+satisfy `D=3*A+2` and are coprime. Values approach 1/3 rather than the dyadic value one.
+Preparation checks canonical construction and recognition against the rational. -/
 structure RationalLeaf where
   value : RealAlgebraicNumber
   rational : Rat
@@ -623,18 +624,25 @@ instance : Hashable RationalLeaf where
 
 def rationalLeaf (bits : Nat) : RationalLeaf :=
   let power := 2 ^ bits
-  let q : Rat := ((power - 1 : Nat) : Rat) / ((power + 1 : Nat) : Rat)
+  let q : Rat := (((power - 1) / 3 : Nat) : Rat) / ((power + 1 : Nat) : Rat)
   let a := ofRat q
   if a.toAlgebraic.p.natDegree == 1 && a.toRat? == some q then
     ⟨a, q⟩
   else Hex.panicWith ⟨0, 0⟩ "rational-leaf fixture failed its degree/recognition check"
 
 def runRationalRecognition (i : RationalLeaf) : Option Rat := i.value.toRat?
+
+/-- The former coefficient-quotient expression, only as a comparison control.
+It uses the same prepared input and core rational arithmetic. -/
+def runRationalQuotient (i : RationalLeaf) : Option Rat :=
+  let p := i.value.toAlgebraic.p
+  if p.natDegree = 1 then some (-(p.coeff 0 : Rat) / (p.coeff 1 : Rat)) else none
 def runRationalFloor (i : RationalLeaf) : Int := i.value.floor
 def runRationalCeil (i : RationalLeaf) : Int := i.value.ceil
 
 -- Mode-1 derivation before measurement: the canonical linear polynomial for
--- q=(2^b-1)/(2^b+1) has primitive coefficients. Recognition constructs the
+-- q=((2^b-1)/3)/(2^b+1) at even b has primitive coefficients D=3*A+2.
+-- Recognition constructs the
 -- reduced Rat directly. Negating its borrowed b-bit constant coefficient
 -- copies Θ(b) bits in the pinned runtime. Positive-denominator natAbs and
 -- record construction add no higher-order work. Rat's structural output hash
@@ -646,9 +654,9 @@ def runRationalCeil (i : RationalLeaf) : Int := i.value.ceil
 setup_benchmark runRationalRecognition b => b
   with prep := rationalLeaf
   where {
-    paramSchedule := .custom #[8192, 16384, 32768, 65536]
-    paramFloor := 8192
-    paramCeiling := 65536
+    paramSchedule := .custom #[262144, 524288, 1048576, 2097152]
+    paramFloor := 262144
+    paramCeiling := 2097152
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
@@ -659,9 +667,9 @@ setup_benchmark runRationalRecognition b => b
 setup_benchmark runRationalFloor b => b
   with prep := rationalLeaf
   where {
-    paramSchedule := .custom #[8192, 16384, 32768, 65536]
-    paramFloor := 8192
-    paramCeiling := 65536
+    paramSchedule := .custom #[262144, 524288, 1048576, 2097152]
+    paramFloor := 262144
+    paramCeiling := 2097152
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
@@ -672,9 +680,24 @@ setup_benchmark runRationalFloor b => b
 setup_benchmark runRationalCeil b => b
   with prep := rationalLeaf
   where {
-    paramSchedule := .custom #[8192, 16384, 32768, 65536]
-    paramFloor := 8192
-    paramCeiling := 65536
+    paramSchedule := .custom #[262144, 524288, 1048576, 2097152]
+    paramFloor := 262144
+    paramCeiling := 2097152
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+-- Comparison control: D mod A=2, A mod 2=1, so the former normalization
+-- has a bounded Euclidean quotient sequence. Single-limb division, reduction
+-- and the actual structural result hash require Θ(b) limb work on this family.
+setup_benchmark runRationalQuotient b => b
+  with prep := rationalLeaf
+  where {
+    paramSchedule := .custom #[262144, 524288, 1048576, 2097152]
+    paramFloor := 262144
+    paramCeiling := 2097152
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
