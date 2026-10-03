@@ -1424,6 +1424,29 @@ The generic
 canonical zero, dense-polynomial degree and interpretation, actual native
 comparison results, and inclusion of the whole original image field.
 
+`Tower.Shared base owners` assembles an immutable shared target while retaining
+all original owner contexts. Use `Shared.gather?` with the actual validated
+context handles, then `Shared.value index value` or
+`Shared.polynomial index polynomial` to enter that target. The owner index
+keeps the original value or polynomial type. The native checked base inclusion
+accepts identical complete real-prefix paths and increasing infinitesimal depth;
+decreasing depth and a different prefix are rejected.
+
+`shared.enlarge?` returns a new shared target, a checked inclusion `previous`
+from the old shared target, and its cached positive `parameter`. All retained
+owner maps use this one inclusion, and accessing the parameter rebuilds no root.
+`Shared.enlarge?_models` proves preservation in one common ambient and identifies
+its actual infinitesimal; `Shared.enlarge?_ordered` gives positivity and comparison
+against every old positive value. Existing serialized values and polynomials
+must pass the returned target's checked readers; old packets with a different
+literal binding are rejected.
+
+Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext`
+for mixed infinitesimal depths, dependent-root registration, original equations,
+owner-map agreement, polynomial transport, parameter order and stale packets.
+The checked inclusions also have ordinary-kernel value, polynomial and comparison
+proofs; the all-owner enlargement proof uses the actual cached checked packet.
+
 Run `lake build HexRealClosure.TowerConversionTests HexRealClosure.TowerTransportTests HexRealClosureMathlib.TowerTransportTests`.
 The routine native fixture checks a changed nonmonic reducible definition, a
 later linear root, identity, two successive definition changes composed with

@@ -1,0 +1,340 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+
+public import HexRealClosure.TowerInclusion
+public import HexRealClosure.TowerEnlargement
+
+public section
+
+namespace Hex.RealClosure.Tower
+
+variable {registry : BaseContext.Registry}
+
+/-- Checked inclusions retaining the exact owners and order of a list of
+original live contexts. -/
+inductive Inclusions (target : Context registry) : List (Context registry) → Type 1 where
+  | nil : Inclusions target []
+  | cons {source : Context registry} {rest : List (Context registry)}
+      (head : Inclusion source target) (tail : Inclusions target rest) :
+      Inclusions target (source :: rest)
+
+/-- Carry every original owner through one later checked inclusion. -/
+@[expose] def Inclusions.extend {source target : Context registry} (next : Inclusion source target) :
+    {owners : List (Context registry)} → Inclusions source owners → Inclusions target owners
+  | [], .nil => .nil
+  | _ :: _, .cons head tail => .cons (head.comp next) (tail.extend next)
+
+/-- Append one new owner without changing the retained order. -/
+@[expose] def Inclusions.snoc {target source : Context registry} :
+    {owners : List (Context registry)} → Inclusions target owners → Inclusion source target →
+      Inclusions target (owners ++ [source])
+  | [], .nil, next => .cons next .nil
+  | _ :: _, .cons head tail, next => .cons head (tail.snoc next)
+
+/-- Retrieve the checked map for an original context by its position, keeping
+its original value and polynomial types. -/
+@[expose] def Inclusions.get {target : Context registry} {owners : List (Context registry)}
+    (maps : Inclusions target owners) (index : Fin owners.length) :
+    Inclusion (owners[index]) target :=
+  match owners, maps with
+  | [], .nil => nomatch index
+  | _ :: _, .cons head tail =>
+    match index with
+    | ⟨0, _⟩ => head
+    | ⟨n + 1, h⟩ => tail.get ⟨n, Nat.lt_of_succ_lt_succ h⟩
+
+/-- Every original owner uses the composition with the same later inclusion. -/
+theorem Inclusions.get_extend {source target : Context registry}
+    {owners : List (Context registry)} (maps : Inclusions source owners)
+    (next : Inclusion source target) (index : Fin owners.length) :
+    (maps.extend next).get index = (maps.get index).comp next := by
+  induction maps with
+  | nil => nomatch index
+  | cons head tail ih =>
+    rcases index with ⟨index, valid⟩
+    cases index with
+    | zero => rfl
+    | succ n => exact ih ⟨n, Nat.lt_of_succ_lt_succ valid⟩
+
+/-- One immutable shared context and a checked inclusion for every original
+live context. All coefficient ancestry is retained by the validated source
+contexts; rebuilding visits it in predecessor order. -/
+structure Shared (base : BaseContext.PackedContext registry)
+    (owners : List (Context registry)) : Type 1 where
+  input : Conversion (Context.ofBase base)
+  maps : Inclusions input.context owners
+  base_eq : input.context.origin.base = base
+
+/-- Begin in the actual declared staged base. -/
+def Shared.empty (base : BaseContext.PackedContext registry) : Shared base [] :=
+  ⟨Conversion.identity (Context.ofBase base), .nil, by
+    rw [(Conversion.identity_spec _).1]
+    cases base with
+    | pack base =>
+      change (Context.base base).origin.base = BaseContext.PackedContext.pack base
+      rw [Context.origin_base]
+      rfl⟩
+
+/-- Rebuild all validated ancestors of one requested live context over the
+current shared target, updating every previous checked inclusion together. -/
+def Shared.addOrigin? {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    {source : Context registry} (origin : Origin source) :
+    Option (Shared base (owners ++ [source])) := by
+  cases origin with
+  | pack original suffix source_eq =>
+    exact do
+      let previous ← Inclusion.base? (.pack original) base
+      let starting := previous.comp (Inclusion.mk shared.input rfl)
+      let rebuilt ← starting.conversion.rebuild? suffix
+      let next := rebuilt.input.cast starting.context_eq
+      let combined := shared.input.comp next
+      let following : Inclusion shared.input.context combined.context :=
+        ⟨next, (shared.input.comp_spec next).1.symm⟩
+      let converted := rebuilt.result.cast source_eq
+      let same : converted.context = combined.context :=
+        (rebuilt.result.cast_spec source_eq).1.trans
+          ((rebuilt.input_spec).1.symm.trans
+            ((rebuilt.input.cast_spec starting.context_eq).1.symm.trans
+              (shared.input.comp_spec next).1.symm))
+      let newest : Inclusion source combined.context := ⟨converted, same⟩
+      have returned_base : combined.context.origin.base = base := by
+        have target : combined.context = rebuilt.result.context :=
+          (shared.input.comp_spec next).1.trans
+            ((rebuilt.input.cast_spec starting.context_eq).1.trans rebuilt.input_spec.1)
+        exact (congrArg (fun context => context.origin.base) target).trans
+          ((congrArg (fun context => context.origin.base) rebuilt.context_eq.symm).trans
+            (rebuilt.suffix.base_eq.trans
+              ((congrArg (fun context => context.origin.base) starting.context_eq).trans
+                shared.base_eq)))
+      return ⟨combined, (shared.maps.extend following).snoc newest, returned_base⟩
+
+/-- Register a validated context using its actual stored base and complete
+root suffix, without caller-supplied coefficient or semantic agreement. -/
+def Shared.add? {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (source : Context registry) : Option (Shared base (owners ++ [source])) :=
+  shared.addOrigin? source.origin
+
+/-- Transport one original value through its returned checked map. -/
+@[expose] def Shared.value {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (index : Fin owners.length) (a : (owners[index]).Value) : shared.input.context.Value :=
+  (shared.maps.get index).value a
+
+/-- Transport all polynomial coefficients through the same original-owner map. -/
+@[expose] def Shared.polynomial {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (index : Fin owners.length) (p : (owners[index]).Poly) : shared.input.context.Poly :=
+  (shared.maps.get index).polynomial p
+
+/-- Register a finite list in its original order. Every additional context
+updates the maps of all contexts already registered. -/
+def Shared.collect? {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners) :
+    (later : List (Context registry)) → Option (Shared base (owners ++ later))
+  | [] => some (_root_.cast (congrArg (Shared base) (List.append_nil owners).symm) shared)
+  | source :: rest => do
+    let added ← shared.add? source
+    let result ← added.collect? rest
+    return _root_.cast (congrArg (Shared base) (List.append_assoc owners [source] rest)) result
+
+/-- Assemble a shared target from actual validated context handles. -/
+def Shared.gather? (base : BaseContext.PackedContext registry)
+    (owners : List (Context registry)) : Option (Shared base owners) :=
+  (Shared.empty base).collect? owners
+
+/-- One enlargement of the shared target, retaining every original owner and
+returning the new positive parameter in that same target. -/
+structure SharedEnlargement {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (original : Shared base owners) : Type 1 where
+  private mk ::
+  shared : Shared base.infinitesimal owners
+  checked : Enlargement original.input.context
+  context_eq : checked.conversion.context = shared.input.context
+
+/-- The old shared target enters the exact target of the cached packet. -/
+@[expose] def SharedEnlargement.previous {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} {original : Shared base owners}
+    (result : SharedEnlargement original) :
+    Inclusion original.input.context result.shared.input.context :=
+  ⟨result.checked.conversion, result.context_eq⟩
+
+/-- Read the cached parameter in the returned shared context. -/
+@[expose] def SharedEnlargement.parameter {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} {original : Shared base owners}
+    (result : SharedEnlargement original) : result.shared.input.context.Value :=
+  _root_.cast (congrArg Context.Value result.context_eq) result.checked.parameter
+
+/-- Rebuild the shared suffix once over the next staged base. All registered
+inclusions enter the returned context through the same checked conversion. -/
+def Shared.enlargeOrigin? {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (origin : Origin shared.input.context) : Option (SharedEnlargement shared) := by
+  cases origin with
+  | pack original suffix source_eq =>
+    have original_eq : BaseContext.PackedContext.pack original = base :=
+      (Suffix.origin_base original suffix).symm.trans
+        ((congrArg (fun context => context.origin.base) source_eq).trans shared.base_eq)
+    cases original_eq
+    exact do
+      let initial := Conversion.infinitesimal original
+      let rebuilt ← initial.rebuild? suffix
+      let converted := rebuilt.result.cast source_eq
+      let input := rebuilt.input.cast (Conversion.infinitesimal_spec original).1
+      let same : input.context = converted.context :=
+        (rebuilt.input.cast_spec (Conversion.infinitesimal_spec original).1).1.trans
+          (rebuilt.input_spec.1.trans (rebuilt.result.cast_spec source_eq).1.symm)
+      let next : Conversion (Context.ofBase (.pack original.infinitesimal)) := input
+      have returned_base : next.context.origin.base =
+          BaseContext.PackedContext.pack original.infinitesimal := by
+        exact (congrArg (fun context => context.origin.base)
+          ((rebuilt.input.cast_spec (Conversion.infinitesimal_spec original).1).1.trans
+            (rebuilt.input_spec.1.trans rebuilt.context_eq.symm))).trans
+          (rebuilt.suffix.base_eq.trans (by
+            rw [(Conversion.infinitesimal_spec original).1, Context.origin_base]))
+      let target : Inclusion shared.input.context next.context :=
+        ⟨converted, same.symm⟩
+      let enlarged : Shared (.pack original.infinitesimal) owners :=
+        ⟨next, shared.maps.extend target, returned_base⟩
+      return ⟨enlarged, rebuilt.enlargement original source_eq,
+        (rebuilt.enlargement_conversion original source_eq).symm ▸ same.symm⟩
+
+/-- Enlarge the actual stored shared context and update all its checked maps. -/
+def Shared.enlarge? {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners) :
+    Option (SharedEnlargement shared) := shared.enlargeOrigin? shared.input.context.origin
+
+/-- The collection retains the existing producer's complete checked packet,
+with no second suffix reconstruction. -/
+theorem Shared.enlargeOrigin?_checked {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (origin : Origin shared.input.context) :
+    (shared.enlargeOrigin? origin).map (fun result => result.checked) =
+      origin.enlargeWithParameter? := by
+  cases origin with
+  | pack original suffix source_eq =>
+    have original_eq : BaseContext.PackedContext.pack original = base :=
+      (Suffix.origin_base original suffix).symm.trans
+        ((congrArg (fun context => context.origin.base) source_eq).trans shared.base_eq)
+    cases original_eq
+    simp only [Shared.enlargeOrigin?, Origin.enlargeWithParameter?]
+    cases (Conversion.infinitesimal original).rebuild? suffix <;> rfl
+
+/-- A successful enlargement updates every retained owner through its one
+returned inclusion of the old shared target. -/
+theorem Shared.enlargeOrigin?_maps {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (origin : Origin shared.input.context) (result : SharedEnlargement shared)
+    (produced : shared.enlargeOrigin? origin = some result) :
+    result.shared.maps = shared.maps.extend result.previous := by
+  cases origin with
+  | pack original suffix source_eq =>
+    have original_eq : BaseContext.PackedContext.pack original = base :=
+      (Suffix.origin_base original suffix).symm.trans
+        ((congrArg (fun context => context.origin.base) source_eq).trans shared.base_eq)
+    cases original_eq
+    cases rebuilt_eq : (Conversion.infinitesimal original).rebuild? suffix with
+    | none =>
+      simp only [Shared.enlargeOrigin?, rebuilt_eq] at produced
+      change none = some result at produced
+      cases produced
+    | some rebuilt =>
+      simp only [Shared.enlargeOrigin?, rebuilt_eq] at produced
+      cases Option.some.inj produced
+      simp only [SharedEnlargement.previous, Rebuilt.enlargement_conversion]
+
+/-- The public producer updates all retained maps through its shared inclusion. -/
+theorem Shared.enlarge?_maps {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (result : SharedEnlargement shared) (produced : shared.enlarge? = some result) :
+    result.shared.maps = shared.maps.extend result.previous :=
+  shared.enlargeOrigin?_maps _ result produced
+
+/-- Every returned owner map is the old map followed by the shared inclusion. -/
+theorem Shared.enlarge?_owner {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (result : SharedEnlargement shared) (produced : shared.enlarge? = some result)
+    (index : Fin owners.length) :
+    result.shared.maps.get index = (shared.maps.get index).comp result.previous := by
+  rw [shared.enlargeOrigin?_maps _ result produced]
+  exact Inclusions.get_extend _ _ _
+
+/-- Each original value follows its retained owner map through enlargement. -/
+theorem Shared.enlarge?_value {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (result : SharedEnlargement shared) (produced : shared.enlarge? = some result)
+    (index : Fin owners.length) (a : (owners[index]).Value) :
+    result.shared.value index a = result.previous.value (shared.value index a) := by
+  unfold Shared.value
+  rw [shared.enlarge?_owner result produced index, Inclusion.comp_value]
+
+/-- Collection enlargement returns the actual whole-context checked packet. -/
+theorem Shared.enlarge?_checked {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners) :
+    shared.enlarge?.map (fun result => result.checked) =
+      shared.input.context.enlargeWithParameter? := shared.enlargeOrigin?_checked _
+
+/-- Forgetting the collection maps returns the existing enlargement of the
+entire shared context, with no second suffix reconstruction. -/
+theorem Shared.enlargeOrigin?_conversion {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (origin : Origin shared.input.context) :
+    (shared.enlargeOrigin? origin).map (fun result => result.previous.conversion) =
+      origin.enlarge? := by
+  have exact_packet := congrArg (fun packet => packet.map Enlargement.conversion)
+    (shared.enlargeOrigin?_checked origin)
+  have exact_conversion : origin.enlargeWithParameter?.map Enlargement.conversion =
+      origin.enlarge? := by
+    cases origin with
+    | pack original suffix source_eq =>
+      simp only [Origin.enlargeWithParameter?, Origin.enlarge?, ← Conversion.rebuild_result,
+        Option.map_map, Function.comp_def, Rebuilt.enlargement_conversion]
+  have aligned : (shared.enlargeOrigin? origin).map
+      (fun result => result.previous.conversion) =
+        origin.enlargeWithParameter?.map Enlargement.conversion := by
+    simpa only [Option.map_map, Function.comp_def, SharedEnlargement.previous] using exact_packet
+  exact aligned.trans exact_conversion
+
+/-- Collection enlargement uses exactly the existing whole-context producer. -/
+theorem Shared.enlarge?_conversion {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners) :
+    shared.enlarge?.map (fun result => result.previous.conversion) =
+      shared.input.context.enlarge? := shared.enlargeOrigin?_conversion _
+
+/-- Registering the checked collection maps adds no failure to the existing
+whole-context enlargement. -/
+theorem Shared.enlarge?_isSome {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners) :
+    shared.enlarge?.isSome = shared.input.context.enlarge?.isSome := by
+  simpa only [Option.isSome_map] using congrArg Option.isSome shared.enlarge?_conversion
+
+end Hex.RealClosure.Tower
+
+/-- info: 'Hex.RealClosure.Tower.Shared.enlarge?' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.enlarge?
+
+/-- info: 'Hex.RealClosure.Tower.Shared.enlarge?_conversion' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.enlarge?_conversion
+
+/-- info: 'Hex.RealClosure.Tower.Shared.enlarge?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.enlarge?_isSome
+
+/-- info: 'Hex.RealClosure.Tower.Shared.enlarge?_checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.enlarge?_checked
+
+/-- info: 'Hex.RealClosure.Tower.Shared.enlarge?_owner' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.enlarge?_owner
+
+/-- info: 'Hex.RealClosure.Tower.Shared.enlarge?_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.enlarge?_value

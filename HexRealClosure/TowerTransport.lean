@@ -430,6 +430,19 @@ structure Rebuilt {source : Context registry} (initial : Conversion source)
   includeValue : initial.context.Value → result.context.Value
   include_eq : ∀ a, includeValue a =
     _root_.cast (congrArg Context.Value context_eq) (suffix.embed a)
+  includeChecked : Transport initial.context result.context includeValue
+
+/-- The cached inclusion of the entire initial context, with the native
+construction steps retained as erased provenance. -/
+def Rebuilt.input {source : Context registry} {initial : Conversion source}
+    {original : Suffix source} (rebuilt : Rebuilt initial original) :
+    Conversion initial.context :=
+  ⟨rebuilt.result.context, rebuilt.includeValue, rebuilt.includeChecked⟩
+
+theorem Rebuilt.input_spec {source : Context registry} {initial : Conversion source}
+    {original : Suffix source} (rebuilt : Rebuilt initial original) :
+    rebuilt.input.context = rebuilt.result.context ∧
+      HEq rebuilt.input.value rebuilt.includeValue := ⟨rfl, HEq.rfl⟩
 
 /-- A rebuilt nonempty suffix starts with a validated converted root. -/
 theorem Rebuilt.root_shape {source : Context registry} {initial : Conversion source}
@@ -440,7 +453,7 @@ theorem Rebuilt.root_shape {source : Context registry} {initial : Conversion sou
         initial.context.sign initial.context.signature,
       ∃ tail : Suffix (initial.context.adjoin converted).context,
         rebuilt.suffix = .root converted tail := by
-  rcases rebuilt with ⟨result, suffix, context_eq, checked, _, _⟩
+  rcases rebuilt with ⟨result, suffix, context_eq, checked, _, _, _⟩
   cases checked with
   | root _ _ _ converted h tail =>
     exact ⟨converted, _, rfl⟩
@@ -450,7 +463,7 @@ suffix supplies checked executable inputs for another refinement. -/
 def Conversion.rebuild? {source : Context registry} (conversion : Conversion source)
     (suffix : Suffix source) : Option (Rebuilt conversion suffix) :=
   match suffix with
-  | .nil => some ⟨conversion, .nil, rfl, .nil conversion, id, fun _ => rfl⟩
+  | .nil => some ⟨conversion, .nil, rfl, .nil conversion, id, fun _ => rfl, .identity _⟩
   | .root descriptor rest =>
     match h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
         (source.mapDescriptor conversion.context conversion.value descriptor) with
@@ -469,7 +482,8 @@ def Conversion.rebuild? {source : Context registry} (conversion : Conversion sou
           fun a => rebuilt.includeValue (child.embed a), by
             intro a
             cases same
-            exact rebuilt.include_eq (child.embed a)⟩
+            exact rebuilt.include_eq (child.embed a),
+          .comp (.inclusion conversion.context converted child rfl) rebuilt.includeChecked⟩
 
 /-- Retaining rebuilt descriptors does not change the final native conversion
 returned by the existing suffix traversal. -/
