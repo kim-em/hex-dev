@@ -1055,10 +1055,15 @@ lean_lib HexRCFBenchSupport where
   srcDir := "bench"
   globs := #[`HexRCF.BenchHash].map Glob.one
 
+-- On-demand attribution only; routine CI does not execute the profiler.
+lean_lib HexRCFProofProfile where
+  srcDir := "bench"
+  globs := #[`HexRCF.ProofProbe.Profiling]
+
 lean_lib HexRCFProofProbe where
   srcDir := "bench"
   globs := #[`HexRCF.ProofProbe.SyntaxFixture, `HexRCF.ProofProbe.Syntax,
-    `HexRCF.ProofProbe.Examples, `HexRCF.ProofProbe.Profiling,
+    `HexRCF.ProofProbe.Examples,
     `HexRCF.ProofProbe.Registered.Unused,
     `HexRCF.ProofProbe.Registered.Support,
     `HexRCF.ProofProbe.Registered.Tactic,

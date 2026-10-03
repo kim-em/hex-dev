@@ -133,4 +133,9 @@ Collect one representative profile with
 The profiler warms only dependencies, retains the completed sample before
 validation, records source/dependency/host identities and never retries for
 host activity. These are build-only modules, with no Mathlib-importing runtime
-benchmark or new CI job.
+benchmark or new CI job. The profiling module belongs to the on-demand
+`HexRCFProofProfile` target, so routine CI does not execute a scientific
+attribution run. The six scaling proofs and counter fixtures remain in the
+existing CI proof-probe target. The recorded profiling revision predates that
+target separation and the rational-constructor lowering; its timings are tied
+to the recorded source, not to subsequent revisions.

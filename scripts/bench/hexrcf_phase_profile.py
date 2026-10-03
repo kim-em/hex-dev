@@ -25,7 +25,7 @@ PROBE = ProbeModule("HexRCF.ProofProbe.Profiling",
 # The record supplies the import closure to the common provenance walker.
 # No pair sweep runs: this collector executes exactly one attribution sample.
 SOURCES = SweepSpec(__doc__, (ProbePair("attribution", PROBE, PROBE, {}),),
-                    "HexRCFProofProbe", "hex-rcf-phase-profile-v1",
+                    "HexRCFProofProfile", "hex-rcf-phase-profile-v1",
                     "single-exclusive-profile", "hex-rcf-phase-profile",
                     extra_sources=(Path("scripts/bench/cpu_lease.py"),))
 
