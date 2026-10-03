@@ -1058,7 +1058,7 @@ lean_lib HexRCFBenchSupport where
 lean_lib HexRCFProofProbe where
   srcDir := "bench"
   globs := #[`HexRCF.ProofProbe.SyntaxFixture, `HexRCF.ProofProbe.Syntax,
-    `HexRCF.ProofProbe.Examples,
+    `HexRCF.ProofProbe.Examples, `HexRCF.ProofProbe.Profiling,
     `HexRCF.ProofProbe.Registered.Unused,
     `HexRCF.ProofProbe.Registered.Support,
     `HexRCF.ProofProbe.Registered.Tactic,

@@ -306,17 +306,18 @@ private def oneQuantifier {n : Nat} (formula : RealFormula.Prenex n) :
   | .quant q (.matrix qf) => some (q, qf)
   | _ => none
 
-private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans : Array SourcePlan) : MetaM Expr := do
+private meta def assemble (source : Reify.Source) (leafSources : Array Expr) (plans : Array SourcePlan) : MetaM Expr := do
   let anchors := plans.map (·.anchorValue)
   -- Several source coordinates may use the same selected generator. Search
   -- once for each generator, then restore the original source order. Every
   -- resulting coordinate still passes the polynomial and enclosure checks.
   let distinct := anchors.foldl (fun seen anchor =>
     if seen.contains anchor then seen else seen.push anchor) #[]
-  let common : QAdjoin.Presentation := if distinct.size = 1 then
+  let common := profileit "rcf common field" (← getOptions) fun _ =>
+    (if distinct.size = 1 then
       let generator := distinct[0]!.toAlgebraic
       ⟨generator, #[generator.toQAdjoin]⟩
-    else QAdjoin.common (distinct.map RealAlgebraicNumber.toAlgebraic)
+    else QAdjoin.common (distinct.map RealAlgebraicNumber.toAlgebraic) : QAdjoin.Presentation)
   unless common.entries.size == distinct.size do
     throwError "rcf: common-field presentation failed"
   unless common.generator.isReal do
@@ -573,6 +574,11 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
     else throwError "rcf: common square has insufficient precision"
   else throwError "rcf: common square failed its root witness"
 
+private meta def prove (source : Reify.Source) (leafSources : Array Expr)
+    (plans : Array SourcePlan) : MetaM Expr := do
+  profileitM Exception "rcf algebraic frontend" (← getOptions)
+    (assemble source leafSources plans)
+
 private meta partial def gather (source : Expr) (leaves : Array Expr) :
     MetaM (Option (Array Expr)) := do
   if ← eligible source then
@@ -611,11 +617,13 @@ private meta partial def gather (source : Expr) (leaves : Array Expr) :
     let some next ← gather scalar leaves | return .declined
     leaves := next
   if leaves.isEmpty then return .declined
-  let mut plans : Array SourcePlan := #[]
-  for scalar in leaves do
-    let some plan ← sourcePlan? scalar |
-      throwError "rcf: internal: eligible leaf has no plan"
-    plans := plans.push plan
+  let plans ← profileitM Exception "rcf source authentication" (← getOptions) do
+    let mut plans : Array SourcePlan := #[]
+    for scalar in leaves do
+      let some plan ← sourcePlan? scalar |
+        throwError "rcf: internal: eligible leaf has no plan"
+      plans := plans.push plan
+    pure plans
   return .proved (← prove source leaves plans)
 
 end Hex.RCF.RealCoefficients.CommonTactic

@@ -286,7 +286,8 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
       throwError "rcf: the existential sentence is false on the prepared cells"
   | _, none => throwError "rcf: finite sign table did not decide the sentence"
   | _, some true => pure ()
-  let certificate ← resultExpr pExpr rootExpr formulaExpr formula data
+  let certificate ← profileitM Exception "rcf literal quotation" (← getOptions) do
+    resultExpr pExpr rootExpr formulaExpr formula data
   let verdictName := match quantifier with
     | .forallReal => ``FieldBuild.Result.checkForall
     | .existsReal => ``FieldBuild.Result.checkExists
@@ -314,7 +315,8 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
           TarskiCertificate.check_eq, SignedRemainderChain.check,
           ← Array.all_toList, Array.toList_range, Bool.and_eq_true];
           repeat' (any_goals (apply And.intro)); all_goals try (decide +kernel)))
-  let remaining ← Lean.Elab.runTactic' candidate.mvarId! script
+  let remaining ← profileitM Exception "rcf literal replay" (← getOptions) do
+    Lean.Elab.runTactic' candidate.mvarId! script
   unless remaining.isEmpty do
     throwError "rcf: fixed-field certificate replay did not prove a true verdict"
   let checked ← instantiateMVars candidate
@@ -338,7 +340,9 @@ meta def proveWithCertificate {p : ZPoly} {s : DyadicSquare}
     (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := [])
     (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit := fun _ => pure ()) :
     MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
-  let some data := FieldBuild.build p s hw hp values formula () precision extraSignKeys |
+  let proposed := profileit "rcf certificate production" (← getOptions) fun _ =>
+    FieldBuild.build p s hw hp values formula () precision extraSignKeys
+  let some data := proposed |
     throwError "rcf: fixed-field certificate construction failed"
   return ← quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula
     quantifier extraSignKeys validate data
@@ -360,8 +364,9 @@ meta def proveRefiningWithCertificate {p : ZPoly} {s : DyadicSquare}
   if real : s.meetsRealAxis = true then
     let options ← getOptions
     Core.checkInterrupted
-    let result := FieldBuild.produceWithin p s hw hp real values formula ()
-      (rcf.algebraic.directDepth.get options) (rcf.algebraic.maxDoublings.get options) extraSignKeys
+    let result := profileit "rcf certificate production" options fun _ =>
+      FieldBuild.produceWithin p s hw hp real values formula ()
+        (rcf.algebraic.directDepth.get options) (rcf.algebraic.maxDoublings.get options) extraSignKeys
     Core.checkInterrupted
     match result with
     | .error .exhausted => throwError "rcf: algebraic interval refinement budget exhausted; increase rcf.algebraic.maxDoublings or rcf.algebraic.directDepth"

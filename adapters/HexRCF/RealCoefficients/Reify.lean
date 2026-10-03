@@ -364,20 +364,20 @@ Lean runtime failures remain terminal exceptions, with state restored; callers
 must not reclassify them as solver declines. -/
 def prepare (source : Expr) (config : Hex.RealFormula.Reify.Config := {})
     (registered : Array Expr := #[]) : MetaM (Except Hex.RealFormula.Reify.Error Source) := do
-  let saved ← saveState
-  let (result, _) ← tryFinally'
-    (do
-      let outcome ← ((prepareCore registered source config).run
-        { config, budget := .ofBudget config.ring.budget }).run
-      return outcome.map Prod.fst)
-    (fun result => do
-      match result with
-      | some (.ok _) =>
-          modify fun state => { state with
-            mctx := saved.meta.mctx
-            postponed := saved.meta.postponed
-            zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds }
-      | _ => saved.restore)
-  return result
-
+  profileitM Exception "rcf source preparation" (← getOptions) do
+    let saved ← saveState
+    let (result, _) ← tryFinally'
+      (do
+        let outcome ← ((prepareCore registered source config).run
+          { config, budget := .ofBudget config.ring.budget }).run
+        return outcome.map Prod.fst)
+      (fun result => do
+        match result with
+        | some (.ok _) =>
+            modify fun state => { state with
+              mctx := saved.meta.mctx
+              postponed := saved.meta.postponed
+              zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds }
+        | _ => saved.restore)
+    return result
 end Hex.RCF.RealCoefficients.Reify
