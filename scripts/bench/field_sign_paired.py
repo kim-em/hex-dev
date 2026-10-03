@@ -81,9 +81,8 @@ def main():
                     if result.returncode or result.stdout != expected:
                         (args.output / f"{block}-{arm}.jsonl").write_bytes(result.stdout)
                         raise RuntimeError("fixture execution failed or the two arms disagree")
-                    if args.mode == "fixtures" and result.stdout != (
-                        ROOT / "conformance-fixtures/HexSignDet/common-fields.jsonl"
-                    ).read_bytes():
+                    fixture = "common-fields.jsonl" if args.mode == "fixtures" else "field-signs.jsonl"
+                    if result.stdout != (ROOT / "conformance-fixtures/HexSignDet" / fixture).read_bytes():
                         raise RuntimeError("output differs from the committed oracle fixtures")
         medians = {
             arm: statistics.median(s["elapsedNanos"] for s in samples if s["arm"] == arm)

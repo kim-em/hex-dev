@@ -7,8 +7,11 @@ reference/interval ratio was 42.567. These are observations on the recorded
 shared host, including generator construction and process startup.
 
 `scalars/` retains all twelve observations, metadata, exact outputs and summary.
-Its source hashes identify the implementation before the number-field API
-refactoring; the reported times refer to that measured binary.
+Its computational source hashes match commit
+`7b2b23f7f68406e58ba0345d7d4d8e6ffc0cdae1`, before the number-field API
+refactoring. Rebuild that version in a separate worktree with
+`lake build hexsigndet_emit_common_fields`. The reported times refer to the
+recorded binary; they do not measure the current per-call reality check.
 Six adjacent blocks alternate reference/interval and interval/reference on one
 automatically leased CPU. No completed sample was excluded and there was no
 rerun. All outputs agree byte for byte. An independent FLINT qqbar evaluation
