@@ -1174,7 +1174,9 @@ lean_lib HexRCFProofProfile where
     `HexRCF.ProofProbe.Windows.FixedOriginal, `HexRCF.ProofProbe.Windows.FixedRefined,
     `HexRCF.ProofProbe.Windows.FurtherOriginal, `HexRCF.ProofProbe.Windows.FurtherRefined,
     `HexRCF.ProofProbe.Windows.ReciprocalOriginal, `HexRCF.ProofProbe.Windows.ReciprocalRefined,
-    `HexRCF.ProofProbe.Windows.CubicOriginal, `HexRCF.ProofProbe.Windows.CubicRefined, `HexRCF.ProofProbe.Windows.Audit].map Glob.one
+    `HexRCF.ProofProbe.Windows.CubicOriginal, `HexRCF.ProofProbe.Windows.CubicRefined,
+    `HexRCF.ProofProbe.Windows.Audit, `HexRCF.ProofProbe.Precision.Bits8,
+    `HexRCF.ProofProbe.Precision.Bits64, `HexRCF.ProofProbe.Precision.Audit].map Glob.one
 
 lean_lib HexRCFProofProbe where
   srcDir := "bench"
@@ -1183,6 +1185,8 @@ lean_lib HexRCFProofProbe where
     `HexRCF.ProofProbe.Prepared.Support, `HexRCF.ProofProbe.Prepared.Guarded,
     `HexRCF.ProofProbe.Prepared.Domain, `HexRCF.ProofProbe.Prepared.Total,
     `HexRCF.ProofProbe.Windows.Support, `HexRCF.ProofProbe.Windows.FixedRefined,
+    `HexRCF.ProofProbe.Precision.Inputs, `HexRCF.ProofProbe.Precision.Support,
+    `HexRCF.ProofProbe.Precision.Bits64,
     `HexRCF.ProofProbe.Registered.Unused,
     `HexRCF.ProofProbe.Registered.Support,
     `HexRCF.ProofProbe.Registered.Tactic,

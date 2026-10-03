@@ -74,7 +74,7 @@ mutual
     expression owner body
 end
 
-private meta def measure (name : Name) : MetaM Json := do
+meta def measure (name : Name) : MetaM Json := do
   let some owner := (← getEnv).getModuleIdxFor? name | throwError "probe is not imported"
   let (_, counts) ← (declaration owner name).run {}
   unless !counts.tables.isEmpty do throwError "no literal sign table in quoted proof"
