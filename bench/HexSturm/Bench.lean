@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexSturm
 import HexSturm.Frontend
+import HexSturm.External
 import LeanBench
 import Lean.Data.Json
 
