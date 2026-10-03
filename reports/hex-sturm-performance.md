@@ -727,13 +727,26 @@ are retained in [metadata and raw exports](bench-results/sturm-short-chain-degre
 
 The adjacent backend comparison above retains the rational/integer pairs and
 hash agreement. Correctness agreement is gating; it has no wall-time ratio
-goal. The pinned python-flint/qqbar oracle checks exact root sums, every
-serialized chain identity and endpoint sign; this is conformance evidence,
-not a native Tarski-query timing comparator. Z3 and python-flint expose root
-operations, but no directly comparable ordered-field literal-certificate
-replay API. Any scheduled end-to-end comparison must state its input/setup
-boundary rather than time root isolation as query evaluation. Further
-comparator coverage remains tracked under #10577.
+goal. The structured informational comparators are **FLINT real-qqbar signed-root sums**
+and **Z3 RCF signed-root sums**. Their [complete-query comparisons](bench-results/sturm-external-comparisons/README.md)
+retain 64 adjacent alternating AB/BA arms on the fixed T_8 queries one, X,
+X−1 and T_8, with exact results 8,0,−8,0. All 32 pairs match complete Option Int
+hashes and expected-result checks. Median paired external/native ratios are
+FLINT 1.981380,2.691172,2.284023,168.350949 and Z3
+1.082383,1.719067,1.399890,4.488035 in that query order.
+The [raw exports and metadata](bench-results/sturm-external-comparisons/) retain
+the source, commands, order, inner counts and every observation. Protocol
+controls have medians 6.734/6.594 µs; no subtraction is inferred.
+
+Inputs and coefficient contexts are prepared. Timed requests call root
+production, filter the open interval, evaluate the complete query and sum
+exact signs, including JSON transport and temporary cleanup. No roots are
+cached by the driver; backend contexts may retain internal caches, and the
+harness performs an untimed warmup. These are informational fixed valid-domain
+endpoints, not complexity admissions, portable speed claims or isolated
+root-isolation timings. Neither external API has a matching Lean literal
+certificate/proof-checking surface. Extension/nested-evidence comparisons stay
+with the downstream owners; these rational-field fixtures do not attest them.
 
 ## Profile
 

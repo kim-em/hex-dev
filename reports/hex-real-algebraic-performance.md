@@ -35,6 +35,14 @@ uses 349 of 360 seconds, with 63 seconds for this executable and only 11 seconds
 of total headroom. This observation precedes the conversion/API rebase onto
 `c74bc64a0`; it does not attest the rebased source or establish stable headroom.
 
+[Merged required CI on `4a028ba84`](bench-results/prerequisite-required-ci-4a028ba84.json)
+passes every required check, including the conformance/factorization tail.
+Verification uses exactly 360 of 360 seconds, with 62 seconds for the real
+executable and no measured total headroom. This attests the Phase-3 PR #10580,
+not the subsequent direct-recognition/headline/benchmark changes. The unchanged
+cap remains a gate; neither a portable timing budget nor stable headroom is
+inferred from the completed pass.
+
 The fixed verifier already invokes each runner once in-process, without warmup
 or tuning. The hard add/subtract registrations and their bare controls account
 for about 26 of the 32 local seconds. There is no repeat-count or tuning setting
