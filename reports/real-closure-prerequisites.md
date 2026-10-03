@@ -124,7 +124,13 @@ compile. [The direct-recognition verification](bench-results/prerequisite-direct
 records a full default build, full conformance build, semantic headline guards
 and its 71 real / 44 Sturm benchmark smoke cases. [Merged-base follow-up checks](bench-results/prerequisite-followup-merged-base-verification.json)
 cover the recorded 71 cases in each executable, both ordinary-kernel companion
-test targets and the new short-chain and external-query registrations. The axiom guards admit exactly `propext`, `Classical.choice`, and
+test targets and the new short-chain and external-query registrations.
+[Current-base verification](bench-results/prerequisite-followup-current-base-verification.json)
+covers the 71 Sturm and 72 real-algebraic cases, including `signField`, on
+base `4f8745e64`. The full default build has 15803 jobs; the admission scan
+covers 284 import cones and 1062 local modules. Persistent rechecks match all
+168 representative-profile artifacts and all four exact-binary entries.
+The axiom guards admit exactly `propext`, `Classical.choice`, and
 `Quot.sound`; no new axiom, admission or native_decide is introduced.
 The Mathlib-free benchmark target compiles and all shipped-API verification cases pass.
 [Retained fixed-case baseline observations](bench-results/real-algebraic-readiness-baseline/results.json)

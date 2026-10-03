@@ -50,6 +50,11 @@ takes 62 seconds and Sturm takes 2. The complete failed run and all 57
 per-library durations remain retained. This is an operational gate failure,
 not a scientific scaling verdict; the final revision still requires green CI.
 
+[Current-base local checks](bench-results/prerequisite-followup-current-base-verification.json)
+pass all 72 real cases, including fixed-field sign, and all 71 Sturm cases.
+Their two-executable total is 36 seconds, with 32 for real and 4 for Sturm;
+this is not the repo-wide required CI gate.
+
 The fixed verifier already invokes each runner once in-process, without warmup
 or tuning. The hard add/subtract registrations and their bare controls account
 for about 26 of the 32 local seconds. There is no repeat-count or tuning setting

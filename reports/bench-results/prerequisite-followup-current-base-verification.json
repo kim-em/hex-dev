@@ -1,0 +1,138 @@
+{
+  "source_commit": "eabbeea9f069d54183d9eed4a651fa583891e255",
+  "merged_base_commit": "4f8745e646e6bfd52717cb433fdf73ea872a831e",
+  "scope": "Rebased implementation and evidence reconciliation, including shipped signField exact-result coverage. No Phase-4 advancement, transitive runtime edit, changed timing observation, raised CI cap or omitted canonical control.",
+  "tested_source_sha256": {
+    "HexRealAlgebraic/Order.lean": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+    "HexRealAlgebraicMathlib/Rational.lean": "88e0c6ef4cbc10f826d6a16b36893596fa2e8a4609a17d9fda0e64ec085655d4",
+    "HexRealAlgebraicMathlib/Roots.lean": "37161c65df791fd265297013de6fa9d4c571bed8154bcbf1493918c3219c5717",
+    "HexRealAlgebraicMathlib/Tests.lean": "386dee77f9e1dc658aaf67263bf8f77ae7341f53f6c1d6aba2bdcfec1201d7fe",
+    "adapters/HexSturmMathlib/Soundness.lean": "d48888d286d47b784ea4c42b3c11df191dd9e9da8f7ac67a1cd78bb91d5f3a36",
+    "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean": "c512261a78e8162b7e68fc49460340ce6d7e8a789ce8a4bd1deb4f3ec097b155",
+    "bench/HexRealAlgebraic/Bench.lean": "714047d05db8b55d9bc0ee4a1e5c93efdc26725e6a649a4d115e1352d86625ae",
+    "bench/HexSturm/Bench.lean": "5411b2524c1bf4f74a8ffcbde6bc2cada0e3b33e57a65dc199f909daa934d7ed",
+    "bench/HexSturm/Frontend.lean": "26cd53004f0a6cf3142b87825e5d78b1f08afacb28256ba712786b12ad295d9f",
+    "bench/HexSturm/External.lean": "8141b593e16c83d7e6ef4c9a13c0362826e7849375b37e8a98c29041ea5d4e08",
+    "scripts/oracle/sturm_bench.py": "c7b8aa2e5a9415f2fb877319f60fab77900d89bddc35d9ee82f69f6fd9734eb9",
+    "scripts/oracle/test_sturm_bench.py": "4a57d93d88ef4acbe8c8e620672bd0970ae0e93a525f3f60beadd336f16de3ad",
+    "scripts/ci/run_oracles.sh": "3f2dd7e2239429160ede53480a5e90655245e2460854962c9610c58168cc0f3e",
+    "lakefile.lean": "d1c45ad84da3c3419d04486accf8ac1b99432eaeaf0743ae44a057b18e424525",
+    "libraries.yml": "e9ee2e5aaf2adddff6bb395251e63b1cf32776ab00a6952ecdc28fc17046940b",
+    "scripts/check_dag.py": "102c6cd2da443381bcd4969f4ded28609bca3f9b2edc5dbaedc546ddd6a5e836",
+    "scripts/check_phase4.py": "934415c15d2dc4bd06c433bb794e49d165b452c18d5b25e3613b731f3c7e4394",
+    ".lake/packages/lean-bench/LeanBench/Run.lean": "18d94f24eccdd6d8d7d53e61e235607e6532e55b90c60e7d4a1e4d037eb40860",
+    ".lake/packages/lean-bench/LeanBench/Verify.lean": "01d5ce5ed69202aae76a44f6d7b6297260b7df483567f09667e3680d2e0bc3f7"
+  },
+  "checks": [
+    {
+      "command": "lake build",
+      "result": "passed",
+      "jobs": 15803
+    },
+    {
+      "command": "lake build HexConformance HexQuerySemantics HexSturmMathlibTests HexRealAlgebraicMathlibTests hexsturm_bench hexrealalgebraic_bench",
+      "result": "passed",
+      "jobs": 14960
+    },
+    {
+      "command": "python3 scripts/ci/check_named_admissions.py",
+      "result": "passed",
+      "cones": 284,
+      "local_modules": 1062
+    },
+    {
+      "command": "python3 scripts/check_dag.py",
+      "result": "passed"
+    },
+    {
+      "command": "python3 scripts/check_phase4.py",
+      "result": "passed",
+      "headline_reports": 43,
+      "changed_registrations": 17
+    },
+    {
+      "command": "python3 scripts/ci/check_benches_mathlib_free.py",
+      "result": "passed",
+      "bench_executables": 62,
+      "build_only_proof_probes": 427
+    },
+    {
+      "command": "HEX_FLINT_BENCH_PYTHON=<pinned venv> LD_LIBRARY_PATH=<host GCC runtime> BENCH_VERIFY_HARD_CAP_SECONDS=360 bash scripts/ci/check_bench_verify_budget.sh HexSturm=hexsturm_bench HexRealAlgebraic=hexrealalgebraic_bench",
+      "result": "passed",
+      "bench_counts": {
+        "HexSturm": 71,
+        "HexRealAlgebraic": 72
+      },
+      "sturm_fixture_degrees": 129,
+      "seconds": {
+        "HexSturm": 4,
+        "HexRealAlgebraic": 32,
+        "total": 36
+      },
+      "scope": "Two owned executables only; not repo-wide CI headroom"
+    },
+    {
+      "command": "/tmp/hex-10577-oracles/bin/python -m unittest scripts.oracle.test_sturm_bench",
+      "result": "passed",
+      "tests": 4,
+      "skipped": 0
+    }
+  ],
+  "axiom_allowlist": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "deterministic_evidence_checks": {
+    "probe_source_snapshots": 3,
+    "protocol_adjustments": 32,
+    "protocol_summary_medians": 8,
+    "profile_artifacts": 168,
+    "profile_artifact_mismatches": [],
+    "exact_binary_entries": 4,
+    "raw_artifact_recheck": "/home/kim/.local/state/hex/issue-10577-verification/followup-opus-rebase-eabbeea9f/persistent-profile-recheck.json"
+  },
+  "required_ci": "Run 37143108056 on 273ee7ef4 fails at 366/360 seconds, with all owned checks passing. Preserved separately in prerequisite-required-ci-273ee7ef4.json. The rebased final revision still needs full green required CI; no current headroom is inferred.",
+  "retained_logs": [
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-opus-rebase-eabbeea9f/issue-10577-opus-rebase-required-targets.log",
+      "bytes": 625541,
+      "sha256": "582a999667ac7a93c96ea80524c52c5ce90626bb3d047bee550598c5fa93866b"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-opus-rebase-eabbeea9f/issue-10577-opus-rebase-full-build.log",
+      "bytes": 638795,
+      "sha256": "f3716dea0f96d1d3e6fc8275e5481af5fbd2541438b774ca981fe093092a5793"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-opus-rebase-eabbeea9f/issue-10577-opus-rebase-admissions.log",
+      "bytes": 95,
+      "sha256": "05529de35ec34de6064a1c65e0ae7137e5be859f37c7b631e294c0cc7192cc3c"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-opus-rebase-eabbeea9f/issue-10577-opus-rebase-dag.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-opus-rebase-eabbeea9f/issue-10577-opus-rebase-mathlib-free.log",
+      "bytes": 97,
+      "sha256": "ebc93409ec476a529d8b722d3438ddbd861e656231862be46685ebc7ebf1fe93"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-opus-rebase-eabbeea9f/issue-10577-opus-rebase-owned-verify.log",
+      "bytes": 57279,
+      "sha256": "d91a24aae5eecb3733f82343376cd254d24896c56ae2882720aff2bf5ed72d6f"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-opus-rebase-eabbeea9f/issue-10577-opus-rebase-external-tests.log",
+      "bytes": 102,
+      "sha256": "cd7a126ff2cbf7a815787a5a807868ce8f1c4bee651c667ec26d25016438a201"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-opus-rebase-eabbeea9f/issue-10577-opus-rebase-phase4.log",
+      "bytes": 72,
+      "sha256": "69830ea3cbad0449c6624c2923010828b5db32597fadc13cbaa9d65b8e37e625"
+    }
+  ]
+}
