@@ -307,7 +307,10 @@ meta def coverProof (factors certified multiPrime : Expr) (hasMulti : Bool) : Me
     let cert ← mkAppM ``Prod.snd #[entry]
     mkLambdaFVars #[entry] (mkApp2 checkFn f cert)
   let multiCheck ← mkAppM ``List.all #[multiPrime, checkFn]
-  let hmulti ← CertificateReplay.checkProof multiCheck
+  let hmulti ← try
+    CertificateReplay.checkProof multiCheck
+  catch ex =>
+    throwError "coverProof: multi-prime certificate replay failed\n{ex.toMessageData}"
   return mkApp6 (mkConst ``CertificateReplay.checkCover) factors certified multiPrime
     Hex.CertificateSyntax.reflTrue hmulti Hex.CertificateSyntax.reflTrue
 
@@ -394,7 +397,7 @@ meta def zpolyIrredProof (fE : Expr) (w : OneWitness) : MetaM Expr :=
       let hcheck ← try
         CertificateReplay.checkProof (mkApp2 (mkConst ``checkMultiPrimeCert) fE certE)
       catch ex =>
-        throwError "irreducibility: multi-prime certificate replay failed\n{ex.toMessageData}"
+        throwError "zpolyIrredProof: multi-prime certificate replay failed\n{ex.toMessageData}"
       return mkApp3 (mkConst ``zpolyIrreducible_of_checkMultiPrimeCert) fE certE hcheck
 
 /-- The `factor_poly` arm for `Polynomial ℤ`: parse with proof, factorize as

@@ -29,7 +29,7 @@ local elab "quoteMulti" f:term : term => do
 theorem quoted : ZPoly.Irreducible quartic := quoteMulti quartic
 
 /--
-error: irreducibility: multi-prime certificate replay failed
+error: zpolyIrredProof: multi-prime certificate replay failed
 `decide_cbv` failed: the proposition evaluates to `false`
 -/
 #guard_msgs in
