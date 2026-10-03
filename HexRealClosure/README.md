@@ -902,6 +902,30 @@ reads agree literally with the independent native coefficient decoder.
 representatives, missing lower-level facts, altered signs and truncated bytes.
 These coefficient readers do not encode or validate a dependency graph.
 
+`Context.readSigns?` performs memo selection in the Mathlib-free core, with no
+interpretation arguments. `HexRealClosureMathlib.SignFacts` connects its result
+to the proved sign facts consumed by coefficient readers.
+`Context.readSignFact?` selects the row for the context's actual reduced query,
+checks the claimed sign, and returns a proved sign fact keyed by the original
+stored polynomial. It checks the literal head and interval before selecting
+the row; a missing index or mismatched query/sign returns `none`. The companion's
+coefficient interpretation proves agreement with the native scalar sign.
+The function is inlined so that the interpretation and field instances occur
+only in erased proofs, including when the ambient field is noncomputable.
+Computing the reduced query uses ordinary predecessor arithmetic. The core
+coefficient reader still takes only supplied sign facts.
+
+`SignFactsConformance` uses one checked graph row to restore both `X²−1+2X`
+and `2X` at the selected root `X=1`, retaining their distinct stored forms.
+The compiled example checks the actual graph and strict coefficient decoder;
+ordinary-kernel proofs check the supplied row, its sign correspondence and
+the stored polynomial and sign fields. A whole-line example shares a memo
+between the positive and negative roots, including their derivative prefixes.
+A second extension obtains its own fact from a checked graph and decodes
+through both coefficient readers; removing a required lower-level fact rejects.
+Wrong signs, unrelated queries, domains and absent indices reject.
+This connection does not itself serialize dependencies between field levels.
+
 `PackingConformance` checks literal restoration, exact keys, context types and
 canonical zero in the ordinary kernel. `NestedSignsConformance` checks a second
 root defined by `a * Y - 1`, where `a` is stored as `X² - 1 + 2X` at the first
