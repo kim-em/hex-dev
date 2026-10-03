@@ -5,8 +5,9 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.SignFacts
+public import HexRealClosure.SignFacts
 public import HexRealClosure.AlgebraicCodec
+public import HexSignDet.Codec.Bytes
 import all HexRealClosure.AlgebraicCodec
 
 public section
@@ -21,7 +22,8 @@ variable {context : Context E Ctx coeffSign parent}
 
 /-- Decode exact stored coefficients from previously proved signs. Zero needs
 no fact. Nonzero literals need their exact polynomial and claimed sign in the
-fixed context; missing facts reject without invoking a sign producer. This
+fixed context; missing facts reject without invoking this context's sign
+producer. The supplied predecessor codec controls lower-level decoding. This
 partial codec need not roundtrip values absent from the finite facts. -/
 @[expose] def Element.signCodec (value : ValueCodec E) (facts : List (SignFact context)) :
     ValueCodec (Element context) where
@@ -77,5 +79,41 @@ theorem Element.signCodec_sound (value : ValueCodec E) (facts : List (SignFact c
             rw [SignFact.read_sound facts polynomial claimed a hr]
             rfl
     · simp at h
+
+/-- Exact roundtrip on a value whose nonzero literal is covered by the finite
+facts. Canonical zero requires no fact; no global coverage premise is hidden. -/
+theorem Element.signCodec_roundtrip (value : ValueCodec E)
+    (facts : List (SignFact context)) (a : Element context)
+    (hv : ∀ x ∈ a.polynomial.toArray, value.decode (value.encode x) = .ok x)
+    (covered : a = 0 ∨ SignFact.read facts a.polynomial a.sign = some a) :
+    (Element.signCodec value facts).decode ((Element.signCodec value facts).encode a) = .ok a := by
+  cases hs : a.stored with
+  | none =>
+    have ha : a = 0 := Element.ext (hs.trans Element.stored_zero.symm)
+    subst a
+    simp [Element.signCodec, Element.codec, Element.stored_zero, Codec.Json.getArr_arr,
+      bind, Except.bind, pure, Except.pure]
+  | some p =>
+    have hr : SignFact.read facts p.polynomial p.sign = some a := by
+      rcases covered with ha | hr
+      · simp [ha, Element.stored_zero] at hs
+      · simpa only [Element.polynomial, Element.sign, hs] using hr
+    have hp : ∀ x ∈ p.polynomial.toArray, value.decode (value.encode x) = .ok x := by
+      simpa only [Element.polynomial, hs] using hv
+    simp [Element.signCodec, Element.codec, hs, Codec.Json.getArr_arr,
+      Codec.read_poly_of value p.polynomial hp, hr, bind, Except.bind, pure, Except.pure]
+
+/-- The actual byte printer/parser preserves covered values under its existing
+lexical policy. Finite sign facts do not need to cover every possible element. -/
+theorem Element.signCodec_bytes (value : ValueCodec E)
+    (facts : List (SignFact context)) (a : Element context)
+    (hv : ∀ x ∈ a.polynomial.toArray, value.decode (value.encode x) = .ok x)
+    (covered : a = 0 ∨ SignFact.read facts a.polynomial a.sign = some a)
+    (limits : Codec.Limits)
+    (bound : Codec.checkBytes limits ((Element.signCodec value facts).encodeBytes a) = .ok ()) :
+    (Element.signCodec value facts).decodeBytes
+      ((Element.signCodec value facts).encodeBytes a) limits = .ok a := by
+  exact (Element.signCodec value facts).decode_encode_of a
+    (Element.signCodec_roundtrip value facts a hv covered) limits bound
 
 end Hex.RealClosure.Algebraic

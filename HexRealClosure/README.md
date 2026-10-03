@@ -883,6 +883,20 @@ The examples use `import all HexRealClosure.Algebraic` to make the stored
 constructors available for `decide +kernel`. The public equality and restoration
 lemmas can be applied without that implementation import.
 
+`Element.signCodec value facts` retains the existing stored-value wire format
+and reads nonzero coefficients from exact sign facts in this context. Missing
+or mismatched facts reject instead of recomputing this context's sign. The
+supplied predecessor codec governs lower-level decoding; composing strict
+readers makes each covered level avoid sign production. Zero needs no fact.
+A finite reader is partial, so its roundtrip proof requires only the actual
+stored coefficients to roundtrip through the predecessor reader and the
+nonzero stored literal to occur in the facts. The corresponding byte theorem
+uses the shared parser/printer and its existing lexical limits. Successful
+reads agree literally with the independent native coefficient decoder.
+`SignCodecConformance` checks two successive strict readers, retained
+representatives, missing lower-level facts, altered signs and truncated bytes.
+These coefficient readers do not encode or validate a dependency graph.
+
 `PackingConformance` checks literal restoration, exact keys, context types and
 canonical zero in the ordinary kernel. `NestedSignsConformance` checks a second
 root defined by `a * Y - 1`, where `a` is stored as `X² - 1 + 2X` at the first

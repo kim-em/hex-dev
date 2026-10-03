@@ -5,16 +5,18 @@ Authors: Kim Morrison
 -/
 module
 
+public import HexRealClosureMathlib.NestedSignsConformance
+public meta import HexRealClosureMathlib.NestedSignsConformance
 public import HexRealClosureMathlib.PackingConformance
 public meta import HexRealClosureMathlib.PackingConformance
 public meta import HexRealClosureMathlib.CoefficientSignsConformance
-public import HexRealClosureMathlib.SignCodec
-public meta import HexRealClosureMathlib.SignCodec
+public import HexRealClosure.SignCodec
+public meta import HexRealClosure.SignCodec
 public import HexSignDet.Codec.Bytes
 public meta import HexSignDet.Codec.Bytes
 import all HexRealClosure.Algebraic
 import all HexRealClosure.AlgebraicCodec
-import all HexRealClosureMathlib.SignCodec
+import all HexRealClosure.SignCodec
 import all HexSignDet.Codec.Basic
 import all HexSignDet.Codec.Json
 
@@ -50,8 +52,53 @@ theorem literal_reader :
 #guard reader.decodeBytes (literalJson.writeBytes.extract 0 (literalJson.writeBytes.size - 1)) == .ok literal
 #guard (reader.decodeBytes (literalJson.writeBytes.extract 0 (literalJson.writeBytes.size - 2))).toOption.isNone
 
+@[expose] def lowerFacts : List (SignFact context) :=
+  literalFacts ++ [⟨DensePoly.C 1, 1, by
+    rw [context.signPoly_const _ (by decide +kernel)]
+    decide +kernel⟩]
+
+@[expose] def lowerReader := Element.signCodec ValueCodec.rat lowerFacts
+
+@[expose] def topFacts : List (SignFact NestedSignsConformance.next) :=
+  [⟨NestedSignsConformance.nextQuery, 1, NestedSignsConformance.next_sign⟩]
+
+@[expose] def topReader := Element.signCodec lowerReader topFacts
+
+/- Both levels use finite strict readers. The lower codec is deliberately
+partial, so the proof uses coverage of the stored coefficients only. -/
+set_option maxRecDepth 32768 in
+theorem nested_roundtrip :
+    topReader.decode (topReader.encode NestedSignsConformance.nextLiteral) =
+      .ok NestedSignsConformance.nextLiteral := by
+  apply Element.signCodec_roundtrip
+  · intro x hx
+    have hc : NestedSignsConformance.nextLiteral.polynomial.toArray =
+        #[NestedSignsConformance.rational 0, NestedSignsConformance.rational 1] := by
+      decide +kernel
+    rw [hc] at hx
+    simp only [Array.mem_def, List.mem_cons, List.not_mem_nil, or_false] at hx
+    rcases hx with rfl | rfl <;> decide +kernel
+  · right
+    decide +kernel
+
+#guard topReader.decodeBytes (topReader.encodeBytes NestedSignsConformance.nextLiteral) ==
+  .ok NestedSignsConformance.nextLiteral
+#guard (Element.signCodec (Element.signCodec ValueCodec.rat ([] : List (SignFact context)))
+  topFacts).decodeBytes (topReader.encodeBytes NestedSignsConformance.nextLiteral) ==
+    .error "stored sign fact missing or mismatched"
+
 /-- info: 'Hex.RealClosure.Algebraic.Element.signCodec_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Element.signCodec_sound
+
+/-- info: 'Hex.RealClosure.Algebraic.Element.signCodec_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Element.signCodec_roundtrip
+/-- info: 'Hex.RealClosure.Algebraic.Element.signCodec_bytes' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Element.signCodec_bytes
+/-- info: 'Hex.RealClosure.Algebraic.SignCodecConformance.nested_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms nested_roundtrip
 
 end Hex.RealClosure.Algebraic.SignCodecConformance

@@ -19,6 +19,7 @@ public import HexRealClosure.Trivial
 public import HexRealClosure.BaseCodec
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
+public import HexRealClosure.SignCodec
 public import HexRealClosure.SignFacts
 public import HexRealClosure.AlgebraicContext
 public import HexRealClosure.AlgebraicReencode

@@ -75,6 +75,19 @@ theorem read_list_of (encode : α → Json) (read : Json → Except String α)
     simp [List.mapM_cons, Function.comp_def, hx, hs, bind, Except.bind,
       pure, Except.pure]
 
+/-- Partial decoders need only cover the actual array entries. -/
+theorem read_array_of (encode : α → Json) (read : Json → Except String α)
+    (a : Array α) (h : ∀ x ∈ a, read (encode x) = .ok x) :
+    readArray read (array encode a) = .ok a := by
+  have hl := read_list_of encode read a.toList (fun x hx => h x (by simpa using hx))
+  simp only [readList, list, Array.toArray_toList] at hl
+  cases hr : readArray read (array encode a) with
+  | error e => simp [hr, Functor.map, Except.map] at hl
+  | ok b =>
+    simp only [hr, Functor.map, Except.map, Except.ok.injEq, Array.toList_inj] at hl
+    cases hl
+    rfl
+
 theorem read_vector (encode : α → Json) (read : Json → Except String α)
     (h : ∀ x, read (encode x) = .ok x) (a : Vector α n) :
     vector n read (array encode a.toArray) = .ok a := by
@@ -94,6 +107,14 @@ theorem read_poly {E : Type} [Zero E] [DecidableEq E]
     readPoly value (poly value p) = .ok p := by
   simp [readPoly, poly, read_array value.encode value.decode h, bind, Except.bind,
     DensePoly.ofCoeffs_toArray, pure, Except.pure]
+
+/-- A polynomial roundtrip needs only the coefficients it actually stores. -/
+theorem read_poly_of {E : Type} [Zero E] [DecidableEq E]
+    (value : ValueCodec E) (p : DensePoly E)
+    (h : ∀ x ∈ p.toArray, value.decode (value.encode x) = .ok x) :
+    readPoly value (poly value p) = .ok p := by
+  simp [readPoly, poly, read_array_of value.encode value.decode p.toArray h,
+    bind, Except.bind, DensePoly.ofCoeffs_toArray, pure, Except.pure]
 
 theorem read_endpoint {E : Type} [Zero E] [DecidableEq E]
     (value : ValueCodec E) (h : value.Lawful) (e : Endpoint E) :
