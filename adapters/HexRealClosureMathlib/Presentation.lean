@@ -217,6 +217,99 @@ theorem Presentation.converted_value (model : Model parent K) (left right : Suff
   rw [Tower.Model.value_cast target_eq realization.target (model.extend right)
     aligned.symm, realization.value]
 
+/-- Actual checked reencoding identifies the old and refined native values.
+The producer's target alignment is discharged by its refinement theorem. -/
+theorem Presentation.refined_value (model : Model parent K)
+    {descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature}
+    {head : DensePoly parent.Value} {lower upper : Endpoint parent.Value}
+    (encoding : SignDet.Reencoding descriptor head lower upper)
+    (a : (parent.adjoin descriptor).context.Value) :
+    (Presentation.mk (.root encoding.target .nil)
+      (_root_.cast (congrArg Context.Value ((Conversion.refine_spec parent encoding).1.trans
+        (congrArg Extension.context (parent.refine encoding).canonical)))
+        ((Conversion.refine parent encoding).value a))).toValue model =
+      (Presentation.mk (.root descriptor .nil) a).toValue model :=
+  Presentation.converted_value model (.root descriptor .nil) (.root encoding.target .nil)
+    (Conversion.refine parent encoding) ((Conversion.refine_spec parent encoding).1.trans
+      (congrArg Extension.context (parent.refine encoding).canonical))
+    (Conversion.Model.refine model encoding) (Conversion.Model.refine_heq model encoding) a
+
+/-- Reindexing a suffix preserves its final native context. -/
+theorem Suffix.cast_context {left right : Context registry} (h : left = right)
+    (suffix : Suffix left) : (h ▸ suffix).context = suffix.context := by
+  cases h
+  rfl
+
+/-- Aligned predecessor interpretations extend to aligned suffix interpretations. -/
+theorem Model.extend_heq {left right : Context registry} (h : left = right)
+    (source : Model left K) (target : Model right K) (aligned : HEq source target)
+    (suffix : Suffix left) : HEq (source.extend suffix) (target.extend (h ▸ suffix)) := by
+  cases h
+  cases eq_of_heq aligned
+  rfl
+
+/-- Refining a root and rebuilding every later validated level preserves the
+old final value class, using the actual producer's model alignment throughout. -/
+theorem Presentation.refined_suffix (model : Model parent K)
+    {descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature}
+    {head : DensePoly parent.Value} {lower upper : Endpoint parent.Value}
+    (encoding : SignDet.Reencoding descriptor head lower upper)
+    (suffix : Suffix (parent.adjoin descriptor).context)
+    (rebuilt : Rebuilt (Conversion.refine parent encoding) suffix)
+    (a : suffix.context.Value) :
+    let same := (Conversion.refine_spec parent encoding).1.trans
+      (congrArg Extension.context (parent.refine encoding).canonical)
+    let right : Suffix parent := .root encoding.target (same ▸ rebuilt.suffix)
+    (Presentation.mk right (_root_.cast (congrArg Context.Value
+      (rebuilt.context_eq.symm.trans (Suffix.cast_context same rebuilt.suffix).symm))
+      (rebuilt.result.value a))).toValue model =
+        (Presentation.mk (.root descriptor suffix) a).toValue model := by
+  dsimp only
+  let same := (Conversion.refine_spec parent encoding).1.trans
+    (congrArg Extension.context (parent.refine encoding).canonical)
+  let first := Conversion.Model.refine model encoding
+  exact Presentation.converted_value model (.root descriptor suffix)
+    (.root encoding.target (same ▸ rebuilt.suffix)) rebuilt.result
+    (rebuilt.context_eq.symm.trans (Suffix.cast_context same rebuilt.suffix).symm)
+    (first.rebuild suffix rebuilt)
+    ((first.rebuild_target suffix rebuilt).trans
+      (Model.extend_heq same first.target (model.adjoin encoding.target)
+        (Conversion.Model.refine_heq model encoding) rebuilt.suffix)) a
+
+/-- Executable equality in a common native suffix is precisely equality of
+its mathematical value classes. -/
+theorem Presentation.equal_spec (model : Model parent K) (suffix : Suffix parent)
+    (a b : suffix.context.Value) :
+    suffix.context.equal a b = true ↔
+      (Presentation.mk suffix a).toValue model = (Presentation.mk suffix b).toValue model := by
+  rw [Presentation.toValue_eq]
+  rw [(model.extend suffix).equal_spec]
+  exact decide_eq_true_iff
+
+/-- If the ambient field is algebraic over the input field, finite native
+presentations cover every ambient value. -/
+theorem Presentation.denote_surjective (model : Model parent K)
+    [Algebra.IsAlgebraic model.field K] :
+    Function.Surjective (fun a : Presentation parent => a.denote model) := by
+  intro x
+  obtain ⟨p, out, produced, entry, member, same⟩ :=
+    model.algebraic_root x (Algebra.IsAlgebraic.isAlgebraic x)
+  exact ⟨entry.root.presentation entry.root.value,
+    (entry.root.presentation_denote _ model).trans same⟩
+
+/-- When the ambient field is algebraic over the prescribed input, the
+identification with it preserves both field operations and the original base map. -/
+@[expose] noncomputable def Presentation.ambientEquiv (model : Model parent K)
+    [Algebra.IsAlgebraic model.field K] : Presentation.Quotient model ≃ₐ[model.field] K :=
+  AlgEquiv.ofBijective
+    ((Union.inclusion (B := model.field) (R := K)).comp
+      (Presentation.algEquiv model).toAlgHom) (by
+    constructor
+    · exact Subtype.val_injective.comp (Presentation.inclusion_bijective model).1
+    · intro x
+      obtain ⟨a, same⟩ := Presentation.denote_surjective model x
+      exact ⟨a.toValue model, same⟩)
+
 theorem Presentation.toValue_zero (model : Model parent K) (suffix : Suffix parent) :
     (Presentation.mk suffix 0).toValue model = 0 := by
   apply (Presentation.ringEquiv model).injective
@@ -305,28 +398,94 @@ theorem Presentation.toValue_sign (model : Model parent K) (a : Presentation par
   have ordered : StrictMono (Presentation.ringEquiv model).toRingHom := fun _ _ h => h
   exact congrArg (fun s : SignType => (s : Int)) (ordered.sign_comp _)
 
+/-- Finitely many algebraic ambient values occur together in an actual
+validated native suffix. Each step uses the complete native root producer. -/
+theorem Presentation.algebraic_values (model : Model parent K) (values : List K)
+    (algebraic : ∀ x ∈ values, IsAlgebraic model.field x) :
+    ∃ suffix : Suffix parent, ∃ stored : List suffix.context.Value,
+      stored.map (model.extend suffix).value = values := by
+  induction values generalizing parent with
+  | nil => exact ⟨.nil, [], rfl⟩
+  | cons x rest ih =>
+    obtain ⟨p, out, produced, entry, member, same⟩ :=
+      model.algebraic_root x (algebraic x List.mem_cons_self)
+    have remaining : ∀ y ∈ rest, IsAlgebraic model.field y :=
+      fun y member => algebraic y (List.mem_cons_of_mem x member)
+    rcases entry with ⟨root, multiplicity⟩
+    cases root with
+    | point value =>
+      obtain ⟨suffix, stored, meanings⟩ := ih model remaining
+      refine ⟨suffix, suffix.embed value :: stored, ?_⟩
+      simp only [List.map_cons, model.extend_embed, meanings]
+      exact congrArg (fun y => y :: rest) same
+    | selected descriptor extension built =>
+      cases built
+      have included : model.field ≤ (model.adjoin descriptor).field := by
+        rintro y ⟨a, ha⟩
+        exact ⟨(parent.adjoin descriptor).embed a,
+          (model.adjoin_embed descriptor a).trans ha⟩
+      let : Algebra model.field (model.adjoin descriptor).field :=
+        (Subfield.inclusion included).toAlgebra
+      let : IsScalarTower model.field (model.adjoin descriptor).field K :=
+        .of_algebraMap_eq fun _ => rfl
+      have child : ∀ y ∈ rest, IsAlgebraic (model.adjoin descriptor).field y :=
+        fun y member => (remaining y member).extendScalars (Subfield.inclusion included).injective
+      obtain ⟨suffix, stored, meanings⟩ := ih (model.adjoin descriptor) child
+      refine ⟨.root descriptor suffix,
+        suffix.embed (parent.adjoin descriptor).generator :: stored, ?_⟩
+      change ((suffix.embed (parent.adjoin descriptor).generator :: stored).map
+        ((model.adjoin descriptor).extend suffix).value) = x :: rest
+      simp only [List.map_cons, Model.extend_embed, meanings]
+      exact congrArg (fun y => y :: rest) same
+
+/-- Presentations at arbitrary finite depths have representatives in one
+validated suffix, with the same mathematical classes in the original order. -/
+theorem Presentation.common_suffix (model : Model parent K) (values : List (Presentation parent)) :
+    ∃ suffix : Suffix parent, ∃ stored : List suffix.context.Value,
+      stored.map (fun a => (Presentation.mk suffix a).toValue model) =
+        values.map (fun a => a.toValue model) := by
+  obtain ⟨suffix, stored, meanings⟩ := Presentation.algebraic_values model
+    (values.map (fun a => a.denote model)) (by
+      intro x member
+      obtain ⟨a, member, rfl⟩ := List.mem_map.mp member
+      exact a.algebraic model)
+  refine ⟨suffix, stored, ?_⟩
+  apply (List.map_injective_iff.mpr (Presentation.inclusion_bijective model).1)
+  apply (List.map_injective_iff.mpr Subtype.val_injective)
+  simpa only [List.map_map, Function.comp_def, Presentation.inclusion_mk,
+    Presentation.toValue, Presentation.toUnion, Presentation.denote] using meanings
+
 /-- Any finite list of presentation values occurs together in one actual native
 collection. Complete root production supplies the selected algebraic values;
 the collection's computed inclusions preserve their order and meanings. -/
 theorem Presentation.common_values (model : Model parent K) (values : List (Presentation parent)) :
     ∃ roots : List (Root parent),
+      (∀ root ∈ roots, ∃ p : DensePoly parent.Value, ∃ out,
+        parent.roots p = .finite out ∧ ∃ entry ∈ out, entry.root = root) ∧
       roots.map (fun root => root.denote model) = values.map (fun value => value.denote model) ∧
       ∃ realization : Collection.Model (parent.collect roots) model,
         (parent.collect roots).values.map realization.input.target.value =
           values.map (fun value => value.denote model) := by
   have represented : ∃ roots : List (Root parent),
+      (∀ root ∈ roots, ∃ p : DensePoly parent.Value, ∃ out,
+        parent.roots p = .finite out ∧ ∃ entry ∈ out, entry.root = root) ∧
       roots.map (fun root => root.denote model) = values.map (fun value => value.denote model) := by
     induction values with
-    | nil => exact ⟨[], rfl⟩
+    | nil => exact ⟨[], fun _ member => False.elim (List.not_mem_nil member), rfl⟩
     | cons value rest ih =>
       obtain ⟨p, out, produced, entry, member, same⟩ :=
         model.algebraic_root (value.denote model) (value.algebraic model)
-      obtain ⟨roots, meanings⟩ := ih
+      obtain ⟨roots, provenance, meanings⟩ := ih
       change entry.root.denote model = value.denote model at same
-      exact ⟨entry.root :: roots, by simp only [List.map_cons, same, meanings]⟩
-  obtain ⟨roots, meanings⟩ := represented
+      refine ⟨entry.root :: roots, ?_, by simp only [List.map_cons, same, meanings]⟩
+      intro root present
+      rcases List.mem_cons.mp present with equal | present
+      · subst root
+        exact ⟨p, out, produced, entry, member, rfl⟩
+      · exact provenance root present
+  obtain ⟨roots, provenance, meanings⟩ := represented
   obtain ⟨realization⟩ := (Context.collect_success model roots).2
-  refine ⟨roots, meanings, realization, ?_⟩
+  refine ⟨roots, provenance, meanings, realization, ?_⟩
   rw [realization.values, Context.collect_sources model, meanings]
 
 end Hex.RealClosure.Tower
@@ -374,3 +533,31 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Presentation.toValue_mul' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Presentation.toValue_mul
+
+/-- info: 'Hex.RealClosure.Tower.Presentation.refined_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Presentation.refined_value
+
+/-- info: 'Hex.RealClosure.Tower.Presentation.refined_suffix' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Presentation.refined_suffix
+
+/-- info: 'Hex.RealClosure.Tower.Presentation.equal_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Presentation.equal_spec
+
+/-- info: 'Hex.RealClosure.Tower.Presentation.denote_surjective' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Presentation.denote_surjective
+
+/-- info: 'Hex.RealClosure.Tower.Presentation.algebraic_values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Presentation.algebraic_values
+
+/-- info: 'Hex.RealClosure.Tower.Presentation.common_suffix' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Presentation.common_suffix
+
+/-- info: 'Hex.RealClosure.Tower.Presentation.ambientEquiv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Presentation.ambientEquiv

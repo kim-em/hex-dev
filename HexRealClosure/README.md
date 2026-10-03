@@ -1923,16 +1923,28 @@ no caller supplies root coverage or chooses a single chain to stand for all towe
 `ringEquiv` and `algEquiv` identify it with the relative algebraic union, preserving
 field operations, ambient order and the prescribed base map. `value_algebraic`
 proves algebraicity over that base, and `realClosed` proves real-closedness.
-The native zero, one, casts, addition, subtraction, multiplication, negation,
+The native zero, one, natural-number casts, addition, subtraction, multiplication, negation,
 total inversion and division agree with operations on classes. Signs agree with
 the same order; raw nonzero representations acquire no literal field laws.
 Native coefficient inclusion through any suffix preserves its class, and
-`converted_value` proves coherence of checked compatible conversions.
+`converted_value` proves coherence given an aligned checked conversion model.
+`refined_value` and `refined_suffix` discharge that alignment for the actual
+root-refinement producer, including reconstruction of every later root level.
+`equal_spec` links executable equality in a common suffix to class equality.
+When the ambient field is algebraic over the input field,
+`denote_surjective` proves that presentations cover the whole ambient field,
+and `ambientEquiv` gives the resulting equivalence with the prescribed base map.
 
-`common_values` places any finite list of presentation values in one actual
+`common_suffix` supplies one validated suffix and native representatives whose
+classes match any finite list of original presentations in order. It uses
+complete native root production at successive compatible predecessor fields.
+The representatives support actual native arithmetic and equality in that suffix.
+
+`common_values` also places any finite list of presentation values in one actual
 native collection with a common ambient interpretation. It uses complete root
 production followed by the checked root-collection producer, and retains the
-values in input order. This semantic finite-value construction does not select
+values in input order, together with their original root-production witnesses.
+These semantic finite-value constructions do not select
 or transport the full requested live dependency DAG during general enlargement.
 That executable assembly, joint ordinary-real realization and Phase-4 tower
 performance remain separate obligations.
