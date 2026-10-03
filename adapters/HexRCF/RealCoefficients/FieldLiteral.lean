@@ -41,6 +41,12 @@ register_option rcf.algebraic.intervalSigns : Bool := {
   descr := "quote exact Horner signs on the authenticated generator interval"
 }
 
+-- Compare one Boolean replay goal with separately checked conjuncts.
+register_option rcf.algebraic.singleReplay : Bool := {
+  defValue := false
+  descr := "check the full fixed-field certificate in one kernel decision goal"
+}
+
 private def arrayLit (ty : Expr) (xs : List Expr) : Expr :=
   let nil := mkApp (mkConst ``List.nil [Level.zero]) ty
   let list := xs.foldr
@@ -333,7 +339,23 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
     #[certificate, valuesExpr, formulaExpr, mkConst ``Unit.unit]
   let proofType ← mkAppM ``Eq #[verdict, mkConst ``Bool.true]
   let candidate ← mkFreshExprMVar proofType
-  let script ← match quantifier with
+  let script ← if rcf.algebraic.singleReplay.get (← getOptions) then
+    match quantifier with
+    | .forallReal => `(tactic|
+        (simp only [FieldBuild.Result.checkForall_eq, FieldBuild.Result.checkEvidence,
+          Field.checkSignTable,
+          LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
+          FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
+          TarskiCertificate.check_eq, SignedRemainderChain.check,
+          ← Array.all_toList, Array.toList_range]; decide +kernel))
+    | .existsReal => `(tactic|
+        (simp only [FieldBuild.Result.checkExists_eq, FieldBuild.Result.checkEvidence,
+          Field.checkSignTable,
+          LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
+          FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
+          TarskiCertificate.check_eq, SignedRemainderChain.check,
+          ← Array.all_toList, Array.toList_range]; decide +kernel))
+  else match quantifier with
     | .forallReal => `(tactic|
         (simp only [FieldBuild.Result.checkForall_eq, FieldBuild.Result.checkEvidence,
           Field.checkSignTable,
