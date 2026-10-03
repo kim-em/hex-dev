@@ -388,6 +388,15 @@ run_one() {
   return "$rc"
 }
 
+# Complete Sturm comparator values and request-lifetime/protocol regressions.
+# Both pinned external dependencies are already installed by the existing job.
+if library_selected HexSturm; then
+  if ! python3 -m unittest scripts.oracle.test_sturm_bench; then
+    echo "FAIL: HexSturm :: exact comparator endpoint tests failed"
+    exit 1
+  fi
+fi
+
 jobs="${HEX_ORACLE_JOBS:-$(nproc)}"
 running=0
 declare -A index_of_pid status_of

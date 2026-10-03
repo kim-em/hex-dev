@@ -622,9 +622,15 @@ examples and equality axiom audit are covered by conformance above.
 Current registrations are in `bench/HexSturm/Bench.lean` and
 `bench/HexSturm/Frontend.lean`. The integer backend stages are shared-kernel
 diagnostics; their existence does not attest every ordered-field frontend.
+The current executable lists and verifies 71 cases, including the 13
+`short-chain-degree` registrations below, plus 12 complete-query fixed
+comparison endpoints and two protocol-overhead controls in
+`bench/HexSturm/External.lean`. The latter are expected-result/informational
+anchors and make no complexity or absolute-budget claim.
 
 | Frontend/stage targets | Strongest justified evidence | Input |
 | --- | --- | --- |
+| `runSparseDomain`, `runSparseQuery`, `runSparseInteger`, `runSparsePrepared`, `runSparseCount`, `runSparsePreparedCount`, `runSparseCertificate`, `runSparsePreparedCertificate`, `runSparseCountCertificate`, `runSparseReplay`, `runSparseCachedReplay`, `runSparseClear`, `runSparseEmbed` | Mode 1, `n` | `short-chain-degree`: `2X^n−1`, query one, endpoints ±1, n=16384–131072 |
 | `runPreparedHigh`, `runPreparedCertificateHigh` | Mode 1, `m²` | Fixed quadratic head, growing query degree 131072–1048576 |
 | `runRetargetWide` | Mode 1, `n²` | Short-chain `X^n−2`, endpoints retargeted to ±3, degree 65536–524288 |
 | `runEmbedSparse` | Mode 1, `n` | Literal integer certificate for `X^n−2`, degree 2048–32768 |
@@ -642,6 +648,17 @@ Phase-4 pass.
 Cached replay checks the literal cache binding during fixture preparation.
 
 ## Verdicts
+
+[Short-chain degree results](bench-results/sturm-short-chain-degree/results.json)
+retain all 208 observations for the 13 frontend/backend cases. The independently
+[derived linear models](bench-results/sturm-short-chain-degree/derivation.md)
+pass with residual slopes from −0.011337 to +0.019652, without signal trimming
+or budget truncation. This supplies growing-degree coverage for the named
+public operations on a three-entry chain with bounded-word coefficients and
+endpoints. It does not admit the unchanged long-chain or growing-bit candidates.
+[Metadata](bench-results/sturm-short-chain-degree/metadata.json) records the clean
+source, exact executable, automatically leased CPU, load, commands, fixed
+trial-major schedule and matching before/after hashes.
 
 [The growing-operand collection](bench-results/prerequisite-sturm-growing-operands/metadata.json)
 records commands, CPU lease, host context, source snapshots and executable
@@ -699,6 +716,15 @@ justify current Phase 4. No failed two-sided case is relabelled mode 2.
 
 ## Comparator ratios
 
+The [short-chain backend pairs](bench-results/sturm-short-chain-degree/analysis.json)
+use four adjacent alternating AB/BA blocks on identical inputs. All 16 common
+parameter pairs have matching complete Option Int hashes. Median paired
+rational/integer ratios at degrees 16384,32768,65536,131072 are
+12.377302,12.114607,11.845440,11.778937. Correctness agreement is gating; these
+host-specific ratios explain relative implementation cost and supply no
+portable speed guarantee. The full arm commands, order, observations and hashes
+are retained in [metadata and raw exports](bench-results/sturm-short-chain-degree/).
+
 The adjacent backend comparison above retains the rational/integer pairs and
 hash agreement. Correctness agreement is gating; it has no wall-time ratio
 goal. The pinned python-flint/qqbar oracle checks exact root sums, every
@@ -710,6 +736,19 @@ boundary rather than time root isolation as query evaluation. Further
 comparator coverage remains tracked under #10577.
 
 ## Profile
+
+The [short-chain-degree representative](bench-results/sturm-short-chain-degree/sturm-short-chain.summary.json)
+uses the actual query at degree 65536 and has 283 operation-window samples.
+Calibration residual is 0.614493 ms; sample-count and ±5 ms sensitivity checks
+pass. Leaf shares are own code 0.35%, GMP 31.10%, allocation 43.11%, Lean runtime
+18.73% and other 6.71%. Inclusive chain production is 67.49%, pseudo-division
+47.70%, and rational gcd 78.45%; inclusive percentages overlap. Rat normalization
+allocates even on this bounded-scalar family, explaining substantial GMP and
+allocation cost without changing the derived linear traversal model.
+[The manifest](bench-results/sturm-short-chain-degree/sturm-short-chain.manifest.json)
+and [artifact checks](bench-results/sturm-short-chain-degree/artifact-check.json)
+retain source/executable identity and verify persistent raw captures, sidecars
+and symbols. This attribution covers the new named family only.
 
 [Retained representative captures](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)
 on clean source `62399ddd0` supply 548 replay samples and 526 prepared-query
