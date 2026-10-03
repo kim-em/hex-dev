@@ -207,7 +207,7 @@ had backwards.
 
 ### The publish mechanism
 
-Five pieces, under `scripts/release/` and `.github/workflows/`:
+Six pieces, under `scripts/release/` and `.github/workflows/`:
 
 - `released.yml` — a per-repo manifest: which paths to copy, which mirror-local
   paths to keep, and which upstream repos to pin, in dependency order.
@@ -226,9 +226,16 @@ Five pieces, under `scripts/release/` and `.github/workflows/`:
 - `synced.json` — the baseline seed (see below).
 - `sync-released.yml` — a manual workflow (`workflow_dispatch`, dry by
   default). One dispatch drives the whole publish.
+- `consumer_check.py` — builds a fresh downstream Lake project against the
+  trees a dry run stages with `--stage`, the way a user would `require` and
+  `import` them. `sync-released.yml` runs it on Ubuntu, macOS and Windows and
+  publishes only after it passes; see
+  [SPEC/CI.md §Release consumer check](../SPEC/CI.md#release-consumer-check).
 
 Each mirror's own CI runs on the sync's push, so a mirror whose published tree
-does not build reports it directly, on the commit that caused it.
+does not build reports it directly, on the commit that caused it. That CI builds
+each mirror as a root package, which cannot show what a downstream user meets;
+the consumer check covers that, before anything is pushed.
 
 Rewriting the cross-repo revisions touches **every** lakefile and
 `lake-manifest.json` in a repo, updating both `rev` and `inputRev`. Lake
