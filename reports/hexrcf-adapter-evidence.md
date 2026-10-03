@@ -82,7 +82,12 @@ The planned extension remains incomplete in these specific respects:
 - General tower/context integration, complete ordered root/enlargement APIs
   and one ordinary real realization of every finite joint nested constraint
   require the actual owner interfaces. Ordered real-closure existence alone
-  does not discharge the joint realization conclusion.
+  does not discharge the joint realization conclusion. The merged
+  `BaseInclusion.sign` and provider-derived `RealPrefix.Model.towerModel`
+  establish base-prefix transport and model packaging; they do not establish
+  one ordinary real point satisfying a nested tower sample’s complete finite
+  set of conditions. Their availability is not a reason to wait for whole-issue
+  closure or unrelated measurements.
 - Algebraic frontend completeness and total acceptance of every supported source
   are not proved by the exact-field total producer. It starts with an already
   authenticated fixed-field environment; frontend irreducibility quotation
