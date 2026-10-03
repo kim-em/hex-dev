@@ -403,29 +403,29 @@ measured by a branch-only debug step on the sync workflow counting
 from the UI on 2026-09-05 for the number-field batch.
 
 `hex-publishing` carries the previously released repositories in
-`released.yml` except the eight listed as released under `hex-publishing-2`
-below: 48 of 50. The ECPP repositories are allocated to
+`released.yml` except the ten existing mirrors listed under
+`hex-publishing-2` below: 48 of 50. The ECPP repositories are allocated to
 `hex-publishing-2`, as listed below. The
 number-field batch (`hex-number-field`, `hex-number-field-mathlib`,
 `hex-number-field-tower`, `hex-number-field-tower-mathlib`, `hex-rcf`)
 is on this token.
 
-`hex-publishing-2` has 46 recorded selected repositories and two further
-allocated slots, against its 50-repository limit:
+`hex-publishing-2` has 48 confirmed selected repositories and two further
+allocated slots, filling its 50-repository limit:
 
 `hex-ecpp` and `hex-ecpp-mathlib` are selected. Their Leanprover organization
 approval is pending; the token owner cannot approve
 their own request. The new `hex-lattice-enum` and
-`hex-lattice-enum-mathlib` empty repositories are allocated to this same token
-so they can join that approval request. Their selections are not yet
-confirmed. Adding the lattice pair brings the recorded allocation to 48 of
-50. Both libraries are at Phase 7; repository reservation alone does not
-publish their sources or admit them into the release manifest.
+`hex-lattice-enum-mathlib` empty repositories are also selected on this token
+and awaiting organization approval. These additions bring the recorded
+selection to 48 of 50. Both lattice libraries are at Phase 7; repository
+reservation alone does not publish their sources or admit them into the
+release manifest.
 
 - selected for publication, approval pending: `hex-ecpp`,
-  `hex-ecpp-mathlib`;
-- empty repositories reserved, selections pending: `hex-lattice-enum`,
-  `hex-lattice-enum-mathlib`;
+  `hex-ecpp-mathlib`, `hex-lattice-enum`, `hex-lattice-enum-mathlib`;
+- existing mirrors allocated, selections pending: `hex-perm-group`,
+  `hex-perm-group-mathlib`;
 - released: `hex-primality`, `hex-primality-mathlib`,
   `hex-sparse-poly`, `hex-sparse-poly-mathlib`, `hex-resultant`,
   `hex-resultant-mathlib`, `hex-graph-iso`, `hex-graph-iso-mathlib`;
@@ -445,21 +445,25 @@ publish their sources or admit them into the release manifest.
   `hex-truncated-series`, `hex-truncated-series-mathlib`,
   `hex-char-poly`, `hex-char-poly-mathlib`.
 
-Both tokens have a pending organization-owner approval
-(https://github.com/organizations/leanprover/settings/personal-access-token-requests)
-for adding the Workflows read-and-write permission, which the sync needs
-to write each mirror's managed `.github/workflows/ci.yml`. Until it is
-approved, a real sync cannot push a workflow file to any mirror.
+The ECPP and lattice additions on `hex-publishing-2` are awaiting
+[organization-owner approval](https://github.com/organizations/leanprover/settings/personal-access-token-requests).
+The token owner cannot approve their own request. Each publishing token needs
+Contents and Workflows read/write; the latter permits changes to the mirrors'
+managed `.github/workflows/ci.yml`. Keep selected repositories and approved
+write grants distinct in this inventory.
 
 `hex-publishing-2` additionally holds organization-level permissions;
 `hex-publishing` holds none.
 
-The published `hex-perm-group` and `hex-perm-group-mathlib` repositories
-are absent from the older routing inventory. Their token placement needs
-reconciliation from a successful publishing preflight or the token settings.
-Reserve two further slots on `hex-publishing-2` until that placement is known;
-with the lattice pair this conservatively budgets all 50 slots. Allocate any
-larger new batch to a third token
+`hex-perm-group` and `hex-perm-group-mathlib` are allocated to
+`hex-publishing-2`. The [last real publishing preflight](https://github.com/kim-em/hex-dev/actions/runs/34687426921)
+reported no Contents write grant for either repository on either token.
+Their baseline entries and release tags do not prove publishing-token
+coverage; failed preflights can still advance the baseline branch. The error
+cannot distinguish an unselected repository from a pending or read-only
+grant. Confirm their selections and organization approval before publishing.
+Once selected, this token has 50 repositories. Allocate any larger new batch
+to a third token
 (`hex-publishing-3`, a new `RELEASED_SYNC_PAT_3` secret, and one line in
 `.github/workflows/sync-released.yml` and `sync_released.py`'s token
 list). The sync's per-repository routing makes the split invisible to
