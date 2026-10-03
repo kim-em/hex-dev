@@ -13,7 +13,7 @@ profiled dominant cost is attributed to a registration.
 ## Bench targets
 
 The compiled Mathlib-free driver is `bench/HexNumberField/Bench.lean`. It
-registers 14 controlled parametric targets and 76 fixed targets (90 total).
+registers 14 controlled parametric targets and 78 fixed targets (92 total).
 The adjacent comments in the driver derive each parametric model or explain the
 fixed-mode choice. The contracts below are copied from the registration sites.
 
@@ -44,7 +44,7 @@ fixed-mode choice. The contracts below are copied from the registration sites.
 | advertised fixed-degree API cases | fixed | lazy and canonical arithmetic, conversion, powers, casts, zero decisions, `AlgebraicPoly.Common` primitives, the integer-polynomial root set `ZPoly.algebraicRoots` on `X⁴ - 10X² + 1`, and the reality test | 500 ms default; 750 ms for measured slower routes, zero grace |
 | `runNormEliminant`, `runEvalEliminant`, `runComponentRoots` | fixed | separable phases of the profiled repeated degree-6 component over `ℚ(√2)` | 1 s, 1.1 s, and 30 s whole-child ceilings, zero grace |
 
-The 76 fixed registrations comprise 51 internal API, phase, and fixed-problem
+The 78 fixed registrations comprise 53 internal API, phase, and fixed-problem
 cases, twenty-four Lean/PARI comparator rungs (`runQAdjoinMulPair` /
 `runPariPolmodMul` at
 `n = 4, 6, 8, 12, 16, 20` and `runQAdjoinInvPair` / `runPariPolmodInv` at
@@ -353,14 +353,14 @@ gap.
 
 ## Verdicts
 
-Thirteen ladders use **mode 1, two-sided parametric**:
+Fourteen ladders use **mode 1, two-sided parametric**:
 `runQAdjoinAddLadder`, `runQAdjoinMulLadder`, `runAddEliminantLadder`,
-`runQAdjoinInvLadder`, `runCommonPresentationLadder`, and
+`runQAdjoinInvLadder`, `runCommonPresentationLadder`, `runContainedPresentation`, and
 `runMergeRootListLadder`, plus the seven API-surface ladders for subtraction,
 negation, scalar multiplication, division, `AlgebraicPoly.ofArray`,
 `AlgebraicPoly.beq`, and `Common.primitive?`. Their adjacent derivations give
 the intended algorithms' expected scaling on the controlled families before
-measurement, and all thirteen pass.
+measurement, and all fourteen pass.
 
 `runLazyAddLadder`, `runExactLadder`, `runExactFactorLadder`,
 `runCanonicalRepLadder`, `runQAdjoinRootsLadder`, and
@@ -374,7 +374,7 @@ measurements and hashes pass.
 This deliberately gives up asymptotic detection for those operations without
 changing their per-library worst-case contracts.
 
-The other 67 fixed registrations are canonical API, separable-phase,
+The other 69 fixed registrations are canonical API, separable-phase,
 comparator, and protocol checks. Their adjacent derivations justify a fixed
 input or grouped constant-time route; none makes an asymptotic claim.
 Historical parametric failures remain diagnostic evidence and are not
@@ -842,8 +842,11 @@ coefficient count.
 The [raw export](bench-results/hex-number-field-containing-presentation.json)
 retains all 21 completed samples from three fixed, trial-major traversals of
 2, 4, 8, 16, 32, 64, 128. The measured source is `5ca2276da` (the working tree
-was source-equivalent to that commit); the subsequent rebase retained the
-producer and benchmark byte-for-byte. CPU 74 was automatically leased on the
+was source-equivalent to that commit), based on `36880151a`. That base
+already contains the GCD backport `e472b0d85`; the subsequent rebase added
+the local-sample delivery and changed none of the number-field, arithmetic,
+polynomial, root, Sturm or real-algebraic sources used by this benchmark.
+The export records `a39fee5bc` with a dirty tree. CPU 74 was automatically leased on the
 shared host. Load averages were 5.390/5.180/5.578 before and
 5.759/5.260/5.603 after. The two-sided harness verdict is consistent with the
 declared linear model, normalized slope −0.125. Median calls range from
@@ -855,9 +858,21 @@ this success branch.
 Reproduce with the shared CPU lease from `scripts.bench.cpu_lease`:
 
 ```sh
- taskset -c "$HEX_BENCH_CPU" .lake/build/bin/hexnumberfield_bench run \
-  --filter runContainedPresentation --outer-trials 3 \
-  --export-file reports/bench-results/hex-number-field-containing-presentation.json
+python3 - <<'PY'
+import subprocess
+from scripts.bench.cpu_lease import cpu_lease
+
+cpu, lease = cpu_lease()
+try:
+    print(f"selected CPU {cpu}", flush=True)
+    subprocess.run(["taskset", "-c", str(cpu),
+                    ".lake/build/bin/hexnumberfield_bench", "run",
+                    "--filter", "runContainedPresentation", "--outer-trials", "3",
+                    "--export-file", "/tmp/hex-number-field-containing-presentation.json"],
+                   check=True)
+finally:
+    lease.close()
+PY
 ```
 
 ### Sensitivity to integer-log steps
