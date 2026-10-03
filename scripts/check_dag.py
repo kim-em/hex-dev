@@ -51,7 +51,6 @@ SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
 }
 
 UMBRELLA_BUILD_TARGETS = {
-    "RealClosureConsumer",
     "HexOrderedFnTests",
     "HexRealClosureTests",
     "HexRealClosureConformanceSupport",
@@ -366,10 +365,10 @@ def main() -> int:
             for imported_root in import_roots(line):
                 if imported_root == owner:
                     continue
-                if imported_root == "Mathlib":
+                if imported_root in {"Mathlib", "TauCeti"}:
                     if owner != "HexManual" and not libraries[owner].mathlib:
                         errors.append(
-                            f"{rel_path}:{line_no} imports Mathlib but {owner} is not a mathlib bridge"
+                            f"{rel_path}:{line_no} imports {imported_root} but {owner} is not a mathlib bridge"
                         )
                     continue
                 if imported_root == "Verso":

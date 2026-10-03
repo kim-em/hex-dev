@@ -1,6 +1,7 @@
 {
-  "sourceRevision": "20a1f9a6bee609aefa47e6d84c7fc2f2d67bae03",
-  "scope": "Preparation snapshot; not manifest entries, phase attestation, or staged split-package validation.",
+  "sourceBaseRevision": "b2575e89cebb8b2d4cdc0f80f4ef13915e7870d5",
+  "sourceInputSHA256": "fe001eceb8605b9551142005792bf3c829c149077cfeed2245b224a34482d626",
+  "scope": "Preparation snapshot; declared dependency closures differ from current public and development semantic import closures. Not staged split-package validation.",
   "toolchain": "leanprover/lean4:v4.35.0-rc3",
   "externalPins": [
     {
@@ -21,117 +22,934 @@
   ],
   "libraries": [
     {
+      "library": "HexArith",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-arith",
+      "directHexDependencies": [],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexBareiss",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-bareiss",
+      "directHexDependencies": [
+        "HexArith",
+        "HexDeterminant",
+        "HexMatrix"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexBareissMathlib",
+      "phase": 7,
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-bareiss-mathlib",
+      "directHexDependencies": [
+        "HexDeterminantMathlib",
+        "HexMatrixMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
+    },
+    {
+      "library": "HexBasic",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-basic",
+      "directHexDependencies": [],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexBerlekamp",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-berlekamp",
+      "directHexDependencies": [
+        "HexPolyFp",
+        "HexMatrix",
+        "HexRowReduce",
+        "HexGFqRing",
+        "HexBasic"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexBerlekampMathlib",
+      "phase": 7,
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-berlekamp-mathlib",
+      "directHexDependencies": [
+        "HexBerlekamp",
+        "HexPolyMathlib",
+        "HexModArithMathlib",
+        "HexPolyFpMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
+    },
+    {
+      "library": "HexBerlekampZassenhaus",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-berlekamp-zassenhaus",
+      "directHexDependencies": [
+        "HexBerlekamp",
+        "HexHensel",
+        "HexLLL",
+        "HexPrimality"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexBerlekampZassenhausMathlib",
+      "phase": 7,
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-berlekamp-zassenhaus-mathlib",
+      "directHexDependencies": [
+        "HexBerlekampZassenhaus",
+        "HexBerlekampMathlib",
+        "HexHenselMathlib",
+        "HexPolyZMathlib",
+        "HexMatrixMathlib",
+        "HexLLLMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
+    },
+    {
+      "library": "HexDeterminant",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-determinant",
+      "directHexDependencies": [
+        "HexMatrix"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexDeterminantMathlib",
+      "phase": 7,
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-determinant-mathlib",
+      "directHexDependencies": [
+        "HexBareiss",
+        "HexDeterminant",
+        "HexMatrixMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
+    },
+    {
+      "library": "HexGFqRing",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-gfq-ring",
+      "directHexDependencies": [
+        "HexPolyFp"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexGramSchmidt",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-gram-schmidt",
+      "directHexDependencies": [
+        "HexRowReduce",
+        "HexDeterminant",
+        "HexBareiss"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexGramSchmidtMathlib",
+      "phase": 7,
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-gram-schmidt-mathlib",
+      "directHexDependencies": [
+        "HexGramSchmidt",
+        "HexBareissMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
+    },
+    {
+      "library": "HexHensel",
+      "phase": 4,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-hensel",
+      "directHexDependencies": [
+        "HexPolyFp",
+        "HexPolyZ",
+        "HexBasic"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexHenselMathlib",
+      "phase": 7,
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-hensel-mathlib",
+      "directHexDependencies": [
+        "HexHensel",
+        "HexPolyMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
+    },
+    {
+      "library": "HexLLL",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-lll",
+      "directHexDependencies": [
+        "HexGramSchmidt",
+        "HexMatrix",
+        "HexBasic"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexLLLMathlib",
+      "phase": 7,
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-lll-mathlib",
+      "directHexDependencies": [
+        "HexLLL",
+        "HexGramSchmidtMathlib",
+        "HexRowReduceMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
+    },
+    {
+      "library": "HexMatrix",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-matrix",
+      "directHexDependencies": [
+        "HexBasic"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexMatrixMathlib",
+      "phase": 7,
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-matrix-mathlib",
+      "directHexDependencies": [
+        "HexMatrix"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
+    },
+    {
+      "library": "HexModArith",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-mod-arith",
+      "directHexDependencies": [
+        "HexArith"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexModArithMathlib",
+      "phase": 7,
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-mod-arith-mathlib",
+      "directHexDependencies": [
+        "HexModArith"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
+    },
+    {
+      "library": "HexModular",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": null,
+      "directHexDependencies": [
+        "HexArith"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexMvPoly",
+      "phase": 4,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-mv-poly",
+      "directHexDependencies": [
+        "HexPoly",
+        "HexBasic",
+        "HexModArith"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexMvPolyMathlib",
+      "phase": 7,
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-mv-poly-mathlib",
+      "directHexDependencies": [
+        "HexMvPoly",
+        "HexPolyMathlib",
+        "HexModArithMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
+    },
+    {
+      "library": "HexNumberField",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-number-field",
+      "directHexDependencies": [
+        "HexPolyZ",
+        "HexRoots",
+        "HexResultant",
+        "HexBerlekampZassenhaus",
+        "HexMatrix",
+        "HexRowReduce"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Batteries"
+      ],
+      "semanticImportExternalRoots": [
+        "Batteries"
+      ]
+    },
+    {
+      "library": "HexNumberFieldMathlib",
+      "phase": 7,
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-number-field-mathlib",
+      "directHexDependencies": [
+        "HexNumberField",
+        "HexResultantMathlib",
+        "HexBerlekampZassenhausMathlib",
+        "HexRootsMathlib",
+        "HexPolyZMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Batteries",
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Batteries",
+        "Mathlib"
+      ]
+    },
+    {
       "library": "HexOrderedFn",
       "phase": 4,
+      "mathlib": false,
       "publishedRepo": null,
       "directHexDependencies": [
         "HexRationalFn",
         "HexPoly",
         "HexPolyFast"
       ],
-      "unpublishedHexClosure": [
+      "declaredUnpublishedHexClosure": [
         "HexPolyFast",
         "HexRationalFn",
         "HexTruncatedSeries"
       ],
-      "mathlib": false
+      "publicImportUnpublishedHexClosure": [
+        "HexPolyFast",
+        "HexRationalFn",
+        "HexTruncatedSeries"
+      ],
+      "semanticImportUnpublishedHexClosure": [
+        "HexPolyFast",
+        "HexRationalFn",
+        "HexTruncatedSeries"
+      ],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
     },
     {
       "library": "HexOrderedFnMathlib",
       "phase": 4,
+      "mathlib": true,
       "publishedRepo": null,
       "directHexDependencies": [
         "HexOrderedFn",
         "HexRationalFnMathlib",
         "HexPolyMathlib"
       ],
-      "unpublishedHexClosure": [
+      "declaredUnpublishedHexClosure": [
         "HexOrderedFn",
         "HexPolyFast",
         "HexRationalFn",
         "HexRationalFnMathlib",
         "HexTruncatedSeries"
       ],
-      "mathlib": true
+      "publicImportUnpublishedHexClosure": [
+        "HexOrderedFn",
+        "HexPolyFast",
+        "HexRationalFn",
+        "HexRationalFnMathlib",
+        "HexTruncatedSeries"
+      ],
+      "semanticImportUnpublishedHexClosure": [
+        "HexOrderedFn",
+        "HexPolyFast",
+        "HexRationalFn",
+        "HexRationalFnMathlib",
+        "HexTruncatedSeries"
+      ],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
     },
     {
-      "library": "HexSturm",
-      "phase": 0,
+      "library": "HexPoly",
+      "phase": 4,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-poly",
+      "directHexDependencies": [],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexPolyFast",
+      "phase": 4,
+      "mathlib": false,
       "publishedRepo": null,
       "directHexDependencies": [
         "HexPoly",
-        "HexRealRoots"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
         "HexTruncatedSeries"
       ],
-      "mathlib": false
-    },
-    {
-      "library": "HexSturmMathlib",
-      "phase": 0,
-      "publishedRepo": null,
-      "directHexDependencies": [
-        "HexSturm",
-        "HexPolyMathlib",
-        "HexRealRootsMathlib"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexSturm",
+      "declaredUnpublishedHexClosure": [
         "HexTruncatedSeries"
       ],
-      "mathlib": true
+      "publicImportUnpublishedHexClosure": [
+        "HexTruncatedSeries"
+      ],
+      "semanticImportUnpublishedHexClosure": [
+        "HexTruncatedSeries"
+      ],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
     },
     {
-      "library": "HexSignDet",
-      "phase": 0,
-      "publishedRepo": null,
+      "library": "HexPolyFp",
+      "phase": 3,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-poly-fp",
       "directHexDependencies": [
-        "HexSturm",
         "HexPoly",
-        "HexMatrix",
-        "HexRowReduce",
-        "HexRank"
+        "HexModArith",
+        "HexPolyFast",
+        "HexModular"
       ],
-      "unpublishedHexClosure": [
+      "declaredUnpublishedHexClosure": [
         "HexModular",
         "HexPolyFast",
-        "HexRank",
-        "HexSturm",
         "HexTruncatedSeries"
       ],
-      "mathlib": false
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
     },
     {
-      "library": "HexSignDetMathlib",
-      "phase": 0,
-      "publishedRepo": null,
+      "library": "HexPolyFpMathlib",
+      "phase": 7,
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-poly-fp-mathlib",
       "directHexDependencies": [
-        "HexSignDet",
-        "HexSturmMathlib",
+        "HexPolyFp",
         "HexPolyMathlib",
-        "HexMatrixMathlib",
-        "HexRankMathlib"
+        "HexModArithMathlib"
       ],
-      "unpublishedHexClosure": [
+      "declaredUnpublishedHexClosure": [
         "HexModular",
         "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
+    },
+    {
+      "library": "HexPolyMathlib",
+      "phase": 7,
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-poly-mathlib",
+      "directHexDependencies": [
+        "HexPoly",
+        "HexMatrixMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
+    },
+    {
+      "library": "HexPolyZ",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-poly-z",
+      "directHexDependencies": [
+        "HexPoly",
+        "HexModArith",
+        "HexPolyFast",
+        "HexModular",
+        "HexArith",
+        "HexBasic"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexPolyZMathlib",
+      "phase": 7,
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-poly-z-mathlib",
+      "directHexDependencies": [
+        "HexPolyZ",
+        "HexHensel",
+        "HexPolyMathlib",
+        "HexModArithMathlib",
+        "HexMatrixMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
+    },
+    {
+      "library": "HexPrimality",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-primality",
+      "directHexDependencies": [
+        "HexArith",
+        "HexBasic"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexRCF",
+      "phase": 7,
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-rcf",
+      "directHexDependencies": [
+        "HexRealRoots",
+        "HexRealRootsMathlib",
+        "HexPolyZ",
+        "HexPolyZMathlib",
+        "HexRealFormulaMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexRealFormula",
+        "HexRealFormulaMathlib",
+        "HexReflect",
+        "HexReflectMathlib",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [
+        "HexOrderedFn",
+        "HexOrderedFnMathlib",
         "HexRank",
         "HexRankMathlib",
+        "HexRealAlgebraic",
+        "HexRealAlgebraicMathlib",
+        "HexRealClosure",
+        "HexRealClosureMathlib",
+        "HexRealFormula",
+        "HexRealFormulaMathlib",
+        "HexReflect",
+        "HexReflectMathlib",
         "HexSignDet",
+        "HexSignDetMathlib",
         "HexSturm",
-        "HexSturmMathlib",
+        "HexSturmMathlib"
+      ],
+      "publicImportExternalRoots": [
+        "Mathlib",
+        "Qq"
+      ],
+      "semanticImportExternalRoots": [
+        "Batteries",
+        "Mathlib",
+        "Qq",
+        "TauCeti"
+      ]
+    },
+    {
+      "library": "HexRank",
+      "phase": 4,
+      "mathlib": false,
+      "publishedRepo": null,
+      "directHexDependencies": [
+        "HexBareiss",
+        "HexDeterminant",
+        "HexMatrix",
+        "HexArith",
+        "HexBasic",
+        "HexPoly"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexRankMathlib",
+      "phase": 4,
+      "mathlib": true,
+      "publishedRepo": null,
+      "directHexDependencies": [
+        "HexRank",
+        "HexBareissMathlib",
+        "HexDeterminantMathlib",
+        "HexMatrixMathlib",
+        "HexNumberFieldMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexRank",
         "HexTruncatedSeries"
       ],
-      "mathlib": true
+      "publicImportUnpublishedHexClosure": [
+        "HexRank"
+      ],
+      "semanticImportUnpublishedHexClosure": [
+        "HexRank"
+      ],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
+    },
+    {
+      "library": "HexRationalFn",
+      "phase": 4,
+      "mathlib": false,
+      "publishedRepo": null,
+      "directHexDependencies": [
+        "HexPoly",
+        "HexPolyFast"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "semanticImportUnpublishedHexClosure": [
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexRationalFnMathlib",
+      "phase": 4,
+      "mathlib": true,
+      "publishedRepo": null,
+      "directHexDependencies": [
+        "HexRationalFn",
+        "HexPolyMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexPolyFast",
+        "HexRationalFn",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [
+        "HexPolyFast",
+        "HexRationalFn",
+        "HexTruncatedSeries"
+      ],
+      "semanticImportUnpublishedHexClosure": [
+        "HexPolyFast",
+        "HexRationalFn",
+        "HexTruncatedSeries"
+      ],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
+    },
+    {
+      "library": "HexRealAlgebraic",
+      "phase": 1,
+      "mathlib": false,
+      "publishedRepo": null,
+      "directHexDependencies": [
+        "HexNumberField"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Batteries"
+      ],
+      "semanticImportExternalRoots": [
+        "Batteries"
+      ]
+    },
+    {
+      "library": "HexRealAlgebraicMathlib",
+      "phase": 1,
+      "mathlib": true,
+      "publishedRepo": null,
+      "directHexDependencies": [
+        "HexRealAlgebraic",
+        "HexNumberFieldMathlib",
+        "HexRealRootsMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexRealAlgebraic",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [
+        "HexRealAlgebraic"
+      ],
+      "semanticImportUnpublishedHexClosure": [
+        "HexRealAlgebraic"
+      ],
+      "publicImportExternalRoots": [
+        "Batteries",
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Batteries",
+        "Mathlib"
+      ]
     },
     {
       "library": "HexRealClosure",
       "phase": 0,
+      "mathlib": false,
       "publishedRepo": null,
       "directHexDependencies": [
         "HexSignDet",
@@ -140,7 +958,7 @@
         "HexRealAlgebraic",
         "HexOrderedFn"
       ],
-      "unpublishedHexClosure": [
+      "declaredUnpublishedHexClosure": [
         "HexModular",
         "HexOrderedFn",
         "HexPolyFast",
@@ -151,11 +969,37 @@
         "HexSturm",
         "HexTruncatedSeries"
       ],
-      "mathlib": false
+      "publicImportUnpublishedHexClosure": [
+        "HexOrderedFn",
+        "HexPolyFast",
+        "HexRank",
+        "HexRationalFn",
+        "HexRealAlgebraic",
+        "HexSignDet",
+        "HexSturm",
+        "HexTruncatedSeries"
+      ],
+      "semanticImportUnpublishedHexClosure": [
+        "HexOrderedFn",
+        "HexPolyFast",
+        "HexRank",
+        "HexRationalFn",
+        "HexRealAlgebraic",
+        "HexSignDet",
+        "HexSturm",
+        "HexTruncatedSeries"
+      ],
+      "publicImportExternalRoots": [
+        "Batteries"
+      ],
+      "semanticImportExternalRoots": [
+        "Batteries"
+      ]
     },
     {
       "library": "HexRealClosureMathlib",
       "phase": 0,
+      "mathlib": true,
       "publishedRepo": null,
       "directHexDependencies": [
         "HexRealClosure",
@@ -166,7 +1010,7 @@
         "HexRealAlgebraicMathlib",
         "HexOrderedFnMathlib"
       ],
-      "unpublishedHexClosure": [
+      "declaredUnpublishedHexClosure": [
         "HexModular",
         "HexOrderedFn",
         "HexOrderedFnMathlib",
@@ -184,734 +1028,423 @@
         "HexSturmMathlib",
         "HexTruncatedSeries"
       ],
-      "mathlib": true
+      "publicImportUnpublishedHexClosure": [
+        "HexOrderedFn",
+        "HexOrderedFnMathlib",
+        "HexPolyFast",
+        "HexRank",
+        "HexRationalFn",
+        "HexRationalFnMathlib",
+        "HexRealAlgebraic",
+        "HexRealClosure",
+        "HexSignDet",
+        "HexSturm",
+        "HexTruncatedSeries"
+      ],
+      "semanticImportUnpublishedHexClosure": [
+        "HexOrderedFn",
+        "HexOrderedFnMathlib",
+        "HexPolyFast",
+        "HexRank",
+        "HexRankMathlib",
+        "HexRationalFn",
+        "HexRationalFnMathlib",
+        "HexRealAlgebraic",
+        "HexRealAlgebraicMathlib",
+        "HexRealClosure",
+        "HexSignDet",
+        "HexSignDetMathlib",
+        "HexSturm",
+        "HexSturmMathlib",
+        "HexTruncatedSeries"
+      ],
+      "publicImportExternalRoots": [
+        "Batteries",
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Batteries",
+        "Mathlib",
+        "TauCeti"
+      ]
+    },
+    {
+      "library": "HexRealFormula",
+      "phase": 1,
+      "mathlib": false,
+      "publishedRepo": null,
+      "directHexDependencies": [
+        "HexMvPoly"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexRealFormulaMathlib",
+      "phase": 1,
+      "mathlib": true,
+      "publishedRepo": null,
+      "directHexDependencies": [
+        "HexRealFormula",
+        "HexMvPolyMathlib",
+        "HexReflectMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexRealFormula",
+        "HexReflect",
+        "HexReflectMathlib"
+      ],
+      "publicImportUnpublishedHexClosure": [
+        "HexRealFormula",
+        "HexReflect",
+        "HexReflectMathlib"
+      ],
+      "semanticImportUnpublishedHexClosure": [
+        "HexRealFormula",
+        "HexReflect",
+        "HexReflectMathlib"
+      ],
+      "publicImportExternalRoots": [
+        "Mathlib",
+        "Qq"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib",
+        "Qq"
+      ]
+    },
+    {
+      "library": "HexRealRoots",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-real-roots",
+      "directHexDependencies": [
+        "HexPolyZ"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
     },
     {
       "library": "HexRealRootsMathlib",
       "phase": 7,
+      "mathlib": true,
       "publishedRepo": "leanprover/hex-real-roots-mathlib",
       "directHexDependencies": [
         "HexRealRoots",
         "HexPolyZMathlib"
       ],
-      "unpublishedHexClosure": [
+      "declaredUnpublishedHexClosure": [
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
       ],
-      "mathlib": true
-    },
-    {
-      "library": "HexRCF",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-rcf",
-      "directHexDependencies": [
-        "HexRealRoots",
-        "HexRealRootsMathlib",
-        "HexPolyZ",
-        "HexPolyZMathlib",
-        "HexRealFormulaMathlib"
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
       ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexRealFormula",
-        "HexRealFormulaMathlib",
-        "HexReflect",
-        "HexReflectMathlib",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": true
-    },
-    {
-      "library": "HexRealAlgebraic",
-      "phase": 1,
-      "publishedRepo": null,
-      "directHexDependencies": [
-        "HexNumberField"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": false
-    },
-    {
-      "library": "HexRealAlgebraicMathlib",
-      "phase": 1,
-      "publishedRepo": null,
-      "directHexDependencies": [
-        "HexRealAlgebraic",
-        "HexNumberFieldMathlib",
-        "HexRealRootsMathlib"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexRealAlgebraic",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": true
-    },
-    {
-      "library": "HexRank",
-      "phase": 4,
-      "publishedRepo": null,
-      "directHexDependencies": [
-        "HexBareiss",
-        "HexDeterminant",
-        "HexMatrix",
-        "HexArith",
-        "HexBasic",
-        "HexPoly"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": false
-    },
-    {
-      "library": "HexRankMathlib",
-      "phase": 4,
-      "publishedRepo": null,
-      "directHexDependencies": [
-        "HexRank",
-        "HexBareissMathlib",
-        "HexDeterminantMathlib",
-        "HexMatrixMathlib",
-        "HexNumberFieldMathlib"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexRank",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": true
-    },
-    {
-      "library": "HexRealFormula",
-      "phase": 1,
-      "publishedRepo": null,
-      "directHexDependencies": [
-        "HexMvPoly"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": false
-    },
-    {
-      "library": "HexRealFormulaMathlib",
-      "phase": 1,
-      "publishedRepo": null,
-      "directHexDependencies": [
-        "HexRealFormula",
-        "HexMvPolyMathlib",
-        "HexReflectMathlib"
-      ],
-      "unpublishedHexClosure": [
-        "HexRealFormula",
-        "HexReflect",
-        "HexReflectMathlib"
-      ],
-      "mathlib": true
+      "semanticImportExternalRoots": [
+        "Mathlib",
+        "TauCeti"
+      ]
     },
     {
       "library": "HexReflect",
       "phase": 1,
+      "mathlib": false,
       "publishedRepo": null,
       "directHexDependencies": [
         "HexMvPoly",
         "HexBasic"
       ],
-      "unpublishedHexClosure": [],
-      "mathlib": false
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
     },
     {
       "library": "HexReflectMathlib",
       "phase": 1,
+      "mathlib": true,
       "publishedRepo": null,
       "directHexDependencies": [
         "HexReflect",
         "HexMvPolyMathlib",
         "HexModArithMathlib"
       ],
-      "unpublishedHexClosure": [
+      "declaredUnpublishedHexClosure": [
         "HexReflect"
       ],
-      "mathlib": true
-    },
-    {
-      "library": "HexPolyFp",
-      "phase": 3,
-      "publishedRepo": "leanprover/hex-poly-fp",
-      "directHexDependencies": [
-        "HexPoly",
-        "HexModArith",
-        "HexPolyFast",
-        "HexModular"
+      "publicImportUnpublishedHexClosure": [
+        "HexReflect"
       ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexTruncatedSeries"
+      "semanticImportUnpublishedHexClosure": [
+        "HexReflect"
       ],
-      "mathlib": false
-    },
-    {
-      "library": "HexPolyMathlib",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-poly-mathlib",
-      "directHexDependencies": [
-        "HexPoly",
-        "HexMatrixMathlib"
+      "publicImportExternalRoots": [
+        "Mathlib"
       ],
-      "unpublishedHexClosure": [],
-      "mathlib": true
-    },
-    {
-      "library": "HexMatrixMathlib",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-matrix-mathlib",
-      "directHexDependencies": [
-        "HexMatrix"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": true
-    },
-    {
-      "library": "HexMatrix",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-matrix",
-      "directHexDependencies": [
-        "HexBasic"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": false
-    },
-    {
-      "library": "HexBasic",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-basic",
-      "directHexDependencies": [],
-      "unpublishedHexClosure": [],
-      "mathlib": false
-    },
-    {
-      "library": "HexPoly",
-      "phase": 4,
-      "publishedRepo": "leanprover/hex-poly",
-      "directHexDependencies": [],
-      "unpublishedHexClosure": [],
-      "mathlib": false
-    },
-    {
-      "library": "HexRationalFnMathlib",
-      "phase": 4,
-      "publishedRepo": null,
-      "directHexDependencies": [
-        "HexRationalFn",
-        "HexPolyMathlib"
-      ],
-      "unpublishedHexClosure": [
-        "HexPolyFast",
-        "HexRationalFn",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": true
-    },
-    {
-      "library": "HexRationalFn",
-      "phase": 4,
-      "publishedRepo": null,
-      "directHexDependencies": [
-        "HexPoly",
-        "HexPolyFast"
-      ],
-      "unpublishedHexClosure": [
-        "HexPolyFast",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": false
-    },
-    {
-      "library": "HexPolyFast",
-      "phase": 4,
-      "publishedRepo": null,
-      "directHexDependencies": [
-        "HexPoly",
-        "HexTruncatedSeries"
-      ],
-      "unpublishedHexClosure": [
-        "HexTruncatedSeries"
-      ],
-      "mathlib": false
-    },
-    {
-      "library": "HexTruncatedSeries",
-      "phase": 7,
-      "publishedRepo": null,
-      "directHexDependencies": [
-        "HexBasic"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": false
-    },
-    {
-      "library": "HexNumberFieldMathlib",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-number-field-mathlib",
-      "directHexDependencies": [
-        "HexNumberField",
-        "HexResultantMathlib",
-        "HexBerlekampZassenhausMathlib",
-        "HexRootsMathlib",
-        "HexPolyZMathlib"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": true
-    },
-    {
-      "library": "HexPolyZMathlib",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-poly-z-mathlib",
-      "directHexDependencies": [
-        "HexPolyZ",
-        "HexHensel",
-        "HexPolyMathlib",
-        "HexModArithMathlib",
-        "HexMatrixMathlib"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": true
-    },
-    {
-      "library": "HexModArithMathlib",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-mod-arith-mathlib",
-      "directHexDependencies": [
-        "HexModArith"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": true
-    },
-    {
-      "library": "HexModArith",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-mod-arith",
-      "directHexDependencies": [
-        "HexArith"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": false
-    },
-    {
-      "library": "HexArith",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-arith",
-      "directHexDependencies": [],
-      "unpublishedHexClosure": [],
-      "mathlib": false
-    },
-    {
-      "library": "HexHensel",
-      "phase": 4,
-      "publishedRepo": "leanprover/hex-hensel",
-      "directHexDependencies": [
-        "HexPolyFp",
-        "HexPolyZ",
-        "HexBasic"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": false
-    },
-    {
-      "library": "HexPolyZ",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-poly-z",
-      "directHexDependencies": [
-        "HexPoly",
-        "HexModArith",
-        "HexPolyFast",
-        "HexModular",
-        "HexArith",
-        "HexBasic"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": false
-    },
-    {
-      "library": "HexModular",
-      "phase": 7,
-      "publishedRepo": null,
-      "directHexDependencies": [
-        "HexArith"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": false
-    },
-    {
-      "library": "HexRootsMathlib",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-roots-mathlib",
-      "directHexDependencies": [
-        "HexRoots",
-        "HexPolyZMathlib"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": true
-    },
-    {
-      "library": "HexRoots",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-roots",
-      "directHexDependencies": [
-        "HexPolyZ"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": false
-    },
-    {
-      "library": "HexBerlekampZassenhausMathlib",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-berlekamp-zassenhaus-mathlib",
-      "directHexDependencies": [
-        "HexBerlekampZassenhaus",
-        "HexBerlekampMathlib",
-        "HexHenselMathlib",
-        "HexPolyZMathlib",
-        "HexMatrixMathlib",
-        "HexLLLMathlib"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": true
-    },
-    {
-      "library": "HexLLLMathlib",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-lll-mathlib",
-      "directHexDependencies": [
-        "HexLLL",
-        "HexGramSchmidtMathlib",
-        "HexRowReduceMathlib"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": true
-    },
-    {
-      "library": "HexRowReduceMathlib",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-row-reduce-mathlib",
-      "directHexDependencies": [
-        "HexMatrixMathlib",
-        "HexRowReduce"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": true
-    },
-    {
-      "library": "HexRowReduce",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-row-reduce",
-      "directHexDependencies": [
-        "HexMatrix"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": false
-    },
-    {
-      "library": "HexGramSchmidtMathlib",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-gram-schmidt-mathlib",
-      "directHexDependencies": [
-        "HexGramSchmidt",
-        "HexBareissMathlib"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": true
-    },
-    {
-      "library": "HexBareissMathlib",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-bareiss-mathlib",
-      "directHexDependencies": [
-        "HexDeterminantMathlib",
-        "HexMatrixMathlib"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": true
-    },
-    {
-      "library": "HexDeterminantMathlib",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-determinant-mathlib",
-      "directHexDependencies": [
-        "HexBareiss",
-        "HexDeterminant",
-        "HexMatrixMathlib"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": true
-    },
-    {
-      "library": "HexDeterminant",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-determinant",
-      "directHexDependencies": [
-        "HexMatrix"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": false
-    },
-    {
-      "library": "HexBareiss",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-bareiss",
-      "directHexDependencies": [
-        "HexArith",
-        "HexDeterminant",
-        "HexMatrix"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": false
-    },
-    {
-      "library": "HexGramSchmidt",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-gram-schmidt",
-      "directHexDependencies": [
-        "HexRowReduce",
-        "HexDeterminant",
-        "HexBareiss"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": false
-    },
-    {
-      "library": "HexLLL",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-lll",
-      "directHexDependencies": [
-        "HexGramSchmidt",
-        "HexMatrix",
-        "HexBasic"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": false
-    },
-    {
-      "library": "HexHenselMathlib",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-hensel-mathlib",
-      "directHexDependencies": [
-        "HexHensel",
-        "HexPolyMathlib"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": true
-    },
-    {
-      "library": "HexBerlekampMathlib",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-berlekamp-mathlib",
-      "directHexDependencies": [
-        "HexBerlekamp",
-        "HexPolyMathlib",
-        "HexModArithMathlib",
-        "HexPolyFpMathlib"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": true
-    },
-    {
-      "library": "HexPolyFpMathlib",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-poly-fp-mathlib",
-      "directHexDependencies": [
-        "HexPolyFp",
-        "HexPolyMathlib",
-        "HexModArithMathlib"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": true
-    },
-    {
-      "library": "HexBerlekamp",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-berlekamp",
-      "directHexDependencies": [
-        "HexPolyFp",
-        "HexMatrix",
-        "HexRowReduce",
-        "HexGFqRing",
-        "HexBasic"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": false
-    },
-    {
-      "library": "HexGFqRing",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-gfq-ring",
-      "directHexDependencies": [
-        "HexPolyFp"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": false
-    },
-    {
-      "library": "HexBerlekampZassenhaus",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-berlekamp-zassenhaus",
-      "directHexDependencies": [
-        "HexBerlekamp",
-        "HexHensel",
-        "HexLLL",
-        "HexPrimality"
-      ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexTruncatedSeries"
-      ],
-      "mathlib": false
-    },
-    {
-      "library": "HexPrimality",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-primality",
-      "directHexDependencies": [
-        "HexArith",
-        "HexBasic"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": false
-    },
-    {
-      "library": "HexResultantMathlib",
-      "phase": 7,
-      "publishedRepo": "leanprover/hex-resultant-mathlib",
-      "directHexDependencies": [
-        "HexResultant",
-        "HexPolyMathlib"
-      ],
-      "unpublishedHexClosure": [],
-      "mathlib": true
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
     },
     {
       "library": "HexResultant",
       "phase": 7,
+      "mathlib": false,
       "publishedRepo": "leanprover/hex-resultant",
       "directHexDependencies": [
         "HexPoly",
         "HexBasic",
         "HexDeterminant"
       ],
-      "unpublishedHexClosure": [],
-      "mathlib": false
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
     },
     {
-      "library": "HexNumberField",
+      "library": "HexResultantMathlib",
       "phase": 7,
-      "publishedRepo": "leanprover/hex-number-field",
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-resultant-mathlib",
       "directHexDependencies": [
-        "HexPolyZ",
-        "HexRoots",
         "HexResultant",
-        "HexBerlekampZassenhaus",
-        "HexMatrix",
-        "HexRowReduce"
+        "HexPolyMathlib"
       ],
-      "unpublishedHexClosure": [
-        "HexModular",
-        "HexPolyFast",
-        "HexTruncatedSeries"
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
       ],
-      "mathlib": false
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
     },
     {
-      "library": "HexRealRoots",
+      "library": "HexRoots",
       "phase": 7,
-      "publishedRepo": "leanprover/hex-real-roots",
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-roots",
       "directHexDependencies": [
         "HexPolyZ"
       ],
-      "unpublishedHexClosure": [
+      "declaredUnpublishedHexClosure": [
         "HexModular",
         "HexPolyFast",
         "HexTruncatedSeries"
       ],
-      "mathlib": false
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
     },
     {
-      "library": "HexMvPolyMathlib",
+      "library": "HexRootsMathlib",
       "phase": 7,
-      "publishedRepo": "leanprover/hex-mv-poly-mathlib",
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-roots-mathlib",
       "directHexDependencies": [
-        "HexMvPoly",
-        "HexPolyMathlib",
-        "HexModArithMathlib"
+        "HexRoots",
+        "HexPolyZMathlib"
       ],
-      "unpublishedHexClosure": [],
-      "mathlib": true
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
     },
     {
-      "library": "HexMvPoly",
-      "phase": 4,
-      "publishedRepo": "leanprover/hex-mv-poly",
+      "library": "HexRowReduce",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": "leanprover/hex-row-reduce",
+      "directHexDependencies": [
+        "HexMatrix"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexRowReduceMathlib",
+      "phase": 7,
+      "mathlib": true,
+      "publishedRepo": "leanprover/hex-row-reduce-mathlib",
+      "directHexDependencies": [
+        "HexMatrixMathlib",
+        "HexRowReduce"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib"
+      ]
+    },
+    {
+      "library": "HexSignDet",
+      "phase": 0,
+      "mathlib": false,
+      "publishedRepo": null,
+      "directHexDependencies": [
+        "HexSturm",
+        "HexPoly",
+        "HexMatrix",
+        "HexRowReduce",
+        "HexRank"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexRank",
+        "HexSturm",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [
+        "HexRank",
+        "HexSturm"
+      ],
+      "semanticImportUnpublishedHexClosure": [
+        "HexRank",
+        "HexSturm"
+      ],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexSignDetMathlib",
+      "phase": 0,
+      "mathlib": true,
+      "publishedRepo": null,
+      "directHexDependencies": [
+        "HexSignDet",
+        "HexSturmMathlib",
+        "HexPolyMathlib",
+        "HexMatrixMathlib",
+        "HexRankMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexRank",
+        "HexRankMathlib",
+        "HexSignDet",
+        "HexSturm",
+        "HexSturmMathlib",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [
+        "HexRank",
+        "HexRankMathlib",
+        "HexSignDet",
+        "HexSturm",
+        "HexSturmMathlib"
+      ],
+      "semanticImportUnpublishedHexClosure": [
+        "HexRank",
+        "HexRankMathlib",
+        "HexSignDet",
+        "HexSturm",
+        "HexSturmMathlib"
+      ],
+      "publicImportExternalRoots": [
+        "Mathlib",
+        "TauCeti"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib",
+        "TauCeti"
+      ]
+    },
+    {
+      "library": "HexSturm",
+      "phase": 0,
+      "mathlib": false,
+      "publishedRepo": null,
       "directHexDependencies": [
         "HexPoly",
-        "HexBasic",
-        "HexModArith"
+        "HexRealRoots"
       ],
-      "unpublishedHexClosure": [],
-      "mathlib": false
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
+    },
+    {
+      "library": "HexSturmMathlib",
+      "phase": 0,
+      "mathlib": true,
+      "publishedRepo": null,
+      "directHexDependencies": [
+        "HexSturm",
+        "HexPolyMathlib",
+        "HexRealRootsMathlib"
+      ],
+      "declaredUnpublishedHexClosure": [
+        "HexModular",
+        "HexPolyFast",
+        "HexSturm",
+        "HexTruncatedSeries"
+      ],
+      "publicImportUnpublishedHexClosure": [
+        "HexSturm"
+      ],
+      "semanticImportUnpublishedHexClosure": [
+        "HexSturm"
+      ],
+      "publicImportExternalRoots": [
+        "Mathlib"
+      ],
+      "semanticImportExternalRoots": [
+        "Mathlib",
+        "TauCeti"
+      ]
+    },
+    {
+      "library": "HexTruncatedSeries",
+      "phase": 7,
+      "mathlib": false,
+      "publishedRepo": null,
+      "directHexDependencies": [
+        "HexBasic"
+      ],
+      "declaredUnpublishedHexClosure": [],
+      "publicImportUnpublishedHexClosure": [],
+      "semanticImportUnpublishedHexClosure": [],
+      "publicImportExternalRoots": [],
+      "semanticImportExternalRoots": []
     }
   ],
   "adapters": [

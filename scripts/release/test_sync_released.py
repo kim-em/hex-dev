@@ -653,6 +653,25 @@ class SyncReleasedTests(unittest.TestCase):
             "import Mathlib.Tactic\nimport Batteries.Data.Vector\n")
         sync_released.validate_external_imports(entry, self.repo)
 
+    def test_tauceti_import_requires_its_own_provider(self) -> None:
+        entry = self._external_import_entry(
+            '[[require]]\nname = "mathlib"\n',
+            "public import TauCeti.Algebra.Polynomial.Sturm.Infinity\n")
+        with self.assertRaisesRegex(RuntimeError, "imports TauCeti"):
+            sync_released.validate_external_imports(entry, self.repo)
+        lakefile = self.repo / "lakefile.toml"
+        lakefile.write_text(lakefile.read_text() +
+                            '[[require]]\nname = "TauCeti"\n', encoding="utf-8")
+        sync_released.validate_external_imports(entry, self.repo)
+
+    def test_tauceti_lean_requirement_provides_import(self) -> None:
+        entry = self._external_import_entry("", "import TauCeti.Data.Matrix.OccCount\n")
+        entry["lakefile"] = "lean"
+        (self.repo / "lakefile.lean").write_text(
+            'require TauCeti from git "https://github.com/TauCetiProject/TauCeti.git" @ "pin"\n',
+            encoding="utf-8")
+        sync_released.validate_external_imports(entry, self.repo)
+
     def test_direct_imports_gain_direct_requires_in_toml(self) -> None:
         lib = self.repo / "HexProbe"
         lib.mkdir()

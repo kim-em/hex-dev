@@ -18,8 +18,6 @@ attribute [local instance 2000] Field.toGrindField
 
 noncomputable section
 
-local instance : DecidableEq ℝ := Classical.decEq ℝ
-
 def rootValue (d : Descriptor ℝ Nat Sturm.orderSign 7) : ℝ :=
   d.root id (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl)
     (fun _ _ => rfl) (fun _ => rfl) HexSturmMathlib.orderSign_eq
@@ -32,12 +30,15 @@ theorem selected_root (p : DensePoly ℝ) (a b : Endpoint ℝ)
       (a.map id) (b.map id)) :
     ∃ out, Descriptor.buildRoots Sturm.orderSign 7 p a b = .ok (some out) ∧
       (∃ d ∈ out, rootValue d = x) ∧
+      (∀ y, y ∈ Tarski.rootsIn (interpret id (fun _ => Iff.rfl) p)
+        (a.map id) (b.map id) ↔ y ∈ out.map rootValue) ∧
+      (out.map rootValue).Nodup ∧
       (out.map rootValue).Pairwise (· < ·) := by
-  obtain ⟨out, produced, coverage, _, ordered⟩ := Descriptor.buildRoots_roots
+  obtain ⟨out, produced, coverage, distinct, ordered⟩ := Descriptor.buildRoots_roots
     id (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl)
     (fun _ _ => rfl) (fun _ => rfl) HexSturmMathlib.orderSign_eq
     (fun _ => rfl) (fun _ => rfl) 7 p a b domain
-  exact ⟨out, produced, List.mem_map.mp ((coverage x).mp member), ordered⟩
+  exact ⟨out, produced, List.mem_map.mp ((coverage x).mp member), coverage, distinct, ordered⟩
 
 /-- info: 'RealClosureConsumer.selected_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
