@@ -360,7 +360,8 @@ Fourteen ladders use **mode 1, two-sided parametric**:
 negation, scalar multiplication, division, `AlgebraicPoly.ofArray`,
 `AlgebraicPoly.beq`, and `Common.primitive?`. Their adjacent derivations give
 the intended algorithms' expected scaling on the controlled families before
-measurement, and all fourteen pass.
+measurement. All fourteen have passing observations; the common-presentation
+fallback observation is archived from before the preflight change.
 
 `runLazyAddLadder`, `runExactLadder`, `runExactFactorLadder`,
 `runCanonicalRepLadder`, `runQAdjoinRootsLadder`, and
@@ -841,12 +842,12 @@ coefficient count.
 
 The [raw export](bench-results/hex-number-field-containing-presentation.json)
 retains all 21 completed samples from three fixed, trial-major traversals of
-2, 4, 8, 16, 32, 64, 128. The measured source is `5ca2276da` (the working tree
-was source-equivalent to that commit), based on `36880151a`. That base
-already contains the GCD backport `e472b0d85`; the subsequent rebase added
-the local-sample delivery and changed none of the number-field, arithmetic,
-polynomial, root, Sturm or real-algebraic sources used by this benchmark.
-The export records `a39fee5bc` with a dirty tree. CPU 74 was automatically leased on the
+2, 4, 8, 16, 32, 64, 128. The export records `a39fee5bc` with a dirty tree,
+based on `36880151a`, which already contains the GCD backport `e472b0d85`.
+The measured producer and benchmark are byte-identical to the published
+source-equivalent revision `bf03cb6ff`. That revision rebases the same change
+over the local-sample delivery; no file in this benchmark's import closure
+changed between those bases. CPU 74 was automatically leased on the
 shared host. Load averages were 5.390/5.180/5.578 before and
 5.759/5.260/5.603 after. The two-sided harness verdict is consistent with the
 declared linear model, normalized slope −0.125. Median calls range from
@@ -1444,7 +1445,7 @@ profiles remain developer-local as required by `SPEC/profiling.md`.
 
 | artefact | source commit | host state | SHA-256 |
 |---|---|---|---|
-| [`bench-results/hex-number-field-containing-presentation.json`](bench-results/hex-number-field-containing-presentation.json) | `5ca2276da`, source-equivalent tree; three-trial containing-field success ladder | CPU 74, load averages 5.390/5.180/5.578 to 5.759/5.260/5.603 | `ec550f407b1175f827b26cf153e47adf59a2399968bfeab9efe950b27b3c60a9` |
+| [`bench-results/hex-number-field-containing-presentation.json`](bench-results/hex-number-field-containing-presentation.json) | `a39fee5bc` plus dirty tree, source-equivalent to published `bf03cb6ff`; three-trial containing-field success ladder | CPU 74, load averages 5.390/5.180/5.578 to 5.759/5.260/5.603 | `ec550f407b1175f827b26cf153e47adf59a2399968bfeab9efe950b27b3c60a9` |
 | [`bench-results/hex-number-field-phase4-final-inversion.json`](bench-results/hex-number-field-phase4-final-inversion.json) | `c94811435`, clean tree; final five-trial normalized-inversion ladder | idle | `5365e22a76a261ff3807521823315e1fe0a3cd7a82d112b8cb49462da84629ff` |
 | [`bench-results/hex-number-field-phase4-final-inversion-comparators.json`](bench-results/hex-number-field-phase4-final-inversion-comparators.json) | `c94811435`, clean tree; current inversion pairs plus overhead | idle | `64b71bf96b66b0626defd7d7dbb6b89c9ea36c22f78c0c08af8acd562bf71699` |
 | [`bench-results/hex-number-field-api-surface.json`](bench-results/hex-number-field-api-surface.json) | `5010a63ba`, clean tree; the 13 parametric registrations before the containing-field preflight | variable scheduler load | `b0d0a48449f71a8b8cd7f924d8a1643c53a48e05936cfff6e440f7e6766f43a2` |
