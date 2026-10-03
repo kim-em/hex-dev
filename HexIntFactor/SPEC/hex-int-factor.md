@@ -266,6 +266,208 @@ stated because the alternative -- a junk value at `0` -- makes
 the factorization's prime-support completeness theorem false and would be found only by a
 consumer.
 
+## Optional checked external production
+
+This route supplies larger-input proposals without changing `factor?`,
+`factorPartial?`, `FactorSearch`, or the registered pure search hooks. Native
+Lean search remains the default. Importing any module runs no subprocess.
+Factor discovery and completion of primality evidence have independent finite
+allocations and independently reported failures. PARI's probable-prime labels
+and completeness flags are never evidence. The accepted language remains
+`Hex.Nat.PrimeCert`; ECPP-bearing factor certificates require a separate design.
+No native QS/NFS or change to SQUFOF dispatch is assigned here.
+
+### Ownership and public boundary
+
+All new modules are Mathlib-free and belong to HexIntFactor:
+
+- `HexIntFactor.Import`: pure `FactorProposal`, `ImportBudget`, diagnostics,
+  and `importFactors`, indexed by the caller's subject. Publicly imported by
+  `HexIntFactor`. It may use HexPrimality's existing bounded native certificate
+  search, never IO or an external callback.
+- `HexIntFactor.Pari`: optional runtime `Pari.produce` and `Pari.factor`,
+  process/parser budgets, explicit executable selection and cancellation.
+  Imported explicitly, excluded from the ordinary umbrella.
+- `HexIntFactor.Export`: optional elaboration commands `#int_factor for n`
+  and `#int_factor_export Module.Name cert for n`. Imported explicitly,
+  excluded from the ordinary umbrella. They use the explicitly selected PARI
+  route, including its finite native fallback.
+- `HexIntFactor.Replay`: only computational complete/partial certificate
+  modules; no search, IO producer, registration or elaborator import. Frozen
+  modules import this module alone.
+
+`FactorProposal` contains an integer subject and integer base/multiplicity
+pairs, each optionally carrying an existing `PrimeCert`. Integer fields allow
+negative input to be rejected explicitly. The proposal does not carry a trusted
+prime/completeness flag. `importFactors budget n proposal rand` returns either
+an import rejection or subject-indexed checked complete/partial data with
+advanced randomness and completion diagnostics. Each exposed prime-power
+entry carries an accepted `PrimeCert`. No new number-theoretic soundness theorem
+is needed: `checkFactorization` and `checkPartial` remain the proof boundary,
+and the Mathlib correspondence consumes these outputs unchanged.
+
+### Validation and certificate allocation
+
+Reject zero subjects, negative or mismatched proposal subjects, zero/unit or
+negative bases, nonpositive multiplicities, and exceeded bounds before search.
+At one, only an empty proposal is valid and yields the empty complete
+factorization. Unsorted and duplicate entries are allowed: validate each entry
+against the remaining quotient of the requested subject first, then sort and
+merge equal bases by adding validated multiplicities. Use bounded multiplication
+against that quotient, then exact divisibility and division; never construct an
+unbounded power of an untrusted exponent. Excess multiplicity or any product
+which does not divide the requested subject rejects the entire proposal.
+An empty or missing-factor proposal for a positive subject is allowed; its
+unlisted quotient is retained as residual, without a completeness claim.
+
+For each distinct validated base, use supplied certificates only after checking
+subject equality, structural limits and `checkPrime`. Invalid supplied evidence
+rejects the proposal; it is never silently trusted or ignored. Conflicting
+supplied certificates need not have identical syntax, but every supplied one
+must be accepted for its base. Otherwise run bounded native `PrimeCert`
+completion once for that distinct base, threading randomness on success and
+failure. Composite bases and bases whose primality cannot be completed remain
+in the residual with distinct diagnostics. The initial importer does not split
+composite proposals further. Multiply their validated powers into the unlisted
+quotient with the same subject bound. Sort and merge only certified entries.
+Check the final partial candidate with `checkPartial`; residual one is checked
+as a complete candidate with `checkFactorization`. Checker rejection is a
+separate internal/import error, never ordinary exhaustion.
+
+Initial default import bounds are 256 subject/base bits, 64 proposal entries,
+256 for each exponent and merged exponent, 4096 certificate nodes and 64
+certificate levels. Every integer in supplied/generated evidence is bounded
+by 256 bits, every stored exponent by 256, and the `pock3Sieve` exclusion
+count by 128. Traverse with remaining node/depth fuel and cap list traversal
+before checker invocation. Certificate search uses a separate per-base fuel
+of 8 and `PrimeCertBudget` with 2 rho restarts and 65536 steps per restart,
+SQUFOF off. Entry and node limits also bound the total number of completion
+calls and certificate replays. These are finite caller-selected allocations,
+not promises that every admitted base can be certified. Zero completion fuel
+allows supplied certificates and records exhaustion for uncertified bases.
+
+### PARI protocol and process lifetime
+
+`Pari.produce` runs the configured executable directly (`gp` by default), with
+`-q -f -s 64000000` and a private temporary request file. The request contains
+only the validated natural numeral and fixed GP code calling `factor`. No shell
+is used, no subject text is interpolated into a shell, stdin is null, and GP
+startup files are ignored. Remove the request file on every exit path.
+The initial producer admits at most 256 bits and 78 decimal digits. It emits
+exactly this ASCII line protocol (one final newline is allowed):
+
+```text
+HEX_FACTOR_BEGIN
+subject
+base exponent
+base exponent
+HEX_FACTOR_END
+```
+
+Each number consists solely of decimal digits; the subject is repeated and
+checked against the caller's input. At most 64 entries, 78 digits per integer,
+and exponent 256 are admitted. No matrices, comments, labels, signs, leading
+or trailing spaces, extra lines or incomplete framing are accepted. Bounds are
+checked before decimal conversion; arithmetic is checked by the pure importer.
+Leading zero digits may be parsed, but canonical export uses natural numerals.
+Missing factors are permitted by import, even though GP normally supplies a
+complete list. Producer parsing never claims primality or completeness.
+
+Process limits are separate: 30000 ms, 16448 stdout bytes, 4096 stderr bytes,
+and a fixed initial GP stack with automatic growth disabled. Cancellation,
+timeout, excess output, non-UTF-8/malformed framing, missing executable,
+nonzero exit or nonempty stderr, invalid arithmetic, and primality-completion
+exhaustion have distinct diagnostics. The wall-clock deadline includes pipe
+completion, including when the leader has exited but descendants hold pipes.
+Adapt and attribute `HexECPPMathlib.Pari` and its `PariProcess` tests without
+importing HexECPP or HexECPPMathlib. On supported POSIX platforms retain the
+original session/process-group handle, use KILL on cancellation/exhaustion,
+collect both dedicated bounded readers, and reap exactly once. Do not reap the
+leader while descendants hold its pipes; after reaping, never kill or wait on
+that PID again. This contract covers descendants remaining in the created
+process group; an executable that deliberately escapes that group is outside
+the supported producer contract. No platform may silently claim these cleanup
+guarantees when its process runtime does not implement them.
+
+### Explicit fallback and diagnostic preservation
+
+`Pari.factor` takes separate import/completion, process/parser and native
+fallback allocations. After unavailable, failed, malformed or rejected external
+production it runs native search on the original positive subject. After a
+checked partial import it runs native search on that residual, preserving
+already certified entries and advanced randomness. Its initial fallback uses
+worklist fuel 4, prime fuel 8, and an independent `PrimeCertBudget` of 2 rho
+restarts and 65536 steps, with existing stage-2 and SQUFOF policies off.
+Run fallback at most once; never restart with default/unbounded allocations.
+For zero or oversized subjects reject before spawning or searching. At one,
+return the checked empty certificate without spawning.
+
+Merge checked residual progress by adding exponents for overlapping certified
+bases and replay the final complete/partial checker against the original
+subject. Retain backend/import/completion diagnostics alongside the eventual
+native incomplete or rejected outcome and checked progress. A native rejection
+remains distinct from exhaustion; retain the rejected candidate diagnostics
+and prefer the previously checked snapshot. Explicit cancellation cleans up
+and returns cancellation without starting fresh native work. The pure importer
+can always be called on already obtained proposals without a process.
+
+### Frozen source and batch-only export
+
+`#int_factor for n` reports a deterministic, self-contained declaration and
+acceptance proof suitable for copying into an ordinary module importing only
+`HexIntFactor.Replay`. `#int_factor_export MyCertificates.Factors cert for n`
+creates `MyCertificates/Factors.lean` relative to the working directory.
+It contains `module`, `public import HexIntFactor.Replay`, `public section`,
+an exposed raw complete or partial certificate named
+`MyCertificates.Factors.cert`, and a subject-indexed checked declaration
+`MyCertificates.Factors.cert_checked`. The checked declaration pins the literal
+requested subject and uses kernel reduction of the ordinary checker.
+All `PrimeCert` constructors are frozen explicitly: replay requires neither GP
+nor factor/certificate search and has no producer or converter proof dependency.
+The same source formatter drives suggestions and export. Complete and partial
+suggestions have exact certificate-text `#guard_msgs` regressions; fresh modules
+compile those verbatim and reject subject substitution or unexposed data.
+
+Evaluate only closed transparent natural expressions. Before any suggestion or
+write, structurally bound and compiled-check the certificate, reify it, and
+kernel-check the actual subject-indexed acceptance proof, with finite proof
+heartbeats, recursion and source-size limits. The initial source ceiling is
+262144 bytes and proof limits are 2000000 heartbeats and recursion depth 8192.
+Proof exhaustion is a distinct export failure; it never publishes unchecked
+source. Validate ASCII module/declaration names and destination before production.
+Create parent directories only after successful kernel checking; create files
+exclusively (`writeNew`), never overwrite, including concurrent creation races.
+
+In the language server both commands give instructions to run
+`lake build +Module` in batch and then remove the generation command; they
+never spawn a factorizer or write files. Source generation is an explicit one-time
+operation, not a subsequent build dependency. Native-only APIs remain usable
+without GP installed.
+
+### Evidence and release obligations
+
+Freeze subjects, seeds and native allocations before live experiments. Retain
+all completed outcomes, including failures, on the shared host; select a CPU
+where supported. Record process/factor discovery, parsing, primality completion,
+compiled checking, source bytes, and fresh-module kernel replay separately.
+Commit at least two distinct complete checked fixtures where the recorded
+bounded native allocation exhausts, plus discovery-success/completion-exhaustion
+and checked-partial replay. Certifiable larger bases are a target; no blanket
+60-digit support is promised. A build-checked manual example documents batch
+syntax, optional executable installation, support bounds and failure modes.
+
+Conformance covers degenerate subjects, powers, duplicates/order, composites,
+wrong products/subjects, omissions, negative/zero exponents, all bounds and
+supplied-certificate rejection/exhaustion. Adapt the audited ECPP fake-process
+suite for missing GP, exit failure, malformed/truncated framing, excess streams,
+cancellation/timeouts and pipe-holding descendants. Small optional real-GP tests
+exercise the protocol; committed replay never factors live. Check exclusive
+creation, exact suggested text, exposure and subject substitution in fresh
+modules, proof dependencies, the import DAG and a fresh Mathlib-free published
+client using only Replay. Extend existing CI scripts/jobs and release-managed
+paths/tests. Track the new Phase 1–4/7 obligations in the library registration;
+existing native performance evidence does not discharge this optional route.
+
 ## The algorithms
 
 The generic routes produce a partial aggregate, which `factor?` accepts through
@@ -1769,6 +1971,11 @@ by `coprime_of_checkOrder`, so the caller passes nothing extra.
    are retained in the stage-2 report. The ordinary default remains opt-in
    under its independent usefulness gate.
 
+9. **Optional checked external production.** The pure importer, optional PARI
+   process and batch export contract above, bounded native fallback, frozen
+   complete/partial replay, conformance, release and capability/cost evidence.
+   Land this SPEC assignment before introducing implementation declarations.
+
 ## File organisation
 
 ```
@@ -1787,6 +1994,10 @@ HexIntFactor/
   Order.lean        -- OrderCert, checkOrder, primitive roots, Carmichael
   Factor.lean       -- the dispatch, factor?, factorPartial?
   Primality.lean    -- untrusted primality-search adapter and registration
+  Import.lean       -- pure bounded proposal import and certificate completion
+  Pari.lean         -- explicitly imported optional producer and native fallback
+  Export.lean       -- explicitly imported batch suggestion/source export
+  Replay.lean       -- computational certificate imports only
 HexIntFactor.lean
 HexIntFactorMathlib/
   Factorization.lean -- factorization_eq, factors_eq and consequences
