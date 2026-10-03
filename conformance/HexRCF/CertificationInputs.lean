@@ -38,7 +38,7 @@ run_meta do
 example : Decidable.decide (Nat.Prime 11) = true := by decide +kernel
 example : Decidable.decide (Nat.Prime 5) = true := by decide +kernel
 
-elab "quartic_certificate" : term => do
+local elab "quartic_certificate" : term => do
   let p : ZPoly := DensePoly.ofList [-2, -7, -1, 4, 1]
   let some cert := certifyIrreducible? p | throwError "no quartic certificate"
   return CertificateSyntax.reifyCertificate cert

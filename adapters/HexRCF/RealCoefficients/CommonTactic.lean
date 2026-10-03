@@ -49,7 +49,7 @@ private meta def naturalSquareRoot? (source : Expr) : MetaM (Option Nat) := do
 
 private inductive SourceKind where
   | radical (degree : Nat)
-  | selected (args : Array Expr)
+  | selected (args : Array Expr) (checked : Expr)
   | normalized (selected checked : Expr)
   deriving Inhabited
 
@@ -190,12 +190,32 @@ private meta def eligible (source : Expr) : MetaM Bool := do
     | none => pure argument
   return (← selectedArgs? anchor).isSome || (← normalizedArgs? anchor).isSome
 
+/-- Bind source data by kernel reduction; authentication and resource failures
+remain terminal, rather than becoming solver declines. -/
+private meta def bindLiteral (goal : Expr) (literal : Expr)
+    (kind label : String) : MetaM Expr := do
+  try
+    withOptions (fun opts =>
+        debug.skipKernelTC.set (Elab.async.set opts false) false) do
+      mkAuxTheorem goal (← mkEqRefl literal) (zetaDelta := true) (cache := false)
+  catch error =>
+    if error.isInterrupt || error.isMaxHeartbeat || error.isMaxRecDepth then throw error
+    throwError "rcf: {kind} source {label} must reduce to its literal encoding in the kernel"
+
+private meta def transportChecked (checked equality : Expr) : MetaM Expr := do
+  let types ← mkAppM ``congrArg #[mkConst ``ZPoly.CheckedIrreducible, equality]
+  mkAppM ``Eq.mp #[types, checked]
+
 private meta def sourceRoot? (argument : Expr) :
     MetaM (Option (RealAlgebraicNumber × ZPoly × DyadicSquare × SourceKind)) := do
   if let some args ← selectedArgs? argument then
-    return some (← FieldRuntime.evalReal argument,
-      ← FieldRuntime.evalZPoly args[0]!, ← FieldRuntime.evalSquare args[1]!,
-      .selected args)
+    let p ← FieldRuntime.evalZPoly args[0]!
+    let sourceP : Q(ZPoly) ← pure args[0]!
+    let literalP : Q(ZPoly) ← FieldLiteral.zpolyExpr p
+    let equality ← bindLiteral q($sourceP = $literalP) literalP "selected" "polynomial"
+    let checked ← transportChecked args[7]! equality
+    return some (← FieldRuntime.evalReal argument, p,
+      ← FieldRuntime.evalSquare args[1]!, .selected args checked)
   let some (args, hreal) ← normalizedArgs? argument | return none
   let p ← FieldRuntime.evalZPoly args[0]!
   let sourceP : Q(ZPoly) ← pure args[0]!
@@ -210,22 +230,15 @@ private meta def sourceRoot? (argument : Expr) :
   let literalSquare : Q(DyadicSquare) ← FieldLiteral.squareExpr s
   -- Authenticate executable data before canonicalization or common-field search.
   -- The kernel checks literal identities without reducing the constructor result.
-  let bindLiteral (goal : Expr) (literal : Expr) (label : String) : MetaM Expr := do
-    try
-      withOptions (fun opts =>
-          debug.skipKernelTC.set (Elab.async.set opts false) false) do
-        mkAuxTheorem goal (← mkEqRefl literal)
-          (zetaDelta := true) (cache := false)
-    catch _ =>
-      throwError "rcf: normalized source {label} must reduce to its literal encoding in the kernel"
-  let hpoly ← bindLiteral q($sourceP = $literalP) literalP "polynomial"
-  let hs ← bindLiteral q(($rep).1.square = $literalSquare) literalSquare "square"
+  let hpoly ← bindLiteral q($sourceP = $literalP) literalP "normalized" "polynomial"
+  let hs ← bindLiteral q(($rep).1.square = $literalSquare) literalSquare "normalized" "square"
+  let checked ← transportChecked args[4]! hpoly
   let hw ← mkDecideProof (q(atomWitness $literalP $literalSquare) : Q(Prop))
   let hp ← mkDecideProof
     (q((mahlerPrec $literalP : Int) ≤ ($literalSquare).prec) : Q(Prop))
   let selected ← mkAppM ``Selected.normalized_toReal
     (args ++ #[hreal, literalP, hpoly, literalSquare, hw, hp, hs])
-  return some (← FieldRuntime.evalReal argument, p, s, .normalized selected args[4]!)
+  return some (← FieldRuntime.evalReal argument, p, s, .normalized selected checked)
 
 private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
   let identity : DensePoly Rat := DensePoly.ofList [0, 1]
@@ -272,7 +285,7 @@ private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
   -- so this reduces field arithmetic without replaying root isolation.
   let hcoeff ← coefficientProof coeffs fieldExpr
   let sourceProof ← if isSelectedField then
-    let .selected args := kind |
+    let .selected args _ := kind |
       throwError "rcf: selected field has no selected generator"
     mkAppM ``Selected.field_eval
       #[args[0]!, args[1]!, args[2]!, args[3]!, args[4]!,
@@ -357,7 +370,7 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
                 throwError "rcf: source radical has a different defining polynomial"
               let nExpr : Q(ℕ) := mkNatLit degree
               pure q(SquareRoot.polynomial $nExpr)
-          | .selected _ | .normalized _ _ => FieldLiteral.zpolyExpr sourceP
+          | .selected _ _ | .normalized _ _ => FieldLiteral.zpolyExpr sourceP
         let sourceWitness ← mkDecideProof
           (q(atomWitness $sourcePExpr $sourceSquareExpr) : Q(Prop))
         let sourcePrecision ← mkDecideProof
@@ -371,7 +384,7 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
               mkAppM ``SquareRoot.selected
                 #[nExpr, sourceSquareExpr, sourceWitness, sourcePrecision,
                   hreal, hpositive]
-          | .selected args => do
+          | .selected args _ => do
               let sourceValue ← mkAppM ``Selected.real_toReal args
               mkAppM ``Eq.symm #[sourceValue]
           | .normalized selected _ => pure selected
@@ -396,17 +409,15 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
       let instType ← mkAppM ``ZPoly.CheckedIrreducible #[pExpr]
       let mut sourceIrred : Option Expr := none
       for plan in plans do
+        if plan.sourcePolynomial != p then continue
         let checked ← match plan.kind with
           | .radical _ => pure none
-          | .selected args => pure (some args[7]!)
-          | .normalized _ checked => pure (some checked)
+          | .selected _ checked | .normalized _ checked => pure (some checked)
         if let some checked := checked then
-          let saved ← saveState
-          let agrees ← try isDefEq (← inferType checked) instType
-            finally saved.restore
-          if agrees then
-            sourceIrred := some checked
-            break
+          unless (← inferType checked) == instType do
+            throwError "rcf: transported source irreducibility has a different literal polynomial"
+          sourceIrred := some checked
+          break
       let irred ← match sourceIrred with
         | some checked => pure checked
         | none => match QuadraticNormCertificate.certify? p with

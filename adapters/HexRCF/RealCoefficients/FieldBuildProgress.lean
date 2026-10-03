@@ -86,7 +86,7 @@ theorem canonical_polynomial (rep : RefinedIsolation p) (hrep : SimpleRoot.mk re
         Array.getElem?_eq_none mapped, Option.getD_none, RealAlgebraicNumber.zero_toReal]
       exact (Field.value_zero rep hrep real).symm
 
-/-- The actual canonical fallback eventually produces separated intervals
+/-- The alternative canonical proposal API eventually produces separated intervals
 for every nonzero fixed-field head along a cofinal precision schedule. -/
 theorem proposeCanonical_progress [RealAlgebraicNumber.Laws]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root) (real : rep.root.im = 0)
@@ -143,7 +143,7 @@ theorem proposeCanonical_accepted [RealAlgebraicNumber.Laws] {Ctx : Type u} [Dec
   simpa only [FieldDecision.point, HexRealRootsMathlib.toReal_eq_cast_toRat] using
     FieldSpecialize.value_ofRat rep hrep real d.toRat
 
-/-- The preferred bounded search or its canonical fallback eventually
+/-- The preferred bounded search or its selected-field fallback eventually
 yields accepted fixed-field isolation evidence for a nonzero squarefree head.
 The statement does not assert full certificate construction or tactic totality. -/
 theorem isolateAt_progress [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]

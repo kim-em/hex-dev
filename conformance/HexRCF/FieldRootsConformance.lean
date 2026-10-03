@@ -83,3 +83,11 @@ end Hex.RCF.FieldRootsTests
 /-- info: '_private.HexRCF.FieldRootsConformance.0.Hex.RCF.FieldRootsTests.complete_checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.FieldRootsTests.complete_checked
+
+/-- info: 'Hex.RCF.RealCoefficients.FieldBuild.isolateAtWith_checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RealCoefficients.FieldBuild.isolateAtWith_checked
+
+/-- info: 'Hex.RCF.RealCoefficients.FieldBuild.isolateAtWith_build' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RealCoefficients.FieldBuild.isolateAtWith_build

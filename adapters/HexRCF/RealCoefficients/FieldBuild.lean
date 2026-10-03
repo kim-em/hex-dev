@@ -46,8 +46,8 @@ An absent owner result or universal root set remains an absent finite proposal. 
   let intervals ← roots.mapM fun r => rootInterval r.root precision
   return ⟨intervals⟩
 
-/-- Search for roots with the existing canonical solver, retaining only its
-dyadic interval proposals. -/
+/-- Alternative canonical root proposal API for existing callers. Production
+uses `proposeRoots`, retaining the selected field presentation. -/
 @[expose] def proposeCanonical [RealAlgebraicNumber.Laws]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
     (head : DensePoly (PolyQuot p root)) (precision : Nat) :
@@ -102,25 +102,34 @@ retain the existing selected field; both attempts are checked with this sign. -/
     (precision : Nat) : Option (IsolationReplay (PolyQuot p root) Ctx) :=
   isolateAtWith rep hrep (proposalSign rep hrep) context head precision
 
-/-- Every successful proposal is accepted by the generic isolation checker
-with the same root, field coordinates and sign operation. -/
+/-- Every successful supplied-sign proposal passes the isolation checker with
+exactly the same field coordinates, context and sign operation. -/
+theorem isolateAtWith_checked {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
+    (sign : PolyQuot p root → Int) (context : Ctx)
+    (head : DensePoly (PolyQuot p root)) (precision : Nat)
+    (cert : IsolationReplay (PolyQuot p root) Ctx)
+    (h : isolateAtWith rep hrep sign context head precision = some cert) :
+    cert.check sign FieldDecision.point context head = true := by
+  unfold isolateAtWith at h
+  cases hdirect : buildProposed sign context head
+      (FieldIsolate.propose? sign FieldDecision.point head) with
+  | none =>
+      exact buildProposed_checked sign context head
+        (proposeRoots rep hrep head precision) cert (by simpa [hdirect] using h)
+  | some direct =>
+      have heq : direct = cert := by simpa [hdirect] using h
+      subst cert
+      exact buildProposed_checked _ _ _ _ _ hdirect
+
+/-- The canonical-sign wrapper preserves the same checker binding. -/
 theorem isolateAt_checked [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
     (context : Ctx) (head : DensePoly (PolyQuot p root))
     (precision : Nat) (cert : IsolationReplay (PolyQuot p root) Ctx)
     (h : isolateAt rep hrep context head precision = some cert) :
-    cert.check (proposalSign rep hrep) FieldDecision.point context head = true := by
-  unfold isolateAt isolateAtWith at h
-  cases hdirect : buildProposed (proposalSign rep hrep) context head
-      (FieldIsolate.propose? (proposalSign rep hrep) FieldDecision.point head) with
-  | none =>
-      simpa [hdirect] using
-        (buildProposed_checked (proposalSign rep hrep) context head
-          (proposeRoots rep hrep head precision) cert (by simpa [hdirect] using h))
-  | some direct =>
-      have heq : direct = cert := by simpa [hdirect] using h
-      subst cert
-      exact buildProposed_checked _ _ _ _ _ hdirect
+    cert.check (proposalSign rep hrep) FieldDecision.point context head = true :=
+  isolateAtWith_checked rep hrep _ context head precision cert h
 
 private theorem buildProposed_build {Ctx : Type u} [DecidableEq Ctx]
     (sign : PolyQuot p root → Int) (context : Ctx) (head : DensePoly (PolyQuot p root))
@@ -132,26 +141,37 @@ private theorem buildProposed_build {Ctx : Type u} [DecidableEq Ctx]
   · contradiction
   · exact ⟨_, produced⟩
 
-/-- Every successful preferred or fallback attempt retains its exact builder
-binding, including the canonical squarefree chain used by query production. -/
-theorem isolateAt_build [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
+/-- Every supplied-sign attempt retains its exact builder binding, including
+its squarefree chain for query production. -/
+theorem isolateAtWith_build {Ctx : Type u} [DecidableEq Ctx]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
-    (context : Ctx) (head : DensePoly (PolyQuot p root)) (precision : Nat)
+    (sign : PolyQuot p root → Int) (context : Ctx)
+    (head : DensePoly (PolyQuot p root)) (precision : Nat)
     (cert : IsolationReplay (PolyQuot p root) Ctx)
-    (produced : isolateAt rep hrep context head precision = some cert) :
-    ∃ isolations, IsolationReplay.build (proposalSign rep hrep) FieldDecision.point
+    (produced : isolateAtWith rep hrep sign context head precision = some cert) :
+    ∃ isolations, IsolationReplay.build sign FieldDecision.point
       context head isolations = some cert := by
-  unfold isolateAt isolateAtWith at produced
-  cases direct : buildProposed (proposalSign rep hrep) context head
-      (FieldIsolate.propose? (proposalSign rep hrep) FieldDecision.point head) with
+  unfold isolateAtWith at produced
+  cases direct : buildProposed sign context head
+      (FieldIsolate.propose? sign FieldDecision.point head) with
   | none =>
-    apply buildProposed_build (proposalSign rep hrep) context head
+    apply buildProposed_build sign context head
       (proposeRoots rep hrep head precision) cert
     simpa only [direct] using produced
   | some result =>
     have same : result = cert := by simpa only [direct, Option.some.injEq] using produced
     subst result
     exact buildProposed_build _ _ _ _ _ direct
+
+/-- The canonical-sign wrapper preserves the same builder binding. -/
+theorem isolateAt_build [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
+    (context : Ctx) (head : DensePoly (PolyQuot p root)) (precision : Nat)
+    (cert : IsolationReplay (PolyQuot p root) Ctx)
+    (produced : isolateAt rep hrep context head precision = some cert) :
+    ∃ isolations, IsolationReplay.build (proposalSign rep hrep) FieldDecision.point
+      context head isolations = some cert :=
+  isolateAtWith_build rep hrep _ context head precision cert produced
 
 /-- Prepare the rational defining polynomial once and certify the finite sign
 arguments that replay will read, deduplicating exact coordinate keys. The

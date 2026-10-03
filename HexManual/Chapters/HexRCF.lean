@@ -535,10 +535,12 @@ power basis; it does not run general common-field search. Polynomial and
 isolation-square checks still authenticate every proposed source coordinate.
 If the common defining polynomial exactly matches an authenticated source's
 polynomial, quotation reuses its supplied `CheckedIrreducible` proof. The
-source instance's type must match in Lean; equality of runtime polynomials
-alone is insufficient. This supports source proofs beyond the frontend's
+kernel proves equality of the original and literal polynomials and transports
+the source instance along that equality; runtime equality alone is insufficient. This supports source proofs beyond the frontend's
 single-witness and quadratic-norm search languages, including a checked real
-quartic with a multi-prime certificate. New common polynomials still require
+quartic with a multi-prime certificate. The fresh goal proofs use ordinary
+imports, while constructing that certificate currently needs private checker
+imports pending its owner's public API. New common polynomials still require
 a supported ordinary-kernel irreducibility certificate.
 The cubic example below verifies
 `x / α = (α² − 1) * x` at the selected positive root of `X³ − X − 1`.
