@@ -39,8 +39,7 @@ open Hex Hex.SignDet Hex.RCF.RealCoefficients HexPolyMathlib.Interpret HexRealRo
 abbrev generator := CubeTwo.realAlgebraic
 abbrev CubicField := QAdjoin generator.toAlgebraic
 
-/-- Ordinary real-algebraic conversion computes the selected cubic field's
-sign; the conversion retains its real embedding. -/
+/-- Interval evaluation computes the sign in the selected cubic embedding. -/
 def fieldSign (a : CubicField) : Int := generator.signField a
 
 abbrev rep := generator.toAlgebraic.rep
