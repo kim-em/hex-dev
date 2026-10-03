@@ -31,7 +31,12 @@ number at most two, excluding the original nine. Data comes from PARI 2.17.3
 The independent oracle reconstructs every polynomial from primitive reduced
 forms and analytic j-values at 160 and 240 decimal digits (mpmath 1.3.0), and
 checks the compiled root fixtures. Runtime roots use the quadratic formula,
-checked square roots and Horner verification, without general polynomial search.
+checked square roots and Horner verification, without general polynomial search. Fifteen non-fundamental entries overlap
+group orders already covered by maximal orders in the portfolio; the table
+adds curve/factoring proposals rather than 33 independent trace families.
+Different j-roots may repeat an unresolved child search with an advanced random
+stream, charging the same shared allocation. This cost remains visible in
+the counters and profiles.
 
 Public search permits 512 bits, depth 21, 20 elliptic rows, 32 total nodes,
 8192 candidates, 32768 roots, 16384 nonresidues and points, 131072 factor-work
@@ -117,17 +122,20 @@ identical non-timing payloads are stored once and addressed by hash.
 verbatim README quickstart and compiled 512-bit producer probe using exact staged
 prerequisites and the real publication source transformations.
 
+[proof-phases-v2.json](proof-phases-v2.json) retains four fixed trial-major
+fresh-module schedules on the complete ordinary-0 certificate, with separate
+matched import/numeral, reification/type/preflight and kernel-proof modules.
+Median wall times are 5.346 s, 4.878 s and 23.436 s respectively. These include
+Lake/import/module overhead. The reification phase is within host variation of
+the baseline; their difference does not estimate a positive isolated reification
+cost. These are externally timed build-only proof probes, as required by
+SPEC/benchmarking.md.
 
-[proof-phases-timed-v2.json](proof-phases-timed-v2.json) retains four fixed
-trial-major fresh-module schedules on the complete ordinary-0 certificate.
-Reification plus expression type inference is timed inside the meta operation
-(median 44.150 ms); replay preflight, including a
-separate reification, is median 45.961 ms. Fresh kernel
-proof-module wall time is 17.619 s, with a matched import/
-numeral baseline of 3.820 s. These wall times include
-Lake/import/module overhead and are not a pure kernel reduction estimate.
-The earlier uninstrumented schedule in [proof-phases-v2.json](proof-phases-v2.json)
-is also retained.
+[proof-phases-timed-v2.json](proof-phases-timed-v2.json) retains a rejected
+diagnostic that added an in-process clock to the reification probe. CI's
+proof-probe lint rejected that setup. Its in-process timings do not attest phase
+obligations; the clock was removed, and the compliant external schedule above
+is the proof-phase evidence.
 
 ## Public generation and replay
 
@@ -136,7 +144,9 @@ the exact frozen representation before suggesting or exporting it. Each successf
 endpoint builds fresh Nat.Prime and Hex.Nat.Prime suggestions, an exported module,
 and verbatim frozen replay with native generation absent and GP blocked. The
 unchanged replay limits include 131072 inspected syntax nodes and 1024 inverse
-witnesses per step.
+witnesses per step. Search checks rows, total nodes and data bits; syntax-node
+and per-step witness limits remain exact post-search preflight checks. A failure
+there is a clean generation error rather than a new search retry.
 
 [public-ordinary-0-v2.json](public-ordinary-0-v2.json) retains the initial public
 failure: frontend OfNat wrappers exceeded the syntax-node limit. The reifier now
@@ -152,8 +162,15 @@ ordinary-0 endpoint is
 `HexECPPMathlib.Tests.Frozen512` replays the same text without importing Native.
 
 [public-final-ordinary-0-v2.json](public-final-ordinary-0-v2.json) rechecks the
-final parser/reifier sources with their hashes. Fresh generation/export and
-frozen-replay module wall times are retained for all four gains.
+final parser/reifier sources with their hashes. The matching final ordinary-3,
+ordinary-5 and difficult-0 artifacts recheck the other three successes with the
+same API source hashes and default heartbeats.
+[default-heartbeats-v2.json](default-heartbeats-v2.json) separately checks the
+ordinary-0 generation guard and verbatim frozen theorem under default
+heartbeats. Fresh generation/export and frozen-replay module wall times are
+retained for all four gains. CI admits only the two ordinary-0 acceptance
+modules (measured 12–16 seconds each), retaining the more expensive full 512-bit
+export protocol as manual evidence and avoiding duplicate generation.
 
 Reproduction uses `lake build`, then the scripts under `scripts/bench/` and
 `scripts/ci/check_ecpp_native.py --bits 512 --subject N --seed S --output NEW.json`.

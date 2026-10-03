@@ -13,8 +13,6 @@ The subject and seed are holdout-512-ordinary-0 in the independently generated
 corpus. This pins the complete public suggestion, including its terminal proof.
 -/
 
-set_option maxHeartbeats 0
-
 /-- info: Try this:
   [apply] ecpp using
     (ecpp_cert%

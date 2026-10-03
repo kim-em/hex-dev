@@ -346,9 +346,6 @@ successful current ladders and declared budgets are the Phase 4 evidence.
 Shared-host variation, synthetic fixed-modulus scalar scope, finite native
 capability and different PARI terminal contracts are explicit practical limits.
 
-## Concerns
-
-
 ## Explicit 512-bit native production
 
 The `native-production` family now includes the independently generated 512-bit
@@ -388,11 +385,13 @@ syntax ceiling, without changing search. Public fresh-module generation/replay
 timings and the initial rejected representation are retained alongside the core
 measurements and are distinct from compiled search/check/convert timings.
 
-The companion proof track separately measures reification and fresh kernel
-replay in [proof-phases-timed-v2.json](ecpp/native512/proof-phases-timed-v2.json).
-Four fixed trial-major schedules give 44.150 ms median for
-reification plus type inference and 45.961 ms for replay preflight
-(including its own reification). The complete fresh proof module takes
-17.619 s median, versus 3.820 s for matched import/numeral
-baseline; those wall observations include Lake and import overhead. All samples
-are retained, including the earlier uninstrumented schedule.
+The companion proof track separates matched import/numeral, reification with
+preflight, and fresh kernel replay in externally timed build-only modules:
+[proof-phases-v2.json](ecpp/native512/proof-phases-v2.json). Four fixed trial-major
+schedules give median wall times 5.346 s, 4.878 s and 23.436 s respectively.
+They include Lake/import overhead; the reification phase is within variation
+of the baseline, so their difference does not estimate its isolated cost.
+The later in-process-clock diagnostic is retained as rejected evidence in
+`proof-phases-timed-v2.json`; its setup violates the proof-probe timing policy
+and its internal timestamps do not attest a phase obligation. The final probe
+uses external timing only.

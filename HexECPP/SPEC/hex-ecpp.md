@@ -382,7 +382,17 @@ The reservation is eight operations for a linear polynomial and
 `12*(bits(n)+1) + 3*(v₂(n-1)+1)² + 64` for a quadratic polynomial. This bounds
 the exponentiations, at most `v₂(n-1)` Tonelli–Shanks iterations and the two
 root checks; unused reservations are not refunded. Norm roots also consume
-the shared root allocation. The fixed 33-entry table is within the design
+the shared root allocation.
+
+Fifteen added discriminants are non-fundamental orders whose possible traces
+overlap maximal orders already represented: 12, 16, 27, 28, 32, 36, 48, 60,
+64, 72, 75, 99, 100, 112 and 147. The table supplies additional checked curve
+and factoring proposals, not 33 independent sets of group orders. Distinct
+j-roots can repeat an unresolved child search using the advanced random stream;
+these retries consume the same shared allocation. Failed children are not memoized.
+Successful children are memoized subject to the remaining row/node/depth limits.
+
+The fixed 33-entry table is within the design
 ceiling of 64 additional entries of degree at most four. A future splitting
 implementation must enforce the per-call 32-attempt and shared
 1048576-attempt ceilings and use the shared, advancing random stream.

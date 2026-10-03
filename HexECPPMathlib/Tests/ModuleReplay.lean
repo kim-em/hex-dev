@@ -47,6 +47,13 @@ example : _root_.Nat.Prime 17 := by primality? (method := ecpp) (bits := 256)
 #guard_msgs in
 example : _root_.Nat.Prime 17 := by primality? (method := ecpp) (bits := 512) (seed := 3)
 
+run_cmd do
+  let parsed := Lean.Parser.runParserCategory (← Lean.getEnv) `tactic
+    "primality? (method := ecpp) (seed := 0) (bits := 512)"
+  match parsed with
+  | .error _ => pure ()
+  | .ok _ => throwError "the bits policy must precede the seed"
+
 /-- error: native ECPP: bits must be 256 or 512 -/
 #guard_msgs in
 example : _root_.Nat.Prime 17 := by primality? (method := ecpp) (bits := 513)
