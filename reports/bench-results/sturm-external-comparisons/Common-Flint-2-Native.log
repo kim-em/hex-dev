@@ -1,0 +1,9 @@
+Hex.SturmExternalBench.runNativeCommon    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=bc94cd3-dirty, 2026-10-03T17:37:23Z, host=chungus2
+  repeat 0  97.603 µs  (×2^4, total 1.562 ms)
+  median: 97.603 µs    min: 97.603 µs    max: 97.603 µs
+  hash: all repeats agree
+  observed hash: 0x22b628d08b360001
+  expected hash: matches
+  peak RSS: 67_148 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-comparisons/Common-Flint-2-Native.json

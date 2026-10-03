@@ -1,0 +1,570 @@
+{
+  "source_commit": "bc94cd3e555d9992d876bd0a417bef315157ba8c",
+  "classification": "informational fixed endpoint comparison; no algorithmic complexity or absolute budget claim",
+  "comparison_arms": 64,
+  "paired_results": 32,
+  "fixed_control_observations": 8,
+  "all_expected_hash_checks_match": true,
+  "source_and_executable_unchanged": true,
+  "summary": [
+    {
+      "fixture": "Count",
+      "comparator": "Flint",
+      "native_median_us": 103.68340625,
+      "external_median_us": 205.9753125,
+      "median_paired_external_over_native": 1.981379755123324,
+      "all_hashes_match": true
+    },
+    {
+      "fixture": "Count",
+      "comparator": "Z3",
+      "native_median_us": 101.9166875,
+      "external_median_us": 110.09475,
+      "median_paired_external_over_native": 1.0823833302344101,
+      "all_hashes_match": true
+    },
+    {
+      "fixture": "Mixed",
+      "comparator": "Flint",
+      "native_median_us": 86.48478125,
+      "external_median_us": 232.745,
+      "median_paired_external_over_native": 2.691171800637682,
+      "all_hashes_match": true
+    },
+    {
+      "fixture": "Mixed",
+      "comparator": "Z3",
+      "native_median_us": 86.4619375,
+      "external_median_us": 147.8698125,
+      "median_paired_external_over_native": 1.7190671826531687,
+      "all_hashes_match": true
+    },
+    {
+      "fixture": "Negative",
+      "comparator": "Flint",
+      "native_median_us": 113.3705625,
+      "external_median_us": 259.596125,
+      "median_paired_external_over_native": 2.2840225775715552,
+      "all_hashes_match": true
+    },
+    {
+      "fixture": "Negative",
+      "comparator": "Z3",
+      "native_median_us": 114.76290625,
+      "external_median_us": 160.646875,
+      "median_paired_external_over_native": 1.399889763598063,
+      "all_hashes_match": true
+    },
+    {
+      "fixture": "Common",
+      "comparator": "Flint",
+      "native_median_us": 97.6184375,
+      "external_median_us": 16421.5175,
+      "median_paired_external_over_native": 168.3509486982693,
+      "all_hashes_match": true
+    },
+    {
+      "fixture": "Common",
+      "comparator": "Z3",
+      "native_median_us": 99.72784375,
+      "external_median_us": 447.880125,
+      "median_paired_external_over_native": 4.488035047220549,
+      "all_hashes_match": true
+    }
+  ],
+  "pairs": [
+    {
+      "fixture": "Count",
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "result_hash": "0xb86baf9ace1766b1",
+      "native_nanos": 100525.25,
+      "external_nanos": 210144.0,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 8,
+      "external_over_native": 2.090459859587517
+    },
+    {
+      "fixture": "Count",
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "result_hash": "0xb86baf9ace1766b1",
+      "native_nanos": 105083.25,
+      "external_nanos": 208271.25,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 8,
+      "external_over_native": 1.9819642997337825
+    },
+    {
+      "fixture": "Count",
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "result_hash": "0xb86baf9ace1766b1",
+      "native_nanos": 102474.4375,
+      "external_nanos": 202980.875,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 8,
+      "external_over_native": 1.9807952105128657
+    },
+    {
+      "fixture": "Count",
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "result_hash": "0xb86baf9ace1766b1",
+      "native_nanos": 104892.375,
+      "external_nanos": 203679.375,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 8,
+      "external_over_native": 1.9417939101865127
+    },
+    {
+      "fixture": "Count",
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "result_hash": "0xb86baf9ace1766b1",
+      "native_nanos": 102579.5625,
+      "external_nanos": 111174.8125,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 16,
+      "external_over_native": 1.0837910573073462
+    },
+    {
+      "fixture": "Count",
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "result_hash": "0xb86baf9ace1766b1",
+      "native_nanos": 102124.5,
+      "external_nanos": 109978.0,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 16,
+      "external_over_native": 1.076901233298572
+    },
+    {
+      "fixture": "Count",
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "result_hash": "0xb86baf9ace1766b1",
+      "native_nanos": 101665.6875,
+      "external_nanos": 110211.5,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 16,
+      "external_over_native": 1.0840579817059715
+    },
+    {
+      "fixture": "Count",
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "result_hash": "0xb86baf9ace1766b1",
+      "native_nanos": 101708.875,
+      "external_nanos": 109944.8125,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 16,
+      "external_over_native": 1.0809756031614743
+    },
+    {
+      "fixture": "Mixed",
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "result_hash": "0x22b628d08b360001",
+      "native_nanos": 86223.4375,
+      "external_nanos": 232617.375,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 8,
+      "external_over_native": 2.697843901201457
+    },
+    {
+      "fixture": "Mixed",
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "result_hash": "0x22b628d08b360001",
+      "native_nanos": 86587.75,
+      "external_nanos": 232682.375,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 8,
+      "external_over_native": 2.687243576602926
+    },
+    {
+      "fixture": "Mixed",
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "result_hash": "0x22b628d08b360001",
+      "native_nanos": 89743.0625,
+      "external_nanos": 233119.25,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 8,
+      "external_over_native": 2.597629761074846
+    },
+    {
+      "fixture": "Mixed",
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "result_hash": "0x22b628d08b360001",
+      "native_nanos": 86381.8125,
+      "external_nanos": 232807.625,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 8,
+      "external_over_native": 2.695100024672439
+    },
+    {
+      "fixture": "Mixed",
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "result_hash": "0x22b628d08b360001",
+      "native_nanos": 86325.5,
+      "external_nanos": 150226.375,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 8,
+      "external_over_native": 1.7402317391732454
+    },
+    {
+      "fixture": "Mixed",
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "result_hash": "0x22b628d08b360001",
+      "native_nanos": 86972.6875,
+      "external_nanos": 146714.875,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 8,
+      "external_over_native": 1.686907455860784
+    },
+    {
+      "fixture": "Mixed",
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "result_hash": "0x22b628d08b360001",
+      "native_nanos": 85450.375,
+      "external_nanos": 148661.625,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 8,
+      "external_over_native": 1.7397422188024336
+    },
+    {
+      "fixture": "Mixed",
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "result_hash": "0x22b628d08b360001",
+      "native_nanos": 86598.375,
+      "external_nanos": 147078.0,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 8,
+      "external_over_native": 1.6983921465039038
+    },
+    {
+      "fixture": "Negative",
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "result_hash": "0x99a2f57b9930f69a",
+      "native_nanos": 113545.8125,
+      "external_nanos": 258418.0,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 4,
+      "external_over_native": 2.2758919444959718
+    },
+    {
+      "fixture": "Negative",
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "result_hash": "0x99a2f57b9930f69a",
+      "native_nanos": 113195.3125,
+      "external_nanos": 258966.5,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 4,
+      "external_over_native": 2.287784664228035
+    },
+    {
+      "fixture": "Negative",
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "result_hash": "0x99a2f57b9930f69a",
+      "native_nanos": 111562.25,
+      "external_nanos": 271452.5,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 4,
+      "external_over_native": 2.4331931276036474
+    },
+    {
+      "fixture": "Negative",
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "result_hash": "0x99a2f57b9930f69a",
+      "native_nanos": 114121.0625,
+      "external_nanos": 260225.75,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 4,
+      "external_over_native": 2.2802604909150754
+    },
+    {
+      "fixture": "Negative",
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "result_hash": "0x99a2f57b9930f69a",
+      "native_nanos": 128163.0625,
+      "external_nanos": 168830.25,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 8,
+      "external_over_native": 1.317308175278661
+    },
+    {
+      "fixture": "Negative",
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "result_hash": "0x99a2f57b9930f69a",
+      "native_nanos": 113918.875,
+      "external_nanos": 160626.875,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 8,
+      "external_over_native": 1.4100110714752054
+    },
+    {
+      "fixture": "Negative",
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "result_hash": "0x99a2f57b9930f69a",
+      "native_nanos": 115606.9375,
+      "external_nanos": 160666.875,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 8,
+      "external_over_native": 1.3897684557209207
+    },
+    {
+      "fixture": "Negative",
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "result_hash": "0x99a2f57b9930f69a",
+      "native_nanos": 112876.6875,
+      "external_nanos": 160197.5,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 8,
+      "external_over_native": 1.4192257369352728
+    },
+    {
+      "fixture": "Common",
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "result_hash": "0x22b628d08b360001",
+      "native_nanos": 97100.8125,
+      "external_nanos": 16416996.0,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 1,
+      "external_over_native": 169.0716645651137
+    },
+    {
+      "fixture": "Common",
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "result_hash": "0x22b628d08b360001",
+      "native_nanos": 98583.0,
+      "external_nanos": 16602190.0,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 1,
+      "external_over_native": 168.4082448292302
+    },
+    {
+      "fixture": "Common",
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "result_hash": "0x22b628d08b360001",
+      "native_nanos": 97603.4375,
+      "external_nanos": 16426039.0,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 1,
+      "external_over_native": 168.2936525673084
+    },
+    {
+      "fixture": "Common",
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "result_hash": "0x22b628d08b360001",
+      "native_nanos": 97633.4375,
+      "external_nanos": 16416254.0,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 1,
+      "external_over_native": 168.141718865527
+    },
+    {
+      "fixture": "Common",
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "result_hash": "0x22b628d08b360001",
+      "native_nanos": 97702.9375,
+      "external_nanos": 447969.0,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 4,
+      "external_over_native": 4.585010558152359
+    },
+    {
+      "fixture": "Common",
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "result_hash": "0x22b628d08b360001",
+      "native_nanos": 102088.875,
+      "external_nanos": 447791.25,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 4,
+      "external_over_native": 4.386288417812421
+    },
+    {
+      "fixture": "Common",
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "result_hash": "0x22b628d08b360001",
+      "native_nanos": 98639.375,
+      "external_nanos": 449261.0,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 4,
+      "external_over_native": 4.55458076452735
+    },
+    {
+      "fixture": "Common",
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "result_hash": "0x22b628d08b360001",
+      "native_nanos": 100816.3125,
+      "external_nanos": 445758.25,
+      "native_inner_repeats": 16,
+      "external_inner_repeats": 4,
+      "external_over_native": 4.421489329913748
+    }
+  ],
+  "protocol_controls": {
+    "Flint": {
+      "observations": 4,
+      "median_us": 6.734,
+      "result_hash": "0xb86baf9ace1766b1"
+    },
+    "Z3": {
+      "observations": 4,
+      "median_us": 6.594,
+      "result_hash": "0xb86baf9ace1766b1"
+    }
+  },
+  "boundary": "Inputs and backend contexts prepared; root API, filtering, exact evaluation, sign sum, temporary cleanup and persistent JSON transport timed. One untimed warmup per child. No driver root cache; backend contexts may retain internal caches. Fixed valid-domain inputs only, no literal certificate/proof comparison."
+}
