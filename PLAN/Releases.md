@@ -388,6 +388,15 @@ GitHub UI (https://github.com/settings/personal-access-tokens); this
 inventory is the durable record of that state, kept current by rule:
 whoever widens a token records the change here in the same working
 session. A fine-grained token selects at most 50 repositories.
+When preparing a new mirror, the agent must choose one token using this
+inventory and the 50-repository limit, record the allocation, and give the
+user clickable [token settings](https://github.com/settings/personal-access-tokens)
+and [Leanprover approval](https://github.com/organizations/leanprover/settings/personal-access-token-requests)
+links. Name the selected token explicitly; do not offer alternatives or ask
+the user to track allocations or capacity. Keep requested allocations distinct
+from confirmed selections and approved grants. If the token's numeric ID is
+available, link directly to its edit page.
+
 Snapshot verified against the live tokens on 2026-09-03 (routing
 measured by a branch-only debug step on the sync workflow counting
 `route_tokens`' output; selections confirmed from the UI) and updated
