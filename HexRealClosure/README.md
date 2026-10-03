@@ -1455,6 +1455,30 @@ Executable guards count the extracted levels in the base and a one-root
 context and rebuild the extracted one-root suffix. The existing four-root
 transport fixture includes a deeper count check and runs outside routine CI.
 
+## Native scalar signs and nested replay
+
+Native selected-root arithmetic reduces high-degree sign queries by the existing
+positive pseudo-remainder while retaining the clean-storage policy. Constant
+queries use the predecessor sign directly. A linear query can use its finite
+endpoint signs when they agree strictly or one endpoint value is zero. If the
+prepared interval contains exactly one head root, one prepared Sturm query gives
+the scalar sign. Intervals with several roots retain the existing selected-sign
+BKR producer and Thom constraints. Companion proofs preserve the same
+selected-root interpretation over arbitrary ordered real closed fields.
+
+The isolation conformance emitter includes an actual two-level algebraic tower
+over two successive infinitesimals: α² = 2 + ε₁ and β² = α + ε₂, with both roots
+selected in (1, 2). It exports checked selected-sign certificates for each query
+at each common selected root, byte-replays them through the native DAG reader,
+and reconstructs every stored value from the empty catalog. It checks inverses,
+a defining-equation zero, and rejection of stale contexts, false consumer signs,
+cycles and false integer denominators. The independent pinned Z3 real-closed-field
+checker verifies the selected roots, signs, context equations and integer table
+identities. The native checker replays the complete polynomial certificates;
+the Python checker does not independently replay every pseudo-remainder step.
+This fixture establishes exporter/checker integration; it does not prove the
+general simultaneous ordinary-real realization theorem or Phase-4 performance.
+
 ## Ordered algebraic ambient models
 
 `Ambient.ofField K` in the companion consumes Tau Ceti's proved ordered

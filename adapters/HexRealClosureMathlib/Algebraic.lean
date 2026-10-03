@@ -131,13 +131,187 @@ theorem Context.queryPoly_sign (context : Context E Ctx coeffSign parent) (p : D
       rw [context.evalPoly_head f hz h1 ha hs hm hnat hsign, mul_zero, zero_add] at he
       rw [← he, _root_.sign_mul, _root_.sign_pos hpos, one_mul]
 
+private theorem linear_eval (p : DensePoly E) (small : p.size ≤ 2) (x : K) :
+    (interpret f hz p).eval x = f (p.coeff 0) + f (p.coeff 1) * x := by
+  have polynomial : interpret f hz p =
+      Polynomial.C (f (p.coeff 0)) + Polynomial.C (f (p.coeff 1)) * Polynomial.X := by
+    apply Polynomial.ext
+    intro i
+    rcases i with _ | i
+    · simp [coeff_interpret]
+    · rcases i with _ | i
+      · simp [coeff_interpret]
+      · rw [coeff_interpret, DensePoly.coeff_eq_zero_of_size_le p (by omega)]
+        simp
+        exact (hz _).mpr rfl
+  rw [polynomial]
+  simp
+
+private theorem linear_pos {a b lower upper x : K}
+    (bounds : lower ≤ x ∧ x ≤ upper)
+    (left : 0 < a + b * lower) (right : 0 < a + b * upper) : 0 < a + b * x := by
+  by_cases nonnegative : 0 ≤ b
+  · have monotone := mul_le_mul_of_nonneg_left bounds.1 nonnegative
+    linarith
+  · have antitone := mul_le_mul_of_nonpos_left bounds.2 (le_of_lt (lt_of_not_ge nonnegative))
+    linarith
+
+private theorem sign_pos_iff (x : K) : (SignType.sign x : Int) = 1 ↔ 0 < x := by
+  constructor
+  · intro h
+    have sign : SignType.sign x = 1 := by
+      cases chosen : SignType.sign x <;> simp [chosen] at h ⊢
+    exact sign_eq_one_iff.mp sign
+  · intro h
+    rw [sign_eq_one_iff.mpr h]
+    rfl
+
+private theorem sign_neg_iff (x : K) : (SignType.sign x : Int) = -1 ↔ x < 0 := by
+  constructor
+  · intro h
+    have sign : SignType.sign x = -1 := by
+      cases chosen : SignType.sign x <;> simp [chosen] at h ⊢
+    exact sign_eq_neg_one_iff.mp sign
+  · intro h
+    rw [sign_eq_neg_one_iff.mpr h]
+    rfl
+
+private theorem sign_zero_iff (x : K) : (SignType.sign x : Int) = 0 ↔ x = 0 := by
+  constructor
+  · intro h
+    have sign : SignType.sign x = 0 := by
+      cases chosen : SignType.sign x <;> simp [chosen] at h ⊢
+    exact sign_eq_zero_iff.mp sign
+  · intro h
+    simp [h]
+
+private theorem linear_lower_sign {a b lower upper x : K}
+    (bounds : lower < x ∧ x < upper) (zero : a + b * lower = 0) :
+    SignType.sign (a + b * x) = SignType.sign (a + b * upper) := by
+  have coefficient : a = -b * lower := by linarith
+  have identity : (a + b * x) * (upper - lower) = (a + b * upper) * (x - lower) := by
+    rw [coefficient]
+    ring
+  have signs := congrArg SignType.sign identity
+  simpa only [_root_.sign_mul, _root_.sign_pos (sub_pos.mpr (lt_trans bounds.1 bounds.2)),
+    _root_.sign_pos (sub_pos.mpr bounds.1), mul_one] using signs
+
+private theorem linear_upper_sign {a b lower upper x : K}
+    (bounds : lower < x ∧ x < upper) (zero : a + b * upper = 0) :
+    SignType.sign (a + b * x) = SignType.sign (a + b * lower) := by
+  have coefficient : a = -b * upper := by linarith
+  have identity : (a + b * x) * (upper - lower) = (a + b * lower) * (upper - x) := by
+    rw [coefficient]
+    ring
+  have signs := congrArg SignType.sign identity
+  simpa only [_root_.sign_mul, _root_.sign_pos (sub_pos.mpr (lt_trans bounds.1 bounds.2)),
+    _root_.sign_pos (sub_pos.mpr bounds.2), mul_one] using signs
+
+/-- The executable endpoint shortcut has the same selected-root sign over any
+lawful ordered real closed coefficient interpretation. -/
+theorem Context.intervalSign?_spec (context : Context E Ctx coeffSign parent)
+    (p : DensePoly E) (sign : Int) (accepted : context.intervalSign? p = some sign) :
+    sign = (SignType.sign (context.evalPoly f hz h1 ha hs hm hnat hsign p) : Int) := by
+  unfold Context.intervalSign? at accepted
+  split at accepted
+  · rename_i size
+    cases lower : context.root.raw.lower <;> cases upper : context.root.raw.upper <;>
+      simp only [lower, upper, reduceCtorEq] at accepted
+    rename_i a b
+    have bounds := ((Tarski.mem_rootsIn _ _ _ _).mp
+      (context.root.root_spec f hz h1 ha hs hm hnat hsign).1).2
+    simp only [lower, upper, Endpoint.map, Tarski.inInterval_finite] at bounds
+    change f a < context.rootValue f hz h1 ha hs hm hnat hsign ∧
+      context.rootValue f hz h1 ha hs hm hnat hsign < f b at bounds
+    have atEndpoint : ∀ point : E, coeffSign (p.eval point) =
+        (SignType.sign (f (p.coeff 0) + f (p.coeff 1) * f point) : Int) := by
+      intro point
+      rw [hsign, ← eval_interpret f hz ha hm, linear_eval f hz p (by omega)]
+    rw [Context.evalPoly, linear_eval f hz p (by omega)]
+    split at accepted
+    · rename_i zero
+      have equal : coeffSign (p.eval b) = sign := Option.some.inj accepted
+      have left := (sign_zero_iff _).mp ((atEndpoint a).symm.trans zero)
+      rw [← equal, atEndpoint b, linear_lower_sign bounds left]
+    · split at accepted
+      · rename_i zero
+        have equal : coeffSign (p.eval a) = sign := Option.some.inj accepted
+        have right := (sign_zero_iff _).mp ((atEndpoint b).symm.trans zero)
+        rw [← equal, atEndpoint a, linear_upper_sign bounds right]
+      · split at accepted
+        · rename_i checked
+          have equal : coeffSign (p.eval a) = sign := Option.some.inj accepted
+          rcases checked.1 with positive | negative
+          · have left := (sign_pos_iff _).mp ((atEndpoint a).symm.trans positive)
+            have right := (sign_pos_iff _).mp ((atEndpoint b).symm.trans (checked.2.trans positive))
+            rw [sign_eq_one_iff.mpr (linear_pos ⟨bounds.1.le, bounds.2.le⟩ left right)]
+            exact equal.symm.trans positive
+          · have left := (sign_neg_iff _).mp ((atEndpoint a).symm.trans negative)
+            have right := (sign_neg_iff _).mp ((atEndpoint b).symm.trans (checked.2.trans negative))
+            have result : f (p.coeff 0) + f (p.coeff 1) * context.rootValue f hz h1 ha hs hm hnat hsign < 0 := by
+              have positive := linear_pos (a := -f (p.coeff 0)) (b := -f (p.coeff 1))
+                ⟨bounds.1.le, bounds.2.le⟩ (by linarith) (by linarith)
+              linarith
+            rw [sign_eq_neg_one_iff.mpr result]
+            exact equal.symm.trans negative
+        · cases accepted
+  · cases accepted
+
+include hn hi in
+/-- The direct prepared scalar query agrees with the descriptor's chosen root
+when the actual complete interval count is one. Thom constraints remain in the
+fallback for intervals containing several roots. -/
+theorem Context.singleSign?_spec (context : Context E Ctx coeffSign parent)
+    (p : DensePoly E) (sign : Int) (accepted : context.singleSign? p = some sign) :
+    sign = (SignType.sign (context.evalPoly f hz h1 ha hs hm hnat hsign p) : Int) := by
+  unfold Context.singleSign? at accepted
+  cases cached : context.handle with
+  | none => simp [cached] at accepted
+  | some handle =>
+    simp only [cached] at accepted
+    split at accepted
+    · rename_i single
+      have equal := Option.some.inj accepted
+      obtain ⟨operation, head, lower, upper⟩ := handle.bindings
+      have count := HexSturmMathlib.countPrepared_sound f hz h1 ha hs hm hnat
+        coeffSign hsign hn hi handle.domain operation
+      rw [head, lower, upper, single] at count
+      have cardinal : (Tarski.rootsIn (interpret f hz context.root.raw.head)
+          (context.root.raw.lower.map f) (context.root.raw.upper.map f)).card = 1 := by
+        exact_mod_cast count.symm
+      obtain ⟨x, singleton⟩ := Finset.card_eq_one.mp cardinal
+      have chosen := (context.root.root_spec f hz h1 ha hs hm hnat hsign).1
+      rw [singleton, Finset.mem_singleton] at chosen
+      have query := HexSturmMathlib.queryPrepared_sound f hz h1 ha hs hm hnat
+        coeffSign hsign hn hi handle.domain operation p
+      rw [head, lower, upper, Tarski.rootSum_singleton _ _ _ _ x singleton] at query
+      rw [← chosen] at query
+      exact equal.symm.trans query
+    · cases accepted
+
 include hn hi in
 /-- Query reduction preserves the existing interpretation of actual native signs. -/
 theorem Context.signPoly_spec (context : Context E Ctx coeffSign parent) (p : DensePoly E) :
     context.signPoly p =
       (SignType.sign (context.evalPoly f hz h1 ha hs hm hnat hsign p) : Int) := by
-  rw [Context.signPoly, context.signQuery_spec f hz h1 ha hs hm hnat hsign hn hi,
-    context.queryPoly_sign f hz h1 ha hs hm hnat hsign hn]
+  unfold Context.signPoly
+  split
+  · rename_i small
+    rw [context.evalPoly_const f hz h1 ha hs hm hnat hsign p small]
+    exact hsign _
+  · dsimp only
+    cases accepted : context.intervalSign? (context.queryPoly p) with
+    | none =>
+      cases direct : context.singleSign? (context.queryPoly p) with
+      | none =>
+        rw [context.signQuery_spec f hz h1 ha hs hm hnat hsign hn hi,
+          context.queryPoly_sign f hz h1 ha hs hm hnat hsign hn]
+      | some sign =>
+        rw [context.singleSign?_spec f hz h1 ha hs hm hnat hsign hn hi _ sign direct,
+          context.queryPoly_sign f hz h1 ha hs hm hnat hsign hn]
+    | some sign =>
+      rw [context.intervalSign?_spec f hz h1 ha hs hm hnat hsign _ sign accepted,
+        context.queryPoly_sign f hz h1 ha hs hm hnat hsign hn]
 
 theorem Context.evalPoly_reduce (context : Context E Ctx coeffSign parent) (p : DensePoly E) :
     context.evalPoly f hz h1 ha hs hm hnat hsign (context.reduce p) =
@@ -535,3 +709,11 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.Context.signPoly_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Context.signPoly_spec
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.intervalSign?_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.intervalSign?_spec
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.singleSign?_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.singleSign?_spec

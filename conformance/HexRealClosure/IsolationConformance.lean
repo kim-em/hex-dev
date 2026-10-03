@@ -8,6 +8,7 @@ module
 public import HexRealClosure.CompleteRoots
 public import HexRealClosure.AlgebraicContext
 public import HexRealClosure.RootCollection
+public import HexRealClosure.NestedReplay
 public import HexSignDet.Codec
 public import HexOrderedFn.Infinitesimal
 
@@ -179,3 +180,4 @@ def main : IO Unit := do
   let cutFactor : DensePoly Rat := DensePoly.ofCoeffs #[3, -5, 2]
   emitAssemblyRat "assembly nonzero cut point" (cutFactor * cutFactor)
   emitCollection
+  Hex.RealClosure.NestedReplay.emit

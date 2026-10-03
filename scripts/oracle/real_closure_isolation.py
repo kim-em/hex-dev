@@ -22,7 +22,8 @@ CASES = ["zero", "constant", "repeated", "nonmonic linear", "quadratic",
          "assembly zero", "assembly constant", "assembly pure power",
          "assembly repeated factors", "assembly root-free factor", "assembly simple zero",
          "nested algebraic coefficients", "nested algebraic multiplicities",
-         "assembly nonzero cut point", "native common root contexts"]
+         "assembly nonzero cut point", "native common root contexts",
+         "nested infinitesimal algebraic replay"]
 RATIONAL_HEADS = [[], [5], [1, -2, 1], [-3, 2], [-2, 0, 1],
                   [0, 6, 0, -3], [-2, 0, 0, 1], [6, 0, -5, 0, 1]]
 
@@ -315,8 +316,20 @@ def verify_nested(row, assembly_row):
             "nested assembled roots are not strictly increasing")
 
 
-def native_value(rcf, raw, roots):
+def native_value(rcf, raw, roots, depth=0):
     require(isinstance(raw, list), "malformed native stored value")
+    if not roots and depth:
+        require(len(raw) == 3 and raw[0] == 1 and type(raw[0]) is int and
+                isinstance(raw[1], list) and isinstance(raw[2], list) and raw[2],
+                "malformed native fraction level")
+        numerator = [native_value(rcf, c, [], depth - 1) for c in raw[1]]
+        denominator = [native_value(rcf, c, [], depth - 1) for c in raw[2]]
+        require((not numerator or numerator[-1] != 0) and denominator[-1] != 0,
+                "native fraction trailing zero")
+        point = rcf.levels[depth - 1]
+        den = rcf.eval(denominator, point)
+        require(den != 0, "native fraction zero denominator")
+        return rcf.eval(numerator, point).__div__(den)
     if not roots:
         require(len(raw) == 3 and raw[0] == 0 and type(raw[0]) is int and
                 type(raw[1]) is int and type(raw[2]) is int and raw[2] > 0 and
@@ -326,7 +339,7 @@ def native_value(rcf, raw, roots):
         return rcf.zero
     require(len(raw) == 2 and isinstance(raw[0], list) and raw[0] and
             type(raw[1]) is int and raw[1] in (-1, 1), "malformed native nonzero")
-    coefficients = [native_value(rcf, c, roots[:-1]) for c in raw[0]]
+    coefficients = [native_value(rcf, c, roots[:-1], depth) for c in raw[0]]
     require(coefficients[-1] != 0, "native stored trailing zero")
     interpreted = rcf.eval(coefficients, roots[-1])
     require(sign(interpreted) == raw[1], "native cached sign differs")
@@ -405,6 +418,137 @@ def verify_collection(row):
     require(total**4 - 10 * total**2 + 1 == 0, "native sum equation differs")
     require(value(row["zero"], shared) == 0 and value(row["two"], shared) == 2 * rcf.one and
             value(row["three"], shared) == 3 * rcf.one, "native coefficients changed")
+
+
+def verify_nested_replay(row):
+    """Check the actual native tower, joint query signs and stored inverses.
+
+    Lean independently replays serialized descriptor and selected-sign graphs.
+    This oracle evaluates their mathematical domains and consumer queries in
+    an independent exact real closed field; it does not replay matrix proofs.
+    """
+    require(set(row) == {"case", "mode", "context", "selected", "values", "signs"}
+            and row["mode"] == "nested-replay", "malformed nested replay row")
+    rcf = RCF({"id": 10377, "levels": ["epsilon1", "epsilon2"],
+               "order": "each-new-level-smaller-than-positive-base-elements"})
+    context = row["context"]
+    require(isinstance(context, list) and len(context) == 3 and context[0] == []
+            and type(context[1]) is int and context[1] == 2 and
+            isinstance(context[2], list) and len(context[2]) == 2,
+            "wrong nested replay stages")
+    epsilon, delta = rcf.levels
+    roots = []
+    frames = context[2]
+    for index, frame in enumerate(frames):
+        require(isinstance(frame, list) and len(frame) == 7 and frame[0] == [0]
+                and type(frame[0][0]) is int, "malformed nested replay frame")
+        head = [native_value(rcf, c, roots, 2) for c in frame[1]]
+        expected = [-(2 * rcf.one + epsilon if index == 0 else roots[0] + delta),
+                    rcf.zero, rcf.one]
+        require(head == expected, "wrong nested replay equation")
+        require(isinstance(frame[2], list) and len(frame[2]) == 2 and
+                frame[2][0] == 1 and type(frame[2][0]) is int and
+                isinstance(frame[3], list) and len(frame[3]) == 2 and
+                frame[3][0] == 1 and type(frame[3][0]) is int and
+                native_value(rcf, frame[2][1], roots, 2) == rcf.one and
+                native_value(rcf, frame[3][1], roots, 2) == 2 * rcf.one,
+                "wrong nested replay interval")
+        require(frame[4] == [] and frame[5] == [],
+                "wrong nested replay Thom data")
+        candidates = [r for r in rcf.api.MkRoots(head, rcf.context)
+                      if rcf.one < r < 2 * rcf.one and sign(r) == 1]
+        require(len(candidates) == 1, "nested replay did not select a unique root")
+        roots.append(candidates[0])
+    alpha, beta = roots
+    require(isinstance(row["selected"], list) and len(row["selected"]) == 2,
+            "nested replay missing a joint sign family")
+    first_queries = [[-rcf.one, rcf.one]]
+    second_queries = [[-rcf.one, rcf.one], [-2 * rcf.one, rcf.one]]
+    for index, (entry, expected_queries, point) in enumerate(zip(
+            row["selected"], [first_queries, second_queries], roots)):
+        require(isinstance(entry, dict) and set(entry) == {"queries", "values", "certificates"},
+                "malformed nested joint signs")
+        queries = [[native_value(rcf, c, roots[:index], 2) for c in q]
+                   for q in entry["queries"]]
+        require(queries == expected_queries, "wrong nested consumer queries")
+        expected_signs = [sign(rcf.eval(q, point)) for q in queries]
+        require(entry["values"] == expected_signs and
+                all(type(s) is int for s in entry["values"]), "nested joint signs differ")
+        require(isinstance(entry["certificates"], list) and
+                len(entry["certificates"]) == len(queries), "nested certificates missing")
+        for certificate, query, expected_sign in zip(entry["certificates"], queries, expected_signs):
+            require(isinstance(certificate, dict) and
+                    set(certificate) == {"queries", "values", "graph"},
+                    "malformed nested certificate")
+            certificate_queries = [[native_value(rcf, c, roots[:index], 2) for c in q]
+                                   for q in certificate["queries"]]
+            require(certificate_queries == [query], "nested certificate query differs")
+            require(certificate["values"] == [expected_sign] and
+                    all(type(s) is int for s in certificate["values"]),
+                    "nested certificate signs differ")
+            graph = certificate["graph"]
+            require(isinstance(graph, list) and len(graph) == 3 and
+                    type(graph[0]) is int and graph[0] == 1 and
+                    type(graph[1]) is int and isinstance(graph[2], list) and
+                    0 <= graph[1] < len(graph[2]), "malformed nested graph")
+            for position, encoded in enumerate(graph[2]):
+                require(isinstance(encoded, list) and len(encoded) == 2 and
+                        isinstance(encoded[0], list) and len(encoded[0]) == 11,
+                        "malformed nested graph node")
+                children = encoded[1]
+                require(children == [] or (isinstance(children, list) and len(children) == 1 and
+                        isinstance(children[0], list) and len(children[0]) == 2 and
+                        all(type(i) is int and 0 <= i < position for i in children[0])),
+                        "nested graph references are not child-before-parent")
+                node = encoded[0]
+                require(node[:4] == frames[index][:4], "nested graph domain differs")
+                node_queries = [[native_value(rcf, c, roots[:index], 2) for c in q]
+                                for q in node[4]]
+                word = [sign(rcf.eval(q, point)) for q in node_queries]
+                system = node[6]
+                require(isinstance(system, list) and len(system) == 6 and
+                        type(node[5]) is int and node[5] > 0,
+                        "malformed nested integer system")
+                size = node[5]
+                exponents, columns, counts, moments, inverse, denominator = system
+                require(all(isinstance(v, list) and len(v) == size for v in system[:5]) and
+                        type(denominator) is int and denominator != 0 and
+                        all(type(n) is int and n >= 0 for n in counts),
+                        "malformed nested integer dimensions")
+                require(all(isinstance(w, list) and len(w) == len(word) and
+                            all(type(a) is int and a in (-1, 0, 1) for a in w) for w in columns)
+                        and len({tuple(w) for w in columns}) == size,
+                        "malformed nested sign support")
+                require([(w, n) for w, n in zip(columns, counts) if n] == [(word, 1)],
+                        "nested graph table differs from exact roots")
+                matrix = []
+                for powers, moment in zip(exponents, moments):
+                    require(isinstance(powers, list) and len(powers) == len(word) and
+                            all(type(a) is int and a in (0, 1, 2) for a in powers) and
+                            type(moment) is int, "malformed nested moment row")
+                    power = lambda w: math.prod(a ** e for a, e in zip(w, powers))
+                    require(moment == power(word), "nested graph moment differs")
+                    matrix.append([power(w) for w in columns])
+                require(all(isinstance(v, list) and len(v) == size and
+                            all(type(a) is int for a in v) for v in inverse),
+                        "malformed nested inverse matrix")
+                require(all(sum(matrix[i][k] * inverse[k][j] for k in range(size)) ==
+                            (denominator if i == j else 0)
+                            for i in range(size) for j in range(size)),
+                        "nested inverse matrix identity failed")
+            root_queries = [[native_value(rcf, c, roots[:index], 2) for c in q]
+                            for q in graph[2][graph[1]][0][4]]
+            require(root_queries == [query],
+                    "nested graph query binding differs")
+    require(isinstance(row["values"], list) and len(row["values"]) == 7,
+            "nested replay lost a stored value")
+    values = [native_value(rcf, raw, roots, 2) for raw in row["values"]]
+    require(values[:4] == [beta, alpha, epsilon, delta], "nested stored values changed")
+    require(values[4] * (beta - rcf.one) == rcf.one and
+            values[5] * (alpha - rcf.one) == rcf.one and values[6] == 0,
+            "nested guard inversion or defining equation changed")
+    require(row["signs"] == [sign(value) for value in values] and
+            all(type(s) is int for s in row["signs"]), "nested stored signs changed")
 
 
 def verify(rows):
@@ -523,6 +667,7 @@ def verify(rows):
     verify_nested(rows[16], rows[17])
     verify_assembly(rows[18], 18)
     verify_collection(rows[19])
+    verify_nested_replay(rows[20])
 
 
 def parse_record(text):
