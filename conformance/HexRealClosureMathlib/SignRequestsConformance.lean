@@ -10,13 +10,11 @@ public meta import HexRealClosureMathlib.SignRequests
 public import HexRealClosureMathlib.SignFactsConformance
 public meta import HexRealClosureMathlib.SignFactsConformance
 public meta import HexSignDet.CrossCheck
-public meta import HexSignDetMathlib.GraphSignsConformance
 
 public section
 
 namespace Hex.RealClosure.Algebraic.SignRequestsConformance
 open SignDet SignDet.Conformance SignDet.CrossCheck
-open Hex.SignDetMathlib.GraphSignsConformance
 open CoefficientSignsConformance PackingConformance SignFactsConformance
 
 @[expose] def requests : Array (SignRequest Rat) :=
