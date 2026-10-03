@@ -1608,6 +1608,10 @@ lean_lib HexRealClosureConformanceSupport where
   srcDir := "conformance"
   globs := #[.one `HexRealClosure.NestedReplay]
 
+lean_exe hexrealclosure_sample_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.SampleConformance
+
 lean_exe hexrealclosure_isolation_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.IsolationConformance

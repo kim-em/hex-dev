@@ -1615,9 +1615,22 @@ which can increase depth and extension degrees; duplicate descriptors are not
 shared. Its boundary requests construct all sector midpoints before searching.
 The local `Family` interface avoids collecting unrelated roots for a sample.
 
+`hexrealclosure_sample_conformance` exports six actual families with their
+complete contexts, converted input coefficients, sample values, cells and sign
+vectors. The independent pinned Z3 RCF oracle checks the complete distinct
+boundary lists, every section and sector, strict membership and computed signs.
+It includes an infinitesimal gap over a selected algebraic predecessor.
+Twenty oracle tests check valid fixtures and reject changes to boundaries,
+points, contexts, transported coefficients and signs. The emitter also rebuilds
+every local context and reads each stored point through the checked native reader.
+Run `lake build hexrealclosure_sample_conformance`, then
+`.lake/build/bin/hexrealclosure_sample_conformance | python3 scripts/oracle/real_closure_samples.py`.
+The oracle checks exact semantics; it does not independently replay polynomial
+certificate graphs or certify canonical fraction syntax.
+
 Joint specialization of nested selected roots and successive infinitesimals
-to one ordinary real assignment, independent sample conformance and the full
-performance evaluation remain separate obligations.
+to one ordinary real assignment and the full performance evaluation remain
+separate obligations.
 
 ## Ordered algebraic ambient models
 
