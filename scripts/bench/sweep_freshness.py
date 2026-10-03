@@ -680,7 +680,9 @@ TOOLCHAIN_NAMESPACES = {"Init", "Lean", "Std", "Lake"}
 
 # These exact AINTLIB commits declare the module roots below. Unknown revisions
 # may add roots or requirements. Audit every srcDir (including its absence)
-# and verify shared dependency pins before extending this inventory.
+# and verify shared dependency pins before extending this inventory. The
+# configuration must remain TOML or declare no extern_lib/custom build targets:
+# Lake links dependency-wide native archives even without a Lean import.
 AUDITED_AINT_REVISIONS = frozenset({
     '3808ce862c09ad5b4de0c76f10ba00946ed2eff3',
     'a5c3affa17bb17d13bbfd2e6c828dc978af65657',

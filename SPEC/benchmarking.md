@@ -1118,7 +1118,8 @@ enforced figure family uses one mechanism, declared in
   `.lean` path whose versions are equal once comments are removed; all
   other whitespace is preserved because Lean indentation carries meaning.
   The factorization checker separately compares the package, dependencies,
-  measured executable, and libraries that build the Hex factor service, so
+  measured executable, libraries, package-wide native archives and their
+  transitive build helpers that build the Hex factor service, so
   additions of unrelated Lake targets do not invalidate its measurement.
   It also accepts the audited AINTLIB pin transition only when the actual
   factor-service import closure excludes every inventoried AINTLIB root;
@@ -1141,7 +1142,9 @@ enforced figure family uses one mechanism, declared in
   HexBasic precompile flag only when the graph already loads that dependency
   natively. An audited fixed AINTLIB Git revision may change only when the measured
   closure excludes every module root declared at both commits; unknown revisions
-  require a new root inventory. All other graph build blocks
+  require a new root inventory and an audit of dependency pins and native
+  link inputs. The audited AINTLIB configurations are TOML and declare no
+  package-wide native archives or custom build targets. All other graph build blocks
   must still match. The separately checked Tau Ceti Thom pin transition likewise
   requires an import closure excluding TauCeti. Mutable refs, unknown closures
   and changes to compiler or native link inputs remain stale.

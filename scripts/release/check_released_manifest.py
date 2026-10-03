@@ -422,6 +422,9 @@ def check_ci_workflows(entries: list[dict]) -> None:
                 known = {pin["name"] for pin in external_pins().values()}
                 if set(packages) - known:
                     fail(f"{entry['repo']}: dependency_caches names an unlocked package")
+                if set(packages) - {"AINTLIB"}:
+                    fail(f"{entry['repo']}: dependency_caches permits only AINTLIB; "
+                         "Mathlib and its dependency artifacts use the upstream cache")
                 required_paths.update(
                     f".lake/packages/{name}/.lake/build/{directory}"
                     for name in packages for directory in ("lib/lean", "ir"))

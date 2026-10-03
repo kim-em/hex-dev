@@ -350,8 +350,8 @@ which Verso's precompiled modules need) in a separate entry keyed only on the
 runner and the `lean-toolchain` and `lake-manifest.json` hash, saved after a
 successful build when that key has no entry yet.
 
-Released mirrors may add explicitly selected external package outputs with
-`dependency_caches` in the release manifest; the managed workflow checker
+Released mirrors may add AINTLIB outputs with `dependency_caches` in the
+release manifest; the managed workflow checker
 requires identical restore and save paths for those packages' `lib/lean` and
 `ir` directories. The ECPP companion retains AINTLIB's Hasse build this way
 because AINTLIB has no public artifact-cache route. Mathlib continues to use

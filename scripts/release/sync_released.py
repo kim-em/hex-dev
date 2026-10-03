@@ -1484,7 +1484,10 @@ def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
         block = "".join(
             f'[[require]]\nname = "{lib}"\ngit = "{url}"\nrev = "{version}"\n\n'
             for dep, lib, url in additions)
-        anchor = re.search(r"(?m)^\[\[(?:lean_lib|lean_exe)\]\]", text)
+        mathlib = next((match for match in re.finditer(
+            r"(?ms)^\[\[require\]\]\s*\n.*?(?=^\[|\Z)", text)
+            if re.search(r'^name\s*=\s*"mathlib"\s*$', match[0], re.M)), None)
+        anchor = mathlib or re.search(r"(?m)^\[\[(?:lean_lib|lean_exe)\]\]", text)
         if anchor:
             text = text[:anchor.start()] + block + text[anchor.start():]
         else:
@@ -1494,9 +1497,20 @@ def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
             f'\nrequire {lib} from git\n  "{url}" @ "{version}"\n'
             for dep, lib, url in additions)
         requires = list(re.finditer(r"(?m)^require\b.*(?:\n[ \t]+.*)*\n", text))
-        mathlib = re.search(r"(?mi)^require\s+mathlib\b", text)
+        mathlib = next((match for match in requires
+            if "github.com/leanprover-community/mathlib4" in match[0]
+            or re.match(r'^require\s+(?:«?mathlib»?(?=\s)|'
+                        r'"leanprover-community"\s*/\s*"mathlib")', match[0], re.I)), None)
         if mathlib:
             end = mathlib.start()
+            # Keep any ordering comment attached to the Mathlib requirement.
+            while end > 0:
+                previous = text.rfind("\n", 0, end - 1) + 1
+                line = text[previous:end].strip()
+                if line and not line.startswith("--"):
+                    break
+                end = previous
+            block += "\n"
         elif requires:
             end = requires[-1].end()
         else:

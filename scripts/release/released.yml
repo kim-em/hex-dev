@@ -63,6 +63,9 @@
 # `lake_declarations` lists named build declarations copied from the monorepo
 # Lake file into the corresponding declarations in a Lean mirror skeleton. It
 # can migrate a package-wide `extern_lib` to a library-scoped custom `target`.
+# `dependency_caches` lists additional external build outputs restored and
+# saved by managed CI. Only AINTLIB is admitted; Mathlib and its dependencies
+# use the upstream cache. Names must be locked, and workflow paths must match.
 # `pins` lists the upstream repos whose git rev is rewritten in this repo's root
 # lakefile (matched by their github URL); `lakefile` is that file's format.
 # The mirror's `lean_lib` build settings are deliberately *not* recorded here:
