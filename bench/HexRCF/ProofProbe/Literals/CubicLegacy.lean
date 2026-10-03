@@ -13,6 +13,7 @@ public section
 namespace Hex.RCF.ProofProbe.Literals.CubicLegacy
 set_option maxRecDepth 8192
 set_option maxHeartbeats 2400000
+set_option rcf.algebraic.monicCore false
 set_option rcf.algebraic.reducedLiterals false
 
 theorem witness : ∃ x : ℝ, x ^ 2 = (2 : ℝ) ^ (1 / 3 : ℝ) ∧

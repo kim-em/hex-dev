@@ -11,29 +11,27 @@ public meta import HexRCF.ProofProbe.Literals.Support
 public section
 open Hex.RCF.ProofProbe.Literals
 
-namespace Hex.RCF.ProofProbe.Intervals.ReciprocalHorner
+namespace Hex.RCF.ProofProbe.Replay.ReciprocalSingle
 set_option maxRecDepth 8192
 set_option maxHeartbeats 2400000
 set_option rcf.algebraic.monicCore false
 set_option rcf.algebraic.reducedLiterals false
 set_option rcf.algebraic.intervalSigns true
+set_option rcf.algebraic.singleReplay true
 
 theorem witness : ∃ x : ℝ, x ^ 2 = 1 / (Real.sqrt 2 + 1) ∧ 0 < x ∧ x < 1 := by rcf
 
-/-- info: 'Hex.RCF.ProofProbe.Intervals.ReciprocalHorner.witness' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.ProofProbe.Replay.ReciprocalSingle.witness' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms witness
 
 run_meta do
-  unless ← usesConstructor `Hex.RCF.ProofProbe.Intervals.ReciprocalHorner.witness
+  unless ← usesConstructor `Hex.RCF.ProofProbe.Replay.ReciprocalSingle.witness
       ``Hex.PolyQuot.reduce 3 do
-    throwError "literal probe did not use its selected quotation constructor"
+    throwError "replay probe changed its literal quotation constructor"
+  unless ← usesInterval `Hex.RCF.ProofProbe.Replay.ReciprocalSingle.witness do
+    throwError "replay probe omitted interval signs"
 
-run_meta do
-  let interval ← usesInterval `Hex.RCF.ProofProbe.Intervals.ReciprocalHorner.witness
-  unless interval == true do
-    throwError "sign probe did not quote its selected evidence branch"
-
--- The collector inventories this unguarded output for every fresh build.
+-- The collector inventories this output for every fresh build.
 #print axioms witness
-end Hex.RCF.ProofProbe.Intervals.ReciprocalHorner
+end Hex.RCF.ProofProbe.Replay.ReciprocalSingle

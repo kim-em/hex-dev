@@ -563,14 +563,41 @@ evidence with interval evaluation. The complete algebraic producer still
 succeeds on its proved input surface. Linear sign lookup remains a cost.
 
 A four-round matched comparison on the further-root, reciprocal-root and cubic
-examples favored interval quotation in all twelve pairs, with median paired
+examples used raw carriers and favored interval quotation in all twelve pairs,
+with median paired
 margins 4.513, 4.752 and 13.553 seconds. The reference reconstructs full queries
 after interval production, so this measures quotation-mode selection, not a
 speedup against older code or isolated kernel time. Shared-host variation and
 all completed samples are retained in `reports/hexrcf-interval-proofs.md`.
-The default is `rcf.algebraic.intervalSigns=true`; the false arm remains a
+Those probes now pin raw carriers explicitly; the pin was added after the
+measurement. The default is `rcf.algebraic.intervalSigns=true`; the false arm remains a
 comparison control. Direct coordinate quotation remains off by default: its
 two separate comparisons did not establish a gain.
+
+`rcf.algebraic.singleReplay` is also false by default. It compares one Boolean
+certificate replay goal with separately checked conjuncts; source authentication
+and the final proof check remain separate. A four-round comparison of the same
+three examples used raw carriers and did not establish a speedup. The probes
+now explicitly pin that mode; the pin was added after the retained measurement.
+Combined replay produced smaller private proof files but used more peak memory. The
+[report and retained samples](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-replay-proofs.md)
+record every completed arm and the exact source and import identities.
+
+`rcf.algebraic.monicCore` is true by default. It normalizes the
+proposed carrier core while retaining the original polynomial product and
+checking both radical identities. Signed Sturm chains keep their existing
+positive scaling. All twelve pairs in a four-round comparison favored this
+mode on the same three examples, with lower peak memory. The
+[report and retained samples](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-carrier-proofs.md)
+describe these full-build observations. Successful proposals have checked
+soundness and a proved monic core. Radical proposal progress and interpreted
+squarefreeness are proved at the actual selected field embedding, using
+zero-reflecting coefficient semantics that preserve arithmetic and inversion.
+These are radical laws; bounded isolation can still exhaust. The complete
+library producer retains raw cores and its existing progress laws. Direct
+`produceWithin` calls also retain their raw default; the tactic passes its
+monic option explicitly. The false mode retains raw cores as a comparison control. This
+normalization does not remove the common-field authentication limitation.
 
 For these reconstructed inputs, closed arithmetic is compiled into the common
 field after authenticating its source values. A quotient is recorded as a
@@ -1909,8 +1936,9 @@ This frontend calls the existing fixed-field root driver directly and retains
 its selected coordinates, avoiding a redundant common-field reconstruction.
 Exhaustion reports `rcf: algebraic interval refinement budget exhausted` and
 is terminal. Rejected construction/replay has a different terminal diagnostic.
-The complete library producer and its progress/decision laws are unaffected
-by the frontend budget. Increasing the limits permits further refinement;
+The complete library producer retains raw cores and its progress/decision laws
+are unaffected by the frontend budget or the tactic's monic default. Increasing
+the limits permits further refinement;
 it does not bypass kernel replay. Lean cancellation is checked before and
 after native production. Individual native root computations run until they
 return and do not check Lean's cancellation token or elaboration heartbeats.

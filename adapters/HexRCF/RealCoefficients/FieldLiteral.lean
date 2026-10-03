@@ -41,6 +41,17 @@ register_option rcf.algebraic.intervalSigns : Bool := {
   descr := "quote exact Horner signs on the authenticated generator interval"
 }
 
+-- Compare one Boolean replay goal with separately checked conjuncts.
+register_option rcf.algebraic.singleReplay : Bool := {
+  defValue := false
+  descr := "check the full fixed-field certificate in one kernel decision goal"
+}
+
+register_option rcf.algebraic.monicCore : Bool := {
+  defValue := true
+  descr := "normalize the proposed carrier core before checked root isolation"
+}
+
 private def arrayLit (ty : Expr) (xs : List Expr) : Expr :=
   let nil := mkApp (mkConst ``List.nil [Level.zero]) ty
   let list := xs.foldr
@@ -333,7 +344,23 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
     #[certificate, valuesExpr, formulaExpr, mkConst ``Unit.unit]
   let proofType ← mkAppM ``Eq #[verdict, mkConst ``Bool.true]
   let candidate ← mkFreshExprMVar proofType
-  let script ← match quantifier with
+  let script ← if rcf.algebraic.singleReplay.get (← getOptions) then
+    match quantifier with
+    | .forallReal => `(tactic|
+        (simp only [FieldBuild.Result.checkForall_eq, FieldBuild.Result.checkEvidence,
+          Field.checkSignTable,
+          LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
+          FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
+          TarskiCertificate.check_eq, SignedRemainderChain.check,
+          ← Array.all_toList, Array.toList_range]; try (decide +kernel)))
+    | .existsReal => `(tactic|
+        (simp only [FieldBuild.Result.checkExists_eq, FieldBuild.Result.checkEvidence,
+          Field.checkSignTable,
+          LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
+          FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
+          TarskiCertificate.check_eq, SignedRemainderChain.check,
+          ← Array.all_toList, Array.toList_range]; try (decide +kernel)))
+  else match quantifier with
     | .forallReal => `(tactic|
         (simp only [FieldBuild.Result.checkForall_eq, FieldBuild.Result.checkEvidence,
           Field.checkSignTable,
@@ -402,6 +429,7 @@ meta def proveRefiningWithCertificate {p : ZPoly} {s : DyadicSquare}
     let result := profileit "rcf certificate production" options fun _ =>
       FieldBuild.produceWithin p s hw hp real values formula ()
         (rcf.algebraic.directDepth.get options) (rcf.algebraic.maxDoublings.get options) extraSignKeys
+        (rcf.algebraic.monicCore.get options)
     Core.checkInterrupted
     match result with
     | .error .exhausted => throwError "rcf: algebraic interval refinement budget exhausted; increase rcf.algebraic.maxDoublings or rcf.algebraic.directDepth"

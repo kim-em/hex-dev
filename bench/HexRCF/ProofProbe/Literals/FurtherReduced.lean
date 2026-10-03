@@ -13,6 +13,7 @@ public section
 namespace Hex.RCF.ProofProbe.Literals.FurtherReduced
 set_option maxRecDepth 8192
 set_option maxHeartbeats 2400000
+set_option rcf.algebraic.monicCore false
 set_option rcf.algebraic.reducedLiterals true
 
 theorem witness : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by rcf
