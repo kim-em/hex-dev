@@ -320,7 +320,10 @@ which does not divide the requested subject rejects the entire proposal.
 An empty or missing-factor proposal for a positive subject is allowed; its
 unlisted quotient is retained as residual, without a completeness claim.
 
-For each distinct validated base, use supplied certificates only after checking
+Complete distinct bases in ascending order. When several supplied certificates
+for a duplicate base are valid, select the first in proposal order. Batch
+production uses `Rand.ofSeed n`; the pure importer uses its caller's explicit
+state. For each distinct validated base, use supplied certificates only after checking
 subject equality, structural limits and `checkPrime`. Invalid supplied evidence
 rejects the proposal; it is never silently trusted or ignored. Conflicting
 supplied certificates need not have identical syntax, but every supplied one
@@ -328,7 +331,11 @@ must be accepted for its base. Otherwise run bounded native `PrimeCert`
 completion once for that distinct base, threading randomness on success and
 failure. Composite bases and bases whose primality cannot be completed remain
 in the residual with distinct diagnostics. The initial importer does not split
-composite proposals further. Multiply their validated powers into the unlisted
+composite proposals further. Retain the canonical validated unresolved
+base/multiplicity pairs, their completion failure kinds, and the unlisted
+quotient as untrusted hints in the result. Independently check that their
+bounded product reconstructs the checked residual; these hints are never
+prime-power evidence. Multiply their validated powers into the unlisted
 quotient with the same subject bound. Sort and merge only certified entries.
 Check the final partial candidate with `checkPartial`; residual one is checked
 as a complete candidate with `checkFactorization`. Checker rejection is a
@@ -338,13 +345,25 @@ Initial default import bounds are 256 subject/base bits, 64 proposal entries,
 256 for each exponent and merged exponent, 4096 certificate nodes and 64
 certificate levels. Every integer in supplied/generated evidence is bounded
 by 256 bits, every stored exponent by 256, and the `pock3Sieve` exclusion
-count by 128. Traverse with remaining node/depth fuel and cap list traversal
-before checker invocation. Certificate search uses a separate per-base fuel
-of 8 and `PrimeCertBudget` with 2 rho restarts and 65536 steps per restart,
-SQUFOF off. Entry and node limits also bound the total number of completion
-calls and certificate replays. These are finite caller-selected allocations,
-not promises that every admitted base can be certified. Zero completion fuel
-allows supplied certificates and records exhaustion for uncertified bases.
+count by `pocklingtonSieveCap` (64). Traverse with remaining node/depth fuel
+and cap list traversal before checker invocation.
+
+Completion uses `Construction.runTraced` with a separate per-base
+`ConstructionBudget`: 256 bits, depth 8, total attempts 128, factor worklist
+fuel 16, nested prime fuel 8, 2 rho restarts and 65536 steps, smooth bounds
+`[64, 512, 4096]`, smooth bases `[2, 3]`, witness bases
+`[2, 3, 5, 7, 11, 13, 17]`, 8 random witnesses, 32 factors, 256 subsets and
+sieve cap 64. SQUFOF and p−1 stage 2 are off. On retryable exhaustion, allow
+one `Construction.retry` through `ecmFactorSearch 128 1024 2`, charged to the
+same remaining total-attempt allocation, with advanced randomness and ordered
+events retained. This is an existing pure callback, not an IO hook.
+Entry and node limits bound the number of completion calls and certificate
+replays. These are finite caller-selected allocations, not promises that every
+admitted base can be certified. With zero completion attempts the importer
+skips native construction entirely and records unfinished completion for
+uncertified bases, including table-range bases; supplied certificates remain
+usable. Adding external proposals for `p−1` or PARI `primecert(p, 1)` is a
+possible later optimization, excluded from the initial factor-list protocol.
 
 ### PARI protocol and process lifetime
 
@@ -382,7 +401,10 @@ completion, including when the leader has exited but descendants hold pipes.
 Adapt and attribute `HexECPPMathlib.Pari` and its `PariProcess` tests without
 importing HexECPP or HexECPPMathlib. On supported POSIX platforms retain the
 original session/process-group handle, use KILL on cancellation/exhaustion,
-collect both dedicated bounded readers, and reap exactly once. Do not reap the
+on a kill path first send KILL, then join both dedicated bounded readers,
+and only then reap exactly once. The process-group cleanup assumption bounds
+reader joining: no supported descendant escapes the group or inherits these
+pipes outside it. Do not copy the older ECPP kill path's early `wait`. Do not reap the
 leader while descendants hold its pipes; after reaping, never kill or wait on
 that PID again. This contract covers descendants remaining in the created
 process group; an executable that deliberately escapes that group is outside
@@ -394,13 +416,23 @@ guarantees when its process runtime does not implement them.
 `Pari.factor` takes separate import/completion, process/parser and native
 fallback allocations. After unavailable, failed, malformed or rejected external
 production it runs native search on the original positive subject. After a
-checked partial import it runs native search on that residual, preserving
-already certified entries and advanced randomness. Its initial fallback uses
-worklist fuel 4, prime fuel 8, and an independent `PrimeCertBudget` of 2 rho
-restarts and 65536 steps, with existing stage-2 and SQUFOF policies off.
-Run fallback at most once; never restart with default/unbounded allocations.
-For zero or oversized subjects reject before spawning or searching. At one,
-return the checked empty certificate without spawning.
+checked partial import it preserves the validated residual pieces: run native
+factorization separately on composite pieces (factor the base, then scale its
+multiplicities) and on the unlisted quotient, preserving certified entries and
+advanced randomness. Bases whose bounded construction already exhausted stay
+unresolved; do not repeat a weaker certificate search or merge them back into
+an integer that would need rediscovery. A probable-prime test alone never
+certifies a piece or removes it from the residual.
+
+The initial native fallback stage uses worklist fuel 4, prime fuel 8, and an
+independent `PrimeCertBudget` of 2 rho restarts and 65536 steps per eligible
+piece, with existing stage-2 and SQUFOF policies off. The current native
+dispatch caps effective nested prime fuel at the remaining worklist fuel
+(initially 4, then decreasing). There are at most `maxEntries + 1` eligible
+calls in this one fallback stage; unavailable/rejected production makes only
+one call on the original subject. Never restart with default/unbounded
+allocations. For zero or oversized subjects reject before spawning or searching.
+At one, return the checked empty certificate without spawning.
 
 Merge checked residual progress by adding exponents for overlapping certified
 bases and replay the final complete/partial checker against the original
@@ -420,12 +452,17 @@ creates `MyCertificates/Factors.lean` relative to the working directory.
 It contains `module`, `public import HexIntFactor.Replay`, `public section`,
 an exposed raw complete or partial certificate named
 `MyCertificates.Factors.cert`, and a subject-indexed checked declaration
-`MyCertificates.Factors.cert_checked`. The checked declaration pins the literal
-requested subject and uses kernel reduction of the ordinary checker.
+`MyCertificates.Factors.cert_checked`, also `@[expose]`. The checked declaration pins the literal
+requested subject and uses core `by decide +kernel` for the ordinary checker.
+Emit `set_option maxHeartbeats 2000000` and `set_option maxRecDepth 8192`
+in the generated module, and validate under precisely those options.
 All `PrimeCert` constructors are frozen explicitly: replay requires neither GP
 nor factor/certificate search and has no producer or converter proof dependency.
-The same source formatter drives suggestions and export. Complete and partial
-suggestions have exact certificate-text `#guard_msgs` regressions; fresh modules
+The same source formatter drives suggestions and export. Text is deterministic
+for fixed checked data and producer outcome; GP availability, timeouts and
+versions may change that outcome. Complete and partial suggestions have exact
+certificate-text `#guard_msgs` regressions driven by the pure importer or an
+injected fake executable, never ambient GP; fresh modules
 compile those verbatim and reject subject substitution or unexposed data.
 
 Evaluate only closed transparent natural expressions. Before any suggestion or
@@ -440,8 +477,10 @@ exclusively (`writeNew`), never overwrite, including concurrent creation races.
 
 In the language server both commands give instructions to run
 `lake build +Module` in batch and then remove the generation command; they
-never spawn a factorizer or write files. Source generation is an explicit one-time
-operation, not a subsequent build dependency. Native-only APIs remain usable
+never spawn a factorizer or write files. Suggestion production is also batch-only
+so opening a source file never starts expensive factor discovery. Source generation is an explicit one-time
+operation, not a subsequent build dependency. Projects with a non-default
+`srcDir` must move the generated module under that source root. Native-only APIs remain usable
 without GP installed.
 
 ### Evidence and release obligations
@@ -461,7 +500,11 @@ wrong products/subjects, omissions, negative/zero exponents, all bounds and
 supplied-certificate rejection/exhaustion. Adapt the audited ECPP fake-process
 suite for missing GP, exit failure, malformed/truncated framing, excess streams,
 cancellation/timeouts and pipe-holding descendants. Small optional real-GP tests
-exercise the protocol; committed replay never factors live. Check exclusive
+exercise the protocol; use one GP thread in recorded shared-host measurements.
+Committed replay never factors live. Explicit Lake/CI targets build Pari, Export
+and Replay even though they are outside the umbrella; prospective release
+`build_modules` and `test_modules` include them and their verification modules.
+Check exclusive
 creation, exact suggested text, exposure and subject substitution in fresh
 modules, proof dependencies, the import DAG and a fresh Mathlib-free published
 client using only Replay. Extend existing CI scripts/jobs and release-managed
