@@ -49,7 +49,8 @@ theorem Context.signFacts_fields (context : Context E Ctx coeffSign parent)
   simp [Context.signFacts]
 
 /-- Check the supplied child graph once and derive all its requested facts.
-Missing or false evidence returns `none`; no producer is called to fill gaps. -/
+Missing or false evidence returns `none`. This packet's producer is not
+called to fill gaps; coefficient arithmetic may evaluate lower-level signs. -/
 @[expose, macro_inline] def Context.readEvidence? (context : Context E Ctx coeffSign parent)
     (required : List (DensePoly E)) (evidence : SignEvidence E Ctx) :
     Option (Vector (SignFact context) required.length) :=
@@ -145,6 +146,10 @@ theorem Context.buildEvidence_success [Hashable E] [Hashable Ctx]
     by simp only [SignEvidence.check_ofSigns, Option.isSome_some]⟩
 
 end Hex.RealClosure.Algebraic
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.signFacts' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.signFacts
 
 /-- info: 'Hex.RealClosure.Algebraic.Context.decodeEvidence_evidence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

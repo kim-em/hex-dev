@@ -8,6 +8,7 @@ module
 public import HexRealClosure.SignRequests
 public import HexSignDet.Codec.GraphLaws
 public import HexSignDet.DagReplay
+public import HexSignDet.DagBounds
 import all HexSignDet.Codec
 import all HexSignDet.Codec.Basic
 import all HexSignDet.Codec.Json
@@ -89,8 +90,8 @@ variable {coeffSign : E → Int} {parent : Ctx}
 
 /-- Check every supplied graph entry once, then select its joint row. Missing,
 reordered or extra keys reject even when the remaining signs are valid.
-No child query production or replacement scalar sign evaluation occurs here.
-Coefficient arithmetic retains the caller's operations. -/
+This level adds no query production. Coefficient arithmetic retains the
+caller's operations and may still evaluate lower-level signs. -/
 @[expose] def check? (evidence : SignEvidence E Ctx)
     (context : Context E Ctx coeffSign parent) (required : List (DensePoly E)) :
     Option (SelectedSigns context.root required) :=
@@ -139,6 +140,21 @@ theorem check_ofSigns [Hashable E] [Hashable Ctx]
     rfl
   · rename_i different
     exact (different rfl).elim
+
+/-- Producer output satisfies the graph parser's root and child-reference
+bounds. Node shape and literal-binding premises are separate obligations. -/
+theorem codec_ofSigns [Hashable E] [Hashable Ctx]
+    (value : ValueCodec E) (ctx : ValueCodec Ctx) (hv : value.Lawful) (hc : ctx.Lawful)
+    (context : Context E Ctx coeffSign parent) {queries : List (DensePoly E)}
+    (signs : SelectedSigns context.root queries)
+    (shape : ∀ e ∈ (ofSigns signs).graph.entries, Codec.Shape e.node)
+    (subjects : ∀ e ∈ (ofSigns signs).graph.entries,
+      Codec.bindings context.root.raw.context context.root.raw.head
+        context.root.raw.lower context.root.raw.upper e.node = true) :
+    (codec value ctx context.root.raw).decode
+      ((codec value ctx context.root.raw).encode (ofSigns signs)) = .ok (ofSigns signs) :=
+  codec_roundtrip value ctx hv hc context.root.raw (ofSigns signs)
+    (Dag.encode_root signs.evidence) shape subjects (Dag.encode_bounds signs.evidence)
 
 end SignEvidence
 

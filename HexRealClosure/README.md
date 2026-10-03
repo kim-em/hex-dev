@@ -1037,8 +1037,10 @@ returns the original joint signs exactly.
 ordered keys, sign vector and shared graph in one versioned byte packet.
 `Context.decodeEvidence` in the companion decodes and checks those bytes, then
 returns a proved sign fact for every key, in order. Its semantic arguments occur
-only in erased proofs. No child producer fills missing evidence. The returned
-facts can be used by `Element.signCodec` at the next coefficient level.
+only in erased proofs. The reader does not run this packet's producer to fill missing evidence.
+`Element.signCodec` can use the returned facts at the next coefficient level
+when they cover every nonzero coefficient literal in that packet, including
+those created by its producer's arithmetic.
 Graph checking uses the supplied coefficient arithmetic; avoiding searches
 inside that arithmetic requires separate coverage of its packing operations.
 
@@ -1048,14 +1050,18 @@ changed root bindings and rejected corrupt unselected entries. A second-level
 packet decodes through proved facts obtained by checking a first-level packet;
 removing a lower literal, an endpoint fact or an upper key rejects. The ordinary
 kernel probe uses a literal child certificate and the general correspondence
-proofs. Axiom audits include the actual producer success theorem and arbitrary
-byte acceptance theorem.
+proofs. Axiom audits include the actual producer success theorem, scalar fact
+construction, and the theorem connecting acceptance to the actual decoded bytes.
 
 This API takes an explicit key list. It does not yet collect all intermediate
 packing keys automatically, rebuild algebraic contexts from child packets or
 supply a single graph of dependencies between field levels. Literal packet
-roundtrips under lawful predecessor codecs are proved separately from semantic
-acceptance through partial predecessor readers. Collection, context rebuilding
+roundtrips under lawful predecessor codecs are conditional on node shape and
+literal bindings; the actual encoder's root and backward-reference bounds are
+proved. Deriving the remaining node premises and proving finite coverage for
+partial predecessor readers are still required for a universal producer-to-byte
+roundtrip. Semantic acceptance of arbitrary bytes is independent of that
+roundtrip. Collection, context rebuilding
 and kernel assembly costs need their own measurements.
 
 `PackingConformance` checks literal restoration, exact keys, context types and

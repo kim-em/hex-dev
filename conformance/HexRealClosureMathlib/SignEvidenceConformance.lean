@@ -32,6 +32,28 @@ open CoefficientSignsConformance PackingConformance SignFactsConformance
     (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _)
     value ValueCodec.nat required bytes
 
+/-- This interpretation has no compiled implementation. The byte reader
+must erase it along with the semantic proof arguments. -/
+noncomputable def rationalModel (x : Rat) : ℝ :=
+  Classical.choose (show ∃ y : ℝ, y = (x : ℝ) from ⟨_, rfl⟩)
+
+theorem rationalModel_eq (x : Rat) : rationalModel x = (x : ℝ) := by
+  unfold rationalModel
+  exact Classical.choose_spec (show ∃ y : ℝ, y = (x : ℝ) from ⟨_, rfl⟩)
+
+@[expose] def decodeModel (required : List (DensePoly Rat)) (bytes : ByteArray) :=
+  context.decodeEvidence rationalModel
+    (fun _ => by rw [rationalModel_eq]; exact Rat.cast_eq_zero)
+    (by rw [rationalModel_eq]; simp)
+    (fun _ _ => by simp only [rationalModel_eq]; exact Rat.cast_add _ _)
+    (fun _ _ => by simp only [rationalModel_eq]; exact Rat.cast_sub _ _)
+    (fun _ _ => by simp only [rationalModel_eq]; exact Rat.cast_mul _ _)
+    (fun _ => by rw [rationalModel_eq]; simp)
+    (fun x => by rw [rationalModel_eq]; exact rational_sign x)
+    (fun _ => by simp only [rationalModel_eq]; exact Rat.cast_neg _)
+    (fun _ => by simp only [rationalModel_eq]; exact Rat.cast_inv _)
+    ValueCodec.rat ValueCodec.nat required bytes
+
 /-- Repeated original keys share one joint graph, while zero remains a real
 requested slot. Tests mutate independently supplied bytes and graph data. -/
 def bytesChecks : Option (List (String × Bool)) := do
@@ -48,24 +70,33 @@ def bytesChecks : Option (List (String × Bool)) := do
       system := {first.node.system with values := first.node.system.values.map (· + 1)}}}
     let extra := {packet with graph :=
       {packet.graph with entries := packet.graph.entries.push bad}}
+    let selected ← packet.graph.entries[packet.graph.root]?
     let cyclicEntries := packet.graph.entries.set! packet.graph.root
-      {first with children := some (packet.graph.root, packet.graph.root)}
+      {selected with children := some (packet.graph.root, packet.graph.root)}
     let cyclic := {packet with graph := {packet.graph with entries := cyclicEntries}}
+    let foreignEntries := packet.graph.entries.set! 0 {first with node := {first.node with context := 8}}
+    let foreign := {packet with graph := {packet.graph with entries := foreignEntries}}
+    let headEntries := packet.graph.entries.set! 0
+      {first with node := {first.node with head := 2 * first.node.head}}
+    let changedHead := {packet with graph := {packet.graph with entries := headEntries}}
     let stale := fun raw => (SignEvidence.codec ValueCodec.rat ValueCodec.nat raw).encodeBytes packet
     pure [
+      ("noncomputable interpretation erases",
+        (decodeModel keys bytes).toOption.map (fun fs => fs.toList.map SignFact.sign) == some [1, 0, 1]),
       ("ordered signs", facts.toList.map SignFact.sign == [1, 0, 1]),
       ("literal keys", facts.toList.map SignFact.polynomial == keys),
       ("direct rational evaluation", facts.toList.map SignFact.sign == keys.map (fun p => Sturm.orderSign (p.eval 1))),
       ("empty requests", emptyFacts.toList.isEmpty),
       ("shared leaf", packet.graph.entries.size == 4),
       ("false signs", (decode ValueCodec.rat keys (codec.encodeBytes badSigns)).toOption.isNone),
-      ("equal repeated order", (decode ValueCodec.rat keys.reverse bytes).toOption.isSome),
       ("missing key", (decode ValueCodec.rat keys.tail bytes).toOption.isNone),
       ("extra key", (decode ValueCodec.rat (keys ++ [0]) bytes).toOption.isNone),
       ("changed order", (decode ValueCodec.rat [0, 2 * Sturm.Fixtures.x, 2 * Sturm.Fixtures.x] bytes).toOption.isNone),
       ("equal value with another polynomial", (decode ValueCodec.rat [stored, 0, 2 * Sturm.Fixtures.x] bytes).toOption.isNone),
       ("corrupt unselected entry", (decode ValueCodec.rat keys (codec.encodeBytes extra)).toOption.isNone),
       ("cyclic references", (decode ValueCodec.rat keys (codec.encodeBytes cyclic)).toOption.isNone),
+      ("foreign graph context", (decode ValueCodec.rat keys (codec.encodeBytes foreign)).toOption.isNone),
+      ("changed graph head", (decode ValueCodec.rat keys (codec.encodeBytes changedHead)).toOption.isNone),
       ("foreign context", (decode ValueCodec.rat keys (stale {source.raw with context := 8})).toOption.isNone),
       ("changed head", (decode ValueCodec.rat keys (stale {source.raw with head := 2 * source.raw.head})).toOption.isNone),
       ("changed endpoint", (decode ValueCodec.rat keys (stale {source.raw with upper := .finite 3})).toOption.isNone),
@@ -149,7 +180,7 @@ def nestedPass : Bool :=
 
 #guard nestedPass
 
-/-- The kernel checks the literal child table, not a compiled sign search. -/
+/-- The child table is checked by the imported ordinary-kernel fixture. -/
 @[expose] def kernelSigns : SelectedSigns context.root [NestedSignsConformance.endpointQuery] :=
   ⟨#v[1], .leaf NestedSignsConformance.endpointNode, by
     simpa only [context, Context.root_adjoin] using NestedSignsConformance.endpoint_checked⟩
