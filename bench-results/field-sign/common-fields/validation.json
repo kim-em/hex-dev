@@ -18,5 +18,10 @@
   "sourceArchiveRef": "refs/heads/evidence/issue-10377-field-sign-615fc66",
   "oracleSourceRevision": "615fc667c8427f8cc0f98aca21d64587a32b2d27",
   "oracleSourceSha256": "ef4faf360d4fe70bc694608330dc76987e89b937a1dc8c10799f222d3401d212",
-  "toolchain": "leanprover/lean4:v4.35.0-rc3"
+  "toolchain": "leanprover/lean4:v4.35.0-rc3",
+  "sourceHashesRecomputedAt": "4d5d405de89dc1da7f02197d62fbdf44e7cb7161",
+  "sourceHashCheckMethod": "Python hashlib.sha256(Path(name).read_bytes()) for each recorded source in sourceHashesRecomputedAt checkout",
+  "builtExecutableSourceRevision": "615fc667c8427f8cc0f98aca21d64587a32b2d27",
+  "builtExecutableBuildCommand": "lake build hexsigndet_emit_common_fields",
+  "builtExecutableRelativePath": ".lake/build/bin/hexsigndet_emit_common_fields"
 }
