@@ -17,8 +17,8 @@ namespace Hex.SignDet.CommonField
 open Lean
 
 /-- Interpret a coordinate using its selected canonical algebraic value.
-The companion proves reality and equality with `Coefficients.ofField` for
-real generators. Nonreal generators are rejected before fixture execution. -/
+This is the canonical-conversion reference arm for the fixtures.
+Nonreal generators are rejected before fixture execution. -/
 @[expose] def value {generator : AlgebraicNumber} (a : QAdjoin generator) : RealAlgebraicNumber :=
   match RealAlgebraicNumber.ofAlgebraic? a.toAlgebraicNumber with
   | some r => r
