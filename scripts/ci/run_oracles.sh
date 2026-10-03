@@ -170,6 +170,9 @@ for entry in "${FILTERED_ORACLES[@]}"; do
   IFS='|' read -r _ emit _ _ <<<"$entry"
   emits+=("$emit")
 done
+if library_selected HexRealClosure || library_selected HexSignDet; then
+  emits+=("hexrealclosure_codec_bytes")
+fi
 if [ "${#emits[@]}" -gt 0 ] && ! lake build "${emits[@]}"; then
   echo "FAIL: building emit executables" >&2
   exit 1
@@ -375,6 +378,19 @@ if [ "$failed" -ne 0 ]; then
   echo
   echo "Conformance: oracle run failed; see preceding markers for the libraries." >&2
   exit 1
+fi
+
+# Native context capacity covers the owning library and its JSON dependency.
+if library_selected HexRealClosure || library_selected HexSignDet; then
+  context_start=$SECONDS
+  if ! (PYTHONPATH=scripts/oracle python3 -c \
+      'from pathlib import Path; from sign_det_json_stress import check_stack; check_stack(Path(".lake/build/bin/hexrealclosure_codec_bytes"))' &&
+      ulimit -s 8192 && LEAN_MAIN_USE_THREAD=0 LEAN_STACK_SIZE_KB=8192 \
+      .lake/build/bin/hexrealclosure_codec_bytes 1000000); then
+    echo "Conformance: native context codec capacity failed." >&2
+    exit 1
+  fi
+  printf 'TIMING: HexRealClosure (hexrealclosure_codec_bytes) %ss\n' "$((SECONDS - context_start))"
 fi
 
 # Exercise the independent Lean/native binding in process against the same

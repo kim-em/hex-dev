@@ -9,12 +9,12 @@ public import HexSignDet.Codec
 public import HexSignDet.Codec.NodeLaws
 import all HexSignDet.Codec
 import all HexSignDet.Codec.Basic
-import all Lean.Data.Json.Basic
+import all HexSignDet.Codec.Json
+import all HexSignDet.Codec.Bytes
 
 public section
 
 namespace Hex.SignDet.Codec
-open Lean
 
 variable {E Ctx : Type} [Zero E] [DecidableEq E]
 
@@ -38,14 +38,14 @@ theorem Shape.read_node (h : Shape n) (value : ValueCodec E) (context : ValueCod
 /-- Earlier child indices roundtrip without changing their left/right order. -/
 theorem read_children (children : Option (Nat × Nat))
     (bounds : ∀ pair ∈ children, pair.1 < earlier ∧ pair.2 < earlier) :
-    readChildren earlier (option (fun (i, j) => Json.arr #[toJson i, toJson j]) children) =
+    readChildren earlier (option (fun (i, j) => Json.arr #[Json.of i, Json.of j]) children) =
       .ok children := by
   unfold readChildren
   apply read_option_of
   intro pair hp
   obtain ⟨left, right⟩ := pair
   obtain ⟨hl, hr⟩ := bounds (left, right) hp
-  simp [tuple, Json.getArr?, index, read_nat, hl, hr, bind, Except.bind, pure, Except.pure]
+  simp [tuple, Json.getArr_arr, index, hl, hr, bind, Except.bind, pure, Except.pure]
 
 variable [DecidableEq Ctx]
 
@@ -56,7 +56,7 @@ theorem read_entry (value : ValueCodec E) (ctx : ValueCodec Ctx)
     (shape : Shape e.node) (subject : bindings context p lo hi e.node = true)
     (bounds : ∀ pair ∈ e.children, pair.1 < earlier ∧ pair.2 < earlier) :
     readEntry value ctx context p lo hi earlier (entry value ctx e) = .ok e := by
-  simp [readEntry, entry, tuple, Json.getArr?, bind, Except.bind, pure, Except.pure,
+  simp [readEntry, entry, tuple, Json.getArr_arr, bind, Except.bind, pure, Except.pure,
     read_children e.children bounds, shape.read_node value ctx hv hc, subject]
 
 /-- The actual left fold reconstructs every entry in order, including entries
@@ -106,7 +106,35 @@ theorem read_graph (value : ValueCodec E) (ctx : ValueCodec Ctx)
     readGraph value ctx context p lo hi (graph value ctx d) = .ok d := by
   have he := read_entries value ctx hv hc context p lo hi d.entries shape subjects bounds
   simp only [Array.size_map, bind, Except.bind, pure, Except.pure] at he
-  simp [readGraph, graph, tuple, array, Json.getArr?, bind, Except.bind, pure, Except.pure,
+  simp [readGraph, graph, tuple, array, Json.getArr_arr, bind, Except.bind, pure, Except.pure,
     Nat.not_le.mpr root, he]
+
+omit [DecidableEq Ctx] in
+/-- The actual byte encoding preserves all supplied JSON fields, without
+any structural, arithmetic or parser-success hypothesis. -/
+theorem encoded_graph (value : ValueCodec E) (ctx : ValueCodec Ctx) (d : Dag E Ctx) :
+    Json.readBytes (d.encodeBytes value ctx) = some (graph value ctx d) :=
+  Json.readBytes_write _
+
+/-- The actual graph byte encoder and decoder preserve the entire supplied
+graph, including false arithmetic evidence and unreachable entries. -/
+theorem decode_graph (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    (hv : value.Lawful) (hc : ctx.Lawful) (context : Ctx)
+    (p : DensePoly E) (lo hi : Endpoint E) (d : Dag E Ctx) (limits : Limits)
+    (root : d.root < d.entries.size)
+    (shape : ∀ e ∈ d.entries, Shape e.node)
+    (subjects : ∀ e ∈ d.entries, bindings context p lo hi e.node = true)
+    (bounds : ∀ (i : Nat) (h : i < d.entries.size), ∀ pair ∈ d.entries[i].children,
+      pair.1 < i ∧ pair.2 < i)
+    (bytes : checkBytes limits (d.encodeBytes value ctx) = .ok ()) :
+    decodeGraph value ctx context p lo hi (d.encodeBytes value ctx) limits = .ok d := by
+  unfold decodeGraph Dag.encodeBytes at *
+  rw [parse_write _ _ bytes]
+  simp only [bind, Except.bind]
+  exact read_graph value ctx hv hc context p lo hi d root shape subjects bounds
+
+/-- info: 'Hex.SignDet.Codec.decode_graph' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms decode_graph
 
 end Hex.SignDet.Codec

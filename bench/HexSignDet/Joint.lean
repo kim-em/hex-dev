@@ -23,6 +23,14 @@ structure Case where
   rightDirect : Replay Rat Nat
   order : Ordering
 
+/-- Diagnostic reports use Lean JSON; certificate replay uses the proved codec. -/
+private def reportJson (value : Codec.Json) : IO Lean.Json := do
+  let some text := String.fromUTF8? value.writeBytes
+    | throw (IO.userError "report encoding emitted invalid UTF-8")
+  match Lean.Json.parse text with
+  | .ok result => return result
+  | .error message => throw (IO.userError message)
+
 private def rootHash (d : Root) : UInt64 :=
   let input : Input := ⟨d.raw.head, d.raw.queries, none, some d.evidence, none⟩
   hash (hash input, d.raw.indices, d.raw.signs)
@@ -170,10 +178,10 @@ private def record (n : Nat) (side : String) (source : Root) (i : Input)
       throw (IO.userError "joint replay table differs from the independent root table")
   return Lean.Json.mkObj [
     ("degree", Lean.toJson n), ("side", Lean.toJson side),
-    ("context", Lean.toJson (10377 : Nat)), ("source", Codec.poly ValueCodec.rat source.raw.head),
+    ("context", Lean.toJson (10377 : Nat)), ("source", (← reportJson (Codec.poly ValueCodec.rat source.raw.head))),
     ("sourceIndices", Lean.toJson source.raw.indices), ("sourceSigns", Lean.toJson source.raw.signs),
-    ("head", Codec.poly ValueCodec.rat i.head),
-    ("queries", Codec.list (Codec.poly ValueCodec.rat) i.queries),
+    ("head", (← reportJson (Codec.poly ValueCodec.rat i.head))),
+    ("queries", (← reportJson (Codec.list (Codec.poly ValueCodec.rat) i.queries))),
     ("table", Lean.toJson (entries tree.node.system)),
     ("directTable", Lean.toJson (entries direct.node.system)),
     ("order", Lean.toJson (match order with | .lt => "lt" | .eq => "eq" | .gt => "gt")),

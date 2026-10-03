@@ -1,16 +1,15 @@
 """Rejection tests for the exact capped-isolation completion oracle."""
 import copy
-import json
 from pathlib import Path
 import unittest
-from scripts.oracle.real_closure_isolation import verify
+from scripts.oracle.real_closure_isolation import parse_record, verify
 
 FIXTURE = Path(__file__).resolve().parents[2] / "conformance-fixtures/HexRealClosure/isolation.jsonl"
 
 
 class IsolationTests(unittest.TestCase):
     def setUp(self):
-        self.rows = [json.loads(line) for line in FIXTURE.read_text().splitlines()]
+        self.rows = [parse_record(line) for line in FIXTURE.read_text().splitlines()]
 
     def rejects(self, mutate, message=None):
         rows = copy.deepcopy(self.rows)
@@ -22,6 +21,12 @@ class IsolationTests(unittest.TestCase):
 
     def test_valid(self):
         verify(self.rows)
+
+    def test_duplicate_json_fields(self):
+        for raw in ['{"output":null,"output":null}',
+                    '{"output":{"head":[],"head":[1]}}']:
+            with self.subTest(raw=raw), self.assertRaisesRegex(AssertionError, "duplicate JSON field"):
+                parse_record(raw)
 
     def test_missing_case(self):
         self.rejects(lambda rows: rows.pop())

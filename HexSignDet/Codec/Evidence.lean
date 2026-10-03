@@ -10,7 +10,7 @@ public import HexSignDet.Codec.Basic
 public section
 
 namespace Hex.SignDet.Codec
-open Lean
+open Codec (Json)
 
 variable {E Ctx : Type} [Zero E] [DecidableEq E]
 
@@ -29,12 +29,12 @@ def readTerminal (value : ValueCodec E) (j : Json) : Except String (E × DensePo
   return (← value.decode a[0], ← readPoly value a[1])
 
 def chain (value : ValueCodec E) (c : SignedRemainderChain E) : Json :=
-  .arr #[array (poly value) c.chain, toJson c.degrees, remainder value c.initial,
+  .arr #[array (poly value) c.chain, Json.of c.degrees, remainder value c.initial,
     array (remainder value) c.steps, option (terminal value) c.terminal]
 
 def readChain (value : ValueCodec E) (j : Json) : Except String (SignedRemainderChain E) := do
   let a ← tuple 5 j
-  return ⟨← readArray (readPoly value) a[0], ← fromJson? a[1],
+  return ⟨← readArray (readPoly value) a[0], ← Json.decode a[1],
     ← readRemainder value a[2], ← readArray (readRemainder value) a[3],
     ← readOption (readTerminal value) a[4]⟩
 
@@ -44,19 +44,19 @@ def tarski (value : ValueCodec E) (context : ValueCodec Ctx)
     (c : TarskiCertificate E E Ctx) : Json :=
   .arr #[context.encode c.context, poly value c.head, poly value c.queryPoly,
     endpoint value c.lower, endpoint value c.upper, chain value c.squarefree,
-    chain value c.remainders, toJson c.lowerSigns, toJson c.upperSigns,
-    toJson c.lowerVariations, toJson c.upperVariations, toJson c.value]
+    chain value c.remainders, Json.of c.lowerSigns, Json.of c.upperSigns,
+    Json.of c.lowerVariations, Json.of c.upperVariations, Json.of c.value]
 
 def readTarski (value : ValueCodec E) (context : ValueCodec Ctx) (j : Json) :
     Except String (TarskiCertificate E E Ctx) := do
   let a ← tuple 12 j
   return ⟨← context.decode a[0], ← readPoly value a[1], ← readPoly value a[2],
     ← readEndpoint value a[3], ← readEndpoint value a[4], ← readChain value a[5],
-    ← readChain value a[6], ← fromJson? a[7], ← fromJson? a[8],
-    ← fromJson? a[9], ← fromJson? a[10], ← fromJson? a[11]⟩
+    ← readChain value a[6], ← Json.decode a[7], ← Json.decode a[8],
+    ← Json.decode a[9], ← Json.decode a[10], ← Json.decode a[11]⟩
 
 def reductionStep (value : ValueCodec E) (s : ReductionStep E) : Json :=
-  .arr #[toJson s.index, poly value s.next, remainder value s.witness]
+  .arr #[Json.of s.index, poly value s.next, remainder value s.witness]
 
 def readReductionStep (value : ValueCodec E) (arity : Nat) (j : Json) :
     Except String (ReductionStep E) := do

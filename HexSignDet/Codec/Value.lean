@@ -32,6 +32,28 @@ inductive Fields where
 end
 
 mutual
+/-- Hash literal values with iteration along array/object width. -/
+@[expose] def Value.hash : Value → UInt64
+  | .null => 0
+  | .bool value => mixHash 1 (Hashable.hash value)
+  | .number value => mixHash 2 (Hashable.hash value)
+  | .string value => mixHash 3 (Hashable.hash value)
+  | .array values => values.hash 4
+  | .object fields => fields.hash 5
+@[expose] def Values.hash : Values → UInt64 → UInt64
+  | .nil, acc => acc
+  | .cons value rest, acc => rest.hash (mixHash acc value.hash)
+@[expose] def Fields.hash : Fields → UInt64 → UInt64
+  | .nil, acc => acc
+  | .cons key value rest, acc => rest.hash (mixHash (mixHash acc (Hashable.hash key)) value.hash)
+end
+
+instance : Hashable Value := ⟨Value.hash⟩
+instance : Hashable Values := ⟨fun values => values.hash 4⟩
+instance : Hashable Fields := ⟨fun fields => fields.hash 5⟩
+
+
+mutual
 @[expose] def Value.tokens : Value → List Token
   | .null => [.null]
   | .bool b => [.bool b]

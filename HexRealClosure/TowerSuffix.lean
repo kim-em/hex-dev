@@ -11,7 +11,7 @@ public section
 
 namespace Hex.RealClosure.Tower
 
-open Lean SignDet
+open SignDet
 
 variable {registry : BaseContext.Registry}
 

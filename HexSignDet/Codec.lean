@@ -13,7 +13,7 @@ public import HexSignDet.DagSelectedSigns
 public section
 
 namespace Hex.SignDet
-open Lean
+open Codec (Json)
 
 variable {E Ctx : Type} [Zero E] [DecidableEq E]
 
@@ -22,13 +22,13 @@ namespace Codec
 /-- A graph entry stores its complete node and zero or one child-index pair. -/
 def entry (value : ValueCodec E) (context : ValueCodec Ctx) (e : Dag.Entry E Ctx) : Json :=
   .arr #[node value context e.node,
-    option (fun (i, j) => Json.arr #[toJson i, toJson j]) e.children]
+    option (fun (i, j) => Json.arr #[Json.of i, Json.of j]) e.children]
 
 /-- Version 1 is `[1, root, entries]`. Coefficient/context codecs use JSON
 values with integer numeric tokens. Every record has an exact positional
 field count, so extra fields cannot be silently ignored. -/
 def graph (value : ValueCodec E) (context : ValueCodec Ctx) (d : Dag E Ctx) : Json :=
-  .arr #[toJson (1 : Nat), toJson d.root, array (entry value context) d.entries]
+  .arr #[Json.of (1 : Nat), Json.of d.root, array (entry value context) d.entries]
 
 def readChildren (earlier : Nat) (j : Json) : Except String (Option (Nat × Nat)) :=
   readOption (fun j => do
@@ -55,8 +55,8 @@ def readGraph [DecidableEq Ctx] (value : ValueCodec E) (ctx : ValueCodec Ctx)
     (context : Ctx) (p : DensePoly E) (lo hi : Endpoint E) (j : Json) :
     Except String (Dag E Ctx) := do
   let a ← tuple 3 j
-  if (← fromJson? (α := Nat) a[0]) != 1 then throw "unsupported graph version"
-  let root ← fromJson? (α := Nat) a[1]
+  if (← Json.decode (α := Nat) a[0]) != 1 then throw "unsupported graph version"
+  let root ← Json.decode (α := Nat) a[1]
   let raw ← a[2].getArr?
   if root ≥ raw.size then throw "graph root out of range"
   let entries ← raw.foldlM (init := #[]) fun entries j => do
@@ -74,7 +74,7 @@ end Codec
 /-- Serialize every literal graph field, without running a producer or checker.
 Malformed graph data can be encoded; decoding and replay still reject it. -/
 def Dag.encodeBytes (value : ValueCodec E) (context : ValueCodec Ctx) (d : Dag E Ctx) : ByteArray :=
-  (Codec.graph value context d).compress.toUTF8
+  (Codec.graph value context d).writeBytes
 
 variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
 

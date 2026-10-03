@@ -10,7 +10,8 @@ public import HexRealClosure.TowerContext
 public section
 
 namespace Hex.RealClosure.Tower
-open Lean SignDet
+open SignDet
+open SignDet.Codec (Json)
 variable {registry : BaseContext.Registry}
 
 /-- The exact whole-context binding is checked before decoding the payload. -/

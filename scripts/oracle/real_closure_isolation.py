@@ -525,8 +525,18 @@ def verify(rows):
     verify_collection(rows[19])
 
 
+def parse_record(text):
+    def fields(pairs):
+        result = {}
+        for key, value in pairs:
+            require(key not in result, "duplicate JSON field: " + key)
+            result[key] = value
+        return result
+    return json.loads(text, object_pairs_hook=fields)
+
+
 def main():
-    rows = [json.loads(line) for line in sys.stdin if line.strip()]
+    rows = [parse_record(line) for line in sys.stdin if line.strip()]
     verify(rows)
     print(f"verified {len(rows)} isolation, assembly and native-collection fixtures with exact Z3 RCF")
 

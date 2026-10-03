@@ -2,9 +2,9 @@
 
 `Dag.encodeBytes` writes a UTF-8 JSON encoding of the supplied graph.
 `Dag.decodeBytes` parses and independently replays it for the caller's exact
-context, head, endpoints and ordered query list. It returns `Except String`
-with an accepted literal tree on success. An error diagnoses malformed input,
-a decoding limit or failed certificate replay; it does not decide root
+context, head, endpoints and ordered query list. It returns `Except String` with
+an accepted literal tree on success. An error diagnoses malformed input, a
+decoding limit or failed certificate replay; it does not decide root
 nonexistence. No query producer, root isolation or coefficient refinement runs
 inside decoding or replay.
 
@@ -15,59 +15,75 @@ from the requested head and indices and requiring count one. The theorem
 descriptor field. Wrong derivative slots, signs or contexts are rejected.
 
 `Dag.decodeSigns` consumes these bytes for a validated selected-root descriptor,
-an ordered query list and a claimed sign vector. It uses `Dag.selectedSigns?`
-to check the table's unique extending row after graph replay. The theorem
+an ordered query list and a claimed sign vector. It uses `Dag.selectedSigns?` to
+check the table's unique extending row after graph replay. The theorem
 `Dag.decodeSigns_evidence` preserves the claimed signs and identifies the actual
 decoded graph and its selected-sign evidence. Correctness therefore applies to
-arbitrary accepted bytes; it does not require a printer/parser roundtrip.
-No selected-sign producer runs during decoding.
+arbitrary accepted bytes; it does not require a printer/parser roundtrip. No
+selected-sign producer runs during decoding.
 
-`ValueCodec` supplies encoders and decoders for coefficient values and the
-full immutable context. The provided codecs cover canonical `Rat` and `Nat`.
-A composite context must encode all its components, including refinement and
-embedding data. A hash or a reused numeric identifier cannot replace that
-value. This serialization implementation handles coefficient/context types in
-`Type`. The computational sign-determination APIs retain their existing universe
+`ValueCodec` supplies encoders and decoders for coefficient values and the full
+immutable context. The provided codecs cover canonical `Rat` and `Nat`. A
+composite context must encode all its components, including refinement and
+embedding data. A hash or a reused numeric identifier cannot replace that value.
+This serialization implementation handles coefficient/context types in `Type`.
+The computational sign-determination APIs retain their existing universe
 polymorphism.
 
 Numeric tokens in this format are integers. Rational coefficients use
 `[numerator, denominator]` with a positive coprime denominator; noncanonical
 pairs are rejected. Coefficient codecs for other representations must use
 integer numeric tokens, strings, arrays or objects. A codec intended for
-roundtrips must preserve its entire value. `ValueCodec.Lawful` states literal value roundtrips, and the included natural
-and rational codecs satisfy it. Structured roundtrip proofs lift this property
-through arrays, lists, vectors, options, integer matrices, polynomials, endpoints,
-remainder steps, chains and complete Tarski certificates. Reduction and query
-preparation records also roundtrip when their factor indices are in bounds.
-`Codec.read_system`, `Codec.read_basis` and `Codec.read_node` preserve all literal
-fields under the parser's row/column arity, rank and factor-index bounds.
-These proofs apply to the actual field encoders and decoders, including false
-arithmetic evidence; no semantic certificate premise is used. `Codec.read_graph`
-proves that structured graph encoding followed by decoding preserves the entire
-graph, provided the value codecs are lawful, all nodes satisfy the structural
-bounds, all node/query subjects match the caller, all references point earlier,
-and the root index is in range. The proof follows the actual decoder's left
-fold and includes unreachable entries. Arbitrary user codecs need not be lawful,
-and no graph-level JSON byte-parser roundtrip theorem is claimed.
-The standalone total backend in `Codec.Value` proves `Codec.Json.readBytes_write`
-for every finite integer-only JSON value. Its accumulator loops are proved equal to the
-reference definitions and keep width and string length off the native stack
-in the compiled 8 MiB stack probes. Nesting still uses recursive calls. It is not yet connected to these
-coefficient codecs or graph operations.
+roundtrips must preserve its entire value. `ValueCodec.Lawful` states literal
+value roundtrips, and the included natural and rational codecs satisfy it.
+Structured roundtrip proofs lift this property through arrays, lists, vectors,
+options, integer matrices, polynomials, endpoints, remainder steps, chains and
+complete Tarski certificates. Reduction and query preparation records also
+roundtrip when their factor indices are in bounds. `Codec.read_system`,
+`Codec.read_basis` and `Codec.read_node` preserve all literal fields under the
+parser's row/column arity, rank and factor-index bounds. These proofs apply to
+the actual field encoders and decoders, including false arithmetic evidence; no
+semantic certificate premise is used. `Codec.read_graph` proves that structured
+graph encoding followed by decoding preserves the entire graph, provided the
+value codecs are lawful, all nodes satisfy the structural bounds, all node/query
+subjects match the caller, all references point earlier, and the root index is
+in range. The proof follows the actual decoder's left fold and includes
+unreachable entries. Arbitrary user codecs need not be lawful.
+`Codec.decode_graph` proves that the actual graph byte encoder and guarded byte
+decoder preserve the entire graph under these structural conditions and the
+caller's lexical byte/depth/digit limits. Arithmetic evidence may be false;
+independent replay remains separate.
 
-The structured codec law does not imply a byte roundtrip, even when the printer
-emits only valid integer tokens. For example, the internal JSON number with
-mantissa 10 and exponent 1 prints as `1` and parses with mantissa 1 and exponent
-0. A decoder that accepts only the original internal representation satisfies
-the structured law for its single value but rejects the parsed bytes. The
-`NumberForm` conformance probe proves that structured law in the ordinary kernel
-and separately checks the normalization and byte rejection by compiled execution.
-A byte-roundtrip proof must establish the actual printer/parser correspondence
-and each value decoder's preservation across it; `ValueCodec.Lawful` alone is
-insufficient. This example does not affect soundness of accepted graph replay.
+The coefficient/context `ValueCodec` targets `Codec.Json.Value`, the shared
+integer-only JSON tree. `ValueCodec.decode_encode` lifts its literal codec law
+through the actual UTF-8 printer/parser when the printed bytes pass the
+lexical policy. The unguarded `Codec.encoded_graph` law preserves every graph
+JSON field without that premise. A characterization of policy acceptance in
+terms of value size, depth and maximum integer digits is a separate obligation;
+the guarded law does not supply it.
+`Codec.Json.readBytes_write` establishes the underlying parser/printer law for
+every finite JSON value without a parser-success premise. Arrays and object
+fields retain their order and duplicate fields literally. Integer numbers have
+one stored representation. The real-closure context uses this same tree; no
+separate context serializer can normalize distinct number representations to the
+same bytes.
 
-Every structural record is a positional array with exactly the listed fields.
-An optional value is `[]` or `[value]`. Arrays and lists retain their original
+The `NumberForm` conformance probe independently demonstrates why ordinary Lean
+JSON is unsuitable as the certificate codec target: its mantissa 10 and exponent
+1 print as `1`, which parses with mantissa 1 and exponent 0. The new certificate
+JSON type has no exponent constructor, so that mismatch is excluded by
+construction. The probe uses Lean JSON solely as an independent negative
+example, outside certificate encoding and replay.
+
+The accumulator loops are proved equal to the finite reference definitions and
+keep width and string length off the native stack in compiled 8 MiB stack
+probes. Nesting still uses recursive calls. The public certificate parser runs
+the lexical limits before the low-level JSON parser. Printed output can exceed
+the input size; roundtrip callers must provide limits that admit the printed
+bytes.
+
+Every structural record is a positional array with exactly the listed fields. An
+optional value is `[]` or `[value]`. Arrays and lists retain their original
 order; matrices are arrays of rows.
 
 | Record | Fields in order |
@@ -86,8 +102,8 @@ order; matrices are arrays of rows.
 | Query preparation | array of reduction steps |
 
 A polynomial is its coefficient array in increasing exponent order; trailing
-literal zeros are rejected. Endpoints are `[0]` for negative infinity,
-`[1, value]` for a finite endpoint, and `[2]` for positive infinity.
+literal zeros are rejected. Endpoints are `[0]` for negative infinity, `[1,
+value]` for a finite endpoint, and `[2]` for positive infinity.
 
 The parser checks node/system sizes, row and column arities, matrix dimensions,
 rank-index bounds, and reduction-index bounds before using the supplied data.
@@ -98,35 +114,34 @@ Tarski certificate must match the caller's full context and root domain.
 Independent graph replay then checks the ordered child query lists, support
 completeness, exact integer matrix identities, reductions and Tarski evidence.
 
-`Codec.Limits` defaults to 16 MiB, 128 nested arrays/objects and 4,096 digits per
-integer token. Callers may supply larger limits. Before JSON parsing, a finite
-byte scan checks these limits, string quoting and delimiter depth and rejects
-fraction/exponent number syntax. UTF-8 validation precedes parsing. Brackets
-and escaped quotes inside strings do not change delimiter depth.
+`Codec.Limits` defaults to 16 MiB, 128 nested arrays/objects and 4,096 digits
+per integer token. Callers may supply larger limits. Before JSON parsing, a
+finite byte scan checks these limits, string quoting and delimiter depth and
+rejects fraction/exponent number syntax. UTF-8 validation precedes parsing.
+Brackets and escaped quotes inside strings do not change delimiter depth.
 
 `Dag.decode_replays` proves that success replays the graph returned by the
-actual decoder, for arbitrary supplied bytes and codecs. The returned tree
-also carries the existing finite checker proof. Conformance compares all
-literal fields after rational/context roundtrips, including a produced graph
-with query preprocessing and moment reductions. It covers stale composite
-contexts, empty-query and zero-root systems, truncated and false evidence,
-invalid references, malformed sizes, noncanonical literals and lexical bounds.
-A canonical-zero coefficient probe preserves distinct nonzero representations
+actual decoder, for arbitrary supplied bytes and codecs. The returned tree also
+carries the existing finite checker proof. Conformance compares all literal
+fields after rational/context roundtrips, including a produced graph with query
+preprocessing and moment reductions. It covers stale composite contexts,
+empty-query and zero-root systems, truncated and false evidence, invalid
+references, malformed sizes, noncanonical literals and lexical bounds. A
+canonical-zero coefficient probe preserves distinct nonzero representations
 without a ring or field instance and rejects substitution of an equal-denotation
 head with different literal coefficients. Byte parsing uses compiled execution;
 the separate ordinary-kernel graph probes and axiom audits remain in place.
 
 This format encodes same-level BKR graphs and coefficient values. It does not
 yet encode lower-level coefficient-sign proof dependencies or establish
-arbitrary-field root/sign semantics. Graph-level JSON byte-parser roundtrip proofs,
-nested evidence transport, serialization cost measurements and the other
-Phase-4 obligations remain open.
+arbitrary-field root/sign semantics. Nested evidence transport, serialization
+cost measurements and the other Phase-4 obligations remain open.
 
 `Dag.decodeBytes_sign_congr`, `Dag.decodeDescriptor_sign_congr` and
-`Dag.decodeSigns_sign_congr` preserve
-exact errors and successful literal data when two sign functions agree on all
-operands of the actual decoded graph. This conditional agreement theorem needs
-no byte-roundtrip premise and does not discharge that separate obligation.
-Callers holding a decoded graph can use its `replay?`, `descriptor?` or `selectedSigns?` interface
-with the corresponding finite sign-congruence theorem, reusing that graph
-without parsing the same input again.
+`Dag.decodeSigns_sign_congr` preserve exact errors and successful literal data
+when two sign functions agree on all operands of the actual decoded graph. This
+conditional agreement theorem needs no byte-roundtrip premise; they apply to
+arbitrary accepted bytes. Callers holding a decoded graph can use its `replay?`,
+`descriptor?` or `selectedSigns?` interface with the corresponding finite
+sign-congruence theorem, reusing that graph without parsing the same input
+again.

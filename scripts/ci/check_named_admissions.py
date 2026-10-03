@@ -177,7 +177,6 @@ def check() -> None:
              "HexRealClosure.QAdjoinTests",
              "HexRealClosure.TowerCatalog", "HexRealClosure.TowerTests",
              "HexRealClosure.RootFrame", "HexRealClosure.RootFrameTests",
-             "HexRealClosure.LiteralSupport", "HexRealClosure.CodecSupport",
              "HexRealClosure.FrameFormat", "HexRealClosure.FrameFormatTests",
              "HexRealClosure.TowerOrder", "HexRealClosure.TowerOrderTests",
              "HexRealClosureMathlib.TowerModel", "HexRealClosureMathlib.TowerModelTests",

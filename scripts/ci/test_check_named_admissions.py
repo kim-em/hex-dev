@@ -119,8 +119,6 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosure/TowerTests.lean",
                 "HexRealClosure/RootFrame.lean",
                 "HexRealClosure/RootFrameTests.lean",
-                "HexRealClosure/LiteralSupport.lean",
-                "HexRealClosure/CodecSupport.lean",
                 "HexRealClosure/FrameFormat.lean",
                 "HexRealClosure/FrameFormatTests.lean",
                 "HexRealClosure/TowerOrder.lean",
