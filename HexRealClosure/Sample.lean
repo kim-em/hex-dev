@@ -35,7 +35,8 @@ inductive Cell (context : Context registry) where
       | .finite bound => decide (context.compare value bound = .lt)
       | .negInf => false)
 
-/-- An ordinary native sample and the explicit inclusion of its coefficients. -/
+/-- An ordinary native sample and the explicit inclusion of its coefficients.
+Membership is a property of its producer, proved in the companion. -/
 structure Sample (parent : Context registry) : Type 1 where
   private mk ::
   input : Conversion parent
@@ -361,6 +362,16 @@ def Family.sectors {polynomials : List parent.Poly} (family : Family parent poly
 def Family.cells {polynomials : List parent.Poly} (family : Family parent polynomials) :
     List (Region parent) := family.boundaries.map Region.section ++ family.regions
 
+/-- A section's local sample is the original cached selected-root sample. -/
+theorem Region.sample_section (root : Root parent) :
+    (Region.section root).sample = Tower.Sample.ofRoot root := by simp [Region.sample]
+
+/-- Public cell membership retains the original boundary or sector label. -/
+theorem Family.mem_cells {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (region : Region parent) : region ∈ family.cells ↔
+      (∃ root ∈ family.boundaries, region = .section root) ∨ region ∈ family.regions := by
+  simp only [Family.cells, List.mem_append, List.mem_map, eq_comm]
+
 /-- The complete cell list describes exactly the returned ordinary samples. -/
 theorem Family.cells_eq {polynomials : List parent.Poly} (family : Family parent polynomials) :
     family.sections ++ family.sectors = family.cells.map Region.sample := by
@@ -371,6 +382,11 @@ theorem Family.cells_eq {polynomials : List parent.Poly} (family : Family parent
 constructs neither other midpoints nor a common context for all roots. -/
 def Family.sector? {polynomials : List parent.Poly} (family : Family parent polynomials)
     (index : Nat) : Option (Tower.Sample parent) := family.regions[index]?.map Region.sample
+
+/-- An indexed request samples exactly the original region at that position. -/
+theorem Family.sector?_eq {polynomials : List parent.Poly} (family : Family parent polynomials)
+    (index : Nat) : family.sector? index = family.regions[index]?.map Region.sample := by
+  simp [Family.sector?]
 
 private def sameRoot (a b : Root parent) : Bool := decide (a.compare b = .eq)
 

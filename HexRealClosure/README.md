@@ -1576,6 +1576,12 @@ collects exactly its two boundary roots. Midpoints of adjacent native values
 handle bounded sectors; offsets by one handle rays; zero handles the root-free
 whole line. Infinitesimally close roots need no separating rational.
 
+`Family.sector?_eq` identifies an indexed result with its original region.
+`Family.mem_cells` connects original boundary and sector labels to the complete
+cell list, and `Region.sample_section` identifies the cached section sample.
+`Context.Poly` is a reducible alias of `DensePoly context.Value`, allowing its
+existing polynomial operations through the public interface.
+
 `Family.sector?` selects a cell label before constructing its sample and rejects
 indices beyond the complete family. `Family.sectorBetween?` compares requested
 root handles with the adjacent complete boundary list, then constructs only

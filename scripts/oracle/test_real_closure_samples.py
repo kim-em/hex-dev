@@ -92,6 +92,8 @@ class SampleTests(unittest.TestCase):
 
     def test_extra_ray_root(self):
         def mutate(rows):
+            self.assertGreater(len(rows[0]["sectors"][1]["context"][2]),
+                               len(rows[0]["context"][2]) + 1)
             rows[0]["sectors"][0]["context"] = copy.deepcopy(rows[0]["sectors"][1]["context"])
         self.rejects(mutate, "not local to its boundaries")
 

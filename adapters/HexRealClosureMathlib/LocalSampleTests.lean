@@ -44,6 +44,31 @@ example (lower upper : Root parent) (sample : Tower.Sample parent)
 
 example (root : Root parent) : (Region.section root).Ordered original := trivial
 
+example (index : Nat) (region : Region parent) (selected : family.regions[index]? = some region)
+    (sample : Tower.Sample parent) (returned : family.sector? index = some sample)
+    (x : K) (inside : region.Mem original x) :
+    sample.signs polynomials = polynomials.map (fun p => (SignType.sign
+      ((HexPolyMathlib.Interpret.interpret original.value original.zero_iff p).eval x) : Int)) := by
+  rw [family.sector?_eq, selected, Option.map_some, Option.some.injEq] at returned
+  subst sample
+  obtain ⟨realization, checked, cell, signs⟩ :=
+    family.region_signs original region (List.mem_of_getElem? selected)
+  exact signs x inside
+
+example (root : Root parent) (member : root ∈ family.boundaries) :
+    Region.section root ∈ family.cells ∧ (Region.section root).sample = Tower.Sample.ofRoot root :=
+  ⟨(family.mem_cells _).mpr (Or.inl ⟨root, member, rfl⟩), Region.sample_section root⟩
+
+example (before after : List (Root parent)) (a b : Root parent)
+    (adjacent : family.boundaries = before ++ a :: b :: after) (x : K)
+    (left : a.denote original < x) (right : x < b.denote original)
+    (region : Region parent) (member : region ∈ family.cells) (inside : region.Mem original x) :
+    region = Region.between a b := by
+  obtain ⟨unique, present, only⟩ := family.cells_unique original x
+  have bounded : Region.between a b ∈ family.cells :=
+    (family.mem_cells _).mpr (Or.inr (family.bounded_mem before after a b adjacent))
+  exact (only region ⟨member, inside⟩).trans (only (.between a b) ⟨bounded, left, right⟩).symm
+
 example (sample : Tower.Sample parent) (present : sample ∈ family.sections) :
     ∃ root ∈ family.boundaries, sample = Tower.Sample.ofRoot root ∧
       sample.cell.contains sample.value = true ∧
