@@ -1677,7 +1677,10 @@ The converted coordinates can also be coefficients of a new sign/root problem.
 Write a = √2 and b = √3 in that common field. At the roots of
 `(x − a)(x − b)`, the ordered queries `x − a`, `x − b`, and `a − b` have
 signs `(0,−,−)` and `(+,0,−)`, each once. The impossible pattern `(0,0,−)`
-has count zero. The sign function below evaluates a field coordinate on the
+has count zero. The same check enumerates a before b and compares roots
+selected by `x − a` and `x − b`. Both derivative words are `[+]`; their
+equality does not identify roots of different defining polynomials.
+The sign function below evaluates a field coordinate on the
 common generator's certified enclosure, refining it when needed.
 
 ```lean
@@ -1695,10 +1698,23 @@ private def commonFieldTablePass
     let head := qa * qb
     let some table := determine sign 7 head .negInf .posInf
       [qa, qb, DensePoly.C (a - b)] | return false
+    let .ok (some roots) :=
+      Descriptor.buildRoots sign 7 head .negInf .posInf
+      | return false
+    let some left := Descriptor.validate sign 7
+      ⟨7, qa, .negInf, .posInf, [1], [1]⟩
+      | return false
+    let some right := Descriptor.validate sign 7
+      ⟨7, qb, .negInf, .posInf, [1], [1]⟩
+      | return false
     return common.generator.p.natDegree == 4 &&
       table.rows.toList ==
       [([0, -1, -1], 1), ([1, 0, -1], 1)] &&
-      table.count [0, 0, -1] == 0
+      table.count [0, 0, -1] == 0 &&
+      roots.map (fun d => d.signAt qa) == [0, 1] &&
+      roots.map (fun d => d.signAt qb) == [-1, 0] &&
+      left.compare right == .lt &&
+      right.compare left == .gt
   else return false
 
 #guard commonFieldTablePass
