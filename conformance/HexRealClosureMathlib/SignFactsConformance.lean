@@ -161,24 +161,34 @@ noncomputable abbrev upperEmbedding : Element context → ℝ :=
       (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _)
       (fun _ _ => Rat.cast_div _ _)) p claimed memo index
 
-/-- Both readers receive facts from supplied checked graphs. Removing the
-lower constant fact rejects the upper literal during coefficient decoding. -/
+/-- The upper literal stores the lower graph-derived coefficient itself.
+Removing that lower fact rejects byte decoding at the dependency boundary. -/
 def nestedPass : Bool :=
   (do
     let lowerMemo ← full.validate? Sturm.orderSign 7 source.raw.head source.raw.lower source.raw.upper
     let lowerFact ← readFact stored 1 lowerMemo 0
-    let lowerReader := Element.signCodec ValueCodec.rat [lowerFact, SignCodecConformance.oneFact]
-    let graph : Dag (Element context) Nat := ⟨#[⟨NestedSignsConformance.queryNode, none⟩], 0⟩
+    let lowerReader := Element.signCodec ValueCodec.rat [lowerFact]
+    let polynomial := DensePoly.ofCoeffs #[NestedSignsConformance.rational 0, literal]
+    let signs ← (NestedSignsConformance.next.buildSigns
+      [NestedSignsConformance.next.queryPoly polynomial]).toOption
+    let node ← match signs.evidence with
+      | .leaf node => some node
+      | _ => none
+    let graph : Dag (Element context) Nat := ⟨#[⟨node, none⟩], 0⟩
     let upperMemo ← graph.validate? Element.sign 8 NestedSignsConformance.root.raw.head
       NestedSignsConformance.root.raw.lower NestedSignsConformance.root.raw.upper
-    let upperFact ← readUpperFact NestedSignsConformance.nextQuery 1 upperMemo graph.root
-    let reader := Element.signCodec lowerReader [upperFact]
-    let bytes := (reader.encode NestedSignsConformance.nextLiteral).writeBytes
-    let restored ← (reader.decodeBytes bytes).toOption
-    let missing := Element.signCodec (Element.signCodec ValueCodec.rat [lowerFact]) [upperFact]
-    pure (restored == NestedSignsConformance.nextLiteral &&
-      (missing.decodeBytes bytes).toOption.isNone &&
-      (readUpperFact NestedSignsConformance.nextQuery (-1) upperMemo graph.root).isNone)) == some true
+    let upperFact ← readUpperFact polynomial 1 upperMemo 0
+    if hn : upperFact.sign ≠ 0 then
+      let value := Element.restore upperFact.polynomial upperFact.sign upperFact.checked hn
+      let reader := Element.signCodec lowerReader [upperFact]
+      let bytes := (reader.encode value).writeBytes
+      let restored ← (reader.decodeBytes bytes).toOption
+      let missing := Element.signCodec
+        (Element.signCodec ValueCodec.rat ([] : List (SignFact context))) [upperFact]
+      pure (restored == value && restored.polynomial == polynomial && restored.sign == 1 &&
+        (missing.decodeBytes bytes).toOption.isNone &&
+        (readUpperFact polynomial (-1) upperMemo 0).isNone)
+    else none) == some true
 
 #guard nestedPass
 
