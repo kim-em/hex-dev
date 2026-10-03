@@ -229,9 +229,16 @@ theorem isolateAt_progress [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableE
     isolations produced gaps
   exact ⟨cert, by unfold isolateAt; rw [produced]; exact accepted⟩
 
-/-- Search successive precisions until the actual isolation checker accepts.
-The preceding progress theorem proves termination for a nonzero squarefree
-head. Root solving runs once; `Nat.find` refines intervals until their gap check
+/-- Doubling precision is cofinal, so finite separation needs only
+logarithmically many precision probes. -/
+theorem doubling_cofinal : Filter.Tendsto (fun k : Nat => 2 ^ k)
+    Filter.atTop Filter.atTop :=
+  Filter.tendsto_atTop_mono
+    (fun k => (show k < 2 ^ k from Nat.lt_two_pow_self).le) Filter.tendsto_id
+
+/-- Double precision until the proposed intervals separate. Separation
+progress proves termination for a nonzero squarefree head, and the acceptance
+law justifies the single replay build. Root solving runs once; `Nat.find` refines intervals until their gap check
 passes, then the replay builder runs once.
 The returned proof checks the literal evidence, without a search-fuel premise.
 This is a compiled producer: quotation must emit its literal certificate and
@@ -254,14 +261,14 @@ def isolate [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     return ⟨intervals⟩
   let separated (precision : Nat) := (proposal precision).filter IsolationCert.checkGaps
   have proposal_eq (precision : Nat) : proposal precision = proposeIsolations head precision := rfl
-  have available : ∃ precision, (separated precision).isSome = true := by
-    obtain ⟨K, progress⟩ := proposeIsolations_separated head nonzero id Filter.tendsto_id
+  have available : ∃ k, (separated (2 ^ k)).isSome = true := by
+    obtain ⟨K, progress⟩ := proposeIsolations_separated head nonzero (fun k => 2 ^ k) doubling_cofinal
     obtain ⟨isolations, produced, gaps⟩ := progress K le_rfl
-    change proposeIsolations head K = some isolations at produced
+    change proposeIsolations head (2 ^ K) = some isolations at produced
     exact ⟨K, by simp only [separated, proposal_eq, produced, Option.filter_some,
       gaps, ↓reduceIte]; rfl⟩
-  let precision := Nat.find available
-  have found := Nat.find_spec available
+  let precision := 2 ^ Nat.find available
+  have found : (separated precision).isSome = true := Nat.find_spec available
   let isolations := (separated precision).get found
   have filtered : separated precision = some isolations := Option.eq_some_of_isSome found
   have inputs := Option.filter_eq_some_iff.mp filtered

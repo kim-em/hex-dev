@@ -81,4 +81,38 @@ theorem exists_formula {m n : Nat} (root : Fin m → ℝ)
     have hv : value = true := hsemantic.mpr h
     simpa [hv] using hvalue
 
+/-- Every checked cell formula yields a total universal decision. -/
+theorem forall_decision {m n : Nat} (root : Fin m → ℝ)
+    (hmono : StrictMono root) (formula : Hex.RealFormula.QF n)
+    (valuation : ℝ → Fin n → ℝ)
+    (signOf : Cell m → Hex.RealFormula.Poly n → Option Sign)
+    (hlookup : ∀ c x, Cell.Region root c x →
+      ∀ p ∈ formula.polys, ∃ sign,
+        signOf c p = some sign ∧
+        SignType.sign (((sign.toInt : Int) : ℝ)) =
+          SignType.sign (p.eval (valuation x))) :
+    ∃ value, OptionFold.allArray (Cell.all m) (fun c => formula.evalSigns (signOf c)) = some value ∧
+      (value = true ↔ ∀ x, formula.toProp (valuation x)) := by
+  exact CellFold.Region.forall_spec root hmono
+    (fun c => formula.evalSigns (signOf c))
+    (fun x => formula.toProp (valuation x))
+    (cell_eval root hmono formula valuation signOf hlookup)
+
+/-- Every checked cell formula yields a total existential decision. -/
+theorem exists_decision {m n : Nat} (root : Fin m → ℝ)
+    (hmono : StrictMono root) (formula : Hex.RealFormula.QF n)
+    (valuation : ℝ → Fin n → ℝ)
+    (signOf : Cell m → Hex.RealFormula.Poly n → Option Sign)
+    (hlookup : ∀ c x, Cell.Region root c x →
+      ∀ p ∈ formula.polys, ∃ sign,
+        signOf c p = some sign ∧
+        SignType.sign (((sign.toInt : Int) : ℝ)) =
+          SignType.sign (p.eval (valuation x))) :
+    ∃ value, OptionFold.anyArray (Cell.all m) (fun c => formula.evalSigns (signOf c)) = some value ∧
+      (value = true ↔ ∃ x, formula.toProp (valuation x)) := by
+  exact CellFold.Region.exists_spec root hmono
+    (fun c => formula.evalSigns (signOf c))
+    (fun x => formula.toProp (valuation x))
+    (cell_eval root hmono formula valuation signOf hlookup)
+
 end Hex.RCF.RealCoefficients

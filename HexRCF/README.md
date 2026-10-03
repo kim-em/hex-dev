@@ -124,3 +124,13 @@ These identities must reduce across imports. A transported isolation certificate
 without a directly checkable root witness is currently rejected before search.
 This extends source conversion; general reconstruction and algebraic-only
 producer completeness remain required.
+
+The fixed-field algebraic backend has a proof-backed complete certificate
+producer: it reduces repeated roots, refines complete root intervals, records
+all required literal signs and evaluates the shared formula on ordinary real
+cells. Compiled decision laws cover both verdicts; only a true verdict with
+ordinary-kernel replay produces a goal proof. The bounded builder remains
+available. The tactic also bounds direct bisection and fallback refinement
+through `rcf.algebraic.directDepth` and `rcf.algebraic.maxDoublings`, with
+terminal exhaustion and replay diagnostics. This does not give total
+registered-constant search or an unlimited proof elaboration budget.

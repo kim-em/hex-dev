@@ -5,7 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
-public meta import HexRCF.RealCoefficients.FieldBuild
+public meta import HexRCF.RealCoefficients.FieldDecisionProgress
+public meta import HexRCF.RealCoefficients.FieldBuildBudget
 public meta import HexRealAlgebraicMathlib.Laws
 public meta import Lean
 
@@ -16,6 +17,16 @@ public meta section
 namespace Hex.RCF.RealCoefficients.FieldLiteral
 
 open Hex Lean Meta
+
+register_option rcf.algebraic.directDepth : Nat := {
+  defValue := 256
+  descr := "maximum direct algebraic interval bisection depth"
+}
+
+register_option rcf.algebraic.maxDoublings : Nat := {
+  defValue := 10
+  descr := "maximum fixed-field enclosure attempts at precisions 1, 2, 4, ... bits"
+}
 
 private def arrayLit (ty : Expr) (xs : List Expr) : Expr :=
   let nil := mkApp (mkConst ``List.nil [Level.zero]) ty
@@ -248,36 +259,26 @@ meta def resultExpr {p : ZPoly} {s : DyadicSquare}
   let signs ← signTableExpr pExpr rootExpr data.signs
   mkAppM ``FieldBuild.Result.mk #[radical, isolation, roots, signs]
 
-/-- Construct a checked proof for a fixed-field existential or universal
-sentence. Search runs in meta code; the resulting term contains only literal
-certificate data, the Boolean replay proof, and its soundness theorem. Return
-the producer result and checked verdict as well so another checker can use the
-same finite sign table without running search or replay a second time. -/
-meta def proveWithCertificate {p : ZPoly} {s : DyadicSquare}
+/-- Quote and replay one fixed-field certificate. Search is already complete;
+all finite sign operands are checked before evaluating the source verdict. -/
+private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
     {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
     [ZPoly.CheckedIrreducible p] {n : Nat}
     (pExpr rootExpr valuesExpr formulaExpr : Expr)
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
-    (formula : RealFormula.QF (n + 1))
-    (quantifier : RealFormula.Quantifier) (precision : Nat := 8)
-    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := [])
-    (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit := fun _ => pure ()) :
+    (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit)
+    (data : FieldBuild.Result p s hw hp Unit (n + 1)) :
     MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
-  let some data := FieldBuild.build p s hw hp values formula () precision extraSignKeys |
-    throwError "rcf: fixed-field certificate construction failed"
   validate data
-  let sampleKeys := SignInputs.openSamples FieldDecision.point data.isolation
-    (formula.polys.map (FieldSpecialize.literalPolynomial values))
-  unless sampleKeys.all (fun key => (data.signs.lookup? key).isSome) do
-    throwError "rcf: fixed-field sign table omitted a cell sample"
-  let sign := fun key => (data.signs.lookup? key).getD 0
-  let cells := Cell.all data.isolation.isolations.intervals.size
-  let cellValue := fun cell => formula.evalSigns
-    (FieldDecision.cellSign sign values data.isolation
-      (data.rootSigns.value data.isolation.total) cell)
+  let keys := FieldBuild.signKeys values formula data.radical.core data.isolation
+    data.rootSigns extraSignKeys
+  unless keys.all (fun key => (data.signs.lookup? key).isSome) do
+    throwError "rcf: fixed-field sign table omitted a replay or cell sign"
   let preview := match quantifier with
-    | .forallReal => OptionFold.allArray cells cellValue
-    | .existsReal => OptionFold.anyArray cells cellValue
+    | .forallReal => data.allValue values formula
+    | .existsReal => data.anyValue values formula
   match quantifier, preview with
   | .forallReal, some false =>
       throwError "rcf: the universal sentence is false on the prepared cells"
@@ -298,14 +299,16 @@ meta def proveWithCertificate {p : ZPoly} {s : DyadicSquare}
   let candidate ← mkFreshExprMVar proofType
   let script ← match quantifier with
     | .forallReal => `(tactic|
-        (simp only [FieldBuild.Result.checkForall, Field.checkSignTable,
+        (simp only [FieldBuild.Result.checkForall_eq, FieldBuild.Result.checkEvidence,
+          Field.checkSignTable,
           LiteralSign.Table.check, RadicalCert.check,
           FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
           TarskiCertificate.check_eq, SignedRemainderChain.check,
           ← Array.all_toList, Array.toList_range, Bool.and_eq_true];
           repeat' (any_goals (apply And.intro)); all_goals try (decide +kernel)))
     | .existsReal => `(tactic|
-        (simp only [FieldBuild.Result.checkExists, Field.checkSignTable,
+        (simp only [FieldBuild.Result.checkExists_eq, FieldBuild.Result.checkEvidence,
+          Field.checkSignTable,
           LiteralSign.Table.check, RadicalCert.check,
           FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
           TarskiCertificate.check_eq, SignedRemainderChain.check,
@@ -320,6 +323,54 @@ meta def proveWithCertificate {p : ZPoly} {s : DyadicSquare}
   check proof
   return (proof, certificate, data, checked)
 
+/-- Construct a checked proof for a fixed-field existential or universal
+sentence. Search runs in meta code; the resulting term contains only literal
+certificate data, the Boolean replay proof, and its soundness theorem. Return
+the producer result and checked verdict as well so another checker can use the
+same finite sign table without running search or replay a second time. -/
+meta def proveWithCertificate {p : ZPoly} {s : DyadicSquare}
+    {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
+    [ZPoly.CheckedIrreducible p] {n : Nat}
+    (pExpr rootExpr valuesExpr formulaExpr : Expr)
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1))
+    (quantifier : RealFormula.Quantifier) (precision : Nat := 8)
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := [])
+    (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit := fun _ => pure ()) :
+    MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
+  let some data := FieldBuild.build p s hw hp values formula () precision extraSignKeys |
+    throwError "rcf: fixed-field certificate construction failed"
+  return ← quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula
+    quantifier extraSignKeys validate data
+
+/-- Produce and quote a fixed-field certificate within explicit frontend
+search budgets. The complete library producer is separate. Accepted false,
+exhaustion and invalid replay remain terminal; search is absent from proofs.
+Cancellation is checked before and after native production. Individual native
+root computations do not check Lean cancellation or elaboration heartbeats. -/
+meta def proveRefiningWithCertificate {p : ZPoly} {s : DyadicSquare}
+    {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
+    [ZPoly.CheckedIrreducible p] {n : Nat}
+    (pExpr rootExpr valuesExpr formulaExpr : Expr)
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := [])
+    (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit := fun _ => pure ()) :
+    MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
+  if real : s.meetsRealAxis = true then
+    let options ← getOptions
+    Core.checkInterrupted
+    let result := FieldBuild.produceWithin p s hw hp real values formula ()
+      (rcf.algebraic.directDepth.get options) (rcf.algebraic.maxDoublings.get options) extraSignKeys
+    Core.checkInterrupted
+    match result with
+    | .error .exhausted => throwError "rcf: algebraic interval refinement budget exhausted; increase rcf.algebraic.maxDoublings or rcf.algebraic.directDepth"
+    | .error .invalidReplay => throwError "rcf: algebraic certificate construction or replay failed"
+    | .ok data =>
+        return ← quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula
+          quantifier extraSignKeys validate data
+  else throwError "rcf: selected square does not name a real coefficient field"
+
 /-- Construct the checked fixed-field proof when no additional sign queries
 are needed by an enclosing coefficient-presentation checker. -/
 meta def prove {p : ZPoly} {s : DyadicSquare}
@@ -331,5 +382,14 @@ meta def prove {p : ZPoly} {s : DyadicSquare}
     (quantifier : RealFormula.Quantifier) (precision : Nat := 8) : MetaM Expr := do
   return (← proveWithCertificate pExpr rootExpr valuesExpr formulaExpr values formula
     quantifier precision).1
+
+/-- Quote a refining algebraic field search with no extra presentation keys. -/
+meta def proveRefining {p : ZPoly} {s : DyadicSquare}
+    {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
+    [ZPoly.CheckedIrreducible p] {n : Nat}
+    (pExpr rootExpr valuesExpr formulaExpr : Expr)
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier) : MetaM Expr := do
+  return (← proveRefiningWithCertificate pExpr rootExpr valuesExpr formulaExpr values formula quantifier).1
 
 end Hex.RCF.RealCoefficients.FieldLiteral
