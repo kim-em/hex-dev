@@ -395,14 +395,19 @@ from the UI on 2026-09-05 for the number-field batch.
 
 `hex-publishing` carries the previously released repositories in
 `released.yml` except the eight listed as released under `hex-publishing-2`
-below: 48 of 50. The new `hex-ecpp` and `hex-ecpp-mathlib` repositories
-need their token selections and organization approvals confirmed before
-the next publishing run. The
+below: 48 of 50. The ECPP repositories are allocated to
+`hex-publishing-2`, as listed below. The
 number-field batch (`hex-number-field`, `hex-number-field-mathlib`,
 `hex-number-field-tower`, `hex-number-field-tower-mathlib`, `hex-rcf`)
 is on this token.
 
 `hex-publishing-2` carries 44 of 50:
+
+The new `hex-ecpp` and `hex-ecpp-mathlib` repositories are allocated to this
+token. Add both selected repositories with Contents and Workflows read/write
+and approve the Leanprover organization grant before the next publishing
+run. Their selections and approval are pending confirmation; this allocation
+uses two of the six slots in the recorded inventory.
 
 - released: `hex-primality`, `hex-primality-mathlib`,
   `hex-sparse-poly`, `hex-sparse-poly-mathlib`, `hex-resultant`,
