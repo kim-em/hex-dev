@@ -280,5 +280,74 @@ class IsolationTests(unittest.TestCase):
                      "malformed native root frame")
 
 
+
+    def test_nested_replay_lost_root_level(self):
+        self.rejects(lambda rows: rows[20]["context"][2].pop(), "wrong nested replay stages")
+
+    def test_nested_replay_wrong_infinitesimal_depth(self):
+        self.rejects(lambda rows: rows[20]["context"].__setitem__(1, 1),
+                     "wrong nested replay stages")
+
+    def test_nested_replay_wrong_consumer_sign(self):
+        self.rejects(lambda rows: rows[20]["selected"][1]["values"].__setitem__(0, -1),
+                     "nested selected signs differ")
+
+    def test_nested_replay_reordered_consumer_queries(self):
+        self.rejects(lambda rows: rows[20]["selected"][1]["queries"].reverse(),
+                     "wrong nested consumer queries")
+
+    def test_nested_replay_cyclic_graph(self):
+        def mutate(rows):
+            graph = rows[20]["selected"][1]["certificates"][0]["graph"]
+            graph[2][graph[1]][1] = [[graph[1], graph[1]]]
+        self.rejects(mutate, "child-before-parent")
+
+    def test_nested_replay_stale_graph_domain(self):
+        self.rejects(lambda rows: rows[20]["selected"][1]["certificates"][0]["graph"][2][0][0].__setitem__(0, [99]),
+                     "nested graph domain differs")
+
+    def test_nested_replay_false_integer_table(self):
+        def mutate(rows):
+            graph = rows[20]["selected"][1]["certificates"][0]["graph"]
+            counts = graph[2][graph[1]][0][6][2]
+            counts[0] += 1
+        self.rejects(mutate, "nested graph table differs")
+
+    def test_nested_replay_false_integer_moment(self):
+        def mutate(rows):
+            graph = rows[20]["selected"][1]["certificates"][0]["graph"]
+            graph[2][graph[1]][0][6][3][0] += 1
+        self.rejects(mutate, "nested graph moment differs")
+
+    def test_nested_replay_zero_integer_denominator(self):
+        def mutate(rows):
+            graph = rows[20]["selected"][1]["certificates"][0]["graph"]
+            graph[2][graph[1]][0][6][5] = 0
+        self.rejects(mutate, "malformed nested integer dimensions")
+
+    def test_nested_replay_wrong_inverse(self):
+        self.rejects(lambda rows: rows[20]["values"].__setitem__(4, []),
+                     "nested guard inversion or defining equation changed")
+
+    def test_nested_replay_wrong_stored_sign(self):
+        self.rejects(lambda rows: rows[20]["signs"].__setitem__(0, -1),
+                     "nested stored signs changed")
+
+
+    def test_nested_replay_wrong_nonzero_integer_denominator(self):
+        def mutate(rows):
+            graph = rows[20]["selected"][1]["certificates"][0]["graph"]
+            system = graph[2][graph[1]][0][6]
+            system[5] += 2
+        self.rejects(mutate, "nested inverse matrix identity failed")
+
+    def test_nested_replay_wrong_crossing_value(self):
+        self.rejects(lambda rows: rows[20]["values"].__setitem__(7, []),
+                     "nested guard inversion or defining equation changed")
+
+    def test_nested_replay_wrong_crossing_sign(self):
+        self.rejects(lambda rows: rows[20]["signs"].__setitem__(7, 1),
+                     "nested stored signs changed")
+
 if __name__ == "__main__":
     unittest.main()

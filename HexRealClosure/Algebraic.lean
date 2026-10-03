@@ -23,6 +23,8 @@ structure Context (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E]
   root : SignDet.Descriptor E Ctx coeffSign parent
   handle : Option (SignDet.QueryHandle root)
   handle_checked : handle = root.prepareQueries
+  rootCount : Option Int
+  count_checked : rootCount = handle.map (fun h => Sturm.countPrepared h.domain)
   cleanCoeff : E → Bool
   canReduce : Bool
   reduce_checked : canReduce =
@@ -36,7 +38,8 @@ variable [DecidableEq Ctx] {coeffSign : E → Int} {parent : Ctx}
 Interpretation and field/order laws are companion conclusions. -/
 def Context.adjoin (root : SignDet.Descriptor E Ctx coeffSign parent)
     (cleanCoeff : E → Bool) : Context E Ctx coeffSign parent :=
-  ⟨root, root.prepareQueries, rfl, cleanCoeff,
+  let handle := root.prepareQueries
+  ⟨root, handle, rfl, handle.map (fun h => Sturm.countPrepared h.domain), rfl, cleanCoeff,
     decide (root.raw.head.leadingCoeff = 1) && root.raw.head.toArray.all cleanCoeff, rfl⟩
 
 private theorem Context.root_adjoin_proof
@@ -147,15 +150,52 @@ theorem Context.queryPoly_degree (context : Context E Ctx coeffSign parent) (p :
       rw [DensePoly.natDegree_eq_size_sub_one] at hpos ⊢
       omega
 
+/-- A linear query with the same strict sign at both finite descriptor
+endpoints has that sign throughout the selected interval. A zero at one
+endpoint uses the other endpoint's sign. Other queries use
+the shared selected-sign producer. -/
+@[expose] def Context.intervalSign? (context : Context E Ctx coeffSign parent)
+    (p : DensePoly E) : Option Int :=
+  if p.size = 2 then
+    match context.root.raw.lower, context.root.raw.upper with
+    | .finite lower, .finite upper =>
+      let left := coeffSign (p.eval lower)
+      let right := coeffSign (p.eval upper)
+      if left = 0 then some right
+      else if right = 0 then some left
+      else if (left = 1 ∨ left = -1) ∧ right = left then some left else none
+    | _, _ => none
+  else none
+
+/-- A prepared interval containing exactly one head root needs one direct
+Sturm query for a scalar sign, without a joint sign-determination table.
+The root count is cached once when the immutable context is constructed. -/
+@[expose] def Context.singleSign? (context : Context E Ctx coeffSign parent)
+    (p : DensePoly E) : Option Int :=
+  match context.handle with
+  | none => none
+  | some handle =>
+    if context.rootCount = some 1 then some (Sturm.queryPrepared handle.domain p) else none
+
 /-- Selected-root signs use the bounded query without changing stored syntax.
-The companion proves the preliminary pseudo-remainder preserves the sign;
-the BKR certificate checks the reduced query. -/
+The companion proves the preliminary pseudo-remainder preserves the sign.
+Linear queries may use endpoint signs. A count-one interval uses one prepared
+Sturm scalar query; other intervals retain the shared BKR producer and its
+checked reduced-query certificate. -/
 @[expose] def Context.signPoly (context : Context E Ctx coeffSign parent)
-    (p : DensePoly E) : Int := context.signQuery (context.queryPoly p)
+    (p : DensePoly E) : Int :=
+  let query := context.queryPoly p
+  if query.size ≤ 1 then coeffSign (query.coeff 0) else
+  match context.intervalSign? query with
+  | some sign => sign
+  | none =>
+    match context.singleSign? query with
+    | some sign => sign
+    | none => context.signQuery query
 
 theorem Context.signPoly_const (context : Context E Ctx coeffSign parent)
     (p : DensePoly E) (h : p.size ≤ 1) : context.signPoly p = coeffSign (p.coeff 0) := by
-  rw [signPoly, context.queryPoly_const p h, context.signQuery_const p h]
+  simp only [signPoly, context.queryPoly_const p h, h, ↓reduceIte]
 
 theorem Context.monic_of_reduce (context : Context E Ctx coeffSign parent)
     (h : context.canReduce = true) : context.root.raw.head.leadingCoeff = 1 := by
