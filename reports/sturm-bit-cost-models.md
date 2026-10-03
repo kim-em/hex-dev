@@ -328,3 +328,88 @@ CPU, retaining binary/source hashes, source snapshots, commands, timestamps
 and host load. These comparisons establish the correction on the cancellation
 family and check preservation of the replay improvement; they are not a
 universal speedup claim.
+
+## Frontend models and retained counterexamples
+
+The old 8–20 head-degree declarations counted coefficient operations while
+crossing Lean's small-integer boundary. Their retained logarithmic span was
+too short for an OLS slope fit. Those observations do not discharge Phase 4.
+The replacement 128–1024 attempt is retained in
+`bench-results/prerequisite-sturm-head-wide`. Retargeting and prepared count
+fail their two-sided quadratic and cubic bit-work hypotheses. They are not
+relabelled as upper-bound passes after observation. The Rat-chain profile at
+512 has 52.06% allocation and 33.64% GMP, with linear-limb arithmetic rather
+than material general multiplication or gcd. The proposed quartic scalar
+citations therefore do not justify those head-degree mode-2 registrations.
+
+The power-of-two quadratic and endpoint attempts in that artifact are also
+retained. Primitive derivative normalization makes the quadratic's chain
+short; power-of-two dyadic endpoints have mantissa ±1. Their dominant work is
+linear-limb copying/shifting, not the general multiplication cited in their
+withdrawn quadratic upper-bound hypotheses.
+
+### New head-only and short-chain two-sided families
+
+`runRetargetWide` uses X^n−2 with preparation at (-1,1), then retargets to
+(-3,3). Its derivative chain is short and needs linear storage. Each timed
+Horner step multiplies by ±3 and traverses a growing Θ(n)-bit accumulator,
+giving `n ^ 2` bit work. The new fixed ladder is
+`65536,131072,262144,524288`: roughly 1600–13000 limbs, chosen to move past
+per-coefficient dispatch. It is fixed before collection; no observed exponent
+or fitted overhead coefficient selects it.
+
+`runInitialWide` and `runClearingWide` build only T_n, using its standard
+successive-coefficient recurrence. Their ladder is
+`16384,32768,65536,131072`. The input/output themselves contain Θ(n²) bits.
+Derivative multiplication by word-size indices and fixed-denominator clearing
+use linear-limb arithmetic, giving the independently declared `n ^ 2`.
+The recurrence is checked against the existing Chebyshev constructor over
+0–128 by `hexsturm_bench check-head-fixtures`. Its mathematical formula is
+[DLMF 18.5.11](https://dlmf.nist.gov/18.5#E11).
+
+`runEmbedSparse` isolates literal embedding from arithmetic: its X^n−2
+certificates have a short chain containing Θ(n) word-size coefficients and
+scales. Integer-to-rational casts, literal copying and scalar hashes take
+constant word work. The declaration is `n`, on
+`2048,4096,8192,16384,32768`. Embedding preserves signs rather than recomputing
+Horner values. The former long-chain bit-volume hypothesis is not reused.
+
+### Growing-operand mode-2 candidates
+
+New mantissas are deterministic odd integers with their top bit set and
+unrelated LCG words in the interior. They do not collapse to a power-of-two
+shift representation.
+
+- Coefficient size: A X³+B X²+C X+D, with unrelated odd b-bit A,
+  (b−2)-bit B, (b−1)-bit C and negative (b−1)-bit D. B²<3AC makes
+  the derivative positive; endpoint dominance gives exactly one real root in
+  (-2,2). A repeated nonreal root would require degree at least four. The
+  fixed-degree producer performs general growing-operand products and gcds.
+- Endpoint size: T_8 at ±u, with odd b-bit u, and separately ±u/2^(b/2).
+  Mantissas remain b-bit integers. Nontrivial Horner steps multiply two
+  growing operands, instead of multiplying by the mantissa ±1.
+- Frontend scalar size: T_8(X−z), with odd b-bit z, on (z−2,z+2).
+  It has eight simple real roots and a fixed normal chain. Linear quotients
+  contain −z, so chain/replay products are growing-by-growing. Prepared
+  counting and denominator transport recompute Horner signs at growing
+  mantissas. Literal embedding is excluded and uses the mode-1 family above.
+
+All these mode-2 declarations are `bits ^ 2`, on
+`2048,4096,8192,16384,32768`, four trial-major trials, a 100 ms inner target
+and a 600 s operational whole-child cap. Fixed degree and chain length bound
+the number of operations, and all intermediate widths are O(b). The cited
+bounds are [GMP basecase multiplication](https://gmplib.org/manual/Basecase-Multiplication)
+and [GMP binary gcd](https://gmplib.org/manual/Binary-GCD), with faster
+large-operand algorithms in the same manual. Algorithm crossovers prevent a
+single tight monomial across these limb regimes. Operation-only profiles must
+confirm that general multiplication/gcd really occurs in the measured phase;
+otherwise the upper-bound claim is not admitted. These qualifications and
+schedules precede collection. The cap is not an absolute performance budget.
+
+Admission status: the odd cubic and integral-endpoint profiles show the
+required general products/gcds. The fractional family has a passing own profile with substantial inclusive
+multiplication/Toom entries; dominant-phase admission remains under audit.
+The translated frontend captures predominantly show single-limb arithmetic
+and copies; general-product caller attribution is incomplete. They therefore
+do not establish the dominant published phase and are unadmitted candidates.
+Their original declarations and completed measurements remain retained.

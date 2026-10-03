@@ -1,0 +1,22 @@
+{
+  "command": [
+    ".lake/build/bin/hexrealalgebraic_bench",
+    "run",
+    "--repeats",
+    "4",
+    "--export",
+    "reports/bench-results/real-algebraic-readiness-baseline/results.json"
+  ],
+  "cpu": 65,
+  "git_commit": "a29afca7a5824d544c8ddf8b59b8952ff8eb1592",
+  "source_sha256": "dcaedcb4711029b2773107900867e46285f799c0ddd5272e84cda11acde163fc",
+  "binary_sha256": "c909fe61be98442ceec96657d84ec035e02b1cc471a80b57127b1c933aa80ece",
+  "host": "Linux chungus2 6.12.111 #1-NixOS SMP PREEMPT_DYNAMIC Mon Sep 21 13:02:51 UTC 2026 x86_64 GNU/Linux",
+  "cpu_model": "\t: AMD EPYC 9455 48-Core Processor",
+  "load": [
+    9.92919921875,
+    17.30419921875,
+    14.34375
+  ],
+  "purpose": "Baseline observations only; fixed registrations have no justified performance mode or operation-specific budget yet."
+}

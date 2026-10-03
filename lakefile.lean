@@ -231,6 +231,10 @@ lean_lib HexRealAlgebraic where
 @[default_target]
 lean_lib HexRealAlgebraicMathlib where
 
+@[default_target]
+lean_lib HexRealAlgebraicMathlibTests where
+  globs := #[.one `HexRealAlgebraicMathlib.Tests]
+
 lean_lib HexNumberFieldTower where
 
 lean_lib HexPolyFp where
@@ -336,6 +340,13 @@ lean_lib HexRealClosureMathlibTests where
 
 @[default_target]
 lean_lib HexSturmMathlib where
+
+@[default_target]
+lean_lib HexSturmMathlibTests where
+  globs := #[.one `HexSturmMathlib.Tests,
+    .one `HexSturmMathlib.Tests.Replay.Accepted,
+    .one `HexSturmMathlib.Tests.Replay.Rejected,
+    .one `HexSturmMathlib.Tests.Replay.Baseline]
 
 lean_lib HexInterval where
 
@@ -632,7 +643,8 @@ lean_lib HexRCFRealCoefficients where
 lean_lib HexQuerySemantics where
   srcDir := "adapters"
   globs := #[`HexRealRootsMathlib.TarskiFoundation, `HexRealRootsMathlib.TarskiSoundness, `HexRealRootsMathlib.TarskiReal,
-    `HexSturmMathlib.Soundness,
+    `HexSturmMathlib.Soundness, `HexSturmMathlib.Tests.Replay.Semantics,
+    `HexSturmMathlib.Tests.Replay.SemanticsBaseline,
     `HexSignDetMathlib.RootModel, `HexSignDetMathlib.RootProducer,
     `HexSignDetMathlib.SelectedRoot, `HexSignDetMathlib.SelectedProducer,
     `HexSignDetMathlib.CompletionProducer, `HexSignDetMathlib.Convert,
@@ -644,6 +656,7 @@ lean_lib HexQuerySemantics where
     `HexSignDetMathlib.ComparisonProducer,
     `HexRealClosureMathlib.Specialize, `HexRealClosureMathlib.SpecializeTests,
     `HexRealClosureMathlib.SignFacts, `HexRealClosureMathlib.SignRequests,
+    `HexRealClosureMathlib.SignEvidence,
     `HexRealClosureMathlib.TransportPolynomial, `HexRealClosureMathlib.TransportProduct,
     `HexRealClosureMathlib.TransportArithmetic, `HexRealClosureMathlib.TransportQuery, `HexRealClosureMathlib.TransportTests,
     `HexRealClosureMathlib.TransportPower, `HexRealClosureMathlib.TransportTarski,
@@ -1164,10 +1177,10 @@ lean_lib HexConformance where
       `HexRealClosureMathlib.NestedSignsConformance,
       `HexRealClosureMathlib.SignCodecConformance,
       `HexRealClosureMathlib.SignFactsConformance,
-      `HexRealClosureMathlib.SignRequestsConformance].map Glob.one
+      `HexRealClosureMathlib.SignRequestsConformance,
+      `HexRealClosureMathlib.SignEvidenceConformance].map Glob.one
 
-    ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
-    ++ #[.submodules `HexSturmMathlib.Replay]
+    ++ #[`HexSturm.Fixtures, `HexSturm.Conformance].map Glob.one
 
     ++ #[`HexKronecker.Conformance].map Glob.one
 
@@ -1822,6 +1835,14 @@ lean_lib HexSignDetBenchSupport where
   globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases, .one `HexSignDet.Small,
     .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Joint,
     .one `HexSignDet.MaximalMatrix, .one `HexSignDet.Height]
+
+lean_exe hexrealalgebraic_bench where
+  srcDir := "bench"
+  root := `HexRealAlgebraic.Bench
+
+lean_lib HexSturmBenchSupport where
+  srcDir := "bench"
+  globs := #[.one `HexSturm.Frontend]
 
 lean_exe hexsturm_bench where
   srcDir := "bench"

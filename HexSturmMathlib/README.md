@@ -36,7 +36,10 @@ accepted certificates over an ordered real closed field. `query_sound` and
 `queryPrepared_sound` apply it to the ordinary and prepared producers;
 `query_count`, `query_sign` and `query_bound` give counts, singleton signs and
 degree bounds. `query_nonneg` justifies the exact natural-number conversion in
-`Sturm.rootCount`, whose success domain is unchanged.
+`Sturm.rootCount`, whose success domain is unchanged. `rootCount_sturm`
+also bridges successful finite-dyadic natural counts to the existing half-open
+integer Sturm count after positive denominator clearing; it does not change
+that API's upper-endpoint-root behavior.
 `countPrepared_sound` relates the actual prepared count to the number of
 distinct roots in its current open interval through the proved shared theorem.
 `countPrepared_nonneg` proves nonnegativity under the same coefficient laws
@@ -47,8 +50,10 @@ The development target `HexQuerySemantics` builds
 and BKR root-semantics modules. These adapters are not published; their
 publication requires integrating them into the companion library target and
 adding pinned Tau Ceti release dependencies. Their axiom audits admit only `propext`,
-`Classical.choice` and `Quot.sound`. Remaining Phase-4 evidence is specified in
-[the specification](SPEC/hex-sturm-mathlib.md).
+`Classical.choice` and `Quot.sound`. This theorem-only companion has no dedicated
+Phase-4 performance deliverable. Ordinary-kernel correctness checks are built
+by `HexSturmMathlibTests` and `HexQuerySemantics`; Phase-4 dependency and
+headline-theorem requirements remain in the readiness audit. See [the specification](SPEC/hex-sturm-mathlib.md).
 
 Executable translations live in Mathlib-free `HexSturm.Transport`; see the
 [SPEC](SPEC/hex-sturm-mathlib.md) for their endpoint and binding contracts.

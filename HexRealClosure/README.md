@@ -1021,6 +1021,52 @@ The graphs are produced outside replay. This format references one supplied
 memo at a time. It does not implement a global graph of field levels or make
 graph validation avoid the predecessor arithmetic's native sign production.
 
+`HexRealClosure.SignEvidence` supplies a whole child packet instead of
+requiring callers to assemble a graph and sign references separately.
+`Context.buildEvidence keys` runs the existing prepared BKR producer on that
+exact ordered list of polynomial keys, then encodes its checked tree as one
+shared graph. Repeated requests retain separate sign slots; repeated literal
+nodes share an entry. Zero and empty request lists are supported.
+`SignEvidence.check?` independently checks the graph and its selected row,
+requiring the caller's complete key list. Missing, extra, reordered or
+substituted keys reject, even if substituted polynomials have equal values.
+The generic `check_ofSigns` theorem proves that checking a produced packet
+returns the original joint signs exactly.
+
+`SignEvidence.codec value ctx raw` stores the full selected-root binding,
+ordered keys, sign vector and shared graph in one versioned byte packet.
+`Context.decodeEvidence` in the companion decodes and checks those bytes, then
+returns a proved sign fact for every key, in order. Its semantic arguments occur
+only in erased proofs. The reader does not run this packet's producer to fill missing evidence.
+`Element.signCodec` can use the returned facts at the next coefficient level
+when they cover every nonzero coefficient literal in that packet, including
+those created by its producer's arithmetic.
+Graph checking uses the supplied coefficient arithmetic; avoiding searches
+inside that arithmetic requires separate coverage of its packing operations.
+
+Run `lake build HexRealClosureMathlib.SignEvidenceConformance` for direct
+rational sign comparisons, shared repeated queries, zero and empty cases,
+changed header, node and moment bindings, cycles, and corrupt unselected
+entries. Compiled decoding also erases a deliberately noncomputable semantic
+interpretation. A fixture second-level graph decodes through proved facts
+obtained by checking a first-level packet;
+removing a lower literal, an endpoint fact or an upper key rejects. The ordinary
+kernel probe uses a literal child certificate and the general correspondence
+proofs. Axiom audits include the actual producer success theorem, scalar fact
+construction, and the theorem connecting acceptance to the actual decoded bytes.
+
+This API takes an explicit key list. It does not yet collect all intermediate
+packing keys automatically, rebuild algebraic contexts from child packets or
+supply a single graph of dependencies between field levels. Literal packet
+roundtrips under lawful predecessor codecs are conditional on node shape;
+the actual encoder's root and backward-reference bounds and checked nodes'
+literal bindings are proved. Deriving the remaining node-shape premises and
+proving finite coverage for
+partial predecessor readers are still required for a universal producer-to-byte
+roundtrip. Semantic acceptance of arbitrary bytes is independent of that
+roundtrip. Collection, context rebuilding
+and kernel assembly costs need their own measurements.
+
 `PackingConformance` checks literal restoration, exact keys, context types and
 canonical zero in the ordinary kernel. `NestedSignsConformance` checks a second
 root defined by `a * Y - 1`, where `a` is stored as `X² - 1 + 2X` at the first

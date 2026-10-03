@@ -32,5 +32,6 @@ each one's cross-repo pins, is
 - Specification: [SPEC/SPEC.md](SPEC/SPEC.md)
 - Execution plan: [PLAN.md](PLAN.md)
 - Library DAG and phase state: [libraries.yml](libraries.yml)
+- Sturm and real-algebraic prerequisite coverage: [readiness matrix](reports/real-closure-prerequisites.md)
 - Development setup and workflow: [DEV.md](DEV.md)
 - Publish-out manifest: [scripts/release/released.yml](scripts/release/released.yml)

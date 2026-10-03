@@ -1,0 +1,372 @@
+{
+  "family": "sturm-translated-cachedreplay",
+  "function": "Hex.SturmFrontendBench.runCachedReplayBits",
+  "parameter": 32768,
+  "cpu": 22,
+  "load": [
+    20.1162109375,
+    13.0986328125,
+    10.68212890625
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/tmp/issue-10577-perf/sturm-translated-cachedreplay",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex10577-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_PROFILE_KERNEL=1",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10577-perf/sturm-translated-cachedreplay/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "profile",
+        "Hex.SturmFrontendBench.runCachedReplayBits",
+        "--param",
+        "32768",
+        "--target-inner-nanos",
+        "2000000000",
+        "--max-seconds-per-call",
+        "60",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/samply.json.gz",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/samply.json.gz",
+        "--perf-script",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/spawn-anchor.json",
+        "--output",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "/tmp/hex10577-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/normalized.json.gz",
+        "--sidecar",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/timed-1340704.jsonl",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/spawn-anchor.json",
+        "--out",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/filtered.json.gz",
+        "--output",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/filtered.json.gz",
+        "--symbols",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/symbols.json",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/sturm-translated-cachedreplay/diagnostics.json",
+        "--thread",
+        "hexsturm_bench",
+        "--top",
+        "20",
+        "--output",
+        "reports/bench-results/prerequisite-readiness-profiles/growing-operands/sturm-translated-cachedreplay.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
+  "commit": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1340704,
+    "bench_thread_name": "hexsturm_bench",
+    "bench_thread_tid": "1340707",
+    "regions_total": 129,
+    "total_timed_ms": 1467.162596,
+    "expected_samples_bench_thread": 1465.7,
+    "retained_samples_bench_thread": 1463,
+    "rejected_samples_bench_thread": 63,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1790918283729476866,
+    "spawn_anchor_mono_ns": 328275490086167,
+    "sidecar_mono_anchor_ns": 328275730427357,
+    "samply_meta_start_time_ms": 1790918283770.6846,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 1.0462549924850464,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 1.0462549924850464,
+      "raw_max_residual_ms": 1.0511720180511475,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 129,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 1463,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 1.0462549924850464,
+          "boundary_residual_raw_max_ms": 1.0511720180511475,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.004068434984987635,
+          "leaf_function_support_size": 322,
+          "comparison_samples": 1462,
+          "exchanged_samples": 11,
+          "exchanged_fraction": 0.007523939808481532,
+          "sampling_noise_allowance": 0.03454165594391378,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.0032019817594866164,
+          "leaf_function_support_size": 321,
+          "comparison_samples": 1458,
+          "exchanged_samples": 5,
+          "exchanged_fraction": 0.003429355281207133,
+          "sampling_noise_allowance": 0.023315581027514885,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 1462,
+          "top_leaf_functions": [
+            {
+              "function": 129,
+              "name": "0x496adc1",
+              "samples": 77
+            },
+            {
+              "function": 307,
+              "name": "0x496adca",
+              "samples": 35
+            },
+            {
+              "function": 246,
+              "name": "0x49691d6",
+              "samples": 33
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 1463,
+          "top_leaf_functions": [
+            {
+              "function": 129,
+              "name": "0x496adc1",
+              "samples": 75
+            },
+            {
+              "function": 307,
+              "name": "0x496adca",
+              "samples": 35
+            },
+            {
+              "function": 246,
+              "name": "0x49691d6",
+              "samples": 33
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 1458,
+          "top_leaf_functions": [
+            {
+              "function": 129,
+              "name": "0x496adc1",
+              "samples": 74
+            },
+            {
+              "function": 307,
+              "name": "0x496adca",
+              "samples": 35
+            },
+            {
+              "function": 246,
+              "name": "0x49691d6",
+              "samples": 33
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "d40df5947dd338826ff79a6a053ccdc7edeaecd28d6667f6a092758534fc7d11",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "0df97c48d73fcb60d59b7b814093f47711de30dc438c86fd5377838306818975",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "5eabe0b626b9e87b2a05af92fe737b8ce4ae4f6a3ee9ce7994f3d1e6313b63e6",
+    "perf.data": "1f05195b0812dafe68b68477e4fe8a0970acb8f3a2faaa84ae9e27af70eb5db7",
+    "timed-1340704.jsonl": "8c8e62ae21e5e1c885cddb06abba0e718c6db1b4387f7985e1952cca7a3f84c1",
+    "5.stdout": "995b26cc5ab731cf4c62fe628a5a4b5e39a55583d88120522547d28082564ea8",
+    "5.stderr": "23e6ba0e3dd2d6306c79e4100389ee3fad867d7fa79e748df04f0352e06298ca",
+    "samply.json.gz": "f07282edd041b2bd5dc2ccf2367a6ac174d4c74ccffdbeceaceafdd7813714b0",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "7.stdout": "7116f28d617af959e7527986993ff2e7ba64709d59e9c61afb687e71d932689c",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "7116f28d617af959e7527986993ff2e7ba64709d59e9c61afb687e71d932689c",
+    "normalized.json.gz": "0ee7453de5a32da9982736d746604a021f8e74399e852bf0728bb2a44e0bf900",
+    "8.stdout": "1037925cf420cdf9e20900daa2ee014a8c78a3453fc4fa2f52ea8935290c5dc8",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "749151df53e62c1feed1623b96419499d5b4c427d44799efb9fa54f2ced0af13",
+    "diagnostics.json": "88781da4664d0dd7b6272460eddb7f4ef057dfd8268f06124774a26f6fb4c6af",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "f0af03a634644037163160743a61930e08b865dcb507beb7124463db07a5070e",
+    "symbols.json": "fc0c25eac9252d379c852df6b1a5cceb6eb9b9c01aff7f55e834313c03af816d",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

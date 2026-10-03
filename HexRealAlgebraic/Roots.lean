@@ -122,13 +122,14 @@ Every constant, including zero, inherits the empty-array convention. -/
 
 namespace RealAlgebraicNumber
 
-/-- Select the unique nonnegative root of the square-root polynomial. -/
+/-- Select the unique nonnegative root of the square-root polynomial.
+This entry point checks the argument sign and rejects negative inputs. -/
 @[expose] def sqrtRoot? (a : RealAlgebraicNumber) : Option RealAlgebraicNumber :=
   if a < 0 then none else ofAlgebraic? a.toAlgebraic.sqrt
 
 /-- Return the nonnegative square root, or none for a negative argument. -/
 @[expose] def sqrt? (a : RealAlgebraicNumber) : Option RealAlgebraicNumber :=
-  if a < 0 then none else sqrtRoot? a
+  sqrtRoot? a
 
 /-- Square root of a nonnegative argument. The companion proves selection succeeds,
 so the fallback is unreachable-by-pipeline-invariant under the supplied hypothesis. -/

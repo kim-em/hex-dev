@@ -1,0 +1,380 @@
+{
+  "family": "sturm-odd-fractional",
+  "function": "Hex.SturmFrontendBench.runFractionalBits",
+  "parameter": 32768,
+  "cpu": 92,
+  "load": [
+    2.6005859375,
+    13.51416015625,
+    14.96435546875
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/tmp/issue-10577-perf/sturm-odd-fractional",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex10577-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_PROFILE_KERNEL=1",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10577-perf/sturm-odd-fractional/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "profile",
+        "Hex.SturmFrontendBench.runFractionalBits",
+        "--param",
+        "32768",
+        "--target-inner-nanos",
+        "2000000000",
+        "--max-seconds-per-call",
+        "60",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/samply.json.gz",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/samply.json.gz",
+        "--perf-script",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/spawn-anchor.json",
+        "--output",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "/tmp/hex10577-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/normalized.json.gz",
+        "--sidecar",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/timed-2419099.jsonl",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/spawn-anchor.json",
+        "--out",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/filtered.json.gz",
+        "--output",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/filtered.json.gz",
+        "--symbols",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/symbols.json",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/sturm-odd-fractional/diagnostics.json",
+        "--thread",
+        "hexsturm_bench",
+        "--top",
+        "20",
+        "--output",
+        "reports/bench-results/prerequisite-readiness-profiles/growing-operands/sturm-odd-fractional.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
+  "commit": "4b0ab3f5b2403d87c88006ea996cd8022552ac58",
+  "dirty": false,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 2419099,
+    "bench_thread_name": "hexsturm_bench",
+    "bench_thread_tid": "2419102",
+    "regions_total": 257,
+    "total_timed_ms": 1541.829401,
+    "expected_samples_bench_thread": 1540.3,
+    "retained_samples_bench_thread": 1542,
+    "rejected_samples_bench_thread": 4,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1790921258146054220,
+    "spawn_anchor_mono_ns": 331249906663501,
+    "sidecar_mono_anchor_ns": 331250026107079,
+    "samply_meta_start_time_ms": 1790921258174.9426,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 1.0010940432548523,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 1.0010940432548523,
+      "raw_max_residual_ms": 1.0121309757232666,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 257,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 1542,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 1.0010940432548523,
+          "boundary_residual_raw_max_ms": 1.0121309757232666,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.0029809447379680045,
+          "leaf_function_support_size": 331,
+          "comparison_samples": 1537,
+          "exchanged_samples": 5,
+          "exchanged_fraction": 0.0032530904359141183,
+          "sampling_noise_allowance": 0.022459049884672778,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.004107783368610506,
+          "leaf_function_support_size": 331,
+          "comparison_samples": 1535,
+          "exchanged_samples": 7,
+          "exchanged_fraction": 0.004560260586319218,
+          "sampling_noise_allowance": 0.026608530176079493,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 1537,
+          "top_leaf_functions": [
+            {
+              "function": 36,
+              "name": "0x49691d6",
+              "samples": 65
+            },
+            {
+              "function": 110,
+              "name": "0x49691b5",
+              "samples": 65
+            },
+            {
+              "function": 84,
+              "name": "0x49691b2",
+              "samples": 46
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 1542,
+          "top_leaf_functions": [
+            {
+              "function": 110,
+              "name": "0x49691b5",
+              "samples": 66
+            },
+            {
+              "function": 36,
+              "name": "0x49691d6",
+              "samples": 65
+            },
+            {
+              "function": 84,
+              "name": "0x49691b2",
+              "samples": 46
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 1535,
+          "top_leaf_functions": [
+            {
+              "function": 110,
+              "name": "0x49691b5",
+              "samples": 66
+            },
+            {
+              "function": 36,
+              "name": "0x49691d6",
+              "samples": 64
+            },
+            {
+              "function": 84,
+              "name": "0x49691b2",
+              "samples": 46
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "8448701f0572b266427b035922e98c0e590e4d27383a4d7ff7fa22a5a29f06bd",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "a2c433f754fd7ff9e4ffd30a4c8a37db371f449865179ab53741f0b18d8bd923",
+    "perf.data": "6cca05803b0ff450d5948851133b9c22695ab7ccde43f6764af14d9dece2a201",
+    "timed-2419099.jsonl": "f59dcd6f7743a92b29f1ea634948416149dd23deaa43d8aa858ecb9aa618c419",
+    "5.stdout": "14d82400d7229ae515aea6c7ce1c38e20400c13fba02d65492f69b60a8244ed2",
+    "5.stderr": "f82130e49d682c3bb9c03219eacc7a6b84696d11814f849ede852a7abc84191e",
+    "samply.json.gz": "507c298584093e1f1c3e933b80309eb570565d7226d6bc8e213cb5fd9a8fad6c",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "7.stdout": "75b1dc592c1f3cab4f3e4495160f858ab8b547add71481ee24f229b719e2db0c",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "75b1dc592c1f3cab4f3e4495160f858ab8b547add71481ee24f229b719e2db0c",
+    "normalized.json.gz": "df03307f95fb3c7cad0aa6d8cbc26410b2e5da0e4366f37dc501ebd30d9d8b0f",
+    "8.stdout": "c99634e7656a564c3a3b4094266ce1cdbaa142644ce8acb8434d9b0deb57114c",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "ce78807f8f370c8f72c2ccf1fa48be2cad72b09d2ef278b1d22b7b652a82d991",
+    "diagnostics.json": "5b16597bf5eb5c8e59a1459f124ca5208f019bd50a0f489c54885f188f407ed5",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "cf7327934ee59870e03e5421abfefd817d917d17a91bc9f018d4237e73c2d193",
+    "symbols.json": "27b121f2501cf903ed04cdfad151a3167b20fe0f3873e4eb90de5c78f076d607",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "source_scope": {
+    "snapshot": "sturm-odd-fractional-source.lean.txt",
+    "sha256": "1636d6051a3f3bb26fb2b62ecbdb8268158eb68faab4bae3ed8c62af64b9fdbc",
+    "same_code_and_registration_as_retained_timing_source": true,
+    "comparison": "only block comments removed; implementation and registrations identical",
+    "scope": "odd mantissa, cubic, integral/fractional endpoints and their registrations"
+  },
+  "binary_unchanged": true
+}

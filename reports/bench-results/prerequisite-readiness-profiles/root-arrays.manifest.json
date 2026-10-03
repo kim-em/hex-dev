@@ -1,0 +1,111 @@
+{
+  "family": "root-arrays",
+  "function": "Hex.RealAlgebraicBench.runMembership",
+  "parameter": 256,
+  "cpu": 39,
+  "load": [
+    15.583984375,
+    14.7587890625,
+    13.435546875
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/tmp/issue-10577-perf/root-arrays",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex10577-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/issue-10577-perf/root-arrays/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_PROFILE_KERNEL=1",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10577-perf/root-arrays/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "profile",
+        "Hex.RealAlgebraicBench.runMembership",
+        "--param",
+        "256",
+        "--target-inner-nanos",
+        "2000000000",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 1
+    }
+  ],
+  "executable_sha256": "80b5e8d338c1eac3ee85a277fc973c3490e4dfd9cc31f2030b81707ed3ac201d",
+  "commit": "4f44b806075ae95ad1b3f05c55e6c1ad5bd3f423",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "status": "failed",
+  "error": "Command '['perf', 'record', '--clockid', 'mono', '-e', 'cycles:u', '-F', '999', '--call-graph', 'dwarf', '-o', '/tmp/issue-10577-perf/root-arrays/perf.data', '--', 'env', 'LEAN_BENCH_PROFILE_KERNEL=1', 'LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10577-perf/root-arrays/timed-%p.jsonl', '/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench', 'profile', 'Hex.RealAlgebraicBench.runMembership', '--param', '256', '--target-inner-nanos', '2000000000', '--profiler', 'env']' returned non-zero exit status 1.",
+  "artifacts": {
+    "0.stdout": "5e3c47b09e005a4ef054d69862c487f90993f0272921226a4e61065557b61532",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "95b593069f5b8c480eb9ff793bfe6e11d31adee62a38aca389a8c54fc7fb35fe",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "c92cd00d7d556dffbe4c4c4c2c76500d6ff3e57af7ce603e28e5787102b1e529",
+    "perf.data": "1eb52f5e5e2e91a997bb3217ea9e3ffa66cbb0327c9d5f7da6d1da483812e5d5",
+    "timed-1898811.jsonl": "eb8e72c51d6aca39a7276637430127abafa5803a11feefa4ad08155b1f7e65f6",
+    "5.stdout": "b4600aa849b83420b75dad2e9f0fc97d133733aa7b96a8df837d72a21e3c285d",
+    "5.stderr": "0992c50431028b1d094c0f8ccdd6910918c47a50ac5554e0ad672edae6cb2972"
+  }
+}
