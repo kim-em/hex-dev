@@ -80,3 +80,27 @@ and their inputs retain producer-computed signs. They are not measurements of
 the current full-input experiment or evidence for a production speedup.
 All completed observations remain retained. This experiment does not complete
 Phase-4 performance requirements.
+
+## Full-input observations
+
+The retained [full-input blocks](results/strict-inputs/summary.json) give
+median replay times of 1.20 ms with facts, 1.49 ms with instrumented ordinary
+arithmetic, and 1.35 ms with unmodified arithmetic. The median within-block
+instrumented ordinary/fact ratio is 1.238 (range 1.217–1.281). These are
+shared-host observations for one tiny fixture, not a directional production
+performance result. IO counters and linear fact lookup remain in the
+instrumented arms. No sample was excluded or unchanged run repeated.
+
+Construction and production collect 178 first-level and 42 second-level
+facts; 159 and 32 are nonconstant. Recursive input decoding consults 18 and
+17 distinct nonzero literal keys. Arithmetic replay uses 40 and 31 distinct
+keys, which can overlap those input keys. Per check, fact replay makes
+1,023 and 444 packing calls, all hits, with zero sign evaluations or inverses.
+Instrumented ordinary replay makes 1,896 and 444 packing calls, including
+304 and 98 nonconstant sign evaluations and two first-level inverses. The
+recorded collection pass discovers no additional keys.
+
+All six blocks, exact-key probes, collection-pass results and three missing
+fact probes are retained with source/binary hashes and exit status. Decoder
+and kernel costs, checked child-proof costs, production collection overhead
+against a plain producer, broad scaling and memory remain unmeasured.
