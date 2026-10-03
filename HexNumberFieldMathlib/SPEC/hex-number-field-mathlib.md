@@ -270,7 +270,7 @@ rational Sturm and Tarski correspondence is imported.
 | `signDepth_spec` | At `separationDepth`, a real nonzero root of degree at least two has the strict sign of its centre; prove the height inequality and reciprocal-Cauchy/root-separation alternatives explicitly |
 | `AlgebraicRoot.sign_eq`, `compare_eq` | Sign of a real lazy root and comparison of real lazy operands agree with `realCompare` after exactification; combine degree-one coefficient sign, `signDepth_spec`, existing subtraction and zero-test correctness |
 | `signTarski_eq` | Positive denominator clearing preserves sign; `tarskiQuery_sign` on `realInterval` gives the reference order of the fixed-field value against zero |
-| `signBall_bound`, `signApprox_eq` | Specialize `Disambiguation.evalMajorant` to the direct rational-coefficient Horner evaluator, and prove the finite endpoint succeeds; the existing `PolyQuot.approx`/`approx_radius` baseline satisfies the same reference sign equation |
+| `signBall_bound`, `signApprox_eq` | For the direct evaluator, specialize `Disambiguation.evalMajorant` to rational-coefficient Horner evaluation (`signBall_bound`). For the guarded evaluator, reuse `PolyQuot.approx_sound` and `approx_radius`. Both require finite endpoint success and the same reference sign equation; any early probe must preserve enclosure soundness |
 | `compareTarski_eq`, `compareApprox_eq` | Reduced fixed-field subtraction and the sign equations give `realCompare` between the materialized operands, without executing those materializations in the fast algorithms |
 | `rootLe_real` | For real canonical operands with the same minimal polynomial, `rootLe` agrees with non-strict `realCompare` order; the common polynomial's separation bound orders their centres |
 
