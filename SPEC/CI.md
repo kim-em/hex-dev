@@ -323,7 +323,9 @@ commit's prefix first and then the dependency-scoped prefix.
 
 Every `main` push that is not cancelled and whose restore step completed
 saves a snapshot as soon as its build steps end, before the verification
-steps, whether or not a build or later step failed. Restored oleans
+steps, whether or not a build or later step failed. Every Pages deploy that is
+not cancelled also saves a snapshot once it has built the manual, so the next
+deploy rebuilds only what changed since the previous one. Restored oleans
 are safe for the same reason a stale cache is: Lake rebuilds every module
 whose inputs changed. Waiting for a fully green run would leave pull
 requests rebuilding everything merged since the last green `main`, which is
@@ -333,7 +335,10 @@ cache saved on the default branch is available to pull requests. Saving
 an approximately 1 GB snapshot from every PR run therefore churns the
 repository's 10 GB cache quota without providing shared reuse. PRs and
 the Pages workflow restore the latest compatible `main` snapshot and
-let Lake rebuild their source delta.
+let Lake rebuild their source delta. Every restore of this cache MUST list
+exactly the paths the save step lists: `actions/cache` includes the path list
+in each entry's version, so a restore with a different list matches no saved
+snapshot and rebuilds everything.
 
 The cached Lean and IR directories cover every root-package module namespace,
 not only `Hex*`; in particular, the `Examples.*` release modules must survive a

@@ -17,7 +17,6 @@ public section
 namespace Hex.RealClosure.Algebraic.NestedSignsConformance
 
 open Hex.SignDet Hex.SignDet.Conformance
-open Hex.SignDetMathlib.GraphSignsConformance
 open CoefficientSignsConformance PackingConformance
 open scoped Hex
 

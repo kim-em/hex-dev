@@ -532,6 +532,17 @@ without seeking a rational separator. Multiple infinitesimal levels and
 tower-generated coefficient certificates are supplied downstream, without
 introducing an upward import here.
 
+Every public operation is also exercised over a genuine number field: the
+compiled, Mathlib-free `hexsigndet_field_checks` executable
+(`conformance/HexSignDet/FieldChecks.lean`) runs descriptors, selected signs,
+completion, query handles, root lists, tables, comparison, re-encoding,
+refinement, Thom re-encoding, conversion and supplied graph signs over ℚ(∛2)
+in its real embedding, and over the quartic common field of √2 and √3. It
+covers shared roots, partial and empty sign words, zero derivative signs,
+negative leading coefficients, noninjective coefficient storage, stale
+evidence rejection and absence results. CI builds and runs it; it exits
+nonzero on any failing check.
+
 Phase 4 separates table production, Tarski queries, coefficient-sign work,
 product construction, matrix solving/reduction, descriptor completion,
 comparison/re-encoding and replay. Sweep `n,s,D`, realized support size,

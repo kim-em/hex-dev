@@ -628,6 +628,7 @@ lean_lib HexQuerySemantics where
     `HexSignDetMathlib.ThomReencoding, `HexSignDetMathlib.ThomRoots,
     `HexSignDetMathlib.ComparisonProducer,
     `HexRealClosureMathlib.Specialize, `HexRealClosureMathlib.SpecializeTests,
+    `HexRealClosureMathlib.SignFacts,
     `HexRealClosureMathlib.TransportPolynomial, `HexRealClosureMathlib.TransportProduct,
     `HexRealClosureMathlib.TransportArithmetic, `HexRealClosureMathlib.TransportQuery, `HexRealClosureMathlib.TransportTests,
     `HexRealClosureMathlib.TransportPower, `HexRealClosureMathlib.TransportTarski,
@@ -1124,22 +1125,14 @@ lean_lib HexConformance where
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
     ++ #[`HexSignDet.CommonField, `HexSignDet.Conformance, `HexSignDet.CrossCheck, `HexSignDet.FastCheck, `HexSignDet.JsonBytes, `HexSignDet.Infinitesimal, `HexSignDetMathlib.Conformance, `HexSignDetMathlib.RootSemantics,
-      `HexSignDetMathlib.SelectedProducerConformance,
-      `HexSignDetMathlib.CompletionConformance,
-      `HexSignDetMathlib.QueryHandleConformance,
-      `HexSignDetMathlib.TableConformance, `HexSignDetMathlib.ReencodingConformance,
-      `HexSignDetMathlib.RootListConformance, `HexSignDetMathlib.RefinementConformance,
-      `HexSignDetMathlib.ThomConformance, `HexSignDetMathlib.ThomRootsConformance,
-      `HexSignDetMathlib.GraphSignsConformance,
-      `HexSignDetMathlib.ComparisonConformance,
-      `HexSignDetMathlib.CommonFieldConformance,
-      `HexSignDetMathlib.ConvertConformance].map Glob.one
+      `HexSignDetMathlib.FieldConformance].map Glob.one
 
     ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests,
       `HexRealClosureMathlib.CoefficientSignsConformance,
       `HexRealClosureMathlib.PackingConformance,
       `HexRealClosureMathlib.NestedSignsConformance,
-      `HexRealClosureMathlib.SignCodecConformance].map Glob.one
+      `HexRealClosureMathlib.SignCodecConformance,
+      `HexRealClosureMathlib.SignFactsConformance].map Glob.one
 
     ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
     ++ #[.submodules `HexSturmMathlib.Replay]
@@ -1508,6 +1501,11 @@ lean_exe hexsigndet_emit_nested_fields where
 lean_exe hexsigndet_emit_infinitesimal where
   srcDir := "conformance"
   root := `HexSignDet.EmitInfinitesimal
+
+-- Compiled sign-determination checks over genuine number fields. Mathlib-free.
+lean_exe hexsigndet_field_checks where
+  srcDir := "conformance"
+  root := `HexSignDet.FieldChecks
 
 lean_exe hexrealformula_emit_fixtures where
   srcDir := "conformance"
@@ -2077,12 +2075,6 @@ lean_exe hexconway_bench where
 
 @[default_target]
 lean_lib HexManual where
-
--- Renders `HexManual` to static HTML (see `Main.lean`). Not a
--- `default_target`: the site is built explicitly by the Pages workflow
--- (`.github/workflows/pages.yml`) and on demand via `lake exe hexmanual`.
-lean_exe hexmanual where
-  root := `Main
 
 lean_exe hexlatticeenum_bench where
   srcDir := "bench"
