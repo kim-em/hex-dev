@@ -136,6 +136,7 @@ This still trusts in-memory producer facts, not independently replayed children.
     match (Element.signCodec base (← s.facts.get)).decode j with
     | .error error =>
       IO.eprintln s!"LITERAL_REJECTED level={s.level}: {error}; no replacement sign evaluation"
+      IO.eprintln s!"counts={reprStr (← s.counts.get)}"
       IO.Process.exit 17
     | .ok a =>
       if a != 0 then
@@ -154,17 +155,23 @@ unsafe def removeFact {context : Context E Nat sign parent} (s : Store context) 
   let some victim := keys.find? (fun p => 1 < p.size)
     | throw (IO.userError "no nonconstant replay fact to remove")
   s.facts.modify fun fs => fs.filter (fun f => f.polynomial != victim)
-  IO.println s!"removed one actually used nonconstant level={s.level} fact"
+  IO.println s!"removed one actually used nonconstant {if literal then "input" else "arithmetic"} level={s.level} fact"
+
+initialize entries : IO.Ref Nat ← IO.mkRef 0
 
 /-- A changing nonce prevents the native compiler from sharing the entire
 Boolean replay result across mode changes. Every positive nonce checks the
 identical graph and caller inputs. -/
-@[noinline] def checkGraph (nonce : Nat) (g : Dag E Nat) (s : E → Int) (id : Nat)
+@[noinline] unsafe def checkGraph (nonce : Nat) (g : Dag E Nat) (s : E → Int) (id : Nat)
     (p : DensePoly E) (a b : Endpoint E) (qs : List (DensePoly E)) : Bool :=
-  nonce != 0 && g.check s id p a b qs
+  match unsafeIO (do
+    entries.modify (· + 1)
+    pure (nonce != 0 && g.check s id p a b qs)) with
+  | .ok result => result
+  | .error _ => panic! "entry counter IO failure; runner aborts on panic"
 
 /-- A separate tower using the unmodified library instances, with no IO counters. -/
-def plain : IO (Nat → Bool) := do
+unsafe def plain : IO (Nat → Bool) := do
   let d1 ← root Sturm.orderSign 7 (DensePoly.ofCoeffs #[-2, 0, 1] : DensePoly Rat) 1 2
   let c1 := Context.adjoin d1 (fun _ => true)
   letI : Hashable (Element c1) := ⟨fun _ => 0⟩
@@ -208,7 +215,7 @@ unsafe def keyProbes : IO Unit := do
     throw (IO.userError "a semantically equal absent literal was accepted")
   if (vn.decode (vp.encode a)).isOk then
     throw (IO.userError "a conjugate context accepted the opposite cached sign")
-  IO.println "noncanonicalAliasRejected=true conjugateLiteralRejected=true"
+  IO.println "noncanonicalAliasRejected=true oppositeCachedSignRejected=true"
 
 unsafe def main (args : List String) : IO UInt32 := do
   if args.contains "--keys-only" then
@@ -230,6 +237,10 @@ unsafe def main (args : List String) : IO UInt32 := do
   letI : Hashable (Element c1) := ⟨fun _ => 0⟩
   do
     let a := pack c1 s1 (DensePoly.ofCoeffs #[0, 1])
+    if args.contains "--inverse-only" then
+      mode.set .replay
+      IO.println s!"unexpectedInverseSign={(inverse c1 s1 a).sign}"
+      throw (IO.userError "unsupported inverse was accepted")
     let d2 ← root Element.sign 8 (DensePoly.ofCoeffs #[-(a + (2 : Element c1)), 0, 1]) (1 : Element c1) 3
     let c2 := Context.adjoin d2 (fun _ => true)
     let s2 ← Store.create c2 2 mode
@@ -288,8 +299,10 @@ unsafe def main (args : List String) : IO UInt32 := do
       let (decoded, head, lower, upper, qs) ← readInputs 1
       IO.println s!"nonconstantFacts1={(← s1.facts.get).countP (fun f => 1 < f.polynomial.size)} nonconstantFacts2={(← s2.facts.get).countP (fun f => 1 < f.polynomial.size)}"
       IO.println s!"literalKeys1={(← s1.literals.get).length} literalKeys2={(← s2.literals.get).length}"
-      if args.contains "--omit-literal" then
-        removeFact s2 true
+      if args.contains "--omit-literal" || args.contains "--omit-literal-level-one" then
+        if args.contains "--omit-literal-level-one" then removeFact s1 true else removeFact s2 true
+        reset s1
+        reset s2
         let _ ← readInputs 2
         throw (IO.userError "missing literal fact was accepted")
       let check := fun (nonce : Nat) => checkGraph nonce decoded (Element.sign (context := c2)) 9 head lower upper qs
@@ -332,18 +345,21 @@ unsafe def main (args : List String) : IO UInt32 := do
       s1.track.set false
       s2.track.set false
       let repetitions := 200
-      let arms := if args.contains "--ordinary-first" then
-        ["plain", "ordinary", "cached"] else ["cached", "ordinary", "plain"]
+      let arms := if args.contains "--reverse-order" then
+        ["cached", "plain", "ordinary"] else ["ordinary", "plain", "cached"]
       for label in arms do
         reset s1
         reset s2
         mode.set (if label == "cached" then .replay else .ordinary)
+        entries.set 0
         let started ← IO.monoNanosNow
         for i in [:repetitions] do
           let accepted := if label == "plain" then plainCheck (10 + i) else check (10 + i)
           if !accepted then throw (IO.userError "timed replay rejected")
         let elapsed := (← IO.monoNanosNow) - started
-        IO.println s!"arm={label} repetitions={repetitions} nanos={elapsed}"
+        let entryCount ← entries.get
+        if entryCount != repetitions then throw (IO.userError "native checker entry count changed")
+        IO.println s!"arm={label} repetitions={repetitions} nanos={elapsed} entries={entryCount}"
         let counts1 ← s1.counts.get
         let counts2 ← s2.counts.get
         if label != "plain" then

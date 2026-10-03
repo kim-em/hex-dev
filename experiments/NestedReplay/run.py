@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts" / "bench"))
 from cpu_lease import cpu_lease
 
-ARM = re.compile(r"arm=(cached|ordinary|plain) repetitions=(\d+) nanos=(\d+)")
+ARM = re.compile(r"arm=(cached|ordinary|plain) repetitions=(\d+) nanos=(\d+) entries=(\d+)")
 COUNTS = re.compile(
     r"level=(\d+) facts=(\d+) used=(\d+) \{ calls := (\d+), signs := (\d+), "
     r"nonconstantSigns := (\d+), hits := (\d+), inverses := (\d+) \}"
@@ -33,14 +33,14 @@ def parse_arms(output: str) -> list[dict]:
     arms = []
     for line in output.splitlines():
         if match := ARM.fullmatch(line):
-            arms.append(dict(arm=match[1], repetitions=int(match[2]), nanos=int(match[3]), levels=[]))
+            arms.append(dict(arm=match[1], repetitions=int(match[2]), nanos=int(match[3]), entries=int(match[4]), levels=[]))
         elif arms and (match := COUNTS.fullmatch(line)):
             names = ["level", "facts", "used", "calls", "signs", "nonconstantSigns", "hits", "inverses"]
             arms[-1]["levels"].append(dict(zip(names, map(int, match.groups()))))
     assert len(arms) == 3, "expected all three timed arms"
     for arm in arms:
         assert [c["level"] for c in arm["levels"]] == [1, 2]
-        assert arm["repetitions"] == 200 and arm["nanos"] > 0
+        assert arm["repetitions"] == arm["entries"] == 200 and arm["nanos"] > 0
         for c in arm["levels"]:
             if arm["arm"] == "plain":
                 assert c["calls"] == c["signs"] == c["hits"] == c["inverses"] == 0
@@ -67,6 +67,10 @@ def main() -> None:
     cpu, lease = cpu_lease()
     # Holding this descriptor leases the same CPU for every adjacent pair.
     with lease:
+        with (args.output / "build.stdout").open("w") as stdout, \
+             (args.output / "build.stderr").open("w") as stderr:
+            subprocess.run(["lake", "-d", "experiments/NestedReplay", "build"],
+                           cwd=ROOT, stdout=stdout, stderr=stderr, check=True)
         metadata = dict(
             revision=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
             treeDirty=bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT)),
@@ -90,7 +94,7 @@ def main() -> None:
 
         keys = run("exact-keys", ["--keys-only"])
         assert keys.returncode == 0
-        assert "noncanonicalAliasRejected=true conjugateLiteralRejected=true" in keys.stdout
+        assert "noncanonicalAliasRejected=true oppositeCachedSignRejected=true" in keys.stdout
         omitted = run("omitted", ["--omit"])
         assert omitted.returncode == 17, "missing actually-used fact did not reject"
         assert "MISSING level=2; no replacement sign evaluation" in omitted.stderr
@@ -103,6 +107,14 @@ def main() -> None:
         literal_omitted = run("omitted-literal", ["--omit-literal"])
         assert literal_omitted.returncode == 17
         assert "LITERAL_REJECTED level=2" in literal_omitted.stderr
+        literal_lower = run("omitted-literal-level-one", ["--omit-literal-level-one"])
+        assert literal_lower.returncode == 17
+        assert "LITERAL_REJECTED level=1" in literal_lower.stderr
+        for rejected in [literal_omitted, literal_lower]:
+            assert "removed one actually used nonconstant" in rejected.stdout
+            assert "signs := 0, nonconstantSigns := 0" in rejected.stderr
+        inverse = run("unsupported-inverse", ["--inverse-only"])
+        assert inverse.returncode == 18 and "UNSUPPORTED inverse level=1" in inverse.stderr
         collection = run("collection-pass", ["--collect-replay"])
         assert collection.returncode == 0
         parse_arms(collection.stdout)
@@ -113,9 +125,9 @@ def main() -> None:
             "collection replay discovered additional keys"
         samples = []
         for pair in range(args.pairs):
-            order = ["cached", "ordinary", "plain"] if pair % 2 == 0 else ["plain", "ordinary", "cached"]
+            order = ["ordinary", "plain", "cached"] if pair % 2 == 0 else ["cached", "plain", "ordinary"]
             started = time.monotonic_ns()
-            result = run(f"pair-{pair}", [] if pair % 2 == 0 else ["--ordinary-first"])
+            result = run(f"pair-{pair}", [] if pair % 2 == 0 else ["--reverse-order"])
             duration = time.monotonic_ns() - started
             assert result.returncode == 0, result.stderr
             assert "graphNodes=2 selectedSigns=[1, 1]" in result.stdout
@@ -128,10 +140,17 @@ def main() -> None:
                 stream.write(json.dumps(sample) + "\n")
         ratios = [next(a["nanos"] for a in s["arms"] if a["arm"] == "ordinary") /
                   next(a["nanos"] for a in s["arms"] if a["arm"] == "cached") for s in samples]
+        plain_over_cached = [next(a["nanos"] for a in s["arms"] if a["arm"] == "plain") /
+                             next(a["nanos"] for a in s["arms"] if a["arm"] == "cached") for s in samples]
+        ordinary_over_plain = [next(a["nanos"] for a in s["arms"] if a["arm"] == "ordinary") /
+                               next(a["nanos"] for a in s["arms"] if a["arm"] == "plain") for s in samples]
         summary = dict(
-            producerOnlyAccepted=True, omissionExits={"arithmeticLevel2": omitted.returncode,
-                "arithmeticLevel1": lower_omitted.returncode, "literalLevel2": literal_omitted.returncode},
-            pairRatiosOrdinaryOverCached=ratios, pairedMedian=statistics.median(ratios),
+            producerOnlyAccepted=all(a["entries"] == 200 for s in samples for a in s["arms"]), omissionExits={"arithmeticLevel2": omitted.returncode,
+                "arithmeticLevel1": lower_omitted.returncode, "literalLevel2": literal_omitted.returncode, "literalLevel1": literal_lower.returncode},
+            pairRatiosOrdinaryOverCached=ratios,
+            plainOverCached=plain_over_cached, ordinaryOverPlain=ordinary_over_plain,
+            pairedMedianPlainOverCached=statistics.median(plain_over_cached),
+            unsupportedInverseExit=inverse.returncode,
             medianNanosPerReplay={arm: statistics.median(
                 a["nanos"] / a["repetitions"] for s in samples for a in s["arms"] if a["arm"] == arm
             ) for arm in ["cached", "ordinary", "plain"]},
