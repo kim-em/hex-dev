@@ -628,6 +628,15 @@ lower-precision fixed-field case removed full queries. This mode therefore
 remains optional. Its individual native calls share the cancellation limits
 of the other native producers.
 
+A separate [initial-precision comparison](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-precision-proofs.md)
+proves the same fixed-field sentence at eight and sixty-four generator bits,
+using a checked selected-root equivalence for transport. The full sign queries
+fall from three to zero, and the private proof file shrinks by 6,456 bytes.
+Four retained rounds give median fresh-module times of 12.689 and 12.556 seconds;
+the paired median change is −0.169 seconds, with one slower candidate. Shared
+constructor and equality lemmas are warmed dependencies. This does not measure
+general field reconstruction or justify a default precision change.
+
 For these reconstructed inputs, closed arithmetic is compiled into the common
 field after authenticating its source values. A quotient is recorded as a
 rational coordinate polynomial and checked by its multiplication identity;

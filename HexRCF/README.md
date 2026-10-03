@@ -191,3 +191,8 @@ containment and checked root counts; frozen replay performs no refinement.
 The option defaults to zero because the
 [retained comparison](../reports/hexrcf-window-proofs.md) found no useful
 whole-module speedup. Inconclusive Horner signs retain exact query evidence.
+
+The [initial-generator precision comparison](../reports/hexrcf-precision-proofs.md)
+retains checked proofs of the same selected-root sentence at eight and sixty-four
+bits. It removes full sign queries in that fixture without establishing a
+general speedup or changing default precision.
