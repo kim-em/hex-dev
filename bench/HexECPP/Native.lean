@@ -45,6 +45,7 @@ private def stats (s : SearchStats) : Lean.Json := Lean.Json.mkObj [
   ("norms", toJson s.norms), ("orders", toJson s.orders),
   ("largeFactors", toJson s.largeFactors), ("proposals", toJson s.proposals),
   ("outputRejects", toJson s.outputRejects), ("outputBits", Lean.toJson s.outputBits),
+  ("polynomialWork", toJson s.polynomialWork), ("polynomialRoots", toJson s.polynomialRoots),
   ("lastRetry", Lean.toJson (s.lastRetry.map (fun e => (e.subject, reprStr e.resource)))),
   ("unresolved", Lean.toJson (s.unresolved.map (fun e => (e.subject, reprStr e.resource))))]
 where toJson := Lean.toJson
@@ -70,7 +71,7 @@ def main (args : List String) : IO UInt32 := do
         let some candidates := candidates.toNat? | throw <| IO.userError "invalid candidates"
         pure (n, seed, { maxDepth := depth, maxCandidates := candidates })
     | _ => throw <| IO.userError (
-        "usage: hexecpp_native SUBJECT SEED [DEPTH CANDIDATES | diagnose512 | diagnose512-public]")
+        "usage: hexecpp_native SUBJECT SEED [DEPTH CANDIDATES | diagnose512 | diagnose512-public | native512 | native512-public]")
   let some n := n.toNat? | throw <| IO.userError "invalid subject"
   let some seed := seed.toNat? | throw <| IO.userError "invalid seed"
   let start ← IO.monoNanosNow

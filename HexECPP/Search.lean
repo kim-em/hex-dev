@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexECPP.CM
+public import HexECPP.CM.Roots
 public import HexPrimality.Construction
 
 public section
@@ -31,6 +31,7 @@ inductive Resource where
   | inputBits | depth | candidates | roots | nonresidues | points
   | factorWork | scalarWork | outputBits | memo | portfolio
   | screening | nonresidueRetries | pointRetries | rows | nodes | factorPolicy
+  | polynomialWork | rootWork
 deriving Repr, BEq, DecidableEq
 
 /-- Finite shared search allocations, with separate local retry ceilings. -/
@@ -69,6 +70,12 @@ structure SearchBudget where
   maxNodes : Option Nat := none
   /-- Reject oversized candidates locally, retaining all charged work. -/
   backtrackOutput : Bool := false
+  /-- Opt in to the attributed fixed linear/quadratic class polynomial table. -/
+  extendedCM : Bool := false
+  /-- Shared reserved polynomial-root modular operations. -/
+  maxPolynomialWork : Nat := 16777216
+  /-- Per-call modular-operation ceiling; closed-form roots need no splits. -/
+  maxRootWork : Nat := 1048576
 deriving Repr
 
 /-- Fixed per-attempt ceiling for terminal construction. It is deliberately
@@ -101,7 +108,7 @@ def native512Budget : SearchBudget := {
   maxScalarWork := 8000000, maxOutputBits := 8000000
   terminal := some { leafBudget with maxBits := 512 }
   order := some orderBudget
-  backtrackOutput := true }
+  backtrackOutput := true, extendedCM := true }
 
 /-- Public 512-bit output allocation: twenty rows and thirty-two total nodes. -/
 def public512Budget : SearchBudget := {
@@ -148,6 +155,10 @@ structure SearchStats where
   outputRejects : Nat := 0
   /-- Actual last literal-bit count; `none` records traversal exhaustion. -/
   outputBits : Option Nat := none
+  /-- Reserved modular-operation bounds for class polynomial roots. -/
+  polynomialWork : Nat := 0
+  /-- Checked j-roots admitted from the class polynomial table. -/
+  polynomialRoots : Nat := 0
   /-- Retained failure. Smaller unresolved children and complete portfolios supersede local retries. -/
   unresolved : Option SearchError := none
   /-- Last local retry exhaustion, retained even when the final diagnosis is portfolio exhaustion. -/
@@ -193,6 +204,7 @@ def charge (budget : SearchBudget) (n : Nat) (resource : Resource)
     | .points => (s.stats.points, budget.maxPoints)
     | .factorWork => (s.stats.factorWork, budget.maxFactorWork)
     | .scalarWork => (s.stats.scalarWork, budget.maxScalarWork)
+    | .polynomialWork => (s.stats.polynomialWork, budget.maxPolynomialWork)
     | _ => (0, 0)
   if used + amount > limit then fail n resource
   modify fun s => { s with stats := match resource with
@@ -202,6 +214,7 @@ def charge (budget : SearchBudget) (n : Nat) (resource : Resource)
     | .points => { s.stats with points := used + amount }
     | .factorWork => { s.stats with factorWork := used + amount }
     | .scalarWork => { s.stats with scalarWork := used + amount }
+    | .polynomialWork => { s.stats with polynomialWork := used + amount }
     | _ => s.stats }
 
 /-- Fixed-width draws need no rejection loop. This is proposal generation,
@@ -226,6 +239,24 @@ private def nonresidue (budget : SearchBudget) (n : Nat) (sextic : Bool) :
 private def sqrt (budget : SearchBudget) (n z a : Nat) : SearchM (Option Nat) := do
   charge budget n .roots
   return CM.sqrt? n z a
+
+/-- Charge a finite root call before evaluating any class polynomial. -/
+private def invariants (budget : SearchBudget) (n z : Nat) (p : CM.ClassPolynomial) :
+    SearchM (List CM.Invariant) := do
+  if !budget.extendedCM then
+    return match p.coefficients with
+      | [c, 1] => [⟨p.d, -c⟩]
+      | _ => []
+  let work := CM.rootWork n p
+  if work > budget.maxRootWork then
+    unresolved n .rootWork
+    return []
+  charge budget n .roots
+  charge budget n .polynomialWork work
+  let roots := CM.roots? n z p
+  modify fun s => { s with stats := { s.stats with
+    polynomialRoots := s.stats.polynomialRoots + roots.length } }
+  return roots.map fun (j : Nat) => ⟨p.d, (j : Int)⟩
 
 private def scalar (budget : SearchBudget) (n a k : Nat) (P : Point) :
     SearchM (Option (Point × List Nat)) := do
@@ -402,33 +433,38 @@ def search (budget : SearchBudget) : Nat → Nat → SearchM (Option Cert)
         unresolved n .screening
         return none
       let some z ← nonresidue budget n false | return none
-      for inv in CM.portfolio do
+      let portfolio := CM.originalPolynomials ++
+        (if budget.extendedCM then CM.classPolynomials else [])
+      for polynomial in portfolio do
         charge budget n .candidates
-        let k := if inv.d % 4 == 0 then inv.d / 4 else inv.d
+        let k := if polynomial.d % 4 == 0 then polynomial.d / 4 else polynomial.d
         let some root ← sqrt budget n z (modSub n 0 k) | continue
-        let norms := [CM.norm? n inv.d root, CM.norm? n inv.d (modSub n 0 root)]
+        let norms := [CM.norm? n polynomial.d root, CM.norm? n polynomial.d (modSub n 0 root)]
         let some (t, v) := norms.findSome? id | continue
         modify fun s => { s with stats := { s.stats with norms := s.stats.norms + 1 } }
-        let g ← if inv.d == 3 then nonresidue budget n true else pure (some z)
+        let invs ← invariants budget n z polynomial
+        if invs.isEmpty then continue
+        let g ← if polynomial.d == 3 then nonresidue budget n true else pure (some z)
         let some g := g | continue
-        for trace in CM.traces inv.d t v do
+        for trace in CM.traces polynomial.d t v do
           charge budget n .candidates
           let m : Int := (n : Int) + 1 - trace
           if m ≤ 0 then continue
           let m := m.toNat
           for q in ← factors budget n m do
             let cofactor := m / q
-            for (a, b) in CM.curves n inv g do
-              let some proposal ← point budget n q cofactor z a b | continue
-              if let some child ← search budget depth q then
-                let c := Cert.step n a b proposal.x proposal.y proposal.discrInv
-                  proposal.inverses child
-                -- The proposal checks this step and recursion supplies its
-                -- child. Replay the complete chain once at `produce`.
-                if let some c ← remember budget (depth + 1) n c then return some c
-              modify fun s => { s with stats := { s.stats with backtracks := s.stats.backtracks + 1 } }
-              -- Different points on this curve have the same child obligation.
-              break
+            for inv in invs do
+              for (a, b) in CM.curves n inv g do
+                let some proposal ← point budget n q cofactor z a b | continue
+                if let some child ← search budget depth q then
+                  let c := Cert.step n a b proposal.x proposal.y proposal.discrInv
+                    proposal.inverses child
+                  -- The proposal checks this step and recursion supplies its
+                  -- child. Replay the complete chain once at `produce`.
+                  if let some c ← remember budget (depth + 1) n c then return some c
+                modify fun s => { s with stats := { s.stats with backtracks := s.stats.backtracks + 1 } }
+                -- Different points on this curve have the same child obligation.
+                break
       unresolved n .portfolio
       return none
 
