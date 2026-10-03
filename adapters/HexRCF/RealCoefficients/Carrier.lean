@@ -40,7 +40,7 @@ The empty product is one. Repeated factors remain: this is input to a later
 checked squarefree preparation, not itself an isolation head. -/
 @[expose] def product (values : Fin n → RealAlgebraicNumber)
     (formula : QF (n + 1)) : DensePoly RealAlgebraicNumber :=
-  ((formula.polys.map (polynomial values)).filter (fun p => !p.isZero)).prod
+  ((prepare values formula).filter (fun p => !p.isZero)).prod
 
 private theorem evaluate_prod_zero (x : ℝ)
     (ps : List (DensePoly RealAlgebraicNumber)) (p : DensePoly RealAlgebraicNumber)
