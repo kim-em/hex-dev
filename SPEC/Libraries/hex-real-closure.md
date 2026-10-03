@@ -164,6 +164,27 @@ polynomial algorithms are reused. The performance evidence must distinguish
 storage policy, a smaller defining polynomial after a split, and an
 irreducibility fast path, rather than attributing all three to one change.
 
+Proof assembly may reuse a finite list of `SignFact context` values. Each fact
+binds its exact stored polynomial and claimed sign to a proof of the actual
+`Context.signPoly` result in that context. `SignFact.read` restores a nonzero
+literal only on an exact key/sign match; missing keys and zero claims reject.
+It preserves the result of the ordinary independent coefficient decoder.
+
+`Element.pack` takes a reduction function proved equal to the context's actual
+storage reduction. Constant remainders use the predecessor sign directly;
+nonconstant remainders use exact keys in the supplied sign facts. A zero sign
+packs to canonical zero. Missing nonconstant keys reach `Element.missing`, an
+opaque function that blocks kernel reduction and executes ordinary native
+packing when compiled. This optional proof-assembly support does not satisfy
+the strict compiled certificate-replay contract by itself.
+
+The cached `One`, `Add`, `Sub`, `Mul`, `Neg` and `NatCast` operations must be
+proved literally equal to the ordinary operations. They provide no alternative
+field instance or fallible arithmetic record. Uncovered operations and numeral
+instances retain their ordinary implementations; installing a cached explicit
+natural-number cast does not replace numeral instances. Public projection and
+operation-equality lemmas remain available without exposing stored constructors.
+
 A persistent split rebuilds the full requested dependency closure in
 predecessor order. Transport each later defining polynomial, interval endpoint,
 selected-root descriptor and live value; re-encode root signs for the new
