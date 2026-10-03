@@ -318,8 +318,8 @@ from the exact first-level bounds, relative transcendence over that whole field,
 second-level sign/zero/order correspondence, embedding comparisons, key order
 and reader round trips. These base contexts do not yet contain algebraic levels.
 Selected-root storage and checked reconstruction of algebraic prefixes are
-provided below. Full dependency transport, complete isolation and exploration
-remain part of the tower implementation.
+provided below, together with complete isolation. Full dependency transport
+and exploration remain part of the tower implementation.
 
 ### Polynomials in a base context
 
@@ -427,8 +427,8 @@ infinitesimal order check the linear-factor cases. The oracle checks the
 midpoint, exact removed value, active and returned heads, returned endpoints
 and independently computed counts; their sum also satisfies root coverage. Its rejection tests detect stale heads, scalar loss, missing or
 invented cut roots, incorrect nested ordering and invalid input acceptance.
-These cases exercise one bisection node; complete isolation and simultaneous
-ordinary-real realization remain separate requirements.
+These cases exercise one bisection node; the complete isolation API is described
+below. Simultaneous ordinary-real realization remains a separate requirement.
 
 ### Capped bisection frontier
 
@@ -1921,7 +1921,8 @@ no caller supplies root coverage or chooses a single chain to stand for all towe
 
 `Presentation.Quotient model` identifies exactly equal denotations. Its
 `ringEquiv` and `algEquiv` identify it with the relative algebraic union, preserving
-field operations, ambient order and the prescribed base map. `value_algebraic`
+field operations and the prescribed base map. `inclusion_lt` and `toValue_lt`
+prove agreement with ambient order. `value_algebraic`
 proves algebraicity over that base, and `realClosed` proves real-closedness.
 The native zero, one, natural-number casts, addition, subtraction, multiplication, negation,
 total inversion and division agree with operations on classes. Signs agree with
@@ -1930,6 +1931,10 @@ Native coefficient inclusion through any suffix preserves its class, and
 `converted_value` proves coherence given an aligned checked conversion model.
 `refined_value` and `refined_suffix` discharge that alignment for the actual
 root-refinement producer, including reconstruction of every later root level.
+`Presentation.refine` packages refinement at any position after an earlier suffix;
+`refined_at` proves class preservation without exposing the ownership casts.
+`refine?` runs the checked later-level reconstruction, and `refine?_success`
+proves that it returns a presentation with the same class on valid input.
 `equal_spec` links executable equality in a common suffix to class equality.
 When the ambient field is algebraic over the input field,
 `denote_surjective` proves that presentations cover the whole ambient field,
@@ -1948,6 +1953,11 @@ These semantic finite-value constructions do not select
 or transport the full requested live dependency DAG during general enlargement.
 That executable assembly, joint ordinary-real realization and Phase-4 tower
 performance remain separate obligations.
+
+The quotient fixes one ambient model and its base embedding. It lives in
+`Type 1`, since the native presentation stores a packed context;
+`Union.Carrier model.field K` retains the ambient universe for consumers that
+need a carrier in that universe. The algebra equivalence connects the two.
 
 Ordinary-import consumers derive cancellation for actual stored multiplication
 and inversion from a nonzero native sign, check total inversion of zero, and

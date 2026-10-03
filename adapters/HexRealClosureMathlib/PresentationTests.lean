@@ -56,17 +56,33 @@ example (a b : Presentation parent) :
   · rw [Presentation.toValue_add, hx, hy]
   · rw [Presentation.equal_spec model suffix x y, hx, hy]
 
-/-- Ordinary imports expose the actual refinement producer's coherence. -/
-example {descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature}
-    {head : DensePoly parent.Value} {lower upper : Endpoint parent.Value}
+/-- Ordinary consumers refine a root after any earlier suffix, with every
+later root reconstructed, without reproducing the ownership casts. -/
+example (first : Suffix parent)
+    {descriptor : SignDet.Descriptor first.context.Value Signature
+      first.context.sign first.context.signature}
+    {head : DensePoly first.context.Value} {lower upper : Endpoint first.context.Value}
     (encoding : SignDet.Reencoding descriptor head lower upper)
-    (a : (parent.adjoin descriptor).context.Value) :
-    (Presentation.mk (.root encoding.target .nil)
-      (_root_.cast (congrArg Context.Value ((Conversion.refine_spec parent encoding).1.trans
-        (congrArg Extension.context (parent.refine encoding).canonical)))
-        ((Conversion.refine parent encoding).value a))).toValue model =
-      (Presentation.mk (.root descriptor .nil) a).toValue model :=
-  Presentation.refined_value model encoding a
+    (later : Suffix (first.context.adjoin descriptor).context)
+    (rebuilt : Rebuilt (Conversion.refine first.context encoding) later)
+    (a : later.context.Value) :
+    (Presentation.refine first encoding later rebuilt a).toValue model =
+      ((Presentation.mk (.root descriptor later) a).prepend first).toValue model :=
+  Presentation.refined_at model first encoding later rebuilt a
+
+/-- The checked producer itself returns a value-preserving presentation;
+consumers need not supply the rebuilt suffix or an aligned target model. -/
+example (first : Suffix parent)
+    {descriptor : SignDet.Descriptor first.context.Value Signature
+      first.context.sign first.context.signature}
+    {head : DensePoly first.context.Value} {lower upper : Endpoint first.context.Value}
+    (encoding : SignDet.Reencoding descriptor head lower upper)
+    (later : Suffix (first.context.adjoin descriptor).context) (a : later.context.Value) :
+    ∃ result, Presentation.refine? first encoding later a = some result ∧
+      result.denote model =
+        ((Presentation.mk (.root descriptor later) a).prepend first).denote model := by
+  obtain ⟨result, returned, same⟩ := Presentation.refine?_success model first encoding later a
+  exact ⟨result, returned, (Presentation.toValue_eq model _ _).mp same⟩
 
 example [Algebra.IsAlgebraic model.field K] :
     Function.Surjective (fun a : Presentation parent => a.denote model) :=
@@ -74,5 +90,11 @@ example [Algebra.IsAlgebraic model.field K] :
 
 noncomputable example [Algebra.IsAlgebraic model.field K] :
     Presentation.Quotient model ≃ₐ[model.field] K := Presentation.ambientEquiv model
+
+/-- The ambient identification retains the input field's prescribed map. -/
+example [Algebra.IsAlgebraic model.field K] (a : model.field) :
+    Presentation.ambientEquiv model
+      (algebraMap model.field (Presentation.Quotient model) a) = (a : K) :=
+  (Presentation.ambientEquiv model).commutes a
 
 end Hex.RealClosure.Tower
