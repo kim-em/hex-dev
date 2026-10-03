@@ -58,6 +58,10 @@ where toJson := Lean.toJson
 
 @[noinline] private def checkIO (n : Nat) (c : Cert) : IO Bool := pure (checkAt n c)
 
+@[noinline] private def outputIO (c : Cert) : IO (String × Hex.Nat.PrimeCert × String × String) :=
+  let leaf := terminal c
+  pure (frozenRows c, leaf, reprStr leaf, reprStr c)
+
 def main (args : List String) : IO UInt32 := do
   let (n, seed, budget) ← match args with
     | [n, seed] => pure (n, seed, ({} : SearchBudget))
@@ -84,8 +88,9 @@ def main (args : List String) : IO UInt32 := do
     | .error e => pure [("verdict", Lean.toJson "exhausted"),
         ("resource", Lean.toJson (reprStr e.resource)), ("unresolved", Lean.toJson e.subject)]
     | .ok c => do
-      let source := frozenRows c
-      let leaf := terminal c
+      let start ← IO.monoNanosNow
+      let (source, leaf, leafText, expanded) ← outputIO c
+      let outputTime := (← IO.monoNanosNow) - start
       let start ← IO.monoNanosNow
       let converted ← convertIO source leaf
       let convertTime := (← IO.monoNanosNow) - start
@@ -97,8 +102,11 @@ def main (args : List String) : IO UInt32 := do
           (certBitsAt ((budget.terminal.getD leafBudget).maxDepth + 1) c)),
         ("descent_bits", Lean.toJson (descent c)),
         ("terminal_nodes", Lean.toJson (primeNodes ((budget.terminal.getD leafBudget).maxDepth + 1) leaf)),
-        ("rows", Lean.toJson source), ("leaf", Lean.toJson (reprStr leaf)),
-        ("expanded", Lean.toJson (reprStr c)),
+        ("rows", Lean.toJson source), ("leaf", Lean.toJson leafText),
+        ("expanded", Lean.toJson expanded),
+        ("output_render_ns", Lean.toJson outputTime),
+        ("row_bytes", Lean.toJson source.utf8ByteSize),
+        ("expanded_bytes", Lean.toJson expanded.utf8ByteSize),
         ("conversion_ns", Lean.toJson convertTime), ("check_ns", Lean.toJson checkTime),
         ("converted", Lean.toJson (converted.toOption.any (checkAt n)))]
   IO.println <| (Lean.Json.mkObj (common ++ fields)).compress
