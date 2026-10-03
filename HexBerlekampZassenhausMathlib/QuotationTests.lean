@@ -68,4 +68,3 @@ end HexBerlekampZassenhausMathlib.QuotationTests
 /-- info: 'HexBerlekampZassenhausMathlib.QuotationTests.composite_prime' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms HexBerlekampZassenhausMathlib.QuotationTests.composite_prime
-

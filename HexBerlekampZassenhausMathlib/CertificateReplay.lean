@@ -29,10 +29,14 @@ namespace HexBerlekampZassenhausMathlib.CertificateReplay
 open Lean Meta
 
 /-- Prove a literal Boolean certificate check by theorem-backed evaluation.
+Uses direct reduction when available, otherwise public reduction equations.
 Returns an ordinary kernel proof of `check = true`, rejecting false or stuck
 checks. The caller supplies the existing checker applied to reified data. -/
 meta def checkProof (check : Expr) : MetaM Expr := do
-  let goal ← mkFreshExprMVar (← mkEq check (mkConst ``Bool.true))
+  let trueE := mkConst ``Bool.true
+  if ← isDefEq check trueE then
+    return mkApp2 (mkConst ``Eq.refl [.one]) (mkConst ``Bool) trueE
+  let goal ← mkFreshExprMVar (← mkEq check trueE)
   Lean.Meta.Tactic.Cbv.cbvDecideGoal goal.mvarId!
   instantiateMVars goal
 

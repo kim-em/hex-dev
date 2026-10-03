@@ -52,6 +52,16 @@ theorem quoted_irreducible : ZPoly.Irreducible quartic := quotedIrreducibility
 
 theorem tactic_irreducible : ZPoly.Irreducible quartic := by irreducibility
 
+example : True := by
+  irreducibility h : quartic
+  guard_hyp h :ₛ ZPoly.Irreducible quartic
+  trivial
+
+example : True := by
+  irreducibility quartic
+  guard_hyp this :ₛ ZPoly.Irreducible quartic
+  trivial
+
 theorem transported_irreducible : Irreducible (HexPolyZMathlib.toPolynomial quartic) := by
   irreducibility
 

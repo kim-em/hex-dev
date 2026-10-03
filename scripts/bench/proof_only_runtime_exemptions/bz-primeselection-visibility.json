@@ -1,0 +1,6 @@
+{
+  "path": "HexBerlekampZassenhaus/PrimeSelection.lean",
+  "baseline_blob": "fde38178743eab8ee03f015f030f09298905bb38",
+  "current_blob": "4a2603f6159831225f88a70dfdee8dbd8f2b97b7",
+  "reason": "Adds only an expose attribute to isGoodPrime. Its Boolean definition, gcd calculation and csimp redirect to isGoodPrimeImpl are unchanged. This exports the existing reduction body for downstream certificate replay without changing compiled prime selection or factorization measured by the factor sweep."
+}

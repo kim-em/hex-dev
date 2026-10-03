@@ -380,7 +380,9 @@ meta def emitIrreducibleOfZ (tactic : String) (P fLit hP : Expr)
     P fLit certifiedE multiE hcheck hP
 
 /-- Emit the free-layer proof `Hex.ZPoly.Irreducible fE` for a witness of
-either kind. -/
+either kind. On the multi-prime route, `fE` must be a reified literal or a
+closed term evaluable through exposed bodies and public reduction equations.
+The conclusion refers to `fE` as supplied. -/
 meta def zpolyIrredProof (fE : Expr) (w : OneWitness) : MetaM Expr :=
   match w with
   | .free wit =>
@@ -459,7 +461,10 @@ meta def irredZPolyStrong (fE : Expr) : Term.TermElabM ExtensionResult := do
   let fLit ← checkTransparent "irreducibility" f fE
   match ← searchOne "irreducibility" fE f with
   | .error why => return .declined why
-  | .ok w => return .success (← zpolyIrredProof fLit w)
+  | .ok w =>
+      let proof ← zpolyIrredProof fLit w
+      let expected := mkApp (mkConst ``Hex.ZPoly.Irreducible) fE
+      return .success (← mkExpectedTypeHint proof expected)
 
 /-- Match `HexPolyZMathlib.toPolynomial f` (or the unfolded
 `HexPolyMathlib.toPolynomial` at `R = ℤ`) and return `f`. -/
