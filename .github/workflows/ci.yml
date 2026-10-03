@@ -255,8 +255,9 @@ jobs:
             .lake/build/ir
             .lake/packages/AINTLIB/.lake/build/lib/lean
             .lake/packages/AINTLIB/.lake/build/ir
-          key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-
             lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
       # --- Lake artifact cache (dormant unless the LAKE_CACHE_*_PUBLIC repo
       # variables are set). A rev-precise, cross-runner fallback to the
@@ -458,10 +459,13 @@ jobs:
       # partial build are safe to reuse, and every PR restores the newest
       # snapshot: saving only after a fully green run left PRs rebuilding
       # hours of main whenever main was red or verification was slow.
+      # The key carries the run and attempt, because cache entries are
+      # immutable: a rerun of the same commit must be able to save a more
+      # complete snapshot, which restore then prefers as the newest match.
       # Pull-request caches are scoped to their merge ref and cannot help
       # another PR, so only main saves.
       - name: Save .lake/build (project and AINTLIB modules; main only)
-        if: ${{ always() && steps.hex-build-cache.outcome == 'success' && github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.hex-build-cache.outputs.cache-hit != 'true' }}
+        if: ${{ !cancelled() && steps.hex-build-cache.outcome == 'success' && github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.hex-build-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4
         with:
           path: |
@@ -469,7 +473,7 @@ jobs:
             .lake/build/ir
             .lake/packages/AINTLIB/.lake/build/lib/lean
             .lake/packages/AINTLIB/.lake/build/ir
-          key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
       # --- Parallel verification tails (single job, in-job parallel steps) ---
       # Both tails only read the already-built .lake/build; they write to
       # disjoint outputs, so they are safe to run concurrently. Each touches a
