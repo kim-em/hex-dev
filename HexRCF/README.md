@@ -117,6 +117,12 @@ Closed arithmetic, natural powers and division for these inputs and positive
 natural square-root aliases compile into checked common-field coordinates.
 Every original divisor is checked before target cell search. Quotient replay
 checks a frozen multiplication identity without repeating inverse search.
+Sources in one selected field retain its generator and power basis. Quotation
+reuses an authenticated source irreducibility proof only when its polynomial
+type exactly matches the computed presentation. The
+[quartic constructor](../conformance/HexRCF/CertificationInputs.lean) and
+[fresh-module proofs](../conformance/HexRCF/CertificationProofs.lean) exercise
+a supplied multi-prime certificate beyond the frontend witness languages.
 It binds the original isolation square to the literal selected-root replay, preserving the
 chosen embedding. Elaboration executes canonicalization; the kernel reduces
 the original polynomial and square identities, rather than canonicalization.

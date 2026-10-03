@@ -50,7 +50,7 @@ private meta def naturalSquareRoot? (source : Expr) : MetaM (Option Nat) := do
 private inductive SourceKind where
   | radical (degree : Nat)
   | selected (args : Array Expr)
-  | normalized (selected : Expr)
+  | normalized (selected checked : Expr)
   deriving Inhabited
 
 private structure SourcePlan where
@@ -225,7 +225,7 @@ private meta def sourceRoot? (argument : Expr) :
     (q((mahlerPrec $literalP : Int) ≤ ($literalSquare).prec) : Q(Prop))
   let selected ← mkAppM ``Selected.normalized_toReal
     (args ++ #[hreal, literalP, hpoly, literalSquare, hw, hp, hs])
-  return some (← FieldRuntime.evalReal argument, p, s, .normalized selected)
+  return some (← FieldRuntime.evalReal argument, p, s, .normalized selected args[4]!)
 
 private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
   let identity : DensePoly Rat := DensePoly.ofList [0, 1]
@@ -299,7 +299,10 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
   -- resulting coordinate still passes the polynomial and enclosure checks.
   let distinct := anchors.foldl (fun seen anchor =>
     if seen.contains anchor then seen else seen.push anchor) #[]
-  let common := QAdjoin.common (distinct.map RealAlgebraicNumber.toAlgebraic)
+  let common : QAdjoin.Presentation := if distinct.size = 1 then
+      let generator := distinct[0]!.toAlgebraic
+      ⟨generator, #[generator.toQAdjoin]⟩
+    else QAdjoin.common (distinct.map RealAlgebraicNumber.toAlgebraic)
   unless common.entries.size == distinct.size do
     throwError "rcf: common-field presentation failed"
   unless common.generator.isReal do
@@ -354,7 +357,7 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
                 throwError "rcf: source radical has a different defining polynomial"
               let nExpr : Q(ℕ) := mkNatLit degree
               pure q(SquareRoot.polynomial $nExpr)
-          | .selected _ | .normalized _ => FieldLiteral.zpolyExpr sourceP
+          | .selected _ | .normalized _ _ => FieldLiteral.zpolyExpr sourceP
         let sourceWitness ← mkDecideProof
           (q(atomWitness $sourcePExpr $sourceSquareExpr) : Q(Prop))
         let sourcePrecision ← mkDecideProof
@@ -371,7 +374,7 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
           | .selected args => do
               let sourceValue ← mkAppM ``Selected.real_toReal args
               mkAppM ``Eq.symm #[sourceValue]
-          | .normalized selected => pure selected
+          | .normalized selected _ => pure selected
         sourcePExprs := sourcePExprs.push sourcePExpr
         sourceSquareExprs := sourceSquareExprs.push sourceSquareExpr
         sourceWitnesses := sourceWitnesses.push sourceWitness
@@ -390,28 +393,44 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
           throwError "rcf: source square count differs from the coordinates"
         extras := extras ++ [CommonPresentation.discSlack square (anchorCoordinates i)]
       let hdegree ← mkDecideProof (q(0 < ($pExpr).natDegree) : Q(Prop))
-      let irred ← match QuadraticNormCertificate.certify? p with
-        | some cert => do
-            let certExpr : Q(QuadraticNormCertificate) ←
-              FieldLiteral.quadraticCertExpr cert
-            let hcert ← mkDecideProof
-              (q(($certExpr).check $pExpr = true) : Q(Prop))
-            mkAppM ``Field.checkedIrreducibleQuadraticNorm
-              #[pExpr, certExpr, hcert, hdegree]
-        | none => do
-            let some witness := HexBerlekampZassenhaus.FactorTactic.searchWitness p |
-              throwError "rcf: no checked irreducibility witness for this common field"
-            let witnessExpr : Q(ZPoly.IrredWitness) :=
-              HexBerlekampZassenhaus.FactorTactic.reifyWitness witness
-            unless ZPoly.checkIrredWitness p witness do
-              throwError "rcf: computed irreducibility witness failed its check"
-            let hwitness ← mkDecideProof
-              (q(ZPoly.checkIrredWitness $pExpr $witnessExpr = true) : Q(Prop))
-            mkAppM ``Field.checkedIrreducible
-              #[pExpr, witnessExpr, hwitness, hdegree]
       let instType ← mkAppM ``ZPoly.CheckedIrreducible #[pExpr]
+      let mut sourceIrred : Option Expr := none
+      for plan in plans do
+        let checked ← match plan.kind with
+          | .radical _ => pure none
+          | .selected args => pure (some args[7]!)
+          | .normalized _ checked => pure (some checked)
+        if let some checked := checked then
+          let saved ← saveState
+          let agrees ← try isDefEq (← inferType checked) instType
+            finally saved.restore
+          if agrees then
+            sourceIrred := some checked
+            break
+      let irred ← match sourceIrred with
+        | some checked => pure checked
+        | none => match QuadraticNormCertificate.certify? p with
+            | some cert => do
+                let certExpr : Q(QuadraticNormCertificate) ←
+                  FieldLiteral.quadraticCertExpr cert
+                let hcert ← mkDecideProof
+                  (q(($certExpr).check $pExpr = true) : Q(Prop))
+                mkAppM ``Field.checkedIrreducibleQuadraticNorm
+                  #[pExpr, certExpr, hcert, hdegree]
+            | none => do
+                let some witness := HexBerlekampZassenhaus.FactorTactic.searchWitness p |
+                  throwError "rcf: no checked irreducibility witness for this common field"
+                let witnessExpr : Q(ZPoly.IrredWitness) :=
+                  HexBerlekampZassenhaus.FactorTactic.reifyWitness witness
+                unless ZPoly.checkIrredWitness p witness do
+                  throwError "rcf: computed irreducibility witness failed its check"
+                let hwitness ← mkDecideProof
+                  (q(ZPoly.checkIrredWitness $pExpr $witnessExpr = true) : Q(Prop))
+                mkAppM ``Field.checkedIrreducible
+                  #[pExpr, witnessExpr, hwitness, hdegree]
       -- Runtime field operations use the canonical generator's instance;
-      -- the emitted proof checks a literal irreducibility witness.
+      -- quotation retains an exactly matching source instance or checks a
+      -- literal irreducibility witness for the new presentation.
       letI : ZPoly.CheckedIrreducible p := common.generator.checked
       withLocalDecl `inst .instImplicit instType fun inst => do
         let sourcePolyRuntime : Fin n → DensePoly Rat := fun i =>

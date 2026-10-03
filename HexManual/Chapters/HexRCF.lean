@@ -529,8 +529,18 @@ arbitrary opaque algebraic value has no implicit reconstruction rule.
 For these reconstructed inputs, closed arithmetic is compiled into the common
 field after authenticating its source values. A quotient is recorded as a
 rational coordinate polynomial and checked by its multiplication identity;
-kernel replay does not repeat inverse search. Several coordinates in one
-selected field share one generator search. The cubic example below verifies
+kernel replay does not repeat inverse search. When all source coordinates use
+one selected generator, the adapter retains that generator and its existing
+power basis; it does not run general common-field search. Polynomial and
+isolation-square checks still authenticate every proposed source coordinate.
+If the common defining polynomial exactly matches an authenticated source's
+polynomial, quotation reuses its supplied `CheckedIrreducible` proof. The
+source instance's type must match in Lean; equality of runtime polynomials
+alone is insufficient. This supports source proofs beyond the frontend's
+single-witness and quadratic-norm search languages, including a checked real
+quartic with a multi-prime certificate. New common polynomials still require
+a supported ordinary-kernel irreducibility certificate.
+The cubic example below verifies
 `x / α = (α² − 1) * x` at the selected positive root of `X³ − X − 1`.
 The same example also uses the ordinary `QAdjoin.toAlgebraicNumber`
 conversion followed by a reality proof, without the `Coefficients.ofField`
