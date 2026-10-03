@@ -46,6 +46,25 @@ theorem monic_squarefree {Ctx : Type u} [DecidableEq Ctx]
     (Field.value_inv rep hrep real) (Field.value_natCast rep hrep real)
     context _ cert produced
 
+/-- The normalized proposal is monic at its actual real interpretation,
+without installing a field instance on the native coordinate storage. -/
+theorem monic_leading {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root) (real : rep.root.im = 0)
+    (context : Ctx) (input : DensePoly (PolyQuot p root))
+    (cert : RadicalCert (PolyQuot p root) Ctx)
+    (produced : RadicalCert.buildMonic context input = some cert) :
+    (HexPolyMathlib.Interpret.interpret
+      (Field.value rep) (Field.value_eq_zero rep hrep real) cert.core).leadingCoeff = 1 := by
+  rw [RadicalCert.buildMonic_core context input cert produced]
+  apply HexPolyMathlib.Interpret.monicize_leading (Field.value rep)
+    (Field.value_eq_zero rep hrep real) (Field.value_mul rep hrep real)
+    (Field.value_inv rep hrep real)
+  intro zero
+  have nonzero := RadicalCert.core_ne_zero context input cert
+    (RadicalCert.buildMonic_checked context input cert produced)
+  rw [RadicalCert.buildMonic_core context input cert produced, zero] at nonzero
+  exact nonzero (by simp [DensePoly.monicize])
+
 /-- Every coordinate over the checked selected real root has a canonical
 real-algebraic search value. -/
 theorem canonical_isSome (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)

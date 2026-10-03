@@ -69,6 +69,10 @@ theorem rational_progress (input : DensePoly Rat) (nonzero : input ≠ 0) :
 #guard_msgs (whitespace := lax) in
 #print axioms FieldBuild.monic_squarefree
 
+/-- info: 'Hex.RCF.RealCoefficients.FieldBuild.monic_leading' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms FieldBuild.monic_leading
+
 private instance : SquareTwo.polynomial.CheckedIrreducible := SquareTwo.checked
 private abbrev hw : atomWitness SquareTwo.polynomial SquareTwo.square := by decide
 private abbrev hp : (mahlerPrec SquareTwo.polynomial : Int) ≤ SquareTwo.square.prec := by decide
