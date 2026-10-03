@@ -122,6 +122,27 @@ Concretely:
   needed (e.g. a macOS dyld cross-check — not currently present), state
   the reason in a workflow-level comment.
 
+### Release consumer check
+
+The manually dispatched `sync-released.yml` is the one exception to the
+single-job rule, because what it guards is platform-specific: whether a user
+can `require` and `import` the published libraries. Its `stage` job runs the
+sync as a dry run with `--stage`, which keeps every rewritten repository. A
+`consumer` job per platform (Ubuntu, macOS, Windows) then runs
+`scripts/release/consumer_check.py`, which requires those staged repositories
+by path from a fresh Lake project, and elaborates, downstream of them, an
+import of every published library, every manifest entry's `test_modules`, and
+the `Examples/` user stories whose imports are all published. It then links
+and runs an executable that calls native code. The `sync` job, which publishes,
+runs only after every blocking `consumer` job passes. Downstream elaboration is
+where `precompileModules`, FFI targets and their link arguments take effect,
+so this is the check that a library built one way here and another way in its
+mirror cannot pass unnoticed. Windows does not block publishing yet; see the
+workflow comment.
+
+This runs only on dispatch, a few times per release, so it does not contend
+with pull-request runners for the concurrency cap.
+
 ### Docs-only fast path
 
 A pull request whose diff touches only documentation, planning text,
