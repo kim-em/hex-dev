@@ -855,6 +855,39 @@ query. The examples also check rejected restoration, packing to the actual
 remainder, and packing a vanishing input to canonical zero. The byte coefficient
 decoder continues to use `restore?`.
 
+The companion module `HexRealClosureMathlib.SignFacts` provides finite,
+proof-bearing sign facts. Each fact fixes the exact polynomial representation
+and its algebraic context. `SignFact.read` restores a nonzero literal only when
+its key and claimed sign match a supplied fact; absent keys, zero claims and
+wrong signs return `none`. Its `read_sound` theorem identifies the result of
+the ordinary executable decoder.
+
+`Element.pack` uses a proved copy of the actual reduction function and supplied
+sign facts for nonconstant retained remainders. Constants use the predecessor's
+ordinary sign operation, including canonical zero. `cachedAdd`, `cachedSub`,
+`cachedMul`, `cachedNeg`, `cachedOne` and `cachedNatCast` supply ordinary operations
+proved exactly equal to the existing operations. These equalities let a caller
+check a literal certificate using the supplied facts and transfer the resulting
+acceptance proof to the existing checker.
+
+An absent nonconstant fact reaches an opaque packing function. This prevents
+ordinary-kernel evaluation from completing that branch. Compiled evaluation of
+that function runs the existing sign producer. Accordingly, these APIs support
+kernel proof assembly; they do not provide a strict compiled checker for
+untrusted cross-level certificates. `SignFact.read` itself has no such fallback.
+
+`PackingConformance` checks literal restoration, exact keys, context types and
+canonical zero in the ordinary kernel. `NestedSignsConformance` checks a second
+root defined by `a * Y - 1`, where `a` is stored as `X² - 1 + 2X` at the first
+selected root `X = 1`. Supplied child evidence establishes the coefficient and
+endpoint signs. The second root is `1/2`; its descriptor and the positive sign
+of `Y` are checked using those facts, then transferred to the actual native
+operations. Wrong signs, context identifiers and intervals reject. Removing a
+needed child fact prevents kernel evaluation. Compiled checks independently
+confirm descriptor and selected-sign acceptance. These small examples exercise
+nested proof assembly; serialized cross-level dependency graphs and strict
+compiled replay remain separate obligations.
+
 Ordinary addition, subtraction, negation, multiplication, inversion and
 division operate on these values. Inversion computes the defining polynomial's
 local gcd with the operand, takes the complementary factor, and scales the
