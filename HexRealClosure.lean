@@ -35,6 +35,7 @@ public import HexRealClosure.TowerSuffix
 public import HexRealClosure.TowerPresentation
 public import HexRealClosure.TowerEnlarge
 public import HexRealClosure.TowerEnlargement
+public import HexRealClosure.LiveContext
 public import HexRealClosure.TowerRoots
 public import HexRealClosure.RootTransport
 public import HexRealClosure.RootCollection

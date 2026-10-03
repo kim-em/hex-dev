@@ -242,6 +242,24 @@ invalid even for an operand whose serialization did not change. Old handles cann
 new contexts without transport. Pure local inversion and a persisted split
 must give equal quotient values.
 
+`Tower.Inclusion.Model` interprets the actual native inclusion; its target is
+the conversion model with the checked target ownership. It preserves original
+values, complete polynomial interpretations, equality and comparison. Semantic
+composition uses the second inclusion's actual target model.
+`Inclusions.Models` retains every original owner's interpretation aligned with
+one common target. Extension preserves the original owner order and models;
+lifting uses the actual ordered field embedding.
+
+`Shared.enlarge?_models` carries an existing coherent collection of original
+interpretations into the prescribed algebraic ambient over the old field's
+infinitesimal extension. The declared base's reference model supplies existence
+of the native laws. The new parameter is the ambient's actual infinitesimal,
+and every original owner's values and polynomials use that same returned target
+model. `Shared.enlarge?_ordered` proves the native parameter positive and
+smaller than each positive old shared value from the base reference alone.
+The executable producer receives no root alignment, coefficient agreement or
+semantic model argument.
+
 At a fixed level of initial degree `d`, there are at most `d-1` nontrivial
 persistent splits. Sum those bounds over a fixed tower; this is not a bound
 on future adjunctions or the cost of repeatedly recomputing a local split.

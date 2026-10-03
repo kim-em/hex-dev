@@ -234,6 +234,45 @@ theorem keys_pack {registry : Registry} {K : Type}
     [Lean.Grind.Field K] [DecidableEq K] {approx : K → Rat → Bounds} {sign : K → Int}
     (context : RealContext registry K approx sign) : (pack context).keys = context.keys := rfl
 
+private theorem keys_injective {registry : Registry} {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    {approx : K → Rat → Bounds} {sign : K → Int}
+    (left : RealChain registry K approx sign) (right : RealPrefix registry)
+    (same : left.keys = right.keys) : RealPrefix.pack ⟨left⟩ = right := by
+  induction left generalizing right with
+  | base =>
+    rcases right with ⟨⟨right⟩⟩
+    cases right with
+    | base => rfl
+    | step parent key bounds registered sp ap =>
+      change [] = parent.keys ++ [key] at same
+      have lengths := congrArg List.length same
+      simp at lengths
+  | step parent key bounds registered sp ap ih =>
+    rcases right with ⟨⟨right⟩⟩
+    cases right with
+    | base =>
+      change parent.keys ++ [key] = [] at same
+      have lengths := congrArg List.length same
+      simp at lengths
+    | step other last otherBounds otherRegistered otherSp otherAp =>
+      change parent.keys ++ [key] = other.keys ++ [last] at same
+      have parts : parent.keys = other.keys ∧ key = last := by
+        have split := List.append_inj' same (by simp)
+        exact ⟨split.1, by simpa using split.2⟩
+      have previous := ih (RealPrefix.pack ⟨other⟩) parts.1
+      cases previous
+      cases parts.2
+      have equal : bounds = otherBounds := Option.some.inj (registered.symm.trans otherRegistered)
+      cases equal
+      rfl
+
+/-- Within one immutable registry, the complete ordered key path identifies
+its validated real prefix, including the exact predecessor bounds. -/
+theorem keys_inj {registry : Registry} {left right : RealPrefix registry}
+    (same : left.keys = right.keys) : left = right := by
+  cases left with
+  | pack context => exact keys_injective context.chain right same
+
 end RealPrefix
 
 namespace PackedContext
@@ -271,7 +310,8 @@ theorem extend_signature {registry : Registry} (context : PackedContext registry
   | 0 => context
   | n + 1 => extendImpl context.infinitesimal n
 
-private theorem extend_infinitesimal {registry : Registry}
+/-- Native base extension commutes with one additional infinitesimal stage. -/
+theorem extend_infinitesimal {registry : Registry}
     (context : PackedContext registry) (n : Nat) :
     context.infinitesimal.extend n = (context.extend n).infinitesimal := by
   induction n with
@@ -353,6 +393,26 @@ private theorem reconstruct_proof {registry : Registry} (context : PackedContext
 /-- Every native staged context decomposes into its actual prefix and depth. -/
 theorem reconstruct {registry : Registry} (context : PackedContext registry) :
     context.realPrefix.finish.extend context.depth = context := reconstruct_proof context
+
+/-- The real-prefix path is the constants component of the whole binding. -/
+theorem prefix_keys {registry : Registry} (context : PackedContext registry) :
+    context.realPrefix.keys = context.signature.constants := by
+  have same := congrArg PackedContext.signature context.reconstruct
+  rw [extend_signature, RealPrefix.finish_signature] at same
+  exact congrArg Signature.constants same
+
+/-- Full base bindings identify the actual native context, rather than only
+its serialized description. Registry providers and predecessor progress are
+fixed by the validated ordered real prefix. -/
+theorem signature_inj {registry : Registry} {left right : PackedContext registry}
+    (same : left.signature = right.signature) : left = right := by
+  have prefixes : left.realPrefix = right.realPrefix := RealPrefix.keys_inj (by
+    rw [prefix_keys, prefix_keys, same])
+  have depths : left.depth = right.depth := congrArg Signature.infinitesimals same
+  rw [← left.reconstruct, ← right.reconstruct, prefixes, depths]
+
+instance {registry : Registry} : DecidableEq (PackedContext registry) := fun left right =>
+  decidable_of_iff (left.signature = right.signature) ⟨signature_inj, congrArg signature⟩
 
 end PackedContext
 
