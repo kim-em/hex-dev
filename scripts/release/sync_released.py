@@ -760,12 +760,12 @@ def rewrite_lib_settings(entry: dict, clone: Path) -> list[str]:
         return []
     lib = entry["lib"]
     required = source_build_settings(lib)
-    if not required:
-        return []
     lakefile = clone / f"lakefile.{entry['lakefile']}"
     text = lakefile.read_text(encoding="utf-8")
     toml = entry["lakefile"] == "toml"
     block = _toml_lib_block(text, lib) if toml else _lean_lib_header(text, lib)
+    if not required and block is None:
+        return []
     if block is None:
         raise RuntimeError(
             f"released Lake file {lakefile} declares no lean_lib {lib}, so the "
@@ -789,6 +789,25 @@ def rewrite_lib_settings(entry: dict, clone: Path) -> list[str]:
                 "own Lake skeleton"
             )
     notes: list[str] = []
+    if "precompileModules" not in required and "precompileModules" in present:
+        # Dropping the flag here must reach the mirror too: every downstream
+        # user pays for a precompiled library, so the mirror may not keep one
+        # this monorepo no longer asks for.
+        line = re.compile(
+            r"(?m)^[ \t]*precompileModules[ \t]*" + ("=" if toml else ":=")
+            + r"[^\n]*\n?")
+        new_body, count = line.subn("", body, count=1)
+        if count != 1:
+            raise RuntimeError(
+                f"cannot remove precompileModules from lean_lib {lib} in {lakefile}"
+            )
+        if not toml and not new_body.strip() and block.group("where"):
+            # `lean_lib X where` with an empty body does not parse.
+            text = (text[:block.start()] + text[block.start():body_start]
+                    .removesuffix(" where") + new_body + text[body_start + len(body):])
+        else:
+            text = text[:body_start] + new_body + text[body_start + len(body):]
+        notes.append(f"  removed precompileModules on lean_lib {lib} ({lakefile.name})")
     if "precompileModules" in required:
         setting = "precompileModules"
         if required[setting] != "true":

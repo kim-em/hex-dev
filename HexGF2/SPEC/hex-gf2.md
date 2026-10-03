@@ -250,3 +250,12 @@ integration shape is documented in the bench module docstring
 when the HO lands. Either pattern satisfies the SPEC.
 
 Structured metadata in `libraries.yml: HexGF2.phase4.comparators`.
+
+## Native code
+
+`lean_lib HexGF2` sets `precompileModules := true` because the library binds
+native implementations with `@[extern]`: the carry-less multiplication `clmul`. Lean's interpreter cannot run
+an `@[extern]` declaration, so without the flag a downstream `#eval`, `#guard`
+or tactic that evaluates one fails with "Could not find native implementation
+of external declaration". The release consumer check exercises this from a
+downstream package before every publish.

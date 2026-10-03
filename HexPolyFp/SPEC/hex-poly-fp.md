@@ -160,3 +160,12 @@ target-modulus and operand-ratio ladders are part of the broader
 hex-poly-fast calibration grid. Conformance forces the available kernels and
 checks them against schoolbook multiplication; an invalid direct root or
 insufficient CRT product is a required fallback case.
+
+## Native code
+
+`lean_lib HexPolyFp` sets `precompileModules := true` because the library binds
+native implementations with `@[extern]`: the packed convolution `fpConvolve` behind `mulPacked`, which `powModMonic` also reaches. Lean's interpreter cannot run
+an `@[extern]` declaration, so without the flag a downstream `#eval`, `#guard`
+or tactic that evaluates one fails with "Could not find native implementation
+of external declaration". The release consumer check exercises this from a
+downstream package before every publish.

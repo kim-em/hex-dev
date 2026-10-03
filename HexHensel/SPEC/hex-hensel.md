@@ -216,3 +216,12 @@ Changes must pass:
 Benchmarks report the exact source revision, toolchain, machine,
 inputs, and lift exponent. Linear and quadratic lifting are recorded
 as distinct operations.
+
+## Native code
+
+`lean_lib HexHensel` sets `precompileModules := true` because the library binds
+native implementations with `@[extern]`: the `WordPoly` operations `add`, `sub`, `mul` and `mulAdd`. Lean's interpreter cannot run
+an `@[extern]` declaration, so without the flag a downstream `#eval`, `#guard`
+or tactic that evaluates one fails with "Could not find native implementation
+of external declaration". The release consumer check exercises this from a
+downstream package before every publish.

@@ -123,6 +123,47 @@ def check_build_settings(entry: dict) -> None:
         fail(f"{repo}: {error}")
 
 
+EXTERN_ATTR = re.compile(r"@\[[^\]]*\bextern\b")
+
+
+def check_precompile_justified(entry: dict, root: Path = REPO_ROOT) -> None:
+    """A published `precompileModules` must say why it is there.
+
+    Every downstream user of a precompiled library compiles and links native
+    code for it on their first build, so the flag has to earn its place. It is
+    required when the library binds `@[extern]` declarations, which Lean's
+    interpreter cannot run; otherwise it is only a speed claim, and must cite a
+    measurement under `reports/`. Either way the library SPEC names the flag.
+    """
+    lib = entry["lib"]
+    if source_build_settings(lib, root / "lakefile.lean").get(
+            "precompileModules") != "true":
+        return
+    repo = entry["repo"]
+    sources = sorted((root / lib).rglob("*.lean")) + [root / f"{lib}.lean"]
+    externs = any(
+        EXTERN_ATTR.search(path.read_text(encoding="utf-8"))
+        for path in sources if path.is_file()
+    )
+    paragraphs = [
+        paragraph
+        for spec in sorted((root / lib / "SPEC").glob("*.md"))
+        for paragraph in spec.read_text(encoding="utf-8").split("\n\n")
+        if "precompileModules" in paragraph
+    ]
+    if not paragraphs:
+        fail(
+            f"{repo}: lean_lib {lib} sets precompileModules, but {lib}/SPEC does "
+            "not say why; every downstream user pays for it"
+        )
+    if not externs and not any("reports/" in paragraph for paragraph in paragraphs):
+        fail(
+            f"{repo}: lean_lib {lib} sets precompileModules without binding any "
+            "@[extern]; its SPEC paragraph on the flag must cite the measurement "
+            "under reports/ that justifies it, or the flag should go"
+        )
+
+
 def parse_sync_baseline(text: str, source: str) -> set[str]:
     """Return repository names from a validated release-sync baseline."""
     try:
@@ -524,6 +565,7 @@ def main() -> int:
                 fail(f"duplicate released library {lib}")
             library_names.add(lib)
             check_build_settings(entry)
+            check_precompile_justified(entry)
             helpers = entry.get("lake_declarations", [])
             if (not isinstance(helpers, list)
                     or not all(isinstance(name, str) for name in helpers)

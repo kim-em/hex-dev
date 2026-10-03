@@ -144,8 +144,7 @@ extern_lib hexnautyffi (pkg) := do
 lean_lib Hex where
 
 -- Mathlib-free dependencies and producers called during elaboration.
-lean_lib HexBasic where
-  precompileModules := true
+lean_lib HexBasic
 
 lean_lib HexTruncatedSeries where
 
@@ -432,8 +431,7 @@ lean_lib HexECPPMathlibTests where
 @[default_target]
 lean_lib HexIntFactorMathlib where
 
-lean_lib HexMatrix where
-  precompileModules := true
+lean_lib HexMatrix
 
 @[default_target]
 lean_lib HexPermGroup where
