@@ -24,16 +24,19 @@ private def sample : Option (Array Bool) := do
   let base := Context.base (BaseContext.rational registry)
   let two : base.Value := 1 + 1
   let before ← Descriptor.validate base.sign base.signature
-    { context := base.signature, head := DensePoly.ofCoeffs #[-1, 1],
-      lower := .finite 0, upper := .finite two, indices := [], signs := [] }
+    { context := base.signature, head := DensePoly.ofCoeffs #[-(two + 1), 0, 1],
+      lower := .finite 1, upper := .finite two, indices := [], signs := [] }
   let first : Suffix base := .root before .nil
   let parent := first.context
+  let predecessor : parent.Value := by
+    change (base.adjoin before).context.Value
+    exact (base.adjoin before).generator
   let two : parent.Value := 1 + 1
   let three : parent.Value := two + 1
   let x : DensePoly parent.Value := DensePoly.ofCoeffs #[0, 1]
   let factor := x * x - DensePoly.C two
   let middle ← Descriptor.validate parent.sign parent.signature
-    { context := parent.signature, head := DensePoly.scale three (factor * (x - DensePoly.C three)),
+    { context := parent.signature, head := DensePoly.scale three (factor * (x - DensePoly.C (predecessor + three))),
       lower := .finite 1, upper := .finite two, indices := [], signs := [] }
   let extension := parent.adjoin middle
   let last ← Descriptor.validate extension.context.sign extension.context.signature
@@ -46,7 +49,12 @@ private def sample : Option (Array Bool) := do
   (Presentation.refine? first encoding later old.generator).map fun result =>
   let target := result.suffix.context
   let value := result.value
-  #[decide (result.suffix.length = 3),
+  let quadratic := match result.suffix with
+    | .root _ rest => match rest with
+      | .root refined _ => refined.raw.head.natDegree == 2
+      | .nil => false
+    | .nil => false
+  #[quadratic, decide (result.suffix.length = 3),
     decide (target.signature.roots.length = 3),
     decide (target.signature.roots.take 1 = old.context.signature.roots.take 1),
     decide (target.signature ≠ old.context.signature),
@@ -56,7 +64,7 @@ private def sample : Option (Array Bool) := do
     target.equal (value * value⁻¹) 1,
     (target.read (old.context.write old.generator)).toOption.isNone]
 
-/-- info: some #[true, true, true, true, true, true, true, true, true] -/
+/-- info: some #[true, true, true, true, true, true, true, true, true, true] -/
 #guard_msgs in
 #eval sample
 

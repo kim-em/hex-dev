@@ -218,10 +218,12 @@ Run `lake build hexrealclosure_bounds_conformance`, then
 `.lake/build/bin/hexrealclosure_bounds_conformance | python3 scripts/oracle/real_closure_bounds.py`.
 
 A failed bound search is a request for whole-line BKR completion. It never
-means that the polynomial has no roots. The bounded bisection and complete
-isolation driver and automatic extraction of a tower suffix from requested
-expressions remain unimplemented. Checked conversion through an explicitly
-supplied finite suffix is described below.
+means that the polynomial has no roots. Bounded bisection and complete isolation
+are described elsewhere in this README. Assembly of the full requested live
+dependency closure remains open; checked conversion through a finite suffix
+and `Context.origin` extraction of one context’s stored base and root suffix
+are available. Selecting the dependency closure from requested expressions
+remains open.
 
 `deflate? p a` removes the factor `X-a` with the shared monic polynomial division.
 `linearFactor a` stores the literal leading coefficient one, and the constructor
@@ -1008,9 +1010,10 @@ conditional on an ambient ordered real closed field, not an existence proof.
 
 The remaining tower work includes dependency-closed enlargement and transport
 across multiple live contexts and full algebraic-coefficient rational delegation
-agreement. Complete ordered roots and multiplicities, single-context enlargement
-and identification of native presentations with the compatible real-closed union
-are described below.
+agreement. Complete ordered roots and multiplicities, the checked
+`Context.enlarge?` producer for one context, and identification of native
+presentations with the compatible real-closed union are described elsewhere
+in this README.
 Each native algebraic context prepares and retains the shared selected-root
 query domain once, eagerly during context construction. `Context.buildSigns`
 reuses it for singleton and joint queries; `buildSigns_eq` proves exact
@@ -1085,7 +1088,7 @@ stale or unknown bindings, forged signs, zero claims, trailing zeros and
 malformed base payloads. The core roundtrip proofs introduce no admission.
 Automatic discovery of a dependent suffix remains open. Complete isolation,
 checked suffix conversion and identification with the real-closed union are
-described below.
+described elsewhere in this README.
 
 Run `lake build HexRealClosure.FrameFormatTests` for total construction over a
 non-monic reducible rational definition, followed by a definition with
@@ -1198,8 +1201,8 @@ root levels, including a noncanonical coefficient representing one, and check
 a gap between multiplicity labels 1 and 3, including their computed gcd.
 Kernel examples apply replay, squarefreeness and completeness at three
 arbitrary validated root levels.
-The proofs use only the standard three axioms. Complete root isolation and
-the remaining conformance and performance evaluation remain open.
+The proofs use only the standard three axioms. Complete root isolation is
+available; the remaining conformance and performance evaluation remain open.
 
 ### Checked persistent root refinement
 
@@ -1969,5 +1972,10 @@ need a carrier in that universe. The algebra equivalence connects the two.
 Ordinary-import consumers derive cancellation for actual stored multiplication
 and inversion from a nonzero native sign, check total inversion of zero, and
 identify equal values at different finite depths. Kernel axiom guards report
-only the standard three axioms. Run
-`lake build HexRealClosureMathlib.PresentationTests`.
+only the standard three axioms. The Mathlib-free `TowerPresentationTests`
+refines the middle root of a three-level tower whose original defining
+polynomial uses an algebraic predecessor coefficient. It rebuilds the later
+level, checks the refined quadratic, order, inverse and prefix retention,
+and rejects the old packet. Run
+`lake build HexRealClosureMathlib.PresentationTests` and
+`lake build HexRealClosure.TowerPresentationTests`.
