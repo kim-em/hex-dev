@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.FieldDecision
+public import HexRCF.RealCoefficients.FieldSignProgress
 public import HexRCF.RealCoefficients.FieldIsolate
 public import HexRCF.RealCoefficients.IsolationBuild
 public import HexRCF.RealCoefficients.RadicalBuild
@@ -30,6 +31,20 @@ The resulting isolations are checked later over the original coordinates. -/
     Option RealAlgebraicNumber := do
   let algebraic ← a.toAlgebraicNumber? rep hrep
   RealAlgebraicNumber.ofAlgebraic? algebraic
+
+/-- Retain the selected field presentation while extracting its sorted real roots.
+An absent owner result or universal root set remains an absent finite proposal. -/
+@[expose] def roots? (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
+    (head : DensePoly (PolyQuot p root)) : Option (Array RealRootCount) :=
+  (PolyQuot.roots? head rep hrep).bind fun roots =>
+    (RealAlgebraicPoly.realRoots roots).finite?
+
+/-- Enclose the complete real root list without reconstructing a common field. -/
+@[expose] def proposeRoots (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
+    (head : DensePoly (PolyQuot p root)) (precision : Nat) : Option IsolationCert := do
+  let roots ← roots? rep hrep head
+  let intervals ← roots.mapM fun r => rootInterval r.root precision
+  return ⟨intervals⟩
 
 /-- Search for roots with the existing canonical solver, retaining only its
 dyadic interval proposals. -/
@@ -68,18 +83,24 @@ private theorem buildProposed_checked {Ctx : Type u} [DecidableEq Ctx]
   · contradiction
   · exact (IsolationReplay.build_checked _ _ _ _ _ _ h).2
 
-/-- First search with prepared field root counts. If that bounded search or
-its exact replay fails, use the existing canonical root solver for proposals.
-Both paths return only evidence accepted over the original field coordinates. -/
+/-- Search and replay with a supplied coordinate sign computation. Root proposals
+retain the existing selected field; both attempts are checked with this sign. -/
+@[expose] def isolateAtWith {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
+    (sign : PolyQuot p root → Int) (context : Ctx)
+    (head : DensePoly (PolyQuot p root)) (precision : Nat) :
+    Option (IsolationReplay (PolyQuot p root) Ctx) :=
+  match buildProposed sign context head
+      (FieldIsolate.propose? sign FieldDecision.point head) with
+  | some direct => some direct
+  | none => buildProposed sign context head (proposeRoots rep hrep head precision)
+
+/-- Preserve the canonical search sign interface for existing callers. -/
 @[expose] def isolateAt [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
     (context : Ctx) (head : DensePoly (PolyQuot p root))
     (precision : Nat) : Option (IsolationReplay (PolyQuot p root) Ctx) :=
-  let sign := proposalSign rep hrep
-  match buildProposed sign context head
-      (FieldIsolate.propose? sign FieldDecision.point head) with
-  | some direct => some direct
-  | none => buildProposed sign context head (proposeCanonical rep hrep head precision)
+  isolateAtWith rep hrep (proposalSign rep hrep) context head precision
 
 /-- Every successful proposal is accepted by the generic isolation checker
 with the same root, field coordinates and sign operation. -/
@@ -89,14 +110,13 @@ theorem isolateAt_checked [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq
     (precision : Nat) (cert : IsolationReplay (PolyQuot p root) Ctx)
     (h : isolateAt rep hrep context head precision = some cert) :
     cert.check (proposalSign rep hrep) FieldDecision.point context head = true := by
-  unfold isolateAt at h
-  dsimp only at h
+  unfold isolateAt isolateAtWith at h
   cases hdirect : buildProposed (proposalSign rep hrep) context head
       (FieldIsolate.propose? (proposalSign rep hrep) FieldDecision.point head) with
   | none =>
       simpa [hdirect] using
         (buildProposed_checked (proposalSign rep hrep) context head
-          (proposeCanonical rep hrep head precision) cert (by simpa [hdirect] using h))
+          (proposeRoots rep hrep head precision) cert (by simpa [hdirect] using h))
   | some direct =>
       have heq : direct = cert := by simpa [hdirect] using h
       subst cert
@@ -121,12 +141,12 @@ theorem isolateAt_build [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq C
     (produced : isolateAt rep hrep context head precision = some cert) :
     ∃ isolations, IsolationReplay.build (proposalSign rep hrep) FieldDecision.point
       context head isolations = some cert := by
-  unfold isolateAt at produced
+  unfold isolateAt isolateAtWith at produced
   cases direct : buildProposed (proposalSign rep hrep) context head
       (FieldIsolate.propose? (proposalSign rep hrep) FieldDecision.point head) with
   | none =>
     apply buildProposed_build (proposalSign rep hrep) context head
-      (proposeCanonical rep hrep head precision) cert
+      (proposeRoots rep hrep head precision) cert
     simpa only [direct] using produced
   | some result =>
     have same : result = cert := by simpa only [direct, Option.some.injEq] using produced
@@ -231,24 +251,29 @@ arguments read by the checked isolation and root-query certificates. -/
     (formula : RealFormula.QF (n + 1)) (context : Ctx) (precision : Nat)
     (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := []) :
     Option (Result p s hw hp Ctx (n + 1)) :=
-  let rep := Field.literalRep p s hw hp
-  let hrep := Field.literalRep_mk p s hw hp
-  let product := FieldCarrier.product values formula
-  match RadicalCert.build context product with
-  | none => none
-  | some radical =>
-    match isolateAt rep hrep context radical.core precision with
+  if real : s.meetsRealAxis = true then
+    let prepared := Field.prepareSign p s hw hp real
+    let sign := fun a : PolyQuot p (SimpleRoot.ofSquare p s hw hp) =>
+      Sturm.queryPrepared prepared.val a.coeffs
+    let rep := Field.literalRep p s hw hp
+    let hrep := Field.literalRep_mk p s hw hp
+    let product := FieldCarrier.product values formula
+    match RadicalCert.build context product with
     | none => none
-    | some isolation =>
-      match FieldRootSigns.Table.build (proposalSign rep hrep) FieldDecision.point
-          context radical.core isolation
-          (FieldSpecialize.literalPolynomial values) formula with
+    | some radical =>
+      match isolateAtWith rep hrep sign context radical.core precision with
       | none => none
-      | some rootSigns =>
-        let keys := signKeys values formula radical.core isolation rootSigns extraSignKeys
-        match buildTable p s hw hp keys with
+      | some isolation =>
+        match FieldRootSigns.Table.build sign FieldDecision.point
+            context radical.core isolation
+            (FieldSpecialize.literalPolynomial values) formula with
         | none => none
-        | some signs => some ⟨radical, isolation, rootSigns, signs⟩
+        | some rootSigns =>
+          let keys := signKeys values formula radical.core isolation rootSigns extraSignKeys
+          match buildTable p s hw hp keys with
+          | none => none
+          | some signs => some ⟨radical, isolation, rootSigns, signs⟩
+  else none
 
 namespace Result
 

@@ -36,6 +36,7 @@ public import HexRCF.RealCoefficients.FieldRootSignsProgress
 public import HexRCF.RealCoefficients.FieldReplay
 public import HexRCF.RealCoefficients.FieldBuild
 public import HexRCF.RealCoefficients.FieldSignProgress
+public import HexRCF.RealCoefficients.FieldRoots
 public import HexRCF.RealCoefficients.FieldBuildProgress
 public import HexRCF.RealCoefficients.FieldDecisionProgress
 public import HexRCF.RealCoefficients.FieldBuildBudget

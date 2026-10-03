@@ -39,8 +39,7 @@ def isolateWithin [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     if doublings = 0 then .error .exhausted else
     -- Reuse the existing field coordinates instead of reconstructing a common
     -- field from separately converted coefficients.
-    let roots := (PolyQuot.roots? head rep hrep).bind fun roots =>
-      (RealAlgebraicPoly.realRoots roots).finite?
+    let roots := roots? rep hrep head
     let rec refine : Nat → Nat → Except BuildError IsolationCert
       | 0, _ => .error .exhausted
       | fuel + 1, precision =>

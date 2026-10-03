@@ -129,7 +129,11 @@ The fixed-field algebraic backend has a proof-backed complete certificate
 producer: it reduces repeated roots, refines complete root intervals, records
 all required literal signs and evaluates the shared formula on ordinary real
 cells. Compiled decision laws cover both verdicts; only a true verdict with
-ordinary-kernel replay produces a goal proof. The bounded builder remains
+ordinary-kernel replay produces a goal proof. Complete root proposals use the
+existing selected number field, with proved source-polynomial correspondence,
+sorted coverage and cofinal separation. The complete producer caches that root
+list across precision attempts; both builders prepare rational coordinate-sign
+queries once. The bounded builder remains
 available. The tactic also bounds direct bisection and fallback refinement
 through `rcf.algebraic.directDepth` and `rcf.algebraic.maxDoublings`, with
 terminal exhaustion and replay diagnostics. This does not give total

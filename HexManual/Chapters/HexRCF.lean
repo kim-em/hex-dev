@@ -1660,13 +1660,18 @@ complete root coverage and interval counts are derived using the owner's
 complete sorted root list and the literal Sturm checker.
 {name}`Hex.RCF.RealCoefficients.FieldBuild.isolateAt_progress` gives the same
 guarantee over original fixed-field coordinates at a checked selected real
-embedding, including the canonical fallback after bounded direct search fails.
-Canonical conversion preserves the exact interpreted polynomial.
+embedding, including the complete selected-field fallback after bounded direct
+search fails. `FieldBuild.roots_meaning` identifies the owner's root output
+with the original real polynomial; `roots_sorted` and `roots_finite` give
+its distinct ordered finite list for every nonzero head. `proposeRoots_spec`
+and `proposeRoots_accepted` derive complete coverage and accepted replay from
+strict enclosures of that list.
 The corresponding `isolate` entry points double successive precisions and
 return isolation evidence together with its checker acceptance proof and
 exact binding to the builder that produced the shared squarefree chain.
-The preferred fixed-field search, head conversion and complete root
-solving run once. Refinement repeats interval construction and gap checks;
+The preferred fixed-field search and complete root solving run once.
+The fallback passes the polynomial to the existing number-field root driver
+in its selected presentation. Refinement repeats interval construction and gap checks;
 the accepted Sturm replay evidence is built once after the gaps pass.
 These are compiled producers. A quoted proof must recheck the emitted literal
 certificate in the ordinary kernel.
@@ -1713,7 +1718,9 @@ as data before building its sign closure.
 rational Tarski queries give the selected real embedding's signs. Search does
 not isolate a new algebraic number for each coordinate sign.
 {name}`Hex.RCF.RealCoefficients.FieldBuild.build_progress` also proves success
-of the bounded builder along every cofinal precision schedule.
+of the bounded builder along every cofinal precision schedule. That builder
+also captures its prepared rational sign domain once, rather than converting
+each coordinate into a separate algebraic number.
 
 The `Result.allValue` and `Result.anyValue` compiled folds use only recorded
 signs. Their `forall_decision` and `exists_decision` theorems prove that the
@@ -1737,10 +1744,12 @@ The first example has a repeated root at the selected positive square root;
 the second produces a further algebraic root and checks simultaneous sign
 conditions on that section. Both use the optional algebraic handler, with
 ordinary real sectors between its root sections. The complete `produce` API
-accepts a direct bisection depth, defaulting to 256, before its proved canonical
-fallback, which still converts coefficients and reconstructs a common field.
-This complete library path can be slower than the frontend fixed-field fallback
-for tightly separated roots. The existing bounded isolation API retains its
+accepts a direct bisection depth, defaulting to 256, before its proved
+selected-field fallback. Both the complete producer and frontend retain that
+field presentation and share its complete root output across precision attempts.
+The owner's root driver still constructs exact algebraic roots; this is not
+a claim that root solving has no exactification cost.
+The existing bounded isolation API retains its
 128-level default.
 The direct proposal can also fail at its bounded bracketing, pivot or gap
 searches; no unchecked interval is accepted.
