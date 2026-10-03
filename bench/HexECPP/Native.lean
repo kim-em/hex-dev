@@ -39,6 +39,12 @@ private def stats (s : SearchStats) : Lean.Json := Lean.Json.mkObj [
   ("nonresidues", toJson s.nonresidues), ("points", toJson s.points),
   ("factorWork", toJson s.factorWork), ("scalarWork", toJson s.scalarWork),
   ("backtracks", toJson s.backtracks),
+  ("terminalCalls", toJson s.terminalCalls), ("terminalSuccesses", toJson s.terminalSuccesses),
+  ("terminalBitRejects", toJson s.terminalBitRejects),
+  ("terminalObligation", Lean.toJson s.terminalObligation),
+  ("norms", toJson s.norms), ("orders", toJson s.orders),
+  ("largeFactors", toJson s.largeFactors), ("proposals", toJson s.proposals),
+  ("outputRejects", toJson s.outputRejects), ("outputBits", Lean.toJson s.outputBits),
   ("lastRetry", Lean.toJson (s.lastRetry.map (fun e => (e.subject, reprStr e.resource)))),
   ("unresolved", Lean.toJson (s.unresolved.map (fun e => (e.subject, reprStr e.resource))))]
 where toJson := Lean.toJson
@@ -57,6 +63,8 @@ def main (args : List String) : IO UInt32 := do
     | [n, seed, "diagnose512"] => pure (n, seed, { maxBits := 512 })
     | [n, seed, "diagnose512-public"] =>
         pure (n, seed, { maxBits := 512, maxDepth := 20 })
+    | [n, seed, "native512"] => pure (n, seed, native512Budget)
+    | [n, seed, "native512-public"] => pure (n, seed, public512Budget)
     | [n, seed, depth, candidates] =>
         let some depth := depth.toNat? | throw <| IO.userError "invalid depth"
         let some candidates := candidates.toNat? | throw <| IO.userError "invalid candidates"
@@ -84,9 +92,10 @@ def main (args : List String) : IO UInt32 := do
       let valid ← checkIO n c
       let checkTime := (← IO.monoNanosNow) - start
       pure [("verdict", Lean.toJson "success"), ("checked", Lean.toJson valid),
-        ("steps", Lean.toJson (steps c)), ("data_bits", Lean.toJson (certBits c)),
+        ("steps", Lean.toJson (steps c)), ("data_bits", Lean.toJson
+          (certBitsAt ((budget.terminal.getD leafBudget).maxDepth + 1) c)),
         ("descent_bits", Lean.toJson (descent c)),
-        ("terminal_nodes", Lean.toJson (primeNodes (leafBudget.maxDepth + 1) leaf)),
+        ("terminal_nodes", Lean.toJson (primeNodes ((budget.terminal.getD leafBudget).maxDepth + 1) leaf)),
         ("rows", Lean.toJson source), ("leaf", Lean.toJson (reprStr leaf)),
         ("expanded", Lean.toJson (reprStr c)),
         ("conversion_ns", Lean.toJson convertTime), ("check_ns", Lean.toJson checkTime),
