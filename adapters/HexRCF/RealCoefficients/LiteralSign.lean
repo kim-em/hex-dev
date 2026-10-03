@@ -140,6 +140,91 @@ theorem build_checked {D : Type u} (domain : Sturm.PreparedDomain Rat)
 
 end Entry
 
+/-- Interpret a checked rational count-one interval through the shared Sturm
+soundness theorem. No isolation or approximation is evaluated by this law. -/
+private theorem checked_count (p : DensePoly Rat) (lower upper : Rat)
+    (count : TarskiCertificate Rat Rat Unit)
+    (accepted : Sturm.check Sturm.orderSign () p 1 (.finite lower) (.finite upper)
+      1 count = true) :
+    realPoly p ≠ 0 ∧
+      (Tarski.rootsIn (realPoly p) (.finite (lower : ℝ)) (.finite (upper : ℝ))).card = 1 := by
+  let f : Rat → ℝ := fun r => (r : ℝ)
+  have hz : ∀ a : Rat, f a = 0 ↔ a = 0 := fun _ => Rat.cast_eq_zero
+  have h1 : f 1 = 1 := by norm_num [f]
+  have ha : ∀ a b : Rat, f (a + b) = f a + f b := Rat.cast_add
+  have hs : ∀ a b : Rat, f (a - b) = f a - f b := Rat.cast_sub
+  have hm : ∀ a b : Rat, f (a * b) = f a * f b := Rat.cast_mul
+  have hn : ∀ n : Nat, f (n : Rat) = (n : ℝ) := by intro n; norm_num [f]
+  have hsign : ∀ a : Rat, Sturm.orderSign a = (SignType.sign (f a) : Int) := by
+    intro a
+    rw [HexSturmMathlib.orderSign_eq]
+    rcases lt_trichotomy a 0 with hneg | hzero | hpos
+    · have hr : (a : ℝ) < 0 := by exact_mod_cast hneg
+      simp [sign_neg hneg, sign_neg hr, f]
+    · subst a; simp [f]
+    · have hr : (0 : ℝ) < a := by exact_mod_cast hpos
+      simp [sign_pos hpos, sign_pos hr, f]
+  have sound := HexSturmMathlib.check_sound f hz h1 ha hs hm hn
+    Sturm.orderSign hsign () p 1 (.finite lower) (.finite upper) 1 count accepted
+  have meaning := sound.2
+  change (1 : Int) = Tarski.rootSum (realPoly p) (realPoly 1)
+    (.finite (lower : ℝ)) (.finite (upper : ℝ)) at meaning
+  rw [show realPoly (1 : DensePoly Rat) = 1 from interpret_one f hz h1,
+    Tarski.rootSum_one] at meaning
+  exact ⟨sound.1.1, by exact_mod_cast meaning.symm⟩
+
+/-- A frozen inner generator interval with its count-one certificate. It is
+trusted only after checking containment in the original count-one interval. -/
+structure Window where
+  lower : Rat
+  upper : Rat
+  count : TarskiCertificate Rat Rat Unit
+
+namespace Window
+
+/-- Check the nested domain and the actual root count; the original generator
+identity remains in the table's outer interval. -/
+@[expose] def check (window : Window) (head : DensePoly Rat) (lower upper : Rat) : Bool :=
+  decide (lower ≤ window.lower) && decide (window.upper ≤ upper) &&
+    Sturm.check Sturm.orderSign () head 1 (.finite window.lower) (.finite window.upper)
+      1 window.count
+
+/-- Both checked count-one domains select the same real root. The tighter
+bounds are a checked conclusion, not supplied containment of the selected root. -/
+theorem bounds (window : Window) (head : DensePoly Rat) (lower upper : Rat)
+    (count : TarskiCertificate Rat Rat Unit) (x : ℝ)
+    (hx : (realPoly head).IsRoot x)
+    (hl : (lower : ℝ) < x) (hu : x < (upper : ℝ))
+    (outer : Sturm.check Sturm.orderSign () head 1 (.finite lower) (.finite upper)
+      1 count = true) (accepted : window.check head lower upper = true) :
+    (window.lower : ℝ) < x ∧ x < (window.upper : ℝ) := by
+  simp only [check, Bool.and_eq_true, decide_eq_true_eq] at accepted
+  have hlo : (lower : ℝ) ≤ (window.lower : ℝ) := by exact_mod_cast accepted.1.1
+  have hhi : (window.upper : ℝ) ≤ (upper : ℝ) := by exact_mod_cast accepted.1.2
+  obtain ⟨nonzero, outerCard⟩ := checked_count head lower upper count outer
+  obtain ⟨_, innerCard⟩ := checked_count head window.lower window.upper window.count accepted.2
+  obtain ⟨root, roots⟩ := Finset.card_eq_one.mp outerCard
+  have original : x ∈ Tarski.rootsIn (realPoly head)
+      (.finite (lower : ℝ)) (.finite (upper : ℝ)) :=
+    (Tarski.mem_rootsIn_iff _ nonzero _ _ x).mpr
+      ⟨hx.eq_zero, (Tarski.inInterval_finite _ _ _).mpr ⟨hl, hu⟩⟩
+  have originalRoot : x = root := by simpa only [roots, Finset.mem_singleton] using original
+  obtain ⟨inner, innerRoots⟩ := Finset.card_eq_one.mp innerCard
+  have member : inner ∈ Tarski.rootsIn (realPoly head)
+      (.finite (window.lower : ℝ)) (.finite (window.upper : ℝ)) := by
+    rw [innerRoots]; exact Finset.mem_singleton_self inner
+  obtain ⟨zero, interval⟩ := (Tarski.mem_rootsIn_iff _ nonzero _ _ inner).mp member
+  have contained := (Tarski.inInterval_finite _ _ _).mp interval
+  have outerMember : inner ∈ Tarski.rootsIn (realPoly head)
+      (.finite (lower : ℝ)) (.finite (upper : ℝ)) :=
+    (Tarski.mem_rootsIn_iff _ nonzero _ _ inner).mpr ⟨zero,
+      (Tarski.inInterval_finite _ _ _).mpr
+        ⟨hlo.trans_lt contained.1, contained.2.trans_le hhi⟩⟩
+  have innerRoot : inner = root := by simpa only [roots, Finset.mem_singleton] using outerMember
+  rwa [originalRoot, ← innerRoot]
+
+end Window
+
 /-- Exact interval signs or rational queries for finitely many field values.
 The same authenticated count-one interval is used for every entry. -/
 structure Table (D : Type u) where
@@ -148,16 +233,28 @@ structure Table (D : Type u) where
   upper : Rat
   count : TarskiCertificate Rat Rat Unit
   entries : List (Entry D)
+  refinement : Option Window := none
 
 namespace Table
 
 variable {D : Type u} [DecidableEq D]
 
-/-- Check the root count and every sign in the literal table. -/
+/-- The interval used by recorded signs. Original context bindings remain on
+`head`/`lower`/`upper`, even when the sign evidence uses a checked inner window. -/
+@[expose] def interval (table : Table D) : Window :=
+  match table.refinement with
+  | none => ⟨table.lower, table.upper, table.count⟩
+  | some window => window
+
+/-- Check the original root count, any frozen refinement and every sign. -/
 @[expose] def check (table : Table D) (query : D → DensePoly Rat) : Bool :=
-  Sturm.check Sturm.orderSign () table.head 1
-    (.finite table.lower) (.finite table.upper) 1 table.count &&
-  table.entries.all fun entry => entry.check table.head table.lower table.upper query
+  let outer := Sturm.check Sturm.orderSign () table.head 1
+    (.finite table.lower) (.finite table.upper) 1 table.count
+  match table.refinement with
+  | none => outer &&
+      table.entries.all fun entry => entry.check table.head table.lower table.upper query
+  | some window => outer && window.check table.head table.lower table.upper &&
+      table.entries.all fun entry => entry.check table.head window.lower window.upper query
 
 /-- Look up a sign only when the finite table records this key. -/
 @[expose] def lookup? (table : Table D) (a : D) : Option Int :=
@@ -170,6 +267,38 @@ consumers can use `lookup?` to require a recorded finite hit. -/
   | some value => value
   | none => (SignType.sign (eval a) : Int)
 
+/-- Every stored entry of an accepted table has the sign at the original
+selected root, including when its evidence uses a checked tighter window. -/
+theorem entry_spec (table : Table D) (query : D → DensePoly Rat)
+    (entry : Entry D) (member : entry ∈ table.entries) (x : ℝ)
+    (hx : (realPoly table.head).IsRoot x)
+    (hl : (table.lower : ℝ) < x) (hu : x < (table.upper : ℝ))
+    (h : table.check query = true) :
+    entry.value = (SignType.sign ((realPoly (query entry.key)).eval x) : Int) := by
+  let interval := table.interval
+  have checks : Sturm.check Sturm.orderSign () table.head 1
+      (.finite interval.lower) (.finite interval.upper) 1 interval.count = true ∧
+      (interval.lower : ℝ) < x ∧ x < (interval.upper : ℝ) ∧
+      table.entries.all (fun entry => entry.check table.head interval.lower interval.upper query) = true := by
+    cases refined : table.refinement with
+    | none =>
+        simp only [check, refined, Bool.and_eq_true] at h
+        simpa only [interval, Table.interval, refined] using And.intro h.1
+          (And.intro hl (And.intro hu h.2))
+    | some window =>
+        simp only [check, refined, Bool.and_eq_true] at h
+        have bounds := window.bounds table.head table.lower table.upper table.count x
+          hx hl hu h.1.1 h.1.2
+        have count : Sturm.check Sturm.orderSign () table.head 1
+            (.finite window.lower) (.finite window.upper) 1 window.count = true := by
+          simp only [Window.check, Bool.and_eq_true] at h
+          exact h.1.2.2
+        simpa only [interval, Table.interval, refined] using And.intro count
+          (And.intro bounds.1 (And.intro bounds.2 h.2))
+  have checked := List.all_eq_true.mp checks.2.2.2 entry member
+  exact entry.check_spec table.head interval.lower interval.upper query
+    x hx checks.2.1 checks.2.2.1 interval.count checks.1 checked
+
 /-- An accepted table agrees with the real sign for every field element,
 including elements absent from the finite table. -/
 theorem sign_spec (table : Table D) (query : D → DensePoly Rat)
@@ -179,20 +308,17 @@ theorem sign_spec (table : Table D) (query : D → DensePoly Rat)
     (heval : ∀ a, eval a = (realPoly (query a)).eval x)
     (h : table.check query = true) (a : D) :
     table.sign eval a = (SignType.sign (eval a) : Int) := by
-  simp only [check, Bool.and_eq_true] at h
   unfold sign lookup?
   cases hfind : table.entries.find? (fun entry => decide (entry.key = a)) with
   | some entry =>
-      simp only [hfind, Option.map_some]
+      simp only [Option.map_some]
       have hm : entry ∈ table.entries := List.mem_of_find?_eq_some hfind
       have heq : entry.key = a := of_decide_eq_true
         (List.find?_some (p := fun row : Entry D => decide (row.key = a)) hfind)
-      have hquery := List.all_eq_true.mp h.2 entry hm
-      have hs := entry.check_spec table.head table.lower table.upper query
-        x hx hl hu table.count h.1 hquery
+      have hs := table.entry_spec query entry hm x hx hl hu h
       rw [heq, ← heval] at hs
       exact hs
-  | none => simp only [hfind, Option.map_none]
+  | none => simp only [Option.map_none]
 
 /-- A checked finite hit has the actual sign; missing keys remain explicit. -/
 theorem lookup_spec (table : Table D) (query : D → DensePoly Rat)
@@ -219,7 +345,7 @@ returned only after the complete literal table checker accepts it. -/
       let count : TarskiCertificate Rat Rat Unit :=
         Sturm.certifyPrepared () domain (1 : DensePoly Rat)
       let entries : List (Entry D) := keys.map (Entry.build domain lower upper · query)
-      let table : Table D := ⟨head, lower, upper, count, entries⟩
+      let table : Table D := ⟨head, lower, upper, count, entries, none⟩
       if table.check query then some table else none
 
 omit [DecidableEq D] in
@@ -331,12 +457,11 @@ theorem build_success (head : DensePoly Rat) (lower upper : Rat)
         Tarski.rootSum_one, card] at meaning
       exact meaning
     let entries : List (Entry D) := keys.map (Entry.build domain lower upper · query)
-    let table : Table D := ⟨head, lower, upper, count, entries⟩
+    let table : Table D := ⟨head, lower, upper, count, entries, none⟩
     have checked : table.check query = true := by
-      simp only [Table.check, Bool.and_eq_true]
+      simp only [table, Table.check, Bool.and_eq_true]
       refine ⟨?_, List.all_eq_true.mpr ?_⟩
-      · change Sturm.check Sturm.orderSign () head 1 (.finite lower) (.finite upper) 1 count = true
-        rw [← countValue]; exact bound 1
+      · rw [← countValue]; exact bound 1
       · intro entry mem
         obtain ⟨key, _, same⟩ := List.mem_map.mp mem
         subst entry
@@ -346,6 +471,53 @@ theorem build_success (head : DensePoly Rat) (lower upper : Rat)
     rw [prepared]
     change (if table.check query then some table else none) = some table
     simp only [checked, ite_eq_left]
+
+/-- Rebuild signs on one proposed contained window. The original root interval
+and count remain unchanged. A malformed window or query rejects; replay does
+not run the preparation or certificate producer. -/
+@[expose] def refine (table : Table D) (lower upper : Rat)
+    (query : D → DensePoly Rat) : Option (Table D) :=
+  match Sturm.prepare Sturm.orderSign table.head (.finite lower) (.finite upper) with
+  | none => none
+  | some domain =>
+      let window : Window := ⟨lower, upper, Sturm.certifyPrepared () domain 1⟩
+      let entries := table.entries.map fun entry => Entry.build domain lower upper entry.key query
+      let result := {table with entries, refinement := some window}
+      if result.check query then some result else none
+
+/-- Successful refinement passes the same independent table checker. -/
+theorem refine_checked (table : Table D) (lower upper : Rat)
+    (query : D → DensePoly Rat) (result : Table D)
+    (h : table.refine lower upper query = some result) : result.check query = true := by
+  unfold refine at h
+  cases prepared : Sturm.prepare Sturm.orderSign table.head (.finite lower) (.finite upper) with
+  | none => rw [prepared] at h; contradiction
+  | some domain =>
+      rw [prepared] at h
+      dsimp only at h
+      split at h
+      · cases Option.some.inj h
+        assumption
+      · contradiction
+
+/-- Refinement preserves the original selected-domain binding and every key in
+its exact entry order; only the sign evidence window is replaced. -/
+theorem refine_bindings (table : Table D) (lower upper : Rat)
+    (query : D → DensePoly Rat) (result : Table D)
+    (h : table.refine lower upper query = some result) :
+    result.head = table.head ∧ result.lower = table.lower ∧ result.upper = table.upper ∧
+      result.count = table.count ∧ result.entries.map Entry.key = table.entries.map Entry.key := by
+  unfold refine at h
+  cases prepared : Sturm.prepare Sturm.orderSign table.head (.finite lower) (.finite upper) with
+  | none => rw [prepared] at h; contradiction
+  | some domain =>
+      rw [prepared] at h
+      dsimp only at h
+      split at h
+      · cases Option.some.inj h
+        refine ⟨rfl, rfl, rfl, rfl, ?_⟩
+        simp only [List.map_map, Function.comp_def, Entry.build_key]
+      · contradiction
 
 end Table
 

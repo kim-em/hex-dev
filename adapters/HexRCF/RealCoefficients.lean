@@ -47,6 +47,7 @@ public import HexRCF.RealCoefficients.FieldDecisionProgress
 public import HexRCF.RealCoefficients.FieldBuildBudget
 public import HexRCF.RealCoefficients.FiniteReplay
 public import HexRCF.RealCoefficients.Replay
+public import HexRCF.RealCoefficients.FieldRefinement
 public meta import HexRCF.RealCoefficients.FieldLiteral
 public meta import HexRCF.RealCoefficients.FieldCompile
 public meta import HexRCF.RealCoefficients.FieldRuntime

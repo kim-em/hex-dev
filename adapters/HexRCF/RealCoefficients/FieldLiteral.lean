@@ -7,6 +7,7 @@ module
 
 public meta import HexRCF.RealCoefficients.FieldDecisionProgress
 public meta import HexRCF.RealCoefficients.FieldBuildBudget
+public meta import HexRCF.RealCoefficients.FieldRefinement
 public meta import HexRCF.RealCoefficients.FieldIndex
 public meta import HexRealAlgebraicMathlib.Laws
 public meta import Lean
@@ -52,6 +53,11 @@ register_option rcf.algebraic.singleReplay : Bool := {
 register_option rcf.algebraic.monicCore : Bool := {
   defValue := true
   descr := "normalize the proposed carrier core before checked root isolation"
+}
+
+register_option rcf.algebraic.signRefinements : Nat := {
+  defValue := 0
+  descr := "maximum checked generator-window refinement steps for inconclusive Horner signs"
 }
 
 register_option rcf.algebraic.indexSigns : Bool := {
@@ -244,15 +250,16 @@ meta def signTableExpr {p : ZPoly} {root : SimpleRoot p}
   let entriesRuntime ← if rcf.algebraic.intervalSigns.get (← getOptions) then
       pure table.entries
     else do
+      let interval := table.interval
       let some domain := Sturm.prepare Sturm.orderSign table.head
-          (.finite table.lower) (.finite table.upper) |
+          (.finite interval.lower) (.finite interval.upper) |
         throwError "rcf: literal sign interval could not be prepared"
       table.entries.mapM fun entry => do
         if entry.evidence.isSome then return entry
         let evidence := Sturm.certifyPrepared () domain entry.key.coeffs
         unless evidence.value == entry.value &&
             Sturm.check Sturm.orderSign () table.head entry.key.coeffs
-              (.finite table.lower) (.finite table.upper) entry.value evidence do
+              (.finite interval.lower) (.finite interval.upper) entry.value evidence do
           throwError "rcf: literal sign query disagrees with its checked enclosure"
         return { entry with evidence := some evidence }
   let evidenceTy ← inferType (← tarskiExpr ratExpr table.count)
@@ -261,10 +268,13 @@ meta def signTableExpr {p : ZPoly} {root : SimpleRoot p}
     mkAppM ``LiteralSign.Entry.mk
       #[← fieldExpr pExpr rootExpr entry.key, mkIntLit entry.value,
         optionLit evidenceTy evidence]
+  let window ← table.refinement.mapM fun window => do
+    mkAppM ``LiteralSign.Window.mk #[← ratExpr window.lower, ← ratExpr window.upper,
+      ← tarskiExpr ratExpr window.count]
   mkAppM ``LiteralSign.Table.mk
     #[← denseExpr ratExpr table.head, ← ratExpr table.lower,
       ← ratExpr table.upper, ← tarskiExpr ratExpr table.count,
-      listLit entryTy entries]
+      listLit entryTy entries, optionLit (mkConst ``LiteralSign.Window) window]
 
 /-- The atom expression comes from the already reflected source formula.
 The default is unreachable for a row produced from that formula; replay still
@@ -318,18 +328,14 @@ meta def resultExpr {p : ZPoly} {s : DyadicSquare}
   let signs ← signTableExpr pExpr rootExpr data.signs
   mkAppM ``FieldBuild.Result.mk #[radical, isolation, roots, signs]
 
-/-- Quote and replay one fixed-field certificate. Search is already complete;
-all finite sign operands are checked before evaluating the source verdict. -/
-private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
+private meta def checkPreview {p : ZPoly} {s : DyadicSquare}
     {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
     [ZPoly.CheckedIrreducible p] {n : Nat}
-    (pExpr rootExpr valuesExpr formulaExpr : Expr)
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
     (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
     (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
     (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit)
-    (data : FieldBuild.Result p s hw hp Unit (n + 1)) :
-    MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
+    (data : FieldBuild.Result p s hw hp Unit (n + 1)) : MetaM Unit := do
   validate data
   let keys := FieldBuild.signKeys values formula data.radical.core data.isolation
     data.rootSigns extraSignKeys
@@ -345,6 +351,43 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
       throwError "rcf: the existential sentence is false on the prepared cells"
   | _, none => throwError "rcf: finite sign table did not decide the sentence"
   | _, some true => pure ()
+
+/-- Refinement is a producer optimization. Frozen replay never calls it. -/
+private meta def refineCertificate {p : ZPoly} {s : DyadicSquare}
+    {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
+    [ZPoly.CheckedIrreducible p] {n : Nat}
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit)
+    (data : FieldBuild.Result p s hw hp Unit (n + 1)) :
+    MetaM (FieldBuild.Result p s hw hp Unit (n + 1)) := do
+  let steps := rcf.algebraic.signRefinements.get (← getOptions)
+  if steps = 0 then return data
+  checkPreview values formula quantifier extraSignKeys validate data
+  Core.checkInterrupted
+  let refined := FieldBuild.refineSigns p s hw hp data.signs steps
+  Core.checkInterrupted
+  match refined with
+  | .error _ => throwError "rcf: generator sign-window refinement produced invalid replay"
+  | .ok signs =>
+      let result := {data with signs := signs.val}
+      validate result
+      return result
+
+/-- Quote and replay one fixed-field certificate. Search is already complete;
+all finite sign operands are checked before evaluating the source verdict. -/
+private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
+    {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
+    [ZPoly.CheckedIrreducible p] {n : Nat}
+    (pExpr rootExpr valuesExpr formulaExpr : Expr)
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit)
+    (data : FieldBuild.Result p s hw hp Unit (n + 1)) :
+    MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
+  checkPreview values formula quantifier extraSignKeys validate data
   let certificate ← profileitM Exception "rcf literal quotation" (← getOptions) do
     resultExpr pExpr rootExpr formulaExpr formula data
   let indexed := rcf.algebraic.indexSigns.get (← getOptions)
@@ -377,7 +420,7 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
     `(tactic|
         (simp only [$checker:ident, $evidence:ident,
           Field.checkSignTable,
-          LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
+          LiteralSign.Table.check, LiteralSign.Window.check, LiteralSign.Entry.check, RadicalCert.check,
           FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
           TarskiCertificate.check_eq, SignedRemainderChain.check,
           ← Array.all_toList, Array.toList_range]; try (decide +kernel)))
@@ -385,7 +428,7 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
     `(tactic|
         (simp only [$checker:ident, $evidence:ident,
           Field.checkSignTable,
-          LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
+          LiteralSign.Table.check, LiteralSign.Window.check, LiteralSign.Entry.check, RadicalCert.check,
           FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
           TarskiCertificate.check_eq, SignedRemainderChain.check,
           ← Array.all_toList, Array.toList_range, Bool.and_eq_true];
@@ -455,6 +498,7 @@ meta def proveWithCertificate {p : ZPoly} {s : DyadicSquare}
     FieldBuild.build p s hw hp values formula () precision extraSignKeys
   let some data := proposed |
     throwError "rcf: fixed-field certificate construction failed"
+  let data ← refineCertificate values formula quantifier extraSignKeys validate data
   return ← quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula
     quantifier extraSignKeys validate data
 
@@ -484,6 +528,7 @@ meta def proveRefiningWithCertificate {p : ZPoly} {s : DyadicSquare}
     | .error .exhausted => throwError "rcf: algebraic interval refinement budget exhausted; increase rcf.algebraic.maxDoublings or rcf.algebraic.directDepth"
     | .error .invalidReplay => throwError "rcf: algebraic certificate construction or replay failed"
     | .ok data =>
+        let data ← refineCertificate values formula quantifier extraSignKeys validate data
         return ← quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula
           quantifier extraSignKeys validate data
   else throwError "rcf: selected square does not name a real coefficient field"
