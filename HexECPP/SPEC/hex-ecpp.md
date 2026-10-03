@@ -365,25 +365,34 @@ The order-factor package is an explicit tuning lever. Retain cumulative work,
 the unresolved subject and advanced random state for every outcome. Raising
 fuel or changing only a size guard does not establish the supported extension.
 
-`HexECPP/CM.lean` continues to own Jacobi, square-root and norm proposals.
-If more coverage is needed, `HexECPP/CM/ClassPolynomials.lean` owns an
-attributed finite table of Hilbert class polynomials, and
-`HexECPP/CM/Roots.lean` owns bounded modular root proposals for that table.
-The initial additional portfolio has at most 64 entries of degree at most
-four; each root call permits at most 32 splitting attempts and 1048576
-modular operations. Charge calls to the shared root counter, splitting
-attempts to a shared 1048576-attempt allocation, and polynomial modular
-operations to a shared 16777216-operation allocation. Splitting draws use
-the shared random stream and remain advanced after rejection. Charge each
-discriminant and order candidate to the existing shared candidate allowance;
-record the actual portfolio size and candidates needed per explored level.
-Freeze the actual ordered table, coefficients, source revision and root
-allocation before tuning. Independently reproduce/check
-its coefficients and discriminants against an attributed upstream source.
-No general class-polynomial generator is admitted. Roots, norm equations,
-curve proposals and inverse witnesses are checked by arithmetic, including
-over composite moduli; CM data contributes no theorem assumption. All new
-computational modules remain Mathlib-free.
+`HexECPP/CM.lean` owns Jacobi, square-root and norm proposals. The
+512-bit portfolio extends its nine invariants with the 33 entries in
+`HexECPP/CM/ClassPolynomials.lean`: all remaining negative discriminants
+with absolute value at most 500 and class number at most two. The linear
+and quadratic Hilbert j-polynomials come from PARI/GP 2.17.3, whose source
+release SHA256 is recorded beside the table. An independent oracle enumerates
+primitive reduced forms and computes the analytic j-polynomial coefficients
+at 160 and 240 decimal digits; it also checks compiled root fixtures.
+
+`HexECPP/CM/Roots.lean` uses the quadratic formula and bounded Tonelli–Shanks,
+then checks canonical roots by Horner evaluation. It needs no random splitting
+attempts. Each call has a 1048576 modular-operation ceiling and charges the
+shared root counter and a 16777216-operation allocation before invocation.
+The reservation is eight operations for a linear polynomial and
+`12*(bits(n)+1) + 3*(v₂(n-1)+1)² + 64` for a quadratic polynomial. This bounds
+the exponentiations, at most `v₂(n-1)` Tonelli–Shanks iterations and the two
+root checks; unused reservations are not refunded. Norm roots also consume
+the shared root allocation. The fixed 33-entry table is within the design
+ceiling of 64 additional entries of degree at most four. A future splitting
+implementation must enforce the per-call 32-attempt and shared
+1048576-attempt ceilings and use the shared, advancing random stream.
+
+Each discriminant and order candidate consumes the shared candidate allowance.
+The ordered table, coefficients, source release and allocations are frozen
+before tuning. No general class-polynomial generator runs in production.
+Roots, norm equations, curve proposals and inverse witnesses are checked by
+arithmetic, including over composite moduli; CM data contributes no theorem
+assumption. All new computational modules remain Mathlib-free.
 
 Native success and public proof generation have distinct output policies.
 The public route enforces the existing compact ceilings: 16384 row bytes,
