@@ -1,0 +1,63 @@
+# Kernel replay experiment
+
+This experiment assembles proofs about the existing supplied-fact coefficient
+arithmetic and `Dag.validateCached?` checker. Each accepted result is an equality
+between the caller's actual Boolean expression and `true` or `false`, checked by
+Lean's ordinary kernel. It unfolds structural checker equations and uses
+`decide +kernel`; it does not evaluate coefficient arithmetic natively or rewrite
+it to the ordinary implementation that searches for signs.
+
+The proof assembler disables error-to-`sorry` recovery, requires closed inputs
+and proofs, and audits their transitive axioms. Only `propext`, `Classical.choice`
+and `Quot.sound` are allowed. Kernel rejection, resource exhaustion and unrelated
+elaboration errors fail the command. `unproved` means neither Boolean equality
+was assembled; it is not a proof that the checker returns `false`.
+
+The controls include complete and missing scalar evidence, a false scalar claim,
+the actual two-entry graph, a false unused entry, and a false endpoint sign.
+A separate control checks the exact returned nodes and their order. Proved
+missing-fact equations identify the scalar and endpoint computations that reach
+`Element.missing`.
+
+`ProofProbe.lean` also proves that the actual finite coefficient decoder reads
+one encoded graph with both fact lists. Both lists cover every stored
+coefficient; only the complete list covers the nonconstant intermediate endpoint
+calculation. The existing checker accepts the complete case; the proof assembler
+cannot prove a Boolean result for the incomplete case.
+
+Build and run the compiled proof wrapper:
+
+```sh
+lake build hexsigndet_kernel_replay_probe
+lake env .lake/build/bin/hexsigndet_kernel_replay_probe
+lake env .lake/build/bin/hexsigndet_kernel_replay_probe emit /tmp/graph.json
+lake env .lake/build/bin/hexsigndet_kernel_replay_probe bytes-equal /tmp/graph.json
+lake env .lake/build/bin/hexsigndet_kernel_replay_probe bytes /tmp/graph.json full true
+lake env .lake/build/bin/hexsigndet_kernel_replay_probe bytes-bound /tmp/graph.json missing unproved
+```
+
+The wrapper parses supplied bytes with the existing integer-only JSON parser and
+quotes the parsed record as a constructor expression. The kernel checks proofs
+about that exact expression. `bytes-equal` additionally proves equality with the
+encoded fixture. `bytes-bound` proves that equality before using the fixture's
+proved decoder equation; it is deliberately restricted to this test record.
+These checks do not prove the native parser implementation correct. Altered
+count and context fields can be tested with `bytes PATH full false`.
+
+The executable uses Lean's unsafe initializer-enabling API to load elaborator
+extensions. This is not part of the arithmetic or proof acceptance boundary.
+Imported fixture modules can construct their native test data during
+initialization. The experiment establishes what proof assembly checks; it does
+not establish that the whole process, including fixture setup, avoids searches.
+
+This is a prototype, not the final public certificate interface. It reuses a
+validated context and certified facts, does not reconstruct contexts from bytes,
+does not collect intermediate facts automatically, and does not return a native
+checked memo. It leaves the native fallback in `Element.missing` unchanged.
+Consequently it does not establish strict native replay or Phase-4 completion.
+Single-run proof assembly timings are diagnostic observations, not performance
+evidence.
+
+Acceptance always requires a kernel-checked equality for the supplied
+expression. Looking for an opaque missing-fact expression inside unapplied
+operation bodies would not establish that replay needs that fact.

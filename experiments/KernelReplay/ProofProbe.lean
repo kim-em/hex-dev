@@ -1,0 +1,295 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+
+public import Lean.Elab.Command
+public import Lean.Meta.Reduce
+public import Lean.Meta.Tactic.Simp
+public import Lean.Util.CollectAxioms
+public import HexRealClosure.SignCodec
+public import HexSignDet.Codec.FiniteGraph
+import all HexSignDet.Codec
+import all HexSignDet.Codec.Node
+import all HexSignDet.Codec.Basic
+import all HexSignDet.Codec.Evidence
+import all HexRealClosure.AlgebraicCodec
+public import HexRealClosureMathlib.PackingConformance
+public import HexRealClosureMathlib.NestedSignsConformance
+import all HexRealClosure.Algebraic
+import all HexPoly.Euclid.DivGcd
+
+public section
+
+namespace Hex.RealClosure.Algebraic.KernelReplayProofProbe
+open Hex.SignDet CoefficientSignsConformance PackingConformance
+open scoped Hex
+
+@[expose] def complete : Bool :=
+  decide (((Element.cachedAdd reduction reduction_eq facts).add small 0).sign = 1)
+
+@[expose] def missing : Bool :=
+  decide (((Element.cachedAdd reduction reduction_eq ([] : List (SignFact context))).add small 0).sign = 1)
+
+@[expose] def falseClaim : Bool :=
+  decide (((Element.cachedAdd reduction reduction_eq facts).add small 0).sign = -1)
+
+@[expose] def completeGraph : Bool :=
+  (Dag.validateCached? reduction reduction_eq NestedSignsConformance.facts 8
+    NestedSignsConformance.linearHead NestedSignsConformance.linearRaw.lower
+    NestedSignsConformance.linearRaw.upper NestedSignsConformance.graph).isSome
+
+@[expose] def missingGraph : Bool :=
+  (Dag.validateCached? reduction reduction_eq facts 8
+    NestedSignsConformance.linearHead NestedSignsConformance.linearRaw.lower
+    NestedSignsConformance.linearRaw.upper NestedSignsConformance.graph).isSome
+
+@[expose] def falseGraph : Bool :=
+  let bad := {NestedSignsConformance.linearNode with system :=
+    {NestedSignsConformance.linearNode.system with
+      values := NestedSignsConformance.linearNode.system.values.map (· + 1)}}
+  let entries := NestedSignsConformance.graph.entries.push ⟨bad, none⟩
+  let graph := {NestedSignsConformance.graph with entries := entries}
+  (Dag.validateCached? reduction reduction_eq NestedSignsConformance.facts 8
+    NestedSignsConformance.linearHead NestedSignsConformance.linearRaw.lower
+    NestedSignsConformance.linearRaw.upper graph).isSome
+
+@[expose] def completeMemo : Bool :=
+  decide ((Dag.validateCached? reduction reduction_eq NestedSignsConformance.facts 8
+    NestedSignsConformance.linearHead NestedSignsConformance.linearRaw.lower
+    NestedSignsConformance.linearRaw.upper NestedSignsConformance.graph).map
+      (fun memo => memo.map (fun checked => checked.value.node)) =
+    some #[NestedSignsConformance.linearNode, NestedSignsConformance.queryNode])
+
+@[expose] def falseEndpointGraph (facts : List (SignFact context)) : Bool :=
+  let upperSigns := NestedSignsConformance.linearCount.upperSigns.set! 0 (-1)
+  let badCount := {NestedSignsConformance.linearCount with upperSigns := upperSigns}
+  let badNode := {NestedSignsConformance.linearNode with moments := NestedSignsConformance.linearNode.moments.map (fun _ => badCount)}
+  let entries := NestedSignsConformance.graph.entries.push ⟨badNode, none⟩
+  let graph := {NestedSignsConformance.graph with entries := entries}
+  (Dag.validateCached? reduction reduction_eq facts 8
+    NestedSignsConformance.linearHead NestedSignsConformance.linearRaw.lower
+    NestedSignsConformance.linearRaw.upper graph).isSome
+
+@[expose] def literalFacts : List (SignFact context) :=
+  PackingConformance.literalFacts ++
+    [⟨DensePoly.C (0 : Rat), 0, context.signPoly_const _ (by decide +kernel)⟩,
+     ⟨DensePoly.C (1 : Rat), 1, context.signPoly_const _ (by decide +kernel)⟩,
+     ⟨DensePoly.C (-1 : Rat), -1, context.signPoly_const _ (by decide +kernel)⟩]
+
+@[expose] def fullJsonFacts := literalFacts ++ NestedSignsConformance.facts
+@[expose] def missingJsonFacts := literalFacts ++ PackingConformance.facts
+
+@[expose] def graphJson : Codec.Json :=
+  Codec.graph (Element.signCodec ValueCodec.rat fullJsonFacts) ValueCodec.nat
+    NestedSignsConformance.graph
+
+@[expose] def byteEqual (j : Codec.Json) : Bool := decide (j = graphJson)
+
+/-- Decode the actual existing graph format using finite literal facts, then
+apply the existing supplied-fact arithmetic checker to every entry. -/
+@[expose] def checkJson (facts : List (SignFact context)) (j : Codec.Json) : Bool :=
+  ((Codec.readGraph (Element.signCodec ValueCodec.rat facts) ValueCodec.nat 8
+    NestedSignsConformance.linearHead NestedSignsConformance.linearRaw.lower
+    NestedSignsConformance.linearRaw.upper j).toOption.bind fun graph =>
+    Dag.validateCached? reduction reduction_eq facts 8
+      NestedSignsConformance.linearHead NestedSignsConformance.linearRaw.lower
+      NestedSignsConformance.linearRaw.upper graph).isSome
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+private theorem graph_read (facts : List (SignFact context))
+    (keys : (Element.signKeys (Codec.Coefficients.graph NestedSignsConformance.graph)).all
+      (fun p => facts.any (fun f => decide (f.polynomial = p))) = true) :
+    Codec.readGraph (Element.signCodec ValueCodec.rat facts) ValueCodec.nat 8
+      NestedSignsConformance.linearHead NestedSignsConformance.linearRaw.lower
+      NestedSignsConformance.linearRaw.upper graphJson = .ok NestedSignsConformance.graph := by
+  apply Codec.read_graph_covered (Element.signCodec ValueCodec.rat facts) ValueCodec.nat 8
+    NestedSignsConformance.linearHead NestedSignsConformance.linearRaw.lower
+    NestedSignsConformance.linearRaw.upper NestedSignsConformance.graph
+  · apply Element.signCodec_covers
+    · intro x _; exact ValueCodec.rat_lawful x
+    · intro p hp
+      obtain ⟨f, hf, he⟩ := List.any_eq_true.mp ((List.all_eq_true.mp keys) p hp)
+      exact ⟨f, hf, of_decide_eq_true he⟩
+  · intro x _; exact ValueCodec.nat_lawful x
+  · decide +kernel
+  · intro e he
+    simp only [NestedSignsConformance.graph, Array.mem_def,
+      List.mem_cons, List.not_mem_nil, or_false] at he
+    rcases he with rfl | rfl
+    all_goals
+      constructor
+      all_goals simp [NestedSignsConformance.linearNode, NestedSignsConformance.queryNode,
+        Vector.toList, NestedSignsConformance.unitPoly, Conformance.singletonNode,
+        Conformance.literalNode, Conformance.literalSystem, Conformance.selectedNode, System.positive]
+      all_goals decide +kernel
+  · intro e he
+    simp only [NestedSignsConformance.graph, Array.mem_def,
+      List.mem_cons, List.not_mem_nil, or_false] at he
+    rcases he with rfl | rfl
+    all_goals decide +kernel
+  · intro i hi pair hp
+    have bound : i < 2 := hi
+    interval_cases i <;> simp [NestedSignsConformance.graph] at hp
+
+set_option maxRecDepth 32768 in
+theorem graph_read_full :
+    Codec.readGraph (Element.signCodec ValueCodec.rat fullJsonFacts) ValueCodec.nat 8
+      NestedSignsConformance.linearHead NestedSignsConformance.linearRaw.lower
+      NestedSignsConformance.linearRaw.upper graphJson = .ok NestedSignsConformance.graph :=
+  graph_read fullJsonFacts (by decide +kernel)
+
+set_option maxRecDepth 32768 in
+theorem graph_read_missing :
+    Codec.readGraph (Element.signCodec ValueCodec.rat missingJsonFacts) ValueCodec.nat 8
+      NestedSignsConformance.linearHead NestedSignsConformance.linearRaw.lower
+      NestedSignsConformance.linearRaw.upper graphJson = .ok NestedSignsConformance.graph :=
+  graph_read missingJsonFacts (by decide +kernel)
+
+set_option maxRecDepth 32768 in
+/-- This missing scalar fact reaches the opaque boundary, with a kernel proof. -/
+theorem scalar_missing :
+    ((Element.cachedAdd reduction reduction_eq ([] : List (SignFact context))).add small 0) =
+      (Element.missing (small.polynomial + (0 : Element context).polynomial)).val := by
+  change Element.pack reduction reduction_eq []
+    (small.polynomial + (0 : Element context).polynomial) = _
+  apply Element.pack_missing
+  · decide +kernel
+  · decide +kernel
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+/-- The graph's finite upper endpoint needs this nonconstant coefficient fact. -/
+theorem endpoint_missing :
+    letI := Element.cachedAdd reduction reduction_eq facts
+    letI := Element.cachedMul reduction reduction_eq facts
+    NestedSignsConformance.rational (-1) + literal * NestedSignsConformance.rational 1 =
+      (Element.missing NestedSignsConformance.endpointQuery).val := by
+  let input := (NestedSignsConformance.rational (-1)).polynomial +
+    ((Element.cachedMul reduction reduction_eq facts).mul literal (NestedSignsConformance.rational 1)).polynomial
+  change Element.pack reduction reduction_eq facts input = _
+  have hp : input = NestedSignsConformance.endpointQuery := by decide +kernel
+  rw [← hp]
+  apply Element.pack_missing
+  · decide +kernel
+  · decide +kernel
+
+#print axioms scalar_missing
+#print axioms endpoint_missing
+
+open Lean Meta Elab Command
+
+meta section
+syntax "#proof_probe " term " expecting " str (" binding " term)? : command
+elab_rules : command
+| `(#proof_probe $term expecting $expected $[binding $literal]?) => do
+  liftTermElabM do
+    let expression ← Term.withoutErrToSorry (Term.elabTermEnsuringType term (mkConst ``Bool))
+    Term.synthesizeSyntheticMVarsNoPostponing
+    let expression ← instantiateMVars expression
+    if expression.hasSorry || expression.hasMVar then throwError "incomplete input"
+    let started ← IO.monoNanosNow
+    let mut outcome := "unproved"
+    let mut failures : List String := []
+    for candidate in [true, false] do
+      let state ← saveState
+      let proof? ← try
+        let resultTerm ← if candidate then `(true) else `(false)
+        let bindingProof ← match literal with
+          | some literal => `(show $literal = graphJson from by decide +kernel)
+          | none => `(True.intro)
+        let proofSyntax ← `(show $term = $resultTerm from by
+          have inputBinding := $bindingProof
+          simp only [inputBinding, complete, missing, falseClaim, completeGraph, missingGraph,
+            falseGraph, falseEndpointGraph, completeMemo, byteEqual, checkJson, graph_read_full,
+            graph_read_missing, Dag.validateCached?, Hex.SignDet.Dag.changeOps,
+            Hex.SignDet.Dag.validate?, Hex.SignDet.Dag.step_eq, Replay.check,
+            Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
+            TarskiCertificate.check_eq, SignedRemainderChain.check,
+            ← Array.all_toList, Array.toList_range]
+          decide +kernel)
+        let proof ← Term.withoutErrToSorry (Term.elabTerm proofSyntax none)
+        Term.synthesizeSyntheticMVarsNoPostponing
+        let proof ← instantiateMVars proof
+        if proof.hasSorry || proof.hasMVar then throwError "incomplete proof"
+        pure (some proof)
+      catch ex =>
+        let reason ← ex.toMessageData.toString
+        if (reason.splitOn "(kernel) deterministic timeout").length > 1 ||
+            (reason.splitOn "(kernel) deep recursion").length > 1 then throw ex
+        unless reason.startsWith "Tactic `decide` failed to reduce" ||
+            reason.startsWith "Tactic `decide` proved that the proposition" do throw ex
+        state.restore
+        failures := reason :: failures
+        pure none
+      if let some proof := proof? then
+        let type ← mkEq expression (mkConst (if candidate then ``Bool.true else ``Bool.false))
+        let mut axioms : Array Name := #[]
+        for decl in (proof.getUsedConstants ++ type.getUsedConstants) do
+          for axiomName in (← collectAxioms decl) do
+            if !axioms.contains axiomName then axioms := axioms.push axiomName
+            unless #[`propext, `Classical.choice, `Quot.sound].contains axiomName do
+              throwError "unexpected axiom {axiomName} through {decl}"
+        let checked := (← getEnv).toKernelEnv.addDecl
+          ((← getOptions).setBool `debug.skipKernelTC false)
+          (.thmDecl { name := `__kernelReplayProofProbe, levelParams := [], type, value := proof })
+        match checked with
+        | .ok _ =>
+          logInfo m!"kernelAccepted=true axioms={axioms}"
+          outcome := if candidate then "true" else "false"
+        | .error _ => throwError "kernel rejected elaborated proof"
+        break
+    if outcome == "unproved" then
+      for reason in failures.reverse do logInfo m!"proofFailure={reason.take 400}"
+    logInfo m!"result={outcome} nanos={(← IO.monoNanosNow) - started}"
+    unless outcome == expected.getString do throwError "unexpected result {outcome}"
+end
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+#proof_probe complete expecting "true"
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+#proof_probe missing expecting "unproved"
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+#proof_probe falseClaim expecting "false"
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+#proof_probe completeGraph expecting "true"
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+#proof_probe missingGraph expecting "unproved"
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+#proof_probe falseGraph expecting "false"
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+#proof_probe completeMemo expecting "true"
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+#proof_probe falseEndpointGraph NestedSignsConformance.facts expecting "false"
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+#proof_probe falseEndpointGraph facts expecting "unproved"
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+#proof_probe checkJson fullJsonFacts graphJson expecting "true"
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+#proof_probe checkJson missingJsonFacts graphJson expecting "unproved"
+
+end Hex.RealClosure.Algebraic.KernelReplayProofProbe

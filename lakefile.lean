@@ -2287,3 +2287,12 @@ lean_lib HexCharPolyMathlibMeasurements where
 lean_exe hexecpp_emit_class_polynomials where
   srcDir := "conformance"
   root := `HexECPP.EmitClassPolynomials
+
+lean_lib KernelReplayExperiment where
+  srcDir := "experiments"
+  globs := #[.one `KernelReplay.ProofProbe]
+
+lean_exe hexsigndet_kernel_replay_probe where
+  supportInterpreter := true
+  srcDir := "experiments"
+  root := `KernelReplay.Main
