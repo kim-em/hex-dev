@@ -166,6 +166,13 @@ folds; `run_spec` proves the exact `Prenex.toProp` meaning at arbitrary fixed
 coordinates in one parent with an actual real model. The
 [formula regressions](../conformance/HexRCF/Samples.lean) distinguish selected
 conjugates, coefficient order, diagnostic false results and half-open domains.
+`Gather.values` transports ordered coefficients from independently constructed
+native contexts through the owner's checked common-context maps. Its
+`prepare_eval`, `run_spec`, `gather_spec` and `run_original` laws preserve
+original owner models and selected embeddings. The
+[gathering regressions](../conformance/HexRCF/Gather.lean) exercise different
+polynomials, selected conjugates, repeated owners, cancellation and a further
+root over the common coefficient field.
 This is a producer API, not literal replay or source-goal quotation. The manual
 gives direct API examples. General frozen tower replay, source authentication
 for that backend and joint infinitesimal realization still require the owner

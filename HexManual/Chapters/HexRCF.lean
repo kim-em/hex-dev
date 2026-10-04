@@ -2340,6 +2340,70 @@ equal, reversed and half-open domains. Fresh modules check the public
 semantics and its standard axiom inventory. These are correctness regressions;
 no timing improvement is claimed for this composition.
 
+Independently constructed contexts can now be gathered through the owner's
+{name}`Hex.RealClosure.Tower.Shared.gather?` operation. Its checked maps retain
+each original owner in input order; repeated owners can reuse the same cached
+predecessor. {name}`Hex.RCF.RealCoefficients.Gather.values` applies those maps
+to the ordered coefficient coordinates. No new quotient-field representation
+or field instance on stored expressions is introduced.
+
+The following computation constructs √2 and √3 independently, gathers them,
+and checks `∃ x, x² = √2 ∧ 1 < x ∧ x < √3`. Its variable roots are therefore
+computed over the already gathered algebraic coefficient field.
+
+```lean
+private def gatheredRoots : Bool := Id.run do
+  let x : sampleBase.Poly := DensePoly.ofCoeffs #[0, 1]
+  let raw := fun n =>
+    ({context := sampleBase.signature,
+      head := x * x - DensePoly.C n,
+      lower := .finite 1, upper := .finite (1 + 1),
+      indices := [], signs := []} :
+        SignDet.RawDescriptor sampleBase.Value
+          Tower.Signature)
+  let some first := SignDet.Descriptor.validate
+      sampleBase.sign sampleBase.signature
+      (raw (1 + 1)) | return false
+  let some second := SignDet.Descriptor.validate
+      sampleBase.sign sampleBase.signature
+      (raw (1 + 1 + 1)) | return false
+  let a := sampleBase.adjoin first
+  let b := sampleBase.adjoin second
+  let owners := [a.context, b.context]
+  let some shared := Shared.gather?
+      (.pack (BaseContext.rational sampleRegistry))
+      owners | return false
+  let coefficients : (i : Fin owners.length) →
+      (owners[i]).Value := by
+    change (i : Fin 2) →
+      ([a.context, b.context][i]).Value
+    exact Fin.cases a.generator
+      (Fin.cases b.generator (fun i => Fin.elim0 i))
+  let v : Hex.RealFormula.Poly 3 := Hex.MvPoly.X 2
+  let formula := Hex.RealFormula.QF.and
+    (.atom ⟨v ^ 2 - Hex.MvPoly.X 0, .eq⟩)
+    (.and (.atom ⟨v - 1, .gt⟩)
+      (.atom ⟨v - Hex.MvPoly.X 1, .lt⟩))
+  return Samples.run (Gather.values shared coefficients)
+    formula .existsReal == some true
+
+#guard gatheredRoots
+```
+
+{name}`Hex.RCF.RealCoefficients.Gather.prepare_eval` proves the meaning of
+every original atom after transport. {name}`Hex.RCF.RealCoefficients.Gather.run_spec`
+relates native production to the shared quantified formula in the original
+owner order. {name}`Hex.RCF.RealCoefficients.Gather.gather_spec` proves actual
+gathering and decision production for compatible source contexts under the
+supplied real base interpretation. For separately authenticated source models,
+{name}`Hex.RCF.RealCoefficients.Gather.run_original` uses their factory equations
+to establish agreement with the common model; no coefficient agreement is
+assumed. Their complete theorem axiom inventories use only the standard three
+axioms. These laws do not treat the computed Boolean above as a proof of a
+source goal. The compiled controls also distinguish the two selected roots of
+`X² − 2`, reverse coefficient order, retain a repeated owner, and check zero
+and leading-term cancellation. Empty collections retain the rational case.
+
 `Samples.run` performs production, including root finding. Its Boolean output
 is not frozen certificate evidence. Turning it into a source-goal tactic
 proof still requires checked literal context/root/sign data, exact source
@@ -2352,9 +2416,9 @@ Integrating their output into frozen tactic replay still needs the owner's
 checked literal context and predecessor-sign interfaces. The example proves
 the simultaneous signs of these ordinary samples. General finite replay for
 nested selected roots and successive infinitesimals still needs one ordinary
-real assignment for the complete joint constraint set. Executable all-live
-enlargement assembly and its frozen acceptance interfaces also remain owner
-obligations.
+real assignment for the complete joint constraint set. Native gathering and shared cache/model transport are available as above.
+Their frozen context/sign reconstruction and general joint realization still
+require the corresponding owner interfaces.
 
 # Caller-supplied finite bounds
 %%%

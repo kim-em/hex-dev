@@ -29,6 +29,7 @@ public import HexRCF.RealCoefficients.FieldIndex
 public import HexRCF.RealCoefficients.FieldSpecialize
 public import HexRCF.RealCoefficients.RepresentationSpecialize
 public import HexRCF.RealCoefficients.Samples
+public import HexRCF.RealCoefficients.Gather
 public import HexRCF.RealCoefficients.SignInputs
 public import HexRCF.RealCoefficients.FieldCarrier
 public import HexRCF.RealCoefficients.Carrier
