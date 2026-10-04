@@ -2397,3 +2397,7 @@ lean_exe hexsigndet_inprocess_replay_probe where
 lean_exe hexrealclosure_policy_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.RootPolicyConformance
+
+lean_exe hexrealclosure_normalization_bench where
+  srcDir := "bench"
+  root := `HexRealClosure.Normalization
