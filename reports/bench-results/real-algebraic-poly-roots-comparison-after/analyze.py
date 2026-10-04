@@ -84,7 +84,7 @@ for row, (family, degrees) in enumerate(meta['families'].items()):
     for backend in ['Z3', 'Flint']:
         rows = [s for s in summary if s['family'] == family and s['backend'] == backend]
         line, = ratio_ax.plot([s['degree'] for s in rows], [s['raw_ratio'] for s in rows],
-                              'o-', label=f'{backend}: raw', lw=2)
+                              'o-', label=f'{backend}: raw', lw=2, color={'Z3':'#ff7f0e','Flint':'#2ca02c'}[backend])
         adjusted = [s for s in rows if s['adjusted_ratio'] is not None]
         ratio_ax.plot([s['degree'] for s in adjusted], [s['adjusted_ratio'] for s in adjusted],
                       '--', color=line.get_color(), label=f'{backend}: protocol-adjusted')
@@ -94,12 +94,12 @@ for row, (family, degrees) in enumerate(meta['families'].items()):
         ax.set_yscale('log'); ax.grid(alpha=.2); ax.legend(fontsize=8)
         ax.set_xlabel('Polynomial degree n (coefficient height fixed)')
     time_ax.set_title('Xⁿ − 2' if family == 'Rational' else 'Xⁿ − √2 (n=1: one root; n≥2: two roots)')
-    time_ax.set_ylabel('Root operation per call (ms, log scale)')
-    ratio_ax.set_ylabel('Paired Hex / external ratio (>1: Hex slower)')
+    time_ax.set_ylabel('Root API + result checks (ms, log scale)')
+    ratio_ax.set_ylabel('Hex / external (>1: Hex slower)')
 fig.text(.015, .015,
     f"Shared host {meta['host']}, leased CPU {meta['cpu']}; 4 adjacent AB/BA pairs per backend/rung. All samples retained; no fitted model.\n"
     "Prepared coefficients; solving, ordering and fingerprints timed. External exact-annihilation checks, JSON and cleanup included.\n"
-    "Separate unpinned degree-16 rational and degree-8 quadratic probes hit a 60 s whole-child cap; no numerical operation time inferred.\n"
+    "Pre-change unpinned degree-16 rational and degree-8 quadratic probes hit a 60 s whole-child cap; no numerical operation time inferred.\n"
     f"Source {meta['source_commit'][:9]}; protocol adjustment is a framing control. Comparison failures/censored arms: {len(failed)}; collected {len(meta['arms'])}/{expected}.", fontsize=8)
 fig.tight_layout(rect=(0, .11, 1, .96))
 for fmt in ['png', 'svg', 'pdf']:

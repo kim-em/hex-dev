@@ -51,6 +51,18 @@ at degrees 4, 8, 16, 32 and 64 are 1.343, 1.019, 0.999, 1.417 and 2.653.
 Both raw and adjusted curves appear in the [plot](comparison.png), with
 [SVG](comparison.svg) and [PDF](comparison.pdf) versions. Time panels include
 all observations with observed min–max shading; ratio panels summarize pairs.
-These observations make this exact-count family plausibly competitive. They
+The plot consistently uses Hex/external ratios; the original external/Hex
+columns remain in the CSV, alongside directly calculated paired Hex/external
+columns. These are API-route comparisons for the same exact-count problem:
+Hex uses a signed-remainder count, while the external routes isolate every
+root before counting. They do not compare the same internal algorithm or
+attest competitiveness with an external direct Sturm-count operation.
+These observations make the Hex route plausibly competitive with the tested
+root-enumeration routes on this exact-count family. They
 do not attest growing-query memory use, arbitrary polynomial shapes,
 extension depth or canonical real-algebraic arithmetic.
+
+[source-equivalence.json](source-equivalence.json) records matching hashes for
+every fingerprinted source after the rebase. The original measurement commit
+is retained by `issue-10577-sturm-measurement-source`; the source identity in
+the measurement record is not rewritten to a later checkout.

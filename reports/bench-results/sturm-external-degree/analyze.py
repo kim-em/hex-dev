@@ -52,6 +52,8 @@ for degree in meta['degrees']:
                  protocol_us=median(p['protocol_nanos'] for p in joined)/1e3,
                  raw_ratio=median(p['raw_ratio'] for p in joined),
                  adjusted_ratio=median(p['adjusted_ratio'] for p in joined),
+                 hex_raw_ratio=median(p['native_nanos']/p['external_nanos'] for p in joined),
+                 hex_adjusted_ratio=median(p['native_nanos']/(p['external_nanos']-p['protocol_nanos']) for p in joined),
                  protocol_fraction=median(p['protocol_nanos'] for p in joined)/median(p['external_nanos'] for p in joined)))
 result=dict(source_commit=meta['source_commit'],summary=summary,pairs=pairs,failed_or_censored=failed,
             completed_observations=observations,classification=meta['classification'])
@@ -74,13 +76,13 @@ for backend,label in [('Native','Hex Sturm'),('Z3','Z3 RCF'),('Flint','FLINT qqb
             ax[0].scatter(p['degree'],p['per_call_nanos']/1e6,s=12,color=line.get_color(),alpha=.3)
 for backend in ['Z3','Flint']:
     rows=[s for s in summary if s['backend']==backend]
-    line,=ax[1].plot([s['degree'] for s in rows],[s['raw_ratio'] for s in rows],'o-',label=f'{backend}: raw',lw=2)
-    ax[1].plot([s['degree'] for s in rows],[s['adjusted_ratio'] for s in rows],'--',color=line.get_color(),label=f'{backend}: protocol-adjusted')
+    line,=ax[1].plot([s['degree'] for s in rows],[s['hex_raw_ratio'] for s in rows],'o-',label=f'{backend}: raw',lw=2,color={'Z3':'#ff7f0e','Flint':'#2ca02c'}[backend])
+    ax[1].plot([s['degree'] for s in rows],[s['hex_adjusted_ratio'] for s in rows],'--',color=line.get_color(),label=f'{backend}: protocol-adjusted')
 ax[1].axhline(1,color='#444444',ls=':',lw=1)
 for a in ax:
     a.set_xscale('log',base=2);a.set_xticks(meta['degrees'],meta['degrees']);a.set_yscale('log');a.grid(alpha=.2);a.legend(fontsize=8);a.set_xlabel('Chebyshev degree n (coefficient height also grows)')
 ax[0].set_ylabel('Complete query time per call (ms, log scale)')
-ax[1].set_ylabel('Paired external / Hex ratio (>1: Hex faster)')
+ax[1].set_ylabel('Hex / external (>1: Hex slower)')
 fig.text(.015,.015,f"Shared host {meta['host']}, leased CPU {meta['cpu']}; 4 adjacent AB/BA pairs per backend/rung. Exact result n on (−2,2).\nPrepared inputs; root/chain production, checks, JSON and cleanup timed. No driver root cache. All samples retained; no fitted model.\nSource {meta['source_commit'][:9]}; protocol-adjusted curves are framing controls, not isolated pure algorithm timings. Failed/censored observations: {len(failed)}.",fontsize=8)
 fig.tight_layout(rect=(0,.1,1,.95))
 for fmt in ['png','svg','pdf']:

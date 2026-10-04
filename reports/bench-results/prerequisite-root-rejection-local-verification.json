@@ -75,12 +75,6 @@
       "log_sha256": "378b6baf4cda472890f3e49da529baea184d1d3eb0fde50a77e3c65221bf3657"
     }
   },
-  "owned_smoke_seconds": {
-    "HexSturm": 1,
-    "HexRealAlgebraic": 39,
-    "total": 40,
-    "cap": 360
-  },
   "ordinary_kernel_axioms": [
     "propext",
     "Classical.choice",
@@ -91,5 +85,12 @@
   "retained_failures": [
     "early-reality-conformance-build.log: unknown mistyped target hexrealalgebraic_emitfixtures; corrected target hexrealalgebraic_emit_fixtures passes",
     "historical rational-degree16 and quadratic-degree8 whole-child cap probes before early rejection; no unchanged rerun"
-  ]
+  ],
+  "benchmark_verification_seconds": {
+    "HexSturm": 1,
+    "HexRealAlgebraic": 39,
+    "total": 40,
+    "cap": 360
+  },
+  "source_check_exit_codes": "root-rejection-checks/record.json (repository-retained logs and explicit exit codes; silent checks intentionally have empty logs)"
 }

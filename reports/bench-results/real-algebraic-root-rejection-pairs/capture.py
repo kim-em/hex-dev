@@ -33,6 +33,9 @@ def registered(family, degree):
 
 if (HERE/'metadata.json').exists():
     raise SystemExit('Refusing to overwrite retained completed or partial measurements')
+status = subprocess.check_output(['git','status','--porcelain'], cwd=ROOT, text=True)
+if status:
+    raise SystemExit('Measurement requires a clean source checkout before creating output records')
 for source in SOURCES:
     if not (ROOT/source).is_file():
         raise SystemExit(f'Missing source fingerprint input: {source}')

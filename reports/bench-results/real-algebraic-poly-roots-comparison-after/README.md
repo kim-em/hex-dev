@@ -15,6 +15,13 @@ simple multiplicity follows from the nonzero constant and characteristic zero.
 FLINT supplies multiplicities. This comparison does not claim generic
 representation equivalence or time isolated root production.
 
+External exact-annihilation checks remain timed. These are API-route plus
+result-check comparisons, not isolated root-operation ratios. The extra
+external verification work favours Hex in those ratios, while Hex remains
+far slower. The matching fingerprints of rational degree `2d` and quadratic
+degree `d` express their intentionally identical exact root values; frozen
+input constructors and commands identify the different input paths.
+
 Input coefficient objects, polynomial preparation and a separate child warmup
 are excluded. Native solving, canonical exactification, reality filtering,
 sorting and fingerprint construction are timed. External solving, sorting,

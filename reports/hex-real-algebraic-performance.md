@@ -69,8 +69,8 @@ canonical fixed input with an easier smoke input, and the scientific inputs
 and their expected hashes are preserved. The operational warning and remaining
 canonical-arithmetic cost remain under #10577. The full CI cap remains enforced;
 no increase or verification bypass is introduced. The retained 336-second run
-had only 24 seconds of headroom; the 349-second run had 11, and the latest
-  completed required run on `4a028ba84` has none.
+had only 24 seconds of headroom; the 349-second run had 11, and the
+completed required run on `4a028ba84` has none.
 Shared-host and CI variance remain concerns, and required CI must pass on the
 final source without weakening the cap.
 
