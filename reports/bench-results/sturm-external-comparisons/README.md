@@ -47,9 +47,10 @@ with minimal-polynomial reduction is a different comparator implementation.
 
 The exact endpoint unit tests cover positive, negative, mixed and zero sums,
 repeated FLINT temporary-value cleanup, unsupported-version rejection,
-malformed/unknown requests and Boolean control validation. A missing
+malformed/unknown requests, Boolean control validation and bounded degree
+validation. The size ladder is covered by the additional degree regression. A missing
 interpreter fails the compiled verifier. Its FLINT endpoint starts with
-`--self-test`, running these four tests once before accepting JSON requests.
+`--self-test`, running these five tests once per startup before accepting JSON requests.
 The tests run in an isolated interpreter. Success output goes to stderr; a
 failure sends a bounded JSON diagnostic to the compiled parent and prevents
 endpoint startup. The existing

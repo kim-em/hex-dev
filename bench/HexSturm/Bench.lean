@@ -158,7 +158,7 @@ private def nativeQuery (fixture : Nat) : IO (Option Int) := do
 initialize flintRef : IO.Ref (Option Hex.BenchOracle.Flint.PersistentComparator) ← IO.mkRef none
 initialize z3Ref : IO.Ref (Option Hex.BenchOracle.Flint.PersistentComparator) ← IO.mkRef none
 
-private def oracleQuery (tool fixture : String) (control := false) : IO (Option Int) := do
+private def oracleQuery (tool fixture : String) (control := false) (degree := 8) : IO (Option Int) := do
   let ref := if tool == "flint" then flintRef else z3Ref
   let driver ← match (← ref.get) with
     | some driver => pure driver
@@ -171,8 +171,9 @@ private def oracleQuery (tool fixture : String) (control := false) : IO (Option 
           if tool == "flint" then #["--self-test"] else #[])
       ref.set (some driver)
       pure driver
-  let reply ← driver.requestLine (Lean.Json.mkObj
-    [("case", Lean.toJson fixture), ("control", Lean.toJson control)]).compress
+  let fields := [("case", Lean.toJson fixture), ("control", Lean.toJson control)]
+  let fields := if degree == 8 then fields else fields ++ [("degree", Lean.toJson degree)]
+  let reply ← driver.requestLine (Lean.Json.mkObj fields).compress
   let parsed ← IO.ofExcept (Lean.Json.parse reply)
   unless (← IO.ofExcept (parsed.getObjValAs? Bool "ok")) do
     throw (IO.userError s!"exact {tool} query failed: {reply}")
@@ -720,6 +721,85 @@ def axisFixtures : IO UInt32 := do
   return 0
 
 end Hex.SturmBench
+
+/-! Fixed degree ladder for direct elapsed-time comparisons. This adds no
+complexity model or performance budget. Warmup caches only coefficient inputs;
+every measured call produces the full exact signed-root query result. -/
+namespace Hex.SturmExternalBench
+
+initialize heads : IO.Ref (Array (Nat × DensePoly Rat)) ← IO.mkRef #[]
+
+private def countDegree (degree : Nat) : IO (Option Int) := do
+  let cached ← heads.get
+  let p ← match cached.find? (fun entry => entry.1 == degree) with
+    | some entry => pure entry.2
+    | none => do
+      let p := DensePoly.ofCoeffs ((Hex.SturmBench.chebyshev degree).toArray.map (fun (z : Int) => (z : Rat)))
+      heads.modify (·.push (degree, p))
+      pure p
+  return Sturm.query Sturm.orderSign p 1 (.finite (-2)) (.finite 2)
+
+def runNative4 : Unit → IO (Option Int) := fun _ => countDegree 4
+setup_fixed_benchmark runNative4 where { observations with expectedHash := some (hash (some (4 : Int))) }
+
+def runFlint4 : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" false 4
+setup_fixed_benchmark runFlint4 where { observations with expectedHash := some (hash (some (4 : Int))) }
+
+def runZ34 : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" false 4
+setup_fixed_benchmark runZ34 where { observations with expectedHash := some (hash (some (4 : Int))) }
+
+def runFlintProtocol4 : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" true 4
+setup_fixed_benchmark runFlintProtocol4 where { observations with expectedHash := some (hash (some (4 : Int))) }
+
+def runZ3Protocol4 : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" true 4
+setup_fixed_benchmark runZ3Protocol4 where { observations with expectedHash := some (hash (some (4 : Int))) }
+
+def runNative16 : Unit → IO (Option Int) := fun _ => countDegree 16
+setup_fixed_benchmark runNative16 where { observations with expectedHash := some (hash (some (16 : Int))) }
+
+def runFlint16 : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" false 16
+setup_fixed_benchmark runFlint16 where { observations with expectedHash := some (hash (some (16 : Int))) }
+
+def runZ316 : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" false 16
+setup_fixed_benchmark runZ316 where { observations with expectedHash := some (hash (some (16 : Int))) }
+
+def runFlintProtocol16 : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" true 16
+setup_fixed_benchmark runFlintProtocol16 where { observations with expectedHash := some (hash (some (16 : Int))) }
+
+def runZ3Protocol16 : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" true 16
+setup_fixed_benchmark runZ3Protocol16 where { observations with expectedHash := some (hash (some (16 : Int))) }
+
+def runNative32 : Unit → IO (Option Int) := fun _ => countDegree 32
+setup_fixed_benchmark runNative32 where { observations with expectedHash := some (hash (some (32 : Int))) }
+
+def runFlint32 : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" false 32
+setup_fixed_benchmark runFlint32 where { observations with expectedHash := some (hash (some (32 : Int))) }
+
+def runZ332 : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" false 32
+setup_fixed_benchmark runZ332 where { observations with expectedHash := some (hash (some (32 : Int))) }
+
+def runFlintProtocol32 : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" true 32
+setup_fixed_benchmark runFlintProtocol32 where { observations with expectedHash := some (hash (some (32 : Int))) }
+
+def runZ3Protocol32 : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" true 32
+setup_fixed_benchmark runZ3Protocol32 where { observations with expectedHash := some (hash (some (32 : Int))) }
+
+def runNative64 : Unit → IO (Option Int) := fun _ => countDegree 64
+setup_fixed_benchmark runNative64 where { observations with expectedHash := some (hash (some (64 : Int))) }
+
+def runFlint64 : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" false 64
+setup_fixed_benchmark runFlint64 where { observations with expectedHash := some (hash (some (64 : Int))) }
+
+def runZ364 : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" false 64
+setup_fixed_benchmark runZ364 where { observations with expectedHash := some (hash (some (64 : Int))) }
+
+def runFlintProtocol64 : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" true 64
+setup_fixed_benchmark runFlintProtocol64 where { observations with expectedHash := some (hash (some (64 : Int))) }
+
+def runZ3Protocol64 : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" true 64
+setup_fixed_benchmark runZ3Protocol64 where { observations with expectedHash := some (hash (some (64 : Int))) }
+
+end Hex.SturmExternalBench
 
 unsafe def main (args : List String) : IO UInt32 :=
   if args == ["check-head-fixtures"] then Hex.SturmBench.validateHeads else
