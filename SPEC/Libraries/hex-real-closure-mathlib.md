@@ -257,6 +257,13 @@ Its canonical owner models and predecessor cache agree semantically in the
 common target without caller-supplied coefficient agreement. This prefix check
 does not synthesize a joint realization for incomparable real-prefix paths.
 
+`Shared.Model.register?` constructs a canonical model for the executable
+registration packet and proves that its actual retained target inclusion
+preserves every previous target value. This includes results computed from
+several owners. `register?_union` proves preservation of their images in the
+prescribed algebraic union. These conclusions require no caller-supplied
+coefficient or target-value agreement.
+
 `Shared.enlarge?_models` carries an existing coherent collection of original
 interpretations into the prescribed algebraic ambient over the old field's
 infinitesimal extension. The declared base's reference model supplies existence

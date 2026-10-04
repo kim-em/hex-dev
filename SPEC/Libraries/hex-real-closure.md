@@ -163,6 +163,12 @@ Original values remain indexed by their original contexts;
 owner index. The native base compatibility check uses the full real-prefix key
 path and nondecreasing infinitesimal depth, rather than a hash or a carrier type.
 
+`Shared.register?` returns the new shared target together with the actual
+checked inclusion of the previous target and the new owner's map. The result
+retains transport for values computed in the previous shared target, beyond
+values stored in its original owner list. Every retained owner map composes
+with this same inclusion. The collection agrees with the existing `add?` API.
+
 `Shared.enlarge?` reconstructs the shared suffix once over the next staged base.
 Its result retains the existing checked conversion/parameter packet, a new
 shared target and all original-owner maps. Reading the parameter performs no

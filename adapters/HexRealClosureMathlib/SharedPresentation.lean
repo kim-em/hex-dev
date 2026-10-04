@@ -139,6 +139,45 @@ theorem Shared.Model.toUnion_coherent
     (secondModel.owners.get j).1 (firstModel.canonicalOwners i)
     (secondModel.canonicalOwners j) a
 
+/-- Register another live context while retaining every value already computed
+in the shared target and its image in the same prescribed algebraic union. -/
+theorem Shared.Model.add?_union {owners : List (Context registry)}
+    {shared : Shared base owners} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) R}
+    (model : Shared.Model shared following reference) (source : Context registry)
+    (compatible : source.origin.base.signature.constants <+: base.signature.constants ∧
+      source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals) :
+    ∃ result, shared.add? source = some result ∧
+      ∃ returned : Shared.Model result following reference,
+        ∃ previous : Inclusion shared.input.context result.input.context,
+          (∀ a, returned.target.value (previous.value a) = model.target.value a) ∧
+          ∀ a, result.targetToUnion reference (previous.value a) =
+            shared.targetToUnion reference a := by
+  obtain ⟨result, produced, returned, previous, preserved⟩ :=
+    model.add?_transport source compatible
+  refine ⟨result, produced, returned, previous, preserved, fun a => ?_⟩
+  apply Subtype.ext
+  rw [returned.targetToUnion_value, model.targetToUnion_value, preserved]
+
+/-- The registration packet transports all already computed target values
+into the same algebraic union through its actual retained runtime inclusion. -/
+theorem Shared.Model.register?_union {owners : List (Context registry)}
+    {shared : Shared base owners} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) R}
+    (model : Shared.Model shared following reference) (source : Context registry)
+    (compatible : source.origin.base.signature.constants <+: base.signature.constants ∧
+      source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals) :
+    ∃ packet : Registration shared source,
+      shared.register? source = some packet ∧
+        ∃ returned : Shared.Model packet.shared following reference,
+          (∀ a, returned.target.value (packet.previous.value a) = model.target.value a) ∧
+          ∀ a, packet.shared.targetToUnion reference (packet.previous.value a) =
+            shared.targetToUnion reference a := by
+  obtain ⟨packet, produced, returned, preserved⟩ := model.register? source compatible
+  refine ⟨packet, produced, returned, preserved, fun a => ?_⟩
+  apply Subtype.ext
+  rw [returned.targetToUnion_value, model.targetToUnion_value, preserved]
+
 section TargetOperations
 variable {owners : List (Context registry)} {shared : Shared base owners}
 variable {following : base.Realization} {reference : Tower.Model (Context.ofBase base) R}
@@ -483,3 +522,11 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Shared.Model.union_extend' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Shared.Model.union_extend
+
+/-- info: 'Hex.RealClosure.Tower.Shared.Model.add?_union' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.Model.add?_union
+
+/-- info: 'Hex.RealClosure.Tower.Shared.Model.register?_union' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.Model.register?_union

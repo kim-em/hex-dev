@@ -61,4 +61,37 @@ example (parent : Root initial) (child : Root parent.context) :
       (firstModel.toUnion_coherent secondModel 0 1 rfl child.value)
   · exact (firstModel.toUnion_embed 1 0 child rfl parent.value).symm
 
+/-- Registering an actual later root retains all previously computed target
+values, including combinations absent from the original owner list. Both
+canonical models and the checked transport come from the produced factories. -/
+example (parent : Root initial) (child : Root parent.context) :
+    ∃ shared : Shared base [parent.context],
+      Shared.gather? base [parent.context] = some shared ∧
+      ∃ model : Shared.Model shared provider.realization provider.towerModel,
+        ∃ packet : Registration shared child.context,
+          shared.register? child.context = some packet ∧
+            ∃ returned : Shared.Model packet.shared provider.realization provider.towerModel,
+              (∀ a, returned.target.value (packet.previous.value a) = model.target.value a) ∧
+              ∀ a, packet.shared.targetToUnion provider.towerModel
+                  (packet.previous.value (a + a⁻¹)) =
+                shared.targetToUnion provider.towerModel (a + a⁻¹) := by
+  have parentBase : parent.context.origin.base = base :=
+    parent.origin_base.trans (Context.ofBase_origin_base base)
+  have childBase : child.context.origin.base = base := child.origin_base.trans parentBase
+  have allowed (source : Context registry) (same : source.origin.base = base) :
+      source.origin.base.signature.constants <+: base.signature.constants ∧
+      source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
+    rw [same]
+    exact ⟨List.prefix_refl _, Nat.le_refl _⟩
+  obtain ⟨shared, produced, ⟨model⟩⟩ :=
+    Shared.gather?_models provider.realization provider.towerModel [parent.context] (by
+      intro source present
+      have equal : source = parent.context := by simpa using present
+      subst source
+      exact allowed _ parentBase)
+  obtain ⟨packet, registered, returned, preserved, union⟩ :=
+    model.register?_union child.context (allowed _ childBase)
+  exact ⟨shared, produced, model, packet, registered, returned, preserved,
+    fun a => union (a + a⁻¹)⟩
+
 end Hex.RealClosure.Tower.SharedPresentationTests

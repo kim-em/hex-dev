@@ -1599,6 +1599,15 @@ infinitesimal depth; unrelated paths and decreasing depth are rejected.
 check, so the same conversion rebuilds dependent roots over a proper real-prefix
 enlargement. Earlier infinitesimals retain their positions before any new ones.
 
+`Shared.register? source` returns a `Registration` packet containing the new
+shared collection, the actual checked inclusion of the previous shared target,
+and the new owner's inclusion. Its `previous.value` transports values already
+computed from several owners, and its coefficient map transports their
+polynomials. `maps_eq` binds all retained owner maps to that same inclusion.
+`Shared.Model.register?` proves interpretation by the returned canonical model;
+`register?_union` preserves the union image of every previously computed value.
+The existing `add?` surface returns the same shared collection.
+
 The development companion `BaseOrder` derives an ordered coefficient field
 from a provider-derived `Chain.Realization`, then constructs its real-closed
 ambient and base tower model. `BaseInclusion.Model.ofTarget` in `BaseMapModel`
