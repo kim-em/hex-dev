@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest import mock
 from pathlib import Path
 from unittest.mock import patch
 
@@ -190,6 +191,23 @@ class LakefileTransitions(unittest.TestCase):
     def test_an_added_or_removed_lakefile_is_a_runtime_change(self):
         self.assertFalse(guard.build_only_lakefile_edit(
             guard.freshness.Difference("lakefile.lean", None, "a" * 40)))
+
+    def test_an_exemption_follows_unrelated_lakefile_edits(self):
+        lib = guard.freshness.FACTOR_LIBRARIES[0]
+        blobs = {
+            "base": BASE,
+            "exempt": BASE + f"\nlean_lib {lib} where\n  moreLinkArgs := #[\"-lm\"]\n",
+            "later": BASE + f"\nlean_lib {lib} where\n  moreLinkArgs := #[\"-lm\"]\n"
+                     "\nlean_lib Unrelated where\n",
+            "relevant": BASE + f"\nlean_lib {lib} where\n  moreLinkArgs := #[\"-lz\"]\n",
+        }
+        exemptions = {("lakefile.lean", "base", "exempt")}
+        with mock.patch.object(guard.freshness, "git", side_effect=lambda *a: blobs[a[-1]]), \
+                mock.patch.object(guard.freshness, "load_exemptions", return_value=exemptions):
+            self.assertTrue(guard.build_only_lakefile_edit(
+                guard.freshness.Difference("lakefile.lean", "base", "later")))
+            self.assertFalse(guard.build_only_lakefile_edit(
+                guard.freshness.Difference("lakefile.lean", "base", "relevant")))
 
     def test_another_path_is_not_a_lakefile_transition(self):
         self.assertFalse(guard.build_only_lakefile_edit(
