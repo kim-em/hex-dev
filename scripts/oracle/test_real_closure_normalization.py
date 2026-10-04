@@ -18,7 +18,8 @@ class TraceTests(unittest.TestCase):
         failures = dict(constant='stored polynomial does not match', working='different defining polynomial',
             degree='wrong stored degree', fraction='noncanonical rational', equality='selected values or signs',
             sign='selected values or signs', flag='distinct normalization policies',
-            head='different defining polynomial', steps='wrong trace parameter', prefix='stored prefix')
+            head='different defining polynomial', steps='wrong trace parameter', prefix='stored prefix',
+            query='wrong actual query polynomial', query_scale='wrong actual query polynomial')
         for change, message in failures.items():
             with self.subTest(change=change):
                 row = copy.deepcopy(self.row)
@@ -31,7 +32,11 @@ class TraceTests(unittest.TestCase):
                 elif change == 'flag': row['eager']['clean'] = True
                 elif change == 'head': row['head'][-1] = [3,1]
                 elif change == 'steps': row['steps'] = 3
-                else: row['prefixes'][1]['clean']['coefficients'][0] = [2,1]
+                elif change == 'prefix': row['prefixes'][1]['clean']['coefficients'][0] = [2,1]
+                elif change == 'query': row['prefixes'][-1]['clean']['query_coefficients'][0] = [1,1]
+                else:
+                    for coefficient in row['prefixes'][-1]['clean']['query_coefficients']:
+                        coefficient[0] *= 2
                 with self.assertRaisesRegex(ValueError, message): verify(row)
 
 
