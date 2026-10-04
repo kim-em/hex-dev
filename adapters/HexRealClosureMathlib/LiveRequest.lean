@@ -9,6 +9,7 @@ public import HexRealClosure.LiveRequest
 public import HexRealClosureMathlib.CacheGather
 public import HexRealClosureMathlib.TowerRoots
 public import HexRealClosureMathlib.SharedPresentation
+public import HexSignDetMathlib.Embedding
 
 public section
 
@@ -269,18 +270,18 @@ private theorem root_frames {base : BaseContext.PackedContext registry} {parent 
       ((Request.owners (pre ++ rootRequest root ++ post))[i]).model? following reference = some (owners.get i).1)
     (frames : List (Frame target))
     (produced : Request.transport? (pre ++ rootRequest root ++ post) maps = some frames) :
-    ∃ (original : Model parent K) (predecessor child : Frame target)
+    ∃ (parentModel : Model parent K) (predecessor child : Frame target)
         (fresh : SignDet.Descriptor target.Value Signature target.sign target.signature)
         (value : target.Value),
       frames[pre.length]? = some predecessor ∧ frames[pre.length + 1]? = some child ∧
         predecessor.descriptors = [fresh] ∧ child.values = [value] ∧
         targetModel.value value = fresh.root targetModel.value targetModel.zero_iff targetModel.one
           targetModel.add targetModel.sub targetModel.mul targetModel.nat targetModel.sign ∧
-        parent.model? following reference = some original ∧
+        parent.model? following reference = some parentModel ∧
         fresh.root targetModel.value targetModel.zero_iff targetModel.one targetModel.add
           targetModel.sub targetModel.mul targetModel.nat targetModel.sign =
-        descriptor.root original.value original.zero_iff original.one original.add original.sub
-          original.mul original.nat original.sign := by
+        descriptor.root parentModel.value parentModel.zero_iff parentModel.one parentModel.add parentModel.sub
+          parentModel.mul parentModel.nat parentModel.sign := by
   induction pre generalizing frames with
   | nil =>
     cases root with
@@ -354,7 +355,7 @@ theorem Collection.root_agreement {base : BaseContext.PackedContext registry}
     (split : request = pre ++ rootRequest root ++ post)
     {following : base.Realization} {reference : Model (Context.ofBase base) K}
     (model : Shared.Model collection.shared following reference) :
-    ∃ (original : Model parent K) (predecessor child : Frame collection.shared.input.context)
+    ∃ (parentModel : Model parent K) (predecessor child : Frame collection.shared.input.context)
         (fresh : SignDet.Descriptor collection.shared.input.context.Value Signature
           collection.shared.input.context.sign collection.shared.input.context.signature)
         (value : collection.shared.input.context.Value),
@@ -363,11 +364,11 @@ theorem Collection.root_agreement {base : BaseContext.PackedContext registry}
         predecessor.descriptors = [fresh] ∧ child.values = [value] ∧
         model.target.value value = fresh.root model.target.value model.target.zero_iff model.target.one
           model.target.add model.target.sub model.target.mul model.target.nat model.target.sign ∧
-        parent.model? following reference = some original ∧
+        parent.model? following reference = some parentModel ∧
         fresh.root model.target.value model.target.zero_iff model.target.one model.target.add
           model.target.sub model.target.mul model.target.nat model.target.sign =
-        descriptor.root original.value original.zero_iff original.one original.add original.sub
-          original.mul original.nat original.sign := by
+        descriptor.root parentModel.value parentModel.zero_iff parentModel.one parentModel.add parentModel.sub
+          parentModel.mul parentModel.nat parentModel.sign := by
   subst request
   exact root_frames root descriptor selected pre post model.target collection.shared.maps model.owners
     model.canonicalOwners collection.frames collection.produced
@@ -495,7 +496,8 @@ theorem Enlargement.preserve {base : BaseContext.PackedContext registry}
   exact preserved
 
 /-- A selected root inside a composite request still agrees with its actual
-refreshed predecessor descriptor after enlargement, through public accessors. -/
+refreshed predecessor descriptor after enlargement, through public accessors.
+The retained parent model is canonical at the enlarged reference. -/
 theorem Enlargement.root_agreement {base : BaseContext.PackedContext registry}
     {parent : Context registry} (root : Root parent)
     (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature)
@@ -507,7 +509,7 @@ theorem Enlargement.root_agreement {base : BaseContext.PackedContext registry}
     (oldModel : Shared.Model original.shared following reference)
     (ambient : Ambient (Hex.RationalFn K)) (produced : original.enlarge? = some result) :
     let returned := (result.model oldModel ambient produced).target
-    ∃ (original : Model parent ambient.Carrier)
+    ∃ (parentModel : Model parent ambient.Carrier)
         (predecessor child : Frame result.collection.shared.input.context)
         (fresh : SignDet.Descriptor result.collection.shared.input.context.Value Signature
           result.collection.shared.input.context.sign result.collection.shared.input.context.signature)
@@ -517,20 +519,50 @@ theorem Enlargement.root_agreement {base : BaseContext.PackedContext registry}
         predecessor.descriptors = [fresh] ∧ child.values = [value] ∧
         returned.value value = fresh.root returned.value returned.zero_iff returned.one returned.add
           returned.sub returned.mul returned.nat returned.sign ∧
-        parent.model? following.infinitesimal (Model.next base reference ambient) = some original ∧
+        parent.model? following.infinitesimal (Model.next base reference ambient) = some parentModel ∧
         fresh.root returned.value returned.zero_iff returned.one returned.add returned.sub
           returned.mul returned.nat returned.sign =
-        descriptor.root original.value original.zero_iff original.one original.add original.sub
-          original.mul original.nat original.sign :=
+        descriptor.root parentModel.value parentModel.zero_iff parentModel.one parentModel.add parentModel.sub
+          parentModel.mul parentModel.nat parentModel.sign :=
   Collection.root_agreement root descriptor selected result.collection split (result.model oldModel ambient produced)
 
-private noncomputable def selectedValue {owner : Context registry} (model : Model owner K)
+/-- Interpret the selected descriptor root through a native context model. -/
+noncomputable def selectedValue {owner : Context registry} (model : Model owner K)
     (descriptor : SignDet.Descriptor owner.Value Signature owner.sign owner.signature) : K :=
   descriptor.root model.value model.zero_iff model.one model.add model.sub model.mul model.nat model.sign
 
+private theorem canonical_next {base : BaseContext.PackedContext registry}
+    {parent : Context registry} (following : base.Realization)
+    (reference : Model (Context.ofBase base) K) (ambient : Ambient (Hex.RationalFn K))
+    (old : Model parent K) (produced : parent.model? following reference = some old) :
+    parent.model? following.infinitesimal (Model.next base reference ambient) =
+      some (old.map (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient)) := by
+  cases base with
+  | pack original =>
+    rw [Model.next_pack original reference ambient]
+    exact parent.model?_next original following reference ambient old produced
+
+private theorem selectedValue_map {parent : Context registry} (old : Model parent K)
+    (ambient : Ambient (Hex.RationalFn K))
+    (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature) :
+    selectedValue (old.map (Ambient.coefficientHom ambient)
+      (Ambient.coefficientHom_strictMono ambient)) descriptor =
+      Ambient.coefficientHom ambient (selectedValue old descriptor) := by
+  exact descriptor.root_map old.value old.zero_iff
+    (old.map (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient)).value
+    (old.map (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient)).zero_iff
+    (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient) (fun _ => rfl)
+    old.one old.add old.sub old.mul old.nat
+    (old.map (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient)).one
+    (old.map (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient)).add
+    (old.map (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient)).sub
+    (old.map (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient)).mul
+    (old.map (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient)).nat
+    old.sign (old.map (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient)).sign
+
 /-- Public consumer: gather and interpret one composite request, enlarge it
  twice, and preserve both selected roots and their original canonical models. -/
-example {base : BaseContext.PackedContext registry} {firstParent secondParent : Context registry}
+theorem Collection.roots_twice {base : BaseContext.PackedContext registry} {firstParent secondParent : Context registry}
     (firstRoot : Root firstParent) (secondRoot : Root secondParent)
     (firstDescriptor : SignDet.Descriptor firstParent.Value Signature firstParent.sign firstParent.signature)
     (secondDescriptor : SignDet.Descriptor secondParent.Value Signature secondParent.sign secondParent.signature)
@@ -547,7 +579,8 @@ example {base : BaseContext.PackedContext registry} {firstParent secondParent : 
     let initial := original.model following reference gathered
     let once := first.model initial ambient firstProduced
     let returned := (twice.model once nextAmbient twiceProduced).target
-    ∃ (sourceA : Model firstParent nextAmbient.Carrier) (sourceB : Model secondParent nextAmbient.Carrier)
+    ∃ (originalA : Model firstParent K) (originalB : Model secondParent K)
+        (sourceA : Model firstParent nextAmbient.Carrier) (sourceB : Model secondParent nextAmbient.Carrier)
         (a b c d : Frame twice.collection.shared.input.context)
         (da db : SignDet.Descriptor twice.collection.shared.input.context.Value Signature
           twice.collection.shared.input.context.sign twice.collection.shared.input.context.signature)
@@ -561,22 +594,49 @@ example {base : BaseContext.PackedContext registry} {firstParent secondParent : 
       secondParent.model? following.infinitesimal.infinitesimal
         (Model.next base.infinitesimal (Model.next base reference ambient) nextAmbient) = some sourceB ∧
       selectedValue returned da = selectedValue sourceA firstDescriptor ∧
-      selectedValue returned db = selectedValue sourceB secondDescriptor := by
+      selectedValue returned db = selectedValue sourceB secondDescriptor ∧
+      firstParent.model? following reference = some originalA ∧
+      secondParent.model? following reference = some originalB ∧
+      selectedValue returned da = Ambient.coefficientHom nextAmbient
+        (Ambient.coefficientHom ambient (selectedValue originalA firstDescriptor)) ∧
+      selectedValue returned db = Ambient.coefficientHom nextAmbient
+        (Ambient.coefficientHom ambient (selectedValue originalB secondDescriptor)) := by
   let initial := original.model following reference gathered
   let once := first.model initial ambient firstProduced
   have firstSplit : (rootRequest firstRoot ++ rootRequest secondRoot ++ operands) =
       [] ++ rootRequest firstRoot ++ (rootRequest secondRoot ++ operands) := by
     simp only [List.nil_append, List.append_assoc]
-  obtain ⟨sourceA, a, b, da, va, atA, atB, descA, valueA, rootA, builtA, originalA⟩ :=
+  obtain ⟨sourceA, a, b, da, va, atA, atB, descA, valueA, rootA, builtA, meaningA⟩ :=
     twice.root_agreement firstRoot firstDescriptor firstSelected
       (pre := []) (post := rootRequest secondRoot ++ operands) firstSplit once nextAmbient twiceProduced
-  obtain ⟨sourceB, c, d, db, vb, atC, atD, descB, valueB, rootB, builtB, originalB⟩ :=
+  obtain ⟨sourceB, c, d, db, vb, atC, atD, descB, valueB, rootB, builtB, meaningB⟩ :=
     twice.root_agreement secondRoot secondDescriptor secondSelected
       (pre := rootRequest firstRoot) (post := operands) rfl once nextAmbient twiceProduced
-  refine ⟨sourceA, sourceB, a, b, c, d, da, db, va, vb, atA, atB, ?_, ?_,
-    descA, valueA, descB, valueB, rootA, rootB, builtA, builtB, originalA, originalB⟩
+  obtain ⟨originalA, _, _, _, _, _, _, _, _, _, initialA, _⟩ :=
+    original.root_agreement firstRoot firstDescriptor firstSelected
+      (pre := []) (post := rootRequest secondRoot ++ operands) firstSplit initial
+  obtain ⟨originalB, _, _, _, _, _, _, _, _, _, initialB, _⟩ :=
+    original.root_agreement secondRoot secondDescriptor secondSelected
+      (pre := rootRequest firstRoot) (post := operands) rfl initial
+  have liftedA := canonical_next following reference ambient originalA initialA
+  have liftedB := canonical_next following reference ambient originalB initialB
+  have twiceA := canonical_next following.infinitesimal (Model.next base reference ambient)
+    nextAmbient _ liftedA
+  have twiceB := canonical_next following.infinitesimal (Model.next base reference ambient)
+    nextAmbient _ liftedB
+  have sameA := Option.some.inj (builtA.symm.trans twiceA)
+  have sameB := Option.some.inj (builtB.symm.trans twiceB)
+  refine ⟨originalA, originalB, sourceA, sourceB, a, b, c, d, da, db, va, vb, atA, atB, ?_, ?_,
+    descA, valueA, descB, valueB, rootA, rootB, builtA, builtB, meaningA, meaningB,
+    initialA, initialB, ?_, ?_⟩
   · simpa only [rootRequest_length firstRoot firstDescriptor firstSelected] using atC
   · simpa only [rootRequest_length firstRoot firstDescriptor firstSelected] using atD
+  · change selectedValue (twice.model once nextAmbient twiceProduced).target da = _
+    change selectedValue (twice.model once nextAmbient twiceProduced).target da = selectedValue sourceA firstDescriptor at meaningA
+    rw [meaningA, sameA, selectedValue_map, selectedValue_map]
+  · change selectedValue (twice.model once nextAmbient twiceProduced).target db = _
+    change selectedValue (twice.model once nextAmbient twiceProduced).target db = selectedValue sourceB secondDescriptor at meaningB
+    rw [meaningB, sameB, selectedValue_map, selectedValue_map]
 
 end Hex.RealClosure.Tower.Live
 
@@ -635,3 +695,7 @@ end Hex.RealClosure.Tower.Live
 /-- info: 'Hex.RealClosure.Tower.Live.Enlargement.root_agreement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Live.Enlargement.root_agreement
+
+/-- info: 'Hex.RealClosure.Tower.Live.Collection.roots_twice' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.Collection.roots_twice

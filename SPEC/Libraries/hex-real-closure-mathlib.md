@@ -309,7 +309,7 @@ compatibility check. Incomparable constant prefixes, including `[a]` and `[b]`,
 and permutations such as `[a,b]` and `[b,a]`, require non-prefix native inclusions
 and a joint realization. The separate ordinary-real finite-sign conclusion for
 arbitrary interleaved stages is not supplied by these ambient `Model.next`
-interpretations. Root agreement also retains the original parent model from
+interpretations. Root agreement also retains the parent model at the current reference from
 its canonical factory and equality with the original descriptor root.
 
 At a fixed level of initial degree `d`, there are at most `d-1` nontrivial
@@ -709,3 +709,7 @@ performance requirements or establish a new mandatory proof-performance gate.
 Shared-host comparisons follow the existing automatic CPU selection and
 adjacent alternating AB/BA discipline. Extend existing CI scripts rather than
 adding workflows. This contract does not advance a phase or publish a library.
+
+`Live.Collection.roots_twice` connects the final roots of a gathered composite
+request after two enlargements to their original interpretations through the
+two coefficient embeddings, retaining the starting canonical factory equations.

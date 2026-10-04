@@ -1962,9 +1962,8 @@ frame lists across that enlargement in the lifted old model.
 `Collection.root_agreement` identifies the actual child value of a root pair
 in a request equal to `pre ++ rootRequest root ++ post` with the root selected by its refreshed predecessor
 descriptor. Both interpretations come from the collection's canonical factory;
-no root-agreement premise is supplied. The theorem also retains the original
-parent model from the canonical factory and equality with the original selected
-descriptor root. It also applies to the collection
+no root-agreement premise is supplied. The theorem also retains the parent model from the canonical factory at the
+current reference and equality with the original selected descriptor root. It also applies to the collection
 returned by enlargement. `Enlargement.model` retrieves that new canonical
 model through the public collection interface for the next enlargement.
 `model_parameter` identifies its new parameter and `model_previous` retains
@@ -1973,7 +1972,10 @@ the checked old-target inclusion aligned with that same returned model.
 public accessors; `Enlargement.root_agreement` identifies a selected root
 inside a composite request through the returned canonical model. A request
 split equation locates either root pair without casting the collection or
-its enlargement.
+its enlargement. `Collection.roots_twice` starts with a gathered composite
+request, obtains each public returned model, and proves that both final selected
+roots equal their starting interpretations through the two actual coefficient
+embeddings. It retains the starting factory equations as conclusions.
 `Collection.frame` provides total access by an original request index, with
 `frame_eq` identifying it with the returned frame list. Public projection
 equations identify the enlargement's collection frames, previous map and
