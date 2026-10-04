@@ -100,10 +100,10 @@ private def withLimit (w : Work) (r : Resource) (k : Nat) : Work := match r with
   match G.directProductWith { limits with generators := 2 } H with
   | .error (.generators 3 2) => pure ()
   | _ => throw (IO.userError "direct product ignored raw generator multiplicities")
-  match G.wreathProductWith { limits with degree := 5 } H (Nat.zero_lt_succ 1) with
+  match G.wreathProductWith { limits with degree := 5 } H with
   | .error (.degree 6 5) => pure ()
   | _ => throw (IO.userError "wreath product omitted a fixed block")
-  match G.wreathProductWith { limits with generators := 6 } H (Nat.zero_lt_succ 1) with
+  match G.wreathProductWith { limits with generators := 6 } H with
   | .error (.generators 7 6) => pure ()
   | _ => throw (IO.userError "wreath generator count must be m*rG+rH")
   let two := Group.ofGenerators #[transposition]
@@ -117,7 +117,7 @@ private def withLimit (w : Work) (r : Resource) (k : Nat) : Work := match r with
         throw (IO.userError "direct product reset its materialization meter")
     | _ => throw (IO.userError "direct product reference allowance")
   | _ => throw (IO.userError "direct product exact dimension boundary")
-  match two.wreathProductWith { limits with degree := 4, generators := 3 } two (Nat.zero_lt_succ 1) with
+  match two.wreathProductWith { limits with degree := 4, generators := 3 } two with
   | .ok (.ok result meter) =>
     unless result.val.order == 8 do throw (IO.userError "bounded C2 wreath product")
     match Group.buildWith allowance result.val.generators with

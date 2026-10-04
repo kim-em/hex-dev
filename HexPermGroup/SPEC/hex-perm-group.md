@@ -773,7 +773,7 @@ Degree-zero factors are permitted. Preserve all explicitly declared fixed
 points in the embeddings.
 
 `wreathProduct G H` uses the imprimitive action of `G wr H`, with `G` of
-degree `n > 0` and `H` of degree `m`. Label `(i,j)` by `j*n+i`, so each
+degree `n` and `H` of degree `m`. Label `(i,j)` by `j*n+i`, so each
 block has size `n`. For `f : Fin m -> Element G` and `h : Element H`, set
 
 ```text
@@ -789,11 +789,14 @@ unique decomposition, and order `(order G)^m * order H`. The projection
 onto `H` has kernel the base group, with conjugation permuting its factors.
 The companion identifies this with the semidirect product `G^m ⋊ H`.
 
-Nonempty blocks are a necessary hypothesis: at `n=0` the action loses the
-top group. Reject that raw request explicitly; do not claim the abstract
-wreath product has been represented faithfully on an empty set. At `m=0`
-the specified product is trivial. Degree one for `G` is permitted. The
-product action on functions is outside this constructor's contract.
+The construction is total. At `n=0` there are no points and the result is
+the trivial group; the action then loses the top group, so the top
+projection is the identity. Faithfulness of the imprimitive action (the top
+group is recovered from the point action), the order formula
+`(order G)^m * order H` and the equivalence with `G^m ⋊ H` hold for `0 < n`,
+and their theorems carry that hypothesis. At `m=0` the product is trivial.
+Degree one for `G` is permitted. The product action on functions is outside
+this constructor's contract.
 
 ## Edge cases and graph-isomorphism integration
 

@@ -230,13 +230,13 @@ def products : Unit → IO Nat := fun _ => do
   let c2 ← readGroup c2Ref
   let c3 := Group.ofGenerators #[cycle3]
   let direct := c2.directProduct c2
-  let wreath := c2.wreathProduct c2 (by decide)
+  let wreath := c2.wreathProduct c2
   let mixed := c2.directProduct c3
   let empty := Group.ofGenerators (#[] : Array (Perm 0))
   let withEmpty := empty.directProduct c2
-  let nonabelian := s3.wreathProduct c2 (by decide)
+  let nonabelian := s3.wreathProduct c2
   let top4 := Group.ofGenerators #[swap4]
-  let fixedBlocks := c2.wreathProduct top4 (by decide)
+  let fixedBlocks := c2.wreathProduct top4
   require (direct.order == 4 && wreath.order == 8 && mixed.order == 6 &&
       withEmpty.order == 2 && nonabelian.order == 72 && fixedBlocks.order == 32 &&
       fixedBlocks.generators.size == 5) "products: wrong order or generator count"

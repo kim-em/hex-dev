@@ -238,21 +238,21 @@ order 2 is the dihedral group of order 8 again:
 ```lean
 def c2Swap : Perm 2 := Perm.mk #v[1, 0]
 def c2 : Group 2 := Group.ofGenerators #[c2Swap]
-def c2wr2 := c2.wreathProduct c2 (by decide)
+def c2wr2 := c2.wreathProduct c2
 #guard c2wr2.order = 8
 #guard c2wr2.generators.size = 3
 
 def c2Element : Element c2 :=
   ⟨c2Swap, .generator (by simp [c2])⟩
 def baseCopy :=
-  WreathProduct.copy c2 (by decide) 0 c2Element
+  WreathProduct.copy c2 0 c2Element
 def topCopy :=
-  WreathProduct.inr c2 (by decide) c2Element
+  WreathProduct.inr c2 c2Element
 #guard baseCopy != topCopy
 def baseTopIsId : Bool :=
-  WreathProduct.top (by decide) baseCopy == Element.id c2
+  WreathProduct.top baseCopy == Element.id c2
 #guard baseTopIsId
-#guard WreathProduct.top (by decide) topCopy = c2Element
+#guard WreathProduct.top topCopy = c2Element
 
 end HexPermGroupChapter
 ```

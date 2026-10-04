@@ -130,7 +130,7 @@ private def cases : IO (List Json) := do
   let core := G.core H hHG
   let series := G.derivedSeries
   let direct := c2Group.directProduct c2Group
-  let wreath := c2Group.wreathProduct c2Group (by decide)
+  let wreath := c2Group.wreathProduct c2Group
 
   let ranks := G.enumerate.toList.map fun p => (G.rank p).val
   let samples : List (Element G) :=

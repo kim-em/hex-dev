@@ -154,12 +154,12 @@ example (G : Group n) (H : Group m) (p : Element G) (q : Element H) :
       (Element.equiv G p, Element.equiv H q) := DirectProduct.groupEquiv_pair G H p q
 
 example (G : Group n) (H : Group m) (hn : 0 < n) :
-    Nonempty (closure (G.wreathProduct H hn).generators ≃*
+    Nonempty (closure (G.wreathProduct H).generators ≃*
       SemidirectProduct (Fin m → closure G.generators) (closure H.generators) (WreathProduct.subgroupShift G H)) :=
   ⟨WreathProduct.groupEquiv G H hn⟩
 
-example (G : Group n) (H : Group m) (hn : 0 < n) :
-    (WreathProduct.inlHom G H hn).range = (WreathProduct.topHom G H hn).ker := WreathProduct.range_inl G H hn
+example (G : Group n) (H : Group m) :
+    (WreathProduct.inlHom G H).range = (WreathProduct.topHom G H).ker := WreathProduct.range_inl G H
 
 private def rotation : Perm 4 := ⟨#v[1, 2, 3, 0], by decide, by decide⟩
 private def reflection : Perm 4 := ⟨#v[0, 3, 2, 1], by decide, by decide⟩

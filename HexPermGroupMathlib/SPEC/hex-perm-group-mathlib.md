@@ -10,8 +10,8 @@ supplied-index sampling, finite actions with their images and kernels,
 complete set and subgroup search, blocks and primitivity, normal closure,
 core and derived series, and direct and imprimitive wreath products.
 Prove the universal properties and action-compatible equivalences stated
-in the computational SPEC, including the nonempty-block hypothesis for
-the faithful wreath action.
+in the computational SPEC, including the `0 < n` hypothesis on the
+semidirect-product equivalence for the wreath action.
 
 The immediate dependency is `HexPermGroup`, plus Mathlib. Extract the
 graph-independent `Perm.toEquiv` and `Perm.ofEquiv` conversions from
