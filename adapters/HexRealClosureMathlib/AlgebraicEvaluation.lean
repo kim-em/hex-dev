@@ -7,7 +7,7 @@ module
 
 public import HexRealClosureMathlib.RegularEvaluation
 public import HexRealClosureMathlib.MonicEvaluation
-public import HexRealClosureMathlib.ModelEvaluation
+public import HexRealClosureMathlib.ModelInventory
 public import HexRealClosureMathlib.TransportSelected
 public import HexSignDetMathlib.SelectedProducer
 
@@ -381,4 +381,80 @@ theorem adjoin_realization (model : Model context K)
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Model.minimal_lift
 
+
+/-- Native coefficients of the actual descriptor and produced joint replay,
+including the minimal polynomial and the requested children's representatives. -/
+@[expose] def adjoinCoefficients
+    (descriptor : SignDet.Descriptor context.Value Signature context.sign context.signature)
+    (q : DensePoly context.Value) (values : List (context.adjoin descriptor).context.Value)
+    (s : SignDet.SelectedSigns descriptor (q :: values.map (context.polynomial descriptor))) :
+    List context.Value :=
+  Transport.Inventory.coefficients q ++
+    (Transport.Inventory.descriptor descriptor.raw descriptor.evidence ++
+      (Transport.Inventory.replay descriptor.raw.head descriptor.raw.lower descriptor.raw.upper
+        (descriptor.raw.queries ++ q :: values.map (context.polynomial descriptor)) s.evidence ++
+        (values.map (context.polynomial descriptor)).flatMap Transport.Inventory.coefficients))
+
+/-- One finite list of old native values suffices to realize the requested
+child signs. Its membership and sign conditions construct every recursive
+transport premise of the actual produced evidence. -/
+theorem adjoin_inventory (model : Model context K)
+    (descriptor : SignDet.Descriptor context.Value Signature context.sign context.signature)
+    (values : List (context.adjoin descriptor).context.Value) :
+    ∃ q : DensePoly context.Value,
+      model.polynomial q = minpoly model.field
+        ((model.adjoin descriptor).value (context.adjoin descriptor).generator) ∧
+      ∃ s : SignDet.SelectedSigns descriptor (q :: values.map (context.polynomial descriptor)),
+        descriptor.buildSigns (q :: values.map (context.polynomial descriptor)) = .ok s ∧
+        ∀ interpretation : CoefficientMap model.field G,
+          (∀ x ∈ adjoinCoefficients descriptor q values s, model.domain interpretation x) →
+          (∀ x ∈ adjoinCoefficients descriptor q values s,
+            (SignType.sign (model.read interpretation x) : Int) = context.sign x) →
+          ∃ descriptorData : Transport.DescriptorData (model.read interpretation)
+            (model.domain interpretation) context.sign (fun a : G => (SignType.sign a : Int))
+            descriptor.raw descriptor.evidence,
+          let selected := (Transport.checkedDescriptor (model.read interpretation)
+            (model.domain interpretation) (model.closed interpretation) id context.sign
+            (fun a : G => (SignType.sign a : Int)) context.signature descriptor descriptorData).root
+              (fun a : G => a) (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl)
+              (fun _ _ => rfl) (fun _ => rfl) (fun _ => rfl)
+          ∃ extended : CoefficientMap (model.adjoin descriptor).field G,
+            (∀ a ∈ values, (model.adjoin descriptor).toValue a ∈ extended.domain ∧
+              (SignType.sign (extended.map ((model.adjoin descriptor).toValue a)) : Int) =
+                (SignType.sign ((model.adjoin descriptor).value a) : Int)) ∧
+            (∀ a : context.Value, model.domain interpretation a →
+              (model.adjoin descriptor).toValue ((context.adjoin descriptor).embed a) ∈ extended.domain ∧
+              extended.map ((model.adjoin descriptor).toValue ((context.adjoin descriptor).embed a)) =
+                model.read interpretation a) ∧
+            (model.adjoin descriptor).toValue (context.adjoin descriptor).generator ∈ extended.domain ∧
+              extended.map ((model.adjoin descriptor).toValue (context.adjoin descriptor).generator) =
+                selected := by
+  classical
+  obtain ⟨q, minimal, s, built, realize⟩ := model.adjoin_realization (G := G) descriptor values
+  refine ⟨q, minimal, s, built, ?_⟩
+  intro interpretation members signs
+  have closed := model.closed interpretation
+  have inventory := model.inventory_agreement interpretation
+    (adjoinCoefficients descriptor q values s) members signs
+  have hq := inventory.append.1
+  have hd := inventory.append.2.append.1
+  have hr := inventory.append.2.append.2.append.1
+  have hv := inventory.append.2.append.2.append.2
+  have descriptorData := Transport.Inventory.descriptor_data closed descriptor.raw descriptor.evidence hd
+  refine ⟨descriptorData, ?_⟩
+  refine realize interpretation ?_ descriptorData
+    (Transport.Inventory.replay_data closed descriptor.raw.head descriptor.raw.lower descriptor.raw.upper
+      (descriptor.raw.queries ++ q :: values.map (context.polynomial descriptor)) s.evidence hr) ?_
+  · intro i _
+    rw [← minimal, model.polynomial_coeff]
+    exact (model.domain_iff interpretation _).mp
+      (closed.coefficient _ _ q hq.members i)
+  · intro a member
+    exact (hv.flatMap (context.polynomial descriptor a)
+      (List.mem_map.mpr ⟨a, member, rfl⟩)).members
+
 end Hex.RealClosure.Tower.Model
+
+/-- info: 'Hex.RealClosure.Tower.Model.adjoin_inventory' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Model.adjoin_inventory

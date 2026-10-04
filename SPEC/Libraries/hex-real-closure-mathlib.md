@@ -502,6 +502,23 @@ field. It supplies the real-valued consumer contract without constructing or
 quoting an unused symbolic ambient model. The relative corollary additionally
 identifies the realized signs with the symbolic denotations.
 
+`Transport.Inventory` enumerates the literal native coefficients, reduction
+scales and quotients, remainder-chain rows, endpoint evaluations and interval
+comparisons of a descriptor and every node of its retained BKR replay. Each
+recursive edge uses the checker's actual `take`/`drop` query slices. Its
+constructors derive `DescriptorData` and `ReplayData` from a closed coefficient
+interpretation and membership, sign agreement and zero reflection on this
+finite list; native expressions need no field structure.
+
+`Tower.Model.adjoin_inventory` chooses the actual joint producer's minimal
+polynomial representative and evidence before quantifying the interpretation.
+Membership and sign agreement on `adjoinCoefficients` suffice to interpret the
+selected child root, preserve the requested child signs, and return a partial
+coefficient interpretation on the child's actual semantic field. The finite
+sign conditions supply zero reflection; closure derives all intermediate
+arithmetic. This is the algebraic step of finite realization. The general
+induction through arbitrarily interleaved infinitesimal levels remains required.
+
 These induction and transport lemmas are local proof deliverables. They
 preserve finitely many infinitesimal inequalities, never their universal
 scheme simultaneously. The exporter constructs the requisite finite evidence or chooses an
