@@ -885,8 +885,10 @@ the independent Z3 oracle checks selected roots, cached signs, coefficient
 inclusions and arithmetic. Its embedded replay graphs are retained data and
 are not replayed by that oracle. Automatic dependency-closed collection of
 live contexts remains required, including staged bases whose real-prefix
-paths are not prefixes of one declared base. Those cases require a joint
-realization; separate real-constant laws do not supply it.
+paths are not prefixes of one declared base. The current native prefix
+check rejects those owners. Supporting them also needs inclusions for keys
+in other positions and a joint realization; separate constant laws do not
+supply these.
 
 `TowerCoverage.lean` connects the native producer to the relative algebraic
 union. `Model.nativePoly` lifts coefficients from the input's mathematical
@@ -1824,7 +1826,8 @@ and staged-order results with dependency closure. The interpretation ingredients
    predecessors. Equivalent selected roots with different intervals or
    reordered chains can still add redundant algebraic levels; arbitrary
    compatible real-prefix permutations remain outside the prefix check. Owners
-   over incomparable real-prefix paths require a supplied joint realization.
+   over incomparable real-prefix paths are rejected. Supporting them requires
+   new native inclusions for non-prefix keys as well as a joint realization.
    Remaining: re-establish the canonical `Shared.Model`, including its target,
    original owners and cache, after enlargement against the next staged
    realization and lifted reference. Automatic dependency-closed traversal and
