@@ -149,16 +149,16 @@ def run : IO Unit := do
   let some reverseMixed := Shared.gather? (.pack first)
       [enlargedOwner.context, extension.context]
     | throw (IO.userError "enlarged/original owner registration failed")
-  require (reverseMixed.input.context.signature.roots.length == 2)
-    "reverse mixed-owner reuse limitation changed"
+  require (reverseMixed.input.context.signature.roots.length == 1)
+    "reverse mixed owners duplicated the same selected root"
   require (reverseMixed.input.context.equal
     (reverseMixed.value 0 (enlargedOwner.value alpha)) (reverseMixed.value 1 alpha))
     "reverse mixed-owner maps selected different roots"
   let some deeperMixed := Shared.gather? (.pack second)
       [extension.context, enlargedOwner.context]
     | throw (IO.userError "intermediate-depth owner registration failed")
-  require (deeperMixed.input.context.signature.roots.length == 2)
-    "intermediate-depth reuse limitation changed"
+  require (deeperMixed.input.context.signature.roots.length == 1)
+    "intermediate-depth owners duplicated the same selected root"
   require (deeperMixed.input.context.equal
     (deeperMixed.value 0 alpha) (deeperMixed.value 1 (enlargedOwner.value alpha)))
     "intermediate-depth maps selected different roots"
@@ -179,13 +179,49 @@ def run : IO Unit := do
   let alternative := base.adjoin alternativeDescriptor
   let some sameRoot := Shared.gather? (.pack rational) [extension.context, alternative.context]
     | throw (IO.userError "alternative root presentation registration failed")
-  require (sameRoot.input.context.signature.roots.length == 2)
-    "alternative descriptor reuse limitation changed"
+  require (sameRoot.input.context.signature.roots.length == 1)
+    "alternative intervals duplicated the same selected root"
   require (sameRoot.input.context.equal (sameRoot.value 0 alpha)
     (sameRoot.value 1 alternative.generator))
     "alternative descriptors did not retain the same selected real root"
   require (sameRoot.input.context.sign (sameRoot.value 0 alpha) == 1)
     "alternative presentations selected the negative conjugate"
+  let some reducibleDescriptor := SignDet.Descriptor.validate base.sign base.signature
+      { context := base.signature,
+        head := DensePoly.C two * (x * x - DensePoly.C two) * (x - DensePoly.C (two + 1)),
+        lower := .finite 1, upper := .finite two, indices := [], signs := [] }
+    | throw (IO.userError "equivalent nonmonic reducible descriptor failed")
+  let reducible := base.adjoin reducibleDescriptor
+  let some differentHead := sameRoot.add? reducible.context
+    | throw (IO.userError "equivalent defining polynomial registration failed")
+  require (differentHead.input.context.signature.roots.length == 1)
+    "equivalent nonmonic reducible head appended a root level"
+  require (differentHead.input.context.equal (differentHead.value ⟨0, by simp⟩ alpha)
+    (differentHead.value ⟨2, by simp⟩ reducible.generator))
+    "equivalent defining polynomial changed the selected root"
+  let some negativeDescriptor := SignDet.Descriptor.validate base.sign base.signature
+      { context := base.signature, head := x * x - DensePoly.C two,
+        lower := .finite (-two), upper := .finite (-1), indices := [], signs := [] }
+    | throw (IO.userError "negative conjugate descriptor failed")
+  let negative := base.adjoin negativeDescriptor
+  let some conjugates := sameRoot.add? negative.context
+    | throw (IO.userError "negative conjugate registration failed")
+  require (conjugates.input.context.signature.roots.length == 1)
+    "existing negative generator appended a root level"
+  require (conjugates.input.context.sign (conjugates.value ⟨2, by simp⟩ negative.generator) == -1 &&
+    conjugates.input.context.equal (conjugates.value ⟨2, by simp⟩ negative.generator)
+      (-conjugates.value ⟨0, by simp⟩ alpha))
+    "constraint check accepted the wrong conjugate"
+  let some linearDescriptor := SignDet.Descriptor.validate base.sign base.signature
+      { context := base.signature, head := DensePoly.C two * (x - DensePoly.C (two + 1)),
+        lower := .finite two, upper := .finite (two + two), indices := [], signs := [] }
+    | throw (IO.userError "nonmonic linear descriptor failed")
+  let linear := base.adjoin linearDescriptor
+  let some linearShared := Shared.gather? (.pack rational) [linear.context]
+    | throw (IO.userError "linear root registration failed")
+  require (linearShared.input.context.signature.roots.length == 0 &&
+    linearShared.input.context.equal (linearShared.value 0 linear.generator) (1 + 1 + 1))
+    "linear root did not remain in the coefficient field"
   let some independentDescriptor := SignDet.Descriptor.validate base.sign base.signature
       { context := base.signature, head := x * x - DensePoly.C (two + 1),
         lower := .finite 1, upper := .finite two, indices := [], signs := [] }
@@ -194,8 +230,8 @@ def run : IO Unit := do
   let some positioned := Shared.gather? (.pack first)
       [independent.context, extension.context, enlargedOwner.context]
     | throw (IO.userError "mixed owner registration after independent root failed")
-  require (positioned.input.context.signature.roots.length == 3)
-    "mixed owner position reuse limitation changed"
+  require (positioned.input.context.signature.roots.length == 2)
+    "mixed owners duplicated a root below an independent level"
   require (positioned.input.context.equal (positioned.value 1 alpha)
     (positioned.value 2 (enlargedOwner.value alpha)))
     "mixed owner position changed its selected real root"
@@ -216,8 +252,8 @@ def run : IO Unit := do
   let alphaBeta := extension.context.adjoin laterBeta
   let some reordered := Shared.gather? (.pack rational) [alphaBeta.context, betaAlpha.context]
     | throw (IO.userError "reordered independent roots registration failed")
-  require (reordered.input.context.signature.roots.length == 4)
-    "reordered root presentation reuse limitation changed"
+  require (reordered.input.context.signature.roots.length == 2)
+    "reordered presentations duplicated their existing selected roots"
   require (reordered.input.context.equal (reordered.value 0 (alphaBeta.embed alpha))
     (reordered.value 1 betaAlpha.generator))
     "reordered presentation changed alpha"

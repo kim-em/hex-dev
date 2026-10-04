@@ -131,6 +131,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosure/TowerRefinementTests.lean",
                 "adapters/HexRealClosureMathlib/TowerRefinement.lean",
                 "HexRealClosure/TowerTransport.lean",
+                "HexRealClosure/TowerReuse.lean",
+                "adapters/HexRealClosureMathlib/TowerReuse.lean",
                 "HexRealClosure/TowerTransportTests.lean",
                 "HexRealClosure/BaseInclusion.lean",
                 "HexRealClosure/BaseInclusionTests.lean",

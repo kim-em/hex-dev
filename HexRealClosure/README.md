@@ -1640,17 +1640,17 @@ identifies the transported value with a separately retrieved canonical owner mod
 
 Registration caches checked inclusions for every original algebraic predecessor.
 Parent/child registration, sibling branches, and repeated owners reuse their
-common roots. Reuse checks exact native provenance, including the staged base
-and complete root descriptors. The cache also retains native target predecessors,
-so contexts built from a returned shared target reuse those ancestors.
-Across different infinitesimal depths, an independently enlarged owner reuses
-a root when its exact context is already cached as a target predecessor or an
-earlier owner's predecessor. Registering
-the enlarged owner first, or into a deeper staged base, can add an equivalent
-algebraic level; the returned value maps still preserve the selected root.
-Owners selecting the same real number through reordered chains, different
-isolating intervals or different replay evidence can also add equivalent levels
-at one staged depth. Reuse currently recognizes exact native predecessors.
+common roots. Exact native provenance is checked first. For a new owner,
+registration validates its converted descriptor and tests existing cached
+generators and their negatives against the defining equation, derivative signs
+and strict interval bounds. A matching value becomes the owner's generator
+through a proved polynomial evaluation map, retaining the exact shared target
+and all existing owner/cache interpretations. A linear converted head supplies
+a coefficient-field candidate, subject to the same complete constraint check.
+Otherwise registration appends a selected-root level and transports the cache.
+This reuses equivalent roots across different intervals, nonmonic reducible
+heads, reordered chains, and independently enlarged staged owners. It does not
+search arbitrary expressions of several generators for roots.
 `Shared.add?_maps` describes the returned old-owner inclusions and
 the appended original-owner map. A new target updates the predecessor cache
 through the same sequence of root inclusions used for retained owners.
@@ -1669,8 +1669,9 @@ must pass the returned target's checked readers; old packets with a different
 literal binding are rejected.
 
 Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext HexRealClosureMathlib.BaseTests HexRealClosureMathlib.BaseFactoryTests HexRealClosureMathlib.BaseMapModel HexRealClosureMathlib.GatherTests`
-for staged value transport, the mixed-depth reuse limitation in both
-registration orders, alternative intervals, reordered chains, unrelated-root
+for staged value transport, mixed-depth reuse in both registration orders,
+alternative intervals and defining polynomials, conjugate selection, linear
+roots, reordered chains, unrelated-root
 position, parent/child and sibling registration, repeated owners, root-level
 counts, original equations,
 owner-map agreement, polynomial transport, parameter order and stale packets.
