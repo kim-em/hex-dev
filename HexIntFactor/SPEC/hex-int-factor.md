@@ -344,8 +344,10 @@ prime does not divide the residual. A prime dividing the subject occurs in the
 listed support or divides the residual. Prove these facts without certifying
 the residual; audit the headline proofs for standard logical axioms only.
 
-Legacy-to-mixed conversions wrap each accepted legacy certificate and preserve
-acceptance and subject indices, for complete and partial data. Reverse
+`PrimePower.ofLegacy`, `Factorization.ofLegacy`, `PartialFactorization.ofLegacy`
+and the two checked types' `ofLegacy` conversions wrap each accepted legacy
+certificate and preserve
+acceptance and subject indices, for complete and partial data. The checked types' explicit `toLegacy`
 conversion succeeds only when every evidence constructor is legacy, and then
 replays the legacy checker; it fails for ECPP entries. Legacy divisor,
 arithmetic-function, squarefree, order and primitive-root APIs still take
@@ -426,8 +428,15 @@ ceiling. Retain checked partial progress after unsuccessful completion.
 
 ### Frozen export, verification and acceptance evidence
 
-Explicit batch commands accept supplied mixed proposals and an explicitly
-selected native completion policy, and the optional real-PARI route.
+The supplied-data commands are
+`#int_factor_mixed for n using proposal` and
+`#int_factor_mixed_export Module.Name cert for n using proposal`. An optional
+`(ecpp := 256)` or `(ecpp := 512)` selects completion explicitly; omission
+disables ECPP. The real-PARI variants replace `using proposal` with
+`(method := pari)` before `for n`. `Mixed.FactorExport.validate` and `source`
+are the shared kernel-validation and formatting APIs. `Mixed.Pari.factor` is
+the optional runtime proposal adapter; `Mixed.importFactors` is its pure
+acceptance/completion boundary.
 Suggestions and exports use one deterministic formatter. Before emitting text,
 preflight certificate/source bounds, reify raw constructors and kernel-check
 the subject-indexed acceptance proof anew. Compiled generation proofs are not
