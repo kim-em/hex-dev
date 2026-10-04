@@ -225,9 +225,11 @@ before publication. The earlier 62-package experiment still covers a different,
 full declared graph including unreleased libraries and the unapproved optional
 ownership prototype.
 
-The pre-rebase snapshot at `5ff3f2fa9a` built merged #10668's authenticated
+The pre-rebase owner-source snapshot from merged `77aadd66` built #10668's authenticated
 preparation/replay, fresh proof probes, manual and existing consumers (15,522
-jobs), with a separate full conformance build (14,763 jobs). The earlier 116 release/DAG tests pass on their recorded source. CI run
+jobs), with a separate full conformance build (14,763 jobs). Those invocation
+HEADs were not separately captured; the current source-bound replacement
+build is recorded below. The earlier 116 release/DAG tests pass on their recorded source. CI run
 [37178450711](https://github.com/kim-em/hex-dev/actions/runs/37178450711) passed
 all oracles but failed smoke verification at 385/360 seconds; it remains a
 failed operational gate. The later run

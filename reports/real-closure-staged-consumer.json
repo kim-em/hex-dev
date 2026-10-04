@@ -116,7 +116,8 @@
   "monorepoChecks": {
     "ownerAPIAndProofProbesManualConsumerJobs": 15522,
     "conformanceJobs": 14763,
-    "releaseAndDAGTests": 116
+    "releaseAndDAGTests": 116,
+    "sourceScope": "Pre-rebase owner source from merged 77aadd66; exact invocation HEAD was not captured. Later release-tool commits did not change these Lean proof/example sources. Current source-bound replacement evidence is in real-closure-generated-consumer.json."
   },
   "retainedCIFailure": {
     "run": "https://github.com/kim-em/hex-dev/actions/runs/37178450711",
@@ -2657,5 +2658,21 @@
     "No published mirror was pushed, no version selected, no phase advanced, and no release dispatch performed.",
     "The unmanaged Hex umbrella still omits ECPP/Mathlib and PermGroup/Mathlib; compilation of the existing umbrella is not completeness.",
     "Optional package ownership and general owner algorithms/evidence remain unresolved."
+  ],
+  "retainedCIFailures": [
+    {
+      "run": "https://github.com/kim-em/hex-dev/actions/runs/37178450711",
+      "smokeSeconds": 385,
+      "hardCapSeconds": 360,
+      "allOraclesPassed": true,
+      "result": "Failed operational gate; no performance pass"
+    },
+    {
+      "run": "https://github.com/kim-em/hex-dev/actions/runs/37189870141",
+      "smokeSeconds": 388,
+      "hardCapSeconds": 360,
+      "allOraclesPassed": true,
+      "result": "Failed operational gate; no performance pass"
+    }
   ]
 }
