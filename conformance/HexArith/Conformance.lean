@@ -8,6 +8,7 @@ import HexArith.ExtGcd
 import HexArith.Barrett.Context
 import HexArith.Montgomery.Context
 import HexArith.UInt64.Wide
+import HexArith.Nat.Sqrt
 
 /-!
 Core conformance checks for the first `hex-arith` Phase 3 slice.
@@ -28,6 +29,7 @@ Covered operations:
 - `MontCtx.fromMont`
 - `MontCtx.mulMont`
 - `HexArith.powMod`
+- natural `floorSqrt` and `ceilSqrt`
 Covered properties:
 - each extended-GCD API returns the same gcd as Lean's built-in arithmetic on committed fixtures
 - each extended-GCD API returns Bezout coefficients satisfying the advertised identity
@@ -46,9 +48,27 @@ Covered edge cases:
 - the Montgomery modulus-`1` degenerate case
 - a near-`2^64` odd Montgomery modulus with near-modulus residues
 - `powMod` exponent zero, base larger than the modulus, even-modulus fallback, and large-`Nat` fallback
+- square-root agreement for small inputs and large exact squares and their neighbors
 -/
 
 namespace HexArith
+
+-- Agreement with an independent executable, including the low-bit cases.
+#guard (List.range 1000).all fun n =>
+  Nat.floorSqrt n == _root_.Nat.sqrt n
+
+-- Large exact squares and both neighbors exercise Newton's termination,
+-- the ceiling branch, and odd/even bit-length initializer boundaries.
+#guard ([64, 257, 4096] : List _root_.Nat).all fun bits =>
+  let r := 2 ^ bits + 1
+  let square := r * r
+  Nat.floorSqrt (square - 1) == r - 1 && Nat.ceilSqrt (square - 1) == r &&
+    Nat.floorSqrt square == r && Nat.ceilSqrt square == r &&
+    Nat.floorSqrt (square + 1) == r && Nat.ceilSqrt (square + 1) == r + 1
+
+/-- info: 'HexArith.Nat.floorSqrt_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Nat.floorSqrt_eq
 
 private def wordBase : Nat := UInt64.word
 private def maxWord : UInt64 := UInt64.ofNat (wordBase - 1)
