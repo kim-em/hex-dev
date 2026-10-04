@@ -2441,10 +2441,14 @@ literal equalities of its coefficient operations. It preserves the descriptor,
 optional canonical prepared cache, root count and reduction policy. Its
 `changeOps_data` theorem preserves the literal subject, root count and reduction
 policy; `changeOps_reduce` and `changeOps_signPoly` identify the actual reduction
-and sign functions with the original functions. Transport changes validity
+and sign functions with the original functions. `changeOps_root` retains the
+complete descriptor, and `changeOps_domains` preserves the prepared cache;
+`changeOps_self` identifies transport with unchanged operations. Transport changes validity
 proofs without executing domain preparation. It does not reconstruct a context
 from untrusted bytes or collect missing arithmetic evidence.
 
+`Algebraic.Context.ofChecked` requires the exact canonical-cache, root-count
+and reduction-policy equations used by the ordinary constructor.
 The restoring factories keep their constructors private. Public projection
 laws expose their stored fields; direct kernel unfolding requires the owning
 module imports used by the conformance fixture.

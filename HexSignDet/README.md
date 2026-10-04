@@ -588,3 +588,8 @@ equal. They transport only validity proofs; they do not prepare another domain
 or produce another query. The descriptor's stored polynomial, endpoints,
 context and replay remain bound. These functions support using supplied-fact
 operations while assembling proofs at successive coefficient levels.
+
+`Descriptor.ofChecked` restores a literal subject and replay only from a proof
+that the existing descriptor checker accepts them. `QueryHandle.ofChecked`
+requires the exact equation identifying its stored domain with `Sturm.prepare`;
+`Descriptor.prepareQueries_eq` identifies the corresponding canonical handle.

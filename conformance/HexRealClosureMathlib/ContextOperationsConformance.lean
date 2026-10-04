@@ -111,9 +111,7 @@ theorem stored_fields :
   decide +kernel
 
 set_option maxRecDepth 32768 in
-/-- The target operation itself is unavailable to kernel computation. The
-positive observation uses public prepared-domain restoring laws; the
-context, descriptor and handle factories are unfolded through their owning imports. -/
+/-- The target operation itself is unavailable to kernel computation. -/
 example : True := by
   fail_if_success
     have : targetAdd.val.add 1 1 = 2 := by decide +kernel

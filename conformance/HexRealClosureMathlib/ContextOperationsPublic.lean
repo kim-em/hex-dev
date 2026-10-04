@@ -13,8 +13,8 @@ namespace Hex.RealClosure.Algebraic.ContextOperationsPublic
 
 open CoefficientSignsConformance ContextOperationsConformance
 
-/-- A caller can read the retained count through public laws, without
-access to any private constructor or operation equality on the data. -/
+/-- A caller can read the retained count through public laws, without access
+to private constructors or an equation between the transported and native contexts. -/
 theorem retained_count :
     let : Add Rat := targetAdd.val
     transported.rootCount = some 1 := by

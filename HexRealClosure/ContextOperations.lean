@@ -92,6 +92,24 @@ prepared cache, count and reduction policy. All transport is confined to proofs.
       simpa only [source, root, clean, canReduce, SignDet.Descriptor.changeOps_self]
         using context.reduce_checked)
 
+/-- The complete checked root is transported, including its replay evidence. -/
+theorem changeOps_root (one : One E) (add : Add E) (neg : Neg E) (sub : Sub E)
+    (mul : Mul E) (inv : Inv E) (div : Div E) (natCast : NatCast E)
+    (ho : one = targetOne) (ha : add = targetAdd) (hg : neg = targetNeg) (hs : sub = targetSub)
+    (hm : mul = targetMul) (hi : inv = targetInv) (hd : div = targetDiv)
+    (hn : natCast = targetNatCast) (sign : E → Int) (binding : Ctx)
+    (context : @Context E Ctx _ _ one add neg sub mul inv div natCast _ sign binding) :
+    @Context.root E Ctx _ _ targetOne targetAdd targetNeg targetSub targetMul targetInv targetDiv
+      targetNatCast _ sign binding (@changeOps E Ctx _ _ _ targetOne targetAdd targetNeg targetSub
+        targetMul targetInv targetDiv targetNatCast one add neg sub mul inv div natCast
+        ho ha hg hs hm hi hd hn sign binding context) =
+    @SignDet.Descriptor.changeOps E Ctx _ _ _ targetOne targetAdd targetSub targetMul targetNatCast
+      one add sub mul natCast ho ha hs hm hn sign binding
+      (@Context.root E Ctx _ _ one add neg sub mul inv div natCast _ sign binding context) := by
+  unfold changeOps
+  exact @Context.ofChecked_root E Ctx _ _ targetOne targetAdd targetNeg targetSub targetMul
+    targetInv targetDiv targetNatCast _ sign binding _ _ _ _ _ _ _ _
+
 /-- Operation transport retains the literal root subject, count and
 reduction policy. This observation needs no access to private constructors. -/
 theorem changeOps_data (one : One E) (add : Add E) (neg : Neg E) (sub : Sub E)
