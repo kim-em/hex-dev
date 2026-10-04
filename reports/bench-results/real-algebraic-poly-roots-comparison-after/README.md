@@ -1,4 +1,4 @@
-# Actual real-algebraic polynomial roots against degree
+# Polynomial-root degree comparisons after early nonreal rejection
 
 These compiled comparisons call `RealAlgebraicPoly.roots` on `X^n−2` at
 degrees 2, 4 and 8, and `X^n−√2` at degrees 1, 2 and 4. Coefficient height
@@ -36,6 +36,7 @@ retain failed degree-16 rational and degree-8 quadratic calls. Those censored
 whole-child probes are not plotted as numerical root-operation timings.
 No Phase-4 completion or metadata advancement follows from these comparisons.
 
-These measurements use source `c6b821d7b`, before the proved early nonreal
-rejection. The source-scoped observations are retained, and do not attest the
-changed implementation.
+This collection uses the proved early rejection of nonreal lazy roots. The
+[earlier collection](../real-algebraic-poly-roots-comparison/README.md) remains
+retained; these separated sweeps are not a controlled before/after speedup.
+The [adjacent pairs](../real-algebraic-root-rejection-pairs/) supply that check.
