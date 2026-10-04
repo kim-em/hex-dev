@@ -10,6 +10,7 @@ public meta import HexRCF.RealCoefficients.Reify
 public meta import HexRCF.RealCoefficients.AlgebraicBounds
 public import HexRCF.RealCoefficients.Registration
 public meta import Mathlib.Tactic.Linarith
+public meta import Mathlib.Tactic.NormNum.RealSqrt
 
 public meta section
 

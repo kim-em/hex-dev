@@ -11,7 +11,6 @@ public import HexRCF.NormalizedInputs
 public meta import HexRCF.NormalizedInputs
 public meta import HexRCF.RealCoefficients
 public meta import HexRCF.ProofEvidence
-public meta import Mathlib.Tactic.NormNum.RealSqrt
 
 public section
 
@@ -44,6 +43,16 @@ theorem exp_normalized : ∀ x : ℝ,
 
 theorem exp_field : ∀ x : ℝ,
     x ^ 2 + Real.exp 1 - selectedField.toReal > 0 := by rcf
+
+@[expose] def negativeField : RealAlgebraicNumber :=
+  Selected.field CubeTwo.polynomial CubeTwo.square
+    (by decide) (by decide) (by rfl) (by decide) (by decide)
+    CubeTwo.checked CubeTwo.squarefree (by decide)
+    ((1 - CubeTwo.realAlgebraic.toAlgebraic.toQAdjoin ^ 2) :
+      QAdjoin CubeTwo.realAlgebraic.toAlgebraic)
+
+theorem pi_negative_field : ∀ x : ℝ,
+    x ^ 2 + Real.pi + negativeField.toReal > 0 := by rcf
 
 theorem pi_positive_divisor : ∀ x : ℝ,
     x ^ 2 + 1 / (Real.pi - Real.sqrt 2) > 0 := by rcf
@@ -92,7 +101,9 @@ example : ∀ x ∈ Set.Ioc (1 : ℝ) 0,
 private meta def refuses (action : MetaM α) : MetaM Unit := do
   let before ← getMCtx
   let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
-  let failed ← tryCatchRuntimeEx (action *> pure false) (fun _ => pure true)
+  let failed ← tryCatchRuntimeEx (action *> pure false) (fun error => do
+    if error.isRuntime || error.isInterrupt then throw error
+    pure true)
   unless failed do throwError "expected mixed finite evidence rejection"
   unless (← getMCtx).mvarCounter == before.mvarCounter do
     throwError "failed mixed finite API leaked metavariables"
@@ -125,16 +136,34 @@ run_elab do
   refuses (Finite.check prepared.source {certificate with prepared := {prepared with
     coefficients := prepared.coefficients.set! 0 {evidence with
       bounds := Hex.OrderedFn.Oracle.Bounds.singleton 0}}})
+  -- Validate earlier enclosures first, then reject a coherent literal/bounds
+  -- forgery whose retained containment proof establishes different bounds.
+  let last := prepared.coefficients.size - 1
+  let some lastEvidence := prepared.coefficients[last]? |
+    throwError "missing final enclosure for tamper test"
+  let forged := {lastEvidence with
+    bounds := Hex.OrderedFn.Oracle.Bounds.singleton 0,
+    literal := q(Hex.OrderedFn.Oracle.Bounds.singleton 0)}
+  refuses (Finite.check prepared.source {certificate with prepared := {prepared with
+    coefficients := prepared.coefficients.set! last forged}})
   -- Enclosure must finish before testing false-sentence proof reconstruction.
   let falseInput ← Finite.prepare q(∀ x : ℝ, x ^ 2 + Real.sqrt 2 - Real.pi > 0)
   refuses (Finite.build falseInput)
   let exactInput ← Finite.prepare q(∀ x : ℝ, x ^ 2 + Real.pi + Real.sqrt 4 - 2 > 0)
-  let some exactEvidence := exactInput.coefficients[0]? |
+  let some exactEvidence := exactInput.coefficients.find? (fun e => e.source == q(Real.sqrt 4)) |
     throwError "perfect-square source lost its coefficient"
-  unless exactEvidence.bounds.lower == 3 && exactEvidence.bounds.upper == 63 / 20 do
+  unless exactEvidence.bounds.lower == 2 && exactEvidence.bounds.upper == 2 do
     throwError "perfect-square coefficient lost its exact rational bounds"
+  let some exactName := exactEvidence.proof.getAppFn.constName? |
+    throwError "perfect-square containment proof is not closed"
+  if ← Hex.RCF.ProofEvidence.contains exactName
+      (fun e => e.isConstOf ``AlgebraicBounds.contains_mkRat) then
+    throwError "perfect-square source used approximate algebraic bounds"
   let before ← getMCtx
-  let _ ← AlgebraicBounds.enclose q(Real.sqrt 3) (1 / 16)
+  let (_, proof) ← AlgebraicBounds.enclose q(Real.sqrt 3) (1 / 16)
+  let .thmInfo _ ← getConstInfo proof.getAppFn.constName! |
+    throwError "public algebraic enclosure did not kernel-check its proof"
+  let _ ← Hex.RCF.checkProof `Hex.RCF.MixedConstants.publicEnclosure (← inferType proof) proof
   unless (← getMCtx).mvarCounter == before.mvarCounter do
     throwError "successful algebraic enclosure changed caller metavariables"
   refuses (AlgebraicBounds.enclose q(Real.sqrt (1 / 2)) (1 / 16))
@@ -146,6 +175,16 @@ run_elab do
     throwError "inverse proof is not closed"
   unless ← Hex.RCF.ProofEvidence.contains coefficientName (fun e => e.isConstOf guardName) do
     throwError "inverse coefficient did not reuse the checked guard enclosure"
+  let shared ← Finite.prepare q(∀ x : ℝ,
+    x / (Real.pi - Real.sqrt 2) = x / (Real.pi - Real.sqrt 2))
+  let some guard := shared.guardBounds[0]? | throwError "missing normalized inverse guard"
+  let some coefficient := shared.coefficients.find? (fun e => e.source.isAppOfArity ``Inv.inv 3) |
+    throwError "variable division did not produce a closed inverse coefficient"
+  let some guardName := guard.proof.getAppFn.constName? | throwError "inverse guard is not closed"
+  let some coefficientName := coefficient.proof.getAppFn.constName? |
+    throwError "normalized inverse proof is not closed"
+  unless ← Hex.RCF.ProofEvidence.contains coefficientName (fun e => e.isConstOf guardName) do
+    throwError "normalized inverse did not reuse its original guard enclosure"
 
 end Hex.RCF.MixedConstants
 
@@ -155,7 +194,8 @@ run_meta do
   for name in [`Hex.RCF.MixedConstants.pi_radical, `Hex.RCF.MixedConstants.pi_other_radical,
       `Hex.RCF.MixedConstants.exp_radical,
       `Hex.RCF.MixedConstants.exp_selected, `Hex.RCF.MixedConstants.exp_normalized,
-      `Hex.RCF.MixedConstants.exp_field, `Hex.RCF.MixedConstants.pi_positive_divisor,
+      `Hex.RCF.MixedConstants.exp_field, `Hex.RCF.MixedConstants.pi_negative_field,
+      `Hex.RCF.MixedConstants.pi_positive_divisor,
       `Hex.RCF.MixedConstants.pi_negative_divisor, `Hex.RCF.MixedConstants.pi_cancelled] do
     unless ← Hex.RCF.ProofEvidence.contains name
         (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound ||
@@ -175,7 +215,8 @@ run_meta do
       (`Hex.RCF.MixedConstants.pi_cancelled, ``SquareTwo.valuation),
       (`Hex.RCF.MixedConstants.exp_radical, ``CubeTwo.valuation),
       (`Hex.RCF.MixedConstants.exp_selected, ``Selected.valuation),
-      (`Hex.RCF.MixedConstants.exp_field, ``Selected.field_valuation)] do
+      (`Hex.RCF.MixedConstants.exp_field, ``Selected.field_valuation),
+      (`Hex.RCF.MixedConstants.pi_negative_field, ``Selected.field_valuation)] do
     unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf marker) do
       throwError "mixed proof used the wrong exact frontend"
     if ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf ``Replay.check_sound) then
@@ -202,6 +243,9 @@ run_meta do
 /-- info: 'Hex.RCF.MixedConstants.exp_field' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.MixedConstants.exp_field
+/-- info: 'Hex.RCF.MixedConstants.pi_negative_field' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.MixedConstants.pi_negative_field
 /-- info: 'Hex.RCF.MixedConstants.false_sentence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.MixedConstants.false_sentence

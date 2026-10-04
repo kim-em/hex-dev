@@ -71,13 +71,16 @@ private meta def encloseCore (source : Expr) (request : Rat) : MetaM (Bounds × 
     mkApp proof q((0 : ℝ))])
 
 /-- Enclose transactionally. Successful proof auxiliaries survive, caller
-metavariables do not change, and every failure restores the complete state. -/
+metavariables do not change, and every failure restores the complete state.
+The returned containment proof is checked by the ordinary kernel. -/
 meta def enclose (source : Expr) (request : Rat) : MetaM (Bounds × Expr) := do
   let saved ← saveState
   let (result, _) ← tryFinally' (withNewMCtxDepth do
     let (bounds, proof) ← encloseCore source request
     let proof ← instantiateMVars proof
-    return (bounds, ← Hex.RCF.checkExpr `Hex.RCF.RealCoefficients.AlgebraicBounds proof))
+    let target ← inferType proof
+    return (bounds, ← Hex.RCF.checkProof `Hex.RCF.RealCoefficients.AlgebraicBounds
+      target proof))
     (fun result => do
       match result with
       | some _ => modify fun state => {state with
