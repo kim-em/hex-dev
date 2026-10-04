@@ -903,6 +903,34 @@ class SyncReleasedTests(unittest.TestCase):
                 entry, self.repo, synced, {}, "v0.1.0", catalog),
             [])
 
+    def test_aggregate_requires_all_manifest_pins_and_locks_directly(self) -> None:
+        (self.repo / "lakefile.toml").write_text(
+            'name = "hex"\n\n[[require]]\nname = "HexBasic"\n'
+            'git = "https://github.com/leanprover/hex-basic.git"\nrev = "v0.6.0"\n')
+        entry = {"repo": "leanprover/hex", "pins_only": True, "lakefile": "toml",
+                 "pins": ["hex-basic", "hex-ecpp-mathlib", "hex-unsynced"]}
+        catalog = {"hex-basic": {"lib": "HexBasic", "lakefile": "toml"},
+                   "hex-ecpp-mathlib": {"lib": "HexECPPMathlib", "lakefile": "lean"},
+                   "hex-unsynced": {"lib": "HexUnsynced", "lakefile": "toml"}}
+        synced = {"hex-basic": "a" * 40, "hex-ecpp-mathlib": "b" * 40}
+        notes = sync_released.rewrite_requires(entry, self.repo, synced, {}, "v0.7.0", catalog)
+        text = (self.repo / "lakefile.toml").read_text()
+        self.assertEqual(len(notes), 1)
+        self.assertIn('name = "HexECPPMathlib"', text)
+        self.assertIn('rev = "v0.7.0"', text)
+        self.assertNotIn("HexUnsynced", text)
+        self.assertNotIn("HexTestKit", text)
+        self.assertEqual(sync_released.rewrite_requires(
+            entry, self.repo, synced, {}, "v0.7.0", catalog), [])
+        doc = {"packages": [{"name": "HexECPPMathlib", "inherited": True}]}
+        notes = []
+        sync_released._synthesize_manifest_packages(
+            entry, self.repo, doc, synced, {}, "v0.7.0", catalog, notes)
+        self.assertFalse(doc["packages"][0]["inherited"])
+        self.assertTrue(any("inherited -> direct" in note for note in notes))
+        self.assertEqual(sync_released._synthesize_manifest_packages(
+            entry, self.repo, doc, synced, {}, "v0.7.0", catalog, []), 0)
+
     def test_direct_imports_gain_direct_requires_in_lean(self) -> None:
         lib = self.repo / "HexProbe"
         lib.mkdir()

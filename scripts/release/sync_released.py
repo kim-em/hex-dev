@@ -1438,7 +1438,7 @@ def _synthesize_manifest_packages(entry: dict, clone: Path, doc: dict,
     if catalog is None:
         catalog = _manifest_catalog()
     packages = doc.setdefault("packages", [])
-    present = {pkg.get("name") for pkg in packages}
+    present = {pkg.get("name"): pkg for pkg in packages}
     lake_text = ""
     for lf in _lake_files(clone, ["lakefile.toml", "lakefile.lean"]):
         if lf.parent == clone:
@@ -1449,6 +1449,11 @@ def _synthesize_manifest_packages(entry: dict, clone: Path, doc: dict,
         if spec is None or not spec["lib"] or dep not in synced:
             continue
         if spec["lib"] in present:
+            package = present[spec["lib"]]
+            if f"{dep}.git" in lake_text and package.get("inherited") is True:
+                package["inherited"] = False
+                added += 1
+                notes.append(f"  manifest {dep} inherited -> direct (lake-manifest.json)")
             continue
         owner = dep_owner.get(dep, "leanprover")
         url = f"https://github.com/{owner}/{dep}.git"
@@ -1464,7 +1469,7 @@ def _synthesize_manifest_packages(entry: dict, clone: Path, doc: dict,
             "inherited": f"{dep}.git" not in lake_text,
             "configFile": f"lakefile.{spec['lakefile']}",
         })
-        present.add(spec["lib"])
+        present[spec["lib"]] = packages[-1]
         added += 1
         notes.append(f"  manifest + {dep} ({spec['lib']}) -> {synced[dep][:12]} "
                      "(lake-manifest.json)")
@@ -1548,11 +1553,12 @@ def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
     the missing ones at the shared release version: a `[[require]]` block before the
     first target in `lakefile.toml`, or a `require ... from git` after the
     last one in `lakefile.lean`, before Mathlib when it is present so its
-    compatible transitive pins remain authoritative.
+    compatible transitive pins remain authoritative. For the aggregate, whose
+    source is unmanaged, the manifest's explicit pins supply the requirements.
     """
     notes: list[str] = []
     pins = entry.get("pins") or []
-    if entry.get("pins_only") or not pins:
+    if not pins:
         return notes
     if catalog is None:
         catalog = _manifest_catalog()
@@ -1560,7 +1566,10 @@ def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
     if not lakefile.is_file():
         return notes
     text = lakefile.read_text(encoding="utf-8")
-    roots = _hex_import_roots(entry, clone)
+    # The aggregate has no managed library source to infer imports from.
+    # Its explicit manifest pins define the libraries it must expose.
+    roots = ({catalog[dep]["lib"] for dep in pins if dep in catalog}
+             if entry.get("pins_only") else _hex_import_roots(entry, clone))
     additions: list[tuple[str, str, str]] = []
     for dep in pins:
         spec = catalog.get(dep)
