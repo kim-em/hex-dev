@@ -37,7 +37,9 @@ or hand-edit a published repository.
 The represented groups act faithfully on `Fin n`. Further finite actions
 include tuples, subsets, partitions, block systems and cosets; their induced
 representations need not be faithful. The scope includes exact sampling from
-a supplied uniform index source, but no cryptographic random-number source.
+a supplied uniform index source, but no random-number source. The Mathlib
+companion draws indices from a generator supplied through Mathlib's `Random`
+interface.
 Conjugacy-class enumeration, abstract group isomorphism, character tables
 and transitive-group databases remain later extensions. There is no claim
 that a generator list is canonical under conjugacy.
@@ -112,6 +114,18 @@ permutation, and `checkWord S p program` compares it with `p`.
 `checkWord_sound` proves membership. Shared subexpressions prevent expansion
 of repeatedly composed words into enormous flat lists. Decode with explicit
 node and byte limits and reject cycles, forward references and bad indices.
+
+A `Word S` is a list of letters `(i, b)` with `i : Fin S.size`, where `b = true`
+denotes the inverse of `S[i]`. Words compose like permutations: the rightmost
+letter acts first. `Word.reduce` cancels adjacent letters `(i, b)` and
+`(i, !b)` until none remain, and preserves evaluation. `Program.toWord? S
+program` expands the nodes reachable from the root into a word and freely
+reduces it. It returns `none` exactly when `program.eval S` is `none`, so an
+invalid unreachable node is still rejected, and a returned word evaluates to
+the program's value. Expansion does not share subexpressions, so the word can
+be exponentially longer than the program. It is a display aid for short
+programs, not a certificate format. `Word.toString` prints a word as a product
+such as `g0 * g1⁻¹`, where `gi` names `S[i]`, and prints the empty word as `1`.
 
 `Chain n` is raw certificate data described below. The checked group shape is:
 
@@ -520,6 +534,27 @@ probability `1 / order G`. The computational library proves the bijection;
 the companion proves the corresponding finite-distribution statement.
 This does not assert that a pseudorandom seed is a source of true uniform
 randomness. Do not obtain bounded indices by a biased modular reduction.
+
+`sampleWith` is the sampling interface of this library: the caller brings
+the randomness, in any functor. The library contains no random-number source
+and does not hook into `IO`.
+
+`HexPermGroupMathlib` provides an instance of Mathlib's `Random m (Element G)`
+for every monad `m`, built from `Group.randomElement G = sampleWith randomIndex
+G` in `RandGT g m`. `randomIndex bound` reads the generator's range `[lo, hi]`,
+sets `width = hi + 1 - lo`, takes the least `k` with `bound ≤ width ^ k`, and
+reads `k` draws as the base-`width` digits of `x < span = width ^ k`. It
+accepts `x` below the largest multiple `limit` of `bound` that is at most
+`span` and returns `x % bound`. Otherwise it tries again, up to 128 attempts,
+and then returns index zero. If the generator's draws are independent and
+uniform on its range, each attempt accepts with probability above one half,
+an accepted index is exactly uniform on `Fin bound`, and each index has
+probability within `2^-128` of `1 / bound`. The attempt limit keeps the
+definition total for every monad and every generator, uniform or not. A range
+with fewer than two values gives index zero without a draw. The instance must
+not use Mathlib's `randFin` or Lean's `randNat`, because they reduce one draw
+modulo the bound, which is biased whenever the bound does not divide the
+generator's range.
 
 Element enumeration uses the orbit-choice bijection, not a second closure
 algorithm, and sorts image arrays lexicographically for the public result.
@@ -1184,7 +1219,7 @@ Implement in this order:
    elementary operations, cycles and order. Adapt graph-isomorphism imports
    without changing its canonical-search behavior.
 2. `Word.lean` and `Orbit.lean`: generated-subgroup semantics, checked programs,
-   BFS, transporters and Schreier's lemma.
+   word flattening and display, BFS, transporters and Schreier's lemma.
 3. `Chain.lean` and `Check.lean`: raw chain data, sifting, complete checking,
    and the membership/cardinality theorems.
 4. `Build.lean`: deterministic construction and its acceptance theorem.
