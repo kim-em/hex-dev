@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import yaml
 
-from scripts.release import aggregate_readme, sync_released
+from scripts.release import aggregate_readme, consumer_check, sync_released
 
 
 class SyncReleasedTests(unittest.TestCase):
@@ -902,6 +902,25 @@ class SyncReleasedTests(unittest.TestCase):
             sync_released.rewrite_requires(
                 entry, self.repo, synced, {}, "v0.1.0", catalog),
             [])
+
+    def test_consumer_prioritizes_shared_helpers_over_the_hex_root(self) -> None:
+        import tomllib
+        aggregate = self.repo / "hex"
+        aggregate.mkdir()
+        (aggregate / "lean-toolchain").write_text("leanprover/lean4:v4.35.0-rc3\n")
+        entries = [
+            {"repo": "leanprover/hex-basic", "lib": "HexBasic"},
+            {"repo": "leanprover/hex-test-kit", "lib": "Hex", "aggregate": False,
+             "lean_lib_name": "HexTestKit"},
+            {"repo": "leanprover/hex", "pins_only": True},
+        ]
+        modules = consumer_check.write_consumer(self.repo, entries)
+        consumer = self.repo / "consumer"
+        config = tomllib.loads((consumer / "lakefile.toml").read_text())
+        self.assertEqual([r["name"] for r in config["require"]], ["HexTestKit", "hex"])
+        self.assertIn("+HexTestKit", modules)
+        imports = (consumer / "Consumer" / "Imports.lean").read_text().splitlines()
+        self.assertEqual(imports, ["import HexBasic"])
 
     def test_aggregate_requires_all_manifest_pins_and_locks_directly(self) -> None:
         (self.repo / "lakefile.toml").write_text(

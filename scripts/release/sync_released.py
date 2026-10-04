@@ -16,7 +16,8 @@ For each repo in scripts/release/released.yml (topological order), this:
 
 A `pins_only` entry (the `leanprover/hex` aggregate) receives the managed CI
 workflow but no library source or Verso rewrite from the monorepo. The sync
-re-pins it to the version published this run. Listed last, after its upstreams,
+adds its manifest requirements and re-pins it to the version published this
+run. Listed last, after its upstreams,
 its lockfile resolves those requirements to the freshly-pushed commits. Its
 other managed artifact is the
 README, rendered by `aggregate_readme.py` from a template plus the manifest's

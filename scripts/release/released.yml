@@ -637,8 +637,8 @@ repos:
     pins: [hex-basic, hex-arith, hex-mv-poly, hex-mv-poly-mathlib, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-hensel, hex-poly-z-mathlib, hex-real-roots, hex-real-roots-mathlib, hex-matrix, hex-matrix-mathlib]
     lakefile: toml
 
-  # Aggregate: re-pinned only, never regenerated from managed source (its
-  # umbrella lakefile.toml and HexAll.lean live only in the released repo).
+  # Aggregate: requirements and pins follow the manifest; no library source
+  # is regenerated. Its umbrella Hex.lean lives only in the released repo.
   # Its README is the one managed artifact: rendered from `readme_template`
   # with the library table generated from the `component:` labels above, so
   # releasing a new library updates it without a hand edit. Listed last so

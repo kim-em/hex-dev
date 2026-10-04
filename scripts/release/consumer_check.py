@@ -103,14 +103,16 @@ def write_consumer(stage: Path, entries: list[dict]) -> list[str]:
     shutil.copy(stage / "hex" / "lean-toolchain", consumer / "lean-toolchain")
     libs = [e["lib"] for e in entries if not e.get("pins_only") and e.get("aggregate", True)]
     # Repositories outside the aggregate (hex-test-kit) are required directly,
-    # so their Lake configuration is built before publication too.
+    # so their Lake configuration is built before publication too. Put them
+    # first: Lake picks the first package claiming a module, and the aggregate's
+    # default Hex root would otherwise capture absent Hex.Conformance modules.
     others = [e for e in entries if not e.get("pins_only") and not e.get("aggregate", True)]
     requires = "".join(
         f'[[require]]\nname = "{e.get("lean_lib_name", e["lib"])}"\n'
         f'path = "../{e["repo"].split("/")[-1]}"\n\n' for e in others)
     (consumer / "lakefile.toml").write_text(
-        'name = "consumer"\n\n'
-        '[[require]]\nname = "hex"\npath = "../hex"\n\n' + requires +
+        'name = "consumer"\n\n' + requires +
+        '[[require]]\nname = "hex"\npath = "../hex"\n\n' +
         '[[lean_lib]]\nname = "Consumer"\n\n'
         '[[lean_exe]]\nname = "consumer_link"\nroot = "Consumer.Main"\n',
         encoding="utf-8",
