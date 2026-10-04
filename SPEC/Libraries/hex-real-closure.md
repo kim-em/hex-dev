@@ -488,7 +488,7 @@ uses one boundary, and a bounded sample collects only its two boundaries.
 Each result retains its own input embedding; cell coverage and sign invariance
 are interpreted in a common ambient field.
 
-An infinitesimal backend may use `r+ε` or `±1/ε`. After algebraics exist,
+An infinitesimal backend may use `r+ε` or `±1/ε`.
 The finite live-request API is `Tower.Live.Request`: every frame retains
 its immutable owner, values, polynomials and checked descriptors. A selected
 root request retains its predecessor descriptor and actual cached child
