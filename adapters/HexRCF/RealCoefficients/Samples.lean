@@ -34,7 +34,7 @@ private theorem find_sign {A : Type} [BEq A] [LawfulBEq A]
     · have tail : key ∈ keys := (List.mem_cons.mp member).resolve_left (Ne.symm same)
       simpa [List.find?_cons, same] using ih tail
 
-/-- Replay only the supplied row through the shared Boolean evaluator.
+/-- Evaluate only the supplied row through the shared Boolean evaluator.
 A length mismatch is rejected; mathematical sign validity comes from the
 actual cell laws, not from this low-level row evaluator. -/
 @[expose] def eval (formula : RealFormula.QF n) (row : List Int) : Option Bool :=
@@ -265,7 +265,8 @@ theorem run_total (original : Model parent ℝ) (values : Fin n → parent.Value
   obtain ⟨result, accepted, _⟩ := run_spec original values formula quantifier
   exact ⟨result, accepted⟩
 
-/-- This producer semantics does not replace checked literal certificates. -/
+/-- A true native production result is equivalent to the shared sentence
+under the fixed coefficient valuation. -/
 theorem run_true (original : Model parent ℝ) (values : Fin n → parent.Value)
     (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier) :
     run values formula quantifier = some true ↔

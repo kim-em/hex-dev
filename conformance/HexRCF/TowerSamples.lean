@@ -8,6 +8,7 @@ module
 public import HexRCF.RealCoefficients
 public import HexRealClosureMathlib.LocalSample
 public meta import HexRealClosure.TowerContext
+public meta import HexRCF.RealCoefficients.Samples
 
 public section
 namespace Hex.RCF.RealCoefficients.TowerSamples
@@ -159,7 +160,8 @@ def domain (n : Nat) : RealFormula.QF (n + 1) :=
   .and (.atom ⟨1 - MvPoly.X (Fin.last n), .lt⟩)
     (.atom ⟨MvPoly.X (Fin.last n) - 2, .le⟩)
 
-/-- Use the existing strict shared Boolean fold on the recorded complete row. -/
+/-- Fold a domain subformula against the complete source row.
+`Samples.Row.eval` instead expects the row for its own entire formula. -/
 def evaluateRow (source : RealFormula.QF n) (row : List Int) (formula : RealFormula.QF n) : Option Bool :=
   formula.evalSigns fun p =>
     ((source.polys.zip row).find? (fun pair => pair.1 == p)).map
@@ -187,8 +189,8 @@ def checked (formula : RealFormula.QF (n + 1)) (lower upper : base.Value) (secti
     sectionRows == sections && sectorRows == sectors &&
     sectionRows.map (fun row => evaluateRow formula row (domain n)) == sectionDomains &&
     sectorRows.map (fun row => evaluateRow formula row (domain n)) == sectorDomains &&
-    sectionRows.map (fun row => evaluateRow formula row formula) == sectionTruths &&
-    sectorRows.all (fun row => evaluateRow formula row formula == some false)
+    sectionRows.map (fun row => Samples.Row.eval formula row) == sectionTruths &&
+    sectorRows.all (fun row => Samples.Row.eval formula row == some false)
 
 #guard checked schema 1 (1 + 1)
   [[0, 0, 1, -1], [-1, 1, 0, -1], [0, 0, -1, -1], [1, 1, -1, 0]]

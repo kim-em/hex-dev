@@ -101,6 +101,14 @@ def rationalDecisions : Bool := Id.run do
   let excluded := RealFormula.QF.and zero (domain 0 1)
   let included := RealFormula.QF.and zero (domain (-1) 0)
   let comparisons := [RealFormula.Cmp.eq, .ne, .lt, .le, .gt, .ge]
+  let constants := fun (coefficient : RealFormula.Poly 1) (expected : List Bool) =>
+    (comparisons.zip expected).all fun (comparison, wanted) =>
+      let formula := RealFormula.QF.atom ⟨coefficient, comparison⟩
+      run values formula .forallReal == some wanted &&
+        run values formula .existsReal == some wanted
+  let squares := fun (quantifier : RealFormula.Quantifier) (expected : List Bool) =>
+    (comparisons.zip expected).all fun (comparison, wanted) =>
+      run values (.atom ⟨x ^ 2, comparison⟩) quantifier == some wanted
   return run values (domain 1 2) .existsReal == some true &&
     run values (domain 1 1) .existsReal == some false &&
     run values (domain 2 1) .existsReal == some false &&
@@ -109,6 +117,11 @@ def rationalDecisions : Bool := Id.run do
     run values .tt .forallReal == some true &&
     run values .ff .existsReal == some false &&
     run values (.atom ⟨0, .eq⟩) .forallReal == some true &&
+    constants (-1) [false, true, true, true, false, false] &&
+    constants 0 [true, false, false, true, false, true] &&
+    constants 1 [false, true, false, false, true, true] &&
+    squares .forallReal [false, false, false, false, false, true] &&
+    squares .existsReal [true, true, false, true, true, true] &&
     comparisons.all (fun comparison =>
       let atom := RealFormula.QF.atom ⟨x, comparison⟩
       run values (.or atom (.not atom)) .forallReal == some true)
