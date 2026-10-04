@@ -228,6 +228,15 @@ class LakefileAffectsRuntime(unittest.TestCase):
                 self.assertIn('@[' + kind + ']', freshness.lakefile_blocks(before)['def configured'])
                 self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
 
+    def test_attribute_with_split_modifiers_fails_closed(self):
+        for kind in ('lean_lib', 'extern_lib', 'target'):
+            for modifiers in ('private', 'private unsafe', 'noncomputable'):
+                with self.subTest(kind=kind, modifiers=modifiers):
+                    before = BASE + ('\nlean_lib Other\n@[' + kind + ']\n  '
+                        + modifiers + '\n  def nativeArchive := "-O3"\n')
+                    self.assertIn('command uncertain', freshness.lakefile_blocks(before))
+                    self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
+
     def test_nonrec_helper_changes_measured_flags(self):
         before = BASE + '\nlean_lib Other\n  nonrec def hexFlags := #["-O3"]\nextern_lib extraffi pkg := hexFlags\n'
         self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))

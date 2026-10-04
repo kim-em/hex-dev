@@ -139,6 +139,12 @@ def lakefile_blocks(text: str) -> dict[str, str]:
             pending.append(line)
         elif line.startswith((" ", "\t")) or not line.strip():
             if code.strip() and pending:
+                # A split declaration header may follow the attribute. Its
+                # ownership is ambiguous here, so retain the whole file.
+                if depth == 0 and re.fullmatch(
+                        r"(?:(?:private|protected|public|partial|unsafe|noncomputable|nonrec|meta)\s*)+",
+                        declaration.strip()):
+                    uncertain = True
                 current.extend(pending)
                 pending = []
             current.append(line)

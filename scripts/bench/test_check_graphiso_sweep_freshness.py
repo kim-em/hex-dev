@@ -46,6 +46,10 @@ class NativeDependencyTests(unittest.TestCase):
         before = self.BASE + '\n@[extern_lib] def configured := "-O3"\n'
         self.assertTrue(check.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
 
+    def test_attribute_with_split_modifier_stays_relevant(self):
+        before = self.BASE + '\nlean_lib Other\n@[extern_lib]\n  private\n  def nativeArchive := "-O3"\n'
+        self.assertTrue(check.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
+
     def test_quoted_flag_does_not_establish_native_loading(self):
         before = self.BASE.replace('  precompileModules := true',
             '  moreLeancArgs := #["\n  precompileModules := true\n"]')
