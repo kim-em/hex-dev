@@ -23,7 +23,7 @@
     "cases": 83,
     "unavailable_component_skips": 0
   },
-  "scope": "Required owner-filtered PR CI; full library/conformance/manual/architecture/ordinary-kernel checks pass. Does not establish all-library benchmark headroom. Separate full-scope run has a failed completed benchmark step and was cancelled while its unrelated oracle tail was still running.",
+  "scope": "Required owner-filtered PR CI; full library/conformance/manual/architecture/ordinary-kernel checks pass. Does not establish all-library benchmark headroom. Separate full-scope run has a failed completed benchmark step and was cancelled while the remaining all-library oracle step was still running. The owned oracles pass in this filtered required run.",
   "retained_logs": [
     {
       "path": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-final-pr-ci.log",

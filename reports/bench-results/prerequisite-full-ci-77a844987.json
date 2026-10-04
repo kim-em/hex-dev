@@ -243,7 +243,7 @@
       "seconds": 0
     }
   ],
-  "scope": "Existing workflow dispatched with all libraries on final PR source. Every benchmark executable completes result checks; the unchanged total cap fails. The additional run was cancelled after this completed failure while the unrelated full oracle tail was still running, to obtain the diagnostic log promptly. No full-oracle success is claimed. Required filtered PR CI separately passes all required gates. No scientific measurement was rerun.",
+  "scope": "Existing workflow dispatched with all libraries on final PR source. Every benchmark executable completes result checks; the unchanged total cap fails. The additional run was cancelled after this completed failure while the remaining all-library oracle step was still running, to obtain the diagnostic log promptly. No full-oracle success is claimed. Required filtered PR CI separately passes all required gates. No scientific measurement was rerun. Owned oracles pass separately in the filtered required run. No completed same-base main breakdown establishes causal attribution for the recurring cap failures.",
   "retained_logs": [
     {
       "path": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-full-ci.log",

@@ -1517,15 +1517,17 @@ libraries:
           rationale: "Pinned algebraic-only MkRoots and exact relations solve the same rational and quadratic-coefficient root fixtures. Prepared coefficients are excluded; result checks, JSON transport and cleanup are retained. No SMT, transcendental or infinitesimal workload is measured. Backend contexts may retain internal caches, while the driver stores no roots. The ratios orient the implemented root audit and do not establish Phase-4 admission."
       input_families:
         - name: canonical-real-arithmetic
-          description: Fixed quadratic and degree-product-12 real operands exercise canonical arithmetic and matching bare-parent controls, with checked constructors/casts and complex projections. Retained addition attribution identifies inherited isolation; full operation-specific evidence and raw profile coverage remain incomplete.
+          description: Fixed quadratic and degree-product-12 real operands exercise canonical arithmetic and matching bare-parent controls, with checked constructors/casts, complex norms/absolute value and real/imaginary projections. Retained addition attribution identifies parent isolation; full operation-specific evidence and raw profile coverage remain incomplete.
         - name: real-order-and-rounding
-          description: Separated and overlapping stored real intervals, near-zero and near-integer values, bounded comparison, floor/ceil, approximation and square roots. Current fixed observations do not discharge separation, precision or degree/height characterization.
+          description: Equality, sign, absolute value, conjugation and min/max anchors; separated and overlapping stored real intervals, near-zero and near-integer values, bounded comparison, floor/ceil, approximation and square roots. Current fixed observations do not discharge separation, precision or degree/height characterization.
         - name: rational-height
           description: One canonical degree-one rational leaf with growing primitive coefficient height, driving recognition, floor, ceiling and the former quotient control. The direct ladder is declared but unmeasured because canonical preparation exposes the retained HexArith square-root prerequisite concern.
         - name: polynomial-arrays-and-sorting
           description: Real coefficient-array construction and root-set membership/projections, plus distinct rational roots in bit-reversal order. Passing array and sorting families are separate from repeated fixed-leaf and exactification diagnostic controls.
         - name: real-polynomial-roots
-          description: Actual RealAlgebraicPoly.roots on X^n-2 and X^n-sqrt(2), varying degree at fixed coefficient height and retaining full sorted root/multiplicity fingerprints. Current external pairs and early-rejection profiles expose unresolved canonical isolation costs.
+          description: Actual RealAlgebraicPoly.roots on X^n-2 and X^n-sqrt(2), varying degree at fixed coefficient height and retaining full sorted root/multiplicity fingerprints, alongside repeated-root multiplicities, integer roots, root-set filtering and exactification anchors. Current external pairs and early-rejection profiles expose unresolved canonical isolation costs.
+        - name: representation
+          description: The shipped Repr formatter and ordinary-kernel generated-term roundtrip checks. The fixed formatter benchmark does not establish growing-size roundtrip performance; separately reported roundtrip scaling and attribution remain incomplete.
         - name: fixed-field-sign
           description: The shipped signField wrapper in Q(sqrt(2)), with constant, zero and nonconstant reduced coordinates. Current compiled anchors and historical source-scoped comparisons remain distinct; current scaling and profile coverage are incomplete. The forward comparison-strategy extension is excluded.
   HexRealAlgebraicMathlib:
