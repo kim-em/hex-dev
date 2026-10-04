@@ -1,0 +1,66 @@
+name = "hexReflectNightlyValidation"
+defaultTargets = ["HexReflectConformance"]
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4-nightly-testing.git"
+rev = "a3bcf0a3c2f9ef666d02bc127b2aee1f64f46078"
+
+[[lean_lib]]
+name = "HexBasic"
+srcDir = "../.."
+precompileModules = true
+
+[[lean_lib]]
+name = "HexArith"
+srcDir = "../.."
+precompileModules = true
+
+[[lean_lib]]
+name = "HexModArith"
+srcDir = "../.."
+
+[[lean_lib]]
+name = "HexPoly"
+srcDir = "../.."
+
+[[lean_lib]]
+name = "HexMvPoly"
+srcDir = "../.."
+
+[[lean_lib]]
+name = "HexReflect"
+srcDir = "../.."
+
+[[lean_lib]]
+name = "HexReflectConformance"
+srcDir = "../../conformance"
+roots = ["HexReflect.TestProviders", "HexReflect.Conformance", "HexReflect.ScopeConformance", "HexReflect.ResidueConformance"]
+
+[[lean_lib]]
+name = "HexModArithMathlib"
+srcDir = "../.."
+
+[[lean_lib]]
+name = "HexMvGcd"
+srcDir = "../.."
+
+[[lean_lib]]
+name = "HexMvPolyMathlib"
+srcDir = "../.."
+
+[[lean_lib]]
+name = "HexPolyFp"
+srcDir = "../.."
+
+[[lean_lib]]
+name = "HexPolyMathlib"
+srcDir = "../.."
+
+[[lean_lib]]
+name = "HexReflectMathlib"
+srcDir = "../.."
+
+[[lean_lib]]
+name = "HexResultant"
+srcDir = "../.."

@@ -461,16 +461,18 @@ def convert (r : ReifiedRing) (s : Sealed) (order : MonoOrder)
     cmp := order.quoteCmp s.n }
   if let some c := (← getThe State).converted.find? (·.key.agrees key) then
     return c
-  -- Every expansion bound is checked before normalization runs.
+  -- Coefficient growth is not bounded by the shared polynomial computation.
   charge .exponent (RingExpr.maxExponent r.expr)
   let remainingTerms := (← getThe State).budget.remaining.terms
-  let termBound := RingExpr.termBound (remainingTerms + 1) r.expr
-  checkBudget .terms termBound
   let bitLimit := (← getThe State).budget.initial.coefficientBits
   checkBudget .coefficientBits (RingExpr.coeffBitBound (bitLimit + 1) r.expr)
   if RingExpr.varBound r.expr > s.n then
     failWith (.variableOutOfRange (RingExpr.varBound r.expr - 1) s.n)
-  let some ts := convertTerms? s.n key.char? r.expr
+  let some p ← (Arith.withExpThreshold (← getThe State).budget.initial.exponent <|
+      (Arith.toPoly? r.expr).run { char? := key.char?, maxTerms? := some remainingTerms } : SymM _)
+    | declineWith (.budgetExhausted
+        ((← getThe State).budget.exhausted .terms (remainingTerms + 1)))
+  let some ts := polyTerms? s.n p
     | failWith (.internal "conversion failed after the variable bound check")
   charge .terms ts.length
   charge .coefficientBits (coefficientBits ts)
@@ -570,7 +572,7 @@ def Conversion.mkProof (c : Conversion) (input : Expr) (cfg : Config := {}) :
   -- `checkProofs`: a type hint asserts nothing by itself, and the pinned
   -- reifier accepts numerals without inspecting their `OfNat` instance, so a
   -- nonstandard instance can make the denoted syntax differ from the source.
-  let denoted ← (denoteRingExpr c.sealed.atoms c.reflected.expr : ReaderT Nat m Expr).run
+  let denoted ← (denoteRingExpr c.reflected.expr : ReaderT Nat m Expr).run
     c.reflected.ringId
   unless ← (isDefEq rhs denoted : MetaM Bool) do
     failWith (.illTypedProof "the denoted reflected syntax is not definitionally the \
