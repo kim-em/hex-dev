@@ -58,7 +58,7 @@ certificates, arbitrary root-sum soundness, increasing matrix/support or
 witness sizes, descriptor operations, or the final semantic theorems. Those
 remain separate requirements. The probes prove only Boolean acceptance/rejection. They do not depend on
 `HexRealRootsMathlib.Tarski.check_rootSum`, proved in
-`adapters/HexRealRootsMathlib/TarskiSoundness.lean`. Applications of that
+`HexRealRootsMathlib/TarskiSoundness.lean`. Applications of that
 semantic theorem have separate [proof-cost evidence](sturm-tarski-semantics.md).
 Root-level correctness also requires the separately specified Tau Ceti Thom
 injectivity/order and BKR foundations. Their actual delivery and use remain
