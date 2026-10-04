@@ -60,3 +60,11 @@ sensitivity pass. Isolation remains 90.56% inclusive. The old third isolation
 pass is removed; two remain. Raw perf/samply/sidecar data and the exact
 source/binary hashes persist at the manifest paths. This supplies required
 attribution rather than a per-change profiling policy.
+
+Fresh checks after rebase onto main `77aadd66f6` pass the full Lake build
+(15821 targets), all 285 Sturm/NumberField/real-algebraic benchmark checks,
+byte-exact committed fixture emission and 83 required exact oracle cases with
+zero unavailable-component skips. The first local wrapper merged stderr
+diagnostics into JSONL and its parsing failure is retained; the corrected
+record uses the existing CI stream separation. These are local checks on
+`3ef41951ce`, not required CI for a later head.
