@@ -628,8 +628,9 @@ full query evidence; invalid proposed evidence is terminal. The
 [retained comparison](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-window-proofs.md)
 found no useful whole-module speedup at a four-step budget, even though the
 lower-precision fixed-field case removed full queries. This mode therefore
-remains optional. Its individual native calls share the cancellation limits
-of the other native producers.
+remains optional. The entire bounded refinement loop is one
+native call: cancellation is checked before and after it, not between its
+steps. A large chosen budget can therefore delay interruption.
 
 A separate [initial-precision comparison](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-precision-proofs.md)
 proves the same fixed-field sentence at eight and sixty-four generator bits,

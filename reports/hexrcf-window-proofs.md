@@ -6,6 +6,12 @@ but this comparison does not establish a useful reduction in whole-module
 cost. The three source examples also show small, mixed changes. No run was
 discarded and no unchanged rerun was taken.
 
+The fixed-field fixture explicitly kernel-checks its full inline proof and
+then assigns it inline, so the theorem declaration checks it again. Both
+fixed-field arms have this cost. The source `rcf` arms use production proof
+acceptance. Their times are retained separately; the fixed row is not an
+isolated measurement of the production acceptance routine.
+
 The producer uses the existing root-refinement API to propose a smaller
 rational interval. The literal table keeps its original generator polynomial,
 outer interval and count. Replay checks containment and a second count-one
@@ -118,7 +124,7 @@ Lake-module cost comparison, including elaboration, production, quotation and
 kernel work. It is not isolated sign timing, an asymptotic bound, physical
 sharing evidence or a general precision-scaling attestation.
 
-Reproduce the fixed schedule with:
+Reproduce the fixed schedule on the retained source `ce95c8f1f` with:
 
 ```sh
 python3 scripts/bench/hexrcf_window_proofs.py --timeout 120

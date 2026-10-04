@@ -5,6 +5,12 @@ full sign queries and whole proof-build cost. It compares eight and sixty-four
 bits for the same positive √2, formula and original target. It does not measure
 automatic source preparation, general field reconstruction or nested depth.
 
+Both fixed-field arms explicitly kernel-check the full inline proof and
+then assign it inline, so their enclosing theorem declarations check it
+again. These balanced double checks are included in the observations. This
+study does not measure the production tactic acceptance routine; the
+[production-acceptance study](hexrcf-precision-production-proofs.md) does.
+
 ## Checked inputs and schedule
 
 The defining polynomial is `X² − 2`. The eight-bit center is `181/128`; the
