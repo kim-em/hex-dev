@@ -1,0 +1,11 @@
+Hex.SturmFrontendBench.runSparseQuery    expected complexity: n    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=c5efa57-dirty, 2026-10-03T16:58:54Z, host=chungus2
+    param  per-call    repeats  C
+   16_384   71.036 ms  ×2^0     C=4335.719
+   32_768  140.766 ms  ×2^0     C=4295.844
+   65_536  288.677 ms  ×2^0     C=4404.861
+  131_072  563.276 ms  ×2^0     C=4297.457
+  verdict: consistent with declared complexity (cMin=4295.844, cMax=4404.861, β=-0.000)
+  per-spawn floor (harness self-measurement): 22.280 ms
+  peak RSS: 94_848 kB..173_528 kB (across 4 ok row(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-short-chain-degree/pair-2-Query.json

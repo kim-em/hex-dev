@@ -6,17 +6,22 @@ Authors: Kim Morrison
 
 module
 
+public import HexBerlekampZassenhausMathlib.FactorTactic
+
 public import HexRCF.RealCoefficients.Registration
 public meta import HexRCF.RealCoefficients.Finite
 public meta import HexRCF.RealCoefficients.Reify
 public meta import HexRCF.RealCoefficients.Interpret
 public import HexRCF.RealCoefficients.RootAliases
+public import HexRCF.RealCoefficients.Conversion
 public import HexRCF.RealCoefficients.Coefficients
 public import HexRCF.RealCoefficients.Specialize
 public import HexRCF.RealCoefficients.Formula
 public import HexRCF.RealCoefficients.Field
 public import HexRCF.RealCoefficients.CommonPresentation
 public import HexRCF.RealCoefficients.LiteralSign
+public import HexRCF.RealCoefficients.SignIndex
+public import HexRCF.RealCoefficients.FieldIndex
 public import HexRCF.RealCoefficients.FieldSpecialize
 public import HexRCF.RealCoefficients.SignInputs
 public import HexRCF.RealCoefficients.FieldCarrier
@@ -36,6 +41,7 @@ public import HexRCF.RealCoefficients.FieldRootSignsProgress
 public import HexRCF.RealCoefficients.FieldReplay
 public import HexRCF.RealCoefficients.FieldBuild
 public import HexRCF.RealCoefficients.FieldSignProgress
+public import HexRCF.RealCoefficients.FieldRoots
 public import HexRCF.RealCoefficients.FieldBuildProgress
 public import HexRCF.RealCoefficients.FieldDecisionProgress
 public import HexRCF.RealCoefficients.FieldBuildBudget

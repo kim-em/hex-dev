@@ -15,6 +15,13 @@ canonical minimal-polynomial form with decidable equality. It builds on
 and the matrix stack; its Mathlib counterpart is
 [`hex-number-field-mathlib`](https://github.com/leanprover/hex-number-field-mathlib).
 
+For a real generator `a`, `QAdjoin.signApprox? f` decides the sign of the
+coordinate `f` by certified interval evaluation. It rejects nonreal generators.
+`QAdjoin.signApprox f h` is total when `h : a.isReal = true`; its companion
+proves that the internal fallback is unreachable and that its result agrees
+with canonical comparison to zero. Neither operation constructs a canonical
+algebraic number for each sign query.
+
 # Quickstart
 
 ```toml
@@ -79,6 +86,10 @@ APIs (`roots?`) for both fixed-field and algebraic-coefficient polynomials.
   algebraic-coefficient root solver.
 - `QAdjoin.ofAlgebraic?` and `ofAlgebraics?` recover coordinates in a chosen
   field; `QAdjoin.common` returns one generator and coordinates for a collection.
+- Common polynomial presentations first check the field of the first nonzero
+  coefficient with one shared power table. A failed membership check uses the
+  bounded primitive-element search; every coordinate is checked at its selected
+  embedding. See [common presentations](SPEC/hex-number-field.md#common-field-construction).
 - The incubating `HexRealAlgebraic` extension supplies typed `.re` and `.im`
   projections and exact total order on the real subtype.
 

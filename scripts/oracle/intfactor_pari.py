@@ -114,6 +114,20 @@ def check(source: str | Path | None, *, failure_dir: Path, profile: str, seed: i
                 n = int(fixture["n"])
                 oracle_value: Any = _factors(pari, n)
                 inputs = {"n": n}
+            elif op == "frozen":
+                n = int(fixture["n"])
+                factors = lean_value["factors"]
+                residual = int(lean_value["residual"])
+                previous = 1
+                for p, e in factors:
+                    p, e = int(p), int(e)
+                    if p <= previous or e <= 0 or not pari.isprime(p):
+                        raise OracleMismatch(f"invalid frozen prime power {p}^{e}")
+                    previous = p
+                if residual <= 0 or math.prod(int(p)**int(e) for p, e in factors) * residual != n:
+                    raise OracleMismatch(f"frozen product/residual mismatch for {n}")
+                oracle_value = lean_value
+                inputs = {"n": n}
             elif op == "divisorfn":
                 n = int(fixture["n"])
                 oracle_value = _divisor_functions(pari, n)

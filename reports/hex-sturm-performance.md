@@ -1,18 +1,24 @@
 # Shared Sturm–Tarski computation measurements
 
+Current admission boundary: the historical head-degree `runReplay` mode-2
+interpretation also needs reconciliation with the dominant-phase policy. Its
+total-work upper bound and completed samples remain valid retained evidence;
+its current Phase-4 admission is suspended, as for the translated candidates.
+
 The corrected quadratic query-degree models pass for initial reduction,
 integer and rational queries, and replay. Head-degree replay now defers dyadic
 normalization to the end of each Horner evaluation, with proved equality to
-its former result. Its predeclared **mode-2 O(n⁴) upper bound passes (observed
-faster)** through degree 2048. This is explicitly weaker than two-sided
+its former result. Its predeclared **mode-2 O(n⁴) upper-bound observation is faster** through degree 2048. This is explicitly weaker than two-sided
 consistency: GMP multiplication crossovers prevent a justified tight monomial
 claim on this ladder. The earlier cubic and quartic two-sided failures remain
 recorded below. [The derivations](sturm-bit-cost-models.md) distinguish the
 former repeated-normalization cost from the implemented recurrence products.
 
 All earlier declarations, failures and samples are retained. These observations
-cover effective query/checker paths. They do not complete the companions'
-Phase 4, the general signed-root-sum theorem or downstream extension evidence.
+cover effective query/checker paths. They do not attest complete frontend Phase-4 coverage or downstream extension
+evidence. The general signed-root-sum theorem is proved in the development
+`HexQuerySemantics` target; theorem-only companions have no dedicated Phase-4
+performance deliverable under the current policy.
 
 ## Original protocol and provenance
 
@@ -78,7 +84,7 @@ The inconclusive cases are `runReplay`, `runIntegerHigh`, `runInitialHigh` and
 `runReplayHigh`. The latter three have residual slopes −0.173, +0.280 and −0.202,
 respectively. A faster-than-declared two-sided result is also a failed
 characterization. These original results do not satisfy the performance obligation. The
-frontend remains at `done_through: 0`. The correction below distinguishes
+frontend phase state is recorded in `libraries.yml`. The correction below distinguishes
 scalar-operation counts from bit costs; no fixed budget replaces the
 parametric models.
 
@@ -447,8 +453,10 @@ the measured code.
 
 The separate fresh-module proof track checks literal acceptance, rejection of a
 false terminal identity, stale-context rejection and interpretation of the
-accepted domain. It cannot establish query root-sum semantics before the actual
-IVT/Rolle and signed-remainder/Cauchy-index foundation is delivered.
+accepted domain. The delivered IVT/Rolle and signed-remainder foundation now establishes
+query root-sum semantics through `HexQuerySemantics`; its ordinary-kernel
+semantic replay tests and axiom guards are correctness checks, separate from
+compiled arithmetic performance.
 
 The independent size sweeps and operation/normalization diagnostics above are
 available. The query-degree findings have corrected quadratic characterizations.
@@ -467,8 +475,10 @@ the companion; these timing observations do not discharge those proofs.
 The [recorded finding](https://github.com/kim-em/hex-dev/issues/10375#issuecomment-5757400442)
 also records the original polynomial pseudo-gcd finding; its wider-ladder
 resolution is documented in the polynomial report.
-These measurements do not advance any library phase. Closure of #10375 also
-requires the implementation PR, independent review and CI.
+The shared computation from #10375 is delivered. Its retained measurements
+do not establish the remaining frontend performance requirements. General
+semantics and exact-domain natural counts are also delivered, independently
+of the Phase-4 findings listed below.
 
 The exact benchmark fixtures can be checked again with the pinned oracle
 environment using `python scripts/bench/check_sturm_fixtures.py` followed by
@@ -497,7 +507,7 @@ Constants and sparse monomials retain their former compact behavior.
 
 | Current registration | Declared expression | Mode | Degree ladder | Result |
 | --- | --- | --- | --- | --- |
-| `runReplay` | `n ^ 4` | 2: one-sided upper bound | 256, 512, 1024, 2048 | within declared upper bound (observed faster) |
+| `runReplay` | `n ^ 4` | Historical mode-2 declaration; admission suspended | 256, 512, 1024, 2048 | observed faster; dominant-phase audit outstanding |
 
 The original `n²` tables above preserve historical declarations and verdicts;
 they are not the current registration.
@@ -604,5 +614,221 @@ sets are retained in the JSON. Both cases have `no-comparable-control`:
 these are fresh whole-build observations, not a resolved incremental kernel
 cost or a speedup claim. This rational literal track checks the current
 companion import closure; it does not itself measure dyadic evaluation or
-supply the deferred general semantic theorem. The new dyadic ordinary-kernel
+measure the subsequently delivered general semantic theorem. The new dyadic ordinary-kernel
 examples and equality axiom audit are covered by conformance above.
+
+## Bench targets
+
+Current registrations are in `bench/HexSturm/Bench.lean` and
+`bench/HexSturm/Frontend.lean`. The integer backend stages are shared-kernel
+diagnostics; their existence does not attest every ordered-field frontend.
+The current executable lists and verifies 71 cases, including the 13
+`short-chain-degree` registrations below, plus 12 complete-query fixed
+comparison endpoints and two protocol-overhead controls in
+`Hex.SturmExternalBench` in `bench/HexSturm/Bench.lean`. The latter are expected-result/informational
+anchors and make no complexity or absolute-budget claim.
+
+| Frontend/stage targets | Strongest justified evidence | Input |
+| --- | --- | --- |
+| `runSparseDomain`, `runSparseQuery`, `runSparseInteger`, `runSparsePrepared`, `runSparseCount`, `runSparsePreparedCount`, `runSparseCertificate`, `runSparsePreparedCertificate`, `runSparseCountCertificate`, `runSparseReplay`, `runSparseCachedReplay`, `runSparseClear`, `runSparseEmbed` | Mode 1, `n` | `short-chain-degree`: `2X^n−1`, query one, endpoints ±1, n=16384–131072 |
+| `runPreparedHigh`, `runPreparedCertificateHigh` | Mode 1, `m²` | Fixed quadratic head, growing query degree 131072–1048576 |
+| `runRetargetWide` | Mode 1, `n²` | Short-chain `X^n−2`, endpoints retargeted to ±3, degree 65536–524288 |
+| `runEmbedSparse` | Mode 1, `n` | Literal integer certificate for `X^n−2`, degree 2048–32768 |
+| `runInitialWide`, `runClearingWide` | Mode 1, `n²` | Chebyshev coefficient arrays, degree 16384–131072 |
+| `runCoefficientBits`, `runEndpointBits` | Mode 2, published `bits²` upper bound | Odd growing coefficients or dyadic mantissas, 2048–32768 bits |
+| `runFractionalBits` | Unadmitted mode-2 candidate; profile attribution under audit | Odd dyadic mantissas, 2048–32768 bits |
+| `runPreparedBits`, `runCountBits`, `runPreparedCountBits`, `runCertificateBits`, `runPreparedCertificateBits`, `runCountCertificateBits`, `runFieldReplayBits`, `runCachedReplayBits`, `runClearBits`, `runInfiniteBits` | Unadmitted mode-2 candidates; dominant phase not established | `T_8(X−z)`, odd growing integer `z`, endpoints `z±2` or infinity |
+
+[Cost derivations](sturm-bit-cost-models.md) precede the corresponding
+collections. They describe bit work on these specific families, not the
+SPEC's general ring-operation bound or downstream extension-oracle costs.
+The translated family keeps degree fixed. Its preregistered general-product
+hypothesis is not established by the available profiles; it contributes no
+Phase-4 pass.
+Cached replay checks the literal cache binding during fixture preparation.
+
+## Verdicts
+
+[Short-chain degree results](bench-results/sturm-short-chain-degree/results.json)
+retain all 208 observations for the 13 frontend/backend cases. The independently
+[derived linear models](bench-results/sturm-short-chain-degree/derivation.md)
+pass with residual slopes from −0.011337 to +0.019652, without signal trimming
+or budget truncation. This supplies growing-degree coverage for the named
+public operations on a three-entry chain with bounded-word coefficients and
+endpoints. It does not admit the unchanged long-chain or growing-bit candidates.
+[Metadata](bench-results/sturm-short-chain-degree/metadata.json) records the clean
+source, exact executable, automatically leased CPU, load, commands, fixed
+trial-major schedule and matching before/after hashes.
+
+[The growing-operand collection](bench-results/prerequisite-sturm-growing-operands/metadata.json)
+records commands, CPU lease, host context, source snapshots and executable
+SHA256; every relevant source and the binary remained unchanged. Native
+LeanBench's trial-major schedule retains four trials at every rung.
+
+| Case | Declared expression | Residual slope | Interpretation |
+| --- | --- | --- | --- |
+| `runInitialWide` | `n ^ 2` | -0.064275 | two-sided pass |
+| `runClearingWide` | `n ^ 2` | -0.093721 | two-sided pass |
+| `runRetargetWide` | `n ^ 2` | -0.018793 | two-sided pass |
+| `runEmbedSparse` | `n` | +0.005649 | two-sided pass |
+| `runCoefficientBits` | `bits ^ 2` | -0.352125 | within declared upper bound (observed faster) |
+| `runEndpointBits` | `bits ^ 2` | -0.586339 | within declared upper bound (observed faster) |
+| `runFractionalBits` | `bits ^ 2` | -0.580784 | unadmitted: own attribution under audit |
+| `runPreparedBits` | `bits ^ 2` | -0.849544 | unadmitted: dominant general-product phase unproved |
+| `runCountBits` | `bits ^ 2` | -0.869592 | unadmitted: dominant general-product phase unproved |
+| `runPreparedCountBits` | `bits ^ 2` | -0.655776 | unadmitted: dominant general-product phase unproved |
+| `runCertificateBits` | `bits ^ 2` | -0.882864 | unadmitted: dominant general-product phase unproved |
+| `runPreparedCertificateBits` | `bits ^ 2` | -0.867449 | unadmitted: dominant general-product phase unproved |
+| `runCountCertificateBits` | `bits ^ 2` | -0.777107 | unadmitted: dominant general-product phase unproved |
+| `runFieldReplayBits` | `bits ^ 2` | -0.876956 | unadmitted: dominant general-product phase unproved |
+| `runCachedReplayBits` | `bits ^ 2` | -0.856630 | unadmitted: dominant general-product phase unproved |
+| `runClearBits` | `bits ^ 2` | -0.829891 | unadmitted: dominant general-product phase unproved |
+| `runInfiniteBits` | `bits ^ 2` | -0.954303 | unadmitted: dominant general-product phase unproved |
+
+The candidate harness wording is `inconclusive`, in the faster direction.
+Only the odd cubic and integral-endpoint families currently connect their
+preregistered published bounds to operation-specific general-product/gcd
+profiles. The fractional family now has its own passing capture; admission still needs
+its dominant-phase attribution audited. The ten translated
+families remain unadmitted: GMP leaf dominance alone does not identify a
+published bound for the dominant phase. All samples and original declarations
+remain retained; no fitted exponent or replacement pass is inferred.
+
+[Prepared nonconstant queries](bench-results/prerequisite-prepared-query-degree/)
+pass their two-sided quadratic declarations: residuals −0.066 and −0.077.
+At the largest rung the value-only path materializes the same roughly
+quadratic-bit quotient as the certificate path, reaching about 33.8 GB peak
+RSS. This is a limitation of the shared chain producer, not evidence of a
+streaming value implementation. The metadata preserves the original broad
+`sources_unchanged: false`; its `retention_scope` independently verifies that
+the measured Sturm source and executable remained unchanged while unrelated
+real benchmark files changed.
+
+[Wide Chebyshev attempts](bench-results/prerequisite-sturm-head-wide/) and
+[the single unchanged coefficient-sign rerun](bench-results/sturm-signs-unchanged/)
+remain retained failures of characterization. The latter residual is +0.465232.
+The former Rat quartic hypotheses have no admissible mode-2 interpretation:
+monic normalization removes the supposed general products/gcds from their
+profile, which is mainly allocation and linear-limb work. The former power-of-two
+bit fixtures likewise collapse to a one-bit mantissa or a normalized linear
+chain. Neither those families nor the original short, mixed-word head ladder
+justify current Phase 4. No failed two-sided case is relabelled mode 2.
+
+## Comparator ratios
+
+The [short-chain backend pairs](bench-results/sturm-short-chain-degree/analysis.json)
+use four adjacent alternating AB/BA blocks on identical inputs. All 16 common
+parameter pairs have matching complete Option Int hashes. Median paired
+rational/integer ratios at degrees 16384,32768,65536,131072 are
+12.377302,12.114607,11.845440,11.778937. Correctness agreement is gating; these
+host-specific ratios explain relative implementation cost and supply no
+portable speed guarantee. The full arm commands, order, observations and hashes
+are retained in [metadata and raw exports](bench-results/sturm-short-chain-degree/).
+
+The adjacent backend comparison above retains the rational/integer pairs and
+hash agreement. Correctness agreement is gating; it has no wall-time ratio
+goal. The structured informational comparators are **FLINT real-qqbar signed-root sums**
+and **Z3 RCF signed-root sums**. Their [complete-query comparisons](bench-results/sturm-external-comparisons/README.md)
+retain 64 adjacent alternating AB/BA arms on the fixed T_8 queries one, X,
+X−1 and T_8, with exact results 8,0,−8,0. All 32 pairs match complete Option Int
+hashes and expected-result checks. Median paired external/native ratios are
+FLINT 1.981380,2.691172,2.284023,168.350949 and Z3
+1.082383,1.719067,1.399890,4.488035 in that query order.
+The [raw exports and metadata](bench-results/sturm-external-comparisons/) retain
+the source, commands, order, inner counts and every observation. Protocol
+controls have medians 6.734/6.594 µs. Z3 Count exceeds the 5% framing-overhead
+threshold (5.989%); its per-pair protocol-adjusted median ratio is 1.017671,
+alongside the raw 1.082383. Both ratios remain in the analysis; this adjustment
+does not isolate a pure algorithm body.
+
+Inputs and coefficient contexts are prepared. Timed requests call root
+production, filter the open interval, evaluate the complete query and sum
+exact signs, including JSON transport and temporary cleanup. FLINT uses generic
+real-qqbar Horner evaluation via `gr_mul`/`gr_add`; the 168.350949 Common ratio
+describes that method, rather than an optimized polynomial-evaluation endpoint
+with minimal-polynomial reduction. No roots are
+cached by the driver; backend contexts may retain internal caches, and the
+harness performs an untimed warmup. These are informational fixed valid-domain
+endpoints, not complexity admissions, portable speed claims or isolated
+root-isolation timings. Neither external API has a matching Lean literal
+certificate/proof-checking surface. Extension/nested-evidence comparisons stay
+with the downstream owners; these rational-field fixtures do not attest them.
+
+## Profile
+
+The [short-chain-degree representative](bench-results/sturm-short-chain-degree/sturm-short-chain.summary.json)
+uses the actual query at degree 65536 and has 283 operation-window samples.
+Calibration residual is 0.614493 ms; sample-count and ±5 ms sensitivity checks
+pass. Leaf shares are own code 0.35%, GMP 31.10%, allocation 43.11%, Lean runtime
+18.73% and other 6.71%. Inclusive chain production is 67.49%, pseudo-division
+47.70%, and rational gcd 78.45%; inclusive percentages overlap. Rat normalization
+allocates even on this bounded-scalar family, explaining substantial GMP and
+allocation cost without changing the derived linear traversal model.
+[The manifest](bench-results/sturm-short-chain-degree/sturm-short-chain.manifest.json)
+and [artifact checks](bench-results/sturm-short-chain-degree/artifact-check.json)
+retain source/executable identity and verify persistent raw captures, sidecars
+and symbols. This attribution covers the new named family only.
+
+[Retained representative captures](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)
+on clean source `62399ddd0` supply 548 replay samples and 526 prepared-query
+samples. Both pass sample-count, calibration and ±5 ms sensitivity checks.
+Replay has 99.82% inclusive certificate-check share, including 77.74% signed
+chain checking, with 46.35% allocation self share. The prepared high-degree
+query has 92.02% signed-chain-build share, including 87.45% pseudo-division,
+with 27.19% allocation self share. Raw perf/samply files, kernel sidecars,
+symbols and checksums are retained in persistent storage. This supplies
+representative attribution without admitting the unresolved model candidates.
+
+[The profile inventory](bench-results/prerequisite-readiness-profiles/inventory.json)
+includes every successful and failed capture, binary fingerprints, commands,
+historical raw-profile locations and filtered summaries. Hashing, fixture preparation
+and process startup are excluded by the kernel sidecar. Recorded growing-operand
+diagnostics pass the ≥100-sample, ≤5 ms calibration and ±5 ms sensitivity checks.
+[The artifact check](bench-results/prerequisite-profile-availability.json) finds
+all 38 prerequisite-readiness raw capture directories unavailable at their
+recorded local paths. Their committed manifests, summaries, diagnostics and
+timing samples remain intact, but these raw perf/samply files cannot currently
+be reprocessed. Those historical candidate profiles do not supply current raw
+attribution if their complexity models are later admitted.
+
+The fractional-endpoint capture at 32768 bits retains 1542 samples, a
+1.001 ms calibration residual and passing ±5 ms sensitivity. It has 98.31%
+GMP leaves; inclusive multiplication entries include `mul_n` (24.64%),
+Toom-3 (21.92%), Toom-2 (20.95%) and basecase (9.21%). These inclusive
+percentages overlap and must not be summed. Its saved implementation and
+registration match the earlier timing source, with only comment changes.
+Published-phase admission remains under audit; this capture does not attest
+the whole library.
+
+The odd cubic and odd endpoint captures at 32768 bits have 95.25% and 98.38%
+GMP leaves respectively. Their generic products/reduction work includes
+`addmul_1`, basecase/Toom multiplication and half-gcd steps. The ten translated
+frontend captures have 93.71–96.44% GMP leaves and 3.31–5.67% allocation.
+Their dominant leaves are `mod_1`, `addmul_1`, `divexact_1`, `copyi` and
+`mul_1`; general basecase/Toom products account for roughly 5% or less.
+Incomplete outer Hex stacks do not establish that the single-limb leaves
+belong to general multiplication. The observed growth is about bits^1.05–1.35,
+and infinity checking has no finite-endpoint Horner phase. Consequently the
+translated captures do not qualify their proposed mode-2 bounds. Caller-level
+attribution or another admissible characterization remains required.
+
+The degree-1024 integer-producer diagnostic has 47.51% allocation, 41.69% GMP
+and 6.62% runtime leaves. The coefficient-sign map has 61.63% runtime,
+20.23% GMP and 14.13% allocation: its wide-ladder failure concerns traversal
+and hashing of stored coefficients, not a general multiplication phase. These
+profiles explain the old failed hypotheses; they do not manufacture passing
+replacement models.
+
+The retained head-degree deferred-replay and query-degree reduction profiles
+above continue to apply to their unchanged shared integer kernels. The
+frontend profiles are separate evidence for prepared, cached and transport paths.
+
+## Concerns
+
+- The historical raw captures were lost after a reboot. Their summaries remain
+  diagnostics and cannot be reprocessed. The [retained representative captures](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)
+  supply fresh replay and prepared-query attribution with raw perf/samply data,
+  sidecars and checksums in persistent storage. Both pass calibration and
+  ±5 ms sensitivity checks; they do not admit the unresolved model candidates.
+
+- [#10577](https://github.com/kim-em/hex-dev/issues/10577): reconcile all advertised frontend operations with registrations/comparators, resolve the retained coefficient-sign characterization, and finish dependency-ordered Phase-4 attestation. The admitted family evidence and unadmitted candidates above do not close this audit.

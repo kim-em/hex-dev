@@ -73,11 +73,13 @@ contains no bridge-local executable operation to test independently.
 
 ## Boundary
 
-The public umbrella imports only the two correspondence modules. The library
-owns no conformance source, compiled benchmark, proof-probe root, oracle
-wrapper, executable checker, reifier, tactic, or global instance. It therefore
-has no ordinary Phase-3 conformance target and no separate Phase-4 runtime
-surface.
+The legacy public umbrella imports only the two correspondence modules.
+That legacy surface owns no executable checker, reifier, tactic, compiled
+benchmark or global instance. The explicitly imported mixed extension adds
+proof-only conformance and the `bench/HexIntFactorMathlib/ProofProbe` root for
+its unconditional correspondence and headline axiom audits. Its computational
+partner owns runtime measurements and independent oracle checks; this
+companion still has no separate Phase-4 runtime surface.
 
 The public divisor-enumeration transports (`divisors_eq`, `divisors_list_eq`,
 `numDivisors_eq_card`) map to the core registration
@@ -85,3 +87,27 @@ The public divisor-enumeration transports (`divisors_eq`, `divisors_list_eq`,
 `reports/hex-int-factor-divisor-protocol-4.md`, which retains the three exhausted
 predecessor protocols and all unsuccessful evidence. The core registration
 therefore discharges performance coverage for these transported APIs.
+
+## Explicit mixed-evidence companion
+
+`HexIntFactorMathlib.Mixed` is imported explicitly, outside the legacy umbrella.
+It owns unconditional soundness for `Hex.Nat.Mixed` complete/partial checked
+data and the two pointwise `factorization_eq` theorems specified in the
+[computational contract](../../HexIntFactor/SPEC/hex-int-factor.md#optional-mixed-primality-evidence).
+It imports mixed computational replay and `HexECPPMathlib.Soundness`, discharging
+the core ECPP hypothesis with `natPrime_of_checkAt` and `prime_iff`. Legacy
+evidence uses existing `PrimeCert` soundness. The complete theorem gives exact
+listed exponents and support; the partial theorem adds the uncertified
+residual's Mathlib factorization, giving lower bounds and exactness only when
+the residual has no further factor of the listed prime. Prove complete/partial
+prime-support statements and audit headline proof dependencies. No search,
+process, elaborator or producer is imported by this correspondence module.
+
+This module does not extend legacy divisor/arithmetic/order APIs to mixed data.
+A caller must obtain a successful explicit legacy-only conversion to use those
+APIs. Both legacy umbrella imports and headline theorems retain their closure.
+The package requires hex-ecpp-mathlib; prospective split recipes and clients
+include it without adding either factorization library to the publishing
+manifest. The ordinary computational replay closure remains Mathlib-free.
+Fresh proof-client and computational export replay, mathematical adversarial
+coverage, manual examples and headline axiom probes verify this boundary.

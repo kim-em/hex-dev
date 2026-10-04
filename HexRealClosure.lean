@@ -16,11 +16,16 @@ public import HexRealClosure.ZeroFactor
 public import HexRealClosure.RootFactors
 public import HexRealClosure.CompleteRoots
 public import HexRealClosure.Trivial
+public import HexRealClosure.TrivialTower
 public import HexRealClosure.BaseCodec
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
+public import HexRealClosure.BaseInclusion
 public import HexRealClosure.SignCodec
 public import HexRealClosure.SignFacts
+public import HexRealClosure.SignReplay
+public import HexRealClosure.SignRequests
+public import HexRealClosure.SignEvidence
 public import HexRealClosure.AlgebraicContext
 public import HexRealClosure.AlgebraicReencode
 public import HexRealClosure.TowerCatalog
@@ -33,7 +38,9 @@ public import HexRealClosure.TowerSuffix
 public import HexRealClosure.TowerPresentation
 public import HexRealClosure.TowerEnlarge
 public import HexRealClosure.TowerEnlargement
+public import HexRealClosure.LiveContext
 public import HexRealClosure.TowerRoots
 public import HexRealClosure.RootTransport
 public import HexRealClosure.RootCollection
+public import HexRealClosure.Sample
 public import HexRealClosure.QAdjoin

@@ -1,0 +1,29 @@
+Hex.SturmBench.runSigns    expected complexity: n ^ 2    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6d78bf3-dirty, 2026-10-02T04:37:36Z, host=chungus2
+  param  per-call    repeats  C
+    128  162.142 µs  ×2^9     C= 9.221 [trial 1/4]
+    256  701.135 µs  ×2^7     C= 9.924 [trial 1/4]
+    512    3.688 ms  ×2^4     C=11.240 [trial 1/4]
+  1_024   27.287 ms  ×2^2     C=25.917 [trial 1/4]
+    128  147.372 µs  ×2^9     C= 9.221 [trial 2/4]
+    256  631.661 µs  ×2^7     C= 9.924 [trial 2/4]
+    512    2.821 ms  ×2^5     C=11.240 [trial 2/4]
+  1_024   27.310 ms  ×2^2     C=25.917 [trial 2/4]
+    128  154.426 µs  ×2^9     C= 9.221 [trial 3/4]
+    256  644.096 µs  ×2^7     C= 9.924 [trial 3/4]
+    512    3.072 ms  ×2^4     C=11.240 [trial 3/4]
+  1_024   27.065 ms  ×2^2     C=25.917 [trial 3/4]
+    128  147.731 µs  ×2^9     C= 9.221 [trial 4/4]
+    256  656.673 µs  ×2^7     C= 9.924 [trial 4/4]
+    512    2.499 ms  ×2^4     C=11.240 [trial 4/4]
+  1_024   25.281 ms  ×2^2     C=25.917 [trial 4/4]
+  verdict: inconclusive (cMin=9.221, cMax=25.917, β=+0.465, looks slower than declared by ~n^0.465)
+  per-spawn floor (harness self-measurement): 31.070 ms
+  peak RSS: 66_580 kB..154_812 kB (across 16 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread 
+      128  4/4     151.079 µs  147.372 µs  162.142 µs  9.776% 
+      256  4/4     650.385 µs  631.661 µs  701.135 µs  10.682%
+      512  4/4       2.947 ms    2.499 ms    3.688 ms  40.374%
+    1_024  4/4      27.176 ms   25.281 ms   27.310 ms  7.466% 
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-signs-unchanged/results.json

@@ -24,7 +24,7 @@ abbrev Computation {α : Type} (budget : Budget) (value : α) := Run budget {res
 /-- Stream the same Schreier candidates as `State.scan`. Every candidate reserves
 its permutation work before evaluation, and its word only after a failed sift.
 The recursive builder uses the caller's meter, including discarded suffixes. -/
-@[expose] def scanWith {n base : Nat} {S : Array (Perm n)} {ι : Type} {budget : Budget}
+@[expose] def scanBudgeted {n base : Nat} {S : Array (Perm n)} {ι : Type} {budget : Budget}
     (build : (T : Array (Perm n)) → Chain.Fixed base T → Construction T base)
     (bounded : (T : Array (Perm n)) → (h : Chain.Fixed base T) → Computation budget (build T h))
     (family : ι → Candidate S base) (wordSize : ι → Nat)
@@ -35,12 +35,12 @@ The recursive builder uses the caller's meter, including discarded suffixes. -/
     reserve .pairs 1
     reserve .images (3 * n)
     let candidate := family i
-    let sifted ← s.result.chain.siftWith base candidate.value
+    let sifted ← s.result.chain.siftBudgeted base candidate.value
     have he : sifted.val.accepted = s.result.chain.accepts base candidate.value :=
       congrArg SiftResult.accepted sifted.property
     if hm : sifted.val.accepted = true then
       have hm : s.result.chain.accepts base candidate.value = true := he.symm.trans hm
-      let result ← scanWith build bounded family wordSize s is
+      let result ← scanBudgeted build bounded family wordSize s is
       return ⟨result.val, by
         simpa only [hlist, State.scan, State.insert, candidate, hm, Bool.true_eq, ↓reduceIte] using result.property⟩
     else
@@ -50,7 +50,7 @@ The recursive builder uses the caller's meter, including discarded suffixes. -/
       let seeds := s.seeds.push candidate.value (candidate.word ()) candidate.valid candidate.fixed
       let child ← bounded seeds.generators seeds.fixed
       let next : State S base := ⟨seeds, child.val, s.rebuilds + 1 + child.val.rebuilds⟩
-      let result ← scanWith build bounded family wordSize next is
+      let result ← scanBudgeted build bounded family wordSize next is
       return ⟨result.val, by
         rw [hlist, State.scan, State.insert]
         simp only [candidate] at hm
@@ -112,7 +112,7 @@ allowance covers the full degree, including declared fixed points. -/
     -- the generator literal reserves 1. A product of sizes a,b reserves
     -- b + (a+b) + (a+b+1) for map, append, and push respectively.
     -- The inner product therefore reserves 6*q+3, the outer 10*q+9.
-    let result ← scanWith recurse limited family (fun _ => 18 * q + 14) initial pairs
+    let result ← scanBudgeted recurse limited family (fun _ => 18 * q + 14) initial pairs
     -- Reword only the top level of the completed suffix. Signed source
     -- references select one retained program, possibly adding an inverse node.
     let words := result.val.seeds.words
@@ -185,7 +185,7 @@ recursive suffix reconstruction. -/
 /-- Construct a checked group within one shared producer budget. Exhaustion has
 no group output, so it cannot supply an ambient order or negative membership.
 Successful output is exactly `ofGenerators S`, with its acceptance proof. -/
-@[expose] def buildWith (budget : Execution.Budget) (S : Array (Perm n)) :
+@[expose] def buildBudgeted (budget : Execution.Budget) (S : Array (Perm n)) :
     Execution.Measured budget {G : Group n // G = ofGenerators S} :=
   Execution.run budget (construct S)
 

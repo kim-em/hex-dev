@@ -30,6 +30,12 @@ the nonnegative square root or `none` for negative input; `sqrt a h` takes a
 proof of nonnegativity. `Repr` emits an ordinary checked Lean expression that
 reconstructs the value.
 
+`signField generator value` wraps `QAdjoin.signApprox` and determines the sign of a `QAdjoin` coordinate in
+its chosen real embedding. It handles constants directly and otherwise uses
+certified interval evaluation, with a finite precision bound derived from an
+integer polynomial satisfied by the value. The companion proves agreement
+with mathematical evaluation and the canonical real-algebraic sign.
+
 `RealAlgebraicPoly.ofArray` normalizes real coefficient arrays.
 `RealAlgebraicPoly.roots` returns `.all` for zero and `.finite` otherwise,
 with distinct increasing roots and positive multiplicities. Inspect `finite?`
@@ -51,7 +57,9 @@ at the separation precision of the product of the minimal polynomials.
 ## Verification
 
 ```sh
-lake build HexRealAlgebraic.Conformance HexRealAlgebraic.ReprChecks hexrealalgebraic_conformance
+lake build HexRealAlgebraic.Conformance HexRealAlgebraic.ReprChecks \
+  HexRealAlgebraic.FieldSignConformance HexRealAlgebraicMathlib.FieldSignConformance \
+  hexrealalgebraic_conformance
 .lake/build/bin/hexrealalgebraic_conformance
 lake build hexrealalgebraic_emit_fixtures
 .lake/build/bin/hexrealalgebraic_emit_fixtures > /tmp/real-algebraic.jsonl

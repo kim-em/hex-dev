@@ -12,9 +12,17 @@ open Lean Elab Command
 
 /-!
 Bridge conformance. Oracle: the Lean kernel; mode: always.
-Covered operation: unconditional `Nat.Prime` proof production from exposed
-ECPP data. The 65-bit fixture exercises an ECPP step and a checked
-Pocklington terminal certificate in a fresh module.
+Covered operations: explicit `ecpp using`, supplied endpoint conversion;
+sibling modules cover compact decoding, both native/PARI suggestion routes,
+source export and process execution. Properties: unconditional primality from
+raw checker acceptance, subject binding and prime-divisor/group correspondence.
+Cases: ordinary 17/65-bit proofs and base-only certificates; frozen 256/512-bit
+replay, composite subjects 35/49 at prime divisors, corrupted witnesses,
+hidden data, compiled replacements, nonclosed subjects and substitution,
+32-node acceptance/33-node rejection, syntax and process exhaustion. Native
+and PARI protocols replay exact generated suggestions and exports in fresh
+modules, reject duplicate exports and replay with search/GP absent. Process
+checks cover cancellation, timeout and descendants retaining pipes.
 -/
 
 example : Nat.Prime 18446744073709551629 := by

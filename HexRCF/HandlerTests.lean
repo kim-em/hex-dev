@@ -121,6 +121,17 @@ private meta def noDispatch (shouldSucceed : Bool) (runtime := false) : TacticM 
 theorem rational : ∀ x : ℝ, x ^ 2 + (1 : ℝ) / 2 > 0 := by
   run_tac noDispatch true
 
+-- Internal rational callers cannot re-enter optional coefficient handlers.
+run_elab do
+  let target ← Term.elabType (← `(term| ∀ x : ℝ, x + Real.pi = x + Real.pi))
+  calls.set #[]
+  let rejected ← try
+    let _ ← proveRationalGoal target
+    pure false
+  catch _ => pure true
+  unless rejected && (← calls.get).isEmpty do
+    throwError "rational-only entry point dispatched a coefficient handler"
+
 /-- info: 'Hex.RCF.HandlerTests.rational' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms rational

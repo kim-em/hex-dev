@@ -1,0 +1,288 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import HexSturm
+import LeanBench
+
+/-! Prepared and literal-transport frontend costs on the bounded Chebyshev
+family `T_n`, degrees 8 through 20, query one, endpoints (-2,2). All preparations, supplied
+certificates and cache validation are outside timed bodies. Degree descent
+has n entries with total O(n^2) stored coefficients. Each ordinary query or
+certificate builds one or two normal chains and performs endpoint Horner
+passes; consecutive divisions have constant degree difference. Replay checks
+linear quotients against consecutive entries, also O(n^2) coefficient work.
+Retargeting performs two degree-n Horner passes. Reusing the count chain costs
+only endpoint passes. Clearing/embedding visit O(n^2) supplied coefficients.
+These are bounded-coefficient family models, not uniform bit-complexity claims.
+-/
+namespace Hex.SturmFrontendBench
+open Hex DensePoly
+
+def head (n : Nat) : ZPoly :=
+  let twoX : ZPoly := ofCoeffs #[0, 2]
+  let rec go : Nat → ZPoly → ZPoly → ZPoly
+    | 0, prev, _ => prev
+    | k + 1, prev, cur => go k cur (twoX * cur - prev)
+  go n 1 (ofCoeffs #[0, 1])
+
+def interval : DyadicInterval := ⟨Dyadic.ofInt (-2), Dyadic.ofInt 2, by decide⟩
+
+structure Input where
+  p : DensePoly Rat
+  domain : Option (Sturm.PreparedDomain Rat)
+  cert : Option (TarskiCertificate Rat Rat Unit)
+  integer : Option IntTarskiCertificate
+  cache : Option (TarskiCertificate.Domain.Checked (Ctx := Unit)
+    (Sturm.orderSign : Rat → Int) (EndpointSigns.ofSign Sturm.orderSign))
+
+instance : Hashable Input where
+  hash i := hash i.p.toArray
+
+def prepare (n : Nat) : Input :=
+  let z := head n
+  let p := ZPoly.toRatPoly z
+  let cert := Sturm.certify Sturm.orderSign () p 1 (.finite (-2)) (.finite 2)
+  { p, domain := Sturm.prepare Sturm.orderSign p (.finite (-2)) (.finite 2), cert,
+    integer := IntTarskiCertificate.certify z 1 interval,
+    cache := cert.bind fun c => TarskiCertificate.Domain.replay? Sturm.orderSign
+      (EndpointSigns.ofSign Sturm.orderSign) c.domain }
+
+-- Consume all translated chain coefficients and scales, not just the answer.
+def chainHash (c : SignedRemainderChain Rat) : UInt64 :=
+  hash (c.chain.map DensePoly.toArray, c.degrees,
+    c.initial.leftScale, c.initial.quotient.toArray, c.initial.rightScale,
+    c.steps.map (fun s => (s.leftScale, s.quotient.toArray, s.rightScale)),
+    c.terminal.map fun (u, q) => (u, q.toArray))
+
+def certHash (c : TarskiCertificate Rat Rat Unit) : UInt64 :=
+  hash (chainHash c.squarefree, chainHash c.remainders,
+    c.lowerSigns, c.upperSigns, c.value)
+
+def integerHash (c : IntTarskiCertificate) : UInt64 :=
+  hash (c.squarefree.chain.map DensePoly.toArray, c.remainders.chain.map DensePoly.toArray,
+    c.remainders.initial.quotient.toArray,
+    c.remainders.steps.map (fun s => (s.leftScale, s.quotient.toArray, s.rightScale)),
+    c.lowerSigns, c.upperSigns, c.value)
+
+def runPrepared (i : Input) : Option Int :=
+  i.domain.map fun d => Sturm.queryPrepared d 1
+
+def runRetarget (i : Input) : Option Bool :=
+  i.domain.map fun d => (d.withEndpoints? (.finite (-3)) (.finite 3)).isSome
+
+def runCount (i : Input) : Option Nat :=
+  Sturm.rootCount Sturm.orderSign i.p (.finite (-2)) (.finite 2)
+
+def runPreparedCount (i : Input) : Option Int :=
+  i.domain.map Sturm.countPrepared
+
+def runCertificate (i : Input) : Option UInt64 :=
+  (Sturm.certify Sturm.orderSign () i.p 1 (.finite (-2)) (.finite 2)).map certHash
+
+def runPreparedCertificate (i : Input) : Option UInt64 :=
+  i.domain.map fun d => certHash (Sturm.certifyPrepared () d 1)
+
+def runCountCertificate (i : Input) : Option UInt64 :=
+  i.domain.map fun d => certHash (Sturm.certifyCountPrepared () d)
+
+def runFieldReplay (i : Input) : Bool :=
+  match i.cert with
+  | none => false
+  | some c => Sturm.check Sturm.orderSign () i.p 1 (.finite (-2)) (.finite 2) c.value c
+
+def runCachedReplay (i : Input) : Bool :=
+  match i.cert with
+  | none => false
+  | some c => Sturm.checkCached Sturm.orderSign () i.p 1 (.finite (-2)) (.finite 2) c.value i.cache c
+
+def runClear (i : Input) : Option UInt64 :=
+  i.cert.map fun c => integerHash (c.clearDenominators i.p 1 interval)
+
+def runEmbed (i : Input) : Option UInt64 := i.integer.map fun c => certHash c.toRat
+
+-- Cost model: normal chains/endpoint passes or visits of their O(n^2) stored coefficients.
+setup_benchmark runPrepared n => n ^ 2
+  with prep := prepare
+  where {
+    paramSchedule := .custom #[8, 10, 12, 16, 20]
+    paramFloor := 8
+    paramCeiling := 20
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 3
+  }
+-- Cost model: two degree-n endpoint evaluations.
+setup_benchmark runRetarget n => n
+  with prep := prepare
+  where {
+    paramSchedule := .custom #[8, 10, 12, 16, 20]
+    paramFloor := 8
+    paramCeiling := 20
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 3
+  }
+-- Cost model: normal chains/endpoint passes or visits of their O(n^2) stored coefficients.
+setup_benchmark runCount n => n ^ 2
+  with prep := prepare
+  where {
+    paramSchedule := .custom #[8, 10, 12, 16, 20]
+    paramFloor := 8
+    paramCeiling := 20
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 3
+  }
+-- Cost model: normal chains/endpoint passes or visits of their O(n^2) stored coefficients.
+setup_benchmark runPreparedCount n => n ^ 2
+  with prep := prepare
+  where {
+    paramSchedule := .custom #[8, 10, 12, 16, 20]
+    paramFloor := 8
+    paramCeiling := 20
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 3
+  }
+-- Cost model: normal chains/endpoint passes or visits of their O(n^2) stored coefficients.
+setup_benchmark runCertificate n => n ^ 2
+  with prep := prepare
+  where {
+    paramSchedule := .custom #[8, 10, 12, 16, 20]
+    paramFloor := 8
+    paramCeiling := 20
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 3
+  }
+-- Cost model: normal chains/endpoint passes or visits of their O(n^2) stored coefficients.
+setup_benchmark runPreparedCertificate n => n ^ 2
+  with prep := prepare
+  where {
+    paramSchedule := .custom #[8, 10, 12, 16, 20]
+    paramFloor := 8
+    paramCeiling := 20
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 3
+  }
+-- Cost model: normal chains/endpoint passes or visits of their O(n^2) stored coefficients.
+setup_benchmark runCountCertificate n => n ^ 2
+  with prep := prepare
+  where {
+    paramSchedule := .custom #[8, 10, 12, 16, 20]
+    paramFloor := 8
+    paramCeiling := 20
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 3
+  }
+-- Cost model: normal chains/endpoint passes or visits of their O(n^2) stored coefficients.
+setup_benchmark runFieldReplay n => n ^ 2
+  with prep := prepare
+  where {
+    paramSchedule := .custom #[8, 10, 12, 16, 20]
+    paramFloor := 8
+    paramCeiling := 20
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 3
+  }
+-- Cost model: normal chains/endpoint passes or visits of their O(n^2) stored coefficients.
+setup_benchmark runCachedReplay n => n ^ 2
+  with prep := prepare
+  where {
+    paramSchedule := .custom #[8, 10, 12, 16, 20]
+    paramFloor := 8
+    paramCeiling := 20
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 3
+  }
+-- Cost model: normal chains/endpoint passes or visits of their O(n^2) stored coefficients.
+setup_benchmark runClear n => n ^ 2
+  with prep := prepare
+  where {
+    paramSchedule := .custom #[8, 10, 12, 16, 20]
+    paramFloor := 8
+    paramCeiling := 20
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 3
+  }
+-- Cost model: normal chains/endpoint passes or visits of their O(n^2) stored coefficients.
+setup_benchmark runEmbed n => n ^ 2
+  with prep := prepare
+  where {
+    paramSchedule := .custom #[8, 10, 12, 16, 20]
+    paramFloor := 8
+    paramCeiling := 20
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 3
+  }
+
+structure QueryInput where
+  domain : Option (Sturm.PreparedDomain Rat)
+  q : DensePoly Rat
+
+instance : Hashable QueryInput where
+  hash i := hash i.q.toArray
+
+def prepareQuery (m : Nat) : QueryInput :=
+  let p : DensePoly Rat := ofCoeffs #[-2, 0, 1]
+  let q : DensePoly Rat := ofCoeffs ((Array.replicate (m + 1) (0 : Rat)).set! 0 1 |>.set! m 1)
+  ⟨Sturm.prepare Sturm.orderSign p (.finite (-2)) (.finite 2), q⟩
+
+def runPreparedHigh (i : QueryInput) : Option Int :=
+  i.domain.map fun d => Sturm.queryPrepared d i.q
+
+def runPreparedCertificateHigh (i : QueryInput) : Option UInt64 :=
+  i.domain.map fun d => certHash (Sturm.certifyPrepared () d i.q)
+
+/- Cost model: for P=X²-2, F=X^m+1, division by the fixed monic
+quadratic stores Θ(m) quotient coefficients with Θ(m)-bit total-width
+progression, hence Θ(m²) big-by-small bit work. Remaining chains have fixed
+degree. This is the same derived initial-reduction family as runRationalHigh;
+prepared querying removes the fixed head/domain work, not that reduction.
+The chosen ladder is its retained signal-valid range, not a new fitted model. -/
+setup_benchmark runPreparedHigh m => m ^ 2
+  with prep := prepareQuery
+  where {
+    paramSchedule := .custom #[131072, 262144, 524288, 1048576]
+    paramFloor := 131072
+    paramCeiling := 1048576
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+/- Cost model: the same Θ(m²) reduction, plus linear traversal of its
+Θ(m²)-bit quotient to consume the literal certificate. No new head chain is
+constructed in this prepared frontend. -/
+setup_benchmark runPreparedCertificateHigh m => m ^ 2
+  with prep := prepareQuery
+  where {
+    paramSchedule := .custom #[131072, 262144, 524288, 1048576]
+    paramFloor := 131072
+    paramCeiling := 1048576
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+end Hex.SturmFrontendBench

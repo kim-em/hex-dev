@@ -9,6 +9,7 @@ public import HexSturmMathlib.Domain
 public import HexRealRootsMathlib.TarskiDomain
 public import HexRealRootsMathlib.TarskiSigns
 public import HexRealRootsMathlib.TarskiCount
+public import HexRealRootsMathlib.ChainCorrespond
 
 public section
 
@@ -179,6 +180,71 @@ theorem query_rat_count (p : DensePoly Rat) (I : DyadicInterval) (value : Int)
   rw [HexRealRootsMathlib.Literal.rootsIn, toPolyℝ_clearDenominators,
     Polynomial.roots_C_mul _ (by exact_mod_cast ne_of_gt (ZPoly.clearDenominators_pos p))] at he
   exact he
+
+/-- On successful root-free finite domains, natural counting agrees with
+positive denominator clearing followed by the existing half-open Sturm count.
+Query success supplies squarefreeness, nonzeroness and the endpoint guards.
+Nonzero constants are included; no degree or squarefreeness hypothesis is
+required from the caller. -/
+theorem rootCount_sturm (p : DensePoly Rat) (I : DyadicInterval) (n : Nat)
+    (result : Sturm.rootCount Sturm.orderSign p
+      (.finite I.lower.toRat) (.finite I.upper.toRat) = some n) :
+    (n : Int) = ZPoly.sturmCount (ZPoly.clearDenominators p).2 I := by
+  classical
+  obtain ⟨value, hvalue, rfl⟩ := Option.map_eq_some_iff.mp result
+  have count := query_rat_count p I value hvalue
+  have nonneg : 0 ≤ value := by
+    rw [count]
+    exact Int.natCast_nonneg _
+  rw [Int.toNat_of_nonneg nonneg]
+  have query := hvalue
+  rw [query_rat_eq, ZPoly.clearDenominators_one] at query
+  have domain : (ZPoly.tarskiQuery (ZPoly.clearDenominators p).2 1 I).isSome := by
+    simp [query]
+  rw [Tarski.integer_domain] at domain
+  obtain ⟨hp0, hsq, _, _⟩ := domain
+  by_cases degree : 1 ≤ (ZPoly.clearDenominators p).2.natDegree
+  · have hsepR : (toPolyℝ (ZPoly.clearDenominators p).2).Separable :=
+      PerfectField.separable_iff_squarefree.mpr hsq
+    have hmap : toPolyℝ (ZPoly.clearDenominators p).2 =
+        (toPolyℚ (ZPoly.clearDenominators p).2).map (algebraMap ℚ ℝ) := by
+      rw [toPolyℝ, toPolyℚ, Polynomial.map_map]
+      congr 1
+    have hsepQ := (Polynomial.separable_map (algebraMap ℚ ℝ)).mp (hmap ▸ hsepR)
+    have squarefree := (squareFreeRat_iff _ hp0).mpr hsepQ.squarefree
+    rw [count, sturmCount_eq_card_roots _ degree squarefree I]
+    have hc : ((ZPoly.clearDenominators p).1 : ℝ) ≠ 0 := by
+      exact_mod_cast ne_of_gt (ZPoly.clearDenominators_pos p)
+    simp only [Literal.rootsIn, Literal.InInterval, toPolyℝ_clearDenominators,
+      Polynomial.roots_C_mul _ hc]
+    congr 1
+    congr 1
+    apply Multiset.filter_congr
+    intro x _
+    rfl
+  · have hdeg : (ZPoly.clearDenominators p).2.natDegree = 0 := by omega
+    have hc : (ZPoly.clearDenominators p).2.degree? = none ∨
+        (ZPoly.clearDenominators p).2.degree? = some 0 := by
+      unfold DensePoly.natDegree at hdeg
+      cases hd : (ZPoly.clearDenominators p).2.degree? with
+      | none => exact Or.inl rfl
+      | some n =>
+        cases n with
+        | zero => exact Or.inr rfl
+        | succ n => simp [hd] at hdeg
+    have hchain : ZPoly.sturmChain (ZPoly.clearDenominators p).2 = #[] := by
+      rcases hc with hc | hc <;> simp only [ZPoly.sturmChain, hc]
+    have hz : ZPoly.sturmCount (ZPoly.clearDenominators p).2 I = 0 := by
+      simp only [ZPoly.sturmCount, hchain, Hex.sturmVarAt, List.map_nil,
+        Hex.signVar, List.filter_nil, Hex.signVar.go, Nat.cast_zero, sub_zero]
+    rw [hz]
+    have he := Tarski.integer_query_count _ I value query
+    have hd : (toPolyℝ (ZPoly.clearDenominators p).2).natDegree = 0 := by
+      rw [natDegree_toPolyℝ, hdeg]
+    have hr : (toPolyℝ (ZPoly.clearDenominators p).2).roots = 0 := by
+      rw [Polynomial.eq_C_of_natDegree_eq_zero hd, Polynomial.roots_C]
+    simpa only [Literal.rootsIn, hr, Multiset.filter_zero, Multiset.card_zero,
+      Nat.cast_zero] using he
 
 /-- Rational query-one counting agrees with the open distinct-root sum. -/
 theorem query_rat_rootSum (p : DensePoly Rat) (I : DyadicInterval) (value : Int)

@@ -772,7 +772,15 @@ Set `E₀ = E.normalizeEval` (remove powers of `X` and content) and
 least `1/B`. The eliminant is nonzero even for the zero element; the early
 coordinate test handles that case before removing zero roots.
 
-Set `C = Disambiguation.evalMajorant f.coeffs PolyQuot.ratAbsCeil p`.
+Two finite interval evaluators satisfy this contract. `signApprox` may use
+`PolyQuot.approx`, whose guard bits account for Horner amplification before
+the requested output precision, or the direct majorant-first evaluator below.
+Either may first read the stored enclosure and try a fixed refinement precision.
+Each early return requires an enclosure wholly on one side of zero. These
+probes do not replace the eliminant-derived endpoint or its success proof.
+
+For the direct evaluator, set
+`C = Disambiguation.evalMajorant f.coeffs PolyQuot.ratAbsCeil p`.
 At input precision `k`, refine the generator to `k+1`, round each rational
 coefficient to a dyadic ball of radius at most `2^-k`, and use `evalRatBall`
 with Horner ball arithmetic. Require `signBall_bound`: the ball contains the
@@ -790,8 +798,10 @@ an enclosure wholly on one side of zero, never just a nonzero centre.
 The schedule has at most `P+1` evaluations, each using the explicit refinement
 fuel above; a single evaluation at `P` is also a valid benchmark arm. The
 existing `PolyQuot.approx` and `approx_radius` provide an alternative baseline:
-request output precision `ceilLog2 (3*B) + 1`, including that API's internal
-`approxGuardBits`. The majorant-first arm is specified to compare the direct
+request output precision at least `ceilLog2 (3*B) + 1`, including that API's
+internal `approxGuardBits`. In particular, `evalDisambiguationLimit E 1` is
+sufficient: the majorant is one for the guarded output-radius bound, not for
+unguarded Horner evaluation. The majorant-first arm is specified to compare the direct
 input-precision budget with those existing guard bits; it is not needed merely
 to obtain a sign algorithm. Phase 4 must count the actual generator precision
 and setup of each arm before claiming the new route saves work.
@@ -891,6 +901,8 @@ def powers? (gamma : AlgebraicNumber) (last : Nat) :
 def trace? (ambient : Nat) (a : AlgebraicNumber) : Option Rat
 def coordinates? (gamma a : AlgebraicNumber)
     (powers : Array AlgebraicNumber) : Option (QAdjoin gamma)
+def presentationAt? (generator : AlgebraicNumber) (coefficients : Array AlgebraicNumber) :
+    Option Presentation
 def presentation? (coefficients : Array AlgebraicNumber) :
     Option Presentation
 ```
@@ -919,9 +931,21 @@ and returns `(ambient / m)` times the conjugate sum
 power-basis coordinate of `a` through the nondegenerate trace pairing (Gram
 matrix of power traces against the traces of `a * gamma^k`), then validates
 the recovered coordinate by canonical algebraic equality before returning it.
-`presentation?` composes the above: find a primitive generator, take its
-powers up to `2 * degree - 2`, embed every coefficient, and return the
-validated fixed-field `Presentation`.
+`presentationAt? gamma coefficients` shares the proposed generator's powers
+up to `2 * degree gamma - 2` and checks every coefficient through
+`coordinates?`. It returns a presentation only if all selected values are
+recovered exactly. `presentation?` first tries the first nonzero coefficient
+as generator through this check, first rejecting the proposal if any
+coefficient degree does not divide the generator degree. If it fails, `primitive?` supplies the
+generator for a second `presentationAt?` call. A proposal rejected after
+coordinate recovery adds at most one such checked presentation attempt to
+the unchanged primitive search and final coordinate phase. Empty and all-zero arrays
+return `none`; public root and collection APIs handle their separate zero
+conventions before calling this producer. When the first coefficient's field
+contains all coefficients, the old maximum-degree search retained that same
+first coefficient (shift zero wins degree ties), so the chosen generator is
+unchanged. The fallback retains the bounded primitive search and selected
+embedding checks.
 
 ## Totalization
 

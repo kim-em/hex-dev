@@ -31,6 +31,16 @@ def Rebuilt.enlargement {B : Type} [Lean.Grind.Field B] [DecidableEq B]
     (_root_.cast (congrArg Context.Value (rebuilt.result.cast_spec target_eq).1.symm)
       (rebuilt.parameter base))
 
+/-- The packet retains the actual conversion of its rebuilt suffix. -/
+theorem Rebuilt.enlargement_conversion {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    {suffix : Suffix (Context.base base)} {source : Context registry}
+    (rebuilt : Rebuilt (Conversion.infinitesimal base) suffix)
+    (target_eq : suffix.context = source) :
+    (rebuilt.enlargement base target_eq).conversion = rebuilt.result.cast target_eq := by
+  unfold Rebuilt.enlargement
+  rfl
+
 /-- Rebuild once and return both the conversion and its new parameter. -/
 @[expose] def Origin.enlargeWithParameter? {source : Context registry} (origin : Origin source) :
     Option (Enlargement source) := by

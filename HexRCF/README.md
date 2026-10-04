@@ -102,6 +102,11 @@ checks frozen bound/subject/version bindings and coverage of used providers,
 then validates enclosure, guard and final proofs in the ordinary kernel.
 Nonseparating bounds leave guards unresolved. This mode is bounded proof search,
 not a complete named-constant field solver.
+The [named-constant regressions](../conformance/HexRCF/NamedConstants.lean)
+and manual supply fixed bounds from existing Mathlib π/e theorems, then prove
+the required inequalities, existential witness and guarded inverse. Separate
+[coarse-bound tests](../conformance/HexRCF/CoarseConstants.lean) retain refusal
+when the supplied evidence leaves a divisor sign unresolved.
 
 `Hex.RCF.RealCoefficients.Reify.prepare` produces the shared source schema,
 fixed coefficient valuation and equivalence to the original goal. The optional
@@ -117,6 +122,20 @@ Closed arithmetic, natural powers and division for these inputs and positive
 natural square-root aliases compile into checked common-field coordinates.
 Every original divisor is checked before target cell search. Quotient replay
 checks a frozen multiplication identity without repeating inverse search.
+Sources in one selected field retain its generator and power basis. Quotation
+reuses an authenticated source irreducibility proof by kernel-checked transport from its original polynomial to the literal
+computed presentation. The
+[quartic constructor](../conformance/HexRCF/CertificationInputs.lean) and
+[fresh-module proofs](../conformance/HexRCF/CertificationProofs.lean) exercise
+a supplied multi-prime certificate beyond the frontend witness languages.
+The certificate construction and fresh goal proofs use ordinary public imports.
+For a new common defining polynomial, quotation also tries the owner's public
+multi-prime certificate API. These certificate languages do not cover every
+irreducible common defining polynomial; refusal need not disappear with a
+larger search bound and does not imply reducibility.
+The fresh regression also proves a goal combining a selected root of
+`X³ − 4X + 2` with `√37`, creating a new degree-six defining polynomial
+certified through the multi-prime route.
 It binds the original isolation square to the literal selected-root replay, preserving the
 chosen embedding. Elaboration executes canonicalization; the kernel reduces
 the original polynomial and square identities, rather than canonicalization.
@@ -129,7 +148,11 @@ The fixed-field algebraic backend has a proof-backed complete certificate
 producer: it reduces repeated roots, refines complete root intervals, records
 all required literal signs and evaluates the shared formula on ordinary real
 cells. Compiled decision laws cover both verdicts; only a true verdict with
-ordinary-kernel replay produces a goal proof. The bounded builder remains
+ordinary-kernel replay produces a goal proof. Complete root proposals use the
+existing selected number field, with proved source-polynomial correspondence,
+sorted coverage and cofinal separation. The complete producer caches that root
+list across precision attempts; both builders prepare rational coordinate-sign
+queries once. The bounded builder remains
 available. The tactic also bounds direct bisection and fallback refinement
 through `rcf.algebraic.directDepth` and `rcf.algebraic.maxDoublings`, with
 terminal exhaustion and replay diagnostics. This does not give total

@@ -421,6 +421,14 @@ replay plus final theorem axiom sets. Planned foundations must stay visibly
 separate from existing declarations; neither `axiom`, `native_decide` nor
 unfinished core proofs may substitute for the correspondence.
 
+`conformance/HexSignDetMathlib/FieldConformance.lean` instantiates each
+producer correctness theorem (selected signs, completion, query handles, root
+coverage, tables, comparison, absence, refinement, re-encoding, conversion and
+root transport along order embeddings) once at the actual cubic field ℚ(∛2)
+with its selected real embedding, or at a noninjective coefficient carrier
+without a field instance, and checks their axiom sets. The corresponding
+computations run in hex-sign-det's compiled `hexsigndet_field_checks`.
+
 Required positive and adversarial cases include:
 
 - `P=X²-1`, `Q=[X,X-1]`: exactly `(-1,-1)` and `(1,0)`, count one each.

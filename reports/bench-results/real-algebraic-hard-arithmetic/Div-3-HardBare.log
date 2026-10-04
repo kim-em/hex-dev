@@ -1,0 +1,8 @@
+Hex.RealAlgebraicBench.runHardBareDiv    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6d78bf3-dirty, 2026-10-02T03:58:13Z, host=chungus2
+  repeat 0  40.283 ms
+  median: 40.283 ms    min: 40.283 ms    max: 40.283 ms
+  hash: all repeats agree
+  observed hash: 0xf93e953cb46d6203
+  peak RSS: 68_276 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Div-3-HardBare.json

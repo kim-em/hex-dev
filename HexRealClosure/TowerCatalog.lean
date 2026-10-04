@@ -35,7 +35,7 @@ theorem Context.read_stale (context : Context registry) (raw : Serialized)
     (h : raw.binding ≠ context.signature) :
     context.read raw = .error "context binding mismatch" := by simp [Context.read, h]
 
-@[expose] def Context.Poly (context : Context registry) : Type := DensePoly context.Value
+@[expose, reducible] def Context.Poly (context : Context registry) : Type := DensePoly context.Value
 
 @[expose] def Context.writePoly (context : Context registry) (p : context.Poly) : Serialized :=
   ⟨context.signature, Codec.poly context.codec p⟩

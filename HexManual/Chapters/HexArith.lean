@@ -34,7 +34,7 @@ native-word code. Two single-word modular reducers,
 {name}`barrettReduce` and {name}`montgomeryReduce`, each come
 with a `Nat`-level model stating the arithmetic before the machine-word
 encoding is pinned down. {name}`HexArith.extGcd` is the extended
-Euclidean algorithm in three flavours ({name}`Nat`, GMP-backed {name}`Int`, and
+Euclidean algorithm in three flavours ({name}`Nat`, {name}`Int`, and
 {name}`UInt64`), and {name}`Hex.Nat.isPrimeTrial` is a trial-division
 primality test that produces a primality witness without `native_decide`
 or a hardcoded prime list.

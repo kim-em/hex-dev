@@ -1,0 +1,47 @@
+from pathlib import Path
+import hashlib,json,os,platform,subprocess,sys,time,shutil
+sys.path.insert(0,'scripts/bench')
+from cpu_lease import cpu_lease
+root=Path.cwd()
+out=root/'reports/bench-results/sturm-external-comparisons'
+out.mkdir(parents=True,exist_ok=True)
+exe=root/'.lake/build/bin/hexsturm_bench'
+cpu,lease=cpu_lease()
+os.sched_setaffinity(0,{cpu})
+def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+paths=['bench/HexSturm/External.lean','bench/HexSturm/Bench.lean','scripts/oracle/sturm_bench.py','scripts/oracle/real_algebraic_qqbar.py','Hex/BenchOracle/Flint.lean']
+meta={'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'dirty_before_outputs':bool(subprocess.check_output(['git','status','--porcelain'],text=True)),'cpu':cpu,'host':platform.node(),'platform':platform.platform(),'load_before':os.getloadavg(),'interpreter':os.environ['HEX_FLINT_BENCH_PYTHON'],'library_path':os.environ.get('LD_LIBRARY_PATH',''),'source_sha256':{p:digest(root/p) for p in paths},'executable_sha256':digest(exe),'classification':'Informational complete-query fixed comparisons and protocol controls; no complexity or absolute-budget admission.','boundary':'Inputs and backend contexts prepared; root API, filtering, exact evaluation, sign sum, temporary cleanup and persistent JSON transport timed. One untimed warmup per child. No driver root cache; backend contexts may retain internal caches. Fixed valid-domain inputs only, no literal certificate/proof comparison.','schedule':'Four adjacent alternating AB/BA blocks for each native/external fixture pair, one fixed repeat per arm. No quiet-core test or discarded completed sample.','arms':[]}
+for path in paths:(out/(path.replace('/','-')+'.txt')).write_bytes((root/path).read_bytes())
+persistent=Path('/home/kim/.local/state/hex/issue-10577-profiles/binaries')
+persistent.mkdir(parents=True,exist_ok=True)
+retained=persistent/('hexsturm_bench-'+meta['executable_sha256'])
+if not retained.exists():shutil.copyfile(exe,retained)
+meta['retained_executable']=str(retained)
+start=time.monotonic()
+(out/'metadata.json').write_text(json.dumps(meta,indent=2)+'\n')
+for fixture in ['Count','Mixed','Negative','Common']:
+ for comparator in ['Flint','Z3']:
+  for block in range(4):
+   order=['Native',comparator] if block%2==0 else [comparator,'Native']
+   for arm in order:
+    stem=f'{fixture}-{comparator}-{block}-{arm}'
+    cmd=[str(exe),'run','Hex.SturmExternalBench.run'+arm+fixture,'--repeats','1','--export-file',str(out/(stem+'.json'))]
+    before=time.monotonic()
+    with (out/(stem+'.log')).open('w') as log:result=subprocess.run(cmd,stdout=log,stderr=subprocess.STDOUT)
+    meta['arms'].append({'fixture':fixture,'comparator':comparator,'block':block,'order':order,'arm':arm,'command':cmd,'exit_code':result.returncode,'elapsed_seconds':time.monotonic()-before})
+    (out/'metadata.json').write_text(json.dumps(meta,indent=2)+'\n')
+    if result.returncode:raise RuntimeError('comparison arm failed; evidence retained')
+for comparator in ['Flint','Z3']:
+ cmd=[str(exe),'run','Hex.SturmExternalBench.run'+comparator+'Protocol','--export-file',str(out/(comparator+'-protocol.json'))]
+ with (out/(comparator+'-protocol.log')).open('w') as log:result=subprocess.run(cmd,stdout=log,stderr=subprocess.STDOUT)
+ meta['arms'].append({'purpose':'protocol control','comparator':comparator,'command':cmd,'exit_code':result.returncode})
+ (out/'metadata.json').write_text(json.dumps(meta,indent=2)+'\n')
+ if result.returncode:raise RuntimeError('protocol control failed; evidence retained')
+meta['elapsed_seconds']=time.monotonic()-start
+meta['load_after']=os.getloadavg()
+meta['source_sha256_after']={p:digest(root/p) for p in paths}
+meta['executable_sha256_after']=digest(exe)
+meta['tracked_sources_unchanged']=meta['source_sha256']==meta['source_sha256_after'] and meta['executable_sha256']==meta['executable_sha256_after']
+meta['generated_output_scope']='Harness dirty flag covers generated evidence outputs, with independently matching tracked source and executable hashes.'
+(out/'metadata.json').write_text(json.dumps(meta,indent=2)+'\n')
+print(json.dumps({'completed_arms':len(meta['arms']),'cpu':cpu,'elapsed_seconds':meta['elapsed_seconds'],'tracked_sources_unchanged':meta['tracked_sources_unchanged']}))

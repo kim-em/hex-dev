@@ -3,19 +3,27 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
+module
 
-import HexECPP.Cert
-import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
-import Mathlib.AlgebraicGeometry.EllipticCurve.NormalForms
-import Mathlib.Algebra.Field.ZMod
-import Mathlib.Data.ZMod.Basic
+public import HexECPP.Cert
+public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
+public import Mathlib.AlgebraicGeometry.EllipticCurve.NormalForms
+public import Mathlib.Algebra.Field.ZMod
+public import Mathlib.Data.ZMod.Basic
 
 /-!
-# Reduction to prime fields
+# Interpreting certificate arithmetic over finite fields
 
-An accepted arithmetic step can be interpreted over every prime divisor of
-its candidate. These lemmas transport its modular residues into `ZMod p`.
+The integer `n` in a primality certificate need not yet be known prime.
+For each prime divisor `p` of `n`, verified modular inverses remain inverses
+in `ZMod p`, and the curve remains nonsingular. We interpret the supplied
+coordinates as Mathlib elliptic curve points and prove that every accepted
+addition agrees with the group law. A finite starting point stays different
+from the identity after reduction. These facts justify the point-order
+argument used to prove `n` prime.
 -/
+
+@[expose] public section
 
 namespace Hex.ECPP
 
@@ -25,7 +33,8 @@ open WeierstrassCurve
 def shortCurve (p a b : ℕ) : WeierstrassCurve (ZMod p) :=
   ⟨0, 0, 0, a, b⟩
 
-instance shortCurve_isShortNF (p a b : ℕ) : (shortCurve p a b).IsShortNF :=
+/-- The checker's short curve has zero coefficients `a₁`, `a₂` and `a₃`. -/
+instance shortCurveIsShortNF (p a b : ℕ) : (shortCurve p a b).IsShortNF :=
   ⟨rfl, rfl, rfl⟩
 
 /-- The checker coprimality guard excludes characteristics two and three. -/
@@ -40,11 +49,14 @@ theorem prime_divisor_gt_three {p n : ℕ} (prime : p.Prime) (hp : p ∣ n)
   · obtain ⟨k, rfl⟩ := hp
     rcases hmod with hmod | hmod <;> omega
 
+/-- Reduction modulo a multiple of `p` preserves the residue in `ZMod p`. -/
 theorem cast_mod {p n : ℕ} (hp : p ∣ n) (t : ℕ) :
     ((t % n : ℕ) : ZMod p) = t := by
   exact (ZMod.natCast_eq_natCast_iff _ _ p).mpr
     ((Nat.mod_modEq t n).of_dvd hp)
 
+/-- The checker's natural modular subtraction is field subtraction after
+reduction at any prime divisor. -/
 theorem cast_modSub {p n : ℕ} (hp : p ∣ n) (hn : 0 < n) (a b : ℕ) :
     ((modSub n a b : ℕ) : ZMod p) = (a : ZMod p) - b := by
   have hle : b % n ≤ a % n + n := by

@@ -9,6 +9,7 @@ module
 public import HexRealAlgebraicMathlib.Basic
 public import HexRealAlgebraicMathlib.Field
 public import HexRealAlgebraicMathlib.Order
+public import HexRealAlgebraicMathlib.FieldSign
 public import HexRealAlgebraicMathlib.Laws
 public import HexRealAlgebraicMathlib.Instances
 public import HexRealAlgebraicMathlib.Algebraic

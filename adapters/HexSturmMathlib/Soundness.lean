@@ -114,6 +114,39 @@ theorem query_sound (p q : DensePoly E) (a b : Endpoint E) (value : Int)
   exact (check_sound f hz h1 ha hs hm hnat sign hsign () _ _ _ _ _ _ checked).2
 
 include h1 ha hs hm hnat hsign hn hi in
+/-- Successful ordinary queries establish their domain and root-sum value.
+The value-only `query_sound` projection remains available to existing callers. -/
+theorem query_spec (p q : DensePoly E) (a b : Endpoint E) (value : Int)
+    (result : Sturm.query sign p q a b = some value) :
+    Domain f hz p a b ∧
+      value = Tarski.rootSum (interpret f hz p) (interpret f hz q) (a.map f) (b.map f) := by
+  have hsg := sign_spec f sign hsign
+  refine ⟨(query_isSome f hz ha hs hm sign (fun x => (hsg x).2.1)
+    (fun x => (hsg x).2.2.1) h1 hn hi hnat (fun x => (hsg x).1) p q a b).mp ?_,
+    query_sound f hz h1 ha hs hm hnat sign hsign hn hi p q a b value result⟩
+  simp only [result, Option.isSome_some]
+
+include h1 ha hs hm hnat hsign hn hi in
+/-- The complete ordinary query contract: a value is returned exactly on its
+lawful domain, and it is the signed sum over the distinct interval roots. -/
+theorem query_iff (p q : DensePoly E) (a b : Endpoint E) (value : Int) :
+    Sturm.query sign p q a b = some value ↔
+      Domain f hz p a b ∧
+        value = Tarski.rootSum (interpret f hz p) (interpret f hz q) (a.map f) (b.map f) := by
+  constructor
+  · exact query_spec f hz h1 ha hs hm hnat sign hsign hn hi p q a b value
+  · rintro ⟨domain, value_eq⟩
+    have hsg := sign_spec f sign hsign
+    have accepted := (query_isSome f hz ha hs hm sign (fun x => (hsg x).2.1)
+      (fun x => (hsg x).2.2.1) h1 hn hi hnat (fun x => (hsg x).1) p q a b).mpr domain
+    cases result : Sturm.query sign p q a b with
+    | none => simp [result] at accepted
+    | some actual =>
+      have actual_eq := query_sound f hz h1 ha hs hm hnat sign hsign hn hi p q a b actual result
+      have equal : actual = value := actual_eq.trans value_eq.symm
+      simpa only [equal] using result
+
+include h1 ha hs hm hnat hsign hn hi in
 /-- A successful query of one is exactly the number of distinct interval roots. -/
 theorem query_count (p : DensePoly E) (a b : Endpoint E) (value : Int)
     (result : Sturm.query sign p 1 a b = some value) :

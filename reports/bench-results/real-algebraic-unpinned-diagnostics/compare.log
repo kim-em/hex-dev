@@ -1,0 +1,27 @@
+env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=4f44b80, 2026-10-02T01:53:47Z, host=chungus2
+Hex.RealAlgebraicBench.runCompare    [fixed] repeats=4
+  repeat 0  450.000 ns  (×2^12, total 1.844 ms)
+  repeat 1  460.000 ns  (×2^12, total 1.888 ms)
+  repeat 2  449.000 ns  (×2^12, total 1.842 ms)
+  repeat 3  442.000 ns  (×2^12, total 1.813 ms)
+  median: 450.000 ns    min: 442.000 ns    max: 460.000 ns
+  hash: all repeats agree
+  observed hash: 0x0
+  peak RSS: 68_204 kB..68_820 kB (across 4 ok repeat(s))
+  ‼ median wall time below 1µs — possibly a compile-time-folded constant rather than work. If the workload is genuinely tiny this is fine; otherwise thread inputs through runtime state (e.g. `IO.Ref`, disk) so the body isn't closed at compile time. See issue #54.
+
+Hex.RealAlgebraicBench.runCompareExact    [fixed] repeats=4
+  repeat 0  40.704 µs  (×2^5, total 1.303 ms)
+  repeat 1  41.185 µs  (×2^5, total 1.318 ms)
+  repeat 2  41.191 µs  (×2^5, total 1.318 ms)
+  repeat 3  41.629 µs  (×2^5, total 1.332 ms)
+  median: 41.191 µs    min: 40.704 µs    max: 41.629 µs
+  hash: all repeats agree
+  observed hash: 0x0
+  peak RSS: 68_200 kB..68_816 kB (across 4 ok repeat(s))
+
+relative median (baseline = Hex.RealAlgebraicBench.runCompare, the first CLI argument):
+  Hex.RealAlgebraicBench.runCompare: 1.000× (450.000 ns)
+  Hex.RealAlgebraicBench.runCompareExact: 91.536× (41.191 µs)
+agreement: all functions agree on output
+exported to /tmp/issue-10577-compare.json

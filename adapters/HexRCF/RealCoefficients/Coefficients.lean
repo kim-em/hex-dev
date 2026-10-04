@@ -16,6 +16,15 @@ public section
 
 namespace Hex.RCF.RealCoefficients.Coefficients
 
+/-- A literal array length bounds coordinate degree without evaluating its
+rational coefficients. Quotation still checks the supplied integer bound. -/
+theorem degree_bound (data : Array Rat) (p : ZPoly)
+    (bound : data.size - 1 < p.natDegree) :
+    (DensePoly.ofCoeffs data).natDegree < p.natDegree := by
+  rw [DensePoly.natDegree_eq_size_sub_one]
+  exact Nat.lt_of_le_of_lt
+    (Nat.sub_le_sub_right (DensePoly.size_ofCoeffs_le data) 1) bound
+
 /-- Convert a fixed-field result while retaining its generator's real embedding.
 Arithmetic producing `value` remains the existing `QAdjoin` arithmetic. -/
 @[expose] def ofField (generator : RealAlgebraicNumber)

@@ -691,7 +691,8 @@ The four routes are `relabel`, `witness`, `root` and `certs`, and
 A positive goal takes the `relabel` route when the right-hand graph is
 syntactically a relabelling of the left-hand one, closing through
 `isomorphic_relabel` with no kernel evaluation and no search. Otherwise
-it takes the `witness` route: the compiled `findIso` search returns a
+it takes the `witness` route: the `findIso` search, run in Lean's interpreter at
+elaboration time, returns a
 literal forward permutation under `maxSearchNodes`, and the tactic ties
 each side's adjacency, colouring and the permutation to list literals
 and closes the goal through `Kernel.checkIso` and

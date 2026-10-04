@@ -1,0 +1,370 @@
+{
+  "family": "real-polynomial-roots",
+  "function": "Hex.RealAlgebraicBench.runRoots",
+  "parameter": 0,
+  "cpu": 43,
+  "load": [
+    14.533203125,
+    12.791015625,
+    12.58642578125
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/tmp/issue-10577-perf/real-polynomial-roots",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex10577-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/issue-10577-perf/real-polynomial-roots/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_PROFILE_KERNEL=1",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10577-perf/real-polynomial-roots/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "profile",
+        "Hex.RealAlgebraicBench.runRoots",
+        "--param",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/issue-10577-perf/real-polynomial-roots/samply.json.gz",
+        "/tmp/issue-10577-perf/real-polynomial-roots/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/issue-10577-perf/real-polynomial-roots/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/issue-10577-perf/real-polynomial-roots/samply.json.gz",
+        "--perf-script",
+        "/tmp/issue-10577-perf/real-polynomial-roots/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/real-polynomial-roots/spawn-anchor.json",
+        "--output",
+        "/tmp/issue-10577-perf/real-polynomial-roots/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "/tmp/hex10577-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/issue-10577-perf/real-polynomial-roots/normalized.json.gz",
+        "--sidecar",
+        "/tmp/issue-10577-perf/real-polynomial-roots/timed-1857058.jsonl",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/real-polynomial-roots/spawn-anchor.json",
+        "--out",
+        "/tmp/issue-10577-perf/real-polynomial-roots/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/real-polynomial-roots/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/issue-10577-perf/real-polynomial-roots/filtered.json.gz",
+        "--output",
+        "/tmp/issue-10577-perf/real-polynomial-roots/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/issue-10577-perf/real-polynomial-roots/filtered.json.gz",
+        "--symbols",
+        "/tmp/issue-10577-perf/real-polynomial-roots/symbols.json",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/real-polynomial-roots/diagnostics.json",
+        "--thread",
+        "hexrealalgebrai",
+        "--top",
+        "20",
+        "--output",
+        "reports/bench-results/prerequisite-readiness-profiles/real-polynomial-roots.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "c0d6f210a80e61e5ab761dc4cd9f318f38fa6ed64d5cda7a7e853c09a194f5ef",
+  "commit": "4f44b806075ae95ad1b3f05c55e6c1ad5bd3f423",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1857058,
+    "bench_thread_name": "hexrealalgebrai",
+    "bench_thread_tid": "1857061",
+    "regions_total": 65,
+    "total_timed_ms": 2005.243907,
+    "expected_samples_bench_thread": 2003.2,
+    "retained_samples_bench_thread": 2001,
+    "rejected_samples_bench_thread": 34,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1790907978590417319,
+    "spawn_anchor_mono_ns": 317970351027041,
+    "sidecar_mono_anchor_ns": 317970560430971,
+    "samply_meta_start_time_ms": 1790907978625.6877,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.9932529926300049,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.9932529926300049,
+      "raw_max_residual_ms": 1.053164005279541,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 65,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 2001,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.9932529926300049,
+          "boundary_residual_raw_max_ms": 1.053164005279541,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.0019990004997501236,
+          "leaf_function_support_size": 737,
+          "comparison_samples": 2001,
+          "exchanged_samples": 10,
+          "exchanged_fraction": 0.004997501249375313,
+          "sampling_noise_allowance": 0.03640431834668951,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.0029188413312141027,
+          "leaf_function_support_size": 735,
+          "comparison_samples": 1995,
+          "exchanged_samples": 6,
+          "exchanged_fraction": 0.0030075187969924814,
+          "sampling_noise_allowance": 0.02824506918947103,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 2001,
+          "top_leaf_functions": [
+            {
+              "function": 234,
+              "name": "0x4b52fd1",
+              "samples": 117
+            },
+            {
+              "function": 102,
+              "name": "0x4b30c7c",
+              "samples": 46
+            },
+            {
+              "function": 160,
+              "name": "0xae8e9",
+              "samples": 45
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 2001,
+          "top_leaf_functions": [
+            {
+              "function": 234,
+              "name": "0x4b52fd1",
+              "samples": 117
+            },
+            {
+              "function": 102,
+              "name": "0x4b30c7c",
+              "samples": 45
+            },
+            {
+              "function": 160,
+              "name": "0xae8e9",
+              "samples": 45
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 1995,
+          "top_leaf_functions": [
+            {
+              "function": 234,
+              "name": "0x4b52fd1",
+              "samples": 117
+            },
+            {
+              "function": 102,
+              "name": "0x4b30c7c",
+              "samples": 45
+            },
+            {
+              "function": 160,
+              "name": "0xae8e9",
+              "samples": 45
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "5e3c47b09e005a4ef054d69862c487f90993f0272921226a4e61065557b61532",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "9d50a21acffcaf62252636d3450b27156c1af44b1cbb31404e948bf52dec17ac",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "6089593075e45d485fedcd05c8c48acadf512a484ff2866d80ef4f3b136fcde5",
+    "perf.data": "44d7b01bbf95726cc8f809c3278f444007aef338cbcafb52fae9445b177d0df6",
+    "timed-1857058.jsonl": "8326611e30406f37f3e0fa99ed0047bc7863cf06c4d661879bd4106a44a373b6",
+    "5.stdout": "f9f2cec6e8570a1fbc48a56cc42684b1b5bfa61a3a24ed73ef65e3e22099e1cb",
+    "5.stderr": "849cf069146b9301dbed8bc7ef42c94ddd54bec38c2e47232544d562c254b752",
+    "samply.json.gz": "0a2401ae747523e8fd1cef28f30ce5e9d4ee4b277f7164fad9845ed18f01275b",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "7.stdout": "4f3dac5764ca224d24c141579b72f5e25457a00f633589a44c6cc8467d800ee5",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "4f3dac5764ca224d24c141579b72f5e25457a00f633589a44c6cc8467d800ee5",
+    "normalized.json.gz": "2d2484234949940708d0d05d6cdbb1681beee40901a48e5e2e0db24389f33e1c",
+    "8.stdout": "f1665e5e65bf2ab4e529e6490234a6f8369228bdab2d7a733a28f581e3fe705f",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "6dc64929ded8bba858bb02403d7f1605074b4d91fef5a85ca1d64ffa4d7625a6",
+    "diagnostics.json": "2e8e344db65b6ab8e43d66a339e667a1eed20d1f846f4f69c715849f498f7cc4",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "1b8a29a3948f6fde9b1a1b204d27e60a29ebe9d2dbfaf1a3997fef7cd1b4132d",
+    "symbols.json": "c5d4d13ee256cb2d0dc334f7fbb1001b4da651f8163b8d9342a3e1fd4217927b",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

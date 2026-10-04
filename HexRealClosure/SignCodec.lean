@@ -8,6 +8,7 @@ module
 public import HexRealClosure.SignFacts
 public import HexRealClosure.AlgebraicCodec
 public import HexSignDet.Codec.Bytes
+public import HexSignDet.Codec.Coefficients
 
 public section
 
@@ -161,6 +162,36 @@ theorem Element.signCodec_roundtrip (value : ValueCodec E)
       simpa only [Element.polynomial, hs] using hv
     simp [Element.signCodec, Element.codec, hs, Codec.Json.getArr_arr,
       Codec.read_poly_of value p.polynomial hp, hr, bind, Except.bind, pure, Except.pure]
+
+/-- Literal child sign requests in first-occurrence order. Repeated keys are
+shared; equal values stored as different polynomials remain different keys. -/
+@[expose] def Element.signKeys (coefficients : List (Element context)) : List (DensePoly E) :=
+  (coefficients.map Element.polynomial).eraseDups
+
+/-- All predecessor coefficients stored by those algebraic literals. This
+does not collect the additional signs needed by arithmetic during replay. -/
+@[expose] def Element.predecessors (coefficients : List (Element context)) : List E :=
+  coefficients.flatMap (fun a => Codec.Coefficients.poly a.polynomial)
+
+/-- Finite proved child keys and finite predecessor coverage establish a
+roundtrip for every requested literal, without a global decoder law. -/
+theorem Element.signCodec_covers (value : ValueCodec E) (facts : List (SignFact context))
+    (coefficients : List (Element context))
+    (hv : value.Covers (Element.predecessors coefficients))
+    (keys : ∀ p ∈ Element.signKeys coefficients, ∃ f ∈ facts, f.polynomial = p) :
+    (Element.signCodec value facts).Covers coefficients := by
+  simp only [Element.predecessors, ValueCodec.covers_flatMap] at hv
+  intro a ha
+  apply Element.signCodec_roundtrip
+  · intro x hx
+    exact hv a ha x (by simpa [Codec.Coefficients.poly] using hx)
+  · by_cases hz : a = 0
+    · exact Or.inl hz
+    · have mem : a.polynomial ∈ Element.signKeys coefficients := by
+        simpa only [Element.signKeys, List.mem_eraseDups] using
+          (List.mem_map.mpr ⟨a, ha, rfl⟩ : a.polynomial ∈ coefficients.map Element.polynomial)
+      obtain ⟨f, hf, hp⟩ := keys a.polynomial mem
+      exact Or.inr (SignFact.read_of_key facts a hz f hf hp)
 
 /-- The actual byte printer/parser preserves covered values under its existing
 lexical policy. Finite sign facts do not need to cover every possible element. -/
