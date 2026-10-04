@@ -306,7 +306,8 @@ these inclusive figures are not added. The raw perf/samply data, sidecar,
 source snapshots, executed collector and exact executable remain in the
 persistent location recorded by the manifest. The [summary](bench-results/prerequisite-current-root-profile-d6cebc4de/rational-roots.summary.json)
 identifies the dominant refinement and Taylor work. This supplies current
-representative attribution for `real-polynomial-roots`; it does not establish
+attribution for the rational-coefficient `X^8 - 2` family member; it does not
+establish
 operation-specific scientific admission or a portable budget.
 
 [Historical representative attribution](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)
@@ -316,8 +317,9 @@ sensitivity checks pass. Root isolation has 91.88% inclusive share, refinement
 90.61%, and allocation 42.38% self share. Raw perf/samply data, kernel sidecars,
 symbols and checksums are retained in persistent storage. This retains attribution for its recorded source before certified parent
 isolation reuse; it supplies no current-operation budget or replacement for
-completed timing samples. The parent-reuse capture below supplies current
-canonical-addition attribution.
+completed timing samples. The parent-reuse capture below supplies canonical-addition attribution on
+`08c8a9f13e`; its executable hash `8626a68c…` matches the `d6cebc4de` root
+capture exactly.
 
 [The complete profile inventory](bench-results/prerequisite-readiness-profiles/inventory.json)
 records manifests, native-kernel sidecars, executable hashes, filtered summaries
@@ -356,7 +358,8 @@ pipeline. Their cost is concrete and must be resolved or justified within the
 owning performance audit before attestation; no unrelated parent is silently
 promoted or given replacement arithmetic here.
 
-The rational-construction anchor has 91.79% inclusive isolation and 36.67%
+On the historical inventory source, the rational-construction anchor has
+91.79% inclusive isolation and 36.67%
 allocation; the real-polynomial root anchor has 96.5% isolation and about 48%
 per-root exactification. Close comparison has 97.77% inclusive `realCompare`,
 88.63% interval search and 82.84% refinement. Sorting and membership captures
@@ -376,8 +379,10 @@ in the linked summaries.
   are retained without claiming they reproduce on changed source.
 
 - The earlier 38 raw captures were lost after a reboot. Their saved summaries
-  remain diagnostics and cannot be reprocessed; the new representative capture
-  supplies retained attribution without a blanket rerun of completed evidence.
+  remain diagnostics and cannot be reprocessed. The replacement `62399ddd0`
+  addition capture is historical after parent reuse; the `08c8a9f13e` addition
+  and `d6cebc4de` rational-root captures supply retained attribution for their
+  scoped implementations without a blanket rerun of completed evidence.
 
 - [#10577](https://github.com/kim-em/hex-dev/issues/10577): finish operation-specific mode/budget justification and comparators, genuine root/leaf parameter families, separation/point and rounding sweeps, and square-root/rational-construction characterization. The shipped `compare_eq` and root completeness/multiplicity/sorting theorems are available independently of this timing work.
 
@@ -457,15 +462,19 @@ and 45.35%; these are tail-call attributions, not arbitrary additive
 inclusive totals. All raw artifacts persist at the manifest paths.
 The local normal-form migration, fixed-presentation conversion reuse and
 per-root enumeration reuse remain outside this targeted repair. No phase
-counter or CI headroom assertion follows from the timing comparisons alone.
+counter or general CI headroom assertion follows.
 
-[Full required CI for merged #10695](bench-results/prerequisite-required-ci-d6cebc4de.json)
+[PR CI for #10695 (head `d6cebc4de`, test merge `252f17576`)](bench-results/prerequisite-required-ci-d6cebc4de.json)
 passes all 57 executable checks (2828 benchmark cases) at 284/360 seconds on
 `d6cebc4de`, including 32 seconds for real-algebraic verification. Every
 conformance oracle passes, including the 83 exact real-algebraic cases with
 zero unavailable-component skips, together with library/conformance/manual,
 architecture, trust and axiom checks. The source's unchanged 360-second cap
-passed; later changes to main's operational cap are not used as evidence here.
+passed. Later main cap changes in #10696 (`52ef27c0be`, 600 seconds)
+are outside this tested source. This is one pass on one runner; it does not
+establish headroom under 360 seconds on slower runners. The soft 30-second
+warning remains for real-algebraic (32 seconds), GF2 (41), Roots (37) and
+PolyZGcd (35); those warnings are retained in the CI record.
 The [local full smoke](bench-results/prerequisite-full-local-smoke-d6cebc4de.json)
 passes the same 57 executables at 150/360 seconds on its recorded host, with
 joint degree-three and ECM continuation checks also passing. The three initial

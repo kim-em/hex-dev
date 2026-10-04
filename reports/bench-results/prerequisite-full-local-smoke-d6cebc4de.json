@@ -239,5 +239,6 @@
   "additional_ci_probes_passed": [
     "joint degree-three rows: 2 validated",
     "ECM continuation checks passed"
-  ]
+  ],
+  "provenance_limit": "Collector recorded source HEAD and every exact executable hash but did not record a dirty-status snapshot."
 }

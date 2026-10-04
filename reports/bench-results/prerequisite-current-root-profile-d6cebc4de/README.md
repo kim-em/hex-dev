@@ -1,7 +1,7 @@
 # Current polynomial-root representative attribution
 
-This capture supplies the required representative attribution for the
-`real-polynomial-roots` input family on source `d6cebc4de`, with the certified
+This capture supplies representative attribution for the rational-coefficient
+`X^8 - 2` member of the `real-polynomial-roots` input family on source `d6cebc4de`, with the certified
 parent isolation reuse in merged PR #10695. It makes no scientific verdict,
 portable budget or Phase-4 attestation.
 
@@ -32,3 +32,10 @@ not a replacement for the retained adjacent timing comparisons. Isolation
 has 94.47% inclusive share. Exactification (62.48%) and component norm-root
 selection (31.60%) are inclusive shares and are not summed. The summary
 classifies all leaf cost and keeps other/unresolved cost visible.
+
+The capture writes 45 artifacts. A separate retention step then copied the
+executed collector and frozen executable into the raw directory, checked the
+binary against its capture-time hash, and extended the manifest to 47 artifacts.
+The manifest's `post_capture_retention` field records this distinction. The
+command above reproduces capture; retaining these two extra files is a separate
+step. No captured sample or original source/executable hash was changed.

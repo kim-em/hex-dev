@@ -77,5 +77,34 @@
   "raw_log": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pr-final-ci.log",
   "log_sha256": "76442bda2c24fa4d109cad7ccf32448a5796617b9b8c983ae89f1b92cfe6b413",
   "jobs_sha256": "87096cc69859a691dd07b231da2915302f472392cb00612a4adc59d3d2a49f57",
-  "interpretation": "Operational CI success at its unchanged source cap; not a controlled comparison with previous runs or scientific Phase-4 admission."
+  "interpretation": "One passing PR run on its recorded runner at 360 seconds; no controlled comparison with earlier runs, no guaranteed headroom on slower runners, and no scientific Phase-4 admission.",
+  "tested_merge_ref": "252f17576f7711206fde6061ddb67fc806a90584",
+  "later_main_cap_change": {
+    "pr": 10696,
+    "commit": "52ef27c0be",
+    "seconds": 600,
+    "outside_tested_source": true
+  },
+  "soft_warnings": [
+    {
+      "executable": "hexgf2_bench",
+      "seconds": 41,
+      "threshold_seconds": 30
+    },
+    {
+      "executable": "hexroots_bench",
+      "seconds": 37,
+      "threshold_seconds": 30
+    },
+    {
+      "executable": "hexpolyzgcd_bench",
+      "seconds": 35,
+      "threshold_seconds": 30
+    },
+    {
+      "executable": "hexrealalgebraic_bench",
+      "seconds": 32,
+      "threshold_seconds": 30
+    }
+  ]
 }

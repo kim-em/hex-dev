@@ -423,5 +423,16 @@
     "capture.py": "6bb9a8f507245056e101a6e7da09bcb3e754204161b4c38a21d71fa938634d8c",
     "hexrealalgebraic_bench": "8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d"
   },
-  "retained_binary": "/home/kim/.local/state/hex/issue-10577-profiles/real-rational-roots-isolation-reuse-d6cebc4de/hexrealalgebraic_bench"
+  "retained_binary": "/home/kim/.local/state/hex/issue-10577-profiles/real-rational-roots-isolation-reuse-d6cebc4de/hexrealalgebraic_bench",
+  "post_capture_retention": {
+    "performed_separately_from_capture": true,
+    "added_artifacts": [
+      "capture.py",
+      "hexrealalgebraic_bench"
+    ],
+    "original_capture_artifact_count": 45,
+    "retained_artifact_count": 47,
+    "binary_checked_against_capture_sha256": true,
+    "measurements_unchanged": true
+  }
 }
