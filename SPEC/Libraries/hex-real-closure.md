@@ -149,8 +149,8 @@ one checked inclusion for each original owner into a shared target. Registration
 visits the owner's validated suffix in predecessor order, reuses cached checked
 inclusions for exact original predecessors, and validates each converted
 selected-root descriptor before checking existing generator values. Its derivative
-and endpoint queries are prepared once. The candidate search visits cached
-entries on demand, trying the image of a generator and then its negative;
+and endpoint queries are prepared once. The candidate search visits retained
+generator images on demand, trying each image and then its negative;
 these images include previously reused values, and structurally repeated
 candidates are skipped. Insertion retains the generator image, extension maps
 the retained images once, and append removes structurally repeated images.

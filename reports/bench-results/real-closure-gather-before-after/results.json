@@ -1,0 +1,122 @@
+[
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 4,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "11",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-timing",
+      "2",
+      "4",
+      "1"
+    ],
+    "wall_seconds": 0.05554640400077915,
+    "load_after": [
+      8.26220703125,
+      28.09033203125,
+      32.18603515625
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=4 repeats=1 nanoseconds=5556578 semantic_hash=4\n"
+  },
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 4,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "11",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-timing",
+      "2",
+      "4",
+      "1"
+    ],
+    "wall_seconds": 0.055777575998945395,
+    "load_after": [
+      8.26220703125,
+      28.09033203125,
+      32.18603515625
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=4 repeats=1 nanoseconds=6962612 semantic_hash=4\n"
+  },
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 8,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "11",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-timing",
+      "2",
+      "8",
+      "1"
+    ],
+    "wall_seconds": 34.07965757400052,
+    "load_after": [
+      8.5068359375,
+      25.9619140625,
+      31.32080078125
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=8 repeats=1 nanoseconds=16952186180 semantic_hash=8\n"
+  },
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 8,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "11",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-timing",
+      "2",
+      "8",
+      "1"
+    ],
+    "wall_seconds": 46.66593925300003,
+    "load_after": [
+      20.404296875,
+      26.10400390625,
+      31.0830078125
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=8 repeats=1 nanoseconds=21430924802 semantic_hash=8\n"
+  },
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 12,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "11",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-timing",
+      "2",
+      "12",
+      "1"
+    ],
+    "wall_seconds": 7399.301336261002,
+    "load_after": [
+      59.34765625,
+      36.6884765625,
+      23.408203125
+    ],
+    "returncode": -15,
+    "output": ""
+  }
+]
