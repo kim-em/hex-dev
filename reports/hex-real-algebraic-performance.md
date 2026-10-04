@@ -295,14 +295,29 @@ reconciliation with the implemented surface and its actual matching APIs.
 
 ## Profile
 
-[Retained representative attribution](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)
+[Current polynomial-root attribution](bench-results/prerequisite-current-root-profile-d6cebc4de/rational-roots.manifest.json)
+profiles `Hex.RealAlgebraicBench.runRationalRoots8`, parameter 0, on source
+`d6cebc4de` and automatically leased CPU 28. Its 1266 kernel-window samples
+pass calibration (0.903 ms residual), confidence and ±5 ms sensitivity checks.
+Isolation has 94.47% inclusive share. Leaf costs are allocation 40.21%, GMP
+23.62%, Lean runtime 28.28%, own code 2.76% and other 5.13%. Exactification and
+component norm-root selection have 62.48% and 31.60% inclusive shares;
+these inclusive figures are not added. The raw perf/samply data, sidecar,
+source snapshots, executed collector and exact executable remain in the
+persistent location recorded by the manifest. The [summary](bench-results/prerequisite-current-root-profile-d6cebc4de/rational-roots.summary.json)
+identifies the dominant refinement and Taylor work. This supplies current
+representative attribution for `real-polynomial-roots`; it does not establish
+operation-specific scientific admission or a portable budget.
+
+[Historical representative attribution](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)
 on clean source `62399ddd0` has 6592 kernel-window samples for canonical hard
 addition. Calibration residual is 0.046 ms, and sample-count and ±5 ms
 sensitivity checks pass. Root isolation has 91.88% inclusive share, refinement
 90.61%, and allocation 42.38% self share. Raw perf/samply data, kernel sidecars,
-symbols and checksums are retained in persistent storage. This supplies the
-required representative attribution, not an operation-specific budget or a
-replacement for the completed timing samples below.
+symbols and checksums are retained in persistent storage. This retains attribution for its recorded source before certified parent
+isolation reuse; it supplies no current-operation budget or replacement for
+completed timing samples. The parent-reuse capture below supplies current
+canonical-addition attribution.
 
 [The complete profile inventory](bench-results/prerequisite-readiness-profiles/inventory.json)
 records manifests, native-kernel sidecars, executable hashes, filtered summaries
@@ -442,4 +457,18 @@ and 45.35%; these are tail-call attributions, not arbitrary additive
 inclusive totals. All raw artifacts persist at the manifest paths.
 The local normal-form migration, fixed-presentation conversion reuse and
 per-root enumeration reuse remain outside this targeted repair. No phase
-counter or all-library headroom assertion follows.
+counter or CI headroom assertion follows from the timing comparisons alone.
+
+[Full required CI for merged #10695](bench-results/prerequisite-required-ci-d6cebc4de.json)
+passes all 57 executable checks (2828 benchmark cases) at 284/360 seconds on
+`d6cebc4de`, including 32 seconds for real-algebraic verification. Every
+conformance oracle passes, including the 83 exact real-algebraic cases with
+zero unavailable-component skips, together with library/conformance/manual,
+architecture, trust and axiom checks. The source's unchanged 360-second cap
+passed; later changes to main's operational cap are not used as evidence here.
+The [local full smoke](bench-results/prerequisite-full-local-smoke-d6cebc4de.json)
+passes the same 57 executables at 150/360 seconds on its recorded host, with
+joint degree-three and ECM continuation checks also passing. The three initial
+local dependency failures remain retained. These are operational observations,
+not controlled comparisons with earlier GitHub runs or scientific Phase-4
+admission. All four assigned phase counters remain 3.

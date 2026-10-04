@@ -186,3 +186,17 @@ consumer/import preparation remain independent of this timing concern.
 [Certified parent isolation reuse](bench-results/number-field-isolation-reuse/README.md)
 proves complete canonical-result equality and reduces measured hard arithmetic
 by about 1.5 times, while preserving current representation and Phase-4 gaps.
+
+[Full required CI for merged #10695](bench-results/prerequisite-required-ci-d6cebc4de.json)
+passes all 57 executable checks (2828 benchmark cases) at 284/360 seconds on
+`d6cebc4de`, including 32 seconds for real-algebraic verification. Every
+conformance oracle passes, including the 83 exact real-algebraic cases with
+zero unavailable-component skips, together with library/conformance/manual,
+architecture, trust and axiom checks. The source's unchanged 360-second cap
+passed; later changes to main's operational cap are not used as evidence here.
+The [local full smoke](bench-results/prerequisite-full-local-smoke-d6cebc4de.json)
+passes the same 57 executables at 150/360 seconds on its recorded host, with
+joint degree-three and ECM continuation checks also passing. The three initial
+local dependency failures remain retained. These are operational observations,
+not controlled comparisons with earlier GitHub runs or scientific Phase-4
+admission. All four assigned phase counters remain 3.
