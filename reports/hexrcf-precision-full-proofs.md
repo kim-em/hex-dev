@@ -17,6 +17,13 @@ and generator-window refinement are disabled. Their centers are respectively
 positive-root identification are kernel-checked. Each arm proves the original
 eight-bit sentence through its own equality to that selected root.
 
+This source explicitly checks the complete inline proof with
+`Lean.Meta.checkWithKernel`, then supplies it inline to the outer theorem,
+whose declaration checks it again. It does not use the production tactic's
+sharing and fresh-auxiliary-theorem acceptance routine. The timings include
+both full-term checks, so they are not measurements of the user tactic's
+proof-acceptance path.
+
 The common imported baseline is prebuilt, including the original eight-bit
 target and generic selected-root laws. Arm-specific constructor checks, selected
 identity and equivalence are declared inside each timed module. The timing
@@ -37,7 +44,10 @@ The collector rotates the three adjacent pairs in four trial-major rounds,
 alternating AB/BA. All 24 completed arms are retained, including complete
 compiler output. No sample was excluded and no unchanged rerun was taken.
 The shared-host runner automatically leased CPU 14 (SMT sibling 62), with one
-Lean thread. Host activity is recorded context. The 120-second per-arm timeout
+Lean thread. Each pair has two AB and two BA rounds, but its positions across the three
+pairs are not evenly balanced: rotation offsets are 0/1/2/0. These results
+support within-pair observations, not a cross-pair precision ordering.
+Host activity is recorded context. The 120-second per-arm timeout
 is operational; it is not a mathematical or performance budget.
 
 ## Observations

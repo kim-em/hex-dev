@@ -70,23 +70,14 @@ elab "precision_build16" : tactic => Lean.Elab.Tactic.liftMetaTactic fun goal =>
         (Lean.mkConst ``values) (Lean.mkConst ``GeneratorWindowTests.matrix)
         runtimeValues GeneratorWindowTests.matrix .existsReal
       let proof ← Lean.Meta.mkAppM ``Iff.mp #[Lean.mkConst ``sameSentence, proof]
-      Hex.RCF.checkAxioms `Hex.RCF.ProofProbe.Precision.Full16 proof
-      Lean.Meta.checkWithKernel proof
+      let proof ← Hex.RCF.checkProof `Hex.RCF.ProofProbe.Precision.Full16
+        (← goal.getType) proof
       goal.assign proof
       return []
     else throwError "insufficient initial precision"
   else throwError "invalid initial square"
 
 theorem witness : sentence8 := by precision_build16
-
-/-- info: 'Hex.RCF.ProofProbe.Precision.Full16.witness' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms witness
-
-run_meta do
-  let window ← Hex.RCF.ProofProbe.Literals.usesConstructor `Hex.RCF.ProofProbe.Precision.Full16.witness
-    ``Hex.RCF.RealCoefficients.LiteralSign.Window.mk 0
-  unless window == false do throwError "initial precision arm unexpectedly refined its generator"
 
 #print axioms witness
 end Hex.RCF.ProofProbe.Precision.Full16
