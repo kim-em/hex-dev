@@ -117,6 +117,9 @@ def run : IO Unit := do
     "registration lost a value computed in the previous shared target"
   require (registered.input.context.sign previousParameter == 1)
     "registration lost the previous shared infinitesimal"
+  require (registered.input.context.compare previousParameter
+      (registered.value ⟨2, by simp [owners]⟩ delta) == .lt)
+    "registration lost the earlier infinitesimal order"
   let some again := registered.enlarge?
     | throw (IO.userError "registered target's second enlargement failed")
   let retainedParameter := again.previous.value previousParameter

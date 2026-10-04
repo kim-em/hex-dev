@@ -94,4 +94,53 @@ example (parent : Root initial) (child : Root parent.context) :
   exact ⟨shared, produced, model, packet, registered, returned, preserved,
     fun a => union (a + a⁻¹)⟩
 
+/-- The canonical registration and union theorem apply to a value combining
+a selected root and values from both infinitesimal stages. The gathering and
+registration successes are obtained from the actual provider factory. -/
+example (parent : Root initial) (child : Root parent.context)
+    (epsilon : (Context.ofBase (base.extend 1)).Value)
+    (delta : (Context.ofBase (base.extend 2)).Value) :
+    let owners := [parent.context, Context.ofBase (base.extend 1), Context.ofBase (base.extend 2)]
+    let following := provider.staged 2
+    let reference := following.reference.model
+    ∃ shared : Shared (base.extend 2) owners,
+      Shared.gather? (base.extend 2) owners = some shared ∧
+      ∃ model : Shared.Model shared following reference,
+        ∃ packet : Registration shared child.context,
+          shared.register? child.context = some packet ∧
+          ∃ returned : Shared.Model packet.shared following reference,
+            packet.shared.targetToUnion reference
+                (packet.previous.value
+                  ((shared.value 0 parent.value + shared.value 1 epsilon) * shared.value 2 delta)) =
+              shared.targetToUnion reference
+                ((shared.value 0 parent.value + shared.value 1 epsilon) * shared.value 2 delta) := by
+  dsimp only
+  let owners := [parent.context, Context.ofBase (base.extend 1), Context.ofBase (base.extend 2)]
+  let following := provider.staged 2
+  let reference := following.reference.model
+  have baseCompatible (n : Nat) (depth : n ≤ 2) :
+      (base.extend n).signature.constants <+: (base.extend 2).signature.constants ∧
+      (base.extend n).signature.infinitesimals ≤ (base.extend 2).signature.infinitesimals := by
+    simp only [BaseContext.PackedContext.extend_signature]
+    exact ⟨List.prefix_refl _, Nat.add_le_add_left depth _⟩
+  have parentBase : parent.context.origin.base = base :=
+    parent.origin_base.trans (Context.ofBase_origin_base base)
+  have childBase : child.context.origin.base = base := child.origin_base.trans parentBase
+  have initialCompatible : base.signature.constants <+: (base.extend 2).signature.constants ∧
+      base.signature.infinitesimals ≤ (base.extend 2).signature.infinitesimals := by
+    simpa only [BaseContext.PackedContext.extend] using baseCompatible 0 (by decide)
+  obtain ⟨shared, produced, ⟨model⟩⟩ := Shared.gather?_models following reference owners (by
+    intro source present
+    simp only [owners, List.mem_cons, List.not_mem_nil, or_false] at present
+    rcases present with rfl | rfl | rfl
+    · rw [parentBase]
+      exact initialCompatible
+    · rw [Context.ofBase_origin_base]
+      exact baseCompatible 1 (by decide)
+    · rw [Context.ofBase_origin_base]
+      exact baseCompatible 2 (by decide))
+  obtain ⟨packet, registered, returned, preserved, union⟩ :=
+    model.register?_union child.context (by rw [childBase]; exact initialCompatible)
+  exact ⟨shared, produced, model, packet, registered, returned, union _⟩
+
 end Hex.RealClosure.Tower.SharedPresentationTests
