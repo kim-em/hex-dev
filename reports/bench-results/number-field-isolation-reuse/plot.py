@@ -28,3 +28,6 @@ fig.tight_layout(rect=[0,.09,1,.94])
 for extension in ['png','svg','pdf']:
  metadata={'Date':None} if extension=='svg' else ({'CreationDate':None,'ModDate':None} if extension=='pdf' else {})
  fig.savefig(HERE/('roots-comparison.'+extension),dpi=180,metadata=metadata)
+
+svg=HERE/"roots-comparison.svg"
+svg.write_text("\n".join(line.rstrip() for line in svg.read_text().splitlines())+"\n")
