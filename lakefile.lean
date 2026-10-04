@@ -1184,7 +1184,9 @@ lean_lib HexRCFProofProfile where
     `HexRCF.ProofProbe.Precision.Bits64, `HexRCF.ProofProbe.Precision.Audit,
     `HexRCF.ProofProbe.Precision.Full8, `HexRCF.ProofProbe.Precision.Full16,
     `HexRCF.ProofProbe.Precision.Full32, `HexRCF.ProofProbe.Precision.Full64,
-    `HexRCF.ProofProbe.Precision.FullAudit].map Glob.one
+    `HexRCF.ProofProbe.Precision.FullAudit,
+    `HexRCF.ProofProbe.CommonRoots.Simple, `HexRCF.ProofProbe.CommonRoots.Repeated,
+    `HexRCF.ProofProbe.CommonRoots.Shared, `HexRCF.ProofProbe.CommonRoots.Audit].map Glob.one
 
 lean_lib HexRCFProofProbe where
   srcDir := "bench"
