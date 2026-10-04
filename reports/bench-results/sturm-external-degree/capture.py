@@ -21,7 +21,7 @@ EXE = ROOT / '.lake/build/bin/hexsturm_bench'
 DEGREES = [4, 8, 16, 32, 64]
 SOURCES = ['bench/HexSturm/Bench.lean', 'scripts/oracle/sturm_bench.py',
            'scripts/oracle/test_sturm_bench.py', 'scripts/oracle/real_algebraic_qqbar.py',
-           'Hex/BenchOracle/Flint.lean', 'HexSturm/Frontend.lean',
+           'Hex/BenchOracle/Flint.lean', 'HexSturm/Basic.lean',
            'HexRealRoots/Tarski.lean', 'HexRealRoots/SignedRemainderChain.lean']
 
 def digest(path):
@@ -33,6 +33,9 @@ def registered(backend, degree, protocol=False):
 
 if (HERE/'metadata.json').exists():
     raise SystemExit('Refusing to overwrite retained completed or partial measurements')
+for source in SOURCES:
+    if not (ROOT/source).is_file():
+        raise SystemExit(f'Missing source fingerprint input: {source}')
 cpu, lease = cpu_lease()
 os.sched_setaffinity(0, {cpu})
 archive = Path('/home/kim/.local/state/hex/issue-10577-measurements/sturm-external-degree')
