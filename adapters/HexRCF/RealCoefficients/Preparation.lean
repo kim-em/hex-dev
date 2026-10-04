@@ -8,6 +8,7 @@ module
 public meta import HexRCF.RealCoefficients.Reify
 public meta import HexRCF.RealCoefficients.Replay
 public meta import HexRCF.RealCoefficients.FieldLiteral
+public meta import HexRCF.RealCoefficients.FieldRuntime
 public meta import HexRCF.Tactic
 
 public meta section
@@ -93,31 +94,76 @@ private meta def restoreOnFailure (action : MetaM α) : MetaM α := do
       | none => saved.restore)
   return result
 
+/-- Bind runtime proposal inputs to their stored source expressions before a
+native diagnostic verdict. Acceptance still requires the ordinary kernel. -/
+private meta def checkBindings (prepared : Environment) : MetaM Unit := do
+  unless (← FieldRuntime.evalZPoly prepared.polynomialExpr) == prepared.polynomial do
+    throwError "rcf: invalid prepared polynomial binding"
+  let root := prepared.rootExpr.consumeMData
+  unless root.isAppOfArity ``SimpleRoot.ofSquare 4 do
+    throwError "rcf: invalid prepared selected-root expression"
+  let args := root.getAppArgs
+  unless (← FieldRuntime.evalZPoly args[0]!) == prepared.polynomial &&
+      (← FieldRuntime.evalSquare args[1]!) == prepared.square do
+    throwError "rcf: invalid prepared selected-root binding"
+  let source ← FieldRuntime.evalFormula prepared.arity prepared.source.formula
+  unless source == .quant prepared.quantifier (.matrix prepared.formula) do
+    throwError "rcf: invalid prepared sentence binding"
+  let matrix ← mkAppM ``RealFormula.Prenex.matrix #[prepared.formulaExpr]
+  unless (← FieldRuntime.evalFormula (prepared.arity + 1) matrix) ==
+      .matrix prepared.formula do
+    throwError "rcf: invalid prepared matrix binding"
+  for i in List.finRange prepared.arity do
+    let bound ← mkDecideProof (← mkLt (mkNatLit i.val) (mkNatLit prepared.arity))
+    let index ← mkAppM ``Fin.mk #[mkNatLit i.val, bound]
+    let coordinate := mkApp prepared.valuesExpr index
+    let coeffs ← mkAppM ``PolyQuot.coeffs #[coordinate]
+    unless (← FieldRuntime.evalRatPoly coeffs) == (prepared.values i).coeffs do
+      throwError "rcf: invalid prepared coefficient binding"
+  for (divisor, expression) in prepared.divisors.zip prepared.divisorExpressions.toList do
+    let coeffs ← mkAppM ``PolyQuot.coeffs #[expression]
+    unless (← FieldRuntime.evalRatPoly coeffs) == divisor.coeffs do
+      throwError "rcf: invalid prepared divisor binding"
+
 /-- Check every retained original divisor proof before any constant, zero,
 empty-domain, or certificate-production shortcut. -/
 meta def checkDomains (prepared : Environment) : MetaM Unit := restoreOnFailure do
   let prepared ← prepared.instantiate
+  prepared.checkBindings
   let .ok original ← Reify.guards prepared.source.original |
     throwError "rcf: prepared environment has an invalid original source"
   unless original.size == prepared.source.divisors.size do
     throwError "rcf: prepared coefficient environment omitted an original divisor"
   for i in [:original.size] do
-    unless ← withNewMCtxDepth <| isDefEq original[i]! prepared.source.divisors[i]! do
+    unless original[i]! == prepared.source.divisors[i]! do
       throwError "rcf: prepared divisor differs from the original source"
   unless prepared.divisorProofs.size == prepared.source.divisors.size &&
       prepared.divisors.length == prepared.source.divisors.size &&
       prepared.divisorExpressions.size == prepared.source.divisors.size &&
       prepared.divisorIdentities.size == prepared.source.divisors.size do
     throwError "rcf: prepared coefficient environment omitted an original divisor"
+  let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
+    `Hex.RCF.RealCoefficients.Coefficients.Environment.checkDomains
+    (← mkAppM ``ZPoly.CheckedIrreducible #[prepared.polynomialExpr]) prepared.irreducibleExpr
+  let sentence ← mkAppM ``RealFormula.Prenex.toProp
+    #[prepared.source.formula, prepared.source.valuation]
+  let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
+    `Hex.RCF.RealCoefficients.Coefficients.Environment.checkDomains
+    (← mkAppM ``Iff #[sentence, prepared.source.original]) prepared.source.proof
   let rep ← mkAppM ``Field.literalRep prepared.rootExpr.getAppArgs
+  let interpreted ← withLocalDeclD `i (mkApp (mkConst ``Fin) (mkNatLit prepared.arity)) fun i => do
+    mkLambdaFVars #[i] (← mkAppM ``Field.value #[rep, mkApp prepared.valuesExpr i])
+  let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
+    `Hex.RCF.RealCoefficients.Coefficients.Environment.checkDomains
+    (← mkEq interpreted prepared.source.valuation) prepared.valuationProof
   for i in [:prepared.source.divisors.size] do
     let divisor : Q(ℝ) := prepared.source.divisors[i]!
     let proof := prepared.divisorProofs[i]!
-    let _ ← Hex.RCF.checkProof
+    let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
       `Hex.RCF.RealCoefficients.Coefficients.Environment.checkDomains q($divisor ≠ 0) proof
     let identity := prepared.divisorIdentities[i]!
     let interpreted ← mkAppM ``Field.value #[rep, prepared.divisorExpressions[i]!]
-    let _ ← Hex.RCF.checkProof
+    let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
       `Hex.RCF.RealCoefficients.Coefficients.Environment.checkDomains
       (← mkEq interpreted divisor) identity
 
@@ -172,10 +218,16 @@ private meta def replayWith (prepared : Environment) (totalProduction : Bool) :
     let result := if totalProduction then Replay.buildTotal input real depth
       else Replay.build input real depth (FieldLiteral.rcf.algebraic.maxDoublings.get options)
         (FieldLiteral.rcf.algebraic.monicCore.get options)
-    Core.checkInterrupted
     let cert ← match result with
-      | .error error => throwError "rcf: prepared finite production failed: {repr error}"
+      | .error .divisor => throwError "rcf: original prepared divisor is zero"
+      | .error (.search .exhausted) =>
+          throwError "rcf: prepared finite search exhausted; increase rcf.algebraic.maxDoublings"
+      | .error (.search .invalidReplay) =>
+          throwError "rcf: prepared finite production failed evidence replay"
+      | .error (.replay error) =>
+          throwError "rcf: prepared finite production failed replay: {repr error}"
       | .ok cert => pure cert
+    Core.checkInterrupted
     match Replay.check input cert with
     | .ok false => throwError "rcf: the prepared finite sentence is false"
     | .error error => throwError "rcf: prepared finite replay failed: {repr error}"

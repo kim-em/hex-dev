@@ -516,13 +516,17 @@ def guards (original : Expr) (config : Hex.RealFormula.Reify.Config := {}) :
       let action : FrontendM (Array Expr) := do
         checkDomains original
         let (source, proof) ← closeSource original
-        let _ ← liftM (Hex.RCF.checkProof `Hex.RCF.RealCoefficients.Reify.guards
+        let _ ← liftM (withoutModifyingEnv <| Hex.RCF.checkProof `Hex.RCF.RealCoefficients.Reify.guards
           (← inferType proof) proof)
         preflight #[] source
       let outcome ← (action.run {config, budget := .ofBudget config.ring.budget}).run
       match outcome with
       | .error error => return .error error
-      | .ok (divisors, _) => return .ok (← divisors.mapM instantiateMVars))
+      | .ok (divisors, _) =>
+          let divisors ← divisors.mapM instantiateMVars
+          if divisors.any Expr.hasMVar then
+            return .error (.internal "original divisors contain unresolved metavariables")
+          return .ok divisors)
     (fun result => do
       match result with
       | some (.ok _) => modify fun state => {state with

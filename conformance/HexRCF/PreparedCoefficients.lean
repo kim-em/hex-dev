@@ -247,4 +247,67 @@ run_meta do
   Hex.RCF.checkAxioms `Hex.RCF.PreparedCoefficientsTests proof
   checkWithKernel proof
 
+-- Runtime diagnostics must refer to the exact prepared source, even when a
+-- caller edits the public record. Validate before either producer starts.
+run_meta do
+  let target : Q(Prop) := q(∃ x ∈ Set.Ioc (1 : ℝ) 2, x ^ 2 = Real.sqrt 2)
+  let .ok prepared ← Coefficients.prepare target | throwError "binding fixture failed"
+  let invalid := [( {prepared with quantifier := .forallReal},
+      "rcf: invalid prepared sentence binding"),
+    ({prepared with formula := .not prepared.formula},
+      "rcf: invalid prepared sentence binding"),
+    ({prepared with values := fun _ => 0},
+      "rcf: invalid prepared coefficient binding")]
+  for (candidate, expected) in invalid do
+    for mode in [0, 1, 2] do
+      let before := (← getMCtx).mvarCounter
+      let failure ← tryCatchRuntimeEx (do
+        let _ ← match mode with
+          | 0 => candidate.prove
+          | 1 => candidate.proveReplay
+          | _ => candidate.proveTotalReplay
+        pure none) (fun error => do pure (some (← error.toMessageData.toString)))
+      unless failure == some expected do
+        throwError "edited prepared input reported the wrong diagnostic: {failure}"
+      unless (← getMCtx).mvarCounter == before do
+        throwError "invalid prepared binding leaked metavariables"
+
+-- Editing both runtime and expression syntax still cannot replace the source
+-- equivalence with a proof of a different sentence before a false diagnostic.
+run_meta do
+  let target : Q(Prop) := q(∃ x ∈ Set.Ioc (1 : ℝ) 2, x ^ 2 = Real.sqrt 2)
+  let .ok prepared ← Coefficients.prepare target | throwError "source fixture failed"
+  let matrix := mkApp (mkConst ``RealFormula.QF.ff) (mkNatLit (prepared.arity + 1))
+  let formula ← mkAppM ``RealFormula.Prenex.matrix #[matrix]
+  let sentence ← mkAppM ``RealFormula.Prenex.quant
+    #[mkConst ``RealFormula.Quantifier.existsReal, formula]
+  let invalid := {prepared with
+    formula := .ff
+    formulaExpr := matrix
+    source.formula := sentence}
+  for mode in [false, true] do
+    let before := (← getMCtx).mvarCounter
+    let failure ← tryCatchRuntimeEx (do
+      let _ ← if mode then invalid.proveTotalReplay else invalid.proveReplay
+      pure none) (fun error => do pure (some (← error.toMessageData.toString)))
+    unless failure.isSome && failure != some "rcf: the prepared finite sentence is false" do
+      throwError "edited source equivalence became a false verdict"
+    unless (← getMCtx).mvarCounter == before do
+      throwError "invalid source equivalence leaked metavariables"
+
+-- Validation-only proof checks leave no unreferenced auxiliary declarations.
+run_meta do
+  let target : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0)
+  let .ok prepared ← Coefficients.prepare target | throwError "guard fixture failed"
+  let before := (← getEnv).constants.map₂.toList.length
+  prepared.checkDomains
+  unless (← getEnv).constants.map₂.toList.length == before do
+    throwError "domain validation retained unused theorem declarations"
+  let invalid := {prepared with divisors := [0]}
+  let failure ← tryCatchRuntimeEx (do
+    let _ ← invalid.proveReplay
+    pure none) (fun error => do pure (some (← error.toMessageData.toString)))
+  unless failure == some "rcf: invalid prepared divisor binding" do
+    throwError "edited divisor reported the wrong diagnostic: {failure}"
+
 end Hex.RCF.PreparedCoefficientsTests
