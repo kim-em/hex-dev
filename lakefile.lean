@@ -770,7 +770,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.TowerTransport, `HexRealClosureMathlib.TowerTransportTests,
     `HexRealClosureMathlib.TowerReuse,
     `HexRealClosureMathlib.TowerInclusion, `HexRealClosureMathlib.LiveContext,
-    `HexRealClosureMathlib.LiveRequest,
+    `HexRealClosureMathlib.LiveRequest, `HexRealClosureMathlib.LiveRequestTests,
     `HexRealClosureMathlib.TowerYun,
     `HexRealClosureMathlib.AlgebraicValue, `HexRealClosureMathlib.BaseClean, `HexRealClosureMathlib.AlgebraicTower,
     `HexRealClosureMathlib.SelectedRoot,

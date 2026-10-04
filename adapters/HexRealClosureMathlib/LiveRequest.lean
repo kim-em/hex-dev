@@ -527,7 +527,7 @@ theorem Enlargement.root_agreement {base : BaseContext.PackedContext registry}
   Collection.root_agreement root descriptor selected result.collection split (result.model oldModel ambient produced)
 
 /-- Interpret the selected descriptor root through a native context model. -/
-noncomputable def selectedValue {owner : Context registry} (model : Model owner K)
+@[expose] noncomputable def selectedValue {owner : Context registry} (model : Model owner K)
     (descriptor : SignDet.Descriptor owner.Value Signature owner.sign owner.signature) : K :=
   descriptor.root model.value model.zero_iff model.one model.add model.sub model.mul model.nat model.sign
 
@@ -542,7 +542,7 @@ private theorem canonical_next {base : BaseContext.PackedContext registry}
     rw [Model.next_pack original reference ambient]
     exact parent.model?_next original following reference ambient old produced
 
-private theorem selectedValue_map {parent : Context registry} (old : Model parent K)
+theorem selectedValue_map {parent : Context registry} (old : Model parent K)
     (ambient : Ambient (Hex.RationalFn K))
     (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature) :
     selectedValue (old.map (Ambient.coefficientHom ambient)
@@ -561,7 +561,7 @@ private theorem selectedValue_map {parent : Context registry} (old : Model paren
     old.sign (old.map (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient)).sign
 
 /-- Public consumer: gather and interpret one composite request, enlarge it
- twice, and preserve both selected roots and their original canonical models. -/
+ twice, relating both selected roots to their starting canonical interpretations. -/
 theorem Collection.roots_twice {base : BaseContext.PackedContext registry} {firstParent secondParent : Context registry}
     (firstRoot : Root firstParent) (secondRoot : Root secondParent)
     (firstDescriptor : SignDet.Descriptor firstParent.Value Signature firstParent.sign firstParent.signature)
