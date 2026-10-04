@@ -305,8 +305,12 @@ request's retained root frames. Public projection equations and `Collection.fram
 connect these semantic claims to the executable accessors. The original request
 supports successive enlargement without supplied root or coefficient
 agreement. These factories use the native real-prefix and infinitesimal-depth
-compatibility check. Incomparable real-prefix owners require both non-prefix
-native inclusions and a joint realization.
+compatibility check. Incomparable constant prefixes, including `[a]` and `[b]`,
+and permutations such as `[a,b]` and `[b,a]`, require non-prefix native inclusions
+and a joint realization. The separate ordinary-real finite-sign conclusion for
+arbitrary interleaved stages is not supplied by these ambient `Model.next`
+interpretations. Root agreement also retains the original parent model from
+its canonical factory and equality with the original descriptor root.
 
 At a fixed level of initial degree `d`, there are at most `d-1` nontrivial
 persistent splits. Sum those bounds over a fixed tower; this is not a bound

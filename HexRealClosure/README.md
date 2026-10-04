@@ -1962,7 +1962,9 @@ frame lists across that enlargement in the lifted old model.
 `Collection.root_agreement` identifies the actual child value of a root pair
 in a request equal to `pre ++ rootRequest root ++ post` with the root selected by its refreshed predecessor
 descriptor. Both interpretations come from the collection's canonical factory;
-no root-agreement premise is supplied. It also applies to the collection
+no root-agreement premise is supplied. The theorem also retains the original
+parent model from the canonical factory and equality with the original selected
+descriptor root. It also applies to the collection
 returned by enlargement. `Enlargement.model` retrieves that new canonical
 model through the public collection interface for the next enlargement.
 `model_parameter` identifies its new parameter and `model_previous` retains
@@ -1981,10 +1983,13 @@ transport computed values and coefficients, perform two enlargements, check
 fresh descriptor bindings and reject stale descriptors and serialized values
 and polynomials. The original contexts remain usable.
 
-Compatible real-prefix permutations still require non-prefix native
-inclusions and a joint realization. Realization through arbitrary interleaved
-algebraic and infinitesimal stages also remains open. This finite request
-interface uses the existing prefix compatibility check.
+The native `gather?` compatibility check requires each owner's constants to
+form a prefix of the shared base and its infinitesimal depth to fit. Incomparable
+prefixes such as `[a]` and `[b]`, and permutations such as `[a,b]` and `[b,a]`,
+need non-prefix native inclusions and a joint realization. Separately, simultaneous
+finite sign realization at an ordinary real point through arbitrarily interleaved
+algebraic and infinitesimal stages remains an issue-wide requirement; the ambient
+`Model.next` interpretations here do not assert that ordinary-real conclusion.
 
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
