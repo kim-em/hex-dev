@@ -184,3 +184,15 @@ registered-constant search or an unlimited proof elaboration budget.
 The [adapter evidence record](../reports/hexrcf-adapter-evidence.md) maps the
 implemented interfaces to conformance, fresh proof examples and retained cost
 experiments, and states the remaining completion limits.
+
+The optional adapter can produce a checked tighter generator window with
+`rcf.algebraic.signRefinements`. Its original selected root remains bound by
+containment and checked root counts; frozen replay performs no refinement.
+The option defaults to zero because the
+[retained comparison](../reports/hexrcf-window-proofs.md) found no useful
+whole-module speedup. Inconclusive Horner signs retain exact query evidence.
+
+The [initial-generator precision comparison](../reports/hexrcf-precision-proofs.md)
+retains checked proofs of the same selected-root sentence at eight and sixty-four
+bits. It removes full sign queries in that fixture without establishing a
+general speedup or changing default precision.
