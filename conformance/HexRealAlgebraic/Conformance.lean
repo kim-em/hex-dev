@@ -98,6 +98,14 @@ open Hex.RealAlgebraicNumber (ofRat ofAlgebraic? sqrt?)
     RealAlgebraicNumber.ofRoot? a.toAlgebraic.toRoot == some a &&
     a.conj == a && a.toAlgebraic.re == a && a.toAlgebraic.im == 0
 
+-- A factorization-lazy mixed root set exercises both the retained real roots
+-- and rejection of its nonreal conjugate pair before canonicalization.
+#guard
+  let roots := (AlgebraicPoly.ofArray #[(-4 : AlgebraicNumber), 0, 0, 0, 1]).roots.toArray
+  roots.size == 4 && roots.all (fun r =>
+    RealAlgebraicNumber.ofRoot? r.root == RealAlgebraicNumber.ofAlgebraic? r.root.exact) &&
+    (roots.filterMap fun r => RealAlgebraicNumber.ofRoot? r.root).size == 2
+
 #guard
   let a := ofRat (9 / 4)
   let checked := if h : 0 ≤ a then some (a.sqrt h) else none

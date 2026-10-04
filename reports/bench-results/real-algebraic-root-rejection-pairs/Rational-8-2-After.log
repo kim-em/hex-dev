@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runRationalRoots8    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=edb3ef9-dirty, 2026-10-04T04:24:36Z, host=chungus2
+  repeat 0  306.147 ms
+  median: 306.147 ms    min: 306.147 ms    max: 306.147 ms
+  hash: all repeats agree
+  observed hash: 0x1e7c893af40a771c
+  expected hash: matches
+  peak RSS: 68_348 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Rational-8-2-After.json

@@ -1,0 +1,9 @@
+Hex.SturmExternalBench.runZ332    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=612b3e5-dirty, 2026-10-04T02:38:25Z, host=chungus2
+  repeat 0  1.859 ms  (×2^5, total 59.493 ms)
+  median: 1.859 ms    min: 1.859 ms    max: 1.859 ms
+  hash: all repeats agree
+  observed hash: 0xcbe00da77fb06541
+  expected hash: matches
+  peak RSS: 67_540 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Z3-0-Z3.json

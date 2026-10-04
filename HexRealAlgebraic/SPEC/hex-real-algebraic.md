@@ -27,6 +27,9 @@ Real order inherits the stored-interval and bounded adaptive refinement paths
 of `AlgebraicNumber.realCompare`; the exact comparison theorem is unchanged.
 The square-root API shares the optimized complex square-root selector while
 retaining negative-input rejection and its nonnegative real result.
+Lazy-root conversion rejects nonreal refined isolations before canonical
+exactification. `ofRoot?_eq` proves equality with the original conversion;
+real-root filtering retains exactly the same canonical values and multiplicities.
 `AlgebraicNumber.normSq` and `AlgebraicNumber.abs` belong here and return
 `RealAlgebraicNumber`, as do `re` and `im`. Their companion identifies them
 with the complex squared norm and norm and proves nonnegativity, zero

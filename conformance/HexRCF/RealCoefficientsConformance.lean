@@ -548,6 +548,14 @@ private def plasticHead : Hex.DensePoly (Hex.PolyQuot plasticPolynomial
     (Field.literalRep_mk plasticPolynomial plasticSquare (by decide) (by decide)))
   FieldDecision.point plasticHead).isSome
 
+/-- info: 'Hex.RCF.RealCoefficients.Specialize.prepare_eval' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Specialize.prepare_eval
+
+/-- info: 'Hex.RCF.RealCoefficients.Specialize.prepare_degrees' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Specialize.prepare_degrees
+
 end Hex.RCF.RealCoefficientsConformance
 
 namespace Hex.RCF.RealCoefficientsConformance

@@ -622,11 +622,15 @@ examples and equality axiom audit are covered by conformance above.
 Current registrations are in `bench/HexSturm/Bench.lean` and
 `bench/HexSturm/Frontend.lean`. The integer backend stages are shared-kernel
 diagnostics; their existence does not attest every ordered-field frontend.
-The current executable lists and verifies 71 cases, including the 13
+The current executable lists and verifies 91 cases, including the 13
 `short-chain-degree` registrations below, plus 12 complete-query fixed
 comparison endpoints and two protocol-overhead controls in
 `Hex.SturmExternalBench` in `bench/HexSturm/Bench.lean`. The latter are expected-result/informational
-anchors and make no complexity or absolute-budget claim.
+anchors and make no complexity or absolute-budget claim. Twenty additional
+fixed registrations extend count comparisons and protocol controls to degrees
+4, 16, 32 and 64; degree 8 uses the existing endpoints. The
+[degree comparison](bench-results/sturm-external-degree/README.md) treats
+measured elapsed time and backend ratios as informational evidence.
 
 | Frontend/stage targets | Strongest justified evidence | Input |
 | --- | --- | --- |
@@ -824,6 +828,22 @@ above continue to apply to their unchanged shared integer kernels. The
 frontend profiles are separate evidence for prepared, cached and transport paths.
 
 ## Concerns
+
+- The headline `query_iff` is proved in the development semantic adapter, but
+  ordinary `import HexSturmMathlib` still does not export it. The bounded public
+  foundation/frontend import integration belongs to
+  [#10575](https://github.com/kim-em/hex-dev/issues/10575); it cannot wait for
+  #10577 closure because it is itself a Sturm Phase-4 prerequisite.
+
+- Growing nonconstant queries against a fixed quadratic still materialize
+  the large quotient even in the value-only path. The retained prepared-query
+  ladder above reaches roughly 99 seconds and 32 GiB whole-child peak RSS.
+  Exact result agreement and family-specific characterization do not resolve
+  this storage cost; no streaming implementation is claimed.
+
+- The wide replay/checker and coefficient-sign failures of characterization
+  remain retained. The narrower passing models and current Chebyshev external
+  comparisons do not discharge their remaining operation-specific evidence.
 
 - The historical raw captures were lost after a reboot. Their summaries remain
   diagnostics and cannot be reprocessed. The [retained representative captures](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)

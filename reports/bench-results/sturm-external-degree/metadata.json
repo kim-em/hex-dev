@@ -1,0 +1,3051 @@
+{
+  "source_commit": "612b3e5912c5a30fcb6325f7f957d7e383cb9eb5",
+  "cpu": 69,
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "load_start": [
+    22.0576171875,
+    9.47314453125,
+    7.09375
+  ],
+  "source_sha256": {
+    "bench/HexSturm/Bench.lean": "701ce213ca65eb5cfefe565533ff0c49fffb4bb87a33ea1ab6c1c7ffdbf174f6",
+    "scripts/oracle/sturm_bench.py": "373d90e884cc0394740d0e281a310ea87ba175126eecf0fd706bc1821fbea49a",
+    "scripts/oracle/test_sturm_bench.py": "478144b13c6d913d73a77b2f49e5966f0ce10ee08e8da8b0db862f1b1f82b450",
+    "scripts/oracle/real_algebraic_qqbar.py": "50ace8c9b7807e263932ca1ae49e98c14e53a465e68e502b35999119d37770a6",
+    "Hex/BenchOracle/Flint.lean": "aacd1a67738c94d983ab930ddb3727ded8c421f5e529652fe2f8082e52e5646b",
+    "HexSturm/Basic.lean": "e94705d172a585b5d9c718941e1e8251a145ee6bb152cbaaf695d0d0e3a20beb",
+    "HexRealRoots/Tarski.lean": "959f1882c67b7068e6274cdfeef9296b9ce3683e84ca8d1c38e5e75da57857a7",
+    "HexRealRoots/SignedRemainderChain.lean": "be56bd454a976838e2a3d87b7126100d26de92af686b556c4f31e9e36cd7e874"
+  },
+  "executable_sha256": "7ac8811e1b9d88ce5166c87a5a80cd50eb152a39cb19f5ef2206a96eda3ba229",
+  "exact_executable": "/home/kim/.local/state/hex/issue-10577-measurements/sturm-external-degree/hexsturm_bench-7ac8811e1b9d88ce5166c87a5a80cd50eb152a39cb19f5ef2206a96eda3ba229",
+  "interpreter": "/tmp/hex-10577-oracles/bin/python",
+  "library_path": "/nix/store/chqq8mpmpyfi9kgsngya71akv5xicn03-gcc-15.2.0-lib/lib",
+  "degrees": [
+    4,
+    8,
+    16,
+    32,
+    64
+  ],
+  "max_coefficient_bits": {
+    "4": 4,
+    "8": 9,
+    "16": 18,
+    "32": 38,
+    "64": 78
+  },
+  "schedule": "Four trial-major blocks, fixed ascending degree ladder; adjacent AB/BA arms alternate per block. A protocol control follows each pair. No load rejection or unchanged rerun.",
+  "boundary": "Complete exact root count for T_n on (-2,2), result Option Int n. Inputs/context initialization and one warmup are excluded; native chain/domain checks and external root production/filtering/sign sum/JSON/cleanup are timed. No driver root cache. Backend internal caches may persist within a batch. Degree and coefficient height both grow in this family.",
+  "classification": "Informational elapsed-time comparisons; no fitted model, complexity admission or absolute budget.",
+  "arms": [
+    {
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Flint-0-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.425712222000584,
+      "output": "4-Flint-0-Native.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlint4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Flint-0-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.9810952459956752,
+      "output": "4-Flint-0-Flint.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Flint-0-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.8485104200080968,
+      "output": "4-Flint-0-Flint-protocol.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Z3-0-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4219286040024599,
+      "output": "4-Z3-0-Native.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ34",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Z3-0-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4960562759952154,
+      "output": "4-Z3-0-Z3.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Z3-0-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49302507399988826,
+      "output": "4-Z3-0-Z3-protocol.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNativeCount",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Flint-0-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.34005300600256305,
+      "output": "8-Flint-0-Native.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintCount",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Flint-0-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7182132150046527,
+      "output": "8-Flint-0-Flint.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Flint-0-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.774304962993483,
+      "output": "8-Flint-0-Flint-protocol.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNativeCount",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Z3-0-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.44704925100086257,
+      "output": "8-Z3-0-Native.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Count",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Z3-0-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5526966980105499,
+      "output": "8-Z3-0-Z3.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Z3-0-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49416874900634866,
+      "output": "8-Z3-0-Z3-protocol.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Flint-0-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46622873199521564,
+      "output": "16-Flint-0-Native.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlint16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Flint-0-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.8191989019978791,
+      "output": "16-Flint-0-Flint.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Flint-0-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.8389572320011212,
+      "output": "16-Flint-0-Flint-protocol.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Z3-0-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46537158198771067,
+      "output": "16-Z3-0-Native.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ316",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Z3-0-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6146116970048752,
+      "output": "16-Z3-0-Z3.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Z3-0-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4932702270016307,
+      "output": "16-Z3-0-Z3-protocol.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Flint-0-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4407266299967887,
+      "output": "32-Flint-0-Native.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlint32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Flint-0-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7442845440091332,
+      "output": "32-Flint-0-Flint.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Flint-0-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7947292210010346,
+      "output": "32-Flint-0-Flint-protocol.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Z3-0-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46645504799380433,
+      "output": "32-Z3-0-Native.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ332",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Z3-0-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5225245530018583,
+      "output": "32-Z3-0-Z3.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Z3-0-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4941521750006359,
+      "output": "32-Z3-0-Z3-protocol.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Flint-0-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4911680509976577,
+      "output": "64-Flint-0-Native.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlint64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Flint-0-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.8501453990029404,
+      "output": "64-Flint-0-Flint.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Flint-0-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7727961400087224,
+      "output": "64-Flint-0-Flint-protocol.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Z3-0-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4892035099910572,
+      "output": "64-Z3-0-Native.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ364",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Z3-0-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5174969210056588,
+      "output": "64-Z3-0-Z3.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Z3-0-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4947859249950852,
+      "output": "64-Z3-0-Z3-protocol.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlint4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Flint-1-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.8964623369975016,
+      "output": "4-Flint-1-Flint.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Flint-1-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.42240497200691607,
+      "output": "4-Flint-1-Native.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Flint-1-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7980235269933473,
+      "output": "4-Flint-1-Flint-protocol.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ34",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Z3-1-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49972991399408784,
+      "output": "4-Z3-1-Z3.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Z3-1-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4162333730055252,
+      "output": "4-Z3-1-Native.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Z3-1-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49266584300494287,
+      "output": "4-Z3-1-Z3-protocol.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintCount",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Flint-1-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7199524890020257,
+      "output": "8-Flint-1-Flint.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNativeCount",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Flint-1-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.3389742079889402,
+      "output": "8-Flint-1-Native.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Flint-1-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7435410649923142,
+      "output": "8-Flint-1-Flint-protocol.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Count",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Z3-1-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46932986000319943,
+      "output": "8-Z3-1-Z3.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNativeCount",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Z3-1-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.31796138000208884,
+      "output": "8-Z3-1-Native.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Z3-1-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46335621499747504,
+      "output": "8-Z3-1-Z3-protocol.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlint16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Flint-1-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.795668778999243,
+      "output": "16-Flint-1-Flint.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Flint-1-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46460285400098655,
+      "output": "16-Flint-1-Native.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Flint-1-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7446256449911743,
+      "output": "16-Flint-1-Flint-protocol.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ316",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Z3-1-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6148985540057765,
+      "output": "16-Z3-1-Z3.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Z3-1-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4649317909934325,
+      "output": "16-Z3-1-Native.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Z3-1-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4658521660021506,
+      "output": "16-Z3-1-Z3-protocol.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlint32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Flint-1-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7508681190083735,
+      "output": "32-Flint-1-Flint.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Flint-1-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4660257729992736,
+      "output": "32-Flint-1-Native.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Flint-1-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7451021620072424,
+      "output": "32-Flint-1-Flint-protocol.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ332",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Z3-1-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49063238900271244,
+      "output": "32-Z3-1-Z3.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Z3-1-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4704234219971113,
+      "output": "32-Z3-1-Native.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Z3-1-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.48968123900704086,
+      "output": "32-Z3-1-Z3-protocol.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlint64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Flint-1-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.793262342995149,
+      "output": "64-Flint-1-Flint.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Flint-1-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46496798600128386,
+      "output": "64-Flint-1-Native.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Flint-1-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7425084889982827,
+      "output": "64-Flint-1-Flint-protocol.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ364",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Z3-1-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49144867999712005,
+      "output": "64-Z3-1-Z3.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Z3-1-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4657586779940175,
+      "output": "64-Z3-1-Native.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Z3-1-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4888453199964715,
+      "output": "64-Z3-1-Z3-protocol.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Flint-2-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.41464293700119015,
+      "output": "4-Flint-2-Native.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlint4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Flint-2-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.8674640370009001,
+      "output": "4-Flint-2-Flint.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Flint-2-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.74450162400899,
+      "output": "4-Flint-2-Flint-protocol.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Z3-2-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4149762209999608,
+      "output": "4-Z3-2-Native.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ34",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Z3-2-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4936590569996042,
+      "output": "4-Z3-2-Z3.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Z3-2-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4899360580020584,
+      "output": "4-Z3-2-Z3-protocol.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNativeCount",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Flint-2-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.34001150699623395,
+      "output": "8-Flint-2-Native.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintCount",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Flint-2-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7177103809954133,
+      "output": "8-Flint-2-Flint.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Flint-2-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.742160484995111,
+      "output": "8-Flint-2-Flint-protocol.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNativeCount",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Z3-2-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.3402643810113659,
+      "output": "8-Z3-2-Native.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Count",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Z3-2-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4679307079932187,
+      "output": "8-Z3-2-Z3.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Z3-2-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4717872850014828,
+      "output": "8-Z3-2-Z3-protocol.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Flint-2-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46776492201024666,
+      "output": "16-Flint-2-Native.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlint16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Flint-2-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7931138870044379,
+      "output": "16-Flint-2-Flint.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Flint-2-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7449120649980614,
+      "output": "16-Flint-2-Flint-protocol.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Z3-2-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46490773699770216,
+      "output": "16-Z3-2-Native.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ316",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Z3-2-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6183809390058741,
+      "output": "16-Z3-2-Z3.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Z3-2-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49014836199057754,
+      "output": "16-Z3-2-Z3-protocol.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Flint-2-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4647731769946404,
+      "output": "32-Flint-2-Native.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlint32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Flint-2-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7731236949912272,
+      "output": "32-Flint-2-Flint.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Flint-2-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7500681489909766,
+      "output": "32-Flint-2-Flint-protocol.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Z3-2-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46440894799889065,
+      "output": "32-Z3-2-Native.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ332",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Z3-2-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49215608899248764,
+      "output": "32-Z3-2-Z3.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Z3-2-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49504037501174025,
+      "output": "32-Z3-2-Z3-protocol.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Flint-2-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4659304139931919,
+      "output": "64-Flint-2-Native.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlint64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Flint-2-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7950477059930563,
+      "output": "64-Flint-2-Flint.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Flint-2-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7432706340041477,
+      "output": "64-Flint-2-Flint-protocol.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Z3-2-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46775584999704733,
+      "output": "64-Z3-2-Native.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ364",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Z3-2-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49209734199394006,
+      "output": "64-Z3-2-Z3.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Z3-2-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4938440819969401,
+      "output": "64-Z3-2-Z3-protocol.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlint4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Flint-3-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.869363288002205,
+      "output": "4-Flint-3-Flint.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Flint-3-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.41371795600571204,
+      "output": "4-Flint-3-Native.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Flint-3-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7422784640075406,
+      "output": "4-Flint-3-Flint-protocol.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ34",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Z3-3-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4673766479972983,
+      "output": "4-Z3-3-Z3.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Z3-3-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.41959971499454696,
+      "output": "4-Z3-3-Native.json"
+    },
+    {
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Z3-3-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4916090179904131,
+      "output": "4-Z3-3-Z3-protocol.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintCount",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Flint-3-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7167754399997648,
+      "output": "8-Flint-3-Flint.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNativeCount",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Flint-3-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.3394340020022355,
+      "output": "8-Flint-3-Native.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Flint-3-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7425862410018453,
+      "output": "8-Flint-3-Flint-protocol.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Count",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Z3-3-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.469703827999183,
+      "output": "8-Z3-3-Z3.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNativeCount",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Z3-3-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.3404569580015959,
+      "output": "8-Z3-3-Native.json"
+    },
+    {
+      "degree": 8,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Z3-3-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46909066899388563,
+      "output": "8-Z3-3-Z3-protocol.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlint16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Flint-3-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.821340553011396,
+      "output": "16-Flint-3-Flint.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Flint-3-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46508223698765505,
+      "output": "16-Flint-3-Native.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Flint-3-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7444896739907563,
+      "output": "16-Flint-3-Flint-protocol.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ316",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Z3-3-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6177698649989907,
+      "output": "16-Z3-3-Z3.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Z3-3-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46543587199994363,
+      "output": "16-Z3-3-Native.json"
+    },
+    {
+      "degree": 16,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/16-Z3-3-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4916958079993492,
+      "output": "16-Z3-3-Z3-protocol.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlint32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Flint-3-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7433803299936699,
+      "output": "32-Flint-3-Flint.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Flint-3-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46459129999857396,
+      "output": "32-Flint-3-Native.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Flint-3-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.743388431990752,
+      "output": "32-Flint-3-Flint-protocol.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ332",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Z3-3-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49194722100219224,
+      "output": "32-Z3-3-Z3.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Z3-3-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4657946639927104,
+      "output": "32-Z3-3-Native.json"
+    },
+    {
+      "degree": 32,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Z3-3-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.490538142999867,
+      "output": "32-Z3-3-Z3-protocol.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlint64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Flint-3-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7963012989930576,
+      "output": "64-Flint-3-Flint.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Flint-3-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46538676899217535,
+      "output": "64-Flint-3-Native.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runFlintProtocol64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Flint-3-Flint-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7449868630064884,
+      "output": "64-Flint-3-Flint-protocol.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ364",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Z3-3-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49604334399919026,
+      "output": "64-Z3-3-Z3.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Native",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runNative64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Z3-3-Native.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4932774830085691,
+      "output": "64-Z3-3-Native.json"
+    },
+    {
+      "degree": 64,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": true,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmExternalBench.runZ3Protocol64",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/64-Z3-3-Z3-protocol.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4914064999902621,
+      "output": "64-Z3-3-Z3-protocol.json"
+    }
+  ],
+  "load_end": [
+    10.01611328125,
+    9.24462890625,
+    7.29248046875
+  ],
+  "source_unchanged": true,
+  "binary_unchanged": true
+}

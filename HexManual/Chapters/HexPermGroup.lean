@@ -470,20 +470,20 @@ for each range of Schreier generators. Each piece is a separate declaration
 proved by evaluation, and the tactic combines them to obtain the hypothesis
 of `card_closure`, or of the corresponding theorem for membership.
 
-Checking the certificate is much cheaper than checking the stabilizer chain
-stored in the group. Checking that chain with `checkChain` during type
-checking reads each permutation as a vector of `Fin n`, one entry at a time,
-and handles a level for every point. For `M11`, measured on one machine on
-2026-09-28 with each run alone:
+Checking the certificate with {name}`Hex.PermGroup.Kernel.check` is much cheaper
+than checking the original chain from {name}`Hex.PermGroup.Group.ofGenerators`.
+Checking that chain with `checkChain` during type checking reads each permutation as a vector of
+`Fin n`, one entry at a time, and handles a level for every point. For `M11`,
+measured on `chungus2` on 2026-09-28 with each run alone:
 
 :::table +header
 * * check
   * time
   * peak memory
-* * `checkChain` on the chain from {name}`Hex.PermGroup.Group.ofGenerators`
+* * `checkChain`
   * 28.3 s
   * 5.8 GB
-* * {name}`Hex.PermGroup.Kernel.check` on the certificate
+* * `Kernel.check`
   * 0.1 s
   * 0.24 GB
 :::

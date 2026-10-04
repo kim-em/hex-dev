@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runZ3QuadraticRoots2Protocol    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=edb3ef9-dirty, 2026-10-04T04:25:16Z, host=chungus2
+  repeat 0  9.722 µs  (×2^13, total 79.645 ms)
+  median: 9.722 µs    min: 9.722 µs    max: 9.722 µs
+  hash: all repeats agree
+  observed hash: 0xf1a1204ac3404b40
+  expected hash: matches
+  peak RSS: 69_132 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-2-Z3-0-Z3-protocol.json
