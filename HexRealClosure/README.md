@@ -1563,7 +1563,9 @@ and prove agreement on the native parent embedding.
 `Shared.gather?_models following reference owners compatible` proves that
 compatible gathering succeeds. Its returned `Shared.Model` interprets the actual
 shared target, preserves the supplied base values, and certifies every returned
-owner inclusion and predecessor cache entry in that same field. The target and
+owner inclusion and predecessor cache entry in that same field. Its
+`canonicalOwners` field identifies every retained owner with its `Context.model?`
+factory result, including through `Shared.Model.ofGather`. The target and
 cached original models are constructed through `Context.model?`; cache hits
 therefore agree with the incoming original predecessor without a separate
 coefficient-agreement hypothesis. `Shared.Model.ofGather` packages the model
@@ -1571,7 +1573,8 @@ for an already returned native result. Callers supply the declared base's
 provider realization and a model in an ordered real closed field, plus the
 same prefix/depth compatibility condition checked by the executable.
 `Shared.Model.value`, `polynomial`, `sign`, and `compare` preserve the original
-owners' values, coefficients, and native order results.
+owners' values, coefficients, and native order results. `value_of_model` also
+identifies the transported value with a separately retrieved canonical owner model.
 
 Registration caches checked inclusions for every original algebraic predecessor.
 Parent/child registration, sibling branches, and repeated owners reuse their
