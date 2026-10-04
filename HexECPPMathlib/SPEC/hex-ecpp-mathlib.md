@@ -100,8 +100,8 @@ It evaluates `checkAt` using compiled code as an untrusted preflight, reifies th
 `natPrime_of_checkAt` with kernel-replayed acceptance. The emitted Boolean
 proof must reduce through exposed Lean definitions and existing approved
 arithmetic fallbacks. A failing preflight, resource interruption, or failed
-kernel replay emits no proof. No `norm_num` registration or automatic fallback
-from the existing `primality` tactic is changed by this SPEC.
+kernel replay emits no proof. The supplied-certificate Elab module registers
+no `norm_num` handler or automatic primality fallback.
 
 
 The explicit `ecpp using c` policy admits subjects and individual
@@ -150,7 +150,7 @@ acceptance and the resulting proof with the Lean kernel. The suggestion
 contains compact frozen data and its explicit Hex leaf, so applying it removes
 both the CAS call and endpoint search. The producer and converter are not
 proof dependencies. Ordinary `primality` imports and behavior are unchanged;
-no automatic fallback or `norm_num` handler is registered.
+the PARI module registers no automatic fallback or `norm_num` handler.
 
 `#ecpp_export MyCertificates.Prime cert for n` writes
 `MyCertificates/Prime.lean`, relative to the process working directory. The
@@ -230,7 +230,8 @@ CM proof dependency. The native search ceiling is admitted separately from
 the supplied-certificate replay ceiling. Both native public commands accept
 optional `(bits := 256)` or `(bits := 512)` before the optional seed; omission
 selects 256, and other policy values fail before search. The 512-bit policy is
-`Hex.ECPP.public512Budget`; no ordinary primality dispatch changes.
+`Hex.ECPP.public512Budget`; importing Native alone does not change ordinary
+primality dispatch.
 
 Native row depth and replay node counts are separate allocations. The bridge
 clamps the default native depth to the converter's 20-row ceiling. For the
@@ -246,6 +247,101 @@ literals, avoiding frontend `OfNat` wrappers while preserving the values and
 the unchanged 131072-node inspection ceiling. Conformance includes an accepted 31-node terminal with its base
 wrapper, both literal and compact replay, and rejection when a row raises the
 total to 33.
+
+## Automatic native fallback
+
+`HexECPPMathlib.Auto` is a separate optional module. Importing it enables a
+bounded native ECPP fallback for ordinary `primality?` on both `Nat.Prime` and
+`Hex.Nat.Prime` goals, via the upstream version-1 `SuggestionExtension`
+boundary. The ordinary ECPPMathlib umbrella, `Native`, `Pari`, core ECPP and
+upstream primality umbrellas do not import Auto. Enablement follows transitive
+imports, so a downstream public import of Auto enables it in its own importers.
+Register Auto in the monorepo Lake roots and the release manifest build modules.
+It introduces no GP invocation,
+`norm_num` handler, ordinary `primality` handler, integer-factorization route,
+or change to SQUFOF dispatch. This fallback does not depend on publication.
+
+Pocklington construction and its registered factor providers run first with
+their existing policies. A success retains its certificate and exact suggestion.
+Only ordinary non-composite exhaustion permits ECPP. An exhausted 521-bit
+construction remains outside ECPP's 512-bit production ceiling; the extension
+must decline before search and explain its ceiling. All other validation and
+interruption rules at the upstream boundary apply unchanged.
+
+A single Mathlib-free `Hex.ECPP.autoBudget (bits : Nat)` definition owns the
+automatic allocation and is shared by Auto and its compiled experiment driver.
+The initial automatic policy is one native seed, 0, for every admitted subject,
+with no subject-specific seeds, factors, certificates or discriminants. Use
+`public512Budget` for 257--512 bits and the existing default native policy for
+smaller inputs, reducing both to at most 1024 candidates, 8192 roots, 4096
+nonresidue draws, 4096 point draws, 4096 factor-work units and 1000000 scalar
+additions. The 512-bit policy additionally caps polynomial and root work at
+1048576 each. Retain their existing finite depth, memo, output, row, total-node,
+terminal, order and local retry limits; do not enlarge smaller-input limits.
+A zero Pocklington attempt limit disables automatic ECPP. A larger desired
+ECPP allocation uses explicit `primality? (method := ecpp)` instead; show that
+hint only for shared-allocation exhaustion, not local/portfolio decline.
+There is no new tactic budget option. Replay limits remain unchanged. Search
+retains its initial bounded terminal-construction call, charging its reserved
+factor package even if the preceding larger construction failed. This can
+produce a terminal-only success; a genuine elliptic success has at least one row.
+
+All recursive native work consumes one allocation. Return its charged counters,
+resource cause and unresolved subject on bounded exhaustion. The final diagnostic
+retains the Pocklington attempt count and original unresolved obligation and
+separately names the ECPP seed, actual allocation, spent counters and failure.
+Do not sum different methods' counters or describe ECPP exhaustion as evidence
+of compositeness. Successful native proposals go through the existing compact
+conversion and exact finite replay preflight. The producer returns only the
+complete frozen suggestion. The upstream caller elaborates that exact syntax
+and kernel-checks one auxiliary theorem before assigning the original goal,
+with no separate `checkWithKernel`. Syntax elaboration retains the existing
+bounded internal data-recursion ceiling of 65536 used by Compact and Elab;
+final auxiliary-theorem acceptance runs outside that internal override under
+the caller's recursion setting. Preserve caller heartbeats and cancellation,
+with system checks at the phase boundaries specified upstream. Do not create
+a fresh task/process to escape accounting or silently raise arithmetic evaluator
+thresholds. User-controlled finite resource settings must be documented for
+acceptance examples which require them. No evidence with `maxHeartbeats 0`
+attests automatic acceptance.
+
+The generated suggestion contains `ecpp using (ecpp_cert% "rows" using leaf)`
+for `Nat.Prime`, or the existing `Hex.Nat.prime_iff` transport for the core
+predicate. It contains every replay row and its explicit terminal `PrimeCert`;
+it invokes neither Auto nor native production. Exact `#guard_msgs` examples
+must pin the complete suggestions for both predicates, including a genuine
+elliptic success where full current Pocklington/ECM construction exhausts.
+Replay those verbatim in fresh modules importing Compact without Auto or Native,
+with GP unavailable. Preserve exact successful Pocklington suggestions.
+
+Before claiming the initial policy as an accepted automatic route, retain
+experiments over the frozen native512 tuning/holdout corpus and existing
+128/256-bit corpus, including bounded unsuccessful cases. Register the
+allocation and fixed seed before runs. Retain every completed shared-host
+sample with its CPU and host context; compare construction alone with the
+complete optional portfolio using adjacent alternating arms. Measure native
+search, compact conversion/preflight, and kernel proof/replay separately using
+the existing proof-probe discipline, and include the complete fresh-module cost and phase heartbeat deltas.
+The explicit 512-bit production evidence alone does not attest this smaller
+policy. Require at least one held-out genuine elliptic success beyond full
+current construction; if the declared allocation fails this gate, record the
+result and revise the SPEC before changing the policy. Native unsuccessful holdout search must finish within a preregistered 5-second
+operational cap on the measurement host, retaining all completed observations
+regardless of activity. The claim reports both coverage and the full failure-cost
+distribution; this is not a universal wall-clock guarantee. Kernel replay must pass
+with declared finite Lean options and existing syntax, row and node ceilings. The initial fixed-seed reduced512
+computational feasibility evidence is retained in
+[the automatic-fallback report](../../reports/ecpp/auto/README.md); it does not
+replace whole-portfolio and finite-option proof acceptance.
+
+Conformance must cover absent registrations, wrong ABI/type/missing producers,
+both supported goal predicates, unsupported/open subject rejection, input-bit
+boundaries, zero construction allowance and finite search allocations, composite refusal, exhausted construction,
+ECPP bounded exhaustion, pre-invocation cancellation and interruption at phase boundaries, failed
+preflight/replay, power-expression goals and their arithmetic warnings, and
+unchanged explicit `using`/`factor :=`/ECPP/PARI routes. Verify that already
+successful construction does not invoke the optional producer. Extend the
+existing single CI job and declared proof/conformance targets.
 
 ## Proof-track evidence
 

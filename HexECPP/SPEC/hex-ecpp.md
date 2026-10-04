@@ -577,3 +577,18 @@ Source registration does not by itself imply release or phase progress.
 - [PARI `primecert` documentation](https://pari.math.u-bordeaux.fr/dochtml/html-stable/Arithmetic_functions.html#primecert): supplied certificate format and terminal prime conventions.
 - [PARI ECPP implementation](https://pari.math.u-bordeaux.fr/lcov-report/basemath/ecpp.c.gcov.html): exact integer size comparison and strong-nonzero check.
 - [Mathlib affine points](https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/AlgebraicGeometry/EllipticCurve/Affine/Point.lean): group-law interface; use the project's lockfile for the version built here.
+
+## Reduced automatic-search allocation
+
+`Hex.ECPP.autoBudget (bits : Nat)` is a Mathlib-free allocation definition
+for the optional downstream automatic primality suggestion route. It selects
+the unchanged native policy through 256 bits or `public512Budget` above that
+threshold, then lowers its finite candidate/root/nonresidue/point/factor/scalar
+allocations as specified by
+[hex-ecpp-mathlib](../../HexECPPMathlib/SPEC/hex-ecpp-mathlib.md#automatic-native-fallback).
+Only the larger policy lowers polynomial and root-work caps to 1048576. The
+compiled feasibility driver and optional Auto module use this single definition.
+The subject ceiling remains at most 512 bits; the caller checks it before work.
+This definition imports no Mathlib, registers no tactic and makes no coverage
+claim. The default `produce`, explicit native256/native512 policies, search
+algorithm and checker remain unchanged.
