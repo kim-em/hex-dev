@@ -702,6 +702,89 @@ class SyncReleasedTests(unittest.TestCase):
             encoding="utf-8")
         sync_released.validate_external_imports(entry, self.repo)
 
+    def test_missing_tauceti_requirement_is_added_with_locked_pin(self) -> None:
+        entry = self._external_import_entry(
+            'name = "probe"\n[[require]]\nname = "mathlib"\nrev = "old"\n'
+            '[[lean_lib]]\nname = "HexProbe"\n',
+            "public import TauCeti.Algebra.Polynomial.Sturm.Infinity\n")
+        notes = sync_released.rewrite_external_requires(entry, self.repo, self.pins)
+        tau = next(pin for pin in self.pins.values() if pin["name"] == "TauCeti")
+        text = (self.repo / "lakefile.toml").read_text()
+        self.assertIn(f'git = "{tau["url"]}"', text)
+        self.assertIn(f'rev = "{tau["inputRev"]}"', text)
+        self.assertLess(text.index('name = "TauCeti"'), text.index('[[lean_lib]]'))
+        sync_released.validate_external_imports(entry, self.repo)
+        self.assertEqual(len(notes), 1)
+        self.assertEqual(sync_released.rewrite_external_requires(entry, self.repo, self.pins), [])
+
+    def test_missing_tauceti_requirement_is_added_in_lean(self) -> None:
+        entry = self._external_import_entry("", "import TauCeti.Data.Matrix.OccCount\n")
+        entry["lakefile"] = "lean"
+        (self.repo / "lakefile.lean").write_text(
+            'import Lake\nopen Lake DSL\npackage probe where\n'
+            'require mathlib from git "https://github.com/leanprover-community/mathlib4.git" @ "old"\n'
+            'lean_lib HexProbe where\n')
+        sync_released.rewrite_external_requires(entry, self.repo, self.pins)
+        sync_released.validate_external_imports(entry, self.repo)
+        text = (self.repo / "lakefile.lean").read_text()
+        self.assertLess(text.index('require TauCeti'), text.index('lean_lib HexProbe'))
+        self.assertEqual(sync_released.rewrite_external_requires(entry, self.repo, self.pins), [])
+
+    def test_external_import_scan_ignores_comments_and_checks_multiple_imports(self) -> None:
+        entry = self._external_import_entry('name = "probe"\n',
+            '/- import Mathlib.Tactic -/\n'
+            'def text := "import Mathlib.Tactic"\n'
+            'public import HexBasic TauCeti.Data.Matrix.OccCount\n')
+        self.assertEqual(set(sync_released._external_import_roots(entry, self.repo)), {"TauCeti"})
+        sync_released.rewrite_external_requires(entry, self.repo, self.pins)
+        self.assertNotIn('name = "mathlib"', (self.repo / "lakefile.toml").read_text())
+        sync_released.validate_external_imports(entry, self.repo)
+
+    def test_missing_external_lock_fails_before_editing_lakefile(self) -> None:
+        entry = self._external_import_entry('name = "probe"\n', 'import TauCeti.Data.Matrix.OccCount\n')
+        path = self.repo / "lakefile.toml"
+        before = path.read_text()
+        with self.assertRaisesRegex(RuntimeError, "no locked external provider TauCeti"):
+            sync_released.rewrite_external_requires(entry, self.repo, {})
+        self.assertEqual(path.read_text(), before)
+
+    def test_commented_scoped_requirement_does_not_provide_external_import(self) -> None:
+        entry = self._external_import_entry("", "import TauCeti.Data.Matrix.OccCount\n")
+        entry["lakefile"] = "lean"
+        (self.repo / "lakefile.lean").write_text(
+            '/-\nrequire "TauCetiProject" / "TauCeti"\n-/\n')
+        with self.assertRaisesRegex(RuntimeError, "imports TauCeti"):
+            sync_released.validate_external_imports(entry, self.repo)
+        (self.repo / "lakefile.lean").write_text(
+            'require "TauCetiProject" / "TauCeti"\n')
+        sync_released.validate_external_imports(entry, self.repo)
+
+    def test_direct_tauceti_manifest_entry_uses_exact_commit(self) -> None:
+        entry = self._external_import_entry('name = "probe"\n', 'import TauCeti.Data.Matrix.OccCount\n')
+        sync_released.rewrite_external_requires(entry, self.repo, self.pins)
+        path = self.repo / "lake-manifest.json"
+        path.write_text(json.dumps({"version": "1.2.0", "packages": []}))
+        sync_released.rewrite_manifest(entry, self.repo, {}, {}, self.pins, "v0.2.0")
+        package = next(p for p in json.loads(path.read_text())["packages"] if p["name"] == "TauCeti")
+        tau = next(pin for pin in self.pins.values() if pin["name"] == "TauCeti")
+        self.assertEqual(package["rev"], tau["rev"])
+        self.assertEqual(package["inputRev"], tau["inputRev"])
+        self.assertFalse(package["inherited"])
+        self.assertEqual(sync_released.rewrite_manifest(entry, self.repo, {}, {}, self.pins, "v0.2.0"), [])
+
+    def test_pinned_companion_carries_inherited_tauceti_to_downstream_lock(self) -> None:
+        entry = self._external_import_entry(
+            'name = "probe"\n[[require]]\nname = "mathlib"\nrev = "pin"\n',
+            'public import HexRealRootsMathlib\n')
+        entry["pins"] = ["hex-real-roots-mathlib"]
+        path = self.repo / "lake-manifest.json"
+        path.write_text(json.dumps({"version": "1.2.0", "packages": []}))
+        sync_released.rewrite_manifest(entry, self.repo, {}, {}, self.pins, "v0.2.0")
+        packages = {p["name"]: p for p in json.loads(path.read_text())["packages"]}
+        self.assertTrue(packages["TauCeti"]["inherited"])
+        self.assertFalse(packages["mathlib"]["inherited"])
+        self.assertNotIn('name = "TauCeti"', (self.repo / "lakefile.toml").read_text())
+
     def test_hasse_requires_aintlib_even_with_mathlib(self) -> None:
         mathlib = '[[require]]\nname = "mathlib"\nrev = "0"\n'
         entry = self._external_import_entry(

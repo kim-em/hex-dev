@@ -15,11 +15,11 @@ It also exports `Real.instIsRealClosed`, constructed from real square roots
 and odd-degree polynomial root existence, through `HexRealRootsMathlib.RealClosed`
 and the umbrella import.
 
-The general Sturm–Tarski root-sum theorem and integer query semantics are
-proved in the monorepo’s `adapters/HexRealRootsMathlib/` modules, built by
-`HexQuerySemantics`. These modules are not yet published in this package.
-Their publication requires adding the companion managed paths and pinned
-Tau Ceti release dependency specified in [the SPEC](SPEC/hex-real-roots-mathlib.md).
+The public umbrella exports the general Sturm–Tarski root-sum theorem and
+integer query semantics through `TarskiSoundness` and `TarskiReal`. The shared
+foundation imports pinned Tau Ceti in this Mathlib companion. These modules
+are integrated in the development source; availability in a published version
+requires the maintainer’s next package sync.
 
 # Quickstart
 
@@ -117,11 +117,13 @@ variation value.
 Together they support the rational/integer whole-`Option` agreement theorem
 in hex-sturm-mathlib without assuming root-sum semantics.
 
-The development adapters import the proved signed-remainder theorem and
-polynomial IVT/Rolle foundation from Tau Ceti. They prove general root-sum
-semantics, singleton-sign and arbitrary ordered-field count consequences.
-These semantic modules remain outside the published package; the algebraic
-replay results above are independent of them.
+`TarskiFoundation`, `TarskiSoundness` and `TarskiReal` import the proved
+signed-remainder theorem and polynomial IVT/Rolle foundation from Tau Ceti.
+`Tarski.check_rootSum` proves soundness of arbitrary accepted certificates
+over an ordered real closed field. `Hex.ZPoly.tarskiQuery_eq` and
+`Hex.IntTarskiCertificate.check_sound` specialize it to integer inputs and
+real roots. Singleton-sign and arbitrary ordered-field count consequences
+are public too; the algebraic replay results above do not need the foundation.
 
 `TarskiSum.lean` defines the mathematical sum over distinct roots in an open
 interval, allowing infinite endpoints. It proves singleton and constant cases,
@@ -138,8 +140,8 @@ therefore nonnegative on query `1`. The rational companion transports the
 finite-interval result. `rootsIn_card` identifies the legacy half-open count
 with the open distinct-root set under the accepted domain;
 `integer_check_rootSum` and `integer_query_rootSum` give the actual query-one
-root-sum identity. Only the arbitrary ordered-field count theorem and
-its dependent general wrapper require the deferred foundation.
+root-sum identity. The arbitrary ordered-field count theorem and its general wrapper use the
+shared Tau Ceti foundation exposed by this companion.
 
 # Verification
 

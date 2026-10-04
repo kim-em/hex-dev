@@ -1,8 +1,9 @@
 # Real-closure package preparation
 
-This is the package-boundary proposal for [#10575](https://github.com/kim-em/hex-dev/issues/10575).
+This records companion integration and package-boundary preparation for
+[#10575](https://github.com/kim-em/hex-dev/issues/10575).
 The source base revision, input digest and exact external pins are recorded in
-[the inventory](real-closure-package-inventory.json). The proposal consumes
+[the inventory](real-closure-package-inventory.json). The integration consumes
 merged APIs. It does not attest implementation owners' pending contracts,
 advance phases, or admit new release-manifest entries. The accompanying
 [requirements audit](real-closure-requirements.md) records the acceptance gaps.
@@ -10,15 +11,15 @@ advance phases, or admit new release-manifest entries. The accompanying
 ## Public imports and source ownership
 
 Regenerate the source inventory with
-`python3 scripts/audit_real_closure_packages.py --base-revision b2575e89cebb8b2d4cdc0f80f4ef13915e7870d5 > reports/real-closure-package-inventory.json`.
+`python3 scripts/audit_real_closure_packages.py --base-revision 49a7bada21543b6d1631de5537c0dda4b1da68ad > reports/real-closure-package-inventory.json`.
 It records declared dependencies separately from imports reachable through
 current public umbrellas and the development semantic modules, including
 external import roots. The digest covers the generator and its source inputs;
 unresolved local library imports are errors. The base revision can be supplied
 explicitly, including in a clone without `origin/main`. Separate
 `candidateRCFPackages` records describe base HexRCF plus RealFormula and the
-proposed optional coefficient package using current imports. Companion
-migrations still introduce the Tau Ceti installation dependency described
+proposed optional coefficient package using current imports. The integrated real-roots companion and remaining companion
+migrations introduce the Tau Ceti installation dependency described
 below. The generator neither creates package trees nor publishes them.
 
 The eight family libraries are HexOrderedFn/Mathlib, HexSturm/Mathlib,
@@ -28,29 +29,29 @@ dependencies. Tau Ceti requirements belong only in Mathlib proof packages.
 The inventory records each library's `mathlib` classification. Development
 semantic modules keep their existing ownership:
 
-| Development source | Intended package and public import | Current availability |
+| Source | Owning package and public import | Current availability |
 | --- | --- | --- |
-| `adapters/HexRealRootsMathlib/Tarski{Foundation,Soundness,Real}.lean` | `hex-real-roots-mathlib`; `HexRealRootsMathlib.TarskiSoundness`, with a public umbrella import | Three modules built by `HexQuerySemantics`; absent from the published source tree and umbrella |
-| `adapters/HexSturmMathlib/Soundness.lean` | `hex-sturm-mathlib`; `HexSturmMathlib.Soundness`, with a public umbrella import | Built by `HexQuerySemantics`; regular companion already contains domain/producer correspondence |
+| `HexRealRootsMathlib/Tarski{Foundation,Soundness,Real}.lean` | `hex-real-roots-mathlib`; `HexRealRootsMathlib` | Integrated in the normal companion target and public umbrella; existing published versions do not contain this migration |
+| `HexSturmMathlib/Soundness.lean` | `hex-sturm-mathlib`; `HexSturmMathlib` | Integrated alongside domain/producer correspondence in the normal target and umbrella; companion remains unreleased. Two semantic regression modules remain under adapters |
 | `adapters/HexSignDetMathlib/` | `hex-sign-det-mathlib`; `HexSignDetMathlib.ThomRoots`, `SelectedProducer`, `ComparisonProducer`, `Convert`, with public umbrella imports | Seventeen adapter modules; the regular umbrella exposes finite BKR algebra, not these selected-root semantics |
-| `adapters/HexRealClosureMathlib/` | `hex-real-closure-mathlib`; `HexRealClosureMathlib.TowerRoots`, `RootCollection`, `TowerEnlargeOrder`, with public umbrella imports | Eighty-seven adapter modules including tests; current umbrella exposes only computation, polynomial interpretation and `BaseContext` |
+| `adapters/HexRealClosureMathlib/` | `hex-real-closure-mathlib`; `HexRealClosureMathlib.TowerRoots`, `RootCollection`, `TowerEnlargeOrder`, with public umbrella imports | 104 adapter modules including tests; current umbrella exposes only computation, polynomial interpretation and `BaseContext` |
 | `HexOrderedFnMathlib/` | `hex-ordered-fn-mathlib`; `HexOrderedFnMathlib` | Ordinary umbrella already exposes real and infinitesimal ordered extensions |
 | `adapters/HexRCF/RealFormula.lean` | Base `hex-rcf`; `HexRCF.RealFormula` after RealFormulaMathlib is publishable | One module built by `HexRCFRealFormula`; absent from base `HexRCF.lean` |
-| `adapters/HexRCF/RealCoefficients/` plus its umbrella | Optional Mathlib adapter proposal below; `HexRCF.RealCoefficients` | Forty-six modules built by `HexRCFRealCoefficients`; absent from base `HexRCF.lean` |
+| `adapters/HexRCF/RealCoefficients/` plus its umbrella | Optional Mathlib adapter proposal below; `HexRCF.RealCoefficients` | 51 coefficient modules built by `HexRCFRealCoefficients`; absent from base `HexRCF.lean` |
 
-The inventory lists every adapter source and its direct import roots. Tests
-ending in `Tests` stay development checks unless individually selected as
+The inventory lists every adapter source and its direct import roots. Modules under `Tests/` or ending in `Tests` stay development checks unless individually selected as
 standalone regression modules under existing release policy. Migration must
 move each semantic file into its owner directory, preserve its module name,
 update companion umbrellas, then remove the adapter file and its old Lake
 glob in the same change. Leaving two providers of one module is invalid.
-No active owner's module is moved by this preparation.
+This integration moves only the completed shared Tarski and Sturm semantic
+modules. Active sign, tower and tactic modules remain with their owners.
 
 ## Tau Ceti impact
 
 The [real-roots companion SPEC](../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#sturm-tarski-correspondence)
 and [family contract](../SPEC/future-work.md#one-sturmtarski-primitive) place
-the shared Tarski semantics in **HexRealRootsMathlib**. Its adapter directly
+the shared Tarski semantics in **HexRealRootsMathlib**. Its `TarskiFoundation.lean` directly
 imports `TauCeti.Algebra.Polynomial.Sturm.Infinity`. The sign companion's regular
 `Foundation.lean` already imports `TauCeti.Data.Matrix.OccCount`; its adapters
 also directly import Tau Ceti's BKR/Thom foundations. The tower companion directly
@@ -89,9 +90,14 @@ Exact candidate foundation requirements from `lake-manifest.json`:
 | mathlib | `https://github.com/leanprover-community/mathlib4.git` | `d870b9068518a0870842d15a0cd42637ec30b587` |
 
 The candidate toolchain is `leanprover/lean4:v4.35.0-rc3`. A future release uses
-one maintainer-selected shared Hex version; none is selected here. Existing
-`external_pins`/`rewrite_external_pins` synchronize declared external requirements
-and locks; they do not create a missing Tau Ceti declaration in a skeleton.
+one maintainer-selected shared Hex version; none is selected here. The existing
+release driver now uses `rewrite_external_requires` to add a missing direct
+provider from the exact monorepo lock before checking managed-source imports.
+`rewrite_external_pins` synchronizes existing declarations; `rewrite_manifest`
+also adds newly needed external providers to downstream locks, marking Tau
+Ceti inherited in packages that obtain it through a pinned companion.
+Existing external dependency records remain pinned. This does not add any
+ineligible Hex library to the release manifest.
 Tau Ceti's own lock uses the same Mathlib revision shown above. Downstream
 proof/tactic packages must resolve a compatible shared Mathlib revision;
 updating Tau Ceti requires checking that compatibility.
@@ -109,9 +115,15 @@ published packages:
 - Integrate `HexRCF.RealFormula` into base HexRCF when RealFormulaMathlib is
   publishable. Its existing SPEC ownership and imports need no tower; shared
   formula consumers should not install the tower just for this module.
-- Use the coefficient adapter's existing Lake declaration with explicit module globs.
-  The optional package and base package share the `HexRCF` namespace but own
-  disjoint modules. The optional package requires base `hex-rcf` and the
+- Sharing the `HexRCF` namespace needs an explicit module-ownership rule in
+  the base package, as well as disjoint source files. Lake’s default `HexRCF`
+  library root claims all `HexRCF.*` modules, including absent optional ones.
+  The local candidate experiment proposes `roots = []` plus an exact list of
+  the 26 non-test base modules; the existing test target retains its separate
+  module list. The optional adapter then owns its own explicit modules.
+  This base-package configuration change is unapplied and needs user direction
+  and an owning SPEC revision before production integration. The rational
+  `import HexRCF` surface is preserved in the experiment. The optional package requires base `hex-rcf` and the
   companions in its separate candidate inventory record, including the
   real-algebraic, Sturm and number-field companions. Its imports require
   RealFormulaMathlib and `HexRCF.RealFormula`, so publication also requires
@@ -137,21 +149,37 @@ ordinary-import examples from a separate Lake project requiring the local
 monorepo. Its four modules consume arbitrary query certificates, prepared
 counts, a runtime rational query and its conditional real interpretation,
 complete BKR/Thom root production, successive infinitesimal order,
-and native tower production/completeness/multiplicities/order. Every resulting
+and native tower production/completeness/multiplicities/order. The query
+consumer also applies the shared integer-certificate theorem through the
+real-roots umbrella and the complete `query_iff` characterization through
+the Sturm umbrella. Every resulting
 theorem has an exact ordinary-kernel axiom guard. None imports `all`, test
 internals, or an active worker's branch. The root default build compiles the
 same source files, as does the existing CI build; the admission scan includes
 their import cones. The rational runtime guard is a conformance case, not a
 kernel proof of producer totality.
 
-This validates **local monorepo consumer composition**, not candidate split
-packages or a release sync. [#10476](https://github.com/kim-em/hex-dev/pull/10476)
-is open at the inventory revision. Its staging/consumer implementation is
-not copied or replaced. The fresh consumer against split-package trees and
-precisely their pinned Hex requirements remains outstanding. These sources
-are ready to reuse when that infrastructure lands and the migration is authorized.
+The existing path-based consumer validates **local monorepo composition**.
+The separate [local candidate experiment](../experiments/RealClosureConsumer/CANDIDATES.md)
+uses ordinary imports against Git-pinned package trees, with no monorepo path
+requirement. It reuses the existing publication source mappings and pin
+rewriters. [#10476](https://github.com/kim-em/hex-dev/pull/10476) remains open;
+its staging/consumer implementation is not copied or replaced. Candidate
+success is not a full release-sync validation, manifest eligibility, or
+availability of any published version. The optional tactic sources are test
+modules in the consumer; no optional installable package is selected.
 Optional tactic consumers reuse [#10358](https://github.com/kim-em/hex-dev/issues/10358)'s `TotalAlgebraicProofs` and
 `ProductionProgress`; exploration consumers await [#10378](https://github.com/kim-em/hex-dev/issues/10378)'s delivered API.
+
+The [candidate evidence ledger](real-closure-candidate-consumer.json) records
+the 62 local Git pins, exact external pins and source/configuration/log hashes.
+The fresh consumer and rational HexRCF test target pass. Separate builds of
+the two migrated companions and the base HexRCF package with its existing
+library declaration pass against the generated locks without `lake update`;
+those locks remain unchanged. Computational candidate declarations and locks
+contain neither Mathlib nor Tau Ceti. These checks validate the local package
+layout and the new provider/lock synthesis; they do not choose the optional
+package boundary or certify a release sync.
 
 ## Unapplied publication changes and distribution prerequisites
 
@@ -167,11 +195,11 @@ manifest state:
 
 1. Finish owner contracts in the requirements audit and this issue's eight
    libraries' Phases 5–7, including real API review and built Verso chapters.
-   The inventory records current **main** counters: ordered pair 4; Sturm,
+   The inventory records source counters: ordered pair 4; Sturm pair 3;
    sign and tower pairs 0. These are recorded counters, not assessments that
    their merged implementations are absent.
 2. Separately obtain distribution eligibility for every transitive input.
-   RealAlgebraic/Mathlib are recorded at 1: [#10577](https://github.com/kim-em/hex-dev/issues/10577) owns implementation and
+   RealAlgebraic/Mathlib are recorded at 3: [#10577](https://github.com/kim-em/hex-dev/issues/10577) owns implementation and
    Phase-4 readiness, followed by their own Phases 5–7. Rank/Mathlib are 4
    with [#10352](https://github.com/kim-em/hex-dev/issues/10352) complete, but still require their own Phases 5–7. RealFormula/
    Mathlib and Reflect/Mathlib are 1 and need their remaining Phases 2–7.
@@ -194,22 +222,17 @@ manifest state:
    initial audit and rerunning the existing manifest checker after migrations.
    The optional package additionally needs an agreed manifest representation
    for its disjoint module globs and owning SPEC; no new release framework.
-5. Before moving Tarski adapters into the already published real-roots
-   companion, extend the existing release tooling to manage the missing
-   direct Tau Ceti requirement in its Lake file. Its synchronized declaration,
-   lock and consumer build must be ready in the same migration; otherwise the
-   next unrelated sync would publish sources needing an undeclared package.
-   `validate_external_imports` now rejects a missing Tau Ceti requirement, but
-   does not add one. The migration PR must also pass candidate-package
-   validation of that requirement before merging, using the existing
-   staging/consumer tooling once available; a sync-time rejection alone is
-   insufficient. Do not hand-edit an existing published mirror. Reconcile
-   exact-path private-import rules for moved modules; TarskiFoundation currently
-   uses `import all HexRealRootsMathlib.TarskiSum`.
+5. The shared Tarski modules are integrated into the already published real-roots
+   companion’s managed paths, with direct pinned Tau Ceti requirement synthesis
+   and inherited downstream lock synthesis in the existing driver. Candidate
+   package builds must verify the synchronized declarations and locks before
+   merge. TarskiFoundation’s `import all HexRealRootsMathlib.TarskiSum` accesses
+   its own companion internals and passes the existing DAG/trusted-import policy;
+   consumers use ordinary imports. No published mirror is edited or pushed.
    Obtain maintainer-created new mirrors and skeletons under
-   [BOOTSTRAP.md](../scripts/release/BOOTSTRAP.md). Declare the direct Tau Ceti
-   requirements above and pinned Hex requirements in new skeletons. Update
-   aggregate coverage only for the agreed package boundary.
+   [BOOTSTRAP.md](../scripts/release/BOOTSTRAP.md). Declare direct Tau Ceti and
+   pinned Hex requirements in new skeletons. Update aggregate coverage only for
+   an agreed optional package boundary.
 6. Use [#10476](https://github.com/kim-em/hex-dev/pull/10476) to build staged trees and a fresh consumer with candidate pins,
    including Tarski, BKR/Thom, ordered extensions, tower roots/exploration and
    the optional tactic. Then run the **full** sync dry run and reconcile any

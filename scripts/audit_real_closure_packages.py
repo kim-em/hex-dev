@@ -91,7 +91,8 @@ def main() -> None:
         public, external = import_closure([name], libraries)
         adapter_files = sorted((ROOT / "adapters" / name).rglob("*.lean"))
         semantic, semantic_external = import_closure(
-            [name] + [module_name(path) for path in adapter_files if not path.stem.endswith("Tests")],
+            [name] + [module_name(path) for path in adapter_files
+                      if "Tests" not in path.parts and not path.stem.endswith("Tests")],
             libraries)
         records.append({
             "library": name, "phase": info["done_through"], "mathlib": info["mathlib"],

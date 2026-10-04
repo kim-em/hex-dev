@@ -10,20 +10,21 @@ independent per-library scaffolding reviews in `status/`. Phase 3 has compiled
 operation/property/edge checks for both cores, ordinary-kernel companion builds
 and axiom guards. Required CI on the final revision must pass before merge.
 Phase 4 remains incomplete for both cores;
-the theorem-only companions need their cores at Phase 4. The Sturm headline
-also needs to be exported by its actual companion library before attestation.
+the theorem-only companions need their cores at Phase 4. Their named
+headlines are available from the ordinary companion libraries.
 
 | Library | Implemented/proved coverage | Phase requirements still to discharge | Evidence |
 | --- | --- | --- | --- |
 | HexSturm | Shared ordered-domain kernel; guarded queries and exact-domain natural counts; prepared domains, retargeting, counts, cached replay and literal certificate transport | Phase 4: comparator/registration reconciliation, admissible characterization and retained concerns | `HexSturm/Basic.lean`, `Transport.lean`, `conformance/HexSturm/Conformance.lean`, [performance report](hex-sturm-performance.md) |
-| HexSturmMathlib | Domain equivalence, prepared bindings, producer acceptance, representation congruence and rational/integer whole-Option agreement; exact query iff, count equality and bounds in development adapters | Phase 4: core eligibility and headline bridge-target reconciliation; no dedicated performance deliverable for this theorem-only layer | `Domain`, `Compare`, `Rational`, `DenominatorClearing`, `IntCast`; `adapters/HexSturmMathlib/Soundness.lean`; ordinary-kernel `HexSturmMathlibTests` |
+| HexSturmMathlib | Domain equivalence, prepared bindings, producer acceptance, representation congruence and rational/integer whole-Option agreement; exact query iff, count equality and bounds in the ordinary companion and public umbrella | Phase 4: core eligibility; no dedicated performance deliverable for this theorem-only layer | `Domain`, `Compare`, `Rational`, `DenominatorClearing`, `IntCast`; `HexSturmMathlib/Soundness.lean`; ordinary-kernel `HexSturmMathlibTests` |
 | HexRealAlgebraic | Real subtype, rational recognition and toRat?-first rounding, canonical arithmetic/order, rounding, square roots, fixed-field coordinate signs, integer and algebraic-coefficient real roots, complex norms | Phase 4: canonical fixed operations need admissible models/budgets; root/leaf, separation and rounding sweeps remain | `conformance/HexRealAlgebraic`, pinned FLINT/qqbar oracle and fixtures; `bench/HexRealAlgebraic/Bench.lean` |
 | HexRealAlgebraicMathlib | Arithmetic/order and closure, law/dictionary coherence, rational recognition, rounding, approximation, Repr round trip, fixed-field sign correspondence, combined roots contract and real closedness | Phase 4: core eligibility; no dedicated performance deliverable for this theorem-only layer | `HexRealAlgebraicMathlib/Instances.lean`, `Roots.lean`, `RealClosed.lean`, `HexRealAlgebraicMathlib/Tests.lean` |
 
 ## Semantic availability
 
-`HexQuerySemantics` builds the shared root-sum foundation and the Sturm
-frontend adapters. `HexSturmMathlib.query_sound` and `check_sound` do not require
+`HexRealRootsMathlib` builds the shared root-sum foundation, and the ordinary
+`HexSturmMathlib` umbrella exposes the frontend semantics. `HexQuerySemantics`
+retains semantic regression tests and the remaining owners’ adapters. `HexSturmMathlib.query_sound` and `check_sound` do not require
 roots to lie in the coefficient field. `rootCount_isSome` preserves precisely
 the query domain; `query_nonneg`, `rootCount_query` and `rootCount_map` justify
 `Int.toNat` on every lawful query-one result. Arbitrary supplied sign functions
@@ -67,14 +68,13 @@ the independently required public contracts for prepared queries, supplied
 certificates, scalar operations and representation changes. Ordinary-kernel
 guards admit only the three standard logical axioms; a noninjective-storage
 query instantiation also builds without field or order instances on storage.
-The real root headline builds in the companion target. The Sturm
-semantic results currently build through `HexQuerySemantics` under `adapters/`.
-`import HexSturmMathlib` does not expose them, and `check_adapter_imports` in
-`scripts/check_dag.py` rejects library imports of adapters. This is an API
-availability gap for Phase 4: the shared `TarskiFoundation` / `TarskiSoundness`
-must enter HexRealRootsMathlib and the frontend `Soundness` must enter
-HexSturmMathlib, with their dependency closure checked. Integration remains
-with #10575 and is not asserted by these monorepo results. In particular, the companion replay tests import the
+Both headlines build in their ordinary companion targets. Shared
+`TarskiFoundation` / `TarskiSoundness` and the integer specialization live in
+HexRealRootsMathlib; frontend `Soundness` lives in HexSturmMathlib and is
+exported by `import HexSturmMathlib`. The dependency and trusted-import checks
+cover this integration. This removes the monorepo API gap without recording
+Phase 4 or claiming split-package publication. The companion replay tests
+still import the
 conformance fixture module `HexSturm.Fixtures`; split-package test wiring must
 provide it when those libraries are published. Available mathematical proofs do not depend on that
 publication work.
