@@ -1282,6 +1282,7 @@ lean_lib HexConformance where
       `HexRealClosureMathlib.CoefficientSignsConformance,
       `HexRealClosureMathlib.DependenciesConformance,
       `HexRealClosureMathlib.PackingConformance,
+      `HexRealClosureMathlib.ContextOperationsConformance,
       `HexRealClosureMathlib.NestedSignsConformance,
       `HexRealClosureMathlib.SignCodecConformance,
       `HexRealClosureMathlib.SignFactsConformance,

@@ -581,3 +581,10 @@ Node/edge/byte counts, intermediate arithmetic calls and operand sizes must be
 reported for complete replay. Final independent conformance and Phase-4
 measurements, including allocation/live memory and proof-assembly costs, remain
 required; the envelope and its roundtrip proofs do not supply that evidence.
+
+`Descriptor.changeOps` and `QueryHandle.changeOps` retain validated root data
+and the exact canonical prepared domain when coefficient operations are proved
+equal. They transport only validity proofs; they do not prepare another domain
+or produce another query. The descriptor's stored polynomial, endpoints,
+context and replay remain bound. These functions support using supplied-fact
+operations while assembling proofs at successive coefficient levels.
