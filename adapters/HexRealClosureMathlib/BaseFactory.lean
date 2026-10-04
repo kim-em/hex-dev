@@ -21,6 +21,8 @@ structure PackedContext.Reference {registry : Registry} (base : PackedContext re
   ordered : letI := field; letI := order; IsStrictOrderedRing Carrier
   closed : letI := field; IsRealClosed Carrier
   model : letI := field; letI := order; Tower.Model (Tower.Context.ofBase base) Carrier
+  inclusion : base.Carrier → Carrier
+  value : ∀ a, model.value a = inclusion (Tower.Context.baseStored base a)
 
 instance {registry : Registry} {base : PackedContext registry} (reference : base.Reference) :
     Field reference.Carrier := reference.field
@@ -42,10 +44,15 @@ noncomputable def PackedContext.Realization.reference {registry : Registry}
     let ordered := following.ordered
     letI : LinearOrder K := ordered.order
     let ambient := ordered.ambient
-    have model := ordered.towerModel
-    rw [Context.ofChain_eq context] at model
-    exact ⟨ambient.Carrier, inferInstance, inferInstance,
-      inferInstance, inferInstance, model⟩
+    have correct : ∀ a, sign a = (SignType.sign (ambient.inclusion a) : Int) := by
+      intro a
+      exact (ordered.sign a).trans (congrArg (fun s : SignType => (s : Int))
+        (ambient.monotone.sign_comp a).symm)
+    let model := Tower.Model.base context ambient.inclusion correct
+    refine ⟨ambient.Carrier, inferInstance, inferInstance,
+      inferInstance, inferInstance, model, ambient.inclusion, ?_⟩
+    intro a
+    exact Tower.Model.base_value context ambient.inclusion correct a
 
 end Hex.RealClosure.BaseContext
 
