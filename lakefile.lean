@@ -358,7 +358,7 @@ lean_lib HexRealClosure where
 @[default_target]
 lean_lib HexRealClosureTests where
   globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.RootOrderTests,
-    .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerRootsTests,
+    .one `HexRealClosure.RootPolicyTests, .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerRootsTests,
     .one `HexRealClosure.RootCollectionTests, .one `HexRealClosure.TowerPresentationTests,
     .one `HexRealClosure.LocalSampleTests, .one `HexRealClosure.LiveContextTests,
     .one `HexRealClosure.TrivialTests, .one `HexRealClosure.TrivialTowerTests,
@@ -755,6 +755,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.BisectionRoots, `HexRealClosureMathlib.BisectionFrontier,
     `HexRealClosureMathlib.BisectionCounts, `HexRealClosureMathlib.Isolation,
     `HexRealClosureMathlib.BisectionFactor, `HexRealClosureMathlib.IsolationFactor,
+    `HexRealClosureMathlib.TowerRootPolicy, `HexRealClosureMathlib.RootPolicy, `HexRealClosureMathlib.IsolationPolicy,
     `HexRealClosureMathlib.ZeroFactor, `HexRealClosureMathlib.IsolationRoots,
     `HexRealClosureMathlib.IsolationTotal,
     `HexRealClosureMathlib.RootOrder, `HexRealClosureMathlib.RootFactors,
@@ -2352,3 +2353,7 @@ lean_exe hexsigndet_kernel_replay_probe where
   supportInterpreter := true
   srcDir := "experiments"
   root := `KernelReplay.Main
+
+lean_exe hexrealclosure_policy_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.RootPolicyConformance
