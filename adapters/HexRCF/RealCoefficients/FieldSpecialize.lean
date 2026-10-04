@@ -108,6 +108,12 @@ coefficient operations. No proof-bearing field instance is evaluated. -/
     acc + DensePoly.C (Int.cast c : PolyQuot p root) *
       Mono.prod (literalCoordinate values) m) 0
 
+/-- Specialize every original shared atom in traversal order. Repeated and
+zero atoms are retained, including the atoms expressing domain guards. -/
+@[expose] def prepare (values : Fin n → PolyQuot p root)
+    (formula : RealFormula.QF (n + 1)) : List (DensePoly (PolyQuot p root)) :=
+  formula.polys.map (literalPolynomial values)
+
 noncomputable local instance : Field (PolyQuot p root) := Hex.PolyQuot.field p root
 noncomputable local instance : CommRing (DensePoly (PolyQuot p root)) :=
   HexPolyMathlib.denseCommRing
@@ -187,5 +193,31 @@ theorem literal_leading (rep : RefinedIsolation p)
       Field.value rep (literalPolynomial values q).leadingCoeff := by
   rw [literalPolynomial_eq]
   exact leading (realHom rep hrep hr) (Field.value_eq_zero rep hrep hr) values q
+
+/-- All prepared atoms have their source values at the same selected
+embedding and real argument, in the original shared traversal order. -/
+theorem prepare_eval (rep : RefinedIsolation p)
+    (hrep : SimpleRoot.mk rep = root) (hr : rep.root.im = 0)
+    (values : Fin n → PolyQuot p root) (formula : RealFormula.QF (n + 1)) (x : ℝ) :
+    (prepare values formula).map (evaluate (realHom rep hrep hr) x) =
+      formula.polys.map (fun q => q.eval (append (fun j => Field.value rep (values j)) x)) := by
+  unfold prepare
+  rw [List.map_map]
+  apply List.map_congr_left
+  intro q _
+  exact literalPolynomial_real rep hrep hr values q x
+
+/-- Prepared semantic degrees include all zero atoms and leading cancellations. -/
+theorem prepare_degrees (rep : RefinedIsolation p)
+    (hrep : SimpleRoot.mk rep = root) (hr : rep.root.im = 0)
+    (values : Fin n → PolyQuot p root) (formula : RealFormula.QF (n + 1)) :
+    (prepare values formula).map (fun q =>
+      ((HexPolyMathlib.toPolynomial q).map (realHom rep hrep hr)).natDegree) =
+      (prepare values formula).map DensePoly.natDegree := by
+  unfold prepare
+  simp only [List.map_map]
+  apply List.map_congr_left
+  intro q _
+  exact literal_degree rep hrep hr values q
 
 end Hex.RCF.RealCoefficients.FieldSpecialize

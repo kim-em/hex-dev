@@ -77,10 +77,48 @@ private meta def ordinaryAxiom (name : Name) : Bool :=
 /-- Optional solvers may depend only on Lean's standard logical axioms.
 Imported dependency inventories also cover theorem bodies hidden by modules. -/
 meta def checkAxioms (name : Name) (proof : Expr) : MetaM Unit := do
+  let proof ← instantiateMVars proof
+  -- Universe metavariables do not hide declarations in an inventory probe.
+  -- Expression metavariables can hide arbitrary proof dependencies.
+  if proof.hasExprMVar then throwError "rcf: handler {name} returned an unresolved proof"
   for constant in proof.getUsedConstants do
     for dependency in ← collectAxioms constant do
       unless ordinaryAxiom dependency do
         throwError "rcf: handler {name} proposed a proof using forbidden axiom {dependency} (through {constant})"
+
+/-- Screen closed expression data before native evaluation or proof acceptance.
+Local hypotheses remain permitted; unresolved and nonstandard dependencies do not. -/
+meta def checkExpr (name : Name) (expression : Expr) : MetaM Expr := do
+  let expression ← instantiateMVars expression
+  if expression.hasMVar then throwError "rcf: {name} contains unresolved metavariables"
+  checkAxioms name expression
+  if (← getEnv).hasUnsafe expression then
+    throwError "rcf: {name} uses an unsafe declaration"
+  return expression
+
+/-- Accept only a closed ordinary proof of the exact target. Agreement cannot
+assign caller metavariables; a fresh uncached theorem checks the candidate
+against its target in the kernel and exposes all transitive dependencies. -/
+meta def checkProof (name : Name) (target proof : Expr)
+    (category : String := "rcf proof") : MetaM Expr := withNewMCtxDepth do
+  let proof ← instantiateMVars proof
+  if proof.hasMVar then
+    throwError "rcf: handler {name} returned an unresolved proof"
+  let proof := ShareCommon.shareCommon' proof
+  let agrees ← profileitM Exception (category ++ " goal agreement") (← getOptions) do
+    withNewMCtxDepth <| isDefEq (← inferType proof) target
+  unless agrees do
+    throwError "rcf: handler {name} proposed a proof of a different goal"
+  checkAxioms name proof
+  if (← getEnv).hasUnsafe proof then
+    throwError "rcf: handler {name} proposed a proof using an unsafe declaration"
+  let proof ← profileitM Exception (category ++ " candidate check") (← getOptions) do
+    withOptions (fun opts => debug.skipKernelTC.set (Elab.async.set opts false) false) do
+      mkAuxTheorem target proof (zetaDelta := true) (cache := false)
+  let .thmInfo _ ← withoutExporting <| getConstInfo proof.getAppFn.constName!
+    | throwError "rcf: handler {name} proposed a candidate that did not close as a theorem"
+  checkAxioms name proof
+  return proof
 
 /-- Try handlers transactionally. Successful handlers retain auxiliary
 proof declarations but cannot export assignments to the target's metavariables.
@@ -109,28 +147,7 @@ private meta def dispatchHandlers (target : Expr)
     match result with
     | .declined => pure ()
     | .failed message => throwError message
-    | .proved proof =>
-        if proof.hasMVar then
-          throwError "rcf: handler {name} returned an unresolved proof"
-        -- Sharing is also needed by type inference for certificate literals.
-        let proof := ShareCommon.shareCommon' proof
-        let agrees ← profileitM Exception "rcf handler goal agreement" (← getOptions) do
-          withNewMCtxDepth <| isDefEq (← inferType proof) target
-        unless agrees do
-          throwError "rcf: handler {name} proposed a proof of a different goal"
-        checkAxioms name proof
-        if (← getEnv).hasUnsafe proof then
-          throwError "rcf: handler {name} proposed a proof using an unsafe declaration"
-        -- A fresh auxiliary theorem checks the complete candidate once with
-        -- the ordinary kernel's resource limits and cancellation token.
-        -- Disable caching: another proof of this type cannot validate this one.
-        let proof ← profileitM Exception "rcf handler candidate check" (← getOptions) do
-          withOptions (fun opts => debug.skipKernelTC.set (Elab.async.set opts false) false) do
-            mkAuxTheorem target proof (zetaDelta := true) (cache := false)
-        let .thmInfo _ ← withoutExporting <| getConstInfo proof.getAppFn.constName!
-          | throwError "rcf: handler {name} proposed a candidate that did not close as a theorem"
-        checkAxioms name proof
-        return proof
+    | .proved proof => return ← checkProof name target proof "rcf handler"
   throwError reason.message
 
 /-- Whether a cell participates in the sentence's quantifier fold. -/
