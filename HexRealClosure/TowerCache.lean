@@ -8,6 +8,7 @@ module
 public import HexRealClosure.TowerIdentity
 public import HexRealClosure.TowerInclusion
 public import HexRealClosure.TowerEnlarge
+public import HexRealClosure.TowerReuse
 
 public section
 
@@ -19,6 +20,32 @@ variable {registry : BaseContext.Registry}
 Entries retain native owners; neither a name nor a hash supplies an equality. -/
 structure InclusionCache (target : Context registry) : Type 1 where
   entries : List (Σ source : Context registry, Inclusion source target)
+
+/-- Existing algebraic generators, carried by their actual cached inclusions.
+This includes generators below the final target level. -/
+@[expose] def InclusionCache.rootValues {target : Context registry}
+    (cache : InclusionCache target) : List target.Value :=
+  (cache.entries.filterMap fun entry => entry.1.lastRoot?.map entry.2.value).flatMap
+    fun root => [root, -root]
+
+/-- A linear head supplies a candidate directly in the coefficient field.
+Every candidate still passes the full selected-root constraint check. -/
+@[expose] def InclusionCache.candidates {target : Context registry}
+    (cache : InclusionCache target)
+    (descriptor : SignDet.Descriptor target.Value Signature target.sign target.signature) :
+    List target.Value :=
+  (if descriptor.raw.head.degree? == some 1 then
+    [-descriptor.raw.head.coeff 0 / descriptor.raw.head.coeff 1] else []) ++ cache.rootValues
+
+/-- Reuse a checked existing value as the source child's selected generator. -/
+@[expose] def Inclusion.reuseRoot {source target : Context registry}
+    (initial : Inclusion source target)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (converted : SignDet.Descriptor target.Value Signature target.sign target.signature)
+    (binding : converted.raw = source.mapDescriptor target initial.value descriptor)
+    (matched : RootMatch target converted) : Inclusion (source.adjoin descriptor).context target :=
+  ⟨initial.native.reuseRoot descriptor converted binding matched.value matched.selected,
+    initial.native.reuseRoot_context descriptor converted binding matched.value matched.selected⟩
 
 /-- Carry all cached original predecessors through the same target inclusion. -/
 @[expose] def InclusionCache.extend {source target : Context registry}
@@ -106,8 +133,8 @@ structure CacheResult (previous original : Context registry) : Type 1 where
   cache : InclusionCache target
   base_eq : target.origin.base = previous.origin.base
 
-/-- Traverse original dependencies in order, reusing their cached inclusions.
-Only a previously unseen exact predecessor is adjoined to the shared target. -/
+/-- Traverse original dependencies in order. Exact cached owners and checked
+existing selected roots are reused before appending an algebraic level. -/
 @[expose] def InclusionCache.rebuild? {target source : Context registry}
     (cache : InclusionCache target) (initial : Inclusion source target)
     (suffix : Suffix source) : Option (CacheResult target suffix.context) :=
@@ -122,21 +149,28 @@ Only a previously unseen exact predecessor is adjoined to the shared target. -/
           (source.mapDescriptor target initial.value descriptor) with
       | none => none
       | some converted =>
-        let child := target.adjoin converted
-        let previous : Inclusion target child.context :=
-          ⟨Conversion.includeRoot target converted child rfl,
-            (Conversion.includeRoot_spec target converted child rfl).1⟩
-        let next : Inclusion original child.context :=
-          ⟨initial.native.adjoinCached descriptor converted checked child rfl,
-            (initial.native.adjoinCached_spec descriptor converted checked child rfl).1⟩
-        let updated := ((cache.extend previous).insert next).insert
-          (Inclusion.identity child.context)
-        match updated.rebuild? next rest with
-        | none => none
-        | some later =>
-          some ⟨later.target, previous.comp later.inclusion, later.original, later.cache,
-            later.base_eq.trans (by
-              rw [Context.origin_adjoin, Origin.snoc_base])⟩
+        match target.findRoot? converted (cache.candidates converted) with
+        | some matched =>
+          let binding := SignDet.Descriptor.build_raw
+            (SignDet.Descriptor.validate_eq_some.mp checked)
+          let next := initial.reuseRoot descriptor converted binding matched
+          (cache.insert next).rebuild? next rest
+        | none =>
+          let child := target.adjoin converted
+          let previous : Inclusion target child.context :=
+            ⟨Conversion.includeRoot target converted child rfl,
+              (Conversion.includeRoot_spec target converted child rfl).1⟩
+          let next : Inclusion original child.context :=
+            ⟨initial.native.adjoinCached descriptor converted checked child rfl,
+              (initial.native.adjoinCached_spec descriptor converted checked child rfl).1⟩
+          let updated := ((cache.extend previous).insert next).insert
+            (Inclusion.identity child.context)
+          match updated.rebuild? next rest with
+          | none => none
+          | some later =>
+            some ⟨later.target, previous.comp later.inclusion, later.original, later.cache,
+              later.base_eq.trans (by
+                rw [Context.origin_adjoin, Origin.snoc_base])⟩
 
 /-- Reusing a cached child follows its actual stored inclusion through the
 remaining original suffix. -/
@@ -159,7 +193,8 @@ private theorem InclusionCache.rebuild?_miss_proof {target source : Context regi
     (missing : cache.find? (source.adjoin descriptor).context = none)
     (converted : SignDet.Descriptor target.Value Signature target.sign target.signature)
     (checked : SignDet.Descriptor.validate target.sign target.signature
-      (source.mapDescriptor target initial.value descriptor) = some converted) :
+      (source.mapDescriptor target initial.value descriptor) = some converted)
+    (unmatched : target.findRoot? converted (cache.candidates converted) = none) :
     cache.rebuild? initial (.root descriptor rest) =
       let child := target.adjoin converted
       let previous : Inclusion target child.context :=
@@ -180,8 +215,54 @@ private theorem InclusionCache.rebuild?_miss_proof {target source : Context regi
   · rename_i actual accepted
     have same : actual = converted := Option.some.inj (accepted.symm.trans checked)
     subst actual
+    simp only [unmatched]
     split <;> rename_i recursiveProduced <;>
       simp only [recursiveProduced, Option.map]
+
+private theorem InclusionCache.rebuild?_reuse_proof {target source : Context registry}
+    (cache : InclusionCache target) (initial : Inclusion source target)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (rest : Suffix (source.adjoin descriptor).context)
+    (missing : cache.find? (source.adjoin descriptor).context = none)
+    (converted : SignDet.Descriptor target.Value Signature target.sign target.signature)
+    (checked : SignDet.Descriptor.validate target.sign target.signature
+      (source.mapDescriptor target initial.value descriptor) = some converted)
+    (matched : RootMatch target converted)
+    (present : target.findRoot? converted (cache.candidates converted) = some matched) :
+    cache.rebuild? initial (.root descriptor rest) =
+      let binding := SignDet.Descriptor.build_raw
+        (SignDet.Descriptor.validate_eq_some.mp checked)
+      let next := initial.reuseRoot descriptor converted binding matched
+      (cache.insert next).rebuild? next rest := by
+  simp only [InclusionCache.rebuild?, missing]
+  split
+  · rename_i rejected
+    rw [checked] at rejected
+    contradiction
+  · rename_i actual accepted
+    have same : actual = converted := Option.some.inj (accepted.symm.trans checked)
+    subst actual
+    simp only [present]
+    rfl
+
+/-- A matching selected root registers the new owner in the unchanged target
+and then traverses its remaining dependencies. -/
+theorem InclusionCache.rebuild?_reuse {target source : Context registry}
+    (cache : InclusionCache target) (initial : Inclusion source target)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (rest : Suffix (source.adjoin descriptor).context)
+    (missing : cache.find? (source.adjoin descriptor).context = none)
+    (converted : SignDet.Descriptor target.Value Signature target.sign target.signature)
+    (checked : SignDet.Descriptor.validate target.sign target.signature
+      (source.mapDescriptor target initial.value descriptor) = some converted)
+    (matched : RootMatch target converted)
+    (present : target.findRoot? converted (cache.candidates converted) = some matched) :
+    cache.rebuild? initial (.root descriptor rest) =
+      let binding := SignDet.Descriptor.build_raw
+        (SignDet.Descriptor.validate_eq_some.mp checked)
+      let next := initial.reuseRoot descriptor converted binding matched
+      (cache.insert next).rebuild? next rest :=
+  cache.rebuild?_reuse_proof initial descriptor rest missing converted checked matched present
 
 /-- A new validated root updates the cache before the remaining rebuild. -/
 theorem InclusionCache.rebuild?_miss {target source : Context registry}
@@ -191,7 +272,8 @@ theorem InclusionCache.rebuild?_miss {target source : Context registry}
     (missing : cache.find? (source.adjoin descriptor).context = none)
     (converted : SignDet.Descriptor target.Value Signature target.sign target.signature)
     (checked : SignDet.Descriptor.validate target.sign target.signature
-      (source.mapDescriptor target initial.value descriptor) = some converted) :
+      (source.mapDescriptor target initial.value descriptor) = some converted)
+    (unmatched : target.findRoot? converted (cache.candidates converted) = none) :
     cache.rebuild? initial (.root descriptor rest) =
       let child := target.adjoin converted
       let previous : Inclusion target child.context :=
@@ -204,7 +286,7 @@ theorem InclusionCache.rebuild?_miss {target source : Context registry}
       (updated.rebuild? next rest).map fun later =>
         ⟨later.target, previous.comp later.inclusion, later.original, later.cache,
           later.base_eq.trans (by rw [Context.origin_adjoin, Origin.snoc_base])⟩ :=
-  cache.rebuild?_miss_proof initial descriptor rest missing converted checked
+  cache.rebuild?_miss_proof initial descriptor rest missing converted checked unmatched
 
 /-- An exactly registered predecessor is reused in the same target, with its exact
 cached map and without adding another algebraic level. -/

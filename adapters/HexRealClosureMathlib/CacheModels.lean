@@ -7,6 +7,7 @@ module
 
 public import HexRealClosureMathlib.ContextModel
 public import HexRealClosureMathlib.LiveContext
+public import HexRealClosureMathlib.TowerReuse
 
 public section
 
@@ -129,6 +130,22 @@ noncomputable def EntryModel.adjoin {source destination : Context registry}
   · intro a
     rw [← aligned]
     exact included.value a
+
+/-- A checked existing generator gives the canonical child owner without
+changing the fixed target model or adjoining an algebraic level. -/
+noncomputable def EntryModel.reuseRoot {source destination : Context registry}
+    {target : Tower.Model destination R} {initial : Inclusion source destination}
+    (model : EntryModel following reference target initial)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (converted : SignDet.Descriptor destination.Value Signature destination.sign destination.signature)
+    (binding : converted.raw = source.mapDescriptor destination initial.value descriptor)
+    (matched : RootMatch destination converted) :
+    EntryModel following reference target (initial.reuseRoot descriptor converted binding matched) := by
+  let interpreted := model.native.reuseRoot descriptor converted binding matched.value matched.selected
+  refine ⟨model.original.adjoin descriptor, ?_, ?_⟩
+  · rw [Context.model?_adjoin, model.produced, Option.map_some]
+  · intro a
+    exact interpreted.value a
 
 /-- Compose a canonical owner's interpretation through the next actual
 inclusion. The source interpretation remains the same factory result. -/

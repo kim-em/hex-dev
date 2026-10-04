@@ -61,49 +61,63 @@ theorem InclusionCache.rebuild?_models {source destination : Context registry}
             (source.mapDescriptor destination initial.value descriptor) = some converted :=
         incoming.native.descriptor_exists descriptor
       obtain ⟨converted, checked⟩ := success
-      let child := destination.adjoin converted
-      let previous : Inclusion destination child.context :=
-        ⟨Conversion.includeRoot destination converted child rfl,
-          (Conversion.includeRoot_spec destination converted child rfl).1⟩
-      let next : Inclusion (source.adjoin descriptor).context child.context :=
-        ⟨initial.native.adjoinCached descriptor converted checked child rfl,
-          (initial.native.adjoinCached_spec descriptor converted checked child rfl).1⟩
-      let nextTarget := target.adjoin converted
-      have nextCanonical : child.context.model? following reference = some nextTarget := by
-        change (destination.adjoin converted).context.model? following reference =
-          some (target.adjoin converted)
-        rw [Context.model?_adjoin, canonical, Option.map_some]
-      let previousModel : Inclusion.Model previous target :=
-        ⟨Conversion.Model.includeRoot target converted child rfl⟩
-      have aligned : previousModel.target = nextTarget :=
-        eq_of_heq (previousModel.target_heq.trans
-          (Conversion.Model.includeRoot_target target converted child rfl))
-      have previousValue : ∀ a, nextTarget.value (previous.value a) = target.value a := by
-        intro a
-        rw [← aligned]
-        exact previousModel.value a
-      let nextEntry : InclusionCache.EntryModel following reference nextTarget next :=
-        incoming.adjoin descriptor converted checked
-      let updated := ((cache.extend previous).insert next).insert (Inclusion.identity child.context)
-      let updatedModels : InclusionCache.Models following reference nextTarget updated :=
-        ((models.transport previous nextTarget previousValue).insert next nextEntry).insert
-          (Inclusion.identity child.context)
-          (InclusionCache.EntryModel.identity nextTarget nextCanonical)
-      obtain ⟨later, laterProduced, ⟨laterModel⟩⟩ :=
-        ih updated nextTarget updatedModels nextCanonical next nextEntry
-      let result : CacheResult destination rest.context :=
-        ⟨later.target, previous.comp later.inclusion, later.original, later.cache,
-          later.base_eq.trans (by
-            change (destination.adjoin converted).context.origin.base = destination.origin.base
-            rw [Context.origin_adjoin, Origin.snoc_base])⟩
-      refine ⟨result, ?_, ⟨⟨laterModel.target, laterModel.produced, ?_,
-        laterModel.original, laterModel.cache⟩⟩⟩
-      · rw [cache.rebuild?_miss initial descriptor rest hit converted checked]
-        change (updated.rebuild? next rest).map _ = some result
-        rw [laterProduced]
-        rfl
-      · intro a
-        rw [Inclusion.comp_value, laterModel.previous, previousValue]
+      cases matched : destination.findRoot? converted (cache.candidates converted) with
+      | some existing =>
+        let binding := SignDet.Descriptor.build_raw
+          (SignDet.Descriptor.validate_eq_some.mp checked)
+        let next := initial.reuseRoot descriptor converted binding existing
+        let nextEntry := incoming.reuseRoot descriptor converted binding existing
+        let updated := cache.insert next
+        let updatedModels := models.insert next nextEntry
+        obtain ⟨result, produced, ⟨interpreted⟩⟩ :=
+          ih updated target updatedModels canonical next nextEntry
+        refine ⟨result, ?_, ⟨interpreted⟩⟩
+        rw [cache.rebuild?_reuse initial descriptor rest hit converted checked existing matched]
+        exact produced
+      | none =>
+        let child := destination.adjoin converted
+        let previous : Inclusion destination child.context :=
+          ⟨Conversion.includeRoot destination converted child rfl,
+            (Conversion.includeRoot_spec destination converted child rfl).1⟩
+        let next : Inclusion (source.adjoin descriptor).context child.context :=
+          ⟨initial.native.adjoinCached descriptor converted checked child rfl,
+            (initial.native.adjoinCached_spec descriptor converted checked child rfl).1⟩
+        let nextTarget := target.adjoin converted
+        have nextCanonical : child.context.model? following reference = some nextTarget := by
+          change (destination.adjoin converted).context.model? following reference =
+            some (target.adjoin converted)
+          rw [Context.model?_adjoin, canonical, Option.map_some]
+        let previousModel : Inclusion.Model previous target :=
+          ⟨Conversion.Model.includeRoot target converted child rfl⟩
+        have aligned : previousModel.target = nextTarget :=
+          eq_of_heq (previousModel.target_heq.trans
+            (Conversion.Model.includeRoot_target target converted child rfl))
+        have previousValue : ∀ a, nextTarget.value (previous.value a) = target.value a := by
+          intro a
+          rw [← aligned]
+          exact previousModel.value a
+        let nextEntry : InclusionCache.EntryModel following reference nextTarget next :=
+          incoming.adjoin descriptor converted checked
+        let updated := ((cache.extend previous).insert next).insert (Inclusion.identity child.context)
+        let updatedModels : InclusionCache.Models following reference nextTarget updated :=
+          ((models.transport previous nextTarget previousValue).insert next nextEntry).insert
+            (Inclusion.identity child.context)
+            (InclusionCache.EntryModel.identity nextTarget nextCanonical)
+        obtain ⟨later, laterProduced, ⟨laterModel⟩⟩ :=
+          ih updated nextTarget updatedModels nextCanonical next nextEntry
+        let result : CacheResult destination rest.context :=
+          ⟨later.target, previous.comp later.inclusion, later.original, later.cache,
+            later.base_eq.trans (by
+              change (destination.adjoin converted).context.origin.base = destination.origin.base
+              rw [Context.origin_adjoin, Origin.snoc_base])⟩
+        refine ⟨result, ?_, ⟨⟨laterModel.target, laterModel.produced, ?_,
+          laterModel.original, laterModel.cache⟩⟩⟩
+        · rw [cache.rebuild?_miss initial descriptor rest hit converted checked matched]
+          change (updated.rebuild? next rest).map _ = some result
+          rw [laterProduced]
+          rfl
+        · intro a
+          rw [Inclusion.comp_value, laterModel.previous, previousValue]
 
 end Hex.RealClosure.Tower
 

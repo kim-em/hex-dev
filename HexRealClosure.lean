@@ -35,6 +35,7 @@ public import HexRealClosure.FrameFormat
 public import HexRealClosure.TowerOrder
 public import HexRealClosure.TowerRefinement
 public import HexRealClosure.TowerTransport
+public import HexRealClosure.TowerReuse
 public import HexRealClosure.TowerSuffix
 public import HexRealClosure.TowerPresentation
 public import HexRealClosure.TowerEnlarge

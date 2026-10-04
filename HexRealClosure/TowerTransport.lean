@@ -16,7 +16,7 @@ variable {registry : BaseContext.Registry}
 
 /-- A finite derivation of native conversion from identity, a checked base
 inclusion, a new infinitesimal, a root inclusion, a checked root refinement,
-and rebuilt later levels.
+reuse of a checked existing selected root, and rebuilt later levels.
 This is erased provenance, not a semantic arithmetic law record. -/
 inductive Transport : (source target : Context registry) → (source.Value → target.Value) → Prop
   | identity (context : Context registry) : Transport context context id
@@ -45,7 +45,17 @@ inductive Transport : (source target : Context registry) → (source.Value → t
       Transport (source.adjoin descriptor).context (target.adjoin converted).context
         (fun x => target.ofPoly converted
           (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map value)))
-
+  | reuse {source target : Context registry} {value : source.Value → target.Value}
+      (previous : Transport source target value)
+      (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+      (converted : SignDet.Descriptor target.Value Signature target.sign target.signature)
+      (binding : converted.raw = source.mapDescriptor target value descriptor)
+      (candidate : target.Value)
+      (selected : converted.raw.constraints.map (fun p => target.sign (p.eval candidate)) =
+        converted.raw.constraintSigns) :
+      Transport (source.adjoin descriptor).context target
+        (fun x => (DensePoly.ofCoeffs
+          ((source.polynomial descriptor x).toArray.map value)).eval candidate)
   | comp {source middle target : Context registry}
       {first : source.Value → middle.Value} {next : middle.Value → target.Value}
       (left : Transport source middle first) (right : Transport middle target next) :
