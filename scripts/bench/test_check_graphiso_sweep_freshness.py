@@ -42,6 +42,10 @@ class NativeDependencyTests(unittest.TestCase):
         uncertain = self.BASE + '\nscript s do\n  let c := (\n'
         self.assertTrue(check.lakefile_texts_differ(self.BASE, uncertain))
 
+    def test_handwritten_target_attribute_stays_relevant(self):
+        before = self.BASE + '\n@[extern_lib] def configured := "-O3"\n'
+        self.assertTrue(check.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
+
     def test_quoted_flag_does_not_establish_native_loading(self):
         before = self.BASE.replace('  precompileModules := true',
             '  moreLeancArgs := #["\n  precompileModules := true\n"]')

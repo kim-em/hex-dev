@@ -69,7 +69,7 @@ FIGURES = ROOT / "reports" / "figures"
 MANIFEST_SUFFIX = ".manifest"
 FINGERPRINT_DIGITS = 12
 
-# Lines that begin a top-level Lake declaration. Text between declarations
+# Lines that begin a top-level Lake declaration.
 # Comments and attributes preceding a declaration belong to it. Expression
 # continuations can start at column zero inside brackets and stay with the
 # current declaration.
@@ -77,6 +77,16 @@ LAKE_DECL = re.compile(
     r"^(?:(?:private|protected|public|partial|unsafe|noncomputable|meta)\s+)*"
     r"(package|require|lean_lib|lean_exe|extern_lib|target|script|def"
     r'|abbrev|opaque|input_file|module_facet|library_facet|package_facet)\s+("[^"\n]*"|«[^»\n]*»|[A-Za-z_][\w\'.]*[!?]*|\S+)')
+
+LAKE_COMMAND = re.compile(
+    r"^(?:namespace|section|end|open|export|set_option|attribute|variable|universe"
+    r"|mutual|instance|macro|syntax)\b|^#[A-Za-z]")
+
+
+def lake_target_attribute(body: str, kinds: str = "target|lean_lib|lean_exe|extern_lib") -> bool:
+    """Recognize handwritten Lake target registrations conservatively."""
+    return re.search(r"@\[[^\]]*\b(?:" + kinds + r")\b",
+                     strip_lean_comments(body)) is not None
 
 
 def _bracket_delta(code: str) -> int:
@@ -101,6 +111,8 @@ def lakefile_blocks(text: str) -> dict[str, str]:
         if candidate and depth != 0 and not line.startswith((" ", "\t")):
             uncertain = True
         match = candidate if depth == 0 else None
+        if key is not None and depth == 0 and not continuation and not match and LAKE_COMMAND.match(declaration):
+            uncertain = True
         if match:
             if key is not None:
                 blocks[key] = "\n".join(current).rstrip()

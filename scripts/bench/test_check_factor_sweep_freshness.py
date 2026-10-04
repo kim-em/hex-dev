@@ -186,9 +186,20 @@ class LakefileAffectsRuntime(unittest.TestCase):
             self.assertTrue(guard.lakefile_texts_differ(BASE + first + second, BASE + second + first))
 
     def test_scope_commands_protect_declaration_position(self):
-        first = 'namespace A\n' + BASE + '\nend A\nlean_lib Other\n'
-        second = BASE + '\nnamespace A\nend A\nlean_lib Other\n'
+        first = BASE.replace('\nlean_lib HexPoly', '\nnamespace A\nlean_lib HexPoly').replace(
+            '\nprivate def', '\nend A\nprivate def')
+        second = BASE.replace('\nlean_lib HexPoly', '\nnamespace A\nlean_lib HexPoly') + 'end A\n'
         self.assertTrue(guard.lakefile_texts_differ(first, second))
+
+    def test_indented_scope_commands_in_unrelated_blocks(self):
+        before = BASE + '\nlean_lib Other\n  namespace A\nlean_lib Third\n  end A\n'
+        after = BASE + '\nlean_lib Other\nlean_lib Third\n  namespace A\n  end A\n'
+        self.assertTrue(guard.lakefile_texts_differ(before, after))
+
+    def test_handwritten_library_order(self):
+        first = '\n@[lean_lib] def first := "config"\n'
+        second = '\nlean_lib HexPoly\n'
+        self.assertTrue(guard.lakefile_texts_differ(BASE + first + second, BASE + second + first))
 
     def test_handwritten_target_attributes_are_relevant(self):
         before = BASE + '\n@[target, lean_lib] def configured := "-O3"\n'

@@ -68,8 +68,7 @@ def graphiso_blocks(text: str) -> dict[str, str]:
     relevant = {}
     for name, body in freshness.lakefile_blocks(text).items():
         kind, _, declaration = name.partition(" ")
-        target_attribute = re.search(r"@\[[^\]]*\b(?:target|lean_lib|lean_exe|extern_lib)\b",
-                                     freshness.strip_lean_comments(body))
+        target_attribute = freshness.lake_target_attribute(body)
         if target_attribute or kind in ("package", "require", "command", "abbrev", "opaque"):
             relevant[name] = body
         elif kind == "lean_lib" and declaration in GRAPHISO_LIBRARIES:
