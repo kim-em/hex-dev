@@ -133,7 +133,9 @@ sync as a dry run with `--stage`, which keeps every rewritten repository. A
 by path from a fresh Lake project, and elaborates, downstream of them, an
 import of every published library, every manifest entry's `test_modules`, and
 the `Examples/` user stories whose imports are all published. It then links
-and runs an executable that calls native code. The `sync` job, which publishes,
+and runs an executable that calls native code. A repository outside the `hex`
+aggregate (`hex-test-kit`) is built in a consumer of its own: its modules share
+the `Hex.*` namespace that the aggregate's `Hex` library claims in a workspace. The `sync` job, which publishes,
 runs only after every blocking `consumer` job passes. Downstream elaboration is
 where `precompileModules`, FFI targets and their link arguments take effect,
 so this is the check that a library built one way here and another way in its

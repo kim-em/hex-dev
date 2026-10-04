@@ -102,15 +102,9 @@ def write_consumer(stage: Path, entries: list[dict]) -> list[str]:
     source.mkdir(parents=True)
     shutil.copy(stage / "hex" / "lean-toolchain", consumer / "lean-toolchain")
     libs = [e["lib"] for e in entries if not e.get("pins_only") and e.get("aggregate", True)]
-    # Repositories outside the aggregate (hex-test-kit) are required directly,
-    # so their Lake configuration is built before publication too.
-    others = [e for e in entries if not e.get("pins_only") and not e.get("aggregate", True)]
-    requires = "".join(
-        f'[[require]]\nname = "{e.get("lean_lib_name", e["lib"])}"\n'
-        f'path = "../{e["repo"].split("/")[-1]}"\n\n' for e in others)
     (consumer / "lakefile.toml").write_text(
         'name = "consumer"\n\n'
-        '[[require]]\nname = "hex"\npath = "../hex"\n\n' + requires +
+        '[[require]]\nname = "hex"\npath = "../hex"\n\n' +
         '[[lean_lib]]\nname = "Consumer"\n\n'
         '[[lean_exe]]\nname = "consumer_link"\nroot = "Consumer.Main"\n',
         encoding="utf-8",
@@ -118,8 +112,7 @@ def write_consumer(stage: Path, entries: list[dict]) -> list[str]:
     (source / "Imports.lean").write_text(
         "".join(f"import {lib}\n" for lib in libs), encoding="utf-8")
     (source / "Main.lean").write_text(MAIN, encoding="utf-8")
-    modules = ["Consumer.Imports"] + [
-        "+" + e.get("lean_lib_name", e["lib"]) for e in others]
+    modules = ["Consumer.Imports"]
     # Built in place: a copy would change the private names some
     # `#guard_msgs` outputs quote.
     for entry in entries:
@@ -136,6 +129,25 @@ def write_consumer(stage: Path, entries: list[dict]) -> list[str]:
             print(f"skipping Examples/{example.name}: imports libraries outside the aggregate "
                   f"{sorted(roots - set(libs))}")
     return modules
+
+
+def write_standalone_consumer(stage: Path, entry: dict) -> tuple[Path, str]:
+    """A separate consumer for a repository outside the aggregate (hex-test-kit).
+
+    Its modules share the aggregate's `Hex.*` namespace, which the aggregate's
+    `Hex` library claims within a workspace, so it is built the way its own
+    users meet it: required alone.
+    """
+    short = entry["repo"].split("/")[-1]
+    name = entry.get("lean_lib_name", entry["lib"])
+    consumer = stage / f"consumer-{short}"
+    consumer.mkdir()
+    shutil.copy(stage / short / "lean-toolchain", consumer / "lean-toolchain")
+    (consumer / "lakefile.toml").write_text(
+        f'name = "consumer-{short}"\n\n'
+        f'[[require]]\nname = "{name}"\npath = "../{short}"\n',
+        encoding="utf-8")
+    return consumer, "+" + name
 
 
 def run(cmd: list[str], cwd: Path) -> None:
@@ -163,6 +175,12 @@ def main() -> int:
     run(["lake", "exe", "cache", "get"], consumer)
     run(["lake", "build", *modules, "consumer_link"], consumer)
     run(["lake", "exe", "consumer_link"], consumer)
+    for entry in entries:
+        if entry.get("pins_only") or entry.get("aggregate", True):
+            continue
+        standalone, module = write_standalone_consumer(stage, entry)
+        run(["lake", "update"], standalone)
+        run(["lake", "build", module], standalone)
     return 0
 
 
