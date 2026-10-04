@@ -24,6 +24,7 @@ import HexOrderedFn.Infinitesimal
 import HexSignDetMathlib.ComparisonProducer
 import HexSignDetMathlib.Convert
 import HexRealAlgebraicMathlib.FieldSign
+import HexRealClosureMathlib.LocalSample
 
 import HexSignDetMathlib.QueryHandle
 
@@ -2072,6 +2073,117 @@ it does not bypass kernel replay. Lean cancellation is checked before and
 after native production. Individual native root computations run until they
 return and do not check Lean's cancellation token or elaboration heartbeats.
 
+
+# Ordinary samples over a selected field
+%%%
+tag := "hex-rcf-native-samples"
+%%%
+
+The native tower API can find roots and choose ordinary real samples over an
+already selected algebraic coefficient field. Start with a checked
+{name}`Hex.SignDet.Descriptor`; its polynomial, interval and derivative signs
+fix the selected root. {name}`Hex.RealClosure.Tower.Model.base` interprets the
+rational base, and `Model.adjoin` preserves that selection in the child field.
+This real interpretation is used in correctness proofs; compiled arithmetic
+uses the owner's native stored values.
+
+{name}`Hex.RCF.RealCoefficients.RepresentationSpecialize.prepare` substitutes
+those values into the shared formula syntax using their actual arithmetic.
+It groups terms by the bound-variable exponent after evaluating coefficient
+coordinates directly. Its `prepare_eval` law needs arithmetic preservation and zero reflection;
+`prepare_degrees` needs zero reflection alone. These permit unequal stored
+nonzero expressions with the same real value. They retain repeated atoms, cancelled zero polynomials and
+the two atoms describing a half-open domain. No field instance on native
+stored expressions is required.
+
+For example, the following API input describes `X² = α` in `(1, 2]`, with
+`α` the fixed selected generator. The repeated square has the same roots.
+
+```lean
+open Hex Hex.RealClosure Hex.RealClosure.Tower
+open Hex.RCF.RealCoefficients
+
+def sampleRegistry : BaseContext.Registry := fun _ => none
+abbrev sampleBase :=
+  Context.base (BaseContext.rational sampleRegistry)
+
+noncomputable def sampleReal : Model sampleBase ℝ :=
+  Model.base (BaseContext.rational sampleRegistry)
+    (Rat.castHom ℝ) ratSign
+
+def sampleFormula : Hex.RealFormula.QF 2 :=
+  let x : Hex.RealFormula.Poly 2 := MvPoly.X 1
+  let q := x ^ 2 - MvPoly.X 0
+  .and (.atom ⟨q, .eq⟩) (.and (.atom ⟨q ^ 2, .ge⟩)
+    (.and (.atom ⟨1 - x, .lt⟩) (.atom ⟨x - 2, .le⟩)))
+
+abbrev SampleSelection :=
+  Hex.SignDet.Descriptor sampleBase.Value
+    Tower.Signature sampleBase.sign sampleBase.signature
+
+example (d : SampleSelection) (x : ℝ) :
+    let field := sampleBase.adjoin d
+    let realModel := sampleReal.adjoin d
+    let values := fun _ : Fin 1 => field.generator
+    let prepared := RepresentationSpecialize.prepare
+      values sampleFormula
+    prepared.map (RepresentationSpecialize.evaluate
+      realModel.value realModel.zero_iff x) =
+      sampleFormula.polys.map (fun q => q.eval
+        (Hex.RealFormula.append
+          (fun i => realModel.value (values i)) x)) := by
+  dsimp only
+  exact RepresentationSpecialize.prepare_eval _ _
+    (sampleReal.adjoin d).one (sampleReal.adjoin d).add
+    (sampleReal.adjoin d).mul (sampleReal.adjoin d).nat
+    (sampleReal.adjoin d).neg _ sampleFormula x
+```
+
+{name}`Hex.RealClosure.Tower.Sample.family` takes the specialized polynomial
+list. Its `cells_unique` theorem places every real point in exactly one
+section or sector, and `cell_signs` gives every polynomial's sign at that
+same point. Each sector has an ordinary sample in its own compatible context;
+`sector_signs` proves the entire sign vector throughout that sector. Here is
+the direct same-point conclusion for any family interpreted in `ℝ`:
+
+```lean
+example {registry : BaseContext.Registry}
+    {parent : Context registry}
+    {polynomials : List parent.Poly}
+    (family : Tower.Sample.Family parent polynomials)
+    (original : Model parent ℝ)
+    (sample : Tower.Sample parent)
+    (present : sample ∈ family.sectors) :
+    ∃ realization : Conversion.Model sample.input original,
+      sample.cell.Mem realization.target
+        (realization.target.value sample.value) ∧
+      sample.signs polynomials = polynomials.map (fun p =>
+        (SignType.sign
+          ((HexPolyMathlib.Interpret.interpret
+            original.value original.zero_iff p).eval
+              (realization.target.value sample.value))
+          : Int)) := by
+  obtain ⟨realization, checked, signs⟩ :=
+    family.sector_signs original sample present
+  have inside := (Cell.contains_correct realization.target
+    sample.cell sample.value).mp checked
+  exact ⟨realization, inside, signs _ inside⟩
+```
+
+The native root producer already provides complete coverage, multiplicities
+and order through `Context.roots_spec` and `Context.roots_sorted`. For the
+positive selected √2 fixture, the four source atoms above have four distinct
+boundaries, four sections and five sectors; the repeated polynomial adds no
+extra boundary. The adapter's regression also checks leading cancellation,
+retained zero atoms, every cell sign and the strict/non-strict domain relations
+through the shared Boolean fold. The negative selected √2 control has only
+the two guard boundaries and rejects the root equation everywhere.
+
+These are ordinary native producer APIs and their real correctness laws.
+Integrating their output into frozen tactic replay still needs the owner's
+checked literal context and predecessor-sign interfaces. The example proves
+the simultaneous signs of ordinary samples; general finite replay through
+successive infinitesimals needs its separate joint realization theorem.
 
 # Caller-supplied finite bounds
 %%%
