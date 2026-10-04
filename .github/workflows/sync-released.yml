@@ -45,7 +45,85 @@ env:
   BASELINE_BRANCH: release-sync-baseline
 
 jobs:
+  # Stage exactly what this run would publish, then build a fresh downstream
+  # project against it on each platform before anything is pushed. See
+  # scripts/release/consumer_check.py and SPEC/CI.md §Release consumer check.
+  stage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 -m pip install --user pyyaml
+      - name: Load live baseline
+        run: |
+          if git fetch origin "$BASELINE_BRANCH" 2>/dev/null; then
+            git show "origin/$BASELINE_BRANCH:synced.json" > /tmp/baseline.json
+          else
+            cp scripts/release/synced.json /tmp/baseline.json
+          fi
+      - name: Stage the repositories this run would publish
+        run: |
+          args=()
+          [ "${{ inputs.force }}" = "true" ] && args+=(--force)
+          python3 scripts/release/sync_released.py --dry-run \
+            --baseline /tmp/baseline.json --stage "$RUNNER_TEMP/stage" "${args[@]}"
+          # The consumer jobs check nothing out: some history file names (e.g.
+          # under progress/) contain `:`, which Windows git refuses even in a
+          # sparse checkout. They need only these paths, shipped alongside.
+          mkdir "$RUNNER_TEMP/hex-dev"
+          cp -r scripts Examples "$RUNNER_TEMP/hex-dev/"
+          tar -C "$RUNNER_TEMP" -cf "$RUNNER_TEMP/stage.tar" stage hex-dev
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-stage
+          path: ${{ runner.temp }}/stage.tar
+          retention-days: 7
+
+  consumer:
+    needs: stage
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    # Windows reports without blocking the publish until the published FFI
+    # builds support it; make it required by deleting this line.
+    continue-on-error: ${{ matrix.os == 'windows-latest' }}
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install pyyaml
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-stage
+          path: ${{ runner.temp }}
+      - name: Unpack stage
+        shell: bash
+        # Relative paths: GNU tar on Windows reads `D:\...` as a remote host.
+        run: cd "$RUNNER_TEMP" && tar -xf stage.tar
+      - name: Install elan
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            curl -sSfL -o elan-init.ps1 https://raw.githubusercontent.com/leanprover/elan/master/elan-init.ps1
+            powershell -ExecutionPolicy Bypass -Command '& ./elan-init.ps1 -NoPrompt $true -DefaultToolchain none'
+            echo "$USERPROFILE/.elan/bin" >> "$GITHUB_PATH"
+          else
+            curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+              | sh -s -- -y --default-toolchain none
+            echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          fi
+      - name: Build a downstream project against the stage
+        shell: bash
+        run: python "$RUNNER_TEMP/hex-dev/scripts/release/consumer_check.py" "$RUNNER_TEMP/stage"
+
   sync:
+    needs: consumer
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
