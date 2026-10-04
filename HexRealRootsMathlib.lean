@@ -74,3 +74,5 @@ Obreshkoff two-circle prerequisite (the λ-graded sector bound in
 `TwoCircleSector`, the region geometry in `TwoCircleRegion`, and the Descartes
 parity in `DescartesParity`).
 -/
+
+public import HexRealRootsMathlib.TarskiMod
