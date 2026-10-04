@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runZ3Rational16Protocol    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6120953, 2026-10-04T19:41:40Z, host=chungus2
+  repeat 0  7.194 µs  (×2^13, total 58.940 ms)
+  median: 7.194 µs    min: 7.194 µs    max: 7.194 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_000 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-scaling/Rational-16-Z3-1-Z3-protocol.json

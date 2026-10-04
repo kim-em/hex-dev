@@ -45,7 +45,7 @@ include hz h1 ha hs hm hnat hsign hn hi hd in
 theorem queryReducedPrepared_eq (domain : Sturm.PreparedDomain E)
     (binding : domain.sign = sign) (q : DensePoly E) :
     Sturm.queryReducedPrepared domain q = Sturm.queryPrepared domain q := by
-  rw [Sturm.queryReducedPrepared_eq_mod,
+  rw [Sturm.queryReducedPrepared_eq,
     queryPrepared_sound f hz h1 ha hs hm hnat sign hsign hn hi domain binding,
     queryPrepared_sound f hz h1 ha hs hm hnat sign hsign hn hi domain binding,
     interpret_mod f hz hs hm hd, Tarski.rootSum_mod]

@@ -34,6 +34,7 @@ certificate API is used when evidence binding the unreduced query is needed. -/
   | none => none
   | some domain => some (queryReducedPrepared domain f)
 
+omit [NatCast E] [Neg E] [Inv E] in
 private theorem modImpl_eq_mod (p q : DensePoly E) :
     DensePoly.modImpl p q = p % q := by
   unfold DensePoly.modImpl
@@ -45,7 +46,7 @@ private theorem modImpl_eq_mod (p q : DensePoly E) :
     exact DensePoly.modArray_eq_divModArray_snd p q (fun coeff => coeff / q.leadingCoeff)
 
 /-- The remainder-only worker agrees operationally with querying the modulus. -/
-theorem queryReducedPrepared_eq_mod (domain : PreparedDomain E) (f : DensePoly E) :
+theorem queryReducedPrepared_eq (domain : PreparedDomain E) (f : DensePoly E) :
     queryReducedPrepared domain f = queryPrepared domain (f % domain.head) := by
   rw [queryReducedPrepared, modImpl_eq_mod]
 
@@ -62,7 +63,7 @@ theorem queryReduced_eq_query (sign : E → Int) (p f : DensePoly E) (a b : Endp
       obtain ⟨hsign, hhead, hlower, hupper⟩ :=
         prepare_eq_some sign p a b domain hprepare
       simp only [queryReduced, hprepare]
-      rw [queryReducedPrepared_eq_mod]
+      rw [queryReducedPrepared_eq]
       simpa only [hsign, hhead, hlower, hupper] using
         (query_prepared domain (f % domain.head)).symm
 

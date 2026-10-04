@@ -248,8 +248,14 @@ accounts for the pinned runtime's integer-negation copy and structural output
 hash. The family keeps degree one, grows coefficient height, and approaches
 1/3. Recognition, rational floor, rational ceiling and the former-quotient
 comparison control have independently derived linear models. The control
-uses the same canonical input and complete result. No controlled improvement
-ratio or current scaling verdict has been obtained.
+uses the same canonical input and complete result. The [post-initializer collection](bench-results/real-algebraic-rational-height-after-sqrt/)
+records current two-sided passes for direct recognition and floor at 262144,
+524288, 1048576 and 2097152 coefficient bits, with four trials per rung.
+Residual slopes are +0.015245 and −0.013195. At two million bits their median
+operation times are 57.990 and 24.644 µs. Ceiling and former-quotient control
+observations remain required; these results establish no controlled improvement
+ratio. Canonical input preparation remains expensive and is excluded from the
+operation timer.
 
 The first rung's [preparation diagnostic](bench-results/real-algebraic-rational-height/direct/preparation-diagnostic/README.md)
 produced no timed observation and was terminated after 969.496897 seconds.
@@ -260,9 +266,12 @@ caller unwinding. They are preparation diagnostics, not operation-only profile
 attribution. The diagnostic invoked `_child` directly, bypassing parent
 supervision. Ordinary `run` caps the entire child, including preparation,
 through `LeanBench.spawnWithCap` at `maxSecondsPerCall` plus `killGraceMs`.
-No supervised scientific run was attempted; the four-rung declaration remains
-unmeasured and unadmitted. This prerequisite
-concern is recorded on [#10577](https://github.com/kim-em/hex-dev/issues/10577#issuecomment-5971054259);
+That historical diagnostic predates the proved bit-length square-root
+initializer now used by `HexArith.Nat.floorSqrt`. Supervised scientific
+recognition and floor runs on the changed source now complete and pass, as
+reported above. The remaining ceiling/control evidence and canonical input
+construction cost remain concerns. The historical prerequisite diagnostic is
+recorded on [#10577](https://github.com/kim-em/hex-dev/issues/10577#issuecomment-5971054259);
 it is distinct from HexPolyFp's #9809 concerns. No transitive implementation or
 phase metadata is changed by this evidence.
 
@@ -390,10 +399,12 @@ in the linked summaries.
   records excessive canonical rational preparation through HexArith's
   bit-length-sensitive square-root initialization and degree-one factorization
   in `HexNumberField/Roots.lean` / `Convert.lean`. Related square-root work
-  [#721](https://github.com/kim-em/hex-dev/issues/721) is closed. The isolated
-  proved initializer proposal is outside this PR pending scope agreement;
-  rational-height declarations remain unadmitted, and no unrelated phase
-  metadata is changed.
+  [#721](https://github.com/kim-em/hex-dev/issues/721) is closed. The proved bit-length initializer is implemented, with an ordinary-kernel
+  equality to Lean core square root and large-square conformance. Its selective
+  Hex-only factorization refresh retains all 392 inputs and reuses every external
+  comparator record. Recognition and floor now pass their declared height
+  models; ceiling/control evidence and costly degree-one canonical construction
+  remain. No unrelated phase metadata is promoted.
 
 The checked square-root wrapper delegates directly to `sqrtRoot?`, removing
 the duplicate negative-input check. Existing selector soundness and nonnegative

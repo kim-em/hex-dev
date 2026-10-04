@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runFlintFloor16Protocol    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=66fdbee-dirty, 2026-10-04T19:53:44Z, host=chungus2
+  repeat 0  8.798 µs  (×2^13, total 72.078 ms)
+  median: 8.798 µs    min: 8.798 µs    max: 8.798 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_416 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-scaling/Floor-16-Flint-3-Flint-protocol.json

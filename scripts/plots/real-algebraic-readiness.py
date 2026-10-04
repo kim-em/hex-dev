@@ -60,7 +60,7 @@ def main():
             ax.set_xlabel('Algebraic degree' if operation in ['Add','Sqrt'] else 'Coefficient bits' if operation=='Rational' else 'Separation exponent k (shift 2⁻ᵏ)')
             ax.grid(alpha=.2);ax.legend(fontsize=8)
         fig.suptitle('Shipped real-algebraic scalar APIs vs FLINT qqbar and Z3 RCF')
-        footer='Operands prepared outside timed bodies; arithmetic includes exact equality. External JSON/cleanup remain timed.\nProtocol curves are shown separately, without subtraction. Missing Z3 floor/ceil arms denote an unavailable matching API.\nA whole-child cap includes preparation and cannot be interpreted as an operation-only lower bound.'
+        footer='Prepared operands; native arithmetic checks canonical polynomial/sign and external arithmetic checks exact annihilation/sign.\nNo expected algebraic root is prepared. External JSON/cleanup remain timed; protocol curves are separate, without subtraction.\nMissing Z3 floor/ceil arms denote an unavailable matching API. Whole-child caps include setup; see retained failures.'
     else:
         for run in meta['runs']:
             if run['label']=='reduced-declared-ladder':continue
