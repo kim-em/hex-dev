@@ -73,11 +73,13 @@ contains no bridge-local executable operation to test independently.
 
 ## Boundary
 
-The public umbrella imports only the two correspondence modules. The library
-owns no conformance source, compiled benchmark, proof-probe root, oracle
-wrapper, executable checker, reifier, tactic, or global instance. It therefore
-has no ordinary Phase-3 conformance target and no separate Phase-4 runtime
-surface.
+The legacy public umbrella imports only the two correspondence modules.
+That legacy surface owns no executable checker, reifier, tactic, compiled
+benchmark or global instance. The explicitly imported mixed extension adds
+proof-only conformance and the `bench/HexIntFactorMathlib/ProofProbe` root for
+its unconditional correspondence and headline axiom audits. Its computational
+partner owns runtime measurements and independent oracle checks; this
+companion still has no separate Phase-4 runtime surface.
 
 The public divisor-enumeration transports (`divisors_eq`, `divisors_list_eq`,
 `numDivisors_eq_card`) map to the core registration
