@@ -44,7 +44,7 @@ def main():
                     direction_rule='consistent direction only if all six ratios are strictly on the same side of 1; otherwise mixed/inconclusive',
                     rerun_policy='one fixed capture; no automatic rerun',
                     inference='descriptive shared-host observations, no significance or asymptotic verdict'),
-                  regime='one Rat extension, head leading coefficient2, 2n products; stored eager denominators at most4; no normalization policy conclusion')
+                  regime='one Rat extension, head leading coefficient 2, 2n products; stored eager denominators at most 4; no normalization policy conclusion')
     def save():
         manifest.write_text(json.dumps(record, indent=2)+'\n')
     def run(command, *, timeout=600, check=True):

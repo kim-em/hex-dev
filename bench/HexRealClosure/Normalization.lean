@@ -52,7 +52,7 @@ def eager (input : Input) : Algebraic.Element input.context :=
     Algebraic.Element.ofPoly (DensePoly.divModMonic (a.polynomial * seed.polynomial) input.working input.monic).2) 1
 
 /-- Fingerprint all stored coefficients and the cached sign. Exact arithmetic
-is checked independently; these fixed endpoints stay below integer truncation. -/
+is checked independently; the oracle checks these fixed endpoints stay below integer truncation. -/
 def resultHash {context : Context} (a : Algebraic.Element context) : UInt64 :=
   hash (a.polynomial.toArray.map (fun q => (q.num, q.den)), a.sign)
 
@@ -180,8 +180,8 @@ end Hex.RealClosure.Normalization
 def main (args : List String) : IO UInt32 := do
   match args with
   | [] =>
-    Hex.RealClosure.Normalization.emit 2
-    Hex.RealClosure.Normalization.emit 4
+    for degree in [2, 4, 8, 16] do
+      Hex.RealClosure.Normalization.emit degree
     return 0
   | ["storage", degree] =>
     let some n := degree.toNat? | throw (IO.userError "degree must be a natural number")

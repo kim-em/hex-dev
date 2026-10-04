@@ -65,6 +65,9 @@ def verify(row):
             if (stored['degree'] != poly.degree() or stored['sign'] != 1 or
                 stored['clean'] is not all(d == 1 for _, d in stored['coefficients'])):
                 raise ValueError("wrong prefix representation metadata")
+    if any(abs(n).bit_length() >= 63 for arm in ('clean', 'eager')
+           for prefix in prefixes for n, _ in prefix[arm]['coefficients']):
+        raise ValueError("stored coefficient exceeds hash truncation bound")
     context = z3.Context()
     def coefficients(values):
         return [z3rcf.RCFNum(f'{n}/{d}', context) for n, d in values]
