@@ -8,6 +8,7 @@ module
 public import HexRCF.RealCoefficients
 public import HexRealClosureMathlib.LocalSample
 public meta import HexRealClosure.TowerContext
+public meta import HexRCF.RealCoefficients.Samples
 
 public section
 namespace Hex.RCF.RealCoefficients.TowerSamples
@@ -82,8 +83,7 @@ theorem prepare_real (d : Selection) (formula : RealFormula.QF (n + 1)) (x : ℝ
     (polynomials d formula).map (RepresentationSpecialize.evaluate (model d).value (model d).zero_iff x) =
       formula.polys.map (fun q => q.eval (RealFormula.append
         (fun _ : Fin n => (model d).value (extension d).generator) x)) :=
-  RepresentationSpecialize.prepare_eval (model d).value (model d).zero_iff
-    (model d).one (model d).add (model d).mul (model d).nat (model d).neg _ formula x
+  Samples.prepare_real (model d) (fun _ : Fin n => (extension d).generator) formula x
 
 /-- Source-level coverage includes root sections and every ordinary real point. -/
 theorem source_coverage (d : Selection) (formula : RealFormula.QF (n + 1)) (x : ℝ) :
@@ -95,9 +95,8 @@ theorem source_coverage (d : Selection) (formula : RealFormula.QF (n + 1)) (x : 
   obtain ⟨region, ⟨present, inside⟩, unique⟩ := (family d formula).cells_unique (model d) x
   obtain ⟨checked, signs⟩ := (family d formula).cell_signs (model d) region present
   refine ⟨region, ⟨present, inside, checked, ?_⟩, ?_⟩
-  · rw [signs x inside]
-    have values := congrArg (List.map (fun y : ℝ => (SignType.sign y : Int))) (prepare_real d formula x)
-    simpa only [List.map_map, Function.comp_def, RepresentationSpecialize.evaluate] using values
+  · exact Samples.cell_signs (model d)
+      (fun _ : Fin n => (extension d).generator) formula region present x inside
   · rintro other ⟨present, inside, _, _⟩
     exact unique other ⟨present, inside⟩
 
@@ -127,12 +126,8 @@ theorem source_sector (d : Selection) (formula : RealFormula.QF (n + 1)) (sample
         (q.eval (RealFormula.append
           (fun _ : Fin n => (model d).value (extension d).generator)
           (realization.target.value sample.value))) : Int)) := by
-  obtain ⟨realization, inside, signs⟩ := sector_real d formula sample present
-  refine ⟨realization, inside, ?_⟩
-  rw [signs]
-  have values := congrArg (List.map (fun x : ℝ => (SignType.sign x : Int)))
-    (prepare_real d formula (realization.target.value sample.value))
-  simpa only [List.map_map, Function.comp_def, RepresentationSpecialize.evaluate] using values
+  exact Samples.sector_signs (model d)
+    (fun _ : Fin n => (extension d).generator) formula sample present
 
 /-- A section's selected boundary realizes the whole source sign vector at
 one ordinary real point, including repeated atoms and domain guards. -/
@@ -145,13 +140,8 @@ theorem source_section (d : Selection) (formula : RealFormula.QF (n + 1))
         (q.eval (RealFormula.append
           (fun _ : Fin n => (model d).value (extension d).generator)
           (root.denote (model d)))) : Int)) := by
-  obtain ⟨root, member, same, checked, signs⟩ :=
-    (family d formula).sections_correct (model d) sample present
-  refine ⟨root, member, same, checked, ?_⟩
-  rw [signs]
-  have values := congrArg (List.map (fun x : ℝ => (SignType.sign x : Int)))
-    (prepare_real d formula (root.denote (model d)))
-  simpa only [List.map_map, Function.comp_def, RepresentationSpecialize.evaluate] using values
+  exact Samples.section_signs (model d)
+    (fun _ : Fin n => (extension d).generator) formula sample present
 
 /-- On a lawful coefficient carrier, both specializations have exactly the
 same real evaluation; stored-expression equality is not assumed. -/
@@ -170,7 +160,8 @@ def domain (n : Nat) : RealFormula.QF (n + 1) :=
   .and (.atom ⟨1 - MvPoly.X (Fin.last n), .lt⟩)
     (.atom ⟨MvPoly.X (Fin.last n) - 2, .le⟩)
 
-/-- Use the existing strict shared Boolean fold on the recorded complete row. -/
+/-- Fold a domain subformula against the complete source row.
+`Samples.Row.eval` instead expects the row for its own entire formula. -/
 def evaluateRow (source : RealFormula.QF n) (row : List Int) (formula : RealFormula.QF n) : Option Bool :=
   formula.evalSigns fun p =>
     ((source.polys.zip row).find? (fun pair => pair.1 == p)).map
@@ -198,8 +189,8 @@ def checked (formula : RealFormula.QF (n + 1)) (lower upper : base.Value) (secti
     sectionRows == sections && sectorRows == sectors &&
     sectionRows.map (fun row => evaluateRow formula row (domain n)) == sectionDomains &&
     sectorRows.map (fun row => evaluateRow formula row (domain n)) == sectorDomains &&
-    sectionRows.map (fun row => evaluateRow formula row formula) == sectionTruths &&
-    sectorRows.all (fun row => evaluateRow formula row formula == some false)
+    sectionRows.map (fun row => Samples.Row.eval formula row) == sectionTruths &&
+    sectorRows.all (fun row => Samples.Row.eval formula row == some false)
 
 #guard checked schema 1 (1 + 1)
   [[0, 0, 1, -1], [-1, 1, 0, -1], [0, 0, -1, -1], [1, 1, -1, 0]]
