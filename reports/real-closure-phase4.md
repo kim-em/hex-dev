@@ -30,6 +30,32 @@ quantified speedup. No rerun of that tagged executable has been collected.
 Its second-isolation window excluded construction of `x³ + 1`; that setup was untimed in the
 historical run.
 
+### Flushed and build-bound functional runs
+
+The retained `flushed-native-d84e506` run checks the least-root interval and
+reports coefficient construction separately. It completed in 5.47 seconds;
+first isolation took 4.94 seconds, construction 0.00372 seconds and second
+isolation 0.149 seconds. Its source is preserved by
+`issue-10378-phase4-flushed-source`.
+
+The `build-bound-native-91bcb67` and `build-bound-canonical-91bcb67` runs
+also retain a successful build log and its hash. Both use the executable
+SHA-256 `d5b10c63a1edaa05a05459415cea7b225834788276b9493d0a01f721795c9bad`
+from source `91bcb67124367f70d24c607371eb017b80237560`, preserved by
+`issue-10378-phase4-build-bound-source`. The native run completed in
+7.08 seconds: first isolation 6.51 seconds, construction 0.00399 seconds,
+second isolation 0.160 seconds. All root-selection, equation and multiplicity
+checks passed.
+
+The canonical run completed first isolation in 40.26 seconds, returned
+three roots and passed the least-root interval check. It then reached the
+1800-second cap before the coefficient-construction stage completed;
+metadata records signal 9 and exit code −9. This localizes the unfinished
+work to construction of the second polynomial, rather than its isolation.
+These are retained functional observations from a shared host, including
+changed apparatus and censored execution. They are not a scientific timing
+comparison or a quantified speedup.
+
 ## Preliminary native profile
 
 [Retained profile metadata and reports](bench-results/real-closure-phase4-native-profile/)
