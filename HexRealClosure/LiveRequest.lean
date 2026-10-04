@@ -229,6 +229,14 @@ validated ancestry before converting either operand. -/
     [⟨parent, { descriptors := [descriptor] }⟩,
       ⟨extension.context, { values := [extension.generator] }⟩]
 
+/-- A selected root retains exactly its predecessor descriptor and child value. -/
+theorem rootRequest_length {parent : Context registry} (root : Root parent)
+    (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature)
+    (selected : root.selection = .selected descriptor) : (rootRequest root).length = 2 := by
+  cases root with
+  | point value => cases selected
+  | selected original extension built => rfl
+
 /-- Convert a request in its original order using its retained owner maps. -/
 @[expose] def Request.transport? {target : Context registry} (request : Request registry)
     (maps : Inclusions target request.owners) : Option (List (Frame target)) :=
@@ -568,3 +576,7 @@ theorem Collection.frame_eq {base : BaseContext.PackedContext registry} {request
   exact List.getElem?_eq_getElem _
 
 end Hex.RealClosure.Tower.Live
+
+/-- info: 'Hex.RealClosure.Tower.Live.rootRequest_length' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.rootRequest_length

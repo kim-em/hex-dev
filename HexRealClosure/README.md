@@ -1960,7 +1960,7 @@ selected roots retain their interpreted lists in one common model.
 checked predecessor model; `Enlargement.semantics` preserves the ordered
 frame lists across that enlargement in the lifted old model.
 `Collection.root_agreement` identifies the actual child value of a root pair
-inside `pre ++ rootRequest root ++ post` with the root selected by its refreshed predecessor
+in a request equal to `pre ++ rootRequest root ++ post` with the root selected by its refreshed predecessor
 descriptor. Both interpretations come from the collection's canonical factory;
 no root-agreement premise is supplied. It also applies to the collection
 returned by enlargement. `Enlargement.model` retrieves that new canonical

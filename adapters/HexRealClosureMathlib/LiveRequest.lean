@@ -491,8 +491,8 @@ theorem Enlargement.root_agreement {base : BaseContext.PackedContext registry}
     (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature)
     (selected : root.selection = .selected descriptor) {pre post : Request registry}
     {request : Request registry} {original : Collection base request}
-    (split : request = pre ++ rootRequest root ++ post)
-    (result : Enlargement original) {following : base.Realization}
+    (result : Enlargement original) (split : request = pre ++ rootRequest root ++ post)
+    {following : base.Realization}
     {reference : Model (Context.ofBase base) K}
     (oldModel : Shared.Model original.shared following reference)
     (ambient : Ambient (Hex.RationalFn K)) (produced : original.enlarge? = some result) :
@@ -507,6 +507,41 @@ theorem Enlargement.root_agreement {base : BaseContext.PackedContext registry}
         returned.value value = fresh.root returned.value returned.zero_iff returned.one returned.add
           returned.sub returned.mul returned.nat returned.sign :=
   Collection.root_agreement root descriptor selected result.collection split (result.model oldModel ambient produced)
+
+/-- Public consumer: both root pairs remain accessible after two enlargements,
+without changing the request index or casting a collection. -/
+example {base : BaseContext.PackedContext registry} {firstParent secondParent : Context registry}
+    (firstRoot : Root firstParent) (secondRoot : Root secondParent)
+    (firstDescriptor : SignDet.Descriptor firstParent.Value Signature firstParent.sign firstParent.signature)
+    (secondDescriptor : SignDet.Descriptor secondParent.Value Signature secondParent.sign secondParent.signature)
+    (firstSelected : firstRoot.selection = .selected firstDescriptor)
+    (secondSelected : secondRoot.selection = .selected secondDescriptor)
+    (operands : Request registry)
+    (original : Collection base (rootRequest firstRoot ++ rootRequest secondRoot ++ operands))
+    {following : base.Realization} {reference : Model (Context.ofBase base) K}
+    (model : Shared.Model original.shared following reference)
+    (ambient : Ambient (Hex.RationalFn K)) (first : Enlargement original)
+    (firstProduced : original.enlarge? = some first)
+    (nextAmbient : Ambient (Hex.RationalFn ambient.Carrier)) (twice : Enlargement first.collection)
+    (twiceProduced : first.collection.enlarge? = some twice) :
+    ∃ a b c d : Frame twice.collection.shared.input.context,
+      twice.collection.frames[0]? = some a ∧ twice.collection.frames[1]? = some b ∧
+      twice.collection.frames[2]? = some c ∧ twice.collection.frames[3]? = some d := by
+  have firstSplit : (rootRequest firstRoot ++ rootRequest secondRoot ++ operands) =
+      [] ++ rootRequest firstRoot ++ (rootRequest secondRoot ++ operands) := by
+    simp only [List.nil_append, List.append_assoc]
+  have firstAgreement := original.root_agreement firstRoot firstDescriptor firstSelected
+    (pre := []) (post := rootRequest secondRoot ++ operands) firstSplit model
+  have secondAgreement := original.root_agreement secondRoot secondDescriptor secondSelected
+    (pre := rootRequest firstRoot) (post := operands) rfl model
+  have firstModel := first.model model ambient firstProduced
+  obtain ⟨a, b, _, _, atA, atB, _⟩ := twice.root_agreement firstRoot firstDescriptor firstSelected
+    (pre := []) (post := rootRequest secondRoot ++ operands) firstSplit firstModel nextAmbient twiceProduced
+  obtain ⟨c, d, _, _, atC, atD, _⟩ := twice.root_agreement secondRoot secondDescriptor secondSelected
+    (pre := rootRequest firstRoot) (post := operands) rfl firstModel nextAmbient twiceProduced
+  refine ⟨a, b, c, d, atA, atB, ?_, ?_⟩
+  · simpa only [rootRequest_length firstRoot firstDescriptor firstSelected] using atC
+  · simpa only [rootRequest_length firstRoot firstDescriptor firstSelected] using atD
 
 end Hex.RealClosure.Tower.Live
 
