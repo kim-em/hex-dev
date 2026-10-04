@@ -1,0 +1,9 @@
+Hex.SturmExternalBench.runFlint32    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=612b3e5-dirty, 2026-10-04T02:39:42Z, host=chungus2
+  repeat 0  3.546 ms  (×2^4, total 56.735 ms)
+  median: 3.546 ms    min: 3.546 ms    max: 3.546 ms
+  hash: all repeats agree
+  observed hash: 0xcbe00da77fb06541
+  expected hash: matches
+  peak RSS: 68_256 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/32-Flint-3-Flint.json
