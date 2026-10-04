@@ -281,6 +281,9 @@ def runInteger (i : Input) : Option Int := ZPoly.tarskiQuery i.p i.f interval
 def runRational (i : Input) : Option Int :=
   Sturm.query Sturm.orderSign i.rp i.rf (.finite (-2)) (.finite 2)
 
+def runReducedRational (i : Input) : Option Int :=
+  Sturm.queryReduced Sturm.orderSign i.rp i.rf (.finite (-2)) (.finite 2)
+
 def runDomain (i : Input) : Bool :=
   (Sturm.prepare Sturm.orderSign i.rp (.finite (-2)) (.finite 2)).isSome
 
@@ -495,6 +498,24 @@ setup_benchmark runIntegerHigh m => m ^ 2
 -- Declared cost-model: Θ(m²) bit work: fixed-quadratic rational division
 -- constructs the same growing integer numerators; denominators remain one.
 setup_benchmark runRationalHigh m => m ^ 2
+  with prep := queryInput
+  where {
+    paramSchedule := .custom #[131072, 262144, 524288, 1048576]
+    paramFloor := 131072
+    paramCeiling := 1048576
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 120
+  }
+-- Mode 1: the same fixed quadratic head and X^m+1 input. Remainder-only
+-- long division makes O(m) big-by-small scalar steps whose numerators grow
+-- to O(m) bits; denominators stay one. These copies/shifts give Θ(m²) bit
+-- work. Its mutable array contains the input's O(m) word-size coefficients
+-- and at most a fixed quadratic window of growing coefficients, rather
+-- than the Θ(m²)-bit literal quotient. The remaining Tarski chain is fixed
+-- degree; its O(m)-bit coefficients add only O(m) bit work.
+setup_benchmark runReducedRational m => m ^ 2
   with prep := queryInput
   where {
     paramSchedule := .custom #[131072, 262144, 524288, 1048576]

@@ -21,6 +21,14 @@ values for arbitrary accepted certificates on the corresponding inputs.
 Ordinary-kernel tests instantiate the generic theorems on canonical rationals and noncanonical
 representatives and inspects their axioms.
 
+`Reduced.lean` proves whole-`Option` equality of `queryReduced` and `query`,
+and equality of reduced and ordinary prepared values. It reduces the query
+modulo the head using the existing remainder-only division; the shared
+`Tarski.rootSum_mod` theorem proves that evaluations at head roots are
+unchanged. In addition to the ordinary query interpretation hypotheses,
+coefficient division must preserve field division. No new root representation
+or Tarski computation is introduced.
+
 `Compare.lean` proves `check_congr` for arbitrary accepted field certificates
 and `query_congr` for the whole producer `Option`, including invalid domains
 and infinities. Both allow positive scaling of the polynomial inputs and
