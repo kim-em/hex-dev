@@ -162,3 +162,12 @@ replace completed measurements or admit unresolved complexity models.
 The [real-algebraic performance report](hex-real-algebraic-performance.md) and
 the Sturm report distinguish valid family passes from failed hypotheses,
 controls and fixed observations without budgets. Phase 4 remains incomplete.
+
+The [single unchanged full-suite recheck](bench-results/prerequisite-full-ci-recheck-77a844987.json)
+of `77a844987` retains all 57 successful executable checks and a completed
+382/360-second cap failure. Its remaining all-library oracle step was
+cancelled after that failure. Available merged proofs and bounded #10575
+consumer/import preparation remain independent of this timing concern.
+[Certified parent isolation reuse](bench-results/number-field-isolation-reuse/README.md)
+proves complete canonical-result equality and reduces measured hard arithmetic
+by about 1.5 times, while preserving current representation and Phase-4 gaps.

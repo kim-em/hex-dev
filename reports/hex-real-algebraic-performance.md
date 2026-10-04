@@ -357,3 +357,21 @@ The per-library verification warning remains under #10577 (39 seconds on
 the recorded pre-rebase check); the
 360-second CI cap is an operational safeguard. Hard addition/subtraction
 and their bare controls account for most of the warning.
+
+[Certified candidate-isolation reuse](bench-results/number-field-isolation-reuse/README.md)
+removes the canonical-construction re-isolation from `exactFactor?`, with
+whole-Option equality preserving the same stored representations. Four
+adjacent AB/BA pairs on `7ceaf9d47d` measure hard addition/subtraction about
+1.5 times faster. The six actual root-API degree rungs retain 48 successful
+arms; their [size plot](bench-results/number-field-isolation-reuse/roots-comparison.png)
+shows an improvement but a severe remaining gap to retained external
+references. The external lines are historical observations, not fresh pairs
+with these native samples. A [current representative profile](bench-results/number-field-isolation-reuse/profile/hard-add.summary.json)
+on `08c8a9f13e` retains 4344 kernel samples with calibration/count/sensitivity
+checks passing. Isolation remains 90.56% inclusive, with the remaining lazy
+eliminant and candidate-exactification paths separately visible at 45.26%
+and 45.35%; these are tail-call attributions, not arbitrary additive
+inclusive totals. All raw artifacts persist at the manifest paths.
+The local normal-form migration, fixed-presentation conversion reuse and
+per-root enumeration reuse remain outside this targeted repair. No phase
+counter or all-library headroom assertion follows.
