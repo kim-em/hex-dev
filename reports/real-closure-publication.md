@@ -34,10 +34,10 @@ semantic modules keep their existing ownership:
 | `HexRealRootsMathlib/Tarski{Foundation,Soundness,Real}.lean` | `hex-real-roots-mathlib`; `HexRealRootsMathlib` | Integrated in the normal companion target and public umbrella; existing published versions do not contain this migration |
 | `HexSturmMathlib/Soundness.lean` | `hex-sturm-mathlib`; `HexSturmMathlib` | Integrated alongside domain/producer correspondence in the normal target and umbrella; companion remains unreleased. Two semantic regression modules remain under adapters |
 | `adapters/HexSignDetMathlib/` | `hex-sign-det-mathlib`; `HexSignDetMathlib.ThomRoots`, `SelectedProducer`, `ComparisonProducer`, `Convert`, with public umbrella imports | Seventeen adapter modules; the regular umbrella exposes finite BKR algebra, not these selected-root semantics |
-| `adapters/HexRealClosureMathlib/` | `hex-real-closure-mathlib`; `HexRealClosureMathlib.TowerRoots`, `RootCollection`, `TowerEnlargeOrder`, with public umbrella imports | 104 adapter modules including tests; current umbrella exposes only computation, polynomial interpretation and `BaseContext` |
+| `adapters/HexRealClosureMathlib/` | `hex-real-closure-mathlib`; `HexRealClosureMathlib.TowerRoots`, `RootCollection`, `TowerEnlargeOrder`, with public umbrella imports | 107 adapter modules including tests; current umbrella exposes only computation, polynomial interpretation and `BaseContext` |
 | `HexOrderedFnMathlib/` | `hex-ordered-fn-mathlib`; `HexOrderedFnMathlib` | Ordinary umbrella already exposes real and infinitesimal ordered extensions |
 | `adapters/HexRCF/RealFormula.lean` | Base `hex-rcf`; `HexRCF.RealFormula` after RealFormulaMathlib is publishable | One module built by `HexRCFRealFormula`; absent from base `HexRCF.lean` |
-| `adapters/HexRCF/RealCoefficients/` plus its umbrella | Optional Mathlib adapter proposal below; `HexRCF.RealCoefficients` | 54 coefficient modules built by `HexRCFRealCoefficients`; absent from base `HexRCF.lean` |
+| `adapters/HexRCF/RealCoefficients/` plus its umbrella | Optional Mathlib adapter proposal below; `HexRCF.RealCoefficients` | 56 coefficient modules built by `HexRCFRealCoefficients`; absent from base `HexRCF.lean` |
 
 The inventory lists every adapter source and its direct import roots. Modules under `Tests/` or ending in `Tests` stay development checks unless individually selected as
 standalone regression modules under existing release policy. Migration must
@@ -228,7 +228,7 @@ ownership prototype.
 
 Merged #10668's authenticated preparation/replay, fresh proof probes, manual
 and existing consumers also build in the monorepo (15,522 jobs), and the full
-conformance target passes (14,763 jobs). The 116 release/DAG tests pass. CI run
+conformance target passes (14,763 jobs). The earlier 116 release/DAG tests pass on their recorded source. CI run
 [37178450711](https://github.com/kim-em/hex-dev/actions/runs/37178450711) passed
 all oracles but failed smoke verification at 385/360 seconds; it remains a
 failed operational gate. The later run

@@ -12,6 +12,7 @@ import subprocess
 import yaml
 
 from release.check_trust_surface import code_without_comments_and_strings
+from libgraph import NATIVE_CARRIER_LIBS
 
 ROOT = Path(__file__).resolve().parents[1]
 FAMILY = ["HexOrderedFn", "HexOrderedFnMathlib", "HexSturm", "HexSturmMathlib",
@@ -52,7 +53,7 @@ def import_closure(modules: list[str], libraries: dict) -> tuple[list[str], list
             seen.add(module)
             pending.extend(imports(module))
     roots = {module.split(".")[0] for module in seen}
-    external = roots - libraries.keys() - {"Hex", "Init", "Lean", "Std"}
+    external = roots - libraries.keys() - NATIVE_CARRIER_LIBS - {"Hex", "Init", "Lean", "Std"}
     return sorted(roots & libraries.keys()), sorted(external)
 
 
