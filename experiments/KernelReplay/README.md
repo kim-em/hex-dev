@@ -13,8 +13,8 @@ and proofs, and audits their transitive axioms. Only `propext`, `Classical.choic
 and `Quot.sound` are allowed. Unexpected kernel errors, resource exhaustion
 and unrelated elaboration errors fail the command. Only a declaration type
 mismatch permits trying the other Boolean result. `unproved` means neither
-equality was assembled; it is not a proof that the checker returns `false`. The probe also requires a missing-fact
-application on the demanded projection or pattern-match path, without searching
+equality was assembled; it is not a proof that the checker returns `false`.
+The probe also requires a missing-fact application on the demanded projection or pattern-match path, without searching
 unapplied lambda bodies. An unrelated blocking definition fails the control.
 Blocked definitions are unfolded to their actual recursors, which select the demanded operand. Committed controls cover two
 blocked arithmetic operands, a blocked constructor field in a matcher,
@@ -27,9 +27,10 @@ Axiom output for the missing-fact lemmas is checked against the three permitted 
 
 The controls include complete and missing scalar evidence, a false scalar claim,
 the actual two-entry graph, a false unused entry, and a false endpoint sign.
-A separate control checks the exact returned nodes and their order. Proved
-missing-fact equations identify the scalar and endpoint computations that reach
-`Element.missing`.
+A separate control checks the exact returned nodes and their order. The scalar
+and endpoint computations have separate kernel-proved missing-fact equations.
+The elaborator computes the diagnostic expression; its polynomial is not
+checked against those equations.
 
 `ProofProbe.lean` also proves that the actual finite coefficient decoder reads
 one encoded graph with both fact lists. Both lists cover every stored
