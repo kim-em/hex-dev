@@ -109,10 +109,10 @@ HexArith's square root for the factorization prime planner. The proved
 bit-length initializer now preserves `Nat.sqrt` exactly, and the selective
 Hex-only factor sweep has current source-bound evidence. [The retained height
 captures](bench-results/real-algebraic-rational-height-after-sqrt/README.md)
-admit the registered recognition, floor and ceiling operation timers through
-two million bits. Canonical preparation remains costly and is excluded from
-those timers; the former quotient control and operation-specific attribution
-remain outstanding. No unrelated library phase is promoted. Historical failed
+admit the registered recognition, floor, ceiling and former quotient control
+operation timers through two million bits on their recorded source. Canonical
+preparation remains costly and is excluded from those timers; representative
+operation-specific attribution remains outstanding. No unrelated library phase is promoted. Historical failed
 preparation evidence is retained with its original source and scope.
 
 ## Verification

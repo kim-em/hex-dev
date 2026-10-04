@@ -32,3 +32,10 @@ and [final union audit](final-named-admission-audit.log) produce identical
 295-root / 1103-module admission results. The tests cover overlapping and cyclic
 imports, fresh reads after source changes and missing mandatory roots without
 depending on traversal order.
+
+[Rebased verification](rebased-verification.json) records 10909 successful Lake
+jobs, all 196 scalar and 93 Sturm smoke cases (72 local seconds), and 319
+admission roots covering 1135 modules after the public-import dependency merged.
+The [full build](rebased-combined-build.log), [owned smoke log](rebased-owned-smoke.log)
+and [admission output](rebased-named-admission-audit.log) retain all diagnostics.
+The earlier records remain scoped to their original revisions.

@@ -15,7 +15,8 @@ hexrealalgebraic_bench list` lists them; `verify` checks their runtime wiring an
 hashes. The existing CI job builds and verifies this executable. The
 [complete local verifier log](bench-results/scalar-current-verification/README.md)
 passes all 196 cases, including degree-8 square root. The current owned wrapper
-takes 72 seconds for this executable and one for Sturm; this establishes no
+takes 71 seconds for this executable and one for Sturm after the rebase; this
+establishes no
 whole-repository headroom. The final PR still requires a green CI run and its actual per-library
 time. Degree-8 square root is an operational smoke-time concern. The retained
 [local verification log](bench-results/prerequisite-verify-budget.log) records
@@ -87,7 +88,7 @@ final source without weakening the cap.
 | Arithmetic and scalar dictionaries | `runAdd`, `runSub`, `runMul`, `runDiv`, `runNeg`, `runInv`, `runNatPow`, `runIntPow`, `runScalars`; corresponding bare controls; `runHard*` | Canonical baseline and adjacent wrapper controls; mode/budget incomplete |
 | Equality, comparison, order, sign, abs, conjugation | `runEquality`, `runCompare`, `runCompareExact`, `runOrder`, `runSign`, `runAbs`, `runConj`, `runCloseCompare`, `runCloseExact` | Fixed branch/hash/comparison anchors; separation models incomplete |
 | Fixed-field coordinate sign | `runFieldSign` | Complete result vector on constant and nonconstant paths in the positive square-root-of-two embedding. [Inherited owner evidence](../bench-results/field-sign/README.md) concerns a pre-refactoring executable; current operation-specific mode/budget remains required |
-| Rational degree-one leaf height | `runRationalRecognition`, `runRationalFloor`, `runRationalCeil`, `runRationalQuotient` | Recognition, floor and ceiling pass their declared height ladders on the initializer source; control and attribution remain outstanding; preparation is excluded and still costly |
+| Rational degree-one leaf height | `runRationalRecognition`, `runRationalFloor`, `runRationalCeil`, `runRationalQuotient` | Recognition, floor, ceiling and former quotient control pass their declared height ladders on the initializer source; attribution remains outstanding; preparation is excluded and still costly |
 | Floor, ceiling, approximation, representation | `runRounding`, `runApprox`, `runRepr` | Baseline anchors; ceiling has proved before/after improvement |
 | Square roots | `runSqrt`, `runSqrtTotal` | Baseline/branch checks on pre-change source; degree/height scaling incomplete |
 | Polynomial constructors and root-set projections/membership | `runPolyConstructors`, `runMembership`, `runRootSet` | Mode-1 family passes |
@@ -111,7 +112,7 @@ The separately forward-specified comparison-strategy extension remains excluded.
 | --- | --- | --- |
 | `canonical-real-arithmetic` | Compiled scalar/constructor, complex norm/absolute-value and real/imaginary projection anchors, canonical hard arithmetic and matching bare-parent controls; retained representative addition profile | Operation-specific characterization and remaining raw profile coverage; parent isolation cost |
 | `real-order-and-rounding` | Equality/sign/abs/conjugation/min-max anchors, near-integer checks, approximation anchors and proved ceiling improvement; current exact scalar degree and separation plots against FLINT/Z3 | Precision, remaining degree/height families, current attribution and scientific characterization; canonical square root is substantially slower on the measured degree ladder |
-| `rational-height` | Direct recognition, floor and ceiling pass their fixed height ladders after the proved square-root initializer; exact construction guards and retained preparation diagnostic | Former quotient control and operation-specific attribution remain; canonical preparation is still costly |
+| `rational-height` | Direct recognition, floor, ceiling and former quotient control pass their fixed height ladders after the proved square-root initializer; exact construction guards and retained preparation diagnostic | Operation-specific attribution remains and canonical preparation is still costly |
 | `polynomial-arrays-and-sorting` | Passing coefficient-array, membership/projection and distinct rational-root sorting families | Representative raw profile retention; repeated fixed-leaf/exactification controls do not establish varying leaf-size coverage |
 | `real-polynomial-roots` | Actual rational/quadratic-coefficient root API degree comparisons, complete fingerprints, repeated/integer/filter roots and multiplicity/exactification anchors, retained rejection pairs and before/after profiles | Severe remaining canonical isolation cost and higher-degree characterization |
 | `representation` | Fixed Repr formatter anchor and generated-term ordinary-kernel roundtrip checks | Separately reported growing-size roundtrip performance and attribution; formatter-only timings do not discharge this obligation |
@@ -255,12 +256,13 @@ hash. The family keeps degree one, grows coefficient height, and approaches
 1/3. Recognition, rational floor, rational ceiling and the former-quotient
 comparison control have independently derived linear models. The control
 uses the same canonical input and complete result. The [post-initializer collection](bench-results/real-algebraic-rational-height-after-sqrt/)
-records current two-sided passes for direct recognition, floor and ceiling at 262144,
+records two-sided passes for direct recognition, floor, ceiling and the former
+quotient control at 262144,
 524288, 1048576 and 2097152 coefficient bits, with four trials per rung.
-Residual slopes are +0.015245, −0.013195 and −0.017619. At two million bits
-their median operation times are 57.990, 24.644 and 24.070 µs. Former-quotient
-control observations remain required; these results establish no controlled improvement
-ratio. Canonical input preparation remains expensive and is excluded from the
+Residual slopes are +0.015245, −0.013195, −0.017619 and −0.004059. At two million
+bits their median operation times are 57.990, 24.644, 24.070 and 402.657 µs.
+All 64 exported points pass, and final source/binary checks remain unchanged.
+These results establish no controlled before/after improvement ratio. Canonical input preparation remains expensive and is excluded from the
 operation timer.
 
 The first rung's [preparation diagnostic](bench-results/real-algebraic-rational-height/direct/preparation-diagnostic/README.md)
@@ -276,8 +278,8 @@ That historical diagnostic predates the proved bit-length square-root
 initializer now used by `HexArith.Nat.floorSqrt`. Supervised scientific
 recognition, floor and ceiling runs on the changed source now complete and pass, as
 reported above. The [height plot](bench-results/real-algebraic-rational-height-after-sqrt/plots/rational-height.svg)
-shows the completed recognition and rounding points. The remaining quotient-control evidence and canonical input
-construction cost remain concerns. The historical prerequisite diagnostic is
+shows the completed recognition and rounding points. Representative operation attribution and canonical input construction cost
+remain concerns. The historical prerequisite diagnostic is
 recorded on [#10577](https://github.com/kim-em/hex-dev/issues/10577#issuecomment-5971054259);
 it is distinct from HexPolyFp's #9809 concerns. The proved HexArith initializer
 addresses the observed Newton start; no transitive phase metadata is promoted.
@@ -453,7 +455,8 @@ in the linked summaries.
   equality to Lean core square root and large-square conformance. Its selective
   Hex-only factorization refresh retains all 392 inputs and reuses every external
   comparator record. Recognition, floor and ceiling now pass their declared height
-  models; quotient-control evidence and costly degree-one canonical construction
+  models, as does the former quotient control; operation attribution and costly
+  degree-one canonical construction
   remain. No unrelated phase metadata is promoted.
 
 The checked square-root wrapper delegates directly to `sqrtRoot?`, removing
