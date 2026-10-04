@@ -1,0 +1,110 @@
+{
+  "schema": "hex-rcf-precision-full-syntax-v1",
+  "measured_source": "2436b6ab047a33ab10791062edf2935aee1cc53d",
+  "audit_source": "a005741521751d934dca3620136c4c863f44ff6b",
+  "probe_source_sha256_matches_measured": true,
+  "probe_source_sha256": {
+    "bench/HexRCF/ProofProbe/Precision/Full8.lean": "f0b7c885a7a34ef756168ba1848151a4005a56270998fde2f842b18dbf39d2ea",
+    "bench/HexRCF/ProofProbe/Precision/Full16.lean": "ec9e24ff67c9250ff7bb92659298e3466ccb432878c2efb1d36fbf1801e58e84",
+    "bench/HexRCF/ProofProbe/Precision/Full32.lean": "e0d52b085462dde206f8d497758fdecaa1e0c5b39a23cff0a27f5fc9debe5b9e",
+    "bench/HexRCF/ProofProbe/Precision/Full64.lean": "8a24e5ad430db4ea89ba7c0f069518ef476608e4a2cb52918fcdd29c2e1b700a"
+  },
+  "audit_module_sha256": "1ee537fc325ea85da8d70e74f1cb447ff27abd8826fbb462fe64704c8cf3c5e6",
+  "traversal_module_sha256": "5809d4889c9057519ffc73e039fba0128f2e586e8597a570a674428c1623b188",
+  "compiler_output_sha256": "501d1f0422cd8474c761e9bcd6c81e8d596d7ef0eaca76e94bc68b945e2a267b",
+  "final_probe_artifact_sha256": {
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full8.olean.server.hash": "2ca917010911df6053a54c355d533567b5ac6cc859c628ede371cf1ddb53d60e",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full64.olean.server.hash": "f9bba57cd8e22039135b51b644ffaa828fcdb05470d88e94163fbbf3de9e5ace",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full8.olean.server": "993d3be4093532ac5fde857bb018a01b62d9f40f63a3fe11cb0e6bedcdd7a689",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full64.olean": "58b6760464bab184d2b2a66955659f7ff0a780e587e3a6b116df594afa33495d",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full64.olean.private.hash": "3621dfc6ca49c4ffbf5af71d012ee93bb4df8b958a0fc6c10a2a2e12ecb47c37",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full64.olean.server": "6061cb064d8d0607b9e22e61603e97ed516621650416b24e88d18599efd284d1",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full64.olean.private": "a3e010d80cc007fa01355d3606104402b86e3d1f866c58734c48e01ce1ab4fda",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full8.olean.private": "dcb25e9d938979dadce11fe7f30293e3d0af9f21e021da08b87156f4df1e9ab1",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full32.olean.server": "7f20167407af0e28bc1f300b7b03092faf28eb5a07ea98127d0e17e5b1f0c047",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full32.olean.server.hash": "f8c258226297a03de65b56222e246fe0a5ae192db403102f1808000b7b7d070a",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full32.olean": "0a14cc1b990ae6f963987030a7fce9457903eb9527012848f2dd755198fdcb6c",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full32.olean.hash": "c052103dd591a6b074e57fb0890c9681b7ea60cfce1ef3213785027384fe8f45",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full32.olean.private": "52b4e3bc6696157a2d7dfc4abb0e9d189c48e0ef605ea9155bb4a3c0e1b8324e",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full32.olean.private.hash": "211de731039a80e35a9d1a3b3d6228eedcb72b5b93c58cfd815d9408f9e68a6c",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full16.olean.server": "244d509c4c975bdccb6a67498904a637f2e88d75fe47b270c3124c676a624872",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full16.olean.hash": "a58941c32718ffffb9b37accab8363645a304e7d9b92c616925b95709955f9bb",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full16.olean.server.hash": "f2f80b32d5e679fb3436d4b8ffd42ea1e3743353e7ae05a8cb5ae33872ddb8f4",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full64.olean.hash": "037c361319ea3910c1f5d84303bbfe12d3d39301eebaf1a279ce964a7542524c",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full16.olean.private.hash": "94a0acbd5f261d10bf9220bf7d7e7f9ac0d9aa46f57cc23ed9caefbbe2622a08",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full8.olean.private.hash": "dc60166776e303f3fc4208a87b65a60ad15c9eb6f7df399af71ded9c8bcff85d",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full8.olean": "cb17bb81a51a64c796150b54e639805243bad8ca93f047624f7694c60da9128f",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full8.olean.hash": "1daff2469592f6d2307768425b351c86870c49895191b759a54990be816bbdfb",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full16.olean": "aecefe0106bd8432c5cf132dc776c642ae31ebe47b8a94e42f5d761495627423",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full16.olean.private": "d2e9bc6fb20c0f8bc41cbedc87b9f64385637425329f354ceb7605c8cb5a9adc"
+  },
+  "artifact_hash_capture": "after this separate audit; not per-arm or before/after captures",
+  "expression_equality": "Lean.Expr.eqv: alpha equivalence, ignoring binder annotations",
+  "scope": "same-module declaration type/body traversal; imported bodies remain leaves; expanded references are syntactic recurrence without reductions or let substitution, not kernel work",
+  "records": [
+    {
+      "distinct_table_syntax": 1,
+      "expanded_local_nodes": 649463932850,
+      "local_declarations": 20,
+      "proof": "Hex.RCF.ProofProbe.Precision.Full8.witness",
+      "tables": [
+        {
+          "interval_entries": 123,
+          "query_entries": 3,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 3,
+      "unique_expressions": 15606,
+      "window_regions": []
+    },
+    {
+      "distinct_table_syntax": 1,
+      "expanded_local_nodes": 648889962236,
+      "local_declarations": 20,
+      "proof": "Hex.RCF.ProofProbe.Precision.Full16.witness",
+      "tables": [
+        {
+          "interval_entries": 126,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 3,
+      "unique_expressions": 15385,
+      "window_regions": []
+    },
+    {
+      "distinct_table_syntax": 1,
+      "expanded_local_nodes": 648889962236,
+      "local_declarations": 20,
+      "proof": "Hex.RCF.ProofProbe.Precision.Full32.witness",
+      "tables": [
+        {
+          "interval_entries": 126,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 3,
+      "unique_expressions": 15391,
+      "window_regions": []
+    },
+    {
+      "distinct_table_syntax": 1,
+      "expanded_local_nodes": 648889962236,
+      "local_declarations": 20,
+      "proof": "Hex.RCF.ProofProbe.Precision.Full64.witness",
+      "tables": [
+        {
+          "interval_entries": 126,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 3,
+      "unique_expressions": 15388,
+      "window_regions": []
+    }
+  ]
+}
