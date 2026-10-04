@@ -32,7 +32,8 @@ def d4 : Group 4 := Group.ofGenerators #[rotation, reflection]
 
 Composition is a left action: `(p.comp q) x = p (q x)`. Programs returned by
 `word?` use the original generator order and can be checked independently with
-`checkWord`.
+`checkWord`. `Program.toWord?` expands a short program into a freely reduced
+word, which `Word.toString` prints as, for example, `g0 * g1`.
 
 The public surface includes point and pointwise stabilizers, containment,
 joins, element enumeration with output caps, left cosets, rank/unrank and

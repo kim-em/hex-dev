@@ -147,6 +147,48 @@ example : (Program.mk #[.inv 1, .id] 0).eval generators = none := by decide
 example : (Program.mk #[.id, .comp 0 2] 0).eval generators = none := by decide
 example : checkWord (#[] : Array (Perm 0)) (Perm.id 0) ⟨#[.id], 0⟩ = true := by decide
 
+-- Flattening follows the composition order of `eval`, cancels inverse pairs,
+-- and fails exactly where evaluation fails, including at dead invalid nodes.
+private def g0 : Fin generators.size × Bool := (⟨0, by decide⟩, false)
+private def g1 : Fin generators.size × Bool := (⟨1, by decide⟩, false)
+private def g1inv : Fin generators.size × Bool := (⟨1, by decide⟩, true)
+private def cancelling : Program :=
+  ⟨#[.generator 0, .inv 0, .generator 1, .comp 1 2, .comp 0 3], 4⟩
+private def mixed : Program := ⟨#[.generator 0, .generator 1, .inv 1, .comp 0 2], 3⟩
+
+example : product.toWord? generators = some [g0, g1] := by decide
+example : shared.toWord? generators = some [g0, g0, g0] := by decide
+example : cancelling.toWord? generators = some [g1] := by decide
+example : mixed.toWord? generators = some [g0, g1inv] := by decide
+example : (Program.mk #[.generator 0, .inv 0, .comp 0 1] 2).toWord? generators = some [] := by
+  decide
+example : (Program.mk #[.generator 2] 0).toWord? generators = none := by decide
+example : (Program.mk #[.id] 1).toWord? generators = none := by decide
+example : (Program.mk #[.id, .comp 0 2] 0).toWord? generators = none := by decide
+example : Word.reduce [g0, g1, g1inv, g1] = [g0, g1] := by decide
+#guard Word.toString [g0, g1inv] == "g0 * g1⁻¹"
+#guard Word.toString ([] : Word generators) == "1"
+
+private def rotation4 : Perm 4 := Perm.mk #v[1, 2, 3, 0]
+private def reflection4 : Perm 4 := Perm.mk #v[0, 3, 2, 1]
+private def square : Group 4 := Group.ofGenerators #[rotation4, reflection4]
+
+-- Membership programs for the square flatten to their short words, although
+-- most of their nodes are unreachable from the root.
+#eval do
+  for (p, expected, shown) in
+      [(rotation4.comp reflection4, [(0, false), (1, false)], "g0 * g1"),
+       (rotation4.comp rotation4, [(0, false), (0, false)], "g0 * g0"),
+       (reflection4, [(1, false)], "g1")] do
+    let some program := square.word? p
+      | throw (IO.userError "square membership program missing")
+    let some w := program.toWord? square.generators
+      | throw (IO.userError "membership program did not flatten")
+    let letters := w.map fun (a : Fin square.generators.size × Bool) => (a.1.val, a.2)
+    unless letters == expected && Word.toString w == shown &&
+        Word.eval square.generators w == p do
+      throw (IO.userError s!"unexpected flattened word {Word.toString w}")
+
 example : cycle.cycles = #[#[0, 1, 2]] := by decide
 example : swap.cycles = #[#[0, 1]] := by decide
 example : swap.cycleType = #[1, 2] := by decide +kernel
