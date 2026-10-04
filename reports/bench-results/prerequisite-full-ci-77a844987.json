@@ -1,0 +1,264 @@
+{
+  "source_commit": "77a844987b4eb8f86883a0f96d0807edbfeb2c37",
+  "pull_request": 10684,
+  "run_id": 37179955481,
+  "run_url": "https://github.com/kim-em/hex-dev/actions/runs/37179955481",
+  "overall_conclusion": "cancelled",
+  "completed_benchmark_gate": "failure",
+  "total_seconds": 388,
+  "hard_cap_seconds": 360,
+  "excess_seconds": 28,
+  "case_counts": {
+    "HexSturm": 91,
+    "HexRealAlgebraic": 102
+  },
+  "all_individual_benchmark_checks_passed": true,
+  "breakdown": [
+    {
+      "executable": "hexrealalgebraic_bench",
+      "seconds": 64
+    },
+    {
+      "executable": "hexgf2_bench",
+      "seconds": 47
+    },
+    {
+      "executable": "hexroots_bench",
+      "seconds": 46
+    },
+    {
+      "executable": "hexpolyzgcd_bench",
+      "seconds": 44
+    },
+    {
+      "executable": "hexnumberfieldtower_bench",
+      "seconds": 32
+    },
+    {
+      "executable": "hexmodular_bench",
+      "seconds": 31
+    },
+    {
+      "executable": "hexnumberfield_bench",
+      "seconds": 22
+    },
+    {
+      "executable": "hexgenericrank_bench",
+      "seconds": 16
+    },
+    {
+      "executable": "hexkronecker_bench",
+      "seconds": 14
+    },
+    {
+      "executable": "hexintfactor_bench",
+      "seconds": 11
+    },
+    {
+      "executable": "hexecpp_bench",
+      "seconds": 9
+    },
+    {
+      "executable": "hexpoly_bench",
+      "seconds": 8
+    },
+    {
+      "executable": "hexrealclosure_bench",
+      "seconds": 4
+    },
+    {
+      "executable": "hextruncatedseries_bench",
+      "seconds": 3
+    },
+    {
+      "executable": "hexsmith_bench",
+      "seconds": 3
+    },
+    {
+      "executable": "hexrcf_bench",
+      "seconds": 3
+    },
+    {
+      "executable": "hexprimality_bench",
+      "seconds": 3
+    },
+    {
+      "executable": "hexsturm_bench",
+      "seconds": 2
+    },
+    {
+      "executable": "hexrowreduce_bench",
+      "seconds": 2
+    },
+    {
+      "executable": "hexrationalfn_bench",
+      "seconds": 2
+    },
+    {
+      "executable": "hexrank_bench",
+      "seconds": 2
+    },
+    {
+      "executable": "hexmvgcd_bench",
+      "seconds": 2
+    },
+    {
+      "executable": "hexsparsepoly_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexsigndet_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexresultant_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexreflect_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexpolysmith_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexpolyfp_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexpolydet_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexorderedfn_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexminpoly_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexlatticeenum_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexhermite_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexhensel_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexgraphiso_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexgfq_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexdet_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexconway_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexbz_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexberlekamp_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexrealroots_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexrealformula_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexpolyz_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexpolyfast_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexpermgroup_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexmvpoly_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexmodularmatrix_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexmodarith_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexmatrix_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexlll_gram_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexgramschmidt_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexgfqring_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexgfqfield_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexdeterminantalideal_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexdeterminant_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexcharpoly_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexarith_bench",
+      "seconds": 0
+    }
+  ],
+  "scope": "Existing workflow dispatched with all libraries on final PR source. Every benchmark executable completes result checks; the unchanged total cap fails. The additional run was cancelled after this completed failure while the unrelated full oracle tail was still running, to obtain the diagnostic log promptly. No full-oracle success is claimed. Required filtered PR CI separately passes all required gates. No scientific measurement was rerun.",
+  "retained_logs": [
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-full-ci.log",
+      "bytes": 6711109,
+      "sha256": "8d57d0badfe767c40c125f8334bee906593523c50fe3a265a2466ef7c10ad5df"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-full-ci-final-jobs.json",
+      "bytes": 9941,
+      "sha256": "6d4f7e6c1697a5b9fdfe9f6f6af7157bf295558e1ad9acd4f2ccb6852a4429a5"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-full-ci-watch.log",
+      "bytes": 97405,
+      "sha256": "3a214037a3fca6911398aa55f91d52932f85bad056bba18e2a550d8357dd1c99"
+    }
+  ]
+}

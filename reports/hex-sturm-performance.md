@@ -829,6 +829,22 @@ frontend profiles are separate evidence for prepared, cached and transport paths
 
 ## Concerns
 
+- The headline `query_iff` is proved in the development semantic adapter, but
+  ordinary `import HexSturmMathlib` still does not export it. The bounded public
+  foundation/frontend import integration belongs to
+  [#10575](https://github.com/kim-em/hex-dev/issues/10575); it cannot wait for
+  #10577 closure because it is itself a Sturm Phase-4 prerequisite.
+
+- Growing nonconstant queries against a fixed quadratic still materialize
+  the large quotient even in the value-only path. The retained prepared-query
+  ladder above reaches roughly 99 seconds and 32 GiB whole-child peak RSS.
+  Exact result agreement and family-specific characterization do not resolve
+  this storage cost; no streaming implementation is claimed.
+
+- The wide replay/checker and coefficient-sign failures of characterization
+  remain retained. The narrower passing models and current Chebyshev external
+  comparisons do not discharge their remaining operation-specific evidence.
+
 - The historical raw captures were lost after a reboot. Their summaries remain
   diagnostics and cannot be reprocessed. The [retained representative captures](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)
   supply fresh replay and prepared-query attribution with raw perf/samply data,

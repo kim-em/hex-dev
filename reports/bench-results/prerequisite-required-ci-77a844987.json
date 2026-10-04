@@ -1,0 +1,44 @@
+{
+  "source_commit": "77a844987b4eb8f86883a0f96d0807edbfeb2c37",
+  "pull_request": 10684,
+  "run_id": 37179867279,
+  "run_url": "https://github.com/kim-em/hex-dev/actions/runs/37179867279",
+  "result": "success",
+  "library_filter": [
+    "HexSturm",
+    "HexRealAlgebraic",
+    "HexRealAlgebraicMathlib"
+  ],
+  "bench_verify": {
+    "total_seconds": 63,
+    "hard_cap_seconds": 360,
+    "HexSturm_seconds": 2,
+    "HexRealAlgebraic_seconds": 61,
+    "case_counts": {
+      "HexSturm": 91,
+      "HexRealAlgebraic": 102
+    }
+  },
+  "exact_real_oracle": {
+    "cases": 83,
+    "unavailable_component_skips": 0
+  },
+  "scope": "Required owner-filtered PR CI; full library/conformance/manual/architecture/ordinary-kernel checks pass. Does not establish all-library benchmark headroom. Separate full-scope run has a failed completed benchmark step and was cancelled while its unrelated oracle tail was still running.",
+  "retained_logs": [
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-final-pr-ci.log",
+      "bytes": 5481918,
+      "sha256": "d0baaec6ad7f49d1303b39152133c1fa894e5e1bf5c65b5fd1990727ec4c01ec"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-final-pr-ci-jobs.json",
+      "bytes": 9935,
+      "sha256": "87d515a521600f4064144b50a37a8cac98a7c95c638d424024d0009fe78ee1b4"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-final-pr-ci-watch.log",
+      "bytes": 88631,
+      "sha256": "a0adc744358382852c43428a072bf7710b3ea16565e6e3818c62ecc2cbf6efbe"
+    }
+  ]
+}
