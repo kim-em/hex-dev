@@ -108,6 +108,9 @@ checked root aliases through separately proved algebraic enclosures. The
 cover π/e with square/cubic roots, both divisor signs and cancelled divisions;
 their ordinary proofs contain literal replay, with no approximation or root
 production call.
+Recognized rational radicals retain exact singleton bounds. A preparation-local
+cache reuses checked enclosures for exact source expressions, including a
+divisor reused by an inverse coefficient; it does not merge distinct aliases.
 The [named-constant regressions](../conformance/HexRCF/NamedConstants.lean)
 and manual supply fixed bounds from existing Mathlib π/e theorems, then prove
 the required inequalities, existential witness and guarded inverse. Separate

@@ -14,7 +14,7 @@ namespace Hex.RCF.RealCoefficients.AlgebraicBounds
 
 open Hex.OrderedFn.Oracle
 
-theorem contains_div (ln un : Int) (ld ud : Nat)
+theorem contains_mkRat (ln un : Int) (ld ud : Nat)
     (ordered : mkRat ln ld ≤ mkRat un ud) (x : ℝ)
     (h : (((ln : ℚ) / (ld : ℚ) : ℚ) : ℝ) ≤ x ∧
       x ≤ (((un : ℚ) / (ud : ℚ) : ℚ) : ℝ)) :
@@ -36,7 +36,7 @@ open Hex Lean Meta Qq Hex.OrderedFn.Oracle
 /-- Propose one enclosure and authenticate it through the existing finite
 fixed-field checker. This bounded operation promises containment, not a width
 or eventual success for every algebraic source presentation. -/
-meta def enclose (source : Expr) (request : Rat) : MetaM (Bounds × Expr) := do
+private meta def encloseCore (source : Expr) (request : Rat) : MetaM (Bounds × Expr) := do
   let (_, _, value) ← FieldRuntime.coefficient source
   let precision := request.den.log2 + 2
   let some interval := rootInterval value precision |
@@ -61,11 +61,29 @@ meta def enclose (source : Expr) (request : Rat) : MetaM (Bounds × Expr) := do
     else do
       let prepared ← match ← Coefficients.prepare target with
         | .ok prepared => pure prepared
+        | .error (.unsupported _ _) =>
+            throwError "rcf: algebraic enclosure needs a supported selected-field presentation"
         | .error error => throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
       prepared.proveReplay
   let ordered ← mkDecideProof (← mkAppM ``LE.le
     #[← mkAppM ``mkRat #[ln, ld], ← mkAppM ``mkRat #[un, ud]])
-  return (bounds, ← mkAppM ``contains_div #[ln, un, ld, ud, ordered, source,
+  return (bounds, ← mkAppM ``contains_mkRat #[ln, un, ld, ud, ordered, source,
     mkApp proof q((0 : ℝ))])
+
+/-- Enclose transactionally. Successful proof auxiliaries survive, caller
+metavariables do not change, and every failure restores the complete state. -/
+meta def enclose (source : Expr) (request : Rat) : MetaM (Bounds × Expr) := do
+  let saved ← saveState
+  let (result, _) ← tryFinally' (withNewMCtxDepth do
+    let (bounds, proof) ← encloseCore source request
+    let proof ← instantiateMVars proof
+    return (bounds, ← Hex.RCF.checkExpr `Hex.RCF.RealCoefficients.AlgebraicBounds proof))
+    (fun result => do
+      match result with
+      | some _ => modify fun state => {state with
+          mctx := saved.meta.mctx, postponed := saved.meta.postponed,
+          zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds}
+      | none => saved.restore)
+  return result
 
 end Hex.RCF.RealCoefficients.AlgebraicBounds

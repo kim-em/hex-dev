@@ -2375,6 +2375,11 @@ divisor from zero. The frozen proof does not rerun algebraic approximation or
 root production. Whole-subject registrations still take priority. This
 composition remains bounded: an unsupported field presentation or an
 unresolved combined enclosure is a failure, not a completeness claim.
+Rational values keep exact bounds when the rational frontend recognizes them,
+including perfect-square radicals. Within one preparation, repeated identical
+closed expressions reuse their checked enclosure proof; the original divisor
+checks still run before proof search. Distinct aliases do not automatically
+share an enclosure or supply an equality proof.
 
 The finite path requests width `1/16` once. The actual width here is `2`;
 containment does not assert that the request was met. A requested-width theorem
