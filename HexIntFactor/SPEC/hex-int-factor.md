@@ -400,7 +400,14 @@ timeout, excess output, non-UTF-8/malformed framing, missing executable,
 nonzero exit or nonempty stderr, invalid arithmetic, and primality-completion
 exhaustion have distinct diagnostics. Direct invocation and bounded output
 reading follow `HexECPPMathlib.Pari` without importing HexECPP or HexECPPMathlib.
-The initial producer supports POSIX platforms.
+The initial producer supports POSIX platforms. Spawn an owned process group;
+on early exit, kill that group before reaping its leader. Pipe readers poll
+with a cancellation token, so cleanup never waits for EOF from a descendant
+that escaped the group. Join both readers, reap the owned child, and remove the
+request file on every exit path. If the operating system rejects signalling,
+report a pipe/cleanup failure and avoid waiting indefinitely for the live child.
+The small optional POSIX IO sidecar belongs
+to HexIntFactor and is excluded from computational replay.
 
 ### Explicit fallback and diagnostic preservation
 

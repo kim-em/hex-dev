@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[2]
 LIBRARIES = {'HexBasic': [], 'HexArith': [],
              'HexPrimality': ['HexBasic', 'HexArith']}
 ENTRY = dict(repo='prospective/hex-int-factor', lib='HexIntFactor', umbrella=True, spec='hex-int-factor', lakefile='lean',
+             lake_declarations=['hexintfactorpariio', 'HexIntFactorPariIO'],
              build_modules=['HexIntFactor.Pari', 'HexIntFactor.Export', 'HexIntFactor.Replay'],
              test_modules=['HexIntFactor.ImportTests', 'HexIntFactor.PariTests',
                            'HexIntFactor.ExportTests'] + [f'HexIntFactor.Frozen.Case{i}' for i in range(7)] + ['HexIntFactor.Frozen.Partial12'])
@@ -61,13 +62,16 @@ def main():
     dest.mkdir()
     shutil.copy(ROOT / "lean-toolchain", dest)
     # The prospective skeleton builds optional producer/export modules separately.
-    (dest / 'lakefile.lean').write_text('import Lake\nopen Lake DSL\npackage HexIntFactor\n'
+    (dest / 'lakefile.lean').write_text('import Lake\nopen Lake DSL System\npackage HexIntFactor\n'
         'require HexPrimality from "../HexPrimality"\n'
         '@[default_target]\nlean_lib HexIntFactor where\n'
-        '  globs := #[`HexIntFactor, `HexIntFactor.Pari, `HexIntFactor.Export, `HexIntFactor.Replay].map Glob.one\n')
+        '  globs := #[`HexIntFactor, `HexIntFactor.Pari, `HexIntFactor.Export, `HexIntFactor.Replay].map Glob.one\n'
+        'target hexintfactorpariio pkg : FilePath := do\n  pure (pkg.dir / \"placeholder\")\n'
+        'lean_lib HexIntFactorPariIO where\n  roots := #[`HexIntFactor.Pari.IO]\n')
     with patch.object(sync, "apply_ci_workflow", return_value=[]):
         sync.apply_paths(ENTRY, dest)
     sync.rewrite_lib_settings(ENTRY, dest)
+    sync.rewrite_lake_declarations(ENTRY, dest)
     sync.rewrite_test_target(ENTRY, dest)
     sync.rewrite_toolchains(dest)
     sync.validate_skeleton(ENTRY, dest)
@@ -80,11 +84,13 @@ def main():
     (client / 'Replay.lean').write_text('module\n'
         'public import HexIntFactor.Frozen.Case3\npublic import HexIntFactor.Frozen.Case5\n'
         'public import HexIntFactor.Frozen.Partial12\n'
+        'public import HexIntFactor.Export\n'
         'public section\n'
         'example : Hex.Nat.checkFactorization Hex.IntFactorFrozen.case3 = true := by decide +kernel\n'
         'example : Hex.Nat.checkPartial Hex.IntFactorFrozen.case5 = true := by decide +kernel\n'
         'example : Hex.Nat.checkPartial Hex.IntFactorFrozen.partial12 = true := by decide +kernel\n'
-        '#print axioms Hex.IntFactorFrozen.case3_checked\n')
+        '#print axioms Hex.IntFactorFrozen.case3_checked\n'
+        'set_option Elab.inServer true in\n#int_factor for 12\n')
     result = subprocess.run(['lake', 'build'], cwd=client, text=True, capture_output=True,
         env=dict(os.environ, HEX_INT_FACTOR_GP='/no-gp-in-split-client'))
     forbidden = [str(p) for p in args.directory.rglob('*') if p.is_dir() and p.name.lower() == 'mathlib']
@@ -95,7 +101,7 @@ def main():
     args.output.write_text(json.dumps(record, indent=2) + '\n')
     if result.returncode or forbidden:
         raise SystemExit(result.stdout + result.stderr + str(forbidden))
-    print('Fresh computational factor replay passed without GP, search or Mathlib')
+    print('Fresh factor replay and optional Export module import passed without GP or Mathlib')
 
 
 if __name__ == '__main__':

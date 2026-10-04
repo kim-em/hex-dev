@@ -102,6 +102,19 @@ target hexecpppariio pkg : FilePath := do
     }
   buildStaticLib (pkg.staticLibDir / nameToStaticLib "hexecpppariio") #[oTarget]
 
+target hexintfactorpariio pkg : FilePath := do
+  let oFile := pkg.dir / defaultBuildDir / "HexIntFactor" / "ffi" / "pari_pipe.o"
+  let srcTarget ← inputTextFile <| pkg.dir / "HexIntFactor" / "ffi" / "pari_pipe.c"
+  let oTarget ← buildFileAfterDep oFile srcTarget fun srcFile => do
+    createParentDirs oFile
+    proc {
+      cmd := "cc"
+      args := #["-c", "-o", oFile.toString, srcFile.toString,
+        "-I", (← getLeanIncludeDir).toString, "-fPIC", "-O2", "-std=c11"]
+      env := #[("TMPDIR", some (← IO.FS.realPath (oFile.parent.getD ".")).toString)]
+    }
+  buildStaticLib (pkg.staticLibDir / nameToStaticLib "hexintfactorpariio") #[oTarget]
+
 private def hexlllProviderOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexLLL" / "ffi" / "lean_hexlll_provider.o"
   let srcTarget ← inputTextFile <| pkg.dir / "HexLLL" / "ffi" / "lean_hexlll_provider.c"
@@ -423,6 +436,13 @@ lean_lib HexECPPMathlibPariIO where
   globs := #[.one `HexECPPMathlib.Pari.IO]
   precompileModules := true
   moreLinkObjs := #[hexecpppariio]
+
+-- Only the optional producer's interruptible pipe module needs native IO.
+lean_lib HexIntFactorPariIO where
+  roots := #[`HexIntFactor.Pari.IO]
+  globs := #[.one `HexIntFactor.Pari.IO]
+  precompileModules := true
+  moreLinkObjs := #[hexintfactorpariio]
 
 -- The release aggregate also builds these modules. Its manifest equality
 -- check requires that registration; all owners use the same Lean settings.
