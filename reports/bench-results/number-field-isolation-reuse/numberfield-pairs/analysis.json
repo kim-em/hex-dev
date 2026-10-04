@@ -1,0 +1,408 @@
+{
+  "cases": {
+    "ExactFactorLadder": {
+      "arms": [
+        {
+          "block": 0,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xc54907e8cdc91172",
+          "median_ms": 92.325024,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 0,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xc54907e8cdc91172",
+          "median_ms": 47.441694,
+          "inner_repeats": [
+            2
+          ]
+        },
+        {
+          "block": 1,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xc54907e8cdc91172",
+          "median_ms": 92.828121,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 1,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xc54907e8cdc91172",
+          "median_ms": 46.550352,
+          "inner_repeats": [
+            2
+          ]
+        },
+        {
+          "block": 2,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xc54907e8cdc91172",
+          "median_ms": 92.487035,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 2,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xc54907e8cdc91172",
+          "median_ms": 46.871513,
+          "inner_repeats": [
+            2
+          ]
+        },
+        {
+          "block": 3,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xc54907e8cdc91172",
+          "median_ms": 92.878817,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 3,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xc54907e8cdc91172",
+          "median_ms": 46.573917,
+          "inner_repeats": [
+            2
+          ]
+        }
+      ],
+      "successful_adjacent_pairs": 4,
+      "median_adjacent_before_after_ratio": 1.9836739363482319,
+      "ratio_range": [
+        1.9460735107814657,
+        1.994223869982849
+      ],
+      "before_median_ms": 92.657578,
+      "after_median_ms": 46.722715
+    },
+    "ExactSelection": {
+      "arms": [
+        {
+          "block": 0,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd5512fda51bc6ff6",
+          "median_ms": 92.840609,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 0,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd5512fda51bc6ff6",
+          "median_ms": 46.782146,
+          "inner_repeats": [
+            2
+          ]
+        },
+        {
+          "block": 1,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd5512fda51bc6ff6",
+          "median_ms": 93.209125,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 1,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd5512fda51bc6ff6",
+          "median_ms": 47.231847,
+          "inner_repeats": [
+            2
+          ]
+        },
+        {
+          "block": 2,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd5512fda51bc6ff6",
+          "median_ms": 92.847639,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 2,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd5512fda51bc6ff6",
+          "median_ms": 47.512639,
+          "inner_repeats": [
+            2
+          ]
+        },
+        {
+          "block": 3,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd5512fda51bc6ff6",
+          "median_ms": 93.307521,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 3,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd5512fda51bc6ff6",
+          "median_ms": 47.131985,
+          "inner_repeats": [
+            2
+          ]
+        }
+      ],
+      "successful_adjacent_pairs": 4,
+      "median_adjacent_before_after_ratio": 1.9765725390881002,
+      "ratio_range": [
+        1.954167163815085,
+        1.984530786595382
+      ],
+      "before_median_ms": 93.028382,
+      "after_median_ms": 47.181916
+    },
+    "ExactLadder": {
+      "arms": [
+        {
+          "block": 0,
+          "arm": "Before",
+          "exit_code": 1,
+          "status": [
+            "killed_at_cap"
+          ],
+          "hash": null,
+          "median_ms": null,
+          "inner_repeats": [
+            0
+          ]
+        },
+        {
+          "block": 0,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd0642a7d4df3da02",
+          "median_ms": 0.945337,
+          "inner_repeats": [
+            64
+          ]
+        },
+        {
+          "block": 1,
+          "arm": "Before",
+          "exit_code": 1,
+          "status": [
+            "killed_at_cap"
+          ],
+          "hash": null,
+          "median_ms": null,
+          "inner_repeats": [
+            0
+          ]
+        },
+        {
+          "block": 1,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd0642a7d4df3da02",
+          "median_ms": 0.936162,
+          "inner_repeats": [
+            64
+          ]
+        },
+        {
+          "block": 2,
+          "arm": "Before",
+          "exit_code": 1,
+          "status": [
+            "killed_at_cap"
+          ],
+          "hash": null,
+          "median_ms": null,
+          "inner_repeats": [
+            0
+          ]
+        },
+        {
+          "block": 2,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd0642a7d4df3da02",
+          "median_ms": 0.945514,
+          "inner_repeats": [
+            64
+          ]
+        },
+        {
+          "block": 3,
+          "arm": "Before",
+          "exit_code": 1,
+          "status": [
+            "killed_at_cap"
+          ],
+          "hash": null,
+          "median_ms": null,
+          "inner_repeats": [
+            0
+          ]
+        },
+        {
+          "block": 3,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd0642a7d4df3da02",
+          "median_ms": 0.942584,
+          "inner_repeats": [
+            64
+          ]
+        }
+      ],
+      "successful_adjacent_pairs": 0,
+      "median_adjacent_before_after_ratio": null,
+      "ratio_range": null,
+      "before_median_ms": null,
+      "after_median_ms": 0.9439605
+    }
+  },
+  "failed_arms": [
+    {
+      "case": "ExactLadder",
+      "block": 0,
+      "arm": "Before",
+      "exit_code": 1,
+      "status": [
+        "killed_at_cap"
+      ],
+      "hash": null,
+      "median_ms": null,
+      "inner_repeats": [
+        0
+      ]
+    },
+    {
+      "case": "ExactLadder",
+      "block": 1,
+      "arm": "Before",
+      "exit_code": 1,
+      "status": [
+        "killed_at_cap"
+      ],
+      "hash": null,
+      "median_ms": null,
+      "inner_repeats": [
+        0
+      ]
+    },
+    {
+      "case": "ExactLadder",
+      "block": 2,
+      "arm": "Before",
+      "exit_code": 1,
+      "status": [
+        "killed_at_cap"
+      ],
+      "hash": null,
+      "median_ms": null,
+      "inner_repeats": [
+        0
+      ]
+    },
+    {
+      "case": "ExactLadder",
+      "block": 3,
+      "arm": "Before",
+      "exit_code": 1,
+      "status": [
+        "killed_at_cap"
+      ],
+      "hash": null,
+      "median_ms": null,
+      "inner_repeats": [
+        0
+      ]
+    }
+  ],
+  "all_completed_arms": 24
+}

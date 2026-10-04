@@ -260,7 +260,11 @@ Fixed-field arithmetic is polynomial arithmetic and scales as the degree
 suggests: multiplication is quadratic in the degree and inversion cubic with a
 logarithmic factor for coefficient growth. Everything that isolates roots is
 dominated by the isolation, so those rows are fixed inputs rather than
-asymptotics.
+asymptotics. Times are shared-host observations. The exactification rows use
+the retained certified-reuse measurements on `7ceaf9d47d`; the integer-root
+row retains its earlier source and is labelled historical. See the
+[performance report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-number-field-performance.md)
+for source scopes and the unchanged operational caps.
 
 :::table +header
 * * operation
@@ -277,13 +281,13 @@ asymptotics.
   * 17 ms
 * * `ZPoly.algebraicRoots`
   * `X⁴ − 10X² + 1`, four roots
-  * 44 ms
+  * 44 ms (historical)
 * * `AlgebraicRoot.exact`
   * a root of `∏ (X² − p)`, `p ≤ 13`, degree 12
-  * 1.9 ms
+  * 1.0 ms
 * * `AlgebraicRoot.exact`
   * a root of `X⁸ − 2` inside `(X⁸ − 2)(X + 3)`
-  * 310 ms
+  * 47 ms
 * * `AlgebraicRoot.add`
   * a root of `X⁶ − 2` plus `√3`, degree product 12
   * 4.5 s

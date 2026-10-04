@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runHardAdd    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=121fc1e, 2026-10-04T07:35:37Z, host=chungus2
+  repeat 0  5.870 s
+  median: 5.870 s    min: 5.870 s    max: 5.870 s
+  hash: all repeats agree
+  observed hash: 0x7cc18faa80303c8
+  expected hash: matches
+  peak RSS: 66_836 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardAdd-0-After.json
