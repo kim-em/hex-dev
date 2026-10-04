@@ -185,6 +185,15 @@ class LakefileAffectsRuntime(unittest.TestCase):
         with patch.object(guard, 'factor_import_modules', return_value={'HexPrimality.Table'}):
             self.assertTrue(guard.lakefile_texts_differ(BASE + first + second, BASE + second + first))
 
+    def test_scope_commands_protect_declaration_position(self):
+        first = 'namespace A\n' + BASE + '\nend A\nlean_lib Other\n'
+        second = BASE + '\nnamespace A\nend A\nlean_lib Other\n'
+        self.assertTrue(guard.lakefile_texts_differ(first, second))
+
+    def test_handwritten_target_attributes_are_relevant(self):
+        before = BASE + '\n@[target, lean_lib] def configured := "-O3"\n'
+        self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
+
     def test_registering_a_new_target_is_not_a_runtime_change(self):
         after = BASE + '\nlean_lib HexPolyFast where\n  srcDir := "."\n'
         self.assertFalse(guard.lakefile_texts_differ(BASE, after))

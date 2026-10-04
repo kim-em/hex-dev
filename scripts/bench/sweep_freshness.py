@@ -131,6 +131,7 @@ def lakefile_blocks(text: str) -> dict[str, str]:
                 current.append(line)
             else:
                 blocks[key] = "\n".join(current).rstrip()
+                uncertain = True
                 key = f"command {commands}"
                 commands += 1
                 current = pending + [line]

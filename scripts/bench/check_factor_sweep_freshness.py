@@ -112,7 +112,9 @@ def factorization_blocks(text: str) -> dict[str, str]:
     blocks = freshness.lakefile_blocks(text)
     for name, body in blocks.items():
         kind, _, decl = name.partition(" ")
-        if kind in ("package", "require"):
+        target_attribute = re.search(r"@\[[^\]]*\b(?:target|lean_lib|lean_exe|extern_lib)\b",
+                                     freshness.strip_lean_comments(body))
+        if target_attribute or kind in ("package", "require"):
             relevant[name] = body
         elif kind == "lean_exe" and decl == FACTOR_SERVICE_EXE:
             relevant[name] = body
