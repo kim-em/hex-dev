@@ -347,4 +347,52 @@ run_meta do
   let annotated := {a with rootExpr := .mdata {} a.rootExpr}
   annotated.checkDomains
 
+-- Both tactic arms cover factory data with guards, multiple source fields
+-- and local aliases; these proofs must contain the common-field identity law.
+set_option rcf.algebraic.validateFresh false in
+ theorem fresh_guard : ∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0 := by rcf
+set_option rcf.algebraic.validateFresh true in
+ theorem checked_guard : ∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0 := by rcf
+set_option rcf.algebraic.validateFresh false in
+ theorem fresh_sources : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 + Real.sqrt 3 > 0 := by rcf
+set_option rcf.algebraic.validateFresh true in
+ theorem checked_sources : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 + Real.sqrt 3 > 0 := by rcf
+set_option rcf.algebraic.validateFresh false in
+ theorem fresh_alias (a : ℝ) (h : a = Real.sqrt 2 + 1) :
+    ∀ x : ℝ, x ^ 2 + 1 / a > 0 := by rcf
+set_option rcf.algebraic.validateFresh true in
+ theorem checked_alias (a : ℝ) (h : a = Real.sqrt 2 + 1) :
+    ∀ x : ℝ, x ^ 2 + 1 / a > 0 := by rcf
+
+run_meta do
+  for name in [``fresh_guard, ``checked_guard, ``fresh_sources, ``checked_sources,
+      ``fresh_alias, ``checked_alias] do
+    unless ← Hex.RCF.ProofEvidence.contains name
+        (fun e => e.isConstOf ``CommonPresentation.checkPolynomials_sound) do
+      throwError "tactic regression did not use the common-field frontend"
+    let info ← getConstInfo name
+    let some proof := info.value? (allowOpaque := true) | throwError "missing tactic proof"
+    Hex.RCF.checkAxioms name proof
+
+-- A synthetic forbidden selected-root witness must be rejected before
+-- native common-field production, including for a false source sentence.
+run_meta do
+  let saved ← saveState
+  try
+    let hw : Q(atomWitness SquareTwo.polynomial SquareTwo.square) ←
+      mkSorry q(atomWitness SquareTwo.polynomial SquareTwo.square) false
+    let bad : Q(RealAlgebraicNumber) := q(Selected.real SquareTwo.polynomial SquareTwo.square
+      $hw (by decide) (by rfl) (by decide) (by decide)
+      SquareTwo.checked SquareTwo.squarefree (by decide))
+    let target : Q(Prop) := q(∀ x : ℝ, x ^ 2 = ($bad).toReal ∧
+      0 / (($bad).toReal + 1) = 0)
+    let failure ← tryCatchRuntimeEx (do
+      let _ ← CommonTactic.handle target
+      pure none) (fun error => do pure (some (← error.toMessageData.toString)))
+    let some message := failure | throwError "forbidden source witness was not rejected"
+    unless (message.splitOn "sorryAx").length > 1 &&
+        (message.splitOn "sourcePlans").length > 1 do
+      throwError "forbidden witness reached production diagnostics: {message}"
+  finally saved.restore
+
 end Hex.RCF.PreparedCoefficientsTests

@@ -37,14 +37,13 @@ private meta unsafe def evalSquareUnsafe (e : Expr) : MetaM DyadicSquare :=
 meta opaque evalSquare (e : Expr) : MetaM DyadicSquare
 
 private meta unsafe def evalRatPolyUnsafe (e : Expr) : MetaM (DensePoly Rat) := do
-  let type ← inferType e
-  evalExpr (DensePoly Rat) type e
+  evalExpr (DensePoly Rat) q(DensePoly Rat) e
 
 @[implemented_by evalRatPolyUnsafe]
 meta opaque evalRatPoly (e : Expr) : MetaM (DensePoly Rat)
 
 private meta unsafe def evalRatPolysUnsafe (e : Expr) : MetaM (List (DensePoly Rat)) := do
-  evalExpr (List (DensePoly Rat)) (← inferType e) e
+  evalExpr (List (DensePoly Rat)) q(List (DensePoly Rat)) e
 
 @[implemented_by evalRatPolysUnsafe]
 meta opaque evalRatPolys (e : Expr) : MetaM (List (DensePoly Rat))

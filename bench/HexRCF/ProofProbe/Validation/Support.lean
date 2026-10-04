@@ -7,6 +7,7 @@ module
 
 public import HexRCF.RealCoefficients
 public meta import HexRCF.RealCoefficients
+public meta import HexRCF.ProofEvidence
 public section
 
 /-! Matched fresh-module costs of redundant fresh-input validation. -/
