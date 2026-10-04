@@ -85,12 +85,27 @@ distinct expressions, and the whole proof has three versus seven distinct
 `And.intro` applications. The other three solver pairs have equal structural
 counts. The precision probes have 15,044 versus 14,833 distinct expressions.
 This traversal visits each structurally equal expression once and follows only
-the probe's own module declarations; imported bodies remain leaves. Counts are
-not an unshared expansion, allocation measurement or kernel-reduction count.
-They do not attribute the historical 61,672-byte private-file difference to
-individual certificates: payloads, local declarations, removed queries and
-serialization references all change. This audit's source and artifacts differ
-from the timed source above; it supplies no new timing comparison.
+the probe's own module declarations; imported bodies remain leaves.
+
+A second [expanded-reference audit](data/hexrcf-window-signs/82c93dac9/audit.json)
+at [retained source `82c93dac95`](https://github.com/kim-em/hex-dev/tree/evidence/hexrcf-window-expanded-audit)
+adds a memoized count of the unshared syntax tree after replacing each local
+declaration reference by its type and body. Synthetic controls check both
+shared expression edges and repeated local declaration references. The fixed
+original/refined counts are 15,193,271,380 and 14,865,428,424 expanded nodes;
+the window region has 2,021 expanded nodes and a maximum natural literal width
+of 28 bits. The precision pair has 15,193,271,380 and 14,619,300,774 nodes.
+The other three solver pairs have equal expanded counts. This is purely a
+syntactic recurrence: it performs no reductions or let substitution, and
+imported declarations remain leaves. The large counts are not executed kernel
+steps, physical allocation, serialized bytes or a proposed execution budget.
+Final window artifact hashes match the preceding audit's retained capture;
+these are final hashes, not per-arm captures.
+
+Neither traversal attributes the historical 61,672-byte private-file difference
+to individual certificates: payloads, local declarations, removed queries and
+serialization references all change. Both audits' source and artifacts differ
+from the timed source above; they supply no new timing comparison.
 
 The median paired change is calculated from adjacent differences and need
 not equal the difference of the two marginal medians. The first further-root
