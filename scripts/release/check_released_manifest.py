@@ -18,6 +18,8 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from libgraph import load_libraries, reachable_dependencies  # noqa: E402
 from release.sync_released import (  # noqa: E402
     MANIFEST,
+    external_pins,
+    render_lakefile,
     SKELETON,
     keep_paths,
     lake_declaration,
@@ -550,6 +552,12 @@ def main() -> int:
             library_names.add(lib)
             check_build_settings(entry)
             check_precompile_justified(entry)
+            # The mirror's Lake file is generated at sync time; render it now so
+            # an entry that cannot be expressed fails here, not mid-release.
+            try:
+                render_lakefile(entry, entries, "v0.0.0", {}, external_pins())
+            except RuntimeError as exc:
+                fail(f"{repo}: cannot generate its Lake file: {exc}")
             helpers = entry.get("lake_declarations", [])
             if (not isinstance(helpers, list)
                     or not all(isinstance(name, str) for name in helpers)

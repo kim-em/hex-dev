@@ -177,23 +177,24 @@ copy:
 The first two lines are the product; a mirror receives them and nothing else,
 plus the library's README. The rest are development instruments: they build in
 this monorepo's shared root Lake graph, run in this monorepo's CI, and are
-never published. A mirror is therefore a single root Lake project, whose
-skeleton `scripts/release/BOOTSTRAP.md` documents; the sync manages source and
-rewrites the lockfile but deliberately leaves that skeleton intact. The
-mirrors' CI workflows are managed centrally in
+never published. A mirror is therefore a single root Lake project whose Lake
+file the sync generates on every publish (see *The generated Lake file* below);
+`scripts/release/BOOTSTRAP.md` documents the few files a new mirror starts
+with. The mirrors' CI workflows are managed centrally in
 `scripts/release/released-ci.yml` and published by the same guarded sync.
 
 "Nothing else" is computed, not listed. `allowed_paths` in `sync_released.py`
 derives what each mirror may contain from its manifest entry — the managed
-paths, the workflows `released-ci.yml` declares for it, and the skeleton the
-sync does not author — and `prune_unmanaged` deletes the rest of the clone
+paths, the workflows `released-ci.yml` declares for it, and the generated Lake
+file and the few skeleton files the sync does not author — and `prune_unmanaged` deletes the rest of the clone
 before anything is copied in, so a library admitted to the manifest inherits
 the policy without a cleanup list of its own. Nothing else under `.github/`
 survives, so a mirror cannot accumulate a workflow beside its build-only
 one, and a mirror carries neither a `reports/` tree nor `.claude/` notes beyond
 the figures its entry names. The `pins_only` aggregate is exempt, since its
 umbrella module, lakefile and documentation tree live only in the released
-repository. `keep_paths` is the
+repository, though its lakefile and umbrella module are generated too.
+`keep_paths` is the
 escape hatch for a mirror-local file outside both sets; one entry uses it, for
 `hex-test-kit`'s fixed `HexTestKit.lean` umbrella. Because it can only
 preserve, a forgotten entry appears as a deletion in the dry run instead of as
@@ -232,36 +233,40 @@ does not build reports it directly, on the commit that caused it. That CI builds
 each mirror as a root package, which cannot show what a downstream user meets;
 the consumer check covers that, before anything is pushed.
 
-Rewriting the cross-repo revisions touches **every** lakefile and
-`lake-manifest.json` in a repo, updating both `rev` and `inputRev`. Lake
-trusts the manifest, so a stale lockfile would otherwise rebuild against
-the old revision. A published dependency that the mirror's lockfile has
-never seen (a library split out upstream, or a companion that gained a
-requirement) is appended as a new lockfile entry at its synced revision,
-since Lake otherwise refuses to build with "dependency X of Y not in
-manifest". A published library that the sources import directly but the
-mirror's Lake file never required is added as a direct `require` at its
-synced revision, since otherwise the mirror builds only while some other
-dependency happens to pull that library in (hex-bareiss lost `HexArith`
-this way when it was split out). The sync also refuses, before pushing
-anything, to publish a library whose sources import `Batteries` or
-`Mathlib` when the mirror's Lake file requires no package providing them:
-inside the monorepo those imports always resolve, in a mirror they resolve
-only through its own `require`s.
+### The generated Lake file
 
-How a library is *built* is decided by this monorepo's `lakefile.lean` and
-carried across the same way. The sync reads the `lean_lib <lib>` block here and
-writes `precompileModules` into the mirror's own `lean_lib` when the mirror has
-lost it: without it Lake never builds the module dynlib that carries the
-library's `@[extern]` symbols, so the mirror compiles while any downstream
-package that evaluates the library during elaboration fails to find the native
-implementation. `extraDepTargets` and `moreLinkArgs` are validated rather than
-written, since they name `extern_lib` targets defined only in the mirror's own
-skeleton and, in `HexLLL`'s case, take the form of a platform conditional that
-no `lakefile.toml` can express; a mirror missing one stops the publication.
-Deriving all of this from the lakefile rather than restating it in
-`released.yml` is deliberate: a hand-maintained copy of a build decision is one
-that can disagree with the build.
+Each mirror's Lake file is rendered by `render_lakefile` in `sync_released.py`
+on every publish, from `released.yml` and this monorepo's `lakefile.lean`;
+nothing in it is maintained by hand. It contains:
+
+- the package, with native Verso docstrings enabled;
+- a `require` at the shared release version for every published library the
+  library depends on (per `libraries.yml`) or its sources import directly, and
+  one for Mathlib, Batteries or Tau Ceti when the sources import them, at this
+  monorepo's locked inputs;
+- the library's `lean_lib` with this monorepo's build settings
+  (`precompileModules`, link objects and arguments), and any declarations the
+  entry lists under `lake_declarations` (native targets, and carrier libraries
+  such as `HexArithNative`), copied verbatim;
+- a `lean_lib` for any library shipped through `extra_paths`, and the
+  `<Lib>Tests`, `<Lib>Modules` and executable targets for the entry's
+  `test_modules`, `build_modules` and `executables`.
+
+The `hex` aggregate's lakefile requires every `aggregate:` library, and its
+`Hex.lean` imports each of them, so a newly published library reaches the
+aggregate in the same publish. The format (TOML or Lean) follows the entry's
+`lakefile` field, because downstream lockfiles record which file to read; an
+entry whose build settings only Lean can express must use `lakefile: lean`, and
+`check_released_manifest.py` renders every entry to catch that before a
+release. How a library is built is therefore decided in one place, this
+monorepo's `lakefile.lean`, and a mirror cannot keep a stale target, lose a
+setting, or miss a dependency.
+
+The lockfile is rewritten, not generated: Hex packages move to the release tag
+and its exact commit, external packages to this monorepo's locked revisions, a
+published dependency the lockfile has never seen is appended, and each
+package's `inherited` flag follows whether the generated Lake file requires it
+directly.
 
 ### The Lake cache
 
@@ -337,8 +342,8 @@ routes that repository's clone and push through that token, so a new library
 goes on whichever token has room. Publishing one takes three steps in this
 order:
 
-1. create the repository under `leanprover`, give it the un-managed Lake
-   skeleton, and add its managed CI workflow in hex-dev
+1. create the repository under `leanprover` with the starting files
+   `scripts/release/BOOTSTRAP.md` lists, and add its managed CI workflow in hex-dev
    (`scripts/release/BOOTSTRAP.md`); the sync clones but never creates;
 2. add that repository to the selected repositories of a token with room,
    with `Contents: Read and write` and `Workflows: Read and write`, and have an

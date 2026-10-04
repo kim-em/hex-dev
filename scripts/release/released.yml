@@ -3,11 +3,11 @@
 # `hex-dev` is the source of truth. The sync (scripts/release/sync_released.py,
 # driven by .github/workflows/sync-released.yml) regenerates each released repo
 # from this monorepo: it deletes everything outside the repo's *managed* paths
-# and its unmanaged skeleton, overwrites the managed paths from here, enables
-# native Verso docstrings in each managed-source repo's lakefile, copies the
-# monorepo's Lean toolchain, synchronizes exact external dependency locks,
-# rewrites cross-repo Hex requirements to the shared release version, commits
-# to the released repo's `main`, and tags that commit. The lockfiles retain the
+# and its unmanaged skeleton, overwrites the managed paths from here, generates
+# the repo's Lake file (PLAN/Releases.md §The generated Lake file), copies the
+# monorepo's Lean toolchain, rewrites the lockfile to the shared release version
+# and the exact external dependency locks, commits to the released repo's
+# `main`, and tags that commit. The lockfiles retain the
 # exact commits resolved by those tags.
 #
 # A released repo ships the library and nothing else: its Lean source, umbrella,
@@ -18,9 +18,9 @@
 #
 # That is a property of the driver, not of this file. `allowed_paths` in
 # sync_released.py computes what a mirror may contain -- the entry's managed
-# paths, the managed .github/workflows/ci.yml, and the skeleton the sync does
-# not author (root Lake files, lake-manifest.json, lean-toolchain, LICENSE,
-# .gitignore, AGENTS.md) -- and `prune_unmanaged` deletes the rest. A new entry
+# paths, the managed .github/workflows/ci.yml, the generated root Lake file, and
+# the skeleton the sync does not author (lake-manifest.json, lean-toolchain,
+# LICENSE, .gitignore, AGENTS.md) -- and `prune_unmanaged` deletes the rest. A new entry
 # therefore inherits the whole policy, and there is nothing per-entry to
 # remember. Nothing else under .github/ survives, so a mirror cannot accumulate
 # a second workflow beside its build-only one; nor do `reports/` or `.claude/`,
@@ -49,31 +49,27 @@
 # the library and nothing else, and the driver applies the same divergence guard
 # as every other managed path.
 # `test_modules` lists verification-only modules copied with the source but
-# intentionally absent from the public umbrella; the sync maintains their
-# non-public `<Lib>Tests` target and released CI builds it.
+# intentionally absent from the public umbrella; the generated Lake file builds
+# them in a non-public `<Lib>Tests` target, and released CI builds it.
 # `keep_paths` is the escape hatch out of that sweep: explicit relative paths a
 # mirror owns that are neither managed nor part of the common skeleton. One
 # entry uses it, for `hex-test-kit`'s fixed `HexTestKit.lean` umbrella. It can
 # only preserve, so a forgotten entry surfaces as a deletion in the dry run, not
 # as an over-published mirror; it may not name a development instrument.
-# `build_modules` lists complete development umbrellas that the released Lake
-# skeleton must build separately from the curated public umbrella.
-# `executables` maps an unmanaged released executable name to its mathematical
-# root module. The sync refuses to publish when the skeleton is stale.
-# `lake_declarations` lists named build declarations copied from the monorepo
-# Lake file into the corresponding declarations in a Lean mirror skeleton. It
-# can migrate a package-wide `extern_lib` to a library-scoped custom `target`,
-# and appends a declaration the mirror lacks (such as a native carrier
-# `lean_lib`).
-# `pins` lists the upstream repos whose git rev is rewritten in this repo's root
-# lakefile (matched by their github URL); `lakefile` is that file's format.
+# `build_modules` lists complete development umbrellas the generated Lake file
+# builds (as `<Lib>Modules`) separately from the curated public umbrella.
+# `executables` maps a released executable name to its mathematical root module.
+# `lake_declarations` names declarations in this monorepo's lakefile.lean (native
+# targets, their helper defs, carrier `lean_lib`s) that the generated Lean Lake
+# file copies verbatim. `lean_lib_name` and `globs` describe a library whose Lake
+# name and module set differ from `lib` (only hex-test-kit).
+# `pins` lists the upstream repos whose revisions the lockfile records;
+# `lakefile` is the generated file's format, which must be `lean` when the
+# library's build settings or declarations need Lean.
 # The mirror's `lean_lib` build settings are deliberately *not* recorded here:
 # this monorepo's `lakefile.lean` is the source of truth for how a library is
-# built, so the sync reads the `lean_lib <lib>` block and carries the settings
-# across itself, writing `precompileModules` and Lean `moreLinkObjs` into the
-# mirror when they are missing and refusing to publish when a setting it cannot
-# synthesize has gone. A second copy of a build decision in this manifest only
-# gives it somewhere to drift.
+# built, and the generated Lake file copies them. A second copy of a build
+# decision in this manifest only gives it somewhere to drift.
 # `announcements` maps a venue (`blog`, `zulip`, `linkedin`) to the https URL
 # where this library was announced; it renders as one line per library in the
 # aggregate README's Announcements section. Deliberately not a table column:
@@ -85,8 +81,8 @@
 # `*-mathlib` companions need none, they occupy the table's third column.
 #
 # A `pins_only: true` entry (the leanprover/hex aggregate) manages no library
-# source from the monorepo: its umbrella lakefile and umbrella .lean live only
-# in the released repo, and the sync re-pins it to the SHAs published this run.
+# source from the monorepo; the sync generates its lakefile and `Hex.lean` from
+# the `aggregate:` entries above, at the version published this run.
 # Its `readme_template` is rendered by scripts/release/aggregate_readme.py and
 # published as the repo's README.md. Such an entry is listed last so every
 # upstream it pins is already synced.
@@ -523,9 +519,9 @@ repos:
   # `HexGraph` supplies dense and sparse graph representations with no SPEC surface of its
   # own, and `hex-graph-iso` is its only consumer, so it rides into this
   # repository through `extra_paths` rather than becoming a repository, a CI
-  # workflow, a token slot and an aggregate-README row of its own. The released
-  # skeleton declares `lean_lib HexGraph` beside `lean_lib HexGraphIso`,
-  # mirroring the monorepo lakefile. A second consumer of `HexGraph` is the
+  # workflow, a token slot and an aggregate-README row of its own. The generated
+  # Lake file declares `lean_lib HexGraph` beside `lean_lib HexGraphIso`,
+  # as the monorepo lakefile does. A second consumer of `HexGraph` is the
   # trigger to promote it to `leanprover/hex-graph`; the source must not be
   # duplicated across two mirrors.
   #
@@ -631,9 +627,9 @@ repos:
     pins: [hex-basic, hex-arith, hex-mv-poly, hex-mv-poly-mathlib, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-hensel, hex-poly-z-mathlib, hex-real-roots, hex-real-roots-mathlib, hex-matrix, hex-matrix-mathlib]
     lakefile: toml
 
-  # Aggregate: re-pinned only, never regenerated from managed source (its
-  # umbrella lakefile.toml and HexAll.lean live only in the released repo).
-  # Its README is the one managed artifact: rendered from `readme_template`
+  # Aggregate: no managed source. Its lakefile.toml and Hex.lean are generated
+  # from the `aggregate:` entries above, and its README is rendered from
+  # `readme_template`
   # with the library table generated from the `component:` labels above, so
   # releasing a new library updates it without a hand edit. Listed last so
   # every pin resolves to a commit synced this run.

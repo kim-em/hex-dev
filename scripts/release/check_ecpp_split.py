@@ -28,8 +28,9 @@ def main():
     if args.directory.exists() or args.output.exists():
         parser.error("use fresh paths; preserve previous evidence")
     args.directory.mkdir(parents=True)
-    entries = {e["lib"]: e for e in yaml.safe_load(sync.MANIFEST.read_text())["repos"]
-               if e.get("lib") in LIBRARIES}
+    all_entries = yaml.safe_load(sync.MANIFEST.read_text())["repos"]
+    entries = {e["lib"]: e for e in all_entries if e.get("lib") in LIBRARIES}
+    pins = sync.external_pins()
     skeleton_heads = {}
     for lib, deps in LIBRARIES.items():
         dest = args.directory / lib
@@ -37,11 +38,10 @@ def main():
                         f"https://github.com/{entries[lib]['repo']}.git", str(dest)], check=True)
         skeleton_heads[lib] = subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=dest, text=True).strip()
-        # Apply the actual publication transformations to real unmanaged skeletons.
+        # Apply the actual publication transformations, including the generated
+        # Lake file, to the published repositories.
         sync.apply_paths(entries[lib], dest)
-        sync.rewrite_lib_settings(entries[lib], dest)
-        sync.rewrite_lake_declarations(entries[lib], dest)
-        sync.rewrite_doc_verso(dest)
+        sync.write_lakefile(entries[lib], dest, all_entries, "v0.0.0", {}, pins)
         sync.rewrite_toolchains(dest)
         lakefile = dest / f"lakefile.{entries[lib]['lakefile']}"
         if deps:
@@ -49,11 +49,11 @@ def main():
             pattern = r'(?ms)^\[\[require\]\]\s*\n(?P<body>.*?)(?=^\[|\Z)'
             def local_requirement(match):
                 name = re.search(r'^name\s*=\s*"([^"\n]+)"', match['body'], re.M)[1]
-                if name not in deps:
+                if name not in LIBRARIES:
                     raise RuntimeError(f"unexpected dependency {name} in {lib}")
                 return f'[[require]]\nname = "{name}"\npath = "../{name}"\n\n'
             text, count = re.subn(pattern, local_requirement, text)
-            if count != len(deps):
+            if count < len(deps):
                 raise RuntimeError(f"missing direct requirement in {lib}")
             lakefile.write_text(text)
         (dest / "lake-manifest.json").unlink(missing_ok=True)
@@ -79,8 +79,8 @@ def main():
                   command=command, cwd=str(client), returncode=result.returncode,
                   stdout=result.stdout, stderr=result.stderr, source_hashes=sources,
                   mathlib_directories=forbidden, skeleton_heads=skeleton_heads,
-                  contract="Actual published unmanaged skeletons and sync transformations, coordinated next-release sources, local paths for exact staged "
-                           "prerequisites. Full sync validators and version-pin/lockfile rewrites are covered by the guarded workflow dry run; this scratch build applies source/settings/toolchain transforms and replaces requires with exact staged local paths. A fresh client uses the README verbatim. Lake "
+                  contract="Actual published repositories and sync transformations, coordinated next-release sources, local paths for exact staged "
+                           "prerequisites. Full sync validators and version-pin/lockfile rewrites are covered by the guarded workflow dry run; this scratch build applies the source, generated Lake file and toolchain transforms and replaces requires with exact staged local paths. A fresh client uses the README verbatim. Lake "
                            "generates all lockfiles. No development project cache is reused.")
     args.output.write_text(json.dumps(record, indent=2) + "\n")
     if result.returncode or forbidden:
