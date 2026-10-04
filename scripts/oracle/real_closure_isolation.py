@@ -2,8 +2,8 @@
 """Exact Z3 oracle for capped isolation, root assembly and native collection.
 
 Checks the actual inputs, scalar-preserving deflation, retained cell counts,
-selected roots, exact deflated Yun heads, completeness and absence of duplicates. Proof graphs and
-producer totality are not replayed by this oracle.
+selected roots, exact deflated Yun heads, completeness and absence of duplicates.
+Proof graphs and producer totality are not replayed by this oracle.
 """
 from __future__ import annotations
 import json
@@ -94,6 +94,11 @@ def squarefree_factors(rcf, p):
         for _ in range(label):
             product = multiply(rcf, product, factor)
     require(product == monic(p), "oracle squarefree decomposition lost a factor")
+    require(all(rcf.squarefree(factor) for factor in factors.values()),
+            "oracle decomposition factor is not squarefree")
+    ordered = list(factors.values())
+    require(all(len(gcd(rcf, a, b)) == 1 for i, a in enumerate(ordered) for b in ordered[i+1:]),
+            "oracle decomposition factors are not coprime")
     return factors
 
 

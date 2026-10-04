@@ -550,7 +550,7 @@ factor. The independent Z3 oracle checks complete ordered root sets and
 original multiplicities. It independently decomposes the input over Z3's
 exact real-closed field and identifies every selected head with its labelled
 monic Yun factor after zero extraction and coefficient-point deflation,
-including factors with no real roots. Rational decomposition cases also agree
+including any nonreal factors of that labelled factor. Rational decomposition cases also agree
 with FLINT's independent squarefree factorization. The oracle checks whole-line
 endpoints, the first accepted Cauchy bound and its fallback, and the permitted
 point and subdivision behavior. Mutations reject extra complex factors,

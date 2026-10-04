@@ -193,6 +193,10 @@ class IsolationTests(unittest.TestCase):
             root["head"] = [[[2*n, d] for n, d in coefficient] for coefficient in root["head"]]
         self.rejects(mutate, "deflated Yun factor")
 
+    def test_selected_head_retains_removed_coefficient_point(self):
+        self.rejects(lambda rows: rows[18]["output"]["entries"][1]["root"].update(
+            head=[[3, 2], [-5, 2], [1, 1]]), "deflated Yun factor")
+
     def test_nested_assembly_missing_root(self):
         self.rejects(lambda rows: rows[17]["output"]["entries"].pop(),
                      "nested assembly roots missing or duplicated")
@@ -356,18 +360,17 @@ class IsolationTests(unittest.TestCase):
         self.rejects(lambda rows: rows[20]["signs"].__setitem__(7, 1),
                      "nested stored signs changed")
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class SquarefreeOracleTests(unittest.TestCase):
     def test_rational_factors_agree_with_independent_flint(self):
-        from flint import fmpq_poly
+        from flint import fmpq, fmpq_poly
         rcf = RCF({"id": 10377, "levels": ["epsilon1"],
                    "order": "each-new-level-smaller-than-positive-base-elements"})
         x, a, b = fmpq_poly([0, 1]), fmpq_poly([-1, 1]), fmpq_poly([1, 0, 1])
+        rows = [parse_record(line) for line in FIXTURE.read_text().splitlines()]
+        fixture_inputs = [fmpq_poly([fmpq(n, d) for n, d in rows[index]["head"]])
+                          for index in (11, 12, 13, 14, 15, 18)]
         for p in (fmpq_poly([5]), -5*x**6, 3*a*b, -3*x**2*a**5*b**3,
-                  fmpq_poly([3, -5, 2])**2):
+                  fmpq_poly([3, -5, 2])**2, *fixture_inputs):
             with self.subTest(polynomial=str(p)):
                 coefficients = [rcf.api.RCFNum(str(c), rcf.context) for c in p.coeffs()]
                 _, expected = p.factor_squarefree()
@@ -375,3 +378,6 @@ class SquarefreeOracleTests(unittest.TestCase):
                                    for c in factor.coeffs()] for factor, label in expected}
                 self.assertEqual(squarefree_factors(rcf, coefficients), factors)
 
+
+if __name__ == "__main__":
+    unittest.main()

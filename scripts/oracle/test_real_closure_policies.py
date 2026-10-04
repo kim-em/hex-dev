@@ -108,10 +108,10 @@ class PolicyTests(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, "deflated Yun factor"):
             verify(rows)
 
-    def test_infinitesimal_head_missing_same_label_root(self):
+    def test_bounded_head_missing_same_label_root(self):
         rows = copy.deepcopy(self.rows)
-        root = rows[31]["result"]["output"]["entries"][0]["root"]
-        root.update(head=[{"num": [[0, 1], [-1, 1]], "den": [[1, 1]]},
-                          {"num": [[1, 1]], "den": [[1, 1]]}], indices=[1], signs=[1])
+        root = rows[17]["result"]["output"]["entries"][0]["root"]
+        root.update(head=[[-1, 1], [1, 1]], indices=[], signs=[])
+        verify_shape(rows[17]["result"], rows[17]["policy"], "cut point")
         with self.assertRaisesRegex(AssertionError, "deflated Yun factor"):
             verify(rows)
