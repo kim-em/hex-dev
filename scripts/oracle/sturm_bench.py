@@ -25,15 +25,40 @@ QUERIES = {"count": [1], "mixed": [0, 1], "negative": [-1, 1], "common": HEAD}
 EXPECTED = {"count": 8, "mixed": 0, "negative": -8, "common": 0}
 
 
+DEGREES = (4, 8, 16, 32, 64)
+
+
+def validate_degree(degree):
+    if type(degree) is not int or degree not in DEGREES:
+        raise ValueError("degree must be one of 4, 8, 16, 32, 64")
+    return degree
+
+
+def coefficients(degree):
+    validate_degree(degree)
+    previous, current = [1], [0, 1]
+    for _ in range(degree):
+        nxt = [0] * (len(current) + 1)
+        for i, c in enumerate(current):
+            nxt[i + 1] += 2 * c
+        for i, c in enumerate(previous):
+            nxt[i] -= c
+        previous, current = current, nxt
+    return previous
+
+
 class Flint:
-    def __init__(self):
+    def __init__(self, degree=8):
         from scripts.oracle.real_algebraic_qqbar import QQBar
         if version("python-flint") != "0.9.0":
             raise RuntimeError("requires python-flint 0.9.0 / FLINT 3.6.0")
+        self.degree = degree
+        head = coefficients(degree)
+        queries = {**QUERIES, "common": head}
         self.oracle = QQBar()
         o = self.oracle
-        self.head = [o.number(c, o.integer) for c in HEAD]
-        self.queries = {name: [o.number(c) for c in cs] for name, cs in QUERIES.items()}
+        self.head = [o.number(c, o.integer) for c in head]
+        self.queries = {name: [o.number(c) for c in cs] for name, cs in queries.items()}
         self.zero, self.lower, self.upper = [o.number(c) for c in [0, -2, 2]]
 
     def evaluate(self, coefficients, root):
@@ -48,8 +73,8 @@ class Flint:
         checkpoint = len(o.owned)
         try:
             roots = o.roots(self.head, integer=True)
-            if len(roots) != 8 or any(m != 1 for _, m in roots):
-                raise ArithmeticError("T_8 must have eight distinct real roots")
+            if len(roots) != self.degree or any(m != 1 for _, m in roots):
+                raise ArithmeticError(f"T_{self.degree} must have {self.degree} distinct real roots")
             return sum(o.compare(self.evaluate(self.queries[name], root), self.zero)
                        for root, _ in roots
                        if o.compare(self.lower, root) < 0 and o.compare(root, self.upper) < 0)
@@ -64,15 +89,18 @@ class Flint:
 
 
 class Z3:
-    def __init__(self):
+    def __init__(self, degree=8):
         import z3
         from z3 import z3rcf
         if version("z3-solver") != "4.15.4.0" or z3.get_version() != (4, 15, 4, 0):
             raise RuntimeError("requires z3-solver 4.15.4.0")
+        self.degree = degree
+        head = coefficients(degree)
+        queries = {**QUERIES, "common": head}
         self.context, self.api = z3.Context(), z3rcf
-        self.head = [z3rcf.RCFNum(c, self.context) for c in HEAD]
+        self.head = [z3rcf.RCFNum(c, self.context) for c in head]
         self.queries = {name: [z3rcf.RCFNum(c, self.context) for c in cs]
-                        for name, cs in QUERIES.items()}
+                        for name, cs in queries.items()}
         self.zero = z3rcf.RCFNum(0, self.context)
         self.lower, self.upper = [z3rcf.RCFNum(c, self.context) for c in [-2, 2]]
 
@@ -84,8 +112,8 @@ class Z3:
 
     def query(self, name):
         roots = sorted(self.api.MkRoots(self.head, self.context))
-        if len(roots) != 8 or not all(x < y for x, y in zip(roots, roots[1:])):
-            raise ArithmeticError("T_8 must have eight distinct real roots")
+        if len(roots) != self.degree or not all(x < y for x, y in zip(roots, roots[1:])):
+            raise ArithmeticError(f"T_{self.degree} must have {self.degree} distinct real roots")
         values = [self.evaluate(self.queries[name], root)
                   for root in roots if self.lower < root < self.upper]
         return sum(1 if value > 0 else -1 if value < 0 else 0 for value in values)
@@ -115,7 +143,8 @@ def main():
                   flush=True)
             raise SystemExit(1)
         print(output[-1000:], file=sys.stderr, end="")
-    endpoint = Flint() if args.tool == "flint" else Z3()
+    factory = Flint if args.tool == "flint" else Z3
+    endpoints = {8: factory()}
     try:
         for line in sys.stdin:
             try:
@@ -126,13 +155,21 @@ def main():
                 control = request.get("control", False)
                 if type(control) is not bool:
                     raise TypeError("control must be a JSON Boolean")
-                value = EXPECTED[name] if control else endpoint.query(name)
+                degree = request.get("degree", 8)
+                validate_degree(degree)  # validate also the protocol-only path
+                if control:
+                    value = degree if name == "count" else -degree if name == "negative" else 0
+                else:
+                    if degree not in endpoints:
+                        endpoints[degree] = factory(degree)
+                    value = endpoints[degree].query(name)
                 reply = {"ok": True, "result": value}
             except (KeyError, ValueError, ArithmeticError, TypeError) as error:
                 reply = {"ok": False, "error": str(error)}
             print(json.dumps(reply), flush=True)
     finally:
-        endpoint.close()
+        for endpoint in endpoints.values():
+            endpoint.close()
 
 
 if __name__ == "__main__":
