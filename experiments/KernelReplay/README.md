@@ -10,12 +10,15 @@ that searches for signs.
 
 The proof assembler disables error-to-`sorry` recovery, requires closed inputs
 and proofs, and audits their transitive axioms. Only `propext`, `Classical.choice`
-and `Quot.sound` are allowed. Unexpected kernel errors, resource exhaustion and unrelated elaboration errors
-fail the command. Only a declaration type mismatch permits trying the other
-Boolean result. `unproved` means neither equality was assembled; it is not a
+and `Quot.sound` are allowed. Unexpected kernel errors, resource exhaustion
+and unrelated elaboration errors fail the command. Only a declaration type
+mismatch permits trying the other Boolean result. `unproved` means neither equality was assembled; it is not a
 proof that the checker returns `false`. The probe also requires a missing-fact
 application on the demanded projection or pattern-match path, without searching
 unapplied lambda bodies. An unrelated blocking definition fails the control.
+Committed negative controls require hard errors for an unrelated opaque Boolean, an incomplete
+proof and a deterministic kernel timeout. Axiom output for the missing-fact
+lemmas is checked against the three permitted axioms.
 
 The controls include complete and missing scalar evidence, a false scalar claim,
 the actual two-entry graph, a false unused entry, and a false endpoint sign.
@@ -44,13 +47,19 @@ python3 experiments/KernelReplay/run.py /tmp/kernel-replay-results
 The wrapper parses supplied bytes with the existing integer-only JSON parser and
 quotes the parsed record as a constructor expression. The kernel checks proofs
 about that exact expression. `bytes-equal` additionally proves equality with the
-encoded fixture. `bytes-bound` proves that equality before using the fixture's
-proved decoder equation; it is deliberately restricted to this test record.
+encoded fixture. `bytes-bound` proves that equality and requires the simplifier
+to use both the binding and the fixture's proved decoder equation. Complete and
+incomplete records exercise this requirement; it is deliberately restricted to
+this test record.
 These checks do not prove the native parser implementation correct. Altered
 count and context fields can be tested with `bytes PATH full false`. The harness
 also proves that the altered count passes decoding before replay rejects it.
 An altered record supplied to `bytes-bound` fails the equality requirement
-outright, even when the expected replay outcome is `unproved`.
+outright, even when the expected replay outcome is `unproved`. The harness
+requires the binding-failure diagnostic and forbids a proved-binding or
+`unproved` result in that control. It pins the fixture's byte size and digest,
+retains every control's output, and imposes a 180-second operational timeout
+per process.
 
 The executable uses Lean's unsafe initializer-enabling API to load elaborator
 extensions. This is not part of the arithmetic or proof acceptance boundary.

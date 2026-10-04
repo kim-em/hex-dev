@@ -182,7 +182,17 @@ theorem endpoint_missing :
   · decide +kernel
   · decide +kernel
 
+/--
+info: 'Hex.RealClosure.Algebraic.KernelReplayProofProbe.scalar_missing' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms scalar_missing
+/--
+info: 'Hex.RealClosure.Algebraic.KernelReplayProofProbe.endpoint_missing' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms endpoint_missing
 
 open Lean Meta Elab Command
@@ -221,11 +231,15 @@ private partial def missingRedex (expression : Expr) : MetaM (Option Expr) :=
         if let some matcher ← getMatcherInfo? name then
           for index in matcher.getDiscrRange do
             if let some discr := args[index]? then
-              if let some missing ← missingRedex discr then return some missing
+              let discr ← withTransparency .all (whnf discr)
+              unless discr.isLit || (← isConstructorApp discr) do
+                return ← missingRedex discr
         if #[``Nat.add, ``Nat.sub, ``Nat.mul, ``Nat.div, ``Nat.mod, ``Nat.pow,
             ``Nat.gcd, ``Nat.beq, ``Nat.ble].contains name then
           for arg in args do
-            if let some missing ← missingRedex arg then return some missing
+            let arg ← withTransparency .all (whnf arg)
+            unless arg.isLit || (← isConstructorApp arg) do
+              return ← missingRedex arg
       return none
     | _ => return none
 
@@ -240,11 +254,26 @@ elab_rules : command
     let started ← IO.monoNanosNow
     let mut rules : SimpTheorems := {}
     if let some literal := literal then
-      let proofSyntax ← `(show $literal = graphJson from by decide +kernel)
-      let proof ← Term.withoutErrToSorry (Term.elabTerm proofSyntax none)
+      let input ← Term.withoutErrToSorry (Term.elabTermEnsuringType literal (mkConst ``Codec.Json))
       Term.synthesizeSyntheticMVarsNoPostponing
-      let proof ← instantiateMVars proof
-      let type ← inferType proof
+      let input ← instantiateMVars input
+      if input.hasSorry || input.hasMVar then throwError "incomplete binding input"
+      let type ← mkEq input (mkConst ``graphJson)
+      let decisionInstance ← synthInstance (mkApp (mkConst ``Decidable) type)
+      let decision := mkAppN (mkConst ``decide) #[type, decisionInstance]
+      let comparison ← mkEq decision (mkConst ``Bool.true)
+      let refl ← mkEqRefl (mkConst ``Bool.true)
+      let options := (← getOptions).setBool `debug.skipKernelTC false
+      match (← getEnv).toKernelEnv.addDecl options
+          (.thmDecl {
+            name := `__kernelReplayBindingDecision
+            levelParams := []
+            type := comparison
+            value := refl }) with
+      | .error (.declTypeMismatch _ _ _) => throwError "literal input binding failed"
+      | .error exception => throwKernelException exception
+      | .ok _ => pure ()
+      let proof := mkAppN (mkConst ``of_decide_eq_true) #[type, decisionInstance, refl]
       let _ ← auditProof proof type
       kernelCheck `__kernelReplayBinding type proof
       rules ← rules.add (.stx `__inputBinding literal.raw) #[] proof
@@ -264,7 +293,13 @@ elab_rules : command
     rules ← rules.addConst ``iff_self
     let context ← Simp.mkContext (simpTheorems := #[rules])
       (congrTheorems := ← getSimpCongrTheorems)
-    let (simplified, _) ← Meta.simp expression context
+    let (simplified, stats) ← Meta.simp expression context
+    if literal.isSome then
+      let used := stats.usedTheorems.toArray.map (·.key)
+      unless used.contains `__inputBinding &&
+          (used.contains ``graph_read_full || used.contains ``graph_read_missing) do
+        throwError "binding or certified decoder rewrite was not used"
+      logInfo "inputBinding=used decoderEquation=used"
     let equation ← simplified.getProof' expression
     let equationType ← mkEq expression simplified.expr
     let _ ← auditProof equation equationType
@@ -307,6 +342,27 @@ elab_rules : command
     unless outcome == expected.getString do throwError "unexpected result {outcome}"
 
 end
+
+/-- An unrelated opaque boundary must never be classified as missing evidence. -/
+opaque otherStuck : Bool := true
+
+/-- error: unproved result without a demanded missing-fact boundary: otherStuck -/
+#guard_msgs (error, drop info) in
+#proof_probe otherStuck expecting "unproved"
+
+/-- error: incomplete proof -/
+#guard_msgs (error, drop info) in
+run_elab do
+  let value ← mkFreshExprMVar (mkConst ``Bool)
+  let _ ← auditProof value (mkConst ``Bool)
+
+/-- error: (kernel) deterministic timeout -/
+#guard_msgs (error, drop info) in
+run_elab do
+  let type ← mkEq (mkConst ``completeGraph) (mkConst ``Bool.true)
+  let proof ← mkEqRefl (mkConst ``Bool.true)
+  withOptions (fun options => maxHeartbeats.set options 1) do
+    kernelCheck `__kernelReplayTimeout type proof
 
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 1000000 in
