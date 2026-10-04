@@ -188,6 +188,58 @@ class Observations(unittest.TestCase):
 
 
 class LakefileTransitions(unittest.TestCase):
+    BASELINE = "a" * 40
+    ENDPOINT = "b" * 40
+    CURRENT = "c" * 40
+    APPROVED = BASE.replace('hexArithOTarget := "cc"', 'hexArithOTarget := "clang"')
+
+    def checked_transition(self, after, *, exemption=None, missing=False,
+                           before_mode="100644", after_mode="100644"):
+        blobs = {self.BASELINE: BASE, self.CURRENT: after}
+        if not missing:
+            blobs[self.ENDPOINT] = self.APPROVED
+
+        def read_blob(*args):
+            self.assertEqual(args[:2], ("cat-file", "blob"))
+            if args[2] not in blobs:
+                raise SystemExit("missing blob")
+            return blobs[args[2]]
+
+        exemptions = {exemption or ("lakefile.lean", self.BASELINE, self.ENDPOINT)}
+        with patch.object(freshness, "git", side_effect=read_blob), \
+                patch.object(freshness, "load_exemptions", return_value=exemptions):
+            return guard.build_only_lakefile_edit(freshness.Difference(
+                "lakefile.lean", self.BASELINE, self.CURRENT, before_mode, after_mode))
+
+    def test_reviewed_transition_survives_unrelated_proof_targets(self):
+        after = self.APPROVED + '\nlean_lib HexProof where\n  srcDir := "adapters"\n'
+        self.assertTrue(guard.lakefile_texts_differ(BASE, after))
+        self.assertTrue(self.checked_transition(after))
+
+    def test_reviewed_transition_does_not_cover_later_runtime_changes(self):
+        for after in (
+                self.APPROVED.replace('`HexBench.FactorService', '`HexBench.Other'),
+                self.APPROVED.replace('hexArithOTarget := "clang"',
+                                      'hexArithOTarget := "clang -O0"'),
+                self.APPROVED.replace('`autoImplicit, false', '`autoImplicit, true')):
+            with self.subTest(after=after):
+                self.assertFalse(self.checked_transition(after))
+
+    def test_reviewed_transition_requires_the_same_baseline_and_path(self):
+        for exemption in (("lakefile.lean", "d" * 40, self.ENDPOINT),
+                          ("other.lean", self.BASELINE, self.ENDPOINT),
+                          ("lakefile.lean", self.BASELINE, None)):
+            with self.subTest(exemption=exemption):
+                self.assertFalse(self.checked_transition(self.APPROVED, exemption=exemption))
+
+    def test_reviewed_transition_requires_available_endpoint(self):
+        self.assertFalse(self.checked_transition(self.APPROVED, missing=True))
+
+    def test_file_mode_changes_are_not_build_only_edits(self):
+        for after in (BASE, self.APPROVED):
+            with self.subTest(after=after):
+                self.assertFalse(self.checked_transition(after, after_mode="120000"))
+
     def test_an_added_or_removed_lakefile_is_a_runtime_change(self):
         self.assertFalse(guard.build_only_lakefile_edit(
             guard.freshness.Difference("lakefile.lean", None, "a" * 40)))

@@ -14,7 +14,9 @@ graph spans HexBasic through HexPolyZ -- and re-measuring needs a
 manual shared-host session, so reviewed runtime-neutral edits are absorbed
 instead of re-measured: when the fingerprint has moved, every path whose blob
 differs from the manifest must carry an exact blob-transition exemption under
-``scripts/bench/proof_only_runtime_exemptions/``. The relevant sets, the
+``scripts/bench/proof_only_runtime_exemptions/`` or pass a checked rule. For
+Lake configuration, a reviewed exact transition may be followed by a checked
+transition that leaves the measured build declarations unchanged. The relevant sets, the
 fingerprinting and the exemption machinery are shared with the other
 figure families in ``scripts/bench/sweep_freshness.py``.
 """
@@ -151,23 +153,33 @@ def lakefile_texts_differ(before: str, after: str) -> bool:
 
 
 def build_only_lakefile_edit(difference: freshness.Difference) -> bool:
-    """A lakefile transition that cannot reach the factorization binary."""
+    """An unchanged factor build, possibly following an exact reviewed edit.
+
+    A reviewed baseline-to-endpoint exemption may be followed by unrelated
+    target additions. Compare that endpoint with today's build declarations;
+    never extend the exemption to a different measured build configuration.
+    """
     if difference.path != LAKEFILE:
         return False
     if difference.baseline is None or difference.current is None:
         return False
-    baseline = freshness.git("cat-file", "blob", difference.baseline)
-    current = freshness.git("cat-file", "blob", difference.current)
-    if not lakefile_texts_differ(baseline, current):
+    if difference.baseline_mode != difference.current_mode:
+        return False
+    before = freshness.git("cat-file", "blob", difference.baseline)
+    after = freshness.git("cat-file", "blob", difference.current)
+    if not lakefile_texts_differ(before, after):
         return True
-    # An exempted lakefile transition stays exempt while later edits leave the
-    # factorization blocks exactly as exempted: those edits are the ones this
-    # comparison already ignores, and the lakefile changes too often for an
-    # exemption tied to one blob to survive the next unrelated pull request.
-    for path, base, exempted in freshness.load_exemptions(freshness.FACTOR_EXEMPTIONS):
-        if (path == LAKEFILE and base == difference.baseline
-                and factorization_blocks(freshness.git("cat-file", "blob", exempted))
-                == factorization_blocks(current)):
+    exemptions = freshness.load_exemptions(
+        ROOT / "scripts" / "bench" / "proof_only_runtime_exemptions")
+    for path, baseline, endpoint in sorted(exemptions, key=repr):
+        if path != LAKEFILE or baseline != difference.baseline or endpoint is None:
+            continue
+        try:
+            approved = freshness.git("cat-file", "blob", endpoint)
+        except SystemExit:
+            # Missing historical objects cannot establish the checked leg.
+            continue
+        if not lakefile_texts_differ(approved, after):
             return True
     return False
 

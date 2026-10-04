@@ -1125,6 +1125,12 @@ enforced figure family uses one mechanism, declared in
   measured executable, libraries, package-wide native archives and their
   transitive build helpers that build the Hex factor service, so
   additions of unrelated Lake targets do not invalidate its measurement.
+  If an exact exemption covers the measured baseline and a reviewed Lake
+  configuration, it may also compare that approved configuration with the
+  current one. This accepts subsequent unrelated target additions only when
+  the measured build declarations still match the approved endpoint; a
+  missing endpoint, a different baseline or a file mode change cannot pass
+  this rule.
   It also accepts the audited AINTLIB pin transition only when the actual
   factor-service import closure excludes every inventoried AINTLIB root;
   all measured build declarations must still match.
