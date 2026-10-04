@@ -92,28 +92,41 @@ lake build hexsigndet_inprocess_replay_probe KernelReplay.LowerProof
 .lake/build/bin/hexsigndet_inprocess_replay_probe
 ```
 
-`InProcessProbe.lean` reads the finite signs needed to pack intermediate
-Horner values and check endpoint conditions. A missing nonconstant fact returns
-`none`. Each successful result has a proof of literal equality with the existing
-ordinary operation or endpoint predicate. The constant path retains ordinary
-predecessor sign evaluation.
+`InProcessProbe.lean` looks up proof-carrying facts established in the kernel
+before execution, to pack intermediate Horner values and check endpoint
+conditions. A missing nonconstant fact returns `none`. Each successful result
+has a proof of literal equality with the existing ordinary operation or endpoint
+predicate. The constant path retains ordinary predecessor sign evaluation.
+Its compiled controls test lookup and rejection of these pre-proved facts;
+they do not validate certificates at runtime. Establishing such facts from
+checked certificates uses the companion's interpretation assumptions in proof
+assembly, separately from the executable memo reader.
 
-`LowerProbe.lean` instead applies the shared Horner operation to the stored
-polynomial representatives. It reads the final expression's sign from an
+`LowerProbe.lean` instead uses the shared Horner order and ordinary polynomial
+operations on the stored representatives. It applies the existing context
+reduction after each partial sum, bounding intermediate degree when the clean
+monic reduction policy applies. It reads the final expression's sign from an
 already checked lower-level graph, without constructing intermediate algebraic
 elements. A scalar difference is checked the same way. `LowerProof.lean` proves
 that accepted signs equal the signs of ordinary evaluation and subtraction.
 The interpretation assumptions occur in correspondence theorems; the executable
 readers take no law arguments. These are mathematical value comparisons, and
-do not replace literal certificate bindings with semantic equality.
+do not replace literal certificate bindings with semantic equality. The lower
+readers require supplied certificates even for constant queries, rather than
+falling back to the predecessor's sign operation.
 
-`InProcessMain.lean` exercises both readers in one process. Twenty controls
+`InProcessMain.lean` exercises both readers in one process. Twenty-three controls
 cover missing evidence followed by successful replay, incorrect sign claims,
 absent indices, different queries, stale context keys, finite and infinite
-endpoints, constants and canonical zero. A zero-sign certificate establishes
-equality of two distinct stored polynomial representatives. Ordinary-kernel
+endpoints, constants and canonical zero. The compiled lower-level evaluation
+and difference controls validate the supplied graph at runtime. A zero-sign
+certificate for the nonzero query `2X - 2` establishes equality at the selected
+root `1`, and a sign-equivalent certificate for the wrong query rejects.
+A separate example checks a difference that reduces to the zero polynomial.
+Ordinary-kernel
 examples check supplied-fact endpoint replay, lower-level sign selection and
-the zero difference; axiom guards check the general correspondence proofs.
+the zero differences; axiom guards check the general correspondence proofs,
+and a fixture instantiates the subtraction correspondence.
 The lower-level Horner example needs its final endpoint certificate, without
 the separate sign fact for the intermediate product required by the first
 reader.

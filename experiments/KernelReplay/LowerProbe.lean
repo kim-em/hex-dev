@@ -16,12 +16,18 @@ variable [One E] [Add E] [Neg E] [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]
 variable [DecidableEq Ctx] {coeffSign : E → Int} {parent : Ctx}
 variable {context : Context E Ctx coeffSign parent}
 
-/-- Evaluate the stored representatives using the shared Horner operation.
-No intermediate algebraic element is constructed. The result is a polynomial
-over the predecessor coefficients, whose sign requires supplied evidence. -/
+/-- Horner evaluation of stored representatives, reducing each partial sum
+with the existing context policy. No intermediate algebraic element is packed. -/
+@[expose] def evalCoefficients (cs : List (Element context)) (x : Element context) :
+    DensePoly E :=
+  cs.foldr (fun c acc => context.reduce (acc * x.polynomial + c.polynomial)) 0
+
+/-- The same Horner order as the shared evaluation, with ordinary polynomial
+operations and context reduction after each step. The result's sign still
+requires supplied lower-level evidence. -/
 @[expose] def evalPolynomial (p : DensePoly (Element context)) (x : Element context) :
     DensePoly E :=
-  DensePoly.evalCoeffList (p.toArray.toList.map Element.polynomial) x.polynomial
+  evalCoefficients p.toArray.toList x
 
 /-- Read the final sign from an already checked lower-level graph. Neither
 the interpretation laws nor a scalar sign producer are executable arguments. -/

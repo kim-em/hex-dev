@@ -7,7 +7,6 @@ module
 
 public import KernelReplay.LowerProbe
 public import HexRealClosureMathlib.Algebraic
-import all Init.Data.Zero
 
 public section
 
@@ -31,7 +30,7 @@ variable {context : Context E Ctx coeffSign parent}
 include hn hi in
 theorem evalCoefficients_value (cs : List (Element context)) (x : Element context) :
     context.evalPoly f hz h1 ha hs hm hnat hsign
-        (DensePoly.evalCoeffList (cs.map Element.polynomial) x.polynomial) =
+        (evalCoefficients cs x) =
       (DensePoly.evalCoeffList cs x).denote f hz h1 ha hs hm hnat hsign := by
   induction cs with
   | nil =>
@@ -40,7 +39,9 @@ theorem evalCoefficients_value (cs : List (Element context)) (x : Element contex
     exact (context.evalPoly_zero f hz h1 ha hs hm hnat hsign).trans
       (Element.denote_zero f hz h1 ha hs hm hnat hsign).symm
   | cons c cs ih =>
-    simp only [List.map_cons, DensePoly.evalCoeffList,
+    simp only [evalCoefficients, List.foldr_cons, DensePoly.evalCoeffList]
+    rw [Context.evalPoly_reduce f hz h1 ha hs hm hnat hsign]
+    simp only [
       Element.denote_add f hz h1 ha hs hm hnat hsign hn hi,
       Element.denote_mul f hz h1 ha hs hm hnat hsign hn hi]
     change (interpret f hz (_ * x.polynomial + c.polynomial)).eval _ = _
@@ -48,6 +49,7 @@ theorem evalCoefficients_value (cs : List (Element context)) (x : Element contex
       Polynomial.eval_mul]
     change context.evalPoly f hz h1 ha hs hm hnat hsign _ *
         x.denote f hz h1 ha hs hm hnat hsign + c.denote f hz h1 ha hs hm hnat hsign = _
+    simp only [evalCoefficients] at ih
     rw [ih]
 
 include hn hi in

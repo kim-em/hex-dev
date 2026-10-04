@@ -7,6 +7,7 @@ module
 
 public import KernelReplay.InProcessProbe
 public import KernelReplay.LowerProbe
+public import KernelReplay.LowerProof
 public import HexRealClosureMathlib.NestedSignsConformance
 public import HexSignDet.DagEncode
 import all HexRealClosure.Algebraic
@@ -26,9 +27,10 @@ open scoped Hex
   let memo ← graph.validate? Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper
   LowerProbe.readEvalSign? linearHead (rational 1) claimed memo index
 
-set_option maxRecDepth 32768 in
-example : reduction (LowerProbe.evalPolynomial linearHead (rational 1)) = endpointQuery := by
-  decide +kernel
+@[expose] def lowerDifference (graph : Dag Rat Nat) (a b : Element context)
+    (claimed : Int) : Option Int := do
+  let memo ← graph.validate? Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper
+  LowerProbe.readDifferenceSign? a b claimed memo 0
 
 @[expose] def lowerMemo : Array (Dag.Checked Sturm.orderSign 7
     singletonRaw.head singletonRaw.lower singletonRaw.upper) :=
@@ -41,9 +43,11 @@ example : reduction (LowerProbe.evalPolynomial linearHead (rational 1)) = endpoi
 set_option maxRecDepth 32768 in
 theorem lower_query : context.queryPoly (LowerProbe.evalPolynomial linearHead (rational 1)) =
     endpointQuery := by
+  simp only [LowerProbe.evalPolynomial, LowerProbe.evalCoefficients]
+  rw [← reduction_eq]
   simp only [Context.queryPoly, Context.queryRemainder, context, Context.root_adjoin,
     CoefficientSignsConformance.source_raw, singletonRaw, DensePoly.pseudoDivMod,
-    ← Array.foldl_toList, Array.toList_range]
+    ← Array.foldl_toList, Array.toList_range, ← Array.all_toList]
   decide +kernel
 
 set_option maxRecDepth 32768 in
@@ -115,6 +119,99 @@ example : literal.polynomial ≠ small.polynomial ∧
     rw [difference_query]
     decide +kernel
 
+@[expose] def vanishingQuery : DensePoly Rat := 2 * Sturm.Fixtures.x - 2
+
+@[expose] def vanishingMoment : TarskiCertificate Rat Rat Nat :=
+  {singletonQuery with
+    queryPoly := vanishingQuery
+    remainders := {
+      chain := #[Sturm.Fixtures.p, 1 - Sturm.Fixtures.x]
+      degrees := #[2, 1]
+      initial := ⟨1, 4, 4⟩
+      steps := #[]
+      terminal := some (1, -Sturm.Fixtures.x - 1)}
+    lowerSigns := #[-1, 1]
+    upperSigns := #[1, -1]
+    lowerVariations := 1
+    upperVariations := 1
+    value := 0}
+
+@[expose] def vanishingSquare : TarskiCertificate Rat Rat Nat :=
+  {singletonQuery with
+    queryPoly := vanishingQuery * vanishingQuery
+    remainders := {
+      chain := #[Sturm.Fixtures.p, Sturm.Fixtures.x - 1]
+      degrees := #[2, 1]
+      initial := ⟨1, 8 * Sturm.Fixtures.x - 16, 16⟩
+      steps := #[]
+      terminal := some (1, Sturm.Fixtures.x + 1)}
+    lowerSigns := #[-1, -1]
+    upperSigns := #[1, 1]
+    lowerVariations := 0
+    upperVariations := 0
+    value := 0}
+
+@[expose] def vanishingNode : Node Rat Nat :=
+  {zeroNode with
+    queries := [vanishingQuery]
+    moments := #v[singletonQuery, vanishingMoment, vanishingSquare]}
+
+set_option maxRecDepth 32768 in
+theorem vanishing_checked : source.checkSigns [vanishingQuery] #v[0] (.leaf vanishingNode) = true := by
+  simp only [Descriptor.checkSigns, CoefficientSignsConformance.source_raw,
+    RawDescriptor.checkSigns, Replay.check, Node.check_eq, checkMoment_eq, queryPoly,
+    Sturm.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+@[expose] def vanishingMemo : Array (Dag.Checked Sturm.orderSign 7
+    singletonRaw.head singletonRaw.lower singletonRaw.upper) :=
+  #[⟨.leaf vanishingNode, by
+    have h := vanishing_checked
+    simp only [Descriptor.checkSigns, CoefficientSignsConformance.source_raw,
+      RawDescriptor.checkSigns, Bool.and_eq_true] at h
+    exact h.1.2⟩]
+
+set_option maxRecDepth 32768 in
+theorem vanishing_query : context.queryPoly (literal.polynomial - (rational 2).polynomial) =
+    vanishingQuery := by
+  simp only [Context.queryPoly, Context.queryRemainder, context, Context.root_adjoin,
+    CoefficientSignsConformance.source_raw, singletonRaw, DensePoly.pseudoDivMod,
+    ← Array.foldl_toList, Array.toList_range]
+  decide +kernel
+
+set_option maxRecDepth 32768 in
+theorem vanishing_read : vanishingQuery.isZero = false ∧
+    LowerProbe.readDifferenceSign? literal (rational 2) 0 vanishingMemo 0 = some 0 ∧
+    LowerProbe.readDifferenceSign? literal (rational 2) 1 vanishingMemo 0 = none := by
+  constructor
+  · decide +kernel
+  · constructor <;>
+      simp only [LowerProbe.readDifferenceSign?, Context.readSigns?] <;>
+      rw [vanishing_query] <;>
+      decide +kernel
+
+private theorem rationalSign (x : Rat) :
+    Sturm.orderSign x = (SignType.sign (x : ℝ) : Int) := by
+  rw [HexSturmMathlib.orderSign_eq]
+  congr 1
+  exact (StrictMono.sign_comp (f := Rat.castHom ℝ) Rat.cast_strictMono x).symm
+
+/-- Instantiate the general correspondence proof on the nonzero query that
+vanishes at the selected root. The native subtraction need not be reduced. -/
+theorem difference_sign : (literal - rational 2).sign = 0 := by
+  have h := LowerProbe.readDifferenceSign_sound (fun q : Rat => (q : ℝ))
+    (fun _ => Rat.cast_eq_zero) (by simp)
+    (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
+    (fun _ _ => Rat.cast_mul _ _) (fun _ => by simp) rationalSign
+    (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _)
+    literal (rational 2) 0 vanishingMemo 0 0 vanishing_read.2.1
+  exact h.symm
+
+/-- info: 'difference_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms difference_sign
+
 @[expose] def endpoints (facts : List (SignFact context)) : Option Bool :=
   (readEndpoints? reduction reduction_eq facts linearHead linearRaw.lower linearRaw.upper).map (·.val)
 
@@ -147,13 +244,17 @@ def main : IO UInt32 := do
   expect "lower-memo-wrong-query"
     ((lowerEval (Dag.encode (.leaf firstNode)) 1).map (· == 1)) none
   expect "different-representatives-zero-difference"
-    ((LowerProbe.readDifferenceSign? literal small 0 zeroMemo 0).map (· == 0)) (some true)
+    ((lowerDifference (Dag.encode (.leaf zeroNode)) literal small 0).map (· == 0)) (some true)
   expect "zero-difference-missing"
-    ((LowerProbe.readDifferenceSign? literal small 0
-      (#[] : Array (Dag.Checked Sturm.orderSign 7 singletonRaw.head singletonRaw.lower
-        singletonRaw.upper)) 0).map (· == 0)) none
+    ((lowerDifference ⟨#[], 0⟩ literal small 0).map (· == 0)) none
   expect "zero-difference-wrong-sign"
-    ((LowerProbe.readDifferenceSign? literal small 1 zeroMemo 0).map (· == 0)) none
+    ((lowerDifference (Dag.encode (.leaf zeroNode)) literal small 1).map (· == 0)) none
+  expect "nonzero-query-vanishes"
+    ((lowerDifference (Dag.encode (.leaf vanishingNode)) literal (rational 2) 0).map (· == 0)) (some true)
+  expect "vanishing-query-wrong-sign"
+    ((lowerDifference (Dag.encode (.leaf vanishingNode)) literal (rational 2) 1).map (· == 0)) none
+  expect "vanishing-query-wrong-certificate"
+    ((lowerDifference (Dag.encode (.leaf zeroNode)) literal (rational 2) 0).map (· == 0)) none
   expect "missing-endpoint-fact" (endpoints PackingConformance.facts) none
   expect "complete-after-missing" (endpoints NestedSignsConformance.facts) (some true)
   expect "missing-Horner-fact"
