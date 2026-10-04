@@ -1181,7 +1181,9 @@ lean_lib HexRCFProofProfile where
     `HexRCF.ProofProbe.Windows.ReciprocalOriginal, `HexRCF.ProofProbe.Windows.ReciprocalRefined,
     `HexRCF.ProofProbe.Windows.CubicOriginal, `HexRCF.ProofProbe.Windows.CubicRefined,
     `HexRCF.ProofProbe.Windows.Audit, `HexRCF.ProofProbe.Precision.Bits8,
-    `HexRCF.ProofProbe.Precision.Bits64, `HexRCF.ProofProbe.Precision.Audit].map Glob.one
+    `HexRCF.ProofProbe.Precision.Bits64, `HexRCF.ProofProbe.Precision.Audit,
+    `HexRCF.ProofProbe.Precision.Full8, `HexRCF.ProofProbe.Precision.Full16,
+    `HexRCF.ProofProbe.Precision.Full32, `HexRCF.ProofProbe.Precision.Full64].map Glob.one
 
 lean_lib HexRCFProofProbe where
   srcDir := "bench"
