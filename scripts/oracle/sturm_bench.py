@@ -97,7 +97,15 @@ class Z3:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tool", choices=["flint", "z3"], required=True)
+    parser.add_argument("--self-test", action="store_true",
+                        help="Run exact endpoint and protocol regressions before serving requests.")
     args = parser.parse_args()
+    if args.self_test:
+        import unittest
+        suite = unittest.defaultTestLoader.loadTestsFromName("scripts.oracle.test_sturm_bench")
+        result = unittest.TextTestRunner(stream=sys.stderr).run(suite)
+        if not result.wasSuccessful():
+            raise SystemExit(1)
     endpoint = Flint() if args.tool == "flint" else Z3()
     try:
         for line in sys.stdin:

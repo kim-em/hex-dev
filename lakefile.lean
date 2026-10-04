@@ -1888,7 +1888,7 @@ lean_exe hexrealalgebraic_bench where
 
 lean_lib HexSturmBenchSupport where
   srcDir := "bench"
-  globs := #[.one `HexSturm.Frontend, .one `HexSturm.External]
+  globs := #[.one `HexSturm.Frontend]
 
 lean_exe hexsturm_bench where
   srcDir := "bench"

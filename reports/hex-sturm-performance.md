@@ -625,7 +625,7 @@ diagnostics; their existence does not attest every ordered-field frontend.
 The current executable lists and verifies 71 cases, including the 13
 `short-chain-degree` registrations below, plus 12 complete-query fixed
 comparison endpoints and two protocol-overhead controls in
-`bench/HexSturm/External.lean`. The latter are expected-result/informational
+`Hex.SturmExternalBench` in `bench/HexSturm/Bench.lean`. The latter are expected-result/informational
 anchors and make no complexity or absolute-budget claim.
 
 | Frontend/stage targets | Strongest justified evidence | Input |
