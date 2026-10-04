@@ -657,6 +657,7 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.FieldBuildBudget,
     `HexRCF.RealCoefficients.FieldRootSigns, `HexRCF.RealCoefficients.FieldRootSignsProgress,
     `HexRCF.RealCoefficients.FieldReplay,
+    `HexRCF.RealCoefficients.FieldRefinement,
     `HexRCF.RealCoefficients.FieldLiteral,
     `HexRCF.RealCoefficients.FieldRuntime,
     `HexRCF.RealCoefficients.Preparation,
