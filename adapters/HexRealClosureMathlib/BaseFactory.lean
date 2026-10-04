@@ -18,7 +18,6 @@ structure PackedContext.Reference {registry : Registry} (base : PackedContext re
   Carrier : Type
   field : Field Carrier
   order : LinearOrder Carrier
-  equality : DecidableEq Carrier
   ordered : letI := field; letI := order; IsStrictOrderedRing Carrier
   closed : letI := field; IsRealClosed Carrier
   model : letI := field; letI := order; Tower.Model (Tower.Context.ofBase base) Carrier
@@ -27,8 +26,6 @@ instance {registry : Registry} {base : PackedContext registry} (reference : base
     Field reference.Carrier := reference.field
 instance {registry : Registry} {base : PackedContext registry} (reference : base.Reference) :
     LinearOrder reference.Carrier := reference.order
-instance {registry : Registry} {base : PackedContext registry} (reference : base.Reference) :
-    DecidableEq reference.Carrier := reference.equality
 instance {registry : Registry} {base : PackedContext registry} (reference : base.Reference) :
     IsStrictOrderedRing reference.Carrier := reference.ordered
 instance {registry : Registry} {base : PackedContext registry} (reference : base.Reference) :
@@ -47,7 +44,7 @@ noncomputable def PackedContext.Realization.reference {registry : Registry}
     let ambient := ordered.ambient
     have model := ordered.towerModel
     rw [Context.ofChain_eq context] at model
-    exact ⟨ambient.Carrier, inferInstance, inferInstance, Classical.decEq _,
+    exact ⟨ambient.Carrier, inferInstance, inferInstance,
       inferInstance, inferInstance, model⟩
 
 end Hex.RealClosure.BaseContext
@@ -91,11 +88,7 @@ noncomputable def Model.derive
         have preserved := BaseContext.Chain.Realization.embedding_sign following source.chain
           original inclusion.coefficients produced a
         exact preserved.symm.trans (targetModel.baseHom_sign target (inclusion.coefficients.value a))
-      let sourceModel := Tower.Model.base source f correct
-      refine ⟨sourceModel, targetModel, ?_⟩
-      intro a
-      exact (targetModel.baseHom_value target (inclusion.value a)).symm.trans
-        (Tower.Model.base_value source f correct a).symm
+      exact Model.ofMap source target inclusion targetModel correct
 
 private theorem Model.derive_target_proof
     {source target : BaseContext.PackedContext registry}
@@ -104,7 +97,8 @@ private theorem Model.derive_target_proof
     (Model.derive following inclusion targetModel).target = targetModel := by
   cases source
   cases target
-  rfl
+  simp only [Model.derive]
+  exact Model.ofMap_target _ _ _ _ _
 
 /-- The source factory retains the supplied target interpretation itself. -/
 theorem Model.derive_target
