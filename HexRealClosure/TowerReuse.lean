@@ -62,13 +62,6 @@ theorem Context.checkSigns_iff (context : Context registry) (candidate : context
       simpa only [constraints.polynomials_eq, constraints.signs_eq] using checked⟩
   else none
 
-/-- Check one existing value against the head first, then the derivative signs
-and strict interval bounds. Rejection changes no context. -/
-@[expose] def Context.matchRoot? (context : Context registry)
-    (descriptor : SignDet.Descriptor context.Value Signature context.sign context.signature)
-    (candidate : context.Value) : Option (RootMatch context descriptor) :=
-  (RootConstraints.prepare context descriptor).match? candidate
-
 /-- Retrieve the actual last algebraic generator without reconstructing its
 predecessors. A staged base has no algebraic generator. -/
 @[expose] def Context.lastRoot? (context : Context registry) : Option context.Value := by
