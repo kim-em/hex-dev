@@ -66,9 +66,10 @@ The canonical construction uses generic real-algebraic multiplication and
 exactification: products of the degree-15 operands form degree-225 product
 eliminants before exact factorization. The native construction instead reduces
 inside `ℚ(α)`. Consequently the retained canonical arm supplies no second
-isolation measurement. The retained build logs confirm Lake's target was up
-to date at a clean source commit; they are not evidence of recompilation from
-an empty build cache.
+isolation measurement. The 91bcb67 build logs show Lake's target was up
+to date at a clean source commit. The 7b63305 snapshot log records compilation
+of the Phase4 driver and executable against cached dependencies. Neither
+build recompiles the dependency graph from an empty cache.
 These are retained functional observations from a shared host, including
 changed apparatus and censored execution. They are not a scientific timing
 comparison or a quantified speedup.
