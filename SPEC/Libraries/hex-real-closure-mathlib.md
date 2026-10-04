@@ -274,10 +274,12 @@ smaller than each positive old shared value from the base reference alone.
 The executable producer receives no root alignment, coefficient agreement or
 semantic model argument.
 
-`Shared.Model.enlarge` constructs the complete canonical model of the actual
-returned shared enlargement. Its new base interpretation is `Model.next`,
-constructed from the old reference and the prescribed ambient. The new target,
-original-owner interpretations, native rebuilt predecessor cache, and
+`Shared.Model.enlarge` proves the existence of the complete canonical model of
+the actual returned shared enlargement. Its new base interpretation is `Model.next`,
+constructed from the old reference and the prescribed ambient. The same
+returned target model interprets the cached parameter as the ambient's actual
+infinitesimal. `Model.nextBase_parameter` proves the corresponding agreement
+at the new base. The new target, original-owner interpretations, native rebuilt predecessor cache, and
 transported old cache all agree with this new canonical factory. The returned
 model supports later compatible registration and successive enlargement
 without additional coefficient or root agreement premises.

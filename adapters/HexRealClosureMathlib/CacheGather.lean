@@ -7,6 +7,8 @@ module
 
 public import HexRealClosureMathlib.CacheRebuild
 import all HexRealClosure.LiveContext
+import all HexRealClosure.TowerEnlargement
+import all HexRealClosure.TowerTransport
 
 public section
 
@@ -565,6 +567,31 @@ private theorem Shared.enlargeOrigin_cache
   cases Option.some.inj produced
   simp only [SharedEnlargement.previous, Rebuilt.enlargement_conversion]
 
+private theorem conversion_cast_apply {source other : Context registry}
+    (conversion : Conversion source) (same : source = other) (a : other.Value) :
+    HEq ((conversion.cast same).value a)
+      (conversion.value (_root_.cast (congrArg Context.Value same.symm) a)) := by
+  cases same
+  rfl
+
+private theorem Shared.enlargeOrigin_parameter
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign) {owners : List (Context registry)}
+    (shared : Shared (.pack base) owners) (suffix : Suffix (Context.base base))
+    (same : suffix.context = shared.input.context)
+    (rebuilt : Rebuilt (Conversion.infinitesimal base) suffix)
+    (rebuiltEq : (Conversion.infinitesimal base).rebuild? suffix = some rebuilt)
+    (result : SharedEnlargement shared)
+    (produced : shared.enlargeOrigin? (Origin.pack base suffix same) = some result) :
+    result.parameter = result.shared.input.value (BaseContext.Element.infinitesimal base) := by
+  simp only [Shared.enlargeOrigin?, rebuiltEq] at produced
+  cases Option.some.inj produced
+  apply eq_of_heq
+  unfold SharedEnlargement.parameter Rebuilt.enlargement Rebuilt.parameter
+  exact (_root_.cast_heq _ _).trans ((_root_.cast_heq _ _).trans
+    (conversion_cast_apply rebuilt.input (Conversion.infinitesimal_spec base).1
+      (BaseContext.Element.infinitesimal base)).symm)
+
 private theorem Shared.Model.enlargeOrigin
     {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
     (base : BaseContext.Context registry B sign) {owners : List (Context registry)}
@@ -578,8 +605,9 @@ private theorem Shared.Model.enlargeOrigin
       shared.enlargeOrigin? (Origin.pack base suffix same) = some result ∧
         ∃ returned : Shared.Model result.shared following.infinitesimal
             (Tower.Model.nextBase base reference ambient),
-          ∃ previous : Inclusion.Model result.previous (model.target.liftInfinitesimal ambient),
-            previous.target = returned.target := by
+          returned.target.value result.parameter = ambient.inclusion Hex.RationalFn.X ∧
+            ∃ previous : Inclusion.Model result.previous (model.target.liftInfinitesimal ambient),
+              previous.target = returned.target := by
   have restriction := restrict_model suffix same reference model.target
     (model.suffix base suffix same origin)
   obtain ⟨rebuilt, rebuiltEq, _, converted, convertedTarget⟩ :=
@@ -674,8 +702,13 @@ private theorem Shared.Model.enlargeOrigin
       result.shared.cache := by
     rw [cacheEq]
     exact nativeCache.append oldCache
+  have parameter : previous.target.value result.parameter = ambient.inclusion Hex.RationalFn.X :=
+    (congrArg previous.target.value
+      (shared.enlargeOrigin_parameter base suffix same rebuilt rebuiltEq result produced)).trans
+      ((preserved (BaseContext.Element.infinitesimal base)).trans
+        (Tower.Model.nextBase_parameter base reference ambient))
   exact ⟨result, produced, ⟨previous.target, canonical, preserved, ownersModel, ownersCanonical,
-    cacheModels⟩, previous, rfl⟩
+    cacheModels⟩, parameter, previous, rfl⟩
 
 
 /-- Enlarge the shared gathering and construct its complete canonical model.
@@ -689,23 +722,25 @@ theorem Shared.Model.enlarge {owners : List (Context registry)}
       shared.enlarge? = some result ∧
         ∃ returned : Shared.Model result.shared following.infinitesimal
             (Tower.Model.next base reference ambient),
-          ∃ previous : Inclusion.Model result.previous (model.target.liftInfinitesimal ambient),
-            previous.target = returned.target := by
+          returned.target.value result.parameter = ambient.inclusion Hex.RationalFn.X ∧
+            ∃ previous : Inclusion.Model result.previous (model.target.liftInfinitesimal ambient),
+              previous.target = returned.target := by
   cases originEq : shared.input.context.origin with
   | pack original suffix same =>
     have originalEq : BaseContext.PackedContext.pack original = base :=
       (Suffix.origin_base original suffix).symm.trans
         ((congrArg (fun context => context.origin.base) same).trans shared.base_eq)
     cases originalEq
-    obtain ⟨result, produced, returned, previous, aligned⟩ :=
+    obtain ⟨result, produced, returned, parameter, previous, aligned⟩ :=
       model.enlargeOrigin original ambient suffix same originEq
     refine ⟨result, ?_, ?_⟩
     · exact (congrArg shared.enlargeOrigin? originEq).trans produced
     · exact (Tower.Model.next_pack original reference ambient).symm ▸
-        (⟨returned, previous, aligned⟩ : ∃ returned : Shared.Model result.shared
+        (⟨returned, parameter, previous, aligned⟩ : ∃ returned : Shared.Model result.shared
           following.infinitesimal (Tower.Model.nextBase original reference ambient),
-          ∃ previous : Inclusion.Model result.previous (model.target.liftInfinitesimal ambient),
-            previous.target = returned.target)
+          returned.target.value result.parameter = ambient.inclusion Hex.RationalFn.X ∧
+            ∃ previous : Inclusion.Model result.previous (model.target.liftInfinitesimal ambient),
+              previous.target = returned.target)
 
 end Hex.RealClosure.Tower
 

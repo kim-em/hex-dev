@@ -1656,10 +1656,13 @@ prefix/depth compatibility condition for every owner.
 owners' values, coefficients, and native order results. `value_of_model` also
 identifies the transported value with a separately retrieved canonical owner model.
 
-`Shared.Model.enlarge ambient` constructs a complete `Shared.Model` for the
+`Shared.Model.enlarge ambient` proves the existence of a complete `Shared.Model` for the
 actual returned enlargement. `Model.next` constructs its new declared base
 interpretation, preserving old constants through the ambient coefficient
-embedding. The enlarged target and every retained owner are the new canonical
+embedding. `Model.nextBase_parameter` identifies the new base parameter with
+its prescribed ambient infinitesimal. The same returned shared target model
+interprets the enlargement's cached parameter as that infinitesimal.
+The enlarged target and every retained owner are the new canonical
 `Context.model?` results; the rebuilt native predecessor cache and transported
 old cache are coherent with that same target. The returned checked inclusion
 identifies the old shared interpretation with the new target. This complete

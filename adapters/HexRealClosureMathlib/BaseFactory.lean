@@ -7,6 +7,8 @@ module
 
 public import HexRealClosureMathlib.BaseModels
 public import HexRealClosureMathlib.BaseMapModel
+public import HexRealClosure.BaseEmbedding
+public import HexRealClosure.TowerEnlarge
 
 public section
 
@@ -186,6 +188,32 @@ theorem nextBase_target {B : Type} [Lean.Grind.Field B] [DecidableEq B]
       (old.baseHom_sign base) ambient).target (nextBase base old ambient) :=
   nextBase_target_proof base old ambient
 
+private theorem nextBase_parameter_proof {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (old : Model (Context.base base) R) (ambient : Ambient (Hex.RationalFn R)) :
+    (nextBase base old ambient).value (BaseContext.Element.infinitesimal base) =
+      ambient.inclusion (Hex.RationalFn.X : Hex.RationalFn R) := by
+  let input := Conversion.Model.infinitesimalMapped base (old.baseHom base)
+    (old.baseHom_sign base) ambient
+  have aligned := cast_value (Conversion.infinitesimal_spec base).1 input.target
+    (Conversion.parameter base)
+  have owned : _root_.cast (congrArg Context.Value (Conversion.infinitesimal_spec base).1)
+      (Conversion.parameter base) = BaseContext.Element.infinitesimal base := by
+    unfold Conversion.parameter
+    exact eq_of_heq ((_root_.cast_heq _ _).trans (_root_.cast_heq _ _))
+  rw [owned] at aligned
+  exact aligned.trans (Conversion.Model.infinitesimalMapped_X base (old.baseHom base)
+    (old.baseHom_sign base) ambient)
+
+/-- The newly constructed base's native parameter denotes the actual
+infinitesimal in the prescribed ambient. -/
+theorem nextBase_parameter {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (old : Model (Context.base base) R) (ambient : Ambient (Hex.RationalFn R)) :
+    (nextBase base old ambient).value (BaseContext.Element.infinitesimal base) =
+      ambient.inclusion (Hex.RationalFn.X : Hex.RationalFn R) :=
+  nextBase_parameter_proof base old ambient
+
 /-- Construct the next interpretation directly from an immutable packed base. -/
 noncomputable def next (base : BaseContext.PackedContext registry)
     (old : Model (Context.ofBase base) R) (ambient : Ambient (Hex.RationalFn R)) :
@@ -217,3 +245,7 @@ end Hex.RealClosure.Tower.Model
 /-- info: 'Hex.RealClosure.BaseContext.PackedContext.Realization.reference' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.BaseContext.PackedContext.Realization.reference
+
+/-- info: 'Hex.RealClosure.Tower.Model.nextBase_parameter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Model.nextBase_parameter
