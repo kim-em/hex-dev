@@ -1,0 +1,31 @@
+import hashlib, json, os, subprocess, sys, time
+from pathlib import Path
+root=Path('/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse')
+sys.path.insert(0,str(root/'scripts/bench'))
+from cpu_lease import cpu_lease
+cpu,lease=cpu_lease()
+output=root/'reports/bench-results/real-closure-root-reuse-order-corrected'
+output.mkdir(exist_ok=True)
+metadata={'cpu':cpu,'affinity':sorted(os.sched_getaffinity(0)),'load':os.getloadavg(),'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),'dirty':subprocess.check_output(['git','status','--short'],cwd=root,text=True),'schedule':'trial-major adjacent AB/BA; head/bounds; no completed sample discarded','repeats':3}
+metadata['executable_sha256']=hashlib.sha256((root/'.lake/build/bin/hexrealclosure_bench').read_bytes()).hexdigest()
+for source_name in ['bench/HexRealClosure/Bench.lean','HexRealClosure/TowerCache.lean','HexRealClosure/TowerReuse.lean']:
+    (output/(Path(source_name).name+'.txt')).write_text((root/source_name).read_text())
+(output/'measure.py.txt').write_text(Path(__file__).read_text())
+(output/'metadata.json').write_text(json.dumps(metadata,indent=2)+'\n')
+results=[]
+for trial in range(2):
+    for degree,count,scenario in [(d,c,s) for d,c in [(2,1),(2,2),(4,1),(4,2)] for s in ['below','inside','above']]:
+        for arm in (['head','bounds'] if trial%2==0 else ['bounds','head']):
+            label=f'trial-{trial}-degree-{degree}-owners-{count}-{scenario}-{arm}'
+            cmd=['taskset','-c',str(cpu),str(root/'.lake/build/bin/hexrealclosure_bench'),'reuse-order',str(degree),str(count),scenario,arm,'3']
+            started=time.monotonic()
+            run=subprocess.run(cmd,cwd=root,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+            record={'trial':trial,'degree':degree,'owners':count,'scenario':scenario,'arm':arm,'command':cmd,'wall_seconds':time.monotonic()-started,'returncode':run.returncode,'output':run.stdout}
+            (output/(label+'.log')).write_text(run.stdout)
+            (output/(label+'.json')).write_text(json.dumps(record,indent=2)+'\n')
+            results.append(record)
+            (output/'results.json').write_text(json.dumps(results,indent=2)+'\n')
+            print(label,run.returncode,run.stdout.strip(),flush=True)
+            if run.returncode:
+                raise SystemExit(run.returncode)
+lease.close()

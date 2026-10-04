@@ -1,0 +1,7 @@
+{
+  "raw_profile_path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/reports/bench-results/real-closure-gather-before-after/cached-eight.perf.data",
+  "sha256": "4fd643a22225b0a15f6d0eb874c7ec99d7e44c5505b1451252006b3f638a3b5e",
+  "bytes": 35580972,
+  "raw_profile_retained_on_measurement_host": true,
+  "summary": "cached-eight-inclusive-profile.txt"
+}
