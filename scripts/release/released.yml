@@ -64,8 +64,7 @@
 # Lake file into the corresponding declarations in a Lean mirror skeleton. It
 # can migrate a package-wide `extern_lib` to a library-scoped custom `target`,
 # and appends a declaration the mirror lacks (such as a native carrier
-# `lean_lib`). `retired_lake_declarations` names declarations to delete from
-# the mirror once this monorepo has dropped them.
+# `lean_lib`).
 # `pins` lists the upstream repos whose git rev is rewritten in this repo's root
 # lakefile (matched by their github URL); `lakefile` is that file's format.
 # The mirror's `lean_lib` build settings are deliberately *not* recorded here:
@@ -110,6 +109,8 @@ repos:
       - { src: "Hex", dest: "Hex" }
     spec: null
     keep_paths: [HexTestKit.lean]   # mirror-local umbrella, authored there
+    lean_lib_name: HexTestKit       # the Lake library is named after that umbrella
+    globs: [HexTestKit, Hex.Conformance.Emit, Hex.BenchOracle.Flint]
     pins: []
     lakefile: toml
 
@@ -124,7 +125,6 @@ repos:
     lake_declarations: [hexArithOTarget, hexarithWideO, hexarithGcdO, HexArithNative]
     extra_paths:
       - { src: "HexArithNative.lean", dest: "HexArithNative.lean" }
-    retired_lake_declarations: [hexarithffi]
 
   - repo: leanprover/hex-primality
     component: Certified primality
@@ -169,7 +169,6 @@ repos:
     lake_declarations: [zmod64MulOTarget, hexmodarithO, HexModArithNative]
     extra_paths:
       - { src: "HexModArithNative.lean", dest: "HexModArithNative.lean" }
-    retired_lake_declarations: [hexmodarithffi]
 
   - repo: leanprover/hex-mv-poly
     component: Sparse multivariate polynomials
@@ -361,6 +360,7 @@ repos:
     spec: hex-gf2
     pins: [hex-basic]
     lakefile: lean
+    lake_declarations: [clmulOTarget, hexgf2ffi]
 
   - repo: leanprover/hex-gf2-mathlib
     lib: HexGF2Mathlib
@@ -454,6 +454,7 @@ repos:
       linkedin: https://www.linkedin.com/posts/kim-morrison-219962b_lattice-basis-reduction-using-the-hex-lean-share-7480672935360266241-WF7o/
     lib: HexLLL
     executables: {hexlll_external_reduction: HexLLL.ExternalReduction}
+    lake_declarations: [hexlllProviderOTarget, hexlllffi]
     umbrella: true
     spec: hex-lll
     pins: [hex-basic, hex-arith, hex-gram-schmidt, hex-row-reduce, hex-determinant, hex-bareiss, hex-matrix]

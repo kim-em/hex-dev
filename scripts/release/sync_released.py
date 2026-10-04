@@ -1450,9 +1450,31 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
         if mf == clone / "lake-manifest.json":
             changed += _synthesize_manifest_packages(
                 entry, clone, doc, synced, dep_owner, version, catalog, notes)
+            # The Lake file is generated, so which packages it requires
+            # directly can change; the lockfile's `inherited` flags follow it.
+            direct = _direct_requires(clone)
+            for pkg in doc.get("packages", []):
+                inherited = pkg.get("name") not in direct
+                if pkg.get("inherited") != inherited:
+                    pkg["inherited"] = inherited
+                    changed += 1
         if changed:
             mf.write_text(_json.dumps(doc, indent=2) + "\n", encoding="utf-8")
     return notes
+
+
+def _direct_requires(clone: Path) -> set[str]:
+    """Package names the mirror's root Lake file requires directly."""
+    names: set[str] = set()
+    toml = clone / "lakefile.toml"
+    if toml.is_file():
+        names.update(r["name"] for r in tomllib.loads(
+            toml.read_text(encoding="utf-8")).get("require", []))
+    lean = clone / "lakefile.lean"
+    if lean.is_file():
+        names.update(re.findall(r"(?m)^require\s+«?([A-Za-z0-9_]+)»?\s+from",
+                                lean.read_text(encoding="utf-8")))
+    return names
 
 
 def _manifest_catalog() -> dict[str, dict[str, str]]:
@@ -1896,8 +1918,10 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
               synced: dict[str, str], baseline: dict[str, str], force: bool,
               dep_owner: dict[str, str],
               pins: dict[str, dict[str, str]], version: str,
-              resuming: bool) -> bool:
+              resuming: bool, entries: list[dict] | None = None) -> bool:
     """Sync and tag one repo; return whether it belongs to this release."""
+    if entries is None:
+        entries = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["repos"]
     repo = entry["repo"]
     short = repo.split("/")[-1]
     print(f"\n=== {repo} ===")
@@ -1924,27 +1948,13 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
                 synced[short] = expected
                 return False
             print(msg + " Overriding (--force).")
-        for line in rewrite_test_target(entry, clone):
-            print(line)
-        validate_skeleton(entry, clone)
         validate_ci_helpers(entry, clone)
         for line in apply_paths(entry, clone):
             print(line)
+        for line in write_lakefile(entry, clone, entries, version, dep_owner, pins):
+            print(line)
         validate_external_imports(entry, clone)
-        if not entry.get("pins_only"):
-            for line in rewrite_doc_verso(clone):
-                print(line)
-            for line in rewrite_lib_settings(entry, clone):
-                print(line)
-            for line in rewrite_lake_declarations(entry, clone):
-                print(line)
         for line in rewrite_toolchains(clone):
-            print(line)
-        for line in rewrite_external_pins(clone, pins):
-            print(line)
-        for line in rewrite_requires(entry, clone, synced, dep_owner, version):
-            print(line)
-        for line in rewrite_pins(entry, clone, synced, dep_owner, version):
             print(line)
         for line in rewrite_manifest(entry, clone, synced, dep_owner, pins, version):
             print(line)
@@ -2138,7 +2148,7 @@ def main() -> int:
             token = None if args.dry_run else repo_token[entry["repo"]]
             released = sync_repo(entry, source_sha, token, args.dry_run,
                                  synced, baseline, args.force, dep_owner, pins,
-                                 version, resuming)
+                                 version, resuming, manifest["repos"])
             if not args.dry_run:
                 if released:
                     completed.add(entry["repo"].split("/")[-1])
