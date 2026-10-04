@@ -53,8 +53,9 @@ companion is still unreleased. Semantic regression tests build through
 `HexQuerySemantics`, alongside the remaining owners’ development adapters.
 Their axiom audits admit only `propext`, `Classical.choice` and `Quot.sound`. This theorem-only companion has no dedicated
 Phase-4 performance deliverable. Ordinary-kernel correctness checks are built
-by `HexSturmMathlibTests` and `HexQuerySemantics`; Phase-4 dependency and
-bridge-target requirements remain in the readiness audit. See [the specification](SPEC/hex-sturm-mathlib.md).
+by `HexSturmMathlibTests` and `HexQuerySemantics`; Phase-4 prerequisite
+eligibility remains in the readiness audit. The public semantic import gap
+is closed. See [the specification](SPEC/hex-sturm-mathlib.md).
 
 Executable translations live in Mathlib-free `HexSturm.Transport`; see the
 [SPEC](SPEC/hex-sturm-mathlib.md) for their endpoint and binding contracts.

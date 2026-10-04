@@ -1376,6 +1376,7 @@ def _synthesize_external_manifest_packages(entry: dict, clone: Path, doc: dict,
         upstream = entries.get(dependency)
         if upstream is not None:
             roots.update(_external_import_roots(upstream, REPO_ROOT))
+    _check_external_boundary(entry, roots)
     required = {EXTERNAL_IMPORT_PACKAGES[root].lower() for root in roots}
     lakefile = clone / f"lakefile.{entry['lakefile']}"
     direct = _declared_external_packages(lakefile.read_text(encoding="utf-8"), entry["lakefile"])
@@ -1483,6 +1484,42 @@ def _hex_import_roots(entry: dict, clone: Path) -> set[str]:
     return roots
 
 
+def _insert_requirements(text: str, lake_format: str, block: str) -> str:
+    """Keep Mathlib last so its compatible transitive pins remain authoritative."""
+    if lake_format == "toml":
+        mathlib = next((match for match in re.finditer(
+            r"(?ms)^\[\[require\]\]\s*\n.*?(?=^\[|\Z)", text)
+            if re.search(r'^name\s*=\s*"mathlib"\s*$', match[0], re.M)), None)
+        anchor = mathlib or re.search(r"(?m)^\[\[(?:lean_lib|lean_exe)\]\]", text)
+        if anchor:
+            text = text[:anchor.start()] + block + text[anchor.start():]
+        else:
+            text = text.rstrip("\n") + "\n\n" + block
+    else:
+        requires = list(re.finditer(r"(?m)^require\b.*(?:\n[ \t]+.*)*\n", text))
+        mathlib = next((match for match in requires
+            if "github.com/leanprover-community/mathlib4" in match[0]
+            or re.match(r'^require\s+(?:«?mathlib»?(?=\s)|'
+                        r'"leanprover-community"\s*/\s*"mathlib")', match[0], re.I)), None)
+        if mathlib:
+            end = mathlib.start()
+            # Keep any ordering comment attached to the Mathlib requirement.
+            while end > 0:
+                previous = text.rfind("\n", 0, end - 1) + 1
+                line = text[previous:end].strip()
+                if line and not line.startswith("--"):
+                    break
+                end = previous
+            block += "\n"
+        elif requires:
+            end = requires[-1].end()
+        else:
+            package = re.search(r"(?ms)^package\b.*?(?=^\S|\Z)", text)
+            end = package.end() if package else len(text)
+        text = text[:end] + block + text[end:]
+    return text
+
+
 def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
                      dep_owner: dict[str, str],
                      version: str,
@@ -1527,39 +1564,11 @@ def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
         block = "".join(
             f'[[require]]\nname = "{lib}"\ngit = "{url}"\nrev = "{version}"\n\n'
             for dep, lib, url in additions)
-        mathlib = next((match for match in re.finditer(
-            r"(?ms)^\[\[require\]\]\s*\n.*?(?=^\[|\Z)", text)
-            if re.search(r'^name\s*=\s*"mathlib"\s*$', match[0], re.M)), None)
-        anchor = mathlib or re.search(r"(?m)^\[\[(?:lean_lib|lean_exe)\]\]", text)
-        if anchor:
-            text = text[:anchor.start()] + block + text[anchor.start():]
-        else:
-            text = text.rstrip("\n") + "\n\n" + block
     else:
         block = "".join(
             f'\nrequire {lib} from git\n  "{url}" @ "{version}"\n'
             for dep, lib, url in additions)
-        requires = list(re.finditer(r"(?m)^require\b.*(?:\n[ \t]+.*)*\n", text))
-        mathlib = next((match for match in requires
-            if "github.com/leanprover-community/mathlib4" in match[0]
-            or re.match(r'^require\s+(?:«?mathlib»?(?=\s)|'
-                        r'"leanprover-community"\s*/\s*"mathlib")', match[0], re.I)), None)
-        if mathlib:
-            end = mathlib.start()
-            # Keep any ordering comment attached to the Mathlib requirement.
-            while end > 0:
-                previous = text.rfind("\n", 0, end - 1) + 1
-                line = text[previous:end].strip()
-                if line and not line.startswith("--"):
-                    break
-                end = previous
-            block += "\n"
-        elif requires:
-            end = requires[-1].end()
-        else:
-            package = re.search(r"(?ms)^package\b.*?(?=^\S|\Z)", text)
-            end = package.end() if package else len(text)
-        text = text[:end] + block + text[end:]
+    text = _insert_requirements(text, entry["lakefile"], block)
     lakefile.write_text(text, encoding="utf-8")
     for dep, lib, _url in additions:
         notes.append(f"  require + {dep} ({lib}) -> {version} ({lakefile.name})")
@@ -1618,6 +1627,16 @@ def _provided_external_roots(text: str, lake_format: str) -> set[str]:
     return provided
 
 
+def _check_external_boundary(entry: dict, roots: set[str]) -> None:
+    """Never synthesize proof dependencies for a computational mirror."""
+    if entry.get("pins_only") or entry.get("mathlib_only") or entry.get("lib", "").endswith("Mathlib"):
+        return
+    forbidden = roots & {"Mathlib", "TauCeti"}
+    if forbidden:
+        raise RuntimeError(f"computational repository {entry['repo']} imports "
+                           f"proof dependencies: {', '.join(sorted(forbidden))}")
+
+
 def rewrite_external_requires(entry: dict, clone: Path,
                               pins: dict[str, dict[str, str]]) -> list[str]:
     """Add missing direct external requirements from the exact monorepo lock.
@@ -1631,8 +1650,9 @@ def rewrite_external_requires(entry: dict, clone: Path,
         return []
     lakefile = clone / f"lakefile.{entry['lakefile']}"
     text = lakefile.read_text(encoding="utf-8")
-    missing = _external_import_roots(entry, clone).keys() - _provided_external_roots(
-        text, entry["lakefile"])
+    roots = _external_import_roots(entry, clone)
+    _check_external_boundary(entry, set(roots))
+    missing = roots.keys() - _provided_external_roots(text, entry["lakefile"])
     if not missing:
         return []
     by_name = {pin["name"].lower(): pin for pin in pins.values()}
@@ -1647,19 +1667,13 @@ def rewrite_external_requires(entry: dict, clone: Path,
         block = "".join(
             f'[[require]]\nname = "{pin["name"]}"\ngit = "{pin["url"]}"\n'
             f'rev = "{pin["inputRev"]}"\n\n' for pin in additions)
-        anchor = re.search(r"(?m)^\[\[(?:lean_lib|lean_exe)\]\]", text)
-        if anchor:
-            text = text[:anchor.start()] + block + text[anchor.start():]
-        else:
-            text = text.rstrip("\n") + "\n\n" + block
-        tomllib.loads(text)
     else:
         block = "".join(
             f'\nrequire {pin["name"]} from git\n  "{pin["url"]}" @ "{pin["inputRev"]}"\n'
             for pin in additions)
-        requires = list(re.finditer(r"(?m)^require\b.*(?:\n[ \t]+.*)*\n", text))
-        anchor = requires[-1].end() if requires else len(text)
-        text = text[:anchor] + block + text[anchor:]
+    text = _insert_requirements(text, entry["lakefile"], block)
+    if entry["lakefile"] == "toml":
+        tomllib.loads(text)
     lakefile.write_text(text, encoding="utf-8")
     return [f'  external require + {pin["name"]} -> {pin["inputRev"]} ({lakefile.name})'
             for pin in additions]
@@ -1672,7 +1686,9 @@ def validate_external_imports(entry: dict, clone: Path) -> None:
     lakefile = clone / f"lakefile.{entry['lakefile']}"
     text = lakefile.read_text(encoding="utf-8") if lakefile.is_file() else ""
     provided = _provided_external_roots(text, entry["lakefile"])
-    missing = {root: where for root, where in _external_import_roots(entry, clone).items()
+    roots = _external_import_roots(entry, clone)
+    _check_external_boundary(entry, set(roots))
+    missing = {root: where for root, where in roots.items()
                if root not in provided}
     if missing:
         raise RuntimeError(

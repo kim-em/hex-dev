@@ -101,6 +101,10 @@ ineligible Hex library to the release manifest.
 Tau Ceti's own lock uses the same Mathlib revision shown above. Downstream
 proof/tactic packages must resolve a compatible shared Mathlib revision;
 updating Tau Ceti requires checking that compatibility.
+The existing mirror CI cache policy does not cache Tau Ceti build artifacts,
+so its imported modules rebuild in affected mirrors. Tau Ceti enables
+`warningAsError`; dependency-pin updates need a fresh compatible build,
+including that warning policy.
 
 ## Optional real-coefficient adapter proposal
 
@@ -173,13 +177,24 @@ Optional tactic consumers reuse [#10358](https://github.com/kim-em/hex-dev/issue
 
 The [candidate evidence ledger](real-closure-candidate-consumer.json) records
 the 62 local Git pins, exact external pins and source/configuration/log hashes.
-The fresh consumer and rational HexRCF test target pass. Separate builds of
+The fresh consumer uses the experimental HexRCF declaration, and its rational
+test target passes under that declaration. Separate builds of
 the two migrated companions and the base HexRCF package with its existing
 library declaration pass against the generated locks without `lake update`;
 those locks remain unchanged. Computational candidate declarations and locks
 contain neither Mathlib nor Tau Ceti. These checks validate the local package
 layout and the new provider/lock synthesis; they do not choose the optional
 package boundary or certify a release sync.
+
+Three [targeted sync previews](real-closure-sync-previews.json), using the
+read-only live `release-sync-baseline` state, pass for
+`hex-real-roots-mathlib`, `hex-rcf` and the aggregate `hex`. They preview the
+direct Tau Ceti requirement and the inherited downstream lock entries using
+the actual published manifest pin lists. The checkout's bootstrap baseline
+first fails because its proposed tag already exists; that failure is retained.
+These previews do not build or retain staged packages and are not a full
+sync dry run. The full-declared-closure candidate builds above do not certify
+the smaller published-only graph.
 
 ## Unapplied publication changes and distribution prerequisites
 
@@ -225,8 +240,11 @@ manifest state:
 5. The shared Tarski modules are integrated into the already published real-roots
    companion’s managed paths, with direct pinned Tau Ceti requirement synthesis
    and inherited downstream lock synthesis in the existing driver. Candidate
-   package builds must verify the synchronized declarations and locks before
-   merge. TarskiFoundation’s `import all HexRealRootsMathlib.TarskiSum` accesses
+   checks validate the local 62-package layout with the full declared graph;
+   they do not establish a build of precisely the published-only mirror graph.
+   Targeted sync dry runs preview the actual three affected manifest entries;
+   fresh builds of precisely staged release output remain part of the
+   publication checks. TarskiFoundation’s `import all HexRealRootsMathlib.TarskiSum` accesses
    its own companion internals and passes the existing DAG/trusted-import policy;
    consumers use ordinary imports. No published mirror is edited or pushed.
    Obtain maintainer-created new mirrors and skeletons under
