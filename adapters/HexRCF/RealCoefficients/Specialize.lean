@@ -15,8 +15,8 @@ public import HexPolyMathlib.PolynomialEquivalence
 public section
 
 /-! Substitute fixed algebraic coefficients into the shared polynomial syntax.
-This is the canonical-field specialization. General representation carriers
-still require an operation-preserving specialization bridge. Kernel replay uses
+This is the canonical-field specialization. `RepresentationSpecialize` gives
+the same substitution for zero-reflecting, operation-preserving representations. Kernel replay uses
 the evaluation theorem and supplied coefficient identities, rather than
 unfolding canonical minimal-polynomial and root-isolation searches. -/
 

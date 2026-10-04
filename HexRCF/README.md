@@ -137,6 +137,15 @@ transport, state restoration, exact bindings, discarded guards and strict
 verdicts. This API covers the documented fixed-field fragment; registrations
 use the separate finite-bound interface, and general towers remain incomplete.
 
+`RepresentationSpecialize.prepare` also specializes shared atoms into native
+coefficient representations using their ordinary arithmetic. Its evaluation
+and degree proofs use operation preservation and zero reflection, without
+asserting field laws on stored values. The [native sample regressions](../conformance/HexRCF/TowerSamples.lean)
+compose it with the owner's complete real-cell and ordinary-sample laws over
+a selected algebraic coefficient field, retaining repeated and zero atoms and
+half-open guards. The manual gives direct API examples. General frozen tower
+replay and joint infinitesimal realization still require the owner interfaces.
+
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
 `QAdjoin` coordinates converted through `Coefficients.ofField` or directly through

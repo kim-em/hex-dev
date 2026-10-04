@@ -24,6 +24,7 @@ Mathlib and are never executable benchmark roots.
 | Closed source conversion and selected embeddings | [CheckedConversions](../conformance/HexRCF/CheckedConversions.lean), [NormalizedCoefficients](../conformance/HexRCF/NormalizedCoefficients.lean), [RootAliasesConformance](../conformance/HexRCF/RootAliasesConformance.lean), [CertificationProofs](../conformance/HexRCF/CertificationProofs.lean): checked real/option/getD/QAdjoin conversion, positive/negative roots, square/cubic aliases and independently constructed fields. Common-field authentication covers the delivered witness languages, not all irreducible polynomials. |
 | Original divisor preflight | [AlgebraicDivision](../conformance/HexRCF/AlgebraicDivision.lean), [CheckedConversions](../conformance/HexRCF/CheckedConversions.lean), [PreparedCoefficients](../conformance/HexRCF/PreparedCoefficients.lean): original denominators survive cancellation and discarded branches. The prepared finite path checks guards before zero, constant and empty-domain shortcuts. |
 | Shared atom specialization | [FieldSpecializeConformance](../conformance/HexRCF/FieldSpecializeConformance.lean): `Specialize.prepare`/`FieldSpecialize.prepare` preserve every atom, including zero and domain guards. Evaluation and semantic degree are proved after coefficient cancellation. The carrier filters zero polynomials only after traversal. |
+| Native representation specialization and ordinary samples | [TowerSamples](../conformance/HexRCF/TowerSamples.lean) applies `RepresentationSpecialize.prepare` to the shared formula over an actual selected native coefficient field. It groups terms by their bound-variable exponent after evaluating coefficient coordinates directly. Evaluation requires preservation of the native arithmetic and zero reflection; degree requires zero reflection alone. No ring/field instance on stored expressions is asserted. Positive and negative selected √2 controls send repeated roots, literally duplicated atoms, zero atoms and leading-cancelled polynomials through `Sample.family`, checking every section/sector sign and the original strict/non-strict domain relations through the shared Boolean fold. The cancelled polynomial contributes an additional root section at zero. Owner `Sample.Family` laws establish real-cell coverage and the whole source sign vector at one ordinary sample, preserving the selected coefficient interpretation. This is direct API consumption, not a new frozen tower tactic backend. |
 | Fixed-field finite construction and replay | [FiniteReplay](../conformance/HexRCF/FiniteReplay.lean): exact formula/quantifier/coefficient/divisor/context bindings, complete recorded sign operands, malformed evidence, diagnostic false and preflight-before-search. `Replay.check_domains`, `check_spec`, `check_sound`, `check_original` and `build_spec` use actual real interpretation laws. Bounded production can exhaust. `buildTotal_checked`/`buildTotal_spec` connect the existing complete exact-field producer to finite acceptance for nonzero original divisors, independently of direct proposal depth; false remains diagnostic. |
 | Original-goal API proof generation | [PreparedCoefficients](../conformance/HexRCF/PreparedCoefficients.lean) and [Prepared probes](../bench/HexRCF/ProofProbe/Prepared): successful guarded and Ioc proofs use `Replay.check_sound`; proof inspection excludes producer calls. A fresh total-production probe sets direct proposal depth to zero and still quotes an accepted Ioc proof. Wrong transport, omitted guards, incorrect identities and false verdicts fail. Preparation/transport preserve caller metavariables on success and restore full state on unsuccessful exits, including runtime exceptions. Assigned metavariables cannot hide forbidden dependencies; acceptance closes a fresh uncached theorem of the exact target. Original guards are recovered again from the source before checking, so editing the stored guard arrays cannot omit them. Runtime polynomial/root, formula, quantifier, coefficients and divisor coordinates are bound to their expression data before diagnostics; source/valuation proofs are checked at their required types. Validation-only checks retain no unused auxiliary declarations. |
 | Checked sign retrieval | [SignIndex](../conformance/HexRCF/SignIndex.lean): indexed hits are checked against the original table position and exact key. Missing or malformed routing falls back to the original lookup, preserving every original hit. Actual quoted-tree and linear/indexed proof regressions exercise both routes, including frozen replay failures and state restoration. |
@@ -88,10 +89,21 @@ The planned extension remains incomplete in these specific respects:
   degree-eight quartic/√2 example in `CertificationInputs` cannot be repaired
   just by trying more good primes. A diagnostic group calculation is not a
   Lean irreducibility proof.
-- General tower/context integration, complete ordered root/enlargement APIs
-  and one ordinary real realization of every finite joint nested constraint
-  require the actual owner interfaces. Ordered real-closure existence alone
-  does not discharge the joint realization conclusion. The merged
+- General frozen tower/context integration, executable assembly of all-live
+  enlargement, and one ordinary real realization of every finite joint set of
+  nested selected-root and successive-infinitesimal constraints still require
+  the actual owner interfaces. Native ordered roots are already available through
+  `Tower.Context.roots_all`, `roots?_success`, `roots_spec` and `roots_sorted`.
+  Native ordinary samples are available through `Sample.Family.cells_unique`,
+  `cell_signs` and `sector_signs`; the adapter consumes those laws in its direct
+  API examples, including source signs at each selected root section. A reducible
+  defining polynomial also checks leading cancellation between distinct stored
+  nonzero expressions whose difference is the canonical zero. They establish
+  actual native producer behavior under a real
+  predecessor model. A frozen tactic checker must separately validate literal
+  context/root/sign data without invoking those producers during replay.
+  Ordered real-closure existence alone does not discharge general joint
+  nested-root/infinitesimal realization or enlargement assembly. The merged
   `BaseInclusion.sign`, provider-derived `RealPrefix.Model.towerModel` and
   `BaseOrder`/`BaseMapModel` interfaces establish checked base-prefix transport,
   model packaging and ordered base models under their actual child laws; they
@@ -105,6 +117,14 @@ The planned extension remains incomplete in these specific respects:
   byte decoder under lexical prechecks. Graph checking still uses ordinary
   coefficient arithmetic. These laws do not reconstruct general tower contexts,
   collect every intermediate packing dependency or realize a joint real sample.
+  The merged [coefficient-level dependency envelope](../HexSignDet/DependenciesCodec.lean)
+  binds serialized results to their ordered full subjects, checks every packet
+  once through its supplied local reader, and retains the exact graph and typed
+  memo. `Graph.decode_encode` and `Decoded.results_bound` prove the actual byte
+  roundtrip and selected-result bindings. These are routing and codec laws;
+  the local reader still supplies arithmetic validity. Automatic intermediate
+  dependency collection, literal context reconstruction and strict compiled
+  arithmetic replay are not supplied by the envelope.
   The merged supplied-fact graph transport in
   [DagOperations](../HexSignDet/DagOperations.lean) preserves memo acceptance,
   rejection, literal trees and indices under the supplied coefficient-operation
