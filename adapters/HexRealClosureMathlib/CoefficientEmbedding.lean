@@ -239,6 +239,8 @@ theorem nested_selected (g : Lean.Grind.Field F)
     let sourceSign := Hex.OrderedFn.Infinitesimal.sign
       (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign)
     let sourceSigns := fractions.toList.map sourceSign
+    let headSigns := fun i => sourceSign (d.raw.head.coeff i)
+    let querySigns := qs.map fun q => fun i => sourceSign (q.coeff i)
     letI : Lean.Grind.Field F := Field.toGrindField
     let data := nestedEvidence g compatible d qs s
     let requested := nestedFractions g compatible fractions
@@ -272,7 +274,11 @@ theorem nested_selected (g : Lean.Grind.Field F)
               (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) f ∧
           (evalNestedFraction (interpretation.map f) first second = 0 ↔ f = 0)) ∧
         requested.toList.map (fun f =>
-          (SignType.sign (evalNestedFraction (interpretation.map f) first second) : Int)) = sourceSigns := by
+          (SignType.sign (evalNestedFraction (interpretation.map f) first second) : Int)) = sourceSigns ∧
+        (∀ i, (SignType.sign (target.raw.head.coeff i) : Int) = headSigns i) ∧
+        List.Forall₂ (fun expected q => ∀ i, (SignType.sign (q.coeff i) : Int) = expected i)
+          querySigns ((data.2.1.map interpretation.polynomial).map
+            (fun q => polynomial (RingHom.id ℝ) ((firstMap first).polynomial q) second)) := by
   cases compatible
   intro d qs s fractions cap positive
   dsimp only [nestedEvidence, nestedFractions]
@@ -280,10 +286,23 @@ theorem nested_selected (g : Lean.Grind.Field F)
   let interpretation := CoefficientMap.ofHom
     (HexRationalFnMathlib.mapHom (HexRationalFnMathlib.mapHom embedding))
   obtain ⟨embedded, raw, evidence, signs, values⟩ := nested_embedding embedding ordered d qs s
+  let inventory := d.raw.head.toArray.toList ++ qs.flatMap (fun q => q.toArray.toList)
+  let family := fractions ∪ inventory.toFinset ∪ {0}
+  have inFamily (p : Hex.DensePoly (Hex.RationalFn (Hex.RationalFn F)))
+      (member : p = d.raw.head ∨ p ∈ qs) (i : Nat) : p.coeff i ∈ family := by
+    by_cases stored : i < p.size
+    · have inArray := RealClosure.CoefficientMap.coefficient_mem p i stored
+      have inInventory : p.coeff i ∈ inventory := by
+        rcases member with rfl | member
+        · exact List.mem_append_left _ inArray
+        · exact List.mem_append_right _ (List.mem_flatMap.mpr ⟨p, member, inArray⟩)
+      exact Finset.mem_union_left _ (Finset.mem_union_right _ (List.mem_toFinset.mpr inInventory))
+    · rw [Hex.DensePoly.coeff_eq_zero_of_size_le p (Nat.le_of_not_gt stored)]
+      exact Finset.mem_union_right _ (Finset.mem_singleton_self _)
   obtain ⟨first, firstPositive, below, second, secondPositive, smaller, target,
     targetRaw, targetEvidence, targetChecked, observed, head, queries, coefficients⟩ :=
-    exists_nested_selected embedded _ signs (fractions.image interpretation.map) cap positive
-  have preserved (f : Hex.RationalFn (Hex.RationalFn F)) (member : f ∈ fractions) :
+    exists_nested_selected embedded _ signs (family.image interpretation.map) cap positive
+  have preserved (f : Hex.RationalFn (Hex.RationalFn F)) (member : f ∈ family) :
       (SignType.sign (evalNestedFraction (interpretation.map f) first second) : Int) =
           Hex.OrderedFn.Infinitesimal.sign
             (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) f ∧
@@ -296,11 +315,48 @@ theorem nested_selected (g : Lean.Grind.Field F)
       exact (HexRationalFnMathlib.mapHom (HexRationalFnMathlib.mapHom embedding)).map_eq_zero_iff
   refine ⟨first, firstPositive, below, second, secondPositive, smaller, target,
     raw ▸ targetRaw, evidence ▸ targetEvidence, ?_, observed.trans values,
-    raw ▸ head, queries, preserved, ?_⟩
+    raw ▸ head, queries,
+    (fun f member => preserved f (Finset.mem_union_left _ (Finset.mem_union_left _ member))),
+    ?_, ?_, ?_⟩
   · simpa only [raw, evidence] using targetChecked
   · apply List.map_congr_left
     intro f member
-    exact (preserved f (Finset.mem_toList.mp member)).1
+    exact (preserved f (Finset.mem_union_left _
+      (Finset.mem_union_left _ (Finset.mem_toList.mp member)))).1
+  · intro i
+    have equation := head i
+    rw [raw] at equation
+    change target.raw.head.coeff i =
+      evalNestedFraction (interpretation.polynomial d.raw.head |>.coeff i) first second at equation
+    rw [equation, RealClosure.CoefficientMap.polynomial_coeff]
+    exact (preserved _ (inFamily _ (Or.inl rfl) i)).1
+  · have each : ∀ q ∈ qs, ∀ i,
+        (SignType.sign ((polynomial (RingHom.id ℝ)
+          ((firstMap first).polynomial (interpretation.polynomial q)) second).coeff i) : Int) =
+          Hex.OrderedFn.Infinitesimal.sign
+            (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) (q.coeff i) := by
+      intro q member i
+      rw [queries _ (List.mem_map.mpr ⟨q, member, rfl⟩) i,
+        RealClosure.CoefficientMap.polynomial_coeff]
+      exact (preserved _ (inFamily _ (Or.inr member) i)).1
+    have assembled : ∀ polynomials : List (Hex.DensePoly (Hex.RationalFn (Hex.RationalFn F))),
+        (∀ q ∈ polynomials, ∀ i,
+          (SignType.sign ((polynomial (RingHom.id ℝ)
+            ((firstMap first).polynomial (interpretation.polynomial q)) second).coeff i) : Int) =
+            Hex.OrderedFn.Infinitesimal.sign
+              (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) (q.coeff i)) →
+        List.Forall₂ (fun expected q => ∀ i, (SignType.sign (q.coeff i) : Int) = expected i)
+          (polynomials.map fun q => fun i => Hex.OrderedFn.Infinitesimal.sign
+            (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) (q.coeff i))
+          ((polynomials.map interpretation.polynomial).map
+            (fun q => polynomial (RingHom.id ℝ) ((firstMap first).polynomial q) second)) := by
+      intro polynomials
+      induction polynomials with
+      | nil => intro _; exact .nil
+      | cons q rest ih =>
+        intro facts
+        exact .cons (facts q (by simp)) (ih (fun r member => facts r (by simp [member])))
+    exact assembled qs each
 
 end Hex.RealClosure.Specialize.Native
 

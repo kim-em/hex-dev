@@ -2056,8 +2056,8 @@ remaining dependency-closed transport obligations are listed above.
 
 The native presentation quotient below identifies finite native tower values
 with the algebraic union; item 1 above restricts the semantic ambient field.
-Descriptor construction and simultaneous realization of finite sign
-conditions at one ordinary real point also remain open.
+Simultaneous realization through arbitrary interleaved algebraic and
+infinitesimal stages remains open.
 
 ### Two infinitesimals with native selected-root evidence
 

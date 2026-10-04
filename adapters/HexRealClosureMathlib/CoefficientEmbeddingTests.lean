@@ -236,6 +236,8 @@ theorem, including every source coefficient of its head and query. -/
 theorem ordinary_selected :
     let fractions := (head.toArray.toList ++ query.toArray.toList).toFinset
     let sourceSigns := fractions.toList.map sign
+    let headSigns := fun i => sign (head.coeff i)
+    let querySigns := [fun i => sign (query.coeff i)]
     letI : Lean.Grind.Field Rat := Field.toGrindField
     let data := Native.nestedEvidence (F := Rat) (context := ()) Lean.Grind.instFieldRat
       HexRationalFnMathlib.ratField_eq descriptor [query] selected
@@ -261,14 +263,18 @@ theorem ordinary_selected :
             (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl)
             (fun _ => rfl) (fun _ => rfl)) = [1] ∧
         requested.toList.map (fun f =>
-          (SignType.sign (evalNestedFraction (interpretation.map f) first second) : Int)) = sourceSigns := by
+          (SignType.sign (evalNestedFraction (interpretation.map f) first second) : Int)) = sourceSigns ∧
+        (∀ i, (SignType.sign (target.raw.head.coeff i) : Int) = headSigns i) ∧
+        List.Forall₂ (fun expected q => ∀ i, (SignType.sign (q.coeff i) : Int) = expected i)
+          querySigns ((data.2.1.map interpretation.polynomial).map
+            (fun q => polynomial (RingHom.id ℝ) ((firstMap first).polynomial q) second)) := by
   obtain ⟨first, positive, below, second, secondPositive, smaller, target,
-    raw, evidence, checked, observed, _, _, _, coefficients⟩ :=
+    raw, evidence, checked, observed, _, _, _, coefficients, headData, queryData⟩ :=
     Native.nested_selected (F := Rat) (context := ()) Lean.Grind.instFieldRat
       HexRationalFnMathlib.ratField_eq (Rat.castHom ℝ) Rat.cast_strictMono descriptor [query] selected
       (head.toArray.toList ++ query.toArray.toList).toFinset 1 zero_lt_one
   exact ⟨first, positive, below, second, secondPositive, smaller, target,
-    raw, evidence, checked, observed, coefficients⟩
+    raw, evidence, checked, observed, coefficients, headData, queryData⟩
 
 /-- info: 'Hex.RealClosure.Specialize.EmbeddingTests.ordinary_selected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
