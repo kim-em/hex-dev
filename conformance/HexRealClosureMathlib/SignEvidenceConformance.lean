@@ -9,6 +9,14 @@ public import HexRealClosureMathlib.SignEvidence
 public meta import HexRealClosureMathlib.SignEvidence
 public import HexRealClosureMathlib.SignFactsConformance
 public meta import HexRealClosureMathlib.SignFactsConformance
+import all HexSignDet.Codec.Basic
+import all HexSignDet.Codec.Json
+import all HexRealClosure.SignCodec
+import all HexRealClosure.AlgebraicCodec
+import all HexRealClosure.Algebraic
+import all HexRealClosure.SignEvidence
+import all HexSignDet.Codec.Coefficients
+import all HexPoly.Euclid.DivGcd
 
 public section
 
@@ -189,6 +197,80 @@ def nestedPass : Bool :=
 
 #guard nestedPass
 
+/-- Both levels are actual producer output. The lower request list is
+collected from every literal of the produced upper packet, rather than a
+handwritten fixture list. Arithmetic during checking still uses native ops. -/
+def producedNestedPass (shared : Bool := false) : Bool :=
+  (do
+    let upperSigns ← (NestedSignsConformance.next.buildSigns
+      [NestedSignsConformance.unitPoly, NestedSignsConformance.nextQuery,
+        0, NestedSignsConformance.unitPoly]).toOption
+    let upper := SignEvidence.ofSigns upperSigns
+    let coefficients := SignEvidence.coefficients NestedSignsConformance.next.root.raw upper
+    let keys := Element.signKeys coefficients
+    let requested := if shared then keys ++ [DensePoly.C (37 : Rat)] else keys
+    let lower ← (context.buildEvidence requested).toOption
+    let lowerCodec := SignEvidence.codec ValueCodec.rat ValueCodec.nat source.raw
+    let facts ← (decode ValueCodec.rat requested (lowerCodec.encodeBytes lower)).toOption
+    let reader := Element.signCodec ValueCodec.rat facts.toList
+    let wire := SignEvidence.codec reader ValueCodec.nat NestedSignsConformance.next.root.raw
+    let decoded ← (decodeUpper reader upper.queries (wire.encodeBytes upper)).toOption
+    let literals := coefficients.all fun a =>
+      reader.decode (reader.encode a) == .ok a
+    let missing := Element.signCodec ValueCodec.rat
+      (facts.toList.filter fun fact => fact.polynomial != stored)
+    let everyOmission := facts.toList.all fun fact =>
+      !keys.contains fact.polynomial || fact.polynomial == 0 ||
+        (decodeUpper (Element.signCodec ValueCodec.rat
+          (facts.toList.filter fun other => other.polynomial != fact.polynomial))
+          upper.queries (wire.encodeBytes upper)).toOption.isNone
+    let prepared := upper.graph.entries.any fun e =>
+      e.node.preparation.any fun p => !p.steps.isEmpty
+    let reduced := upper.graph.entries.any fun e =>
+      e.node.reductions.toArray.any fun r => r.any fun p => !p.steps.isEmpty
+    pure (decoded.toList.map SignFact.sign == [1, 1, 0, 1] && literals && everyOmission &&
+      prepared && reduced && keys.length < coefficients.length &&
+      (decodeUpper missing upper.queries (wire.encodeBytes upper)).toOption.isNone)) == some true
+
+#guard producedNestedPass
+#guard producedNestedPass true
+
+@[expose] def upperKernelSigns :
+    SelectedSigns NestedSignsConformance.next.root [NestedSignsConformance.unitPoly] :=
+  ⟨#v[1], .leaf NestedSignsConformance.queryNode, by
+    simpa only [NestedSignsConformance.next, Context.extend, Context.root_adjoin] using
+      NestedSignsConformance.query_checked⟩
+
+@[expose] def kernelLowerFacts : List (SignFact context) :=
+  literalFacts ++ [SignCodecConformance.oneFact, ⟨DensePoly.C (-1), -1, by
+    rw [context.signPoly_const _ (by decide +kernel)]
+    decide +kernel⟩]
+
+@[expose] def kernelLowerReader := Element.signCodec ValueCodec.rat kernelLowerFacts
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+/-- The ordinary kernel verifies coverage of every stored literal in this
+upper packet, including its scales, quotients and finite endpoints. -/
+theorem upper_coverage : kernelLowerReader.Covers
+    (SignEvidence.coefficients NestedSignsConformance.next.root.raw
+      (SignEvidence.ofSigns upperKernelSigns)) := by
+  unfold ValueCodec.Covers
+  simp only [NestedSignsConformance.next, Context.extend, Context.root_adjoin,
+    NestedSignsConformance.root_raw]
+  simp only [SignEvidence.ofSigns, upperKernelSigns, Dag.encode_leaf]
+  decide +kernel
+
+/-- The actual partial-reader codec roundtrip is a kernel theorem, with no
+global law for the algebraic coefficient decoder. -/
+theorem upper_roundtrip :
+    (SignEvidence.codec kernelLowerReader ValueCodec.nat NestedSignsConformance.next.root.raw).decode
+      ((SignEvidence.codec kernelLowerReader ValueCodec.nat
+        NestedSignsConformance.next.root.raw).encode (SignEvidence.ofSigns upperKernelSigns)) =
+      .ok (SignEvidence.ofSigns upperKernelSigns) :=
+  SignEvidence.codec_ofSigns_covered _ _ _ upperKernelSigns upper_coverage
+    (ValueCodec.nat_lawful.covers _)
+
 /-- The child table is checked by the imported ordinary-kernel fixture. -/
 @[expose] def kernelSigns : SelectedSigns context.root [NestedSignsConformance.endpointQuery] :=
   ⟨#v[1], .leaf NestedSignsConformance.endpointNode, by
@@ -245,3 +327,7 @@ end Hex.RealClosure.Algebraic.SignEvidenceConformance
 /-- info: 'Hex.RealClosure.Algebraic.SignEvidenceConformance.rational_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.SignEvidenceConformance.rational_roundtrip
+
+/-- info: 'Hex.RealClosure.Algebraic.SignEvidenceConformance.upper_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.SignEvidenceConformance.upper_roundtrip
