@@ -1579,9 +1579,11 @@ identifies the transported value with a separately retrieved canonical owner mod
 Registration caches checked inclusions for every original algebraic predecessor.
 Parent/child registration, sibling branches, and repeated owners reuse their
 common roots. Exact native provenance is checked first. For a new owner,
-registration validates its converted descriptor and tests existing cached
-generators and their negatives against the defining equation, derivative signs
-and strict interval bounds. A matching value becomes the owner's generator
+registration validates its converted descriptor and visits cached generators
+and their negatives on demand. Each candidate is tested against the defining
+equation first, followed by derivative signs and strict interval bounds; the
+check stops at the first mismatch and the search stops at the first full match.
+A matching value becomes the owner's generator
 through a proved polynomial evaluation map, retaining the exact shared target
 and all existing owner/cache interpretations. A linear converted head supplies
 a coefficient-field candidate, subject to the same complete constraint check.
