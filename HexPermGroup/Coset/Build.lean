@@ -78,25 +78,25 @@ The public wrapper checks the caller's cap before invoking this helper. -/
 
 /-- Complete deterministic left transversal, or an exact size-limit result
 before allocation. The representatives need not be canonical across inputs. -/
-@[expose] def leftCosetsWith (cap : Nat) (G H : Group n) (h : H.IsSubgroup G) :
+@[expose] def leftCosetsCapped (cap : Nat) (G H : Group n) (h : H.IsSubgroup G) :
     Except SizeLimit (LeftTransversal G H) :=
   if G.index H h ≤ cap then .ok (G.leftTransversal H h)
   else .error ⟨G.index H h, cap⟩
 
-theorem leftCosetsWith_ok (cap : Nat) (G H : Group n) (h : H.IsSubgroup G) :
-    (∃ t, leftCosetsWith cap G H h = .ok t) ↔ G.index H h ≤ cap := by
-  unfold leftCosetsWith
+theorem leftCosetsCapped_ok (cap : Nat) (G H : Group n) (h : H.IsSubgroup G) :
+    (∃ t, leftCosetsCapped cap G H h = .ok t) ↔ G.index H h ≤ cap := by
+  unfold leftCosetsCapped
   split <;> simp_all
 
-theorem leftCosetsWith_error (cap : Nat) (G H : Group n) (h : H.IsSubgroup G) :
-    leftCosetsWith cap G H h = .error ⟨G.index H h, cap⟩ ↔ cap < G.index H h := by
-  unfold leftCosetsWith
+theorem leftCosetsCapped_error (cap : Nat) (G H : Group n) (h : H.IsSubgroup G) :
+    leftCosetsCapped cap G H h = .error ⟨G.index H h, cap⟩ ↔ cap < G.index H h := by
+  unfold leftCosetsCapped
   split <;> simp_all
 
-theorem leftCosetsWith_spec (cap : Nat) (G H : Group n) (h : H.IsSubgroup G)
-    (t : LeftTransversal G H) (ht : leftCosetsWith cap G H h = .ok t) :
+theorem leftCosetsCapped_spec (cap : Nat) (G H : Group n) (h : H.IsSubgroup G)
+    (t : LeftTransversal G H) (ht : leftCosetsCapped cap G H h = .ok t) :
     t.reps.size = G.index H h ∧ t.reps.size ≤ cap ∧ G.order = t.reps.size * H.order := by
-  have hc := (leftCosetsWith_ok cap G H h).mp ⟨t, ht⟩
+  have hc := (leftCosetsCapped_ok cap G H h).mp ⟨t, ht⟩
   exact ⟨t.count h, by rwa [t.count h], t.order_eq h⟩
 
 end Group

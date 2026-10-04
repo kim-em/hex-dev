@@ -120,14 +120,14 @@ def containment : Unit → IO Nat := fun _ => do
 def enumeration : Unit → IO Nat := fun _ => do
   let G ← readGroup s4Ref
   let H := Group.ofGenerators #[cycle4]
-  let .ok xs := G.elementsWith 24 | throw (IO.userError "enumeration: exact cap")
-  let .error elementLimit := G.elementsWith 23
+  let .ok xs := G.elementsCapped 24 | throw (IO.userError "enumeration: exact cap")
+  let .error elementLimit := G.elementsCapped 23
     | throw (IO.userError "enumeration: short element cap")
   if h : H.isSubgroup G = true then
     let inclusion := (Group.isSubgroup_iff H G).mp h
-    let .ok cosets := G.leftCosetsWith 6 H inclusion
+    let .ok cosets := G.leftCosetsCapped 6 H inclusion
       | throw (IO.userError "enumeration: exact coset cap")
-    let .error cosetLimit := G.leftCosetsWith 5 H inclusion
+    let .error cosetLimit := G.leftCosetsCapped 5 H inclusion
       | throw (IO.userError "enumeration: short coset cap")
     require (xs.size == 24 && elementLimit.required == 24 && cosets.reps.size == 6 &&
       cosetLimit.required == 6) "enumeration: cap contract"
@@ -141,7 +141,7 @@ def elementAccess : Unit → IO Nat := fun _ => do
     | throw (IO.userError "element-access: missing large cyclic generator")
   let some p := G.unrank? 17
     | throw (IO.userError "element-access: index rejected")
-  let samples : List (Element G) := Group.sampleWith (fun bound _ => List.finRange bound) G
+  let samples : List (Element G) := Group.sampleFrom (fun bound _ => List.finRange bound) G
   require ((G.rank p).val == 17 && samples.map (fun q => (G.rank q).val) == List.range 24 &&
       swap4.sign == -1 && (swap4.comp cycle4).sign == swap4.sign * cycle4.sign &&
       swap4.cycleType == #[1, 1, 2] && largeGenerator.order > 18446744073709551615 &&

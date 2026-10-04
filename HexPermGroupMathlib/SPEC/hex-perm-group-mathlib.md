@@ -29,7 +29,7 @@ files running the kernel replay theorems and `perm_group` in
 `proof_probes` root and built by CI on every PR.
 
 The library provides Mathlib's `Random m (Element G)` instance for every
-monad `m`, built from `Group.randomElement`, which applies `Group.sampleWith`
+monad `m`, built from `Group.randomElement`, which applies `Group.sampleFrom`
 to the rejection sampler `randomIndex` over a `RandomGen` generator. Its
 contract, specified in
 [hex-perm-group, Ranking and sampling](../../HexPermGroup/SPEC/hex-perm-group.md#ranking-and-sampling),

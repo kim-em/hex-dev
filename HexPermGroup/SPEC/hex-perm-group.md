@@ -280,7 +280,7 @@ chain invariants and demonstrates its improvement on the required families.
 
 Prove `ofGenerators_checks` for every well-formed generator array, without
 assuming a successful randomized trial, a known group order or a complete
-classification table. The optional `buildWith budget S` counts point visits,
+classification table. The optional `buildBudgeted budget S` counts point visits,
 Schreier pairs, sift steps and certificate nodes. It returns either a group
 with a passing chain for exactly `S`, or an incomplete result. Incomplete
 results may report verified words or subgroups discovered so far, but expose
@@ -479,9 +479,18 @@ The soundness theorems are stated and proved in `HexPermGroupMathlib`: see
 | `isNormal H G h` | Normality of `H` in `G`, with `h` proving containment. |
 | `isAbelian G` | True exactly when all group elements commute. |
 | `rank G p`, `unrank G k` | Inverse maps between `Element G` and `Fin (order G)`. |
-| `sampleWith draw G` | Unrank one index supplied by `draw` for the positive bound `order G`. |
-| `elementsWith cap G` | Every group element once if `order G ≤ cap`, otherwise an explicit size-limit result. |
-| `leftCosetsWith cap G H h` | A complete left transversal when `h` proves `H ≤ G` and the index fits the cap. |
+| `sampleFrom draw G` | Unrank one index supplied by `draw` for the positive bound `order G`. |
+| `elementsCapped cap G` | Every group element once if `order G ≤ cap`, otherwise an explicit size-limit result. |
+| `leftCosetsCapped cap G H h` | A complete left transversal when `h` proves `H ≤ G` and the index fits the cap. |
+
+Operations that take a limit are named by the kind of limit. A `Capped`
+operation, such as `elementsCapped` or `leftCosetsCapped`, compares its cap
+with the exact size of the required output before doing any work, and
+otherwise returns a size-limit result. A `Budgeted` operation, such as
+`buildBudgeted` or `centralizerBudgeted`, meters its work against a budget
+and returns either a complete result or an explicitly incomplete one. An
+operation parameterized by a supplied function rather than a limit, such as
+`sampleFrom`, carries neither suffix.
 
 `orbit` and `transporter?` can use the generator BFS and its checked orbit
 certificate without constructing a new chain. For `stabilizer`, use the
@@ -524,9 +533,9 @@ The unique element of a trivial group has rank zero, including at degree
 zero. Checked raw-index and raw-permutation entry points reject out-of-range
 indices and nonmembers. Ranking is relative to the stored chain, and need
 not agree for different presentations of the same group or with the
-lexicographically sorted output of `elementsWith`.
+lexicographically sorted output of `elementsCapped`.
 
-`sampleWith` takes an effectful bounded-index source returning an element of
+`sampleFrom` takes an effectful bounded-index source returning an element of
 `Fin (order G)` and applies `unrank`. It preserves any explicit source
 failure. Its mathematical uniformity contract is conditional on a uniform
 input index: every group element has exactly one preimage and thus
@@ -535,12 +544,12 @@ the companion proves the corresponding finite-distribution statement.
 This does not assert that a pseudorandom seed is a source of true uniform
 randomness. Do not obtain bounded indices by a biased modular reduction.
 
-`sampleWith` is the sampling interface of this library: the caller brings
+`sampleFrom` is the sampling interface of this library: the caller brings
 the randomness, in any functor. The library contains no random-number source
 and does not hook into `IO`.
 
 `HexPermGroupMathlib` provides an instance of Mathlib's `Random m (Element G)`
-for every monad `m`, built from `Group.randomElement G = sampleWith randomIndex
+for every monad `m`, built from `Group.randomElement G = sampleFrom randomIndex
 G` in `RandGT g m`. `randomIndex bound` reads the generator's range `[lo, hi]`,
 sets `width = hi + 1 - lo`, takes the least `k` with `bound ≤ width ^ k`, and
 reads `k` draws as the base-`width` digits of `x < span = width ^ k`. It
@@ -563,7 +572,7 @@ answer is not an empty group or an empty list.
 
 ### Left cosets
 
-`leftCosetsWith` uses cosets `gH`. For representatives `x,y` in `G`,
+`leftCosetsCapped` uses cosets `gH`. For representatives `x,y` in `G`,
 `xH=yH` exactly when `y⁻¹*x` belongs to `H`. Start from `H` and perform
 BFS under **left** multiplication by the symmetric generators of `G`.
 Compare a new coset with stored representatives using that membership test.
@@ -687,7 +696,7 @@ chain for `K` alone does not prove this equality. For a negative transporter
 answer every branch must be excluded; a positive answer needs only a checked
 word and the action equation.
 
-Exact forms terminate on the finite chain tree. `...With budget` forms count
+Exact forms terminate on the finite chain tree. `...Budgeted budget` forms count
 visited nodes, refinement work, sifts and certificate nodes; exhaustion is
 explicitly incomplete. Discovered subgroups are lower bounds only. There is
 no polynomial runtime or polynomial certificate-size promise for this search.

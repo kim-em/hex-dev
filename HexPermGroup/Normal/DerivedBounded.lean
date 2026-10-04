@@ -30,7 +30,7 @@ threads the same meter through the seed chain and every normal-closure rebuild. 
       chain := built.val.chain
       valid := by simpa only [built.property, Group.generators_ofGenerators] using built.val.valid }
   have hH : H.IsSubgroup G := seed_inside G
-  let closed ← Normal.iterateWith G (G.order - H.order) H hH (Nat.le_refl _)
+  let closed ← Normal.iterateBudgeted G (G.order - H.order) H hH (Nat.le_refl _)
   reserve .certificates 1
   return {
     group := closed.group
@@ -48,7 +48,7 @@ namespace Hex.PermGroup.Group
 
 /-- Exhaustion of a derived step returns no final derived subgroup. Its seed
 construction and normal closure consume a single cumulative producer meter. -/
-@[expose] def derivedWith (budget : Execution.Budget) (G : Group n) :
+@[expose] def derivedBudgeted (budget : Execution.Budget) (G : Group n) :
     Execution.Measured budget (Derived.Result G) := Execution.run budget (Derived.construct G)
 
 end Hex.PermGroup.Group
