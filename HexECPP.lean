@@ -16,4 +16,15 @@ public import HexECPP.Search
 
 public section
 
-/-! Mathlib-free ECPP certificate data, checking, and bounded conversion. -/
+/-!
+# Elliptic curve primality proving
+
+ECPP proves an integer prime by finding an elliptic curve point of sufficiently
+large prime order. A certificate records the curve, point, modular inverses and
+a certificate for that smaller prime. This library supplies the data, an
+executable checker, conversion of PARI certificate text and a built-in search.
+
+Import `HexECPPMathlib` for the theorem that checker acceptance implies
+Mathlib's `Nat.Prime`, or `HexECPPMathlib.Native` to search from a primality
+goal. The computational library here imports no Mathlib modules.
+-/

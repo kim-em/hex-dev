@@ -13,12 +13,17 @@ public import Lean.Meta.Tactic.TryThis
 public import Mathlib.Tactic.Linter.TacticDocumentation
 
 /-!
-# Explicit PARI certificate production
+# Proving primality with certificates found by PARI/GP
 
-`primality? (method := pari)` calls `gp` on PATH and suggests a compact,
-frozen certificate. In a batch build, `#ecpp_export Module.Name certName for n`
-writes a reusable Lean module. The language server displays build instructions.
-Importing that module and replaying suggestions never calls PARI.
+`primality? (method := pari)` asks the external PARI/GP computer algebra
+system to find an elliptic curve primality certificate for the integer in
+the goal. Hex completes and converts the data, verifies it in Lean's kernel,
+and suggests an `ecpp using` proof containing the saved certificate.
+
+Generation needs the `gp` executable on PATH and a POSIX system. In a batch
+build, `#ecpp_export Module.Name cert for n` saves a certificate to a new
+Lean module. Checking a saved suggestion or imported certificate never calls
+PARI. The external program proposes data; it is not trusted as a proof.
 -/
 
 @[expose] public section
@@ -51,8 +56,10 @@ meta def generate (n : Nat) : MetaM (String × Cert) := do
   checkWithKernel proof
   return (source, frozen)
 
-/-- Explicit bounded PARI generation with a kernel-checked frozen suggestion.
-PARI proposes data; replay uses only the Lean checker and soundness theorem. -/
+/-- Prove the integer in a primality goal using a certificate found by
+PARI/GP, and suggest a replacement containing the saved certificate.
+Generation requires `gp` on PATH and finite time and output limits.
+The resulting proof is kernel-checked; checking the replacement needs no GP. -/
 tactic_extension Hex.PrimalityTactic.primalitySuggestTac
 
 @[inherit_doc Hex.PrimalityTactic.primalitySuggestTac,
@@ -60,7 +67,8 @@ tactic_extension Hex.PrimalityTactic.primalitySuggestTac
 syntax (name := pariSuggestTac) "primality?" " (" &"method" " := " &"pari" ")" : tactic
 
 set_option hygiene false in
-/-- Solve the closed subject and suggest its exact compact replay term. -/
+/-- Prove a closed primality goal using PARI and offer an `ecpp using`
+replacement containing the exact checked certificate. -/
 @[tactic pariSuggestTac] meta def suggest : Tactic.Tactic := fun stx => do
   let goal ← Tactic.getMainGoal
   goal.withContext <| withOptions (maxRecDepth.set · 65536) do
@@ -83,8 +91,12 @@ set_option hygiene false in
     Tactic.replaceMainGoal []
     Meta.Tactic.TryThis.addSuggestion stx replacement
 
-/-- Write one exposed certificate declaration in a user-selected module.
-Creation is exclusive: existing files are never overwritten. -/
+/-- Find a primality certificate with PARI/GP and save it in a new Lean
+module during `lake build`. For example,
+`#ecpp_export MyPrimes.Prime cert for 17` creates `MyPrimes/Prime.lean`.
+Remove the command after generation, import that module and use
+`ecpp using MyPrimes.Prime.cert`. The proof is kernel-checked before writing;
+existing files are never overwritten. -/
 syntax (name := pariExportCmd) "#ecpp_export " ident ident " for " term : command
 
 set_option hygiene false in

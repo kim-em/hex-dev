@@ -9,12 +9,17 @@ public import HexECPPMathlib.Elab
 public import Lean.Elab.Command
 
 /-!
-# Compact frozen ECPP certificates
+# Saving elliptic curve primality certificates as short Lean expressions
 
-`ecpp_cert% "PARI rows" using leaf` expands bounded certificate data to raw
-constructors during elaboration. It does not run PARI or search for a terminal
-prime. The explicit Hex terminal certificate and all generated inverse
-witnesses are checked by the ordinary checker and replayed in the kernel.
+`ecpp_cert% "rows" using lastPrimeCertificate` stores curves and points in
+PARI's row format, together with a HexPrimality certificate for the prime
+that ends the chain. Elaboration reconstructs the modular inverses and turns
+the result into explicit `Cert` data. `ecpp using` then proves primality by
+verifying the complete certificate in Lean's kernel.
+
+Reading a saved expression does not run PARI or search for any of its primes.
+The shared export helper creates a Lean module for data from a generator
+that has checked the exact saved certificate and its proof.
 -/
 
 @[expose] public section
@@ -23,10 +28,16 @@ open Lean Elab Meta
 
 namespace Hex.ECPP
 
-/-- Compact, self-contained source for an ECPP certificate. -/
+/-- A saved elliptic curve primality certificate, encoded as PARI rows and
+a HexPrimality certificate for the last prime. Use
+`ecpp using (ecpp_cert% "rows" using lastPrimeCertificate)` to prove the
+recorded integer prime. This notation reconstructs the certificate's
+arithmetic witnesses; it does not invoke PARI or repeat curve search. -/
 syntax (name := compactCertTerm) "ecpp_cert% " str " using " term : term
 
-/-- Decode compact rows and an explicit terminal into bounded exposed raw data. -/
+/-- Read a saved certificate's rows and last-prime certificate, reconstruct
+the modular inverses, and expose the resulting constructor data for proof
+checking. Reject invalid input or exceeded certificate limits. -/
 @[term_elab compactCertTerm] meta def elabCompactCert : Term.TermElab := fun stx _ =>
   withOptions (maxRecDepth.set · 65536) do
   let `(term| ecpp_cert% $source:str using $leaf:term) := stx
@@ -70,12 +81,15 @@ syntax (name := compactCertTerm) "ecpp_cert% " str " using " term : term
   compileDecl decl
   return mkConst name
 
-/-- The explicit terminal certificate embedded by a complete ECPP chain. -/
+/-- Extract the HexPrimality certificate that proves the last prime in an
+ECPP certificate's chain. -/
 meta def terminalCert : Cert → Hex.Nat.PrimeCert
   | .base leaf => leaf
   | .step _ _ _ _ _ _ _ child => terminalCert child
 
-/-- Freeze conversion inputs, avoiding the expanded inverse transcript in source. -/
+/-- Render saved curves and points with their last-prime certificate as an
+`ecpp_cert%` expression. Modular inverses are reconstructed when that saved
+expression is elaborated, so they need not all appear in the source text. -/
 meta def compactSyntax (source : String) (cert : Cert) : MetaM Term := do
   let leaf ← Hex.PrimalityTactic.certificateSyntax (terminalCert cert)
   let source := Syntax.mkStrLit source
