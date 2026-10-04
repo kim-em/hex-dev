@@ -10,8 +10,9 @@ includes all child preparation and execution. These boundaries are distinct.
 | --- | ---: | ---: | --- | ---: |
 | Direct recognition | 16 | +0.015245 | Two-sided linear pass | 57.990 µs |
 | Rational floor | 16 | −0.013195 | Two-sided linear pass | 24.644 µs |
+| Rational ceiling | 16 | −0.017619 | Two-sided linear pass | 24.070 µs |
 
-Both use the declared fixed trial-major schedule, four outer trials, 100 ms
+All three use the declared fixed trial-major schedule, four outer trials, 100 ms
 batch target, signal multiplier one and a 600-second whole-child safeguard.
 No rows are removed or budget-truncated. No load filter, quiet-core preflight
 or unchanged rerun is used. These results admit only their named operation
@@ -23,9 +24,18 @@ excessive Newton start in the former preparation diagnostic; general degree-one
 factorization and canonical isolation remain in the call path.
 
 [Completed snapshot](completed-snapshot.json) records source, native hash,
-leased CPU and host activity. It is explicitly a snapshot of the first two
-completed registrations. Ceiling and former-quotient-control runs remain in
-the persistent collection named there; no result is inferred for either until
+leased CPU and host activity. It is explicitly a snapshot of the first three
+completed registrations. The former-quotient-control run remains in
+the persistent collection named there; no result is inferred until
 its export completes. Their evidence and representative operation attribution
 remain required before full family admission. The underlying compiler and
 operation declarations are retained as source snapshots.
+
+[Size plot](plots/rational-height.svg) shows all completed points and their
+median curves. Regenerate it with:
+
+```sh
+python3 scripts/plots/real-algebraic-readiness.py --kind height \
+  --input reports/bench-results/real-algebraic-rational-height-after-sqrt \
+  --output reports/bench-results/real-algebraic-rational-height-after-sqrt/plots
+```

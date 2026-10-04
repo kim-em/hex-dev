@@ -527,12 +527,15 @@ setup_benchmark runRationalHigh m => m ^ 2
 -- Cost model: the original rational query retains Θ(m²) bits of quotient
 -- coefficients and performs Θ(m²) big-by-small bit work on this sparse
 -- fixed-degree-head family. Value-only preparation omits integer certificates.
+-- Limit this quotient-retaining diagnostic to the measured storage range.
+-- Higher degrees can retain tens of GiB; use the reduced path below for its
+-- separately declared larger ladder. This does not admit the baseline model.
 setup_benchmark runRationalValue degree => degree ^ 2
   with prep := rationalValueInput
   where {
-    paramSchedule := .custom #[131072, 262144, 524288, 1048576]
-    paramFloor := 131072
-    paramCeiling := 1048576
+    paramSchedule := .custom #[32768, 65536, 131072, 262144]
+    paramFloor := 32768
+    paramCeiling := 262144
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1

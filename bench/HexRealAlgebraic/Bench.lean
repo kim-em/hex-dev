@@ -10,7 +10,7 @@ import Hex.BenchOracle.Flint
 /-! Scalar size axes for the shipped API. Inputs and expected polynomial fingerprints are
 prepared outside timed requests. Arithmetic checks minimal polynomial/sign;
 comparison/rounding return their exact result. External arms check exact annihilation and sign, without a preconstructed
-expected algebraic root, and include JSON transport and temporary cleanup, with separately measured protocol controls.
+expected nonrational result for add/sqrt, and include JSON transport and temporary cleanup, with separately measured protocol controls.
 These fixed ladders are descriptive performance observations, not cost-model or
 budget attestations. No forward comparison-strategy extension is implemented. -/
 namespace Hex.RealAlgebraicScaling
@@ -22,6 +22,7 @@ private def real (a : AlgebraicNumber) : RealAlgebraicNumber :=
 private structure Input where
   a : RealAlgebraicNumber
   b : RealAlgebraicNumber
+  -- Rational reference or near-integer rounding operand; unused for add/sqrt.
   expected : RealAlgebraicNumber
   q : Rat
   polynomial : Array Int := #[]

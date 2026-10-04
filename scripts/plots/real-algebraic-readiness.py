@@ -28,8 +28,11 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--input',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True)
-    p.add_argument('--kind',choices=('scalar','sturm'),required=True)
-    args=p.parse_args();root=args.input;meta=json.loads((root/'metadata.json').read_text())
+    p.add_argument('--kind',choices=('scalar','sturm','height'),required=True)
+    args=p.parse_args();root=args.input
+    metadata=root/'metadata.json'
+    if args.kind=='height' and not metadata.exists():metadata=root/'completed-snapshot.json'
+    meta=json.loads(metadata.read_text())
     output=args.output;output.mkdir(parents=True,exist_ok=True)
     rows,failures=[],[]
     if args.kind=='scalar':
@@ -61,7 +64,34 @@ def main():
             ax.set_xlabel('Algebraic degree' if operation in ['Add','Sqrt'] else 'Coefficient bits' if operation=='Rational' else 'Separation exponent k (shift 2⁻ᵏ)')
             ax.grid(alpha=.2);ax.legend(fontsize=8)
         fig.suptitle('Shipped real-algebraic scalar APIs vs FLINT qqbar and Z3 RCF')
-        footer='Prepared operands; native arithmetic checks canonical polynomial/sign and external arithmetic checks exact annihilation/sign.\nNo expected algebraic root is prepared. External JSON/cleanup remain timed; protocol curves are separate, without subtraction.\nMissing Z3 floor/ceil arms denote an unavailable matching API. Whole-child caps include setup; see retained failures.'
+        footer='Prepared operands; native arithmetic checks canonical polynomial/sign and external arithmetic checks exact annihilation/sign.\nAdd/sqrt prepare no independent expected nonrational result; rational references and rounding integers are prepared.\nNative polynomial checks and external annihilation arithmetic differ. JSON/cleanup remain timed; no protocol subtraction.\nMissing Z3 floor/ceil arms denote an unavailable matching API. Whole-child caps include setup; see retained failures.'
+    elif args.kind=='height':
+        fig,ax=plt.subplots(figsize=(9,6))
+        for run in meta['runs']:
+            path=root/run['output']
+            if not path.exists():
+                failures.append(dict(run=run,reason='missing export'));continue
+            result=json.loads(path.read_text())['results'][0]
+            valid=[pt for pt in result['points'] if pt['status']=='ok']
+            failed=[pt for pt in result['points'] if pt['status']!='ok']
+            if failed or run['exit_code']:
+                failures.append(dict(run=run,reason='failed or censored points',result=result))
+            xs=[];ys=[];lo=[];hi=[]
+            color=plt.rcParams['axes.prop_cycle'].by_key()['color'][len(ax.lines)]
+            for size in sorted({pt['param'] for pt in valid}):
+                values=[pt['per_call_nanos']/1000 for pt in valid if pt['param']==size]
+                xs.append(size);ys.append(median(values));lo.append(min(values));hi.append(max(values))
+                ax.scatter([size]*len(values),values,s=15,alpha=.35,color=color)
+            ax.plot(xs,ys,'o-',label=run['name'],color=color)
+            ax.fill_between(xs,lo,hi,alpha=.12,color=color)
+            rows.append(dict(name=run['name'],points=result['points'],
+                             slope=result['slope'],verdict=result['verdict'],
+                             whole_parent_seconds=run['whole_parent_seconds']))
+        ax.set_xscale('log',base=2);ax.set_yscale('log');ax.grid(alpha=.2);ax.legend()
+        ax.set_xlabel('Primitive rational coefficient height (bits)')
+        ax.set_ylabel('Registered operation time (µs)')
+        fig.suptitle('Direct rational leaves after the proved square-root initializer')
+        footer='Four fixed outer trials at each height; every exported point retained. Timers exclude canonical preparation.\nCanonical preparation remains costly: recognition whole-parent time is about 38 minutes.\nThis source-scoped collection supplies no before/after ratio or general canonical-construction bound.'
     else:
         for run in meta['runs']:
             if run['label']=='reduced-declared-ladder':continue
@@ -92,9 +122,12 @@ def main():
         footer='Four adjacent AB/BA arms per rung, identical rational value-only inputs; no unrelated integer certificate in preparation.\nKernel timings exclude preparation. Peak RSS includes preparation, child execution and native process baseline.\nAll complete signed-result hashes agree. The paired ladder is descriptive evidence, not a complexity verdict.'
     fig.text(.015,.018,footer+f'\nSource {meta["source"][:10]}, {meta["host"]}, leased CPU {meta["cpu"]}. All completed arms and failures retained; no load filtering or rerun.',fontsize=8)
     fig.tight_layout(rect=(0,.16,1,.94))
-    stem='scalar-comparison' if args.kind=='scalar' else 'sturm-reduced-comparison'
+    stem={'scalar':'scalar-comparison','sturm':'sturm-reduced-comparison','height':'rational-height'}[args.kind]
     for fmt in ['png','svg','pdf']:
         fig.savefig(output/(stem+'.'+fmt),dpi=160,metadata={'Date':None} if fmt=='svg' else {'CreationDate':None} if fmt=='pdf' else None)
+        if fmt=='svg':
+            svg=output/(stem+'.svg')
+            svg.write_text('\n'.join(line.rstrip() for line in svg.read_text().splitlines())+'\n')
     (output/'analysis.json').write_text(json.dumps(dict(observations=rows,failures=failures),indent=2)+'\n')
     print(f'{len(rows)} complete arms; {len(failures)} failed/censored arms')
 

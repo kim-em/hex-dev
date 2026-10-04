@@ -49,7 +49,20 @@
       "exit_code": 0,
       "whole_parent_seconds": 2241.8413247920034,
       "output": "RationalFloor.json"
+    },
+    {
+      "name": "RationalCeil",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/sqrt-initializer/current-main/height-science/hexrealalgebraic_bench-4bb656ae81039bb0892d10ab8dca037e325b6e9d59ad75b263f2d83da775e50a",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalCeil",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/sqrt-initializer/current-main/height-science/RationalCeil.json"
+      ],
+      "exit_code": 0,
+      "whole_parent_seconds": 2153.9090189620038,
+      "output": "RationalCeil.json"
     }
   ],
-  "retention_scope": "Snapshot of completed recognition and floor registrations only. Ceiling and quotient registrations remain active in the recorded persistent collection; no scientific observations are inferred for them."
+  "retention_scope": "Snapshot of completed recognition, floor and ceiling registrations only. The former quotient control remains active in the recorded persistent collection. No final source/binary-unchanged verdict or control observations are inferred."
 }

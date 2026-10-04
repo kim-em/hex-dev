@@ -10,15 +10,21 @@ performance deliverable.
 
 ## Bench targets
 
-`bench/HexRealAlgebraic/Bench.lean` registers 102 cases. `lake exe
+`bench/HexRealAlgebraic/Bench.lean` registers 196 cases. `lake exe
 hexrealalgebraic_bench list` lists them; `verify` checks their runtime wiring and
-hashes. The existing CI job builds and verifies this executable. The retained
+hashes. The existing CI job builds and verifies this executable. The
+[complete local verifier log](bench-results/scalar-current-verification/README.md)
+passes all 196 cases, including degree-8 square root. The current owned wrapper
+takes 72 seconds for this executable and one for Sturm; this establishes no
+whole-repository headroom. The final PR still requires a green CI run and its actual per-library
+time. Degree-8 square root is an operational smoke-time concern. The retained
 [local verification log](bench-results/prerequisite-verify-budget.log) records
 44 Sturm and 67 real-algebraic cases, completing in 37 seconds against the
-600-second local script default; CI sets a 360-second cap. The real executable
+600-second local script default. That historical CI revision uses a
+360-second cap; current CI uses 600 seconds. The real executable
 took 32 seconds on that historical 67-case source and exceeded the 30-second per-library soft threshold.
 The subsequent [direct-recognition verification](bench-results/prerequisite-direct-recognition-verification.json)
-records all 71 current real cases and 44 Sturm cases passing, with 129 validated
+records all 71 real cases on its source and 44 Sturm cases passing, with 129 validated
 Sturm coefficient fixtures; it measures only the owned executables, not the
 repo-wide CI budget.
 [Required CI](https://github.com/kim-em/hex-dev/actions/runs/36972953823)
@@ -64,7 +70,7 @@ this is not the repo-wide required CI gate.
 The fixed verifier already invokes each runner once in-process, without warmup
 or tuning. The hard add/subtract registrations and their bare controls account
 for about 26 of the 32 local seconds in the recorded 72-case check on
-`eabbeea9f`; the current 102-case CI log has no per-case timing breakdown. There is no repeat-count or tuning setting
+`eabbeea9f`; the historical 102-case CI log has no per-case timing breakdown. There is no repeat-count or tuning setting
 left to reduce for these calls. The harness policy forbids replacing a
 canonical fixed input with an easier smoke input, and the scientific inputs
 and their expected hashes are preserved. The operational warning and remaining
@@ -81,7 +87,7 @@ final source without weakening the cap.
 | Arithmetic and scalar dictionaries | `runAdd`, `runSub`, `runMul`, `runDiv`, `runNeg`, `runInv`, `runNatPow`, `runIntPow`, `runScalars`; corresponding bare controls; `runHard*` | Canonical baseline and adjacent wrapper controls; mode/budget incomplete |
 | Equality, comparison, order, sign, abs, conjugation | `runEquality`, `runCompare`, `runCompareExact`, `runOrder`, `runSign`, `runAbs`, `runConj`, `runCloseCompare`, `runCloseExact` | Fixed branch/hash/comparison anchors; separation models incomplete |
 | Fixed-field coordinate sign | `runFieldSign` | Complete result vector on constant and nonconstant paths in the positive square-root-of-two embedding. [Inherited owner evidence](../bench-results/field-sign/README.md) concerns a pre-refactoring executable; current operation-specific mode/budget remains required |
-| Rational degree-one leaf height | `runRationalRecognition`, `runRationalFloor`, `runRationalCeil`, `runRationalQuotient` | Independently derived mode-1 candidates; first-rung canonical preparation exceeds the declared operational cap; no current admission |
+| Rational degree-one leaf height | `runRationalRecognition`, `runRationalFloor`, `runRationalCeil`, `runRationalQuotient` | Recognition, floor and ceiling pass their declared height ladders on the initializer source; control and attribution remain outstanding; preparation is excluded and still costly |
 | Floor, ceiling, approximation, representation | `runRounding`, `runApprox`, `runRepr` | Baseline anchors; ceiling has proved before/after improvement |
 | Square roots | `runSqrt`, `runSqrtTotal` | Baseline/branch checks on pre-change source; degree/height scaling incomplete |
 | Polynomial constructors and root-set projections/membership | `runPolyConstructors`, `runMembership`, `runRootSet` | Mode-1 family passes |
@@ -104,8 +110,8 @@ The separately forward-specified comparison-strategy extension remains excluded.
 | Manifest family | Current evidence | Remaining evidence or concern |
 | --- | --- | --- |
 | `canonical-real-arithmetic` | Compiled scalar/constructor, complex norm/absolute-value and real/imaginary projection anchors, canonical hard arithmetic and matching bare-parent controls; retained representative addition profile | Operation-specific characterization and remaining raw profile coverage; parent isolation cost |
-| `real-order-and-rounding` | Equality/sign/abs/conjugation/min-max anchors, separated and overlapping compare anchors, near-zero/near-integer checks, approximation and square-root anchors; proved ceiling improvement | Genuine separation, precision and degree/height families, current attribution and scientific characterization |
-| `rational-height` | Declared direct degree-one recognition/floor/ceil/control ladders; exact construction/recognition guards and retained preparation diagnostic | Canonical preparation prerequisite prevents current scientific observations; the isolated parent proposal is not applied |
+| `real-order-and-rounding` | Equality/sign/abs/conjugation/min-max anchors, near-integer checks, approximation anchors and proved ceiling improvement; current exact scalar degree and separation plots against FLINT/Z3 | Precision, remaining degree/height families, current attribution and scientific characterization; canonical square root is substantially slower on the measured degree ladder |
+| `rational-height` | Direct recognition, floor and ceiling pass their fixed height ladders after the proved square-root initializer; exact construction guards and retained preparation diagnostic | Former quotient control and operation-specific attribution remain; canonical preparation is still costly |
 | `polynomial-arrays-and-sorting` | Passing coefficient-array, membership/projection and distinct rational-root sorting families | Representative raw profile retention; repeated fixed-leaf/exactification controls do not establish varying leaf-size coverage |
 | `real-polynomial-roots` | Actual rational/quadratic-coefficient root API degree comparisons, complete fingerprints, repeated/integer/filter roots and multiplicity/exactification anchors, retained rejection pairs and before/after profiles | Severe remaining canonical isolation cost and higher-degree characterization |
 | `representation` | Fixed Repr formatter anchor and generated-term ordinary-kernel roundtrip checks | Separately reported growing-size roundtrip performance and attribution; formatter-only timings do not discharge this obligation |
@@ -249,11 +255,11 @@ hash. The family keeps degree one, grows coefficient height, and approaches
 1/3. Recognition, rational floor, rational ceiling and the former-quotient
 comparison control have independently derived linear models. The control
 uses the same canonical input and complete result. The [post-initializer collection](bench-results/real-algebraic-rational-height-after-sqrt/)
-records current two-sided passes for direct recognition and floor at 262144,
+records current two-sided passes for direct recognition, floor and ceiling at 262144,
 524288, 1048576 and 2097152 coefficient bits, with four trials per rung.
-Residual slopes are +0.015245 and −0.013195. At two million bits their median
-operation times are 57.990 and 24.644 µs. Ceiling and former-quotient control
-observations remain required; these results establish no controlled improvement
+Residual slopes are +0.015245, −0.013195 and −0.017619. At two million bits
+their median operation times are 57.990, 24.644 and 24.070 µs. Former-quotient
+control observations remain required; these results establish no controlled improvement
 ratio. Canonical input preparation remains expensive and is excluded from the
 operation timer.
 
@@ -268,14 +274,22 @@ supervision. Ordinary `run` caps the entire child, including preparation,
 through `LeanBench.spawnWithCap` at `maxSecondsPerCall` plus `killGraceMs`.
 That historical diagnostic predates the proved bit-length square-root
 initializer now used by `HexArith.Nat.floorSqrt`. Supervised scientific
-recognition and floor runs on the changed source now complete and pass, as
-reported above. The remaining ceiling/control evidence and canonical input
+recognition, floor and ceiling runs on the changed source now complete and pass, as
+reported above. The [height plot](bench-results/real-algebraic-rational-height-after-sqrt/plots/rational-height.svg)
+shows the completed recognition and rounding points. The remaining quotient-control evidence and canonical input
 construction cost remain concerns. The historical prerequisite diagnostic is
 recorded on [#10577](https://github.com/kim-em/hex-dev/issues/10577#issuecomment-5971054259);
-it is distinct from HexPolyFp's #9809 concerns. No transitive implementation or
-phase metadata is changed by this evidence.
+it is distinct from HexPolyFp's #9809 concerns. The proved HexArith initializer
+addresses the observed Newton start; no transitive phase metadata is promoted.
 
 ## Scalar size axes
+
+The timed result checks differ: native addition/square root compare canonical
+polynomial arrays and sign; external arms perform extra exact arithmetic for
+annihilation and sign. Add/sqrt prepare no independent expected nonrational
+result; rational construction prepares its rational reference and rounding
+checks integers. The curves include these checking costs and cannot isolate
+primitive-operation speed.
 
 The [current scalar comparison](bench-results/real-algebraic-scalar-annihilation/README.md)
 retains 432 adjacent native/FLINT/Z3/protocol arms on arithmetic-degree,
@@ -285,8 +299,9 @@ All exact result guards pass, with no cap, filtering or unchanged rerun. The
 show all observations and spreads; protocol curves remain separate.
 
 Native arithmetic checks canonical minimal polynomial and sign; external
-arithmetic checks exact annihilation and sign. No expected algebraic root is
-prepared. Contexts can retain caches populated by warmup. Addition and square
+arithmetic checks exact annihilation and sign. Add and square root prepare no
+independent expected nonrational result. Contexts can retain caches populated
+by warmup. Addition and square
 root on the positive root of `X^8−2` take median 322.3 ms and 8.840 seconds,
 versus transported FLINT/Z3 observations in the tens of microseconds. This
 is a severe unresolved canonical-construction/isolation gap. These descriptive
@@ -440,8 +455,8 @@ in the linked summaries.
   [#721](https://github.com/kim-em/hex-dev/issues/721) is closed. The proved bit-length initializer is implemented, with an ordinary-kernel
   equality to Lean core square root and large-square conformance. Its selective
   Hex-only factorization refresh retains all 392 inputs and reuses every external
-  comparator record. Recognition and floor now pass their declared height
-  models; ceiling/control evidence and costly degree-one canonical construction
+  comparator record. Recognition, floor and ceiling now pass their declared height
+  models; quotient-control evidence and costly degree-one canonical construction
   remain. No unrelated phase metadata is promoted.
 
 The checked square-root wrapper delegates directly to `sqrtRoot?`, removing
