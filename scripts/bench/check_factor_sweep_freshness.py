@@ -21,6 +21,8 @@ figure families in ``scripts/bench/sweep_freshness.py``.
 
 from __future__ import annotations
 
+import re
+
 from collections import Counter
 import hashlib
 import json
@@ -44,6 +46,23 @@ FACTOR_SERVICE_EXE = "hexbz_factor_service"
 FACTOR_BUILD_DEFS = {"hexArithOTarget", "zmod64MulOTarget"}
 
 
+def _executable_lib_settings(body: str) -> str:
+    """A `lean_lib` block reduced to what can reach a compiled executable.
+
+    `precompileModules` only decides whether Lake builds shared libraries for
+    elaboration-time evaluation; comments and a bare versus `where` header
+    change nothing at all. Dropping them lets such edits pass without an
+    exemption tied to one lakefile blob.
+    """
+    lines = []
+    for line in body.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("--") or stripped.startswith("precompileModules"):
+            continue
+        lines.append(re.sub(r"^(lean_lib\s+\S+)\s+where$", r"\1", stripped))
+    return "\n".join(lines)
+
+
 def factorization_blocks(text: str) -> dict[str, str]:
     """The lakefile declarations that can affect the factorization binary.
 
@@ -61,7 +80,7 @@ def factorization_blocks(text: str) -> dict[str, str]:
         elif kind == "lean_exe" and decl == FACTOR_SERVICE_EXE:
             relevant[name] = body
         elif kind == "lean_lib" and decl in libs:
-            relevant[name] = body
+            relevant[name] = _executable_lib_settings(body)
         elif kind == "def" and decl in FACTOR_BUILD_DEFS:
             relevant[name] = body
     return relevant
