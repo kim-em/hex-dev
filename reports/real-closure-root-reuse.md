@@ -50,8 +50,9 @@ Means below are microseconds per search on this host.
 | 4 | 2 | above | 881.7 | 187.7 | 0.21 |
 
 Bounds first reduces the measured quartic cost in all three cases. Quadratic
-inside/above queries favor head first; the quadratic below case favors bounds
-first, with a near tie for one owner. These mixed results do not support a
+inside/above queries favor head first. The two-owner quadratic below case favors
+bounds first in both orders; the one-owner case changes direction with order,
+with the first arm faster in each trial. These mixed results do not support a
 universal reorder. Production remains head first.
 
 Reproduce a compiled sample with
@@ -195,12 +196,15 @@ their original `semantic_hash` field name, which was a count rather than a hash.
 
 The recorded measurement heads predate the rebase onto upstream `492e0e4`,
 which includes the CI budget correction `52ef27c`. The cached measurement history
-is retained by the immutable `issue-10378-root-reuse-measured` tag at `d770fc2`;
+is retained by the `issue-10378-root-reuse-measured` tag at `d770fc2`;
 the baseline is retained by `issue-10378-gather-baseline` at `eaf5222`.
 The tagged cached head differs from `1fd702c` only in benchmark, report and SPEC
-files. Both untimed-check executables were rebuilt with `lake build` before their
-hashes and check outputs were captured. Their build logs are recorded in the
-check metadata.
+files. The superseded initial order run is retained by
+`issue-10378-root-reuse-order-initial` at `358a99f`, in addition to its archived
+sources. Both untimed-check executables were rebuilt with `lake build` before their
+hashes and check outputs were captured. Their complete build logs and SHA-256
+hashes are retained in the check archive; these separate build records accompany
+the runner’s executable/source captures.
 
 The [initial setup rejection](bench-results/real-closure-gather-reused-owners/results.json)
 required both implementations to return one presentation level, a condition

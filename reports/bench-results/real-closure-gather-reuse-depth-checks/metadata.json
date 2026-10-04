@@ -5,15 +5,18 @@
       "head": "eaf52227f509d9cf1550295268e0ef374730c4a8",
       "dirty": " M bench/HexRealClosure/Bench.lean\n",
       "executable_sha256": "90d5b849e4e1cd1a9e048344cac7f64cf89970d145575c97517053a4db3b74c6",
-      "build_log": "/home/kim/.codex/tasks/hex-10378/reused-owner-depth-gather-baseline-build.log",
-      "build_exit_code": 0
+      "build_log": "baseline-build.log",
+      "build_exit_code": 0,
+      "build_log_sha256": "e8a9ec900d12ffc334c6b7ba85e181de830556147c922d3e702e2cb2a3c358ad"
     },
     "cached": {
       "head": "d770fc20da110140681d31f27a9c2bbfbfd27136",
       "dirty": " M bench/HexRealClosure/Bench.lean\n M reports/bench-results/real-closure-gather-before-after/cached-eight-profile-artifact.json\n M reports/real-closure-root-reuse.md\n?? reports/bench-results/real-closure-gather-reuse-depth-checks/\n",
       "executable_sha256": "ab2fba10522283ad932c9c0aa25d23c406db72ba735c20d65d3cb18bb06d527f",
-      "build_log": "/home/kim/.codex/tasks/hex-10378/reused-owner-depth-root-reuse-build.log",
-      "build_exit_code": 0
+      "build_log": "cached-build.log",
+      "build_exit_code": 0,
+      "build_log_sha256": "5e2a2b42b0044a8245b577d643fd963c8dc2f6db0b669e3139fc18a7730dcbf5"
     }
-  }
+  },
+  "build_record_note": "The check runner captures source and executable hashes. Successful preceding lake-build records are included separately; the runner itself does not rebuild."
 }
