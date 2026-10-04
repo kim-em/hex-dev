@@ -452,6 +452,68 @@ theorem Shared.enlarge?_isSome {base : BaseContext.PackedContext registry}
     shared.enlarge?.isSome = shared.input.context.enlarge?.isSome := by
   simpa only [Option.isSome_map] using congrArg Option.isSome shared.enlarge?_conversion
 
+/-- Successful origin registration implies the actual base compatibility
+checked by the producer; it is not an extra reader premise. -/
+theorem Shared.addOrigin?_compatible {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    {source : Context registry} (origin : Origin source)
+    (result : Shared base (owners ++ [source]))
+    (produced : shared.addOrigin? origin = some result) :
+    origin.base.signature.constants <+: base.signature.constants ∧
+      origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
+  cases origin with
+  | pack original suffix same =>
+    apply (Inclusion.base?_isSome (.pack original) base).mp
+    cases checked : Inclusion.base? (.pack original) base with
+    | none => simp [Shared.addOrigin?, checked] at produced
+    | some inclusion => rfl
+
+/-- Successful registration carries its source's staged compatibility. -/
+theorem Shared.add?_compatible {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (source : Context registry) (result : Shared base (owners ++ [source]))
+    (produced : shared.add? source = some result) :
+    source.origin.base.signature.constants <+: base.signature.constants ∧
+      source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
+  rw [Shared.add?_eq] at produced
+  exact shared.addOrigin?_compatible source.origin result produced
+
+/-- Successful collection proves compatibility for every requested original
+owner, including owners that were already present in the cache. -/
+theorem Shared.collect?_compatible {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (later : List (Context registry)) (result : Shared base (owners ++ later))
+    (produced : shared.collect? later = some result) :
+    ∀ source ∈ later,
+      source.origin.base.signature.constants <+: base.signature.constants ∧
+      source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
+  induction later generalizing owners with
+  | nil => simp
+  | cons source rest ih =>
+    rw [Shared.collect?_cons] at produced
+    cases first : shared.add? source with
+    | none => simp only [first, bind, Option.bind] at produced; contradiction
+    | some added =>
+      cases following : added.collect? rest with
+      | none => simp only [first, following, bind, Option.bind] at produced; contradiction
+      | some collected =>
+        intro owner present
+        rcases List.mem_cons.mp present with equal | present
+        · subst owner
+          exact shared.add?_compatible source added first
+        · exact ih added collected following owner present
+
+/-- A successful native gather already certifies every owner's staged base
+compatibility. Readers need not supply it again. -/
+theorem Shared.gather?_compatible (base : BaseContext.PackedContext registry)
+    (owners : List (Context registry)) (shared : Shared base owners)
+    (produced : Shared.gather? base owners = some shared) :
+    ∀ source ∈ owners,
+      source.origin.base.signature.constants <+: base.signature.constants ∧
+      source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
+  rw [Shared.gather?_eq] at produced
+  exact (Shared.empty base).collect?_compatible owners shared produced
+
 end Hex.RealClosure.Tower
 
 /-- info: 'Hex.RealClosure.Tower.Shared.add?_maps' depends on axioms: [propext, Classical.choice, Quot.sound] -/

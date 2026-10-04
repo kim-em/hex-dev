@@ -290,13 +290,11 @@ theorem Shared.gather?_models (following : base.Realization)
 and native compatibility checks supply every owner and cache agreement. -/
 noncomputable def Shared.Model.ofGather (following : base.Realization)
     (reference : Tower.Model (Context.ofBase base) R) (owners : List (Context registry))
-    (compatible : ∀ source ∈ owners,
-      source.origin.base.signature.constants <+: base.signature.constants ∧
-      source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals)
     (shared : Shared base owners) (produced : Shared.gather? base owners = some shared) :
     Shared.Model shared following reference := Classical.choice (by
   obtain ⟨result, resultProduced, models⟩ :=
-    Shared.gather?_models following reference owners compatible
+    Shared.gather?_models following reference owners
+      (Shared.gather?_compatible base owners shared produced)
   have same := Option.some.inj (resultProduced.symm.trans produced)
   cases same
   exact models)
@@ -382,3 +380,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Shared.Model.compare' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Shared.Model.compare
+
+/-- info: 'Hex.RealClosure.Tower.Shared.Model.ofGather' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.Model.ofGather
