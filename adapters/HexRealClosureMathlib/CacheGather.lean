@@ -65,11 +65,13 @@ private theorem nil_heq {left right : Context registry} (same : left = right) :
   rfl
 
 private theorem cache_empty_heq {left right : Context registry} (same : left = right)
-    (cache : InclusionCache left) (empty : cache.entries = []) :
-    HEq cache (⟨[]⟩ : InclusionCache right) := by
+    (cache : InclusionCache left) (empty : cache.entries = [])
+    (candidates : cache.candidates = []) :
+    HEq cache (⟨[], []⟩ : InclusionCache right) := by
   cases same
   cases cache
   cases empty
+  cases candidates
   rfl
 
 /-- The actual empty collection has the supplied base interpretation and a
@@ -90,10 +92,10 @@ noncomputable def Shared.Model.empty (following : base.Realization)
       (Inclusions.nil (target := conversion.context)) :=
     (Shared.empty_maps base).trans (nil_heq contextEq)
   have cacheEq : HEq (Shared.empty base).cache
-      (⟨[]⟩ : InclusionCache conversion.context) :=
-    cache_empty_heq contextEq _ (Shared.empty_entries base)
+      (⟨[], []⟩ : InclusionCache conversion.context) :=
+    cache_empty_heq contextEq _ (Shared.empty_entries base) (Shared.empty_candidates base)
   exact Shared.Model.ofParts (Shared.empty base) following reference conversion same
-    model.target canonical model.value .nil mapsEq .nil (fun index => nomatch index) ⟨[]⟩ cacheEq
+    model.target canonical model.value .nil mapsEq .nil (fun index => nomatch index) ⟨[], []⟩ cacheEq
     (InclusionCache.Models.empty model.target)
 
 private noncomputable def castEntry {left right destination : Context registry}
