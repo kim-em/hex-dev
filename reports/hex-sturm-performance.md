@@ -856,17 +856,21 @@ frontend profiles are separate evidence for prepared, cached and transport paths
 
 ## Concerns
 
-- The headline `query_iff` is proved in the development semantic adapter, but
-  ordinary `import HexSturmMathlib` still does not export it. The bounded public
-  foundation/frontend import integration belongs to
-  [#10575](https://github.com/kim-em/hex-dev/issues/10575); it cannot wait for
-  #10577 closure because it is itself a Sturm Phase-4 prerequisite.
+- The public foundation/frontend integration from
+  [#10683](https://github.com/kim-em/hex-dev/pull/10683), owned by
+  [#10575](https://github.com/kim-em/hex-dev/issues/10575), is included in this
+  source tree. Ordinary `import HexSturmMathlib` exports `query_iff` and the
+  reduced-query correspondence. Source availability does not attest Phase 4
+  or publish the split repositories.
 
-- Growing nonconstant queries against a fixed quadratic still materialize
-  the large quotient even in the value-only path. The retained prepared-query
-  ladder above reaches roughly 99 seconds and 32 GiB whole-child peak RSS.
-  Exact result agreement and family-specific characterization do not resolve
-  this storage cost; no streaming implementation is claimed.
+- The original prepared-query API still materializes a large quotient for
+  growing queries against a fixed quadratic. Its retained historical ladder
+  reaches roughly 99 seconds and 32 GiB whole-child peak RSS. The new
+  remainder-only value-query path avoids retaining that quotient: the current
+  degree-262144 comparison observes roughly 137 MiB rather than 2175 MiB.
+  It still has quadratic bit work and takes roughly 78 seconds at degree
+  1048576. These observations do not establish a general space bound or
+  change the existing certificate API.
 
 - The wide replay/checker and coefficient-sign failures of characterization
   remain retained. The narrower passing models and current Chebyshev external
