@@ -33,6 +33,15 @@ class NativeDependencyTests(unittest.TestCase):
             'lean_lib HexBasic where\n  precompileModules := true\n  moreLeancArgs := #["-O1"]')
         self.assertTrue(check.lakefile_texts_differ(self.BASE, after))
 
+    def test_shared_parser_unknown_commands_stay_relevant(self):
+        for declaration in ('set_option maxRecDepth 1000', 'abbrev flag := 1000',
+                            '@[default_instance] instance : Nat := 1000'):
+            before = self.BASE + '\n' + declaration + '\nlean_lib Other\n'
+            with self.subTest(declaration=declaration):
+                self.assertTrue(check.lakefile_texts_differ(before, before.replace('1000', '2000')))
+        uncertain = self.BASE + '\nscript s do\n  let c := (\n'
+        self.assertTrue(check.lakefile_texts_differ(self.BASE, uncertain))
+
     def test_quoted_flag_does_not_establish_native_loading(self):
         before = self.BASE.replace('  precompileModules := true',
             '  moreLeancArgs := #["\n  precompileModules := true\n"]')

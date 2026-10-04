@@ -76,7 +76,7 @@ FINGERPRINT_DIGITS = 12
 LAKE_DECL = re.compile(
     r"^(?:(?:private|protected|public|partial|unsafe|noncomputable|meta)\s+)*"
     r"(package|require|lean_lib|lean_exe|extern_lib|target|script|def"
-    r'|abbrev|opaque|input_file|module_facet|library_facet|package_facet)\s+("[^"\n]*"|«[^»\n]*»|[A-Za-z_][\w\'.]*|\S+)')
+    r'|abbrev|opaque|input_file|module_facet|library_facet|package_facet)\s+("[^"\n]*"|«[^»\n]*»|[A-Za-z_][\w\'.]*[!?]*|\S+)')
 
 
 def _bracket_delta(code: str) -> int:
@@ -108,9 +108,11 @@ def lakefile_blocks(text: str) -> dict[str, str]:
             if kind != "require":
                 if name.startswith(('"', '«')):
                     name = name[1:-1]
-                if not re.fullmatch(r"[A-Za-z_][\w'.]*", name):
+                if not re.fullmatch(r"[A-Za-z_][\w'.]*[!?]*", name):
                     uncertain = True
             key = f"{kind} {name}"
+            if key in blocks:
+                uncertain = True
             current = pending + [line]
             pending = []
             depth = _bracket_delta(code)
@@ -118,7 +120,7 @@ def lakefile_blocks(text: str) -> dict[str, str]:
         elif key is None:
             pending.append(line)
         elif (not code.strip() and line.strip() and
-              (pending or not line.startswith((" ", "\t")))) or code.startswith("@["):
+              (pending or not line.startswith((" ", "\t")))) or (code.startswith("@[") and not declaration.strip()):
             pending.append(line)
         elif line.startswith((" ", "\t")) or not line.strip():
             current.append(line)

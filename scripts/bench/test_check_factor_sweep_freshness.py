@@ -163,6 +163,28 @@ class LakefileAffectsRuntime(unittest.TestCase):
         before = BASE + '\ndef flags(x : Nat) := "-O3"\nextern_lib extraffi pkg := flags 0\n'
         self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
 
+    def test_helper_suffixes_and_repeated_keys_preserve_relevant_bodies(self):
+        for suffix in ('?', '!'):
+            before = BASE + f'\ndef flags := "-O3"\ndef flags{suffix} := true\nextern_lib extraffi pkg := flags\n'
+            with self.subTest(suffix=suffix):
+                self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
+        duplicate = BASE + '\ndef flags := "-O3"\ndef flags := "unchanged"\n'
+        self.assertTrue(guard.lakefile_texts_differ(duplicate, duplicate.replace('-O3', '-O0')))
+
+    def test_comma_fields_retain_compiler_flags(self):
+        before = BASE.replace('srcDir := "."', 'precompileModules := true, moreLeancArgs := #["-O3"]')
+        self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
+
+    def test_attributed_commands_remain_relevant(self):
+        before = BASE + '\n@[default_instance] instance : String := "-O3"\nlean_lib Other\n'
+        self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
+
+    def test_library_claimant_order_is_part_of_build_configuration(self):
+        first = 'lean_lib First where\n  globs := #[Glob.one `HexPrimality.Table]\n'
+        second = 'lean_lib Second where\n  globs := #[Glob.one `HexPrimality.Table]\n'
+        with patch.object(guard, 'factor_import_modules', return_value={'HexPrimality.Table'}):
+            self.assertTrue(guard.lakefile_texts_differ(BASE + first + second, BASE + second + first))
+
     def test_registering_a_new_target_is_not_a_runtime_change(self):
         after = BASE + '\nlean_lib HexPolyFast where\n  srcDir := "."\n'
         self.assertFalse(guard.lakefile_texts_differ(BASE, after))

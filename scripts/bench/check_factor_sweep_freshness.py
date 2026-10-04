@@ -23,9 +23,7 @@ figure families in ``scripts/bench/sweep_freshness.py``.
 
 from __future__ import annotations
 
-import re
 from functools import cache
-
 from collections import Counter
 import hashlib
 import json
@@ -94,7 +92,7 @@ def _executable_lib_settings(body: str) -> str:
     lines = []
     for line in body.splitlines():
         stripped = line.strip()
-        if not stripped or stripped.startswith("--") or (stripped.startswith("precompileModules") and ";" not in stripped):
+        if not stripped or stripped.startswith("--") or (re.fullmatch(r"precompileModules\s*:=\s*(?:true|false)", freshness.strip_lean_comments(stripped).strip()) is not None):
             continue
         lines.append(re.sub(r"^(lean_lib\s+\S+)\s+where$", r"\1", stripped))
     return "\n".join(lines)
@@ -125,6 +123,8 @@ def factorization_blocks(text: str) -> dict[str, str]:
     helpers = {name: body for name, body in blocks.items()
                if name.partition(" ")[0] in {"def", "abbrev", "opaque", "target", "input_file",
                    "module_facet", "library_facet", "package_facet"}}
+    claimant_order = [name for name in blocks if name.startswith("lean_lib ") and name in relevant]
+    relevant["library order"] = "\n".join(claimant_order)
     pending = list(relevant.values())
     while pending:
         body = pending.pop()
