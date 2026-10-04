@@ -492,6 +492,7 @@ private meta def prepareField (source : Reify.Source) (leafSources : Array Expr)
         unless CommonPresentation.checkPresentation hw hp table
             sourcePolyRuntime sourceSquareRuntime anchorCoordinates do
           throwError "rcf: common-field source presentation rejected"
+        let table ← FieldLiteral.prepareSigns table
         let signTable ← FieldLiteral.signTableExpr pExpr rootExpr table
         let checked ← mkAppM ``CommonPresentation.checkPresentation
           #[hwExpr, hpExpr, signTable, sourcePolyFn, sourceSquareFn, anchorExpr]

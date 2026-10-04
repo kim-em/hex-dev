@@ -574,6 +574,9 @@ Those probes now pin raw carriers explicitly; the pin was added after the
 measurement. The default is `rcf.algebraic.intervalSigns=true`; the false arm remains a
 comparison control. Direct coordinate quotation remains off by default: its
 two separate comparisons did not establish a gain.
+The comparison control changes evidence from the tactic producers. Quotation and replay
+of a supplied frozen table, including the explicit prepared replay API, preserve its
+entries regardless of this option.
 
 `rcf.algebraic.singleReplay` is also false by default. It compares one Boolean
 certificate replay goal with separately checked conjuncts; source authentication

@@ -111,6 +111,37 @@ private def proposed := Replay.build input real 256 5
 #guard_msgs (whitespace := lax) in
 #print axioms Replay.build_spec
 
+-- A production comparison option cannot reconstruct frozen Horner evidence.
+-- The two literal serializations must be identical, including every entry.
+run_meta do
+  let .ok data ← pure (FieldBuild.produceWithin SquareTwo.polynomial SquareTwo.square
+      hw hp real values formula () 256 5 (monicCore := true)) |
+    throwError "frozen quotation fixture failed production"
+  unless data.signs.entries.any (·.evidence.isNone) do
+    throwError "frozen quotation fixture contains no Horner evidence"
+  let quote := FieldLiteral.resultExpr (Lean.mkConst ``SquareTwo.polynomial)
+    (Lean.mkConst ``root) (Lean.mkConst ``formula) formula data
+  let original ← Lean.withOptions (fun opts => opts.setBool `rcf.algebraic.intervalSigns true) quote
+  let control ← Lean.withOptions (fun opts => opts.setBool `rcf.algebraic.intervalSigns false) quote
+  unless original == control do
+    throwError "frozen quotation changed evidence under a production option"
+  let proof ← Lean.withOptions (fun opts => opts.setBool `rcf.algebraic.intervalSigns false) do
+    FieldLiteral.replay (Lean.mkConst ``SquareTwo.polynomial) (Lean.mkConst ``root)
+      (Lean.mkConst ``values) (Lean.mkConst ``formula) values formula .existsReal data
+  Hex.RCF.checkAxioms `Hex.RCF.FiniteReplayTests proof
+  unless (proof.find? fun e => e.isAppOfArity ``LiteralSign.Entry.mk 4 &&
+      e.getAppArgs[3]!.isAppOfArity ``Option.none 1).isSome do
+    throwError "frozen replay reconstructed the supplied Horner evidence"
+  let invalid := {data.signs with count := {data.signs.count with value := 0}}
+  let rejected ← try
+    let _ ← Lean.withOptions (fun opts => opts.setBool `rcf.algebraic.intervalSigns false) do
+      FieldLiteral.prepareSigns invalid
+    pure none
+  catch error => pure (some (← error.toMessageData.toString))
+  unless rejected == some "rcf: original literal sign table failed replay" do
+    throwError "comparison producer repaired invalid original evidence: {rejected}"
+
+
 private def falseFormula : RealFormula.QF 3 := .atom ⟨1, .eq⟩
 
 -- Invalid frozen evidence cannot become a false or unresolved goal diagnostic.
@@ -127,6 +158,15 @@ run_meta do
     (falseFormula, Lean.mkConst ``falseFormula, RealFormula.Quantifier.existsReal, existential,
       "rcf: the existential sentence is false on the prepared cells")]
   for (matrix, expression, quantifier, data, diagnostic) in cases do
+    let controlFailure ← try
+      let _ ← Lean.withOptions (fun options =>
+          options.setBool `rcf.algebraic.intervalSigns false) do
+        FieldLiteral.proveRefiningWithCertificate (Lean.mkConst ``SquareTwo.polynomial)
+          (Lean.mkConst ``root) (Lean.mkConst ``values) expression values matrix quantifier
+      pure none
+    catch error => pure (some (← error.toMessageData.toString))
+    unless controlFailure == some diagnostic do
+      throwError "full-query production changed a terminal false verdict: {controlFailure}"
     let badSigns := {data.signs with count := {data.signs.count with value := 0}}
     for indexed in [false, true] do
       for (candidate, expected) in [(data, diagnostic),
