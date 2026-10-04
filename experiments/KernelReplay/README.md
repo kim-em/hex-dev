@@ -115,18 +115,20 @@ do not replace literal certificate bindings with semantic equality. The lower
 readers require supplied certificates even for constant queries, rather than
 falling back to the predecessor's sign operation.
 
-`InProcessMain.lean` exercises both readers in one process. Twenty-three controls
+`InProcessMain.lean` exercises both readers in one process. Its 25 controls
 cover missing evidence followed by successful replay, incorrect sign claims,
 absent indices, different queries, stale context keys, finite and infinite
-endpoints, constants and canonical zero. The compiled lower-level evaluation
+endpoints, constants and canonical zero, plus well-bound graphs with forged
+counts or moment variations. The compiled lower-level evaluation
 and difference controls validate the supplied graph at runtime. A zero-sign
-certificate for the nonzero query `2X - 2` establishes equality at the selected
-root `1`, and a sign-equivalent certificate for the wrong query rejects.
+certificate for the nonzero query `2X - 2` establishes `literal = 2` in the
+extension: both denote `2` at the selected root `1`. A sign-equivalent
+certificate for the wrong query rejects.
 A separate example checks a difference that reduces to the zero polynomial.
 Ordinary-kernel
 examples check supplied-fact endpoint replay, lower-level sign selection and
 the zero differences; axiom guards check the general correspondence proofs,
-and a fixture instantiates the subtraction correspondence.
+and fixtures instantiate both the evaluation and subtraction correspondences.
 The lower-level Horner example needs its final endpoint certificate, without
 the separate sign fact for the intermediate product required by the first
 reader.

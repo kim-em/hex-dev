@@ -51,7 +51,7 @@ theorem lower_query : context.queryPoly (LowerProbe.evalPolynomial linearHead (r
   decide +kernel
 
 set_option maxRecDepth 32768 in
-example : LowerProbe.readEvalSign? linearHead (rational 1) 1 lowerMemo 0 = some 1 := by
+theorem eval_read : LowerProbe.readEvalSign? linearHead (rational 1) 1 lowerMemo 0 = some 1 := by
   simp only [LowerProbe.readEvalSign?, Context.readSigns?]
   rw [lower_query]
   decide +kernel
@@ -197,6 +197,15 @@ private theorem rationalSign (x : Rat) :
   congr 1
   exact (StrictMono.sign_comp (f := Rat.castHom ℝ) Rat.cast_strictMono x).symm
 
+theorem eval_sign : (linearHead.eval (rational 1)).sign = 1 := by
+  have h := LowerProbe.readEvalSign_sound (fun q : Rat => (q : ℝ))
+    (fun _ => Rat.cast_eq_zero) (by simp)
+    (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
+    (fun _ _ => Rat.cast_mul _ _) (fun _ => by simp) rationalSign
+    (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _)
+    linearHead (rational 1) 1 lowerMemo 0 1 eval_read
+  exact h.symm
+
 /-- Instantiate the general correspondence proof on the nonzero query that
 vanishes at the selected root. The native subtraction need not be reduced. -/
 theorem difference_sign : (literal - rational 2).sign = 0 := by
@@ -255,6 +264,14 @@ def main : IO UInt32 := do
     ((lowerDifference (Dag.encode (.leaf vanishingNode)) literal (rational 2) 1).map (· == 0)) none
   expect "vanishing-query-wrong-certificate"
     ((lowerDifference (Dag.encode (.leaf zeroNode)) literal (rational 2) 0).map (· == 0)) none
+  expect "vanishing-forged-counts"
+    ((lowerDifference (Dag.encode (.leaf {vanishingNode with
+      system := {vanishingNode.system with counts := #v[0, 0, 1]}}))
+      literal (rational 2) 1).map (· == 1)) none
+  expect "vanishing-forged-moment"
+    ((lowerDifference (Dag.encode (.leaf {vanishingNode with
+      moments := #v[singletonQuery, {vanishingMoment with upperVariations := 0}, vanishingSquare]}))
+      literal (rational 2) 0).map (· == 0)) none
   expect "missing-endpoint-fact" (endpoints PackingConformance.facts) none
   expect "complete-after-missing" (endpoints NestedSignsConformance.facts) (some true)
   expect "missing-Horner-fact"
