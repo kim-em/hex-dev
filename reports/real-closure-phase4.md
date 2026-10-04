@@ -52,9 +52,22 @@ three roots and passed the least-root interval check. It then reached the
 1800-second cap before the coefficient-construction stage completed;
 metadata records signal 9 and exit code −9. This localizes the unfinished
 work to construction of the second polynomial, rather than its isolation.
+The canonical construction uses generic real-algebraic multiplication and
+exactification: products of the degree-15 operands form degree-225 product
+eliminants before exact factorization. The native construction instead reduces
+inside `ℚ(α)`. Consequently the retained canonical arm supplies no second
+isolation measurement. The retained build logs confirm Lake's target was up
+to date at a clean source commit; they are not evidence of recompilation from
+an empty build cache.
 These are retained functional observations from a shared host, including
 changed apparatus and censored execution. They are not a scientific timing
 comparison or a quantified speedup.
+
+In the build-bound native run, first isolation over `ℚ` accounts for about
+92% of the 7.08-second process time. The preliminary whole-process profile
+therefore mostly describes this base-field path. It provides little evidence
+about the algebraic tower stage, whose required separate attribution remains
+outstanding.
 
 ## Preliminary native profile
 
@@ -95,7 +108,7 @@ rational Sturm sequence finds three real roots and verifies the least-root
 interval, with no root below it. Reproduce these checks with
 `python3 scripts/oracle/real_closure_phase4_inputs.py --paper PAPER.pdf`
 in an environment with the pinned versions. The checker verifies the supplied PDF hash; the formulas
-were manually transcribed and checked against section4, PDF page14.
+were manually transcribed and checked against section 4, PDF page 14.
 `input-checks.json` records this checker's hash and is the current input
 verification; `workload-checks.json` retains the earlier, narrower check.
 Retain a new compiled functional run with

@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import platform
 import subprocess
+import shutil
 import sys
 import time
 
@@ -51,13 +52,25 @@ def main():
                                            indent=2) + "\n")
         return 1
     if git("rev-parse", "HEAD") != source_head or git("status", "--porcelain"):
+        metadata_path.write_text(json.dumps({"status": "source changed", "source_head": source_head,
+                                            "ended_utc": utc()}, indent=2) + "\n")
         raise RuntimeError("source changed during the retained build")
-    cpu, lease = cpu_lease()
-    executable = REPO / ".lake/build/bin/hexrealclosure_phase4"
+    try:
+        executable = args.output / "hexrealclosure_phase4"
+        shutil.copy2(REPO / ".lake/build/bin/hexrealclosure_phase4", executable)
+        lean_version = subprocess.check_output(["lake", "env", "lean", "--version"],
+                                               cwd=REPO, text=True).strip()
+        lake_version = subprocess.check_output(["lake", "--version"], cwd=REPO, text=True).strip()
+        cpu, lease = cpu_lease()
+    except Exception as error:
+        metadata_path.write_text(json.dumps({"status": "setup failed", "source_head": source_head,
+                                            "error": str(error), "ended_utc": utc()}, indent=2) + "\n")
+        raise
     command = ["taskset", "-c", str(cpu), str(executable), "metitarski", args.backend]
     metadata = {
         "purpose": "compiled functional validation; not a scientific timing comparison",
         "backend": args.backend, "source_head": source_head, "source_dirty": False,
+        "lean_version": lean_version, "lake_version": lake_version,
         "build_command": build_command,
         "build_log_sha256": hashlib.sha256((args.output / "build.log").read_bytes()).hexdigest(),
         "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
