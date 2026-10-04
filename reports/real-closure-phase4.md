@@ -144,6 +144,20 @@ The paper PDF SHA-256 and formula are in the retained checks. The original
 CADE 2013 scripts have not been recovered from the pinned Z3 source trees.
 No corrected polynomial or replacement workload is assumed here.
 
+## Short product-chain normalization comparison
+
+The [retained matched clean/eager comparison](bench-results/real-closure-normalization-d73e2f/README.md)
+checks four Rat-extension sizes, all 64 arithmetic prefixes and 48 timed arms
+from a preregistered fixed schedule. Both storage policies use one prepared
+root and the same native packing. Eager was faster in every paired trial for
+this short family. The archive retains actual stored/query coefficient growth,
+source and executable bindings, exact independent checks and all command outputs.
+
+This family has one extension and 2n linear-seed products, eager denominators
+at most 4, and direct Sturm queries; degree 2 takes the linear endpoint fast
+path. These observations do not determine a normalization policy or satisfy
+whole-tower normalization, scaling, operation-counter or time-budget coverage.
+
 ## Remaining measurements
 
 The functional runs do not establish Phase 4 readiness. Required remaining
