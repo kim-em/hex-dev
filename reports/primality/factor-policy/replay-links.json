@@ -1,0 +1,822 @@
+[
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 0,
+    "certificate_sha256": "739c795dac137a70f1b1c761b0d078abede22b3aab96f938362ce182277162c9",
+    "theorem": "Hex.PrimalityFactorProbe.case2"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 1,
+    "certificate_sha256": "9435f792c5671caf2d8cfbc63f5c6151b6b92035df20c9a8d6d841e9d22a2c8c",
+    "theorem": "Hex.PrimalityFactorProbe.case4"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 2,
+    "certificate_sha256": "739c795dac137a70f1b1c761b0d078abede22b3aab96f938362ce182277162c9",
+    "theorem": "Hex.PrimalityFactorProbe.case2"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 3,
+    "certificate_sha256": "739c795dac137a70f1b1c761b0d078abede22b3aab96f938362ce182277162c9",
+    "theorem": "Hex.PrimalityFactorProbe.case2"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 4,
+    "certificate_sha256": "739c795dac137a70f1b1c761b0d078abede22b3aab96f938362ce182277162c9",
+    "theorem": "Hex.PrimalityFactorProbe.case2"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 5,
+    "certificate_sha256": "41cbaf47006f7843845c9b72a18d04ab9cc7122e71ca4ce3e34766e19b0c37b3",
+    "theorem": "Hex.PrimalityFactorProbe.case3"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 6,
+    "certificate_sha256": "41cbaf47006f7843845c9b72a18d04ab9cc7122e71ca4ce3e34766e19b0c37b3",
+    "theorem": "Hex.PrimalityFactorProbe.case3"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 7,
+    "certificate_sha256": "41cbaf47006f7843845c9b72a18d04ab9cc7122e71ca4ce3e34766e19b0c37b3",
+    "theorem": "Hex.PrimalityFactorProbe.case3"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 8,
+    "certificate_sha256": "41cbaf47006f7843845c9b72a18d04ab9cc7122e71ca4ce3e34766e19b0c37b3",
+    "theorem": "Hex.PrimalityFactorProbe.case3"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 9,
+    "certificate_sha256": "353230e6524ae7c69f84d09df1910c98443de4c5585354601f9e72512af255e6",
+    "theorem": "Hex.PrimalityFactorProbe.case5"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 10,
+    "certificate_sha256": "9435f792c5671caf2d8cfbc63f5c6151b6b92035df20c9a8d6d841e9d22a2c8c",
+    "theorem": "Hex.PrimalityFactorProbe.case4"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 11,
+    "certificate_sha256": "353230e6524ae7c69f84d09df1910c98443de4c5585354601f9e72512af255e6",
+    "theorem": "Hex.PrimalityFactorProbe.case5"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 12,
+    "certificate_sha256": "353230e6524ae7c69f84d09df1910c98443de4c5585354601f9e72512af255e6",
+    "theorem": "Hex.PrimalityFactorProbe.case5"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 13,
+    "certificate_sha256": "353230e6524ae7c69f84d09df1910c98443de4c5585354601f9e72512af255e6",
+    "theorem": "Hex.PrimalityFactorProbe.case5"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 14,
+    "certificate_sha256": "9435f792c5671caf2d8cfbc63f5c6151b6b92035df20c9a8d6d841e9d22a2c8c",
+    "theorem": "Hex.PrimalityFactorProbe.case4"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 15,
+    "certificate_sha256": "9435f792c5671caf2d8cfbc63f5c6151b6b92035df20c9a8d6d841e9d22a2c8c",
+    "theorem": "Hex.PrimalityFactorProbe.case4"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 16,
+    "certificate_sha256": "eeab2fb1b28340d543a5be4ff8f9d4b84c987f5e448485a0879b507c69f5474f",
+    "theorem": "Hex.PrimalityFactorProbe.case6"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 17,
+    "certificate_sha256": "5c54522e9b432fbfc907cd9e1ffa366acd04bbaee08d3a5f50ce355d5ec95ef6",
+    "theorem": "Hex.PrimalityFactorProbe.case10"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 18,
+    "certificate_sha256": "89aaabdc4405832e079f59a4a792df0a90c25fa18676ca13ad03ce359dc002ae",
+    "theorem": "Hex.PrimalityFactorProbe.case12"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 19,
+    "certificate_sha256": "854c10fc9a7c6cf1f5a341f14d7468638ede288abf02bc2c427ac380a4eda54a",
+    "theorem": "Hex.PrimalityFactorProbe.case11"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 20,
+    "certificate_sha256": "854c10fc9a7c6cf1f5a341f14d7468638ede288abf02bc2c427ac380a4eda54a",
+    "theorem": "Hex.PrimalityFactorProbe.case11"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 21,
+    "certificate_sha256": "89aaabdc4405832e079f59a4a792df0a90c25fa18676ca13ad03ce359dc002ae",
+    "theorem": "Hex.PrimalityFactorProbe.case12"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 22,
+    "certificate_sha256": "5c54522e9b432fbfc907cd9e1ffa366acd04bbaee08d3a5f50ce355d5ec95ef6",
+    "theorem": "Hex.PrimalityFactorProbe.case10"
+  },
+  {
+    "report": "balanced-fields-v1.json",
+    "sample": 23,
+    "certificate_sha256": "eeab2fb1b28340d543a5be4ff8f9d4b84c987f5e448485a0879b507c69f5474f",
+    "theorem": "Hex.PrimalityFactorProbe.case6"
+  },
+  {
+    "report": "balanced-successes-v1.json",
+    "sample": 0,
+    "certificate_sha256": "0fd47bae858921b84b04d8da1498722b615e24bf575b536f2e9c5952c2edf98e",
+    "theorem": "Hex.PrimalityFactorProbe.case9"
+  },
+  {
+    "report": "balanced-successes-v1.json",
+    "sample": 1,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "balanced-successes-v1.json",
+    "sample": 2,
+    "certificate_sha256": "0fd47bae858921b84b04d8da1498722b615e24bf575b536f2e9c5952c2edf98e",
+    "theorem": "Hex.PrimalityFactorProbe.case9"
+  },
+  {
+    "report": "balanced-successes-v1.json",
+    "sample": 3,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "construction-screen-v1.json",
+    "sample": 0,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "construction-screen-v1.json",
+    "sample": 1,
+    "certificate_sha256": "ad42d56971d812b50e54975eaa812c8ac67456593c39cec941780e1267100bb1",
+    "theorem": "Hex.PrimalityFactorProbe.case1"
+  },
+  {
+    "report": "construction-screen-v1.json",
+    "sample": 2,
+    "certificate_sha256": "ad42d56971d812b50e54975eaa812c8ac67456593c39cec941780e1267100bb1",
+    "theorem": "Hex.PrimalityFactorProbe.case1"
+  },
+  {
+    "report": "construction-screen-v1.json",
+    "sample": 3,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "coverage-v1.json",
+    "sample": 4,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "coverage-v1.json",
+    "sample": 6,
+    "certificate_sha256": "ad42d56971d812b50e54975eaa812c8ac67456593c39cec941780e1267100bb1",
+    "theorem": "Hex.PrimalityFactorProbe.case1"
+  },
+  {
+    "report": "efficient-coverage-v1.json",
+    "sample": 4,
+    "certificate_sha256": "0a42753c6c9492b6a92b216c4703873b15b8b61f6bc1875c494bf5d807e7489b",
+    "theorem": "Hex.PrimalityFactorProbe.case8"
+  },
+  {
+    "report": "efficient-coverage-v1.json",
+    "sample": 6,
+    "certificate_sha256": "0fd47bae858921b84b04d8da1498722b615e24bf575b536f2e9c5952c2edf98e",
+    "theorem": "Hex.PrimalityFactorProbe.case9"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 0,
+    "certificate_sha256": "739c795dac137a70f1b1c761b0d078abede22b3aab96f938362ce182277162c9",
+    "theorem": "Hex.PrimalityFactorProbe.case2"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 1,
+    "certificate_sha256": "9435f792c5671caf2d8cfbc63f5c6151b6b92035df20c9a8d6d841e9d22a2c8c",
+    "theorem": "Hex.PrimalityFactorProbe.case4"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 2,
+    "certificate_sha256": "739c795dac137a70f1b1c761b0d078abede22b3aab96f938362ce182277162c9",
+    "theorem": "Hex.PrimalityFactorProbe.case2"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 3,
+    "certificate_sha256": "739c795dac137a70f1b1c761b0d078abede22b3aab96f938362ce182277162c9",
+    "theorem": "Hex.PrimalityFactorProbe.case2"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 4,
+    "certificate_sha256": "739c795dac137a70f1b1c761b0d078abede22b3aab96f938362ce182277162c9",
+    "theorem": "Hex.PrimalityFactorProbe.case2"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 5,
+    "certificate_sha256": "41cbaf47006f7843845c9b72a18d04ab9cc7122e71ca4ce3e34766e19b0c37b3",
+    "theorem": "Hex.PrimalityFactorProbe.case3"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 6,
+    "certificate_sha256": "41cbaf47006f7843845c9b72a18d04ab9cc7122e71ca4ce3e34766e19b0c37b3",
+    "theorem": "Hex.PrimalityFactorProbe.case3"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 7,
+    "certificate_sha256": "41cbaf47006f7843845c9b72a18d04ab9cc7122e71ca4ce3e34766e19b0c37b3",
+    "theorem": "Hex.PrimalityFactorProbe.case3"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 8,
+    "certificate_sha256": "41cbaf47006f7843845c9b72a18d04ab9cc7122e71ca4ce3e34766e19b0c37b3",
+    "theorem": "Hex.PrimalityFactorProbe.case3"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 9,
+    "certificate_sha256": "353230e6524ae7c69f84d09df1910c98443de4c5585354601f9e72512af255e6",
+    "theorem": "Hex.PrimalityFactorProbe.case5"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 10,
+    "certificate_sha256": "9435f792c5671caf2d8cfbc63f5c6151b6b92035df20c9a8d6d841e9d22a2c8c",
+    "theorem": "Hex.PrimalityFactorProbe.case4"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 11,
+    "certificate_sha256": "353230e6524ae7c69f84d09df1910c98443de4c5585354601f9e72512af255e6",
+    "theorem": "Hex.PrimalityFactorProbe.case5"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 12,
+    "certificate_sha256": "353230e6524ae7c69f84d09df1910c98443de4c5585354601f9e72512af255e6",
+    "theorem": "Hex.PrimalityFactorProbe.case5"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 13,
+    "certificate_sha256": "353230e6524ae7c69f84d09df1910c98443de4c5585354601f9e72512af255e6",
+    "theorem": "Hex.PrimalityFactorProbe.case5"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 14,
+    "certificate_sha256": "9435f792c5671caf2d8cfbc63f5c6151b6b92035df20c9a8d6d841e9d22a2c8c",
+    "theorem": "Hex.PrimalityFactorProbe.case4"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 15,
+    "certificate_sha256": "9435f792c5671caf2d8cfbc63f5c6151b6b92035df20c9a8d6d841e9d22a2c8c",
+    "theorem": "Hex.PrimalityFactorProbe.case4"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 16,
+    "certificate_sha256": "eeab2fb1b28340d543a5be4ff8f9d4b84c987f5e448485a0879b507c69f5474f",
+    "theorem": "Hex.PrimalityFactorProbe.case6"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 17,
+    "certificate_sha256": "eeab2fb1b28340d543a5be4ff8f9d4b84c987f5e448485a0879b507c69f5474f",
+    "theorem": "Hex.PrimalityFactorProbe.case6"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 18,
+    "certificate_sha256": "89aaabdc4405832e079f59a4a792df0a90c25fa18676ca13ad03ce359dc002ae",
+    "theorem": "Hex.PrimalityFactorProbe.case12"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 19,
+    "certificate_sha256": "79af447346a0d36128c529bc0bae93dcb9b3e152598567ca235669e544e630d8",
+    "theorem": "Hex.PrimalityFactorProbe.case7"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 20,
+    "certificate_sha256": "79af447346a0d36128c529bc0bae93dcb9b3e152598567ca235669e544e630d8",
+    "theorem": "Hex.PrimalityFactorProbe.case7"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 21,
+    "certificate_sha256": "89aaabdc4405832e079f59a4a792df0a90c25fa18676ca13ad03ce359dc002ae",
+    "theorem": "Hex.PrimalityFactorProbe.case12"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 22,
+    "certificate_sha256": "eeab2fb1b28340d543a5be4ff8f9d4b84c987f5e448485a0879b507c69f5474f",
+    "theorem": "Hex.PrimalityFactorProbe.case6"
+  },
+  {
+    "report": "efficient-fields-v1.json",
+    "sample": 23,
+    "certificate_sha256": "eeab2fb1b28340d543a5be4ff8f9d4b84c987f5e448485a0879b507c69f5474f",
+    "theorem": "Hex.PrimalityFactorProbe.case6"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 0,
+    "certificate_sha256": "739c795dac137a70f1b1c761b0d078abede22b3aab96f938362ce182277162c9",
+    "theorem": "Hex.PrimalityFactorProbe.case2"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 1,
+    "certificate_sha256": "9435f792c5671caf2d8cfbc63f5c6151b6b92035df20c9a8d6d841e9d22a2c8c",
+    "theorem": "Hex.PrimalityFactorProbe.case4"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 2,
+    "certificate_sha256": "739c795dac137a70f1b1c761b0d078abede22b3aab96f938362ce182277162c9",
+    "theorem": "Hex.PrimalityFactorProbe.case2"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 3,
+    "certificate_sha256": "739c795dac137a70f1b1c761b0d078abede22b3aab96f938362ce182277162c9",
+    "theorem": "Hex.PrimalityFactorProbe.case2"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 4,
+    "certificate_sha256": "739c795dac137a70f1b1c761b0d078abede22b3aab96f938362ce182277162c9",
+    "theorem": "Hex.PrimalityFactorProbe.case2"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 5,
+    "certificate_sha256": "41cbaf47006f7843845c9b72a18d04ab9cc7122e71ca4ce3e34766e19b0c37b3",
+    "theorem": "Hex.PrimalityFactorProbe.case3"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 6,
+    "certificate_sha256": "41cbaf47006f7843845c9b72a18d04ab9cc7122e71ca4ce3e34766e19b0c37b3",
+    "theorem": "Hex.PrimalityFactorProbe.case3"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 7,
+    "certificate_sha256": "41cbaf47006f7843845c9b72a18d04ab9cc7122e71ca4ce3e34766e19b0c37b3",
+    "theorem": "Hex.PrimalityFactorProbe.case3"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 8,
+    "certificate_sha256": "41cbaf47006f7843845c9b72a18d04ab9cc7122e71ca4ce3e34766e19b0c37b3",
+    "theorem": "Hex.PrimalityFactorProbe.case3"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 9,
+    "certificate_sha256": "353230e6524ae7c69f84d09df1910c98443de4c5585354601f9e72512af255e6",
+    "theorem": "Hex.PrimalityFactorProbe.case5"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 10,
+    "certificate_sha256": "618dc969f57e491964a87e4ae8148a0950f882a358a283086d636b11bef9d614",
+    "theorem": "Hex.PrimalityFactorProbe.case13"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 11,
+    "certificate_sha256": "353230e6524ae7c69f84d09df1910c98443de4c5585354601f9e72512af255e6",
+    "theorem": "Hex.PrimalityFactorProbe.case5"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 12,
+    "certificate_sha256": "353230e6524ae7c69f84d09df1910c98443de4c5585354601f9e72512af255e6",
+    "theorem": "Hex.PrimalityFactorProbe.case5"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 14,
+    "certificate_sha256": "353230e6524ae7c69f84d09df1910c98443de4c5585354601f9e72512af255e6",
+    "theorem": "Hex.PrimalityFactorProbe.case5"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 15,
+    "certificate_sha256": "eeab2fb1b28340d543a5be4ff8f9d4b84c987f5e448485a0879b507c69f5474f",
+    "theorem": "Hex.PrimalityFactorProbe.case6"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 16,
+    "certificate_sha256": "eeab2fb1b28340d543a5be4ff8f9d4b84c987f5e448485a0879b507c69f5474f",
+    "theorem": "Hex.PrimalityFactorProbe.case6"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 17,
+    "certificate_sha256": "eeab2fb1b28340d543a5be4ff8f9d4b84c987f5e448485a0879b507c69f5474f",
+    "theorem": "Hex.PrimalityFactorProbe.case6"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 18,
+    "certificate_sha256": "eeab2fb1b28340d543a5be4ff8f9d4b84c987f5e448485a0879b507c69f5474f",
+    "theorem": "Hex.PrimalityFactorProbe.case6"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 19,
+    "certificate_sha256": "89aaabdc4405832e079f59a4a792df0a90c25fa18676ca13ad03ce359dc002ae",
+    "theorem": "Hex.PrimalityFactorProbe.case12"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 20,
+    "certificate_sha256": "79af447346a0d36128c529bc0bae93dcb9b3e152598567ca235669e544e630d8",
+    "theorem": "Hex.PrimalityFactorProbe.case7"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 21,
+    "certificate_sha256": "79af447346a0d36128c529bc0bae93dcb9b3e152598567ca235669e544e630d8",
+    "theorem": "Hex.PrimalityFactorProbe.case7"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 22,
+    "certificate_sha256": "9435f792c5671caf2d8cfbc63f5c6151b6b92035df20c9a8d6d841e9d22a2c8c",
+    "theorem": "Hex.PrimalityFactorProbe.case4"
+  },
+  {
+    "report": "fields-v1.json",
+    "sample": 23,
+    "certificate_sha256": "89aaabdc4405832e079f59a4a792df0a90c25fa18676ca13ad03ce359dc002ae",
+    "theorem": "Hex.PrimalityFactorProbe.case12"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 0,
+    "certificate_sha256": "739c795dac137a70f1b1c761b0d078abede22b3aab96f938362ce182277162c9",
+    "theorem": "Hex.PrimalityFactorProbe.case2"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 1,
+    "certificate_sha256": "9435f792c5671caf2d8cfbc63f5c6151b6b92035df20c9a8d6d841e9d22a2c8c",
+    "theorem": "Hex.PrimalityFactorProbe.case4"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 2,
+    "certificate_sha256": "739c795dac137a70f1b1c761b0d078abede22b3aab96f938362ce182277162c9",
+    "theorem": "Hex.PrimalityFactorProbe.case2"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 3,
+    "certificate_sha256": "739c795dac137a70f1b1c761b0d078abede22b3aab96f938362ce182277162c9",
+    "theorem": "Hex.PrimalityFactorProbe.case2"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 4,
+    "certificate_sha256": "739c795dac137a70f1b1c761b0d078abede22b3aab96f938362ce182277162c9",
+    "theorem": "Hex.PrimalityFactorProbe.case2"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 5,
+    "certificate_sha256": "41cbaf47006f7843845c9b72a18d04ab9cc7122e71ca4ce3e34766e19b0c37b3",
+    "theorem": "Hex.PrimalityFactorProbe.case3"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 6,
+    "certificate_sha256": "41cbaf47006f7843845c9b72a18d04ab9cc7122e71ca4ce3e34766e19b0c37b3",
+    "theorem": "Hex.PrimalityFactorProbe.case3"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 7,
+    "certificate_sha256": "41cbaf47006f7843845c9b72a18d04ab9cc7122e71ca4ce3e34766e19b0c37b3",
+    "theorem": "Hex.PrimalityFactorProbe.case3"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 8,
+    "certificate_sha256": "41cbaf47006f7843845c9b72a18d04ab9cc7122e71ca4ce3e34766e19b0c37b3",
+    "theorem": "Hex.PrimalityFactorProbe.case3"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 9,
+    "certificate_sha256": "353230e6524ae7c69f84d09df1910c98443de4c5585354601f9e72512af255e6",
+    "theorem": "Hex.PrimalityFactorProbe.case5"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 10,
+    "certificate_sha256": "9435f792c5671caf2d8cfbc63f5c6151b6b92035df20c9a8d6d841e9d22a2c8c",
+    "theorem": "Hex.PrimalityFactorProbe.case4"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 11,
+    "certificate_sha256": "353230e6524ae7c69f84d09df1910c98443de4c5585354601f9e72512af255e6",
+    "theorem": "Hex.PrimalityFactorProbe.case5"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 12,
+    "certificate_sha256": "9435f792c5671caf2d8cfbc63f5c6151b6b92035df20c9a8d6d841e9d22a2c8c",
+    "theorem": "Hex.PrimalityFactorProbe.case4"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 13,
+    "certificate_sha256": "353230e6524ae7c69f84d09df1910c98443de4c5585354601f9e72512af255e6",
+    "theorem": "Hex.PrimalityFactorProbe.case5"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 14,
+    "certificate_sha256": "9435f792c5671caf2d8cfbc63f5c6151b6b92035df20c9a8d6d841e9d22a2c8c",
+    "theorem": "Hex.PrimalityFactorProbe.case4"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 15,
+    "certificate_sha256": "353230e6524ae7c69f84d09df1910c98443de4c5585354601f9e72512af255e6",
+    "theorem": "Hex.PrimalityFactorProbe.case5"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 16,
+    "certificate_sha256": "eeab2fb1b28340d543a5be4ff8f9d4b84c987f5e448485a0879b507c69f5474f",
+    "theorem": "Hex.PrimalityFactorProbe.case6"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 17,
+    "certificate_sha256": "89aaabdc4405832e079f59a4a792df0a90c25fa18676ca13ad03ce359dc002ae",
+    "theorem": "Hex.PrimalityFactorProbe.case12"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 18,
+    "certificate_sha256": "79af447346a0d36128c529bc0bae93dcb9b3e152598567ca235669e544e630d8",
+    "theorem": "Hex.PrimalityFactorProbe.case7"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 19,
+    "certificate_sha256": "79af447346a0d36128c529bc0bae93dcb9b3e152598567ca235669e544e630d8",
+    "theorem": "Hex.PrimalityFactorProbe.case7"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 20,
+    "certificate_sha256": "89aaabdc4405832e079f59a4a792df0a90c25fa18676ca13ad03ce359dc002ae",
+    "theorem": "Hex.PrimalityFactorProbe.case12"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 21,
+    "certificate_sha256": "eeab2fb1b28340d543a5be4ff8f9d4b84c987f5e448485a0879b507c69f5474f",
+    "theorem": "Hex.PrimalityFactorProbe.case6"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 22,
+    "certificate_sha256": "eeab2fb1b28340d543a5be4ff8f9d4b84c987f5e448485a0879b507c69f5474f",
+    "theorem": "Hex.PrimalityFactorProbe.case6"
+  },
+  {
+    "report": "mixed-fields-v1.json",
+    "sample": 23,
+    "certificate_sha256": "eeab2fb1b28340d543a5be4ff8f9d4b84c987f5e448485a0879b507c69f5474f",
+    "theorem": "Hex.PrimalityFactorProbe.case6"
+  },
+  {
+    "report": "mixed-successes-v1.json",
+    "sample": 0,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "mixed-successes-v1.json",
+    "sample": 1,
+    "certificate_sha256": "ad42d56971d812b50e54975eaa812c8ac67456593c39cec941780e1267100bb1",
+    "theorem": "Hex.PrimalityFactorProbe.case1"
+  },
+  {
+    "report": "mixed-successes-v1.json",
+    "sample": 2,
+    "certificate_sha256": "ad42d56971d812b50e54975eaa812c8ac67456593c39cec941780e1267100bb1",
+    "theorem": "Hex.PrimalityFactorProbe.case1"
+  },
+  {
+    "report": "mixed-successes-v1.json",
+    "sample": 3,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "paired-v1.json",
+    "sample": 0,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "paired-v1.json",
+    "sample": 1,
+    "certificate_sha256": "ad42d56971d812b50e54975eaa812c8ac67456593c39cec941780e1267100bb1",
+    "theorem": "Hex.PrimalityFactorProbe.case1"
+  },
+  {
+    "report": "paired-v1.json",
+    "sample": 2,
+    "output_sha256": "d865401eea9162bb75ce3bff3b740fea116230c59531823f67d0c064a21c990e",
+    "primecert_kernel_replay": "primecert-kernel-replay.json",
+    "case": "holdout-512-difficult-0"
+  },
+  {
+    "report": "paired-v1.json",
+    "sample": 3,
+    "output_sha256": "d865401eea9162bb75ce3bff3b740fea116230c59531823f67d0c064a21c990e",
+    "primecert_kernel_replay": "primecert-kernel-replay.json",
+    "case": "holdout-512-difficult-0"
+  },
+  {
+    "report": "paired-v1.json",
+    "sample": 4,
+    "certificate_sha256": "ad42d56971d812b50e54975eaa812c8ac67456593c39cec941780e1267100bb1",
+    "theorem": "Hex.PrimalityFactorProbe.case1"
+  },
+  {
+    "report": "paired-v1.json",
+    "sample": 5,
+    "certificate_sha256": "ad42d56971d812b50e54975eaa812c8ac67456593c39cec941780e1267100bb1",
+    "theorem": "Hex.PrimalityFactorProbe.case1"
+  },
+  {
+    "report": "paired-v1.json",
+    "sample": 6,
+    "output_sha256": "d865401eea9162bb75ce3bff3b740fea116230c59531823f67d0c064a21c990e",
+    "primecert_kernel_replay": "primecert-kernel-replay.json",
+    "case": "holdout-512-difficult-0"
+  },
+  {
+    "report": "paired-v1.json",
+    "sample": 7,
+    "output_sha256": "d865401eea9162bb75ce3bff3b740fea116230c59531823f67d0c064a21c990e",
+    "primecert_kernel_replay": "primecert-kernel-replay.json",
+    "case": "holdout-512-difficult-0"
+  },
+  {
+    "report": "paired-v1.json",
+    "sample": 8,
+    "certificate_sha256": "ad42d56971d812b50e54975eaa812c8ac67456593c39cec941780e1267100bb1",
+    "theorem": "Hex.PrimalityFactorProbe.case1"
+  },
+  {
+    "report": "paired-v1.json",
+    "sample": 9,
+    "output_sha256": "1886c8bbc680990872d4b5ab1dad20b1adee626144ebaa82a6a14159841dd742",
+    "primecert_kernel_replay": "primecert-kernel-replay.json",
+    "case": "holdout-512-ordinary-4"
+  },
+  {
+    "report": "paired-v1.json",
+    "sample": 10,
+    "output_sha256": "1886c8bbc680990872d4b5ab1dad20b1adee626144ebaa82a6a14159841dd742",
+    "primecert_kernel_replay": "primecert-kernel-replay.json",
+    "case": "holdout-512-ordinary-4"
+  },
+  {
+    "report": "paired-v1.json",
+    "sample": 11,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "paired-v1.json",
+    "sample": 12,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "paired-v1.json",
+    "sample": 13,
+    "output_sha256": "1886c8bbc680990872d4b5ab1dad20b1adee626144ebaa82a6a14159841dd742",
+    "primecert_kernel_replay": "primecert-kernel-replay.json",
+    "case": "holdout-512-ordinary-4"
+  },
+  {
+    "report": "paired-v1.json",
+    "sample": 14,
+    "output_sha256": "1886c8bbc680990872d4b5ab1dad20b1adee626144ebaa82a6a14159841dd742",
+    "primecert_kernel_replay": "primecert-kernel-replay.json",
+    "case": "holdout-512-ordinary-4"
+  },
+  {
+    "report": "paired-v1.json",
+    "sample": 15,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "primecert-coverage-v1.json",
+    "sample": 4,
+    "output_sha256": "1886c8bbc680990872d4b5ab1dad20b1adee626144ebaa82a6a14159841dd742",
+    "primecert_kernel_replay": "primecert-kernel-replay.json",
+    "case": "holdout-512-ordinary-4"
+  },
+  {
+    "report": "primecert-coverage-v1.json",
+    "sample": 6,
+    "output_sha256": "d865401eea9162bb75ce3bff3b740fea116230c59531823f67d0c064a21c990e",
+    "primecert_kernel_replay": "primecert-kernel-replay.json",
+    "case": "holdout-512-difficult-0"
+  },
+  {
+    "report": "seed1-v1.json",
+    "sample": 0,
+    "certificate_sha256": "0a42753c6c9492b6a92b216c4703873b15b8b61f6bc1875c494bf5d807e7489b",
+    "theorem": "Hex.PrimalityFactorProbe.case8"
+  },
+  {
+    "report": "seed1-v1.json",
+    "sample": 1,
+    "certificate_sha256": "0fd47bae858921b84b04d8da1498722b615e24bf575b536f2e9c5952c2edf98e",
+    "theorem": "Hex.PrimalityFactorProbe.case9"
+  },
+  {
+    "report": "seed2-v1.json",
+    "sample": 0,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "seed2-v1.json",
+    "sample": 1,
+    "certificate_sha256": "0fd47bae858921b84b04d8da1498722b615e24bf575b536f2e9c5952c2edf98e",
+    "theorem": "Hex.PrimalityFactorProbe.case9"
+  },
+  {
+    "report": "dispatch-controls-v1.json",
+    "sample": 2,
+    "certificate_sha256": "ad42d56971d812b50e54975eaa812c8ac67456593c39cec941780e1267100bb1",
+    "theorem": "Hex.PrimalityFactorProbe.case1"
+  },
+  {
+    "report": "dispatch-controls-v1.json",
+    "sample": 3,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  }
+]

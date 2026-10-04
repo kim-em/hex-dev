@@ -1,0 +1,6 @@
+ℹ [114/441] Replayed HexPrimality.Table:c.o
+info: stderr:
+/home/kim/worktrees/hex-dev/hex-dev-issue-10585/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]
+1 warning generated.
+✔ [767/767] Built HexPrimalityMathlib.ProofProbe.FactorExperiment (953ms)
+Build completed successfully (767 jobs).
