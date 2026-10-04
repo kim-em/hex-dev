@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
+public import HexRealClosure.SignReplay
+public meta import HexRealClosure.SignReplay
 public import HexRealClosureMathlib.PackingConformance
 public meta import HexRealClosureMathlib.PackingConformance
 public import HexRealClosureMathlib.AlgebraicTower
@@ -265,6 +267,41 @@ theorem graph_memo :
       simp [graph]
     exact nodes.trans shape
 
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+/-- The actual supplied-fact validator reduces both literal entries and their
+indices in the ordinary kernel, without using the native validator theorem. -/
+theorem graph_cachedMemo :
+    (Dag.validateCached? reduction reduction_eq facts 8 linearHead
+      linearRaw.lower linearRaw.upper graph).map
+      (fun memo => memo.map (fun checked => checked.value.node)) =
+        some #[linearNode, queryNode] := by
+  simp only [Dag.validateCached?, Hex.SignDet.Dag.changeOps, Dag.validate?, Dag.step_eq,
+    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
+    TarskiCertificate.check_eq, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+/-- Missing the required endpoint fact blocks the same actual memo interface. -/
+example : True := by
+  fail_if_success
+    have :
+        (Dag.validateCached? reduction reduction_eq PackingConformance.facts 8 linearHead
+          linearRaw.lower linearRaw.upper graph).map
+          (fun memo => memo.map (fun checked => checked.value.node)) =
+            some #[linearNode, queryNode] := by
+      simp only [Dag.validateCached?, Hex.SignDet.Dag.changeOps, Dag.validate?, Dag.step_eq,
+        Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
+        TarskiCertificate.check_eq, SignedRemainderChain.check,
+        ← Array.all_toList, Array.toList_range]
+      decide +kernel
+  trivial
+
+#guard (Dag.validateCached? reduction reduction_eq ([] : List (SignFact context)) 8
+  linearHead linearRaw.lower linearRaw.upper graph).isSome
+
 /-- Two selections use the same accepted memo and bind their own ordered
 query lists. The proof uses the already proved memo rather than replaying it. -/
 theorem graph_selections :
@@ -471,5 +508,9 @@ example : True := by
 /-- info: 'Hex.RealClosure.Algebraic.NestedSignsConformance.next_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms next_sign
+
+/-- info: 'Hex.RealClosure.Algebraic.NestedSignsConformance.graph_cachedMemo' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms graph_cachedMemo
 
 end Hex.RealClosure.Algebraic.NestedSignsConformance

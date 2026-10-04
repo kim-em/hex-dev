@@ -219,4 +219,39 @@ theorem Element.cachedNatCast_eq (reduce : DensePoly E → DensePoly E)
   funext n
   exact Element.pack_eq reduce hr facts _
 
+/-- Inversion retains the existing inverse polynomial computation, then
+packs its result using supplied facts for the actual retained remainder. -/
+@[expose, instance_reducible] def Element.cachedInv (reduce : DensePoly E → DensePoly E)
+    (hr : reduce = context.reduce) (facts : List (SignFact context)) : Inv (Element context) :=
+  ⟨fun a => match a.stored with
+    | none => 0
+    | some _ => Element.pack reduce hr facts a.inverseCandidate⟩
+
+theorem Element.cachedInv_eq (reduce : DensePoly E → DensePoly E)
+    (hr : reduce = context.reduce) (facts : List (SignFact context)) :
+    Element.cachedInv reduce hr facts = (inferInstance : Inv (Element context)) := by
+  apply congrArg Inv.mk
+  funext a
+  change (match a.stored with
+    | none => 0
+    | some _ => Element.pack reduce hr facts a.inverseCandidate) = a.inv
+  unfold Element.inv
+  cases a.stored
+  · rfl
+  · exact Element.pack_eq reduce hr facts _
+
+/-- Division uses those same supplied-fact multiplication and inversion
+operations. Missing packing facts retain the ordinary kernel boundary. -/
+@[expose, instance_reducible] def Element.cachedDiv (reduce : DensePoly E → DensePoly E)
+    (hr : reduce = context.reduce) (facts : List (SignFact context)) : Div (Element context) :=
+  ⟨fun a b => (Element.cachedMul reduce hr facts).mul a
+    ((Element.cachedInv reduce hr facts).inv b)⟩
+
+theorem Element.cachedDiv_eq (reduce : DensePoly E → DensePoly E)
+    (hr : reduce = context.reduce) (facts : List (SignFact context)) :
+    Element.cachedDiv reduce hr facts = (inferInstance : Div (Element context)) := by
+  unfold Element.cachedDiv
+  rw [Element.cachedMul_eq, Element.cachedInv_eq]
+  rfl
+
 end Hex.RealClosure.Algebraic
