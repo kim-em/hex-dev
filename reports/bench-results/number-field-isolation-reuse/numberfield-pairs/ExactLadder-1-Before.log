@@ -1,0 +1,8 @@
+run: 1 fixed benchmark(s) failed expectedHash check: Hex.NumberFieldBench.runExactLadder
+Hex.NumberFieldBench.runExactLadder    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=121fc1e, 2026-10-04T07:47:07Z, host=chungus2
+  repeat 0  —  [killed at cap]
+  median: — (no successful repeats)
+  hash: all repeats agree
+  expected hash: FAIL — expected 0xd0642a7d4df3da02, got no observed hash (no `ok` repeat produced one)
+exported to /home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-pairs/ExactLadder-1-Before.json

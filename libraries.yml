@@ -1085,7 +1085,7 @@ libraries:
         - name: native-production
           description: Frozen 128-, 256- and 512-bit native subjects, including the longest validation chain and independently generated 512-bit holdout, separate production, frozen conversion and checking; retained whole-corpus verdicts include exhaustion and full-construction comparisons.
   HexIntFactor:
-    deps: [HexPrimality, HexArith, HexBasic]
+    deps: [HexPrimality, HexArith, HexBasic, HexECPP]
     mathlib: false
     done_through: 7
     status: active
@@ -1102,6 +1102,8 @@ libraries:
           description: Smooth-order and unbalanced semiprimes for Pollard p-1 and ECM stage 1.
         - name: power-forms
           description: Difference-of-powers inputs with the cyclotomic pre-split visible separately.
+        - name: mixed-ecpp-completion
+          description: Frozen arithmetic proposals separate legacy and native ECPP completion, compiled replay, source size and fresh kernel checking; complete products exceed 512 subject bits and partial residuals retain exhaustion.
         - name: certificate-replay-and-order
           description: Kernel-facing factorization replay and multiplicative-order computation.
         - name: squarefree-divisor-enumeration
@@ -1340,7 +1342,8 @@ libraries:
     status: active
     proof_probes: [bench/HexECPPMathlib/ProofProbe]
   HexIntFactorMathlib:
-    deps: [HexIntFactor, HexPrimalityMathlib]
+    proof_probes: [bench/HexIntFactorMathlib/ProofProbe]
+    deps: [HexIntFactor, HexPrimalityMathlib, HexECPPMathlib]
     mathlib: true
     done_through: 7
     status: active

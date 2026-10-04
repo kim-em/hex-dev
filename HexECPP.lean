@@ -13,6 +13,8 @@ public import HexECPP.Cert
 public import HexECPP.Import
 public import HexECPP.CM
 public import HexECPP.Search
+public import HexECPP.Policy
+public import HexECPP.ElabData
 
 public section
 

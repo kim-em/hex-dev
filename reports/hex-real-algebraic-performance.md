@@ -295,14 +295,31 @@ reconciliation with the implemented surface and its actual matching APIs.
 
 ## Profile
 
-[Retained representative attribution](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)
+[Current polynomial-root attribution](bench-results/prerequisite-current-root-profile-d6cebc4de/rational-roots.manifest.json)
+profiles `Hex.RealAlgebraicBench.runRationalRoots8`, parameter 0, on source
+`d6cebc4de` and automatically leased CPU 28. Its 1266 kernel-window samples
+pass calibration (0.903 ms residual), confidence and ±5 ms sensitivity checks.
+Isolation has 94.47% inclusive share. Leaf costs are allocation 40.21%, GMP
+23.62%, Lean runtime 28.28%, own code 2.76% and other 5.13%. Exactification and
+component norm-root selection have 62.48% and 31.60% inclusive shares;
+these inclusive figures are not added. The raw perf/samply data, sidecar,
+source snapshots, executed collector and exact executable remain in the
+persistent location recorded by the manifest. The [summary](bench-results/prerequisite-current-root-profile-d6cebc4de/rational-roots.summary.json)
+identifies the dominant refinement and Taylor work. This supplies current
+attribution for the rational-coefficient `X^8 - 2` family member; it does not
+establish
+operation-specific scientific admission or a portable budget.
+
+[Historical representative attribution](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)
 on clean source `62399ddd0` has 6592 kernel-window samples for canonical hard
 addition. Calibration residual is 0.046 ms, and sample-count and ±5 ms
 sensitivity checks pass. Root isolation has 91.88% inclusive share, refinement
 90.61%, and allocation 42.38% self share. Raw perf/samply data, kernel sidecars,
-symbols and checksums are retained in persistent storage. This supplies the
-required representative attribution, not an operation-specific budget or a
-replacement for the completed timing samples below.
+symbols and checksums are retained in persistent storage. This retains attribution for its recorded source before certified parent
+isolation reuse; it supplies no current-operation budget or replacement for
+completed timing samples. The parent-reuse capture below supplies canonical-addition attribution on
+`08c8a9f13e`; its executable hash `8626a68c…` matches the `d6cebc4de` root
+capture exactly.
 
 [The complete profile inventory](bench-results/prerequisite-readiness-profiles/inventory.json)
 records manifests, native-kernel sidecars, executable hashes, filtered summaries
@@ -341,7 +358,8 @@ pipeline. Their cost is concrete and must be resolved or justified within the
 owning performance audit before attestation; no unrelated parent is silently
 promoted or given replacement arithmetic here.
 
-The rational-construction anchor has 91.79% inclusive isolation and 36.67%
+On the historical inventory source, the rational-construction anchor has
+91.79% inclusive isolation and 36.67%
 allocation; the real-polynomial root anchor has 96.5% isolation and about 48%
 per-root exactification. Close comparison has 97.77% inclusive `realCompare`,
 88.63% interval search and 82.84% refinement. Sorting and membership captures
@@ -361,8 +379,10 @@ in the linked summaries.
   are retained without claiming they reproduce on changed source.
 
 - The earlier 38 raw captures were lost after a reboot. Their saved summaries
-  remain diagnostics and cannot be reprocessed; the new representative capture
-  supplies retained attribution without a blanket rerun of completed evidence.
+  remain diagnostics and cannot be reprocessed. The replacement `62399ddd0`
+  addition capture is historical after parent reuse; the `08c8a9f13e` addition
+  and `d6cebc4de` rational-root captures supply retained attribution for their
+  scoped implementations without a blanket rerun of completed evidence.
 
 - [#10577](https://github.com/kim-em/hex-dev/issues/10577): finish operation-specific mode/budget justification and comparators, genuine root/leaf parameter families, separation/point and rounding sweeps, and square-root/rational-construction characterization. The shipped `compare_eq` and root completeness/multiplicity/sorting theorems are available independently of this timing work.
 
@@ -402,23 +422,62 @@ failure recurs across this assignment's retained
 [384/360](bench-results/prerequisite-required-ci-82039231f.json) and 388/360 runs.
 No completed same-base main breakdown establishes causal attribution. These
 failures are operational observations, not failed result checks or Phase-4
-verdicts. One unchanged operational recheck of source `77a844987` is recorded on
-[run 37183791720](https://github.com/kim-em/hex-dev/actions/runs/37183791720);
-no result or headroom is inferred before it finishes.
+verdicts. The [single unchanged operational recheck of source `77a844987`](bench-results/prerequisite-full-ci-recheck-77a844987.json)
+also completes every result check across 57 executables but fails at 382/360
+seconds, including 62 seconds for this executable. Its remaining all-library
+oracle step was cancelled after that completed failure; no full-oracle pass
+is claimed and no further unchanged recheck is performed.
 
 On the recorded 72-case source `eabbeea9f`, hard addition/subtraction and their
 bare controls account for about 26 of 32 local seconds. The current CI warning
 has no per-case breakdown. The [retained hard-add profile](bench-results/prerequisite-representative-profiles-62399ddd0/real-hard-add.summary.json)
-locates three near-equal isolation passes: lazy eliminant selection, factor
+on `62399ddd0` locates three near-equal isolation passes before certified
+reuse: lazy eliminant selection, factor
 exactification, and canonical representative construction. In particular,
 `exactFactor?` in `HexNumberField/Convert.lean` and `rawRep?` in
 `HexNumberField/Basic.lean` run the same deterministic factor isolation at the
-same separation depth. Reusing those certified results is a concrete parent
-optimization, not an implemented repair in this four-library change. The
-canonical representation and existing parent arithmetic remain intact.
+same separation depth on that recorded source. The certified reuse below
+removes the canonical-construction re-isolation while preserving the complete
+canonical result; the eliminant and candidate runs remain separate.
 
 The profiled `Convert.lean`, `Basic.lean`, `Lazy.lean` and real-add paths are
 unchanged from `62399ddd0` through the measured root-rejection source. The
 near-equal terminal-path shares use tail-call attribution: `ofNormalized?` is
 the tail call of `exactFactor?`, so those displayed shares are not nested
 inclusive totals. Arbitrary inclusive profile shares must not be added.
+
+[Certified candidate-isolation reuse](bench-results/number-field-isolation-reuse/README.md)
+removes the canonical-construction re-isolation from `exactFactor?`, with
+whole-Option equality preserving the same stored representations. Four
+adjacent AB/BA pairs on `7ceaf9d47d` measure hard addition/subtraction about
+1.5 times faster. The six actual root-API degree rungs retain 48 successful
+arms; their [size plot](bench-results/number-field-isolation-reuse/roots-comparison.png)
+shows an improvement but a severe remaining gap to retained external
+references. The external lines are historical observations, not fresh pairs
+with these native samples. A [current representative profile](bench-results/number-field-isolation-reuse/profile/hard-add.summary.json)
+on `08c8a9f13e` retains 4344 kernel samples with calibration/count/sensitivity
+checks passing. Isolation remains 90.56% inclusive, with the remaining lazy
+eliminant and candidate-exactification paths separately visible at 45.26%
+and 45.35%; these are tail-call attributions, not arbitrary additive
+inclusive totals. All raw artifacts persist at the manifest paths.
+The local normal-form migration, fixed-presentation conversion reuse and
+per-root enumeration reuse remain outside this targeted repair. No phase
+counter or general CI headroom assertion follows.
+
+[PR CI for #10695 (head `d6cebc4de`, test merge `252f17576`)](bench-results/prerequisite-required-ci-d6cebc4de.json)
+passes all 57 executable checks (2828 benchmark cases) at 284/360 seconds on
+`d6cebc4de`, including 32 seconds for real-algebraic verification. Every
+conformance oracle passes, including the 83 exact real-algebraic cases with
+zero unavailable-component skips, together with library/conformance/manual,
+architecture, trust and axiom checks. The source's unchanged 360-second cap
+passed. Later main cap changes in #10696 (`52ef27c0be`, 600 seconds)
+are outside this tested source. This is one pass on one runner; it does not
+establish headroom under 360 seconds on slower runners. The soft 30-second
+warning remains for real-algebraic (32 seconds), GF2 (41), Roots (37) and
+PolyZGcd (35); those warnings are retained in the CI record.
+The [local full smoke](bench-results/prerequisite-full-local-smoke-d6cebc4de.json)
+passes the same 57 executables at 150/360 seconds on its recorded host, with
+joint degree-three and ECM continuation checks also passing. The three initial
+local dependency failures remain retained. These are operational observations,
+not controlled comparisons with earlier GitHub runs or scientific Phase-4
+admission. All four assigned phase counters remain 3.

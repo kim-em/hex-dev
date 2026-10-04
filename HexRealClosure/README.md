@@ -1134,8 +1134,10 @@ of `Y` are checked using those facts, then transferred to the actual native
 operations. Wrong signs, context identifiers and intervals reject. Removing a
 needed child fact prevents kernel evaluation. Compiled checks independently
 confirm descriptor and selected-sign acceptance. These small examples exercise
-nested proof assembly; serialized cross-level dependency graphs and strict
-compiled replay remain separate obligations.
+nested proof assembly. `Hex.SignDet.Dependencies.Graph` serializes and routes
+shared cross-level packets with full subjects and earlier/lower references.
+Automatic intermediate arithmetic evidence, context reconstruction, strict
+compiled replay and complete cost reporting remain required.
 
 Ordinary addition, subtraction, negation, multiplication, inversion and
 division operate on these values. Inversion computes the defining polynomial's

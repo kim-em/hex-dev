@@ -16,6 +16,7 @@ from unittest.mock import patch
 import yaml
 
 from scripts.release import aggregate_readme, sync_released
+from scripts.release.intfactor_prospective import ENTRY as INTFACTOR_ENTRY
 
 
 class SyncReleasedTests(unittest.TestCase):
@@ -722,6 +723,30 @@ class SyncReleasedTests(unittest.TestCase):
         self.assertEqual(advanced["upstream"], "new-upstream")
         self.assertEqual(advanced["downstream"], "new-downstream")
         self.assertEqual(advanced["_pending_release"]["repos"], ["downstream"])
+
+    def test_intfactor_optional_modules_and_frozen_data_are_managed(self) -> None:
+        # Prospective publication: HexIntFactor is not a released.yml entry yet.
+        entry = INTFACTOR_ENTRY
+        (self.repo / "lakefile.lean").write_text(
+            "import Lake\nopen Lake DSL\npackage factor\n"
+            "lean_lib HexIntFactor where\n"
+            "  globs := #[`HexIntFactor, `HexIntFactor.Pari, `HexIntFactor.Export, "
+            "`HexIntFactor.Replay, `HexIntFactor.Mixed.Replay, `HexIntFactor.Mixed.Import, "
+            "`HexIntFactor.Mixed.Pari, `HexIntFactor.Mixed.Export].map Glob.one\n")
+        with patch.object(sync_released, "apply_ci_workflow", return_value=[]):
+            sync_released.apply_paths(entry, self.repo)
+        for module in entry["build_modules"] + entry["test_modules"]:
+            path = self.repo / (module.replace(".", "/") + ".lean")
+            self.assertTrue(path.is_file(), module)
+        text = (self.repo / "HexIntFactor/Frozen/Case3.lean").read_text()
+        self.assertIn("public import HexIntFactor.Replay", text)
+        self.assertNotIn("HexIntFactor.Export", text)
+        mixed = (self.repo / "HexIntFactor/Mixed/Frozen/CaseA.lean").read_text()
+        self.assertIn("public import HexIntFactor.Mixed.Replay", mixed)
+        self.assertNotIn("Mathlib", mixed)
+        self.assertNotIn("Mixed.Export", mixed)
+        self.assertFalse((self.repo / "bench").joinpath("HexIntFactor").exists())
+        self.assertTrue((self.repo / "SPEC/hex-int-factor.md").is_file())
 
     def test_repo_push_updates_main_and_tag_atomically(self) -> None:
         remote = self.repo / "remote.git"

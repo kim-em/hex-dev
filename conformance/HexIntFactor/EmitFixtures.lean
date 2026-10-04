@@ -14,6 +14,7 @@ import HexIntFactor.Frozen.Case4
 import HexIntFactor.Frozen.Case5
 import HexIntFactor.Frozen.Case6
 import HexIntFactor.Frozen.Partial12
+import HexIntFactor.Mixed.Frozen.Small
 
 /-! Deterministic JSONL fixtures for integer factorization. -/
 
@@ -127,6 +128,15 @@ private def emitFrozen (index : Nat) (raw : PartialFactorization) : IO Unit := d
     ("{\"factors\":" ++ powersJson raw.factors ++
       ",\"residual\":" ++ toString raw.residual ++ "}")
 
+private def emitMixed (tag : String) (raw : Hex.Nat.Mixed.PartialFactorization) : IO Unit := do
+  let case := "frozen/mixed/" ++ tag
+  emitFixture "frozen" case (",\"n\":" ++ toString raw.subject)
+  unless Hex.Nat.Mixed.checkPartial raw do throw <| IO.userError (case ++ ": replay rejected")
+  let factors := "[" ++ String.intercalate "," (raw.factors.map fun e =>
+    "[" ++ toString e.prime ++ "," ++ toString e.exponent ++ "]") ++ "]"
+  emitResult lib case "frozen"
+    ("{\"factors\":" ++ factors ++ ",\"residual\":" ++ toString raw.residual ++ "}")
+
 def main : IO Unit := do
   for (tag, n) in factorCases do emitFactor tag n
   for p in primesBelowHundred do emitFactor ("below100/" ++ toString p) p
@@ -153,3 +163,6 @@ def main : IO Unit := do
   emitFrozen 5 Hex.IntFactorFrozen.case5
   emitFrozen 6 Hex.IntFactorFrozen.case6
   emitFrozen 7 Hex.IntFactorFrozen.partial12
+
+  emitMixed "complete34" ⟨Hex.Nat.Mixed.Frozen.small.subject, Hex.Nat.Mixed.Frozen.small.factors, 1⟩
+  emitMixed "overlap578" Hex.Nat.Mixed.Frozen.partialOverlap

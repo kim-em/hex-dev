@@ -351,8 +351,11 @@ include preservation of ordinary division and do not impose a field instance
 or injective interpretation on stored coefficients.
 
 Actual coefficient/context and graph byte roundtrips are proved by the
-computational codec laws. Cross-level coefficient-sign dependencies and
-sharing, remaining conformance/examples and Phase-4 evidence remain required. Root-sum/replay soundness follows from the shared
+computational codec laws. `Dependencies.Graph` routes shared typed packet
+results across coefficient levels and proves full literal reference bindings.
+Complete intermediate coefficient evidence, context reconstruction, strict
+compiled arithmetic replay, final conformance/examples and Phase-4 evidence
+remain required. Root-sum/replay soundness follows from the shared
 proved theorem; finite BKR proofs consume Tau Ceti moment/count recovery, and
 root identity and strict comparison consume Tau Ceti Thom theorems.
 See the

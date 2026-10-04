@@ -643,12 +643,11 @@ registration. The declared squarefree-divisor-enumeration family names the
 exact measured ladder. This explicit mapping closes the API-to-benchmark gap
 that the mechanical checks alone cannot establish.
 
-The pair's library sources, umbrella modules and manual chapter are unchanged
-from the accepted Phase-5--7 work. No new public declaration or proof changed,
-and the representative profile still covers divisor generation, merge sorting,
-array materialization and result consumption. The later-phase proof/API review,
-conformance and documentation evidence therefore remain fresh. Publication and
-the release manifest remain outside this work.
+The legacy divisor ladder's declarations and proofs retain the accepted
+Phase-5--7 behavior. The representative profile covers divisor generation, merge
+sorting, array materialization and result consumption. Optional mixed-evidence
+proof/API review, conformance and documentation evidence is recorded separately
+below. Publication remains separate.
 
 The final local audit builds `HexIntFactor`, `HexIntFactorMathlib`,
 `HexConformance`, and `HexManual` together (11,480 jobs); verifies all 41
@@ -680,3 +679,15 @@ complete results exhaust the recorded native fuel-four allocation; a 255-bit
 base is discovered but exhausts its supported certificate completion budget.
 This optional producer does not change native dispatch or the comparator claims
 above.
+
+## mixed-ecpp-completion
+
+The optional mixed-evidence extension has its frozen subjects, allocations,
+all completed component/completion samples, unsuccessful outcomes, independent
+arithmetic/primality/transcript checks and fresh kernel replay in
+[the mixed capability report](intfactor/mixed/README.md). Supplied arithmetic
+proposals isolate certificate completion from factor discovery. Two complete
+products exceed 512 subject bits and contain ECPP-certified bases where the
+legacy profile exhausts; one result retains checked partial progress after
+ECPP exhaustion. These are capability and admission observations, rather than
+an asymptotic timing claim or an extension of the legacy divisor API.

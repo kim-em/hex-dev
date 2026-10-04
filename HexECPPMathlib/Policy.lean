@@ -5,18 +5,6 @@ Authors: Kim Morrison
 -/
 module
 
-public import Init
+public import HexECPP.Policy
 
-/-! # Shared ECPP replay policy
-
-The process boundary and elaborators enforce the same admitted numeral ceiling.
--/
-
-@[expose] public section
-
-namespace Hex.ECPP
-
-/-- Numeral ceiling admitted by the fresh-module kernel replay probes. -/
-def maxBits : Nat := 512
-
-end Hex.ECPP
+/-! Compatibility import for the shared Mathlib-free ECPP replay policy. -/

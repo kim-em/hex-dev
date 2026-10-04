@@ -23,8 +23,15 @@
 # HEX_LIBRARY_FILTER is an optional whitespace-separated list of libraries.
 # Empty or unset means all libraries. `--list` prints the tuple registry without
 # building or checking oracle dependencies for use by the CI classifier.
+# `--build-only` prepares the selected native targets before parallel CI tails.
 
 set -uo pipefail
+
+mode="${1:-}"
+if [ "$#" -gt 1 ] || { [ -n "$mode" ] && [ "$mode" != "--list" ] && [ "$mode" != "--build-only" ]; }; then
+  echo "usage: $0 [--list|--build-only]" >&2
+  exit 2
+fi
 
 work_dir="$(mktemp -d "${TMPDIR:-/tmp}/hex-oracles.XXXXXX")"
 trap 'rm -rf -- "$work_dir"' EXIT
@@ -134,7 +141,7 @@ fi
 # release CI must never turn a missing oracle dependency into a green `SKIP`.
 # Preflight the required oracle dependency families before emitting any fixtures so a
 # broken installation fails early and unambiguously.
-if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
+if [ "$mode" != "--build-only" ] && [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
   if ! command -v gap >/dev/null 2>&1; then
     echo "FAIL: required GAP oracle is unavailable" >&2
     exit 1
@@ -183,6 +190,9 @@ fi
 if [ "${#emits[@]}" -gt 0 ] && ! lake build "${emits[@]}"; then
   echo "FAIL: building emit executables" >&2
   exit 1
+fi
+if [ "$mode" = "--build-only" ]; then
+  exit 0
 fi
 
 run_tuple() {
