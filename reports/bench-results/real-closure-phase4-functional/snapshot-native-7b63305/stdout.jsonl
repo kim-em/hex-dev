@@ -1,0 +1,5 @@
+{"backend":"native","elapsed_ns":4946499358,"root_count":3,"stage":"first-isolation","workload":"metitarski"}
+{"backend":"native","checked":true,"lower":[-1875,2048],"stage":"first-selection","upper":[-1875,4096],"workload":"metitarski"}
+{"backend":"native","degree":3,"elapsed_ns":3691202,"stage":"second-construction","workload":"metitarski"}
+{"backend":"native","elapsed_ns":149480793,"root_count":1,"stage":"second-isolation","workload":"metitarski"}
+{"backend":"native","checked":true,"first_context_depth":1,"workload":"metitarski"}
