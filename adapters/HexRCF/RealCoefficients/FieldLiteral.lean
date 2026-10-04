@@ -7,6 +7,7 @@ module
 
 public meta import HexRCF.RealCoefficients.FieldDecisionProgress
 public meta import HexRCF.RealCoefficients.FieldBuildBudget
+public meta import HexRCF.RealCoefficients.FiniteReplay
 public meta import HexRCF.RealCoefficients.FieldRefinement
 public meta import HexRCF.RealCoefficients.FieldIndex
 public meta import HexRealAlgebraicMathlib.Laws
@@ -344,6 +345,11 @@ private meta def checkPreview {p : ZPoly} {s : DyadicSquare}
   let preview := match quantifier with
     | .forallReal => data.allValue values formula
     | .existsReal => data.anyValue values formula
+  -- A rejected or false preview must not mislabel malformed frozen evidence
+  -- as a mathematical verdict. Successful proposals still undergo kernel replay.
+  if preview != some true then
+    unless data.checkFinite values formula () extraSignKeys do
+      throwError "rcf: fixed-field certificate evidence failed replay"
   match quantifier, preview with
   | .forallReal, some false =>
       throwError "rcf: the universal sentence is false on the prepared cells"

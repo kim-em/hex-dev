@@ -145,6 +145,20 @@ run_meta do
     unless (← Lean.getMCtx).mvarCounter == before do
       throwError "window replay failure leaked metavariables"
 
+    -- A false preview cannot hide the same malformed inner-window evidence.
+    let falseFailure ← try
+      let _ ← Lean.withOptions (fun options =>
+          options.setBool `rcf.algebraic.indexSigns indexed) do
+        FieldLiteral.replay (Lean.mkConst ``SquareTwo.polynomial) (Lean.mkConst ``root)
+          (Lean.mkConst ``values) (Lean.mkConst ``matrix) values matrix .forallReal corrupt
+      pure none
+    catch error => pure (some (← error.toMessageData.toString))
+    unless falseFailure == some "rcf: fixed-field certificate evidence failed replay" do
+      throwError "invalid window became a false-goal diagnostic: {falseFailure}"
+    unless (← Lean.getMCtx).mvarCounter == before do
+      throwError "invalid false-preview window leaked metavariables"
+
+
 elab "fixed_window" : tactic => Lean.Elab.Tactic.liftMetaTactic fun goal => do
   let (proof, _, _, _) ← FieldLiteral.proveRefiningWithCertificate
     (Lean.mkConst ``SquareTwo.polynomial) (Lean.mkConst ``root)
