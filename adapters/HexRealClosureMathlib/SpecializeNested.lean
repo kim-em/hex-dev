@@ -219,6 +219,73 @@ private theorem coefficient_regular {p : Hex.DensePoly (Hex.RationalFn ℝ)} {fi
     Regular (RingHom.id ℝ) first (p.coeff i) := by
   simpa only [Regular, Polynomial.map_id, HexPolyMathlib.coeff_toPolynomial] using (data i).1
 
+/-- Substitute the first ordinary parameter in the stored outer fraction,
+retaining the second indeterminate as a native rational-function value. -/
+noncomputable def mapFraction (f : Hex.RationalFn (Hex.RationalFn ℝ)) (first : ℝ) :
+    Hex.RationalFn ℝ :=
+  let numerator := polynomial (RingHom.id ℝ) f.num first
+  let denominator := polynomial (RingHom.id ℝ) f.den first
+  if zero : denominator = 0 then 0 else Hex.RationalFn.normalize numerator denominator zero
+
+private theorem polynomial_reflects (p : Hex.DensePoly (Hex.RationalFn ℝ)) (first : ℝ)
+    (data : CoefficientData (HexPolyMathlib.toPolynomial p) first) :
+    polynomial (RingHom.id ℝ) p first = 0 ↔ p = 0 := by
+  apply polynomial_zero
+  intro i _
+  simpa only [evalFraction, evalMapped, Polynomial.map_id, HexPolyMathlib.coeff_toPolynomial]
+    using data.zero_iff i
+
+/-- The first substitution represents the actual substituted numerator and
+denominator, with the denominator nonzero from finite coefficient reflection. -/
+theorem mapFraction_spec (f : Hex.RationalFn (Hex.RationalFn ℝ)) (first : ℝ)
+    (denominator : CoefficientData (HexPolyMathlib.toPolynomial f.den) first) :
+    Hex.RationalFn.Represents (mapFraction f first)
+      (polynomial (RingHom.id ℝ) f.num first) (polynomial (RingHom.id ℝ) f.den first) := by
+  have nonzero := (polynomial_reflects f.den first denominator).not.mpr f.den_ne_zero
+  simp only [mapFraction, dif_neg nonzero]
+  exact Hex.RationalFn.normalize_spec _ _ nonzero
+
+private theorem polynomial_trailing (p : Hex.DensePoly (Hex.RationalFn ℝ)) (first : ℝ)
+    (data : CoefficientData (HexPolyMathlib.toPolynomial p) first) :
+    (HexPolyMathlib.toPolynomial (polynomial (RingHom.id ℝ) p first)).trailingCoeff =
+      evalFraction (HexPolyMathlib.toPolynomial p).trailingCoeff first := by
+  have mapped : HexPolyMathlib.toPolynomial (polynomial (RingHom.id ℝ) p first) =
+      mapCoefficients (fun q => evalFraction q first) (evalFraction_zero first)
+        (HexPolyMathlib.toPolynomial p) := by
+    ext i
+    simp only [HexPolyMathlib.coeff_toPolynomial, polynomial_coeff, mapCoefficients_coeff,
+      evalFraction, evalMapped, Polynomial.map_id]
+  rw [mapped]
+  exact mapCoefficients_trailing _ _ _ data.zero_iff
+
+private theorem lowest_sign (p : Hex.DensePoly (Hex.RationalFn ℝ)) (first : ℝ)
+    (data : CoefficientData (HexPolyMathlib.toPolynomial p) first) :
+    Hex.OrderedFn.orderSign (Hex.OrderedFn.Infinitesimal.lowestCoeff
+      (polynomial (RingHom.id ℝ) p first)) =
+    Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign
+      (Hex.OrderedFn.Infinitesimal.lowestCoeff p) := by
+  simp only [Hex.OrderedFn.Infinitesimal.lowestCoeff_eq]
+  rw [polynomial_trailing p first data, Hex.OrderedFn.Infinitesimal.orderSign_eq]
+  simpa only [Polynomial.trailingCoeff] using
+    (data (HexPolyMathlib.toPolynomial p).natTrailingDegree).2
+
+/-- First substitution preserves the actual successive-infinitesimal sign
+while retaining a native second-level fraction for later replay specialization. -/
+theorem mapFraction_sign (f : Hex.RationalFn (Hex.RationalFn ℝ)) (first : ℝ)
+    (numerator : CoefficientData (HexPolyMathlib.toPolynomial f.num) first)
+    (denominator : CoefficientData (HexPolyMathlib.toPolynomial f.den) first) :
+    Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign (mapFraction f first) =
+      Hex.OrderedFn.Infinitesimal.sign
+        (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) f := by
+  have nonzero := (polynomial_reflects f.den first denominator).not.mpr f.den_ne_zero
+  rw [Hex.OrderedFn.Infinitesimal.sign_fraction Hex.OrderedFn.orderSign
+    Hex.OrderedFn.Infinitesimal.orderSign_eq (mapFraction_spec f first denominator) nonzero]
+  rw [lowest_sign f.num first numerator, lowest_sign f.den first denominator]
+  exact (Hex.OrderedFn.Infinitesimal.sign_fraction
+    (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign)
+    (fun q => (inner_sign q).trans (Hex.OrderedFn.Infinitesimal.orderSign_eq q))
+    (Hex.RationalFn.represents_self f) f.den_ne_zero).symm
+
 /-- Actual native addition specializes using the first-level guards; closure
 of the existing regular coefficient ring handles intermediate sums. -/
 theorem nested_polynomial_add (p q : Hex.DensePoly (Hex.RationalFn ℝ)) (first second : ℝ)
