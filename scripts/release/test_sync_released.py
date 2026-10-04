@@ -903,7 +903,7 @@ class SyncReleasedTests(unittest.TestCase):
                 entry, self.repo, synced, {}, "v0.1.0", catalog),
             [])
 
-    def test_consumer_prioritizes_shared_helpers_over_the_hex_root(self) -> None:
+    def test_consumer_isolates_shared_helpers_from_the_hex_root(self) -> None:
         import tomllib
         aggregate = self.repo / "hex"
         aggregate.mkdir()
@@ -917,8 +917,13 @@ class SyncReleasedTests(unittest.TestCase):
         modules = consumer_check.write_consumer(self.repo, entries)
         consumer = self.repo / "consumer"
         config = tomllib.loads((consumer / "lakefile.toml").read_text())
-        self.assertEqual([r["name"] for r in config["require"]], ["HexTestKit", "hex"])
-        self.assertIn("+HexTestKit", modules)
+        self.assertEqual([r["name"] for r in config["require"]], ["hex"])
+        self.assertNotIn("+HexTestKit", modules)
+        helper, targets = consumer_check.write_helper_consumer(self.repo, entries)
+        helper_config = tomllib.loads((helper / "lakefile.toml").read_text())
+        self.assertEqual([r["name"] for r in helper_config["require"]], ["HexTestKit"])
+        self.assertIn("+HexTestKit", targets)
+        self.assertEqual((helper / "HelperConsumer.lean").read_text(), "import HexTestKit\n")
         imports = (consumer / "Consumer" / "Imports.lean").read_text().splitlines()
         self.assertEqual(imports, ["import HexBasic"])
 

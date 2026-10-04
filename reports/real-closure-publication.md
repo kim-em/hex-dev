@@ -190,11 +190,12 @@ contain neither Mathlib nor Tau Ceti. These checks validate the local package
 layout and the new provider/lock synthesis; they do not choose the optional
 package boundary or certify a release sync.
 
-Three [targeted sync previews](real-closure-sync-previews.json), using the
+The earlier three [targeted sync previews](real-closure-sync-previews.json), using the
 read-only live `release-sync-baseline` state, pass for
 `hex-real-roots-mathlib`, `hex-rcf` and the aggregate `hex`. They preview the
 direct Tau Ceti requirement and the inherited downstream lock entries using
-the actual published manifest pin lists. The checkout's bootstrap baseline
+the actual published manifest pin lists. They predate the aggregate requirement
+repair and the merged staging consumer, and do not validate the current driver. The checkout's bootstrap baseline
 first fails because its proposed tag already exists; that failure is retained.
 These previews do not build or retain staged packages and are not a full
 sync dry run. The full-declared-closure candidate builds above do not certify
@@ -248,7 +249,11 @@ manifest state:
    they do not establish a build of precisely the published-only mirror graph.
    Merging puts these modules in the existing managed paths: the next routine
    full sync will copy them and add Tau Ceti to the companion and downstream
-   locks. The merged #10476 workflow builds staged output before pushing and
+   locks. The aggregate requirement repair also adds its already-published
+   ECPP/Mathlib requirements, carrying AINTLIB/HasseWeil into aggregate consumers;
+   existing direct Hex requirements are marked direct in generated locks.
+   This is a Mathlib-only dependency, not a computational package requirement.
+   The merged #10476 workflow builds staged output before pushing and
    tagging. Hold release dispatch until a fresh
    build of the exact candidate release output and pins passes under that
    infrastructure. The local full-graph builds and targeted previews
@@ -264,6 +269,14 @@ manifest state:
    the optional tactic. Then run the **full** sync dry run and reconcile any
    diverged mirror baseline. A plain `--dry-run` does not retain staged packages; pass `--stage`
    to retain them for `consumer_check.py`.
+
+The staged aggregate's unmanaged `Hex.lean` omits HexECPP/Mathlib and
+HexPermGroup/Mathlib, despite their inclusion in the manifest and generated
+README table. Ordinary per-library imports remain the consumer surface tested
+here. Reconcile that umbrella with the manifest before promising complete
+`import Hex` re-exports. A proposal is to manage `Hex.lean` from the existing
+`HexAggregateCheck.lean` import set; changing the aggregate's source ownership
+requires a separate package decision before applying it. No mirror is hand-edited.
 
 Mirror creation, version selection, release dispatch and announcements follow
 the maintainer's schedule. Unrelated distribution eligibility is separate
