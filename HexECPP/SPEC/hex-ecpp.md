@@ -582,8 +582,8 @@ Source registration does not by itself imply release or phase progress.
 
 `Hex.ECPP.autoBudget (bits : Nat)` is a Mathlib-free allocation definition
 for the optional downstream automatic primality suggestion route. It selects
-the unchanged native policy through 256 bits or `public512Budget` above that
-threshold, then lowers its finite candidate/root/nonresidue/point/factor/scalar
+the native policy through 256 bits with the existing public 20-row depth
+clamp, or `public512Budget` above that threshold, then lowers its finite candidate/root/nonresidue/point/factor/scalar
 allocations as specified by
 [hex-ecpp-mathlib](../../HexECPPMathlib/SPEC/hex-ecpp-mathlib.md#automatic-native-fallback).
 Only the larger policy lowers polynomial and root-work caps to 1048576. The

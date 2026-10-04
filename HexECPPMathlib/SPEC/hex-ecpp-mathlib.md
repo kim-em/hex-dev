@@ -273,7 +273,8 @@ automatic allocation and is shared by Auto and its compiled experiment driver.
 The initial automatic policy is one native seed, 0, for every admitted subject,
 with no subject-specific seeds, factors, certificates or discriminants. Use
 `public512Budget` for 257--512 bits and the existing default native policy for
-smaller inputs, reducing both to at most 1024 candidates, 8192 roots, 4096
+smaller inputs with the existing public 20-row depth clamp, reducing both
+to at most 1024 candidates, 8192 roots, 4096
 nonresidue draws, 4096 point draws, 4096 factor-work units and 1000000 scalar
 additions. The 512-bit policy additionally caps polynomial and root work at
 1048576 each. Retain their existing finite depth, memo, output, row, total-node,
