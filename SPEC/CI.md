@@ -132,10 +132,11 @@ sync as a dry run with `--stage`, which keeps every rewritten repository. A
 `scripts/release/consumer_check.py`, which requires those staged repositories
 by path from a fresh Lake project, and elaborates, downstream of them, an
 import of every aggregate library, those manifest entries' `test_modules`, and
-the `Examples/` user stories whose imports are all published. A separate fresh
-helper consumer checks non-aggregate packages such as hex-test-kit and their
-tests, avoiding the aggregate's default `Hex` module ownership. It then links
-and runs an executable that calls native code. The `sync` job, which publishes,
+the `Examples/` user stories whose imports are all published. A fresh helper
+consumer first checks non-aggregate packages such as hex-test-kit and their
+tests, avoiding the aggregate's default `Hex` module ownership. The aggregate
+consumer also builds the existing `Hex` umbrella, then links and runs an
+executable that calls native code. The `sync` job, which publishes,
 runs only after every blocking `consumer` job passes. Downstream elaboration is
 where `precompileModules`, FFI targets and their link arguments take effect,
 so this is the check that a library built one way here and another way in its

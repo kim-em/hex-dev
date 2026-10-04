@@ -115,7 +115,7 @@ def write_consumer(stage: Path, entries: list[dict]) -> list[str]:
     (source / "Imports.lean").write_text(
         "".join(f"import {lib}\n" for lib in libs), encoding="utf-8")
     (source / "Main.lean").write_text(MAIN, encoding="utf-8")
-    modules = ["Consumer.Imports"]
+    modules = ["Consumer.Imports", "+Hex"]
     # Built in place: a copy would change the private names some
     # `#guard_msgs` outputs quote.
     for entry in entries:
@@ -159,7 +159,7 @@ def write_helper_consumer(stage: Path, entries: list[dict]) -> tuple[Path, list[
         encoding="utf-8")
     modules = ["HelperConsumer"]
     for entry in others:
-        modules.append("+" + entry.get("lean_lib_name", entry["lib"]))
+        modules.append(entry.get("lean_lib_name", entry["lib"]))
         modules.extend("+" + test for test in entry.get("test_modules") or [])
     return consumer, modules
 
