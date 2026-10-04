@@ -682,10 +682,6 @@ meta def prepareSource (source : Reify.Source) : MetaM (Option Coefficients.Envi
   if leaves.isEmpty then return none
   let prepared ← (← prepareField source leaves plans).instantiate
   prepared.checkDomains
-  for proof in [prepared.source.proof, prepared.source.sentenceProof,
-      prepared.valuationProof, prepared.irreducibleExpr] do
-    let _ ← Hex.RCF.checkProof `Hex.RCF.RealCoefficients.CommonTactic.prepareSource
-      (← inferType proof) proof
   return some prepared
 
 @[rcf_handler] meta def handle : Handler := fun target => do

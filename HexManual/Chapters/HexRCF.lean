@@ -1811,6 +1811,10 @@ search and kernel failures are terminal.
 and quotes a finite certificate through the public
 {name}`Hex.RCF.RealCoefficients.Replay.check_sound` theorem, then checks the proof
 against the original goal. A failed attempt restores caller metavariables.
+Before production, the API binds runtime coordinates, selected root, matrix
+and quantifier to their stored expressions and checks source and valuation
+proofs at their required types. Edited records fail input validation before a
+false verdict. Validation-only checks leave no unused theorem declarations.
 The existing `rcf` tactic retains its documented quotation options.
 
 {name}`Hex.RCF.RealCoefficients.Replay.Input` records the coefficient order,
@@ -1877,7 +1881,7 @@ default. It does not prove recognition or irreducibility quotation complete
 for every closed algebraic source, or make Lean elaboration resource limits
 unbounded. The total producer has no finite search budget. Native production
 runs synchronously without heartbeat or cancellation polls inside the call;
-cancellation is observed after control returns to meta code. Quotation and
+cancellation is polled after the production result is matched in meta code. Quotation and
 kernel checking retain Lean’s ordinary resource limits.
 
 The explicit finite API uses linear recorded-sign lookup and one kernel
