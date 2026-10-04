@@ -172,8 +172,11 @@ perform one gathering on an automatically leased CPU. Means are milliseconds.
 
 Reuse greatly reduces the measured larger quadratic cases and the three- and
 four-owner quartic cases. One-owner quartic gathering cannot reuse a predecessor
-root and pays the added feature's overhead; two-owner quartic gathering is also
-slower. These observations support retaining checked generator reuse, with the
+root and pays the added feature's overhead. Two-owner quartic gathering reuses
+a root, but avoiding one extension does not repay the added overhead in these
+samples. The two-owner quadratic pair changes direction between trials, with
+the first arm faster in each; its near-equal mean establishes no consistent
+direction. These observations support retaining checked generator reuse, with the
 independent-root regressions above as a documented cost. They do not isolate
 the effect of retaining images from the effect of avoiding repeated extensions.
 The [metadata](bench-results/real-closure-gather-reused-owners-valid/metadata.json)
@@ -185,10 +188,19 @@ The [16 untimed depth checks](bench-results/real-closure-gather-reuse-depth-chec
 use those same input families and the same gathering algorithms, retaining their
 own source and binary hashes. Each cached case returns depth one; each baseline
 case returns depth equal to the owner count. Every owner-value check passes.
-These checks verify that reuse happened without collecting another timing
-schedule. The current driver prints `target_depth` after its semantic checks and
+These checks verify that reuse happened in every multi-owner family without
+collecting another timing schedule. The current driver prints `target_depth` after its semantic checks and
 calls the number of verified owners `checked_owners`; the older archives retain
 their original `semantic_hash` field name, which was a count rather than a hash.
+
+The recorded measurement heads predate the rebase onto upstream `492e0e4`,
+which includes the CI budget correction `52ef27c`. The cached measurement history
+is retained by the immutable `issue-10378-root-reuse-measured` tag at `d770fc2`;
+the baseline is retained by `issue-10378-gather-baseline` at `eaf5222`.
+The tagged cached head differs from `1fd702c` only in benchmark, report and SPEC
+files. Both untimed-check executables were rebuilt with `lake build` before their
+hashes and check outputs were captured. Their build logs are recorded in the
+check metadata.
 
 The [initial setup rejection](bench-results/real-closure-gather-reused-owners/results.json)
 required both implementations to return one presentation level, a condition
@@ -198,7 +210,7 @@ owner values while allowing either valid presentation depth.
 
 ## Attribution
 
-A representative cached quadratic eight-owner run was profiled at 99 Hz on one
+A cached quadratic eight-owner run was profiled at 99 Hz on one
 leased CPU. The retained profile records roughly 4,000 samples and no lost events.
 Allocation and reference-count release account for about 40% of exclusive samples;
 GMP addition and rational multiplication also appear among the leading costs.

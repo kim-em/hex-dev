@@ -6,5 +6,6 @@
   "summary": "cached-eight-inclusive-profile.txt",
   "profiled_source_head": null,
   "profiled_executable_sha256": null,
-  "provenance_limit": "The profiling invocation did not record a source head or executable hash; it cannot be bound to either compared exact executable."
+  "provenance_limit": "The profiling invocation did not record a source head or executable hash; it cannot be bound to either compared exact executable.",
+  "moved_from": "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/reports/bench-results/real-closure-gather-before-after/cached-eight.perf.data"
 }
