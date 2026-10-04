@@ -883,8 +883,8 @@ old-handle validity, and stale-context reader rejection. The isolation
 conformance driver exports the actual recursive stored values and root frames;
 the independent Z3 oracle checks selected roots, cached signs, coefficient
 inclusions and arithmetic. Its embedded replay graphs are retained data and
-are not replayed by that oracle. Collecting arbitrary dependency-closed live
-contexts, including differing staged bases, remains required.
+are not replayed by that oracle. Automatic dependency-closed collection of
+live contexts remains required.
 
 `TowerCoverage.lean` connects the native producer to the relative algebraic
 union. `Model.nativePoly` lifts coefficients from the input's mathematical
@@ -1634,7 +1634,7 @@ against every old positive value. Existing serialized values and polynomials
 must pass the returned target's checked readers; old packets with a different
 literal binding are rejected.
 
-Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext HexRealClosureMathlib.BaseTests HexRealClosureMathlib.BaseMapModel`
+Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext HexRealClosureMathlib.BaseTests HexRealClosureMathlib.BaseFactoryTests HexRealClosureMathlib.BaseMapModel HexRealClosureMathlib.GatherTests`
 for staged value transport, the mixed-depth reuse limitation in both
 registration orders, alternative intervals, reordered chains, unrelated-root
 position, parent/child and sibling registration, repeated owners, root-level
@@ -1822,6 +1822,10 @@ and staged-order results with dependency closure. The interpretation ingredients
    predecessors. Equivalent selected roots with different intervals or
    reordered chains can still add redundant algebraic levels; arbitrary
    compatible real-prefix permutations remain outside the prefix check.
+   Remaining: re-establish the canonical `Shared.Model`, including its target,
+   original owners and cache, after enlargement against the next staged
+   realization and lifted reference. Automatic dependency-closed traversal and
+   the total `Context.enlarge` constructor also remain required.
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
 proves that its ordered algebraic real closure of `R(ε)` is algebraic over the
