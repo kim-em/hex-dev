@@ -1649,17 +1649,24 @@ identifies the transported value with a separately retrieved canonical owner mod
 
 Registration caches checked inclusions for every original algebraic predecessor.
 Parent/child registration, sibling branches, and repeated owners reuse their
-common roots. Reuse checks exact native provenance, including the staged base
-and complete root descriptors. The cache also retains native target predecessors,
-so contexts built from a returned shared target reuse those ancestors.
-Across different infinitesimal depths, an independently enlarged owner reuses
-a root when its exact context is already cached as a target predecessor or an
-earlier owner's predecessor. Registering
-the enlarged owner first, or into a deeper staged base, can add an equivalent
-algebraic level; the returned value maps still preserve the selected root.
-Owners selecting the same real number through reordered chains, different
-isolating intervals or different replay evidence can also add equivalent levels
-at one staged depth. Reuse currently recognizes exact native predecessors.
+common roots. Exact native provenance is checked first. For a new owner,
+registration validates its converted descriptor and prepares its constraints
+once. It visits the images of cached generators and their negatives on demand,
+including previously reused values, and skips structurally repeated candidates.
+Insertion computes an original generator's image once and retains it in the
+immutable cache. Extension maps these retained values once, and cache append
+removes structurally repeated images.
+Each candidate is tested against the defining
+equation first, followed by derivative signs and strict interval bounds; the
+check stops at the first mismatch and the search stops at the first full match.
+A matching value becomes the owner's generator
+through a proved polynomial evaluation map, retaining the exact shared target
+and all existing owner/cache interpretations. A linear converted head supplies
+a coefficient-field candidate, subject to the same complete constraint check.
+Otherwise registration appends a selected-root level and transports the cache.
+This reuses equivalent roots across different intervals, nonmonic reducible
+heads, reordered chains, and independently enlarged staged owners. It does not
+search arbitrary expressions of several generators for roots.
 `Shared.add?_maps` describes the returned old-owner inclusions and
 the appended original-owner map. A new target updates the predecessor cache
 through the same sequence of root inclusions used for retained owners.
@@ -1678,8 +1685,9 @@ must pass the returned target's checked readers; old packets with a different
 literal binding are rejected.
 
 Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext HexRealClosureMathlib.BaseTests HexRealClosureMathlib.BaseFactoryTests HexRealClosureMathlib.BaseMapModel HexRealClosureMathlib.GatherTests`
-for staged value transport, the mixed-depth reuse limitation in both
-registration orders, alternative intervals, reordered chains, unrelated-root
+for staged value transport, mixed-depth reuse in both registration orders,
+alternative intervals and defining polynomials, conjugate selection, linear
+roots, reordered chains, unrelated-root
 position, parent/child and sibling registration, repeated owners, root-level
 counts, original equations,
 owner-map agreement, polynomial transport, parameter order and stale packets.
@@ -1862,15 +1870,19 @@ and staged-order results with dependency closure. The interpretation ingredients
    `Shared.Model.enlarge?` then transports the whole returned owner family
    through one actual shared enlargement. `Context.origin` extracts each
    exact base and validated root suffix. Reuse recognizes exact native
-   predecessors. Equivalent selected roots with different intervals or
-   reordered chains can still add redundant algebraic levels; arbitrary
-   compatible real-prefix permutations remain outside the prefix check. Owners
+   predecessors and checks cached generator images, their negatives and linear
+   coefficient-field roots against the full converted descriptor. Covered
+   equivalent intervals and reordered algebraic chains add no root level;
+   arbitrary expressions in several generators are not searched, and compatible
+   real-prefix permutations remain outside the prefix check.
+   Owners
    over incomparable real-prefix paths are rejected. Supporting them requires
    new native inclusions for non-prefix keys as well as a joint realization.
    Remaining: re-establish the canonical `Shared.Model`, including its target,
    original owners and cache, after enlargement against the next staged
    realization and lifted reference. Automatic dependency-closed traversal and
    the total `Context.enlarge` constructor also remain required.
+
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
 proves that its ordered algebraic real closure of `R(ε)` is algebraic over the

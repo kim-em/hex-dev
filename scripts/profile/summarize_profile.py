@@ -18,6 +18,7 @@ def main() -> int:
     parser.add_argument("--diagnostics", type=Path)
     parser.add_argument("--thread", required=True)
     parser.add_argument("--top", type=int, default=20)
+    parser.add_argument("--benchmark", help="benchmark frame used to report stack coverage")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
 
@@ -26,6 +27,11 @@ def main() -> int:
     with gzip.open(args.profile) as handle:
         profile = json.load(handle)
     summary = analyse(profile, Symbolicator(symbols), args.top, args.thread)
+    if args.benchmark:
+        percent = next((entry["percent"] for entry in summary["inclusive_hex"] if entry["function"] == args.benchmark), 0.0)
+        summary["benchmark_stack_coverage"] = dict(function=args.benchmark, percent=percent,
+            missing_percent=round(100.0 - percent, 2),
+            interpretation="Inclusive shares are lower bounds when recorded stacks omit frames.")
     document = {
         "profile": str(args.profile),
         "symbols": str(symbols),

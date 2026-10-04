@@ -1,0 +1,18 @@
+import json, os, subprocess, sys, time
+from pathlib import Path
+root=Path('/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse')
+sys.path.insert(0,str(root/'scripts/bench'))
+from cpu_lease import cpu_lease
+cpu,lease=cpu_lease()
+output=root/'reports/bench-results/real-closure-gather-before-after'
+cmd=['perf','record','-F','99','-e','cycles:u','--call-graph','dwarf,8192','-o',str(output/'cached-eight.perf.data'),'--','taskset','-c',str(cpu),str(root/'.lake/build/bin/hexrealclosure_bench'),'gather-timing','2','8','1']
+start=time.monotonic();p=subprocess.run(cmd,cwd=root,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+(output/'cached-eight-profile.log').write_text(p.stdout)
+(output/'cached-eight-profile.json').write_text(json.dumps({'purpose':'one attribution profile for unexpectedly slower cached quadratic full gather at eight owners; not a repeat timing sample','cpu':cpu,'command':cmd,'load_after':os.getloadavg(),'wall_seconds':time.monotonic()-start,'returncode':p.returncode},indent=2)+'\n')
+print(p.stdout,flush=True)
+if p.returncode==0:
+ report=subprocess.run(['perf','report','--stdio','--no-children','--percent-limit','0.5','-i',str(output/'cached-eight.perf.data')],text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+ (output/'cached-eight-profile-report.txt').write_text(report.stdout)
+ print(report.stdout[:8000],flush=True)
+lease.close()
+raise SystemExit(p.returncode)

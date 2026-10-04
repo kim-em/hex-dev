@@ -147,17 +147,29 @@ original context.
 `Tower.Shared base owners` retains an immutable list of original contexts and
 one checked inclusion for each original owner into a shared target. Registration
 visits the owner's validated suffix in predecessor order, reuses cached checked
-inclusions for original predecessors, and adjoins only previously unseen exact
-native predecessors.
+inclusions for exact original predecessors, and validates each converted
+selected-root descriptor before checking existing generator values. Its derivative
+and endpoint queries are prepared once. The candidate search visits retained
+generator images on demand, trying each image and then its negative;
+these images include previously reused values, and structurally repeated
+candidates are skipped. Insertion retains the generator image, extension maps
+the retained images once, and append removes structurally repeated images.
+A linear head supplies its coefficient-field value first. Constraint checks stop
+at the first mismatching sign, testing the head before derivative signs and strict
+finite bounds. A successful full check retains the exact target context and
+registers the source child through polynomial evaluation at that value. Otherwise
+registration appends an algebraic level and converts the retained maps.
 Parent/child owners and sibling branches therefore retain one common ancestor
 level when they share exact native predecessors. The cache retains target-side
 predecessors too, including those rebuilt during enlargement, so a context built
 from a returned target can reuse its ancestry. Every new target updates all
 earlier owner and predecessor maps. Exact predecessor reuse checks the actual
-native chain, descriptor and replay. Value-level root deduplication must also
-reconcile reordered chains, alternative descriptors and evidence, and independent
-enlargement images across staged depths. This bounds algebraic-degree growth and
-retains the root identity required by the shared sample interface.
+native chain, descriptor and replay. Checked value reuse reconciles reordered
+chains, alternative descriptors and evidence, and independent enlargement images
+across staged depths when their selected values are cached generators or their
+negatives. General expressions in several generators are not searched. Repeated
+presentations covered by the candidate rule add no algebraic level and preserve
+the selected-root identity required by the shared sample interface.
 Original values remain indexed by their original contexts;
 `Shared.value` and `Shared.polynomial` select the checked map by its original
 owner index. The native base compatibility check uses the full real-prefix key

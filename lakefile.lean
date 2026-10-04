@@ -762,6 +762,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.GatherTests,
     `HexRealClosureMathlib.TowerAlgebraic, `HexRealClosureMathlib.TowerRefinement,
     `HexRealClosureMathlib.TowerTransport, `HexRealClosureMathlib.TowerTransportTests,
+    `HexRealClosureMathlib.TowerReuse,
     `HexRealClosureMathlib.TowerInclusion, `HexRealClosureMathlib.LiveContext,
     `HexRealClosureMathlib.TowerYun,
     `HexRealClosureMathlib.AlgebraicValue, `HexRealClosureMathlib.BaseClean, `HexRealClosureMathlib.AlgebraicTower,
@@ -2376,12 +2377,17 @@ lean_exe hexecpp_emit_class_polynomials where
 
 lean_lib KernelReplayExperiment where
   srcDir := "experiments"
-  globs := #[.one `KernelReplay.ProofProbe]
+  globs := #[.one `KernelReplay.ProofProbe, .one `KernelReplay.InProcessProbe,
+    .one `KernelReplay.LowerProbe, .one `KernelReplay.LowerProof]
 
 lean_exe hexsigndet_kernel_replay_probe where
   supportInterpreter := true
   srcDir := "experiments"
   root := `KernelReplay.Main
+
+lean_exe hexsigndet_inprocess_replay_probe where
+  srcDir := "experiments"
+  root := `KernelReplay.InProcessMain
 
 lean_exe hexrealclosure_policy_conformance where
   srcDir := "conformance"

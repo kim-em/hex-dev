@@ -79,10 +79,11 @@ def Shared.empty (base : BaseContext.PackedContext registry) : Shared base [] :=
     | pack base =>
       change (Context.base base).origin.base = BaseContext.PackedContext.pack base
       rw [Context.origin_base]
-      rfl, ⟨[]⟩⟩
+      rfl, ⟨[], []⟩⟩
 
-/-- Register one requested context, reusing cached original predecessors and
-rebuilding unseen exact predecessors. Update all previous checked inclusions together. -/
+/-- Register one requested context, reusing exact original predecessors and
+checked existing selected-root values before adjoining a new level. Update all
+previous checked inclusions together. -/
 def Shared.addOrigin? {base : BaseContext.PackedContext registry}
     {owners : List (Context registry)} (shared : Shared base owners)
     {source : Context registry} (origin : Origin source) :
@@ -112,6 +113,13 @@ private theorem Shared.empty_entries_proof (base : BaseContext.PackedContext reg
 /-- The initial collection has no original predecessor cache entries. -/
 theorem Shared.empty_entries (base : BaseContext.PackedContext registry) :
     (Shared.empty base).cache.entries = [] := Shared.empty_entries_proof base
+
+private theorem Shared.empty_candidates_proof (base : BaseContext.PackedContext registry) :
+    (Shared.empty base).cache.candidates = [] := rfl
+
+/-- The empty shared collection has no algebraic candidate images. -/
+theorem Shared.empty_candidates (base : BaseContext.PackedContext registry) :
+    (Shared.empty base).cache.candidates = [] := Shared.empty_candidates_proof base
 
 private theorem Shared.empty_maps_proof (base : BaseContext.PackedContext registry) :
     HEq (Shared.empty base).maps

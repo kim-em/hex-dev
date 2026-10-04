@@ -8,6 +8,7 @@ import HexRealClosure.Element
 import HexRealClosure.AlgebraicContext
 import HexRealClosure.CompleteRoots
 import HexRealClosure.TowerRoots
+import HexRealClosure.LiveContext
 import LeanBench
 
 namespace Hex.RealClosure.Bench
@@ -360,7 +361,281 @@ setup_fixed_benchmark runNested where {
   repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
 }
 
+/-- The exact ascending MetiTarski degree-15 input from CADE 2013, section 4.
+The independent Phase4 oracle checks its least-root interval and root count. -/
+private def metiCoefficients : Array Rat := #[592704, 402192, 90972, 3266731,
+  -931392, -193914, -5792221, 756756, 140742, 3046158, -259308,
+  -42336, -520884, 31752, 4536, 216]
+
+private def metiHead : nativeBase.Poly :=
+  DensePoly.ofCoeffs (metiCoefficients.map fun q => ⟨q⟩)
+
+initialize metiRef : IO.Ref (Option nativeBase.Poly) ← IO.mkRef (some metiHead)
+
+/-- Profile the actual first complete-root operation on the MetiTarski input.
+The call checks the returned root count before returning its harness result. -/
+def runMetiFirst : Unit → IO UInt64 := fun _ => do
+  let some head ← metiRef.get | throw (IO.userError "missing MetiTarski first input")
+  let .ok (.finite roots) := nativeBase.roots? head
+    | throw (IO.userError "MetiTarski first root operation failed")
+  unless roots.length == 3 do throw (IO.userError "MetiTarski first root count changed")
+  return 1
+
+setup_fixed_benchmark runMetiFirst where {
+  repeats := 10, maxSecondsPerCall := 120.0, expectedHash := some 0x1
+}
+
+private instance : Hashable (Σ owner : Tower.Context nativeRegistry, owner.Poly) where
+  hash input := hash (input.1.writePoly input.2).value
+
+/-- Prepare the actual least-root coefficient context outside the measured
+second-stage operation. Odd degrees extend `Y³ + α³ + 1` for a degree ladder;
+rung three is the exact second MetiTarski input. -/
+def metiSecondInput (degree : Nat) : Option (Σ owner : Tower.Context nativeRegistry, owner.Poly) :=
+  match nativeBase.roots? metiHead with
+  | .ok (.finite (first :: _)) =>
+    if first.root.signAt (DensePoly.ofCoeffs #[⟨1875 / 2048⟩, 1]) != 1 ||
+        first.root.signAt (DensePoly.ofCoeffs #[⟨1875 / 4096⟩, 1]) != -1 then none
+    else
+      let owner := first.root.context
+      let alpha := first.root.value
+      let y : owner.Poly := DensePoly.ofCoeffs #[0, 1]
+      let power := (List.range degree).foldl (fun p _ => p * y) (DensePoly.C 1)
+      some ⟨owner, power + DensePoly.C (alpha * alpha * alpha + 1)⟩
+  | _ => none
+
+/-- Complete native root production over the retained least-root context.
+Preparation, hashing and process exit are outside the profile's timed regions. -/
+def runMetiSecond (input : Option (Σ owner : Tower.Context nativeRegistry, owner.Poly)) : UInt64 :=
+  match input with
+  | none => 0
+  | some ⟨owner, head⟩ =>
+    match owner.roots? head with
+    | .ok (.finite roots) => if roots.length == 1 then 1 else 0
+    | _ => 0
+
+/- Cost model: cubic degree scaling is a hypothesis for this fixed coefficient
+context. The Euclidean factor recurrence and signed-remainder chains each use
+quadratic dense polynomial operations through a degree-linear sequence. Bit
+sizes and repeated algebraic sign checks may exceed this degree-only model;
+the measured ladder must test that hypothesis. -/
+setup_benchmark runMetiSecond n => n ^ 3
+  with prep := metiSecondInput
+  where {
+    paramFloor := 3, paramCeiling := 9
+    paramSchedule := .custom #[3, 5, 7, 9]
+    maxSecondsPerCall := 120.0
+    targetInnerNanos := 500000000
+    signalFloorMultiplier := 1.0
+  }
+
 end Hex.RealClosure.Bench
 
+namespace Hex.RealClosure.Bench.ReuseOrder
+
+open Tower
+
+private def registry : BaseContext.Registry := fun _ => none
+private abbrev base := Context.base (BaseContext.rational registry)
+
+private structure Input where
+  target : Context registry
+  descriptor : SignDet.Descriptor target.Value Signature target.sign target.signature
+  cache : InclusionCache target
+  candidates : List target.Value
+
+private def generator? (context : Context registry) : Option context.Value := by
+  cases context with
+  | pack chain =>
+    cases chain with
+    | base original => exact none
+    | root parent descriptor frame encoded =>
+      exact some (Algebraic.Element.ofPoly (DensePoly.ofCoeffs #[0, 1]))
+
+private def descriptor (degree constant : Nat) (lower upper : Rat) (derivatives : Bool := false) :
+    Option (SignDet.Descriptor base.Value Signature base.sign base.signature) :=
+  SignDet.Descriptor.validate base.sign base.signature
+    { context := base.signature,
+      head := DensePoly.natPow (DensePoly.ofCoeffs #[0, 1] : base.Poly) degree -
+        DensePoly.C (Nat.cast constant),
+      lower := .finite (⟨lower⟩), upper := .finite (⟨upper⟩),
+      indices := if derivatives then [1] else [], signs := if derivatives then [1] else [] }
+
+private def checkSigns (context : Context registry) (candidate : context.Value) :
+    List context.Poly → List Int → Bool
+  | [], [] => true
+  | p :: ps, sign :: signs =>
+      context.sign (p.eval candidate) == sign && checkSigns context candidate ps signs
+  | _, _ => false
+
+/-- Experimental constraint schedules on identical actual cached generators.
+Both arms check the same complete sign list. The bounds arm visits lower
+then upper before the head and derivatives. Production search order is unchanged. -/
+private def search (input : Input) (boundsFirst : Bool) : Bool :=
+  let queries := input.descriptor.raw.constraints
+  let signs := input.descriptor.raw.constraintSigns
+  let frontCount := 1 + input.descriptor.raw.queries.length
+  let queries := if boundsFirst then queries.drop frontCount ++ queries.take frontCount else queries
+  let signs := if boundsFirst then signs.drop frontCount ++ signs.take frontCount else signs
+  input.candidates.any fun candidate =>
+    checkSigns input.target candidate queries signs ||
+      checkSigns input.target (-candidate) queries signs
+
+private def prepare (degree count : Nat) (scenario : String) : IO ((Bool → Bool) × Nat) := do
+  unless (degree == 2 || degree == 4) && count > 0 && count ≤ 3 do
+    throw (IO.userError "root reuse order: degree must be 2 or 4; owner count 1..3")
+  let selected := ([2, 3, 5].take count).map (fun constant =>
+    (descriptor degree constant 1 3).map (fun d => (base.adjoin d).context))
+  if selected.any Option.isNone then
+    throw (IO.userError "root reuse order: owner descriptor rejected")
+  let owners := selected.filterMap id
+  let some shared := Shared.gather? (.pack (BaseContext.rational registry)) owners
+    | throw (IO.userError "root reuse order: gathering failed")
+  unless shared.input.context.signature.roots.length == count do
+    throw (IO.userError "root reuse order: distinct owners did not retain their levels")
+  let (constant, lower, upper) : Nat × Rat × Rat :=
+    if scenario == "below" then
+      (if degree == 2 then 11 else 17, if degree == 2 then 3 else 2, if degree == 2 then 4 else 3)
+    else if scenario == "inside" then (6, 1, 3)
+    else (1, 0, 9 / 8)
+  let some wanted := descriptor degree constant lower upper true
+    | throw (IO.userError "root reuse order: query descriptor rejected")
+  let raw := base.mapDescriptor shared.input.context shared.input.value wanted
+  let some converted := SignDet.Descriptor.validate shared.input.context.sign
+      shared.input.context.signature raw
+    | throw (IO.userError "root reuse order: converted query rejected")
+  let candidates := (shared.cache.entries.filterMap fun ⟨owner, inclusion⟩ =>
+    (generator? owner).map inclusion.value).eraseDups
+  let input : Input := ⟨shared.input.context, converted, shared.cache, candidates⟩
+  return ⟨fun boundsFirst => search input boundsFirst, input.candidates.length⟩
+
+/-- One compiled sample; setup is outside timing and the mutable reference
+prevents the input from being a closed compile-time expression. -/
+def run (args : List String) : IO UInt32 := do
+  let [degree, count, scenario, arm, repeats] := args
+    | throw (IO.userError "usage: reuse-order DEGREE OWNERS below|inside|above head|bounds REPEATS")
+  let some degree := degree.toNat? | throw (IO.userError "invalid degree")
+  let some count := count.toNat? | throw (IO.userError "invalid owner count")
+  let some repeats := repeats.toNat? | throw (IO.userError "invalid repeat count")
+  unless repeats > 0 && (arm == "head" || arm == "bounds") &&
+      (scenario == "below" || scenario == "inside" || scenario == "above") do
+    throw (IO.userError "root reuse order: invalid arm or repeat count")
+  let (check, candidates) ← prepare degree count scenario
+  let ref ← IO.mkRef check
+  let started ← IO.monoNanosNow
+  for _ in [:repeats] do
+    let current ← ref.get
+    if current (arm == "bounds") then
+      throw (IO.userError "root reuse order: unexpected cached root")
+  let elapsed := (← IO.monoNanosNow) - started
+  IO.println s!"degree={degree} owners={count} candidates={candidates} scenario={scenario} derivatives=1 arm={arm} repeats={repeats} nanoseconds={elapsed} hash=0"
+  return 0
+
+end Hex.RealClosure.Bench.ReuseOrder
+
+
+namespace Hex.RealClosure.Bench.GatherTiming
+
+open Tower
+
+private def registry : BaseContext.Registry := fun _ => none
+private abbrev base := Context.base (BaseContext.rational registry)
+
+private def primes : List Nat := [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53]
+
+private def generator? (context : Context registry) : Option context.Value := by
+  cases context with
+  | pack chain =>
+    cases chain with
+    | base original => exact none
+    | root parent descriptor frame encoded =>
+      exact some (Algebraic.Element.ofPoly (DensePoly.ofCoeffs #[0, 1]))
+
+private def verifyOwner (degree constant : Nat) {owners : List (Context registry)}
+    (shared : Shared (.pack (BaseContext.rational registry)) owners)
+    (index : Fin owners.length) : Bool :=
+  (generator? owners[index]).elim false fun generator =>
+    let image := shared.value index generator
+    let target := shared.input.context
+    let head : target.Poly := DensePoly.natPow (DensePoly.ofCoeffs #[0, 1] : target.Poly) degree -
+      DensePoly.C (Nat.cast constant)
+    target.sign image == 1 && target.sign (head.eval image) == 0
+
+private def verifyOwners (degree count : Nat) (constants : List Nat)
+    (owners : List (Context registry)) (reuse : Bool := false) : Bool × Nat :=
+  match Shared.gather? (.pack (BaseContext.rational registry)) owners with
+  | none => (false, 0)
+  | some shared =>
+    ((if reuse then 0 < shared.input.context.signature.roots.length &&
+      shared.input.context.signature.roots.length ≤ count
+    else shared.input.context.signature.roots.length == count) &&
+      (List.finRange owners.length).all fun index =>
+        verifyOwner degree (constants[index.val]?.getD 0) shared index,
+      shared.input.context.signature.roots.length)
+
+/-- Identical distinct-root input construction for the baseline and cached
+implementations. Validation is outside the gathering timing. -/
+private def prepare (degree count : Nat) (reuse : Bool) : IO ((Unit → Nat) × (Unit → Bool × Nat)) := do
+  unless (degree == 2 || degree == 4) && count > 0 && count ≤ (if reuse then 64 else primes.length) do
+    throw (IO.userError "gather timing: degree 2 or 4; distinct owners 1..16 or repeated-root owners 1..64")
+  let constants := if reuse then List.replicate count 2 else primes.take count
+  let descriptors := constants.zipIdx |>.map fun (constant, index) =>
+    SignDet.Descriptor.validate base.sign base.signature
+      { context := base.signature,
+        head := DensePoly.natPow (DensePoly.ofCoeffs #[0, 1] : base.Poly) degree -
+          DensePoly.C (Nat.cast constant),
+        lower := .finite 0, upper := .finite (Nat.cast (constant + 1 + if reuse then index else 0)),
+        indices := [], signs := [] }
+  if descriptors.any Option.isNone then
+    throw (IO.userError "gather timing: owner descriptor rejected")
+  let owners : List (Context registry) := descriptors.filterMap fun descriptor => descriptor.map fun d => (base.adjoin d).context
+  let gather : Unit → Nat := fun (_ : Unit) =>
+    match Shared.gather? (.pack (BaseContext.rational registry)) owners with
+    | none => 0
+    | some shared => shared.input.context.signature.roots.length
+  let verify : Unit → Bool × Nat := fun _ => verifyOwners degree count constants owners reuse
+  return (gather, verify)
+
+/-- Time full native gathering, then independently check every returned owner
+against its actual defining polynomial and positive selected embedding. -/
+def run (args : List String) (reuse : Bool := false) : IO UInt32 := do
+  let [degree, count, repeats] := args
+    | throw (IO.userError "usage: gather-timing DEGREE OWNERS REPEATS")
+  let some degree := degree.toNat? | throw (IO.userError "invalid degree")
+  let some count := count.toNat? | throw (IO.userError "invalid owner count")
+  let some repeats := repeats.toNat? | throw (IO.userError "invalid repeat count")
+  unless repeats > 0 do throw (IO.userError "repeat count must be positive")
+  let (gather, verify) ← prepare degree count reuse
+  let ref ← IO.mkRef gather
+  let started ← IO.monoNanosNow
+  for _ in [:repeats] do
+    let current ← ref.get
+    let depth := current ()
+    unless (if reuse then 0 < depth && depth ≤ count else depth == count) do
+      throw (IO.userError "gather timing: unexpected target root count")
+  let elapsed := (← IO.monoNanosNow) - started
+  let (valid, depth) := verify ()
+  unless valid do throw (IO.userError "gather timing: owner semantics failed")
+  IO.println s!"degree={degree} owners={count} reuse={reuse} repeats={repeats} nanoseconds={elapsed} checked_owners={count} target_depth={depth}"
+  return 0
+
+/-- Verify presentation depth and every owner's selected value without timing. -/
+def check (args : List String) : IO UInt32 := do
+  let [degree, count] := args
+    | throw (IO.userError "usage: gather-reuse-check DEGREE OWNERS")
+  let some degree := degree.toNat? | throw (IO.userError "invalid degree")
+  let some count := count.toNat? | throw (IO.userError "invalid owner count")
+  let (_, verify) ← prepare degree count true
+  let (valid, depth) := verify ()
+  unless valid do throw (IO.userError "gather check: owner semantics failed")
+  IO.println s!"degree={degree} owners={count} checked_owners={count} target_depth={depth}"
+  return 0
+
+end Hex.RealClosure.Bench.GatherTiming
+
 def main (args : List String) : IO UInt32 :=
-  LeanBench.Cli.dispatch args
+  if args.head? == some "reuse-order" then Hex.RealClosure.Bench.ReuseOrder.run (args.drop 1)
+  else if args.head? == some "gather-timing" then Hex.RealClosure.Bench.GatherTiming.run (args.drop 1)
+  else if args.head? == some "gather-reuse-timing" then Hex.RealClosure.Bench.GatherTiming.run (args.drop 1) true
+  else if args.head? == some "gather-reuse-check" then Hex.RealClosure.Bench.GatherTiming.check (args.drop 1)
+  else LeanBench.Cli.dispatch args

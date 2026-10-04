@@ -1,0 +1,24 @@
+{
+  "trial": 0,
+  "degree": 2,
+  "owners": 8,
+  "arm": "cached",
+  "command": [
+    "taskset",
+    "-c",
+    "44",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+    "gather-timing",
+    "2",
+    "8",
+    "1"
+  ],
+  "wall_seconds": 42.205244143002346,
+  "load_after": [
+    5.3896484375,
+    5.6552734375,
+    11.3193359375
+  ],
+  "returncode": 0,
+  "output": "degree=2 owners=8 repeats=1 nanoseconds=21193852923 semantic_hash=8\n"
+}

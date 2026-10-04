@@ -165,6 +165,7 @@ jobs:
           python3 -m unittest scripts/bench/test_intfactor_phase4.py
           python3 -m unittest scripts/profile/test_normalize_perf.py
           python3 -m unittest scripts/profile/test_elf_symbols.py
+          python3 -m unittest scripts/profile/test_real_closure.py
           python3 -m unittest scripts/bench/test_core_telemetry.py
           python3 -m unittest scripts/bench/test_tower_factor_compare.py
           python3 -m unittest scripts/oracle/test_flint_mpoly_bench.py
@@ -451,11 +452,12 @@ jobs:
           lake -d experiments/RealClosureAlgebraic build \
             Tests Transfer algebraicCheck algebraicBench policyCheck policyBench policyTrace refinementCheck
           lake -d experiments/NestedReplay build
-          lake build hexsigndet_kernel_replay_probe
+          lake build hexsigndet_kernel_replay_probe hexsigndet_inprocess_replay_probe KernelReplay.LowerProof
           experiments/RealClosureRepresentation/.lake/build/bin/representationPrototype
           probe_dir=$(mktemp -d)
           python3 experiments/NestedReplay/run.py "$probe_dir/nested-replay"
           python3 experiments/KernelReplay/run.py "$probe_dir/kernel-replay"
+          .lake/build/bin/hexsigndet_inprocess_replay_probe
           experiments/RealClosureAlgebraic/.lake/build/bin/algebraicCheck > "$probe_dir/algebraic.jsonl"
           python3 experiments/RealClosureAlgebraic/verify.py < "$probe_dir/algebraic.jsonl"
           experiments/RealClosureAlgebraic/.lake/build/bin/policyCheck > "$probe_dir/checks.jsonl"

@@ -1,0 +1,32 @@
+{
+  "purpose": "one attribution profile for unexpectedly slower cached quadratic full gather at eight owners; not a repeat timing sample",
+  "cpu": 13,
+  "command": [
+    "perf",
+    "record",
+    "-F",
+    "99",
+    "-e",
+    "cycles:u",
+    "--call-graph",
+    "dwarf,8192",
+    "-o",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/reports/bench-results/real-closure-gather-before-after/cached-eight.perf.data",
+    "--",
+    "taskset",
+    "-c",
+    "13",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+    "gather-timing",
+    "2",
+    "8",
+    "1"
+  ],
+  "load_after": [
+    10.85791015625,
+    19.32861328125,
+    27.5771484375
+  ],
+  "wall_seconds": 42.766598428999714,
+  "returncode": 0
+}
