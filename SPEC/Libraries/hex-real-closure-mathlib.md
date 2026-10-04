@@ -250,6 +250,13 @@ composition uses the second inclusion's actual target model.
 one common target. Extension preserves the original owner order and models;
 lifting uses the actual ordered field embedding.
 
+`Context.model?` derives canonical source models from the declared target
+provider history. `Shared.gather?_models` constructs a coherent `Shared.Model`
+for every compatible owner list; producer success also implies that compatibility.
+Its canonical owner models and predecessor cache agree semantically in the
+common target without caller-supplied coefficient agreement. This prefix check
+does not synthesize a joint realization for incomparable real-prefix paths.
+
 `Shared.enlarge?_models` carries an existing coherent collection of original
 interpretations into the prescribed algebraic ambient over the old field's
 infinitesimal extension. The declared base's reference model supplies existence

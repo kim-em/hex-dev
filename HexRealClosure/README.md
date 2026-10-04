@@ -913,8 +913,12 @@ old-handle validity, and stale-context reader rejection. The isolation
 conformance driver exports the actual recursive stored values and root frames;
 the independent Z3 oracle checks selected roots, cached signs, coefficient
 inclusions and arithmetic. Its embedded replay graphs are retained data and
-are not replayed by that oracle. Collecting arbitrary dependency-closed live
-contexts, including differing staged bases, remains required.
+are not replayed by that oracle. Automatic dependency-closed collection of
+live contexts remains required, including staged bases whose real-prefix
+paths are not prefixes of one declared base. The current native prefix
+check rejects those owners. Supporting them also needs inclusions for keys
+in other positions and a joint realization; separate constant laws do not
+supply these.
 
 `TowerCoverage.lean` connects the native producer to the relative algebraic
 union. `Model.nativePoly` lifts coefficients from the input's mathematical
@@ -1592,8 +1596,8 @@ ambient and base tower model. `BaseInclusion.Model.ofTarget` in `BaseMapModel`
 extracts an existing target model's coefficient homomorphism and composes the
 checked native map. It derives the source model, sign preservation, conversion
 model and fixed-owner inclusion model without a caller-supplied coefficient
-agreement. These base factories do not yet construct the complete coherent
-owner and cache family for `Shared.gather?`.
+agreement. The development adapter `CacheGather` extends these factories
+through the actual shared registration and collection producers.
 
 `RealPrefix.Model.prefix?` retrieves the actual validated interpretation for
 an earlier ordered real-prefix path from a target provider history. It succeeds
@@ -1615,9 +1619,24 @@ succeeds exactly when the owner's base passes the native compatibility check.
 base model directly from the staged realization; the owner factory accepts
 `following.reference.model`.
 `Context.model?_adjoin` and `model?_embed` identify the parent and child results
-and prove agreement on the native parent embedding. These owner models are
-inputs to the remaining cache-coherence proof; they do not by themselves certify
-the maps returned by `Shared.gather?`.
+and prove agreement on the native parent embedding.
+
+`Shared.gather?_models following reference owners compatible` proves that
+compatible gathering succeeds. Its returned `Shared.Model` interprets the actual
+shared target, preserves the supplied base values, and certifies every returned
+owner inclusion and predecessor cache entry in that same field. Its
+`canonicalOwners` field identifies every retained owner with its `Context.model?`
+factory result, including through `Shared.Model.ofGather`. The target and
+cached original models are constructed through `Context.model?`; cache hits
+therefore agree semantically with the incoming original predecessor without a separate
+coefficient-agreement hypothesis. `Shared.Model.ofGather` packages the model
+for an already returned native result. Callers supply the declared base's
+provider realization, a model in an ordered real closed field, and the
+actual successful gathering result. The producer's success derives the
+prefix/depth compatibility condition for every owner.
+`Shared.Model.value`, `polynomial`, `sign`, and `compare` preserve the original
+owners' values, coefficients, and native order results. `value_of_model` also
+identifies the transported value with a separately retrieved canonical owner model.
 
 Registration caches checked inclusions for every original algebraic predecessor.
 Parent/child registration, sibling branches, and repeated owners reuse their
@@ -1642,15 +1661,14 @@ owner maps use this one inclusion, and accessing the parameter rebuilds no root.
 `Shared.enlarge?_models` carries an existing coherent collection of owner
 models into one common ambient and identifies its actual infinitesimal and every
 input owner's interpreted values. The result includes a coherent family whose
-original models are exactly the prescribed lifts of the input family. A factory
-producing that coherent collection
-from `gather?`, and a proof that compatible registration succeeds, remain required;
-`Shared.enlarge?_ordered` gives positivity and comparison
+original models are exactly the prescribed lifts of the input family. The
+`owners` field of the `Shared.Model` produced by `gather?_models` supplies this
+coherent collection. `Shared.enlarge?_ordered` gives positivity and comparison
 against every old positive value. Existing serialized values and polynomials
 must pass the returned target's checked readers; old packets with a different
 literal binding are rejected.
 
-Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext HexRealClosureMathlib.BaseTests HexRealClosureMathlib.BaseMapModel`
+Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext HexRealClosureMathlib.BaseTests HexRealClosureMathlib.BaseFactoryTests HexRealClosureMathlib.BaseMapModel HexRealClosureMathlib.GatherTests`
 for staged value transport, the mixed-depth reuse limitation in both
 registration orders, alternative intervals, reordered chains, unrelated-root
 position, parent/child and sibling registration, repeated owners, root-level
@@ -1829,12 +1847,21 @@ and staged-order results with dependency closure. The interpretation ingredients
    the local algebraic bound when a parameter is only known smaller than
    positive values of the initial base map; this supports comparisons in
    other compatible ambient interpretations for dependency closure.
-5. **Remaining:** gathering a dependency-closed collection of live contexts
-   and assembling
-   the total checked constructor with its value and order preservation
-   statements. `Context.origin` extracts the exact base and validated root
-   suffix of one stored context. `Context.collect` gathers root handles over
-   one common predecessor; arbitrary live-context dependency traversal remains.
+5. `Shared.gather?_models` constructs coherent original-owner interpretations
+   and predecessor-cache models for compatible live contexts. Its factory
+   derives source coefficient agreement from the target provider history;
+   `Shared.Model.enlarge?` then transports the whole returned owner family
+   through one actual shared enlargement. `Context.origin` extracts each
+   exact base and validated root suffix. Reuse recognizes exact native
+   predecessors. Equivalent selected roots with different intervals or
+   reordered chains can still add redundant algebraic levels; arbitrary
+   compatible real-prefix permutations remain outside the prefix check. Owners
+   over incomparable real-prefix paths are rejected. Supporting them requires
+   new native inclusions for non-prefix keys as well as a joint realization.
+   Remaining: re-establish the canonical `Shared.Model`, including its target,
+   original owners and cache, after enlargement against the next staged
+   realization and lifted reference. Automatic dependency-closed traversal and
+   the total `Context.enlarge` constructor also remain required.
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
 proves that its ordered algebraic real closure of `R(ε)` is algebraic over the
