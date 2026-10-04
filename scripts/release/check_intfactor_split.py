@@ -2,7 +2,7 @@
 """Build a fresh computational factor-replay client from publication-shaped sources.
 
 HexIntFactor is not yet registered for publication. Its skeleton is prospective;
-its upstream prerequisites use real published skeletons and sync transformations.
+its upstream prerequisites use the real published repositories and sync transformations.
 """
 from __future__ import annotations
 import argparse
@@ -34,43 +34,45 @@ def main():
     if args.directory.exists() or args.output.exists():
         parser.error('use fresh paths')
     args.directory.mkdir(parents=True)
-    entries = {e['lib']: e for e in yaml.safe_load(sync.MANIFEST.read_text())['repos']
-               if e.get('lib') in LIBRARIES}
+    all_entries = yaml.safe_load(sync.MANIFEST.read_text())['repos']
+    entries = {e['lib']: e for e in all_entries if e.get('lib') in LIBRARIES}
+    pins = sync.external_pins()
     for lib, deps in LIBRARIES.items():
         dest = args.directory / lib
         subprocess.run(['git', 'clone', '--depth', '1',
                         f"https://github.com/{entries[lib]['repo']}.git", str(dest)], check=True)
         sync.apply_paths(entries[lib], dest)
-        sync.rewrite_lib_settings(entries[lib], dest)
-        sync.rewrite_lake_declarations(entries[lib], dest)
-        sync.rewrite_doc_verso(dest)
+        sync.write_lakefile(entries[lib], dest, all_entries, 'v0.0.0', {}, pins)
         sync.rewrite_toolchains(dest)
         if deps:
             lakefile = dest / 'lakefile.toml'
             pattern = r'(?ms)^\[\[require\]\]\s*\n(?P<body>.*?)(?=^\[|\Z)'
             def local_requirement(match):
                 name = re.search(r'^name\s*=\s*"([^"\n]+)"', match['body'], re.M)[1]
-                if name not in deps:
+                if name not in LIBRARIES:
                     raise RuntimeError(f'unexpected requirement {name}')
                 return f'[[require]]\nname = "{name}"\npath = "../{name}"\n\n'
             text, count = re.subn(pattern, local_requirement, lakefile.read_text())
-            assert count == len(deps)
+            assert count >= len(deps)
             lakefile.write_text(text)
         (dest / 'lake-manifest.json').unlink(missing_ok=True)
     dest = args.directory / 'HexIntFactor'
     dest.mkdir()
     shutil.copy(ROOT / "lean-toolchain", dest)
-    # The prospective skeleton builds optional producer/export modules separately.
+    # The prospective Lake file builds optional producer/export modules
+    # separately, carries this monorepo's build settings for the library, and
+    # builds the entry's test modules, as a generated one would.
+    settings = ''.join(f'  {name} := {value}\n' for name, value in
+                       sync.source_build_settings('HexIntFactor').items())
+    tests = ', '.join(f'`{module}' for module in ENTRY['test_modules'])
     (dest / 'lakefile.lean').write_text('import Lake\nopen Lake DSL\npackage HexIntFactor\n'
         'require HexPrimality from "../HexPrimality"\n'
         '@[default_target]\nlean_lib HexIntFactor where\n'
-        '  globs := #[`HexIntFactor, `HexIntFactor.Pari, `HexIntFactor.Export, `HexIntFactor.Replay].map Glob.one\n')
+        '  globs := #[`HexIntFactor, `HexIntFactor.Pari, `HexIntFactor.Export, `HexIntFactor.Replay].map Glob.one\n'
+        + settings + f'\nlean_lib HexIntFactorTests where\n  globs := #[{tests}]\n')
     with patch.object(sync, "apply_ci_workflow", return_value=[]):
         sync.apply_paths(ENTRY, dest)
-    sync.rewrite_lib_settings(ENTRY, dest)
-    sync.rewrite_test_target(ENTRY, dest)
     sync.rewrite_toolchains(dest)
-    sync.validate_skeleton(ENTRY, dest)
     client = args.directory / 'Client'
     client.mkdir()
     shutil.copy(ROOT / 'lean-toolchain', client)
