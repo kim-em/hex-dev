@@ -81,6 +81,38 @@ Consequently it does not establish strict native replay or Phase-4 completion.
 Single-run proof assembly timings are diagnostic observations, not performance
 evidence.
 
+`Assemble.lean` supplies a reusable in-process proof assembler for a closed
+Boolean expression. It returns either a checked equation for the actual
+expression or the demanded missing-fact application, retaining the exact
+context and original polynomial. Unrelated opaque expressions and kernel
+errors remain errors. It uses no native coefficient evaluation.
+The generic assembler does not certify that an arbitrary caller's expression
+avoids sign production. The actual replay program and simplification rules
+retain the supplied-fact packing boundary; a final interface must fix those
+choices rather than permit arbitrary expressions or rewrites.
+
+Its producer-side collector retries the actual checker after obtaining each
+required fact from a supplier. It audits and kernel checks supplied facts and
+returns the finite list used in the final checked equation. A missing supplier
+result or exhausted fuel returns the unresolved request; neither establishes
+a Boolean result. Replay does not call this collector or its supplier.
+
+```sh
+lake env .lake/build/bin/hexsigndet_kernel_replay_probe collect
+```
+
+The collection control starts with no intermediate facts for the actual
+two-entry graph. It discovers the retained keys `2X` and `2X - 1` in the exact
+coefficient context, selects their already proved facts from an inventory, and
+checks the resulting complete calculation. Kernel equations check the keys
+and contexts. An incomplete inventory stops at `2X - 1`; zero fuel never calls
+the supplier; repeatedly supplied irrelevant facts stop at the fuel bound.
+This control collects facts automatically but does not produce new sign
+certificates. General certificate production, context reconstruction and
+deeper replay remain outstanding. The collector makes one proof-assembly
+attempt per supplied fact plus a final attempt; these controls establish no
+scaling or Phase-4 result.
+
 Acceptance always requires a kernel-checked equality for the supplied
 expression. Looking for an opaque missing-fact expression inside unapplied
 operation bodies would not establish that replay needs that fact.
