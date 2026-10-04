@@ -129,17 +129,65 @@ run_elab do
     throwError "coefficient-size control did not reach leaf classification"
   let .error (.budget _) ← RationalRoot.parameters? large |
     throwError "coefficient-size control did not exhaust recognition"
-  refuses (Coefficients.prepare budgetGoal)
+  let beforeBudget ← getMCtx
+  let budgetNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
+  let .error (.budget _) ← Coefficients.prepare budgetGoal |
+    throwError "coefficient preparation did not preserve structured recognition exhaustion"
+  unless (← getMCtx).mvarCounter == beforeBudget.mvarCounter &&
+      (← (← getEnv).getLocalConstantInfos).map (·.name) == budgetNames do
+    throwError "structured recognition exhaustion changed caller state"
   for target in #[q(∀ x : ℝ,
       x ^ 2 + Real.sqrt 3 + $large + Real.sqrt (Real.sqrt 2) > 0),
       q(∀ x : ℝ, x ^ 2 + Real.sqrt (Real.sqrt 2) + $large + Real.sqrt 3 > 0)] do
+    let .ok _ ← Reify.prepare target |
+      throwError "unsupported-sibling control did not reach leaf classification"
     let before ← getMCtx
     let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
-    let .error (.unsupported _ _) ← Coefficients.prepare target |
+    let .error (.unsupported declined _) ← Coefficients.prepare target |
       throwError "recognition exhaustion preempted an unsupported sibling"
+    unless declined == target do
+      throwError "unsupported-sibling control did not decline at the environment boundary"
     unless (← getMCtx).mvarCounter == before.mvarCounter &&
         (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
       throwError "deferred recognition refusal changed caller state"
+  let largeBase : Q(ℝ) := q(1 / (((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ)))
+  for unsupported in #[q(Real.pi), q(Real.sqrt 2)] do
+    for root in #[q(Real.sqrt ($largeBase + $unsupported)),
+        q(Real.sqrt ($unsupported + $largeBase))] do
+      let root : Q(ℝ) ← pure root
+      let .ok none ← RationalRoot.parameters? root |
+        throwError "unsupported root-base syntax was hidden by arithmetic exhaustion"
+      let target := q(∀ x : ℝ, x ^ 2 + Real.sqrt 3 + $root > 0)
+      let .ok _ ← Reify.prepare target |
+        throwError "unsupported root-base control did not reach leaf classification"
+      let before ← getMCtx
+      let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
+      let .error (.unsupported declined _) ← Coefficients.prepare target |
+        throwError "unsupported root-base operand order changed the refusal category"
+      unless declined == target do
+        throwError "unsupported root-base control did not decline at the environment boundary"
+      unless (← getMCtx).mvarCounter == before.mvarCounter &&
+          (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
+        throwError "unsupported root-base refusal changed caller state"
+  for root in #[q($largeBase ^ (Real.pi + $largeBase)),
+      q($largeBase ^ ($largeBase + Real.pi))] do
+    let .ok none ← RationalRoot.parameters? root |
+      throwError "base exhaustion preempted an unsupported root exponent"
+  let .error (.unsupported _ _) ← RationalRoot.parameters? q($largeBase ^ (2 / 3 : ℝ)) |
+    throwError "base exhaustion preempted a nonreciprocal root exponent"
+  let largeNatural : Q(ℝ) := q(Real.sqrt (((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ)))
+  let naturalGoal := q(∀ x : ℝ, x ^ 2 + Real.sqrt 3 + $largeNatural > 0)
+  let .ok _ ← Reify.prepare naturalGoal |
+    throwError "natural-radicand control did not reach leaf classification"
+  let .error (.budget _) ← RationalRoot.parameters? largeNatural |
+    throwError "natural radicand bypassed the shared recognition budget"
+  let beforeNatural ← getMCtx
+  let naturalNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
+  let .error (.budget _) ← Coefficients.prepare naturalGoal |
+    throwError "natural-radicand preparation bypassed structured recognition exhaustion"
+  unless (← getMCtx).mvarCounter == beforeNatural.mvarCounter &&
+      (← (← getEnv).getLocalConstantInfos).map (·.name) == naturalNames do
+    throwError "natural-radicand exhaustion changed caller state"
   let .ok division ← Reify.prepare q(∀ x : ℝ,
       x / (2 : ℝ) ^ (1 / 3 : ℝ) =
         ((2 : ℝ) ^ (1 / 3 : ℝ)) ^ 2 * x / 2) |

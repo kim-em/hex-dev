@@ -247,9 +247,9 @@ Root recognition also bounds the computed rational base size. Its structured
 exhaustion is deferred until every sibling has been classified. -/
 private meta def eligible (source : Expr) :
     MetaM (Except Hex.RealFormula.Reify.Error (Bool × Option RationalRoot.Parameters)) := do
-  if (← naturalSquareRoot? source).isSome then return .ok (true, none)
   match ← rootParameters? source with
-  | .error error => return .error error
+  | .error (.budget exhausted) => return .error (.budget exhausted)
+  | .error error => throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
   | .ok (some parameters) => return .ok (true, some parameters)
   | .ok none => pure ()
   unless source.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return .ok (false, none)
@@ -758,16 +758,16 @@ private meta def gather (source : Expr) (leaves : Leaves) :
   gatherCore (← Reify.lowerSources #[] source) leaves
 
 private meta def sourcePlans (source : Reify.Source) :
-    MetaM (Option (Array Expr × Array SourcePlan)) := do
+    MetaM (Except Hex.RealFormula.Reify.Error (Option (Array Expr × Array SourcePlan))) := do
   for expression in #[source.proof, source.sentenceProof] ++
       source.coefficients ++ source.divisors do
     let _ ← Hex.RCF.checkExpr `Hex.RCF.RealCoefficients.CommonTactic.sourcePlans expression
   let mut leaves : Leaves := {}
   for scalar in source.coefficients ++ source.divisors do
-    let some next ← gather scalar leaves | return none
+    let some next ← gather scalar leaves | return .ok none
     leaves := next
   if let some error := leaves.error then
-    throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
+    return .error error
   let plans ← profileitM Exception "rcf source authentication" (← getOptions) do
     let mut plans : Array SourcePlan := #[]
     for scalar in leaves.sources do
@@ -775,16 +775,20 @@ private meta def sourcePlans (source : Reify.Source) :
         throwError "rcf: internal: eligible leaf has no plan"
       plans := plans.push plan
     pure plans
-  return some (leaves.sources, plans)
+  return .ok (some (leaves.sources, plans))
 
 /-- Prepare an exact selected-field environment without root/cell production.
 The rational-only input remains with the existing rational solver. -/
-private meta def prepareSource (source : Reify.Source) : MetaM (Option Coefficients.Environment) := do
-  let some (leaves, plans) ← sourcePlans source | return none
-  if leaves.isEmpty then return none
+private meta def prepareSource (source : Reify.Source) :
+    MetaM (Except Hex.RealFormula.Reify.Error (Option Coefficients.Environment)) := do
+  let (leaves, plans) ← match ← sourcePlans source with
+    | .error error => return .error error
+    | .ok none => return .ok none
+    | .ok (some result) => pure result
+  if leaves.isEmpty then return .ok none
   let prepared ← (← prepareField source leaves plans).instantiate
   prepared.checkDomains
-  return some prepared
+  return .ok (some prepared)
 
 @[rcf_handler] meta def handle : Handler := fun target => do
   unless ← candidate target do return .declined
@@ -800,7 +804,10 @@ private meta def prepareSource (source : Reify.Source) : MetaM (Option Coefficie
   if source.coefficients.size == 1 then
     if (← Tactic.handlesCoefficient source.coefficients[0]!) &&
         (← rationalGuards source.divisors) then return .declined
-  let some (leaves, plans) ← sourcePlans source | return .declined
+  let (leaves, plans) ← match ← sourcePlans source with
+    | .error error => return .failed (Hex.RealFormula.Reify.Error.toMessageData error)
+    | .ok none => return .declined
+    | .ok (some result) => pure result
   if leaves.isEmpty then return .proved (← proveRational source)
   return .proved (← prove source leaves plans)
 
@@ -822,8 +829,11 @@ meta def prepare (target : Expr) :
     let source ← match ← Reify.prepare target with
       | .ok source => pure source
       | .error error => return .error error
-    let some prepared ← CommonTactic.prepareSource source |
-      return .error (.unsupported target "no supported selected-field coefficient environment")
+    let prepared ← match ← CommonTactic.prepareSource source with
+      | .error error => return .error error
+      | .ok none =>
+          return .error (.unsupported target "no supported selected-field coefficient environment")
+      | .ok (some prepared) => pure prepared
     return .ok prepared)
     (fun result => do
       match result with

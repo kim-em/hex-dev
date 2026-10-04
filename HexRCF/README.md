@@ -113,6 +113,9 @@ Zero divisions inside an unsupported root base or exponent are refused during
 recognition rather than reaching common-field replay. Negative bases,
 nonreciprocal real exponents and unsupported nested algebraic-base roots do
 not acquire a signed-root interpretation from this frontend.
+Unsupported root-base syntax and unsupported sibling coefficients take
+precedence over recognition exhaustion. For otherwise supported sources,
+`Coefficients.prepare` returns a structured budget error before field construction.
 Registered bounds compose with unregistered selected algebraic values and
 checked root aliases through separately proved algebraic enclosures. The
 [mixed-coefficient regressions](../conformance/HexRCF/MixedConstants.lean)

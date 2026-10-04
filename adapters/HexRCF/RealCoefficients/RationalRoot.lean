@@ -66,6 +66,32 @@ def isNotation (e : Expr) : Bool :=
   e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 ||
     (e.isAppOfArity ``HPow.hPow 6 && e.getAppArgs[1]!.isConstOf ``Real)
 
+/-- Check scalar syntax without computing its value or coefficient size.
+The shared arithmetic reifier still validates instances and performs all
+bounded normalization. Unsupported operands must not be hidden by exhaustion. -/
+private partial def rationalSyntax (source : Expr) (inverse : Bool := false) : MetaM Bool := do
+  let e := source.consumeMData
+  if (getRawNatValue? e).isSome then return true
+  let args := e.getAppArgs
+  let op := e.getAppFn.constName?
+  if e.isAppOfArity ``OfNat.ofNat 3 then
+    return (getRawNatValue? args[1]!).isSome
+  if op == some ``Neg.neg && args.size == 3 then return ← rationalSyntax args[2]! inverse
+  if inverse && e.isAppOfArity ``Inv.inv 3 then return ← rationalSyntax args[2]! inverse
+  if [``Int.cast, ``Nat.cast, ``Rat.cast, ``RatCast.ratCast, ``Int.ofNat,
+      ``Int.negOfNat, ``Rat.ofInt].any (op == some ·) && !args.isEmpty then
+    return ← rationalSyntax args.back! inverse
+  if e.isAppOfArity ``Int.negSucc 1 then return ← rationalSyntax args[0]! inverse
+  if [``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv].any (op == some ·) &&
+      args.size == 6 then
+    return (← rationalSyntax args[4]! inverse) && (← rationalSyntax args[5]! inverse)
+  if e.isAppOfArity ``HPow.hPow 6 then
+    unless (← inferType args[5]!).isConstOf ``Nat do return false
+    return (← getNatValue? args[5]!).isSome && (← rationalSyntax args[4]! inverse)
+  if e.isAppOfArity ``OfScientific.ofScientific 5 then
+    return (← getNatValue? args[4]!).isSome && (← rationalSyntax args[2]! inverse)
+  return false
+
 /-- Recognize a positive rational base and reciprocal natural degree. Shared
 reflection limits remain structured errors; source admission retains every
 original base/exponent divisor before this classification. -/
@@ -81,9 +107,22 @@ def parameters? (original : Expr) (config : Hex.RealFormula.Reify.Config := {}) 
     else if realPower then some (args[4]!, args[5]!) else none
   let some (base, exponent) := parts | return .ok none
   let base ← Reify.lowerSources #[] base
+  unless ← rationalSyntax base do return .ok none
+  unless ← rationalSyntax exponent true do return .ok none
   let action : ReifyM Nat := do
-    let _ ← arithmetic #[] base
-    Coefficients.rootDegree exponent
+    let degree ← Coefficients.rootDegree exponent
+    let view ← arithmetic #[] base
+    -- Shared denominator normalization bounds denominators; its ring reifier
+    -- bounds the numerator before rational evaluation, including natural powers.
+    match ← liftM (Hex.Reflect.run (Hex.Reflect.reifyCommRing view.numerator) config.ring) with
+    | .success ring _ =>
+        charge .coefficientBits
+          (Hex.Reflect.RingExpr.coeffBitBound (config.ring.budget.coefficientBits + 1) ring.expr)
+    | .declined (.budgetExhausted exhausted) _ => abort (.budget exhausted)
+    | .declined reason usage => abort (.providerDeclined reason usage #[])
+    | .failure reason => abort (.providerFailure reason #[])
+    | .notApplicable => abort (.unsupported base "expected a rational coefficient ring")
+    return degree
   let degree ← match ← (action.run
       {config, budget := .ofBudget config.ring.budget}).run with
     | .error error => return .error error
