@@ -109,7 +109,7 @@ def main():
              "--call-graph", "dwarf", "-o", args.raw / "perf.data", "--", "env",
              f"LEAN_BENCH_TIMED_REGIONS_SIDECAR={args.raw}/timed-%p.jsonl", *profile])
         rows = [json.loads(line) for line in measured.splitlines() if line.startswith("{")]
-        if len(rows) != 1 or rows[0].get("status") != "ok" or rows[0].get("result_hash") != 1:
+        if len(rows) != 1 or rows[0].get("status") != "ok" or rows[0].get("result_hash") != "0x1":
             raise RuntimeError("profile did not return the expected complete-root result")
         record["measurement"] = rows[0]
         run(["samply", "import", "--save-only", "--no-open", "--unstable-presymbolicate",
