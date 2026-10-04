@@ -117,6 +117,95 @@ theorem Model.derive_target
 
 end Hex.RealClosure.Tower.BaseInclusion
 
+namespace Hex.RealClosure.Tower.Model
+
+open scoped Hex.OrderedFn.Infinitesimal
+
+variable {registry : BaseContext.Registry} {R : Type u}
+variable [Field R] [LinearOrder R] [DecidableEq R] [IsStrictOrderedRing R]
+
+/-- Construct the new native base interpretation from the old model's actual
+coefficient hom in an ordered algebraic ambient over its rational functions. -/
+noncomputable def nextBase {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (old : Model (Context.base base) R) (ambient : Ambient (Hex.RationalFn R)) :
+    Model (Context.base base.infinitesimal) ambient.Carrier :=
+  (Conversion.infinitesimal_spec base).1 ▸
+    (Conversion.Model.infinitesimalMapped base (old.baseHom base)
+      (old.baseHom_sign base) ambient).target
+
+private theorem cast_value {source target : Context registry}
+    {K : Type v} [Field K] [LinearOrder K] (same : source = target)
+    (model : Model source K) (a : source.Value) :
+    (same ▸ model).value (_root_.cast (congrArg Context.Value same) a) = model.value a := by
+  cases same
+  rfl
+
+private theorem nextBase_embed_proof {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (old : Model (Context.base base) R) (ambient : Ambient (Hex.RationalFn R))
+    (a : (Context.base base).Value) :
+    (nextBase base old ambient).value (BaseContext.Element.embed a) =
+      Ambient.coefficientHom ambient (old.value a) := by
+  letI : Field B := HexPolyMathlib.fieldOfGrind
+  let input := Conversion.Model.infinitesimalMapped base (old.baseHom base)
+    (old.baseHom_sign base) ambient
+  have aligned := cast_value (Conversion.infinitesimal_spec base).1 input.target
+    ((Conversion.infinitesimal base).value a)
+  have included := congrArg (nextBase base old ambient).value
+    (Conversion.infinitesimal_value base a)
+  have coefficient := Model.base_value base
+    ((Ambient.coefficientHom ambient).comp (old.baseHom base))
+    (Conversion.Model.mapped_base_sign (old.baseHom base) (old.baseHom_sign base) ambient) a
+  exact included.symm.trans (aligned.trans ((input.value a).trans
+    (coefficient.trans (congrArg (Ambient.coefficientHom ambient) (old.baseHom_value base a)))))
+
+/-- Constants preserve the old interpretation in the constructed new base.
+This agreement is a conclusion of the factory, rather than a caller premise. -/
+theorem nextBase_embed {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (old : Model (Context.base base) R) (ambient : Ambient (Hex.RationalFn R))
+    (a : (Context.base base).Value) :
+    (nextBase base old ambient).value (BaseContext.Element.embed a) =
+      Ambient.coefficientHom ambient (old.value a) := nextBase_embed_proof base old ambient a
+
+private theorem nextBase_target_proof {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (old : Model (Context.base base) R) (ambient : Ambient (Hex.RationalFn R)) :
+    HEq (Conversion.Model.infinitesimalMapped base (old.baseHom base)
+      (old.baseHom_sign base) ambient).target (nextBase base old ambient) := by
+  exact ((Conversion.Model.infinitesimalMapped base (old.baseHom base)
+    (old.baseHom_sign base) ambient).target.cast_heq (Conversion.infinitesimal_spec base).1).symm
+
+/-- The constructed next base is the actual infinitesimal conversion's target,
+with only its native context ownership aligned. -/
+theorem nextBase_target {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (old : Model (Context.base base) R) (ambient : Ambient (Hex.RationalFn R)) :
+    HEq (Conversion.Model.infinitesimalMapped base (old.baseHom base)
+      (old.baseHom_sign base) ambient).target (nextBase base old ambient) :=
+  nextBase_target_proof base old ambient
+
+/-- Construct the next interpretation directly from an immutable packed base. -/
+noncomputable def next (base : BaseContext.PackedContext registry)
+    (old : Model (Context.ofBase base) R) (ambient : Ambient (Hex.RationalFn R)) :
+    Model (Context.ofBase base.infinitesimal) ambient.Carrier := by
+  cases base with
+  | pack base => exact nextBase base old ambient
+
+private theorem next_pack_proof {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (old : Model (Context.base base) R) (ambient : Ambient (Hex.RationalFn R)) :
+    next (.pack base) old ambient = nextBase base old ambient := rfl
+
+/-- Unpacking a base retains the same constructed interpretation. -/
+theorem next_pack {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (old : Model (Context.base base) R) (ambient : Ambient (Hex.RationalFn R)) :
+    next (.pack base) old ambient = nextBase base old ambient := next_pack_proof base old ambient
+
+end Hex.RealClosure.Tower.Model
+
 /-- info: 'Hex.RealClosure.Tower.BaseInclusion.Model.derive' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.BaseInclusion.Model.derive

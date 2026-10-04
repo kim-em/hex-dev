@@ -178,6 +178,18 @@ def Models.empty {destination : Context registry} (target : Tower.Model destinat
   intro entry present
   exact False.elim (List.not_mem_nil present)
 
+/-- Combine two actual caches certified in the same target interpretation. -/
+noncomputable def Models.append {destination : Context registry}
+    {target : Tower.Model destination R} {first second : InclusionCache destination}
+    (left : Models following reference target first)
+    (right : Models following reference target second) :
+    Models following reference target (first.append second) := by
+  intro entry present
+  exact Classical.choice (by
+    rcases List.mem_append.mp present with first | second
+    · exact ⟨left entry first⟩
+    · exact ⟨right entry second⟩)
+
 /-- Retain the canonical owner interpretation for a newly inserted actual map. -/
 noncomputable def Models.insert {destination source : Context registry}
     {target : Tower.Model destination R} {cache : InclusionCache destination}

@@ -14,6 +14,7 @@ public section
 namespace Hex.RealClosure.BaseContext.GatherTests
 
 open OrderedFn OrderedFn.Oracle
+open scoped Hex.OrderedFn.Infinitesimal
 
 local instance (priority := 2000) : Lean.Grind.Field Rat := Lean.Grind.instFieldRat
 
@@ -101,5 +102,35 @@ example
     model.targetToUnion_add (shared.value 0 second.generator) (shared.value 1 first.generator),
     model.toUnion_embed 1 0 (.selected child second rfl) rfl first.generator⟩
 
+
+
+/-- A returned factory model supports registration of the previous shared
+context followed by another actual infinitesimal enlargement. Both enlarged
+models include canonical owners and coherent caches. -/
+example {base : PackedContext registry} {owners : List (Tower.Context registry)}
+    {shared : Tower.Shared base owners} {following : base.Realization}
+    {reference : Tower.Model (Tower.Context.ofBase base) ℝ}
+    (model : Tower.Shared.Model shared following reference)
+    (ambient : Ambient (Hex.RationalFn ℝ))
+    (again : Ambient (Hex.RationalFn ambient.Carrier)) :
+    ∃ first : Tower.SharedEnlargement shared,
+      shared.enlarge? = some first ∧
+      ∃ registered, first.shared.add? shared.input.context = some registered ∧
+      ∃ second : Tower.SharedEnlargement registered,
+        registered.enlarge? = some second ∧
+        Nonempty (Tower.Shared.Model second.shared following.infinitesimal.infinitesimal
+          (Tower.Model.next base.infinitesimal (Tower.Model.next base reference ambient) again)) := by
+  obtain ⟨first, firstProduced, firstModel, _, _⟩ := model.enlarge ambient
+  have allowed : shared.input.context.origin.base.signature.constants <+:
+      base.infinitesimal.signature.constants ∧
+      shared.input.context.origin.base.signature.infinitesimals ≤
+        base.infinitesimal.signature.infinitesimals := by
+    rw [shared.base_eq, PackedContext.infinitesimal_signature]
+    exact ⟨List.prefix_refl _, Nat.le_succ _⟩
+  obtain ⟨registered, registeredProduced, ⟨registeredModel⟩⟩ :=
+    firstModel.add? shared.input.context allowed
+  obtain ⟨second, secondProduced, secondModel, _, _⟩ := registeredModel.enlarge again
+  exact ⟨first, firstProduced, registered, registeredProduced, second, secondProduced,
+    ⟨secondModel⟩⟩
 
 end Hex.RealClosure.BaseContext.GatherTests

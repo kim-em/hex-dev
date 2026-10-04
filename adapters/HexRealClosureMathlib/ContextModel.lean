@@ -191,6 +191,19 @@ theorem Context.model?_embed (context : Context registry)
   rw [parentProduced, childProduced, Option.map_some] at same
   rw [Option.some.inj same, original.adjoin_embed descriptor a]
 
+/-- Canonical interpretation of every actual selected-root suffix extends the
+canonical model of its starting context. -/
+theorem Suffix.model?_extend {source : Context registry} (suffix : Suffix source)
+    (following : base.Realization) (reference : Tower.Model (Context.ofBase base) R) :
+    ∀ (model : Tower.Model source R), source.model? following reference = some model →
+      suffix.context.model? following reference = some (model.extend suffix) := by
+  induction suffix with
+  | nil => intro model canonical; exact canonical
+  | root descriptor rest ih =>
+    intro model canonical
+    exact ih (model.adjoin descriptor) (by
+      rw [Context.model?_adjoin, canonical, Option.map_some])
+
 private theorem Context.model?_isSome_proof (context : Context registry)
     (following : base.Realization) (target : Tower.Model (Context.ofBase base) R) :
     (context.model? following target).isSome = true ↔

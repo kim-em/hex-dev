@@ -1656,6 +1656,16 @@ prefix/depth compatibility condition for every owner.
 owners' values, coefficients, and native order results. `value_of_model` also
 identifies the transported value with a separately retrieved canonical owner model.
 
+`Shared.Model.enlarge ambient` constructs a complete `Shared.Model` for the
+actual returned enlargement. `Model.next` constructs its new declared base
+interpretation, preserving old constants through the ambient coefficient
+embedding. The enlarged target and every retained owner are the new canonical
+`Context.model?` results; the rebuilt native predecessor cache and transported
+old cache are coherent with that same target. The returned checked inclusion
+identifies the old shared interpretation with the new target. This complete
+model supports `add?`, `collect?`, and further `enlarge` calls. These agreements
+are derived from the original factory model and provider history.
+
 `Shared.presentation index value` packages the actual checked owner value as a
 finite native presentation over the shared collection's declared base. The
 `SharedPresentation` development adapter proves that its denotation is the
@@ -1901,7 +1911,8 @@ and staged-order results with dependency closure. The interpretation ingredients
 5. `Shared.gather?_models` constructs coherent original-owner interpretations
    and predecessor-cache models for compatible live contexts. Its factory
    derives source coefficient agreement from the target provider history;
-   `Shared.Model.enlarge?` then transports the whole returned owner family
+   `Shared.Model.enlarge` constructs the whole enlarged factory model,
+   including canonical owner interpretations and coherent predecessor caches,
    through one actual shared enlargement. `Context.origin` extracts each
    exact base and validated root suffix. Reuse recognizes exact native
    predecessors and checks cached generator images, their negatives and linear
