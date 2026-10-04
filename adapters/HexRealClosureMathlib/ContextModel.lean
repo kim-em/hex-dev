@@ -35,6 +35,49 @@ noncomputable def Context.model? (context : Context registry)
     (following : base.Realization) (target : Tower.Model (Context.ofBase base) R) :
     Option (Tower.Model context R) := context.origin.model? following target
 
+private theorem Context.model?_baseMap_proof
+    (source : BaseContext.PackedContext registry)
+    (following : base.Realization) (target : Tower.Model (Context.ofBase base) R)
+    (inclusion : BaseInclusion source base)
+    (produced : BaseInclusion.make? source base = some inclusion) :
+    (Context.ofBase source).model? following target =
+      some (BaseInclusion.Model.derive following inclusion target).source := by
+  cases source with
+  | pack original =>
+    change (Context.base original).model? following target = _
+    rw [Context.model?, Context.origin_base]
+    simp only [Origin.model?]
+    rw [produced]
+    rfl
+
+/-- A successful coefficient inclusion supplies exactly the source model
+used by the canonical owner factory at that base. -/
+theorem Context.model?_baseMap
+    (source : BaseContext.PackedContext registry)
+    (following : base.Realization) (target : Tower.Model (Context.ofBase base) R)
+    (inclusion : BaseInclusion source base)
+    (produced : BaseInclusion.make? source base = some inclusion) :
+    (Context.ofBase source).model? following target =
+      some (BaseInclusion.Model.derive following inclusion target).source :=
+  Context.model?_baseMap_proof source following target inclusion produced
+
+/-- A canonical base owner agrees with the supplied reference on every
+value transported by the actual successful native coefficient inclusion. -/
+theorem Context.model?_value
+    (source : BaseContext.PackedContext registry)
+    (following : base.Realization) (target : Tower.Model (Context.ofBase base) R)
+    (inclusion : BaseInclusion source base)
+    (produced : BaseInclusion.make? source base = some inclusion)
+    (original : Tower.Model (Context.ofBase source) R)
+    (ownerProduced : (Context.ofBase source).model? following target = some original)
+    (a : (Context.ofBase source).Value) :
+    target.value (inclusion.value a) = original.value a := by
+  have same := Context.model?_baseMap source following target inclusion produced
+  rw [ownerProduced] at same
+  have preserved := (BaseInclusion.Model.derive following inclusion target).value a
+  rw [BaseInclusion.Model.derive_target, ← Option.some.inj same] at preserved
+  exact preserved
+
 private theorem Model.extend_snoc {source : Context registry} (model : Model source R)
     (suffix : Suffix source)
     (descriptor : SignDet.Descriptor suffix.context.Value Signature
@@ -120,3 +163,11 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Context.model?_embed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Context.model?_embed
+
+/-- info: 'Hex.RealClosure.Tower.Context.model?_baseMap' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.model?_baseMap
+
+/-- info: 'Hex.RealClosure.Tower.Context.model?_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.model?_value

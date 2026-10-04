@@ -712,6 +712,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.BaseMapModel,
     `HexRealClosureMathlib.BaseFactory,
     `HexRealClosureMathlib.ContextModel,
+    `HexRealClosureMathlib.BaseFactoryTests,
     `HexRealClosureMathlib.TowerAlgebraic, `HexRealClosureMathlib.TowerRefinement,
     `HexRealClosureMathlib.TowerTransport, `HexRealClosureMathlib.TowerTransportTests,
     `HexRealClosureMathlib.TowerInclusion, `HexRealClosureMathlib.LiveContext,
