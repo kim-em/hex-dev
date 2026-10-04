@@ -57,7 +57,8 @@ result=dict(source_commit=meta['source_commit'],summary=summary,pairs=pairs,fail
             completed_observations=observations,classification=meta['classification'])
 (HERE/'analysis.json').write_text(json.dumps(result,indent=2)+'\n')
 with (HERE/'summary.csv').open('w') as f:
-    w=csv.DictWriter(f,fieldnames=list(summary[0]));w.writeheader();w.writerows(summary)
+    w=csv.DictWriter(f,fieldnames=list(summary[0]),lineterminator='\n');w.writeheader();w.writerows(summary)
+plt.rcParams['svg.hashsalt']='hex'
 fig,ax=plt.subplots(1,2,figsize=(12,4.8))
 fig.suptitle('Exact root count: Hex Sturm, Z3 RCF and FLINT qqbar',fontsize=16)
 for backend,label in [('Native','Hex Sturm'),('Z3','Z3 RCF'),('Flint','FLINT qqbar driver')]:
@@ -83,6 +84,8 @@ ax[1].set_ylabel('Paired external / Hex ratio (>1: Hex faster)')
 fig.text(.015,.015,f"Shared host {meta['host']}, leased CPU {meta['cpu']}; 4 adjacent AB/BA pairs per backend/rung. Exact result n on (−2,2).\nPrepared inputs; root/chain production, checks, JSON and cleanup timed. No driver root cache. All samples retained; no fitted model.\nSource {meta['source_commit'][:9]}; protocol-adjusted curves are framing controls, not isolated pure algorithm timings. Failed/censored observations: {len(failed)}.",fontsize=8)
 fig.tight_layout(rect=(0,.1,1,.95))
 for fmt in ['png','svg','pdf']:
-    p=HERE/f'comparison.{fmt}';fig.savefig(p,dpi=170)
+    p=HERE/f'comparison.{fmt}'
+    metadata={'Date':None} if fmt=='svg' else {'CreationDate':None} if fmt=='pdf' else None
+    fig.savefig(p,dpi=170,metadata=metadata)
     if fmt=='svg':p.write_text('\n'.join(line.rstrip() for line in p.read_text().splitlines())+'\n')
 print(json.dumps(summary,indent=2))

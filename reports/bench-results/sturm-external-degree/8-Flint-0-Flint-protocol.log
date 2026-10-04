@@ -1,0 +1,9 @@
+Hex.SturmExternalBench.runFlintProtocol    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=612b3e5-dirty, 2026-10-04T02:38:11Z, host=chungus2
+  repeat 0  7.711 µs  (×2^13, total 63.173 ms)
+  median: 7.711 µs    min: 7.711 µs    max: 7.711 µs
+  hash: all repeats agree
+  observed hash: 0xb86baf9ace1766b1
+  expected hash: matches
+  peak RSS: 66_604 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/8-Flint-0-Flint-protocol.json

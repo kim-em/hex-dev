@@ -26,3 +26,31 @@ records also go to persistent host storage.
 elapsed time and raw/protocol-adjusted ratios. Protocol adjustment is a
 framing control, not an isolated pure-algorithm time. No fitted exponent,
 complexity admission, absolute budget or phase advancement is claimed.
+
+
+[Results](summary.csv) retain 120 successful observations: 40 exact-hash-matched
+native/external pairs and 40 protocol controls, with no failures or censored
+points. [Metadata](metadata.json) records source `612b3e591`, leased CPU 69,
+source snapshots, pinned interpreter, commands, load context and the exact
+persistent executable. Source and executable checks remain unchanged.
+[Analysis](analysis.json) retains every arm and paired calculation.
+
+| Degree | Hex median ms (Z3 pairs) | Z3 RCF median ms | FLINT qqbar median ms | Z3 / Hex paired ratio | FLINT / Hex paired ratio |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 4 | 0.0351 | 0.0540 | 0.0853 | 1.543 | 2.437 |
+| 8 | 0.1027 | 0.1101 | 0.2015 | 1.085 | 1.984 |
+| 16 | 0.3382 | 0.3447 | 0.5507 | 1.020 | 1.629 |
+| 32 | 1.3006 | 1.8482 | 3.5449 | 1.423 | 2.701 |
+| 64 | 5.5980 | 14.8606 | 35.2700 | 2.654 | 6.335 |
+
+Native FLINT-pair medians are recorded separately in the CSV and used in
+FLINT ratios; ratios are medians of adjacent pairs, not ratios of the displayed
+aggregate medians. Transport is material on the small rungs: at degree 4 it
+is 13.0% of the Z3 median and 8.4% of FLINT's. Protocol-adjusted Z3/Hex ratios
+at degrees 4, 8, 16, 32 and 64 are 1.343, 1.019, 0.999, 1.417 and 2.653.
+Both raw and adjusted curves appear in the [plot](comparison.png), with
+[SVG](comparison.svg) and [PDF](comparison.pdf) versions. Time panels include
+all observations with observed min–max shading; ratio panels summarize pairs.
+These observations make this exact-count family plausibly competitive. They
+do not attest growing-query memory use, arbitrary polynomial shapes,
+extension depth or canonical real-algebraic arithmetic.
