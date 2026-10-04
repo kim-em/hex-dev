@@ -140,6 +140,20 @@ class LakefileAffectsRuntime(unittest.TestCase):
         self.assertTrue(guard.lakefile_texts_differ(
             before, BASE + f"\nlean_lib {lib} where\n  moreLinkArgs := #[\"-lm\"]\n"))
 
+    def test_native_carrier_edits_are_runtime_changes(self):
+        base = BASE + (
+            "\ntarget wideO pkg : FilePath := hexArithOTarget pkg \"wide_arith.c\"\n"
+            "\nlean_lib HexArithNative where\n"
+            "  roots := #[`HexArithNative]\n"
+            "  globs := #[.one `HexArithNative, .one `HexArith.UInt64.Wide]\n"
+            "  moreLinkObjs := #[wideO]\n"
+            "  moreLinkArgs := #[\"-lgmp\"]\n")
+        for mutated in (
+                base.replace("wide_arith.c", "wide_arith2.c"),
+                base.replace("  moreLinkObjs := #[wideO]\n", ""),
+                base.replace('#["-lgmp"]', '#["-lm"]')):
+            self.assertTrue(guard.lakefile_texts_differ(base, mutated))
+
     def test_editing_a_factorization_library_is_a_runtime_change(self):
         after = BASE.replace('lean_lib HexPoly where\n  srcDir := "."',
                              'lean_lib HexPoly where\n  srcDir := "src"')
