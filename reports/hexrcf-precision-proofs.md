@@ -95,3 +95,7 @@ Reproduce from the measured source with
 The wrapper leases a CPU and retains completed arms automatically. The
 sixty-four-bit proof is a default build-only example; the eight-bit control and
 audit are on-demand modules. None is an executable benchmark root.
+
+A [separate four-width comparison](hexrcf-precision-full-proofs.md) includes
+arm-specific constructor and transport proofs inside each timed module. It
+retains a different source and schedule; its observations are not pooled here.
