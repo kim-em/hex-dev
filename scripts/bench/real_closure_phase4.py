@@ -81,7 +81,7 @@ def main():
                            if line.startswith("model name")), "unknown"),
         "cpu": cpu, "affinity": sorted(os.sched_getaffinity(0)),
         "command": command, "operational_timeout_seconds": args.timeout,
-        "started_utc": utc(),
+        "started_utc": utc(), "status": "running", "child_affinity": [cpu],
     }
     path = metadata_path
     path.write_text(json.dumps(metadata, indent=2) + "\n")

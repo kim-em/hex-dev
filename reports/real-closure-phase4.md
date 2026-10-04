@@ -47,6 +47,16 @@ from source `91bcb67124367f70d24c607371eb017b80237560`, preserved by
 second isolation 0.160 seconds. All root-selection, equation and multiplicity
 checks passed.
 
+The `snapshot-native-7b63305` run executes a retained copy of the hashed
+binary, records Lean 4.35.0-rc3 and Lake 5.0.0-src, and completed all checks
+in 5.47 seconds. Its source is preserved by
+`issue-10378-phase4-snapshot-source`. The copied executable remains at
+`/home/kim/.codex/tasks/hex-10378/phase4-snapshot-native/hexrealclosure_phase4`;
+the committed archive retains its hash, build log, metadata and output.
+The flushed, build-bound and snapshot native runs execute the same binary
+`d5b10c63…`; their 5.47, 7.08 and 5.47-second observations record shared-host
+variation on byte-identical code, rather than a source-change effect.
+
 The canonical run completed first isolation in 40.26 seconds, returned
 three roots and passed the least-root interval check. It then reached the
 1800-second cap before the coefficient-construction stage completed;
@@ -63,9 +73,10 @@ These are retained functional observations from a shared host, including
 changed apparatus and censored execution. They are not a scientific timing
 comparison or a quantified speedup.
 
-In the build-bound native run, first isolation over `ℚ` accounts for about
-92% of the 7.08-second process time. The preliminary whole-process profile
-therefore mostly describes this base-field path. It provides little evidence
+The unprofiled native run of the profiled binary spends about 90% of its
+5.52-second process time in first isolation over `ℚ` (4.98 seconds). The
+build-bound native run spends about 92% there. The preliminary whole-process
+profile therefore mostly describes this base-field path. It provides little evidence
 about the algebraic tower stage, whose required separate attribution remains
 outstanding.
 
@@ -115,7 +126,12 @@ Retain a new compiled functional run with
 `python3 scripts/bench/real_closure_phase4.py native NEW_OUTPUT_DIRECTORY`
 (or `canonical`); the runner requires a clean checkout, retains a successful
 `lake build hexrealclosure_phase4` log, refuses to overwrite evidence and
-records CPU model, OS, kernel, source commit, binary hash and termination signal.
+copies the built executable into that directory, hashes and executes that
+snapshot, and records Lean and Lake versions, CPU model, OS, kernel, source
+commit, binary hash and termination signal. The output directory must be
+outside the checkout; copy the metadata, logs and output into the report
+archive afterwards. Lake validates its cached input hashes, including artifacts
+restored from other worktrees; the retained build is not a fresh compilation.
 Z3 4.15.4 checks the printed first `tower8` polynomial under `0 < ε < 1`.
 The paper prints a constant term `4 − 2ε² + 4`, giving
 
