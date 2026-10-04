@@ -1956,12 +1956,17 @@ selected roots retain their interpreted lists in one common model.
 `Collection.enlarge?_models` retains the new parameter identity and the
 checked predecessor model; `Enlargement.semantics` preserves the ordered
 frame lists across that enlargement in the lifted old model.
-`Collection.root_agreement` identifies the actual child value in a collected
-root request with the root selected by its actual refreshed predecessor
+`Collection.root_agreement` identifies the actual child value of a root pair
+inside `pre ++ rootRequest root ++ post` with the root selected by its refreshed predecessor
 descriptor. Both interpretations come from the collection's canonical factory;
 no root-agreement premise is supplied. It also applies to the collection
 returned by enlargement. `Enlargement.model` retrieves that new canonical
 model through the public collection interface for the next enlargement.
+`model_parameter` identifies its new parameter and `model_previous` retains
+the checked old-target inclusion aligned with that same returned model.
+`Enlargement.preserve` states complete frame-list preservation using those
+public accessors; `Enlargement.root_agreement` applies it to a selected root
+inside a composite request after enlargement.
 `Collection.frame` provides total access by an original request index, with
 `frame_eq` identifying it with the returned frame list. Public projection
 equations identify the enlargement's collection frames, previous map and

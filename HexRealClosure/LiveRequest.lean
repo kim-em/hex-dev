@@ -239,6 +239,24 @@ validated ancestry before converting either operand. -/
     let later ← Request.transport? rest remaining
     return converted :: later
 
+/-- Split successful transport into the actual first frame and remaining list. -/
+theorem Request.transport?_cons {target owner : Context registry}
+    (frame : Frame owner) (rest : Request registry) (inclusion : Inclusion owner target)
+    (remaining : Inclusions target rest.owners) (frames : List (Frame target))
+    (produced : Request.transport? (⟨owner, frame⟩ :: rest) (.cons inclusion remaining) = some frames) :
+    ∃ first tail, frame.transport? inclusion = some first ∧
+      Request.transport? rest remaining = some tail ∧ frames = first :: tail := by
+  change (frame.transport? inclusion >>= fun first =>
+    rest.transport? remaining >>= fun tail => some (first :: tail)) = some frames at produced
+  cases first : frame.transport? inclusion with
+  | none => simp [Request.transport?, first] at produced
+  | some converted =>
+    cases later : Request.transport? rest remaining with
+    | none => simp [Request.transport?, first, later] at produced
+    | some tail =>
+      exact ⟨converted, tail, rfl, rfl, by
+        simpa [Request.transport?, first, later] using produced.symm⟩
+
 /-- Transport retains exactly one output frame for every original request. -/
 theorem Request.transport?_length {target : Context registry} (request : Request registry)
     (maps : Inclusions target request.owners) (frames : List (Frame target))
@@ -517,6 +535,30 @@ theorem Enlargement.parameter_eq {base : BaseContext.PackedContext registry}
     (result : Enlargement original) : HEq result.parameter result.shared.parameter := by
   unfold Enlargement.parameter Enlargement.collection
   exact HEq.rfl
+
+/-- Move a dependent statement about the checked packet to the public
+collection, frame, predecessor and parameter accessors in one step. -/
+theorem Enlargement.project {base : BaseContext.PackedContext registry}
+    {request : Request registry} {original : Collection base request}
+    (result : Enlargement original)
+    (property : (shared : Shared base.infinitesimal request.owners) →
+      List (Frame shared.input.context) →
+      Inclusion original.shared.input.context shared.input.context →
+      shared.input.context.Value → Prop)
+    (proved : property result.shared.shared result.frames result.shared.previous result.shared.parameter) :
+    property result.collection.shared result.collection.frames result.previous result.parameter := by
+  unfold Enlargement.collection Enlargement.previous Enlargement.parameter
+  exact proved
+
+/-- One-hop transport is stated entirely through the public collection and
+predecessor accessors, so the next enlargement consumes the same frames. -/
+theorem Enlargement.transport {base : BaseContext.PackedContext registry}
+    {request : Request registry} {original : Collection base request}
+    (result : Enlargement original) (zero : result.previous.value 0 = 0) :
+    original.frames.mapM (fun frame => frame.transport? result.previous) =
+      some result.collection.frames := by
+  unfold Enlargement.collection Enlargement.previous at *
+  exact result.frames_oneHop zero
 
 /-- Total indexed access agrees with the actual produced frame list. -/
 theorem Collection.frame_eq {base : BaseContext.PackedContext registry} {request : Request registry}

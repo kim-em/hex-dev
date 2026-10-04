@@ -24,6 +24,10 @@ private def check {base : BaseContext.PackedContext registry} {request : Request
   let target := collection.shared.input.context
   require (target.signature.roots.length == 2) "live request duplicated root ancestry"
   require (collection.frames.length == 5) "live request changed frame order or count"
+  require (collection.frames.map (fun frame => frame.values.length) == [0, 1, 0, 1, 1] &&
+    collection.frames.map (fun frame => frame.polynomials.length) == [0, 0, 0, 0, 1] &&
+    collection.frames.map (fun frame => frame.descriptors.length) == [1, 0, 1, 0, 0])
+    "live request changed an operand or descriptor list length"
   let some betaFrame := collection.frames[1]? | throw (IO.userError "missing beta frame")
   let some beta := betaFrame.values[0]? | throw (IO.userError "missing beta")
   let some alphaFrame := collection.frames[3]? | throw (IO.userError "missing alpha frame")
@@ -65,6 +69,9 @@ def run : IO Unit := do
   let some empty := Request.gather? (.pack rational) []
     | throw (IO.userError "empty live request failed")
   require (empty.frames.isEmpty) "empty request gained frames"
+  let some emptyNext := empty.enlarge?
+    | throw (IO.userError "empty live request enlargement failed")
+  require (emptyNext.collection.frames.isEmpty) "enlargement gave an empty request frames"
   let pointRequest := rootRequest (Root.point (parent := base) (1+1))
   let some point := Request.gather? (.pack rational) pointRequest
     | throw (IO.userError "point live request failed")
@@ -72,6 +79,14 @@ def run : IO Unit := do
   let some pointValue := pointFrame.values[0]? | throw (IO.userError "point value missing")
   require (point.shared.input.context.equal pointValue (1+1) && pointFrame.descriptors.isEmpty)
     "point request did not retain its value without root evidence"
+  let some pointNext := point.enlarge?
+    | throw (IO.userError "point live request enlargement failed")
+  let some nextPointFrame := pointNext.collection.frames[0]?
+    | throw (IO.userError "enlarged point frame missing")
+  let some nextPoint := nextPointFrame.values[0]?
+    | throw (IO.userError "enlarged point value missing")
+  require (pointNext.collection.shared.input.context.equal nextPoint (1+1) &&
+    nextPointFrame.descriptors.isEmpty) "point enlargement changed its value or added evidence"
   let incompatible := Context.base rational.infinitesimal
   let bad : Request registry := [⟨incompatible, { values := [1] }⟩]
   require ((Request.gather? (.pack rational) bad).isNone)
@@ -99,6 +114,10 @@ def run : IO Unit := do
   let some collection := request.gather? (.pack rational.infinitesimal)
     | throw (IO.userError "dependency-closed live gathering failed")
   check collection
+  let first := collection.frame ⟨0, by
+    simp [request, rootRequest, betaRoot, alphaRoot, Root.ofSelection]⟩
+  require (first.descriptors.length == 1 && first.values.isEmpty)
+    "total indexed frame accessor did not retain the root dependency frame"
   let some enlarged := collection.enlarge?
     | throw (IO.userError "live enlargement failed")
   require (decide (enlarged.previous.value 0 = 0))
