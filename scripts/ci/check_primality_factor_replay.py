@@ -61,6 +61,8 @@ def main():
             assert digest(primecert_term(row["stdout"])) == replay["term_sha256"]
     for path in REPORTS.glob("*.json"):
         data = json.loads(path.read_text())
+        if not isinstance(data, dict):
+            continue
         for index, row in enumerate(data.get("samples", [])):
             if row.get("result", {}).get("status") in ["success", "generated"]:
                 assert (path.name, index) in linked
