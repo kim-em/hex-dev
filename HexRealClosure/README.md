@@ -1597,8 +1597,9 @@ cached original models are constructed through `Context.model?`; cache hits
 therefore agree with the incoming original predecessor without a separate
 coefficient-agreement hypothesis. `Shared.Model.ofGather` packages the model
 for an already returned native result. Callers supply the declared base's
-provider realization and a model in an ordered real closed field, plus the
-same prefix/depth compatibility condition checked by the executable.
+provider realization, a model in an ordered real closed field, and the
+actual successful gathering result. The producer's success derives the
+prefix/depth compatibility condition for every owner.
 `Shared.Model.value`, `polynomial`, `sign`, and `compare` preserve the original
 owners' values, coefficients, and native order results. `value_of_model` also
 identifies the transported value with a separately retrieved canonical owner model.

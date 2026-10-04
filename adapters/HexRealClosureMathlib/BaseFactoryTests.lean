@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.ContextModel
+public import HexRealClosureMathlib.CacheGather
 public import HexOrderedFnMathlib.LiouvilleTests
 
 public section
@@ -141,5 +142,33 @@ example :
       RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys]
   rw [keys]
   exact ⟨List.nil_prefix, by decide⟩
+
+/-- An accepted mixed-depth gathering needs no repeated compatibility proof.
+The canonical factory identifies duplicated cached owners in one target. -/
+example {R : Type} [Field R] [LinearOrder R] [DecidableEq R]
+    [IsStrictOrderedRing R] [IsRealClosed R]
+    (reference : Tower.Model (Tower.Context.ofBase (providerModel.context.finish.extend 2)) R)
+    (descriptor : SignDet.Descriptor
+      (Tower.Context.ofBase (rationalModel.context.finish.extend 1)).Value Tower.Signature
+      (Tower.Context.ofBase (rationalModel.context.finish.extend 1)).sign
+      (Tower.Context.ofBase (rationalModel.context.finish.extend 1)).signature)
+    (shared : Tower.Shared (providerModel.context.finish.extend 2)
+      [(Tower.Context.ofBase (rationalModel.context.finish.extend 1)).adjoin descriptor |>.context,
+       Tower.Context.ofBase (rationalModel.context.finish.extend 1),
+       (Tower.Context.ofBase (rationalModel.context.finish.extend 1)).adjoin descriptor |>.context])
+    (produced : Tower.Shared.gather? (providerModel.context.finish.extend 2)
+      [(Tower.Context.ofBase (rationalModel.context.finish.extend 1)).adjoin descriptor |>.context,
+       Tower.Context.ofBase (rationalModel.context.finish.extend 1),
+       (Tower.Context.ofBase (rationalModel.context.finish.extend 1)).adjoin descriptor |>.context] =
+      some shared) :
+    ∃ model : Tower.Shared.Model shared (providerModel.staged 2) reference,
+      ∀ a : ((Tower.Context.ofBase (rationalModel.context.finish.extend 1)).adjoin
+          descriptor).context.Value,
+        model.target.value (shared.value 0 a) = model.target.value (shared.value 2 a) := by
+  let model := Tower.Shared.Model.ofGather (providerModel.staged 2) reference _ shared produced
+  have duplicate := Option.some.inj ((model.canonicalOwners 0).symm.trans (model.canonicalOwners 2))
+  refine ⟨model, fun a => ?_⟩
+  exact (model.value 0 a).trans ((congrArg (fun original => original.value a) duplicate).trans
+    (model.value 2 a).symm)
 
 end Hex.RealClosure.BaseContext.FactoryTests
