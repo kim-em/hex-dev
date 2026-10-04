@@ -20,6 +20,10 @@ These are correctness checks; they do not measure executable performance. -/
 #guard_msgs in
 #print axioms Hex.RealAlgebraicNumber.compare_eq
 
+/-- info: 'Hex.RealAlgebraicNumber.ofRoot?_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealAlgebraicNumber.ofRoot?_eq
+
 /-- info: 'Hex.RealAlgebraicPoly.contains_roots_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealAlgebraicPoly.contains_roots_iff

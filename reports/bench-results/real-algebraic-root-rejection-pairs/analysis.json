@@ -1,0 +1,101 @@
+{
+  "summary": [
+    {
+      "family": "Rational",
+      "degree": 8,
+      "complete_pairs": 4,
+      "before_ms": 1063.962871,
+      "after_ms": 307.1153515,
+      "median_adjacent_ratio": 3.412248193205624,
+      "min_adjacent_ratio": 2.987162204126969,
+      "max_adjacent_ratio": 3.9064673561432897
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "complete_pairs": 4,
+      "before_ms": 661.91134,
+      "after_ms": 294.4032315,
+      "median_adjacent_ratio": 2.2483025206234935,
+      "min_adjacent_ratio": 1.5634489260512967,
+      "max_adjacent_ratio": 2.9941093078971934
+    }
+  ],
+  "pairs": [
+    {
+      "family": "Rational",
+      "degree": 8,
+      "block": 0,
+      "before_nanos": 985274475.0,
+      "after_nanos": 308083486.0,
+      "ratio": 3.1980762350890823,
+      "hash": "0x1e7c893af40a771c"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "block": 1,
+      "before_nanos": 1139449943.0,
+      "after_nanos": 381448969.0,
+      "ratio": 2.987162204126969,
+      "hash": "0x1e7c893af40a771c"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "block": 2,
+      "before_nanos": 1110218437.0,
+      "after_nanos": 306147217.0,
+      "ratio": 3.626420151322166,
+      "hash": "0x1e7c893af40a771c"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "block": 3,
+      "before_nanos": 1017707305.0,
+      "after_nanos": 260518574.0,
+      "ratio": 3.9064673561432897,
+      "hash": "0x1e7c893af40a771c"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "block": 0,
+      "before_nanos": 526424640.0,
+      "after_nanos": 336707283.0,
+      "ratio": 1.5634489260512967,
+      "hash": "0x1e7c893af40a771c"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "block": 1,
+      "before_nanos": 665318834.0,
+      "after_nanos": 294887130.0,
+      "ratio": 2.256181319272903,
+      "hash": "0x1e7c893af40a771c"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "block": 2,
+      "before_nanos": 799922354.0,
+      "after_nanos": 267165381.0,
+      "ratio": 2.9941093078971934,
+      "hash": "0x1e7c893af40a771c"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "block": 3,
+      "before_nanos": 658503846.0,
+      "after_nanos": 293919333.0,
+      "ratio": 2.2404237219740835,
+      "hash": "0x1e7c893af40a771c"
+    }
+  ],
+  "collected_arms": 16,
+  "expected_arms": 16,
+  "failed_or_censored": []
+}

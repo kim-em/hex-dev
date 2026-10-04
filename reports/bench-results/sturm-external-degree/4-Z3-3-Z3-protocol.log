@@ -1,0 +1,9 @@
+Hex.SturmExternalBench.runZ3Protocol4    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=612b3e5-dirty, 2026-10-04T02:39:30Z, host=chungus2
+  repeat 0  6.992 µs  (×2^13, total 57.283 ms)
+  median: 6.992 µs    min: 6.992 µs    max: 6.992 µs
+  hash: all repeats agree
+  observed hash: 0xed90ec35aca6b359
+  expected hash: matches
+  peak RSS: 68_260 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-degree/4-Z3-3-Z3-protocol.json
