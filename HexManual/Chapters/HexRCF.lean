@@ -641,6 +641,23 @@ transport are prebuilt, so their initial elaboration is excluded. This does not
 measure the total cost of changing precision or general field reconstruction,
 and does not justify a default precision change.
 
+The [four-width study with constructor and transport included](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-precision-production-proofs.md)
+checks eight, sixteen, thirty-two and sixty-four initial bits through the
+actual tactic proof-acceptance routine. All 36 fresh-module arms retain their
+output and standard-axiom audit. The variable paired observations justify no
+default change. Each timed module proves its own generator validity and
+selected-root equivalence; common imported laws and the original target are
+prebuilt. This fixed-field experiment does not implement arbitrary field
+reconstruction or nested transport.
+
+The [source repeated/shared-root comparison](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-common-root-proofs.md)
+uses actual `rcf` goals with a squared zero polynomial and an additional
+polynomial sharing existing roots. All three checked carriers have four root
+sections and five sectors. Sixteen retained arms include source preparation,
+quotation and kernel acceptance; paired medians increase by 0.890 and 1.266
+seconds for these changed inputs. Several input dimensions change together,
+so this is not a one-parameter complexity model or a general scaling claim.
+
 For these reconstructed inputs, closed arithmetic is compiled into the common
 field after authenticating its source values. A quotient is recorded as a
 rational coordinate polynomial and checked by its multiplication identity;
