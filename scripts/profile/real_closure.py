@@ -93,7 +93,7 @@ def main():
         record["profiler_commit"] = run(["git", "-C", args.profiler_root, "rev-parse", "HEAD"]).strip()
         if run(["git", "-C", args.profiler_root, "status", "--porcelain"]).strip():
             raise RuntimeError("profile filter source is dirty")
-        package_pin = next(p["rev"] for p in json.loads((ROOT / "lake-manifest.json").read_text())["packages"] if p["name"] == "lean-bench")
+        package_pin = next(p["rev"] for p in json.loads((ROOT / "lake-manifest.json").read_text())["packages"] if p["name"].strip("«»") == "lean-bench")
         if args.postprocess:
             capture = json.loads(args.postprocess.read_text())
             if capture["stage"] != args.stage or Path(capture["raw"]).resolve() != args.raw:
@@ -148,7 +148,7 @@ def main():
             record["measurement"] = validate_measurement(rows, record["commit"])
             capture_commit = record["commit"]
         pinned = json.loads(run(["git", "show", f"{capture_commit}:lake-manifest.json"]))
-        record["compiled_lean_bench_commit"] = next(p["rev"] for p in pinned["packages"] if p["name"] == "lean-bench")
+        record["compiled_lean_bench_commit"] = next(p["rev"] for p in pinned["packages"] if p["name"].strip("«»") == "lean-bench")
         run(["samply", "import", "--save-only", "--no-open", "--unstable-presymbolicate",
              "-o", work / "samply.json.gz", args.raw / "perf.data"])
         samples = run(["perf", "script", "--ns", "-F", "pid,tid,time,event",
