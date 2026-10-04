@@ -31,6 +31,7 @@ def main():
     parser.add_argument("output", type=Path)
     parser.add_argument("--timeout", type=float, default=1800)
     args = parser.parse_args()
+    args.output = args.output.resolve()
     if args.timeout <= 0:
         parser.error("timeout must be positive")
     if REPO in args.output.resolve().parents:
