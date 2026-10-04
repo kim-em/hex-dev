@@ -695,6 +695,13 @@ private meta def gather (source : Expr) (leaves : Array Expr) :
 
 private meta def sourcePlans (source : Reify.Source) :
     MetaM (Option (Array Expr × Array SourcePlan)) := do
+  for expression in #[source.proof, source.sentenceProof] ++
+      source.coefficients ++ source.divisors do
+    let expression ← instantiateMVars expression
+    if expression.hasMVar then throwError "rcf: source authentication contains unresolved metavariables"
+    Hex.RCF.checkAxioms `Hex.RCF.RealCoefficients.CommonTactic.sourcePlans expression
+    if (← getEnv).hasUnsafe expression then
+      throwError "rcf: source authentication uses an unsafe declaration"
   let mut leaves := #[]
   for scalar in source.coefficients ++ source.divisors do
     let some next ← gather scalar leaves | return none

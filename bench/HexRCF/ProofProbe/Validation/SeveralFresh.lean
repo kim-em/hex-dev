@@ -14,12 +14,18 @@ set_option maxRecDepth 8192
 set_option maxHeartbeats 1600000
 set_option rcf.algebraic.validateFresh false
 
-theorem positive : ∀ x : ℝ, x ^ 2 + 3 * Real.sqrt 2 > 0 ∧
-    Real.sqrt 2 > 0 ∧ 2 * Real.sqrt 2 > 0 ∧ 3 * Real.sqrt 2 > 0 := by rcf
+theorem positive : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 + Real.sqrt 3 > 0 ∧
+    Real.sqrt 2 > 0 ∧ Real.sqrt 3 > 0 := by rcf
 
 /-- info: 'Hex.RCF.ProofProbe.Validation.SeveralFresh.positive' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms positive
 
 #print axioms positive
+run_meta do
+  unless ← Hex.RCF.ProofEvidence.contains
+      `Hex.RCF.ProofProbe.Validation.SeveralFresh.positive
+      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.CommonPresentation.checkPolynomials_sound) do
+    throwError "validation probe did not use the common-field frontend"
+
 end Hex.RCF.ProofProbe.Validation.SeveralFresh

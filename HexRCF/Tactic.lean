@@ -89,19 +89,20 @@ meta def checkAxioms (name : Name) (proof : Expr) : MetaM Unit := do
 /-- Accept only a closed ordinary proof of the exact target. Agreement cannot
 assign caller metavariables; a fresh uncached theorem checks the candidate
 against its target in the kernel and exposes all transitive dependencies. -/
-meta def checkProof (name : Name) (target proof : Expr) : MetaM Expr := withNewMCtxDepth do
+meta def checkProof (name : Name) (target proof : Expr)
+    (category : String := "rcf proof") : MetaM Expr := withNewMCtxDepth do
   let proof ← instantiateMVars proof
   if proof.hasMVar then
     throwError "rcf: handler {name} returned an unresolved proof"
   let proof := ShareCommon.shareCommon' proof
-  let agrees ← profileitM Exception "rcf handler goal agreement" (← getOptions) do
+  let agrees ← profileitM Exception (category ++ " goal agreement") (← getOptions) do
     withNewMCtxDepth <| isDefEq (← inferType proof) target
   unless agrees do
     throwError "rcf: handler {name} proposed a proof of a different goal"
   checkAxioms name proof
   if (← getEnv).hasUnsafe proof then
     throwError "rcf: handler {name} proposed a proof using an unsafe declaration"
-  let proof ← profileitM Exception "rcf handler candidate check" (← getOptions) do
+  let proof ← profileitM Exception (category ++ " candidate check") (← getOptions) do
     withOptions (fun opts => debug.skipKernelTC.set (Elab.async.set opts false) false) do
       mkAuxTheorem target proof (zetaDelta := true) (cache := false)
   let .thmInfo _ ← withoutExporting <| getConstInfo proof.getAppFn.constName!
@@ -136,7 +137,7 @@ private meta def dispatchHandlers (target : Expr)
     match result with
     | .declined => pure ()
     | .failed message => throwError message
-    | .proved proof => return ← checkProof name target proof
+    | .proved proof => return ← checkProof name target proof "rcf handler"
   throwError reason.message
 
 /-- Whether a cell participates in the sentence's quantifier fold. -/
