@@ -152,7 +152,8 @@ def lakefile_texts_differ(before: str, after: str) -> bool:
     return any(new_blocks[name] != body for name, body in old_blocks.items())
 
 
-def build_only_lakefile_edit(difference: freshness.Difference) -> bool:
+def build_only_lakefile_edit(difference: freshness.Difference,
+                            family: freshness.Family | None = None) -> bool:
     """An unchanged factor build, possibly following an exact reviewed edit.
 
     A reviewed baseline-to-endpoint exemption may be followed by unrelated
@@ -169,10 +170,14 @@ def build_only_lakefile_edit(difference: freshness.Difference) -> bool:
     after = freshness.git("cat-file", "blob", difference.current)
     if not lakefile_texts_differ(before, after):
         return True
-    exemptions = freshness.load_exemptions(
-        ROOT / "scripts" / "bench" / "proof_only_runtime_exemptions")
+    family = freshness.factor_family("hex-factor") if family is None else family
+    if not family.permits_exemption(LAKEFILE):
+        return False
+    exemptions = freshness.load_exemptions(family.exemptions)
     for path, baseline, endpoint in sorted(exemptions, key=repr):
         if path != LAKEFILE or baseline != difference.baseline or endpoint is None:
+            continue
+        if not isinstance(endpoint, str) or not re.fullmatch(r"[0-9a-f]{40}(?:[0-9a-f]{24})?", endpoint):
             continue
         try:
             approved = freshness.git("cat-file", "blob", endpoint)
@@ -299,7 +304,7 @@ def main() -> int:
                 f"--ref <commit>")
             continue
         verdict = freshness.assess(
-            family, [recorded], allow=build_only_lakefile_edit)
+            family, [recorded], allow=lambda difference: build_only_lakefile_edit(difference, family))
         errors.extend(f"{system}: {error}" for error in verdict.errors)
 
     # Newest-per-system plots may combine records made at different times.

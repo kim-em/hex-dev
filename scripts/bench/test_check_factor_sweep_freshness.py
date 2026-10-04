@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import unittest
 from unittest import mock
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -194,10 +195,11 @@ class LakefileTransitions(unittest.TestCase):
     APPROVED = BASE.replace('hexArithOTarget := "cc"', 'hexArithOTarget := "clang"')
 
     def checked_transition(self, after, *, exemption=None, missing=False,
-                           before_mode="100644", after_mode="100644"):
+                           before_mode="100644", after_mode="100644", family=None):
+        exemption = exemption or ("lakefile.lean", self.BASELINE, self.ENDPOINT)
         blobs = {self.BASELINE: BASE, self.CURRENT: after}
         if not missing:
-            blobs[self.ENDPOINT] = self.APPROVED
+            blobs[exemption[2]] = self.APPROVED
 
         def read_blob(*args):
             self.assertEqual(args[:2], ("cat-file", "blob"))
@@ -205,11 +207,11 @@ class LakefileTransitions(unittest.TestCase):
                 raise SystemExit("missing blob")
             return blobs[args[2]]
 
-        exemptions = {exemption or ("lakefile.lean", self.BASELINE, self.ENDPOINT)}
+        exemptions = {exemption}
         with patch.object(freshness, "git", side_effect=read_blob), \
                 patch.object(freshness, "load_exemptions", return_value=exemptions):
             return guard.build_only_lakefile_edit(freshness.Difference(
-                "lakefile.lean", self.BASELINE, self.CURRENT, before_mode, after_mode))
+                "lakefile.lean", self.BASELINE, self.CURRENT, before_mode, after_mode), family)
 
     def test_reviewed_transition_survives_unrelated_proof_targets(self):
         after = self.APPROVED + '\nlean_lib HexProof where\n  srcDir := "adapters"\n'
@@ -235,10 +237,38 @@ class LakefileTransitions(unittest.TestCase):
     def test_reviewed_transition_requires_available_endpoint(self):
         self.assertFalse(self.checked_transition(self.APPROVED, missing=True))
 
+    def test_endpoint_must_be_a_full_object_id_not_a_revision_expression(self):
+        for endpoint in ("HEAD:lakefile.lean", ":lakefile.lean", self.ENDPOINT[:12], "--help"):
+            with self.subTest(endpoint=endpoint):
+                self.assertFalse(self.checked_transition(self.APPROVED,
+                    exemption=("lakefile.lean", self.BASELINE, endpoint)))
+
+    def test_reviewed_transition_respects_family_exemption_restrictions(self):
+        self.assertFalse(self.checked_transition(self.APPROVED,
+            family=freshness.factor_family("flint")))
+
+    def test_assessment_still_rejects_another_changed_source_path(self):
+        family = freshness.factor_family("hex-factor")
+        before = f"100644 {self.BASELINE} 0\tlakefile.lean\n100644 {'d'*40} 0\tHexPoly/A.lean\n"
+        after = f"100644 {self.CURRENT} 0\tlakefile.lean\n100644 {'e'*40} 0\tHexPoly/A.lean\n"
+        blobs = {self.BASELINE: BASE, self.ENDPOINT: self.APPROVED, self.CURRENT: self.APPROVED}
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(freshness, "RESULTS", Path(temporary)), \
+                patch.object(freshness, "git", side_effect=lambda *args: blobs[args[2]]), \
+                patch.object(freshness, "load_exemptions", return_value={
+                    ("lakefile.lean", self.BASELINE, self.ENDPOINT)}):
+            digest = freshness.record(family, before)
+            verdict = freshness.assess(family, [freshness.Observation(digest, "sample")],
+                listing=after, allow=lambda diff: guard.build_only_lakefile_edit(diff, family))
+            self.assertEqual([diff.path for diff in verdict.exempted], ["lakefile.lean"])
+            self.assertEqual(len(verdict.errors), 1)
+            self.assertIn("HexPoly/A.lean", verdict.errors[0])
+
     def test_file_mode_changes_are_not_build_only_edits(self):
         for after in (BASE, self.APPROVED):
             with self.subTest(after=after):
                 self.assertFalse(self.checked_transition(after, after_mode="120000"))
+                self.assertFalse(self.checked_transition(after, before_mode="120000"))
 
     def test_an_added_or_removed_lakefile_is_a_runtime_change(self):
         self.assertFalse(guard.build_only_lakefile_edit(

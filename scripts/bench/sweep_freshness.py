@@ -27,7 +27,9 @@ newest manifest path by path, and accepts the difference only when every
 differing path is covered by a blob-transition exemption. Exemptions name
 both the baseline and the current blob, so they expire automatically when
 the file changes again, and they live one-per-file so that concurrent
-pull requests never collide on a shared list.
+pull requests never collide on a shared list. A family may also use a
+checked rule; the factorization Lake rule can follow an exact exemption
+with a transition that preserves its approved measured build declarations.
 
 The pay-off is that a broad relevant set (the Hex factor service spans
 HexBasic through HexPolyZ, and re-measuring needs a manual shared-host
@@ -316,6 +318,10 @@ def load_exemptions(directory: Path | None) -> set[tuple[str, str, str]]:
     exempting a path or trusting a commit-message marker. A null blob id
     is the absent side of an addition or a deletion, so removing a file
     that declared no executable definition is exemptible too.
+
+    The factorization lakefile rule can separately compose this exact claim
+    with a checked transition from its endpoint: the measured build
+    declarations must remain unchanged and the original baseline must match.
 
     One file per exemption. A single shared list cannot be merged:
     entries are appended by whichever branches happen to be open, so
