@@ -55,7 +55,7 @@ namespace Environment
 private meta def closed (expression : Expr) : MetaM Expr := do
   let expression ← instantiateMVars expression
   if expression.hasMVar then throwError "rcf: prepared environment contains unresolved metavariables"
-  return expression
+  Hex.RCF.checkExpr `Hex.RCF.RealCoefficients.Coefficients.Environment.input expression
 
 /-- Instantiate all expression data before discarding temporary frontend state.
 Unresolved data cannot be assigned while accepting an externally supplied proof. -/

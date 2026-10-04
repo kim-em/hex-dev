@@ -28,10 +28,12 @@ def pair(case: str) -> ProbePair:
          "reference_mode": "repeat full prepared environment validation",
          "candidate_mode": "private factory assembly and dispatcher checking",
          "same_formula": True, "same_imports_solver_and_replay": True,
-         "required_route": "CommonPresentation.checkPolynomials_sound in quoted proof"})
+         "required_route": "CommonPresentation.checkPolynomials_sound in quoted proof",
+         "required_arm": "source transport wrapper versus direct Iff application",
+         "matched_async_and_kernel_options": True})
 
 SPEC = SweepSpec(description=__doc__, pairs=tuple(pair(x) for x in ("Scalar", "Several")),
-    probe_target="HexRCFProofProfile", schema="hex-rcf-validation-proofs-v2",
+    probe_target="HexRCFProofProfile", schema="hex-rcf-validation-proofs-v3",
     measurement="adjacent-fresh-input-validation-olean-wall-v1",
     output_stem="hex-rcf-validation-proofs", required_samples=4,
     retain_compiler_output=True)
