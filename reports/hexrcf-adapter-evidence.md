@@ -96,7 +96,13 @@ The planned extension remains incomplete in these specific respects:
   do not establish
   one ordinary real point satisfying a nested tower sample’s complete finite
   set of conditions. Their availability is not a reason to wait for whole-issue
-  closure or unrelated measurements.
+  closure or unrelated measurements. The merged finite-reader
+  [sign-evidence interfaces](../adapters/HexRealClosureMathlib/SignEvidence.lean)
+  supply `signFacts_coversKeys` and `decodeEvidence_nested`: checked child facts
+  cover the upper packet's stored literal support and compose with its actual
+  byte decoder under lexical prechecks. Graph checking still uses ordinary
+  coefficient arithmetic. These laws do not reconstruct general tower contexts,
+  collect every intermediate packing dependency or realize a joint real sample.
 - Algebraic frontend completeness and total acceptance of every supported source
   are not proved by the exact-field total producer. It starts with an already
   authenticated fixed-field environment; frontend irreducibility quotation
