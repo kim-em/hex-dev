@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Rule
+module
+
+public import HexIntervalMathlib.Rule
+
+public section
 
 /-!
 # Built-in arithmetic rule conformance

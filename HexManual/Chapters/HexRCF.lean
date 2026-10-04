@@ -4,30 +4,65 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexRCF
-import HexRCF.RealCoefficients
-import Mathlib.Analysis.Real.Pi.Bounds
-import Mathlib.Analysis.Complex.ExponentialBounds
-import HexRealClosure
-import HexSignDet
-import HexSignDetMathlib.SelectedProducer
-import HexSignDetMathlib.CompletionProducer
-import HexSignDetMathlib.TableProducer
-import HexSignDetMathlib.ReencodingProducer
-import HexSignDetMathlib.ReencodingRefinement
-import HexSignDetMathlib.ThomReencoding
-import HexSignDetMathlib.ThomRoots
-import HexRationalFn
-import HexOrderedFn.Infinitesimal
-import HexSignDetMathlib.ComparisonProducer
-import HexSignDetMathlib.Convert
-import HexRealAlgebraicMathlib.FieldSign
+public import VersoManual
+public import HexRCF
+public import HexRCF.RealCoefficients
+public import Mathlib.Analysis.Real.Pi.Bounds
+public import Mathlib.Analysis.Complex.ExponentialBounds
+public import HexRealClosure
+public import HexSignDet
+public import HexSignDetMathlib.SelectedProducer
+public import HexSignDetMathlib.CompletionProducer
+public import HexSignDetMathlib.TableProducer
+public import HexSignDetMathlib.ReencodingProducer
+public import HexSignDetMathlib.ReencodingRefinement
+public import HexSignDetMathlib.ThomReencoding
+public import HexSignDetMathlib.ThomRoots
+public import HexRationalFn
+public import HexOrderedFn.Infinitesimal
+public import HexSignDetMathlib.ComparisonProducer
+public import HexSignDetMathlib.Convert
+public import HexRealAlgebraicMathlib.FieldSign
+public import HexSignDetMathlib.QueryHandle
+public import HexSignDetMathlib.RootList
+import all HexRCF.Certificate
+import all HexRCF.DecisionCheck
+import all HexRCF.Language
+import all HexRCF.Syntax
+import all HexBerlekampZassenhaus.Factorization
+meta import all HexBerlekampZassenhaus.Factorization
+import all Std.Data.DTreeMap.Internal.Operations
+import all Std.Data.DTreeMap.Internal.Queries
+import all Std.Data.DTreeMap.Internal.Balancing
+import all Init.WF
+import all Init.Data.Nat.Basic
+import all HexArith.Montgomery.Context
+import all HexBerlekampZassenhaus.Classical.Obstruction
+import all HexBerlekampZassenhaus.Modular.PrimePlan
+import all HexGramSchmidt.Int.Core
+import all HexHensel.QuadraticMultifactor
+import all HexMatrix.Basic
+import all HexModArith.WordMod
+import all HexPolyFp.Field
+import all HexPolyZ.IntegerPolynomial
+import all HexRowReduce.Pivot
+import all Init.Data.Array.Basic
+import all Init.Data.Int.Repr
+import all Init.Data.Nat.Bitwise.Basic
+import all Init.Data.Nat.Gcd
+import all Init.Data.Range.Basic
+import all HexBerlekamp.DegreePattern
+import all HexBerlekamp.Factor
+import all HexHensel.Quadratic
+import all HexPoly.Euclid.DivGcd
+import all Init.Data.Repr
+import all HexBerlekamp.BerlekampMatrix
+import all HexHensel.WordTransport
+import all HexRowReduce.Nullspace
 
-import HexSignDetMathlib.QueryHandle
-
-import HexSignDetMathlib.RootList
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -315,7 +350,7 @@ procedure used by the tactic:
 ```lean
 open Hex.RCF
 
-private def positiveQuadratic : Sentence :=
+public def positiveQuadratic : Sentence :=
   .forallReal (.atom {
     p := #p[1, 0, 1]
     cmp := .gt
@@ -331,7 +366,7 @@ interval `(a, b]`. This sentence represents
 ```lean
 open Hex.RCF
 
-private def nonnegativeOnUnit : Sentence :=
+public def nonnegativeOnUnit : Sentence :=
   .forallIoc (Dyadic.ofInt 0) (Dyadic.ofInt 1)
     (.atom {
       p := #p[0, 1]
@@ -458,7 +493,7 @@ computation, or interval refinement. The emitted
 proof uses ordinary kernel reduction and does not use `native_decide`:
 
 ```lean
-theorem rcf_square_nonnegative : ∀ x : ℝ, x ^ 2 ≥ 0 := by
+public theorem rcf_square_nonnegative : ∀ x : ℝ, x ^ 2 ≥ 0 := by
   rcf
 ```
 
@@ -653,47 +688,47 @@ open Hex.RCF.RealCoefficients
 set_option maxRecDepth 2048
 set_option maxHeartbeats 1000000
 
-private abbrev cubicGenerator : Hex.AlgebraicNumber :=
+public abbrev cubicGenerator : Hex.AlgebraicNumber :=
   CubeTwo.realAlgebraic.toAlgebraic
 
-private abbrev fieldCoordinate :
+public abbrev fieldCoordinate :
     Hex.QAdjoin cubicGenerator :=
   1 + cubicGenerator.toQAdjoin
 
-private abbrev fieldCoefficient : Hex.RealAlgebraicNumber :=
+public abbrev fieldCoefficient : Hex.RealAlgebraicNumber :=
   Coefficients.ofField CubeTwo.realAlgebraic fieldCoordinate
 
-private abbrev selectedCubic : Hex.RealAlgebraicNumber :=
+public abbrev selectedCubic : Hex.RealAlgebraicNumber :=
   Selected.real CubeTwo.polynomial CubeTwo.square
     (by decide) (by decide) (by rfl) (by decide) (by decide)
     CubeTwo.checked CubeTwo.squarefree (by decide)
 
-private abbrev selectedGenerator : Hex.AlgebraicNumber :=
+public abbrev selectedGenerator : Hex.AlgebraicNumber :=
   selectedCubic.toAlgebraic
 
-private abbrev computedCoordinate :
+public abbrev computedCoordinate :
     Hex.QAdjoin selectedGenerator :=
   (selectedGenerator.toQAdjoin *
     selectedGenerator.toQAdjoin + 1) / 2
 
-private abbrev computedCoefficient :
+public abbrev computedCoefficient :
     Hex.RealAlgebraicNumber :=
   Selected.field CubeTwo.polynomial CubeTwo.square
     (by decide) (by decide) (by rfl) (by decide) (by decide)
     CubeTwo.checked CubeTwo.squarefree (by decide)
     computedCoordinate
 
-private abbrev plasticPolynomial : Hex.ZPoly :=
+public abbrev plasticPolynomial : Hex.ZPoly :=
   Hex.DensePoly.ofList [-1, -1, 0, 1]
 
-private abbrev plasticSquare : Hex.DyadicSquare :=
+public abbrev plasticSquare : Hex.DyadicSquare :=
   ⟨Dyadic.ofInt 5426 >>> (12 : Int), 0, 12⟩
 
-private theorem plasticChecked :
+public theorem plasticChecked :
     plasticPolynomial.CheckedIrreducible :=
   ⟨by decide +kernel, by decide⟩
 
-private theorem plasticSquarefree :
+public theorem plasticSquarefree :
     Hex.HasOnlySimpleRoots plasticPolynomial := by
   have hne : plasticPolynomial ≠ 0 := by decide
   letI : plasticPolynomial.CheckedIrreducible :=
@@ -703,7 +738,7 @@ private theorem plasticSquarefree :
     (Hex.ZPoly.CheckedIrreducible.separable
       plasticPolynomial)
 
-private def plasticRoot : Hex.RealAlgebraicNumber :=
+public def plasticRoot : Hex.RealAlgebraicNumber :=
   Selected.real plasticPolynomial plasticSquare
     (by decide) (by decide) (by rfl) (by decide)
     (by decide) plasticChecked plasticSquarefree (by decide)
@@ -719,19 +754,19 @@ example :
 example : ∀ x : ℝ, x + plasticRoot.toReal > x := by
   rcf
 
-private abbrev plasticRep :
+public abbrev plasticRep :
     Hex.RefinedIsolation plasticPolynomial :=
   Field.literalRep plasticPolynomial plasticSquare
     (by decide) (by decide)
 
-private abbrev plasticAlgebraic : Hex.AlgebraicNumber :=
+public abbrev plasticAlgebraic : Hex.AlgebraicNumber :=
   Hex.AlgebraicNumber.ofNormalized plasticPolynomial
     (by rfl) (by decide)
     (by decide) plasticChecked plasticSquarefree
     plasticRep
     (Hex.AlgebraicNumber.ofNormalized?_isSome _ _ _ _ _ _ _)
 
-private def normalizedPlastic : Hex.RealAlgebraicNumber :=
+public def normalizedPlastic : Hex.RealAlgebraicNumber :=
   Hex.RealAlgebraicNumber.ofAlgebraic plasticAlgebraic (by
     apply (Hex.AlgebraicNumber.isReal_iff _).mpr
     exact (congrArg Complex.im
@@ -740,11 +775,11 @@ private def normalizedPlastic : Hex.RealAlgebraicNumber :=
       plasticChecked plasticSquarefree plasticRep _)).trans
       (Field.literalRep_real _ _ _ _ (by decide)))
 
-private abbrev plasticCoordinate :
+public abbrev plasticCoordinate :
     Hex.QAdjoin normalizedPlastic.toAlgebraic :=
   normalizedPlastic.toAlgebraic.toQAdjoin ^ 2 - 1
 
-private abbrev plasticCoefficient :
+public abbrev plasticCoefficient :
     Hex.RealAlgebraicNumber :=
   Coefficients.ofField normalizedPlastic plasticCoordinate
 
@@ -757,7 +792,7 @@ example : ∀ x : ℝ,
       plasticCoefficient.toReal * x := by
   rcf
 
-private abbrev convertedPlastic :
+public abbrev convertedPlastic :
     Hex.RealAlgebraicNumber :=
   Hex.RealAlgebraicNumber.ofAlgebraic
     plasticCoordinate.toAlgebraicNumber (by
@@ -811,18 +846,18 @@ set_option maxHeartbeats 5000000 in
 example : ∃ x : ℝ, Real.sqrt 2 < x ∧ x < Real.sqrt 3 := by
   rcf
 
-private abbrev squareThreePolynomial : Hex.ZPoly :=
+public abbrev squareThreePolynomial : Hex.ZPoly :=
   Hex.DensePoly.ofList [-3, 0, 1]
 
-private abbrev squareThreeSelection : Hex.DyadicSquare :=
+public abbrev squareThreeSelection : Hex.DyadicSquare :=
   ⟨Dyadic.ofInt 7094 >>> (12 : Int), 0, 10⟩
 
-private theorem squareThreeChecked :
+public theorem squareThreeChecked :
     squareThreePolynomial.CheckedIrreducible :=
   Field.checkedIrreducible squareThreePolynomial
     (.eisenstein 3 0) (by decide +kernel) (by decide)
 
-private theorem squareThreeSquarefree :
+public theorem squareThreeSquarefree :
     Hex.HasOnlySimpleRoots squareThreePolynomial := by
   have hne : squareThreePolynomial ≠ 0 := by decide
   letI : squareThreePolynomial.CheckedIrreducible :=
@@ -832,21 +867,21 @@ private theorem squareThreeSquarefree :
     (Hex.ZPoly.CheckedIrreducible.separable
       squareThreePolynomial)
 
-private def selectedThree : Hex.RealAlgebraicNumber :=
+public def selectedThree : Hex.RealAlgebraicNumber :=
   Selected.real squareThreePolynomial squareThreeSelection
     (by decide +kernel) (by decide +kernel) (by rfl)
     (by decide) (by decide)
     squareThreeChecked squareThreeSquarefree
     (by decide +kernel)
 
-private abbrev squareThreeGenerator : Hex.AlgebraicNumber :=
+public abbrev squareThreeGenerator : Hex.AlgebraicNumber :=
   selectedThree.toAlgebraic
 
-private abbrev squareThreeCoordinate :
+public abbrev squareThreeCoordinate :
     Hex.QAdjoin squareThreeGenerator :=
   1 + squareThreeGenerator.toQAdjoin
 
-private abbrev shiftedThree : Hex.RealAlgebraicNumber :=
+public abbrev shiftedThree : Hex.RealAlgebraicNumber :=
   Coefficients.ofField selectedThree squareThreeCoordinate
 
 set_option maxHeartbeats 5000000 in
@@ -933,18 +968,18 @@ polynomial; the public multi-prime certificate route authenticates it before
 the goal's root and sign checks.
 
 ```lean
-private abbrev certificatePolynomial : Hex.ZPoly :=
+public abbrev certificatePolynomial : Hex.ZPoly :=
   Hex.DensePoly.ofList [2, -4, 0, 1]
-private abbrev certificateSquare : Hex.DyadicSquare :=
+public abbrev certificateSquare : Hex.DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 112416129 26, 0, 24⟩
 
-private theorem certificateChecked :
+public theorem certificateChecked :
     certificatePolynomial.CheckedIrreducible :=
   Field.checkedIrreducible certificatePolynomial
     (.eisenstein 2 0)
     (by decide +kernel) (by decide)
 
-private theorem certificateSquarefree :
+public theorem certificateSquarefree :
     Hex.HasOnlySimpleRoots certificatePolynomial := by
   let : certificatePolynomial.CheckedIrreducible :=
     certificateChecked
@@ -953,7 +988,7 @@ private theorem certificateSquarefree :
     (Hex.ZPoly.CheckedIrreducible.separable
       certificatePolynomial)
 
-private abbrev certificateRoot : Hex.RealAlgebraicNumber :=
+public abbrev certificateRoot : Hex.RealAlgebraicNumber :=
   Selected.real certificatePolynomial certificateSquare
     (by decide +kernel) (by decide) (by rfl)
     (by decide) (by decide) certificateChecked
@@ -1098,16 +1133,16 @@ for every coefficient operation, including division.
 section
 open Hex Hex.RealClosure
 
-private def x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
-private def head : DensePoly Rat :=
+public def x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
+public def head : DensePoly Rat :=
   (DensePoly.ofCoeffs #[-2, 0, 1]) *
     (x - DensePoly.C 3)
-private def raw : SignDet.RawDescriptor Rat Nat :=
+public def raw : SignDet.RawDescriptor Rat Nat :=
   { context := 7, head, lower := .finite 1,
     upper := .finite 2,
     indices := [], signs := [] }
 
-private def selectedArithmetic : Option
+public def selectedArithmetic : Option
     (Int × Int × Int × Nat × Nat × Nat × Bool ×
       Bool × Bool) := do
   let d ← Root.validate 7 raw
@@ -1166,12 +1201,12 @@ zero. The query order is the order of the two supplied polynomials.
 ```lean
 open Hex Hex.SignDet
 
-private def bkrHead : DensePoly Rat :=
+public def bkrHead : DensePoly Rat :=
   DensePoly.ofCoeffs #[-1, 0, 1]
-private def bkrX : DensePoly Rat :=
+public def bkrX : DensePoly Rat :=
   DensePoly.ofCoeffs #[0, 1]
 
-private def bkrTablePasses : Bool :=
+public def bkrTablePasses : Bool :=
   match determine Sturm.orderSign 7 bkrHead
       .negInf .posInf [bkrX, bkrX - 1] with
   | none => false
@@ -1204,10 +1239,10 @@ and `x² − 2` have signs `+`, `0`, and `−` respectively. The descriptor reco
 the defining polynomial, interval and context as well as the derivative sign.
 
 ```lean
-private def positiveRoot : RawDescriptor Rat Nat :=
+public def positiveRoot : RawDescriptor Rat Nat :=
   ⟨7, bkrHead, .negInf, .posInf, [1], [1]⟩
 
-private def selectedSignsPass : Bool :=
+public def selectedSignsPass : Bool :=
   match Descriptor.build Sturm.orderSign 7 positiveRoot with
   | .ok (.ok root) =>
     match root.buildSigns
@@ -1231,19 +1266,19 @@ have signs `+`, `−` and `0`. Repeating the first query repeats its sign in the
 same position. An empty query list returns an empty sign vector.
 
 ```lean
-private abbrev signsField := Hex.QAdjoin cubicGenerator
-private def signsAlpha : signsField :=
+public abbrev signsField := Hex.QAdjoin cubicGenerator
+public def signsAlpha : signsField :=
   cubicGenerator.toQAdjoin
-private def signsFieldSign (a : signsField) : Int :=
+public def signsFieldSign (a : signsField) : Int :=
   (Coefficients.ofField CubeTwo.realAlgebraic a).sign
-private def signsX : DensePoly signsField :=
+public def signsX : DensePoly signsField :=
   DensePoly.ofList [0, 1]
-private def signsHead : DensePoly signsField :=
+public def signsHead : DensePoly signsField :=
   (signsX - DensePoly.C signsAlpha) *
     (signsX + DensePoly.C signsAlpha)
-private def signsRoot : RawDescriptor signsField Nat :=
+public def signsRoot : RawDescriptor signsField Nat :=
   ⟨7, signsHead, .negInf, .posInf, [1], [1]⟩
-private def signsFieldPasses : Bool :=
+public def signsFieldPasses : Bool :=
   match Descriptor.build signsFieldSign 7 signsRoot with
   | .ok (.ok root) =>
     let queries := [signsX - 1, signsX - DensePoly.C 2,
@@ -1273,7 +1308,7 @@ The same cubic-field example can use this operation directly, receiving only the
 sign from the checked calculation:
 
 ```lean
-private def totalSignsFieldPasses : Bool :=
+public def totalSignsFieldPasses : Bool :=
   match Descriptor.validate signsFieldSign 7 signsRoot with
   | some root =>
     [root.signAt (signsX - 1),
@@ -1299,12 +1334,12 @@ without changing the selected root. Over the same cubic coefficient field,
 `P″` and `P‴`, all positive at α, in that order.
 
 ```lean
-private def completionHead : DensePoly signsField :=
+public def completionHead : DensePoly signsField :=
   (signsX - DensePoly.C signsAlpha) * signsX *
     (signsX + DensePoly.C signsAlpha)
-private def partialRoot : RawDescriptor signsField Nat :=
+public def partialRoot : RawDescriptor signsField Nat :=
   ⟨7, completionHead, .negInf, .posInf, [2], [1]⟩
-private def completionPasses : Bool :=
+public def completionPasses : Bool :=
   match Descriptor.validate signsFieldSign 7 partialRoot with
   | none => false
   | some root =>
@@ -1337,7 +1372,7 @@ construction and selected-sign validation still replay the domain evidence
 and joint table; the handle carries no measured speedup guarantee. Over the same cubic coefficient field:
 
 ```lean
-private def preparedSignsFieldPasses : Bool :=
+public def preparedSignsFieldPasses : Bool :=
   match Descriptor.validate signsFieldSign 7 signsRoot with
   | none => false
   | some root =>
@@ -1373,7 +1408,7 @@ has only −α. Restricting the original head to `(−2, 0)` also excludes +α.
 Both calls return ordinary absence, with no internal error.
 
 ```lean
-private def absentReencodingPasses : Bool :=
+public def absentReencodingPasses : Bool :=
   match Descriptor.validate signsFieldSign 7 signsRoot with
   | none => false
   | some root =>
@@ -1411,7 +1446,7 @@ fresh evidence for those bounds. Evidence from the original whole-line
 description is rejected at the refined interval.
 
 ```lean
-private def refinedCubicRootPasses : Bool :=
+public def refinedCubicRootPasses : Bool :=
   match Descriptor.validate signsFieldSign 7 signsRoot with
   | none => false
   | some root =>
@@ -1448,7 +1483,7 @@ line also contains −1, which was neither a root of the source head nor in its
 interval. Re-encoding retains +α and builds fresh evidence for the target.
 
 ```lean
-private def changedCubicHeadPasses : Bool :=
+public def changedCubicHeadPasses : Bool :=
   let bounded : RawDescriptor signsField Nat :=
     ⟨7, signsHead, .finite 0, .finite 2, [], []⟩
   let target := (signsX - DensePoly.C signsAlpha) * (signsX + 1)
@@ -1472,7 +1507,7 @@ larger coefficient field. Here the source selects √2 over the rationals. Movin
 its descriptor into the existing field ℚ(∛2) allows a query comparing it with ∛2:
 
 ```lean
-private theorem cubic_zero (q : Rat) :
+public theorem cubic_zero (q : Rat) :
     (PolyQuot.ofRat q : signsField) = 0 ↔ q = 0 := by
   rw [← Field.value_eq_zero cubicGenerator.rep
       cubicGenerator.rep_mk
@@ -1484,7 +1519,7 @@ private theorem cubic_zero (q : Rat) :
         CubeTwo.realAlgebraic.property),
     Rat.cast_eq_zero]
 
-private def convertedRootPasses : Bool :=
+public def convertedRootPasses : Bool :=
   let raw : RawDescriptor Rat Nat :=
     ⟨7, bkrX * bkrX - 2, .finite 0, .posInf, [], []⟩
   match Descriptor.validate Sturm.orderSign 7 raw with
@@ -1525,7 +1560,7 @@ example uses the same actual cubic coefficient field and enumerates the roots
 of `P = (x − α)x(x + α)`. The returned words correspond to `−α`, `0` and `α`:
 
 ```lean
-private def rootsFieldPasses : Bool :=
+public def rootsFieldPasses : Bool :=
   let p := signsHead * signsX
   match Descriptor.buildRoots signsFieldSign 7 p .negInf .posInf with
   | .ok (some roots) =>
@@ -1561,7 +1596,7 @@ rational separator. Root enumeration uses their derivative signs to order them,
 and the selected-root API distinguishes their polynomial signs exactly.
 
 ```lean
-private def infinitesimalRootsPasses : Bool :=
+public def infinitesimalRootsPasses : Bool :=
   let epsilon : Hex.RationalFn Rat := Hex.RationalFn.X
   let sign := Hex.OrderedFn.Infinitesimal.sign Sturm.orderSign
   let x : DensePoly (Hex.RationalFn Rat) :=
@@ -1584,10 +1619,10 @@ comparison constructs a checked common squarefree polynomial and expresses
 both root selections in it. This example finds `1 < 2`.
 
 ```lean
-private def rootTwo : RawDescriptor Rat Nat :=
+public def rootTwo : RawDescriptor Rat Nat :=
   ⟨7, bkrX - 2, .negInf, .posInf, [1], [1]⟩
 
-private def orderedRootsPass : Bool :=
+public def orderedRootsPass : Bool :=
   match Descriptor.build Sturm.orderSign 7 positiveRoot,
       Descriptor.build Sturm.orderSign 7 rootTwo with
   | .ok (.ok one), .ok (.ok two) =>
@@ -1602,14 +1637,14 @@ squarefree comparison polynomial. The two descriptors below select the same
 positive root of `x² − 2`, despite their different defining polynomials.
 
 ```lean
-private def sqrtTwoRoot : RawDescriptor Rat Nat :=
+public def sqrtTwoRoot : RawDescriptor Rat Nat :=
   ⟨7, bkrX * bkrX - 2, .negInf, .posInf, [1], [1]⟩
 
-private def sharedRoot : RawDescriptor Rat Nat :=
+public def sharedRoot : RawDescriptor Rat Nat :=
   ⟨7, (bkrX * bkrX - 2) * (bkrX - 3),
     .negInf, .posInf, [1], [-1]⟩
 
-private def commonRootPass : Bool :=
+public def commonRootPass : Bool :=
   match Descriptor.build Sturm.orderSign 7 sqrtTwoRoot,
       Descriptor.build Sturm.orderSign 7 sharedRoot with
   | .ok (.ok left), .ok (.ok right) =>
@@ -1630,7 +1665,7 @@ The comparison completes these two descriptions and returns equality directly.
 It checks that construction succeeded before inspecting the total result.
 
 ```lean
-private def sameHeadPass : Bool :=
+public def sameHeadPass : Bool :=
   match Descriptor.validate Sturm.orderSign 7 sqrtTwoRoot,
       Descriptor.validate Sturm.orderSign 7
         {sqrtTwoRoot with
@@ -1676,12 +1711,12 @@ values, in the supplied order. Converting those coordinates to real algebraic
 numbers then checks the exact order √2 < √3 in their selected embeddings.
 
 ```lean
-private def independentInputs :
+public def independentInputs :
     Array Hex.AlgebraicNumber := #[
   Hex.ZPoly.rootNear #p[-2, 0, 1] 1.4,
   Hex.ZPoly.rootNear #p[-3, 0, 1] 1.7]
 
-private def independentRootsPass : Bool :=
+public def independentRootsPass : Bool :=
   let common := Hex.QAdjoin.common independentInputs
   common.generator.isReal &&
     common.entries.map (·.toAlgebraicNumber) ==
@@ -1711,7 +1746,7 @@ The sign function below evaluates a field coordinate on the
 common generator's certified enclosure, refining it when needed.
 
 ```lean
-private def commonFieldTablePass
+public def commonFieldTablePass
     (common : Hex.QAdjoin.Presentation) : Bool := Id.run do
   if real : common.generator.isReal = true then
     let sign : Hex.QAdjoin common.generator → Int :=
@@ -1974,9 +2009,9 @@ approximation procedure. The bound suffices for a square plus `2 + sin 1`.
 ```lean
 open Hex.OrderedFn.Oracle
 
-private def callerBounds (_ : Rat) : Bounds := ⟨-1, 1, by decide⟩
+public def callerBounds (_ : Rat) : Bounds := ⟨-1, 1, by decide⟩
 
-private theorem callerContainment
+public theorem callerContainment
     (δ : Rat) (_ : 0 < δ) :
     Contains (callerBounds δ) (Real.sin 1) := by
   simpa [Contains, callerBounds] using
@@ -2010,9 +2045,9 @@ for the displayed finite proofs, including the original nonzero divisor
 not certify arbitrary requested widths or a convergent search.
 
 ```lean
-private def callerPiBounds (_ : Rat) : Bounds :=
+public def callerPiBounds (_ : Rat) : Bounds :=
   ⟨3, mkRat 63 20, by norm_num⟩
-private def callerExpBounds (_ : Rat) : Bounds :=
+public def callerExpBounds (_ : Rat) : Bounds :=
   ⟨mkRat 5 2, mkRat 11 4, by norm_num⟩
 
 @[rcf_constant] private def callerPi :

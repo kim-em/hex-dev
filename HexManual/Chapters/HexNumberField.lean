@@ -4,9 +4,26 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexNumberFieldMathlib
+public import VersoManual
+
+public import HexNumberFieldMathlib
+
+import all HexNumberField.Basic
+import all HexNumberField.Convert
+import all HexNumberField.IntegerRoots
+import all HexNumberField.Roots
+import all HexNumberFieldMathlib.AlgebraicRoots
+import all HexNumberFieldMathlib.IntegerRoots
+public meta import HexNumberField.CommonField
+public meta import HexNumberField.IntegerRoots
+public meta import HexNumberField.Nearest
+public meta import HexNumberField.Roots
+public meta import HexNumberField.Unity
+public meta import HexNumberFieldMathlib.Basic
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -83,9 +100,9 @@ open Hex
 
 namespace HexNumberFieldChapter
 
-def sqrt2 : AlgebraicNumber :=
+@[expose] public def sqrt2 : AlgebraicNumber :=
   (ZPoly.algebraicRoots #p[-2, 0, 1])[1]!
-def sqrt3 : AlgebraicNumber :=
+@[expose] public def sqrt3 : AlgebraicNumber :=
   (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
 
 #guard (ZPoly.algebraicRoots #p[-2, 0, 1]).size = 2
@@ -127,7 +144,7 @@ The golden ratio is the positive root of `X² − X − 1`. Its defining identit
 its reciprocal, and the tenth Lucas number all fall out of decidable equality:
 
 ```lean
-def φ : AlgebraicNumber :=
+@[expose] public def φ : AlgebraicNumber :=
   (ZPoly.algebraicRoots #p[-1, -1, 1])[1]!
 
 #guard φ * φ = φ + 1
@@ -150,13 +167,13 @@ sum; nothing is factored. The sum of `√2` with itself is a root of
 Requesting the canonical form factors that polynomial and keeps `X² − 8`:
 
 ```lean
-def lazySum : AlgebraicRoot :=
+@[expose] public def lazySum : AlgebraicRoot :=
   sqrt2.toRoot.add sqrt2.toRoot
 
 #guard lazySum.p = #p[0, -8, 0, 1]
 #guard lazySum.exact.p = #p[-8, 0, 1]
 
-def lazyProduct : AlgebraicRoot :=
+@[expose] public def lazyProduct : AlgebraicRoot :=
   sqrt2.toRoot.mul sqrt2.toRoot
 
 #guard lazyProduct.p = #p[-4, 0, 1]
@@ -183,7 +200,7 @@ representation. Its roots are lazy roots with multiplicities: the polynomial
 polynomial `X⁴ − 2`.
 
 ```lean
-def quarticRoots : Array RootCount :=
+@[expose] public def quarticRoots : Array RootCount :=
   (AlgebraicPoly.ofArray #[-sqrt2, 0, 1]).roots.toArray
 
 #guard quarticRoots.size = 2
@@ -210,10 +227,10 @@ reduced modulo its minimal polynomial, and inverses are calculated with
 extended gcds.
 
 ```lean
-def cbrt2 : AlgebraicNumber :=
+@[expose] public def cbrt2 : AlgebraicNumber :=
   (ZPoly.algebraicRoots #p[-2, 0, 0, 1])[0]!
 
-def c : QAdjoin cbrt2 := cbrt2.toQAdjoin
+@[expose] public def c : QAdjoin cbrt2 := cbrt2.toQAdjoin
 
 #guard c ^ 3 = 2
 #guard c⁻¹ = c * c / 2
@@ -477,7 +494,7 @@ open HexNumberFieldChapter
 #guard (QAdjoin.ofAlgebraic? sqrt2 (-sqrt2)).isSome
 #guard (QAdjoin.ofAlgebraic? sqrt2 sqrt3).isNone
 
-def sharedField := QAdjoin.common #[sqrt2, sqrt3, sqrt2]
+@[expose] public def sharedField := QAdjoin.common #[sqrt2, sqrt3, sqrt2]
 #guard sharedField.entries.map (·.toAlgebraicNumber) == #[sqrt2, sqrt3, sqrt2]
 
 example (a b : AlgebraicNumber) (c : QAdjoin a)

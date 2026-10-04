@@ -4,10 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimality
-import HexPrimality.Curve25519Replay
-import HexPrimality.Curve448Replay
-import HexPrimality.CertificateProducer
+module
+
+public import HexPrimality
+public import HexPrimality.Curve25519Replay
+public import HexPrimality.Curve448Replay
+public import HexPrimality.CertificateProducer
+
+public meta import HexPrimality.CertificateProducer
+
+public section
 
 open Hex.Nat
 

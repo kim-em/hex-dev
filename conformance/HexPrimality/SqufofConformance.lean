@@ -4,7 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimality.Squfof
+module
+
+public import HexPrimality.Squfof
+
+public meta import HexPrimality.Squfof
+
+public section
 
 open Hex.Nat.Squfof
 

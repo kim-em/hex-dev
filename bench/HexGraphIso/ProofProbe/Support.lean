@@ -4,8 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGraphIso
-import HexGraphIso.TestGraphs
+module
+
+public import HexGraphIso
+public import HexGraphIso.TestGraphs
+
+public meta import HexGraphIso.TestGraphs
+
+public section
 
 /-!
 Shared inputs for the CI-built `graph_iso` examples and optional CFI diagnostics.
@@ -41,7 +47,7 @@ export Hex.GraphIso.TestGraphs (g12 g12relabelled g12b)
 
 /-- The Petersen graph on `Fin 10`, one-cell coloured: an outer
 pentagon, an inner pentagram, and the five spokes. -/
-def petersen : Colored 10 1 :=
+@[expose] def petersen : Colored 10 1 :=
   { graph := Graph.ofEdges
       [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
        (5, 7), (7, 9), (6, 9), (6, 8), (5, 8),
@@ -50,18 +56,18 @@ def petersen : Colored 10 1 :=
 
 /-- The two-colouring of `Fin 10` giving vertices `a` and `b` colour
 `0` and every other vertex colour `1`. -/
-def markPair (a b : Fin 10) : Coloring 10 2 :=
+@[expose] def markPair (a b : Fin 10) : Coloring 10 2 :=
   (Coloring.ofVector? (Hex.Vector.ofFn' fun i =>
     if i = a ∨ i = b then 0 else 1)).getD (Coloring.mod 10 2)
 
 /-- The Petersen graph with one adjacent pair marked colour `0`. -/
-def edgeMarkA : Colored 10 2 := ⟨petersen.graph, markPair 0 1⟩
+@[expose] def edgeMarkA : Colored 10 2 := ⟨petersen.graph, markPair 0 1⟩
 /-- The Petersen graph with a different adjacent pair marked colour
 `0`, isomorphic to `edgeMarkA` as a coloured graph. -/
-def edgeMarkB : Colored 10 2 := ⟨petersen.graph, markPair 2 3⟩
+@[expose] def edgeMarkB : Colored 10 2 := ⟨petersen.graph, markPair 2 3⟩
 /-- The Petersen graph with a non-adjacent pair marked colour `0`,
 which no colour-preserving isomorphism carries to `edgeMarkA`. -/
-def nonedgeMark : Colored 10 2 := ⟨petersen.graph, markPair 0 2⟩
+@[expose] def nonedgeMark : Colored 10 2 := ⟨petersen.graph, markPair 0 2⟩
 
 /-! # The CFI pair over `K4`
 
@@ -74,18 +80,18 @@ vertex's `e`-th incident base edge, `e ∈ [0, 3)`, incident edges in
 lexicographic base-edge order. -/
 
 /-- The six edges of `K4` in lexicographic order. -/
-def k4Edges : List (Nat × Nat) :=
+@[expose] def k4Edges : List (Nat × Nat) :=
   [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)]
 
 /-- The index of base edge `(u, v)` in the incident-edge list of `u`. -/
-def portIdx (u other : Nat) : Nat :=
+@[expose] def portIdx (u other : Nat) : Nat :=
   ((k4Edges.filter fun e => e.1 == u || e.2 == u).findIdx
     fun e => (e.1 == u && e.2 == other) || (e.1 == other && e.2 == u))
 
 /-- The `k`-th even-parity subset of three ports: rank `k ∈ [0, 4)`
 maps to the subset with low bits chosen by `k` and top bit fixing the
 parity. -/
-def middleMask (k : Nat) : Nat :=
+@[expose] def middleMask (k : Nat) : Nat :=
   (k % 2) + 2 * ((k / 2) % 2) + 4 * (((k % 2) + ((k / 2) % 2)) % 2)
 
 /-- The adjacency of the (possibly twisted) CFI graph over `K4` on an
@@ -93,7 +99,7 @@ ordered pair `x < y`: the twist crosses the `a`/`b` connection of the
 lexicographically first base edge `(0, 1)`. The public adjacency wraps
 this in an explicit diagonal guard and min/max normalization, so
 symmetry and looplessness are by construction. -/
-def cfiAdjCore (twist : Bool) (x y : Nat) : Bool := Id.run do
+@[expose] def cfiAdjCore (twist : Bool) (x y : Nat) : Bool := Id.run do
   let vx := x / 10; let px := x % 10
   let vy := y / 10; let py := y % 10
   if vx == vy then
@@ -119,7 +125,7 @@ def cfiAdjCore (twist : Bool) (x y : Nat) : Bool := Id.run do
 
 /-- The CFI graph over `K4` on 40 vertices, one-cell coloured, twisted
 or untwisted. -/
-def cfi (twist : Bool) : Colored 40 1 :=
+@[expose] def cfi (twist : Bool) : Colored 40 1 :=
   { graph := Graph.ofAdj
       (fun i j => if i == j then false else
         cfiAdjCore twist (Nat.min i.val j.val) (Nat.max i.val j.val))

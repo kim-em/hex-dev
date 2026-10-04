@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Experiment.PntChebyshev
+module
+
+public import HexIntervalMathlib.Experiment.PntChebyshev
+
+public section
 
 /-!
 # Source-pinned PNT+ Chebyshev conformance

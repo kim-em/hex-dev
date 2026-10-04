@@ -4,9 +4,34 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexGraphIso
+public import VersoManual
+
+public import HexGraphIso
+
+import all HexGraphIso.AutComplete
+import all HexGraphIso.Autom
+import all HexGraphIso.Autos
+import all HexGraphIso.Nauty.Cert.Certify
+import all HexGraphIso.Nauty.Search.Refine
+import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
+import all HexGraphIso.Nauty.Sparse.Graph
+import all HexGraphIso.Nauty.Sparse.Key
+import all HexGraphIso.Nauty.Sparse.Refine
+import all HexGraphIso.Nauty.Sparse.Refine.Counts
+import all HexGraphIso.Nauty.Sparse.Sort
+import all HexGraphIso.Nauty.Sparse.SpecCanon
+import all HexGraphIso.Nauty.Sparse.SpecMax
+import all HexGraphIso.Nauty.Sparse.Target
+import all HexGraphIso.Nauty.Spec.Achieved
+import all HexGraphIso.Nauty.Spec.CanonSpec
+import all HexGraphIso.Nauty.Spec.SpecCanon
+import all HexGraphIso.Ops
+import all HexGraphIso.Sparse.Canonical
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -505,14 +530,14 @@ open Hex Hex.GraphIso Hex.GraphIso.Nauty
 
 namespace NautyAlgorithmChapterExample
 
-private def pathSix : Colored 6 1 :=
+public def pathSix : Colored 6 1 :=
   { graph := Graph.ofEdges
       [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5)]
     coloring := Coloring.trivial 6 }
 
-private def pathCtx : Ctx 6 := { g := rowsOf pathSix }
+public def pathCtx : Ctx 6 := { g := rowsOf pathSix }
 
-private def initialState : RefineSt 6 :=
+public def initialState : RefineSt 6 :=
   { lab := #[0, 1, 2, 3, 4, 5]
     ptn := initPtn 6 8 [5]
     active := initActive 6 [5]
@@ -521,17 +546,17 @@ private def initialState : RefineSt 6 :=
     maxpos := 0
     longcode := 1 }
 
-private def blocks (st : RefineSt 6) : List (List Nat) :=
+public def blocks (st : RefineSt 6) : List (List Nat) :=
   (cells st.ptn 1 6).map fun (lo, hi) =>
     (List.range (hi + 1 - lo)).map fun i => st.lab[lo + i]!
 
-private def firstSplit : RefineSt 6 :=
+public def firstSplit : RefineSt 6 :=
   refineStep pathCtx 1 0 initialState
 
-private def secondSplit : RefineSt 6 :=
+public def secondSplit : RefineSt 6 :=
   refineStep pathCtx 1 firstSplit.hint firstSplit
 
-private def trace : List (List (List Nat)) :=
+public def trace : List (List (List Nat)) :=
   [blocks initialState,
    blocks firstSplit,
    blocks secondSplit]

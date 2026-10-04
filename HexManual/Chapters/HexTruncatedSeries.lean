@@ -4,9 +4,31 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexTruncatedSeriesMathlib
+public import VersoManual
+
+public import HexTruncatedSeriesMathlib
+
+import all HexTruncatedSeries.Classes
+import all HexTruncatedSeries.Comp
+import all HexTruncatedSeries.Defs
+import all HexTruncatedSeries.ExpLog
+import all HexTruncatedSeries.Inverse
+import all HexTruncatedSeries.Precision
+import all HexTruncatedSeries.Revert
+import all HexTruncatedSeries.Ring
+import all HexTruncatedSeries.Sqrt
+import all HexTruncatedSeriesMathlib.Basic
+import all HexTruncatedSeriesMathlib.Newton
+import all HexTruncatedSeriesMathlib.Ops
+public meta import HexTruncatedSeries.Defs
+public meta import HexTruncatedSeries.Precision
+public meta import HexTruncatedSeries.Ring
+
+public meta import HexTruncatedSeries.Newton
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -69,7 +91,7 @@ interpreted modulo the precision.
 ```lean
 open Hex Hex.TSeries
 
-def geometric : TSeries Int 6 :=
+@[expose] public def geometric : TSeries Int 6 :=
   ofFn fun _ => 1
 
 #guard (geometric * (1 - X)).coeff 0 == 1
@@ -98,7 +120,7 @@ truncated series.
 ```lean
 open Hex Hex.TSeries
 
-def shifted : TSeries Int 6 :=
+@[expose] public def shifted : TSeries Int 6 :=
   ofFn fun i => if i = 2 then 7 else 0
 
 #guard shifted.valuation? == some 2
@@ -185,7 +207,7 @@ produce the same series, and substitution recovers `x` at precision six.
 ```lean
 open Hex Hex.TSeries
 
-def reversible : TSeries Rat 6 :=
+@[expose] public def reversible : TSeries Rat 6 :=
   X - X ^ 2
 
 #guard

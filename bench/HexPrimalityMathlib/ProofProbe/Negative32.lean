@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimalityMathlib
+module
+
+public import HexPrimalityMathlib
+
+public section
 
 /-! Factor-found probe on the adversarial strong pseudoprime
 `3215031751 = 151 * 751 * 28351`. -/

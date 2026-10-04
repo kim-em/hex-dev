@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexBareissMathlib
-import Mathlib.Data.ZMod.Basic
-import Mathlib.Tactic.NormDet
-import Mathlib.Tactic.Ring
+
+module
+public import HexBareissMathlib
+public import Mathlib.Data.ZMod.Basic
+public import Mathlib.Tactic.NormDet
+public import Mathlib.Tactic.Ring
+
+public section
 
 /-! Build-only examples for the kernel determinant certificate and the `det`
 tactic: a hand-written certificate discharged in the kernel, and the tactic in both orientations, on the four literal syntaxes, behind
@@ -78,7 +82,7 @@ example : Matrix.det (R := ℤ) !![1, 2, 3; 4, 5, 6; 7, 8, 9] = 0 := by det
 example : Matrix.det (R := ℤ) !![1, 2, 3; 2, 4, 6; 0, 0, 1] = 0 := by det
 
 /-- A `16 × 16` matrix of `8`-bit entries. -/
-def dense16 : Matrix (Fin 16) (Fin 16) ℤ :=
+@[expose] def dense16 : Matrix (Fin 16) (Fin 16) ℤ :=
   !![-9, 2, 8, -1, -6, -2, -1, -8, 2, 1, 9, -6, 9, 8, -5, 0;
     2, 2, 9, -4, 4, -7, 7, 3, 6, 2, -2, -6, -5, -8, 0, 8;
     -1, 2, -6, 1, -5, -4, 8, 2, 3, -5, 8, 3, -8, -8, -7, 9;

@@ -4,9 +4,27 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexMvPolyMathlib
+public import VersoManual
+
+public import HexMvPolyMathlib
+
+import all HexMvPoly.Basic
+import all HexMvPoly.Eval
+import all HexMvPoly.Mono
+import all HexMvPoly.Operations
+import all HexMvPoly.Recursive
+import all HexMvPoly.Structural
+import all HexMvPolyMathlib.Aeval
+import all HexMvPolyMathlib.Correspondence
+import all HexMvPolyMathlib.Equiv
+import all HexMvPolyMathlib.Recursive
+import all Init.Data.Order.Ord
+public meta import HexMvPoly.Mono
+public meta import HexMvPoly.Structural
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -191,11 +209,11 @@ open Hex Hex.MvPoly
 
 namespace HexMvPolyChapter
 
-abbrev P := MvPoly 2 Int Mono.lex
+@[expose] public abbrev P := MvPoly 2 Int Mono.lex
 
-def x : P := X 0
-def y : P := X 1
-def p : P :=
+@[expose] public def x : P := X 0
+@[expose] public def y : P := X 1
+@[expose] public def p : P :=
   x ^ 2 + (C 2 * x) * y + C 3
 
 #guard p.termCount = 3

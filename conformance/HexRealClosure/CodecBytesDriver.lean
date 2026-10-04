@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRealClosure.CodecTests
-import HexSignDet.JsonBytes
+
+module
+public import HexRealClosure.CodecTests
+public import HexSignDet.JsonBytes
+
+public section
 
 /-- The harness configures and verifies the native stack before these probes. -/
 def main (args : List String) : IO UInt32 := do

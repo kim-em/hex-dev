@@ -3,15 +3,19 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSignDet
-import HexSignDet.Convert
-import HexSignDet.Codec
-import HexSignDet.DagSelectedSigns
-import HexSignDet.DagEncode
-import HexSignDet.CommonField
-import HexSignDet.CrossCheck
-import HexSignDet.Infinitesimal
-import HexRealRoots.TarskiTests
+
+module
+public import HexSignDet
+public import HexSignDet.Convert
+public import HexSignDet.Codec
+public import HexSignDet.DagSelectedSigns
+public import HexSignDet.DagEncode
+public import HexSignDet.CommonField
+public import HexSignDet.CrossCheck
+public import HexSignDet.Infinitesimal
+public import HexRealRoots.TarskiTests
+
+public section
 
 /-! Compiled sign-determination checks over genuine number fields.
 

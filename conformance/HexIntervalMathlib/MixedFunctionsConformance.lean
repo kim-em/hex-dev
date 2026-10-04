@@ -4,12 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Experiment.MixedFunctions
-import HexInterval.Experiment.GoalFrontend
-import HexInterval.Experiment.GoalClosure
-import HexInterval.Experiment.ProofFrontend
-import HexInterval.Experiment.TargetRun
-import Mathlib.Lean.Elab.Tactic.Meta
+module
+
+public import HexIntervalMathlib.Experiment.MixedFunctions
+public import HexInterval.Experiment.GoalFrontend
+public import HexInterval.Experiment.GoalClosure
+public import HexInterval.Experiment.ProofFrontend
+public import HexInterval.Experiment.TargetRun
+public import Mathlib.Lean.Elab.Tactic.Meta
+
+public section
 
 /-!
 # Mixed sine/exponential tactic conformance

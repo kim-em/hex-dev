@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexSmith
-import Hex.BenchOracle.Flint
-import Hex.BenchOracle.Pari
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexSmith
+public import Hex.BenchOracle.Flint
+public import Hex.BenchOracle.Pari
+public import Lean.Data.Json
+public import LeanBench
+
+public section
 
 /-! Mathlib-free Smith benchmarks over the input families fixed by the SPEC,
 including informational FLINT/PARI comparisons and untimed entry-growth
@@ -87,10 +91,10 @@ def presentationWide (n : Nat) : Input := presentationShape n (n + 2)
 private def matrix (input : Input) : Matrix Int input.rows input.cols :=
   Matrix.ofFn fun i j => input.entries.getD (i.val * input.cols + j.val) 0
 
-private def checksum (M : Matrix Int n m) : UInt64 :=
+def checksum (M : Matrix Int n m) : UInt64 :=
   M.data.foldl (fun acc x => mixHash acc (hash x)) 0
 
-private def dataChecksum (D : Matrix.SmithData n m) : UInt64 :=
+def dataChecksum (D : Matrix.SmithData n m) : UInt64 :=
   let diagonal := D.diag.toList.foldl (fun acc x => mixHash acc (hash x)) 0
   mixHash (checksum D.left) <| mixHash (checksum D.leftInv) <|
     mixHash (checksum D.right) (mixHash (checksum D.rightInv) diagonal)

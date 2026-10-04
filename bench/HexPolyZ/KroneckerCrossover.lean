@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexPolyZ
-import HexPolyZ.KroneckerMulti
-import HexPolyZ.NttMul
+
+module
+public import HexPolyZ
+public import HexPolyZ.KroneckerMulti
+public import HexPolyZ.NttMul
+
+public section
 
 /-!
 Kernel microbenchmark for the integer dense polynomial product: schoolbook

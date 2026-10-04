@@ -3,13 +3,17 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Paul Cadman, Kim Morrison
 -/
+
+module
 /-
 Portions adapted from Mathlib:
 Copyright (c) 2026 Paul Cadman. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Determinant.Arithmetic
-import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Correctness
+public import Determinant.Arithmetic
+public import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Correctness
+
+public section
 
 /-! Experimental adaptation of Mathlib's Bird certificate evaluator. The same
 recurrence and theorem applications build a shared expression without polynomial

@@ -1,0 +1,6 @@
+{
+  "path": "Hex/BenchOracle/Nauty.lean",
+  "baseline_blob": "b3933da429eee62caf86122fa2b91646e3b65764",
+  "current_blob": "88cda3b03dfab003a2afb467bde28ab8dcaf5de3",
+  "reason": "Adds the module header, public imports and a public section while retaining the existing executable definition bodies and native symbols. This oracle/conformance helper is outside the measured factor service import graph; the broad Hex fingerprint includes it, but the service neither calls nor links its Lean declarations."
+}

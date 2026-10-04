@@ -4,9 +4,25 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexGramSchmidtMathlib
+public import VersoManual
+
+public import HexGramSchmidtMathlib
+
+import all HexGramSchmidt.Basic.IntCast
+import all HexGramSchmidt.Basic.Rat
+import all HexGramSchmidt.Int.Core
+import all HexGramSchmidt.Int.Scaled
+import all HexGramSchmidt.Update
+import all HexGramSchmidtMathlib.Basic
+import all HexGramSchmidtMathlib.Int.Augmented
+import all HexGramSchmidtMathlib.Int.GramDet
+public meta import HexGramSchmidt.Int.Core
+public meta import HexGramSchmidt.Int.Scaled
+public meta import HexGramSchmidt.Update
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -116,7 +132,7 @@ namespace HexGramSchmidtChapter
 
 -- A 3×3 integer matrix with rows
 --   (1,1,0), (1,0,1), (0,1,1).
-private def m : Hex.Matrix Int 3 3 :=
+public def m : Hex.Matrix Int 3 3 :=
   #m[1, 1, 0; 1, 0, 1; 0, 1, 1]
 
 -- Leading Gram determinants d_0 .. d_3. The empty

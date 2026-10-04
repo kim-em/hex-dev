@@ -4,12 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Experiment.Centered
-import HexInterval.Experiment.BranchProof
-import HexInterval.Experiment.OperationSemantics
-import HexInterval.Experiment.PayloadSession
-import HexInterval.Experiment.ProofRegistry
-import Mathlib.Lean.Elab.Tactic.Meta
+module
+
+public import HexIntervalMathlib.Experiment.Centered
+public import HexInterval.Experiment.BranchProof
+public import HexInterval.Experiment.OperationSemantics
+public import HexInterval.Experiment.PayloadSession
+public import HexInterval.Experiment.ProofRegistry
+public import Mathlib.Lean.Elab.Tactic.Meta
+
+public section
 
 /-!
 # Exact contraction, split, and branch-dependent replay

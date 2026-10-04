@@ -4,9 +4,23 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexBasic
+public import VersoManual
+
+public import HexBasic
+
+import all HexBasic.ArrayDecEq
+import all HexBasic.ExactDiv
+import all HexBasic.ExtTreeMap
+import all HexBasic.Fold
+import all HexBasic.OfFn
+import all HexBasic.Rand
+import all HexBasic.Vector.Modify
+public meta import HexBasic.ExactDiv
+public meta import HexBasic.Rand
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -212,7 +226,7 @@ size reasoning need.
 namespace HexBasicFolds
 
 -- The fold shape the lemmas above talk about.
-def sum2 (z : Int) (xs : List Int) : Int :=
+@[expose] public def sum2 (z : Int) (xs : List Int) : Int :=
   xs.foldl (fun a i => a + 2 * i) z
 
 -- The sum itself.

@@ -3,11 +3,15 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSignDet
-import HexRationalFn
-import HexOrderedFn.Infinitesimal
-import Lean.Data.Json
-import Hex.Conformance.Emit
+
+module
+public import HexSignDet
+public import HexRationalFn
+public import HexOrderedFn.Infinitesimal
+public import Lean.Data.Json
+public import Hex.Conformance.Emit
+
+public section
 
 namespace Hex.SignDet.NestedFields
 open Hex.SignDet

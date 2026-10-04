@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexLLL
+module
+
+public import Hex.Conformance.Emit
+public import HexLLL
+
+public section
 
 /-!
 JSONL emit driver for the `hex-lll` oracle.

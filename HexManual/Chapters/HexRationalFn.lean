@@ -4,10 +4,25 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
-import HexRationalFnMathlib
-import HexPolyFp.PrimeField
-import Mathlib.Tactic.Ring
+module
+
+public import VersoManual
+public import HexRationalFnMathlib
+public import HexPolyFp.PrimeField
+public import Mathlib.Tactic.Ring
+
+public meta import HexModArith.Residue
+public meta import HexModArith.Ring
+public meta import HexRationalFn.Arithmetic
+public meta import HexRationalFn.Field
+public meta import HexRationalFn.Normalize
+
+public meta import HexModArith.Field
+public meta import HexRationalFn.Eval
+
+public meta import HexRationalFn.Derivative
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -39,7 +54,7 @@ assume convergence of a generating series.
 
 ```lean
 namespace RationalFnRecurrence
-theorem eliminate (A B U Y W : RatFunc ℚ)
+public theorem eliminate (A B U Y W : RatFunc ℚ)
     (hA : A ≠ 0) (hB : B ≠ 0)
     (hY : A * Y = U) (hW : B * W = Y) :
     W = U / (A * B) := by
@@ -56,9 +71,9 @@ and a second cascade with a cancelling factor:
 ```lean
 open Hex
 namespace RationalFnCascade
-def x : RationalFn Rat := RationalFn.X
-def first : RationalFn Rat := 1 / (1 - x)
-def second : RationalFn Rat := 1 / (1 - 2 * x)
+@[expose] public def x : RationalFn Rat := RationalFn.X
+@[expose] public def first : RationalFn Rat := 1 / (1 - x)
+@[expose] public def second : RationalFn Rat := 1 / (1 - 2 * x)
 #guard first * second = 1 / ((1 - x) * (1 - 2 * x))
 #guard ((1 - x) / (1 - 2 * x)) * first = second
 end RationalFnCascade
@@ -76,8 +91,8 @@ is not stored in the rational function:
 ```lean
 open Hex
 namespace RationalFnDomain
-def p : DensePoly Rat := #p[-1, 0, 1]
-def q : DensePoly Rat := #p[-1, 1]
+@[expose] public def p : DensePoly Rat := #p[-1, 0, 1]
+@[expose] public def q : DensePoly Rat := #p[-1, 1]
 #guard q.eval 1 = 0
 #guard (RationalFn.ofFraction? p q).map
   (fun f => RationalFn.eval? f 1) = some (some 2)
@@ -99,10 +114,10 @@ field element. Meanwhile the derivative of `X²` vanishes:
 ```lean
 open Hex
 namespace RationalFnFinite
-instance : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
-instance : ZMod64.PrimeModulus 2 :=
+public instance : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
+public instance : ZMod64.PrimeModulus 2 :=
   ZMod64.primeModulusOfPrime (by decide)
-def x : RationalFn (ZMod64 2) := RationalFn.X
+@[expose] public def x : RationalFn (ZMod64 2) := RationalFn.X
 #guard x ^ (2 : Nat) - x ≠ 0
 #guard ([0, 1] : List (ZMod64 2)).all
   (fun a => RationalFn.eval?

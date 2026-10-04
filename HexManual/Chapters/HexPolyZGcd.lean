@@ -4,10 +4,21 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexPolyZGcd
-import HexPolyZGcdMathlib
+public import VersoManual
+
+public import HexPolyZGcd
+public import HexPolyZGcdMathlib
+
+import all HexPolyZ.ExactDivision
+import all HexPolyZGcd.Cert
+import all HexPolyZGcd.Gcd
+import all HexPolyZGcd.Maximal
+import all HexPolyZGcd.SquareFree
+import all HexPolyZGcdMathlib.Gcd
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -88,10 +99,10 @@ open Hex
 
 namespace HexPolyZGcdChapter
 
-def x1 : ZPoly := DensePoly.ofList [1, 1]
-def x2 : ZPoly := DensePoly.ofList [2, 1]
-def left : ZPoly := x1 * x1 * x2
-def right : ZPoly := x1 * x2 * x2
+@[expose] public def x1 : ZPoly := DensePoly.ofList [1, 1]
+@[expose] public def x2 : ZPoly := DensePoly.ofList [2, 1]
+@[expose] public def left : ZPoly := x1 * x1 * x2
+@[expose] public def right : ZPoly := x1 * x2 * x2
 
 #guard ZPoly.gcd left right == x1 * x2
 

@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyDet
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexPolyDet
+public import Lean.Data.Json
+public import LeanBench
+
+public section
 
 /-!
 Mode 3: each feasible (dimension, atoms, degree, support) workload has a

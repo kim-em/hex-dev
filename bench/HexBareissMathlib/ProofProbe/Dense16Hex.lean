@@ -3,7 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexBareissMathlib
+
+module
+public import HexBareissMathlib
+
+public section
 
 /-! `Dense16Hex`: the `dense-16` family, a `16 × 16` literal over `ℤ`, proved by `det`. -/
 

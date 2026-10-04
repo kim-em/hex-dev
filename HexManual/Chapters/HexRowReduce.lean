@@ -4,9 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexRowReduceMathlib
+public import VersoManual
+
+public import HexRowReduceMathlib
+
+import all HexMatrix.Basic
+import all HexRowReduce.Api
+import all HexRowReduce.Loop
+import all HexRowReduce.RowEchelon.Contracts
+import all HexRowReduceMathlib.RankSpanNullspace
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -167,7 +177,7 @@ open Hex Hex.Matrix
 namespace HexRowReduceKernelRecipe
 
 -- M has rank 1 (second row twice the first), 3 columns.
-def M : Matrix Rat 2 3 := #m[1, 2, 3; 2, 4, 6]
+@[expose] public def M : Matrix Rat 2 3 := #m[1, 2, 3; 2, 4, 6]
 
 -- The reduction reports rank 1, so nullity is 3 - 1 = 2.
 #guard (Matrix.rowReduce M).rank = 1
@@ -208,10 +218,10 @@ open Hex Hex.Matrix HexMatrixMathlib
 
 namespace HexRowReduceKernelProof
 
-def A : _root_.Matrix (Fin 2) (Fin 3) Rat :=
+@[expose] public def A : _root_.Matrix (Fin 2) (Fin 3) Rat :=
   !![1, 2, 3; 2, 4, 6]
 
-theorem rank_eq_one : A.rank = 1 := by
+public theorem rank_eq_one : A.rank = 1 := by
   rw [← matrixEquiv.apply_symm_apply A,
       ← rank_eq (rowReduce_isRowReduced _)]
   decide +kernel
@@ -242,7 +252,7 @@ open Hex Hex.Matrix
 
 namespace HexRowReduceSpanRecipe
 
-def M : Matrix Rat 2 3 := #m[1, 2, 3; 2, 4, 6]
+@[expose] public def M : Matrix Rat 2 3 := #m[1, 2, 3; 2, 4, 6]
 
 -- (3, 6, 9) = 3·(1, 2, 3) is in the row span.
 #eval Matrix.spanContains M #v[3, 6, 9]
@@ -272,11 +282,11 @@ open Hex Hex.Matrix HexMatrixMathlib
 
 namespace HexRowReduceSpanProof
 
-def A : _root_.Matrix (Fin 2) (Fin 3) Rat :=
+@[expose] public def A : _root_.Matrix (Fin 2) (Fin 3) Rat :=
   !![1, 2, 3; 2, 4, 6]
-def w : Fin 3 → Rat := ![1, 2, 3]
+@[expose] public def w : Fin 3 → Rat := ![1, 2, 3]
 
-theorem w_mem_span :
+public theorem w_mem_span :
     w ∈ Submodule.span Rat (Set.range A.row) := by
   rw [← matrixEquiv.apply_symm_apply A,
       ← vectorEquiv.apply_symm_apply w,

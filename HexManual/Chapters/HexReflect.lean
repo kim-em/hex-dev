@@ -4,9 +4,22 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexReflectMathlib
+public import VersoManual
+
+public import HexReflectMathlib
+
+import all HexReflect.Budget
+import all HexReflect.Convert
+import all HexReflect.Proof
+import all HexReflect.Provider
+import all HexReflect.Result
+import all HexReflect.Session
+import all HexReflectMathlib.Carrier
+import all HexReflectMathlib.Correspondence
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

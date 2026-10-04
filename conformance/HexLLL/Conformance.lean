@@ -4,7 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexLLL
+module
+
+public import HexLLL
+
+public meta import HexLLL.Checker
+public meta import HexLLL.ExternalReducer
+public meta import HexLLL.Native
+public meta import HexMatrix.Basic
+
+public section
 
 /-!
 Core conformance checks for `HexLLL`.

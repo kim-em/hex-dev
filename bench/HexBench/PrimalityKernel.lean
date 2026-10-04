@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimalityBench.Inputs
+module
+
+public import HexPrimalityBench.Inputs
+
+public section
 
 /-!
 Kernel-replay probes for the `hex-primality` certificate checker.

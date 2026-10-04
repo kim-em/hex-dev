@@ -4,7 +4,22 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexDet
+module
+
+public import HexDet
+
+public meta import HexBareiss.Bareiss
+public meta import HexDet.Basic
+public meta import HexDet.Field
+public meta import HexDet.Int
+public meta import HexDet.Poly
+public meta import HexModArith.Residue
+public meta import HexModArith.Ring
+public meta import HexMvPoly.Ring
+
+public meta import HexDet.MvPoly
+
+public section
 
 /-!
 Core conformance checks for `hex-det`.

@@ -4,11 +4,24 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
-import HexECPP
-import HexECPPMathlib
-import HexECPPMathlib.Native
-import HexECPPMathlib.Pari
+module
+
+public import VersoManual
+public import HexECPP
+public import HexECPPMathlib
+public import HexECPPMathlib.Native
+public import HexECPPMathlib.Pari
+
+import all HexECPP.Cert
+import all HexECPP.Import
+import all HexECPP.Replay
+import all HexECPP.Search
+import all HexECPPMathlib.Hasse
+import all HexECPPMathlib.Hasse.Frobenius
+import all HexECPPMathlib.Reduction
+import all HexECPPMathlib.Soundness
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -45,11 +58,11 @@ or scalar in the raw certificate.
 open Hex.ECPP
 namespace HexECPPChapter
 
-def smallCertificate : Cert := .base (.small 17)
+@[expose] public def smallCertificate : Cert := .base (.small 17)
 #guard checkAt 17 smallCertificate
 #guard !checkAt 19 smallCertificate
 
-def curveCertificate : Cert :=
+@[expose] public def curveCertificate : Cert :=
   .step 17 2 3 3 6 6 [10, 13, 3, 13]
     (.base (.small 11))
 #guard checkAt 17 curveCertificate
@@ -81,7 +94,7 @@ endpoint occupies the index immediately after the rows.
 #guard (convertText defaultImportBudget
   "17" (.small 17)).isOk
 
-def importExhausted : Bool := match convertCounted
+@[expose] public def importExhausted : Bool := match convertCounted
     { defaultImportBudget with maxIntegerBits := 2 }
     Hex.Nat.defaultPrimeCertBudget
     (Hex.Rand.ofSeed 1) 10 ⟨[], 15⟩ with
@@ -113,12 +126,12 @@ exhaustion and an unresolved recursive child have distinct diagnostics.
 
 ```lean
 #guard (produce 17 0).result.toOption.any (checkAt 17)
-def bitsExhausted : Bool :=
+@[expose] public def bitsExhausted : Bool :=
   match (produce 17 0 { maxBits := 4 }).result with
   | .error e => e.resource == .inputBits
   | _ => false
 #guard bitsExhausted
-def depthExhausted : Bool :=
+@[expose] public def depthExhausted : Bool :=
   match (produce 17 0 { maxDepth := 0 }).result with
   | .error e => e.resource == .depth
   | _ => false
@@ -156,7 +169,7 @@ example (c : Hex.ECPP.Cert)
     (h : Hex.ECPP.check c = true) : Nat.Prime c.subject :=
   Hex.ECPP.natPrime_of_check h
 
-@[expose] def certificate : Hex.ECPP.Cert :=
+@[expose] public def certificate : Hex.ECPP.Cert :=
   .step 17 2 3 3 6 6 [10, 13, 3, 13]
     (.base (.small 11))
 

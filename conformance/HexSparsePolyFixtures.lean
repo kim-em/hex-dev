@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexSparsePoly
-import HexModArith
+module
+
+public import HexSparsePoly
+public import HexModArith
+
+public section
 
 /-!
 Single source of committed inputs shared by HexSparsePoly's Lean

@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvGcd.Families
-import LeanBench
+module
+
+public import HexMvGcd.Families
+public import LeanBench
+
+public section
 
 /-!
 Mode-3 registrations for the route-dependent `hex-mv-gcd` families.

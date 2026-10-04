@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGraphIso
-import Hex.BenchOracle.Nauty
+module
+
+public import HexGraphIso
+public import Hex.BenchOracle.Nauty
+
+public section
 
 /-!
 Per-instance timing sweep over the deterministic graph families for the

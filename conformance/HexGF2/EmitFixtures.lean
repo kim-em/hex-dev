@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexGF2.CommonIrreducibility
-import HexGF2.Field
+module
+
+public import Hex.Conformance.Emit
+public import HexGF2.CommonIrreducibility
+public import HexGF2.Field
+
+public section
 
 /-!
 JSONL emit driver for the `hex-gf2` oracle.

@@ -4,9 +4,55 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealFormula
-import HexRealFormulaMathlib.Reify
-import Lean.Elab.Tactic
+module
+
+public import HexRCF.RealFormula
+public import HexRealFormulaMathlib.Reify
+public import Lean.Elab.Tactic
+public meta import HexRCF.RealFormula
+public meta import HexRCF.Syntax
+import all HexRCF.RealFormula
+meta import all HexRCF.RealFormula
+public meta import HexRCF.DecisionCheck
+import all HexRCF.Syntax
+meta import all HexRCF.Syntax
+import all HexRCF.DecisionCheck
+meta import all HexRCF.DecisionCheck
+import all HexRealFormula.Syntax
+meta import all HexRealFormula.Syntax
+import all HexRealFormula.Prenex
+meta import all HexRealFormula.Prenex
+import all HexRealFormula.Kernel
+meta import all HexRealFormula.Kernel
+import all HexMvPoly.Basic
+meta import all HexMvPoly.Basic
+import all HexMvPoly.Operations
+meta import all HexMvPoly.Operations
+import all HexMvPoly.Query
+import all HexMvPoly.Recursive
+import all HexMvPoly.Mono
+meta import all HexMvPoly.Mono
+import all Std.Data.DTreeMap.Internal.Operations
+import all Std.Data.DTreeMap.Internal.Queries
+import all Std.Data.DTreeMap.Internal.Balancing
+import all Init.WF
+import all Init.Data.Nat.Basic
+import all HexRCF.Builder
+import all HexRCF.SeparationCheck
+import all HexRealRoots.Isolate
+import all Init.Data.Nat.Bitwise.Basic
+import all Init.Data.Vector.OfFn
+import all HexArith.Nat.Sqrt
+import all HexPolyZ.IntegerPolynomial
+import all HexRCF.SturmBuilder
+import all HexRealRoots.Mobius
+import all Init.Data.Array.Basic
+import all Init.Data.Nat.Gcd
+
+set_option maxRecDepth 2048
+set_option maxHeartbeats 1000000
+
+section
 
 /-!
 Oracle: none. Mode: always.
@@ -93,7 +139,7 @@ private def specialized : QF 2 := inequality.map (MvPoly.subst fun i =>
 
 example (ρ : Fin 0 → ℝ) :
     (ofSentence (.forallReal .tt)).toProp ρ :=
-  RealFormula.check_sound (t := .forallReal .tt) (by decide) .constants (by decide) ρ
+  RealFormula.check_sound (t := .forallReal .tt) (by decide +kernel) .constants (by decide +kernel) ρ
 
 /-- Exercise the emitted syntax all the way through checked RCF decision. -/
 example : ∃ x : ℝ, x / 2 = 1 := by

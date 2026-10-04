@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimalityMathlib
+module
+
+public import HexPrimalityMathlib
+
+public section
 
 /-! Elevated null control for the negative-result fresh-module sweep. Repeated
 balanced 64-bit proofs make host interference visible above the import floor. -/

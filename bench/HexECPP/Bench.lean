@@ -4,13 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPP.Search
-import HexECPP.Fixture65
-import HexECPP.Fixture256
-import HexECPP.Fixture512
-import HexECPP.ImportConformance
-import HexECPP.PariFixtures
-import LeanBench
+module
+
+public import HexECPP.Search
+public import HexECPP.Fixture65
+public import HexECPP.Fixture256
+public import HexECPP.Fixture512
+public import HexECPP.ImportConformance
+public import HexECPP.PariFixtures
+public import LeanBench
+
+public section
 
 /-!
 Mathlib-free compiled ECPP measurements. Conversion, checking, and raw
@@ -31,7 +35,7 @@ and scalar primitives instead use the independently derived ladders below.
 
 open Hex.ECPP
 
-private instance : Inhabited Cert := ⟨.base (.small 2)⟩
+instance : Inhabited Cert := ⟨.base (.small 2)⟩
 
 initialize cert65Ref : IO.Ref Cert ← IO.mkRef Fixture65.cert
 initialize cert256Ref : IO.Ref Cert ← IO.mkRef Fixture256.cert
@@ -251,8 +255,8 @@ of primality and certificate generation. Setup remains outside timed regions.
 namespace Hex.ECPPBench
 open Hex.ECPP
 
-private instance : Hashable ImportBudget := ⟨fun b => hash (reprStr b)⟩
-private instance : Hashable PariCertificate := ⟨fun c => hash (reprStr c)⟩
+instance : Hashable ImportBudget := ⟨fun b => hash (reprStr b)⟩
+instance : Hashable PariCertificate := ⟨fun c => hash (reprStr c)⟩
 
 def scalarInput (bits : Nat) : Nat × List Nat :=
   let q := 13 * (2 ^ (max 1 bits) - 1)
@@ -350,7 +354,7 @@ structure SizedCase where
   inverses : List Nat
   deriving Repr
 
-private instance : Hashable SizedCase := ⟨fun input => hash (reprStr input)⟩
+instance : Hashable SizedCase := ⟨fun input => hash (reprStr input)⟩
 
 /-- Use independently generated primes and full-width nontrivial coordinates.
 Dense scalar and modulus widths grow together; setup is outside measurement. -/

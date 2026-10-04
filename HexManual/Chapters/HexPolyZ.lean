@@ -4,11 +4,25 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexPolyZ.Decomposition
-import HexPolyZ.Mignotte
-import HexPolyZMathlib
+public import VersoManual
+
+public import HexPolyZ.Decomposition
+public import HexPolyZ.Mignotte
+public import HexPolyZMathlib
+
+import all HexArith.Nat.Prime
+import all HexHensel.ModularPolynomial
+import all HexPolyZ.IntegerPolynomial
+import all HexPolyZ.Mignotte
+import all HexPolyZMathlib.MahlerSeparation
+import all HexPolyZMathlib.Mignotte
+import all HexPolyZMathlib.PolynomialEquivalence
+import all HexPolyZMathlib.Squarefree
+public meta import HexPolyZ.Mignotte
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -104,7 +118,7 @@ open Hex Hex.DensePoly
 namespace HexPolyZChapterContent
 
 -- f = 2 + 4x + 6x²
-private def f : ZPoly := #p[2, 4, 6]
+public def f : ZPoly := #p[2, 4, 6]
 
 -- The content is the nonnegative gcd of the
 -- coefficients; the primitive part divides it out.
@@ -120,7 +134,7 @@ private def f : ZPoly := #p[2, 4, 6]
 #guard ZPoly.content #p[1, 2, 3] = 1
 
 -- Dilation X ↦ 2·X scales coefficient i by 2ⁱ.
-private def g : ZPoly := #p[1, 1, 1]
+public def g : ZPoly := #p[1, 1, 1]
 #guard (ZPoly.dilate 2 g).toArray.toList = [1, 2, 4]
 
 end HexPolyZChapterContent
@@ -227,7 +241,7 @@ open Hex Hex.DensePoly
 namespace HexPolyZChapterMignotte
 
 -- g = 1 + x + x² + x³ + x⁴
-private def g : ZPoly := #p[1, 1, 1, 1, 1]
+public def g : ZPoly := #p[1, 1, 1, 1, 1]
 
 -- Squared L2 norm of the coefficient vector is 5, and
 -- its conservative integer bound is ceilSqrt 5 = 3.

@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhaus
-import Lean.Data.Json
+module
+
+public import HexBerlekampZassenhaus
+public import Lean.Data.Json
+
+public section
 
 /-!
 # Berlekamp fixed-space kernel attribution and packed-representation pricing

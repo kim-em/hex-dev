@@ -3,7 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import Mathlib.Tactic.NormDet
+
+module
+public import Mathlib.Tactic.NormDet
+
+public section
 
 /-! `Dense12Mathlib`: the `dense-12` family, a `12 × 12` literal over `ℤ`, proved by `eval_det`. -/
 
