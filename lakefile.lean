@@ -27,7 +27,7 @@ require AINTLIB from git
   "https://github.com/CBirkbeck/AINTLIB.git" @
     "ab1451487da02cd4483d0e2cdb2cc9e44bbbac17"
 
--- Abstract Sturm–Tarski semantics for the development query adapters.
+-- Abstract Sturm–Tarski semantics for the Mathlib proof companions.
 require TauCeti from git
   "https://github.com/TauCetiProject/TauCeti.git" @
     "0dbbe255a4f418084b30a3ffe6763d824a6b4250"
@@ -674,8 +674,7 @@ lean_lib HexRCFRealCoefficients where
 @[default_target]
 lean_lib HexQuerySemantics where
   srcDir := "adapters"
-  globs := #[`HexRealRootsMathlib.TarskiFoundation, `HexRealRootsMathlib.TarskiSoundness, `HexRealRootsMathlib.TarskiReal,
-    `HexSturmMathlib.Soundness, `HexSturmMathlib.Tests.Replay.Semantics,
+  globs := #[`HexSturmMathlib.Tests.Replay.Semantics,
     `HexSturmMathlib.Tests.Replay.SemanticsBaseline,
     `HexSignDetMathlib.RootModel, `HexSignDetMathlib.RootProducer,
     `HexSignDetMathlib.SelectedRoot, `HexSignDetMathlib.SelectedProducer,

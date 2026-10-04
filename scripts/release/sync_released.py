@@ -60,6 +60,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import aggregate_readme  # noqa: E402
+from check_trust_surface import code_without_comments_and_strings  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "scripts" / "release" / "released.yml"
@@ -1352,9 +1353,51 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
         if mf == clone / "lake-manifest.json":
             changed += _synthesize_manifest_packages(
                 entry, clone, doc, synced, dep_owner, version, catalog, notes)
+            changed += _synthesize_external_manifest_packages(entry, clone, doc, notes)
         if changed:
             mf.write_text(_json.dumps(doc, indent=2) + "\n", encoding="utf-8")
     return notes
+
+
+def _synthesize_external_manifest_packages(entry: dict, clone: Path, doc: dict,
+                                           notes: list[str]) -> int:
+    """Lock direct providers and providers newly needed by pinned Hex companions.
+
+    The monorepo lock supplies complete package records. Pin lists already
+    contain the transitive Hex closure; scan those managed sources too so a
+    downstream such as HexRCF receives Tau Ceti as an inherited dependency.
+    """
+    if "repo" not in entry:
+        return 0  # Partial entries used by the independent pin-rewrite API have no source scope.
+    manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
+    entries = {item["repo"].split("/")[-1]: item for item in manifest["repos"]}
+    roots = set(_external_import_roots(entry, clone))
+    for dependency in entry.get("pins") or []:
+        upstream = entries.get(dependency)
+        if upstream is not None:
+            roots.update(_external_import_roots(upstream, REPO_ROOT))
+    required = {EXTERNAL_IMPORT_PACKAGES[root].lower() for root in roots}
+    lakefile = clone / f"lakefile.{entry['lakefile']}"
+    direct = _declared_external_packages(lakefile.read_text(encoding="utf-8"), entry["lakefile"])
+    locked = json.loads(LAKE_MANIFEST.read_text(encoding="utf-8"))["packages"]
+    source = {package["name"].lower(): package for package in locked}
+    packages = doc.setdefault("packages", [])
+    present = {package["name"].lower(): package for package in packages}
+    changed = 0
+    for name in sorted(required):
+        if name not in source:
+            raise RuntimeError(f"no monorepo lock entry for external provider {name}")
+        if name not in present:
+            package = dict(source[name], inherited=name not in direct)
+            packages.append(package)
+            present[name] = package
+            changed += 1
+            notes.append(f'  manifest + external {package["name"]} -> {package["rev"][:12]} '
+                         '(lake-manifest.json)')
+        elif name in direct and present[name].get("inherited"):
+            present[name]["inherited"] = False
+            changed += 1
+    return changed
 
 
 def _manifest_catalog() -> dict[str, dict[str, str]]:
@@ -1523,42 +1566,114 @@ def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
     return notes
 
 
-def validate_external_imports(entry: dict, clone: Path) -> None:
-    """Require the mirror's Lake file to provide checked external import roots.
+EXTERNAL_IMPORT_PACKAGES = {
+    "Mathlib": "mathlib", "Batteries": "batteries",
+    "TauCeti": "TauCeti", "HasseWeil": "AINTLIB",
+}
 
-    The monorepo provides Batteries, Mathlib, Tau Ceti and AINTLIB; a mirror
-    only has what its own Lake file requires. Scan synced sources for these
-    roots and fail before pushing when a corresponding provider is absent.
-    Mathlib also provides Batteries; Tau Ceti and HasseWeil require their
-    own direct dependencies.
-    """
-    if entry.get("pins_only"):
-        return
-    lakefile = clone / f"lakefile.{entry['lakefile']}"
-    text = lakefile.read_text(encoding="utf-8") if lakefile.is_file() else ""
-    provided: set[str] = set()
-    if re.search(r'(?i)mathlib4?\.git|name\s*=\s*"mathlib"|require\s+mathlib\b', text):
-        provided.update({"Mathlib", "Batteries"})
-    if re.search(r'(?i)batteries\.git|name\s*=\s*"batteries"|require\s+batteries\b', text):
-        provided.add("Batteries")
-    if re.search(r'(?i)tauceti\.git|name\s*=\s*"TauCeti"|require\s+TauCeti\b', text):
-        provided.add("TauCeti")
-    if re.search(r'(?i)AINTLIB\.git|name\s*=\s*"AINTLIB"|require\s+AINTLIB\b', text):
-        provided.add("HasseWeil")
-    roots: dict[str, str] = {}
+
+def _external_import_roots(entry: dict, clone: Path) -> dict[str, str]:
+    """Direct external imports in managed Lean code, excluding comments/strings."""
     pattern = re.compile(
-        r"^\s*(?:(?:public|private|meta)\s+)*import\s+(?:all\s+)?(Batteries|Mathlib|TauCeti|HasseWeil)\b",
-        re.M)
+        r"^[ \t]*(?:(?:public|private|meta)[ \t]+)*import[ \t]+"
+        r"(?:all[ \t]+)?([\w. \t]+)$", re.M)
+    roots: dict[str, str] = {}
     for src, dest_rel, is_dir in managed_paths(entry):
-        dest = clone / dest_rel
+        dest = src if clone == REPO_ROOT else clone / dest_rel
         files = list(dest.rglob("*.lean")) if is_dir else (
             [dest] if dest.suffix == ".lean" else [])
         for lean in files:
             if not lean.is_file():
                 continue
-            for root in pattern.findall(lean.read_text(encoding="utf-8")):
-                roots.setdefault(root, str(lean.relative_to(clone)))
-    missing = {root: where for root, where in roots.items() if root not in provided}
+            code = code_without_comments_and_strings(lean.read_text(encoding="utf-8"))
+            for line in pattern.findall(code):
+                for module in line.split():
+                    root = module.split(".")[0]
+                    if root in EXTERNAL_IMPORT_PACKAGES:
+                        roots.setdefault(root, str(lean.relative_to(clone)))
+    return roots
+
+
+def _declared_external_packages(text: str, lake_format: str) -> set[str]:
+    if lake_format == "toml":
+        names = {str(requirement.get("name", "")).lower()
+                 for requirement in tomllib.loads(text).get("require", [])}
+    else:
+        code = code_without_comments_and_strings(text)
+        names = {name.lower() for name in re.findall(
+            r"(?m)^require[ \t]+«?([A-Za-z0-9_-]+)»?[ \t]+from\b", code)}
+        # Lake's scoped Reservoir spelling also provides the named package.
+        names.update(match[1].lower() for match in re.finditer(
+            r'(?m)^require[ \t]+"[^"\n]+"[ \t]*/[ \t]*"([^"\n]+)"', text)
+            if code[match.start():].startswith("require"))
+    return names
+
+
+def _provided_external_roots(text: str, lake_format: str) -> set[str]:
+    names = _declared_external_packages(text, lake_format)
+    provided = {root for root, package in EXTERNAL_IMPORT_PACKAGES.items()
+                if package.lower() in names}
+    if "Mathlib" in provided:
+        provided.add("Batteries")
+    return provided
+
+
+def rewrite_external_requires(entry: dict, clone: Path,
+                              pins: dict[str, dict[str, str]]) -> list[str]:
+    """Add missing direct external requirements from the exact monorepo lock.
+
+    Like Hex requirement synthesis, this works only on the candidate clone.
+    A moved semantic module must not rely on a transitive provider that its
+    mirror has never declared. Existing declarations are synchronized by
+    rewrite_external_pins, and rewrite_manifest carries the exact commits.
+    """
+    if entry.get("pins_only"):
+        return []
+    lakefile = clone / f"lakefile.{entry['lakefile']}"
+    text = lakefile.read_text(encoding="utf-8")
+    missing = _external_import_roots(entry, clone).keys() - _provided_external_roots(
+        text, entry["lakefile"])
+    if not missing:
+        return []
+    by_name = {pin["name"].lower(): pin for pin in pins.values()}
+    additions = []
+    for root in sorted(missing):
+        package = EXTERNAL_IMPORT_PACKAGES[root]
+        pin = by_name.get(package.lower())
+        if pin is None:
+            raise RuntimeError(f"no locked external provider {package} for {entry['repo']}")
+        additions.append(pin)
+    if entry["lakefile"] == "toml":
+        block = "".join(
+            f'[[require]]\nname = "{pin["name"]}"\ngit = "{pin["url"]}"\n'
+            f'rev = "{pin["inputRev"]}"\n\n' for pin in additions)
+        anchor = re.search(r"(?m)^\[\[(?:lean_lib|lean_exe)\]\]", text)
+        if anchor:
+            text = text[:anchor.start()] + block + text[anchor.start():]
+        else:
+            text = text.rstrip("\n") + "\n\n" + block
+        tomllib.loads(text)
+    else:
+        block = "".join(
+            f'\nrequire {pin["name"]} from git\n  "{pin["url"]}" @ "{pin["inputRev"]}"\n'
+            for pin in additions)
+        requires = list(re.finditer(r"(?m)^require\b.*(?:\n[ \t]+.*)*\n", text))
+        anchor = requires[-1].end() if requires else len(text)
+        text = text[:anchor] + block + text[anchor:]
+    lakefile.write_text(text, encoding="utf-8")
+    return [f'  external require + {pin["name"]} -> {pin["inputRev"]} ({lakefile.name})'
+            for pin in additions]
+
+
+def validate_external_imports(entry: dict, clone: Path) -> None:
+    """Reject missing direct providers before publishing managed Lean sources."""
+    if entry.get("pins_only"):
+        return
+    lakefile = clone / f"lakefile.{entry['lakefile']}"
+    text = lakefile.read_text(encoding="utf-8") if lakefile.is_file() else ""
+    provided = _provided_external_roots(text, entry["lakefile"])
+    missing = {root: where for root, where in _external_import_roots(entry, clone).items()
+               if root not in provided}
     if missing:
         raise RuntimeError(
             f"released repository {entry['repo']} imports "
@@ -1643,6 +1758,8 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
         validate_skeleton(entry, clone)
         validate_ci_helpers(entry, clone)
         for line in apply_paths(entry, clone):
+            print(line)
+        for line in rewrite_external_requires(entry, clone, pins):
             print(line)
         validate_external_imports(entry, clone)
         if not entry.get("pins_only"):

@@ -5,8 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSturmMathlib.Soundness
-public import HexRealRootsMathlib.RealClosed
+public import HexSturmMathlib
+public import HexRealRootsMathlib
 public meta import HexSturm.Basic
 
 public section
@@ -18,6 +18,28 @@ open Hex HexPolyMathlib.Interpret HexRealRootsMathlib
 attribute [local instance 2000] Field.toGrindField
 
 noncomputable section
+
+/-- The ordinary real-roots umbrella exposes semantic replay for arbitrary
+integer certificates, independently of the field frontend. -/
+theorem integer_query (p q : ZPoly) (interval : DyadicInterval) (value : Int)
+    (certificate : IntTarskiCertificate)
+    (accepted : IntTarskiCertificate.check p q interval value certificate = true) :
+    value = Tarski.rootSum (toPolyℝ p) (toPolyℝ q)
+      (.finite (HexRealRootsMathlib.Dyadic.toReal interval.lower))
+      (.finite (HexRealRootsMathlib.Dyadic.toReal interval.upper)) := by
+  exact IntTarskiCertificate.check_sound p q interval value certificate accepted
+
+/-- Consume the complete public query contract, including exact success on
+the lawful domain, without assuming that the producer returned a value. -/
+theorem query_iff (p q : DensePoly ℝ) (a b : Endpoint ℝ) (value : Int) :
+    Sturm.query Sturm.orderSign p q a b = some value ↔
+      HexSturmMathlib.Domain id (fun _ => Iff.rfl) p a b ∧
+        value = Tarski.rootSum (interpret id (fun _ => Iff.rfl) p)
+          (interpret id (fun _ => Iff.rfl) q) (a.map id) (b.map id) := by
+  exact HexSturmMathlib.query_iff id (fun _ => Iff.rfl)
+    rfl (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl) (fun _ => rfl)
+    Sturm.orderSign HexSturmMathlib.orderSign_eq (fun _ => rfl) (fun _ => rfl)
+    p q a b value
 
 /-- Consume the prepared-query theorem at the ordinary real field. Preparation
 and its sign binding remain explicit; this is not a producer-success premise. -/
@@ -77,6 +99,14 @@ theorem rational_roots
     rationalHead (.finite (-2)) (.finite 2) 2 answer
   simp only [Endpoint.map, realCast, Rat.cast_neg, Rat.cast_ofNat] at sound
   exact_mod_cast sound.symm
+
+/-- info: 'RealClosureConsumer.integer_query' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms integer_query
+
+/-- info: 'RealClosureConsumer.query_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms query_iff
 
 /-- info: 'RealClosureConsumer.prepared_count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

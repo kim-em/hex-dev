@@ -1,0 +1,781 @@
+{
+  "kind": "Local Git-pinned candidate consumer; not release-sync validation or distribution eligibility",
+  "sourceBaseRevision": "49a7bada21543b6d1631de5537c0dda4b1da68ad",
+  "sourceIntegrationCommit": "4a456c706411974b907d4a7405c2eeac5ece01f3",
+  "sourceInputSHA256": "5c8eb54028be6af6df7a54c729519b1b9452fe34bf854320977c2ab730218422",
+  "semanticSourceSHA256": {
+    "HexRealRootsMathlib/TarskiFoundation.lean": "28ff07ec4509cdfccd4999104cd376fe3c76dbf08c3e7d79ac25d7386ff7fef9",
+    "HexRealRootsMathlib/TarskiSoundness.lean": "1a5fe0ea9f71252a3244de6f2072e369b7c4ebca8343a5f4bb695fe0cef13582",
+    "HexRealRootsMathlib/TarskiReal.lean": "a24b52696ac67b815bb66f0f39bb1be039f795836997b40c992e6e6bf7e5774d",
+    "HexSturmMathlib/Soundness.lean": "d48888d286d47b784ea4c42b3c11df191dd9e9da8f7ac67a1cd78bb91d5f3a36"
+  },
+  "recipe": "experiments/RealClosureConsumer/CANDIDATES.md",
+  "artifactDirectory": "/home/kim/.codex/tasks/hex-10575/candidates",
+  "toolchain": "leanprover/lean4:v4.35.0-rc3",
+  "packageCount": 62,
+  "checks": {
+    "exactCandidateGitHeads": true,
+    "allHexLockPinsMatchCandidates": true,
+    "monorepoPathDependencies": false,
+    "computationalDeclarationsAndLocksHaveNoMathlibOrTauCeti": true
+  },
+  "externalPins": [
+    {
+      "name": "mathlib",
+      "url": "https://github.com/leanprover-community/mathlib4.git",
+      "rev": "d870b9068518a0870842d15a0cd42637ec30b587"
+    },
+    {
+      "name": "batteries",
+      "url": "https://github.com/leanprover-community/batteries",
+      "rev": "33131f4fb10067cb3009bf4db615d9680c1ccd6b"
+    },
+    {
+      "name": "TauCeti",
+      "url": "https://github.com/TauCetiProject/TauCeti.git",
+      "rev": "0dbbe255a4f418084b30a3ffe6763d824a6b4250"
+    },
+    {
+      "name": "plausible",
+      "url": "https://github.com/leanprover-community/plausible",
+      "rev": "fb13df72ecefd8ddbf9291021d7f33a8673eb57b"
+    },
+    {
+      "name": "LeanSearchClient",
+      "url": "https://github.com/leanprover-community/LeanSearchClient",
+      "rev": "29ff470276c725ae01505d55b17148c18fc7dfd3"
+    },
+    {
+      "name": "importGraph",
+      "url": "https://github.com/leanprover-community/import-graph",
+      "rev": "a6d31147557d4b044a3ce226768572919acc1def"
+    },
+    {
+      "name": "proofwidgets",
+      "url": "https://github.com/leanprover-community/ProofWidgets4",
+      "rev": "c643bbb3c24f8a25f9c14e3a6b1ceb13d01f3de1"
+    },
+    {
+      "name": "aesop",
+      "url": "https://github.com/leanprover-community/aesop",
+      "rev": "a90fbf7b02ff06a0deebf74088dff9e5fe02c9ea"
+    },
+    {
+      "name": "Qq",
+      "url": "https://github.com/leanprover-community/quote4",
+      "rev": "37b0ba0b26109cf9f9c541f0f9557e50cfa1a3b9"
+    },
+    {
+      "name": "Cli",
+      "url": "https://github.com/leanprover/lean4-cli",
+      "rev": "843844fa601dd56767b1eb22b7ada5b64d5e567a"
+    }
+  ],
+  "packages": [
+    {
+      "library": "HexPoly",
+      "package": "hex-poly",
+      "candidateCommit": "e694db16f07165e6345f95a2130997dd082cc3db",
+      "mirrorBase": "7723d0331ec68512cb9a814ea5a0516ef458c763",
+      "mathlib": false,
+      "configurationSHA256": "ac1cef6ae2ca732132ac525fd6872b45a86f739c131bbd5e14ff41021d60e1de",
+      "manifestSHA256": "06ed46f9ad50ddb8084273e0038fa5a9580e6639a4825822073c8ca67c8f673a"
+    },
+    {
+      "library": "HexArith",
+      "package": "hex-arith",
+      "candidateCommit": "93522fac32fc9eceddbe6ceb2d0c585572e66bc1",
+      "mirrorBase": "4976aa3805cdbc1cbbb3853bcdb784467a754249",
+      "mathlib": false,
+      "configurationSHA256": "4983b5cd6672130c2d9a1e64ec0fc8e5acd63aded81c6510069de72cfe15f8d4",
+      "manifestSHA256": "8eb3eb053ef039643270af3ea6fed8dcbfe13053a581ab23653d78c128facce1"
+    },
+    {
+      "library": "HexModArith",
+      "package": "hex-mod-arith",
+      "candidateCommit": "615a6411e50aaa7be9da7b1ac5c6df3256f7f5a6",
+      "mirrorBase": "5ee28ef5a55f907e0ea7eab58747c09238a1ea1d",
+      "mathlib": false,
+      "configurationSHA256": "6590bf0cfa891c6658441364c0f78cce1f2161f8301579f3a1849e0639773306",
+      "manifestSHA256": "96f0b6dea800f2226c5441a0813c66994b9a8c51f48f1cc943fc05e5c86c2be8"
+    },
+    {
+      "library": "HexBasic",
+      "package": "hex-basic",
+      "candidateCommit": "898e77b7b7d558f1435a9cb70fd6b394696e3162",
+      "mirrorBase": "a7de08cb8ff56c86e43ddb909e16df78e672a303",
+      "mathlib": false,
+      "configurationSHA256": "007735d8ecd5e5a9309e75af4b5a32fe106d34dd2fc4b66fe6c3b17b2b05e972",
+      "manifestSHA256": "988cba97ac2049bc9c91e99410d871045bf67ca697d343baefc79aff23ae7aea"
+    },
+    {
+      "library": "HexTruncatedSeries",
+      "package": "hex-truncated-series",
+      "candidateCommit": "6bee0018d3d2daf2e61717fcf589f00179c32355",
+      "mirrorBase": null,
+      "mathlib": false,
+      "configurationSHA256": "e10f19b66d855d2ca073bef26ebe224c5bf5ecebaaf1205e4b2f884fb3ba2ddf",
+      "manifestSHA256": "aab7c1d8a0a45c446dcdb73545424b2c3a510fe45100f49e98a4722b45105651"
+    },
+    {
+      "library": "HexPolyFast",
+      "package": "hex-poly-fast",
+      "candidateCommit": "6d1fd3e6e5ad11bb2086df3d9bf2ebeef83123c1",
+      "mirrorBase": null,
+      "mathlib": false,
+      "configurationSHA256": "53dc40a6f8732fc201a15d762adc66f2975219c83c91cdbb1fb5751e1d7c5722",
+      "manifestSHA256": "7e599356fbbeea8f3bed3fb38ce66bcfdfca44a39f9d08c297730de996c8456e"
+    },
+    {
+      "library": "HexModular",
+      "package": "hex-modular",
+      "candidateCommit": "c2127050bf5bebcb2e48b21d92407b18cd421211",
+      "mirrorBase": null,
+      "mathlib": false,
+      "configurationSHA256": "d71bde72b46372ceaa776e4b1c5340c9851c292777dd81af46d69478a9659c36",
+      "manifestSHA256": "99318a6d338847392d2cf24df15899113a0f2d98553b595473fcd256ee38faba"
+    },
+    {
+      "library": "HexPolyZ",
+      "package": "hex-poly-z",
+      "candidateCommit": "9b957ff66936e72d1e25c5d77c3a2de235d2db02",
+      "mirrorBase": "01aa3e6d54a0818f72f758589d8db1c2b2d47a22",
+      "mathlib": false,
+      "configurationSHA256": "038ae62c29a3822b37499b5379aebb6c3a54208c652cd10adc19ede7e7c0f612",
+      "manifestSHA256": "ac8666d3854e2d9659a7e94b877a0481b8e4f97cdd3c94184877a4f6676487d5"
+    },
+    {
+      "library": "HexRealRoots",
+      "package": "hex-real-roots",
+      "candidateCommit": "bb2d8ca1a2908bda5cb10c12a4d51e9349d7c745",
+      "mirrorBase": "318df32a597a9a8d036c317a5fc622746e5758df",
+      "mathlib": false,
+      "configurationSHA256": "4b1e440385a4e45d3355a9fa0d6c69da83bb6ceb8b0fc87ed44ac7c67ccb1703",
+      "manifestSHA256": "38daf95dc828531bd3b0ca287897849327171fae91ecd8e96092b72b17908b74"
+    },
+    {
+      "library": "HexPolyFp",
+      "package": "hex-poly-fp",
+      "candidateCommit": "431d938f5f1f7c7913b995e028157fa9ece273dd",
+      "mirrorBase": "f14b8f7bb299a8122f1efeadc1ec765df54a1cf2",
+      "mathlib": false,
+      "configurationSHA256": "5823e3440726c6c522f0f22fd818d0f560a4faad719ef6e0060c0d92c7599717",
+      "manifestSHA256": "56150203d64f4df562599e7a34274239cdfa5cb15be693ff1e7b481e441f13e1"
+    },
+    {
+      "library": "HexHensel",
+      "package": "hex-hensel",
+      "candidateCommit": "53bc213b6a0663ab22f9ad142b2c91e0effd05b0",
+      "mirrorBase": "b96da5d3ea71cc15d275fdb44389fb8872684c0a",
+      "mathlib": false,
+      "configurationSHA256": "c7bffb15ab8638b7b9b5a6cad266cc43282e1f07216b6df1077bf9e4cf6dec5e",
+      "manifestSHA256": "0f31fe737832760e721951745cb69e0bc1a657a0b1d59a1b1f503bdac926f937"
+    },
+    {
+      "library": "HexMatrix",
+      "package": "hex-matrix",
+      "candidateCommit": "beb06b98f36b0a60b574acd2f97a2a1254dfa405",
+      "mirrorBase": "887323f57cf55b6be3fad6f7cd6f36db8f8e2df5",
+      "mathlib": false,
+      "configurationSHA256": "15aab4ed8b43fd283693f6f0d841d523b8eb9e878cd8eb4e7a2dd818a56fbeb3",
+      "manifestSHA256": "0662b834c70b97ce6a2f68013f590e7c020af0bc04b0f828bd300c555f068384"
+    },
+    {
+      "library": "HexMatrixMathlib",
+      "package": "hex-matrix-mathlib",
+      "candidateCommit": "d5716f772c09b448e62487aff3019ef2e0bc9803",
+      "mirrorBase": "a6b62d31002afc86f16585960415806212614969",
+      "mathlib": true,
+      "configurationSHA256": "5155bcb97dc56f1d32837744191155524df8a2279d79274b316428850f7479a7",
+      "manifestSHA256": "940438cb57245a4d9490e9310a0841da7765a556b00b6c95b02bd6f405e51deb"
+    },
+    {
+      "library": "HexPolyMathlib",
+      "package": "hex-poly-mathlib",
+      "candidateCommit": "79eb5d5cce6e365b49fa2de8f595d1e60bc05ca3",
+      "mirrorBase": "f77f8e11718fc1421e04a57696ad55739b684724",
+      "mathlib": true,
+      "configurationSHA256": "71431e74f0a070c922969a8bc7cbf3e917a8724cd24884f77aea6c4cb225ecc4",
+      "manifestSHA256": "408efbfd106953e254692ab780f9e5d51b4dbb7918caeb8d01fa46a431b371b0"
+    },
+    {
+      "library": "HexModArithMathlib",
+      "package": "hex-mod-arith-mathlib",
+      "candidateCommit": "65d682c8acaaed1c6b162a45594471cb6c88d8e6",
+      "mirrorBase": "cb2d2e623e2fde2f033a686d8772c88d4e99893b",
+      "mathlib": true,
+      "configurationSHA256": "58c8478fb903f03a7d4ad9e752ff079538da411e4f3e6667017272de58ccd8f7",
+      "manifestSHA256": "4a7ccf931158059ff3e20982e6658646bae334ff59033042f87fa5ad4ccbaf49"
+    },
+    {
+      "library": "HexPolyZMathlib",
+      "package": "hex-poly-z-mathlib",
+      "candidateCommit": "b293d8cf60a06ce163aee24150d651ea7168e801",
+      "mirrorBase": "8d95fbe978098bb7a9957b110e1cf4d609e149d2",
+      "mathlib": true,
+      "configurationSHA256": "15e0663769ee37cadefaa03548241475f2f71640b985b88675ee5afc4b2ce0aa",
+      "manifestSHA256": "15f85a5bfd8a15558d72e2308fdcd4142748010391d7f97c708232c5bf42f08b"
+    },
+    {
+      "library": "HexRealRootsMathlib",
+      "package": "hex-real-roots-mathlib",
+      "candidateCommit": "1886caf6cbb665b9da243f994072aa4b935b48ff",
+      "mirrorBase": "53ce31466dc5ff520463249d470119c1e0006e22",
+      "mathlib": true,
+      "configurationSHA256": "50242a62e163201ee6ded7caa8f42806aeafcf8b547b0074b8c0c06ec5920930",
+      "manifestSHA256": "caa8796b749584adf8b1b3c6fdfff626e66216c48907ca86c1b08dbc3d88746b"
+    },
+    {
+      "library": "HexSturm",
+      "package": "hex-sturm",
+      "candidateCommit": "8e38e6c9e5b17caa7aa421e65a092b2d8e848cb5",
+      "mirrorBase": null,
+      "mathlib": false,
+      "configurationSHA256": "e9eedb7494f7b94c05588150e08a951b2c50b0d5fc70273b4a6fbeeebc233006",
+      "manifestSHA256": "6384fd0c2dcfd27f47c32c279b425da1575e389a78c42a1eaec859a82b9d0bab"
+    },
+    {
+      "library": "HexSturmMathlib",
+      "package": "hex-sturm-mathlib",
+      "candidateCommit": "5829c99fb8337b3d120498aaf96b6fd569467dd8",
+      "mirrorBase": null,
+      "mathlib": true,
+      "configurationSHA256": "0749255bf37998fc14d5f21ab98e10d0ef2fe57fef1aca346adc6f8e36da356e",
+      "manifestSHA256": "01266b1275575e8022cfa2524fe09c21ad464474fe7a5dc4a085f89ae6476f7c"
+    },
+    {
+      "library": "HexRowReduce",
+      "package": "hex-row-reduce",
+      "candidateCommit": "99ef70a52c822cfaa5920ca782842b53fbce1eef",
+      "mirrorBase": "a3603e6de658f436223827dbcebe1ecd9cc7a2fe",
+      "mathlib": false,
+      "configurationSHA256": "13d718726342a3c8b153bbff8370fe0a84181739d5ce80f3841fb26c25173fd1",
+      "manifestSHA256": "e50733bf08ea8d5fed0ffac2f684dc09727566275845e2875bab8c510d0d3595"
+    },
+    {
+      "library": "HexDeterminant",
+      "package": "hex-determinant",
+      "candidateCommit": "c3b0601b5eac19959bf47eac604d4c553c390257",
+      "mirrorBase": "869ebb42b0b3d764d2385dc511fa71654452c81d",
+      "mathlib": false,
+      "configurationSHA256": "447f1d49c2af8739b48e2027a107326092b0e432d4bd69eb0c07dd861617b931",
+      "manifestSHA256": "205e6c689974452aebf3a5f080724967e5c6cbe18e0fde6696a7609206ba3678"
+    },
+    {
+      "library": "HexBareiss",
+      "package": "hex-bareiss",
+      "candidateCommit": "5639f4e041d8c3b32b77e9dd7a074d1dea5f1cda",
+      "mirrorBase": "83fd6ddb3de5027234cb90a0a6c28d622146023f",
+      "mathlib": false,
+      "configurationSHA256": "051a56db6eef806d301e96d0b2d92a1b7f447c1c7e6f4abdde4366e83f2f4589",
+      "manifestSHA256": "c03dcd6fe82fb01e45ba55297d6e558be3103964ed9c7c95794d46115c87f7c4"
+    },
+    {
+      "library": "HexRank",
+      "package": "hex-rank",
+      "candidateCommit": "15ba70c8ef33ae8f10983c71b8b8160374a1a5ec",
+      "mirrorBase": null,
+      "mathlib": false,
+      "configurationSHA256": "3dd52f551019bbbbd641420823d69d88172eb4697e57f32207a5abd561106adc",
+      "manifestSHA256": "79f1b57c043a908c292d76a94f87f76759cb93c852ded443432c3c405c391156"
+    },
+    {
+      "library": "HexSignDet",
+      "package": "hex-sign-det",
+      "candidateCommit": "6da46d77b8cbaffa98b7c8d5cdffa224d3a5d38e",
+      "mirrorBase": null,
+      "mathlib": false,
+      "configurationSHA256": "ae3e47cb07e3636c32f8f3ff2beca20c96d0819b9a60406e8794d5325a2f19d7",
+      "manifestSHA256": "9a55353bda427b1b45e6d2595e623c78ceed5276a80b664962fe57f82c97d6e4"
+    },
+    {
+      "library": "HexDeterminantMathlib",
+      "package": "hex-determinant-mathlib",
+      "candidateCommit": "73a05327d2bcd39f9a645234b58858ba5baa6989",
+      "mirrorBase": "cc7b3d06f687ad2a449996c25261651e5fd00092",
+      "mathlib": true,
+      "configurationSHA256": "c1b0c13b04f433d8c9f0486202abebe38bdece81e362948b065d2b65d8a87992",
+      "manifestSHA256": "f4341bc3a3eae03b168143f52e1da60fe80d6a274eb849b8b4c08eded65a6196"
+    },
+    {
+      "library": "HexBareissMathlib",
+      "package": "hex-bareiss-mathlib",
+      "candidateCommit": "490a5a57a7b25147c36d4db2fa8314bdef854306",
+      "mirrorBase": "a179233d61a9d926a8d304b71a35cec53330881f",
+      "mathlib": true,
+      "configurationSHA256": "afbc65bf20a522b5baf644591df84dc29c91d403a842d4f75a21176ac984fa1d",
+      "manifestSHA256": "f6e2b57f1e3a1c732faecd8200a380660d67ccb10657b013e436b9c3f2eb01e2"
+    },
+    {
+      "library": "HexRoots",
+      "package": "hex-roots",
+      "candidateCommit": "a7e397c211f7c222de89ec487bdaf46151d14dd0",
+      "mirrorBase": "89f1a98baf87e1d6e6264ed7885ad073faa1a1b0",
+      "mathlib": false,
+      "configurationSHA256": "dac5aff40e4a9fb6792fb94df3ab797b793f5294990947430b0d74f4b96a5b58",
+      "manifestSHA256": "39342c30c5645917eb81c82593d847f8f031048eec37344eba46060adfe7c7ec"
+    },
+    {
+      "library": "HexResultant",
+      "package": "hex-resultant",
+      "candidateCommit": "e1bd8066eb0da03e4cac0dc836a3aafee29f1934",
+      "mirrorBase": "afce87570da8ce291133fa1c9cf67648a55b2346",
+      "mathlib": false,
+      "configurationSHA256": "09782be78c3be1348c21d9d630e59fdc584cc0281b9a130e93266fe536896f23",
+      "manifestSHA256": "cca01d6e560be0da779b74172ba35217c846ec3abee4f3793d9ffdf7ce75cd2e"
+    },
+    {
+      "library": "HexGFqRing",
+      "package": "hex-gfq-ring",
+      "candidateCommit": "ef047fa0f6519ef51cef4c388d3a513a3f5eb9f5",
+      "mirrorBase": "b72959292fcc02c4b67dc2ecc6b9cfa04d5a33f7",
+      "mathlib": false,
+      "configurationSHA256": "e304b53be8ca9e2f9c93046812003df0d1c397efa60b70cc287455b91c05a39c",
+      "manifestSHA256": "6d3523764e6ac49b928a91fd10d20762a00d5888d2435eb9dac01429fc43b665"
+    },
+    {
+      "library": "HexBerlekamp",
+      "package": "hex-berlekamp",
+      "candidateCommit": "db66c8aef28b1996ee761715fa60674e5d201385",
+      "mirrorBase": "7e8b5edd881e8694a97b0abb6ee8bfb4406f054a",
+      "mathlib": false,
+      "configurationSHA256": "dba00958e53dac89fa0c8e5e64be9ee7a73663223d5b3cdbe494c6219fd182d6",
+      "manifestSHA256": "828aa84a72e45656cac725c2d748868ead81b0b0c8db1a44436613ac943dfb5c"
+    },
+    {
+      "library": "HexGramSchmidt",
+      "package": "hex-gram-schmidt",
+      "candidateCommit": "c6fa44f8502f9fcebc2357af870b35d7d3442087",
+      "mirrorBase": "aceb0e9b1a15d7cca887327cdafca33f243107c3",
+      "mathlib": false,
+      "configurationSHA256": "841b4bc08d7b138a3ce04fc37c49f2d58646d60d58829357d095ad864e5727b5",
+      "manifestSHA256": "2baf94990f67d23ab41a52b2e2aa6565c0dfc5d7d0c9fb760036862267adeb9b"
+    },
+    {
+      "library": "HexLLL",
+      "package": "hex-lll",
+      "candidateCommit": "55b4780be4e9a628608a14471ba383c9291861a3",
+      "mirrorBase": "ca30af2c6d5d846327a66268b8258b780dde5a91",
+      "mathlib": false,
+      "configurationSHA256": "870d3144a974a58369e39efa9383b5ee2a097d5a7add9e9c2ee6a4ab6d9fbf85",
+      "manifestSHA256": "6201cca1b5698c16f894ae8bbc60f0dad5fc2f0ae8c8c0b35f9f17255a796d9d"
+    },
+    {
+      "library": "HexPrimality",
+      "package": "hex-primality",
+      "candidateCommit": "592960b10e98cbda8591ea9a4f56a0c6bb359540",
+      "mirrorBase": "4717a54f0e128cc041df82a4274ab0db914cbdde",
+      "mathlib": false,
+      "configurationSHA256": "b84b8b9397934d0e3067bf317838a64db746986d6cf34d75fa8673cabec706d1",
+      "manifestSHA256": "0410ceccc0fb46a20fd1440b0afa941eebb2c715d071547671febd12def4ab5b"
+    },
+    {
+      "library": "HexBerlekampZassenhaus",
+      "package": "hex-berlekamp-zassenhaus",
+      "candidateCommit": "46051959d49a40948f02b91281d80d1c0cfb37a9",
+      "mirrorBase": "8da4a9f8a19e4e905ddbd0925f86a7f80cc32f25",
+      "mathlib": false,
+      "configurationSHA256": "02ea4816fafd5472670147b56bc79f94fbe690ce8db58394135664924b82ca28",
+      "manifestSHA256": "ad2ec48fdb17c65f0235479e0aa5be613974df21e3186f7bbf6c2c10797a8eaa"
+    },
+    {
+      "library": "HexNumberField",
+      "package": "hex-number-field",
+      "candidateCommit": "8d63bb115e48cc58ff05da6bf3c8ac59ef183487",
+      "mirrorBase": "cd7fc2ee4300f344b6d6f152c7a3ec8256092fd0",
+      "mathlib": false,
+      "configurationSHA256": "d81a614703eef2815ac00ab524796b4281da25957ca72006cff2e4a6473947da",
+      "manifestSHA256": "56bed1e37bff9386dece9fae30470a76ed31705f00d7f20f51d492e9517ece3e"
+    },
+    {
+      "library": "HexResultantMathlib",
+      "package": "hex-resultant-mathlib",
+      "candidateCommit": "0173dc86283edabc56ac162383c833f81a49c306",
+      "mirrorBase": "8067ff1f45940f661d00a1c7ac260ea9ea22f779",
+      "mathlib": true,
+      "configurationSHA256": "b891329209899ad3ed2091c7968e98a34277e4ab2ee75b5cfcea1e62e4f2ef28",
+      "manifestSHA256": "7be589abd541423d50ee3ea429fb54dbb681fa1e78699c98f924e76312545d4c"
+    },
+    {
+      "library": "HexPolyFpMathlib",
+      "package": "hex-poly-fp-mathlib",
+      "candidateCommit": "751be6059858e20d8bace28a36efa4a03276352a",
+      "mirrorBase": "58e4783d7aad437cc084d0e49df14db346795922",
+      "mathlib": true,
+      "configurationSHA256": "4e887d24126685f58ba5a9f4e91927fd88ca2e2af7ec21d92e7f501198ae8140",
+      "manifestSHA256": "2326c0cc4adfb6a51289e2de62dbd7e0d2acde74d573bdb5918a58c0994d8d3a"
+    },
+    {
+      "library": "HexBerlekampMathlib",
+      "package": "hex-berlekamp-mathlib",
+      "candidateCommit": "d0468f30fce6ad1f03c794906f04163835c4992f",
+      "mirrorBase": "2da6b90c51a10f0e614439a855abf34f3442fc7e",
+      "mathlib": true,
+      "configurationSHA256": "6763634508442db3a19e419ef293eca7421559a4f924d0f3db0e1f1d48e473bb",
+      "manifestSHA256": "959bb880eff9e09be47d60d5b3c8332d7e75881f8c31c00dcb789e6193727d54"
+    },
+    {
+      "library": "HexHenselMathlib",
+      "package": "hex-hensel-mathlib",
+      "candidateCommit": "0571ea71205d32c2ddc3ab5a92e2e9113518b705",
+      "mirrorBase": "860546bddfaaf906ff7a65ff7e28ba7fbdf184f6",
+      "mathlib": true,
+      "configurationSHA256": "a1ad6051703338e1e6e6cfcc02d54de6d3c56672b68d5d256b2721ee8226c61a",
+      "manifestSHA256": "7300650590e6cdfcb74ee194d9083c31069235fb2b8a4594fb73c837dc299a30"
+    },
+    {
+      "library": "HexGramSchmidtMathlib",
+      "package": "hex-gram-schmidt-mathlib",
+      "candidateCommit": "57a5d34bd1384569a48e6c7d646642fa8e543912",
+      "mirrorBase": "69cde710faa62c21b373b9f8482d3cd641c9c7b2",
+      "mathlib": true,
+      "configurationSHA256": "2b8157f939a7d201c127979691b241ee2a55471c7fa35686e3b76b59156d6b1a",
+      "manifestSHA256": "9bbac166daf318bd3033911084252e3c1ad6f693ed06c738482ec85e9bede80f"
+    },
+    {
+      "library": "HexRowReduceMathlib",
+      "package": "hex-row-reduce-mathlib",
+      "candidateCommit": "e16fb5ff4001ea64970716f4e31c026b49755b7a",
+      "mirrorBase": "c3760b13d9d168a787bdaa12a825ac0323947cec",
+      "mathlib": true,
+      "configurationSHA256": "bb00552546eeec845483fc9d427d3eae682e04767d0df4f848d6baed6a202cf7",
+      "manifestSHA256": "bb1f833c219b5454e5535b30c3fecd24bb109ad32ec232ca4391cb85a0c4ee20"
+    },
+    {
+      "library": "HexLLLMathlib",
+      "package": "hex-lll-mathlib",
+      "candidateCommit": "0242c904ac9c2ff887a72745c83ce94b4e75e633",
+      "mirrorBase": "4d4d0752a464934c22579183e5696e0bc3f62a49",
+      "mathlib": true,
+      "configurationSHA256": "90289db197b5127be377f6abf92689d907fd45dd768bfe9650f6e99509aa4b86",
+      "manifestSHA256": "ba30586966de6f7db1bab6ebc3b0e98eafcd3c309c95233b5cbdd982593541b3"
+    },
+    {
+      "library": "HexBerlekampZassenhausMathlib",
+      "package": "hex-berlekamp-zassenhaus-mathlib",
+      "candidateCommit": "75dcc229fb2ae3ada824fdda6bf86ed127d23a03",
+      "mirrorBase": "ef0ce4f33fb46a52774ca7336ecbf20ecdb2ff28",
+      "mathlib": true,
+      "configurationSHA256": "d996cf1a1486c54b242f07ec04bd5e6e0f7da426ecc3ba89a8bacc822b54ccc0",
+      "manifestSHA256": "c36c46cc687f7520dd2aa561f14e92e8b8e569e43821930461dfa60a12c3e728"
+    },
+    {
+      "library": "HexRootsMathlib",
+      "package": "hex-roots-mathlib",
+      "candidateCommit": "af7189e6cf0ce3a2f804a2466f8c4c1d7718d0da",
+      "mirrorBase": "9bcfb127d85e33c877d3e68d19385b115d7d45b9",
+      "mathlib": true,
+      "configurationSHA256": "627d1aa3d2daf478dc52b02b43ef6a3955bf7d04e382f086e0164d4cdb5b6d1f",
+      "manifestSHA256": "b2678ede967b91893b506a8adb8b9cb1afbbfea871de3e8d83789b0a25fbb4e5"
+    },
+    {
+      "library": "HexNumberFieldMathlib",
+      "package": "hex-number-field-mathlib",
+      "candidateCommit": "17ee8d61711672a4997a9065a9dcd29412bccff5",
+      "mirrorBase": "a78e104be26a12ecc7dde11d85df52357ebf3aae",
+      "mathlib": true,
+      "configurationSHA256": "772641599ab85c38693cc06e81a79d91de94bf54663703fcc199219d40253fd1",
+      "manifestSHA256": "7e01a123c655565faadcf29ccf36e6547a44d6dbecd6ea967f3644b108376f74"
+    },
+    {
+      "library": "HexRankMathlib",
+      "package": "hex-rank-mathlib",
+      "candidateCommit": "95c3f58f7da369ed3126e7e5f252abcbb6d8b398",
+      "mirrorBase": null,
+      "mathlib": true,
+      "configurationSHA256": "3ab60431b1cd782c685af7c58dfd54c5e59f9320e5fa67666bc3d0533c492658",
+      "manifestSHA256": "1f132b614161a6ef1d5a3b0b85a7c09dbd44fc2f0f510e76fcbb3c677bbdaef4"
+    },
+    {
+      "library": "HexSignDetMathlib",
+      "package": "hex-sign-det-mathlib",
+      "candidateCommit": "4858cb7f6bd809dae8e75ccbf1f5b406ea08b866",
+      "mirrorBase": null,
+      "mathlib": true,
+      "configurationSHA256": "51688548ca19e1e3153455a505d2758337cbaf77db64f956a8a31413e36164be",
+      "manifestSHA256": "83d3b64d1116c3a953821e267420c633d57f80f8e50f1ea2e94cfe416479fd78"
+    },
+    {
+      "library": "HexRationalFn",
+      "package": "hex-rational-fn",
+      "candidateCommit": "b24352dafb3f5d973619cd550f55f2ed39cb38de",
+      "mirrorBase": null,
+      "mathlib": false,
+      "configurationSHA256": "152b20fdbbb0173f257bf524b5622d26982ec6516f77c670c5768cf5e56144ae",
+      "manifestSHA256": "89421d0ae8b90e968eabf7cc0c32336dcb54f6462442aead04476fdffed3471b"
+    },
+    {
+      "library": "HexOrderedFn",
+      "package": "hex-ordered-fn",
+      "candidateCommit": "0cf7b4a2b6e19b9144154cc003797c3dd452612d",
+      "mirrorBase": null,
+      "mathlib": false,
+      "configurationSHA256": "0bd48635de6ef37cfcbd288dbacaeb7bb0f20d0eb8a1f9aa8f97196decd7c35f",
+      "manifestSHA256": "940425ae18657d5c1393ec09ff8efd8c633e6ba842de131beadc0c340f0d194c"
+    },
+    {
+      "library": "HexRationalFnMathlib",
+      "package": "hex-rational-fn-mathlib",
+      "candidateCommit": "27316b7e61ea241050d5af0d646c43d3ee71a90f",
+      "mirrorBase": null,
+      "mathlib": true,
+      "configurationSHA256": "cb25a573df00d2fa58a62ca3e9fc5a648badab9b96f351f9e6447d8c143ec014",
+      "manifestSHA256": "e5eac4d884e48c6df70198d50a65259c2d870ea45a64df2f5a913238811a584a"
+    },
+    {
+      "library": "HexOrderedFnMathlib",
+      "package": "hex-ordered-fn-mathlib",
+      "candidateCommit": "ffcb5cd99456e80a8e4243b8fce3ce45cd229a4a",
+      "mirrorBase": null,
+      "mathlib": true,
+      "configurationSHA256": "ae4024114fa948634ea0fa2931f40ec12b67767ace39501f7cd56953cb34160c",
+      "manifestSHA256": "b6358fad829e81113e7fa7ccb487c1bce718b018d0653db59e529e00a49c7da6"
+    },
+    {
+      "library": "HexRealAlgebraic",
+      "package": "hex-real-algebraic",
+      "candidateCommit": "c46c4672ae428524092c158861740d7529e106af",
+      "mirrorBase": null,
+      "mathlib": false,
+      "configurationSHA256": "a1c45ec1a25cd857364c4f951f39a0ff77319d224c3111107664026cd88cf9d4",
+      "manifestSHA256": "9583a3691f3b7de4d8497c8908253ba8f34ce3ce73fddc6de470cb5d81a42644"
+    },
+    {
+      "library": "HexRealClosure",
+      "package": "hex-real-closure",
+      "candidateCommit": "9a5b6b013c222d3dc6fe6a219dbd623be1f505e9",
+      "mirrorBase": null,
+      "mathlib": false,
+      "configurationSHA256": "70895422b7b256d6780300d09261743b9903161182ad83070365d491bf38cfa4",
+      "manifestSHA256": "d0f3a13e2dd97068cddabfbbaa1d5abea31c97991fe986bbe4a1102a49758be0"
+    },
+    {
+      "library": "HexRealAlgebraicMathlib",
+      "package": "hex-real-algebraic-mathlib",
+      "candidateCommit": "53b9d8969c48cb6ef39f197b5ec98c06846f58b4",
+      "mirrorBase": null,
+      "mathlib": true,
+      "configurationSHA256": "fbbd85ac78e9c76b9d6aa95313ce4f83eddc52a72bed113c682591d656a52a9e",
+      "manifestSHA256": "b785200ef94fbb3eab9890db9a629cdc44a8a9ea4b65ffceb18716cc3e8164ff"
+    },
+    {
+      "library": "HexRealClosureMathlib",
+      "package": "hex-real-closure-mathlib",
+      "candidateCommit": "dad85881608cd8fe9474023daf4eeeaf765cebbf",
+      "mirrorBase": null,
+      "mathlib": true,
+      "configurationSHA256": "8bda31daf6ce05c3213eed83876168a0167eef010a728146ad2a1ceacedaf953",
+      "manifestSHA256": "8518869367398dfee02cb5838c6f3377b35a234c835e6a5771f5655ffd3ee775"
+    },
+    {
+      "library": "HexMvPoly",
+      "package": "hex-mv-poly",
+      "candidateCommit": "8a287e36ff6f71e09146757e13d539ff0e6af29a",
+      "mirrorBase": "dd8f33b90fa8f96c7cce22436c4bd65de825c1d5",
+      "mathlib": false,
+      "configurationSHA256": "981fa629458a56d84d3e4f419b9c90edee7fab18e8646d53d097791893b25609",
+      "manifestSHA256": "2d9bfa6cf41f0d7d079cc923c4f54d761f48712f4f29f7d66a236025102bba15"
+    },
+    {
+      "library": "HexRealFormula",
+      "package": "hex-real-formula",
+      "candidateCommit": "42317c4fa2efddd0584fbae81a4de9fdb3e19560",
+      "mirrorBase": null,
+      "mathlib": false,
+      "configurationSHA256": "f51b663442d511e055edfedad710b92db55d83771ecd6cd9750eddf43222c7cc",
+      "manifestSHA256": "28ee8c91b7ff2a92ce7509126522c8a5002e85d08a1af5ebc82029d54d6514ff"
+    },
+    {
+      "library": "HexMvPolyMathlib",
+      "package": "hex-mv-poly-mathlib",
+      "candidateCommit": "924601d3022b7434fbaad7106f3de991225d5299",
+      "mirrorBase": "6c85c6645cc740d37ea17cfbb2d92ee49c940025",
+      "mathlib": true,
+      "configurationSHA256": "3ddbaf79519ae325720cc426d42068fb20798d916f9e0d60bb20169cc987188f",
+      "manifestSHA256": "9bdc33733616a4e00cbd82a42370948b129dcd7723f3cff1084479ebf96f9761"
+    },
+    {
+      "library": "HexReflect",
+      "package": "hex-reflect",
+      "candidateCommit": "731f2de00fcad513bfb091c17cd68ce9fffb07f5",
+      "mirrorBase": null,
+      "mathlib": false,
+      "configurationSHA256": "7a972dd2d75b58ef0fcd76e72314afffede7db0e690d504b8c1aa1dc02601005",
+      "manifestSHA256": "28ee8c91b7ff2a92ce7509126522c8a5002e85d08a1af5ebc82029d54d6514ff"
+    },
+    {
+      "library": "HexReflectMathlib",
+      "package": "hex-reflect-mathlib",
+      "candidateCommit": "a374690feba42f574ba88034d76db0387ebf38fc",
+      "mirrorBase": null,
+      "mathlib": true,
+      "configurationSHA256": "feed1c9170eb586161fe89052a10dfe04158c4b00e8b3ae0b6f8a0e754fb04ac",
+      "manifestSHA256": "f602fc3ce55a459249f36ded8ea3fe6410dded133ca75df7433ec77b77162c90"
+    },
+    {
+      "library": "HexRealFormulaMathlib",
+      "package": "hex-real-formula-mathlib",
+      "candidateCommit": "37f6ae61c39a74f0b407773085789fa3d230e027",
+      "mirrorBase": null,
+      "mathlib": true,
+      "configurationSHA256": "6b464e5bbea2e0ead9cdfc713388b5d6719d004d89c6ebab6ef48a1bbdfb6210",
+      "manifestSHA256": "3abe85ba2cd76eb9b1fca9192c7f2171608d208e3ee3293f8995c97d7b43660d"
+    },
+    {
+      "library": "HexRCF",
+      "package": "hex-rcf",
+      "candidateCommit": "bff36d67c3e6bc948b4f13ff691b275d4374d3a4",
+      "mirrorBase": "5184085507fabb68e57eb773a01ffe6ba25da844",
+      "mathlib": true,
+      "configurationSHA256": "847a1b45e0dd50f39cc961d0a119787f3024718c404ff79d0051d9e756bc3a43",
+      "manifestSHA256": "806d970c83e744faa4a956fc9872dd05dfc2eb020afb0e460c7c361dea7d1c7c",
+      "originalCandidateCommit": "9f2553a0863017245f96136508dd52dd97e9333e"
+    }
+  ],
+  "consumer": {
+    "configurationSHA256": "71af9bcc51b246683d87190b043d04c70a0eefbf129a2d1346f0a013736c2201",
+    "manifestSHA256": "350edb53f768b2e71094cbe495ad127665f292d93790daa1c4ef2bdcacd3f10f",
+    "sourceSHA256": {
+      "Consumer.lean": "bbf51d64b499558034fea18c53029597bcbd820763049452a5d2a458d470b928",
+      "HexRCF/ProductionProgress.lean": "de785bde2ef78557f5ea0815380d5daf2f38a2f2a332f14e9e38d74cc803351e",
+      "HexRCF/RealCoefficients/Carrier.lean": "3c902bfce8e9665fef95a769c7aff051250af9d4bd3eb23b7fdbb090c951f8d0",
+      "HexRCF/RealCoefficients/CellFormula.lean": "9ebf19f62eb39ed68d9d46adcee8757475e60abe86bf5dd2d897f28b3a45494a",
+      "HexRCF/RealCoefficients/Coefficients.lean": "01e41826978ecd61a0b5bf6ea08f9c6aa05c5f41b9b5529b358bbc81fc9dad83",
+      "HexRCF/RealCoefficients/CommonPresentation.lean": "4f4584a87f7c74d761aa4d0ded667b6b3c6b16705015dadb2a5f8b77c53de2c5",
+      "HexRCF/RealCoefficients/CommonTactic.lean": "88d21a150c829d4d600f3ded74e4f987292ca636c0909f4a5d0e2a40c8b421a9",
+      "HexRCF/RealCoefficients/Conversion.lean": "c94eb3aa7c0cba5683a93649a614e3d44072a44f82d4a687d49f038b0e6bf681",
+      "HexRCF/RealCoefficients/CubeTwo.lean": "2e7238b21b1daea05cea90fa40eadc34ad404559a1e24747e1bedbb9b5fff986",
+      "HexRCF/RealCoefficients/Field.lean": "1d14c263568713a8392adf8edf94d17c5b912fa771bdfeaeda6d44dbe451ac8e",
+      "HexRCF/RealCoefficients/FieldBuild.lean": "ce2574b3c89bde40d26d9a610e5537313dbb5f68aca28dff93b764e328f5736f",
+      "HexRCF/RealCoefficients/FieldBuildBudget.lean": "5581f2c288929b2e9ee7c7e6716f89eb7c04025dd4bdfbc408c2d8c2b75f6305",
+      "HexRCF/RealCoefficients/FieldBuildProgress.lean": "d284ae3e39bef9f63bf2a5a0b064245af6c5f378de7da1f35e84361f5f213128",
+      "HexRCF/RealCoefficients/FieldCarrier.lean": "aa4e027cc65e7aecb696f6690a4ec2eeb30395c7d36b74ff89ff6c930e6abb1c",
+      "HexRCF/RealCoefficients/FieldCompile.lean": "259183b41fef2e563bd4a27a1ae141a6d4dbe9bfc3c6a77b0455ee21faad6b0a",
+      "HexRCF/RealCoefficients/FieldDecision.lean": "bc708cd341e3809e5aa20eed45998dbea61e9a42bc246fa1617010d0259521fd",
+      "HexRCF/RealCoefficients/FieldDecisionProgress.lean": "0fb2408c46dde473aecfe56dadae8ea5086711287d9de2f7191430ac24a6120a",
+      "HexRCF/RealCoefficients/FieldIndex.lean": "97a6451b5d4e0186750aaa3181a6797606e8e43942e85285621300ab04ff4845",
+      "HexRCF/RealCoefficients/FieldIsolate.lean": "e8f7e93828f69b8be8434537a3efabbaddccf67d4fffcabde27ed7a05f6f4ea9",
+      "HexRCF/RealCoefficients/FieldLiteral.lean": "e6ea3dabc8f9d5ea8a9827d92283dc95b00b38b6195c91c9cdb438d2867b2128",
+      "HexRCF/RealCoefficients/FieldReplay.lean": "40e9c09f5b823acca1894631236eb906935239ee81ece2599e029ed26446ce47",
+      "HexRCF/RealCoefficients/FieldRootSigns.lean": "361fb207d8165659ab82a901733fef39120468cddbe1e89a445fe2e4346dd2b9",
+      "HexRCF/RealCoefficients/FieldRootSignsProgress.lean": "9d7cea0147cbfe2c3842ed849390eb1b4f98557c21a58b847f45bc17734cb0b2",
+      "HexRCF/RealCoefficients/FieldRoots.lean": "c0689f33aae815cf514eed01c31c008ed99416cbb4a8b9142a325c060c3d1aac",
+      "HexRCF/RealCoefficients/FieldRuntime.lean": "7ec3bd45f684d536271699bb13ed48805b018082a3d0060256f0700ee7b1b54d",
+      "HexRCF/RealCoefficients/FieldSignProgress.lean": "c8676aff34d6f60cd36cb85228e6d51672ad208eb23de7aaf36c6e40870cedc4",
+      "HexRCF/RealCoefficients/FieldSpecialize.lean": "b67ed74caade71b28d53cf7294f8d62fae1023bca88e9bab1682e1972850d59d",
+      "HexRCF/RealCoefficients/Finite.lean": "b31a858b63d2c937e147e1e1bd88c5513095791a36111e9fa7629921f423be3f",
+      "HexRCF/RealCoefficients/Formula.lean": "d60e91f42615d84c2f8213ee6d57c0be39e646cc31dde8cab205f31015a15cd3",
+      "HexRCF/RealCoefficients/Interpret.lean": "339b6064dd56993e4b845fe5e4aa1ba100443d4daaf9c35f11893087e4ce444c",
+      "HexRCF/RealCoefficients/IntervalSign.lean": "48660f6ec8bc6d380c0255b221f7966a75a14012a63172610f637e00f94e7560",
+      "HexRCF/RealCoefficients/IsolationAssembly.lean": "00ac9cf7cfdd1c377f8a951324007de9298533325b49710d5e0b9a9d95784272",
+      "HexRCF/RealCoefficients/IsolationBuild.lean": "e4339a6a7f9409accc9bf9d7f839c2648290c3ee112154c9b23a6187c5a92e38",
+      "HexRCF/RealCoefficients/IsolationCheck.lean": "a8d2a0e2d085022a0a07557c2df1524bd04c1163741a7c98fe88bf3ddfbb057f",
+      "HexRCF/RealCoefficients/IsolationProgress.lean": "4896c0b667752101ff27ef0fab49099197def4275e5f9cb6779e804dc972ee51",
+      "HexRCF/RealCoefficients/IsolationSemantics.lean": "61a268cbb68e3127cf38e4d93ef428022966383507c4b70627e86922e36f2160",
+      "HexRCF/RealCoefficients/Isolations.lean": "e655ece61d34bc76cad1068730d379c8ea60c2df4f0acf52b94e2faf83f7f7d6",
+      "HexRCF/RealCoefficients/LiteralSign.lean": "3daf33bbd471aabd05b24e5370fde1302544f9e8054dc2d43d8efaefebd50068",
+      "HexRCF/RealCoefficients/Radical.lean": "6e684c5864fc7308c2a014aba1d622bf5f3e64eccdf589033043f1de12e724b7",
+      "HexRCF/RealCoefficients/RadicalBuild.lean": "69839559fe9a283e25ffdcafe456e30b7092bd5e7d86c425018aeb21c1d08345",
+      "HexRCF/RealCoefficients/RadicalCheck.lean": "419e46cde9112eac26957cffd864733423101bfa19b08f2d055769957956ffd9",
+      "HexRCF/RealCoefficients/RadicalProgress.lean": "e55d2af5741ea70cacc43a4ed78adedbf4b4dd0e705d9274432d5ca355870558",
+      "HexRCF/RealCoefficients/Registration.lean": "0118741e050bf819be78598b0633c956bab882d655185741abbd8da81ff7dd4b",
+      "HexRCF/RealCoefficients/Reify.lean": "45b71feb165fb16d77065e93c0a95ca6c822406a0fe00704c5edd45098c66b5a",
+      "HexRCF/RealCoefficients/RootAliases.lean": "6ab1fd3006a4ca9d778871dcbb0fcc148b29accdfa83b8e0ef64e6898b2791c2",
+      "HexRCF/RealCoefficients/Selected.lean": "5d29d11adbcb744443018d0c6de31d6cc321481bb0c70488e95e7c479bd1c410",
+      "HexRCF/RealCoefficients/SignIndex.lean": "c6079c2b2b2e197e0dde9acc245b3bf8ff52b8a5955dfc0d26c6d9c838c8714a",
+      "HexRCF/RealCoefficients/SignInputs.lean": "5cde4c91aabfe82fa5cb5e638d6a9057e3ee93ee9cb2edfb3b9d4c26b8ab1a09",
+      "HexRCF/RealCoefficients/Specialize.lean": "d27b71d3a19a39a64c3647b833b2b39dce931908a744ec4b3ccfbd8ce733ef94",
+      "HexRCF/RealCoefficients/SquareRoot.lean": "0f50dc09054a381f9fcb2dd42d3582c39fc15f083da17ea9e38c645135b7c9bf",
+      "HexRCF/RealCoefficients/SquareTwo.lean": "8a30927c8b18da2cc76c58d84e452384cd53c588ff950e843ca076ec453864be",
+      "HexRCF/RealCoefficients/Tactic.lean": "4af5154c8620c167b9730e307faf9389db4b16839c487e8faa825fe34f348986",
+      "HexRCF/RealCoefficients.lean": "399a7e27e0266fc5e4dc040e25b1bc273e440a7966552395151670a40aa8f847",
+      "HexRCF/RealFormula.lean": "4f5c0c1909407591a379d3f40582e0c82f6e1a91786e0a41946b1dbe4e80ef3b",
+      "HexRCF/TotalAlgebraicProofs.lean": "b7d8aea0da45a23bc7fc21f0e431e4320eb4276c1b687ace416113cd3c840fae",
+      "RealClosureConsumer/Ordered.lean": "f9c8d42a9189ddd9bb5485e316c7b7f667e50bf2d0c3d4748b66275cffd91ef5",
+      "RealClosureConsumer/Query.lean": "47028cf1a3c5e3f78fb47d6bffba6de2bab9d33395ba5b05cb1d668acd387ee8",
+      "RealClosureConsumer/Sign.lean": "763537ffa2c0afdc733bbd5afd0e85d8bd441b0a7399bcbe09da78344aa4959c",
+      "RealClosureConsumer/Tower.lean": "17f70a1cf2a5899f1d9457d4fd3734898481995efd80ae432ebb3791baaec04a"
+    },
+    "command": "lake --no-cache build Consumer OptionalChecks HexRCFTests",
+    "jobs": 10918,
+    "exitCode": 0,
+    "log": "candidate-last-build.log",
+    "logSHA256": "6d4ee3944b72669ce7337eed9c117a886d3952a3a1944601f86d0fc19b0cffbb"
+  },
+  "generatedLockChecks": [
+    {
+      "package": "hex-real-roots-mathlib",
+      "targets": [
+        "HexRealRootsMathlib"
+      ],
+      "manifestSHA256": "caa8796b749584adf8b1b3c6fdfff626e66216c48907ca86c1b08dbc3d88746b",
+      "logSHA256": "e9751bd58a8b4f0dba80e9140af5559662a8e41759ac812a5c7e162f2f9e2960",
+      "manifestUnchanged": true,
+      "exitCode": 0
+    },
+    {
+      "package": "hex-sturm-mathlib",
+      "targets": [
+        "HexSturmMathlib"
+      ],
+      "manifestSHA256": "01266b1275575e8022cfa2524fe09c21ad464474fe7a5dc4a085f89ae6476f7c",
+      "logSHA256": "6a75a3590f52c74b0a4e94bb82b38899cd918c5c69b36bb757d0679cb0bb2060",
+      "manifestUnchanged": true,
+      "exitCode": 0
+    },
+    {
+      "package": "base-rcf-release-shape",
+      "targets": [
+        "HexRCF",
+        "HexRCFTests"
+      ],
+      "manifestSHA256": "806d970c83e744faa4a956fc9872dd05dfc2eb020afb0e460c7c361dea7d1c7c",
+      "logSHA256": "586ec4d64dffd44517a076911384e58d389ef91f08df7eb4fa5535a9b287888f",
+      "manifestUnchanged": true,
+      "exitCode": 0
+    }
+  ],
+  "optionalBoundaryExperiment": {
+    "status": "Local proposal only; not approved or applied to published base-package declarations",
+    "basePackage": "hex-rcf",
+    "baseLibraryRoots": [],
+    "baseModuleGlobs": [
+      "HexRCF",
+      "HexRCF.Builder",
+      "HexRCF.Carrier",
+      "HexRCF.CarrierCheck",
+      "HexRCF.Cells",
+      "HexRCF.CellsCheck",
+      "HexRCF.Certificate",
+      "HexRCF.CommonRoot",
+      "HexRCF.CommonRootCheck",
+      "HexRCF.Decision",
+      "HexRCF.DecisionCheck",
+      "HexRCF.IsolationCheck",
+      "HexRCF.Isolations",
+      "HexRCF.Language",
+      "HexRCF.Regions",
+      "HexRCF.Reify",
+      "HexRCF.Separation",
+      "HexRCF.SeparationCheck",
+      "HexRCF.SignMatrix",
+      "HexRCF.SignMatrixCheck",
+      "HexRCF.Soundness",
+      "HexRCF.SturmBuilder",
+      "HexRCF.SturmCheck",
+      "HexRCF.SturmReplay",
+      "HexRCF.Syntax",
+      "HexRCF.Tactic"
+    ],
+    "originalBaseCommit": "9f2553a0863017245f96136508dd52dd97e9333e",
+    "prototypeBaseCommit": "bff36d67c3e6bc948b4f13ff691b275d4374d3a4",
+    "optionalSources": "Existing adapter and owner proof examples hosted as consumer test modules, not an installable optional package"
+  },
+  "limits": [
+    "Local commits and file URLs are not published versions or remotely installable pins.",
+    "Published mirrors were read-only; no full sync dry run or #10476 staging validation was performed.",
+    "Sign and tower candidate semantic sources reuse merged owner adapters; their production migration remains with the appropriate integration tranche.",
+    "The optional adapter package boundary and changed base module declarations require user direction and an owning SPEC revision before production changes.",
+    "No owner Phase-4 attestation, joint nested ordinary-real realization, phase promotion, or family release-readiness claim follows from these builds."
+  ]
+}
