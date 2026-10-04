@@ -122,6 +122,8 @@ repos:
     pins: []
     lakefile: lean
     lake_declarations: [hexArithOTarget, hexarithWideO, hexarithGcdO, HexArithNative]
+    extra_paths:
+      - { src: "HexArithNative.lean", dest: "HexArithNative.lean" }
     retired_lake_declarations: [hexarithffi]
 
   - repo: leanprover/hex-primality
@@ -165,6 +167,8 @@ repos:
     pins: [hex-arith]
     lakefile: lean
     lake_declarations: [zmod64MulOTarget, hexmodarithO, HexModArithNative]
+    extra_paths:
+      - { src: "HexModArithNative.lean", dest: "HexModArithNative.lean" }
     retired_lake_declarations: [hexmodarithffi]
 
   - repo: leanprover/hex-mv-poly
