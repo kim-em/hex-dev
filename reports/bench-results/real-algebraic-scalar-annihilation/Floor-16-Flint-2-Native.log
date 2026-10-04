@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runFloor16    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a3ddc94-dirty, 2026-10-04T20:09:54Z, host=chungus2
+  repeat 0  2.452 µs  (×2^15, total 80.376 ms)
+  median: 2.452 µs    min: 2.452 µs    max: 2.452 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 68_720 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Floor-16-Flint-2-Native.json

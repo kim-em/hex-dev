@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runCompare256    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a3ddc94-dirty, 2026-10-04T20:13:30Z, host=chungus2
+  repeat 0  47.910 µs  (×2^11, total 98.120 ms)
+  median: 47.910 µs    min: 47.910 µs    max: 47.910 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 68_896 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Compare-256-Z3-3-Native.json

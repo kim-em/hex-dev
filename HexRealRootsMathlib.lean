@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealRootsMathlib.TarskiSoundness
+public import HexRealRootsMathlib.TarskiMod
 public import HexRealRootsMathlib.TarskiReal
 public import HexRealRootsMathlib.RealClosed
 public import HexRealRootsMathlib.TarskiInterpret
@@ -75,4 +76,3 @@ Obreshkoff two-circle prerequisite (the λ-graded sector bound in
 parity in `DescartesParity`).
 -/
 
-public import HexRealRootsMathlib.TarskiMod
