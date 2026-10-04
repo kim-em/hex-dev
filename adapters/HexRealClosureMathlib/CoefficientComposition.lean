@@ -13,6 +13,11 @@ namespace Hex.RealClosure.CoefficientMap
 
 attribute [local instance 2000] Field.toGrindField
 
+/-- Canonical coefficients read in the original native field dictionary. -/
+@[expose] def nativeCoefficients {A : Type} [Lean.Grind.Field A] [DecidableEq A]
+    (values : List (Hex.RationalFn A)) : List A := values.flatMap fun q =>
+  (List.range q.num.size).map q.num.coeff ++ (List.range q.den.size).map q.den.coeff
+
 variable {F G H : Type} [Field F] [Field G] [Field H]
 variable [DecidableEq F] [DecidableEq G] [DecidableEq H]
 
@@ -386,8 +391,7 @@ theorem exists_parameter (first : CoefficientMap F ℝ) (qs : List (Hex.Rational
 /-- Canonical numerator and denominator coefficients of the actual finite
 fraction family. All unstored coefficient positions are zero. -/
 @[expose] def coefficients (qs : List (Hex.RationalFn F)) : List F :=
-  qs.flatMap fun q => (List.range q.num.size).map q.num.coeff ++
-    (List.range q.den.size).map q.den.coeff
+  nativeCoefficients qs
 
 private theorem num_mem (qs : List (Hex.RationalFn F)) (q : Hex.RationalFn F)
     (member : q ∈ qs) (i : Nat) (bound : i < q.num.size) : q.num.coeff i ∈ coefficients qs :=

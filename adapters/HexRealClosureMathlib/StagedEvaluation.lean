@@ -13,11 +13,6 @@ public section
 
 namespace Hex.RealClosure.CoefficientMap
 
-/-- Canonical coefficients read in the original native field dictionary. -/
-@[expose] def nativeCoefficients {F : Type} [Lean.Grind.Field F] [DecidableEq F]
-    (values : List (RationalFn F)) : List F := values.flatMap fun q =>
-  (List.range q.num.size).map q.num.coeff ++ (List.range q.den.size).map q.den.coeff
-
 /-- Specialize a native rational-function stage without changing its field
 dictionary. The new interpretation retains every old domain coefficient,
 including those mapped to zero, as well as the finite requested signs. -/
@@ -58,6 +53,22 @@ as a constant at every level. -/
   | real parent model previous => exact fun a r => model.hom a = r
   | infinitesimal parent previous ih =>
     exact fun a r => ∃ b, a = RationalFn.C b ∧ ih b r
+
+/-- Real-prefix coefficients have their caller-supplied interpreted values. -/
+@[simp] theorem Chain.Realization.realValue_real
+    {A : Type} [Lean.Grind.Field A] [DecidableEq A]
+    {approx : A → Rat → OrderedFn.Oracle.Bounds} {nativeSign : A → Int}
+    (parent : RealChain registry A approx nativeSign)
+    (model : (RealContext.ofChain parent).Interpretation)
+    (previous : parent.Realization registry model) (a : A) (r : ℝ) :
+    (Chain.Realization.real parent model previous).RealValue a r ↔ model.hom a = r := Iff.rfl
+
+/-- Adding an infinitesimal retains exactly the embedded real-prefix values. -/
+@[simp] theorem Chain.Realization.realValue_infinitesimal
+    (parent : Chain registry K sign) (previous : parent.Realization registry)
+    (a : RationalFn K) (r : ℝ) :
+    (Chain.Realization.infinitesimal parent previous).RealValue a r ↔
+      ∃ b, a = RationalFn.C b ∧ previous.RealValue b r := Iff.rfl
 
 /-- A finite family in any actual provider-derived staged base has a partial
 ordinary-real interpretation preserving its native signs and every coefficient

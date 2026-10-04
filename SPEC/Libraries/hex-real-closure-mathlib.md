@@ -563,10 +563,19 @@ model's semantic field, preserving the requested signs and all inherited real
 coefficients. `Context.realize_values` derives the native symbolic reference
 from the context's actual origin and provider history, returning an ordinary
 reader and its closed arithmetic domain without an ambient-model input
-premise. A finite family shares this one reader. Simultaneous use across live
+premise. It constructs a symbolic ordered real-closed reference using
+`Ambient.ofField`; this is the relative realization route. The direct
+`Sample.realizeReplay` route above, which avoids ordered real-closure existence
+for an infinitesimal field, remains a separate required proof.
+`Suffix.realize_values` states inherited-value preservation directly at the
+known suffix embedding. The `realValue_real`, `realValue_infinitesimal` and
+`realValue_pack` lemmas introduce the fixed-coefficient predicate.
+A finite family shares this one reader. Simultaneous use across live
 contexts additionally requires their checked inclusions into one compatible
 context; the sample/export APIs must retain those ownership and membership
-conditions. These theorems specialize finite sign conditions, rather than
+conditions. Infinitesimals added after selected roots enter a new staged base
+through checked enlargement and suffix reconstruction; realizing their live
+predecessors additionally requires the corresponding dependency transport. These theorems specialize finite sign conditions, rather than
 embedding a whole infinitesimal field into ℝ.
 
 These induction and transport lemmas are local proof deliverables. They

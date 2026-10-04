@@ -23,6 +23,14 @@ prefix through the original native base and suffix embeddings. -/
     cases same
     exact fun a r => ∃ b, a = suffix.embed b ∧ following.RealValue b.stored r
 
+/-- Introduce an inherited real value through the actual suffix embedding. -/
+@[simp] theorem Origin.realValue_pack {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base)) (following : base.chain.Realization registry)
+    (a : suffix.context.Value) (r : ℝ) :
+    (Origin.pack base suffix rfl).RealValue following a r ↔
+      ∃ b, a = suffix.embed b ∧ following.RealValue b.stored r := Iff.rfl
+
 /-- Simultaneous ordinary-real realization of a finite family in an actual
 native context. Provider history supplies the fixed real coefficients, and
 the origin supplies every stored infinitesimal and selected-root level.
@@ -96,6 +104,23 @@ theorem Context.realize_values (context : Context registry)
       (∀ a r, context.origin.RealValue following a r → domain a ∧ read a = r) :=
   context.origin.realize_values following values
 
+/-- Ordinary realization along a known stored suffix, with a directly usable
+fixed-coefficient clause. Callers need no dependent cast through `origin.base`. -/
+theorem Suffix.realize_values {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (following : base.chain.Realization registry) (suffix : Suffix (Context.base base))
+    (values : List suffix.context.Value) :
+    ∃ read : suffix.context.Value → ℝ, ∃ domain : suffix.context.Value → Prop,
+      Transport.Closed read domain ∧
+      (∀ a ∈ values, domain a ∧ (SignType.sign (read a) : Int) = suffix.context.sign a) ∧
+      (∀ b r, following.RealValue b.stored r → domain (suffix.embed b) ∧ read (suffix.embed b) = r) := by
+  obtain ⟨read, domain, closed, finite, real⟩ :=
+    (Origin.pack base suffix rfl).realize_values following values
+  refine ⟨read, domain, closed, finite, ?_⟩
+  intro b r inherited
+  apply real (suffix.embed b) r
+  exact (Origin.realValue_pack base suffix following _ r).mpr ⟨b, rfl, inherited⟩
+
 end Hex.RealClosure.Tower
 
 /-- info: 'Hex.RealClosure.Tower.Context.realize' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -105,3 +130,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Context.realize_values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Context.realize_values
+
+/-- info: 'Hex.RealClosure.Tower.Suffix.realize_values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Suffix.realize_values
