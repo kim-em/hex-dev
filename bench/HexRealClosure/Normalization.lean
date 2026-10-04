@@ -21,9 +21,6 @@ structure Input where
   steps : Nat
   monic : working.leadingCoeff = 1
 
-instance : Hashable Input where
-  hash input := hash (input.context.root.raw.head.toArray, input.working.toArray, input.steps)
-
 /-- Prepare the positive root of `2X^degree - 1` in `(0,1)`. Neither storage
 arm changes this descriptor, its selected embedding or its sign backend. -/
 def prepare (degree : Nat) : Option Input := do
@@ -69,7 +66,8 @@ def runEager (input : Option Input) : UInt64 :=
 /- Fixed comparison endpoints: these registrations bind exact result hashes
 for the four matched inputs. They make no asymptotic claim and do not discharge
 Phase-4 scaling coverage. Linear-seed multiplication and eager monic division
-are linear per step; sign queries in both arms build remainder chains. Clean
+are linear per step. The unique selected root uses direct Sturm queries rather
+than BKR; degree 2 uses the linear endpoint fast path instead. Clean
 queries also pseudo-divide the retained higher-degree polynomial. Rational bit
 growth prevents deriving a tight wall-time model from the cubic field-operation
 estimate alone. A general timeout is an operational cap, not a regression budget.
