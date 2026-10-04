@@ -14,31 +14,38 @@ import all HexRCF.ProofProbe.Precision.Full32
 public import HexRCF.ProofProbe.Precision.Full64
 import all HexRCF.ProofProbe.Precision.Full64
 public meta import HexRCF.ProofProbe.Windows.Audit
-public meta import HexRCF.ProofProbe.Literals.Support
+import all HexRCF.ProofProbe.Windows.Audit
 public meta section
 
 namespace Hex.RCF.ProofProbe.Precision
-open Lean
+open Lean Meta
+
+private def hasWindow (name : Name) : MetaM Bool := do
+  let some owner := (← getEnv).getModuleIdxFor? name | throwError "proof is not imported"
+  let (_, counts) ← (Windows.Audit.declaration owner name).run {}
+  return counts.expressions.toList.any fun (e, _) =>
+    e.isConstOf ``Hex.RCF.RealCoefficients.LiteralSign.Window.mk
+
+-- The imported-proof traversal must observe a known positive window control.
+run_meta do
+  unless ← hasWindow ``Windows.FixedRefined.witness do
+    throwError "imported window control was not observed"
 
 run_meta do
   logInfo m!"{(← Windows.Audit.measure ``Full8.witness).compress}"
-  let window ← Literals.usesConstructor ``Full8.witness
-    ``Hex.RCF.RealCoefficients.LiteralSign.Window.mk 0
-  unless window == false do throwError "initial precision arm unexpectedly refined its generator"
+  if ← hasWindow ``Full8.witness then
+    throwError "initial precision arm unexpectedly refined its generator"
 run_meta do
   logInfo m!"{(← Windows.Audit.measure ``Full16.witness).compress}"
-  let window ← Literals.usesConstructor ``Full16.witness
-    ``Hex.RCF.RealCoefficients.LiteralSign.Window.mk 0
-  unless window == false do throwError "initial precision arm unexpectedly refined its generator"
+  if ← hasWindow ``Full16.witness then
+    throwError "initial precision arm unexpectedly refined its generator"
 run_meta do
   logInfo m!"{(← Windows.Audit.measure ``Full32.witness).compress}"
-  let window ← Literals.usesConstructor ``Full32.witness
-    ``Hex.RCF.RealCoefficients.LiteralSign.Window.mk 0
-  unless window == false do throwError "initial precision arm unexpectedly refined its generator"
+  if ← hasWindow ``Full32.witness then
+    throwError "initial precision arm unexpectedly refined its generator"
 run_meta do
   logInfo m!"{(← Windows.Audit.measure ``Full64.witness).compress}"
-  let window ← Literals.usesConstructor ``Full64.witness
-    ``Hex.RCF.RealCoefficients.LiteralSign.Window.mk 0
-  unless window == false do throwError "initial precision arm unexpectedly refined its generator"
+  if ← hasWindow ``Full64.witness then
+    throwError "initial precision arm unexpectedly refined its generator"
 
 end Hex.RCF.ProofProbe.Precision
