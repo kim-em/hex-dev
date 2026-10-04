@@ -50,6 +50,15 @@ theorem alias_base (a : ℝ) (h : (1 / 2 : ℝ) = a) :
 
 theorem half_open : ∀ x ∈ Set.Ioc (0 : ℝ) 1, x < Real.sqrt (1 / 2) → x ^ 2 < 1 / 2 := by rcf
 
+theorem rational_square : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt 2 + Real.sqrt (9 / 4) > 0 := by rcf
+
+theorem perfect_cube : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt 2 + (8 : ℝ) ^ (1 / 3 : ℝ) > 0 := by rcf
+
+theorem shared_anchor : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt 2 - (4 : ℝ) ^ (1 / 4 : ℝ) = x ^ 2 := by rcf
+
 /-- error: rcf: original closed divisor is zero -/
 #guard_msgs in
 example : ∀ x : ℝ, x ^ 2 + 0 / (Real.sqrt (1 / 2) - Real.sqrt (1 / 2)) ≥ 0 := by rcf
@@ -99,6 +108,14 @@ run_elab do
   let .ok (some constructorParameters) ← RationalRoot.parameters? constructorSource |
     throwError "constructor-wrapped rational root was not recognized"
   let _ ← RationalRoot.identify constructorSource constructorParameters
+  refuses (RationalRoot.identify q(Real.sqrt (1 / 2)) ⟨1 / 3, 2⟩)
+  refuses (RationalRoot.identify q(Real.sqrt (1 / 2)) ⟨1 / 2, 3⟩)
+  for (source, base, degree) in [(q(Real.sqrt (9 / 4)), (9 / 4 : Rat), 2),
+      (q((8 : ℝ) ^ (1 / 3 : ℝ)), (8 : Rat), 3),
+      (q((4 : ℝ) ^ (1 / 4 : ℝ)), (4 : Rat), 4)] do
+    let (_, _, canonical) ← FieldRuntime.coefficient source
+    unless canonical.toAlgebraic.p != RationalRoot.polynomial base degree do
+      throwError "perfect-power control did not exercise a different canonical polynomial"
   let .ok none ← RationalRoot.parameters? q((-2 : ℝ) ^ (1 / 3 : ℝ)) |
     throwError "negative real-power branch was admitted"
   let .error (.unsupported _ _) ← RationalRoot.parameters? q((2 : ℝ) ^ (2 / 3 : ℝ)) |
@@ -283,3 +300,23 @@ run_meta do
 /-- info: 'Hex.RCF.RationalRoots.constructor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.RationalRoots.constructor
+
+run_meta do
+  for name in [`Hex.RCF.RationalRoots.rational_square, `Hex.RCF.RationalRoots.perfect_cube,
+      `Hex.RCF.RationalRoots.shared_anchor] do
+    unless ← Hex.RCF.ProofEvidence.contains name
+        (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.RationalRoot.selected) do
+      throwError "perfect-power control {name} did not authenticate the original root alias"
+    Hex.RCF.checkAxioms name (Lean.mkConst name)
+
+/-- info: 'Hex.RCF.RationalRoots.rational_square' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RationalRoots.rational_square
+
+/-- info: 'Hex.RCF.RationalRoots.perfect_cube' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RationalRoots.perfect_cube
+
+/-- info: 'Hex.RCF.RationalRoots.shared_anchor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RationalRoots.shared_anchor

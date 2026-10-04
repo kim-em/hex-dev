@@ -94,7 +94,7 @@ def parameters? (original : Expr) (config : Hex.RealFormula.Reify.Config := {}) 
 
 /-- Prove the selected positive-root notation equals the original source,
 using checked source lowering. This does not discharge source divisors. -/
-def identify (source : Expr) (parameters : Parameters) : MetaM Expr := do
+private def identifyCore (source : Expr) (parameters : Parameters) : MetaM Expr := do
   let num : Q(ℤ) := mkIntLit parameters.base.num
   let den : Q(ℕ) := mkNatLit parameters.base.den
   let degree : Q(ℕ) := mkNatLit parameters.degree
@@ -108,5 +108,12 @@ def identify (source : Expr) (parameters : Parameters) : MetaM Expr := do
   let proof ← mkEqTrans (← instantiateMVars goal) (← mkEqSymm equality)
   Hex.RCF.checkProof `Hex.RCF.RealCoefficients.RationalRoot
     (← mkEq canonical source) proof
+
+/-- Alias identification restores the caller's full state on refusal. -/
+def identify (source : Expr) (parameters : Parameters) : MetaM Expr := do
+  let saved ← saveState
+  let (result, _) ← tryFinally' (identifyCore source parameters)
+    (fun result => unless result.isSome do saved.restore)
+  return result
 
 end Hex.RCF.RealCoefficients.RationalRoot

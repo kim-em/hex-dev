@@ -108,7 +108,9 @@ these aliases preserves original base/exponent/divisor guards and becomes
 multiplication by a closed inverse before shared-schema abstraction. The
 [rational-root regressions](../conformance/HexRCF/RationalRoots.lean) exercise
 actual tactic and prepared replay proofs, a further root over the coefficient
-field, half-open domains and terminal false/invalid inputs. Negative bases,
+field, half-open domains, terminal false verdicts and zero-divisor failures.
+Zero divisions inside an unsupported root base or exponent are refused during
+recognition rather than reaching common-field replay. Negative bases,
 nonreciprocal real exponents and unsupported nested algebraic-base roots do
 not acquire a signed-root interpretation from this frontend.
 Registered bounds compose with unregistered selected algebraic values and
@@ -168,8 +170,9 @@ coordinates in one parent with an actual real model. The
 conjugates, coefficient order, diagnostic false results and half-open domains.
 `Gather.values` transports ordered coefficients from independently constructed
 native contexts through the owner's checked common-context maps. Its
-`prepare_eval`, `run_spec`, `gather_spec` and `run_original` laws preserve
-original owner models and selected embeddings. The
+`prepare_eval` and `run_spec` laws preserve coordinates in supplied compatible
+models. `gather_spec` and `run_original` additionally bind those coordinates to
+the authenticated original owner models and selected embeddings. The
 [gathering regressions](../conformance/HexRCF/Gather.lean) exercise different
 polynomials, selected conjugates, repeated owners, cancellation and a further
 root over the common coefficient field.

@@ -2416,9 +2416,12 @@ Integrating their output into frozen tactic replay still needs the owner's
 checked literal context and predecessor-sign interfaces. The example proves
 the simultaneous signs of these ordinary samples. General finite replay for
 nested selected roots and successive infinitesimals still needs one ordinary
-real assignment for the complete joint constraint set. Native gathering and shared cache/model transport are available as above.
-Their frozen context/sign reconstruction and general joint realization still
-require the corresponding owner interfaces.
+real assignment for the complete joint constraint set. Executable all-live
+enlargement assembly and its frozen acceptance interfaces remain owner
+obligations. Native gathering and shared cache/model transport are available
+as above; they do not supply that general enlargement. Frozen context/sign
+reconstruction and general joint realization still require the corresponding
+owner interfaces.
 
 # Caller-supplied finite bounds
 %%%

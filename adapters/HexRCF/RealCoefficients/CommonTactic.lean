@@ -234,17 +234,27 @@ private meta def rootParameters? (source : Expr) : MetaM (Option RationalRoot.Pa
   | .error (.unsupported _ _) => pure none
   | .error error => throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
 
+private meta def rootArguments (parameters : RationalRoot.Parameters) :
+    MetaM (Q(ℚ) × Q(ℕ)) := do
+  let base : Q(ℚ) ← mkAppM ``mkRat
+    #[mkIntLit parameters.base.num, mkNatLit parameters.base.den]
+  let degree : Q(ℕ) ← pure (mkNatLit parameters.degree)
+  return (base, degree)
+
 /-- Classify the entire source before executing any algebraic construction.
-Unknown siblings must cause a decline before a recognized sibling can fail. -/
-private meta def eligible (source : Expr) : MetaM Bool := do
-  if (← naturalSquareRoot? source).isSome then return true
-  if (← rootParameters? source).isSome then return true
-  unless source.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return false
+Unknown siblings must cause a decline before a recognized sibling can fail.
+Root recognition uses the same config as the preceding cumulative Reify.prepare
+validation, so its budget errors have already been checked for the whole source. -/
+private meta def eligible (source : Expr) :
+    MetaM (Bool × Option RationalRoot.Parameters) := do
+  if (← naturalSquareRoot? source).isSome then return (true, none)
+  if let some parameters ← rootParameters? source then return (true, some parameters)
+  unless source.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return (false, none)
   let argument := source.appArg!
   let anchor ← match ← fieldArgs? argument with
     | some (_, anchor, _) => pure anchor
     | none => pure argument
-  return (← selectedArgs? anchor).isSome || (← normalizedArgs? anchor).isSome
+  return ((← selectedArgs? anchor).isSome || (← normalizedArgs? anchor).isSome, none)
 
 /-- Bind source data by kernel reduction; authentication and resource failures
 remain terminal, rather than becoming solver declines. -/
@@ -297,7 +307,8 @@ private meta def sourceRoot? (argument : Expr) :
     (args ++ #[hreal, literalP, hpoly, literalSquare, hw, hp, hs])
   return some (← FieldRuntime.evalReal argument, p, s, .normalized selected checked)
 
-private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
+private meta def sourcePlan? (source : Expr) (root : Option RationalRoot.Parameters) :
+    MetaM (Option SourcePlan) := do
   let identity : DensePoly Rat := DensePoly.ofList [0, 1]
   if let some radicand ← naturalSquareRoot? source then
     let (_, _, anchorValue) ← FieldRuntime.coefficient source
@@ -319,7 +330,7 @@ private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
     return some ⟨source, anchorValue, sourceP, sourceSquare,
       identity, fieldExpr, sourceProof,
       .radical radicand (← rootAlias source radicand)⟩
-  if let some parameters ← rootParameters? source then
+  if let some parameters := root then
     let (_, _, anchorValue) ← FieldRuntime.coefficient source
     let sourceP := RationalRoot.polynomial parameters.base parameters.degree
     let sourceSquare := if anchorValue.toAlgebraic.p == sourceP then
@@ -449,9 +460,7 @@ private meta def prepareField (source : Reify.Source) (leafSources : Array Expr)
           | .root parameters _ => do
               unless sourceP == RationalRoot.polynomial parameters.base parameters.degree do
                 throwError "rcf: source rational root has a different defining polynomial"
-              let base : Q(ℚ) ← mkAppM ``mkRat
-                #[mkIntLit parameters.base.num, mkNatLit parameters.base.den]
-              let degree : Q(ℕ) ← pure (mkNatLit parameters.degree)
+              let (base, degree) ← rootArguments parameters
               pure q(RationalRoot.polynomial $base $degree)
           | .selected _ _ | .normalized _ _ => FieldLiteral.zpolyExpr sourceP
         let sourceWitness ← mkDecideProof
@@ -469,9 +478,7 @@ private meta def prepareField (source : Reify.Source) (leafSources : Array Expr)
                   hreal, hpositive]
               mkEqTrans selected aliasProof
           | .root parameters aliasProof => do
-              let base : Q(ℚ) ← mkAppM ``mkRat
-                #[mkIntLit parameters.base.num, mkNatLit parameters.base.den]
-              let degree : Q(ℕ) ← pure (mkNatLit parameters.degree)
+              let (base, degree) ← rootArguments parameters
               let hn ← mkDecideProof (q($degree ≠ 0) : Q(Prop))
               let hreal ← mkDecideProof
                 (q(($sourceSquareExpr).meetsRealAxis = true) : Q(Prop))
@@ -702,10 +709,20 @@ private meta def proveRational (source : Reify.Source) : MetaM Expr := do
   let proof ← Hex.RCF.proveRationalGoal source.sentence
   mkAppM ``Iff.mp #[source.sentenceProof, proof]
 
-private meta partial def gatherCore (source : Expr) (leaves : Array Expr) :
-    MetaM (Option (Array Expr)) := do
-  if ← eligible source then
-    return some (if leaves.contains source then leaves else leaves.push source)
+private structure Leaves where
+  sources : Array Expr := #[]
+  roots : ExprMap RationalRoot.Parameters := {}
+
+private meta partial def gatherCore (source : Expr) (leaves : Leaves) :
+    MetaM (Option Leaves) := do
+  if leaves.sources.contains source then return some leaves
+  let (accepted, root) ← eligible source
+  if accepted then
+    let roots := match root with
+      | some parameters => leaves.roots.insert source parameters
+      | none => leaves.roots
+    let updated : Leaves := {sources := (leaves.sources.push source), roots}
+    return some updated
   let e := source.consumeMData
   let args := e.getAppArgs
   let op := e.getAppFn.constName?
@@ -727,8 +744,8 @@ private meta partial def gatherCore (source : Expr) (leaves : Array Expr) :
 
 -- Registered subjects are handled before this frontend. Lower the entire
 -- scalar once, rather than lowering each suffix again during its traversal.
-private meta def gather (source : Expr) (leaves : Array Expr) :
-    MetaM (Option (Array Expr)) := do
+private meta def gather (source : Expr) (leaves : Leaves) :
+    MetaM (Option Leaves) := do
   gatherCore (← Reify.lowerSources #[] source) leaves
 
 private meta def sourcePlans (source : Reify.Source) :
@@ -736,18 +753,18 @@ private meta def sourcePlans (source : Reify.Source) :
   for expression in #[source.proof, source.sentenceProof] ++
       source.coefficients ++ source.divisors do
     let _ ← Hex.RCF.checkExpr `Hex.RCF.RealCoefficients.CommonTactic.sourcePlans expression
-  let mut leaves := #[]
+  let mut leaves : Leaves := {}
   for scalar in source.coefficients ++ source.divisors do
     let some next ← gather scalar leaves | return none
     leaves := next
   let plans ← profileitM Exception "rcf source authentication" (← getOptions) do
     let mut plans : Array SourcePlan := #[]
-    for scalar in leaves do
-      let some plan ← sourcePlan? scalar |
+    for scalar in leaves.sources do
+      let some plan ← sourcePlan? scalar (leaves.roots[scalar]?) |
         throwError "rcf: internal: eligible leaf has no plan"
       plans := plans.push plan
     pure plans
-  return some (leaves, plans)
+  return some (leaves.sources, plans)
 
 /-- Prepare an exact selected-field environment without root/cell production.
 The rational-only input remains with the existing rational solver. -/
