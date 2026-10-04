@@ -78,8 +78,9 @@ The unprofiled native run of the profiled binary spends about 90% of its
 5.52-second process time in first isolation over `ℚ` (4.98 seconds). The
 build-bound native run spends about 92% there. The preliminary whole-process
 profile therefore mostly describes this base-field path. It provides little evidence
-about the algebraic tower stage, whose required separate attribution remains
-outstanding.
+about the algebraic tower stage. The separately filtered first- and
+second-stage attribution is now retained in the
+[MetiTarski root-operation profiles](bench-results/real-closure-metitarski-kernels/).
 
 ## Preliminary native profile
 
@@ -149,6 +150,9 @@ The functional runs do not establish Phase 4 readiness. Required remaining
 evidence includes the fixed trial-major schedule, clean versus eager
 reduction, exact archived workloads, coefficient and evidence growth,
 operation and query counters, DAG sharing, serialization and kernel replay,
-and the required filtered inclusive Hex attribution. Neither this preliminary
-profile nor historical gather profiles with missing source provenance satisfy
-that requirement.
+and profile coverage of the remaining required input families. The separately
+[filtered MetiTarski profiles](bench-results/real-closure-metitarski-kernels/)
+supply representative first- and second-stage inclusive Hex attribution, with
+clean committed postprocessing and recorded stack truncation. This preliminary
+whole-process profile and historical gather profiles with missing source
+provenance remain insufficient for that requirement.
