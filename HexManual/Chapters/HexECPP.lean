@@ -53,11 +53,17 @@ that Lean checks before accepting a primality theorem.
 
 For Mathlib users, the main entry points are:
 
-| Import | What it provides |
-| --- | --- |
-| `HexECPPMathlib` | Proofs from previously supplied certificates. |
-| `HexECPPMathlib.Native` | Built-in search for a certificate, followed by a proof. |
-| `HexECPPMathlib.Pari` | Certificate search using the external PARI/GP program, followed by a proof. |
+:::table +header
+* * Import
+  * What it provides
+* * `HexECPPMathlib`
+  * Proofs from previously supplied certificates.
+* * `HexECPPMathlib.Native`
+  * Built-in search for a certificate, followed by a proof.
+* * `HexECPPMathlib.Pari`
+  * Certificate search using the external PARI/GP program,
+    followed by a proof.
+:::
 
 The computational library `HexECPP` supplies the certificate checker
 and built-in search without importing Mathlib. Its companion
@@ -145,7 +151,10 @@ prime, its order is exactly `q`. Consequently,
 
 `q ≤ #E(𝔽_p) ≤ (√p + 1)²`.
 
-The second inequality is Hasse's bound. If we also require
+The second inequality is Hasse's bound. We use Chris Birkbeck's
+formal proof in [AINTLIB](https://github.com/CBirkbeck/AINTLIB/blob/ab1451487da02cd4483d0e2cdb2cc9e44bbbac17/projects/HasseWeil/HasseWeil/HasseBound.lean),
+imported as {name}`HasseWeil.WeilPairing.hasse_bound`.
+If we also require
 
 `q > (n^(1/4) + 1)²`,
 
@@ -188,7 +197,7 @@ auxiliary prime. Here is a complete elliptic curve certificate for 17:
 ```lean
 namespace HexECPPChapter
 
-@[expose] def certificate : Hex.ECPP.Cert :=
+def certificate : Hex.ECPP.Cert :=
   .step 17 2 3 3 6 6 [10, 13, 3, 13]
     (.base (.small 11))
 
@@ -208,9 +217,8 @@ only a modular multiplication: to justify dividing by `d`, we supply
 still unknown, since division by an arbitrary nonzero residue modulo
 a composite integer is not valid.
 
-The attribute `@[expose]` makes the stored data available when another
-Lean module imports it. The `ecpp using` tactic reads the certificate's
-constructor data, checks that it is for the integer in the goal, and
+The `ecpp using` tactic reads the certificate's constructor data,
+checks that it is for the integer in the goal, and
 produces a proof using the soundness theorem. A stored certificate
 must consist of data, with no uncomputed search calls or local
 hypotheses.
