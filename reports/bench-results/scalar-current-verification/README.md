@@ -17,3 +17,9 @@ also passes; its inherited diagnostics remain retained.
 registrations on the annihilation-guard implementation measured at `a3ddc9473f`.
 The descriptive 432-arm collection separately retains the frozen executable
 and source snapshots. Required CI on the final PR revision remains necessary.
+
+The [source admission audit](named-admission-audit.log) checks 295 mandatory
+adapter/conformance roots and their union of 1103 local modules. The CI scanner
+walks shared dependencies once within an audit; it still rejects missing local
+imports, shadowed adapters and admissions and rereads sources on each new audit.
+The ten lexer/graph regression tests pass.

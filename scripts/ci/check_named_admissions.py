@@ -147,7 +147,12 @@ def module_file(module: str) -> Path | None:
 
 
 def import_cone(start: str) -> set[Path]:
-    pending = [start]
+    return import_cones([start])
+
+
+def import_cones(starts: list[str]) -> set[Path]:
+    """Traverse a union once; shared dependencies retain all audit obligations."""
+    pending = list(starts)
     seen: set[str] = set()
     paths: set[Path] = set()
     while pending:
@@ -283,7 +288,7 @@ def check() -> None:
             module = ".".join(path.relative_to(ROOT / "conformance").with_suffix("").parts)
             if module_file(module) != path:
                 raise ValueError(f"conformance module {module} is shadowed by another source file")
-    paths = set().union(*(import_cone(module) for module in roots))
+    paths = import_cones(roots)
     if BRIDGE not in paths:
         raise ValueError(f"the optional adapter no longer imports {BRIDGE}")
     for relative in sorted(paths):
