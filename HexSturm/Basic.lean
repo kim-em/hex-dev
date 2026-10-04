@@ -27,8 +27,9 @@ coefficient growth without changing signs or forcing positive-leading entries. -
   (c, DensePoly.scale c⁻¹ p)
 
 /-- A validated head and pair of endpoints, retaining the sign operation used
-for validation. The constructor is private; serialized inputs must go through
-`prepare` again. The squarefree chain is reused by prepared queries. -/
+for validation. Its private constructor is reached through preparation or
+restoration from the exact producer equation and original validity proofs.
+The squarefree chain is reused by prepared queries. -/
 structure PreparedDomain (E : Type u) [Zero E] [DecidableEq E] [One E] [Add E] [Sub E] [Mul E]
     [NatCast E] [Neg E] [Inv E] where
   private mk ::

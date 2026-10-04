@@ -12,7 +12,7 @@ public section
 
 namespace Hex.RealClosure.Algebraic.Context
 
-variable {E Ctx : Type} [Zero E] [DecidableEq E] [DecidableEq Ctx]
+variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E] [DecidableEq Ctx]
 variable [targetOne : One E] [targetAdd : Add E] [targetNeg : Neg E] [targetSub : Sub E]
 variable [targetMul : Mul E] [targetInv : Inv E] [targetDiv : Div E] [targetNatCast : NatCast E]
 
@@ -124,6 +124,34 @@ theorem changeOps_data (one : One E) (add : Add E) (neg : Neg E) (sub : Sub E)
   unfold changeOps
   simp only [@Context.ofChecked_root, @Context.ofChecked_rootCount,
     @Context.ofChecked_cleanCoeff, @Context.ofChecked_canReduce, @SignDet.Descriptor.changeOps_raw]
+
+/-- Transport retains the optional canonical cache, with each stored domain
+transported to the target operations and no preparation rerun. -/
+theorem changeOps_domains (one : One E) (add : Add E) (neg : Neg E) (sub : Sub E)
+    (mul : Mul E) (inv : Inv E) (div : Div E) (natCast : NatCast E)
+    (ho : one = targetOne) (ha : add = targetAdd) (hg : neg = targetNeg) (hs : sub = targetSub)
+    (hm : mul = targetMul) (hi : inv = targetInv) (hd : div = targetDiv)
+    (hn : natCast = targetNatCast) (sign : E → Int) (binding : Ctx)
+    (context : @Context E Ctx _ _ one add neg sub mul inv div natCast _ sign binding) :
+    (@Context.handle E Ctx _ _ targetOne targetAdd targetNeg targetSub targetMul targetInv targetDiv
+      targetNatCast _ sign binding (@changeOps E Ctx _ _ _ targetOne targetAdd targetNeg targetSub targetMul targetInv targetDiv
+        targetNatCast one add neg sub mul inv div natCast ho ha hg hs hm hi hd hn
+        sign binding context)).map
+        (fun h => @SignDet.QueryHandle.domain E Ctx _ _ targetOne targetAdd targetSub targetMul
+          targetNatCast targetNeg targetInv _ sign binding _ h) =
+    (@Context.handle E Ctx _ _ one add neg sub mul inv div natCast _ sign binding context).map (fun h =>
+      @Sturm.PreparedDomain.changeOps E _ _ targetOne targetAdd targetSub targetMul targetNatCast
+        targetNeg targetInv one add sub mul natCast neg inv ho ha hs hm hn hg hi
+        (@SignDet.QueryHandle.domain E Ctx _ _ one add sub mul natCast neg inv _ sign binding
+          (@Context.root E Ctx _ _ one add neg sub mul inv div natCast _ sign binding context) h)) := by
+  unfold changeOps
+  rw [@Context.ofChecked_domains, Option.map_map]
+  congr 1
+  funext handle
+  dsimp only [Function.comp_def]
+  exact @SignDet.QueryHandle.changeOps_domain E Ctx _ _ _ targetOne targetAdd targetSub
+    targetMul targetNatCast targetNeg targetInv one add sub mul natCast neg inv
+    ho ha hs hm hn hg hi sign binding _ handle
 
 /-- Identity transport preserves the entire immutable context. -/
 theorem changeOps_self (sign : E → Int) (binding : Ctx)

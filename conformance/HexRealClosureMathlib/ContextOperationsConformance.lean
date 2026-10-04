@@ -59,6 +59,17 @@ private theorem source_cached : source.prepareQueries = some sourceHandle := by
   unfold sourceHandle
   apply Hex.SignDet.Descriptor.prepareQueries_eq
 
+set_option maxRecDepth 32768 in
+/-- The original prepared context counts the single positive root. -/
+theorem source_count : context.rootCount = some 1 := by
+  simp only [context, Context.adjoin, source_cached, sourceHandle,
+    Hex.SignDet.QueryHandle.ofChecked, sourceDomain, @Sturm.PreparedDomain.ofChecked_sign,
+    @Sturm.PreparedDomain.ofChecked_head, @Sturm.PreparedDomain.ofChecked_lower,
+    @Sturm.PreparedDomain.ofChecked_upper, @Sturm.PreparedDomain.ofChecked_squarefree,
+    Option.map_some, Sturm.countPrepared, Sturm.certifyCountPrepared,
+    TarskiCertificate.fromChains, TarskiCertificate.signs, signVar]
+  decide +kernel
+
 /-- The target operation equals rational addition, but the kernel cannot
 execute its value. Its equality is used only in erased validity proofs. -/
 opaque targetAdd : {operation : Add Rat // operation = Rat.instAdd} := ⟨inferInstance, rfl⟩
@@ -74,11 +85,12 @@ opaque targetAdd : {operation : Add Rat // operation = Rat.instAdd} := ⟨inferI
 
 set_option maxRecDepth 32768 in
 /-- The actual transported fields compute without evaluating the opaque
-addition or rewriting transport to the original context. -/
+addition or using an equation between the transported and native contexts. -/
 theorem stored_fields :
     let : Add Rat := targetAdd.val
     transported.root.raw = Hex.SignDet.Conformance.singletonRaw ∧
     transported.rootCount = some 1 ∧ transported.canReduce = true ∧
+    transported.cleanCoeff 37 = true ∧
     transported.handle.map (fun handle => handle.domain.squarefree.chain) =
       some #[Sturm.Fixtures.p, Sturm.Fixtures.x, sourceUnit] := by
   let : Add Rat := targetAdd.val

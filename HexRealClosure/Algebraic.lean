@@ -122,7 +122,7 @@ theorem Context.ofChecked_eq (context : Context E Ctx coeffSign parent) :
 
 /-- Context equality retains the exact descriptor, optional prepared domain,
 root count and reduction policy. Proof fields do not affect that equality. -/
-theorem Context.ext (left right : Context E Ctx coeffSign parent)
+private theorem Context.ext (left right : Context E Ctx coeffSign parent)
     (root : left.root = right.root) (handle : HEq left.handle right.handle)
     (count : left.rootCount = right.rootCount)
     (clean : left.cleanCoeff = right.cleanCoeff) (reduce : left.canReduce = right.canReduce) :

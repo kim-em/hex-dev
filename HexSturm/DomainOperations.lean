@@ -11,7 +11,7 @@ public section
 
 namespace Hex.Sturm.PreparedDomain
 
-variable {E : Type} [Zero E] [DecidableEq E]
+variable {E : Type u} [Zero E] [DecidableEq E]
 variable [targetOne : One E] [targetAdd : Add E] [targetSub : Sub E]
 variable [targetMul : Mul E] [targetNatCast : NatCast E] [targetNeg : Neg E] [targetInv : Inv E]
 
@@ -45,6 +45,37 @@ The exact producer equation and endpoint proofs are transported, not rerun. -/
         (@One.one (DensePoly E) (@DensePoly.instOne E _ _ one)) at produced
       rw [ho, ha, hs, hm, hn, hg, hi] at produced
       exact produced)
+
+/-- All literal domain fields survive equal-operation transport. -/
+theorem changeOps_data (one : One E) (add : Add E) (sub : Sub E)
+    (mul : Mul E) (natCast : NatCast E) (neg : Neg E) (inv : Inv E)
+    (ho : one = targetOne) (ha : add = targetAdd) (hs : sub = targetSub)
+    (hm : mul = targetMul) (hn : natCast = targetNatCast)
+    (hg : neg = targetNeg) (hi : inv = targetInv)
+    (domain : @PreparedDomain E _ _ one add sub mul natCast neg inv) :
+    (@PreparedDomain.sign E _ _ targetOne targetAdd targetSub targetMul
+        targetNatCast targetNeg targetInv (@changeOps E _ _ targetOne targetAdd targetSub targetMul targetNatCast targetNeg targetInv
+        one add sub mul natCast neg inv ho ha hs hm hn hg hi domain),
+      @PreparedDomain.head E _ _ targetOne targetAdd targetSub targetMul
+        targetNatCast targetNeg targetInv (@changeOps E _ _ targetOne targetAdd targetSub targetMul targetNatCast targetNeg targetInv
+        one add sub mul natCast neg inv ho ha hs hm hn hg hi domain),
+      @PreparedDomain.lower E _ _ targetOne targetAdd targetSub targetMul
+        targetNatCast targetNeg targetInv (@changeOps E _ _ targetOne targetAdd targetSub targetMul targetNatCast targetNeg targetInv
+        one add sub mul natCast neg inv ho ha hs hm hn hg hi domain),
+      @PreparedDomain.upper E _ _ targetOne targetAdd targetSub targetMul
+        targetNatCast targetNeg targetInv (@changeOps E _ _ targetOne targetAdd targetSub targetMul targetNatCast targetNeg targetInv
+        one add sub mul natCast neg inv ho ha hs hm hn hg hi domain),
+      @PreparedDomain.squarefree E _ _ targetOne targetAdd targetSub targetMul
+        targetNatCast targetNeg targetInv (@changeOps E _ _ targetOne targetAdd targetSub targetMul targetNatCast targetNeg targetInv
+        one add sub mul natCast neg inv ho ha hs hm hn hg hi domain)) =
+    (@PreparedDomain.sign E _ _ one add sub mul natCast neg inv domain,
+      @PreparedDomain.head E _ _ one add sub mul natCast neg inv domain,
+      @PreparedDomain.lower E _ _ one add sub mul natCast neg inv domain,
+      @PreparedDomain.upper E _ _ one add sub mul natCast neg inv domain,
+      @PreparedDomain.squarefree E _ _ one add sub mul natCast neg inv domain) := by
+  unfold changeOps
+  exact @PreparedDomain.ofChecked_data E _ _ targetOne targetAdd targetSub targetMul
+    targetNatCast targetNeg targetInv _ _ _ _ _ _ _ _
 
 /-- Identity transport preserves the complete prepared-domain value. -/
 theorem changeOps_self (domain : PreparedDomain E) :

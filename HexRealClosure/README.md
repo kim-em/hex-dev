@@ -2444,3 +2444,7 @@ policy; `changeOps_reduce` and `changeOps_signPoly` identify the actual reductio
 and sign functions with the original functions. Transport changes validity
 proofs without executing domain preparation. It does not reconstruct a context
 from untrusted bytes or collect missing arithmetic evidence.
+
+The restoring factories keep their constructors private. Public projection
+laws expose their stored fields; direct kernel unfolding requires the owning
+module imports used by the conformance fixture.

@@ -13,7 +13,7 @@ public section
 
 namespace Hex.SignDet.QueryHandle
 
-variable {E Ctx : Type} [Zero E] [DecidableEq E] [DecidableEq Ctx]
+variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E] [DecidableEq Ctx]
 variable [targetOne : One E] [targetAdd : Add E] [targetSub : Sub E]
 variable [targetMul : Mul E] [targetNatCast : NatCast E] [targetNeg : Neg E] [targetInv : Inv E]
 
