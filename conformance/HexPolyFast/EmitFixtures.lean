@@ -16,6 +16,8 @@ public import HexPolyFp.NttMul
 public import HexPolyZ.KroneckerMulti
 public import HexPolyZ.NttMul
 
+import all HexModArith.Ntt.Catalogue
+
 public section
 
 /-!
