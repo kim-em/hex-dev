@@ -26,7 +26,7 @@ def digest(path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--oracle-python', type=Path, required=True)
+    parser.add_argument('--oracle-python', type=Path, required=True, help='path to the interpreter with the pinned oracle packages (venv paths are preserved)')
     args = parser.parse_args()
     args.oracle_python = args.oracle_python.absolute()
     destination = args.output.resolve()
@@ -37,13 +37,14 @@ def main():
     manifest = destination / 'manifest.json'
     record = dict(status='running', host=platform.node(), platform=platform.platform(),
                   sizes=[2,4,8,16], trials=6, target_inner_nanos=500000000,
+                  child_timeout_seconds=600, warmup_first_iter=True, python_version=sys.version,
                   schedule='trial-major; degree order 2,4,8,16; adjacent AB/BA alternating by trial',
                   arms=dict(A='clean', B='eager'), commands=[], measurements=[],
                   comparison=dict(per_call='total_nanos / inner_repeats',
                     statistic='per-degree median (mean of the middle two sorted values) and full range of six paired eager/clean ratios',
                     analyzer='scripts/bench/analyze_real_closure_normalization.py',
                     direction_rule='consistent direction only if all six ratios are strictly on the same side of 1; otherwise mixed/inconclusive',
-                    rerun_policy='one fixed capture; no automatic or manual rerun for an inconclusive result',
+                    rerun_policy='one fixed capture; no rerun for an inconclusive result; at most one unchanged recapture after an operational failure, retaining all completed arms and failed attempts',
                     inference='descriptive shared-host observations, no significance or asymptotic verdict'),
                   regime='one Rat extension, head leading coefficient 2, 2n products; stored eager denominators at most 4; unique selected root uses direct Sturm rather than BKR; degree 2 uses the linear endpoint fast path; no normalization policy conclusion')
     def save():

@@ -79,6 +79,7 @@ def clean2 (_ : Unit) : IO UInt64 := do
 
 setup_fixed_benchmark clean2 where {
   expectedHash := some 0x3412eccad34759ea
+  warmupFirstIter := true
   minTotalSeconds := 0.5
   maxSecondsPerCall := 120.0
 }
@@ -88,6 +89,7 @@ def clean4 (_ : Unit) : IO UInt64 := do
 
 setup_fixed_benchmark clean4 where {
   expectedHash := some 0x94e8f7be8d8094d5
+  warmupFirstIter := true
   minTotalSeconds := 0.5
   maxSecondsPerCall := 120.0
 }
@@ -97,6 +99,7 @@ def clean8 (_ : Unit) : IO UInt64 := do
 
 setup_fixed_benchmark clean8 where {
   expectedHash := some 0x7fafce5255084bbd
+  warmupFirstIter := true
   minTotalSeconds := 0.5
   maxSecondsPerCall := 120.0
 }
@@ -106,6 +109,7 @@ def clean16 (_ : Unit) : IO UInt64 := do
 
 setup_fixed_benchmark clean16 where {
   expectedHash := some 0x992873940e7a7ca3
+  warmupFirstIter := true
   minTotalSeconds := 0.5
   maxSecondsPerCall := 120.0
 }
@@ -115,6 +119,7 @@ def eager2 (_ : Unit) : IO UInt64 := do
 
 setup_fixed_benchmark eager2 where {
   expectedHash := some 0xe368522d9dc1d2f2
+  warmupFirstIter := true
   minTotalSeconds := 0.5
   maxSecondsPerCall := 120.0
 }
@@ -124,6 +129,7 @@ def eager4 (_ : Unit) : IO UInt64 := do
 
 setup_fixed_benchmark eager4 where {
   expectedHash := some 0x319b3437a6d96431
+  warmupFirstIter := true
   minTotalSeconds := 0.5
   maxSecondsPerCall := 120.0
 }
@@ -133,6 +139,7 @@ def eager8 (_ : Unit) : IO UInt64 := do
 
 setup_fixed_benchmark eager8 where {
   expectedHash := some 0xcfa38add5d03e099
+  warmupFirstIter := true
   minTotalSeconds := 0.5
   maxSecondsPerCall := 120.0
 }
@@ -142,6 +149,7 @@ def eager16 (_ : Unit) : IO UInt64 := do
 
 setup_fixed_benchmark eager16 where {
   expectedHash := some 0x72603d1a602928b2
+  warmupFirstIter := true
   minTotalSeconds := 0.5
   maxSecondsPerCall := 120.0
 }

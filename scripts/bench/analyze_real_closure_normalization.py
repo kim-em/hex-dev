@@ -2,7 +2,8 @@
 """Summarize the preregistered paired normalization schedule, retaining all arms.
 
 The median of six values is the arithmetic mean of the middle two sorted values.
-No automatic or manual rerun follows an inconclusive comparison.
+No rerun follows an inconclusive comparison. At most one unchanged recapture
+after an operational failure is permitted; every failed attempt is retained.
 """
 import argparse
 import hashlib
@@ -28,25 +29,33 @@ def summarize(folder):
     if [(r['trial'], r['degree'], r['arm']) for r in rows] != schedule:
         raise ValueError('schedule mismatch')
     for attempt in rows:
+        commands = [c for c in manifest['commands'] if c['stdout'] == attempt['output']]
+        if len(commands) != 1:
+            raise ValueError('measurement command binding is missing or ambiguous')
         original = [json.loads(line) for line in (folder / Path(attempt['output']).name).read_text().splitlines()
                     if line.startswith('{')]
         if original != attempt['rows'] or len(original) != 1 or attempt['exit_code'] != 0:
             raise ValueError('measurement disagrees with retained command output')
         row = original[0]
         name = 'Hex.RealClosure.Normalization.' + ('clean' if attempt['arm'] == 'A' else 'eager') + str(attempt['degree'])
+        if commands[0]['argv'][-6:] != ['_child', '--bench', name, '--fixed', '--min-total-nanos', str(manifest['target_inner_nanos'])]:
+            raise ValueError('measurement command used different timing parameters')
         if (row['status'] != 'ok' or row['kind'] != 'fixed' or row['function'] != name or
             row['result_hash'] != manifest['expected_hashes'][str(attempt['degree'])][attempt['arm']] or
             row['env']['git_commit'] != manifest['commit'] or row['env']['git_dirty'] is not False or
-            row['total_nanos'] <= 0 or row['inner_repeats'] <= 0):
+            row['total_nanos'] < manifest['target_inner_nanos'] or row['inner_repeats'] <= 0):
             raise ValueError('measurement failed its arithmetic or source binding')
     summary = []
     for degree in (2, 4, 8, 16):
         values = {arm: [r['rows'][0]['total_nanos'] / r['rows'][0]['inner_repeats']
                        for r in rows if r['degree'] == degree and r['arm'] == arm] for arm in 'AB'}
+        repeats = {arm: [r['rows'][0]['inner_repeats'] for r in rows
+                        if r['degree'] == degree and r['arm'] == arm] for arm in 'AB'}
         ratios = [b / a for a, b in zip(values['A'], values['B'])]
         direction = ('eager faster throughout' if all(r < 1 for r in ratios) else
                      'clean faster throughout' if all(r > 1 for r in ratios) else 'mixed/inconclusive')
         summary.append(dict(degree=degree, direction=direction,
+            inner_repeats={arm: [min(repeats[arm]), max(repeats[arm])] for arm in 'AB'},
             clean_ms=statistics.median(values['A']) / 1e6, eager_ms=statistics.median(values['B']) / 1e6,
             paired_eager_over_clean_median=statistics.median(ratios),
             paired_eager_over_clean_min=min(ratios), paired_eager_over_clean_max=max(ratios),
