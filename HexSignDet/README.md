@@ -536,3 +536,40 @@ coefficient operations. `changeOps_validate` proves exact agreement with the
 actual validator, including rejection; `changeOps_nodes` preserves its literal
 node list and indices. These are operation equalities, not field laws on stored
 representatives or assumptions about certificate completeness.
+
+
+`Dependencies.Graph` stores certificates from successive coefficient fields in
+one finite array. Each entry records its coefficient level, full literal
+subject, payload and references to lower-level entries. References include
+both the expected level and subject. `Graph.check` rejects cycles, forward
+references, equal-level dependencies, invalid result indices and mismatched
+subjects, including defects in unused entries.
+
+`Graph.validate?` takes the mathematical reader for each packet and checks
+entries in order. Each reader receives only its declared, already checked
+children, and its result type may depend on the complete entry. Several parent
+packets can reuse one child's typed result. Local readers check the actual BKR
+and coefficient evidence, including coverage of every required fact;
+structural envelope checking alone does not establish sign correctness.
+`Graph.validate_entries` proves that every returned memo position retains the
+original complete entry. `Graph.validate_check`, `Graph.check_children` and
+`Graph.check_roots` establish reference bounds, strict level decrease and full
+literal bindings from actual acceptance.
+
+`Dependencies.Graph.codec` uses the shared integer-only JSON format.
+`Graph.codec_lawful` and `Graph.codec_bytes` preserve every entry, result and
+reference literally. `Graph.decode` binds the ordered result levels and
+subjects to the caller before checking packet contents. `Graph.decode_encode`
+relates actual printing, byte parsing and local checking to the exact returned
+memo and parsed graph, under the shared syntax/resource precheck.
+`Decoded.results` selects the declared typed results in order using proved
+index bounds, including repeated references to shared entries. Packet readers still supply
+context reconstruction and evidence for intermediate coefficient arithmetic.
+
+The direct nested conformance example produces two distinct upper packets
+and one joint lower packet, then checks their common serialized envelope using
+the existing mathematical readers and a finite coefficient reader. It tests
+repeated results, false unused packets, independently valid incomplete child
+packets, missing edges, wrong levels, stale subjects and altered payload
+contexts. It reuses validated contexts and ordinary coefficient arithmetic;
+it does not establish strict compiled arithmetic replay.

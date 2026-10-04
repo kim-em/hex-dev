@@ -155,3 +155,19 @@ arbitrary accepted bytes. Callers holding a decoded graph can use its `replay?`,
 `descriptor?` or `selectedSigns?` interface with the corresponding finite
 sign-congruence theorem, reusing that graph without parsing the same input
 again.
+
+
+The coefficient-level dependency envelope is `Dependencies.Graph.codec`.
+Its version-one JSON layout is `[1, entries, roots]`. An entry is
+`[level, subject, payload, children]`, and a reference is
+`[index, level, subject]`. Subjects and payloads are complete integer-only JSON
+values, preserved without normalization. Entries retain checking order;
+references point to earlier entries at strictly lower levels. Same-level BKR
+recursion stays inside each packet's existing `Dag` payload.
+
+`Graph.decode` requires the caller's ordered `(level, subject)` results before
+it invokes the local mathematical packet readers. The codec's literal and
+byte roundtrip proofs do not assume that a malformed graph is valid. Graph
+acceptance additionally checks every reference and every payload through its
+local reader, including unused entries. Complete intermediate arithmetic
+facts and context reconstruction remain responsibilities of those readers.
