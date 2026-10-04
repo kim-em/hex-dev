@@ -112,6 +112,46 @@ def rawRep? (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
                 exact List.find?_some
                   (p := fun r : RefinedIsolation p => r.sameRoot rep) hfind⟩
 
+/-- Select from an already computed deterministic isolation run. Its equations
+certify the provenance used by the canonical constructor; both proofs erase
+from compiled code. -/
+@[expose]
+def rawRepIn? (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p) (hzero : p ≠ ZPoly.X)
+    (isolations : Array (DyadicRootIsolation p)) (refined : Array (RefinedIsolation p))
+    (hisolate : ZPoly.isolateComplexRoots? p squarefree (separationDepth p : Int) =
+      some isolations)
+    (hrefine : isolations.mapM DyadicRootIsolation.toRefined? = some refined) :
+    Option {r : RefinedIsolation p //
+      IsCanonical p squarefree r ∧ r.sameRoot rep = true} :=
+  match hfind : refined.toList.find? fun r => r.sameRoot rep with
+  | none => none
+  | some canonical => some ⟨canonical, Or.inr
+      ⟨hzero, isolations, refined, hisolate, hrefine, List.mem_of_find?_eq_some hfind⟩,
+      List.find?_some (p := fun r : RefinedIsolation p => r.sameRoot rep) hfind⟩
+
+/-- Reusing a certified isolation run preserves the complete selector result. -/
+theorem rawRepIn?_eq (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p) (hzero : p ≠ ZPoly.X)
+    (isolations : Array (DyadicRootIsolation p)) (refined : Array (RefinedIsolation p))
+    (hisolate : ZPoly.isolateComplexRoots? p squarefree (separationDepth p : Int) =
+      some isolations)
+    (hrefine : isolations.mapM DyadicRootIsolation.toRefined? = some refined) :
+    rawRepIn? p squarefree rep hzero isolations refined hisolate hrefine =
+      rawRep? p squarefree rep hzero := by
+  unfold rawRep?
+  split
+  · simp_all
+  · rename_i roots hroots
+    have hroots' := Option.some.inj (hroots.symm.trans hisolate)
+    subst roots
+    split
+    · simp_all
+    · rename_i reps hreps
+      have hreps' := Option.some.inj (hreps.symm.trans hrefine)
+      subst reps
+      rfl
+
 /-- The real axis or one of the two open half planes. -/
 inductive RootSide where
   | real | upper | lower
@@ -179,6 +219,37 @@ def canonicalRep? (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
     if hmatch : r.rep.sameRoot rep = true then
       some ⟨r, by rw [orient?_base horient]; exact base.2.1, hmatch⟩
     else none
+
+/-- Canonical orientation using a certified deterministic isolation run. -/
+@[expose]
+def canonicalRepIn? (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p) (hzero : p ≠ ZPoly.X)
+    (isolations : Array (DyadicRootIsolation p)) (refined : Array (RefinedIsolation p))
+    (hisolate : ZPoly.isolateComplexRoots? p squarefree (separationDepth p : Int) =
+      some isolations)
+    (hrefine : isolations.mapM DyadicRootIsolation.toRefined? = some refined) :
+    Option {r : OrientedIsolation p //
+      IsCanonical p squarefree r.base ∧ r.rep.sameRoot rep = true} := do
+  let side := sideOf rep
+  let target := if side = .lower then rep.conj else rep
+  let base ← rawRepIn? p squarefree target hzero isolations refined hisolate hrefine
+  match horient : orient? base.1 side with
+  | none => none
+  | some r =>
+    if hmatch : r.rep.sameRoot rep = true then
+      some ⟨r, by rw [orient?_base horient]; exact base.2.1, hmatch⟩
+    else none
+
+/-- Certified reuse preserves the orientation and canonical stored isolation. -/
+theorem canonicalRepIn?_eq (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p) (hzero : p ≠ ZPoly.X)
+    (isolations : Array (DyadicRootIsolation p)) (refined : Array (RefinedIsolation p))
+    (hisolate : ZPoly.isolateComplexRoots? p squarefree (separationDepth p : Int) =
+      some isolations)
+    (hrefine : isolations.mapM DyadicRootIsolation.toRefined? = some refined) :
+    canonicalRepIn? p squarefree rep hzero isolations refined hisolate hrefine =
+      canonicalRep? p squarefree rep hzero := by
+  simp only [canonicalRepIn?, rawRepIn?_eq, canonicalRep?]
 
 end AlgebraicNumber
 
@@ -344,6 +415,40 @@ def ofNormalized?
     let canonical ← canonicalRep? p squarefree rep _hzero
     some (.mk p prim pos_lc pos_degree checked squarefree canonical.1
       canonical.2.1)
+
+/-- Construct the identical canonical value using an isolation run already
+performed by the caller. The zero fast path remains explicit. -/
+def ofNormalizedIn?
+    (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
+    (pos_degree : 0 < p.natDegree)
+    (checked : ZPoly.CheckedIrreducible p) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p)
+    (isolations : Array (DyadicRootIsolation p)) (refined : Array (RefinedIsolation p))
+    (hisolate : ZPoly.isolateComplexRoots? p squarefree (separationDepth p : Int) =
+      some isolations)
+    (hrefine : isolations.mapM DyadicRootIsolation.toRefined? = some refined) :
+    Option AlgebraicNumber :=
+  if hzero : p = ZPoly.X then some zeroRaw
+  else do
+    let canonical ← canonicalRepIn? p squarefree rep hzero isolations refined
+      hisolate hrefine
+    some (.mk p prim pos_lc pos_degree checked squarefree canonical.1 canonical.2.1)
+
+/-- Reuse preserves the complete checked constructor result, including its
+canonical stored representative and every failure branch. -/
+theorem ofNormalizedIn?_eq
+    (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
+    (pos_degree : 0 < p.natDegree)
+    (checked : ZPoly.CheckedIrreducible p) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p)
+    (isolations : Array (DyadicRootIsolation p)) (refined : Array (RefinedIsolation p))
+    (hisolate : ZPoly.isolateComplexRoots? p squarefree (separationDepth p : Int) =
+      some isolations)
+    (hrefine : isolations.mapM DyadicRootIsolation.toRefined? = some refined) :
+    ofNormalizedIn? p prim pos_lc pos_degree checked squarefree rep isolations
+      refined hisolate hrefine =
+      ofNormalized? p prim pos_lc pos_degree checked squarefree rep := by
+  simp only [ofNormalizedIn?, canonicalRepIn?_eq, ofNormalized?]
 
 /-- The success bit of canonicalization is exactly the success bit of its
 isolation, refinement, and representative-selection pipeline. This exposes
