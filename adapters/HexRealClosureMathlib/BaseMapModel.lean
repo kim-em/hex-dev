@@ -23,6 +23,50 @@ structure Model (inclusion : BaseInclusion source target) where
   target : Tower.Model (Context.ofBase target) R
   value : ∀ a, target.value (inclusion.value a) = source.value a
 
+/-- Interpret the checked coefficient map in one target model. Both chain
+and packed-context factories share this value-preservation construction. -/
+noncomputable def Model.ofMap
+    {K S : Type} [Lean.Grind.Field K] [DecidableEq K]
+    [Lean.Grind.Field S] [DecidableEq S] {sign : K → Int} {sourceSign : S → Int}
+    (source : BaseContext.Context registry S sourceSign)
+    (target : BaseContext.Context registry K sign)
+    (inclusion : BaseInclusion (.pack source) (.pack target))
+    (targetModel : Tower.Model (Context.base target) R)
+    (correct : ∀ a, sourceSign a =
+      (SignType.sign ((targetModel.baseHom target).comp inclusion.coefficients.hom a) : Int)) :
+    Model (R := R) inclusion := by
+  letI : Field S := HexPolyMathlib.fieldOfGrind
+  let f := (targetModel.baseHom target).comp inclusion.coefficients.hom
+  let sourceModel := Tower.Model.base source f correct
+  refine ⟨sourceModel, targetModel, ?_⟩
+  intro a
+  exact (targetModel.baseHom_value target (inclusion.value a)).symm.trans
+    (Tower.Model.base_value source f correct a).symm
+
+private theorem Model.ofMap_target_proof
+    {K S : Type} [Lean.Grind.Field K] [DecidableEq K]
+    [Lean.Grind.Field S] [DecidableEq S] {sign : K → Int} {sourceSign : S → Int}
+    (source : BaseContext.Context registry S sourceSign)
+    (target : BaseContext.Context registry K sign)
+    (inclusion : BaseInclusion (.pack source) (.pack target))
+    (targetModel : Tower.Model (Context.base target) R)
+    (correct : ∀ a, sourceSign a =
+      (SignType.sign ((targetModel.baseHom target).comp inclusion.coefficients.hom a) : Int)) :
+    (Model.ofMap source target inclusion targetModel correct).target = targetModel := rfl
+
+/-- The shared coefficient factory retains the supplied target model. -/
+theorem Model.ofMap_target
+    {K S : Type} [Lean.Grind.Field K] [DecidableEq K]
+    [Lean.Grind.Field S] [DecidableEq S] {sign : K → Int} {sourceSign : S → Int}
+    (source : BaseContext.Context registry S sourceSign)
+    (target : BaseContext.Context registry K sign)
+    (inclusion : BaseInclusion (.pack source) (.pack target))
+    (targetModel : Tower.Model (Context.base target) R)
+    (correct : ∀ a, sourceSign a =
+      (SignType.sign ((targetModel.baseHom target).comp inclusion.coefficients.hom a) : Int)) :
+    (Model.ofMap source target inclusion targetModel correct).target = targetModel :=
+  Model.ofMap_target_proof source target inclusion targetModel correct
+
 /-- Extract the target's actual coefficient hom and compose the checked native
 map. The source model and every coefficient agreement are derived here. -/
 noncomputable def Model.ofTarget
@@ -46,12 +90,8 @@ noncomputable def Model.ofTarget
     have preserved := following.embedding_sign source original inclusion.coefficients produced a
     exact preserved.symm.trans
       (targetModel.baseHom_sign (BaseContext.Context.ofChain target) (inclusion.coefficients.value a))
-  let sourceModel := Tower.Model.base (BaseContext.Context.ofChain source) f correct
-  refine ⟨sourceModel, targetModel, ?_⟩
-  intro a
-  exact (targetModel.baseHom_value (BaseContext.Context.ofChain target)
-    (inclusion.value a)).symm.trans
-    (Tower.Model.base_value (BaseContext.Context.ofChain source) f correct a).symm
+  exact Model.ofMap (BaseContext.Context.ofChain source) (BaseContext.Context.ofChain target)
+    inclusion targetModel correct
 
 /-- Construct both base interpretations in the target's derived ordered
 real-closed ambient. No ambient or coefficient interpretation is supplied. -/
@@ -105,3 +145,11 @@ end Hex.RealClosure.Tower.BaseInclusion
 /-- info: 'Hex.RealClosure.Tower.BaseInclusion.Model.ofRealizations' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.BaseInclusion.Model.ofRealizations
+
+/-- info: 'Hex.RealClosure.Tower.BaseInclusion.Model.ofMap' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.BaseInclusion.Model.ofMap
+
+/-- info: 'Hex.RealClosure.Tower.BaseInclusion.Model.ofMap_target' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.BaseInclusion.Model.ofMap_target
