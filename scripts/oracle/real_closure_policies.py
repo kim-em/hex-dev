@@ -45,10 +45,20 @@ def verify_shape(result, policy, name):
         elif policy == POLICIES[2]:
             require(root["lower"] == [0] and root["upper"] == [2],
                     "whole policy retained finite bounds")
-        if policy == POLICIES[1] and root["kind"] == "selected" and name == CASES[8]:
+        if name in CASES[9:]:
+            require(root["kind"] == "selected" and root["indices"] == [1, 2],
+                    "close squarefree pair did not exercise derivative-sign selection")
+        if policy != POLICIES[1] or root["kind"] != "selected":
+            continue
+        head = [rcf.coeff(c, depth) for c in root["head"]]
+        absolute = lambda value: -value if value < 0 else value
+        bound = next((2**i for i in range(1, 2*len(head)+1)
+                      if all(absolute(c) < (2**i-1)*absolute(head[-1])
+                             for c in head[:-1])), None)
+        if bound is None:
             require(root["lower"] == [0] and root["upper"] == [2],
                     "bounded policy did not use the whole-line fallback")
-        if policy == POLICIES[1] and root["kind"] == "selected" and name != CASES[8]:
+        else:
             require(root["lower"][0] == 1 and root["upper"][0] == 1,
                     "bounded policy lost a finite bound")
             require(rcf.coeff(root["lower"][1], depth) == -rcf.coeff(root["upper"][1], depth),
@@ -58,9 +68,9 @@ def verify_shape(result, policy, name):
             require(key not in bounded_cells or bounded_cells[key] == cell,
                     "bounded policy subdivided one squarefree factor")
             bounded_cells[key] = cell
-        if name in CASES[9:]:
-            require(root["kind"] == "selected" and root["indices"] == [1, 2],
-                    "close squarefree pair did not exercise derivative-sign selection")
+            require(rcf.coeff(root["lower"][1], depth) == -bound and
+                    rcf.coeff(root["upper"][1], depth) == bound,
+                    "bounded policy did not use the first accepted Cauchy bound")
 
 
 def verify(rows):

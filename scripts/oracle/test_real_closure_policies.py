@@ -70,6 +70,14 @@ class PolicyTests(unittest.TestCase):
 
     def test_bounded_inverse_fallback(self):
         rows = copy.deepcopy(self.rows)
-        rows[19]["result"]["output"]["entries"][0]["root"]["lower"] = [1, {"num": [[0, 1]], "den": [[1, 1]]}]
+        rows[19]["result"]["output"]["entries"][0]["root"]["lower"] = [1, {"num": [], "den": [[1, 1]]}]
         with self.assertRaisesRegex(AssertionError, "did not use the whole-line fallback"):
+            verify(rows)
+
+    def test_bounded_wrong_bound_for_entire_factor(self):
+        rows = copy.deepcopy(self.rows)
+        for index in (0, 2):
+            rows[14]["result"]["output"]["entries"][index]["root"].update(
+                lower=[1, [-2, 1]], upper=[1, [2, 1]])
+        with self.assertRaisesRegex(AssertionError, "first accepted Cauchy bound"):
             verify(rows)
