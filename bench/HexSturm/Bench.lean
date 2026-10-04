@@ -531,6 +531,9 @@ setup_benchmark runRationalHigh m => m ^ 2
 -- and at most a fixed quadratic window of growing coefficients, rather
 -- than the Θ(m²)-bit literal quotient. The remaining Tarski chain is fixed
 -- degree; its O(m)-bit coefficients add only O(m) bit work.
+-- Cost model: the original rational query retains Θ(m²) bits of quotient
+-- coefficients and performs Θ(m²) big-by-small bit work on this sparse
+-- fixed-degree-head family. Value-only preparation omits integer certificates.
 setup_benchmark runRationalValue m => m ^ 2
   with prep := rationalValueInput
   where {
@@ -543,6 +546,9 @@ setup_benchmark runRationalValue m => m ^ 2
     maxSecondsPerCall := 120
   }
 
+-- Cost model: remainder-only elimination performs Θ(m²) bit work on the
+-- growing coefficients, without retaining the Θ(m²)-bit quotient. The array
+-- has m+1 input slots and a fixed-degree active window.
 setup_benchmark runReducedRational m => m ^ 2
   with prep := rationalValueInput
   where {

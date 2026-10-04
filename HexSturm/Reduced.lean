@@ -6,7 +6,6 @@ Authors: Kim Morrison
 module
 
 public import HexSturm.Basic
-import all HexSturm.Basic
 import all HexPoly.Euclid.DivGcd
 
 public section
@@ -53,10 +52,19 @@ theorem queryReducedPrepared_eq_mod (domain : PreparedDomain E) (f : DensePoly E
 /-- Domain-first reduction agrees with ordinary querying of the remainder. -/
 theorem queryReduced_eq_query (sign : E → Int) (p f : DensePoly E) (a b : Endpoint E) :
     queryReduced sign p f a b = query sign p (f % p) a b := by
-  cases he : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign) p a b <;>
-    cases hc : SignedRemainderChain.lastIsConstant
-      (SignedRemainderChain.build sign (normalize sign) p 1) <;>
-    simp [queryReduced, prepare, queryReducedPrepared, queryPrepared, query,
-      TarskiCertificate.query, TarskiCertificate.certify, he, hc, modImpl_eq_mod]
+  cases hprepare : prepare sign p a b with
+  | none =>
+      have hsome := prepare_isSome sign p (f % p) a b
+      have invalid : query sign p (f % p) a b = none := by
+        cases hquery : query sign p (f % p) a b <;> simp_all
+      simp [queryReduced, hprepare, invalid]
+  | some domain =>
+      obtain ⟨hsign, hhead, hlower, hupper⟩ :=
+        prepare_eq_some sign p a b domain hprepare
+      simp only [queryReduced, hprepare]
+      rw [queryReducedPrepared_eq_mod]
+      simpa only [hsign, hhead, hlower, hupper] using
+        (query_prepared domain (f % domain.head)).symm
+
 
 end Hex.Sturm
