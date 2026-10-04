@@ -1,5 +1,9 @@
 # Initial precision with construction and transport included
 
+The separate [production-acceptance study](hexrcf-precision-production-proofs.md)
+uses the actual tactic acceptance routine and a balanced six-round schedule.
+Its observations are retained separately from this 24-arm study.
+
 This fixed-field experiment compares 8, 16, 32 and 64 initial generator bits
 for the same positive √2 and the exact same existential target. Every fresh
 module checks its own square, proves its selected value is √2, proves the
