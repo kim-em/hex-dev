@@ -1896,7 +1896,17 @@ zero; the generated proof contains no producer or search call. This explicit
 API retains raw carrier production and does not change the bounded `rcf`
 default. It does not prove recognition or irreducibility quotation complete
 for every closed algebraic source, or make Lean elaboration resource limits
-unbounded. Native production checks cancellation before and after its call.
+unbounded. The total producer has no finite search budget. Native production
+runs synchronously without heartbeat or cancellation polls inside the call;
+cancellation is observed after control returns to meta code. Quotation and
+kernel checking retain Lean’s ordinary resource limits.
+
+The explicit finite API uses linear recorded-sign lookup and one kernel
+decision. The tactic's indexed lookup and split/combined replay options govern
+its separate quotation path. Both paths use the same literal evidence reduction
+lemmas. Original guard coordinates remain in the finite envelope even after
+cancellation; exact nonvanishing and their source identities are checked
+separately from the quantifier fold.
 
 This fixed-field API covers the documented exact algebraic fragment. The
 caller-registration path below has its own frozen bounds and subject/version

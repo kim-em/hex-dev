@@ -7,6 +7,7 @@ module
 
 public import HexRCF.RealCoefficients
 public meta import HexRCF.RealCoefficients.Replay
+public meta import HexRCF.RealCoefficients.FieldLiteral
 public section
 
 namespace Hex.RCF.FiniteReplayTests
@@ -109,5 +110,38 @@ private def proposed := Replay.build input real 256 5
 /-- info: 'Hex.RCF.RealCoefficients.Replay.build_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Replay.build_spec
+
+private def falseFormula : RealFormula.QF 3 := .atom ⟨1, .eq⟩
+
+-- Invalid frozen evidence cannot become a false or unresolved goal diagnostic.
+-- Observe replay's own restoration under both quantifiers and lookup modes.
+run_meta do
+  let .ok universal ← pure (FieldBuild.produceWithin SquareTwo.polynomial SquareTwo.square
+      hw hp real values formula () 256 5 (monicCore := true)) |
+    throwError "universal false-verdict fixture failed production"
+  let .ok existential ← pure (FieldBuild.produceWithin SquareTwo.polynomial SquareTwo.square
+      hw hp real values falseFormula () 256 5 (monicCore := true)) |
+    throwError "existential false-verdict fixture failed production"
+  let cases := [(formula, Lean.mkConst ``formula, RealFormula.Quantifier.forallReal, universal,
+      "rcf: the universal sentence is false on the prepared cells"),
+    (falseFormula, Lean.mkConst ``falseFormula, RealFormula.Quantifier.existsReal, existential,
+      "rcf: the existential sentence is false on the prepared cells")]
+  for (matrix, expression, quantifier, data, diagnostic) in cases do
+    let badSigns := {data.signs with count := {data.signs.count with value := 0}}
+    for indexed in [false, true] do
+      for (candidate, expected) in [(data, diagnostic),
+          ({data with signs := badSigns}, "rcf: fixed-field certificate evidence failed replay")] do
+        let before := (← Lean.getMCtx).mvarCounter
+        let failure ← try
+          let _ ← Lean.withOptions (fun options =>
+              options.setBool `rcf.algebraic.indexSigns indexed) do
+            FieldLiteral.replay (Lean.mkConst ``SquareTwo.polynomial) (Lean.mkConst ``root)
+              (Lean.mkConst ``values) expression values matrix quantifier candidate
+          pure none
+        catch error => pure (some (← error.toMessageData.toString))
+        unless failure == some expected do
+          throwError "incorrect frozen false-verdict diagnostic: {failure}"
+        unless (← Lean.getMCtx).mvarCounter == before do
+          throwError "frozen false-verdict failure leaked metavariables"
 
 end Hex.RCF.FiniteReplayTests

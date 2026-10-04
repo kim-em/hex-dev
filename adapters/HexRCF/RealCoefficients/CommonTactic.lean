@@ -680,12 +680,12 @@ The rational-only input remains with the existing rational solver. -/
 meta def prepareSource (source : Reify.Source) : MetaM (Option Coefficients.Environment) := do
   let some (leaves, plans) ← sourcePlans source | return none
   if leaves.isEmpty then return none
-  let prepared ← prepareField source leaves plans
+  let prepared ← (← prepareField source leaves plans).instantiate
   prepared.checkDomains
-  for proof in [source.proof, source.sentenceProof, prepared.valuationProof,
-      prepared.irreducibleExpr] do
-    Hex.RCF.checkAxioms `Hex.RCF.RealCoefficients.CommonTactic.prepareSource proof
-    checkWithKernel proof
+  for proof in [prepared.source.proof, prepared.source.sentenceProof,
+      prepared.valuationProof, prepared.irreducibleExpr] do
+    let _ ← Hex.RCF.checkProof `Hex.RCF.RealCoefficients.CommonTactic.prepareSource
+      (← inferType proof) proof
   return some prepared
 
 @[rcf_handler] meta def handle : Handler := fun target => do
@@ -719,7 +719,7 @@ metavariable and environment state. No failure starts a different solver. -/
 meta def prepare (target : Expr) :
     MetaM (Except Hex.RealFormula.Reify.Error Environment) := do
   let saved ← saveState
-  let (result, _) ← tryFinally' (withOptions (fun options =>
+  let (result, _) ← tryFinally' (withNewMCtxDepth <| withOptions (fun options =>
       debug.skipKernelTC.set (Elab.async.set options false) false) do
     let source ← match ← Reify.prepare target with
       | .ok source => pure source
@@ -729,7 +729,9 @@ meta def prepare (target : Expr) :
     return .ok prepared)
     (fun result => do
       match result with
-      | some (.ok _) => pure ()
+      | some (.ok _) => modify fun state => {state with
+          mctx := saved.meta.mctx, postponed := saved.meta.postponed,
+          zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds}
       | _ => saved.restore)
   return result
 

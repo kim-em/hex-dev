@@ -51,16 +51,59 @@ structure Environment where
 
 namespace Environment
 
+private meta def closed (expression : Expr) : MetaM Expr := do
+  let expression ← instantiateMVars expression
+  if expression.hasMVar then throwError "rcf: prepared environment contains unresolved metavariables"
+  return expression
+
+/-- Instantiate all expression data before discarding temporary frontend state.
+Unresolved data cannot be assigned while accepting an externally supplied proof. -/
+meta def instantiate (prepared : Environment) : MetaM Environment := do
+  let source := prepared.source
+  let source := {source with
+    original := ← closed source.original
+    sentence := ← closed source.sentence
+    sentenceProof := ← closed source.sentenceProof
+    coefficients := ← source.coefficients.mapM closed
+    divisors := ← source.divisors.mapM closed
+    formula := ← closed source.formula
+    valuation := ← closed source.valuation
+    proof := ← closed source.proof}
+  return {prepared with
+    source
+    polynomialExpr := ← closed prepared.polynomialExpr
+    rootExpr := ← closed prepared.rootExpr
+    valuesExpr := ← closed prepared.valuesExpr
+    formulaExpr := ← closed prepared.formulaExpr
+    irreducibleExpr := ← closed prepared.irreducibleExpr
+    valuationProof := ← closed prepared.valuationProof
+    divisorProofs := ← prepared.divisorProofs.mapM closed
+    divisorExpressions := ← prepared.divisorExpressions.mapM closed
+    divisorIdentities := ← prepared.divisorIdentities.mapM closed}
+
 private meta def restoreOnFailure (action : MetaM α) : MetaM α := do
   let saved ← saveState
-  let (result, _) ← tryFinally' (withOptions (fun options =>
+  let (result, _) ← tryFinally' (withNewMCtxDepth <| withOptions (fun options =>
       debug.skipKernelTC.set (Elab.async.set options false) false) action)
-    (fun result => unless result.isSome do saved.restore)
+    (fun result => do
+      match result with
+      | some _ => modify fun state => {state with
+          mctx := saved.meta.mctx, postponed := saved.meta.postponed,
+          zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds}
+      | none => saved.restore)
   return result
 
 /-- Check every retained original divisor proof before any constant, zero,
 empty-domain, or certificate-production shortcut. -/
 meta def checkDomains (prepared : Environment) : MetaM Unit := restoreOnFailure do
+  let prepared ← prepared.instantiate
+  let .ok original ← Reify.guards prepared.source.original |
+    throwError "rcf: prepared environment has an invalid original source"
+  unless original.size == prepared.source.divisors.size do
+    throwError "rcf: prepared coefficient environment omitted an original divisor"
+  for i in [:original.size] do
+    unless ← withNewMCtxDepth <| isDefEq original[i]! prepared.source.divisors[i]! do
+      throwError "rcf: prepared divisor differs from the original source"
   unless prepared.divisorProofs.size == prepared.source.divisors.size &&
       prepared.divisors.length == prepared.source.divisors.size &&
       prepared.divisorExpressions.size == prepared.source.divisors.size &&
@@ -70,32 +113,28 @@ meta def checkDomains (prepared : Environment) : MetaM Unit := restoreOnFailure 
   for i in [:prepared.source.divisors.size] do
     let divisor : Q(ℝ) := prepared.source.divisors[i]!
     let proof := prepared.divisorProofs[i]!
-    unless ← isDefEq (← inferType proof) q($divisor ≠ 0) do
-      throwError "rcf: prepared divisor proof has the wrong original target"
-    Hex.RCF.checkAxioms `Hex.RCF.RealCoefficients.Coefficients.Environment.checkDomains proof
-    checkWithKernel proof
+    let _ ← Hex.RCF.checkProof
+      `Hex.RCF.RealCoefficients.Coefficients.Environment.checkDomains q($divisor ≠ 0) proof
     let identity := prepared.divisorIdentities[i]!
     let interpreted ← mkAppM ``Field.value #[rep, prepared.divisorExpressions[i]!]
-    unless ← isDefEq (← inferType identity) (← mkEq interpreted divisor) do
-      throwError "rcf: prepared divisor coordinate has the wrong original identity"
-    Hex.RCF.checkAxioms `Hex.RCF.RealCoefficients.Coefficients.Environment.checkDomains identity
-    checkWithKernel identity
+    let _ ← Hex.RCF.checkProof
+      `Hex.RCF.RealCoefficients.Coefficients.Environment.checkDomains
+      (← mkEq interpreted divisor) identity
 
 /-- Compose a checked fixed-field sentence proof with authenticated source
 coefficients and the original-goal equivalence. Check the complete proof and
 its original target, including every transitive axiom dependency. -/
 private meta def compose (prepared : Environment) (fixed : Expr) : MetaM Expr := do
+  let fixed ← closed fixed
+  let prepared ← prepared.instantiate
   let source := prepared.source
   let congr ← withLocalDeclD `ρ (← inferType source.valuation) fun ρ => do
     let body ← mkAppM ``Hex.RealFormula.Prenex.toProp #[source.formula, ρ]
     mkAppM ``congrArg #[← mkLambdaFVars #[ρ] body, prepared.valuationProof]
   let specialized ← mkAppM ``Eq.mp #[congr, fixed]
   let proof ← mkAppM ``Iff.mp #[source.proof, specialized]
-  unless ← isDefEq (← inferType proof) source.original do
-    throwError "rcf: prepared source transport returned the wrong original target"
-  Hex.RCF.checkAxioms `Hex.RCF.RealCoefficients.Coefficients.Environment.transport proof
-  checkWithKernel proof
-  return proof
+  Hex.RCF.checkProof `Hex.RCF.RealCoefficients.Coefficients.Environment.transport
+    source.original proof
 
 /-- Transport only after checking all original domain obligations. -/
 meta def transport (prepared : Environment) (fixed : Expr) : MetaM Expr := restoreOnFailure do
@@ -118,7 +157,7 @@ meta def prove (prepared : Environment) : MetaM Expr := restoreOnFailure do
 /-- Exercise the public finite build/check interface on prepared source data.
 The quoted proof contains frozen certificate literals and `Replay.check_sound`;
 production and field/root searches are absent from the proof term. This explicit
-API retains the existing tactic quotation path and its option behavior. -/
+API quotes its finite checker with one kernel decision and linear table lookup. -/
 private meta def replayWith (prepared : Environment) (totalProduction : Bool) :
     MetaM Expr := restoreOnFailure do
   prepared.checkDomains
@@ -155,6 +194,7 @@ private meta def replayWith (prepared : Environment) (totalProduction : Bool) :
       let certificate ← mkAppM ``Replay.Certificate.mk #[inputExpr, data]
       let checked : Q(Except Replay.Error Bool) ← mkAppM ``Replay.check #[inputExpr, certificate]
       let candidate ← mkFreshExprMVar (q($checked = .ok true) : Q(Prop))
+      let lemmas ← FieldLiteral.evidenceLemmas
       let remaining ← withOptions (fun opts =>
           debug.skipKernelTC.set (Elab.async.set opts false) false) do
         Lean.Elab.runTactic' candidate.mvarId! (← `(tactic|
@@ -162,10 +202,7 @@ private meta def replayWith (prepared : Environment) (totalProduction : Bool) :
             Bool.false_eq_true, ite_false, Replay.Input.value,
             FieldBuild.Result.checkFinite, FieldBuild.Result.recorded,
             FieldBuild.Result.allValue, FieldBuild.Result.anyValue,
-            Field.checkSignTable, LiteralSign.Table.check, LiteralSign.Entry.check,
-            RadicalCert.check, FieldRootSigns.Table.check, IsolationReplay.check,
-            Sturm.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
-            ← Array.all_toList, Array.toList_range]; decide +kernel)))
+            $lemmas,*]; decide +kernel)))
       unless remaining.isEmpty do
         throwError "rcf: prepared finite replay did not prove its accepted verdict"
       let accepted ← instantiateMVars candidate

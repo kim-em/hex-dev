@@ -196,6 +196,7 @@ def check() -> None:
              "HexRealClosureMathlib.BaseStagedRealization",
              "HexRealClosureMathlib.BaseProvider",
              "HexRealClosureMathlib.BaseModel",
+             "HexRealClosureMathlib.BaseOrder", "HexRealClosureMathlib.BaseMapModel",
              "HexRealClosure.BisectionTests", "HexRealClosure.DeflationConformance",
              "HexRealClosure.BisectionFrontierTests", "HexRealClosure.IsolationTests",
              "HexRealClosure.IsolationConformance", "HexRealClosure.RootOrderTests",

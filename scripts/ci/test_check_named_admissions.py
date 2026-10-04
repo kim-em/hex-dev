@@ -139,6 +139,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosureMathlib/BaseStagedRealization.lean",
                 "HexRealClosureMathlib/BaseProvider.lean",
                 "adapters/HexRealClosureMathlib/BaseModel.lean",
+                "adapters/HexRealClosureMathlib/BaseOrder.lean",
+                "adapters/HexRealClosureMathlib/BaseMapModel.lean",
                 "HexRealClosure/TowerInclusion.lean",
                 "HexRealClosure/LiveContext.lean",
                 "HexRealClosure/LiveContextTests.lean",

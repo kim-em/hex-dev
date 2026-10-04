@@ -93,7 +93,8 @@ run_meta do
     unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf ``Replay.check_sound) do
       throwError "prepared finite proof did not use the public replay checker"
     for forbidden in [``Replay.build, ``Replay.buildTotal, ``FieldBuild.produceWithin,
-        ``FieldBuild.produce] do
+        ``FieldBuild.produce, ``Field.prepareSign, ``Sturm.queryPrepared,
+        ``Sturm.certifyPrepared, ``FieldBuild.buildTable] do
       if ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf forbidden) then
         throwError "prepared finite quotation embedded a producer"
 
@@ -177,5 +178,73 @@ run_meta do
   unless rejected.isNone do throwError "finite false verdict became a proof"
   unless (← getMCtx).mvarCounter == before do
     throwError "false finite verdict leaked metavariables"
+
+-- Assigned metavariables cannot hide nonstandard proof dependencies. These
+-- synthetic terms are rejected in meta code and never become theorem proofs.
+run_meta do
+  let target : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0)
+  let .ok prepared ← Coefficients.prepare target | throwError "guarded preparation failed"
+  let guardType ← inferType prepared.divisorProofs[0]!
+  let assigned ← mkFreshExprMVar guardType
+  assigned.mvarId!.assign (← mkSorry guardType false)
+  let invalid := {prepared with divisorProofs := #[assigned]}
+  let rejected ← attempt invalid.checkDomains
+  unless rejected.isNone do throwError "assigned guard proof hid a forbidden dependency"
+
+run_meta do
+  let target : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0)
+  let .ok prepared ← Coefficients.prepare target | throwError "guarded preparation failed"
+  let equality ← inferType prepared.valuationProof
+  let fixedType ← mkAppM ``RealFormula.Prenex.toProp
+    #[prepared.source.formula, equality.getAppArgs[1]!]
+  for hidden in [false, true] do
+    let forbidden ← mkSorry fixedType false
+    let proposed ← if hidden then do
+        let assigned ← mkFreshExprMVar fixedType
+        assigned.mvarId!.assign forbidden
+        pure assigned
+      else pure forbidden
+    let rejected ← attempt (prepared.transport proposed)
+    unless rejected.isNone do throwError "transport accepted a forbidden proof dependency"
+
+run_meta do
+  let target : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0)
+  let .ok prepared ← Coefficients.prepare target | throwError "guarded preparation failed"
+  let missing := {prepared with
+    source.divisors := #[]
+    divisorProofs := #[]
+    divisors := []
+    divisorExpressions := #[]
+    divisorIdentities := #[]}
+  let rejected ← attempt missing.checkDomains
+  unless rejected.isNone do throwError "editable source silently dropped an original guard"
+
+-- Successful preparation and transport retain closed proof declarations but
+-- preserve caller metavariables. Unresolved proof types cannot be unified away.
+run_meta do
+  let target : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0)
+  let before := (← getMCtx).mvarCounter
+  let .ok prepared ← Coefficients.prepare target | throwError "guarded preparation failed"
+  unless (← getMCtx).mvarCounter == before do
+    throwError "successful preparation leaked temporary metavariables"
+  let congr ← withLocalDeclD `ρ (← inferType prepared.source.valuation) fun ρ => do
+    let body ← mkAppM ``RealFormula.Prenex.toProp #[prepared.source.formula, ρ]
+    mkAppM ``congrArg #[← mkLambdaFVars #[ρ] body, prepared.valuationProof]
+  let specialized ← mkAppM ``Iff.mpr #[prepared.source.proof, mkConst ``guarded]
+  let fixed ← mkAppM ``Eq.mpr #[congr, specialized]
+  let unknown ← mkFreshExprMVar (mkSort .zero)
+  let unresolved := mkApp2 (mkConst ``id [.zero]) unknown fixed
+  let before := (← getMCtx).mvarCounter
+  let rejected ← attempt (prepared.transport unresolved)
+  unless rejected.isNone do throwError "transport unified an unresolved caller proof type"
+  if ← unknown.mvarId!.isAssigned then throwError "transport assigned a caller proof type"
+  unless (← getMCtx).mvarCounter == before do
+    throwError "unresolved transport leaked temporary metavariables"
+  let proof ← prepared.transport fixed
+  unless (← getMCtx).mvarCounter == before do
+    throwError "successful transport leaked temporary metavariables"
+  if proof.hasMVar then throwError "successful transport returned temporary metavariables"
+  Hex.RCF.checkAxioms `Hex.RCF.PreparedCoefficientsTests proof
+  checkWithKernel proof
 
 end Hex.RCF.PreparedCoefficientsTests
