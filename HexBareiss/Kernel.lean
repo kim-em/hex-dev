@@ -12,6 +12,7 @@ public import HexMatrix.Notation
 public import HexMatrix.Packed
 public import HexMatrix.Lists
 public meta import HexMatrix.Lists
+meta import HexMatrix.Packed
 
 public section
 

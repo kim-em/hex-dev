@@ -8,6 +8,7 @@ module
 
 public import HexPolySmith.Contracts
 public import HexPolySmith.ExactDiv
+meta import HexMatrix.Basic
 
 public section
 

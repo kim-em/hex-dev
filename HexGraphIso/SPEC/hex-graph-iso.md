@@ -691,7 +691,8 @@ The four routes are `relabel`, `witness`, `root` and `certs`, and
 A positive goal takes the `relabel` route when the right-hand graph is
 syntactically a relabelling of the left-hand one, closing through
 `isomorphic_relabel` with no kernel evaluation and no search. Otherwise
-it takes the `witness` route: the compiled `findIso` search returns a
+it takes the `witness` route: the `findIso` search, run in Lean's interpreter at
+elaboration time, returns a
 literal forward permutation under `maxSearchNodes`, and the tactic ties
 each side's adjacency, colouring and the permutation to list literals
 and closes the goal through `Kernel.checkIso` and
@@ -731,11 +732,10 @@ kernel; the regression ladder in
 missing exposure on two refinement helpers and on core's `Array.map`,
 worked around per `HexBasic.OfFn` pending the upstream exposure fixes).
 
-The library builds with `precompileModules`, so the compiled search
-the tactic runs at elaboration time runs compiled rather than
-interpreted whenever the library's shared objects are loaded (a
-downstream `lake build`, or `lake lean` on a file; `lake env lean`
-interprets). The kernel cost of the negative routes is measured by
+The library does not set `precompileModules`: the tactic's search runs
+interpreted at elaboration time, and a measurement from a downstream package on
+Paley graphs with 29, 37 and 41 vertices found no consistent gain from
+compiling it, because kernel checking dominates. The kernel cost of the negative routes is measured by
 `scripts/bench/graphiso_kernel_cost.py`, which reports type-checking
 time per certificate record and its exponent in the vertex count over
 the cactus corpus; its records live under `reports/bench-results/`

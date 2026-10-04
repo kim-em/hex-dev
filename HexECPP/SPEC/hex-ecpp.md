@@ -186,7 +186,7 @@ definition needed by replay must be `@[expose]`. Restrict the accepted term
 form to constructor data and exposed data constants; reject arbitrary
 computations. Bound traversal, unfolding, numeral size and total certificate
 nodes, including embedded `PrimeCert` data, before evaluating the checker.
-It evaluates `checkAt` using compiled code as an untrusted preflight, reifies the certificate, and emits
+It evaluates `checkAt` as an untrusted preflight, reifies the certificate, and emits
 `natPrime_of_checkAt` with kernel-replayed acceptance. The emitted Boolean
 proof must reduce through exposed Lean definitions and existing approved
 arithmetic fallbacks. A failing preflight, resource interruption, or failed

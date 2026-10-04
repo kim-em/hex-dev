@@ -1914,7 +1914,8 @@ primality h : n     -- tactic: adds `h : Hex.Nat.Prime n`
 ```
 
 Following `factor_poly` and `irreducibility` in hex-berlekamp: the
-search runs at elaboration time as untrusted compiled code. The emitted
+search runs at elaboration time, in Lean's interpreter, as untrusted code
+(`HexPrimality` does not set `precompileModules`). The emitted
 term applies `prime_of_checkPrimeAt` to the requested numeral, the inductive
 certificate reified by its constructors, and one `Eq.refl true` slot. The
 kernel reduces the subject-equality and `checkPrime` Boolean in that slot, so

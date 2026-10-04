@@ -132,6 +132,14 @@ class LakefileAffectsRuntime(unittest.TestCase):
         self.assertNotEqual(before, after)
         self.assertFalse(guard.lakefile_texts_differ(before, after))
 
+    def test_precompiling_a_factorization_library_is_not_a_runtime_change(self):
+        lib = guard.freshness.FACTOR_LIBRARIES[0]
+        before = BASE + f"\nlean_lib {lib} where\n  precompileModules := true\n"
+        after = BASE + f"\nlean_lib {lib}\n"
+        self.assertFalse(guard.lakefile_texts_differ(before, after))
+        self.assertTrue(guard.lakefile_texts_differ(
+            before, BASE + f"\nlean_lib {lib} where\n  moreLinkArgs := #[\"-lm\"]\n"))
+
     def test_editing_a_factorization_library_is_a_runtime_change(self):
         after = BASE.replace('lean_lib HexPoly where\n  srcDir := "."',
                              'lean_lib HexPoly where\n  srcDir := "src"')

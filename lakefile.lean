@@ -144,8 +144,7 @@ extern_lib hexnautyffi (pkg) := do
 lean_lib Hex where
 
 -- Mathlib-free dependencies and producers called during elaboration.
-lean_lib HexBasic where
-  precompileModules := true
+lean_lib HexBasic
 
 lean_lib HexTruncatedSeries where
 
@@ -282,13 +281,9 @@ lean_lib HexConway where
 
 lean_lib HexGFq where
 
-lean_lib HexPrimality where
-  -- primality? executes certificate construction during elaboration.
-  precompileModules := true
+lean_lib HexPrimality
 
-lean_lib HexECPP where
-  -- The explicit certificate elaborator evaluates checked data during elaboration.
-  precompileModules := true
+lean_lib HexECPP
 
 lean_lib HexIntFactor where
   globs := #[`HexIntFactor, `HexIntFactor.Pari, `HexIntFactor.Export,
@@ -432,12 +427,10 @@ lean_lib HexECPPMathlibTests where
 @[default_target]
 lean_lib HexIntFactorMathlib where
 
-lean_lib HexMatrix where
-  precompileModules := true
+lean_lib HexMatrix
 
 @[default_target]
-lean_lib HexPermGroup where
-  precompileModules := true
+lean_lib HexPermGroup
 
 @[default_target]
 lean_lib HexPermGroupMathlib where
@@ -448,8 +441,7 @@ lean_lib HexPermGroupTests where
 
 lean_lib HexGraph where
 
-lean_lib HexGraphIso where
-  precompileModules := true
+lean_lib HexGraphIso
 
 @[default_target]
 lean_lib HexGraphIsoMathlib where
@@ -464,14 +456,11 @@ lean_lib HexPolySmith where
 @[default_target]
 lean_lib HexPolySmithMathlib where
 
-lean_lib HexRowReduce where
-  precompileModules := true
+lean_lib HexRowReduce
 
-lean_lib HexDeterminant where
-  precompileModules := true
+lean_lib HexDeterminant
 
-lean_lib HexBareiss where
-  precompileModules := true
+lean_lib HexBareiss
 
 lean_lib HexDeterminantalIdeal where
 
