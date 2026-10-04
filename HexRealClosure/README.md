@@ -2059,6 +2059,22 @@ with the algebraic union; item 1 above restricts the semantic ambient field.
 Descriptor construction and simultaneous realization of finite sign
 conditions at one ordinary real point also remain open.
 
+### Two infinitesimals with native selected-root evidence
+
+`Specialize.Native.nested_selected` composes native coefficient dictionary
+transport, an ordered embedding of the base field into ℝ, and both
+infinitesimal specializations. It constructs one checked real descriptor and
+replay for the actual native descriptor and its ordered query list. The same
+positive parameters preserve every recorded selected query sign and the
+complete sign list of any requested finite coefficient set. The second
+parameter is smaller than the first, and the first can be chosen below any
+positive cap.
+
+`CoefficientEmbeddingTests.ordinary_selected` applies this public theorem to
+all head and query coefficients of a checked descriptor over two native
+rational-function levels. General realization through arbitrarily interleaved
+algebraic and infinitesimal stages remains open.
+
 ### Finite signs at an ordinary real parameter
 
 `Specialize.polynomial_sign` proves that a real polynomial near zero on the

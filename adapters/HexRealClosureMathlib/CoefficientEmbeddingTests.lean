@@ -172,7 +172,7 @@ theorem recorded_values : selected.values.toList = [1] := rfl
 
 /-- Native nested checked evidence reaches one ordinary real parameter pair
 and selected root, retaining the nonconstant query's recorded positive sign. -/
-theorem ordinary_selected :
+theorem embedded_selected :
     let values := selected.values.toList
     letI : Lean.Grind.Field Rat := Field.toGrindField
     let data := Native.nestedEvidence (F := Rat) (context := ()) Lean.Grind.instFieldRat
@@ -226,6 +226,49 @@ theorem ordinary_selected :
     raw ▸ targetRaw, evidence ▸ targetEvidence,
     raw ▸ headCoefficients, queryCoefficients,
     observed.trans (values.trans (Native.nestedEvidence_values _ _ _ _ _)), bound ▸ constantData⟩
+
+/-- info: 'Hex.RealClosure.Specialize.EmbeddingTests.embedded_selected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.EmbeddingTests.embedded_selected
+
+/-- The concrete native producer is an instance of the public composition
+theorem, including every source coefficient of its head and query. -/
+theorem ordinary_selected :
+    let fractions := (head.toArray.toList ++ query.toArray.toList).toFinset
+    let sourceSigns := fractions.toList.map sign
+    letI : Lean.Grind.Field Rat := Field.toGrindField
+    let data := Native.nestedEvidence (F := Rat) (context := ()) Lean.Grind.instFieldRat
+      HexRationalFnMathlib.ratField_eq descriptor [query] selected
+    let requested := Native.nestedFractions (F := Rat) Lean.Grind.instFieldRat
+      HexRationalFnMathlib.ratField_eq fractions
+    let interpretation := CoefficientMap.ofHom
+      (HexRationalFnMathlib.mapHom (HexRationalFnMathlib.mapHom (Rat.castHom ℝ)))
+    ∃ first : ℝ, 0 < first ∧ first < 1 ∧ ∃ second : ℝ, 0 < second ∧ second < first ∧
+      ∃ target : Descriptor ℝ Unit (fun r : ℝ => (SignType.sign r : Int)) (),
+        target.raw = ((data.1.raw.substitute interpretation).substitute (firstMap first)).specialize
+          (RingHom.id ℝ) second ∧
+        target.evidence = ((data.1.evidence.substitute interpretation).substitute
+          (firstMap first)).specialize (RingHom.id ℝ) second ∧
+        Descriptor.ofReplay? (fun r : ℝ => (SignType.sign r : Int)) ()
+          (((data.1.raw.substitute interpretation).substitute (firstMap first)).specialize
+            (RingHom.id ℝ) second)
+          (((data.1.evidence.substitute interpretation).substitute (firstMap first)).specialize
+            (RingHom.id ℝ) second) = some target ∧
+        signsAt (fun r : ℝ => r) (fun _ => Iff.rfl)
+          ((data.2.1.map interpretation.polynomial).map
+            (fun q => polynomial (RingHom.id ℝ) ((firstMap first).polynomial q) second))
+          (target.root (fun r : ℝ => r) (fun _ => Iff.rfl) rfl
+            (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl)
+            (fun _ => rfl) (fun _ => rfl)) = [1] ∧
+        requested.toList.map (fun f =>
+          (SignType.sign (evalNestedFraction (interpretation.map f) first second) : Int)) = sourceSigns := by
+  obtain ⟨first, positive, below, second, secondPositive, smaller, target,
+    raw, evidence, checked, observed, _, _, _, coefficients⟩ :=
+    Native.nested_selected (F := Rat) (context := ()) Lean.Grind.instFieldRat
+      HexRationalFnMathlib.ratField_eq (Rat.castHom ℝ) Rat.cast_strictMono descriptor [query] selected
+      (head.toArray.toList ++ query.toArray.toList).toFinset 1 zero_lt_one
+  exact ⟨first, positive, below, second, secondPositive, smaller, target,
+    raw, evidence, checked, observed, coefficients⟩
 
 /-- info: 'Hex.RealClosure.Specialize.EmbeddingTests.ordinary_selected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
