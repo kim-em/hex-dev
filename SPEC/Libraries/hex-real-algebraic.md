@@ -55,8 +55,11 @@ Use `RealAlgebraicNumber` as the namespace for the following names.
 `toAlgebraic` projects the underlying canonical value. `ofAlgebraic?` performs
 one stored-precision `isReal` test, returning `some ⟨a, h⟩` precisely on success
 and `none` on nonreal input. A proof-taking `ofAlgebraic a h` packages an already
-known real value without retesting. `ofRoot? r` exactifies `r` through
-`AlgebraicRoot.exact` and then calls `ofAlgebraic?`. No implicit coercion from
+known real value without retesting. `ofRoot? r` first checks reality on its
+stored separation-refined isolation, rejecting nonreal roots before
+canonicalization. Retained roots pass through `AlgebraicRoot.exact` and
+`ofAlgebraic?`; the companion's `ofRoot?_eq` proves equality with
+exactify-then-check for every lazy root. No implicit coercion from
 arbitrary complex algebraic numbers is provided.
 
 Equality is inherited from the canonical carrier: subtype equality is equality
