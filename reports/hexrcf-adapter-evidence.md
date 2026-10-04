@@ -28,6 +28,7 @@ Mathlib and are never executable benchmark roots.
 | Fixed-field finite construction and replay | [FiniteReplay](../conformance/HexRCF/FiniteReplay.lean): exact formula/quantifier/coefficient/divisor/context bindings, complete recorded sign operands, malformed evidence, diagnostic false and preflight-before-search. `Replay.check_domains`, `check_spec`, `check_sound`, `check_original` and `build_spec` use actual real interpretation laws. Bounded production can exhaust. `buildTotal_checked`/`buildTotal_spec` connect the existing complete exact-field producer to finite acceptance for nonzero original divisors, independently of direct proposal depth; false remains diagnostic. |
 | Original-goal API proof generation | [PreparedCoefficients](../conformance/HexRCF/PreparedCoefficients.lean) and [Prepared probes](../bench/HexRCF/ProofProbe/Prepared): successful guarded and Ioc proofs use `Replay.check_sound`; proof inspection excludes producer calls. A fresh total-production probe sets direct proposal depth to zero and still quotes an accepted Ioc proof. Wrong transport, omitted guards, incorrect identities and false verdicts fail. Preparation/transport preserve caller metavariables on success and restore full state on unsuccessful exits, including runtime exceptions. Assigned metavariables cannot hide forbidden dependencies; acceptance closes a fresh uncached theorem of the exact target. Original guards are recovered again from the source before checking, so editing the stored guard arrays cannot omit them. Runtime polynomial/root, formula, quantifier, coefficients and divisor coordinates are bound to their expression data before diagnostics; source/valuation proofs are checked at their required types. Validation-only checks retain no unused auxiliary declarations. |
 | Checked sign retrieval | [SignIndex](../conformance/HexRCF/SignIndex.lean): indexed hits are checked against the original table position and exact key. Missing or malformed routing falls back to the original lookup, preserving every original hit. Actual quoted-tree and linear/indexed proof regressions exercise both routes, including frozen replay failures and state restoration. |
+| Generator-window proposals and replay | [GeneratorWindow](../conformance/HexRCF/GeneratorWindow.lean): checked containment and two count-one certificates identify the same selected real root. Production can rebuild all sign entries on the tighter interval; frozen quotation never refines. Malformed, stale, wrong-conjugate and endpoint-root evidence fails, and both lookup modes restore state on replay failure. |
 | Root and cell correctness | [FieldRootsConformance](../conformance/HexRCF/FieldRootsConformance.lean), [ProductionProgress](../conformance/HexRCF/ProductionProgress.lean), [AlgebraicProgress](../conformance/HexRCF/AlgebraicProgress.lean), [CarrierModes](../conformance/HexRCF/CarrierModes.lean): selected-field root correspondence, complete carrier roots, squarefree normalization, repeated/common roots and leading cancellation. Samples are ordinary real sections/sectors. General joint nested realization is not supplied by these tests. |
 | Caller-registered finite bounds | [NamedConstants](../conformance/HexRCF/NamedConstants.lean), [RegisteredConstants](../conformance/HexRCF/RegisteredConstants.lean), [CoarseConstants](../conformance/HexRCF/CoarseConstants.lean): actual caller-supplied containment proves the specified π/e goals and inverse guard. Missing, stale, cyclic, swapped or nonseparating evidence is rejected/refused. This finite path does not construct a total named-constant field or prove joint independence. |
 | Manual | [Existing rcf chapter](../HexManual/Chapters/HexRCF.lean): full Hex source constructions, aliases, common fields, root operations, caller registrations and the explicit prepared/build/check/soundness path. Examples remain actual Lake-built proofs. |
@@ -57,6 +58,9 @@ Targeted retained experiments answer concrete implementation questions:
 | Quotient coordinate quotation | [Literal quotation](hexrcf-literal-proofs.md) | Two changed-source comparisons did not establish a gain; reduced-coordinate quotation remains off. |
 | Full queries versus exact interval sign evidence | [Interval quotation](hexrcf-interval-proofs.md) | The fixed-goal comparison favors interval quotation. Its reconstructed-query control and historical provenance limitations are explicit. |
 | Indexed sign retrieval | [Index comparison](hexrcf-index-proofs.md) | Two retained fixed-goal studies favor indexed retrieval; the default is enabled. These measure whole fresh-module cost, with exact measured-source and later shipping-source identities stated separately. |
+| Generator-window refinement | [Window comparison](hexrcf-window-proofs.md) | All 32 fixed-schedule arms are retained. The low-precision fixture removes three full queries at a proof-size cost; the study establishes no useful whole-module speedup, so refinement defaults to zero. |
+| Initial generator precision | [Precision comparison](hexrcf-precision-proofs.md) | Eight versus sixty-four bits for the same selected √2 and exact target, with checked transport. Three full queries disappear and private proof size falls; the small mixed paired changes justify no default change. The original pair excludes arm-specific setup. A [separate four-width study](hexrcf-precision-full-proofs.md) includes fresh constructor/transport proofs and retains all 24 arms. Its large mixed margins establish no reliable speedup; the [36-arm production-acceptance study](hexrcf-precision-production-proofs.md) uses the actual tactic acceptance routine and a balanced six-round schedule. Its variable observations justify no default change. None proves general reconstruction or nested-depth costs. |
+| Repeated/shared source roots | [Source comparisons](hexrcf-common-root-proofs.md) | Two changed-input comparisons through the named-√2 frontend retain all 16 arms. The normalized carrier has four root sections in each case. Several input dimensions change together; this is not one-parameter or asymptotic scaling evidence. |
 | Carrier normalization | [Carrier comparison](hexrcf-carrier-proofs.md) | The retained fixed-goal pairs favor monic carriers; the ordinary-kernel normalization laws retain the original product. Signed chains are not arbitrarily made monic. |
 | One replay goal versus split conjuncts | [Replay comparison](hexrcf-replay-proofs.md) | The retained comparison did not establish a gain; combined replay stays off. |
 | Degree, source atoms and coefficient width | [Input costs and attribution](hexrcf-scaling-proofs.md) | Independent two-point observations in a no-real-root regime, with serialized/expanded syntax and a representative phase profile. These are not asymptotic verdicts or precision/depth evidence. |
@@ -85,9 +89,6 @@ The planned extension remains incomplete in these specific respects:
   degree-eight quartic/√2 example in `CertificationInputs` cannot be repaired
   just by trying more good primes. A diagnostic group calculation is not a
   Lean irreducibility proof.
-- Authenticated generator-interval refinement remains separate work. Exact
-  interval signs currently use the bound defining their selected literal root,
-  with checked rational Sturm evidence when the bound is inconclusive.
 - General frozen tower/context integration, executable assembly of all-live
   enlargement, and one ordinary real realization of every finite joint set of
   nested selected-root and successive-infinitesimal constraints still require
@@ -113,14 +114,28 @@ The planned extension remains incomplete in these specific respects:
   byte decoder under lexical prechecks. Graph checking still uses ordinary
   coefficient arithmetic. These laws do not reconstruct general tower contexts,
   collect every intermediate packing dependency or realize a joint real sample.
+  The merged supplied-fact graph transport in
+  [DagOperations](../HexSignDet/DagOperations.lean) preserves memo acceptance,
+  rejection, literal trees and indices under the supplied coefficient-operation
+  laws. Reciprocal/division packing retains the actual inverse computation.
+  Missing-fact compiled fallback remains; this interface does not collect all
+  intermediate keys or rebuild general cross-level contexts. The merged
+  development theorem `HexSturmMathlib.query_iff` and actual companion
+  `RealAlgebraicPoly.roots_spec` establish their lawful query/root contracts.
+  The query theorem is still in a development adapter rather than exposed by
+  `import HexSturmMathlib`; owner integration remains required for that public
+  companion surface. These available laws are not waiting on performance closure.
 - Algebraic frontend completeness and total acceptance of every supported source
   are not proved by the exact-field total producer. It starts with an already
   authenticated fixed-field environment; frontend irreducibility quotation
   still has the concrete language gap above. Registered constants remain bounded
   certified search unless the stronger child progress/relative transcendence
   laws are supplied.
-- The recorded input comparisons do not cover precision, nested depth or
-  common/repeated-root cost scaling. New numerical primitive measurements must
+- The initial-generator precision comparisons cover one fixed field at four
+  widths, including fresh constructor/transport proofs and production proof
+  acceptance. The repeated/shared-root comparisons cover two changed-input
+  pairs through the named-√2 frontend. Broad precision, nested depth and
+  asymptotic common/repeated-root cost scaling remain unmeasured. New numerical primitive measurements must
   use Mathlib-free owner drivers on explicitly bound adapter-generated inputs;
   preparation costs must be reported separately. Existing correctness examples
   do not stand in for those additional scientific measurements.

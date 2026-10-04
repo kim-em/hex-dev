@@ -451,9 +451,11 @@ jobs:
           lake -d experiments/RealClosureAlgebraic build \
             Tests Transfer algebraicCheck algebraicBench policyCheck policyBench policyTrace refinementCheck
           lake -d experiments/NestedReplay build
+          lake build hexsigndet_kernel_replay_probe
           experiments/RealClosureRepresentation/.lake/build/bin/representationPrototype
           probe_dir=$(mktemp -d)
           python3 experiments/NestedReplay/run.py "$probe_dir/nested-replay"
+          python3 experiments/KernelReplay/run.py "$probe_dir/kernel-replay"
           experiments/RealClosureAlgebraic/.lake/build/bin/algebraicCheck > "$probe_dir/algebraic.jsonl"
           python3 experiments/RealClosureAlgebraic/verify.py < "$probe_dir/algebraic.jsonl"
           experiments/RealClosureAlgebraic/.lake/build/bin/policyCheck > "$probe_dir/checks.jsonl"

@@ -118,10 +118,7 @@ theorem lookupIndex_spec (table : Table D) (query : D → Hex.DensePoly Rat)
       have sameValue : found = value := Option.some.inj (by simpa only [routed] using hit)
       obtain ⟨entry, member, same, valueEq⟩ := index.lookup_entry
         table.entries.toArray compare key found routed
-      simp only [check, Bool.and_eq_true] at accepted
-      have entryAccepted := List.all_eq_true.mp accepted.2 entry member
-      have actual := entry.check_spec table.head table.lower table.upper query
-        x hx hl hu table.count accepted.1 entryAccepted
+      have actual := table.entry_spec query entry member x hx hl hu accepted
       rw [same, ← heval, valueEq, sameValue] at actual
       exact actual
 

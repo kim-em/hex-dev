@@ -186,3 +186,10 @@ consumer/import preparation remain independent of this timing concern.
 [Certified parent isolation reuse](bench-results/number-field-isolation-reuse/README.md)
 proves complete canonical-result equality and reduces measured hard arithmetic
 by about 1.5 times, while preserving current representation and Phase-4 gaps.
+
+[PR CI for #10695](bench-results/prerequisite-required-ci-d6cebc4de.json)
+(head `d6cebc4de`, test merge `252f17576`) passes all 57 executables and every
+conformance oracle at 284/360 seconds. The [source-scoped CI discussion](hex-real-algebraic-performance.md#concerns)
+records the per-library soft warnings, the slower-runner limit, later main cap
+changes and the retained local smoke and dependency failures. It establishes
+no scientific Phase-4 admission. All four assigned counters remain 3.

@@ -1,0 +1,49 @@
+{
+  "schema": "hexrcf-precision-sign-audit-v1",
+  "measured_commit": "97733103897449e76138246277355ec446662327",
+  "audit_source_sha256": {
+    "bench/HexRCF/ProofProbe/Precision/Audit.lean": "0c9f92a955e8a8282eb10aff9926069c37c735de969e7e3e1b268811fc80cb6a",
+    "bench/HexRCF/ProofProbe/Windows/Audit.lean": "a1d6742ec7073ee3d40f5f19355927a3aca1406d9904fe074ba2d1d19e689c59"
+  },
+  "origin": "Final retained artifacts captured after all eight timed arms, before separate quotation audit; not per-arm hashes.",
+  "proof_artifact_sha256": {
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Bits8.olean": "b3e53236a48d782f8c7eb26168128d2a54bc9fe466a5ac7f0e5144186aae2086",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Bits8.olean.private": "ec3fa974d2d0d0b234601d037207938bef0be60e479f241077e68f6a90e04ea1",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Bits8.olean.server": "cad20a898989cf7a6096fccc5e82c8f691d7c5e0c550e9d9b7ddfdecfdecd6e7",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Bits8.ilean": "948aa9681300b1a1da90e5806932bbe3a74a2ae65ae396ab9fd7ad883735e6f4",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Bits64.olean": "2590a532e99e5a7c5bc18f994686130c88b919c5a861a74f3774815e51683414",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Bits64.olean.private": "2ed2ec3e9a726bba2ec05bdb72a7a5b8514e752c7968a9c2a9976db2e3a59d99",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Bits64.olean.server": "3be298a22366e4f88edb2322448086a1c085293e2d577592b57b24acca01963c",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Bits64.ilean": "fa2d3ce6952ead6dc716053c05a3182c0fac1c8c85f45d36eb7a73929eb538c6"
+  },
+  "proof_artifacts_unchanged_during_collection": true,
+  "compiler_output_encoding": "JSON string of the complete combined original compiler output; decoded UTF-8 bytes have the stated SHA256.",
+  "stdout_sha256": "b8928eff965a8b753c21b31244460d9e4f7cc1a3912003f4e3c74f1db86bb24e",
+  "convention": "Distinct table syntax in the actual timed proof and reachable local declarations; imported bodies are leaves. No physical sharing or expanded-work claim.",
+  "proofs": [
+    {
+      "distinct_table_syntax": 1,
+      "local_declarations": 6,
+      "proof": "Hex.RCF.ProofProbe.Precision.Bits8.witness",
+      "tables": [
+        {
+          "interval_entries": 123,
+          "query_entries": 3,
+          "refined_window": false
+        }
+      ]
+    },
+    {
+      "distinct_table_syntax": 1,
+      "local_declarations": 6,
+      "proof": "Hex.RCF.ProofProbe.Precision.Bits64.witness",
+      "tables": [
+        {
+          "interval_entries": 126,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ]
+    }
+  ]
+}

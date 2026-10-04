@@ -45,7 +45,7 @@ mutual
   private meta partial def expression (owner : ModuleIdx) (e : Expr) : Scan Unit := do
     if (← get).expressions.contains e then return
     modify fun s => { s with expressions := s.expressions.insert e () }
-    if e.isAppOfArity `Hex.RCF.RealCoefficients.LiteralSign.Table.mk 6 then
+    if e.isAppOfArity `Hex.RCF.RealCoefficients.LiteralSign.Table.mk 7 then
       let split ← entries e.getAppArgs[5]!
       modify fun s => { s with tables := split :: s.tables }
     match e with

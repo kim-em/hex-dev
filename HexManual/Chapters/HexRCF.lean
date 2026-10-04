@@ -620,6 +620,47 @@ not isolated lookup timing or an asymptotic claim. The
 include every completed arm and their source identities. The false mode keeps
 linear retrieval; older comparison probes explicitly pin that mode.
 
+`rcf.algebraic.signRefinements` is zero by default. Setting it to a positive
+natural number bounds producer attempts to tighten the generator interval when
+Horner signs are inconclusive. The certificate retains the original generator
+and checks that the tighter count-one interval selects the same real root.
+Replay checks frozen data and never runs refinement. Inconclusive signs keep
+full query evidence; invalid proposed evidence is terminal. The
+[retained comparison](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-window-proofs.md)
+found no useful whole-module speedup at a four-step budget, even though the
+lower-precision fixed-field case removed full queries. This mode therefore
+remains optional. The entire bounded refinement loop is one
+native call: cancellation is checked before and after it, not between its
+steps. A large chosen budget can therefore delay interruption.
+
+A separate [initial-precision comparison](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-precision-proofs.md)
+proves the same fixed-field sentence at eight and sixty-four generator bits,
+using a checked selected-root equivalence for transport. The full sign queries
+fall from three to zero, and the private proof file shrinks by 6,456 bytes.
+Four retained rounds give median fresh-module times of 12.689 and 12.556 seconds;
+the paired median change is −0.169 seconds, with one slower candidate. Arm-specific constructor checks and the candidate
+transport are prebuilt, so their initial elaboration is excluded. This does not
+measure the total cost of changing precision or general field reconstruction,
+and does not justify a default precision change.
+
+The [four-width study with constructor and transport included](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-precision-production-proofs.md)
+checks eight, sixteen, thirty-two and sixty-four initial bits through the
+actual tactic proof-acceptance routine. All 36 fresh-module arms retain their
+output and standard-axiom audit. The variable paired observations justify no
+default change. Each timed module proves its own generator validity and
+selected-root equivalence; common imported laws and the original target are
+prebuilt. This fixed-field experiment does not implement arbitrary field
+reconstruction or nested transport.
+
+The [source repeated/shared-root comparison](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-common-root-proofs.md)
+uses actual `rcf` goals with a squared zero polynomial and an additional
+polynomial sharing existing roots. All three checked carriers have four root
+sections and five sectors. Sixteen retained arms include the named-√2 frontend preparation,
+quotation and kernel acceptance; paired medians increase by 0.890 and 1.266
+seconds for these changed inputs, retaining a −8.198-second repeated-input
+observation as well. Several input dimensions change together,
+so this is not a one-parameter complexity model or a general scaling claim.
+
 For these reconstructed inputs, closed arithmetic is compiled into the common
 field after authenticating its source values. A quotient is recorded as a
 rational coordinate polynomial and checked by its multiplication identity;

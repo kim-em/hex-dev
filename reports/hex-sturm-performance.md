@@ -461,8 +461,9 @@ compiled arithmetic performance.
 The independent size sweeps and operation/normalization diagnostics above are
 available. The query-degree findings have corrected quadratic characterizations.
 The earlier head-degree replay test failed its cubic characterization. The
-deferred-normalization implementation and its predeclared mode-2 validation
-below resolve that performance finding, subject to implementation review. Concrete
+deferred-normalization implementation supplies the retained one-sided
+upper-bound observation below. Current Phase-4 admission remains suspended
+until its dominant-phase attribution satisfies the policy. Concrete
 extension-depth and nested-evidence probes belong downstream under #10378;
 general root-sum/replay soundness, singleton/sign/bound consequences and the
 exact-domain natural root-count wrapper are proved in the development
