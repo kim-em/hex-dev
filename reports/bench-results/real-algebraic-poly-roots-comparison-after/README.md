@@ -47,3 +47,12 @@ This collection uses the proved early rejection of nonreal lazy roots. The
 [earlier collection](../real-algebraic-poly-roots-comparison/README.md) remains
 retained; these separated sweeps are not a controlled before/after speedup.
 The [adjacent pairs](../real-algebraic-root-rejection-pairs/) supply that check.
+
+[source-equivalence.json](source-equivalence.json) identifies every fingerprinted
+source against `89bed09cf`, including the definitionally equal predicate alias
+and the unregistered manual-probe additions. The original measured commits
+remain reachable through the pushed `issue-10577-root-measurement-source`
+branch. Timings remain attributed to their recorded sources. The current
+collector gained its clean-checkout preflight after these measurements; the
+original collector is retained in [collection-driver.py.txt](collection-driver.py.txt). Profile manifests that say
+`dirty: true` accompany unchanged computational snapshots and exact binaries.

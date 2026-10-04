@@ -37,3 +37,12 @@ the external root backends; rejecting the nonreal roots resolves avoidable
 work, but does not resolve repeated canonical isolation of retained roots.
 The exact executables and raw records are also retained persistently under
 `/home/kim/.local/state/hex/issue-10577-measurements/`.
+
+[source-equivalence.json](source-equivalence.json) identifies every fingerprinted
+source against `89bed09cf`, including the definitionally equal predicate alias
+and the unregistered manual-probe additions. The original measured commits
+remain reachable through the pushed `issue-10577-root-measurement-source`
+branch. Timings remain attributed to their recorded sources. The current
+collector gained its clean-checkout preflight after these measurements; the
+original collector is retained in [collection-driver.py.txt](collection-driver.py.txt). Profile manifests that say
+`dirty: true` accompany unchanged computational snapshots and exact binaries.

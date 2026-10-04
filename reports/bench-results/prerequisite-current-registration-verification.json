@@ -1,6 +1,9 @@
 [
   {
+    "source_commit": "89bed09cfa022c73bcdc9603df0cc5e427ae1a7c",
+    "dirty_documentation_only": true,
     "executable": "hexsturm_bench",
+    "executable_sha256": "7ac8811e1b9d88ce5166c87a5a80cd50eb152a39cb19f5ef2206a96eda3ba229",
     "count": 20,
     "command": [
       ".lake/build/bin/hexsturm_bench",
@@ -27,13 +30,13 @@
       "Hex.SturmExternalBench.runZ3Protocol64"
     ],
     "exit_code": 0,
-    "whole_verification_seconds": 0.8912469389997568,
-    "source_context_parent": "dafbe6e87afdcc48abf45252c5dc95068ae38efa",
-    "source_context_dirty": true,
-    "provenance_note": "Operational timing collected before the rebase and commit of review corrections. Exact binary identity was not captured for this check; use prerequisite-current-registration-verification.json for an explicitly fingerprinted current-source check."
+    "whole_verification_seconds": 0.9521539280003708
   },
   {
+    "source_commit": "89bed09cfa022c73bcdc9603df0cc5e427ae1a7c",
+    "dirty_documentation_only": true,
     "executable": "hexrealalgebraic_bench",
+    "executable_sha256": "9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
     "count": 30,
     "command": [
       ".lake/build/bin/hexrealalgebraic_bench",
@@ -70,9 +73,6 @@
       "Hex.RealAlgebraicBench.runZ3QuadraticRoots4Protocol"
     ],
     "exit_code": 0,
-    "whole_verification_seconds": 0.9470740260003367,
-    "source_context_parent": "dafbe6e87afdcc48abf45252c5dc95068ae38efa",
-    "source_context_dirty": true,
-    "provenance_note": "Operational timing collected before the rebase and commit of review corrections. Exact binary identity was not captured for this check; use prerequisite-current-registration-verification.json for an explicitly fingerprinted current-source check."
+    "whole_verification_seconds": 1.0504255689993443
   }
 ]

@@ -25,3 +25,12 @@ versions, CPU/host context, calibration and sensitivity diagnostics.
 Raw perf data, original and normalized profiles, sidecars, symbols and logs
 remain under `/home/kim/.local/state/hex/issue-10577-profiles/` at their recorded
 paths. No quiet-core preflight, load rejection or unchanged rerun was used.
+
+[source-equivalence.json](source-equivalence.json) identifies every fingerprinted
+source against `89bed09cf`, including the definitionally equal predicate alias
+and the unregistered manual-probe additions. The original measured commits
+remain reachable through the pushed `issue-10577-root-measurement-source`
+branch. Timings remain attributed to their recorded sources. The current
+collector gained its clean-checkout preflight after these measurements; the
+original collector is retained in [collection-driver.py.txt](collection-driver.py.txt). Profile manifests that say
+`dirty: true` accompany unchanged computational snapshots and exact binaries.

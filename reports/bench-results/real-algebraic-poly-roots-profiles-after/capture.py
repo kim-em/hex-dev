@@ -35,6 +35,9 @@ def main():
     parser.add_argument('--target-nanos', type=int)
     args = parser.parse_args()
     os.chdir(ROOT)
+    status = subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT, text=True)
+    if status:
+        raise SystemExit('Profile capture requires a clean source checkout before output creation')
     args.raw.mkdir(parents=True, exist_ok=False)
     args.output.mkdir(parents=True, exist_ok=True)
     cpu, lease = cpu_lease()

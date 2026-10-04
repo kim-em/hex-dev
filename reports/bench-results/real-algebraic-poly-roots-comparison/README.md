@@ -49,3 +49,12 @@ No Phase-4 completion or metadata advancement follows from these comparisons.
 These measurements use source `c6b821d7b`, before the proved early nonreal
 rejection. The source-scoped observations are retained, and do not attest the
 changed implementation.
+
+[source-equivalence.json](source-equivalence.json) identifies every fingerprinted
+source against `89bed09cf`, including the definitionally equal predicate alias
+and the unregistered manual-probe additions. The original measured commits
+remain reachable through the pushed `issue-10577-root-measurement-source`
+branch. Timings remain attributed to their recorded sources. The current
+collector gained its clean-checkout preflight after these measurements; the
+original collector is retained in [collection-driver.py.txt](collection-driver.py.txt). Profile manifests that say
+`dirty: true` accompany unchanged computational snapshots and exact binaries.

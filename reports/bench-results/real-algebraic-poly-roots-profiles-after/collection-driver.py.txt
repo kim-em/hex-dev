@@ -35,9 +35,6 @@ def main():
     parser.add_argument('--target-nanos', type=int)
     args = parser.parse_args()
     os.chdir(ROOT)
-    status = subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT, text=True)
-    if status:
-        raise SystemExit('Profile capture requires a clean source checkout before output creation')
     args.raw.mkdir(parents=True, exist_ok=False)
     args.output.mkdir(parents=True, exist_ok=True)
     cpu, lease = cpu_lease()
@@ -65,7 +62,7 @@ def main():
         record['lean_bench_commit'] = run(['git', '-C', ROOT / '.lake/packages/lean-bench', 'rev-parse', 'HEAD']).strip()
         record['lake_version'] = run(['lake', '--version']).strip()
         record['computational_source_sha256'] = {}
-        for relative in ['bench/HexRealAlgebraic/Bench.lean', 'HexRealAlgebraic/Roots.lean', 'HexNumberField/Roots.lean', 'HexNumberField/Convert.lean']:
+        for relative in ['bench/HexRealAlgebraic/Bench.lean', 'HexRealAlgebraic/Basic.lean', 'HexRealAlgebraic/Roots.lean', 'HexNumberField/Roots.lean', 'HexNumberField/Convert.lean']:
             source = ROOT / relative
             record['computational_source_sha256'][relative] = hashlib.sha256(source.read_bytes()).hexdigest()
             (args.raw / (relative.replace('/', '-') + '.txt')).write_bytes(source.read_bytes())

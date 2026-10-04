@@ -353,6 +353,7 @@ the duplicate negative-input check. Existing selector soundness and nonnegative
 totality prove the same contract. Earlier square-root baseline observations
 retain their pre-change source; they provide no current performance admission.
 
-The 32-second per-library verification warning remains under #10577; the
+The per-library verification warning remains under #10577 (39 seconds on
+the recorded pre-rebase check); the
 360-second CI cap is an operational safeguard. Hard addition/subtraction
 and their bare controls account for most of the warning.

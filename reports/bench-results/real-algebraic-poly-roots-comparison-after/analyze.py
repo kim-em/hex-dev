@@ -100,6 +100,7 @@ fig.text(.015, .015,
     f"Shared host {meta['host']}, leased CPU {meta['cpu']}; 4 adjacent AB/BA pairs per backend/rung. All samples retained; no fitted model.\n"
     "Prepared coefficients; solving, ordering and fingerprints timed. External exact-annihilation checks, JSON and cleanup included.\n"
     "Pre-change unpinned degree-16 rational and degree-8 quadratic probes hit a 60 s whole-child cap; no numerical operation time inferred.\n"
+    "Larger post-change whole-child probes pass in 9.3–9.4 s including preparation; they are not plotted as operation-only points.\n"
     f"Source {meta['source_commit'][:9]}; protocol adjustment is a framing control. Comparison failures/censored arms: {len(failed)}; collected {len(meta['arms'])}/{expected}.", fontsize=8)
 fig.tight_layout(rect=(0, .11, 1, .96))
 for fmt in ['png', 'svg', 'pdf']:
