@@ -47,7 +47,6 @@ using only the actual Liouville provider's analytic premises. -/
 private noncomputable def providerModel := rationalModel.register (key 1) (present 1)
   (liouvilleNumber 2) providerContained providerWidth providerTranscendence
 
-set_option backward.isDefEq.respectTransparency false in
 /-- A real provider history supplies the complete gathering proof for repeated
 nested rational owners over a proper real-prefix enlargement. -/
 example
@@ -65,13 +64,33 @@ example
         [second.context, first.context, second.context] = some shared ∧
       Nonempty (Tower.Shared.Model shared providerModel.realization providerModel.towerModel) := by
   dsimp only
+  let first := (Tower.Context.base (BaseContext.rational registry)).adjoin parent
+  let second := first.context.adjoin child
+  have firstBase : first.context.origin.base =
+      PackedContext.pack (BaseContext.rational registry) := by
+    rw [Tower.Context.origin_adjoin_base]
+    rfl
+  have secondBase : second.context.origin.base =
+      PackedContext.pack (BaseContext.rational registry) :=
+    (congrArg Tower.Origin.base (Tower.Context.origin_adjoin first.context child)).trans
+      ((Tower.Origin.snoc_base first.context.origin child).trans firstBase)
+  have allowed : (PackedContext.pack (BaseContext.rational registry)).signature.constants <+:
+      providerModel.context.finish.signature.constants ∧
+      (PackedContext.pack (BaseContext.rational registry)).signature.infinitesimals ≤
+        providerModel.context.finish.signature.infinitesimals := by
+    simp only [PackedContext.signature, BaseContext.rational,
+      Context.signature_real, RealContext.keys_rational]
+    exact ⟨List.nil_prefix, Nat.zero_le _⟩
   apply Tower.Shared.gather?_models providerModel.realization providerModel.towerModel
   intro source present
   simp only [List.mem_cons, List.not_mem_nil, or_false] at present
-  rcases present with rfl | rfl | rfl <;>
-    simp only [Tower.Context.origin_adjoin, Tower.Origin.snoc_base, Tower.Context.origin_base] <;>
-    simp only [Tower.Origin.base, PackedContext.signature, BaseContext.rational,
-      Context.signature_real, RealContext.keys_rational] <;>
-    exact ⟨List.nil_prefix, Nat.zero_le _⟩
+  rcases present with rfl | rfl | rfl
+  · rw [secondBase]
+    exact allowed
+  · rw [firstBase]
+    exact allowed
+  · rw [secondBase]
+    exact allowed
+
 
 end Hex.RealClosure.BaseContext.GatherTests

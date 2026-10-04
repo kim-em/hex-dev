@@ -123,7 +123,6 @@ theorem Shared.empty_maps (base : BaseContext.PackedContext registry) :
       (Inclusions.nil (target := (Shared.empty base).input.context)) :=
   Shared.empty_maps_proof base
 
-set_option backward.isDefEq.respectTransparency false in
 private theorem Shared.addOrigin?_spec_proof {base : BaseContext.PackedContext registry}
     {owners : List (Context registry)} (shared : Shared base owners)
     {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
@@ -144,7 +143,7 @@ private theorem Shared.addOrigin?_spec_proof {base : BaseContext.PackedContext r
     (shared.maps.extend rebuilt.inclusion).snoc rebuilt.original,
     rebuilt.base_eq.trans shared.base_eq, rebuilt.cache⟩, ?_, rfl, HEq.rfl, HEq.rfl⟩
   simp only [Shared.addOrigin?, baseProduced, bind, Option.bind, pure]
-  rw [produced]
+  rw (config := { transparency := .all }) [produced]
 
 /-- Actual registration combines the returned predecessor inclusion with
 all retained owners and the exact returned cache. -/
