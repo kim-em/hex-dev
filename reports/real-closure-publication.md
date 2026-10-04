@@ -179,7 +179,7 @@ Optional tactic consumers reuse [#10358](https://github.com/kim-em/hex-dev/issue
 and fresh `ProofProbe.Prepared` proofs. The latter authenticate source/divisor
 bindings and quote frozen replay with exact ordinary-kernel axiom guards; exploration consumers await [#10378](https://github.com/kim-em/hex-dev/issues/10378)'s delivered API.
 
-The [candidate evidence ledger](real-closure-candidate-consumer.json) records
+The earlier [candidate evidence ledger](real-closure-candidate-consumer.json) records
 the 62 local Git pins, exact external pins and source/configuration/log hashes.
 The fresh consumer uses the experimental HexRCF declaration, and its rational
 test target passes under that declaration. Separate builds of
@@ -200,6 +200,38 @@ first fails because its proposed tag already exists; that failure is retained.
 These previews do not build or retain staged packages and are not a full
 sync dry run. The full-declared-closure candidate builds above do not certify
 the smaller published-only graph.
+
+The [staged-consumer ledger](real-closure-staged-consumer.json) records a full
+60-repository dry run using the merged release tool and the live baseline.
+The initial consumer failed because the aggregate omitted its manifest's
+published ECPP/Mathlib requirements; the driver now adds them. A combined
+aggregate/test-kit consumer then failed module ownership, and changing
+require order did not repair it. Those failures are retained. The existing
+checker now uses a separate helper project without changing published roots.
+Its helper build, aggregate import/test/example build (23,585 jobs), and native
+link check all pass. Separate checks build the existing `Hex` umbrella, the
+complete `HexTestKit` target, and the existing arbitrary-certificate Tarski
+example with its exact ordinary-kernel guard. All 32 computational staged
+lockfiles contain no Mathlib, Tau Ceti or AINTLIB.
+
+The stage was produced at the ledger's `b01673` source commit; fresh consumer
+projects reuse content-hashed staged library build outputs. The newer checker
+supplies helper isolation and additional targets. Since staging, the driver
+runtime syntax tree and parsed manifest data are unchanged; README wording was
+corrected afterward. This validates the recorded candidate code and dependency
+configuration on Linux, not every platform or new-family eligibility. The
+release workflow must restage current output and pass its blocking consumers
+before publication. The earlier 62-package experiment still covers a different,
+full declared graph including unreleased libraries and the unapproved optional
+ownership prototype.
+
+Merged #10668's authenticated preparation/replay, fresh proof probes, manual
+and existing consumers also build in the monorepo (15,522 jobs), and the full
+conformance target passes (14,763 jobs). The 116 release/DAG tests pass. CI run
+[37178450711](https://github.com/kim-em/hex-dev/actions/runs/37178450711) passed
+all oracles but failed smoke verification at 385/360 seconds; it remains a
+failed operational gate, with the cap and scientific settings unchanged.
+No performance attestation follows from these builds or smoke results.
 
 ## Unapplied publication changes and distribution prerequisites
 

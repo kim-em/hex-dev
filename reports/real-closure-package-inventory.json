@@ -1,6 +1,6 @@
 {
   "sourceBaseRevision": "77aadd66f60890dd4f5288defad936180c53ea17",
-  "sourceInputSHA256": "9ecbf3ee5311679add38533bc00faa9dfc626dac6a8aafd3699dc04680d5e33b",
+  "sourceInputSHA256": "d870148902e02cbcf4138f65066894a85b1cc18f46cf7f9c7c0e20f412088456",
   "scope": "Preparation snapshot; declared dependency closures differ from current public and development semantic import closures. Not staged split-package validation.",
   "toolchain": "leanprover/lean4:v4.35.0-rc3",
   "externalPins": [
