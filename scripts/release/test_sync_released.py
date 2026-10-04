@@ -7,6 +7,7 @@ import json
 import subprocess
 import tempfile
 import unittest
+import re
 import shutil
 import tomllib
 from pathlib import Path
@@ -1193,6 +1194,28 @@ class GeneratedLakefileTests(unittest.TestCase):
                                                   encoding="utf-8")
         with self.assertRaisesRegex(RuntimeError, "requires mathlib"):
             sync_released.validate_manifest({"repo": "leanprover/hex-plain"}, clone)
+
+    def test_every_released_lake_file_declares_each_target_once(self) -> None:
+        entries = yaml.safe_load(sync_released.MANIFEST.read_text())["repos"]
+        pins = sync_released.external_pins()
+        for entry in entries:
+            text = sync_released.render_lakefile(entry, entries, "v0.0.0", {}, pins)
+            if entry.get("pins_only") or entry.get("lakefile") != "lean":
+                names = [lib["name"] for lib in tomllib.loads(text).get("lean_lib", [])]
+            else:
+                names = re.findall(
+                    r"(?m)^(?:lean_lib|lean_exe|target|extern_lib)\s+(\S+)", text)
+            self.assertEqual(len(names), len(set(names)), entry["repo"])
+
+    def test_aggregate_lockfile_gains_closure_external_packages(self) -> None:
+        entries = yaml.safe_load(sync_released.MANIFEST.read_text())["repos"]
+        hex_entry = next(e for e in entries if e.get("pins_only"))
+        doc = {"packages": [{"name": "mathlib", "url": "u", "inherited": False}]}
+        notes: list[str] = []
+        sync_released._add_closure_externals(hex_entry, doc, notes)
+        names = {p["name"] for p in doc["packages"]}
+        self.assertIn("AINTLIB", names)  # hex -> HexECPPMathlib -> AINTLIB
+        self.assertTrue(next(p for p in doc["packages"] if p["name"] == "AINTLIB")["inherited"])
 
     def test_lockfile_inherited_flags_follow_the_lake_file(self) -> None:
         clone = Path(tempfile.mkdtemp())

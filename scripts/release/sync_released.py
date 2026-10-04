@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import functools
 import json
 import os
 import re
@@ -802,6 +803,7 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
             changed += _synthesize_manifest_packages(
                 entry, clone, doc, synced, dep_owner, version, catalog, notes)
             changed += _reconcile_hex_packages(entry, doc, catalog, notes)
+            changed += _add_closure_externals(entry, doc, notes)
             # The Lake file is generated, so which packages it requires
             # directly can change; the lockfile's `inherited` flags follow it.
             direct = _direct_requires(clone)
@@ -849,6 +851,24 @@ def _reconcile_hex_packages(entry: dict, doc: dict,
     return changed
 
 
+def _add_closure_externals(entry: dict, doc: dict, notes: list[str]) -> int:
+    """Copy missing closure-wide external packages from this monorepo's lockfile."""
+    entries = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["repos"]
+    wanted = {name.lower() for name in closure_external_packages(entry, entries)}
+    present = {str(pkg.get("name", "")).lower() for pkg in doc.get("packages", [])}
+    source = json.loads(LAKE_MANIFEST.read_text(encoding="utf-8"))["packages"]
+    added = 0
+    for pkg in source:
+        name = str(pkg.get("name", ""))
+        if name.lower() in wanted and name.lower() not in present:
+            copy = dict(pkg)
+            copy["inherited"] = True
+            doc.setdefault("packages", []).append(copy)
+            notes.append(f"  manifest + {name} (required in the dependency closure)")
+            added += 1
+    return added
+
+
 def validate_manifest(entry: dict, clone: Path) -> None:
     """Refuse to publish a lockfile that disagrees with the generated Lake file.
 
@@ -861,10 +881,15 @@ def validate_manifest(entry: dict, clone: Path) -> None:
         raise RuntimeError(f"{entry['repo']} has no lake-manifest.json")
     present = {pkg.get("name") for pkg in
                json.loads(path.read_text(encoding="utf-8")).get("packages", [])}
-    missing = sorted(_direct_requires(clone) - present)
+    entries = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["repos"]
+    needed = _direct_requires(clone) | (
+        set() if entry.get("pins_only") and not entry.get("pins")
+        else closure_external_packages(entry, entries))
+    lowered = {str(name).lower() for name in present}
+    missing = sorted(name for name in needed if name.lower() not in lowered)
     if missing:
         raise RuntimeError(
-            f"{entry['repo']}'s generated Lake file requires {', '.join(missing)}, "
+            f"{entry['repo']}'s dependency graph requires {', '.join(missing)}, "
             "which its lake-manifest.json lacks; run `lake update` on the staged "
             "repository and commit the resulting lockfile to the mirror first")
 
@@ -1009,6 +1034,33 @@ def _library_deps() -> dict[str, tuple[str, ...]]:
     return {name: info.deps for name, info in load_libraries().items()}
 
 
+@functools.lru_cache(maxsize=None)
+def _source_import_roots_cached(repo: str) -> frozenset[str]:
+    entries = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["repos"]
+    entry = next(e for e in entries if e["repo"] == repo)
+    return frozenset(_source_import_roots(entry))
+
+
+def closure_external_packages(entry: dict, entries: list[dict]) -> set[str]:
+    """External package names any library in the entry's published closure requires.
+
+    A lockfile records every package in the dependency graph, so a library
+    that newly requires AINTLIB puts AINTLIB in the lockfile of everything that
+    depends on it, the `hex` aggregate included.
+    """
+    shorts = set(entry.get("pins") or []) | {entry.get("repo", "").split("/")[-1]}
+    names: set[str] = set()
+    for other in entries:
+        if other.get("pins_only") or other["repo"].split("/")[-1] not in shorts:
+            continue
+        roots = _source_import_roots_cached(other["repo"])
+        externals = {EXTERNAL_IMPORT_ROOTS[r] for r in EXTERNAL_IMPORT_ROOTS if r in roots}
+        if "mathlib" in externals:
+            externals.discard("batteries")
+        names |= externals
+    return names
+
+
 def _source_import_roots(entry: dict) -> set[str]:
     """Top-level module roots imported by the library's published sources."""
     pattern = re.compile(
@@ -1116,7 +1168,10 @@ def render_lakefile(entry: dict, entries: list[dict], version: str,
         declarations = entry.get("lake_declarations") or []
         helpers = [d for d in declarations
                    if not re.search(rf"(?m)^lean_lib {re.escape(d)}\b", source)]
-        carriers = [d for d in declarations if d not in helpers]
+        # The main library is always emitted from this monorepo's declaration
+        # below, so listing it under `lake_declarations` must not repeat it.
+        carriers = [d for d in declarations
+                    if d not in helpers and d != entry["lib"]]
         for name in helpers:
             out += ["", _lean_declaration_text(source, name).rstrip()]
         out += ["", "@[default_target]", _main_lib_text(source, entry["lib"]).rstrip()]
