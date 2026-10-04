@@ -534,7 +534,7 @@ setup_benchmark runRationalHigh m => m ^ 2
 -- Cost model: the original rational query retains Θ(m²) bits of quotient
 -- coefficients and performs Θ(m²) big-by-small bit work on this sparse
 -- fixed-degree-head family. Value-only preparation omits integer certificates.
-setup_benchmark runRationalValue m => m ^ 2
+setup_benchmark runRationalValue degree => degree ^ 2
   with prep := rationalValueInput
   where {
     paramSchedule := .custom #[131072, 262144, 524288, 1048576]
@@ -549,7 +549,7 @@ setup_benchmark runRationalValue m => m ^ 2
 -- Cost model: remainder-only elimination performs Θ(m²) bit work on the
 -- growing coefficients, without retaining the Θ(m²)-bit quotient. The array
 -- has m+1 input slots and a fixed-degree active window.
-setup_benchmark runReducedRational m => m ^ 2
+setup_benchmark runReducedRational degree => degree ^ 2
   with prep := rationalValueInput
   where {
     paramSchedule := .custom #[131072, 262144, 524288, 1048576]
