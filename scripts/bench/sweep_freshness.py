@@ -74,9 +74,14 @@ FINGERPRINT_DIGITS = 12
 # continuations can start at column zero inside brackets and stay with the
 # current declaration.
 LAKE_DECL = re.compile(
-    r"^(?:(?:private|protected|public)\s+)?"
+    r"^(?:(?:private|protected|public|partial|unsafe|noncomputable|meta)\s+)*"
     r"(package|require|lean_lib|lean_exe|extern_lib|target|script|def"
-    r"|input_file|module_facet|library_facet|package_facet)\s+(\S+)")
+    r"|abbrev|opaque|input_file|module_facet|library_facet|package_facet)\s+(\S+)")
+
+
+def _bracket_delta(code: str) -> int:
+    code = re.sub(r'"(?:\\.|[^"\\])*"', '""', code)
+    return sum(code.count(c) for c in "([{") - sum(code.count(c) for c in ")]}")
 
 
 def lakefile_blocks(text: str) -> dict[str, str]:
@@ -85,14 +90,20 @@ def lakefile_blocks(text: str) -> dict[str, str]:
     key: str | None = None
     pending: list[str] = []
     current: list[str] = []
-    for line, code in zip(text.splitlines(), strip_lean_comments(text, preserve_lines=True).splitlines(), strict=True):
-        match = LAKE_DECL.match(line)
+    depth = 0
+    continuation = False
+    commands = 0
+    for line, code in zip(text.split("\n"), strip_lean_comments(text, preserve_lines=True).split("\n"), strict=True):
+        declaration = re.sub(r"^(?:@\[[^\]]*\]\s*)+", "", code.lstrip())
+        match = LAKE_DECL.match(declaration) if depth == 0 else None
         if match:
             if key is not None:
                 blocks[key] = "\n".join(current).rstrip()
             key = f"{match.group(1)} {match.group(2)}"
             current = pending + [line]
             pending = []
+            depth = _bracket_delta(code)
+            continuation = code.rstrip().endswith((":=", "++", "<|", "=>", ","))
         elif key is None:
             pending.append(line)
         elif (not code.strip() and line.strip() and
@@ -101,9 +112,19 @@ def lakefile_blocks(text: str) -> dict[str, str]:
         elif line.startswith((" ", "\t")) or not line.strip():
             current.append(line)
         else:
-            current.extend(pending)
-            pending = []
-            current.append(line)
+            if depth > 0 or continuation:
+                current.extend(pending)
+                pending = []
+                current.append(line)
+            else:
+                blocks[key] = "\n".join(current).rstrip()
+                key = f"command {commands}"
+                commands += 1
+                current = pending + [line]
+                pending = []
+        if not match and code.strip():
+            depth += _bracket_delta(code)
+            continuation = code.rstrip().endswith((":=", "++", "<|", "=>", ","))
     if key is not None:
         blocks[key] = "\n".join(current).rstrip()
     return blocks

@@ -68,6 +68,37 @@ class LakefileBlocks(unittest.TestCase):
 
 
 class LakefileAffectsRuntime(unittest.TestCase):
+    def test_imported_module_outside_factor_namespaces_protects_its_library(self):
+        before = BASE + '\nlean_lib HexPrimality\n'
+        after = before.replace('lean_lib HexPrimality\n',
+                               'lean_lib HexPrimality where\n  moreLeancArgs := #["-O0"]\n')
+        with patch.object(guard, 'factor_import_modules', return_value={'HexPrimality.Table'}):
+            self.assertTrue(guard.lakefile_texts_differ(before, after))
+
+    def test_computed_module_claims_are_conservatively_protected(self):
+        for glob in ('someHelper', 'Name.mkSimple "HexArith"',
+                     '#[`Other].map (fun _ => `HexArith.UInt64.Wide)'):
+            after = BASE + f'\nlean_lib New where\n  globs := {glob}\n'
+            with self.subTest(glob=glob), \
+                    patch.object(guard, 'factor_import_modules', return_value={'HexArith.UInt64.Wide'}):
+                self.assertTrue(guard.lakefile_texts_differ(BASE, after))
+
+    def test_unrecognised_top_level_commands_cannot_hide_flags(self):
+        for declaration in ('abbrev flags := "-O3"', 'noncomputable def flags := "-O3"',
+                            'opaque flags := "-O3"', 'instance : String := "-O3"',
+                            'set_option maxRecDepth 1000'):
+            before = BASE + '\nlean_lib Other\n' + declaration + \
+                '\nprivate def hexArithOTarget2 := flags\nextern_lib extraffi pkg := hexArithOTarget2\n'
+            after = before.replace('-O3', '-O0').replace('maxRecDepth 1000', 'maxRecDepth 2000')
+            with self.subTest(declaration=declaration):
+                self.assertTrue(guard.lakefile_texts_differ(before, after))
+
+    def test_inline_attributes_and_comments_cannot_hide_native_archives(self):
+        for prefix in ('@[default_target] ', '/-- native archive -/ '):
+            after = BASE + '\nlean_lib Other\n' + prefix + 'extern_lib extraffi pkg := "archive"\n'
+            with self.subTest(prefix=prefix):
+                self.assertTrue(guard.lakefile_texts_differ(BASE, after))
+
     def test_column_zero_compiler_flag_continuation_is_protected(self):
         before = BASE.replace('hexArithOTarget := "cc"', 'hexArithOTarget := (\n"cc -O3")')
         self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
@@ -81,6 +112,15 @@ class LakefileAffectsRuntime(unittest.TestCase):
             self.assertTrue(guard.lakefile_texts_differ(before, imported))
         with patch.object(guard, 'factor_import_modules', return_value=None):
             self.assertTrue(guard.lakefile_texts_differ(before, after))
+
+    def test_qualified_literal_globs_distinguish_imported_modules(self):
+        for constructor in ('Glob.one', 'Glob.submodules', 'Glob.andSubmodules'):
+            unrelated = BASE + f'\nlean_lib Checks where\n  globs := #[{constructor} `Other.Tests]\n'
+            imported = unrelated.replace('`Other.Tests', '`HexPrimality.Table')
+            with self.subTest(constructor=constructor), \
+                    patch.object(guard, 'factor_import_modules', return_value={'HexPrimality.Table'}):
+                self.assertFalse(guard.lakefile_texts_differ(BASE, unrelated))
+                self.assertTrue(guard.lakefile_texts_differ(BASE, imported))
 
     def test_registering_a_new_target_is_not_a_runtime_change(self):
         after = BASE + '\nlean_lib HexPolyFast where\n  srcDir := "."\n'

@@ -56,17 +56,27 @@ def factor_import_modules() -> set[str] | None:
     return freshness.lean_import_modules(["HexBench.FactorService"])
 
 
-def _claims_factor_module(body: str, libs: set[str]) -> bool:
+def _claims_factor_module(declaration: str, body: str) -> bool:
     """Whether a `lean_lib` owns modules of a factorization library.
 
     Native carrier libraries (HexArithNative, HexModArithNative) take modules
     of HexArith and HexModArith by their globs, together with those libraries'
     C objects, so they are part of the factorization build too.
     """
-    names = [name for name in re.findall(r"`([A-Z][A-Za-z0-9_.]*)", body)
-             if name.split(".")[0] in libs]
-    if not names:
-        return False
+    source = freshness.strip_lean_comments(body)
+    fields = re.findall(r"\b(?:roots|globs)\s*:=\s*(.*?)(?=\n[ \t]+[A-Za-z_][\w']*\s*:=|$)",
+                        source, re.DOTALL)
+    names = [declaration]
+    module = r"`[A-Za-z_][A-Za-z0-9_.']*"
+    item = rf"(?:(?:Glob)?\.(?:one|submodules|andSubmodules)\s+)?{module}"
+    vector = rf"#\[\s*(?:{item}(?:\s*,\s*{item})*\s*,?\s*)?\](?:\s*\.map\s+Glob\.one)?"
+    for expression in fields:
+        # Filtering a literal module list can remove modules but cannot create
+        # new names. Other computed roots/globs remain conservatively relevant.
+        expression = re.sub(r"^Array\.filter\s+\(.*\)\s*<\|\s*", "", expression.strip(), flags=re.DOTALL)
+        if not re.fullmatch(rf"{vector}(?:\s*\+\+\s*{vector})*", expression):
+            return True
+        names.extend(re.findall(r"`([A-Za-z_][A-Za-z0-9_.']*)", expression))
     modules = factor_import_modules()
     # An incomplete import walk cannot establish that a claimant is unrelated.
     return modules is None or any(module == name or module.startswith(name + ".")
@@ -108,12 +118,12 @@ def factorization_blocks(text: str) -> dict[str, str]:
             relevant[name] = body
         elif kind == "lean_exe" and decl == FACTOR_SERVICE_EXE:
             relevant[name] = body
-        elif kind == "lean_lib" and (decl in libs or _claims_factor_module(body, libs)):
+        elif kind == "lean_lib" and (decl in libs or _claims_factor_module(decl, body)):
             relevant[name] = _executable_lib_settings(body)
-        elif kind == "extern_lib" or (kind == "def" and decl in FACTOR_BUILD_DEFS):
+        elif kind in ("extern_lib", "command") or (kind == "def" and decl in FACTOR_BUILD_DEFS):
             relevant[name] = body
     helpers = {name: body for name, body in blocks.items()
-               if name.partition(" ")[0] in {"def", "target", "input_file",
+               if name.partition(" ")[0] in {"def", "abbrev", "opaque", "target", "input_file",
                    "module_facet", "library_facet", "package_facet"}}
     pending = list(relevant.values())
     while pending:
@@ -121,7 +131,7 @@ def factorization_blocks(text: str) -> dict[str, str]:
         for name, helper in helpers.items():
             if name in relevant:
                 continue
-            declaration = name.partition(" ")[2]
+            declaration = name.partition(" ")[2].rsplit(".", 1)[-1]
             if re.search(r"(?<![\w'])" + re.escape(declaration) + r"(?![\w'])", body):
                 relevant[name] = helper
                 pending.append(helper)
@@ -190,7 +200,7 @@ def build_only_lakefile_edit(difference: freshness.Difference,
     for path, baseline, endpoint in sorted(exemptions, key=repr):
         if path != LAKEFILE or baseline != difference.baseline or endpoint is None:
             continue
-        if not isinstance(endpoint, str) or not re.fullmatch(r"[0-9a-f]{40}(?:[0-9a-f]{24})?", endpoint):
+        if not isinstance(endpoint, str) or not re.fullmatch(r"[0-9a-f]{40}", endpoint):
             continue
         try:
             approved = freshness.git("cat-file", "blob", endpoint)
