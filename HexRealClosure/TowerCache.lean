@@ -70,7 +70,7 @@ def InclusionCache.findRoot? {target : Context registry}
 @[expose] def InclusionCache.extend {source target : Context registry}
     (cache : InclusionCache source) (next : Inclusion source target) : InclusionCache target :=
   ⟨cache.entries.map fun entry => ⟨entry.1, entry.2.comp next⟩,
-    (cache.candidates.map next.value).eraseDups⟩
+    cache.candidates.map next.value⟩
 
 /-- Retain a checked map for an actual original predecessor. -/
 @[expose] def InclusionCache.insert {source target : Context registry}
