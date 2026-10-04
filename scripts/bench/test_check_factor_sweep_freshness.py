@@ -232,6 +232,15 @@ class LakefileAffectsRuntime(unittest.TestCase):
         before = BASE + '\nlean_lib Other\n  nonrec def hexFlags := #["-O3"]\nextern_lib extraffi pkg := hexFlags\n'
         self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
 
+    def test_indented_attribute_is_retained_with_local_or_multiline_declaration(self):
+        before = BASE + '\nprivate def hexArithOTarget := base\n  where\n  @[implemented_by fast]\n  base := "cc"\nlean_lib Other\n'
+        split_name = BASE + '\nlean_lib Other\n  @[target]\n  def\n    configured := "-O3"\nlean_lib After\n'
+        with patch.object(guard, 'factor_import_modules', return_value={'HexPrimality.Table'}):
+            self.assertTrue(guard.lakefile_texts_differ(before, before.replace('fast', 'slow')))
+            self.assertTrue(guard.lakefile_texts_differ(split_name, split_name.replace('-O3', '-O0')))
+            tail = BASE + '\nprivate def hexArithOTarget := "cc"\n  @[implemented_by fast]'
+            self.assertTrue(guard.lakefile_texts_differ(tail, tail.replace('fast', 'slow')))
+
     def test_registering_a_new_target_is_not_a_runtime_change(self):
         after = BASE + '\nlean_lib HexPolyFast where\n  srcDir := "."\n'
         self.assertFalse(guard.lakefile_texts_differ(BASE, after))

@@ -138,6 +138,9 @@ def lakefile_blocks(text: str) -> dict[str, str]:
               (pending or not line.startswith((" ", "\t")))) or (code.lstrip().startswith("@[") and not declaration.strip()):
             pending.append(line)
         elif line.startswith((" ", "\t")) or not line.strip():
+            if code.strip() and pending:
+                current.extend(pending)
+                pending = []
             current.append(line)
         else:
             if depth > 0 or continuation:
@@ -155,6 +158,7 @@ def lakefile_blocks(text: str) -> dict[str, str]:
             depth += _bracket_delta(code)
             continuation = code.rstrip().endswith((":=", "++", "<|", "=>", ","))
     if key is not None:
+        current.extend(pending)
         blocks[key] = "\n".join(current).rstrip()
     if depth != 0 or uncertain:
         blocks["command uncertain"] = text
