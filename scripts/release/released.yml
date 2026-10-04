@@ -107,6 +107,7 @@ repos:
       - { src: "Hex", dest: "Hex" }
     spec: null
     keep_paths: [HexTestKit.lean]   # mirror-local umbrella, authored there
+    lean_lib_name: HexTestKit       # the Lake library is named after that umbrella
     pins: []
     lakefile: toml
 

@@ -67,8 +67,10 @@ jobs:
           fi
       - name: Stage the repositories this run would publish
         run: |
+          args=()
+          [ "${{ inputs.force }}" = "true" ] && args+=(--force)
           python3 scripts/release/sync_released.py --dry-run \
-            --baseline /tmp/baseline.json --stage "$RUNNER_TEMP/stage"
+            --baseline /tmp/baseline.json --stage "$RUNNER_TEMP/stage" "${args[@]}"
           # The consumer jobs check nothing out: some history file names (e.g.
           # under progress/) contain `:`, which Windows git refuses even in a
           # sparse checkout. They need only these paths, shipped alongside.

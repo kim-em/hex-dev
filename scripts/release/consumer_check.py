@@ -102,10 +102,15 @@ def write_consumer(stage: Path, entries: list[dict]) -> list[str]:
     source.mkdir(parents=True)
     shutil.copy(stage / "hex" / "lean-toolchain", consumer / "lean-toolchain")
     libs = [e["lib"] for e in entries if not e.get("pins_only") and e.get("aggregate", True)]
-    published = {e["lib"] for e in entries if not e.get("pins_only")}
+    # Repositories outside the aggregate (hex-test-kit) are required directly,
+    # so their Lake configuration is built before publication too.
+    others = [e for e in entries if not e.get("pins_only") and not e.get("aggregate", True)]
+    requires = "".join(
+        f'[[require]]\nname = "{e.get("lean_lib_name", e["lib"])}"\n'
+        f'path = "../{e["repo"].split("/")[-1]}"\n\n' for e in others)
     (consumer / "lakefile.toml").write_text(
         'name = "consumer"\n\n'
-        '[[require]]\nname = "hex"\npath = "../hex"\n\n'
+        '[[require]]\nname = "hex"\npath = "../hex"\n\n' + requires +
         '[[lean_lib]]\nname = "Consumer"\n\n'
         '[[lean_exe]]\nname = "consumer_link"\nroot = "Consumer.Main"\n',
         encoding="utf-8",
@@ -113,21 +118,23 @@ def write_consumer(stage: Path, entries: list[dict]) -> list[str]:
     (source / "Imports.lean").write_text(
         "".join(f"import {lib}\n" for lib in libs), encoding="utf-8")
     (source / "Main.lean").write_text(MAIN, encoding="utf-8")
-    modules = ["Consumer.Imports"]
+    modules = ["Consumer.Imports"] + [
+        "+" + e.get("lean_lib_name", e["lib"]) for e in others]
     # Built in place: a copy would change the private names some
     # `#guard_msgs` outputs quote.
     for entry in entries:
         modules.extend(f"+{test}" for test in entry.get("test_modules") or [])
     for example in sorted((REPO_ROOT / "Examples").glob("*.lean")):
         roots = imported_roots(example)
-        if roots <= published:
+        # Only libraries the consumer reaches through `hex` are eligible.
+        if roots <= set(libs):
             target = source / "Examples" / example.name
             target.parent.mkdir(exist_ok=True)
             shutil.copy(example, target)
             modules.append(f"Consumer.Examples.{example.stem}")
         else:
-            print(f"skipping Examples/{example.name}: imports unpublished "
-                  f"{sorted(roots - published)}")
+            print(f"skipping Examples/{example.name}: imports libraries outside the aggregate "
+                  f"{sorted(roots - set(libs))}")
     return modules
 
 
