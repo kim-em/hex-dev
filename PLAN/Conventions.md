@@ -191,9 +191,18 @@ not `monicisedCoreTransportPackage`. See
 Libraries that use `@[extern]` (e.g. `hex-arith` for GMP wrappers,
 `hex-gf2` for CLMUL) keep their C shims in a `ffi/` subdirectory
 within the library (e.g. `HexArith/ffi/wide_arith.c`). Compile those
-sources in `lakefile.lean` with a custom `target` attached to the
-corresponding `lean_lib` through `moreLinkObjs`. A package-level
-`extern_lib` leaks into every downstream executable even when its module
+sources in `lakefile.lean` as custom object-file `target`s, attached through
+`moreLinkObjs` to a separate carrier `lean_lib` (for example `HexArithNative`)
+that owns the modules declaring those `@[extern]`s and is declared after the
+main library, since Lake gives a module to the last library claiming it.
+
+The carrier exists for Windows. Lake links a module's native library against
+the whole shared library of every *other* library it imports, objects
+included, but never adds its own library's `moreLinkObjs`, and Windows must
+resolve every symbol at link time. Carrier modules therefore import nothing
+from the main library, and C code that calls back into Lean lives in the same
+carrier as the Lean code it calls. A package-level `extern_lib` would also
+work there, but it leaks into every downstream executable even when its module
 graph never imports that library. Use `moreLinkArgs` only for system linker
 flags such as `-lgmp`, never for listing `.c` sources.
 

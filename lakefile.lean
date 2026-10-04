@@ -47,7 +47,10 @@ private def zmod64MulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexModArith" / "ffi" / "zmod64_mul.o"
   let srcTarget ← inputTextFile <| pkg.dir / "HexModArith" / "ffi" / "zmod64_mul.c"
   buildFileAfterDep oFile srcTarget fun srcFile => do
-    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3"]
+    -- `LEAN_EXPORTING` makes `LEAN_EXPORT` a dllexport on Windows, as Lake
+    -- does for Lean's own C; a carrier DLL otherwise hides these symbols.
+    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3",
+      "-DLEAN_EXPORTING"]
     -- Mathlib's sandbox permits writes in the build directory, but not /tmp.
     -- Set TMPDIR for this compiler process only, including compiler wrappers.
     createParentDirs oFile
@@ -67,7 +70,10 @@ private def hexArithOTarget (pkg : Package) (src : String) : FetchM (Job FilePat
   let oFile := pkg.dir / defaultBuildDir / "HexArith" / "ffi" / s!"{stem}.o"
   let srcTarget ← inputTextFile <| pkg.dir / "HexArith" / "ffi" / src
   buildFileAfterDep oFile srcTarget fun srcFile => do
-    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3"]
+    -- `LEAN_EXPORTING` makes `LEAN_EXPORT` a dllexport on Windows, as Lake
+    -- does for Lean's own C; a carrier DLL otherwise hides these symbols.
+    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3",
+      "-DLEAN_EXPORTING"]
     -- Mathlib's sandbox permits writes in the build directory, but not /tmp.
     -- Set TMPDIR for this compiler process only, including compiler wrappers.
     createParentDirs oFile
@@ -77,17 +83,15 @@ private def hexArithOTarget (pkg : Package) (src : String) : FetchM (Job FilePat
       env := #[("TMPDIR", some (← IO.FS.realPath (oFile.parent.getD ".")).toString)]
     }
 
-target hexarithffi pkg : FilePath := do
-  let name := nameToStaticLib "hexarithffi"
-  -- TODO(lean4#15160): remove extended_gcd.c after the pinned toolchain provides
-  -- Nat.extendedGcd: https://github.com/leanprover/lean4/pull/15160
-  let oTargets ← #[ "wide_arith.c", "extended_gcd.c" ].mapM (hexArithOTarget pkg)
-  buildStaticLib (pkg.staticLibDir / name) oTargets
+-- Object files rather than an archive: a library's shared form keeps every
+-- object it is given, while an archive contributes only referenced members.
+target hexarithWideO pkg : FilePath := hexArithOTarget pkg "wide_arith.c"
 
-target hexmodarithffi pkg : FilePath := do
-  let name := nameToStaticLib "hexmodarithffi"
-  let oTarget ← zmod64MulOTarget pkg
-  buildStaticLib (pkg.staticLibDir / name) #[oTarget]
+-- TODO(lean4#15160): remove extended_gcd.c after the pinned toolchain provides
+-- Nat.extendedGcd: https://github.com/leanprover/lean4/pull/15160
+target hexarithGcdO pkg : FilePath := hexArithOTarget pkg "extended_gcd.c"
+
+target hexmodarithO pkg : FilePath := zmod64MulOTarget pkg
 
 target hexecpppariio pkg : FilePath := do
   let oFile := pkg.dir / defaultBuildDir / "HexECPPMathlib" / "ffi" / "pari_pipe.o"
@@ -153,7 +157,24 @@ lean_lib HexTruncatedSeriesMathlib where
 
 lean_lib HexArith where
   precompileModules := true
-  moreLinkObjs := #[hexarithffi]
+
+-- The C objects ride on a separate library that owns the modules binding them.
+-- Lake links a module's native library against the whole shared library of any
+-- *other* library it imports, objects included, but never adds its own
+-- library's `moreLinkObjs`; Windows resolves every symbol at link time, so the
+-- objects must sit in a different library from the modules that import them.
+-- Declared after `HexArith`, because Lake gives a module to the last library
+-- that claims it. These modules import nothing from `HexArith`, and
+-- `extended_gcd.c` calls back into `HexArith.Nat.ExtendedGcd`, so both sides
+-- of that callback live in one shared library. The single root named after the
+-- library makes Lake load it as a plugin; Lean loads every plain dynlib before
+-- any plugin, so a carrier that is not a plugin cannot depend on one.
+lean_lib HexArithNative where
+  roots := #[`HexArithNative]
+  globs := #[.one `HexArithNative, .one `HexArith.UInt64.Wide,
+    .one `HexArith.Nat.ExtendedGcd]
+  precompileModules := true
+  moreLinkObjs := #[hexarithWideO, hexarithGcdO]
   -- TODO(lean4#15160): remove -lgmp with the local extended_gcd.c adapter.
   moreLinkArgs := #["-lgmp"]
 
@@ -208,8 +229,14 @@ lean_lib HexSparsePoly where
 
 lean_lib HexModArith where
   precompileModules := true
-  moreLinkObjs := #[hexmodarithffi]
-  moreLinkArgs := #["-lgmp"]
+
+-- Carries `zmod64_mul.c` for the modules that bind it; see `HexArithNative`.
+lean_lib HexModArithNative where
+  roots := #[`HexModArithNative]
+  globs := #[.one `HexModArithNative, .one `HexModArith.WordMod,
+    .one `HexModArith.Residue]
+  precompileModules := true
+  moreLinkObjs := #[hexmodarithO]
 
 lean_lib HexModular where
 
@@ -502,8 +529,10 @@ lean_lib HexLatticeEnumTests where
 lean_lib HexLLL where
   precompileModules := true
   extraDepTargets := #[`hexlllffi]
+  -- `dlopen` lives in libdl on Linux, in libc on macOS, and is absent on
+  -- Windows, where the provider uses LoadLibrary instead.
   moreLinkArgs :=
-    if System.Platform.isOSX then
+    if System.Platform.isOSX || System.Platform.isWindows then
       #[]
     else
       #["-ldl"]
