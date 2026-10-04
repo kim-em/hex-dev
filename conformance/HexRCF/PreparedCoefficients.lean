@@ -347,21 +347,37 @@ run_meta do
   let annotated := {a with rootExpr := .mdata {} a.rootExpr}
   annotated.checkDomains
 
+-- Data-level forbidden evidence must be screened before native evaluation.
+run_meta do
+  let target : Q(Prop) := q(∀ x : ℝ, x ^ 2 + Real.sqrt 3 > 0)
+  let .ok prepared ← Coefficients.prepare target | throwError "data screen fixture failed"
+  let bad ← mkSorry q(ZPoly) false
+  let invalid := {prepared with polynomialExpr := bad}
+  let before := (← getMCtx).mvarCounter
+  let failure ← tryCatchRuntimeEx (do
+    invalid.checkDomains
+    pure none) (fun error => do pure (some (← error.toMessageData.toString)))
+  let some message := failure | throwError "forbidden polynomial data was evaluated"
+  unless (message.splitOn "sorryAx").length > 1 do
+    throwError "forbidden polynomial data did not fail screening: {message}"
+  unless (← getMCtx).mvarCounter == before do
+    throwError "data screening leaked metavariables"
+
 -- Both tactic arms cover factory data with guards, multiple source fields
 -- and local aliases; these proofs must contain the common-field identity law.
 set_option rcf.algebraic.validateFresh false in
- theorem fresh_guard : ∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0 := by rcf
+theorem fresh_guard : ∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0 := by rcf
 set_option rcf.algebraic.validateFresh true in
- theorem checked_guard : ∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0 := by rcf
+theorem checked_guard : ∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0 := by rcf
 set_option rcf.algebraic.validateFresh false in
- theorem fresh_sources : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 + Real.sqrt 3 > 0 := by rcf
+theorem fresh_sources : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 + Real.sqrt 3 > 0 := by rcf
 set_option rcf.algebraic.validateFresh true in
- theorem checked_sources : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 + Real.sqrt 3 > 0 := by rcf
+theorem checked_sources : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 + Real.sqrt 3 > 0 := by rcf
 set_option rcf.algebraic.validateFresh false in
- theorem fresh_alias (a : ℝ) (h : a = Real.sqrt 2 + 1) :
+theorem fresh_alias (a : ℝ) (h : a = Real.sqrt 2 + 1) :
     ∀ x : ℝ, x ^ 2 + 1 / a > 0 := by rcf
 set_option rcf.algebraic.validateFresh true in
- theorem checked_alias (a : ℝ) (h : a = Real.sqrt 2 + 1) :
+theorem checked_alias (a : ℝ) (h : a = Real.sqrt 2 + 1) :
     ∀ x : ℝ, x ^ 2 + 1 / a > 0 := by rcf
 
 run_meta do

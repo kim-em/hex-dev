@@ -38,8 +38,10 @@ retain all sixteen completed builds at clean source
 common-field proof marker and its complete standard axiom inventory.
 
 Four trial-major rounds rotate the two pairs and alternate adjacent AB/BA
-arms. The same imports and solver/replay options are used; the only control is
-`validateFresh`. Imported dependencies are warmed before timing, and only each
+arms. The same imports and solver/replay controls are used. In this v2 source,
+the checked arm forces synchronous elaboration while the fresh arm uses ambient
+options; both were timed with one Lean thread. This is a stated arm difference,
+so the result is not an isolated validation-cost attribution. Imported dependencies are warmed before timing, and only each
 probe’s artifacts are removed per arm. Whole Lake time includes dependency
 replay, elaboration, production, quotation, kernel checking, route inspection
 and compiler output. Imported source hashes and exact dependency checkouts are
@@ -61,8 +63,8 @@ Namespace and source-module names differ between arms; the small private-size
 difference is an observation, not an isolated proof-sharing attribution.
 
 The mechanical record reports `complete`, `release_quality: true` and
-`no-comparable-control`. These fixed-goal observations support a small
-whole-module saving from avoiding redundant validation. They establish no
+`no-comparable-control`. These divisor-free fixed-goal observations favor the fresh arm, with the
+synchronous-option difference stated above. They do not isolate validation cost. They establish no
 asymptotic coefficient law, numerical-kernel complexity attestation, separate
 validation/kernel attribution or general frontend/tower completion. The
 reference already includes batched coordinate validation, so this does not

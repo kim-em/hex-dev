@@ -86,6 +86,16 @@ meta def checkAxioms (name : Name) (proof : Expr) : MetaM Unit := do
       unless ordinaryAxiom dependency do
         throwError "rcf: handler {name} proposed a proof using forbidden axiom {dependency} (through {constant})"
 
+/-- Screen closed expression data before native evaluation or proof acceptance.
+Local hypotheses remain permitted; unresolved and nonstandard dependencies do not. -/
+meta def checkExpr (name : Name) (expression : Expr) : MetaM Expr := do
+  let expression ← instantiateMVars expression
+  if expression.hasMVar then throwError "rcf: {name} contains unresolved metavariables"
+  checkAxioms name expression
+  if (← getEnv).hasUnsafe expression then
+    throwError "rcf: {name} uses an unsafe declaration"
+  return expression
+
 /-- Accept only a closed ordinary proof of the exact target. Agreement cannot
 assign caller metavariables; a fresh uncached theorem checks the candidate
 against its target in the kernel and exposes all transitive dependencies. -/

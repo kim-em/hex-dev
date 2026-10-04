@@ -26,5 +26,6 @@ run_meta do
       `Hex.RCF.ProofProbe.Validation.ScalarChecked.positive
       (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.CommonPresentation.checkPolynomials_sound) do
     throwError "validation probe did not use the common-field frontend"
+  assertArm `Hex.RCF.ProofProbe.Validation.ScalarChecked.positive true
 
 end Hex.RCF.ProofProbe.Validation.ScalarChecked
