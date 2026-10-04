@@ -74,12 +74,12 @@ FINGERPRINT_DIGITS = 12
 # continuations can start at column zero inside brackets and stay with the
 # current declaration.
 LAKE_DECL = re.compile(
-    r"^(?:(?:private|protected|public|partial|unsafe|noncomputable|meta)\s+)*"
+    r"^(?:(?:private|protected|public|partial|unsafe|noncomputable|nonrec|meta)\s+)*"
     r"(package|require|lean_lib|lean_exe|extern_lib|target|script|def"
     r'|abbrev|opaque|input_file|module_facet|library_facet|package_facet)\s+("[^"\n]*"|«[^»\n]*»|[A-Za-z_][\w\'.]*[!?]*|\S+)')
 
 LAKE_COMMAND = re.compile(
-    r"^(?:(?:private|protected|public|partial|unsafe|noncomputable|meta|local|scoped)\s+)*"
+    r"^(?:(?:private|protected|public|partial|unsafe|noncomputable|nonrec|meta|local|scoped)\s+)*"
     r"(?:namespace|section|end|open|export|set_option|attribute|variable|universe"
     r"|mutual|instance|macro|macro_rules|syntax|notation|infix|infixl|infixr|prefix|postfix"
     r"|elab|elab_rules|run_cmd|run_elab|run_meta|initialize|deriving|declare_syntax_cat"
@@ -135,7 +135,7 @@ def lakefile_blocks(text: str) -> dict[str, str]:
         elif key is None:
             pending.append(line)
         elif (not code.strip() and line.strip() and
-              (pending or not line.startswith((" ", "\t")))) or (code.startswith("@[") and not declaration.strip()):
+              (pending or not line.startswith((" ", "\t")))) or (code.lstrip().startswith("@[") and not declaration.strip()):
             pending.append(line)
         elif line.startswith((" ", "\t")) or not line.strip():
             current.append(line)

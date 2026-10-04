@@ -221,6 +221,17 @@ class LakefileAffectsRuntime(unittest.TestCase):
         before = BASE + '\n@[target, lean_lib] def configured := "-O3"\n'
         self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
 
+    def test_indented_attribute_attaches_to_handwritten_target(self):
+        for kind in ('lean_lib', 'extern_lib', 'target'):
+            with self.subTest(kind=kind):
+                before = BASE + '\nlean_lib Other\n  @[' + kind + ']\n  def configured := "-O3"\n'
+                self.assertIn('@[' + kind + ']', freshness.lakefile_blocks(before)['def configured'])
+                self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
+
+    def test_nonrec_helper_changes_measured_flags(self):
+        before = BASE + '\nlean_lib Other\n  nonrec def hexFlags := #["-O3"]\nextern_lib extraffi pkg := hexFlags\n'
+        self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
+
     def test_registering_a_new_target_is_not_a_runtime_change(self):
         after = BASE + '\nlean_lib HexPolyFast where\n  srcDir := "."\n'
         self.assertFalse(guard.lakefile_texts_differ(BASE, after))
