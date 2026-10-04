@@ -622,11 +622,15 @@ examples and equality axiom audit are covered by conformance above.
 Current registrations are in `bench/HexSturm/Bench.lean` and
 `bench/HexSturm/Frontend.lean`. The integer backend stages are shared-kernel
 diagnostics; their existence does not attest every ordered-field frontend.
-The current executable lists and verifies 71 cases, including the 13
+The current executable lists and verifies 91 cases, including the 13
 `short-chain-degree` registrations below, plus 12 complete-query fixed
 comparison endpoints and two protocol-overhead controls in
 `Hex.SturmExternalBench` in `bench/HexSturm/Bench.lean`. The latter are expected-result/informational
-anchors and make no complexity or absolute-budget claim.
+anchors and make no complexity or absolute-budget claim. Twenty additional
+fixed registrations extend count comparisons and protocol controls to degrees
+4, 16, 32 and 64; degree 8 uses the existing endpoints. The
+[degree comparison](bench-results/sturm-external-degree/README.md) treats
+measured elapsed time and backend ratios as informational evidence.
 
 | Frontend/stage targets | Strongest justified evidence | Input |
 | --- | --- | --- |
