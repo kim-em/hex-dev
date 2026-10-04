@@ -2462,3 +2462,20 @@ literal entries and indices are preserved. Missing nonconstant facts block
 ordinary-kernel reduction, but compiled evaluation retains the native fallback.
 These interfaces support proof assembly; they do not establish a compiled
 checker that avoids lower-level sign searches.
+
+`Algebraic.Context.changeOps` retains an existing root context under proved
+literal equalities of its coefficient operations. It preserves the descriptor,
+optional canonical prepared cache, root count and reduction policy. Its
+`changeOps_data` theorem preserves the literal subject, root count and reduction
+policy; `changeOps_reduce` and `changeOps_signPoly` identify the actual reduction
+and sign functions with the original functions. `changeOps_root` retains the
+complete descriptor, and `changeOps_domains` preserves the prepared cache;
+`changeOps_self` identifies transport with unchanged operations. Transport changes validity
+proofs without executing domain preparation. It does not reconstruct a context
+from untrusted bytes or collect missing arithmetic evidence.
+
+`Algebraic.Context.ofChecked` requires the exact canonical-cache, root-count
+and reduction-policy equations used by the ordinary constructor.
+The restoring factories keep their constructors private. Public projection
+laws expose their stored fields; direct kernel unfolding requires the owning
+module imports used by the conformance fixture.

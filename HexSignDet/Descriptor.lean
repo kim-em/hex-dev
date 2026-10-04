@@ -34,6 +34,35 @@ structure Descriptor (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E]
   evidence : Replay E Ctx
   accepted : raw.check sign context evidence = true
 
+/-- Assemble a descriptor from an already proved literal replay check.
+The proof identifies the exact raw subject and evidence; no replay is rerun. -/
+def Descriptor.ofChecked (sign : E → Int) (context : Ctx)
+    (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx)
+    (accepted : raw.check sign context evidence = true) : Descriptor E Ctx sign context :=
+  ⟨raw, evidence, accepted⟩
+
+@[simp] theorem Descriptor.ofChecked_raw (sign : E → Int) (context : Ctx)
+    (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx)
+    (accepted : raw.check sign context evidence = true) :
+    (ofChecked sign context raw evidence accepted).raw = raw := by
+  unfold ofChecked
+  rfl
+
+@[simp] theorem Descriptor.ofChecked_evidence (sign : E → Int) (context : Ctx)
+    (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx)
+    (accepted : raw.check sign context evidence = true) :
+    (ofChecked sign context raw evidence accepted).evidence = evidence := by
+  unfold ofChecked
+  rfl
+
+/-- Reassembling an existing checked descriptor retains the complete value. -/
+theorem Descriptor.ofChecked_eq {sign : E → Int} {context : Ctx}
+    (descriptor : Descriptor E Ctx sign context) :
+    ofChecked sign context descriptor.raw descriptor.evidence descriptor.accepted = descriptor := by
+  unfold ofChecked
+  cases descriptor
+  rfl
+
 /-- Validate supplied replay evidence. Failure says the certificate did not
 establish this descriptor; it does not decide mathematical nonexistence. -/
 def Descriptor.ofReplay? (sign : E → Int) (context : Ctx)

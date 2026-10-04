@@ -7,3 +7,4 @@ module
 
 public import HexSturm.Basic
 public import HexSturm.Transport
+public import HexSturm.DomainOperations
