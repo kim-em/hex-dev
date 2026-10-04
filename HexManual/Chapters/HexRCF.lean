@@ -2359,7 +2359,21 @@ private theorem callerContainment
 example : ∀ x : ℝ, x ^ 2 + 2 + Real.sin 1 > 0 := by rcf
 example : ∃ x : ℝ,
     x = Real.sin 1 ∧ -2 < x ∧ x < 2 := by rcf
+
+example : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 + Real.sin 1 > 0 := by rcf
+example : ∀ x : ℝ,
+    x ^ 2 + 1 / (Real.sqrt 2 + Real.sin 1) > 0 := by rcf
 ```
+
+Registered bounds also compose with unregistered algebraic coefficients.
+For the last two examples, the algebraic approximation proposes rational
+endpoints for the selected positive square root. The existing exact algebraic
+frontend proves containment by literal replay before those bounds enter the
+finite arithmetic. The supplied sine bound then separates the original
+divisor from zero. The frozen proof does not rerun algebraic approximation or
+root production. Whole-subject registrations still take priority. This
+composition remains bounded: an unsupported field presentation or an
+unresolved combined enclosure is a failure, not a completeness claim.
 
 The finite path requests width `1/16` once. The actual width here is `2`;
 containment does not assert that the request was met. A requested-width theorem

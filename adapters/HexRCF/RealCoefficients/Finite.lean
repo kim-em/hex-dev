@@ -7,6 +7,7 @@ module
 
 public meta import HexRCF.Tactic
 public meta import HexRCF.RealCoefficients.Reify
+public meta import HexRCF.RealCoefficients.AlgebraicBounds
 public import HexRCF.RealCoefficients.Registration
 public meta import Mathlib.Tactic.Linarith
 
@@ -155,6 +156,12 @@ private partial def enclose (entries : Array (Name × Expr)) (request : Rat)
         #[{ declaration := name, subject := source, version, request, bounds, identity, containment }]
   let e := source.consumeMData
   let (op, args) := e.getAppFnArgs
+  let realPower ← if op == ``HPow.hPow && args.size == 6 then
+      pure ((← inferType args[5]!).isConstOf ``Real) else pure false
+  if e.isAppOfArity ``RealAlgebraicNumber.toReal 1 ||
+      e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 || realPower then
+    let (bounds, proof) ← AlgebraicBounds.enclose source request
+    return ← checked source bounds proof
   if [``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv].contains op && args.size == 6 then
     let left ← enclose entries request args[4]!
     let right ← enclose entries request args[5]!
