@@ -5,7 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexModArith.WordMod
-public import HexModArith.Residue
-
-/-! The root of `HexModArithNative`, the library carrying HexModArith's C objects. -/
+/-! The root of `HexModArithNative`, the library carrying HexModArith's C objects (see
+`PLAN/Conventions.md`). It imports nothing: it exists so the library has a single
+root named after it, which makes Lake load the library as a plugin. The modules
+the library owns are listed by its `globs`, and an import between two of them
+would make Lake link that module on its own, without the C objects. -/

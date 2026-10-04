@@ -5,7 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexArith.UInt64.Wide
-public import HexArith.Nat.ExtendedGcd
-
-/-! The root of `HexArithNative`, the library carrying HexArith's C objects. -/
+/-! The root of `HexArithNative`, the library carrying HexArith's C objects (see
+`PLAN/Conventions.md`). It imports nothing: it exists so the library has a single
+root named after it, which makes Lake load the library as a plugin. The modules
+the library owns are listed by its `globs`, and an import between two of them
+would make Lake link that module on its own, without the C objects. -/
