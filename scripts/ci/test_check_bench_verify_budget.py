@@ -18,11 +18,12 @@ from libgraph import load_libraries
 
 class CheckBenchVerifyBudgetTests(unittest.TestCase):
     def run_script(
-        self, *arguments: str, library_filter: str
+        self, *arguments: str, library_filter: str,
+        lake_script: str = "#!/bin/sh\nexit 0\n",
     ) -> subprocess.CompletedProcess[str]:
         with tempfile.TemporaryDirectory() as directory:
             fake_lake = Path(directory) / "lake"
-            fake_lake.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            fake_lake.write_text(lake_script, encoding="utf-8")
             fake_lake.chmod(0o755)
             env = os.environ.copy()
             env.update(
@@ -60,11 +61,19 @@ class CheckBenchVerifyBudgetTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("filtered runs require Library=bench_executable", result.stdout)
 
+    def test_sturm_fixture_failure_fails_closed(self) -> None:
+        result = self.run_script(
+            "HexSturm=hexsturm_bench",
+            library_filter="HexSturm",
+            lake_script='#!/bin/sh\n[ "$3" != "check-head-fixtures" ] || exit 7\nexit 0\n',
+        )
+        self.assertEqual(result.returncode, 7, result.stdout)
+
     def test_workflow_pairs_match_lake_roots(self) -> None:
         workflow = (REPO_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         block = workflow.split(
             "bash scripts/ci/check_bench_verify_budget.sh \\\n", 1
-        )[1].split("          # These two interval", 1)[0]
+        )[1].split("          if [ -z \"$HEX_LIBRARY_FILTER\" ]", 1)[0]
         pairs = re.findall(r"\b(Hex[A-Za-z0-9]+)=([a-z0-9_]+_bench)\b", block)
         self.assertEqual(len(pairs), 57)
 

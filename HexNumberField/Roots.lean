@@ -468,16 +468,31 @@ def coordinates? (gamma a : AlgebraicNumber)
       coordinate gamma.rep gamma.rep_mk
     if recovered == a then some coordinate else none
 
-/-- Construct and validate one primitive fixed-field presentation for an
-algebraic coefficient array. -/
+/-- Check an entire coefficient array in one proposed field, sharing its
+power table and validating every recovered coordinate at the selected embedding. -/
 @[expose]
-def presentation? (coefficients : Array AlgebraicNumber) :
+def presentationAt? (generator : AlgebraicNumber) (coefficients : Array AlgebraicNumber) :
     Option Presentation := do
-  let generator ← primitive? coefficients
   let d := degree generator
   let powers ← powers? generator (2 * d - 2)
   let embedded ← coefficients.mapM fun a => coordinates? generator a powers
   some ⟨generator, embedded⟩
+
+/-- Construct and validate one primitive fixed-field presentation for an
+algebraic coefficient array. First try the field of the first nonzero
+coefficient; otherwise use the bounded primitive-element search. -/
+@[expose]
+def presentation? (coefficients : Array AlgebraicNumber) : Option Presentation :=
+  let proposed := do
+    let first ← (coefficients.filter fun a => !a.isZero)[0]?
+    if coefficients.all (fun a => degree first % degree a == 0) then
+      presentationAt? first coefficients
+    else none
+  match proposed with
+  | some presentation => some presentation
+  | none => do
+    let generator ← primitive? coefficients
+    presentationAt? generator coefficients
 
 end Hex.AlgebraicPoly.Common
 
@@ -595,6 +610,20 @@ private def rootsSqrtTwoExact? : Option AlgebraicNumber :=
   else
     none
 
+private def rootsSqrtThreePoly : ZPoly := DensePoly.ofList [-3, 0, 1]
+
+private def rootsSqrtThreeRep : RefinedIsolation rootsSqrtThreePoly :=
+  ⟨⟨⟨Dyadic.ofIntWithPrec 222 7, 0, 8⟩, .ofWitness (by decide)⟩, by decide⟩
+
+private def rootsSqrtThreeExact? : Option AlgebraicNumber :=
+  if hirred : ZPoly.isIrreducible rootsSqrtThreePoly = true then
+    letI : ZPoly.CheckedIrreducible rootsSqrtThreePoly := ⟨hirred, by decide⟩
+    let root := SimpleRoot.mk rootsSqrtThreeRep
+    let generator := PolyQuot.reduce rootsSqrtThreePoly root
+      (DensePoly.ofList ([0, 1] : List Rat))
+    generator.toAlgebraicNumber? rootsSqrtThreeRep rfl
+  else none
+
 private def algebraicLinearRoots? : Option RootSet := do
   let sqrtTwo ← rootsSqrtTwoExact?
   let negSqrtTwo ← AlgebraicPoly.Common.scale? (-1) sqrtTwo
@@ -679,3 +708,40 @@ private def algebraicLinearRoots? : Option RootSet := do
     | _, _ => false
 
 end Hex
+
+-- An existing containing field is accepted. Direct rational coordinate
+-- recovery rejects √2; the public producer rejects that proposal by degree
+-- before using the unchanged primitive-search fallback.
+#guard
+    match Hex.rootsSqrtTwoExact?, Hex.AlgebraicPoly.Common.rational? 2 with
+    | some sqrtTwo, some two =>
+        match Hex.AlgebraicPoly.Common.presentation? #[sqrtTwo, two],
+            Hex.AlgebraicPoly.Common.presentationAt? two #[two, sqrtTwo],
+            Hex.AlgebraicPoly.Common.presentation? #[two, sqrtTwo] with
+        | some contained, none, some extended =>
+            contained.generator == sqrtTwo && contained.coefficients.size = 2 &&
+              extended.generator.p.natDegree = 2 && extended.coefficients.size = 2
+        | _, _, _ => false
+    | _, _ => false
+
+-- Both trace products have the required degree and zero trace, but their
+-- recovered coordinate is zero rather than √3. Exact equality rejects it.
+#guard
+    match Hex.rootsSqrtTwoExact?, Hex.rootsSqrtThreeExact? with
+    | some sqrtTwo, some sqrtThree =>
+        Hex.AlgebraicPoly.Common.trace? 2 sqrtThree == some 0 &&
+          (Hex.AlgebraicPoly.Common.mul? sqrtTwo sqrtThree >>=
+            Hex.AlgebraicPoly.Common.trace? 2) == some 0 &&
+          (Hex.AlgebraicPoly.Common.presentationAt? sqrtTwo #[sqrtTwo, sqrtThree]).isNone
+    | _, _ => false
+
+-- Equal degrees pass the proposal's divisibility check. Exact coordinate
+-- recovery rejects √3 in ℚ(√2), and the public producer finds their degree-four field.
+#guard
+    match Hex.rootsSqrtTwoExact?, Hex.rootsSqrtThreeExact? with
+    | some sqrtTwo, some sqrtThree =>
+        match Hex.AlgebraicPoly.Common.presentation? #[sqrtTwo, sqrtThree] with
+        | some extended =>
+            extended.generator.p.natDegree = 4 && extended.coefficients.size = 2
+        | none => false
+    | _, _ => false

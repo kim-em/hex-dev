@@ -1,0 +1,44 @@
+{
+  "source_commit": "982c40ed063117d4f38f7fb6170937625b78f530",
+  "dirty": false,
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "cpu": 8,
+  "load_before": [
+    7.2197265625,
+    18.16552734375,
+    28.0244140625
+  ],
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+    "run",
+    "Hex.RealAlgebraicBench.runRationalRecognition",
+    "Hex.RealAlgebraicBench.runRationalFloor",
+    "Hex.RealAlgebraicBench.runRationalCeil",
+    "--export-file",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-rational-height/results.json"
+  ],
+  "schedule": "Each registered six-rung ladder uses four trial-major samples; no per-run sampling override.",
+  "source_sha256": {
+    "bench/HexRealAlgebraic/Bench.lean": "1f9bf7a2017d8c2e082b3d4f40bd41fbde1d00a9274d063808c7a5814bb24756",
+    "HexRealAlgebraic/Order.lean": "f1a1249c280e7351f576b24544a00f55007a3b68fe4947dfd3f9a4a7a358c3ba",
+    "reports/bench-results/real-algebraic-rational-height/derivation.md": "e6d277496e705c7c28048d8112d0d7b3b3e2bbef0e4d83d2d88102aea6b2683f"
+  },
+  "executable_sha256": "26673bd5918b3a2e05b7b531ec48d0b7557a0bd2e74c70c32017e302a23d4b8f",
+  "lean_bench_commit": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+  "lake_version": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "started_monotonic": 22279.848526885,
+  "exit_code": 0,
+  "elapsed_seconds": 15.522972418999416,
+  "load_after": [
+    6.76513671875,
+    17.521484375,
+    27.65478515625
+  ],
+  "source_sha256_after": {
+    "bench/HexRealAlgebraic/Bench.lean": "1f9bf7a2017d8c2e082b3d4f40bd41fbde1d00a9274d063808c7a5814bb24756",
+    "HexRealAlgebraic/Order.lean": "f1a1249c280e7351f576b24544a00f55007a3b68fe4947dfd3f9a4a7a358c3ba",
+    "reports/bench-results/real-algebraic-rational-height/derivation.md": "e6d277496e705c7c28048d8112d0d7b3b3e2bbef0e4d83d2d88102aea6b2683f"
+  },
+  "dirty_scope": "The wrapper recorded clean source before creating outputs. The harness reports git_dirty=true because the evidence snapshots/log/export were then untracked; tracked implementation files and hashes did not change."
+}

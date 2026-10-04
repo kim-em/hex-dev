@@ -14,34 +14,46 @@ public import Lean.Data.Json
 public section
 
 /-!
-# Bounded conversion of supplied PARI ECPP rows
+# Reading primality certificates from PARI/GP
 
-Conversion constructs proposals and inverse transcripts. Every returned
-certificate is checked again by `checkAt`; no proposal is a proof dependency.
+PARI encodes an elliptic curve primality certificate as rows `[n,t,s,a,P]`.
+The proposed curve order is `m = n + 1 - t`, with auxiliary prime `q = m / s`.
+Conversion recovers the curve from `a` and `P`, computes `Q = s • P`, and
+collects the modular inverses needed to verify `q • Q = O`.
+
+The last prime in the PARI chain needs its own HexPrimality certificate.
+Callers can supply that certificate or ask `convertCounted` to search for it.
+Every returned ECPP certificate passes `checkAt`; claimed curve orders and
+PARI's stopping cutoff are not trusted as proofs of primality.
 -/
 
 namespace Hex.ECPP
 
-/-- Finite allocations for parsing, conversion and terminal construction. -/
+/-- Limits on the input and work allowed when importing a primality
+certificate from PARI text. These bound parsing, point calculations and
+optional search for a proof of the last prime. Exceeding a limit returns an
+error; it does not imply that the intended integer is composite. -/
 structure ImportBudget where
-  /-- Maximum UTF-8 bytes before parsing. -/
+  /-- Maximum certificate text length in UTF-8 bytes, checked before parsing. -/
   maxInputBytes : Nat
-  /-- Maximum consecutive decimal digits before integer allocation. -/
+  /-- Maximum digits in a supplied decimal integer, checked before allocating it. -/
   maxDigits : Nat
-  /-- Maximum supplied rows. -/
+  /-- Maximum number of elliptic curve steps in the supplied certificate. -/
   maxRows : Nat
-  /-- Maximum bit length of any supplied integer magnitude. -/
+  /-- Maximum bit length of the magnitude of any supplied integer, including coordinates. -/
   maxIntegerBits : Nat
-  /-- Maximum bit length of either scalar replay. -/
+  /-- Maximum bit length of the cofactor or auxiliary prime used to multiply a point. -/
   maxScalarBits : Nat
-  /-- Maximum inverse operations per scalar replay. -/
+  /-- Maximum divisions requiring a modular inverse in one scalar multiplication. -/
   maxInverseOps : Nat
-  /-- Maximum caller-supplied terminal search fuel. -/
+  /-- Maximum search fuel a caller may request for proving the last prime in the chain. -/
   maxEndpointFuel : Nat
 deriving Repr
 
-/-- A finite conversion policy admitting the frozen 512-bit PARI vector.
-Callers can use smaller explicit budgets for shorter certificates. -/
+/-- Standard limits used to import saved primality certificates: 16 KiB of
+text, 170 decimal digits per integer, 20 elliptic rows, 512-bit integers and
+scalars, 1200 divisions per scalar multiplication and 200 units of search fuel
+for the last prime. Callers may choose smaller limits. -/
 def defaultImportBudget : ImportBudget :=
   ⟨16384, 170, 20, 512, 512, 1200, 200⟩
 
@@ -110,7 +122,7 @@ def residue (n : Nat) (z : Int) : Nat := (z % (n : Int)).toNat
 /-- Conversion may search for inverses, unlike the proof checker. Each
 proposal is still verified before it enters the raw certificate. -/
 def inverse? (n d : Nat) : Option Nat :=
-  let (g, s, _) := HexArith.extGcd d n
+  let (g, s, _) := HexArith.Int.extGcd (d : Int) (n : Int)
   if g != 1 then none
   else
     let u := residue n s
@@ -190,10 +202,10 @@ def checkRowLimits (budget : ImportBudget) (row : PariRow) :
       (fun z => HexArith.bitLength z > budget.maxIntegerBits) then
     throw .exhausted
 
-/-- Preflight parsed input before checking or searching for a terminal
-certificate. Row errors retain their original vector index; the endpoint
-uses the index immediately after the last row. Text byte and digit limits
-are enforced separately by `parsePari`. -/
+/-- Check the number of rows and the sizes of their integers before doing
+curve arithmetic or proving the last prime. An error identifies the original
+row, or the position after the rows for that last integer. `parsePari`
+separately checks text length and decimal digit limits. -/
 def preflight (budget : ImportBudget) (input : PariCertificate) :
     Except ImportError Unit := do
   if input.rows.length > budget.maxRows then throw { row := 0, kind := .exhausted }
@@ -241,8 +253,10 @@ def convertRows (budget : ImportBudget) :
       | .ok cert => pure cert
       | .error kind => throw { row := rowIndex, kind := kind }
 
-/-- Convert a parsed PARI vector with a supplied accepted Hex terminal
-certificate. The terminal subject must match exactly. -/
+/-- Convert parsed PARI rows into a checked ECPP primality certificate.
+`leaf` must pass the HexPrimality checker and certify exactly the last
+integer in the PARI chain. Conversion verifies the curve and point
+calculations, then checks the resulting complete certificate. -/
 def convert (budget : ImportBudget) (input : PariCertificate)
     (leaf : Hex.Nat.PrimeCert) : Except ImportError Cert := do
   preflight budget input
@@ -345,21 +359,30 @@ private def parseLocated (budget : ImportBudget) (source : String) :
   preflight budget input
   pure input
 
-/-- Parse a PARI integer or a vector of `[n,t,s,a,P]` rows. An affine `P`
-has two coordinates; the three-coordinate form is also accepted so its
-projective `z` is checked as a unit. `convertText` retains row locations. -/
+/-- Read PARI primality certificate text: either an integer ending the proof
+chain or a vector of `[n,t,s,a,P]` elliptic curve rows. Here `n + 1 - t` is a
+proposed order, `s` its cofactor, `a` a curve coefficient, and `P` a point.
+Points may have two affine or three homogeneous coordinates. Parsing is not
+a primality proof; `convertText` completes the arithmetic checks and retains
+the failing row's location if conversion fails. -/
 def parsePari (budget : ImportBudget) (source : String) :
     Except ImportErrorKind PariCertificate :=
   (parseLocated budget source).mapError ImportError.kind
 
-/-- Parse and convert a supplied PARI certificate under explicit limits. -/
+/-- Read PARI certificate text and convert it to a checked Hex primality
+certificate. Supply `leaf` as a HexPrimality certificate for the last prime
+in the chain. Return an error for invalid data or exceeded limits.
+Conversion does not call GP or search for `leaf`; a successful result is
+accepted by the ECPP checker for the integer recorded in the text. -/
 def convertText (budget : ImportBudget) (source : String)
     (leaf : Hex.Nat.PrimeCert) : Except ImportError Cert := do
   let input ← parseLocated budget source
   convert budget input leaf
 
-/-- Complete a partial PARI endpoint with Hex's bounded, checked terminal
-certificate search. Supplied `fuel` above the conversion allocation is rejected. -/
+/-- Import parsed PARI rows while searching for a proof of their last prime.
+The resulting complete certificate is checked before it is returned, together
+with the advanced random state. The requested `fuel` must fit `budget`;
+an exhausted search does not establish compositeness. -/
 def convertCounted (budget : ImportBudget)
     (primeBudget : Hex.Nat.PrimeCertBudget) (rand : Hex.Rand)
     (fuel : Nat) (input : PariCertificate) :

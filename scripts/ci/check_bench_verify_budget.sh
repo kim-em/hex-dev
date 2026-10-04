@@ -100,9 +100,15 @@ for bench in "${filtered_benches[@]}"; do
   if [ "${GITHUB_ACTIONS:-}" = "true" ] && [ -x "$bench_exe" ]; then
     "$bench_exe" list
     "$bench_exe" "$verify_command"
+    if [ "$bench" = "hexsturm_bench" ]; then
+      "$bench_exe" check-head-fixtures
+    fi
   else
     lake exe "$bench" list
     lake exe "$bench" "$verify_command"
+    if [ "$bench" = "hexsturm_bench" ]; then
+      lake exe "$bench" check-head-fixtures
+    fi
   fi
   end=$(date +%s)
   elapsed=$((end - start))

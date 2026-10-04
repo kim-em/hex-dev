@@ -19,7 +19,7 @@ The transported operations and their computational owners are:
 | --- | --- | --- |
 | `PolyQuot` reduction, arithmetic, scalar actions, powers, inversion, approximation, and checked/total canonical conversion | `HexNumberField` | `conformance/HexNumberField/Conformance.lean`, `hexnumberfield_bench`, and `reports/hex-number-field-performance.md` |
 | Lazy and canonical algebraic-number equality, zero recognition, arithmetic, exactification, and field operations | `HexNumberField` | The same conformance target covers checked and total lazy operations, semantic equality, rational construction, casts, scalar actions, and powers; the same benchmark target registers the corresponding compiled surfaces. |
-| Yun decomposition, candidate disambiguation and merging, fixed-field roots, algebraic-coefficient roots, and common-field presentation (`rational?`, arithmetic and shifts, primitive search, powers, traces, coordinates, and `presentation?`) | `HexNumberField` | The root and algebraic-polynomial sections of the owner conformance target exercise the public pipelines, including common presentation transitively; the owner benchmark registers their components and end-to-end paths. |
+| Yun decomposition, candidate disambiguation and merging, fixed-field roots, algebraic-coefficient roots, and common-field presentation (`rational?`, arithmetic and shifts, primitive search, powers, traces, coordinates, `presentationAt?`, and `presentation?`) | `HexNumberField` | The root and algebraic-polynomial sections of the owner conformance target exercise the public pipelines, including common presentation transitively; the owner benchmark registers their components and end-to-end paths. |
 | Selected-root isolation and `RefinedIsolation.refineTo?`; dyadic-ball construction and arithmetic; radius, extent, membership, and square-intersection semantics | `HexRoots` | `conformance/HexRoots/Conformance.lean`, `hexroots_bench`, and `reports/hex-roots-performance.md` |
 | Executable bivariate resultants used by lazy eliminants and fixed-field norm/evaluation eliminants | `HexResultant` | `conformance/HexResultant/Conformance.lean`, `hexresultant_bench`, and `reports/hex-resultant-performance.md` |
 | Checked irreducibility and integer-polynomial factorization used by canonicalization and exactification | `HexBerlekampZassenhaus` | `conformance/HexBerlekampZassenhaus/Conformance.lean`, `hexbz_bench`, and `reports/hex-berlekamp-zassenhaus-performance.md` |
@@ -270,7 +270,7 @@ rational Sturm and Tarski correspondence is imported.
 | `signDepth_spec` | At `separationDepth`, a real nonzero root of degree at least two has the strict sign of its centre; prove the height inequality and reciprocal-Cauchy/root-separation alternatives explicitly |
 | `AlgebraicRoot.sign_eq`, `compare_eq` | Sign of a real lazy root and comparison of real lazy operands agree with `realCompare` after exactification; combine degree-one coefficient sign, `signDepth_spec`, existing subtraction and zero-test correctness |
 | `signTarski_eq` | Positive denominator clearing preserves sign; `tarskiQuery_sign` on `realInterval` gives the reference order of the fixed-field value against zero |
-| `signBall_bound`, `signApprox_eq` | Specialize `Disambiguation.evalMajorant` to the direct rational-coefficient Horner evaluator, and prove the finite endpoint succeeds; the existing `PolyQuot.approx`/`approx_radius` baseline satisfies the same reference sign equation |
+| `signBall_bound`, `signApprox_eq` | For the direct evaluator, specialize `Disambiguation.evalMajorant` to rational-coefficient Horner evaluation (`signBall_bound`). For the guarded evaluator, reuse `PolyQuot.approx_sound` and `approx_radius`. Both require finite endpoint success and the same reference sign equation; any early probe must preserve enclosure soundness |
 | `compareTarski_eq`, `compareApprox_eq` | Reduced fixed-field subtraction and the sign equations give `realCompare` between the materialized operands, without executing those materializations in the fast algorithms |
 | `rootLe_real` | For real canonical operands with the same minimal polynomial, `rootLe` agrees with non-strict `realCompare` order; the common polynomial's separation bound orders their centres |
 
@@ -410,7 +410,7 @@ HexNumberFieldMathlib/
   Yun.lean                   : Yun multiplicity correspondence
   Primitive.lean             : bounded primitive-element search soundness
   Presentation.lean          : checked common-field arithmetic totality
-  PresentationSemantics.lean : assembly of total primitive presentations
+  PresentationSemantics.lean : checked proposed-field presentations and total primitive fallback
   Coordinates.lean           : trace-pairing coordinate recovery
 ```
 

@@ -30,7 +30,8 @@ BUDGETS = {"runCheck65": .00032, "runCheck256": .012, "runCheck512": .045,
            "runNativeHard": 3.3,
            "runNativeCheck": .010, "runNativeConvert": .14,
            "runParse512": .0016, "runNativeExhaust": .075,
-           "runCM128": .00023, "runCM256": .00020, "runCountedConvert65": .0021}
+           "runCM128": .00023, "runCM256": .00020, "runCountedConvert65": .0021,
+           "runNative512": 5.0, "runNative512Check": .080, "runNative512Convert": .300}
 
 
 def sha(path: Path) -> str:
@@ -69,7 +70,7 @@ def main() -> None:
         parser.error("output exists; preserve completed runs")
     cpu, lease = cpu_lease()
     sources = ["lean-toolchain", "lake-manifest.json", "bench/HexECPP/Bench.lean",
-               "scripts/bench/ecpp_audit.py", *[str(p) for p in sorted(Path("HexECPP").glob("*.lean"))]]
+               "scripts/bench/ecpp_audit.py", *[str(p) for p in sorted(Path("HexECPP").rglob("*.lean"))]]
     report = dict(cpu=cpu, host=os.uname().nodename, platform=platform.platform(),
                   source=subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
                   source_hashes={p: sha(ROOT / p) for p in sources}, executable_sha256=sha(BENCH),

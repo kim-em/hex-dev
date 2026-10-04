@@ -1,0 +1,9 @@
+Hex.SturmExternalBench.runNativeMixed    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=bc94cd3-dirty, 2026-10-03T17:37:16Z, host=chungus2
+  repeat 0  86.587 µs  (×2^4, total 1.385 ms)
+  median: 86.587 µs    min: 86.587 µs    max: 86.587 µs
+  hash: all repeats agree
+  observed hash: 0x22b628d08b360001
+  expected hash: matches
+  peak RSS: 67_292 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-comparisons/Mixed-Flint-1-Native.json

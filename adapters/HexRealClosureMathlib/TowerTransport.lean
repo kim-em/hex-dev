@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.TowerTransport
+public import HexRealClosure.TowerSuffix
 public import HexRealClosureMathlib.TowerRefinement
 public import HexRealClosureMathlib.TowerAlgebraic
 public import HexRealClosureMathlib.Ambient
@@ -25,6 +25,22 @@ variable [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRe
   match suffix with
   | .nil => original
   | .root descriptor rest => (original.adjoin descriptor).extend rest
+
+/-- Aligned predecessor interpretations extend to aligned suffix interpretations. -/
+theorem extend_heq {left right : Context registry} (h : left = right)
+    (source : Model left K) (target : Model right K) (aligned : HEq source target)
+    (suffix : Suffix left) : HEq (source.extend suffix) (target.extend (h ▸ suffix)) := by
+  cases h
+  cases eq_of_heq aligned
+  rfl
+
+/-- Concatenating native suffixes composes their actual selected-root interpretations. -/
+theorem extend_append {source : Context registry} (model : Model source K)
+    (first : Suffix source) (later : Suffix first.context) :
+    HEq (model.extend (first.append later)) ((model.extend first).extend later) := by
+  induction first with
+  | nil => rfl
+  | root descriptor rest ih => exact ih (model.adjoin descriptor) later
 
 /-- The actual embeddings through a validated suffix preserve each original
 mathematical value. -/
@@ -488,9 +504,9 @@ noncomputable def adjoin (result : Conversion (source.adjoin descriptor).context
 
 private theorem extend_cast_heq {left right : Context registry} (h : left = right)
     (target : Hex.RealClosure.Tower.Model right K) (suffix : Suffix left) :
-    HEq ((h.symm ▸ target).extend suffix) (target.extend (h ▸ suffix)) := by
-  cases h
-  rfl
+    HEq ((h.symm ▸ target).extend suffix) (target.extend (h ▸ suffix)) :=
+  Hex.RealClosure.Tower.Model.extend_heq h (h.symm ▸ target) target
+    (target.cast_heq h.symm) suffix
 
 /-- Interpret the exact rebuilt suffix in the target model of the starting
 conversion, while preserving the old final values. -/
@@ -605,6 +621,26 @@ theorem rebuild_target (suffix : Suffix source) (rebuilt : Rebuilt conversion su
     HEq (model.rebuild suffix rebuilt).target
       (model.target.extend rebuilt.suffix) :=
   Classical.choose_spec (model.align_exists rebuilt.checked)
+
+/-- The cached inclusion of the complete starting target preserves its
+interpretation through the actual rebuilt suffix. -/
+noncomputable def rebuildInput (suffix : Suffix source)
+    (rebuilt : Rebuilt conversion suffix) : Model rebuilt.input model.target where
+  target := rebuilt.input_spec.1.symm ▸
+    (rebuilt.context_eq ▸ model.target.extend rebuilt.suffix)
+  value a := by
+    rw [cast_value _ _ _ _ rebuilt.input_spec.2, rebuilt.include_eq a, cast_element_value]
+    exact model.target.extend_embed rebuilt.suffix a
+
+/-- Both returned conversions use the same interpretation of every rebuilt
+root; the cached starting-context inclusion introduces no second model. -/
+theorem rebuildInput_target (suffix : Suffix source)
+    (rebuilt : Rebuilt conversion suffix) :
+    HEq (model.rebuildInput suffix rebuilt).target (model.rebuild suffix rebuilt).target := by
+  exact ((rebuilt.context_eq ▸ model.target.extend rebuilt.suffix).cast_heq
+    rebuilt.input_spec.1.symm).trans
+      (((model.target.extend rebuilt.suffix).cast_heq rebuilt.context_eq).trans
+        (model.rebuild_target suffix rebuilt).symm)
 
 private theorem extend_aligned (suffix : Suffix source) (result : Conversion suffix.context)
     (h : conversion.extend? suffix = some result) :
@@ -890,6 +926,14 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.extend' depends on axioms: [propex
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuild_target' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.rebuild_target
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuildInput' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.rebuildInput
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuildInput_target' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.rebuildInput_target
 
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuildComp' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

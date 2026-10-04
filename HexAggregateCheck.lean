@@ -11,6 +11,7 @@ public import HexArith
 public import HexPrimality
 public import HexECPP
 public import HexPrimalityMathlib
+public import HexECPPMathlib
 public import HexPoly
 public import HexMvPoly
 public import HexModArith

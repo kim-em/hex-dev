@@ -1,0 +1,2 @@
+[ perf record: Woken up 496 times to write data ]
+[ perf record: Captured and wrote 123.824 MB /home/kim/.local/state/hex/issue-10577-profiles/rational-interior-preparation-a7e5fb9eb/deep-stack/perf.data (1981 samples) ]

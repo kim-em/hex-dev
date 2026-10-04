@@ -23,7 +23,15 @@ def main() -> None:
     args = parser.parse_args()
     if args.output.exists():
         parser.error("output already exists; preserve completed observations")
-    cases = [c for c in json.loads(args.campaign.read_text())["cases"]
+    campaign = json.loads(args.campaign.read_text())
+    if campaign.get("split") == "holdout":
+        cases = [dict(id=c["id"], subject=c["subject"], bits=512,
+                      native=c["arms"]["native"]["result"],
+                      construction=c["arms"]["construction"]["result"])
+                 for c in campaign["cases"] if c["trial"] == 0]
+    else:
+        cases = campaign["cases"]
+    cases = [c for c in cases
              if c["bits"] > 128 and c["native"]["verdict"] == "success"
              and c["construction"]["construction"]["verdict"].endswith("exhausted")]
     cpu, lease = cpu_lease()

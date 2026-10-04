@@ -1,0 +1,23 @@
+{
+  "purpose": "Resolve callers missing from the retained 8 KiB unwind during canonical preparation; diagnostic only.",
+  "command": [
+    "perf",
+    "record",
+    "--clockid",
+    "mono",
+    "-e",
+    "cycles:u",
+    "-F",
+    "99",
+    "--call-graph",
+    "dwarf,65528",
+    "-p",
+    "326189",
+    "-o",
+    "/home/kim/.local/state/hex/issue-10577-profiles/rational-interior-preparation-a7e5fb9eb/deep-stack/perf.data",
+    "--",
+    "sleep",
+    "20"
+  ],
+  "exit_code": 0
+}

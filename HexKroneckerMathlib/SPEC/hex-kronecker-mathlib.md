@@ -7,9 +7,8 @@ tactic for every commutative ring.  It is unpublished because
 the frontend depends on `HexReflect` and `HexReflectMathlib`.
 
 Dependencies are `HexKronecker`, `HexMvPolyMathlib`, `HexReflect`,
-`HexReflectMathlib`, and `HexMatrixMathlib`, plus Mathlib.  The library owns a
-tactic and fresh-module proof probes.  The
-tactic and its soundness theorem live together here, as required by
+`HexReflectMathlib`, and `HexMatrixMathlib`, plus Mathlib.  The tactic and
+its soundness theorem live together here, as required by
 [matrix-tactics §Placement](../../SPEC/matrix-tactics.md#placement).
 
 ## Denotation and polynomial model
@@ -238,48 +237,25 @@ hypothesis `hx : x = 0`.
 
 ## Fresh-module comparisons and shipping bar
 
-Proof probes live under `bench/HexKroneckerMathlib/ProofProbe`, declared
-exactly in `libraries.yml`.  The runner builds fresh modules with warm imports
-and six adjacent candidate/reference pairs, alternating `AB`/`BA`, retaining
-every completed sample on the shared host.  Each accepted family has matched
-modules for `kronecker`, Mathlib `ring`, and Grind's `grobner` from
-`Init/Grind/Tactics.lean`; import-only baselines are subtracted round by round.
-The sources use identical propositions and construction modules.
-
-The primary grid uses atom counts `1, 2, 3, 4, 6, 8` and degrees
-`2, 4, 8, 16`.  It records preflight declines rather than invoking the tactic
-where the dense box is outside budget.  Additional determinant-shaped probes
-expand the determinant of an `n × n` matrix whose entries are polynomials in
-`k` shared atoms, varying `n`, `k`, and entry degree.  A separate
-many-independent-atoms family uses `n²` linear atoms and must decline before
-packing once its `2^(n²)` dense box crosses the limit; a slow success is a
-failure of dispatch.
-
-The preregistered operational cleanup timeout is 180 seconds.  The absolute
-candidate ceiling is 30 seconds for each accepted atom-and-degree case and 60
-seconds for each accepted determinant-shaped case.  These values are fixed by
-this SPEC before measurements are collected.  The implementation PR records
-the exact source hashes, raw samples, paired medians, `.olean` sizes, axiom
-audits, and one kernel-only profile for each family.  The Mathlib-free bench
-supplies the complexity evidence; these probes measure reification, emitted
-literals, kernel checking, and total tactic cost.
-
 The tactic ships under the opt-in exception of
-[matrix-tactics §The bar against Mathlib](../../SPEC/matrix-tactics.md#the-bar-against-mathlib),
-exactly as that exception is written: the tactic and term form ship
-explicitly opt-in once the full family table is recorded and the absolute
-ceilings pass, with every losing family in the table.  Being strictly below
-both `ring` and `grobner` on a family is not a condition for opt-in
-shipping; it is the condition for that family to enter a default chain, and
-the chain then dispatches on the winning regime.  The report names the
-winning regime from the measurements (the determinant-shaped families and
-the larger expansions) and the losing one (small grids, where reflection and kernel traversal
-are a substantial fraction of invocation cost), and records the per-family ratios for
-both.  Dense boxes outside the accepted budget decline before proof
-construction.  A family accepted by either comparator but outside the
-Kronecker regime is recorded as scope deliberately delegated, not as a
-packed success.  No default chain changes merely because the opt-in bar
-passes.
+[matrix-tactics §The bar against Mathlib](../../SPEC/matrix-tactics.md#the-bar-against-mathlib):
+explicitly opt-in, with the complete family table against Mathlib `ring` and
+Grind's `grobner`, including every losing family, recorded in
+[the performance report](../../reports/hex-kronecker-mathlib-performance.md),
+and with the absolute ceilings passed: 30 seconds for each accepted
+atom-and-degree case and 60 seconds for each accepted determinant-shaped case.
+A family enters a default chain only when it is strictly below both `ring` and
+`grobner`, and no default chain changes merely because the opt-in bar passes.
+Dense boxes outside the accepted budget decline before proof construction. A
+family accepted by either comparator but outside the Kronecker regime is scope
+deliberately delegated, not a packed success.
+
+The comparison modules are not kept in the repository. A new comparison, for
+example before a family enters a default chain, generates fresh modules with
+the same protocol: matched `kronecker`, `ring` and `grobner` modules over
+identical propositions, warm imports, six adjacent candidate/reference pairs
+alternating `AB`/`BA`, import-only baselines subtracted round by round, and
+every completed sample retained.
 
 ## Placement and consumers
 

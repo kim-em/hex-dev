@@ -1,0 +1,41 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+
+public import HexRCF.RealCoefficients
+public meta import HexRCF.RealCoefficients
+public meta import HexRCF.ProofProbe.Literals.Support
+public section
+open Hex.RCF.ProofProbe.Literals
+
+namespace Hex.RCF.ProofProbe.Intervals.CubicQuery
+set_option maxRecDepth 8192
+set_option maxHeartbeats 2400000
+set_option rcf.algebraic.monicCore false
+set_option rcf.algebraic.reducedLiterals false
+set_option rcf.algebraic.indexSigns false
+set_option rcf.algebraic.intervalSigns false
+
+theorem witness : ∃ x : ℝ, x ^ 2 = (2 : ℝ) ^ (1 / 3 : ℝ) ∧
+    1 < x ∧ x < (2 : ℝ) ^ (1 / 3 : ℝ) := by rcf
+
+/-- info: 'Hex.RCF.ProofProbe.Intervals.CubicQuery.witness' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms witness
+
+run_meta do
+  unless ← usesConstructor `Hex.RCF.ProofProbe.Intervals.CubicQuery.witness
+      ``Hex.PolyQuot.reduce 3 do
+    throwError "literal probe did not use its selected quotation constructor"
+
+run_meta do
+  let interval ← usesInterval `Hex.RCF.ProofProbe.Intervals.CubicQuery.witness
+  unless interval == false do
+    throwError "sign probe did not quote its selected evidence branch"
+
+-- The collector inventories this unguarded output for every fresh build.
+#print axioms witness
+end Hex.RCF.ProofProbe.Intervals.CubicQuery

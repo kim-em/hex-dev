@@ -155,8 +155,8 @@ build path despite containing documentation only.
 Anything else (`lakefile.lean`, `lake-manifest.json`, `lean-toolchain`,
 `.github/**`, `scripts/**`, any `.lean` file, ...) makes the PR a full
 build. Pushes to `main` and manual dispatches always build in full,
-regardless of the changed files, so the cache snapshot and the Lake
-cache publish only ever come from a fully verified tree. The fast path is
+regardless of the changed files, so the Lake artifact cache publish only
+ever comes from a fully verified tree. The fast path is
 neither a second job nor a workflow-level `paths` filter: the required
 check stays the single `build` job and is reported green either way.
 
@@ -316,21 +316,46 @@ The key prefix MUST include runner OS, runner architecture, and the
 hash of `lean-toolchain` plus `lake-manifest.json`. Lake can reconcile
 ordinary Hex source changes, but artifacts from a different Lean
 toolchain or dependency graph are not useful enough to justify their
-download. The final key component is the commit SHA, with the
-dependency-scoped prefix used as `restore-keys`.
+download. The remaining key components are the commit SHA, the run ID and
+the run attempt; cache entries are immutable, so a rerun of the same commit
+needs its own key to save a more complete snapshot. Restore tries the
+commit's prefix first and then the dependency-scoped prefix.
 
-Only a fully verified `main` push saves a snapshot. Pull-request caches
+Every `main` push that is not cancelled and whose restore step completed
+saves a snapshot as soon as its build steps end, before the verification
+steps, whether or not a build or later step failed. Every Pages deploy that is
+not cancelled also saves a snapshot once it has built the manual, so the next
+deploy rebuilds only what changed since the previous one. Restored oleans
+are safe for the same reason a stale cache is: Lake rebuilds every module
+whose inputs changed. Waiting for a fully green run would leave pull
+requests rebuilding everything merged since the last green `main`, which is
+hours of work whenever `main` is red or verification is slow. Pull-request caches
 are scoped to that PR's merge ref and cannot seed another PR, while a
 cache saved on the default branch is available to pull requests. Saving
 an approximately 1 GB snapshot from every PR run therefore churns the
 repository's 10 GB cache quota without providing shared reuse. PRs and
 the Pages workflow restore the latest compatible `main` snapshot and
-let Lake rebuild their source delta.
+let Lake rebuild their source delta. Every restore of this cache MUST list
+exactly the paths the save step lists: `actions/cache` includes the path list
+in each entry's version, so a restore with a different list matches no saved
+snapshot and rebuilds everything.
 
 The cached Lean and IR directories cover every root-package module namespace,
 not only `Hex*`; in particular, the `Examples.*` release modules must survive a
-restore. Dependency packages keep their own build directories and are not part
-of this cache.
+restore. The snapshot also includes AINTLIB's own `lib/lean` and `ir`
+directories. Other dependency packages keep their build directories outside
+this cache. The Pages workflow caches the builds of the non-Mathlib packages
+it compiles (Verso and its relatives, TauCeti, and Batteries' compiled objects,
+which Verso's precompiled modules need) in a separate entry keyed only on the
+runner and the `lean-toolchain` and `lake-manifest.json` hash, saved after a
+successful build when that key has no entry yet.
+
+Released mirrors may add AINTLIB outputs with `dependency_caches` in the
+release manifest; the managed workflow checker
+requires identical restore and save paths for those packages' `lib/lean` and
+`ir` directories. The ECPP companion retains AINTLIB's Hasse build this way
+because AINTLIB has no public artifact-cache route. Mathlib continues to use
+its mandatory upstream cache.
 
 Every build workflow installs the exact `lean-toolchain` pin through
 `scripts/ci/setup_lean_toolchain.sh`, which downloads the canonical GitHub
@@ -340,8 +365,8 @@ may lose prerelease artifacts that remain present in the canonical release.
 The helper owns no whole-`.lake` cache; the explicit Hex cache below owns this
 policy and Mathlib's cache is managed separately. The public R2/Lake artifact
 cache is a fallback only when the GitHub cache has no compatible match.
-Successful trusted `main` builds publish to both backends after all
-verification gates pass.
+The GitHub snapshot is saved as above; the R2 artifact cache is published
+by successful trusted `main` builds after all verification gates pass.
 
 Coverage:
 

@@ -36,7 +36,64 @@ theorem ValueCodec.rat_lawful : rat.Lawful := by
   intro q
   simp [rat, Json.getArr_arr, bind, Except.bind, pure, Except.pure, q.den_nz, Rat.mkRat_self]
 
+/-- Successful strict reads preserve the exact result of another decoder. -/
+@[expose] def ValueCodec.Refines (strict complete : ValueCodec α) : Prop :=
+  ∀ j a, strict.decode j = .ok a → complete.decode j = .ok a
+
 namespace Codec
+
+private theorem list_refines (strict complete : α → Except String β)
+    (h : ∀ x y, strict x = .ok y → complete x = .ok y)
+    (xs : List α) (ys : List β) (hs : xs.mapM strict = .ok ys) :
+    xs.mapM complete = .ok ys := by
+  induction xs generalizing ys with
+  | nil => simpa using hs
+  | cons x xs ih =>
+    simp only [List.mapM_cons] at hs ⊢
+    cases hx : strict x with
+    | error e => simp [hx, bind, Except.bind] at hs
+    | ok y =>
+      simp only [hx, bind, Except.bind] at hs
+      cases ht : xs.mapM strict with
+      | error e => simp [ht] at hs
+      | ok tail =>
+        simp only [ht, pure, Except.pure, Except.ok.injEq] at hs
+        subst ys
+        simp [h x y hx, ih tail ht, bind, Except.bind, pure, Except.pure]
+
+/-- Refinement lifts through the actual ordered array reader. -/
+theorem readArray_refines (strict complete : Json → Except String α)
+    (h : ∀ j a, strict j = .ok a → complete j = .ok a)
+    (j : Json) (a : Array α) (ha : readArray strict j = .ok a) :
+    readArray complete j = .ok a := by
+  unfold readArray at ha ⊢
+  cases hj : j.getArr? with
+  | error e => simp [hj, bind, Except.bind] at ha
+  | ok raw =>
+    simp only [hj, bind, Except.bind] at ha ⊢
+    have hl : raw.toList.mapM strict = .ok a.toList := by
+      rw [← Array.toList_mapM]
+      simp [ha, Functor.map, Except.map]
+    have hg := list_refines strict complete h raw.toList a.toList hl
+    rw [← Array.toList_mapM] at hg
+    cases hr : raw.mapM complete with
+    | error e => simp [hr, Functor.map, Except.map] at hg
+    | ok b =>
+      simp only [hr, Functor.map, Except.map, Except.ok.injEq, Array.toList_inj] at hg
+      cases hg
+      rfl
+
+/-- Polynomial decoding preserves every literal coefficient under refinement. -/
+theorem readPoly_refines {E : Type} (strict complete : ValueCodec E) [Zero E] [DecidableEq E]
+    (h : strict.Refines complete) (j : Json) (p : DensePoly E)
+    (hp : readPoly strict j = .ok p) : readPoly complete j = .ok p := by
+  unfold readPoly at hp ⊢
+  cases hr : readArray strict.decode j with
+  | error e => simp [hr, bind, Except.bind] at hp
+  | ok a =>
+    have hc := readArray_refines strict.decode complete.decode h j a hr
+    simp only [hr, hc, bind, Except.bind] at hp ⊢
+    exact hp
 
 /-- Element roundtrips lift through the actual ordered array decoder. -/
 theorem read_array (encode : α → Json) (read : Json → Except String α)
@@ -75,6 +132,19 @@ theorem read_list_of (encode : α → Json) (read : Json → Except String α)
     simp [List.mapM_cons, Function.comp_def, hx, hs, bind, Except.bind,
       pure, Except.pure]
 
+/-- Partial decoders need only cover the actual array entries. -/
+theorem read_array_of (encode : α → Json) (read : Json → Except String α)
+    (a : Array α) (h : ∀ x ∈ a, read (encode x) = .ok x) :
+    readArray read (array encode a) = .ok a := by
+  have hl := read_list_of encode read a.toList (fun x hx => h x (by simpa using hx))
+  simp only [readList, list, Array.toArray_toList] at hl
+  cases hr : readArray read (array encode a) with
+  | error e => simp [hr, Functor.map, Except.map] at hl
+  | ok b =>
+    simp only [hr, Functor.map, Except.map, Except.ok.injEq, Array.toList_inj] at hl
+    cases hl
+    rfl
+
 theorem read_vector (encode : α → Json) (read : Json → Except String α)
     (h : ∀ x, read (encode x) = .ok x) (a : Vector α n) :
     vector n read (array encode a.toArray) = .ok a := by
@@ -95,12 +165,31 @@ theorem read_poly {E : Type} [Zero E] [DecidableEq E]
   simp [readPoly, poly, read_array value.encode value.decode h, bind, Except.bind,
     DensePoly.ofCoeffs_toArray, pure, Except.pure]
 
+/-- A polynomial roundtrip needs only the coefficients it actually stores. -/
+theorem read_poly_of {E : Type} [Zero E] [DecidableEq E]
+    (value : ValueCodec E) (p : DensePoly E)
+    (h : ∀ x ∈ p.toArray, value.decode (value.encode x) = .ok x) :
+    readPoly value (poly value p) = .ok p := by
+  simp [readPoly, poly, read_array_of value.encode value.decode p.toArray h,
+    bind, Except.bind, DensePoly.ofCoeffs_toArray, pure, Except.pure]
+
 theorem read_endpoint {E : Type} [Zero E] [DecidableEq E]
     (value : ValueCodec E) (h : value.Lawful) (e : Endpoint E) :
     readEndpoint value (endpoint value e) = .ok e := by
   unfold ValueCodec.Lawful at h
   cases e <;> simp [readEndpoint, endpoint, Json.getArr_arr, bind, Except.bind, pure,
     Except.pure, h, Functor.map, Except.map]
+
+/-- An endpoint roundtrip needs only its actual finite coefficient. -/
+theorem read_endpoint_of {E : Type} (value : ValueCodec E) (endpoint : Endpoint E)
+    (covered : ∀ x, endpoint = .finite x → value.decode (value.encode x) = .ok x) :
+    Codec.readEndpoint value (Codec.endpoint value endpoint) = .ok endpoint := by
+  cases endpoint with
+  | negInf => rfl
+  | posInf => rfl
+  | finite x =>
+    simp [Codec.readEndpoint, Codec.endpoint, Codec.Json.getArr_arr, covered x rfl,
+      bind, Except.bind, Functor.map, Except.map]
 
 /-- The standard JSON array instances use the same ordered traversal. -/
 theorem read_jsonArray {α : Type} [Json.To α] [Json.From α]

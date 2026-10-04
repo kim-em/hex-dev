@@ -21,7 +21,7 @@ abbrev CheckedBool (expected : Bool) := {value : Bool // value = expected}
 /-- Charge each visited level and permutation allocation in a membership query. -/
 @[expose] def _root_.Hex.PermGroup.Execution.Meter.sift (m : Meter budget) (G : Group n) (p : Perm n) :
     Measured budget (CheckedBool (G.contains p)) := m.execute do
-  let result ← G.chain.siftWith 0 p
+  let result ← G.chain.siftBudgeted 0 p
   return ⟨result.val.accepted, congrArg SiftResult.accepted result.property⟩
 
 /-- Query a finite family without materializing it. The caller supplies the
@@ -31,7 +31,7 @@ permutation-image reservation needed to evaluate one entry of the family. -/
       (CheckedBool (decide (∀ i : Fin size, start ≤ i.val → G.contains (values i) = true))) := do
   if hi : start < size then
     Execution.reserve .images imageCost
-    let result ← G.chain.siftWith 0 (values ⟨start, hi⟩)
+    let result ← G.chain.siftBudgeted 0 (values ⟨start, hi⟩)
     have he : result.val.accepted = G.contains (values ⟨start, hi⟩) :=
       congrArg SiftResult.accepted result.property
     if hm : result.val.accepted = true then
@@ -74,7 +74,7 @@ variable {G : Group n}
 
 /-- Coverage requires both the prefix and every suffix generator. A partial
 family check cannot certify coverage or its negation. -/
-@[expose] def Node.coveredWith (t : Node G) (K : Group n) (m : Meter budget) :
+@[expose] def Node.coveredBudgeted (t : Node G) (K : Group n) (m : Meter budget) :
     Measured budget (CheckedBool (t.covered K)) :=
   match m.sift K t.rep.val with
   | .exhausted failure => .exhausted failure
@@ -109,9 +109,9 @@ abbrev Tester (P : Predicate n) (budget : Budget) := Evaluator P.test budget
 
 /-- Each attempted pruning reason is charged separately. Completing the scan
 without finding a reason allows traversal to continue; exhausting it does not. -/
-@[expose] def Pruner.refineWith {test : Perm n → Bool} (C : Pruner G test) (t : Node G) (m : Meter budget) :
+@[expose] def Pruner.refineBudgeted {test : Perm n → Bool} (C : Pruner G test) (t : Node G) (m : Meter budget) :
     Measured budget (Option {r : C.Reason // C.reject t r = true}) :=
-  let run := C.findWith t (m.available .refinements)
+  let run := C.findBudgeted t (m.available .refinements)
   let meter := m.charge .refinements run.used run.bounded
   match hr : run.result with
   | .found i _ hi _ => .ok (some ⟨(C.trials t).get i, hi⟩) meter

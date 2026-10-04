@@ -62,6 +62,26 @@ count one, and preserves the complete raw descriptor. Ordinary-kernel probes
 cover the full derivative graph, repeated references to one child, selected-root
 extraction and truncated/cyclic graphs.
 
+`Dag.validate?` exposes the same checked graph fold as a reusable memo.
+`Dag.select?` binds an entry index to its exact ordered queries, while
+`SelectedSigns.ofMemo?` also checks the descriptor prefix and unique extending
+row. Several selections can reuse one validated memo without rerunning its
+query or matrix checks. Context, head and endpoints are fixed in the memo's
+type. `SelectedSigns.readMemo?` supports independently constructed descriptors:
+`Dag.bindDomain?` first checks literal head and endpoint equality and transports
+only the proofs, preserving every stored tree. Different bindings reject.
+Validation checks every entry, including unreachable entries; selection
+rejects an absent index or a different query list. `Dag.selectedSigns_memo`
+proves literal agreement with the existing one-result interface.
+`Dag.validate_nodes`, `Dag.validate_size` and `Dag.validate_get` preserve entry
+indices and nodes. `Dag.validate_expands` also preserves the full literal
+subtrees and child references at every accepted index.
+
+The conformance examples also select the roots −1 and +1 of `X² − 1` on the
+whole line using opposite first-derivative signs. One validated graph then
+supplies `sign X = −1` and `sign X = +1` at those independently constructed
+descriptors; substituting the positive sign at the negative root rejects.
+
 `Dag.selectedSigns?` checks a supplied graph for the descriptor's derivative
 queries followed by the caller's ordered query list. It accepts exactly the
 claimed sign vector when the checked table has one extending row of count one.
@@ -510,3 +530,9 @@ checks run before graph replay.
 A cross-level coefficient-sign certificate will require a separate type with
 its own level and context bindings. `Dag` is its same-level BKR component; its
 fixed-domain memo does not satisfy the separate nested-evidence obligation.
+
+`Dag.changeOps` transports a checked memo along literal equalities of the
+coefficient operations. `changeOps_validate` proves exact agreement with the
+actual validator, including rejection; `changeOps_nodes` preserves its literal
+node list and indices. These are operation equalities, not field laws on stored
+representatives or assumptions about certificate completeness.

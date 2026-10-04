@@ -116,7 +116,7 @@ theorem realRoots_noDuplicates (roots : RootSet) (h : roots.NoDuplicates) :
     rw [← AlgebraicRoot.exact_toComplex a.root, ← AlgebraicRoot.exact_toComplex b.root,
       ← (realRoot?_sound a s hs).1, ← (realRoot?_sound b t ht).1, hst]
 
-/-- A nonzero real polynomial has distinct roots in strictly increasing order. -/
+/-- The finite real-root view has distinct roots in strictly increasing order. -/
 theorem roots_sorted (f : RealAlgebraicPoly) :
     f.roots.toArray.toList.Pairwise (fun a b => a.root < b.root) := by
   exact ((realRoots_sorted f.toAlgebraic.roots).and
@@ -163,5 +163,23 @@ theorem roots_multiplicity (f : RealAlgebraicPoly) (s : RealRootCount)
 /-- The representation carries a positive multiplicity for every finite root. -/
 theorem roots_positive (f : RealAlgebraicPoly) (s : RealRootCount)
     (_hs : s ∈ f.roots.toArray) : 0 < s.multiplicity := s.multiplicity_pos
+
+/-- The complete root-driver contract: the zero polynomial has universal roots;
+every real zero is represented; executable membership agrees with evaluation;
+finite roots are strictly ordered and carry their positive exact multiplicities. -/
+theorem roots_spec (f : RealAlgebraicPoly) :
+    (f.roots = .all ↔ f.toPolynomial = 0) ∧
+    (∀ x : ℝ, f.roots.Contains x ↔ f.toPolynomial.eval x = 0) ∧
+    (∀ a : RealAlgebraicNumber, f.roots.contains a = true ↔
+      f.toPolynomial.eval a.toReal = 0) ∧
+    f.roots.toArray.toList.Pairwise (fun a b => a.root < b.root) ∧
+    (∀ s ∈ f.roots.toArray,
+      s.multiplicity = f.toPolynomial.rootMultiplicity s.root.toReal ∧
+        0 < s.multiplicity) := by
+  refine ⟨roots_all_iff f, contains_roots_iff f, ?_, roots_sorted f, ?_⟩
+  · intro a
+    exact (RealRootSet.contains_iff f.roots a).trans (contains_roots_iff f a.toReal)
+  · intro s hs
+    exact ⟨roots_multiplicity f s hs, roots_positive f s hs⟩
 
 end Hex.RealAlgebraicPoly

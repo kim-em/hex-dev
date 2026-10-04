@@ -53,20 +53,17 @@ theorem sqrtRoot?_isSome (a : RealAlgebraicNumber) (ha : 0 ≤ a) :
 /-- The checked square-root API succeeds exactly for nonnegative arguments. -/
 theorem sqrt?_isSome (a : RealAlgebraicNumber) :
     a.sqrt?.isSome = true ↔ 0 ≤ a := by
-  unfold sqrt?
-  split
-  · rename_i h
-    simp [not_le.mpr h]
-  · rename_i h
-    simp [sqrtRoot?_isSome a (le_of_not_gt h), le_of_not_gt h]
+  change a.sqrtRoot?.isSome = true ↔ 0 ≤ a
+  constructor
+  · intro h
+    obtain ⟨b, hb⟩ := Option.isSome_iff_exists.mp h
+    rw [← (sqrtRoot?_sound a b hb).2]
+    exact sq_nonneg b
+  · exact sqrtRoot?_isSome a
 
 /-- A successful checked square root has the specified value. -/
 theorem sqrt?_sound (a b : RealAlgebraicNumber) (h : a.sqrt? = some b) :
-    0 ≤ b ∧ b ^ 2 = a := by
-  unfold sqrt? at h
-  split at h
-  · contradiction
-  · exact sqrtRoot?_sound a b h
+    0 ≤ b ∧ b ^ 2 = a := sqrtRoot?_sound a b h
 
 /-- The proof-carrying square root never takes its fallback. -/
 theorem sqrt?_eq_some (a : RealAlgebraicNumber) (ha : 0 ≤ a) :

@@ -514,6 +514,36 @@ class SyncReleasedTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "must define executable"):
             sync_released.validate_skeleton(entry, self.repo)
 
+    def test_intfactor_optional_modules_and_frozen_data_are_managed(self) -> None:
+        # Prospective publication: HexIntFactor is not a released.yml entry yet.
+        entry = {
+            "repo": "prospective/hex-int-factor", "lib": "HexIntFactor",
+            "umbrella": True, "spec": "hex-int-factor", "lakefile": "lean",
+            "build_modules": ["HexIntFactor.Pari", "HexIntFactor.Export", "HexIntFactor.Replay"],
+            "test_modules": ["HexIntFactor.ImportTests", "HexIntFactor.PariTests",
+                             "HexIntFactor.ExportTests"] +
+                            [f"HexIntFactor.Frozen.Case{i}" for i in range(7)] +
+                            ["HexIntFactor.Frozen.Partial12"],
+        }
+        (self.repo / "lakefile.lean").write_text(
+            "import Lake\nopen Lake DSL\npackage factor\n"
+            "lean_lib HexIntFactor where\n"
+            "  globs := #[`HexIntFactor, `HexIntFactor.Pari, `HexIntFactor.Export, "
+            "`HexIntFactor.Replay].map Glob.one\n")
+        with patch.object(sync_released, "apply_ci_workflow", return_value=[]):
+            sync_released.apply_paths(entry, self.repo)
+        sync_released.rewrite_lib_settings(entry, self.repo)
+        sync_released.rewrite_test_target(entry, self.repo)
+        sync_released.validate_skeleton(entry, self.repo)
+        for module in entry["build_modules"] + entry["test_modules"]:
+            path = self.repo / (module.replace(".", "/") + ".lean")
+            self.assertTrue(path.is_file(), module)
+        text = (self.repo / "HexIntFactor/Frozen/Case3.lean").read_text()
+        self.assertIn("public import HexIntFactor.Replay", text)
+        self.assertNotIn("HexIntFactor.Export", text)
+        self.assertFalse((self.repo / "bench").joinpath("HexIntFactor").exists())
+        self.assertTrue((self.repo / "SPEC/hex-int-factor.md").is_file())
+
     def test_release_skeleton_requires_declared_lake_format(self) -> None:
         (self.repo / "lakefile.lean").write_text("import Lake\n", encoding="utf-8")
         with self.assertRaisesRegex(RuntimeError, "lakefile.toml"):
@@ -653,6 +683,35 @@ class SyncReleasedTests(unittest.TestCase):
             "import Mathlib.Tactic\nimport Batteries.Data.Vector\n")
         sync_released.validate_external_imports(entry, self.repo)
 
+    def test_tauceti_import_requires_its_own_provider(self) -> None:
+        entry = self._external_import_entry(
+            '[[require]]\nname = "mathlib"\n',
+            "public import TauCeti.Algebra.Polynomial.Sturm.Infinity\n")
+        with self.assertRaisesRegex(RuntimeError, "imports TauCeti"):
+            sync_released.validate_external_imports(entry, self.repo)
+        lakefile = self.repo / "lakefile.toml"
+        lakefile.write_text(lakefile.read_text() +
+                            '[[require]]\nname = "TauCeti"\n', encoding="utf-8")
+        sync_released.validate_external_imports(entry, self.repo)
+
+    def test_tauceti_lean_requirement_provides_import(self) -> None:
+        entry = self._external_import_entry("", "import TauCeti.Data.Matrix.OccCount\n")
+        entry["lakefile"] = "lean"
+        (self.repo / "lakefile.lean").write_text(
+            'require TauCeti from git "https://github.com/TauCetiProject/TauCeti.git" @ "pin"\n',
+            encoding="utf-8")
+        sync_released.validate_external_imports(entry, self.repo)
+
+    def test_hasse_requires_aintlib_even_with_mathlib(self) -> None:
+        mathlib = '[[require]]\nname = "mathlib"\nrev = "0"\n'
+        entry = self._external_import_entry(
+            mathlib, "module\npublic import HasseWeil.HasseBound\n")
+        with self.assertRaisesRegex(RuntimeError, "imports HasseWeil"):
+            sync_released.validate_external_imports(entry, self.repo)
+        (self.repo / "lakefile.toml").write_text(
+            mathlib + '[[require]]\nname = "AINTLIB"\nrev = "0"\n')
+        sync_released.validate_external_imports(entry, self.repo)
+
     def test_direct_imports_gain_direct_requires_in_toml(self) -> None:
         lib = self.repo / "HexProbe"
         lib.mkdir()
@@ -710,6 +769,47 @@ class SyncReleasedTests(unittest.TestCase):
             '@ "0"\n\nrequire HexBasic from git\n'
             '  "https://github.com/leanprover/hex-basic.git" @ "v0.1.0"\n\n'
             "@[default_target]", text)
+
+    def test_new_hex_requirement_preserves_mathlib_last(self) -> None:
+        lib = self.repo / "HexProbe"
+        lib.mkdir()
+        (lib / "Basic.lean").write_text("import HexBasic\n")
+        path = self.repo / "lakefile.lean"
+        entry = {"repo": "leanprover/hex-probe", "lib": "HexProbe",
+                 "lakefile": "lean", "readme": False, "pins": ["hex-basic"]}
+        for declaration in (
+            'require mathlib from git "https://github.com/leanprover-community/mathlib4.git" @ "pin"',
+            'require «mathlib» from git "https://github.com/leanprover-community/mathlib4.git" @ "pin"',
+            'require "leanprover-community" / "mathlib" @ git "pin"',
+        ):
+            with self.subTest(declaration=declaration):
+                path.write_text('import Lake\npackage probe where\n'
+                    'require AINTLIB from git "https://github.com/CBirkbeck/AINTLIB.git" @ "pin"\n'
+                    '-- Keep Mathlib last.\n' + declaration + '\nlean_lib HexProbe\n')
+                sync_released.rewrite_requires(entry, self.repo, {"hex-basic": "a" * 40},
+                    {}, "v0.1.0", {"hex-basic": {"lib": "HexBasic", "lakefile": "toml"}})
+                text = path.read_text()
+                self.assertLess(text.index("require AINTLIB"), text.index("require HexBasic"))
+                self.assertLess(text.index("require HexBasic"), text.index("-- Keep Mathlib last."))
+                self.assertIn('-- Keep Mathlib last.\n' + declaration, text)
+
+    def test_new_toml_hex_requirement_preserves_mathlib_last(self) -> None:
+        lib = self.repo / "HexProbe"
+        lib.mkdir()
+        (lib / "Basic.lean").write_text("import HexBasic\n")
+        path = self.repo / "lakefile.toml"
+        path.write_text('name = "probe"\n[[require]]\nname = "AINTLIB"\n'
+            'git = "https://github.com/CBirkbeck/AINTLIB.git"\nrev = "pin"\n'
+            '[[require]]\nname = "mathlib"\n'
+            'git = "https://github.com/leanprover-community/mathlib4.git"\nrev = "pin"\n'
+            '[[lean_lib]]\nname = "HexProbe"\n')
+        entry = {"repo": "leanprover/hex-probe", "lib": "HexProbe",
+                 "lakefile": "toml", "readme": False, "pins": ["hex-basic"]}
+        sync_released.rewrite_requires(entry, self.repo, {"hex-basic": "a" * 40},
+            {}, "v0.1.0", {"hex-basic": {"lib": "HexBasic", "lakefile": "toml"}})
+        text = path.read_text()
+        self.assertLess(text.index('name = "AINTLIB"'), text.index('name = "HexBasic"'))
+        self.assertLess(text.index('name = "HexBasic"'), text.index('name = "mathlib"'))
 
     def test_missing_root_toolchain_fails_closed(self) -> None:
         (self.repo / "lean-toolchain").unlink()
@@ -1014,6 +1114,22 @@ class LakeDeclarationTests(unittest.TestCase):
         self.assertEqual(self.rewrite(),
                          ["  build declaration compileArchive (lakefile.lean)"])
         self.assertEqual(self.target.read_text(), "import Lake\n\n" + replacement)
+
+
+    def test_carries_native_sidecar_settings_without_precompiling_bridge(self) -> None:
+        self.entry["lake_declarations"] = ["PipeIO"]
+        replacement = (
+            "lean_lib PipeIO where\n"
+            "  globs := #[.one `Bridge.Pipe.IO]\n"
+            "  precompileModules := true\n"
+            "  moreLinkObjs := #[compileArchive]\n\n"
+        )
+        self.source.write_text("import Lake\n\n" + replacement)
+        bridge = "lean_lib Bridge\n\n"
+        self.target.write_text("import Lake\n\n" + bridge + "lean_lib PipeIO\n")
+        self.assertEqual(len(self.rewrite()), 1)
+        self.assertEqual(self.target.read_text(), "import Lake\n\n" + bridge + replacement)
+        self.assertEqual(self.rewrite(), [])
 
 
 class LibBuildSettingTests(unittest.TestCase):

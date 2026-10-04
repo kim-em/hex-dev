@@ -1,0 +1,64 @@
+Hex.SturmFrontendBench.runRetargetWide    expected complexity: n ^ 2    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6d78bf3-dirty, 2026-10-02T05:09:20Z, host=chungus2
+    param  per-call    repeats  C
+   65_536  964.133 ms  ×2^0     C=0.225 [trial 1/4]
+  131_072    3.708 s   ×2^0     C=0.216 [trial 1/4]
+  262_144   14.481 s   ×2^0     C=0.211 [trial 1/4]
+  524_288   59.230 s   ×2^0     C=0.217 [trial 1/4]
+   65_536  965.940 ms  ×2^0     C=0.225 [trial 2/4]
+  131_072    3.709 s   ×2^0     C=0.216 [trial 2/4]
+  262_144   14.502 s   ×2^0     C=0.211 [trial 2/4]
+  524_288   59.215 s   ×2^0     C=0.217 [trial 2/4]
+   65_536  957.727 ms  ×2^0     C=0.225 [trial 3/4]
+  131_072    3.712 s   ×2^0     C=0.216 [trial 3/4]
+  262_144   14.511 s   ×2^0     C=0.211 [trial 3/4]
+  524_288   60.205 s   ×2^0     C=0.217 [trial 3/4]
+   65_536    1.018 s   ×2^0     C=0.225 [trial 4/4]
+  131_072    3.930 s   ×2^0     C=0.216 [trial 4/4]
+  262_144   15.512 s   ×2^0     C=0.211 [trial 4/4]
+  524_288   59.951 s   ×2^0     C=0.217 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=0.211, cMax=0.225, β=-0.019)
+  per-spawn floor (harness self-measurement): 23.229 ms
+  peak RSS: 82_088 kB..184_932 kB (across 16 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+      param  trials  median      min         max       spread
+     65_536  4/4     965.037 ms  957.727 ms   1.018 s  6.255%
+    131_072  4/4       3.711 s     3.708 s    3.930 s  6.001%
+    262_144  4/4      14.506 s    14.481 s   15.512 s  7.105%
+    524_288  4/4      59.591 s    59.215 s   60.205 s  1.661%
+
+Hex.SturmFrontendBench.runEmbedSparse    expected complexity: n    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6d78bf3-dirty, 2026-10-02T05:14:46Z, host=chungus2
+   param  per-call    repeats  C
+   2_048  153.188 µs  ×2^9     C=75.961 [trial 1/4] †
+   4_096  312.454 µs  ×2^8     C=76.085 [trial 1/4]
+   8_192  625.622 µs  ×2^7     C=76.146 [trial 1/4]
+  16_384    1.269 ms  ×2^6     C=76.213 [trial 1/4]
+  32_768    2.581 ms  ×2^5     C=77.062 [trial 1/4]
+   2_048  155.257 µs  ×2^9     C=75.961 [trial 2/4] †
+   4_096  316.436 µs  ×2^8     C=76.085 [trial 2/4]
+   8_192  626.186 µs  ×2^7     C=76.146 [trial 2/4]
+  16_384    1.249 ms  ×2^6     C=76.213 [trial 2/4]
+  32_768    2.524 ms  ×2^5     C=77.062 [trial 2/4]
+   2_048  155.876 µs  ×2^9     C=75.961 [trial 3/4] †
+   4_096  310.835 µs  ×2^8     C=76.085 [trial 3/4]
+   8_192  621.960 µs  ×2^7     C=76.146 [trial 3/4]
+  16_384    1.236 ms  ×2^6     C=76.213 [trial 3/4]
+  32_768    2.499 ms  ×2^5     C=77.062 [trial 3/4]
+   2_048  158.602 µs  ×2^9     C=75.961 [trial 4/4] †
+   4_096  310.645 µs  ×2^8     C=76.085 [trial 4/4]
+   8_192  619.081 µs  ×2^7     C=76.146 [trial 4/4]
+  16_384    1.248 ms  ×2^6     C=76.213 [trial 4/4]
+  32_768    2.526 ms  ×2^5     C=77.062 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=76.085, cMax=77.062, β=+0.006)
+  per-spawn floor (harness self-measurement): 31.254 ms
+  peak RSS: 68_764 kB..84_612 kB (across 20 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+     param  trials  median      min         max         spread
+     2_048  4/4     155.567 µs  153.188 µs  158.602 µs  3.480%
+     4_096  4/4     311.644 µs  310.645 µs  316.436 µs  1.858%
+     8_192  4/4     623.791 µs  619.081 µs  626.186 µs  1.139%
+    16_384  4/4       1.249 ms    1.236 ms    1.269 ms  2.601%
+    32_768  4/4       2.525 ms    2.499 ms    2.581 ms  3.254%
+
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/prerequisite-sturm-growing-operands/retarget-and-embedding.json

@@ -610,3 +610,47 @@ private def rtCoeffs : List (DensePoly Rat) :=
     (PolyQuot.ofSquare sqrtTwoPoly sqrtTwoSquare a.coeffs).coeffs = a.coeffs
 
 end Hex.NumberFieldConformance
+
+namespace Hex.QAdjoin.SignConformance
+
+/-- These branch witnesses use the canonical generator's stored isolation precision. -/
+private def fallbackPass (negative : Bool) : Bool :=
+  let input := ZPoly.rootNear #p[-2, 0, 0, 1] 1.3
+  if real : input.isReal = true then
+    let positive := (input.toQAdjoin - 1) ^ 80
+    let value := if negative then -positive else positive
+    value.coeffs.size > 1 && SignApprox.initial? input value == none &&
+      SignApprox.refined? input value == none &&
+      (SignApprox.endpoint? input value).isSome &&
+      value.signApprox real == (if negative then -1 else 1)
+  else false
+
+#guard fallbackPass false
+#guard fallbackPass true
+
+private def refinedPass : Bool :=
+  let input := ZPoly.rootNear #p[-2, 0, 1] 1.4
+  if real : input.isReal = true then
+    let value := (3 - 2 * input.toQAdjoin) ^ 8
+    SignApprox.initial? input value == none &&
+      SignApprox.refined? input value == some 1 && value.signApprox real == 1
+  else false
+
+#guard refinedPass
+
+
+private def constantsPass : Bool :=
+  let input := ZPoly.rootNear #p[-2, 0, 1] 1.4
+  if real : input.isReal = true then
+    (0 : QAdjoin input).signApprox real == 0 &&
+      (1 : QAdjoin input).signApprox real == 1 &&
+      (-1 : QAdjoin input).signApprox real == -1 &&
+      SignApprox.initial? input input.toQAdjoin == some 1
+  else false
+
+#guard constantsPass
+-- A complex generator is rejected even for rational coordinates.
+#guard (signApprox? (0 : QAdjoin AlgebraicNumber.I)).isNone
+#guard (signApprox? (1 : QAdjoin AlgebraicNumber.I)).isNone
+
+end Hex.QAdjoin.SignConformance

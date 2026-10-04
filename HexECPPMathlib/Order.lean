@@ -3,21 +3,31 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
+module
 
-import HexECPPMathlib.Hasse
-import HexECPP.Replay
-import Mathlib.GroupTheory.OrderOfElement
+public import HexECPPMathlib.Hasse
+public import HexECPP.Replay
+public import Mathlib.GroupTheory.OrderOfElement
 
 /-!
-# Exact prime point order
+# Point orders exclude small prime divisors
 
-A nonidentity point annihilated by a prime scalar has exactly that order. The
-order divides the cardinality of its finite group.
+If a nonidentity point in a finite group satisfies `q • Q = 0` for a prime
+`q`, its order is exactly `q`. Lagrange's theorem then makes `q` a divisor
+of the group size. For an elliptic curve reduced modulo a prime divisor
+`p` of the candidate `n`, this gives `q ≤ #E(𝔽_p)`.
+
+Hasse's bound and the certificate's strict size condition together rule out
+`p² ≤ n`. This is the contradiction needed to prove `n` prime.
 -/
+
+@[expose] public section
 
 namespace Hex.ECPP
 
 set_option linter.style.haveILetI false in
+/-- A nonzero point annihilated by a prime has that order, which divides the
+cardinality of its finite group. -/
 theorem prime_order_dvd_card {G : Type*} [AddGroup G] [Fintype G]
     {q : ℕ} (hq : q.Prime) {Q : G} (hne : Q ≠ 0) (hzero : q • Q = 0) :
     q ∣ Fintype.card G := by
@@ -26,6 +36,7 @@ theorem prime_order_dvd_card {G : Type*} [AddGroup G] [Fintype G]
   rw [← hord]
   exact addOrderOf_dvd_card
 
+/-- A prime annihilating a nonzero point is at most the finite group order. -/
 theorem prime_order_le_card {G : Type*} [AddGroup G] [Fintype G]
     {q : ℕ} (hq : q.Prime) {Q : G} (hne : Q ≠ 0) (hzero : q • Q = 0) :
     q ≤ Fintype.card G := by

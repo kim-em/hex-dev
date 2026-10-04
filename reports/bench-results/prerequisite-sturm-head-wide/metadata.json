@@ -1,0 +1,66 @@
+{
+  "cpu": 6,
+  "head": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "host": "chungus2",
+  "load_start": [
+    2.3447265625,
+    4.51171875,
+    6.7109375
+  ],
+  "commands": [
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+      "run",
+      "Hex.SturmFrontendBench.runPrepared",
+      "Hex.SturmFrontendBench.runRetarget",
+      "Hex.SturmFrontendBench.runCount",
+      "Hex.SturmFrontendBench.runPreparedCount",
+      "Hex.SturmFrontendBench.runCertificate",
+      "Hex.SturmFrontendBench.runPreparedCertificate",
+      "Hex.SturmFrontendBench.runCountCertificate",
+      "Hex.SturmFrontendBench.runFieldReplay",
+      "Hex.SturmFrontendBench.runCachedReplay",
+      "Hex.SturmFrontendBench.runClear",
+      "Hex.SturmFrontendBench.runEmbed",
+      "Hex.SturmFrontendBench.runInfinite",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/prerequisite-sturm-head-wide/frontend.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+      "run",
+      "Hex.SturmBench.runInteger",
+      "Hex.SturmBench.runRational",
+      "Hex.SturmBench.runDomain",
+      "Hex.SturmBench.runInitial",
+      "Hex.SturmBench.runChain",
+      "Hex.SturmBench.runEndpoints",
+      "Hex.SturmBench.runSigns",
+      "Hex.SturmBench.runClearing",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/prerequisite-sturm-head-wide/producer.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+      "run",
+      "Hex.SturmFrontendBench.runCoefficientBits",
+      "Hex.SturmFrontendBench.runEndpointBits",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/prerequisite-sturm-head-wide/bits.json"
+    ]
+  ],
+  "hashes": {
+    "bench/HexSturm/Bench.lean": "877730129181af94f3e7251fa409dabc4a70bd8c347131a636ad1c502fbd5faa",
+    "bench/HexSturm/Frontend.lean": "ec86c1c87cb675089e44efea256c90b79925decddaed5ee2341cda49c68c5e42",
+    "reports/sturm-bit-cost-models.md": "d6bf2e72a726022642cbb5b20ef41f5000856eb94fed34e36924647db933d257",
+    "lake-manifest.json": "a2440490b8954368bd3de4d4e7142d0a75ef6b4e1cbe664c152a87e0715a0e56",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench": "d81094975c9e126f7bc3c3935ca06cf3c8d5c1bb65b72f59d9c82d09891f125e"
+  },
+  "load_end": [
+    3.55029296875,
+    3.9677734375,
+    5.37158203125
+  ],
+  "sources_unchanged": true
+}

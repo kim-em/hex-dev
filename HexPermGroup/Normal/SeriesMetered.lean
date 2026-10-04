@@ -47,7 +47,7 @@ namespace Hex.PermGroup.Group
 /-- Bound the complete cost of derived steps as well as the number of terms.
 Every successful result carries its checked-prefix and term-count contracts;
 only a terminal certificate yields a solvability answer. -/
-@[expose] def derivedSeriesWithin (budget : Execution.Budget) (G : Group n) (terms : Nat) :
+@[expose] def derivedSeriesBudgeted (budget : Execution.Budget) (G : Group n) (terms : Nat) :
     Execution.Measured budget {result : Series.BoundedResult G // result.certificate.terms ≤ terms} :=
   Execution.run budget (Series.construct terms G)
 

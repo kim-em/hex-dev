@@ -40,14 +40,14 @@ private def withLimit (w : Work) (r : Resource) (k : Nat) : Work := match r with
 
 #eval show IO Unit from do
   for S in ([#[swap, cycle], #[cycle, swap, cycle.inv, Perm.id 3], #[]] : List (Array (Perm 3))) do
-    let used : Work ← match Group.buildWith allowance S with
+    let used : Work ← match Group.buildBudgeted allowance S with
       | .exhausted failure => throw (IO.userError s!"construction exhausted {repr failure.resource}")
       | .ok result meter =>
         unless checkChain S result.val.chain do throw (IO.userError "bounded chain rejected")
         let expected := Group.ofGenerators S
         unless result.val.order == expected.order do throw (IO.userError "bounded order differs")
         pure meter.used
-    match Group.buildWith used S with
+    match Group.buildBudgeted used S with
     | .exhausted _ => throw (IO.userError "exact construction allowance exhausted")
     | .ok _ meter =>
       unless meter.used == used do throw (IO.userError "construction accounting depends on surplus budget")
@@ -55,19 +55,19 @@ private def withLimit (w : Work) (r : Resource) (k : Nat) : Work := match r with
       if used.get resource > 0 then
         for cap in [0, used.get resource - 1] do
           let budget := withLimit allowance resource cap
-          match Group.buildWith budget S with
+          match Group.buildBudgeted budget S with
           | .ok _ _ => throw (IO.userError s!"construction ignored {repr resource} limit")
           | .exhausted failure =>
             unless failure.resource == resource && failure.meter.used.get resource <= cap do
               throw (IO.userError "wrong construction exhaustion or exceeded allowance")
 
 #eval show IO Unit from do
-  match Group.buildWith { certificates := 1 } (#[] : Array (Perm 0)) with
+  match Group.buildBudgeted { certificates := 1 } (#[] : Array (Perm 0)) with
   | .ok result meter =>
     unless result.val.order == 1 && meter.used.certificates == 1 do
       throw (IO.userError "degree-zero construction contract")
   | .exhausted _ => throw (IO.userError "degree-zero exact allowance exhausted")
-  match Group.buildWith {} (#[] : Array (Perm 0)) with
+  match Group.buildBudgeted {} (#[] : Array (Perm 0)) with
   | .ok _ _ => throw (IO.userError "zero allowance allocated a chain node")
   | .exhausted failure =>
     unless failure.resource == Resource.certificates && failure.meter.used == ({} : Work) do
@@ -83,7 +83,7 @@ private def withLimit (w : Work) (r : Resource) (k : Nat) : Work := match r with
       certificates := 5 + 4 + 1 + 2 + 1,
       images := 114 + 4 + 2 + 2 * (6 + 6),
       storage := 108 + 48 + 48 + 1 + 3 * 2 }
-  match Group.buildWith expected #[transposition] with
+  match Group.buildBudgeted expected #[transposition] with
   | .exhausted failure => throw (IO.userError s!"C2 reservation boundary: {repr failure.resource}")
   | .ok group meter =>
     unless group.val.order == 2 && meter.used == expected do
@@ -94,40 +94,40 @@ private def withLimit (w : Work) (r : Resource) (k : Nat) : Work := match r with
   let G := Group.ofGenerators #[transposition, transposition]
   let H := Group.ofGenerators #[swap]
   let limits : ProductLimits := ⟨6, 7, allowance⟩
-  match G.directProductWith { limits with degree := 4 } H with
+  match G.directProductBudgeted { limits with degree := 4 } H with
   | .error (.degree 5 4) => pure ()
   | _ => throw (IO.userError "direct product omitted a declared fixed point")
-  match G.directProductWith { limits with generators := 2 } H with
+  match G.directProductBudgeted { limits with generators := 2 } H with
   | .error (.generators 3 2) => pure ()
   | _ => throw (IO.userError "direct product ignored raw generator multiplicities")
-  match G.wreathProductWith { limits with degree := 5 } H (Nat.zero_lt_succ 1) with
+  match G.wreathProductBudgeted { limits with degree := 5 } H with
   | .error (.degree 6 5) => pure ()
   | _ => throw (IO.userError "wreath product omitted a fixed block")
-  match G.wreathProductWith { limits with generators := 6 } H (Nat.zero_lt_succ 1) with
+  match G.wreathProductBudgeted { limits with generators := 6 } H with
   | .error (.generators 7 6) => pure ()
   | _ => throw (IO.userError "wreath generator count must be m*rG+rH")
   let two := Group.ofGenerators #[transposition]
-  match two.directProductWith { limits with degree := 4, generators := 2 } two with
+  match two.directProductBudgeted { limits with degree := 4, generators := 2 } two with
   | .ok (.ok result meter) =>
     unless result.val.order == 4 do throw (IO.userError "bounded C2 direct product")
-    match Group.buildWith allowance result.val.generators with
+    match Group.buildBudgeted allowance result.val.generators with
     | .ok _ construction =>
       unless meter.used.images == construction.used.images + 12 &&
           meter.used.storage == construction.used.storage + 4 do
         throw (IO.userError "direct product reset its materialization meter")
     | _ => throw (IO.userError "direct product reference allowance")
   | _ => throw (IO.userError "direct product exact dimension boundary")
-  match two.wreathProductWith { limits with degree := 4, generators := 3 } two (Nat.zero_lt_succ 1) with
+  match two.wreathProductBudgeted { limits with degree := 4, generators := 3 } two with
   | .ok (.ok result meter) =>
     unless result.val.order == 8 do throw (IO.userError "bounded C2 wreath product")
-    match Group.buildWith allowance result.val.generators with
+    match Group.buildBudgeted allowance result.val.generators with
     | .ok _ construction =>
       unless meter.used.images == construction.used.images + 30 &&
           meter.used.storage == construction.used.storage + 17 do
         throw (IO.userError "wreath product reset its materialization meter")
     | _ => throw (IO.userError "wreath product reference allowance")
   | _ => throw (IO.userError "wreath product exact dimension boundary")
-  match two.directProductWith { limits with work := {} } two with
+  match two.directProductBudgeted { limits with work := {} } two with
   | .ok (.exhausted failure) =>
     unless failure.resource == Resource.storage && failure.meter.used == ({} : Work) do
       throw (IO.userError "product allocated before its first reservation")
@@ -136,21 +136,21 @@ private def withLimit (w : Work) (r : Resource) (k : Nat) : Work := match r with
 #eval show IO Unit from do
   let H := Group.ofGenerators #[swap]
   let G := H.adjoin cycle
-  let used ← match G.normalClosureWith allowance H (H.subgroup_adjoin cycle) with
+  let used ← match G.normalClosureBudgeted allowance H (H.subgroup_adjoin cycle) with
     | .ok result meter =>
       unless result.group.order == 6 && !result.trace.isEmpty &&
           Normal.checkClosure G H result.group result.trace do
         throw (IO.userError "bounded normal closure lost its forced conjugate or replay")
       pure meter.used
     | .exhausted failure => throw (IO.userError s!"normal closure allowance: {repr failure.resource}")
-  match G.normalClosureWith used H (H.subgroup_adjoin cycle) with
+  match G.normalClosureBudgeted used H (H.subgroup_adjoin cycle) with
   | .ok _ meter =>
     unless meter.used == used do throw (IO.userError "normal closure depends on surplus allowance")
   | _ => throw (IO.userError "normal closure exact boundary")
   for resource in [Resource.points, .pairs, .sifts, .certificates, .images, .storage] do
     unless used.get resource > 0 do throw (IO.userError "normal closure did not exercise nested construction")
     for cap in [0, used.get resource - 1] do
-      match G.normalClosureWith (withLimit allowance resource cap) H (H.subgroup_adjoin cycle) with
+      match G.normalClosureBudgeted (withLimit allowance resource cap) H (H.subgroup_adjoin cycle) with
       | .ok _ _ => throw (IO.userError "normal closure ignored a cumulative limit")
       | .exhausted failure =>
         unless failure.resource == resource && failure.meter.used.get resource <= cap do
@@ -171,22 +171,22 @@ private def withLimit (w : Work) (r : Resource) (k : Nat) : Work := match r with
   let a : Perm 4 := ⟨#v[1, 0, 2, 3], by decide, by decide⟩
   let b : Perm 4 := ⟨#v[1, 2, 3, 0], by decide, by decide⟩
   let G := Group.ofGenerators #[a, b]
-  match G.derivedWith allowance with
+  match G.derivedBudgeted allowance with
   | .ok result _ =>
     unless result.group.order == 12 && Derived.check G result.group result.certificate do
       throw (IO.userError "bounded S4 derived subgroup or replay")
   | .exhausted failure => throw (IO.userError s!"S4 derived allowance: {repr failure.resource}")
   for terms in [0, 1, 2, 3] do
-    match G.derivedSeriesWithin allowance terms with
+    match G.derivedSeriesBudgeted allowance terms with
     | .ok result _ =>
       unless result.val.certificate.check G && result.val.certificate.terms <= terms &&
           result.val.answer? == (if terms == 3 then some true else none) do
         throw (IO.userError "derived term cap supplied an invalid prefix or premature answer")
     | .exhausted failure => throw (IO.userError s!"S4 series allowance: {repr failure.resource}")
-  let used ← match G.derivedSeriesWithin allowance 3 with
+  let used ← match G.derivedSeriesBudgeted allowance 3 with
     | .ok _ meter => pure meter.used
     | .exhausted _ => throw (IO.userError "S4 series allowance")
-  match G.derivedSeriesWithin used 3 with
+  match G.derivedSeriesBudgeted used 3 with
   | .ok result meter =>
     unless result.val.answer? == some true && meter.used == used do
       throw (IO.userError "derived series exact allowance changed its result")
@@ -194,7 +194,7 @@ private def withLimit (w : Work) (r : Resource) (k : Nat) : Work := match r with
   for resource in [Resource.nodes, .points, .pairs, .sifts, .certificates, .images, .storage] do
     unless used.get resource > 0 do throw (IO.userError "S4 did not exercise a derived resource")
     for cap in [0, used.get resource - 1] do
-      match G.derivedSeriesWithin (withLimit allowance resource cap) 3 with
+      match G.derivedSeriesBudgeted (withLimit allowance resource cap) 3 with
       | .ok _ _ => throw (IO.userError "derived series ignored its producer budget")
       | .exhausted failure =>
         unless failure.resource == resource && failure.meter.used.get resource <= cap do

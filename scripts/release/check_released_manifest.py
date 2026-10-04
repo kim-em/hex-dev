@@ -24,6 +24,7 @@ from release.sync_released import (  # noqa: E402
     managed_paths,
     released_ci_workflows,
     source_build_settings,
+    external_pins,
 )
 from release import aggregate_readme  # noqa: E402
 
@@ -453,6 +454,21 @@ def check_ci_workflows(entries: list[dict]) -> None:
                 ".lake/build",
                 ".lake/packages/Hex*/.lake/build",
             }
+            packages = entry.get("dependency_caches", [])
+            if (not isinstance(packages, list)
+                    or not all(isinstance(name, str) for name in packages)
+                    or len(packages) != len(set(packages))):
+                fail(f"{entry['repo']}: dependency_caches requires unique package names")
+            if packages:
+                known = {pin["name"] for pin in external_pins().values()}
+                if set(packages) - known:
+                    fail(f"{entry['repo']}: dependency_caches names an unlocked package")
+                if set(packages) - {"AINTLIB"}:
+                    fail(f"{entry['repo']}: dependency_caches permits only AINTLIB; "
+                         "Mathlib and its dependency artifacts use the upstream cache")
+                required_paths.update(
+                    f".lake/packages/{name}/.lake/build/{directory}"
+                    for name in packages for directory in ("lib/lean", "ir"))
             cached_paths = {
                 path.strip()
                 for path in restore_inputs.get("path", "").splitlines()

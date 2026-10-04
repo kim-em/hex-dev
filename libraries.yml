@@ -1083,7 +1083,7 @@ libraries:
         - name: supplied-certificates
           description: Complete accepted 65-, 256- and 512-bit supplied chains measure checking and conversion under distinct operation-specific fixed budgets.
         - name: native-production
-          description: Frozen 128- and 256-bit native subjects, including the longest validation chain, separate production, frozen conversion and checking; retained whole-corpus verdicts include exhaustion.
+          description: Frozen 128-, 256- and 512-bit native subjects, including the longest validation chain and independently generated 512-bit holdout, separate production, frozen conversion and checking; retained whole-corpus verdicts include exhaustion and full-construction comparisons.
   HexIntFactor:
     deps: [HexPrimality, HexArith, HexBasic]
     mathlib: false
@@ -1110,6 +1110,8 @@ libraries:
           description: Certified prime-power inputs with a growing exponent and growing entry count, exercising the closed-form sigma route.
         - name: p-minus-one-stage2-policy
           description: The shared extra-prime family with larger prime factors at 128, 256, and 512 bits and seeds 0 through 4, comparing the actual (64,4096) continuation allocation against the disabled policy while retaining route participation, checked successes, full-scan misses, and table/balanced/smooth regressions.
+        - name: external-production-and-import
+          description: Frozen subjects and finite native allocations separate optional GP discovery, bounded parsing, PrimeCert completion, compiled acceptance, source bytes and fresh computational replay; every success and exhaustion is retained.
 
   # ---------- Mathlib bridges ----------
   HexPolyMathlib:
@@ -1153,7 +1155,6 @@ libraries:
   HexKroneckerMathlib:
     deps: [HexKronecker, HexMvPolyMathlib, HexReflect, HexReflectMathlib, HexMatrixMathlib]
     mathlib: true
-    proof_probes: [bench/HexKroneckerMathlib/ProofProbe]
     done_through: 4
     status: active
     phase4:
@@ -1335,7 +1336,7 @@ libraries:
   HexECPPMathlib:
     deps: [HexECPP, HexPrimalityMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 7
     status: active
     proof_probes: [bench/HexECPPMathlib/ProofProbe]
   HexIntFactorMathlib:
@@ -1504,12 +1505,12 @@ libraries:
   HexRealAlgebraic:
     deps: [HexNumberField]
     mathlib: false
-    done_through: 1
+    done_through: 3
     status: active
   HexRealAlgebraicMathlib:
     deps: [HexRealAlgebraic, HexNumberFieldMathlib, HexRealRootsMathlib]
     mathlib: true
-    done_through: 1
+    done_through: 3
     status: active
   HexNumberFieldTower:
     deps: [HexNumberField, HexResultant, HexBerlekampZassenhaus]
@@ -1563,14 +1564,23 @@ libraries:
   HexSturm:
     deps: [HexPoly, HexRealRoots]
     mathlib: false
-    done_through: 0
+    done_through: 3
     status: active
     phase4:
+      comparators:
+        - tool: "FLINT real-qqbar signed-root sums"
+          class: informational
+          rationale: "Pinned FLINT root production and exact evaluation return the complete finite-interval query on fixed T_8 inputs. Prepared coefficient contexts, persistent JSON transport and root-value cleanup are recorded; this is not a literal-certificate or isolated-root-production comparison."
+        - tool: "Z3 RCF signed-root sums"
+          class: informational
+          rationale: "Pinned Z3 RCF root production and exact evaluation return the complete finite-interval query on the same fixed inputs. Backend contexts may retain internal caches; no roots are cached by the driver and no Lean proof surface or speed target is claimed."
       input_families:
         - name: head-degree
           description: Chebyshev heads T_n with query 1 on (-2,2), measuring the normal signed chain and endpoint passes as head degree grows.
         - name: query-degree
           description: Fixed head x²−2 with query x^m+1 on (-2,2), measuring initial reduction and replay as query degree grows.
+        - name: short-chain-degree
+          description: Heads 2X^n−1 with query 1 on (-1,1), growing degree with a three-entry bounded-word chain; covers domain preparation, full/prepared query/count, certificates, literal/cached replay, clearing and embedding.
   HexSignDet:
     deps: [HexSturm, HexPoly, HexMatrix, HexRowReduce, HexRank]
     mathlib: false
@@ -1595,7 +1605,7 @@ libraries:
   HexSturmMathlib:
     deps: [HexSturm, HexPolyMathlib, HexRealRootsMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 3
     status: active
   HexRCF:
     # The existing shared-formula dependency and pins are retained for compatibility.

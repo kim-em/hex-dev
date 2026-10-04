@@ -247,9 +247,9 @@ private def prepareCore (target : Expr) (request : Rat := 1 / 16)
   for divisor in source.divisors do
     let evidence ← enclose entries request divisor
     if evidence.bounds.lower == 0 && evidence.bounds.upper == 0 then
-      throwError "rcf: original divisor is zero"
+      throwError "rcf: original closed divisor is zero"
     unless evidence.bounds.separated do
-      throwError "rcf: original divisor remains unresolved in supplied bounds"
+      throwError "rcf: original closed divisor remains unresolved in supplied bounds"
     let separated ← mkDecideProof (← mkAppM ``Eq
       #[← mkAppM ``Bounds.separated #[evidence.literal], mkConst ``Bool.true])
     let nonzero ← mkAppM ``Contains.ne_zero #[evidence.proof, separated]

@@ -7,8 +7,10 @@ module
 
 public meta import HexRCF.RealCoefficients.FieldDecisionProgress
 public meta import HexRCF.RealCoefficients.FieldBuildBudget
+public meta import HexRCF.RealCoefficients.FieldIndex
 public meta import HexRealAlgebraicMathlib.Laws
 public meta import Lean
+public meta import HexRCF.Tactic
 
 public meta section
 
@@ -27,6 +29,41 @@ register_option rcf.algebraic.maxDoublings : Nat := {
   defValue := 10
   descr := "maximum fixed-field enclosure attempts at precisions 1, 2, 4, ... bits"
 }
+
+-- A comparison control for literal quotation, with the same replay checker
+-- and soundness theorem in both modes. This does not change solver dispatch.
+register_option rcf.algebraic.reducedLiterals : Bool := {
+  defValue := false
+  descr := "quote fixed-field coordinates directly instead of reducing them again"
+}
+
+-- The false arm retains full-query quotation as a reproducible comparison control.
+register_option rcf.algebraic.intervalSigns : Bool := {
+  defValue := true
+  descr := "quote exact Horner signs on the authenticated generator interval"
+}
+
+-- Compare one Boolean replay goal with separately checked conjuncts.
+register_option rcf.algebraic.singleReplay : Bool := {
+  defValue := false
+  descr := "check the full fixed-field certificate in one kernel decision goal"
+}
+
+register_option rcf.algebraic.monicCore : Bool := {
+  defValue := true
+  descr := "normalize the proposed carrier core before checked root isolation"
+}
+
+register_option rcf.algebraic.indexSigns : Bool := {
+  defValue := true
+  descr := "retrieve fixed-field replay signs through a checked positional index"
+}
+
+private def indexExpr : LiteralSign.Index → Expr
+  | .empty => mkConst ``LiteralSign.Index.empty
+  | .node position left right =>
+      mkApp3 (mkConst ``LiteralSign.Index.node) (mkNatLit position)
+        (indexExpr left) (indexExpr right)
 
 private def arrayLit (ty : Expr) (xs : List Expr) : Expr :=
   let nil := mkApp (mkConst ``List.nil [Level.zero]) ty
@@ -73,7 +110,13 @@ private def denseExpr {E : Type} [Zero E] [DecidableEq E]
 meta def fieldExpr {p : ZPoly} {root : SimpleRoot p}
     (pExpr rootExpr : Expr) (value : PolyQuot p root) : MetaM Expr := do
   let coeffs ← denseExpr ratExpr value.coeffs
-  mkAppM ``PolyQuot.reduce #[pExpr, rootExpr, coeffs]
+  if !(rcf.algebraic.reducedLiterals.get (← getOptions)) then
+    return ← mkAppM ``PolyQuot.reduce #[pExpr, rootExpr, coeffs]
+  let modulusDegree ← mkAppM ``DensePoly.natDegree #[pExpr]
+  let bound ← mkDecideProof
+    (← mkLt (mkNatLit (value.coeffs.toArray.size - 1)) modulusDegree)
+  let bound ← mkAppM ``Coefficients.degree_bound #[coeffs.appArg!, pExpr, bound]
+  mkAppOptM ``PolyQuot.mk #[some pExpr, some rootExpr, some coeffs, some bound]
 
 /-- The defining integer polynomial as printable coefficient data. -/
 meta def zpolyExpr (p : ZPoly) : MetaM Expr :=
@@ -198,10 +241,26 @@ meta def signTableExpr {p : ZPoly} {root : SimpleRoot p}
     (pExpr rootExpr : Expr) (table : LiteralSign.Table (PolyQuot p root)) : MetaM Expr := do
   let ty ← inferType (← fieldExpr pExpr rootExpr (0 : PolyQuot p root))
   let entryTy ← mkAppM ``LiteralSign.Entry #[ty]
-  let entries ← table.entries.mapM fun entry => do
+  let entriesRuntime ← if rcf.algebraic.intervalSigns.get (← getOptions) then
+      pure table.entries
+    else do
+      let some domain := Sturm.prepare Sturm.orderSign table.head
+          (.finite table.lower) (.finite table.upper) |
+        throwError "rcf: literal sign interval could not be prepared"
+      table.entries.mapM fun entry => do
+        if entry.evidence.isSome then return entry
+        let evidence := Sturm.certifyPrepared () domain entry.key.coeffs
+        unless evidence.value == entry.value &&
+            Sturm.check Sturm.orderSign () table.head entry.key.coeffs
+              (.finite table.lower) (.finite table.upper) entry.value evidence do
+          throwError "rcf: literal sign query disagrees with its checked enclosure"
+        return { entry with evidence := some evidence }
+  let evidenceTy ← inferType (← tarskiExpr ratExpr table.count)
+  let entries ← entriesRuntime.mapM fun entry => do
+    let evidence ← entry.evidence.mapM (tarskiExpr ratExpr)
     mkAppM ``LiteralSign.Entry.mk
       #[← fieldExpr pExpr rootExpr entry.key, mkIntLit entry.value,
-        ← tarskiExpr ratExpr entry.evidence]
+        optionLit evidenceTy evidence]
   mkAppM ``LiteralSign.Table.mk
     #[← denseExpr ratExpr table.head, ← ratExpr table.lower,
       ← ratExpr table.upper, ← tarskiExpr ratExpr table.count,
@@ -286,42 +345,96 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
       throwError "rcf: the existential sentence is false on the prepared cells"
   | _, none => throwError "rcf: finite sign table did not decide the sentence"
   | _, some true => pure ()
-  let certificate ← resultExpr pExpr rootExpr formulaExpr formula data
-  let verdictName := match quantifier with
-    | .forallReal => ``FieldBuild.Result.checkForall
-    | .existsReal => ``FieldBuild.Result.checkExists
+  let certificate ← profileitM Exception "rcf literal quotation" (← getOptions) do
+    resultExpr pExpr rootExpr formulaExpr formula data
+  let indexed := rcf.algebraic.indexSigns.get (← getOptions)
+  let index := if indexed then LiteralSign.Index.build data.signs.entries.toArray Field.keyOrder
+    else LiteralSign.Index.empty
+  let routing ← mkAppOptM ``Field.keyOrder #[some pExpr, some rootExpr]
+  let quotedIndex := indexExpr index
+  let verdictName := match indexed, quantifier with
+    | true, .forallReal => ``FieldBuild.Result.checkForallIndex
+    | true, .existsReal => ``FieldBuild.Result.checkExistsIndex
+    | false, .forallReal => ``FieldBuild.Result.checkForall
+    | false, .existsReal => ``FieldBuild.Result.checkExists
   let soundName := match quantifier with
     | .forallReal => ``FieldBuild.Result.checkForall_sound
     | .existsReal => ``FieldBuild.Result.checkExists_sound
-  let verdict ← mkAppM verdictName
-    #[certificate, valuesExpr, formulaExpr, mkConst ``Unit.unit]
+  let arguments := if indexed then
+    #[certificate, routing, quotedIndex, valuesExpr, formulaExpr, mkConst ``Unit.unit]
+    else #[certificate, valuesExpr, formulaExpr, mkConst ``Unit.unit]
+  let verdict ← mkAppM verdictName arguments
   let proofType ← mkAppM ``Eq #[verdict, mkConst ``Bool.true]
   let candidate ← mkFreshExprMVar proofType
-  let script ← match quantifier with
-    | .forallReal => `(tactic|
-        (simp only [FieldBuild.Result.checkForall_eq, FieldBuild.Result.checkEvidence,
+  let checker := mkIdent (match indexed, quantifier with
+    | true, .forallReal => ``FieldBuild.Result.checkForallIndex
+    | true, .existsReal => ``FieldBuild.Result.checkExistsIndex
+    | false, .forallReal => ``FieldBuild.Result.checkForall_eq
+    | false, .existsReal => ``FieldBuild.Result.checkExists_eq)
+  let evidence := mkIdent (if indexed then ``FieldBuild.Result.checkEvidenceIndex
+    else ``FieldBuild.Result.checkEvidence)
+  let script ← if rcf.algebraic.singleReplay.get (← getOptions) then
+    `(tactic|
+        (simp only [$checker:ident, $evidence:ident,
           Field.checkSignTable,
-          LiteralSign.Table.check, RadicalCert.check,
+          LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
+          FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
+          TarskiCertificate.check_eq, SignedRemainderChain.check,
+          ← Array.all_toList, Array.toList_range]; try (decide +kernel)))
+  else
+    `(tactic|
+        (simp only [$checker:ident, $evidence:ident,
+          Field.checkSignTable,
+          LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
           FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
           TarskiCertificate.check_eq, SignedRemainderChain.check,
           ← Array.all_toList, Array.toList_range, Bool.and_eq_true];
           repeat' (any_goals (apply And.intro)); all_goals try (decide +kernel)))
-    | .existsReal => `(tactic|
-        (simp only [FieldBuild.Result.checkExists_eq, FieldBuild.Result.checkEvidence,
-          Field.checkSignTable,
-          LiteralSign.Table.check, RadicalCert.check,
-          FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
-          TarskiCertificate.check_eq, SignedRemainderChain.check,
-          ← Array.all_toList, Array.toList_range, Bool.and_eq_true];
-          repeat' (any_goals (apply And.intro)); all_goals try (decide +kernel)))
-  let remaining ← Lean.Elab.runTactic' candidate.mvarId! script
+  let remaining ← profileitM Exception "rcf literal replay" (← getOptions) do
+    Lean.Elab.runTactic' candidate.mvarId! script
   unless remaining.isEmpty do
     throwError "rcf: fixed-field certificate replay did not prove a true verdict"
   let checked ← instantiateMVars candidate
+  let checked ← if indexed then do
+    let signTableName := match quantifier with
+      | .forallReal => ``FieldBuild.Result.checkForallIndex_signTable
+      | .existsReal => ``FieldBuild.Result.checkExistsIndex_signTable
+    let sameName := match quantifier with
+      | .forallReal => ``FieldBuild.Result.checkForallIndex_eq
+      | .existsReal => ``FieldBuild.Result.checkExistsIndex_eq
+    let signed ← mkAppM signTableName (arguments.push checked)
+    let same ← mkAppM sameName (arguments.push signed)
+    let reverse ← mkAppM ``Eq.symm #[same]
+    mkAppM ``Eq.trans #[reverse, checked]
+  else pure checked
   let proof ← mkAppM soundName
     #[certificate, valuesExpr, formulaExpr, mkConst ``Unit.unit, checked]
   check proof
   return (proof, certificate, data, checked)
+
+/-- Replay a supplied frozen result without production. Original extra operands
+must already be recorded. Errors restore caller state and remain terminal;
+accepted false is diagnostic. The returned fixed-field proof is checked in the
+ordinary kernel and rejects every nonstandard axiom dependency. -/
+meta def replay {p : ZPoly} {s : DyadicSquare}
+    {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
+    [ZPoly.CheckedIrreducible p] {n : Nat}
+    (pExpr rootExpr valuesExpr formulaExpr : Expr)
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
+    (data : FieldBuild.Result p s hw hp Unit (n + 1))
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := []) : MetaM Expr := do
+  let saved ← saveState
+  let (proof, _) ← tryFinally' (withOptions (fun options =>
+      debug.skipKernelTC.set (Elab.async.set options false) false) do
+    let (proof, _, _, _) ← quoteCertificate pExpr rootExpr valuesExpr formulaExpr
+      values formula quantifier extraSignKeys (fun _ => pure ()) data
+    let proof := ShareCommon.shareCommon' proof
+    Hex.RCF.checkAxioms `Hex.RCF.RealCoefficients.FieldLiteral.replay proof
+    checkWithKernel proof
+    return proof)
+    (fun result => unless result.isSome do saved.restore)
+  return proof
 
 /-- Construct a checked proof for a fixed-field existential or universal
 sentence. Search runs in meta code; the resulting term contains only literal
@@ -338,7 +451,9 @@ meta def proveWithCertificate {p : ZPoly} {s : DyadicSquare}
     (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := [])
     (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit := fun _ => pure ()) :
     MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
-  let some data := FieldBuild.build p s hw hp values formula () precision extraSignKeys |
+  let proposed := profileit "rcf certificate production" (← getOptions) fun _ =>
+    FieldBuild.build p s hw hp values formula () precision extraSignKeys
+  let some data := proposed |
     throwError "rcf: fixed-field certificate construction failed"
   return ← quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula
     quantifier extraSignKeys validate data
@@ -360,8 +475,10 @@ meta def proveRefiningWithCertificate {p : ZPoly} {s : DyadicSquare}
   if real : s.meetsRealAxis = true then
     let options ← getOptions
     Core.checkInterrupted
-    let result := FieldBuild.produceWithin p s hw hp real values formula ()
-      (rcf.algebraic.directDepth.get options) (rcf.algebraic.maxDoublings.get options) extraSignKeys
+    let result := profileit "rcf certificate production" options fun _ =>
+      FieldBuild.produceWithin p s hw hp real values formula ()
+        (rcf.algebraic.directDepth.get options) (rcf.algebraic.maxDoublings.get options) extraSignKeys
+        (rcf.algebraic.monicCore.get options)
     Core.checkInterrupted
     match result with
     | .error .exhausted => throwError "rcf: algebraic interval refinement budget exhausted; increase rcf.algebraic.maxDoublings or rcf.algebraic.directDepth"
