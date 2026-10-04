@@ -984,8 +984,13 @@ IMPORT_COMMAND = re.compile(
     r"^[ \t]*(?:(?:public|private|meta)[ \t]+)*import(?:[ \t]+all)?(?:[ \t]+|$)(.*)$")
 
 
-def _import_roots(source: str) -> set[str]:
-    """Read import headers, including continued lines and quoted identifiers."""
+def _module_parts(module: str) -> tuple[str, ...]:
+    return tuple(part[1:-1] if part.startswith("«") else part
+                 for part in re.findall(MODULE_PART, module))
+
+
+def _import_modules(source: str) -> set[str]:
+    """Read full import names, including continued and quoted identifiers."""
     lines = code_without_comments_and_strings(source).splitlines()
     roots: set[str] = set()
     for i, line in enumerate(lines):
@@ -997,8 +1002,9 @@ def _import_roots(source: str) -> set[str]:
             matches = list(MODULE_NAME.finditer(text))
             if text and not re.sub(MODULE_NAME, "", text).strip():
                 for match in matches:
-                    part = re.match(MODULE_PART, match[0])[0]
-                    roots.add(part[1:-1] if part.startswith("«") else part)
+                    parts = _module_parts(match[0])
+                    roots.add(".".join(part if re.fullmatch(r"\w+", part)
+                                       else f"«{part}»" for part in parts))
             elif text:
                 break
             i += 1
@@ -1010,6 +1016,10 @@ def _import_roots(source: str) -> set[str]:
             if text and not (text[0].isupper() or text.startswith("«")):
                 break
     return roots
+
+
+def _import_roots(source: str) -> set[str]:
+    return {_module_parts(module)[0] for module in _import_modules(source)}
 
 
 def _external_import_roots(entry: dict, clone: Path) -> dict[str, str]:

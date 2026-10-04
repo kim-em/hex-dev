@@ -516,7 +516,6 @@
     ],
     "jobs": 13767,
     "exitCode": 0,
-    "releaseAndDependencyTests": 119,
     "scannedAdmissionCones": 295,
     "scannedLocalModules": 1100,
     "publishedTrustFiles": 2048
@@ -636,5 +635,25 @@
     "ci-37189870141-failed.log": {
       "SHA256": "f52f61e49256fb99b139eceb6b22962e4a697b71504bf4dcbede07bd6107b135"
     }
+  },
+  "releaseAndDependencyTests": {
+    "sourceCommit": "2a9a6283f96be0d23281238745b6b4c455f30968",
+    "count": 119,
+    "exitCode": 0,
+    "scope": "Review-corrected package and dependency tests, separately from the staged-source Lean build"
+  },
+  "sharedParserFollowup": {
+    "sourceSHA256": {
+      "scripts/release/sync_released.py": "7d908568fcb27c3c8185558e703d830f4c60bf3ecc30dc2c3bfc6d537df250e1",
+      "scripts/release/consumer_check.py": "918bcfa16086880e33120abb2ce39a6d45bc57acab7465da697ee486fe3a4aec",
+      "scripts/audit_real_closure_packages.py": "ece96092cce9f303d9ae33a637e228d596a996d1445f868bf087e9db017ad5ec",
+      "scripts/release/test_sync_released.py": "bbd3a823012a8aff0b9a14a4331b16e5c3f3c23fb2476dfeedc8f87266c5794b"
+    },
+    "releaseAndDependencyTests": 119,
+    "testLogSHA256": "ae8aff262eec5b99af111caaaa1b787393e5a229b82ac94f664b8b64a79da2d9",
+    "all60RenderedConfigurationsUnchanged": true,
+    "downstreamExampleSelectionUnchanged": true,
+    "inventoryClaimsUnchanged": true,
+    "historicalArchiveAncestryVerified": true
   }
 }

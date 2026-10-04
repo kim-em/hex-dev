@@ -31,6 +31,11 @@ from pathlib import Path
 
 import yaml
 
+try:
+    from .sync_released import _import_roots
+except ImportError:  # Direct script invocation.
+    from sync_released import _import_roots
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "scripts" / "release" / "released.yml"
 HEX_URL = re.compile(r"https://github\.com/leanprover/([A-Za-z0-9_-]+?)(?:\.git)?$")
@@ -89,13 +94,7 @@ def point_at_stage(stage: Path, repo: Path) -> None:
 
 
 def imported_roots(path: Path) -> set[str]:
-    return {
-        match.group(1).split(".")[0]
-        for match in re.finditer(
-            r"(?m)^\s*(?:public\s+)?(?:meta\s+)?import\s+(?:all\s+)?([A-Za-z0-9_.]+)",
-            path.read_text(encoding="utf-8"),
-        )
-    }
+    return _import_roots(path.read_text(encoding="utf-8"))
 
 
 def write_consumer(stage: Path, entries: list[dict]) -> list[str]:

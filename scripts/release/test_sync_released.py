@@ -1205,6 +1205,7 @@ class GeneratedLakefileTests(unittest.TestCase):
     def test_import_headers_cover_line_endings_continuations_and_quoted_names(self) -> None:
         source = 'module\r\npublic meta import\r\n  «TauCeti».Data.Matrix\r\n  Mathlib.Tactic\r\n\r\nnamespace Unimported\r\n'
         self.assertEqual(sync_released._import_roots(source), {"TauCeti", "Mathlib"})
+        self.assertEqual(sync_released._import_modules(source), {"TauCeti.Data.Matrix", "Mathlib.Tactic"})
         self.assertEqual(sync_released._import_roots('import «Mathlib.Foo»\n'), {"Mathlib.Foo"})
 
     def test_source_requirements_ignore_comments_and_find_all_imports(self) -> None:

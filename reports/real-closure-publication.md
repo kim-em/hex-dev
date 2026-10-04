@@ -248,8 +248,9 @@ tests, eligible examples and native linking. The shared arbitrary-certificate
 Tarski example with its exact kernel axiom guard also builds (9,343 jobs).
 All 32 computational locks exclude Mathlib, Tau Ceti and AINTLIB. The complete
 monorepo integration, owner examples, manual and conformance pass together
-(13,767 jobs), as do 119 package/dependency tests, 295 admission cones and the
-2,048-file trust scan. External Mathlib artifacts are cached; Hex package
+(13,767 jobs), with 295 admission cones and the 2,048-file trust scan. The
+119 package/dependency tests run against the separately recorded review
+corrections at `2a9a6283f9`. External Mathlib artifacts are cached; Hex package
 build outputs start absent. Parser/boundary corrections leave all 60 rendered
 configurations byte-identical to the built stage. The ledger identifies that
 scope and the remaining requirement to restage final output under the release
