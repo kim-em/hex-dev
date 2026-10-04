@@ -102,6 +102,15 @@ checks frozen bound/subject/version bindings and coverage of used providers,
 then validates enclosure, guard and final proofs in the ordinary kernel.
 Nonseparating bounds leave guards unresolved. This mode is bounded proof search,
 not a complete named-constant field solver.
+Registered bounds compose with unregistered selected algebraic values and
+checked root aliases through separately proved algebraic enclosures. The
+[mixed-coefficient regressions](../conformance/HexRCF/MixedConstants.lean)
+cover π/e with square/cubic roots, both divisor signs and cancelled divisions;
+their ordinary proofs contain literal replay, with no approximation or root
+production call.
+Recognized rational radicals retain exact singleton bounds. A preparation-local
+cache reuses checked enclosures for exact source expressions, including a
+divisor reused by an inverse coefficient; it does not merge distinct aliases.
 The [named-constant regressions](../conformance/HexRCF/NamedConstants.lean)
 and manual supply fixed bounds from existing Mathlib π/e theorems, then prove
 the required inequalities, existential witness and guarded inverse. Separate

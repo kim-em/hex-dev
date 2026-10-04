@@ -9,6 +9,8 @@ module
 public import HexBerlekampZassenhausMathlib.FactorTactic
 
 public import HexRCF.RealCoefficients.Registration
+public import HexRCF.RealCoefficients.AlgebraicBounds
+public meta import HexRCF.RealCoefficients.AlgebraicBounds
 public meta import HexRCF.RealCoefficients.Finite
 public meta import HexRCF.RealCoefficients.Reify
 public meta import HexRCF.RealCoefficients.Interpret

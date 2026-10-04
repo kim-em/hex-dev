@@ -7,8 +7,10 @@ module
 
 public meta import HexRCF.Tactic
 public meta import HexRCF.RealCoefficients.Reify
+public meta import HexRCF.RealCoefficients.AlgebraicBounds
 public import HexRCF.RealCoefficients.Registration
 public meta import Mathlib.Tactic.Linarith
+public meta import Mathlib.Tactic.NormNum.RealSqrt
 
 public meta section
 
@@ -132,7 +134,19 @@ private def rational (source : Expr) : MetaM Enclosure := do
   unless rest.isEmpty do throwError "rcf: could not quote rational containment"
   checked source bounds (← instantiateMVars goal)
 
-private partial def enclose (entries : Array (Name × Expr)) (request : Rat)
+-- One preparation fixes the registry and request. Exact source keys preserve
+-- subject/embedding identity; the local cache never enters a certificate.
+private abbrev Cache := IO.Ref (ExprMap Enclosure)
+
+mutual
+private partial def enclose (cache : Cache) (entries : Array (Name × Expr)) (request : Rat)
+    (source : Expr) : MetaM Enclosure := do
+  if let some evidence := (← cache.get)[source]? then return evidence
+  let evidence ← encloseCore cache entries request source
+  cache.modify (·.insert source evidence)
+  return evidence
+
+private partial def encloseCore (cache : Cache) (entries : Array (Name × Expr)) (request : Rat)
     (source : Expr) : MetaM Enclosure := do
   -- Whole-subject matching precedes arithmetic and rational normalization.
   for (name, subject) in entries do
@@ -155,9 +169,17 @@ private partial def enclose (entries : Array (Name × Expr)) (request : Rat)
         #[{ declaration := name, subject := source, version, request, bounds, identity, containment }]
   let e := source.consumeMData
   let (op, args) := e.getAppFnArgs
+  let realPower ← if op == ``HPow.hPow && args.size == 6 then
+      pure ((← inferType args[5]!).isConstOf ``Real) else pure false
+  if e.isAppOfArity ``RealAlgebraicNumber.toReal 1 ||
+      e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 || realPower then
+    if (← (Hex.RCF.Reify.recognizeCoefficient source).run).isOk then
+      return ← rational source
+    let (bounds, proof) ← AlgebraicBounds.enclose source request
+    return ← checked source bounds proof
   if [``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv].contains op && args.size == 6 then
-    let left ← enclose entries request args[4]!
-    let right ← enclose entries request args[5]!
+    let left ← enclose cache entries request args[4]!
+    let right ← enclose cache entries request args[5]!
     if op == ``HSub.hSub then
       if ← Registration.sameSubject left.source right.source then
         let zero ← rational q((0 : ℝ))
@@ -198,12 +220,12 @@ private partial def enclose (entries : Array (Name × Expr)) (request : Rat)
           ← mkAppM ``Option.some #[← boundsExpr bounds]])]
     return ← checked source bounds (← mkAppM ``And.left #[divided]) (left.observations ++ right.observations)
   if op == ``Neg.neg && args.size == 3 then
-    let child ← enclose entries request args[2]!
+    let child ← enclose cache entries request args[2]!
     return ← checked source child.bounds.neg (← mkAppM ``Contains.neg #[child.proof]) child.observations
       (some (← mkAppM ``Bounds.neg #[child.literal]))
   if op == ``Inv.inv && args.size == 3 then
     let x : Q(ℝ) := args[2]!
-    let quotient ← enclose entries request q((1 : ℝ) / $x)
+    let quotient ← enclose cache entries request q((1 : ℝ) / $x)
     let predicate ← withLocalDeclD `value q(ℝ) fun value => do
       mkLambdaFVars #[value] (← mkAppM ``Contains #[quotient.literal, value])
     let proof ← mkAppM ``Eq.mp #[← mkAppM ``congrArg
@@ -212,7 +234,7 @@ private partial def enclose (entries : Array (Name × Expr)) (request : Rat)
   if op == ``HPow.hPow && args.size == 6 then
     let some exponent ← getNatValue? args[5]! |
       throwError "rcf: supplied bounds support natural coefficient powers"
-    let base ← enclose entries request args[4]!
+    let base ← enclose cache entries request args[4]!
     let mut result := { (← rational q((1 : ℝ))) with observations := base.observations }
     for _ in [:exponent] do
       let x : Q(ℝ) := base.source
@@ -229,6 +251,7 @@ private partial def enclose (entries : Array (Name × Expr)) (request : Rat)
       #[predicate, ← instantiateMVars equality], result.proof]
     return ← checked source result.bounds proof result.observations
   rational source
+end
 
 /-- Freeze supplied bounds and discharge every source guard before proof search.
 An exact zero is invalid; a nonseparating bound is unresolved. -/
@@ -242,10 +265,11 @@ private def prepareCore (target : Expr) (request : Rat := 1 / 16)
       | .ok source => pure source
       | .error error => throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
   let entries ← Registration.used candidates (source.coefficients ++ source.divisors)
+  let cache ← IO.mkRef ({} : ExprMap Enclosure)
   let mut guards := #[]
   let mut guardBounds := #[]
   for divisor in source.divisors do
-    let evidence ← enclose entries request divisor
+    let evidence ← enclose cache entries request divisor
     if evidence.bounds.lower == 0 && evidence.bounds.upper == 0 then
       throwError "rcf: original closed divisor is zero"
     unless evidence.bounds.separated do
@@ -255,7 +279,7 @@ private def prepareCore (target : Expr) (request : Rat := 1 / 16)
     let nonzero ← mkAppM ``Contains.ne_zero #[evidence.proof, separated]
     guardBounds := guardBounds.push evidence
     guards := guards.push (divisor, ← ordinary nonzero (← mkAppM ``Ne #[divisor, q((0 : ℝ))]))
-  let coefficients ← source.coefficients.mapM (enclose entries request)
+  let coefficients ← source.coefficients.mapM (enclose cache entries request)
   let registry ← entries.mapM fun (name, _) => do
     return (name, mkNatLit (← evalNat (← mkAppM ``Registration.version #[mkConst name])))
   return { source, registry, request, coefficients, guards, guardBounds }

@@ -204,6 +204,27 @@ private meta def scalarRat (e : Expr) : RecognitionM Rat := do
     | throwError "rcf: symbolic or non-rational coefficient{indentExpr e}"
   throwThe UnsupportedCoefficient { expr := e, closed }
 
+/-- Probe one scalar through the rational frontend's typed recognition boundary.
+Unsupported closed syntax is a result; runtime/resource exceptions propagate.
+The probe preserves caller metavariable state. -/
+meta def recognizeCoefficient (e : Expr) : ExceptT UnsupportedCoefficient MetaM Rat := ExceptT.mk do
+  let saved ← saveState
+  let (result, _) ← tryFinally' (withNewMCtxDepth do
+    match ← (scalarRat e).run with
+    | .ok value => return .ok value
+    | .error error =>
+      let expr ← instantiateMVars error.expr
+      let value ← instantiateMVars error.closed.value
+      let proof ← instantiateMVars error.closed.proof
+      return .error {error with expr, closed := {value, proof}})
+    (fun result => do
+      match result with
+      | some _ => modify fun state => {state with
+          mctx := saved.meta.mctx, postponed := saved.meta.postponed,
+          zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds}
+      | none => saved.restore)
+  return result
+
 /-- Interval endpoints stay in the rational frontend, even when optional
 coefficient handlers are installed. -/
 private meta def endpointRat (e : Expr) : MetaM Rat := do
