@@ -33,6 +33,22 @@ lean_exe hexbz_factor_service where
 """
 
 
+class RepositoryLakefile(unittest.TestCase):
+    def test_current_import_closure_and_library_ownership(self):
+        guard.factor_import_modules.cache_clear()
+        self.addCleanup(guard.factor_import_modules.cache_clear)
+        modules = guard.factor_import_modules()
+        self.assertIsNotNone(modules)
+        self.assertTrue({'HexBench.BerlekampKernel', 'HexPrimality.Table'} <= modules)
+        source = freshness.git('show', ':lakefile.lean')
+        parsed = freshness.lakefile_blocks(source)
+        self.assertFalse(any(key.startswith('command ') for key in parsed))
+        relevant = guard.factorization_blocks(source)
+        for library in ('HexPrimality', 'HexBerlekampKernelProbe', 'HexArithNative', 'HexModArithNative'):
+            self.assertIn('lean_lib ' + library, relevant)
+        self.assertNotIn('lean_lib HexConformance', relevant)
+
+
 class LakefileBlocks(unittest.TestCase):
     def test_multiline_doc_comment_attaches_to_following_declaration(self):
         text = BASE + '\n/-- The new\nmodule. -/\nlean_lib HexNew\n'
@@ -121,6 +137,31 @@ class LakefileAffectsRuntime(unittest.TestCase):
                     patch.object(guard, 'factor_import_modules', return_value={'HexPrimality.Table'}):
                 self.assertFalse(guard.lakefile_texts_differ(BASE, unrelated))
                 self.assertTrue(guard.lakefile_texts_differ(BASE, imported))
+
+    def test_quoted_and_braced_library_names_cannot_hide_implicit_roots(self):
+        for name in ('«HexBench»', '"HexBench"', 'HexBench{'):
+            after = BASE + f'\nlean_lib {name} where\n  srcDir := "bench"\n'
+            with self.subTest(name=name), patch.object(guard, 'factor_import_modules',
+                                                      return_value={'HexBench.BerlekampKernel'}):
+                self.assertTrue(guard.lakefile_texts_differ(BASE, after))
+
+    def test_character_literal_does_not_absorb_native_declarations(self):
+        after = BASE + "\nscript s do\n  let c := '('\n  pure 0\nextern_lib extraffi pkg := \"archive\"\n"
+        self.assertTrue(guard.lakefile_texts_differ(BASE, after))
+        self.assertTrue(guard.lakefile_texts_differ(BASE, BASE + '\nscript s do\n  let c := (\n'))
+
+    def test_nested_filter_application_cannot_hide_computed_globs(self):
+        after = BASE + '\nlean_lib Other where\n  globs := Array.filter (fun _ => true) <| (fun (_ : Array Glob) => #[.submodules `HexBench]) <| #[`Unrelated].map Glob.one\n'
+        with patch.object(guard, 'factor_import_modules', return_value={'HexBench.BerlekampKernel'}):
+            self.assertTrue(guard.lakefile_texts_differ(BASE, after))
+
+    def test_semicolon_fields_retain_compiler_flags(self):
+        before = BASE.replace('srcDir := "."', 'precompileModules := true; moreLeancArgs := #["-O3"]')
+        self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
+
+    def test_helper_parameters_need_no_space_after_name(self):
+        before = BASE + '\ndef flags(x : Nat) := "-O3"\nextern_lib extraffi pkg := flags 0\n'
+        self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
 
     def test_registering_a_new_target_is_not_a_runtime_change(self):
         after = BASE + '\nlean_lib HexPolyFast where\n  srcDir := "."\n'
@@ -256,6 +297,11 @@ class Observations(unittest.TestCase):
 
 
 class LakefileTransitions(unittest.TestCase):
+    def setUp(self):
+        patcher = patch.object(guard, 'factor_import_modules', return_value={'HexArith.UInt64.Wide'})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     BASELINE = "a" * 40
     ENDPOINT = "b" * 40
     CURRENT = "c" * 40

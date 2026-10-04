@@ -73,7 +73,7 @@ def _claims_factor_module(declaration: str, body: str) -> bool:
     for expression in fields:
         # Filtering a literal module list can remove modules but cannot create
         # new names. Other computed roots/globs remain conservatively relevant.
-        expression = re.sub(r"^Array\.filter\s+\(.*\)\s*<\|\s*", "", expression.strip(), flags=re.DOTALL)
+        expression = re.sub(r"^Array\.filter\s+\(.*?\)\s*<\|\s*", "", expression.strip(), flags=re.DOTALL)
         if not re.fullmatch(rf"{vector}(?:\s*\+\+\s*{vector})*", expression):
             return True
         names.extend(re.findall(r"`([A-Za-z_][A-Za-z0-9_.']*)", expression))
@@ -94,7 +94,7 @@ def _executable_lib_settings(body: str) -> str:
     lines = []
     for line in body.splitlines():
         stripped = line.strip()
-        if not stripped or stripped.startswith("--") or stripped.startswith("precompileModules"):
+        if not stripped or stripped.startswith("--") or (stripped.startswith("precompileModules") and ";" not in stripped):
             continue
         lines.append(re.sub(r"^(lean_lib\s+\S+)\s+where$", r"\1", stripped))
     return "\n".join(lines)

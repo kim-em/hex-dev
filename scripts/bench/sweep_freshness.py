@@ -76,11 +76,12 @@ FINGERPRINT_DIGITS = 12
 LAKE_DECL = re.compile(
     r"^(?:(?:private|protected|public|partial|unsafe|noncomputable|meta)\s+)*"
     r"(package|require|lean_lib|lean_exe|extern_lib|target|script|def"
-    r"|abbrev|opaque|input_file|module_facet|library_facet|package_facet)\s+(\S+)")
+    r'|abbrev|opaque|input_file|module_facet|library_facet|package_facet)\s+("[^"\n]*"|«[^»\n]*»|[A-Za-z_][\w\'.]*|\S+)')
 
 
 def _bracket_delta(code: str) -> int:
     code = re.sub(r'"(?:\\.|[^"\\])*"', '""', code)
+    code = re.sub(r"'(?:\\.|[^'\\])'", "''", code)
     return sum(code.count(c) for c in "([{") - sum(code.count(c) for c in ")]}")
 
 
@@ -93,13 +94,23 @@ def lakefile_blocks(text: str) -> dict[str, str]:
     depth = 0
     continuation = False
     commands = 0
+    uncertain = False
     for line, code in zip(text.split("\n"), strip_lean_comments(text, preserve_lines=True).split("\n"), strict=True):
         declaration = re.sub(r"^(?:@\[[^\]]*\]\s*)+", "", code.lstrip())
-        match = LAKE_DECL.match(declaration) if depth == 0 else None
+        candidate = LAKE_DECL.match(declaration)
+        if candidate and depth != 0 and not line.startswith((" ", "\t")):
+            uncertain = True
+        match = candidate if depth == 0 else None
         if match:
             if key is not None:
                 blocks[key] = "\n".join(current).rstrip()
-            key = f"{match.group(1)} {match.group(2)}"
+            kind, name = match.group(1), match.group(2)
+            if kind != "require":
+                if name.startswith(('"', '«')):
+                    name = name[1:-1]
+                if not re.fullmatch(r"[A-Za-z_][\w'.]*", name):
+                    uncertain = True
+            key = f"{kind} {name}"
             current = pending + [line]
             pending = []
             depth = _bracket_delta(code)
@@ -127,6 +138,8 @@ def lakefile_blocks(text: str) -> dict[str, str]:
             continuation = code.rstrip().endswith((":=", "++", "<|", "=>", ","))
     if key is not None:
         blocks[key] = "\n".join(current).rstrip()
+    if depth != 0 or uncertain:
+        blocks["command uncertain"] = text
     return blocks
 
 
