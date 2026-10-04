@@ -58,9 +58,11 @@ import yaml
 # Importable both as a script and as scripts.release.sync_released, so the
 # sibling module is reached through the directory rather than the package.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import aggregate_readme  # noqa: E402
 from check_trust_surface import code_without_comments_and_strings  # noqa: E402
+from libgraph import PROOF_IMPORT_ROOTS  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "scripts" / "release" / "released.yml"
@@ -1353,14 +1355,14 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
         if mf == clone / "lake-manifest.json":
             changed += _synthesize_manifest_packages(
                 entry, clone, doc, synced, dep_owner, version, catalog, notes)
-            changed += _synthesize_external_manifest_packages(entry, clone, doc, notes)
+            changed += _synthesize_external_manifest_packages(entry, clone, doc, synced, notes)
         if changed:
             mf.write_text(_json.dumps(doc, indent=2) + "\n", encoding="utf-8")
     return notes
 
 
 def _synthesize_external_manifest_packages(entry: dict, clone: Path, doc: dict,
-                                           notes: list[str]) -> int:
+                                           synced: dict[str, str], notes: list[str]) -> int:
     """Lock direct providers and providers newly needed by pinned Hex companions.
 
     The monorepo lock supplies complete package records. Pin lists already
@@ -1374,7 +1376,7 @@ def _synthesize_external_manifest_packages(entry: dict, clone: Path, doc: dict,
     roots = set(_external_import_roots(entry, clone))
     for dependency in entry.get("pins") or []:
         upstream = entries.get(dependency)
-        if upstream is not None:
+        if upstream is not None and dependency in synced:
             roots.update(_external_import_roots(upstream, REPO_ROOT))
     _check_external_boundary(entry, roots)
     required = {EXTERNAL_IMPORT_PACKAGES[root].lower() for root in roots}
@@ -1398,6 +1400,8 @@ def _synthesize_external_manifest_packages(entry: dict, clone: Path, doc: dict,
         elif name in direct and present[name].get("inherited"):
             present[name]["inherited"] = False
             changed += 1
+            notes.append(f'  manifest external {present[name]["name"]} inherited -> direct '
+                         '(lake-manifest.json)')
     return changed
 
 
@@ -1485,14 +1489,22 @@ def _hex_import_roots(entry: dict, clone: Path) -> set[str]:
 
 
 def _insert_requirements(text: str, lake_format: str, block: str) -> str:
-    """Keep Mathlib last so its compatible transitive pins remain authoritative."""
+    """Insert new requirements before Mathlib to preserve its transitive pins."""
     if lake_format == "toml":
         mathlib = next((match for match in re.finditer(
             r"(?ms)^\[\[require\]\]\s*\n.*?(?=^\[|\Z)", text)
             if re.search(r'^name\s*=\s*"mathlib"\s*$', match[0], re.M)), None)
         anchor = mathlib or re.search(r"(?m)^\[\[(?:lean_lib|lean_exe)\]\]", text)
         if anchor:
-            text = text[:anchor.start()] + block + text[anchor.start():]
+            end = anchor.start()
+            if mathlib:
+                while end > 0:
+                    previous = text.rfind("\n", 0, end - 1) + 1
+                    line = text[previous:end].strip()
+                    if line and not line.startswith("#"):
+                        break
+                    end = previous
+            text = text[:end] + block + text[end:]
         else:
             text = text.rstrip("\n") + "\n\n" + block
     else:
@@ -1631,7 +1643,7 @@ def _check_external_boundary(entry: dict, roots: set[str]) -> None:
     """Never synthesize proof dependencies for a computational mirror."""
     if entry.get("pins_only") or entry.get("mathlib_only") or entry.get("lib", "").endswith("Mathlib"):
         return
-    forbidden = roots & {"Mathlib", "TauCeti"}
+    forbidden = roots & PROOF_IMPORT_ROOTS
     if forbidden:
         raise RuntimeError(f"computational repository {entry['repo']} imports "
                            f"proof dependencies: {', '.join(sorted(forbidden))}")
