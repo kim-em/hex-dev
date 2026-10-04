@@ -732,6 +732,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.SpecializeReduction,
     `HexRealClosureMathlib.SpecializeMoment,
     `HexRealClosureMathlib.SpecializeReplay,
+    `HexRealClosureMathlib.SpecializeNested,
     `HexRealClosureMathlib.SpecializeSample,
     `HexRealClosureMathlib.SpecializeSelected,
     `HexRealClosureMathlib.SpecializeDescriptor,
