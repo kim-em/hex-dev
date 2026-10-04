@@ -624,40 +624,39 @@ private def wreathImages (n m : Nat) (base : Array (Array Nat)) (top : Array Nat
     destination * n + base[destination]![x % n]!).toArray
 
 private def checkWreathProduct (G : Group n) (H : Group m) : IO Unit := do
-  if hn : 0 < n then
+  let product := G.wreathProduct H
+  unless product.generators.size == m * G.generators.size + H.generators.size &&
+      checkChain product.generators product.chain do
+    throw (IO.userError "wreath product generator count or chain check failed")
+  if 0 < n then
     let left := closure n (G.generators.map fun p => p.vec.toArray.map Fin.val)
     let right := closure m (H.generators.map fun p => p.vec.toArray.map Fin.val)
     let expected := (rawTuples left m).flatMap fun f => right.map (wreathImages n m f)
-    let .ok product := G.wreathProduct? H
-      | throw (IO.userError "wreath product rejected nonempty blocks")
-    unless product.order == expected.size && product.order == left.size ^ m * right.size &&
-        product.generators.size == m * G.generators.size + H.generators.size &&
-        checkChain product.generators product.chain do
-      throw (IO.userError "wreath product order, generator count or chain check failed")
+    unless product.order == expected.size && product.order == left.size ^ m * right.size do
+      throw (IO.userError "wreath product order disagrees with independent base/top enumeration")
     for raw in (permutations (List.range (n * m))).map List.toArray do
       let some p := Perm.ofNatArray? (n * m) raw
         | throw (IO.userError "wreath reference candidate rejected")
       unless product.contains p == expected.contains raw do
         throw (IO.userError "wreath product membership disagrees with independent base/top enumeration")
-    let exact := G.wreathProduct H hn
-    let elements := exact.enumerate
+    let elements := product.enumerate
     for r in elements do
-      let f := WreathProduct.base hn r
-      let h := WreathProduct.top hn r
+      let f := WreathProduct.base r
+      let h := WreathProduct.top r
       let rawBase := (List.finRange m).toArray.map fun j => (f j).val.vec.toArray.map Fin.val
       let rawTop := h.val.vec.toArray.map Fin.val
       unless rawBase.all left.contains && right.contains rawTop &&
           r.val.vec.toArray.map Fin.val == wreathImages n m rawBase rawTop &&
-          WreathProduct.pair hn f h == r &&
-          (WreathProduct.inl H hn f).comp (WreathProduct.inr G hn h) == r do
+          WreathProduct.pair f h == r &&
+          (WreathProduct.inl H f).comp (WreathProduct.inr G h) == r do
         throw (IO.userError "wreath projections or unique decomposition failed")
       let fixesBlocks := (List.range (n * m)).all fun x =>
         (r.val.vec.toArray.map Fin.val)[x]! / n == x / n
       unless (h == Element.id H) == fixesBlocks do
         throw (IO.userError "top projection kernel failed to identify the base group")
       for s in elements do
-        let g := WreathProduct.base hn s
-        let k := WreathProduct.top hn s
+        let g := WreathProduct.base s
+        let k := WreathProduct.top s
         let rawOther := (List.finRange m).toArray.map fun j => (g j).val.vec.toArray.map Fin.val
         let invTop := inverseImages rawTop
         let newBase := (List.range m).toArray.map fun j => composeImages rawBase[j]! rawOther[invTop[j]!]!
@@ -666,14 +665,17 @@ private def checkWreathProduct (G : Group n) (H : Group m) : IO Unit := do
           throw (IO.userError "wreath multiplication used the wrong base-factor index")
       for j in List.finRange m do
         for p in G.enumerate do
-          let lifted := WreathProduct.inr G hn h
-          unless lifted.comp ((WreathProduct.copy H hn j p).comp lifted.inv) ==
-              WreathProduct.copy H hn (h.val.get j) p do
+          let lifted := WreathProduct.inr G h
+          unless lifted.comp ((WreathProduct.copy H j p).comp lifted.inv) ==
+              WreathProduct.copy H (h.val.get j) p do
             throw (IO.userError "top conjugation failed to permute the base factors")
   else
-    match G.wreathProduct? H with
-    | .error .emptyBlocks => pure ()
-    | .ok _ => throw (IO.userError "empty-block wreath request was accepted")
+    -- Empty blocks leave no points, so every input pair gives the trivial group.
+    unless product.order == 1 do
+      throw (IO.userError "empty-block wreath product is not the trivial group")
+    for r in product.enumerate do
+      unless WreathProduct.top r == Element.id H do
+        throw (IO.userError "empty-block wreath top projection is not trivial")
 
 private def referenceDerived (n : Nat) (reference : Array (Array Nat)) : Array (Array Nat) :=
   closure n (reference.flatMap fun p => reference.map fun q =>
@@ -1803,7 +1805,7 @@ example : Blocks.check #[] [(0, 0)] (Partition.discrete 1) [] = true := by decid
 
 -- Destination-indexed action: the swap in block zero acts after the top swap.
 private def swap2 : Perm 2 := Perm.mk #v[1, 0]
-example : (Perm.Wreath.perm (by decide : 0 < 2)
+example : (Perm.Wreath.perm
     (fun j : Fin 2 => if j = 0 then swap2 else Perm.id 2) swap2).vec = #v[2, 3, 1, 0] := by decide +kernel
 
 #eval do

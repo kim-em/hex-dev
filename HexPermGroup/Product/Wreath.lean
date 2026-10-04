@@ -16,19 +16,20 @@ namespace Hex.PermGroup.Group
 open Perm.Wreath
 
 /-- One copy of every original generator in every block, followed by the
-original top generators. All blocks are included even for intransitive `H`. -/
-@[expose] def wreathProduct (G : Group n) (H : Group m) (hn : 0 < n) : Group (n * m) :=
-  ofGenerators (((List.finRange m).flatMap fun i => G.generators.toList.map (copy hn i)).toArray ++
-    H.generators.map (lift hn))
+original top generators. All blocks are included even for intransitive `H`.
+With empty blocks (`n = 0`) there are no points and the result is trivial. -/
+@[expose] def wreathProduct (G : Group n) (H : Group m) : Group (n * m) :=
+  ofGenerators (((List.finRange m).flatMap fun i => G.generators.toList.map (copy i)).toArray ++
+    H.generators.map lift)
 
-theorem wreath_generators_size (G : Group n) (H : Group m) (hn : 0 < n) :
-    (G.wreathProduct H hn).generators.size = m * G.generators.size + H.generators.size := by
+theorem wreath_generators_size (G : Group n) (H : Group m) :
+    (G.wreathProduct H).generators.size = m * G.generators.size + H.generators.size := by
   simp [wreathProduct, List.length_flatMap, List.map_const', List.sum_replicate_nat]
 
-theorem wreath_copy_mem (G : Group n) (H : Group m) (hn : 0 < n) (i : Fin m)
-    (p : Perm n) (hp : Generated G.generators p) : Generated (G.wreathProduct H hn).generators (copy hn i p) := by
+theorem wreath_copy_mem (G : Group n) (H : Group m) (i : Fin m)
+    (p : Perm n) (hp : Generated G.generators p) : Generated (G.wreathProduct H).generators (copy i p) := by
   apply hp.lift
-  · simpa only [copy_id] using (Generated.id (S := (G.wreathProduct H hn).generators))
+  · simpa only [copy_id] using (Generated.id (S := (G.wreathProduct H).generators))
   · intro p hp
     apply Generated.generator
     apply Array.mem_append.mpr
@@ -40,10 +41,10 @@ theorem wreath_copy_mem (G : Group n) (H : Group m) (hn : 0 < n) (i : Fin m)
   · intro p hp
     simpa only [copy_inv] using hp.inv
 
-theorem wreath_lift_mem (G : Group n) (H : Group m) (hn : 0 < n)
-    (h : Perm m) (hh : Generated H.generators h) : Generated (G.wreathProduct H hn).generators (lift hn h) := by
+theorem wreath_lift_mem (G : Group n) (H : Group m)
+    (h : Perm m) (hh : Generated H.generators h) : Generated (G.wreathProduct H).generators (lift h) := by
   apply hh.lift
-  · simpa only [lift_id] using (Generated.id (S := (G.wreathProduct H hn).generators))
+  · simpa only [lift_id] using (Generated.id (S := (G.wreathProduct H).generators))
   · intro h hh
     exact .generator (Array.mem_append.mpr (Or.inr (Array.mem_map.mpr ⟨h, hh, rfl⟩)))
   · intro h k hh hk
@@ -51,35 +52,35 @@ theorem wreath_lift_mem (G : Group n) (H : Group m) (hn : 0 < n)
   · intro h hh
     simpa only [lift_inv] using hh.inv
 
-theorem wreath_base_mem (G : Group n) (H : Group m) (hn : 0 < n)
+theorem wreath_base_mem (G : Group n) (H : Group m)
     (f : Fin m → Perm n) (hf : ∀ j, Generated G.generators (f j)) :
-    Generated (G.wreathProduct H hn).generators (perm hn f (Perm.id m)) := by
+    Generated (G.wreathProduct H).generators (perm f (Perm.id m)) := by
   have hi (k : Nat) (hk : k ≤ m) :
-      Generated (G.wreathProduct H hn).generators (perm hn (initial f k) (Perm.id m)) := by
+      Generated (G.wreathProduct H).generators (perm (initial f k) (Perm.id m)) := by
     induction k with
-    | zero => simpa only [initial_zero, perm_id] using (Generated.id (S := (G.wreathProduct H hn).generators))
+    | zero => simpa only [initial_zero, perm_id] using (Generated.id (S := (G.wreathProduct H).generators))
     | succ k ih =>
       have hl : k < m := by omega
-      rw [initial_succ hn f k hl]
-      exact (ih (by omega)).comp (G.wreath_copy_mem H hn ⟨k, hl⟩ _ (hf _))
+      rw [initial_succ f k hl]
+      exact (ih (by omega)).comp (G.wreath_copy_mem H ⟨k, hl⟩ _ (hf _))
   simpa only [initial_full] using hi m (Nat.le_refl _)
 
-theorem wreath_perm_mem (G : Group n) (H : Group m) (hn : 0 < n)
+theorem wreath_perm_mem (G : Group n) (H : Group m)
     (f : Fin m → Perm n) (h : Perm m) (hf : ∀ j, Generated G.generators (f j)) (hh : Generated H.generators h) :
-    Generated (G.wreathProduct H hn).generators (perm hn f h) := by
+    Generated (G.wreathProduct H).generators (perm f h) := by
   rw [factor]
-  exact (G.wreath_base_mem H hn f hf).comp (G.wreath_lift_mem H hn h hh)
+  exact (G.wreath_base_mem H f hf).comp (G.wreath_lift_mem H h hh)
 
 /-- Generated elements are exactly the base functions together with a top
 element. This also proves that the listed copies and lifts generate the result. -/
-theorem mem_wreathProduct (G : Group n) (H : Group m) (hn : 0 < n) (r : Perm (n * m)) :
-    Generated (G.wreathProduct H hn).generators r ↔
+theorem mem_wreathProduct (G : Group n) (H : Group m) (r : Perm (n * m)) :
+    Generated (G.wreathProduct H).generators r ↔
       ∃ (f : Fin m → Perm n) (h : Perm m),
-        (∀ j, Generated G.generators (f j)) ∧ Generated H.generators h ∧ r = perm hn f h := by
+        (∀ j, Generated G.generators (f j)) ∧ Generated H.generators h ∧ r = perm f h := by
   constructor
   · intro hr
     apply hr.lift
-    · exact ⟨fun _ => Perm.id n, Perm.id m, fun _ => .id, .id, (perm_id hn).symm⟩
+    · exact ⟨fun _ => Perm.id n, Perm.id m, fun _ => .id, .id, perm_id.symm⟩
     · intro r hr
       simp only [wreathProduct, generators_ofGenerators, Array.mem_append] at hr
       rcases hr with hr | hr
@@ -94,31 +95,10 @@ theorem mem_wreathProduct (G : Group n) (H : Group m) (hn : 0 < n) (r : Perm (n 
         exact ⟨fun _ => Perm.id n, h, fun _ => .id, .generator hh, rfl⟩
     · rintro r s ⟨f, h, hf, hh, rfl⟩ ⟨g, k, hg, hk, rfl⟩
       exact ⟨fun j => (f j).comp (g (h.inv.get j)), h.comp k,
-        fun j => (hf j).comp (hg _), hh.comp hk, perm_comp hn f g h k⟩
+        fun j => (hf j).comp (hg _), hh.comp hk, perm_comp f g h k⟩
     · rintro r ⟨f, h, hf, hh, rfl⟩
-      exact ⟨inverse f h, h.inv, fun j => (hf (h.get j)).inv, hh.inv, perm_inv hn f h⟩
+      exact ⟨inverse f h, h.inv, fun j => (hf (h.get j)).inv, hh.inv, perm_inv f h⟩
   · rintro ⟨f, h, hf, hh, rfl⟩
-    exact G.wreath_perm_mem H hn f h hf hh
-
-end Hex.PermGroup.Group
-
-namespace Hex.PermGroup.WreathProduct
-
-inductive Error where
-  | emptyBlocks
-  deriving DecidableEq, Repr
-
-end Hex.PermGroup.WreathProduct
-
-namespace Hex.PermGroup.Group
-
-/-- Raw requests with empty blocks are rejected: their point action would
-lose the top group. Zero blocks with a positive block size are permitted. -/
-@[expose] def wreathProduct? (G : Group n) (H : Group m) : Except WreathProduct.Error (Group (n * m)) :=
-  if hn : 0 < n then .ok (G.wreathProduct H hn) else .error .emptyBlocks
-
-theorem wreathProduct_error (G : Group n) (H : Group m) : G.wreathProduct? H = .error .emptyBlocks ↔ n = 0 := by
-  unfold wreathProduct?
-  split <;> simp_all <;> omega
+    exact G.wreath_perm_mem H f h hf hh
 
 end Hex.PermGroup.Group
