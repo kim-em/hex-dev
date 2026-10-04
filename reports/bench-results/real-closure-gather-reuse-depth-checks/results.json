@@ -1,0 +1,258 @@
+[
+  {
+    "degree": 2,
+    "owners": 2,
+    "arm": "baseline",
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-check",
+      "2",
+      "2"
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=2 checked_owners=2 target_depth=2\n",
+    "depth": 2,
+    "expected_depth": 2,
+    "depth_matches": true
+  },
+  {
+    "degree": 2,
+    "owners": 2,
+    "arm": "cached",
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-check",
+      "2",
+      "2"
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=2 checked_owners=2 target_depth=1\n",
+    "depth": 1,
+    "expected_depth": 1,
+    "depth_matches": true
+  },
+  {
+    "degree": 2,
+    "owners": 4,
+    "arm": "baseline",
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-check",
+      "2",
+      "4"
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=4 checked_owners=4 target_depth=4\n",
+    "depth": 4,
+    "expected_depth": 4,
+    "depth_matches": true
+  },
+  {
+    "degree": 2,
+    "owners": 4,
+    "arm": "cached",
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-check",
+      "2",
+      "4"
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=4 checked_owners=4 target_depth=1\n",
+    "depth": 1,
+    "expected_depth": 1,
+    "depth_matches": true
+  },
+  {
+    "degree": 2,
+    "owners": 6,
+    "arm": "baseline",
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-check",
+      "2",
+      "6"
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=6 checked_owners=6 target_depth=6\n",
+    "depth": 6,
+    "expected_depth": 6,
+    "depth_matches": true
+  },
+  {
+    "degree": 2,
+    "owners": 6,
+    "arm": "cached",
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-check",
+      "2",
+      "6"
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=6 checked_owners=6 target_depth=1\n",
+    "depth": 1,
+    "expected_depth": 1,
+    "depth_matches": true
+  },
+  {
+    "degree": 2,
+    "owners": 8,
+    "arm": "baseline",
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-check",
+      "2",
+      "8"
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=8 checked_owners=8 target_depth=8\n",
+    "depth": 8,
+    "expected_depth": 8,
+    "depth_matches": true
+  },
+  {
+    "degree": 2,
+    "owners": 8,
+    "arm": "cached",
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-check",
+      "2",
+      "8"
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=8 checked_owners=8 target_depth=1\n",
+    "depth": 1,
+    "expected_depth": 1,
+    "depth_matches": true
+  },
+  {
+    "degree": 4,
+    "owners": 1,
+    "arm": "baseline",
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-check",
+      "4",
+      "1"
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=1 checked_owners=1 target_depth=1\n",
+    "depth": 1,
+    "expected_depth": 1,
+    "depth_matches": true
+  },
+  {
+    "degree": 4,
+    "owners": 1,
+    "arm": "cached",
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-check",
+      "4",
+      "1"
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=1 checked_owners=1 target_depth=1\n",
+    "depth": 1,
+    "expected_depth": 1,
+    "depth_matches": true
+  },
+  {
+    "degree": 4,
+    "owners": 2,
+    "arm": "baseline",
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-check",
+      "4",
+      "2"
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=2 checked_owners=2 target_depth=2\n",
+    "depth": 2,
+    "expected_depth": 2,
+    "depth_matches": true
+  },
+  {
+    "degree": 4,
+    "owners": 2,
+    "arm": "cached",
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-check",
+      "4",
+      "2"
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=2 checked_owners=2 target_depth=1\n",
+    "depth": 1,
+    "expected_depth": 1,
+    "depth_matches": true
+  },
+  {
+    "degree": 4,
+    "owners": 3,
+    "arm": "baseline",
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-check",
+      "4",
+      "3"
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=3 checked_owners=3 target_depth=3\n",
+    "depth": 3,
+    "expected_depth": 3,
+    "depth_matches": true
+  },
+  {
+    "degree": 4,
+    "owners": 3,
+    "arm": "cached",
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-check",
+      "4",
+      "3"
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=3 checked_owners=3 target_depth=1\n",
+    "depth": 1,
+    "expected_depth": 1,
+    "depth_matches": true
+  },
+  {
+    "degree": 4,
+    "owners": 4,
+    "arm": "baseline",
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-check",
+      "4",
+      "4"
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=4 checked_owners=4 target_depth=4\n",
+    "depth": 4,
+    "expected_depth": 4,
+    "depth_matches": true
+  },
+  {
+    "degree": 4,
+    "owners": 4,
+    "arm": "cached",
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-check",
+      "4",
+      "4"
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=4 checked_owners=4 target_depth=1\n",
+    "depth": 1,
+    "expected_depth": 1,
+    "depth_matches": true
+  }
+]

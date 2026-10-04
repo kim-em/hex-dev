@@ -4,7 +4,7 @@ An immutable inclusion cache retains each original predecessor and its checked
 map. It also retains the mapped selected generators once per insertion, maps
 them once on extension, and removes structurally duplicate images on insertion
 and append. Searches do not recompute the original generators or their images.
-Each candidate and its negative must satisfy the converted defining equation,
+Each candidate or its negative is accepted only if it satisfies the converted defining equation,
 derivative signs, and strict finite bounds. Linear heads first provide their
 coefficient-field root. This is a finite candidate search; arbitrary expressions
 in several generators are not enumerated.
@@ -66,9 +66,10 @@ compare the actual gathering implementation before and after caching generator
 images and introducing checked selected-generator reuse. The baseline reuses
 exact original contexts; it does not search other presentations' generators.
 This measures the complete added search/cache feature, rather than isolating
-image storage alone. Both arms use the same compiled driver, native descriptors and input
-construction. Setup is outside the measured interval. Gathering is timed; a
-second gathering independently checks every returned owner equation and positive
+image storage alone. Both arms use identical `GatherTiming` source, native descriptors and input
+construction; the baseline executable omits the unrelated reuse-order mode.
+Setup is outside the measured interval. Gathering is timed; a
+second gathering checks every returned owner equation and positive
 selected embedding after timing. Owners select positive roots of `X^d-p` for
 successive primes `p = 2, 3, 5, 7, …`. Two fixed trials use
 adjacent baseline/cached and cached/baseline order on one automatically leased
@@ -89,10 +90,13 @@ to the field already constructed. Means are milliseconds on the recorded host.
 | 4 | 3 | 64 | 1.6904 | 4.0420 | 2.39 |
 | 4 | 4 | 256 | 6.5707 | 12.0316 | 1.83 |
 
-Caching generator images is slower in seven of the eight family means. These
-samples do not establish a full-gathering speedup. The image cache saves repeated reconstruction and mapping,
-but extending and deduplicating stored candidates adds work even when no original
-root can be reused. The benchmark checks every owner defining equation and positive selected
+The complete added search/cache feature is slower in seven of the eight family
+means. The quadratic two- and six-owner pairs disagree in direction between
+trials; in those families the first arm wins both times. Their means do not
+establish the direction independently of order effects. These samples do not
+establish a full-gathering speedup. Failed checked searches and image upkeep both
+add work; the comparison does not attribute the regression to either component.
+The benchmark checks every owner defining equation and positive selected
 embedding in both arms; timing is not an acceptance criterion for these checks.
 
 The [metadata](bench-results/real-closure-gather-bounded/metadata.json) and retained
@@ -123,8 +127,8 @@ passed. Means are milliseconds on the recorded host.
 | 4 | 3 | 64 | 1.5954 | 2.9715 | 1.86 |
 | 4 | 4 | 256 | 6.2489 | 11.4546 | 1.83 |
 
-All eight revised family means remain slower than the baseline. The retained
-image list has not demonstrated a benefit on these independent-root families;
+All eight revised family means remain slower than the baseline, with the same
+direction in every adjacent pair. The complete added feature has not demonstrated a benefit on these independent-root families;
 removing this equality pass does not change that conclusion. This experiment
 changes the implementation, so it is distinct from an unchanged rerun.
 Its [metadata](bench-results/real-closure-gather-single-map/metadata.json),
@@ -134,7 +138,7 @@ do not establish a before/after improvement.
 
 An earlier [full-gathering schedule](bench-results/real-closure-gather-before-after/results.json)
 completed the quadratic four- and eight-owner baseline/cached pairs, then its
-quadratic twelve-owner baseline used over two hours of CPU without completing.
+quadratic twelve-owner baseline ran for 7,399 seconds of wall time without completing.
 That unfinished sample was terminated, recorded with return code `-15`, and
 retained alongside all completed samples. The sixteen-owner and larger quartic
 cases were not run. The bounded schedule retains the quadratic eight-owner
@@ -177,6 +181,15 @@ and [runner](bench-results/real-closure-gather-reused-owners-valid/measure.py.tx
 retain exact sources and binaries. Reproduce an arm with
 `hexrealclosure_bench gather-reuse-timing 2 8 1` in its recorded checkout.
 
+The [16 untimed depth checks](bench-results/real-closure-gather-reuse-depth-checks/results.json)
+use those same input families and the same gathering algorithms, retaining their
+own source and binary hashes. Each cached case returns depth one; each baseline
+case returns depth equal to the owner count. Every owner-value check passes.
+These checks verify that reuse happened without collecting another timing
+schedule. The current driver prints `target_depth` after its semantic checks and
+calls the number of verified owners `checked_owners`; the older archives retain
+their original `semantic_hash` field name, which was a count rather than a hash.
+
 The [initial setup rejection](bench-results/real-closure-gather-reused-owners/results.json)
 required both implementations to return one presentation level, a condition
 the baseline does not promise. It failed before producing a timing and is
@@ -194,6 +207,13 @@ BKR or lower-level selected-sign queries. This profile explains substantial
 representation-management cost without completing the required Phase 4 cost
 breakdown.
 
+This is a profile of one cached-arm run, so it cannot attribute the difference
+between the two arms. The invocation did not record a source head or binary
+hash; its exact implementation cannot be identified. The raw profile is retained
+outside the worktree at the durable host path, with its byte count and SHA-256 in
+the [artifact manifest](bench-results/real-closure-gather-before-after/cached-eight-profile-artifact.json).
+These provenance limits preclude using it as an exact-head Phase 4 attribution.
+
 ## Other retained runs and limits
 
 
@@ -210,3 +230,5 @@ source, executable hash and failure output; it supplies no search timing.
 The required tower8 isolation, nested evidence, MetiTarski and clean-versus-eager
 workloads remain outstanding. These focused measurements do not satisfy the
 full tower Phase 4 evaluation.
+The cost of retaining generator images during shared-context enlargement has
+also not been measured by these gathering cases.

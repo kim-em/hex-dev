@@ -1,0 +1,15 @@
+{
+  "kind": "untimed semantic and presentation-depth checks; no timing samples",
+  "arms": {
+    "baseline": {
+      "head": "eaf52227f509d9cf1550295268e0ef374730c4a8",
+      "dirty": " M bench/HexRealClosure/Bench.lean\n",
+      "executable_sha256": "90d5b849e4e1cd1a9e048344cac7f64cf89970d145575c97517053a4db3b74c6"
+    },
+    "cached": {
+      "head": "d770fc20da110140681d31f27a9c2bbfbfd27136",
+      "dirty": " M bench/HexRealClosure/Bench.lean\n M reports/bench-results/real-closure-gather-before-after/cached-eight-profile-artifact.json\n M reports/real-closure-root-reuse.md\n?? reports/bench-results/real-closure-gather-reuse-depth-checks/\n",
+      "executable_sha256": "ab2fba10522283ad932c9c0aa25d23c406db72ba735c20d65d3cb18bb06d527f"
+    }
+  }
+}
