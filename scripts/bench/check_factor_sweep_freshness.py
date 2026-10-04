@@ -156,9 +156,20 @@ def build_only_lakefile_edit(difference: freshness.Difference) -> bool:
         return False
     if difference.baseline is None or difference.current is None:
         return False
-    return not lakefile_texts_differ(
-        freshness.git("cat-file", "blob", difference.baseline),
-        freshness.git("cat-file", "blob", difference.current))
+    baseline = freshness.git("cat-file", "blob", difference.baseline)
+    current = freshness.git("cat-file", "blob", difference.current)
+    if not lakefile_texts_differ(baseline, current):
+        return True
+    # An exempted lakefile transition stays exempt while later edits leave the
+    # factorization blocks exactly as exempted: those edits are the ones this
+    # comparison already ignores, and the lakefile changes too often for an
+    # exemption tied to one blob to survive the next unrelated pull request.
+    for path, base, exempted in freshness.load_exemptions(freshness.FACTOR_EXEMPTIONS):
+        if (path == LAKEFILE and base == difference.baseline
+                and factorization_blocks(freshness.git("cat-file", "blob", exempted))
+                == factorization_blocks(current)):
+            return True
+    return False
 
 
 def load_current_reports(corpus_sha: str):
