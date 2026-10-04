@@ -41,7 +41,7 @@ supplied-index sampling, finite tuple/subset/partition actions, images and
 kernels, complete or budgeted subgroup search, blocks and primitivity, normal
 closure, core, derived series, and direct and imprimitive wreath products.
 
-`Group.buildWith` and the bounded normal/product operations reserve cumulative
+`Group.buildBudgeted` and the bounded normal/product operations reserve cumulative
 producer work before each operation. Exhaustion returns the proved stopping
 state only: it never means negative membership, exact ambient order,
 nonsolvability, or a final image/kernel. Certificate and program replay use

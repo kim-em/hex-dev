@@ -112,9 +112,9 @@ theorem sample_uniform (G : Group n) (source : PMF (Fin G.order))
 
 /-- The effect-polymorphic sampling API has the same probability contract when
 its index source is a probability mass function. -/
-theorem sampleWith_probability
+theorem sampleFrom_probability
     (draw : (bound : Nat) → 0 < bound → PMF (Fin bound)) (G : Group n) (p : Element G) :
-    (sampleWith draw G) p = (draw G.order G.order_pos) (G.rank p) :=
+    (sampleFrom draw G) p = (draw G.order G.order_pos) (G.rank p) :=
   unrank_probability G (draw G.order G.order_pos) p
 
 /-- An element of `G` drawn with Mathlib's random-generator interface: unrank an
@@ -125,7 +125,7 @@ accepting within its attempt limit. Mathlib's `randFin` is not used, because it
 reduces a draw modulo the bound and is therefore biased. -/
 @[expose] def randomElement {g : Type} [RandomGen g] {m : Type → Type} [Monad m]
     (G : Group n) : RandGT g m (Element G) :=
-  G.sampleWith randomIndex
+  G.sampleFrom randomIndex
 
 instance {m : Type → Type} [Monad m] (G : Group n) : Random m (Element G) where
   random := G.randomElement
