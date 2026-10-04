@@ -9,6 +9,7 @@ public import HexRealClosureMathlib.BaseContext
 public import HexRealClosureMathlib.BaseProvider
 public import HexRealClosureMathlib.BaseStagedRealization
 public import HexRealClosureMathlib.BaseModels
+public import HexRealClosureMathlib.ContextModel
 public import HexRealClosure.BaseInclusion
 public meta import HexRealClosure.BaseInclusion
 public import HexRealClosure.LiveContext
@@ -73,6 +74,50 @@ example : ((providerModel.staged 2).restrict?
     rw [keys]
     exact List.nil_prefix
   · decide
+
+private theorem originBase (base : PackedContext registry) :
+    (Tower.Context.ofBase base).origin.base = base := by
+  cases base with
+  | pack base =>
+    simp only [Tower.Context.ofBase, Tower.Context.origin_base, Tower.Origin.base]
+    rfl
+
+/-- Canonical owner lookup uses the actual Liouville provider history across a
+proper real prefix and differing infinitesimal depths. The child factory
+preserves the generated parent's values without an agreement premise. -/
+example {R : Type} [Field R] [LinearOrder R] [DecidableEq R]
+    [IsStrictOrderedRing R] [IsRealClosed R]
+    (reference : Tower.Model (Tower.Context.ofBase (providerModel.context.finish.extend 2)) R)
+    (descriptor : SignDet.Descriptor
+      (Tower.Context.ofBase (rationalModel.context.finish.extend 1)).Value Tower.Signature
+      (Tower.Context.ofBase (rationalModel.context.finish.extend 1)).sign
+      (Tower.Context.ofBase (rationalModel.context.finish.extend 1)).signature) :
+    let source := Tower.Context.ofBase (rationalModel.context.finish.extend 1)
+    ∃ original : Tower.Model source R,
+      source.model? (providerModel.staged 2) reference = some original ∧
+      ∃ child : Tower.Model (source.adjoin descriptor).context R,
+        (source.adjoin descriptor).context.model? (providerModel.staged 2) reference = some child ∧
+        ∀ a, child.value ((source.adjoin descriptor).embed a) = original.value a := by
+  let source := Tower.Context.ofBase (rationalModel.context.finish.extend 1)
+  have compatible : source.origin.base.signature.constants <+:
+      (providerModel.context.finish.extend 2).signature.constants ∧
+      source.origin.base.signature.infinitesimals ≤
+        (providerModel.context.finish.extend 2).signature.infinitesimals := by
+    rw [originBase]
+    simp only [PackedContext.extend_signature, RealPrefix.finish_signature]
+    have keys : rationalModel.context.keys = [] := by
+      simp only [rationalModel, RealPrefix.Model.rational, RealPrefix.Model.context,
+        RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys]
+    rw [keys]
+    exact ⟨List.nil_prefix, by decide⟩
+  have success := (source.model?_isSome (providerModel.staged 2) reference).mpr compatible
+  obtain ⟨original, produced⟩ := Option.isSome_iff_exists.mp success
+  have childProduced : (source.adjoin descriptor).context.model? (providerModel.staged 2)
+      reference = some (original.adjoin descriptor) := by
+    rw [Tower.Context.model?_adjoin, produced, Option.map_some]
+  exact ⟨original, produced, original.adjoin descriptor, childProduced,
+    source.model?_embed (providerModel.staged 2) reference descriptor original
+      (original.adjoin descriptor) produced childProduced⟩
 
 example : providerModel.context.keys = [key 1] := by
   exact (RealPrefix.Model.register_keys rationalModel (key 1) (present 1) (liouvilleNumber 2)
