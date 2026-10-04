@@ -102,6 +102,15 @@ checks frozen bound/subject/version bindings and coverage of used providers,
 then validates enclosure, guard and final proofs in the ordinary kernel.
 Nonseparating bounds leave guards unresolved. This mode is bounded proof search,
 not a complete named-constant field solver.
+Positive rational square and higher-root aliases are authenticated against
+checked selected roots of `denominator * X^n - numerator`. Closed division by
+these aliases preserves original base/exponent/divisor guards and becomes
+multiplication by a closed inverse before shared-schema abstraction. The
+[rational-root regressions](../conformance/HexRCF/RationalRoots.lean) exercise
+actual tactic and prepared replay proofs, a further root over the coefficient
+field, half-open domains and terminal false/invalid inputs. Negative bases,
+nonreciprocal real exponents and unsupported nested algebraic-base roots do
+not acquire a signed-root interpretation from this frontend.
 Registered bounds compose with unregistered selected algebraic values and
 checked root aliases through separately proved algebraic enclosures. The
 [mixed-coefficient regressions](../conformance/HexRCF/MixedConstants.lean)

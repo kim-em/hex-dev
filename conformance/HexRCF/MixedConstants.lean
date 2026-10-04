@@ -54,6 +54,9 @@ theorem exp_field : ∀ x : ℝ,
 theorem pi_negative_field : ∀ x : ℝ,
     x ^ 2 + Real.pi + negativeField.toReal > 0 := by rcf
 
+theorem pi_rational_root : ∀ x : ℝ,
+    x ^ 2 + Real.pi - Real.sqrt (1 / 2) > 0 := by rcf
+
 theorem pi_positive_divisor : ∀ x : ℝ,
     x ^ 2 + 1 / (Real.pi - Real.sqrt 2) > 0 := by rcf
 
@@ -82,7 +85,7 @@ theorem false_sentence : ¬ (∀ x : ℝ, x ^ 2 + Real.sqrt 2 - Real.pi > 0) := 
 
 /-- error: rcf: algebraic enclosure needs a supported selected-field presentation -/
 #guard_msgs in
-example : ∀ x : ℝ, x ^ 2 + Real.pi - Real.sqrt (1 / 2) > 0 := by rcf
+example : ∀ x : ℝ, x ^ 2 + Real.pi - Real.sqrt (Real.sqrt 2) > 0 := by rcf
 
 /-- error: rcf: original closed divisor is zero -/
 #guard_msgs in
@@ -173,7 +176,14 @@ run_elab do
   let _ ← Hex.RCF.checkProof `Hex.RCF.MixedConstants.publicEnclosure (← inferType proof) proof
   unless (← getMCtx).mvarCounter == before.mvarCounter do
     throwError "successful algebraic enclosure changed caller metavariables"
-  refuses (AlgebraicBounds.enclose q(Real.sqrt (1 / 2)) (1 / 16))
+  let (_, rootProof) ← AlgebraicBounds.enclose q((3 : ℝ) ^ (1 / 3 : ℝ)) (1 / 16)
+  let rootName := rootProof.getAppFn.constName!
+  unless ← Hex.RCF.ProofEvidence.contains rootName
+      (fun e => e.isConstOf ``RationalRoot.selected) do
+    throwError "higher-root enclosure did not authenticate its selected embedding"
+  let _ ← Hex.RCF.checkProof `Hex.RCF.MixedConstants.rootEnclosure
+    (← inferType rootProof) rootProof
+  refuses (AlgebraicBounds.enclose q(Real.sqrt (Real.sqrt 2)) (1 / 16))
   let shared ← Finite.prepare q(∀ x : ℝ, x ^ 2 + 1 / (Real.pi - Real.sqrt 2) > 0)
   let some guard := shared.guardBounds[0]? | throwError "missing shared guard bound"
   let some coefficient := shared.coefficients[0]? | throwError "missing inverse bound"
@@ -199,7 +209,7 @@ open Hex.RCF.RealCoefficients
 
 run_meta do
   for name in [`Hex.RCF.MixedConstants.pi_radical, `Hex.RCF.MixedConstants.pi_other_radical,
-      `Hex.RCF.MixedConstants.exp_radical,
+      `Hex.RCF.MixedConstants.exp_radical, `Hex.RCF.MixedConstants.pi_rational_root,
       `Hex.RCF.MixedConstants.exp_selected, `Hex.RCF.MixedConstants.exp_normalized,
       `Hex.RCF.MixedConstants.exp_field, `Hex.RCF.MixedConstants.pi_negative_field,
       `Hex.RCF.MixedConstants.pi_positive_divisor,
@@ -213,6 +223,9 @@ run_meta do
         ``Hex.RCF.RealCoefficients.FieldBuild.produceWithin] do
       if ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf forbidden) then
         throwError "mixed constant proof embedded algebraic production"
+  unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.MixedConstants.pi_rational_root
+      (fun e => e.isConstOf ``RationalRoot.selected) do
+    throwError "mixed rational-root proof did not use its checked embedding"
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.MixedConstants.pi_other_radical
       (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.Replay.check_sound) do
     throwError "mixed sqrt3 proof did not use prepared finite replay"
@@ -265,3 +278,7 @@ run_meta do
 /-- info: 'Hex.RCF.MixedConstants.pi_cancelled' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.MixedConstants.pi_cancelled
+
+/-- info: 'Hex.RCF.MixedConstants.pi_rational_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.MixedConstants.pi_rational_root

@@ -7,6 +7,7 @@ module
 
 public meta import HexRCF.RealCoefficients.Tactic
 public meta import HexRCF.RealCoefficients.SquareRoot
+public meta import HexRCF.RealCoefficients.RationalRoot
 public meta import HexRCF.RealCoefficients.CommonPresentation
 public meta import HexBerlekampZassenhaus.QuadraticNormRecover
 public meta import HexBerlekampZassenhausMathlib.FactorTactic
@@ -100,6 +101,7 @@ private meta def rootAlias (source : Expr) (radicand : Nat) : MetaM Expr := do
 
 private inductive SourceKind where
   | radical (radicand : Nat) (aliasProof : Expr)
+  | root (parameters : RationalRoot.Parameters) (aliasProof : Expr)
   | selected (args : Array Expr) (checked : Expr)
   | normalized (selected checked : Expr)
   deriving Inhabited
@@ -174,7 +176,7 @@ private meta def normalizedArgs? (argument : Expr) :
   return some (algebraic.getAppArgs, realArgs[1]!)
 
 private partial def sourceAtoms (e : Expr) (seen : Array Expr) : Array Expr :=
-  if e.isAppOfArity ``Real.sqrt 1 ||
+  if RationalRoot.isNotation e ||
       e.isAppOfArity ``RealAlgebraicNumber.toReal 1 then
     if seen.contains e then seen else seen.push e
   else
@@ -207,13 +209,7 @@ private partial def algebraicDivision (e : Expr) : Bool :=
 private meta def candidate (target : Expr) : MetaM Bool := do
   -- Local aliases are resolved by the shared frontend, with their proofs.
   if target.hasFVar || algebraicDivision target then return true
-  let atoms := sourceAtoms target #[]
-  if atoms.size ≥ 2 then return true
-  let some atom := atoms[0]? | return false
-  if atom.isAppOfArity ``Real.sqrt 1 then
-    if (← naturalSquareRoot? atom).isSome then return true
-    return (← Reify.lowerSources #[] atom) != atom
-  return atom.isAppOfArity ``RealAlgebraicNumber.toReal 1
+  return !(sourceAtoms target #[]).isEmpty
 
 /-- Preserve single-coefficient priority only when every original divisor
 is rational. Rational normalization restores its temporary metavariable state. -/
@@ -232,10 +228,17 @@ private meta def rationalGuards (divisors : Array Expr) : MetaM Bool := do
     if !result then return false
   return true
 
+private meta def rootParameters? (source : Expr) : MetaM (Option RationalRoot.Parameters) := do
+  match ← RationalRoot.parameters? source with
+  | .ok parameters => pure parameters
+  | .error (.unsupported _ _) => pure none
+  | .error error => throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
+
 /-- Classify the entire source before executing any algebraic construction.
 Unknown siblings must cause a decline before a recognized sibling can fail. -/
 private meta def eligible (source : Expr) : MetaM Bool := do
   if (← naturalSquareRoot? source).isSome then return true
+  if (← rootParameters? source).isSome then return true
   unless source.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return false
   let argument := source.appArg!
   let anchor ← match ← fieldArgs? argument with
@@ -316,6 +319,23 @@ private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
     return some ⟨source, anchorValue, sourceP, sourceSquare,
       identity, fieldExpr, sourceProof,
       .radical radicand (← rootAlias source radicand)⟩
+  if let some parameters ← rootParameters? source then
+    let (_, _, anchorValue) ← FieldRuntime.coefficient source
+    let sourceP := RationalRoot.polynomial parameters.base parameters.degree
+    let sourceSquare := if anchorValue.toAlgebraic.p == sourceP then
+        anchorValue.toAlgebraic.rep.1.square
+      else
+        let precision := mahlerPrec sourceP + 4
+        let ball := anchorValue.approxBall precision
+        { re := ball.re, im := 0, prec := precision }
+    unless Decidable.decide (atomWitness sourceP sourceSquare) &&
+        Decidable.decide ((mahlerPrec sourceP : Int) ≤ sourceSquare.prec) do
+      throwError "rcf: rational-root source has no checked selected-root witness"
+    let fieldExpr ← FieldLiteral.ratPolyExpr identity
+    let sourceProof ← mkAppM ``CommonPresentation.generator_eval #[source]
+    return some ⟨source, anchorValue, sourceP, sourceSquare,
+      identity, fieldExpr, sourceProof,
+      .root parameters (← RationalRoot.identify source parameters)⟩
   unless source.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return none
   let argument := source.appArg!
   let field? ← fieldArgs? argument
@@ -426,6 +446,13 @@ private meta def prepareField (source : Reify.Source) (leafSources : Array Expr)
                 throwError "rcf: source radical has a different defining polynomial"
               let nExpr : Q(ℕ) := mkNatLit radicand
               pure q(SquareRoot.polynomial $nExpr)
+          | .root parameters _ => do
+              unless sourceP == RationalRoot.polynomial parameters.base parameters.degree do
+                throwError "rcf: source rational root has a different defining polynomial"
+              let base : Q(ℚ) ← mkAppM ``mkRat
+                #[mkIntLit parameters.base.num, mkNatLit parameters.base.den]
+              let degree : Q(ℕ) ← pure (mkNatLit parameters.degree)
+              pure q(RationalRoot.polynomial $base $degree)
           | .selected _ _ | .normalized _ _ => FieldLiteral.zpolyExpr sourceP
         let sourceWitness ← mkDecideProof
           (q(atomWitness $sourcePExpr $sourceSquareExpr) : Q(Prop))
@@ -440,6 +467,18 @@ private meta def prepareField (source : Reify.Source) (leafSources : Array Expr)
               let selected ← mkAppM ``SquareRoot.selected
                 #[nExpr, sourceSquareExpr, sourceWitness, sourcePrecision,
                   hreal, hpositive]
+              mkEqTrans selected aliasProof
+          | .root parameters aliasProof => do
+              let base : Q(ℚ) ← mkAppM ``mkRat
+                #[mkIntLit parameters.base.num, mkNatLit parameters.base.den]
+              let degree : Q(ℕ) ← pure (mkNatLit parameters.degree)
+              let hn ← mkDecideProof (q($degree ≠ 0) : Q(Prop))
+              let hreal ← mkDecideProof
+                (q(($sourceSquareExpr).meetsRealAxis = true) : Q(Prop))
+              let hpositive ← Tactic.positiveLowerBound sourceSquareExpr
+              let selected ← mkAppM ``RationalRoot.selected
+                #[base, degree, hn, sourceSquareExpr,
+                  sourceWitness, sourcePrecision, hreal, hpositive]
               mkEqTrans selected aliasProof
           | .selected args _ => do
               let sourceValue ← mkAppM ``Selected.real_toReal args
@@ -468,7 +507,7 @@ private meta def prepareField (source : Reify.Source) (leafSources : Array Expr)
       for plan in plans do
         if plan.sourcePolynomial != p then continue
         let checked ← match plan.kind with
-          | .radical _ _ => pure none
+          | .radical _ _ | .root _ _ => pure none
           | .selected _ checked | .normalized _ checked => pure (some checked)
         if let some checked := checked then
           unless (← inferType checked) == instType do

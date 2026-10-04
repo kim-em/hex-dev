@@ -14,6 +14,8 @@ public meta import HexRCF.RealCoefficients.AlgebraicBounds
 public meta import HexRCF.RealCoefficients.Finite
 public meta import HexRCF.RealCoefficients.Reify
 public meta import HexRCF.RealCoefficients.Interpret
+public import HexRCF.RealCoefficients.RationalRoot
+public meta import HexRCF.RealCoefficients.RationalRoot
 public import HexRCF.RealCoefficients.RootAliases
 public import HexRCF.RealCoefficients.Conversion
 public import HexRCF.RealCoefficients.Coefficients

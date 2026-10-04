@@ -266,6 +266,8 @@ private partial def hasNamedSource (registered : Array Expr) (e : Expr) : MetaM 
       e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 ||
       e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 ||
       e.isConstOf ``Real.pi || e.isAppOfArity ``Real.exp 1 then return true
+  if e.isAppOfArity ``HPow.hPow 6 then
+    if (← inferType e.getAppArgs[5]!).isConstOf ``Real then return true
   e.getAppArgs.anyM (hasNamedSource registered)
 
 /-- Lower visible rational and checked algebraic constructors using their
