@@ -2,6 +2,7 @@ from pathlib import Path
 import json,statistics
 import matplotlib
 matplotlib.use('Agg')
+matplotlib.rcParams['svg.hashsalt']='hex-number-field-isolation-reuse'
 import matplotlib.pyplot as plt
 HERE=Path(__file__).resolve().parent
 native=json.loads((HERE/'root-pairs/analysis.json').read_text())['cases']
@@ -24,4 +25,6 @@ axes[1].legend(fontsize=8,loc='upper left')
 fig.suptitle('Canonical real roots: certified isolation reuse',fontsize=14)
 fig.text(.5,.015,'Native: four adjacent AB/BA pairs per degree; band = all observed native values.\nExternal curves reuse edb3ef9566 observations; they are not paired with the new native samples.',ha='center',fontsize=8)
 fig.tight_layout(rect=[0,.09,1,.94])
-for extension in ['png','svg','pdf']:fig.savefig(HERE/('roots-comparison.'+extension),dpi=180)
+for extension in ['png','svg','pdf']:
+ metadata={'Date':None} if extension=='svg' else ({'CreationDate':None,'ModDate':None} if extension=='pdf' else {})
+ fig.savefig(HERE/('roots-comparison.'+extension),dpi=180,metadata=metadata)

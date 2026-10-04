@@ -17,10 +17,11 @@ records four adjacent AB/BA pairs per case on source `7ceaf9d47d`. The
 candidate-certification median changes from 92.658 to 46.723 ms and the
 multiple-candidate selection median from 93.028 to 47.182 ms; median paired
 Before/After ratios are 1.984 and 1.977. The end-to-end six-factor median
-changes from 1.536 to 1.012 ms, with a paired ratio of 1.517. Inputs, result
+changes from 1.477 to 0.954 ms, with a paired ratio of 1.561. Inputs, result
 hashes and operational caps are preserved. All failed initial collector arms
-remain retained; the end-to-end comparison restores its registered measurement
-floor rather than weakening its cap.
+remain retained. Both nonregistered collector floors are diagnostic; the
+final end-to-end comparison uses the actual registered 0.02-second floor
+with the unchanged cap and input. No new five-trial admission is claimed.
 
 `exactFactor?` reuses its certified candidate-isolation run in
 `ofNormalizedIn?`. Whole-result equality with the original canonical
@@ -37,6 +38,12 @@ eliminant selection, `PolyQuot.toAlgebraicNumber?` and repeated per-root
 exactification retain their separate isolation costs; this is not an assertion
 that all repeated isolation is eliminated. The forward local-canonicalization
 migration and comparison-strategy extension are not implemented here.
+
+The existing Phase-4 registrations and input families retain their coverage
+and budgets. The helpers are exercised through the same exactification
+registrations; no unrelated operation is removed or new algorithm admitted.
+Historical attribution remains scoped to its original source, and the changed
+path has the representative profile above.
 
 The same retained comparison records hard real addition/subtraction at about
 1.5 times faster and actual real polynomial roots across two degree ladders.

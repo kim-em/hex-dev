@@ -11,9 +11,9 @@
           ],
           "hash": "0xd0642a7d4df3da02",
           "eligible": true,
-          "median_ms": 1.535206,
+          "median_ms": 1.475454,
           "inner_repeats": [
-            1
+            16
           ]
         },
         {
@@ -25,9 +25,9 @@
           ],
           "hash": "0xd0642a7d4df3da02",
           "eligible": true,
-          "median_ms": 1.016327,
+          "median_ms": 0.940011,
           "inner_repeats": [
-            1
+            32
           ]
         },
         {
@@ -39,9 +39,9 @@
           ],
           "hash": "0xd0642a7d4df3da02",
           "eligible": true,
-          "median_ms": 1.535286,
+          "median_ms": 1.471265,
           "inner_repeats": [
-            1
+            16
           ]
         },
         {
@@ -53,9 +53,9 @@
           ],
           "hash": "0xd0642a7d4df3da02",
           "eligible": true,
-          "median_ms": 1.012461,
+          "median_ms": 0.942744,
           "inner_repeats": [
-            1
+            32
           ]
         },
         {
@@ -67,9 +67,9 @@
           ],
           "hash": "0xd0642a7d4df3da02",
           "eligible": true,
-          "median_ms": 1.536017,
+          "median_ms": 1.477695,
           "inner_repeats": [
-            1
+            16
           ]
         },
         {
@@ -81,9 +81,9 @@
           ],
           "hash": "0xd0642a7d4df3da02",
           "eligible": true,
-          "median_ms": 1.01164,
+          "median_ms": 0.97639,
           "inner_repeats": [
-            1
+            32
           ]
         },
         {
@@ -95,9 +95,9 @@
           ],
           "hash": "0xd0642a7d4df3da02",
           "eligible": true,
-          "median_ms": 1.539512,
+          "median_ms": 1.504784,
           "inner_repeats": [
-            1
+            16
           ]
         },
         {
@@ -109,20 +109,20 @@
           ],
           "hash": "0xd0642a7d4df3da02",
           "eligible": true,
-          "median_ms": 1.007544,
+          "median_ms": 0.964271,
           "inner_repeats": [
-            1
+            32
           ]
         }
       ],
       "successful_adjacent_pairs": 4,
-      "median_adjacent_before_after_ratio": 1.5173668714146102,
+      "median_adjacent_before_after_ratio": 1.5605802017866113,
       "ratio_range": [
-        1.5105433585843928,
-        1.527984882049816
+        1.5134270117473552,
+        1.5696135470755128
       ],
-      "before_median_ms": 1.5356515,
-      "after_median_ms": 1.0120505
+      "before_median_ms": 1.4765745,
+      "after_median_ms": 0.9535075
     }
   },
   "failed_arms": [],

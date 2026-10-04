@@ -7,7 +7,7 @@
     24.3603515625
   ],
   "schedule": "Four fixed trial-major blocks; ExactLadder only; adjacent Before/After arms alternate AB/BA by block. No sample rejection or unchanged rerun.",
-  "collector_correction": "This historical collector used a 0.001-second floor, below the registered 0.02-second floor. Its original incorrect description is preserved in metadata.original.json. All eight completed arms remain diagnostic; the registered-exact-ladder-pairs capture supplies the comparison at the actual declared floor without changing caps or inputs.",
+  "collector_correction": "Retains the original 0.05-second-floor capture, where all four old ExactLadder children reached the unchanged 0.2-second whole-child cap during amplification. This capture restores the registered 0.001-second floor; cap, input, hashes and implementation remain unchanged. It is a changed collector configuration, not an unchanged retry.",
   "scope": "Informational controlled before/after observations of unchanged complete canonical exactification and expected hashes. Prepared fixed operands and separate warmup excluded. No scientific mode admission or portable timing budget.",
   "arms": [
     {

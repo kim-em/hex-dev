@@ -10,6 +10,7 @@
             "ok"
           ],
           "hash": "0x7cc18faa80303c8",
+          "eligible": true,
           "median_ms": 6629.895049,
           "inner_repeats": [
             1
@@ -23,6 +24,7 @@
             "ok"
           ],
           "hash": "0x7cc18faa80303c8",
+          "eligible": true,
           "median_ms": 5870.100528,
           "inner_repeats": [
             1
@@ -36,6 +38,7 @@
             "ok"
           ],
           "hash": "0x7cc18faa80303c8",
+          "eligible": true,
           "median_ms": 6622.121217,
           "inner_repeats": [
             1
@@ -49,6 +52,7 @@
             "ok"
           ],
           "hash": "0x7cc18faa80303c8",
+          "eligible": true,
           "median_ms": 4438.588259,
           "inner_repeats": [
             1
@@ -62,6 +66,7 @@
             "ok"
           ],
           "hash": "0x7cc18faa80303c8",
+          "eligible": true,
           "median_ms": 6600.944444,
           "inner_repeats": [
             1
@@ -75,6 +80,7 @@
             "ok"
           ],
           "hash": "0x7cc18faa80303c8",
+          "eligible": true,
           "median_ms": 4388.495946,
           "inner_repeats": [
             1
@@ -88,6 +94,7 @@
             "ok"
           ],
           "hash": "0x7cc18faa80303c8",
+          "eligible": true,
           "median_ms": 6710.504736,
           "inner_repeats": [
             1
@@ -101,6 +108,7 @@
             "ok"
           ],
           "hash": "0x7cc18faa80303c8",
+          "eligible": true,
           "median_ms": 4436.855408,
           "inner_repeats": [
             1
@@ -126,6 +134,7 @@
             "ok"
           ],
           "hash": "0xcfcded9e67ef422a",
+          "eligible": true,
           "median_ms": 9824.243134,
           "inner_repeats": [
             1
@@ -139,6 +148,7 @@
             "ok"
           ],
           "hash": "0xcfcded9e67ef422a",
+          "eligible": true,
           "median_ms": 4400.119798,
           "inner_repeats": [
             1
@@ -152,6 +162,7 @@
             "ok"
           ],
           "hash": "0xcfcded9e67ef422a",
+          "eligible": true,
           "median_ms": 6654.280991,
           "inner_repeats": [
             1
@@ -165,6 +176,7 @@
             "ok"
           ],
           "hash": "0xcfcded9e67ef422a",
+          "eligible": true,
           "median_ms": 4645.405039,
           "inner_repeats": [
             1
@@ -178,6 +190,7 @@
             "ok"
           ],
           "hash": "0xcfcded9e67ef422a",
+          "eligible": true,
           "median_ms": 6708.836309,
           "inner_repeats": [
             1
@@ -191,6 +204,7 @@
             "ok"
           ],
           "hash": "0xcfcded9e67ef422a",
+          "eligible": true,
           "median_ms": 4478.837457,
           "inner_repeats": [
             1
@@ -204,6 +218,7 @@
             "ok"
           ],
           "hash": "0xcfcded9e67ef422a",
+          "eligible": true,
           "median_ms": 6597.908686,
           "inner_repeats": [
             1
@@ -217,6 +232,7 @@
             "ok"
           ],
           "hash": "0xcfcded9e67ef422a",
+          "eligible": true,
           "median_ms": 4413.820105,
           "inner_repeats": [
             1

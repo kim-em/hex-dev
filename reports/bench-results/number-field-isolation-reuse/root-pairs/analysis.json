@@ -10,6 +10,7 @@
             "ok"
           ],
           "hash": "0x6cec062c2935e3b5",
+          "eligible": true,
           "median_ms": 6.107107,
           "inner_repeats": [
             16
@@ -23,6 +24,7 @@
             "ok"
           ],
           "hash": "0x6cec062c2935e3b5",
+          "eligible": true,
           "median_ms": 3.156017,
           "inner_repeats": [
             16
@@ -36,6 +38,7 @@
             "ok"
           ],
           "hash": "0x6cec062c2935e3b5",
+          "eligible": true,
           "median_ms": 6.74101,
           "inner_repeats": [
             16
@@ -49,6 +52,7 @@
             "ok"
           ],
           "hash": "0x6cec062c2935e3b5",
+          "eligible": true,
           "median_ms": 5.132938,
           "inner_repeats": [
             16
@@ -62,6 +66,7 @@
             "ok"
           ],
           "hash": "0x6cec062c2935e3b5",
+          "eligible": true,
           "median_ms": 3.773348,
           "inner_repeats": [
             16
@@ -75,6 +80,7 @@
             "ok"
           ],
           "hash": "0x6cec062c2935e3b5",
+          "eligible": true,
           "median_ms": 3.494697,
           "inner_repeats": [
             32
@@ -88,6 +94,7 @@
             "ok"
           ],
           "hash": "0x6cec062c2935e3b5",
+          "eligible": true,
           "median_ms": 3.803413,
           "inner_repeats": [
             16
@@ -101,6 +108,7 @@
             "ok"
           ],
           "hash": "0x6cec062c2935e3b5",
+          "eligible": true,
           "median_ms": 2.724095,
           "inner_repeats": [
             32
@@ -126,6 +134,7 @@
             "ok"
           ],
           "hash": "0xf1a1204ac3404b40",
+          "eligible": true,
           "median_ms": 26.498217,
           "inner_repeats": [
             2
@@ -139,6 +148,7 @@
             "ok"
           ],
           "hash": "0xf1a1204ac3404b40",
+          "eligible": true,
           "median_ms": 15.126184,
           "inner_repeats": [
             8
@@ -152,6 +162,7 @@
             "ok"
           ],
           "hash": "0xf1a1204ac3404b40",
+          "eligible": true,
           "median_ms": 19.275097,
           "inner_repeats": [
             4
@@ -165,6 +176,7 @@
             "ok"
           ],
           "hash": "0xf1a1204ac3404b40",
+          "eligible": true,
           "median_ms": 17.812443,
           "inner_repeats": [
             4
@@ -178,6 +190,7 @@
             "ok"
           ],
           "hash": "0xf1a1204ac3404b40",
+          "eligible": true,
           "median_ms": 19.324771,
           "inner_repeats": [
             4
@@ -191,6 +204,7 @@
             "ok"
           ],
           "hash": "0xf1a1204ac3404b40",
+          "eligible": true,
           "median_ms": 13.266912,
           "inner_repeats": [
             4
@@ -204,6 +218,7 @@
             "ok"
           ],
           "hash": "0xf1a1204ac3404b40",
+          "eligible": true,
           "median_ms": 18.25319,
           "inner_repeats": [
             4
@@ -217,6 +232,7 @@
             "ok"
           ],
           "hash": "0xf1a1204ac3404b40",
+          "eligible": true,
           "median_ms": 11.443393,
           "inner_repeats": [
             8
@@ -242,6 +258,7 @@
             "ok"
           ],
           "hash": "0x1e7c893af40a771c",
+          "eligible": true,
           "median_ms": 353.439982,
           "inner_repeats": [
             1
@@ -255,6 +272,7 @@
             "ok"
           ],
           "hash": "0x1e7c893af40a771c",
+          "eligible": true,
           "median_ms": 180.913597,
           "inner_repeats": [
             1
@@ -268,6 +286,7 @@
             "ok"
           ],
           "hash": "0x1e7c893af40a771c",
+          "eligible": true,
           "median_ms": 327.221004,
           "inner_repeats": [
             1
@@ -281,6 +300,7 @@
             "ok"
           ],
           "hash": "0x1e7c893af40a771c",
+          "eligible": true,
           "median_ms": 160.292678,
           "inner_repeats": [
             1
@@ -294,6 +314,7 @@
             "ok"
           ],
           "hash": "0x1e7c893af40a771c",
+          "eligible": true,
           "median_ms": 243.221369,
           "inner_repeats": [
             1
@@ -307,6 +328,7 @@
             "ok"
           ],
           "hash": "0x1e7c893af40a771c",
+          "eligible": true,
           "median_ms": 219.863641,
           "inner_repeats": [
             1
@@ -320,6 +342,7 @@
             "ok"
           ],
           "hash": "0x1e7c893af40a771c",
+          "eligible": true,
           "median_ms": 264.990492,
           "inner_repeats": [
             1
@@ -333,6 +356,7 @@
             "ok"
           ],
           "hash": "0x1e7c893af40a771c",
+          "eligible": true,
           "median_ms": 154.951051,
           "inner_repeats": [
             1
@@ -358,6 +382,7 @@
             "ok"
           ],
           "hash": "0x66f7d3b46f1ee8e",
+          "eligible": true,
           "median_ms": 10.186126,
           "inner_repeats": [
             8
@@ -371,6 +396,7 @@
             "ok"
           ],
           "hash": "0x66f7d3b46f1ee8e",
+          "eligible": true,
           "median_ms": 9.668031,
           "inner_repeats": [
             8
@@ -384,6 +410,7 @@
             "ok"
           ],
           "hash": "0x66f7d3b46f1ee8e",
+          "eligible": true,
           "median_ms": 10.564401,
           "inner_repeats": [
             8
@@ -397,6 +424,7 @@
             "ok"
           ],
           "hash": "0x66f7d3b46f1ee8e",
+          "eligible": true,
           "median_ms": 10.059825,
           "inner_repeats": [
             8
@@ -410,6 +438,7 @@
             "ok"
           ],
           "hash": "0x66f7d3b46f1ee8e",
+          "eligible": true,
           "median_ms": 9.451326,
           "inner_repeats": [
             8
@@ -423,6 +452,7 @@
             "ok"
           ],
           "hash": "0x66f7d3b46f1ee8e",
+          "eligible": true,
           "median_ms": 7.559685,
           "inner_repeats": [
             8
@@ -436,6 +466,7 @@
             "ok"
           ],
           "hash": "0x66f7d3b46f1ee8e",
+          "eligible": true,
           "median_ms": 9.659232,
           "inner_repeats": [
             8
@@ -449,6 +480,7 @@
             "ok"
           ],
           "hash": "0x66f7d3b46f1ee8e",
+          "eligible": true,
           "median_ms": 7.42557,
           "inner_repeats": [
             8
@@ -474,6 +506,7 @@
             "ok"
           ],
           "hash": "0xf1a1204ac3404b40",
+          "eligible": true,
           "median_ms": 27.917231,
           "inner_repeats": [
             2
@@ -487,6 +520,7 @@
             "ok"
           ],
           "hash": "0xf1a1204ac3404b40",
+          "eligible": true,
           "median_ms": 17.364975,
           "inner_repeats": [
             4
@@ -500,6 +534,7 @@
             "ok"
           ],
           "hash": "0xf1a1204ac3404b40",
+          "eligible": true,
           "median_ms": 25.727039,
           "inner_repeats": [
             2
@@ -513,6 +548,7 @@
             "ok"
           ],
           "hash": "0xf1a1204ac3404b40",
+          "eligible": true,
           "median_ms": 21.3512,
           "inner_repeats": [
             4
@@ -526,6 +562,7 @@
             "ok"
           ],
           "hash": "0xf1a1204ac3404b40",
+          "eligible": true,
           "median_ms": 40.243499,
           "inner_repeats": [
             2
@@ -539,6 +576,7 @@
             "ok"
           ],
           "hash": "0xf1a1204ac3404b40",
+          "eligible": true,
           "median_ms": 30.465038,
           "inner_repeats": [
             2
@@ -552,6 +590,7 @@
             "ok"
           ],
           "hash": "0xf1a1204ac3404b40",
+          "eligible": true,
           "median_ms": 26.204517,
           "inner_repeats": [
             2
@@ -565,6 +604,7 @@
             "ok"
           ],
           "hash": "0xf1a1204ac3404b40",
+          "eligible": true,
           "median_ms": 17.107959,
           "inner_repeats": [
             4
@@ -590,6 +630,7 @@
             "ok"
           ],
           "hash": "0x1e7c893af40a771c",
+          "eligible": true,
           "median_ms": 322.451302,
           "inner_repeats": [
             1
@@ -603,6 +644,7 @@
             "ok"
           ],
           "hash": "0x1e7c893af40a771c",
+          "eligible": true,
           "median_ms": 165.391236,
           "inner_repeats": [
             1
@@ -616,6 +658,7 @@
             "ok"
           ],
           "hash": "0x1e7c893af40a771c",
+          "eligible": true,
           "median_ms": 258.187435,
           "inner_repeats": [
             1
@@ -629,6 +672,7 @@
             "ok"
           ],
           "hash": "0x1e7c893af40a771c",
+          "eligible": true,
           "median_ms": 166.77626,
           "inner_repeats": [
             1
@@ -642,6 +686,7 @@
             "ok"
           ],
           "hash": "0x1e7c893af40a771c",
+          "eligible": true,
           "median_ms": 261.108957,
           "inner_repeats": [
             1
@@ -655,6 +700,7 @@
             "ok"
           ],
           "hash": "0x1e7c893af40a771c",
+          "eligible": true,
           "median_ms": 164.300442,
           "inner_repeats": [
             1
@@ -668,6 +714,7 @@
             "ok"
           ],
           "hash": "0x1e7c893af40a771c",
+          "eligible": true,
           "median_ms": 447.564845,
           "inner_repeats": [
             1
@@ -681,6 +728,7 @@
             "ok"
           ],
           "hash": "0x1e7c893af40a771c",
+          "eligible": true,
           "median_ms": 212.543721,
           "inner_repeats": [
             1

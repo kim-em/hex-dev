@@ -10,6 +10,7 @@
             "ok"
           ],
           "hash": "0xc54907e8cdc91172",
+          "eligible": true,
           "median_ms": 92.325024,
           "inner_repeats": [
             1
@@ -23,6 +24,7 @@
             "ok"
           ],
           "hash": "0xc54907e8cdc91172",
+          "eligible": true,
           "median_ms": 47.441694,
           "inner_repeats": [
             2
@@ -36,6 +38,7 @@
             "ok"
           ],
           "hash": "0xc54907e8cdc91172",
+          "eligible": true,
           "median_ms": 92.828121,
           "inner_repeats": [
             1
@@ -49,6 +52,7 @@
             "ok"
           ],
           "hash": "0xc54907e8cdc91172",
+          "eligible": true,
           "median_ms": 46.550352,
           "inner_repeats": [
             2
@@ -62,6 +66,7 @@
             "ok"
           ],
           "hash": "0xc54907e8cdc91172",
+          "eligible": true,
           "median_ms": 92.487035,
           "inner_repeats": [
             1
@@ -75,6 +80,7 @@
             "ok"
           ],
           "hash": "0xc54907e8cdc91172",
+          "eligible": true,
           "median_ms": 46.871513,
           "inner_repeats": [
             2
@@ -88,6 +94,7 @@
             "ok"
           ],
           "hash": "0xc54907e8cdc91172",
+          "eligible": true,
           "median_ms": 92.878817,
           "inner_repeats": [
             1
@@ -101,6 +108,7 @@
             "ok"
           ],
           "hash": "0xc54907e8cdc91172",
+          "eligible": true,
           "median_ms": 46.573917,
           "inner_repeats": [
             2
@@ -126,6 +134,7 @@
             "ok"
           ],
           "hash": "0xd5512fda51bc6ff6",
+          "eligible": true,
           "median_ms": 92.840609,
           "inner_repeats": [
             1
@@ -139,6 +148,7 @@
             "ok"
           ],
           "hash": "0xd5512fda51bc6ff6",
+          "eligible": true,
           "median_ms": 46.782146,
           "inner_repeats": [
             2
@@ -152,6 +162,7 @@
             "ok"
           ],
           "hash": "0xd5512fda51bc6ff6",
+          "eligible": true,
           "median_ms": 93.209125,
           "inner_repeats": [
             1
@@ -165,6 +176,7 @@
             "ok"
           ],
           "hash": "0xd5512fda51bc6ff6",
+          "eligible": true,
           "median_ms": 47.231847,
           "inner_repeats": [
             2
@@ -178,6 +190,7 @@
             "ok"
           ],
           "hash": "0xd5512fda51bc6ff6",
+          "eligible": true,
           "median_ms": 92.847639,
           "inner_repeats": [
             1
@@ -191,6 +204,7 @@
             "ok"
           ],
           "hash": "0xd5512fda51bc6ff6",
+          "eligible": true,
           "median_ms": 47.512639,
           "inner_repeats": [
             2
@@ -204,6 +218,7 @@
             "ok"
           ],
           "hash": "0xd5512fda51bc6ff6",
+          "eligible": true,
           "median_ms": 93.307521,
           "inner_repeats": [
             1
@@ -217,6 +232,7 @@
             "ok"
           ],
           "hash": "0xd5512fda51bc6ff6",
+          "eligible": true,
           "median_ms": 47.131985,
           "inner_repeats": [
             2
@@ -242,6 +258,7 @@
             "killed_at_cap"
           ],
           "hash": null,
+          "eligible": false,
           "median_ms": null,
           "inner_repeats": [
             0
@@ -255,6 +272,7 @@
             "ok"
           ],
           "hash": "0xd0642a7d4df3da02",
+          "eligible": true,
           "median_ms": 0.945337,
           "inner_repeats": [
             64
@@ -268,6 +286,7 @@
             "killed_at_cap"
           ],
           "hash": null,
+          "eligible": false,
           "median_ms": null,
           "inner_repeats": [
             0
@@ -281,6 +300,7 @@
             "ok"
           ],
           "hash": "0xd0642a7d4df3da02",
+          "eligible": true,
           "median_ms": 0.936162,
           "inner_repeats": [
             64
@@ -294,6 +314,7 @@
             "killed_at_cap"
           ],
           "hash": null,
+          "eligible": false,
           "median_ms": null,
           "inner_repeats": [
             0
@@ -307,6 +328,7 @@
             "ok"
           ],
           "hash": "0xd0642a7d4df3da02",
+          "eligible": true,
           "median_ms": 0.945514,
           "inner_repeats": [
             64
@@ -320,6 +342,7 @@
             "killed_at_cap"
           ],
           "hash": null,
+          "eligible": false,
           "median_ms": null,
           "inner_repeats": [
             0
@@ -333,6 +356,7 @@
             "ok"
           ],
           "hash": "0xd0642a7d4df3da02",
+          "eligible": true,
           "median_ms": 0.942584,
           "inner_repeats": [
             64
@@ -356,6 +380,7 @@
         "killed_at_cap"
       ],
       "hash": null,
+      "eligible": false,
       "median_ms": null,
       "inner_repeats": [
         0
@@ -370,6 +395,7 @@
         "killed_at_cap"
       ],
       "hash": null,
+      "eligible": false,
       "median_ms": null,
       "inner_repeats": [
         0
@@ -384,6 +410,7 @@
         "killed_at_cap"
       ],
       "hash": null,
+      "eligible": false,
       "median_ms": null,
       "inner_repeats": [
         0
@@ -398,6 +425,7 @@
         "killed_at_cap"
       ],
       "hash": null,
+      "eligible": false,
       "median_ms": null,
       "inner_repeats": [
         0

@@ -24,19 +24,34 @@ no fitted complexity model, portable budget or all-library CI inference.
 | Hard real subtraction | 6681.559 | 4446.329 | 1.496 |
 | Candidate exactification | 92.658 | 46.723 | 1.984 |
 | Enclosing-root exactification | 93.028 | 47.182 | 1.977 |
-| End-to-end six-factor exactification | 1.536 | 1.012 | 1.517 |
+| End-to-end six-factor exactification (registered floor) | 1.477 | 0.954 | 1.561 |
 
 The arithmetic capture retains 16 successful arms and the root-degree capture
 48 successful arms with complete sorted polynomial/sign/multiplicity hashes.
 The initial NumberField capture retains all 24 arms: 20 succeed and four old
 `runExactLadder` children hit the unchanged 0.2-second whole-child cap during
 amplification with the collector's 0.05-second floor. That is not a measured
-single-operation timeout or a hash mismatch. The corrected ExactLadder-only
-capture restores the registration's 0.001-second floor and retains eight
-successful arms. No other inputs or caps change, no completed sample is
-discarded and no unchanged rerun is performed. Candidate/selection comparisons
-use the successful original arms; end-to-end ratios use only the corrected
-paired capture. `analyze.py` reports every failed arm explicitly.
+single-operation timeout or a hash mismatch. The next capture retains eight
+successful arms at 0.001 seconds, below the registered 0.02-second floor;
+its incorrect historical label is preserved in `metadata.original.json` and
+corrected in its current metadata. It is diagnostic, not registered-mode
+admission. The final ExactLadder-only capture uses the actual registered
+0.02-second floor and retains eight successful arms with unchanged caps,
+inputs and hashes. End-to-end ratios use only that final paired capture.
+No completed observation is discarded and no unchanged rerun is performed.
+All collectors override `--repeats` to one per arm to obtain adjacent AB/BA
+pairs; the four blocks are a comparison, not a new five-trial admission.
+The first collectors also override their floors as their raw configs record;
+the final collector restores the declared ExactLadder floor. `analyze.py`
+retains every failed arm and calculates summaries only from successful
+hash-checked arms. Across the five captures all 104 arms remain retained.
+
+The raw exporter records the collector working directory's git metadata for
+both arms; `env.git_commit` is not the After executable's compiled source.
+Use `metadata.sources[arm]`, binary hashes and source snapshots to identify
+compiled provenance. `numberfield-bench-source-equivalence.json` supplies
+the omitted NumberField benchmark snapshot by reconstruction from the
+recorded immutable heads, and confirms that its bodies are identical.
 
 The root plot compares the actual real polynomial-root API at rational degrees
 2/4/8 and quadratic-coefficient degrees 1/2/4. External FLINT and Z3 RCF lines
@@ -68,3 +83,10 @@ zero unavailable-component skips. The first local wrapper merged stderr
 diagnostics into JSONL and its parsing failure is retained; the corrected
 record uses the existing CI stream separation. These are local checks on
 `3ef41951ce`, not required CI for a later head.
+
+Both compiled-source heads and the profile source have retained remote refs:
+`issue-10577-isolation-before-source` (121fc1e027) and
+`issue-10577-isolation-measurement-source` (08c8a9f13e, containing 7ceaf9d47d).
+[NumberField conformance](numberfield-conformance.json) independently re-emits
+the byte-exact committed corpus and checks all 11 FLINT/PARI cases with zero
+failures. The two Mathlib rewrites remain guarded by ordinary-kernel axioms.
