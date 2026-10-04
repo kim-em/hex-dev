@@ -153,9 +153,13 @@ lean_lib HexArith where
 -- Declared after `HexArith`, because Lake gives a module to the last library
 -- that claims it. These modules import nothing from `HexArith`, and
 -- `extended_gcd.c` calls back into `HexArith.Nat.ExtendedGcd`, so both sides
--- of that callback live in one shared library.
+-- of that callback live in one shared library. The single root named after the
+-- library makes Lake load it as a plugin; Lean loads every plain dynlib before
+-- any plugin, so a carrier that is not a plugin cannot depend on one.
 lean_lib HexArithNative where
-  roots := #[`HexArith.UInt64.Wide, `HexArith.Nat.ExtendedGcd]
+  roots := #[`HexArithNative]
+  globs := #[.one `HexArithNative, .one `HexArith.UInt64.Wide,
+    .one `HexArith.Nat.ExtendedGcd]
   precompileModules := true
   moreLinkObjs := #[hexarithWideO, hexarithGcdO]
   -- TODO(lean4#15160): remove -lgmp with the local extended_gcd.c adapter.
@@ -215,7 +219,9 @@ lean_lib HexModArith where
 
 -- Carries `zmod64_mul.c` for the modules that bind it; see `HexArithNative`.
 lean_lib HexModArithNative where
-  roots := #[`HexModArith.WordMod, `HexModArith.Residue]
+  roots := #[`HexModArithNative]
+  globs := #[.one `HexModArithNative, .one `HexModArith.WordMod,
+    .one `HexModArith.Residue]
   precompileModules := true
   moreLinkObjs := #[hexmodarithO]
 
