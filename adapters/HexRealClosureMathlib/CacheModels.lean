@@ -8,6 +8,7 @@ module
 public import HexRealClosureMathlib.ContextModel
 public import HexRealClosureMathlib.LiveContext
 public import HexRealClosureMathlib.TowerReuse
+import all HexRealClosure.TowerCache
 
 public section
 
@@ -230,6 +231,55 @@ noncomputable def Models.transport {destination later : Context registry}
     cases same
     exact ⟨(models previous stored).transport next nextTarget preserved⟩)
 
+open scoped Hex.OrderedFn.Infinitesimal in
+/-- Transport one old cache entry to the constructed next base. Its original
+owner interpretation is the actual next canonical factory result. -/
+noncomputable def EntryModel.nextBase
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (original : (BaseContext.PackedContext.pack base).Realization)
+    (reference : Tower.Model (Context.base base) R)
+    (ambient : Ambient (Hex.RationalFn R))
+    {source destination later : Context registry}
+    {target : Tower.Model destination R} {inclusion : Inclusion source destination}
+    (model : EntryModel original reference target inclusion)
+    (next : Inclusion destination later) (nextTarget : Tower.Model later ambient.Carrier)
+    (preserved : ∀ a, nextTarget.value (next.value a) =
+      Ambient.coefficientHom ambient (target.value a)) :
+    EntryModel original.infinitesimal (Tower.Model.nextBase base reference ambient)
+      nextTarget (inclusion.comp next) where
+  original := model.original.map (Ambient.coefficientHom ambient)
+    (Ambient.coefficientHom_strictMono ambient)
+  produced := source.model?_next base original reference ambient model.original model.produced
+  value := by
+    intro a
+    rw [Inclusion.comp_value, preserved, model.value]
+    rfl
+
+open scoped Hex.OrderedFn.Infinitesimal in
+/-- Preserve the entire old predecessor cache with canonical interpretations
+over the next base, through its one actual common-context inclusion. -/
+noncomputable def Models.nextBase
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (original : (BaseContext.PackedContext.pack base).Realization)
+    (reference : Tower.Model (Context.base base) R)
+    (ambient : Ambient (Hex.RationalFn R))
+    {destination later : Context registry}
+    {target : Tower.Model destination R} {cache : InclusionCache destination}
+    (models : Models original reference target cache)
+    (next : Inclusion destination later) (nextTarget : Tower.Model later ambient.Carrier)
+    (preserved : ∀ a, nextTarget.value (next.value a) =
+      Ambient.coefficientHom ambient (target.value a)) :
+    Models original.infinitesimal (Tower.Model.nextBase base reference ambient)
+      nextTarget (cache.extend next) := by
+  intro entry present
+  exact Classical.choice (by
+    obtain ⟨previous, stored, same⟩ := List.mem_map.mp present
+    cases same
+    exact ⟨(models previous stored).nextBase base original reference ambient next nextTarget
+      preserved⟩)
+
 /-- A hit retrieves the interpretation of that exact stored owner inclusion. -/
 noncomputable def Models.get {destination source : Context registry}
     {target : Tower.Model destination R} {cache : InclusionCache destination}
@@ -258,6 +308,58 @@ theorem Models.parent_agree {destination source : Context registry}
     incoming.produced child.produced a
 
 end Hex.RealClosure.Tower.InclusionCache
+
+namespace Hex.RealClosure.Tower.Suffix
+
+variable {registry : BaseContext.Registry} {base : BaseContext.PackedContext registry}
+variable {R : Type u} [Field R] [LinearOrder R] [DecidableEq R]
+variable [IsStrictOrderedRing R] [IsRealClosed R]
+
+private noncomputable def prefixes_models_proof
+    (following : base.Realization) (reference : Tower.Model (Context.ofBase base) R)
+    {source : Context registry} (suffix : Suffix source) :
+    ∀ (model : Tower.Model source R), source.model? following reference = some model →
+      InclusionCache.Models following reference (model.extend suffix) suffix.prefixes.cache := by
+  induction suffix with
+  | nil =>
+    intro model canonical
+    exact (InclusionCache.Models.empty model).insert (Inclusion.identity _)
+      (InclusionCache.EntryModel.identity model canonical)
+  | @root parent descriptor rest ih =>
+    intro model canonical
+    let child := parent.adjoin descriptor
+    let first : Inclusion parent child.context :=
+      ⟨Conversion.includeRoot parent descriptor child rfl,
+        (Conversion.includeRoot_spec parent descriptor child rfl).1⟩
+    have childCanonical : child.context.model? following reference =
+        some (model.adjoin descriptor) := by
+      rw [Context.model?_adjoin, canonical, Option.map_some]
+    let later := ih (model.adjoin descriptor) childCanonical
+    let inclusion := first.comp rest.prefixes.inclusion
+    have retained : InclusionCache.EntryModel following reference
+        ((model.adjoin descriptor).extend rest) inclusion :=
+      ⟨model, canonical, by
+        intro a
+        rw [Inclusion.comp_value, rest.prefixes_value]
+        have firstValue := Inclusion.value_eq
+          (Conversion.includeRoot parent descriptor child rfl)
+          (Conversion.includeRoot_spec parent descriptor child rfl).1 child.embed
+          (Conversion.includeRoot_spec parent descriptor child rfl).2 a
+        exact ((model.adjoin descriptor).extend_embed rest (first.value a)).trans
+          ((congrArg (model.adjoin descriptor).value firstValue).trans
+            (model.adjoin_embed descriptor a))⟩
+    exact later.insert inclusion retained
+
+/-- The actual native predecessor cache of a suffix has canonical owner
+models at every retained level in its final interpretation. -/
+noncomputable def prefixes_models
+    (following : base.Realization) (reference : Tower.Model (Context.ofBase base) R)
+    {source : Context registry} (suffix : Suffix source) (model : Tower.Model source R)
+    (canonical : source.model? following reference = some model) :
+    InclusionCache.Models following reference (model.extend suffix) suffix.prefixes.cache :=
+  prefixes_models_proof following reference suffix model canonical
+
+end Hex.RealClosure.Tower.Suffix
 
 /-- info: 'Hex.RealClosure.Tower.InclusionCache.Models.parent_agree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

@@ -117,6 +117,54 @@ theorem Model.derive_target
     (Model.derive following inclusion targetModel).target = targetModel :=
   Model.derive_target_proof following inclusion targetModel
 
+/-- Deriving a source model commutes with the checked inclusion into the next
+infinitesimal base whenever the actual target models preserve its constants. -/
+theorem Model.derive_next_value
+    {source : BaseContext.PackedContext registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    {S : Type v} [Field S] [LinearOrder S]
+    (target : BaseContext.Context registry B sign)
+    (old : BaseInclusion source (.pack target))
+    (next : BaseInclusion source (.pack target.infinitesimal))
+    (original : (BaseContext.PackedContext.pack target).Realization)
+    (following : (BaseContext.PackedContext.pack target.infinitesimal).Realization)
+    (oldModel : Tower.Model (Context.ofBase (.pack target)) R)
+    (nextModel : Tower.Model (Context.ofBase (.pack target.infinitesimal)) S)
+    (embedding : R →+* S)
+    (constants : ∀ a, nextModel.value (BaseContext.Element.embed a) =
+      embedding (oldModel.value a))
+    (a : (Context.ofBase source).Value) :
+    (Model.derive following next nextModel).source.value a =
+      embedding ((Model.derive original old oldModel).source.value a) := by
+  rw [← (Model.derive following next nextModel).value,
+    Model.derive_target, BaseInclusion.next_value target old next]
+  have preserved := (Model.derive original old oldModel).value a
+  rw [Model.derive_target] at preserved
+  exact (constants (old.value a)).trans (congrArg embedding preserved)
+
+/-- The source interpretation itself is transported through the ordered
+ambient embedding; no separate choice of a source model remains. -/
+theorem Model.derive_next
+    {source : BaseContext.PackedContext registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    {S : Type v} [Field S] [LinearOrder S]
+    (target : BaseContext.Context registry B sign)
+    (old : BaseInclusion source (.pack target))
+    (next : BaseInclusion source (.pack target.infinitesimal))
+    (original : (BaseContext.PackedContext.pack target).Realization)
+    (following : (BaseContext.PackedContext.pack target.infinitesimal).Realization)
+    (oldModel : Tower.Model (Context.ofBase (.pack target)) R)
+    (nextModel : Tower.Model (Context.ofBase (.pack target.infinitesimal)) S)
+    (embedding : R →+* S) (ordered : StrictMono embedding)
+    (constants : ∀ a, nextModel.value (BaseContext.Element.embed a) =
+      embedding (oldModel.value a)) :
+    (Model.derive following next nextModel).source =
+      (Model.derive original old oldModel).source.map embedding ordered := by
+  apply Tower.Model.value_ext
+  intro a
+  exact Model.derive_next_value target old next original following oldModel nextModel
+    embedding constants a
+
 end Hex.RealClosure.Tower.BaseInclusion
 
 namespace Hex.RealClosure.Tower.Model
