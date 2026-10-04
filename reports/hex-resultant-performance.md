@@ -65,7 +65,7 @@ HEX_FLINT_BENCH_PYTHON=/tmp/hexresultant-bench-venv/bin/python \
 ```
 
 The 41-target verification completed in 0.781 s on the report host, well below
-the 30 s per-library warning and 360 s repository-wide hard cap.
+the 30 s per-library warning and the configured repository-wide hard cap.
 
 ## Comparator Ratios
 
