@@ -26,6 +26,32 @@ noncomputable def read (model : Model context K) (interpretation : CoefficientMa
 def domain (model : Model context K) (interpretation : CoefficientMap model.field G)
     (a : context.Value) : Prop := model.toValue a ∈ interpretation.domain
 
+/-- Every polynomial over the actual semantic field has a finite native
+coefficient representative. This requires no field structure on native values. -/
+theorem polynomial_surjective (model : Model context K) :
+    Function.Surjective model.polynomial := by
+  classical
+  intro p
+  let coefficient (i : Fin (p.natDegree + 1)) : context.Value :=
+    (model.toValue_surjective (p.coeff i)).choose
+  have represents (i : Fin (p.natDegree + 1)) :
+      model.toValue (coefficient i) = p.coeff i :=
+    (model.toValue_surjective (p.coeff i)).choose_spec
+  refine ⟨DensePoly.ofCoeffs (Array.ofFn coefficient), ?_⟩
+  apply Polynomial.ext
+  intro i
+  rw [model.polynomial_coeff, DensePoly.coeff_ofCoeffs]
+  change model.toValue ((Array.ofFn coefficient).getD i (0 : context.Value)) = p.coeff i
+  by_cases bound : i < p.natDegree + 1
+  · rw [← Array.getElem_eq_getD (h := show i < (Array.ofFn coefficient).size from
+      by simpa only [Array.size_ofFn] using bound) (0 : context.Value)]
+    simpa only [Array.getElem_ofFn] using represents ⟨i, bound⟩
+  · rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_none (by simpa using Nat.le_of_not_gt bound)]
+    simp only [Option.getD_none]
+    rw [(model.toValue_zero 0).mpr rfl,
+      Polynomial.coeff_eq_zero_of_natDegree_lt (by omega)]
+
+omit [DecidableEq G] in
 /-- A native polynomial whose stored coefficients lie in the interpretation
 domain has a polynomial lift over that subring. -/
 theorem polynomial_lift (model : Model context K)
@@ -138,6 +164,10 @@ theorem closed (model : Model context K) (interpretation : CoefficientMap model.
 /-- info: 'Hex.RealClosure.Tower.Model.closed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Model.closed
+
+/-- info: 'Hex.RealClosure.Tower.Model.polynomial_surjective' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Model.polynomial_surjective
 
 /-- info: 'Hex.RealClosure.Tower.Model.polynomial_lift' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
