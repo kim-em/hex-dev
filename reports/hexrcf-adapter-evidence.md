@@ -96,7 +96,10 @@ The planned extension remains incomplete in these specific respects:
   `Tower.Context.roots_all`, `roots?_success`, `roots_spec` and `roots_sorted`.
   Native ordinary samples are available through `Sample.Family.cells_unique`,
   `cell_signs` and `sector_signs`; the adapter consumes those laws in its direct
-  API examples. They establish actual native producer behavior under a real
+  API examples, including source signs at each selected root section. A reducible
+  defining polynomial also checks leading cancellation between distinct stored
+  nonzero expressions whose difference is the canonical zero. They establish
+  actual native producer behavior under a real
   predecessor model. A frozen tactic checker must separately validate literal
   context/root/sign data without invoking those producers during replay.
   Ordered real-closure existence alone does not discharge general joint

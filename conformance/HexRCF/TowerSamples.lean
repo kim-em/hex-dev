@@ -134,6 +134,25 @@ theorem source_sector (d : Selection) (formula : RealFormula.QF (n + 1)) (sample
     (prepare_real d formula (realization.target.value sample.value))
   simpa only [List.map_map, Function.comp_def, RepresentationSpecialize.evaluate] using values
 
+/-- A section's selected boundary realizes the whole source sign vector at
+one ordinary real point, including repeated atoms and domain guards. -/
+theorem source_section (d : Selection) (formula : RealFormula.QF (n + 1))
+    (sample : Tower.Sample (extension d).context)
+    (present : sample ∈ (family d formula).sections) :
+    ∃ root ∈ (family d formula).boundaries, sample = Tower.Sample.ofRoot root ∧
+      sample.cell.contains sample.value = true ∧
+      sample.signs (polynomials d formula) = formula.polys.map (fun q => (SignType.sign
+        (q.eval (RealFormula.append
+          (fun _ : Fin n => (model d).value (extension d).generator)
+          (root.denote (model d)))) : Int)) := by
+  obtain ⟨root, member, same, checked, signs⟩ :=
+    (family d formula).sections_correct (model d) sample present
+  refine ⟨root, member, same, checked, ?_⟩
+  rw [signs]
+  have values := congrArg (List.map (fun x : ℝ => (SignType.sign x : Int)))
+    (prepare_real d formula (root.denote (model d)))
+  simpa only [List.map_map, Function.comp_def, RepresentationSpecialize.evaluate] using values
+
 /-- On a lawful coefficient carrier, both specializations have exactly the
 same real evaluation; stored-expression equality is not assumed. -/
 theorem field_eval {D : Type u} [CommRing D] [DecidableEq D]
@@ -221,6 +240,30 @@ def mixed : RealFormula.QF 3 :=
   [some false, some false, some true, some false]
   [some false, some false, some false]
 
+/-- A reducible defining polynomial retains distinct nonzero representatives
+of the selected value. Their difference still packs to the unique stored zero. -/
+def noncanonicalCancellation : Bool := Id.run do
+  let x : base.Poly := DensePoly.ofCoeffs #[0, 1]
+  let some d := SignDet.Descriptor.validate base.sign base.signature
+      { context := base.signature,
+        head := (x * x - DensePoly.C (1 + 1)) * (x - DensePoly.C (1 + 1 + 1)),
+        lower := .finite 1, upper := .finite (1 + 1), indices := [], signs := [] }
+    | return false
+  let g := (extension d).generator
+  let h := g * g * g / (1 + 1)
+  let values : Fin 2 → (extension d).context.Value := fun i => if i.val = 0 then g else h
+  let prepared := RepresentationSpecialize.prepare values cancellation
+  let result := Tower.Sample.family (extension d).context prepared
+  return g != h && g - h == 0 &&
+    prepared.map DensePoly.natDegree == [2, 0, 1, 1] &&
+    result.boundaries.length == 3 &&
+    result.sections.map (fun sample => sample.signs prepared) ==
+      [[0, 0, 1, -1], [1, 0, 0, -1], [1, 0, -1, 0]] &&
+    result.sectors.map (fun sample => sample.signs prepared) ==
+      [[1, 0, 1, -1], [1, 0, 1, -1], [1, 0, -1, -1], [1, 0, -1, 1]]
+
+#guard noncanonicalCancellation
+
 end Hex.RCF.RealCoefficients.TowerSamples
 
 /-- info: 'Hex.RCF.RealCoefficients.TowerSamples.coverage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -250,6 +293,10 @@ end Hex.RCF.RealCoefficients.TowerSamples
 /-- info: 'Hex.RCF.RealCoefficients.TowerSamples.source_coverage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.RealCoefficients.TowerSamples.source_coverage
+
+/-- info: 'Hex.RCF.RealCoefficients.TowerSamples.source_section' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RealCoefficients.TowerSamples.source_section
 
 /-- info: 'Hex.RCF.RealCoefficients.TowerSamples.leading' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

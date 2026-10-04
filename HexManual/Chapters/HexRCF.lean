@@ -2184,10 +2184,11 @@ example (d : SampleSelection) (x : ℝ) :
 ```
 
 {name}`Hex.RealClosure.Tower.Sample.family` takes the specialized polynomial
-list. Its `cells_unique` theorem places every real point in exactly one
-section or sector, and `cell_signs` gives every polynomial's sign at that
+list. {name}`Hex.RealClosure.Tower.Sample.Family.cells_unique` places every
+real point in exactly one section or sector, and
+{name}`Hex.RealClosure.Tower.Sample.Family.cell_signs` gives every polynomial's sign at that
 same point. Each sector has an ordinary sample in its own compatible context;
-`sector_signs` proves the entire sign vector throughout that sector. Here is
+{name}`Hex.RealClosure.Tower.Sample.Family.sector_signs` proves the entire sign vector throughout that sector. Here is
 the direct same-point conclusion for any family interpreted in `ℝ`:
 
 ```lean
@@ -2214,6 +2215,29 @@ example {registry : BaseContext.Registry}
   exact ⟨realization, inside, signs _ inside⟩
 ```
 
+Root sections use their selected boundary as the real witness.
+{name}`Hex.RealClosure.Tower.Sample.Family.sections_correct` checks all signs
+at that boundary, with the original coefficient interpretation fixed:
+
+```lean
+example {registry : BaseContext.Registry}
+    {parent : Context registry}
+    {polynomials : List parent.Poly}
+    (family : Tower.Sample.Family parent polynomials)
+    (original : Model parent ℝ)
+    (sample : Tower.Sample parent)
+    (present : sample ∈ family.sections) :
+    ∃ root ∈ family.boundaries,
+      sample = Tower.Sample.ofRoot root ∧
+      sample.cell.contains sample.value = true ∧
+      sample.signs polynomials = polynomials.map (fun p =>
+        (SignType.sign
+          ((HexPolyMathlib.Interpret.interpret
+            original.value original.zero_iff p).eval
+              (root.denote original)) : Int)) := by
+  exact family.sections_correct original sample present
+```
+
 The native root producer already provides complete coverage, multiplicities
 and order through {name}`Hex.RealClosure.Tower.Context.roots_spec` and
 {name}`Hex.RealClosure.Tower.Context.roots_sorted`. For the
@@ -2225,6 +2249,9 @@ control sends a literally duplicated atom, a zero atom and a leading-cancelled
 polynomial through the native root/sample producer. The cancelled polynomial
 adds a section at zero. Every cell sign and the strict/non-strict domain
 relations are checked through the shared Boolean fold.
+Another control uses the selected root of `(X² − 2)(X − 3)` in `(1, 2)`.
+Its distinct stored expressions `α` and `α³/2` have zero difference; their
+leading-term cancellation still produces the correct degree and every cell sign.
 
 These are ordinary native producer APIs and their real correctness laws.
 Integrating their output into frozen tactic replay still needs the owner's
