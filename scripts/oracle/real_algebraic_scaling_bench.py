@@ -37,8 +37,7 @@ class Flint:
             self.expected=o.number(self.rational)
         elif operation in ('add','sqrt'):
             self.a=o.to_real(o.nth_root(self.two,size))
-            self.expected=(o.binary('add',self.a,self.one) if operation=='add'
-                           else o.to_real(o.nth_root(self.two,2*size)))
+
         else:
             self.a=o.unary('sqrt',self.two)
             shift=o.number(Fraction(1,2**size))
@@ -57,6 +56,12 @@ class Flint:
             elif op=='add':result=o.binary('add',self.a,self.one)
             elif op=='sqrt':result=o.unary('sqrt',self.a)
             else:result=o.unary(op,self.near)
+            if op=='sqrt':
+                return o.compare(o.binary('mul',result,result),self.a)==0 and o.compare(result,self.one)>0
+            if op=='add':
+                value=o.binary('sub',result,self.one)
+                for _ in range(self.size.bit_length()-1):value=o.binary('mul',value,value)
+                return o.compare(value,self.two)==0 and o.compare(result,self.one)>0
             return o.compare(result,self.expected)==0
         finally:
             for value,ctx in reversed(o.owned[checkpoint:]):
@@ -84,8 +89,7 @@ class Z3:
             self.expected=self.num(self.rational)
         elif operation in ('add','sqrt'):
             self.a=sorted(z3rcf.MkRoots([-self.two]+[self.zero]*(size-1)+[self.one],self.context))[-1]
-            self.expected=(self.a+self.one if operation=='add' else
-                sorted(z3rcf.MkRoots([-self.two]+[self.zero]*(2*size-1)+[self.one],self.context))[-1])
+
         else:
             self.a=sorted(z3rcf.MkRoots([-self.two,self.zero,self.one],self.context))[-1]
             self.b=self.a+self.num(f'1/{2**size}')
@@ -99,6 +103,11 @@ class Z3:
         if op=='rational':result=self.num(self.rational)
         elif op=='add':result=self.a+self.one
         else:result=sorted(self.api.MkRoots([-self.a,self.zero,self.one],self.context))[-1]
+        if op=='sqrt':return result*result==self.a and result>self.one
+        if op=='add':
+            value=result-self.one
+            for _ in range(self.size.bit_length()-1):value=value*value
+            return value==self.two and result>self.one
         return result==self.expected
 
     def close(self):pass

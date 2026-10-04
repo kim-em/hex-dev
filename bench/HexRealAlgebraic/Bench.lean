@@ -7,10 +7,10 @@ import HexRealAlgebraic
 import LeanBench
 import Hex.BenchOracle.Flint
 
-/-! Scalar size axes for the shipped API. Inputs and exact expected values are
-prepared outside timed requests. Arithmetic includes an exact equality guard;
-comparison/rounding return their exact result. External arms additionally include
-JSON transport and temporary cleanup, with separately measured protocol controls.
+/-! Scalar size axes for the shipped API. Inputs and expected polynomial fingerprints are
+prepared outside timed requests. Arithmetic checks minimal polynomial/sign;
+comparison/rounding return their exact result. External arms check exact annihilation and sign, without a preconstructed
+expected algebraic root, and include JSON transport and temporary cleanup, with separately measured protocol controls.
 These fixed ladders are descriptive performance observations, not cost-model or
 budget attestations. No forward comparison-strategy extension is implemented. -/
 namespace Hex.RealAlgebraicScaling
@@ -24,6 +24,7 @@ private structure Input where
   b : RealAlgebraicNumber
   expected : RealAlgebraicNumber
   q : Rat
+  polynomial : Array Int := #[]
 
 initialize inputs : IO.Ref (Array (String × Nat × Input)) ← IO.mkRef #[]
 
@@ -37,10 +38,10 @@ private def prepare (operation : String) (size : Nat) : IO Input := do
   else if operation == "add" || operation == "sqrt" then
     let p : ZPoly := DensePoly.ofCoeffs ((Array.replicate size (0 : Int)).push 1 |>.set! 0 (-2))
     let a := real (p.rootNear (3 / 2))
-    let expected := if operation == "add" then a + 1 else
-      let p : ZPoly := DensePoly.ofCoeffs ((Array.replicate (2 * size) (0 : Int)).push 1 |>.set! 0 (-2))
-      real (p.rootNear (3 / 2))
-    { a := a, b := 1, expected := expected, q := 0 : Input }
+    let polynomial := if operation == "add" then
+      (DensePoly.natPow (#p[-1, 1] : ZPoly) size - DensePoly.C 2).toArray
+      else (Array.replicate (2 * size) (0 : Int)).push 1 |>.set! 0 (-2)
+    { a := a, b := 1, expected := 0, q := 0, polynomial := polynomial : Input }
   else
     let a := real (ZPoly.rootNear #p[-2, 0, 1] (3 / 2))
     let shift := ofRat (1 / (2 ^ size : Rat))
@@ -51,8 +52,12 @@ private def prepare (operation : String) (size : Nat) : IO Input := do
 private def native (operation : String) (size : Nat) : IO Bool := do
   let i ← prepare operation size
   match operation with
-  | "add" => return i.a + i.b == i.expected
-  | "sqrt" => return i.a.sqrt? == some i.expected
+  | "add" =>
+      let result := i.a + i.b
+      return result.toAlgebraic.p.toArray == i.polynomial && result.sign == 1
+  | "sqrt" =>
+      let some result := i.a.sqrt? | return false
+      return result.toAlgebraic.p.toArray == i.polynomial && result.sign == 1
   | "compare" => return RealAlgebraicNumber.compare i.a i.b == Ordering.lt
   | "floor" => return i.expected.floor == 1
   | "ceil" => return i.expected.ceil == 2
@@ -159,14 +164,19 @@ def runZ3Sqrt4Protocol : Unit → IO Bool := fun _ => external "z3" "sqrt" 4 tru
 setup_fixed_benchmark runZ3Sqrt4Protocol where observations
 
 def runSqrt8 : Unit → IO Bool := fun _ => native "sqrt" 8
+setup_fixed_benchmark runSqrt8 where observations
 
 def runFlintSqrt8 : Unit → IO Bool := fun _ => external "flint" "sqrt" 8 false
+setup_fixed_benchmark runFlintSqrt8 where observations
 
 def runFlintSqrt8Protocol : Unit → IO Bool := fun _ => external "flint" "sqrt" 8 true
+setup_fixed_benchmark runFlintSqrt8Protocol where observations
 
 def runZ3Sqrt8 : Unit → IO Bool := fun _ => external "z3" "sqrt" 8 false
+setup_fixed_benchmark runZ3Sqrt8 where observations
 
 def runZ3Sqrt8Protocol : Unit → IO Bool := fun _ => external "z3" "sqrt" 8 true
+setup_fixed_benchmark runZ3Sqrt8Protocol where observations
 
 def runCompare4 : Unit → IO Bool := fun _ => native "compare" 4
 setup_fixed_benchmark runCompare4 where observations

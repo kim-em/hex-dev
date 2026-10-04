@@ -43,7 +43,7 @@ def main():
               start=datetime.datetime.now(datetime.timezone.utc).isoformat(),host=os.uname().nodename,
               cpu=cpu,load_start=os.getloadavg(),binary_sha256=sha(exe),families=FAMILIES,
               sources={s:sha(ROOT/s) for s in sources},arms=[],
-              boundary='Prepared operands and expected results; operations include exact result guards. External arms include JSON transport and temporary cleanup, with protocol controls. Four trial-major adjacent AB/BA blocks per comparator/rung, one fixed batch per arm, minimum batch 50 ms. No fitted model or admission claim.')
+              boundary='Prepared operands, no expected algebraic root; native arithmetic checks the complete minimal-polynomial/sign identity and external arithmetic checks exact annihilation/sign. External arms include JSON transport and temporary cleanup, with protocol controls. Four trial-major adjacent AB/BA blocks per comparator/rung, one fixed batch per arm, minimum batch 50 ms. No fitted model or admission claim.')
     for s in sources:shutil.copyfile(ROOT/s,out/(s.replace('/','-')+'.txt'))
     env=os.environ.copy();env['HEX_FLINT_BENCH_PYTHON']=sys.executable
     def save():(out/'metadata.json').write_text(json.dumps(meta,indent=2)+'\n')
