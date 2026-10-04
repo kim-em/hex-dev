@@ -510,10 +510,12 @@ constructors derive `DescriptorData` and `ReplayData` from a closed coefficient
 interpretation and membership, sign agreement and zero reflection on this
 finite list; native expressions need no field structure.
 
-`Tower.Model.adjoin_inventory` chooses the actual joint producer's minimal
-polynomial representative and evidence before quantifying the interpretation.
+`Tower.Model.adjoin_inventory` chooses a native representative of the minimal
+polynomial classically and feeds it to the actual joint producer before
+quantifying the interpretation.
 Membership and sign agreement on `adjoinCoefficients` suffice to interpret the
-selected child root, preserve the requested child signs, and return a partial
+selected child root, preserve the requested child signs in the next stage's native input form,
+and return a partial
 coefficient interpretation on the child's actual semantic field. The finite
 sign conditions supply zero reflection; closure derives all intermediate
 arithmetic. This is the algebraic step of finite realization. The general

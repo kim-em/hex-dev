@@ -419,9 +419,9 @@ theorem adjoin_inventory (model : Model context K)
               (fun a : G => a) (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl)
               (fun _ _ => rfl) (fun _ => rfl) (fun _ => rfl)
           ∃ extended : CoefficientMap (model.adjoin descriptor).field G,
-            (∀ a ∈ values, (model.adjoin descriptor).toValue a ∈ extended.domain ∧
-              (SignType.sign (extended.map ((model.adjoin descriptor).toValue a)) : Int) =
-                (SignType.sign ((model.adjoin descriptor).value a) : Int)) ∧
+            (∀ a ∈ values, (model.adjoin descriptor).domain extended a ∧
+              (SignType.sign ((model.adjoin descriptor).read extended a) : Int) =
+                (context.adjoin descriptor).context.sign a) ∧
             (∀ a : context.Value, model.domain interpretation a →
               (model.adjoin descriptor).toValue ((context.adjoin descriptor).embed a) ∈ extended.domain ∧
               extended.map ((model.adjoin descriptor).toValue ((context.adjoin descriptor).embed a)) =
@@ -441,17 +441,28 @@ theorem adjoin_inventory (model : Model context K)
   have hr := inventory.append.2.append.2.append.1
   have hv := inventory.append.2.append.2.append.2
   have descriptorData := Transport.Inventory.descriptor_data closed descriptor.raw descriptor.evidence hd
-  refine ⟨descriptorData, ?_⟩
-  refine realize interpretation ?_ descriptorData
-    (Transport.Inventory.replay_data closed descriptor.raw.head descriptor.raw.lower descriptor.raw.upper
-      (descriptor.raw.queries ++ q :: values.map (context.polynomial descriptor)) s.evidence hr) ?_
-  · intro i _
+  have minimalGuards : ∀ i ≤ (minpoly model.field
+      ((model.adjoin descriptor).value (context.adjoin descriptor).generator)).natDegree,
+      (minpoly model.field
+        ((model.adjoin descriptor).value (context.adjoin descriptor).generator)).coeff i ∈
+          interpretation.domain := by
+    intro i _
     rw [← minimal, model.polynomial_coeff]
     exact (model.domain_iff interpretation _).mp
       (closed.coefficient _ _ q hq.members i)
-  · intro a member
+  have valueGuards : ∀ a ∈ values, ∀ i < (context.polynomial descriptor a).size,
+      model.domain interpretation ((context.polynomial descriptor a).coeff i) := by
+    intro a member
     exact (hv.flatMap (context.polynomial descriptor a)
       (List.mem_map.mpr ⟨a, member, rfl⟩)).members
+  obtain ⟨extended, finite, coefficients, generator⟩ := realize interpretation minimalGuards descriptorData
+    (Transport.Inventory.replay_data closed descriptor.raw.head descriptor.raw.lower descriptor.raw.upper
+      (descriptor.raw.queries ++ q :: values.map (context.polynomial descriptor)) s.evidence hr) valueGuards
+  refine ⟨descriptorData, extended, ?_, coefficients, generator⟩
+  intro a member
+  refine ⟨(model.adjoin descriptor).domain_iff extended a |>.mpr (finite a member).1, ?_⟩
+  rw [(model.adjoin descriptor).read_apply, (model.adjoin descriptor).sign]
+  exact (finite a member).2
 
 end Hex.RealClosure.Tower.Model
 
