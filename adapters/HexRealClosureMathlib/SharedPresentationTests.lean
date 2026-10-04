@@ -59,14 +59,6 @@ example (parent : Root initial) (child : Root parent.context) :
   constructor
   · exact congrArg Subtype.val
       (firstModel.toUnion_coherent secondModel 0 1 rfl child.value)
-  · apply Subtype.ext
-    have produced := child.model?_ofModel provider.realization provider.towerModel
-      (firstModel.owners.get 1).1 (firstModel.canonicalOwners 1)
-    have aligned := Option.some.inj (produced.symm.trans (firstModel.canonicalOwners 0))
-    have childValue := congrArg
-      (fun m : Tower.Model child.context ℝ => m.value (child.embed parent.value)) aligned
-    exact (firstModel.toUnion_value 1 parent.value).trans
-      ((child.embed_value (firstModel.owners.get 1).1 parent.value).symm.trans
-        (childValue.trans (firstModel.toUnion_value 0 (child.embed parent.value)).symm))
+  · exact (firstModel.toUnion_embed 1 0 child rfl parent.value).symm
 
 end Hex.RealClosure.Tower.SharedPresentationTests

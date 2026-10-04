@@ -201,6 +201,39 @@ theorem Shared.Model.targetToUnion_inv (a : shared.input.context.Value) :
   rw [model.targetToUnion_value, model.targetToUnion_value]
   exact model.target.inv a
 
+/-- Target zero maps to the zero of the prescribed union. -/
+theorem Shared.Model.targetToUnion_zero : shared.targetToUnion reference 0 = 0 := by
+  apply Subtype.ext
+  change (shared.targetToUnion reference 0 : R) = 0
+  rw [model.targetToUnion_value]
+  exact (model.target.zero_iff 0).mpr rfl
+
+/-- Target one maps to the unit of the prescribed union. -/
+theorem Shared.Model.targetToUnion_one : shared.targetToUnion reference 1 = 1 := by
+  apply Subtype.ext
+  change (shared.targetToUnion reference 1 : R) = 1
+  rw [model.targetToUnion_value]
+  exact model.target.one
+
+/-- Equality of combined values is equality of their union images. -/
+theorem Shared.Model.targetToUnion_equal (a b : shared.input.context.Value) :
+    shared.input.context.equal a b =
+      decide (shared.targetToUnion reference a = shared.targetToUnion reference b) := by
+  rw [model.target.equal_spec]
+  have equal : shared.targetToUnion reference a = shared.targetToUnion reference b ↔
+      (shared.targetToUnion reference a : R) = (shared.targetToUnion reference b : R) :=
+    Subtype.ext_iff
+  simp only [equal, model.targetToUnion_value]
+
+/-- The shared target retains the prescribed coefficient-field embedding. -/
+theorem Shared.Model.targetToUnion_base (a : (Context.ofBase base).Value) :
+    shared.targetToUnion reference (shared.input.value a) =
+      algebraMap reference.field (Union.Carrier reference.field R) (reference.toValue a) := by
+  apply Subtype.ext
+  change (shared.targetToUnion reference (shared.input.value a) : R) =
+    ((reference.toValue a : reference.field) : R)
+  rw [model.targetToUnion_value, model.input, reference.coe_toValue]
+
 /-- Target comparison agrees with the order in the algebraic union. -/
 theorem Shared.Model.targetToUnion_compare (a b : shared.input.context.Value) :
     shared.input.context.compare a b =
@@ -340,6 +373,24 @@ theorem Root.model?_factory (following : base.Realization)
     root.context.model? following reference = some (root.model reference) := by
   exact root.model?_ofModel following reference reference (Context.model?_base following reference)
 
+/-- A child owner's checked coefficient embedding has the same union image
+as the original parent value, including across proper base inclusions. -/
+theorem Shared.Model.toUnion_embed {owners : List (Context registry)}
+    {shared : Shared base owners} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) R}
+    (model : Shared.Model shared following reference)
+    (i j : Fin owners.length) (root : Root owners[i]) (same : root.context = owners[j])
+    (a : (owners[i]).Value) :
+    model.toUnion j (_root_.cast (congrArg Context.Value same) (root.embed a)) =
+      model.toUnion i a := by
+  apply Subtype.ext
+  have produced := root.model?_ofModel following reference
+    (model.owners.get i).1 (model.canonicalOwners i)
+  exact (model.toUnion_value j _).trans
+    ((factory_value_cast same following reference (root.model (model.owners.get i).1)
+      (model.owners.get j).1 produced (model.canonicalOwners j) (root.embed a)).symm.trans
+        ((root.embed_value (model.owners.get i).1 a).trans (model.toUnion_value i a).symm))
+
 /-- Every element of the prescribed union is represented by an actual native
 root producer entry and by its checked inclusion into an actual shared target. -/
 theorem Shared.union_coverage (following : base.Realization)
@@ -371,6 +422,46 @@ theorem Shared.union_coverage (following : base.Realization)
   exact (model.toUnion_value 0 entry.root.value).trans
     ((congrArg (fun m : Tower.Model entry.root.context R => m.value entry.root.value) aligned).trans meaning)
 
+/-- An existing gathering can add any element of the algebraic union through
+an actual root-producer owner. Every retained original owner keeps its image. -/
+theorem Shared.Model.union_extend {owners : List (Context registry)}
+    {shared : Shared base owners} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) R}
+    (model : Shared.Model shared following reference) (x : Union.Carrier reference.field R) :
+    ∃ p : (Context.ofBase base).Poly, ∃ out,
+      (Context.ofBase base).roots p = .finite out ∧ ∃ entry ∈ out,
+        ∃ added : Shared base (owners ++ [entry.root.context]),
+          shared.add? entry.root.context = some added ∧
+          ∃ next : Shared.Model added following reference,
+            (∃ (j : Fin (owners ++ [entry.root.context]).length)
+              (same : entry.root.context = (owners ++ [entry.root.context])[j]),
+              (next.toUnion j (_root_.cast (congrArg Context.Value same) entry.root.value) : R) = x) ∧
+            ∀ (i : Fin owners.length) (a : (owners[i]).Value),
+              ∃ (j : Fin (owners ++ [entry.root.context]).length)
+                (same : owners[i] = (owners ++ [entry.root.context])[j]),
+                next.toUnion j (_root_.cast (congrArg Context.Value same) a) = model.toUnion i a := by
+  obtain ⟨p, out, produced, entry, member, meaning⟩ := reference.union_coverage x
+  have compatible : entry.root.context.origin.base.signature.constants <+:
+      base.signature.constants ∧
+      entry.root.context.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
+    rw [entry.root.origin_base, Context.ofBase_origin_base]
+    exact ⟨List.prefix_refl _, Nat.le_refl _⟩
+  obtain ⟨added, addedProduced, ⟨next⟩⟩ := model.add? entry.root.context compatible
+  refine ⟨p, out, produced, entry, member, added, addedProduced, next, ?_, ?_⟩
+  · let j : Fin (owners ++ [entry.root.context]).length := ⟨owners.length, by simp⟩
+    have same : entry.root.context = (owners ++ [entry.root.context])[j] := by simp [j]
+    refine ⟨j, same, ?_⟩
+    exact (next.toUnion_value j _).trans
+      ((factory_value_cast same following reference (entry.root.model reference)
+        (next.owners.get j).1 (entry.root.model?_factory following reference)
+        (next.canonicalOwners j) entry.root.value).symm.trans meaning)
+  · intro i a
+    let j : Fin (owners ++ [entry.root.context]).length :=
+      ⟨i.val, by simp only [List.length_append, List.length_singleton]; omega⟩
+    have same : owners[i] = (owners ++ [entry.root.context])[j] := by
+      simp only [j, Fin.getElem_fin, List.getElem_append_left i.isLt]
+    exact ⟨j, same, (model.toUnion_coherent next i j same a).symm⟩
+
 end Hex.RealClosure.Tower
 
 /-- info: 'Hex.RealClosure.Tower.Shared.union_coverage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -388,3 +479,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Shared.Model.toUnion_coherent' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Shared.Model.toUnion_coherent
+
+/-- info: 'Hex.RealClosure.Tower.Shared.Model.union_extend' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.Model.union_extend

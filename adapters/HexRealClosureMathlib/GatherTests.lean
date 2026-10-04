@@ -65,7 +65,8 @@ example
       ∃ model : Tower.Shared.Model shared providerModel.realization providerModel.towerModel,
         shared.targetToUnion providerModel.towerModel
           (shared.value 0 second.generator + shared.value 1 first.generator) =
-          model.toUnion 0 second.generator + model.toUnion 1 first.generator := by
+          model.toUnion 0 second.generator + model.toUnion 1 first.generator ∧
+        model.toUnion 0 (second.embed first.generator) = model.toUnion 1 first.generator := by
   dsimp only
   let first := (Tower.Context.base (BaseContext.rational registry)).adjoin parent
   let second := first.context.adjoin child
@@ -97,7 +98,8 @@ example
         · rw [secondBase]
           exact allowed)
   exact ⟨shared, produced, model,
-    model.targetToUnion_add (shared.value 0 second.generator) (shared.value 1 first.generator)⟩
+    model.targetToUnion_add (shared.value 0 second.generator) (shared.value 1 first.generator),
+    model.toUnion_embed 1 0 (.selected child second rfl) rfl first.generator⟩
 
 
 end Hex.RealClosure.BaseContext.GatherTests

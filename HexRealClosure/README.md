@@ -1662,7 +1662,11 @@ presentation quotient. A Liouville-prefix example combines nested rational-root
 owners after proper real-prefix enlargement.
 `Shared.union_coverage` proves that every element of that union has an actual
 native root-producer entry and a successful shared gathering whose inclusion
-represents it. Together with `Presentation.algEquiv` and `Presentation.realClosed`,
+represents it. `Shared.Model.union_extend` instead appends such an actual
+producer owner to an existing gathering and preserves every retained owner's
+union image. Target equality, zero, one and the base-embedding law are explicit.
+`toUnion_embed` preserves a parent's image through a selected child, including
+in the Liouville-prefix client. Together with `Presentation.algEquiv` and `Presentation.realClosed`,
 this identifies these compatible native values with the algebraic real closed
 union under the supplied base embedding. This construction uses the native
 prefix/depth compatibility check; it does not deduplicate differently encoded
