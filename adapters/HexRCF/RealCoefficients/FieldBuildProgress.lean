@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.FieldBuild
+public import HexRCF.RealCoefficients.FieldRoots
 public import HexRCF.RealCoefficients.FieldSignProgress
 public import HexRCF.RealCoefficients.RadicalProgress
 public import HexRCF.RealCoefficients.FieldRootSignsProgress
@@ -15,6 +16,54 @@ public import HexNumberFieldMathlib.Exact
 public section
 namespace Hex.RCF.RealCoefficients.FieldBuild
 variable {p : ZPoly} {root : SimpleRoot p} [ZPoly.CheckedIrreducible p]
+
+/-- The normalized radical proposal used by the bounded frontend succeeds for
+every shared carrier at the actual selected real field embedding. This is
+radical production, not progress of the bounded isolation search. -/
+theorem monic_progress {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root) (real : rep.root.im = 0)
+    (context : Ctx) (values : Fin n → PolyQuot p root) (formula : RealFormula.QF (n + 1)) :
+    ∃ cert, RadicalCert.buildMonic context (FieldCarrier.product values formula) = some cert := by
+  exact RadicalCert.buildMonic_success_real (Field.value rep)
+    (Field.value_eq_zero rep hrep real) (Field.value_one rep hrep real)
+    (Field.value_add rep hrep real) (Field.value_sub rep hrep real)
+    (Field.value_mul rep hrep real) (Field.value_div rep hrep real)
+    (Field.value_inv rep hrep real) (Field.value_natCast rep hrep real)
+    context _ (FieldCarrier.product_ne_zero values formula)
+
+/-- An actual normalized proposal has a squarefree core at that same selected
+embedding; squarefreeness is not an assumption on the certificate. -/
+theorem monic_squarefree {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root) (real : rep.root.im = 0)
+    (context : Ctx) (values : Fin n → PolyQuot p root) (formula : RealFormula.QF (n + 1))
+    (cert : RadicalCert (PolyQuot p root) Ctx)
+    (produced : RadicalCert.buildMonic context (FieldCarrier.product values formula) = some cert) :
+    Squarefree (HexPolyMathlib.Interpret.interpret
+      (Field.value rep) (Field.value_eq_zero rep hrep real) cert.core) := by
+  exact RadicalCert.buildMonic_squarefree (Field.value rep)
+    (Field.value_eq_zero rep hrep real) (Field.value_sub rep hrep real)
+    (Field.value_mul rep hrep real) (Field.value_div rep hrep real)
+    (Field.value_inv rep hrep real) (Field.value_natCast rep hrep real)
+    context _ cert produced
+
+/-- The normalized proposal is monic at its actual real interpretation,
+without installing a field instance on the native coordinate storage. -/
+theorem monic_leading {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root) (real : rep.root.im = 0)
+    (context : Ctx) (input : DensePoly (PolyQuot p root))
+    (cert : RadicalCert (PolyQuot p root) Ctx)
+    (produced : RadicalCert.buildMonic context input = some cert) :
+    (HexPolyMathlib.Interpret.interpret
+      (Field.value rep) (Field.value_eq_zero rep hrep real) cert.core).leadingCoeff = 1 := by
+  rw [RadicalCert.buildMonic_core context input cert produced]
+  apply HexPolyMathlib.Interpret.monicize_leading (Field.value rep)
+    (Field.value_eq_zero rep hrep real) (Field.value_mul rep hrep real)
+    (Field.value_inv rep hrep real)
+  intro zero
+  have nonzero := RadicalCert.core_ne_zero context input cert
+    (RadicalCert.buildMonic_checked context input cert produced)
+  rw [RadicalCert.buildMonic_core context input cert produced, zero] at nonzero
+  exact nonzero (by simp [DensePoly.monicize])
 
 /-- Every coordinate over the checked selected real root has a canonical
 real-algebraic search value. -/
@@ -85,7 +134,7 @@ theorem canonical_polynomial (rep : RefinedIsolation p) (hrep : SimpleRoot.mk re
         Array.getElem?_eq_none mapped, Option.getD_none, RealAlgebraicNumber.zero_toReal]
       exact (Field.value_zero rep hrep real).symm
 
-/-- The actual canonical fallback eventually produces separated intervals
+/-- The alternative canonical proposal API eventually produces separated intervals
 for every nonzero fixed-field head along a cofinal precision schedule. -/
 theorem proposeCanonical_progress [RealAlgebraicNumber.Laws]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root) (real : rep.root.im = 0)
@@ -142,7 +191,7 @@ theorem proposeCanonical_accepted [RealAlgebraicNumber.Laws] {Ctx : Type u} [Dec
   simpa only [FieldDecision.point, HexRealRootsMathlib.toReal_eq_cast_toRat] using
     FieldSpecialize.value_ofRat rep hrep real d.toRat
 
-/-- The preferred bounded search or its canonical fallback eventually
+/-- The preferred bounded search or its selected-field fallback eventually
 yields accepted fixed-field isolation evidence for a nonzero squarefree head.
 The statement does not assert full certificate construction or tactic totality. -/
 theorem isolateAt_progress [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
@@ -155,22 +204,23 @@ theorem isolateAt_progress [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableE
   cases direct : buildProposed (proposalSign rep hrep) context head
       (FieldIsolate.propose? (proposalSign rep hrep) FieldDecision.point head) with
   | some cert =>
-    exact ⟨0, fun k _ => ⟨cert, by simp only [isolateAt, direct]⟩⟩
+    exact ⟨0, fun k _ => ⟨cert, by simp only [isolateAt, isolateAtWith, direct]⟩⟩
   | none =>
-    obtain ⟨K, hK⟩ := proposeCanonical_progress rep hrep real head nonzero schedule progress
+    obtain ⟨K, hK⟩ := proposeRoots_progress rep hrep head nonzero schedule progress
     refine ⟨K, fun k hk => ?_⟩
     obtain ⟨isolations, produced, gaps⟩ := hK k hk
-    obtain ⟨cert, accepted⟩ := proposeCanonical_accepted rep hrep real context head nonzero
+    obtain ⟨cert, accepted⟩ := proposeRoots_accepted rep hrep real (proposalSign rep hrep)
+      (proposalSign_spec rep hrep real) context head nonzero
       squarefree (schedule k) isolations produced gaps
     refine ⟨cert, ?_⟩
-    simp only [isolateAt, direct]
+    simp only [isolateAt, isolateAtWith, direct]
     simp only [buildProposed, produced]
     exact accepted
 
 /-- Construct accepted isolation evidence over the original selected field
-by doubling interval precision. Canonical conversion and progress prove
+by doubling interval precision. Selected-field root progress proves
 termination; the returned certificate still passes the fixed-coordinate checker.
-The preferred search, head conversion and root solving each run once.
+The preferred search and selected-field root solving each run once.
 Refinement checks only interval gaps; the accepted replay is built once.
 Quotation must emit the literal certificate and recheck it in the ordinary
 kernel; kernel reduction of this compiled search is not required. This entry
@@ -202,22 +252,21 @@ def isolateUsing [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     obtain ⟨isolations, built⟩ := binding
     exact ⟨(IsolationReplay.build_checked _ _ _ _ _ _ built).2, ⟨isolations, built⟩⟩
   | none =>
-    -- Conversion and complete root solving are shared across all precisions.
-    let roots := (head.toArray.mapM (canonical? rep hrep)).bind fun coefficients =>
-      (RealAlgebraicPoly.ofArray coefficients).roots.finite?
+    -- The same selected-field roots are shared across all precision attempts.
+    let roots := roots? rep hrep head
     let proposal (precision : Nat) : Option IsolationCert := do
       let roots ← roots
       let intervals ← roots.mapM fun r => rootInterval r.root precision
       return ⟨intervals⟩
     let separated (precision : Nat) := (proposal precision).filter IsolationCert.checkGaps
     have proposal_eq (precision : Nat) :
-        proposal precision = proposeCanonical rep hrep head precision := by
-      simp only [proposal, roots, proposeCanonical, solverIntervals, bind, Option.bind_assoc]
+        proposal precision = proposeRoots rep hrep head precision := by
+      simp only [proposal, roots, proposeRoots, bind]
     have available : ∃ k, (separated (2 ^ k)).isSome = true := by
-      obtain ⟨K, progress⟩ := proposeCanonical_progress rep hrep real head nonzero
+      obtain ⟨K, progress⟩ := proposeRoots_progress rep hrep head nonzero
         (fun k => 2 ^ k) doubling_cofinal
       obtain ⟨isolations, produced, gaps⟩ := progress K le_rfl
-      change proposeCanonical rep hrep head (2 ^ K) = some isolations at produced
+      change proposeRoots rep hrep head (2 ^ K) = some isolations at produced
       exact ⟨K, by simp only [separated, proposal_eq, produced, Option.filter_some,
         gaps, ↓reduceIte]; rfl⟩
     let precision := 2 ^ Nat.find available
@@ -225,13 +274,17 @@ def isolateUsing [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     let isolations := (separated precision).get found
     have filtered : separated precision = some isolations := Option.eq_some_of_isSome found
     have inputs := Option.filter_eq_some_iff.mp filtered
-    have produced : proposeCanonical rep hrep head precision = some isolations :=
+    have produced : proposeRoots rep hrep head precision = some isolations :=
       (proposal_eq precision).symm.trans inputs.1
     have accepted : (IsolationReplay.build sign FieldDecision.point
         context head isolations).isSome = true := by
-      obtain ⟨cert, built⟩ := proposeCanonical_accepted rep hrep real context head nonzero
+      have meaning : ∀ a, sign a = (SignType.sign (Field.value rep a) : Int) := by
+        intro a
+        rw [same]
+        exact proposalSign_spec rep hrep real a
+      obtain ⟨cert, built⟩ := proposeRoots_accepted rep hrep real sign meaning context head nonzero
         squarefree precision isolations produced inputs.2
-      rw [same, built]; rfl
+      rw [built]; rfl
     let cert := (IsolationReplay.build sign FieldDecision.point
       context head isolations).get accepted
     have built : IsolationReplay.build (proposalSign rep hrep) FieldDecision.point
@@ -370,10 +423,23 @@ theorem build_progress [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
   let keys := signKeys values formula radical.core isolation rootSigns extraSignKeys
   obtain ⟨signs, signed⟩ := buildTable_success p s hw hp real keys
   refine ⟨⟨radical, isolation, rootSigns, signs⟩, ?_⟩
-  simp only [rep, product] at produced isolated queried
+  simp only [product] at produced
+  change isolateAtWith (Field.literalRep p s hw hp) (Field.literalRep_mk p s hw hp)
+    (proposalSign rep hrep) context radical.core (schedule k) = some isolation at isolated
+  change FieldRootSigns.Table.build (proposalSign rep hrep) FieldDecision.point
+    context radical.core isolation (FieldSpecialize.literalPolynomial values) formula =
+    some rootSigns at queried
+  have signEq : (fun a : PolyQuot p (SimpleRoot.ofSquare p s hw hp) =>
+      Sturm.queryPrepared (Field.prepareSign p s hw hp real).val a.coeffs) =
+      proposalSign rep hrep := by
+    funext a
+    exact (Field.prepareSign_spec p s hw hp real a).trans
+      (proposalSign_spec rep hrep hr a).symm
   unfold build
+  rw [dite_eq_left real]
   dsimp only
-  simp only [produced, isolated, queried]
+  simp only [signEq, produced]
+  simp only [isolated, queried]
   change (match buildTable p s hw hp keys with
     | none => none
     | some signs => some (Result.mk radical isolation rootSigns signs)) = _

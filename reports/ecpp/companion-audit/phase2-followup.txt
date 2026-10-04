@@ -1,0 +1,78 @@
+# Review of the uncommitted HexECPPMathlib follow-up
+
+I found no soundness or correctness blocker in the follow-up code. All nine earlier findings and the open earlier-review items are resolved, three of them with small residuals. What remains is two merge-sequencing problems caused by the release edits still in progress, a few low-severity hygiene issues, and documentation and bookkeeping gaps for phases 2, 3, 4 and 7.
+
+The review was read-only and partial in two ways:
+- **Nothing was run.** Shell access was blocked for builds and tests, so this is a static review.
+- **Build traces aren't proof.** The `.lake` traces show `Elab`, `Tests` and `LintTests` compiling with no warnings, but I couldn't confirm the traces match the current sources. CI is still the real check.
+
+The working tree also changed while I reviewed it: the lakefile, `released.yml` and the sync script picked up edits that aren't staged yet. I treated those as release preparation, not publication.
+
+## Earlier findings
+
+| # | Topic | Status |
+|---|---|---|
+| N1 | GraphIso exemption channel | **Fixed.** The exemption channel and file are gone. The checked rule now accepts an AINTLIB revision change only when both old and new are 40-hex SHAs and the cactus import closure excludes AINTLIB and HasseWeil. Tests cover a moved ref, a changed URL, changed precompile, package and extern_lib blocks, and an unknown closure. Residual in item 5 below. |
+| N2 | Mutable AINTLIB pin | **Fixed:** pinned to `a5c3aff…` in both the lakefile and the manifest. |
+| N3 | Compact aux-name uniqueness | **Fixed** (`Compact.lean:49-61`). It keeps `idx`/`parentIdxs` and only swaps `namePrefix`. It restores the prefix in a `finally` block and keeps the advanced index, which is correct because `mkUniqueName` re-checks the environment. The numeric `.0` component makes the module suffix impossible to write by hand. Residual test gap in item 6. |
+| N4 | `let` traversal cost | **Fixed in `checkData`.** Persistent closures replace substitution. Lookup charges i+1 fuel. Pass 1 audits every value (unused ones too) and pass 2 charges each expanded occurrence, so total work is linear in fuel. The NodeBudget test with 2^60 sharing still applies. Residual in item 4. |
+| N5 | Cleanup when kill fails | **Fixed** (`Process.lean:48-67, 127-132`). The kill error is captured, cancellation is set, both readers are collected, then a non-blocking `tryWait` runs. There's no unconditional `wait`, and the original error is kept in the message. Small residual in item 3. |
+| N6 | Windows | **Fixed:** rejected before the request file is created or anything is spawned (`Process.lean:139`). |
+| N7 | C retry race | **Fixed and correct** (`pari_pipe.c:69-72`). The second `killpg` catches children created by setsid+fork in the window. The leader is still unreaped, so its PID and group ID can't be reused. |
+| N8 | Factor exemption reason text | **Fixed**, but the blob pin goes stale; see item 1. |
+| N9 | Test killing a PID it doesn't own | **Fixed:** no signals now, it uses stop files instead. A new race is in item 3. |
+| Earlier nits | Naming and test messages | **Fixed:** `explicitCert` is namespaced, and `#guard_msgs` now shows the user name. Optional imports, the `roots` build entries plus `check_dag.lean_build_roots`, the linter run, and the Frobenius `@[simp] oneSubFrobenius_eq_zero` with its test example are all sound. |
+
+## New findings, most severe first
+
+1. **Medium, merge sequencing: the factor exemption pins the wrong lakefile blob.**
+   - `ecpp-module-aintlib-lakefile.json` pins `current_blob` `bfc9322e`, which is the staged version.
+   - The working tree lakefile is now `76f4cb50`: it adds globs to `HexReleaseTests` and `HexFactorizationModules`.
+   - hex-factor freshness reads the index, so it fails as soon as that lakefile is staged.
+   - **Fix:** regenerate the exemption from the final lakefile, as the last step. Its reason must also mention the `HexFactorizationModules` change, since that library holds `HexBerlekampZassenhaus.All`. The GraphIso rule isn't affected, because those blocks aren't among the graph's build declarations.
+
+2. **Medium, sequencing: the new `released.yml` entry fails CI while `done_through` is 0.**
+   - `check_released_manifest.py:181-195` (run at `ci.yml:130`) rejects any entry below `done_through: 7` that has never been published.
+   - **Fix:** keep the entry uncommitted until phase 7 is recorded.
+
+3. **Low: the stop-file test usually leaks the escaped helper process.**
+   - In `PariProcess.lean:59-63`, the test writes `.stop` and then deletes it microseconds later, because the task has already finished.
+   - The helper process checks for the file every 25 ms, so it usually misses it and lives for its full 20 s.
+   - **Fix:** have the helper delete `.stop` itself when it exits, and have the test wait for that deletion with a time limit.
+   - **Related residual in `stop`:** the `tryWait` after a kill error can throw and hide the kill error. Wrap it in `try … catch _ => pure ()`.
+
+4. **Low: the quadratic `let` cost moved into evaluation.**
+   - `evalCertUnsafe` runs `reduce`, which calls `instantiate1` once per `let`.
+   - It's bounded by the 131072-node pass, and only the user's own input can trigger it.
+   - **Fix:** build the `Cert` directly from the audited `Expr` with the same `DataContext`, skipping `reduce` and `evalExpr`.
+
+5. **Low: the GraphIso AINTLIB rule only rules out two names.**
+   - The rule checks only for the `AINTLIB` and `HasseWeil` prefixes, but AINTLIB's `lakefile.toml` declares 12 libraries (`Common`, `FltRegular`, `LeanModularForms`, …).
+   - It can't trigger today, because the cactus import closure doesn't use Mathlib.
+   - **Fix:** require the closure to contain no `Mathlib` prefix, since every AINTLIB library imports Mathlib.
+   - **Docs:** `SPEC/benchmarking.md` §Checked rules doesn't describe the graph build-declaration rules (the HexBasic flag, Tau Ceti, AINTLIB). This gap predates the PR; the new rule widens it.
+
+6. **Low / nit:**
+   - **Duplicate Lake ownership.** In the pending lakefile, `HexECPPMathlib.Tests` is claimed by both `HexECPPMathlibTests` (`lakefile.lean:400`) and `HexReleaseTests` (`:1248`). Native and Pari are claimed by both the `HexECPPMathlib` roots (`:389`) and `HexFactorizationModules` (`:1341`). Lake gives each module to the last match. That's harmless while none of these libraries set options, but it's confusing. Keep one registration.
+   - **Weak test.** The new First/Second `sameName` test would also have passed before the N3 fix. The cross-module case (private `p.Certs` in `Main` vs private `p` in `Certs.Main`) is still untested.
+   - **SPEC wording.** SPEC lines 133-135 say cleanup always reaps the child. They should mention the kill-failure exception and say outright that generation is POSIX-only, as the README already does.
+
+## Blockers by phase
+
+| Phase | Blocker | Fix |
+|---|---|---|
+| 1 | None found. | |
+| 2 | `status/hex-ecpp-mathlib.scaffolding-reviewed` is missing (`PLAN/Phase2.md:96-106`). | Add the token, recording dispositions for the items above. |
+| 3 | The docstring at `conformance/HexECPPMathlib/Conformance.lean:13-18` lacks the covered-operations, properties and edge-cases lists required by `SPEC/testing.md:49-63`. The elaborators are only tested in sibling modules. | Expand it to cover `ecpp using`, `ecpp_cert%`, both `primality?` routes, `#ecpp_export`, the 31/33-node and 512-bit limits, hidden and `implemented_by` constants, and the n = 35/49 divisor reductions. |
+| 4 | `PLAN/Phase4.md:25-27` requires the SPEC to assign each tactic or proof generator to an evidence track. The HexECPPMathlib SPEC never does; the assignment only appears in `reports/ecpp/companion-proof-surface.md`. `check_phase4.py` skips Mathlib libraries, so no checker catches this. | Add a short paragraph to the SPEC. |
+| 5 | None found: no `sorry` or axioms, and `Tests.lean` guards the axioms. | |
+| 6 | The linter run is present. I couldn't check for dead declarations by grep. | Confirm by review. |
+| 7 | The manual section and README exist, but the README Quickstart isn't build-checked; `SPEC/readme.md` asks for a manual check. | Do and record that check. |
+| All | `libraries.yml:1338` still says `done_through: 0`. | Raise it one phase at a time. |
+
+Separate from the phases, publication still needs:
+- AINTLIB moved to an upstream `main` commit (today's pin comes from the head of PR 8598);
+- a standalone build against the published core;
+- the companion mirror bootstrapped.
+
+The audit report already lists these.

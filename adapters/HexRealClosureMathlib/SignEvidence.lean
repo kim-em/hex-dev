@@ -1,0 +1,315 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+
+public import HexRealClosure.SignEvidence
+public import HexRealClosure.SignCodec
+public import HexRealClosureMathlib.SignFacts
+
+public section
+
+namespace Hex.RealClosure.Algebraic
+open SignDet
+
+variable {E Ctx : Type} {K : Type v} [Zero E] [DecidableEq E]
+variable [One E] [Add E] [Neg E] [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]
+variable [DecidableEq Ctx] {coeffSign : E → Int} {parent : Ctx}
+variable [Field K] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K] [IsRealClosed K]
+variable (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
+variable (h1 : f 1 = 1) (ha : ∀ a b, f (a + b) = f a + f b)
+variable (hs : ∀ a b, f (a - b) = f a - f b)
+variable (hm : ∀ a b, f (a * b) = f a * f b)
+variable (hnat : ∀ n : Nat, f (n : E) = (n : K))
+variable (hsign : ∀ a, coeffSign a = (SignType.sign (f a) : Int))
+variable (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
+
+/-- Derive every scalar fact from one checked joint row. The interpretation
+arguments occur only in erased proofs. Exact original keys, including zero
+and repeated keys, occupy the same vector slots as the requested queries. -/
+@[expose, macro_inline] def Context.signFacts (context : Context E Ctx coeffSign parent)
+    {queries : List (DensePoly E)} (signs : SelectedSigns context.root queries) :
+    Vector (SignFact context) queries.length :=
+  Vector.ofFn fun i => ⟨queries[i.val], signs.values[i.val], by
+    rw [context.signPoly_spec f hz h1 ha hs hm hnat hsign hn hi,
+      Context.evalPoly, Context.rootValue]
+    have values := signs.values_at_root f hz h1 ha hs hm hnat hsign
+    have slot := congrArg (fun xs : List Int => xs[i.val]?) values
+    simpa [signsAt, i.isLt] using slot.symm⟩
+
+/-- This executable extraction retains every original slot literally. -/
+theorem Context.signFacts_fields (context : Context E Ctx coeffSign parent)
+    {queries : List (DensePoly E)} (signs : SelectedSigns context.root queries)
+    (i : Fin queries.length) :
+    (context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs)[i.val].polynomial =
+      queries[i.val] ∧
+    (context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs)[i.val].sign =
+      signs.values[i.val] := by
+  simp [Context.signFacts]
+
+/-- Every requested literal key appears among the facts derived from its
+checked joint row. Repeated keys retain their original vector slots. -/
+theorem Context.signFacts_key (context : Context E Ctx coeffSign parent)
+    {queries : List (DensePoly E)} (signs : SelectedSigns context.root queries)
+    (p : DensePoly E) (hp : p ∈ queries) :
+    ∃ fact ∈ (context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs).toList,
+      fact.polynomial = p := by
+  obtain ⟨i, bound, same⟩ := List.mem_iff_getElem.mp hp
+  let facts := context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs
+  refine ⟨facts[i], Vector.mem_toList_iff.mpr (Vector.mem_of_getElem rfl), ?_⟩
+  exact (Context.signFacts_fields f hz h1 ha hs hm hnat hsign hn hi
+    context signs ⟨i, bound⟩).1.trans same
+
+/-- A child joint table containing every collected key proves finite-reader
+coverage. It may also contain keys needed by other packets at that level. -/
+theorem Context.signFacts_coversKeys (context : Context E Ctx coeffSign parent)
+    (value : ValueCodec E) (coefficients : List (Element context))
+    (hv : value.Covers (Element.predecessors coefficients))
+    {keys : List (DensePoly E)} (signs : SelectedSigns context.root keys)
+    (included : ∀ p ∈ Element.signKeys coefficients, p ∈ keys) :
+    (Element.signCodec value
+      (context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs).toList).Covers coefficients :=
+  Element.signCodec_covers value _ coefficients hv
+    (fun p hp => Context.signFacts_key f hz h1 ha hs hm hnat hsign hn hi
+      context signs p (included p hp))
+
+/-- A child joint table proves finite-reader coverage for all algebraic
+literals requested by the executable key collector. The predecessor reader
+needs coverage only of the coefficients stored in those literals. -/
+theorem Context.signFacts_covers (context : Context E Ctx coeffSign parent)
+    (value : ValueCodec E) (coefficients : List (Element context))
+    (hv : value.Covers (Element.predecessors coefficients))
+    (signs : SelectedSigns context.root (Element.signKeys coefficients)) :
+    (Element.signCodec value
+      (context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs).toList).Covers coefficients :=
+  Context.signFacts_coversKeys f hz h1 ha hs hm hnat hsign hn hi
+    context value coefficients hv signs (fun _ hp => hp)
+
+/-- Check the supplied child graph once and derive all its requested facts.
+Missing or false evidence returns `none`. This packet's producer is not
+called to fill gaps; coefficient arithmetic may evaluate lower-level signs. -/
+@[expose, macro_inline] def Context.readEvidence? (context : Context E Ctx coeffSign parent)
+    (required : List (DensePoly E)) (evidence : SignEvidence E Ctx) :
+    Option (Vector (SignFact context) required.length) :=
+  let context := context
+  match evidence.check? context required with
+  | none => none
+  | some signs => some (context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs)
+
+/-- Checking a packet made from joint signs returns exactly their scalar
+facts, rather than merely some vector of the same length. -/
+theorem Context.readEvidence_ofSigns [Hashable E] [Hashable Ctx]
+    (context : Context E Ctx coeffSign parent) (queries : List (DensePoly E))
+    (signs : SelectedSigns context.root queries) :
+    context.readEvidence? f hz h1 ha hs hm hnat hsign hn hi queries
+      (SignEvidence.ofSigns signs) =
+        some (context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs) := by
+  unfold Context.readEvidence?
+  dsimp only
+  rw [SignEvidence.check_ofSigns]
+
+/-- Acceptance is exactly the existing independent graph selection. -/
+theorem Context.readEvidence_accept (context : Context E Ctx coeffSign parent)
+    (required : List (DensePoly E)) (evidence : SignEvidence E Ctx) :
+    (context.readEvidence? f hz h1 ha hs hm hnat hsign hn hi required evidence).isSome =
+      (evidence.check? context required).isSome := by
+  unfold Context.readEvidence?
+  dsimp only
+  split <;> simp_all
+
+/-- Arbitrary successful evidence supplies one accepted joint row and all
+facts derived from it. This is not restricted to producer-generated packets. -/
+theorem Context.readEvidence_evidence (context : Context E Ctx coeffSign parent)
+    (required : List (DensePoly E)) (evidence : SignEvidence E Ctx)
+    (facts : Vector (SignFact context) required.length)
+    (h : context.readEvidence? f hz h1 ha hs hm hnat hsign hn hi required evidence = some facts) :
+    ∃ signs, evidence.check? context required = some signs ∧
+      facts = context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs := by
+  unfold Context.readEvidence? at h
+  cases hc : evidence.check? context required with
+  | none => simp [hc] at h
+  | some signs =>
+    simp only [hc, Option.some.injEq] at h
+    exact ⟨signs, rfl, h.symm⟩
+
+/-- Decode the complete context-bound child packet using the supplied
+predecessor reader, then check its graph and exact required key list. -/
+@[expose, macro_inline] def Context.decodeEvidence (context : Context E Ctx coeffSign parent)
+    (value : ValueCodec E) (ctx : ValueCodec Ctx) (required : List (DensePoly E))
+    (input : ByteArray) (limits : Codec.Limits := {}) :
+    Except String (Vector (SignFact context) required.length) := do
+  let context := context
+  let evidence ← (SignEvidence.codec value ctx context.root.raw).decodeBytes input limits
+  match context.readEvidence? f hz h1 ha hs hm hnat hsign hn hi required evidence with
+  | none => throw "child sign evidence rejected"
+  | some facts => return facts
+
+/-- Printing a packet produced from checked joint signs, parsing it and
+checking its graph returns exactly the original scalar facts, provided the
+printed bytes pass the lexical precheck. JSON parser success and node bounds
+are proved. At algebraic levels, `Element.codec` recomputes stored signs to
+provide its global roundtrip law. Strict partial readers use
+`Context.decodeEvidence_covered` instead. -/
+theorem Context.decodeEvidence_ofSigns [Hashable E] [Hashable Ctx]
+    (context : Context E Ctx coeffSign parent)
+    (value : ValueCodec E) (ctx : ValueCodec Ctx) (hv : value.Lawful) (hc : ctx.Lawful)
+    {queries : List (DensePoly E)} (signs : SelectedSigns context.root queries)
+    (limits : Codec.Limits)
+    (bytes : Codec.checkBytes limits
+      ((SignEvidence.codec value ctx context.root.raw).encodeBytes
+        (SignEvidence.ofSigns signs)) = .ok ()) :
+    context.decodeEvidence f hz h1 ha hs hm hnat hsign hn hi value ctx queries
+      ((SignEvidence.codec value ctx context.root.raw).encodeBytes
+        (SignEvidence.ofSigns signs)) limits =
+      .ok (context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs) := by
+  unfold Context.decodeEvidence
+  dsimp only
+  rw [SignEvidence.bytes_ofSigns value ctx hv hc context signs limits bytes]
+  simp only [bind, Except.bind,
+    Context.readEvidence_ofSigns f hz h1 ha hs hm hnat hsign hn hi, pure, Except.pure]
+
+/-- Printing, parsing and checking a produced packet returns the exact
+original scalar facts with a finite predecessor reader. Its literal support
+is collected from the actual packet; no global decoder law is required.
+Graph checking retains ordinary coefficient arithmetic. -/
+theorem Context.decodeEvidence_covered [Hashable E] [Hashable Ctx]
+    (context : Context E Ctx coeffSign parent) (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    {queries : List (DensePoly E)} (signs : SelectedSigns context.root queries)
+    (hv : value.Covers (SignEvidence.coefficients context.root.raw (SignEvidence.ofSigns signs)))
+    (hc : ctx.Covers (SignEvidence.contexts context.root.raw (SignEvidence.ofSigns signs)))
+    (limits : Codec.Limits)
+    (bytes : Codec.checkBytes limits
+      ((SignEvidence.codec value ctx context.root.raw).encodeBytes
+        (SignEvidence.ofSigns signs)) = .ok ()) :
+    context.decodeEvidence f hz h1 ha hs hm hnat hsign hn hi value ctx queries
+      ((SignEvidence.codec value ctx context.root.raw).encodeBytes
+        (SignEvidence.ofSigns signs)) limits =
+      .ok (context.signFacts f hz h1 ha hs hm hnat hsign hn hi signs) := by
+  unfold Context.decodeEvidence
+  dsimp only
+  rw [SignEvidence.bytes_ofSigns_covered value ctx context signs hv hc limits bytes]
+  simp only [bind, Except.bind,
+    Context.readEvidence_ofSigns f hz h1 ha hs hm hnat hsign hn hi, pure, Except.pure]
+
+section Nested
+variable (lower : Context E Ctx coeffSign parent)
+variable {UpperCtx : Type} [DecidableEq UpperCtx] [Hashable E] [Hashable UpperCtx]
+variable {upperParent : UpperCtx}
+variable (g : Element lower → K) (gz : ∀ a, g a = 0 ↔ a = 0)
+variable (g1 : g 1 = 1) (ga : ∀ a b, g (a + b) = g a + g b)
+variable (gs : ∀ a b, g (a - b) = g a - g b)
+variable (gm : ∀ a b, g (a * b) = g a * g b)
+variable (gnat : ∀ n : Nat, g (n : Element lower) = (n : K))
+variable (gsign : ∀ a, Element.sign a = (SignType.sign (g a) : Int))
+variable (gn : ∀ a, g (-a) = -g a) (gi : ∀ a, g a⁻¹ = (g a)⁻¹)
+
+/-- Compose a checked lower joint table with the actual upper byte decoder.
+The lower table contains the keys collected from the upper producer's packet
+and may share one joint table with other packets at the same level.
+The upper graph still checks with ordinary coefficient arithmetic. -/
+theorem Context.decodeEvidence_nested
+    (upper : Context (Element lower) UpperCtx Element.sign upperParent)
+    (value : ValueCodec E) (ctx : ValueCodec UpperCtx)
+    {queries : List (DensePoly (Element lower))} (signs : SelectedSigns upper.root queries)
+    (hv : value.Covers (Element.predecessors
+      (SignEvidence.coefficients upper.root.raw (SignEvidence.ofSigns signs))))
+    {keys : List (DensePoly E)} (lowerSigns : SelectedSigns lower.root keys)
+    (included : ∀ p ∈ Element.signKeys
+      (SignEvidence.coefficients upper.root.raw (SignEvidence.ofSigns signs)), p ∈ keys)
+    (hc : ctx.Covers (SignEvidence.contexts upper.root.raw (SignEvidence.ofSigns signs)))
+    (limits : Codec.Limits)
+    (bytes : Codec.checkBytes limits
+      ((SignEvidence.codec
+        (Element.signCodec value
+          (lower.signFacts f hz h1 ha hs hm hnat hsign hn hi lowerSigns).toList)
+        ctx upper.root.raw).encodeBytes (SignEvidence.ofSigns signs)) = .ok ()) :
+    upper.decodeEvidence g gz g1 ga gs gm gnat gsign gn gi
+      (Element.signCodec value
+        (lower.signFacts f hz h1 ha hs hm hnat hsign hn hi lowerSigns).toList)
+      ctx queries
+      ((SignEvidence.codec
+        (Element.signCodec value
+          (lower.signFacts f hz h1 ha hs hm hnat hsign hn hi lowerSigns).toList)
+        ctx upper.root.raw).encodeBytes (SignEvidence.ofSigns signs)) limits =
+      .ok (upper.signFacts g gz g1 ga gs gm gnat gsign gn gi signs) := by
+  apply Context.decodeEvidence_covered g gz g1 ga gs gm gnat gsign gn gi
+  · exact Context.signFacts_coversKeys f hz h1 ha hs hm hnat hsign hn hi lower value _
+      hv lowerSigns included
+  · exact hc
+  · exact bytes
+
+end Nested
+
+/-- Success refers to the actual decoded bytes and accepted graph. No claim
+about the printer, a cached sign or a second certificate replaces that check. -/
+theorem Context.decodeEvidence_evidence (context : Context E Ctx coeffSign parent)
+    (value : ValueCodec E) (ctx : ValueCodec Ctx) (required : List (DensePoly E))
+    (input : ByteArray) (limits : Codec.Limits)
+    (facts : Vector (SignFact context) required.length)
+    (h : context.decodeEvidence f hz h1 ha hs hm hnat hsign hn hi
+      value ctx required input limits = .ok facts) :
+    ∃ evidence, (SignEvidence.codec value ctx context.root.raw).decodeBytes input limits =
+        .ok evidence ∧
+      context.readEvidence? f hz h1 ha hs hm hnat hsign hn hi required evidence = some facts := by
+  unfold Context.decodeEvidence at h
+  cases hd : (SignEvidence.codec value ctx context.root.raw).decodeBytes input limits with
+  | error error => simp [hd, bind, Except.bind] at h
+  | ok evidence =>
+    simp only [hd, bind, Except.bind] at h
+    cases hc : context.readEvidence? f hz h1 ha hs hm hnat hsign hn hi required evidence with
+    | none => simp [hc] at h
+    | some result =>
+      simp only [hc, pure, Except.pure, Except.ok.injEq] at h
+      subst facts
+      exact ⟨evidence, rfl, hc⟩
+
+include f hz h1 ha hs hm hnat hsign hn hi in
+/-- Under the existing coefficient interpretation laws, the actual shared
+producer always returns a child packet. No availability hypothesis or fallback
+certificate is supplied by the caller. -/
+theorem Context.buildEvidence_success [Hashable E] [Hashable Ctx]
+    (context : Context E Ctx coeffSign parent) (queries : List (DensePoly E)) :
+    ∃ evidence, context.buildEvidence queries = .ok evidence ∧
+      (evidence.check? context queries).isSome = true := by
+  obtain ⟨signs, success⟩ := context.root.buildSigns_success f hz h1 ha hs hm hnat hsign hn hi queries
+  have hc : context.buildSigns queries = .ok signs := by
+    rw [context.buildSigns_eq]
+    exact success
+  exact ⟨SignEvidence.ofSigns signs, context.buildEvidence_of_success queries signs hc,
+    by simp only [SignEvidence.check_ofSigns, Option.isSome_some]⟩
+
+end Hex.RealClosure.Algebraic
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.signFacts' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.signFacts
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.decodeEvidence_evidence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.decodeEvidence_evidence
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.decodeEvidence_ofSigns' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.decodeEvidence_ofSigns
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.buildEvidence_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.buildEvidence_success
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.decodeEvidence_covered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.decodeEvidence_covered
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.signFacts_covers' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.signFacts_covers
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.decodeEvidence_nested' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.decodeEvidence_nested
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.signFacts_coversKeys' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.signFacts_coversKeys

@@ -216,6 +216,57 @@ private theorem interpreted_power (input : DensePoly E) (n : Nat) :
   rw [Interpret.interpret_map, DensePoly.Interpret.map_natPow f hz hm ha h1,
     power_value, ← Interpret.interpret_map]
 
+omit [CharZero K] [NatCast E] hnat in
+include h1 ha in
+/-- Any divisor with the complete root set supplies the two radical identities.
+This assembly proof applies equally to a raw core and a unit-scaled core. -/
+private theorem identities_for (input core : DensePoly E) (nonzero : input ≠ 0)
+    (divides : Interpret.interpret f hz core ∣ Interpret.interpret f hz input)
+    (roots : ∀ x, (Interpret.interpret f hz core).IsRoot x ↔
+      (Interpret.interpret f hz input).IsRoot x) :
+    let quotient := (DensePoly.divMod input core).1
+    let cofactor := (DensePoly.divMod (DensePoly.natPow core (input.natDegree + 1)) quotient).1
+    (input - core * quotient).isZero = true ∧
+      (DensePoly.natPow core (input.natDegree + 1) - quotient * cofactor).isZero = true := by
+  let quotient := (DensePoly.divMod input core).1
+  let cofactor := (DensePoly.divMod (DensePoly.natPow core (input.natDegree + 1)) quotient).1
+  have inputNe : Interpret.interpret f hz input ≠ 0 := by
+    rw [Interpret.interpret_map]
+    exact polynomial_ne_zero _
+      (fun h => nonzero ((DensePoly.Interpret.map_eq_zero f hz input).mp h))
+  have coreNe : Interpret.interpret f hz core ≠ 0 := by
+    intro h
+    rw [h, zero_dvd_iff] at divides
+    exact inputNe divides
+  have quotientEq : Interpret.interpret f hz quotient =
+      Interpret.interpret f hz input / Interpret.interpret f hz core := by
+    exact congrArg Prod.fst (Interpret.interpret_divMod f hz hs hm hd input core)
+  have productEq : Interpret.interpret f hz core * Interpret.interpret f hz quotient =
+      Interpret.interpret f hz input := by
+    rw [quotientEq]
+    exact EuclideanDomain.mul_div_cancel' coreNe divides
+  have quotientNe : Interpret.interpret f hz quotient ≠ 0 := by
+    intro h
+    rw [h, mul_zero] at productEq
+    exact inputNe productEq.symm
+  have powerDivides : Interpret.interpret f hz quotient ∣
+      (Interpret.interpret f hz core) ^ (input.natDegree + 1) := by
+    simpa only [Interpret.natDegree_interpret] using
+      quotient_dvd_power (Interpret.interpret f hz input) (Interpret.interpret f hz core)
+        (Interpret.interpret f hz quotient) inputNe productEq roots
+  have cofactorEq : Interpret.interpret f hz cofactor =
+      (Interpret.interpret f hz core) ^ (input.natDegree + 1) / Interpret.interpret f hz quotient := by
+    have transfer := congrArg Prod.fst (Interpret.interpret_divMod f hz hs hm hd
+      (DensePoly.natPow core (input.natDegree + 1)) quotient)
+    simpa only [interpreted_power f hz hm h1 ha] using transfer
+  constructor
+  · apply (Interpret.sub_isZero f hz hs input (core * quotient)).mpr
+    rw [Interpret.interpret_mul f hz ha hm]
+    exact productEq.symm
+  · apply (Interpret.sub_isZero f hz hs _ _).mpr
+    rw [interpreted_power f hz hm h1 ha, Interpret.interpret_mul f hz ha hm, cofactorEq]
+    exact (EuclideanDomain.mul_div_cancel' quotientNe powerDivides).symm
+
 include h1 ha in
 -- Mapping the two native division identities expands the quotient algorithms
 -- during elaboration; this local allowance does not change executable search.
@@ -228,8 +279,6 @@ private theorem candidate_identities (input : DensePoly E) (nonzero : input ≠ 
       (DensePoly.natPow core (input.natDegree + 1) - quotient * cofactor).isZero = true := by
   let mapped := DensePoly.Interpret.map f hz input
   let core := (DensePoly.divMod input (DensePoly.gcd input input.derivativeImpl)).1
-  let quotient := (DensePoly.divMod input core).1
-  let cofactor := (DensePoly.divMod (DensePoly.natPow core (input.natDegree + 1)) quotient).1
   have mappedNe : mapped ≠ 0 := fun h => nonzero ((DensePoly.Interpret.map_eq_zero f hz input).mp h)
   have coreEq : DensePoly.Interpret.map f hz core =
       mapped / DensePoly.gcd mapped mapped.derivativeImpl := by
@@ -237,46 +286,16 @@ private theorem candidate_identities (input : DensePoly E) (nonzero : input ≠ 
     rw [DensePoly.Interpret.map_div f hz hs hm hd,
       DensePoly.Interpret.map_gcd f hz hs hm hd, ← DensePoly.derivative_eq_derivativeImpl,
       DensePoly.Interpret.map_derivative f hz hnat hm, DensePoly.derivative_eq_derivativeImpl]
-  have coreDivides : (mapped / DensePoly.gcd mapped mapped.derivativeImpl) ∣ mapped :=
-    divide_dvd mapped _ (DensePoly.gcd_dvd_left _ _)
-  have quotientEq : DensePoly.Interpret.map f hz quotient =
-      mapped / (mapped / DensePoly.gcd mapped mapped.derivativeImpl) := by
-    change DensePoly.Interpret.map f hz (input / core) = _
-    rw [DensePoly.Interpret.map_div f hz hs hm hd, coreEq]
-  have productEq : toPolynomial (mapped / DensePoly.gcd mapped mapped.derivativeImpl) *
-      toPolynomial (mapped / (mapped / DensePoly.gcd mapped mapped.derivativeImpl)) =
-        toPolynomial mapped := by
-    rw [mul_comm]
-    exact divide_mul mapped _ coreDivides
-  have first : Interpret.interpret f hz input =
-      Interpret.interpret f hz core * Interpret.interpret f hz quotient := by
-    simpa only [Interpret.interpret_map, coreEq, quotientEq] using productEq.symm
-  have inputNe := polynomial_ne_zero mapped mappedNe
-  have quotientNe : Interpret.interpret f hz quotient ≠ 0 := by
-    intro zero
-    have identity := first
-    rw [zero, mul_zero] at identity
-    exact inputNe (by simpa only [Interpret.interpret_map] using identity)
-  have powerDivides : Interpret.interpret f hz quotient ∣
-      (Interpret.interpret f hz core) ^ (input.natDegree + 1) := by
-    have divides := quotient_dvd_power (toPolynomial mapped)
-      (toPolynomial (mapped / DensePoly.gcd mapped mapped.derivativeImpl))
-      (toPolynomial (mapped / (mapped / DensePoly.gcd mapped mapped.derivativeImpl)))
-      inputNe productEq (core_roots mapped mappedNe)
-    simpa only [Interpret.interpret_map, coreEq, quotientEq, natDegree_toPolynomial,
-      DensePoly.Interpret.map_degree, mapped] using divides
-  have cofactorEq : Interpret.interpret f hz cofactor =
-      (Interpret.interpret f hz core) ^ (input.natDegree + 1) / Interpret.interpret f hz quotient := by
-    have transfer := congrArg Prod.fst (Interpret.interpret_divMod f hz hs hm hd
-      (DensePoly.natPow core (input.natDegree + 1)) quotient)
-    simpa only [interpreted_power f hz hm h1 ha] using transfer
-  constructor
-  · exact (Interpret.sub_isZero f hz hs input (core * quotient)).mpr
-      (by rw [Interpret.interpret_mul f hz ha hm]; exact first)
-  · apply (Interpret.sub_isZero f hz hs _ _).mpr
-    rw [interpreted_power f hz hm h1 ha, Interpret.interpret_mul f hz ha hm,
-      cofactorEq]
-    exact (EuclideanDomain.mul_div_cancel' quotientNe powerDivides).symm
+  have divides : Interpret.interpret f hz core ∣ Interpret.interpret f hz input := by
+    refine ⟨toPolynomial (DensePoly.gcd mapped mapped.derivativeImpl), ?_⟩
+    simp only [Interpret.interpret_map, coreEq]
+    exact (divide_mul mapped _ (DensePoly.gcd_dvd_left _ _)).symm
+  have roots : ∀ x, (Interpret.interpret f hz core).IsRoot x ↔
+      (Interpret.interpret f hz input).IsRoot x := by
+    intro x
+    simp only [Interpret.interpret_map, coreEq]
+    exact core_roots mapped mappedNe x
+  exact identities_for f hz hs hm hd h1 ha input core nonzero divides roots
 
 include h1 ha in
 /-- Zero-reflecting characteristic-zero arithmetic makes the actual bounded
@@ -293,6 +312,73 @@ theorem build_success {Ctx : Type w} [DecidableEq Ctx] (context : Ctx)
       (DensePoly.gcd input input.derivativeImpl)).1 = 0
     rw [zero, Interpret.interpret_zero]
   exact build_fromIdentities context input nonzero identities coreNe
+
+omit [CharZero K] [IsAlgClosed K] [One E] [Add E] [Sub E] [Div E] [NatCast E]
+  hs hd hnat h1 ha in
+include hm in
+private theorem monic_associated [Inv E] (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
+    (core : DensePoly E) (nonzero : core ≠ 0) :
+    Associated (Interpret.interpret f hz core)
+      (Interpret.interpret f hz (DensePoly.monicize core)) := by
+  rw [Interpret.interpret_map, Interpret.interpret_map,
+    DensePoly.Interpret.map_monicize f hz hm hi,
+    DensePoly.monicize_eq_scale, toPolynomial_scale, mul_comm]
+  apply associated_mul_unit_right
+  apply (isUnit_iff_ne_zero.mpr (inv_ne_zero
+    (DensePoly.leadingCoeff_ne_zero
+      (fun h => nonzero ((DensePoly.Interpret.map_eq_zero f hz core).mp h))))).map
+
+include h1 ha in
+/-- Unit scaling preserves the complete root set and both radical identities,
+so the actual monic producer succeeds on every nonzero lawful input. -/
+theorem buildMonic_success [Inv E] (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
+    {Ctx : Type w} [DecidableEq Ctx] (context : Ctx)
+    (input : DensePoly E) (nonzero : input ≠ 0) :
+    ∃ cert, buildMonic context input = some cert := by
+  let raw := (DensePoly.divMod input (DensePoly.gcd input input.derivativeImpl)).1
+  let core := DensePoly.monicize raw
+  have separable := core_interpret f hz hs hm hd hnat input nonzero
+  have rawNe : raw ≠ 0 := by
+    intro h
+    apply separable.ne_zero
+    change Interpret.interpret f hz raw = 0
+    rw [h, Interpret.interpret_zero]
+  have association := monic_associated f hz hm hi raw rawNe
+  have rawPolyNe : Interpret.interpret f hz raw ≠ 0 := separable.ne_zero
+  have corePolyNe : Interpret.interpret f hz core ≠ 0 := by
+    intro h
+    exact rawPolyNe (association.eq_zero_iff.mpr h)
+  have coreNe : core ≠ 0 := by
+    intro h
+    apply corePolyNe
+    rw [h, Interpret.interpret_zero]
+  have rawIdentities := candidate_identities f hz hs hm hd hnat h1 ha input nonzero
+  have rawDivides : Interpret.interpret f hz raw ∣ Interpret.interpret f hz input := by
+    refine ⟨Interpret.interpret f hz (DensePoly.divMod input raw).1, ?_⟩
+    have identity := (Interpret.sub_isZero f hz hs input
+      (raw * (DensePoly.divMod input raw).1)).mp rawIdentities.1
+    simpa only [Interpret.interpret_mul f hz ha hm] using identity
+  have divides : Interpret.interpret f hz core ∣ Interpret.interpret f hz input :=
+    association.dvd_iff_dvd_left.mp rawDivides
+  have rawRoots : ∀ x, (Interpret.interpret f hz raw).IsRoot x ↔
+      (Interpret.interpret f hz input).IsRoot x := by
+    intro x
+    simp only [Interpret.interpret_map]
+    change (toPolynomial (DensePoly.Interpret.map f hz
+      (input / DensePoly.gcd input input.derivativeImpl))).IsRoot x ↔ _
+    rw [DensePoly.Interpret.map_div f hz hs hm hd,
+      DensePoly.Interpret.map_gcd f hz hs hm hd,
+      ← DensePoly.derivative_eq_derivativeImpl,
+      DensePoly.Interpret.map_derivative f hz hnat hm, DensePoly.derivative_eq_derivativeImpl]
+    exact core_roots _ (fun h => nonzero ((DensePoly.Interpret.map_eq_zero f hz input).mp h)) x
+  have roots : ∀ x, (Interpret.interpret f hz core).IsRoot x ↔
+      (Interpret.interpret f hz input).IsRoot x := by
+    intro x
+    rw [← Polynomial.mem_roots corePolyNe, ← association.roots_eq,
+      Polynomial.mem_roots rawPolyNe]
+    exact rawRoots x
+  exact buildMonic_fromIdentities context input nonzero
+    (identities_for f hz hs hm hd h1 ha input core nonzero divides roots) coreNe
 
 omit hz hs hm hd hnat in
 private theorem core_squarefree (value : E → ℝ) (zero : ∀ a, value a = 0 ↔ a = 0)
@@ -348,6 +434,30 @@ theorem build_success_real {Ctx : Type w} [DecidableEq Ctx]
     (fun a b => by simp only [add, Complex.ofReal_add]) context input nonzero
 
 omit hz hs hm hd hnat in
+/-- The normalized producer's progress uses the same ordinary complex embedding
+as the raw producer; normalization additionally preserves inversion. -/
+theorem buildMonic_success_real [Inv E] {Ctx : Type w} [DecidableEq Ctx]
+    (value : E → ℝ) (zero : ∀ a, value a = 0 ↔ a = 0)
+    (one : value (1 : E) = 1) (add : ∀ a b, value (a+b) = value a + value b)
+    (sub : ∀ a b, value (a-b) = value a - value b)
+    (mul : ∀ a b, value (a*b) = value a * value b)
+    (div : ∀ a b, value (a/b) = value a / value b)
+    (inv : ∀ a, value a⁻¹ = (value a)⁻¹)
+    (nat : ∀ n : Nat, value (n : E) = (n : ℝ))
+    (context : Ctx) (input : DensePoly E) (nonzero : input ≠ 0) :
+    ∃ cert, buildMonic context input = some cert := by
+  classical
+  exact buildMonic_success (fun a => (value a : ℂ))
+    (fun a => by simpa only [Complex.ofReal_eq_zero] using zero a)
+    (fun a b => by simp only [sub, Complex.ofReal_sub])
+    (fun a b => by simp only [mul, Complex.ofReal_mul])
+    (fun a b => by simp only [div, Complex.ofReal_div])
+    (fun n => by simp only [nat, Complex.ofReal_natCast])
+    (by simp only [one, Complex.ofReal_one])
+    (fun a b => by simp only [add, Complex.ofReal_add])
+    (fun a => by simp only [inv, Complex.ofReal_inv]) context input nonzero
+
+omit hz hs hm hd hnat in
 /-- A returned radical certificate has a genuinely squarefree interpreted
 core, derived from the producer's exact gcd quotient rather than assumed. -/
 theorem build_squarefree {Ctx : Type w} [DecidableEq Ctx]
@@ -361,6 +471,28 @@ theorem build_squarefree {Ctx : Type w} [DecidableEq Ctx]
     Squarefree (Interpret.interpret value zero cert.core) := by
   rw [build_core context input cert produced]
   exact core_squarefree value zero sub mul div nat input (build_nonzero context input cert produced)
+
+omit hz hs hm hd hnat in
+/-- Unit normalization preserves the squarefree interpreted core of an actual
+successful producer result, without assuming squarefreeness in its certificate. -/
+theorem buildMonic_squarefree [Inv E] {Ctx : Type w} [DecidableEq Ctx]
+    (value : E → ℝ) (zero : ∀ a, value a = 0 ↔ a = 0)
+    (sub : ∀ a b, value (a-b) = value a - value b)
+    (mul : ∀ a b, value (a*b) = value a * value b)
+    (div : ∀ a b, value (a/b) = value a / value b)
+    (inv : ∀ a, value a⁻¹ = (value a)⁻¹)
+    (nat : ∀ n : Nat, value (n : E) = (n : ℝ))
+    (context : Ctx) (input : DensePoly E) (cert : RadicalCert E Ctx)
+    (produced : buildMonic context input = some cert) :
+    Squarefree (Interpret.interpret value zero cert.core) := by
+  rw [buildMonic_core context input cert produced]
+  have simple := core_squarefree value zero sub mul div nat input
+    (buildMonic_nonzero context input cert produced)
+  have nonzero : (input / DensePoly.gcd input input.derivativeImpl) ≠ 0 := by
+    intro h
+    apply simple.ne_zero
+    rw [h, Interpret.interpret_zero]
+  exact (monic_associated value zero mul inv _ nonzero).squarefree_iff.mp simple
 
 omit hz hs hm hd hnat in
 /-- Execute the original bounded radical search using its proved progress law.

@@ -1,0 +1,126 @@
+{
+  "cpu": 15,
+  "head": "4f44b806075ae95ad1b3f05c55e6c1ad5bd3f423",
+  "host": "chungus2",
+  "load_start": [
+    13.26318359375,
+    14.29736328125,
+    13.55712890625
+  ],
+  "source_sha256": "825099db4834e3a4b3d50a472463eaabaac80914f3fba9768024b40b27e691b4",
+  "executable_sha256": "c56a92df8768359135ff9d71cdc90ff471754d880b57bb01e6e984a184dcead3",
+  "commands": [
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "compare",
+      "Hex.RealAlgebraicBench.runCompare",
+      "Hex.RealAlgebraicBench.runCompareExact",
+      "Hex.RealAlgebraicBench.runQqbarCompare",
+      "Hex.RealAlgebraicBench.runQqbarProtocol",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-readiness-comparisons/separated-0.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "compare",
+      "Hex.RealAlgebraicBench.runQqbarProtocol",
+      "Hex.RealAlgebraicBench.runQqbarCompare",
+      "Hex.RealAlgebraicBench.runCompareExact",
+      "Hex.RealAlgebraicBench.runCompare",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-readiness-comparisons/separated-1.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "compare",
+      "Hex.RealAlgebraicBench.runCompare",
+      "Hex.RealAlgebraicBench.runCompareExact",
+      "Hex.RealAlgebraicBench.runQqbarCompare",
+      "Hex.RealAlgebraicBench.runQqbarProtocol",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-readiness-comparisons/separated-2.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "compare",
+      "Hex.RealAlgebraicBench.runQqbarProtocol",
+      "Hex.RealAlgebraicBench.runQqbarCompare",
+      "Hex.RealAlgebraicBench.runCompareExact",
+      "Hex.RealAlgebraicBench.runCompare",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-readiness-comparisons/separated-3.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "compare",
+      "Hex.RealAlgebraicBench.runCloseCompare",
+      "Hex.RealAlgebraicBench.runCloseExact",
+      "Hex.RealAlgebraicBench.runQqbarCloseCompare",
+      "Hex.RealAlgebraicBench.runQqbarProtocol",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-readiness-comparisons/close-0.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "compare",
+      "Hex.RealAlgebraicBench.runQqbarProtocol",
+      "Hex.RealAlgebraicBench.runQqbarCloseCompare",
+      "Hex.RealAlgebraicBench.runCloseExact",
+      "Hex.RealAlgebraicBench.runCloseCompare",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-readiness-comparisons/close-1.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "compare",
+      "Hex.RealAlgebraicBench.runCloseCompare",
+      "Hex.RealAlgebraicBench.runCloseExact",
+      "Hex.RealAlgebraicBench.runQqbarCloseCompare",
+      "Hex.RealAlgebraicBench.runQqbarProtocol",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-readiness-comparisons/close-2.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "compare",
+      "Hex.RealAlgebraicBench.runQqbarProtocol",
+      "Hex.RealAlgebraicBench.runQqbarCloseCompare",
+      "Hex.RealAlgebraicBench.runCloseExact",
+      "Hex.RealAlgebraicBench.runCloseCompare",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-readiness-comparisons/close-3.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "compare",
+      "Hex.RealAlgebraicBench.runCloseCompare",
+      "Hex.RealAlgebraicBench.runCloseExact",
+      "--repeats",
+      "4",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-readiness-comparisons/shift-20.json"
+    ]
+  ],
+  "load_end": [
+    14.23828125,
+    14.4697265625,
+    13.62109375
+  ],
+  "executable_unchanged": true
+}

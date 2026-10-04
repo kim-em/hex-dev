@@ -1,0 +1,372 @@
+{
+  "family": "sturm-translated-fieldreplay",
+  "function": "Hex.SturmFrontendBench.runFieldReplayBits",
+  "parameter": 32768,
+  "cpu": 36,
+  "load": [
+    20.1162109375,
+    13.0986328125,
+    10.68212890625
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/tmp/issue-10577-perf/sturm-translated-fieldreplay",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex10577-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_PROFILE_KERNEL=1",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10577-perf/sturm-translated-fieldreplay/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "profile",
+        "Hex.SturmFrontendBench.runFieldReplayBits",
+        "--param",
+        "32768",
+        "--target-inner-nanos",
+        "2000000000",
+        "--max-seconds-per-call",
+        "60",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/samply.json.gz",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/samply.json.gz",
+        "--perf-script",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/spawn-anchor.json",
+        "--output",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "/tmp/hex10577-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/normalized.json.gz",
+        "--sidecar",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/timed-1340262.jsonl",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/spawn-anchor.json",
+        "--out",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/filtered.json.gz",
+        "--output",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/filtered.json.gz",
+        "--symbols",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/symbols.json",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/sturm-translated-fieldreplay/diagnostics.json",
+        "--thread",
+        "hexsturm_bench",
+        "--top",
+        "20",
+        "--output",
+        "reports/bench-results/prerequisite-readiness-profiles/growing-operands/sturm-translated-fieldreplay.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
+  "commit": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1340262,
+    "bench_thread_name": "hexsturm_bench",
+    "bench_thread_tid": "1340265",
+    "regions_total": 65,
+    "total_timed_ms": 1752.544085,
+    "expected_samples_bench_thread": 1750.8,
+    "retained_samples_bench_thread": 1749,
+    "rejected_samples_bench_thread": 93,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1790918279682260854,
+    "spawn_anchor_mono_ns": 328271442870656,
+    "sidecar_mono_anchor_ns": 328271700779681,
+    "samply_meta_start_time_ms": 1790918279723.1157,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.9663329720497131,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.9663329720497131,
+      "raw_max_residual_ms": 0.9819559454917908,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 65,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 1749,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.9663329720497131,
+          "boundary_residual_raw_max_ms": 0.9819559454917908,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.0028587764436821036,
+          "leaf_function_support_size": 421,
+          "comparison_samples": 1749,
+          "exchanged_samples": 10,
+          "exchanged_fraction": 0.005717552887364208,
+          "sampling_noise_allowance": 0.0314787505919848,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.0032780855115111876,
+          "leaf_function_support_size": 422,
+          "comparison_samples": 1744,
+          "exchanged_samples": 7,
+          "exchanged_fraction": 0.0040137614678899085,
+          "sampling_noise_allowance": 0.02644386997785638,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 1749,
+          "top_leaf_functions": [
+            {
+              "function": 40,
+              "name": "0x49691b5",
+              "samples": 54
+            },
+            {
+              "function": 155,
+              "name": "0x496918e",
+              "samples": 51
+            },
+            {
+              "function": 251,
+              "name": "0x49691a2",
+              "samples": 50
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 1749,
+          "top_leaf_functions": [
+            {
+              "function": 40,
+              "name": "0x49691b5",
+              "samples": 53
+            },
+            {
+              "function": 155,
+              "name": "0x496918e",
+              "samples": 51
+            },
+            {
+              "function": 251,
+              "name": "0x49691a2",
+              "samples": 50
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 1744,
+          "top_leaf_functions": [
+            {
+              "function": 40,
+              "name": "0x49691b5",
+              "samples": 53
+            },
+            {
+              "function": 155,
+              "name": "0x496918e",
+              "samples": 50
+            },
+            {
+              "function": 251,
+              "name": "0x49691a2",
+              "samples": 50
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "d40df5947dd338826ff79a6a053ccdc7edeaecd28d6667f6a092758534fc7d11",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "0df97c48d73fcb60d59b7b814093f47711de30dc438c86fd5377838306818975",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "2f25b895118f283e66681b4e0b8f08016f56b9c242fb13b28520c1986ab9c851",
+    "perf.data": "6d9dbb60a7414e05ebcf7ea64260e126044a9e5696c13cda218f156ea89be8ed",
+    "timed-1340262.jsonl": "28305601dceb74eb07f2bc312bb23c812be3a042e67168595487207fb9c6a65d",
+    "5.stdout": "f1e9560ff27fc84317a9ee8049981ca80d9d5fc8c5a144dce444d6a5483acfce",
+    "5.stderr": "c0e4f9a55e3905bd3cbb5dead70b5e47c46588ebf3195fc0bb95184853730e5c",
+    "samply.json.gz": "57e0ecaa24fd13c08df711bf5f98eca35fd7d223a006c948f1a4434f90c0d9cc",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "7.stdout": "89ac50f9d1e019250a809bf6ff09ec1e26f6229592a2d4ff3107dc74d9bc1680",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "89ac50f9d1e019250a809bf6ff09ec1e26f6229592a2d4ff3107dc74d9bc1680",
+    "normalized.json.gz": "e0cc60629ef45044208422043e135b059c6889f26eb265aa2e19792b19773c5f",
+    "8.stdout": "fc63c6f650a9f0ebd4a317e228068b5e3bc5bb502d43585af0061ef6186b57e6",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "8f0542369ae2690aa2600a379e4ebdc79e0c380684f28e0d6a5bc120fecc87ba",
+    "diagnostics.json": "2028c63b5efa76827a0f64c17d5f2982247ee1c4f1cb2cdfbfa893bc6183e477",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "9bddaba565c923b6af816d7f5f44bf27ed0efbebcd8848d549571e1526c3218d",
+    "symbols.json": "a3b7feb5363b50c172bde15fb0793c0d570f3137384b496e0c1a7d15cb016adc",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

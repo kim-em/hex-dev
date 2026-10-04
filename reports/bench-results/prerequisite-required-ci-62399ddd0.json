@@ -1,0 +1,378 @@
+{
+  "source_commit": "62399ddd0cc7416287cafcfb19c51bc6184aef6d",
+  "source_base_commit": "9498f1e2dee9aa95017170509258a6b0174d8310",
+  "run_id": 37122795812,
+  "url": "https://github.com/kim-em/hex-dev/actions/runs/37122795812",
+  "result": "success",
+  "scope": "Completed required CI before the conversion/API rebase. This evidence does not attest the rebased source. All completed observations are retained.",
+  "jobs": [
+    {
+      "name": "build",
+      "conclusion": "success",
+      "started_at": "2026-10-03T12:25:12Z",
+      "completed_at": "2026-10-03T14:45:32Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:25:12Z",
+          "completed_at": "2026-10-03T12:25:14Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:25:14Z",
+          "completed_at": "2026-10-03T12:25:28Z"
+        },
+        {
+          "name": "Classify the change (docs-only fast path)",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:25:28Z",
+          "completed_at": "2026-10-03T12:25:28Z"
+        },
+        {
+          "name": "Run python3 scripts/check_copyright_headers.py",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:25:28Z",
+          "completed_at": "2026-10-03T12:25:28Z"
+        },
+        {
+          "name": "Lint Lean file line counts (SPEC/CI.md \u00a7Source-file lints)",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:25:28Z",
+          "completed_at": "2026-10-03T12:25:29Z"
+        },
+        {
+          "name": "Check dependency DAG and trusted-internals imports",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:25:29Z",
+          "completed_at": "2026-10-03T12:32:10Z"
+        },
+        {
+          "name": "Check the released manifest and Phase-7 admission state",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:32:10Z",
+          "completed_at": "2026-10-03T12:32:14Z"
+        },
+        {
+          "name": "Check the manual's released/unreleased split matches released.yml",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:32:14Z",
+          "completed_at": "2026-10-03T12:32:14Z"
+        },
+        {
+          "name": "Run python3 -m unittest scripts/release/test_sync_released.py",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:32:14Z",
+          "completed_at": "2026-10-03T12:32:19Z"
+        },
+        {
+          "name": "Run python3 scripts/release/check_trust_surface.py",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:32:19Z",
+          "completed_at": "2026-10-03T12:32:25Z"
+        },
+        {
+          "name": "Cross-check every compiled clmul path (HexGF2/SPEC/hex-gf2.md)",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:32:25Z",
+          "completed_at": "2026-10-03T12:32:25Z"
+        },
+        {
+          "name": "Run python3 scripts/check_phase4.py",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:32:25Z",
+          "completed_at": "2026-10-03T12:32:26Z"
+        },
+        {
+          "name": "Check Phase 7 chapters and anchored tutorials (PLAN/Phase7.md)",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:32:26Z",
+          "completed_at": "2026-10-03T12:32:26Z"
+        },
+        {
+          "name": "Run bench source lints (SPEC/benchmarking.md)",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:32:26Z",
+          "completed_at": "2026-10-03T12:33:01Z"
+        },
+        {
+          "name": "Check benches are Mathlib-free (SPEC/benchmarking.md)",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:33:01Z",
+          "completed_at": "2026-10-03T12:33:29Z"
+        },
+        {
+          "name": "Verify conformance matrix invariant",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:33:29Z",
+          "completed_at": "2026-10-03T12:33:29Z"
+        },
+        {
+          "name": "Validate committed PNT+ inventory (offline)",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:33:29Z",
+          "completed_at": "2026-10-03T12:33:30Z"
+        },
+        {
+          "name": "Install system dependencies",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:33:30Z",
+          "completed_at": "2026-10-03T12:33:42Z"
+        },
+        {
+          "name": "Install Python dependencies (bench comparator + oracles)",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:33:42Z",
+          "completed_at": "2026-10-03T12:34:07Z"
+        },
+        {
+          "name": "Verify performance measurements and figures are current",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:34:07Z",
+          "completed_at": "2026-10-03T12:34:32Z"
+        },
+        {
+          "name": "Set up pinned Lean toolchain (no build)",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:34:32Z",
+          "completed_at": "2026-10-03T12:34:39Z"
+        },
+        {
+          "name": "Fetch Mathlib cache",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:34:39Z",
+          "completed_at": "2026-10-03T12:36:38Z"
+        },
+        {
+          "name": "Verify Mathlib cache populated (hard fail on miss)",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:36:38Z",
+          "completed_at": "2026-10-03T12:36:39Z"
+        },
+        {
+          "name": "Configure Lean shared library path",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:36:39Z",
+          "completed_at": "2026-10-03T12:36:39Z"
+        },
+        {
+          "name": "Restore .lake/build (project and AINTLIB modules)",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:36:39Z",
+          "completed_at": "2026-10-03T12:37:08Z"
+        },
+        {
+          "name": "Configure Lake artifact cache (no-op unless endpoints set)",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:37:09Z",
+          "completed_at": "2026-10-03T12:37:09Z"
+        },
+        {
+          "name": "Restore hex-dev oleans from the Lake cache (anonymous; non-fatal)",
+          "conclusion": "skipped",
+          "started_at": "2026-10-03T12:37:09Z",
+          "completed_at": "2026-10-03T12:37:09Z"
+        },
+        {
+          "name": "Disable implicit Lake cache restores during build",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:37:09Z",
+          "completed_at": "2026-10-03T12:37:09Z"
+        },
+        {
+          "name": "Assert Mathlib will not rebuild (lake build --no-build)",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:37:09Z",
+          "completed_at": "2026-10-03T12:37:35Z"
+        },
+        {
+          "name": "Define the hex-dev cache + build target sets",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:37:35Z",
+          "completed_at": "2026-10-03T12:37:35Z"
+        },
+        {
+          "name": "Decide whether to collect Conway rebuild evidence",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:37:35Z",
+          "completed_at": "2026-10-03T12:37:35Z"
+        },
+        {
+          "name": "Collect Conway rebuild evidence",
+          "conclusion": "skipped",
+          "started_at": "2026-10-03T12:37:35Z",
+          "completed_at": "2026-10-03T12:37:35Z"
+        },
+        {
+          "name": "Build hex libraries + bench exes",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:37:35Z",
+          "completed_at": "2026-10-03T12:53:18Z"
+        },
+        {
+          "name": "Verify Conway generation and compiled certificates",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:53:18Z",
+          "completed_at": "2026-10-03T12:53:20Z"
+        },
+        {
+          "name": "Verify Conway rebuild provenance",
+          "conclusion": "skipped",
+          "started_at": "2026-10-03T12:53:20Z",
+          "completed_at": "2026-10-03T12:53:20Z"
+        },
+        {
+          "name": "Upload Conway rebuild evidence",
+          "conclusion": "skipped",
+          "started_at": "2026-10-03T12:53:20Z",
+          "completed_at": "2026-10-03T12:53:20Z"
+        },
+        {
+          "name": "Verify deterministic HexPrimality table regeneration",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:53:20Z",
+          "completed_at": "2026-10-03T12:53:25Z"
+        },
+        {
+          "name": "Build conformance + emit-fixture targets",
+          "conclusion": "success",
+          "started_at": "2026-10-03T12:53:25Z",
+          "completed_at": "2026-10-03T13:15:25Z"
+        },
+        {
+          "name": "Check real-closure architecture experiments",
+          "conclusion": "success",
+          "started_at": "2026-10-03T13:15:25Z",
+          "completed_at": "2026-10-03T13:16:33Z"
+        },
+        {
+          "name": "Build HexManual",
+          "conclusion": "success",
+          "started_at": "2026-10-03T13:16:33Z",
+          "completed_at": "2026-10-03T13:26:03Z"
+        },
+        {
+          "name": "Save .lake/build (project and AINTLIB modules; main only)",
+          "conclusion": "skipped",
+          "started_at": "2026-10-03T13:26:03Z",
+          "completed_at": "2026-10-03T13:26:03Z"
+        },
+        {
+          "name": "Bench verify (smoke gate per SPEC/benchmarking.md \u00a7CI integration)",
+          "conclusion": "success",
+          "started_at": "2026-10-03T13:26:03Z",
+          "completed_at": "2026-10-03T13:31:53Z"
+        },
+        {
+          "name": "Conformance oracles + BZ gates",
+          "conclusion": "success",
+          "started_at": "2026-10-03T13:26:03Z",
+          "completed_at": "2026-10-03T14:45:29Z"
+        },
+        {
+          "name": "Wait for all",
+          "conclusion": "success",
+          "started_at": "2026-10-03T13:26:03Z",
+          "completed_at": "2026-10-03T14:45:29Z"
+        },
+        {
+          "name": "Gate on parallel verification results (fail-closed)",
+          "conclusion": "success",
+          "started_at": "2026-10-03T14:45:29Z",
+          "completed_at": "2026-10-03T14:45:29Z"
+        },
+        {
+          "name": "Publish hex-dev oleans to the Lake cache (main only)",
+          "conclusion": "skipped",
+          "started_at": "2026-10-03T14:45:29Z",
+          "completed_at": "2026-10-03T14:45:29Z"
+        },
+        {
+          "name": "Upload failure records",
+          "conclusion": "skipped",
+          "started_at": "2026-10-03T14:45:29Z",
+          "completed_at": "2026-10-03T14:45:29Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success",
+          "started_at": "2026-10-03T14:45:29Z",
+          "completed_at": "2026-10-03T14:45:29Z"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success",
+          "started_at": "2026-10-03T14:45:29Z",
+          "completed_at": "2026-10-03T14:45:29Z"
+        }
+      ]
+    }
+  ],
+  "bench_verify": {
+    "total_seconds": 349,
+    "hard_cap_seconds": 360,
+    "remaining_seconds": 11,
+    "real_algebraic_seconds": 63,
+    "per_executable_seconds": {
+      "hexrealalgebraic_bench": 63,
+      "hexroots_bench": 47,
+      "hexgf2_bench": 46,
+      "hexpolyzgcd_bench": 33,
+      "hexmodular_bench": 32,
+      "hexnumberfieldtower_bench": 31,
+      "hexnumberfield_bench": 21,
+      "hexgenericrank_bench": 15,
+      "hexintfactor_bench": 10,
+      "hexpoly_bench": 6,
+      "hexkronecker_bench": 6,
+      "hexrealclosure_bench": 4,
+      "hexprimality_bench": 4,
+      "hextruncatedseries_bench": 3,
+      "hexrowreduce_bench": 2,
+      "hexrcf_bench": 2,
+      "hexrank_bench": 2,
+      "hexecpp_bench": 2,
+      "hexsturm_bench": 1,
+      "hexsparsepoly_bench": 1,
+      "hexreflect_bench": 1,
+      "hexrationalfn_bench": 1,
+      "hexpolysmith_bench": 1,
+      "hexpolyfast_bench": 1,
+      "hexpolydet_bench": 1,
+      "hexorderedfn_bench": 1,
+      "hexmvgcd_bench": 1,
+      "hexmodularmatrix_bench": 1,
+      "hexmodarith_bench": 1,
+      "hexlatticeenum_bench": 1,
+      "hexhermite_bench": 1,
+      "hexhensel_bench": 1,
+      "hexgraphiso_bench": 1,
+      "hexgfqring_bench": 1,
+      "hexdeterminant_bench": 1,
+      "hexcharpoly_bench": 1,
+      "hexbz_bench": 1,
+      "hexberlekamp_bench": 1,
+      "hexsmith_bench": 0,
+      "hexsigndet_bench": 0,
+      "hexresultant_bench": 0,
+      "hexrealroots_bench": 0,
+      "hexrealformula_bench": 0,
+      "hexpolyz_bench": 0,
+      "hexpolyfp_bench": 0,
+      "hexpermgroup_bench": 0,
+      "hexmvpoly_bench": 0,
+      "hexminpoly_bench": 0,
+      "hexmatrix_bench": 0,
+      "hexlll_gram_bench": 0,
+      "hexgramschmidt_bench": 0,
+      "hexgfqfield_bench": 0,
+      "hexgfq_bench": 0,
+      "hexdeterminantalideal_bench": 0,
+      "hexdet_bench": 0,
+      "hexconway_bench": 0,
+      "hexarith_bench": 0
+    },
+    "concern": "Shared-host variance and expensive canonical fixed arithmetic leave narrow CI headroom. These operational durations are not scientific performance budgets."
+  }
+}

@@ -106,6 +106,10 @@ python3 scripts/oracle/sign_det_common_fields.py --check
 python3 -m unittest scripts.oracle.test_sign_det_common_fields
 ```
 
+The emitter uses the certified interval field sign. Its `--legacy` option runs
+the same fixtures with canonical conversion for each sign callback; the paired
+measurement driver compares these explicit strategies and checks identical output.
+
 `json-bytes.jsonl` contains integer-only JSON byte inputs for the total
 `Codec.Json` backend. The compiled `hexsigndet_json_bytes` driver parses the
 enclosed bytes; Python's standard JSON parser independently checks acceptance
@@ -118,3 +122,10 @@ lake build hexsigndet_json_bytes
 python3 scripts/oracle/sign_det_json_bytes.py
 python3 -m unittest scripts.oracle.test_sign_det_json_bytes
 ```
+
+`field-signs.jsonl` records twenty close-value signs in quadratic and cubic
+fields, including both signs of each prescribed power. Regenerate it with
+`lake build hexsigndet_emit_field_signs` followed by
+`.lake/build/bin/hexsigndet_emit_field_signs > conformance-fixtures/HexSignDet/field-signs.jsonl`.
+The independent qqbar oracle checks the selected generator, coordinate values,
+prescribed powers and signs; CI also checks rejection of modified evidence.

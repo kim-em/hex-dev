@@ -136,7 +136,7 @@ smaller than the automorphism group of the graph. Showing that it is all of
 the automorphism group is a theorem about the graph, which the
 {ref "hex-graph-iso"}[HexGraphIso] chapter discusses.
 
-For a subgroup `H` of `G`, {name}`Hex.PermGroup.Group.leftCosetsWith` returns
+For a subgroup `H` of `G`, {name}`Hex.PermGroup.Group.leftCosetsCapped` returns
 one representative `g` of each left coset `g H`. It takes a bound on the index
 and returns an error, carrying the index, when the index exceeds the bound;
 this lets a caller refuse to allocate a large transversal. It also needs a
@@ -157,7 +157,7 @@ theorem pointFixer_le :
   intro p hp
   exact (symmetric3.mem_stabilizer 2 p).mp hp |>.1
 
-#guard (symmetric3.leftCosetsWith 3 pointFixer
+#guard (symmetric3.leftCosetsCapped 3 pointFixer
   pointFixer_le).isOk
 ```
 
@@ -238,21 +238,21 @@ order 2 is the dihedral group of order 8 again:
 ```lean
 def c2Swap : Perm 2 := Perm.mk #v[1, 0]
 def c2 : Group 2 := Group.ofGenerators #[c2Swap]
-def c2wr2 := c2.wreathProduct c2 (by decide)
+def c2wr2 := c2.wreathProduct c2
 #guard c2wr2.order = 8
 #guard c2wr2.generators.size = 3
 
 def c2Element : Element c2 :=
   ⟨c2Swap, .generator (by simp [c2])⟩
 def baseCopy :=
-  WreathProduct.copy c2 (by decide) 0 c2Element
+  WreathProduct.copy c2 0 c2Element
 def topCopy :=
-  WreathProduct.inr c2 (by decide) c2Element
+  WreathProduct.inr c2 c2Element
 #guard baseCopy != topCopy
 def baseTopIsId : Bool :=
-  WreathProduct.top (by decide) baseCopy == Element.id c2
+  WreathProduct.top baseCopy == Element.id c2
 #guard baseTopIsId
-#guard WreathProduct.top (by decide) topCopy = c2Element
+#guard WreathProduct.top topCopy = c2Element
 
 end HexPermGroupChapter
 ```
@@ -351,28 +351,28 @@ comparison for the other Mathieu groups and for `J2`, `HS`, `McL` and `Co3`.
 
 # Limits on time and space
 
-Many operations have a second form, named with the suffix `With` or `Within`,
-that takes a limit.
+Many operations have a second form that takes a limit. Its name ends in
+`Capped` or `Budgeted`, according to the kind of limit.
 
-When the size of the output is known in advance, the limit is compared with
-it before any work is done. {name}`Hex.PermGroup.Group.elementsWith` lists the
+When the size of the output is known in advance, a `Capped` form compares the
+limit with it before any work is done. {name}`Hex.PermGroup.Group.elementsCapped` lists the
 elements of a group when the order is at most its bound, and otherwise returns
-an error carrying the order. {name}`Hex.PermGroup.Group.leftCosetsWith` does
+an error carrying the order. {name}`Hex.PermGroup.Group.leftCosetsCapped` does
 the same with the index, and {name}`Hex.PermGroup.Group.blockAction` with the
 number of blocks.
 
-Other operations count their work as they go and stop when a budget runs out.
-{name}`Hex.PermGroup.Group.buildWith` is the bounded form of `ofGenerators`:
+A `Budgeted` form counts its work as it goes and stops when the budget runs out.
+{name}`Hex.PermGroup.Group.buildBudgeted` is the bounded form of `ofGenerators`:
 it returns the same group when the budget suffices, and otherwise reports
 which resource ran out, with no group.
 
 Some bounded operations return what they have found so far.
-{name}`Hex.PermGroup.Group.centralizerWith`,
-{name}`Hex.PermGroup.Group.normalizerWith` and
-{name}`Hex.PermGroup.Group.setStabilizerWith` return either the answer or a
-subgroup of it. {name}`Hex.PermGroup.Group.setTransporterWith` returns an
+{name}`Hex.PermGroup.Group.centralizerBudgeted`,
+{name}`Hex.PermGroup.Group.normalizerBudgeted` and
+{name}`Hex.PermGroup.Group.setStabilizerBudgeted` return either the answer or a
+subgroup of it. {name}`Hex.PermGroup.Group.setTransporterBudgeted` returns an
 element, a proof that there is none, or a report that the search was not
-finished. {name}`Hex.PermGroup.Group.derivedSeriesWith` returns the terms of
+finished. {name}`Hex.PermGroup.Group.derivedSeriesCapped` returns the terms of
 the derived series computed before its term limit. A partial result proves
 only what it contains: a subgroup found by an unfinished search may be
 smaller than the answer, and a series cut off before it reaches the trivial

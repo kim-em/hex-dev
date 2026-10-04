@@ -1,0 +1,17 @@
+{
+  "producerOnlyAccepted": true,
+  "omissionExit": 17,
+  "pairRatiosOrdinaryOverCached": [
+    1.4017675726350016,
+    1.399580682385555,
+    1.3331013270606709,
+    1.3927919026187396,
+    1.5876881545760195,
+    1.3820338362588829
+  ],
+  "pairedMedian": 1.3961862925021473,
+  "medianNanosPerReplay": {
+    "cached": 1681237.6475,
+    "ordinary": 2356481.9749999996
+  }
+}

@@ -9,6 +9,8 @@ module
 import all Init.Data.Array.Basic
 
 import HexPermGroupMathlib
+meta import HexPermGroup.Rank
+meta import HexPermGroupMathlib.Rank
 
 namespace Hex.PermGroup.Tests
 
@@ -152,11 +154,51 @@ example (G : Group n) (H : Group m) (p : Element G) (q : Element H) :
       (Element.equiv G p, Element.equiv H q) := DirectProduct.groupEquiv_pair G H p q
 
 example (G : Group n) (H : Group m) (hn : 0 < n) :
-    Nonempty (closure (G.wreathProduct H hn).generators ≃*
+    Nonempty (closure (G.wreathProduct H).generators ≃*
       SemidirectProduct (Fin m → closure G.generators) (closure H.generators) (WreathProduct.subgroupShift G H)) :=
   ⟨WreathProduct.groupEquiv G H hn⟩
 
-example (G : Group n) (H : Group m) (hn : 0 < n) :
-    (WreathProduct.inlHom G H hn).range = (WreathProduct.topHom G H hn).ker := WreathProduct.range_inl G H hn
+example (G : Group n) (H : Group m) :
+    (WreathProduct.inlHom G H).range = (WreathProduct.topHom G H).ker := WreathProduct.range_inl G H
+
+private def rotation : Perm 4 := ⟨#v[1, 2, 3, 0], by decide, by decide⟩
+private def reflection : Perm 4 := ⟨#v[0, 3, 2, 1], by decide, by decide⟩
+private def square : Group 4 := Group.ofGenerators #[rotation, reflection]
+
+/-- `count` draws from Mathlib's `Random` instance for `Element square`. -/
+private def squareDraws (count : Nat) : RandG StdGen (Array (Element square)) := do
+  let mut out := #[]
+  for _ in [0:count] do
+    out := out.push (← Random.rand (Element square))
+  return out
+
+/-- `count` draws from `randomIndex bound`. -/
+private def indexDraws (bound : Nat) (h : 0 < bound) (count : Nat) :
+    RandG StdGen (Array (Fin bound)) := do
+  let mut out := #[]
+  for _ in [0:count] do
+    out := out.push (← randomIndex bound h)
+  return out
+
+-- The instance draws members, and with the fixed seed 2000 draws reach all
+-- 8 elements of the square group.
+#guard ((squareDraws 20).run' (ULift.up (mkStdGen 42))).all (square.contains ·.val)
+#guard
+  let draws := (squareDraws 2000).run' (ULift.up (mkStdGen 42))
+  draws.all (square.contains ·.val) &&
+    (List.range square.order).all fun k => draws.any fun p => (square.rank p).val == k
+example : (Random.rand (Element square) : RandG StdGen (Element square)) =
+    square.randomElement := rfl
+
+-- Bound one draws nothing. A bound above the generator range
+-- `[1, 2147483562]` combines three draws, and its results exceed one draw's span.
+#guard
+  let (k, gen) := (randomIndex 1 (by decide) : RandG StdGen (Fin 1)).run (ULift.up (mkStdGen 7))
+  k.val == 0 && gen.down.s1 == (mkStdGen 7).s1 && gen.down.s2 == (mkStdGen 7).s2
+#guard ((indexDraws (2 ^ 70 + 3) (by decide) 50).run' (ULift.up (mkStdGen 7))).any
+  (·.val ≥ 2 ^ 62)
+#guard
+  let draws := (indexDraws 3 (by decide) 300).run' (ULift.up (mkStdGen 7))
+  (List.range 3).all fun k => draws.any (·.val == k)
 
 end Hex.PermGroup.Tests

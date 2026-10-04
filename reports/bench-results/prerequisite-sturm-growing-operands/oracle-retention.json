@@ -1,0 +1,6 @@
+{
+  "original_command": "python scripts/bench/check_sturm_fixtures.py /tmp/issue-10577-axis-fixtures.jsonl",
+  "original_status": "terminated: no completed result; generic qqbar isolation was still running after 22 minutes",
+  "replacement": "generic integer centering of both head and query, with translated dyadic endpoints; full root-sum/domain contract preserved; original certificate identities and endpoint signs are still independently checked",
+  "completed_results": "8 growing-operand fixtures and all 11 existing benchmark fixtures pass with pinned python-flint 0.9.0 / FLINT 3.6.0"
+}

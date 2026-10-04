@@ -57,6 +57,7 @@ ORACLES=(
   "HexRealRoots|hexrealroots_emit_fixtures|scripts/oracle/realroots_flint.py|conformance-fixtures/HexRealRoots/realroots.jsonl"
   "HexSignDet|hexsigndet_json_bytes|scripts/oracle/sign_det_json_bytes.py|conformance-fixtures/HexSignDet/json-bytes.jsonl"
   "HexSignDet|hexsigndet_emit_fixtures|scripts/oracle/sign_det_flint.py|conformance-fixtures/HexSignDet/sign_det.jsonl"
+  "HexSignDet|hexsigndet_emit_field_signs|scripts/oracle/sign_det_field_signs.py|conformance-fixtures/HexSignDet/field-signs.jsonl"
   "HexSignDet|hexsigndet_emit_common_fields|scripts/oracle/sign_det_common_fields.py|conformance-fixtures/HexSignDet/common-fields.jsonl"
   "HexRCF|hexrcf_emit_fixtures|scripts/oracle/rcf_flint.py|conformance-fixtures/HexRCF/rcf.jsonl"
   "HexRoots|hexroots_emit_fixtures|scripts/oracle/roots_flint.py|conformance-fixtures/HexRoots/roots.jsonl"
@@ -91,14 +92,17 @@ ORACLES=(
   "HexPrimality|hexprimality_emit_fixtures|scripts/oracle/primality_pari.py|conformance-fixtures/HexPrimality/primality.jsonl"
   "HexPrimality|hexprimality_squfof_measure|scripts/oracle/primality_squfof.py|conformance-fixtures/HexPrimality/squfof-corpus.jsonl"
   "HexECPP|hexecpp_emit_fixtures|scripts/oracle/ecpp_pari.py|conformance-fixtures/HexECPP/ecpp.jsonl"
+  "HexECPP|hexecpp_emit_class_polynomials|scripts/oracle/ecpp_class_polynomials.py|conformance-fixtures/HexECPP/class-polynomials.jsonl"
   "HexIntFactor|hexintfactor_emit_fixtures|scripts/oracle/intfactor_pari.py|conformance-fixtures/HexIntFactor/intfactor.jsonl"
   "HexNumberField|hexnumberfield_emit_fixtures|scripts/oracle/number_field_flint_pari.py|conformance-fixtures/HexNumberField/number_field.jsonl"
   "HexNumberFieldTower|hexnumberfieldtower_emit_fixtures|scripts/oracle/number_field_tower_pari.py|conformance-fixtures/HexNumberFieldTower/number_field_tower.jsonl"
   # Exact Python integer/Fraction formula evaluation
   "HexRealFormula|hexrealformula_emit_fixtures|scripts/oracle/real_formula.py|conformance-fixtures/HexRealFormula/formula.jsonl"
+  "HexRealClosure|hexrealclosure_trivial_conformance|scripts/oracle/real_closure_trivial.py|conformance-fixtures/HexRealClosure/trivial.jsonl"
   "HexRealClosure|hexrealclosure_bounds_conformance|scripts/oracle/real_closure_bounds.py|conformance-fixtures/HexRealClosure/bounds.jsonl"
   "HexRealClosure|hexrealclosure_deflation_conformance|scripts/oracle/real_closure_deflation.py|conformance-fixtures/HexRealClosure/deflation.jsonl"
   "HexRealClosure|hexrealclosure_isolation_conformance|scripts/oracle/real_closure_isolation.py|conformance-fixtures/HexRealClosure/isolation.jsonl"
+  "HexRealClosure|hexrealclosure_sample_conformance|scripts/oracle/real_closure_samples.py|conformance-fixtures/HexRealClosure/samples.jsonl"
   # Exact Python integer/Fraction Cartesian enumeration
   "HexLatticeEnum|hexlatticeenum_emit_fixtures|scripts/oracle/lattice_enum.py|conformance-fixtures/HexLatticeEnum/latticeenum.jsonl"
   # Conway tables backed
@@ -170,6 +174,9 @@ for entry in "${FILTERED_ORACLES[@]}"; do
   IFS='|' read -r _ emit _ _ <<<"$entry"
   emits+=("$emit")
 done
+if library_selected HexRealClosure; then
+  emits+=("hexrealclosure_trivial_tests")
+fi
 if library_selected HexRealClosure || library_selected HexSignDet; then
   emits+=("hexrealclosure_codec_bytes")
 fi
@@ -213,7 +220,24 @@ run_tuple() {
     return 0
   fi
 
-  if ! ".lake/build/bin/$emit" >"$fresh"; then
+  local emit_command=(".lake/build/bin/$emit")
+  if [ "$oracle" = "scripts/oracle/real_closure_trivial.py" ]; then
+    # Operational CI bound; manual validation retains the complete driver
+    # without a limit. This does not set a scientific performance budget.
+    if timeout 3600 env LEAN_ABORT_ON_PANIC=1 .lake/build/bin/hexrealclosure_trivial_tests; then
+      :
+    else
+      local native_status=$?
+      if [ "$native_status" -eq 124 ]; then
+        echo "TIMEOUT: native rational-tower backend differential tests exceeded 3600 seconds" >&2
+      else
+        echo "FAIL: native rational-tower backend differential tests (exit $native_status)" >&2
+      fi
+      return 1
+    fi
+    emit_command=(env LEAN_ABORT_ON_PANIC=1 "${emit_command[@]}")
+  fi
+  if ! "${emit_command[@]}" >"$fresh"; then
     echo "FAIL: $lib :: $emit exited non-zero"
     return 1
   fi
@@ -250,8 +274,13 @@ run_tuple() {
     fi
   fi
 
-  if [ "$oracle" = "scripts/oracle/sign_det_common_fields.py" ]; then
-    if ! python3 -m unittest scripts.oracle.test_sign_det_common_fields; then
+  if [ "$oracle" = "scripts/oracle/sign_det_common_fields.py" ] ||
+      [ "$oracle" = "scripts/oracle/sign_det_field_signs.py" ]; then
+    local test_class=CommonFieldOracle
+    if [ "$oracle" = "scripts/oracle/sign_det_field_signs.py" ]; then
+      test_class=FieldSignOracle
+    fi
+    if ! python3 -m unittest "scripts.oracle.test_sign_det_common_fields.$test_class"; then
       echo "FAIL: $lib :: common-field oracle rejection checks failed"
       return 1
     fi
@@ -271,6 +300,12 @@ run_tuple() {
     fi
   fi
 
+  if [ "$oracle" = "scripts/oracle/real_closure_trivial.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_real_closure_trivial; then
+      echo "FAIL: native trivial-root oracle mutation tests" >&2
+      return 1
+    fi
+  fi
   if [ "$oracle" = "scripts/oracle/real_closure_bounds.py" ]; then
     if ! python3 -m unittest scripts.oracle.test_real_closure_bounds; then
       echo "FAIL: $lib :: finite-bound oracle rejection checks failed"
@@ -281,6 +316,13 @@ run_tuple() {
   if [ "$oracle" = "scripts/oracle/real_closure_isolation.py" ]; then
     if ! python3 -m unittest scripts.oracle.test_real_closure_isolation; then
       echo "FAIL: $lib :: isolation completion oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
+  if [ "$oracle" = "scripts/oracle/real_closure_samples.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_real_closure_samples; then
+      echo "FAIL: $lib :: section/sector sample oracle rejection checks failed"
       return 1
     fi
   fi

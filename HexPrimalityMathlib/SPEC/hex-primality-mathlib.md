@@ -400,3 +400,14 @@ HexPrimalityMathlibConformance/
   OptIn.lean
 bench/HexPrimalityMathlib/ProofProbe/
 ```
+
+## Optional ECPP suggestion fallback
+
+The shared core `primality?` goal handler may call the optional versioned
+proof-producing fallback after construction exhausts. For `Nat.Prime` it
+requests that exact predicate; it must not retry a failed companion route
+as a separate core route or duplicate the portfolio. The same kernel-checked
+proof and complete frozen suggestion are required as for the core goal.
+No automatic ECPP code is imported by this library. The allocation and
+optional import are owned by
+[hex-ecpp-mathlib](../../HexECPPMathlib/SPEC/hex-ecpp-mathlib.md#automatic-native-fallback).

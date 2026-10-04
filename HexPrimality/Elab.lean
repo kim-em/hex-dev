@@ -16,7 +16,7 @@ public section
 The `primality` term elaborator and tactic.
 
 `primality n` elaborates to a proof of `Hex.Nat.Prime n` for a literal `n`:
-the compiled certificate search runs at elaboration time as untrusted code,
+the certificate search runs at elaboration time, in Lean's interpreter, as untrusted code,
 and the emitted term applies `prime_of_checkPrimeAt` to the reified
 certificate with an `Eq.refl true` slot, so the kernel replays only
 `checkPrime` — `O(K log n)` modular and bounded ordinary multiplications,

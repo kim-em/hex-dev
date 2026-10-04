@@ -716,7 +716,8 @@ def lake_declaration(text: str, name: str) -> tuple[int, int]:
     Managed declarations use `def`, `target`, `extern_lib` or `lean_lib`
     without attributes. Supporting both target forms lets the sync migrate an
     old package-wide `extern_lib` into a library-scoped custom `target`, and
-    `lean_lib` carries a native carrier library (see `HexArithNative`). Refuse
+    `lean_lib` carries a native carrier or sidecar library (see
+    `HexArithNative`). Refuse
     missing or ambiguous declarations rather than modifying the wrong recipe.
     """
     if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_']*", name):
@@ -951,10 +952,11 @@ def _synthesize_manifest_packages(entry: dict, clone: Path, doc: dict,
 def validate_external_imports(entry: dict, clone: Path) -> None:
     """Require the mirror's Lake file to provide checked external import roots.
 
-    The monorepo provides Batteries, Mathlib and Tau Ceti; a mirror only has
-    what its own Lake file requires. Scan synced sources for those roots and
-    fail before pushing when a corresponding requirement is absent. Mathlib
-    also provides Batteries, but does not provide Tau Ceti.
+    The monorepo provides Batteries, Mathlib, Tau Ceti and AINTLIB; a mirror
+    only has what its own Lake file requires. Scan synced sources for these
+    roots and fail before pushing when a corresponding provider is absent.
+    Mathlib also provides Batteries; Tau Ceti and HasseWeil require their
+    own direct dependencies.
     """
     if entry.get("pins_only"):
         return
@@ -967,9 +969,11 @@ def validate_external_imports(entry: dict, clone: Path) -> None:
         provided.add("Batteries")
     if re.search(r'(?i)tauceti\.git|name\s*=\s*"TauCeti"|require\s+TauCeti\b', text):
         provided.add("TauCeti")
+    if re.search(r'(?i)AINTLIB\.git|name\s*=\s*"AINTLIB"|require\s+AINTLIB\b', text):
+        provided.add("HasseWeil")
     roots: dict[str, str] = {}
     pattern = re.compile(
-        r"^\s*(?:(?:public|private|meta)\s+)*import\s+(?:all\s+)?(Batteries|Mathlib|TauCeti)\b",
+        r"^\s*(?:(?:public|private|meta)\s+)*import\s+(?:all\s+)?(Batteries|Mathlib|TauCeti|HasseWeil)\b",
         re.M)
     for src, dest_rel, is_dir in managed_paths(entry):
         dest = clone / dest_rel
@@ -996,7 +1000,7 @@ def validate_external_imports(entry: dict, clone: Path) -> None:
 # because dependents' lockfiles record which file to read.
 DOC_VERSO_OPTIONS = (("doc.verso", "true"), ("doc.verso.suggestions", "false"))
 EXTERNAL_IMPORT_ROOTS = {"Mathlib": "mathlib", "Batteries": "batteries",
-                         "TauCeti": "TauCeti"}
+                         "TauCeti": "TauCeti", "HasseWeil": "AINTLIB"}
 
 
 def _library_deps() -> dict[str, tuple[str, ...]]:

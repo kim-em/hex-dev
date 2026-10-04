@@ -65,7 +65,7 @@ theorem toRat?_eq_some (a : RealAlgebraicNumber) (q : Rat) :
     a.toRat? = some q ↔ a = ofRat q := by
   constructor
   · intro h
-    dsimp only [toRat?] at h
+    rw [toRat?_formula] at h
     split at h
     · rename_i hd
       have heq := Option.some.inj h
@@ -77,7 +77,7 @@ theorem toRat?_eq_some (a : RealAlgebraicNumber) (q : Rat) :
     have hd := ofRat_degree q
     have heq := eq_of_degree_one (ofRat q) hd
     have hq := ofRat_injective heq
-    dsimp only [toRat?]
+    rw [toRat?_formula]
     rw [ite_eq_left hd]
     exact congrArg some hq.symm
 

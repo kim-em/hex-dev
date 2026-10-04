@@ -1,0 +1,740 @@
+{
+  "plan_sha256": "3ddf01bdb78d92cda292ae1e6bd228ca9d826deebaeb80188219acdf918c00e1",
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "cpu": 69,
+  "load_start": [
+    6.25146484375,
+    7.95068359375,
+    10.9052734375
+  ],
+  "revision": "c618e605dabc983fd7a5d4b4259582de48054501",
+  "gp": "/nix/store/8jmg390qca8sv8k077r4h77yqrzmsfy9-pari-2.17.3/bin/gp-2.17",
+  "outcomes": [
+    {
+      "stage": "preparation",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.Prepare",
+      "returncode": 0,
+      "ns": 2556433857,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [183/186] Built HexIntFactor.MeasureExternalnnjilyph.Support (740ms)\n\u2714 [184/186] Built HexIntFactor.MeasureExternalnnjilyph.Support:c.o (187ms)\n\u2714 [185/186] Built HexIntFactor.MeasureExternalnnjilyph.Support:dynlib (39ms)\n\u2714 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.Prepare (600ms)\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "attempts": 6,
+      "factors": [],
+      "fuel": 4,
+      "ns": 59992577,
+      "residual": "1263407822267091861725148110322209",
+      "stage": "native",
+      "status": "Hex.Nat.FactorStop.incomplete",
+      "subject": "1263407822267091861725148110322209"
+    },
+    {
+      "stage": "native_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.Native0Fuel4",
+      "returncode": 0,
+      "ns": 1671563908,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.Native0Fuel4 (655ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/Native0Fuel4.lean:2:0: FACTOR_MEASURE {\"attempts\":6,\"factors\":[],\"fuel\":4,\"ns\":59992577,\"residual\":\"1263407822267091861725148110322209\",\"stage\":\"native\",\"status\":\"Hex.Nat.FactorStop.incomplete\",\"subject\":\"1263407822267091861725148110322209\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "attempts": 2,
+      "factors": [],
+      "fuel": 1,
+      "ns": 28787905,
+      "residual": "1263407822267091861725148110322209",
+      "stage": "native",
+      "status": "Hex.Nat.FactorStop.incomplete",
+      "subject": "1263407822267091861725148110322209"
+    },
+    {
+      "stage": "native_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.Native0Fuel1",
+      "returncode": 0,
+      "ns": 1658115094,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.Native0Fuel1 (624ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/Native0Fuel1.lean:2:0: FACTOR_MEASURE {\"attempts\":2,\"factors\":[],\"fuel\":1,\"ns\":28787905,\"residual\":\"1263407822267091861725148110322209\",\"stage\":\"native\",\"status\":\"Hex.Nat.FactorStop.incomplete\",\"subject\":\"1263407822267091861725148110322209\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "bytes": 107,
+      "ns": 33895485,
+      "output": "HEX_FACTOR_BEGIN\n1263407822267091861725148110322209\n926510094425921 1\n1363620137403810529 1\nHEX_FACTOR_END\n",
+      "stage": "process",
+      "status": "success",
+      "subject": "1263407822267091861725148110322209"
+    },
+    {
+      "ns": 37746,
+      "stage": "parse",
+      "status": "success",
+      "subject": "1263407822267091861725148110322209"
+    },
+    {
+      "attempts": 10,
+      "events": "[]",
+      "factors": [
+        [
+          "926510094425921",
+          1
+        ],
+        [
+          "1363620137403810529",
+          1
+        ]
+      ],
+      "ns": 220167,
+      "residual": "1",
+      "stage": "completion",
+      "status": "complete",
+      "subject": "1263407822267091861725148110322209",
+      "unresolved": "[]"
+    },
+    {
+      "ns": 31537,
+      "stage": "compiled_check",
+      "status": "accepted",
+      "subject": "1263407822267091861725148110322209"
+    },
+    {
+      "bytes": 790,
+      "module": "HexIntFactor.Frozen.Case0",
+      "ns": 2577996,
+      "stage": "export",
+      "status": "written",
+      "subject": "1263407822267091861725148110322209"
+    },
+    {
+      "stage": "external_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.External0",
+      "returncode": 0,
+      "ns": 1649981096,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.External0 (633ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/External0.lean:2:0: FACTOR_MEASURE {\"bytes\":107,\"ns\":33895485,\"output\":\"HEX_FACTOR_BEGIN\\n1263407822267091861725148110322209\\n926510094425921 1\\n1363620137403810529 1\\nHEX_FACTOR_END\\n\",\"stage\":\"process\",\"status\":\"success\",\"subject\":\"1263407822267091861725148110322209\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External0.lean:2:0: FACTOR_MEASURE {\"ns\":37746,\"stage\":\"parse\",\"status\":\"success\",\"subject\":\"1263407822267091861725148110322209\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External0.lean:2:0: FACTOR_MEASURE {\"attempts\":10,\"events\":\"[]\",\"factors\":[[\"926510094425921\",1],[\"1363620137403810529\",1]],\"ns\":220167,\"residual\":\"1\",\"stage\":\"completion\",\"status\":\"complete\",\"subject\":\"1263407822267091861725148110322209\",\"unresolved\":\"[]\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External0.lean:2:0: FACTOR_MEASURE {\"ns\":31537,\"stage\":\"compiled_check\",\"status\":\"accepted\",\"subject\":\"1263407822267091861725148110322209\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External0.lean:2:0: FACTOR_MEASURE {\"bytes\":790,\"module\":\"HexIntFactor.Frozen.Case0\",\"ns\":2577996,\"stage\":\"export\",\"status\":\"written\",\"subject\":\"1263407822267091861725148110322209\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "stage": "fresh_module_replay",
+      "subject": "1263407822267091861725148110322209",
+      "returncode": 0,
+      "ns": 1249807230,
+      "source_bytes": 790,
+      "log": "\u2139 [115/153] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [153/153] Built HexIntFactor.Frozen.Case0 (239ms)\nBuild completed successfully (153 jobs).\n"
+    },
+    {
+      "attempts": 30,
+      "factors": [
+        [
+          "926510094425921",
+          1
+        ],
+        [
+          "2305843009213693951",
+          1
+        ]
+      ],
+      "fuel": 4,
+      "ns": 55487344,
+      "residual": "1",
+      "stage": "native",
+      "status": "complete",
+      "subject": "2136386824197929408955547135303871"
+    },
+    {
+      "stage": "native_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.Native1Fuel4",
+      "returncode": 0,
+      "ns": 1653630597,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.Native1Fuel4 (655ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/Native1Fuel4.lean:2:0: FACTOR_MEASURE {\"attempts\":30,\"factors\":[[\"926510094425921\",1],[\"2305843009213693951\",1]],\"fuel\":4,\"ns\":55487344,\"residual\":\"1\",\"stage\":\"native\",\"status\":\"complete\",\"subject\":\"2136386824197929408955547135303871\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "attempts": 2,
+      "factors": [],
+      "fuel": 1,
+      "ns": 28688899,
+      "residual": "2136386824197929408955547135303871",
+      "stage": "native",
+      "status": "Hex.Nat.FactorStop.incomplete",
+      "subject": "2136386824197929408955547135303871"
+    },
+    {
+      "stage": "native_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.Native1Fuel1",
+      "returncode": 0,
+      "ns": 1653319340,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.Native1Fuel1 (631ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/Native1Fuel1.lean:2:0: FACTOR_MEASURE {\"attempts\":2,\"factors\":[],\"fuel\":1,\"ns\":28688899,\"residual\":\"2136386824197929408955547135303871\",\"stage\":\"native\",\"status\":\"Hex.Nat.FactorStop.incomplete\",\"subject\":\"2136386824197929408955547135303871\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "bytes": 107,
+      "ns": 34055534,
+      "output": "HEX_FACTOR_BEGIN\n2136386824197929408955547135303871\n926510094425921 1\n2305843009213693951 1\nHEX_FACTOR_END\n",
+      "stage": "process",
+      "status": "success",
+      "subject": "2136386824197929408955547135303871"
+    },
+    {
+      "ns": 39859,
+      "stage": "parse",
+      "status": "success",
+      "subject": "2136386824197929408955547135303871"
+    },
+    {
+      "attempts": 14,
+      "events": "[]",
+      "factors": [
+        [
+          "926510094425921",
+          1
+        ],
+        [
+          "2305843009213693951",
+          1
+        ]
+      ],
+      "ns": 340066,
+      "residual": "1",
+      "stage": "completion",
+      "status": "complete",
+      "subject": "2136386824197929408955547135303871",
+      "unresolved": "[]"
+    },
+    {
+      "ns": 34791,
+      "stage": "compiled_check",
+      "status": "accepted",
+      "subject": "2136386824197929408955547135303871"
+    },
+    {
+      "bytes": 869,
+      "module": "HexIntFactor.Frozen.Case1",
+      "ns": 2921046,
+      "stage": "export",
+      "status": "written",
+      "subject": "2136386824197929408955547135303871"
+    },
+    {
+      "stage": "external_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.External1",
+      "returncode": 0,
+      "ns": 1647288261,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.External1 (637ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/External1.lean:2:0: FACTOR_MEASURE {\"bytes\":107,\"ns\":34055534,\"output\":\"HEX_FACTOR_BEGIN\\n2136386824197929408955547135303871\\n926510094425921 1\\n2305843009213693951 1\\nHEX_FACTOR_END\\n\",\"stage\":\"process\",\"status\":\"success\",\"subject\":\"2136386824197929408955547135303871\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External1.lean:2:0: FACTOR_MEASURE {\"ns\":39859,\"stage\":\"parse\",\"status\":\"success\",\"subject\":\"2136386824197929408955547135303871\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External1.lean:2:0: FACTOR_MEASURE {\"attempts\":14,\"events\":\"[]\",\"factors\":[[\"926510094425921\",1],[\"2305843009213693951\",1]],\"ns\":340066,\"residual\":\"1\",\"stage\":\"completion\",\"status\":\"complete\",\"subject\":\"2136386824197929408955547135303871\",\"unresolved\":\"[]\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External1.lean:2:0: FACTOR_MEASURE {\"ns\":34791,\"stage\":\"compiled_check\",\"status\":\"accepted\",\"subject\":\"2136386824197929408955547135303871\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External1.lean:2:0: FACTOR_MEASURE {\"bytes\":869,\"module\":\"HexIntFactor.Frozen.Case1\",\"ns\":2921046,\"stage\":\"export\",\"status\":\"written\",\"subject\":\"2136386824197929408955547135303871\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "stage": "fresh_module_replay",
+      "subject": "2136386824197929408955547135303871",
+      "returncode": 0,
+      "ns": 1249234986,
+      "source_bytes": 869,
+      "log": "\u2139 [115/153] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [153/153] Built HexIntFactor.Frozen.Case1 (234ms)\nBuild completed successfully (153 jobs).\n"
+    },
+    {
+      "attempts": 31,
+      "factors": [
+        [
+          "2305843009213693951",
+          1
+        ],
+        [
+          "18446744073709551557",
+          1
+        ]
+      ],
+      "fuel": 4,
+      "ns": 56343579,
+      "residual": "1",
+      "stage": "native",
+      "status": "complete",
+      "subject": "42535295865117307778430344311653531707"
+    },
+    {
+      "stage": "native_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.Native2Fuel4",
+      "returncode": 0,
+      "ns": 1647128165,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.Native2Fuel4 (659ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/Native2Fuel4.lean:2:0: FACTOR_MEASURE {\"attempts\":31,\"factors\":[[\"2305843009213693951\",1],[\"18446744073709551557\",1]],\"fuel\":4,\"ns\":56343579,\"residual\":\"1\",\"stage\":\"native\",\"status\":\"complete\",\"subject\":\"42535295865117307778430344311653531707\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "attempts": 2,
+      "factors": [],
+      "fuel": 1,
+      "ns": 28956267,
+      "residual": "42535295865117307778430344311653531707",
+      "stage": "native",
+      "status": "Hex.Nat.FactorStop.incomplete",
+      "subject": "42535295865117307778430344311653531707"
+    },
+    {
+      "stage": "native_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.Native2Fuel1",
+      "returncode": 0,
+      "ns": 1661650249,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.Native2Fuel1 (630ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/Native2Fuel1.lean:2:0: FACTOR_MEASURE {\"attempts\":2,\"factors\":[],\"fuel\":1,\"ns\":28956267,\"residual\":\"42535295865117307778430344311653531707\",\"stage\":\"native\",\"status\":\"Hex.Nat.FactorStop.incomplete\",\"subject\":\"42535295865117307778430344311653531707\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "bytes": 116,
+      "ns": 59650119,
+      "output": "HEX_FACTOR_BEGIN\n42535295865117307778430344311653531707\n2305843009213693951 1\n18446744073709551557 1\nHEX_FACTOR_END\n",
+      "stage": "process",
+      "status": "success",
+      "subject": "42535295865117307778430344311653531707"
+    },
+    {
+      "ns": 37806,
+      "stage": "parse",
+      "status": "success",
+      "subject": "42535295865117307778430344311653531707"
+    },
+    {
+      "attempts": 14,
+      "events": "[]",
+      "factors": [
+        [
+          "2305843009213693951",
+          1
+        ],
+        [
+          "18446744073709551557",
+          1
+        ]
+      ],
+      "ns": 375379,
+      "residual": "1",
+      "stage": "completion",
+      "status": "complete",
+      "subject": "42535295865117307778430344311653531707",
+      "unresolved": "[]"
+    },
+    {
+      "ns": 52208,
+      "stage": "compiled_check",
+      "status": "accepted",
+      "subject": "42535295865117307778430344311653531707"
+    },
+    {
+      "bytes": 925,
+      "module": "HexIntFactor.Frozen.Case2",
+      "ns": 3152531,
+      "stage": "export",
+      "status": "written",
+      "subject": "42535295865117307778430344311653531707"
+    },
+    {
+      "stage": "external_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.External2",
+      "returncode": 0,
+      "ns": 1669697279,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.External2 (662ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/External2.lean:2:0: FACTOR_MEASURE {\"bytes\":116,\"ns\":59650119,\"output\":\"HEX_FACTOR_BEGIN\\n42535295865117307778430344311653531707\\n2305843009213693951 1\\n18446744073709551557 1\\nHEX_FACTOR_END\\n\",\"stage\":\"process\",\"status\":\"success\",\"subject\":\"42535295865117307778430344311653531707\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External2.lean:2:0: FACTOR_MEASURE {\"ns\":37806,\"stage\":\"parse\",\"status\":\"success\",\"subject\":\"42535295865117307778430344311653531707\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External2.lean:2:0: FACTOR_MEASURE {\"attempts\":14,\"events\":\"[]\",\"factors\":[[\"2305843009213693951\",1],[\"18446744073709551557\",1]],\"ns\":375379,\"residual\":\"1\",\"stage\":\"completion\",\"status\":\"complete\",\"subject\":\"42535295865117307778430344311653531707\",\"unresolved\":\"[]\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External2.lean:2:0: FACTOR_MEASURE {\"ns\":52208,\"stage\":\"compiled_check\",\"status\":\"accepted\",\"subject\":\"42535295865117307778430344311653531707\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External2.lean:2:0: FACTOR_MEASURE {\"bytes\":925,\"module\":\"HexIntFactor.Frozen.Case2\",\"ns\":3152531,\"stage\":\"export\",\"status\":\"written\",\"subject\":\"42535295865117307778430344311653531707\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "stage": "fresh_module_replay",
+      "subject": "42535295865117307778430344311653531707",
+      "returncode": 0,
+      "ns": 1251372393,
+      "source_bytes": 925,
+      "log": "\u2139 [115/153] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [153/153] Built HexIntFactor.Frozen.Case2 (235ms)\nBuild completed successfully (153 jobs).\n"
+    },
+    {
+      "attempts": 12,
+      "factors": [],
+      "fuel": 4,
+      "ns": 174877490,
+      "residual": "53739425505922110098241478198196257576470600960682015825098539243996639",
+      "stage": "native",
+      "status": "Hex.Nat.FactorStop.incomplete",
+      "subject": "53739425505922110098241478198196257576470600960682015825098539243996639"
+    },
+    {
+      "stage": "native_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.Native3Fuel4",
+      "returncode": 0,
+      "ns": 1755339827,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.Native3Fuel4 (770ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/Native3Fuel4.lean:2:0: FACTOR_MEASURE {\"attempts\":12,\"factors\":[],\"fuel\":4,\"ns\":174877490,\"residual\":\"53739425505922110098241478198196257576470600960682015825098539243996639\",\"stage\":\"native\",\"status\":\"Hex.Nat.FactorStop.incomplete\",\"subject\":\"53739425505922110098241478198196257576470600960682015825098539243996639\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "attempts": 2,
+      "factors": [],
+      "fuel": 1,
+      "ns": 35217614,
+      "residual": "53739425505922110098241478198196257576470600960682015825098539243996639",
+      "stage": "native",
+      "status": "Hex.Nat.FactorStop.incomplete",
+      "subject": "53739425505922110098241478198196257576470600960682015825098539243996639"
+    },
+    {
+      "stage": "native_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.Native3Fuel1",
+      "returncode": 0,
+      "ns": 1647312567,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.Native3Fuel1 (633ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/Native3Fuel1.lean:2:0: FACTOR_MEASURE {\"attempts\":2,\"factors\":[],\"fuel\":1,\"ns\":35217614,\"residual\":\"53739425505922110098241478198196257576470600960682015825098539243996639\",\"stage\":\"native\",\"status\":\"Hex.Nat.FactorStop.incomplete\",\"subject\":\"53739425505922110098241478198196257576470600960682015825098539243996639\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "bytes": 189,
+      "ns": 936301086,
+      "output": "HEX_FACTOR_BEGIN\n53739425505922110098241478198196257576470600960682015825098539243996639\n926510094425921 1\n1363620137403810529 1\n2305843009213693951 1\n18446744069414584321 1\nHEX_FACTOR_END\n",
+      "stage": "process",
+      "status": "success",
+      "subject": "53739425505922110098241478198196257576470600960682015825098539243996639"
+    },
+    {
+      "ns": 57896,
+      "stage": "parse",
+      "status": "success",
+      "subject": "53739425505922110098241478198196257576470600960682015825098539243996639"
+    },
+    {
+      "attempts": 24,
+      "events": "[]",
+      "factors": [
+        [
+          "926510094425921",
+          1
+        ],
+        [
+          "1363620137403810529",
+          1
+        ],
+        [
+          "2305843009213693951",
+          1
+        ],
+        [
+          "18446744069414584321",
+          1
+        ]
+      ],
+      "ns": 691189,
+      "residual": "1",
+      "stage": "completion",
+      "status": "complete",
+      "subject": "53739425505922110098241478198196257576470600960682015825098539243996639",
+      "unresolved": "[]"
+    },
+    {
+      "ns": 55954,
+      "stage": "compiled_check",
+      "status": "accepted",
+      "subject": "53739425505922110098241478198196257576470600960682015825098539243996639"
+    },
+    {
+      "bytes": 1233,
+      "module": "HexIntFactor.Frozen.Case3",
+      "ns": 4383563,
+      "stage": "export",
+      "status": "written",
+      "subject": "53739425505922110098241478198196257576470600960682015825098539243996639"
+    },
+    {
+      "stage": "external_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.External3",
+      "returncode": 0,
+      "ns": 2553489263,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.External3 (1.5s)\ninfo: HexIntFactor/MeasureExternalnnjilyph/External3.lean:2:0: FACTOR_MEASURE {\"bytes\":189,\"ns\":936301086,\"output\":\"HEX_FACTOR_BEGIN\\n53739425505922110098241478198196257576470600960682015825098539243996639\\n926510094425921 1\\n1363620137403810529 1\\n2305843009213693951 1\\n18446744069414584321 1\\nHEX_FACTOR_END\\n\",\"stage\":\"process\",\"status\":\"success\",\"subject\":\"53739425505922110098241478198196257576470600960682015825098539243996639\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External3.lean:2:0: FACTOR_MEASURE {\"ns\":57896,\"stage\":\"parse\",\"status\":\"success\",\"subject\":\"53739425505922110098241478198196257576470600960682015825098539243996639\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External3.lean:2:0: FACTOR_MEASURE {\"attempts\":24,\"events\":\"[]\",\"factors\":[[\"926510094425921\",1],[\"1363620137403810529\",1],[\"2305843009213693951\",1],[\"18446744069414584321\",1]],\"ns\":691189,\"residual\":\"1\",\"stage\":\"completion\",\"status\":\"complete\",\"subject\":\"53739425505922110098241478198196257576470600960682015825098539243996639\",\"unresolved\":\"[]\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External3.lean:2:0: FACTOR_MEASURE {\"ns\":55954,\"stage\":\"compiled_check\",\"status\":\"accepted\",\"subject\":\"53739425505922110098241478198196257576470600960682015825098539243996639\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External3.lean:2:0: FACTOR_MEASURE {\"bytes\":1233,\"module\":\"HexIntFactor.Frozen.Case3\",\"ns\":4383563,\"stage\":\"export\",\"status\":\"written\",\"subject\":\"53739425505922110098241478198196257576470600960682015825098539243996639\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "stage": "fresh_module_replay",
+      "subject": "53739425505922110098241478198196257576470600960682015825098539243996639",
+      "returncode": 0,
+      "ns": 1254741726,
+      "source_bytes": 1233,
+      "log": "\u2139 [115/153] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [153/153] Built HexIntFactor.Frozen.Case3 (241ms)\nBuild completed successfully (153 jobs).\n"
+    },
+    {
+      "attempts": 24,
+      "factors": [
+        [
+          "2013265921",
+          1
+        ],
+        [
+          "2305843009213693951",
+          1
+        ]
+      ],
+      "fuel": 4,
+      "ns": 126953551,
+      "residual": "1263407822267091861725148110322209",
+      "stage": "native",
+      "status": "Hex.Nat.FactorStop.incomplete",
+      "subject": "5865086737153646739775266298177935466733017070941921214531039"
+    },
+    {
+      "stage": "native_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.Native4Fuel4",
+      "returncode": 0,
+      "ns": 1761953104,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.Native4Fuel4 (726ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/Native4Fuel4.lean:2:0: FACTOR_MEASURE {\"attempts\":24,\"factors\":[[\"2013265921\",1],[\"2305843009213693951\",1]],\"fuel\":4,\"ns\":126953551,\"residual\":\"1263407822267091861725148110322209\",\"stage\":\"native\",\"status\":\"Hex.Nat.FactorStop.incomplete\",\"subject\":\"5865086737153646739775266298177935466733017070941921214531039\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "attempts": 2,
+      "factors": [],
+      "fuel": 1,
+      "ns": 35894212,
+      "residual": "5865086737153646739775266298177935466733017070941921214531039",
+      "stage": "native",
+      "status": "Hex.Nat.FactorStop.incomplete",
+      "subject": "5865086737153646739775266298177935466733017070941921214531039"
+    },
+    {
+      "stage": "native_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.Native4Fuel1",
+      "returncode": 0,
+      "ns": 1656735724,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.Native4Fuel1 (637ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/Native4Fuel1.lean:2:0: FACTOR_MEASURE {\"attempts\":2,\"factors\":[],\"fuel\":1,\"ns\":35894212,\"residual\":\"5865086737153646739775266298177935466733017070941921214531039\",\"stage\":\"native\",\"status\":\"Hex.Nat.FactorStop.incomplete\",\"subject\":\"5865086737153646739775266298177935466733017070941921214531039\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "bytes": 169,
+      "ns": 335844980,
+      "output": "HEX_FACTOR_BEGIN\n5865086737153646739775266298177935466733017070941921214531039\n2013265921 1\n926510094425921 1\n1363620137403810529 1\n2305843009213693951 1\nHEX_FACTOR_END\n",
+      "stage": "process",
+      "status": "success",
+      "subject": "5865086737153646739775266298177935466733017070941921214531039"
+    },
+    {
+      "ns": 52569,
+      "stage": "parse",
+      "status": "success",
+      "subject": "5865086737153646739775266298177935466733017070941921214531039"
+    },
+    {
+      "attempts": 25,
+      "events": "[]",
+      "factors": [
+        [
+          "2013265921",
+          1
+        ],
+        [
+          "926510094425921",
+          1
+        ],
+        [
+          "1363620137403810529",
+          1
+        ],
+        [
+          "2305843009213693951",
+          1
+        ]
+      ],
+      "ns": 462999,
+      "residual": "1",
+      "stage": "completion",
+      "status": "complete",
+      "subject": "5865086737153646739775266298177935466733017070941921214531039",
+      "unresolved": "[]"
+    },
+    {
+      "ns": 43975,
+      "stage": "compiled_check",
+      "status": "accepted",
+      "subject": "5865086737153646739775266298177935466733017070941921214531039"
+    },
+    {
+      "bytes": 1204,
+      "module": "HexIntFactor.Frozen.Case4",
+      "ns": 4194071,
+      "stage": "export",
+      "status": "written",
+      "subject": "5865086737153646739775266298177935466733017070941921214531039"
+    },
+    {
+      "stage": "external_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.External4",
+      "returncode": 0,
+      "ns": 1949116093,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.External4 (937ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/External4.lean:2:0: FACTOR_MEASURE {\"bytes\":169,\"ns\":335844980,\"output\":\"HEX_FACTOR_BEGIN\\n5865086737153646739775266298177935466733017070941921214531039\\n2013265921 1\\n926510094425921 1\\n1363620137403810529 1\\n2305843009213693951 1\\nHEX_FACTOR_END\\n\",\"stage\":\"process\",\"status\":\"success\",\"subject\":\"5865086737153646739775266298177935466733017070941921214531039\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External4.lean:2:0: FACTOR_MEASURE {\"ns\":52569,\"stage\":\"parse\",\"status\":\"success\",\"subject\":\"5865086737153646739775266298177935466733017070941921214531039\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External4.lean:2:0: FACTOR_MEASURE {\"attempts\":25,\"events\":\"[]\",\"factors\":[[\"2013265921\",1],[\"926510094425921\",1],[\"1363620137403810529\",1],[\"2305843009213693951\",1]],\"ns\":462999,\"residual\":\"1\",\"stage\":\"completion\",\"status\":\"complete\",\"subject\":\"5865086737153646739775266298177935466733017070941921214531039\",\"unresolved\":\"[]\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External4.lean:2:0: FACTOR_MEASURE {\"ns\":43975,\"stage\":\"compiled_check\",\"status\":\"accepted\",\"subject\":\"5865086737153646739775266298177935466733017070941921214531039\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External4.lean:2:0: FACTOR_MEASURE {\"bytes\":1204,\"module\":\"HexIntFactor.Frozen.Case4\",\"ns\":4194071,\"stage\":\"export\",\"status\":\"written\",\"subject\":\"5865086737153646739775266298177935466733017070941921214531039\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "stage": "fresh_module_replay",
+      "subject": "5865086737153646739775266298177935466733017070941921214531039",
+      "returncode": 0,
+      "ns": 1247589170,
+      "source_bytes": 1204,
+      "log": "\u2139 [115/153] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [153/153] Built HexIntFactor.Frozen.Case4 (236ms)\nBuild completed successfully (153 jobs).\n"
+    },
+    {
+      "attempts": 40,
+      "factors": [],
+      "fuel": 4,
+      "ns": 139360084,
+      "residual": "57896044618658097711785492504343953926634992332820282019728792003956564819949",
+      "stage": "native",
+      "status": "Hex.Nat.FactorStop.incomplete",
+      "subject": "57896044618658097711785492504343953926634992332820282019728792003956564819949"
+    },
+    {
+      "stage": "native_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.Native5Fuel4",
+      "returncode": 0,
+      "ns": 1761821733,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.Native5Fuel4 (736ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/Native5Fuel4.lean:2:0: FACTOR_MEASURE {\"attempts\":40,\"factors\":[],\"fuel\":4,\"ns\":139360084,\"residual\":\"57896044618658097711785492504343953926634992332820282019728792003956564819949\",\"stage\":\"native\",\"status\":\"Hex.Nat.FactorStop.incomplete\",\"subject\":\"57896044618658097711785492504343953926634992332820282019728792003956564819949\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "attempts": 8,
+      "factors": [],
+      "fuel": 1,
+      "ns": 40746112,
+      "residual": "57896044618658097711785492504343953926634992332820282019728792003956564819949",
+      "stage": "native",
+      "status": "Hex.Nat.FactorStop.incomplete",
+      "subject": "57896044618658097711785492504343953926634992332820282019728792003956564819949"
+    },
+    {
+      "stage": "native_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.Native5Fuel1",
+      "returncode": 0,
+      "ns": 1651150346,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.Native5Fuel1 (644ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/Native5Fuel1.lean:2:0: FACTOR_MEASURE {\"attempts\":8,\"factors\":[],\"fuel\":1,\"ns\":40746112,\"residual\":\"57896044618658097711785492504343953926634992332820282019728792003956564819949\",\"stage\":\"native\",\"status\":\"Hex.Nat.FactorStop.incomplete\",\"subject\":\"57896044618658097711785492504343953926634992332820282019728792003956564819949\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "bytes": 190,
+      "ns": 33655751,
+      "output": "HEX_FACTOR_BEGIN\n57896044618658097711785492504343953926634992332820282019728792003956564819949\n57896044618658097711785492504343953926634992332820282019728792003956564819949 1\nHEX_FACTOR_END\n",
+      "stage": "process",
+      "status": "success",
+      "subject": "57896044618658097711785492504343953926634992332820282019728792003956564819949"
+    },
+    {
+      "ns": 50906,
+      "stage": "parse",
+      "status": "success",
+      "subject": "57896044618658097711785492504343953926634992332820282019728792003956564819949"
+    },
+    {
+      "attempts": 128,
+      "events": "[]",
+      "factors": [],
+      "ns": 488553603,
+      "residual": "57896044618658097711785492504343953926634992332820282019728792003956564819949",
+      "stage": "completion",
+      "status": "partial",
+      "subject": "57896044618658097711785492504343953926634992332820282019728792003956564819949",
+      "unresolved": "[{ base := 57896044618658097711785492504343953926634992332820282019728792003956564819949,\n   exponent := 1,\n   stop := Hex.Nat.CompletionStop.unfinished,\n   attempts := 128,\n   obligation := some 74058212732561358302231226437062788676166966415465897661863160754340907,\n   events := [] }]"
+    },
+    {
+      "ns": 12348,
+      "stage": "compiled_check",
+      "status": "accepted",
+      "subject": "57896044618658097711785492504343953926634992332820282019728792003956564819949"
+    },
+    {
+      "bytes": 590,
+      "module": "HexIntFactor.Frozen.Case5",
+      "ns": 542988,
+      "stage": "export",
+      "status": "written",
+      "subject": "57896044618658097711785492504343953926634992332820282019728792003956564819949"
+    },
+    {
+      "stage": "external_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.External5",
+      "returncode": 0,
+      "ns": 2160764313,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.External5 (1.1s)\ninfo: HexIntFactor/MeasureExternalnnjilyph/External5.lean:2:0: FACTOR_MEASURE {\"bytes\":190,\"ns\":33655751,\"output\":\"HEX_FACTOR_BEGIN\\n57896044618658097711785492504343953926634992332820282019728792003956564819949\\n57896044618658097711785492504343953926634992332820282019728792003956564819949 1\\nHEX_FACTOR_END\\n\",\"stage\":\"process\",\"status\":\"success\",\"subject\":\"57896044618658097711785492504343953926634992332820282019728792003956564819949\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External5.lean:2:0: FACTOR_MEASURE {\"ns\":50906,\"stage\":\"parse\",\"status\":\"success\",\"subject\":\"57896044618658097711785492504343953926634992332820282019728792003956564819949\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External5.lean:2:0: FACTOR_MEASURE {\"attempts\":128,\"events\":\"[]\",\"factors\":[],\"ns\":488553603,\"residual\":\"57896044618658097711785492504343953926634992332820282019728792003956564819949\",\"stage\":\"completion\",\"status\":\"partial\",\"subject\":\"57896044618658097711785492504343953926634992332820282019728792003956564819949\",\"unresolved\":\"[{ base := 57896044618658097711785492504343953926634992332820282019728792003956564819949,\\n   exponent := 1,\\n   stop := Hex.Nat.CompletionStop.unfinished,\\n   attempts := 128,\\n   obligation := some 74058212732561358302231226437062788676166966415465897661863160754340907,\\n   events := [] }]\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External5.lean:2:0: FACTOR_MEASURE {\"ns\":12348,\"stage\":\"compiled_check\",\"status\":\"accepted\",\"subject\":\"57896044618658097711785492504343953926634992332820282019728792003956564819949\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External5.lean:2:0: FACTOR_MEASURE {\"bytes\":590,\"module\":\"HexIntFactor.Frozen.Case5\",\"ns\":542988,\"stage\":\"export\",\"status\":\"written\",\"subject\":\"57896044618658097711785492504343953926634992332820282019728792003956564819949\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "stage": "fresh_module_replay",
+      "subject": "57896044618658097711785492504343953926634992332820282019728792003956564819949",
+      "returncode": 0,
+      "ns": 1264389137,
+      "source_bytes": 590,
+      "log": "\u2139 [115/153] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [153/153] Built HexIntFactor.Frozen.Case5 (223ms)\nBuild completed successfully (153 jobs).\n"
+    },
+    {
+      "attempts": 14,
+      "factors": [
+        [
+          "1000003",
+          1
+        ],
+        [
+          "1000033",
+          1
+        ]
+      ],
+      "fuel": 4,
+      "ns": 1512190,
+      "residual": "1",
+      "stage": "native",
+      "status": "complete",
+      "subject": "1000036000099"
+    },
+    {
+      "stage": "native_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.Native6Fuel4",
+      "returncode": 0,
+      "ns": 1647261316,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.Native6Fuel4 (605ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/Native6Fuel4.lean:2:0: FACTOR_MEASURE {\"attempts\":14,\"factors\":[[\"1000003\",1],[\"1000033\",1]],\"fuel\":4,\"ns\":1512190,\"residual\":\"1\",\"stage\":\"native\",\"status\":\"complete\",\"subject\":\"1000036000099\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "attempts": 1,
+      "factors": [],
+      "fuel": 1,
+      "ns": 1040258,
+      "residual": "1000036000099",
+      "stage": "native",
+      "status": "Hex.Nat.FactorStop.incomplete",
+      "subject": "1000036000099"
+    },
+    {
+      "stage": "native_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.Native6Fuel1",
+      "returncode": 0,
+      "ns": 1647145519,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.Native6Fuel1 (597ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/Native6Fuel1.lean:2:0: FACTOR_MEASURE {\"attempts\":1,\"factors\":[],\"fuel\":1,\"ns\":1040258,\"residual\":\"1000036000099\",\"stage\":\"native\",\"status\":\"Hex.Nat.FactorStop.incomplete\",\"subject\":\"1000036000099\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "bytes": 66,
+      "ns": 34141084,
+      "output": "HEX_FACTOR_BEGIN\n1000036000099\n1000003 1\n1000033 1\nHEX_FACTOR_END\n",
+      "stage": "process",
+      "status": "success",
+      "subject": "1000036000099"
+    },
+    {
+      "ns": 32689,
+      "stage": "parse",
+      "status": "success",
+      "subject": "1000036000099"
+    },
+    {
+      "attempts": 0,
+      "events": "[]",
+      "factors": [],
+      "ns": 21322,
+      "residual": "1000036000099",
+      "stage": "completion",
+      "status": "partial",
+      "subject": "1000036000099",
+      "unresolved": "[{ base := 1000003,\n   exponent := 1,\n   stop := Hex.Nat.CompletionStop.unfinished,\n   attempts := 0,\n   obligation := none,\n   events := [] },\n { base := 1000033,\n   exponent := 1,\n   stop := Hex.Nat.CompletionStop.unfinished,\n   attempts := 0,\n   obligation := none,\n   events := [] }]"
+    },
+    {
+      "ns": 8804,
+      "stage": "compiled_check",
+      "status": "accepted",
+      "subject": "1000036000099"
+    },
+    {
+      "bytes": 398,
+      "module": "HexIntFactor.Frozen.Case6",
+      "ns": 413987,
+      "stage": "export",
+      "status": "written",
+      "subject": "1000036000099"
+    },
+    {
+      "stage": "external_module",
+      "module": "HexIntFactor.MeasureExternalnnjilyph.External6",
+      "returncode": 0,
+      "ns": 1651228230,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [186/186] Built HexIntFactor.MeasureExternalnnjilyph.External6 (631ms)\ninfo: HexIntFactor/MeasureExternalnnjilyph/External6.lean:2:0: FACTOR_MEASURE {\"bytes\":66,\"ns\":34141084,\"output\":\"HEX_FACTOR_BEGIN\\n1000036000099\\n1000003 1\\n1000033 1\\nHEX_FACTOR_END\\n\",\"stage\":\"process\",\"status\":\"success\",\"subject\":\"1000036000099\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External6.lean:2:0: FACTOR_MEASURE {\"ns\":32689,\"stage\":\"parse\",\"status\":\"success\",\"subject\":\"1000036000099\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External6.lean:2:0: FACTOR_MEASURE {\"attempts\":0,\"events\":\"[]\",\"factors\":[],\"ns\":21322,\"residual\":\"1000036000099\",\"stage\":\"completion\",\"status\":\"partial\",\"subject\":\"1000036000099\",\"unresolved\":\"[{ base := 1000003,\\n   exponent := 1,\\n   stop := Hex.Nat.CompletionStop.unfinished,\\n   attempts := 0,\\n   obligation := none,\\n   events := [] },\\n { base := 1000033,\\n   exponent := 1,\\n   stop := Hex.Nat.CompletionStop.unfinished,\\n   attempts := 0,\\n   obligation := none,\\n   events := [] }]\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External6.lean:2:0: FACTOR_MEASURE {\"ns\":8804,\"stage\":\"compiled_check\",\"status\":\"accepted\",\"subject\":\"1000036000099\"}\ninfo: HexIntFactor/MeasureExternalnnjilyph/External6.lean:2:0: FACTOR_MEASURE {\"bytes\":398,\"module\":\"HexIntFactor.Frozen.Case6\",\"ns\":413987,\"stage\":\"export\",\"status\":\"written\",\"subject\":\"1000036000099\"}\nBuild completed successfully (186 jobs).\n"
+    },
+    {
+      "stage": "fresh_module_replay",
+      "subject": "1000036000099",
+      "returncode": 0,
+      "ns": 1266630468,
+      "source_bytes": 398,
+      "log": "\u2139 [115/153] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [153/153] Built HexIntFactor.Frozen.Case6 (224ms)\nBuild completed successfully (153 jobs).\n"
+    }
+  ],
+  "load_finish": [
+    5.4697265625,
+    7.4912109375,
+    10.59375
+  ]
+}

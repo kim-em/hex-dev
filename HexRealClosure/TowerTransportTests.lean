@@ -166,7 +166,10 @@ private def sample : Option (Array Bool) :=
     (fourth.context.read packet).toOption.isNone,
     (fourth.context.read (fourth.context.write oldOne)).toOption.isSome]
 
-#check_failure Conversion.mk
+-- Identity cannot certify a conversion into another staged base.
+#check_failure (show Conversion (Context.base (BaseContext.rational registry)) from
+  ⟨Context.base (BaseContext.rational registry).infinitesimal,
+    BaseContext.Element.embed, .identity _⟩)
 
 end Hex.RealClosure.Tower.TransportTests
 

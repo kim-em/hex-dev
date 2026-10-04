@@ -93,12 +93,15 @@ definition needed by replay must be `@[expose]`. Restrict the accepted term
 form to constructor data and exposed data constants; reject arbitrary
 computations. Bound traversal, unfolding, numeral size and total certificate
 nodes, including embedded `PrimeCert` data, before evaluating the checker.
+Constructor-data let bindings charge every occurrence after substitution.
+Shared terminal trees are traversed with a decreasing node allocation before
+reification or checker evaluation.
 It evaluates `checkAt` using compiled code as an untrusted preflight, reifies the certificate, and emits
 `natPrime_of_checkAt` with kernel-replayed acceptance. The emitted Boolean
 proof must reduce through exposed Lean definitions and existing approved
 arithmetic fallbacks. A failing preflight, resource interruption, or failed
-kernel replay emits no proof. No `norm_num` registration or automatic fallback
-from the existing `primality` tactic is changed by this SPEC.
+kernel replay emits no proof. The supplied-certificate Elab module registers
+no `norm_num` handler or automatic primality fallback.
 
 
 The explicit `ecpp using c` policy admits subjects and individual
@@ -119,6 +122,7 @@ enclosing term small without requiring users to change recursion options.
 The auxiliary body has no compiled replacement or proof assumptions.
 No PARI invocation or terminal certificate search runs during replay.
 
+PARI generation is POSIX-only and rejects other platforms before spawning.
 Users explicitly import `HexECPPMathlib.Pari` to enable
 `primality? (method := pari)` for `Nat.Prime` and `Hex.Nat.Prime` goals. The
 generator runs `gp` from PATH with `-q -f`, passing only the evaluated natural
@@ -128,9 +132,15 @@ exit path. It uses no shell and ignores GP startup files. The initial PARI
 stack is 64000000 bytes; GP startup preferences cannot
 enable automatic stack growth. The process is limited to 30000 milliseconds,
 16448 stdout bytes and 4096 stderr bytes. On POSIX, cancellation and exhaustion
-terminate the process group with KILL and reap the child. Collect both pipe
+terminate the process group with KILL and reap the child. If the OS rejects
+the kill, collect readers and attempt a nonblocking reap, then report cleanup
+failure alongside the original error; do not wait indefinitely for a live
+process. Collect both pipe
 readers before reaping the leader, and never wait or kill that PID again after
-reaping it. Missing
+reaping it. Readers poll fresh, nonblocking POSIX pipe descriptors and observe
+cooperative cancellation independently of EOF, including pipes retained by
+descendants outside the original process group. The small Mathlib-free IO
+sidecar is precompiled; the mathematical bridge is not. Missing
 executables, process failures, framing errors, conversion diagnostics and
 timeout are reported distinctly. Conversion failure alone proves no
 compositeness.
@@ -140,13 +150,14 @@ acceptance and the resulting proof with the Lean kernel. The suggestion
 contains compact frozen data and its explicit Hex leaf, so applying it removes
 both the CAS call and endpoint search. The producer and converter are not
 proof dependencies. Ordinary `primality` imports and behavior are unchanged;
-no automatic fallback or `norm_num` handler is registered.
+the PARI module registers no automatic fallback or `norm_num` handler.
 
 `#ecpp_export MyCertificates.Prime cert for n` writes
 `MyCertificates/Prime.lean`, relative to the process working directory. The
-file imports `HexECPPMathlib.Compact` and contains one certificate declaration
-named `MyCertificates.Prime.cert`. After generation, remove the command, put
-the file under the project's Lean source root, import `MyCertificates.Prime`,
+file uses the module system, publicly imports `HexECPPMathlib.Compact`, and
+contains one `@[expose] public` certificate declaration named
+`MyCertificates.Prime.cert`. After generation, remove the command, put
+the file under the project's Lean source root, use `public import MyCertificates.Prime`,
 and use `ecpp using MyCertificates.Prime.cert`. Parent directories may be
 created; existing files are never overwritten. The command runs only in batch
 builds: the language server displays instructions to run `lake build +Module`
@@ -216,4 +227,154 @@ producer is owned by the computational SPEC. It validates raw data and
 kernel-checks the unconditional proof before suggesting or exporting compact
 frozen data. It introduces no registration on ordinary `primality` and no
 CM proof dependency. The native search ceiling is admitted separately from
-the supplied-certificate replay ceiling.
+the supplied-certificate replay ceiling. Both native public commands accept
+optional `(bits := 256)` or `(bits := 512)` before the optional seed; omission
+selects 256, and other policy values fail before search. The 512-bit policy is
+`Hex.ECPP.public512Budget`; importing Native alone does not change ordinary
+primality dispatch.
+
+Native row depth and replay node counts are separate allocations. The bridge
+clamps the default native depth to the converter's 20-row ceiling. For the
+512-bit policy it allows a terminal call after 20 rows (search depth 21), and
+enforces at most 20 rows and 32 total nodes during search and memo reuse. Replay additionally
+counts every embedded terminal `PrimeCert` node and its ECPP base wrapper:
+rows + 1 + terminal nodes must be at most 32. A shallow terminal tree can
+therefore exhaust replay even when both search depth limits were respected.
+Generation passes the complete proposal through `certProof` and its replay
+preflight before any suggestion or export; this exhaustion is a clean resource
+failure. Reified ECPP natural fields and inverse lists use raw natural
+literals, avoiding frontend `OfNat` wrappers while preserving the values and
+the unchanged 131072-node inspection ceiling. Conformance includes an accepted 31-node terminal with its base
+wrapper, both literal and compact replay, and rejection when a row raises the
+total to 33.
+
+## Automatic native fallback
+
+`HexECPPMathlib.Auto` is a separate optional module. Importing it enables a
+bounded native ECPP fallback for ordinary `primality?` on both `Nat.Prime` and
+`Hex.Nat.Prime` goals, via the upstream version-1 `SuggestionExtension`
+boundary. The ordinary ECPPMathlib umbrella, `Native`, `Pari`, core ECPP and
+upstream primality umbrellas do not import Auto. Enablement follows transitive
+imports, so a downstream public import of Auto enables it in its own importers.
+Register Auto in the monorepo Lake roots and the release manifest build modules.
+It introduces no GP invocation,
+`norm_num` handler, ordinary `primality` handler, integer-factorization route,
+or change to SQUFOF dispatch. This fallback does not depend on publication.
+
+Pocklington construction and its registered factor providers run first with
+their existing policies. A success retains its certificate and exact suggestion.
+Only ordinary non-composite exhaustion permits ECPP. An exhausted 521-bit
+construction remains outside ECPP's 512-bit production ceiling; the extension
+must decline before search and explain its ceiling. All other validation and
+interruption rules at the upstream boundary apply unchanged.
+
+A single Mathlib-free `Hex.ECPP.autoBudget (bits : Nat)` definition owns the
+automatic allocation and is shared by Auto and its compiled experiment driver.
+The initial automatic policy is one native seed, 0, for every admitted subject,
+with no subject-specific seeds, factors, certificates or discriminants. Use
+`public512Budget` for 257--512 bits and the existing default native policy for
+smaller inputs with the existing public 20-row depth clamp, reducing both
+to at most 1024 candidates, 8192 roots, 4096
+nonresidue draws, 4096 point draws, 4096 factor-work units and 1000000 scalar
+additions. The 512-bit policy additionally caps polynomial and root work at
+1048576 each. Retain their existing finite depth, memo, output, row, total-node,
+terminal, order and local retry limits; do not enlarge smaller-input limits.
+A zero Pocklington attempt limit disables automatic ECPP. A larger desired
+ECPP allocation uses explicit `primality? (method := ecpp)` instead; show that
+hint only for shared-allocation exhaustion, not local/portfolio decline.
+There is no new tactic budget option. Replay limits remain unchanged. Search
+retains its initial bounded terminal-construction call, charging its reserved
+factor package even if the preceding larger construction failed. This can
+produce a terminal-only success; a genuine elliptic success has at least one row.
+
+All recursive native work consumes one allocation. Return its charged counters,
+resource cause and unresolved subject on bounded exhaustion. The final diagnostic
+retains the Pocklington attempt count and original unresolved obligation and
+separately names the ECPP seed, actual allocation, spent counters and failure.
+Do not sum different methods' counters or describe ECPP exhaustion as evidence
+of compositeness. Successful native proposals go through the existing compact
+conversion and exact finite replay preflight. The producer returns only the
+complete frozen suggestion. The upstream caller elaborates that exact syntax
+and kernel-checks one auxiliary theorem before assigning the original goal,
+with no separate `checkWithKernel`. Syntax elaboration retains the existing
+bounded internal data-recursion ceiling of 65536 used by Compact and Elab;
+final auxiliary-theorem acceptance runs outside that internal override under
+the caller's recursion setting. Preserve caller heartbeats and cancellation,
+with system checks at the phase boundaries specified upstream. Do not create
+a fresh task/process to escape accounting or silently raise arithmetic evaluator
+thresholds. User-controlled finite resource settings must be documented for
+acceptance examples which require them. No evidence with `maxHeartbeats 0`
+attests automatic acceptance.
+
+The generated suggestion contains `ecpp using (ecpp_cert% "rows" using leaf)`
+for `Nat.Prime`, or the existing `Hex.Nat.prime_iff` transport for the core
+predicate. It contains every replay row and its explicit terminal `PrimeCert`;
+it invokes neither Auto nor native production. Exact `#guard_msgs` examples
+must pin the complete suggestions for both predicates, including a genuine
+elliptic success where full current Pocklington/ECM construction exhausts.
+Replay those verbatim in fresh modules importing Compact without Auto or Native,
+with GP unavailable. Preserve exact successful Pocklington suggestions.
+
+Before claiming the initial policy as an accepted automatic route, retain
+experiments over the frozen native512 tuning/holdout corpus and existing
+128/256-bit corpus, including bounded unsuccessful cases. Register the
+allocation and fixed seed before runs. Retain every completed shared-host
+sample with its CPU and host context; compare construction alone with the
+complete optional portfolio using adjacent alternating arms. Measure native
+search, compact conversion/preflight, and kernel proof/replay separately using
+the existing proof-probe discipline, and include the complete fresh-module cost and phase heartbeat deltas.
+The explicit 512-bit production evidence alone does not attest this smaller
+policy. Require at least one held-out genuine elliptic success beyond full
+current construction; if the declared allocation fails this gate, record the
+result and revise the SPEC before changing the policy. Native unsuccessful holdout search must finish within a preregistered 5-second
+operational cap on the measurement host, retaining all completed observations
+regardless of activity. The claim reports both coverage and the full failure-cost
+distribution; this is not a universal wall-clock guarantee. Kernel replay must pass
+with declared finite Lean options and existing syntax, row and node ceilings. The initial fixed-seed reduced512
+computational feasibility evidence is retained in
+[the automatic-fallback report](../../reports/ecpp/auto/README.md); it does not
+replace whole-portfolio and finite-option proof acceptance.
+
+Conformance must cover absent registrations, wrong ABI/type/missing producers,
+both supported goal predicates, unsupported/open subject rejection, input-bit
+boundaries, zero construction allowance and finite search allocations, composite refusal, exhausted construction,
+ECPP bounded exhaustion, pre-invocation cancellation and interruption at phase boundaries, failed
+preflight/replay, power-expression goals and their arithmetic warnings, and
+unchanged explicit `using`/`factor :=`/ECPP/PARI routes. Verify that already
+successful construction does not invoke the optional producer. Extend the
+existing single CI job and declared proof/conformance targets.
+
+## Proof-track evidence
+
+This Mathlib companion has no compiled benchmark track. Literal `ecpp using`,
+compact `ecpp_cert%`, native/PARI suggestions and source export, and frozen
+replay take the proof track. `libraries.yml` declares the explicit
+`bench/HexECPPMathlib/ProofProbe` root built by CI; the public generation/export
+routes additionally have protocol conformance that builds generated source
+and replays the exact certificate suggestion in fresh modules. The surface
+inventory is `reports/ecpp/companion-proof-surface.md`. Existing replay and
+native corpus evidence is retained. `NativeGeneration` runs the native tactic
+on a representative 128-bit subject. PARI generation/export uses the protocol
+script as its evidence because GP is optional; replay probes alone do not
+attest generation. The computational partner owns compiled
+performance claims and profiles.
+
+## Mixed integer-factorization integration
+
+`HexIntFactorMathlib.Mixed` explicitly imports `HexECPPMathlib.Soundness` and
+uses `Hex.ECPP.natPrime_of_checkAt` for every ECPP-bearing factor entry. This
+companion gains no dependency on HexIntFactor or HexIntFactorMathlib. Mixed
+computational exports import only their computational replay boundary; they
+carry checked data, while unconditional primality and `Nat.factorization`
+correspondence require the designated factorization companion. Existing ECPP
+replay/production policies and legacy primality certificate semantics remain
+unchanged. The new consumer separately measures its combined certificate and
+subject replay allocations; existing ECPP corpus success alone does not
+discharge that integration evidence.
+
+The raw-data reifier and bounded syntax auditor are shared from the explicitly
+imported Mathlib-free `HexECPP.ElabData`, with numeral/replay limits in
+`HexECPP.Policy`. `HexECPPMathlib.Policy` re-exports the latter for compatibility.
+The existing ECPP proof elaborator retains its accepted syntax and admission
+policy while this extraction lets mixed computational exports validate data
+without importing mathematical soundness.

@@ -23,6 +23,12 @@ structure RawDescriptor (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] whe
   indices : List Nat
   signs : List Int
 
+instance [DecidableEq Ctx] : DecidableEq (RawDescriptor E Ctx) := fun a b =>
+  decidable_of_iff
+    (a.context = b.context ∧ a.head = b.head ∧ a.lower = b.lower ∧ a.upper = b.upper ∧
+      a.indices = b.indices ∧ a.signs = b.signs)
+    (by cases a; cases b; simp only [RawDescriptor.mk.injEq])
+
 variable [NatCast E] [Mul E]
 
 /-- The next `n` formal derivatives, without normalization or sign-changing

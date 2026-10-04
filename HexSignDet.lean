@@ -33,14 +33,17 @@ public import HexSignDet.Reencode
 public import HexSignDet.Compare
 
 public import HexSignDet.Dag
+public import HexSignDet.DagOperations
 public import HexSignDet.DagSigns
 public import HexSignDet.DagSelectedSigns
 public import HexSignDet.DagEncode
 public import HexSignDet.DagReplay
 public import HexSignDet.DagExpand
+public import HexSignDet.DagBounds
 public import HexSignDet.Codec
 public import HexSignDet.Codec.EvidenceLaws
 public import HexSignDet.Codec.NodeLaws
 public import HexSignDet.Codec.GraphLaws
+public import HexSignDet.Codec.FiniteGraph
 
 public import HexSignDet.Codec.Value

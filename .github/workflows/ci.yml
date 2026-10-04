@@ -195,8 +195,9 @@ jobs:
         if: steps.classify.outputs.docs_only != 'true'
         run: |
           python3 -m pip install --user -r scripts/conway/requirements.txt \
-            python-flint==0.9.0 z3-solver==4.15.4.0 sympy==1.14.0 gmpy2 cypari2 conway-polynomials matplotlib==3.11.1
+            python-flint==0.9.0 z3-solver==4.15.4.0 sympy==1.14.0 mpmath==1.3.0 gmpy2 cypari2 conway-polynomials matplotlib==3.11.1
           python3 -m unittest scripts/oracle/test_hermite_bench_drivers.py
+          python3 -m unittest scripts/bench/test_check_sturm_fixtures.py
           python3 -m unittest scripts/oracle/test_matrix_carriers.py scripts/oracle/test_rank_bench.py scripts/oracle/test_rank_stages.py
           python3 -m unittest scripts/bench/test_rank_measure.py scripts/bench/test_rank_analyze.py scripts/bench/test_rank_checker_analyze.py
           python3 -m unittest scripts/oracle/test_row_reduce_fields.py
@@ -316,8 +317,8 @@ jobs:
       - name: Define the hex-dev cache + build target sets
         if: steps.classify.outputs.docs_only != 'true'
         run: |
-          echo "HEX_LIB_TARGETS=HexBasic HexTruncatedSeries HexTruncatedSeriesMathlib HexArith HexPoly HexPolyFast HexRationalFn HexRationalFnMathlib HexOrderedFn HexOrderedFnMathlib HexOrderedFnTests HexRationalFnKernelProbe HexPolyFastKernels HexMvPoly HexModArith HexGF2 HexPolyZ HexRoots HexResultant HexInterval HexIntervalExperiment HexIntervalMathlib HexIntervalMathlibExperiment HexIntervalReplayProbe HexIntervalMathlibReplayProbe HexRealRootsMathlibReplayProbe HexSturm HexSignDet HexSignDetMathlib HexSignDetMathlibProofProbe HexSignDetMathlibDiagnostics HexSturmMathlib HexRealClosure HexRealClosureMathlib HexRealClosureTests HexRealClosureMathlibTests HexRCFProofProbe HexRealFormula HexRealFormulaMathlib HexRCFRealFormula HexRCFRealCoefficients HexQuerySemantics RealClosureConsumer HexRealFormulaProofProbe HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexPrimality HexECPP HexECPPMathlib HexIntFactor HexPrimalityKernelProbe HexPrimalityElabProbe HexPrimalityMathlibProofProbe HexECPPMathlibProofProbe HexIntFactorKernelProbe HexMvGcdKernelProbe HexBerlekampZassenhaus HexRealRoots HexMatrix HexRowReduce HexDeterminant HexBareiss HexModularMatrix HexModularMatrixMathlib HexRank HexDet HexHermite HexSmith HexCharPoly HexMinPoly HexPolySmith HexGramSchmidt HexLatticeEnum HexLatticeEnumMathlib HexLatticeEnumTests HexPermGroup HexPermGroupMathlib HexPermGroupTests HexLLL HexMatrixMathlib HexRankMathlib HexRankTests HexRankMathlibProofProbe HexGenericRank HexGenericRankMathlib HexGenericRankTests HexGenericRankMathlibProofProbe HexBareissMathlibProofProbe HexPolyDet HexPolyDetMathlib HexHermiteMathlib HexSmithMathlib HexSmithTests HexDetMathlib HexCharPolyMathlib HexMinPolyMathlib HexStructuralTacticTests HexStructuralTacticProofProbe HexPolySmithMathlib HexDeterminantalIdeal HexDeterminantalIdealMathlib HexDeterminantalIdealTests HexDeterminantalIdealMathlibProofProbe HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib HexBerlekampZassenhausMathlibProofProbe HexBerlekampMathlibProofProbe HexPrimalityMathlib HexIntFactorMathlib HexPolyFpMathlib HexFactorizationModules HexRealRootsMathlib HexGF2Mathlib HexGFqMathlib HexMvPolyMathlib HexMvPolyMathlibProofProbe HexMvPolyBenchSupport HexReflect HexReflectMathlib HexKronecker HexKroneckerMathlib HexKroneckerTests HexKroneckerMathlibProofProbe HexRCF HexRootsMathlib HexResultantMathlib HexNumberField HexNumberFieldMathlib HexRealAlgebraic HexRealAlgebraicMathlib HexNumberFieldTower HexNumberFieldTowerMathlib HexReleaseTests HexReleaseExamples HexAggregateCheck HexGraphIsoProofProbe HexGraphIsoSparseProofProbe HexGraphIsoMathlibProofProbe HexPermGroupMathlibProofProbe HexPolyDetMathlibProofProbe HexCharPolyMathlibProofProbe" >> "$GITHUB_ENV"
-          echo "HEX_EXE_TARGETS=hextruncatedseries_bench hexarith_bench hexpoly_bench hexpolyfast_bench hexrationalfn_bench hexorderedfn_bench hexpolysmith_bench hexmvpoly_bench hexrealformula_bench hexreflect_bench hexmvgcd_bench hexsparsepoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexmodular_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexprimality_bench hexecpp_bench hexprimality_squfof_measure hexprimality_policy_probe hexprimality_field_probe hexprimality_fuel_probe hexintfactor_bench hexintfactor_field_bench hexberlekamp_bench hexbz_bench hexconway_bench hexconway_replay hexmatrix_bench hexgraphiso_bench hexpermgroup_bench hexstrassen_compare hexrowreduce_bench hexdeterminant_bench hexdeterminantalideal_bench hexbareiss_bench hexpolydet_bench hexmodularmatrix_bench hexrank_bench hexgenericrank_bench hexdet_bench hexcharpoly_bench hexminpoly_bench hexgramschmidt_bench hexlatticeenum_bench hexhermite_bench hexsmith_bench hexsigndet_bench hexsturm_bench hexrealclosure_bench hexrealclosure_codec_bytes hexrealroots_bench hexrcf_bench hexroots_bench hexresultant_bench hexnumberfield_bench hexnumberfieldtower_bench tower_factor_diff hexinterval_decision_bench hexroots_demo hex_interval_representation_spike hex_interval_center_spike hex_interval_scale_spike hex_interval_scheduler_spike hex_interval_policy_frontier_spike hex_arith_floor hexlll_bench hexlll_gram_bench hexlll_external_reduction hexbz_factor_service" >> "$GITHUB_ENV"
+          echo "HEX_LIB_TARGETS=HexBasic HexTruncatedSeries HexTruncatedSeriesMathlib HexArith HexPoly HexPolyFast HexRationalFn HexRationalFnMathlib HexOrderedFn HexOrderedFnMathlib HexOrderedFnTests HexRationalFnKernelProbe HexPolyFastKernels HexMvPoly HexModArith HexGF2 HexPolyZ HexRoots HexResultant HexRealRootsMathlibReplayProbe HexSturm HexSignDet HexSignDetMathlib HexSignDetMathlibProofProbe HexSignDetMathlibDiagnostics HexSturmMathlib HexSturmMathlibTests HexRealClosure HexRealClosureMathlib HexRealClosureTests HexRealClosureMathlibTests HexRCFProofProbe HexRealFormula HexRealFormulaMathlib HexRCFRealFormula HexRCFRealCoefficients HexQuerySemantics RealClosureConsumer HexRealFormulaProofProbe HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexPrimality HexECPP HexECPPMathlib HexIntFactor HexIntFactorTests HexPrimalityKernelProbe HexPrimalityElabProbe HexPrimalityMathlibProofProbe HexECPPMathlibProofProbe HexIntFactorKernelProbe HexMvGcdKernelProbe HexBerlekampZassenhaus HexRealRoots HexMatrix HexRowReduce HexDeterminant HexBareiss HexModularMatrix HexModularMatrixMathlib HexRank HexDet HexHermite HexSmith HexCharPoly HexMinPoly HexPolySmith HexGramSchmidt HexLatticeEnum HexLatticeEnumMathlib HexLatticeEnumTests HexPermGroup HexPermGroupMathlib HexPermGroupTests HexLLL HexMatrixMathlib HexRankMathlib HexRankTests HexRankMathlibProofProbe HexGenericRank HexGenericRankMathlib HexGenericRankTests HexGenericRankMathlibProofProbe HexBareissMathlibProofProbe HexPolyDet HexPolyDetMathlib HexHermiteMathlib HexSmithMathlib HexSmithTests HexDetMathlib HexCharPolyMathlib HexMinPolyMathlib HexStructuralTacticTests HexStructuralTacticProofProbe HexPolySmithMathlib HexDeterminantalIdeal HexDeterminantalIdealMathlib HexDeterminantalIdealTests HexDeterminantalIdealMathlibProofProbe HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib HexBerlekampZassenhausMathlibProofProbe HexBerlekampMathlibProofProbe HexPrimalityMathlib HexIntFactorMathlib HexPolyFpMathlib HexFactorizationModules HexRealRootsMathlib HexGF2Mathlib HexGFqMathlib HexMvPolyMathlib HexMvPolyMathlibProofProbe HexMvPolyBenchSupport HexReflect HexReflectMathlib HexKronecker HexKroneckerMathlib HexKroneckerTests HexRCF HexRootsMathlib HexResultantMathlib HexNumberField HexNumberFieldMathlib HexRealAlgebraic HexRealAlgebraicMathlib HexRealAlgebraicMathlibTests HexNumberFieldTower HexNumberFieldTowerMathlib HexReleaseTests HexReleaseExamples HexAggregateCheck HexGraphIsoProofProbe HexGraphIsoSparseProofProbe HexGraphIsoMathlibProofProbe HexPermGroupMathlibProofProbe HexPolyDetMathlibProofProbe HexCharPolyMathlibProofProbe" >> "$GITHUB_ENV"
+          echo "HEX_EXE_TARGETS=hextruncatedseries_bench hexarith_bench hexpoly_bench hexpolyfast_bench hexrationalfn_bench hexorderedfn_bench hexpolysmith_bench hexmvpoly_bench hexrealformula_bench hexreflect_bench hexmvgcd_bench hexsparsepoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexmodular_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexprimality_bench hexecpp_bench hexprimality_squfof_measure hexprimality_policy_probe hexprimality_field_probe hexprimality_fuel_probe hexintfactor_bench hexintfactor_field_bench hexberlekamp_bench hexbz_bench hexconway_bench hexconway_replay hexmatrix_bench hexgraphiso_bench hexpermgroup_bench hexstrassen_compare hexrowreduce_bench hexdeterminant_bench hexdeterminantalideal_bench hexbareiss_bench hexpolydet_bench hexmodularmatrix_bench hexrank_bench hexgenericrank_bench hexdet_bench hexcharpoly_bench hexminpoly_bench hexgramschmidt_bench hexlatticeenum_bench hexhermite_bench hexsmith_bench hexsigndet_bench hexsturm_bench hexrealalgebraic_bench hexrealclosure_bench hexrealclosure_codec_bytes hexrealroots_bench hexrcf_bench hexroots_bench hexresultant_bench hexnumberfield_bench hexnumberfieldtower_bench tower_factor_diff hexinterval_decision_bench hexroots_demo hex_interval_representation_spike hex_interval_center_spike hex_interval_scale_spike hex_interval_scheduler_spike hex_interval_policy_frontier_spike hex_arith_floor hexlll_bench hexlll_gram_bench hexlll_external_reduction hexbz_factor_service" >> "$GITHUB_ENV"
       - name: Decide whether to collect Conway rebuild evidence
         id: conway-rebuild
         if: steps.classify.outputs.docs_only != 'true'
@@ -374,6 +375,7 @@ jobs:
         run: |
           lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests \
             HexPolyDetMathlib.Tests \
+            HexECPPMathlibTests \
             HexPrimality.ProofProbe.PMinusOne.Support
           lake exe hexarith_extgcd_tests
           python3 scripts/ci/check_rank_compiler.py
@@ -411,7 +413,7 @@ jobs:
             hexbz_emit_fixtures hexpolyz_emit_fixtures \
             hexgf2_emit_fixtures hexgfq_emit_fixtures \
             hexgfqring_emit_fixtures hexgfqfield_emit_fixtures \
-            hexhensel_emit_fixtures hexprimality_emit_fixtures hexecpp_emit_fixtures \
+            hexhensel_emit_fixtures hexprimality_emit_fixtures hexecpp_emit_fixtures hexecpp_emit_class_polynomials \
             hexintfactor_emit_fixtures \
             hexconway_emit_fixtures \
             hexrowreduce_emit_fixtures hexdeterminant_emit_fixtures \
@@ -420,16 +422,18 @@ jobs:
             hexsmith_emit_fixtures hexcharpoly_emit_fixtures hexcharpoly_emit_carrier_fixtures \
             hexminpoly_emit_fixtures \
             hexgramschmidt_emit_fixtures hexlatticeenum_emit_fixtures \
-            hexlll_emit_fixtures hexrealroots_emit_fixtures hexsigndet_emit_fixtures \
+            hexlll_emit_fixtures hexrealroots_emit_fixtures hexsigndet_emit_fixtures hexsigndet_field_checks \
             hexrcf_emit_fixtures \
             hexroots_emit_fixtures hexresultant_emit_fixtures \
             hexnumberfield_emit_fixtures hexrealalgebraic_emit_fixtures hexrealalgebraic_conformance \
             hexnumberfield_quadratic \
             hexnumberfieldtower_emit_fixtures hexgraphiso_emit_trace hexgraphiso_emit_campaign
           if [ -z "$HEX_LIBRARY_FILTER" ] || [[ " $HEX_LIBRARY_FILTER " == *" HexIntFactor "* ]]; then
-            lake build HexIntFactorFieldConformance
+            lake build HexIntFactorFieldConformance HexIntFactorTests
+            python3 scripts/ci/check_intfactor_pari.py --gp "$(command -v gp)"
           fi
           .lake/build/bin/hexorderedfn_liouville_test
+          .lake/build/bin/hexsigndet_field_checks
           python3 scripts/ci/check_ecpp_pari.py
           python3 scripts/ci/check_ecpp_native.py
       - name: Check real-closure architecture experiments
@@ -443,8 +447,10 @@ jobs:
           lake -d experiments/RealClosureRepresentation build representationPrototype HexRationalFn.Field
           lake -d experiments/RealClosureAlgebraic build \
             Tests Transfer algebraicCheck algebraicBench policyCheck policyBench policyTrace refinementCheck
+          lake -d experiments/NestedReplay build
           experiments/RealClosureRepresentation/.lake/build/bin/representationPrototype
           probe_dir=$(mktemp -d)
+          python3 experiments/NestedReplay/run.py "$probe_dir/nested-replay"
           experiments/RealClosureAlgebraic/.lake/build/bin/algebraicCheck > "$probe_dir/algebraic.jsonl"
           python3 experiments/RealClosureAlgebraic/verify.py < "$probe_dir/algebraic.jsonl"
           experiments/RealClosureAlgebraic/.lake/build/bin/policyCheck > "$probe_dir/checks.jsonl"
@@ -517,23 +523,13 @@ jobs:
             HexCharPoly=hexcharpoly_bench HexMinPoly=hexminpoly_bench \
             HexGramSchmidt=hexgramschmidt_bench HexLatticeEnum=hexlatticeenum_bench \
             HexLLL=hexlll_gram_bench HexRealRoots=hexrealroots_bench \
-            HexSturm=hexsturm_bench HexSignDet=hexsigndet_bench \
+            HexSturm=hexsturm_bench HexRealAlgebraic=hexrealalgebraic_bench HexSignDet=hexsigndet_bench \
             HexRealClosure=hexrealclosure_bench \
             HexRCF=hexrcf_bench HexRoots=hexroots_bench \
             HexResultant=hexresultant_bench HexNumberField=hexnumberfield_bench \
             HexNumberFieldTower=hexnumberfieldtower_bench \
-            HexInterval=hexinterval_decision_bench HexGraphIso=hexgraphiso_bench \
+            HexGraphIso=hexgraphiso_bench \
             HexPermGroup=hexpermgroup_bench
-          # These two interval scheduler spikes are exact logical-count
-          # canaries rather than lean-bench timing registrations. Build them
-          # above and exercise their fixtures directly here.
-          if [ -z "$HEX_LIBRARY_FILTER" ] || [[ " $HEX_LIBRARY_FILTER " == *" HexInterval "* ]]; then
-            .lake/build/bin/hex_interval_scheduler_spike canary
-            .lake/build/bin/hex_interval_policy_frontier_spike canary
-            # The decision target has fixed timing registrations above plus a
-            # separate canonical logical policy-comparison canary.
-            .lake/build/bin/hexinterval_decision_bench canary
-          fi
           if [ -z "$HEX_LIBRARY_FILTER" ] || [[ " $HEX_LIBRARY_FILTER " == *" HexSignDet "* ]]; then
             .lake/build/bin/hexsigndet_bench inspect-joint 3 > "$RUNNER_TEMP/sign-det-joint.jsonl"
             python3 scripts/bench/sign_det_joint.py "$RUNNER_TEMP/sign-det-joint.jsonl" --degree 3

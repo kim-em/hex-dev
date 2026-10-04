@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.Algebraic
+public import HexSignDet.DagSelectedSigns
 
 public section
 
@@ -22,6 +23,23 @@ structure SignFact (context : Context E Ctx coeffSign parent) where
   checked : context.signPoly polynomial = sign
 
 variable {context : Context E Ctx coeffSign parent}
+
+/-- Select supplied evidence for the scalar operation's actual reduced query.
+All executable query/domain/row checks stay in the Mathlib-free core. -/
+@[expose] def Context.readSigns? (context : Context E Ctx coeffSign parent)
+    (p : DensePoly E) (claimed : Int) {head : DensePoly E} {lower upper : Endpoint E}
+    (memo : Array (SignDet.Dag.Checked coeffSign parent head lower upper)) (index : Nat) :
+    Option (SignDet.SelectedSigns context.root [context.queryPoly p]) :=
+  SignDet.SelectedSigns.readMemo? context.root [context.queryPoly p] #v[claimed] memo index
+
+theorem Context.readSigns_value {context : Context E Ctx coeffSign parent}
+    {p : DensePoly E} {claimed : Int} {head : DensePoly E} {lower upper : Endpoint E}
+    {memo : Array (SignDet.Dag.Checked coeffSign parent head lower upper)} {index : Nat}
+    {signs : SignDet.SelectedSigns context.root [context.queryPoly p]}
+    (h : context.readSigns? p claimed memo index = some signs) : signs.value = claimed := by
+  obtain ⟨bound, _, accepted⟩ := SignDet.SelectedSigns.readMemo_evidence h
+  obtain ⟨_, _, values, _⟩ := SignDet.SelectedSigns.ofMemo_evidence accepted
+  simp [SignDet.SelectedSigns.value, values]
 
 /-- Literal lookup retains the proof belonging to that precise key. -/
 @[expose] def SignFact.find (facts : List (SignFact context)) (p : DensePoly E) :
@@ -79,21 +97,22 @@ opaque Element.missing (p : DensePoly E) :
 
 /-- Pack with supplied signs of the exact retained remainders. A proved
 reduction function avoids evaluating the context constructor in the kernel.
-Constant remainders use the ordinary predecessor sign; a missing nonconstant
-fact stops ordinary-kernel evaluation at `Element.missing`. -/
+Supplied facts cover constant and nonconstant remainders. Without a supplied
+constant fact, packing uses the ordinary predecessor sign; a missing
+nonconstant fact stops ordinary-kernel evaluation at `Element.missing`. -/
 @[expose] def Element.pack (reduce : DensePoly E → DensePoly E)
     (_hr : reduce = context.reduce) (facts : List (SignFact context)) (p : DensePoly E) : Element context :=
   let kept := reduce p
-  if hc : kept.size ≤ 1 then
-    let s := coeffSign (kept.coeff 0)
-    if hn : s = 0 then 0
-    else Element.restore kept s (context.signPoly_const kept hc) hn
-  else
-    match SignFact.find facts kept with
-    | none => (Element.missing p).val
-    | some f =>
-      if hn : f.val = 0 then 0
-      else Element.restore kept f.val f.property hn
+  match SignFact.find facts kept with
+  | some f =>
+    if hn : f.val = 0 then 0
+    else Element.restore kept f.val f.property hn
+  | none =>
+    if hc : kept.size ≤ 1 then
+      let s := coeffSign (kept.coeff 0)
+      if hn : s = 0 then 0
+      else Element.restore kept s (context.signPoly_const kept hc) hn
+    else (Element.missing p).val
 
 /-- A missing nonconstant fact reaches exactly the opaque packing boundary. -/
 theorem Element.pack_missing (reduce : DensePoly E → DensePoly E)
@@ -118,20 +137,22 @@ theorem Element.pack_eq (reduce : DensePoly E → DensePoly E)
     exact hc
   unfold pack
   dsimp only
-  split
-  · rename_i hc
+  cases hf : SignFact.find facts (reduce p) with
+  | some f =>
+    simp only
     split
     · rename_i hn
-      exact zero_eq ((context.signPoly_const _ hc).trans hn)
-    · exact restore_eq _ (context.signPoly_const _ hc) (by assumption)
-  · cases hf : SignFact.find facts (reduce p) with
-    | none => simpa only using (Element.missing p).property
-    | some f =>
-      simp only
+      exact zero_eq (f.property.trans hn)
+    · exact restore_eq _ f.property (by assumption)
+  | none =>
+    simp only
+    split
+    · rename_i hc
       split
       · rename_i hn
-        exact zero_eq (f.property.trans hn)
-      · exact restore_eq _ f.property (by assumption)
+        exact zero_eq ((context.signPoly_const _ hc).trans hn)
+      · exact restore_eq _ (context.signPoly_const _ hc) (by assumption)
+    · simpa only using (Element.missing p).property
 
 @[expose, instance_reducible] def Element.cachedAdd (reduce : DensePoly E → DensePoly E)
     (hr : reduce = context.reduce) (facts : List (SignFact context)) : Add (Element context) :=
@@ -197,5 +218,40 @@ theorem Element.cachedNatCast_eq (reduce : DensePoly E → DensePoly E)
   apply congrArg NatCast.mk
   funext n
   exact Element.pack_eq reduce hr facts _
+
+/-- Inversion retains the existing inverse polynomial computation, then
+packs its result using supplied facts for the actual retained remainder. -/
+@[expose, instance_reducible] def Element.cachedInv (reduce : DensePoly E → DensePoly E)
+    (hr : reduce = context.reduce) (facts : List (SignFact context)) : Inv (Element context) :=
+  ⟨fun a => match a.stored with
+    | none => 0
+    | some _ => Element.pack reduce hr facts a.inverseCandidate⟩
+
+theorem Element.cachedInv_eq (reduce : DensePoly E → DensePoly E)
+    (hr : reduce = context.reduce) (facts : List (SignFact context)) :
+    Element.cachedInv reduce hr facts = (inferInstance : Inv (Element context)) := by
+  apply congrArg Inv.mk
+  funext a
+  change (match a.stored with
+    | none => 0
+    | some _ => Element.pack reduce hr facts a.inverseCandidate) = a.inv
+  unfold Element.inv
+  cases a.stored
+  · rfl
+  · exact Element.pack_eq reduce hr facts _
+
+/-- Division uses those same supplied-fact multiplication and inversion
+operations. Missing packing facts retain the ordinary kernel boundary. -/
+@[expose, instance_reducible] def Element.cachedDiv (reduce : DensePoly E → DensePoly E)
+    (hr : reduce = context.reduce) (facts : List (SignFact context)) : Div (Element context) :=
+  ⟨fun a b => (Element.cachedMul reduce hr facts).mul a
+    ((Element.cachedInv reduce hr facts).inv b)⟩
+
+theorem Element.cachedDiv_eq (reduce : DensePoly E → DensePoly E)
+    (hr : reduce = context.reduce) (facts : List (SignFact context)) :
+    Element.cachedDiv reduce hr facts = (inferInstance : Div (Element context)) := by
+  unfold Element.cachedDiv
+  rw [Element.cachedMul_eq, Element.cachedInv_eq]
+  rfl
 
 end Hex.RealClosure.Algebraic

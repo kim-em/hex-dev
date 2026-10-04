@@ -34,7 +34,8 @@ round trips.
 `RealAlgebraicPoly.toPolynomial` interprets real coefficient arrays in `ℝ[X]`;
 `ofPolynomial` converts a Mathlib polynomial into the executable representation.
 The root theorems prove completeness, multiplicity agreement, and strict
-ordering. Real-closedness uses the executable root driver to recover witnesses
+ordering. `RealAlgebraicPoly.roots_spec` combines these with the zero-polynomial
+and executable-membership contracts. Real-closedness uses the executable root driver to recover witnesses
 for square closure and odd-degree root existence. The real root is supplied by
 Mathlib’s generic odd-root theorem using the shared `Real.instIsRealClosed`
 from `HexRealRootsMathlib`; real-closedness of `RealAlgebraicNumber` is then

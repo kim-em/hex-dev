@@ -39,7 +39,7 @@ open Execution
 /-- Direct products check `n+m` and `rG+rH` before either generator map runs.
 Image reservations include the degree-sized output arrays and factor identities.
 Chain construction then continues with the same meter. -/
-@[expose] def directProductWith (limits : ProductLimits) (G : Group n) (H : Group m) :
+@[expose] def directProductBudgeted (limits : ProductLimits) (G : Group n) (H : Group m) :
     Except ProductLimit (Measured limits.work {K : Group (n + m) // K = G.directProduct H}) :=
   if n + m ≤ limits.degree then
     if G.generators.size + H.generators.size ≤ limits.generators then
@@ -54,9 +54,9 @@ Chain construction then continues with the same meter. -/
 
 /-- The imprimitive product checks `n*m` and `m*rG+rH`, including fixed blocks.
 The native wreath action caches one base permutation per block before building
-its point images. Empty blocks remain excluded by the positive-degree hypothesis. -/
-@[expose] def wreathProductWith (limits : ProductLimits) (G : Group n) (H : Group m) (hn : 0 < n) :
-    Except ProductLimit (Measured limits.work {K : Group (n * m) // K = G.wreathProduct H hn}) :=
+its point images. -/
+@[expose] def wreathProductBudgeted (limits : ProductLimits) (G : Group n) (H : Group m) :
+    Except ProductLimit (Measured limits.work {K : Group (n * m) // K = G.wreathProduct H}) :=
   if n * m ≤ limits.degree then
     if m * G.generators.size + H.generators.size ≤ limits.generators then
       .ok (Execution.run limits.work do
@@ -64,22 +64,22 @@ its point images. Empty blocks remain excluded by the positive-degree hypothesis
         reserve .storage ((m + 3) * count + m)
         reserve .images ((2 * (n * m) + m) * count)
         construct (((List.finRange m).flatMap fun i =>
-          G.generators.toList.map (Perm.Wreath.copy hn i)).toArray ++
-          H.generators.map (Perm.Wreath.lift hn)))
+          G.generators.toList.map (Perm.Wreath.copy i)).toArray ++
+          H.generators.map Perm.Wreath.lift))
     else .error (.generators (m * G.generators.size + H.generators.size) limits.generators)
   else .error (.degree (n * m) limits.degree)
 
 /-- Degree rejection happens before any direct-product allocation or chain work. -/
-theorem directProductWith_degree (limits : ProductLimits) (G : Group n) (H : Group m)
+theorem directProductBudgeted_degree (limits : ProductLimits) (G : Group n) (H : Group m)
     (h : limits.degree < n + m) :
-    G.directProductWith limits H = .error (.degree (n + m) limits.degree) := by
-  simp [directProductWith, Nat.not_le.mpr h]
+    G.directProductBudgeted limits H = .error (.degree (n + m) limits.degree) := by
+  simp [directProductBudgeted, Nat.not_le.mpr h]
 
 /-- Wreath degree rejection retains the full declared product degree. -/
-theorem wreathProductWith_degree (limits : ProductLimits) (G : Group n) (H : Group m) (hn : 0 < n)
+theorem wreathProductBudgeted_degree (limits : ProductLimits) (G : Group n) (H : Group m)
     (h : limits.degree < n * m) :
-    G.wreathProductWith limits H hn = .error (.degree (n * m) limits.degree) := by
-  simp [wreathProductWith, Nat.not_le.mpr h]
+    G.wreathProductBudgeted limits H = .error (.degree (n * m) limits.degree) := by
+  simp [wreathProductBudgeted, Nat.not_le.mpr h]
 
 end Group
 end Hex.PermGroup

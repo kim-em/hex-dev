@@ -137,6 +137,41 @@ literal identity/equality checks. A context owns an immutable predecessor DAG.
 Splitting or enlargement returns a new context plus explicit transport;
 old handles remain valid only in their old context.
 
+### Shared live contexts
+
+`Tower.Inclusion source target` retains the actual checked conversion and its
+proved target ownership. Values and polynomials enter the target through this
+inclusion. Composition applies the cached maps in order; identity retains the
+original context.
+
+`Tower.Shared base owners` retains an immutable list of original contexts and
+one checked inclusion for each original owner into a shared target. Registration
+visits the owner's validated suffix in predecessor order, reuses cached checked
+inclusions for original predecessors, and adjoins only previously unseen exact
+native predecessors.
+Parent/child owners and sibling branches therefore retain one common ancestor
+level when they share exact native predecessors. The cache retains target-side
+predecessors too, including those rebuilt during enlargement, so a context built
+from a returned target can reuse its ancestry. Every new target updates all
+earlier owner and predecessor maps. Exact predecessor reuse checks the actual
+native chain, descriptor and replay. Value-level root deduplication must also
+reconcile reordered chains, alternative descriptors and evidence, and independent
+enlargement images across staged depths. This bounds algebraic-degree growth and
+retains the root identity required by the shared sample interface.
+Original values remain indexed by their original contexts;
+`Shared.value` and `Shared.polynomial` select the checked map by its original
+owner index. The native base compatibility check uses the full real-prefix key
+path and nondecreasing infinitesimal depth, rather than a hash or a carrier type.
+
+`Shared.enlarge?` reconstructs the shared suffix once over the next staged base.
+Its result retains the existing checked conversion/parameter packet, a new
+shared target and all original-owner maps. Reading the parameter performs no
+new descriptor validation. Every returned map is the old map followed by the
+one shared inclusion, and old contexts remain valid. Registry reconstruction
+uses the separate validated-prefix catalog for the exact predecessor's progress
+premises. Inclusion across larger real prefixes must respect those registered
+predecessors and the complete staged order.
+
 ## Validated construction, packing and persistent refinement
 
 `Context.adjoin` accepts an opaque descriptor validated in its exact
@@ -182,9 +217,11 @@ resource check. These readers do not themselves serialize or validate a graph
 of coefficient-proof dependencies.
 
 `Element.pack` takes a reduction function proved equal to the context's actual
-storage reduction. Constant remainders use the predecessor sign directly;
-nonconstant remainders use exact keys in the supplied sign facts. A zero sign
-packs to canonical zero. Missing nonconstant keys reach `Element.missing`, an
+storage reduction. Supplied sign facts are looked up by the exact retained
+remainder, including constants. A constant remainder without a supplied fact
+uses the ordinary predecessor sign. Both paths pack a zero sign to canonical
+zero. List-based lookup has cost proportional to the supplied fact list,
+including for constants. Missing nonconstant keys reach `Element.missing`, an
 opaque function that blocks kernel reduction and executes ordinary native
 packing when compiled. This optional proof-assembly support does not satisfy
 the strict compiled certificate-replay contract by itself.
@@ -420,11 +457,18 @@ adjacent boundaries `a<b` (possibly infinite), a finite polynomial family `Q`,
 and evidence that no nonzero member of `Q` has a root in `(a,b)`. Zero
 polynomials are allowed and have constant zero sign. Supply boundary order
 and completeness of the boundary root list, not just two chosen roots.
+A complete family partition may construct this evidence itself; checked
+boundary requests must still reject non-adjacent pairs. An indexed interface
+may additionally select sectors from that validated complete partition.
 The result includes the sample context, input embedding, strict membership
-and signs of every member of `Q` at the sample. A midpoint in a common root
-context handles bounded sectors; `a+1`, `b-1` and `0` handle rays and the whole
+and signs of every member of `Q` at the sample. A midpoint in a context containing the two boundary roots
+handles bounded sectors; `a+1`, `b-1` and `0` handle rays and the whole
 line. Dyadic samples are an optional Archimedean backend, not a generic
-separation requirement.
+separation requirement. Order and deduplicate the original root handles
+before building arithmetic contexts. A section reuses its root context, a ray
+uses one boundary, and a bounded sample collects only its two boundaries.
+Each result retains its own input embedding; cell coverage and sign invariance
+are interpreted in a common ambient field.
 
 An infinitesimal backend may use `r+ε` or `±1/ε`. After algebraics exist,
 `Context.enlarge` rebuilds the infinitesimal base before those levels,

@@ -32,7 +32,8 @@ def d4 : Group 4 := Group.ofGenerators #[rotation, reflection]
 
 Composition is a left action: `(p.comp q) x = p (q x)`. Programs returned by
 `word?` use the original generator order and can be checked independently with
-`checkWord`.
+`checkWord`. `Program.toWord?` expands a short program into a freely reduced
+word, which `Word.toString` prints as, for example, `g0 * g1`.
 
 The public surface includes point and pointwise stabilizers, containment,
 joins, element enumeration with output caps, left cosets, rank/unrank and
@@ -40,7 +41,7 @@ supplied-index sampling, finite tuple/subset/partition actions, images and
 kernels, complete or budgeted subgroup search, blocks and primitivity, normal
 closure, core, derived series, and direct and imprimitive wreath products.
 
-`Group.buildWith` and the bounded normal/product operations reserve cumulative
+`Group.buildBudgeted` and the bounded normal/product operations reserve cumulative
 producer work before each operation. Exhaustion returns the proved stopping
 state only: it never means negative membership, exact ambient order,
 nonsolvability, or a final image/kernel. Certificate and program replay use
