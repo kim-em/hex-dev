@@ -228,11 +228,11 @@ private meta def rationalGuards (divisors : Array Expr) : MetaM Bool := do
     if !result then return false
   return true
 
-private meta def rootParameters? (source : Expr) : MetaM (Option RationalRoot.Parameters) := do
+private meta def rootParameters? (source : Expr) :
+    MetaM (Except Hex.RealFormula.Reify.Error (Option RationalRoot.Parameters)) := do
   match ← RationalRoot.parameters? source with
-  | .ok parameters => pure parameters
-  | .error (.unsupported _ _) => pure none
-  | .error error => throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
+  | .error (.unsupported _ _) => pure (.ok none)
+  | result => pure result
 
 private meta def rootArguments (parameters : RationalRoot.Parameters) :
     MetaM (Q(ℚ) × Q(ℕ)) := do
@@ -243,18 +243,21 @@ private meta def rootArguments (parameters : RationalRoot.Parameters) :
 
 /-- Classify the entire source before executing any algebraic construction.
 Unknown siblings must cause a decline before a recognized sibling can fail.
-Root recognition uses the same config as the preceding cumulative Reify.prepare
-validation, so its budget errors have already been checked for the whole source. -/
+Root recognition also bounds the computed rational base size. Its structured
+exhaustion is deferred until every sibling has been classified. -/
 private meta def eligible (source : Expr) :
-    MetaM (Bool × Option RationalRoot.Parameters) := do
-  if (← naturalSquareRoot? source).isSome then return (true, none)
-  if let some parameters ← rootParameters? source then return (true, some parameters)
-  unless source.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return (false, none)
+    MetaM (Except Hex.RealFormula.Reify.Error (Bool × Option RationalRoot.Parameters)) := do
+  if (← naturalSquareRoot? source).isSome then return .ok (true, none)
+  match ← rootParameters? source with
+  | .error error => return .error error
+  | .ok (some parameters) => return .ok (true, some parameters)
+  | .ok none => pure ()
+  unless source.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return .ok (false, none)
   let argument := source.appArg!
   let anchor ← match ← fieldArgs? argument with
     | some (_, anchor, _) => pure anchor
     | none => pure argument
-  return ((← selectedArgs? anchor).isSome || (← normalizedArgs? anchor).isSome, none)
+  return .ok ((← selectedArgs? anchor).isSome || (← normalizedArgs? anchor).isSome, none)
 
 /-- Bind source data by kernel reduction; authentication and resource failures
 remain terminal, rather than becoming solver declines. -/
@@ -712,16 +715,22 @@ private meta def proveRational (source : Reify.Source) : MetaM Expr := do
 private structure Leaves where
   sources : Array Expr := #[]
   roots : ExprMap RationalRoot.Parameters := {}
+  error : Option Hex.RealFormula.Reify.Error := none
 
 private meta partial def gatherCore (source : Expr) (leaves : Leaves) :
     MetaM (Option Leaves) := do
   if leaves.sources.contains source then return some leaves
-  let (accepted, root) ← eligible source
+  let (accepted, root, deferred) := match ← eligible source with
+    | .ok (accepted, root) => (accepted, root, none)
+    | .error error => (true, none, some error)
   if accepted then
     let roots := match root with
       | some parameters => leaves.roots.insert source parameters
       | none => leaves.roots
-    let updated : Leaves := {sources := (leaves.sources.push source), roots}
+    let error := match leaves.error with
+      | some error => some error
+      | none => deferred
+    let updated : Leaves := {sources := (leaves.sources.push source), roots, error}
     return some updated
   let e := source.consumeMData
   let args := e.getAppArgs
@@ -757,6 +766,8 @@ private meta def sourcePlans (source : Reify.Source) :
   for scalar in source.coefficients ++ source.divisors do
     let some next ← gather scalar leaves | return none
     leaves := next
+  if let some error := leaves.error then
+    throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
   let plans ← profileitM Exception "rcf source authentication" (← getOptions) do
     let mut plans : Array SourcePlan := #[]
     for scalar in leaves.sources do

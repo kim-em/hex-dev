@@ -109,7 +109,7 @@ private def identifyCore (source : Expr) (parameters : Parameters) : MetaM Expr 
   Hex.RCF.checkProof `Hex.RCF.RealCoefficients.RationalRoot
     (← mkEq canonical source) proof
 
-/-- Alias identification restores the caller's full state on refusal. -/
+/-- Alias identification restores the backtrackable caller state on refusal. -/
 def identify (source : Expr) (parameters : Parameters) : MetaM Expr := do
   let saved ← saveState
   let (result, _) ← tryFinally' (identifyCore source parameters)

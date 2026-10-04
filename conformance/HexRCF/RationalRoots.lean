@@ -123,6 +123,23 @@ run_elab do
   let .error (.budget _) ← RationalRoot.parameters? q((2 : ℝ) ^ (1 / 10000 : ℝ))
       {ring := {budget := {Hex.Reflect.Budget.default with exponent := 8}}} |
     throwError "shared root-degree budget was ignored"
+  let large : Q(ℝ) := q(Real.sqrt (1 / (((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ))))
+  let budgetGoal := q(∀ x : ℝ, x ^ 2 + Real.sqrt 3 + $large > 0)
+  let .ok _ ← Reify.prepare budgetGoal |
+    throwError "coefficient-size control did not reach leaf classification"
+  let .error (.budget _) ← RationalRoot.parameters? large |
+    throwError "coefficient-size control did not exhaust recognition"
+  refuses (Coefficients.prepare budgetGoal)
+  for target in #[q(∀ x : ℝ,
+      x ^ 2 + Real.sqrt 3 + $large + Real.sqrt (Real.sqrt 2) > 0),
+      q(∀ x : ℝ, x ^ 2 + Real.sqrt (Real.sqrt 2) + $large + Real.sqrt 3 > 0)] do
+    let before ← getMCtx
+    let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
+    let .error (.unsupported _ _) ← Coefficients.prepare target |
+      throwError "recognition exhaustion preempted an unsupported sibling"
+    unless (← getMCtx).mvarCounter == before.mvarCounter &&
+        (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
+      throwError "deferred recognition refusal changed caller state"
   let .ok division ← Reify.prepare q(∀ x : ℝ,
       x / (2 : ℝ) ^ (1 / 3 : ℝ) =
         ((2 : ℝ) ^ (1 / 3 : ℝ)) ^ 2 * x / 2) |
