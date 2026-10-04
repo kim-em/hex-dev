@@ -5,6 +5,7 @@ import argparse
 from importlib.metadata import version
 import json
 import math
+import sys
 from pathlib import Path
 
 
@@ -47,6 +48,19 @@ def verify(row):
         raise ValueError("storage arms did not exercise distinct normalization policies")
     if row['clean']['degree'] != clean.degree() or row['eager']['degree'] != eager.degree():
         raise ValueError("wrong stored degree")
+    prefixes = row['prefixes']
+    if not isinstance(prefixes, list) or len(prefixes) != steps + 1:
+        raise ValueError("missing arithmetic prefixes")
+    for step, prefix in enumerate(prefixes):
+        clean_prefix = polynomial(prefix['clean']['coefficients'])
+        eager_prefix = polynomial(prefix['eager']['coefficients'])
+        if prefix['step'] != step or clean_prefix != (x + 1) ** step or eager_prefix != (x + 1) ** step % head:
+            raise ValueError("stored prefix does not match its arithmetic trace")
+        for arm, poly in [('clean', clean_prefix), ('eager', eager_prefix)]:
+            stored = prefix[arm]
+            if (stored['degree'] != poly.degree() or stored['sign'] != 1 or
+                stored['clean'] is not all(d == 1 for _, d in stored['coefficients'])):
+                raise ValueError("wrong prefix representation metadata")
     context = z3.Context()
     def coefficients(values):
         return [z3rcf.RCFNum(f'{n}/{d}', context) for n, d in values]
@@ -70,15 +84,17 @@ def verify(row):
                     total_coefficient_bits=sum(abs(n).bit_length()+d.bit_length() for n,d in values),
                     serialized_bytes=len(json.dumps(values,separators=(',',':')).encode()))
     return dict(degree=degree, steps=steps, checked=True,
-                clean=growth(row['clean']['coefficients']), eager=growth(row['eager']['coefficients']))
+                clean=growth(row['clean']['coefficients']), eager=growth(row['eager']['coefficients']),
+                prefixes=[dict(step=p['step'], clean=growth(p['clean']['coefficients']),
+                               eager=growth(p['eager']['coefficients'])) for p in prefixes])
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('fixtures', nargs='+', type=Path)
+    parser.add_argument('fixtures', nargs='*', type=Path)
     args = parser.parse_args()
-    for path in args.fixtures:
-        for line in path.read_text().splitlines():
+    for contents in ([path.read_text() for path in args.fixtures] if args.fixtures else [sys.stdin.read()]):
+        for line in contents.splitlines():
             print(json.dumps(verify(json.loads(line)), sort_keys=True))
 
 

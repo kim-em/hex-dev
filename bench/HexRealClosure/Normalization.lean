@@ -19,6 +19,7 @@ structure Input where
   context : Context
   working : DensePoly Rat
   steps : Nat
+  monic : working.leadingCoeff = 1
 
 instance : Hashable Input where
   hash input := hash (input.context.root.raw.head.toArray, input.working.toArray, input.steps)
@@ -32,7 +33,10 @@ def prepare (degree : Nat) : Option Input := do
       indices := [], signs := [] }
   let descriptor ← SignDet.Descriptor.validate OrderedFn.orderSign () raw
   let context := Algebraic.Context.adjoin descriptor (fun q => decide (q.den = 1))
-  return ⟨context, DensePoly.monicize head, 2 * degree⟩
+  let working := DensePoly.monicize head
+  if monic : working.leadingCoeff = 1 then
+    return ⟨context, working, 2 * degree, monic⟩
+  else none
 
 /-- Retain the library's actual clean packing after each multiplication. -/
 def clean (input : Input) : Algebraic.Element input.context :=
@@ -45,48 +49,103 @@ This is a measurement baseline; it changes no production storage policy. -/
 def eager (input : Input) : Algebraic.Element input.context :=
   let seed : Algebraic.Element input.context := Algebraic.Element.ofPoly (DensePoly.ofCoeffs #[1, 1])
   (List.range input.steps).foldl (fun a _ =>
-    Algebraic.Element.ofPoly (DensePoly.divMod (a.polynomial * seed.polynomial) input.working).2) 1
+    Algebraic.Element.ofPoly (DensePoly.divModMonic (a.polynomial * seed.polynomial) input.working input.monic).2) 1
 
-/-- The result is a positive value; missing input or a failed result returns a
-nonmatching hash which measurement runners must reject. -/
+/-- Bind the complete stored representative and cached sign to a timed result. -/
+def resultHash {context : Context} (a : Algebraic.Element context) : UInt64 :=
+  hash (a.polynomial.toArray.map (fun q => (q.num, q.den)), a.sign)
+
 def runClean (input : Option Input) : UInt64 :=
   match input with
   | none => 0
-  | some input => if (clean input).sign == 1 then 1 else 0
+  | some input => let a := clean input; if a.sign == 1 then resultHash a else 0
 
-/- Cost model: cubic degree scaling is a hypothesis. With 2n multiplies,
-retained degrees are O(n); dense multiplication and polynomial reduction
-cost O(n^2) coefficient operations per step. Coefficient bit growth and
-selected-root sign work are measured separately and can exceed this model. -/
-setup_benchmark runClean n => n ^ 3
-  with prep := prepare
-  where {
-    paramFloor := 2, paramCeiling := 16
-    paramSchedule := .custom #[2, 4, 8, 16]
-    maxSecondsPerCall := 120.0
-    targetInnerNanos := 500000000
-    signalFloorMultiplier := 1.0
-  }
-
-/-- Eager arm of the same arithmetic trace. -/
 def runEager (input : Option Input) : UInt64 :=
   match input with
   | none => 0
-  | some input => if (eager input).sign == 1 then 1 else 0
+  | some input => let a := eager input; if a.sign == 1 then resultHash a else 0
 
-/- Cost model: the eager arm has 2n products and reductions on degree-O(n)
-dense representatives, giving a cubic coefficient-operation hypothesis.
-Rational denominator growth and selected-root queries remain unbounded by
-this degree-only model and must be reported with the actual measurements. -/
-setup_benchmark runEager n => n ^ 3
-  with prep := prepare
-  where {
-    paramFloor := 2, paramCeiling := 16
-    paramSchedule := .custom #[2, 4, 8, 16]
-    maxSecondsPerCall := 120.0
-    targetInnerNanos := 500000000
-    signalFloorMultiplier := 1.0
-  }
+/- Fixed comparison endpoints: these registrations bind exact result hashes
+for the four matched inputs. They make no asymptotic claim and do not discharge
+Phase-4 scaling coverage. Linear-seed multiplication and eager monic division
+are linear per step; sign queries in both arms build remainder chains. Clean
+queries also pseudo-divide the retained higher-degree polynomial. Rational bit
+growth prevents deriving a tight wall-time model from the cubic field-operation
+estimate alone. A general timeout is an operational cap, not a regression budget.
+Preparation is installed in the reference before the harness starts timing. -/
+initialize measurementInputs : IO.Ref (List (Nat × Input)) ← IO.mkRef []
+
+def clean2 (_ : Unit) : IO UInt64 := do
+  return runClean (((← measurementInputs.get).find? (fun input => input.1 == 2)).map Prod.snd)
+
+setup_fixed_benchmark clean2 where {
+  expectedHash := some 0x3412eccad34759ea
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def clean4 (_ : Unit) : IO UInt64 := do
+  return runClean (((← measurementInputs.get).find? (fun input => input.1 == 4)).map Prod.snd)
+
+setup_fixed_benchmark clean4 where {
+  expectedHash := some 0x94e8f7be8d8094d5
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def clean8 (_ : Unit) : IO UInt64 := do
+  return runClean (((← measurementInputs.get).find? (fun input => input.1 == 8)).map Prod.snd)
+
+setup_fixed_benchmark clean8 where {
+  expectedHash := some 0x7fafce5255084bbd
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def clean16 (_ : Unit) : IO UInt64 := do
+  return runClean (((← measurementInputs.get).find? (fun input => input.1 == 16)).map Prod.snd)
+
+setup_fixed_benchmark clean16 where {
+  expectedHash := some 0x992873940e7a7ca3
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def eager2 (_ : Unit) : IO UInt64 := do
+  return runEager (((← measurementInputs.get).find? (fun input => input.1 == 2)).map Prod.snd)
+
+setup_fixed_benchmark eager2 where {
+  expectedHash := some 0xe368522d9dc1d2f2
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def eager4 (_ : Unit) : IO UInt64 := do
+  return runEager (((← measurementInputs.get).find? (fun input => input.1 == 4)).map Prod.snd)
+
+setup_fixed_benchmark eager4 where {
+  expectedHash := some 0x319b3437a6d96431
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def eager8 (_ : Unit) : IO UInt64 := do
+  return runEager (((← measurementInputs.get).find? (fun input => input.1 == 8)).map Prod.snd)
+
+setup_fixed_benchmark eager8 where {
+  expectedHash := some 0xcfa38add5d03e099
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def eager16 (_ : Unit) : IO UInt64 := do
+  return runEager (((← measurementInputs.get).find? (fun input => input.1 == 16)).map Prod.snd)
+
+setup_fixed_benchmark eager16 where {
+  expectedHash := some 0x72603d1a602928b2
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
 
 private def coefficients (p : DensePoly Rat) : Lean.Json :=
   Lean.toJson (p.toArray.map fun q => [q.num, (q.den : Int)])
@@ -94,7 +153,7 @@ private def coefficients (p : DensePoly Rat) : Lean.Json :=
 private def storage {context : Context} (a : Algebraic.Element context) : Lean.Json :=
   Lean.Json.mkObj [("coefficients", coefficients a.polynomial),
     ("degree", Lean.toJson a.polynomial.natDegree), ("clean", Lean.toJson a.isClean),
-    ("sign", Lean.toJson a.sign)]
+    ("sign", Lean.toJson a.sign), ("result_hash", Lean.toJson (resultHash a).toNat)]
 
 /-- Untimed semantic and representation checks accompany each measured size.
 The independent exact oracle also checks the retained polynomials modulo the
@@ -105,17 +164,32 @@ def emit (degree : Nat) : IO Unit := do
   let b := eager input
   unless (a - b).sign == 0 && a.sign == 1 && b.sign == 1 do
     throw (IO.userError "normalization arms disagree at the selected root")
+  let prefixes := (List.range (input.steps + 1)).map fun step =>
+    let partialInput := { input with steps := step }
+    Lean.Json.mkObj [("step", Lean.toJson step), ("clean", storage (clean partialInput)),
+      ("eager", storage (eager partialInput))]
   IO.println <| (Lean.Json.mkObj [("degree", Lean.toJson degree),
     ("steps", Lean.toJson input.steps), ("head", coefficients input.context.root.raw.head),
     ("working_head", coefficients input.working), ("clean", storage a),
-    ("eager", storage b), ("equal_at_root", Lean.toJson true)]).compress
+    ("eager", storage b), ("equal_at_root", Lean.toJson true), ("prefixes", Lean.toJson prefixes)]).compress
 
 end Hex.RealClosure.Normalization
 
 def main (args : List String) : IO UInt32 := do
   match args with
+  | [] =>
+    Hex.RealClosure.Normalization.emit 2
+    Hex.RealClosure.Normalization.emit 4
+    return 0
   | ["storage", degree] =>
     let some n := degree.toNat? | throw (IO.userError "degree must be a natural number")
     Hex.RealClosure.Normalization.emit n
     return 0
-  | _ => LeanBench.Cli.dispatch args
+  | _ =>
+    let mut inputs := []
+    for degree in [2, 4, 8, 16] do
+      let some input := Hex.RealClosure.Normalization.prepare degree |
+        throw (IO.userError "normalization input rejected")
+      inputs := inputs ++ [(degree, input)]
+    Hex.RealClosure.Normalization.measurementInputs.set inputs
+    LeanBench.Cli.dispatch args
