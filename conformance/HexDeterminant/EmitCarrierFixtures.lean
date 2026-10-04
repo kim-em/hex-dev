@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexDeterminant.Carriers
+module
+
+public import HexDeterminant.Carriers
+
+public section
 
 /-- Emit complete symbolic determinants independently of the Bareiss emitters. -/
 def main : IO Unit := do

@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Experiment.PntTable10A2
-import HexInterval.Experiment.ProofFrontend
-import HexInterval.Experiment.TargetRun
-import Mathlib.Lean.Elab.Tactic.Meta
+module
+
+public import HexIntervalMathlib.Experiment.PntTable10A2
+public import HexInterval.Experiment.ProofFrontend
+public import HexInterval.Experiment.TargetRun
+public import Mathlib.Lean.Elab.Tactic.Meta
+
+public section
 
 /-!
 # Checked PNT+ BKLNW Table 10 `a₂` acceptance

@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexGraphIso.Sparse.Run
-import HexGraphIso.Sparse.Autos
-import HexGraphIso.Nauty.Sparse.Cert.Records
-import Lean.Data.Json
+
+module
+public import HexGraphIso.Sparse.Run
+public import HexGraphIso.Sparse.Autos
+public import HexGraphIso.Nauty.Sparse.Cert.Records
+public import Lean.Data.Json
+
+public section
 
 /-! Native sparse timing driver for the six-way comparison. The shared
 adjacency-text corpus is decoded before timing. Native JSON edge input is

@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimality.ProofProbe.PMinusOne.Support
+module
+
+public import HexPrimality.ProofProbe.PMinusOne.Support
+
+public section
 
 /-! One construction search with the production budget. -/
 set_option maxHeartbeats 0

@@ -1117,6 +1117,11 @@ enforced figure family uses one mechanism, declared in
   a rule is a fact the check establishes. `lean_comment_only` accepts a
   `.lean` path whose versions are equal once comments are removed; all
   other whitespace is preserved because Lean indentation carries meaning.
+  The graph checker also accepts a legacy-to-module header conversion only
+  when the ordered imports and complete declaration body remain byte-for-byte
+  identical: it permits adding `module`, making those imports public, and
+  opening `public section`. Meta imports, changed instances or declaration
+  attributes, body edits, and file-mode changes still require measurements.
   The factorization checker separately compares the package, dependencies,
   measured executable, libraries, package-wide native archives and their
   transitive build helpers that build the Hex factor service, so

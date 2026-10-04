@@ -4,9 +4,32 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexPolyFast
+public import VersoManual
+
+public import HexPolyFast
+
+import all HexPolyFast.Cyclic
+import all HexPolyFast.CyclicRemainder
+import all HexPolyFast.Division
+import all HexPolyFast.HalfGcd
+import all HexPolyFast.Interpolation
+import all HexPolyFast.Karatsuba
+import all HexPolyFast.Multipoint
+import all HexPolyFast.Pade
+import all HexPolyFast.Plan
+import all HexPolyFast.Reciprocal
+import all HexPolyFast.RemainderTree
+import all HexPolyFast.Reverse
+import all HexPolyFast.Tree
+public meta import HexPolyFast.Karatsuba
+public meta import HexPolyFast.Plan
+
+public meta import HexTruncatedSeries.Defs
+public meta import HexTruncatedSeries.Newton
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -69,13 +92,13 @@ open Hex Hex.DensePoly
 
 namespace HexPolyFastChapterMul
 
-private def a : DensePoly Int :=
+public def a : DensePoly Int :=
   #p[3, -2, 0, 5, 1]
 
-private def b : DensePoly Int :=
+public def b : DensePoly Int :=
   #p[-1, 6, 2]
 
-private def plan : MulPlan Int :=
+public def plan : MulPlan Int :=
   karatsubaPlan 2
 
 #guard mulWith plan a b = a * b
@@ -168,10 +191,10 @@ open Hex Hex.DensePoly
 
 namespace HexPolyFastChapterDivision
 
-private def a : DensePoly Rat :=
+public def a : DensePoly Rat :=
   #p[3, -2, 0, 5, 1]
 
-private def b : DensePoly Rat :=
+public def b : DensePoly Rat :=
   #p[2, -3, 1]
 
 #guard
@@ -274,16 +297,16 @@ open Hex Hex.DensePoly
 
 namespace HexPolyFastChapterPoints
 
-private def points : Array Rat :=
+public def points : Array Rat :=
   #[-1, 0, 2]
 
-private def values : Array Rat :=
+public def values : Array Rat :=
   #[6, 3, 3]
 
-private def expected : DensePoly Rat :=
+public def expected : DensePoly Rat :=
   #p[3, -2, 1]
 
-private def interpolated : Option (DensePoly Rat) :=
+public def interpolated : Option (DensePoly Rat) :=
   (InterpPlan.build?
     (karatsubaPlan 2) points).bind
       (fun plan => plan.interpolate? values)
@@ -321,10 +344,10 @@ open Hex Hex.DensePoly
 
 namespace HexPolyFastChapterPade
 
-private def series : TSeries Rat 3 :=
+public def series : TSeries Rat 3 :=
   TSeries.ofFn fun _ => 1
 
-private def approximant :
+public def approximant :
     Option (DensePoly Rat × DensePoly Rat) :=
   (pade? (karatsubaPlan 2) series 1 1).map
     (fun approx => (approx.p, approx.q))

@@ -4,7 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexNumberField
+module
+
+public import HexNumberField
+
+public meta import HexNumberField.IntegerRoots
+public meta import HexNumberField.Nearest
+public meta import HexNumberField.Roots
+
+public meta import HexNumberField.RealSign
+
+public section
 
 /-!
 Core conformance checks for `HexNumberField`.

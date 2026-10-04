@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRoots
-import LeanBench
+module
+
+public import HexRoots
+public import LeanBench
+
+public section
 
 /-!
 Phase 4 benchmark registrations for `hex-roots`.

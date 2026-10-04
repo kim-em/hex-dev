@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPPMathlib.Compact
+module
+
+public import HexECPPMathlib.Compact
+
+@[expose] public section
 
 namespace Hex.ECPP.CompactFixtures
 

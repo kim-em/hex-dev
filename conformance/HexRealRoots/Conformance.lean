@@ -4,8 +4,21 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealRoots
-import HexRealRoots.TarskiTests
+module
+
+public import HexRealRoots
+public import HexRealRoots.TarskiTests
+
+public meta import HexRealRoots.Isolate
+public meta import HexRealRoots.IsolateDescartes
+public meta import HexRealRoots.IsolateSturm
+public meta import HexRealRoots.Mobius
+public meta import HexRealRoots.Prec
+public meta import HexRealRoots.Refine
+
+public meta import HexRealRoots.SimpleRealRoot
+
+public section
 
 /-!
 Core conformance checks for `HexRealRoots`.

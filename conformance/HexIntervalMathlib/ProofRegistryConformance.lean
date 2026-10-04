@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.SineSignConformance
+module
+
+public import HexIntervalMathlib.SineSignConformance
+
+public section
 
 /-!
 # Joint proof-package registry conformance

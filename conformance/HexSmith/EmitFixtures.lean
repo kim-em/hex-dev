@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexSmith
-import HexMatrix.Notation
+module
+
+public import Hex.Conformance.Emit
+public import HexSmith
+public import HexMatrix.Notation
+
+public section
 
 /-! JSONL fixtures for the canonical Smith diagonal. -/
 

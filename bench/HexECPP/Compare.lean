@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor.Construction
-import Lean.Data.Json
+module
+
+public import HexIntFactor.Construction
+public import Lean.Data.Json
+
+public section
 
 /-! The full current construction profile, including the registered ECM
 retry. This is the same default schedule as Hex.PrimalityTactic.construct.

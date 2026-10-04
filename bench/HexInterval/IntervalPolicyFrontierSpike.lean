@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.PolicyFrontier
+module
+
+public import HexInterval.Experiment.PolicyFrontier
+
+public section
 
 /-!
 # Policy-frontier representation spike driver

@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexReflectMathlib
-import HexMvGcd.Instances
-import Mathlib.Algebra.Field.ZMod
-import Mathlib.LinearAlgebra.Matrix.Notation
+module
+
+public import HexReflectMathlib
+public import HexMvGcd.Instances
+public import Mathlib.Algebra.Field.ZMod
+public import Mathlib.LinearAlgebra.Matrix.Notation
+
+public section
 
 /-!
 # Residue coefficient conformance
@@ -48,7 +52,7 @@ example : Hex.LawfulGcdOps (ZMod64 3) := inferInstance
 example (F : Type u) [Field F] [CharP F 3] : Function.Injective (residueHom 3 F) :=
   residueHom_injective 3 F
 
-private def kernelCheck (xs : Array Expr) (proof : Expr) : MetaM Unit := do
+private meta def kernelCheck (xs : Array Expr) (proof : Expr) : MetaM Unit := do
   let name ← mkFreshUserName `Hex.ReflectResidueConformance.proof
   let type ← mkForallFVars xs (← inferType proof)
   let value ← mkLambdaFVars xs proof
@@ -83,7 +87,7 @@ run_meta do
       throwError "missing downstream coefficient instances"
     logInfo "ZMod 3 matrix: residue coefficients, X₀³ - X₀, kernel accepted"
 
-private def checkAux (coeffType : Expr) : List Expr → MetaM Unit
+private meta def checkAux (coeffType : Expr) : List Expr → MetaM Unit
   | [] => do
     let target ← mkAppOptM ``Hex.LawfulGcdOps
       #[coeffType, none, none, none, none, none, none]
@@ -107,7 +111,7 @@ run_meta do
     kernelCheck #[x] entry.result.proof
     logInfo "ZMod 5: auxiliary instances supply lawful gcd and Mathlib ring"
 
-private def declineProbe (p : Nat) (reason : String) : MetaM Unit := do
+private meta def declineProbe (p : Nat) (reason : String) : MetaM Unit := do
   let ty := mkApp (mkConst ``ZMod) (mkNatLit p)
   withLocalDeclD `x ty fun x => do
     let .declined (.providerCondition id message) _ ← reflectRing x
@@ -191,7 +195,7 @@ example : Function.Injective (residueHom 3 (MvPolynomial (Fin 1) (ZMod 3))) :=
 
 /-- Check the quoted polynomials, source equations, and injectivity of the
 provider's actual interpretation function in the kernel. -/
-private def checkMatrix (p : Nat) (factor : Expr)
+private meta def checkMatrix (p : Nat) (factor : Expr)
     (matrixEntries sources expectedValues : Array Expr) : MetaM Unit := do
   let outcome ← reflectRingBatch sources (cfg := { checkProofs := true })
   let .success batch _ := outcome
@@ -323,7 +327,7 @@ run_meta do
     Hex.ReflectResidueConformance.kernelCheck #[x] entry.result.proof
     logInfo "Grind-only residue carrier: integer fallback, kernel accepted"
 
-section
+public section
 open scoped Fin.CommRing
 
 /-- info: Fin with a Mathlib ring: ZMod retry supplies domain evidence -/
@@ -354,7 +358,7 @@ open Lean Meta Hex.Reflect
 -- Pin the literal characteristic so inference need not discover it through Nat.lcm.
 local instance : CharP (ZMod 3 × ZMod 3) 3 := inferInstance
 
-private def probe (ty : Expr) : MetaM Unit :=
+private meta def probe (ty : Expr) : MetaM Unit :=
   withLocalDeclD `x ty fun x => do
     let outcome ← reflectRing x
     let .declined (.providerCondition id message) _ := outcome

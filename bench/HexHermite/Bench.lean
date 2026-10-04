@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexHermite
-import Hex.BenchOracle.Flint
-import Hex.BenchOracle.Pari
-import LeanBench
+module
+
+public import HexHermite
+public import Hex.BenchOracle.Flint
+public import Hex.BenchOracle.Pari
+public import LeanBench
+
+public section
 
 /-! Mathlib-free HNF benchmarks over the four input families fixed by the SPEC. -/
 
@@ -76,7 +80,7 @@ private def matrix (input : Input) : Matrix Int input.rows input.cols :=
 
 /- A fixed-width structural checksum keeps result observation linear in the
 matrix size without making the benchmark multiply ever-growing `Int` values. -/
-private def checksum (M : Matrix Int n m) : UInt64 :=
+def checksum (M : Matrix Int n m) : UInt64 :=
   M.data.foldl (fun acc x => mixHash acc (hash x)) 0
 
 private def bitLength (z : Int) : Nat :=

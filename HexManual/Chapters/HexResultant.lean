@@ -4,9 +4,32 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexResultantMathlib
+public import VersoManual
+
+public import HexResultantMathlib
+
+import all HexBasic.ExactDiv
+import all HexResultant.BlockDeterminant
+import all HexResultant.BrownTraub
+import all HexResultant.DeterminantAlgebra
+import all HexResultant.Discriminant
+import all HexResultant.Fraction
+import all HexResultant.FractionPoly
+import all HexResultant.PseudoDivMod
+import all HexResultant.Subresultant
+import all HexResultant.SubresultantExt
+import all HexResultant.SubresultantMinor
+import all HexResultantMathlib.Chain
+import all HexResultantMathlib.Discriminant
+import all HexResultantMathlib.PseudoDivMod
+import all HexResultantMathlib.Roots
+import all HexResultantMathlib.Specialize
+import all HexResultantMathlib.Sylvester
+public meta import HexResultant.Discriminant
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -310,8 +333,8 @@ open Hex
 
 namespace HexResultantChapter
 
-private def f : DensePoly Int := DensePoly.ofList [-2, 0, 1]
-private def g : DensePoly Int := DensePoly.ofList [-3, 1]
+public def f : DensePoly Int := DensePoly.ofList [-2, 0, 1]
+public def g : DensePoly Int := DensePoly.ofList [-3, 1]
 
 #guard DensePoly.resultant f g = 7
 #guard DensePoly.disc f = 8

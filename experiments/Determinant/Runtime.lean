@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import Determinant.Schedules
-import Determinant.Fixture
-import Determinant.Modular
-import Determinant.Univariate
+
+module
+public import Determinant.Schedules
+public import Determinant.Fixture
+public import Determinant.Modular
+public import Determinant.Univariate
+
+public section
 
 open Hex Determinant.Schedules
 

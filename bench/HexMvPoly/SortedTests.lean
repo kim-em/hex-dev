@@ -4,8 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvPoly.Sorted
-import HexMvPolyCorpus
+module
+
+public import HexMvPoly.Sorted
+public import HexMvPolyCorpus
+
+public meta import HexMvPolyCorpus
+
+public meta import HexMvPoly.Sorted
+
+public section
 
 open Hex Hex.MvPoly Hex.MvPolyBench Hex.MvPolyBench.Corpus
 

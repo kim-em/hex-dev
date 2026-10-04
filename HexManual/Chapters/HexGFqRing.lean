@@ -4,9 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexGFqRing
+public import VersoManual
+
+public import HexGFqRing
+
+import all HexGFqRing.Operations
+import all HexGFqRing.PolynomialQuotient
+public meta import HexGFqRing.Operations
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -125,30 +133,30 @@ namespace HexGFqRingChapterExample
 local instance boundsFive : ZMod64.Bounds 5 :=
   ⟨by decide, by decide⟩
 
-private theorem prime_five : Hex.Nat.Prime 5 := by decide
+public theorem prime_five : Hex.Nat.Prime 5 := by decide
 
-private instance : ZMod64.PrimeModulus 5 := ⟨prime_five⟩
+public instance : ZMod64.PrimeModulus 5 := ⟨prime_five⟩
 
 /-- Monic degree-4 polynomial x⁴ + 2 over F₅. -/
-private def modulus : FpPoly 5 := #p[2, 0, 0, 0, 1]
+public def modulus : FpPoly 5 := #p[2, 0, 0, 0, 1]
 
-private theorem modulus_pos_degree :
+public theorem modulus_pos_degree :
     0 < FpPoly.degree modulus := by decide
 
-private def q (f : FpPoly 5) :
+public def q (f : FpPoly 5) :
     PolyQuotient modulus modulus_pos_degree :=
   ofPoly modulus modulus_pos_degree f
 
-private def reprNats
+public def reprNats
     (x : PolyQuotient modulus modulus_pos_degree) :
     List Nat :=
   (repr x).toArray.toList.map ZMod64.toNat
 
-private def a : PolyQuotient modulus modulus_pos_degree :=
+public def a : PolyQuotient modulus modulus_pos_degree :=
   q #p[2, 3]
-private def b : PolyQuotient modulus modulus_pos_degree :=
+public def b : PolyQuotient modulus modulus_pos_degree :=
   q #p[4, 1, 0, 1]
-private def x : PolyQuotient modulus modulus_pos_degree :=
+public def x : PolyQuotient modulus modulus_pos_degree :=
   q #p[0, 1]
 
 -- (2 + 3x) + (4 + x + x³) ≡ 1 + 4x + x³ (mod 5)

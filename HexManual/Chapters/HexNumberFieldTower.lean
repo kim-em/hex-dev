@@ -4,9 +4,22 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexNumberFieldTowerMathlib
+public import VersoManual
+
+public import HexNumberFieldTowerMathlib
+
+import all HexNumberFieldTower.Basic
+import all HexNumberFieldTower.Factor
+import all HexNumberFieldTower.Flatten
+import all HexNumberFieldTower.Split
+import all HexNumberFieldTowerMathlib.Adjoin
+import all HexNumberFieldTowerMathlib.Flatten
+public meta import HexNumberFieldMathlib.Field
+public meta import HexNumberFieldTowerMathlib.Total
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -71,18 +84,18 @@ open Hex Hex.NumberTower
 
 namespace HexNumberFieldTowerChapter
 
-def sqrt2 : AlgebraicNumber :=
+@[expose] public def sqrt2 : AlgebraicNumber :=
   (ZPoly.algebraicRoots #p[-2, 0, 1])[1]!
-def sqrt3 : AlgebraicNumber :=
+@[expose] public def sqrt3 : AlgebraicNumber :=
   (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
 
 -- `adjoin` is the Mathlib companion library's total
 -- form of `adjoin?`, which never returns `none`
 -- (`adjoin?_isSome`).
-def Q2 : Extension NumberTower.rat :=
+@[expose] public def Q2 : Extension NumberTower.rat :=
   adjoin NumberTower.rat sqrt2.toRoot
-abbrev T2 : NumberTower := Q2.tower
-def r2 : Elem T2 := Q2.gen
+@[expose] public abbrev T2 : NumberTower := Q2.tower
+@[expose] public def r2 : Elem T2 := Q2.gen
 
 #guard T2.dim = 2
 #guard coeffs (r2 * r2) = #[2, 0]
@@ -105,10 +118,10 @@ tag := "hex-number-field-tower-factor"
 finds exactly those two factors, with the scalar `1` kept separate:
 
 ```lean
-def quartic : Poly T2 :=
+@[expose] public def quartic : Poly T2 :=
   liftZPoly T2 #p[1, 0, -10, 0, 1]
-def gPlus : Poly T2 := #p[-1, (2 : Rat) • r2, 1]
-def gMinus : Poly T2 := #p[-1, (-2 : Rat) • r2, 1]
+@[expose] public def gPlus : Poly T2 := #p[-1, (2 : Rat) • r2, 1]
+@[expose] public def gMinus : Poly T2 := #p[-1, (-2 : Rat) • r2, 1]
 
 #guard gPlus * gMinus = quartic
 
@@ -136,7 +149,7 @@ tag := "hex-number-field-tower-split"
 has dimension four and the four roots square to `2` or `3`:
 
 ```lean
-def biquadratic : Poly NumberTower.rat :=
+@[expose] public def biquadratic : Poly NumberTower.rat :=
   liftZPoly NumberTower.rat #p[6, 0, -5, 0, 1]
 
 #guard
@@ -168,15 +181,15 @@ Here `γ` has the quartic above as minimal polynomial, so it is `±√2 ± √3`
 flattening and then to a canonical number agrees with computing directly:
 
 ```lean
-def Q23 : Extension T2 := adjoin T2 sqrt3.toRoot
-abbrev T23 : NumberTower := Q23.tower
-def s2 : Elem T23 := Q23.embed r2
-def s3 : Elem T23 := Q23.gen
+@[expose] public def Q23 : Extension T2 := adjoin T2 sqrt3.toRoot
+@[expose] public abbrev T23 : NumberTower := Q23.tower
+@[expose] public def s2 : Elem T23 := Q23.embed r2
+@[expose] public def s3 : Elem T23 := Q23.gen
 
 #guard T23.dim = 4
 #guard (s2 + s3) * (s2 - s3) = -1
 
-def F : Flattening T23 := flatten T23
+@[expose] public def F : Flattening T23 := flatten T23
 
 #guard F.root.p = #p[1, 0, -10, 0, 1]
 #guard (F.toPrimitive s2).coeffs = #p[0, -9 / 2, 0, 1 / 2]

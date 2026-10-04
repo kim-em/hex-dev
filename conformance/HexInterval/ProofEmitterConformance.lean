@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.ProofFrontend
-import HexInterval.PolicyFunctionConformance
+module
+
+public import HexInterval.Experiment.ProofFrontend
+public import HexInterval.PolicyFunctionConformance
+
+public section
 
 /-!
 This isolated canary quotes a plain trace for the arbitrary-function

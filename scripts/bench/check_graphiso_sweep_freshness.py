@@ -20,7 +20,8 @@ declared in ``scripts/bench/sweep_freshness.py``.
 
 The family declares no exemption channel, so any difference has to be
 re-measured, with checked exceptions: a ``.lean`` path whose two blobs are equal once
-comments are removed, and additions of plain literal Lake targets in existing
+comments are removed, a legacy-to-module header conversion with byte-for-byte
+identical imports and body, and additions of plain literal Lake targets in existing
 Hex library namespaces outside the measured import closure. Target additions
 cannot change existing declarations, build options, defaults, or module
 ownership within that closure. The check also compares the Lake declarations
@@ -261,9 +262,32 @@ def observations() -> tuple[list[freshness.Observation], list[str]]:
     return found, errors
 
 
+
+def module_header_only(difference: freshness.Difference) -> bool:
+    """Check a legacy-to-module header conversion with an identical body.
+
+    Public imports and the public section preserve legacy visibility. No meta
+    imports, declaration attributes, instance changes or body edits qualify.
+    """
+    if (not difference.path.endswith(".lean") or difference.baseline is None
+            or difference.current is None
+            or difference.baseline_mode != difference.current_mode):
+        return False
+    before = freshness.blob_text(difference.baseline)
+    after = freshness.blob_text(difference.current)
+    match = re.fullmatch(
+        r"(?s)(/-\nCopyright[^\n]*\n.*?\n-/\n\n)module\n\n"
+        r"((?:public import [A-Za-z0-9_.]+\n)*)(?:\n)?public section\n\n(.*)", after)
+    if match is None:
+        return False
+    imports = match[2].replace("public import ", "import ")
+    return before == match[1] + imports + ("\n" if imports else "") + match[3]
+
+
 def runtime_neutral(difference: freshness.Difference) -> bool:
     """The checked allowances shared by freshness and sweep selection."""
-    return (freshness.lean_comment_only(difference)
+    return (module_header_only(difference)
+            or freshness.lean_comment_only(difference)
             or independent_lake_targets(difference)
             or build_only_lakefile_edit(difference))
 

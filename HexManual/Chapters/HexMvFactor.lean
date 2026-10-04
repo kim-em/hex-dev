@@ -4,9 +4,22 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexMvFactor
+public import VersoManual
+
+public import HexMvFactor
+
+import all HexMvFactor.Decomp
+import all HexMvFactor.Eez
+import all HexMvFactor.Factor
+import all HexMvFactor.Irred
+import all HexMvFactor.IrredData
+import all HexMvFactor.Kronecker
+import all HexMvFactor.Leading
+import all HexMvFactor.Point
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Experiment.PntFks2Family
-import HexIntervalMathlib.PntFks2XpowConformance
-import HexInterval.Experiment.Frontend
-import HexInterval.Experiment.TargetRun
+module
+
+public import HexIntervalMathlib.Experiment.PntFks2Family
+public import HexIntervalMathlib.PntFks2XpowConformance
+public import HexInterval.Experiment.Frontend
+public import HexInterval.Experiment.TargetRun
+
+public section
 
 /-!
 # Local/release conformance for the full PNT+ FKS2 family

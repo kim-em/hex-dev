@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimalityMathlib
+module
+
+public import HexPrimalityMathlib
+
+public section
 
 /-! Odd small-factor probe at the supported 512-bit input ceiling:
 `97 * (2^505 + 1)`. -/

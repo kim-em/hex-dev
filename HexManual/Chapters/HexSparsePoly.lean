@@ -4,9 +4,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexSparsePolyMathlib
+public import VersoManual
+
+public import HexSparsePolyMathlib
+
+import all HexSparsePoly.Arith
+import all HexSparsePoly.Basic
+import all HexSparsePoly.Dense
+import all HexSparsePoly.Euclid
+import all HexSparsePoly.Eval
+import all HexSparsePolyMathlib.Equiv
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

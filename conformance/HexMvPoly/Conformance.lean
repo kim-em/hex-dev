@@ -4,7 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvPolyFixtures
+module
+
+public import HexMvPolyFixtures
+
+public meta import HexMvPoly.Basic
+public meta import HexMvPoly.Mono
+public meta import HexMvPoly.Query
+public meta import HexMvPoly.Ring
+public meta import HexMvPolyFixtures
+
+public section
 
 /-!
 Core executable conformance checks for `hex-mv-poly`.

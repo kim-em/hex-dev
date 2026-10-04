@@ -4,8 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexCharPoly.Fixtures
-import HexCharPoly.Carriers
+module
+
+public import HexCharPoly.Fixtures
+public import HexCharPoly.Carriers
+
+public meta import HexCharPoly.Carriers
+public meta import HexCharPoly.Fixtures
+public meta import HexModArith.Residue
+public meta import HexMvPoly.Ring
+
+public section
 
 /-!
 Executable characteristic-polynomial conformance checks.

@@ -1,0 +1,6 @@
+{
+  "path": "Hex/BenchOracle/Flint.lean",
+  "baseline_blob": "f86e97c524fad7fcdfd96c49491bb4b157ebe647",
+  "current_blob": "e0b4a5cfd99c7ead09bb36eeb6f24318340754f4",
+  "reason": "Adds the module header, public imports and a public section while retaining the existing executable definition bodies and native symbols. The factor service retains the same FLINT framing, parsing, child lifetime and operation dispatch; only import/export metadata changes."
+}

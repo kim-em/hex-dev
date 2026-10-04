@@ -4,13 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor.Divisors
-import HexPrimalityMathlib.Prime
-import Mathlib.Data.Finset.Sort
-import Mathlib.Data.Nat.Factorization.Basic
-import Mathlib.Data.Nat.Squarefree
-import Mathlib.Data.Nat.Totient
-import Mathlib.NumberTheory.Divisors
+module
+
+public import HexIntFactor.Divisors
+public import HexPrimalityMathlib.Prime
+public import Mathlib.Data.Finset.Sort
+public import Mathlib.Data.Nat.Factorization.Basic
+public import Mathlib.Data.Nat.Squarefree
+public import Mathlib.Data.Nat.Totient
+public import Mathlib.NumberTheory.Divisors
+
+public section
 
 /-! Correspondence between checked factor lists and `Nat.factorization`. -/
 

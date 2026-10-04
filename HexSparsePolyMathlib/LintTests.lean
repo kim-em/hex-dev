@@ -4,11 +4,22 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexSparsePolyMathlib
-import Batteries.Tactic.Lint
-import Mathlib.Tactic.Linter.Lint
-import Mathlib.Tactic.Linter.Style
-import Mathlib.Tactic.Linter.TacticDocumentation
+module
+
+public import HexSparsePolyMathlib
+public import Batteries.Tactic.Lint
+public import Mathlib.Tactic.Linter.Lint
+public import Mathlib.Tactic.Linter.Style
+public import Mathlib.Tactic.Linter.TacticDocumentation
+
+import all HexSparsePoly.Arith
+import all HexSparsePoly.Basic
+import all HexSparsePoly.Dense
+import all HexSparsePoly.Euclid
+import all HexSparsePoly.Eval
+import all HexSparsePolyMathlib.Equiv
+
+public section
 
 /-!
 # Sparse-polynomial lint regression
@@ -34,7 +45,7 @@ Batteries' `Environment.isAutoDecl` filter predates those generated
 names, so plain `docBlameThm` reports them as undocumented; `@[nolint]`
 cannot repair this from here because it only applies in the defining
 module. -/
-@[env_linter disabled] def docBlameThm' : Linter :=
+@[env_linter disabled] meta def docBlameThm' : Linter :=
   { docBlameThm with
     test := fun declName => do
       if declName.components.getLast? == some `ofNat_ctorIdx then return none

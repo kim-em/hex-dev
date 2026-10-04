@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Init
-import Init.Data.Rat.Lemmas
+module
+
+public import Init
+public import Init.Data.Rat.Lemmas
+
+public section
 
 namespace Search
 

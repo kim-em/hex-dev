@@ -4,11 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimalityBench.Inputs
-import HexPrimality.PMinusOneFixtures
-import HexPrimality.PMinusOneMeasure
-import HexPrimality.PMinusOneParents
-import LeanBench
+module
+
+public import HexPrimalityBench.Inputs
+public import HexPrimality.PMinusOneFixtures
+public import HexPrimality.PMinusOneMeasure
+public import HexPrimality.PMinusOneParents
+public import LeanBench
+import all HexPrimality.PMinusOne
+
+public section
 
 /-!
 Complete compiled Phase-4 evidence for `HexPrimality`.
@@ -719,7 +724,7 @@ structure PreparedPower where
   checksum : Nat
 deriving Inhabited
 
-@[noinline] def preparePower (n : Nat) : PreparedPower :=
+@[noinline, expose] def preparePower (n : Nat) : PreparedPower :=
   if n = 0 then ⟨fun _ _ => 0, 0⟩ else
     let word := UInt64.ofNat n
     if word.toNat = n then
@@ -741,7 +746,7 @@ theorem preparePower_eq (n a e : Nat) :
     · split <;> rfl
     · rfl
 
-def preparedSmooth (power : PreparedPower) (bound : Nat) : List Nat → Nat → Nat
+@[expose] def preparedSmooth (power : PreparedPower) (bound : Nat) : List Nat → Nat → Nat
   | [], x => x
   | q :: qs, x =>
       if q ≤ smoothBound bound then

@@ -4,12 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRowReduce
-import HexPolyFp.PrimeField
-import HexRationalFn
-import Hex.BenchOracle.Flint
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexRowReduce
+public import HexPolyFp.PrimeField
+public import HexRationalFn
+public import Hex.BenchOracle.Flint
+public import Lean.Data.Json
+public import LeanBench
+
+public section
 
 /-!
 Mode-1 benchmarks for every advertised executable `HexRowReduce` operation.
@@ -27,10 +31,10 @@ structure Input where
   matrix : Matrix Rat n n
   query : Vector Rat n
 
-private def vectorChecksum {n : Nat} (v : Vector Rat n) : UInt64 :=
+def vectorChecksum {n : Nat} (v : Vector Rat n) : UInt64 :=
   hash v.toArray
 
-private def matrixChecksum {n m : Nat} (M : Matrix Rat n m) : UInt64 :=
+def matrixChecksum {n m : Nat} (M : Matrix Rat n m) : UInt64 :=
   M.rows.toArray.foldl
     (fun checksum row => mixHash checksum (vectorChecksum row)) (hash n)
 
@@ -291,9 +295,9 @@ structure Input (F : Type) where
 instance [OfNat F 0] : Inhabited (Input F) :=
   ⟨⟨0, 0, 0, 0, 0, fun _ => 0⟩⟩
 
-private def vecHash (f : F → UInt64) (x : Vector F n) : UInt64 :=
+def vecHash (f : F → UInt64) (x : Vector F n) : UInt64 :=
   x.toArray.foldl (fun h a => mixHash h (f a)) 0
-private def matHash (f : F → UInt64) (A : Matrix F n m) : UInt64 :=
+def matHash (f : F → UInt64) (A : Matrix F n m) : UInt64 :=
   -- Recover the width from storage: evaluating a dependent `m - rank A`
   -- argument here would run a second elimination just to hash its dimension.
   let data := A.data.toArray

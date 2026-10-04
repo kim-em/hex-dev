@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRationalFn.Families
-import HexPolyFp.PrimeField
+module
+
+public import HexRationalFn.Families
+public import HexPolyFp.PrimeField
+
+public section
 
 /-!
 Complementary degree, output-size, Euclidean-chain, and coefficient-height
@@ -19,10 +23,10 @@ open DensePoly RationalFn
 open RationalFnFamilies (Raw Pair fraction config)
 open RationalFnScaling (dense consecutive output)
 
-private instance : Inhabited (RationalFn Rat) := ⟨0⟩
-private instance : Hashable (RationalFn Rat) := ⟨fun f => hash (output f)⟩
-private instance : Hashable Raw := ⟨fun i => hash (i.p.toArray, i.q.toArray)⟩
-private instance : Hashable Pair := ⟨fun i => hash (output i.f, output i.g)⟩
+instance : Inhabited (RationalFn Rat) := ⟨0⟩
+instance : Hashable (RationalFn Rat) := ⟨fun f => hash (output f)⟩
+instance : Hashable Raw := ⟨fun i => hash (i.p.toArray, i.q.toArray)⟩
+instance : Hashable Pair := ⟨fun i => hash (output i.f, output i.g)⟩
 
 def linearFraction (n : Nat) := fraction (dense (max n 1)) #p[0, 1]
 def squareDenominator (n : Nat) := fraction (dense (max n 1)) #p[0, 0, 1]
@@ -113,10 +117,10 @@ setup_benchmark transportCoeffs n => n with prep := linearFraction where
 scoped instance : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
 scoped instance : ZMod64.PrimeModulus 7 := ZMod64.primeModulusOfPrime (by decide)
 abbrev F := ZMod64 7
-private instance : Hashable F := ⟨fun x => hash x.toNat⟩
-private instance : Inhabited (RationalFn F) := ⟨0⟩
-private instance : Hashable (DensePoly F) := ⟨fun p => hash p.toArray⟩
-private instance : Hashable (RationalFn F) := ⟨fun f => hash (f.num.toArray, f.den.toArray)⟩
+instance : Hashable F := ⟨fun x => hash x.toNat⟩
+instance : Inhabited (RationalFn F) := ⟨0⟩
+instance : Hashable (DensePoly F) := ⟨fun p => hash p.toArray⟩
+instance : Hashable (RationalFn F) := ⟨fun f => hash (f.num.toArray, f.den.toArray)⟩
 
 /-- Consecutive continuants with every Euclidean quotient equal to X+1.
 Each recurrence increases degree by one, also in characteristic seven. -/

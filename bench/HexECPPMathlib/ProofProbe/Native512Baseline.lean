@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPPMathlib.Tests.Frozen512
+module
+
+public import HexECPPMathlib.Tests.Frozen512
+
+public section
 
 /-! Fresh-module proof phases for the frozen native 512-bit endpoint. -/
 

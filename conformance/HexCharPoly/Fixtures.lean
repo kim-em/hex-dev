@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexCharPoly
+module
+
+public import HexCharPoly
+
+public section
 
 /-! Shared integer fixtures for characteristic-polynomial conformance. -/
 

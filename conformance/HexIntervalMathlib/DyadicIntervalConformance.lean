@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Experiment.DyadicInterval
-import HexInterval.Experiment.ProofEmitter
+module
+
+public import HexIntervalMathlib.Experiment.DyadicInterval
+public import HexInterval.Experiment.ProofEmitter
+
+public section
 
 /-!
 # Exact interval semantics conformance

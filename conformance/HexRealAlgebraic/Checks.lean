@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealAlgebraic
+module
+
+public import HexRealAlgebraic
+
+public section
 
 /-! Additional compiled conformance cases, shared by the executable and fixture emitter. -/
 

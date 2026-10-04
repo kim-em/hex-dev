@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Tactic
+module
+
+public import HexIntervalMathlib.Tactic
+
+public section
 
 /-!
 # Supported arithmetic tactic conformance

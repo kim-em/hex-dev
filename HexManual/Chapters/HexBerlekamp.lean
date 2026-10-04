@@ -4,9 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexBerlekampMathlib
+public import VersoManual
+
+public import HexBerlekampMathlib
+
+import all HexBerlekamp.Factor
+import all HexBerlekampMathlib.Irreducibility
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -78,7 +85,7 @@ open Hex
 local instance boundsFive : ZMod64.Bounds 5 :=
   ⟨by decide, by decide⟩
 
-def f : FpPoly 5 := #p[1, 0, 1]
+@[expose] public def f : FpPoly 5 := #p[1, 0, 1]
 
 #check Berlekamp.berlekampFactor
 #check Berlekamp.rabinTest

@@ -1,0 +1,6 @@
+{
+  "path": "Hex/BenchOracle/Carriers.lean",
+  "baseline_blob": "21e0d7dfe2ef602d6c61b6c4e70c7d2233897efc",
+  "current_blob": "c277a4cc60cadcda508eec0e1624c6b6e819662b",
+  "reason": "Adds the module header, public imports and a public section while retaining the existing executable definition bodies and native symbols. This oracle/conformance helper is outside the measured factor service import graph; the broad Hex fingerprint includes it, but the service neither calls nor links its Lean declarations."
+}

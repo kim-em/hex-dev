@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSturm
-import LeanBench
+
+module
+public import HexSturm
+public import LeanBench
+
+public section
 
 /-! Prepared query, count, replay and literal-transport costs on `T_n`,
 query one and endpoints (-2,2). The head-degree ladder is 128 through 1024;

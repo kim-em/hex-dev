@@ -3,15 +3,19 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSignDet.Phases
-import HexSignDet.Small
-import HexSignDet.Joint
-import HexSignDet.Paired
-import HexSignDet.Maximal
-import HexSignDet.MaximalMatrix
-import HexSignDet.Height
-import LeanBench
-import Lean.Data.Json
+
+module
+public import HexSignDet.Phases
+public import HexSignDet.Small
+public import HexSignDet.Joint
+public import HexSignDet.Paired
+public import HexSignDet.Maximal
+public import HexSignDet.MaximalMatrix
+public import HexSignDet.Height
+public import LeanBench
+public import Lean.Data.Json
+
+public section
 
 /-!
 Computational performance owner: `HexSignDet`.

@@ -4,7 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGraphIso.ProofProbe.Support
+module
+
+public import HexGraphIso.ProofProbe.Support
+
+public meta import HexGraphIso.ProofProbe.Support
+
+public section
 
 /-! The negative ordered-colour pair at `n = 10`: an adjacent marked
 pair against a non-adjacent one.

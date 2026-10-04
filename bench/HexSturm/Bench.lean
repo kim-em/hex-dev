@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexSturm
-import HexSturm.Frontend
-import LeanBench
-import Lean.Data.Json
+module
+
+public import HexSturm
+public import HexSturm.Frontend
+public import LeanBench
+public import Lean.Data.Json
+
+public section
 
 /-!
 Shared query stage measurements and rational/integer comparison.

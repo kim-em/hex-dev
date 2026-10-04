@@ -4,8 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGFqField.Operations
-import HexBerlekamp.RabinSoundness
+module
+
+public import HexGFqField.Operations
+public import HexBerlekamp.RabinSoundness
+
+public meta import HexGFqRing.Operations
+
+public meta import HexGFqField.Operations
+
+public section
 
 /-!
 Core conformance checks for the finite-field wrapper in `HexGFqField`.

@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyZGcd
-import Hex.BenchOracle.Flint
-import HexBasic.Rand
-import LeanBench
+module
+
+public import HexPolyZGcd
+public import Hex.BenchOracle.Flint
+public import HexBasic.Rand
+public import LeanBench
+
+public section
 
 /-!
 Native scientific benchmarks for `hex-poly-z-gcd`.

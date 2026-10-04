@@ -4,9 +4,22 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexMvGcd
+public import VersoManual
+
+public import HexMvGcd
+
+import all HexMvGcd.Cert
+import all HexMvGcd.CertData
+import all HexMvGcd.Content
+import all HexMvGcd.Divide
+import all HexMvGcd.Gcd
+import all HexMvGcd.Normalize
+import all HexMvGcd.Squarefree
+import all HexMvGcd.Squarefree.Basic
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

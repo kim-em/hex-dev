@@ -3,8 +3,17 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import VersoManual
-import HexLatticeEnumMathlib
+
+module
+public import VersoManual
+public import HexLatticeEnumMathlib
+
+public meta import HexLatticeEnum.Cert
+public meta import HexLatticeEnum.Closest
+public meta import HexLatticeEnum.Enumerate
+public meta import HexLatticeEnum.Shortest
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -24,9 +33,9 @@ Exact closest-vector search finds `(1,2)`, at squared distance one.
 ```lean
 open Hex Hex.LatticeEnum
 namespace LatticeLeastSquares
-def rows : Matrix Int 2 2 :=
+@[expose] public def rows : Matrix Int 2 2 :=
   Matrix.ofRows #v[#v[2, 0], #v[1, 2]]
-def target : Vector Rat 2 := #v[1, 1]
+@[expose] public def target : Vector Rat 2 := #v[1, 1]
 #guard (ofMatrix? rows).map
   (fun b => (babai b target).distanceSq) = some 2
 #guard (ofMatrix? rows).map
@@ -55,7 +64,7 @@ ball of that squared radius also contains zero.
 ```lean
 open Hex Hex.LatticeEnum
 namespace LatticeA2
-def rows : Matrix Int 2 3 :=
+@[expose] public def rows : Matrix Int 2 3 :=
   Matrix.ofRows #v[#v[1, -1, 0], #v[0, 1, -1]]
 #guard ((ofMatrix? rows).bind shortest).map
   (fun a => a.distanceSq) = some 2
@@ -104,7 +113,7 @@ resource-related failure branch.
 ```lean
 open Hex Hex.LatticeEnum
 namespace LatticeBudget
-def stopped : Optimization 2 2 → Bool
+@[expose] public def stopped : Optimization 2 2 → Bool
   | .incomplete _ _ pending .optimum counts =>
     !pending.isEmpty && counts.nodes == 0
   | _ => false
@@ -151,7 +160,7 @@ two closest integers to one half are zero and one:
 ```lean
 open Hex Hex.LatticeEnum
 namespace LatticeReplay
-def certificate : Certificate 1 1 where
+@[expose] public def certificate : Certificate 1 1 where
   rows := Matrix.ofRows #v[#v[1]]
   forward := Matrix.ofRows #v[#v[1]]
   reverse := Matrix.ofRows #v[#v[1]]

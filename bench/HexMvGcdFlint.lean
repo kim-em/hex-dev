@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.BenchOracle.Flint
-import HexMvGcd
-import LeanBench
+module
+
+public import Hex.BenchOracle.Flint
+public import HexMvGcd
+public import LeanBench
+
+public section
 
 /-!
 FLINT comparison fixtures for `hex-mv-gcd`.

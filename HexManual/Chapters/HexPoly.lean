@@ -4,10 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexPoly.Euclid
-import HexPolyMathlib
+public import VersoManual
+
+public import HexPoly.Euclid
+public import HexPolyMathlib
+
+import all HexPoly.Dense
+import all HexPoly.Euclid.DivGcd
+import all HexPoly.Operations
+import all HexPolyMathlib.PolynomialEquivalence
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -188,9 +197,9 @@ open Hex Hex.DensePoly
 namespace HexPolyChapterArith
 
 -- a = 1 + 2x + 3x²
-private def a : DensePoly Int := #p[1, 2, 3]
+public def a : DensePoly Int := #p[1, 2, 3]
 -- b = x
-private def b : DensePoly Int := monomial 1 1
+public def b : DensePoly Int := monomial 1 1
 
 -- The constructors normalize: trailing zeros are
 -- dropped, and a monomial stores its one nonzero
@@ -273,8 +282,8 @@ open Hex Hex.DensePoly
 namespace HexPolyChapterEuclid
 
 -- p = x² - 1, q = x - 1
-private def p : DensePoly Rat := #p[-1, 0, 1]
-private def q : DensePoly Rat := #p[-1, 1]
+public def p : DensePoly Rat := #p[-1, 0, 1]
+public def q : DensePoly Rat := #p[-1, 1]
 
 -- x² - 1 = (x - 1)(x + 1), so the division is exact.
 -- Quotient x + 1, remainder 0.

@@ -4,10 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexGFq.Basic
-import HexGFqMathlib
+public import VersoManual
+
+public import HexGFq.Basic
+public import HexGFqMathlib
+
+import all HexGFq.Basic
+import all HexGFqMathlib.Basic
+public meta import HexGFq.Basic
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -160,8 +168,8 @@ namespace HexGFqChapter
 #check (GF2q 3)
 
 -- Packed elements of GF(8); bit i is the xⁱ coeff.
-abbrev E := GF2q 3
-def ofW (w : UInt64) : E := GF2q.ofWord w
+@[expose] public abbrev E := GF2q 3
+@[expose] public def ofW (w : UInt64) : E := GF2q.ofWord w
 
 -- x = 0b010, x² = 0b100.
 -- x · x² = x³ ≡ x + 1 = 0b011, since x³+x+1 = 0.

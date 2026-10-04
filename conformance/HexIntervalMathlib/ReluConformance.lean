@@ -4,15 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Experiment.ExpSign
-import HexInterval.Experiment.GoalFrontend
-import HexInterval.Experiment.GoalClosure
-import HexInterval.Experiment.ProofFrontend
-import HexInterval.Experiment.TargetRun
-import HexInterval.Experiment.BranchStart
-import HexInterval.Experiment.BranchTree
-import HexInterval.Experiment.BranchProof
-import Mathlib.Lean.Elab.Tactic.Meta
+module
+
+public import HexIntervalMathlib.Experiment.ExpSign
+public import HexInterval.Experiment.GoalFrontend
+public import HexInterval.Experiment.GoalClosure
+public import HexInterval.Experiment.ProofFrontend
+public import HexInterval.Experiment.TargetRun
+public import HexInterval.Experiment.BranchStart
+public import HexInterval.Experiment.BranchTree
+public import HexInterval.Experiment.BranchProof
+public import Mathlib.Lean.Elab.Tactic.Meta
+
+public section
 
 /-!
 # Distinct-assumption function propagation conformance
