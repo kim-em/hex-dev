@@ -12,13 +12,18 @@ The proof assembler disables error-to-`sorry` recovery, requires closed inputs
 and proofs, and audits their transitive axioms. Only `propext`, `Classical.choice`
 and `Quot.sound` are allowed. Unexpected kernel errors, resource exhaustion
 and unrelated elaboration errors fail the command. Only a declaration type
-mismatch permits trying the other Boolean result. `unproved` means neither equality was assembled; it is not a
-proof that the checker returns `false`. The probe also requires a missing-fact
+mismatch permits trying the other Boolean result. `unproved` means neither
+equality was assembled; it is not a proof that the checker returns `false`. The probe also requires a missing-fact
 application on the demanded projection or pattern-match path, without searching
 unapplied lambda bodies. An unrelated blocking definition fails the control.
-Committed negative controls require hard errors for an unrelated opaque Boolean, an incomplete
-proof and a deterministic kernel timeout. Axiom output for the missing-fact
-lemmas is checked against the three permitted axioms.
+Blocked definitions are unfolded to their actual recursors, which select the demanded operand. Committed controls cover two
+blocked arithmetic operands, a blocked constructor field in a matcher,
+an unrelated opaque Boolean, an incomplete proof, a real kernel timeout and
+the shared exception classifier used by both binding and result decisions.
+The arithmetic and matcher controls use closed terms and positive counterparts
+that must reach missing evidence. The probe follows projections and recursor
+arguments after unfolding definitions; unsupported shapes fail the control.
+Axiom output for the missing-fact lemmas is checked against the three permitted axioms.
 
 The controls include complete and missing scalar evidence, a false scalar claim,
 the actual two-entry graph, a false unused entry, and a false endpoint sign.

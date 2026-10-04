@@ -215,33 +215,45 @@ private def kernelCheck (name : Name) (type proof : Expr) : MetaM Unit := do
   ofExceptKernelException <| ((← getEnv).toKernelEnv.addDecl options
     (.thmDecl { name, levelParams := [], type, value := proof })).map (fun _ => ())
 
-/-- Follow demanded projections and recursor scrutinees, never lambda bodies. -/
+/-- A failed Boolean comparison permits another candidate; all other kernel
+errors are fatal in both the binding and result paths. -/
+private def acceptKernel {α : Type} (checked : Except Kernel.Exception α) : MetaM Bool :=
+  match checked with
+  | .ok _ => pure true
+  | .error (.declTypeMismatch _ _ _) => pure false
+  | .error exception => throwKernelException exception
+
+/-- Follow demanded projections and recursor scrutinees, never lambda bodies.
+Unfold blocked definitions to their actual recursors, which select the
+operand; do not guess from the declared argument order. -/
 private partial def missingRedex (expression : Expr) : MetaM (Option Expr) :=
   withIncRecDepth do
-    let expression ← withTransparency .all (whnf expression)
+    let expression ← withOptions (fun options => smartUnfolding.set options false) do
+      withTransparency .all (whnf expression)
     if expression.getAppFn.isConstOf ``Element.missing then return some expression
     match expression with
     | .proj _ _ value => missingRedex value
     | .mdata _ value => missingRedex value
     | .app .. =>
-      if let .const name _ := expression.getAppFn then
+      if let .proj .. := expression.getAppFn then return ← missingRedex expression.getAppFn
+      if let .const name levels := expression.getAppFn then
         let args := expression.getAppArgs
         if let .recInfo recursor ← getConstInfo name then
           if let some major := args[recursor.getMajorIdx]? then return ← missingRedex major
-        if let some matcher ← getMatcherInfo? name then
-          for index in matcher.getDiscrRange do
-            if let some discr := args[index]? then
-              let discr ← withTransparency .all (whnf discr)
-              unless discr.isLit || (← isConstructorApp discr) do
-                return ← missingRedex discr
-        if #[``Nat.add, ``Nat.sub, ``Nat.mul, ``Nat.div, ``Nat.mod, ``Nat.pow,
-            ``Nat.gcd, ``Nat.beq, ``Nat.ble].contains name then
-          for arg in args do
-            let arg ← withTransparency .all (whnf arg)
-            unless arg.isLit || (← isConstructorApp arg) do
-              return ← missingRedex arg
+        if let .defnInfo definition ← getConstInfo name then
+          let body := definition.value.instantiateLevelParams definition.levelParams levels
+          return ← missingRedex (body.beta args)
       return none
     | _ => return none
+
+/-- Regression terms must be closed before inspecting their reduction paths. -/
+private def closedTerm (stx : Syntax) (typeName : Name) : TermElabM Expr := do
+  let expression ← Term.withoutErrToSorry
+    (Term.elabTermEnsuringType stx (mkConst typeName))
+  Term.synthesizeSyntheticMVarsNoPostponing
+  let expression ← instantiateMVars expression
+  if expression.hasSorry || expression.hasMVar then throwError "incomplete regression input"
+  return expression
 
 syntax "#proof_probe " term " expecting " str (" binding " term)? : command
 elab_rules : command
@@ -264,15 +276,13 @@ elab_rules : command
       let comparison ← mkEq decision (mkConst ``Bool.true)
       let refl ← mkEqRefl (mkConst ``Bool.true)
       let options := (← getOptions).setBool `debug.skipKernelTC false
-      match (← getEnv).toKernelEnv.addDecl options
+      unless ← acceptKernel ((← getEnv).toKernelEnv.addDecl options
           (.thmDecl {
             name := `__kernelReplayBindingDecision
             levelParams := []
             type := comparison
-            value := refl }) with
-      | .error (.declTypeMismatch _ _ _) => throwError "literal input binding failed"
-      | .error exception => throwKernelException exception
-      | .ok _ => pure ()
+            value := refl })) do
+        throwError "literal input binding failed"
       let proof := mkAppN (mkConst ``of_decide_eq_true) #[type, decisionInstance, refl]
       let _ ← auditProof proof type
       kernelCheck `__kernelReplayBinding type proof
@@ -320,10 +330,7 @@ elab_rules : command
           levelParams := []
           type := comparisonType
           value := reflexivity })
-      match checked with
-      | .error (.declTypeMismatch _ _ _) => logInfo "kernelResult=typeMismatch"
-      | .error exception => throwKernelException exception
-      | .ok _ =>
+      if ← acceptKernel checked then
         let resultProof := mkAppN (mkConst ``of_decide_eq_true)
           #[proposition, decisionInstance, reflexivity]
         let proof := mkAppN (mkConst ``Eq.trans [.succ .zero])
@@ -334,6 +341,7 @@ elab_rules : command
         logInfo m!"kernelAccepted=true axioms={axioms}"
         outcome := if candidate then "true" else "false"
         break
+      else logInfo "kernelResult=typeMismatch"
     if outcome == "unproved" then
       let some redex ← missingRedex simplified.expr
         | throwError "unproved result without a demanded missing-fact boundary: {simplified.expr}"
@@ -345,6 +353,39 @@ end
 
 /-- An unrelated opaque boundary must never be classified as missing evidence. -/
 opaque otherStuck : Bool := true
+opaque otherNat : Nat := 0
+
+/- A primitive that recurses on its unrelated second operand must not blame
+missing evidence in its first. This exercises the diagnostic's actual path. -/
+#guard_msgs in
+run_elab do
+  let second ← closedTerm (← `(if missing then (1 : Nat) else 0)) ``Nat
+  let expression := mkApp2 (mkConst ``Nat.add) second (mkConst ``otherNat)
+  unless (← missingRedex expression).isNone do
+    throwError "ambiguous primitive operands were reported as missing evidence"
+  let positive := mkApp2 (mkConst ``Nat.add) (mkConst ``otherNat) second
+  unless (← missingRedex positive).isSome do
+    throwError "missing recursive operand was not reported"
+
+/- A constructor in the first discriminant can still contain the obstruction.
+Do not skip that field and attribute failure to a later missing sign. -/
+#guard_msgs in
+run_elab do
+  let expression ← closedTerm (← `(match some otherStuck, missing with
+    | some true, true => true
+    | _, _ => false)) ``Bool
+  unless (← missingRedex expression).isNone do
+    throwError "blocked constructor field was reported as missing evidence"
+  let positive ← closedTerm (← `(match some true, missing with
+    | some true, true => true
+    | _, _ => false)) ``Bool
+  unless (← missingRedex positive).isSome do
+    throwError "missing matcher operand was not reported"
+
+/-- error: (kernel) deterministic timeout -/
+#guard_msgs (error, drop info) in
+run_elab do
+  let _ ← acceptKernel (α := Unit) (.error .deterministicTimeout)
 
 /-- error: unproved result without a demanded missing-fact boundary: otherStuck -/
 #guard_msgs (error, drop info) in
