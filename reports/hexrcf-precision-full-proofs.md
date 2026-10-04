@@ -12,7 +12,7 @@ the ordinary kernel. It asks whether the tighter initial square remains useful
 when these arm-specific proofs are included. The mixed, variable observations
 justify no default precision change or general speedup.
 
-The [four modules](../bench/HexRCF/ProofProbe/Precision/Full8.lean) use the
+The [four measured modules](https://github.com/kim-em/hex-dev/blob/evidence/hexrcf-precision-full-2436b6ab0/bench/HexRCF/ProofProbe/Precision/Full8.lean) use the
 same imports, formula, coefficient and options: one coefficient, three atoms,
 variable exponent two, degree-four carrier over the degree-two field, monic
 carrier, interval signs and indexed lookup; reduced literals, combined replay
@@ -32,8 +32,8 @@ The common imported baseline is prebuilt, including the original eight-bit
 target and generic selected-root laws. Arm-specific constructor checks, selected
 identity and equivalence are declared inside each timed module. The timing
 includes their elaboration, native proposed certificate production, quotation,
-transport application and kernel checking. It still excludes import startup
-work in the warmed dependencies and does not implement general coefficient,
+transport application and kernel checking. It includes Lake startup and import loading; warming prebuilds common
+dependencies rather than excluding their loading and does not implement general coefficient,
 context or nested-evidence transport after reconstructing a field.
 
 ## Retained source and schedule

@@ -58,7 +58,8 @@ Targeted retained experiments answer concrete implementation questions:
 | Full queries versus exact interval sign evidence | [Interval quotation](hexrcf-interval-proofs.md) | The fixed-goal comparison favors interval quotation. Its reconstructed-query control and historical provenance limitations are explicit. |
 | Indexed sign retrieval | [Index comparison](hexrcf-index-proofs.md) | Two retained fixed-goal studies favor indexed retrieval; the default is enabled. These measure whole fresh-module cost, with exact measured-source and later shipping-source identities stated separately. |
 | Generator-window refinement | [Window comparison](hexrcf-window-proofs.md) | All 32 fixed-schedule arms are retained. The low-precision fixture removes three full queries at a proof-size cost; the study establishes no useful whole-module speedup, so refinement defaults to zero. |
-| Initial generator precision | [Precision comparison](hexrcf-precision-proofs.md) | Eight versus sixty-four bits for the same selected √2 and exact target, with checked transport. Three full queries disappear and private proof size falls; the small mixed paired changes justify no default change. The original pair excludes arm-specific setup. A [separate four-width study](hexrcf-precision-full-proofs.md) includes fresh constructor/transport proofs and retains all 24 arms. Its large mixed margins establish no reliable speedup; neither study proves general reconstruction or nested-depth costs. |
+| Initial generator precision | [Precision comparison](hexrcf-precision-proofs.md) | Eight versus sixty-four bits for the same selected √2 and exact target, with checked transport. Three full queries disappear and private proof size falls; the small mixed paired changes justify no default change. The original pair excludes arm-specific setup. A [separate four-width study](hexrcf-precision-full-proofs.md) includes fresh constructor/transport proofs and retains all 24 arms. Its large mixed margins establish no reliable speedup; The [36-arm production-acceptance study](hexrcf-precision-production-proofs.md) uses the actual tactic acceptance routine and a balanced six-round schedule. Its variable observations justify no default change. None proves general reconstruction or nested-depth costs. |
+| Repeated/shared source roots | [Source comparisons](hexrcf-common-root-proofs.md) | Two changed-input comparisons through the named-√2 frontend retain all 16 arms. The normalized carrier has four root sections in each case. Several input dimensions change together; this is not one-parameter or asymptotic scaling evidence. |
 | Carrier normalization | [Carrier comparison](hexrcf-carrier-proofs.md) | The retained fixed-goal pairs favor monic carriers; the ordinary-kernel normalization laws retain the original product. Signed chains are not arbitrarily made monic. |
 | One replay goal versus split conjuncts | [Replay comparison](hexrcf-replay-proofs.md) | The retained comparison did not establish a gain; combined replay stays off. |
 | Degree, source atoms and coefficient width | [Input costs and attribution](hexrcf-scaling-proofs.md) | Independent two-point observations in a no-real-root regime, with serialized/expanded syntax and a representative phase profile. These are not asymptotic verdicts or precision/depth evidence. |
@@ -121,9 +122,11 @@ The planned extension remains incomplete in these specific respects:
   still has the concrete language gap above. Registered constants remain bounded
   certified search unless the stronger child progress/relative transcendence
   laws are supplied.
-- The initial-generator precision comparison covers one fixed field and two
-  widths. Broad precision, nested depth and common/repeated-root cost scaling
-  remain unmeasured. New numerical primitive measurements must
+- The initial-generator precision comparisons cover one fixed field at four
+  widths, including fresh constructor/transport proofs and production proof
+  acceptance. The repeated/shared-root comparisons cover two changed-input
+  pairs through the named-√2 frontend. Broad precision, nested depth and
+  asymptotic common/repeated-root cost scaling remain unmeasured. New numerical primitive measurements must
   use Mathlib-free owner drivers on explicitly bound adapter-generated inputs;
   preparation costs must be reported separately. Existing correctness examples
   do not stand in for those additional scientific measurements.

@@ -17,11 +17,12 @@ The [modules](../bench/HexRCF/ProofProbe/CommonRoots/Simple.lean) prove:
 
 They use identical imports and options: monic carrier, indexed lookup and
 interval signs; reduced literals, combined replay and generator refinement
-are disabled. They each authenticate the single selected √2 source coefficient.
+are disabled. They each use `Tactic.handle` → `proveNamedRoot`, the named-√2 frontend,
+which authenticates the single selected √2 source coefficient.
 The repeated input changes maximum atom degree from two to four and product
 degree from four to six, while retaining three atoms. The shared input changes
 maximum atom degree from two to three, product degree from four to seven and
-atom count from three to four. These targets have the same principal zero set,
+atom count from three to four. These targets have the same solution set,
 but are distinct Lean statements. The additional factor x−1 supplies no new
 carrier root because the existing strict lower-bound atom already uses it.
 
@@ -32,14 +33,18 @@ The clean measured and audited source is
 The [raw report](bench-results/hex-rcf-common-root-proofs-22c5010fe-chungus2.json)
 and [incremental samples](bench-results/hex-rcf-common-root-proofs-22c5010fe-chungus2.json.samples.jsonl)
 retain all 16 completed arms and full compiler output. Source and dependency
-identities remained unchanged. Four trial-major rounds rotate two adjacent
+identities remained unchanged. This pin is on a sibling evidence branch; the
+timed CommonRoots modules and adapter match the shipping tranche. The
+collector now calls the unchanged solution-set metadata `same_solution_set`;
+the recorded source uses `same_principal_zero_set`. The precision probes and
+their collector differ and are measured separately. Four trial-major rounds rotate two adjacent
 pairs. Each pair occupies each position twice and uses two AB and two BA
 rounds. No completed sample was excluded and no unchanged rerun was taken.
 
 The AMD EPYC 9455 shared-host runner automatically leased CPU 88 (SMT sibling
 40), with one Lean thread. Recorded activity is context. The 120-second
 per-arm timeout is an operational safeguard. Imports and dependencies are
-warmed; measured costs include source coefficient preparation, certificate
+warmed; measured costs include named-√2 frontend preparation, certificate
 production, quotation and fresh-module kernel acceptance.
 
 | Input pair | Simple median s | Candidate median s | Median paired change s | Private proof bytes | Median peak RSS KiB |
@@ -67,9 +72,11 @@ are unchanged across the separate audit. These are not per-arm hash captures.
 The traversal requires the actual `FieldBuild.Result.checkExists_sound` proof
 and exactly one literal solver envelope with five carrier coefficients and
 four root sections. Every case has four sections and five sectors. The first
-two have three root-sign rows; the shared input has four. None uses the
-multi-source `CommonPresentation.checkPolynomials_sound` path: each has one
-irrational source coefficient in a single selected field.
+two have three root-sign rows; the shared input has four. None uses `CommonPresentation.checkPolynomials_sound`: the named-√2 handler
+selects these fixtures before general common-field preparation. A single
+non-fixture coefficient can use that general path, as the checked √3 window
+control demonstrates. These timings cover the named-√2 frontend, rather than
+general source coefficient preparation.
 
 | Input | Interval/full-query entries | Unique expressions | Expanded local-reference nodes |
 | --- | ---: | ---: | ---: |

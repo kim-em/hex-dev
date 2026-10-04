@@ -61,6 +61,7 @@ private def describe (name : Name) : MetaM Json := do
   unless solver do throwError "source proof bypassed the fixed-field algebraic solver"
   let common := counts.expressions.toList.any fun (e, _) =>
     e.isConstOf ``RealCoefficients.CommonPresentation.checkPolynomials_sound
+  if common then throwError "named sqrt(2) probe changed its source authentication route"
   return Json.mkObj [("proof", toJson name.toString), ("common_presentation", toJson common), ("solver", toJson rows.head!),
     ("syntax", ← Windows.Audit.measure name)]
 

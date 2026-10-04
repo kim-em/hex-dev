@@ -653,9 +653,10 @@ reconstruction or nested transport.
 The [source repeated/shared-root comparison](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-common-root-proofs.md)
 uses actual `rcf` goals with a squared zero polynomial and an additional
 polynomial sharing existing roots. All three checked carriers have four root
-sections and five sectors. Sixteen retained arms include source preparation,
+sections and five sectors. Sixteen retained arms include the named-√2 frontend preparation,
 quotation and kernel acceptance; paired medians increase by 0.890 and 1.266
-seconds for these changed inputs. Several input dimensions change together,
+seconds for these changed inputs, retaining a −8.198-second repeated-input
+observation as well. Several input dimensions change together,
 so this is not a one-parameter complexity model or a general scaling claim.
 
 For these reconstructed inputs, closed arithmetic is compiled into the common

@@ -147,6 +147,13 @@ run_meta do
       (Lean.mkConst ``matrix) matrix data
   unless quotedTrue == quotedFalse do
     throwError "frozen window quotation changed under a producer option"
+  for indexed in [false, true] do
+    let replayed ← Lean.withOptions (fun options =>
+        options.setBool `rcf.algebraic.indexSigns indexed) do
+      FieldLiteral.replay (Lean.mkConst ``SquareTwo.polynomial) (Lean.mkConst ``root)
+        (Lean.mkConst ``values) (Lean.mkConst ``matrix) values matrix .existsReal data
+    let _ ← Hex.RCF.checkProof `Hex.RCF.GeneratorWindowTests
+      (← Lean.Meta.inferType proof) replayed
   let falseValid ← try
     let _ ← FieldLiteral.replay (Lean.mkConst ``SquareTwo.polynomial) (Lean.mkConst ``root)
       (Lean.mkConst ``values) (Lean.mkConst ``matrix) values matrix .forallReal data
@@ -224,12 +231,13 @@ theorem guarded : ∀ x : ℝ, x ^ 2 + 1 / Real.sqrt 2 > 0 := by rcf
 theorem domain : ∃ x ∈ Set.Ioc (1 : ℝ) 2, x ^ 2 = Real.sqrt 2 := by rcf
 
 run_meta do
-  for name in [`Hex.RCF.GeneratorWindowTests.further,
+  for name in [`Hex.RCF.GeneratorWindowTests.fixed,
+      `Hex.RCF.GeneratorWindowTests.source_window, `Hex.RCF.GeneratorWindowTests.further,
       `Hex.RCF.GeneratorWindowTests.guarded, `Hex.RCF.GeneratorWindowTests.domain] do
     unless ← Hex.RCF.ProofEvidence.contains name
         (fun e => e.isConstOf ``FieldBuild.Result.checkExistsIndex_eq ||
           e.isConstOf ``FieldBuild.Result.checkForallIndex_eq) do
-      throwError "window proof did not use indexed checked sign retrieval"
+      throwError "quoted solver proof did not use indexed checked sign retrieval"
     for producer in [``FieldBuild.refineSigns, ``RefinedIsolation.refineTo?,
         ``Table.refine, ``FieldBuild.produceWithin] do
       if ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf producer) then
