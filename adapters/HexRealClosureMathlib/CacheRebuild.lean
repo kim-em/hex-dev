@@ -61,7 +61,7 @@ theorem InclusionCache.rebuild?_models {source destination : Context registry}
             (source.mapDescriptor destination initial.value descriptor) = some converted :=
         incoming.native.descriptor_exists descriptor
       obtain ⟨converted, checked⟩ := success
-      cases matched : destination.findRoot? converted (cache.candidates converted) with
+      cases matched : cache.findRoot? converted with
       | some existing =>
         let binding := SignDet.Descriptor.build_raw
           (SignDet.Descriptor.validate_eq_some.mp checked)

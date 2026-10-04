@@ -212,6 +212,24 @@ def run : IO Unit := do
     conjugates.input.context.equal (conjugates.value ⟨2, by simp⟩ negative.generator)
       (-conjugates.value ⟨0, by simp⟩ alpha))
     "constraint check accepted the wrong conjugate"
+  let some thomDescriptor := SignDet.Descriptor.validate base.sign base.signature
+      { context := base.signature, head := x * x - DensePoly.C two,
+        lower := .finite (-two), upper := .finite two, indices := [1], signs := [-1] }
+    | throw (IO.userError "derivative-selected conjugate descriptor failed")
+  let thom := base.adjoin thomDescriptor
+  let some selectedConjugate := sameRoot.add? thom.context
+    | throw (IO.userError "derivative-selected conjugate registration failed")
+  require (selectedConjugate.input.context.signature.roots.length == 1 &&
+    selectedConjugate.input.context.equal (selectedConjugate.value ⟨2, by simp⟩ thom.generator)
+      (-selectedConjugate.value ⟨0, by simp⟩ alpha))
+    "derivative signs did not distinguish the two existing conjugates"
+  let some afterEnlargement := next.add? alternative.context
+    | throw (IO.userError "equivalent root registration after enlargement failed")
+  require (afterEnlargement.input.context.signature.roots.length == 1 &&
+    afterEnlargement.input.context.equal
+      (afterEnlargement.value ⟨3, by simp [owners]⟩ alternative.generator)
+      (afterEnlargement.value ⟨0, by simp [owners]⟩ alpha))
+    "post-enlargement candidates duplicated an equivalent selected root"
   let some linearDescriptor := SignDet.Descriptor.validate base.sign base.signature
       { context := base.signature, head := DensePoly.C two * (x - DensePoly.C (two + 1)),
         lower := .finite two, upper := .finite (two + two), indices := [], signs := [] }

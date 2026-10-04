@@ -20,16 +20,32 @@ structure RootMatch (context : Context registry)
   selected : descriptor.raw.constraints.map (fun p => context.sign (p.eval value)) =
     descriptor.raw.constraintSigns
 
-/-- Search existing values by their defining equation, derivative signs and
-strict interval bounds. Failed candidates do not change the context. -/
-@[expose] def Context.findRoot? (context : Context registry)
-    (descriptor : SignDet.Descriptor context.Value Signature context.sign context.signature) :
-    List context.Value → Option (RootMatch context descriptor)
-  | [] => none
-  | candidate :: rest =>
-    if selected : descriptor.raw.constraints.map (fun p => context.sign (p.eval candidate)) =
-        descriptor.raw.constraintSigns then some ⟨candidate, selected⟩
-    else context.findRoot? descriptor rest
+/-- Compare constraint signs in order, stopping at the first mismatch. -/
+@[expose] def Context.checkSigns (context : Context registry) (candidate : context.Value) :
+    List context.Poly → List Int → Bool
+  | [], [] => true
+  | p :: ps, sign :: signs =>
+    context.sign (p.eval candidate) == sign && context.checkSigns candidate ps signs
+  | _, _ => false
+
+/-- The short-circuit check accepts exactly the full original sign equation. -/
+theorem Context.checkSigns_iff (context : Context registry) (candidate : context.Value)
+    (ps : List context.Poly) (signs : List Int) :
+    context.checkSigns candidate ps signs = true ↔
+      ps.map (fun p => context.sign (p.eval candidate)) = signs := by
+  induction ps generalizing signs with
+  | nil => cases signs <;> simp [Context.checkSigns]
+  | cons p ps ih => cases signs <;> simp [Context.checkSigns, ih]
+
+/-- Check one existing value against the head first, then the derivative signs
+and strict interval bounds. Rejection changes no context. -/
+@[expose] def Context.matchRoot? (context : Context registry)
+    (descriptor : SignDet.Descriptor context.Value Signature context.sign context.signature)
+    (candidate : context.Value) : Option (RootMatch context descriptor) :=
+  if accepted : context.checkSigns candidate descriptor.raw.constraints
+      descriptor.raw.constraintSigns = true then
+    some ⟨candidate, (context.checkSigns_iff candidate _ _).mp accepted⟩
+  else none
 
 /-- Retrieve the actual last algebraic generator without reconstructing its
 predecessors. A staged base has no algebraic generator. -/
@@ -82,18 +98,5 @@ theorem Conversion.reuseRoot_context {source : Context registry}
     (conversion.reuseRoot descriptor converted binding candidate selected).context =
       conversion.context := conversion.reuseRoot_context_proof descriptor converted binding candidate selected
 
-/-- Check an existing target value against all constraints of the converted
-selected root, including its defining equation and strict interval bounds. -/
-@[expose] def Conversion.reuseRoot? {source : Context registry}
-    (conversion : Conversion source)
-    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
-    (converted : SignDet.Descriptor conversion.context.Value Signature
-      conversion.context.sign conversion.context.signature)
-    (binding : converted.raw = source.mapDescriptor conversion.context conversion.value descriptor)
-    (candidate : conversion.context.Value) : Option (Conversion (source.adjoin descriptor).context) :=
-  if selected : converted.raw.constraints.map
-      (fun p => conversion.context.sign (p.eval candidate)) = converted.raw.constraintSigns then
-    some (conversion.reuseRoot descriptor converted binding candidate selected)
-  else none
 
 end Hex.RealClosure.Tower

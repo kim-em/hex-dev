@@ -21,21 +21,35 @@ Entries retain native owners; neither a name nor a hash supplies an equality. -/
 structure InclusionCache (target : Context registry) : Type 1 where
   entries : List (Σ source : Context registry, Inclusion source target)
 
-/-- Existing algebraic generators, carried by their actual cached inclusions.
-This includes generators below the final target level. -/
-@[expose] def InclusionCache.rootValues {target : Context registry}
-    (cache : InclusionCache target) : List target.Value :=
-  (cache.entries.filterMap fun entry => entry.1.lastRoot?.map entry.2.value).flatMap
-    fun root => [root, -root]
+private def findCachedRoot {target : Context registry}
+    (descriptor : SignDet.Descriptor target.Value Signature target.sign target.signature) :
+    List (Σ source : Context registry, Inclusion source target) → Option (RootMatch target descriptor)
+  | [] => none
+  | entry :: rest =>
+    match entry.1.lastRoot? with
+    | none => findCachedRoot descriptor rest
+    | some root =>
+      let candidate := entry.2.value root
+      match target.matchRoot? descriptor candidate with
+      | some matched => some matched
+      | none =>
+        match target.matchRoot? descriptor (-candidate) with
+        | some matched => some matched
+        | none => findCachedRoot descriptor rest
 
-/-- A linear head supplies a candidate directly in the coefficient field.
-Every candidate still passes the full selected-root constraint check. -/
-@[expose] def InclusionCache.candidates {target : Context registry}
+/-- Search cached generators and their negatives on demand. A linear head
+supplies a coefficient-field candidate first. Every accepted value passes
+all selected-root constraints; later entries are untouched after a match. -/
+def InclusionCache.findRoot? {target : Context registry}
     (cache : InclusionCache target)
     (descriptor : SignDet.Descriptor target.Value Signature target.sign target.signature) :
-    List target.Value :=
-  (if descriptor.raw.head.degree? == some 1 then
-    [-descriptor.raw.head.coeff 0 / descriptor.raw.head.coeff 1] else []) ++ cache.rootValues
+    Option (RootMatch target descriptor) :=
+  if descriptor.raw.head.degree? == some 1 then
+    match target.matchRoot? descriptor
+        (-descriptor.raw.head.coeff 0 / descriptor.raw.head.coeff 1) with
+    | some matched => some matched
+    | none => findCachedRoot descriptor cache.entries
+  else findCachedRoot descriptor cache.entries
 
 /-- Reuse a checked existing value as the source child's selected generator. -/
 @[expose] def Inclusion.reuseRoot {source target : Context registry}
@@ -149,7 +163,7 @@ existing selected roots are reused before appending an algebraic level. -/
           (source.mapDescriptor target initial.value descriptor) with
       | none => none
       | some converted =>
-        match target.findRoot? converted (cache.candidates converted) with
+        match cache.findRoot? converted with
         | some matched =>
           let binding := SignDet.Descriptor.build_raw
             (SignDet.Descriptor.validate_eq_some.mp checked)
@@ -194,7 +208,7 @@ private theorem InclusionCache.rebuild?_miss_proof {target source : Context regi
     (converted : SignDet.Descriptor target.Value Signature target.sign target.signature)
     (checked : SignDet.Descriptor.validate target.sign target.signature
       (source.mapDescriptor target initial.value descriptor) = some converted)
-    (unmatched : target.findRoot? converted (cache.candidates converted) = none) :
+    (unmatched : cache.findRoot? converted = none) :
     cache.rebuild? initial (.root descriptor rest) =
       let child := target.adjoin converted
       let previous : Inclusion target child.context :=
@@ -228,7 +242,7 @@ private theorem InclusionCache.rebuild?_reuse_proof {target source : Context reg
     (checked : SignDet.Descriptor.validate target.sign target.signature
       (source.mapDescriptor target initial.value descriptor) = some converted)
     (matched : RootMatch target converted)
-    (present : target.findRoot? converted (cache.candidates converted) = some matched) :
+    (present : cache.findRoot? converted = some matched) :
     cache.rebuild? initial (.root descriptor rest) =
       let binding := SignDet.Descriptor.build_raw
         (SignDet.Descriptor.validate_eq_some.mp checked)
@@ -256,7 +270,7 @@ theorem InclusionCache.rebuild?_reuse {target source : Context registry}
     (checked : SignDet.Descriptor.validate target.sign target.signature
       (source.mapDescriptor target initial.value descriptor) = some converted)
     (matched : RootMatch target converted)
-    (present : target.findRoot? converted (cache.candidates converted) = some matched) :
+    (present : cache.findRoot? converted = some matched) :
     cache.rebuild? initial (.root descriptor rest) =
       let binding := SignDet.Descriptor.build_raw
         (SignDet.Descriptor.validate_eq_some.mp checked)
@@ -273,7 +287,7 @@ theorem InclusionCache.rebuild?_miss {target source : Context registry}
     (converted : SignDet.Descriptor target.Value Signature target.sign target.signature)
     (checked : SignDet.Descriptor.validate target.sign target.signature
       (source.mapDescriptor target initial.value descriptor) = some converted)
-    (unmatched : target.findRoot? converted (cache.candidates converted) = none) :
+    (unmatched : cache.findRoot? converted = none) :
     cache.rebuild? initial (.root descriptor rest) =
       let child := target.adjoin converted
       let previous : Inclusion target child.context :=
