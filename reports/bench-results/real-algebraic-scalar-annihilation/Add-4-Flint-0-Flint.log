@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runFlintAdd4    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a3ddc94-dirty, 2026-10-04T19:58:16Z, host=chungus2
+  repeat 0  22.330 µs  (×2^12, total 91.468 ms)
+  median: 22.330 µs    min: 22.330 µs    max: 22.330 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_732 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-4-Flint-0-Flint.json

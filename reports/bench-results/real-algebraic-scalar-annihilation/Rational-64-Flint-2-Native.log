@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runRational64    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a3ddc94-dirty, 2026-10-04T20:11:04Z, host=chungus2
+  repeat 0  522.027 µs  (×2^7, total 66.819 ms)
+  median: 522.027 µs    min: 522.027 µs    max: 522.027 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 68_712 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Rational-64-Flint-2-Native.json

@@ -44,14 +44,15 @@ def main():
             sizes=meta['families'][operation]
             for backend,control in [('Native',False),('Flint',False),('Z3',False),('Flint',True),('Z3',True)]:
                 selected=[r for r in rows if r['operation']==operation and r['arm']==backend and r['control']==control]
+                color={('Native',False):'#1f77b4',('Flint',False):'#ff7f0e',('Z3',False):'#2ca02c',('Flint',True):'#d62728',('Z3',True):'#9467bd'}[(backend,control)]
                 xs=[];ys=[];lo=[];hi=[]
                 for size in sizes:
                     values=[r['nanos']/1e6 for r in selected if r['size']==size]
                     if not values:continue
                     xs.append(size);ys.append(median(values));lo.append(min(values));hi.append(max(values))
-                    ax.scatter([size]*len(values),values,s=10,alpha=.25)
+                    ax.scatter([size]*len(values),values,s=10,alpha=.25,color=color)
                 if not xs:continue
-                line,=ax.plot(xs,ys,':o' if control else '-o',label=backend+(' protocol' if control else ''))
+                line,=ax.plot(xs,ys,':o' if control else '-o',label=backend+(' protocol' if control else ''),color=color)
                 ax.fill_between(xs,lo,hi,color=line.get_color(),alpha=.1)
             failed=[f for f in failures if f['arm']['operation']==operation]
             if failed:ax.text(.02,.98,f'{len(failed)} failed/censored arms; see analysis.json',transform=ax.transAxes,va='top',fontsize=8)

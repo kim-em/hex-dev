@@ -275,6 +275,42 @@ recorded on [#10577](https://github.com/kim-em/hex-dev/issues/10577#issuecomment
 it is distinct from HexPolyFp's #9809 concerns. No transitive implementation or
 phase metadata is changed by this evidence.
 
+## Scalar size axes
+
+The [current scalar comparison](bench-results/real-algebraic-scalar-annihilation/README.md)
+retains 432 adjacent native/FLINT/Z3/protocol arms on arithmetic-degree,
+rational-construction-height, close-comparison and near-integer-rounding axes.
+All exact result guards pass, with no cap, filtering or unchanged rerun. The
+[plots](bench-results/real-algebraic-scalar-annihilation/plots/scalar-comparison.svg)
+show all observations and spreads; protocol curves remain separate.
+
+Native arithmetic checks canonical minimal polynomial and sign; external
+arithmetic checks exact annihilation and sign. No expected algebraic root is
+prepared. Contexts can retain caches populated by warmup. Addition and square
+root on the positive root of `X^8−2` take median 322.3 ms and 8.840 seconds,
+versus transported FLINT/Z3 observations in the tens of microseconds. This
+is a severe unresolved canonical-construction/isolation gap. These descriptive
+API-route ratios do not supply a speed gate or Phase-4 budget.
+
+At separation exponent 256 native comparison takes 47.0 µs; floor and ceiling
+of `1+√2/2^k` take about 3.0 µs. The external framing control dominates these
+fast references, so raw ratios cannot rank primitive performance. The Z3 RCF
+adapter supplies no matching floor/ceil API. The axes keep algebraic degree
+fixed while coefficient height also grows with separation exponent.
+
+The [earlier expected-root controls](bench-results/real-algebraic-scalar-expected-root-controls/)
+remain archived, including capped attempts and their distinct warm-context
+boundary. The [boundary diagnostic](bench-results/scalar-sqrt8-boundary/) shows
+why those whole-child caps cannot be operation-only lower bounds. The
+[retained square-root attribution](bench-results/readiness-runtime-profiles/README.md)
+identifies isolation on its named source and result-guard wrapper; the parent
+square-root API is unchanged. This is not a blanket profile attestation.
+
+These panels measure the implemented scalar APIs. They do not reopen the
+excluded forward comparison-strategy extension or attest its six comparator
+families. Remaining scalar operations, approximation, representation roundtrip
+and fixed-field sign require their own evidence.
+
 ## Comparator ratios
 
 The manifest classifies `FLINT real-qqbar exact comparisons and polynomial roots`
@@ -284,8 +320,10 @@ separated and overlapping values. External root fingerprints infer their
 minimal-polynomial field from the Eisenstein fixture, while the native API
 constructs its canonical representation. Sorting, exact external annihilation,
 transport and cleanup remain timed. These are bounded API-route comparisons,
-not identical internal algorithms or a global speed requirement. Arithmetic,
-rounding and other matching external operation coverage remain incomplete.
+not identical internal algorithms or a global speed requirement. The scalar
+collection adds addition, square root, rational construction and comparison
+for both backends, and exact FLINT floor/ceil. Remaining scalar operations and
+other matching surfaces still need characterization.
 
 [Separated and overlapping comparison blocks](bench-results/real-algebraic-readiness-comparisons/)
 record the fixed sqrt(2)/sqrt(3) and sqrt(2)/(sqrt(2)+2^-50) inputs. Smart and
