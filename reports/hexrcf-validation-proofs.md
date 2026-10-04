@@ -70,3 +70,42 @@ validation/kernel attribution or general frontend/tower completion. The
 reference already includes batched coordinate validation, so this does not
 measure the older per-coordinate evaluator. The measured source is retained
 separately from later documentation and delivery commits.
+
+## Matched production options and arm assertions
+
+The final [raw results](bench-results/hex-rcf-validation-proofs-d2ecfdf0d-chungus2.json)
+and [arm records](bench-results/hex-rcf-validation-proofs-d2ecfdf0d-chungus2.json.samples.jsonl)
+retain sixteen further completed builds at clean source
+`d2ecfdf0dbc6bd6bbfb18a3c30af90c85c7063d2`. Inputs and the fixed four-round
+adjacent AB/BA schedule match the common-field study. Both arms now force the
+same synchronous elaboration/kernel options and use a new metavariable depth.
+Each probe additionally inspects its final auxiliary theorem body to assert
+that checked transport or direct fresh assembly actually ran. Public input
+expressions are screened before native evaluation in this source.
+
+This is a changed-source comparison, not an unchanged rerun. It remains
+separate from both earlier records. All route/arm assertions and standard
+axiom inventories pass. Source/dependency hashes and full compiler output are
+retained. Host `chungus2`, Lean 4.35.0-rc3, automatically leased CPU 9,
+sibling 57 and one Lean thread are recorded. No host activity discards a sample.
+
+| Goal | Median checked / fresh seconds | Median paired fresh minus checked seconds | Median peak RSS checked / fresh KiB | Private olean checked / fresh bytes |
+| --- | --- | ---: | --- | --- |
+| Scalar | 12.197 / 9.526 | −2.5585 | 3,457,382 / 3,468,476 | 545,384 / 545,152 |
+| Several sources | 9.845 / 9.651 | −0.2019 | 3,515,786 / 3,516,246 | 645,488 / 645,256 |
+
+Scalar paired differences are `[0.1038, -5.4343, -4.9273, -0.1897]` seconds;
+several-source differences are `[-0.1609, -0.2429, -3.2580, -0.1448]`.
+Seven of eight pairs favor fresh assembly. The large completed margins are
+retained and dominate the scalar paired median; this small sample supplies no
+stable speedup magnitude. Public bytes match within pairs (58,432 / 59,488);
+server bytes are 616. Namespace/source names differ between arms, so the
+232-byte private-size difference is not assigned an isolated cause.
+
+The record is `complete`, `release_quality: true`, `no-comparable-control`.
+These divisor-free goals exercise the intended boundary and show no practical
+penalty from the private assembly design on the tested inputs. The observations
+do not isolate validation or kernel work, establish general coefficient
+scaling, cover guarded/divisor cost or attest general frontend/tower completion.
+No further unchanged rerun was collected. Timing and later shipping sources
+remain explicitly distinct.
