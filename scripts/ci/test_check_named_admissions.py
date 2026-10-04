@@ -147,6 +147,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 "adapters/HexRealClosureMathlib/CacheRebuild.lean",
                 "adapters/HexRealClosureMathlib/CacheGather.lean",
                 "adapters/HexRealClosureMathlib/GatherTests.lean",
+                "adapters/HexRealClosureMathlib/SharedPresentation.lean",
+                "adapters/HexRealClosureMathlib/SharedPresentationTests.lean",
                 "adapters/HexRealClosureMathlib/BaseOrder.lean",
                 "adapters/HexRealClosureMathlib/BaseMapModel.lean",
                 "HexRealClosure/TowerInclusion.lean",
