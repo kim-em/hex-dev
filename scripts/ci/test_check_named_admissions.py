@@ -142,6 +142,7 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosureMathlib/BasePrefixModels.lean",
                 "HexRealClosureMathlib/BaseModels.lean",
                 "adapters/HexRealClosureMathlib/BaseFactory.lean",
+                "adapters/HexRealClosureMathlib/BaseFactoryTests.lean",
                 "adapters/HexRealClosureMathlib/ContextModel.lean",
                 "adapters/HexRealClosureMathlib/BaseOrder.lean",
                 "adapters/HexRealClosureMathlib/BaseMapModel.lean",

@@ -129,35 +129,17 @@ example {R : Type} [Field R] [LinearOrder R] [DecidableEq R]
     Tower.Context.model?_value source (providerModel.staged 2) reference inclusion produced
       original ownerProduced⟩
 
-/-- The reference model required by the consumers is constructed from the
-actual staged realization and ordered real-closure existence theorem. -/
-private theorem referenceExists (base : PackedContext registry) (following : base.Realization) :
-    ∃ (R : Type) (field : Field R) (order : LinearOrder R) (equality : DecidableEq R),
-      letI := field
-      letI := order
-      letI := equality
-      ∃ (_ordered : IsStrictOrderedRing R) (_closed : IsRealClosed R),
-        Nonempty (Tower.Model (Tower.Context.ofBase base) R) := by
-  classical
-  cases base with
-  | @pack K field equality sign context =>
-    letI : Field K := HexPolyMathlib.fieldOfGrind
-    let ordered := following.ordered
-    letI : LinearOrder K := ordered.order
-    let ambient := ordered.ambient
-    refine ⟨ambient.Carrier, inferInstance, inferInstance, Classical.decEq _,
-      inferInstance, inferInstance, ?_⟩
-    have model := ordered.towerModel
-    rw [Context.ofChain_eq context] at model
-    exact ⟨model⟩
-
+/-- The actual packed reference is usable by the canonical owner consumer,
+without a supplied real-closed field or reference-model hypothesis. -/
 example :
-    ∃ (R : Type) (field : Field R) (order : LinearOrder R) (equality : DecidableEq R),
-      letI := field
-      letI := order
-      letI := equality
-      ∃ (_ordered : IsStrictOrderedRing R) (_closed : IsRealClosed R),
-        Nonempty (Tower.Model (Tower.Context.ofBase (providerModel.context.finish.extend 2)) R) :=
-  referenceExists (providerModel.context.finish.extend 2) (providerModel.staged 2)
+    ((Tower.Context.ofBase (rationalModel.context.finish.extend 1)).model?
+      (providerModel.staged 2) (providerModel.staged 2).reference.model).isSome = true := by
+  rw [Tower.Context.model?_isSome, originBase]
+  simp only [PackedContext.extend_signature, RealPrefix.finish_signature]
+  have keys : rationalModel.context.keys = [] := by
+    simp only [rationalModel, RealPrefix.Model.rational, RealPrefix.Model.context,
+      RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys]
+  rw [keys]
+  exact ⟨List.nil_prefix, by decide⟩
 
 end Hex.RealClosure.BaseContext.FactoryTests

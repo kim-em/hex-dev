@@ -10,6 +10,48 @@ public import HexRealClosureMathlib.BaseMapModel
 
 public section
 
+namespace Hex.RealClosure.BaseContext
+
+/-- An ordered real-closed reference field and interpretation for one packed
+native base. Its field is constructed from the base's actual realization. -/
+structure PackedContext.Reference {registry : Registry} (base : PackedContext registry) where
+  Carrier : Type
+  field : Field Carrier
+  order : LinearOrder Carrier
+  equality : DecidableEq Carrier
+  ordered : letI := field; letI := order; IsStrictOrderedRing Carrier
+  closed : letI := field; IsRealClosed Carrier
+  model : letI := field; letI := order; Tower.Model (Tower.Context.ofBase base) Carrier
+
+instance {registry : Registry} {base : PackedContext registry} (reference : base.Reference) :
+    Field reference.Carrier := reference.field
+instance {registry : Registry} {base : PackedContext registry} (reference : base.Reference) :
+    LinearOrder reference.Carrier := reference.order
+instance {registry : Registry} {base : PackedContext registry} (reference : base.Reference) :
+    DecidableEq reference.Carrier := reference.equality
+instance {registry : Registry} {base : PackedContext registry} (reference : base.Reference) :
+    IsStrictOrderedRing reference.Carrier := reference.ordered
+instance {registry : Registry} {base : PackedContext registry} (reference : base.Reference) :
+    IsRealClosed reference.Carrier := reference.closed
+
+/-- Construct the reference directly from the actual staged realization and
+ordered real-closure existence theorem, with no supplied ambient field. -/
+noncomputable def PackedContext.Realization.reference {registry : Registry}
+    {base : PackedContext registry} (following : base.Realization) : base.Reference := by
+  classical
+  cases base with
+  | @pack K field equality sign context =>
+    letI : Field K := HexPolyMathlib.fieldOfGrind
+    let ordered := following.ordered
+    letI : LinearOrder K := ordered.order
+    let ambient := ordered.ambient
+    have model := ordered.towerModel
+    rw [Context.ofChain_eq context] at model
+    exact ⟨ambient.Carrier, inferInstance, inferInstance, Classical.decEq _,
+      inferInstance, inferInstance, model⟩
+
+end Hex.RealClosure.BaseContext
+
 namespace Hex.RealClosure.Tower.BaseInclusion
 
 variable {registry : BaseContext.Registry} {R : Type u} [Field R] [LinearOrder R]
@@ -81,3 +123,7 @@ end Hex.RealClosure.Tower.BaseInclusion
 /-- info: 'Hex.RealClosure.Tower.BaseInclusion.Model.derive_target' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.BaseInclusion.Model.derive_target
+
+/-- info: 'Hex.RealClosure.BaseContext.PackedContext.Realization.reference' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.PackedContext.Realization.reference
