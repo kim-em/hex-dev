@@ -68,8 +68,9 @@ and the consumer was rebuilt. These are not algorithm or performance results.
 
 The [evidence ledger](../../reports/real-closure-candidate-consumer.json)
 records all 62 candidate commits, exact external pins, configuration hashes,
-consumer source hashes and build-log hashes. The fresh consumer build completes
-10,918 jobs, including the existing rational HexRCF test target. Separate
+consumer source hashes and build-log hashes. The fresh consumer uses the
+experimental base declaration described above; its build completes 10,918
+jobs, including the existing rational HexRCF test target under that declaration. Separate
 HexRealRootsMathlib, HexSturmMathlib and unchanged-base HexRCF package builds
 also pass without `lake update`; their generated locks stay byte-for-byte
 unchanged. Computational package declarations and locks contain neither

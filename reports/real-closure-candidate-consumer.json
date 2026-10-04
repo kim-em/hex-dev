@@ -700,7 +700,9 @@
     "jobs": 10918,
     "exitCode": 0,
     "log": "candidate-last-build.log",
-    "logSHA256": "6d4ee3944b72669ce7337eed9c117a886d3952a3a1944601f86d0fc19b0cffbb"
+    "logSHA256": "6d4ee3944b72669ce7337eed9c117a886d3952a3a1944601f86d0fc19b0cffbb",
+    "basePackageCommit": "bff36d67c3e6bc948b4f13ff691b275d4374d3a4",
+    "baseDeclaration": "Experimental roots=[] and explicit module globs; unchanged-base check is separately identified below"
   },
   "generatedLockChecks": [
     {
@@ -711,7 +713,9 @@
       "manifestSHA256": "caa8796b749584adf8b1b3c6fdfff626e66216c48907ca86c1b08dbc3d88746b",
       "logSHA256": "e9751bd58a8b4f0dba80e9140af5559662a8e41759ac812a5c7e162f2f9e2960",
       "manifestUnchanged": true,
-      "exitCode": 0
+      "exitCode": 0,
+      "candidateCommit": "1886caf6cbb665b9da243f994072aa4b935b48ff",
+      "configurationSHA256": "50242a62e163201ee6ded7caa8f42806aeafcf8b547b0074b8c0c06ec5920930"
     },
     {
       "package": "hex-sturm-mathlib",
@@ -721,7 +725,9 @@
       "manifestSHA256": "01266b1275575e8022cfa2524fe09c21ad464474fe7a5dc4a085f89ae6476f7c",
       "logSHA256": "6a75a3590f52c74b0a4e94bb82b38899cd918c5c69b36bb757d0679cb0bb2060",
       "manifestUnchanged": true,
-      "exitCode": 0
+      "exitCode": 0,
+      "candidateCommit": "5829c99fb8337b3d120498aaf96b6fd569467dd8",
+      "configurationSHA256": "0749255bf37998fc14d5f21ab98e10d0ef2fe57fef1aca346adc6f8e36da356e"
     },
     {
       "package": "base-rcf-release-shape",
@@ -732,7 +738,9 @@
       "manifestSHA256": "806d970c83e744faa4a956fc9872dd05dfc2eb020afb0e460c7c361dea7d1c7c",
       "logSHA256": "586ec4d64dffd44517a076911384e58d389ef91f08df7eb4fa5535a9b287888f",
       "manifestUnchanged": true,
-      "exitCode": 0
+      "exitCode": 0,
+      "candidateCommit": "9f2553a0863017245f96136508dd52dd97e9333e",
+      "configurationSHA256": "991e14663c0aa7b04fa09ba68842c17e9eb155786c997a92db03d81a96aecb62"
     }
   ],
   "optionalBoundaryExperiment": {
@@ -777,5 +785,6 @@
     "Sign and tower candidate semantic sources reuse merged owner adapters; their production migration remains with the appropriate integration tranche.",
     "The optional adapter package boundary and changed base module declarations require user direction and an owning SPEC revision before production changes.",
     "No owner Phase-4 attestation, joint nested ordinary-real realization, phase promotion, or family release-readiness claim follows from these builds."
-  ]
+  ],
+  "sourceIntegrationNote": "Semantic source hashes at the recorded integration commit are identical to the PR sources; later consumer and documentation edits are identified by their hashes."
 }

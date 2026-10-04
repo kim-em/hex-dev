@@ -665,7 +665,7 @@ class SyncReleasedTests(unittest.TestCase):
         (lib / "Basic.lean").write_text(source, encoding="utf-8")
         (self.repo / "lakefile.toml").write_text(lakefile, encoding="utf-8")
         return {"repo": "leanprover/hex-probe", "lib": "HexProbe",
-                "lakefile": "toml", "readme": False}
+                "lakefile": "toml", "readme": False, "mathlib_only": True}
 
     def test_batteries_import_without_provider_fails_closed(self) -> None:
         entry = self._external_import_entry(
@@ -712,7 +712,7 @@ class SyncReleasedTests(unittest.TestCase):
         text = (self.repo / "lakefile.toml").read_text()
         self.assertIn(f'git = "{tau["url"]}"', text)
         self.assertIn(f'rev = "{tau["inputRev"]}"', text)
-        self.assertLess(text.index('name = "TauCeti"'), text.index('[[lean_lib]]'))
+        self.assertLess(text.index('name = "TauCeti"'), text.index('name = "mathlib"'))
         sync_released.validate_external_imports(entry, self.repo)
         self.assertEqual(len(notes), 1)
         self.assertEqual(sync_released.rewrite_external_requires(entry, self.repo, self.pins), [])
@@ -727,7 +727,7 @@ class SyncReleasedTests(unittest.TestCase):
         sync_released.rewrite_external_requires(entry, self.repo, self.pins)
         sync_released.validate_external_imports(entry, self.repo)
         text = (self.repo / "lakefile.lean").read_text()
-        self.assertLess(text.index('require TauCeti'), text.index('lean_lib HexProbe'))
+        self.assertLess(text.index('require TauCeti'), text.index('require mathlib'))
         self.assertEqual(sync_released.rewrite_external_requires(entry, self.repo, self.pins), [])
 
     def test_external_import_scan_ignores_comments_and_checks_multiple_imports(self) -> None:
@@ -784,6 +784,44 @@ class SyncReleasedTests(unittest.TestCase):
         self.assertTrue(packages["TauCeti"]["inherited"])
         self.assertFalse(packages["mathlib"]["inherited"])
         self.assertNotIn('name = "TauCeti"', (self.repo / "lakefile.toml").read_text())
+
+    def test_computational_mirror_rejects_proof_import_even_with_provider(self) -> None:
+        for root in ("Mathlib", "TauCeti"):
+            entry = self._external_import_entry(
+                f'name = "probe"\n[[require]]\nname = "{root}"\n', f"import {root}\n")
+            entry.pop("mathlib_only")
+            lakefile = self.repo / "lakefile.toml"
+            before = lakefile.read_text()
+            with self.assertRaisesRegex(RuntimeError, "computational repository"):
+                sync_released.rewrite_external_requires(entry, self.repo, self.pins)
+            self.assertEqual(lakefile.read_text(), before)
+            with self.assertRaisesRegex(RuntimeError, "computational repository"):
+                sync_released.validate_external_imports(entry, self.repo)
+
+    def test_aggregate_inherits_external_provider_without_direct_require(self) -> None:
+        entry = {"repo": "leanprover/hex", "pins_only": True, "lakefile": "toml",
+                 "pins": ["hex-real-roots-mathlib"]}
+        lakefile = self.repo / "lakefile.toml"
+        lakefile.write_text('name = "hex"\n')
+        path = self.repo / "lake-manifest.json"
+        path.write_text(json.dumps({"version": "1.2.0", "packages": []}))
+        self.assertEqual(sync_released.rewrite_external_requires(entry, self.repo, self.pins), [])
+        sync_released.rewrite_manifest(entry, self.repo, {}, {}, self.pins, "v0.2.0")
+        packages = {p["name"]: p for p in json.loads(path.read_text())["packages"]}
+        self.assertTrue(packages["TauCeti"]["inherited"])
+        self.assertTrue(packages["mathlib"]["inherited"])
+        self.assertEqual(lakefile.read_text(), 'name = "hex"\n')
+
+    def test_new_direct_requirement_updates_inherited_lock_record(self) -> None:
+        entry = self._external_import_entry(
+            'name = "probe"\n', 'import TauCeti.Data.Matrix.OccCount\n')
+        sync_released.rewrite_external_requires(entry, self.repo, self.pins)
+        source = json.loads(sync_released.LAKE_MANIFEST.read_text())["packages"]
+        tau = dict(next(p for p in source if p["name"] == "TauCeti"), inherited=True)
+        path = self.repo / "lake-manifest.json"
+        path.write_text(json.dumps({"version": "1.2.0", "packages": [tau]}))
+        sync_released.rewrite_manifest(entry, self.repo, {}, {}, self.pins, "v0.2.0")
+        self.assertFalse(json.loads(path.read_text())["packages"][0]["inherited"])
 
     def test_hasse_requires_aintlib_even_with_mathlib(self) -> None:
         mathlib = '[[require]]\nname = "mathlib"\nrev = "0"\n'
