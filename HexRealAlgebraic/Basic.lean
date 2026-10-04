@@ -35,9 +35,10 @@ namespace RealAlgebraicNumber
 @[expose] def ofAlgebraic? (a : AlgebraicNumber) : Option RealAlgebraicNumber :=
   if h : a.isReal = true then some (ofAlgebraic a h) else none
 
-/-- Exactify a lazy algebraic root and check reality. -/
+/-- Reject nonreal lazy roots using their separation-refined isolation before
+canonical exactification. The companion proves equality with exactify-then-check. -/
 @[expose] def ofRoot? (a : AlgebraicRoot) : Option RealAlgebraicNumber :=
-  ofAlgebraic? a.exact
+  if a.rep.1.square.meetsRealAxis then ofAlgebraic? a.exact else none
 
 /-- Checked construction succeeds precisely on real inputs. -/
 @[simp] theorem ofAlgebraic?_isSome (a : AlgebraicNumber) :

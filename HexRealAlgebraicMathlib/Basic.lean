@@ -92,6 +92,18 @@ end Hex.AlgebraicNumber
 
 namespace Hex.RealAlgebraicNumber
 
+/-- The stored isolation test rejects exactly the roots that canonical
+exactification would reject. Retained canonical values are unchanged. -/
+theorem ofRoot?_eq (a : AlgebraicRoot) :
+    ofRoot? a = ofAlgebraic? a.exact := by
+  have hreal : a.rep.1.square.meetsRealAxis = true ↔ a.exact.isReal = true := by
+    rw [AlgebraicNumber.isReal_iff, AlgebraicRoot.exact_toComplex]
+    exact HexRootsMathlib.RefinedIsolation.meetsRealAxis_iff a.rep
+  by_cases h : a.rep.1.square.meetsRealAxis = true
+  · simp [ofRoot?, h]
+  · have hn : ¬ a.exact.isReal = true := fun hr => h (hreal.mpr hr)
+    simp [ofRoot?, h, ofAlgebraic?, hn]
+
 /-- The real value of a canonical real algebraic number. -/
 @[expose] noncomputable def toReal (a : RealAlgebraicNumber) : ℝ :=
   a.toAlgebraic.toComplex.re

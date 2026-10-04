@@ -40,6 +40,11 @@ expose those operations. Their named correspondence theorems and axiom guards
 remain part of the readiness audit. The excluded forward comparison extension
 below is not included in this headline or the shipped attestation.
 
+`RealAlgebraicNumber.ofRoot?_eq` identifies early rejection using the stored
+refined isolation with canonical exactification followed by the reality check.
+Its ordinary-kernel guard protects the complete equality, including nonreal
+inputs; the root completeness and multiplicity results reuse that equality.
+
 This theorem builds in the ordinary companion target; the pair still requires
 the core's Phase-4 evidence before either library can record Phase 4.
 

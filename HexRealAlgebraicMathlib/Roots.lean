@@ -38,6 +38,7 @@ theorem realRoot?_sound (r : RootCount) (s : RealRootCount) (h : realRoot? r = s
     s.root.toAlgebraic = r.root.exact ∧ s.multiplicity = r.multiplicity := by
   change (RealAlgebraicNumber.ofRoot? r.root).bind (fun a =>
     some (RealRootCount.mk a r.multiplicity r.multiplicity_pos)) = some s at h
+  rw [RealAlgebraicNumber.ofRoot?_eq] at h
   simp only [Option.bind_eq_some_iff, Option.some.injEq] at h
   obtain ⟨a, ha, rfl⟩ := h
   exact ⟨((RealAlgebraicNumber.ofAlgebraic?_eq_some _ _).mp ha).symm, rfl⟩
@@ -50,7 +51,7 @@ theorem realRoot?_complete (r : RootCount) (x : ℝ) (h : r.root.toComplex = (x 
     rfl
   let a := RealAlgebraicNumber.ofAlgebraic r.root.exact hr
   refine ⟨⟨a, r.multiplicity, r.multiplicity_pos⟩, ?_, ?_⟩
-  · simp only [realRoot?, RealAlgebraicNumber.ofRoot?, RealAlgebraicNumber.ofAlgebraic?,
+  · simp only [realRoot?, RealAlgebraicNumber.ofRoot?_eq, RealAlgebraicNumber.ofAlgebraic?,
       dite_eq_left hr]
     rfl
   · change r.root.exact.toComplex.re = x
