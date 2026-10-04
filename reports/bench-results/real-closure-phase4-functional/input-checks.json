@@ -1,0 +1,42 @@
+{
+  "metitarski_coefficients_ascending": [
+    592704,
+    402192,
+    90972,
+    3266731,
+    -931392,
+    -193914,
+    -5792221,
+    756756,
+    140742,
+    3046158,
+    -259308,
+    -42336,
+    -520884,
+    31752,
+    4536,
+    216
+  ],
+  "meti_factorization": "(1, [(216*x^15 + 4536*x^14 + 31752*x^13 + (-520884)*x^12 + (-42336)*x^11 + (-259308)*x^10 + 3046158*x^9 + 140742*x^8 + 756756*x^7 + (-5792221)*x^6 + (-193914)*x^5 + (-931392)*x^4 + 3266731*x^3 + 90972*x^2 + 402192*x + 592704, 1)])",
+  "meti_gcd_derivative": "1",
+  "meti_real_root_count": 3,
+  "least_root_interval": [
+    [
+      -1875,
+      2048
+    ],
+    [
+      -1875,
+      4096
+    ]
+  ],
+  "roots_before_interval": 0,
+  "roots_in_interval": 1,
+  "cauchy_bound": 30000,
+  "printed_tower8_no_root_below_one": "unsat",
+  "printed_quartic_identity": "P(x,e) = (x^2-e*x-2)^2 + 4-2*e^2",
+  "z3_query": "(declare-fun epsilon () Real)\n(declare-fun x () Real)\n(assert (> epsilon 0.0))\n(assert (< epsilon 1.0))\n(assert (let ((a!1 (+ (- (^ x 4.0) (* 2.0 epsilon (^ x 3.0)))\n              (* (- (^ epsilon 2.0) 4.0) (^ x 2.0))\n              (* 4.0 epsilon x)\n              8.0)))\n  (<= (- a!1 (* 2.0 (^ epsilon 2.0))) 0.0)))\n",
+  "z3_version": "4.15.4",
+  "python_flint_version": "0.9.0",
+  "paper_sha256": "4caf52449ebb030fcc9341b864c08b307a944dd0d0fc7fb801413486396d7a19"
+}
