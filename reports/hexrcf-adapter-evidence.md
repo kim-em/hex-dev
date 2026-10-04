@@ -114,6 +114,14 @@ The planned extension remains incomplete in these specific respects:
   byte decoder under lexical prechecks. Graph checking still uses ordinary
   coefficient arithmetic. These laws do not reconstruct general tower contexts,
   collect every intermediate packing dependency or realize a joint real sample.
+  The merged [coefficient-level dependency envelope](../HexSignDet/DependenciesCodec.lean)
+  binds serialized results to their ordered full subjects, checks every packet
+  once through its supplied local reader, and retains the exact graph and typed
+  memo. `Graph.decode_encode` and `Decoded.results_bound` prove the actual byte
+  roundtrip and selected-result bindings. These are routing and codec laws;
+  the local reader still supplies arithmetic validity. Automatic intermediate
+  dependency collection, literal context reconstruction and strict compiled
+  arithmetic replay are not supplied by the envelope.
   The merged supplied-fact graph transport in
   [DagOperations](../HexSignDet/DagOperations.lean) preserves memo acceptance,
   rejection, literal trees and indices under the supplied coefficient-operation
