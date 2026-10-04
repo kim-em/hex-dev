@@ -2,7 +2,8 @@
 import copy
 from pathlib import Path
 import unittest
-from scripts.oracle.real_closure_isolation import parse_record, verify
+from scripts.oracle.real_closure_isolation import parse_record, verify, squarefree_factors
+from scripts.oracle.sign_det_z3 import RCF
 
 FIXTURE = Path(__file__).resolve().parents[2] / "conformance-fixtures/HexRealClosure/isolation.jsonl"
 
@@ -186,6 +187,12 @@ class IsolationTests(unittest.TestCase):
         self.rejects(lambda rows: rows[17]["output"]["entries"][1].update(multiplicity=3),
                      "wrong nested root multiplicity")
 
+    def test_nested_selected_head_scalar(self):
+        def mutate(rows):
+            root = rows[17]["output"]["entries"][0]["root"]
+            root["head"] = [[[2*n, d] for n, d in coefficient] for coefficient in root["head"]]
+        self.rejects(mutate, "deflated Yun factor")
+
     def test_nested_assembly_missing_root(self):
         self.rejects(lambda rows: rows[17]["output"]["entries"].pop(),
                      "nested assembly roots missing or duplicated")
@@ -351,3 +358,20 @@ class IsolationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SquarefreeOracleTests(unittest.TestCase):
+    def test_rational_factors_agree_with_independent_flint(self):
+        from flint import fmpq_poly
+        rcf = RCF({"id": 10377, "levels": ["epsilon1"],
+                   "order": "each-new-level-smaller-than-positive-base-elements"})
+        x, a, b = fmpq_poly([0, 1]), fmpq_poly([-1, 1]), fmpq_poly([1, 0, 1])
+        for p in (fmpq_poly([5]), -5*x**6, 3*a*b, -3*x**2*a**5*b**3,
+                  fmpq_poly([3, -5, 2])**2):
+            with self.subTest(polynomial=str(p)):
+                coefficients = [rcf.api.RCFNum(str(c), rcf.context) for c in p.coeffs()]
+                _, expected = p.factor_squarefree()
+                factors = {label: [rcf.api.RCFNum(str(c/factor.leading_coefficient()), rcf.context)
+                                   for c in factor.coeffs()] for factor, label in expected}
+                self.assertEqual(squarefree_factors(rcf, coefficients), factors)
+

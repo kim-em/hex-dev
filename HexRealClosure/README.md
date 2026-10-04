@@ -546,8 +546,17 @@ proves the same complete RootSet contract under the context's ambient model.
 zero, constants, nonmonic repeated factors, zero extraction, root-free
 factors, cut points, an inverse infinitesimal, distinct-label close roots in
 separate Yun factors, and squarefree and equal-label close pairs within one
-factor. The independent Z3 oracle checks complete ordered root sets
-and original multiplicities. `RootPolicyTests` checks native root equations,
+factor. The independent Z3 oracle checks complete ordered root sets and
+original multiplicities. It independently decomposes the input over Z3's
+exact real-closed field and identifies every selected head with its labelled
+monic Yun factor after zero extraction and coefficient-point deflation,
+including factors with no real roots. Rational decomposition cases also agree
+with FLINT's independent squarefree factorization. The oracle checks whole-line
+endpoints, the first accepted Cauchy bound and its fallback, and the permitted
+point and subdivision behavior. Mutations reject extra complex factors,
+incorrect leading scalars and omitted roots of the same multiplicity even
+when root selection and the first bound remain valid.
+`RootPolicyTests` checks native root equations,
 exact ownership, order, labels and policy agreement over rational and already
 adjoined algebraic parents through both native materialization APIs.
 

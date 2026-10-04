@@ -2,7 +2,7 @@
 import copy
 from pathlib import Path
 import unittest
-from scripts.oracle.real_closure_policies import parse_record, verify
+from scripts.oracle.real_closure_policies import parse_record, verify, verify_shape
 
 FIXTURE = Path(__file__).resolve().parents[2]/"conformance-fixtures/HexRealClosure/policies.jsonl"
 
@@ -80,4 +80,38 @@ class PolicyTests(unittest.TestCase):
             rows[14]["result"]["output"]["entries"][index]["root"].update(
                 lower=[1, [-2, 1]], upper=[1, [2, 1]])
         with self.assertRaisesRegex(AssertionError, "first accepted Cauchy bound"):
+            verify(rows)
+
+    def test_selected_head_with_extra_complex_factor(self):
+        rows = copy.deepcopy(self.rows)
+        # Same selected real root, interval and multiplicity, but a different
+        # monic polynomial: (X²-2)(X²+1), with no additional real roots.
+        rows[3]["result"]["output"]["entries"][0]["root"]["head"] = [
+            [-2, 1], [0, 1], [-1, 1], [0, 1], [1, 1]]
+        with self.assertRaisesRegex(AssertionError, "deflated Yun factor"):
+            verify(rows)
+
+    def test_bounded_wrong_head_with_same_first_bound(self):
+        rows = copy.deepcopy(self.rows)
+        for index, signs in ((0, [-1, 1, -1, 1]), (2, [1, 1, 1, 1])):
+            rows[14]["result"]["output"]["entries"][index]["root"].update(
+                head=[[-2, 1], [0, 1], [-1, 1], [0, 1], [1, 1]],
+                indices=[1, 2, 3, 4], signs=signs)
+        verify_shape(rows[14]["result"], rows[14]["policy"], "repeated factors")
+        with self.assertRaisesRegex(AssertionError, "deflated Yun factor"):
+            verify(rows)
+
+    def test_selected_head_scalar_is_not_the_monic_factor(self):
+        rows = copy.deepcopy(self.rows)
+        root = rows[14]["result"]["output"]["entries"][0]["root"]
+        root["head"] = [[2*n, d] for n, d in root["head"]]
+        with self.assertRaisesRegex(AssertionError, "deflated Yun factor"):
+            verify(rows)
+
+    def test_infinitesimal_head_missing_same_label_root(self):
+        rows = copy.deepcopy(self.rows)
+        root = rows[31]["result"]["output"]["entries"][0]["root"]
+        root.update(head=[{"num": [[0, 1], [-1, 1]], "den": [[1, 1]]},
+                          {"num": [[1, 1]], "den": [[1, 1]]}], indices=[1], signs=[1])
+        with self.assertRaisesRegex(AssertionError, "deflated Yun factor"):
             verify(rows)
