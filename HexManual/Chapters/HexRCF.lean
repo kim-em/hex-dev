@@ -2253,6 +2253,56 @@ Another control uses the selected root of `(X² − 2)(X − 3)` in `(1, 2)`.
 Its distinct stored expressions `α` and `α³/2` have zero difference; their
 leading-term cancellation still produces the correct degree and every cell sign.
 
+{name}`Hex.RCF.RealCoefficients.Samples.run` connects this native family to
+the shared Boolean formula and its one real quantifier. It prepares the atom
+list once, evaluates a complete sign row for each section or sector, and uses
+the existing strict quantifier fold. The result is `some true` or `some false`
+under an actual ordinary-real predecessor model. False is a diagnostic result.
+{name}`Hex.RCF.RealCoefficients.Samples.run_spec` proves exactly the shared
+{name}`Hex.RealFormula.Prenex.toProp` meaning at the fixed coefficient values:
+
+```lean
+example (d : SampleSelection) :
+    let field := sampleBase.adjoin d
+    let realModel := sampleReal.adjoin d
+    let values := fun _ : Fin 1 => field.generator
+    ∃ result,
+      Samples.run values sampleFormula .existsReal =
+        some result ∧
+      (result = true ↔ ∃ x : ℝ,
+        sampleFormula.toProp (Hex.RealFormula.append
+          (fun i => realModel.value (values i)) x)) := by
+  dsimp only
+  exact Samples.run_spec (sampleReal.adjoin d)
+    (fun _ : Fin 1 => (sampleBase.adjoin d).generator)
+    sampleFormula .existsReal
+```
+
+All coefficient coordinates belong to one native parent context, and they
+may be different values there. Independently constructed fields require
+proved conversion into that common context first. The
+{name}`Hex.RCF.RealCoefficients.Samples.section_formula` and
+{name}`Hex.RCF.RealCoefficients.Samples.sector_formula` laws interpret the
+whole Boolean formula at the same selected boundary or ordinary sector
+point; {name}`Hex.RCF.RealCoefficients.Samples.cell_formula` applies throughout
+the cell. These compose actual root coverage, cell membership and sign laws,
+without adding them as unproved assumptions.
+
+The compiled regressions distinguish positive and negative selected √2 in
+`∀ x, x² + α > 0`, and swap two distinct coefficient coordinates to check
+that their order changes the answer. They retain repeated/common roots,
+zero and cancelled atoms, all six comparisons and Boolean operations, and
+equal, reversed and half-open domains. Fresh modules check the public
+semantics and its standard axiom inventory. These are correctness regressions;
+no timing improvement is claimed for this composition.
+
+`Samples.run` performs production, including root finding. Its Boolean output
+is not frozen certificate evidence. Turning it into a source-goal tactic
+proof still requires checked literal context/root/sign data, exact source
+coefficient identities and every original divisor guard. Its real-model
+hypothesis does not supply a global real interpretation of symbolic
+infinitesimals or discharge their required finite joint realization.
+
 These are ordinary native producer APIs and their real correctness laws.
 Integrating their output into frozen tactic replay still needs the owner's
 checked literal context and predecessor-sign interfaces. The example proves

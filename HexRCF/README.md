@@ -143,8 +143,15 @@ and degree proofs use operation preservation and zero reflection, without
 asserting field laws on stored values. The [native sample regressions](../conformance/HexRCF/TowerSamples.lean)
 compose it with the owner's complete real-cell and ordinary-sample laws over
 a selected algebraic coefficient field, retaining repeated and zero atoms and
-half-open guards. The manual gives direct API examples. General frozen tower
-replay and joint infinitesimal realization still require the owner interfaces.
+half-open guards. `Samples.run` uses those native cells and the shared strict Boolean/quantifier
+folds; `run_spec` proves the exact `Prenex.toProp` meaning at arbitrary fixed
+coordinates in one parent with an actual real model. The
+[formula regressions](../conformance/HexRCF/Samples.lean) distinguish selected
+conjugates, coefficient order, diagnostic false results and half-open domains.
+This is a producer API, not literal replay or source-goal quotation. The manual
+gives direct API examples. General frozen tower replay, source authentication
+for that backend and joint infinitesimal realization still require the owner
+interfaces.
 
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
