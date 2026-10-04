@@ -58,14 +58,14 @@ class AdmissionScannerTests(unittest.TestCase):
         source = 'def x := f x\' \'"\'\ntheorem bad : False := by sorry\n'
         self.assertIsNotNone(ADMISSION.search(code_only(source)))
 
-    def test_overlapping_roots_and_fresh_source(self):
+    def test_overlapping_cyclic_roots_and_fresh_source(self):
         with TemporaryDirectory() as temporary:
             root = Path(temporary)
             (root / "Local").mkdir()
             sources = {
                 "Local/Left.lean": "import Local.Shared\n",
                 "Local/Right.lean": "public import Local.Shared\n",
-                "Local/Shared.lean": "theorem h : True := by trivial\n",
+                "Local/Shared.lean": "import Local.Left\ntheorem h : True := by trivial\n",
             }
             for name, source in sources.items():
                 (root / name).write_text(source)
@@ -79,6 +79,7 @@ class AdmissionScannerTests(unittest.TestCase):
                 (root / "Local/Shared.lean").write_text("import Local.Missing\n")
                 with self.assertRaisesRegex(ValueError, "missing local import Local.Missing"):
                     audit.import_cones(["Local.Left", "Local.Right"])
+                (root / "Local/Shared.lean").write_text(sources["Local/Shared.lean"])
                 with self.assertRaisesRegex(ValueError, "missing local import Local.Absent"):
                     audit.import_cones(["Local.Left", "Local.Absent"])
 

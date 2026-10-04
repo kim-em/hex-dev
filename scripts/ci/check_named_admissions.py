@@ -146,10 +146,6 @@ def module_file(module: str) -> Path | None:
     return None
 
 
-def import_cone(start: str) -> set[Path]:
-    return import_cones([start])
-
-
 def import_cones(starts: list[str]) -> set[Path]:
     """Traverse a union once; shared dependencies retain all audit obligations."""
     pending = list(starts)

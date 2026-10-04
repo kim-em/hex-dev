@@ -53,18 +53,18 @@ Covered edge cases:
 
 namespace HexArith
 
--- Agreement with an independent executable, including the low-bit cases.
+-- Agreement with the core executable, including the low-bit cases.
 #guard (List.range 1000).all fun n =>
   Nat.floorSqrt n == _root_.Nat.sqrt n
 
 -- Large exact squares and both neighbors exercise Newton's termination,
 -- and the ceiling branch.
 #guard ([64, 257, 4096] : List _root_.Nat).all fun bits =>
-  let r := 2 ^ bits + 1
-  let square := r * r
-  Nat.floorSqrt (square - 1) == r - 1 && Nat.ceilSqrt (square - 1) == r &&
-    Nat.floorSqrt square == r && Nat.ceilSqrt square == r &&
-    Nat.floorSqrt (square + 1) == r && Nat.ceilSqrt (square + 1) == r + 1
+  ([2 ^ bits - 1, 2 ^ bits + 1] : List _root_.Nat).all fun r =>
+    let square := r * r
+    Nat.floorSqrt (square - 1) == r - 1 && Nat.ceilSqrt (square - 1) == r &&
+      Nat.floorSqrt square == r && Nat.ceilSqrt square == r &&
+      Nat.floorSqrt (square + 1) == r && Nat.ceilSqrt (square + 1) == r + 1
 
 -- Powers with odd log2 exercise the other parity of the initializer exponent.
 #guard ([64, 257, 4096] : List _root_.Nat).all fun bits =>

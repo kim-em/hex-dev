@@ -298,11 +298,8 @@ All exact result guards pass, with no cap, filtering or unchanged rerun. The
 [plots](bench-results/real-algebraic-scalar-annihilation/plots/scalar-comparison.svg)
 show all observations and spreads; protocol curves remain separate.
 
-Native arithmetic checks canonical minimal polynomial and sign; external
-arithmetic checks exact annihilation and sign. Add and square root prepare no
-independent expected nonrational result. Contexts can retain caches populated
-by warmup. Addition and square
-root on the positive root of `X^8−2` take median 322.3 ms and 8.840 seconds,
+Contexts can retain caches populated by warmup. Addition and square root on
+the positive root of `X^8−2` take median 322.3 ms and 8.840 seconds,
 versus transported FLINT/Z3 observations in the tens of microseconds. This
 is a severe unresolved canonical-construction/isolation gap. These descriptive
 API-route ratios do not supply a speed gate or Phase-4 budget.
