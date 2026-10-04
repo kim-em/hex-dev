@@ -14,13 +14,15 @@ they are not new timings of the latest binary.
   the integer backend at degree 131072. The second reaches about 99 seconds
   and 32 GiB whole-child peak RSS at query degree 1048576, exposing expensive
   quotient materialization even for the value-only query.
-- [Real-algebraic list and arithmetic costs](real-algebraic-costs.png): stored
-  root-list construction and membership, sorting distinct rational root
-  records, and the retained canonical arithmetic fixture. Adding/subtracting
+- [Real-algebraic list and arithmetic costs](real-algebraic-costs.png):
+  polynomial construction from real-algebraic coefficient arrays, membership
+  in a prepared list of distinct rational roots, sorting distinct rational
+  root records, and the retained canonical arithmetic fixture. Adding/subtracting
   the positive root of `X⁶−2` and `√3` takes about 6.5 seconds and produces
   degree 12. The bare number-field parent has essentially the same cost.
-  These fixed-size arithmetic bars are not a growth curve; the cheap stored
-  list operations do not establish fast root production.
+  Unary operations use only the degree-6 input. These fixed-size arithmetic
+  bars are not a growth curve; the cheap coefficient/list operations do not
+  establish fast root production.
 - [Fixed-degree Z3 RCF and FLINT comparisons](external-fixed-comparison.png):
   complete signed-root queries for `T_8` on `(-2,2)`. Adjacent alternating
   AB/BA comparisons check the full result hashes. Z3's count is approximately

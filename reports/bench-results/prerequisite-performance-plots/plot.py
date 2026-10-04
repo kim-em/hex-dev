@@ -42,13 +42,14 @@ def save(fig, stem, note):
     fig.text(.02, .012, note, fontsize=8, color='#444444')
     fig.tight_layout(rect=(0,.065,1,.95))
     for fmt in ['png', 'svg', 'pdf']:
-        fig.savefig(HERE / f'{stem}.{fmt}', dpi=170)
+        meta = {'Date': None} if fmt == 'svg' else {'CreationDate': None} if fmt == 'pdf' else None
+        fig.savefig(HERE / f'{stem}.{fmt}', dpi=170, metadata=meta)
         if fmt == 'svg':
             p = HERE / f'{stem}.{fmt}'
             p.write_text('\n'.join(line.rstrip() for line in p.read_text().splitlines()) + '\n')
     plt.close(fig)
 
-plt.rcParams.update({'font.size': 10, 'axes.spines.top':False, 'axes.spines.right':False})
+plt.rcParams.update({'font.size': 10, 'axes.spines.top':False, 'axes.spines.right':False, 'svg.hashsalt':'hex'})
 short = read('sturm-short-chain-degree/results.json')['results']
 short = {r['function'].split('.')[-1]:r for r in short}
 prepared = read('prerequisite-prepared-query-degree/prepared-query.json')['results']
@@ -65,7 +66,9 @@ axes[1].legend(fontsize=8)
 for r,label in zip(prepared,['Value query','Certificate query']):
     ps = sorted({p['param'] for p in r['points']})
     vals = [median([p['peak_rss_kb']/1048576 for p in r['points'] if p['param']==m]) for m in ps]
-    axes[2].plot(ps,vals,'o-',label=label,lw=2)
+    line, = axes[2].plot(ps,vals,'o-',label=label,lw=2)
+    for point in r['points']:
+        axes[2].scatter(point['param'],point['peak_rss_kb']/1048576,color=line.get_color(),alpha=.3,s=12)
 axes[2].set_xscale('log',base=2);axes[2].set_xticks(ps,[f'{x:,}' for x in ps])
 axes[2].set(title='Growing query: whole-child peak RSS',xlabel='Query degree m',ylabel='Peak RSS (GiB)')
 axes[2].grid(alpha=.2);axes[2].legend(fontsize=8)
@@ -74,12 +77,13 @@ save(fig,'sturm-growth','Shared host chungus2, AMD EPYC 9455; 4 trials per rung.
 arr = read('prerequisite-readiness-models/arrays.json')['results']
 roots = read('real-algebraic-root-phases/results.json')['results']
 fig,axes=plt.subplots(1,3,figsize=(15,4.7));fig.suptitle('Real algebraic operations: cheap list handling, expensive canonical arithmetic',fontsize=16)
-for r,label in zip(arr,['Root-list construction','Membership scan','Access stored root set']):
+for r,label in zip(arr,['Polynomial construction + reality check','Membership scan','Access stored root set']):
     curve(axes[0],r,label,unit=1e3)
-axes[0].set(title='Stored roots of a repeated-factor polynomial',xlabel='Stored list length',ylabel='Time per call (µs)');axes[0].legend(fontsize=8)
+axes[0].set(title='Distinct rational values 1..n',xlabel='Length n (coefficients / stored roots)',ylabel='Time per call (µs)');axes[0].legend(fontsize=8)
 curve(axes[1],roots[1],'Merge sort',unit=1e3)
 axes[1].set(title='Sort distinct rational root records',xlabel='Root count',ylabel='Time per call (µs)');axes[1].legend(fontsize=8)
 ops=['Add','Sub','Mul','Div','Neg','Inv','NatPow','IntPow']
+hashes = {op: set() for op in ops}
 x=np.arange(len(ops));width=.38
 for j,arm in enumerate(['Hard','HardBare']):
     vals=[];lo=[];hi=[]
@@ -88,15 +92,18 @@ for j,arm in enumerate(['Hard','HardBare']):
         for block in range(4):
             r=read(f'real-algebraic-hard-arithmetic/{op}-{block}-{arm}.json')['results'][0]
             if not r['hashes_agree']:raise ValueError('Result hashes disagree')
+            hashes[op].add(r['observed_hash'])
             ns=[p['total_nanos']/p['inner_repeats'] for p in r['points']]
             runs.append(median(ns)/1e6)
         vals.append(median(runs));lo.append(min(runs));hi.append(max(runs))
     vals=np.array(vals)
     axes[2].bar(x+(j-.5)*width, vals,width,label=['Real-algebraic wrapper','Bare number-field parent'][j],yerr=[vals-np.array(lo),np.array(hi)-vals],capsize=2)
+if any(len(values) != 1 for values in hashes.values()):
+    raise ValueError('Paired wrappers or trials return different complete hashes')
 axes[2].set_xticks(x,ops,rotation=35);axes[2].set_yscale('log')
 axes[2].set(title='Fixed inputs of degrees 6 and 2',ylabel='Time per call (ms, log scale)');axes[2].legend(fontsize=8)
 axes[2].grid(axis='y',alpha=.2)
-save(fig,'real-algebraic-costs','Shared host; all retained trials shown, including leading points from earlier model checks. Sources: 4f44b806 (lists), 6d78bf3 (sort/arithmetic).\nArithmetic fixture: positive root of X⁶−2 and √3; Add/Sub yield degree 12 and take ≈6.5 s. Fixed-size bars do not establish a growth rate. Paired wrappers return identical complete hashes.')
+save(fig,'real-algebraic-costs','Shared host; all retained trials shown, including leading points from earlier model checks. Sources: 4f44b806 (lists), 6d78bf3 (sort/arithmetic).\nArithmetic fixture: positive root of X⁶−2 and √3; Add/Sub yield degree 12 and take ≈6.5 s. Unary operations use only the degree-6 input; bars do not establish growth. Paired wrappers return identical complete hashes.')
 
 external=read('sturm-external-comparisons/analysis.json')
 fig,axes=plt.subplots(1,2,figsize=(12,4.7));fig.suptitle('Exact Sturm query comparisons: Chebyshev T₈ on (−2,2)',fontsize=16)
