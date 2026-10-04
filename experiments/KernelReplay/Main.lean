@@ -52,8 +52,8 @@ unsafe def main (args : List String) : IO UInt32 := do
         | .error message => throw (IO.userError message)
       pure (some ("bytes-equal", "byteEqual " ++ jsonTerm json, "true", none))
     | [command, path, mode, expected] => do
-      unless command == "bytes" || command == "bytes-bound" do
-        throw (IO.userError "expected bytes or bytes-bound")
+      unless ["bytes", "bytes-bound", "bytes-read"].contains command do
+        throw (IO.userError "expected bytes, bytes-bound, or bytes-read")
       let json ← match Codec.parse {} (← IO.FS.readBinFile path) with
         | .ok value => pure value
         | .error message => throw (IO.userError message)
@@ -64,9 +64,12 @@ unsafe def main (args : List String) : IO UInt32 := do
       unless ["true", "false", "unproved"].contains expected do
         throw (IO.userError "expected true, false, or unproved outcome")
       let literal := if command == "bytes-bound" then some (jsonTerm json) else none
-      pure (some (command, "checkJson Hex.RealClosure.Algebraic.KernelReplayProofProbe." ++
+      let reader := if command == "bytes-read" then "readJson" else "checkJson"
+      pure (some (command, reader ++ " Hex.RealClosure.Algebraic.KernelReplayProofProbe." ++
         facts ++ " " ++ jsonTerm json, expected, literal))
     | _ => pure none
+  if byteControl.isNone && args.any (fun arg => !controls.any (fun control => control.1 == arg)) then
+    throw (IO.userError "unknown control name")
   let selected := match byteControl with
     | some control => [control]
     | none => controls.filter fun control => args.isEmpty || args.contains control.1

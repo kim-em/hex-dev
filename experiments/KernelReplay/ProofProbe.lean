@@ -88,6 +88,11 @@ open scoped Hex
 
 @[expose] def byteEqual (j : Codec.Json) : Bool := decide (j = graphJson)
 
+@[expose] def readJson (facts : List (SignFact context)) (j : Codec.Json) : Bool :=
+  (Codec.readGraph (Element.signCodec ValueCodec.rat facts) ValueCodec.nat 8
+    NestedSignsConformance.linearHead NestedSignsConformance.linearRaw.lower
+    NestedSignsConformance.linearRaw.upper j).isOk
+
 /-- Decode the actual existing graph format using finite literal facts, then
 apply the existing supplied-fact arithmetic checker to every entry. -/
 @[expose] def checkJson (facts : List (SignFact context)) (j : Codec.Json) : Bool :=
@@ -183,6 +188,47 @@ theorem endpoint_missing :
 open Lean Meta Elab Command
 
 meta section
+
+private def auditProof (proof type : Expr) : MetaM (Array Name) := do
+  if proof.hasSorry || proof.hasMVar || type.hasSorry || type.hasMVar then
+    throwError "incomplete proof"
+  let mut axioms : Array Name := #[]
+  for decl in (proof.getUsedConstants ++ type.getUsedConstants) do
+    for axiomName in (← collectAxioms decl) do
+      if !axioms.contains axiomName then axioms := axioms.push axiomName
+      unless #[`propext, `Classical.choice, `Quot.sound].contains axiomName do
+        throwError "unexpected axiom {axiomName} through {decl}"
+  return axioms
+
+private def kernelCheck (name : Name) (type proof : Expr) : MetaM Unit := do
+  let options := (← getOptions).setBool `debug.skipKernelTC false
+  ofExceptKernelException <| ((← getEnv).toKernelEnv.addDecl options
+    (.thmDecl { name, levelParams := [], type, value := proof })).map (fun _ => ())
+
+/-- Follow demanded projections and recursor scrutinees, never lambda bodies. -/
+private partial def missingRedex (expression : Expr) : MetaM (Option Expr) :=
+  withIncRecDepth do
+    let expression ← withTransparency .all (whnf expression)
+    if expression.getAppFn.isConstOf ``Element.missing then return some expression
+    match expression with
+    | .proj _ _ value => missingRedex value
+    | .mdata _ value => missingRedex value
+    | .app .. =>
+      if let .const name _ := expression.getAppFn then
+        let args := expression.getAppArgs
+        if let .recInfo recursor ← getConstInfo name then
+          if let some major := args[recursor.getMajorIdx]? then return ← missingRedex major
+        if let some matcher ← getMatcherInfo? name then
+          for index in matcher.getDiscrRange do
+            if let some discr := args[index]? then
+              if let some missing ← missingRedex discr then return some missing
+        if #[``Nat.add, ``Nat.sub, ``Nat.mul, ``Nat.div, ``Nat.mod, ``Nat.pow,
+            ``Nat.gcd, ``Nat.beq, ``Nat.ble].contains name then
+          for arg in args do
+            if let some missing ← missingRedex arg then return some missing
+      return none
+    | _ => return none
+
 syntax "#proof_probe " term " expecting " str (" binding " term)? : command
 elab_rules : command
 | `(#proof_probe $term expecting $expected $[binding $literal]?) => do
@@ -192,60 +238,74 @@ elab_rules : command
     let expression ← instantiateMVars expression
     if expression.hasSorry || expression.hasMVar then throwError "incomplete input"
     let started ← IO.monoNanosNow
+    let mut rules : SimpTheorems := {}
+    if let some literal := literal then
+      let proofSyntax ← `(show $literal = graphJson from by decide +kernel)
+      let proof ← Term.withoutErrToSorry (Term.elabTerm proofSyntax none)
+      Term.synthesizeSyntheticMVarsNoPostponing
+      let proof ← instantiateMVars proof
+      let type ← inferType proof
+      let _ ← auditProof proof type
+      kernelCheck `__kernelReplayBinding type proof
+      rules ← rules.add (.stx `__inputBinding literal.raw) #[] proof
+      logInfo "inputBinding=proved"
+    for decl in #[``complete, ``missing, ``falseClaim, ``completeGraph, ``missingGraph,
+        ``falseGraph, ``falseEndpointGraph, ``completeMemo, ``byteEqual, ``readJson, ``checkJson,
+        ``Dag.validateCached?, ``Hex.SignDet.Dag.changeOps, ``Hex.SignDet.Dag.validate?,
+        ``Replay.check, ``queryPoly, ``Sturm.check, ``SignedRemainderChain.check] do
+      rules ← rules.addDeclToUnfold decl
+    for decl in #[``graph_read_full, ``graph_read_missing, ``Hex.SignDet.Dag.step_eq,
+        ``Node.check_eq, ``checkMoment_eq, ``TarskiCertificate.check_eq,
+        ``Array.toList_range] do
+      rules ← rules.addConst decl
+    rules ← rules.addConst ``Array.all_toList (inv := true)
+    rules ← rules.addConst ``Array.foldlM_toList (inv := true)
+    rules ← rules.addConst ``eq_self
+    rules ← rules.addConst ``iff_self
+    let context ← Simp.mkContext (simpTheorems := #[rules])
+      (congrTheorems := ← getSimpCongrTheorems)
+    let (simplified, _) ← Meta.simp expression context
+    let equation ← simplified.getProof' expression
+    let equationType ← mkEq expression simplified.expr
+    let _ ← auditProof equation equationType
+    kernelCheck `__kernelReplaySimplification equationType equation
+    let options := (← getOptions).setBool `debug.skipKernelTC false
+    let env := (← getEnv).toKernelEnv
     let mut outcome := "unproved"
-    let mut failures : List String := []
     for candidate in [true, false] do
-      let state ← saveState
-      let proof? ← try
-        let resultTerm ← if candidate then `(true) else `(false)
-        let bindingProof ← match literal with
-          | some literal => `(show $literal = graphJson from by decide +kernel)
-          | none => `(True.intro)
-        let proofSyntax ← `(show $term = $resultTerm from by
-          have inputBinding := $bindingProof
-          simp only [inputBinding, complete, missing, falseClaim, completeGraph, missingGraph,
-            falseGraph, falseEndpointGraph, completeMemo, byteEqual, checkJson, graph_read_full,
-            graph_read_missing, Dag.validateCached?, Hex.SignDet.Dag.changeOps,
-            Hex.SignDet.Dag.validate?, Hex.SignDet.Dag.step_eq, Replay.check,
-            Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
-            TarskiCertificate.check_eq, SignedRemainderChain.check,
-            ← Array.all_toList, Array.toList_range]
-          decide +kernel)
-        let proof ← Term.withoutErrToSorry (Term.elabTerm proofSyntax none)
-        Term.synthesizeSyntheticMVarsNoPostponing
-        let proof ← instantiateMVars proof
-        if proof.hasSorry || proof.hasMVar then throwError "incomplete proof"
-        pure (some proof)
-      catch ex =>
-        let reason ← ex.toMessageData.toString
-        if (reason.splitOn "(kernel) deterministic timeout").length > 1 ||
-            (reason.splitOn "(kernel) deep recursion").length > 1 then throw ex
-        unless reason.startsWith "Tactic `decide` failed to reduce" ||
-            reason.startsWith "Tactic `decide` proved that the proposition" do throw ex
-        state.restore
-        failures := reason :: failures
-        pure none
-      if let some proof := proof? then
-        let type ← mkEq expression (mkConst (if candidate then ``Bool.true else ``Bool.false))
-        let mut axioms : Array Name := #[]
-        for decl in (proof.getUsedConstants ++ type.getUsedConstants) do
-          for axiomName in (← collectAxioms decl) do
-            if !axioms.contains axiomName then axioms := axioms.push axiomName
-            unless #[`propext, `Classical.choice, `Quot.sound].contains axiomName do
-              throwError "unexpected axiom {axiomName} through {decl}"
-        let checked := (← getEnv).toKernelEnv.addDecl
-          ((← getOptions).setBool `debug.skipKernelTC false)
-          (.thmDecl { name := `__kernelReplayProofProbe, levelParams := [], type, value := proof })
-        match checked with
-        | .ok _ =>
-          logInfo m!"kernelAccepted=true axioms={axioms}"
-          outcome := if candidate then "true" else "false"
-        | .error _ => throwError "kernel rejected elaborated proof"
+      let result := mkConst (if candidate then ``Bool.true else ``Bool.false)
+      let proposition ← mkEq simplified.expr result
+      let decisionInstance ← synthInstance (mkApp (mkConst ``Decidable) proposition)
+      let decision := mkAppN (mkConst ``decide) #[proposition, decisionInstance]
+      let comparisonType ← mkEq decision (mkConst ``Bool.true)
+      let reflexivity ← mkEqRefl (mkConst ``Bool.true)
+      let checked := env.addDecl options
+        (.thmDecl {
+          name := `__kernelReplayReduction
+          levelParams := []
+          type := comparisonType
+          value := reflexivity })
+      match checked with
+      | .error (.declTypeMismatch _ _ _) => logInfo "kernelResult=typeMismatch"
+      | .error exception => throwKernelException exception
+      | .ok _ =>
+        let resultProof := mkAppN (mkConst ``of_decide_eq_true)
+          #[proposition, decisionInstance, reflexivity]
+        let proof := mkAppN (mkConst ``Eq.trans [.succ .zero])
+          #[mkConst ``Bool, expression, simplified.expr, result, equation, resultProof]
+        let type ← mkEq expression result
+        let axioms ← auditProof proof type
+        kernelCheck `__kernelReplayProofProbe type proof
+        logInfo m!"kernelAccepted=true axioms={axioms}"
+        outcome := if candidate then "true" else "false"
         break
     if outcome == "unproved" then
-      for reason in failures.reverse do logInfo m!"proofFailure={reason.take 400}"
+      let some redex ← missingRedex simplified.expr
+        | throwError "unproved result without a demanded missing-fact boundary: {simplified.expr}"
+      logInfo m!"missingRedex={redex}"
     logInfo m!"result={outcome} nanos={(← IO.monoNanosNow) - started}"
     unless outcome == expected.getString do throwError "unexpected result {outcome}"
+
 end
 
 set_option maxRecDepth 32768 in

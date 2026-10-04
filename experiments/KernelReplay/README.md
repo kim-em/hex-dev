@@ -3,15 +3,19 @@
 This experiment assembles proofs about the existing supplied-fact coefficient
 arithmetic and `Dag.validateCached?` checker. Each accepted result is an equality
 between the caller's actual Boolean expression and `true` or `false`, checked by
-Lean's ordinary kernel. It unfolds structural checker equations and uses
-`decide +kernel`; it does not evaluate coefficient arithmetic natively or rewrite
-it to the ordinary implementation that searches for signs.
+Lean's ordinary kernel. It simplifies structural checker equations, then asks
+the kernel to reduce the resulting Boolean comparison. It does not evaluate
+coefficient arithmetic natively or rewrite it to the ordinary implementation
+that searches for signs.
 
 The proof assembler disables error-to-`sorry` recovery, requires closed inputs
 and proofs, and audits their transitive axioms. Only `propext`, `Classical.choice`
-and `Quot.sound` are allowed. Kernel rejection, resource exhaustion and unrelated
-elaboration errors fail the command. `unproved` means neither Boolean equality
-was assembled; it is not a proof that the checker returns `false`.
+and `Quot.sound` are allowed. Unexpected kernel errors, resource exhaustion and unrelated elaboration errors
+fail the command. Only a declaration type mismatch permits trying the other
+Boolean result. `unproved` means neither equality was assembled; it is not a
+proof that the checker returns `false`. The probe also requires a missing-fact
+application on the demanded projection or pattern-match path, without searching
+unapplied lambda bodies. An unrelated blocking definition fails the control.
 
 The controls include complete and missing scalar evidence, a false scalar claim,
 the actual two-entry graph, a false unused entry, and a false endpoint sign.
@@ -34,6 +38,7 @@ lake env .lake/build/bin/hexsigndet_kernel_replay_probe emit /tmp/graph.json
 lake env .lake/build/bin/hexsigndet_kernel_replay_probe bytes-equal /tmp/graph.json
 lake env .lake/build/bin/hexsigndet_kernel_replay_probe bytes /tmp/graph.json full true
 lake env .lake/build/bin/hexsigndet_kernel_replay_probe bytes-bound /tmp/graph.json missing unproved
+python3 experiments/KernelReplay/run.py /tmp/kernel-replay-results
 ```
 
 The wrapper parses supplied bytes with the existing integer-only JSON parser and
@@ -42,7 +47,10 @@ about that exact expression. `bytes-equal` additionally proves equality with the
 encoded fixture. `bytes-bound` proves that equality before using the fixture's
 proved decoder equation; it is deliberately restricted to this test record.
 These checks do not prove the native parser implementation correct. Altered
-count and context fields can be tested with `bytes PATH full false`.
+count and context fields can be tested with `bytes PATH full false`. The harness
+also proves that the altered count passes decoding before replay rejects it.
+An altered record supplied to `bytes-bound` fails the equality requirement
+outright, even when the expected replay outcome is `unproved`.
 
 The executable uses Lean's unsafe initializer-enabling API to load elaborator
 extensions. This is not part of the arithmetic or proof acceptance boundary.
