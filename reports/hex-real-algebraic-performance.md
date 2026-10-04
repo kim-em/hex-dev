@@ -402,23 +402,44 @@ failure recurs across this assignment's retained
 [384/360](bench-results/prerequisite-required-ci-82039231f.json) and 388/360 runs.
 No completed same-base main breakdown establishes causal attribution. These
 failures are operational observations, not failed result checks or Phase-4
-verdicts. One unchanged operational recheck of source `77a844987` is recorded on
-[run 37183791720](https://github.com/kim-em/hex-dev/actions/runs/37183791720);
-no result or headroom is inferred before it finishes.
+verdicts. The [single unchanged operational recheck of source `77a844987`](bench-results/prerequisite-full-ci-recheck-77a844987.json)
+also completes every result check across 57 executables but fails at 382/360
+seconds, including 62 seconds for this executable. Its remaining all-library
+oracle step was cancelled after that completed failure; no full-oracle pass
+is claimed and no further unchanged recheck is performed.
 
 On the recorded 72-case source `eabbeea9f`, hard addition/subtraction and their
 bare controls account for about 26 of 32 local seconds. The current CI warning
 has no per-case breakdown. The [retained hard-add profile](bench-results/prerequisite-representative-profiles-62399ddd0/real-hard-add.summary.json)
-locates three near-equal isolation passes: lazy eliminant selection, factor
+on `62399ddd0` locates three near-equal isolation passes before certified
+reuse: lazy eliminant selection, factor
 exactification, and canonical representative construction. In particular,
 `exactFactor?` in `HexNumberField/Convert.lean` and `rawRep?` in
 `HexNumberField/Basic.lean` run the same deterministic factor isolation at the
-same separation depth. Reusing those certified results is a concrete parent
-optimization, not an implemented repair in this four-library change. The
-canonical representation and existing parent arithmetic remain intact.
+same separation depth on that recorded source. The certified reuse below
+removes the canonical-construction re-isolation while preserving the complete
+canonical result; the eliminant and candidate runs remain separate.
 
 The profiled `Convert.lean`, `Basic.lean`, `Lazy.lean` and real-add paths are
 unchanged from `62399ddd0` through the measured root-rejection source. The
 near-equal terminal-path shares use tail-call attribution: `ofNormalized?` is
 the tail call of `exactFactor?`, so those displayed shares are not nested
 inclusive totals. Arbitrary inclusive profile shares must not be added.
+
+[Certified candidate-isolation reuse](bench-results/number-field-isolation-reuse/README.md)
+removes the canonical-construction re-isolation from `exactFactor?`, with
+whole-Option equality preserving the same stored representations. Four
+adjacent AB/BA pairs on `7ceaf9d47d` measure hard addition/subtraction about
+1.5 times faster. The six actual root-API degree rungs retain 48 successful
+arms; their [size plot](bench-results/number-field-isolation-reuse/roots-comparison.png)
+shows an improvement but a severe remaining gap to retained external
+references. The external lines are historical observations, not fresh pairs
+with these native samples. A [current representative profile](bench-results/number-field-isolation-reuse/profile/hard-add.summary.json)
+on `08c8a9f13e` retains 4344 kernel samples with calibration/count/sensitivity
+checks passing. Isolation remains 90.56% inclusive, with the remaining lazy
+eliminant and candidate-exactification paths separately visible at 45.26%
+and 45.35%; these are tail-call attributions, not arbitrary additive
+inclusive totals. All raw artifacts persist at the manifest paths.
+The local normal-form migration, fixed-presentation conversion reuse and
+per-root enumeration reuse remain outside this targeted repair. No phase
+counter or all-library headroom assertion follows.

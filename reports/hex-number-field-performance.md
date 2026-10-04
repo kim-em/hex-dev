@@ -27,7 +27,12 @@ floor rather than weakening its cap.
 constructor retains precisely the same stored representative and checked
 failures. The historical nested `canonicalRep?` attribution in the profiles
 below describes the pre-reuse source: that repeated candidate run is removed.
-The standalone `canonicalRep?` registration still performs its own run. Lazy
+The standalone `canonicalRep?` registration still performs its own run. The
+[current representative hard-add profile](bench-results/number-field-isolation-reuse/profile/hard-add.summary.json)
+on `08c8a9f13e` retains 4344 kernel samples with successful calibration, count
+and boundary-sensitivity checks. Isolation is 90.56% inclusive; the remaining
+eliminant and exactification paths have tail-call-attributed shares of 45.26%
+and 45.35%. Raw artifacts and checksums persist at the manifest paths. Lazy
 eliminant selection, `PolyQuot.toAlgebraicNumber?` and repeated per-root
 exactification retain their separate isolation costs; this is not an assertion
 that all repeated isolation is eliminated. The forward local-canonicalization

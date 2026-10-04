@@ -53,3 +53,10 @@ The initial operational verifications without installed oracle dependencies
 are retained separately; `verify-with-oracles.json` records the corrected
 environment and successful checks. This is not required CI or Phase-4
 attestation for a later source.
+
+The representative hard-add profile on documented source `08c8a9f13e`
+retains 4344 kernel samples; calibration, expected counts and ±5 ms boundary
+sensitivity pass. Isolation remains 90.56% inclusive. The old third isolation
+pass is removed; two remain. Raw perf/samply/sidecar data and the exact
+source/binary hashes persist at the manifest paths. This supplies required
+attribution rather than a per-change profiling policy.
