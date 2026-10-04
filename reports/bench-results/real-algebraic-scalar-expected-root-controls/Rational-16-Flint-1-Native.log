@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runRational16    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6120953, 2026-10-04T19:41:38Z, host=chungus2
+  repeat 0  240.416 µs  (×2^8, total 61.547 ms)
+  median: 240.416 µs    min: 240.416 µs    max: 240.416 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_276 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-scaling/Rational-16-Flint-1-Native.json

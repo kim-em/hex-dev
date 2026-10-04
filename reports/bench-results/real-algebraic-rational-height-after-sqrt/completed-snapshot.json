@@ -1,0 +1,55 @@
+{
+  "source": "16cff198bb2f2230b3553fb11766768b379081e5",
+  "dirty": false,
+  "cpu": 58,
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "load_start": [
+    8.70703125,
+    32.16845703125,
+    33.72509765625
+  ],
+  "executable": "/home/kim/.local/state/hex/issue-10577-proposals/sqrt-initializer/current-main/height-science/hexrealalgebraic_bench-4bb656ae81039bb0892d10ab8dca037e325b6e9d59ad75b263f2d83da775e50a",
+  "executable_sha256": "4bb656ae81039bb0892d10ab8dca037e325b6e9d59ad75b263f2d83da775e50a",
+  "boundary": "Registered operation-only rational recognition/floor/ceil/quotient. Canonical input preparation and the child warmup are excluded from kernel timing. Whole parent invocation elapsed time includes preparation and all children.",
+  "schedule": "Each registration uses its declared fixed trial-major schedule, four outer trials at 262144/524288/1048576/2097152 bits, target 100 ms, signal multiplier 1 and 600 s child safeguard. No source or settings overrides, activity rejection or unchanged rerun.",
+  "sources": {
+    "HexArith/Nat/Sqrt.lean": "02684a5167ec604cdf432554058be0c4674e926fdb356934e45bf1964c81746e",
+    "HexNumberField/Roots.lean": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+    "HexNumberField/Convert.lean": "059b2d9716d199c4b60fdbe9a51fcdb527728cbd554a75bf626ca7363c0a0b86",
+    "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "HexRealAlgebraic/Order.lean": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+    "bench/HexRealAlgebraic/Bench.lean": "91f6523fbbd8c6d8af8f53680d7500f0de5e11a245d48622e7ff446fd01555c5",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e"
+  },
+  "runs": [
+    {
+      "name": "RationalRecognition",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/sqrt-initializer/current-main/height-science/hexrealalgebraic_bench-4bb656ae81039bb0892d10ab8dca037e325b6e9d59ad75b263f2d83da775e50a",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRecognition",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/sqrt-initializer/current-main/height-science/RationalRecognition.json"
+      ],
+      "exit_code": 0,
+      "whole_parent_seconds": 2263.4878541049984,
+      "output": "RationalRecognition.json"
+    },
+    {
+      "name": "RationalFloor",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/sqrt-initializer/current-main/height-science/hexrealalgebraic_bench-4bb656ae81039bb0892d10ab8dca037e325b6e9d59ad75b263f2d83da775e50a",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalFloor",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/sqrt-initializer/current-main/height-science/RationalFloor.json"
+      ],
+      "exit_code": 0,
+      "whole_parent_seconds": 2241.8413247920034,
+      "output": "RationalFloor.json"
+    }
+  ],
+  "retention_scope": "Snapshot of completed recognition and floor registrations only. Ceiling and quotient registrations remain active in the recorded persistent collection; no scientific observations are inferred for them."
+}

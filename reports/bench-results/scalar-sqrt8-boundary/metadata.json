@@ -1,0 +1,18 @@
+{
+  "cpu": 21,
+  "source": "20e29ae7626d2a4a171d28e71c50e2ab3f8c7252",
+  "binary_sha256": "976aa3359dfc39acb530c33677adebe897be8954570b45ef416763dffb90e8bf",
+  "load_start": [
+    5.41064453125,
+    12.8583984375,
+    16.9208984375
+  ],
+  "scope": "One controlled boundary diagnostic of the previously capped fixture; the setup marker is outside the operation timer. The 120-second whole-invocation cutoff is an operational safeguard, not an operation budget.",
+  "exit_code": 0,
+  "elapsed_seconds": 42.16304155499529,
+  "load_end": [
+    6.3603515625,
+    12.00439453125,
+    16.435546875
+  ]
+}

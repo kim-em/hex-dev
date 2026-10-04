@@ -719,6 +719,32 @@ bit fixtures likewise collapse to a one-bit mantissa or a normalized linear
 chain. Neither those families nor the original short, mixed-word head ladder
 justify current Phase 4. No failed two-sided case is relabelled mode 2.
 
+## Remainder-only value queries
+
+`queryReduced` and `queryReducedPrepared` reduce by the validated head using
+`DensePoly.modImpl`, then invoke the existing shared producer. The companion
+proves equality with the original whole result, including failures, under
+lawful coefficient division. These opt-in value APIs avoid retaining the
+unreduced query's literal quotient; the existing certificate contract remains
+available.
+
+The [controlled storage/runtime comparison](bench-results/sturm-reduced-value-comparison/README.md)
+retains all 32 adjacent AB/BA arms with identical rational value-only preparation.
+At degree 262144 peak whole-process RSS falls from about 2175 to 137 MiB, and
+median kernel time improves about 1.5×. Preparation and process memory are
+included in RSS, while kernel timings exclude preparation. All signed-result
+hashes agree. Earlier coupled-preparation and quotient-producing prototypes
+remain archived with their actual limitations and interrupted parents.
+
+The reduced query's registered quadratic bit-work ladder passes at degrees
+131072–1048576 with four trials per rung: residual −0.063658, no truncation or
+signal exclusion. Median kernel time at the largest rung is still 78.0 seconds.
+The [current representative capture](bench-results/readiness-runtime-profiles/README.md)
+attributes 90.79% inclusive share to the remainder-only worker. This provides
+family-specific evidence, not an admission of the unresolved sign or replay
+candidates. The former 33.8 GB observation remains valid for its original
+quotient-retaining API and recorded source.
+
 ## Comparator ratios
 
 The [short-chain backend pairs](bench-results/sturm-short-chain-degree/analysis.json)
