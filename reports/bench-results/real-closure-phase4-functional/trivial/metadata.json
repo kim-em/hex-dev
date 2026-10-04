@@ -1,0 +1,23 @@
+{
+  "purpose": "functional compiled workload validation; not a fixed-schedule scientific comparison",
+  "backend": "trivial",
+  "source_head": "b2cea573a742a279dc07e8626f64b570c19d0c2e",
+  "source_dirty": false,
+  "executable_sha256": "3edbc3503a26592c2dc36410d5a30e81d571306aa4a835d997c90154578a62af",
+  "cpu": 34,
+  "host": "chungus2",
+  "started_utc": "2026-10-04T11:43:55.582669+00:00",
+  "command": [
+    "taskset",
+    "-c",
+    "34",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-phase4/.lake/build/bin/hexrealclosure_phase4",
+    "metitarski",
+    "trivial"
+  ],
+  "operational_timeout_seconds": 1800,
+  "exit_code": null,
+  "status": "operational timeout",
+  "elapsed_wall_seconds": 1800.0143009679996,
+  "ended_utc": "2026-10-04T12:13:55.597386+00:00"
+}
