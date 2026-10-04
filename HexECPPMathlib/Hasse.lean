@@ -7,7 +7,15 @@ module
 
 public import HexECPPMathlib.Hasse.Degree
 
-/-! # The restricted prime-field Hasse bound -/
+/-!
+# Hasse's bound over the prime fields used in a primality proof
+
+For an elliptic curve over `ZMod p`, with `p` prime and `N` points, the
+integer inequality `(p + 1 - N)² ≤ 4*p` implies
+`N ≤ (√p + 1)²`. An ECPP certificate forces `N` to be at least the order
+of its supplied point. Combining these bounds excludes a small prime
+divisor of the integer being proved prime.
+-/
 
 @[expose] public section
 

@@ -12,21 +12,26 @@ public import HexPrimality.Construction
 public section
 
 /-!
-# Bounded native ECPP search
+# Searching for elliptic curve primality certificates
 
-One deterministic allocation survives every recursive failure and retry.
-Factor work is reserved in bounded attempt packages: a leaf call reserves 64
-attempts and an order call reserves four. The fixed profiles below also bound
-trial division, subsets, worklists, witness sampling and per-attempt work;
-unused reservations are never refunded. Root calls execute at most a quadratic
-number of modular operations in the admitted bit size; scalar work counts the
-maximum additions in the existing bit schedule. Exhaustion is not a verdict
-of compositeness. The public `produce` boundary returns only subject-bound checked certificates.
+`produce n seed` tries to construct a certificate proving `n` prime. It uses
+complex multiplication to propose curves and orders, partially factors a
+proposed order `m = s*q`, and tries to obtain a point of order `q` by multiplying
+another point by `s`. It then recursively constructs a certificate for `q`.
+Small-prime and Pocklington certificates can end the chain.
+
+Search has finite limits shared across all attempted curves and recursive
+calls. An unsuccessful branch does not refund its work. Failure to find a
+certificate does not imply compositeness. Every successful result passes
+`checkAt n`; a `Nat.Prime n` theorem additionally uses the soundness result
+from `HexECPPMathlib`. Proposed orders and random choices are not proof
+assumptions.
 -/
 
 namespace Hex.ECPP
 
-/-- Shared allocations and local failure causes in native production. -/
+/-- The work limit or unsuccessful search stage reported when certificate
+search cannot complete a primality proof. -/
 inductive Resource where
   | inputBits | depth | candidates | roots | nonresidues | points
   | factorWork | scalarWork | outputBits | memo | portfolio
@@ -34,7 +39,11 @@ inductive Resource where
   | polynomialWork | rootWork
 deriving Repr, BEq, DecidableEq
 
-/-- Finite shared search allocations, with separate local retry ceilings. -/
+/-- Limits for finding an elliptic curve primality certificate. The counters
+bound the entire search, including recursive proofs of auxiliary primes;
+trying another curve does not restore work already spent. Retry limits also
+bound the number of choices tried on each curve. Neither a bit-length limit
+nor the other allowances guarantee that search succeeds for every prime. -/
 structure SearchBudget where
   /-- Maximum subject bit length. -/
   maxBits : Nat := 256
@@ -101,7 +110,11 @@ def orderBudget : Hex.Nat.FactorSearchBudget := {
   smoothBounds := [64, 512]
   smoothBases := [2] }
 
-/-- Explicit opt-in 512-bit allocation. The default `produce` policy is unchanged. -/
+/-- Larger search policy for integers through 512 bits, with additional
+fixed complex multiplication class polynomials. Select it explicitly;
+`produce` defaults to the 256-bit policy. Search can still fail within this
+size range. Use `public512Budget` when the result must fit the public proof
+commands' certificate limits. -/
 def native512Budget : SearchBudget := {
   maxBits := 512, maxDepth := 32, maxCandidates := 8192, maxRoots := 32768
   maxNonresidues := 16384, maxPoints := 16384, maxFactorWork := 131072
@@ -110,15 +123,18 @@ def native512Budget : SearchBudget := {
   order := some orderBudget
   backtrackOutput := true, extendedCM := true }
 
-/-- Public 512-bit output allocation: twenty rows and thirty-two total nodes. -/
+/-- The 512-bit search policy used by the public tactic and export command.
+It restricts output to 20 elliptic rows and 32 total certificate nodes,
+including the wrapper and all nodes of the last HexPrimality certificate. -/
 def public512Budget : SearchBudget := {
   native512Budget with maxDepth := 21, maxRows := some 20, maxNodes := some 32 }
 
-/-- An unresolved subject and the allocation or search stage that failed. -/
+/-- An integer whose primality certificate was not found, together with the
+work limit or search stage that stopped the attempt. -/
 structure SearchError where
-  /-- Subject whose proof remains unresolved. -/
+  /-- Integer whose primality certificate remains unfound. -/
   subject : Nat
-  /-- Allocation or search stage responsible for failure. -/
+  /-- Work limit or search stage responsible for stopping the search. -/
   resource : Resource
 deriving Repr
 
@@ -469,9 +485,12 @@ def search (budget : SearchBudget) : Nat → Nat → SearchM (Option Cert)
       unresolved n .portfolio
       return none
 
-/-- Success or unresolved diagnosis together with the final shared search state. -/
+/-- The outcome of certificate search, together with its final random state
+and statistics. An error reports an unsuccessful attempt, not a proof that
+the input is composite. -/
 structure SearchResult where
-  /-- Complete checked certificate or unresolved diagnostic. -/
+  /-- A complete checked primality certificate, or the integer and reason
+  for which the search stopped. -/
   result : Except SearchError Cert
   /-- Final random stream, counters and successful memo. -/
   state : SearchState
@@ -501,8 +520,16 @@ private theorem finish_ok {n : Nat} {result : Except SearchError (Option Cert)}
         assumption
       · simp at h
 
-/-- Native production accepts only the subject, seed and resource allocation.
-Every success is complete raw certificate data accepted by `checkAt`. -/
+/-- Search for a primality certificate for `n`, using `seed` to choose the
+deterministic random sequence and `budget` to limit the work. Return a
+certificate and search statistics, or an error explaining why search stopped.
+Every `.ok c` result satisfies `checkAt n c = true`; failure to find a
+certificate does not imply that `n` is composite.
+
+The default policy admits inputs through 256 bits. `native512Budget` and
+`public512Budget` explicitly select 512-bit search. For a theorem of
+Mathlib's `Nat.Prime n`, use `HexECPPMathlib.Native` or apply the companion's
+soundness theorem to a kernel-checked checker equation. -/
 def produce (n seed : Nat) (budget : SearchBudget := {}) : SearchResult :=
   let computation : SearchM (Option Cert) := do
     let result ← search budget budget.maxDepth n

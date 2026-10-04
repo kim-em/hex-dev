@@ -10,16 +10,20 @@ public import Mathlib.Data.Fintype.Option
 public import HasseWeil.HasseBound
 
 /-!
-# Finite affine elliptic-curve points
+# Counting elliptic curve points and applying Hasse's bound
 
-The affine point type supplied by Mathlib consists of the point at infinity
-and nonsingular coordinate pairs. Over a finite field this makes the point
-type finite. We use Chris Birkbeck's proved Hasse bound in AINTLIB
-(Apache 2.0) for the mathematical estimate. Its axiom-clean capstone uses
-Frobenius and `1 − Frobenius` Weil-pairing scaling, coprime pencil scaling,
-and a nonnegative kernel-cardinality quadratic form. This supplies the
-substantial degree/Frobenius infrastructure used here; the independent
-fixed-point correspondence used by ECPP is in `Frobenius.lean`.
+Mathlib's affine point type includes the point at infinity and nonsingular
+coordinate pairs. Over a finite field it is a finite type, so we can speak
+of the number of points on the curve.
+
+Hasse's theorem bounds the difference between that number and `|F| + 1` by
+`2*√|F|`. We import Chris Birkbeck's proof from AINTLIB (Apache 2.0), then
+express the bound as the integer inequality `t² ≤ 4*|F|`. This is the form
+used to prove primality from an ECPP certificate. The imported theorem's
+dependencies are audited to allow only Lean's standard axioms.
+
+The related interpretation of prime-field points as Frobenius fixed points
+is provided in `HexECPPMathlib.Hasse.Frobenius`.
 -/
 
 @[expose] public section
@@ -46,8 +50,11 @@ namespace Hex.ECPP
 
 open WeierstrassCurve
 
-/-- The integer Hasse inequality used by ECPP. The underlying theorem is
-`HasseWeil.WeilPairing.hasse_bound`, with only the standard Lean axioms. -/
+/-- Hasse's bound on the number of points of an elliptic curve over a finite
+field, written as an exact integer inequality. If `N` is the point count
+and `r` the field size, `(r + 1 - N)² ≤ 4*r`.
+The proof uses AINTLIB's `HasseWeil.WeilPairing.hasse_bound`, whose
+dependencies contain only the standard Lean axioms. -/
 theorem hasse_sq {F : Type*} [Field F] [Fintype F] [DecidableEq F]
     (W : WeierstrassCurve F) [W.toAffine.IsElliptic] :
     ((Fintype.card F : ℤ) + 1 - (Fintype.card W.toAffine.Point : ℤ)) ^ 2 ≤

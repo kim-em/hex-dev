@@ -14,6 +14,18 @@ public import HexECPPMathlib.Soundness
 public import HexECPPMathlib.Elab
 public import HexECPPMathlib.Compact
 
-/-! Prime-field semantics, Hasse bound, and unconditional ECPP soundness. -/
+/-!
+# Proving primality from elliptic curve certificates
+
+`ecpp using c` proves a `Nat.Prime n` goal from a supplied certificate `c`.
+The proof interprets its elliptic curve arithmetic over every prime divisor
+of `n` and uses Hasse's bound to exclude a small prime divisor. Acceptance by
+the executable checker is the only premise of the soundness theorem.
+
+Compact certificates use `ecpp_cert% "rows" using lastPrimeCertificate`.
+Import `HexECPPMathlib.Native` to find certificates with the built-in search,
+or `HexECPPMathlib.Pari` to use PARI/GP. Neither search is needed to check a
+saved certificate.
+-/
 
 @[expose] public section

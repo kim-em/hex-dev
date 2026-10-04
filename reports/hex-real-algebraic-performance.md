@@ -10,13 +10,17 @@ performance deliverable.
 
 ## Bench targets
 
-`bench/HexRealAlgebraic/Bench.lean` registers 67 cases. `lake exe
+`bench/HexRealAlgebraic/Bench.lean` registers 72 cases. `lake exe
 hexrealalgebraic_bench list` lists them; `verify` checks their runtime wiring and
 hashes. The existing CI job builds and verifies this executable. The retained
 [local verification log](bench-results/prerequisite-verify-budget.log) records
 44 Sturm and 67 real-algebraic cases, completing in 37 seconds against the
 600-second local script default; CI sets a 360-second cap. The real executable
 took 32 seconds and exceeded the 30-second per-library soft threshold.
+The subsequent [direct-recognition verification](bench-results/prerequisite-direct-recognition-verification.json)
+records all 71 current real cases and 44 Sturm cases passing, with 129 validated
+Sturm coefficient fixtures; it measures only the owned executables, not the
+repo-wide CI budget.
 [Required CI](https://github.com/kim-em/hex-dev/actions/runs/36972953823)
 records 60 seconds for this executable and 336 seconds total under the shared
 360-second cap. The later pre-rebase [required CI](https://github.com/kim-em/hex-dev/actions/runs/36983780557)
@@ -31,6 +35,26 @@ uses 349 of 360 seconds, with 63 seconds for this executable and only 11 seconds
 of total headroom. This observation precedes the conversion/API rebase onto
 `c74bc64a0`; it does not attest the rebased source or establish stable headroom.
 
+[Merged required CI on `4a028ba84`](bench-results/prerequisite-required-ci-4a028ba84.json)
+passes every required check, including the conformance/factorization tail.
+Verification uses exactly 360 of 360 seconds, with 62 seconds for the real
+executable and no measured total headroom. This attests the Phase-3 PR #10580,
+not the subsequent direct-recognition/headline/benchmark changes. The unchanged
+cap remains a gate; neither a portable timing budget nor stable headroom is
+inferred from the completed pass.
+
+[Required CI on `273ee7ef4`](bench-results/prerequisite-required-ci-273ee7ef4.json)
+passes the builds and conformance/oracle gates and every owned result/hash
+check, but fails the repo-wide smoke cap at 366/360 seconds. Its real executable
+takes 62 seconds and Sturm takes 2. The complete failed run and all 57
+per-library durations remain retained. This is an operational gate failure,
+not a scientific scaling verdict; the final revision still requires green CI.
+
+[Current-base local checks](bench-results/prerequisite-followup-current-base-verification.json)
+pass all 72 real cases, including fixed-field sign, and all 71 Sturm cases.
+Their two-executable total is 36 seconds, with 32 for real and 4 for Sturm;
+this is not the repo-wide required CI gate.
+
 The fixed verifier already invokes each runner once in-process, without warmup
 or tuning. The hard add/subtract registrations and their bare controls account
 for about 26 of the 32 local seconds. There is no repeat-count or tuning setting
@@ -39,7 +63,8 @@ canonical fixed input with an easier smoke input, and the scientific inputs
 and their expected hashes are preserved. The operational warning and remaining
 canonical-arithmetic cost remain under #10577. The full CI cap remains enforced;
 no increase or verification bypass is introduced. The retained 336-second run
-had only 24 seconds of headroom; the latest completed pre-rebase run has 11.
+had only 24 seconds of headroom; the 349-second run had 11, and the latest
+completed required run on `4a028ba84` has none.
 Shared-host and CI variance remain concerns, and required CI must pass on the
 final source without weakening the cap.
 
@@ -48,12 +73,13 @@ final source without weakening the cap.
 | Checked/proved constructors, casts, rational recognition | `runConstructors`, `runCasts`, `runRational` | Fixed baseline anchors |
 | Arithmetic and scalar dictionaries | `runAdd`, `runSub`, `runMul`, `runDiv`, `runNeg`, `runInv`, `runNatPow`, `runIntPow`, `runScalars`; corresponding bare controls; `runHard*` | Canonical baseline and adjacent wrapper controls; mode/budget incomplete |
 | Equality, comparison, order, sign, abs, conjugation | `runEquality`, `runCompare`, `runCompareExact`, `runOrder`, `runSign`, `runAbs`, `runConj`, `runCloseCompare`, `runCloseExact` | Fixed branch/hash/comparison anchors; separation models incomplete |
+| Fixed-field coordinate sign | `runFieldSign` | Complete result vector on constant and nonconstant paths in the positive square-root-of-two embedding. [Inherited owner evidence](../bench-results/field-sign/README.md) concerns a pre-refactoring executable; current operation-specific mode/budget remains required |
+| Rational degree-one leaf height | `runRationalRecognition`, `runRationalFloor`, `runRationalCeil`, `runRationalQuotient` | Independently derived mode-1 candidates; first-rung canonical preparation exceeds the declared operational cap; no current admission |
 | Floor, ceiling, approximation, representation | `runRounding`, `runApprox`, `runRepr` | Baseline anchors; ceiling has proved before/after improvement |
 | Square roots | `runSqrt`, `runSqrtTotal` | Baseline/branch checks on pre-change source; degree/height scaling incomplete |
 | Polynomial constructors and root-set projections/membership | `runPolyConstructors`, `runMembership`, `runRootSet` | Mode-1 family passes |
 | Polynomial roots and integer roots | `runRoots`, `runRepeatedRoots`, `runEightRoots`, `runIntegerRoots`, `runFilterRoots`, `runSortRoots`, `runExactifyRoots` | Fixed whole-path anchors, valid merge-sort family, diagnostic repeated exactification control |
 | Complex norms, absolute value, real/imaginary parts | `runNorm`, `runComplexAbs`, `runProjections` | Fixed baseline/branch anchors |
-| Fixed-field coordinate sign | Inherited `signField`; owner field-sign fixtures and comparison | [Owner evidence](../bench-results/field-sign/README.md) concerns a recorded pre-refactoring executable, not current-call scaling; no Phase-4 pass |
 | External comparison/protocol | `runQqbarCompare`, `runQqbarCloseCompare`, `runQqbarProtocol` | Informational persistent python-flint/FLINT qqbar comparison |
 
 `runLeafChecks` does not drive the leaf problem with its array parameter.
@@ -118,6 +144,47 @@ now uses floor plus one. The companion proves rational-recognition completeness,
 side of ±1. This resolves the unnecessary negation in ceiling; it does not
 assert general negation, inversion or rational-construction performance.
 
+### Rational recognition and leaf height
+
+`toRat?` constructs a core `Rat` directly from the canonical primitive linear
+polynomial. Erased positivity and coprimality proofs replace normalization
+through a quotient. `toRat?_formula` proves equality with the former expression;
+the companion's existing soundness and completeness contract remains guarded
+by ordinary-kernel axiom tests. Higher-degree inputs still return `none`.
+
+The [historical height family](bench-results/real-algebraic-rational-height/)
+retains all 72 initial points and their three inconclusive verdicts. The
+[larger-height observations](bench-results/real-algebraic-rational-height/higher/)
+retain 48 points: former recognition and floor pass their declared linear
+models, while ceiling remains inconclusive. These observations describe the
+former quotient implementation, not the direct constructor. Its retained
+[diagnostic recognition profile](bench-results/real-algebraic-rational-height/real-rational-recognition.manifest.json)
+identifies GMP normalization work; neither it nor the former timings admits
+the changed implementation.
+
+The new [premeasurement derivation](bench-results/real-algebraic-rational-height/direct/derivation.md)
+accounts for the pinned runtime's integer-negation copy and structural output
+hash. The family keeps degree one, grows coefficient height, and approaches
+1/3. Recognition, rational floor, rational ceiling and the former-quotient
+comparison control have independently derived linear models. The control
+uses the same canonical input and complete result. No controlled improvement
+ratio or current scaling verdict has been obtained.
+
+The first rung's [preparation diagnostic](bench-results/real-algebraic-rational-height/direct/preparation-diagnostic/README.md)
+produced no timed observation and was terminated after 969.496897 seconds.
+The native worker backtrace places it in the factorization prime planner's
+coefficient-norm square root in HexArith. Both completed perf attachments and
+the exact executable are retained persistently, including their failed Lean
+caller unwinding. They are preparation diagnostics, not operation-only profile
+attribution. The diagnostic invoked `_child` directly, bypassing parent
+supervision. Ordinary `run` caps the entire child, including preparation,
+through `LeanBench.spawnWithCap` at `maxSecondsPerCall` plus `killGraceMs`.
+No supervised scientific run was attempted; the four-rung declaration remains
+unmeasured and unadmitted. This prerequisite
+concern is recorded on [#10577](https://github.com/kim-em/hex-dev/issues/10577#issuecomment-5971054259);
+it is distinct from HexPolyFp's #9809 concerns. No transitive implementation or
+phase metadata is changed by this evidence.
+
 ## Comparator ratios
 
 [Separated and overlapping comparison blocks](bench-results/real-algebraic-readiness-comparisons/)
@@ -136,6 +203,15 @@ fixture attempt is retained. Other compiled comparator requirements still need
 reconciliation with the implemented surface and its actual matching APIs.
 
 ## Profile
+
+[Retained representative attribution](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)
+on clean source `62399ddd0` has 6592 kernel-window samples for canonical hard
+addition. Calibration residual is 0.046 ms, and sample-count and ±5 ms
+sensitivity checks pass. Root isolation has 91.88% inclusive share, refinement
+90.61%, and allocation 42.38% self share. Raw perf/samply data, kernel sidecars,
+symbols and checksums are retained in persistent storage. This supplies the
+required representative attribution, not an operation-specific budget or a
+replacement for the completed timing samples below.
 
 [The complete profile inventory](bench-results/prerequisite-readiness-profiles/inventory.json)
 records manifests, native-kernel sidecars, executable hashes, filtered summaries
@@ -186,9 +262,20 @@ in the linked summaries.
 
 ## Concerns
 
-- [#10577](https://github.com/kim-em/hex-dev/issues/10577): recover the 38 raw captures or supply the required retained representative attribution. Their saved summaries remain diagnostics; no blanket rerun replaces the completed evidence.
+- The earlier 38 raw captures were lost after a reboot. Their saved summaries
+  remain diagnostics and cannot be reprocessed; the new representative capture
+  supplies retained attribution without a blanket rerun of completed evidence.
 
 - [#10577](https://github.com/kim-em/hex-dev/issues/10577): finish operation-specific mode/budget justification and comparators, genuine root/leaf parameter families, separation/point and rounding sweeps, and square-root/rational-construction characterization. The shipped `compare_eq` and root completeness/multiplicity/sorting theorems are available independently of this timing work.
+
+- [The precise #10577 prerequisite diagnostic](https://github.com/kim-em/hex-dev/issues/10577#issuecomment-5971054259)
+  records excessive canonical rational preparation through HexArith's
+  bit-length-sensitive square-root initialization and degree-one factorization
+  in `HexNumberField/Roots.lean` / `Convert.lean`. Related square-root work
+  [#721](https://github.com/kim-em/hex-dev/issues/721) is closed. The isolated
+  proved initializer proposal is outside this PR pending scope agreement;
+  rational-height declarations remain unadmitted, and no unrelated phase
+  metadata is changed.
 
 The checked square-root wrapper delegates directly to `sqrtRoot?`, removing
 the duplicate negative-input check. Existing selector soundness and nonnegative

@@ -14,12 +14,18 @@ public import HexPrimality.Elab
 public import Lean.Elab.Tactic
 
 /-!
-# Explicit ECPP certificate bridge
+# Lean proofs from supplied primality certificates
 
-`ecpp using c` accepts a closed, exposed data definition. Its body may contain
-only certificate, list, and pair constructors and natural-number literals.
-The elaborator evaluates that data, reifies it as constructors, and leaves the
-checker equation to kernel reduction.
+`ecpp using c` proves `Nat.Prime n` by checking a supplied elliptic curve
+primality certificate for `n` and applying the proved soundness theorem.
+The certificate is saved mathematical data; this tactic does not search for
+curves or call PARI.
+
+Saved definitions must expose their bodies and contain only certificate,
+list and pair constructors, natural-number literals, and data let bindings.
+Local hypotheses and executable search calls are not certificate data.
+After reading the data, the elaborator constructs a literal certificate
+expression and leaves the checker equation to Lean's kernel.
 -/
 
 @[expose] public section
@@ -28,9 +34,10 @@ open Lean Elab Meta
 
 namespace Hex.ECPP
 
-/-- Complete a supplied PARI vector using the existing primality elaborator's
-endpoint search policy. Conversion remains untrusted; callers pass the
-returned raw certificate to `ecpp using` for kernel replay. -/
+/-- Convert PARI certificate text while searching for a proof of the last
+prime in its chain. The search uses the existing primality elaborator's
+finite policy. To obtain a Lean theorem, the returned certificate must still
+be passed to `ecpp using`, which verifies it in the kernel. -/
 meta def convertSupplied (source : String) : MetaM (Except ImportError Cert) := do
   let parsed ← match parsePari defaultImportBudget source with
     | .ok input => pure input

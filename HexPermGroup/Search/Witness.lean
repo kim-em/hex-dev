@@ -18,7 +18,7 @@ variable {G : Group n} {test : Perm n → Bool} {budget : Budget}
 
 /-- Sift once to obtain the chain choices, reserve the exact number of program
 nodes, then construct the positive certificate in the original generators. -/
-@[expose] def Witness.ofElementWith (p : Element G) (hp : test p.val = true) (m : Meter budget) :
+@[expose] def Witness.ofElementBudgeted (p : Element G) (hp : test p.val = true) (m : Meter budget) :
     Measured budget (Witness G test) :=
   match m.spend .sifts 1 with
   | .error failure => .exhausted failure

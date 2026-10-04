@@ -33,6 +33,7 @@ public import HexSignDet.Reencode
 public import HexSignDet.Compare
 
 public import HexSignDet.Dag
+public import HexSignDet.DagOperations
 public import HexSignDet.DagSigns
 public import HexSignDet.DagSelectedSigns
 public import HexSignDet.DagEncode

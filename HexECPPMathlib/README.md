@@ -4,12 +4,20 @@ Part of [`hex`](https://github.com/kim-em/hex-dev), a computer algebra library
 for Lean 4. The aim is fast executable code, fully verified, built with
 spec-driven development.
 
-This companion proves unconditional ECPP soundness and provides explicit
-certificate replay into Mathlib's `Nat.Prime`. It depends on
+Use elliptic curve primality proving (ECPP) to obtain Lean proofs of
+`Nat.Prime n`. You can check a saved primality certificate or ask Hex's
+built-in search or PARI/GP to find one. Each certificate records elliptic
+curve points and proofs of smaller primes; Hasse's bound shows that accepted
+data excludes every possible small prime divisor of `n`.
+
+This companion supplies that mathematical proof and the certificate tactics.
+It depends on
 [`hex-ecpp`](https://github.com/leanprover/hex-ecpp),
 [`hex-primality-mathlib`](https://github.com/leanprover/hex-primality-mathlib),
 Mathlib and [AINTLIB](https://github.com/CBirkbeck/AINTLIB). The computational
-partner supplies the arithmetic checker and bounded native search.
+partner supplies the arithmetic checker and built-in search. See the
+[manual](https://kim-em.github.io/hex-dev/HexECPP___-bounded-elliptic-curve-certificates/Introduction/)
+for a first proof and an explanation of the mathematics.
 
 # Quickstart
 

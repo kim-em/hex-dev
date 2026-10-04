@@ -530,3 +530,9 @@ checks run before graph replay.
 A cross-level coefficient-sign certificate will require a separate type with
 its own level and context bindings. `Dag` is its same-level BKR component; its
 fixed-domain memo does not satisfy the separate nested-evidence obligation.
+
+`Dag.changeOps` transports a checked memo along literal equalities of the
+coefficient operations. `changeOps_validate` proves exact agreement with the
+actual validator, including rejection; `changeOps_nodes` preserves its literal
+node list and indices. These are operation equalities, not field laws on stored
+representatives or assumptions about certificate completeness.

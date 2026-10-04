@@ -10,8 +10,8 @@ supplied-index sampling, finite actions with their images and kernels,
 complete set and subgroup search, blocks and primitivity, normal closure,
 core and derived series, and direct and imprimitive wreath products.
 Prove the universal properties and action-compatible equivalences stated
-in the computational SPEC, including the nonempty-block hypothesis for
-the faithful wreath action.
+in the computational SPEC, including the `0 < n` hypothesis on the
+semidirect-product equivalence for the wreath action.
 
 The immediate dependency is `HexPermGroup`, plus Mathlib. Extract the
 graph-independent `Perm.toEquiv` and `Perm.ofEquiv` conversions from
@@ -27,6 +27,19 @@ Because it owns a tactic, its Phase 4 deliverable is the proof track: example
 files running the kernel replay theorems and `perm_group` in
 `bench/HexPermGroupMathlib/ProofProbe`, declared as its `libraries.yml`
 `proof_probes` root and built by CI on every PR.
+
+The library provides Mathlib's `Random m (Element G)` instance for every
+monad `m`, built from `Group.randomElement`, which applies `Group.sampleFrom`
+to the rejection sampler `randomIndex` over a `RandomGen` generator. Its
+contract, specified in
+[hex-perm-group, Ranking and sampling](../../HexPermGroup/SPEC/hex-perm-group.md#ranking-and-sampling),
+is that, for a generator whose draws are independent and uniform on its range,
+each element has probability within `2^-128` of `1 / order G`, and exactly
+`1 / order G` conditional on the index draw accepting within its 128
+attempts. It does not use Mathlib's `randFin`, which reduces one draw modulo
+the bound and is biased. `HexPermGroupMathlib/Tests.lean` checks with a fixed
+`mkStdGen` seed that draws are members and that 2000 draws reach every
+element of a group of order 8.
 
 Build-only examples in
 `HexPermGroupMathlib/Tests.lean` exercise membership, exact order, stabilizers,

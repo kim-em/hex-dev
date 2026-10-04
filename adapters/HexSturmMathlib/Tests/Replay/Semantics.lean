@@ -72,6 +72,26 @@ theorem noncanonical_value {Ctx : Type*} [DecidableEq Ctx] (context : Ctx)
     (fun n => by simp [value_natCast]) (fun x => Sturm.orderSign (value x))
     (fun x => rational_sign (value x)) context p q a b v certificate checked).2
 
+open HexPoly.InterpretTests in
+/-- The full query contract applies to noninjective storage without field or
+order instances on that storage, in both directions and without a producer. -/
+theorem noncanonical_query_iff (p q : Poly) (a b : Endpoint Rep) (v : Int) :
+    Sturm.query (fun x => Sturm.orderSign (value x)) p q a b = some v ↔
+      Domain (fun x => (value x : ℝ)) (fun x => by simp [value_eq_zero]) p a b ∧
+        v = Tarski.rootSum
+          (interpret (fun x => (value x : ℝ)) (fun x => by simp [value_eq_zero]) p)
+          (interpret (fun x => (value x : ℝ)) (fun x => by simp [value_eq_zero]) q)
+          (a.map (fun x => (value x : ℝ))) (b.map (fun x => (value x : ℝ))) := by
+  exact query_iff (fun x => (value x : ℝ)) (fun x => by simp [value_eq_zero])
+    (by simp [value_one]) (fun x y => by simp [value_add])
+    (fun x y => by simp [value_sub]) (fun x y => by simp [value_mul])
+    (fun n => by simp [value_natCast]) (fun x => Sturm.orderSign (value x))
+    (fun x => rational_sign (value x)) (fun x => by
+      change ((value (pack (-(raw x).1) (-(raw x).2))) : ℝ) = _
+      rw [value_pack]
+      simp [value, atOne, add_comm])
+    (fun x => by simp [value_inv]) p q a b v
+
 /-- Kernel replay with integer coefficients and distinct dyadic endpoint storage. -/
 theorem integer_accepted :
     TarskiCertificate.check Int.sign EndpointSigns.intDyadic (7 : Nat)
@@ -155,6 +175,14 @@ theorem integer_value :
 /-- info: 'HexSturmMathlib.query_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms HexSturmMathlib.query_spec
+
+/-- info: 'HexSturmMathlib.query_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexSturmMathlib.query_iff
+
+/-- info: 'HexSturmMathlib.ReplayTests.noncanonical_query_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms noncanonical_query_iff
 
 /-- info: 'HexSturmMathlib.rootCount_sturm' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
