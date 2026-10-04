@@ -37,11 +37,13 @@ private def check {registry : BaseContext.Registry} (base : Tower.Context regist
           entry.root.context.signature.roots.length == ownerDepth do
         throw (IO.userError "native policy root equation or ownership failed")
     for (a,b) in entries.zip entries.tail do
-      unless a.root.compare b.root == .lt do
-        throw (IO.userError "native policy roots lost strict ordering")
+      let .ok .lt := a.root.compare? b.root
+        | throw (IO.userError "native policy roots lost strict ordering or comparison failed")
     for others in [standard, ordinary] do
       for (a,b) in entries.zip others do
-        unless a.root.compare b.root == .eq && a.multiplicity == b.multiplicity do
+        let .ok .eq := a.root.compare? b.root
+          | throw (IO.userError "native policy root equality comparison failed")
+        unless a.multiplicity == b.multiplicity do
           throw (IO.userError "native policies changed ordered values or multiplicities")
 
 private def run : IO Unit := do

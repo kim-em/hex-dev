@@ -35,6 +35,7 @@ def verify_shape(result, policy, name):
     rcf = RCF({"id": 10377, "levels": ["epsilon1"],
                "order": "each-new-level-smaller-than-positive-base-elements"})
     depth = 0 if name in CASES[:7] else 1
+    bounded_cells = {}
     for entry in result["output"]["entries"]:
         root = entry["root"]
         if root["kind"] == "point":
@@ -44,6 +45,16 @@ def verify_shape(result, policy, name):
         elif policy == POLICIES[2]:
             require(root["lower"] == [0] and root["upper"] == [2],
                     "whole policy retained finite bounds")
+        if policy == POLICIES[1] and root["kind"] == "selected" and name != CASES[8]:
+            require(root["lower"][0] == 1 and root["upper"][0] == 1,
+                    "bounded policy lost a finite bound")
+            require(rcf.coeff(root["lower"][1], depth) == -rcf.coeff(root["upper"][1], depth),
+                    "bounded policy subdivided its symmetric initial cell")
+            key = repr(root["head"])
+            cell = (root["lower"], root["upper"])
+            require(key not in bounded_cells or bounded_cells[key] == cell,
+                    "bounded policy subdivided one squarefree factor")
+            bounded_cells[key] = cell
         if name in CASES[9:]:
             require(root["kind"] == "selected" and root["indices"] == [1, 2],
                     "close squarefree pair did not exercise derivative-sign selection")

@@ -544,8 +544,9 @@ proves the same complete RootSet contract under the context's ambient model.
 
 `RootPolicyConformance` exports 33 exact outputs covering all three policies,
 zero, constants, nonmonic repeated factors, zero extraction, root-free
-factors, cut points, an inverse infinitesimal, and infinitesimally close pairs
-with both distinct and equal multiplicity labels in one squarefree factor. The independent Z3 oracle checks complete ordered root sets
+factors, cut points, an inverse infinitesimal, distinct-label close roots in
+separate Yun factors, and squarefree and equal-label close pairs within one
+factor. The independent Z3 oracle checks complete ordered root sets
 and original multiplicities. `RootPolicyTests` checks native root equations,
 exact ownership, order, labels and policy agreement over rational and already
 adjoined algebraic parents through both native materialization APIs.

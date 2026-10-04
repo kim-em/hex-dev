@@ -51,3 +51,6 @@ class PolicyTests(unittest.TestCase):
     def test_missing_derivative_selection(self):
         self.rejects(lambda rows: rows[31]["result"]["output"]["entries"][0]["root"].update(
             indices=[], signs=[]))
+
+    def test_bounded_lost_bounds(self):
+        self.rejects(lambda rows: rows[14]["result"]["output"]["entries"][0]["root"].update(lower=[0]))

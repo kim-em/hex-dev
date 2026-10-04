@@ -77,4 +77,3 @@ def main : IO Unit := do
       fraction (first*second)
     emit policy "infinitesimal same-label pair" (OrderedFn.Infinitesimal.sign Sturm.orderSign)
       fraction (DensePoly.scale 3 (first*second*first*second))
-
