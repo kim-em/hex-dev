@@ -1,0 +1,26 @@
+{
+  "validation_ns": 65797,
+  "source_bytes": 1052709,
+  "residual": "1",
+  "reification_kernel_source_ns": 6669843198,
+  "legacy_stops": [
+    "Hex.Nat.Mixed.CompletionStop.supplied",
+    "Hex.Nat.Mixed.CompletionStop.legacyExhausted"
+  ],
+  "legacy_ns": 210699190,
+  "ecpp_stops": [
+    "Hex.Nat.Mixed.CompletionStop.ecppDisabled",
+    "Hex.Nat.Mixed.CompletionStop.certified"
+  ],
+  "ecpp_ns": 1530517401,
+  "ecpp_calls": 1,
+  "completion_ns": 1741451173,
+  "compiled_checking_ns": 56620729,
+  "attempts": 26,
+  "native_state_sha256": "c63bb60bfcecb434ab68a2d727f7d039dfe70f0dfe9dd72ed648e9afcb2e7d79",
+  "native_stats": "{ rand := { state := 8010357324720920323 },\n  stats := { candidates := 492,\n             roots := 772,\n             nonresidues := 86,\n             points := 437,\n             factorWork := 2516,\n             scalarWork := 155076,\n             backtracks := 28,\n             terminalCalls := 23,\n             terminalSuccesses := 1,\n             terminalBitRejects := 0,\n             terminalObligation := some 66354600027708530850732233178584327530521343394473,\n             norms := 104,\n             orders := 261,\n             largeFactors := 40,\n             proposals := 48,\n             outputRejects := 0,\n             outputBits := some 3426756,\n             polynomialWork := 91843,\n             polynomialRoots := 131,\n             unresolved := some { subject := 22802459874808415361892276114709518745783245933,\n                             resource := Hex.ECPP.Resource.depth },\n             lastRetry := some { subject := 66354600027708530850732233178584327530521343394473,\n                            resource := Hex.ECPP.Resource.pointRetries } },\n}",
+  "source_sha256": "67ab0cc277d851f606043e1bad289f7a22d6c2079f9a265ff1ab7037619a4b8f",
+  "cpu": null,
+  "host": "chungus2",
+  "purpose": "preliminary functional acceptance; not a scheduled timing comparison"
+}

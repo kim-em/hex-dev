@@ -129,6 +129,12 @@ including the wrapper and all nodes of the last HexPrimality certificate. -/
 def public512Budget : SearchBudget := {
   native512Budget with maxDepth := 21, maxRows := some 20, maxNodes := some 32 }
 
+/-- Explicit output-bounded 256-bit allocation for mixed factor completion.
+The ordinary producer and existing Native 256-bit policy retain their defaults. -/
+def public256Budget : SearchBudget := {
+  maxDepth := 21, maxRows := some 20, maxNodes := some 32
+  backtrackOutput := true }
+
 /-- An integer whose primality certificate was not found, together with the
 work limit or search stage that stopped the attempt. -/
 structure SearchError where
