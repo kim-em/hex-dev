@@ -1,0 +1,359 @@
+{
+  "checks": [
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/0.stdout",
+      "sha256": "39e50aecb2c28ad37e817f5862bb613f03b4968ac99aa567a2229e3a8ca8a34f"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/0.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/1.stdout",
+      "sha256": "099e67dae7a8eb194da2689ee9604e904b0dad8c2672d9ca608dbe848b4faf81"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/1.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/2.stdout",
+      "sha256": "ea4051d25617d0e024f030bda5851a0455d525691cc814683f878e4ccdb2ed5d"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/2.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/3.stdout",
+      "sha256": "e35d3608d07cf59f7870878491e6b275a359bb34ea901c9e8086aed6bec6e07a"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/3.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/bench-HexRealAlgebraic-Bench.lean.txt",
+      "sha256": "7f58d3fe33db2a9ef9a5d094d3966f8cce528ed2b054b6ce66d535fc37d23342"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/HexRealAlgebraic-Basic.lean.txt",
+      "sha256": "c03086f304d4fdbaf13a35140f89c442a1539f1d1f09d0cdd22a0ddb16ac9daa"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/HexRealAlgebraic-Roots.lean.txt",
+      "sha256": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/HexNumberField-Roots.lean.txt",
+      "sha256": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/HexNumberField-Convert.lean.txt",
+      "sha256": "5ca7230f7647e69e139fbb1cdb9dcce569a3147f162d10631483d0d95eaa1507"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/4.stdout",
+      "sha256": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/4.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/5.stdout",
+      "sha256": "773fb1f2e2e076dd506d133fd9f11106c30eb440541d879fe11125a6e75495ce"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/5.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/6.stdout",
+      "sha256": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/6.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/7.stdout",
+      "sha256": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/7.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/spawn-anchor.json",
+      "sha256": "5d48e8b3aa4c6561b04e2fe60ad6cd3aaf501f63e3b9959937fa8a225cf6831d"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/perf.data",
+      "sha256": "251bfdb3e31b21710a8f402893942ea3b6d7218e7d1e9f932e5ff8f478d30fcf"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/timed-534279.jsonl",
+      "sha256": "c144dff7abdebd5cb8d339c74058929445f8f969d75fa03e3e70fe1eb8798945"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/8.stdout",
+      "sha256": "645d40e3da47653442ad044890fa790e905bbce780497b48987e7c363ae3d691"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/8.stderr",
+      "sha256": "ec9bc3dd42271897497754ea9b819828232c3816e085d42e06b4b2e3d0901967"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/samply.json.gz",
+      "sha256": "eba6f999357c19f28a4da4f563a63fdb61c9831fd38a9608b45424726023277b"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/9.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/9.stderr",
+      "sha256": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/10.stdout",
+      "sha256": "8485250ab64c363bfd4881947da296cad6838c86d673b69ab85d240b2efb471a"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/10.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/perf-samples.txt",
+      "sha256": "8485250ab64c363bfd4881947da296cad6838c86d673b69ab85d240b2efb471a"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/normalized.json.gz",
+      "sha256": "5b5c83828c871822749aa4533b3df212b9a8e551da5dc038239c67766760f9a3"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/11.stdout",
+      "sha256": "1a7286342e7e404282e0fca2b673052f0a808845af0adb48490eb58464fc88f0"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/11.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/filtered.json.gz",
+      "sha256": "8597289195e30e0bcc6b2a3702d65e1051bdc6a1086d88a07d1b4aa841225205"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/diagnostics.json",
+      "sha256": "42b64fd725f0afb3b4bb46ccb05cc414ac55107ee432f433276a6d1a5bec9849"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/12.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/12.stderr",
+      "sha256": "9f2bc9522b0f661de20cdaf800586a5ac33c4a112a4aa65a318e9c7ccd959f08"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/symbols.json",
+      "sha256": "0babab662f7e116f4413488f4cb324390b2a9ae29b3c749a538ad88d1f6b5532"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/13.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/13.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/14.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/rational-roots-after-717/14.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/0.stdout",
+      "sha256": "39e50aecb2c28ad37e817f5862bb613f03b4968ac99aa567a2229e3a8ca8a34f"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/0.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/1.stdout",
+      "sha256": "31ac55dab5b0b31fd0151adb9b06e857e4b0b1c81025450a85e8a44add15450e"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/1.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/2.stdout",
+      "sha256": "ea4051d25617d0e024f030bda5851a0455d525691cc814683f878e4ccdb2ed5d"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/2.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/3.stdout",
+      "sha256": "e35d3608d07cf59f7870878491e6b275a359bb34ea901c9e8086aed6bec6e07a"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/3.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/bench-HexRealAlgebraic-Bench.lean.txt",
+      "sha256": "7f58d3fe33db2a9ef9a5d094d3966f8cce528ed2b054b6ce66d535fc37d23342"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/HexRealAlgebraic-Basic.lean.txt",
+      "sha256": "c03086f304d4fdbaf13a35140f89c442a1539f1d1f09d0cdd22a0ddb16ac9daa"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/HexRealAlgebraic-Roots.lean.txt",
+      "sha256": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/HexNumberField-Roots.lean.txt",
+      "sha256": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/HexNumberField-Convert.lean.txt",
+      "sha256": "5ca7230f7647e69e139fbb1cdb9dcce569a3147f162d10631483d0d95eaa1507"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/4.stdout",
+      "sha256": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/4.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/5.stdout",
+      "sha256": "773fb1f2e2e076dd506d133fd9f11106c30eb440541d879fe11125a6e75495ce"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/5.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/6.stdout",
+      "sha256": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/6.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/7.stdout",
+      "sha256": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/7.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/spawn-anchor.json",
+      "sha256": "d92762df30fbad19ee7455e2615fb04096520d9912f9648311e6575fe64c9c85"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/perf.data",
+      "sha256": "ecf1827af58f19ed824bf4290982ceac56af8ac0307469a0e193dd5b741e108e"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/timed-536005.jsonl",
+      "sha256": "557d041b335a6449e5512b06959da8a2ca95c486cfb2bccf7692569fde7bb0bc"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/8.stdout",
+      "sha256": "ab428c6434925ad4bf85ab179114b0be853fa330cece54160d75700417703c6b"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/8.stderr",
+      "sha256": "5d4ef4e6fa4cc9893336ac33ff2f7464f275205c17198b26f4899d01763f4ea7"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/samply.json.gz",
+      "sha256": "f875cb15d442b1a9b55c3701f6a5cc1d68b608cbf7c8a6afd5902126da7632e8"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/9.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/9.stderr",
+      "sha256": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/10.stdout",
+      "sha256": "58b1b19c8641efdc862633d249360c606e9d6a65fdcf637014e94afa1f22bd91"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/10.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/perf-samples.txt",
+      "sha256": "58b1b19c8641efdc862633d249360c606e9d6a65fdcf637014e94afa1f22bd91"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/normalized.json.gz",
+      "sha256": "69dd58f4604bf15533b3e2c24c334cd9bd0d723bb7a9eed0f157554a00ff2ea5"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/11.stdout",
+      "sha256": "f451690606cf8b1af4dfa3da805f06f214dc7979813b1fe5bea15c697fd88978"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/11.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/filtered.json.gz",
+      "sha256": "33c1bcb703b438f11670bfa2b8fb3f1bb8fa1050683463052753ccdaba8f1874"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/diagnostics.json",
+      "sha256": "a0316987400df8c6ad10e4256b1e384baf3774648d00c8a884582a49a216cc9e"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/12.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/12.stderr",
+      "sha256": "f2c2b963e6390c3ea627548704659067c59410ea9c793891fb28c5e348a90573"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/symbols.json",
+      "sha256": "16d2d002cc769b301eedc4d88af7e93b6acd5f1df8ba9213935b19ed45dac332"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/13.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/13.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/14.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/14.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "all_match": true,
+  "executable": "/home/kim/.local/state/hex/issue-10577-profiles/binaries/hexrealalgebraic_bench-b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+  "executable_sha256": "b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d"
+}
