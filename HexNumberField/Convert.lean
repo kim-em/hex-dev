@@ -20,9 +20,10 @@ Exactification factors the enclosing squarefree polynomial, rechecks each
 factor's executable normalization certificates, isolates its roots, and keeps
 the unique factor isolation whose disc meets the input representative. The
 selected factor is finally passed through
-{name}`Hex.AlgebraicNumber.ofNormalized?`, so
-the stored representative follows the library's deterministic canonical
-isolation strategy.
+{name}`Hex.AlgebraicNumber.ofNormalizedIn?`, reusing the certified isolation
+run. Its whole-result equality with `ofNormalized?` preserves the library's
+deterministic canonical isolation strategy. Fixed-presentation conversion
+still uses `ofNormalized?`; it does not yet reuse its isolation run.
 -/
 namespace Hex
 
@@ -141,6 +142,10 @@ def exactFactor? (a : AlgebraicRoot) (q : ZPoly) : Option AlgebraicNumber :=
   else
     none
 
+-- Unfolding the do-block exposes projections of the semireducible
+-- RefinedIsolation subtype across the module boundary. Permit ordinary
+-- definitional reduction when simp checks those projections; the axiom
+-- guard below audits the resulting kernel theorem.
 set_option backward.isDefEq.respectTransparency false in
 /-- Certified isolation reuse preserves the original exactification pipeline,
 including its canonical stored representative and all checked failures. -/

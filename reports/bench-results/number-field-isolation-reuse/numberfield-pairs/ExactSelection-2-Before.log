@@ -1,0 +1,9 @@
+Hex.NumberFieldBench.runExactSelection    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=121fc1e, 2026-10-04T07:47:08Z, host=chungus2
+  repeat 0  92.848 ms
+  median: 92.848 ms    min: 92.848 ms    max: 92.848 ms
+  hash: all repeats agree
+  observed hash: 0xd5512fda51bc6ff6
+  expected hash: matches
+  peak RSS: 68_648 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-pairs/ExactSelection-2-Before.json

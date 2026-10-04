@@ -134,8 +134,14 @@ The shipped representation is described here; the required
 [direct radical design](hex-number-field.md#local-canonicalization-and-representation-migration)
 replaces all-roots provenance with a deterministic local normal form in a
 coordinated constructor migration. Every smart constructor normalizes the primitive polynomial. Zero uses the
-fixed certified `zeroRep`. Other values use `rawRep?` to re-isolate the
-polynomial with the fixed strategy at `separationDepth`. The private record
+fixed certified `zeroRep`. Other values use the fixed isolation strategy at
+`separationDepth`. `rawRep?` performs that run; `rawRepIn?` reuses arrays whose
+proof equations identify exactly that deterministic run and refinement.
+`canonicalRepIn?` preserves orientation, and `ofNormalizedIn?` returns the
+complete result of `ofNormalized?`, including the same stored representative
+and every checked failure. `exactFactor?` uses this certified reuse after its
+candidate isolation. These helpers retain the shipped all-roots provenance;
+they do not implement the forward local-canonicalization migration. The private record
 stores an `OrientedIsolation`: a canonical real or upper-half-plane `base`,
 and a `RootSide` tag (`real`, `upper`, or `lower`). The `valid` field proves
 that the base meets the real axis for `real`, or that its centre is above
@@ -1060,12 +1066,13 @@ The required exactification input families are:
 
 - `exactification-selection`: the fixed enclosing polynomial
   `(X^8 - 2)(X + 3)`, with the chosen root pinned to `X^8 - 2`, records
-  multiple-candidate selection and canonical re-isolation without treating
+  multiple-candidate selection and canonical representative selection without treating
   the easy enclosing factorization as scaling evidence;
 - `exactification-certification`: fixed degree-eight certification cases use
   `X^8 - 2` inside `(X^8 - 2)(X + 3)`, pinned to the nonlinear factor, to time
-  `AlgebraicRoot.exactFactor?`, and the same candidate in the public
-  `AlgebraicNumber.canonicalRep?` phase. The enclosing polynomial has degree 9,
+  `AlgebraicRoot.exactFactor?`, whose canonical constructor now reuses that
+  certified candidate run, and the same candidate in the independently
+  callable public `AlgebraicNumber.canonicalRep?` phase. The enclosing polynomial has degree 9,
   `coeffAbsMax = 6`, coefficient bit height 3, and certificate precision 77;
   the candidate has degree 8, `coeffAbsMax = 2`, coefficient bit height 2, and
   certificate precision 53. Their zero-grace whole-child budgets are 2 seconds

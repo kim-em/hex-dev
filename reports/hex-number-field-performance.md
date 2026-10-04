@@ -5,10 +5,41 @@ Mathlib-free executable computation, so all of its Phase-4 evidence is ordinary
 LeanBench evidence and none of it is fresh-module proof evidence
 (`PLAN/Phase4.md` §Evidence tracks).
 
-This snapshot records the complete Phase-4 evidence. `libraries.yml` records
-`HexNumberField` at `done_through: 4`; every direct dependency is also at Phase
-4 or later, every advertised compiled operation is registered, and every
-profiled dominant cost is attributed to a registration.
+The sections below retain source-scoped Phase-4 evidence. `libraries.yml`
+records `HexNumberField` at `done_through: 7`; this repair changes no phase
+counter or direct dependency. Historical timings and profiles remain retained
+on their named sources and are not current-tree timing predictions.
+
+## Certified candidate-isolation reuse
+
+[The controlled comparison](bench-results/number-field-isolation-reuse/README.md)
+records four adjacent AB/BA pairs per case on source `7ceaf9d47d`. The
+candidate-certification median changes from 92.658 to 46.723 ms and the
+multiple-candidate selection median from 93.028 to 47.182 ms; median paired
+Before/After ratios are 1.984 and 1.977. The end-to-end six-factor median
+changes from 1.536 to 1.012 ms, with a paired ratio of 1.517. Inputs, result
+hashes and operational caps are preserved. All failed initial collector arms
+remain retained; the end-to-end comparison restores its registered measurement
+floor rather than weakening its cap.
+
+`exactFactor?` reuses its certified candidate-isolation run in
+`ofNormalizedIn?`. Whole-result equality with the original canonical
+constructor retains precisely the same stored representative and checked
+failures. The historical nested `canonicalRep?` attribution in the profiles
+below describes the pre-reuse source: that repeated candidate run is removed.
+The standalone `canonicalRep?` registration still performs its own run. Lazy
+eliminant selection, `PolyQuot.toAlgebraicNumber?` and repeated per-root
+exactification retain their separate isolation costs; this is not an assertion
+that all repeated isolation is eliminated. The forward local-canonicalization
+migration and comparison-strategy extension are not implemented here.
+
+The same retained comparison records hard real addition/subtraction at about
+1.5 times faster and actual real polynomial roots across two degree ladders.
+Those canonical root APIs remain far slower than the retained external
+references. No all-library CI headroom or four-library Phase-4 completion is
+inferred from this targeted reuse. Ordinary-kernel guards and all 92
+NumberField/102 real-algebraic compiled checks pass locally on the measured
+source; required CI must attest a final PR head.
 
 ## Bench targets
 
