@@ -112,3 +112,61 @@ def overriddenProposal : FactorProposal := ⟨1, []⟩
 /-- error: ecpp: `overriddenProposal` has a compiled implementation; use constructor data -/
 #guard_msgs in
 #int_factor_mixed for 1 using overriddenProposal
+
+run_cmd do
+  let limits := FactorExport.Budget.cap {
+    maxSourceBytes := 2097153, maxSyntaxNodes := 1048577,
+    maxHeartbeats := 20000001, maxRecDepth := 65537 }
+  unless limits.maxSourceBytes == 2097152 && limits.maxSyntaxNodes == 1048576 &&
+      limits.maxHeartbeats == 20000000 && limits.maxRecDepth == 65536 do
+    throwError "export ceilings widened"
+
+/-- error: (kernel) deterministic timeout -/
+#guard_msgs in
+run_cmd do
+  discard <| Lean.Elab.Command.liftTermElabM <| FactorExport.source `certificate 34
+    (.complete Frozen.small_checked) { maxHeartbeats := 1 }
+
+/-- error: (kernel) deterministic timeout -/
+#guard_msgs in
+set_option debug.skipKernelTC true in
+run_cmd do
+  discard <| Lean.Elab.Command.liftTermElabM <| FactorExport.source `certificate 34
+    (.complete Frozen.small_checked) { maxHeartbeats := 1 }
+
+/-- error: mixed factor export: source byte limit -/
+#guard_msgs in
+run_cmd do
+  discard <| Lean.Elab.Command.liftTermElabM <| FactorExport.source `certificate 34
+    (.complete Frozen.small_checked) { maxSourceBytes := 1, maxHeartbeats := 1 }
+
+/-- error: (kernel) deep recursion detected, use `set_option maxRecDepth <num>` to increase the limit -/
+#guard_msgs in
+run_cmd do
+  discard <| Lean.Elab.Command.liftTermElabM <| FactorExport.source `certificate 34
+    (.complete Frozen.small_checked) { maxRecDepth := 1 }
+
+/--
+error: (deterministic) timeout at `«mixed factor export»`, maximum number of heartbeats (1) has been reached
+
+Note: Use `set_option maxHeartbeats <num>` to set the limit.
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+-/
+#guard_msgs in
+run_cmd do
+  discard <| Lean.Elab.Command.liftTermElabM do
+    let n := 2^4095
+    let .ok value := FactorImport.accept n ⟨n, [⟨2, 4095, .legacy (.small 2)⟩], 1⟩
+      | throwError "test data rejected"
+    FactorExport.source `certificate n value { maxHeartbeats := 1 }
+
+run_cmd do
+  discard <| Lean.Elab.Command.liftTermElabM <| FactorExport.source `certificate 34
+    (.complete Frozen.small_checked) { maxSourceBytes := 540 }
+
+/-- error: mixed factor export: source byte limit -/
+#guard_msgs in
+run_cmd do
+  discard <| Lean.Elab.Command.liftTermElabM <| FactorExport.source `certificate 34
+    (.complete Frozen.small_checked) { maxSourceBytes := 539 }

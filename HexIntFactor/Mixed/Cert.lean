@@ -233,44 +233,6 @@ theorem checkFactorization_sorted {F : Factorization}
     F.factors.Pairwise (fun a b => a.prime < b.prime) :=
   checkEntries_pairwise (checked_parts h).2.1
 
-namespace Internal
-
-/-- A prime dividing a product of certified prime powers is the base of one
-of the entries. Exponents need not be positive for this direction. -/
-theorem prime_mem_of_dvd_prod {q : Nat} (hq : Prime q) :
-    ∀ {entries : List PrimePower},
-      (∀ e ∈ entries, Prime e.prime) →
-      q ∣ (entries.map fun e => e.prime ^ e.exponent).prod →
-      ∃ e ∈ entries, e.prime = q := by
-  intro entries hprime hdvd
-  induction entries with
-  | nil =>
-      exact absurd (Nat.dvd_one.mp hdvd) hq.ne_one
-  | cons e rest ih =>
-      simp only [List.map_cons, List.prod_cons] at hdvd
-      rcases hq.dvd_mul.mp hdvd with he | hrest
-      · have hbase := hq.dvd_of_dvd_pow he
-        rcases (hprime e (by simp)).2 q hbase with hq1 | heq
-        · exact absurd hq1 hq.ne_one
-        · exact ⟨e, by simp, heq.symm⟩
-      · obtain ⟨e, he, heq⟩ := ih
-          (fun e he => hprime e (by simp [he])) hrest
-        exact ⟨e, by simp [he], heq⟩
-
-/-- The first prime in a strictly ordered list of prime powers does not divide
-the product represented by its tail. -/
-theorem not_dvd_tail_prod {entry : PrimePower} {rest : List PrimePower}
-    (hp : Prime entry.prime) (htail : ∀ e ∈ rest, Prime e.prime)
-    (hsorted : (entry :: rest).Pairwise fun a b => a.prime < b.prime) :
-    ¬entry.prime ∣ (rest.map fun e => e.prime ^ e.exponent).prod := by
-  intro hdvd
-  obtain ⟨e, he, heq⟩ := prime_mem_of_dvd_prod hp htail hdvd
-  have hlt := (List.pairwise_cons.mp hsorted).1 e he
-  rw [heq] at hlt
-  exact Nat.lt_irrefl _ hlt
-
-end Internal
-
 private theorem prime_eq_of_dvd {p q : Nat} (hp : Prime p) (hq : Prime q)
     (h : p ∣ q) : p = q := by
   rcases hq.2 p h with h | h

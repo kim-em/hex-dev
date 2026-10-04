@@ -1,0 +1,272 @@
+{
+  "cpu": 60,
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "loadavg": [
+    18.4541015625,
+    22.96533203125,
+    19.2080078125
+  ],
+  "plan": {
+    "issue": 10673,
+    "corpus_sha256": "f637736faaa474ef32ab61b9a146f52c3d6c83e96b730dbef0dc14f87669bce2",
+    "cases": [
+      {
+        "id": "a",
+        "corpus_id": "holdout-512-ordinary-0",
+        "base": 12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457,
+        "subject": 50620308678057236711363815349340902272384245339589290443090718007750435585029482703003354421316088499751611237750551249409545545155726249022731693051157828,
+        "small_base": 2,
+        "small_exponent": 2,
+        "native_seed": 0,
+        "expected": "complete",
+        "legacy_seed": 12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457
+      },
+      {
+        "id": "b",
+        "corpus_id": "holdout-512-ordinary-3",
+        "base": 7065189838482317911507479868798535730570068332444669726683537376311597879857917999853299197262244131953963424316801120147570853989595570812519051510818097,
+        "subject": 21195569515446953734522439606395607191710204997334009180050612128934793639573753999559897591786732395861890272950403360442712561968786712437557154532454291,
+        "small_base": 3,
+        "small_exponent": 1,
+        "native_seed": 0,
+        "expected": "complete",
+        "legacy_seed": 7065189838482317911507479868798535730570068332444669726683537376311597879857917999853299197262244131953963424316801120147570853989595570812519051510818097
+      },
+      {
+        "id": "partial",
+        "corpus_id": "holdout-512-ordinary-1",
+        "base": 9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527,
+        "subject": 19972938954922454472594064715153540410375188333443142017278553894582675601823908816765939309445916823559594556919594244786968649255333913906221567321069054,
+        "small_base": 2,
+        "small_exponent": 1,
+        "native_seed": 1,
+        "expected": "partial",
+        "legacy_seed": 9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527
+      }
+    ],
+    "limits": {
+      "subject_bits": 4096,
+      "base_bits": 512,
+      "entries": 64,
+      "exponent": 4096,
+      "ecpp_calls": 2,
+      "legacy_total_attempts": 128,
+      "ecpp_policy": "public512Budget",
+      "replay_rows": 20,
+      "replay_nodes": 32,
+      "inverses_per_row": 1024,
+      "source_bytes": 2097152,
+      "syntax_nodes": 1048576,
+      "kernel_heartbeats": 20000000,
+      "kernel_rec_depth": 65536
+    },
+    "schedule": "two completed trial-major runs per case; retain failures; adjacent alternate legacy/ECPP arms for component comparison"
+  },
+  "samples": [
+    {
+      "case": "a",
+      "trial": 0,
+      "order": [
+        "legacy",
+        "ecpp"
+      ],
+      "wall_ns": 11797217049,
+      "returncode": 0,
+      "log": "Trial0A.log",
+      "phases": {
+        "validation_ns": 60370,
+        "source_bytes": 1052709,
+        "residual": "1",
+        "reification_kernel_source_ns": 6311790311,
+        "native_stats": "{ candidates := 492,\n  roots := 772,\n  nonresidues := 86,\n  points := 437,\n  factorWork := 2516,\n  scalarWork := 155076,\n  backtracks := 28,\n  terminalCalls := 23,\n  terminalSuccesses := 1,\n  terminalBitRejects := 0,\n  terminalObligation := some 66354600027708530850732233178584327530521343394473,\n  norms := 104,\n  orders := 261,\n  largeFactors := 40,\n  proposals := 48,\n  outputRejects := 0,\n  outputBits := some 3426756,\n  polynomialWork := 91843,\n  polynomialRoots := 131,\n  unresolved := some { subject := 22802459874808415361892276114709518745783245933,\n                  resource := Hex.ECPP.Resource.depth },\n  lastRetry := some { subject := 66354600027708530850732233178584327530521343394473,\n                 resource := Hex.ECPP.Resource.pointRetries } }",
+        "legacy_stops": [
+          "Hex.Nat.Mixed.CompletionStop.supplied",
+          "Hex.Nat.Mixed.CompletionStop.legacyExhausted"
+        ],
+        "legacy_ns": 213872306,
+        "ecpp_stops": [
+          "Hex.Nat.Mixed.CompletionStop.ecppSkipped",
+          "Hex.Nat.Mixed.CompletionStop.certified"
+        ],
+        "ecpp_ns": 1557667524,
+        "ecpp_calls": 1,
+        "completion_ns": 1776484700,
+        "compiled_checking_ns": 29312234,
+        "attempts": 26
+      },
+      "source_sha256": "67ab0cc277d851f606043e1bad289f7a22d6c2079f9a265ff1ab7037619a4b8f"
+    },
+    {
+      "case": "b",
+      "trial": 0,
+      "order": [
+        "ecpp",
+        "legacy"
+      ],
+      "wall_ns": 11921323635,
+      "returncode": 0,
+      "log": "Trial0B.log",
+      "phases": {
+        "validation_ns": 58357,
+        "source_bytes": 1122771,
+        "residual": "1",
+        "reification_kernel_source_ns": 6216390119,
+        "native_stats": "{ candidates := 629,\n  roots := 712,\n  nonresidues := 82,\n  points := 269,\n  factorWork := 2840,\n  scalarWork := 116500,\n  backtracks := 4,\n  terminalCalls := 24,\n  terminalSuccesses := 1,\n  terminalBitRejects := 0,\n  terminalObligation := some 4288031860554132486616883654571054102338513593,\n  norms := 140,\n  orders := 326,\n  largeFactors := 22,\n  proposals := 23,\n  outputRejects := 0,\n  outputBits := some 3659653,\n  polynomialWork := 282706,\n  polynomialRoots := 191,\n  unresolved := some { subject := 3776600812820112092503081005228851026807765612100097529352273626932453363372699980809653030925782935381892637484979361062282177943313,\n                  resource := Hex.ECPP.Resource.portfolio },\n  lastRetry := some { subject := 4288031860554132486616883654571054102338513593,\n                 resource := Hex.ECPP.Resource.pointRetries } }",
+        "legacy_stops": [
+          "Hex.Nat.Mixed.CompletionStop.supplied",
+          "Hex.Nat.Mixed.CompletionStop.legacyExhausted"
+        ],
+        "legacy_ns": 205918790,
+        "ecpp_stops": [
+          "Hex.Nat.Mixed.CompletionStop.ecppSkipped",
+          "Hex.Nat.Mixed.CompletionStop.certified"
+        ],
+        "ecpp_ns": 1673179932,
+        "ecpp_calls": 1,
+        "completion_ns": 1914309281,
+        "compiled_checking_ns": 29617217,
+        "attempts": 20
+      },
+      "source_sha256": "2044d11527b84c1666199574284f9c52821e4d40496efa1831a838e00618598d"
+    },
+    {
+      "case": "partial",
+      "trial": 0,
+      "order": [
+        "legacy",
+        "ecpp"
+      ],
+      "wall_ns": 2391231782,
+      "returncode": 0,
+      "log": "Trial0Partial.log",
+      "phases": {
+        "validation_ns": 63084,
+        "source_bytes": 935,
+        "residual": "9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527",
+        "reification_kernel_source_ns": 799966,
+        "native_stats": "{ candidates := 62,\n  roots := 52,\n  nonresidues := 1,\n  points := 0,\n  factorWork := 144,\n  scalarWork := 0,\n  backtracks := 0,\n  terminalCalls := 1,\n  terminalSuccesses := 0,\n  terminalBitRejects := 0,\n  terminalObligation := some 9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527,\n  norms := 10,\n  orders := 20,\n  largeFactors := 0,\n  proposals := 0,\n  outputRejects := 0,\n  outputBits := none,\n  polynomialWork := 24976,\n  polynomialRoots := 14,\n  unresolved := some { subject := 9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527,\n                  resource := Hex.ECPP.Resource.portfolio },\n  lastRetry := none }",
+        "legacy_stops": [
+          "Hex.Nat.Mixed.CompletionStop.supplied",
+          "Hex.Nat.Mixed.CompletionStop.legacyExhausted"
+        ],
+        "legacy_ns": 202997202,
+        "ecpp_stops": [
+          "Hex.Nat.Mixed.CompletionStop.ecppSkipped",
+          "Hex.Nat.Mixed.CompletionStop.ecppExhausted (Hex.ECPP.Resource.portfolio)"
+        ],
+        "ecpp_ns": 66425102,
+        "ecpp_calls": 1,
+        "completion_ns": 269499537,
+        "compiled_checking_ns": 31537,
+        "attempts": 26
+      },
+      "source_sha256": "d038d5009354bda041932223c14d35aaa1bee952fb7fb686e4047d59b77a6743"
+    },
+    {
+      "case": "a",
+      "trial": 1,
+      "order": [
+        "ecpp",
+        "legacy"
+      ],
+      "wall_ns": 11595337817,
+      "returncode": 0,
+      "log": "Trial1A.log",
+      "phases": {
+        "validation_ns": 59889,
+        "source_bytes": 1052709,
+        "residual": "1",
+        "reification_kernel_source_ns": 6228424088,
+        "native_stats": "{ candidates := 492,\n  roots := 772,\n  nonresidues := 86,\n  points := 437,\n  factorWork := 2516,\n  scalarWork := 155076,\n  backtracks := 28,\n  terminalCalls := 23,\n  terminalSuccesses := 1,\n  terminalBitRejects := 0,\n  terminalObligation := some 66354600027708530850732233178584327530521343394473,\n  norms := 104,\n  orders := 261,\n  largeFactors := 40,\n  proposals := 48,\n  outputRejects := 0,\n  outputBits := some 3426756,\n  polynomialWork := 91843,\n  polynomialRoots := 131,\n  unresolved := some { subject := 22802459874808415361892276114709518745783245933,\n                  resource := Hex.ECPP.Resource.depth },\n  lastRetry := some { subject := 66354600027708530850732233178584327530521343394473,\n                 resource := Hex.ECPP.Resource.pointRetries } }",
+        "legacy_stops": [
+          "Hex.Nat.Mixed.CompletionStop.supplied",
+          "Hex.Nat.Mixed.CompletionStop.legacyExhausted"
+        ],
+        "legacy_ns": 213806973,
+        "ecpp_stops": [
+          "Hex.Nat.Mixed.CompletionStop.ecppSkipped",
+          "Hex.Nat.Mixed.CompletionStop.certified"
+        ],
+        "ecpp_ns": 1537912373,
+        "ecpp_calls": 1,
+        "completion_ns": 1742362540,
+        "compiled_checking_ns": 27959169,
+        "attempts": 26
+      },
+      "source_sha256": "67ab0cc277d851f606043e1bad289f7a22d6c2079f9a265ff1ab7037619a4b8f"
+    },
+    {
+      "case": "b",
+      "trial": 1,
+      "order": [
+        "legacy",
+        "ecpp"
+      ],
+      "wall_ns": 12182693196,
+      "returncode": 0,
+      "log": "Trial1B.log",
+      "phases": {
+        "validation_ns": 60660,
+        "source_bytes": 1122771,
+        "residual": "1",
+        "reification_kernel_source_ns": 6586790496,
+        "native_stats": "{ candidates := 629,\n  roots := 712,\n  nonresidues := 82,\n  points := 269,\n  factorWork := 2840,\n  scalarWork := 116500,\n  backtracks := 4,\n  terminalCalls := 24,\n  terminalSuccesses := 1,\n  terminalBitRejects := 0,\n  terminalObligation := some 4288031860554132486616883654571054102338513593,\n  norms := 140,\n  orders := 326,\n  largeFactors := 22,\n  proposals := 23,\n  outputRejects := 0,\n  outputBits := some 3659653,\n  polynomialWork := 282706,\n  polynomialRoots := 191,\n  unresolved := some { subject := 3776600812820112092503081005228851026807765612100097529352273626932453363372699980809653030925782935381892637484979361062282177943313,\n                  resource := Hex.ECPP.Resource.portfolio },\n  lastRetry := some { subject := 4288031860554132486616883654571054102338513593,\n                 resource := Hex.ECPP.Resource.pointRetries } }",
+        "legacy_stops": [
+          "Hex.Nat.Mixed.CompletionStop.supplied",
+          "Hex.Nat.Mixed.CompletionStop.legacyExhausted"
+        ],
+        "legacy_ns": 201682254,
+        "ecpp_stops": [
+          "Hex.Nat.Mixed.CompletionStop.ecppSkipped",
+          "Hex.Nat.Mixed.CompletionStop.certified"
+        ],
+        "ecpp_ns": 1648925574,
+        "ecpp_calls": 1,
+        "completion_ns": 1857166221,
+        "compiled_checking_ns": 30491903,
+        "attempts": 20
+      },
+      "source_sha256": "2044d11527b84c1666199574284f9c52821e4d40496efa1831a838e00618598d"
+    },
+    {
+      "case": "partial",
+      "trial": 1,
+      "order": [
+        "ecpp",
+        "legacy"
+      ],
+      "wall_ns": 2431047579,
+      "returncode": 0,
+      "log": "Trial1Partial.log",
+      "phases": {
+        "validation_ns": 59799,
+        "source_bytes": 935,
+        "residual": "9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527",
+        "reification_kernel_source_ns": 836830,
+        "native_stats": "{ candidates := 62,\n  roots := 52,\n  nonresidues := 1,\n  points := 0,\n  factorWork := 144,\n  scalarWork := 0,\n  backtracks := 0,\n  terminalCalls := 1,\n  terminalSuccesses := 0,\n  terminalBitRejects := 0,\n  terminalObligation := some 9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527,\n  norms := 10,\n  orders := 20,\n  largeFactors := 0,\n  proposals := 0,\n  outputRejects := 0,\n  outputBits := none,\n  polynomialWork := 24976,\n  polynomialRoots := 14,\n  unresolved := some { subject := 9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527,\n                  resource := Hex.ECPP.Resource.portfolio },\n  lastRetry := none }",
+        "legacy_stops": [
+          "Hex.Nat.Mixed.CompletionStop.supplied",
+          "Hex.Nat.Mixed.CompletionStop.legacyExhausted"
+        ],
+        "legacy_ns": 204586490,
+        "ecpp_stops": [
+          "Hex.Nat.Mixed.CompletionStop.ecppSkipped",
+          "Hex.Nat.Mixed.CompletionStop.ecppExhausted (Hex.ECPP.Resource.portfolio)"
+        ],
+        "ecpp_ns": 66837884,
+        "ecpp_calls": 1,
+        "completion_ns": 272666376,
+        "compiled_checking_ns": 41191,
+        "attempts": 26
+      },
+      "source_sha256": "d038d5009354bda041932223c14d35aaa1bee952fb7fb686e4047d59b77a6743"
+    }
+  ],
+  "sources": {
+    "HexIntFactor/Mixed/Import.lean": "471e77aad8b011a5a606ef3cf32073c0805990e05d02266fc665fdf956786c91",
+    "HexIntFactor/Mixed/Export.lean": "6a4552ae910e8ab6b82399ac88e152a48760d040e90b726fb1b7d388b265a44a",
+    "HexECPP/Search.lean": "b1073b509bf6c9732272d65ee96bc754e524459cbe0efd084ce063b1541092b3",
+    "scripts/bench/intfactor_mixed.lean.in": "f544300026f79d69a5d2a2e55966b6c9f6f523b8cadcc49edb39338689b927bb"
+  }
+}

@@ -287,7 +287,6 @@ lean_lib HexPrimality where
   precompileModules := true
 
 lean_lib HexECPP where
-  globs := #[`HexECPP, `HexECPP.Policy, `HexECPP.ElabData].map Glob.one
   -- The explicit certificate elaborator evaluates checked data during elaboration.
   precompileModules := true
 

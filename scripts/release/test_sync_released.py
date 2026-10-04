@@ -13,6 +13,7 @@ from unittest.mock import patch
 import yaml
 
 from scripts.release import aggregate_readme, sync_released
+from scripts.release.intfactor_prospective import ENTRY as INTFACTOR_ENTRY
 
 
 class SyncReleasedTests(unittest.TestCase):
@@ -516,17 +517,7 @@ class SyncReleasedTests(unittest.TestCase):
 
     def test_intfactor_optional_modules_and_frozen_data_are_managed(self) -> None:
         # Prospective publication: HexIntFactor is not a released.yml entry yet.
-        entry = {
-            "repo": "prospective/hex-int-factor", "lib": "HexIntFactor",
-            "umbrella": True, "spec": "hex-int-factor", "lakefile": "lean",
-            "build_modules": ["HexIntFactor.Pari", "HexIntFactor.Export", "HexIntFactor.Replay"] +
-                             [f"HexIntFactor.Mixed.{m}" for m in ("Replay", "Import", "Pari", "Export")],
-            "test_modules": ["HexIntFactor.ImportTests", "HexIntFactor.PariTests",
-                             "HexIntFactor.ExportTests", "HexIntFactor.Mixed.ImportTests",
-                             "HexIntFactor.Mixed.ExportTests", "HexIntFactor.Mixed.Frozen.Small"] +
-                            [f"HexIntFactor.Frozen.Case{i}" for i in range(7)] +
-                            ["HexIntFactor.Frozen.Partial12"],
-        }
+        entry = INTFACTOR_ENTRY
         (self.repo / "lakefile.lean").write_text(
             "import Lake\nopen Lake DSL\npackage factor\n"
             "lean_lib HexIntFactor where\n"

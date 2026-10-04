@@ -378,10 +378,19 @@ inverse witnesses per row. Caller structural settings may tighten but do not
 widen these supported ceilings. Bound
 transcript traversal before checker invocation. The batch surface additionally
 admits at most 1048576 expanded syntax nodes and 2097152 source bytes, with
-explicit 20000000-heartbeat and 65536-recursion ceilings for kernel validation.
-The frozen two-trial endpoint campaign in `reports/intfactor/mixed` verifies
-these source/proof ceilings on both complete mixed outputs and the partial
-output, including fresh ordinary-module replay. Those endpoints are included
+explicit 20000000-heartbeat and 65536-recursion ceilings. Meta reification
+uses its own fresh accounting origin. The synchronous kernel limit also counts
+allocations already used by the command, so earlier proposal elaboration and
+production leave less of that allocation for kernel replay.
+The batch commands install these explicit fixed allocations; callers of the
+public export APIs can select smaller `Budget` fields. The elaborator context
+receives the heartbeat allocation as well as the
+options. Fresh subject-indexed acceptance is synchronously kernel-checked with
+these limits and the cancellation token; the temporary declaration environment
+is discarded. Public export settings cannot widen the supported ceilings.
+The frozen two-trial endpoint campaign in `reports/intfactor/mixed` records
+both complete mixed outputs and the partial output fitting within these
+source/proof ceilings, including fresh ordinary-module replay. Those endpoints are included
 in existing CI targets. They are
 admission/resource policies, not claims that every admitted raw certificate
 completes replay. Public native ECPP policies are only 256 and
@@ -391,13 +400,17 @@ occur in a larger product without violating the independently bounded subject.
 Keep structural validation, legacy completion, ECPP completion, factor
 discovery and frozen replay allocations separate. Legacy completion retains
 `Construction.runTraced` and one registered ECM retry. Each distinct base gets
-at most the existing 128-attempt per-base profile, with base bits 512; retry
+at most 128 attempts, with base bits 512; retry
 uses that base's remaining allowance. A separate total legacy attempt ceiling
 of 8192 initially covers 64 such calls. Explicit smaller total allocations
 clamp each base's package to the remaining total. If the total has already
 been spent, record `legacyStarved`, preserving the base in the residual unless
 explicit ECPP completion succeeds. Starved bases may use ECPP. Neither this
 allocation nor its diagnostics alter the legacy importer's per-base policy.
+The batch commands use the existing fixed legacy importer profile. The pure
+importer permits caller-selected finite `ConstructionBudget` suballocations
+for each attempt; these are independent of the clamped attempt, entry and
+structural ceilings, and are retained in the experiment records.
 ECPP completion is off by default and explicitly selected after attempted
 legacy construction exhausts, starves, or has an explicitly zero allocation.
 It reuses `Hex.ECPP.produce`. The 512-bit policy is `public512Budget`; the
@@ -405,7 +418,7 @@ new `public256Budget` is the default search profile with depth 21, 20 rows,
 32 nodes and `backtrackOutput := true`. This profile serves mixed completion
 and leaves the existing explicit Native 256-bit policy unchanged.
 Reserve the full selected allocation before each call, across all distinct
-bases: at most two ECPP calls initially, no refunded failures or hidden retry
+bases: at most two ECPP calls, even if a caller requests more, no refunded failures or hidden retry
 loop. Thus every SearchBudget counter has a subject-wide bound of at most
 two selected per-call allocations, including factor/scalar/root/polynomial
 work, memo/output and local retries. Keep legacy randomness separate from ECPP: an explicit `ecppSeed` defaults
@@ -440,7 +453,8 @@ are the shared kernel-validation and formatting APIs. `Mixed.Pari.factor` is
 the optional runtime proposal adapter; `Mixed.importFactors` is its pure
 acceptance/completion boundary.
 Suggestions and exports use one deterministic formatter. Before emitting text,
-preflight certificate/source bounds, reify raw constructors and kernel-check
+preflight certificate bounds, construct source with incremental byte charging
+before kernel replay, reify raw constructors and kernel-check
 the subject-indexed acceptance proof anew. Compiled generation proofs are not
 trusted. Emit public exposed complete/partial raw and checked data importing
 only mixed replay. Enforce editor gating and exclusive file creation, checking

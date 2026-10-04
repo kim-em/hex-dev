@@ -40,9 +40,14 @@ policy, including failed calls and retries. Legacy and native random states,
 counters and unsuccessful outcomes remain in the importer result.
 
 Expanded input and reified syntax has a 1048576-node limit. Export caps UTF-8
-source at 2097152 bytes; reification and fresh kernel validation use 20000000
-heartbeats and recursion depth 65536. Supported settings may tighten the
-structural ceilings. No bit limit guarantees production or replay success.
+source at 2097152 bytes, charging fragments before joining them and rejecting
+oversized output before kernel replay. Reification uses a fresh 20000000-heartbeat
+allocation and recursion depth 65536. Synchronous kernel checking uses the same
+ceiling but also counts allocations from earlier command work, including
+proposal elaboration and production. Supported settings may tighten the
+structural and export ceilings. Kernel validation is synchronous, receives the
+cancellation token and uses a temporary declaration environment which is
+discarded. No bit limit guarantees production or replay success.
 
 [component-comparison-v1.json](component-comparison-v1.json) retains both
 trial-major adjacent construction/ECPP arms, alternating their order with case
@@ -54,10 +59,14 @@ completed preliminary functional sample, which was not pinned and is not used
 as a timing comparison.
 
 [completion-v1.json](completion-v1.json) and
-[completion-v2.json](completion-v2.json) retain every completed mixed sample.
-The second schedule verifies the added shared structural ceilings and the
-reified-syntax preflight; subjects and allocations are unchanged. Each schedule
-has two trial-major runs. One CPU is automatically leased without checking for
+[completion-v2.json](completion-v2.json) retain every completed mixed sample
+with the earlier unrestricted debugging kernel checker.
+[completion-v3.json](completion-v3.json) measures the synchronous kernel checker
+under the supported heartbeat/recursion limits, the clamped ECPP call count and
+reuse of partial acceptance for complete results.
+[completion-v4.json](completion-v4.json) measures incremental source-byte
+charging before kernel replay. Subjects, allocations and output data are
+unchanged. Each schedule has two trial-major runs. One CPU is automatically leased without checking for
 an idle core, and host/load context is retained. Component arms are adjacent
 and alternate order. Absolute times describe this shared host.
 
@@ -69,13 +78,13 @@ compiled acceptance is measured separately.
 
 | Case | Outcome | Legacy ms | ECPP ms | Compiled acceptance ms | Reification/kernel/source ms | Source bytes |
 |---|---|---:|---:|---:|---:|---:|
-| A | complete | 210.35 / 239.64 | 1561.12 / 1794.60 | 57.07 / 64.85 | 5923.88 / 6217.12 | 1052709 |
-| B | complete | 205.38 / 202.50 | 1672.91 / 1679.44 | 64.39 / 58.21 | 6034.62 / 6240.94 | 1122771 |
-| partial | checked partial | 203.13 / 212.63 | 66.96 / 67.89 | 0.04 / 0.04 | 0.89 / 0.87 | 935 |
+| A | complete | 213.87 / 213.81 | 1557.67 / 1537.91 | 29.31 / 27.96 | 6311.79 / 6228.42 | 1052709 |
+| B | complete | 205.92 / 201.68 | 1673.18 / 1648.93 | 29.62 / 30.49 | 6216.39 / 6586.79 | 1122771 |
+| partial | checked partial | 203.00 / 204.59 | 66.43 / 66.84 | 0.03 / 0.04 | 0.80 / 0.84 | 935 |
 
-Proposal validation is 0.056–0.063 ms. End-to-end mixed preparation is retained
+Proposal validation is 0.058–0.063 ms. End-to-end mixed preparation is retained
 separately from those isolated component measurements. Output constructors are
-identical across all completed trials and both implementation schedules.
+identical across all completed trials and all implementation schedules.
 Case A has 20 elliptic rows, 10 terminal constructors and 31 total constructors;
 B has 19 rows, 8 terminal constructors and 28 total constructors. Their
 transcripts fit the new actual replay allocations; this was measured rather
@@ -113,8 +122,12 @@ no certificate or primality claim in the checked result.
 text, compiles it verbatim in fresh ordinary modules, checks exported public data
 and changed-subject rejection, refuses overwriting an existing destination,
 checks editor gating and syntax exhaustion, and exercises the real small PARI
-route with native ECPP explicitly selected. All 425 existing and mixed arithmetic
-fixtures pass the independent factorization oracle. Legacy fixture output is
+route with native ECPP explicitly selected. The existing CI step also re-admits
+both large ECPP outputs through the supplied-proposal batch command.
+`Mixed.ExportTests`, built by `HexIntFactorTests`, separately pins Meta and
+kernel heartbeat rejection, kernel recursion rejection, compiled-check bypass
+rejection and exact source byte rejection before replay. All 425 existing
+and mixed arithmetic fixtures pass the independent factorization oracle. Legacy fixture output is
 preserved as an exact prefix.
 
 The build-checked manual, computational and companion libraries, test targets,
@@ -124,7 +137,10 @@ and partial correspondence proofs audit to `propext`, `Classical.choice` and
 `native_decide` are used. Fresh prospective split checks verify computational
 replay and batch admission with no Mathlib directory, and a separate companion
 client with the intended Mathlib/AINTLIB proof closure. Their results are in
-[split-v1.json](split-v1.json).
+[split-v1.json](split-v1.json), [split-v2.json](split-v2.json) and
+[split-v3.json](split-v3.json). The last two build all three large frozen
+modules as well as batch admission and
+correspondence clients.
 
 Legacy embeddings preserve their checkers. Checked reverse conversion rejects
 ECPP entries and replays legacy acceptance. Legacy divisor, arithmetic-function,

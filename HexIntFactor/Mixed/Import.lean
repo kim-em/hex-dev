@@ -44,7 +44,7 @@ deriving Repr
 /-- Completion failures never certify a residual or assert completeness. -/
 inductive CompletionStop where
   | supplied | certified | composite | legacySkipped | legacyStarved | legacyExhausted
-  | ecppDisabled | ecppStarved | ecppExhausted (resource : Hex.ECPP.Resource)
+  | ecppDisabled | ecppSkipped | ecppStarved | ecppExhausted (resource : Hex.ECPP.Resource)
   | certificateBounds
 deriving Repr, BEq
 
@@ -164,14 +164,14 @@ private def merge (b : ImportBudget) : List Entry → Except ImportError (List E
           else return a :: tail
       | [] => return [a]
 
-/-- Replay both the final partial and, when applicable, complete checker. -/
+/-- Replay partial data once; residual one supplies complete acceptance. -/
 def accept (n : Nat) (raw : PartialFactorization) : Except ImportError (CheckedFactors n) :=
   if hs : raw.subject = n then
     if hv : checkPartial raw = true then
-      if raw.residual = 1 then
+      if hr : raw.residual = 1 then
         let F : Factorization := ⟨n, raw.factors⟩
-        if hf : checkFactorization F = true then .ok (.complete ⟨F, rfl, hf⟩)
-        else .error .rejected
+        let hf := checkFactorization_of_checkPartial hv hr
+        .ok (.complete ⟨F, rfl, by simpa only [hs] using hf⟩)
       else .ok (.partialResult ⟨raw, hs, hv⟩)
     else .error .rejected
   else .error .subjectMismatch
@@ -239,11 +239,13 @@ def prepare (b : ImportBudget) (n : Nat) (proposal : FactorProposal) (r : Hex.Ra
     attempts := attempts + used
     events := events ++ trace
     let mut stop := legacyStop
-    let mut ecppStop := CompletionStop.ecppDisabled
+    let mut ecppStop := if b.ecppBits.isSome then CompletionStop.ecppSkipped else .ecppDisabled
     let mut ecpp := none
     if cert.isNone && legacyStop != .composite then
       if let some bits := b.ecppBits then
-        if ecppCalls >= b.maxEcppCalls then
+        if b.maxEcppCalls == 0 then
+          stop := .ecppSkipped
+        else if ecppCalls >= min b.maxEcppCalls 2 then
           stop := .ecppStarved
           ecppStop := .ecppStarved
         else

@@ -16,17 +16,12 @@ import subprocess
 import yaml
 from unittest.mock import patch
 import sync_released as sync
+from intfactor_prospective import ENTRY
 
 ROOT = Path(__file__).resolve().parents[2]
 LIBRARIES = {'HexBasic': [], 'HexArith': [],
              'HexPrimality': ['HexBasic', 'HexArith'],
              'HexECPP': ['HexArith', 'HexPrimality']}
-ENTRY = dict(repo='prospective/hex-int-factor', lib='HexIntFactor', umbrella=True, spec='hex-int-factor', lakefile='lean',
-             build_modules=['HexIntFactor.Pari', 'HexIntFactor.Export', 'HexIntFactor.Replay'] +
-                           [f'HexIntFactor.Mixed.{m}' for m in ('Replay', 'Import', 'Pari', 'Export')],
-             test_modules=['HexIntFactor.ImportTests', 'HexIntFactor.PariTests',
-                           'HexIntFactor.ExportTests', 'HexIntFactor.Mixed.ImportTests',
-                           'HexIntFactor.Mixed.ExportTests', 'HexIntFactor.Mixed.Frozen.Small'] + [f'HexIntFactor.Frozen.Case{i}' for i in range(7)] + ['HexIntFactor.Frozen.Partial12'])
 
 
 def proof_client(directory: Path, record: dict, output: Path):
@@ -127,6 +122,9 @@ def main():
         'public import HexIntFactor.Frozen.Case3\npublic import HexIntFactor.Frozen.Case5\n'
         'public import HexIntFactor.Frozen.Partial12\n'
         'public import HexIntFactor.Mixed.Frozen.Small\n'
+        'public import HexIntFactor.Mixed.Frozen.CaseA\n'
+        'public import HexIntFactor.Mixed.Frozen.CaseB\n'
+        'public import HexIntFactor.Mixed.Frozen.Partial\n'
         'public section\n'
         'example : Hex.Nat.checkFactorization Hex.IntFactorFrozen.case3 = true := by decide +kernel\n'
         'example : Hex.Nat.checkPartial Hex.IntFactorFrozen.case5 = true := by decide +kernel\n'

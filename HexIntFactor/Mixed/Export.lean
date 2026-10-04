@@ -28,33 +28,86 @@ structure Budget where
   maxHeartbeats : Nat := 20000000
   maxRecDepth : Nat := 65536
 
-mutual
-private meta def primeText : PrimeCert → String
-  | .small n => s!"(Hex.Nat.PrimeCert.small {n})"
-  | .pock n fs => s!"(Hex.Nat.PrimeCert.pock {n} [{factorsText fs}])"
-  | .pock3 n r s w fs => s!"(Hex.Nat.PrimeCert.pock3 {n} {r} {s} {w} [{factorsText fs}])"
-  | .pock3Sieve n r s w m fs =>
-      s!"(Hex.Nat.PrimeCert.pock3Sieve {n} {r} {s} {w} {m} [{factorsText fs}])"
+/-- Caller allocations may tighten the supported export ceilings. -/
+meta def Budget.cap (b : Budget) : Budget := {
+  maxSourceBytes := min b.maxSourceBytes 2097152
+  maxSyntaxNodes := min b.maxSyntaxNodes 1048576
+  maxHeartbeats := min b.maxHeartbeats 20000000
+  maxRecDepth := min b.maxRecDepth 65536 }
 
-private meta def factorsText : List (Nat × Nat × PrimeCert) → String
-  | [] => ""
-  | (a, e, c) :: rest =>
-      s!"({a}, {e}, {primeText c})" ++ (if rest.isEmpty then "" else ", " ++ factorsText rest)
+private meta def withBudget {α} (budget : Budget) (action : TermElabM α) : TermElabM α :=
+  withTheReader Core.Context (fun ctx => { ctx with maxHeartbeats := budget.cap.maxHeartbeats * 1000 }) <|
+    withOptions (fun opts => maxRecDepth.set
+      (maxHeartbeats.set opts budget.cap.maxHeartbeats) budget.cap.maxRecDepth) <|
+      withCurrHeartbeats action
+
+private meta abbrev TextM := StateT Nat (Except String)
+
+/-- Charge each fragment before joining it to bounded output. -/
+private meta def emit (s : String) : TextM String := do
+  let remaining ← get
+  if s.utf8ByteSize > remaining then throw "mixed factor export: source byte limit"
+  set (remaining - s.utf8ByteSize)
+  return s
+
+mutual
+private meta def primeText : PrimeCert → TextM String
+  | .small n => emit s!"(Hex.Nat.PrimeCert.small {n})"
+  | .pock n fs => do
+      let head ← emit s!"(Hex.Nat.PrimeCert.pock {n} ["
+      let body ← factorsText fs
+      return head ++ body ++ (← emit "])")
+  | .pock3 n r s w fs => do
+      let head ← emit s!"(Hex.Nat.PrimeCert.pock3 {n} {r} {s} {w} ["
+      let body ← factorsText fs
+      return head ++ body ++ (← emit "])")
+  | .pock3Sieve n r s w m fs => do
+      let head ← emit s!"(Hex.Nat.PrimeCert.pock3Sieve {n} {r} {s} {w} {m} ["
+      let body ← factorsText fs
+      return head ++ body ++ (← emit "])")
+
+private meta def factorsText : List (Nat × Nat × PrimeCert) → TextM String
+  | [] => pure ""
+  | (a, e, c) :: rest => do
+      let head ← emit s!"({a}, {e}, "
+      let cert ← primeText c
+      let close ← emit ")"
+      let sep ← emit (if rest.isEmpty then "" else ", ")
+      return head ++ cert ++ close ++ sep ++ (← factorsText rest)
 end
 
-private meta def ecppText : Hex.ECPP.Cert → String
-  | .base c => s!"(Hex.ECPP.Cert.base {primeText c})"
-  | .step n a b x y d ws child =>
-      s!"(Hex.ECPP.Cert.step {n} {a} {b} {x} {y} {d} [" ++
-      String.intercalate ", " (ws.map toString) ++ s!"] {ecppText child})"
+private meta def ecppText : Hex.ECPP.Cert → TextM String
+  | .base c => do
+      let head ← emit "(Hex.ECPP.Cert.base "
+      let cert ← primeText c
+      return head ++ cert ++ (← emit ")")
+  | .step n a b x y d ws child => do
+      let head ← emit s!"(Hex.ECPP.Cert.step {n} {a} {b} {x} {y} {d} ["
+      let witnesses ← ws.mapM fun w => emit (toString w)
+      discard <| emit (String.intercalate "" (List.replicate (ws.length - 1) ", "))
+      let close ← emit "] "
+      let cert ← ecppText child
+      -- Separator bytes are reserved independently before joining witnesses.
+      return head ++ String.intercalate ", " witnesses ++ close ++ cert ++ (← emit ")")
 
-private meta def evidenceText : Evidence → String
-  | .legacy c => s!"(Hex.Nat.Mixed.Evidence.legacy {primeText c})"
-  | .ecpp c => s!"(Hex.Nat.Mixed.Evidence.ecpp {ecppText c})"
+private meta def evidenceText : Evidence → TextM String
+  | .legacy c => do
+      let head ← emit "(Hex.Nat.Mixed.Evidence.legacy "
+      let cert ← primeText c
+      return head ++ cert ++ (← emit ")")
+  | .ecpp c => do
+      let head ← emit "(Hex.Nat.Mixed.Evidence.ecpp "
+      let cert ← ecppText c
+      return head ++ cert ++ (← emit ")")
 
-private meta def powersText (fs : List PrimePower) : String :=
-  "[" ++ String.intercalate ", " (fs.map fun e =>
-    s!"⟨{e.prime}, {e.exponent}, {evidenceText e.cert}⟩") ++ "]"
+private meta def powersText (fs : List PrimePower) : TextM String := do
+  let head ← emit "["
+  let entries ← fs.mapM fun e => do
+    let head ← emit s!"⟨{e.prime}, {e.exponent}, "
+    let cert ← evidenceText e.cert
+    return head ++ cert ++ (← emit "⟩")
+  discard <| emit (String.intercalate "" (List.replicate (fs.length - 1) ", "))
+  return head ++ String.intercalate ", " entries ++ (← emit "]")
 
 private meta def evidenceExpr : Evidence → Expr
   | .legacy c => mkApp (mkConst ``Evidence.legacy) (Hex.PrimalityTactic.reifyPrimeCert c)
@@ -69,22 +122,29 @@ private meta def rawExpr (n : Nat) (value : CheckedFactors n) : MetaM Expr := do
   | .partialResult _ => mkApp3 (mkConst ``PartialFactorization.mk) (mkNatLit n) fs
       (mkNatLit value.raw.residual)
 
+private meta def preflight (n : Nat) (value : CheckedFactors n) : MetaM Unit := do
+  let limits : ImportBudget := {}
+  let raw := value.raw
+  unless raw.subject == n && raw.residual ≤ n && HexArith.bitLength n ≤ limits.maxSubjectBits &&
+      (raw.factors.take (limits.maxEntries + 1)).length ≤ limits.maxEntries do
+    throwError "mixed factor export: subject/data bounds"
+  for e in raw.factors do
+    unless HexArith.bitLength e.prime ≤ limits.maxBaseBits && e.exponent > 0 &&
+        e.exponent ≤ limits.maxExponent && FactorImport.certificateFits limits e.cert do
+      throwError "mixed factor export: certificate bounds"
+
 /-- Preflight raw data, discard compiled producer proofs and kernel-check a
 fresh subject-indexed acceptance constructor under finite options. -/
 meta def validate (n : Nat) (value : CheckedFactors n) (budget : Budget := {}) : MetaM Unit := do
+  let budget := budget.cap
   if budget.maxHeartbeats == 0 || budget.maxRecDepth == 0 then
     throwError "mixed factor export: proof budgets must be positive"
-  withOptions (fun opts => maxRecDepth.set (maxHeartbeats.set opts budget.maxHeartbeats) budget.maxRecDepth) do
-    let limits : ImportBudget := {}
-    let raw := value.raw
-    unless raw.subject == n && HexArith.bitLength n ≤ limits.maxSubjectBits &&
-        (raw.factors.take (limits.maxEntries + 1)).length ≤ limits.maxEntries do
-      throwError "mixed factor export: subject/data bounds"
-    for e in raw.factors do
-      unless e.exponent > 0 && e.exponent ≤ limits.maxExponent &&
-          FactorImport.certificateFits limits e.cert do
-        throwError "mixed factor export: certificate bounds"
-    let .ok _ := FactorImport.accept n raw | throwError "mixed factor export: checker rejection"
+  withTheReader Core.Context (fun ctx => { ctx with maxHeartbeats := budget.maxHeartbeats * 1000 }) <|
+    withOptions (fun opts => maxRecDepth.set (maxHeartbeats.set opts budget.maxHeartbeats) budget.maxRecDepth) <|
+    withCurrHeartbeats do
+    checkSystem "mixed factor export"
+    preflight n value
+    let .ok _ := FactorImport.accept n value.raw | throwError "mixed factor export: checker rejection"
     let data ← rawExpr n value
     discard <| Hex.ECPP.auditData data {
       maxNodes := budget.maxSyntaxNodes, numeralBits := 4096
@@ -96,20 +156,41 @@ meta def validate (n : Nat) (value : CheckedFactors n) (budget : Budget := {}) :
       | .partialResult _ => ``CheckedPartialFactorization.mk
     let proof := mkApp4 (mkConst ctor) (mkNatLit n) data
       (← mkEqRefl (mkNatLit n)) Hex.PrimalityTactic.reflTrue
-    checkWithKernel proof
+    checkSystem "mixed factor export"
+    let decl := Declaration.defnDecl {
+      name := ← mkAuxDeclName `mixedAcceptance
+      levelParams := []
+      type := ← inferType proof
+      value := proof
+      hints := .abbrev
+      safety := .safe }
+    let opts ← getOptions
+    -- Synchronous kernel checking with cancellation; discard the temporary environment.
+    match (← getEnv).addDeclCore (Core.getMaxHeartbeats opts).toUSize
+        budget.maxRecDepth.toUSize decl (← readThe Core.Context).cancelTk? (doCheck := true) with
+    | .ok _ => pure ()
+    | .error error => throwKernelException error
 
 /-- Deterministic public exposed data and kernel acceptance, importing replay only. -/
 meta def source (name : Name) (n : Nat) (value : CheckedFactors n) (budget : Budget := {}) :
     MetaM String := do
-  validate n value budget
+  let budget := budget.cap
+  preflight n value
   let (rawType, checkedType) := match value with
     | .complete _ => ("Factorization", "CheckedFactorization")
     | .partialResult _ => ("PartialFactorization", "CheckedPartialFactorization")
-  let data := match value with
-    | .complete _ => s!"⟨{n}, {powersText value.raw.factors}⟩"
-    | .partialResult _ => s!"⟨{n}, {powersText value.raw.factors}, {value.raw.residual}⟩"
-  let text := s!"module\n\npublic import HexIntFactor.Mixed.Replay\n\npublic section\n\nset_option maxHeartbeats {budget.maxHeartbeats}\nset_option maxRecDepth {budget.maxRecDepth}\n\n@[expose] def {name} : Hex.Nat.Mixed.{rawType} :=\n  {data}\n\n@[expose] def {name}_checked : Hex.Nat.Mixed.{checkedType} {n} :=\n  ⟨{name}, rfl, by decide +kernel⟩\n"
-  if text.utf8ByteSize > budget.maxSourceBytes then throwError "mixed factor export: source byte limit"
+  let format : TextM String := do
+    let head ← emit s!"module\n\npublic import HexIntFactor.Mixed.Replay\n\npublic section\n\nset_option maxHeartbeats {budget.maxHeartbeats}\nset_option maxRecDepth {budget.maxRecDepth}\n\n@[expose] def {name} : Hex.Nat.Mixed.{rawType} :=\n  ⟨{n}, "
+    let fs ← powersText value.raw.factors
+    let residual ← emit (match value with
+      | .complete _ => ""
+      | .partialResult _ => s!", {value.raw.residual}")
+    let tail ← emit s!"⟩\n\n@[expose] def {name}_checked : Hex.Nat.Mixed.{checkedType} {n} :=\n  ⟨{name}, rfl, by decide +kernel⟩\n"
+    return head ++ fs ++ residual ++ tail
+  let text ← match format.run budget.maxSourceBytes with
+    | .ok (text, _) => pure text
+    | .error error => throwError "{error}"
+  validate n value budget
   return text
 
 private meta def dataBudget (b : Budget) : Hex.ECPP.DataBudget := {
@@ -193,8 +274,7 @@ syntax (name := mixedPariSuggest) "#int_factor_mixed" " (" &"method" " := " &"pa
 @[command_elab mixedSuggest, command_elab mixedPariSuggest]
 meta def suggest : Command.CommandElab := fun stx => do
   if ← editorInstructions then return
-  let text ← Command.liftTermElabM <| withOptions (fun opts =>
-      maxRecDepth.set (maxHeartbeats.set opts 20000000) 65536) do
+  let text ← Command.liftTermElabM <| withBudget {} do
     match stx with
     | `(command| #int_factor_mixed $[(ecpp := $bits:num)]? for $term:term using $proposal:term) =>
         let n ← subject term
@@ -227,8 +307,7 @@ meta def exportFile : Command.CommandElab := fun stx => do
     | .ok path => pure path
     | .error e => throwError "mixed factor export: {e}"
   if ← path.pathExists then throwError "mixed factor export: {path} already exists"
-  let text ← Command.liftTermElabM <| withOptions (fun opts =>
-      maxRecDepth.set (maxHeartbeats.set opts 20000000) 65536) do
+  let text ← Command.liftTermElabM <| withBudget {} do
     match stx with
     | `(command| #int_factor_mixed_export $[(ecpp := $bits:num)]? $_:ident $_:ident for $term:term using $proposal:term) =>
         let n ← subject term

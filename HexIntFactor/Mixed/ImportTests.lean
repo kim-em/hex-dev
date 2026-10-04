@@ -98,3 +98,17 @@ private def deepCert : Nat → Hex.Nat.PrimeCert
 
 #guard !FactorImport.certificateFits { maxCertDepth := 1000, maxCertNodes := 100000 }
   (.legacy (deepCert 65))
+
+#guard match importFactors { noSearch with ecppBits := some 256, maxEcppCalls := 3 }
+    30 ⟨30, [(2, 1, none), (3, 1, none), (5, 1, none)]⟩ seed with
+  | .ok r => r.ecppCalls == 2 && r.unresolved.any (·.stop == .ecppStarved) && checkPartial r.value.raw
+  | _ => false
+#guard match importFactors { noSearch with ecppBits := some 256, maxEcppCalls := 0 }
+    2 ⟨2, [(2, 1, none)]⟩ seed with
+  | .ok r => r.ecppCalls == 0 && r.completions.all (·.ecppStop == .ecppSkipped) &&
+      r.unresolved.all (·.stop == .ecppSkipped)
+  | _ => false
+#guard match importFactors { ecppBits := some 256 } 4 ⟨4, [(4, 1, none)]⟩ seed with
+  | .ok r => r.ecppCalls == 0 && r.completions.all (·.ecppStop == .ecppSkipped) &&
+      r.unresolved.all (·.stop == .composite)
+  | _ => false

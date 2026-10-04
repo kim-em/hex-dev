@@ -134,7 +134,6 @@ UMBRELLA_BUILD_TARGETS = {
 # SPEC-assigned optional public modules build with their owning library while
 # staying outside its ordinary umbrella. Only these exact modules are allowed.
 OPTIONAL_BUILD_MODULES = {
-    "HexECPP": {"HexECPP.Policy", "HexECPP.ElabData"},
     "HexIntFactor": {"HexIntFactor.Pari", "HexIntFactor.Export",
         "HexIntFactor.Mixed.Replay", "HexIntFactor.Mixed.Import",
         "HexIntFactor.Mixed.Pari", "HexIntFactor.Mixed.Export"},

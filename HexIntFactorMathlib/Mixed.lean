@@ -66,7 +66,7 @@ theorem CheckedFactorization.prime {n : Nat} (F : CheckedFactorization n)
   Hex.Nat.prime_iff.mp (checkFactorization_prime ecppSoundness F.valid e he)
 
 /-- The mixed canonical list gives exactly Mathlib's complete multiplicities. -/
-theorem factorization_eq (F : Factorization) (h : checkFactorization F = true) (p : Nat) :
+theorem Factorization.factorization_eq (F : Factorization) (h : checkFactorization F = true) (p : Nat) :
     F.subject.factorization p =
       (F.factors.find? fun e => e.prime == p).elim 0 (·.exponent) := by
   rw [← checkFactorization_prod h]
@@ -77,7 +77,7 @@ theorem factorization_eq (F : Factorization) (h : checkFactorization F = true) (
 theorem CheckedFactorization.factorization_eq {n : Nat} (F : CheckedFactorization n) (p : Nat) :
     n.factorization p =
       (F.raw.factors.find? fun e => e.prime == p).elim 0 (·.exponent) := by
-  simpa only [F.subject_eq] using Hex.Nat.Mixed.factorization_eq F.raw F.valid p
+  simpa only [F.subject_eq] using Factorization.factorization_eq F.raw F.valid p
 
 /-- Complete listed support contains every prime divisor, and only those divisors. -/
 theorem CheckedFactorization.primeSupport {n q : Nat} (F : CheckedFactorization n)
@@ -98,7 +98,7 @@ theorem CheckedPartialFactorization.prime {n : Nat} (F : CheckedPartialFactoriza
   Hex.Nat.prime_iff.mp (checkPartial_prime ecppSoundness F.valid e he)
 
 /-- Partial multiplicities include any further prime powers in the residual. -/
-theorem partial_factorization_eq (F : PartialFactorization) (h : checkPartial F = true) (p : Nat) :
+theorem PartialFactorization.factorization_eq (F : PartialFactorization) (h : checkPartial F = true) (p : Nat) :
     F.subject.factorization p =
       (F.factors.find? fun e => e.prime == p).elim 0 (·.exponent) +
       F.residual.factorization p := by
@@ -121,7 +121,7 @@ theorem CheckedPartialFactorization.factorization_eq {n : Nat}
     n.factorization p =
       (F.raw.factors.find? fun e => e.prime == p).elim 0 (·.exponent) +
       F.raw.residual.factorization p := by
-  simpa only [F.subject_eq] using partial_factorization_eq F.raw F.valid p
+  simpa only [F.subject_eq] using PartialFactorization.factorization_eq F.raw F.valid p
 
 /-- A partial certified exponent is a lower bound, without certifying the residual. -/
 theorem CheckedPartialFactorization.exponent_le {n : Nat} (F : CheckedPartialFactorization n)
