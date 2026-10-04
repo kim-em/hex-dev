@@ -40,6 +40,8 @@ def main():
     parser.add_argument("--seed-offset", type=int, default=0,
                         help="Hex seed is subject plus this offset; timing trials repeat that seed")
     parser.add_argument("--primecert", type=Path)
+    parser.add_argument("--corpus", type=Path, help="independently frozen prime-subject corpus")
+    parser.add_argument("--split", choices=["tuning", "validation", "all"], default="all")
     args = parser.parse_args()
     if args.output.exists():
         parser.error("output already exists; retain the original experiment")
@@ -47,21 +49,30 @@ def main():
         parser.error("trials, jobs and timeout must be positive")
     if args.seed_offset < 0:
         parser.error("seed offset must be nonnegative")
-    if args.subjects == "bottlenecks" and args.mode != "factor":
+    if args.corpus and args.mode != "construct":
+        parser.error("custom prime corpus requires --mode construct")
+    if not args.corpus and args.subjects == "bottlenecks" and args.mode != "factor":
         parser.error("bottleneck predecessors are factorization inputs, not prime subjects")
     if "primecert" in args.profiles and (args.primecert is None or args.mode != "construct"):
         parser.error("primecert requires --primecert and --mode construct")
-    corpus_path = ROOT / "reports/ecpp/native512/corpus-v1.json"
+    corpus_path = args.corpus or ROOT / "reports/ecpp/native512/corpus-v1.json"
     corpus = json.loads(corpus_path.read_text())
-    cases = [c for c in corpus["cases"] if c["split"] ==
-             ("tuning" if args.subjects == "tuning" else "holdout")]
-    if args.subjects in ["successes", "bottlenecks"]:
+    if args.corpus:
+        if not corpus.get("complete"):
+            parser.error("custom corpus must be completely frozen")
+        cases = [c for c in corpus["cases"] if args.split == "all" or c["split"] == args.split]
+        if not cases or len({c["subject"] for c in cases}) != len(cases):
+            parser.error("custom corpus must select nonempty, distinct subjects")
+    else:
+        cases = [c for c in corpus["cases"] if c["split"] ==
+                 ("tuning" if args.subjects == "tuning" else "holdout")]
+    if not args.corpus and args.subjects in ["successes", "bottlenecks"]:
         cases = [c for c in cases if c["id"].endswith(("ordinary-4", "difficult-0"))]
-    if args.subjects == "fields":
+    if not args.corpus and args.subjects == "fields":
         from primality_cactus import corpus as field_corpus
         cases = [{"id": c["name"], "subject": int(c["n"])} for c in field_corpus()
                  if c["name"] in ["Curve25519", "secp256k1", "P-256", "P-384", "Curve448", "P-521"]]
-    if args.subjects == "bottlenecks":
+    if not args.corpus and args.subjects == "bottlenecks":
         for c in cases:
             c["subject"] = (231392247121855978133901766920235943779795090217764365202095841950595408010261529694920315912705259316767035574545980825506006625180389834577710157
                             if c["id"].endswith("ordinary-4") else c["subject"]) - 1
@@ -74,7 +85,7 @@ def main():
                "HexPrimality/Construction.lean"]
     report = {
         "protocol": "Fixed trial-major per-case schedule; adjacent profile arms, reverse order "
-                    "in odd trials; no supplied factors; retain every result and timeout. "
+                    "in alternate trials and alternate subjects; no supplied factors; retain every result and timeout. "
                     "The previously inspected eight holdout cases are now exploratory tuning "
                     "data, not independent validation of these new policies.",
         "argv": sys.argv, "host": platform.node(), "platform": platform.platform(),
@@ -82,6 +93,8 @@ def main():
                                           text=True).strip(),
         "toolchain": (ROOT / "lean-toolchain").read_text().strip(),
         "corpus_sha256": hashlib.sha256(corpus_path.read_bytes()).hexdigest(),
+        "cases": cases,
+        "corpus_path": str(corpus_path),
         "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
         "sources": {p: (ROOT / p).read_text() for p in sources},
         "source_sha256": {p: hashlib.sha256((ROOT / p).read_bytes()).hexdigest() for p in sources},
@@ -125,11 +138,14 @@ def main():
 
     save()
 
-    def run_case(case):
+    def run_case(indexed):
+        case_index, case = indexed
         cpu, lease = cpu_lease()
         try:
             for trial in range(args.trials):
-                profiles = args.profiles if trial % 2 == 0 else list(reversed(args.profiles))
+                # Reverse the first block across subjects too, so a one-trial
+                # coverage sweep does not always measure the same arm first.
+                profiles = args.profiles if (trial + case_index) % 2 == 0 else list(reversed(args.profiles))
                 for profile in profiles:
                     command = ([sys.executable, str(upstream / "scripts/prime_cert.py"),
                                 str(case["subject"])] if profile == "primecert" else
@@ -185,7 +201,7 @@ def main():
             lease.close()
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as executor:
-        list(executor.map(run_case, cases))
+        list(executor.map(run_case, enumerate(cases)))
     report["complete"] = True
     report["loadavg_end"] = list(os.getloadavg())
     save()

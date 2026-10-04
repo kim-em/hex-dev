@@ -32,7 +32,7 @@ private def rounds : List (Nat × Nat × Nat) :=
 #guard Ecm.validBounds 32768 524288
 
 private def staged (randomCurves trace : Bool) (mixed : Bool := false)
-    (early : Bool := false) :
+    (early : Bool := false) (interleave : Bool := false) :
     FactorSearch := fun allocation n r => Id.run do
   if n == 0 then return ⟨⟨[], 0⟩, r, 0, []⟩
   let limit := allocation.attemptLimit.getD 1024
@@ -46,7 +46,10 @@ private def staged (randomCurves trace : Bool) (mixed : Bool := false)
   let mut factors := initial.raw.factors
   let mut residual := 1
   let mut stack := [initial.raw.residual]
-  let schedule := if mixed then
+  let schedule := if interleave then
+    [(10000, 1000000, 8, true), (10000, 1000000, 42, true),
+      (32768, 524288, 64, false), (50000, 4000000, 200, true)]
+    else if mixed then
     [(10000, 1000000, 50, true), (32768, 524288, 64, false),
       (50000, 4000000, 200, true)]
     else rounds.map fun (b₁, b₂, curves) => (b₁, b₂, curves, randomCurves)
@@ -61,8 +64,40 @@ private def staged (randomCurves trace : Bool) (mixed : Bool := false)
     if isProbablePrime m then
       factors := insert m 1 factors
       continue
+    -- Recover cheap smooth factors before ECM on smaller residuals. On larger
+    -- residuals give eight curves a chance before paying for the long p-1 ladder.
+    let small := m.log2 + 1 ≤ 192
+    if interleave && small then
+      let found := Construction.factorSearch
+        { coreAllocation with
+          smoothBounds := [262144, 524288]
+          primeBudget := { coreAllocation.primeBudget with rhoRestarts := 0 }
+          attemptLimit := some (limit - work) } m rand
+      work := work + found.attempts
+      rand := found.rand
+      events := events ++ found.events
+      if !found.raw.factors.isEmpty then
+        for (p, e) in found.raw.factors do factors := insert p e factors
+        stack := found.raw.residual :: stack
+        continue
     let mut divisor := 0
     for idx in [:schedule.length] do
+      if interleave && idx == 1 then tables := tables.set! 1 tables[0]!
+      if interleave && !small && idx == 1 then
+        let found := Construction.factorSearch
+          { coreAllocation with
+            smoothBounds := [262144, 524288]
+            primeBudget := { coreAllocation.primeBudget with rhoRestarts := 0 }
+            attemptLimit := some (limit - work) } m rand
+        work := work + found.attempts
+        rand := found.rand
+        events := events ++ found.events
+        if !found.raw.factors.isEmpty then
+          -- Preserve all returned components; the normal worklist validates
+          -- and processes them using the same remaining allowance.
+          divisor := found.raw.factors.head!.1
+          if 1 < divisor && divisor < m && m % divisor == 0 then break
+          divisor := 0
       let (b₁, b₂, curves, randomCurves) := schedule[idx]!
       for curve in [:curves] do
         if work ≥ limit then break
@@ -111,10 +146,23 @@ private def profile (name : String) (trace : Bool) :
   | "mixed" => some (short, staged true trace true)
   | "efficient" => some (short, staged true trace true true)
   | "balanced" => some (balanced, staged true trace true true)
+  | "interleaved" => some (balanced, staged true trace true true true)
   | "random-retry" => some (constructionBudget, staged true trace)
   | _ => none
 
 public def main (args : List String) : IO UInt32 := do
+  if args == ["selftest"] then
+    let some (budget, provider) := profile "interleaved" false | return 2
+    for n in [0, 1, 2, 35, 49, 1000036000099] do
+      for limit in [0, 1, 2, 3, 8, 32] do
+        let result := provider { budget.factor with attemptLimit := some limit }
+          n (Hex.Rand.ofSeed 1)
+        unless result.attempts ≤ limit &&
+            result.raw.factors.foldl (fun acc (q, e) => acc * q^e)
+              result.raw.residual == n do
+          throw <| IO.userError "interleaved allowance or reconstruction failure"
+    IO.println "Interleaved resource and reconstruction checks passed"
+    return 0
   let (args, seedArg) := if args.length == 4 then (args.take 3, args[3]!) else (args, "")
   let [mode, name, subject] := args |
     throw <| IO.userError
