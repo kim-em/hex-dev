@@ -23,3 +23,12 @@ adapter/conformance roots and their union of 1103 local modules. The CI scanner
 walks shared dependencies once within an audit; it still rejects missing local
 imports, shadowed adapters and admissions and rereads sources on each new audit.
 The ten lexer/graph regression tests pass.
+
+[The final source record](named-admission-verification.json) binds the graph
+scanner, its [ten regression tests](final-named-admission-tests.log) and the
+[expanded square-root conformance build](final-sqrt-parity-build.log) to their
+committed source. The [original separate-cone audit](current-named-admission-audit.log)
+and [final union audit](final-named-admission-audit.log) produce identical
+295-root / 1103-module admission results. The tests cover overlapping and cyclic
+imports, fresh reads after source changes and missing mandatory roots without
+depending on traversal order.
