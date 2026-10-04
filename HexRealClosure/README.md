@@ -1921,15 +1921,42 @@ and staged-order results with dependency closure. The interpretation ingredients
    predecessors and checks cached generator images, their negatives and linear
    coefficient-field roots against the full converted descriptor. Covered
    equivalent intervals and reordered algebraic chains add no root level;
-   arbitrary expressions in several generators are not searched, and compatible
+   arbitrary expressions in several generators are not searched. Compatible
    real-prefix permutations remain outside the prefix check.
-   Owners
-   over incomparable real-prefix paths are rejected. Supporting them requires
-   new native inclusions for non-prefix keys as well as a joint realization.
-   Remaining: re-establish the canonical `Shared.Model`, including its target,
-   original owners and cache, after enlargement against the next staged
-   realization and lifted reference. Automatic dependency-closed traversal and
-   the total `Context.enlarge` constructor also remain required.
+   `Shared.Model.enlarge` re-establishes the canonical model, original owner
+   interpretations and predecessor cache against the next staged realization
+   and lifted reference. Finite operand requests use the interface below.
+
+### Finite live requests
+
+`Tower.Live.Frame owner` retains values, polynomials and checked descriptors
+in their immutable owner. A `Request` is an ordered finite list of these
+frames. `rootRequest` retains a selected root's defining descriptor in its
+predecessor and its actual cached child generator. Each owner supplies its
+validated coefficient ancestry through `Context.origin`.
+
+`Request.gather?` gathers that complete ancestry once, using the shared
+predecessor cache, and transports every frame through its retained inclusion.
+It validates every descriptor again against the actual common target.
+`Collection.enlarge?` rebuilds that shared suffix once after adding an
+infinitesimal, then refreshes every original request. The enlargement retains
+one map for the previous shared target and maps for all original owners;
+`Enlargement.maps` identifies their compositions. `Enlargement.collection`
+retains the original request for further enlargement.
+
+The companion proves gathering success from the canonical staged base
+factory and native prefix compatibility. It proves enlargement success with
+a complete canonical model of the returned collection. At every original
+frame position, the actual produced values, polynomial coefficients and
+selected roots retain their interpreted lists in one common model.
+Native tests gather a selected parent and dependent child in reverse order,
+transport computed values and coefficients, perform two enlargements, check
+fresh descriptor bindings and reject stale descriptors and serialized values
+and polynomials. The original contexts remain usable.
+
+Compatible real-prefix permutations still require non-prefix native
+inclusions and a joint realization. This finite request interface uses the
+existing prefix compatibility check.
 
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`

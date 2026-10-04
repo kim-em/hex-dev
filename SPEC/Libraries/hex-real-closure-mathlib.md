@@ -284,6 +284,18 @@ transported old cache all agree with this new canonical factory. The returned
 model supports later compatible registration and successive enlargement
 without additional coefficient or root agreement premises.
 
+`Tower.Live.Request.gather?_models` constructs the canonical shared model
+for a finite request of immutable owner frames. The executable gathering
+follows each owner's validated ancestry and refreshes every requested
+descriptor in the common target. `Request.transport?_semantics` preserves
+the complete value, polynomial-coefficient and selected-root lists at every
+original frame position. `Collection.enlarge?_models` constructs the complete
+canonical model of the actual enlarged collection, so the original request
+supports successive enlargement without supplied root or coefficient
+agreement. These factories use the native real-prefix and infinitesimal-depth
+compatibility check. Incomparable real-prefix owners require both non-prefix
+native inclusions and a joint realization.
+
 At a fixed level of initial degree `d`, there are at most `d-1` nontrivial
 persistent splits. Sum those bounds over a fixed tower; this is not a bound
 on future adjunctions or the cost of repeatedly recomputing a local split.
