@@ -278,11 +278,11 @@ and `[IsRealClosed R]` on the Mathlib side.
 
 | Statement | Required conclusion / owner |
 | --- | --- |
-| `query_sound` | `query p f a b = some q` implies `Domain p a b` and `q = TaQ(F,P;a,b)`; development `HexQuerySemantics` adapter. |
-| `check_sound` | Accepted replay implies the same domain and query equality; development `HexQuerySemantics` adapter via the shared replay theorem. |
+| `query_sound` | `query p f a b = some q` implies `Domain p a b` and `q = TaQ(F,P;a,b)`; ordinary `HexSturmMathlib.Soundness` companion. |
+| `check_sound` | Accepted replay implies the same domain and query equality; ordinary `HexSturmMathlib.Soundness` companion via the shared replay theorem. |
 | `query_isSome` | `(query p f a b).isSome ↔ Domain p a b`; executable guard/termination proof here, interpretation in companion. |
 | `certify_checks` | Certificates produced on the domain pass replay and carry the same value as `query`. |
-| `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; proved in the development `HexQuerySemantics` adapters, for eventual companion publication. |
+| `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; proved in ordinary `HexSturmMathlib.Soundness` and exported by the companion umbrella. |
 | `query_congr` | Order-preserving field maps and transported endpoints preserve query results, including domain validity. |
 | `check_congr` | Checked positive-scaled chains have equal values; producer acceptance gives whole-`Option` rational/integer agreement with different normalizers. |
 | `query_rat_eq` | Positive denominator clearing at rational coefficients and dyadic endpoints agrees, including `none`, with `ZPoly.tarskiQuery`; companion. |

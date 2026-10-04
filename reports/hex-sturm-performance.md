@@ -16,8 +16,9 @@ former repeated-normalization cost from the implemented recurrence products.
 
 All earlier declarations, failures and samples are retained. These observations
 cover effective query/checker paths. They do not attest complete frontend Phase-4 coverage or downstream extension
-evidence. The general signed-root-sum theorem is proved in the development
-`HexQuerySemantics` target; theorem-only companions have no dedicated Phase-4
+evidence. The general signed-root-sum theorem is exported by ordinary
+`HexRealRootsMathlib` and `HexSturmMathlib` imports. `HexQuerySemantics` retains
+semantic regression tests; theorem-only companions have no dedicated Phase-4
 performance deliverable under the current policy.
 
 ## Original protocol and provenance
@@ -454,8 +455,8 @@ the measured code.
 The separate fresh-module proof track checks literal acceptance, rejection of a
 false terminal identity, stale-context rejection and interpretation of the
 accepted domain. The delivered IVT/Rolle and signed-remainder foundation now establishes
-query root-sum semantics through `HexQuerySemantics`; its ordinary-kernel
-semantic replay tests and axiom guards are correctness checks, separate from
+query root-sum semantics in the ordinary Mathlib companions; `HexQuerySemantics`
+retains ordinary-kernel semantic replay tests and axiom guards, separate from
 compiled arithmetic performance.
 
 The independent size sweeps and operation/normalization diagnostics above are
@@ -466,8 +467,9 @@ upper-bound observation below. Current Phase-4 admission remains suspended
 until its dominant-phase attribution satisfies the policy. Concrete
 extension-depth and nested-evidence probes belong downstream under #10378;
 general root-sum/replay soundness, singleton/sign/bound consequences and the
-exact-domain natural root-count wrapper are proved in the development
-`HexQuerySemantics` target. Their [semantic proof-cost evidence](sturm-tarski-semantics.md)
+exact-domain natural root-count wrapper are proved and exported by the ordinary
+`HexSturmMathlib` companion. Its regression target `HexQuerySemantics` keeps
+the semantic replay and axiom tests. Their [semantic proof-cost evidence](sturm-tarski-semantics.md)
 is separate from these arithmetic measurements. The integer query-one
 finite/whole-line counts and rational finite-dyadic specialization also retain
 their proofs using the existing real Sturm theorem. Whole-`Option` field-representation and
