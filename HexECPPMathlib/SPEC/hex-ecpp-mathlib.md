@@ -358,3 +358,16 @@ on a representative 128-bit subject. PARI generation/export uses the protocol
 script as its evidence because GP is optional; replay probes alone do not
 attest generation. The computational partner owns compiled
 performance claims and profiles.
+
+## Mixed integer-factorization integration
+
+`HexIntFactorMathlib.Mixed` explicitly imports `HexECPPMathlib.Soundness` and
+uses `Hex.ECPP.natPrime_of_checkAt` for every ECPP-bearing factor entry. This
+companion gains no dependency on HexIntFactor or HexIntFactorMathlib. Mixed
+computational exports import only their computational replay boundary; they
+carry checked data, while unconditional primality and `Nat.factorization`
+correspondence require the designated factorization companion. Existing ECPP
+replay/production policies and legacy primality certificate semantics remain
+unchanged. The new consumer separately measures its combined certificate and
+subject replay allocations; existing ECPP corpus success alone does not
+discharge that integration evidence.

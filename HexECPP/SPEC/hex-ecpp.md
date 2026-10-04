@@ -592,3 +592,16 @@ The subject ceiling remains at most 512 bits; the caller checks it before work.
 This definition imports no Mathlib, registers no tactic and makes no coverage
 claim. The default `produce`, explicit native256/native512 policies, search
 algorithm and checker remain unchanged.
+
+## Mixed integer-factorization integration
+
+The optional `HexIntFactor.Mixed` modules consume `Cert`, `checkAt` and the
+existing bounded native `produce`; ownership and allocations are specified in
+[HexIntFactor](../../HexIntFactor/SPEC/hex-int-factor.md#optional-mixed-primality-evidence).
+ECPP gains no dependency on HexIntFactor and no new certificate semantics,
+producer, fallback in ordinary primality dispatch or external certificate
+backend. Terminal certificates still embed legacy `PrimeCert`. Computational
+factor replay requires only `HexECPP.Cert`; optional completion imports search
+separately. Factor-base and whole-factorization subject limits are independent.
+Unconditional mixed primality is discharged in HexIntFactorMathlib through
+HexECPPMathlib, never asserted in the computational replay closure.

@@ -85,3 +85,25 @@ The public divisor-enumeration transports (`divisors_eq`, `divisors_list_eq`,
 `reports/hex-int-factor-divisor-protocol-4.md`, which retains the three exhausted
 predecessor protocols and all unsuccessful evidence. The core registration
 therefore discharges performance coverage for these transported APIs.
+
+## Explicit mixed-evidence companion
+
+`HexIntFactorMathlib.Mixed` is imported explicitly, outside the legacy umbrella.
+It owns unconditional soundness for `Hex.Nat.Mixed` complete/partial checked
+data and the two pointwise `factorization_eq` theorems specified in the
+[computational contract](../../HexIntFactor/SPEC/hex-int-factor.md#optional-mixed-primality-evidence).
+It imports mixed computational replay and `HexECPPMathlib.Soundness`, discharging
+the core ECPP hypothesis with `natPrime_of_checkAt` and `prime_iff`. Legacy
+evidence uses existing `PrimeCert` soundness. The complete theorem gives exact
+listed exponents and support; the partial theorem adds the uncertified
+residual's Mathlib factorization, giving lower bounds and exactness only when
+the residual has no further factor of the listed prime. Prove complete/partial
+prime-support statements and audit headline proof dependencies. No search,
+process, elaborator or producer is imported by this correspondence module.
+
+This module does not extend legacy divisor/arithmetic/order APIs to mixed data.
+A caller must obtain a successful explicit legacy-only conversion to use those
+APIs. Both legacy umbrella imports and headline theorems retain their closure.
+Release pins add hex-ecpp-mathlib, retaining the Mathlib-free computational split.
+Fresh proof-client and computational export replay, mathematical adversarial
+coverage, manual examples and headline axiom probes verify this boundary.
