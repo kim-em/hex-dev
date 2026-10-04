@@ -360,6 +360,69 @@ setup_fixed_benchmark runNested where {
   repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
 }
 
+/-- The exact ascending MetiTarski degree-15 input from CADE 2013, section 4.
+The independent Phase4 oracle checks its least-root interval and root count. -/
+private def metiCoefficients : Array Rat := #[592704, 402192, 90972, 3266731,
+  -931392, -193914, -5792221, 756756, 140742, 3046158, -259308,
+  -42336, -520884, 31752, 4536, 216]
+
+private def metiHead : nativeBase.Poly :=
+  DensePoly.ofCoeffs (metiCoefficients.map fun q => ⟨q⟩)
+
+initialize metiRef : IO.Ref (Option nativeBase.Poly) ← IO.mkRef (some metiHead)
+
+/-- Profile the actual first complete-root operation on the MetiTarski input.
+The call checks the returned root count before returning its harness result. -/
+def runMetiFirst : Unit → IO UInt64 := fun _ => do
+  let some head ← metiRef.get | throw (IO.userError "missing MetiTarski first input")
+  let .ok (.finite roots) := nativeBase.roots? head
+    | throw (IO.userError "MetiTarski first root operation failed")
+  unless roots.length == 3 do throw (IO.userError "MetiTarski first root count changed")
+  return 1
+
+setup_fixed_benchmark runMetiFirst where {
+  repeats := 10, maxSecondsPerCall := 120.0, expectedHash := some 0x1
+}
+
+private instance : Hashable (Σ owner : Tower.Context nativeRegistry, owner.Poly) where
+  hash input := hash (input.1.writePoly input.2).value
+
+/-- Prepare the actual least-root coefficient context outside the measured
+second-stage operation. Odd degrees extend `Y³ + α³ + 1` for a degree ladder;
+rung three is the exact second MetiTarski input. -/
+def metiSecondInput (degree : Nat) : Option (Σ owner : Tower.Context nativeRegistry, owner.Poly) :=
+  match nativeBase.roots? metiHead with
+  | .ok (.finite (first :: _)) =>
+    if first.root.signAt (DensePoly.ofCoeffs #[⟨1875 / 2048⟩, 1]) != 1 ||
+        first.root.signAt (DensePoly.ofCoeffs #[⟨1875 / 4096⟩, 1]) != -1 then none
+    else
+      let owner := first.root.context
+      let alpha := first.root.value
+      let y : owner.Poly := DensePoly.ofCoeffs #[0, 1]
+      let power := (List.range degree).foldl (fun p _ => p * y) (DensePoly.C 1)
+      some ⟨owner, power + DensePoly.C (alpha * alpha * alpha + 1)⟩
+  | _ => none
+
+/-- Complete native root production over the retained least-root context.
+Preparation, hashing and process exit are outside the profile's timed regions. -/
+def runMetiSecond (input : Option (Σ owner : Tower.Context nativeRegistry, owner.Poly)) : UInt64 :=
+  match input with
+  | none => 0
+  | some ⟨owner, head⟩ =>
+    match owner.roots? head with
+    | .ok (.finite roots) => if roots.length == 1 then 1 else 0
+    | _ => 0
+
+setup_benchmark runMetiSecond n => n^3
+  with prep := metiSecondInput
+  where {
+    paramFloor := 3, paramCeiling := 9
+    paramSchedule := .custom #[3, 5, 7, 9]
+    maxSecondsPerCall := 120.0
+    targetInnerNanos := 500000000
+    signalFloorMultiplier := 1.0
+  }
+
 end Hex.RealClosure.Bench
 
 def main (args : List String) : IO UInt32 :=
