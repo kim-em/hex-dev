@@ -143,16 +143,17 @@ example :
   rw [keys]
   exact ⟨List.nil_prefix, by decide⟩
 
-/-- Gathering the actual mixed-depth parent and duplicated child succeeds
-with the constructed reference, then the canonical owner factory preserves
-both copies of every child value. No producer success is assumed. -/
+/-- Gathering owners over two compatible infinitesimal bases succeeds with
+the constructed reference. Canonical owner models identify both copies of
+every child value; this is semantic agreement, not a native cache-hit test. -/
 example (descriptor : SignDet.Descriptor
       (Tower.Context.ofBase (rationalModel.context.finish.extend 1)).Value Tower.Signature
       (Tower.Context.ofBase (rationalModel.context.finish.extend 1)).sign
       (Tower.Context.ofBase (rationalModel.context.finish.extend 1)).signature) :
     let source := Tower.Context.ofBase (rationalModel.context.finish.extend 1)
     let child := source.adjoin descriptor
-    let owners := [child.context, source, child.context]
+    let owners := [child.context, source, child.context,
+      Tower.Context.ofBase rationalModel.context.finish]
     let reference := (providerModel.staged 2).reference.model
     ∃ shared : Tower.Shared (providerModel.context.finish.extend 2) owners,
       Tower.Shared.gather? (providerModel.context.finish.extend 2) owners = some shared ∧
@@ -161,7 +162,8 @@ example (descriptor : SignDet.Descriptor
           model.target.value (shared.value 0 a) = model.target.value (shared.value 2 a) := by
   let source := Tower.Context.ofBase (rationalModel.context.finish.extend 1)
   let child := source.adjoin descriptor
-  let owners := [child.context, source, child.context]
+  let owners := [child.context, source, child.context,
+      Tower.Context.ofBase rationalModel.context.finish]
   let reference := (providerModel.staged 2).reference.model
   have parentCompatible : source.origin.base.signature.constants <+:
       (providerModel.context.finish.extend 2).signature.constants ∧
@@ -181,14 +183,26 @@ example (descriptor : SignDet.Descriptor
     change (source.adjoin descriptor).context.origin.base.signature.constants <+: _ ∧ _
     rw [Tower.Context.origin_adjoin, Tower.Origin.snoc_base]
     exact parentCompatible
+  have rationalCompatible : (Tower.Context.ofBase rationalModel.context.finish).origin.base.signature.constants <+:
+      (providerModel.context.finish.extend 2).signature.constants ∧
+      (Tower.Context.ofBase rationalModel.context.finish).origin.base.signature.infinitesimals ≤
+        (providerModel.context.finish.extend 2).signature.infinitesimals := by
+    rw [originBase]
+    simp only [RealPrefix.finish_signature, PackedContext.extend_signature]
+    have keys : rationalModel.context.keys = [] := by
+      simp only [rationalModel, RealPrefix.Model.rational, RealPrefix.Model.context,
+        RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys]
+    rw [keys]
+    exact ⟨List.nil_prefix, by decide⟩
   obtain ⟨shared, produced, _⟩ := Tower.Shared.gather?_models (providerModel.staged 2)
     reference owners (by
       intro owner present
       simp only [owners, List.mem_cons, List.not_mem_nil, or_false] at present
-      rcases present with same | same | same <;> subst owner
+      rcases present with same | same | same | same <;> subst owner
       · exact childCompatible
       · exact parentCompatible
-      · exact childCompatible)
+      · exact childCompatible
+      · exact rationalCompatible)
   let model := Tower.Shared.Model.ofGather (providerModel.staged 2) reference owners shared produced
   have duplicate := Option.some.inj ((model.canonicalOwners 0).symm.trans (model.canonicalOwners 2))
   refine ⟨shared, produced, model, fun a => ?_⟩

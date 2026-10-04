@@ -78,6 +78,7 @@ theorem Context.model?_value
   have preserved := (BaseInclusion.Model.derive following inclusion target).value a
   rw [BaseInclusion.Model.derive_target, ← Option.some.inj same] at preserved
   exact preserved
+
 private theorem Context.model?_base_proof
     (following : base.Realization) (target : Tower.Model (Context.ofBase base) R) :
     (Context.ofBase base).model? following target = some target := by
@@ -194,10 +195,10 @@ end Hex.RealClosure.Tower
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Context.model?_embed
 
-
 /-- info: 'Hex.RealClosure.Tower.Context.model?_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Context.model?_value
+
 /-- info: 'Hex.RealClosure.Tower.Context.model?_base' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Context.model?_base

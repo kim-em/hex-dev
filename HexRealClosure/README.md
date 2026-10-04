@@ -884,7 +884,9 @@ conformance driver exports the actual recursive stored values and root frames;
 the independent Z3 oracle checks selected roots, cached signs, coefficient
 inclusions and arithmetic. Its embedded replay graphs are retained data and
 are not replayed by that oracle. Automatic dependency-closed collection of
-live contexts remains required.
+live contexts remains required, including staged bases whose real-prefix
+paths are not prefixes of one declared base. Those cases require a joint
+realization; separate real-constant laws do not supply it.
 
 `TowerCoverage.lean` connects the native producer to the relative algebraic
 union. `Model.nativePoly` lifts coefficients from the input's mathematical
@@ -1594,7 +1596,7 @@ owner inclusion and predecessor cache entry in that same field. Its
 `canonicalOwners` field identifies every retained owner with its `Context.model?`
 factory result, including through `Shared.Model.ofGather`. The target and
 cached original models are constructed through `Context.model?`; cache hits
-therefore agree with the incoming original predecessor without a separate
+therefore agree semantically with the incoming original predecessor without a separate
 coefficient-agreement hypothesis. `Shared.Model.ofGather` packages the model
 for an already returned native result. Callers supply the declared base's
 provider realization, a model in an ordered real closed field, and the
@@ -1821,7 +1823,8 @@ and staged-order results with dependency closure. The interpretation ingredients
    exact base and validated root suffix. Reuse recognizes exact native
    predecessors. Equivalent selected roots with different intervals or
    reordered chains can still add redundant algebraic levels; arbitrary
-   compatible real-prefix permutations remain outside the prefix check.
+   compatible real-prefix permutations remain outside the prefix check. Owners
+   over incomparable real-prefix paths require a supplied joint realization.
    Remaining: re-establish the canonical `Shared.Model`, including its target,
    original owners and cache, after enlargement against the next staged
    realization and lifted reference. Automatic dependency-closed traversal and
