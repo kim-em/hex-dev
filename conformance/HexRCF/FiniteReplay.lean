@@ -111,6 +111,25 @@ private def proposed := Replay.build input real 256 5
 #guard_msgs (whitespace := lax) in
 #print axioms Replay.build_spec
 
+-- A production comparison option cannot reconstruct frozen Horner evidence.
+-- The two literal serializations must be identical, including every entry.
+run_meta do
+  let .ok data ← pure (FieldBuild.produceWithin SquareTwo.polynomial SquareTwo.square
+      hw hp real values formula () 256 5 (monicCore := true)) |
+    throwError "frozen quotation fixture failed production"
+  unless data.signs.entries.any (·.evidence.isNone) do
+    throwError "frozen quotation fixture contains no Horner evidence"
+  let quote := FieldLiteral.resultExpr (Lean.mkConst ``SquareTwo.polynomial)
+    (Lean.mkConst ``root) (Lean.mkConst ``formula) formula data
+  let original ← Lean.withOptions (fun opts => opts.setBool `rcf.algebraic.intervalSigns true) quote
+  let control ← Lean.withOptions (fun opts => opts.setBool `rcf.algebraic.intervalSigns false) quote
+  unless original == control do
+    throwError "frozen quotation changed evidence under a production option"
+  let proof ← Lean.withOptions (fun opts => opts.setBool `rcf.algebraic.intervalSigns false) do
+    FieldLiteral.replay (Lean.mkConst ``SquareTwo.polynomial) (Lean.mkConst ``root)
+      (Lean.mkConst ``values) (Lean.mkConst ``formula) values formula .existsReal data
+  Hex.RCF.checkAxioms `Hex.RCF.FiniteReplayTests proof
+
 private def falseFormula : RealFormula.QF 3 := .atom ⟨1, .eq⟩
 
 -- Invalid frozen evidence cannot become a false or unresolved goal diagnostic.
