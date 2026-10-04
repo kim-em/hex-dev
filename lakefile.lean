@@ -1792,6 +1792,10 @@ lean_exe hexrealclosure_bench where
   srcDir := "bench"
   root := `HexRealClosure.Bench
 
+lean_exe hexrealclosure_phase4 where
+  srcDir := "bench"
+  root := `HexRealClosure.Phase4
+
 lean_exe hexrealclosure_trivial_tests where
   root := `HexRealClosure.TrivialTowerTests
 
