@@ -101,6 +101,8 @@ def run : IO Unit := do
   check collection
   let some enlarged := collection.enlarge?
     | throw (IO.userError "live enlargement failed")
+  require (decide (enlarged.previous.value 0 = 0))
+    "live enlargement did not preserve zero for one-hop transport"
   check enlarged.collection
   let target := enlarged.collection.shared.input.context
   let some first := collection.frames[0]? | throw (IO.userError "missing original descriptor frame")
@@ -120,6 +122,8 @@ def run : IO Unit := do
   require (first.descriptors.length == refreshed.descriptors.length) "descriptor count changed"
   let some twice := enlarged.collection.enlarge?
     | throw (IO.userError "second live enlargement failed")
+  require (decide (twice.previous.value 0 = 0))
+    "second enlargement did not preserve zero for one-hop transport"
   check twice.collection
   require (twice.collection.shared.input.context.sign twice.parameter == 1 &&
     twice.collection.shared.input.context.compare twice.parameter

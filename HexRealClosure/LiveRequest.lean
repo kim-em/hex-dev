@@ -222,7 +222,7 @@ order rather than identifying owners by names or equality searches. -/
 /-- A selected root requests both its defining descriptor in the predecessor
 and its actual generator in its cached child. Gathering follows each owner's
 validated ancestry before converting either operand. -/
-def rootRequest {parent : Context registry} (root : Root parent) : Request registry :=
+@[expose] def rootRequest {parent : Context registry} (root : Root parent) : Request registry :=
   match root with
   | .point value => [⟨parent, { values := [value] }⟩]
   | .selected descriptor extension _ =>
@@ -383,7 +383,7 @@ theorem Request.gather?_shared (base : BaseContext.PackedContext registry)
       rfl
 
 /-- Index the actual converted frames by their original request positions. -/
-def Collection.frame {base : BaseContext.PackedContext registry} {request : Request registry}
+@[expose] def Collection.frame {base : BaseContext.PackedContext registry} {request : Request registry}
     (collection : Collection base request) (index : Fin request.length) :
     Frame collection.shared.input.context :=
   collection.frames[index.val]'(by
@@ -496,5 +496,33 @@ theorem Enlargement.frames_oneHop {base : BaseContext.PackedContext registry}
   rw [Request.transport?_comp request original.shared.maps original.frames original.produced
     result.shared.previous zero, ← original.shared.enlarge?_maps result.shared result.sharedProduced]
   exact result.produced
+
+/-- The public collection retains precisely the enlargement's actual frames. -/
+theorem Enlargement.collection_frames {base : BaseContext.PackedContext registry}
+    {request : Request registry} {original : Collection base request}
+    (result : Enlargement original) : HEq result.collection.frames result.frames := by
+  unfold Enlargement.collection
+  exact HEq.rfl
+
+/-- The public predecessor inclusion is the retained producer inclusion. -/
+theorem Enlargement.previous_eq {base : BaseContext.PackedContext registry}
+    {request : Request registry} {original : Collection base request}
+    (result : Enlargement original) : HEq result.previous result.shared.previous := by
+  unfold Enlargement.previous Enlargement.collection
+  exact HEq.rfl
+
+/-- The public parameter is the actual producer's new infinitesimal. -/
+theorem Enlargement.parameter_eq {base : BaseContext.PackedContext registry}
+    {request : Request registry} {original : Collection base request}
+    (result : Enlargement original) : HEq result.parameter result.shared.parameter := by
+  unfold Enlargement.parameter Enlargement.collection
+  exact HEq.rfl
+
+/-- Total indexed access agrees with the actual produced frame list. -/
+theorem Collection.frame_eq {base : BaseContext.PackedContext registry} {request : Request registry}
+    (collection : Collection base request) (index : Fin request.length) :
+    collection.frames[index.val]? = some (collection.frame index) := by
+  unfold Collection.frame
+  exact List.getElem?_eq_getElem _
 
 end Hex.RealClosure.Tower.Live

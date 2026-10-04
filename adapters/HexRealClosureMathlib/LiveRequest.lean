@@ -8,6 +8,7 @@ module
 public import HexRealClosure.LiveRequest
 public import HexRealClosureMathlib.CacheGather
 public import HexRealClosureMathlib.TowerRoots
+public import HexRealClosureMathlib.SharedPresentation
 
 public section
 
@@ -256,6 +257,75 @@ noncomputable def Collection.model {base : BaseContext.PackedContext registry}
   Shared.Model.ofGather following reference request.owners collection.shared
     (Request.gather?_shared base request collection produced)
 
+/-- In the actual gathered frames of a selected root request, the retained
+child value equals the root selected by its refreshed predecessor descriptor.
+Both original interpretations are supplied by the common canonical factory. -/
+theorem Collection.root_agreement {base : BaseContext.PackedContext registry}
+    {parent : Context registry} (root : Root parent)
+    (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature)
+    (selected : root.selection = .selected descriptor)
+    (collection : Collection base (rootRequest root))
+    {following : base.Realization} {reference : Model (Context.ofBase base) K}
+    (model : Shared.Model collection.shared following reference) :
+    ∃ (predecessor child : Frame collection.shared.input.context)
+        (fresh : SignDet.Descriptor collection.shared.input.context.Value Signature
+          collection.shared.input.context.sign collection.shared.input.context.signature)
+        (value : collection.shared.input.context.Value),
+      collection.frames[0]? = some predecessor ∧ collection.frames[1]? = some child ∧
+        predecessor.descriptors = [fresh] ∧ child.values = [value] ∧
+        model.target.value value = fresh.root model.target.value model.target.zero_iff model.target.one
+          model.target.add model.target.sub model.target.mul model.target.nat model.target.sign := by
+  cases root with
+  | point value => simp [Root.selection] at selected
+  | selected original extension built =>
+    simp only [Root.selection, Isolation.Root.selected.injEq] at selected
+    cases selected
+    cases built
+    let root : Root parent := .selected descriptor (parent.adjoin descriptor) rfl
+    let request := rootRequest root
+    let firstIndex : Fin request.length := ⟨0, by simp [request, rootRequest, root]⟩
+    let secondIndex : Fin request.length := ⟨1, by simp [request, rootRequest, root]⟩
+    obtain ⟨predecessor, firstAt, firstBuilt⟩ := Request.transport?_frame request collection.shared.maps
+      collection.frames collection.produced firstIndex
+    obtain ⟨child, secondAt, secondBuilt⟩ := Request.transport?_frame request collection.shared.maps
+      collection.frames collection.produced secondIndex
+    have raw := Frame.transport?_descriptors (request.frame firstIndex)
+      (collection.shared.maps.get ⟨0, by simp [request, Request.owners, rootRequest, root]⟩)
+      predecessor firstBuilt
+    have length : predecessor.descriptors.length = 1 := by
+      have measured := congrArg List.length raw
+      simp only [List.length_map] at measured
+      exact measured
+    obtain ⟨fresh, only⟩ := List.length_eq_one_iff.mp length
+    let ownerIndex : Fin request.owners.length := ⟨0, by simp [request, Request.owners, rootRequest, root]⟩
+    let childIndex : Fin request.owners.length := ⟨1, by simp [request, Request.owners, rootRequest, root]⟩
+    let originalModel : Model parent K := (model.owners.get ownerIndex).1
+    have originalProduced : parent.model? following reference = some originalModel :=
+      model.canonicalOwners ownerIndex
+    have childProduced := root.model?_ofModel following reference originalModel originalProduced
+    have childValue := model.value_of_model childIndex (root.model originalModel) childProduced root.value
+    have childValues := Frame.transport?_values (request.frame secondIndex)
+      (collection.shared.maps.get childIndex) child secondBuilt
+    have roots := Frame.transport?_root (model.owners.get ownerIndex).2.val
+      (request.frame firstIndex) predecessor firstBuilt
+    rw [(model.owners.get ownerIndex).2.property] at roots
+    rw [only] at roots
+    change [fresh.root model.target.value model.target.zero_iff model.target.one
+      model.target.add model.target.sub model.target.mul model.target.nat model.target.sign] =
+      [descriptor.root originalModel.value originalModel.zero_iff originalModel.one originalModel.add
+        originalModel.sub originalModel.mul originalModel.nat originalModel.sign] at roots
+    have rootEq : fresh.root model.target.value model.target.zero_iff model.target.one
+        model.target.add model.target.sub model.target.mul model.target.nat model.target.sign =
+        descriptor.root originalModel.value originalModel.zero_iff originalModel.one originalModel.add
+          originalModel.sub originalModel.mul originalModel.nat originalModel.sign := by
+      exact List.cons.inj roots |>.1
+    refine ⟨predecessor, child, fresh, collection.shared.value childIndex root.value,
+      firstAt, secondAt, only, ?_, ?_⟩
+    · exact childValues
+    · rw [childValue]
+      change root.denote originalModel = _
+      exact (root.denote_selection originalModel).trans rootEq.symm
+
 /-- Across enlargement, each refreshed frame preserves the ordered values,
 coefficients and selected roots of the old frame in its lifted model. -/
 theorem Enlargement.semantics {base : BaseContext.PackedContext registry}
@@ -298,6 +368,22 @@ theorem Collection.enlarge?_models {base : BaseContext.PackedContext registry}
   rw [same]
   exact ⟨returned, parameter, previous, aligned⟩
 
+/-- Retrieve the canonical model of an actual enlargement through its public
+collection interface, directly usable by the next enlargement. -/
+noncomputable def Enlargement.model {base : BaseContext.PackedContext registry}
+    {request : Request registry} {original : Collection base request}
+    (result : Enlargement original) {following : base.Realization}
+    {reference : Model (Context.ofBase base) K}
+    (oldModel : Shared.Model original.shared following reference)
+    (ambient : Ambient (Hex.RationalFn K))
+    (produced : original.enlarge? = some result) :
+    Shared.Model result.collection.shared following.infinitesimal (Model.next base reference ambient) :=
+  Classical.choice (by
+    obtain ⟨next, built, returned, _, previous, aligned⟩ := original.enlarge?_models oldModel ambient
+    have same := Option.some.inj (built.symm.trans produced)
+    cases same
+    exact ⟨result.collection_shared.symm ▸ returned⟩)
+
 end Hex.RealClosure.Tower.Live
 
 /-- info: 'Hex.RealClosure.Tower.Live.Frame.transport?_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -331,3 +417,11 @@ end Hex.RealClosure.Tower.Live
 /-- info: 'Hex.RealClosure.Tower.Live.rootRequest_semantics' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Live.rootRequest_semantics
+
+/-- info: 'Hex.RealClosure.Tower.Live.Collection.root_agreement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.Collection.root_agreement
+
+/-- info: 'Hex.RealClosure.Tower.Live.Enlargement.model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.Enlargement.model

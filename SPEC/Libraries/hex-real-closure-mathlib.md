@@ -293,8 +293,12 @@ original frame position. `Collection.enlarge?_models` constructs the complete
 canonical model of the actual enlarged collection, the new parameter identity
 and its checked predecessor model. `Enlargement.semantics` preserves each
 ordered frame list across the enlargement in the lifted old model, and
-`rootRequest_semantics` connects its cached generator and refreshed descriptor.
-The original request
+`Collection.root_agreement` connects the actual child value and refreshed
+predecessor descriptor in the returned root-request frames, deriving both
+models from the common canonical factory. It applies after enlargement too.
+`Enlargement.model` retrieves the returned canonical model through its public
+collection interface. Public projection equations and `Collection.frame_eq`
+connect these semantic claims to the executable accessors. The original request
 supports successive enlargement without supplied root or coefficient
 agreement. These factories use the native real-prefix and infinitesimal-depth
 compatibility check. Incomparable real-prefix owners require both non-prefix

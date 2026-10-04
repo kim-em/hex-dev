@@ -1956,9 +1956,16 @@ selected roots retain their interpreted lists in one common model.
 `Collection.enlarge?_models` retains the new parameter identity and the
 checked predecessor model; `Enlargement.semantics` preserves the ordered
 frame lists across that enlargement in the lifted old model.
-`rootRequest_semantics` identifies a transported cached generator with its
-refreshed descriptor using the canonical child model of its predecessor.
-`Collection.frame` provides total access by an original request index.
+`Collection.root_agreement` identifies the actual child value in a collected
+root request with the root selected by its actual refreshed predecessor
+descriptor. Both interpretations come from the collection's canonical factory;
+no root-agreement premise is supplied. It also applies to the collection
+returned by enlargement. `Enlargement.model` retrieves that new canonical
+model through the public collection interface for the next enlargement.
+`Collection.frame` provides total access by an original request index, with
+`frame_eq` identifying it with the returned frame list. Public projection
+equations identify the enlargement's collection frames, previous map and
+parameter with its checked packet.
 Native tests gather a selected parent and dependent child in reverse order,
 transport computed values and coefficients, perform two enlargements, check
 fresh descriptor bindings and reject stale descriptors and serialized values
@@ -1966,8 +1973,8 @@ and polynomials. The original contexts remain usable.
 
 Compatible real-prefix permutations still require non-prefix native
 inclusions and a joint realization. Realization through arbitrary interleaved
-algebraic and infinitesimal stages also remains open. This finite request interface uses the
-existing prefix compatibility check.
+algebraic and infinitesimal stages also remains open. This finite request
+interface uses the existing prefix compatibility check.
 
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
