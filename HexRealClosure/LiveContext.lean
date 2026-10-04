@@ -103,6 +103,7 @@ result data, together with the new owner and every earlier owner map. -/
 structure Registration {base : BaseContext.PackedContext registry}
     {owners : List (Context registry)} (original : Shared base owners)
     (source : Context registry) : Type 1 where
+  private mk ::
   shared : Shared base (owners ++ [source])
   previous : Inclusion original.input.context shared.input.context
   newest : Inclusion source shared.input.context
