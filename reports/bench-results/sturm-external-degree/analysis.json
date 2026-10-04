@@ -10,6 +10,8 @@
       "protocol_us": 7.1323071899414066,
       "raw_ratio": 2.4372323507375273,
       "adjusted_ratio": 2.2334504867361202,
+      "hex_raw_ratio": 0.410313557916891,
+      "hex_adjusted_ratio": 0.44775147818628847,
       "protocol_fraction": 0.0836194016835768
     },
     {
@@ -21,6 +23,8 @@
       "protocol_us": 7.0093251953125,
       "raw_ratio": 1.5429111798710005,
       "adjusted_ratio": 1.3429381717711524,
+      "hex_raw_ratio": 0.6481254560842771,
+      "hex_adjusted_ratio": 0.7446368081302479,
       "protocol_fraction": 0.12973808170446424
     },
     {
@@ -32,6 +36,8 @@
       "protocol_us": 6.882649475097656,
       "raw_ratio": 1.9839357029610467,
       "adjusted_ratio": 1.9158426317024102,
+      "hex_raw_ratio": 0.5040869164477421,
+      "hex_adjusted_ratio": 0.5220019755158471,
       "protocol_fraction": 0.034158803319856795
     },
     {
@@ -43,6 +49,8 @@
       "protocol_us": 6.710752746582031,
       "raw_ratio": 1.0848854535831753,
       "adjusted_ratio": 1.0186130682687438,
+      "hex_raw_ratio": 0.9219586795853274,
+      "hex_adjusted_ratio": 0.9819594745506309,
       "protocol_fraction": 0.06093454288745642
     },
     {
@@ -54,6 +62,8 @@
       "protocol_us": 7.1313798828125,
       "raw_ratio": 1.6285663498557297,
       "adjusted_ratio": 1.607478128759039,
+      "hex_raw_ratio": 0.6140386318274276,
+      "hex_adjusted_ratio": 0.6220939429805372,
       "protocol_fraction": 0.012948705321857842
     },
     {
@@ -65,6 +75,8 @@
       "protocol_us": 7.021268005371094,
       "raw_ratio": 1.019580642517235,
       "adjusted_ratio": 0.9988798155269728,
+      "hex_raw_ratio": 0.980801144475471,
+      "hex_adjusted_ratio": 1.0011279056610092,
       "protocol_fraction": 0.020371858099407895
     },
     {
@@ -76,6 +88,8 @@
       "protocol_us": 7.110777526855469,
       "raw_ratio": 2.700876226371709,
       "adjusted_ratio": 2.6954585661103003,
+      "hex_raw_ratio": 0.3702522459813282,
+      "hex_adjusted_ratio": 0.37099643457152365,
       "protocol_fraction": 0.0020059059047147693
     },
     {
@@ -87,6 +101,8 @@
       "protocol_us": 7.064155029296875,
       "raw_ratio": 1.4226498626520943,
       "adjusted_ratio": 1.4171795793531583,
+      "hex_raw_ratio": 0.7029181893757976,
+      "hex_adjusted_ratio": 0.7056315788665442,
       "protocol_fraction": 0.003822222515373803
     },
     {
@@ -98,6 +114,8 @@
       "protocol_us": 7.164856628417969,
       "raw_ratio": 6.335366798396316,
       "adjusted_ratio": 6.334079629262501,
+      "hex_raw_ratio": 0.15784563936148732,
+      "hex_adjusted_ratio": 0.15787771622957725,
       "protocol_fraction": 0.00020314295454822094
     },
     {
@@ -109,6 +127,8 @@
       "protocol_us": 7.078267150878906,
       "raw_ratio": 2.653998658207767,
       "adjusted_ratio": 2.652737587734044,
+      "hex_raw_ratio": 0.37679009747130676,
+      "hex_adjusted_ratio": 0.37696921654597043,
       "protocol_fraction": 0.00047631220352237387
     }
   ],

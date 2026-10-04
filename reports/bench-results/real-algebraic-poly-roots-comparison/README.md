@@ -15,6 +15,16 @@ simple multiplicity follows from the nonzero constant and characteristic zero.
 FLINT supplies multiplicities. This comparison does not claim generic
 representation equivalence or time isolated root production.
 
+The timed external annihilation checks are additional verification work; the
+ratios compare API routes with their stated result checks, rather than isolated
+root operations. Keeping the checks makes the returned fixture polynomial a
+verified consequence of the actual roots, rather than an unchecked request
+echo. This extra external cost favours Hex in the displayed ratio; it does not
+explain Hex's much larger observed cost. Rational degree `2d` and quadratic
+degree `d` deliberately have the same exact root values and fingerprints.
+Their input-path identity comes from the frozen source, commands and context
+construction, not from distinct output hashes across families.
+
 Input coefficient objects, polynomial preparation and a separate child warmup
 are excluded. Native solving, canonical exactification, reality filtering,
 sorting and fingerprint construction are timed. External solving, sorting,
