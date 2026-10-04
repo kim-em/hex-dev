@@ -36,6 +36,40 @@ noncomputable def Context.model? (context : Context registry)
     (following : base.Realization) (target : Tower.Model (Context.ofBase base) R) :
     Option (Tower.Model context R) := context.origin.model? following target
 
+private theorem Context.model?_origin_proof (context : Context registry)
+    (following : base.Realization) (target : Tower.Model (Context.ofBase base) R) :
+    context.model? following target = context.origin.model? following target := rfl
+
+/-- The canonical context factory consumes its actual stored origin. -/
+theorem Context.model?_origin (context : Context registry)
+    (following : base.Realization) (target : Tower.Model (Context.ofBase base) R) :
+    context.model? following target = context.origin.model? following target :=
+  context.model?_origin_proof following target
+
+private theorem Origin.model?_pack_proof
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (original : BaseContext.Context registry B sign) (suffix : Suffix (Context.base original))
+    {context : Context registry} (same : suffix.context = context)
+    (following : base.Realization) (target : Tower.Model (Context.ofBase base) R) :
+    (Origin.pack original suffix same).model? following target =
+      ((Context.base original).model? following target).map
+        (fun model => same ▸ model.extend suffix) := by
+  cases same
+  rw [Context.model?, Context.origin_base]
+  simp only [Origin.model?]
+  cases BaseInclusion.make? (.pack original) base <;> rfl
+
+/-- A stored origin extends exactly the canonical model of its original base. -/
+theorem Origin.model?_pack
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (original : BaseContext.Context registry B sign) (suffix : Suffix (Context.base original))
+    {context : Context registry} (same : suffix.context = context)
+    (following : base.Realization) (target : Tower.Model (Context.ofBase base) R) :
+    (Origin.pack original suffix same).model? following target =
+      ((Context.base original).model? following target).map
+        (fun model => same ▸ model.extend suffix) :=
+  Origin.model?_pack_proof original suffix same following target
+
 private theorem Context.model?_baseMap_proof
     (source : BaseContext.PackedContext registry)
     (following : base.Realization) (target : Tower.Model (Context.ofBase base) R)

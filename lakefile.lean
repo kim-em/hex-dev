@@ -758,6 +758,8 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.CacheRebuild,
     `HexRealClosureMathlib.CacheGather,
     `HexRealClosureMathlib.GatherTests,
+    `HexRealClosureMathlib.SharedPresentation,
+    `HexRealClosureMathlib.SharedPresentationTests,
     `HexRealClosureMathlib.TowerAlgebraic, `HexRealClosureMathlib.TowerRefinement,
     `HexRealClosureMathlib.TowerTransport, `HexRealClosureMathlib.TowerTransportTests,
     `HexRealClosureMathlib.TowerInclusion, `HexRealClosureMathlib.LiveContext,

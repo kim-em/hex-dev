@@ -160,6 +160,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 "adapters/HexRealClosureMathlib/CoefficientReplay.lean",
                 "adapters/HexRealClosureMathlib/CoefficientMoment.lean",
                 "adapters/HexRealClosureMathlib/CoefficientReduction.lean",
+                "adapters/HexRealClosureMathlib/SharedPresentation.lean",
+                "adapters/HexRealClosureMathlib/SharedPresentationTests.lean",
                 "adapters/HexRealClosureMathlib/BaseOrder.lean",
                 "adapters/HexRealClosureMathlib/BaseMapModel.lean",
                 "HexRealClosure/TowerInclusion.lean",

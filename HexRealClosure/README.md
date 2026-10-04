@@ -1647,6 +1647,20 @@ prefix/depth compatibility condition for every owner.
 owners' values, coefficients, and native order results. `value_of_model` also
 identifies the transported value with a separately retrieved canonical owner model.
 
+`Shared.presentation index value` packages the actual checked owner value as a
+finite native presentation over the shared collection's declared base. The
+`SharedPresentation` development adapter proves that its denotation is the
+canonical original owner's value. `Shared.Model.toUnion` then enters that
+value into the prescribed relative algebraic union, preserving canonical zero,
+one, arithmetic, total inversion, mathematical equality and comparison.
+`Shared.union_coverage` proves that every element of that union has an actual
+native root-producer entry and a successful shared gathering whose inclusion
+represents it. Together with `Presentation.algEquiv` and `Presentation.realClosed`,
+this identifies these compatible native values with the algebraic real closed
+union under the supplied base embedding. This construction uses the native
+prefix/depth compatibility check; it does not deduplicate differently encoded
+equivalent roots or supply joint ordinary-real specialization.
+
 Registration caches checked inclusions for every original algebraic predecessor.
 Parent/child registration, sibling branches, and repeated owners reuse their
 common roots. Reuse checks exact native provenance, including the staged base
