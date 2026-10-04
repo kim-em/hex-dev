@@ -1,7 +1,7 @@
 {
   "schema": "hex-rcf-window-expanded-syntax-v1",
   "source": "82c93dac95b44428e2c021485981b41d03920bec",
-  "scope": "untimed syntax audit; unique structural expressions plus per-occurrence local declaration type/body expansion; imported bodies remain leaves; no reduction or let substitution",
+  "scope": "untimed syntax audit; unique expressions modulo Lean.Expr.eqv plus per-occurrence local declaration type/body expansion; imported bodies remain leaves; no reduction or let substitution",
   "audit_source_sha256": "5809d4889c9057519ffc73e039fba0128f2e586e8597a570a674428c1623b188",
   "compiler_output_sha256": "56374c41df96e469ae1f000f4bfd9ad19e2a9c5b966ed2fbb2f8248f09dd3461",
   "final_window_artifact_sha256": {
@@ -202,5 +202,6 @@
       "unique_expressions": 14833,
       "window_regions": []
     }
-  ]
+  ],
+  "expression_equality": "Lean.Expr.eqv: alpha equivalence, ignoring binder annotations; not pointer identity"
 }
