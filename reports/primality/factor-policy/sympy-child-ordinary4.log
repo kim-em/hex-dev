@@ -1,0 +1,22 @@
+CHILD 231392247121855978133901766920235943779795090217764365202095841950595408010261529694920315912705259316767035574545980825506006625180389834577710157
+Factoring 23139..(137 other digits)..10156
+Trial division with ints [2 ... 32768] and fail_max=600
+	2 ** 2
+	173 ** 1
+Check for termination
+Trial division with primes [1979 ... 3958]
+Pollard's p-1 with smoothness bound 1979 and seed 3958
+Pollard's rho with retries 1, max_steps 1979 and seed 3958
+Check for termination
+Trial division with primes [3958 ... 7916]
+Pollard's p-1 with smoothness bound 3958 and seed 7916
+Pollard's rho with retries 1, max_steps 3958 and seed 7916
+Trial division with primes [7916 ... 15832]
+Pollard's p-1 with smoothness bound 7916 and seed 15832
+Pollard's rho with retries 1, max_steps 7916 and seed 15832
+Check for termination
+Elliptic Curve with B1 bound 10000, B2 bound 1000000, num_curves 50
+Elliptic Curve with B1 bound 50000, B2 bound 5000000, num_curves 200
+Check for termination
+Factorization is complete.
+FACTORIZATION {2: 2, 173: 1, 3123599: 1, 119117987: 1, 3407650424398873248347: 1, 263727278085898508909776859276785530295439768420955106495189836494449359368507512761372224758574088787986913: 1}

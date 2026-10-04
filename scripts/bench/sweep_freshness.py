@@ -27,7 +27,9 @@ newest manifest path by path, and accepts the difference only when every
 differing path is covered by a blob-transition exemption. Exemptions name
 both the baseline and the current blob, so they expire automatically when
 the file changes again, and they live one-per-file so that concurrent
-pull requests never collide on a shared list.
+pull requests never collide on a shared list. A family may also use a
+checked rule; the factorization Lake rule can follow an exact exemption
+with a transition that preserves its approved measured build declarations.
 
 The pay-off is that a broad relevant set (the Hex factor service spans
 HexBasic through HexPolyZ, and re-measuring needs a manual shared-host
@@ -67,13 +69,33 @@ FIGURES = ROOT / "reports" / "figures"
 MANIFEST_SUFFIX = ".manifest"
 FINGERPRINT_DIGITS = 12
 
-# Lines that begin a top-level Lake declaration. Text between declarations
-# belongs to the declaration that follows it, including attributes and helper
-# definitions used by that declaration.
+# Lines that begin a top-level Lake declaration.
+# Comments and attributes preceding a declaration belong to it. Expression
+# continuations can start at column zero inside brackets and stay with the
+# current declaration.
 LAKE_DECL = re.compile(
-    r"^(?:(?:private|protected|public)\s+)?"
+    r"^(?:(?:private|protected|public|partial|unsafe|noncomputable|nonrec|meta)\s+)*"
     r"(package|require|lean_lib|lean_exe|extern_lib|target|script|def"
-    r"|input_file|module_facet|library_facet|package_facet)\s+(\S+)")
+    r'|abbrev|opaque|input_file|module_facet|library_facet|package_facet)\s+("[^"\n]*"|«[^»\n]*»|[A-Za-z_][\w\'.]*[!?]*|\S+)')
+
+LAKE_COMMAND = re.compile(
+    r"^(?:(?:private|protected|public|partial|unsafe|noncomputable|nonrec|meta|local|scoped)\s+)*"
+    r"(?:namespace|section|end|open|export|set_option|attribute|variable|universe"
+    r"|mutual|instance|macro|macro_rules|syntax|notation|infix|infixl|infixr|prefix|postfix"
+    r"|elab|elab_rules|run_cmd|run_elab|run_meta|initialize|deriving|declare_syntax_cat"
+    r"|theorem|example|structure|class|inductive|omit|include)(?![\w'!?])|^#[A-Za-z]")
+
+
+def lake_target_attribute(body: str, kinds: str = "target|lean_lib|lean_exe|extern_lib") -> bool:
+    """Recognize handwritten Lake target registrations conservatively."""
+    return re.search(r"@\[[^\]]*\b(?:" + kinds + r")\b",
+                     strip_lean_comments(body)) is not None
+
+
+def _bracket_delta(code: str) -> int:
+    code = re.sub(r'"(?:\\.|[^"\\])*"', '""', code)
+    code = re.sub(r"'(?:\\.|[^'\\])'", "''", code)
+    return sum(code.count(c) for c in "([{") - sum(code.count(c) for c in ")]}")
 
 
 def lakefile_blocks(text: str) -> dict[str, str]:
@@ -82,22 +104,71 @@ def lakefile_blocks(text: str) -> dict[str, str]:
     key: str | None = None
     pending: list[str] = []
     current: list[str] = []
-    for line in text.splitlines():
-        match = LAKE_DECL.match(line)
+    depth = 0
+    continuation = False
+    commands = 0
+    uncertain = False
+    for line, code in zip(text.split("\n"), strip_lean_comments(text, preserve_lines=True).split("\n"), strict=True):
+        declaration = re.sub(r"^(?:@\[[^\]]*\]\s*)+", "", code.lstrip())
+        candidate = LAKE_DECL.match(declaration)
+        if candidate and depth != 0 and not line.startswith((" ", "\t")):
+            uncertain = True
+        match = candidate if depth == 0 else None
+        if depth == 0 and not candidate and declaration.strip() and (
+                code.lstrip().startswith("@[") or re.fullmatch(
+                    r"(?:(?:private|protected|public|partial|unsafe|noncomputable|nonrec|meta)\s*)+",
+                    declaration.strip())):
+            # An incomplete attributed or modifier header has ambiguous
+            # ownership. Keep the whole file rather than dropping its body.
+            uncertain = True
+        if key is not None and depth == 0 and not continuation and not match and LAKE_COMMAND.match(declaration):
+            uncertain = True
         if match:
             if key is not None:
                 blocks[key] = "\n".join(current).rstrip()
-            key = f"{match.group(1)} {match.group(2)}"
+            kind, name = match.group(1), match.group(2)
+            if kind != "require":
+                if name.startswith(('"', '«')):
+                    name = name[1:-1]
+                if not re.fullmatch(r"[A-Za-z_][\w'.]*[!?]*", name):
+                    uncertain = True
+            key = f"{kind} {name}"
+            if key in blocks:
+                uncertain = True
             current = pending + [line]
             pending = []
+            depth = _bracket_delta(code)
+            continuation = code.rstrip().endswith((":=", "++", "<|", "=>", ","))
         elif key is None:
             pending.append(line)
-        elif line.strip() == "" or line.startswith((" ", "\t")):
+        elif (not code.strip() and line.strip() and
+              (pending or not line.startswith((" ", "\t")))) or (code.lstrip().startswith("@[") and not declaration.strip()):
+            pending.append(line)
+        elif line.startswith((" ", "\t")) or not line.strip():
+            if code.strip() and pending:
+                current.extend(pending)
+                pending = []
             current.append(line)
         else:
-            pending.append(line)
+            if depth > 0 or continuation:
+                current.extend(pending)
+                pending = []
+                current.append(line)
+            else:
+                blocks[key] = "\n".join(current).rstrip()
+                uncertain = True
+                key = f"command {commands}"
+                commands += 1
+                current = pending + [line]
+                pending = []
+        if not match and code.strip():
+            depth += _bracket_delta(code)
+            continuation = code.rstrip().endswith((":=", "++", "<|", "=>", ","))
     if key is not None:
+        current.extend(pending)
         blocks[key] = "\n".join(current).rstrip()
+    if depth != 0 or uncertain:
+        blocks["command uncertain"] = text
     return blocks
 
 
@@ -317,6 +388,10 @@ def load_exemptions(directory: Path | None) -> set[tuple[str, str, str]]:
     is the absent side of an addition or a deletion, so removing a file
     that declared no executable definition is exemptible too.
 
+    The factorization lakefile rule can separately compose this exact claim
+    with a checked transition from its endpoint: the measured build
+    declarations must remain unchanged and the original baseline must match.
+
     One file per exemption. A single shared list cannot be merged:
     entries are appended by whichever branches happen to be open, so
     concurrent pull requests collide on it textually even when their
@@ -342,13 +417,14 @@ def blob_text(blob: str) -> str:
     return git("cat-file", "blob", blob)
 
 
-def strip_lean_comments(text: str) -> str:
+def strip_lean_comments(text: str, *, preserve_lines: bool = False) -> str:
     """`text` with every Lean comment replaced by a single space.
 
     Handles line comments and nested block comments; the doc forms need
     no special case, since ``/--`` and ``/-!`` open with ``/-``. String
     literals are stepped over, so a ``--`` inside one survives. Nothing
     outside a comment is ever removed.
+    With `preserve_lines`, retain block-comment newlines for linewise parsing.
     """
     out: list[str] = []
     i, n = 0, len(text)
@@ -367,6 +443,7 @@ def strip_lean_comments(text: str) -> str:
                     break
             continue
         if text.startswith("/-", i):
+            start = i
             depth, i = 1, i + 2
             while i < n and depth:
                 if text.startswith("/-", i):
@@ -375,7 +452,7 @@ def strip_lean_comments(text: str) -> str:
                     depth, i = depth - 1, i + 2
                 else:
                     i += 1
-            out.append(" ")
+            out.append(" " + ("\n" * text[start:i].count("\n") + " " if preserve_lines else ""))
             continue
         if text.startswith("--", i):
             while i < n and text[i] != "\n":
@@ -743,8 +820,8 @@ def index_lean_sources() -> tuple[dict[Path, list[str]], set[str]]:
     return sources, local_prefixes
 
 
-def lean_import_prefixes(roots: list[str], source_index=None) -> set[str] | None:
-    """Over-approximate the specified roots' imported namespaces.
+def lean_import_modules(roots: list[str], source_index=None) -> set[str] | None:
+    """Over-approximate the specified roots' imported modules.
 
     Inspect every tracked source whose path suffix matches an imported module,
     so every declared source directory is covered and ambiguity only widens
@@ -752,7 +829,6 @@ def lean_import_prefixes(roots: list[str], source_index=None) -> set[str] | None
     Nonlocal imports still contribute their namespace. Unsupported import
     syntax and unresolved local modules fail closed.
     """
-    prefixes = {root.split(".")[0] for root in roots} | TOOLCHAIN_NAMESPACES
     try:
         sources, local_prefixes = (source_index or index_lean_sources)()
     except ValueError:
@@ -782,9 +858,14 @@ def lean_import_prefixes(roots: list[str], source_index=None) -> set[str] | None
                 if match is None:
                     return None
                 for imported_module in match[1].split():
-                    prefixes.add(imported_module.split(".")[0])
                     stack.append(imported_module)
-    return prefixes
+    return seen
+
+
+def lean_import_prefixes(roots: list[str], source_index=None) -> set[str] | None:
+    """Imported namespaces, with the same conservative resolution checks."""
+    modules = lean_import_modules(roots, source_index)
+    return None if modules is None else {module.split(".")[0] for module in modules} | TOOLCHAIN_NAMESPACES
 
 
 def audited_aint_revision(body: str) -> bool:
