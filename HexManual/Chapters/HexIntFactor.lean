@@ -9,6 +9,8 @@ import HexIntFactor
 import HexIntFactorMathlib
 import HexIntFactor.Frozen.Case3
 import HexIntFactor.Frozen.Case5
+import HexIntFactor.Mixed.Frozen.Small
+import HexIntFactorMathlib.Mixed
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -418,3 +420,86 @@ tag := "hex-int-factor-cross-references"
 * `HexConway` can consume complete prime support for multiplicative-group
   orders when its committed table grows beyond hand-maintained
   factorizations.
+
+# Optional mixed primality evidence
+%%%
+tag := "hex-int-factor-mixed"
+%%%
+
+The explicit `HexIntFactor.Mixed.Replay` extension accepts both legacy
+`PrimeCert` and ECPP evidence, bound to each proposed base and the caller's
+subject. Its product, order and positive-exponent facts are computational.
+Its primality and prime-support theorems take an explicit ECPP soundness
+hypothesis. Import `HexIntFactorMathlib.Mixed` to discharge that hypothesis
+with the existing ECPP soundness theorem and obtain unconditional
+`Nat.factorization` correspondence.
+
+{docstring Hex.Nat.Mixed.checkEvidence}
+
+{docstring Hex.Nat.Mixed.CheckedFactorization.factorization_eq}
+
+{docstring Hex.Nat.Mixed.CheckedPartialFactorization.factorization_eq}
+
+A partial residual can contain further powers of a listed prime. The partial
+correspondence adds the residual's factorization; listed exponents are lower
+bounds and become exact when the corresponding prime does not divide the residual.
+
+```lean
+namespace HexIntFactorMixedChapter
+
+open Hex.Nat.Mixed
+
+example : Hex.Nat.Mixed.CheckedFactorization 34 :=
+  Frozen.small_checked
+example :
+    Hex.Nat.Mixed.CheckedPartialFactorization 578 :=
+  Frozen.partialOverlap_checked
+
+#guard checkAt 34 Frozen.small
+#guard !checkAt 35 Frozen.small
+#guard checkPartialAt 578 Frozen.partialOverlap
+#guard Frozen.partialOverlap.residual == 17
+
+example (p : Nat) : (34 : Nat).factorization p =
+    (Frozen.small.factors.find?
+      fun e => e.prime == p).elim 0 (·.exponent) :=
+  Frozen.small_checked.factorization_eq p
+
+example (p : Nat) : (578 : Nat).factorization p =
+    (Frozen.partialOverlap.factors.find?
+      fun e => e.prime == p).elim 0 (·.exponent) +
+      Frozen.partialOverlap.residual.factorization p :=
+  Frozen.partialOverlap_checked.factorization_eq p
+
+end HexIntFactorMixedChapter
+```
+
+`HexIntFactor.Mixed.Import` adds pure supplied-proposal import. ECPP completion
+is off by default. Select `ecppBits := some 256` or `some 512` to try the native
+producer after bounded legacy completion. Defaults admit a 4096-bit subject,
+512-bit bases, 64 entries and exponents through 4096. Legacy completion has
+128 attempts per base and 8192 shared attempts; ECPP reserves at most two
+independent public-policy calls. Failed calls are charged. ECPP seeds use
+`ecppSeed + callIndex` independently of legacy randomness. The result retains
+both histories and useful checked partial progress.
+
+For batch suggestions, import `HexIntFactor.Mixed.Export` and write
+`#int_factor_mixed (ecpp := 512) for 34 using proposal`. The optional
+`(method := pari)` variant obtains arithmetic proposals from the existing
+256-bit process route. Pure completion calls no subprocess. Supplied data must
+be closed, exposed constructor data; the batch subject must be a numeral or
+an exposed numeral alias. `#int_factor_mixed_export MyFactors.Mixed cert for 34
+using proposal` exclusively creates public replay data after a fresh kernel
+check. Both commands are gated out of editor execution. Frozen replay imports
+neither Mathlib nor search.
+
+Supplied ECPP data admits 20 rows, 32 constructor nodes including terminal
+legacy evidence, and 1024 inverses per row. Batch admission also bounds expanded
+syntax, source size, reification and kernel replay. The frozen acceptance report
+records two mixed complete products of 513 and 514 bits where the legacy route
+exhausts, plus a checked partial result after native ECPP exhaustion.
+
+Legacy divisor, totient, order and square-decomposition APIs still take the
+legacy representation. `ofLegacy` embeds it into mixed data; checked `toLegacy`
+replays legacy acceptance and succeeds only when every entry carries legacy
+evidence. ECPP entries require an explicit arithmetic API extension.

@@ -59,6 +59,17 @@ def certificate : Cert := .base (.small 17)
   `native512Budget` admits 512 bits, and `public512Budget` additionally enforces
   the public replay row and node ceilings. Production above 512 bits is unsupported.
 
+# Integer-factorization integration
+
+`HexIntFactor.Mixed` is an explicit downstream consumer of subject-bound ECPP
+evidence. It combines ECPP and legacy certificates without changing `PrimeCert`
+or introducing a dependency cycle. Its native completion uses `public256Budget`
+or `public512Budget`; the new public 256-bit policy bounds depth at 21, rows at
+20 and constructor nodes at 32 while preserving the existing Native 256-bit API.
+`HexECPP.Policy` and `HexECPP.ElabData` provide shared Mathlib-free replay bounds,
+constructor-data auditing and reification. Unconditional mixed primality remains
+owned by the mathematical companions.
+
 # Verification
 
 The checker arithmetic and its check of the intended integer are proved in Lean. `convert_ok`

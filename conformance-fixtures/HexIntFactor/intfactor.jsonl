@@ -844,3 +844,7 @@
 {"kind":"result","lib":"HexIntFactor","case":"frozen/6","op":"frozen","value":{"factors":[],"residual":1000036000099}}
 {"kind":"frozen","lib":"HexIntFactor","case":"frozen/7","n":12}
 {"kind":"result","lib":"HexIntFactor","case":"frozen/7","op":"frozen","value":{"factors":[[2,2]],"residual":3}}
+{"kind":"frozen","lib":"HexIntFactor","case":"frozen/mixed/complete34","n":34}
+{"kind":"result","lib":"HexIntFactor","case":"frozen/mixed/complete34","op":"frozen","value":{"factors":[[2,1],[17,1]],"residual":1}}
+{"kind":"frozen","lib":"HexIntFactor","case":"frozen/mixed/overlap578","n":578}
+{"kind":"result","lib":"HexIntFactor","case":"frozen/mixed/overlap578","op":"frozen","value":{"factors":[[2,1],[17,1]],"residual":17}}

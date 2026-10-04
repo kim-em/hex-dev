@@ -287,18 +287,27 @@ lean_lib HexPrimality where
   precompileModules := true
 
 lean_lib HexECPP where
+  globs := #[`HexECPP, `HexECPP.Policy, `HexECPP.ElabData].map Glob.one
   -- The explicit certificate elaborator evaluates checked data during elaboration.
   precompileModules := true
 
 lean_lib HexIntFactor where
   globs := #[`HexIntFactor, `HexIntFactor.Pari, `HexIntFactor.Export,
-    `HexIntFactor.Replay].map Glob.one
+    `HexIntFactor.Replay, `HexIntFactor.Mixed.Replay, `HexIntFactor.Mixed.Import,
+    `HexIntFactor.Mixed.Pari, `HexIntFactor.Mixed.Export,
+    `HexIntFactor.Mixed.Frozen.Small].map Glob.one
   -- The registered construction provider must also execute natively.
   precompileModules := true
 
+-- Large frozen ECPP endpoints have measured finite replay allocations.
+lean_lib HexIntFactorMixedFrozen where
+  roots := #[`HexIntFactor.Mixed.Frozen.CaseA, `HexIntFactor.Mixed.Frozen.CaseB,
+    `HexIntFactor.Mixed.Frozen.Partial]
+
 lean_lib HexIntFactorTests where
   globs := #[`HexIntFactor.ImportTests, `HexIntFactor.PariTests,
-    `HexIntFactor.ExportTests,
+    `HexIntFactor.ExportTests, `HexIntFactor.Mixed.ImportTests,
+    `HexIntFactor.Mixed.ExportTests,
     `HexIntFactor.Frozen.Case0,
     `HexIntFactor.Frozen.Case1,
     `HexIntFactor.Frozen.Case2,
@@ -431,6 +440,7 @@ lean_lib HexECPPMathlibTests where
 
 @[default_target]
 lean_lib HexIntFactorMathlib where
+  roots := #[`HexIntFactorMathlib, `HexIntFactorMathlib.Mixed]
 
 lean_lib HexMatrix where
   precompileModules := true
@@ -901,6 +911,14 @@ lean_lib HexPrimalityElabProbeScientific where
     `HexPrimality.ProofProbe.Bit512.Literal,
     `HexPrimality.ProofProbe.Bit512.Replay,
     `HexPrimality.ProofProbe.Bit512.Tactic].map Glob.one ++ #[.submodules `HexPrimality.ProofProbe.PMinusOne]
+
+-- Explicit companion probes for large mixed frozen data.
+lean_lib HexIntFactorMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[Glob.one `HexIntFactorMathlib.ProofProbe.Mixed]
+
+lean_lib HexIntFactorMathlibTests where
+  globs := #[Glob.one `HexIntFactorMathlib.MixedTests]
 
 lean_lib HexIntFactorKernelProbe where
   srcDir := "bench"

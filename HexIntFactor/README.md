@@ -8,7 +8,8 @@ Certified natural-number factorization, divisor functions, multiplicative
 orders, and primitive roots for Lean 4, without Mathlib. It builds on
 [`hex-primality`](https://github.com/leanprover/hex-primality),
 [`hex-arith`](https://github.com/leanprover/hex-arith), and
-[`hex-basic`](https://github.com/leanprover/hex-basic). Correspondence with
+[`hex-basic`](https://github.com/leanprover/hex-basic). The optional mixed
+extension uses [`hex-ecpp`](https://github.com/leanprover/hex-ecpp). Correspondence with
 Mathlib's factorization and order APIs lives in
 [`hex-int-factor-mathlib`](https://github.com/leanprover/hex-int-factor-mathlib).
 
@@ -128,6 +129,51 @@ certified progress is retained. Exhausted prime completion remains unresolved.
 See the [capability and cost report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-int-factor-external.md)
 for all frozen subjects and outcomes, including a discovered 255-bit base whose
 completion exhausts. These examples make no general 60-digit capability claim.
+
+# Optional mixed ECPP evidence
+
+Import `HexIntFactor.Mixed.Replay` for `Hex.Nat.Mixed` complete and partial
+certificates carrying either `Evidence.legacy` or `Evidence.ecpp`. Every entry
+binds evidence to its base; checked types bind the result to the requested
+subject. Product and ordering theorems are unconditional in the computational
+library. Primality and prime-support facts take an explicit ECPP soundness
+hypothesis, discharged by `HexIntFactorMathlib.Mixed`.
+
+`HexIntFactor.Mixed.Import` supplies the pure importer. ECPP is disabled by
+default; `{ ecppBits := some 256 }` or `{ ecppBits := some 512 }` explicitly
+selects native completion after the legacy route. Independent defaults admit
+4096 subject bits, 512 base/evidence bits, 64 entries, exponents through 4096,
+4096 legacy syntax nodes and depth 64, 20 ECPP rows, 32 constructor nodes
+including the base wrapper and terminal evidence, and 1024 inverses per row.
+Structural budgets can tighten these ceilings. Legacy work has at most 128
+attempts per base and 8192 shared attempts; ECPP reserves two full public-policy
+calls without refunding failures. `ecppSeed + callIndex` is independent of the
+legacy random stream. Results retain completion counters, states and distinct
+exhaustion diagnostics.
+
+Batch commands use closed exposed constructor data and numeral subjects:
+
+```lean
+import HexIntFactor.Mixed.Export
+#int_factor_mixed (ecpp := 512) for 72 using ⟨72, [(2, 3, none), (3, 2, none)]⟩
+#int_factor_mixed_export MyFactors.Mixed cert for 72 using ⟨72, [(2, 3, none), (3, 2, none)]⟩
+```
+
+Select `(method := pari)` instead of `using proposal` for the existing bounded
+256-bit factor-discovery process. Supplied proposals support larger subjects;
+ordinary completion is subprocess-free. Exports are exclusive, public and
+exposed, with acceptance freshly checked in the kernel before any suggestion
+or write. Source is capped at 2 MiB, expanded syntax at 1048576 nodes, and proof
+replay at 20000000 heartbeats and recursion depth 65536. Editor execution only
+prints batch instructions. Generated source imports `Mixed.Replay` alone.
+
+The [frozen capability report](https://github.com/kim-em/hex-dev/blob/main/reports/intfactor/mixed/README.md)
+records two complete mixed products containing ECPP-certified 512-bit bases
+where the recorded legacy allocation exhausts, and a retained partial result.
+A partial residual has no primality claim and may contain more powers of a
+listed prime. `ofLegacy` embeds legacy data; checked `toLegacy` accepts only
+legacy-bearing entries and replays the legacy checker. Existing divisor,
+totient, order and square-decomposition APIs consume the legacy representation.
 
 # Verification
 

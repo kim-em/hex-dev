@@ -93,3 +93,11 @@ Development happens in the
 [`hex-dev`](https://github.com/kim-em/hex-dev) monorepo, not in the published
 mirror. Contributions are welcome as pull requests to the `SPEC/` directory:
 describe the behavior you want and leave the implementation to the maintainer.
+
+# Mixed factorization integration
+
+`HexIntFactorMathlib.Mixed` uses `Hex.ECPP.natPrime_of_checkAt` to discharge the
+optional computational factorization extension's ECPP soundness hypothesis.
+Complete and partial Mathlib factorization correspondence lives in that
+companion. Shared auditing and reification now live in `HexECPP.ElabData`;
+`HexECPPMathlib.Policy` remains a compatibility import of `HexECPP.Policy`.

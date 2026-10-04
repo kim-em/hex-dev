@@ -374,13 +374,15 @@ factor-base/evidence numeral bits, 64 proposal entries and exponent 4096.
 Supplied legacy evidence admits 4096 constructor/list nodes and depth 64 per
 entry; ECPP admits 20 rows, 32 total certificate nodes including the base
 wrapper and embedded legacy constructor nodes (not list cells), and 1024
-inverse witnesses per row. Bound
+inverse witnesses per row. Caller structural settings may tighten but do not
+widen these supported ceilings. Bound
 transcript traversal before checker invocation. The batch surface additionally
 admits at most 1048576 expanded syntax nodes and 2097152 source bytes, with
 explicit 20000000-heartbeat and 65536-recursion ceilings for kernel validation.
-These initial source/proof ceilings are provisional until fresh endpoint
-measurements pass: keep ECPP-bearing fixtures above 256 base bits in manually
-built targets until those measurements justify promotion to CI. They are
+The frozen two-trial endpoint campaign in `reports/intfactor/mixed` verifies
+these source/proof ceilings on both complete mixed outputs and the partial
+output, including fresh ordinary-module replay. Those endpoints are included
+in existing CI targets. They are
 admission/resource policies, not claims that every admitted raw certificate
 completes replay. Public native ECPP policies are only 256 and
 512 bits; supplied evidence also supports at most 512 bits. A 512-bit base can

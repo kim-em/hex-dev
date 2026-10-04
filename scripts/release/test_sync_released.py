@@ -519,9 +519,11 @@ class SyncReleasedTests(unittest.TestCase):
         entry = {
             "repo": "prospective/hex-int-factor", "lib": "HexIntFactor",
             "umbrella": True, "spec": "hex-int-factor", "lakefile": "lean",
-            "build_modules": ["HexIntFactor.Pari", "HexIntFactor.Export", "HexIntFactor.Replay"],
+            "build_modules": ["HexIntFactor.Pari", "HexIntFactor.Export", "HexIntFactor.Replay"] +
+                             [f"HexIntFactor.Mixed.{m}" for m in ("Replay", "Import", "Pari", "Export")],
             "test_modules": ["HexIntFactor.ImportTests", "HexIntFactor.PariTests",
-                             "HexIntFactor.ExportTests"] +
+                             "HexIntFactor.ExportTests", "HexIntFactor.Mixed.ImportTests",
+                             "HexIntFactor.Mixed.ExportTests", "HexIntFactor.Mixed.Frozen.Small"] +
                             [f"HexIntFactor.Frozen.Case{i}" for i in range(7)] +
                             ["HexIntFactor.Frozen.Partial12"],
         }
@@ -529,7 +531,8 @@ class SyncReleasedTests(unittest.TestCase):
             "import Lake\nopen Lake DSL\npackage factor\n"
             "lean_lib HexIntFactor where\n"
             "  globs := #[`HexIntFactor, `HexIntFactor.Pari, `HexIntFactor.Export, "
-            "`HexIntFactor.Replay].map Glob.one\n")
+            "`HexIntFactor.Replay, `HexIntFactor.Mixed.Replay, `HexIntFactor.Mixed.Import, "
+            "`HexIntFactor.Mixed.Pari, `HexIntFactor.Mixed.Export].map Glob.one\n")
         with patch.object(sync_released, "apply_ci_workflow", return_value=[]):
             sync_released.apply_paths(entry, self.repo)
         sync_released.rewrite_lib_settings(entry, self.repo)
@@ -541,6 +544,10 @@ class SyncReleasedTests(unittest.TestCase):
         text = (self.repo / "HexIntFactor/Frozen/Case3.lean").read_text()
         self.assertIn("public import HexIntFactor.Replay", text)
         self.assertNotIn("HexIntFactor.Export", text)
+        mixed = (self.repo / "HexIntFactor/Mixed/Frozen/CaseA.lean").read_text()
+        self.assertIn("public import HexIntFactor.Mixed.Replay", mixed)
+        self.assertNotIn("Mathlib", mixed)
+        self.assertNotIn("Mixed.Export", mixed)
         self.assertFalse((self.repo / "bench").joinpath("HexIntFactor").exists())
         self.assertTrue((self.repo / "SPEC/hex-int-factor.md").is_file())
 

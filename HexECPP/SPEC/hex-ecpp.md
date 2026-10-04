@@ -618,3 +618,9 @@ replay; extracting them changes no checker semantics or native search default.
 mixed completion: default 256-bit work counters, depth 21, 20 rows, 32 nodes
 and output backtracking. The existing explicit Native 256-bit route retains
 its current policy.
+
+The computational umbrella exposes the shared `Policy` and `ElabData` modules
+so the ordinary split-library build includes their native initializers.
+`HexECPP.Replay` remains the small executable replay closure; it imports neither
+elaboration nor search. `HexIntFactor` legacy replay and umbrella imports are
+unchanged by the optional downstream integration.
