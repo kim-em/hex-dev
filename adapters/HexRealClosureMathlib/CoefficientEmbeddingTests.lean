@@ -179,30 +179,53 @@ theorem ordinary_selected :
       HexRationalFnMathlib.ratField_eq descriptor [query] selected
     let interpretation := CoefficientMap.ofHom
       (HexRationalFnMathlib.mapHom (HexRationalFnMathlib.mapHom (Rat.castHom ℝ)))
+    HEq data.1 descriptor ∧ HEq data.2.1 [query] ∧ HEq data.2.2 selected ∧
     ∃ first second : ℝ, 0 < first ∧ first < 1 ∧ 0 < second ∧ second < first ∧
       ∃ target : Descriptor ℝ Unit (fun r : ℝ => (SignType.sign r : Int)) (),
         target.raw = ((data.1.raw.substitute interpretation).substitute (firstMap first)).specialize
           (RingHom.id ℝ) second ∧
         target.evidence = ((data.1.evidence.substitute interpretation).substitute (firstMap first)).specialize
           (RingHom.id ℝ) second ∧
+        (∀ i, target.raw.head.coeff i =
+          evalNestedFraction ((data.1.raw.substitute interpretation).head.coeff i) first second) ∧
+        (∀ q ∈ data.2.1.map interpretation.polynomial, ∀ i,
+          (polynomial (RingHom.id ℝ) ((firstMap first).polynomial q) second).coeff i =
+            evalNestedFraction (q.coeff i) first second) ∧
         signsAt (fun r : ℝ => r) (fun _ => Iff.rfl)
           ((data.2.1.map interpretation.polynomial).map
             (fun q => polynomial (RingHom.id ℝ) ((firstMap first).polynomial q) second))
           (target.root (fun r : ℝ => r) (fun _ => Iff.rfl) rfl
             (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl)
-            (fun _ => rfl) (fun _ => rfl)) = values := by
+            (fun _ => rfl) (fun _ => rfl)) = values ∧
+        let constant := (data.1.raw.substitute interpretation).head.coeff 0
+        (firstMap first).map constant = mapFraction constant first ∧
+          evalMapped (RingHom.id ℝ) ((firstMap first).map constant) second =
+            evalNestedFraction constant first second ∧
+          (SignType.sign (evalNestedFraction constant first second) : Int) =
+            OrderedFn.Infinitesimal.sign (OrderedFn.Infinitesimal.sign OrderedFn.orderSign) constant ∧
+          (evalNestedFraction constant first second = 0 ↔ constant = 0) := by
   dsimp only
   letI : Lean.Grind.Field Rat := Field.toGrindField
   let data := Native.nestedEvidence (F := Rat) (context := ()) Lean.Grind.instFieldRat
     HexRationalFnMathlib.ratField_eq descriptor [query] selected
+  refine ⟨Native.nestedEvidence_descriptor _ _ _ _ _,
+    Native.nestedEvidence_queries _ _ _ _ _, Native.nestedEvidence_selected _ _ _ _ _, ?_⟩
   obtain ⟨embedded, raw, evidence, signs, values⟩ :=
     nested_embedding (Rat.castHom ℝ) Rat.cast_strictMono data.1 data.2.1 data.2.2
+  let constant := embedded.raw.head.coeff 0
   obtain ⟨first, positive, below, second, secondPositive, smaller, target,
-      targetRaw, targetEvidence, _, observed, _, _, _⟩ :=
-    exists_nested_selected embedded _ signs ∅ 1 zero_lt_one
+      targetRaw, targetEvidence, _, observed, headCoefficients, queryCoefficients, fractions⟩ :=
+    exists_nested_selected embedded _ signs {constant} 1 zero_lt_one
+  have constantData := fractions constant (Finset.mem_singleton_self constant)
+  have bound : constant = (data.1.raw.substitute
+      (CoefficientMap.ofHom (HexRationalFnMathlib.mapHom
+        (HexRationalFnMathlib.mapHom (Rat.castHom ℝ))))).head.coeff 0 := by
+    dsimp only [constant]
+    rw [raw]
   exact ⟨first, second, positive, below, secondPositive, smaller, target,
     raw ▸ targetRaw, evidence ▸ targetEvidence,
-    observed.trans (values.trans (Native.nestedEvidence_values _ _ _ _ _))⟩
+    raw ▸ headCoefficients, queryCoefficients,
+    observed.trans (values.trans (Native.nestedEvidence_values _ _ _ _ _)), bound ▸ constantData⟩
 
 /-- info: 'Hex.RealClosure.Specialize.EmbeddingTests.ordinary_selected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

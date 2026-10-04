@@ -122,6 +122,60 @@ def nestedEvidence (g : Lean.Grind.Field F) (compatible : Field.toGrindField (K 
   exact fun d qs s => ⟨d, qs, s⟩
 
 omit [IsStrictOrderedRing F] in
+/-- Transport retains the entire original descriptor, including raw data and replay. -/
+theorem nestedEvidence_descriptor (g : Lean.Grind.Field F)
+    (compatible : Field.toGrindField (K := F) = g) :
+    letI : Lean.Grind.Field F := g
+    letI : Lean.Grind.Field (Hex.RationalFn F) := Hex.RationalFn.instField
+    letI : Lean.Grind.Field (Hex.RationalFn (Hex.RationalFn F)) := Hex.RationalFn.instField
+    ∀ (d : Hex.SignDet.Descriptor (Hex.RationalFn (Hex.RationalFn F)) Ctx
+        (Hex.OrderedFn.Infinitesimal.sign
+          (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign)) context)
+      (qs : List (Hex.DensePoly (Hex.RationalFn (Hex.RationalFn F))))
+      (s : Hex.SignDet.SelectedSigns d qs),
+      letI : Lean.Grind.Field F := Field.toGrindField
+      HEq (nestedEvidence g compatible d qs s).1 d := by
+  cases compatible
+  intros
+  rfl
+
+omit [IsStrictOrderedRing F] in
+/-- Transport retains the original ordered query polynomials. -/
+theorem nestedEvidence_queries (g : Lean.Grind.Field F)
+    (compatible : Field.toGrindField (K := F) = g) :
+    letI : Lean.Grind.Field F := g
+    letI : Lean.Grind.Field (Hex.RationalFn F) := Hex.RationalFn.instField
+    letI : Lean.Grind.Field (Hex.RationalFn (Hex.RationalFn F)) := Hex.RationalFn.instField
+    ∀ (d : Hex.SignDet.Descriptor (Hex.RationalFn (Hex.RationalFn F)) Ctx
+        (Hex.OrderedFn.Infinitesimal.sign
+          (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign)) context)
+      (qs : List (Hex.DensePoly (Hex.RationalFn (Hex.RationalFn F))))
+      (s : Hex.SignDet.SelectedSigns d qs),
+      letI : Lean.Grind.Field F := Field.toGrindField
+      HEq (nestedEvidence g compatible d qs s).2.1 qs := by
+  cases compatible
+  intros
+  rfl
+
+omit [IsStrictOrderedRing F] in
+/-- Transport retains the actual checked selected-sign certificate. -/
+theorem nestedEvidence_selected (g : Lean.Grind.Field F)
+    (compatible : Field.toGrindField (K := F) = g) :
+    letI : Lean.Grind.Field F := g
+    letI : Lean.Grind.Field (Hex.RationalFn F) := Hex.RationalFn.instField
+    letI : Lean.Grind.Field (Hex.RationalFn (Hex.RationalFn F)) := Hex.RationalFn.instField
+    ∀ (d : Hex.SignDet.Descriptor (Hex.RationalFn (Hex.RationalFn F)) Ctx
+        (Hex.OrderedFn.Infinitesimal.sign
+          (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign)) context)
+      (qs : List (Hex.DensePoly (Hex.RationalFn (Hex.RationalFn F))))
+      (s : Hex.SignDet.SelectedSigns d qs),
+      letI : Lean.Grind.Field F := Field.toGrindField
+      HEq (nestedEvidence g compatible d qs s).2.2 s := by
+  cases compatible
+  intros
+  rfl
+
+omit [IsStrictOrderedRing F] in
 /-- Dictionary transport retains every recorded integer sign. -/
 theorem nestedEvidence_values (g : Lean.Grind.Field F)
     (compatible : Field.toGrindField (K := F) = g) :
