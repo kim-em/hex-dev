@@ -623,7 +623,8 @@ repos:
   # `HexRCF` imports Mathlib and has no separate companion: the `rcf` tactic
   # targets `ℝ`, so its soundness theorem lives in the same library. Its name
   # lacks the Mathlib suffix, so it takes a table row; `mathlib_only` puts
-  # that row's link in the Mathlib column of the aggregate README.
+  # that row's link in the Mathlib column of the aggregate README and identifies
+  # its proof-package boundary for external dependency synthesis.
   - repo: leanprover/hex-rcf
     component: Real-closed-field decision (`rcf` tactic)
     mathlib_only: true

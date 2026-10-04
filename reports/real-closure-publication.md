@@ -242,9 +242,13 @@ manifest state:
    and inherited downstream lock synthesis in the existing driver. Candidate
    checks validate the local 62-package layout with the full declared graph;
    they do not establish a build of precisely the published-only mirror graph.
-   Targeted sync dry runs preview the actual three affected manifest entries;
-   fresh builds of precisely staged release output remain part of the
-   publication checks. TarskiFoundation’s `import all HexRealRootsMathlib.TarskiSum` accesses
+   Merging puts these modules in the existing managed paths: the next routine
+   full sync will copy them and add Tau Ceti to the companion and downstream
+   locks. The current sync does not build staged output before pushing and
+   tagging; mirror CI runs afterward. Hold release dispatch until a fresh
+   build of the exact candidate release output and pins passes, using
+   #10476 when available. The local full-graph builds and targeted previews
+   do not provide that check. TarskiFoundation’s `import all HexRealRootsMathlib.TarskiSum` accesses
    its own companion internals and passes the existing DAG/trusted-import policy;
    consumers use ordinary imports. No published mirror is edited or pushed.
    Obtain maintainer-created new mirrors and skeletons under

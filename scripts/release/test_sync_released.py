@@ -779,14 +779,15 @@ class SyncReleasedTests(unittest.TestCase):
         entry["pins"] = ["hex-real-roots-mathlib"]
         path = self.repo / "lake-manifest.json"
         path.write_text(json.dumps({"version": "1.2.0", "packages": []}))
-        sync_released.rewrite_manifest(entry, self.repo, {}, {}, self.pins, "v0.2.0")
+        sync_released.rewrite_manifest(entry, self.repo, {"hex-real-roots-mathlib": "synced"}, {},
+                                       self.pins, "v0.2.0")
         packages = {p["name"]: p for p in json.loads(path.read_text())["packages"]}
         self.assertTrue(packages["TauCeti"]["inherited"])
         self.assertFalse(packages["mathlib"]["inherited"])
         self.assertNotIn('name = "TauCeti"', (self.repo / "lakefile.toml").read_text())
 
     def test_computational_mirror_rejects_proof_import_even_with_provider(self) -> None:
-        for root in ("Mathlib", "TauCeti"):
+        for root in ("Mathlib", "TauCeti", "HasseWeil"):
             entry = self._external_import_entry(
                 f'name = "probe"\n[[require]]\nname = "{root}"\n', f"import {root}\n")
             entry.pop("mathlib_only")
@@ -806,7 +807,8 @@ class SyncReleasedTests(unittest.TestCase):
         path = self.repo / "lake-manifest.json"
         path.write_text(json.dumps({"version": "1.2.0", "packages": []}))
         self.assertEqual(sync_released.rewrite_external_requires(entry, self.repo, self.pins), [])
-        sync_released.rewrite_manifest(entry, self.repo, {}, {}, self.pins, "v0.2.0")
+        sync_released.rewrite_manifest(entry, self.repo, {"hex-real-roots-mathlib": "synced"}, {},
+                                       self.pins, "v0.2.0")
         packages = {p["name"]: p for p in json.loads(path.read_text())["packages"]}
         self.assertTrue(packages["TauCeti"]["inherited"])
         self.assertTrue(packages["mathlib"]["inherited"])
@@ -820,8 +822,42 @@ class SyncReleasedTests(unittest.TestCase):
         tau = dict(next(p for p in source if p["name"] == "TauCeti"), inherited=True)
         path = self.repo / "lake-manifest.json"
         path.write_text(json.dumps({"version": "1.2.0", "packages": [tau]}))
-        sync_released.rewrite_manifest(entry, self.repo, {}, {}, self.pins, "v0.2.0")
+        notes = sync_released.rewrite_manifest(entry, self.repo, {}, {}, self.pins, "v0.2.0")
         self.assertFalse(json.loads(path.read_text())["packages"][0]["inherited"])
+        self.assertIn("  manifest external TauCeti inherited -> direct (lake-manifest.json)", notes)
+
+    def test_unsynchronized_upstream_does_not_add_external_lock_entries(self) -> None:
+        entry = self._external_import_entry('name = "probe"\n', "")
+        entry["pins"] = ["hex-proof-mathlib"]
+        manifest = self.repo / "released.yml"
+        manifest.write_text("repos:\n  - repo: leanprover/hex-proof-mathlib\n"
+                            "    lib: HexProofMathlib\n    lakefile: toml\n")
+        path = self.repo / "lake-manifest.json"
+        roots = lambda item, _: {"HasseWeil": "Proof.lean"} if item["repo"].endswith("hex-proof-mathlib") else {}
+        with patch.object(sync_released, "MANIFEST", manifest), \
+                patch.object(sync_released, "_external_import_roots", side_effect=roots):
+            path.write_text(json.dumps({"version": "1.2.0", "packages": []}))
+            sync_released.rewrite_manifest(entry, self.repo, {}, {}, self.pins, "v0.2.0")
+            self.assertEqual(json.loads(path.read_text())["packages"], [])
+            sync_released.rewrite_manifest(entry, self.repo, {"hex-proof-mathlib": "published"},
+                                           {}, self.pins, "v0.2.0")
+            names = {p["name"] for p in json.loads(path.read_text())["packages"]}
+            self.assertIn("AINTLIB", names)
+            entry.pop("mathlib_only")
+            before = path.read_text()
+            with self.assertRaisesRegex(RuntimeError, "computational repository"):
+                sync_released.rewrite_manifest(entry, self.repo, {"hex-proof-mathlib": "published"},
+                                               {}, self.pins, "v0.2.0")
+            self.assertEqual(path.read_text(), before)
+
+    def test_new_external_requirement_keeps_toml_mathlib_comment(self) -> None:
+        entry = self._external_import_entry(
+            'name = "probe"\n\n# Mathlib pins take precedence.\n[[require]]\n'
+            'name = "mathlib"\nrev = "old"\n', "import TauCeti\n")
+        sync_released.rewrite_external_requires(entry, self.repo, self.pins)
+        text = (self.repo / "lakefile.toml").read_text()
+        self.assertLess(text.index('name = "TauCeti"'), text.index("# Mathlib"))
+        self.assertIn('# Mathlib pins take precedence.\n[[require]]\nname = "mathlib"', text)
 
     def test_hasse_requires_aintlib_even_with_mathlib(self) -> None:
         mathlib = '[[require]]\nname = "mathlib"\nrev = "0"\n'
