@@ -1604,6 +1604,9 @@ common roots. Exact native provenance is checked first. For a new owner,
 registration validates its converted descriptor and prepares its constraints
 once. It visits the images of cached generators and their negatives on demand,
 including previously reused values, and skips structurally repeated candidates.
+Insertion computes an original generator's image once and retains it in the
+immutable cache. Extension maps these retained values once, and cache append
+removes structurally repeated images.
 Each candidate is tested against the defining
 equation first, followed by derivative signs and strict interval bounds; the
 check stops at the first mismatch and the search stops at the first full match.

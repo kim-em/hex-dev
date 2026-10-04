@@ -174,7 +174,7 @@ noncomputable def EntryModel.transport {source destination later : Context regis
 
 /-- The empty cache has no owner maps to certify. -/
 def Models.empty {destination : Context registry} (target : Tower.Model destination R) :
-    Models following reference target ⟨[]⟩ := by
+    Models following reference target ⟨[], []⟩ := by
   intro entry present
   exact False.elim (List.not_mem_nil present)
 
