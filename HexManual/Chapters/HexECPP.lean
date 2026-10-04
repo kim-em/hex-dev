@@ -240,7 +240,7 @@ Coordinates and inverse witnesses must be residues between 0 and
 The real-valued size condition above is implemented with exact integer
 inequalities. With `r = q - 1`, the checker requires
 `n < r²` and `16 n q < (r² - n)²`. These are equivalent to the stated
-size condition for `q ≥ 2`; equality is not enough to prove primality.
+size condition for `q ≥ 2`; equality is not enough for this argument.
 
 {docstring Hex.ECPP.sizeBound}
 
@@ -341,11 +341,12 @@ without installing GP. Each row has the form `[n,t,s,a,P]`:
   `Q = s • P` and checks the required scalar multiplication by `q`.
 
 The row in the example for 17 has `m = 17 + 1 - 7 = 11` and
-cofactor 1, so `P` is already the point `Q` of order 11. A saved
-row is an encoding of the certificate calculation: the field `t`
-need not be the actual Frobenius trace of the curve. Hex verifies
-the required point-order calculation instead of trusting a claimed
-point count.
+cofactor 1, so `P` is already the point `Q` of order 11. The curve
+itself has 22 points; the saved row records the point's order 11,
+which is enough for the proof. A saved row is an encoding of the
+certificate calculation: the field `t` need not be the actual
+Frobenius trace of the curve. Hex verifies the required point-order
+calculation instead of trusting a claimed point count.
 
 PARI certificates end with a prime below PARI's own cutoff. Hex
 still requires a proof certificate for that last integer; in the
@@ -470,7 +471,8 @@ allow only Lean's standard `propext`, `Classical.choice` and
 `Quot.sound` axioms.
 
 The companion also relates the curve's points over the prime field
-to points fixed by Frobenius over an algebraic closure. The
+to points fixed by Frobenius over any extension field, in particular
+an algebraic closure. The
 equivalences {name}`Hex.ECPP.rationalPointsEquivFixed` and
 {name}`Hex.ECPP.rationalPointsEquivKer` express that correspondence
 as fixed points and as the kernel of `1 - Frobenius`, respectively.
