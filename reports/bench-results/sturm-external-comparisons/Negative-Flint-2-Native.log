@@ -1,0 +1,9 @@
+Hex.SturmExternalBench.runNativeNegative    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=bc94cd3-dirty, 2026-10-03T17:37:19Z, host=chungus2
+  repeat 0  111.562 µs  (×2^4, total 1.785 ms)
+  median: 111.562 µs    min: 111.562 µs    max: 111.562 µs
+  hash: all repeats agree
+  observed hash: 0x99a2f57b9930f69a
+  expected hash: matches
+  peak RSS: 67_592 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-comparisons/Negative-Flint-2-Native.json

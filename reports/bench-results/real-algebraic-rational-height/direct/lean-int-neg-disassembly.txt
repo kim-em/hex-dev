@@ -1,0 +1,70 @@
+
+/home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/lib/lean/libleanshared.so:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .text:
+
+00000000096283c0 <lean_int_big_neg>:
+ 96283c0:	55                   	push   %rbp
+ 96283c1:	41 56                	push   %r14
+ 96283c3:	53                   	push   %rbx
+ 96283c4:	48 83 ec 20          	sub    $0x20,%rsp
+ 96283c8:	48 8d 77 08          	lea    0x8(%rdi),%rsi
+ 96283cc:	48 8d 5c 24 10       	lea    0x10(%rsp),%rbx
+ 96283d1:	48 89 df             	mov    %rbx,%rdi
+ 96283d4:	e8 37 97 ff ff       	call   9621b10 <_ZN4lean3mpzC1ERKS0_>
+ 96283d9:	f7 5c 24 14          	negl   0x14(%rsp)
+ 96283dd:	49 89 e6             	mov    %rsp,%r14
+ 96283e0:	4c 89 f7             	mov    %r14,%rdi
+ 96283e3:	48 89 de             	mov    %rbx,%rsi
+ 96283e6:	e8 35 97 ff ff       	call   9621b20 <_ZN4lean3mpzC1EOS0_>
+ 96283eb:	4c 89 f7             	mov    %r14,%rdi
+ 96283ee:	be 00 00 00 80       	mov    $0x80000000,%esi
+ 96283f3:	e8 60 98 ff ff       	call   9621c58 <_ZN4lean3cmpERKNS_3mpzEi>
+ 96283f8:	85 c0                	test   %eax,%eax
+ 96283fa:	78 11                	js     962840d <lean_int_big_neg+0x4d>
+ 96283fc:	48 89 e7             	mov    %rsp,%rdi
+ 96283ff:	be ff ff ff 7f       	mov    $0x7fffffff,%esi
+ 9628404:	e8 4f 98 ff ff       	call   9621c58 <_ZN4lean3cmpERKNS_3mpzEi>
+ 9628409:	85 c0                	test   %eax,%eax
+ 962840b:	7e 31                	jle    962843e <lean_int_big_neg+0x7e>
+ 962840d:	bf 18 00 00 00       	mov    $0x18,%edi
+ 9628412:	e8 79 5b 05 00       	call   967df90 <lean_alloc_small_object_core>
+ 9628417:	48 89 c3             	mov    %rax,%rbx
+ 962841a:	0f b7 68 04          	movzwl 0x4(%rax),%ebp
+ 962841e:	48 89 c7             	mov    %rax,%rdi
+ 9628421:	48 83 c7 08          	add    $0x8,%rdi
+ 9628425:	48 89 e6             	mov    %rsp,%rsi
+ 9628428:	e8 e3 96 ff ff       	call   9621b10 <_ZN4lean3mpzC1ERKS0_>
+ 962842d:	c7 03 01 00 00 00    	movl   $0x1,(%rbx)
+ 9628433:	81 cd 00 00 00 fa    	or     $0xfa000000,%ebp
+ 9628439:	89 6b 04             	mov    %ebp,0x4(%rbx)
+ 962843c:	eb 12                	jmp    9628450 <lean_int_big_neg+0x90>
+ 962843e:	48 89 e7             	mov    %rsp,%rdi
+ 9628441:	e8 72 97 ff ff       	call   9621bb8 <_ZNK4lean3mpz7get_intEv>
+ 9628446:	89 c0                	mov    %eax,%eax
+ 9628448:	48 8d 1c 45 01 00 00 	lea    0x1(,%rax,2),%rbx
+ 962844f:	00 
+ 9628450:	48 89 e7             	mov    %rsp,%rdi
+ 9628453:	e8 18 96 ff ff       	call   9621a70 <_ZN4lean3mpzD1Ev>
+ 9628458:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+ 962845d:	e8 0e 96 ff ff       	call   9621a70 <_ZN4lean3mpzD1Ev>
+ 9628462:	48 89 d8             	mov    %rbx,%rax
+ 9628465:	48 83 c4 20          	add    $0x20,%rsp
+ 9628469:	5b                   	pop    %rbx
+ 962846a:	41 5e                	pop    %r14
+ 962846c:	5d                   	pop    %rbp
+ 962846d:	c3                   	ret
+ 962846e:	48 89 c3             	mov    %rax,%rbx
+ 9628471:	48 89 e7             	mov    %rsp,%rdi
+ 9628474:	e8 f7 95 ff ff       	call   9621a70 <_ZN4lean3mpzD1Ev>
+ 9628479:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+ 962847e:	e8 ed 95 ff ff       	call   9621a70 <_ZN4lean3mpzD1Ev>
+ 9628483:	48 89 df             	mov    %rbx,%rdi
+ 9628486:	e8 95 14 0f 00       	call   9719920 <_Unwind_Resume>
+
+Disassembly of section .plt:

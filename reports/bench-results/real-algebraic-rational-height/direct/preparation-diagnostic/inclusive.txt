@@ -1,0 +1,29 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 19K of event 'cycles:u'
+# Event count (approx.): 87617557546
+#
+# Children      Self  Symbol                                                           IPC   [IPC Coverage]
+# ........  ........  ...............................................................  ....................
+#
+    35.11%    35.11%  [.] __gmpn_addmul_1_x86_64                                       -      -            
+    11.70%    11.70%  [.] __gmpn_sub_n_x86_64                                          -      -            
+     9.34%     9.34%  [.] __gmpn_add_n_x86_64                                          -      -            
+     6.34%     6.34%  [.] __gmpn_mul_2                                                 -      -            
+     3.63%     3.63%  [.] __gmpn_addmul_2_fat                                          -      -            
+     3.58%     3.58%  [.] mpn_fft_mul_2exp_modF                                        -      -            
+     3.38%     3.38%  [.] __gmpn_toom22_mul                                            -      -            
+     3.22%     3.20%  [.] __gmpn_lshift_x86_64                                         -      -            
+     2.89%     2.87%  [.] __gmpn_mul_basecase_fat                                      -      -            
+     2.53%     2.53%  [.] __gmpn_submul_1_x86_64                                       -      -            
+     2.37%     2.37%  [.] __gmpn_pi1_bdiv_q_1                                          -      -            
+     2.15%     2.12%  [.] __gmpn_lshiftc_x86_64                                        -      -            
+     2.10%     2.10%  [.] __gmpn_copyi_x86_64                                          -      -            
+
+
+#
+# (Tip: Show current config key-value pairs: perf config --list)
+#

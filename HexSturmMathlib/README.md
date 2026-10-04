@@ -34,6 +34,7 @@ full context and value and do not rerun the polynomial producer.
 The shared Sturm–Tarski theorem proves root-sum semantics for arbitrary
 accepted certificates over an ordered real closed field. `query_sound` and
 `queryPrepared_sound` apply it to the ordinary and prepared producers;
+`query_iff` characterizes both failure and the returned signed root sum;
 `query_count`, `query_sign` and `query_bound` give counts, singleton signs and
 degree bounds. `query_nonneg` justifies the exact natural-number conversion in
 `Sturm.rootCount`, whose success domain is unchanged. `rootCount_sturm`
@@ -53,7 +54,7 @@ adding pinned Tau Ceti release dependencies. Their axiom audits admit only `prop
 `Classical.choice` and `Quot.sound`. This theorem-only companion has no dedicated
 Phase-4 performance deliverable. Ordinary-kernel correctness checks are built
 by `HexSturmMathlibTests` and `HexQuerySemantics`; Phase-4 dependency and
-headline-theorem requirements remain in the readiness audit. See [the specification](SPEC/hex-sturm-mathlib.md).
+bridge-target requirements remain in the readiness audit. See [the specification](SPEC/hex-sturm-mathlib.md).
 
 Executable translations live in Mathlib-free `HexSturm.Transport`; see the
 [SPEC](SPEC/hex-sturm-mathlib.md) for their endpoint and binding contracts.

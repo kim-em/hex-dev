@@ -9,11 +9,16 @@ public import HexECPPMathlib.Hasse
 public import Mathlib.FieldTheory.Finite.Basic
 
 /-!
-# Frobenius on elliptic-curve points
+# Prime-field points as fixed points of Frobenius
 
-For a curve defined over `ZMod p`, Frobenius on any extension field acts
-coordinatewise on its affine points. Its fixed points are precisely the
-points coming from the base field.
+For an elliptic curve defined over `ZMod p`, the `p`-power Frobenius sends
+affine coordinates `(x,y)` to `(x^p,y^p)` over an extension field. Its fixed
+points are precisely the points defined over the prime field.
+
+The equivalences here identify those rational points both with Frobenius
+fixed points and with the kernel of `1 - Frobenius`. In particular, over an
+algebraic closure this explains how the finite point count relates to an
+endomorphism of the curve's group of points.
 -/
 
 @[expose] public section
