@@ -19,6 +19,8 @@
   "exit_code": 0,
   "elapsed_wall_seconds": 5.520851189001405,
   "ended_utc": "2026-10-04T12:23:04.652557+00:00",
-  "source_tag": "issue-10378-phase4-profile-source",
-  "build_provenance_limit": "Source cleanliness was captured at execution, not during the earlier build; CPU model, OS and kernel were not recorded for this historical run."
+  "annotations": {
+    "source_tag": "issue-10378-phase4-profile-source",
+    "build_provenance_limit": "Source cleanliness was captured at execution, not during the earlier build; CPU model, OS and kernel were not recorded for this historical run."
+  }
 }

@@ -34,11 +34,13 @@
   "raw_profile_bytes": 4833596,
   "raw_profile_sha256": "2ecc4899ef1b3b7c7f2d0cf98c23a19d739a3be2d673d64d4aa9e1ff751da14d",
   "report_exit_code": 0,
-  "source_tag": "issue-10378-phase4-profile-source",
-  "profile_limitations": [
-    "99Hz, not required1kHz",
-    "whole process, not filtered bench thread and timed regions",
-    "Hex inclusive callers not recovered reliably",
-    "raw profile retained locally; no remote raw-data archive recorded"
-  ]
+  "annotations": {
+    "source_tag": "issue-10378-phase4-profile-source",
+    "profile_limitations": [
+      "99Hz, not required1kHz",
+      "whole process, not filtered bench thread and timed regions",
+      "Hex inclusive callers not recovered reliably",
+      "raw profile retained locally; no remote raw-data archive recorded"
+    ]
+  }
 }
