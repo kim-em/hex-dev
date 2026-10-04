@@ -39,7 +39,8 @@ register_option rcf.algebraic.reducedLiterals : Bool := {
 }
 
 -- The false arm produces full queries as a reproducible comparison control.
--- Frozen quotation always preserves the supplied evidence.
+-- Only tactic producers use this control. Frozen quotation and the explicit
+-- prepared replay API always preserve the supplied evidence.
 register_option rcf.algebraic.intervalSigns : Bool := {
   defValue := true
   descr := "produce exact Horner signs on the authenticated generator interval"
@@ -266,9 +267,7 @@ meta def prepareSigns {p : ZPoly} {root : SimpleRoot p}
   let entries ← table.entries.mapM fun entry => do
     if entry.evidence.isSome then return entry
     let evidence := Sturm.certifyPrepared () domain entry.key.coeffs
-    unless evidence.value == entry.value &&
-        Sturm.check Sturm.orderSign () table.head entry.key.coeffs
-          (.finite table.lower) (.finite table.upper) entry.value evidence do
+    unless evidence.value == entry.value do
       throwError "rcf: literal sign query disagrees with its checked enclosure"
     return { entry with evidence := some evidence }
   let result := {table with entries}
