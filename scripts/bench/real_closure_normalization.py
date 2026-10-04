@@ -35,12 +35,12 @@ def main():
     os.chdir(ROOT)
     manifest = destination / 'manifest.json'
     record = dict(status='running', host=platform.node(), platform=platform.platform(),
-                  sizes=[2,4,8,16], trials=5, target_inner_nanos=500000000,
+                  sizes=[2,4,8,16], trials=6, target_inner_nanos=500000000,
                   schedule='trial-major; degree order 2,4,8,16; adjacent AB/BA alternating by trial',
                   arms=dict(A='clean', B='eager'), commands=[], measurements=[])
     def save():
         manifest.write_text(json.dumps(record, indent=2)+'\n')
-    def run(command, *, timeout=600):
+    def run(command, *, timeout=600, check=True):
         argv = list(map(str, command))
         index = len(record['commands'])
         output = destination / f'{index}.stdout'
@@ -51,7 +51,10 @@ def main():
             try:
                 code = process.wait(timeout=timeout)
             except BaseException:
-                os.killpg(process.pid, signal.SIGKILL)
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
                 process.wait()
                 record['commands'].append(dict(argv=argv, exit_code=process.returncode,
                     incomplete=True, elapsed_ns=time.monotonic_ns()-began, stdout=str(output), stderr=str(errors)))
@@ -60,7 +63,7 @@ def main():
         record['commands'].append(dict(argv=argv, exit_code=code,
             elapsed_ns=time.monotonic_ns()-began, stdout=str(output), stderr=str(errors)))
         save()
-        if code != 0:
+        if check and code != 0:
             raise RuntimeError(f'command failed: {argv}')
         return output
     lease = None
@@ -78,7 +81,7 @@ def main():
             raise RuntimeError('lean-bench checkout disagrees with its source pin')
         if run(['git','-C',ROOT/'.lake/packages/lean-bench','status','--porcelain']).read_text().strip():
             raise RuntimeError('lean-bench checkout is dirty')
-        run(['lake','build','hexrealclosure_normalization_bench'])
+        run(['lake','build','hexrealclosure_normalization_bench'], timeout=None)
         snapshot = destination / 'hexrealclosure_normalization_bench'
         shutil.copy2(ROOT/'.lake/build/bin/hexrealclosure_normalization_bench',snapshot)
         record['executable_sha256'] = digest(snapshot)
@@ -88,24 +91,33 @@ def main():
         cpu, lease = cpu_lease()
         os.sched_setaffinity(0,{cpu})
         record.update(cpu=cpu, affinity=sorted(os.sched_getaffinity(0)), load=os.getloadavg())
+        hashes = {}
         for degree in record['sizes']:
             fixture = run([snapshot,'storage',degree])
             run([args.oracle_python,'scripts/oracle/real_closure_normalization.py',fixture])
+            stored = json.loads(fixture.read_text())
+            hashes[degree] = {arm: f'0x{stored[label]["result_hash"]:x}'
+                             for arm, label in [('A','clean'),('B','eager')]}
+        record['expected_hashes'] = hashes
+        record['registration_purpose'] = 'fixed exact-result comparison endpoints; no scaling or absolute-budget verdict'
         for trial in range(record['trials']):
             order = ['A','B'] if trial % 2 == 0 else ['B','A']
             for degree in record['sizes']:
                 for arm in order:
-                    name = 'Hex.RealClosure.Normalization.run' + ('Clean' if arm=='A' else 'Eager')
+                    name = 'Hex.RealClosure.Normalization.' + ('clean' if arm=='A' else 'eager') + str(degree)
                     load = os.getloadavg()
-                    output = run([snapshot,'_child','--bench',name,'--param',degree,
-                        '--target-nanos',record['target_inner_nanos'],'--cache-mode','warm'])
-                    rows = [json.loads(line) for line in output.read_text().splitlines() if line.startswith('{')]
-                    record['measurements'].append(dict(trial=trial, degree=degree, arm=arm,
-                        order=''.join(order), load=load, rows=rows, output=str(output)))
+                    output = run([snapshot,'_child','--bench',name,'--fixed',
+                        '--min-total-nanos',record['target_inner_nanos']], check=False)
+                    attempt = dict(trial=trial, degree=degree, arm=arm, order=''.join(order),
+                                   load=load, output=str(output), exit_code=record['commands'][-1]['exit_code'])
+                    record['measurements'].append(attempt)
                     save()
-                    if len(rows)!=1 or rows[0].get('status')!='ok' or rows[0].get('result_hash')!='0x1':
+                    rows = [json.loads(line) for line in output.read_text().splitlines() if line.startswith('{')]
+                    attempt['rows'] = rows
+                    save()
+                    if attempt['exit_code']!=0 or len(rows)!=1 or rows[0].get('status')!='ok' or rows[0].get('result_hash')!=hashes[degree][arm]:
                         raise RuntimeError('measurement failed its complete arithmetic result check')
-                    if rows[0].get('function') != name or rows[0].get('param') != degree:
+                    if rows[0].get('function') != name or rows[0].get('kind') != 'fixed':
                         raise RuntimeError('measurement row names a different arm or parameter')
                     env = rows[0].get('env',{})
                     if env.get('git_commit')!=record['commit'] or env.get('git_dirty') is not False:
