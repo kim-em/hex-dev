@@ -316,6 +316,12 @@ class AdmissionScannerTests(unittest.TestCase):
             qadjoin.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             qadjoin_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+            for module in ("HexRealClosure.LiveRequest", "HexRealClosure.LiveRequestTests",
+                           "HexRealClosureMathlib.LiveRequest"):
+                directory = root / ("adapters" if "Mathlib" in module else "")
+                path = directory / (module.replace(".", "/") + ".lean")
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
                 for probe in (union, union_tests, qadjoin, qadjoin_tests):

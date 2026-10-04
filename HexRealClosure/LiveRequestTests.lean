@@ -32,6 +32,23 @@ private def check {base : BaseContext.PackedContext registry} {request : Request
     "transport lost a defining equation"
   require (target.sign alpha == 1 && target.sign beta == 1)
     "transport changed a selected root"
+  for (index, value) in [(0, beta), (2, alpha)] do
+    let some frame := collection.frames[index]? | throw (IO.userError "missing root dependency frame")
+    let some descriptor := frame.descriptors[0]? | throw (IO.userError "missing root dependency descriptor")
+    require (target.sign (descriptor.raw.head.eval value) == 0)
+      "transported descriptor does not vanish at its retained generator"
+    match descriptor.raw.lower with
+    | .finite lower =>
+      require (target.compare lower value == .lt)
+        "retained generator does not lie above its transported lower bound"
+    | .negInf => pure ()
+    | .posInf => throw (IO.userError "invalid lower bound")
+    match descriptor.raw.upper with
+    | .finite upper =>
+      require (target.compare value upper == .lt)
+        "retained generator does not lie below its transported upper bound"
+    | .posInf => pure ()
+    | .negInf => throw (IO.userError "invalid upper bound")
   let some operands := collection.frames[4]? | throw (IO.userError "missing operand frame")
   let some computed := operands.values[0]? | throw (IO.userError "missing computed value")
   require (target.equal computed (beta + alpha)) "transport lost a computed live value"
@@ -45,6 +62,20 @@ private def check {base : BaseContext.PackedContext registry} {request : Request
 
 def run : IO Unit := do
   let base := Context.base rational
+  let some empty := Request.gather? (.pack rational) []
+    | throw (IO.userError "empty live request failed")
+  require (empty.frames.isEmpty) "empty request gained frames"
+  let pointRequest := rootRequest (Root.point (parent := base) (1+1))
+  let some point := Request.gather? (.pack rational) pointRequest
+    | throw (IO.userError "point live request failed")
+  let some pointFrame := point.frames[0]? | throw (IO.userError "point frame missing")
+  let some pointValue := pointFrame.values[0]? | throw (IO.userError "point value missing")
+  require (point.shared.input.context.equal pointValue (1+1) && pointFrame.descriptors.isEmpty)
+    "point request did not retain its value without root evidence"
+  let incompatible := Context.base rational.infinitesimal
+  let bad : Request registry := [⟨incompatible, { values := [1] }⟩]
+  require ((Request.gather? (.pack rational) bad).isNone)
+    "rational target accepted an owner with an extra infinitesimal"
   let x : base.Poly := DensePoly.ofCoeffs #[0, 1]
   let some descriptor := SignDet.Descriptor.validate base.sign base.signature
       { context := base.signature, head := x*x - DensePoly.C (1+1),

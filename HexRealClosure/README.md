@@ -1939,7 +1939,10 @@ validated coefficient ancestry through `Context.origin`.
 predecessor cache, and transports every frame through its retained inclusion.
 It validates every descriptor again against the actual common target.
 `Collection.enlarge?` rebuilds that shared suffix once after adding an
-infinitesimal, then refreshes every original request. The enlargement retains
+infinitesimal, then transports the current frames through the previous target's
+inclusion and refreshes their descriptors. The proved transport composition
+retains the original producer certificate without recomputing its historical
+maps. The enlargement retains
 one map for the previous shared target and maps for all original owners;
 `Enlargement.maps` identifies their compositions. `Enlargement.collection`
 retains the original request for further enlargement.
@@ -1949,13 +1952,21 @@ factory and native prefix compatibility. It proves enlargement success with
 a complete canonical model of the returned collection. At every original
 frame position, the actual produced values, polynomial coefficients and
 selected roots retain their interpreted lists in one common model.
+`Collection.model` interprets an actual gathered result through that factory.
+`Collection.enlarge?_models` retains the new parameter identity and the
+checked predecessor model; `Enlargement.semantics` preserves the ordered
+frame lists across that enlargement in the lifted old model.
+`rootRequest_semantics` identifies a transported cached generator with its
+refreshed descriptor using the canonical child model of its predecessor.
+`Collection.frame` provides total access by an original request index.
 Native tests gather a selected parent and dependent child in reverse order,
 transport computed values and coefficients, perform two enlargements, check
 fresh descriptor bindings and reject stale descriptors and serialized values
 and polynomials. The original contexts remain usable.
 
 Compatible real-prefix permutations still require non-prefix native
-inclusions and a joint realization. This finite request interface uses the
+inclusions and a joint realization. Realization through arbitrary interleaved
+algebraic and infinitesimal stages also remains open. This finite request interface uses the
 existing prefix compatibility check.
 
 

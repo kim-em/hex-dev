@@ -489,13 +489,6 @@ Each result retains its own input embedding; cell coverage and sign invariance
 are interpreted in a common ambient field.
 
 An infinitesimal backend may use `r+ε` or `±1/ε`.
-The finite live-request API is `Tower.Live.Request`: every frame retains
-its immutable owner, values, polynomials and checked descriptors. A selected
-root request retains its predecessor descriptor and actual cached child
-generator. `Request.gather?` gathers owner ancestry before mapping operands,
-and `Collection.enlarge?` rebuilds that shared ancestry once and refreshes
-every original frame. The returned enlargement retains the old target map,
-the original owner maps and a collection ready for successive enlargement.
 
 After algebraics exist,
 `Context.enlarge` rebuilds the infinitesimal base before those levels,
@@ -508,6 +501,16 @@ literally through `R → R(δ) → R'`; no unlisted uniqueness-of-real-closure
 theorem is assumed. Since `R/B` is algebraic, `R'/B(δ)` is algebraic too.
 Computationally reconstruct the staged base `B(δ)` and revalidate transported
 root descriptors/certificates in predecessor order.
+
+The finite live-request API is `Tower.Live.Request`: every frame retains
+its immutable owner, values, polynomials and checked descriptors. A selected
+root request retains its predecessor descriptor and actual cached child
+generator. `Request.gather?` gathers owner ancestry before mapping operands,
+and `Collection.enlarge?` rebuilds that shared ancestry once and transports
+the current frames through the previous target map, refreshing every
+descriptor while retaining the original producer certificate. The returned enlargement retains the old target map,
+the original owner maps and a collection ready for successive enlargement.
+
 
 Enlargement preserves embeddings, root identity and all previous comparisons,
 and returns a new context; appending an infinitesimal after an algebraic

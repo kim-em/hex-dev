@@ -290,7 +290,11 @@ follows each owner's validated ancestry and refreshes every requested
 descriptor in the common target. `Request.transport?_semantics` preserves
 the complete value, polynomial-coefficient and selected-root lists at every
 original frame position. `Collection.enlarge?_models` constructs the complete
-canonical model of the actual enlarged collection, so the original request
+canonical model of the actual enlarged collection, the new parameter identity
+and its checked predecessor model. `Enlargement.semantics` preserves each
+ordered frame list across the enlargement in the lifted old model, and
+`rootRequest_semantics` connects its cached generator and refreshed descriptor.
+The original request
 supports successive enlargement without supplied root or coefficient
 agreement. These factories use the native real-prefix and infinitesimal-depth
 compatibility check. Incomparable real-prefix owners require both non-prefix
