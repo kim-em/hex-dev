@@ -521,6 +521,32 @@ below. Native root entries, their coefficient embeddings and the compatible
 presentation quotient are described below. Automatic dependency transport and
 simultaneous ordinary-real realization remain requirements of the full tower.
 
+### Complete roots with finite isolation choices
+
+`Isolation.Policy` offers `standard`, `bounded` and `whole`. The standard
+choice uses the finite bound search and bisection cap. The bounded choice
+omits bisection; the whole-line choice omits both optimizations. Each choice
+completes every retained cell with the existing BKR descriptor producer.
+No choice asks for a coefficient precision threshold.
+
+`Roots.Policy.roots policy sign context p` applies the choice to every actual
+Yun factor, restores extracted zero with its original multiplicity and sorts
+all roots with their attached labels. Its diagnostic form is `roots?`.
+`RootPolicy` proves total success, the separate zero `all` case, exact root
+coverage and multiplicities, strict ordering and agreement between policies.
+
+For native context-indexed values, use `context.rootsWith policy p` or
+`context.rootsWith? policy p`. Every selected entry retains its actual child
+context, root value and predecessor coefficient embedding. `TowerRootPolicy`
+proves the same complete RootSet contract under the context's ambient model.
+
+`RootPolicyConformance` exports 27 exact outputs covering all three policies,
+zero, constants, nonmonic repeated factors, zero extraction, root-free
+factors, cut points, an infinitesimally close repeated pair and an inverse
+infinitesimal. The independent Z3 oracle checks complete ordered root sets
+and original multiplicities. `RootPolicyTests` checks native root equations,
+ownership, order and labels through the actual materialization API.
+
 ### Bound selection and whole-line dispatch
 
 `Isolation.search? sign p` follows the fixed finite dyadic bound policy. On an
