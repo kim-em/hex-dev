@@ -165,6 +165,48 @@ theorem constant_zero :
     zero.polynomial = 0 ∧ zero.sign = 0 := by
   decide +kernel
 
+@[expose] def inverseKey : DensePoly Rat := DensePoly.ofCoeffs #[0, 1 / 2]
+
+set_option maxRecDepth 32768 in
+/-- A linear endpoint query computes the sign of the exact inverse remainder. -/
+theorem inverse_key_sign : context.signPoly inverseKey = 1 := by
+  simp only [Context.signPoly, Context.queryPoly, Context.queryRemainder,
+    Context.intervalSign?, context, Context.root_adjoin,
+    CoefficientSignsConformance.source_raw, Hex.SignDet.Conformance.singletonRaw,
+    DensePoly.pseudoDivMod, ← Array.foldl_toList, Array.toList_range]
+  decide +kernel
+
+@[expose] def inverseFacts : List (SignFact context) :=
+  facts ++ [⟨inverseKey, 1, inverse_key_sign⟩]
+
+set_option maxRecDepth 32768 in
+theorem nonconstant_candidate : small.inverseCandidate = inverseKey := by
+  simp only [Element.inverseCandidate, Element.inverseFactor, context, Context.root_adjoin,
+    CoefficientSignsConformance.source_raw]
+  decide +kernel
+
+set_option maxRecDepth 32768 in
+/-- Inversion of the nonconstant representative 2X packs the exact remainder
+X/2 from its supplied fact; it retains the existing gcd/Bézout calculation. -/
+theorem nonconstant_inverse :
+    let inverse := @Inv.inv (Element context)
+      (Element.cachedInv reduction reduction_eq inverseFacts) small
+    inverse.polynomial = inverseKey ∧ inverse.sign = 1 := by
+  dsimp only
+  unfold Element.cachedInv
+  simp only [nonconstant_candidate]
+  decide +kernel
+
+set_option maxRecDepth 32768 in
+example : True := by
+  fail_if_success
+    have : (@Inv.inv (Element context)
+        (Element.cachedInv reduction reduction_eq ([] : List (SignFact context))) small).sign = 1 := by
+      unfold Element.cachedInv
+      simp only [nonconstant_candidate]
+      decide +kernel
+  trivial
+
 @[expose] def reciprocalFacts : List (SignFact opaqueContext) :=
   constantFacts ++
     [⟨DensePoly.C (1 / 3 : Rat), 1, by
@@ -184,8 +226,8 @@ theorem constant_inverseCandidate :
   decide +kernel
 
 set_option maxRecDepth 32768 in
-/-- Reciprocal and quotient packing consume supplied constant facts even when
-ordinary predecessor sign evaluation is opaque to the kernel. -/
+/-- A constant reciprocal and quotient over Rat consume supplied facts even
+when the predecessor sign function is opaque to the kernel. -/
 theorem constant_inverse :
     let three := @NatCast.natCast (Element opaqueContext)
       (Element.cachedNatCast id opaque_reduction reciprocalFacts) 3
@@ -201,6 +243,15 @@ theorem constant_inverse :
   unfold Element.cachedDiv Element.cachedInv
   simp only [constant_inverseCandidate]
   decide +kernel
+
+set_option maxRecDepth 32768 in
+/-- The ordinary inverse cannot discharge this opaque-sign goal by reduction. -/
+example : True := by
+  fail_if_success
+    have : ((@NatCast.natCast (Element opaqueContext)
+        (Element.cachedNatCast id opaque_reduction reciprocalFacts) 3)⁻¹).sign = 1 := by
+      decide +kernel
+  trivial
 
 /-- A supplied proof restores agreement with the ordinary total operations. -/
 theorem constant_native : ((3 : Nat) : Element opaqueContext).sign = 1 := by
@@ -273,5 +324,9 @@ example : True := by
 /-- info: 'Hex.RealClosure.Algebraic.PackingConformance.constant_inverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms constant_inverse
+
+/-- info: 'Hex.RealClosure.Algebraic.PackingConformance.nonconstant_inverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms nonconstant_inverse
 
 end Hex.RealClosure.Algebraic.PackingConformance

@@ -2351,7 +2351,8 @@ literally with the ordinary total operations for every fact list. Inversion
 retains the existing inverse-polynomial computation; its gcd and predecessor
 arithmetic are unchanged. `Algebraic.Dag.validateCached?` validates an entire
 supplied graph with coefficient operations using supplied facts, then transports
-the memo to the ordinary graph interface. The exact acceptance, rejection,
+each entry's erased acceptance proof to the ordinary graph interface. The
+literal memo remains reducible in the kernel. The exact acceptance, rejection,
 literal entries and indices are preserved. Missing nonconstant facts block
 ordinary-kernel reduction, but compiled evaluation retains the native fallback.
 These interfaces support proof assembly; they do not establish a compiled
