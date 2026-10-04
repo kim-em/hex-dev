@@ -142,6 +142,43 @@ def Context.infinitesimal {registry : Registry} {K : Type}
     (parent : Context registry K sign) :
     Context registry (RationalFn K) (Infinitesimal.sign sign) := ⟨.infinitesimal parent.chain⟩
 
+private theorem Context.real_chain_proof {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K]
+    {approx : K → Rat → Bounds} {sign : K → Int}
+    (parent : RealContext registry K approx sign) :
+    (Context.real parent).chain = .real parent.chain := rfl
+
+/-- Finishing a real prefix retains its actual stored predecessor chain. -/
+theorem Context.real_chain {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K]
+    {approx : K → Rat → Bounds} {sign : K → Int}
+    (parent : RealContext registry K approx sign) :
+    (Context.real parent).chain = .real parent.chain := Context.real_chain_proof parent
+
+private theorem Context.infinitesimal_chain_proof {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (parent : Context registry K sign) :
+    parent.infinitesimal.chain = .infinitesimal parent.chain := rfl
+
+/-- Adding an infinitesimal retains the exact completed predecessor chain. -/
+theorem Context.infinitesimal_chain {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (parent : Context registry K sign) :
+    parent.infinitesimal.chain = .infinitesimal parent.chain :=
+  Context.infinitesimal_chain_proof parent
+
+private theorem Context.ofChain_eq_proof {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (context : Context registry K sign) : Context.ofChain context.chain = context := by
+  cases context
+  rfl
+
+/-- Repacking the actual chain preserves its original nominal base context. -/
+theorem Context.ofChain_eq {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (context : Context registry K sign) : Context.ofChain context.chain = context :=
+  Context.ofChain_eq_proof context
+
 /-- The rational base, before either kind of transcendental extension. -/
 @[expose] def rational (registry : Registry) : Context registry Rat orderSign := .real (.rational registry)
 
