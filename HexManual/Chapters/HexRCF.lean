@@ -1811,10 +1811,15 @@ search and kernel failures are terminal.
 and quotes a finite certificate through the public
 {name}`Hex.RCF.RealCoefficients.Replay.check_sound` theorem, then checks the proof
 against the original goal. A failed attempt restores caller metavariables.
-Before production, the API binds runtime coordinates, selected root, matrix
-and quantifier to their stored expressions and checks source and valuation
-proofs at their required types. Edited records fail input validation before a
+Before production, the API binds the polynomial, selected root, matrix,
+quantifier, coefficients and divisor coordinates to their stored expressions.
+It checks irreducibility, source and valuation proofs at their required types. Edited records fail input validation before a
 false verdict. Validation-only checks leave no unused theorem declarations.
+The tactic assembles its freshly constructed data through a private path;
+the dispatcher checks its complete original-goal proof. The comparison option
+`rcf.algebraic.validateFresh` repeats public validation for fresh tactic data
+and defaults to false. Public preparation and replay always validate editable
+inputs independently of this comparison control.
 The existing `rcf` tactic retains its documented quotation options.
 
 {name}`Hex.RCF.RealCoefficients.Replay.Input` records the coefficient order,

@@ -493,11 +493,15 @@ meta def proveRefiningWithCertificate {p : ZPoly} {s : DyadicSquare}
       FieldBuild.produceWithin p s hw hp real values formula ()
         (rcf.algebraic.directDepth.get options) (rcf.algebraic.maxDoublings.get options) extraSignKeys
         (rcf.algebraic.monicCore.get options)
-    Core.checkInterrupted
     match result with
-    | .error .exhausted => throwError "rcf: algebraic interval refinement budget exhausted; increase rcf.algebraic.maxDoublings or rcf.algebraic.directDepth"
-    | .error .invalidReplay => throwError "rcf: algebraic certificate construction or replay failed"
+    | .error .exhausted =>
+        Core.checkInterrupted
+        throwError "rcf: algebraic interval refinement budget exhausted; increase rcf.algebraic.maxDoublings or rcf.algebraic.directDepth"
+    | .error .invalidReplay =>
+        Core.checkInterrupted
+        throwError "rcf: algebraic certificate construction or replay failed"
     | .ok data =>
+        Core.checkInterrupted
         return ← quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula
           quantifier extraSignKeys validate data
   else throwError "rcf: selected square does not name a real coefficient field"

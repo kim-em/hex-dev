@@ -290,7 +290,7 @@ run_meta do
     let failure ← tryCatchRuntimeEx (do
       let _ ← if mode then invalid.proveTotalReplay else invalid.proveReplay
       pure none) (fun error => do pure (some (← error.toMessageData.toString)))
-    unless failure.isSome && failure != some "rcf: the prepared finite sentence is false" do
+    unless failure == some "rcf: handler Hex.RCF.RealCoefficients.Coefficients.Environment.source proposed a proof of a different goal" do
       throwError "edited source equivalence became a false verdict"
     unless (← getMCtx).mvarCounter == before do
       throwError "invalid source equivalence leaked metavariables"
@@ -309,5 +309,42 @@ run_meta do
     pure none) (fun error => do pure (some (← error.toMessageData.toString)))
   unless failure == some "rcf: invalid prepared divisor binding" do
     throwError "edited divisor reported the wrong diagnostic: {failure}"
+
+-- Pin the required types independently of each proof's own inferred type.
+run_meta do
+  let first : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0)
+  let second : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 3 + 1) > 0)
+  let .ok a ← Coefficients.prepare first | throwError "first type fixture failed"
+  let .ok b ← Coefficients.prepare second | throwError "second type fixture failed"
+  let cases := [({a with irreducibleExpr := b.irreducibleExpr}, "irreducible"),
+    ({a with valuationProof := b.valuationProof}, "valuation"),
+    ({a with source.proof := b.source.proof}, "source")]
+  for (invalid, name) in cases do
+    let failure ← tryCatchRuntimeEx (do
+      invalid.checkDomains
+      pure none) (fun error => do pure (some (← error.toMessageData.toString)))
+    let expected := "rcf: handler Hex.RCF.RealCoefficients.Coefficients.Environment." ++
+      name ++ " proposed a proof of a different goal"
+    unless failure == some expected do
+      throwError "wrong-type evidence did not fail its required obligation: {failure}"
+  let matrix := mkApp (mkConst ``RealFormula.QF.ff) (mkNatLit (a.arity + 1))
+  let zeroValues ← FieldLiteral.valuesExpr a.polynomialExpr a.rootExpr
+    (fun (_ : Fin a.arity) => (0 : PolyQuot a.polynomial
+      (SimpleRoot.ofSquare a.polynomial a.square a.witness a.precision)))
+  let zeroDivisor ← FieldLiteral.fieldExpr a.polynomialExpr a.rootExpr
+    (0 : PolyQuot a.polynomial (SimpleRoot.ofSquare a.polynomial a.square a.witness a.precision))
+  let expressions := [({a with polynomialExpr := b.polynomialExpr}, "polynomial"),
+    ({a with rootExpr := b.rootExpr}, "selected-root"),
+    ({a with formulaExpr := matrix}, "matrix"),
+    ({a with valuesExpr := zeroValues}, "coefficient"),
+    ({a with divisorExpressions := #[zeroDivisor]}, "divisor")]
+  for (invalid, name) in expressions do
+    let failure ← tryCatchRuntimeEx (do
+      let _ ← invalid.proveReplay
+      pure none) (fun error => do pure (some (← error.toMessageData.toString)))
+    unless failure == some ("rcf: invalid prepared " ++ name ++ " binding") do
+      throwError "edited expression did not fail input binding: {failure}"
+  let annotated := {a with rootExpr := .mdata {} a.rootExpr}
+  annotated.checkDomains
 
 end Hex.RCF.PreparedCoefficientsTests

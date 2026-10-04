@@ -43,6 +43,12 @@ private meta unsafe def evalRatPolyUnsafe (e : Expr) : MetaM (DensePoly Rat) := 
 @[implemented_by evalRatPolyUnsafe]
 meta opaque evalRatPoly (e : Expr) : MetaM (DensePoly Rat)
 
+private meta unsafe def evalRatPolysUnsafe (e : Expr) : MetaM (List (DensePoly Rat)) := do
+  evalExpr (List (DensePoly Rat)) (← inferType e) e
+
+@[implemented_by evalRatPolysUnsafe]
+meta opaque evalRatPolys (e : Expr) : MetaM (List (DensePoly Rat))
+
 private meta unsafe def evalFormulaUnsafe (n : Nat) (e : Expr) :
     MetaM (RealFormula.Prenex n) :=
   evalExpr (RealFormula.Prenex n)

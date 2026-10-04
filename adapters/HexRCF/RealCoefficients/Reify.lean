@@ -517,7 +517,7 @@ def guards (original : Expr) (config : Hex.RealFormula.Reify.Config := {}) :
         checkDomains original
         let (source, proof) ← closeSource original
         let _ ← liftM (withoutModifyingEnv <| Hex.RCF.checkProof `Hex.RCF.RealCoefficients.Reify.guards
-          (← inferType proof) proof)
+          (← mkEq original source) proof)
         preflight #[] source
       let outcome ← (action.run {config, budget := .ofBudget config.ring.budget}).run
       match outcome with
