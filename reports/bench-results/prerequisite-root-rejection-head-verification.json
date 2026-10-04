@@ -1,0 +1,38 @@
+{
+  "source_commit": "89bed09cfa022c73bcdc9603df0cc5e427ae1a7c",
+  "dirty_documentation_only": true,
+  "checks": {
+    "full_lake_build": {
+      "status": "pass",
+      "count": 15818,
+      "log": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-final-full-build.log",
+      "log_sha256": "3de90feb125cc428f4944817a2fa3162de5e1fec375f63a9360324405c0f1ea1"
+    },
+    "full_conformance_build": {
+      "status": "pass",
+      "count": 14758,
+      "log": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-final-conformance-build.log",
+      "log_sha256": "67419bde7a43b6806540eaaf19d63187bb0e5eb527e5d8fd43fa0a3d88820abb"
+    },
+    "owned_benchmark_verification": {
+      "status": "pass",
+      "count": 193,
+      "log": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-final-owned-verification.log",
+      "log_sha256": "84436c977e2753e75142ee982da56e9c3b3c89a8ad44cb70d54ef8ed9ab7137e"
+    },
+    "companion_and_benchmark_build": {
+      "status": "pass",
+      "count": 10038,
+      "log": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-rebased-build.log",
+      "log_sha256": "771f8f55aad4ba3b910ca0d9d21156b4232a9a90f0738c5f50f4bee6ee1b6a4b"
+    }
+  },
+  "benchmark_verification_seconds": {
+    "HexSturm": 1,
+    "HexRealAlgebraic": 32,
+    "total": 33,
+    "cap": 360
+  },
+  "source_check_record": "root-rejection-checks/record.json",
+  "scope": "Fresh local checks after the predicate alias and rebase onto 558106359. Computational source matches the named revision; only evidence/documentation files are dirty. Required CI must attest the final PR head."
+}

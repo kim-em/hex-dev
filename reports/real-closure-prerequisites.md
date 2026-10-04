@@ -17,7 +17,7 @@ also needs to be exported by its actual companion library before attestation.
 | --- | --- | --- | --- |
 | HexSturm | Shared ordered-domain kernel; guarded queries and exact-domain natural counts; prepared domains, retargeting, counts, cached replay and literal certificate transport | Phase 4: comparator/registration reconciliation, admissible characterization and retained concerns | `HexSturm/Basic.lean`, `Transport.lean`, `conformance/HexSturm/Conformance.lean`, [performance report](hex-sturm-performance.md) |
 | HexSturmMathlib | Domain equivalence, prepared bindings, producer acceptance, representation congruence and rational/integer whole-Option agreement; exact query iff, count equality and bounds in development adapters | Phase 4: core eligibility and headline bridge-target reconciliation; no dedicated performance deliverable for this theorem-only layer | `Domain`, `Compare`, `Rational`, `DenominatorClearing`, `IntCast`; `adapters/HexSturmMathlib/Soundness.lean`; ordinary-kernel `HexSturmMathlibTests` |
-| HexRealAlgebraic | Real subtype, rational recognition and toRat?-first rounding, canonical arithmetic/order, rounding, square roots, fixed-field coordinate signs, integer and algebraic-coefficient real roots, complex norms | Phase 4: canonical fixed operations need admissible models/budgets; root/leaf, separation and rounding sweeps remain | `conformance/HexRealAlgebraic`, pinned FLINT/qqbar oracle and fixtures; `bench/HexRealAlgebraic/Bench.lean` |
+| HexRealAlgebraic | Real subtype, rational recognition and toRat?-first rounding, canonical arithmetic/order, rounding, square roots, fixed-field coordinate signs, integer and algebraic-coefficient real roots, complex norms; proved early nonreal rejection and actual polynomial-root degree comparisons | Phase 4: canonical root enumeration remains far behind external backends; fixed-operation admission, leaf/separation/rounding and higher-degree characterization remain | `conformance/HexRealAlgebraic`, pinned FLINT/qqbar oracle and fixtures; `bench/HexRealAlgebraic/Bench.lean`; [root curves and attribution](hex-real-algebraic-performance.md#direct-polynomial-root-size-comparisons) |
 | HexRealAlgebraicMathlib | Arithmetic/order and closure, law/dictionary coherence, rational recognition, rounding, approximation, Repr round trip, fixed-field sign correspondence, combined roots contract and real closedness | Phase 4: core eligibility; no dedicated performance deliverable for this theorem-only layer | `HexRealAlgebraicMathlib/Instances.lean`, `Roots.lean`, `RealClosed.lean`, `HexRealAlgebraicMathlib/Tests.lean` |
 
 ## Semantic availability
@@ -162,3 +162,18 @@ replace completed measurements or admit unresolved complexity models.
 The [real-algebraic performance report](hex-real-algebraic-performance.md) and
 the Sturm report distinguish valid family passes from failed hypotheses,
 controls and fixed observations without budgets. Phase 4 remains incomplete.
+
+[Required CI for merged #10684](bench-results/prerequisite-required-ci-77a844987.json)
+attests the proved early nonreal rejection and expanded direct benchmark
+surface on `77a844987`: 91 Sturm and 102 real-algebraic checks, 63/360 filtered
+seconds, 83 exact real-algebraic oracle cases without unavailable-component
+skips, and full library/conformance/manual/architecture/trust checks.
+[The separately retained all-library run](bench-results/prerequisite-full-ci-77a844987.json)
+completes all 57 executable result checks but fails the unchanged total cap at
+388/360 seconds; its remaining all-library oracle step was cancelled after that
+completed failure, so no full-oracle success or headroom is claimed. The owned
+oracles pass separately in required filtered CI; no completed same-base main
+breakdown establishes causal attribution for the recurring cap failures. The
+manifest now declares the real-algebraic comparator and input-family coverage
+obligations with their actual pending evidence. These declarations and the
+merged proved API do not advance any phase counter.

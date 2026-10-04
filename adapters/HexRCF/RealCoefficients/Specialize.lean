@@ -44,6 +44,12 @@ Normalization combines equal powers and removes semantic leading cancellation. -
     (p : RealFormula.Poly (n + 1)) : DensePoly RealAlgebraicNumber :=
   MvPoly.eval₂ (Int.castRingHom (DensePoly RealAlgebraicNumber)) (coordinate values) p
 
+/-- Prepare every shared atom in its original traversal order, retaining
+repeated, zero, and domain-guard atoms before carrier construction. -/
+@[expose] def prepare (values : Fin n → RealAlgebraicNumber)
+    (formula : RealFormula.QF (n + 1)) : List (DensePoly RealAlgebraicNumber) :=
+  formula.polys.map (polynomial values)
+
 /-- Interpret the resulting polynomial at any real argument, not only algebraic ones. -/
 @[expose] noncomputable def evaluate (x : ℝ) : DensePoly RealAlgebraicNumber →+* ℝ :=
   (Polynomial.eval₂RingHom RealAlgebraicNumber.toRealHom x).comp
@@ -92,5 +98,28 @@ theorem leading (values : Fin n → RealAlgebraicNumber)
     (fun _ => by
       rw [← RealAlgebraicNumber.zero_toReal]
       exact RealAlgebraicNumber.toReal_injective.eq_iff) values p
+
+/-- Prepared atoms evaluate at the fixed authenticated coefficient valuation. -/
+theorem prepare_eval (values : Fin n → RealAlgebraicNumber)
+    (formula : RealFormula.QF (n + 1)) (x : ℝ) :
+    (prepare values formula).map (evaluate x) =
+      formula.polys.map (fun q => q.eval (append (fun j => (values j).toReal) x)) := by
+  unfold prepare
+  rw [List.map_map]
+  apply List.map_congr_left
+  intro q _
+  exact polynomial_eval values q x
+
+/-- The whole prepared atom list retains semantic degree, including cancellation. -/
+theorem prepare_degrees (values : Fin n → RealAlgebraicNumber)
+    (formula : RealFormula.QF (n + 1)) :
+    (prepare values formula).map (fun q =>
+      ((HexPolyMathlib.toPolynomial q).map RealAlgebraicNumber.toRealHom).natDegree) =
+      (prepare values formula).map DensePoly.natDegree := by
+  unfold prepare
+  simp only [List.map_map]
+  apply List.map_congr_left
+  intro q _
+  exact degree values q
 
 end Hex.RCF.RealCoefficients.Specialize

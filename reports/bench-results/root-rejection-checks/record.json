@@ -1,0 +1,52 @@
+{
+  "source_parent": "dafbe6e87afdcc48abf45252c5dc95068ae38efa",
+  "dirty_source": true,
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "reports/bench-results/root-rejection-checks/check_dag.txt",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "reports/bench-results/root-rejection-checks/check_file_line_counts.txt",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_phase4.py"
+      ],
+      "exit_code": 0,
+      "log": "reports/bench-results/root-rejection-checks/check_phase4.txt",
+      "log_sha256": "6cb935d325978f335e5a655ec20dfa11ed44793c51b8139bf74c25cf98d95df0"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/ci/check_persistent_flint_warmup.py"
+      ],
+      "exit_code": 0,
+      "log": "reports/bench-results/root-rejection-checks/check_persistent_flint_warmup.txt",
+      "log_sha256": "378b6baf4cda472890f3e49da529baea184d1d3eb0fde50a77e3c65221bf3657"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "reports/bench-results/root-rejection-checks/check_copyright_headers.txt",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "note": "Silent checks have empty log files; recorded process exit codes establish their outcomes."
+}

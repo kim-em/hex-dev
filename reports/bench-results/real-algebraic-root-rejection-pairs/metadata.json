@@ -1,0 +1,465 @@
+{
+  "source_commit": "edb3ef9566cbf37c193ebd9fb217abde3c976495",
+  "cpu": 79,
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "load_start": [
+    80.4619140625,
+    76.384765625,
+    49.1142578125
+  ],
+  "source_sha256": {
+    "bench/HexRealAlgebraic/Bench.lean": "7f58d3fe33db2a9ef9a5d094d3966f8cce528ed2b054b6ce66d535fc37d23342",
+    "HexRealAlgebraic/Basic.lean": "c03086f304d4fdbaf13a35140f89c442a1539f1d1f09d0cdd22a0ddb16ac9daa",
+    "HexRealAlgebraic/Roots.lean": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+    "HexRealAlgebraicMathlib/Basic.lean": "2fd7eb4edf5545253d7405a7644ad017b171f732af15e35d9fc5a709ee68b113",
+    "HexRealAlgebraicMathlib/Roots.lean": "d87be3d4fec1c6fe2fdebff614d5cf44a4b2de894bb83046c458bdc1b4a15888",
+    "HexNumberField/Roots.lean": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+    "HexNumberField/Convert.lean": "5ca7230f7647e69e139fbb1cdb9dcce569a3147f162d10631483d0d95eaa1507"
+  },
+  "executable_sha256": "b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+  "exact_executable": "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-root-rejection-pairs/hexrealalgebraic_bench-b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+  "interpreter": "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+  "library_path": "/nix/store/chqq8mpmpyfi9kgsngya71akv5xicn03-gcc-15.2.0-lib/lib",
+  "before_source_commit": "c6b821d7b9c0e86461ad9c61f1a7f91234cd5428",
+  "before_executable": "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-poly-roots-comparison/hexrealalgebraic_bench-bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+  "before_executable_sha256": "bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+  "raw_git_environment": "LeanBench reads the current checkout at invocation; this is not the historical executable source identity. The separately frozen source commits and executable hashes identify the arms.",
+  "families": {
+    "Rational": [
+      8
+    ],
+    "Quadratic": [
+      4
+    ]
+  },
+  "coefficient_height": "2 for rational coefficients, fixed positive sqrt(2) for quadratic coefficients",
+  "schedule": "Four trial-major blocks, fixed ascending degree ladder; adjacent AB/BA arms alternate per block. Before and after arms alternate AB/BA order. No load rejection or unchanged rerun.",
+  "boundary": "Actual complete RealAlgebraicPoly.roots and ordered polynomial/sign/multiplicity fingerprint on X^8-2 and X^4-sqrt(2). Prepared inputs and separate warmup excluded; root solving, exactification, filtering, sorting and fingerprints included. The same benchmark body and expected fingerprints are used in both frozen executables.",
+  "classification": "Informational elapsed-time comparisons; no fitted model, complexity admission or absolute budget.",
+  "arms": [
+    {
+      "family": "Rational",
+      "degree": 8,
+      "block": 0,
+      "order": [
+        "Before",
+        "After"
+      ],
+      "arm": "Before",
+      "source_commit": "c6b821d7b9c0e86461ad9c61f1a7f91234cd5428",
+      "executable_sha256": "bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-poly-roots-comparison/hexrealalgebraic_bench-bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Rational-8-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 4.402698507999958,
+      "output": "Rational-8-0-Before.json"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "block": 0,
+      "order": [
+        "Before",
+        "After"
+      ],
+      "arm": "After",
+      "source_commit": "edb3ef9566cbf37c193ebd9fb217abde3c976495",
+      "executable_sha256": "b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-root-rejection-pairs/hexrealalgebraic_bench-b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Rational-8-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.6514196209996044,
+      "output": "Rational-8-0-After.json"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "block": 0,
+      "order": [
+        "Before",
+        "After"
+      ],
+      "arm": "Before",
+      "source_commit": "c6b821d7b9c0e86461ad9c61f1a7f91234cd5428",
+      "executable_sha256": "bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-poly-roots-comparison/hexrealalgebraic_bench-bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Quadratic-4-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.5881529869998303,
+      "output": "Quadratic-4-0-Before.json"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "block": 0,
+      "order": [
+        "Before",
+        "After"
+      ],
+      "arm": "After",
+      "source_commit": "edb3ef9566cbf37c193ebd9fb217abde3c976495",
+      "executable_sha256": "b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-root-rejection-pairs/hexrealalgebraic_bench-b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Quadratic-4-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7963747719995808,
+      "output": "Quadratic-4-0-After.json"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "block": 1,
+      "order": [
+        "After",
+        "Before"
+      ],
+      "arm": "After",
+      "source_commit": "edb3ef9566cbf37c193ebd9fb217abde3c976495",
+      "executable_sha256": "b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-root-rejection-pairs/hexrealalgebraic_bench-b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Rational-8-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.6164331989998573,
+      "output": "Rational-8-1-After.json"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "block": 1,
+      "order": [
+        "After",
+        "Before"
+      ],
+      "arm": "Before",
+      "source_commit": "c6b821d7b9c0e86461ad9c61f1a7f91234cd5428",
+      "executable_sha256": "bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-poly-roots-comparison/hexrealalgebraic_bench-bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Rational-8-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 4.473550857999726,
+      "output": "Rational-8-1-Before.json"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "block": 1,
+      "order": [
+        "After",
+        "Before"
+      ],
+      "arm": "After",
+      "source_commit": "edb3ef9566cbf37c193ebd9fb217abde3c976495",
+      "executable_sha256": "b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-root-rejection-pairs/hexrealalgebraic_bench-b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Quadratic-4-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.8928460910001377,
+      "output": "Quadratic-4-1-After.json"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "block": 1,
+      "order": [
+        "After",
+        "Before"
+      ],
+      "arm": "Before",
+      "source_commit": "c6b821d7b9c0e86461ad9c61f1a7f91234cd5428",
+      "executable_sha256": "bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-poly-roots-comparison/hexrealalgebraic_bench-bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Quadratic-4-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.751585517999956,
+      "output": "Quadratic-4-1-Before.json"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "block": 2,
+      "order": [
+        "Before",
+        "After"
+      ],
+      "arm": "Before",
+      "source_commit": "c6b821d7b9c0e86461ad9c61f1a7f91234cd5428",
+      "executable_sha256": "bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-poly-roots-comparison/hexrealalgebraic_bench-bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Rational-8-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 4.589438780999899,
+      "output": "Rational-8-2-Before.json"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "block": 2,
+      "order": [
+        "Before",
+        "After"
+      ],
+      "arm": "After",
+      "source_commit": "edb3ef9566cbf37c193ebd9fb217abde3c976495",
+      "executable_sha256": "b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-root-rejection-pairs/hexrealalgebraic_bench-b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Rational-8-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.6077146540001195,
+      "output": "Rational-8-2-After.json"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "block": 2,
+      "order": [
+        "Before",
+        "After"
+      ],
+      "arm": "Before",
+      "source_commit": "c6b821d7b9c0e86461ad9c61f1a7f91234cd5428",
+      "executable_sha256": "bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-poly-roots-comparison/hexrealalgebraic_bench-bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Quadratic-4-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.3832404989998395,
+      "output": "Quadratic-4-2-Before.json"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "block": 2,
+      "order": [
+        "Before",
+        "After"
+      ],
+      "arm": "After",
+      "source_commit": "edb3ef9566cbf37c193ebd9fb217abde3c976495",
+      "executable_sha256": "b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-root-rejection-pairs/hexrealalgebraic_bench-b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Quadratic-4-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.9343004490001476,
+      "output": "Quadratic-4-2-After.json"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "block": 3,
+      "order": [
+        "After",
+        "Before"
+      ],
+      "arm": "After",
+      "source_commit": "edb3ef9566cbf37c193ebd9fb217abde3c976495",
+      "executable_sha256": "b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-root-rejection-pairs/hexrealalgebraic_bench-b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Rational-8-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.3476559400000951,
+      "output": "Rational-8-3-After.json"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "block": 3,
+      "order": [
+        "After",
+        "Before"
+      ],
+      "arm": "Before",
+      "source_commit": "c6b821d7b9c0e86461ad9c61f1a7f91234cd5428",
+      "executable_sha256": "bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-poly-roots-comparison/hexrealalgebraic_bench-bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Rational-8-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.9999663389999114,
+      "output": "Rational-8-3-Before.json"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "block": 3,
+      "order": [
+        "After",
+        "Before"
+      ],
+      "arm": "After",
+      "source_commit": "edb3ef9566cbf37c193ebd9fb217abde3c976495",
+      "executable_sha256": "b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-root-rejection-pairs/hexrealalgebraic_bench-b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Quadratic-4-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.3962269249996098,
+      "output": "Quadratic-4-3-After.json"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "block": 3,
+      "order": [
+        "After",
+        "Before"
+      ],
+      "arm": "Before",
+      "source_commit": "c6b821d7b9c0e86461ad9c61f1a7f91234cd5428",
+      "executable_sha256": "bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-measurements/real-algebraic-poly-roots-comparison/hexrealalgebraic_bench-bec287d77909311da36489deb7f0bb83b540f96740b280e52024bf56ea8a0a4f",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Quadratic-4-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.4553939120000905,
+      "output": "Quadratic-4-3-Before.json"
+    }
+  ],
+  "load_end": [
+    66.85888671875,
+    73.5302734375,
+    49.31201171875
+  ],
+  "source_unchanged": true,
+  "binary_unchanged": true
+}

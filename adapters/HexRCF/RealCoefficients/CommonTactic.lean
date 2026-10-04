@@ -12,6 +12,7 @@ public meta import HexBerlekampZassenhaus.QuadraticNormRecover
 public meta import HexBerlekampZassenhausMathlib.FactorTactic
 
 public meta import HexRCF.RealCoefficients.FieldCompile
+public meta import HexRCF.RealCoefficients.Preparation
 
 public meta section
 
@@ -358,7 +359,8 @@ private def oneQuantifier {n : Nat} (formula : RealFormula.Prenex n) :
   | .quant q (.matrix qf) => some (q, qf)
   | _ => none
 
-private meta def assemble (source : Reify.Source) (leafSources : Array Expr) (plans : Array SourcePlan) : MetaM Expr := do
+private meta def prepareField (source : Reify.Source) (leafSources : Array Expr)
+    (plans : Array SourcePlan) : MetaM Coefficients.Environment := do
   let anchors := plans.map (·.anchorValue)
   -- Several source coordinates may use the same selected generator. Search
   -- once for each generator, then restore the original source order. Every
@@ -490,6 +492,7 @@ private meta def assemble (source : Reify.Source) (leafSources : Array Expr) (pl
         unless CommonPresentation.checkPresentation hw hp table
             sourcePolyRuntime sourceSquareRuntime anchorCoordinates do
           throwError "rcf: common-field source presentation rejected"
+        let table ← FieldLiteral.prepareSigns table
         let signTable ← FieldLiteral.signTableExpr pExpr rootExpr table
         let checked ← mkAppM ``CommonPresentation.checkPresentation
           #[hwExpr, hpExpr, signTable, sourcePolyFn, sourceSquareFn, anchorExpr]
@@ -555,6 +558,10 @@ private meta def assemble (source : Reify.Source) (leafSources : Array Expr) (pl
         let hrealExpr ← mkDecideProof (q(($sExpr).meetsRealAxis = true) : Q(Prop))
         let hrExpr ← mkAppM ``Field.literalRep_real
           #[pExpr, sExpr, hwExpr, hpExpr, hrealExpr]
+        let mut divisorProofs : Array Expr := #[]
+        let mut divisorValues := []
+        let mut divisorExpressions : Array Expr := #[]
+        let mut divisorIdentities : Array Expr := #[]
         for divisor in source.divisors do
           let (lowered, equality) ← Reify.lowerWithProof #[] divisor
           let compiled ← FieldCompile.compile pExpr rootExpr repExpr hrepExpr hrExpr leaf lowered
@@ -569,11 +576,12 @@ private meta def assemble (source : Reify.Source) (leafSources : Array Expr) (pl
           let hcoeff ← mkDecideProof goal
           let hne ← mkAppM ``Field.coordinate_ne_zero #[compiled.expression, hcoeff]
           let proof := mkApp (← mkLambdaFVars #[inst] (mkApp reflect hne)) irred
-          Hex.RCF.checkAxioms `Hex.RCF.RealCoefficients.CommonTactic.handle proof
-          let _ ← withoutModifyingEnv do
-            withOptions (fun opts =>
-                debug.skipKernelTC.set (Elab.async.set opts false) false) do
-              mkAuxTheorem (← inferType proof) proof (zetaDelta := true) (cache := false)
+          divisorProofs := divisorProofs.push proof
+          divisorValues := divisorValues ++ [compiled.value]
+          divisorExpressions := divisorExpressions.push
+            (mkApp (← mkLambdaFVars #[inst] compiled.expression) irred)
+          divisorIdentities := divisorIdentities.push
+            (mkApp (← mkLambdaFVars #[inst] originalProof) irred)
         let mut compiled : Array (FieldCompile.Result p
             (SimpleRoot.ofSquare p s hw hp)) := #[]
         for coefficient in source.coefficients do
@@ -592,29 +600,63 @@ private meta def assemble (source : Reify.Source) (leafSources : Array Expr) (pl
         let formulaWhnf ← whnf source.formula
         let matrixExpr ← whnf formulaWhnf.getAppArgs.back!
         let qfExpr := matrixExpr.getAppArgs.back!
-        let (fixedProof, _, _, _) ← FieldLiteral.proveRefiningWithCertificate
-          pExpr rootExpr targetExpr qfExpr targetValues qf quantifier
         let targetFin := mkApp (mkConst ``Fin) (mkNatLit m)
         let targetEqGoal ← withLocalDeclD `i targetFin fun i => do
           let interpreted ← mkAppM ``Field.value #[repExpr, mkApp targetExpr i]
           mkForallFVars #[i] (← mkEq interpreted (mkApp source.valuation i))
         let pointwise ← FieldLiteral.proveFinCases targetEqGoal (compiled.map (·.proof))
         let eqVal ← mkAppM ``funext #[pointwise]
-        let congr ← withLocalDeclD `ρ (← inferType source.valuation) fun ρ => do
-          let body ← mkAppM ``Hex.RealFormula.Prenex.toProp #[source.formula, ρ]
-          mkAppM ``congrArg #[← mkLambdaFVars #[ρ] body, eqVal]
-        let specialized ← mkAppM ``Eq.mp #[congr, fixedProof]
-        let final ← mkAppM ``Iff.mp #[source.proof, specialized]
-        let abstract ← mkLambdaFVars #[inst] final
-        let applied := mkApp abstract irred
-        return applied
+        let close (expression : Expr) : MetaM Expr := do
+          let expression ← instantiateMVars expression
+          return mkApp (← mkLambdaFVars #[inst] expression) irred
+        return {
+          source, polynomial := p, square := s, witness := hw, precision := hp,
+          checked := common.generator.checked, arity := m, values := targetValues,
+          formula := qf, quantifier, polynomialExpr := pExpr, rootExpr,
+          valuesExpr := ← close targetExpr, formulaExpr := qfExpr,
+          irreducibleExpr := irred, valuationProof := ← close eqVal, divisorProofs,
+          divisors := divisorValues, divisorExpressions, divisorIdentities
+        }
     else throwError "rcf: common square has insufficient precision"
   else throwError "rcf: common square failed its root witness"
+
+-- Retain full fresh-record validation as a matched proof-cost control. The
+-- editable public preparation API always validates independently of this option.
+register_option rcf.algebraic.validateFresh : Bool := {
+  defValue := false
+  descr := "diagnostic comparison: repeat prepared-input validation for fresh tactic data"
+}
+
+/-- Assemble only factory-produced data. No editable environment is accepted
+at this private boundary; the dispatcher checks the complete original proof. -/
+private meta def proveFresh (prepared : Coefficients.Environment) : MetaM Expr :=
+    withNewMCtxDepth <| withOptions (fun options =>
+      debug.skipKernelTC.set (Elab.async.set options false) false) do
+    for proof in [prepared.source.proof, prepared.valuationProof, prepared.irreducibleExpr] do
+      let _ ← Hex.RCF.checkExpr `Hex.RCF.RealCoefficients.CommonTactic.proveFresh proof
+    for i in [:prepared.source.divisors.size] do
+      let divisor : Q(ℝ) := prepared.source.divisors[i]!
+      let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
+        `Hex.RCF.RealCoefficients.CommonTactic.guard q($divisor ≠ 0) prepared.divisorProofs[i]!
+    let _ : ZPoly.CheckedIrreducible prepared.polynomial := prepared.checked
+    let instType ← mkAppM ``ZPoly.CheckedIrreducible #[prepared.polynomialExpr]
+    let fixed ← withLocalDecl `inst .instImplicit instType fun inst => do
+      let proof ← FieldLiteral.proveRefining prepared.polynomialExpr prepared.rootExpr
+        prepared.valuesExpr prepared.formulaExpr prepared.values prepared.formula prepared.quantifier
+      return mkApp (← mkLambdaFVars #[inst] proof) prepared.irreducibleExpr
+    let congr ← withLocalDeclD `ρ (← inferType prepared.source.valuation) fun ρ => do
+      let body ← mkAppM ``RealFormula.Prenex.toProp #[prepared.source.formula, ρ]
+      mkAppM ``congrArg #[← mkLambdaFVars #[ρ] body, prepared.valuationProof]
+    let specialized ← mkAppM ``Eq.mp #[congr, fixed]
+    mkAppM ``Iff.mp #[prepared.source.proof, specialized]
 
 private meta def prove (source : Reify.Source) (leafSources : Array Expr)
     (plans : Array SourcePlan) : MetaM Expr := do
   profileitM Exception "rcf algebraic frontend" (← getOptions)
-    (assemble source leafSources plans)
+    (do
+      let prepared ← prepareField source leafSources plans
+      if rcf.algebraic.validateFresh.get (← getOptions) then prepared.prove
+      else proveFresh prepared)
 
 private meta def proveRational (source : Reify.Source) : MetaM Expr := do
   Tactic.checkGuards source
@@ -650,6 +692,33 @@ private meta def gather (source : Expr) (leaves : Array Expr) :
     MetaM (Option (Array Expr)) := do
   gatherCore (← Reify.lowerSources #[] source) leaves
 
+private meta def sourcePlans (source : Reify.Source) :
+    MetaM (Option (Array Expr × Array SourcePlan)) := do
+  for expression in #[source.proof, source.sentenceProof] ++
+      source.coefficients ++ source.divisors do
+    let _ ← Hex.RCF.checkExpr `Hex.RCF.RealCoefficients.CommonTactic.sourcePlans expression
+  let mut leaves := #[]
+  for scalar in source.coefficients ++ source.divisors do
+    let some next ← gather scalar leaves | return none
+    leaves := next
+  let plans ← profileitM Exception "rcf source authentication" (← getOptions) do
+    let mut plans : Array SourcePlan := #[]
+    for scalar in leaves do
+      let some plan ← sourcePlan? scalar |
+        throwError "rcf: internal: eligible leaf has no plan"
+      plans := plans.push plan
+    pure plans
+  return some (leaves, plans)
+
+/-- Prepare an exact selected-field environment without root/cell production.
+The rational-only input remains with the existing rational solver. -/
+private meta def prepareSource (source : Reify.Source) : MetaM (Option Coefficients.Environment) := do
+  let some (leaves, plans) ← sourcePlans source | return none
+  if leaves.isEmpty then return none
+  let prepared ← (← prepareField source leaves plans).instantiate
+  prepared.checkDomains
+  return some prepared
+
 @[rcf_handler] meta def handle : Handler := fun target => do
   unless ← candidate target do return .declined
   if ← Registration.deferExact target then return .declined
@@ -664,18 +733,37 @@ private meta def gather (source : Expr) (leaves : Array Expr) :
   if source.coefficients.size == 1 then
     if (← Tactic.handlesCoefficient source.coefficients[0]!) &&
         (← rationalGuards source.divisors) then return .declined
-  let mut leaves := #[]
-  for scalar in source.coefficients ++ source.divisors do
-    let some next ← gather scalar leaves | return .declined
-    leaves := next
+  let some (leaves, plans) ← sourcePlans source | return .declined
   if leaves.isEmpty then return .proved (← proveRational source)
-  let plans ← profileitM Exception "rcf source authentication" (← getOptions) do
-    let mut plans : Array SourcePlan := #[]
-    for scalar in leaves do
-      let some plan ← sourcePlan? scalar |
-        throwError "rcf: internal: eligible leaf has no plan"
-      plans := plans.push plan
-    pure plans
   return .proved (← prove source leaves plans)
 
 end Hex.RCF.RealCoefficients.CommonTactic
+
+namespace Hex.RCF.RealCoefficients.Coefficients
+open Lean Meta
+
+/-- Recognize and authenticate the exact algebraic fragment of a one-variable
+source goal, in its original coefficient order, before goal certificate search.
+Purely rational goals use the base solver; caller-registered bounds use the
+finite-certificate frontend. A structured decline or exception restores the
+metavariable and environment state. No failure starts a different solver. -/
+meta def prepare (target : Expr) :
+    MetaM (Except Hex.RealFormula.Reify.Error Environment) := do
+  let saved ← saveState
+  let (result, _) ← tryFinally' (withNewMCtxDepth <| withOptions (fun options =>
+      debug.skipKernelTC.set (Elab.async.set options false) false) do
+    let source ← match ← Reify.prepare target with
+      | .ok source => pure source
+      | .error error => return .error error
+    let some prepared ← CommonTactic.prepareSource source |
+      return .error (.unsupported target "no supported selected-field coefficient environment")
+    return .ok prepared)
+    (fun result => do
+      match result with
+      | some (.ok _) => modify fun state => {state with
+          mctx := saved.meta.mctx, postponed := saved.meta.postponed,
+          zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds}
+      | _ => saved.restore)
+  return result
+
+end Hex.RCF.RealCoefficients.Coefficients
