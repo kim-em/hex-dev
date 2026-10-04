@@ -1,6 +1,0 @@
-{
-  "path": "lakefile.lean",
-  "baseline_blob": "d6ea39caa225a28e286472ef3eac764fb4bf54a3",
-  "current_blob": "baf66a313afef26a67fc75923f832f3d392edcc7",
-  "reason": "The factorization build declarations differ only in the already audited AINTLIB proof-only pin and the comment above the unchanged Tau Ceti pin. This integration removes four proved semantic modules from the separate HexQuerySemantics target after moving them into their existing Mathlib companion targets; the factorization service imports neither target. No factorization executable, computational definition, compiler option, native archive, or runtime dependency pin changes."
-}

@@ -27,7 +27,7 @@ require AINTLIB from git
   "https://github.com/CBirkbeck/AINTLIB.git" @
     "ab1451487da02cd4483d0e2cdb2cc9e44bbbac17"
 
--- Abstract Sturm–Tarski semantics for the Mathlib proof companions.
+-- Abstract Sturm–Tarski semantics for the development query adapters.
 require TauCeti from git
   "https://github.com/TauCetiProject/TauCeti.git" @
     "0dbbe255a4f418084b30a3ffe6763d824a6b4250"
