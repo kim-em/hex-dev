@@ -35,7 +35,7 @@ def main():
     shutil.copyfile(original, exe)
     exe.chmod(0o755)
     sources = ['HexSturm/Basic.lean', 'HexSturm/Reduced.lean',
-               'HexRealRoots/Kernel/TarskiCertificate.lean', 'bench/HexSturm/Bench.lean',
+               'HexPoly/Euclid/DivGcd.lean', 'bench/HexSturm/Bench.lean',
                'lean-toolchain', 'lake-manifest.json', 'scripts/bench/sturm_reduced_comparison.py']
     sources = [s for s in sources if (ROOT / s).is_file()]
     cpu, lease = cpu_lease()
@@ -66,7 +66,7 @@ def main():
     try:
         for trial in range(4):
             for n in [32768,65536,131072,262144]:
-                arms = [('original','runRationalHigh'),('reduced','runReducedRational')]
+                arms = [('original','runRationalValue'),('reduced','runReducedRational')]
                 if trial%2:
                     arms.reverse()
                 for arm, name in arms:
