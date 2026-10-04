@@ -371,3 +371,10 @@ replay/production policies and legacy primality certificate semantics remain
 unchanged. The new consumer separately measures its combined certificate and
 subject replay allocations; existing ECPP corpus success alone does not
 discharge that integration evidence.
+
+The raw-data reifier and bounded syntax auditor are shared from the explicitly
+imported Mathlib-free `HexECPP.ElabData`, with numeral/replay limits in
+`HexECPP.Policy`. `HexECPPMathlib.Policy` re-exports the latter for compatibility.
+The existing ECPP proof elaborator retains its accepted syntax and admission
+policy while this extraction lets mixed computational exports validate data
+without importing mathematical soundness.

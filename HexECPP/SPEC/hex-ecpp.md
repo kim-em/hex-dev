@@ -605,3 +605,16 @@ factor replay requires only `HexECPP.Cert`; optional completion imports search
 separately. Factor-base and whole-factorization subject limits are independent.
 Unconditional mixed primality is discharged in HexIntFactorMathlib through
 HexECPPMathlib, never asserted in the computational replay closure.
+
+`HexECPP.Policy` and `HexECPP.ElabData` own the Mathlib-free numeral/replay
+limits, raw certificate reifier and bounded constructor-data syntax auditor,
+including persistent let scopes and rejection of compiled overrides. The auditor
+accepts an explicit extension whitelist and finite syntax/numeral allocation
+for larger enclosing data types; certificate admission remains independently
+bounded. `HexECPPMathlib.Elab` and `HexIntFactor.Mixed.Export` reuse this shared
+code. These meta modules are explicitly imported and excluded from certificate
+replay; extracting them changes no checker semantics or native search default.
+`Hex.ECPP.public256Budget` adds an explicit output-bounded search profile for
+mixed completion: default 256-bit work counters, depth 21, 20 rows, 32 nodes
+and output backtracking. The existing explicit Native 256-bit route retains
+its current policy.

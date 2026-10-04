@@ -104,6 +104,8 @@ process, elaborator or producer is imported by this correspondence module.
 This module does not extend legacy divisor/arithmetic/order APIs to mixed data.
 A caller must obtain a successful explicit legacy-only conversion to use those
 APIs. Both legacy umbrella imports and headline theorems retain their closure.
-Release pins add hex-ecpp-mathlib, retaining the Mathlib-free computational split.
+The package requires hex-ecpp-mathlib; prospective split recipes and clients
+include it without adding either factorization library to the publishing
+manifest. The ordinary computational replay closure remains Mathlib-free.
 Fresh proof-client and computational export replay, mathematical adversarial
 coverage, manual examples and headline axiom probes verify this boundary.
