@@ -242,7 +242,7 @@ theorem mapFraction_spec (f : Hex.RationalFn (Hex.RationalFn ℝ)) (first : ℝ)
     Hex.RationalFn.Represents (mapFraction f first)
       (polynomial (RingHom.id ℝ) f.num first) (polynomial (RingHom.id ℝ) f.den first) := by
   have nonzero := (polynomial_reflects f.den first denominator).not.mpr f.den_ne_zero
-  simp only [mapFraction, dif_neg nonzero]
+  simp only [mapFraction, dite_eq_right nonzero]
   exact Hex.RationalFn.normalize_spec _ _ nonzero
 
 private theorem polynomial_trailing (p : Hex.DensePoly (Hex.RationalFn ℝ)) (first : ℝ)
@@ -285,6 +285,46 @@ theorem mapFraction_sign (f : Hex.RationalFn (Hex.RationalFn ℝ)) (first : ℝ)
     (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign)
     (fun q => (inner_sign q).trans (Hex.OrderedFn.Infinitesimal.orderSign_eq q))
     (Hex.RationalFn.represents_self f) f.den_ne_zero).symm
+
+/-- The first substitution reflects zero for each fraction whose actual
+stored numerator and denominator coefficient families were specialized. -/
+theorem mapFraction_zero_iff (f : Hex.RationalFn (Hex.RationalFn ℝ)) (first : ℝ)
+    (numerator : CoefficientData (HexPolyMathlib.toPolynomial f.num) first)
+    (denominator : CoefficientData (HexPolyMathlib.toPolynomial f.den) first) :
+    mapFraction f first = 0 ↔ f = 0 := by
+  rw [← Hex.OrderedFn.Infinitesimal.sign_eq_zero_iff, mapFraction_sign f first numerator denominator,
+    nested_sign_zero_iff]
+
+/-- One first-parameter neighborhood preserves all signs and zero tests of
+recorded outer fractions before substituting their remaining indeterminate. -/
+theorem mapFractions_near (fractions : Finset (Hex.RationalFn (Hex.RationalFn ℝ))) :
+    ∀ᶠ first in 𝓝[>] (0 : ℝ), ∀ f ∈ fractions,
+      Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign (mapFraction f first) =
+        Hex.OrderedFn.Infinitesimal.sign
+          (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) f ∧
+      (mapFraction f first = 0 ↔ f = 0) := by
+  classical
+  let polynomials := (fractions.image fun f => HexPolyMathlib.toPolynomial f.num) ∪
+    (fractions.image fun f => HexPolyMathlib.toPolynomial f.den)
+  filter_upwards [coefficients_near polynomials] with first data
+  intro f present
+  have numerator := data _ (Finset.mem_union_left _ (Finset.mem_image.mpr ⟨f, present, rfl⟩))
+  have denominator := data _ (Finset.mem_union_right _ (Finset.mem_image.mpr ⟨f, present, rfl⟩))
+  exact ⟨mapFraction_sign f first numerator denominator,
+    mapFraction_zero_iff f first numerator denominator⟩
+
+/-- Evaluating the remaining indeterminate after first substitution equals
+actual simultaneous evaluation of the original stored fraction at that pair. -/
+theorem mapFraction_eval (f : Hex.RationalFn (Hex.RationalFn ℝ)) (first second : ℝ)
+    (denominator : CoefficientData (HexPolyMathlib.toPolynomial f.den) first)
+    (guard : evalNestedPolynomial (HexPolyMathlib.toPolynomial f.den) first second ≠ 0) :
+    evalMapped (RingHom.id ℝ) (mapFraction f first) second =
+      evalNestedFraction f first second := by
+  have guard' : ((HexPolyMathlib.toPolynomial (polynomial (RingHom.id ℝ) f.den first)).map
+      (RingHom.id ℝ)).eval second ≠ 0 := by
+    simpa only [Polynomial.map_id, nested_polynomial_eq] using guard
+  rw [evalMapped_fraction (RingHom.id ℝ) second (mapFraction_spec f first denominator) guard']
+  simp only [Polynomial.map_id, evalNestedFraction, nested_polynomial_eq]
 
 /-- Actual native addition specializes using the first-level guards; closure
 of the existing regular coefficient ring handles intermediate sums. -/
@@ -396,13 +436,13 @@ theorem nested_fraction_mul (f g : Hex.RationalFn (Hex.RationalFn ℝ)) (first s
   have cross : SN * (FD * GD) = (FN * GN) * SD := by
     apply Polynomial.map_injective (regularRing (RingHom.id ℝ) first).subtype
       (regularRing (RingHom.id ℝ) first).subtype_injective
-    simp only [Polynomial.map_mul, Polynomial.map_add, hfn, hfd, hgn, hgd, hsn, hsd]
-    simpa only [HexPolyMathlib.toPolynomial_mul, HexPolyMathlib.toPolynomial_add] using
+    simp only [Polynomial.map_mul, hfn, hfd, hgn, hgd, hsn, hsd]
+    simpa only [HexPolyMathlib.toPolynomial_mul] using
       congrArg HexPolyMathlib.toPolynomial (Hex.RationalFn.mul_spec f g)
   have specialized := congrArg
     (fun p => (p.map (evaluation (RingHom.id ℝ) first)).eval second) cross
-  simp only [Polynomial.map_mul, Polynomial.map_add, Polynomial.eval_mul,
-    Polynomial.eval_add, ← nested_lift_eval f.num first second FN hfn,
+  simp only [Polynomial.map_mul, Polynomial.eval_mul,
+    ← nested_lift_eval f.num first second FN hfn,
     ← nested_lift_eval f.den first second FD hfd, ← nested_lift_eval g.num first second GN hgn,
     ← nested_lift_eval g.den first second GD hgd, ← nested_lift_eval (f * g).num first second SN hsn,
     ← nested_lift_eval (f * g).den first second SD hsd] at specialized
@@ -458,6 +498,177 @@ theorem nested_fraction_inv (f : Hex.RationalFn (Hex.RationalFn ℝ)) (first sec
     unfold evalNestedFraction
     rw [inv_div]
     exact (div_eq_div_iff inverseDen numerator).mpr specialized
+
+/-- First-parameter coefficient substitution preserves canonical addition
+on the finitely guarded stored operands and actual sum. -/
+theorem mapFraction_add (f g : Hex.RationalFn (Hex.RationalFn ℝ)) (first : ℝ)
+    (left : CoefficientData (HexPolyMathlib.toPolynomial f.num) first ∧
+      CoefficientData (HexPolyMathlib.toPolynomial f.den) first)
+    (right : CoefficientData (HexPolyMathlib.toPolynomial g.num) first ∧
+      CoefficientData (HexPolyMathlib.toPolynomial g.den) first)
+    (sum : CoefficientData (HexPolyMathlib.toPolynomial (f + g).num) first ∧
+      CoefficientData (HexPolyMathlib.toPolynomial (f + g).den) first) :
+    mapFraction (f + g) first = mapFraction f first + mapFraction g first := by
+  classical
+  obtain ⟨FN, hfn⟩ := polynomial_lift (RingHom.id ℝ) first f.num
+    (fun i _ => coefficient_regular left.1 i)
+  obtain ⟨FD, hfd⟩ := polynomial_lift (RingHom.id ℝ) first f.den
+    (fun i _ => coefficient_regular left.2 i)
+  obtain ⟨GN, hgn⟩ := polynomial_lift (RingHom.id ℝ) first g.num
+    (fun i _ => coefficient_regular right.1 i)
+  obtain ⟨GD, hgd⟩ := polynomial_lift (RingHom.id ℝ) first g.den
+    (fun i _ => coefficient_regular right.2 i)
+  obtain ⟨SN, hsn⟩ := polynomial_lift (RingHom.id ℝ) first (f + g).num
+    (fun i _ => coefficient_regular sum.1 i)
+  obtain ⟨SD, hsd⟩ := polynomial_lift (RingHom.id ℝ) first (f + g).den
+    (fun i _ => coefficient_regular sum.2 i)
+  have cross : SN * (FD * GD) = (FN * GD + GN * FD) * SD := by
+    apply Polynomial.map_injective (regularRing (RingHom.id ℝ) first).subtype
+      (regularRing (RingHom.id ℝ) first).subtype_injective
+    simp only [Polynomial.map_mul, Polynomial.map_add, hfn, hfd, hgn, hgd, hsn, hsd]
+    simpa only [HexPolyMathlib.toPolynomial_mul, HexPolyMathlib.toPolynomial_add] using
+      congrArg HexPolyMathlib.toPolynomial (Hex.RationalFn.add_spec f g)
+  have mapped := congrArg (fun p => p.map (evaluation (RingHom.id ℝ) first)) cross
+  simp only [Polynomial.map_mul, Polynomial.map_add] at mapped
+  have specialized :
+      polynomial (RingHom.id ℝ) (f + g).num first *
+        (polynomial (RingHom.id ℝ) f.den first * polynomial (RingHom.id ℝ) g.den first) =
+      (polynomial (RingHom.id ℝ) f.num first * polynomial (RingHom.id ℝ) g.den first +
+        polynomial (RingHom.id ℝ) g.num first * polynomial (RingHom.id ℝ) f.den first) *
+        polynomial (RingHom.id ℝ) (f + g).den first := by
+    apply (HexPolyMathlib.equiv (R := ℝ)).injective
+    change HexPolyMathlib.toPolynomial _ = HexPolyMathlib.toPolynomial _
+    simp only [HexPolyMathlib.toPolynomial_mul, HexPolyMathlib.toPolynomial_add]
+    rw [polynomial_map (RingHom.id ℝ) first f.num FN hfn,
+      polynomial_map (RingHom.id ℝ) first f.den FD hfd,
+      polynomial_map (RingHom.id ℝ) first g.num GN hgn,
+      polynomial_map (RingHom.id ℝ) first g.den GD hgd,
+      polynomial_map (RingHom.id ℝ) first (f + g).num SN hsn,
+      polynomial_map (RingHom.id ℝ) first (f + g).den SD hsd]
+    exact mapped
+  have represented : Hex.RationalFn.Represents (mapFraction (f + g) first)
+      (polynomial (RingHom.id ℝ) f.num first * polynomial (RingHom.id ℝ) g.den first +
+        polynomial (RingHom.id ℝ) g.num first * polynomial (RingHom.id ℝ) f.den first)
+      (polynomial (RingHom.id ℝ) f.den first * polynomial (RingHom.id ℝ) g.den first) := by
+    have source := mapFraction_spec (f + g) first sum.2
+    unfold Hex.RationalFn.Represents at *
+    apply Hex.DensePoly.mul_right_cancel
+      ((polynomial_reflects (f + g).den first sum.2).not.mpr (f + g).den_ne_zero)
+    grind
+  exact represented.eq ((mapFraction_spec f first left.2).add (mapFraction_spec g first right.2))
+    (Hex.DensePoly.mul_ne_zero ((polynomial_reflects f.den first left.2).not.mpr f.den_ne_zero)
+      ((polynomial_reflects g.den first right.2).not.mpr g.den_ne_zero))
+
+/-- First-parameter coefficient substitution preserves canonical multiplication
+on the finitely guarded stored operands and actual product. -/
+theorem mapFraction_mul (f g : Hex.RationalFn (Hex.RationalFn ℝ)) (first : ℝ)
+    (left : CoefficientData (HexPolyMathlib.toPolynomial f.num) first ∧
+      CoefficientData (HexPolyMathlib.toPolynomial f.den) first)
+    (right : CoefficientData (HexPolyMathlib.toPolynomial g.num) first ∧
+      CoefficientData (HexPolyMathlib.toPolynomial g.den) first)
+    (product : CoefficientData (HexPolyMathlib.toPolynomial (f * g).num) first ∧
+      CoefficientData (HexPolyMathlib.toPolynomial (f * g).den) first) :
+    mapFraction (f * g) first = mapFraction f first * mapFraction g first := by
+  classical
+  obtain ⟨FN, hfn⟩ := polynomial_lift (RingHom.id ℝ) first f.num
+    (fun i _ => coefficient_regular left.1 i)
+  obtain ⟨FD, hfd⟩ := polynomial_lift (RingHom.id ℝ) first f.den
+    (fun i _ => coefficient_regular left.2 i)
+  obtain ⟨GN, hgn⟩ := polynomial_lift (RingHom.id ℝ) first g.num
+    (fun i _ => coefficient_regular right.1 i)
+  obtain ⟨GD, hgd⟩ := polynomial_lift (RingHom.id ℝ) first g.den
+    (fun i _ => coefficient_regular right.2 i)
+  obtain ⟨SN, hsn⟩ := polynomial_lift (RingHom.id ℝ) first (f * g).num
+    (fun i _ => coefficient_regular product.1 i)
+  obtain ⟨SD, hsd⟩ := polynomial_lift (RingHom.id ℝ) first (f * g).den
+    (fun i _ => coefficient_regular product.2 i)
+  have cross : SN * (FD * GD) = (FN * GN) * SD := by
+    apply Polynomial.map_injective (regularRing (RingHom.id ℝ) first).subtype
+      (regularRing (RingHom.id ℝ) first).subtype_injective
+    simp only [Polynomial.map_mul, hfn, hfd, hgn, hgd, hsn, hsd]
+    simpa only [HexPolyMathlib.toPolynomial_mul] using
+      congrArg HexPolyMathlib.toPolynomial (Hex.RationalFn.mul_spec f g)
+  have mapped := congrArg (fun p => p.map (evaluation (RingHom.id ℝ) first)) cross
+  simp only [Polynomial.map_mul] at mapped
+  have specialized :
+      polynomial (RingHom.id ℝ) (f * g).num first *
+        (polynomial (RingHom.id ℝ) f.den first * polynomial (RingHom.id ℝ) g.den first) =
+      (polynomial (RingHom.id ℝ) f.num first * polynomial (RingHom.id ℝ) g.num first) *
+        polynomial (RingHom.id ℝ) (f * g).den first := by
+    apply (HexPolyMathlib.equiv (R := ℝ)).injective
+    change HexPolyMathlib.toPolynomial _ = HexPolyMathlib.toPolynomial _
+    simp only [HexPolyMathlib.toPolynomial_mul]
+    rw [polynomial_map (RingHom.id ℝ) first f.num FN hfn,
+      polynomial_map (RingHom.id ℝ) first f.den FD hfd,
+      polynomial_map (RingHom.id ℝ) first g.num GN hgn,
+      polynomial_map (RingHom.id ℝ) first g.den GD hgd,
+      polynomial_map (RingHom.id ℝ) first (f * g).num SN hsn,
+      polynomial_map (RingHom.id ℝ) first (f * g).den SD hsd]
+    exact mapped
+  have represented : Hex.RationalFn.Represents (mapFraction (f * g) first)
+      (polynomial (RingHom.id ℝ) f.num first * polynomial (RingHom.id ℝ) g.num first)
+      (polynomial (RingHom.id ℝ) f.den first * polynomial (RingHom.id ℝ) g.den first) := by
+    have source := mapFraction_spec (f * g) first product.2
+    unfold Hex.RationalFn.Represents at *
+    apply Hex.DensePoly.mul_right_cancel
+      ((polynomial_reflects (f * g).den first product.2).not.mpr (f * g).den_ne_zero)
+    grind
+  exact represented.eq ((mapFraction_spec f first left.2).mul (mapFraction_spec g first right.2))
+    (Hex.DensePoly.mul_ne_zero ((polynomial_reflects f.den first left.2).not.mpr f.den_ne_zero)
+      ((polynomial_reflects g.den first right.2).not.mpr g.den_ne_zero))
+
+/-- First-parameter substitution preserves total inversion, including zero,
+on the actual guarded input and stored inverse. -/
+theorem mapFraction_inv (f : Hex.RationalFn (Hex.RationalFn ℝ)) (first : ℝ)
+    (input : CoefficientData (HexPolyMathlib.toPolynomial f.num) first ∧
+      CoefficientData (HexPolyMathlib.toPolynomial f.den) first)
+    (inverse : CoefficientData (HexPolyMathlib.toPolynomial f⁻¹.num) first ∧
+      CoefficientData (HexPolyMathlib.toPolynomial f⁻¹.den) first) :
+    mapFraction f⁻¹ first = (mapFraction f first)⁻¹ := by
+  classical
+  by_cases zero : f = 0
+  · have left := (mapFraction_zero_iff f⁻¹ first inverse.1 inverse.2).mpr
+      (by rw [zero, inv_zero])
+    have right := (mapFraction_zero_iff f first input.1 input.2).mpr zero
+    rw [left, right, inv_zero]
+  · obtain ⟨FN, hfn⟩ := polynomial_lift (RingHom.id ℝ) first f.num
+      (fun i _ => coefficient_regular input.1 i)
+    obtain ⟨FD, hfd⟩ := polynomial_lift (RingHom.id ℝ) first f.den
+      (fun i _ => coefficient_regular input.2 i)
+    obtain ⟨IN, hin⟩ := polynomial_lift (RingHom.id ℝ) first f⁻¹.num
+      (fun i _ => coefficient_regular inverse.1 i)
+    obtain ⟨ID, hid⟩ := polynomial_lift (RingHom.id ℝ) first f⁻¹.den
+      (fun i _ => coefficient_regular inverse.2 i)
+    have cross : IN * FN = FD * ID := by
+      apply Polynomial.map_injective (regularRing (RingHom.id ℝ) first).subtype
+        (regularRing (RingHom.id ℝ) first).subtype_injective
+      simp only [Polynomial.map_mul, hfn, hfd, hin, hid]
+      simpa only [HexPolyMathlib.toPolynomial_mul] using congrArg HexPolyMathlib.toPolynomial
+        (Hex.RationalFn.inv_spec f ((Hex.RationalFn.num_eq_zero f).not.mpr zero))
+    have mapped := congrArg (fun p => p.map (evaluation (RingHom.id ℝ) first)) cross
+    simp only [Polynomial.map_mul] at mapped
+    have specialized :
+        polynomial (RingHom.id ℝ) f⁻¹.num first * polynomial (RingHom.id ℝ) f.num first =
+        polynomial (RingHom.id ℝ) f.den first * polynomial (RingHom.id ℝ) f⁻¹.den first := by
+      apply (HexPolyMathlib.equiv (R := ℝ)).injective
+      change HexPolyMathlib.toPolynomial _ = HexPolyMathlib.toPolynomial _
+      simp only [HexPolyMathlib.toPolynomial_mul]
+      rw [polynomial_map (RingHom.id ℝ) first f.num FN hfn,
+        polynomial_map (RingHom.id ℝ) first f.den FD hfd,
+        polynomial_map (RingHom.id ℝ) first f⁻¹.num IN hin,
+        polynomial_map (RingHom.id ℝ) first f⁻¹.den ID hid]
+      exact mapped
+    have represented := (mapFraction_spec f first input.2).mul
+      (mapFraction_spec f⁻¹ first inverse.2)
+    have one : Hex.RationalFn.Represents (1 : Hex.RationalFn ℝ)
+        (polynomial (RingHom.id ℝ) f.num first * polynomial (RingHom.id ℝ) f⁻¹.num first)
+        (polynomial (RingHom.id ℝ) f.den first * polynomial (RingHom.id ℝ) f⁻¹.den first) := by
+      change 1 * _ = _ * 1
+      grind
+    exact eq_inv_of_mul_eq_one_right (represented.eq one
+      (Hex.DensePoly.mul_ne_zero
+        ((polynomial_reflects f.den first input.2).not.mpr f.den_ne_zero)
+        ((polynomial_reflects f⁻¹.den first inverse.2).not.mpr f⁻¹.den_ne_zero)))
 
 private theorem nested_fraction_sign
     (fraction : Hex.RationalFn (Hex.RationalFn ℝ)) (first second : ℝ)
@@ -555,6 +766,35 @@ theorem nested_fractions_near (fractions : Finset (Hex.RationalFn (Hex.RationalF
       (signs _ (Finset.mem_union_right _ (Finset.mem_image.mpr ⟨fraction, present, rfl⟩)))
     refine ⟨guard, agreement, ?_⟩
     rw [← cast_sign_zero, agreement, nested_sign_zero_iff]
+
+/-- Before the second indeterminate is evaluated, one first-parameter
+neighborhood preserves all recorded signs, zero tests and arithmetic steps.
+Each operation uses its actual stored result from the finite inventory. -/
+theorem mapArithmetic_near (fractions : Finset (Hex.RationalFn (Hex.RationalFn ℝ))) :
+    ∀ᶠ first in 𝓝[>] (0 : ℝ),
+      (∀ f ∈ fractions,
+        Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign (mapFraction f first) =
+          Hex.OrderedFn.Infinitesimal.sign
+            (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) f ∧
+        (mapFraction f first = 0 ↔ f = 0)) ∧
+      (∀ f ∈ fractions, ∀ g ∈ fractions, f + g ∈ fractions →
+        mapFraction (f + g) first = mapFraction f first + mapFraction g first) ∧
+      (∀ f ∈ fractions, ∀ g ∈ fractions, f * g ∈ fractions →
+        mapFraction (f * g) first = mapFraction f first * mapFraction g first) ∧
+      (∀ f ∈ fractions, f⁻¹ ∈ fractions →
+        mapFraction f⁻¹ first = (mapFraction f first)⁻¹) := by
+  filter_upwards [nested_fractions_near fractions] with first coefficients
+  refine ⟨fun f hf => ⟨mapFraction_sign f first (coefficients.1 f hf).1
+    (coefficients.1 f hf).2, mapFraction_zero_iff f first (coefficients.1 f hf).1
+      (coefficients.1 f hf).2⟩, ?_, ?_, ?_⟩
+  · intro f hf g hg hsum
+    exact mapFraction_add f g first (coefficients.1 f hf) (coefficients.1 g hg)
+      (coefficients.1 (f + g) hsum)
+  · intro f hf g hg hproduct
+    exact mapFraction_mul f g first (coefficients.1 f hf) (coefficients.1 g hg)
+      (coefficients.1 (f * g) hproduct)
+  · intro f hf hinverse
+    exact mapFraction_inv f first (coefficients.1 f hf) (coefficients.1 f⁻¹ hinverse)
 
 /-- At one ordinary parameter pair, every recorded sign and arithmetic step
 in a finite family is preserved together. Membership requires recording each
@@ -665,3 +905,43 @@ end Hex.RealClosure.Specialize
 /-- info: 'Hex.RealClosure.Specialize.exists_nested_arithmetic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Specialize.exists_nested_arithmetic
+
+/-- info: 'Hex.RealClosure.Specialize.mapFraction' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.mapFraction
+
+/-- info: 'Hex.RealClosure.Specialize.mapFraction_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.mapFraction_spec
+
+/-- info: 'Hex.RealClosure.Specialize.mapFraction_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.mapFraction_sign
+
+/-- info: 'Hex.RealClosure.Specialize.mapFraction_zero_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.mapFraction_zero_iff
+
+/-- info: 'Hex.RealClosure.Specialize.mapFractions_near' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.mapFractions_near
+
+/-- info: 'Hex.RealClosure.Specialize.mapFraction_eval' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.mapFraction_eval
+
+/-- info: 'Hex.RealClosure.Specialize.mapFraction_add' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.mapFraction_add
+
+/-- info: 'Hex.RealClosure.Specialize.mapFraction_mul' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.mapFraction_mul
+
+/-- info: 'Hex.RealClosure.Specialize.mapFraction_inv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.mapFraction_inv
+
+/-- info: 'Hex.RealClosure.Specialize.mapArithmetic_near' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.mapArithmetic_near
