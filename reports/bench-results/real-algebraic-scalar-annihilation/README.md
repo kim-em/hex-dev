@@ -5,7 +5,12 @@ trial-major AB/BA blocks compare each native/comparator pair, followed by its
 persistent-protocol control. Native timings include the actual shipped API and
 an exact result guard. External timings include the corresponding exact
 operation, result guard, JSON transport and temporary cleanup. Operands are
-prepared outside timing; an expected algebraic square root is not constructed.
+prepared outside timing. Add and square root do not construct an independent
+expected nonrational result. Rational construction prepares its exact rational
+reference; rounding checks prepared integers. Native add/sqrt guards compare
+canonical polynomial arrays and sign, while external guards perform additional
+exact arithmetic for annihilation and sign. Their checking costs differ and
+remain timed; these curves do not isolate primitive operation costs.
 Backend contexts can retain internal caches, including those populated by
 warmup. These are warm API-route observations, not identical internal algorithms.
 

@@ -45,7 +45,7 @@ private theorem modImpl_eq_mod (p q : DensePoly E) :
   · simp only [hlt, ↓reduceIte, DensePoly.mod, DensePoly.divMod]
     exact DensePoly.modArray_eq_divModArray_snd p q (fun coeff => coeff / q.leadingCoeff)
 
-/-- The remainder-only worker agrees operationally with querying the modulus. -/
+/-- The remainder-only worker agrees operationally with querying the remainder. -/
 theorem queryReducedPrepared_eq (domain : PreparedDomain E) (f : DensePoly E) :
     queryReducedPrepared domain f = queryPrepared domain (f % domain.head) := by
   rw [queryReducedPrepared, modImpl_eq_mod]

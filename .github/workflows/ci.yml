@@ -201,6 +201,7 @@ jobs:
           python3 -m unittest scripts/oracle/test_matrix_carriers.py scripts/oracle/test_rank_bench.py scripts/oracle/test_rank_stages.py
           python3 -m unittest scripts/bench/test_rank_measure.py scripts/bench/test_rank_analyze.py scripts/bench/test_rank_checker_analyze.py
           python3 -m unittest scripts/oracle/test_row_reduce_fields.py
+          python3 -m unittest scripts/oracle/test_real_algebraic_scaling_bench.py
       - name: Verify performance measurements and figures are current
         if: steps.classify.outputs.docs_only != 'true'
         run: |

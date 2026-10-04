@@ -58,13 +58,20 @@ namespace HexArith
   Nat.floorSqrt n == _root_.Nat.sqrt n
 
 -- Large exact squares and both neighbors exercise Newton's termination,
--- the ceiling branch, and odd/even bit-length initializer boundaries.
+-- and the ceiling branch.
 #guard ([64, 257, 4096] : List _root_.Nat).all fun bits =>
   let r := 2 ^ bits + 1
   let square := r * r
   Nat.floorSqrt (square - 1) == r - 1 && Nat.ceilSqrt (square - 1) == r &&
     Nat.floorSqrt square == r && Nat.ceilSqrt square == r &&
     Nat.floorSqrt (square + 1) == r && Nat.ceilSqrt (square + 1) == r + 1
+
+-- Powers with odd log2 exercise the other parity of the initializer exponent.
+#guard ([64, 257, 4096] : List _root_.Nat).all fun bits =>
+  let n := 2 ^ (2 * bits + 1)
+  ([n - 1, n, n + 1] : List _root_.Nat).all fun m =>
+    let r := _root_.Nat.sqrt m
+    Nat.floorSqrt m == r && Nat.ceilSqrt m == (if r * r == m then r else r + 1)
 
 /-- info: 'HexArith.Nat.floorSqrt_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
