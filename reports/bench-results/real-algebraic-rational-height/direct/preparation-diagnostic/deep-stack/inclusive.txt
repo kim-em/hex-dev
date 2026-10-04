@@ -1,0 +1,29 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 88434918224
+#
+# Children      Self  Symbol                             IPC   [IPC Coverage]
+# ........  ........  .................................  ....................
+#
+    39.31%    39.31%  [.] __gmpn_addmul_1_x86_64         -      -            
+            |          
+             --3.69%--__gmpn_addmul_1_x86_64
+
+    10.10%    10.10%  [.] __gmpn_sub_n_x86_64            -      -            
+     8.84%     8.84%  [.] __gmpn_add_n_x86_64            -      -            
+     7.98%     7.98%  [.] __gmpn_mul_2                   -      -            
+     4.20%     4.20%  [.] __gmpn_toom22_mul              -      -            
+     3.84%     3.84%  [.] __gmpn_addmul_2_fat            -      -            
+     3.69%     3.69%  [.] __gmpn_mul_basecase_fat        -      -            
+     3.23%     3.23%  [.] __gmpn_pi1_bdiv_q_1            -      -            
+     3.13%     3.13%  [.] __gmpn_lshift_x86_64           -      -            
+     2.22%     2.22%  [.] __gmpn_submul_1_x86_64         -      -            
+
+
+#
+# (Tip: To not record events from perf itself add --exclude-perf)
+#

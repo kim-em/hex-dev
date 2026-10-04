@@ -1,0 +1,123 @@
+{
+  "tested_parent_commit": "e4c9eb83da4c6ba2413e244c36f94d12a8637fd5",
+  "base_commit": "714c432d090aa63c655cb846eb1a312ae4d5b4b0",
+  "source_sha256": {
+    "bench/HexSturm/Bench.lean": "12f852e97155a6a73e51b1ff84812886cca771ef360e77381e102bffd258c1d4",
+    "scripts/oracle/sturm_bench.py": "b474f3f62706b5a7e38b5208e1b8a52bb272a7c01a5fd8e5c8304ce9e0c8326c",
+    "lakefile.lean": "13f190b833a2188a7250315c9578674fb4e7edaea14e891915d52c862a944641",
+    "scripts/ci/run_oracles.sh": "74fbd02524c7194ee0f06a4a8b7eff874ff32ec3245514e15a9c28885d205ee3"
+  },
+  "scope": "Move the unchanged compiled external comparator registrations into the existing Sturm bench module and execute endpoint self-tests during its persistent FLINT startup. Restore the shared Lake and oracle-runner files to main. Required CI uses its existing owner classifier; full conformance compilation and all owned canonical checks remain required. Self-tests run in an isolated interpreter; failures return a bounded JSON diagnostic to the compiled verifier.",
+  "classification": {
+    "all_libraries": false,
+    "libraries": [
+      "HexSturm",
+      "HexSturmMathlib",
+      "HexRealAlgebraic",
+      "HexRealAlgebraicMathlib"
+    ]
+  },
+  "checks": [
+    {
+      "command": "lake build hexsturm_bench hexrealalgebraic_bench HexSturmMathlibTests HexRealAlgebraicMathlibTests",
+      "result": "passed",
+      "jobs": 10070
+    },
+    {
+      "command": "lake build HexConformance HexQuerySemantics HexSturmMathlibTests HexRealAlgebraicMathlibTests",
+      "result": "passed",
+      "jobs": 14891
+    },
+    {
+      "command": "existing owner-filtered check_bench_verify_budget.sh, GITHUB_ACTIONS=true, cap=360",
+      "result": "passed",
+      "case_counts": {
+        "HexSturm": 71,
+        "HexRealAlgebraic": 72
+      },
+      "elapsed_seconds": {
+        "HexSturm": 1,
+        "HexRealAlgebraic": 29,
+        "total": 30
+      }
+    },
+    {
+      "command": "sturm_bench.py --tool flint --self-test with empty stdin",
+      "result": "passed",
+      "tests": 4,
+      "stdout_bytes": 0
+    },
+    {
+      "command": "python3 scripts/check_dag.py",
+      "result": "passed"
+    },
+    {
+      "command": "python3 scripts/ci/check_benches_mathlib_free.py",
+      "result": "passed",
+      "executables": 62,
+      "probes": 433
+    },
+    {
+      "command": "compiled hexsturm_bench verify with forced isolated self-test failure",
+      "result": "expected rejection",
+      "exit_code": 1,
+      "visible_diagnostic": "endpoint self-test failed (7): forced endpoint regression: exact result mismatch"
+    },
+    {
+      "command": "check_phase4.py; check_persistent_flint_warmup.py; copyright and line-count guards",
+      "result": "passed"
+    }
+  ],
+  "retained_logs": [
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/ci-scoping/issue-10577-ci-scoping-build.log",
+      "bytes": 24913,
+      "sha256": "6daa4e21e96fa79022a87e45b71571d2df237bf2564cbcd2af6575fbcb2e94bb"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/ci-scoping/issue-10577-ci-scoping-conformance-build.log",
+      "bytes": 613628,
+      "sha256": "3e2477222a3eff5d530b93b594dd0d03ee42e92af271fd7512741e877c4f7b40"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/ci-scoping/issue-10577-ci-scoping-owned-verify.log",
+      "bytes": 16678,
+      "sha256": "d35f595e9a0f5af9b492a696a02a4a3813e47b6ab7f907c880db507bd6d5b748"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/ci-scoping/issue-10577-ci-scoping-selftest.stderr",
+      "bytes": 102,
+      "sha256": "ab87e660cb44f3f1b7020402633bad02c8722e04a06279617df57629bba022e3"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/ci-scoping/issue-10577-ci-scoping-selftest.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/ci-scoping/issue-10577-ci-scoping-dag.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/ci-scoping/issue-10577-ci-scoping-mathlib-free.log",
+      "bytes": 97,
+      "sha256": "0b7f2e917624ef4eeaa98d2ba72b1416f82606bfd7077e54a4425d31250b7614"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/ci-scoping/issue-10577-ci-scoping-lines.log",
+      "bytes": 1282,
+      "sha256": "4ecf1302de7cf878e69ecb1f81cdb80167b8ed515cc1c8b65aa705a242fc2fe9"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/ci-scoping/issue-10577-ci-scoping-reviewed-verify.log",
+      "bytes": 16678,
+      "sha256": "d35f595e9a0f5af9b492a696a02a4a3813e47b6ab7f907c880db507bd6d5b748"
+    }
+  ],
+  "limitations": [
+    "The completed all-library CI failure on 82039231f remains retained: 384 seconds against its 360-second cap. Owner scoping does not establish headroom for a full main-branch benchmark run.",
+    "These are correctness and operational CI checks, not replacement scientific timing samples or Phase-4 advancement.",
+    "The historical eabbeea9f verification record and external timing source snapshots retain their original source scope."
+  ]
+}

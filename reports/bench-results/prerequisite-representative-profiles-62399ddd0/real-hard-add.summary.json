@@ -1,0 +1,538 @@
+{
+  "allocation_share_percent": 42.38,
+  "classified_percent": 93.96,
+  "diagnostics": {
+    "bench_pid": 3090703,
+    "bench_thread_name": "hexrealalgebrai",
+    "bench_thread_tid": "3090714",
+    "calibration": {
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "boundary_residual_raw_max_ms": null,
+          "boundary_residual_trimmed_max_ms": null,
+          "hit_count": 0,
+          "regions_without_samples": 1,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "boundary_residual_raw_max_ms": 0.41062599793076515,
+          "boundary_residual_trimmed_max_ms": 0.04580099880695343,
+          "hit_count": 6592,
+          "regions_without_samples": 0,
+          "within_residual_limit": true
+        }
+      },
+      "configured_max_residual_ms": 5.0,
+      "effective_max_residual_ms": 5.0,
+      "raw_max_residual_ms": 0.41062599793076515,
+      "residual_ms": 0.04580099880695343,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "sample_interval_ms": 1.001001,
+      "selected_mode": "relative-to-meta-start-ms",
+      "within_residual_limit": true
+    },
+    "calibration_max_residual_ms": 5.0,
+    "calibration_residual_ms": 0.04580099880695343,
+    "confidence": "passed",
+    "expected_samples_bench_thread": 6594.9,
+    "low_confidence_reasons": [],
+    "minimum_retained_samples": 100,
+    "off_bench_thread_samples_in_window": 0,
+    "regions_total": 1,
+    "rejected_samples_bench_thread": 6743,
+    "retained_samples_bench_thread": 6592,
+    "samply_interval_ms": 1.001001,
+    "samply_meta_start_time_ms": 1791031359739.7166,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "schema": 2,
+    "sensitivity": {
+      "cases": {
+        "minus": {
+          "retained_samples": 6591,
+          "shift_ms": -5.0,
+          "top_leaf_functions": [
+            {
+              "function": 51,
+              "name": "0xae90c",
+              "samples": 282
+            },
+            {
+              "function": 309,
+              "name": "0xae923",
+              "samples": 278
+            },
+            {
+              "function": 125,
+              "name": "0xae8e9",
+              "samples": 185
+            }
+          ]
+        },
+        "nominal": {
+          "retained_samples": 6592,
+          "shift_ms": 0.0,
+          "top_leaf_functions": [
+            {
+              "function": 51,
+              "name": "0xae90c",
+              "samples": 282
+            },
+            {
+              "function": 309,
+              "name": "0xae923",
+              "samples": 278
+            },
+            {
+              "function": 125,
+              "name": "0xae8e9",
+              "samples": 185
+            }
+          ]
+        },
+        "plus": {
+          "retained_samples": 6586,
+          "shift_ms": 5.0,
+          "top_leaf_functions": [
+            {
+              "function": 51,
+              "name": "0xae90c",
+              "samples": 281
+            },
+            {
+              "function": 309,
+              "name": "0xae923",
+              "samples": 277
+            },
+            {
+              "function": 125,
+              "name": "0xae8e9",
+              "samples": 184
+            }
+          ]
+        }
+      },
+      "comparisons": {
+        "minus": {
+          "comparison_samples": 6591,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.0013654984069185253,
+          "exchanged_samples": 9,
+          "failure_reasons": [],
+          "leaf_function_support_size": 1281,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.01382326889559628,
+          "total_variation_distance": 0.0007513831747617088,
+          "verdict": "passed"
+        },
+        "plus": {
+          "comparison_samples": 6586,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.0009110233829334953,
+          "exchanged_samples": 6,
+          "failure_reasons": [],
+          "leaf_function_support_size": 1279,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.011286399513597506,
+          "total_variation_distance": 0.000802535313212224,
+          "verdict": "passed"
+        }
+      },
+      "configured_max_total_variation_distance": 0.1,
+      "leaf_function_distributions_stable": true,
+      "maximum_sampling_noise_allowance": 0.5,
+      "minimum_comparison_samples": 100,
+      "reported_top_function_count": 3,
+      "sampling_noise_coefficient": 0.6,
+      "shift_ms": 5.0,
+      "verdict": "passed"
+    },
+    "sidecar_mono_anchor_ns": 19117456730785,
+    "spawn_anchor_mono_ns": 19110529789920,
+    "spawn_anchor_wall_ns": 1791031359702452085,
+    "stage": "complete",
+    "total_timed_ms": 6601.530553
+  },
+  "inclusive_hex": [
+    {
+      "function": "Hex.RealAlgebraicNumber.add",
+      "percent": 91.88
+    },
+    {
+      "function": "_private.HexRealAlgebraic.Bench.0_Hex.RealAlgebraicBench.hardArithmetic",
+      "percent": 91.88
+    },
+    {
+      "function": "Hex.ZPoly.isolateComplexRoots?",
+      "percent": 91.88
+    },
+    {
+      "function": "Hex.isolateLoop",
+      "percent": 91.88
+    },
+    {
+      "function": "Hex.Component.refineAll",
+      "percent": 90.61
+    },
+    {
+      "function": "Hex.IsolationLoop.next",
+      "percent": 90.61
+    },
+    {
+      "function": "Hex.exactRootFree",
+      "percent": 89.4
+    },
+    {
+      "function": "Hex.taylor",
+      "percent": 81.75
+    },
+    {
+      "function": "Hex.Taylor.pass",
+      "percent": 81.14
+    },
+    {
+      "function": "Hex.AlgebraicRoot.exact",
+      "percent": 61.35
+    },
+    {
+      "function": "Hex.AlgebraicRoot.exact?",
+      "percent": 61.35
+    },
+    {
+      "function": "Hex.GaussDyadic.mul",
+      "percent": 49.45
+    },
+    {
+      "function": "Hex.AlgebraicNumber.rawRep?",
+      "percent": 30.81
+    },
+    {
+      "function": "Hex.AlgebraicNumber.canonicalRep?",
+      "percent": 30.79
+    },
+    {
+      "function": "Hex.AlgebraicNumber.ofNormalized?",
+      "percent": 30.79
+    },
+    {
+      "function": "Hex.AlgebraicRoot.exactFactor?",
+      "percent": 30.55
+    },
+    {
+      "function": "Hex.AlgebraicNumber.add",
+      "percent": 30.54
+    },
+    {
+      "function": "Hex.AlgebraicRoot.add",
+      "percent": 30.54
+    },
+    {
+      "function": "Hex.AlgebraicRoot.ofEliminant?",
+      "percent": 30.54
+    },
+    {
+      "function": "Hex.GaussDyadic.add",
+      "percent": 28.28
+    },
+    {
+      "function": "Hex.pelletAt",
+      "percent": 8.09
+    },
+    {
+      "function": "Hex.glueCovered",
+      "percent": 3.35
+    },
+    {
+      "function": "Hex.glueList",
+      "percent": 1.9
+    },
+    {
+      "function": "Hex.glueInsert",
+      "percent": 1.9
+    },
+    {
+      "function": "Hex.Component.certify?",
+      "percent": 1.26
+    },
+    {
+      "function": "Hex.DyadicSquare.adjacent",
+      "percent": 0.94
+    },
+    {
+      "function": "Hex.refineFastAtom?",
+      "percent": 0.83
+    },
+    {
+      "function": "Hex.IsolationLoop.finishAllAtoms?",
+      "percent": 0.83
+    },
+    {
+      "function": "Hex.refineFastLoop",
+      "percent": 0.83
+    },
+    {
+      "function": "Hex.IsolationLoop.refineAttempt?",
+      "percent": 0.83
+    }
+  ],
+  "leaf_categories": {
+    "allocation": 42.38,
+    "gmp": 31.64,
+    "lean-own-code": 0.99,
+    "lean-runtime": 18.95,
+    "other": 6.04
+  },
+  "profile": "/home/kim/.local/state/hex/issue-10577-profiles/real-hard-add-62399ddd0/filtered.json.gz",
+  "samples": 6592,
+  "symbols": "/home/kim/.local/state/hex/issue-10577-profiles/real-hard-add-62399ddd0/symbols.json",
+  "top_inclusive": [
+    {
+      "function": "lean_apply_2",
+      "percent": 92.6
+    },
+    {
+      "function": "Hex.RealAlgebraicNumber.add",
+      "percent": 91.88
+    },
+    {
+      "function": "_private.HexRealAlgebraic.Bench.0_Hex.RealAlgebraicBench.hardArithmetic",
+      "percent": 91.88
+    },
+    {
+      "function": "Hex.ZPoly.isolateComplexRoots?",
+      "percent": 91.88
+    },
+    {
+      "function": "Hex.isolateLoop",
+      "percent": 91.88
+    },
+    {
+      "function": "lean-bench_.private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+      "percent": 91.87
+    },
+    {
+      "function": "lean-bench.LeanBench.kernelLoop",
+      "percent": 91.85
+    },
+    {
+      "function": "lean-bench.LeanBench.autoTune",
+      "percent": 91.85
+    },
+    {
+      "function": "lean-bench.LeanBench.runChildMode",
+      "percent": 91.85
+    },
+    {
+      "function": "lean-bench.LeanBench.Cli.runChildCmd",
+      "percent": 91.81
+    },
+    {
+      "function": "_ZNSt3__110__function6__funcIZ13lean_run_mainE3$_0FvvEEclB9nqe230100Ev",
+      "percent": 91.73
+    },
+    {
+      "function": "_ZN4lean7lthread3imp5_mainEPv",
+      "percent": 91.73
+    },
+    {
+      "function": "start_thread",
+      "percent": 91.72
+    },
+    {
+      "function": "__clone3",
+      "percent": 91.69
+    },
+    {
+      "function": "Hex.Component.refineAll",
+      "percent": 90.61
+    },
+    {
+      "function": "Hex.IsolationLoop.next",
+      "percent": 90.61
+    },
+    {
+      "function": "Hex.exactRootFree",
+      "percent": 89.4
+    },
+    {
+      "function": "List.foldl",
+      "percent": 88.47
+    },
+    {
+      "function": "Hex.taylor",
+      "percent": 81.75
+    },
+    {
+      "function": "Hex.Taylor.pass",
+      "percent": 81.14
+    }
+  ],
+  "top_self": [
+    {
+      "function": "malloc@@GLIBC_2.2.5",
+      "percent": 17.05
+    },
+    {
+      "function": "free@@GLIBC_2.2.5",
+      "percent": 9.71
+    },
+    {
+      "function": "lean_alloc_small_object_core",
+      "percent": 5.4
+    },
+    {
+      "function": "__gmpz_init_set",
+      "percent": 4.76
+    },
+    {
+      "function": "mi_free",
+      "percent": 3.16
+    },
+    {
+      "function": "Dyadic.add",
+      "percent": 2.93
+    },
+    {
+      "function": "__gmpn_invert_limb",
+      "percent": 2.85
+    },
+    {
+      "function": "__gmpz_add",
+      "percent": 2.76
+    },
+    {
+      "function": "__gmp_default_allocate",
+      "percent": 2.64
+    },
+    {
+      "function": "Int.trailingZeros.aux",
+      "percent": 2.61
+    },
+    {
+      "function": "realloc@@GLIBC_2.2.5",
+      "percent": 2.43
+    },
+    {
+      "function": "__gmpz_realloc",
+      "percent": 2.31
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 2.2
+    },
+    {
+      "function": "__gmpn_copyi_x86_64",
+      "percent": 1.94
+    },
+    {
+      "function": "__gmpn_divrem_1_x86_64",
+      "percent": 1.93
+    },
+    {
+      "function": "__gmpz_cmp_si",
+      "percent": 1.77
+    },
+    {
+      "function": "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_",
+      "percent": 1.71
+    },
+    {
+      "function": "lean_free_object",
+      "percent": 1.67
+    },
+    {
+      "function": "Dyadic.mul",
+      "percent": 1.62
+    },
+    {
+      "function": "_int_free_chunk",
+      "percent": 1.55
+    }
+  ],
+  "top_self_undecorated": [
+    {
+      "percent": 17.05,
+      "symbol": "malloc@@GLIBC_2.2.5"
+    },
+    {
+      "percent": 9.71,
+      "symbol": "free@@GLIBC_2.2.5"
+    },
+    {
+      "percent": 5.4,
+      "symbol": "lean_alloc_small_object_core"
+    },
+    {
+      "percent": 4.76,
+      "symbol": "__gmpz_init_set"
+    },
+    {
+      "percent": 3.16,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 2.93,
+      "symbol": "Dyadic.add"
+    },
+    {
+      "percent": 2.85,
+      "symbol": "__gmpn_invert_limb"
+    },
+    {
+      "percent": 2.76,
+      "symbol": "__gmpz_add"
+    },
+    {
+      "percent": 2.64,
+      "symbol": "__gmp_default_allocate"
+    },
+    {
+      "percent": 2.61,
+      "symbol": "Int.trailingZeros.aux_.redArg"
+    },
+    {
+      "percent": 2.43,
+      "symbol": "realloc@@GLIBC_2.2.5"
+    },
+    {
+      "percent": 2.31,
+      "symbol": "__gmpz_realloc"
+    },
+    {
+      "percent": 2.2,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 1.94,
+      "symbol": "__gmpn_copyi_x86_64"
+    },
+    {
+      "percent": 1.93,
+      "symbol": "__gmpn_divrem_1_x86_64"
+    },
+    {
+      "percent": 1.77,
+      "symbol": "__gmpz_cmp_si"
+    },
+    {
+      "percent": 1.71,
+      "symbol": "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_"
+    },
+    {
+      "percent": 1.67,
+      "symbol": "lean_free_object"
+    },
+    {
+      "percent": 1.62,
+      "symbol": "Dyadic.mul"
+    },
+    {
+      "percent": 1.55,
+      "symbol": "_int_free_chunk"
+    }
+  ],
+  "unresolved_leaf_percent": 0.64
+}
