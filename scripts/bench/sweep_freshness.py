@@ -70,8 +70,9 @@ MANIFEST_SUFFIX = ".manifest"
 FINGERPRINT_DIGITS = 12
 
 # Lines that begin a top-level Lake declaration. Text between declarations
-# belongs to the declaration that follows it, including attributes and helper
-# definitions used by that declaration.
+# Comments and attributes preceding a declaration belong to it. Expression
+# continuations can start at column zero inside brackets and stay with the
+# current declaration.
 LAKE_DECL = re.compile(
     r"^(?:(?:private|protected|public)\s+)?"
     r"(package|require|lean_lib|lean_exe|extern_lib|target|script|def"
@@ -84,7 +85,7 @@ def lakefile_blocks(text: str) -> dict[str, str]:
     key: str | None = None
     pending: list[str] = []
     current: list[str] = []
-    for line in text.splitlines():
+    for line, code in zip(text.splitlines(), strip_lean_comments(text, preserve_lines=True).splitlines(), strict=True):
         match = LAKE_DECL.match(line)
         if match:
             if key is not None:
@@ -94,10 +95,15 @@ def lakefile_blocks(text: str) -> dict[str, str]:
             pending = []
         elif key is None:
             pending.append(line)
-        elif line.strip() == "" or line.startswith((" ", "\t")):
+        elif (not code.strip() and line.strip() and
+              (pending or not line.startswith((" ", "\t")))) or code.startswith("@["):
+            pending.append(line)
+        elif line.startswith((" ", "\t")) or not line.strip():
             current.append(line)
         else:
-            pending.append(line)
+            current.extend(pending)
+            pending = []
+            current.append(line)
     if key is not None:
         blocks[key] = "\n".join(current).rstrip()
     return blocks
@@ -348,13 +354,14 @@ def blob_text(blob: str) -> str:
     return git("cat-file", "blob", blob)
 
 
-def strip_lean_comments(text: str) -> str:
+def strip_lean_comments(text: str, *, preserve_lines: bool = False) -> str:
     """`text` with every Lean comment replaced by a single space.
 
     Handles line comments and nested block comments; the doc forms need
     no special case, since ``/--`` and ``/-!`` open with ``/-``. String
     literals are stepped over, so a ``--`` inside one survives. Nothing
     outside a comment is ever removed.
+    With `preserve_lines`, retain block-comment newlines for linewise parsing.
     """
     out: list[str] = []
     i, n = 0, len(text)
@@ -373,6 +380,7 @@ def strip_lean_comments(text: str) -> str:
                     break
             continue
         if text.startswith("/-", i):
+            start = i
             depth, i = 1, i + 2
             while i < n and depth:
                 if text.startswith("/-", i):
@@ -381,7 +389,7 @@ def strip_lean_comments(text: str) -> str:
                     depth, i = depth - 1, i + 2
                 else:
                     i += 1
-            out.append(" ")
+            out.append(" " + ("\n" * text[start:i].count("\n") + " " if preserve_lines else ""))
             continue
         if text.startswith("--", i):
             while i < n and text[i] != "\n":
@@ -749,8 +757,8 @@ def index_lean_sources() -> tuple[dict[Path, list[str]], set[str]]:
     return sources, local_prefixes
 
 
-def lean_import_prefixes(roots: list[str], source_index=None) -> set[str] | None:
-    """Over-approximate the specified roots' imported namespaces.
+def lean_import_modules(roots: list[str], source_index=None) -> set[str] | None:
+    """Over-approximate the specified roots' imported modules.
 
     Inspect every tracked source whose path suffix matches an imported module,
     so every declared source directory is covered and ambiguity only widens
@@ -758,7 +766,6 @@ def lean_import_prefixes(roots: list[str], source_index=None) -> set[str] | None
     Nonlocal imports still contribute their namespace. Unsupported import
     syntax and unresolved local modules fail closed.
     """
-    prefixes = {root.split(".")[0] for root in roots} | TOOLCHAIN_NAMESPACES
     try:
         sources, local_prefixes = (source_index or index_lean_sources)()
     except ValueError:
@@ -788,9 +795,14 @@ def lean_import_prefixes(roots: list[str], source_index=None) -> set[str] | None
                 if match is None:
                     return None
                 for imported_module in match[1].split():
-                    prefixes.add(imported_module.split(".")[0])
                     stack.append(imported_module)
-    return prefixes
+    return seen
+
+
+def lean_import_prefixes(roots: list[str], source_index=None) -> set[str] | None:
+    """Imported namespaces, with the same conservative resolution checks."""
+    modules = lean_import_modules(roots, source_index)
+    return None if modules is None else {module.split(".")[0] for module in modules} | TOOLCHAIN_NAMESPACES
 
 
 def audited_aint_revision(body: str) -> bool:

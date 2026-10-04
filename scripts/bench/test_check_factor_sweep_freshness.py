@@ -34,6 +34,19 @@ lean_exe hexbz_factor_service where
 
 
 class LakefileBlocks(unittest.TestCase):
+    def test_multiline_doc_comment_attaches_to_following_declaration(self):
+        text = BASE + '\n/-- The new\nmodule. -/\nlean_lib HexNew\n'
+        blocks = freshness.lakefile_blocks(text)
+        self.assertIn('module. -/', blocks['lean_lib HexNew'])
+        self.assertNotIn('module. -/', blocks['lean_exe hexbz_factor_service'])
+
+    def test_column_zero_expression_continuation_stays_in_its_declaration(self):
+        before = BASE + '\nlean_lib HexChecks where\n  globs := #[\n`HexArith.Conformance,\n    `HexPoly.Conformance]\n\nlean_lib Other\n'
+        blocks = freshness.lakefile_blocks(before)
+        self.assertIn('`HexArith.Conformance', blocks['lean_lib HexChecks'])
+        self.assertIn('`HexPoly.Conformance', blocks['lean_lib HexChecks'])
+        self.assertNotIn('`HexArith.Conformance', blocks['lean_lib Other'])
+
     def test_splits_top_level_declarations(self):
         blocks = freshness.lakefile_blocks(BASE)
         self.assertIn("package hex", blocks)
@@ -55,6 +68,20 @@ class LakefileBlocks(unittest.TestCase):
 
 
 class LakefileAffectsRuntime(unittest.TestCase):
+    def test_column_zero_compiler_flag_continuation_is_protected(self):
+        before = BASE.replace('hexArithOTarget := "cc"', 'hexArithOTarget := (\n"cc -O3")')
+        self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
+
+    def test_claiming_only_unimported_conformance_modules_is_unrelated(self):
+        before = BASE + '\nlean_lib HexChecks where\n  globs := #[\n`HexArith.Conformance,\n    `HexPoly.Conformance]\n'
+        after = before.replace('`HexPoly.Conformance', '`HexPoly.OtherConformance')
+        with patch.object(guard, 'factor_import_modules', return_value={'HexArith.UInt64.Wide'}):
+            self.assertFalse(guard.lakefile_texts_differ(before, after))
+            imported = before.replace('`HexArith.Conformance', '`HexArith.UInt64.Wide')
+            self.assertTrue(guard.lakefile_texts_differ(before, imported))
+        with patch.object(guard, 'factor_import_modules', return_value=None):
+            self.assertTrue(guard.lakefile_texts_differ(before, after))
+
     def test_registering_a_new_target_is_not_a_runtime_change(self):
         after = BASE + '\nlean_lib HexPolyFast where\n  srcDir := "."\n'
         self.assertFalse(guard.lakefile_texts_differ(BASE, after))

@@ -24,6 +24,7 @@ figure families in ``scripts/bench/sweep_freshness.py``.
 from __future__ import annotations
 
 import re
+from functools import cache
 
 from collections import Counter
 import hashlib
@@ -49,6 +50,12 @@ FACTOR_SERVICE_EXE = "hexbz_factor_service"
 FACTOR_BUILD_DEFS = {"hexArithOTarget", "zmod64MulOTarget"}
 
 
+@cache
+def factor_import_modules() -> set[str] | None:
+    """Read the immutable index once per checker invocation."""
+    return freshness.lean_import_modules(["HexBench.FactorService"])
+
+
 def _claims_factor_module(body: str, libs: set[str]) -> bool:
     """Whether a `lean_lib` owns modules of a factorization library.
 
@@ -56,8 +63,14 @@ def _claims_factor_module(body: str, libs: set[str]) -> bool:
     of HexArith and HexModArith by their globs, together with those libraries'
     C objects, so they are part of the factorization build too.
     """
-    return any(name.split(".")[0] in libs
-               for name in re.findall(r"`([A-Z][A-Za-z0-9_.]*)", body))
+    names = [name for name in re.findall(r"`([A-Z][A-Za-z0-9_.]*)", body)
+             if name.split(".")[0] in libs]
+    if not names:
+        return False
+    modules = factor_import_modules()
+    # An incomplete import walk cannot establish that a claimant is unrelated.
+    return modules is None or any(module == name or module.startswith(name + ".")
+                                  for name in names for module in modules)
 
 
 def _executable_lib_settings(body: str) -> str:
@@ -184,7 +197,7 @@ def build_only_lakefile_edit(difference: freshness.Difference,
         except SystemExit:
             # Missing historical objects cannot establish the checked leg.
             continue
-        if not lakefile_texts_differ(approved, after):
+        if factorization_blocks(approved) == factorization_blocks(after):
             return True
     return False
 
