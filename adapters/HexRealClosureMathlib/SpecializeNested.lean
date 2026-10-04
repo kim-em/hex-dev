@@ -521,6 +521,36 @@ theorem nested_arithmetic_near (fractions : Finset (Hex.RationalFn (Hex.Rational
     exact nested_fraction_inv f first second (coefficients.1 f hf) (coefficients.1 f⁻¹ hinverse)
       (values f⁻¹ hinverse).1 (values f hf).2.2
 
+/-- One positive ordinary pair below the requested cap preserves the entire
+recorded finite family, including successive-parameter order and arithmetic. -/
+theorem exists_nested_arithmetic (fractions : Finset (Hex.RationalFn (Hex.RationalFn ℝ)))
+    (cap : ℝ) (positive : 0 < cap) :
+    ∃ first : ℝ, 0 < first ∧ first < cap ∧
+      ∃ second : ℝ, 0 < second ∧ second < first ∧
+      (∀ f ∈ fractions,
+        (SignType.sign (evalNestedFraction f first second) : Int) =
+          Hex.OrderedFn.Infinitesimal.sign
+            (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) f ∧
+        (evalNestedFraction f first second = 0 ↔ f = 0)) ∧
+      (∀ f ∈ fractions, ∀ g ∈ fractions, f + g ∈ fractions →
+        evalNestedFraction (f + g) first second =
+          evalNestedFraction f first second + evalNestedFraction g first second) ∧
+      (∀ f ∈ fractions, ∀ g ∈ fractions, f * g ∈ fractions →
+        evalNestedFraction (f * g) first second =
+          evalNestedFraction f first second * evalNestedFraction g first second) ∧
+      (∀ f ∈ fractions, f⁻¹ ∈ fractions →
+        evalNestedFraction f⁻¹ first second = (evalNestedFraction f first second)⁻¹) := by
+  have firstSmall : ∀ᶠ first in 𝓝[>] (0 : ℝ), first < cap :=
+    eventually_nhdsWithin_of_eventually_nhds (eventually_lt_nhds positive)
+  have firstPositive : ∀ᶠ first in 𝓝[>] (0 : ℝ), 0 < first := self_mem_nhdsWithin
+  obtain ⟨first, ⟨data, belowCap⟩, hfirst⟩ :=
+    (((nested_arithmetic_near fractions).and firstSmall).and firstPositive).exists
+  have secondSmall : ∀ᶠ second in 𝓝[>] (0 : ℝ), second < first :=
+    eventually_nhdsWithin_of_eventually_nhds (eventually_lt_nhds hfirst)
+  have secondPositive : ∀ᶠ second in 𝓝[>] (0 : ℝ), 0 < second := self_mem_nhdsWithin
+  obtain ⟨second, ⟨preserved, below⟩, hsecond⟩ := ((data.and secondSmall).and secondPositive).exists
+  exact ⟨first, hfirst, belowCap, second, hsecond, below, preserved⟩
+
 end Successive
 
 /-- info: 'Hex.RealClosure.Specialize.mapCoefficients_trailing' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -564,3 +594,7 @@ end Hex.RealClosure.Specialize
 /-- info: 'Hex.RealClosure.Specialize.nested_arithmetic_near' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Specialize.nested_arithmetic_near
+
+/-- info: 'Hex.RealClosure.Specialize.exists_nested_arithmetic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.exists_nested_arithmetic
