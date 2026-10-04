@@ -1643,6 +1643,220 @@ def validate_external_imports(entry: dict, clone: Path) -> None:
             + f" but {lakefile.name} requires no package providing it")
 
 
+# Generated Lake files. A mirror's Lake file is rendered here, from
+# released.yml and this monorepo's lakefile.lean, on every sync: nothing in it is
+# hand-maintained, so it cannot drift from how this repository builds the
+# library, keep a target that no longer exists, or miss a newly published
+# dependency. The format (TOML or Lean) follows the entry's `lakefile` field,
+# because dependents' lockfiles record which file to read.
+DOC_VERSO_OPTIONS = (("doc.verso", "true"), ("doc.verso.suggestions", "false"))
+EXTERNAL_IMPORT_ROOTS = {"Mathlib": "mathlib", "Batteries": "batteries",
+                         "TauCeti": "TauCeti"}
+
+
+def _library_deps() -> dict[str, tuple[str, ...]]:
+    sys.path.insert(0, str(REPO_ROOT / "scripts"))
+    from libgraph import load_libraries
+    return {name: info.deps for name, info in load_libraries().items()}
+
+
+def _source_import_roots(entry: dict) -> set[str]:
+    """Top-level module roots imported by the library's published sources."""
+    pattern = re.compile(
+        r"^\s*(?:(?:public|private|meta)\s+)*import\s+(?:all\s+)?([A-Z][A-Za-z0-9]*)",
+        re.M)
+    roots: set[str] = set()
+    for src, _dest, is_dir in managed_paths(entry):
+        files = list(src.rglob("*.lean")) if is_dir else (
+            [src] if src.suffix == ".lean" else [])
+        for lean in files:
+            if lean.is_file():
+                roots.update(pattern.findall(lean.read_text(encoding="utf-8")))
+    return roots
+
+
+def release_requires(entry: dict, entries: list[dict], version: str,
+                     dep_owner: dict[str, str],
+                     pins: dict[str, dict[str, str]],
+                     library_deps: dict[str, tuple[str, ...]] | None = None
+                     ) -> list[tuple[str, str, str]]:
+    """The mirror's direct requirements as (name, git URL, revision).
+
+    A published Hex library is required when the library declares it as a
+    dependency in libraries.yml or its sources import it directly, so a
+    mirror never builds only because some other dependency happens to pull a
+    library in. External packages are required for the roots the sources
+    import (Mathlib also covers Batteries), at this monorepo's locked inputs.
+    """
+    if library_deps is None:
+        library_deps = _library_deps()
+    by_lib = {e["lib"]: e["repo"].split("/")[-1]
+              for e in entries if e.get("lib") and not e.get("pins_only")}
+    roots = _source_import_roots(entry)
+    wanted = set(library_deps.get(entry["lib"], ())) | roots
+    out: list[tuple[str, str, str]] = []
+    for other in entries:
+        lib = other.get("lib")
+        if other.get("pins_only") or not lib or lib == entry["lib"] or lib not in wanted:
+            continue
+        short = by_lib[lib]
+        owner = dep_owner.get(short, "leanprover")
+        out.append((lib, f"https://github.com/{owner}/{short}.git", version))
+    externals = {root for root in EXTERNAL_IMPORT_ROOTS if root in roots}
+    if "Mathlib" in externals:
+        externals.discard("Batteries")
+    by_name = {pin["name"].lower(): pin for pin in pins.values()}
+    for root in sorted(externals):
+        pin = by_name.get(EXTERNAL_IMPORT_ROOTS[root].lower())
+        if pin is None:
+            raise RuntimeError(
+                f"{entry['repo']} imports {root}, but this monorepo's lockfile has "
+                f"no {EXTERNAL_IMPORT_ROOTS[root]} package to pin it to")
+        out.append((pin["name"], pin["url"], pin["inputRev"]))
+    return out
+
+
+def _lean_declaration_text(source: str, name: str) -> str:
+    start, end = lake_declaration(source, name)
+    return source[start:end].rstrip() + "\n"
+
+
+def _main_lib_text(source: str, lib: str) -> str:
+    """This monorepo's `lean_lib` declaration for `lib`, verbatim."""
+    header = _lean_lib_header(source, lib)
+    if header is None:
+        raise RuntimeError(f"lakefile.lean declares no lean_lib {lib}")
+    end = _block_end(source, header.end())
+    return source[header.start():end].rstrip() + "\n"
+
+
+def render_lakefile(entry: dict, entries: list[dict], version: str,
+                    dep_owner: dict[str, str],
+                    pins: dict[str, dict[str, str]],
+                    library_deps: dict[str, tuple[str, ...]] | None = None,
+                    source: str | None = None) -> str:
+    """Render a mirror's complete Lake file."""
+    short = entry["repo"].split("/")[-1]
+    if source is None:
+        source = LAKEFILE.read_text(encoding="utf-8")
+    if entry.get("pins_only"):
+        return _render_aggregate_lakefile(entries, version, dep_owner)
+    requires = release_requires(entry, entries, version, dep_owner, pins, library_deps)
+    lib = entry.get("lean_lib_name", entry["lib"])
+    tests = entry.get("test_modules") or []
+    modules = entry.get("build_modules") or []
+    executables = entry.get("executables") or {}
+    defaults = [lib] + ([f"{lib}Modules"] if modules else [])
+    if entry.get("lakefile") == "lean":
+        out = ["import Lake", "open System Lake DSL", "",
+               f"package «{short}» where",
+               "  leanOptions := #["
+               + ", ".join(f"⟨`{k}, {v}⟩" for k, v in DOC_VERSO_OPTIONS) + "]", ""]
+        for name, url, rev in requires:
+            out += [f"require {name} from git", f'  "{url}" @ "{rev}"']
+        declarations = entry.get("lake_declarations") or []
+        helpers = [d for d in declarations
+                   if not re.search(rf"(?m)^lean_lib {re.escape(d)}\b", source)]
+        carriers = [d for d in declarations if d not in helpers]
+        for name in helpers:
+            out += ["", _lean_declaration_text(source, name).rstrip()]
+        out += ["", "@[default_target]", _main_lib_text(source, entry["lib"]).rstrip()]
+        for name in carriers:
+            out += ["", _lean_declaration_text(source, name).rstrip()]
+        if modules:
+            out += ["", "@[default_target]", f"lean_lib {lib}Modules where",
+                    "  globs := #[" + ", ".join(f"`{m}" for m in modules) + "]"]
+        if tests:
+            out += ["", f"lean_lib {lib}Tests where",
+                    "  globs := #[" + ", ".join(f"`{m}" for m in tests) + "]"]
+        for exe, root in executables.items():
+            out += ["", f"lean_exe {exe} where", f"  root := `{root}"]
+        return "\n".join(out) + "\n"
+    settings = source_build_settings(entry["lib"]) if entry.get("lib") in \
+        lean_lib_settings(source) else {}
+    unsupported = sorted(set(settings) - {"precompileModules"})
+    if unsupported or entry.get("lake_declarations"):
+        raise RuntimeError(
+            f"{entry['repo']} needs {', '.join(unsupported) or 'lake_declarations'}, "
+            "which only a Lean Lake file can express; set `lakefile: lean`")
+    quote = lambda items: "[" + ", ".join(f'"{item}"' for item in items) + "]"
+    out = [f'name = "{short}"', f"defaultTargets = {quote(defaults)}", "",
+           "leanOptions = ["]
+    out += [f'  {{ name = "{k}", value = {v} }},' for k, v in DOC_VERSO_OPTIONS]
+    out += ["]"]
+    for name, url, rev in requires:
+        out += ["", "[[require]]", f'name = "{name}"', f'git = "{url}"', f'rev = "{rev}"']
+    out += ["", "[[lean_lib]]", f'name = "{lib}"']
+    if entry.get("globs"):
+        out += [f"globs = {quote(entry['globs'])}"]
+    if settings.get("precompileModules") == "true":
+        out += ["precompileModules = true"]
+    if modules:
+        out += ["", "[[lean_lib]]", f'name = "{lib}Modules"', f"globs = {quote(modules)}"]
+    if tests:
+        out += ["", "[[lean_lib]]", f'name = "{lib}Tests"', f"globs = {quote(tests)}"]
+    for exe, root in executables.items():
+        out += ["", "[[lean_exe]]", f'name = "{exe}"', f'root = "{root}"']
+    return "\n".join(out) + "\n"
+
+
+AGGREGATE_HEADER = (
+    "# Aggregator: requires every released Hex library at one shared release\n"
+    "# version. Require `hex` to depend on everything released; or require an\n"
+    "# individual library (e.g. hex-mv-poly or hex-lll) for just that piece.\n"
+    "# Generated by hex-dev's scripts/release/sync_released.py from released.yml."
+)
+
+
+def aggregate_libraries(entries: list[dict]) -> list[dict]:
+    return [e for e in entries
+            if not e.get("pins_only") and e.get("aggregate", True)]
+
+
+def _render_aggregate_lakefile(entries: list[dict], version: str,
+                               dep_owner: dict[str, str]) -> str:
+    out = ['name = "hex"', 'defaultTargets = ["Hex"]', "",
+           AGGREGATE_HEADER]
+    for e in aggregate_libraries(entries):
+        short = e["repo"].split("/")[-1]
+        owner = dep_owner.get(short, "leanprover")
+        out += ["", "[[require]]", f'name = "{e["lib"]}"',
+                f'git = "https://github.com/{owner}/{short}.git"', f'rev = "{version}"']
+    out += ["", "[[lean_lib]]", 'name = "Hex"']
+    return "\n".join(out) + "\n"
+
+
+def render_aggregate_umbrella(entries: list[dict]) -> str:
+    return "module\n\n" + "".join(
+        f"public import {e['lib']}\n" for e in aggregate_libraries(entries))
+
+
+def write_lakefile(entry: dict, clone: Path, entries: list[dict], version: str,
+                   dep_owner: dict[str, str],
+                   pins: dict[str, dict[str, str]]) -> list[str]:
+    """Replace the mirror's Lake file (and the aggregate's umbrella) with the rendering."""
+    notes: list[str] = []
+    fmt = "toml" if entry.get("pins_only") else entry.get("lakefile", "toml")
+    path = clone / f"lakefile.{fmt}"
+    text = render_lakefile(entry, entries, version, dep_owner, pins)
+    if fmt == "toml":
+        tomllib.loads(text)
+    other = clone / f"lakefile.{'lean' if fmt == 'toml' else 'toml'}"
+    if other.exists():
+        other.unlink()
+        notes.append(f"  removed {other.name}")
+    if not path.is_file() or path.read_text(encoding="utf-8") != text:
+        path.write_text(text, encoding="utf-8")
+        notes.append(f"  generated {path.name}")
+    if entry.get("pins_only"):
+        umbrella = clone / "Hex.lean"
+        body = render_aggregate_umbrella(entries)
+        if not umbrella.is_file() or umbrella.read_text(encoding="utf-8") != body:
+            umbrella.write_text(body, encoding="utf-8")
+            notes.append("  generated Hex.lean")
+    return notes
+
+
 def remote_tag_target(clone: Path, version: str) -> str | None:
     """Return the commit named by a remote lightweight tag, if it exists."""
     output = run(
