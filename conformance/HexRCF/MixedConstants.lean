@@ -141,9 +141,12 @@ run_elab do
   let last := prepared.coefficients.size - 1
   let some lastEvidence := prepared.coefficients[last]? |
     throwError "missing final enclosure for tamper test"
+  let zero : Q(ℚ) := q(mkRat 0 1)
+  let ordered ← mkDecideProof q($zero ≤ $zero)
+  let forgedLiteral ← mkAppM ``Hex.OrderedFn.Oracle.Bounds.mk #[zero, zero, ordered]
   let forged := {lastEvidence with
     bounds := Hex.OrderedFn.Oracle.Bounds.singleton 0,
-    literal := q(Hex.OrderedFn.Oracle.Bounds.singleton 0)}
+    literal := forgedLiteral}
   refuses (Finite.check prepared.source {certificate with prepared := {prepared with
     coefficients := prepared.coefficients.set! last forged}})
   -- Enclosure must finish before testing false-sentence proof reconstruction.
@@ -161,8 +164,12 @@ run_elab do
     throwError "perfect-square source used approximate algebraic bounds"
   let before ← getMCtx
   let (_, proof) ← AlgebraicBounds.enclose q(Real.sqrt 3) (1 / 16)
-  let .thmInfo _ ← getConstInfo proof.getAppFn.constName! |
+  let proofName := proof.getAppFn.constName!
+  let .thmInfo _ ← getConstInfo proofName |
     throwError "public algebraic enclosure did not kernel-check its proof"
+  unless proofName != ``AlgebraicBounds.contains_mkRat &&
+      ((← getEnv).getModuleIdxFor? proofName).isNone do
+    throwError "public algebraic enclosure did not close a fresh kernel theorem"
   let _ ← Hex.RCF.checkProof `Hex.RCF.MixedConstants.publicEnclosure (← inferType proof) proof
   unless (← getMCtx).mvarCounter == before.mvarCounter do
     throwError "successful algebraic enclosure changed caller metavariables"

@@ -78,7 +78,11 @@ meta def enclose (source : Expr) (request : Rat) : MetaM (Bounds × Expr) := do
   let (result, _) ← tryFinally' (withNewMCtxDepth do
     let (bounds, proof) ← encloseCore source request
     let proof ← instantiateMVars proof
-    let target ← inferType proof
+    let lower ← mkAppM ``mkRat #[mkIntLit bounds.lower.num, mkNatLit bounds.lower.den]
+    let upper ← mkAppM ``mkRat #[mkIntLit bounds.upper.num, mkNatLit bounds.upper.den]
+    let ordered ← mkDecideProof (← mkAppM ``LE.le #[lower, upper])
+    let literal ← mkAppM ``Bounds.mk #[lower, upper, ordered]
+    let target ← mkAppM ``Contains #[literal, source]
     return (bounds, ← Hex.RCF.checkProof `Hex.RCF.RealCoefficients.AlgebraicBounds
       target proof))
     (fun result => do
