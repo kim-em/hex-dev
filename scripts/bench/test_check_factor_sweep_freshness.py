@@ -277,19 +277,19 @@ class LakefileTransitions(unittest.TestCase):
     def test_an_exemption_follows_unrelated_lakefile_edits(self):
         lib = guard.freshness.FACTOR_LIBRARIES[0]
         blobs = {
-            "base": BASE,
-            "exempt": BASE + f"\nlean_lib {lib} where\n  moreLinkArgs := #[\"-lm\"]\n",
-            "later": BASE + f"\nlean_lib {lib} where\n  moreLinkArgs := #[\"-lm\"]\n"
+            self.BASELINE: BASE,
+            self.ENDPOINT: BASE + f"\nlean_lib {lib} where\n  moreLinkArgs := #[\"-lm\"]\n",
+            self.CURRENT: BASE + f"\nlean_lib {lib} where\n  moreLinkArgs := #[\"-lm\"]\n"
                      "\nlean_lib Unrelated where\n",
-            "relevant": BASE + f"\nlean_lib {lib} where\n  moreLinkArgs := #[\"-lz\"]\n",
+            "d" * 40: BASE + f"\nlean_lib {lib} where\n  moreLinkArgs := #[\"-lz\"]\n",
         }
-        exemptions = {("lakefile.lean", "base", "exempt")}
+        exemptions = {("lakefile.lean", self.BASELINE, self.ENDPOINT)}
         with mock.patch.object(guard.freshness, "git", side_effect=lambda *a: blobs[a[-1]]), \
                 mock.patch.object(guard.freshness, "load_exemptions", return_value=exemptions):
             self.assertTrue(guard.build_only_lakefile_edit(
-                guard.freshness.Difference("lakefile.lean", "base", "later")))
+                guard.freshness.Difference("lakefile.lean", self.BASELINE, self.CURRENT)))
             self.assertFalse(guard.build_only_lakefile_edit(
-                guard.freshness.Difference("lakefile.lean", "base", "relevant")))
+                guard.freshness.Difference("lakefile.lean", self.BASELINE, "d" * 40)))
 
     def test_another_path_is_not_a_lakefile_transition(self):
         self.assertFalse(guard.build_only_lakefile_edit(
