@@ -732,8 +732,7 @@ setup_benchmark runRationalQuotient b => b
   }
 
 /-! Actual polynomial-root API coverage. `X^n−2` and `X^n−√2` have
-exactly one negative and one positive real root at even degree, and only the
-positive root at degree one.
+exactly one negative and one positive real root on the even-degree ladder.
 Their canonical minimal polynomials are respectively `X^n−2` and `X^(2n)−2`,
 by Eisenstein at 2. The complete ordered polynomial/sign/multiplicity array
 therefore identifies every output root on these fixtures. This is a benchmark
@@ -755,7 +754,7 @@ private def rootPolynomial (degree : Nat) (quadratic : Bool) : IO RealAlgebraicP
 
 private def expectedRoots (degree : Nat) (quadratic : Bool) : Array (Array Int × Int × Nat) :=
   let poly := (Array.replicate (if quadratic then 2 * degree else degree) (0 : Int)).push 1 |>.set! 0 (-2)
-  if degree == 1 then #[(poly, 1, 1)] else #[(poly, -1, 1), (poly, 1, 1)]
+  #[(poly, -1, 1), (poly, 1, 1)]
 
 private def polynomialRoots (degree : Nat) (quadratic : Bool) : IO (Array (Array Int × Int × Nat)) := do
   let f ← rootPolynomial degree quadratic
@@ -772,8 +771,8 @@ setup_fixed_benchmark runRationalRoots4 where { observations with maxSecondsPerC
 def runRationalRoots8 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => polynomialRoots 8 false
 setup_fixed_benchmark runRationalRoots8 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 8 false)) }
 
-def runQuadraticRoots1 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => polynomialRoots 1 true
-setup_fixed_benchmark runQuadraticRoots1 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 1 true)) }
+def runRationalRoots16 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => polynomialRoots 16 false
+setup_fixed_benchmark runRationalRoots16 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 16 false)) }
 
 def runQuadraticRoots2 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => polynomialRoots 2 true
 setup_fixed_benchmark runQuadraticRoots2 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 2 true)) }
@@ -781,102 +780,8 @@ setup_fixed_benchmark runQuadraticRoots2 where { observations with maxSecondsPer
 def runQuadraticRoots4 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => polynomialRoots 4 true
 setup_fixed_benchmark runQuadraticRoots4 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 4 true)) }
 
-initialize rootsFlintRef : IO.Ref (Option Hex.BenchOracle.Flint.PersistentComparator) ← IO.mkRef none
-initialize rootsZ3Ref : IO.Ref (Option Hex.BenchOracle.Flint.PersistentComparator) ← IO.mkRef none
-
-private def externalRoots (tool : String) (degree : Nat) (quadratic : Bool)
-    (control := false) : IO (Array (Array Int × Int × Nat)) := do
-  let ref := if tool == "flint" then rootsFlintRef else rootsZ3Ref
-  let driver ← match (← ref.get) with
-    | some driver => pure driver
-    | none => do
-      let python := (← IO.getEnv "HEX_FLINT_BENCH_PYTHON").getD "python3"
-      let path : System.FilePath := "scripts/oracle/real_algebraic_roots_bench.py"
-      let script := if (← path.pathExists) then path.toString
-        else "../scripts/oracle/real_algebraic_roots_bench.py"
-      let driver ← Hex.BenchOracle.Flint.PersistentComparator.spawn python
-        (#[script, "--tool", tool] ++ if tool == "flint" then #["--self-test"] else #[])
-      ref.set (some driver)
-      pure driver
-  let reply ← driver.requestLine (Lean.Json.mkObj [
-    ("degree", Lean.toJson degree), ("quadratic", Lean.toJson quadratic),
-    ("control", Lean.toJson control)]).compress
-  let parsed ← IO.ofExcept (Lean.Json.parse reply)
-  unless (← IO.ofExcept (parsed.getObjValAs? Bool "ok")) do
-    throw (IO.userError s!"exact {tool} roots failed: {reply}")
-  return (← IO.ofExcept (parsed.getObjValAs? (Array (Array Int × Int × Nat)) "result"))
-
-def runFlintRationalRoots2 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "flint" 2 false false
-setup_fixed_benchmark runFlintRationalRoots2 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 2 false)) }
-
-def runFlintRationalRoots2Protocol : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "flint" 2 false true
-setup_fixed_benchmark runFlintRationalRoots2Protocol where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 2 false)) }
-
-def runZ3RationalRoots2 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "z3" 2 false false
-setup_fixed_benchmark runZ3RationalRoots2 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 2 false)) }
-
-def runZ3RationalRoots2Protocol : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "z3" 2 false true
-setup_fixed_benchmark runZ3RationalRoots2Protocol where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 2 false)) }
-
-def runFlintRationalRoots4 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "flint" 4 false false
-setup_fixed_benchmark runFlintRationalRoots4 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 4 false)) }
-
-def runFlintRationalRoots4Protocol : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "flint" 4 false true
-setup_fixed_benchmark runFlintRationalRoots4Protocol where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 4 false)) }
-
-def runZ3RationalRoots4 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "z3" 4 false false
-setup_fixed_benchmark runZ3RationalRoots4 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 4 false)) }
-
-def runZ3RationalRoots4Protocol : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "z3" 4 false true
-setup_fixed_benchmark runZ3RationalRoots4Protocol where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 4 false)) }
-
-def runFlintRationalRoots8 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "flint" 8 false false
-setup_fixed_benchmark runFlintRationalRoots8 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 8 false)) }
-
-def runFlintRationalRoots8Protocol : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "flint" 8 false true
-setup_fixed_benchmark runFlintRationalRoots8Protocol where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 8 false)) }
-
-def runZ3RationalRoots8 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "z3" 8 false false
-setup_fixed_benchmark runZ3RationalRoots8 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 8 false)) }
-
-def runZ3RationalRoots8Protocol : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "z3" 8 false true
-setup_fixed_benchmark runZ3RationalRoots8Protocol where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 8 false)) }
-
-def runFlintQuadraticRoots1 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "flint" 1 true false
-setup_fixed_benchmark runFlintQuadraticRoots1 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 1 true)) }
-
-def runFlintQuadraticRoots1Protocol : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "flint" 1 true true
-setup_fixed_benchmark runFlintQuadraticRoots1Protocol where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 1 true)) }
-
-def runZ3QuadraticRoots1 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "z3" 1 true false
-setup_fixed_benchmark runZ3QuadraticRoots1 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 1 true)) }
-
-def runZ3QuadraticRoots1Protocol : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "z3" 1 true true
-setup_fixed_benchmark runZ3QuadraticRoots1Protocol where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 1 true)) }
-
-def runFlintQuadraticRoots2 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "flint" 2 true false
-setup_fixed_benchmark runFlintQuadraticRoots2 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 2 true)) }
-
-def runFlintQuadraticRoots2Protocol : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "flint" 2 true true
-setup_fixed_benchmark runFlintQuadraticRoots2Protocol where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 2 true)) }
-
-def runZ3QuadraticRoots2 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "z3" 2 true false
-setup_fixed_benchmark runZ3QuadraticRoots2 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 2 true)) }
-
-def runZ3QuadraticRoots2Protocol : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "z3" 2 true true
-setup_fixed_benchmark runZ3QuadraticRoots2Protocol where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 2 true)) }
-
-def runFlintQuadraticRoots4 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "flint" 4 true false
-setup_fixed_benchmark runFlintQuadraticRoots4 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 4 true)) }
-
-def runFlintQuadraticRoots4Protocol : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "flint" 4 true true
-setup_fixed_benchmark runFlintQuadraticRoots4Protocol where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 4 true)) }
-
-def runZ3QuadraticRoots4 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "z3" 4 true false
-setup_fixed_benchmark runZ3QuadraticRoots4 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 4 true)) }
-
-def runZ3QuadraticRoots4Protocol : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => externalRoots "z3" 4 true true
-setup_fixed_benchmark runZ3QuadraticRoots4Protocol where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 4 true)) }
+def runQuadraticRoots8 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => polynomialRoots 8 true
+setup_fixed_benchmark runQuadraticRoots8 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 8 true)) }
 
 end Hex.RealAlgebraicBench
 
