@@ -47,6 +47,17 @@ FACTOR_SERVICE_EXE = "hexbz_factor_service"
 FACTOR_BUILD_DEFS = {"hexArithOTarget", "zmod64MulOTarget"}
 
 
+def _claims_factor_module(body: str, libs: set[str]) -> bool:
+    """Whether a `lean_lib` owns modules of a factorization library.
+
+    Native carrier libraries (HexArithNative, HexModArithNative) take modules
+    of HexArith and HexModArith by their globs, together with those libraries'
+    C objects, so they are part of the factorization build too.
+    """
+    return any(name.split(".")[0] in libs
+               for name in re.findall(r"`([A-Z][A-Za-z0-9_.]*)", body))
+
+
 def _executable_lib_settings(body: str) -> str:
     """A `lean_lib` block reduced to what can reach a compiled executable.
 
@@ -82,7 +93,7 @@ def factorization_blocks(text: str) -> dict[str, str]:
             relevant[name] = body
         elif kind == "lean_exe" and decl == FACTOR_SERVICE_EXE:
             relevant[name] = body
-        elif kind == "lean_lib" and decl in libs:
+        elif kind == "lean_lib" and (decl in libs or _claims_factor_module(body, libs)):
             relevant[name] = _executable_lib_settings(body)
         elif kind == "extern_lib" or (kind == "def" and decl in FACTOR_BUILD_DEFS):
             relevant[name] = body
