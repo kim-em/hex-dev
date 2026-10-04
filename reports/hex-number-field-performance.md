@@ -5,10 +5,53 @@ Mathlib-free executable computation, so all of its Phase-4 evidence is ordinary
 LeanBench evidence and none of it is fresh-module proof evidence
 (`PLAN/Phase4.md` §Evidence tracks).
 
-This snapshot records the complete Phase-4 evidence. `libraries.yml` records
-`HexNumberField` at `done_through: 4`; every direct dependency is also at Phase
-4 or later, every advertised compiled operation is registered, and every
-profiled dominant cost is attributed to a registration.
+The sections below retain source-scoped Phase-4 evidence. `libraries.yml`
+records `HexNumberField` at `done_through: 7`; this repair changes no phase
+counter or direct dependency. Historical timings and profiles remain retained
+on their named sources and are not current-tree timing predictions.
+
+## Certified candidate-isolation reuse
+
+[The controlled comparison](bench-results/number-field-isolation-reuse/README.md)
+records four adjacent AB/BA pairs per case on source `7ceaf9d47d`. The
+candidate-certification median changes from 92.658 to 46.723 ms and the
+multiple-candidate selection median from 93.028 to 47.182 ms; median paired
+Before/After ratios are 1.984 and 1.977. The end-to-end six-factor median
+changes from 1.477 to 0.954 ms, with a paired ratio of 1.561. Inputs, result
+hashes and operational caps are preserved. All failed initial collector arms
+remain retained. Both nonregistered collector floors are diagnostic; the
+final end-to-end comparison uses the actual registered 0.02-second floor
+with the unchanged cap and input. No new five-trial admission is claimed.
+
+`exactFactor?` reuses its certified candidate-isolation run in
+`ofNormalizedIn?`. Whole-result equality with the original canonical
+constructor retains precisely the same stored representative and checked
+failures. The historical nested `canonicalRep?` attribution in the profiles
+below describes the pre-reuse source: that repeated candidate run is removed.
+The standalone `canonicalRep?` registration still performs its own run. The
+[current representative hard-add profile](bench-results/number-field-isolation-reuse/profile/hard-add.summary.json)
+on `08c8a9f13e` retains 4344 kernel samples with successful calibration, count
+and boundary-sensitivity checks. Isolation is 90.56% inclusive; the remaining
+eliminant and exactification paths have tail-call-attributed shares of 45.26%
+and 45.35%. Raw artifacts and checksums persist at the manifest paths. Lazy
+eliminant selection, `PolyQuot.toAlgebraicNumber?` and repeated per-root
+exactification retain their separate isolation costs; this is not an assertion
+that all repeated isolation is eliminated. The forward local-canonicalization
+migration and comparison-strategy extension are not implemented here.
+
+The existing Phase-4 registrations and input families retain their coverage
+and budgets. The helpers are exercised through the same exactification
+registrations; no unrelated operation is removed or new algorithm admitted.
+Historical attribution remains scoped to its original source, and the changed
+path has the representative profile above.
+
+The same retained comparison records hard real addition/subtraction at about
+1.5 times faster and actual real polynomial roots across two degree ladders.
+Those canonical root APIs remain far slower than the retained external
+references. No all-library CI headroom or four-library Phase-4 completion is
+inferred from this targeted reuse. Ordinary-kernel guards and all 92
+NumberField/102 real-algebraic compiled checks pass locally on the measured
+source; required CI must attest a final PR head.
 
 ## Bench targets
 
