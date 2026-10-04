@@ -19,5 +19,9 @@
   "exit_code": null,
   "status": "operational timeout",
   "elapsed_wall_seconds": 1800.0143009679996,
-  "ended_utc": "2026-10-04T12:13:55.597386+00:00"
+  "ended_utc": "2026-10-04T12:13:55.597386+00:00",
+  "source_tag": "issue-10378-phase4-profile-source",
+  "backend_implementation": "canonical RealAlgebraicPoly.roots; historical CLI name trivial",
+  "last_completed_stage": "unknown: stdout buffered and empty at timeout",
+  "build_provenance_limit": "Source cleanliness was captured at execution, not during the earlier build; CPU model, OS and kernel were not recorded for this historical run."
 }

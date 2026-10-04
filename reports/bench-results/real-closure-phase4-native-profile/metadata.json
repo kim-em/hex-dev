@@ -1,5 +1,5 @@
 {
-  "purpose": "one representative Phase4 native MetiTarski profile; not a timing comparison",
+  "purpose": "Preliminary whole-process low-level diagnostic; does not satisfy Phase4 profiling contract",
   "compiled_source_head": "b2cea573a742a279dc07e8626f64b570c19d0c2e",
   "repository_head": "2a20b4e3c0d6725a3bec38e88aa92ea625390a59",
   "compiled_paths_unchanged": true,
@@ -33,5 +33,12 @@
   "raw_profile_path": "/home/kim/.local/share/hex/bench-profiles/real-closure-metitarski-native-b2cea573.perf.data",
   "raw_profile_bytes": 4833596,
   "raw_profile_sha256": "2ecc4899ef1b3b7c7f2d0cf98c23a19d739a3be2d673d64d4aa9e1ff751da14d",
-  "report_exit_code": 0
+  "report_exit_code": 0,
+  "source_tag": "issue-10378-phase4-profile-source",
+  "profile_limitations": [
+    "99Hz, not required1kHz",
+    "whole process, not filtered bench thread and timed regions",
+    "Hex inclusive callers not recovered reliably",
+    "raw profile retained locally; no remote raw-data archive recorded"
+  ]
 }
