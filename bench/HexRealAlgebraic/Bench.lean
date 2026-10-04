@@ -159,19 +159,14 @@ def runZ3Sqrt4Protocol : Unit → IO Bool := fun _ => external "z3" "sqrt" 4 tru
 setup_fixed_benchmark runZ3Sqrt4Protocol where observations
 
 def runSqrt8 : Unit → IO Bool := fun _ => native "sqrt" 8
-setup_fixed_benchmark runSqrt8 where observations
 
 def runFlintSqrt8 : Unit → IO Bool := fun _ => external "flint" "sqrt" 8 false
-setup_fixed_benchmark runFlintSqrt8 where observations
 
 def runFlintSqrt8Protocol : Unit → IO Bool := fun _ => external "flint" "sqrt" 8 true
-setup_fixed_benchmark runFlintSqrt8Protocol where observations
 
 def runZ3Sqrt8 : Unit → IO Bool := fun _ => external "z3" "sqrt" 8 false
-setup_fixed_benchmark runZ3Sqrt8 where observations
 
 def runZ3Sqrt8Protocol : Unit → IO Bool := fun _ => external "z3" "sqrt" 8 true
-setup_fixed_benchmark runZ3Sqrt8Protocol where observations
 
 def runCompare4 : Unit → IO Bool := fun _ => native "compare" 4
 setup_fixed_benchmark runCompare4 where observations
@@ -364,6 +359,21 @@ setup_fixed_benchmark runZ3Rational1024 where observations
 
 def runZ3Rational1024Protocol : Unit → IO Bool := fun _ => external "z3" "rational" 1024 true
 setup_fixed_benchmark runZ3Rational1024Protocol where observations
+
+/-- Untimed boundary diagnostic for the retained larger square-root fixture.
+Its setup marker lets a whole-child cap distinguish construction from operation. -/
+def sqrtProbe : IO UInt32 := do
+  let start ← IO.monoNanosNow
+  let _ ← prepare "sqrt" 8
+  IO.println (Lean.Json.mkObj [("stage", Lean.toJson ("prepared" : String)),
+    ("elapsed_ns", Lean.toJson ((← IO.monoNanosNow) - start))]).compress
+  (← IO.getStdout).flush
+  let start ← IO.monoNanosNow
+  let result ← runSqrt8 ()
+  IO.println (Lean.Json.mkObj [("stage", Lean.toJson ("operation" : String)),
+    ("elapsed_ns", Lean.toJson ((← IO.monoNanosNow) - start)),
+    ("result", Lean.toJson result)]).compress
+  return if result then 0 else 1
 
 end Hex.RealAlgebraicScaling
 
@@ -1253,6 +1263,7 @@ end Hex.RealAlgebraicBench
 
 unsafe def main (args : List String) : IO UInt32 :=
   match args with
+  | ["probe-scalar-sqrt8"] => Hex.RealAlgebraicScaling.sqrtProbe
   | ["probe-rational16"] => Hex.RealAlgebraicBench.rootProbe 16 false
   | ["probe-quadratic8"] => Hex.RealAlgebraicBench.rootProbe 8 true
   | _ => LeanBench.Cli.dispatch args
