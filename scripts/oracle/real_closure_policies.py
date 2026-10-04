@@ -45,6 +45,9 @@ def verify_shape(result, policy, name):
         elif policy == POLICIES[2]:
             require(root["lower"] == [0] and root["upper"] == [2],
                     "whole policy retained finite bounds")
+        if policy == POLICIES[1] and root["kind"] == "selected" and name == CASES[8]:
+            require(root["lower"] == [0] and root["upper"] == [2],
+                    "bounded policy did not use the whole-line fallback")
         if policy == POLICIES[1] and root["kind"] == "selected" and name != CASES[8]:
             require(root["lower"][0] == 1 and root["upper"][0] == 1,
                     "bounded policy lost a finite bound")

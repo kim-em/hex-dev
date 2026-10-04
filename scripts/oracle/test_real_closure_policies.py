@@ -54,3 +54,22 @@ class PolicyTests(unittest.TestCase):
 
     def test_bounded_lost_bounds(self):
         self.rejects(lambda rows: rows[14]["result"]["output"]["entries"][0]["root"].update(lower=[0]))
+
+    def test_bounded_asymmetric_cell(self):
+        rows = copy.deepcopy(self.rows)
+        rows[14]["result"]["output"]["entries"][-1]["root"]["lower"] = [1, [0, 1]]
+        with self.assertRaisesRegex(AssertionError, "subdivided its symmetric initial cell"):
+            verify(rows)
+
+    def test_bounded_subdivided_factor(self):
+        rows = copy.deepcopy(self.rows)
+        rows[14]["result"]["output"]["entries"][2]["root"].update(
+            lower=[1, [-2, 1]], upper=[1, [2, 1]])
+        with self.assertRaisesRegex(AssertionError, "subdivided one squarefree factor"):
+            verify(rows)
+
+    def test_bounded_inverse_fallback(self):
+        rows = copy.deepcopy(self.rows)
+        rows[19]["result"]["output"]["entries"][0]["root"]["lower"] = [1, {"num": [[0, 1]], "den": [[1, 1]]}]
+        with self.assertRaisesRegex(AssertionError, "did not use the whole-line fallback"):
+            verify(rows)
