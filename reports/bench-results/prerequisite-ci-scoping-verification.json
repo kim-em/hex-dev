@@ -3,11 +3,11 @@
   "base_commit": "714c432d090aa63c655cb846eb1a312ae4d5b4b0",
   "source_sha256": {
     "bench/HexSturm/Bench.lean": "12f852e97155a6a73e51b1ff84812886cca771ef360e77381e102bffd258c1d4",
-    "scripts/oracle/sturm_bench.py": "65e356137b49e4727bb3e669951b54337ac25af61006aebbe48083248d471d9d",
+    "scripts/oracle/sturm_bench.py": "b474f3f62706b5a7e38b5208e1b8a52bb272a7c01a5fd8e5c8304ce9e0c8326c",
     "lakefile.lean": "13f190b833a2188a7250315c9578674fb4e7edaea14e891915d52c862a944641",
     "scripts/ci/run_oracles.sh": "74fbd02524c7194ee0f06a4a8b7eff874ff32ec3245514e15a9c28885d205ee3"
   },
-  "scope": "Move the unchanged compiled external comparator registrations into the existing Sturm bench module and execute endpoint self-tests during its persistent FLINT startup. Restore the shared Lake and oracle-runner files to main. Required CI uses its existing owner classifier; full conformance compilation and all owned canonical checks remain required.",
+  "scope": "Move the unchanged compiled external comparator registrations into the existing Sturm bench module and execute endpoint self-tests during its persistent FLINT startup. Restore the shared Lake and oracle-runner files to main. Required CI uses its existing owner classifier; full conformance compilation and all owned canonical checks remain required. Self-tests run in an isolated interpreter; failures return a bounded JSON diagnostic to the compiled verifier.",
   "classification": {
     "all_libraries": false,
     "libraries": [
@@ -56,6 +56,16 @@
       "result": "passed",
       "executables": 62,
       "probes": 433
+    },
+    {
+      "command": "compiled hexsturm_bench verify with forced isolated self-test failure",
+      "result": "expected rejection",
+      "exit_code": 1,
+      "visible_diagnostic": "endpoint self-test failed (7): forced endpoint regression: exact result mismatch"
+    },
+    {
+      "command": "check_phase4.py; check_persistent_flint_warmup.py; copyright and line-count guards",
+      "result": "passed"
     }
   ],
   "retained_logs": [
@@ -98,6 +108,11 @@
       "path": "/home/kim/.local/state/hex/issue-10577-verification/ci-scoping/issue-10577-ci-scoping-lines.log",
       "bytes": 1282,
       "sha256": "4ecf1302de7cf878e69ecb1f81cdb80167b8ed515cc1c8b65aa705a242fc2fe9"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/ci-scoping/issue-10577-ci-scoping-reviewed-verify.log",
+      "bytes": 16678,
+      "sha256": "d35f595e9a0f5af9b492a696a02a4a3813e47b6ab7f907c880db507bd6d5b748"
     }
   ],
   "limitations": [

@@ -50,5 +50,7 @@ repeated FLINT temporary-value cleanup, unsupported-version rejection,
 malformed/unknown requests and Boolean control validation. A missing
 interpreter fails the compiled verifier. Its FLINT endpoint starts with
 `--self-test`, running these four tests once before accepting JSON requests.
-Test output goes to stderr; a failure prevents endpoint startup. The existing
+The tests run in an isolated interpreter. Success output goes to stderr; a
+failure sends a bounded JSON diagnostic to the compiled parent and prevents
+endpoint startup. The existing
 benchmark verification step exercises this path; no new CI job is introduced.

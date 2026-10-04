@@ -101,11 +101,20 @@ def main():
                         help="Run exact endpoint and protocol regressions before serving requests.")
     args = parser.parse_args()
     if args.self_test:
-        import unittest
-        suite = unittest.defaultTestLoader.loadTestsFromName("scripts.oracle.test_sturm_bench")
-        result = unittest.TextTestRunner(stream=sys.stderr).run(suite)
-        if not result.wasSuccessful():
+        import subprocess
+        # Run tests in an isolated interpreter so the serving context stays fresh.
+        completed = subprocess.run(
+            [sys.executable, "-m", "unittest", "scripts.oracle.test_sturm_bench"],
+            cwd=ROOT, capture_output=True, text=True, check=False)
+        output = completed.stdout + completed.stderr
+        if completed.returncode:
+            # The persistent parent reads stdout, not the child's stderr pipe.
+            # Bound the diagnostic to avoid filling an unread pipe on failure.
+            print(json.dumps({"ok": False, "error":
+                  f"endpoint self-test failed ({completed.returncode}): {output[-8000:]}"}),
+                  flush=True)
             raise SystemExit(1)
+        print(output[-1000:], file=sys.stderr, end="")
     endpoint = Flint() if args.tool == "flint" else Z3()
     try:
         for line in sys.stdin:
