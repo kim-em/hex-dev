@@ -3,8 +3,9 @@
 The question is whether the completed semantic modules can be consumed from
 separate package trees with exact dependencies, and what prevents an optional
 real-coefficient adapter from sharing the existing `HexRCF` namespace.
-This is a local experiment for #10575, not release-sync validation or
-publication eligibility. Merged PR #10476 supplies the release staging check;
+The evidence ledger identifies the exact source commit used by this local
+experiment for #10575. It is not release-sync validation or publication
+eligibility. Merged PR #10476 supplies the release staging check;
 its implementation is not duplicated here.
 
 ## Construction
@@ -15,13 +16,15 @@ lock for external requirements. Assemble the closure of HexRealRootsMathlib,
 HexSturmMathlib, HexSignDetMathlib, HexOrderedFnMathlib, HexRealClosureMathlib and
 HexRCF in dependency order. The local layout contains 62 Hex packages.
 
-For existing mirrors, clone their public skeletons without writing to them.
-For unpublished inputs, use local skeletons following `BOOTSTRAP.md`; do not
-add those inputs to the released manifest. Reuse the existing driver's
-`managed_paths`, `rsync_dir`, `copy_file`, `rewrite_test_target`,
-`rewrite_doc_verso`, `rewrite_lib_settings`, `rewrite_lake_declarations`,
-`rewrite_toolchains`, `rewrite_external_requires`, `rewrite_external_pins`,
-`rewrite_requires`, `rewrite_manifest` and `validate_external_imports`.
+Reproducing the recorded evidence requires its recorded source commit and
+configuration hashes; it used the driver helpers available at that revision.
+For a new candidate, use current `BOOTSTRAP.md` and the existing driver's
+`managed_paths`, `apply_paths`, `render_lakefile`, `write_lakefile`,
+`rewrite_toolchains`, `rewrite_manifest` and `validate_external_imports`.
+Clone existing mirrors read-only and use local skeletons for unpublished
+inputs. Do not add those inputs to the released manifest. Current Lake
+configuration is generated from monorepo declarations and manifest metadata;
+obsolete mirror declarations must not be copied into a new candidate.
 Copy the already delivered sign/tower semantic adapters into their candidate
 owner trees without changing the monorepo's active owner files. Exclude their
 semantic regression modules from those additional candidate mappings.

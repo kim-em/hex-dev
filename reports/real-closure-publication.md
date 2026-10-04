@@ -91,13 +91,12 @@ Exact candidate foundation requirements from `lake-manifest.json`:
 
 The candidate toolchain is `leanprover/lean4:v4.35.0-rc3`. A future release uses
 one maintainer-selected shared Hex version; none is selected here. The existing
-release driver now uses `rewrite_external_requires` to add a missing direct
-provider from the exact monorepo lock before checking managed-source imports.
-`rewrite_external_pins` synchronizes existing declarations; `rewrite_manifest`
-also adds newly needed external providers to downstream locks, marking Tau
+release driver uses `release_requires` and `render_lakefile` to generate direct
+providers from the monorepo lock. `rewrite_manifest` and
+`_add_closure_externals` supply exact locked providers downstream, marking Tau
 Ceti inherited in packages that obtain it through a pinned companion.
-Existing external dependency records remain pinned. This does not add any
-ineligible Hex library to the release manifest.
+Computational/proof classification follows `libraries.yml`, shared with the
+DAG checks. This does not add an ineligible Hex library to the release manifest.
 Tau Ceti's own lock uses the same Mathlib revision shown above. Downstream
 proof/tactic packages must resolve a compatible shared Mathlib revision;
 updating Tau Ceti requires checking that compatibility.
@@ -226,9 +225,9 @@ before publication. The earlier 62-package experiment still covers a different,
 full declared graph including unreleased libraries and the unapproved optional
 ownership prototype.
 
-Merged #10668's authenticated preparation/replay, fresh proof probes, manual
-and existing consumers also build in the monorepo (15,522 jobs), and the full
-conformance target passes (14,763 jobs). The earlier 116 release/DAG tests pass on their recorded source. CI run
+The pre-rebase snapshot at `5ff3f2fa9a` built merged #10668's authenticated
+preparation/replay, fresh proof probes, manual and existing consumers (15,522
+jobs), with a separate full conformance build (14,763 jobs). The earlier 116 release/DAG tests pass on their recorded source. CI run
 [37178450711](https://github.com/kim-em/hex-dev/actions/runs/37178450711) passed
 all oracles but failed smoke verification at 385/360 seconds; it remains a
 failed operational gate. The later run
@@ -238,6 +237,26 @@ retained; neither is a performance pass. Main subsequently merged the separate
 CI-limit change [#10696](https://github.com/kim-em/hex-dev/pull/10696). This
 integration changes no smoke limit, scientific settings or fixed inputs.
 No performance attestation follows from these builds or smoke results.
+
+The [generated-package evidence](real-closure-generated-consumer.json) covers
+#10682's generator at source `3c2e7fa09d`, based on `767b3e15ee`. The full
+60-repository dry run and fresh downstream helper/aggregate projects pass:
+8 helper jobs, 22,529 aggregate jobs, ordinary generated `import Hex`, manifest
+tests, eligible examples and native linking. The shared arbitrary-certificate
+Tarski example with its exact kernel axiom guard also builds (9,343 jobs).
+All 32 computational locks exclude Mathlib, Tau Ceti and AINTLIB. The complete
+monorepo integration, owner examples, manual and conformance pass together
+(13,767 jobs), as do 119 package/dependency tests, 295 admission cones and the
+2,048-file trust scan. External Mathlib artifacts are cached; Hex package
+build outputs start absent. Parser/boundary corrections leave all 60 rendered
+configurations byte-identical to the built stage. The ledger identifies that
+scope and the remaining requirement to restage final output under the release
+workflow; Linux evidence does not assert every platform or family eligibility.
+
+Evidence source snapshots are retained on upstream branches
+`issue-10575-evidence-candidates`, `issue-10575-evidence-staged` and
+`issue-10575-evidence-generated`; the ledgers' exact commit IDs remain the
+reproduction references. These branches do not publish split mirrors.
 
 ## Unapplied publication changes and distribution prerequisites
 

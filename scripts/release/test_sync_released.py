@@ -21,6 +21,8 @@ from scripts.release.intfactor_prospective import ENTRY as INTFACTOR_ENTRY
 
 class SyncReleasedTests(unittest.TestCase):
     def setUp(self) -> None:
+        classification = sync_released._library_mathlib() | {"HexProbe": True}
+        self.enterContext(patch.object(sync_released, "_library_mathlib", return_value=classification))
         self.temporary = tempfile.TemporaryDirectory()
         self.repo = Path(self.temporary.name)
         (self.repo / "lean-toolchain").write_text(
@@ -494,7 +496,7 @@ class SyncReleasedTests(unittest.TestCase):
         (lib / "Basic.lean").write_text(source, encoding="utf-8")
         (self.repo / "lakefile.toml").write_text(lakefile, encoding="utf-8")
         return {"repo": "leanprover/hex-probe", "lib": "HexProbe",
-                "lakefile": "toml", "readme": False, "mathlib_only": True}
+                "lakefile": "toml", "readme": False}
 
     def test_batteries_import_without_provider_fails_closed(self) -> None:
         entry = self._external_import_entry(
@@ -1154,11 +1156,15 @@ class GeneratedLakefileTests(unittest.TestCase):
          "test_modules": ["HexFoo.Tests"], "executables": {"foo": "HexFoo.Main"},
          "build_modules": ["HexFoo.All"]},
         {"repo": "leanprover/hex-plain", "lib": "HexPlain", "lakefile": "toml",
-         "test_modules": ["HexPlain.Tests"], "aggregate": False, "mathlib_only": True},
+         "test_modules": ["HexPlain.Tests"], "aggregate": False},
         {"repo": "leanprover/hex-linked", "lib": "HexLinked", "lakefile": "toml"},
         {"repo": "leanprover/hex", "pins_only": True},
     ]
     DEPS = {"HexFoo": ("HexBar",), "HexPlain": ("HexBar",), "HexBar": (), "HexLinked": ()}
+
+    def setUp(self) -> None:
+        classification = sync_released._library_mathlib() | {"HexPlain": True, "HexFoo": False}
+        self.enterContext(patch.object(sync_released, "_library_mathlib", return_value=classification))
 
     def render(self, short: str, roots: set[str] = frozenset()) -> str:
         entry = next(e for e in self.ENTRIES if e["repo"].endswith("/" + short))
@@ -1189,10 +1195,17 @@ class GeneratedLakefileTests(unittest.TestCase):
         requires = tomllib.loads(text)["require"]
         tau = next(pin for pin in pins.values() if pin["name"] == "TauCeti")
         self.assertIn({"name": "TauCeti", "git": tau["url"], "rev": tau["inputRev"]}, requires)
+        self.assertEqual(tau["inputRev"], tau["rev"])
+        self.assertRegex(tau["rev"], r"^[0-9a-f]{40}$")
         self.assertEqual(requires[-1]["name"], "mathlib")
         doc = {"packages": []}
         sync_released._add_closure_externals(entry, doc, [])
         self.assertEqual(next(p["rev"] for p in doc["packages"] if p["name"] == "TauCeti"), tau["rev"])
+
+    def test_import_headers_cover_line_endings_continuations_and_quoted_names(self) -> None:
+        source = 'module\r\npublic meta import\r\n  «TauCeti».Data.Matrix\r\n  Mathlib.Tactic\r\n\r\nnamespace Unimported\r\n'
+        self.assertEqual(sync_released._import_roots(source), {"TauCeti", "Mathlib"})
+        self.assertEqual(sync_released._import_roots('import «Mathlib.Foo»\n'), {"Mathlib.Foo"})
 
     def test_source_requirements_ignore_comments_and_find_all_imports(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

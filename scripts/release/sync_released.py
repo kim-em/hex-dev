@@ -978,26 +978,54 @@ def _synthesize_manifest_packages(entry: dict, clone: Path, doc: dict,
     return added
 
 
+MODULE_PART = r"(?:«[^»\r\n]+»|[\w]+)"
+MODULE_NAME = re.compile(MODULE_PART + r"(?:\." + MODULE_PART + r")*")
+IMPORT_COMMAND = re.compile(
+    r"^[ \t]*(?:(?:public|private|meta)[ \t]+)*import(?:[ \t]+all)?(?:[ \t]+|$)(.*)$")
+
+
+def _import_roots(source: str) -> set[str]:
+    """Read import headers, including continued lines and quoted identifiers."""
+    lines = code_without_comments_and_strings(source).splitlines()
+    roots: set[str] = set()
+    for i, line in enumerate(lines):
+        command = IMPORT_COMMAND.match(line)
+        if command is None:
+            continue
+        text = command[1].strip()
+        while True:
+            matches = list(MODULE_NAME.finditer(text))
+            if text and not re.sub(MODULE_NAME, "", text).strip():
+                for match in matches:
+                    part = re.match(MODULE_PART, match[0])[0]
+                    roots.add(part[1:-1] if part.startswith("«") else part)
+            elif text:
+                break
+            i += 1
+            if i >= len(lines):
+                break
+            text = lines[i].strip()
+            # Continuation module names in this tree start with a capital or
+            # use quoted identifiers. A new Lean command ends the header.
+            if text and not (text[0].isupper() or text.startswith("«")):
+                break
+    return roots
+
+
 def _external_import_roots(entry: dict, clone: Path) -> dict[str, str]:
     """Direct external imports in managed Lean code, excluding comments/strings."""
-    pattern = re.compile(
-        r"^[ \t]*(?:(?:public|private|meta)[ \t]+)*import[ \t]+"
-        r"(?:all[ \t]+)?([\w. \t]+)$", re.M)
     roots: dict[str, str] = {}
     for src, dest_rel, is_dir in managed_paths(entry):
         dest = src if clone == REPO_ROOT else clone / dest_rel
         files = list(dest.rglob("*.lean")) if is_dir else (
             [dest] if dest.suffix == ".lean" else [])
         for lean in files:
-            if not lean.is_file():
-                continue
-            code = code_without_comments_and_strings(lean.read_text(encoding="utf-8"))
-            for line in pattern.findall(code):
-                for module in line.split():
-                    root = module.split(".")[0]
+            if lean.is_file():
+                for root in _import_roots(lean.read_text(encoding="utf-8")):
                     if root in EXTERNAL_IMPORT_ROOTS:
                         roots.setdefault(root, str(lean.relative_to(clone)))
     return roots
+
 
 def _declared_external_packages(text: str, lake_format: str) -> set[str]:
     if lake_format == "toml":
@@ -1013,6 +1041,7 @@ def _declared_external_packages(text: str, lake_format: str) -> set[str]:
             if code[match.start():].startswith("require"))
     return names
 
+
 def _provided_external_roots(text: str, lake_format: str) -> set[str]:
     names = _declared_external_packages(text, lake_format)
     provided = {root for root, package in EXTERNAL_IMPORT_ROOTS.items()
@@ -1021,14 +1050,16 @@ def _provided_external_roots(text: str, lake_format: str) -> set[str]:
         provided.add("Batteries")
     return provided
 
+
 def _check_external_boundary(entry: dict, roots: set[str]) -> None:
     """Never synthesize proof dependencies for a computational mirror."""
-    if entry.get("pins_only") or entry.get("mathlib_only") or entry.get("lib", "").endswith("Mathlib"):
+    if entry.get("pins_only") or _library_mathlib().get(entry.get("lib", ""), False):
         return
     forbidden = roots & PROOF_IMPORT_ROOTS
     if forbidden:
         raise RuntimeError(f"computational repository {entry['repo']} imports "
                            f"proof dependencies: {', '.join(sorted(forbidden))}")
+
 
 def validate_external_imports(entry: dict, clone: Path) -> None:
     """Reject missing direct providers before publishing managed Lean sources."""
@@ -1057,6 +1088,12 @@ def validate_external_imports(entry: dict, clone: Path) -> None:
 DOC_VERSO_OPTIONS = (("doc.verso", "true"), ("doc.verso.suggestions", "false"))
 EXTERNAL_IMPORT_ROOTS = {"Mathlib": "mathlib", "Batteries": "batteries",
                          "TauCeti": "TauCeti", "HasseWeil": "AINTLIB"}
+
+
+@functools.lru_cache(maxsize=1)
+def _library_mathlib() -> dict[str, bool]:
+    from libgraph import load_libraries
+    return {name: info.mathlib for name, info in load_libraries().items()}
 
 
 def _library_deps() -> dict[str, tuple[str, ...]]:
@@ -1094,18 +1131,13 @@ def closure_external_packages(entry: dict, entries: list[dict]) -> set[str]:
 
 def _source_import_roots(entry: dict) -> set[str]:
     """Top-level module roots imported by the library's published sources."""
-    pattern = re.compile(
-        r"^[ \t]*(?:(?:public|private|meta)[ \t]+)*import[ \t]+"
-        r"(?:all[ \t]+)?([\w. \t]+)$", re.M)
     roots: set[str] = set()
     for src, _dest, is_dir in managed_paths(entry):
         files = list(src.rglob("*.lean")) if is_dir else (
             [src] if src.suffix == ".lean" else [])
         for lean in files:
             if lean.is_file():
-                code = code_without_comments_and_strings(lean.read_text(encoding="utf-8"))
-                for line in pattern.findall(code):
-                    roots.update(module.split(".")[0] for module in line.split())
+                roots.update(_import_roots(lean.read_text(encoding="utf-8")))
     return roots
 
 

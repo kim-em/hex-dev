@@ -135,7 +135,7 @@ import of every aggregate library, those manifest entries' `test_modules`, and
 the `Examples/` user stories whose imports are all published. A fresh helper
 consumer first checks non-aggregate packages such as hex-test-kit and their
 tests, avoiding the aggregate's default `Hex` module ownership. The aggregate
-consumer also builds the existing `Hex` umbrella, then links and runs an
+consumer also builds the generated `Hex` umbrella, then links and runs an
 executable that calls native code. The `sync` job, which publishes,
 runs only after every blocking `consumer` job passes. Downstream elaboration is
 where `precompileModules`, FFI targets and their link arguments take effect,
@@ -281,7 +281,7 @@ job, enforces two rules:
 ## Released-aggregate mirror
 
 `leanprover/hex` supplies a module-system umbrella. The manifest defines the
-complete released import set; the mirror's unmanaged `Hex.lean` can lag it.
+complete released import set; the mirror's generated `Hex.lean` follows it.
 A module may not import a non-module module, so a
 library that never adopted the module system builds fine here and breaks
 the aggregate: nothing inside this monorepo imports a released umbrella
@@ -292,9 +292,9 @@ import anything.
 content is the complete `public import` set declared by the aggregate's
 manifest pins, so module compatibility failures surface in `lake build` here
 instead of after the publish-out sync has pushed the library. This verifies
-the intended import set, not the completeness of the mirror's `Hex.lean`.
-The staged consumer also imports those libraries individually; neither check
-proves that `import Hex` re-exports every manifest library.
+module compatibility for the intended import set. The sync generates the
+mirror's `Hex.lean` from the aggregated manifest entries, and the staged
+consumer builds that generated umbrella as well as ordinary per-library imports.
 `scripts/release/check_released_manifest.py` compares its import list
 against the `leanprover/hex` entry's `pins:` in
 `scripts/release/released.yml` and fails on drift, so publishing a new
