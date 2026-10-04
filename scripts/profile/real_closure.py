@@ -34,9 +34,12 @@ def measurement_rows(text):
     return [json.loads(line) for line in text.splitlines() if line.startswith("{")]
 
 
-def validate_measurement(rows, commit):
+def validate_measurement(rows, commit, stage):
     if len(rows) != 1 or rows[0].get("status") != "ok" or rows[0].get("result_hash") != "0x1":
         raise RuntimeError("profile did not return the expected complete-root result")
+    name, parameter, _ = CASES[stage]
+    if rows[0].get("function") != "Hex.RealClosure.Bench." + name or rows[0].get("param") != parameter or rows[0].get("profile_kernel") is not True:
+        raise RuntimeError("measurement row does not match the requested kernel and parameter")
     env = rows[0].get("env", {})
     if env.get("git_commit") != commit or env.get("git_dirty") is not False:
         raise RuntimeError("measurement row is not bound to the clean capture commit")
@@ -67,8 +70,8 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     record = dict(stage=args.stage, host=platform.node(), platform=platform.platform(),
                   raw=str(args.raw), commands=[], status="running", sample_frequency_hz=1000)
-    manifest = args.output / f"{args.stage}.manifest.json"
-    if manifest.exists():
+    manifest = args.output / (f"{args.stage}.postprocess.manifest.json" if args.postprocess else f"{args.stage}.manifest.json")
+    if manifest.exists() or (args.output / f"{args.stage}.summary.json").exists():
         parser.error("refusing to overwrite a prior manifest")
     work = args.output / f"{args.stage}.postprocess" if args.postprocess else args.raw
     work.mkdir(exist_ok=not args.postprocess)
@@ -107,9 +110,13 @@ def main():
             if capture["dirty"] is not False:
                 raise RuntimeError("capture source was dirty")
             perf_index = next(i for i,c in enumerate(capture["commands"]) if c["argv"][:2] == ["perf", "record"])
+            if capture["commands"][perf_index]["exit_code"] != 0:
+                raise RuntimeError("capture process failed")
+            if record["profiler_commit"] != capture["profiler_commit"]:
+                raise RuntimeError("retained capture requires its recorded filter revision")
             rows = measurement_rows((args.raw / f"{perf_index}.stdout").read_text())
             record["measurement_rows"] = rows
-            record["measurement"] = validate_measurement(rows, capture["commit"])
+            record["measurement"] = validate_measurement(rows, capture["commit"], args.stage)
             capture_commit = capture["commit"]
             anchor = args.raw / "spawn-anchor.json"
         else:
@@ -145,7 +152,7 @@ def main():
                  f"LEAN_BENCH_TIMED_REGIONS_SIDECAR={args.raw}/timed-%p.jsonl", *profile])
             rows = measurement_rows(measured)
             record["measurement_rows"] = rows
-            record["measurement"] = validate_measurement(rows, record["commit"])
+            record["measurement"] = validate_measurement(rows, record["commit"], args.stage)
             capture_commit = record["commit"]
         pinned = json.loads(run(["git", "show", f"{capture_commit}:lake-manifest.json"]))
         record["compiled_lean_bench_commit"] = next(p["rev"] for p in pinned["packages"] if p["name"].strip("«»") == "lean-bench")

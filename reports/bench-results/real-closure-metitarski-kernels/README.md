@@ -15,14 +15,22 @@ The first capture attributes 94.90% of samples inclusively to root comparison/so
 
 The first profile source is retained by tag `issue-10378-metitarski-first-kernel-source`; the second by `issue-10378-metitarski-second-kernel-source`. The first benchmark body is unchanged between those source commits. The runner now validates the schema’s string result hash `0x1` before postprocessing. Both accepted captures returned that hash and status `ok`.
 
-All captures are retained. `second-io-failed.manifest.json` records a rejected adaptation: the parametric macro registered an IO action as a pure result instead of executing it, producing nearly empty regions and reaching the region limit. Its functional verification did not validate execution. The pure function fixes this boundary. `second-validation-failed.manifest.json` retains the completed pure capture whose launcher rejected the string hash by comparing it to integer 1. `second-unbound-postprocess.manifest.json` retains the initial recovery whose tooling was not bound to a clean commit. The accepted `first.postprocess.manifest.json` and `second.postprocess.manifest.json` run the committed `--postprocess` mode at `26eda1c3eb`, retained by `issue-10378-metitarski-postprocess-source`. They validate each original artifact hash and clean measurement row, record the clean processor and filter revisions, and bind each resulting summary by SHA-256. The second original manifest hash is `c276c4a8929df3e3aa3e7ee4fcf54580acf0181ba12d3828911f1972a1415c58`, matching the retained validation-failure manifest. Original captures remain unmodified. No measurement was repeated. Counts, leaf categories, inclusive function shares and filter diagnostics reproduce the original summaries; equal-share rankings now use deterministic lexical tie ordering, and summary paths point to the new derived artifacts.
+All captures are retained. `second-io-failed.manifest.json` records a rejected adaptation: the parametric macro registered an IO action as a pure result instead of executing it, producing nearly empty regions and reaching the region limit. Its functional verification did not validate execution. The pure function fixes this boundary. `second-validation-failed.manifest.json` retains the completed pure capture whose launcher rejected the string hash by comparing it to integer 1. `second-unbound-postprocess.manifest.json` retains the initial recovery whose tooling was not bound to a clean commit. The accepted `first.postprocess.manifest.json` and `second.postprocess.manifest.json` run the committed `--postprocess` mode at `26eda1c3eb`, retained by `issue-10378-metitarski-postprocess-source`. They validate each original artifact hash and clean measurement row, record the clean processor and filter revisions, and bind each resulting summary by SHA-256. The second original manifest hash is `c276c4a8929df3e3aa3e7ee4fcf54580acf0181ba12d3828911f1972a1415c58`, matching the retained validation-failure manifest. Original captured files remain unmodified. The earlier unbound recovery added derived files to the second raw directory; the committed mode writes fresh derived files into its output directory. Future captures verify the actual clean dependency checkout before building. No measurement was repeated. Counts, leaf categories, inclusive function shares and filter diagnostics reproduce the original summaries; equal-share rankings now use deterministic lexical tie ordering, and summary paths point to the new derived artifacts.
 
 The workload archive/correction for tower8, ordinary fixed trial-major timing studies, matched clean/eager comparisons, growth/counter studies and the final Phase4 audit remain required.
+
+The measured branch began at `b3d6da1648`, before the final rebase onto
+main `3c40c9c99f`. The intervening tree adds canonical owner/cache factories,
+base embedding theorems and isolation-policy APIs. The legacy root producer,
+selected coefficient arithmetic and shared SignDet/Sturm/dense-polynomial
+source are unchanged; the existing `Isolation.lean` delta is documentation.
+These profiles describe the retained source snapshots above, rather than a
+new capture of the rebased tree or a claim about all new cache/policy paths.
 
 ## Reproducibility and diagnostics
 
 Both captures ran on chungus2, x86_64, AMD EPYC 9455 48-Core Processor,
-Linux 6.12.111 / glibc 2.42. The compiled lean-bench dependency is
+Linux 6.12.111 / glibc 2.42. The pinned lean-bench dependency is
 `8a37daf1074c3bdbd0da479b55538bad4a0022db` (version 0.1.0); the clean
 filter revision is `9356baa2f5757ee40320a897bd284914d5bb9f5e`.
 Samply is 0.13.1, perf 7.2.8 and Lean 4.35.0-rc3. Inputs are deterministic,
