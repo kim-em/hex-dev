@@ -42,9 +42,11 @@ are context, not validity thresholds.
 
 These two-point, end-to-end comparisons are neither parametric complexity
 registrations nor fixed-budget attestations. They have no independently derived
-tight wall-time model, upper-bound verdict or operation-specific ceiling. Full
-Phase-4 cost attestation remains blocked under the benchmarking mode order;
-a generic timeout does not supply a scientific budget. Precision and nested
+tight wall-time model, upper-bound verdict or operation-specific ceiling. The current Phase-4
+proof track requires CI-built examples for this Mathlib-facing proof surface,
+not a compiled complexity verdict or timing sweep of ordinary laws. These
+observations supply no numerical complexity attestation; a generic timeout
+does not supply a scientific budget. Precision and nested
 depth, bounded failures and common/repeated-root scaling remain separate work.
 The earlier [root-section report](hexrcf-production-proofs.md) preserves actual
 close-section/further-root observations without claiming independent scaling.

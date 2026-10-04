@@ -45,6 +45,8 @@ public import HexRCF.RealCoefficients.FieldRoots
 public import HexRCF.RealCoefficients.FieldBuildProgress
 public import HexRCF.RealCoefficients.FieldDecisionProgress
 public import HexRCF.RealCoefficients.FieldBuildBudget
+public import HexRCF.RealCoefficients.FiniteReplay
+public import HexRCF.RealCoefficients.Replay
 public meta import HexRCF.RealCoefficients.FieldLiteral
 public meta import HexRCF.RealCoefficients.FieldCompile
 public meta import HexRCF.RealCoefficients.FieldRuntime
@@ -53,6 +55,7 @@ public import HexRCF.RealCoefficients.SquareRoot
 public import HexRCF.RealCoefficients.CubeTwo
 public import HexRCF.RealCoefficients.Selected
 public meta import HexRCF.RealCoefficients.Tactic
+public meta import HexRCF.RealCoefficients.Preparation
 public meta import HexRCF.RealCoefficients.CommonTactic
 public import HexRCF.RealCoefficients.CellFormula
 

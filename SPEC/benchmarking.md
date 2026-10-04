@@ -858,10 +858,14 @@ The `Bench verify` step has two enforced budgets:
 - **Repo-wide hard cap configured in CI**. The total time for the
   `Bench verify` step (build + run, summed across all libraries)
   MUST be under the cap. Crossing it fails the build with a
-  per-library breakdown so the offender is obvious. The cap may carry
-  a small variance buffer for GitHub-hosted runner noise, but the
-  long-term target remains **5 wallclock minutes** once slow fixed
-  smoke rungs are remediated.
+  per-library breakdown so the offender is obvious. The cap must sit
+  above the step's time on the slowest runners CI is assigned, not
+  between the fast and slow figures: the same step takes about 225 s
+  on a fast GitHub-hosted runner and about 385 s on a slow one, every
+  library slower by the same factor of roughly 1.8, so a cap between
+  those fails about half of all runs for no change of code. The cap is
+  therefore 600 s. The long-term target remains **5 wallclock minutes
+  on a slow runner** once slow fixed smoke rungs are remediated.
 
 When a library trips either:
 
