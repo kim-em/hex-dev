@@ -1,0 +1,2 @@
+[ perf record: Woken up 19 times to write data ]
+[ perf record: Captured and wrote 4.517 MB /home/kim/.local/share/hex/bench-profiles/real-closure-metitarski-native-b2cea573.perf.data (539 samples) ]
