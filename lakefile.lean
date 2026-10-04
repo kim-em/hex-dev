@@ -1246,6 +1246,7 @@ lean_lib HexConformance where
 
     ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests,
       `HexRealClosureMathlib.CoefficientSignsConformance,
+      `HexRealClosureMathlib.DependenciesConformance,
       `HexRealClosureMathlib.PackingConformance,
       `HexRealClosureMathlib.NestedSignsConformance,
       `HexRealClosureMathlib.SignCodecConformance,

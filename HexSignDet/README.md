@@ -32,8 +32,9 @@ coefficients. Zero is an extra conservative chain operand. These lists describe
 result dependencies, not an ordered trace of runtime sign calls, and retain
 repeated occurrences. A finite cache need not be lawful outside its keys, but
 callers must prove agreement at every required operand before transferring the
-original checker's soundness. A dependency graph across coefficient-field levels
-and its exact context/operand bindings remain separate requirements.
+original checker's soundness. The `Dependencies.Graph` envelope binds cross-level references to full
+subjects and routes checked packet results. Context reconstruction and complete
+intermediate coefficient evidence remain required.
 `Dag.signOperands` covers every serialized entry, including entries unreachable
 from the root. `Dag.replay_sign_congr` preserves failure and the exact returned
 tree under finite sign agreement; `Dag.check_sign_congr` preserves the Boolean
@@ -527,12 +528,56 @@ accepted supplied graph's actual replay result. For encoded trees,
 `Dag.descriptor_encode` also covers rejection. Descriptor shape and context
 checks run before graph replay.
 
-A cross-level coefficient-sign certificate will require a separate type with
-its own level and context bindings. `Dag` is its same-level BKR component; its
-fixed-domain memo does not satisfy the separate nested-evidence obligation.
+`Dependencies.Graph` supplies the cross-level envelope with level and full
+subject bindings. `Dag` supplies each packet's same-level BKR component.
+Complete intermediate coefficient facts and context reconstruction belong to
+the packet readers; the fixed-domain memo does not supply them.
 
 `Dag.changeOps` transports a checked memo along literal equalities of the
 coefficient operations. `changeOps_validate` proves exact agreement with the
 actual validator, including rejection; `changeOps_nodes` preserves its literal
 node list and indices. These are operation equalities, not field laws on stored
 representatives or assumptions about certificate completeness.
+
+`Dependencies.Graph` stores certificates from successive coefficient fields in
+one finite array. Each entry records its coefficient level, full literal
+subject, payload and references to lower-level entries. References include
+both the expected level and subject. `Graph.check` rejects cycles, forward
+references, equal-level dependencies, invalid result indices and mismatched
+subjects, including defects in unused entries.
+
+`Graph.validate?` takes the mathematical reader for each packet and checks
+entries in order. Each reader receives only its declared, already checked
+children, and its result type may depend on the complete entry. Several parent
+packets can reuse one child's typed result. Local readers check the actual BKR
+and coefficient evidence, including coverage of every required fact;
+structural envelope checking alone does not establish sign correctness.
+`Graph.validate_entries` proves that every returned memo position retains the
+original complete entry. `Graph.validate_check`, `Graph.check_children` and
+`Graph.check_roots` establish reference bounds, strict level decrease and full
+literal bindings from actual acceptance.
+
+`Dependencies.Graph.codec` uses the shared integer-only JSON format.
+`Graph.codec_lawful` and `Graph.codec_bytes` preserve every entry, result and
+reference literally. `Graph.decode` binds the ordered result levels and
+subjects to the caller before checking packet contents. `Graph.decode_encode`
+relates actual printing, byte parsing and local checking to the exact returned
+memo and parsed graph, under the shared syntax/resource precheck.
+`Decoded.results` selects the declared typed results in order using proved
+index bounds, including repeated references to shared entries.
+`Decoded.results_bound` and `results_size` identify their full ordered caller
+bindings and length. Packet readers still supply
+context reconstruction and evidence for intermediate coefficient arithmetic.
+
+The direct nested conformance example produces two distinct upper packets
+and one joint lower packet, then checks their common serialized envelope using
+the existing mathematical readers and a finite coefficient reader. It tests
+repeated results, false unused packets, independently valid incomplete child
+packets, missing edges, wrong levels, stale subjects and altered payload
+contexts. It reuses validated contexts and ordinary coefficient arithmetic;
+it does not establish strict compiled arithmetic replay.
+
+Node/edge/byte counts, intermediate arithmetic calls and operand sizes must be
+reported for complete replay. Final independent conformance and Phase-4
+measurements, including allocation/live memory and proof-assembly costs, remain
+required; the envelope and its roundtrip proofs do not supply that evidence.
