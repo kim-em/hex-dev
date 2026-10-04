@@ -8,6 +8,7 @@ module
 public import HexRealClosureMathlib.BaseContext
 public import HexRealClosureMathlib.BaseProvider
 public import HexRealClosureMathlib.BaseStagedRealization
+public import HexRealClosureMathlib.BaseModels
 public import HexRealClosure.BaseInclusion
 public meta import HexRealClosure.BaseInclusion
 public import HexRealClosure.LiveContext
@@ -58,6 +59,20 @@ private theorem providerWidth (δ : Rat) (positive : 0 < δ) :
 using only the actual Liouville provider's analytic premises. -/
 private noncomputable def providerModel := rationalModel.register (key 1) (present 1)
   (liouvilleNumber 2) providerContained providerWidth providerTranscendence
+
+noncomputable example : (providerModel.context.finish.extend 2).Realization := providerModel.staged 2
+
+example : ((providerModel.staged 2).restrict?
+    (rationalModel.context.finish.extend 1)).isSome = true := by
+  rw [PackedContext.Realization.restrict?_isSome]
+  simp only [PackedContext.extend_signature, RealPrefix.finish_signature]
+  constructor
+  · have keys : rationalModel.context.keys = [] := by
+      simp only [rationalModel, RealPrefix.Model.rational, RealPrefix.Model.context,
+        RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys]
+    rw [keys]
+    exact List.nil_prefix
+  · decide
 
 example : providerModel.context.keys = [key 1] := by
   exact (RealPrefix.Model.register_keys rationalModel (key 1) (present 1) (liouvilleNumber 2)
