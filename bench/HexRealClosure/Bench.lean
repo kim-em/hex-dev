@@ -405,13 +405,13 @@ def metiSecondInput (degree : Nat) : Option (Σ owner : Tower.Context nativeRegi
 
 /-- Complete native root production over the retained least-root context.
 Preparation, hashing and process exit are outside the profile's timed regions. -/
-def runMetiSecond (input : Option (Σ owner : Tower.Context nativeRegistry, owner.Poly)) : UInt64 :=
-  match input with
-  | none => 0
-  | some ⟨owner, head⟩ =>
-    match owner.roots? head with
-    | .ok (.finite roots) => if roots.length == 1 then 1 else 0
-    | _ => 0
+def runMetiSecond (input : Option (Σ owner : Tower.Context nativeRegistry, owner.Poly)) : IO UInt64 := do
+  let some ⟨owner, head⟩ := input
+    | throw (IO.userError "MetiTarski second input preparation failed")
+  let .ok (.finite roots) := owner.roots? head
+    | throw (IO.userError "MetiTarski second root operation failed")
+  unless roots.length == 1 do throw (IO.userError "MetiTarski second root count changed")
+  return 1
 
 setup_benchmark runMetiSecond n => n^3
   with prep := metiSecondInput
