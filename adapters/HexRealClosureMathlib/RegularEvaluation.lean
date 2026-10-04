@@ -95,6 +95,41 @@ theorem evaluation_fraction (domain : Subring F) (value : domain →+* G)
     (fun c : denominators value => isUnit_iff_ne_zero.mpr c.property)
     a (value a / value b) b).mpr (by rw [mul_comm, div_mul_cancel₀ _ b.property])
 
+/-- A regular fraction with nonzero evaluated value has its inverse in the
+same source-field image. The numerator becomes another surviving denominator. -/
+theorem inv_mem (domain : Subring F) (value : domain →+* G)
+    (a : (source domain value).range) (nonzero : evaluation domain value a ≠ 0) :
+    (a : F)⁻¹ ∈ (source domain value).range := by
+  obtain ⟨z, original⟩ := a.property
+  obtain ⟨numerator, denominator, rfl⟩ :=
+    IsLocalization.exists_mk'_eq (denominators value) z
+  have same : a = (source domain value).rangeRestrict
+      (IsLocalization.mk' (Localization (denominators value)) numerator denominator) :=
+    Subtype.ext original.symm
+  have evaluated := evaluation_fraction domain value numerator denominator
+  rw [← same] at evaluated
+  have survives : value numerator ≠ 0 := by
+    intro zero
+    rw [zero, zero_div] at evaluated
+    exact nonzero evaluated
+  have eligible : numerator ∈ denominators value := by
+    change value numerator ≠ 0
+    exact survives
+  let next := IsLocalization.mk' (Localization (denominators value))
+    (denominator : domain) (⟨numerator, eligible⟩ : denominators value)
+  have product : (a : F) * source domain value next = 1 := by
+    dsimp only [next]
+    rw [← original, ← map_mul,
+      IsLocalization.mk'_mul_mk'_eq_one' (S := Localization (denominators value)) numerator denominator eligible,
+      map_one]
+  have sourceNonzero : (a : F) ≠ 0 := by
+    intro zero
+    rw [zero, zero_mul] at product
+    exact zero_ne_one product
+  refine ⟨next, ?_⟩
+  apply mul_left_cancel₀ sourceNonzero
+  rw [product, mul_inv_cancel₀ sourceNonzero]
+
 /-- info: 'Hex.RealClosure.Specialize.Regular.evaluation_apply' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Specialize.Regular.evaluation_apply
@@ -130,6 +165,52 @@ theorem regular_map [DecidableEq F] [DecidableEq G] (interpretation : Coefficien
   change Specialize.Regular.evaluation interpretation.domain interpretation.value _ = _
   rw [← bound]
   exact Specialize.Regular.evaluation_coefficient _ _ _
+
+/-- Regular interpretation supports division by every represented value
+whose image remains nonzero, with the expected inverse value. -/
+theorem regular_inv [DecidableEq F] [DecidableEq G]
+    (interpretation : CoefficientMap F G) (a : F)
+    (member : a ∈ interpretation.regular.domain) (nonzero : interpretation.regular.map a ≠ 0) :
+    a⁻¹ ∈ interpretation.regular.domain ∧
+      interpretation.regular.map a⁻¹ = (interpretation.regular.map a)⁻¹ := by
+  have valueNonzero : interpretation.regular.value ⟨a, member⟩ ≠ 0 := by
+    rwa [← map_mem interpretation.regular a member]
+  have inverse := Specialize.Regular.inv_mem interpretation.domain interpretation.value
+    ⟨a, member⟩ valueNonzero
+  have sourceNonzero : a ≠ 0 := by
+    intro zero
+    rw [zero, map_zero] at nonzero
+    exact nonzero rfl
+  refine ⟨inverse, ?_⟩
+  apply mul_left_cancel₀ nonzero
+  rw [← map_mul interpretation.regular member inverse, mul_inv_cancel₀ sourceNonzero,
+    map_one, mul_inv_cancel₀ nonzero]
+
+/-- Restricting regular fractions to a field inclusion preserves inverse
+membership and values whenever the interpreted denominator is nonzero. -/
+theorem regular_comap_inv {E : Type} [Field E] [DecidableEq E]
+    [DecidableEq F] [DecidableEq G] (interpretation : CoefficientMap F G)
+    (embedding : E →+* F) (a : E)
+    (member : a ∈ (interpretation.regular.comap embedding).domain)
+    (nonzero : (interpretation.regular.comap embedding).map a ≠ 0) :
+    a⁻¹ ∈ (interpretation.regular.comap embedding).domain ∧
+      (interpretation.regular.comap embedding).map a⁻¹ =
+        ((interpretation.regular.comap embedding).map a)⁻¹ := by
+  rw [comap_domain] at member
+  rw [comap_map] at nonzero
+  obtain ⟨inverse, mapped⟩ := interpretation.regular_inv (embedding a) member nonzero
+  constructor
+  · rw [comap_domain, map_inv₀]
+    exact inverse
+  · rw [comap_map, map_inv₀, mapped, comap_map]
+
+/-- info: 'Hex.RealClosure.CoefficientMap.regular_comap_inv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.CoefficientMap.regular_comap_inv
+
+/-- info: 'Hex.RealClosure.CoefficientMap.regular_inv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.CoefficientMap.regular_inv
 
 /-- info: 'Hex.RealClosure.CoefficientMap.regular_map' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
