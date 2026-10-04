@@ -62,7 +62,7 @@ class AdmissionScannerTests(unittest.TestCase):
         with TemporaryDirectory() as temporary:
             root = Path(temporary)
             entry = root / "adapters/HexRCF/RealCoefficients.lean"
-            bridge = root / "adapters/HexRealRootsMathlib/TarskiSoundness.lean"
+            bridge = root / "HexRealRootsMathlib/TarskiSoundness.lean"
             sign = root / "adapters/HexSignDetMathlib/RootProducer.lean"
             conformance = root / "conformance/HexSignDetMathlib/FieldConformance.lean"
             completion = root / "conformance/HexSignDet/FieldChecks.lean"
@@ -325,7 +325,7 @@ class AdmissionScannerTests(unittest.TestCase):
                     audit.check()
                 deflation.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 bridge.write_text("theorem check_rootSum : True := by sorry\n", encoding="utf-8")
-                with self.assertRaisesRegex(ValueError, "unapproved admission in adapters/HexRealRootsMathlib"):
+                with self.assertRaisesRegex(ValueError, "unapproved admission in HexRealRootsMathlib"):
                     audit.check()
                 bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
                 dependency.write_text("theorem bad : True := by sorry\n", encoding="utf-8")

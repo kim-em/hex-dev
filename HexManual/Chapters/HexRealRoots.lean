@@ -269,6 +269,51 @@ endpoints is stated over `ℝ`. This keeps rational normalization, and its
 `Nat.gcd`, away from the kernel, which is what makes endpoint extraction a
 plain `rfl` even for the refined fractional endpoints above.
 
+# Signed sums over roots
+%%%
+tag := "hex-real-roots-tarski"
+%%%
+
+A Tarski query sums the sign of a query polynomial at each distinct root of
+another polynomial in an open interval. Querying the constant polynomial `1`
+counts roots; a negative value is possible for other queries. The computational
+operation {name}`Hex.ZPoly.tarskiQuery` uses integer coefficients and exact
+dyadic endpoints. Its head must be nonzero and squarefree, and neither
+endpoint may be a root. A failed domain returns `none`.
+
+The ordinary `HexRealRootsMathlib` import exposes both the exact success-domain
+theorem and the interpretation of a successful answer in the real numbers:
+
+{docstring Hex.ZPoly.tarskiQuery_isSome}
+
+{docstring Hex.ZPoly.tarskiQuery_eq}
+
+The checker theorem also applies to arbitrary supplied certificate data. The
+following example uses that theorem directly; it does not assume that the
+certificate was produced by the search algorithm.
+
+```lean
+open Hex HexRealRootsMathlib
+
+example (p q : ZPoly) (interval : DyadicInterval)
+    (value : Int)
+    (certificate : IntTarskiCertificate)
+    (accepted : IntTarskiCertificate.check
+      p q interval value certificate = true) :
+    value = Tarski.rootSum (toPolyℝ p) (toPolyℝ q)
+      (.finite (Dyadic.toReal interval.lower))
+      (.finite (Dyadic.toReal interval.upper)) := by
+  exact IntTarskiCertificate.check_sound
+    p q interval value certificate accepted
+```
+
+The shared theorem {name}`HexRealRootsMathlib.Tarski.check_rootSum` works over
+any ordered real closed field, including non-Archimedean fields. Its coefficient
+interpretation and sign laws are explicit hypotheses. `HexSturmMathlib` applies
+that theorem to the field frontend, prepared queries and root counts. Tau Ceti
+supplies the abstract Sturm–Tarski foundation in the Mathlib companion; the
+computational package does not depend on it.
+
 # Cross-references
 %%%
 tag := "hex-real-roots-cross-references"

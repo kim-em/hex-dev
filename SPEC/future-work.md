@@ -1143,8 +1143,9 @@ return the specified multiplicities.
 [hex-real-roots](../HexRealRoots/SPEC/hex-real-roots.md#tarski-queries) owns
 integer Sturm chains and the implemented `ZPoly.tarskiQuery` and `IntTarskiCertificate`.
 Their abstract root-sum and replay soundness theorems are proved in the
-development `HexQuerySemantics` adapters using the pinned Tau Ceti foundation;
-publication in the split companions remains separate. Its ordinary root counts and
+ordinary HexRealRootsMathlib companion using the pinned Tau Ceti foundation,
+with field frontend semantics exposed by HexSturmMathlib. Publication in the
+split companions remains separate. Its ordinary root counts and
 `hex-rcf`'s derivative-seeded `SturmReplay` cannot certify general Tarski
 queries. Transcendental sign refinement consumes a caller-supplied approximation
 procedure. `hex-ordered-fn` owns the small exact finite-bound representation and

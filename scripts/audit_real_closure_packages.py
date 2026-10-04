@@ -6,19 +6,18 @@ from hashlib import sha256
 import argparse
 import json
 from pathlib import Path
-import re
 import subprocess
 
 import yaml
 
-from release.check_trust_surface import code_without_comments_and_strings
+from release.sync_released import _import_modules, _module_parts
+from libgraph import NATIVE_CARRIER_LIBS
 
 ROOT = Path(__file__).resolve().parents[1]
 FAMILY = ["HexOrderedFn", "HexOrderedFnMathlib", "HexSturm", "HexSturmMathlib",
           "HexSignDet", "HexSignDetMathlib", "HexRealClosure", "HexRealClosureMathlib"]
 ADAPTERS = ["HexRealRootsMathlib", "HexSturmMathlib", "HexSignDetMathlib",
             "HexRealClosureMathlib", "HexRCF"]
-IMPORT = re.compile(r"^[ \t]*(?:(?:public|private|meta)[ \t]+)*import[ \t]+(?:all[ \t]+)?([\w. \t]+)$", re.M)
 SOURCE_INPUTS: set[Path] = set()
 
 
@@ -31,14 +30,13 @@ def module_name(path: Path) -> str:
 
 @cache
 def imports(module: str) -> tuple[str, ...]:
-    relative = Path(*module.split(".")).with_suffix(".lean")
+    relative = Path(*_module_parts(module)).with_suffix(".lean")
     for base in (ROOT, ROOT / "adapters"):
         path = base / relative
         if path.is_file():
             SOURCE_INPUTS.add(path)
-            return tuple(module for line in IMPORT.findall(
-                code_without_comments_and_strings(path.read_text())) for module in line.split())
-    if module.split(".")[0] in LIBRARY_NAMES:
+            return tuple(sorted(_import_modules(path.read_text())))
+    if _module_parts(module)[0] in LIBRARY_NAMES:
         raise ValueError(f"unresolved local library module: {module}")
     return ()
 
@@ -51,8 +49,8 @@ def import_closure(modules: list[str], libraries: dict) -> tuple[list[str], list
         if module not in seen:
             seen.add(module)
             pending.extend(imports(module))
-    roots = {module.split(".")[0] for module in seen}
-    external = roots - libraries.keys() - {"Hex", "Init", "Lean", "Std"}
+    roots = {_module_parts(module)[0] for module in seen}
+    external = roots - libraries.keys() - NATIVE_CARRIER_LIBS - {"Hex", "Init", "Lean", "Std"}
     return sorted(roots & libraries.keys()), sorted(external)
 
 
@@ -65,7 +63,8 @@ def main() -> None:
     args = parser.parse_args()
     SOURCE_INPUTS.update(ROOT / path for path in
                          ["libraries.yml", "scripts/release/released.yml", "lake-manifest.json",
-                          "lean-toolchain", "scripts/audit_real_closure_packages.py"])
+                          "lean-toolchain", "scripts/audit_real_closure_packages.py",
+                          "scripts/release/sync_released.py", "scripts/libgraph.py"])
     libraries = yaml.safe_load((ROOT / "libraries.yml").read_text())["libraries"]
     LIBRARY_NAMES.update(libraries)
     released = yaml.safe_load((ROOT / "scripts/release/released.yml").read_text())["repos"]
@@ -91,7 +90,8 @@ def main() -> None:
         public, external = import_closure([name], libraries)
         adapter_files = sorted((ROOT / "adapters" / name).rglob("*.lean"))
         semantic, semantic_external = import_closure(
-            [name] + [module_name(path) for path in adapter_files if not path.stem.endswith("Tests")],
+            [name] + [module_name(path) for path in adapter_files
+                      if "Tests" not in path.parts and not path.stem.endswith("Tests")],
             libraries)
         records.append({
             "library": name, "phase": info["done_through"], "mathlib": info["mathlib"],
@@ -104,7 +104,7 @@ def main() -> None:
     adapters = []
     for name in ADAPTERS:
         paths = sorted((ROOT / "adapters" / name).rglob("*.lean"))
-        roots = {module.split(".")[0] for path in paths for module in imports(module_name(path))}
+        roots = {_module_parts(module)[0] for path in paths for module in imports(module_name(path))}
         adapters.append({"namespace": name,
                          "target": "HexRCFRealFormula + HexRCFRealCoefficients" if name == "HexRCF" else "HexQuerySemantics",
                          "directImportRoots": sorted(roots - {name}),
