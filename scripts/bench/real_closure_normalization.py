@@ -28,6 +28,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--oracle-python', type=Path, required=True)
     args = parser.parse_args()
+    args.oracle_python = args.oracle_python.resolve()
     destination = args.output.resolve()
     if destination == ROOT or ROOT in destination.parents:
         parser.error('measurement artifacts must remain outside the frozen checkout')
@@ -37,7 +38,13 @@ def main():
     record = dict(status='running', host=platform.node(), platform=platform.platform(),
                   sizes=[2,4,8,16], trials=6, target_inner_nanos=500000000,
                   schedule='trial-major; degree order 2,4,8,16; adjacent AB/BA alternating by trial',
-                  arms=dict(A='clean', B='eager'), commands=[], measurements=[])
+                  arms=dict(A='clean', B='eager'), commands=[], measurements=[],
+                  comparison=dict(per_call='total_nanos / inner_repeats',
+                    statistic='per-degree median and full range of six paired eager/clean ratios',
+                    direction_rule='consistent direction only if all six ratios are strictly on the same side of 1; otherwise mixed/inconclusive',
+                    rerun_policy='one fixed capture; no automatic rerun',
+                    inference='descriptive shared-host observations, no significance or asymptotic verdict'),
+                  regime='one Rat extension, head leading coefficient2, 2n products; stored eager denominators at most4; no normalization policy conclusion')
     def save():
         manifest.write_text(json.dumps(record, indent=2)+'\n')
     def run(command, *, timeout=600, check=True):
@@ -99,7 +106,8 @@ def main():
             hashes[degree] = {arm: f'0x{stored[label]["result_hash"]:x}'
                              for arm, label in [('A','clean'),('B','eager')]}
         record['expected_hashes'] = hashes
-        record['registration_purpose'] = 'fixed exact-result comparison endpoints; no scaling or absolute-budget verdict'
+        record['registration_purpose'] = 'fixed exact-result comparison endpoints in a short product-chain regime; no policy, scaling or absolute-budget verdict'
+        run([snapshot,'verify'])
         for trial in range(record['trials']):
             order = ['A','B'] if trial % 2 == 0 else ['B','A']
             for degree in record['sizes']:

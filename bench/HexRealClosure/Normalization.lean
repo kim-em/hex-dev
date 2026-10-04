@@ -51,7 +51,8 @@ def eager (input : Input) : Algebraic.Element input.context :=
   (List.range input.steps).foldl (fun a _ =>
     Algebraic.Element.ofPoly (DensePoly.divModMonic (a.polynomial * seed.polynomial) input.working input.monic).2) 1
 
-/-- Bind the complete stored representative and cached sign to a timed result. -/
+/-- Fingerprint all stored coefficients and the cached sign. Exact arithmetic
+is checked independently; these fixed endpoints stay below integer truncation. -/
 def resultHash {context : Context} (a : Algebraic.Element context) : UInt64 :=
   hash (a.polynomial.toArray.map (fun q => (q.num, q.den)), a.sign)
 
@@ -152,6 +153,7 @@ private def coefficients (p : DensePoly Rat) : Lean.Json :=
 
 private def storage {context : Context} (a : Algebraic.Element context) : Lean.Json :=
   Lean.Json.mkObj [("coefficients", coefficients a.polynomial),
+    ("query_coefficients", coefficients (context.queryPoly a.polynomial)),
     ("degree", Lean.toJson a.polynomial.natDegree), ("clean", Lean.toJson a.isClean),
     ("sign", Lean.toJson a.sign), ("result_hash", Lean.toJson (resultHash a).toNat)]
 
