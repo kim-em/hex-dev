@@ -18,6 +18,8 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from libgraph import load_libraries, reachable_dependencies  # noqa: E402
 from release.sync_released import (  # noqa: E402
     MANIFEST,
+    external_pins,
+    render_lakefile,
     SKELETON,
     keep_paths,
     lake_declaration,
@@ -566,6 +568,12 @@ def main() -> int:
             library_names.add(lib)
             check_build_settings(entry)
             check_precompile_justified(entry)
+            # The mirror's Lake file is generated at sync time; render it now so
+            # an entry that cannot be expressed fails here, not mid-release.
+            try:
+                render_lakefile(entry, entries, "v0.0.0", {}, external_pins())
+            except RuntimeError as exc:
+                fail(f"{repo}: cannot generate its Lake file: {exc}")
             helpers = entry.get("lake_declarations", [])
             if (not isinstance(helpers, list)
                     or not all(isinstance(name, str) for name in helpers)
@@ -577,19 +585,6 @@ def main() -> int:
                     lake_declaration((REPO_ROOT / "lakefile.lean").read_text(), name)
                 except RuntimeError as exc:
                     fail(f"{repo}: {exc}")
-            retired = entry.get("retired_lake_declarations", [])
-            if (not isinstance(retired, list)
-                    or not all(isinstance(name, str) for name in retired)
-                    or set(retired) & set(helpers)
-                    or (retired and entry.get("lakefile") != "lean")):
-                fail(f"{repo}: retired_lake_declarations must be distinct names "
-                     "outside lake_declarations, for a Lean Lake file")
-            for name in retired:
-                try:
-                    lake_declaration((REPO_ROOT / "lakefile.lean").read_text(), name)
-                except RuntimeError:
-                    continue
-                fail(f"{repo}: retired Lake declaration {name} is still in lakefile.lean")
             test_modules = entry.get("test_modules", [])
             if (
                 not isinstance(test_modules, list)

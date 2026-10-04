@@ -65,18 +65,19 @@ def expected_assembly(rcf, index):
     return product
 
 
-def verify_assembly(row, index):
+def verify_assembly(row, index, *, depth=0, expected=None, require_cut_point=True):
     require(set(row) == {"case", "mode", "head", "output"} and row["mode"] == "assembly",
             "malformed assembly row")
     rcf = RCF({"id": 10377, "levels": ["epsilon1"],
                "order": "each-new-level-smaller-than-positive-base-elements"})
     def polynomial(raw):
         require(isinstance(raw, list), "malformed assembly polynomial")
-        p = [rcf.coeff(c, 0) for c in raw]
+        p = [rcf.coeff(c, depth) for c in raw]
         require(not p or p[-1] != 0, "trailing assembly zero coefficient")
         return p
     p = polynomial(row["head"])
-    require(p == expected_assembly(rcf, index), "wrong assembly input")
+    require(p == (expected_assembly(rcf, index) if expected is None else expected(rcf)),
+            "wrong assembly input")
     output = row["output"]
     require(isinstance(output, dict), "assembly producer failed")
     if not p:
@@ -95,7 +96,7 @@ def verify_assembly(row, index):
         require(isinstance(raw, dict), "malformed assembled root")
         if raw.get("kind") == "point":
             require(set(raw) == {"kind", "value"}, "malformed coefficient point")
-            value = rcf.coeff(raw["value"], 0)
+            value = rcf.coeff(raw["value"], depth)
             points.append((value, entry["multiplicity"]))
         else:
             require(set(raw) == {"kind", "context", "head", "lower", "upper",
@@ -114,7 +115,7 @@ def verify_assembly(row, index):
                     return None, 1
                 require(len(endpoint) == 2 and endpoint[0] == 1,
                         "malformed finite selected endpoint")
-                return rcf.coeff(endpoint[1], 0), 0
+                return rcf.coeff(endpoint[1], depth), 0
             lo, lt = endpoint(lower)
             hi, ht = endpoint(upper)
             derivatives = rcf.derivatives(head)
@@ -143,7 +144,7 @@ def verify_assembly(row, index):
     require(sorted(selected) == sorted(roots), "assembled root coverage differs from exact RCF")
     require(all(a < b for a, b in zip(selected, selected[1:])),
             "assembled roots are not strictly increasing")
-    if index == 18:
+    if index == 18 and require_cut_point:
         require((rcf.one, 2) in points,
                 "nonzero cut-point fixture did not exercise a bisection point")
 

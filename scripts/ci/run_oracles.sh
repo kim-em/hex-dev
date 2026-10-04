@@ -109,6 +109,7 @@ ORACLES=(
   "HexRealClosure|hexrealclosure_bounds_conformance|scripts/oracle/real_closure_bounds.py|conformance-fixtures/HexRealClosure/bounds.jsonl"
   "HexRealClosure|hexrealclosure_deflation_conformance|scripts/oracle/real_closure_deflation.py|conformance-fixtures/HexRealClosure/deflation.jsonl"
   "HexRealClosure|hexrealclosure_isolation_conformance|scripts/oracle/real_closure_isolation.py|conformance-fixtures/HexRealClosure/isolation.jsonl"
+  "HexRealClosure|hexrealclosure_policy_conformance|scripts/oracle/real_closure_policies.py|conformance-fixtures/HexRealClosure/policies.jsonl"
   "HexRealClosure|hexrealclosure_sample_conformance|scripts/oracle/real_closure_samples.py|conformance-fixtures/HexRealClosure/samples.jsonl"
   # Exact Python integer/Fraction Cartesian enumeration
   "HexLatticeEnum|hexlatticeenum_emit_fixtures|scripts/oracle/lattice_enum.py|conformance-fixtures/HexLatticeEnum/latticeenum.jsonl"
@@ -319,6 +320,13 @@ run_tuple() {
   if [ "$oracle" = "scripts/oracle/real_closure_bounds.py" ]; then
     if ! python3 -m unittest scripts.oracle.test_real_closure_bounds; then
       echo "FAIL: $lib :: finite-bound oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
+  if [ "$oracle" = "scripts/oracle/real_closure_policies.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_real_closure_policies; then
+      echo "FAIL: $lib :: RootSet policy oracle rejection checks failed"
       return 1
     fi
   fi

@@ -10,6 +10,9 @@ public import HexRealClosure.Deflation
 public import HexRealClosure.Bisection
 public import HexRealClosure.BisectionFrontier
 public import HexRealClosure.Isolation
+public import HexRealClosure.IsolationPolicy
+public import HexRealClosure.RootPolicy
+public import HexRealClosure.TowerRootPolicy
 public import HexRealClosure.IsolationRoots
 public import HexRealClosure.RootOrder
 public import HexRealClosure.ZeroFactor
