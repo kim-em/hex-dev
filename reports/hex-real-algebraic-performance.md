@@ -10,7 +10,7 @@ performance deliverable.
 
 ## Bench targets
 
-`bench/HexRealAlgebraic/Bench.lean` registers 72 cases. `lake exe
+`bench/HexRealAlgebraic/Bench.lean` registers 102 cases. `lake exe
 hexrealalgebraic_bench list` lists them; `verify` checks their runtime wiring and
 hashes. The existing CI job builds and verifies this executable. The retained
 [local verification log](bench-results/prerequisite-verify-budget.log) records
@@ -28,6 +28,12 @@ records 36 seconds for this executable and 217 seconds total under the same cap.
 These are historical verification observations on their recorded sources, not
 scientific budgets or current-base headroom assertions. The rebased verification
 is recorded separately in [the rebase evidence](bench-results/prerequisite-rebase-verification.json).
+
+The merged [required CI on `9c298eb98`](https://github.com/kim-em/hex-dev/actions/runs/37171438363)
+passes all required gates, including the 71 Sturm and 72 real-algebraic cases,
+at 33/360 seconds for the owner-filtered benchmark gate. This records #10660,
+before the new direct polynomial-root registrations and early-rejection change;
+it does not establish main's all-library headroom or attest changed source.
 
 [Completed CI on `62399ddd0`](bench-results/prerequisite-required-ci-62399ddd0.json)
 passes all required checks, including the exact oracles. Benchmark verification
@@ -63,7 +69,7 @@ canonical fixed input with an easier smoke input, and the scientific inputs
 and their expected hashes are preserved. The operational warning and remaining
 canonical-arithmetic cost remain under #10577. The full CI cap remains enforced;
 no increase or verification bypass is introduced. The retained 336-second run
-had only 24 seconds of headroom; the 349-second run had 11, and the latest
+had only 24 seconds of headroom; the 349-second run had 11, and the
 completed required run on `4a028ba84` has none.
 Shared-host and CI variance remain concerns, and required CI must pass on the
 final source without weakening the cap.
@@ -78,7 +84,7 @@ final source without weakening the cap.
 | Floor, ceiling, approximation, representation | `runRounding`, `runApprox`, `runRepr` | Baseline anchors; ceiling has proved before/after improvement |
 | Square roots | `runSqrt`, `runSqrtTotal` | Baseline/branch checks on pre-change source; degree/height scaling incomplete |
 | Polynomial constructors and root-set projections/membership | `runPolyConstructors`, `runMembership`, `runRootSet` | Mode-1 family passes |
-| Polynomial roots and integer roots | `runRoots`, `runRepeatedRoots`, `runEightRoots`, `runIntegerRoots`, `runFilterRoots`, `runSortRoots`, `runExactifyRoots` | Fixed whole-path anchors, valid merge-sort family, diagnostic repeated exactification control |
+| Polynomial roots and integer roots | `runRoots`, `runRepeatedRoots`, `runEightRoots`, `runIntegerRoots`, `runFilterRoots`, `runSortRoots`, `runExactifyRoots`; direct `runRationalRoots*` and `runQuadraticRoots*` plus FLINT/Z3 controls | Direct implemented `RealAlgebraicPoly.roots` coverage and exact external degree comparisons; canonical enumeration performance remains a concern |
 | Complex norms, absolute value, real/imaginary parts | `runNorm`, `runComplexAbs`, `runProjections` | Fixed baseline/branch anchors |
 | External comparison/protocol | `runQqbarCompare`, `runQqbarCloseCompare`, `runQqbarProtocol` | Informational persistent python-flint/FLINT qqbar comparison |
 
@@ -89,6 +95,64 @@ as controls; neither establishes leaf-operation or root-exactification scaling.
 in bit-reversal order; it only covers comparisons with disjoint stored intervals.
 
 ## Verdicts
+
+### Direct polynomial-root size comparisons
+
+The earlier root-set filtering and integer-root anchors did not directly time
+`RealAlgebraicPoly.roots`. Six native registrations now exercise that actual
+API, with 24 external/protocol registrations. They solve `X^n−2` at degrees
+2, 4 and 8 and `X^n−√2` at degrees 1, 2 and 4. Coefficient height is fixed;
+degree one returns one root and the even degrees return two. Complete ordered
+minimal-polynomial/sign/multiplicity fingerprints identify every output root
+on these Eisenstein fixtures. This does not waive general root correspondence.
+
+The [current size comparison](bench-results/real-algebraic-poly-roots-comparison-after/README.md)
+retains all 144 successful observations, comprising 48 adjacent native/external
+pairs and 48 protocol controls. Prepared inputs and child warmup are excluded;
+native solving, exactification, filtering and sorting remain timed. The pinned
+FLINT qqbar and Z3 RCF backends solve the same exact root problem, with sorting,
+annihilation checks, JSON and temporary cleanup timed. Their minimal polynomial
+is inferred from the fixture, not extracted from internal representations.
+All complete-result guards and paired hashes match; source/binary fingerprints
+remain unchanged. The [earlier source-scoped comparison](bench-results/real-algebraic-poly-roots-comparison/README.md)
+and every failed [operational probe](bench-results/real-algebraic-poly-roots-probes/README.md)
+remain retained. Old cap failures do not assert a timeout on the changed code.
+The [post-change larger probes](bench-results/real-algebraic-poly-roots-probes-after/README.md)
+both pass within the 60-second operational cap, in about 9.3–9.4 seconds
+including preparation. They verify rational degree 16 and quadratic degree 8,
+but do not extend the operation-only scientific timing ladder.
+
+| Fixture | Hex median ms (Z3 pairs) | Z3 RCF median ms | FLINT qqbar median ms | Median adjacent Hex/Z3 ratio |
+| --- | ---: | ---: | ---: | ---: |
+| Rational degree 2 | 3.837 | 0.0295 | 0.0365 | 127.96 |
+| Rational degree 4 | 18.215 | 0.0342 | 0.0549 | 537.24 |
+| Rational degree 8 | 245.314 | 0.0407 | 0.0973 | 6016.01 |
+| Quadratic degree 1 | 9.352 | 0.0161 | 0.0218 | 579.59 |
+| Quadratic degree 2 | 24.850 | 0.0311 | 0.0625 | 799.94 |
+| Quadratic degree 4 | 253.621 | 0.0364 | 0.1170 | 6905.61 |
+
+FLINT pairs have their own native medians in the CSV. Ratios are medians of
+adjacent pairs, not ratios of aggregate medians. Raw and protocol-adjusted
+curves appear in the [PNG](bench-results/real-algebraic-poly-roots-comparison-after/comparison.png),
+[SVG](bench-results/real-algebraic-poly-roots-comparison-after/comparison.svg)
+and [PDF](bench-results/real-algebraic-poly-roots-comparison-after/comparison.pdf).
+Protocol cost is material on the smallest external rungs; both curves are
+displayed without claiming isolated backend-algorithm timings. All timing dots
+and observed min–max shading are retained. No fitted complexity model or
+invented portable budget is needed to see the severe comparative gap.
+
+The owned `ofRoot?` now rejects nonreal refined isolations before exactification.
+The companion proves exact API equality `ofRoot?_eq`, with an ordinary-kernel
+axiom guard; completeness and multiplicity proofs reuse it. The controlled
+[adjacent frozen-executable pairs](bench-results/real-algebraic-root-rejection-pairs/README.md)
+retain all 16 successful arms with identical complete results: median adjacent
+before/after ratios are 3.412 for rational degree 8 and 2.248 for quadratic
+degree 4. This resolves avoidable canonicalization of nonreal roots.
+The [current representative attribution](bench-results/real-algebraic-poly-roots-profiles-after/README.md)
+still places about 96% inclusive cost in isolation and 76% in canonical
+exactification. The retained real roots repeat their parent canonical isolation;
+this remaining algorithmic cost is unresolved. Earlier profiles remain valid
+only on their named pre-change source. No phase counter is advanced.
 
 [Array models](bench-results/prerequisite-readiness-models/arrays.json) have
 four trial-major samples at each of 16,32,64,128,256. The independently derived
@@ -262,6 +326,13 @@ in the linked summaries.
 
 ## Concerns
 
+- Actual canonical real-polynomial root enumeration remains several thousand
+  times slower than the exact external root backends on the larger tested
+  rungs, after the proved early nonreal rejection. Repeated canonical isolation
+  remains dominant. Higher-degree characterization and operation-specific
+  Phase-4 admission remain incomplete; the historical oversized cap failures
+  are retained without claiming they reproduce on changed source.
+
 - The earlier 38 raw captures were lost after a reboot. Their saved summaries
   remain diagnostics and cannot be reprocessed; the new representative capture
   supplies retained attribution without a blanket rerun of completed evidence.
@@ -282,6 +353,7 @@ the duplicate negative-input check. Existing selector soundness and nonnegative
 totality prove the same contract. Earlier square-root baseline observations
 retain their pre-change source; they provide no current performance admission.
 
-The 32-second per-library verification warning remains under #10577; the
+The per-library verification warning remains under #10577 (39 seconds on
+the recorded pre-rebase check); the
 360-second CI cap is an operational safeguard. Hard addition/subtraction
 and their bare controls account for most of the warning.

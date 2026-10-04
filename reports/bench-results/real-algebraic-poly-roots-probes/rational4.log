@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runRationalRoots4    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=b905eef-dirty, 2026-10-04T04:04:36Z, host=chungus2
+  repeat 0  30.106 ms  (×2^1, total 60.212 ms)
+  median: 30.106 ms    min: 30.106 ms    max: 30.106 ms
+  hash: all repeats agree
+  observed hash: 0xf1a1204ac3404b40
+  expected hash: matches
+  peak RSS: 68_792 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-verification/poly-roots-smoke/rational4.json

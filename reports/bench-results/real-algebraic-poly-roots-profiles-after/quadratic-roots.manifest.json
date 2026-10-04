@@ -1,0 +1,422 @@
+{
+  "family": "quadratic-roots",
+  "function": "Hex.RealAlgebraicBench.runQuadraticRoots4",
+  "parameter": 0,
+  "cpu": 47,
+  "load": [
+    52.32958984375,
+    69.296875,
+    48.798828125
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/packages/lean-bench",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "lake",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply",
+        "config",
+        "--get",
+        "remote.origin.url"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "profile",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--param",
+        "0",
+        "--target-inner-nanos",
+        "1000000000",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/samply.json.gz",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/samply.json.gz",
+        "--perf-script",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/perf-samples.txt",
+        "--spawn-anchor",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/spawn-anchor.json",
+        "--output",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/normalized.json.gz",
+        "--sidecar",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/timed-536005.jsonl",
+        "--spawn-anchor",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/spawn-anchor.json",
+        "--out",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/filtered.json.gz",
+        "--diagnostics",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/elf_symbols.py",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/filtered.json.gz",
+        "--output",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/summarize_profile.py",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/filtered.json.gz",
+        "--symbols",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/symbols.json",
+        "--diagnostics",
+        "/home/kim/.local/state/hex/issue-10577-profiles/quadratic-roots-after-717/diagnostics.json",
+        "--thread",
+        "hexrealalgebrai",
+        "--top",
+        "20",
+        "--output",
+        "reports/bench-results/real-algebraic-poly-roots-profiles-after/quadratic-roots.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "b7376a100ac4fed5afdfed5aaa422e7c3a11ebe3714447dd0879bf1750c30b8d",
+  "driver_sha256": "db9bf3d75c26357bfc9dcf174aea603d519edb82408479566b20d8bb7926f650",
+  "cpu_model": "AMD EPYC 9455 48-Core Processor",
+  "purpose": "Required representative attribution for actual RealAlgebraicPoly.roots on rational/quadratic-coefficient fixtures. Not a timing sweep or phase admission.",
+  "commit": "edb3ef9566cbf37c193ebd9fb217abde3c976495",
+  "dirty": true,
+  "lean_bench_commit": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+  "lake_version": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "computational_source_sha256": {
+    "bench/HexRealAlgebraic/Bench.lean": "7f58d3fe33db2a9ef9a5d094d3966f8cce528ed2b054b6ce66d535fc37d23342",
+    "HexRealAlgebraic/Basic.lean": "c03086f304d4fdbaf13a35140f89c442a1539f1d1f09d0cdd22a0ddb16ac9daa",
+    "HexRealAlgebraic/Roots.lean": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+    "HexNumberField/Roots.lean": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+    "HexNumberField/Convert.lean": "5ca7230f7647e69e139fbb1cdb9dcce569a3147f162d10631483d0d95eaa1507"
+  },
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "profiler_remote": "https://github.com/kim-em/lean-bench-samply.git",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "timed_duration_ns": 1237199600,
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 536005,
+    "bench_thread_name": "hexrealalgebrai",
+    "bench_thread_tid": "536039",
+    "regions_total": 3,
+    "total_timed_ms": 1237.1996,
+    "expected_samples_bench_thread": 1236.0,
+    "retained_samples_bench_thread": 1235,
+    "rejected_samples_bench_thread": 418,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1791087924593901783,
+    "spawn_anchor_mono_ns": 2356441591652,
+    "sidecar_mono_anchor_ns": 2357097971434,
+    "samply_meta_start_time_ms": 1791087924632.2039,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.7295309999026358,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.7295309999026358,
+      "raw_max_residual_ms": 0.8737740004435182,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 3,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 1235,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.7295309999026358,
+          "boundary_residual_raw_max_ms": 0.8737740004435182,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.0032388663967611343,
+          "leaf_function_support_size": 573,
+          "comparison_samples": 1235,
+          "exchanged_samples": 10,
+          "exchanged_fraction": 0.008097165991902834,
+          "sampling_noise_allowance": 0.052008772240606196,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.0037819689937790223,
+          "leaf_function_support_size": 572,
+          "comparison_samples": 1230,
+          "exchanged_samples": 5,
+          "exchanged_fraction": 0.0040650406504065045,
+          "sampling_noise_allowance": 0.03689301541695422,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 1235,
+          "top_leaf_functions": [
+            {
+              "function": 69,
+              "name": "0x4ba13d1",
+              "samples": 62
+            },
+            {
+              "function": 231,
+              "name": "0x4b37c53",
+              "samples": 27
+            },
+            {
+              "function": 250,
+              "name": "0x4ba13c9",
+              "samples": 26
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 1235,
+          "top_leaf_functions": [
+            {
+              "function": 69,
+              "name": "0x4ba13d1",
+              "samples": 62
+            },
+            {
+              "function": 231,
+              "name": "0x4b37c53",
+              "samples": 28
+            },
+            {
+              "function": 250,
+              "name": "0x4ba13c9",
+              "samples": 25
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 1230,
+          "top_leaf_functions": [
+            {
+              "function": 69,
+              "name": "0x4ba13d1",
+              "samples": 61
+            },
+            {
+              "function": 231,
+              "name": "0x4b37c53",
+              "samples": 28
+            },
+            {
+              "function": 250,
+              "name": "0x4ba13c9",
+              "samples": 25
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "39e50aecb2c28ad37e817f5862bb613f03b4968ac99aa567a2229e3a8ca8a34f",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "31ac55dab5b0b31fd0151adb9b06e857e4b0b1c81025450a85e8a44add15450e",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "ea4051d25617d0e024f030bda5851a0455d525691cc814683f878e4ccdb2ed5d",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "e35d3608d07cf59f7870878491e6b275a359bb34ea901c9e8086aed6bec6e07a",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bench-HexRealAlgebraic-Bench.lean.txt": "7f58d3fe33db2a9ef9a5d094d3966f8cce528ed2b054b6ce66d535fc37d23342",
+    "HexRealAlgebraic-Basic.lean.txt": "c03086f304d4fdbaf13a35140f89c442a1539f1d1f09d0cdd22a0ddb16ac9daa",
+    "HexRealAlgebraic-Roots.lean.txt": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+    "HexNumberField-Roots.lean.txt": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+    "HexNumberField-Convert.lean.txt": "5ca7230f7647e69e139fbb1cdb9dcce569a3147f162d10631483d0d95eaa1507",
+    "4.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "5.stdout": "773fb1f2e2e076dd506d133fd9f11106c30eb440541d879fe11125a6e75495ce",
+    "5.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "6.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "7.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "d92762df30fbad19ee7455e2615fb04096520d9912f9648311e6575fe64c9c85",
+    "perf.data": "ecf1827af58f19ed824bf4290982ceac56af8ac0307469a0e193dd5b741e108e",
+    "timed-536005.jsonl": "557d041b335a6449e5512b06959da8a2ca95c486cfb2bccf7692569fde7bb0bc",
+    "8.stdout": "ab428c6434925ad4bf85ab179114b0be853fa330cece54160d75700417703c6b",
+    "8.stderr": "5d4ef4e6fa4cc9893336ac33ff2f7464f275205c17198b26f4899d01763f4ea7",
+    "samply.json.gz": "f875cb15d442b1a9b55c3701f6a5cc1d68b608cbf7c8a6afd5902126da7632e8",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "10.stdout": "58b1b19c8641efdc862633d249360c606e9d6a65fdcf637014e94afa1f22bd91",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "58b1b19c8641efdc862633d249360c606e9d6a65fdcf637014e94afa1f22bd91",
+    "normalized.json.gz": "69dd58f4604bf15533b3e2c24c334cd9bd0d723bb7a9eed0f157554a00ff2ea5",
+    "11.stdout": "f451690606cf8b1af4dfa3da805f06f214dc7979813b1fe5bea15c697fd88978",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "33c1bcb703b438f11670bfa2b8fb3f1bb8fa1050683463052753ccdaba8f1874",
+    "diagnostics.json": "a0316987400df8c6ad10e4256b1e384baf3774648d00c8a884582a49a216cc9e",
+    "12.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "12.stderr": "f2c2b963e6390c3ea627548704659067c59410ea9c793891fb28c5e348a90573",
+    "symbols.json": "16d2d002cc769b301eedc4d88af7e93b6acd5f1df8ba9213935b19ed45dac332",
+    "13.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "13.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "14.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "14.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
