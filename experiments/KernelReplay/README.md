@@ -84,3 +84,62 @@ evidence.
 Acceptance always requires a kernel-checked equality for the supplied
 expression. Looking for an opaque missing-fact expression inside unapplied
 operation bodies would not establish that replay needs that fact.
+
+## In-process readers
+
+```sh
+lake build hexsigndet_inprocess_replay_probe KernelReplay.LowerProof
+.lake/build/bin/hexsigndet_inprocess_replay_probe
+```
+
+`InProcessProbe.lean` looks up proof-carrying facts established in the kernel
+before execution, to pack intermediate Horner values and check endpoint
+conditions. A missing nonconstant fact returns `none`. Each successful result
+has a proof of literal equality with the existing ordinary operation or endpoint
+predicate. The constant path retains ordinary predecessor sign evaluation.
+Its compiled controls test lookup and rejection of these pre-proved facts;
+they do not validate certificates at runtime. Establishing such facts from
+checked certificates uses the companion's interpretation assumptions in proof
+assembly, separately from the executable memo reader.
+
+`LowerProbe.lean` instead uses the shared Horner order and ordinary polynomial
+operations on the stored representatives. It applies the existing context
+reduction after each partial sum, bounding intermediate degree when the clean
+monic reduction policy applies. It reads the final expression's sign from an
+already checked lower-level graph, without constructing intermediate algebraic
+elements. A scalar difference is checked the same way. `LowerProof.lean` proves
+that accepted signs equal the signs of ordinary evaluation and subtraction.
+The interpretation assumptions occur in correspondence theorems; the executable
+readers take no law arguments. These are mathematical value comparisons, and
+do not replace literal certificate bindings with semantic equality. The lower
+readers require supplied certificates even for constant queries, rather than
+falling back to the predecessor's sign operation.
+
+`InProcessMain.lean` exercises both readers in one process. Its 25 controls
+cover missing evidence followed by successful replay, incorrect sign claims,
+absent indices, different queries, stale context keys, finite and infinite
+endpoints, constants and canonical zero, plus well-bound graphs with forged
+counts or moment variations. The compiled lower-level evaluation
+and difference controls validate the supplied graph at runtime. A zero-sign
+certificate for the nonzero query `2X - 2` establishes `literal = 2` in the
+extension: both denote `2` at the selected root `1`. A sign-equivalent
+certificate for the wrong query rejects.
+A separate example checks a difference that reduces to the zero polynomial.
+Ordinary-kernel
+examples check supplied-fact endpoint replay, lower-level sign selection and
+the zero differences; axiom guards check the general correspondence proofs,
+and fixtures instantiate both the evaluation and subtraction correspondences.
+The lower-level Horner example needs its final endpoint certificate, without
+the separate sign fact for the intermediate product required by the first
+reader.
+
+These readers return normal rejection without stopping the process. They are
+component experiments, not a complete nested replay checker. Their coefficient
+type remains generic: ordinary arithmetic over an algebraic predecessor can
+still invoke that predecessor's sign search. The controls use rational
+predecessor arithmetic. They also reuse certified contexts and literal graph
+fixtures; fixture initialization may run production. They do not reconstruct
+contexts from untrusted bytes or prove that an entire nested replay execution
+avoids production. General polynomial-identity integration, evidence production,
+deeper-level replay, independent final-interface conformance and Phase-4
+performance evidence remain separate obligations.
