@@ -542,7 +542,7 @@ jobs:
             python3 scripts/bench/sign_det_joint.py "$RUNNER_TEMP/sign-det-joint.jsonl" --degree 3
           fi
           .lake/build/bin/hexprimality_field_probe verify-ecm2
-          .lake/build/bin/hexprimality_factor_experiment construct balanced 31 > /dev/null
+          python3 scripts/ci/check_primality_factor_replay.py
           touch "$RUNNER_TEMP/bench.ok"
       - name: Conformance oracles + BZ gates
         if: steps.classify.outputs.docs_only != 'true'

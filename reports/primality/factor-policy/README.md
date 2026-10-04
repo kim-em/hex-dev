@@ -34,9 +34,12 @@ checker implementations. Each successful construction passes `checkPrime` and
 binds the result to the original subject; the frozen proofs then replay the
 same certificate text through `natPrime_of_checkPrimeAt` in the Lean kernel.
 
-The experimental policies vary three things: preliminary factoring resources,
-ECM curve schedules, and whether construction starts directly with the combined
-provider. Their relative timings measure the complete policies. They do not
+The experimental policies vary preliminary factoring resources, ECM curve
+schedules, construction dispatch and stopping conditions. The staged family
+also screens each residual for probable primality before ECM; the current
+provider can retain an untested prime when its core allowance is exhausted.
+The staged family does not implement SQUFOF rescue, which is disabled in all
+these profiles. Their relative timings measure the complete policies. They do not
 isolate a single bound or the effect of random curve parameters.
 
 | Profile | Preliminary factoring | ECM rounds | Dispatch / stopping |
@@ -80,7 +83,7 @@ PrimeCert/Hex, Hex/PrimeCert, PrimeCert/Hex. Each subject has its own leased CPU
 its two arms run adjacent. The Hex arm is `random`. Each trial repeats the same
 seed and therefore the same search, rather than adding a coverage observation.
 
-| Subject | Hex times (s) | PrimeCert+SymPy times (s) | Median ratio, PrimeCert / Hex |
+| Subject | Hex times (s) | PrimeCert+SymPy times (s) | Ratio of medians, PrimeCert / Hex |
 | --- | --- | --- | --- |
 | ordinary-4 | 81.64, 70.04, 66.66, 63.49 | 128.75, 140.42, 142.63, 109.73 | 1.97 |
 | difficult-0 | 3.24, 3.49, 4.28, 3.25 | 8.66, 9.10, 9.50, 9.07 | 2.70 |
@@ -90,6 +93,14 @@ comparison is conditional on that common success set. It excludes kernel replay
 and dependency compilation; it includes process startup, automatic search and
 certificate formatting. Hex also performs its final native checker acceptance
 test during construction. End-to-end tactic elaboration was not measured.
+
+This compares the tools as shipped, including their different leaf tables:
+Hex certifies table primes below 100000 directly, while this PrimeCert generator
+uses its small-prime table through 3000. PrimeCert launches a separate
+`uv`/Python/SymPy process to factor each larger recursive predecessor: 13 calls
+for ordinary-4 and 22 for difficult-0. The times include all those repeated
+environment, interpreter and import costs. They do not compare only factoring
+arithmetic.
 
 PrimeCert is unmodified upstream commit
 `0803c2f6bd289c09704c7d352bb8fcf770cbb9b2`, using its Python generator and SymPy
@@ -168,8 +179,10 @@ runs are not the four-trial paired comparison above.
 by SHA-256 and its guarded theorem in the frozen probe. `replay-links.json` links
 every successful measured row to that proof. The guard allows only `propext`,
 `Classical.choice` and `Quot.sound`. `primecert-kernel-replay.json` retains the two
-upstream kernel replays; all fresh PrimeCert outputs counted here are byte-for-byte
-identical to those replayed outputs. A generator's textual success alone never
+upstream kernel replays. Generated theorem names are shortened in those modules,
+while the exact `prime_cert%` term is preserved. Both the generated output and
+the extracted certificate term have SHA-256 links; each fresh term counted here
+is identical to the term in its replayed module. A generator's textual success alone never
 counts as a proof.
 
 The SymPy traces show the actual ECM escalation at the earlier bottlenecks.

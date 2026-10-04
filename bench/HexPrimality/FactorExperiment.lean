@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 import HexIntFactor.Construction
+meta import HexIntFactor.EcmStage2
 import all HexPrimality.Construction
 import Lean.Data.Json
 
@@ -26,6 +27,9 @@ private def insert (q e : Nat) : List (Nat × Nat) → List (Nat × Nat)
 -- endpoint stays within Hex's existing bound of 4194304.
 private def rounds : List (Nat × Nat × Nat) :=
   [(10000, 1000000, 50), (50000, 4000000, 200)]
+
+#guard rounds.all fun (b₁, b₂, _) => Ecm.validBounds b₁ b₂
+#guard Ecm.validBounds 32768 524288
 
 private def staged (randomCurves trace : Bool) (mixed : Bool := false)
     (early : Bool := false) :
@@ -113,7 +117,8 @@ private def profile (name : String) (trace : Bool) :
 public def main (args : List String) : IO UInt32 := do
   let (args, seedArg) := if args.length == 4 then (args.take 3, args[3]!) else (args, "")
   let [mode, name, subject] := args |
-    throw <| IO.userError "usage: hexprimality_factor_experiment (factor|construct|trace) PROFILE SUBJECT"
+    throw <| IO.userError
+      "usage: hexprimality_factor_experiment (factor|construct|trace) PROFILE SUBJECT [SEED]"
   let some n := subject.toNat? | throw <| IO.userError "invalid subject"
   let some seed := if seedArg == "" then some n else seedArg.toNat? |
     throw <| IO.userError "invalid seed"

@@ -40,8 +40,6 @@ def main():
     parser.add_argument("--seed-offset", type=int, default=0,
                         help="Hex seed is subject plus this offset; timing trials repeat that seed")
     parser.add_argument("--primecert", type=Path)
-    parser.add_argument("--executable", type=Path,
-                        default=ROOT / ".lake/build/bin/hexprimality_factor_experiment")
     args = parser.parse_args()
     if args.output.exists():
         parser.error("output already exists; retain the original experiment")
@@ -68,11 +66,9 @@ def main():
             c["subject"] = (231392247121855978133901766920235943779795090217764365202095841950595408010261529694920315912705259316767035574545980825506006625180389834577710157
                             if c["id"].endswith("ordinary-4") else c["subject"]) - 1
             c["id"] += "-child-predecessor" if c["id"].endswith("ordinary-4") else "-predecessor"
-    executable = args.executable.resolve()
-    control = subprocess.run([str(executable), "construct", "baseline", "31"],
-                             cwd=ROOT, capture_output=True, text=True, timeout=30)
-    if control.returncode != 0 or json.loads(control.stdout).get("status") != "success":
-        raise RuntimeError(f"native control failed: {control.stdout}\n{control.stderr}")
+    subprocess.run(["lake", "build", "hexprimality_factor_experiment"], cwd=ROOT,
+                   check=True, stdout=sys.stderr)
+    executable = ROOT / ".lake/build/bin/hexprimality_factor_experiment"
     sources = ["bench/HexPrimality/FactorExperiment.lean", "HexIntFactor/Construction.lean",
                "HexIntFactor/Ecm.lean", "HexIntFactor/EcmStage2.lean",
                "HexPrimality/Construction.lean"]
@@ -116,6 +112,10 @@ def main():
     frozen.chmod(0o755)
     assert hashlib.sha256(frozen.read_bytes()).hexdigest() == report["executable_sha256"]
     executable = frozen.resolve()
+    control = subprocess.run([str(executable), "construct", "baseline", "31"],
+                             cwd=ROOT, capture_output=True, text=True, timeout=30)
+    if control.returncode != 0 or json.loads(control.stdout).get("status") != "success":
+        raise RuntimeError(f"native control failed: {control.stdout}\n{control.stderr}")
     lock = threading.Lock()
 
     def save():
@@ -140,6 +140,7 @@ def main():
                     command = ["taskset", "-c", str(cpu), *command]
                     row = {"case": case["id"], "subject": case["subject"], "trial": trial,
                            "seed": None if profile == "primecert" else case["subject"] + args.seed_offset,
+                           "executable_sha256": None if profile == "primecert" else report["executable_sha256"],
                            "profile": profile, "cpu": cpu, "command": command,
                            "state": "running", "loadavg_start": list(os.getloadavg())}
                     with lock:
