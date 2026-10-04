@@ -345,7 +345,8 @@ theorem Collection.root_agreement {base : BaseContext.PackedContext registry}
     {parent : Context registry} (root : Root parent)
     (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature)
     (selected : root.selection = .selected descriptor) {pre post : Request registry}
-    (collection : Collection base (pre ++ rootRequest root ++ post))
+    {request : Request registry} (collection : Collection base request)
+    (split : request = pre ++ rootRequest root ++ post)
     {following : base.Realization} {reference : Model (Context.ofBase base) K}
     (model : Shared.Model collection.shared following reference) :
     ∃ (predecessor child : Frame collection.shared.input.context)
@@ -356,8 +357,9 @@ theorem Collection.root_agreement {base : BaseContext.PackedContext registry}
         collection.frames[pre.length + 1]? = some child ∧
         predecessor.descriptors = [fresh] ∧ child.values = [value] ∧
         model.target.value value = fresh.root model.target.value model.target.zero_iff model.target.one
-          model.target.add model.target.sub model.target.mul model.target.nat model.target.sign :=
-  root_frames root descriptor selected pre post model.target collection.shared.maps model.owners
+          model.target.add model.target.sub model.target.mul model.target.nat model.target.sign := by
+  subst request
+  exact root_frames root descriptor selected pre post model.target collection.shared.maps model.owners
     model.canonicalOwners collection.frames collection.produced
 
 /-- Across enlargement, each refreshed frame preserves the ordered values,
@@ -488,7 +490,8 @@ theorem Enlargement.root_agreement {base : BaseContext.PackedContext registry}
     {parent : Context registry} (root : Root parent)
     (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature)
     (selected : root.selection = .selected descriptor) {pre post : Request registry}
-    {original : Collection base (pre ++ rootRequest root ++ post)}
+    {request : Request registry} {original : Collection base request}
+    (split : request = pre ++ rootRequest root ++ post)
     (result : Enlargement original) {following : base.Realization}
     {reference : Model (Context.ofBase base) K}
     (oldModel : Shared.Model original.shared following reference)
@@ -503,7 +506,7 @@ theorem Enlargement.root_agreement {base : BaseContext.PackedContext registry}
         predecessor.descriptors = [fresh] ∧ child.values = [value] ∧
         returned.value value = fresh.root returned.value returned.zero_iff returned.one returned.add
           returned.sub returned.mul returned.nat returned.sign :=
-  Collection.root_agreement root descriptor selected result.collection (result.model oldModel ambient produced)
+  Collection.root_agreement root descriptor selected result.collection split (result.model oldModel ambient produced)
 
 end Hex.RealClosure.Tower.Live
 

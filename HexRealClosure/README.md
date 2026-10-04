@@ -1942,7 +1942,10 @@ It validates every descriptor again against the actual common target.
 infinitesimal, then transports the current frames through the previous target's
 inclusion and refreshes their descriptors. The proved transport composition
 retains the original producer certificate without recomputing its historical
-maps. The enlargement retains
+maps. This incremental branch checks that the predecessor inclusion maps
+zero to zero; otherwise the producer retains a full transport fallback.
+The semantic inclusion proves zero preservation, and native tests check the
+incremental branch at both enlargements. The enlargement retains
 one map for the previous shared target and maps for all original owners;
 `Enlargement.maps` identifies their compositions. `Enlargement.collection`
 retains the original request for further enlargement.
@@ -1965,8 +1968,10 @@ model through the public collection interface for the next enlargement.
 `model_parameter` identifies its new parameter and `model_previous` retains
 the checked old-target inclusion aligned with that same returned model.
 `Enlargement.preserve` states complete frame-list preservation using those
-public accessors; `Enlargement.root_agreement` applies it to a selected root
-inside a composite request after enlargement.
+public accessors; `Enlargement.root_agreement` identifies a selected root
+inside a composite request through the returned canonical model. A request
+split equation locates either root pair without casting the collection or
+its enlargement.
 `Collection.frame` provides total access by an original request index, with
 `frame_eq` identifying it with the returned frame list. Public projection
 equations identify the enlargement's collection frames, previous map and

@@ -505,7 +505,9 @@ its immutable owner, values, polynomials and checked descriptors. A selected
 root request retains its predecessor descriptor and actual cached child
 generator. `Request.gather?` gathers owner ancestry before mapping operands,
 and `Collection.enlarge?` rebuilds that shared ancestry once and transports
-the current frames through the previous target map, refreshing every
+the current frames through the previous target map when its zero check
+passes, with a full original-request transport fallback otherwise. Semantic
+inclusions preserve zero. Both branches refresh every
 descriptor while retaining the original producer certificate. The returned
 enlargement retains the old target map,
 the original owner maps and a collection ready for successive enlargement.
