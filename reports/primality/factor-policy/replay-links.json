@@ -818,5 +818,125 @@
     "sample": 3,
     "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
     "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "paired-v2.json",
+    "sample": 0,
+    "certificate_sha256": "ad42d56971d812b50e54975eaa812c8ac67456593c39cec941780e1267100bb1",
+    "theorem": "Hex.PrimalityFactorProbe.case1"
+  },
+  {
+    "report": "paired-v2.json",
+    "sample": 1,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "paired-v2.json",
+    "sample": 2,
+    "case": "holdout-512-difficult-0",
+    "output_sha256": "d865401eea9162bb75ce3bff3b740fea116230c59531823f67d0c064a21c990e"
+  },
+  {
+    "report": "paired-v2.json",
+    "sample": 3,
+    "case": "holdout-512-difficult-0",
+    "output_sha256": "d865401eea9162bb75ce3bff3b740fea116230c59531823f67d0c064a21c990e"
+  },
+  {
+    "report": "paired-v2.json",
+    "sample": 4,
+    "certificate_sha256": "ad42d56971d812b50e54975eaa812c8ac67456593c39cec941780e1267100bb1",
+    "theorem": "Hex.PrimalityFactorProbe.case1"
+  },
+  {
+    "report": "paired-v2.json",
+    "sample": 5,
+    "certificate_sha256": "ad42d56971d812b50e54975eaa812c8ac67456593c39cec941780e1267100bb1",
+    "theorem": "Hex.PrimalityFactorProbe.case1"
+  },
+  {
+    "report": "paired-v2.json",
+    "sample": 6,
+    "case": "holdout-512-difficult-0",
+    "output_sha256": "d865401eea9162bb75ce3bff3b740fea116230c59531823f67d0c064a21c990e"
+  },
+  {
+    "report": "paired-v2.json",
+    "sample": 7,
+    "case": "holdout-512-difficult-0",
+    "output_sha256": "d865401eea9162bb75ce3bff3b740fea116230c59531823f67d0c064a21c990e"
+  },
+  {
+    "report": "paired-v2.json",
+    "sample": 8,
+    "certificate_sha256": "ad42d56971d812b50e54975eaa812c8ac67456593c39cec941780e1267100bb1",
+    "theorem": "Hex.PrimalityFactorProbe.case1"
+  },
+  {
+    "report": "paired-v2.json",
+    "sample": 9,
+    "case": "holdout-512-ordinary-4",
+    "output_sha256": "1886c8bbc680990872d4b5ab1dad20b1adee626144ebaa82a6a14159841dd742"
+  },
+  {
+    "report": "paired-v2.json",
+    "sample": 10,
+    "case": "holdout-512-ordinary-4",
+    "output_sha256": "1886c8bbc680990872d4b5ab1dad20b1adee626144ebaa82a6a14159841dd742"
+  },
+  {
+    "report": "paired-v2.json",
+    "sample": 11,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "paired-v2.json",
+    "sample": 12,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "paired-v2.json",
+    "sample": 13,
+    "case": "holdout-512-ordinary-4",
+    "output_sha256": "1886c8bbc680990872d4b5ab1dad20b1adee626144ebaa82a6a14159841dd742"
+  },
+  {
+    "report": "paired-v2.json",
+    "sample": 14,
+    "case": "holdout-512-ordinary-4",
+    "output_sha256": "1886c8bbc680990872d4b5ab1dad20b1adee626144ebaa82a6a14159841dd742"
+  },
+  {
+    "report": "paired-v2.json",
+    "sample": 15,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "coverage-v2.json",
+    "sample": 8,
+    "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d",
+    "theorem": "Hex.PrimalityFactorProbe.case0"
+  },
+  {
+    "report": "coverage-v2.json",
+    "sample": 10,
+    "certificate_sha256": "ad42d56971d812b50e54975eaa812c8ac67456593c39cec941780e1267100bb1",
+    "theorem": "Hex.PrimalityFactorProbe.case1"
+  },
+  {
+    "report": "coverage-v2.json",
+    "sample": 12,
+    "case": "holdout-512-difficult-0",
+    "output_sha256": "d865401eea9162bb75ce3bff3b740fea116230c59531823f67d0c064a21c990e"
+  },
+  {
+    "report": "coverage-v2.json",
+    "sample": 13,
+    "case": "holdout-512-ordinary-4",
+    "output_sha256": "1886c8bbc680990872d4b5ab1dad20b1adee626144ebaa82a6a14159841dd742"
   }
 ]

@@ -3,7 +3,7 @@
 A bounded native Hex policy matched PrimeCert+SymPy's **two successes out of
 eight 512-bit subjects**, under a common 180-second process limit. On the two
 common successes, four adjacent alternating comparisons gave generation-time
-medians of **68.4 vs 134.6 seconds** and **3.37 vs 9.08 seconds**. Both systems'
+medians of **65.5 vs 121.3 seconds** and **2.57 vs 6.75 seconds**. Both systems'
 generated certificates passed Lean kernel replay.
 
 This is exploratory evidence on a previously inspected corpus. It does not
@@ -78,15 +78,15 @@ that condition and pass the caller's actual construction budget.
 
 ## Matched generation timings
 
-`paired-v1.json` contains four timing trials per subject, ordered Hex/PrimeCert,
+`paired-v2.json` contains four timing trials per subject, ordered Hex/PrimeCert,
 PrimeCert/Hex, Hex/PrimeCert, PrimeCert/Hex. Each subject has its own leased CPU;
 its two arms run adjacent. The Hex arm is `random`. Each trial repeats the same
 seed and therefore the same search, rather than adding a coverage observation.
 
 | Subject | Hex times (s) | PrimeCert+SymPy times (s) | Ratio of medians, PrimeCert / Hex |
 | --- | --- | --- | --- |
-| ordinary-4 | 81.64, 70.04, 66.66, 63.49 | 128.75, 140.42, 142.63, 109.73 | 1.97 |
-| difficult-0 | 3.24, 3.49, 4.28, 3.25 | 8.66, 9.10, 9.50, 9.07 | 2.70 |
+| ordinary-4 | 63.19, 67.30, 70.14, 63.68 | 132.44, 120.59, 122.00, 111.02 | 1.85 |
+| difficult-0 | 2.53, 2.61, 2.59, 2.54 | 6.93, 6.73, 6.70, 6.76 | 2.63 |
 
 These subjects were selected because both systems proved them. The timing
 comparison is conditional on that common success set. It excludes kernel replay
@@ -100,7 +100,9 @@ uses its small-prime table through 3000. PrimeCert launches a separate
 `uv`/Python/SymPy process to factor each larger recursive predecessor: 13 calls
 for ordinary-4 and 22 for difficult-0. The times include all those repeated
 environment, interpreter and import costs. They do not compare only factoring
-arithmetic.
+arithmetic. A single operational startup/import observation took 0.170 seconds
+(`sympy-import-observation.json`); this is not a repeated timing estimate and is
+not subtracted from any result.
 
 PrimeCert is unmodified upstream commit
 `0803c2f6bd289c09704c7d352bb8fcf770cbb9b2`, using its Python generator and SymPy
@@ -111,7 +113,7 @@ Shared-host activity never caused a sample to be dropped or repeated.
 
 ## Coverage at the common operational ceiling
 
-`coverage-v1.json` and `primecert-coverage-v1.json` retain one automatic attempt
+`coverage-v2.json` retains one automatic attempt from each system
 per subject with a 180-second wall limit and no supplied factors. These are the
 eight previously frozen holdout subjects from
 `reports/ecpp/native512/corpus-v1.json`; they are now tuning data for these
@@ -127,7 +129,7 @@ impossibility when a run exhausts or times out.
 | ordinary-4 | Proved | Proved |
 | ordinary-5 | Timeout | Timeout |
 | difficult-0 | Proved | Proved |
-| difficult-1 | Timeout | Timeout |
+| difficult-1 | Exhausted | Timeout |
 
 `efficient-coverage-v1.json` has the same two successes. Four failures exhaust
 their finite curve schedule before the shared attempt limit; the two timeouts
@@ -162,7 +164,7 @@ startup component.
 
 The Curve25519 regression remains. The more conservative `balanced` profile
 also took about 98 seconds on ordinary-4, compared with the earlier `random`
-profile's matched median of 68 seconds. Those different-policy runs were not
+profile's matched median of 65.5 seconds. Those different-policy runs were not
 paired, so this is a tradeoff observation rather than another speedup estimate.
 Registering a new fallback provider alone would not reproduce the direct-pass
 measurements: current tactic dispatch first runs the original core budget.
@@ -195,10 +197,17 @@ All pilots remain evidence. `screen-v1.json` contains a driver-entry-point
 failure and is excluded from measurements. `fields-v1.json` is exploratory only:
 a rebuild changed the executable for a late sample, so its initial binary hash
 cannot attest the complete schedule. Later field comparisons use frozen copies
-of their executables, checked before every sample. The four paired `random`
-native trials used their recorded original binary; it was restored before the
-last native trial. Raw records preserve the original source versions, including
-earlier driver limitations.
+of their executables, checked before every sample. `paired-v1.json`,
+`coverage-v1.json` and `primecert-coverage-v1.json` also lack per-sample binary
+attestation and remain exploratory pilots. The headline comparison and coverage
+use the complete `paired-v2.json` and `coverage-v2.json` schedules, which build
+before snapshotting, freeze their binaries and verify the hash before every
+native sample. They preserve dependency source hashes and exact generated-term
+links to kernel replay. Raw records retain the earlier driver limitations.
+
+CI builds the driver and frozen proof target, checks every retained successful
+row's certificate link, and regenerates the balanced Curve448 certificate with
+an exact hash comparison against its frozen kernel proof.
 
 ## Reproduction and remaining experiments
 
