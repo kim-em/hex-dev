@@ -194,12 +194,28 @@ class LakefileAffectsRuntime(unittest.TestCase):
     def test_indented_scope_commands_in_unrelated_blocks(self):
         before = BASE + '\nlean_lib Other\n  namespace A\nlean_lib Third\n  end A\n'
         after = BASE + '\nlean_lib Other\nlean_lib Third\n  namespace A\n  end A\n'
-        self.assertTrue(guard.lakefile_texts_differ(before, after))
+        with patch.object(guard, 'factor_import_modules', return_value={'HexPrimality.Table'}):
+            self.assertTrue(guard.lakefile_texts_differ(before, after))
+
+    def test_indented_commands_can_change_measured_flags(self):
+        commands = ('notation "hexFlags" => #["-O3"]', 'macro_rules | `(hexFlags) => `(#["-O3"])',
+                    'run_cmd logInfo "-O3"', 'local instance : String := "-O3"')
+        for command in commands:
+            with self.subTest(command=command), patch.object(guard, 'factor_import_modules',
+                                                             return_value={'HexPrimality.Table'}):
+                before = BASE + '\nlean_lib Other\n  ' + command + '\n'
+                self.assertTrue(guard.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
 
     def test_handwritten_library_order(self):
         first = '\n@[lean_lib] def first := "config"\n'
-        second = '\nlean_lib HexPoly\n'
-        self.assertTrue(guard.lakefile_texts_differ(BASE + first + second, BASE + second + first))
+        second = '\nlean_lib Second where\n  globs := #[Glob.one `HexPrimality.Table]\n'
+        before, after = BASE + first + second, BASE + second + first
+        for source in (before, after):
+            self.assertNotIn('command uncertain', freshness.lakefile_blocks(source))
+        with patch.object(guard, 'factor_import_modules', return_value={'HexPrimality.Table'}):
+            self.assertTrue(guard.lakefile_texts_differ(before, after))
+            unrelated = '\nlean_lib Other\n'
+            self.assertFalse(guard.lakefile_texts_differ(before, BASE + first + unrelated + second))
 
     def test_handwritten_target_attributes_are_relevant(self):
         before = BASE + '\n@[target, lean_lib] def configured := "-O3"\n'

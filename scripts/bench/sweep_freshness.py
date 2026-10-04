@@ -79,8 +79,11 @@ LAKE_DECL = re.compile(
     r'|abbrev|opaque|input_file|module_facet|library_facet|package_facet)\s+("[^"\n]*"|«[^»\n]*»|[A-Za-z_][\w\'.]*[!?]*|\S+)')
 
 LAKE_COMMAND = re.compile(
-    r"^(?:namespace|section|end|open|export|set_option|attribute|variable|universe"
-    r"|mutual|instance|macro|syntax)\b|^#[A-Za-z]")
+    r"^(?:(?:private|protected|public|partial|unsafe|noncomputable|meta|local|scoped)\s+)*"
+    r"(?:namespace|section|end|open|export|set_option|attribute|variable|universe"
+    r"|mutual|instance|macro|macro_rules|syntax|notation|infix|infixl|infixr|prefix|postfix"
+    r"|elab|elab_rules|run_cmd|run_elab|run_meta|initialize|deriving|declare_syntax_cat"
+    r"|theorem|example|structure|class|inductive|omit|include)(?![\w'!?])|^#[A-Za-z]")
 
 
 def lake_target_attribute(body: str, kinds: str = "target|lean_lib|lean_exe|extern_lib") -> bool:
