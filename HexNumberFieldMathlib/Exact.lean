@@ -134,7 +134,7 @@ theorem exactFactor?_sound (a : AlgebraicRoot) (q : ZPoly)
       (HexRootsMathlib.toPolyℂ a.p).IsRoot z)
     {b : AlgebraicNumber} (h : a.exactFactor? q = some b) :
     b.toComplex = a.toComplex := by
-  unfold AlgebraicRoot.exactFactor? at h
+  rw [AlgebraicRoot.exactFactor?_eq] at h
   split at h
   · rename_i hprim
     split at h
@@ -191,7 +191,7 @@ theorem exactFactor?_isSome (a : AlgebraicRoot) (q : ZPoly)
     (hsimple : HasOnlySimpleRoots q)
     (hroot : (HexRootsMathlib.toPolyℂ q).IsRoot a.toComplex) :
     (a.exactFactor? q).isSome := by
-  unfold AlgebraicRoot.exactFactor?
+  rw [AlgebraicRoot.exactFactor?_eq]
   rw [dite_eq_left hprim, dite_eq_left hpos, dite_eq_left hdegree, dite_eq_left hirred,
     dite_eq_left hsimple]
   have hqne : q ≠ 0 := by
