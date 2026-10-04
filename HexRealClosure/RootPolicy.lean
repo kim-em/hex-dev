@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.IsolationPolicy
-public import HexRealClosure.RootFactors
+public import HexRealClosure.CompleteRoots
 public import HexRealClosure.ZeroFactor
 public import HexRealClosure.Yun
 
@@ -59,6 +59,28 @@ theorem factorEntries_cons {policy : Isolation.Policy} {sign : E → Int} {conte
             simpa [factorEntries, positive, produced, remaining] using accepted.symm⟩
   · simp [factorEntries, positive] at accepted
 
+/-- The standard policy executes the original factor completion exactly. -/
+theorem factorEntries_standard (sign : E → Int) (context : Ctx)
+    (factors : List (DensePoly E × Nat)) :
+    factorEntries .standard sign context factors = Roots.factorEntries sign context factors := by
+  induction factors with
+  | nil => rfl
+  | cons factor factors ih =>
+    rcases factor with ⟨p, label⟩
+    by_cases positive : 0 < label
+    · cases produced : Isolation.complete? sign context p with
+      | error error => simp [factorEntries, Roots.factorEntries, positive,
+          Isolation.Policy.complete?_standard, produced, Except.map]
+      | ok result =>
+        cases result with
+        | none => simp [factorEntries, Roots.factorEntries, positive,
+            Isolation.Policy.complete?_standard, produced, Except.map]
+        | some completion =>
+          simp [factorEntries, Roots.factorEntries, positive,
+            Isolation.Policy.complete?_standard, produced, Except.map, ih]
+          rfl
+    · simp [factorEntries, Roots.factorEntries, positive]
+
 variable [Div E]
 
 /-- Execute zero extraction, the raw Yun recurrence and every actual factor
@@ -79,6 +101,12 @@ This intermediate result retains diagnostics and is not globally ordered. -/
           .ok (.finite (⟨.point 0, removed.2, positive⟩ :: entries))
         else .ok (.finite entries)
 
+/-- The standard policy retains the original Yun and zero extraction pipeline. -/
+theorem assemble_standard (sign : E → Int) (context : Ctx) (p : DensePoly E) :
+    assemble .standard sign context p = Roots.assemble sign context p := by
+  simp only [assemble, Roots.assemble, factorEntries_standard]
+  rfl
+
 /-- Run the selected finite isolation policy for every actual Yun factor,
 then sort all emitted entries with their original multiplicities. -/
 @[expose] def roots? (policy : Isolation.Policy) (sign : E → Int) (context : Ctx)
@@ -91,20 +119,38 @@ then sort all emitted entries with their original multiplicities. -/
     | .error error => .error error
     | .ok sorted => .ok (.finite sorted)
 
+/-- The default diagnostic API is unchanged, including internal errors. -/
+theorem roots?_standard (sign : E → Int) (context : Ctx) (p : DensePoly E) :
+    roots? .standard sign context p = Roots.roots? sign context p := by
+  simp only [roots?, Roots.roots?, assemble_standard]
+  rfl
+
 /-- The ordinary complete root operation. The companion proves that the
 diagnostic fallback is unreachable under the coefficient interpretation laws. -/
 @[expose] def roots (policy : Isolation.Policy) (sign : E → Int) (context : Ctx) (p : DensePoly E) :
     Output sign context :=
-  match roots? policy sign context p with
-  | .ok output => output
-  | .error error =>
-    letI : Inhabited (Output sign context) := ⟨.all⟩
-    panic! s!"Roots.roots: internal error {repr error}"
+  match policy with
+  | .standard => Roots.roots sign context p
+  | policy =>
+    match roots? policy sign context p with
+    | .ok output => output
+    | .error error =>
+      letI : Inhabited (Output sign context) := ⟨.all⟩
+      panic! s!"Roots.Policy.roots: internal error {repr error}"
+
+/-- Standard ordinary roots use the original implementation. -/
+theorem roots_standard (sign : E → Int) (context : Ctx) (p : DensePoly E) :
+    roots .standard sign context p = Roots.roots sign context p := rfl
 
 /-- The total API returns its actual successful checked construction. -/
 theorem roots_of_success {policy : Isolation.Policy} {sign : E → Int} {context : Ctx} {p : DensePoly E}
     {output : Output sign context} (built : roots? policy sign context p = .ok output) :
-    roots policy sign context p = output := by simp only [roots, built]
+    roots policy sign context p = output := by
+  cases policy with
+  | standard =>
+    exact Roots.roots_of_success (by rwa [roots?_standard] at built)
+  | bounded => simp only [roots, built]
+  | whole => simp only [roots, built]
 
 /-- A finite checked output retains the exact assembly and entry sort. -/
 theorem roots?_finite {policy : Isolation.Policy} {sign : E → Int} {context : Ctx} {p : DensePoly E}

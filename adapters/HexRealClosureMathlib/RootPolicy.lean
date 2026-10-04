@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
+public import Mathlib.Data.List.Sort
 public import HexRealClosureMathlib.RootTotal
 public import HexRealClosureMathlib.IsolationPolicy
 public import HexRealClosure.RootPolicy
@@ -334,6 +335,63 @@ theorem roots_sorted (context : Ctx) (p : DensePoly E) (out : List (Entry sign c
   rw [returned] at computed
   cases computed
   exact roots?_sorted φ hz h1 ha hs hm hnat hsign hn hi hd policy context p out built
+
+include hz h1 ha hs hm hnat hsign hn hi hd in
+/-- Strict ordering turns policy agreement into equality of the complete
+interpreted lists of values with their original multiplicities. -/
+theorem roots?_equal (other : Isolation.Policy) (context : Ctx) (p : DensePoly E)
+    (first second : List (Entry sign context))
+    (built : roots? policy sign context p = .ok (.finite first))
+    (again : roots? other sign context p = .ok (.finite second)) :
+    (first.map fun e => (e.value φ hz h1 ha hs hm hnat hsign, e.multiplicity)) =
+      (second.map fun e => (e.value φ hz h1 ha hs hm hnat hsign, e.multiplicity)) := by
+  let observation := fun e : Entry sign context =>
+    (e.value φ hz h1 ha hs hm hnat hsign, e.multiplicity)
+  have orderedFirst : (first.map observation).Pairwise (fun a b => a.1 < b.1) := by
+    simpa only [List.pairwise_map] using
+      roots?_sorted φ hz h1 ha hs hm hnat hsign hn hi hd policy context p first built
+  have orderedSecond : (second.map observation).Pairwise (fun a b => a.1 < b.1) := by
+    simpa only [List.pairwise_map] using
+      roots?_sorted φ hz h1 ha hs hm hnat hsign hn hi hd other context p second again
+  have firstNodup := (orderedFirst.imp (S := fun a b => a ≠ b) (fun less same => by
+    cases same
+    exact lt_irrefl _ less)).nodup
+  have secondNodup := (orderedSecond.imp (S := fun a b => a ≠ b) (fun less same => by
+    cases same
+    exact lt_irrefl _ less)).nodup
+  have members (a : K × Nat) : a ∈ first.map observation ↔ a ∈ second.map observation := by
+    rcases a with ⟨value, label⟩
+    simpa only [List.mem_map, observation, Prod.mk.injEq] using
+      roots?_agreement φ hz h1 ha hs hm hnat hsign hn hi hd policy other context p
+        first second built again value label
+  have same := (List.subperm_of_subset firstNodup (fun a h => (members a).mp h)).antisymm
+    (List.subperm_of_subset secondNodup (fun a h => (members a).mpr h))
+  exact List.Perm.eq_of_pairwise (fun a b _ _ less greater =>
+    False.elim ((not_lt_of_ge (le_of_lt greater)) less)) orderedFirst orderedSecond same
+
+include hz h1 ha hs hm hnat hsign hn hi hd in
+/-- Ordinary roots preserve the complete ordered value and multiplicity list
+across isolation choices. -/
+theorem roots_equal (other : Isolation.Policy) (context : Ctx) (p : DensePoly E)
+    (first second : List (Entry sign context))
+    (built : roots policy sign context p = .finite first)
+    (again : roots other sign context p = .finite second) :
+    (first.map fun e => (e.value φ hz h1 ha hs hm hnat hsign, e.multiplicity)) =
+      (second.map fun e => (e.value φ hz h1 ha hs hm hnat hsign, e.multiplicity)) := by
+  obtain ⟨output, checked, computed⟩ :=
+    roots_success φ hz h1 ha hs hm hnat hsign hn hi hd policy context p
+  rw [built] at computed
+  cases computed
+  obtain ⟨output, checkedOther, computed⟩ :=
+    roots_success φ hz h1 ha hs hm hnat hsign hn hi hd other context p
+  rw [again] at computed
+  cases computed
+  exact roots?_equal φ hz h1 ha hs hm hnat hsign hn hi hd policy other context p
+    first second checked checkedOther
+
+/-- info: 'Hex.RealClosure.Roots.Policy.roots?_equal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Roots.Policy.roots?_equal
 
 /-- info: 'Hex.RealClosure.Roots.Policy.roots?_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

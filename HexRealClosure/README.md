@@ -533,19 +533,22 @@ No choice asks for a coefficient precision threshold.
 Yun factor, restores extracted zero with its original multiplicity and sorts
 all roots with their attached labels. Its diagnostic form is `roots?`.
 `RootPolicy` proves total success, the separate zero `all` case, exact root
-coverage and multiplicities, strict ordering and agreement between policies.
+coverage and multiplicities, strict ordering and equality of the interpreted
+ordered value and multiplicity lists between policies. The standard policy is exactly the existing default
+API, including checked diagnostics.
 
 For native context-indexed values, use `context.rootsWith policy p` or
 `context.rootsWith? policy p`. Every selected entry retains its actual child
 context, root value and predecessor coefficient embedding. `TowerRootPolicy`
 proves the same complete RootSet contract under the context's ambient model.
 
-`RootPolicyConformance` exports 27 exact outputs covering all three policies,
+`RootPolicyConformance` exports 33 exact outputs covering all three policies,
 zero, constants, nonmonic repeated factors, zero extraction, root-free
-factors, cut points, an infinitesimally close repeated pair and an inverse
-infinitesimal. The independent Z3 oracle checks complete ordered root sets
+factors, cut points, an inverse infinitesimal, and infinitesimally close pairs
+with both distinct and equal multiplicity labels in one squarefree factor. The independent Z3 oracle checks complete ordered root sets
 and original multiplicities. `RootPolicyTests` checks native root equations,
-ownership, order and labels through the actual materialization API.
+exact ownership, order, labels and policy agreement over rational and already
+adjoined algebraic parents through both native materialization APIs.
 
 ### Bound selection and whole-line dispatch
 

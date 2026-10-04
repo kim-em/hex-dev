@@ -30,7 +30,8 @@ private def fraction (a : RationalFn Rat) : Json := object [
 private def emit {E : Type} [Zero E] [DecidableEq E] [One E] [Add E]
     [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E] [Div E]
     (policy : Policy) (name : String) (sign : E → Int) (encode : E → Json) (p : DensePoly E)
-    (context : Nat := 10378) (base : Option Json := none) : IO Unit := do
+    : IO Unit := do
+  let context : Nat := 10378
   let output := match Roots.Policy.roots? policy sign context p with
     | .error error => object [("error", .string (reprStr error))]
     | .ok .all => object [("kind", .string "all")]
@@ -49,9 +50,6 @@ private def emit {E : Type} [Zero E] [DecidableEq E] [One E] [Add E]
           object [("root", root), ("multiplicity", Json.of entry.multiplicity)]))]
   let fields := [("case", .string name), ("mode", .string "assembly"),
     ("head", .arr (p.toArray.map encode)), ("output", output)]
-  let fields := match base with
-    | none => fields
-    | some descriptor => ("base", descriptor) :: fields
   printJson (object [("policy", .string (reprStr policy)), ("result", object fields)])
 
 def main : IO Unit := do
@@ -75,3 +73,8 @@ def main : IO Unit := do
       fraction (DensePoly.scale 2 (first*first*second*second*second))
     emit policy "inverse infinitesimal" (OrderedFn.Infinitesimal.sign Sturm.orderSign)
       fraction (y - DensePoly.C epsilon⁻¹)
+    emit policy "infinitesimal squarefree pair" (OrderedFn.Infinitesimal.sign Sturm.orderSign)
+      fraction (first*second)
+    emit policy "infinitesimal same-label pair" (OrderedFn.Infinitesimal.sign Sturm.orderSign)
+      fraction (DensePoly.scale 3 (first*second*first*second))
+

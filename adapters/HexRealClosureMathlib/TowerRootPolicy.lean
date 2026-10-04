@@ -76,7 +76,27 @@ theorem Context.rootsWith_agreement (model : Model parent K) (first second : Iso
   (Context.rootsWith_spec model first p left x label).trans
     (Context.rootsWith_spec model second p right x label).symm
 
+/-- Native policies return equal ordered lists of interpreted root values
+and multiplicities while retaining their own immutable owners. -/
+theorem Context.rootsWith_equal (model : Model parent K) (first second : Isolation.Policy)
+    (p : DensePoly parent.Value) {a b : List (RootEntry parent)}
+    (left : parent.rootsWith first p = .finite a) (right : parent.rootsWith second p = .finite b) :
+    (a.map fun e => (e.denote model, e.multiplicity)) =
+      (b.map fun e => (e.denote model, e.multiplicity)) := by
+  obtain ⟨entries, produced, rfl⟩ := Context.rootsWith_finite first p left
+  obtain ⟨others, producedOther, rfl⟩ := Context.rootsWith_finite second p right
+  have labels (entry : Roots.Entry parent.sign parent.signature) :
+      (RootEntry.ofEntry parent entry).multiplicity = entry.multiplicity := rfl
+  simpa only [List.map_map, Function.comp_def, RootEntry.denote_ofEntry, labels] using
+    Roots.Policy.roots_equal model.value model.zero_iff model.one model.add model.sub
+      model.mul model.nat model.sign model.neg model.inv model.div first second
+      parent.signature p entries others produced producedOther
+
 end Hex.RealClosure.Tower
+
+/-- info: 'Hex.RealClosure.Tower.Context.rootsWith_equal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.rootsWith_equal
 
 /-- info: 'Hex.RealClosure.Tower.Context.rootsWith_all' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

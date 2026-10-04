@@ -23,20 +23,31 @@ class PolicyTests(unittest.TestCase):
         self.rejects(lambda rows: rows.pop())
 
     def test_wrong_policy(self):
-        self.rejects(lambda rows: rows[9].update(policy=rows[0]["policy"]))
+        self.rejects(lambda rows: rows[11].update(policy=rows[0]["policy"]))
 
     def test_missing_root(self):
-        self.rejects(lambda rows: rows[12]["result"]["output"]["entries"].pop())
+        self.rejects(lambda rows: rows[14]["result"]["output"]["entries"].pop())
 
     def test_duplicate_root(self):
-        self.rejects(lambda rows: rows[25]["result"]["output"]["entries"].append(
-            rows[25]["result"]["output"]["entries"][0]))
+        self.rejects(lambda rows: rows[29]["result"]["output"]["entries"].append(
+            rows[29]["result"]["output"]["entries"][0]))
 
     def test_wrong_label(self):
-        self.rejects(lambda rows: rows[21]["result"]["output"]["entries"][0].update(multiplicity=99))
+        self.rejects(lambda rows: rows[24]["result"]["output"]["entries"][0].update(multiplicity=99))
 
     def test_missing_all_case(self):
-        self.rejects(lambda rows: rows[18]["result"].update(output={"kind":"finite","entries":[]}))
+        self.rejects(lambda rows: rows[22]["result"].update(output={"kind":"finite","entries":[]}))
 
     def test_wrong_input(self):
-        self.rejects(lambda rows: rows[20]["result"]["head"].__setitem__(6, [-7,1]))
+        self.rejects(lambda rows: rows[25]["result"]["head"].__setitem__(6, [-7,1]))
+
+    def test_reordered_close_roots(self):
+        self.rejects(lambda rows: rows[31]["result"]["output"]["entries"].reverse())
+
+    def test_whole_finite_bounds(self):
+        self.rejects(lambda rows: rows[31]["result"]["output"]["entries"][0]["root"].update(
+            lower=rows[9]["result"]["output"]["entries"][0]["root"]["lower"]))
+
+    def test_missing_derivative_selection(self):
+        self.rejects(lambda rows: rows[31]["result"]["output"]["entries"][0]["root"].update(
+            indices=[], signs=[]))

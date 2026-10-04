@@ -9,7 +9,8 @@ from scripts.oracle.sign_det_z3 import check_version
 
 POLICIES = ["Hex.RealClosure.Isolation.Policy." + p for p in ["standard", "bounded", "whole"]]
 CASES = ["zero", "constant", "pure power", "repeated factors", "root-free factor",
-         "simple zero", "cut point", "infinitesimal repeated pair", "inverse infinitesimal"]
+         "simple zero", "cut point", "infinitesimal repeated pair", "inverse infinitesimal",
+         "infinitesimal squarefree pair", "infinitesimal same-label pair"]
 INDICES = [10, 11, 12, 13, 14, 15, 18]
 
 
@@ -19,6 +20,33 @@ def infinitesimal_pair(rcf):
     for a in [epsilon, epsilon, 2*epsilon, 2*epsilon, 2*epsilon]:
         p = multiply(rcf, p, [-a, rcf.one])
     return p
+
+
+def close_pair(rcf, repeated=False):
+    epsilon = rcf.levels[0]
+    pair = multiply(rcf, [-epsilon, rcf.one], [-2*epsilon, rcf.one])
+    return [3*c for c in multiply(rcf, pair, pair)] if repeated else pair
+
+
+def verify_shape(result, policy, name):
+    from scripts.oracle.sign_det_z3 import RCF
+    if result["output"].get("kind") != "finite":
+        return
+    rcf = RCF({"id": 10377, "levels": ["epsilon1"],
+               "order": "each-new-level-smaller-than-positive-base-elements"})
+    depth = 0 if name in CASES[:7] else 1
+    for entry in result["output"]["entries"]:
+        root = entry["root"]
+        if root["kind"] == "point":
+            if policy != POLICIES[0]:
+                require(rcf.coeff(root["value"], depth) == 0,
+                        "nonbisection policy emitted nonzero point")
+        elif policy == POLICIES[2]:
+            require(root["lower"] == [0] and root["upper"] == [2],
+                    "whole policy retained finite bounds")
+        if name in CASES[9:]:
+            require(root["kind"] == "selected" and root["indices"] == [1, 2],
+                    "close squarefree pair did not exercise derivative-sign selection")
 
 
 def verify(rows):
@@ -33,9 +61,14 @@ def verify(rows):
             verify_assembly(result, INDICES[CASES.index(name)],
                             require_cut_point=policy == POLICIES[0])
         else:
-            expected = infinitesimal_pair if name == CASES[7] else \
-                lambda rcf: [(-rcf.one).__div__(rcf.levels[0]), rcf.one]
+            expected = {
+                CASES[7]: infinitesimal_pair,
+                CASES[8]: lambda rcf: [(-rcf.one).__div__(rcf.levels[0]), rcf.one],
+                CASES[9]: close_pair,
+                CASES[10]: lambda rcf: close_pair(rcf, repeated=True),
+            }[name]
             verify_assembly(result, None, depth=1, expected=expected, require_cut_point=False)
+        verify_shape(result, policy, name)
 
 
 def main():
