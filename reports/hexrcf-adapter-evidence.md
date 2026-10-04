@@ -58,7 +58,7 @@ Targeted retained experiments answer concrete implementation questions:
 | Full queries versus exact interval sign evidence | [Interval quotation](hexrcf-interval-proofs.md) | The fixed-goal comparison favors interval quotation. Its reconstructed-query control and historical provenance limitations are explicit. |
 | Indexed sign retrieval | [Index comparison](hexrcf-index-proofs.md) | Two retained fixed-goal studies favor indexed retrieval; the default is enabled. These measure whole fresh-module cost, with exact measured-source and later shipping-source identities stated separately. |
 | Generator-window refinement | [Window comparison](hexrcf-window-proofs.md) | All 32 fixed-schedule arms are retained. The low-precision fixture removes three full queries at a proof-size cost; the study establishes no useful whole-module speedup, so refinement defaults to zero. |
-| Initial generator precision | [Precision comparison](hexrcf-precision-proofs.md) | Eight versus sixty-four bits for the same selected √2 and exact target, with checked transport. Three full queries disappear and private proof size falls; the small mixed paired changes justify no default change. Shared authentication lemmas are warmed, and no broad precision or nested-depth claim is made. |
+| Initial generator precision | [Precision comparison](hexrcf-precision-proofs.md) | Eight versus sixty-four bits for the same selected √2 and exact target, with checked transport. Three full queries disappear and private proof size falls; the small mixed paired changes justify no default change. Arm-specific authentication and candidate-only transport setup are prebuilt and excluded; this is not total precision-switch cost or broad precision/depth evidence. |
 | Carrier normalization | [Carrier comparison](hexrcf-carrier-proofs.md) | The retained fixed-goal pairs favor monic carriers; the ordinary-kernel normalization laws retain the original product. Signed chains are not arbitrarily made monic. |
 | One replay goal versus split conjuncts | [Replay comparison](hexrcf-replay-proofs.md) | The retained comparison did not establish a gain; combined replay stays off. |
 | Degree, source atoms and coefficient width | [Input costs and attribution](hexrcf-scaling-proofs.md) | Independent two-point observations in a no-real-root regime, with serialized/expanded syntax and a representative phase profile. These are not asymptotic verdicts or precision/depth evidence. |
@@ -104,6 +104,17 @@ The planned extension remains incomplete in these specific respects:
   byte decoder under lexical prechecks. Graph checking still uses ordinary
   coefficient arithmetic. These laws do not reconstruct general tower contexts,
   collect every intermediate packing dependency or realize a joint real sample.
+  The merged supplied-fact graph transport in
+  [DagOperations](../HexSignDet/DagOperations.lean) preserves memo acceptance,
+  rejection, literal trees and indices under the supplied coefficient-operation
+  laws. Reciprocal/division packing retains the actual inverse computation.
+  Missing-fact compiled fallback remains; this interface does not collect all
+  intermediate keys or rebuild general cross-level contexts. The merged
+  development theorem `HexSturmMathlib.query_iff` and actual companion
+  `RealAlgebraicPoly.roots_spec` establish their lawful query/root contracts.
+  The query theorem is still in a development adapter rather than exposed by
+  `import HexSturmMathlib`; owner integration remains required for that public
+  companion surface. These available laws are not waiting on performance closure.
 - Algebraic frontend completeness and total acceptance of every supported source
   are not proved by the exact-field total producer. It starts with an already
   authenticated fixed-field environment; frontend irreducibility quotation

@@ -636,9 +636,10 @@ proves the same fixed-field sentence at eight and sixty-four generator bits,
 using a checked selected-root equivalence for transport. The full sign queries
 fall from three to zero, and the private proof file shrinks by 6,456 bytes.
 Four retained rounds give median fresh-module times of 12.689 and 12.556 seconds;
-the paired median change is −0.169 seconds, with one slower candidate. Shared
-constructor and equality lemmas are warmed dependencies. This does not measure
-general field reconstruction or justify a default precision change.
+the paired median change is −0.169 seconds, with one slower candidate. Arm-specific constructor checks and the candidate
+transport are prebuilt, so their initial elaboration is excluded. This does not
+measure the total cost of changing precision or general field reconstruction,
+and does not justify a default precision change.
 
 For these reconstructed inputs, closed arithmetic is compiled into the common
 field after authenticating its source values. A quotient is recorded as a

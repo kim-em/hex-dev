@@ -18,8 +18,10 @@ never runs refinement or repairs a malformed window.
 
 The fixed case uses `SquareTwo.square` at eight bits and the formula
 `x² = θ ∧ 1 < x ∧ x < 2`. Its candidate proof must contain a literal inner
-window; the original proof must contain none. Separate conformance requires a
-strict decrease in full-query entries and preserves every key and sign.
+window; the original proof must contain none. The fixture's conformance requires a strict decrease in full-query entries and
+preserves every key and sign. The current producer additionally retains the
+original table whenever a bounded attempt removes no full query, and skips
+refinement in full-query mode.
 The source cases are the further-root, reciprocal and cubic manual examples.
 Both arms use identical imports and goals, monic carriers, unreduced-coordinate
 quotation, Horner evidence, indexed retrieval and split kernel replay. Only the
@@ -28,6 +30,12 @@ zero/four-step refinement budget differs.
 The exact measured source is
 [`ce95c8f1f8400bbc9e649ee366cdb6242503c808`](https://github.com/kim-em/hex-dev/tree/evidence/hexrcf-window-ce95c8f1f),
 based on `6b4acf58b33bf810976ec224ee188d12099ba84e`.
+The measured source predates the prepared frontend on `4ddaf23f1`. The current
+`CommonTactic`, `Preparation`, `Replay` and frozen serializer differ from that
+source, as do the refinement-quality and cancellation guards. The retained
+timings measure their named source, not the current shipped tactic. Current
+proof builds validate compatibility without establishing performance equality.
+
 Repository and package checkouts were clean and stayed unchanged during the
 comparison. The source hashes, full checkout identities, compiler outputs,
 artifact sizes, memory observations and every completed arm are in the

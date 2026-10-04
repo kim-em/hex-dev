@@ -19,9 +19,11 @@ and a degree-four carrier over the degree-two field.
 Both arms import the same support module. Indexed retrieval, interval signs and
 monic carriers are enabled; reduced-coordinate quotation and combined replay
 are disabled. Generator refinement is zero. The candidate uses the proved
-sentence equivalence after quoting its high-precision certificate. The shared
-constructor, selected-root and equivalence lemmas are warmed dependencies:
-their initial elaboration is outside the timed region. The transport application,
+sentence equivalence after quoting its high-precision certificate. Both arms import support that prebuilds arm-specific constructor validity and
+selected-root lemmas, plus the candidate-only sentence equivalence. Their initial
+elaboration is outside the timed region. In particular, the extra sixty-four-bit
+validity check and transport setup are excluded; this is not the total cost of
+changing a goal's initial precision. The transport application,
 native certificate production, quotation and kernel checking are included.
 
 The [collector](../scripts/bench/hexrcf_precision_proofs.py) uses four trial-major,

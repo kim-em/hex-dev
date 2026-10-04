@@ -53,6 +53,20 @@ set_option maxHeartbeats 2400000
     | .ok refined => refined.val.refinement.isNone &&
         refined.val.entries.all (·.evidence.isSome)
 
+-- A bounded attempt which cannot separate a close nonzero sign must retain
+-- the original evidence, rather than adding a useless second count certificate.
+private def hard : K := theta - (13043817825332782212 : K) / (9223372036854775808 : K)
+#guard match table? [hard] with
+  | none => false
+  | some original =>
+    original.entries.any (·.evidence.isSome) &&
+      match FieldBuild.refineSigns SquareTwo.polynomial SquareTwo.square hw hp original 1 with
+      | .error _ => false
+      | .ok result => result.val.refinement.isNone &&
+          result.val.entries.map (·.key) == original.entries.map (·.key) &&
+          result.val.entries.map (·.value) == original.entries.map (·.value) &&
+          result.val.entries.all (·.evidence.isSome)
+
 -- Corrupted original evidence is terminal before proposing any refinement.
 #guard match table? [close] with
   | none => false
@@ -125,6 +139,28 @@ run_meta do
   unless quotedWindow.isAppOfArity ``Option.some 2 do
     throwError "quotation lost the frozen window"
   Hex.RCF.checkAxioms `Hex.RCF.GeneratorWindowTests proof
+  let quotedTrue ← Lean.withOptions (fun opts => opts.setBool `rcf.algebraic.intervalSigns true) do
+    FieldLiteral.resultExpr (Lean.mkConst ``SquareTwo.polynomial) (Lean.mkConst ``root)
+      (Lean.mkConst ``matrix) matrix data
+  let quotedFalse ← Lean.withOptions (fun opts => opts.setBool `rcf.algebraic.intervalSigns false) do
+    FieldLiteral.resultExpr (Lean.mkConst ``SquareTwo.polynomial) (Lean.mkConst ``root)
+      (Lean.mkConst ``matrix) matrix data
+  unless quotedTrue == quotedFalse do
+    throwError "frozen window quotation changed under a producer option"
+  let falseValid ← try
+    let _ ← FieldLiteral.replay (Lean.mkConst ``SquareTwo.polynomial) (Lean.mkConst ``root)
+      (Lean.mkConst ``values) (Lean.mkConst ``matrix) values matrix .forallReal data
+    pure none
+  catch error => pure (some (← error.toMessageData.toString))
+  unless falseValid == some "rcf: the universal sentence is false on the prepared cells" do
+    throwError "valid refined evidence changed the false verdict: {falseValid}"
+  let (_, _, control, _) ← Lean.withOptions (fun opts =>
+      opts.setBool `rcf.algebraic.intervalSigns false) do
+    FieldLiteral.proveRefiningWithCertificate (Lean.mkConst ``SquareTwo.polynomial)
+      (Lean.mkConst ``root) (Lean.mkConst ``values) (Lean.mkConst ``matrix)
+      values matrix .existsReal
+  unless control.signs.refinement.isNone && control.signs.entries.all (·.evidence.isSome) do
+    throwError "full-query production performed useless window refinement"
   let some window := data.signs.refinement | throwError "missing test window"
   let badWindow := {window with count := {window.count with value := 0}}
   let badSigns := {data.signs with refinement := some badWindow}
@@ -171,6 +207,18 @@ theorem fixed : ∃ x : ℝ, matrix.toProp
       (Field.literalRep SquareTwo.polynomial SquareTwo.square hw hp) (values j)) x) := by
   fixed_window
 
+set_option rcf.algebraic.signRefinements 16 in
+theorem source_window : ∀ x : ℝ, x ^ 2 + Real.sqrt 3 -
+    (31950697969885030203 / 18446744073709551616 : ℝ) > 0 := by rcf
+
+run_meta do
+  unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.GeneratorWindowTests.source_window
+      (fun e => e.isConstOf ``Window.mk) do
+    throwError "the complete tactic path emitted no generator window"
+  unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.GeneratorWindowTests.source_window
+      (fun e => e.isConstOf ``CommonPresentation.checkPolynomials_sound) do
+    throwError "the checked window bypassed common-field source authentication"
+
 theorem further : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by rcf
 theorem guarded : ∀ x : ℝ, x ^ 2 + 1 / Real.sqrt 2 > 0 := by rcf
 theorem domain : ∃ x ∈ Set.Ioc (1 : ℝ) 2, x ^ 2 = Real.sqrt 2 := by rcf
@@ -192,6 +240,9 @@ run_meta do
       (fun e => e.isConstOf ``Window.mk) do
     throwError "fixed-field quoted proof omitted the checked window"
 
+/-- info: 'Hex.RCF.GeneratorWindowTests.source_window' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms source_window
 /-- info: 'Hex.RCF.GeneratorWindowTests.fixed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms fixed

@@ -74,11 +74,22 @@ mutual
     expression owner body
 end
 
+
 meta def measure (name : Name) : MetaM Json := do
   let some owner := (← getEnv).getModuleIdxFor? name | throwError "probe is not imported"
   let (_, counts) ← (declaration owner name).run {}
   unless !counts.tables.isEmpty do throwError "no literal sign table in quoted proof"
+  let windows := counts.expressions.toList.filterMap fun (e, _) =>
+    if e.isAppOfArity `Hex.RCF.RealCoefficients.LiteralSign.Window.mk 3 then some e else none
+  let regionSizes ← windows.mapM fun e => do
+    let (_, state) ← (expression owner e).run {}
+    return Json.mkObj [("unique_expressions", toJson state.expressions.size),
+      ("local_declarations", toJson state.declarations.size)]
+  let conjunctions := counts.expressions.toList.filter fun (e, _) => e.isAppOfArity ``And.intro 4
   return Json.mkObj [
+    ("unique_expressions", toJson counts.expressions.size),
+    ("unique_conjunction_apps", toJson conjunctions.length),
+    ("window_regions", toJson regionSizes),
     ("proof", toJson name.toString),
     ("local_declarations", toJson counts.declarations.size),
     ("distinct_table_syntax", toJson counts.tables.length),
@@ -87,11 +98,18 @@ meta def measure (name : Name) : MetaM Json := do
 
 run_meta do
   logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Windows.FixedOriginal.witness).compress}"
+run_meta do
   logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Windows.FixedRefined.witness).compress}"
+run_meta do
   logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Windows.FurtherOriginal.witness).compress}"
+run_meta do
   logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Windows.FurtherRefined.witness).compress}"
+run_meta do
   logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Windows.ReciprocalOriginal.witness).compress}"
+run_meta do
   logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Windows.ReciprocalRefined.witness).compress}"
+run_meta do
   logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Windows.CubicOriginal.witness).compress}"
+run_meta do
   logInfo m!"{(← measure ``Hex.RCF.ProofProbe.Windows.CubicRefined.witness).compress}"
 end Hex.RCF.ProofProbe.Windows.Audit
