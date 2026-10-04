@@ -18,7 +18,8 @@ never runs refinement or repairs a malformed window.
 
 The fixed case uses `SquareTwo.square` at eight bits and the formula
 `x² = θ ∧ 1 < x ∧ x < 2`. Its candidate proof must contain a literal inner
-window; the original proof must contain none. The fixture's conformance requires a strict decrease in full-query entries and
+window; the original proof must contain none. The fixture's
+conformance requires a strict decrease in full-query entries and
 preserves every key and sign. The current producer additionally retains the
 original table whenever a bounded attempt removes no full query, and skips
 refinement in full-query mode.
@@ -75,6 +76,21 @@ table. On the current monic/indexed path, the three source-example solver
 tables already decide all recorded signs with Horner evaluation. No tighter
 solver window is emitted in those cases. Counts describe distinct quoted table
 syntax and recorded entries, not heap sharing or expanded execution work.
+
+A separate untimed [current-source structural audit](data/hexrcf-window-signs/64f5d309f/audit.json)
+at [retained source `64f5d309f`](https://github.com/kim-em/hex-dev/tree/evidence/hexrcf-window-audit-64f5d309f)
+finds 15,044 versus 16,931 distinct expressions and six versus ten local
+proof declarations for the fixed fixture. Its window payload contains 194
+distinct expressions, and the whole proof has three versus seven distinct
+`And.intro` applications. The other three solver pairs have equal structural
+counts. The precision probes have 15,044 versus 14,833 distinct expressions.
+This traversal visits each structurally equal expression once and follows only
+the probe's own module declarations; imported bodies remain leaves. Counts are
+not an unshared expansion, allocation measurement or kernel-reduction count.
+They do not attribute the historical 61,672-byte private-file difference to
+individual certificates: payloads, local declarations, removed queries and
+serialization references all change. This audit's source and artifacts differ
+from the timed source above; it supplies no new timing comparison.
 
 The median paired change is calculated from adjacent differences and need
 not equal the difference of the two marginal medians. The first further-root
