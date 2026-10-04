@@ -1,8 +1,8 @@
 {
   "kind": "Three targeted mirror sync previews; no staging, builds of exact mirror output, or full sync validation",
-  "sourceCommit": "8ee0a3c5c0b10fe73c1653ef7e592a8ca8aae8ff",
-  "driverSHA256": "a45ed1d34ff42ba2ace4cc80ac9ec4dfa96fcb0a3ae206b145cf232bbb36b5b5",
-  "manifestSHA256": "f1b650e7162c33547a39477a437736dcaca381df96a75d8286efb3f83d9b726e",
+  "sourceCommit": "a80c9515cd852a0f993b0a8bd734979f3d5b0f95",
+  "driverSHA256": "7376e57c6b38cd23191e9f3fb20adaba762382357cf85fe7908d9807fa7b1dd6",
+  "manifestSHA256": "58b4640bd9b5bbc372082ed29db0abd81606edc944dabc720c130fbd3aab74c2",
   "baselineBranch": "release-sync-baseline",
   "baselinePath": "synced.json",
   "baselineSHA256": "44231869929d76cf1ac3fd7b3e43b3ab42875dbaa414635745953551852279ac",
@@ -17,8 +17,8 @@
         "external require + TauCeti -> 0dbbe255a4f418084b30a3ffe6763d824a6b4250 (lakefile.toml)",
         "manifest + external TauCeti -> 0dbbe255a4f4 (lake-manifest.json)"
       ],
-      "log": "dry-run-live-hex-real-roots-mathlib.log",
-      "logSHA256": "ba07758d95027ad3b77800dc317d3585c73b926460f42de3845d8e8003848b0a"
+      "log": "dry-run-reviewed-hex-real-roots-mathlib.log",
+      "logSHA256": "4cffff1fdb7fe375ac5104b16f0fb5f65b40e8e70aa8a7bb7db78a84aa6c9019"
     },
     {
       "repository": "leanprover/hex-rcf",
@@ -27,19 +27,18 @@
       "externalChanges": [
         "manifest + external TauCeti -> 0dbbe255a4f4 (lake-manifest.json)"
       ],
-      "log": "dry-run-live-hex-rcf.log",
-      "logSHA256": "0706f4ec8128eec7d2d3ccea2c262af1c3da2d302f3051f92534b76b8d93f192"
+      "log": "dry-run-reviewed-hex-rcf.log",
+      "logSHA256": "b2f52c482c728458f22dbc8fffa11b69fee4fe51d9f8276c8067bdcb2ed62b71"
     },
     {
       "repository": "leanprover/hex",
       "command": "python3 scripts/release/sync_released.py --dry-run --only hex --baseline <read-only live baseline>",
       "exitCode": 0,
       "externalChanges": [
-        "manifest + external AINTLIB -> ab1451487da0 (lake-manifest.json)",
         "manifest + external TauCeti -> 0dbbe255a4f4 (lake-manifest.json)"
       ],
-      "log": "dry-run-live-hex.log",
-      "logSHA256": "ff731b3acafe0858cf18dfd040c23f1f1d0fafdb9de70d2509d2e9994151bb7b"
+      "log": "dry-run-reviewed-hex.log",
+      "logSHA256": "a0a4d45706abb27016376ef4ebda434ae20e049b6c3a4a1a7a59683e9500d82f"
     }
   ],
   "retainedFailure": {
@@ -65,5 +64,6 @@
     "Each command previews only its named current manifest entry and uses published pins, unlike the full-declared-closure local candidates.",
     "No mirror writes, full sync dry run, staged downstream consumer, or publication was performed.",
     "Successful exact-output builds and full sync validation remain required before publication."
-  ]
+  ],
+  "sourceTreeCleanAtRun": true
 }
