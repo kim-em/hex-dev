@@ -181,6 +181,8 @@ def run : IO Unit := do
     | throw (IO.userError "alternative root presentation registration failed")
   require (sameRoot.input.context.signature.roots.length == 1)
     "alternative intervals duplicated the same selected root"
+  require (sameRoot.cache.candidates.length == 1)
+    "equivalent owners retained duplicate generator images"
   require (sameRoot.input.context.equal (sameRoot.value 0 alpha)
     (sameRoot.value 1 alternative.generator))
     "alternative descriptors did not retain the same selected real root"
@@ -269,6 +271,23 @@ def run : IO Unit := do
     linearAfterRoot.input.context.equal
       (linearAfterRoot.value ⟨2, by simp⟩ linear.generator) (1 + 1 + 1))
     "linear root added a redundant level above an existing algebraic root"
+  let some linearProductDescriptor := SignDet.Descriptor.validate base.sign base.signature
+      { context := base.signature,
+        head := (x - DensePoly.C (two + 1)) * (x * x - DensePoly.C two),
+        lower := .finite ((two + two + 1) / two), upper := .finite (two + two),
+        indices := [], signs := [] }
+    | throw (IO.userError "reducible coefficient-field descriptor failed")
+  let linearProduct := base.adjoin linearProductDescriptor
+  let some reusedConstant := linearAfterRoot.add? linearProduct.context
+    | throw (IO.userError "previously reused coefficient-field candidate failed")
+  require (reusedConstant.input.context.signature.roots.length == 1 &&
+    reusedConstant.input.context.equal
+      (reusedConstant.value ⟨3, by simp⟩ linearProduct.generator) (1 + 1 + 1))
+    "previously reused coefficient-field value was not searched"
+  let some uncachedConstant := sameRoot.add? linearProduct.context
+    | throw (IO.userError "uncached reducible coefficient-field root failed")
+  require (uncachedConstant.input.context.signature.roots.length == 2)
+    "candidate search invented an uncached coefficient-field root"
   let some linearShared := Shared.gather? (.pack rational) [linear.context]
     | throw (IO.userError "linear root registration failed")
   require (linearShared.input.context.signature.roots.length == 0 &&

@@ -152,7 +152,9 @@ selected-root descriptor before checking existing generator values. Its derivati
 and endpoint queries are prepared once. The candidate search visits cached
 entries on demand, trying the image of a generator and then its negative;
 these images include previously reused values, and structurally repeated
-candidates are skipped. A linear head supplies its coefficient-field value first. Constraint checks stop
+candidates are skipped. Insertion retains the generator image, extension maps
+the retained images once, and append removes structurally repeated images.
+A linear head supplies its coefficient-field value first. Constraint checks stop
 at the first mismatching sign, testing the head before derivative signs and strict
 finite bounds. A successful full check retains the exact target context and
 registers the source child through polynomial evaluation at that value. Otherwise

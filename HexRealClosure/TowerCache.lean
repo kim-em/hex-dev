@@ -20,17 +20,14 @@ variable {registry : BaseContext.Registry}
 Entries retain native owners; neither a name nor a hash supplies an equality. -/
 structure InclusionCache (target : Context registry) : Type 1 where
   entries : List (Σ source : Context registry, Inclusion source target)
+  candidates : List target.Value := []
 
 private def findCachedRoot {target : Context registry}
     {descriptor : SignDet.Descriptor target.Value Signature target.sign target.signature}
     (constraints : RootConstraints target descriptor) (seen : List target.Value) :
-    List (Σ source : Context registry, Inclusion source target) → Option (RootMatch target descriptor)
+    List target.Value → Option (RootMatch target descriptor)
   | [] => none
-  | entry :: rest =>
-    match entry.1.lastRoot? with
-    | none => findCachedRoot constraints seen rest
-    | some root =>
-      let candidate := entry.2.value root
+  | candidate :: rest =>
       if seen.contains candidate then findCachedRoot constraints seen rest
       else
         match constraints.match? candidate with
@@ -56,8 +53,8 @@ def InclusionCache.findRoot? {target : Context registry}
     let candidate := -descriptor.raw.head.coeff 0 / descriptor.raw.head.coeff 1
     match constraints.match? candidate with
     | some matched => some matched
-    | none => findCachedRoot constraints [candidate] cache.entries
-  else findCachedRoot constraints [] cache.entries
+    | none => findCachedRoot constraints [candidate] cache.candidates
+  else findCachedRoot constraints [] cache.candidates
 
 /-- Reuse a checked existing value as the source child's selected generator. -/
 @[expose] def Inclusion.reuseRoot {source target : Context registry}
@@ -72,17 +69,23 @@ def InclusionCache.findRoot? {target : Context registry}
 /-- Carry all cached original predecessors through the same target inclusion. -/
 @[expose] def InclusionCache.extend {source target : Context registry}
     (cache : InclusionCache source) (next : Inclusion source target) : InclusionCache target :=
-  ⟨cache.entries.map fun entry => ⟨entry.1, entry.2.comp next⟩⟩
+  ⟨cache.entries.map fun entry => ⟨entry.1, entry.2.comp next⟩,
+    (cache.candidates.map next.value).eraseDups⟩
 
 /-- Retain a checked map for an actual original predecessor. -/
 @[expose] def InclusionCache.insert {source target : Context registry}
     (cache : InclusionCache target) (next : Inclusion source target) : InclusionCache target :=
-  ⟨⟨source, next⟩ :: cache.entries⟩
+  let candidates := match source.lastRoot? with
+    | none => cache.candidates
+    | some root =>
+      let candidate := next.value root
+      if cache.candidates.contains candidate then cache.candidates else candidate :: cache.candidates
+  ⟨⟨source, next⟩ :: cache.entries, candidates⟩
 
 /-- Retain two collections of checked predecessors in the same target. -/
 @[expose] def InclusionCache.append {target : Context registry}
     (first second : InclusionCache target) : InclusionCache target :=
-  ⟨first.entries ++ second.entries⟩
+  ⟨first.entries ++ second.entries, (first.candidates ++ second.candidates).eraseDups⟩
 
 /-- Checked inclusions of an actual suffix's native predecessors. -/
 structure Suffix.Prefixes {source : Context registry} (suffix : Suffix source) : Type 1 where
@@ -95,7 +98,7 @@ def Suffix.prefixes {source : Context registry} (suffix : Suffix source) : suffi
   match suffix with
   | .nil =>
     let inclusion := Inclusion.identity source
-    ⟨inclusion, (InclusionCache.mk []).insert inclusion⟩
+    ⟨inclusion, (InclusionCache.mk [] []).insert inclusion⟩
   | .root descriptor rest =>
     let child := source.adjoin descriptor
     let first : Inclusion source child.context :=
