@@ -56,6 +56,10 @@ def verify(row):
         eager_prefix = polynomial(prefix['eager']['coefficients'])
         if prefix['step'] != step or clean_prefix != (x + 1) ** step or eager_prefix != (x + 1) ** step % head:
             raise ValueError("stored prefix does not match its arithmetic trace")
+        if (polynomial(prefix['clean']['query_coefficients']) !=
+                (2 ** max(step - degree + 1, 0)) * ((x + 1) ** step % head) or
+                polynomial(prefix['eager']['query_coefficients']) != eager_prefix):
+            raise ValueError("wrong actual query polynomial")
         for arm, poly in [('clean', clean_prefix), ('eager', eager_prefix)]:
             stored = prefix[arm]
             if (stored['degree'] != poly.degree() or stored['sign'] != 1 or
@@ -86,7 +90,9 @@ def verify(row):
     return dict(degree=degree, steps=steps, checked=True,
                 clean=growth(row['clean']['coefficients']), eager=growth(row['eager']['coefficients']),
                 prefixes=[dict(step=p['step'], clean=growth(p['clean']['coefficients']),
-                               eager=growth(p['eager']['coefficients'])) for p in prefixes])
+                               eager=growth(p['eager']['coefficients']),
+                               clean_query=growth(p['clean']['query_coefficients']),
+                               eager_query=growth(p['eager']['query_coefficients'])) for p in prefixes])
 
 
 def main():
