@@ -186,6 +186,34 @@ def run : IO Unit := do
     "alternative descriptors did not retain the same selected real root"
   require (sameRoot.input.context.sign (sameRoot.value 0 alpha) == 1)
     "alternative presentations selected the negative conjugate"
+  let z : DensePoly alternative.context.Value := DensePoly.ofCoeffs #[0, 1]
+  let some alternativeChildDescriptor := SignDet.Descriptor.validate alternative.context.sign
+      alternative.context.signature
+      { context := alternative.context.signature,
+        head := z * z - DensePoly.C alternative.generator,
+        lower := .finite 0, upper := .finite (1 + 1), indices := [], signs := [] }
+    | throw (IO.userError "child of reused owner descriptor failed")
+  let alternativeChild := alternative.context.adjoin alternativeChildDescriptor
+  let some reusedParent := sameRoot.add? alternativeChild.context
+    | throw (IO.userError "reused owner predecessor lookup failed")
+  let reusedChild := reusedParent.value ⟨2, by simp⟩ alternativeChild.generator
+  require (reusedParent.input.context.signature.roots.length == 2 &&
+    reusedParent.input.context.equal (reusedChild * reusedChild)
+      (reusedParent.value ⟨0, by simp⟩ alpha))
+    "exact hit on a reused owner lost its coefficient interpretation"
+  let some unmatchedDescriptor := SignDet.Descriptor.validate base.sign base.signature
+      { context := base.signature,
+        head := (x * x - DensePoly.C two) * (x * x - DensePoly.C (two + 1)),
+        lower := .finite ((two + 1) / two), upper := .finite two, indices := [], signs := [] }
+    | throw (IO.userError "unmatched reducible descriptor failed")
+  let unmatched := base.adjoin unmatchedDescriptor
+  let some newRoot := sameRoot.add? unmatched.context
+    | throw (IO.userError "constraint rejection did not append the new root")
+  let beta := newRoot.value ⟨2, by simp⟩ unmatched.generator
+  require (newRoot.input.context.signature.roots.length == 2 &&
+    newRoot.input.context.equal (beta * beta) (1 + 1 + 1) &&
+    newRoot.input.context.compare (newRoot.value ⟨0, by simp⟩ alpha) beta == .lt)
+    "head equality bypassed the strict interval constraints"
   let some reducibleDescriptor := SignDet.Descriptor.validate base.sign base.signature
       { context := base.signature,
         head := DensePoly.C two * (x * x - DensePoly.C two) * (x - DensePoly.C (two + 1)),
@@ -235,6 +263,12 @@ def run : IO Unit := do
         lower := .finite two, upper := .finite (two + two), indices := [], signs := [] }
     | throw (IO.userError "nonmonic linear descriptor failed")
   let linear := base.adjoin linearDescriptor
+  let some linearAfterRoot := sameRoot.add? linear.context
+    | throw (IO.userError "linear root registration in an algebraic target failed")
+  require (linearAfterRoot.input.context.signature.roots.length == 1 &&
+    linearAfterRoot.input.context.equal
+      (linearAfterRoot.value ⟨2, by simp⟩ linear.generator) (1 + 1 + 1))
+    "linear root added a redundant level above an existing algebraic root"
   let some linearShared := Shared.gather? (.pack rational) [linear.context]
     | throw (IO.userError "linear root registration failed")
   require (linearShared.input.context.signature.roots.length == 0 &&

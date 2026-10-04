@@ -1641,8 +1641,10 @@ identifies the transported value with a separately retrieved canonical owner mod
 Registration caches checked inclusions for every original algebraic predecessor.
 Parent/child registration, sibling branches, and repeated owners reuse their
 common roots. Exact native provenance is checked first. For a new owner,
-registration validates its converted descriptor and visits cached generators
-and their negatives on demand. Each candidate is tested against the defining
+registration validates its converted descriptor and prepares its constraints
+once. It visits the images of cached generators and their negatives on demand,
+including previously reused values, and skips structurally repeated candidates.
+Each candidate is tested against the defining
 equation first, followed by derivative signs and strict interval bounds; the
 check stops at the first mismatch and the search stops at the first full match.
 A matching value becomes the owner's generator
@@ -1856,15 +1858,19 @@ and staged-order results with dependency closure. The interpretation ingredients
    `Shared.Model.enlarge?` then transports the whole returned owner family
    through one actual shared enlargement. `Context.origin` extracts each
    exact base and validated root suffix. Reuse recognizes exact native
-   predecessors. Equivalent selected roots with different intervals or
-   reordered chains can still add redundant algebraic levels; arbitrary
-   compatible real-prefix permutations remain outside the prefix check. Owners
+   predecessors and checks cached generator images, their negatives and linear
+   coefficient-field roots against the full converted descriptor. Covered
+   equivalent intervals and reordered algebraic chains add no root level;
+   arbitrary expressions in several generators are not searched, and compatible
+   real-prefix permutations remain outside the prefix check.
+   Owners
    over incomparable real-prefix paths are rejected. Supporting them requires
    new native inclusions for non-prefix keys as well as a joint realization.
    Remaining: re-establish the canonical `Shared.Model`, including its target,
    original owners and cache, after enlargement against the next staged
    realization and lifted reference. Automatic dependency-closed traversal and
    the total `Context.enlarge` constructor also remain required.
+
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
 proves that its ordered algebraic real closure of `R(ε)` is algebraic over the

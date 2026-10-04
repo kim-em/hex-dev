@@ -22,20 +22,27 @@ structure InclusionCache (target : Context registry) : Type 1 where
   entries : List (Σ source : Context registry, Inclusion source target)
 
 private def findCachedRoot {target : Context registry}
-    (descriptor : SignDet.Descriptor target.Value Signature target.sign target.signature) :
+    {descriptor : SignDet.Descriptor target.Value Signature target.sign target.signature}
+    (constraints : RootConstraints target descriptor) (seen : List target.Value) :
     List (Σ source : Context registry, Inclusion source target) → Option (RootMatch target descriptor)
   | [] => none
   | entry :: rest =>
     match entry.1.lastRoot? with
-    | none => findCachedRoot descriptor rest
+    | none => findCachedRoot constraints seen rest
     | some root =>
       let candidate := entry.2.value root
-      match target.matchRoot? descriptor candidate with
-      | some matched => some matched
-      | none =>
-        match target.matchRoot? descriptor (-candidate) with
+      if seen.contains candidate then findCachedRoot constraints seen rest
+      else
+        match constraints.match? candidate with
         | some matched => some matched
-        | none => findCachedRoot descriptor rest
+        | none =>
+          let negative := -candidate
+          if seen.contains negative || negative == candidate then
+            findCachedRoot constraints (candidate :: seen) rest
+          else
+            match constraints.match? negative with
+            | some matched => some matched
+            | none => findCachedRoot constraints (negative :: candidate :: seen) rest
 
 /-- Search cached generators and their negatives on demand. A linear head
 supplies a coefficient-field candidate first. Every accepted value passes
@@ -44,12 +51,13 @@ def InclusionCache.findRoot? {target : Context registry}
     (cache : InclusionCache target)
     (descriptor : SignDet.Descriptor target.Value Signature target.sign target.signature) :
     Option (RootMatch target descriptor) :=
+  let constraints := RootConstraints.prepare target descriptor
   if descriptor.raw.head.degree? == some 1 then
-    match target.matchRoot? descriptor
-        (-descriptor.raw.head.coeff 0 / descriptor.raw.head.coeff 1) with
+    let candidate := -descriptor.raw.head.coeff 0 / descriptor.raw.head.coeff 1
+    match constraints.match? candidate with
     | some matched => some matched
-    | none => findCachedRoot descriptor cache.entries
-  else findCachedRoot descriptor cache.entries
+    | none => findCachedRoot constraints [candidate] cache.entries
+  else findCachedRoot constraints [] cache.entries
 
 /-- Reuse a checked existing value as the source child's selected generator. -/
 @[expose] def Inclusion.reuseRoot {source target : Context registry}
