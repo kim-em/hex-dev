@@ -489,6 +489,38 @@ theorem nested_fractions_near (fractions : Finset (Hex.RationalFn (Hex.RationalF
     refine ⟨guard, agreement, ?_⟩
     rw [← cast_sign_zero, agreement, nested_sign_zero_iff]
 
+/-- At one ordinary parameter pair, every recorded sign and arithmetic step
+in a finite family is preserved together. Membership requires recording each
+actual result; it does not assume any coefficient interpretation laws. -/
+theorem nested_arithmetic_near (fractions : Finset (Hex.RationalFn (Hex.RationalFn ℝ))) :
+    ∀ᶠ first in 𝓝[>] (0 : ℝ), ∀ᶠ second in 𝓝[>] (0 : ℝ),
+      (∀ f ∈ fractions,
+        (SignType.sign (evalNestedFraction f first second) : Int) =
+          Hex.OrderedFn.Infinitesimal.sign
+            (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) f ∧
+        (evalNestedFraction f first second = 0 ↔ f = 0)) ∧
+      (∀ f ∈ fractions, ∀ g ∈ fractions, f + g ∈ fractions →
+        evalNestedFraction (f + g) first second =
+          evalNestedFraction f first second + evalNestedFraction g first second) ∧
+      (∀ f ∈ fractions, ∀ g ∈ fractions, f * g ∈ fractions →
+        evalNestedFraction (f * g) first second =
+          evalNestedFraction f first second * evalNestedFraction g first second) ∧
+      (∀ f ∈ fractions, f⁻¹ ∈ fractions →
+        evalNestedFraction f⁻¹ first second = (evalNestedFraction f first second)⁻¹) := by
+  filter_upwards [nested_fractions_near fractions] with first coefficients
+  filter_upwards [coefficients.2] with second values
+  refine ⟨fun f hf => (values f hf).2, ?_, ?_, ?_⟩
+  · intro f hf g hg hsum
+    exact nested_fraction_add f g first second (coefficients.1 f hf) (coefficients.1 g hg)
+      (coefficients.1 (f + g) hsum) (values f hf).1 (values g hg).1 (values (f + g) hsum).1
+  · intro f hf g hg hproduct
+    exact nested_fraction_mul f g first second (coefficients.1 f hf) (coefficients.1 g hg)
+      (coefficients.1 (f * g) hproduct) (values f hf).1 (values g hg).1
+      (values (f * g) hproduct).1
+  · intro f hf hinverse
+    exact nested_fraction_inv f first second (coefficients.1 f hf) (coefficients.1 f⁻¹ hinverse)
+      (values f⁻¹ hinverse).1 (values f hf).2.2
+
 end Successive
 
 /-- info: 'Hex.RealClosure.Specialize.mapCoefficients_trailing' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -524,3 +556,11 @@ end Hex.RealClosure.Specialize
 /-- info: 'Hex.RealClosure.Specialize.nested_fraction_mul' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Specialize.nested_fraction_mul
+
+/-- info: 'Hex.RealClosure.Specialize.nested_fraction_inv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.nested_fraction_inv
+
+/-- info: 'Hex.RealClosure.Specialize.nested_arithmetic_near' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.nested_arithmetic_near
