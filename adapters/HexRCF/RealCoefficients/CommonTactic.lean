@@ -619,12 +619,45 @@ private meta def prepareField (source : Reify.Source) (leafSources : Array Expr)
     else throwError "rcf: common square has insufficient precision"
   else throwError "rcf: common square failed its root witness"
 
+-- Retain full fresh-record validation as a matched proof-cost control. The
+-- editable public preparation API always validates independently of this option.
+register_option rcf.algebraic.validateFresh : Bool := {
+  defValue := false
+  descr := "repeat prepared-input validation for freshly constructed tactic data"
+}
+
+/-- Assemble only factory-produced data. No editable environment is accepted
+at this private boundary; the dispatcher checks the complete original proof. -/
+private meta def proveFresh (prepared : Coefficients.Environment) : MetaM Expr := do
+  for proof in [prepared.source.proof, prepared.valuationProof, prepared.irreducibleExpr] do
+    let proof ← instantiateMVars proof
+    if proof.hasMVar then throwError "rcf: fresh source authentication contains unresolved metavariables"
+    Hex.RCF.checkAxioms `Hex.RCF.RealCoefficients.CommonTactic.proveFresh proof
+    if (← getEnv).hasUnsafe proof then
+      throwError "rcf: fresh source authentication uses an unsafe declaration"
+  for i in [:prepared.source.divisors.size] do
+    let divisor : Q(ℝ) := prepared.source.divisors[i]!
+    let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
+      `Hex.RCF.RealCoefficients.CommonTactic.guard q($divisor ≠ 0) prepared.divisorProofs[i]!
+  let _ : ZPoly.CheckedIrreducible prepared.polynomial := prepared.checked
+  let instType ← mkAppM ``ZPoly.CheckedIrreducible #[prepared.polynomialExpr]
+  let fixed ← withLocalDecl `inst .instImplicit instType fun inst => do
+    let proof ← FieldLiteral.proveRefining prepared.polynomialExpr prepared.rootExpr
+      prepared.valuesExpr prepared.formulaExpr prepared.values prepared.formula prepared.quantifier
+    return mkApp (← mkLambdaFVars #[inst] proof) prepared.irreducibleExpr
+  let congr ← withLocalDeclD `ρ (← inferType prepared.source.valuation) fun ρ => do
+    let body ← mkAppM ``RealFormula.Prenex.toProp #[prepared.source.formula, ρ]
+    mkAppM ``congrArg #[← mkLambdaFVars #[ρ] body, prepared.valuationProof]
+  let specialized ← mkAppM ``Eq.mp #[congr, fixed]
+  mkAppM ``Iff.mp #[prepared.source.proof, specialized]
+
 private meta def prove (source : Reify.Source) (leafSources : Array Expr)
     (plans : Array SourcePlan) : MetaM Expr := do
   profileitM Exception "rcf algebraic frontend" (← getOptions)
     (do
       let prepared ← prepareField source leafSources plans
-      prepared.prove)
+      if rcf.algebraic.validateFresh.get (← getOptions) then prepared.prove
+      else proveFresh prepared)
 
 private meta def proveRational (source : Reify.Source) : MetaM Expr := do
   Tactic.checkGuards source

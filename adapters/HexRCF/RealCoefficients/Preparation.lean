@@ -73,7 +73,7 @@ meta def instantiate (prepared : Environment) : MetaM Environment := do
   return {prepared with
     source
     polynomialExpr := ← closed prepared.polynomialExpr
-    rootExpr := ← closed prepared.rootExpr
+    rootExpr := (← closed prepared.rootExpr).consumeMData
     valuesExpr := ← closed prepared.valuesExpr
     formulaExpr := ← closed prepared.formulaExpr
     irreducibleExpr := ← closed prepared.irreducibleExpr
@@ -113,20 +113,24 @@ private meta def checkBindings (prepared : Environment) : MetaM Unit := do
   unless (← FieldRuntime.evalFormula (prepared.arity + 1) matrix) ==
       .matrix prepared.formula do
     throwError "rcf: invalid prepared matrix binding"
-  for i in List.finRange prepared.arity do
-    let bound ← mkDecideProof (← mkLt (mkNatLit i.val) (mkNatLit prepared.arity))
-    let index ← mkAppM ``Fin.mk #[mkNatLit i.val, bound]
-    let coordinate := mkApp prepared.valuesExpr index
-    let coeffs ← mkAppM ``PolyQuot.coeffs #[coordinate]
-    unless (← FieldRuntime.evalRatPoly coeffs) == (prepared.values i).coeffs do
-      throwError "rcf: invalid prepared coefficient binding"
-  for (divisor, expression) in prepared.divisors.zip prepared.divisorExpressions.toList do
-    let coeffs ← mkAppM ``PolyQuot.coeffs #[expression]
-    unless (← FieldRuntime.evalRatPoly coeffs) == divisor.coeffs do
-      throwError "rcf: invalid prepared divisor binding"
+  let polynomialType : Q(Type) := q(DensePoly Rat)
+  let values ← withLetDecl `coordinates (← inferType prepared.valuesExpr) prepared.valuesExpr fun values => do
+    let coordinates ← (List.finRange prepared.arity).mapM fun i => do
+      let bound ← mkDecideProof (← mkLt (mkNatLit i.val) (mkNatLit prepared.arity))
+      let index ← mkAppM ``Fin.mk #[mkNatLit i.val, bound]
+      mkAppM ``PolyQuot.coeffs #[mkApp values index]
+    mkLetFVars #[values] (← mkListLit polynomialType coordinates)
+  unless (← FieldRuntime.evalRatPolys values) ==
+      (List.finRange prepared.arity).map (fun i => (prepared.values i).coeffs) do
+    throwError "rcf: invalid prepared coefficient binding"
+  let divisors ← prepared.divisorExpressions.toList.mapM fun expression =>
+    mkAppM ``PolyQuot.coeffs #[expression]
+  unless (← FieldRuntime.evalRatPolys (← mkListLit polynomialType divisors)) ==
+      prepared.divisors.map (·.coeffs) do
+    throwError "rcf: invalid prepared divisor binding"
 
-/-- Check every retained original divisor proof before any constant, zero,
-empty-domain, or certificate-production shortcut. -/
+/-- Bind runtime input to its expressions and authenticate required source,
+field, valuation and original-divisor proofs before any production shortcut. -/
 meta def checkDomains (prepared : Environment) : MetaM Unit := restoreOnFailure do
   let prepared ← prepared.instantiate
   prepared.checkBindings
@@ -143,28 +147,28 @@ meta def checkDomains (prepared : Environment) : MetaM Unit := restoreOnFailure 
       prepared.divisorIdentities.size == prepared.source.divisors.size do
     throwError "rcf: prepared coefficient environment omitted an original divisor"
   let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
-    `Hex.RCF.RealCoefficients.Coefficients.Environment.checkDomains
+    `Hex.RCF.RealCoefficients.Coefficients.Environment.irreducible
     (← mkAppM ``ZPoly.CheckedIrreducible #[prepared.polynomialExpr]) prepared.irreducibleExpr
   let sentence ← mkAppM ``RealFormula.Prenex.toProp
     #[prepared.source.formula, prepared.source.valuation]
   let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
-    `Hex.RCF.RealCoefficients.Coefficients.Environment.checkDomains
+    `Hex.RCF.RealCoefficients.Coefficients.Environment.source
     (← mkAppM ``Iff #[sentence, prepared.source.original]) prepared.source.proof
   let rep ← mkAppM ``Field.literalRep prepared.rootExpr.getAppArgs
   let interpreted ← withLocalDeclD `i (mkApp (mkConst ``Fin) (mkNatLit prepared.arity)) fun i => do
     mkLambdaFVars #[i] (← mkAppM ``Field.value #[rep, mkApp prepared.valuesExpr i])
   let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
-    `Hex.RCF.RealCoefficients.Coefficients.Environment.checkDomains
+    `Hex.RCF.RealCoefficients.Coefficients.Environment.valuation
     (← mkEq interpreted prepared.source.valuation) prepared.valuationProof
   for i in [:prepared.source.divisors.size] do
     let divisor : Q(ℝ) := prepared.source.divisors[i]!
     let proof := prepared.divisorProofs[i]!
     let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
-      `Hex.RCF.RealCoefficients.Coefficients.Environment.checkDomains q($divisor ≠ 0) proof
+      `Hex.RCF.RealCoefficients.Coefficients.Environment.guard q($divisor ≠ 0) proof
     let identity := prepared.divisorIdentities[i]!
     let interpreted ← mkAppM ``Field.value #[rep, prepared.divisorExpressions[i]!]
     let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
-      `Hex.RCF.RealCoefficients.Coefficients.Environment.checkDomains
+      `Hex.RCF.RealCoefficients.Coefficients.Environment.identity
       (← mkEq interpreted divisor) identity
 
 /-- Compose a checked fixed-field sentence proof with authenticated source
@@ -188,8 +192,8 @@ meta def transport (prepared : Environment) (fixed : Expr) : MetaM Expr := resto
   prepared.compose fixed
 
 /-- Use the existing bounded producer and literal quotation on prepared data.
-Preparation itself has already authenticated every original divisor; search
-failures remain terminal and do not change the selected coefficient field. -/
+The editable environment is revalidated before search; failures remain
+terminal and do not change the selected coefficient field. -/
 meta def prove (prepared : Environment) : MetaM Expr := restoreOnFailure do
   prepared.checkDomains
   let _ : ZPoly.CheckedIrreducible prepared.polynomial := prepared.checked

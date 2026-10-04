@@ -1146,7 +1146,10 @@ lean_lib HexRCFBenchSupport where
 -- On-demand attribution and paired quotation costs; outside routine CI.
 lean_lib HexRCFProofProfile where
   srcDir := "bench"
-  globs := #[`HexRCF.ProofProbe.Profiling,
+  globs := #[`HexRCF.ProofProbe.Validation.Support,
+    `HexRCF.ProofProbe.Validation.ScalarChecked, `HexRCF.ProofProbe.Validation.ScalarFresh,
+    `HexRCF.ProofProbe.Validation.SeveralChecked, `HexRCF.ProofProbe.Validation.SeveralFresh,
+    `HexRCF.ProofProbe.Profiling,
     `HexRCF.ProofProbe.Literals.Support,
     `HexRCF.ProofProbe.Literals.FurtherLegacy, `HexRCF.ProofProbe.Literals.FurtherReduced,
     `HexRCF.ProofProbe.Literals.ReciprocalLegacy, `HexRCF.ProofProbe.Literals.ReciprocalReduced,
@@ -1189,6 +1192,7 @@ lean_lib HexRCFProofProbe where
     `HexRCF.ProofProbe.Windows.Support, `HexRCF.ProofProbe.Windows.FixedRefined,
     `HexRCF.ProofProbe.Precision.Inputs, `HexRCF.ProofProbe.Precision.Support,
     `HexRCF.ProofProbe.Precision.Bits64,
+    `HexRCF.ProofProbe.Validation.Support, `HexRCF.ProofProbe.Validation.ScalarFresh,
     `HexRCF.ProofProbe.Registered.Unused,
     `HexRCF.ProofProbe.Registered.Support,
     `HexRCF.ProofProbe.Registered.Tactic,
