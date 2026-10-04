@@ -189,30 +189,6 @@ private def square : Group 4 := Group.ofGenerators #[rotation4, reflection4]
         Word.eval square.generators w == p do
       throw (IO.userError s!"unexpected flattened word {Word.toString w}")
 
--- `sampleIO` returns members, and 2000 draws from the square hit all 8
--- elements. A miss has probability at most `8 * (7/8)^2000 < 10^-100`; the
--- three values of `uniformFin 3` in 300 draws are missed with probability at
--- most `3 * (2/3)^300 < 10^-50`.
-#eval do
-  let s3 := Group.ofGenerators generators
-  for _ in [0:20] do
-    let p ← s3.sampleIO
-    unless s3.contains p.val do throw (IO.userError "sampleIO returned a nonmember")
-  let mut seen : Array Bool := Array.replicate square.order false
-  for _ in [0:2000] do
-    let p ← square.sampleIO
-    unless square.contains p.val do throw (IO.userError "sampleIO returned a nonmember")
-    seen := seen.set! (square.rank p).val true
-  unless seen.all id do throw (IO.userError "2000 uniform draws missed a square element")
-  let mut hits : Array Bool := #[false, false, false]
-  for _ in [0:300] do
-    let k ← uniformFin 3 (by decide)
-    hits := hits.set! k.val true
-  unless hits.all id do throw (IO.userError "uniformFin 3 missed a value")
-  unless (← uniformFin 1 (by decide)).val == 0 do throw (IO.userError "uniformFin 1 was nonzero")
-  let big ← uniformFin (2 ^ 70 + 3) (by decide)
-  unless big.val < 2 ^ 70 + 3 do throw (IO.userError "uniformFin exceeded its bound")
-
 example : cycle.cycles = #[#[0, 1, 2]] := by decide
 example : swap.cycles = #[#[0, 1]] := by decide
 example : swap.cycleType = #[1, 2] := by decide +kernel

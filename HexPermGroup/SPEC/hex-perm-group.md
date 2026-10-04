@@ -37,9 +37,9 @@ or hand-edit a published repository.
 The represented groups act faithfully on `Fin n`. Further finite actions
 include tuples, subsets, partitions, block systems and cosets; their induced
 representations need not be faithful. The scope includes exact sampling from
-a supplied uniform index source, and an `IO` sampler whose bounded indices come
-from `IO.getRandomBytes` by rejection sampling. The library implements no
-random-number generator of its own.
+a supplied uniform index source, but no random-number source. The Mathlib
+companion draws indices from a generator supplied through Mathlib's `Random`
+interface.
 Conjugacy-class enumeration, abstract group isomorphism, character tables
 and transitive-group databases remain later extensions. There is no claim
 that a generator list is canonical under conjugacy.
@@ -480,7 +480,6 @@ The soundness theorems are stated and proved in `HexPermGroupMathlib`: see
 | `isAbelian G` | True exactly when all group elements commute. |
 | `rank G p`, `unrank G k` | Inverse maps between `Element G` and `Fin (order G)`. |
 | `sampleWith draw G` | Unrank one index supplied by `draw` for the positive bound `order G`. |
-| `sampleIO G` | `sampleWith uniformFin G`: a uniformly distributed element in `IO`. |
 | `elementsWith cap G` | Every group element once if `order G ≤ cap`, otherwise an explicit size-limit result. |
 | `leftCosetsWith cap G H h` | A complete left transversal when `h` proves `H ≤ G` and the index fits the cap. |
 
@@ -536,13 +535,26 @@ the companion proves the corresponding finite-distribution statement.
 This does not assert that a pseudorandom seed is a source of true uniform
 randomness. Do not obtain bounded indices by a biased modular reduction.
 
-`uniformFin bound h : IO (Fin bound)` reads enough bytes from
-`IO.getRandomBytes` to cover `bound - 1`, keeps the bit length of `bound - 1`
-low bits, and retries until the value is below `bound`. Each attempt accepts
-with probability above one half. If the bytes are uniform and independent,
-the result is exactly uniform on `Fin bound`, and `sampleIO G` returns each
-element of `G` with probability exactly `1 / order G`. Lean's `randNat`
-reduces modulo the bound and must not be used for this purpose.
+`sampleWith` is the sampling interface of this library: the caller brings
+the randomness, in any functor. The library contains no random-number source
+and does not hook into `IO`.
+
+`HexPermGroupMathlib` provides an instance of Mathlib's `Random m (Element G)`
+for every monad `m`, built from `Group.randomElement G = sampleWith randomIndex
+G` in `RandGT g m`. `randomIndex bound` reads the generator's range `[lo, hi]`,
+sets `width = hi + 1 - lo`, takes the least `k` with `bound ≤ width ^ k`, and
+reads `k` draws as the base-`width` digits of `x < span = width ^ k`. It
+accepts `x` below the largest multiple `limit` of `bound` that is at most
+`span` and returns `x % bound`. Otherwise it tries again, up to 128 attempts,
+and then returns index zero. If the generator's draws are independent and
+uniform on its range, each attempt accepts with probability above one half,
+an accepted index is exactly uniform on `Fin bound`, and each index has
+probability within `2^-128` of `1 / bound`. The attempt limit keeps the
+definition total for every monad and every generator, uniform or not. A range
+with fewer than two values gives index zero without a draw. The instance must
+not use Mathlib's `randFin` or Lean's `randNat`, because they reduce one draw
+modulo the bound, which is biased whenever the bound does not divide the
+generator's range.
 
 Element enumeration uses the orbit-choice bijection, not a second closure
 algorithm, and sorts image arrays lexicographically for the public result.
@@ -1215,8 +1227,7 @@ Implement in this order:
    and the membership/cardinality theorems.
 4. `Build.lean`: deterministic construction and its acceptance theorem.
    `Subgroup.lean`, `Coset.lean` and `Rank.lean`: basic subgroup operations,
-   cosets, elementary predicates, rank/unrank, supplied-index sampling and
-   uniform sampling in `IO`.
+   cosets, elementary predicates, rank/unrank and supplied-index sampling.
 5. `Action.lean`: proof-bearing finite actions, generic orbits and Schreier
    stabilizers, induced images and kernels.
 6. `Search.lean`: complete backtracking and checkers for set transporters,
