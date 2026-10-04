@@ -2360,7 +2360,8 @@ example : ∀ x : ℝ, x ^ 2 + 2 + Real.sin 1 > 0 := by rcf
 example : ∃ x : ℝ,
     x = Real.sin 1 ∧ -2 < x ∧ x < 2 := by rcf
 
-example : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 + Real.sin 1 > 0 := by rcf
+example : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt 2 + Real.sin 1 > 0 := by rcf
 example : ∀ x : ℝ,
     x ^ 2 + 1 / (Real.sqrt 2 + Real.sin 1) > 0 := by rcf
 ```
