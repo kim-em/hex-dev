@@ -84,7 +84,8 @@ proof declarations for the fixed fixture. Its window payload contains 194
 distinct expressions, and the whole proof has three versus seven distinct
 `And.intro` applications. The other three solver pairs have equal structural
 counts. The precision probes have 15,044 versus 14,833 distinct expressions.
-This traversal visits each structurally equal expression once and follows only
+This traversal uses Lean’s expression equality (alpha equivalence, ignoring
+binder annotations), visits each equal expression once, and follows only
 the probe's own module declarations; imported bodies remain leaves.
 
 A second [expanded-reference audit](data/hexrcf-window-signs/82c93dac9/audit.json)

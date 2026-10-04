@@ -1,7 +1,7 @@
 {
   "schema": "hex-rcf-window-structure-v1",
   "source": "64f5d309f0a88ead12aeb86f1c7edc2698ba213a",
-  "scope": "untimed current-source syntax audit; distinct structural expressions, same-module declaration bodies only; imported bodies are leaves",
+  "scope": "untimed current-source syntax audit; distinct expressions modulo Lean.Expr.eqv, same-module declaration bodies only; imported bodies are leaves",
   "audit_source_sha256": "e1da8a65654487dd203580d7e473d4b8484f074b72de059f131b5c8010e72822",
   "compiler_output_sha256": "6943419f8a64240f37821002ab9c5c13c19990f6eca2143b3ca64c7aa49d455f",
   "window_probe_sha256_before_build": {
@@ -207,5 +207,6 @@
       "unique_expressions": 14833,
       "window_regions": []
     }
-  ]
+  ],
+  "expression_equality": "Lean.Expr.eqv: alpha equivalence, ignoring binder annotations; not pointer identity"
 }
