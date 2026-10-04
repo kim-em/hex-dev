@@ -148,9 +148,11 @@ original context.
 one checked inclusion for each original owner into a shared target. Registration
 visits the owner's validated suffix in predecessor order, reuses cached checked
 inclusions for exact original predecessors, and validates each converted
-selected-root descriptor before checking existing generator values. The candidate
-search visits cached entries on demand, trying a generator and then its negative;
-a linear head supplies its coefficient-field value first. Constraint checks stop
+selected-root descriptor before checking existing generator values. Its derivative
+and endpoint queries are prepared once. The candidate search visits cached
+entries on demand, trying the image of a generator and then its negative;
+these images include previously reused values, and structurally repeated
+candidates are skipped. A linear head supplies its coefficient-field value first. Constraint checks stop
 at the first mismatching sign, testing the head before derivative signs and strict
 finite bounds. A successful full check retains the exact target context and
 registers the source child through polynomial evaluation at that value. Otherwise
