@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexSturmMathlib
+public import HexSturmMathlib.Tests.Reduced
 public import HexRealRootsMathlib.TarskiTests
 
 public section

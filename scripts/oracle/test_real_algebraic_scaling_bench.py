@@ -29,7 +29,7 @@ class Scaling(unittest.TestCase):
         for factory in (bench.Flint,bench.Z3):
             endpoint=factory('add',4)
             try:
-                endpoint.expected=(endpoint.oracle.number(0) if factory is bench.Flint else endpoint.num(0))
+                endpoint.two=(endpoint.oracle.number(3) if factory is bench.Flint else endpoint.num(3))
                 self.assertFalse(endpoint.run())
             finally:
                 endpoint.close()

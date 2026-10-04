@@ -3,11 +3,16 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSturmMathlib
-import HexSturmMathlib.RealClosed
+module
+
+public import HexSturmMathlib
+public import HexRealRootsMathlib.RealClosed
+
+public section
 
 namespace HexSturmMathlib.Tests.Reduced
 open Hex
+open scoped Classical
 
 /-- Ordinary umbrella imports expose reduced-query correspondence, including
 invalid domains; this example uses the identity real-closed interpretation. -/

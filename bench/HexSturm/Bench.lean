@@ -524,13 +524,6 @@ setup_benchmark runRationalHigh m => m ^ 2
     signalFloorMultiplier := 1
     maxSecondsPerCall := 120
   }
--- Mode 1: the same fixed quadratic head and X^m+1 input. Remainder-only
--- long division makes O(m) big-by-small scalar steps whose numerators grow
--- to O(m) bits; denominators stay one. These copies/shifts give Θ(m²) bit
--- work. Its mutable array contains the input's O(m) word-size coefficients
--- and at most a fixed quadratic window of growing coefficients, rather
--- than the Θ(m²)-bit literal quotient. The remaining Tarski chain is fixed
--- degree; its O(m)-bit coefficients add only O(m) bit work.
 -- Cost model: the original rational query retains Θ(m²) bits of quotient
 -- coefficients and performs Θ(m²) big-by-small bit work on this sparse
 -- fixed-degree-head family. Value-only preparation omits integer certificates.
@@ -546,6 +539,13 @@ setup_benchmark runRationalValue degree => degree ^ 2
     maxSecondsPerCall := 120
   }
 
+-- Mode 1: the same fixed quadratic head and X^m+1 input. Remainder-only
+-- long division makes O(m) big-by-small scalar steps whose numerators grow
+-- to O(m) bits; denominators stay one. These copies/shifts give Θ(m²) bit
+-- work. Its mutable array contains the input's O(m) word-size coefficients
+-- and at most a fixed quadratic window of growing coefficients, rather
+-- than the Θ(m²)-bit literal quotient. The remaining Tarski chain is fixed
+-- degree; its O(m)-bit coefficients add only O(m) bit work.
 -- Cost model: remainder-only elimination performs Θ(m²) bit work on the
 -- growing coefficients, without retaining the Θ(m²)-bit quotient. The array
 -- has m+1 input slots and a fixed-degree active window.
