@@ -1,0 +1,9 @@
+Hex.SturmExternalBench.runZ3Common    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=bc94cd3-dirty, 2026-10-03T17:37:24Z, host=chungus2
+  repeat 0  449.261 µs  (×2^2, total 1.797 ms)
+  median: 449.261 µs    min: 449.261 µs    max: 449.261 µs
+  hash: all repeats agree
+  observed hash: 0x22b628d08b360001
+  expected hash: matches
+  peak RSS: 68_192 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-comparisons/Common-Z3-2-Z3.json

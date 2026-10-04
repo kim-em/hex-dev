@@ -2558,6 +2558,95 @@ allocation. Search exhaustion identifies the unresolved obligation rather
 than silently increasing bounds. A retry starts at the root and does not
 reuse a failed child independently of its random state and remaining budget.
 
+### Optional proof-producing fallback
+
+After ordinary `primality?` exhausts all its registered factor-construction
+routes, it may consult a separately versioned proof-producing extension.
+This does not change `PrimeCert`, `checkPrime`, ordinary `primality`,
+`norm_num`, integer factorization, explicit `factor :=`, or supplied `using`
+certificates. HexPrimality imports no downstream certificate library.
+
+`Hex.PrimalityTactic.SuggestionExtension` records ABI version 1 and the
+name of a meta definition at the shared `SuggestionProducer` type. The
+fixed discovery list contains only
+`Hex.ECPP.Auto.suggestionExtension`. Adding or reordering entries requires
+a HexPrimality release. Validate a present registration's type, version,
+producer declaration and producer type before invocation; a malformed
+registration fails with its declaration name. Absent registrations add no
+search, proof construction, or replay cost. Discovery is lazy: return the
+first construction success and its existing exact suggestion unchanged.
+
+The public meta ABI is:
+
+```lean
+meta structure SuggestionRequest where
+  subject : Nat
+  expression : Lean.Expr
+  predicate : Lean.Name
+  constructionLimit : Nat
+  constructionAttempts : Nat
+  unresolved : Nat
+
+meta inductive SuggestionResult where
+  | declined (diagnostic : String)
+  | exhausted (diagnostic : String)
+  | proposed (replacement : Lean.TSyntax `tactic)
+
+meta abbrev SuggestionProducer :=
+  SuggestionRequest → Lean.MetaM SuggestionResult
+```
+
+Require the producer to be a public meta definition of this exact type. Its
+meta closure only proposes bounded syntax; this differs from construction's
+ordinary `FactorSearch` definition because the new boundary performs no pure
+factor computation and exports no new checker instruction.
+
+Invoke this boundary at most once per present registration when construction's
+stop is `exhausted`, the original construction limit is nonzero, and the syntax
+is ordinary `primality?`, including its `pMinusOneStage2` option. This condition
+is not `Construction.retryable`: spending the entire Pocklington allowance
+must still permit the separately allocated ECPP route. A composite verdict,
+explicit factor provider or supplied certificate never permits the fallback.
+
+The caller saves elaborator state before invoking a producer and restores it
+on decline, exhaustion or error, including auxiliary declarations. Resource
+usage is not refunded by restoring state. The caller combines the original
+construction diagnostic with a present producer's decline/exhaustion message;
+neither response establishes compositeness. Lean interruption, malformed
+registration, failed reification/preflight or failed kernel replay abort with
+phase context, without trying another producer or reporting bounded exhaustion.
+
+A proposal is accepted by elaborating the exact emitted tactic against a fresh
+goal of the original type. Reject remaining goals, free/metavariables and
+unfinished proofs. Synchronously add one auxiliary theorem using `mkAuxLemma`
+with asynchronous elaboration disabled, retaining caller resource options and
+cancellation, then assign its constant to the original goal. This is the same
+kernel acceptance boundary used by `decide +kernel`. Neither producer nor
+caller may use `Kernel.check`/`checkWithKernel`: those debug interfaces lack
+resource/cancellation parameters and would duplicate expensive replay.
+The enclosing declaration references the checked constant, so it does not
+repeat the full certificate reduction. Method-specific certificate acceptance
+uses that method's soundness theorem, never an unchecked `PrimeCert` opcode.
+
+Construction and ECPP allocations form a finite portfolio, not one interchangeable
+attempt count. The existing `(maxAttempts := ...)` is the total shared limit
+for Pocklington construction including all factor-provider retries. It neither
+resets nor purchases ECPP factor work. The optional ECPP allocation is separately
+specified in its module contract, and diagnostics report both ledgers. Every
+ECPP recursion, retry, failed factor package and memo reuse obeys one shared
+ECPP allocation, with no reset after failure. There is no automatic second seed
+or enlargement of either allocation. Do not increase, reset or disable caller
+heartbeats. Check Lean's system/cancellation state before search and between
+search, conversion, exact syntax preflight and final kernel acceptance.
+Compiled pure search has no cooperative polling within a call: bounded work
+runs to its next phase boundary, where interruption/heartbeat exhaustion is
+observed. State this limitation and retain phase heartbeat deltas in evidence.
+The ECPP replay contract separately bounds internal data elaboration recursion;
+final auxiliary-theorem acceptance uses the caller's recursion limit.
+
+The optional producer contract, allocation, import and evidence requirements
+are specified in [hex-ecpp-mathlib](../../HexECPPMathlib/SPEC/hex-ecpp-mathlib.md#automatic-native-fallback).
+
 Semantic search bounds and Lean's heartbeat limit are independent limits.
 Production tactics and providers must not raise or disable `maxHeartbeats`,
 reset its counter or initial baseline, or exclude search allocations from

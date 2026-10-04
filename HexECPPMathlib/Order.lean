@@ -10,10 +10,15 @@ public import HexECPP.Replay
 public import Mathlib.GroupTheory.OrderOfElement
 
 /-!
-# Exact prime point order
+# Point orders exclude small prime divisors
 
-A nonidentity point annihilated by a prime scalar has exactly that order. The
-order divides the cardinality of its finite group.
+If a nonidentity point in a finite group satisfies `q • Q = 0` for a prime
+`q`, its order is exactly `q`. Lagrange's theorem then makes `q` a divisor
+of the group size. For an elliptic curve reduced modulo a prime divisor
+`p` of the candidate `n`, this gives `q ≤ #E(𝔽_p)`.
+
+Hasse's bound and the certificate's strict size condition together rule out
+`p² ≤ n`. This is the contradiction needed to prove `n` prime.
 -/
 
 @[expose] public section

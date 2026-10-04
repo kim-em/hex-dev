@@ -4,11 +4,18 @@ Part of [hex](https://github.com/kim-em/hex-dev), a computer algebra library
 for Lean 4. The project aims for fast executable code, fully verified,
 built with spec-driven development.
 
-`HexECPP` provides arithmetic checking of elliptic-curve primality
-certificates, bounded PARI certificate conversion, and opt-in native CM
-production through 512 bits with an explicit finite policy. It depends on `HexArith` and `HexPrimality`.
-The [HexECPPMathlib companion](https://github.com/kim-em/hex-dev/tree/main/HexECPPMathlib)
-owns curve semantics, the Hasse bound, and the unconditional primality implication.
+Elliptic curve primality proving (ECPP) proves an integer prime using a point
+of sufficiently large prime order on an elliptic curve. `HexECPP` stores and
+checks the mathematical data for this argument, searches for certificates,
+and imports certificates supplied by PARI/GP. Its search partially factors
+proposed curve orders and recursively proves their auxiliary primes.
+
+This package provides computation without Mathlib. Import the
+[HexECPPMathlib companion](https://github.com/kim-em/hex-dev/tree/main/HexECPPMathlib)
+to turn accepted certificates into Lean proofs of `Nat.Prime n` using the
+proved Hasse bound. See the
+[manual](https://kim-em.github.io/hex-dev/HexECPP___-bounded-elliptic-curve-certificates/Introduction/)
+for the mathematical argument and proof workflows.
 
 # Quickstart
 
@@ -35,8 +42,9 @@ def certificate : Cert := .base (.small 17)
 
 # Functionality
 
-- `check` replays supplied inverse witnesses and the exact integer size bound.
-  `checkAt` also binds the certificate to its requested subject.
+- `check` verifies the curves, point multiplications, modular inverses and
+  auxiliary prime certificates. `checkAt n` also requires that the certificate
+  is for the integer `n`.
 - `parsePari`, `preflight`, `convert`, `convertText`, and `convertCounted`
   enforce explicit parsing, integer, row, scalar, inverse and endpoint allocations.
 - `proposeScalar` generates checked affine inverse transcripts.
@@ -53,7 +61,7 @@ def certificate : Cert := .base (.small 17)
 
 # Verification
 
-Arithmetic invariants and subject binding are proved in Lean. `convert_ok`
+The checker arithmetic and its check of the intended integer are proved in Lean. `convert_ok`
 and `produce_ok` establish that successful conversion and production pass
 this checker. The checker never searches for inverses or calls an oracle.
 Supplied-certificate replay has separate 512-bit conformance evidence.

@@ -12,10 +12,15 @@ public import Mathlib.Algebra.Field.ZMod
 public import Mathlib.Data.ZMod.Basic
 
 /-!
-# Reduction to prime fields
+# Interpreting certificate arithmetic over finite fields
 
-An accepted arithmetic step can be interpreted over every prime divisor of
-its candidate. These lemmas transport its modular residues into `ZMod p`.
+The integer `n` in a primality certificate need not yet be known prime.
+For each prime divisor `p` of `n`, verified modular inverses remain inverses
+in `ZMod p`, and the curve remains nonsingular. We interpret the supplied
+coordinates as Mathlib elliptic curve points and prove that every accepted
+addition agrees with the group law. A finite starting point stays different
+from the identity after reduction. These facts justify the point-order
+argument used to prove `n` prime.
 -/
 
 @[expose] public section

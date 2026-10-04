@@ -18,6 +18,31 @@ from `HexRealAlgebraicMathlib/Tests.lean`. Phase eligibility follows the core's
 direct dependencies and attestation in `libraries.yml`; it does not require
 a separate timing report for this theorem-only companion.
 
+## Headline correctness theorem
+
+`Hex.RealAlgebraicPoly.roots_spec` in `Roots.lean` states the end-to-end
+postcondition of the implemented real polynomial root driver. Its clauses are:
+
+- The universal root set is returned exactly for the zero polynomial.
+- Semantic membership is equivalent to polynomial evaluation being zero for
+  every real value, including values not supplied as executable inputs.
+- Executable membership agrees with evaluation at a real algebraic number.
+- The finite root view is strictly increasing, hence has no duplicate values.
+- Each finite entry carries its exact positive polynomial root multiplicity.
+
+The existing completeness, zero-polynomial, sorting, membership and multiplicity
+theorems compose into this result. `HexRealAlgebraicMathlibTests` checks its
+ordinary-kernel axiom dependencies. Scalar arithmetic/order laws and dictionary
+coherence, implemented `compare_eq`, checked constructors, rational recognition,
+rounding, approximation, square roots, Repr and integer-root correspondence
+remain independently required public contracts: the root driver does not
+expose those operations. Their named correspondence theorems and axiom guards
+remain part of the readiness audit. The excluded forward comparison extension
+below is not included in this headline or the shipped attestation.
+
+This theorem builds in the ordinary companion target; the pair still requires
+the core's Phase-4 evidence before either library can record Phase 4.
+
 ## Array and comparison correspondence
 
 This section specifies the forward comparison-strategy extension owned by

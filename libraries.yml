@@ -1567,11 +1567,20 @@ libraries:
     done_through: 3
     status: active
     phase4:
+      comparators:
+        - tool: "FLINT real-qqbar signed-root sums"
+          class: informational
+          rationale: "Pinned FLINT root production and exact evaluation return the complete finite-interval query on fixed T_8 inputs. Prepared coefficient contexts, persistent JSON transport and root-value cleanup are recorded; this is not a literal-certificate or isolated-root-production comparison."
+        - tool: "Z3 RCF signed-root sums"
+          class: informational
+          rationale: "Pinned Z3 RCF root production and exact evaluation return the complete finite-interval query on the same fixed inputs. Backend contexts may retain internal caches; no roots are cached by the driver and no Lean proof surface or speed target is claimed."
       input_families:
         - name: head-degree
           description: Chebyshev heads T_n with query 1 on (-2,2), measuring the normal signed chain and endpoint passes as head degree grows.
         - name: query-degree
           description: Fixed head x²−2 with query x^m+1 on (-2,2), measuring initial reduction and replay as query degree grows.
+        - name: short-chain-degree
+          description: Heads 2X^n−1 with query 1 on (-1,1), growing degree with a three-entry bounded-word chain; covers domain preparation, full/prepared query/count, certificates, literal/cached replay, clearing and embedding.
   HexSignDet:
     deps: [HexSturm, HexPoly, HexMatrix, HexRowReduce, HexRank]
     mathlib: false

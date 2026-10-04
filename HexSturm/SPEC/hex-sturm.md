@@ -46,6 +46,16 @@ construction and isolation in `hex-real-closure`; coefficient orders and
 approximation protocols in `hex-ordered-fn`. There is no root-search,
 Archimedean separation, CAD, coverings, or tactic completeness claim here.
 
+## Headline correctness theorem
+
+The bridge headline is `HexSturmMathlib.query_iff`: an ordinary query returns
+an integer exactly when its domain holds and that integer is the signed sum
+over the distinct roots in the open interval. Its
+[companion contract](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md#headline-correctness-theorem)
+states the lawful-interpretation hypotheses, the independently required
+prepared/count/replay/transport contracts, and the development-adapter boundary.
+The theorem's availability does not waive the remaining Phase-4 requirements.
+
 ## Coefficients and evidence
 
 Use the shared [execution contract](../../SPEC/real-closure-execution.md).
@@ -336,8 +346,12 @@ remain their owners' obligations.
 
 The registered input families are `head-degree` (Chebyshev heads `T_n` with
 query `1` on `(-2,2)`) and `query-degree` (fixed head `x²-2`, query `x^m+1`
-on `(-2,2)`). They exercise normal degree descent and initial reduction,
-respectively; the additional sweep dimensions below remain required.
+on `(-2,2)`), and `short-chain-degree` (`2X^n−1`, query one on `(-1,1)`,
+with a three-entry chain). They separate normal descent, initial reduction and
+growing degree with a fixed short chain; the additional sweep dimensions below
+remain required. The short-chain frontend registrations have independently
+derived linear bounded-word models and retained passes; they do not admit the
+unresolved long-chain or growing-bit candidates.
 
 Phase 4 measures domain/squarefree checks, initial reduction, subsequent chain
 production, endpoint evaluation, coefficient signs and literal replay
