@@ -21,6 +21,7 @@ public import HexRealClosure.BaseCodec
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
 public import HexRealClosure.BaseInclusion
+public import HexRealClosure.BaseEmbedding
 public import HexRealClosure.SignCodec
 public import HexRealClosure.SignFacts
 public import HexRealClosure.SignRequests
@@ -38,6 +39,7 @@ public import HexRealClosure.TowerPresentation
 public import HexRealClosure.TowerEnlarge
 public import HexRealClosure.TowerEnlargement
 public import HexRealClosure.LiveContext
+public import HexRealClosure.SharedPresentation
 public import HexRealClosure.TowerRoots
 public import HexRealClosure.RootTransport
 public import HexRealClosure.RootCollection

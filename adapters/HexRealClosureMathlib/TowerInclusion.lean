@@ -24,6 +24,16 @@ structure Model (inclusion : Inclusion source destination)
 
 namespace Model
 
+/-- Package a proved value-preserving native inclusion with the specified
+source and target interpretations. -/
+noncomputable def ofValues (inclusion : Inclusion source destination)
+    (original : Tower.Model source K) (target : Tower.Model destination K)
+    (preserved : ∀ a, target.value (inclusion.value a) = original.value a) :
+    Inclusion.Model inclusion original := by
+  rcases inclusion with ⟨conversion, same⟩
+  cases same
+  exact ⟨⟨target, preserved⟩⟩
+
 variable {inclusion : Inclusion source destination} {original : Tower.Model source K}
 variable (model : Model inclusion original)
 include model
@@ -36,6 +46,23 @@ noncomputable def target : Tower.Model destination K :=
 theorem target_heq : HEq model.target model.conversion.target := by
   unfold target
   exact model.conversion.target.cast_heq inclusion.context_eq
+
+omit model in
+private theorem ofValues_target_proof (inclusion : Inclusion source destination)
+    (original : Tower.Model source K) (target : Tower.Model destination K)
+    (preserved : ∀ a, target.value (inclusion.value a) = original.value a) :
+    (ofValues inclusion original target preserved).target = target := by
+  rcases inclusion with ⟨conversion, same⟩
+  cases same
+  rfl
+
+omit model in
+/-- The inclusion package retains the supplied target interpretation. -/
+theorem ofValues_target (inclusion : Inclusion source destination)
+    (original : Tower.Model source K) (target : Tower.Model destination K)
+    (preserved : ∀ a, target.value (inclusion.value a) = original.value a) :
+    (ofValues inclusion original target preserved).target = target :=
+  ofValues_target_proof inclusion original target preserved
 
 /-- Carry a checked inclusion's interpretation into a larger ordered field. -/
 noncomputable def map {L : Type v} [Field L] [LinearOrder L]
