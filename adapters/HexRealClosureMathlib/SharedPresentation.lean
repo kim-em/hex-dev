@@ -40,6 +40,17 @@ private theorem Origin.presentation_denote {context : Context registry}
     rw [aligned]
     rfl
 
+/-- The target presentation interprets every actual computed shared value. -/
+theorem Shared.Model.targetPresentation_denote {owners : List (Context registry)}
+    {shared : Shared base owners} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) R}
+    (model : Shared.Model shared following reference) (a : shared.input.context.Value) :
+    (shared.targetPresentation a).denote reference = model.target.value a := by
+  have produced := model.canonical
+  rw [Context.model?_origin] at produced
+  exact shared.input.context.origin.presentation_denote shared.base_eq following reference
+    model.target produced a
+
 /-- A gathered owner's finite presentation has exactly its original value in
 all canonical selected-root extensions of the declared base interpretation. -/
 theorem Shared.Model.presentation_denote {owners : List (Context registry)}
@@ -48,17 +59,35 @@ theorem Shared.Model.presentation_denote {owners : List (Context registry)}
     (model : Shared.Model shared following reference)
     (index : Fin owners.length) (a : (owners[index]).Value) :
     (shared.presentation index a).denote reference = (model.owners.get index).1.value a := by
-  have produced := model.canonical
-  rw [Context.model?_origin] at produced
-  exact (shared.input.context.origin.presentation_denote shared.base_eq following reference
-    model.target produced (shared.value index a)).trans (model.value index a)
+  exact (model.targetPresentation_denote (shared.value index a)).trans (model.value index a)
+
+/-- Map any actual computed shared value to the prescribed algebraic union. -/
+@[expose] noncomputable def Shared.targetToUnion {owners : List (Context registry)}
+    (shared : Shared base owners) (reference : Tower.Model (Context.ofBase base) R)
+    (a : shared.input.context.Value) : Union.Carrier reference.field R :=
+  (shared.targetPresentation a).toUnion reference
+
+/-- The target union map uses the canonical selected-root interpretation. -/
+theorem Shared.Model.targetToUnion_value {owners : List (Context registry)}
+    {shared : Shared base owners} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) R}
+    (model : Shared.Model shared following reference) (a : shared.input.context.Value) :
+    (shared.targetToUnion reference a : R) = model.target.value a :=
+  model.targetPresentation_denote a
+
+/-- The target map is the prescribed algebraic equivalence on native classes. -/
+theorem Shared.algEquiv_target {owners : List (Context registry)}
+    (shared : Shared base owners) (reference : Tower.Model (Context.ofBase base) R)
+    (a : shared.input.context.Value) :
+    Presentation.algEquiv reference ((shared.targetPresentation a).toValue reference) =
+      shared.targetToUnion reference a := rfl
 
 /-- A gathered value enters the prescribed algebraic union through its actual
 finite native presentation, retaining its selected embedding. -/
 @[expose] noncomputable def Shared.Model.toUnion {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
-    (model : Shared.Model shared following reference)
+    (_model : Shared.Model shared following reference)
     (index : Fin owners.length) (a : (owners[index]).Value) : Union.Carrier reference.field R :=
   (shared.presentation index a).toUnion reference
 
@@ -70,6 +99,132 @@ theorem Shared.Model.toUnion_value {owners : List (Context registry)}
     (index : Fin owners.length) (a : (owners[index]).Value) :
     (model.toUnion index a : R) = (model.owners.get index).1.value a :=
   model.presentation_denote index a
+
+/-- The owner map is the algebraic equivalence on its actual native class. -/
+theorem Shared.Model.algEquiv_toValue {owners : List (Context registry)}
+    {shared : Shared base owners} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) R}
+    (model : Shared.Model shared following reference)
+    (index : Fin owners.length) (a : (owners[index]).Value) :
+    Presentation.algEquiv reference ((shared.presentation index a).toValue reference) =
+      model.toUnion index a := rfl
+
+private theorem factory_value_cast {left right : Context registry}
+    (same : left = right) (following : base.Realization)
+    (reference : Tower.Model (Context.ofBase base) R)
+    (original : Tower.Model left R) (other : Tower.Model right R)
+    (first : left.model? following reference = some original)
+    (second : right.model? following reference = some other) (a : left.Value) :
+    original.value a = other.value (_root_.cast (congrArg Context.Value same) a) := by
+  cases same
+  have aligned : original = other := Option.some.inj (first.symm.trans second)
+  cases aligned
+  rfl
+
+/-- An original value has the same union image in any two successful gathers,
+even when it appears at different positions and the target towers differ. -/
+theorem Shared.Model.toUnion_coherent
+    {firstOwners secondOwners : List (Context registry)}
+    {first : Shared base firstOwners} {second : Shared base secondOwners}
+    {following : base.Realization} {reference : Tower.Model (Context.ofBase base) R}
+    (firstModel : Shared.Model first following reference)
+    (secondModel : Shared.Model second following reference)
+    (i : Fin firstOwners.length) (j : Fin secondOwners.length)
+    (same : firstOwners[i] = secondOwners[j]) (a : (firstOwners[i]).Value) :
+    firstModel.toUnion i a =
+      secondModel.toUnion j (_root_.cast (congrArg Context.Value same) a) := by
+  apply Subtype.ext
+  rw [firstModel.toUnion_value, secondModel.toUnion_value]
+  exact factory_value_cast same following reference (firstModel.owners.get i).1
+    (secondModel.owners.get j).1 (firstModel.canonicalOwners i)
+    (secondModel.canonicalOwners j) a
+
+section TargetOperations
+variable {owners : List (Context registry)} {shared : Shared base owners}
+variable {following : base.Realization} {reference : Tower.Model (Context.ofBase base) R}
+variable (model : Shared.Model shared following reference)
+include model
+
+/-- The union map preserves target add after values from different owners are combined. -/
+theorem Shared.Model.targetToUnion_add (a b : shared.input.context.Value) :
+    shared.targetToUnion reference (a + b) =
+      shared.targetToUnion reference a + shared.targetToUnion reference b := by
+  apply Subtype.ext
+  change (shared.targetToUnion reference (a + b) : R) =
+    (shared.targetToUnion reference a : R) + (shared.targetToUnion reference b : R)
+  rw [model.targetToUnion_value, model.targetToUnion_value, model.targetToUnion_value]
+  exact model.target.add a b
+
+/-- The union map preserves target sub after values from different owners are combined. -/
+theorem Shared.Model.targetToUnion_sub (a b : shared.input.context.Value) :
+    shared.targetToUnion reference (a - b) =
+      shared.targetToUnion reference a - shared.targetToUnion reference b := by
+  apply Subtype.ext
+  change (shared.targetToUnion reference (a - b) : R) =
+    (shared.targetToUnion reference a : R) - (shared.targetToUnion reference b : R)
+  rw [model.targetToUnion_value, model.targetToUnion_value, model.targetToUnion_value]
+  exact model.target.sub a b
+
+/-- The union map preserves target mul after values from different owners are combined. -/
+theorem Shared.Model.targetToUnion_mul (a b : shared.input.context.Value) :
+    shared.targetToUnion reference (a * b) =
+      shared.targetToUnion reference a * shared.targetToUnion reference b := by
+  apply Subtype.ext
+  change (shared.targetToUnion reference (a * b) : R) =
+    (shared.targetToUnion reference a : R) * (shared.targetToUnion reference b : R)
+  rw [model.targetToUnion_value, model.targetToUnion_value, model.targetToUnion_value]
+  exact model.target.mul a b
+
+/-- The union map preserves target div after values from different owners are combined. -/
+theorem Shared.Model.targetToUnion_div (a b : shared.input.context.Value) :
+    shared.targetToUnion reference (a / b) =
+      shared.targetToUnion reference a / shared.targetToUnion reference b := by
+  apply Subtype.ext
+  change (shared.targetToUnion reference (a / b) : R) =
+    (shared.targetToUnion reference a : R) / (shared.targetToUnion reference b : R)
+  rw [model.targetToUnion_value, model.targetToUnion_value, model.targetToUnion_value]
+  exact model.target.div a b
+
+/-- The union map preserves target neg. -/
+theorem Shared.Model.targetToUnion_neg (a : shared.input.context.Value) :
+    shared.targetToUnion reference (-a) = - (shared.targetToUnion reference a) := by
+  apply Subtype.ext
+  change (shared.targetToUnion reference (-a) : R) = - (shared.targetToUnion reference a : R)
+  rw [model.targetToUnion_value, model.targetToUnion_value]
+  exact model.target.neg a
+
+/-- The union map preserves target inv. -/
+theorem Shared.Model.targetToUnion_inv (a : shared.input.context.Value) :
+    shared.targetToUnion reference (a⁻¹) = (shared.targetToUnion reference a)⁻¹ := by
+  apply Subtype.ext
+  change (shared.targetToUnion reference (a⁻¹) : R) = (shared.targetToUnion reference a : R)⁻¹
+  rw [model.targetToUnion_value, model.targetToUnion_value]
+  exact model.target.inv a
+
+/-- Target comparison agrees with the order in the algebraic union. -/
+theorem Shared.Model.targetToUnion_compare (a b : shared.input.context.Value) :
+    shared.input.context.compare a b =
+      if shared.targetToUnion reference a < shared.targetToUnion reference b then Ordering.lt
+      else if shared.targetToUnion reference a = shared.targetToUnion reference b
+        then Ordering.eq else Ordering.gt := by
+  rw [model.target.compare_spec]
+  have equal : shared.targetToUnion reference a = shared.targetToUnion reference b ↔
+      (shared.targetToUnion reference a : R) = (shared.targetToUnion reference b : R) :=
+    Subtype.ext_iff
+  change _ = if (shared.targetToUnion reference a : R) <
+      (shared.targetToUnion reference b : R) then Ordering.lt
+    else if shared.targetToUnion reference a = shared.targetToUnion reference b
+      then Ordering.eq else Ordering.gt
+  simp only [equal, model.targetToUnion_value]
+
+/-- Target signs agree with the signs of the same union values. -/
+theorem Shared.Model.targetToUnion_sign (a : shared.input.context.Value) :
+    shared.input.context.sign a = (SignType.sign (shared.targetToUnion reference a) : Int) := by
+  rw [model.target.sign]
+  change _ = (SignType.sign (shared.targetToUnion reference a : R) : Int)
+  rw [model.targetToUnion_value]
+
+end TargetOperations
 
 section Operations
 variable {owners : List (Context registry)} {shared : Shared base owners}
@@ -164,18 +319,26 @@ theorem Shared.Model.toUnion_compare (a b : (owners[index]).Value) :
 
 end Operations
 
+/-- The actual root model extends any factory-derived compatible parent. -/
+theorem Root.model?_ofModel {parent : Context registry} (following : base.Realization)
+    (reference : Tower.Model (Context.ofBase base) R) (root : Root parent)
+    (original : Tower.Model parent R)
+    (produced : parent.model? following reference = some original) :
+    root.context.model? following reference = some (root.model original) := by
+  cases root with
+  | point value => exact produced
+  | selected descriptor extension built =>
+    cases built
+    change (parent.adjoin descriptor).context.model? following reference =
+      some (original.adjoin descriptor)
+    rw [Context.model?_adjoin, produced]
+    rfl
+
 /-- Native root contexts use their canonical owner-factory interpretation. -/
 theorem Root.model?_factory (following : base.Realization)
     (reference : Tower.Model (Context.ofBase base) R) (root : Root (Context.ofBase base)) :
     root.context.model? following reference = some (root.model reference) := by
-  cases root with
-  | point value => exact Context.model?_base following reference
-  | selected descriptor extension built =>
-    cases built
-    change ((Context.ofBase base).adjoin descriptor).context.model? following reference =
-      some (reference.adjoin descriptor)
-    rw [Context.model?_adjoin, Context.model?_base]
-    rfl
+  exact root.model?_ofModel following reference reference (Context.model?_base following reference)
 
 /-- Every element of the prescribed union is represented by an actual native
 root producer entry and by its checked inclusion into an actual shared target. -/
@@ -217,3 +380,11 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Shared.Model.toUnion_compare' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Shared.Model.toUnion_compare
+
+/-- info: 'Hex.RealClosure.Tower.Shared.Model.targetToUnion_inv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.Model.targetToUnion_inv
+
+/-- info: 'Hex.RealClosure.Tower.Shared.Model.toUnion_coherent' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.Model.toUnion_coherent

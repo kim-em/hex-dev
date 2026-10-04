@@ -28,7 +28,9 @@ example (parent : Root initial) (child : Root parent.context) :
         ∃ firstModel : Shared.Model first provider.realization provider.towerModel,
           ∃ secondModel : Shared.Model second provider.realization provider.towerModel,
             (firstModel.toUnion 0 child.value : ℝ) =
-              (secondModel.toUnion 1 child.value : ℝ) := by
+              (secondModel.toUnion 1 child.value : ℝ) ∧
+            firstModel.toUnion 1 parent.value =
+              firstModel.toUnion 0 (child.embed parent.value) := by
   have parentBase : parent.context.origin.base = base :=
     parent.origin_base.trans (Context.ofBase_origin_base base)
   have childBase : child.context.origin.base = base := child.origin_base.trans parentBase
@@ -54,10 +56,17 @@ example (parent : Root initial) (child : Root parent.context) :
         · exact compatible _ parentBase
         · exact compatible _ childBase)
   refine ⟨first, firstProduced, second, secondProduced, firstModel, secondModel, ?_⟩
-  have aligned := Option.some.inj ((firstModel.canonicalOwners 0).symm.trans
-    (secondModel.canonicalOwners 1))
-  exact (firstModel.toUnion_value 0 child.value).trans
-    ((congrArg (fun m : Tower.Model child.context ℝ => m.value child.value) aligned).trans
-      (secondModel.toUnion_value 1 child.value).symm)
+  constructor
+  · exact congrArg Subtype.val
+      (firstModel.toUnion_coherent secondModel 0 1 rfl child.value)
+  · apply Subtype.ext
+    have produced := child.model?_ofModel provider.realization provider.towerModel
+      (firstModel.owners.get 1).1 (firstModel.canonicalOwners 1)
+    have aligned := Option.some.inj (produced.symm.trans (firstModel.canonicalOwners 0))
+    have childValue := congrArg
+      (fun m : Tower.Model child.context ℝ => m.value (child.embed parent.value)) aligned
+    exact (firstModel.toUnion_value 1 parent.value).trans
+      ((child.embed_value (firstModel.owners.get 1).1 parent.value).symm.trans
+        (childValue.trans (firstModel.toUnion_value 0 (child.embed parent.value)).symm))
 
 end Hex.RealClosure.Tower.SharedPresentationTests

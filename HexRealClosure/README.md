@@ -1582,6 +1582,13 @@ finite native presentation over the shared collection's declared base. The
 canonical original owner's value. `Shared.Model.toUnion` then enters that
 value into the prescribed relative algebraic union, preserving canonical zero,
 one, arithmetic, total inversion, mathematical equality and comparison.
+`Shared.targetPresentation` and `Shared.targetToUnion` also cover arbitrary
+computed target values, including arithmetic combining different owners. Their
+operation and sign theorems use the fixed canonical target interpretation.
+`Shared.Model.toUnion_coherent` identifies an original value across differently
+ordered gatherings, and `algEquiv_toValue` connects its map to the mathematical
+presentation quotient. A Liouville-prefix example combines nested rational-root
+owners after proper real-prefix enlargement.
 `Shared.union_coverage` proves that every element of that union has an actual
 native root-producer entry and a successful shared gathering whose inclusion
 represents it. Together with `Presentation.algEquiv` and `Presentation.realClosed`,
