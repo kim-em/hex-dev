@@ -1,3 +1,8 @@
 {
-  "bench/HexRealClosure/Bench.lean": "3b6052966fc7fbecbf6b3e108f328ef98f7428623d80aaa415a71c51261c27f4"
+  "bench/HexRealClosure/Bench.lean": "3b6052966fc7fbecbf6b3e108f328ef98f7428623d80aaa415a71c51261c27f4",
+  "HexRealClosure/TowerCache.lean": "6d39d97b9887b6611a86a2c2b675b410c7104ee8823308b3cdb7de00b08c7780",
+  "HexRealClosure/TowerReuse.lean": "a38181ab5aefc75d9aa8559272681d2a99cd2bdb14914a1e6b7c3903e1962088",
+  "HexRealClosure/LiveContext.lean": "b55113368cac2073321265bb3aee10ca2c2cc5daf511d131922ea2f5a9ee086e",
+  "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+  "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
 }

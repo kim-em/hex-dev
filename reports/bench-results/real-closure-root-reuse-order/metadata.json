@@ -106,5 +106,7 @@
   "head": "358a99fe1d431284bdbead812761bee26c53d55c",
   "dirty": " M HexRealClosure/LiveContext.lean\n M HexRealClosure/LiveContextTests.lean\n M HexRealClosure/README.md\n M HexRealClosure/TowerCache.lean\n M HexRealClosure/TowerReuse.lean\n M SPEC/Libraries/hex-real-closure.md\n M adapters/HexRealClosureMathlib/CacheGather.lean\n M adapters/HexRealClosureMathlib/CacheModels.lean\n M bench/HexRealClosure/Bench.lean\n",
   "schedule": "trial-major adjacent AB/BA; head/bounds; no completed sample discarded",
-  "repeats": 3
+  "repeats": 3,
+  "native_source_commit": "915d37f6e88852bef34ce0b6aea3521ac7e603ad",
+  "source_note": "The cached native sources were committed unchanged immediately after the measurement. Bench.lean.txt captures the then-uncommitted experimental driver; native source and pinned dependencies are captured alongside it."
 }
