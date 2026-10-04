@@ -54,6 +54,16 @@ decoder preserve the entire graph under these structural conditions and the
 caller's lexical byte/depth/digit limits. Arithmetic evidence may be false;
 independent replay remains separate.
 
+Finite predecessor readers use `ValueCodec.Covers` instead of a global
+`Lawful` assumption. `Codec.Coefficients.graph` collects every stored
+coefficient in wire order, including scales, quotients, endpoints and
+unreachable entries. `Codec.graphContexts` collects the corresponding literal
+contexts. `read_graph_covered` and `decode_graph_covered` prove exact structured
+and byte roundtrips from coverage of these finite lists, with the same shape,
+binding, reference and lexical checks as the complete-reader laws. These
+collectors perform no arithmetic. Signs needed by intermediate arithmetic
+remain a separate requirement from decoding stored literals.
+
 The coefficient/context `ValueCodec` targets `Codec.Json.Value`, the shared
 integer-only JSON tree. `ValueCodec.decode_encode` lifts its literal codec law
 through the actual UTF-8 printer/parser when the printed bytes pass the
