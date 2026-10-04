@@ -800,6 +800,7 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
         if mf == clone / "lake-manifest.json":
             changed += _synthesize_manifest_packages(
                 entry, clone, doc, synced, dep_owner, version, catalog, notes)
+            changed += _reconcile_hex_packages(entry, doc, catalog, notes)
             # The Lake file is generated, so which packages it requires
             # directly can change; the lockfile's `inherited` flags follow it.
             direct = _direct_requires(clone)
@@ -811,6 +812,60 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
         if changed:
             mf.write_text(_json.dumps(doc, indent=2) + "\n", encoding="utf-8")
     return notes
+
+
+HEX_PACKAGE_URL = re.compile(r"github\.com/(?:kim-em|leanprover)/hex(?:-[A-Za-z0-9-]+)?(?:\.git)?$")
+
+
+def _reconcile_hex_packages(entry: dict, doc: dict,
+                            catalog: dict[str, dict[str, str]] | None,
+                            notes: list[str]) -> int:
+    """Make the lockfile's Hex packages exactly the entry's published closure.
+
+    The generated Lake file can stop requiring a library, and a dependency can
+    change Lake file format; the lockfile follows, so Lake is never handed a
+    package set or `configFile` that disagrees with the Lake files it reads.
+    """
+    if catalog is None:
+        catalog = _manifest_catalog()
+    wanted = {catalog[dep]["lib"]: dep for dep in entry.get("pins") or []
+              if dep in catalog and catalog[dep]["lib"]}
+    changed = 0
+    kept = []
+    for pkg in doc.get("packages", []):
+        if HEX_PACKAGE_URL.search(pkg.get("url") or ""):
+            name = pkg.get("name")
+            if name not in wanted:
+                notes.append(f"  manifest - {name} (no longer a dependency)")
+                changed += 1
+                continue
+            config = f"lakefile.{catalog[wanted[name]]['lakefile']}"
+            if pkg.get("configFile") != config:
+                pkg["configFile"] = config
+                changed += 1
+        kept.append(pkg)
+    doc["packages"] = kept
+    return changed
+
+
+def validate_manifest(entry: dict, clone: Path) -> None:
+    """Refuse to publish a lockfile that disagrees with the generated Lake file.
+
+    Every direct requirement must have a lockfile entry; a missing external one
+    (a mirror that newly needs Mathlib, say) cannot be synthesized without
+    Lake resolving its own dependencies, so it stops the sync instead.
+    """
+    path = clone / "lake-manifest.json"
+    if not path.is_file():
+        raise RuntimeError(f"{entry['repo']} has no lake-manifest.json")
+    present = {pkg.get("name") for pkg in
+               json.loads(path.read_text(encoding="utf-8")).get("packages", [])}
+    missing = sorted(_direct_requires(clone) - present)
+    if missing:
+        raise RuntimeError(
+            f"{entry['repo']}'s generated Lake file requires {', '.join(missing)}, "
+            "which its lake-manifest.json lacks; run `lake update` on the staged "
+            "repository and commit the resulting lockfile to the mirror first")
 
 
 def _direct_requires(clone: Path) -> set[str]:
@@ -1252,6 +1307,7 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
             print(line)
         for line in rewrite_manifest(entry, clone, synced, dep_owner, pins, version):
             print(line)
+        validate_manifest(entry, clone)
         if stage is not None:
             shutil.copytree(clone, stage / short,
                             ignore=shutil.ignore_patterns(".git"))

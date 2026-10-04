@@ -751,6 +751,7 @@ class SyncReleasedTests(unittest.TestCase):
         with (
             patch.object(sync_released, "clone_url", return_value=str(remote)),
             patch.object(sync_released, "write_lakefile", return_value=[]),
+            patch.object(sync_released, "validate_manifest"),
             patch.object(sync_released, "validate_ci_helpers"),
             patch.object(sync_released, "apply_paths", side_effect=apply),
             patch.object(sync_released, "rewrite_toolchains", return_value=[]),
@@ -1166,6 +1167,32 @@ class GeneratedLakefileTests(unittest.TestCase):
                 entry, self.ENTRIES, "v0.9.0", {}, {}, self.DEPS, self.SOURCE))
         self.assertEqual([lib["name"] for lib in document["lean_lib"]],
                          ["HexPlain", "HexBar"])
+
+    def test_lockfile_hex_packages_follow_the_published_closure(self) -> None:
+        doc = {"packages": [
+            {"name": "HexBar", "url": "https://github.com/leanprover/hex-bar.git",
+             "configFile": "lakefile.lean"},
+            {"name": "HexGone", "url": "https://github.com/leanprover/hex-gone.git",
+             "configFile": "lakefile.toml"},
+            {"name": "mathlib", "url": "https://github.com/leanprover-community/mathlib4.git",
+             "configFile": "lakefile.lean"}]}
+        catalog = {"hex-bar": {"lib": "HexBar", "lakefile": "toml"}}
+        notes: list[str] = []
+        sync_released._reconcile_hex_packages(
+            {"repo": "leanprover/hex-plain", "pins": ["hex-bar"]}, doc, catalog, notes)
+        self.assertEqual([(p["name"], p["configFile"]) for p in doc["packages"]],
+                         [("HexBar", "lakefile.toml"), ("mathlib", "lakefile.lean")])
+        self.assertEqual(notes, ["  manifest - HexGone (no longer a dependency)"])
+
+    def test_a_requirement_missing_from_the_lockfile_stops_the_sync(self) -> None:
+        clone = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, clone)
+        (clone / "lakefile.toml").write_text(
+            '[[require]]\nname = "mathlib"\ngit = "x"\nrev = "v"\n', encoding="utf-8")
+        (clone / "lake-manifest.json").write_text(json.dumps({"packages": []}),
+                                                  encoding="utf-8")
+        with self.assertRaisesRegex(RuntimeError, "requires mathlib"):
+            sync_released.validate_manifest({"repo": "leanprover/hex-plain"}, clone)
 
     def test_lockfile_inherited_flags_follow_the_lake_file(self) -> None:
         clone = Path(tempfile.mkdtemp())
