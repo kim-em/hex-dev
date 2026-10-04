@@ -93,3 +93,9 @@ These end-to-end fresh-module measurements do not isolate kernel time.
 
 - [Array-length comparison results](bench-results/hex-rcf-literal-proofs-c09bb526d-chungus2.json)
 - [Retained samples](bench-results/hex-rcf-literal-proofs-c09bb526d-chungus2.json.samples.jsonl)
+
+The comparison predates indexed sign retrieval. Its probes now explicitly pin
+`rcf.algebraic.indexSigns false`, `intervalSigns false`, `singleReplay false`
+and `monicCore false`. These later pins preserve the measured full-query,
+linear/raw/split configuration while changing current source hashes. The archived commit and
+hashes remain the identities of the retained experiment.

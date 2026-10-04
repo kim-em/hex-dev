@@ -63,3 +63,8 @@ normalization has its own retained comparison in
 [the carrier report](hexrcf-carrier-proofs.md). Signed Sturm chains already use positive scaling; making them
 arbitrarily monic can change their sign semantics. This comparison does not
 evaluate those changes.
+
+The comparison predates indexed sign retrieval. Its probes now explicitly pin
+`rcf.algebraic.indexSigns false`; this later pin preserves the measured linear
+lookup mode while changing current source hashes. The archived commit and
+hashes remain the identities of the retained experiment.
