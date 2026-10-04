@@ -496,7 +496,9 @@ jobs:
         background: true
         env:
           # Hard cap per SPEC/benchmarking.md §CI integration "Time budget".
-          BENCH_VERIFY_HARD_CAP_SECONDS: "360"
+          # The same work takes about 225 s on a fast runner and 385 s on a
+          # slow one, so the cap must sit above the slow figure.
+          BENCH_VERIFY_HARD_CAP_SECONDS: "600"
           HEX_LIBRARY_FILTER: ${{ steps.classify.outputs.library_filter }}
         run: |
           bash scripts/ci/check_bench_verify_budget.sh \
