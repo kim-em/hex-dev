@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Executable
+module
+
+public import HexInterval.Executable
+
+public section
 
 /-!
 Conformance for the sealed executable package/application assembly. The

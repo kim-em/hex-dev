@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Experiment.ExpSign
+module
+
+public import HexIntervalMathlib.Experiment.ExpSign
+
+public section
 
 /-!
 # Proof-producing contradiction conformance

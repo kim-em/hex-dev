@@ -1,0 +1,6 @@
+{
+  "path": "Hex/BenchOracle/Pari.lean",
+  "baseline_blob": "67864822cc40d953e1324bc2f4224ab6d6f24e89",
+  "current_blob": "fec950b9a634ca77482d51dc39767fc68b00b8c8",
+  "reason": "Adds the module header, public imports and a public section while retaining the existing executable definition bodies and native symbols. The existing PersistentComparator abbreviation becomes public because the cached ref exposes that type; its target is unchanged. The factor service does not import this PARI comparator."
+}

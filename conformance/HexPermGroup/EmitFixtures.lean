@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPermGroup
+module
+
+public import HexPermGroup
+
+public section
 
 /-! Reproducible, presentation-preserving Hex results for the GAP oracle. -/
 

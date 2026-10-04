@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.Center
+module
+
+public import HexInterval.Experiment.Center
+
+public section
 
 /-!
 Adversarial conformance checks for the provisional centered-product replay

@@ -4,7 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexSparsePolyFixtures
+module
+
+public import HexSparsePolyFixtures
+
+public meta import HexModArith.Residue
+public meta import HexModArith.Ring
+public meta import HexSparsePoly.Arith
+public meta import HexSparsePoly.Basic
+public meta import HexSparsePoly.Dense
+public meta import HexSparsePoly.Eval
+public meta import HexSparsePolyFixtures
+
+public section
 
 /-!
 Core executable conformance checks for `hex-sparse-poly`.

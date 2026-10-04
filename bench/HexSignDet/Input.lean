@@ -3,7 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSignDet
+
+module
+public import HexSignDet
+
+public section
 
 namespace Hex.SignDetBench
 open Hex.SignDet
@@ -46,14 +50,14 @@ private def nodeHash (n : Node Rat Nat) : UInt64 :=
     n.basis.rank, n.basis.rows.toArray.map Fin.val, n.basis.cols.toArray.map Fin.val,
     n.basis.denom, matrixHash n.basis.adj)
 
-private def treeHash : Replay Rat Nat → UInt64
+def treeHash : Replay Rat Nat → UInt64
   | .leaf n => hash ((0 : Nat), nodeHash n)
   | .split n l r => hash ((1 : Nat), nodeHash n, treeHash l, treeHash r)
 
-private def graphHash (d : Dag Rat Nat) : UInt64 :=
+def graphHash (d : Dag Rat Nat) : UInt64 :=
   hash (d.root, d.entries.map fun e => (nodeHash e.node, e.children))
 
-private def domainHash (d : Sturm.PreparedDomain Rat) : UInt64 :=
+def domainHash (d : Sturm.PreparedDomain Rat) : UInt64 :=
   hash (polyHash d.head, endpointHash d.lower, endpointHash d.upper, chainHash d.squarefree)
 
 structure Input where

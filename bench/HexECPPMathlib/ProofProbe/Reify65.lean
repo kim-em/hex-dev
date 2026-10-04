@@ -4,7 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPPMathlib.ProofProbe.Support
+module
+
+public import HexECPPMathlib.ProofProbe.Support
+
+public meta import HexECPP.Fixture65
+
+public section
 
 open Lean Elab Command Meta
 

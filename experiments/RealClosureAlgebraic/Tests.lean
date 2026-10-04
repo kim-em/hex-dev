@@ -3,8 +3,23 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import Algebraic
+
+module
+public import Algebraic
+
+import all Algebraic
+import all HexPolyZ.IntegerPolynomial
+import all Init.Data.Nat.Gcd
+import all Init.Data.Nat.Bitwise.Basic
+import all HexPoly.Euclid.DivGcd
+import all HexPoly.Dense
+import all HexRealRoots.Var
+import all HexRealRoots.Chain
+import all HexRealRoots.Basic
+
+public section
 open Hex Algebraic
+open scoped Hex
 set_option maxRecDepth 8192
 set_option maxHeartbeats 2000000
 

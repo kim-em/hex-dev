@@ -3,7 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexGraphIso.SparseProofProbe.Support
+
+module
+public import HexGraphIso.SparseProofProbe.Support
+
+public section
 
 /-! Optional manual negative CFI replay, with the dense probe's larger limits. -/
 

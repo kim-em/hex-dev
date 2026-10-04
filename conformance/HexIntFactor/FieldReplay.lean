@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimality.Cert
+module
+
+public import HexPrimality.Cert
+
+public section
 
 /-! Ordinary checker replay of the exact ECM construction certificates. -/
 

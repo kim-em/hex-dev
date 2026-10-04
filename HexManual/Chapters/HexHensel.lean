@@ -4,11 +4,23 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexHensel.Multifactor
-import HexHensel.QuadraticMultifactor
-import HexHenselMathlib
+public import VersoManual
+
+public import HexHensel.Multifactor
+public import HexHensel.QuadraticMultifactor
+public import HexHenselMathlib
+
+import all HexHensel.Linear
+import all HexHensel.ModularDivision
+import all HexHensel.ModularPolynomial
+import all HexHensel.Multifactor
+import all HexHensel.Quadratic
+import all HexHensel.QuadraticMultifactor
+import all HexHenselMathlib.HenselLemmas
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -79,14 +91,14 @@ open Hex Hex.DensePoly Hex.QuadraticLiftResult
 
 namespace HexHenselChapterReduce
 
-private def f : ZPoly := #p[100, -3, 50]
+public def f : ZPoly := #p[100, -3, 50]
 
 -- 100 ≡ 2, -3 ≡ 46, 50 ≡ 1  (mod 7² = 49)
-private def a : ZPoly := ZPoly.reduceModPow f 7 2
+public def a : ZPoly := ZPoly.reduceModPow f 7 2
 #guard a.toArray.toList = [2, 46, 1]
 
 -- 100 ≡ 0, -3 ≡ 22, 50 ≡ 0  (mod 5² = 25)
-private def b : ZPoly := reduceModSquare f 5
+public def b : ZPoly := reduceModSquare f 5
 #guard b.toArray.toList = [0, 22]
 
 end HexHenselChapterReduce

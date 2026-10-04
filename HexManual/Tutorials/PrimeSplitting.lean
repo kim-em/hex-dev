@@ -4,10 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexBerlekampZassenhaus
-import Mathlib.NumberTheory.KummerDedekind
+public import VersoManual
+
+public import HexBerlekampZassenhaus
+public import Mathlib.NumberTheory.KummerDedekind
+
+public meta import HexBerlekampZassenhaus
+
+public meta import HexPolyFp
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -71,10 +79,10 @@ open Hex
 namespace PrimeSplittingTutorial
 
 /-- `x² + 1`, the defining polynomial of `ℚ(i)`. -/
-def fGauss : ZPoly := #p[1, 0, 1]
+@[expose] public def fGauss : ZPoly := #p[1, 0, 1]
 
 /-- `x³ - 2`, the defining polynomial of `ℚ(∛2)`. -/
-def fCubic : ZPoly := #p[-2, 0, 0, 1]
+@[expose] public def fCubic : ZPoly := #p[-2, 0, 0, 1]
 
 -- Both pass the executable irreducibility check ...
 #guard ZPoly.isIrreducible fGauss
@@ -88,11 +96,11 @@ def fCubic : ZPoly := #p[-2, 0, 0, 1]
     = #[(fCubic, 1)]
 
 /-- Kernel-certified: `x² + 1` is irreducible. -/
-theorem fGauss_irred : ZPoly.Irreducible fGauss :=
+public theorem fGauss_irred : ZPoly.Irreducible fGauss :=
   irreducibility fGauss
 
 /-- Kernel-certified: `x³ - 2` is irreducible. -/
-theorem fCubic_irred : ZPoly.Irreducible fCubic :=
+public theorem fCubic_irred : ZPoly.Irreducible fCubic :=
   irreducibility fCubic
 
 end PrimeSplittingTutorial
@@ -170,7 +178,7 @@ namespace PrimeSplittingTutorial
 factor, sorted. Under Kummer-Dedekind, each pair is a
 prime above `p` with that residue degree and
 ramification index. -/
-def splittingType (p : Nat) [ZMod64.Bounds p]
+@[expose] public def splittingType (p : Nat) [ZMod64.Bounds p]
     [ZMod64.PrimeModulus p] (f : FpPoly p) :
     List (Nat × Nat) :=
   let dec := FpPoly.squareFreeDecomposition
@@ -187,33 +195,33 @@ def splittingType (p : Nat) [ZMod64.Bounds p]
       (a.1 == b.1 && decide (a.2 ≤ b.2))
 
 /-- Coefficients as naturals, for readable factors. -/
-def coeffNats {p : Nat} [ZMod64.Bounds p]
+@[expose] public def coeffNats {p : Nat} [ZMod64.Bounds p]
     (f : FpPoly p) : List Nat :=
   f.toArray.toList.map ZMod64.toNat
 
 -- The primes this page visits, with machine-word
 -- bounds and primality facts as instances.
-private instance pm2 : ZMod64.PrimeModulus 2 :=
+public instance pm2 : ZMod64.PrimeModulus 2 :=
   ⟨by decide⟩
-private instance b3 : ZMod64.Bounds 3 :=
+public instance b3 : ZMod64.Bounds 3 :=
   ⟨by decide, by decide⟩
-private instance pm3 : ZMod64.PrimeModulus 3 :=
+public instance pm3 : ZMod64.PrimeModulus 3 :=
   ⟨by decide⟩
-private instance b5 : ZMod64.Bounds 5 :=
+public instance b5 : ZMod64.Bounds 5 :=
   ⟨by decide, by decide⟩
-private instance pm5 : ZMod64.PrimeModulus 5 :=
+public instance pm5 : ZMod64.PrimeModulus 5 :=
   ⟨by decide⟩
-private instance b7 : ZMod64.Bounds 7 :=
+public instance b7 : ZMod64.Bounds 7 :=
   ⟨by decide, by decide⟩
-private instance pm7 : ZMod64.PrimeModulus 7 :=
+public instance pm7 : ZMod64.PrimeModulus 7 :=
   ⟨by decide⟩
-private instance b13 : ZMod64.Bounds 13 :=
+public instance b13 : ZMod64.Bounds 13 :=
   ⟨by decide, by decide⟩
-private instance pm13 : ZMod64.PrimeModulus 13 :=
+public instance pm13 : ZMod64.PrimeModulus 13 :=
   ⟨by decide⟩
-private instance b31 : ZMod64.Bounds 31 :=
+public instance b31 : ZMod64.Bounds 31 :=
   ⟨by decide, by decide⟩
-private instance pm31 : ZMod64.PrimeModulus 31 :=
+public instance pm31 : ZMod64.PrimeModulus 31 :=
   ⟨by decide⟩
 
 end PrimeSplittingTutorial
@@ -259,9 +267,9 @@ namespace PrimeSplittingTutorial
 
 -- Mod 13 the roots are 5 and 8: the factors are
 -- x - 5 and x - 8, stored as x + 8 and x + 5.
-def g13 : FpPoly 13 := #p[1, 0, 1]
+@[expose] public def g13 : FpPoly 13 := #p[1, 0, 1]
 #guard ZPoly.modP 13 fGauss == g13
-theorem g13_monic : DensePoly.Monic g13 := by rfl
+public theorem g13_monic : DensePoly.Monic g13 := by rfl
 
 #guard ((Berlekamp.berlekampFactor g13 g13_monic)
   |>.factors.map coeffNats) == [[8, 1], [5, 1]]
@@ -321,9 +329,9 @@ namespace PrimeSplittingTutorial
 #guard splittingType 31 (ZPoly.modP 31 fCubic)
     = [(1, 1), (1, 1), (1, 1)]
 
-def g31 : FpPoly 31 := #p[29, 0, 0, 1]
+@[expose] public def g31 : FpPoly 31 := #p[29, 0, 0, 1]
 #guard ZPoly.modP 31 fCubic == g31
-theorem g31_monic : DensePoly.Monic g31 := by rfl
+public theorem g31_monic : DensePoly.Monic g31 := by rfl
 
 -- The factors x - 4, x - 7, x - 20, stored as
 -- x + 27, x + 24, x + 11.
@@ -375,18 +383,18 @@ namespace PrimeSplittingTutorial
 /-- A certified factorization of `x² + 1` mod 13: the
 `factors_mul` and `factors_irred` fields are proofs,
 replayed by the kernel from Rabin certificates. -/
-noncomputable def fac13 := factor_poly g13
+@[expose] public noncomputable def fac13 := factor_poly g13
 
 example : fac13.factors = [#p[8, 1], #p[5, 1]] := by
   rfl
 example : fac13.scalar = 1 := rfl
 
-def g7 : FpPoly 7 := #p[5, 0, 0, 1]
+@[expose] public def g7 : FpPoly 7 := #p[5, 0, 0, 1]
 #guard ZPoly.modP 7 fCubic == g7
 
 /-- Kernel-certified inertness: `x³ - 2` stays
 irreducible mod 7. -/
-theorem g7_irred : FpPoly.Irreducible g7 :=
+public theorem g7_irred : FpPoly.Irreducible g7 :=
   irreducibility g7
 
 end PrimeSplittingTutorial
@@ -425,7 +433,7 @@ open Hex
 namespace PrimeSplittingTutorial
 
 /-- Dedekind's cubic `x³ - x² - 2x - 8`. -/
-def fDedekind : ZPoly := #p[-8, -2, -1, 1]
+@[expose] public def fDedekind : ZPoly := #p[-8, -2, -1, 1]
 
 #guard ZPoly.isIrreducible fDedekind
 

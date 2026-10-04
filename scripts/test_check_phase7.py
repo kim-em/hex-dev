@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from check_phase7 import PolicyError, check, parse_anchor_table, tutorial_module
+from check_phase7 import PolicyError, check, imports_module, parse_anchor_table, tutorial_module
 
 ANCHOR_TABLE = """
 | Tutorial | Anchor library | Source file |
@@ -92,6 +92,22 @@ def build_root(
         manual.append("{include 2 HexManual.Tutorials.AESField}")
     (tmp / "HexManual.lean").write_text("\n".join(manual) + "\n", encoding="utf-8")
     return tmp
+
+
+class ModuleImportsTests(unittest.TestCase):
+    def test_module_manual_is_reachable(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = build_root(Path(raw))
+            manual = root / "HexManual.lean"
+            manual.write_text("module\n" + manual.read_text().replace("import ", "public import "))
+            self.assertEqual(check(root), [])
+
+    def test_import_forms_and_exact_names(self) -> None:
+        module = "HexManual.Chapters.HexGF2"
+        for prefix in ("import", "public import", "private import all", "public meta import"):
+            self.assertTrue(imports_module(f"{prefix} {module}\n", module))
+            self.assertFalse(imports_module(f"{prefix} {module}Extra\n", module))
+        self.assertFalse(imports_module(f"-- public import {module}\n", module))
 
 
 class AnchorTableTests(unittest.TestCase):

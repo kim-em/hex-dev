@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGraphIso.ProofProbe.Support
+module
+
+public import HexGraphIso.ProofProbe.Support
+
+public section
 
 /-! The negative CFI pair: the Cai-Fürer-Immerman construction over
 `K4`, untwisted against twisted, at `n = 40`, under larger limits than

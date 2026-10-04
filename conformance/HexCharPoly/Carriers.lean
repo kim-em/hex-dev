@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexCharPoly
-import HexMvPoly.Ring
-import HexModArith
-import HexRationalFn.Field
-import Lean.Data.Json
+module
+
+public import HexCharPoly
+public import HexMvPoly.Ring
+public import HexModArith
+public import HexRationalFn.Field
+public import Lean.Data.Json
+
+public section
 
 /-! Exact carrier inputs and canonical wire encodings shared by integration
 fixtures and benchmarks. The outer `DensePoly` variable is always fresh. -/

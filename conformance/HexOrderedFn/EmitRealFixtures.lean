@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexOrderedFn.Tests
-import Lean.Data.Json
+module
+
+public import HexOrderedFn.Tests
+public import Lean.Data.Json
+
+public section
 
 open Hex Hex.OrderedFn Hex.OrderedFn.Oracle Lean
 

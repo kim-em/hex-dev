@@ -4,9 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexGF2
+public import VersoManual
+
+public import HexGF2
+
+public meta import HexGF2.Field.Word
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -91,14 +97,14 @@ open Hex
 namespace AESTutorial
 
 /-- AES's field: `GF(2⁸)` under the Rijndael modulus. -/
-abbrev AES : Type :=
+@[expose] public abbrev AES : Type :=
   GF2n 8 0x1B (by decide) (by decide)
     GF2Poly.aes_modulus_irreducible
 
 /-- Read a word as a field element, reducing it
 modulo the AES modulus. Inputs above `0xFF` are
 not rejected; their higher terms reduce back in. -/
-def byte (w : UInt64) : AES := GF2n.reduce w
+@[expose] public def byte (w : UInt64) : AES := GF2n.reduce w
 
 end AESTutorial
 ```
@@ -154,7 +160,7 @@ open Hex
 namespace AESTutorial
 
 /-- Multiplication by `x`, the AES `xtime` operation. -/
-def xtime (a : AES) : AES := a * byte 0x02
+@[expose] public def xtime (a : AES) : AES := a * byte 0x02
 
 #guard (xtime (byte 0x57)).val = 0xAE
 #guard (xtime (byte 0xAE)).val = 0x47

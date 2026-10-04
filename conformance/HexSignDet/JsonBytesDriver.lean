@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSignDet.Codec.Value
-import HexSignDet.JsonBytes
-import HexSignDet.Codec.Bytes
-import Lean.Data.Json
+
+module
+public import HexSignDet.Codec.Value
+public import HexSignDet.JsonBytes
+public import HexSignDet.Codec.Bytes
+public import Lean.Data.Json
+
+public section
 
 /-! Line-oriented conformance transport. Each request is a JSON array of byte
 values. The standard Lean parser handles only that transport; the independent

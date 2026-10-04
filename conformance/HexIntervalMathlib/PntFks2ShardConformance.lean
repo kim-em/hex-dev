@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Experiment.PntFks2Shard
-import HexInterval.Experiment.Frontend
-import HexInterval.Experiment.TargetRun
+module
+
+public import HexIntervalMathlib.Experiment.PntFks2Shard
+public import HexInterval.Experiment.Frontend
+public import HexInterval.Experiment.TargetRun
+
+public section
 
 /-!
 # PNT+ FKS2 shard conformance

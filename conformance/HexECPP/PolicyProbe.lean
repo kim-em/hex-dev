@@ -4,8 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimality.Search
-import HexECPP.Fixture256
+module
+
+public import HexPrimality.Search
+public import HexECPP.Fixture256
+
+public meta import HexECPP.Fixture256
+public meta import HexPrimality.Search
+
+public section
 
 /-! The 256-bit ECPP fixture has a complete checked certificate while the
 settled bounded Pocklington search policy exhausts on the same subject. -/

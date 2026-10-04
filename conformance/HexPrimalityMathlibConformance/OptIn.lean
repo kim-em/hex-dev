@@ -4,7 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimalityMathlib
+module
+
+public import HexPrimalityMathlib
+
+import all HexPrimalityMathlib.Policy
+
+public section
 
 /-!
 Fresh-module checks for the explicit Hex `Nat.Prime` `norm_num` policy.

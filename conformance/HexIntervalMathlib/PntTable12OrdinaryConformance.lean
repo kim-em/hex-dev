@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Experiment.PntTable12Ordinary
-import HexIntervalMathlib.Experiment.PntTable12
-import HexInterval.Experiment.ProofFrontend
-import HexInterval.Experiment.TargetRun
-import Mathlib.Lean.Elab.Tactic.Meta
+module
+
+public import HexIntervalMathlib.Experiment.PntTable12Ordinary
+public import HexIntervalMathlib.Experiment.PntTable12
+public import HexInterval.Experiment.ProofFrontend
+public import HexInterval.Experiment.TargetRun
+public import Mathlib.Lean.Elab.Tactic.Meta
+
+public section
 
 /-!
 # PNT+ ordinary Table 12 generated-batch conformance

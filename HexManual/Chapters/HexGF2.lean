@@ -4,18 +4,37 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexGF2.Basic
-import HexGF2.Clmul
-import HexGF2.Multiply
-import HexGF2.Euclid
-import HexGF2.Field
-import HexGF2.Irreducibility
-import HexGF2.RabinSoundness
-import HexGF2.CommonIrreducibility
+public import VersoManual
 
-import HexGF2Mathlib
+public import HexGF2.Basic
+public import HexGF2.Clmul
+public import HexGF2.Multiply
+public import HexGF2.Euclid
+public import HexGF2.Field
+public import HexGF2.Irreducibility
+public import HexGF2.RabinSoundness
+public import HexGF2.CommonIrreducibility
+
+public import HexGF2Mathlib
+
+import all HexGF2.Basic
+import all HexGF2.Clmul
+import all HexGF2.CommonIrreducibility
+import all HexGF2.Euclid
+import all HexGF2.Field.Poly
+import all HexGF2.Field.Word
+import all HexGF2.Irreducibility
+import all HexGF2.Multiply
+import all HexGF2.RabinSoundness
+import all HexGF2Mathlib.Algebra
+import all HexGF2Mathlib.Basic
+import all HexGF2Mathlib.Field
+public meta import HexGF2.Basic
+public meta import HexGF2.Field.Word
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -240,11 +259,11 @@ open Hex
 
 namespace HexGF2Chapter
 
-abbrev AES : Type :=
+@[expose] public abbrev AES : Type :=
   GF2n 8 0x1B (by decide) (by decide)
     GF2Poly.aes_modulus_irreducible
 
-def aes (w : UInt64) : AES := GF2n.reduce w
+@[expose] public def aes (w : UInt64) : AES := GF2n.reduce w
 
 -- 0x53 and 0xCA are inverse bytes in AES's GF(2^8),
 -- so their product is 1.

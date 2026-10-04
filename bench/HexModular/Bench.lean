@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexModular
-import HexModularBench.Comparator
-import LeanBench
+module
+
+public import HexModular
+public import HexModularBench.Comparator
+public import LeanBench
+
+public section
 
 /-!
 Native benchmark registrations for `hex-modular`.

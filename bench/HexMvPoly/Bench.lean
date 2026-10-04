@@ -4,8 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvPolyCorpus
-import LeanBench
+module
+
+public import HexMvPolyCorpus
+public import LeanBench
+
+public meta import HexMvPoly.Operations
+
+public meta import HexMvPolyCorpus
+
+public section
 
 /-!
 Native benchmark registrations for `hex-mv-poly`.

@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Experiment.PntPrimeLogSmall
+module
+
+public import HexIntervalMathlib.Experiment.PntPrimeLogSmall
+
+public section
 
 /-!
 # Source-pinned PNT+ small-prime logarithm conformance

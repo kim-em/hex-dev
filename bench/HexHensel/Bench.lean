@@ -4,13 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.BenchOracle.Flint
-import HexPolyFast.Tree
-import HexPolyZ.NttMul
-import HexHensel.Multifactor
-import HexHensel.Quadratic
-import HexHensel.QuadraticMultifactor
-import LeanBench
+module
+
+public import Hex.BenchOracle.Flint
+public import HexPolyFast.Tree
+public import HexPolyZ.NttMul
+public import HexHensel.Multifactor
+public import HexHensel.Quadratic
+public import HexHensel.QuadraticMultifactor
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `hex-hensel`.
@@ -81,7 +85,7 @@ times only.
 namespace Hex
 namespace HenselBench
 
-private instance benchBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+instance benchBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 
 instance : Hashable ZPoly where
   hash p := hash p.toArray

@@ -4,35 +4,49 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealCoefficients.FieldSpecialize
-import HexRCF.RealCoefficients.SignInputs
-import HexRCF.RealCoefficients.FieldCarrier
+module
+
+public import HexRCF.RealCoefficients.FieldSpecialize
+public import HexRCF.RealCoefficients.SignInputs
+public import HexRCF.RealCoefficients.FieldCarrier
+
+public meta import HexSturm.Basic
+
+public meta import HexMvPoly.Mono
+
+public meta import HexRCF.RealCoefficients.SignInputs
+
+public meta import HexRCF.RealCoefficients.FieldSpecialize
+
+public meta import HexRCF.RealCoefficients.FieldCarrier
+
+public section
 
 open Hex Hex.RCF.RealCoefficients Hex.RealFormula
 
 namespace Hex.RCF.FieldSpecializeConformance
 
-private def cubePoly : ZPoly := DensePoly.ofList [-2, 0, 0, 1]
-private def cubeSquare : DyadicSquare :=
+def cubePoly : ZPoly := DensePoly.ofList [-2, 0, 0, 1]
+def cubeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 5411319705 32, 0, 32⟩
-private theorem cubeWitness : atomWitness cubePoly cubeSquare := by decide +kernel
-private theorem cubePrecision :
+theorem cubeWitness : atomWitness cubePoly cubeSquare := by decide +kernel
+theorem cubePrecision :
     (mahlerPrec cubePoly : Int) ≤ cubeSquare.prec := by decide +kernel
-private theorem cubeReal : cubeSquare.meetsRealAxis = true := by decide +kernel
+theorem cubeReal : cubeSquare.meetsRealAxis = true := by decide +kernel
 private theorem cubeIrred :
     ZPoly.checkIrredWitness cubePoly (.eisenstein 2 0) = true := by decide +kernel
 private theorem cubeDegree : 0 < cubePoly.natDegree := by decide +kernel
 
-private abbrev CubeField := PolyQuot cubePoly
+abbrev CubeField := PolyQuot cubePoly
   (SimpleRoot.ofSquare cubePoly cubeSquare cubeWitness cubePrecision)
 
-private def root : CubeField :=
+def root : CubeField :=
   PolyQuot.ofSquare cubePoly cubeSquare (DensePoly.ofList [0, 1])
     cubeWitness cubePrecision
 
-private def atom : RealFormula.Poly 2 := MvPoly.X 1 - MvPoly.X 0
+def atom : RealFormula.Poly 2 := MvPoly.X 1 - MvPoly.X 0
 
-private def specialized : DensePoly CubeField :=
+def specialized : DensePoly CubeField :=
   FieldSpecialize.literalPolynomial (fun _ : Fin 1 => root) atom
 
 -- The executable substitution uses only the reduced rational coordinates.
@@ -45,9 +59,9 @@ private def carrier : DensePoly CubeField :=
   FieldCarrier.product (fun _ : Fin 1 => root) formula
 #guard carrier = specialized
 
-private instance : ZPoly.CheckedIrreducible cubePoly :=
+instance : ZPoly.CheckedIrreducible cubePoly :=
   Field.checkedIrreducible cubePoly (.eisenstein 2 0) cubeIrred cubeDegree
-private noncomputable instance : Field CubeField :=
+noncomputable instance : Field CubeField :=
   Hex.PolyQuot.field cubePoly
     (SimpleRoot.ofSquare cubePoly cubeSquare cubeWitness cubePrecision)
 

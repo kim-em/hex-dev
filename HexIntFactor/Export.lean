@@ -4,9 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor.Pari
-import HexPrimality.Elab
-import Lean.Elab.Command
+module
+
+public import HexIntFactor.Pari
+public import HexPrimality.Elab
+public import Lean.Elab.Command
+public meta import HexIntFactor.Import
+public meta import HexIntFactor.Pari
+
+public section
 
 /-! Explicit batch production/export. The reifier is HexPrimality.Elab's existing
 PrimeCert reifier. Exclusive creation and editor gating follow
@@ -23,20 +29,20 @@ structure Budget where
   maxRecDepth : Nat := 8192
 
 mutual
-private def primeText : PrimeCert → String
+private meta def primeText : PrimeCert → String
   | .small n => s!"(Hex.Nat.PrimeCert.small {n})"
   | .pock n fs => s!"(Hex.Nat.PrimeCert.pock {n} [{factorsText fs}])"
   | .pock3 n r s w fs => s!"(Hex.Nat.PrimeCert.pock3 {n} {r} {s} {w} [{factorsText fs}])"
   | .pock3Sieve n r s w m fs =>
       s!"(Hex.Nat.PrimeCert.pock3Sieve {n} {r} {s} {w} {m} [{factorsText fs}])"
 
-private def factorsText : List (Nat × Nat × PrimeCert) → String
+private meta def factorsText : List (Nat × Nat × PrimeCert) → String
   | [] => ""
   | (a, e, c) :: rest =>
       s!"({a}, {e}, {primeText c})" ++ (if rest.isEmpty then "" else ", " ++ factorsText rest)
 end
 
-private def powersText (fs : List PrimePower) : String :=
+private meta def powersText (fs : List PrimePower) : String :=
   "[" ++ String.intercalate ", " (fs.map fun e =>
     s!"⟨{e.exponent}, {primeText e.cert}⟩") ++ "]"
 
@@ -110,12 +116,12 @@ private meta def generate (n : Nat) : MetaM (CheckedFactors n) := do
   let some value := result.value | throwError "integer factorization: no checked result"
   return value
 
-private def asciiName (s : String) : Bool :=
+private meta def asciiName (s : String) : Bool :=
   let alpha := fun c => ('a' ≤ c && c ≤ 'z') || ('A' ≤ c && c ≤ 'Z') || c == '_'
   s != "_" && s.toList.head?.any alpha &&
     s.toList.all (fun c => alpha c || ('0' ≤ c && c ≤ '9'))
 
-private def destination (modName declName : Name) : Except String System.FilePath := do
+private meta def destination (modName declName : Name) : Except String System.FilePath := do
   unless modName.toString.splitOn "." |>.all asciiName do
     throw "module name must consist of ASCII identifier components"
   unless declName.isAtomic && asciiName declName.toString do

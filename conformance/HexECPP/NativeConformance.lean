@@ -4,7 +4,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPP.Search
+module
+
+public import HexECPP.Search
+
+public meta import HexBasic.Rand
+public meta import HexECPP.CM
+public meta import HexECPP.CM.ClassPolynomials
+public meta import HexECPP.CM.Roots
+public meta import HexECPP.Cert
+public meta import HexECPP.Import
+public meta import HexECPP.Search
+public meta import HexPrimality.Cert
+
+public section
 
 /-! Arithmetic proposals, exceptional twist families, shared allocation
 exhaustion and native subject binding. Composite failures carry no verdict. -/

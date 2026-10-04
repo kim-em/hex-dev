@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealFormulaMathlib.Reify
-import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
-import Lean.Elab.Command
+module
+
+public import HexRealFormulaMathlib.Reify
+public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
+public import Lean.Elab.Command
+
+public section
 
 /-! Reification tests check complete proofs, binder identity, and explicit parameters. -/
 

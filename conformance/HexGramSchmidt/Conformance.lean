@@ -4,7 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGramSchmidt.Update
+module
+
+public import HexGramSchmidt.Update
+
+public meta import HexGramSchmidt.Int.Combination
+public meta import HexGramSchmidt.Int.Core
+public meta import HexGramSchmidt.Int.Scaled
+public meta import HexGramSchmidt.Update
+
+public section
 
 /-!
 Core conformance checks for `HexGramSchmidt`.

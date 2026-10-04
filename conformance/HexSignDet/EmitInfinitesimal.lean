@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSignDet.Infinitesimal
-import HexSignDet.Compare
-import Hex.Conformance.Emit
-import Lean.Data.Json
+
+module
+public import HexSignDet.Infinitesimal
+public import HexSignDet.Compare
+public import Hex.Conformance.Emit
+public import Lean.Data.Json
+
+public section
 
 /-! Exact rational-function coefficient fixtures for the pinned Z3 RCF oracle.
 The order of infinitesimal introduction is part of every input record. -/

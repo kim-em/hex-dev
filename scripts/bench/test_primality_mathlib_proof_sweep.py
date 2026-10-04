@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import re
 import unittest
 
 from scripts.bench import fresh_module_sweep
@@ -48,13 +49,16 @@ class PrimalityMathlibProofSweepTests(unittest.TestCase):
     def test_measured_modules_are_pairwise_import_isolated(self) -> None:
         for module in fresh_module_sweep.probe_modules(proof.SPEC):
             source = fresh_module_sweep.probe_source(module, proof.SPEC.src_dir)
-            imports = [
-                line for line in source.read_text(encoding="utf-8").splitlines()
-                if line.startswith("import ")
-            ]
+            imports = []
+            for line in source.read_text(encoding="utf-8").splitlines():
+                match = re.fullmatch(
+                    r"\s*(?:(?:public|private)\s+)?(?:meta\s+)?import\s+(?:all\s+)?(.+)",
+                    line.split("--", 1)[0])
+                if match:
+                    imports.extend(match[1].split())
             self.assertEqual(
                 imports,
-                ["import HexPrimalityMathlib.ProofProbe.Support"],
+                ["HexPrimalityMathlib.ProofProbe.Support"],
                 module,
             )
 

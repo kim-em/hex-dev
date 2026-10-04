@@ -4,7 +4,24 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealAlgebraic
+module
+
+public import HexRealAlgebraic
+public meta import HexNumberField.Nearest
+public meta import HexRealAlgebraic.Basic
+public meta import HexRealAlgebraic.Order
+public meta import HexRealAlgebraic.Roots
+public meta import HexRealAlgebraic.Complex
+public meta import HexRealAlgebraic.Norm
+import all HexRealAlgebraic.Basic
+meta import all HexRealAlgebraic.Basic
+import all HexRealAlgebraic.Order
+meta import all HexRealAlgebraic.Order
+
+import all HexNumberField.Basic
+import all HexNumberField.Nearest
+
+public section
 
 /-!
 Oracle: none (core); exact python-flint qqbar arithmetic and certified FLINT root balls
@@ -102,7 +119,7 @@ open Hex.RealAlgebraicNumber (ofRat ofAlgebraic? sqrt?)
   let a := ofRat (9 / 4)
   let checked := if h : 0 ≤ a then some (a.sqrt h) else none
   checked == some (ofRat (3 / 2)) && checked == a.sqrt? &&
-    (RealAlgebraicNumber.sqrt 0 (by decide)) == 0
+    (RealAlgebraicNumber.sqrt 0 (by decide +kernel)) == 0
 
 #guard
   let a := ofRat (-3 / 2)

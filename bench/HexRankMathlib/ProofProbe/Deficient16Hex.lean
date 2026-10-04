@@ -3,7 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRankMathlib
+
+module
+public import HexRankMathlib
+
+public section
 
 /-! `Deficient16`: a `16 × 16` integer literal of rank `14`, proved by `rank`. -/
 

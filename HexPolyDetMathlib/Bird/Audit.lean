@@ -3,7 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexPolyDetMathlib.Bird.Evaluator
+
+module
+public import HexPolyDetMathlib.Bird.Evaluator
+
+public section
 
 open Lean Meta Qq Mathlib.Tactic.Ring Mathlib.Tactic.Determinant
 

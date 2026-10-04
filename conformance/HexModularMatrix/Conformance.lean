@@ -4,8 +4,34 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexModularMatrix.Fixtures
-import HexMatrix.Notation
+module
+
+public import HexModularMatrix.Fixtures
+public import HexMatrix.Notation
+
+public meta import HexMatrix.Basic
+public meta import HexModArith.Modulus
+public meta import HexModArith.Residue
+public meta import HexModArith.Ring
+public meta import HexModularMatrix.Decomp
+public meta import HexModularMatrix.Det
+public meta import HexModularMatrix.Divisor
+public meta import HexModularMatrix.Fixtures
+public meta import HexModularMatrix.Image
+public meta import HexModularMatrix.Kernel
+public meta import HexModularMatrix.Normalise
+public meta import HexModularMatrix.Numerator
+public meta import HexModularMatrix.Rank
+public meta import HexModularMatrix.Reconstruction
+public meta import HexModularMatrix.Solve
+public meta import HexModularMatrix.SolveMat
+
+public meta import HexModularMatrix.Decomp
+
+import all HexModularMatrix.Kernel
+meta import all HexModularMatrix.Kernel
+
+public section
 
 /-!
 Oracle: `scripts/oracle/modmat_flint.py` (FLINT integer determinants).
@@ -276,19 +302,19 @@ private def twiceIdentity : Matrix Int 2 2 := #m[2, 0; 0, 2]
   some ([[2, 0], [0, 2]] : List (List Int))
 
 -- The SPEC's noninitial selected column checks placement, signs, and scale.
-private def exampleMatrix : Matrix Int 2 3 := #m[2, 4, 6; 4, 8, 12]
-private def exampleCert : Matrix.RankCert Int 2 3 := ⟨1, #v[1], #v[1], 8, #m[1]⟩
-private theorem exampleCheck : exampleMatrix.checkRank exampleCert = true := by decide +kernel
-private def exampleKernel := Matrix.Kernel.ofCert exampleMatrix exampleCert exampleCheck
+@[expose] def exampleMatrix : Matrix Int 2 3 := #m[2, 4, 6; 4, 8, 12]
+@[expose] def exampleCert : Matrix.RankCert Int 2 3 := ⟨1, #v[1], #v[1], 8, #m[1]⟩
+theorem exampleCheck : exampleMatrix.checkRank exampleCert = true := by decide +kernel
+@[expose] def exampleKernel := Matrix.Kernel.ofCert exampleMatrix exampleCert exampleCheck
 #guard exampleKernel.freeCols == #v[0, 2]
 #guard exampleKernel.basis == #m[-8, 0; 4, 12; 0, -8]
 #guard exampleMatrix * exampleKernel.basis == 0
 
 -- Permuted pivot selections and noncanonical common scale remain valid inputs.
-private def permutedMatrix : Matrix Int 2 3 := #m[1, 0, 3; 0, 1, 5]
-private def permutedCert : Matrix.RankCert Int 2 3 := ⟨2, #v[1, 0], #v[1, 0], -2, #m[-2, 0; 0, -2]⟩
-private theorem permutedCheck : permutedMatrix.checkRank permutedCert = true := by decide +kernel
-private def permutedKernel := Matrix.Kernel.ofCert permutedMatrix permutedCert permutedCheck
+@[expose] def permutedMatrix : Matrix Int 2 3 := #m[1, 0, 3; 0, 1, 5]
+@[expose] def permutedCert : Matrix.RankCert Int 2 3 := ⟨2, #v[1, 0], #v[1, 0], -2, #m[-2, 0; 0, -2]⟩
+theorem permutedCheck : permutedMatrix.checkRank permutedCert = true := by decide +kernel
+@[expose] def permutedKernel := Matrix.Kernel.ofCert permutedMatrix permutedCert permutedCheck
 #guard permutedKernel.freeCols == #v[2]
 #guard permutedKernel.basis == #m[-6; -10; 2]
 #guard permutedMatrix * permutedKernel.basis == 0

@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.SineProofConformance
-import HexInterval.Experiment.ProofFrontend
-import Mathlib.Lean.Elab.Tactic.Meta
+module
+
+public import HexIntervalMathlib.SineProofConformance
+public import HexInterval.Experiment.ProofFrontend
+public import Mathlib.Lean.Elab.Tactic.Meta
+
+public section
 
 /-!
 # Tactic-frontend canary for arbitrary-function interval search

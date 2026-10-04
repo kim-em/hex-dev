@@ -4,11 +4,25 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
-import HexIntFactor
-import HexIntFactorMathlib
-import HexIntFactor.Frozen.Case3
-import HexIntFactor.Frozen.Case5
+module
+
+public import VersoManual
+public import HexIntFactor
+public import HexIntFactorMathlib
+public import HexIntFactor.Frozen.Case3
+public import HexIntFactor.Frozen.Case5
+
+import all HexIntFactor.Cert
+import all HexIntFactor.Construction
+import all HexIntFactor.Divisors
+import all HexIntFactor.Factor
+import all HexIntFactor.Order
+import all HexIntFactor.Partial
+import all HexIntFactorMathlib.Factorization
+import all HexIntFactorMathlib.Order
+public meta import HexIntFactor.Divisors
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -126,7 +140,7 @@ namespace HexIntFactorChapter
 
 set_option maxRecDepth 100000
 
-def twelve : CheckedFactorization 12 :=
+@[expose] public def twelve : CheckedFactorization 12 :=
   ⟨⟨12, [⟨2, .small 2⟩, ⟨1, .small 3⟩]⟩,
     rfl, by decide⟩
 
@@ -215,14 +229,14 @@ open Hex Hex.Nat
 
 namespace HexIntFactorChapter
 
-def completeImport : Bool := match importFactors {} 72
+@[expose] public def completeImport : Bool := match importFactors {} 72
     ⟨72, [(3, 2, none), (2, 3, none)]⟩ (Rand.ofSeed 72) with
   | .ok result => result.value.raw.residual == 1 &&
       result.value.raw.factors.map
         (fun e => (e.prime, e.exponent)) == [(2, 3), (3, 2)]
   | .error _ => false
 
-def partialImport : Bool := match importFactors
+@[expose] public def partialImport : Bool := match importFactors
     { completion := { maxAttempts := 0 } } 12
     ⟨12, [(2, 2, some (.small 2)), (3, 1, none)]⟩
     (Rand.ofSeed 12) with

@@ -4,8 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexHermite
-import HexMatrix.Notation
+module
+
+public import HexHermite
+public import HexMatrix.Notation
+
+public meta import HexHermite.Cert
+public meta import HexHermite.Contracts
+public meta import HexHermite.Hermite
+public meta import HexHermite.Kernel
+public meta import HexHermite.Lattice
+public meta import HexMatrix.Basic
+
+public section
 
 /-!
 # Hermite conformance

@@ -519,6 +519,7 @@ class SyncReleasedTests(unittest.TestCase):
         entry = {
             "repo": "prospective/hex-int-factor", "lib": "HexIntFactor",
             "umbrella": True, "spec": "hex-int-factor", "lakefile": "lean",
+            "lake_declarations": ["hexintfactorpariio", "HexIntFactorPariIO"],
             "build_modules": ["HexIntFactor.Pari", "HexIntFactor.Export", "HexIntFactor.Replay"],
             "test_modules": ["HexIntFactor.ImportTests", "HexIntFactor.PariTests",
                              "HexIntFactor.ExportTests"] +
@@ -529,15 +530,22 @@ class SyncReleasedTests(unittest.TestCase):
             "import Lake\nopen Lake DSL\npackage factor\n"
             "lean_lib HexIntFactor where\n"
             "  globs := #[`HexIntFactor, `HexIntFactor.Pari, `HexIntFactor.Export, "
-            "`HexIntFactor.Replay].map Glob.one\n")
+            "`HexIntFactor.Replay].map Glob.one\n"
+            "target hexintfactorpariio pkg : FilePath := do\n  pure (pkg.dir / \"placeholder\")\n"
+            "lean_lib HexIntFactorPariIO where\n  roots := #[`HexIntFactor.Pari.IO]\n")
         with patch.object(sync_released, "apply_ci_workflow", return_value=[]):
             sync_released.apply_paths(entry, self.repo)
         sync_released.rewrite_lib_settings(entry, self.repo)
+        sync_released.rewrite_lake_declarations(entry, self.repo)
         sync_released.rewrite_test_target(entry, self.repo)
         sync_released.validate_skeleton(entry, self.repo)
         for module in entry["build_modules"] + entry["test_modules"]:
             path = self.repo / (module.replace(".", "/") + ".lean")
             self.assertTrue(path.is_file(), module)
+        self.assertTrue((self.repo / "HexIntFactor/ffi/pari_pipe.c").is_file())
+        recipe = (self.repo / "lakefile.lean").read_text()
+        self.assertIn("moreLinkObjs := #[hexintfactorpariio]", recipe)
+        self.assertNotIn("placeholder", recipe)
         text = (self.repo / "HexIntFactor/Frozen/Case3.lean").read_text()
         self.assertIn("public import HexIntFactor.Replay", text)
         self.assertNotIn("HexIntFactor.Export", text)

@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexHermite
+module
+
+public import Hex.Conformance.Emit
+public import HexHermite
+
+public section
 
 /-! JSONL fixtures for row Hermite normal form and its left transform. -/
 

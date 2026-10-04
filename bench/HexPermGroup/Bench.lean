@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPermGroup
-import LeanBench
+module
+
+public import HexPermGroup
+public import LeanBench
+
+public section
 
 /-!
 The thirteen required permutation-group benchmark families. Inputs are rebuilt

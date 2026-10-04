@@ -3,7 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexNumberField
+
+module
+public import HexNumberField
+
+public section
 open Hex
 
 /-! Compiled stage decomposition and resource regression for issue #10156.

@@ -4,11 +4,28 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexPolyFp
+public import VersoManual
 
-import HexPolyFpMathlib
+public import HexPolyFp
+
+public import HexPolyFpMathlib
+
+import all HexPolyFp.Field
+import all HexPolyFp.Frobenius
+import all HexPolyFp.ModCompose
+import all HexPolyFp.Quotient.Ring
+import all HexPolyFp.Ring
+import all HexPolyFp.SquareFree
+import all HexPolyFp.SquareFree.Algebra
+import all HexPolyFpMathlib.Basic
+public meta import HexPolyFp.Frobenius
+public meta import HexPolyFp.ModCompose
+public meta import HexPolyFp.SquareFree
+public meta import HexPolyFp.SquareFree.Algebra
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -148,32 +165,32 @@ namespace HexPolyFpChapterExample
 local instance boundsFive : ZMod64.Bounds 5 :=
   ⟨by decide, by decide⟩
 
-private theorem prime_five : Hex.Nat.Prime 5 := by decide
+public theorem prime_five : Hex.Nat.Prime 5 := by decide
 
-private def coeffNats (f : FpPoly 5) : List Nat :=
+public def coeffNats (f : FpPoly 5) : List Nat :=
   f.toArray.toList.map ZMod64.toNat
 
-private def sfSummary
+public def sfSummary
     (d : SquareFreeDecomposition 5) :
     Nat × List (List Nat × Nat) :=
   (d.unit.toNat,
     d.factors.map
       (fun sf => (coeffNats sf.factor, sf.multiplicity)))
 
-private def sfReconstruction
+public def sfReconstruction
     (d : SquareFreeDecomposition 5) : FpPoly 5 :=
   .C d.unit * weightedProduct d.factors
 
 -- Monic modulus x² + 2 over F₅, with x² ≡ 3.
-private def quadModulus : FpPoly 5 := #p[2, 0, 1]
+public def quadModulus : FpPoly 5 := #p[2, 0, 1]
 
-private theorem quadModulus_monic :
+public theorem quadModulus_monic :
     DensePoly.Monic quadModulus := by rfl
 
 -- Monic linear modulus x + 3 over F₅.
-private def linearModulus : FpPoly 5 := #p[3, 1]
+public def linearModulus : FpPoly 5 := #p[3, 1]
 
-private theorem linearModulus_monic :
+public theorem linearModulus_monic :
     DensePoly.Monic linearModulus := by rfl
 
 -- (x + 1)³ mod (x² + 2) ≡ x.

@@ -4,9 +4,21 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekamp.DegreePattern
-import HexBerlekamp.DistinctDegree
-import HexBerlekamp.DelayedKernel
+module
+
+public import HexBerlekamp.DegreePattern
+public import HexBerlekamp.DistinctDegree
+public import HexBerlekamp.DelayedKernel
+
+public meta import HexBerlekamp.BerlekampMatrix
+public meta import HexBerlekamp.DegreePattern
+public meta import HexBerlekamp.DistinctDegree
+public meta import HexBerlekamp.Factor
+public meta import HexBerlekamp.Irreducibility
+
+public meta import HexBerlekamp.DelayedKernel
+
+public section
 
 /-!
 Core conformance checks for the `HexBerlekamp` Berlekamp, Rabin

@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
+
+public import VersoManual
+
+public section
 
 /-!
 Site-wide visual theme for the `HexManual` Verso site.
@@ -23,7 +27,7 @@ The colour scheme is adapted from the Formal Frontier
 namespace HexManual.Theme
 
 /-- The CSS for the site-wide theme, injected verbatim into each page's `<head>`. -/
-def css : String :=
+@[expose] public def css : String :=
 "/* === Hex manual: custom theme === */
 /* Green and orange accents over the default Verso theme */
 
@@ -308,7 +312,7 @@ input[type='search']:focus {
 class read from its `.label` pill (`def`, `theorem`, `structure`, `type class`),
 so the CSS above can colour defs and theorems differently. Pure CSS cannot do
 this because the kind lives only in the label's text. -/
-def js : String :=
+@[expose] public def js : String :=
 "(function () {
   function tagKinds() {
     document.querySelectorAll('.namedocs').forEach(function (box) {
@@ -330,7 +334,7 @@ open Verso.Output in
 /-- The theme's `<head>` contributions for `config.extraHead`: the stylesheet
 plus the kind-tagging script. `escape := false` keeps CSS combinators like `>`
 and `:has(...)` (and the script's `<`-free source) intact. -/
-def head : Array Html :=
+@[expose] public def head : Array Html :=
   #[.tag "style" #[] (.text false css),
     .tag "script" #[] (.text false js)]
 

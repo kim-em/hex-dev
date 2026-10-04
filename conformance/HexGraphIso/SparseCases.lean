@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexGraph.Sparse.Relabel
-import HexGraphIso.Perm
-import HexGraphIso.Nauty.Sparse.Search
-import Lean.Data.Json
+
+module
+public import HexGraph.Sparse.Relabel
+public import HexGraphIso.Perm
+public import HexGraphIso.Nauty.Sparse.Search
+public import Lean.Data.Json
+
+public section
 
 /-! JSONL differential driver for the sparse dispatch. The search mode uses
 the native checked edge constructor and independently checks the raw canonical
