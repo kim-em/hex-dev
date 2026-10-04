@@ -46,6 +46,39 @@ def validate_measurement(rows, commit, stage):
     return rows[0]
 
 
+def validate_capture(capture, stage, raw, profiler_commit):
+    if capture["stage"] != stage or Path(capture["raw"]).resolve() != raw:
+        raise RuntimeError("capture manifest does not match the requested stage and raw directory")
+    if capture["dirty"] is not False or capture["profiler_commit"] != profiler_commit:
+        raise RuntimeError("capture source is dirty or filter revision differs")
+    indices = [i for i, c in enumerate(capture["commands"]) if c["argv"][:2] == ["perf", "record"]]
+    if len(indices) != 1:
+        raise RuntimeError("expected one capture process")
+    index = indices[0]
+    if capture["commands"][index]["exit_code"] != 0:
+        raise RuntimeError("capture process failed")
+    if capture["status"] == "failed":
+        if capture.get("error") != "profile did not return the expected complete-root result" or index != len(capture["commands"]) - 1:
+            raise RuntimeError("capture failure is not the recoverable result-hash validation failure")
+    elif capture["status"] != "profiled":
+        raise RuntimeError("capture is not complete")
+    sidecars = list(raw.glob("timed-*.jsonl"))
+    if len(sidecars) != 1:
+        raise RuntimeError("expected one timed-region sidecar")
+    required = {"perf.data", "spawn-anchor.json", "hexrealclosure_bench", f"{index}.stdout", sidecars[0].name}
+    artifacts = capture["artifacts"]
+    if not required <= artifacts.keys():
+        raise RuntimeError("capture manifest omits a consumed artifact")
+    if artifacts["hexrealclosure_bench"] != capture["executable_sha256"]:
+        raise RuntimeError("executable snapshot hash disagrees with the capture manifest")
+    for name, expected in artifacts.items():
+        if Path(name).name != name or digest(raw / name) != expected:
+            raise RuntimeError(f"retained artifact changed: {name}")
+    rows = measurement_rows((raw / f"{index}.stdout").read_text())
+    validate_measurement(rows, capture["commit"], stage)
+    return rows
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--stage", choices=CASES, required=True)
@@ -99,22 +132,10 @@ def main():
         package_pin = next(p["rev"] for p in json.loads((ROOT / "lake-manifest.json").read_text())["packages"] if p["name"].strip("«»") == "lean-bench")
         if args.postprocess:
             capture = json.loads(args.postprocess.read_text())
-            if capture["stage"] != args.stage or Path(capture["raw"]).resolve() != args.raw:
-                raise RuntimeError("capture manifest does not match the requested stage and raw directory")
-            for name, expected in capture["artifacts"].items():
-                if digest(args.raw / name) != expected:
-                    raise RuntimeError(f"retained artifact changed: {name}")
+            rows = validate_capture(capture, args.stage, args.raw, record["profiler_commit"])
             record.update(capture_manifest=str(args.postprocess), capture_manifest_sha256=digest(args.postprocess),
                           capture_commit=capture["commit"], capture_dirty=capture["dirty"],
                           original_status=capture["status"], original_error=capture.get("error"))
-            if capture["dirty"] is not False:
-                raise RuntimeError("capture source was dirty")
-            perf_index = next(i for i,c in enumerate(capture["commands"]) if c["argv"][:2] == ["perf", "record"])
-            if capture["commands"][perf_index]["exit_code"] != 0:
-                raise RuntimeError("capture process failed")
-            if record["profiler_commit"] != capture["profiler_commit"]:
-                raise RuntimeError("retained capture requires its recorded filter revision")
-            rows = measurement_rows((args.raw / f"{perf_index}.stdout").read_text())
             record["measurement_rows"] = rows
             record["measurement"] = validate_measurement(rows, capture["commit"], args.stage)
             capture_commit = capture["commit"]
@@ -155,7 +176,7 @@ def main():
             record["measurement"] = validate_measurement(rows, record["commit"], args.stage)
             capture_commit = record["commit"]
         pinned = json.loads(run(["git", "show", f"{capture_commit}:lake-manifest.json"]))
-        record["compiled_lean_bench_commit"] = next(p["rev"] for p in pinned["packages"] if p["name"].strip("«»") == "lean-bench")
+        record["pinned_lean_bench_commit"] = next(p["rev"] for p in pinned["packages"] if p["name"].strip("«»") == "lean-bench")
         run(["samply", "import", "--save-only", "--no-open", "--unstable-presymbolicate",
              "-o", work / "samply.json.gz", args.raw / "perf.data"])
         samples = run(["perf", "script", "--ns", "-F", "pid,tid,time,event",
