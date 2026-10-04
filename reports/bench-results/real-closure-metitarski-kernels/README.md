@@ -4,20 +4,56 @@ These profiles use the exact degree-15 MetiTarski input and its second polynomia
 
 The first operation includes complete root production and its root-count check. The second operation uses the actual retained native coefficient context; preparing the first root and second polynomial occurs before the timed regions. The odd-degree ladder in the benchmark extends this second input, with rung three retaining the exact paper input.
 
-Both captures use 1000 Hz `cycles:u` sampling, monotonic timestamps and DWARF stacks. LeanBench emits kernel regions around each operation; hashing, preparation, sidecar writes and exit are excluded by the filter. CPU leases select a permitted CPU without testing its load. Manifests retain load, affinity, tool versions, clean source commit, build output, copied executable hash and every capture/postprocessing command. Raw profiles and executable snapshots remain at their recorded local paths.
+Both captures use 1000 Hz `cycles:u` sampling, monotonic timestamps and 8192-byte DWARF stacks. OS kernel time, including page faults, is excluded. Future captures request 65528-byte stacks. LeanBench emits timed regions around each benchmark operation; hashing, preparation, sidecar writes and exit are excluded by the filter. CPU leases select a permitted CPU without testing its load. Manifests retain load, affinity, tool versions, clean source commit, build-output hashes, copied executable hash and every capture/postprocessing command. Raw profiles and executable snapshots remain at their recorded local paths.
 
 | Stage | Source commit | CPU | Retained samples | Rejected samples | Filter diagnostics |
 | --- | --- | ---: | ---: | ---: | --- |
 | First | `9f9e291c733a9039a9f44e88ae623dd66d6e0c4a` | 80 | 21752 | 10 | passed |
 | Second | `52f769a56779ed0efe8a128683405aa29d295623` | 47 | 2524 | 4962 | passed |
 
-The first capture attributes 94.90% of samples inclusively to root comparison/sorting, including 94.31% to descriptor comparison construction. The second attributes 81.81% inclusively to algebraic coefficient sign evaluation. Inclusive shares overlap along call stacks and must not be added. GMP leaf shares are 50.35% and 43.42%; allocation leaf shares are 27.30% and 36.81%, respectively. The summaries retain leaf categories, unresolved shares, demangled inclusive stacks and filter calibration/sensitivity diagnostics.
+The first capture attributes 94.90% of samples inclusively to root comparison/sorting, including 94.31% to descriptor comparison construction. The second attributes 81.81% inclusively to algebraic coefficient sign evaluation. Inclusive shares overlap along call stacks and must not be added. They are lower bounds: 4.74% of first-stage stacks and 12.36% of second-stage stacks omit the benchmark frame, consistent with truncated deep DWARF stacks. Symbol resolution and stack completeness are distinct diagnostics. GMP leaf shares are 50.35% and 43.42%; allocation leaf shares are 27.30% and 36.81%, respectively. The summaries retain leaf categories, unresolved shares, demangled inclusive stacks and filter calibration/sensitivity diagnostics.
 
 The first profile source is retained by tag `issue-10378-metitarski-first-kernel-source`; the second by `issue-10378-metitarski-second-kernel-source`. The first benchmark body is unchanged between those source commits. The runner now validates the schema’s string result hash `0x1` before postprocessing. Both accepted captures returned that hash and status `ok`.
 
-All captures are retained. `second-io-failed.manifest.json` records a rejected adaptation: the parametric macro registered an IO action as a pure result instead of executing it, producing nearly empty regions and reaching the region limit. Its functional verification did not validate execution. The pure function fixes this boundary. `second-validation-failed.manifest.json` retains the completed pure capture whose launcher rejected the string hash by comparing it to integer 1. `second.postprocess.manifest.json` records validation and postprocessing of that same successful capture, retaining the original manifest hash and every command; no measurement was repeated to repair the parser.
+All captures are retained. `second-io-failed.manifest.json` records a rejected adaptation: the parametric macro registered an IO action as a pure result instead of executing it, producing nearly empty regions and reaching the region limit. Its functional verification did not validate execution. The pure function fixes this boundary. `second-validation-failed.manifest.json` retains the completed pure capture whose launcher rejected the string hash by comparing it to integer 1. `second-unbound-postprocess.manifest.json` retains the initial recovery whose tooling was not bound to a clean commit. The accepted `first.postprocess.manifest.json` and `second.postprocess.manifest.json` run the committed `--postprocess` mode at `26eda1c3eb`, retained by `issue-10378-metitarski-postprocess-source`. They validate each original artifact hash and clean measurement row, record the clean processor and filter revisions, and bind each resulting summary by SHA-256. The second original manifest hash is `c276c4a8929df3e3aa3e7ee4fcf54580acf0181ba12d3828911f1972a1415c58`, matching the retained validation-failure manifest. Original captures remain unmodified. No measurement was repeated. Counts, leaf categories, inclusive function shares and filter diagnostics reproduce the original summaries; equal-share rankings now use deterministic lexical tie ordering, and summary paths point to the new derived artifacts.
 
 The workload archive/correction for tower8, ordinary fixed trial-major timing studies, matched clean/eager comparisons, growth/counter studies and the final Phase4 audit remain required.
+
+## Reproducibility and diagnostics
+
+Both captures ran on chungus2, x86_64, AMD EPYC 9455 48-Core Processor,
+Linux 6.12.111 / glibc 2.42. The compiled lean-bench dependency is
+`8a37daf1074c3bdbd0da479b55538bad4a0022db` (version 0.1.0); the clean
+filter revision is `9356baa2f5757ee40320a897bd284914d5bb9f5e`.
+Samply is 0.13.1, perf 7.2.8 and Lean 4.35.0-rc3. Inputs are deterministic,
+with no random seed. Full capture and postprocessing commands appear in the
+manifests; raw snapshots and every command's output remain at their recorded
+external paths.
+
+| Filter output | First | Second |
+| --- | ---: | ---: |
+| Target window (seconds) | 15 | 3 |
+| Timed regions | 3 | 17 |
+| `total_timed_ms` | 21787.23241 | 2524.121549 |
+| `calibration_residual_ms` | 0.9444329962 | 0.9268020019 |
+| `retained_samples_bench_thread` | 21752 | 2524 |
+| `sensitivity.verdict` | passed | passed |
+| Benchmark frame coverage | 95.26% | 87.64% |
+
+The first profile's dominant cost is sorting three roots, through
+`Root.sortBy` / `Root.compare` and descriptor comparison/reencoding. This
+is an unexpected dominant cost relative to isolation itself. The concrete
+[upstream comparison concern](https://github.com/kim-em/hex-dev/issues/10377#issuecomment-5983809923)
+requests investigation of checked isolation/reencoding reuse and separated
+intervals from the descriptor owner. The tower does not duplicate that API.
+
+The second profile is dominated by algebraic sign/zero checks during
+`Element.ofPoly` and coefficient arithmetic. Signed-remainder construction
+and dense pseudo-division perform these tests over the retained selected-root
+context; multiplication accounts for 56.10% inclusively. Eager child-context
+construction in `Tower.Context.adjoin` accounts for 39.26%. These observations
+identify concrete costs, but do not establish the effect of a clean/eager
+storage ablation.
 
 ## First: top twenty inclusive Hex functions
 

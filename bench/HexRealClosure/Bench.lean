@@ -418,7 +418,7 @@ context. The Euclidean factor recurrence and signed-remainder chains each use
 quadratic dense polynomial operations through a degree-linear sequence. Bit
 sizes and repeated algebraic sign checks may exceed this degree-only model;
 the measured ladder must test that hypothesis. -/
-setup_benchmark runMetiSecond n => n^3
+setup_benchmark runMetiSecond n => n ^ 3
   with prep := metiSecondInput
   where {
     paramFloor := 3, paramCeiling := 9

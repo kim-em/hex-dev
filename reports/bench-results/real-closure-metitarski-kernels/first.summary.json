@@ -1,5 +1,11 @@
 {
   "allocation_share_percent": 27.3,
+  "benchmark_stack_coverage": {
+    "function": "Hex.RealClosure.Bench.runMetiFirst",
+    "interpretation": "Inclusive shares are lower bounds when recorded stacks omit frames.",
+    "missing_percent": 4.74,
+    "percent": 95.26
+  },
   "classified_percent": 96.02,
   "diagnostics": {
     "bench_pid": 1114093,
@@ -302,11 +308,11 @@
       "percent": 1.0
     },
     {
-      "function": "Hex.SignDet.ReductionStep.build",
+      "function": "Hex.SignDet.Reduction.buildFrom",
       "percent": 0.98
     },
     {
-      "function": "Hex.SignDet.Reduction.buildFrom",
+      "function": "Hex.SignDet.ReductionStep.build",
       "percent": 0.98
     },
     {
@@ -329,13 +335,29 @@
     "lean-runtime": 17.65,
     "other": 3.98
   },
-  "profile": "/home/kim/.local/share/hex/bench-profiles/real-closure-meti-first-kernel/filtered.json.gz",
+  "profile": "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/first.postprocess/filtered.json.gz",
   "samples": 21752,
-  "symbols": "/home/kim/.local/share/hex/bench-profiles/real-closure-meti-first-kernel/symbols.json",
+  "symbols": "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/first.postprocess/symbols.json",
   "top_inclusive": [
     {
       "function": "lean_apply_2",
       "percent": 95.28
+    },
+    {
+      "function": "Hex.RealClosure.Bench.runMetiFirst",
+      "percent": 95.26
+    },
+    {
+      "function": "Hex.RealClosure.Tower.Context.roots?",
+      "percent": 95.26
+    },
+    {
+      "function": "_ZN4lean7lthread3imp5_mainEPv",
+      "percent": 95.26
+    },
+    {
+      "function": "_ZNSt3__110__function6__funcIZ13lean_run_mainE3$_0FvvEEclB9nqe230100Ev",
+      "percent": 95.26
     },
     {
       "function": "lean-bench.LeanBench.Cli.runChildCmd",
@@ -346,31 +368,15 @@
       "percent": 95.26
     },
     {
-      "function": "lean-bench.LeanBench.runChildMode",
-      "percent": 95.26
-    },
-    {
       "function": "lean-bench.LeanBench.kernelLoop",
       "percent": 95.26
     },
     {
-      "function": "_ZNSt3__110__function6__funcIZ13lean_run_mainE3$_0FvvEEclB9nqe230100Ev",
-      "percent": 95.26
-    },
-    {
-      "function": "_ZN4lean7lthread3imp5_mainEPv",
-      "percent": 95.26
-    },
-    {
-      "function": "Hex.RealClosure.Bench.runMetiFirst",
+      "function": "lean-bench.LeanBench.runChildMode",
       "percent": 95.26
     },
     {
       "function": "lean-bench_.private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
-      "percent": 95.26
-    },
-    {
-      "function": "Hex.RealClosure.Tower.Context.roots?",
       "percent": 95.26
     },
     {

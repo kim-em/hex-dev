@@ -1,5 +1,11 @@
 {
   "allocation_share_percent": 36.81,
+  "benchmark_stack_coverage": {
+    "function": "Hex.RealClosure.Bench.runMetiSecond",
+    "interpretation": "Inclusive shares are lower bounds when recorded stacks omit frames.",
+    "missing_percent": 12.36,
+    "percent": 87.64
+  },
   "classified_percent": 96.2,
   "diagnostics": {
     "bench_pid": 1235349,
@@ -294,11 +300,11 @@
       "percent": 21.79
     },
     {
-      "function": "Hex.SignDet.buildPrepared",
+      "function": "Hex.RealClosure.Algebraic.Context.adjoin",
       "percent": 21.67
     },
     {
-      "function": "Hex.RealClosure.Algebraic.Context.adjoin",
+      "function": "Hex.SignDet.buildPrepared",
       "percent": 21.67
     },
     {
@@ -346,11 +352,11 @@
       "percent": 11.33
     },
     {
-      "function": "Hex.RealClosure.Bisection.Frontier.prepare?",
+      "function": "Hex.RealClosure.Bisection.Cell.prepare?",
       "percent": 10.82
     },
     {
-      "function": "Hex.RealClosure.Bisection.Cell.prepare?",
+      "function": "Hex.RealClosure.Bisection.Frontier.prepare?",
       "percent": 10.82
     },
     {
@@ -366,11 +372,11 @@
       "percent": 9.94
     },
     {
-      "function": "Hex.Sturm.certifyPrepared",
+      "function": "Hex.SignDet.buildNode",
       "percent": 9.43
     },
     {
-      "function": "Hex.SignDet.buildNode",
+      "function": "Hex.Sturm.certifyPrepared",
       "percent": 9.43
     },
     {
@@ -406,12 +412,16 @@
       "percent": 3.61
     },
     {
+      "function": "Hex.DensePoly.subImpl",
+      "percent": 3.05
+    },
+    {
       "function": "Hex.TarskiCertificate.checkEndpoints",
       "percent": 3.05
     },
     {
-      "function": "Hex.DensePoly.subImpl",
-      "percent": 3.05
+      "function": "Hex.DensePoly.divMod",
+      "percent": 3.01
     },
     {
       "function": "Hex.DensePoly.divModArray",
@@ -419,10 +429,6 @@
     },
     {
       "function": "_private.HexPoly.Euclid.DivGcd.0_Hex.DensePoly.divModArrayAuxImplGo",
-      "percent": 3.01
-    },
-    {
-      "function": "Hex.DensePoly.divMod",
       "percent": 3.01
     },
     {
@@ -442,11 +448,11 @@
       "percent": 2.38
     },
     {
-      "function": "_private.HexPoly.Euclid.DivGcd.0_Hex.DensePoly.modArrayAuxImplGo",
+      "function": "Hex.DensePoly.modArray",
       "percent": 2.34
     },
     {
-      "function": "Hex.DensePoly.modArray",
+      "function": "_private.HexPoly.Euclid.DivGcd.0_Hex.DensePoly.modArrayAuxImplGo",
       "percent": 2.34
     },
     {
@@ -485,9 +491,9 @@
     "lean-runtime": 15.06,
     "other": 3.8
   },
-  "profile": "/home/kim/.local/share/hex/bench-profiles/real-closure-meti-second-pure-kernel/filtered.json.gz",
+  "profile": "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/second.postprocess/filtered.json.gz",
   "samples": 2524,
-  "symbols": "/home/kim/.local/share/hex/bench-profiles/real-closure-meti-second-pure-kernel/symbols.json",
+  "symbols": "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/second.postprocess/symbols.json",
   "top_inclusive": [
     {
       "function": "lean_apply_2",
