@@ -23,8 +23,9 @@ variable {E : Type u} [Zero E] [DecidableEq E] [One E] [Add E] [Mul E] [Neg E] [
 
 /-- Evaluate only the coefficient coordinates with their actual arithmetic. -/
 @[expose] def coefficient (values : Fin n → E) (m : Mono (n + 1)) (c : Int) : E :=
-  scalar c * (List.finRange n).foldl
-    (fun acc i => acc * Mono.powBySq (values i) m[i.castSucc]) 1
+  let product := (List.finRange n).foldl (fun acc i =>
+    if m[i.castSucc] = 0 then acc else acc * Mono.powBySq (values i) m[i.castSucc]) 1
+  if c = 1 then product else scalar c * product
 
 /-- Group terms by their bound-variable exponent through dense coefficient addition.
 Coefficient powers and products are evaluated in `E`, without polynomial products
@@ -95,12 +96,23 @@ private theorem coefficient_value (values : Fin n → E) (x : ℝ)
     f (coefficient values m c) * x ^ m[Fin.last n] =
       (c : ℝ) * Mono.prod (append (fun j => f (values j)) x) m := by
   have fold (indices : List (Fin n)) (acc : E) :
-      f (indices.foldl (fun acc i => acc * Mono.powBySq (values i) m[i.castSucc]) acc) =
+      f (indices.foldl (fun acc i =>
+        if m[i.castSucc] = 0 then acc else acc * Mono.powBySq (values i) m[i.castSucc]) acc) =
       indices.foldl (fun acc i => acc * Mono.powBySq (f (values i)) m[i.castSucc]) (f acc) := by
     induction indices generalizing acc with
     | nil => rfl
-    | cons i rest ih => simp only [List.foldl_cons, ih, hm, power_value f h1 hm]
-  simp only [coefficient, hm, scalar_value f hn hneg, fold, h1]
+    | cons i rest ih =>
+      by_cases unused : m[i.castSucc] = 0
+      · simp only [List.foldl_cons, unused, ite_true, Mono.powBySq, mul_one, ih]
+      · simp only [List.foldl_cons, unused, ite_false, ih, hm, power_value f h1 hm]
+  have scalar_product : ∀ a : E,
+      f (if c = 1 then a else scalar c * a) = (c : ℝ) * f a := by
+    intro a
+    by_cases unit : c = 1
+    · subst c
+      simp only [ite_true, Int.cast_one, one_mul]
+    · simp only [ite_eq_right unit, hm, scalar_value f hn hneg]
+  simp only [coefficient, scalar_product, fold, h1]
   simp only [Mono.prod, List.finRange_succ_last, List.foldl_append, List.foldl_map,
     List.foldl_cons, List.foldl_nil]
   simp only [append, Fin.val_castSucc, Fin.isLt, dite_true, Fin.val_last,
@@ -131,6 +143,12 @@ theorem polynomial_eval (values : Fin n → E) (q : RealFormula.Poly (n + 1)) (x
 theorem degree (values : Fin n → E) (q : RealFormula.Poly (n + 1)) :
     (HexPolyMathlib.Interpret.interpret f hz (polynomial values q)).natDegree =
       (polynomial values q).natDegree := HexPolyMathlib.Interpret.natDegree_interpret f hz _
+
+/-- The leading coefficient is interpreted at the same fixed representation map. -/
+theorem leading (values : Fin n → E) (q : RealFormula.Poly (n + 1)) :
+    (HexPolyMathlib.Interpret.interpret f hz (polynomial values q)).leadingCoeff =
+      f (polynomial values q).leadingCoeff :=
+  HexPolyMathlib.Interpret.leadingCoeff_interpret f hz _
 
 include h1 ha hm hn hneg in
 /-- Every prepared atom has its original value; guards are not stripped. -/

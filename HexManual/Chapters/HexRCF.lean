@@ -2083,16 +2083,19 @@ The native tower API can find roots and choose ordinary real samples over an
 already selected algebraic coefficient field. Start with a checked
 {name}`Hex.SignDet.Descriptor`; its polynomial, interval and derivative signs
 fix the selected root. {name}`Hex.RealClosure.Tower.Model.base` interprets the
-rational base, and `Model.adjoin` preserves that selection in the child field.
+rational base, and {name}`Hex.RealClosure.Tower.Model.adjoin` preserves that selection in the child field.
 This real interpretation is used in correctness proofs; compiled arithmetic
 uses the owner's native stored values.
 
 {name}`Hex.RCF.RealCoefficients.RepresentationSpecialize.prepare` substitutes
 those values into the shared formula syntax using their actual arithmetic.
 It groups terms by the bound-variable exponent after evaluating coefficient
-coordinates directly. Its `prepare_eval` law needs arithmetic preservation and zero reflection;
-`prepare_degrees` needs zero reflection alone. These permit unequal stored
-nonzero expressions with the same real value. They retain repeated atoms, cancelled zero polynomials and
+coordinates directly. Its
+{name}`Hex.RCF.RealCoefficients.RepresentationSpecialize.prepare_eval` law
+needs arithmetic preservation and zero reflection;
+{name}`Hex.RCF.RealCoefficients.RepresentationSpecialize.prepare_degrees`
+needs zero reflection alone. These permit unequal stored nonzero expressions
+with the same real value. They retain repeated atoms, cancelled zero polynomials and
 the two atoms describing a half-open domain. No field instance on native
 stored expressions is required.
 
@@ -2171,19 +2174,25 @@ example {registry : BaseContext.Registry}
 ```
 
 The native root producer already provides complete coverage, multiplicities
-and order through `Context.roots_spec` and `Context.roots_sorted`. For the
+and order through {name}`Hex.RealClosure.Tower.Context.roots_spec` and
+{name}`Hex.RealClosure.Tower.Context.roots_sorted`. For the
 positive selected √2 fixture, the four source atoms above have four distinct
 boundaries, four sections and five sectors; the repeated polynomial adds no
-extra boundary. The adapter's regression also checks leading cancellation,
-retained zero atoms, every cell sign and the strict/non-strict domain relations
-through the shared Boolean fold. The negative selected √2 control has only
-the two guard boundaries and rejects the root equation everywhere.
+extra boundary. The negative selected √2 control has only the two guard
+boundaries and rejects the root equation everywhere. A separate mixed-input
+control sends a literally duplicated atom, a zero atom and a leading-cancelled
+polynomial through the native root/sample producer. The cancelled polynomial
+adds a section at zero. Every cell sign and the strict/non-strict domain
+relations are checked through the shared Boolean fold.
 
 These are ordinary native producer APIs and their real correctness laws.
 Integrating their output into frozen tactic replay still needs the owner's
 checked literal context and predecessor-sign interfaces. The example proves
-the simultaneous signs of ordinary samples; general finite replay through
-successive infinitesimals needs its separate joint realization theorem.
+the simultaneous signs of these ordinary samples. General finite replay for
+nested selected roots and successive infinitesimals still needs one ordinary
+real assignment for the complete joint constraint set. Executable all-live
+enlargement assembly and its frozen acceptance interfaces also remain owner
+obligations.
 
 # Caller-supplied finite bounds
 %%%
