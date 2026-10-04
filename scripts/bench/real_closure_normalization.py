@@ -28,7 +28,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--oracle-python', type=Path, required=True)
     args = parser.parse_args()
-    args.oracle_python = args.oracle_python.resolve()
+    args.oracle_python = args.oracle_python.absolute()
     destination = args.output.resolve()
     if destination == ROOT or ROOT in destination.parents:
         parser.error('measurement artifacts must remain outside the frozen checkout')
@@ -40,11 +40,12 @@ def main():
                   schedule='trial-major; degree order 2,4,8,16; adjacent AB/BA alternating by trial',
                   arms=dict(A='clean', B='eager'), commands=[], measurements=[],
                   comparison=dict(per_call='total_nanos / inner_repeats',
-                    statistic='per-degree median and full range of six paired eager/clean ratios',
+                    statistic='per-degree median (mean of the middle two sorted values) and full range of six paired eager/clean ratios',
+                    analyzer='scripts/bench/analyze_real_closure_normalization.py',
                     direction_rule='consistent direction only if all six ratios are strictly on the same side of 1; otherwise mixed/inconclusive',
-                    rerun_policy='one fixed capture; no automatic rerun',
+                    rerun_policy='one fixed capture; no automatic or manual rerun for an inconclusive result',
                     inference='descriptive shared-host observations, no significance or asymptotic verdict'),
-                  regime='one Rat extension, head leading coefficient 2, 2n products; stored eager denominators at most 4; no normalization policy conclusion')
+                  regime='one Rat extension, head leading coefficient 2, 2n products; stored eager denominators at most 4; unique selected root uses direct Sturm rather than BKR; degree 2 uses the linear endpoint fast path; no normalization policy conclusion')
     def save():
         manifest.write_text(json.dumps(record, indent=2)+'\n')
     def run(command, *, timeout=600, check=True):
@@ -92,15 +93,19 @@ def main():
         snapshot = destination / 'hexrealclosure_normalization_bench'
         shutil.copy2(ROOT/'.lake/build/bin/hexrealclosure_normalization_bench',snapshot)
         record['executable_sha256'] = digest(snapshot)
-        record['oracle_python'] = str(args.oracle_python.resolve())
+        record['oracle_python'] = str(args.oracle_python.absolute())
         record['oracle_version'] = run([args.oracle_python,'-c',
             'import z3; from importlib.metadata import version; print(version("python-flint"), z3.get_version_string())']).read_text().strip()
         cpu, lease = cpu_lease()
         os.sched_setaffinity(0,{cpu})
         record.update(cpu=cpu, affinity=sorted(os.sched_getaffinity(0)), load=os.getloadavg())
         hashes = {}
+        committed_rows = {json.loads(line)['degree']: line+'\n' for line in
+            (ROOT/'conformance-fixtures/HexRealClosure/normalization.jsonl').read_text().splitlines()}
         for degree in record['sizes']:
             fixture = run([snapshot,'storage',degree])
+            if fixture.read_text() != committed_rows[degree]:
+                raise RuntimeError('snapshot emission diverges from the committed fixture')
             run([args.oracle_python,'scripts/oracle/real_closure_normalization.py',fixture])
             stored = json.loads(fixture.read_text())
             hashes[degree] = {arm: f'0x{stored[label]["result_hash"]:x}'
