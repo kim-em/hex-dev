@@ -26,7 +26,9 @@ The canonical backend arm reached the 1800-second operational cap. Its stdout
 was buffered and empty when the process was terminated, so the last completed
 stage cannot be established from that output.
 This timeout is a censored observation, not a completed timing sample or a
-quantified speedup. No unchanged rerun of that arm has been collected.
+quantified speedup. No rerun of that tagged executable has been collected.
+Its second-isolation window excluded construction of `x³ + 1`; that setup was untimed in the
+historical run.
 
 ## Preliminary native profile
 
@@ -36,9 +38,10 @@ cover one compiled native MetiTarski run, at 99 Hz `cycles:u` with
 `b2cea573a742a279dc07e8626f64b570c19d0c2e`; the binary SHA-256 is
 `3edbc3503a26592c2dc36410d5a30e81d571306aa4a835d997c90154578a62af`.
 The source is preserved by the upstream tag
-`issue-10378-phase4-profile-source`. The measured repository's subsequent
-changes contain only evidence files;
-its driver and Lake configuration match the compiled source. Both stages
+`issue-10378-phase4-profile-source`. The measured repository at
+`2a20b4e3c0d6725a3bec38e88aa92ea625390a59`
+adds only evidence files to that source; its driver and Lake configuration
+match the compiled source. The current driver includes later stage checks. Both stages
 and the equation/multiplicity checks completed.
 
 The profile retained 539 samples and reported zero lost samples. The largest
@@ -64,11 +67,16 @@ The retained independent checks use python-flint 0.9.0 to establish that
 the MetiTarski degree-15 polynomial is irreducible and squarefree. An exact
 rational Sturm sequence finds three real roots and verifies the least-root
 interval, with no root below it. Reproduce these checks with
-`python3 scripts/oracle/real_closure_phase4_inputs.py` in an environment with
-the pinned versions. Retain a new compiled functional run with
+`python3 scripts/oracle/real_closure_phase4_inputs.py --paper PAPER.pdf`
+in an environment with the pinned versions. The checker verifies the supplied PDF hash; the formulas
+were manually transcribed and checked against section4, PDF page14.
+`input-checks.json` records this checker's hash and is the current input
+verification; `workload-checks.json` retains the earlier, narrower check.
+Retain a new compiled functional run with
 `python3 scripts/bench/real_closure_phase4.py native NEW_OUTPUT_DIRECTORY`
-(or `canonical`); the runner refuses to overwrite evidence and records
-CPU model, OS, kernel, source snapshot, binary hash and termination signal.
+(or `canonical`); the runner requires a clean checkout, retains a successful
+`lake build hexrealclosure_phase4` log, refuses to overwrite evidence and
+records CPU model, OS, kernel, source commit, binary hash and termination signal.
 Z3 4.15.4 checks the printed first `tower8` polynomial under `0 < ε < 1`.
 The paper prints a constant term `4 − 2ε² + 4`, giving
 

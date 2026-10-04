@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Check the exact printed Phase 4 inputs independently of Hex."""
+import argparse
+import hashlib
 import json
+from pathlib import Path
 
 import flint
 import z3
@@ -26,7 +29,10 @@ def variations(chain, point):
     return sum(a != b for a, b in zip(signs, signs[1:]))
 
 
-def check():
+def check(paper):
+    paper_hash = hashlib.sha256(paper.read_bytes()).hexdigest()
+    if paper_hash != PAPER_SHA256:
+        raise ValueError("paper PDF differs from the recorded transcription source")
     if flint.__version__ != "0.9.0" or z3.get_version_string() != "4.15.4":
         raise ValueError("expected python-flint0.9.0 and Z34.15.4")
     p = flint.fmpq_poly(COEFFICIENTS)
@@ -76,9 +82,17 @@ def check():
         "z3_query": no_root.sexpr(),
         "z3_version": z3.get_version_string(),
         "python_flint_version": flint.__version__,
-        "paper_sha256": PAPER_SHA256,
+        "paper_sha256": paper_hash,
+        "transcription": {"method": "manually checked against the PDF",
+                          "section": 4, "pdf_page": 14,
+                          "metitarski": "degree15 followed by y^3+x^3+1",
+                          "tower8_constant": "4-2*epsilon^2+4"},
+        "checker_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
     }
 
 
 if __name__ == "__main__":
-    print(json.dumps(check(), indent=2))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--paper", type=Path, required=True)
+    args = parser.parse_args()
+    print(json.dumps(check(args.paper), indent=2))

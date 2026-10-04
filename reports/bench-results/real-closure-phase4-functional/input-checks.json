@@ -38,5 +38,13 @@
   "z3_query": "(declare-fun epsilon () Real)\n(declare-fun x () Real)\n(assert (> epsilon 0.0))\n(assert (< epsilon 1.0))\n(assert (let ((a!1 (+ (- (^ x 4.0) (* 2.0 epsilon (^ x 3.0)))\n              (* (- (^ epsilon 2.0) 4.0) (^ x 2.0))\n              (* 4.0 epsilon x)\n              8.0)))\n  (<= (- a!1 (* 2.0 (^ epsilon 2.0))) 0.0)))\n",
   "z3_version": "4.15.4",
   "python_flint_version": "0.9.0",
-  "paper_sha256": "4caf52449ebb030fcc9341b864c08b307a944dd0d0fc7fb801413486396d7a19"
+  "paper_sha256": "4caf52449ebb030fcc9341b864c08b307a944dd0d0fc7fb801413486396d7a19",
+  "transcription": {
+    "method": "manually checked against the PDF",
+    "section": 4,
+    "pdf_page": 14,
+    "metitarski": "degree15 followed by y^3+x^3+1",
+    "tower8_constant": "4-2*epsilon^2+4"
+  },
+  "checker_sha256": "27aa962715d8cfe578c8447c94680f7bc2b866de1bd0878e605939e439ab9208"
 }
