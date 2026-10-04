@@ -859,6 +859,7 @@ lean_lib HexPrimalityElabProbe where
 lean_lib HexPrimalityMathlibProofProbe where
   srcDir := "bench"
   globs := #[`HexPrimalityMathlib.ProofProbe.Support,
+    `HexPrimalityMathlib.ProofProbe.FactorExperiment,
     `HexPrimalityMathlib.ProofProbe.Baseline,
     `HexPrimalityMathlib.ProofProbe.Input31,
     `HexPrimalityMathlib.ProofProbe.Literal31,
@@ -2236,6 +2237,10 @@ lean_exe hexprimality_policy_probe where
 lean_exe hexprimality_field_probe where
   srcDir := "bench"
   root := `HexPrimality.FieldProbe
+
+lean_exe hexprimality_factor_experiment where
+  srcDir := "bench"
+  root := `HexPrimality.FactorExperiment
 
 lean_exe hexprimality_fuel_probe where
   srcDir := "bench"
