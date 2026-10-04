@@ -114,6 +114,13 @@ def lakefile_blocks(text: str) -> dict[str, str]:
         if candidate and depth != 0 and not line.startswith((" ", "\t")):
             uncertain = True
         match = candidate if depth == 0 else None
+        if depth == 0 and not candidate and declaration.strip() and (
+                code.lstrip().startswith("@[") or re.fullmatch(
+                    r"(?:(?:private|protected|public|partial|unsafe|noncomputable|nonrec|meta)\s*)+",
+                    declaration.strip())):
+            # An incomplete attributed or modifier header has ambiguous
+            # ownership. Keep the whole file rather than dropping its body.
+            uncertain = True
         if key is not None and depth == 0 and not continuation and not match and LAKE_COMMAND.match(declaration):
             uncertain = True
         if match:
@@ -139,12 +146,6 @@ def lakefile_blocks(text: str) -> dict[str, str]:
             pending.append(line)
         elif line.startswith((" ", "\t")) or not line.strip():
             if code.strip() and pending:
-                # A split declaration header may follow the attribute. Its
-                # ownership is ambiguous here, so retain the whole file.
-                if depth == 0 and re.fullmatch(
-                        r"(?:(?:private|protected|public|partial|unsafe|noncomputable|nonrec|meta)\s*)+",
-                        declaration.strip()):
-                    uncertain = True
                 current.extend(pending)
                 pending = []
             current.append(line)
