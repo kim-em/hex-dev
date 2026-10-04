@@ -893,7 +893,7 @@ permutation is packed by kernel evaluation.
 
 The tactic evaluates each generator and the query to image lists, runs
 `Kernel.certify` and `Kernel.chunks` with the degree and the number of inputs, and computes the order or the sift verdict
-in compiled code. If the goal is false, or `Kernel.chunks` fails, it reports the
+outside the kernel. If the goal is false, or `Kernel.chunks` fails, it reports the
 certified order, the verdict or the limit that failed, and stops before adding
 any declaration. Otherwise it adds:
 

@@ -731,11 +731,10 @@ kernel; the regression ladder in
 missing exposure on two refinement helpers and on core's `Array.map`,
 worked around per `HexBasic.OfFn` pending the upstream exposure fixes).
 
-The library builds with `precompileModules`, so the compiled search
-the tactic runs at elaboration time runs compiled rather than
-interpreted whenever the library's shared objects are loaded (a
-downstream `lake build`, or `lake lean` on a file; `lake env lean`
-interprets). The kernel cost of the negative routes is measured by
+The library does not set `precompileModules`: the tactic's search runs
+interpreted at elaboration time, and a measurement from a downstream package on
+Paley graphs with 29, 37 and 41 vertices found no consistent gain from
+compiling it, because kernel checking dominates. The kernel cost of the negative routes is measured by
 `scripts/bench/graphiso_kernel_cost.py`, which reports type-checking
 time per certificate record and its exponent in the vertex count over
 the cactus corpus; its records live under `reports/bench-results/`
