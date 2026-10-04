@@ -37,7 +37,7 @@ semantic modules keep their existing ownership:
 | `adapters/HexRealClosureMathlib/` | `hex-real-closure-mathlib`; `HexRealClosureMathlib.TowerRoots`, `RootCollection`, `TowerEnlargeOrder`, with public umbrella imports | 104 adapter modules including tests; current umbrella exposes only computation, polynomial interpretation and `BaseContext` |
 | `HexOrderedFnMathlib/` | `hex-ordered-fn-mathlib`; `HexOrderedFnMathlib` | Ordinary umbrella already exposes real and infinitesimal ordered extensions |
 | `adapters/HexRCF/RealFormula.lean` | Base `hex-rcf`; `HexRCF.RealFormula` after RealFormulaMathlib is publishable | One module built by `HexRCFRealFormula`; absent from base `HexRCF.lean` |
-| `adapters/HexRCF/RealCoefficients/` plus its umbrella | Optional Mathlib adapter proposal below; `HexRCF.RealCoefficients` | 51 coefficient modules built by `HexRCFRealCoefficients`; absent from base `HexRCF.lean` |
+| `adapters/HexRCF/RealCoefficients/` plus its umbrella | Optional Mathlib adapter proposal below; `HexRCF.RealCoefficients` | 54 coefficient modules built by `HexRCFRealCoefficients`; absent from base `HexRCF.lean` |
 
 The inventory lists every adapter source and its direct import roots. Modules under `Tests/` or ending in `Tests` stay development checks unless individually selected as
 standalone regression modules under existing release policy. Migration must
@@ -167,13 +167,17 @@ The existing path-based consumer validates **local monorepo composition**.
 The separate [local candidate experiment](../experiments/RealClosureConsumer/CANDIDATES.md)
 uses ordinary imports against Git-pinned package trees, with no monorepo path
 requirement. It reuses the existing publication source mappings and pin
-rewriters. [#10476](https://github.com/kim-em/hex-dev/pull/10476) remains open;
-its staging/consumer implementation is not copied or replaced. Candidate
+rewriters. [#10476](https://github.com/kim-em/hex-dev/pull/10476) is merged;
+its existing `--dry-run --stage` and `consumer_check.py` supply the exact
+release-output check. The earlier local candidate results below predate that
+infrastructure and remain identified separately. Candidate
 success is not a full release-sync validation, manifest eligibility, or
 availability of any published version. The optional tactic sources are test
 modules in the consumer; no optional installable package is selected.
-Optional tactic consumers reuse [#10358](https://github.com/kim-em/hex-dev/issues/10358)'s `TotalAlgebraicProofs` and
-`ProductionProgress`; exploration consumers await [#10378](https://github.com/kim-em/hex-dev/issues/10378)'s delivered API.
+Optional tactic consumers reuse [#10358](https://github.com/kim-em/hex-dev/issues/10358)'s `TotalAlgebraicProofs`,
+`ProductionProgress`, and merged #10668's `PreparedCoefficients`, `FiniteReplay`
+and fresh `ProofProbe.Prepared` proofs. The latter authenticate source/divisor
+bindings and quote frozen replay with exact ordinary-kernel axiom guards; exploration consumers await [#10378](https://github.com/kim-em/hex-dev/issues/10378)'s delivered API.
 
 The [candidate evidence ledger](real-closure-candidate-consumer.json) records
 the 62 local Git pins, exact external pins and source/configuration/log hashes.
@@ -244,10 +248,10 @@ manifest state:
    they do not establish a build of precisely the published-only mirror graph.
    Merging puts these modules in the existing managed paths: the next routine
    full sync will copy them and add Tau Ceti to the companion and downstream
-   locks. The current sync does not build staged output before pushing and
-   tagging; mirror CI runs afterward. Hold release dispatch until a fresh
-   build of the exact candidate release output and pins passes, using
-   #10476 when available. The local full-graph builds and targeted previews
+   locks. The merged #10476 workflow builds staged output before pushing and
+   tagging. Hold release dispatch until a fresh
+   build of the exact candidate release output and pins passes under that
+   infrastructure. The local full-graph builds and targeted previews
    do not provide that check. TarskiFoundation’s `import all HexRealRootsMathlib.TarskiSum` accesses
    its own companion internals and passes the existing DAG/trusted-import policy;
    consumers use ordinary imports. No published mirror is edited or pushed.
@@ -258,7 +262,8 @@ manifest state:
 6. Use [#10476](https://github.com/kim-em/hex-dev/pull/10476) to build staged trees and a fresh consumer with candidate pins,
    including Tarski, BKR/Thom, ordered extensions, tower roots/exploration and
    the optional tactic. Then run the **full** sync dry run and reconcile any
-   diverged mirror baseline. Current `--dry-run` does not stage packages.
+   diverged mirror baseline. A plain `--dry-run` does not retain staged packages; pass `--stage`
+   to retain them for `consumer_check.py`.
 
 Mirror creation, version selection, release dispatch and announcements follow
 the maintainer's schedule. Unrelated distribution eligibility is separate

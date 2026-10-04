@@ -42,7 +42,10 @@ guards permit only `propext`, `Classical.choice` and `Quot.sound`. These are
 proof/API composition checks; there are no new performance measurements or
 claims of joint ordinary-real realization. Optional tactic examples remain
 owned by [#10358](https://github.com/kim-em/hex-dev/issues/10358) and are reused from `conformance/HexRCF/TotalAlgebraicProofs.lean`
-and `ProductionProgress.lean`. The [local candidate experiment](CANDIDATES.md) additionally builds these
+and `ProductionProgress.lean`. Merged #10668 also supplies
+`PreparedCoefficients.lean`, `FiniteReplay.lean` and fresh
+`bench/HexRCF/ProofProbe/Prepared` examples; reuse their original
+source modules and exact axiom guards for preparation/frozen replay. The [local candidate experiment](CANDIDATES.md) additionally builds these
 examples against exact Git-pinned package trees. Exploration acceptance and
 full release-sync consumer validation remain in the
 [publication plan](../../reports/real-closure-publication.md).

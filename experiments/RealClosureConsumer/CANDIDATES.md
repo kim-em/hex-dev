@@ -4,7 +4,7 @@ The question is whether the completed semantic modules can be consumed from
 separate package trees with exact dependencies, and what prevents an optional
 real-coefficient adapter from sharing the existing `HexRCF` namespace.
 This is a local experiment for #10575, not release-sync validation or
-publication eligibility. PR #10476 supplies the future release staging check;
+publication eligibility. Merged PR #10476 supplies the release staging check;
 its implementation is not duplicated here.
 
 ## Construction
