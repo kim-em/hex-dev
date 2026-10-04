@@ -153,7 +153,6 @@ class AdmissionScannerTests(unittest.TestCase):
                 "adapters/HexRealClosureMathlib/RegularEvaluation.lean",
                 "adapters/HexRealClosureMathlib/ModelEvaluation.lean",
                 "adapters/HexRealClosureMathlib/AlgebraicEvaluation.lean",
-                "adapters/HexRealClosureMathlib/SelectedEvaluation.lean",
                 "adapters/HexRealClosureMathlib/SpecializeFractionRing.lean",
                 "adapters/HexRealClosureMathlib/CoefficientMap.lean",
                 "adapters/HexRealClosureMathlib/CoefficientQuery.lean",

@@ -131,4 +131,8 @@ theorem regular_map [DecidableEq F] [DecidableEq G] (interpretation : Coefficien
   rw [← bound]
   exact Specialize.Regular.evaluation_coefficient _ _ _
 
+/-- info: 'Hex.RealClosure.CoefficientMap.regular_map' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.CoefficientMap.regular_map
+
 end Hex.RealClosure.CoefficientMap

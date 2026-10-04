@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
+public import HexRealClosureMathlib.RegularEvaluation
 public import HexRealClosureMathlib.MonicEvaluation
 public import HexRealClosureMathlib.ModelEvaluation
 public import HexRealClosureMathlib.TransportSelected
@@ -18,21 +19,24 @@ variable {registry : BaseContext.Registry} {context : Context registry}
 variable {K G : Type} [Field K] [LinearOrder K] [DecidableEq K]
 variable [IsStrictOrderedRing K] [IsRealClosed K] [Field G] [DecidableEq G]
 
-/-- Build a native checked zero query for the original selected generator's
-actual minimal polynomial. Both the finite native representative and successful
-query production are conclusions. -/
+/-- A native representative of the original generator's minimal polynomial
+exists, and the actual joint query producer accepts it with any finite list
+of further queries. The representative is chosen in the companion proof. -/
 theorem minimal_query (model : Model context K)
-    (descriptor : SignDet.Descriptor context.Value Signature context.sign context.signature) :
+    (descriptor : SignDet.Descriptor context.Value Signature context.sign context.signature)
+    (qs : List (DensePoly context.Value)) :
     ∃ q : DensePoly context.Value,
       model.polynomial q = minpoly model.field
         ((model.adjoin descriptor).value (context.adjoin descriptor).generator) ∧
-      ∃ s : SignDet.SelectedSigns descriptor [q],
-        descriptor.buildSigns [q] = .ok s ∧ s.values.toList = [0] := by
+      ∃ s : SignDet.SelectedSigns descriptor (q :: qs),
+        descriptor.buildSigns (q :: qs) = .ok s ∧
+          s.values.toList = (0 : Int) :: SignDet.signsAt model.value model.zero_iff qs
+            ((model.adjoin descriptor).value (context.adjoin descriptor).generator) := by
   classical
   obtain ⟨q, original⟩ := model.polynomial_surjective
     (minpoly model.field ((model.adjoin descriptor).value (context.adjoin descriptor).generator))
   obtain ⟨s, built, values⟩ := descriptor.buildSigns_roots model.value model.zero_iff
-    model.one model.add model.sub model.mul model.nat model.sign model.neg model.inv [q]
+    model.one model.add model.sub model.mul model.nat model.sign model.neg model.inv (q :: qs)
   refine ⟨q, original, s, built, ?_⟩
   have zero : (HexPolyMathlib.Interpret.interpret model.value model.zero_iff q).eval
       (descriptor.root model.value model.zero_iff model.one model.add model.sub
@@ -40,7 +44,9 @@ theorem minimal_query (model : Model context K)
     rw [← model.adjoin_generator descriptor, ← model.polynomial_eval, original]
     exact minpoly.aeval model.field _
   simp only [SignDet.signsAt, List.map_cons, List.map_nil, zero, sign_zero] at values
-  change s.values.toList = [0] at values
+  rw [← model.adjoin_generator descriptor] at values
+  change s.values.toList = (0 : Int) :: SignDet.signsAt model.value model.zero_iff qs
+    ((model.adjoin descriptor).value (context.adjoin descriptor).generator) at values
   exact values
 
 omit [DecidableEq G] in
@@ -248,6 +254,112 @@ theorem adjoin_signs (model : Model context K)
   simp only [Function.comp_apply] at signValue
   rw [← model.adjoin_value descriptor a] at signValue
   exact signValue
+
+/-- The actual native joint producer supplies one finite family realization
+step. All coefficient premises concern the chosen minimal polynomial and the
+same produced literal evidence. The returned interpretation is on the actual
+child's semantic field and includes fractions with surviving denominators,
+so it composes with another native algebraic step. -/
+theorem adjoin_realization (model : Model context K)
+    (descriptor : SignDet.Descriptor context.Value Signature context.sign context.signature)
+    (values : List (context.adjoin descriptor).context.Value) :
+    ∃ q : DensePoly context.Value,
+      model.polynomial q = minpoly model.field
+        ((model.adjoin descriptor).value (context.adjoin descriptor).generator) ∧
+      ∃ s : SignDet.SelectedSigns descriptor (q :: values.map (context.polynomial descriptor)),
+        descriptor.buildSigns (q :: values.map (context.polynomial descriptor)) = .ok s ∧
+        ∀ interpretation : CoefficientMap model.field G,
+          (∀ i ≤ (minpoly model.field
+            ((model.adjoin descriptor).value (context.adjoin descriptor).generator)).natDegree,
+              (minpoly model.field
+                ((model.adjoin descriptor).value (context.adjoin descriptor).generator)).coeff i ∈
+                  interpretation.domain) →
+          ∀ descriptorData : Transport.DescriptorData (model.read interpretation)
+            (model.domain interpretation) context.sign (fun a : G => (SignType.sign a : Int))
+            descriptor.raw descriptor.evidence,
+          Transport.ReplayData (model.read interpretation) (model.domain interpretation)
+            context.sign (fun a : G => (SignType.sign a : Int)) descriptor.raw.head
+            descriptor.raw.lower descriptor.raw.upper
+            (descriptor.raw.queries ++ q :: values.map (context.polynomial descriptor)) s.evidence →
+          (∀ a ∈ values, ∀ i < (context.polynomial descriptor a).size,
+            model.domain interpretation ((context.polynomial descriptor a).coeff i)) →
+          let selected := (Transport.checkedDescriptor (model.read interpretation)
+            (model.domain interpretation) (model.closed interpretation) id context.sign
+            (fun a : G => (SignType.sign a : Int)) context.signature descriptor descriptorData).root
+              (fun a : G => a) (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl)
+              (fun _ _ => rfl) (fun _ => rfl) (fun _ => rfl)
+          ∃ extended : CoefficientMap (model.adjoin descriptor).field G,
+            (∀ a ∈ values, (model.adjoin descriptor).toValue a ∈ extended.domain ∧
+              (SignType.sign (extended.map ((model.adjoin descriptor).toValue a)) : Int) =
+                (SignType.sign ((model.adjoin descriptor).value a) : Int)) ∧
+            (∀ a : context.Value, model.domain interpretation a →
+              (model.adjoin descriptor).toValue ((context.adjoin descriptor).embed a) ∈ extended.domain ∧
+              extended.map ((model.adjoin descriptor).toValue ((context.adjoin descriptor).embed a)) =
+                model.read interpretation a) ∧
+            (model.adjoin descriptor).toValue (context.adjoin descriptor).generator ∈ extended.domain ∧
+              extended.map ((model.adjoin descriptor).toValue (context.adjoin descriptor).generator) =
+                selected := by
+  classical
+  obtain ⟨q, query, s, built, _⟩ := model.minimal_query descriptor
+    (values.map (context.polynomial descriptor))
+  refine ⟨q, query, s, built, ?_⟩
+  intro interpretation minimalGuards descriptorData queryData guards
+  obtain ⟨minimal, monic, original⟩ := model.minimal_lift interpretation descriptor minimalGuards
+  obtain ⟨chosen, preserved⟩ := model.adjoin_signs interpretation descriptor q query values s
+    descriptorData queryData minimal monic original guards
+  let root := (model.adjoin descriptor).value (context.adjoin descriptor).generator
+  let selected := (Transport.checkedDescriptor (model.read interpretation)
+    (model.domain interpretation) (model.closed interpretation) id context.sign
+    (fun a : G => (SignType.sign a : Int)) context.signature descriptor descriptorData).root
+      (fun a : G => a) (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl)
+      (fun _ _ => rfl) (fun _ => rfl) (fun _ => rfl)
+  let ambient := interpretation.algebraic root selected minimal monic original chosen
+  let extended := ambient.regular.comap (model.adjoin descriptor).field.subtype
+  refine ⟨extended, ?_, ?_, ?_, ?_⟩
+  · intro a member
+    obtain ⟨domain, signValue⟩ := preserved a member
+    refine ⟨?_, ?_⟩
+    · rw [CoefficientMap.comap_domain]
+      exact ambient.regular_mem _ domain
+    rw [CoefficientMap.comap_map]
+    change (SignType.sign (ambient.regular.map ((model.adjoin descriptor).value a)) : Int) = _
+    rw [ambient.regular_map _ domain]
+    exact signValue
+  · intro a member
+    have member := (model.domain_iff interpretation a).mp member
+    have coefficient := interpretation.algebraic_polynomial root selected minimal monic original chosen
+      (Polynomial.C ⟨model.toValue a, member⟩)
+    have source : Specialize.Algebraic.source interpretation.domain root
+        (Polynomial.C ⟨model.toValue a, member⟩) = model.value a := by
+      rw [Specialize.Algebraic.source_apply, Polynomial.eval₂_C]
+      rfl
+    rw [source, Polynomial.eval₂_C] at coefficient
+    constructor
+    · rw [CoefficientMap.comap_domain]
+      change (model.adjoin descriptor).value ((context.adjoin descriptor).embed a) ∈ ambient.regular.domain
+      rw [model.adjoin_embed]
+      exact ambient.regular_mem _ coefficient.1
+    · rw [CoefficientMap.comap_map]
+      change ambient.regular.map ((model.adjoin descriptor).value ((context.adjoin descriptor).embed a)) =
+        model.read interpretation a
+      rw [model.adjoin_embed, ambient.regular_map _ coefficient.1, model.read_apply]
+      have agrees := interpretation.algebraic_map root selected minimal monic original chosen (model.toValue a) member
+      rw [Subfield.algebraMap_ofSubfield] at agrees
+      change ambient.map ((model.toValue a : model.field) : K) =
+        interpretation.map (model.toValue a) at agrees
+      rw [model.coe_toValue] at agrees
+      exact agrees
+  · rw [CoefficientMap.comap_domain]
+    exact ambient.regular_mem _ (interpretation.algebraic_mem root selected minimal monic original chosen)
+  · rw [CoefficientMap.comap_map]
+    change ambient.regular.map root = selected
+    rw [ambient.regular_map _
+      (interpretation.algebraic_mem root selected minimal monic original chosen)]
+    exact interpretation.algebraic_root root selected minimal monic original chosen
+
+/-- info: 'Hex.RealClosure.Tower.Model.adjoin_realization' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Model.adjoin_realization
 
 /-- info: 'Hex.RealClosure.Tower.Model.adjoin_signs' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

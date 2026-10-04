@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.TowerAlgebraic
+public import HexRealClosureMathlib.TowerCoverage
 public import HexRealClosureMathlib.CoefficientMap
 public import HexRealClosureMathlib.TransportClosed
 
@@ -26,30 +27,25 @@ noncomputable def read (model : Model context K) (interpretation : CoefficientMa
 def domain (model : Model context K) (interpretation : CoefficientMap model.field G)
     (a : context.Value) : Prop := model.toValue a ∈ interpretation.domain
 
+/-- Read the native value through the same semantic coefficient interpretation. -/
+theorem read_apply (model : Model context K) (interpretation : CoefficientMap model.field G)
+    (a : context.Value) : model.read interpretation a = interpretation.map (model.toValue a) := by
+  simp only [read]
+
+/-- Native guards concern membership of the actual semantic value. -/
+theorem domain_iff (model : Model context K) (interpretation : CoefficientMap model.field G)
+    (a : context.Value) : model.domain interpretation a ↔ model.toValue a ∈ interpretation.domain := Iff.rfl
+
 /-- Every polynomial over the actual semantic field has a finite native
 coefficient representative. This requires no field structure on native values. -/
-theorem polynomial_surjective (model : Model context K) :
+theorem polynomial_surjective [IsStrictOrderedRing K] [IsRealClosed K]
+    (model : Model context K) :
     Function.Surjective model.polynomial := by
   classical
   intro p
-  let coefficient (i : Fin (p.natDegree + 1)) : context.Value :=
-    (model.toValue_surjective (p.coeff i)).choose
-  have represents (i : Fin (p.natDegree + 1)) :
-      model.toValue (coefficient i) = p.coeff i :=
-    (model.toValue_surjective (p.coeff i)).choose_spec
-  refine ⟨DensePoly.ofCoeffs (Array.ofFn coefficient), ?_⟩
-  apply Polynomial.ext
-  intro i
-  rw [model.polynomial_coeff, DensePoly.coeff_ofCoeffs]
-  change model.toValue ((Array.ofFn coefficient).getD i (0 : context.Value)) = p.coeff i
-  by_cases bound : i < p.natDegree + 1
-  · rw [← Array.getElem_eq_getD (h := show i < (Array.ofFn coefficient).size from
-      by simpa only [Array.size_ofFn] using bound) (0 : context.Value)]
-    simpa only [Array.getElem_ofFn] using represents ⟨i, bound⟩
-  · rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_none (by simpa using Nat.le_of_not_gt bound)]
-    simp only [Option.getD_none]
-    rw [(model.toValue_zero 0).mpr rfl,
-      Polynomial.coeff_eq_zero_of_natDegree_lt (by omega)]
+  refine ⟨model.nativePoly p, ?_⟩
+  apply Polynomial.map_injective model.field.subtype Subtype.val_injective
+  rw [model.polynomial_map, model.nativePoly_value]
 
 omit [DecidableEq G] in
 /-- A native polynomial whose stored coefficients lie in the interpretation

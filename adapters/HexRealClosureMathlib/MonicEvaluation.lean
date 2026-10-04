@@ -166,4 +166,26 @@ theorem algebraic_polynomial (interpretation : CoefficientMap F G) (root : K) (s
       ((Specialize.Algebraic.source interpretation.domain root).rangeRestrict p) = _
   exact Specialize.Algebraic.evaluation_apply _ _ _ _ _ _ _ _ p
 
+/-- Adjoining the specialized root preserves every previously interpreted
+coefficient through the original ambient field inclusion. -/
+theorem algebraic_map (interpretation : CoefficientMap F G) (root : K) (selected : G)
+    (minimal : Polynomial interpretation.domain) (monic : minimal.Monic)
+    (original : minimal.map interpretation.domain.subtype = minpoly F root)
+    (chosen : minimal.eval₂ interpretation.value selected = 0)
+    (a : F) (member : a ∈ interpretation.domain) :
+    (interpretation.algebraic root selected minimal monic original chosen).map
+      (algebraMap F K a) = interpretation.map a := by
+  have evaluated := interpretation.algebraic_polynomial root selected minimal monic original chosen
+    (Polynomial.C ⟨a, member⟩)
+  have source : Specialize.Algebraic.source interpretation.domain root (Polynomial.C ⟨a, member⟩) =
+      algebraMap F K a := by
+    rw [Specialize.Algebraic.source_apply, Polynomial.eval₂_C]
+    rfl
+  rw [source, Polynomial.eval₂_C] at evaluated
+  exact evaluated.2.trans (interpretation.map_mem a member).symm
+
+/-- info: 'Hex.RealClosure.CoefficientMap.algebraic_map' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.CoefficientMap.algebraic_map
+
 end Hex.RealClosure.CoefficientMap

@@ -240,7 +240,6 @@ def check() -> None:
              "HexRealClosureMathlib.RegularEvaluation",
              "HexRealClosureMathlib.ModelEvaluation",
              "HexRealClosureMathlib.AlgebraicEvaluation",
-             "HexRealClosureMathlib.SelectedEvaluation",
              "HexRealClosureMathlib.SpecializeFractionRing",
              "HexRealClosureMathlib.CoefficientMap",
              "HexRealClosureMathlib.CoefficientQuery",

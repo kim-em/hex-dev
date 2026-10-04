@@ -25,6 +25,22 @@ namespace CoefficientMap
 
 variable (interpretation : CoefficientMap F G)
 
+/-- Restrict a guarded interpretation along an actual field inclusion.
+This lets an algebraic evaluation on the ambient field feed the next
+native context's semantic value field. -/
+noncomputable def comap {E : Type} [Field E] (embedding : E →+* F) : CoefficientMap E G where
+  domain := interpretation.domain.comap embedding
+  value := interpretation.value.comp {
+    toFun := fun a => ⟨embedding a, a.property⟩
+    map_zero' := Subtype.ext embedding.map_zero
+    map_one' := Subtype.ext embedding.map_one
+    map_add' := fun a b => Subtype.ext (embedding.map_add a b)
+    map_mul' := fun a b => Subtype.ext (embedding.map_mul a b) }
+
+/-- Membership is tested in the original interpretation at the included value. -/
+theorem comap_domain {E : Type} [Field E] (embedding : E →+* F) (a : E) :
+    a ∈ (interpretation.comap embedding).domain ↔ embedding a ∈ interpretation.domain := Iff.rfl
+
 /-- Read the interpreted coefficient. Zero is the total fallback outside the
 domain; preservation theorems require membership for their actual operands. -/
 noncomputable def map (coefficient : F) : G := by
@@ -35,6 +51,13 @@ noncomputable def map (coefficient : F) : G := by
 theorem map_mem (coefficient : F) (member : coefficient ∈ interpretation.domain) :
     interpretation.map coefficient = interpretation.value ⟨coefficient, member⟩ := by
   simp only [map, dite_eq_left member]
+
+/-- Restriction preserves the total reader, including its outside-domain fallback. -/
+theorem comap_map {E : Type} [Field E] [DecidableEq E] (embedding : E →+* F) (a : E) :
+    (interpretation.comap embedding).map a = interpretation.map (embedding a) := by
+  classical
+  simp only [map, comap, Subring.mem_comap]
+  split_ifs <;> rfl
 
 theorem map_zero : interpretation.map 0 = 0 := by
   rw [map_mem _ _ interpretation.domain.zero_mem]

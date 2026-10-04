@@ -738,7 +738,6 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.RegularEvaluation,
     `HexRealClosureMathlib.ModelEvaluation,
     `HexRealClosureMathlib.AlgebraicEvaluation,
-    `HexRealClosureMathlib.SelectedEvaluation,
     `HexRealClosureMathlib.CoefficientMap,
     `HexRealClosureMathlib.CoefficientQuery,
     `HexRealClosureMathlib.CoefficientTarski,
