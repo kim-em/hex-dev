@@ -37,7 +37,9 @@ or hand-edit a published repository.
 The represented groups act faithfully on `Fin n`. Further finite actions
 include tuples, subsets, partitions, block systems and cosets; their induced
 representations need not be faithful. The scope includes exact sampling from
-a supplied uniform index source, but no cryptographic random-number source.
+a supplied uniform index source, and an `IO` sampler whose bounded indices come
+from `IO.getRandomBytes` by rejection sampling. The library implements no
+random-number generator of its own.
 Conjugacy-class enumeration, abstract group isomorphism, character tables
 and transitive-group databases remain later extensions. There is no claim
 that a generator list is canonical under conjugacy.
@@ -112,6 +114,18 @@ permutation, and `checkWord S p program` compares it with `p`.
 `checkWord_sound` proves membership. Shared subexpressions prevent expansion
 of repeatedly composed words into enormous flat lists. Decode with explicit
 node and byte limits and reject cycles, forward references and bad indices.
+
+A `Word S` is a list of letters `(i, b)` with `i : Fin S.size`, where `b = true`
+denotes the inverse of `S[i]`. Words compose like permutations: the rightmost
+letter acts first. `Word.reduce` cancels adjacent letters `(i, b)` and
+`(i, !b)` until none remain, and preserves evaluation. `Program.toWord? S
+program` expands the nodes reachable from the root into a word and freely
+reduces it. It returns `none` exactly when `program.eval S` is `none`, so an
+invalid unreachable node is still rejected, and a returned word evaluates to
+the program's value. Expansion does not share subexpressions, so the word can
+be exponentially longer than the program. It is a display aid for short
+programs, not a certificate format. `Word.toString` prints a word as a product
+such as `g0 * g1⁻¹`, where `gi` names `S[i]`, and prints the empty word as `1`.
 
 `Chain n` is raw certificate data described below. The checked group shape is:
 
@@ -466,6 +480,7 @@ The soundness theorems are stated and proved in `HexPermGroupMathlib`: see
 | `isAbelian G` | True exactly when all group elements commute. |
 | `rank G p`, `unrank G k` | Inverse maps between `Element G` and `Fin (order G)`. |
 | `sampleWith draw G` | Unrank one index supplied by `draw` for the positive bound `order G`. |
+| `sampleIO G` | `sampleWith uniformFin G`: a uniformly distributed element in `IO`. |
 | `elementsWith cap G` | Every group element once if `order G ≤ cap`, otherwise an explicit size-limit result. |
 | `leftCosetsWith cap G H h` | A complete left transversal when `h` proves `H ≤ G` and the index fits the cap. |
 
@@ -520,6 +535,14 @@ probability `1 / order G`. The computational library proves the bijection;
 the companion proves the corresponding finite-distribution statement.
 This does not assert that a pseudorandom seed is a source of true uniform
 randomness. Do not obtain bounded indices by a biased modular reduction.
+
+`uniformFin bound h : IO (Fin bound)` reads enough bytes from
+`IO.getRandomBytes` to cover `bound - 1`, keeps the bit length of `bound - 1`
+low bits, and retries until the value is below `bound`. Each attempt accepts
+with probability above one half. If the bytes are uniform and independent,
+the result is exactly uniform on `Fin bound`, and `sampleIO G` returns each
+element of `G` with probability exactly `1 / order G`. Lean's `randNat`
+reduces modulo the bound and must not be used for this purpose.
 
 Element enumeration uses the orbit-choice bijection, not a second closure
 algorithm, and sorts image arrays lexicographically for the public result.
@@ -1184,12 +1207,13 @@ Implement in this order:
    elementary operations, cycles and order. Adapt graph-isomorphism imports
    without changing its canonical-search behavior.
 2. `Word.lean` and `Orbit.lean`: generated-subgroup semantics, checked programs,
-   BFS, transporters and Schreier's lemma.
+   word flattening and display, BFS, transporters and Schreier's lemma.
 3. `Chain.lean` and `Check.lean`: raw chain data, sifting, complete checking,
    and the membership/cardinality theorems.
 4. `Build.lean`: deterministic construction and its acceptance theorem.
    `Subgroup.lean`, `Coset.lean` and `Rank.lean`: basic subgroup operations,
-   cosets, elementary predicates, rank/unrank and supplied-index sampling.
+   cosets, elementary predicates, rank/unrank, supplied-index sampling and
+   uniform sampling in `IO`.
 5. `Action.lean`: proof-bearing finite actions, generic orbits and Schreier
    stabilizers, induced images and kernels.
 6. `Search.lean`: complete backtracking and checkers for set transporters,

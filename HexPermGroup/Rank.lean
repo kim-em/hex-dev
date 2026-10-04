@@ -125,6 +125,32 @@ theorem value_choice (c : Chain n) (base : Nat) (p : Perm n) (h : c.accepts base
 
 end Hex.PermGroup.Chain
 
+namespace Hex.PermGroup
+
+/-- One rejection-sampling attempt per call: read `bytes` random bytes, keep the
+low `bits` bits and accept the value if it is below `bound`. Each attempt
+accepts with probability above one half, so the expected number of attempts is
+below two. The loop has no fuel because an `IO` source has no failure mode that
+fuel would report. -/
+private partial def uniformFinLoop (bound : Nat) (bits bytes : Nat) : IO (Fin bound) := do
+  let data ← IO.getRandomBytes bytes.toUSize
+  let x := data.foldl (fun acc b => acc * 256 + b.toNat) 0 % 2 ^ bits
+  if h : x < bound then return ⟨x, h⟩ else uniformFinLoop bound bits bytes
+
+/-- A uniformly distributed element of `Fin bound`, by rejection sampling on
+`IO.getRandomBytes`. Each attempt reads enough bytes to cover `bound - 1`, keeps
+the bit length of `bound - 1` bits, and retries until the value is below
+`bound`; no modular reduction is applied to an incomplete range. The result is
+exactly uniform provided the bytes from `IO.getRandomBytes` are uniform and
+independent. -/
+def uniformFin (bound : Nat) (h : 0 < bound) : IO (Fin bound) :=
+  if bound = 1 then pure ⟨0, h⟩
+  else
+    let bits := (bound - 1).log2 + 1
+    uniformFinLoop bound bits ((bits + 7) / 8)
+
+end Hex.PermGroup
+
 namespace Hex.PermGroup.Group
 
 theorem checked (G : Group n) : G.chain.checkFrom 0 = true :=
@@ -187,6 +213,11 @@ the positive exact order; its effects and failures are preserved by `map`. -/
 @[expose] def sampleWith {m : Type → Type} [Functor m]
     (draw : (bound : Nat) → 0 < bound → m (Fin bound)) (G : Group n) : m (Element G) :=
   G.unrank <$> draw G.order G.order_pos
+
+/-- A uniformly distributed element of `G`, unranking an index drawn by
+`uniformFin`. -/
+def sampleIO (G : Group n) : IO (Element G) :=
+  G.sampleWith uniformFin
 
 theorem sampleWith_error {ε : Type} (error : ε) (G : Group n) :
     sampleWith (m := Except ε) (fun _ _ => Except.error error) G = Except.error error := rfl
