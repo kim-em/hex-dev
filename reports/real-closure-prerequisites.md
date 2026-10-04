@@ -162,3 +162,18 @@ replace completed measurements or admit unresolved complexity models.
 The [real-algebraic performance report](hex-real-algebraic-performance.md) and
 the Sturm report distinguish valid family passes from failed hypotheses,
 controls and fixed observations without budgets. Phase 4 remains incomplete.
+
+[Required CI for merged #10684](bench-results/prerequisite-required-ci-77a844987.json)
+attests the proved early nonreal rejection and expanded direct benchmark
+surface on `77a844987`: 91 Sturm and 102 real-algebraic checks, 63/360 filtered
+seconds, 83 exact real-algebraic oracle cases without unavailable-component
+skips, and full library/conformance/manual/architecture/trust checks.
+[The separately retained all-library run](bench-results/prerequisite-full-ci-77a844987.json)
+completes all 57 executable result checks but fails the unchanged total cap at
+388/360 seconds; its remaining all-library oracle step was cancelled after that
+completed failure, so no full-oracle success or headroom is claimed. The owned
+oracles pass separately in required filtered CI; no completed same-base main
+breakdown establishes causal attribution for the recurring cap failures. The
+manifest now declares the real-algebraic comparator and input-family coverage
+obligations with their actual pending evidence. These declarations and the
+merged proved API do not advance any phase counter.

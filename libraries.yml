@@ -1507,6 +1507,29 @@ libraries:
     mathlib: false
     done_through: 3
     status: active
+    phase4:
+      comparators:
+        - tool: "FLINT real-qqbar exact comparisons and polynomial roots"
+          class: informational
+          rationale: "Pinned python-flint/FLINT public qqbar calls supply separated and overlapping comparisons and exact roots for X^n-2 and X^n-sqrt(2). Persistent-process transport, sorting, exact annihilation and cleanup remain timed. The native API produces canonical minimal-polynomial representations, whereas the external fingerprint's polynomial follows the fixture's Eisenstein proof; these are explicitly bounded API-route observations, not identical internal algorithms or a speed gate. Arithmetic and rounding comparator coverage remains incomplete."
+        - tool: "Z3 RCF real polynomial roots"
+          class: informational
+          rationale: "Pinned algebraic-only MkRoots and exact relations solve the same rational and quadratic-coefficient root fixtures. Prepared coefficients are excluded; result checks, JSON transport and cleanup are retained. No SMT, transcendental or infinitesimal workload is measured. Backend contexts may retain internal caches, while the driver stores no roots. The ratios orient the implemented root audit and do not establish Phase-4 admission."
+      input_families:
+        - name: canonical-real-arithmetic
+          description: Fixed quadratic and degree-product-12 real operands exercise canonical arithmetic and matching bare-parent controls, with checked constructors/casts, complex norms/absolute value and real/imaginary projections. Retained addition attribution identifies parent isolation; full operation-specific evidence and raw profile coverage remain incomplete.
+        - name: real-order-and-rounding
+          description: Equality, sign, absolute value, conjugation and min/max anchors; separated and overlapping stored real intervals, near-zero and near-integer values, bounded comparison, floor/ceil, approximation and square roots. Current fixed observations do not discharge separation, precision or degree/height characterization.
+        - name: rational-height
+          description: One canonical degree-one rational leaf with growing primitive coefficient height, driving recognition, floor, ceiling and the former quotient control. The direct ladder is declared but unmeasured because canonical preparation exposes the retained HexArith square-root prerequisite concern.
+        - name: polynomial-arrays-and-sorting
+          description: Real coefficient-array construction and root-set membership/projections, plus distinct rational roots in bit-reversal order. Passing array and sorting families are separate from repeated fixed-leaf and exactification diagnostic controls.
+        - name: real-polynomial-roots
+          description: Actual RealAlgebraicPoly.roots on X^n-2 and X^n-sqrt(2), varying degree at fixed coefficient height and retaining full sorted root/multiplicity fingerprints, alongside repeated-root multiplicities, integer roots, root-set filtering and exactification anchors. Current external pairs and early-rejection profiles expose unresolved canonical isolation costs.
+        - name: representation
+          description: The shipped Repr formatter and ordinary-kernel generated-term roundtrip checks. The fixed formatter benchmark does not establish growing-size roundtrip performance; separately reported roundtrip scaling and attribution remain incomplete.
+        - name: fixed-field-sign
+          description: The shipped signField wrapper in Q(sqrt(2)), with constant, zero and nonconstant reduced coordinates. Current compiled anchors and historical source-scoped comparisons remain distinct; current scaling and profile coverage are incomplete. The forward comparison-strategy extension is excluded.
   HexRealAlgebraicMathlib:
     deps: [HexRealAlgebraic, HexNumberFieldMathlib, HexRealRootsMathlib]
     mathlib: true
@@ -1570,10 +1593,10 @@ libraries:
       comparators:
         - tool: "FLINT real-qqbar signed-root sums"
           class: informational
-          rationale: "Pinned FLINT root production and exact evaluation return the complete finite-interval query on fixed T_8 inputs. Prepared coefficient contexts, persistent JSON transport and root-value cleanup are recorded; this is not a literal-certificate or isolated-root-production comparison."
+          rationale: "Pinned FLINT root production and exact evaluation return complete finite-interval queries on fixed T_8 inputs and Chebyshev query-one degree ladders 4-64. Prepared coefficient contexts, persistent JSON transport and root-value cleanup are recorded; this is not a literal-certificate or isolated-root-production comparison."
         - tool: "Z3 RCF signed-root sums"
           class: informational
-          rationale: "Pinned Z3 RCF root production and exact evaluation return the complete finite-interval query on the same fixed inputs. Backend contexts may retain internal caches; no roots are cached by the driver and no Lean proof surface or speed target is claimed."
+          rationale: "Pinned Z3 RCF root production and exact evaluation return complete finite-interval queries on the same fixed inputs and Chebyshev query-one degree ladders 4-64. Backend contexts may retain internal caches; no roots are cached by the driver and no Lean proof surface or speed target is claimed."
       input_families:
         - name: head-degree
           description: Chebyshev heads T_n with query 1 on (-2,2), measuring the normal signed chain and endpoint passes as head degree grows.
