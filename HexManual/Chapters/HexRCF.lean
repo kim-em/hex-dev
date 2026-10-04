@@ -1799,6 +1799,99 @@ the proved `QAdjoin.common_get` theorem.
 tag := "hex-rcf-specialization-enclosures"
 %%%
 
+The explicit preparation API is
+{name}`Hex.RCF.RealCoefficients.Coefficients.prepare`. It returns authenticated
+fixed-field coordinates in the original coefficient order, their identities
+with the closed source expressions, and every original divisor before
+cancellation. Rational-only sources remain with the existing base solver;
+unsupported exact sources return a structured decline, while authentication,
+search and kernel failures are terminal.
+
+{name}`Hex.RCF.RealCoefficients.Coefficients.Environment.proveReplay` constructs
+and quotes a finite certificate through the public
+{name}`Hex.RCF.RealCoefficients.Replay.check_sound` theorem, then checks the proof
+against the original goal. A failed attempt restores caller metavariables.
+The existing `rcf` tactic retains its documented quotation options.
+
+{name}`Hex.RCF.RealCoefficients.Replay.Input` records the coefficient order,
+shared formula, quantifier, original divisor coordinates and context. Its type
+fixes the defining polynomial and the selected root. Domain restrictions remain
+formula atoms. {name}`Hex.RCF.RealCoefficients.Replay.build` uses bounded root/cell
+production and checks all original divisors before searching.
+{name}`Hex.RCF.RealCoefficients.Replay.check` reads only frozen evidence, returning
+an accepted Boolean or a structured binding, divisor, evidence or unresolved
+error. It never repeats root isolation, gcd or sign search. An accepted false
+verdict is diagnostic and provides no proof of the user's goal.
+
+{name}`Hex.RCF.RealCoefficients.Replay.check_domains` proves that every retained
+original divisor is nonzero at the selected embedding, even for a zero atom or
+an empty domain. {name}`Hex.RCF.RealCoefficients.Replay.check_spec` identifies the
+accepted Boolean with the fixed-field real sentence.
+
+```lean
+open Hex Hex.RCF.RealCoefficients
+
+example {p : ZPoly} {s : DyadicSquare}
+    {hw : atomWitness p s}
+    {hp : (mahlerPrec p : Int) ≤ s.prec}
+    [ZPoly.CheckedIrreducible p]
+    {Ctx : Type} [DecidableEq Ctx]
+    (input : Replay.Input p s hw hp Ctx n)
+    (cert : Replay.Certificate p s hw hp Ctx n)
+    (accepted : Replay.check input cert = .ok true) :
+    input.toProp :=
+  Replay.check_sound input cert accepted
+```
+
+For an already authenticated exact field,
+{name}`Hex.RCF.RealCoefficients.Replay.buildTotal` uses the existing complete
+producer rather than a finite refinement limit. It preflights every original
+divisor before production and preserves false as a diagnostic.
+{name}`Hex.RCF.RealCoefficients.Replay.buildTotal_spec` proves that each valid
+input produces an accepted correct verdict, independently of the direct
+proposal depth. The nonzero-divisor hypothesis below describes valid input;
+certificate acceptance and the verdict are conclusions.
+
+```lean
+example {p : ZPoly} {s : DyadicSquare}
+    {hw : atomWitness p s}
+    {hp : (mahlerPrec p : Int) ≤ s.prec}
+    [ZPoly.CheckedIrreducible p]
+    {Ctx : Type} [DecidableEq Ctx]
+    (input : Replay.Input p s hw hp Ctx n)
+    (real : s.meetsRealAxis = true) (depth : Nat)
+    (domains : ∀ divisor ∈ input.divisors, divisor ≠ 0) :
+    ∃ cert value,
+      Replay.buildTotal input real depth = .ok cert ∧
+      Replay.check input cert = .ok value ∧
+      (value = true ↔ input.toProp) :=
+  Replay.buildTotal_spec input real depth domains
+```
+
+{name}`Hex.RCF.RealCoefficients.Coefficients.Environment.proveTotalReplay`
+quotes the resulting finite evidence and transports the accepted true verdict
+to the exact original target. Its fresh Ioc proof regression uses direct depth
+zero; the generated proof contains no producer or search call. This explicit
+API retains raw carrier production and does not change the bounded `rcf`
+default. It does not prove recognition or irreducibility quotation complete
+for every closed algebraic source, or make Lean elaboration resource limits
+unbounded. The total producer has no finite search budget. Native production
+runs synchronously without heartbeat or cancellation polls inside the call;
+cancellation is observed after control returns to meta code. Quotation and
+kernel checking retain Lean’s ordinary resource limits.
+
+The explicit finite API uses linear recorded-sign lookup and one kernel
+decision. The tactic's indexed lookup and split/combined replay options govern
+its separate quotation path. Both paths use the same literal evidence reduction
+lemmas. Original guard coordinates remain in the finite envelope even after
+cancellation; exact nonvanishing and their source identities are checked
+separately from the quantifier fold.
+
+This fixed-field API covers the documented exact algebraic fragment. The
+caller-registration path below has its own frozen bounds and subject/version
+bindings; it does not supply a total field for general root algorithms. General
+frontend certification and tower realization remain incomplete.
+
 The shared formula records coefficient parameters and the quantified variable.
 Specialization evaluates the parameters in their fixed real embeddings and
 combines equal powers of the variable. Leading terms can disappear when
@@ -1807,6 +1900,13 @@ independently named coefficients denote the same value.
 polynomial's degree agrees with its real interpretation, including constants
 and zero. {name}`Hex.RCF.RealCoefficients.FieldSpecialize.literal_degree` gives
 the same guarantee for the literal fixed-field compiler.
+
+{name}`Hex.RCF.RealCoefficients.Specialize.prepare` and
+{name}`Hex.RCF.RealCoefficients.FieldSpecialize.prepare` retain all atoms in the
+shared traversal, including repeated atoms, zero polynomials and domain guards.
+Their `prepare_eval` and `prepare_degrees` laws apply after coefficient
+cancellation; filtering zero polynomials for carrier construction does not
+remove their Boolean atoms or original divisor conditions.
 
 ```lean
 open Hex.RCF.RealCoefficients

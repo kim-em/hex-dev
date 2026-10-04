@@ -8,6 +8,7 @@ module
 
 public meta import HexRealFormulaMathlib.Reify
 public meta import HexRCF.Reify
+public meta import HexRCF.Tactic
 public meta import HexRCF.RealCoefficients.Registration
 public meta import HexRCF.RealCoefficients.Interpret
 public import HexRealAlgebraicMathlib.Basic
@@ -504,6 +505,31 @@ private def prepareCore (registered : Array Expr) (original : Expr) (config : He
       checkWithKernel result.sentenceProof
       set state
       return result
+
+/-- Recover all original divisor obligations after checked alias substitution.
+This reuses source preflight without coefficient lowering, schema construction
+or root/sign production. Successful results preserve caller metavariables. -/
+def guards (original : Expr) (config : Hex.RealFormula.Reify.Config := {}) :
+    MetaM (Except Hex.RealFormula.Reify.Error (Array Expr)) := do
+  let saved ← saveState
+  let (result, _) ← tryFinally' (withNewMCtxDepth do
+      let action : FrontendM (Array Expr) := do
+        checkDomains original
+        let (source, proof) ← closeSource original
+        let _ ← liftM (Hex.RCF.checkProof `Hex.RCF.RealCoefficients.Reify.guards
+          (← inferType proof) proof)
+        preflight #[] source
+      let outcome ← (action.run {config, budget := .ofBudget config.ring.budget}).run
+      match outcome with
+      | .error error => return .error error
+      | .ok (divisors, _) => return .ok (← divisors.mapM instantiateMVars))
+    (fun result => do
+      match result with
+      | some (.ok _) => modify fun state => {state with
+          mctx := saved.meta.mctx, postponed := saved.meta.postponed,
+          zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds}
+      | _ => saved.restore)
+  return result
 
 /-- Build a source schema for closed rational, real algebraic, π/e and explicitly
 supplied registered subjects. The latter are pending frontend coordinates;
