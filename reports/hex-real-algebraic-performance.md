@@ -117,6 +117,10 @@ All complete-result guards and paired hashes match; source/binary fingerprints
 remain unchanged. The [earlier source-scoped comparison](bench-results/real-algebraic-poly-roots-comparison/README.md)
 and every failed [operational probe](bench-results/real-algebraic-poly-roots-probes/README.md)
 remain retained. Old cap failures do not assert a timeout on the changed code.
+The [post-change larger probes](bench-results/real-algebraic-poly-roots-probes-after/README.md)
+both pass within the 60-second operational cap, in about 9.3–9.4 seconds
+including preparation. They verify rational degree 16 and quadratic degree 8,
+but do not extend the operation-only scientific timing ladder.
 
 | Fixture | Hex median ms (Z3 pairs) | Z3 RCF median ms | FLINT qqbar median ms | Median adjacent Hex/Z3 ratio |
 | --- | ---: | ---: | ---: | ---: |
