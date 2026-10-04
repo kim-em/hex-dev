@@ -731,7 +731,8 @@ class SyncReleasedTests(unittest.TestCase):
         )
 
         def publish(entry, _source_sha, _token, _dry_run, synced,
-                    _baseline, _force, _dep_owner, _pins, version, resuming):
+                    _baseline, _force, _dep_owner, _pins, version, resuming,
+                    *_rest):
             self.assertEqual(version, "v0.2.0")
             self.assertFalse(resuming)
             if entry["repo"].endswith("/first"):
@@ -780,7 +781,8 @@ class SyncReleasedTests(unittest.TestCase):
         }), encoding="utf-8")
 
         def publish(entry, _source_sha, _token, _dry_run, synced,
-                    _baseline, _force, _dep_owner, _pins, version, resuming):
+                    _baseline, _force, _dep_owner, _pins, version, resuming,
+                    *_rest):
             self.assertEqual(version, "v0.2.0")
             self.assertFalse(resuming)
             short = entry["repo"].split("/")[-1]
@@ -827,7 +829,8 @@ class SyncReleasedTests(unittest.TestCase):
         }), encoding="utf-8")
 
         def publish(entry, _source_sha, _token, _dry_run, synced,
-                    _baseline, _force, _dep_owner, _pins, version, resuming):
+                    _baseline, _force, _dep_owner, _pins, version, resuming,
+                    *_rest):
             self.assertEqual(version, "v0.2.0")
             self.assertTrue(resuming)
             short = entry["repo"].split("/")[-1]
@@ -866,7 +869,8 @@ class SyncReleasedTests(unittest.TestCase):
         )
 
         def publish(entry, _source_sha, _token, _dry_run, synced,
-                    _baseline, _force, _dep_owner, _pins, version, resuming):
+                    _baseline, _force, _dep_owner, _pins, version, resuming,
+                    *_rest):
             self.assertEqual(version, "v0.2.0")
             self.assertFalse(resuming)
             self.assertEqual(entry["repo"], "leanprover/downstream")
@@ -1264,7 +1268,8 @@ class TokenPreflightTests(unittest.TestCase):
         seen_tokens: list = []
 
         def publish(entry, _source_sha, token, _dry_run, synced,
-                    _baseline, _force, _dep_owner, _pins, version, resuming):
+                    _baseline, _force, _dep_owner, _pins, version, resuming,
+                    *_rest):
             seen_tokens.append(token)
             self.assertEqual(version, "v0.2.0")
             self.assertFalse(resuming)
