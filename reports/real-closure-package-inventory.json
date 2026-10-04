@@ -1,6 +1,6 @@
 {
-  "sourceBaseRevision": "b2575e89cebb8b2d4cdc0f80f4ef13915e7870d5",
-  "sourceInputSHA256": "d1fe598b84165750579fcd62ca5d2aa71761e3076c3e4a5b0e6c27c046f99954",
+  "sourceBaseRevision": "767b3e15ee1c38d3abcd4a98e52b500f80733df6",
+  "sourceInputSHA256": "42ce8437f721e8aa9bd726400d2d0f7e6985c0c82636b6acecb0bd3459886d34",
   "scope": "Preparation snapshot; declared dependency closures differ from current public and development semantic import closures. Not staged split-package validation.",
   "toolchain": "leanprover/lean4:v4.35.0-rc3",
   "externalPins": [
@@ -762,8 +762,10 @@
       "semanticImportUnpublishedHexClosure": [
         "HexOrderedFn",
         "HexOrderedFnMathlib",
+        "HexPolyFast",
         "HexRank",
         "HexRankMathlib",
+        "HexRationalFn",
         "HexRealAlgebraic",
         "HexRealAlgebraicMathlib",
         "HexRealClosure",
@@ -775,7 +777,8 @@
         "HexSignDet",
         "HexSignDetMathlib",
         "HexSturm",
-        "HexSturmMathlib"
+        "HexSturmMathlib",
+        "HexTruncatedSeries"
       ],
       "publicImportExternalRoots": [
         "Mathlib",
@@ -895,7 +898,7 @@
     },
     {
       "library": "HexRealAlgebraic",
-      "phase": 1,
+      "phase": 3,
       "mathlib": false,
       "publishedRepo": null,
       "directHexDependencies": [
@@ -917,7 +920,7 @@
     },
     {
       "library": "HexRealAlgebraicMathlib",
-      "phase": 1,
+      "phase": 3,
       "mathlib": true,
       "publishedRepo": null,
       "directHexDependencies": [
@@ -1151,7 +1154,8 @@
       "publicImportUnpublishedHexClosure": [],
       "semanticImportUnpublishedHexClosure": [],
       "publicImportExternalRoots": [
-        "Mathlib"
+        "Mathlib",
+        "TauCeti"
       ],
       "semanticImportExternalRoots": [
         "Mathlib",
@@ -1385,7 +1389,7 @@
     },
     {
       "library": "HexSturm",
-      "phase": 0,
+      "phase": 3,
       "mathlib": false,
       "publishedRepo": null,
       "directHexDependencies": [
@@ -1404,7 +1408,7 @@
     },
     {
       "library": "HexSturmMathlib",
-      "phase": 0,
+      "phase": 3,
       "mathlib": true,
       "publishedRepo": null,
       "directHexDependencies": [
@@ -1425,7 +1429,8 @@
         "HexSturm"
       ],
       "publicImportExternalRoots": [
-        "Mathlib"
+        "Mathlib",
+        "TauCeti"
       ],
       "semanticImportExternalRoots": [
         "Mathlib",
@@ -1451,25 +1456,20 @@
     {
       "namespace": "HexRealRootsMathlib",
       "target": "HexQuerySemantics",
-      "directImportRoots": [
-        "HexRealRoots",
-        "Mathlib",
-        "TauCeti"
-      ],
-      "modules": [
-        "adapters/HexRealRootsMathlib/TarskiFoundation.lean",
-        "adapters/HexRealRootsMathlib/TarskiReal.lean",
-        "adapters/HexRealRootsMathlib/TarskiSoundness.lean"
-      ]
+      "directImportRoots": [],
+      "modules": []
     },
     {
       "namespace": "HexSturmMathlib",
       "target": "HexQuerySemantics",
       "directImportRoots": [
+        "HexPoly",
+        "HexRealRoots",
         "HexRealRootsMathlib"
       ],
       "modules": [
-        "adapters/HexSturmMathlib/Soundness.lean"
+        "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean",
+        "adapters/HexSturmMathlib/Tests/Replay/SemanticsBaseline.lean"
       ]
     },
     {
@@ -1515,6 +1515,7 @@
         "HexSignDet",
         "HexSignDetMathlib",
         "HexSturmMathlib",
+        "Init",
         "Mathlib",
         "TauCeti"
       ],
@@ -1532,6 +1533,11 @@
         "adapters/HexRealClosureMathlib/BaseAlgebraicity.lean",
         "adapters/HexRealClosureMathlib/BaseBound.lean",
         "adapters/HexRealClosureMathlib/BaseClean.lean",
+        "adapters/HexRealClosureMathlib/BaseFactory.lean",
+        "adapters/HexRealClosureMathlib/BaseFactoryTests.lean",
+        "adapters/HexRealClosureMathlib/BaseMapModel.lean",
+        "adapters/HexRealClosureMathlib/BaseModel.lean",
+        "adapters/HexRealClosureMathlib/BaseOrder.lean",
         "adapters/HexRealClosureMathlib/Bisection.lean",
         "adapters/HexRealClosureMathlib/BisectionCounts.lean",
         "adapters/HexRealClosureMathlib/BisectionFactor.lean",
@@ -1539,6 +1545,7 @@
         "adapters/HexRealClosureMathlib/BisectionRoots.lean",
         "adapters/HexRealClosureMathlib/Bounds.lean",
         "adapters/HexRealClosureMathlib/Canonical.lean",
+        "adapters/HexRealClosureMathlib/ContextModel.lean",
         "adapters/HexRealClosureMathlib/Deflation.lean",
         "adapters/HexRealClosureMathlib/Element.lean",
         "adapters/HexRealClosureMathlib/EnlargementTests.lean",
@@ -1546,14 +1553,25 @@
         "adapters/HexRealClosureMathlib/IsolationFactor.lean",
         "adapters/HexRealClosureMathlib/IsolationRoots.lean",
         "adapters/HexRealClosureMathlib/IsolationTotal.lean",
+        "adapters/HexRealClosureMathlib/LiveContext.lean",
+        "adapters/HexRealClosureMathlib/LocalSample.lean",
+        "adapters/HexRealClosureMathlib/LocalSampleTests.lean",
         "adapters/HexRealClosureMathlib/Polynomial.lean",
+        "adapters/HexRealClosureMathlib/Presentation.lean",
+        "adapters/HexRealClosureMathlib/PresentationTests.lean",
         "adapters/HexRealClosureMathlib/QAdjoin.lean",
         "adapters/HexRealClosureMathlib/RootCollection.lean",
         "adapters/HexRealClosureMathlib/RootFactors.lean",
+        "adapters/HexRealClosureMathlib/RootList.lean",
         "adapters/HexRealClosureMathlib/RootOrder.lean",
         "adapters/HexRealClosureMathlib/RootTotal.lean",
         "adapters/HexRealClosureMathlib/RootTransport.lean",
+        "adapters/HexRealClosureMathlib/Sample.lean",
+        "adapters/HexRealClosureMathlib/SampleTests.lean",
         "adapters/HexRealClosureMathlib/SelectedRoot.lean",
+        "adapters/HexRealClosureMathlib/SignEvidence.lean",
+        "adapters/HexRealClosureMathlib/SignFacts.lean",
+        "adapters/HexRealClosureMathlib/SignRequests.lean",
         "adapters/HexRealClosureMathlib/Specialize.lean",
         "adapters/HexRealClosureMathlib/SpecializeDescriptor.lean",
         "adapters/HexRealClosureMathlib/SpecializeMoment.lean",
@@ -1571,6 +1589,7 @@
         "adapters/HexRealClosureMathlib/TowerEnlarge.lean",
         "adapters/HexRealClosureMathlib/TowerEnlargeOrder.lean",
         "adapters/HexRealClosureMathlib/TowerEnlargeOrderTests.lean",
+        "adapters/HexRealClosureMathlib/TowerInclusion.lean",
         "adapters/HexRealClosureMathlib/TowerModel.lean",
         "adapters/HexRealClosureMathlib/TowerModelTests.lean",
         "adapters/HexRealClosureMathlib/TowerNaturality.lean",
@@ -1601,6 +1620,8 @@
         "adapters/HexRealClosureMathlib/TransportTarski.lean",
         "adapters/HexRealClosureMathlib/TransportTests.lean",
         "adapters/HexRealClosureMathlib/Trivial.lean",
+        "adapters/HexRealClosureMathlib/TrivialTower.lean",
+        "adapters/HexRealClosureMathlib/TrivialTowerTests.lean",
         "adapters/HexRealClosureMathlib/Union.lean",
         "adapters/HexRealClosureMathlib/UnionTests.lean",
         "adapters/HexRealClosureMathlib/Yun.lean",
@@ -1625,11 +1646,13 @@
         "HexRealRoots",
         "HexRealRootsMathlib",
         "HexReflect",
+        "HexRoots",
         "HexRootsMathlib",
         "HexSturm",
         "HexSturmMathlib",
         "Lean",
-        "Mathlib"
+        "Mathlib",
+        "Qq"
       ],
       "modules": [
         "adapters/HexRCF/RealCoefficients/Carrier.lean",
@@ -1637,6 +1660,7 @@
         "adapters/HexRCF/RealCoefficients/Coefficients.lean",
         "adapters/HexRCF/RealCoefficients/CommonPresentation.lean",
         "adapters/HexRCF/RealCoefficients/CommonTactic.lean",
+        "adapters/HexRCF/RealCoefficients/Conversion.lean",
         "adapters/HexRCF/RealCoefficients/CubeTwo.lean",
         "adapters/HexRCF/RealCoefficients/Field.lean",
         "adapters/HexRCF/RealCoefficients/FieldBuild.lean",
@@ -1646,17 +1670,22 @@
         "adapters/HexRCF/RealCoefficients/FieldCompile.lean",
         "adapters/HexRCF/RealCoefficients/FieldDecision.lean",
         "adapters/HexRCF/RealCoefficients/FieldDecisionProgress.lean",
+        "adapters/HexRCF/RealCoefficients/FieldIndex.lean",
         "adapters/HexRCF/RealCoefficients/FieldIsolate.lean",
         "adapters/HexRCF/RealCoefficients/FieldLiteral.lean",
+        "adapters/HexRCF/RealCoefficients/FieldRefinement.lean",
         "adapters/HexRCF/RealCoefficients/FieldReplay.lean",
         "adapters/HexRCF/RealCoefficients/FieldRootSigns.lean",
         "adapters/HexRCF/RealCoefficients/FieldRootSignsProgress.lean",
+        "adapters/HexRCF/RealCoefficients/FieldRoots.lean",
         "adapters/HexRCF/RealCoefficients/FieldRuntime.lean",
         "adapters/HexRCF/RealCoefficients/FieldSignProgress.lean",
         "adapters/HexRCF/RealCoefficients/FieldSpecialize.lean",
         "adapters/HexRCF/RealCoefficients/Finite.lean",
+        "adapters/HexRCF/RealCoefficients/FiniteReplay.lean",
         "adapters/HexRCF/RealCoefficients/Formula.lean",
         "adapters/HexRCF/RealCoefficients/Interpret.lean",
+        "adapters/HexRCF/RealCoefficients/IntervalSign.lean",
         "adapters/HexRCF/RealCoefficients/IsolationAssembly.lean",
         "adapters/HexRCF/RealCoefficients/IsolationBuild.lean",
         "adapters/HexRCF/RealCoefficients/IsolationCheck.lean",
@@ -1664,14 +1693,18 @@
         "adapters/HexRCF/RealCoefficients/IsolationSemantics.lean",
         "adapters/HexRCF/RealCoefficients/Isolations.lean",
         "adapters/HexRCF/RealCoefficients/LiteralSign.lean",
+        "adapters/HexRCF/RealCoefficients/Preparation.lean",
         "adapters/HexRCF/RealCoefficients/Radical.lean",
         "adapters/HexRCF/RealCoefficients/RadicalBuild.lean",
         "adapters/HexRCF/RealCoefficients/RadicalCheck.lean",
         "adapters/HexRCF/RealCoefficients/RadicalProgress.lean",
         "adapters/HexRCF/RealCoefficients/Registration.lean",
         "adapters/HexRCF/RealCoefficients/Reify.lean",
+        "adapters/HexRCF/RealCoefficients/Replay.lean",
+        "adapters/HexRCF/RealCoefficients/RepresentationSpecialize.lean",
         "adapters/HexRCF/RealCoefficients/RootAliases.lean",
         "adapters/HexRCF/RealCoefficients/Selected.lean",
+        "adapters/HexRCF/RealCoefficients/SignIndex.lean",
         "adapters/HexRCF/RealCoefficients/SignInputs.lean",
         "adapters/HexRCF/RealCoefficients/Specialize.lean",
         "adapters/HexRCF/RealCoefficients/SquareRoot.lean",
@@ -1770,6 +1803,7 @@
         "HexOrderedFn",
         "HexOrderedFnMathlib",
         "HexPoly",
+        "HexPolyFast",
         "HexPolyFp",
         "HexPolyFpMathlib",
         "HexPolyMathlib",
@@ -1779,6 +1813,7 @@
         "HexRCF",
         "HexRank",
         "HexRankMathlib",
+        "HexRationalFn",
         "HexRealAlgebraic",
         "HexRealAlgebraicMathlib",
         "HexRealClosure",
@@ -1798,13 +1833,16 @@
         "HexSignDet",
         "HexSignDetMathlib",
         "HexSturm",
-        "HexSturmMathlib"
+        "HexSturmMathlib",
+        "HexTruncatedSeries"
       ],
       "importUnpublishedHexClosure": [
         "HexOrderedFn",
         "HexOrderedFnMathlib",
+        "HexPolyFast",
         "HexRank",
         "HexRankMathlib",
+        "HexRationalFn",
         "HexRealAlgebraic",
         "HexRealAlgebraicMathlib",
         "HexRealClosure",
@@ -1816,7 +1854,8 @@
         "HexSignDet",
         "HexSignDetMathlib",
         "HexSturm",
-        "HexSturmMathlib"
+        "HexSturmMathlib",
+        "HexTruncatedSeries"
       ],
       "importExternalRoots": [
         "Batteries",

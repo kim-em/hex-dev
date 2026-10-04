@@ -43,31 +43,32 @@ recomputes exact signs and variations at the supplied interval; its acceptance
 theorem requires the original certificate to bind that interval. Neither
 translation calls polynomial division, gcd, or a chain producer.
 
-The development-only `HexQuerySemantics` target proves root-sum/replay semantics,
+The ordinary `HexSturmMathlib` target exposes proved root-sum/replay semantics,
 root counts, nonnegativity and degree bounds, and singleton-root signs through
 the shared hex-real-roots-mathlib foundation. The theorem for arbitrary
 accepted certificates has no producer-success hypothesis. All these results
 use only Lean's standard logical axioms. Independent scaffolding reviews are
 retained in `status/`; ordinary-kernel correctness checks are complete. Phase
 attestation is recorded in `libraries.yml`. Phase 4 still requires core
-eligibility and the headline correctness theorem's bridge-target
-availability reconciled against the development-adapter boundary. The `HexSturmMathlibTests` target builds
+eligibility. The named headline `query_iff` and the independent prepared and
+checker contracts are exposed by the public umbrella. The `HexSturmMathlibTests` target builds
 the ordinary companion checks under `HexSturmMathlib/Tests`. Semantic axiom
-guards live beside their development-only imports under `adapters/` and build
+guards remain in regression modules under `adapters/` and build
 through `HexQuerySemantics`. This theorem-only layer has no dedicated Phase-4 timing
 deliverable under the current policy.
 
-These proved semantic modules currently live under `adapters/`, outside the
-`HexSturmMathlib` library target. This companion is not yet released. Publishing them with their pinned Tau Ceti
-dependency remains a separate delivery obligation. Companion ownership below
-specifies the intended API; it does not imply the adapters are released.
+`Soundness.lean` is part of this companion and its public umbrella. This
+companion is not yet released. Its pinned HexRealRootsMathlib dependency
+carries the shared Tau Ceti foundation; no computational package depends
+on a proof companion or Tau Ceti. Publication remains separate from
+monorepo API availability.
 
 `HexSturmMathlib` imports `HexSturm`, `HexPolyMathlib` and
 `HexRealRootsMathlib`. The shared signed-remainder theorem, representation and
 positive-scaling bridges, and shared replay soundness live in
 [hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#shared-foundation-and-proof-ownership).
 Its Tau Ceti import and general integer/dyadic specialization are confined to
-the development adapters. The companion module `RealClosed.lean` proves
+that Mathlib companion. The companion module `RealClosed.lean` proves
 `IsRealClosed ℝ` independently. This companion proves the field frontend's domain guards,
 endpoint sign operations, query-proof composition and root-count API
 against the shared theorem, instantiating its domain and embedding as
@@ -184,7 +185,7 @@ guards its variation drop equals `TaQ`.
 Tau Ceti supplies polynomial IVT, Rolle and the signed-remainder identity,
 including infinite endpoints and arbitrary common gcd, through the pinned
 foundation named in the [owning companion's contract](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#shared-foundation-and-proof-ownership).
-The development adapters prove correspondence with the checked Hex data.
+The companion semantic modules prove correspondence with the checked Hex data.
 Ordinary derivative-seeded
 `Sturm.IsSturmChain` has incompatible root-flank and root-free-tail conditions;
 it cannot establish this signed sum.
@@ -196,8 +197,9 @@ and rational/integer correspondence live in the companion library. Root-sum
 semantics (`query_iff`, `query_spec`, `query_sound`, `queryPrepared_sound`,
 `countPrepared_sound`, `countPrepared_nonneg`, `check_sound`, `rootCount_eq`,
 `query_bound`, `query_sign`) and exact natural-count conversion live in the
-monorepo's `HexQuerySemantics` adapter target, not the released companion
-umbrella. Package integration of those adapters is owned by #10575. Assume the operation-preserving, zero-reflecting interpretation
+ordinary companion target and its public umbrella. `HexQuerySemantics`
+retains the semantic regression modules. The companion is not yet released.
+Assume the operation-preserving, zero-reflecting interpretation
 in the lawful semantic field described above.
 
 | Theorem | Hypotheses and conclusion |
@@ -300,7 +302,7 @@ The general `Hex.Sturm.rootCount` uses the same shared query computation.
 ## Integer/dyadic specialization and positive clearing
 
 `ZPoly.tarskiQuery_eq` and `IntTarskiCertificate.check_sound` stay in
-the development `HexRealRootsMathlib.TarskiReal` adapter, specialized from
+the companion module `HexRealRootsMathlib.TarskiReal`, specialized from
 the shared theorem with the integer embedding and exact dyadic endpoints
 in `ℝ`. The integer ring kernel
 requires no `Field Int`. The generic rational frontend reaches infinities;

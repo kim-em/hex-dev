@@ -7,6 +7,7 @@ import sys
 
 from libgraph import (
     EXTERNAL_IMPORT_ROOTS,
+    PROOF_IMPORT_ROOTS,
     KNOWN_EXCEPTIONS,
     check_lakefile_alignment,
     library_owner_for_path,
@@ -392,7 +393,7 @@ def main() -> int:
             for imported_root in import_roots(line):
                 if imported_root == owner:
                     continue
-                if imported_root in {"Mathlib", "TauCeti"}:
+                if imported_root in PROOF_IMPORT_ROOTS:
                     if owner != "HexManual" and not libraries[owner].mathlib:
                         errors.append(
                             f"{rel_path}:{line_no} imports {imported_root} but {owner} is not a mathlib bridge"

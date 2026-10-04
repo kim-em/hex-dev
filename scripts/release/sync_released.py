@@ -15,13 +15,11 @@ For each repo in scripts/release/released.yml (topological order), this:
      resulting commit with that version
      (unless --dry-run, which prints the planned changes and pin rewrites).
 
-A `pins_only` entry (the `leanprover/hex` aggregate) receives the managed CI
-workflow but no library source or Verso rewrite from the monorepo. The sync
-re-pins it to the version published this run. Listed last, after its upstreams,
-its lockfile resolves those requirements to the freshly-pushed commits. Its
-other managed artifact is the
-README, rendered by `aggregate_readme.py` from a template plus the manifest's
-`component:` labels so the published library table cannot fall behind.
+A `pins_only` entry (the `leanprover/hex` aggregate) receives generated Lake
+requirements and a generated public umbrella from the manifest's aggregated
+entries, alongside managed CI and README. Listed last, its lockfile resolves
+those requirements to freshly synchronized commits. Its README is rendered by
+`aggregate_readme.py` from a template and the manifest's `component:` labels.
 
 Auth (non-dry-run): tokens from --token (repeatable) or the environment
 ($RELEASED_SYNC_PAT, $RELEASED_SYNC_PAT_2, ... in numeric order) are used as
@@ -62,6 +60,10 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import aggregate_readme  # noqa: E402
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from check_trust_surface import code_without_comments_and_strings  # noqa: E402
+from libgraph import PROOF_IMPORT_ROOTS  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "scripts" / "release" / "released.yml"
@@ -855,6 +857,8 @@ def _add_closure_externals(entry: dict, doc: dict, notes: list[str]) -> int:
     """Copy missing closure-wide external packages from this monorepo's lockfile."""
     entries = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["repos"]
     wanted = {name.lower() for name in closure_external_packages(entry, entries)}
+    _check_external_boundary(entry, {root for root, name in EXTERNAL_IMPORT_ROOTS.items()
+                                    if name.lower() in wanted})
     present = {str(pkg.get("name", "")).lower() for pkg in doc.get("packages", [])}
     source = json.loads(LAKE_MANIFEST.read_text(encoding="utf-8"))["packages"]
     added = 0
@@ -974,42 +978,110 @@ def _synthesize_manifest_packages(entry: dict, clone: Path, doc: dict,
     return added
 
 
-def validate_external_imports(entry: dict, clone: Path) -> None:
-    """Require the mirror's Lake file to provide checked external import roots.
+MODULE_PART = r"(?:«[^»\r\n]+»|[\w]+)"
+MODULE_NAME = re.compile(MODULE_PART + r"(?:\." + MODULE_PART + r")*")
+IMPORT_COMMAND = re.compile(
+    r"^[ \t]*(?:(?:public|private|meta)[ \t]+)*import(?:[ \t]+all)?(?:[ \t]+|$)(.*)$")
 
-    The monorepo provides Batteries, Mathlib, Tau Ceti and AINTLIB; a mirror
-    only has what its own Lake file requires. Scan synced sources for these
-    roots and fail before pushing when a corresponding provider is absent.
-    Mathlib also provides Batteries; Tau Ceti and HasseWeil require their
-    own direct dependencies.
-    """
+
+def _module_parts(module: str) -> tuple[str, ...]:
+    return tuple(part[1:-1] if part.startswith("«") else part
+                 for part in re.findall(MODULE_PART, module))
+
+
+def _import_modules(source: str) -> set[str]:
+    """Read full import names, including continued and quoted identifiers."""
+    lines = code_without_comments_and_strings(source).splitlines()
+    roots: set[str] = set()
+    for i, line in enumerate(lines):
+        command = IMPORT_COMMAND.match(line)
+        if command is None:
+            continue
+        text = command[1].strip()
+        while True:
+            matches = list(MODULE_NAME.finditer(text))
+            if text and not re.sub(MODULE_NAME, "", text).strip():
+                for match in matches:
+                    parts = _module_parts(match[0])
+                    roots.add(".".join(part if re.fullmatch(r"\w+", part)
+                                       else f"«{part}»" for part in parts))
+            elif text:
+                break
+            i += 1
+            if i >= len(lines):
+                break
+            text = lines[i].strip()
+            # Continuation module names in this tree start with a capital or
+            # use quoted identifiers. A new Lean command ends the header.
+            if text and not (text[0].isupper() or text.startswith("«")):
+                break
+    return roots
+
+
+def _import_roots(source: str) -> set[str]:
+    return {_module_parts(module)[0] for module in _import_modules(source)}
+
+
+def _external_import_roots(entry: dict, clone: Path) -> dict[str, str]:
+    """Direct external imports in managed Lean code, excluding comments/strings."""
+    roots: dict[str, str] = {}
+    for src, dest_rel, is_dir in managed_paths(entry):
+        dest = src if clone == REPO_ROOT else clone / dest_rel
+        files = list(dest.rglob("*.lean")) if is_dir else (
+            [dest] if dest.suffix == ".lean" else [])
+        for lean in files:
+            if lean.is_file():
+                for root in _import_roots(lean.read_text(encoding="utf-8")):
+                    if root in EXTERNAL_IMPORT_ROOTS:
+                        roots.setdefault(root, str(lean.relative_to(clone)))
+    return roots
+
+
+def _declared_external_packages(text: str, lake_format: str) -> set[str]:
+    if lake_format == "toml":
+        names = {str(requirement.get("name", "")).lower()
+                 for requirement in tomllib.loads(text).get("require", [])}
+    else:
+        code = code_without_comments_and_strings(text)
+        names = {name.lower() for name in re.findall(
+            r"(?m)^require[ \t]+«?([A-Za-z0-9_-]+)»?[ \t]+from\b", code)}
+        # Lake's scoped Reservoir spelling also provides the named package.
+        names.update(match[1].lower() for match in re.finditer(
+            r'(?m)^require[ \t]+"[^"\n]+"[ \t]*/[ \t]*"([^"\n]+)"', text)
+            if code[match.start():].startswith("require"))
+    return names
+
+
+def _provided_external_roots(text: str, lake_format: str) -> set[str]:
+    names = _declared_external_packages(text, lake_format)
+    provided = {root for root, package in EXTERNAL_IMPORT_ROOTS.items()
+                if package.lower() in names}
+    if "Mathlib" in provided:
+        provided.add("Batteries")
+    return provided
+
+
+def _check_external_boundary(entry: dict, roots: set[str]) -> None:
+    """Never synthesize proof dependencies for a computational mirror."""
+    if entry.get("pins_only") or _library_mathlib().get(entry.get("lib", ""), False):
+        return
+    forbidden = roots & PROOF_IMPORT_ROOTS
+    if forbidden:
+        raise RuntimeError(f"computational repository {entry['repo']} imports "
+                           f"proof dependencies: {', '.join(sorted(forbidden))}")
+
+
+def validate_external_imports(entry: dict, clone: Path) -> None:
+    """Reject missing direct providers before publishing managed Lean sources."""
     if entry.get("pins_only"):
         return
     lakefile = clone / f"lakefile.{entry['lakefile']}"
     text = lakefile.read_text(encoding="utf-8") if lakefile.is_file() else ""
-    provided: set[str] = set()
-    if re.search(r'(?i)mathlib4?\.git|name\s*=\s*"mathlib"|require\s+mathlib\b', text):
-        provided.update({"Mathlib", "Batteries"})
-    if re.search(r'(?i)batteries\.git|name\s*=\s*"batteries"|require\s+batteries\b', text):
-        provided.add("Batteries")
-    if re.search(r'(?i)tauceti\.git|name\s*=\s*"TauCeti"|require\s+TauCeti\b', text):
-        provided.add("TauCeti")
-    if re.search(r'(?i)AINTLIB\.git|name\s*=\s*"AINTLIB"|require\s+AINTLIB\b', text):
-        provided.add("HasseWeil")
-    roots: dict[str, str] = {}
-    pattern = re.compile(
-        r"^\s*(?:(?:public|private|meta)\s+)*import\s+(?:all\s+)?(Batteries|Mathlib|TauCeti|HasseWeil)\b",
-        re.M)
-    for src, dest_rel, is_dir in managed_paths(entry):
-        dest = clone / dest_rel
-        files = list(dest.rglob("*.lean")) if is_dir else (
-            [dest] if dest.suffix == ".lean" else [])
-        for lean in files:
-            if not lean.is_file():
-                continue
-            for root in pattern.findall(lean.read_text(encoding="utf-8")):
-                roots.setdefault(root, str(lean.relative_to(clone)))
-    missing = {root: where for root, where in roots.items() if root not in provided}
+    provided = _provided_external_roots(text, entry["lakefile"])
+    roots = _external_import_roots(entry, clone)
+    _check_external_boundary(entry, set(roots))
+    missing = {root: where for root, where in roots.items()
+               if root not in provided}
     if missing:
         raise RuntimeError(
             f"released repository {entry['repo']} imports "
@@ -1026,6 +1098,12 @@ def validate_external_imports(entry: dict, clone: Path) -> None:
 DOC_VERSO_OPTIONS = (("doc.verso", "true"), ("doc.verso.suggestions", "false"))
 EXTERNAL_IMPORT_ROOTS = {"Mathlib": "mathlib", "Batteries": "batteries",
                          "TauCeti": "TauCeti", "HasseWeil": "AINTLIB"}
+
+
+@functools.lru_cache(maxsize=1)
+def _library_mathlib() -> dict[str, bool]:
+    from libgraph import load_libraries
+    return {name: info.mathlib for name, info in load_libraries().items()}
 
 
 def _library_deps() -> dict[str, tuple[str, ...]]:
@@ -1063,16 +1141,13 @@ def closure_external_packages(entry: dict, entries: list[dict]) -> set[str]:
 
 def _source_import_roots(entry: dict) -> set[str]:
     """Top-level module roots imported by the library's published sources."""
-    pattern = re.compile(
-        r"^\s*(?:(?:public|private|meta)\s+)*import\s+(?:all\s+)?([A-Z][A-Za-z0-9]*)",
-        re.M)
     roots: set[str] = set()
     for src, _dest, is_dir in managed_paths(entry):
         files = list(src.rglob("*.lean")) if is_dir else (
             [src] if src.suffix == ".lean" else [])
         for lean in files:
             if lean.is_file():
-                roots.update(pattern.findall(lean.read_text(encoding="utf-8")))
+                roots.update(_import_roots(lean.read_text(encoding="utf-8")))
     return roots
 
 
@@ -1107,7 +1182,8 @@ def release_requires(entry: dict, entries: list[dict], version: str,
     if "Mathlib" in externals:
         externals.discard("Batteries")
     by_name = {pin["name"].lower(): pin for pin in pins.values()}
-    for root in sorted(externals):
+    _check_external_boundary(entry, externals)
+    for root in sorted(externals, key=lambda root: (root == "Mathlib", root)):
         pin = by_name.get(EXTERNAL_IMPORT_ROOTS[root].lower())
         if pin is None:
             raise RuntimeError(

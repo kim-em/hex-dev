@@ -46,15 +46,16 @@ distinct roots in its current open interval through the proved shared theorem.
 `countPrepared_nonneg` proves nonnegativity under the same coefficient laws
 before a consumer converts the count to `Nat`.
 
-The development target `HexQuerySemantics` builds
-`adapters/HexSturmMathlib/Soundness.lean` together with the integer specialization
-and BKR root-semantics modules. These adapters are not published; their
-publication requires integrating them into the companion library target and
-adding pinned Tau Ceti release dependencies. Their axiom audits admit only `propext`,
-`Classical.choice` and `Quot.sound`. This theorem-only companion has no dedicated
+`HexSturmMathlib.Soundness` belongs to the ordinary companion target and is
+exported by `import HexSturmMathlib`. It consumes the shared semantics from
+HexRealRootsMathlib; Tau Ceti remains confined to Mathlib companions. This
+companion is still unreleased. Semantic regression tests build through
+`HexQuerySemantics`, alongside the remaining owners’ development adapters.
+Their axiom audits admit only `propext`, `Classical.choice` and `Quot.sound`. This theorem-only companion has no dedicated
 Phase-4 performance deliverable. Ordinary-kernel correctness checks are built
-by `HexSturmMathlibTests` and `HexQuerySemantics`; Phase-4 dependency and
-bridge-target requirements remain in the readiness audit. See [the specification](SPEC/hex-sturm-mathlib.md).
+by `HexSturmMathlibTests` and `HexQuerySemantics`; Phase-4 prerequisite
+eligibility remains in the readiness audit. The public semantic import gap
+is closed. See [the specification](SPEC/hex-sturm-mathlib.md).
 
 Executable translations live in Mathlib-free `HexSturm.Transport`; see the
 [SPEC](SPEC/hex-sturm-mathlib.md) for their endpoint and binding contracts.

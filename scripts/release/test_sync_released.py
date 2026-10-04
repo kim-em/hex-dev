@@ -21,6 +21,8 @@ from scripts.release.intfactor_prospective import ENTRY as INTFACTOR_ENTRY
 
 class SyncReleasedTests(unittest.TestCase):
     def setUp(self) -> None:
+        classification = sync_released._library_mathlib() | {"HexProbe": True}
+        self.enterContext(patch.object(sync_released, "_library_mathlib", return_value=classification))
         self.temporary = tempfile.TemporaryDirectory()
         self.repo = Path(self.temporary.name)
         (self.repo / "lean-toolchain").write_text(
@@ -530,6 +532,24 @@ class SyncReleasedTests(unittest.TestCase):
             'require TauCeti from git "https://github.com/TauCetiProject/TauCeti.git" @ "pin"\n',
             encoding="utf-8")
         sync_released.validate_external_imports(entry, self.repo)
+
+    def test_external_validation_ignores_comments_and_strings(self) -> None:
+        entry = self._external_import_entry('name = "probe"\n',
+            '/-\nimport TauCeti\n/- import Mathlib -/\n-/\n'
+            'def diagnostic := "import HasseWeil"\n')
+        sync_released.validate_external_imports(entry, self.repo)
+        (self.repo / "HexProbe" / "Basic.lean").write_text(
+            "import Init TauCeti.Data.Matrix.OccCount\n")
+        with self.assertRaisesRegex(RuntimeError, "imports TauCeti"):
+            sync_released.validate_external_imports(entry, self.repo)
+
+    def test_commented_requirement_does_not_provide_tauceti(self) -> None:
+        entry = self._external_import_entry('', 'import TauCeti\n')
+        entry["lakefile"] = "lean"
+        (self.repo / "lakefile.lean").write_text(
+            '/-\nrequire "TauCetiProject" / "TauCeti"\n-/\n')
+        with self.assertRaisesRegex(RuntimeError, "imports TauCeti"):
+            sync_released.validate_external_imports(entry, self.repo)
 
     def test_missing_root_toolchain_fails_closed(self) -> None:
         (self.repo / "lean-toolchain").unlink()
@@ -1142,6 +1162,10 @@ class GeneratedLakefileTests(unittest.TestCase):
     ]
     DEPS = {"HexFoo": ("HexBar",), "HexPlain": ("HexBar",), "HexBar": (), "HexLinked": ()}
 
+    def setUp(self) -> None:
+        classification = sync_released._library_mathlib() | {"HexPlain": True, "HexFoo": False}
+        self.enterContext(patch.object(sync_released, "_library_mathlib", return_value=classification))
+
     def render(self, short: str, roots: set[str] = frozenset()) -> str:
         entry = next(e for e in self.ENTRIES if e["repo"].endswith("/" + short))
         pins = {"https://github.com/leanprover-community/mathlib4": {
@@ -1150,6 +1174,49 @@ class GeneratedLakefileTests(unittest.TestCase):
         with patch.object(sync_released, "_source_import_roots", return_value=set(roots)):
             return sync_released.render_lakefile(
                 entry, self.ENTRIES, "v0.9.0", {}, pins, self.DEPS, self.SOURCE)
+
+    def test_computation_cannot_gain_direct_proof_requirements(self) -> None:
+        for root in ("Mathlib", "TauCeti", "HasseWeil"):
+            with self.subTest(root=root), self.assertRaisesRegex(
+                    RuntimeError, "computational repository"):
+                self.render("hex-foo", {root})
+
+    def test_computation_cannot_gain_inherited_proof_requirements(self) -> None:
+        entry = {"repo": "leanprover/hex-foo", "lib": "HexFoo"}
+        with patch.object(sync_released, "closure_external_packages", return_value={"TauCeti"}), \
+                self.assertRaisesRegex(RuntimeError, "computational repository"):
+            sync_released._add_closure_externals(entry, {"packages": []}, [])
+
+    def test_tarski_companion_requires_the_exact_tau_pin(self) -> None:
+        entries = yaml.safe_load(sync_released.MANIFEST.read_text())["repos"]
+        entry = next(e for e in entries if e.get("lib") == "HexRealRootsMathlib")
+        pins = sync_released.external_pins()
+        text = sync_released.render_lakefile(entry, entries, "v0.9.0", {}, pins)
+        requires = tomllib.loads(text)["require"]
+        tau = next(pin for pin in pins.values() if pin["name"] == "TauCeti")
+        self.assertIn({"name": "TauCeti", "git": tau["url"], "rev": tau["inputRev"]}, requires)
+        self.assertEqual(tau["inputRev"], tau["rev"])
+        self.assertRegex(tau["rev"], r"^[0-9a-f]{40}$")
+        self.assertEqual(requires[-1]["name"], "mathlib")
+        doc = {"packages": []}
+        sync_released._add_closure_externals(entry, doc, [])
+        self.assertEqual(next(p["rev"] for p in doc["packages"] if p["name"] == "TauCeti"), tau["rev"])
+
+    def test_import_headers_cover_line_endings_continuations_and_quoted_names(self) -> None:
+        source = 'module\r\npublic meta import\r\n  «TauCeti».Data.Matrix\r\n  Mathlib.Tactic\r\n\r\nnamespace Unimported\r\n'
+        self.assertEqual(sync_released._import_roots(source), {"TauCeti", "Mathlib"})
+        self.assertEqual(sync_released._import_modules(source), {"TauCeti.Data.Matrix", "Mathlib.Tactic"})
+        self.assertEqual(sync_released._import_roots('import «Mathlib.Foo»\n'), {"Mathlib.Foo"})
+
+    def test_source_requirements_ignore_comments_and_find_all_imports(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "HexProbe.lean"
+            source.write_text('/-\nimport Mathlib\n-/\n'
+                              'def s := "import HasseWeil"\n'
+                              'public import HexFoo HexBar.Basic\n')
+            with patch.object(sync_released, "managed_paths", return_value=[(source, source.name, False)]):
+                self.assertEqual(sync_released._source_import_roots({}), {"HexFoo", "HexBar"})
 
     def test_toml_mirror_is_rendered_from_the_manifest(self) -> None:
         text = self.render("hex-plain", {"Mathlib"})

@@ -131,9 +131,12 @@ sync as a dry run with `--stage`, which keeps every rewritten repository. A
 `consumer` job per platform (Ubuntu, macOS, Windows) then runs
 `scripts/release/consumer_check.py`, which requires those staged repositories
 by path from a fresh Lake project, and elaborates, downstream of them, an
-import of every published library, every manifest entry's `test_modules`, and
-the `Examples/` user stories whose imports are all published. It then links
-and runs an executable that calls native code. The `sync` job, which publishes,
+import of every aggregate library, those manifest entries' `test_modules`, and
+the `Examples/` user stories whose imports are all published. A fresh helper
+consumer first checks non-aggregate packages such as hex-test-kit and their
+tests, avoiding the aggregate's default `Hex` module ownership. The aggregate
+consumer also builds the generated `Hex` umbrella, then links and runs an
+executable that calls native code. The `sync` job, which publishes,
 runs only after every blocking `consumer` job passes. Downstream elaboration is
 where `precompileModules`, FFI targets and their link arguments take effect,
 so this is the check that a library built one way here and another way in its
@@ -277,17 +280,21 @@ job, enforces two rules:
 
 ## Released-aggregate mirror
 
-`leanprover/hex` is a module-system umbrella that `public import`s every
-released library. A module may not import a non-module module, so a
+`leanprover/hex` supplies a module-system umbrella. The manifest defines the
+complete released import set; the mirror's generated `Hex.lean` follows it.
+A module may not import a non-module module, so a
 library that never adopted the module system builds fine here and breaks
 the aggregate: nothing inside this monorepo imports a released umbrella
 from module code, and the non-module conformance and bench drivers may
 import anything.
 
 `HexAggregateCheck.lean` closes that hole. It is a `module` whose only
-content is the same `public import`s the aggregate carries, in the same
-order, so the failure surfaces in `lake build` here instead of after the
-publish-out sync has pushed the library.
+content is the complete `public import` set declared by the aggregate's
+manifest pins, so module compatibility failures surface in `lake build` here
+instead of after the publish-out sync has pushed the library. This verifies
+module compatibility for the intended import set. The sync generates the
+mirror's `Hex.lean` from the aggregated manifest entries, and the staged
+consumer builds that generated umbrella as well as ordinary per-library imports.
 `scripts/release/check_released_manifest.py` compares its import list
 against the `leanprover/hex` entry's `pins:` in
 `scripts/release/released.yml` and fails on drift, so publishing a new

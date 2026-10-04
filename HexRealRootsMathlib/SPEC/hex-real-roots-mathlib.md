@@ -1,13 +1,13 @@
 # hex-real-roots-mathlib
 
 Dependencies: hex-real-roots, hex-poly-mathlib, hex-poly-z-mathlib and
-Mathlib; the shared abstract Sturm–Tarski foundation uses a Tau Ceti
-import in the development-only `HexQuerySemantics` target. Its proved semantic
-modules currently live under `adapters/HexRealRootsMathlib/`, outside the
-released companion. Publishing that layer remains an obligation: move it into
-the companion managed paths and carry the pinned Tau Ceti dependency through
-the release configuration and downstream consumers. The proof is complete;
-this SPEC does not claim that the semantic layer has been published.
+Mathlib and pinned Tau Ceti. `TarskiFoundation.lean`, `TarskiSoundness.lean`
+and `TarskiReal.lean` belong to this companion and build with its normal
+library target. The public umbrella exports the shared semantics and integer
+specialization. The existing release tool carries their Tau Ceti requirement
+and exact lock into candidate packages and downstream consumers. Integration
+in the development source does not assert availability in an existing
+published version; publication follows the maintainer’s package sync.
 
 Mathlib companion for [hex-real-roots](https://github.com/leanprover/hex-real-roots). Proves
 **soundness** of the certified isolations (a `RealRootIsolation`
@@ -598,8 +598,8 @@ correspondence, the squarefreeness check and success exactly on squarefreeness
 plus the executable endpoint guards. `TarskiDomain.lean` proves integer/dyadic
 endpoint correspondence, exact mathematical domain equivalence and domain
 soundness of accepted replay. Root-sum and semantic replay soundness,
-singleton-sign and count/bound results are proved in the development
-`HexQuerySemantics` adapters; publishing that layer remains required.
+singleton-sign and count/bound results are public through
+`TarskiSoundness.lean` and `TarskiReal.lean` in this companion.
 
 `TarskiCompare.lean` proves that arbitrary accepted chains for positively
 scaled inputs have equal lengths and entrywise positive scaling under their
@@ -620,7 +620,7 @@ of the separate Tarski-query API.
 
 The [Tarski-query primitive](../../HexRealRoots/SPEC/hex-real-roots.md#tarski-queries)
 uses the general signed-remainder/Cauchy-index semantics proved in the
-development adapters. Its contract requires
+companion semantic modules. Its contract requires
 `tarskiQuery_eq`, identifying the executable variation drop with the sum of
 `sign (f(α))` over the real roots of squarefree nonzero `p` in the interval,
 under its non-root endpoint guards. Prove `tarskiQuery_isSome` for that domain
@@ -638,7 +638,7 @@ common root contributes zero. Introduce the signed-query theorem without
 weakening the existing Sturm-count predicate or its theorems.
 
 The abstract foundation is imported from Tau Ceti through this companion’s
-development adapters, shared by the integer frontend and
+`TarskiFoundation.lean`, shared by the integer frontend and
 [hex-sturm](../../HexSturm/SPEC/hex-sturm.md#required-correspondence-and-specialization-theorems).
 It is not a second proof from the existing derivative-chain theorem.
 The [Sturm–Tarski theorem](https://www.isa-afp.org/entries/Sturm_Tarski.html)
@@ -837,7 +837,7 @@ import of hex-real-algebraic-mathlib, and the odd-root proof has only one copy.
 
 Instantiate the shared domain/replay bridge with `D=ℤ`, `j=Int.castRingHom ℝ`
 and exact dyadic evaluation to prove `ZPoly.tarskiQuery_eq` and
-`IntTarskiCertificate.check_sound` in the development adapter
+`IntTarskiCertificate.check_sound` in the companion module
 `TarskiReal.lean`. Also retain `tarskiQuery_isSome` for exactly
 the nonzero/squarefree/root-free domain and `tarskiQuery_sign` for a singleton
 root set. `DyadicInterval.lt` already supplies endpoint ordering. Optimized
@@ -849,7 +849,8 @@ shared results for field guards, generic endpoint sign operations, coefficient-p
 composition, positive rational denominator clearing and `rootCount_eq`.
 The pinned Tau Ceti also supplies ordered real-closure existence, consumed
 downstream by hex-real-closure-mathlib. The shared semantic theorems above are
-proved in the development adapter; publication remains separate. The existing
+proved in this companion and exposed by its public umbrella; publication
+of the integrated sources remains separate. The existing
 derivative `Sturm.IsSturmChain` development remains unchanged.
 
 Shared replay conformance must include negative sums, common gcds, zero
