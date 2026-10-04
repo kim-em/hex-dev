@@ -51,7 +51,7 @@ Targeted retained experiments answer concrete implementation questions:
 
 | Question | Record | Supported conclusion |
 | --- | --- | --- |
-| Fresh tactic input validation | [Validation comparison](hexrcf-validation-proofs.md) | The original sixteen-arm run is retained as A/A only. Sixteen corrected arms assert the common-field proof route; all eight adjacent pairs favor private assembly by small margins. Editable public inputs remain fully validated and batch their coordinates. |
+| Fresh tactic input validation | [Validation comparison](hexrcf-validation-proofs.md) | The original sixteen-arm run is retained as A/A only. Two corrected sixteen-arm studies retain exact common-field routing; the final study also asserts the selected arm and matches production options. Its seven favorable pairs include large retained margins, so no stable speedup magnitude is claimed. Editable public inputs remain fully validated and batch their coordinates. |
 | Repeated source construction and root proposal work | [Production](hexrcf-production-proofs.md), [production sharing](hexrcf-production-sharing.md) | Selected-field production and syntax sharing observations on the recorded inputs; no physical heap-sharing claim. |
 | Quotient coordinate quotation | [Literal quotation](hexrcf-literal-proofs.md) | Two changed-source comparisons did not establish a gain; reduced-coordinate quotation remains off. |
 | Full queries versus exact interval sign evidence | [Interval quotation](hexrcf-interval-proofs.md) | The fixed-goal comparison favors interval quotation. Its reconstructed-query control and historical provenance limitations are explicit. |
