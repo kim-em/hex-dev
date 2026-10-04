@@ -153,6 +153,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 "adapters/HexRealClosureMathlib/CoefficientMap.lean",
                 "adapters/HexRealClosureMathlib/CoefficientQuery.lean",
                 "adapters/HexRealClosureMathlib/CoefficientTarski.lean",
+                "adapters/HexRealClosureMathlib/CoefficientEmbeddingTests.lean",
+                "adapters/HexRealClosureMathlib/CoefficientEmbedding.lean",
                 "adapters/HexRealClosureMathlib/CoefficientSelected.lean",
                 "adapters/HexRealClosureMathlib/CoefficientDescriptor.lean",
                 "adapters/HexRealClosureMathlib/CoefficientReplay.lean",

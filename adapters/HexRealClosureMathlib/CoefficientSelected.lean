@@ -98,17 +98,38 @@ theorem exists_nested_selected
           (target.root (fun x : ℝ => x) (fun _ => Iff.rfl) rfl
             (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl)
             (fun _ => rfl) (fun _ => rfl)) = s.values.toList ∧
+        (∀ i, target.raw.head.coeff i = evalNestedFraction (d.raw.head.coeff i) first second) ∧
+        (∀ q ∈ qs, ∀ i,
+          (polynomial (RingHom.id ℝ) ((firstMap first).polynomial q) second).coeff i =
+            evalNestedFraction (q.coeff i) first second) ∧
         ∀ f ∈ fractions,
+          (firstMap first).map f = mapFraction f first ∧
+          evalMapped (RingHom.id ℝ) ((firstMap first).map f) second =
+            evalNestedFraction f first second ∧
           (SignType.sign (evalNestedFraction f first second) : Int) =
             Hex.OrderedFn.Infinitesimal.sign
               (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) f ∧
           (evalNestedFraction f first second = 0 ↔ f = 0) := by
   classical
+  let family : Finset (Hex.RationalFn (Hex.RationalFn ℝ)) :=
+    fractions ∪ d.raw.head.toArray.toList.toFinset ∪
+      (qs.flatMap (fun q => q.toArray.toList)).toFinset ∪ {0}
+  have inFamily (p : Hex.DensePoly (Hex.RationalFn (Hex.RationalFn ℝ)))
+      (selected : p = d.raw.head ∨ p ∈ qs) (i : Nat) : p.coeff i ∈ family := by
+    by_cases stored : i < p.size
+    · have entry := RealClosure.CoefficientMap.coefficient_mem p i stored
+      rcases selected with rfl | present
+      · exact Finset.mem_union_left _ (Finset.mem_union_left _
+          (Finset.mem_union_right _ (List.mem_toFinset.mpr entry)))
+      · exact Finset.mem_union_left _ (Finset.mem_union_right _
+          (List.mem_toFinset.mpr (List.mem_flatMap.mpr ⟨p, present, entry⟩)))
+    · rw [Hex.DensePoly.coeff_eq_zero_of_size_le p (Nat.le_of_not_gt stored)]
+      exact Finset.mem_union_right _ (Finset.mem_singleton_self _)
   have belowCap : ∀ᶠ first in 𝓝[>] (0 : ℝ), first < cap :=
     eventually_nhdsWithin_of_eventually_nhds (eventually_lt_nhds positive)
   have firstPositive : ∀ᶠ first in 𝓝[>] (0 : ℝ), 0 < first := self_mem_nhdsWithin
   obtain ⟨first, ⟨⟨⟨data, ordinary⟩, below⟩, hfirst⟩⟩ :=
-    ((((firstMap_near s.coefficients).and (nested_fractions_near fractions)).and belowCap).and
+    ((((firstMap_near s.coefficients).and (nested_fractions_near family)).and belowCap).and
       firstPositive).exists
   let firstDescriptor : Descriptor (Hex.RationalFn ℝ) Ctx
       (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) context :=
@@ -125,12 +146,32 @@ theorem exists_nested_selected
   obtain ⟨second, ⟨⟨⟨conditions, belowFirst⟩, small⟩, hsecond⟩⟩ :=
     (((ordinary.2.and secondSmall).and selectedSmall).and secondPositive).exists
   obtain ⟨target, raw, evidence, checked, signs⟩ := selected second hsecond small
-  refine ⟨first, hfirst, below, second, hsecond, belowFirst, target, ?_, ?_, ?_, ?_, ?_⟩
-  · simpa only [firstDescriptor, Descriptor.map_raw] using raw
+  have evaluated f (hf : f ∈ family) :
+      (firstMap first).map f = mapFraction f first ∧
+        evalMapped (RingHom.id ℝ) ((firstMap first).map f) second =
+          evalNestedFraction f first second := by
+    have interpreted := firstMap_value f first (ordinary.1 f hf).1 (ordinary.1 f hf).2
+    refine ⟨interpreted.2, ?_⟩
+    rw [interpreted.2]
+    exact mapFraction_eval f first second (ordinary.1 f hf).2 (conditions f hf).1
+  have head : target.raw = (d.raw.substitute (firstMap first)).specialize (RingHom.id ℝ) second := by
+    simpa only [firstDescriptor, Descriptor.map_raw] using raw
+  refine ⟨first, hfirst, below, second, hsecond, belowFirst, target, head, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · simpa only [firstDescriptor, Descriptor.map_evidence] using evidence
   · simpa only [firstDescriptor, Descriptor.map_raw, Descriptor.map_evidence] using checked
   · simpa only [firstSigns, SelectedSigns.substitute_values, List.map_map, Function.comp_def] using signs
-  · exact fun f hf => (conditions f hf).2
+  · intro i
+    rw [head]
+    change (polynomial (RingHom.id ℝ) ((firstMap first).polynomial d.raw.head) second).coeff i = _
+    rw [polynomial_coeff, RealClosure.CoefficientMap.polynomial_coeff]
+    exact (evaluated _ (inFamily _ (Or.inl rfl) i)).2
+  · intro q hq i
+    rw [polynomial_coeff, RealClosure.CoefficientMap.polynomial_coeff]
+    exact (evaluated _ (inFamily _ (Or.inr hq) i)).2
+  · intro f hf
+    have member : f ∈ family := Finset.mem_union_left _ (Finset.mem_union_left _
+      (Finset.mem_union_left _ hf))
+    exact ⟨(evaluated f member).1, (evaluated f member).2, (conditions f member).2⟩
 
 /-- info: 'Hex.RealClosure.Specialize.exists_nested_selected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
