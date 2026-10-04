@@ -120,10 +120,11 @@ unresolved decision; none is dispatched by this audit.
 
 - **[#10577](https://github.com/kim-em/hex-dev/issues/10577):** merged prerequisite implementation/readiness and complete Phase-4
   attestation. [#10580](https://github.com/kim-em/hex-dev/issues/10580)'s still-open results must be distinguished from main.
-- **[#10377](https://github.com/kim-em/hex-dev/issues/10377):** shared serialized cross-level coefficient-proof dependencies,
-  compiled arithmetic replay/conversions, independent conformance and BKR/Thom
-  Phase 4. Merged [#10612](https://github.com/kim-em/hex-dev/issues/10612)'s finite proof assembly does not discharge the complete
-  contract; [#10615](https://github.com/kim-em/hex-dev/issues/10615)/[#10617](https://github.com/kim-em/hex-dev/issues/10617) remain pending partial PRs.
+- **[#10377](https://github.com/kim-em/hex-dev/issues/10377):** the shared serialized dependency envelope,
+  typed packet routing and byte roundtrip laws are implemented. Automatic
+  intermediate coefficient evidence, root-context reconstruction, strict compiled
+  arithmetic replay, final independent conformance/direct examples and BKR/Thom
+  Phase-4 evidence and attestation remain required.
 - **[#10378](https://github.com/kim-em/hex-dev/issues/10378):** all-live dependency closure/general enlargement, joint ordinary-real
   realization, full trivial-base arithmetic agreement, native union/sample and
   exploration/number-field completion, required tower workloads/clean-eager

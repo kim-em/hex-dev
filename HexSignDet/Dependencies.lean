@@ -144,6 +144,7 @@ theorem Graph.check_roots (graph : Graph) (accepted : graph.check = true)
   exact (Reference.check_eq root graph.entries).mp
     (Array.all_eq_true_iff_forall_mem.mp accepted.1 root member)
 
+/-- A successful local reader retains the exact supplied entry. -/
 theorem step_entry (read : (entry : Entry) → Array (Checked Result) → Option (Result entry))
     (memo : Array (Checked Result)) (entry : Entry) (next : Checked Result)
     (accepted : step read memo entry = some next) : next.entry = entry := by

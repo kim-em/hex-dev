@@ -99,6 +99,37 @@ Reference bounds follow from checking, so selection cannot fail. -/
       simp only [Array.size_map] at size
       omega)
 
+/-- Selected values retain the caller's ordered levels and full subjects. -/
+theorem Decoded.results_bound (decoded : Decoded Result required) :
+    decoded.results.map (fun result => (result.entry.level, result.entry.subject)) = required := by
+  calc
+    decoded.results.map (fun result => (result.entry.level, result.entry.subject)) =
+        decoded.graph.roots.attach.map (fun root => (root.val.level, root.val.subject)) := by
+      unfold results
+      rw [Array.map_map]
+      apply Array.map_congr_left
+      intro root _
+      obtain ⟨bound, level, subject⟩ :=
+        decoded.graph.check_roots decoded.structural root.val root.property
+      have size := congrArg Array.size decoded.entries
+      simp only [Array.size_map] at size
+      have memoBound : root.val.index < decoded.memo.size := by omega
+      have entry := congrArg (fun entries : Array Entry => entries[root.val.index]?) decoded.entries
+      simp only [Array.getElem?_map, Array.getElem?_eq_getElem memoBound,
+        Array.getElem?_eq_getElem bound, Option.map_some, Option.some.injEq] at entry
+      dsimp only [Function.comp_def]
+      rw [entry]
+      exact Prod.ext level.symm subject.symm
+    _ = decoded.graph.roots.map (fun root => (root.level, root.subject)) :=
+      Array.attach_map_val decoded.graph.roots (fun root : Reference => (root.level, root.subject))
+    _ = required := decoded.bound
+
+/-- The selected result vector has the requested length. -/
+theorem Decoded.results_size (decoded : Decoded Result required) :
+    decoded.results.size = required.size := by
+  have bound := congrArg Array.size decoded.results_bound
+  simpa only [Array.size_map] using bound
+
 /-- Decode one complete envelope and bind its ordered results to the caller's
 full subjects before running any local packet reader. Returned indices remain
 those of the serialized graph. -/
@@ -146,3 +177,7 @@ end Hex.SignDet.Dependencies
 /-- info: 'Hex.SignDet.Dependencies.Graph.decode_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Dependencies.Graph.decode_encode
+
+/-- info: 'Hex.SignDet.Dependencies.Decoded.results_bound' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Dependencies.Decoded.results_bound

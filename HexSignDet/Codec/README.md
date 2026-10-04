@@ -156,7 +156,6 @@ arbitrary accepted bytes. Callers holding a decoded graph can use its `replay?`,
 sign-congruence theorem, reusing that graph without parsing the same input
 again.
 
-
 The coefficient-level dependency envelope is `Dependencies.Graph.codec`.
 Its version-one JSON layout is `[1, entries, roots]`. An entry is
 `[level, subject, payload, children]`, and a reference is
@@ -167,7 +166,13 @@ recursion stays inside each packet's existing `Dag` payload.
 
 `Graph.decode` requires the caller's ordered `(level, subject)` results before
 it invokes the local mathematical packet readers. The codec's literal and
-byte roundtrip proofs do not assume that a malformed graph is valid. Graph
+byte roundtrip proofs assume no validity or parse-success premise. Graph
 acceptance additionally checks every reference and every payload through its
 local reader, including unused entries. Complete intermediate arithmetic
 facts and context reconstruction remain responsibilities of those readers.
+
+Resource limits apply to the complete envelope. An entry's payload gains three
+JSON array levels; references add their own arrays around the full subject. A
+payload within a standalone depth limit need not fit the same limit inside the
+envelope. `Graph.codec_bytes` requires the complete printed bytes to pass the
+shared precheck.

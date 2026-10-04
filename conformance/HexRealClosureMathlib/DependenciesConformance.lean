@@ -31,13 +31,15 @@ def subject {E : Type} [Zero E] [DecidableEq E] (value : ValueCodec E)
 
 /-- The existing mathematical readers check each local graph. The upper
 coefficient reader uses only the declared lower packet's proved facts. -/
-def read (keys : List (DensePoly Rat)) (lowerSubject upperSubject₁ upperSubject₂ : Codec.Json)
+def read (lowerRequests : List (Codec.Json × List (DensePoly Rat)))
+    (upperSubject₁ upperSubject₂ : Codec.Json)
     (queries₁ queries₂ : List (DensePoly (Element context)))
     (entry : Dependencies.Entry) (children : Array (Dependencies.Checked Result)) :
     Option (Result entry) := do
   if level : entry.level = 0 then
-    if entry.subject != lowerSubject || !children.isEmpty then none else
-      let facts ← (decode ValueCodec.rat keys entry.payload.writeBytes).toOption
+    if !children.isEmpty then none else
+      let request ← lowerRequests.find? (fun request => entry.subject == request.1)
+      let facts ← (decode ValueCodec.rat request.2 entry.payload.writeBytes).toOption
       return .lower level facts.toList
   else if level : entry.level = 1 then
     if children.size != 1 then none else
@@ -82,7 +84,10 @@ def checks : Option (List (String × Bool)) := do
   let entry₂ : Dependencies.Entry := ⟨1, subject₂, upperCodec.encode packet₂, #[ref₀]⟩
   let graph : Dependencies.Graph := ⟨#[entry₀, entry₁, entry₂], #[ref₁, ref₁, ref₂]⟩
   let required := graph.roots.map fun root => (root.level, root.subject)
-  let localReader := read keys subject₀ subject₁ subject₂ qs₁ qs₂
+  let incompleteKeys := keys.filter (· != stored)
+  let incompleteSubject := subject ValueCodec.rat source.raw incompleteKeys
+  let localReader := read [(subject₀, keys), (incompleteSubject, incompleteKeys)]
+    subject₁ subject₂ qs₁ qs₂
   let decodeGraph := fun graph => Dependencies.Graph.decode localReader required
     (Dependencies.Graph.codec.encodeBytes graph)
   let decoded ← (decodeGraph graph).toOption
@@ -91,9 +96,16 @@ def checks : Option (List (String × Bool)) := do
   let falseEntry := {entry₀ with payload := lowerCodec.encode bad}
   let falseLower := {graph with entries := graph.entries.set! 0 falseEntry}
   let falseUnused := {graph with entries := graph.entries.push falseEntry}
-  let incomplete ← (context.buildEvidence keys.tail).toOption
-  let incompleteEntry := {entry₀ with payload := lowerCodec.encode incomplete}
-  let incompleteChild := {graph with entries := graph.entries.set! 0 incompleteEntry}
+  let incomplete ← (context.buildEvidence incompleteKeys).toOption
+  let incompleteEntry : Dependencies.Entry := ⟨0, incompleteSubject, lowerCodec.encode incomplete, #[]⟩
+  let incompleteRef : Dependencies.Reference := ⟨0, 0, incompleteSubject⟩
+  let incompleteUpper₁ := {entry₁ with children := #[incompleteRef]}
+  let incompleteUpper₂ := {entry₂ with children := #[incompleteRef]}
+  let incompleteChild := {graph with entries :=
+    #[incompleteEntry, incompleteUpper₁, incompleteUpper₂]}
+  let standalone : Dependencies.Graph := ⟨#[incompleteEntry], #[incompleteRef]⟩
+  let childAccepted := (Dependencies.Graph.decode localReader #[(0, incompleteSubject)]
+    (Dependencies.Graph.codec.encodeBytes standalone)).toOption.isSome
   let foreignCodec := SignEvidence.codec ValueCodec.rat ValueCodec.nat
     {source.raw with context := 9}
   let foreignEntry := {entry₀ with payload := foreignCodec.encode lower}
@@ -121,8 +133,8 @@ def checks : Option (List (String × Bool)) := do
       [[1, 1, 0, 1], [1, 1, 0, 1], [1]]),
     ("false child", (decodeGraph falseLower).toOption.isNone),
     ("false unused packet", falseUnused.check && (decodeGraph falseUnused).toOption.isNone),
-    ("independently valid incomplete child", incompleteChild.check &&
-      (decodeGraph incompleteChild).toOption.isNone),
+    ("independently valid incomplete child", keys.contains stored && stored != 0 &&
+      childAccepted && incompleteChild.check && (decodeGraph incompleteChild).toOption.isNone),
     ("foreign payload context", foreignChild.check && (decodeGraph foreignChild).toOption.isNone),
     ("missing child", missing.check && (decodeGraph missing).toOption.isNone),
     ("forward reference", !forward.check && (decodeGraph forward).toOption.isNone),
