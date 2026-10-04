@@ -236,7 +236,7 @@ def check() -> None:
              "HexRealClosureMathlib.SpecializeReduction", "HexRealClosureMathlib.SpecializeMoment",
              "HexRealClosureMathlib.SpecializeReplay", "HexRealClosureMathlib.SpecializeSample", "HexRealClosureMathlib.SpecializeSelected", "HexRealClosureMathlib.SpecializeDescriptor",
              "HexRealClosureMathlib.SpecializeNested",
-             "HexRealClosureMathlib.SpecializeFractionRing", "HexRealClosureMathlib.CoefficientMap",
+             "HexRealClosureMathlib.SpecializeFractionRing", "HexRealClosureMathlib.CoefficientMap", "HexRealClosureMathlib.CoefficientQuery", "HexRealClosureMathlib.CoefficientTarski", "HexRealClosureMathlib.CoefficientSelected", "HexRealClosureMathlib.CoefficientDescriptor", "HexRealClosureMathlib.CoefficientReplay", "HexRealClosureMathlib.CoefficientMoment", "HexRealClosureMathlib.CoefficientReduction",
              "HexRealClosureMathlib.TransportPolynomial", "HexRealClosureMathlib.TransportProduct",
              "HexRealClosureMathlib.TransportArithmetic", "HexRealClosureMathlib.TransportQuery", "HexRealClosureMathlib.TransportTests",
              "HexRealClosureMathlib.TransportRing", "HexRealClosureMathlib.TransportPower",

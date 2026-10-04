@@ -61,6 +61,12 @@ theorem map_neg {coefficient : F} (member : coefficient ∈ interpretation.domai
   rw [map_mem _ _ (interpretation.domain.neg_mem member), map_mem _ _ member]
   exact interpretation.value.map_neg ⟨coefficient, member⟩
 
+theorem map_sub {first second : F} (left : first ∈ interpretation.domain)
+    (right : second ∈ interpretation.domain) :
+    interpretation.map (first - second) = interpretation.map first - interpretation.map second := by
+  rw [map_mem _ _ (interpretation.domain.sub_mem left right), map_mem _ _ left, map_mem _ _ right]
+  exact interpretation.value.map_sub ⟨first, left⟩ ⟨second, right⟩
+
 /-- Substitute the actual stored array and retain native normalization. -/
 noncomputable def polynomial (p : Hex.DensePoly F) : Hex.DensePoly G :=
   Hex.DensePoly.ofCoeffs (p.toArray.map interpretation.map)
@@ -82,6 +88,13 @@ theorem polynomial_coeff (p : Hex.DensePoly F) (i : Nat) :
       rw [← Hex.DensePoly.toArray_getD, Array.getD_eq_getD_getElem?, read]
       rfl
     simp only [Option.map_some, Option.getD_some, original]
+
+theorem polynomial_one : interpretation.polynomial 1 = 1 := by
+  apply Hex.DensePoly.ext_coeff
+  intro i
+  rw [polynomial_coeff]
+  simp only [← HexPolyMathlib.coeff_toPolynomial, HexPolyMathlib.toPolynomial_one, Polynomial.coeff_one]
+  split_ifs <;> simp only [map_one, map_zero]
 
 /-- The finite stored coefficient guards lift the entire actual polynomial
 into the interpretation's subring. -/
@@ -168,6 +181,39 @@ theorem polynomial_leading (p : Hex.DensePoly F)
   rw [← HexPolyMathlib.leadingCoeff_toPolynomial, Polynomial.leadingCoeff,
     HexPolyMathlib.natDegree_toPolynomial, HexPolyMathlib.coeff_toPolynomial,
     polynomial_degree interpretation p reflects, polynomial_coeff, leading]
+
+/-- The actual normalized array length is retained under the finite zero
+pattern guard, including the zero-polynomial case. -/
+theorem polynomial_size (p : Hex.DensePoly F)
+    (reflects : ∀ i < p.size, interpretation.map (p.coeff i) = 0 ↔ p.coeff i = 0) :
+    (interpretation.polynomial p).size = p.size := by
+  by_cases zero : p = 0
+  · rw [zero, (polynomial_zero interpretation 0 (by simp [map_zero])).mpr rfl]
+    rfl
+  · have source : p.size ≠ 0 := fun empty => zero ((Hex.DensePoly.size_eq_zero_iff p).mp empty)
+    have target : (interpretation.polynomial p).size ≠ 0 := by
+      intro empty
+      exact zero ((polynomial_zero interpretation p reflects).mp
+        ((Hex.DensePoly.size_eq_zero_iff _).mp empty))
+    have degree := polynomial_degree interpretation p reflects
+    simp only [Hex.DensePoly.natDegree_eq_size_sub_one] at degree
+    omega
+
+theorem polynomial_isZero (p : Hex.DensePoly F)
+    (reflects : ∀ i < p.size, interpretation.map (p.coeff i) = 0 ↔ p.coeff i = 0) :
+    (interpretation.polynomial p).isZero = p.isZero := by
+  change ((interpretation.polynomial p).size == 0) = (p.size == 0)
+  rw [polynomial_size interpretation p reflects]
+
+/-- Stored coefficients are read from the actual literal array. -/
+theorem coefficient_mem (p : Hex.DensePoly F) (i : Nat) (stored : i < p.size) :
+    p.coeff i ∈ p.toArray.toList := by
+  have bound : i < p.toArray.size := by simpa using stored
+  have entry : p.toArray[i]? = some (p.coeff i) := by
+    rw [Array.getElem?_eq_getElem bound, ← Hex.DensePoly.toArray_getD]
+    congr 1
+    exact Array.getElem_eq_getD (h := bound) 0
+  simpa using Array.mem_of_getElem? entry
 
 /-- Actual polynomial addition specializes using only regularity of the
 finitely stored input coefficients. Intermediate sums need no extra guards. -/
@@ -274,4 +320,58 @@ theorem polynomial_eval (p : Hex.DensePoly F) (x : F)
   rw [map_mem _ _ point]
 
 end CoefficientMap
+
+namespace Specialize
+
+open Filter Topology
+
+/-- The actual first-parameter coefficient interpretation retains the second
+indeterminate in native rational-function values. -/
+noncomputable def firstMap (first : ℝ) :
+    CoefficientMap (Hex.RationalFn (Hex.RationalFn ℝ)) (Hex.RationalFn ℝ) where
+  domain := fractionRing (regularRing (RingHom.id ℝ) first) (evaluation (RingHom.id ℝ) first)
+  value := FractionRing.evaluation (regularRing (RingHom.id ℝ) first)
+    (evaluation (RingHom.id ℝ) first)
+
+/-- Finite stored coefficient guards give the actual homomorphic value;
+membership is derived from the source fraction rather than supplied by a caller. -/
+theorem firstMap_value (fraction : Hex.RationalFn (Hex.RationalFn ℝ)) (first : ℝ)
+    (num : CoefficientData (HexPolyMathlib.toPolynomial fraction.num) first)
+    (den : CoefficientData (HexPolyMathlib.toPolynomial fraction.den) first) :
+    fraction ∈ (firstMap first).domain ∧
+      (firstMap first).map fraction = mapFraction fraction first := by
+  obtain ⟨member, value⟩ := mapFraction_mem fraction first num den
+  refine ⟨member, ?_⟩
+  rw [CoefficientMap.map_mem _ _ member]
+  exact value
+
+/-- One first-parameter neighborhood gives every recorded coefficient a
+lawful interpretation, preserves its actual successive-level sign, and reflects
+zero. Polynomial intermediate arithmetic follows from this same subring map. -/
+theorem firstMap_near (fractions : Finset (Hex.RationalFn (Hex.RationalFn ℝ))) :
+    ∀ᶠ first in 𝓝[>] (0 : ℝ), ∀ fraction ∈ fractions,
+      fraction ∈ (firstMap first).domain ∧
+      ((firstMap first).map fraction = 0 ↔ fraction = 0) ∧
+      Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign ((firstMap first).map fraction) =
+        Hex.OrderedFn.Infinitesimal.sign
+          (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) fraction := by
+  filter_upwards [nested_fractions_near fractions] with first data
+  intro fraction present
+  have coefficients := data.1 fraction present
+  obtain ⟨member, value⟩ := firstMap_value fraction first coefficients.1 coefficients.2
+  refine ⟨member, ?_, ?_⟩
+  · rw [value]
+    exact mapFraction_zero_iff fraction first coefficients.1 coefficients.2
+  · rw [value]
+    exact mapFraction_sign fraction first coefficients.1 coefficients.2
+
+end Specialize
 end Hex.RealClosure
+
+/-- info: 'Hex.RealClosure.Specialize.firstMap_near' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.firstMap_near
+
+/-- info: 'Hex.RealClosure.CoefficientMap.polynomial_eval' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.CoefficientMap.polynomial_eval
