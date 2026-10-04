@@ -7,6 +7,7 @@ module
 
 public meta import HexRCF.RealCoefficients.FieldDecisionProgress
 public meta import HexRCF.RealCoefficients.FieldBuildBudget
+public meta import HexRCF.RealCoefficients.FiniteReplay
 public meta import HexRCF.RealCoefficients.FieldIndex
 public meta import HexRealAlgebraicMathlib.Laws
 public meta import Lean
@@ -83,6 +84,21 @@ private def vectorLit (ty : Expr) {n : Nat} (xs : Vector Expr n) : MetaM Expr :=
   let data := arrayLit ty xs.toArray.toList
   let proof ← mkAppM ``Eq.refl #[mkNatLit n]
   mkAppM ``Vector.mk #[data, proof]
+
+/-- Shared literal evidence reductions for tactic and explicit finite replay.
+Each caller supplies its own envelope and verdict equations. -/
+meta def evidenceLemmas : MetaM (TSyntaxArray ``Parser.Tactic.simpLemma) := do
+  return #[← `(Parser.Tactic.simpLemma| Field.checkSignTable),
+    ← `(Parser.Tactic.simpLemma| LiteralSign.Table.check),
+    ← `(Parser.Tactic.simpLemma| LiteralSign.Entry.check),
+    ← `(Parser.Tactic.simpLemma| RadicalCert.check),
+    ← `(Parser.Tactic.simpLemma| FieldRootSigns.Table.check),
+    ← `(Parser.Tactic.simpLemma| IsolationReplay.check),
+    ← `(Parser.Tactic.simpLemma| Sturm.check),
+    ← `(Parser.Tactic.simpLemma| TarskiCertificate.check_eq),
+    ← `(Parser.Tactic.simpLemma| SignedRemainderChain.check),
+    ← `(Parser.Tactic.simpLemma| ← Array.all_toList),
+    ← `(Parser.Tactic.simpLemma| Array.toList_range)]
 
 private def ratExpr (q : Rat) : MetaM Expr :=
   mkAppM ``mkRat #[mkIntLit q.num, mkNatLit q.den]
@@ -338,6 +354,11 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
   let preview := match quantifier with
     | .forallReal => data.allValue values formula
     | .existsReal => data.anyValue values formula
+  -- False or unresolved previews cannot turn malformed frozen evidence into
+  -- a goal diagnostic. Successful proposals still undergo kernel replay.
+  if preview != some true then
+    unless data.checkFinite values formula () extraSignKeys do
+      throwError "rcf: fixed-field certificate evidence failed replay"
   match quantifier, preview with
   | .forallReal, some false =>
       throwError "rcf: the universal sentence is false on the prepared cells"
@@ -373,22 +394,15 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
     | false, .existsReal => ``FieldBuild.Result.checkExists_eq)
   let evidence := mkIdent (if indexed then ``FieldBuild.Result.checkEvidenceIndex
     else ``FieldBuild.Result.checkEvidence)
+  let lemmas ← evidenceLemmas
   let script ← if rcf.algebraic.singleReplay.get (← getOptions) then
     `(tactic|
         (simp only [$checker:ident, $evidence:ident,
-          Field.checkSignTable,
-          LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
-          FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
-          TarskiCertificate.check_eq, SignedRemainderChain.check,
-          ← Array.all_toList, Array.toList_range]; try (decide +kernel)))
+          $lemmas,*]; try (decide +kernel)))
   else
     `(tactic|
         (simp only [$checker:ident, $evidence:ident,
-          Field.checkSignTable,
-          LiteralSign.Table.check, LiteralSign.Entry.check, RadicalCert.check,
-          FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
-          TarskiCertificate.check_eq, SignedRemainderChain.check,
-          ← Array.all_toList, Array.toList_range, Bool.and_eq_true];
+          $lemmas,*, Bool.and_eq_true];
           repeat' (any_goals (apply And.intro)); all_goals try (decide +kernel)))
   let remaining ← profileitM Exception "rcf literal replay" (← getOptions) do
     Lean.Elab.runTactic' candidate.mvarId! script

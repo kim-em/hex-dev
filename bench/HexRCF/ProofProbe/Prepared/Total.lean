@@ -22,7 +22,9 @@ run_meta do
       (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.Replay.check_sound) do
     throwError "total production probe did not quote finite replay"
   for name in [``Hex.RCF.RealCoefficients.Replay.buildTotal,
-      ``Hex.RCF.RealCoefficients.FieldBuild.produce] do
+      ``Hex.RCF.RealCoefficients.FieldBuild.produce,
+      ``Hex.RCF.RealCoefficients.Field.prepareSign, ``Hex.Sturm.queryPrepared,
+      ``Hex.Sturm.certifyPrepared, ``Hex.RCF.RealCoefficients.FieldBuild.buildTable] do
     if ← Hex.RCF.ProofEvidence.contains `Hex.RCF.ProofProbe.Prepared.Total.goal
         (fun e => e.isConstOf name) then
       throwError "total production entered the quoted proof"
