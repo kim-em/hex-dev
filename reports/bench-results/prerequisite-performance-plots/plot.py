@@ -43,6 +43,9 @@ def save(fig, stem, note):
     fig.tight_layout(rect=(0,.065,1,.95))
     for fmt in ['png', 'svg', 'pdf']:
         fig.savefig(HERE / f'{stem}.{fmt}', dpi=170)
+        if fmt == 'svg':
+            p = HERE / f'{stem}.{fmt}'
+            p.write_text('\n'.join(line.rstrip() for line in p.read_text().splitlines()) + '\n')
     plt.close(fig)
 
 plt.rcParams.update({'font.size': 10, 'axes.spines.top':False, 'axes.spines.right':False})
