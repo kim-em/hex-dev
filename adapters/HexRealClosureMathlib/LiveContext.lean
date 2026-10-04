@@ -48,7 +48,7 @@ noncomputable def Inclusions.Models.extend {source destination : Context registr
 
 /-- Append one newly registered owner's checked interpretation to the same
 common target without changing any earlier original owner. -/
-noncomputable def Inclusions.Models.snoc {destination source : Context registry}
+@[expose] noncomputable def Inclusions.Models.snoc {destination source : Context registry}
     {contexts : List (Context registry)} {maps : Inclusions destination contexts}
     {target : Tower.Model destination R} (models : Inclusions.Models target maps)
     {next : Inclusion source destination} (original : Tower.Model source R)
@@ -74,7 +74,7 @@ noncomputable def Inclusions.Models.map {destination : Context registry}
 
 /-- Retrieve an original owner's model and its alignment with the actual
 common target model. -/
-noncomputable def Inclusions.Models.get {destination : Context registry}
+@[expose] noncomputable def Inclusions.Models.get {destination : Context registry}
     {contexts : List (Context registry)} {maps : Inclusions destination contexts}
     {target : Tower.Model destination R} (models : Inclusions.Models target maps)
     (index : Fin contexts.length) :
