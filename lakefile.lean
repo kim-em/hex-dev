@@ -706,8 +706,7 @@ lean_lib HexRCFRealCoefficients where
 @[default_target]
 lean_lib HexQuerySemantics where
   srcDir := "adapters"
-  globs := #[`HexRealRootsMathlib.TarskiFoundation, `HexRealRootsMathlib.TarskiSoundness, `HexRealRootsMathlib.TarskiReal,
-    `HexSturmMathlib.Soundness, `HexSturmMathlib.Tests.Replay.Semantics,
+  globs := #[`HexSturmMathlib.Tests.Replay.Semantics,
     `HexSturmMathlib.Tests.Replay.SemanticsBaseline,
     `HexSignDetMathlib.RootModel, `HexSignDetMathlib.RootProducer,
     `HexSignDetMathlib.SelectedRoot, `HexSignDetMathlib.SelectedProducer,
@@ -734,6 +733,18 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.SpecializeReduction,
     `HexRealClosureMathlib.SpecializeMoment,
     `HexRealClosureMathlib.SpecializeReplay,
+    `HexRealClosureMathlib.SpecializeNested,
+    `HexRealClosureMathlib.SpecializeFractionRing,
+    `HexRealClosureMathlib.CoefficientMap,
+    `HexRealClosureMathlib.CoefficientQuery,
+    `HexRealClosureMathlib.CoefficientTarski,
+    `HexRealClosureMathlib.CoefficientEmbeddingTests,
+    `HexRealClosureMathlib.CoefficientEmbedding,
+    `HexRealClosureMathlib.CoefficientSelected,
+    `HexRealClosureMathlib.CoefficientDescriptor,
+    `HexRealClosureMathlib.CoefficientReplay,
+    `HexRealClosureMathlib.CoefficientMoment,
+    `HexRealClosureMathlib.CoefficientReduction,
     `HexRealClosureMathlib.SpecializeSample,
     `HexRealClosureMathlib.SpecializeSelected,
     `HexRealClosureMathlib.SpecializeDescriptor,
@@ -745,6 +756,10 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.BaseFactory,
     `HexRealClosureMathlib.ContextModel,
     `HexRealClosureMathlib.BaseFactoryTests,
+    `HexRealClosureMathlib.CacheModels,
+    `HexRealClosureMathlib.CacheRebuild,
+    `HexRealClosureMathlib.CacheGather,
+    `HexRealClosureMathlib.GatherTests,
     `HexRealClosureMathlib.TowerAlgebraic, `HexRealClosureMathlib.TowerRefinement,
     `HexRealClosureMathlib.TowerTransport, `HexRealClosureMathlib.TowerTransportTests,
     `HexRealClosureMathlib.TowerInclusion, `HexRealClosureMathlib.LiveContext,
@@ -1285,6 +1300,8 @@ lean_lib HexConformance where
       `HexRealClosureMathlib.CoefficientSignsConformance,
       `HexRealClosureMathlib.DependenciesConformance,
       `HexRealClosureMathlib.PackingConformance,
+      `HexRealClosureMathlib.ContextOperationsConformance,
+      `HexRealClosureMathlib.ContextOperationsPublic,
       `HexRealClosureMathlib.NestedSignsConformance,
       `HexRealClosureMathlib.SignCodecConformance,
       `HexRealClosureMathlib.SignFactsConformance,
@@ -1795,6 +1812,10 @@ lean_exe hexnumberfield_bench where
 lean_exe hexrealclosure_bench where
   srcDir := "bench"
   root := `HexRealClosure.Bench
+
+lean_exe hexrealclosure_phase4 where
+  srcDir := "bench"
+  root := `HexRealClosure.Phase4
 
 lean_exe hexrealclosure_trivial_tests where
   root := `HexRealClosure.TrivialTowerTests

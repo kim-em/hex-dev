@@ -11,7 +11,12 @@ Field remainders are divided by their positive absolute leading coefficient;
 negative leading signs are retained. Integers use the separate content backend.
 
 `prepare` validates a head and its endpoints once; `queryPrepared` reuses the
-squarefree chain. Prepared domains have a private constructor. `certify` and
+squarefree chain. Prepared domains have a private constructor.
+`PreparedDomain.ofChecked` restores a domain from its exact producer equation,
+endpoint validity and constant-terminal proof; `prepare_ofChecked` identifies
+that domain with actual preparation. `PreparedDomain.changeOps` retains its
+fields along proved equalities of coefficient operations. These interfaces
+reuse proved data without preparing another chain. `certify` and
 `certifyPrepared` retain finite evidence with the caller's full literal context;
 `check` checks that evidence through the shared checker.
 `certify_value` and `certifyPrepared_value` relate certificates with any context

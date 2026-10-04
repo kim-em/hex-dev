@@ -36,6 +36,22 @@ private theorem regular_of_represents (embedding : F →+* ℝ) (t : ℝ)
     zero, zero_mul] at equation
   exact equation
 
+/-- Any actual noncanonical numerator/denominator presentation evaluates to
+its fraction when that presentation's denominator survives substitution. -/
+theorem evalMapped_fraction (embedding : F →+* ℝ) (t : ℝ)
+    {fraction : Hex.RationalFn F} {num den : Hex.DensePoly F}
+    (represents : Hex.RationalFn.Represents fraction num den)
+    (nonzero : ((HexPolyMathlib.toPolynomial den).map embedding).eval t ≠ 0) :
+    evalMapped embedding fraction t =
+      ((HexPolyMathlib.toPolynomial num).map embedding).eval t /
+        ((HexPolyMathlib.toPolynomial den).map embedding).eval t := by
+  have guard := regular_of_represents embedding t represents nonzero
+  have cross := congrArg (fun p : Hex.DensePoly F =>
+    ((HexPolyMathlib.toPolynomial p).map embedding).eval t) represents
+  simp only [HexPolyMathlib.toPolynomial_mul, Polynomial.map_mul, Polynomial.eval_mul] at cross
+  unfold evalMapped
+  exact (div_eq_div_iff guard nonzero).mpr cross
+
 /-- Canonical addition preserves regularity of its two operands. -/
 theorem regular_add (embedding : F →+* ℝ) (t : ℝ) {first second : Hex.RationalFn F}
     (left : Regular embedding t first) (right : Regular embedding t second) :
@@ -279,3 +295,7 @@ theorem polynomial_eval (embedding : F →+* ℝ) (t : ℝ)
 #print axioms Hex.RealClosure.Specialize.polynomial_eval
 
 end Hex.RealClosure.Specialize
+
+/-- info: 'Hex.RealClosure.Specialize.evalMapped_fraction' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.evalMapped_fraction

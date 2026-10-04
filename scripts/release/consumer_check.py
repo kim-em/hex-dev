@@ -8,13 +8,16 @@ then creates `STAGE/consumer`: an ordinary Lake project that requires the `hex`
 aggregate exactly as a user would, and builds
 
 - one module importing every published library umbrella,
-- every manifest entry's `test_modules`, from the staged repositories,
+- aggregate entries' `test_modules`, from the staged repositories,
 - every `Examples/*.lean` user story whose imports are all published, and
 - an executable that links the whole published closure and calls native code.
 
 Elaborating in a downstream package is what exercises `precompileModules`, the
 FFI targets and their link arguments the way a user meets them, on whichever
-platform runs this script. Run from the repository root.
+platform runs this script. Non-aggregate libraries are checked first in
+`STAGE/helper-consumer`, with their tests and ordinary umbrella imports, so the
+aggregate's default `Hex` root cannot capture test-kit modules. Run from the
+repository root.
 """
 from __future__ import annotations
 
@@ -27,6 +30,11 @@ import sys
 from pathlib import Path
 
 import yaml
+
+try:
+    from .sync_released import _import_roots
+except ImportError:  # Direct script invocation.
+    from sync_released import _import_roots
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "scripts" / "release" / "released.yml"
@@ -86,13 +94,7 @@ def point_at_stage(stage: Path, repo: Path) -> None:
 
 
 def imported_roots(path: Path) -> set[str]:
-    return {
-        match.group(1).split(".")[0]
-        for match in re.finditer(
-            r"(?m)^\s*(?:public\s+)?(?:meta\s+)?import\s+(?:all\s+)?([A-Za-z0-9_.]+)",
-            path.read_text(encoding="utf-8"),
-        )
-    }
+    return _import_roots(path.read_text(encoding="utf-8"))
 
 
 def write_consumer(stage: Path, entries: list[dict]) -> list[str]:
@@ -102,15 +104,9 @@ def write_consumer(stage: Path, entries: list[dict]) -> list[str]:
     source.mkdir(parents=True)
     shutil.copy(stage / "hex" / "lean-toolchain", consumer / "lean-toolchain")
     libs = [e["lib"] for e in entries if not e.get("pins_only") and e.get("aggregate", True)]
-    # Repositories outside the aggregate (hex-test-kit) are required directly,
-    # so their Lake configuration is built before publication too.
-    others = [e for e in entries if not e.get("pins_only") and not e.get("aggregate", True)]
-    requires = "".join(
-        f'[[require]]\nname = "{e.get("lean_lib_name", e["lib"])}"\n'
-        f'path = "../{e["repo"].split("/")[-1]}"\n\n' for e in others)
     (consumer / "lakefile.toml").write_text(
         'name = "consumer"\n\n'
-        '[[require]]\nname = "hex"\npath = "../hex"\n\n' + requires +
+        '[[require]]\nname = "hex"\npath = "../hex"\n\n'
         '[[lean_lib]]\nname = "Consumer"\n\n'
         '[[lean_exe]]\nname = "consumer_link"\nroot = "Consumer.Main"\n',
         encoding="utf-8",
@@ -118,12 +114,12 @@ def write_consumer(stage: Path, entries: list[dict]) -> list[str]:
     (source / "Imports.lean").write_text(
         "".join(f"import {lib}\n" for lib in libs), encoding="utf-8")
     (source / "Main.lean").write_text(MAIN, encoding="utf-8")
-    modules = ["Consumer.Imports"] + [
-        "+" + e.get("lean_lib_name", e["lib"]) for e in others]
+    modules = ["Consumer.Imports", "+Hex"]
     # Built in place: a copy would change the private names some
     # `#guard_msgs` outputs quote.
     for entry in entries:
-        modules.extend(f"+{test}" for test in entry.get("test_modules") or [])
+        if not entry.get("pins_only") and entry.get("aggregate", True):
+            modules.extend(f"+{test}" for test in entry.get("test_modules") or [])
     for example in sorted((REPO_ROOT / "Examples").glob("*.lean")):
         roots = imported_roots(example)
         # Only libraries the consumer reaches through `hex` are eligible.
@@ -138,6 +134,35 @@ def write_consumer(stage: Path, entries: list[dict]) -> list[str]:
     return modules
 
 
+def write_helper_consumer(stage: Path, entries: list[dict]) -> tuple[Path, list[str]] | None:
+    """Check non-aggregate packages separately from the aggregate's Hex root.
+
+    Lake's default Hex root claims absent Hex.* modules supplied by the test
+    kit. Separate downstream projects preserve each published declaration and
+    check both packages without relying on ambiguous module ownership.
+    """
+    others = [e for e in entries if not e.get("pins_only") and not e.get("aggregate", True)]
+    if not others:
+        return None
+    consumer = stage / "helper-consumer"
+    consumer.mkdir()
+    shutil.copy(stage / "hex" / "lean-toolchain", consumer / "lean-toolchain")
+    requires = "".join(
+        f'[[require]]\nname = "{e.get("lean_lib_name", e["lib"])}"\n'
+        f'path = "../{e["repo"].split("/")[-1]}"\n\n' for e in others)
+    (consumer / "lakefile.toml").write_text(
+        'name = "helper-consumer"\n\n' + requires +
+        '[[lean_lib]]\nname = "HelperConsumer"\n', encoding="utf-8")
+    (consumer / "HelperConsumer.lean").write_text(
+        "".join(f'import {e.get("lean_lib_name", e["lib"])}\n' for e in others),
+        encoding="utf-8")
+    modules = ["HelperConsumer"]
+    for entry in others:
+        modules.append(entry.get("lean_lib_name", entry["lib"]))
+        modules.extend("+" + test for test in entry.get("test_modules") or [])
+    return consumer, modules
+
+
 def run(cmd: list[str], cwd: Path) -> None:
     print("+", " ".join(cmd), flush=True)
     subprocess.run(cmd, cwd=cwd, check=True)
@@ -149,14 +174,20 @@ def main() -> int:
                     help="directory filled by sync_released.py --dry-run --stage")
     args = ap.parse_args()
     stage = args.stage.resolve()
-    if (stage / "consumer").exists():
-        ap.error(f"{stage / 'consumer'} already exists")
+    for name in ("consumer", "helper-consumer"):
+        if (stage / name).exists():
+            ap.error(f"{stage / name} already exists")
     entries = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["repos"]
     for entry in entries:
         repo = stage / entry["repo"].split("/")[-1]
         if not repo.is_dir():
             ap.error(f"{repo} is missing; stage every repository (no --only)")
         point_at_stage(stage, repo)
+    helper = write_helper_consumer(stage, entries)
+    if helper is not None:
+        project, targets = helper
+        run(["lake", "update"], project)
+        run(["lake", "build", *targets], project)
     modules = write_consumer(stage, entries)
     consumer = stage / "consumer"
     run(["lake", "update"], consumer)

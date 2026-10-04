@@ -12,7 +12,7 @@ from pathlib import Path
 import re
 
 ROOT = Path(__file__).resolve().parents[2]
-BRIDGE = Path("adapters/HexRealRootsMathlib/TarskiSoundness.lean")
+BRIDGE = Path("HexRealRootsMathlib/TarskiSoundness.lean")
 ADMISSION = re.compile(
     r"\b[A-Za-z_]*[sS]orry[A-Za-z_]*\b|\b(?:admit|admitGoal|axiom)\b|^\s*(?:(?:private|protected|noncomputable|unsafe)\s+)*constant\b(?!\s*:)|(?<!\.)\bstop\b(?!\s*:=)",
     re.MULTILINE,
@@ -199,6 +199,8 @@ def check() -> None:
              "HexRealClosureMathlib.BasePrefixModels", "HexRealClosureMathlib.BaseModels",
              "HexRealClosureMathlib.BaseFactory", "HexRealClosureMathlib.ContextModel",
              "HexRealClosureMathlib.BaseFactoryTests",
+             "HexRealClosureMathlib.CacheModels", "HexRealClosureMathlib.CacheRebuild",
+             "HexRealClosureMathlib.CacheGather", "HexRealClosureMathlib.GatherTests",
              "HexRealClosureMathlib.BaseOrder", "HexRealClosureMathlib.BaseMapModel",
              "HexRealClosure.BisectionTests", "HexRealClosure.DeflationConformance",
              "HexRealClosure.BisectionFrontierTests", "HexRealClosure.IsolationTests",
@@ -233,6 +235,18 @@ def check() -> None:
              "HexRealClosureMathlib.SpecializeRegular", "HexRealClosureMathlib.SpecializeQuery", "HexRealClosureMathlib.SpecializeTarski",
              "HexRealClosureMathlib.SpecializeReduction", "HexRealClosureMathlib.SpecializeMoment",
              "HexRealClosureMathlib.SpecializeReplay", "HexRealClosureMathlib.SpecializeSample", "HexRealClosureMathlib.SpecializeSelected", "HexRealClosureMathlib.SpecializeDescriptor",
+             "HexRealClosureMathlib.SpecializeNested",
+             "HexRealClosureMathlib.SpecializeFractionRing",
+             "HexRealClosureMathlib.CoefficientMap",
+             "HexRealClosureMathlib.CoefficientQuery",
+             "HexRealClosureMathlib.CoefficientTarski",
+             "HexRealClosureMathlib.CoefficientEmbeddingTests",
+             "HexRealClosureMathlib.CoefficientEmbedding",
+             "HexRealClosureMathlib.CoefficientSelected",
+             "HexRealClosureMathlib.CoefficientDescriptor",
+             "HexRealClosureMathlib.CoefficientReplay",
+             "HexRealClosureMathlib.CoefficientMoment",
+             "HexRealClosureMathlib.CoefficientReduction",
              "HexRealClosureMathlib.TransportPolynomial", "HexRealClosureMathlib.TransportProduct",
              "HexRealClosureMathlib.TransportArithmetic", "HexRealClosureMathlib.TransportQuery", "HexRealClosureMathlib.TransportTests",
              "HexRealClosureMathlib.TransportRing", "HexRealClosureMathlib.TransportPower",

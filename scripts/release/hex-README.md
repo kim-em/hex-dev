@@ -30,8 +30,9 @@ git = "https://github.com/leanprover/hex.git"
 rev = "main"
 ```
 
-Then `import Hex` re-exports every library in the table below at a single
-coherent pinned set:
+The requirement installs the libraries in the table below at a single
+coherent pinned set. The generated `import Hex` umbrella re-exports every
+aggregated library:
 
 ```lean
 import Hex

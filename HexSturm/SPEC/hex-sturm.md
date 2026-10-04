@@ -10,7 +10,10 @@ shared query producer and literal checker. It provides `prepare`, `query`,
 `queryPrepared`, `certify`, `certifyPrepared` and `check`, with explicit
 coefficient signs and finite/infinite endpoints. `PreparedDomain` has a private
 constructor and retains its sign operation, head, endpoints and validated
-squarefree chain. `orderSign` is the canonical ordered-coefficient sign function. The frontend
+squarefree chain. A domain is prepared by the shared producer, or restored
+from proofs of endpoint validity, a constant terminal entry and exact equality
+with the producer's chain. Restoration retains those data and invariants;
+serialized data alone do not establish them. `orderSign` is the canonical ordered-coefficient sign function. The frontend
 uses ordinary coefficient inversion to divide each remainder by its positive
 absolute leading coefficient, preserving negative leading signs. The shared
 integer backend retains its content normalization.

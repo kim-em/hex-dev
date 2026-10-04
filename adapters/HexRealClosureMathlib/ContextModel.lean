@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.TowerEnlarge
+public import HexRealClosure.BaseEmbedding
 public import HexRealClosureMathlib.BaseFactory
 
 public section
@@ -77,6 +78,36 @@ theorem Context.model?_value
   have preserved := (BaseInclusion.Model.derive following inclusion target).value a
   rw [BaseInclusion.Model.derive_target, ← Option.some.inj same] at preserved
   exact preserved
+
+private theorem Context.model?_base_proof
+    (following : base.Realization) (target : Tower.Model (Context.ofBase base) R) :
+    (Context.ofBase base).model? following target = some target := by
+  cases base with
+  | pack original =>
+    change (Context.base original).model? following target = some target
+    rw [Context.model?, Context.origin_base]
+    simp only [Origin.model?]
+    cases produced : BaseInclusion.make? (.pack original) (.pack original) with
+    | none =>
+      have success := (BaseInclusion.make?_isSome (.pack original) (.pack original)).mpr
+        ⟨List.prefix_refl _, Nat.le_refl _⟩
+      rw [produced] at success
+      cases success
+    | some inclusion =>
+      change some (BaseInclusion.Model.derive following inclusion target).source = some target
+      apply congrArg some
+      apply Model.value_ext
+      intro a
+      have preserved := (BaseInclusion.Model.derive following inclusion target).value a
+      rw [BaseInclusion.Model.derive_target] at preserved
+      exact preserved.symm.trans (congrArg target.value (inclusion.self_value a))
+
+/-- At the declared target base, the owner factory returns the supplied
+interpretation itself. Staged identity maps retain every native coefficient. -/
+theorem Context.model?_base
+    (following : base.Realization) (target : Tower.Model (Context.ofBase base) R) :
+    (Context.ofBase base).model? following target = some target :=
+  Context.model?_base_proof following target
 
 private theorem Model.extend_snoc {source : Context registry} (model : Model source R)
     (suffix : Suffix source)
@@ -164,10 +195,14 @@ end Hex.RealClosure.Tower
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Context.model?_embed
 
-/-- info: 'Hex.RealClosure.Tower.Context.model?_baseMap' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Tower.Context.model?_baseMap
-
 /-- info: 'Hex.RealClosure.Tower.Context.model?_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Context.model?_value
+
+/-- info: 'Hex.RealClosure.Tower.Context.model?_base' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.model?_base
+
+/-- info: 'Hex.RealClosure.Tower.Context.model?_baseMap' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.model?_baseMap

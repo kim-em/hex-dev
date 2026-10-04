@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.ContextModel
+public import HexRealClosureMathlib.CacheGather
 public import HexOrderedFnMathlib.LiouvilleTests
 
 public section
@@ -141,5 +142,71 @@ example :
       RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys]
   rw [keys]
   exact ⟨List.nil_prefix, by decide⟩
+
+/-- Gathering owners over two compatible infinitesimal bases succeeds with
+the constructed reference. Canonical owner models identify both copies of
+every child value; this is semantic agreement, not a native cache-hit test. -/
+example (descriptor : SignDet.Descriptor
+      (Tower.Context.ofBase (rationalModel.context.finish.extend 1)).Value Tower.Signature
+      (Tower.Context.ofBase (rationalModel.context.finish.extend 1)).sign
+      (Tower.Context.ofBase (rationalModel.context.finish.extend 1)).signature) :
+    let source := Tower.Context.ofBase (rationalModel.context.finish.extend 1)
+    let child := source.adjoin descriptor
+    let owners := [child.context, source, child.context,
+      Tower.Context.ofBase rationalModel.context.finish]
+    let reference := (providerModel.staged 2).reference.model
+    ∃ shared : Tower.Shared (providerModel.context.finish.extend 2) owners,
+      Tower.Shared.gather? (providerModel.context.finish.extend 2) owners = some shared ∧
+      ∃ model : Tower.Shared.Model shared (providerModel.staged 2) reference,
+        ∀ a : child.context.Value,
+          model.target.value (shared.value 0 a) = model.target.value (shared.value 2 a) := by
+  let source := Tower.Context.ofBase (rationalModel.context.finish.extend 1)
+  let child := source.adjoin descriptor
+  let owners := [child.context, source, child.context,
+      Tower.Context.ofBase rationalModel.context.finish]
+  let reference := (providerModel.staged 2).reference.model
+  have parentCompatible : source.origin.base.signature.constants <+:
+      (providerModel.context.finish.extend 2).signature.constants ∧
+      source.origin.base.signature.infinitesimals ≤
+        (providerModel.context.finish.extend 2).signature.infinitesimals := by
+    rw [originBase]
+    simp only [PackedContext.extend_signature, RealPrefix.finish_signature]
+    have keys : rationalModel.context.keys = [] := by
+      simp only [rationalModel, RealPrefix.Model.rational, RealPrefix.Model.context,
+        RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys]
+    rw [keys]
+    exact ⟨List.nil_prefix, by decide⟩
+  have childCompatible : child.context.origin.base.signature.constants <+:
+      (providerModel.context.finish.extend 2).signature.constants ∧
+      child.context.origin.base.signature.infinitesimals ≤
+        (providerModel.context.finish.extend 2).signature.infinitesimals := by
+    change (source.adjoin descriptor).context.origin.base.signature.constants <+: _ ∧ _
+    rw [Tower.Context.origin_adjoin, Tower.Origin.snoc_base]
+    exact parentCompatible
+  have rationalCompatible : (Tower.Context.ofBase rationalModel.context.finish).origin.base.signature.constants <+:
+      (providerModel.context.finish.extend 2).signature.constants ∧
+      (Tower.Context.ofBase rationalModel.context.finish).origin.base.signature.infinitesimals ≤
+        (providerModel.context.finish.extend 2).signature.infinitesimals := by
+    rw [originBase]
+    simp only [RealPrefix.finish_signature, PackedContext.extend_signature]
+    have keys : rationalModel.context.keys = [] := by
+      simp only [rationalModel, RealPrefix.Model.rational, RealPrefix.Model.context,
+        RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys]
+    rw [keys]
+    exact ⟨List.nil_prefix, by decide⟩
+  obtain ⟨shared, produced, _⟩ := Tower.Shared.gather?_models (providerModel.staged 2)
+    reference owners (by
+      intro owner present
+      simp only [owners, List.mem_cons, List.not_mem_nil, or_false] at present
+      rcases present with same | same | same | same <;> subst owner
+      · exact childCompatible
+      · exact parentCompatible
+      · exact childCompatible
+      · exact rationalCompatible)
+  let model := Tower.Shared.Model.ofGather (providerModel.staged 2) reference owners shared produced
+  have duplicate := Option.some.inj ((model.canonicalOwners 0).symm.trans (model.canonicalOwners 2))
+  refine ⟨shared, produced, model, fun a => ?_⟩
+  exact (model.value 0 a).trans ((congrArg (fun original => original.value a) duplicate).trans
+    (model.value 2 a).symm)
 
 end Hex.RealClosure.BaseContext.FactoryTests
