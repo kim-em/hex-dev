@@ -61,27 +61,27 @@ namespace Codec
 /-- Dimensions come from the already decoded enclosing record. The supplied
 array length is checked before decoding entries; no claimed dimension drives
 an allocation or a loop over missing input. -/
-@[expose] def vector (n : Nat) (read : Json → Except String α) (j : Json) : Except String (Vector α n) := do
+def vector (n : Nat) (read : Json → Except String α) (j : Json) : Except String (Vector α n) := do
   let a ← tuple n j
   let values ← a.toArray.mapM read
   if h : values.size = n then return ⟨values, h⟩
   else throw "wrong decoded vector length"
 
-@[expose] def matrix (n m : Nat) (j : Json) : Except String (Matrix Int n m) :=
+def matrix (n m : Nat) (j : Json) : Except String (Matrix Int n m) :=
   Matrix.ofRows <$> vector n (vector m Json.decode) j
 
-@[expose] def encodeMatrix (a : Matrix Int n m) : Json :=
+def encodeMatrix (a : Matrix Int n m) : Json :=
   array (array Json.of) (a.rows.toArray.map Vector.toArray)
 
-@[expose] def index (n : Nat) (j : Json) : Except String (Fin n) := do
+def index (n : Nat) (j : Json) : Except String (Fin n) := do
   let i ← Json.decode (α := Nat) j
   if h : i < n then return ⟨i, h⟩ else throw "index out of range"
 
-@[expose] def option (encode : α → Json) : Option α → Json
+def option (encode : α → Json) : Option α → Json
   | none => .arr #[]
   | some a => .arr #[encode a]
 
-@[expose] def readOption (read : Json → Except String α) (j : Json) : Except String (Option α) := do
+def readOption (read : Json → Except String α) (j : Json) : Except String (Option α) := do
   let a ← j.getArr?
   match a.toList with
   | [] => return none
