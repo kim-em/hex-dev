@@ -13,10 +13,21 @@ Prove the universal properties and action-compatible equivalences stated
 in the computational SPEC, including the `0 < n` hypothesis on the
 semidirect-product equivalence for the wreath action.
 
-The immediate dependency is `HexPermGroup`, plus Mathlib. Extract the
-graph-independent `Perm.toEquiv` and `Perm.ofEquiv` conversions from
-`HexGraphIsoMathlib` when migrating that consumer. This library must not
+The immediate dependency is `HexPermGroup`, plus Mathlib. The
+graph-independent `Perm.toEquiv` and `Perm.ofEquiv` conversions live in
+`HexPermGroupMathlib/Perm/Basic.lean`. This module does not install a
+`Group (Hex.Perm n)` instance; that optional structure and the multiplicative
+equivalence remain in `HexPermGroupMathlib/Perm.lean`. This library must not
 depend on graph isomorphism or a classification database.
+
+`HexPermGroupMathlib/Generated.lean` contains the lightweight mathematical
+interface: `generated_iff_mem`, `hasOrder_iff_card`,
+`generatesAll_iff_eq_top`, and their translations for a list of generators.
+It imports only the computational generation/order semantics and the basic
+conversions. `Word.lean`, `Order.lean` and `Kernel.lean` retain the old entry
+points. The tactic adapter imports this semantic interface and uses
+`Hex.PermGroup.Tactic.{Input,Goal,prepare,replay,render}`; it does not inspect
+certificate representations or create packing/checker declarations itself.
 
 The library translates the Mathlib-free kernel replay theorems and extends
 the `perm_group` tactic from `HexPermGroup`, as specified in
@@ -48,3 +59,10 @@ normal and derived subgroups, rank/unrank and product embeddings.
 Runtime conformance and compiled benchmarking belong
 to `HexPermGroup`. Kernel replay of `Kernel.check` is exercised by this
 library's proof probes.
+
+`HexPermGroupMathlib/TacticTests.lean` imports only the lightweight tactic
+adapter and checks all four goal forms, set and subgroup definitions, coerced
+Finsets, set builders, invalid-image fallback, degrees zero and one, false
+goals and the absence of the optional Hex group instance. Source replay tests
+remain in `CertificateTests.lean`; computational interface tests also cover
+bad canonical equalities and rollback after a kernel rejection.

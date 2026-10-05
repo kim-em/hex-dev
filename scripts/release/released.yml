@@ -94,6 +94,7 @@ repos:
   - repo: leanprover/hex-basic
     component: Foundations
     lib: HexBasic
+    test_modules: [HexBasic.ModuleBoundaryTests]
     umbrella: true
     readme: false        # README is authored in the released repo, not managed
     spec: null
@@ -557,7 +558,7 @@ repos:
 
   - repo: leanprover/hex-perm-group-mathlib
     lib: HexPermGroupMathlib
-    test_modules: [HexPermGroupMathlib.Tests, HexPermGroupMathlib.CertificateTests]
+    test_modules: [HexPermGroupMathlib.Tests, HexPermGroupMathlib.CertificateTests, HexPermGroupMathlib.TacticTests]
     umbrella: true
     spec: hex-perm-group-mathlib
     pins: [hex-basic, hex-perm-group]
