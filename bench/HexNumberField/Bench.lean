@@ -422,13 +422,14 @@ setup_fixed_benchmark runIsolateAdd where {
   expectedHash := some 0x4367ab34a73ea4ed
 }
 
-/- The precomputed degree-four eliminant is square-free normalized, isolated
-to its separation depth, and filtered by one certified operation ball. This
-fixed case records the selection boundary; comparing it with `runIsolateAdd`
-attributes the additional operation-ball disambiguation work. -/
+/- The precomputed degree-four eliminant is square-free normalized and its
+desired root is certified directly from the operation ball, with global
+isolation as fallback. Comparing this fixed selection boundary with
+`runIsolateAdd` contrasts selected-root and global isolation work. Lazy hashes
+pin the stored square; canonical arithmetic hashes below remain unchanged. -/
 setup_fixed_benchmark runSelectAdd where {
   repeats := 3, maxSecondsPerCall := 5.0,
-  expectedHash := some 0xb2956b93cac0235f
+  expectedHash := some 0xc7075ff68f1c4795
 }
 
 /- The total lazy-add wrapper calls the checked path, then performs only the
@@ -436,7 +437,7 @@ constant-time proven-unreachable fallback projection. This therefore measures
 both `add?` and its total wrapper on the same degree-product-four route. -/
 setup_fixed_benchmark runLazyAdd where {
   repeats := 3, maxSecondsPerCall := 5.0,
-  expectedHash := some 0xb2956b93cac0235f
+  expectedHash := some 0xc7075ff68f1c4795
 }
 
 /-! # Exactification and roots -/
@@ -606,13 +607,13 @@ implementation through a total wrapper whose extra `Option.getD` projection
 is constant-time. Negation is directly certificate-free. These fixed quadratic
 inputs isolate the five public routes without asserting an isolation model. -/
 setup_fixed_benchmark runLazySub where
-  { apiFixedConfig with expectedHash := some 0x751dc56f8c0d0b2e }
+  { apiFixedConfig with expectedHash := some 0x7ef7229539b2e964 }
 setup_fixed_benchmark runLazyMul where
-  { apiFixedConfig with expectedHash := some 0xab6b27ac2b367388 }
+  { apiFixedConfig with expectedHash := some 0x66a0c1d12c492880 }
 setup_fixed_benchmark runLazyDiv where
-  { apiFixedConfig with expectedHash := some 0x1122363c42d4fe8d }
+  { apiFixedConfig with expectedHash := some 0xc18ec9b591326fb2 }
 setup_fixed_benchmark runLazyInv where
-  { apiFixedConfig with expectedHash := some 0x49c2d04def0370f2 }
+  { apiFixedConfig with expectedHash := some 0x57da03c997efeefd }
 setup_fixed_benchmark runLazyNeg where
   { apiAnchorConfig with expectedHash := some 0xb98e2baa3432a5d3 }
 
@@ -1509,7 +1510,7 @@ operation across the mode change. -/
 setup_fixed_benchmark runLazyAddLadder where {
   repeats := 3
   maxSecondsPerCall := 12.0
-  expectedHash := some 0xc544c942d8336f51
+  expectedHash := some 0x6b2bc8ad12820bb2
 }
 
 /-! # Exactification ladder -/

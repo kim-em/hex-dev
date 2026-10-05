@@ -392,4 +392,15 @@ def certifyAtom? (p : ZPoly) (s : DyadicSquare) : Option (DyadicRootIsolation p)
   else
     none
 
+/-- Direct atom certification retains the supplied candidate square. -/
+theorem certifyAtom?_square {p : ZPoly} {s : DyadicSquare}
+    {iso : DyadicRootIsolation p} (h : certifyAtom? p s = some iso) :
+    iso.square = s := by
+  unfold certifyAtom? at h
+  split at h
+  · exact congrArg DyadicRootIsolation.square (Option.some.inj h).symm
+  · split at h
+    · exact congrArg DyadicRootIsolation.square (Option.some.inj h).symm
+    · simp at h
+
 end Hex

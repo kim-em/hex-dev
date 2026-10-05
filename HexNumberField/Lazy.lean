@@ -19,7 +19,9 @@ Factorization-lazy arithmetic for algebraic roots.
 Binary operations form their integer eliminants with bivariate resultants,
 discard multiplicities by primitive square-free normalization, and select the
 desired root using a certified operation ball at the eliminant's separation
-depth. Negation reflects both the polynomial and its root certificate directly.
+depth. Direct atom certification avoids constructing unwanted conjugate roots;
+complete global isolation remains the fallback. Negation reflects both the
+polynomial and its root certificate directly.
 -/
 namespace Hex
 
@@ -172,8 +174,21 @@ def RefinedIsolation.neg {p : ZPoly} (r : RefinedIsolation p)
 
 namespace AlgebraicRoot
 
-/-- Run a consumer while the eliminant producer's certified isolation is
-available. The cache is transient; the stored root representation is unchanged. -/
+/-- Certify the root enclosed by `ball` directly. The ball must fit inside
+the candidate square, and the atom must meet the separation-precision bound.
+Failure leaves the global isolation route available. -/
+@[expose]
+def isolateAt? (p : ZPoly) (ball : DyadicComplexBall) (prec : Int) :
+    Option (RefinedIsolation p) := do
+  let s : DyadicSquare := ⟨ball.re, ball.im, prec⟩
+  if ball.radius ≤ s.halfWidth then do
+    let iso ← certifyAtom? p s
+    iso.toRefined?
+  else none
+
+/-- Select the enclosed root directly when possible. Otherwise run the
+consumer while the global producer's certified isolations are available.
+Both consumers must implement the same operation on the selected root. -/
 @[expose]
 def withEliminant? {α : Type} (raw : ZPoly)
     (ballAt : Int → Option DyadicComplexBall)
@@ -182,7 +197,8 @@ def withEliminant? {α : Type} (raw : ZPoly)
       (refined : Array (RefinedIsolation a.p)) →
       ZPoly.isolateComplexRoots? a.p a.squarefree (separationDepth a.p : Int) =
         some isolations →
-      isolations.mapM DyadicRootIsolation.toRefined? = some refined → Option α) :
+      isolations.mapM DyadicRootIsolation.toRefined? = some refined → Option α)
+    (localFinish : AlgebraicRoot → Option α) :
     Option α := do
   let p := ZPoly.squareFreeCore raw
   if hprim : ZPoly.content p = 1 then
@@ -190,35 +206,43 @@ def withEliminant? {α : Type} (raw : ZPoly)
       if hdegree : 0 < p.natDegree then
         if hsimple : HasOnlySimpleRoots p then do
           let ball ← ballAt (separationDepth p : Int)
-          match hisolate : ZPoly.isolateComplexRoots? p hsimple (separationDepth p : Int) with
-          | none => none
-          | some isolations =>
-            match hrefine : isolations.mapM DyadicRootIsolation.toRefined? with
-            | none => none
-            | some refined =>
-              match refined.toList.filter fun r => r.1.square.meetsBall ball with
-              | [matching] =>
-                  let a : AlgebraicRoot :=
-                    { p, prim := hprim, pos_lc := hpos, pos_degree := hdegree,
-                      squarefree := hsimple, x := SimpleRoot.mk matching,
-                      rep := matching, rep_mk := rfl }
-                  finish a isolations refined hisolate hrefine
-              | _ => none
+          match isolateAt? p ball (separationDepth p : Int) with
+          | some matching =>
+              localFinish
+                { p, prim := hprim, pos_lc := hpos, pos_degree := hdegree,
+                  squarefree := hsimple, x := SimpleRoot.mk matching,
+                  rep := matching, rep_mk := rfl }
+          | none =>
+              match hisolate : ZPoly.isolateComplexRoots? p hsimple (separationDepth p : Int) with
+              | none => none
+              | some isolations =>
+                match hrefine : isolations.mapM DyadicRootIsolation.toRefined? with
+                | none => none
+                | some refined =>
+                  match refined.toList.filter fun r => r.1.square.meetsBall ball with
+                  | [matching] =>
+                      let a : AlgebraicRoot :=
+                        { p, prim := hprim, pos_lc := hpos, pos_degree := hdegree,
+                          squarefree := hsimple, x := SimpleRoot.mk matching,
+                          rep := matching, rep_mk := rfl }
+                      finish a isolations refined hisolate hrefine
+                  | _ => none
         else none
       else none
     else none
   else none
 
-/-- Normalize an eliminant, isolate all of its distinct roots, and retain the
-root meeting the supplied certified operation ball. -/
+/-- Normalize an eliminant and certify the root enclosed by the supplied
+operation ball. If direct certification fails, isolate all distinct roots
+and retain the unique root meeting that ball. -/
 @[expose]
 def ofEliminant? (raw : ZPoly)
     (ballAt : Int → Option DyadicComplexBall) : Option AlgebraicRoot :=
-  withEliminant? raw ballAt fun a _ _ _ _ => some a
+  withEliminant? raw ballAt (fun a _ _ _ _ => some a) some
 
--- The equality keeps the original producer contract available to companions.
+-- The equality exposes the shared producer contract to companions.
 set_option backward.isDefEq.respectTransparency false in
-/-- The shared producer preserves every certificate, selected root and failure. -/
+/-- Expose direct selection and its global fallback without consumer callbacks. -/
 theorem ofEliminant?_eq (raw : ZPoly)
     (ballAt : Int → Option DyadicComplexBall) :
     ofEliminant? raw ballAt = (do
@@ -229,10 +253,8 @@ theorem ofEliminant?_eq (raw : ZPoly)
         if hsimple : HasOnlySimpleRoots p then do
           let prec : Int := separationDepth p
           let ball ← ballAt prec
-          let isolations ← ZPoly.isolateComplexRoots? p hsimple prec
-          let refined ← isolations.mapM DyadicRootIsolation.toRefined?
-          match refined.toList.filter fun r => r.1.square.meetsBall ball with
-          | [matching] =>
+          match isolateAt? p ball prec with
+          | some matching =>
               some
                 { p
                   prim := hprim
@@ -242,7 +264,21 @@ theorem ofEliminant?_eq (raw : ZPoly)
                   x := SimpleRoot.mk matching
                   rep := matching
                   rep_mk := rfl }
-          | _ => none
+          | none => do
+              let isolations ← ZPoly.isolateComplexRoots? p hsimple prec
+              let refined ← isolations.mapM DyadicRootIsolation.toRefined?
+              match refined.toList.filter fun r => r.1.square.meetsBall ball with
+              | [matching] =>
+                  some
+                    { p
+                      prim := hprim
+                      pos_lc := hpos
+                      pos_degree := hdegree
+                      squarefree := hsimple
+                      x := SimpleRoot.mk matching
+                      rep := matching
+                      rep_mk := rfl }
+              | _ => none
         else
           none
       else
@@ -274,7 +310,7 @@ theorem withEliminant?_eq {α : Type} (raw : ZPoly)
     (f : AlgebraicRoot → Option α)
     (hfinish : ∀ a isolations refined hisolate hrefine,
       finish a isolations refined hisolate hrefine = f a) :
-    withEliminant? raw ballAt finish = (ofEliminant? raw ballAt).bind f := by
+    withEliminant? raw ballAt finish f = (ofEliminant? raw ballAt).bind f := by
   rw [ofEliminant?_eq]
   unfold withEliminant?
   simp only [hfinish, Option.bind_eq_bind]
@@ -288,8 +324,8 @@ factor equal to the whole enclosing polynomial. -/
 @[expose]
 def exactEliminant? (raw : ZPoly)
     (ballAt : Int → Option DyadicComplexBall) : Option AlgebraicNumber :=
-  withEliminant? raw ballAt fun a isolations refined hisolate hrefine =>
-    a.exactIn? isolations refined hisolate hrefine
+  withEliminant? raw ballAt (fun a isolations refined hisolate hrefine =>
+    a.exactIn? isolations refined hisolate hrefine) AlgebraicRoot.exact?
 
 /-- Fusing selection and exactification preserves the complete checked result. -/
 theorem exactEliminant?_eq (raw : ZPoly)
@@ -307,7 +343,8 @@ def exactEliminant (raw : ZPoly) (ballAt : Int → Option DyadicComplexBall)
     (fallback : Unit → AlgebraicRoot) : AlgebraicNumber :=
   match withEliminant? raw ballAt (fun a isolations refined hisolate hrefine =>
     some ((a.exactIn? isolations refined hisolate hrefine).getD
-      (Hex.panicWith 0 "AlgebraicRoot.exact: certification failed"))) with
+      (Hex.panicWith 0 "AlgebraicRoot.exact: certification failed")))
+      (fun a => some a.exact) with
   | some result => result
   | none => (fallback ()).exact
 

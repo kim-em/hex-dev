@@ -225,6 +225,41 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
 
 /-! # Lazy algebraic arithmetic -/
 
+-- Direct certification needs both enclosure containment and separation
+-- precision, and cannot certify a square around the wrong value.
+#guard (AlgebraicRoot.isolateAt? ZPoly.X ⟨0, 0, 0⟩
+  (separationDepth ZPoly.X)).isSome
+#guard (AlgebraicRoot.isolateAt? ZPoly.X ⟨0, 0, 1⟩ 16).isNone
+#guard (AlgebraicRoot.isolateAt? ZPoly.X ⟨0, 0, 0⟩ (-1)).isNone
+#guard (AlgebraicRoot.isolateAt? ZPoly.X ⟨1, 0, 0⟩ 16).isNone
+
+-- This admissible ball is too wide for the direct square, so the eliminant
+-- constructor must retain its complete global-isolation fallback.
+#guard
+  let p := ZPoly.X
+  let ball : DyadicComplexBall := ⟨0, 0, Dyadic.ofIntWithPrec 1 (mahlerPrec p)⟩
+  (AlgebraicRoot.isolateAt? p ball (separationDepth p)).isNone &&
+    (AlgebraicRoot.ofEliminant? p (fun _ => some ball)).map (·.isZero) == some true
+
+-- A trace product from the mixed algebraic-coefficient root case. Its
+-- squarefree product eliminant has degree 36, but the selected value lives
+-- in the degree-six field of gamma. Compare canonical output with a direct
+-- fixed-field calculation, not with another eliminant multiplication.
+#guard
+  let p : ZPoly := DensePoly.ofCoeffs #[-32, 0, 0, 0, 0, 0, 1]
+  match p.algebraicRoots[0]? with
+  | none => false
+  | some gamma =>
+      let beta := PolyQuot.reduce gamma.p gamma.x
+        (DensePoly.ofCoeffs ([0, 0, 1/2, -1/2] : List Rat).toArray)
+      let expected := PolyQuot.reduce gamma.p gamma.x
+        (DensePoly.ofCoeffs ([0, 0, 0, 1/2, -1/2] : List Rat).toArray)
+      match beta.toAlgebraicNumber? gamma.rep gamma.rep_mk,
+          expected.toAlgebraicNumber? gamma.rep gamma.rep_mk with
+      | some beta, some expected =>
+          AlgebraicPoly.Common.mul? beta gamma == some expected
+      | _, _ => false
+
 #guard
   match sqrtTwo? with
   | some a =>
