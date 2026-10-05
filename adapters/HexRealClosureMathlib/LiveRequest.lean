@@ -13,6 +13,8 @@ public import HexSignDetMathlib.Embedding
 
 public section
 
+open scoped List
+
 namespace Hex.RealClosure.Tower.Live
 
 open scoped Hex.OrderedFn.Infinitesimal
@@ -238,7 +240,7 @@ theorem Request.gather?_models {base : BaseContext.PackedContext registry}
     (following : base.Realization) (reference : Model (Context.ofBase base) K)
     (request : Request registry)
     (compatible : ∀ source ∈ request.owners,
-      source.origin.base.signature.constants <+: base.signature.constants ∧
+      source.origin.base.signature.constants <+ base.signature.constants ∧
       source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals) :
     ∃ result, request.gather? base = some result ∧
       Nonempty (Shared.Model result.shared following reference) := by

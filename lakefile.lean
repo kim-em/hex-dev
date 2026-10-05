@@ -766,7 +766,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.BaseMapModel,
     `HexRealClosureMathlib.BaseFactory,
     `HexRealClosureMathlib.ContextModel,
-    `HexRealClosureMathlib.BaseFactoryTests,
+    `HexRealClosureMathlib.BaseFactoryTests, `HexRealClosureMathlib.BaseGatherTests,
     `HexRealClosureMathlib.CacheModels,
     `HexRealClosureMathlib.CacheRebuild,
     `HexRealClosureMathlib.CacheGather,

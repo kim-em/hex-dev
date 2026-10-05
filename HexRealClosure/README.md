@@ -365,15 +365,24 @@ without polynomial gcd work. For example, the independently registered path
 The companion `RealPrefix.Model.subsequence_map` derives preservation of every
 real coefficient from both registered models. `RealChain.Realization.subsequence_sign`
 derives agreement of their actual native signs. `RealContext.provider_unique`
-uses stored approximation progress to prove that a registry key has one real
-value. The build-only `SubsequenceTests.insert_before` constructs the target
+uses stored approximation progress to prove that a registered provider has at
+most one real value relative to its interpreted predecessor. The build-only `SubsequenceTests.insert_before` constructs the target
 with `Model.register`, checks this non-prefix inclusion and proves that the
 prefix-only producer rejects it.
 
 The target retains its own relative-transcendence premises and progress proofs
 for each exact predecessor. The subsequence factory does not construct a joint
-target from separately supplied providers, permute a real-key path, or enlarge
-the prefix-only `Tower.BaseInclusion` interface.
+target from separately supplied providers, or permute a real-key path.
+
+`Chain.subsequence?` and `PackedContext.subsequence?` retain successive
+infinitesimals in their original order while admitting the real-key subsequence.
+`Tower.BaseInclusion.make?` uses this broader native check. The companion
+derives the source realization from the target provider values and the source
+chain's stored progress proofs, so canonical owner lookup and shared gathering
+accept these inclusions without a separate source interpretation or agreement
+premise. `BaseTests` executes empty, self, incompatible-version and decreasing
+key checks, plus preservation of the real variable and an old infinitesimal
+when another target infinitesimal is added.
 
 `BaseContext.Context.real` finishes that prefix. `Context.infinitesimal` then
 adds any number of successive positive infinitesimals. The types prevent

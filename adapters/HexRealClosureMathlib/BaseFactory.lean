@@ -75,26 +75,17 @@ noncomputable def Model.derive
     | @pack K targetField targetEq targetSign target =>
       letI : Field S := HexPolyMathlib.fieldOfGrind
       letI : Field K := HexPolyMathlib.fieldOfGrind
-      have compatible := (BaseContext.PackedContext.embedding?_isSome
+      have compatible := (BaseContext.PackedContext.subsequence?_isSome
         (.pack source) (.pack target)).mp (by rw [inclusion.produced]; rfl)
       have success := (following.restrict?_isSome (.pack source)).mpr compatible
       have original : source.chain.Realization registry :=
         (following.restrict? (.pack source)).get success
-      let coefficients : BaseContext.FieldEmbedding S K := inclusion.coefficients
-      have produced : target.chain.embedding? (.pack (BaseContext.Context.ofChain source.chain)) =
-          some inclusion.coefficients := by
-        change target.chain.embedding? (.pack (BaseContext.Context.ofChain source.chain)) =
-          some coefficients
-        rw [BaseContext.Context.ofChain_eq source]
-        have checked : (BaseContext.PackedContext.pack source).embedding? (.pack target) =
-            some coefficients := inclusion.produced
-        rw [← BaseContext.Context.ofChain_eq target] at checked
-        rw [BaseContext.PackedContext.embedding?_ofChain] at checked
-        exact checked
+      have produced : target.chain.subsequence? source.chain = some inclusion.coefficients := by
+        exact inclusion.produced
       let f := (targetModel.baseHom target).comp inclusion.coefficients.hom
       have correct : ∀ a, sourceSign a = (SignType.sign (f a) : Int) := by
         intro a
-        have preserved := BaseContext.Chain.Realization.embedding_sign following source.chain
+        have preserved := BaseContext.Chain.Realization.subsequence_sign following source.chain
           original inclusion.coefficients produced a
         exact preserved.symm.trans (targetModel.baseHom_sign target (inclusion.coefficients.value a))
       exact Model.ofMap source target inclusion targetModel correct

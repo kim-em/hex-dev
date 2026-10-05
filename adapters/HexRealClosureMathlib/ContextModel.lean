@@ -11,6 +11,8 @@ public import HexRealClosureMathlib.BaseFactory
 
 public section
 
+open scoped List
+
 namespace Hex.RealClosure.Tower
 
 variable {registry : BaseContext.Registry} {base : BaseContext.PackedContext registry}
@@ -124,7 +126,7 @@ private theorem Context.model?_base_proof
     cases produced : BaseInclusion.make? (.pack original) (.pack original) with
     | none =>
       have success := (BaseInclusion.make?_isSome (.pack original) (.pack original)).mpr
-        ⟨List.prefix_refl _, Nat.le_refl _⟩
+        ⟨List.Sublist.refl _, Nat.le_refl _⟩
       rw [produced] at success
       cases success
     | some inclusion =>
@@ -207,7 +209,7 @@ theorem Suffix.model?_extend {source : Context registry} (suffix : Suffix source
 private theorem Context.model?_isSome_proof (context : Context registry)
     (following : base.Realization) (target : Tower.Model (Context.ofBase base) R) :
     (context.model? following target).isSome = true ↔
-      context.origin.base.signature.constants <+: base.signature.constants ∧
+      List.Sublist context.origin.base.signature.constants base.signature.constants ∧
         context.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
   have packaged : (context.model? following target).isSome =
       (BaseInclusion.make? context.origin.base base).isSome := by
@@ -220,7 +222,7 @@ same target field; unrelated paths and decreasing depth are rejected. -/
 theorem Context.model?_isSome (context : Context registry)
     (following : base.Realization) (target : Tower.Model (Context.ofBase base) R) :
     (context.model? following target).isSome = true ↔
-      context.origin.base.signature.constants <+: base.signature.constants ∧
+      List.Sublist context.origin.base.signature.constants base.signature.constants ∧
         context.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals :=
   context.model?_isSome_proof following target
 
@@ -323,7 +325,7 @@ theorem Context.model?_next (context : Context registry)
   have compatible := (context.model?_isSome original reference).mp (by rw [oldProduced]; rfl)
   have success := (context.model?_isSome original.infinitesimal
     (Tower.Model.nextBase base reference ambient)).mpr (by
-      change context.origin.base.signature.constants <+:
+      change context.origin.base.signature.constants <+
           ((BaseContext.PackedContext.pack base).infinitesimal).signature.constants ∧
         context.origin.base.signature.infinitesimals ≤
           ((BaseContext.PackedContext.pack base).infinitesimal).signature.infinitesimals

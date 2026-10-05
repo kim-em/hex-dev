@@ -82,12 +82,12 @@ noncomputable def Model.ofTarget
   letI : Field K := HexPolyMathlib.fieldOfGrind
   letI : Field S := HexPolyMathlib.fieldOfGrind
   let f := (targetModel.baseHom (BaseContext.Context.ofChain target)).comp inclusion.coefficients.hom
-  have produced : target.embedding? (.pack (BaseContext.Context.ofChain source)) =
+  have produced : target.subsequence? source =
       some inclusion.coefficients := by
-    simpa only [BaseContext.PackedContext.embedding?_ofChain] using inclusion.produced
+    simpa only [BaseContext.PackedContext.subsequence?_ofChain] using inclusion.produced
   have correct : ∀ a, sourceSign a = (SignType.sign (f a) : Int) := by
     intro a
-    have preserved := following.embedding_sign source original inclusion.coefficients produced a
+    have preserved := following.subsequence_sign source original inclusion.coefficients produced a
     exact preserved.symm.trans
       (targetModel.baseHom_sign (BaseContext.Context.ofChain target) (inclusion.coefficients.value a))
   exact Model.ofMap (BaseContext.Context.ofChain source) (BaseContext.Context.ofChain target)

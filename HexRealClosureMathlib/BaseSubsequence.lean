@@ -242,7 +242,7 @@ theorem RealChain.Realization.subsequence
             RealChain.interpretStep_embed]
           exact ih sourceWhole previousMap found a
 
-/-- Cached subsequence inclusions preserve coefficients in both independently
+/-- Checked subsequence inclusions preserve coefficients in both independently
 registered provider models. -/
 theorem RealPrefix.Model.subsequence {registry : Registry} (source target : Model registry)
     (map : FieldEmbedding source.context.Carrier target.context.Carrier)

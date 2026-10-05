@@ -145,33 +145,6 @@ theorem Chain.Realization.embedding_sign
 
 end Hex.RealClosure.BaseContext
 
-namespace Hex.RealClosure.Tower
-
-variable {registry : BaseContext.Registry}
-
-/-- A checked nominal inclusion preserves signs through the provider-derived
-real prefixes and all staged infinitesimals. No agreement premise is required. -/
-theorem BaseInclusion.sign
-    {K S : Type} [Lean.Grind.Field K] [DecidableEq K]
-    [Lean.Grind.Field S] [DecidableEq S] {sign : K → Int} {sourceSign : S → Int}
-    (source : BaseContext.Chain registry S sourceSign)
-    (target : BaseContext.Chain registry K sign)
-    (original : source.Realization registry) (following : target.Realization registry)
-    (inclusion : BaseInclusion (.pack (BaseContext.Context.ofChain source))
-      (.pack (BaseContext.Context.ofChain target)))
-    (a : (Context.ofBase (.pack (BaseContext.Context.ofChain source))).Value) :
-    (Context.ofBase (.pack (BaseContext.Context.ofChain target))).sign (inclusion.value a) =
-      (Context.ofBase (.pack (BaseContext.Context.ofChain source))).sign a := by
-  change sign (inclusion.coefficients.value a.stored) = sourceSign a.stored
-  exact following.embedding_sign source original inclusion.coefficients
-    (by simpa only [BaseContext.PackedContext.embedding?_ofChain] using inclusion.produced) a.stored
-
-end Hex.RealClosure.Tower
-
 /-- info: 'Hex.RealClosure.BaseContext.Chain.Realization.embedding_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.BaseContext.Chain.Realization.embedding_sign
-
-/-- info: 'Hex.RealClosure.Tower.BaseInclusion.sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Tower.BaseInclusion.sign

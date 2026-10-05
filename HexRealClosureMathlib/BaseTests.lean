@@ -11,6 +11,7 @@ public import HexRealClosureMathlib.BaseStagedRealization
 public import HexRealClosureMathlib.BaseModels
 public import HexRealClosure.BaseInclusion
 public meta import HexRealClosure.BaseInclusion
+public meta import HexRealClosure.BaseSubsequence
 public import HexRealClosure.LiveContext
 public meta import HexRealClosure.LiveContext
 public import HexRealClosure.AlgebraicContext
@@ -71,7 +72,7 @@ example : ((providerModel.staged 2).restrict?
       simp only [rationalModel, RealPrefix.Model.rational, RealPrefix.Model.context,
         RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys]
     rw [keys]
-    exact List.nil_prefix
+    exact List.nil_sublist _
   · decide
 
 example : providerModel.context.keys = [key 1] := by
@@ -111,6 +112,27 @@ private theorem approxProgress (version : Nat) (f : RationalFn Rat) (δ : Rat) :
 private abbrev realContext (version : Nat) := Context.real
   (prefixContext.constant (key version) (present version)
     (signProgress version) (approxProgress version))
+
+-- These execute the checked native factory on an actual validated provider.
+#guard (PackedContext.pack (BaseContext.rational registry)).subsequence?
+  (.pack (realContext 1)) |>.isSome
+#guard (PackedContext.pack (realContext 1)).subsequence? (.pack (realContext 1)) |>.isSome
+#guard !((PackedContext.pack (realContext 2)).subsequence? (.pack (realContext 1))).isSome
+#guard !((PackedContext.pack (realContext 1)).subsequence?
+  (.pack (BaseContext.rational registry))).isSome
+
+private def mappedVariable : Option Bool := do
+  let map ← (PackedContext.pack (realContext 1)).subsequence? (.pack (realContext 1))
+  return map.value RationalFn.X == RationalFn.X
+
+#guard mappedVariable == some true
+
+private def stagedVariables : Option Bool := do
+  let map ← (PackedContext.pack (realContext 1).infinitesimal).subsequence?
+    (.pack (realContext 1).infinitesimal.infinitesimal)
+  return map.value RationalFn.X == RationalFn.C RationalFn.X
+
+#guard stagedVariables == some true
 
 private def positive : Element (realContext 1) := ⟨OrderedFn.LiouvilleCoreTests.positive.val⟩
 private abbrev mixed := (realContext 1).infinitesimal

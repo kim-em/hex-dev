@@ -11,6 +11,8 @@ public import HexRealClosureMathlib.Presentation
 
 public section
 
+open scoped List
+
 namespace Hex.RealClosure.Tower
 
 variable {registry : BaseContext.Registry} {base : BaseContext.PackedContext registry}
@@ -145,7 +147,7 @@ theorem Shared.Model.add?_union {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
     (model : Shared.Model shared following reference) (source : Context registry)
-    (compatible : source.origin.base.signature.constants <+: base.signature.constants ∧
+    (compatible : source.origin.base.signature.constants <+ base.signature.constants ∧
       source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals) :
     ∃ result, shared.add? source = some result ∧
       ∃ returned : Shared.Model result following reference,
@@ -165,7 +167,7 @@ theorem Shared.Model.register?_union {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
     (model : Shared.Model shared following reference) (source : Context registry)
-    (compatible : source.origin.base.signature.constants <+: base.signature.constants ∧
+    (compatible : source.origin.base.signature.constants <+ base.signature.constants ∧
       source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals) :
     ∃ packet : Registration shared source,
       shared.register? source = some packet ∧
@@ -441,11 +443,11 @@ theorem Shared.union_coverage (following : base.Realization)
             ∃ model : Shared.Model shared following reference,
               (model.toUnion 0 entry.root.value : R) = x := by
   obtain ⟨p, out, produced, entry, member, meaning⟩ := reference.union_coverage x
-  have compatible : entry.root.context.origin.base.signature.constants <+:
+  have compatible : entry.root.context.origin.base.signature.constants <+
       base.signature.constants ∧
       entry.root.context.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
     rw [entry.root.origin_base, Context.ofBase_origin_base]
-    exact ⟨List.prefix_refl _, Nat.le_refl _⟩
+    exact ⟨List.Sublist.refl _, Nat.le_refl _⟩
   obtain ⟨shared, sharedProduced, ⟨model⟩⟩ :=
     Shared.gather?_models following reference [entry.root.context]
       (fun source present => by
@@ -480,11 +482,11 @@ theorem Shared.Model.union_extend {owners : List (Context registry)}
                 (same : owners[i] = (owners ++ [entry.root.context])[j]),
                 next.toUnion j (_root_.cast (congrArg Context.Value same) a) = model.toUnion i a := by
   obtain ⟨p, out, produced, entry, member, meaning⟩ := reference.union_coverage x
-  have compatible : entry.root.context.origin.base.signature.constants <+:
+  have compatible : entry.root.context.origin.base.signature.constants <+
       base.signature.constants ∧
       entry.root.context.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
     rw [entry.root.origin_base, Context.ofBase_origin_base]
-    exact ⟨List.prefix_refl _, Nat.le_refl _⟩
+    exact ⟨List.Sublist.refl _, Nat.le_refl _⟩
   obtain ⟨added, addedProduced, ⟨next⟩⟩ := model.add? entry.root.context compatible
   refine ⟨p, out, produced, entry, member, added, addedProduced, next, ?_, ?_⟩
   · let j : Fin (owners ++ [entry.root.context]).length := ⟨owners.length, by simp⟩

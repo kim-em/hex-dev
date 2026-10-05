@@ -11,6 +11,8 @@ public import HexOrderedFnMathlib.LiouvilleTests
 
 public section
 
+open scoped List
+
 namespace Hex.RealClosure.BaseContext.FactoryTests
 
 open OrderedFn OrderedFn.Oracle
@@ -58,7 +60,7 @@ example : ((providerModel.staged 2).restrict?
       simp only [rationalModel, RealPrefix.Model.rational, RealPrefix.Model.context,
         RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys]
     rw [keys]
-    exact List.nil_prefix
+    exact List.nil_sublist _
   · decide
 
 private theorem originBase (base : PackedContext registry) :
@@ -85,7 +87,7 @@ example {R : Type} [Field R] [LinearOrder R] [DecidableEq R]
         (source.adjoin descriptor).context.model? (providerModel.staged 2) reference = some child ∧
         ∀ a, child.value ((source.adjoin descriptor).embed a) = original.value a := by
   let source := Tower.Context.ofBase (rationalModel.context.finish.extend 1)
-  have compatible : source.origin.base.signature.constants <+:
+  have compatible : source.origin.base.signature.constants <+
       (providerModel.context.finish.extend 2).signature.constants ∧
       source.origin.base.signature.infinitesimals ≤
         (providerModel.context.finish.extend 2).signature.infinitesimals := by
@@ -95,7 +97,7 @@ example {R : Type} [Field R] [LinearOrder R] [DecidableEq R]
       simp only [rationalModel, RealPrefix.Model.rational, RealPrefix.Model.context,
         RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys]
     rw [keys]
-    exact ⟨List.nil_prefix, by decide⟩
+    exact ⟨List.nil_sublist _, by decide⟩
   have success := (source.model?_isSome (providerModel.staged 2) reference).mpr compatible
   obtain ⟨original, produced⟩ := Option.isSome_iff_exists.mp success
   have childProduced : (source.adjoin descriptor).context.model? (providerModel.staged 2)
@@ -120,7 +122,7 @@ example {R : Type} [Field R] [LinearOrder R] [DecidableEq R]
   have success := (Tower.BaseInclusion.make?_isSome source
     (providerModel.context.finish.extend 2)).mpr (by
       simp only [source, PackedContext.extend_signature]
-      exact ⟨List.prefix_refl _, by omega⟩)
+      exact ⟨List.Sublist.refl _, by omega⟩)
   obtain ⟨inclusion, produced⟩ := Option.isSome_iff_exists.mp success
   let original := (Tower.BaseInclusion.Model.derive (providerModel.staged 2)
     inclusion reference).source
@@ -141,7 +143,7 @@ example :
     simp only [rationalModel, RealPrefix.Model.rational, RealPrefix.Model.context,
       RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys]
   rw [keys]
-  exact ⟨List.nil_prefix, by decide⟩
+  exact ⟨List.nil_sublist _, by decide⟩
 
 /-- Gathering owners over two compatible infinitesimal bases succeeds with
 the constructed reference. Canonical owner models identify both copies of
@@ -165,7 +167,7 @@ example (descriptor : SignDet.Descriptor
   let owners := [child.context, source, child.context,
       Tower.Context.ofBase rationalModel.context.finish]
   let reference := (providerModel.staged 2).reference.model
-  have parentCompatible : source.origin.base.signature.constants <+:
+  have parentCompatible : source.origin.base.signature.constants <+
       (providerModel.context.finish.extend 2).signature.constants ∧
       source.origin.base.signature.infinitesimals ≤
         (providerModel.context.finish.extend 2).signature.infinitesimals := by
@@ -175,15 +177,15 @@ example (descriptor : SignDet.Descriptor
       simp only [rationalModel, RealPrefix.Model.rational, RealPrefix.Model.context,
         RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys]
     rw [keys]
-    exact ⟨List.nil_prefix, by decide⟩
-  have childCompatible : child.context.origin.base.signature.constants <+:
+    exact ⟨List.nil_sublist _, by decide⟩
+  have childCompatible : child.context.origin.base.signature.constants <+
       (providerModel.context.finish.extend 2).signature.constants ∧
       child.context.origin.base.signature.infinitesimals ≤
         (providerModel.context.finish.extend 2).signature.infinitesimals := by
-    change (source.adjoin descriptor).context.origin.base.signature.constants <+: _ ∧ _
+    change (source.adjoin descriptor).context.origin.base.signature.constants <+ _ ∧ _
     rw [Tower.Context.origin_adjoin, Tower.Origin.snoc_base]
     exact parentCompatible
-  have rationalCompatible : (Tower.Context.ofBase rationalModel.context.finish).origin.base.signature.constants <+:
+  have rationalCompatible : (Tower.Context.ofBase rationalModel.context.finish).origin.base.signature.constants <+
       (providerModel.context.finish.extend 2).signature.constants ∧
       (Tower.Context.ofBase rationalModel.context.finish).origin.base.signature.infinitesimals ≤
         (providerModel.context.finish.extend 2).signature.infinitesimals := by
@@ -193,7 +195,7 @@ example (descriptor : SignDet.Descriptor
       simp only [rationalModel, RealPrefix.Model.rational, RealPrefix.Model.context,
         RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys]
     rw [keys]
-    exact ⟨List.nil_prefix, by decide⟩
+    exact ⟨List.nil_sublist _, by decide⟩
   obtain ⟨shared, produced, _⟩ := Tower.Shared.gather?_models (providerModel.staged 2)
     reference owners (by
       intro owner present

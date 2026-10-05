@@ -141,8 +141,8 @@ def Inclusion.extendBase (base : BaseContext.PackedContext registry) (n : Nat) :
     Inclusion (Context.ofBase base) (Context.ofBase (base.extend n)) :=
   ⟨Conversion.extendBase base n, Conversion.extendBase_context base n⟩
 
-/-- Check the complete real-prefix path and infinitesimal order before
-including a staged base. The original prefix is retained in the target;
+/-- Check the complete real-key subsequence and infinitesimal order before
+including a staged base. The original keys are retained in the target;
 unrelated paths and decreasing depth are rejected. -/
 def Inclusion.base? (source target : BaseContext.PackedContext registry) :
     Option (Inclusion (Context.ofBase source) (Context.ofBase target)) :=
@@ -159,11 +159,11 @@ theorem Inclusion.base?_eq (source target : BaseContext.PackedContext registry) 
       (fun inclusion => ⟨Conversion.base inclusion, (Conversion.base_spec inclusion).1⟩) :=
   Inclusion.base?_eq_proof source target
 
-/-- Staged-base compatibility is checked on the full real-prefix path and
+/-- Staged-base compatibility is checked on the full real-key subsequence and
 on the required order of the retained infinitesimals. -/
 theorem Inclusion.base?_isSome (source target : BaseContext.PackedContext registry) :
     (Inclusion.base? source target).isSome = true ↔
-      source.signature.constants <+: target.signature.constants ∧ source.depth ≤ target.depth := by
+      List.Sublist source.signature.constants target.signature.constants ∧ source.depth ≤ target.depth := by
   simp only [Inclusion.base?, Option.isSome_map]
   exact BaseInclusion.make?_isSome source target
 

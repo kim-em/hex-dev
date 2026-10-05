@@ -43,6 +43,7 @@ theorem insert_before {registry : Registry} (source parent : RealPrefix.Model re
     rw [sourceKeys, childKeys]
     exact List.sublist_append_right [α] [β]
 
+
 end Hex.RealClosure.BaseContext.SubsequenceTests
 
 /-- info: 'Hex.RealClosure.BaseContext.SubsequenceTests.insert_before' depends on axioms: [propext, Classical.choice, Quot.sound] -/
