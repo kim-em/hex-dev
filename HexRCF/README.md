@@ -223,6 +223,16 @@ gives direct API examples. General frozen tower replay, source authentication
 for that backend and joint infinitesimal realization still require the owner
 interfaces.
 
+`Realization.exists_real` turns an accepted one-infinitesimal BKR replay into
+an ordinary real witness for the complete shared source formula. The fixed
+coefficient field has a supplied ordered real embedding; constant lifting
+preserves all source atoms, including domain guards. The
+[realization regressions](../conformance/HexRCF/Realization.lean) freeze a root
+of `X − (1 + ε)` and prove the whole conjunction `1 < x ∧ x ≤ 2`, with changed
+context/coefficient, missing-child and invalid-row controls. This direct API
+still requires frontend coefficient/divisor authentication and source reification;
+it does not discharge general nested or successive-infinitesimal realization.
+
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
 `QAdjoin` coordinates converted through `Coefficients.ofField` or directly through
