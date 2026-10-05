@@ -8,6 +8,12 @@ module
 public import HexSignDetMathlib.RootProducer
 public import HexSignDetMathlib.SelectedRoot
 public import HexSignDetMathlib.SelectedProducer
+public import HexSignDetMathlib.TableProducer
+public import HexSignDetMathlib.CompletionProducer
+public import HexSignDetMathlib.ThomRoots
+public import HexSignDetMathlib.ThomReencoding
+public import HexSignDetMathlib.ComparisonProducer
+public import HexSignDetMathlib.Naturality
 public import HexSignDet.Conformance
 public import HexRealRootsMathlib.RealClosed
 
@@ -152,5 +158,49 @@ theorem literal_support (s : List Int) :
 /-- info: 'Hex.SignDet.moment_entry' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.moment_entry
+
+/-- info: 'Hex.SignDet.determine_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.determine_correct
+
+/-- info: 'Hex.SignDet.determinePrepared_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.determinePrepared_success
+
+/-- info: 'Hex.SignDet.Descriptor.complete_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.complete_correct
+
+/-- info: 'Hex.SignDet.Descriptor.compare_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.compare_correct
+
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.buildRoots_roots
+
+/-- info: 'Hex.SignDet.Descriptor.buildReencoding_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.buildReencoding_isSome
+
+/-- info: 'Hex.SignDet.Descriptor.convert_signAt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.convert_signAt
+
+/-- info: 'Hex.SignDet.Descriptor.convert_compare' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.convert_compare
+
+/-- info: 'Hex.SignDet.determine_convert_counts' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.determine_convert_counts
+
+/-- info: 'Hex.SignDet.determine_convert_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.determine_convert_isSome
+
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_convert_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.buildRoots_convert_roots
 
 end Hex.SignDetMathlib.RootSemantics

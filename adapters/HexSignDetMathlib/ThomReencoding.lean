@@ -115,4 +115,31 @@ theorem Descriptor.buildReencoding_success {context : Ctx}
         exact hbuild) hcheck
     exact ⟨r, hr, r.root_eq_source f hz h1 ha hs hm hnat hsign⟩
 
+include hz h1 ha hs hm hnat hn hi hsign in
+/-- The actual diagnostic producer returns a re-encoding exactly when the
+new root domain is valid and contains the selected source root. -/
+theorem Descriptor.buildReencoding_isSome {context : Ctx}
+    (source : Descriptor E Ctx sign context) (head : DensePoly E) (a b : Endpoint E) :
+    (∃ r, source.buildReencoding head a b = .ok (some r)) ↔
+      HexSturmMathlib.Domain f hz head a b ∧
+      source.root f hz h1 ha hs hm hnat hsign ∈
+        Tarski.rootsIn (interpret f hz head) (a.map f) (b.map f) := by
+  constructor
+  · rintro ⟨r, hr⟩
+    by_cases hd : HexSturmMathlib.Domain f hz head a b
+    · refine ⟨hd, ?_⟩
+      by_contra absent
+      have missing := source.buildReencoding_absent f hz h1 ha hs hm hnat hsign hn hi
+        head a b absent
+      rw [hr] at missing
+      cases missing
+    · have invalid := source.buildReencoding_invalid f hz h1 ha hs hm hnat hsign hn hi
+        head a b hd
+      rw [hr] at invalid
+      cases invalid
+  · rintro ⟨hd, member⟩
+    obtain ⟨r, hr, _⟩ := source.buildReencoding_success f hz h1 ha hs hm hnat hsign hn hi
+      head a b hd member
+    exact ⟨r, hr⟩
+
 end Hex.SignDet

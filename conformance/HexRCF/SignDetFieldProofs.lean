@@ -32,7 +32,7 @@ coefficient carrier without a field instance. One instantiation per producer
 correctness theorem checks that the Mathlib correctness API composes with real
 number-field coefficients. The computations themselves are checked by the
 compiled `hexsigndet_field_checks` executable. -/
-namespace Hex.SignDetMathlib.FieldConformance
+namespace Hex.RCF.SignDetFieldProofs
 
 open Hex Hex.SignDet Hex.RCF.RealCoefficients HexPolyMathlib.Interpret HexRealRootsMathlib
 
@@ -338,41 +338,41 @@ theorem extension_root {L : Type*} [_root_.Field L] [DecidableEq L] [LinearOrder
 
 end Noncanonical
 
-/-- info: 'Hex.SignDetMathlib.FieldConformance.cubic_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.SignDetFieldProofs.cubic_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms cubic_success
-/-- info: 'Hex.SignDetMathlib.FieldConformance.cubic_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.SignDetFieldProofs.cubic_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms cubic_complete
-/-- info: 'Hex.SignDetMathlib.FieldConformance.cubic_queries' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.SignDetFieldProofs.cubic_queries' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms cubic_queries
-/-- info: 'Hex.SignDetMathlib.FieldConformance.cubic_coverage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.SignDetFieldProofs.cubic_coverage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms cubic_coverage
-/-- info: 'Hex.SignDetMathlib.FieldConformance.cubic_table' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.SignDetFieldProofs.cubic_table' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms cubic_table
-/-- info: 'Hex.SignDetMathlib.FieldConformance.cubic_compare' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.SignDetFieldProofs.cubic_compare' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms cubic_compare
-/-- info: 'Hex.SignDetMathlib.FieldConformance.cubic_absent' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.SignDetFieldProofs.cubic_absent' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms cubic_absent
-/-- info: 'Hex.SignDetMathlib.FieldConformance.cubic_refinement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.SignDetFieldProofs.cubic_refinement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms cubic_refinement
-/-- info: 'Hex.SignDetMathlib.FieldConformance.cubic_convert' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.SignDetFieldProofs.cubic_convert' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms cubic_convert
-/-- info: 'Hex.SignDetMathlib.FieldConformance.algebraic_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.SignDetFieldProofs.algebraic_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms algebraic_root
-/-- info: 'Hex.SignDetMathlib.FieldConformance.Noncanonical.reencoding' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.SignDetFieldProofs.Noncanonical.reencoding' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Noncanonical.reencoding
-/-- info: 'Hex.SignDetMathlib.FieldConformance.Noncanonical.extension_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.SignDetFieldProofs.Noncanonical.extension_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Noncanonical.extension_root
 
-end Hex.SignDetMathlib.FieldConformance
+end Hex.RCF.SignDetFieldProofs

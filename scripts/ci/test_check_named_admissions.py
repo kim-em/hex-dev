@@ -99,7 +99,7 @@ class AdmissionScannerTests(unittest.TestCase):
             entry = root / "adapters/HexRCF/RealCoefficients.lean"
             bridge = root / "HexRealRootsMathlib/TarskiSoundness.lean"
             sign = root / "adapters/HexSignDetMathlib/RootProducer.lean"
-            conformance = root / "conformance/HexSignDetMathlib/FieldConformance.lean"
+            conformance = root / "conformance/HexRCF/SignDetFieldProofs.lean"
             completion = root / "conformance/HexSignDet/FieldChecks.lean"
             base = root / "HexRealClosure/BaseTests.lean"
             model = root / "HexRealClosureMathlib/BaseTests.lean"
