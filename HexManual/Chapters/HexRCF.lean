@@ -2447,8 +2447,8 @@ actual gathering and decision production when each owner's registered keys form
 an ordered subsequence of the supplied target's keys and its infinitesimal depth
 does not exceed the target's. Thus an owner over `[β]` can enter a target over
 `[α, β]`, retaining the same provider identity and version. Reordered or stale
-keys do not satisfy this condition. The supplied target still needs its actual
-provider-derived realization and real model; this operation does not construct
+keys do not satisfy this condition. The operation needs a provider realization
+of the target and a real model of its base; it does not construct
 a new registered base for incompatible owners or infer independence of named
 constants. {name}`Hex.RCF.RealCoefficients.Gather.gather_spec` retains the
 prefix-compatible API. For separately authenticated source models,

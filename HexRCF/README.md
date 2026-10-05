@@ -212,7 +212,8 @@ owner's registered keys form an ordered subsequence of the target keys and its
 infinitesimal depth does not exceed the target depth. For example, an owner over
 `[β]` can enter a supplied target over `[α, β]`; provider versions and key order
 remain fixed. `gather_spec` retains the prefix API. `run_original` additionally
-binds coordinates to separately authenticated original models and selected embeddings. The
+binds coordinates to separately authenticated original models and selected
+embeddings. The
 [gathering regressions](../conformance/HexRCF/Gather.lean) exercise different
 polynomials, selected conjugates, repeated owners, cancellation and a further
 root over the common coefficient field, non-prefix compatibility and stale keys.
