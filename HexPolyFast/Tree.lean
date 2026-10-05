@@ -71,10 +71,12 @@ theorem Monic.mul {p q : DensePoly R} (hp : p.Monic) (hq : q.Monic) :
 strictly below `n`. -/
 def treeSplit (n : Nat) : Nat := 2 ^ Nat.log2 (n - 1)
 
+/-- The adjacent-pair tree split is positive. -/
 theorem treeSplit_pos (n : Nat) : 0 < treeSplit n := by
   unfold treeSplit
   exact Nat.pow_pos (by omega)
 
+/-- For at least two leaves, the tree split is strictly smaller than the leaf count. -/
 theorem treeSplit_lt (n : Nat) (hn : 2 ≤ n) : treeSplit n < n := by
   have hm : n - 1 ≠ 0 := by omega
   have hle : 2 ^ Nat.log2 (n - 1) ≤ n - 1 :=

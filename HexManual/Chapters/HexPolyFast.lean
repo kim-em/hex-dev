@@ -344,9 +344,3 @@ run natively in Lean. There is no separate Mathlib companion: the operations
 reduce to the existing `DensePoly` semantics, which the
 {ref "hex-poly"}[`HexPoly` chapter] and its companion already connect to
 Mathlib polynomials.
-
-Coefficient-specific callers construct plans above this dependency boundary.
-{ref "hex-poly-z"}[`HexPolyZ`] supplies Kronecker and CRT-NTT integer kernels,
-while {ref "hex-poly-fp"}[`HexPolyFp`] supplies direct and auxiliary-prime
-NTT multiplication. The generic algorithms here remain their independent
-semantic fallback.

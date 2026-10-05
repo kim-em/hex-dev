@@ -36,6 +36,7 @@ def cyclicModulus (n : Nat) : DensePoly R :=
 def negacyclicModulus (n : Nat) : DensePoly R :=
   monomial n 1 + 1
 
+/-- Over a nontrivial ring, the positive-length cyclic modulus has size `n + 1`. -/
 theorem size_cyclicModulus (n : Nat) (hn : 0 < n) (hone : (1 : R) ≠ 0) :
     (cyclicModulus (R := R) n).size = n + 1 := by
   have hn0 : n ≠ 0 := by omega
@@ -56,6 +57,7 @@ theorem size_cyclicModulus (n : Nat) (hn : 0 < n) (hone : (1 : R) ≠ 0) :
     have hz' : (1 : R) = 0 := Lean.Grind.AddCommGroup.sub_eq_zero_iff.mp hz
     exact hone hz'
 
+/-- Over a nontrivial ring, the positive-length negacyclic modulus has size `n + 1`. -/
 theorem size_negacyclicModulus (n : Nat) (hn : 0 < n) (hone : (1 : R) ≠ 0) :
     (negacyclicModulus (R := R) n).size = n + 1 := by
   have hn0 : n ≠ 0 := by omega
@@ -79,6 +81,7 @@ theorem size_negacyclicModulus (n : Nat) (hn : 0 < n) (hone : (1 : R) ≠ 0) :
     have hz' : (1 : R) = 0 := hz
     exact hone hz'
 
+/-- The positive-length cyclic modulus is monic over a nontrivial ring. -/
 theorem cyclicModulus_monic (n : Nat) (hn : 0 < n) (hone : (1 : R) ≠ 0) :
     (cyclicModulus (R := R) n).Monic := by
   have hn0 : n ≠ 0 := by omega
@@ -94,6 +97,7 @@ theorem cyclicModulus_monic (n : Nat) (hn : 0 < n) (hone : (1 : R) ≠ 0) :
   rw [Lean.Grind.Ring.sub_eq_add_neg, Lean.Grind.AddCommGroup.neg_zero,
     Lean.Grind.Semiring.add_zero]
 
+/-- The positive-length negacyclic modulus is monic over a nontrivial ring. -/
 theorem negacyclicModulus_monic (n : Nat) (hn : 0 < n) (hone : (1 : R) ≠ 0) :
     (negacyclicModulus (R := R) n).Monic := by
   have hn0 : n ≠ 0 := by omega
@@ -184,6 +188,7 @@ private theorem coeff_foldl_monomials (p : DensePoly R) (N k : Nat) :
           change (0 : R) + 0 = 0
           exact Lean.Grind.Semiring.add_zero 0
 
+/-- Summing a polynomial's coefficient monomials reconstructs the polynomial. -/
 theorem foldl_monomials_eq (p : DensePoly R) :
     (List.range p.size).foldl
         (fun q i => q + monomial i (p.coeff i)) 0 = p := by
@@ -243,6 +248,7 @@ private theorem cyclicModulus_dvd_fold_sub (n N : Nat) (hn : 0 < n)
       exact dvd_add_poly ih
         (cyclicModulus_dvd_monomial_sub n N hn (p.coeff N))
 
+/-- Cyclic folding preserves the residue modulo `x^n - 1`. -/
 theorem cyclicModulus_dvd_sub_fold (n : Nat) (hn : 0 < n) (p : DensePoly R) :
     cyclicModulus (R := R) n ∣
       p - ofCoeffs (cyclicCoeffs n p) := by
@@ -489,6 +495,7 @@ private theorem negacyclicModulus_dvd_fold_sub (n N : Nat) (hn : 0 < n)
       simpa [negacyclicTerm, negacyclicResidue] using
         negacyclicModulus_dvd_monomial_sub (R := R) n N hn (p.coeff N)
 
+/-- Negacyclic folding preserves the residue modulo `x^n + 1`. -/
 theorem negacyclicModulus_dvd_sub_fold (n : Nat) (hn : 0 < n)
     (p : DensePoly R) :
     negacyclicModulus (R := R) n ∣

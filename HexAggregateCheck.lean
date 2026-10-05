@@ -64,6 +64,10 @@ public import HexNumberFieldMathlib
 public import HexNumberFieldTower
 public import HexNumberFieldTowerMathlib
 public import HexRCF
+public import HexTruncatedSeries
+public import HexTruncatedSeriesMathlib
+public import HexModular
+public import HexPolyFast
 
 /-!
 Mirror of the released aggregate's umbrella.

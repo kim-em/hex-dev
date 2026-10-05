@@ -33,19 +33,27 @@ variable {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
 denominator degree at most `n`.  A nonzero denominator is stronger than the
 nontrivial-pair condition and is what the half-gcd construction supplies. -/
 structure PadeApproximant {k : Nat} (s : TSeries F k) (m n : Nat) where
+  /-- Numerator polynomial. -/
   p : DensePoly F
+  /-- Denominator polynomial. -/
   q : DensePoly F
+  /-- The numerator has degree at most the requested bound. -/
   p_size : p.size ≤ m + 1
+  /-- The denominator has degree at most the requested bound. -/
   q_size : q.size ≤ n + 1
+  /-- The denominator is nonzero. -/
   q_ne : q ≠ 0
+  /-- The denominator times the input agrees with the numerator to the required order. -/
   congruent : ∀ i, i < m + n + 1 →
     (q * polyOfSeries s - p).coeff i = 0
 
+/-- A low coefficient prefix has size at most its length. -/
 theorem size_low_le (len : Nat) (p : DensePoly F) :
     (low len p).size ≤ len := by
   unfold low
   simpa using size_ofList_le ((List.range len).map p.coeff)
 
+/-- A prefix covering the polynomial's support equals the polynomial. -/
 theorem low_eq_self_of_size_le {len : Nat} {p : DensePoly F}
     (hsize : p.size ≤ len) : low len p = p := by
   apply ext_coeff
@@ -172,11 +180,17 @@ theorem padeHomogeneous_q (plan : MulPlan F) {k : Nat} (s : TSeries F k)
 
 /-- A Padé approximant whose denominator is normalized at the origin. -/
 structure NormalizedPade {k : Nat} (s : TSeries F k) (m n : Nat) where
+  /-- Numerator polynomial. -/
   p : DensePoly F
+  /-- Denominator polynomial. -/
   q : DensePoly F
+  /-- The numerator has degree at most the requested bound. -/
   p_size : p.size ≤ m + 1
+  /-- The denominator has degree at most the requested bound. -/
   q_size : q.size ≤ n + 1
+  /-- The denominator is normalized to one at the origin. -/
   q_zero : q.coeff 0 = 1
+  /-- The denominator times the input agrees with the numerator to the required order. -/
   congruent : ∀ i, i < m + n + 1 →
     (q * polyOfSeries s - p).coeff i = 0
 
@@ -320,6 +334,7 @@ private theorem homogeneous_unit (plan : MulPlan F) {k : Nat}
     simp only [ite_true] at hdetZero
     grind
 
+/-- Scale a Padé pair by the inverse denominator constant to normalize it at the origin. -/
 def PadeApproximant.normalize {k : Nat} {s : TSeries F k} {m n : Nat}
     (approx : PadeApproximant s m n) (hc : approx.q.coeff 0 ≠ 0) :
     NormalizedPade s m n := by

@@ -282,10 +282,9 @@ lean_lib HexPolyFp where
 
 -- Fast-multiplication kernels specified by HexPolyFast/SPEC/hex-poly-fast.md
 -- §"Coefficient-owner file layouts". They import HexPolyFast and HexModular,
--- which are not published, so the released umbrellas HexPolyZ.lean and
--- HexPolyFp.lean do not export them; they rejoin those umbrellas when
--- hex-poly-fast and hex-modular are admitted to scripts/release/released.yml
--- (https://github.com/kim-em/hex-dev/issues/10001).
+-- which must be published before the released umbrellas HexPolyZ.lean and
+-- HexPolyFp.lean can export them. Restore the kernels after a successful real
+-- sync publishes those dependencies (https://github.com/kim-em/hex-dev/issues/10739).
 @[default_target]
 lean_lib HexPolyFastKernels where
   globs := #[`HexPolyZ.KroneckerMulti, `HexPolyZ.NttMul, `HexPolyFp.NttMul]
@@ -1283,7 +1282,7 @@ lean_lib HexConformance where
 
     ++ #[`HexTruncatedSeries.Conformance].map Glob.one
 
-    ++ #[`HexPolyFast.Conformance].map Glob.one
+    ++ #[`HexPolyFast.Conformance, `HexPolyFast.Lint].map Glob.one
 
     ++ #[`HexRationalFn.Conformance, `HexRationalFn.Domains, `HexOrderedFn.Conformance].map Glob.one
 
@@ -1417,6 +1416,7 @@ lean_lib HexReleaseTests where
     `HexRealRootsMathlib.TarskiTests,
     `HexRootsMathlib.Examples,
     `HexPrimality.Examples.Curve25519,
+    `HexModular.KernelTests, `HexModular.LoopTests,
     `HexMvPoly.KernelTests,
     `HexMvPoly.KernelResidueTests,
     `HexMvPolyMathlib.KernelResidueTests,
@@ -1471,9 +1471,7 @@ lean_lib HexStructuralTacticProofProbe where
 -- stack. Keep this separate from the released-test target, whose module list
 -- must exactly mirror the repositories already present in the release manifest.
 lean_lib HexMvFactorizationTests where
-  globs := #[`HexModular.KernelTests,
-    `HexModular.LoopTests,
-    `HexPolyZGcd.Kernel,
+  globs := #[`HexPolyZGcd.Kernel,
     `HexMvGcd.KernelTests,
     `HexMvGcd.CertTests,
     `HexMvGcd.Eval,
@@ -1509,9 +1507,8 @@ lean_lib HexFactorizationModules where
 lean_lib HexSparsePolyTests where
   globs := #[`HexSparsePolyMathlib.LintTests]
 
--- Monorepo-only lint regression for the incubating truncated-series pair.
--- It moves into the release-manifest-backed test target when the pair is
--- published.
+-- Declaration linting runs in monorepo CI. The lint source is copied to the
+-- mirror with its bridge library; mirror CI builds the published API.
 @[default_target]
 lean_lib HexTruncatedSeriesTests where
   globs := #[`HexTruncatedSeriesMathlib.LintTests]

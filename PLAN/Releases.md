@@ -386,7 +386,9 @@ repository outside its list, so the clone succeeds from public https and only
 the push returns `403 Permission to leanprover/<repo>.git denied`.
 `sync_released.py` now preflights every target repository against the tokens
 before the first push and refuses to start, naming the repositories no token
-covers. A dry run does not preflight, using no token and pushing nothing.
+covers. The driver's `--dry-run` mode uses no token and pushes nothing. The
+workflow runs a separate read-only grant diagnostic before staging; see the
+verification instructions in the token inventory below.
 
 **What the preflight does not prove.** Its receive-pack probe verifies that a
 token can push ordinary content to the selected repository. GitHub checks the
@@ -412,25 +414,45 @@ the user to track allocations or capacity. Keep requested allocations distinct
 from confirmed selections and approved grants. If the token's numeric ID is
 available, link directly to its edit page.
 
-Snapshot verified against the live tokens on 2026-09-03 (routing
-measured by a branch-only debug step on the sync workflow counting
-`route_tokens`' output; selections confirmed from the UI) and updated
-from the UI on 2026-09-05 for the number-field batch.
+Approval and write access are verifiable information; agents must investigate
+rather than asking the maintainer to confirm them. An organization owner can
+inspect the approved tokens and pending requests through
+[GitHub's token API](https://docs.github.com/en/rest/orgs/personal-access-tokens):
+`gh api --paginate orgs/leanprover/personal-access-tokens` and
+`gh api --paginate orgs/leanprover/personal-access-token-requests`.
+For each token, its `repositories_url` lists its approved repository scope;
+its `permissions.repository` records Contents and Workflows grants.
+These owner-only endpoints can return 404 to a member even when the tokens exist.
 
-`hex-publishing` carries the previously released repositories in
-`released.yml` except the ten existing mirrors listed under
-`hex-publishing-2` below: 48 of 50. The ECPP repositories are selected on
-`hex-publishing-2`, as listed below. The
-number-field batch (`hex-number-field`, `hex-number-field-mathlib`,
-`hex-number-field-tower`, `hex-number-field-tower-mathlib`, `hex-rcf`)
-is on this token.
+The dry-run workflow's **Check publishing-token grants (read-only)** step uses
+the actual `RELEASED_SYNC_PAT` and `RELEASED_SYNC_PAT_2` secrets, calling
+`route_tokens`/`selection_check` in `scripts/release/sync_released.py`.
+It probes each repository's receive-pack advertisement without pushing and
+reports the publishing secret name with Contents write access. Inspect this step's
+logs to update approved coverage in this inventory. Its diagnostic failure does
+not prevent staging or consumer builds; the real sync repeats the preflight and
+fails before any push if a grant is missing. Public repository metadata, a
+successful clone, SSH access, and repository selection alone are not evidence
+that a publishing token can write. The receive-pack probe cannot check the
+separate Workflows permission; inspect the approved permission metadata where
+available, and keep this limitation distinct from verified Contents access.
+
+`hex-publishing` selects all managed repositories in `released.yml` except
+those listed on `hex-publishing-2` below, plus
+[`leanprover/fplll`](https://github.com/leanprover/fplll), which is outside
+the publish manifest: 50 selections in total. This includes `hex-test-kit`,
+the `hex` aggregate, the number-field batch, and `hex-poly-fast`.
+The read-only [publishing-token grant check](https://github.com/kim-em/hex-dev/actions/runs/37272440824/job/111659598036)
+verified Contents write access for every managed repository: `hex-poly-fast`
+through `RELEASED_SYNC_PAT`, and its three Phase-7 siblings through
+`RELEASED_SYNC_PAT_2`. The same check verified the ECPP and permutation-group
+mirrors on token 2. Workflows permission is separate from this receive-pack check.
 
 `hex-publishing-2` has 50 confirmed selected repositories, filling its
 50-repository limit:
 
-`hex-ecpp` and `hex-ecpp-mathlib` are selected. Their Leanprover organization
-approval is pending; the token owner cannot approve
-their own request. The new `hex-lattice-enum` and
+`hex-ecpp` and `hex-ecpp-mathlib` have verified Contents write access.
+The new `hex-lattice-enum` and
 `hex-lattice-enum-mathlib` empty repositories are also selected on this token
 and awaiting organization approval. The existing `hex-perm-group` and
 `hex-perm-group-mathlib` mirrors are also selected. Both lattice libraries
@@ -438,14 +460,16 @@ are at Phase 7; repository
 reservation alone does not publish their sources or admit them into the
 release manifest.
 
-- selected for publication, approval pending: `hex-ecpp`,
-  `hex-ecpp-mathlib`, `hex-lattice-enum`, `hex-lattice-enum-mathlib`,
-  `hex-perm-group`, `hex-perm-group-mathlib`;
+- selected for publication, approval pending: `hex-lattice-enum`,
+  `hex-lattice-enum-mathlib`;
 - released: `hex-primality`, `hex-primality-mathlib`,
   `hex-sparse-poly`, `hex-sparse-poly-mathlib`, `hex-resultant`,
-  `hex-resultant-mathlib`, `hex-graph-iso`, `hex-graph-iso-mathlib`;
-- created for publication, not yet in `released.yml`: `hex-modular`,
-  `hex-modular-mathlib`, `hex-mv-gcd`, `hex-mv-gcd-mathlib`,
+  `hex-resultant-mathlib`, `hex-graph-iso`, `hex-graph-iso-mathlib`,
+  `hex-modular`, `hex-truncated-series`, `hex-truncated-series-mathlib`,
+  `hex-ecpp`, `hex-ecpp-mathlib`, `hex-perm-group`, `hex-perm-group-mathlib`
+  (admitted to the manifest; Contents write access verified);
+- created for publication, not yet in `released.yml`: `hex-modular-mathlib`,
+  `hex-mv-gcd`, `hex-mv-gcd-mathlib`,
   `hex-mv-hensel`, `hex-mv-hensel-mathlib`, `hex-mv-factor`,
   `hex-mv-factor-mathlib`, `hex-poly-z-gcd`,
   `hex-poly-z-gcd-mathlib`, `hex-cyclotomic`,
@@ -457,11 +481,9 @@ release manifest.
   `hex-modular-matrix-mathlib`, `hex-padics`, `hex-padics-mathlib`,
   `hex-poly-smith`, `hex-poly-smith-mathlib`, `hex-smith`,
   `hex-smith-mathlib`, `hex-summation`, `hex-summation-mathlib`,
-  `hex-truncated-series`, `hex-truncated-series-mathlib`,
   `hex-char-poly`, `hex-char-poly-mathlib`.
 
-The ECPP, lattice and permutation-group additions on `hex-publishing-2`
-are awaiting
+The lattice additions on `hex-publishing-2` are awaiting
 [organization-owner approval](https://github.com/organizations/leanprover/settings/personal-access-token-requests).
 The token owner cannot approve their own request. Each publishing token needs
 Contents and Workflows read/write; the latter permits changes to the mirrors'
@@ -471,21 +493,18 @@ write grants distinct in this inventory.
 `hex-publishing-2` additionally holds organization-level permissions;
 `hex-publishing` holds none.
 
-The [last real publishing preflight](https://github.com/kim-em/hex-dev/actions/runs/34687426921)
-reported no Contents write grant for `hex-perm-group` or
-`hex-perm-group-mathlib` on either token.
-Their baseline entries and release tags do not prove publishing-token
-coverage; failed preflights can still advance the baseline branch. The error
-cannot distinguish an unselected repository from a pending or read-only
-grant. Approved access must be checked separately from confirmed selections.
+Both publishing tokens are at their 50-repository limit. The next new
+repository needs `hex-publishing-3`: create the fine-grained token, select
+that repository with Contents and Workflows read/write, obtain organization
+approval, store it as `RELEASED_SYNC_PAT_3`, and add its environment line to
+both the `sync` job and the stage job's read-only grant-check step in
+`.github/workflows/sync-released.yml`. The driver already probes numbered
+environment slots in order.
 
-`hex-publishing-2` has no free slots. Allocate new batches of up to two
-repositories to `hex-publishing`, which has two remaining slots; larger batches
-need a third token
-(`hex-publishing-3`, a new `RELEASED_SYNC_PAT_3` secret, and one line in
-`.github/workflows/sync-released.yml` and `sync_released.py`'s token
-list). The sync's per-repository routing makes the split invisible to
-everything else.
+Selection alone does not establish write access. The real-sync preflight
+checks every target again before pushing any repository; the diagnostic
+workflow check above is evidence of current Contents access, not a replacement
+for that preflight.
 
 
 ### Baseline and the uncoordinated-commit guard
