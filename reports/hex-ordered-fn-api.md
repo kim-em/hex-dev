@@ -21,7 +21,7 @@ completion. The retained computational baseline is in
 
 | Module | Definitions and proof boundary reviewed | Result |
 | --- | --- | --- |
-| [Oracle](../HexOrderedFnMathlib/Oracle.lean) | `Contains`, provider correctness, endpoint arithmetic and quotient containment | Four-corner multiplication handles all endpoint signs. Inversion/division require strict zero separation; finite containment is distinct from a shrinking-width guarantee. |
+| [Oracle](../HexOrderedFnMathlib/Oracle.lean) | `Contains`, provider correctness, endpoint arithmetic and quotient containment | Four-corner multiplication handles all endpoint signs. Shared containment proves intersection succeeds; its containment law uses the endpoint characterization rather than unfolding the operation. Inversion/division require strict zero separation; finite containment is distinct from a shrinking-width guarantee. |
 | [Evaluation](../HexOrderedFnMathlib/Evaluation.lean) | Polynomial evaluation, relative transcendence, denominator nonvanishing, rational-function evaluation, injective homomorphism and constructor equations | Transcendence is over the entire predecessor field, not merely over the rationals. The field interpretation uses that hypothesis to justify nonzero canonical denominators. |
 | [Real](../HexOrderedFnMathlib/Real.lean) | Horner/enclosure soundness, finite attempt and bounded sign soundness, total sign and approximation specifications | Successful-trial soundness uses containment; total-search specifications consume progress. Stored denominator guards do not recover source-expression guards erased by cancellation. |
 | [Convergence](../HexOrderedFnMathlib/Convergence.lean) | Endpoint convergence, sums/products, actual Horner convergence, simultaneous refinement and quotient convergence away from zero | Coefficients and argument narrow together; product estimates retain the cross term. The quotient result uses denominator separation rather than total real division at zero. |
@@ -33,9 +33,20 @@ completion. The retained computational baseline is in
 Public fields and lemmas have source documentation, including non-obvious private
 helpers. The API lint target selects the actual module roots, rather than
 declaration namespaces, and checks theorem documentation as well as the default
-environment linters. Both extensionality statements have source docstrings, so
+environment linters. The extensionality laws have source docstrings, so
 the lint checks need no declaration exemptions. The production umbrellas do not
 import the lint target.
+
+The private production helpers are used by their owning proofs: `accessibleWf`
+implements the accessible-subtype recursion; `mul_bounds` proves multiplication
+and division containment;
+`poly_coeff` and `poly_ne_zero` support the Laurent embedding's support, order
+and fraction laws; `sign_poly` proves fraction signs; the lowest-index and
+coefficient map lemmas prove coefficient transport. The shared public
+`Oracle.cast_sign_neg`/`cast_sign_nonpos` characterize integer signs for both
+real and infinitesimal strict/nonstrict order equivalences. The bounded search's `go` is its executed
+recursion. Public standalone normalization and transfer lemmas are exported API,
+not alternate implementations of the algorithms.
 
 ## Verification and remaining phase checks
 
@@ -52,10 +63,23 @@ Both libraries' production declarations contain no `sorry`, added axioms or
 and exact emitted-fixture oracles supply the Phase-5 checks. Computational
 operations and searches use the native Lean implementation.
 
-Phase 6 still requires a recorded performance regression check against the
-retained committed benchmark baseline and completion of the phase acceptance
-review, including the no-dead-declarations criterion, documentation and
+The [retained regression observations](bench-results/ordered-fn-api-regression/README.md)
+compare the last committed benchmark baseline to the API candidate. They cover
+all 17 retained native workload families, with 816 completed adjacent arms and
+matching result hashes. Final performance acceptance remains distinct from
+collecting those observations: whole pinned builds use different Lean versions,
+and the retained slower points need an explicit acceptance decision or
+a focused investigation. At review
+commit [`484c5405fe`](https://github.com/kim-em/hex-dev/tree/484c5405fe7f7b34e01854510006d80b42856063),
+the rebuilt benchmark has SHA-256
+`6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed`,
+identical to the measured candidate. The comparison remains descriptive; it
+does not supply a Phase-6 performance acceptance verdict.
+
+Phase 6 still requires completion of its acceptance review, including the
+performance decision, no-dead-declarations criterion, documentation and
 Mathlib-quality review of each nontrivial declaration. A linter pass or successful
-theorem application is not that performance check. The chapter and READMEs provide documentation, but their existence alone
+theorem application is not that performance check. The chapter and READMEs
+provide documentation, but their existence alone
 does not advance Phase 7 ahead of Phase 6. Neither pair is added to the released
 manifest by this work.
