@@ -392,23 +392,27 @@ private instance : Hashable (Σ owner : Tower.Context nativeRegistry, owner.Poly
 /-- Prepare the actual least-root coefficient context outside the measured
 second-stage operation. Odd degrees extend `Y³ + α³ + 1` for a degree ladder;
 rung three is the exact second MetiTarski input. -/
-private def metiFirst? : Option (Tower.Root nativeBase) :=
-  match nativeBase.roots? metiHead with
+private def metiFirst? (head : nativeBase.Poly) : Option (Tower.Root nativeBase) :=
+  match nativeBase.roots? head with
   | .ok (.finite (first :: rest)) =>
-    if rest.length != 2 || first.multiplicity != 1 ||
+    if rest.length != 2 || first.multiplicity != 1 || first.root.signAt head != 0 ||
         first.root.signAt (DensePoly.ofCoeffs #[⟨1875 / 2048⟩, 1]) != 1 ||
         first.root.signAt (DensePoly.ofCoeffs #[⟨1875 / 4096⟩, 1]) != -1 then none
     else some first.root
   | _ => none
 
-/-- Build the measured polynomial over the retained checked predecessor. -/
-def metiSecondInput (degree : Nat) : Option (Σ owner : Tower.Context nativeRegistry, owner.Poly) := do
-  let first ← metiFirst?
+private def metiSecondOver (first : Tower.Root nativeBase) (degree : Nat) :
+    Σ owner : Tower.Context nativeRegistry, owner.Poly :=
   let owner := first.context
   let alpha := first.value
   let y : owner.Poly := DensePoly.ofCoeffs #[0, 1]
   let power := (List.range degree).foldl (fun p _ => p * y) (DensePoly.C 1)
-  return ⟨owner, power + DensePoly.C (alpha * alpha * alpha + 1)⟩
+  ⟨owner, power + DensePoly.C (alpha * alpha * alpha + 1)⟩
+
+/-- Build the polynomial from the same retained checked predecessor. -/
+def metiSecondInput (degree : Nat) : Option (Σ owner : Tower.Context nativeRegistry, owner.Poly) := do
+  let first ← metiFirst? metiHead
+  return metiSecondOver first degree
 
 /-- Complete native root production over the retained least-root context.
 Preparation, hashing and process exit are outside the profile's timed regions. -/
@@ -459,13 +463,15 @@ def metiCheck (args : List String) : IO UInt32 := do
   let [degree] := args | throw (IO.userError "usage: meti-input DEGREE")
   let some degree := degree.toNat? | throw (IO.userError "invalid degree")
   unless degree ∈ [3,5,7,9] do throw (IO.userError "unsupported measured degree")
-  let some ⟨owner,head⟩ := metiSecondInput degree
-    | throw (IO.userError "missing checked MetiTarski input")
+  let some original ← metiRef.get | throw (IO.userError "missing checked predecessor input")
+  let some first := metiFirst? original
+    | throw (IO.userError "missing checked MetiTarski predecessor")
+  let ⟨owner,head⟩ := metiSecondOver first degree
   let some text := String.fromUTF8? (owner.writePoly head).value.writeBytes
     | throw (IO.userError "invalid measured polynomial UTF-8")
   let .ok encoded := Lean.Json.parse text
     | throw (IO.userError "invalid measured polynomial serialization")
-  let some (.selected descriptor _ _) := metiFirst?
+  let .selected descriptor _ _ := first
     | throw (IO.userError "missing measured predecessor descriptor")
   let some firstText := String.fromUTF8? (Tower.rootData nativeBase.codec descriptor).writeBytes
     | throw (IO.userError "invalid measured predecessor UTF-8")
@@ -478,7 +484,10 @@ def metiCheck (args : List String) : IO UInt32 := do
   return 0
 
 private def metiRunner (degree : Nat) : IO (Nat → IO (Nat × Option UInt64)) := do
-  let input := metiSecondInput degree
+  let some original ← metiRef.get | throw (IO.userError "missing measured predecessor input")
+  let some first := metiFirst? original
+    | throw (IO.userError "missing measured MetiTarski predecessor")
+  let input := some (metiSecondOver first degree)
   let some ⟨_,head⟩ := input | throw (IO.userError "missing measured MetiTarski input")
   unless head.size == degree+1 do throw (IO.userError "wrong measured degree")
   LeanBench.blackBox (hash input)

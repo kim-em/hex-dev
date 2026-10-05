@@ -33,7 +33,8 @@ def summarize(folder,archive=False):
     record = json.loads((folder/'manifest.json').read_text())
     require(record['schema'] == 1 and record['status'] == 'completed'
             and record['degrees'] == DEGREES and record['trials'] == TRIALS
-            and record['dirty'] is False and record['affinity'] == [record['cpu']],
+            and record['dirty'] is False and record['affinity'] == [record['cpu']]
+            and record['oracle_version'] == '0.9.0 3.6.0',
             'wrong capture protocol')
     require(set(record['source_hashes']) == SOURCES, 'changed frozen source inventory')
     omitted = {}
@@ -100,7 +101,7 @@ def summarize(folder,archive=False):
         require(p['status'] in ('ok','timed_out','killed_at_cap','error'), 'unknown measurement status')
         if p['status'] != 'ok':
             continue
-        require(p['result_hash'] == '0x1' and not p['below_signal_floor']
+        require(p['result_hash'] == '0x1' and type(p['below_signal_floor']) is bool
                 and type(p['inner_repeats']) is int and p['inner_repeats'] > 0
                 and type(p['total_nanos']) is int and p['total_nanos'] > 0,
                 'invalid completed measurement')
@@ -124,7 +125,8 @@ def summarize(folder,archive=False):
         median = statistics.median(values) if values else None
         rows.append(dict(degree=n,completed_trials=len(values),
                          batches=[dict(trial_index=p['trial_index'],total_nanos=p['total_nanos'],
-                                       inner_repeats=p['inner_repeats'])
+                                       inner_repeats=p['inner_repeats'],
+                                       below_signal_floor=p['below_signal_floor'])
                                   for p in rung if p['status'] == 'ok'],
                          failures=[p for p in rung if p['status'] != 'ok'],
                          median_ns=float(median) if median is not None else None,

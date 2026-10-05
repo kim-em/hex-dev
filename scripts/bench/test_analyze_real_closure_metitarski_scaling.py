@@ -51,6 +51,7 @@ class ScalingCaptureTests(unittest.TestCase):
             (folder/name).write_bytes(name.encode())
         record = dict(schema=1, status='completed', degrees=DEGREES, trials=6,
                       dirty=False, affinity=[1], cpu=1, commit=env['git_commit'],
+                      oracle_version='0.9.0 3.6.0',
                       commands=[dict(argv=['hexrealclosure_bench','run',FUNCTION],
                                      exit_code=0, acceptable_exit_codes=[0,2])], functional=functional,
                       source_hashes={name:digest(folder/'sources'/name) for name in SOURCES})
@@ -75,6 +76,18 @@ class ScalingCaptureTests(unittest.TestCase):
             self.assertEqual(result['rows'][0]['batches'][0]['total_nanos'], 300000000)
             self.assertEqual(result['rows'][-1]['failures'][0]['status'], 'killed_at_cap')
             self.assertEqual(result['rows'][-1]['completed_trials'], 5)
+
+    def test_signal_floor_is_retained(self):
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            record = self.prepare(folder)
+            document = json.loads((folder/'measurements.json').read_text())
+            document['results'][0]['points'][0]['below_signal_floor'] = True
+            (folder/'measurements.json').write_text(json.dumps(document))
+            self.reseal(folder, record, 'measurements.json')
+            result = summarize(folder)
+            self.assertEqual(result['completed_samples'], 23)
+            self.assertTrue(result['rows'][0]['batches'][0]['below_signal_floor'])
 
     def test_all_failures_and_harness_exit_two(self):
         for status in ['killed_at_cap', 'timed_out', 'error']:
