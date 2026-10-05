@@ -64,6 +64,7 @@ public import HexRCF.RealCoefficients.CubeTwo
 public import HexRCF.RealCoefficients.Selected
 public meta import HexRCF.RealCoefficients.Tactic
 public meta import HexRCF.RealCoefficients.Preparation
+public meta import HexRCF.RealCoefficients.AlgebraicRoot
 public meta import HexRCF.RealCoefficients.CommonTactic
 public import HexRCF.RealCoefficients.CellFormula
 

@@ -152,7 +152,7 @@ open Lean Meta Qq in
 local elab "mixedDecline%" : term => do
   let saved ← saveState
   let target := q(∀ x : ℝ,
-    x ^ 2 + Hex.RCF.NormalizedInputs.hidden.toReal + Real.sqrt (Real.sqrt 2) > 0)
+    x ^ 2 + Hex.RCF.NormalizedInputs.hidden.toReal + Real.sqrt Real.pi > 0)
   let .ok source ← Reify.prepare target |
     throwError "mixed source must prepare before handler classification"
   unless source.coefficients.size == 2 do

@@ -261,8 +261,8 @@ run_elab do
       (← (← getEnv).getLocalConstantInfos).map (·.name) == budgetNames do
     throwError "structured recognition exhaustion changed caller state"
   for target in #[q(∀ x : ℝ,
-      x ^ 2 + Real.sqrt 3 + $large + Real.sqrt (Real.sqrt 2) > 0),
-      q(∀ x : ℝ, x ^ 2 + Real.sqrt (Real.sqrt 2) + $large + Real.sqrt 3 > 0)] do
+      x ^ 2 + Real.sqrt 3 + $large + Real.sqrt Real.pi > 0),
+      q(∀ x : ℝ, x ^ 2 + Real.sqrt Real.pi + $large + Real.sqrt 3 > 0)] do
     let .ok _ ← Reify.prepare target |
       throwError "unsupported-sibling control did not reach leaf classification"
     let before ← getMCtx
@@ -274,6 +274,11 @@ run_elab do
     unless (← getMCtx).mvarCounter == before.mvarCounter &&
         (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
       throwError "deferred recognition refusal changed caller state"
+  for target in #[q(∀ x : ℝ,
+      x ^ 2 + Real.sqrt 3 + $large + Real.sqrt (Real.sqrt 2) > 0),
+      q(∀ x : ℝ, x ^ 2 + Real.sqrt (Real.sqrt 2) + $large + Real.sqrt 3 > 0)] do
+    let .error (.budget _) ← Coefficients.prepare target |
+      throwError "supported nested-root sibling hid rational recognition exhaustion"
   let largeBase : Q(ℝ) := q(1 / (((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ)))
   let .error (.budget _) ← RationalRoot.parameters?
       q(Real.sqrt ($largeBase + 0 / (1 - 1))) |
@@ -281,7 +286,7 @@ run_elab do
   let .error (.unsupported _ _) ← RationalRoot.parameters?
       q(Real.sqrt (0 / (1 - 1) + $largeBase)) |
     throwError "evaluated zero divisor was admitted by rational-root recognition"
-  for unsupported in #[q(Real.pi), q(Real.sqrt 2)] do
+  for unsupported in #[q(Real.pi), q(Real.exp 1)] do
     for root in #[q(Real.sqrt ($largeBase + $unsupported)),
         q(Real.sqrt ($unsupported + $largeBase))] do
       let root : Q(ℝ) ← pure root
@@ -299,6 +304,16 @@ run_elab do
       unless (← getMCtx).mvarCounter == before.mvarCounter &&
           (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
         throwError "unsupported root-base refusal changed caller state"
+  for root in #[q(Real.sqrt ($largeBase + Real.sqrt 2)),
+      q(Real.sqrt (Real.sqrt 2 + $largeBase))] do
+    let target := q(∀ x : ℝ, x ^ 2 + $root > 0)
+    let before ← getMCtx
+    let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
+    let .error (.budget _) ← Coefficients.prepare target |
+      throwError "algebraic root base bypassed rational-subexpression admission"
+    unless (← getMCtx).mvarCounter == before.mvarCounter &&
+        (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
+      throwError "algebraic root-base exhaustion changed caller state"
   for root in #[q($largeBase ^ (Real.pi + $largeBase)),
       q($largeBase ^ ($largeBase + Real.pi))] do
     let .ok none ← RationalRoot.parameters? root |
@@ -390,9 +405,10 @@ run_elab do
       q(∀ x : ℝ, x ^ 2 - Real.sqrt (1 / 2) > 0) |
     throwError "false sentence failed before coefficient preparation"
   refuses falseInput.proveReplay
-  let .error (.unsupported _ _) ← Coefficients.prepare
+  let .ok nested ← Coefficients.prepare
       q(∀ x : ℝ, x ^ 2 + Real.sqrt (Real.sqrt 2) > 0) |
-    throwError "nested algebraic-base root unexpectedly admitted"
+    throwError "nested algebraic-base root was not prepared"
+  let _ ← nested.proveReplay
 
 end Hex.RCF.RationalRoots
 

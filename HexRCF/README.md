@@ -110,19 +110,29 @@ multiplication by a closed inverse before shared-schema abstraction. The
 actual tactic and prepared replay proofs, a further root over the coefficient
 field, half-open domains, terminal false verdicts and zero-divisor failures.
 Root bases or exponents with an evaluated zero divisor are refused during
-recognition rather than reaching common-field replay. Negative bases,
-nonreciprocal real exponents and unsupported nested algebraic-base roots do
-not acquire a signed-root interpretation from this frontend.
+recognition rather than reaching common-field replay. The
+[algebraic-base regressions](../conformance/HexRCF/AlgebraicRoots.lean) also
+authenticate nested roots, shifted bases and guarded quotients. Frozen power,
+polynomial and sign evidence checks the base's selected embedding and the
+nonnegative root branch. Degree one accepts negative algebraic bases as the
+identity; higher degrees do not acquire a signed-root interpretation.
+Nonreciprocal real exponents remain unsupported.
 In common-field preparation, unsupported root-base syntax and unsupported
 sibling coefficients take precedence over recognition exhaustion. For otherwise supported sources,
 `Coefficients.prepare` returns a structured budget error before field construction.
+Authentication then proceeds in source order: a terminal failure or exhaustion
+stops before later coefficients are authenticated, including later negative bases.
 Before common-field search, `rcf.algebraic.commonDegree` bounds the product of
 the canonical degrees of distinct selected generators (default 64). This
 conservative admission uses the shared exponent budget diagnostic; different
 aliases for the same selected generator are counted once. It does not bound
 every subsequent operation or prove certificate-search completeness.
-The admission also applies to a single generator. A root inside a root base
-is outside this rational-base grammar even when its value is rational.
+The admission also applies to a single generator. For algebraic-base roots,
+the root degree times the base's authentication-field degree must fit the same
+limit before root production, even if cancellation lowers its minimal degree.
+Exactly repeated bases share authentication throughout one recursive preparation. These roots require
+supported selected-field presentations and irreducibility certificates;
+arbitrary algebraic source conversion is not yet complete.
 The finite-bound path applies the root syntax and size checks separately to
 each leaf before rational normalization or enclosure proposals; errors there
 are terminal in traversal order.

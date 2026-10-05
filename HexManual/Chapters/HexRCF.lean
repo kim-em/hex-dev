@@ -559,18 +559,55 @@ The last checks the cube root's nonzero divisor before using its power equation.
 Division by a closed higher-root alias becomes multiplication by its closed
 inverse before abstraction, so the shared integer reifier receives no parameter
 denominator. Natural powers of the quantified variable keep their usual
-polynomial meaning. Negative real-power bases and nonreciprocal real exponents
-are outside this alias grammar. Nested roots with an algebraic base, such as
-`Real.sqrt (Real.sqrt 2)`, still need a supported source presentation; this
-rational-base path does not provide that conversion. Before common-field
+polynomial meaning. Nonreciprocal real exponents are outside this alias grammar.
+Roots with an algebraic base first authenticate that base in its selected
+field. Frozen polynomial, power and sign evidence then identifies the root
+with the original expression. For degrees greater than one, this checks the
+nonnegative branch; negative bases do not receive a signed-root interpretation.
+Degree one is ordinary identity and also accepts negative algebraic bases.
+
+```lean
+section
+set_option maxRecDepth 16384
+set_option maxHeartbeats 2400000
+
+example : ∀ x : ℝ,
+    x ^ 2 - 2 * Real.sqrt (Real.sqrt 2) * x +
+      Real.sqrt 2 ≥ 0 := by rcf
+
+example : ∃ x : ℝ,
+    x = Real.sqrt (3 + Real.sqrt 2) ∧
+      2 < x ∧ x < 3 := by rcf
+
+example : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt
+      (1 / (4 + Real.sqrt 2)) > 0 := by rcf
+end
+```
+
+These examples respectively use a nested root as a coefficient, locate a
+root of a shifted algebraic base, and retain the original divisor guard
+inside a root. Cancellation can yield a zero base, but never removes a
+zero-divisor obligation. The same authentication supports reciprocal natural
+root degrees such as `(3 + Real.sqrt 2) ^ (1 / 3 : ℝ)` and further nesting.
+The ordinary proof checks recorded certificates; it does not repeat the
+native root or sign searches.
+
+Before common-field
 search, `rcf.algebraic.commonDegree` bounds the product of the canonical degrees
 of distinct selected generators (default 64), reporting exhaustion through
 the shared exponent dimension. This is a conservative admission bound:
 aliases for one selected generator count once, but algebraic relations between
 different generators can make the actual common degree smaller than the product.
-The admission also applies to a single generator. Root notation inside a base
-is outside this rational-base grammar even when its value is rational.
+The admission also applies to a single generator. Algebraic-base roots require
+the root degree times the degree of the field authenticating their base to
+fit the same limit. This conservative bound applies before native root
+production, including when cancellation reduces the base's minimal degree.
+Repeated uses of exactly the same base share authentication throughout one recursive preparation.
+These roots require supported selected-field presentations and irreducibility certificates.
 It does not establish complete witness search or bound every later operation.
+Authentication follows source order; a terminal failure or exhaustion prevents
+authentication of later coefficients, even when a later negative base would decline.
 
 The adapter's source preparation applies its coefficient-size limit to
 intermediate arithmetic in rational-root bases, reciprocal exponents and
