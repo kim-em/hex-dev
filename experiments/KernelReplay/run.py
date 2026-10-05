@@ -37,6 +37,10 @@ def main() -> None:
         outcomes.append({"control": label, "exit_code": process.returncode})
         print(f"{label}: passed", flush=True)
 
+    run("generated", ["generated"],
+        contains=("generated=2 kernelAccepted=true", "generatedWrongSigns=kernelRejected",
+                  "generatedDifferentQuery=kernelRejected", "generatedStaleContext=kernelRejected",
+                  "generatedForgedCount=kernelRejected", "productionNanos=", "packetCheckNanos="))
     run("collect", ["collect"],
         contains=("collected=2 kernelAccepted=true", "incompleteInventory=missingEndpoint",
                   "zeroFuel=normalRejection", "irrelevantSupplier=boundedRejection",

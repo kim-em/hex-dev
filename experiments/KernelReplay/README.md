@@ -4,7 +4,7 @@ This experiment assembles proofs about the existing supplied-fact coefficient
 arithmetic and `Dag.validateCached?` checker. Each accepted result is an equality
 between the caller's actual Boolean expression and `true` or `false`, checked by
 Lean's ordinary kernel. It simplifies structural checker equations, then asks
-the kernel to reduce the resulting Boolean comparison. It does not evaluate
+the kernel to reduce the resulting Boolean comparison. Replay does not evaluate
 coefficient arithmetic natively or rewrite it to the ordinary implementation
 that searches for signs.
 
@@ -75,8 +75,10 @@ not establish that the whole process, including fixture setup, avoids searches.
 
 This is a prototype, not the final public certificate interface. It reuses a
 validated context and certified facts, does not reconstruct contexts from bytes,
-does not produce intermediate sign certificates automatically, and does not
-return a native checked memo. It leaves the native fallback in `Element.missing` unchanged.
+does not reconstruct general nested coefficient contexts, and does not return
+a native checked memo. The rational-predecessor producer below generates
+intermediate certificates for one fixed context. The experiment leaves the
+native fallback in `Element.missing` unchanged.
 Consequently it does not establish strict native replay or Phase-4 completion.
 Single-run proof assembly timings are diagnostic observations, not performance
 evidence.
@@ -116,6 +118,39 @@ certificates. General certificate production, context reconstruction and
 deeper replay remain outstanding. The collector makes one proof-assembly
 attempt per supplied fact plus a final attempt; these controls establish no
 scaling or Phase-4 result.
+
+`Generated.lean` supplies fresh certificates instead of selecting an inventory
+of already proved facts. It starts the actual two-entry checker with an empty
+fact list, obtains the demanded keys `2X` and `2X - 1`, and invokes the existing
+prepared BKR producer at the coefficient context's selected root. It quotes
+the resulting polynomial, integer sign and graph as literal integer-only JSON
+data. The existing decoder, graph checker and `Context.readSignFact?` then
+assemble the facts. Kernel-checked equations bind each packet to that reader's
+actual acceptance or rejection; successful facts are audited and kernel checked
+before collection uses them. The final graph equation also goes through the
+ordinary kernel. The prototype fixes the rational interpretation in proof
+assembly; it introduces no runtime law package or second query implementation.
+The controls check the requested keys and contexts with kernel equations, and
+require kernel-checked rejection of wrong signs, a different query, a stale
+context identifier and forged counts.
+The different query is `X` in place of `2X - 1`; both have value `1` at the
+selected root `1`, but their literal polynomial bindings differ.
+
+```sh
+lake env .lake/build/bin/hexsigndet_kernel_replay_probe generated
+```
+
+The producer uses unsafe native evaluation to obtain a requested rational
+polynomial and run existing production. Those results remain untrusted data:
+quotation and native computation cannot establish acceptance. Replay takes
+supplied packets and does not call the producer. Generation, collection and
+checking run within the same process. This fixture still starts from an already
+validated coefficient context and a fixed upper-level graph; it does not produce
+that graph or reconstruct its context from bytes. It demonstrates fresh
+intermediate evidence at a rational predecessor, not general replay through
+arbitrarily many coefficient fields. Its timing includes repeated collection
+attempts and coefficient certificate checks, excludes process startup, and is a
+diagnostic observation rather than Phase-4 evidence.
 
 Acceptance always requires a kernel-checked equality for the supplied
 expression. Looking for an opaque missing-fact expression inside unapplied
