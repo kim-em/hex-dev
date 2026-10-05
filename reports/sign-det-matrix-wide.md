@@ -216,7 +216,8 @@ The normalized decline is consistent with the source explanation at this rough
 precision, with explicit sampling and cache limits.
 
 Under [Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim),
-this supplies the finite-range disposition of the inconclusive findings. The original verdicts and cubic operation bound are retained. The optimization
+this supplies the finite-range disposition of the inconclusive findings.
+The original verdicts and cubic operation bound are retained. The optimization
 below reduces non-dense work in the current checker; it has no new scientific
 scaling verdict. No point, exponent,
 tolerance, warmup setting or original verdict changes. A further collection
@@ -256,11 +257,15 @@ The [controlled before/after comparison](data/sign-det-matrix-power/cold-246bc73
 retains all 24 samples: six trial-major rounds at dimensions 243 and 729,
 adjacent arms alternating AB/BA. Both arms execute exactly one cold callback
 per child. The baseline is `2d3529be5a`, the parent of the optimization commit;
-the after binary uses the optimized source at `246bc73c38`. Their complete
-computational source-hash maps differ only in `HexSignDet/Matrix.lean`.
-Sources and binaries remain unchanged throughout collection, and every
+the after binary uses the optimized source at `246bc73c38`. Their recorded
+277-entry source-hash maps differ only in `HexSignDet/Matrix.lean`; these maps
+also include collector and documentation files. The collector records unchanged
+sources and binaries throughout collection, and every
 checker returns true. Median paired before/after ratios are 1.313 and 1.145,
-about 24% and 13% less callback time. These finite shared-host observations
+about 24% and 13% less callback time. All six pairs favour the optimization at
+each size; individual ratios range from 1.29–1.32 and 1.10–1.17. At size 729,
+the median is 1.159 for before-first pairs and 1.106 for after-first pairs.
+The alternating schedule balances this order sensitivity. These shared-host observations
 do not establish a new scaling verdict or performance for every application.
 
 The [earlier exploratory comparison](data/sign-det-matrix-power/7d21b4083f/metadata.json)
@@ -270,11 +275,15 @@ recorded its first call, while the optimized arm recorded calls after a probe.
 Those confounds prevent isolating the optimization's effect. No exploratory
 sample is removed or silently replaced by the controlled collection.
 
-Both archives retain original metadata, outputs, collectors, core source
-modules and binary/source hashes. Validate their raw rows, schedules, source
-closure differences, exact answers and recomputed paired ratios with:
+Both archives retain original metadata, outputs, collectors, matrix source
+modules and binary hashes. The controlled archive additionally records the
+full source-hash maps; the exploratory archive records only matrix module
+hashes. The validator checks raw rows, schedules, exact answers and recomputed
+paired ratios, and compares the controlled source maps without reconstructing
+every entry from Git. Recheck both archives with:
 
     python3 -m scripts.bench.sign_det_matrix_attribution reports/data/sign-det-matrix-power/cold-246bc73c38 --comparison
+    python3 -m scripts.bench.sign_det_matrix_attribution reports/data/sign-det-matrix-power/7d21b4083f --comparison
 
 The ordinary companion proofs compile, all 33 genuine-number-field checks
 pass, and the pinned independent FLINT oracle confirms 102 rational root/sign
