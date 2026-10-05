@@ -14,9 +14,10 @@ reduced arm declares Θ(s log s) on this two-root family: every balanced
 node has a bounded matrix, and its query and sign slots are scanned in Θ(k)
 work for a node containing k input polynomials. The full arm declares Θ(27^s)
 scalar work from cubic worst-case rational Gauss-Jordan and dense
-inverse-identity replay on the 3^s square moment matrix. This is a finite-input
-wall-time model, not a bit-complexity claim for
-arbitrary s. Rational row reduction may instead dominate; `inspect-full`
+inverse-identity replay on the 3^s square moment matrix. The full arm is an auxiliary reference comparison. Its formula records a
+scalar-operation count, not a useful finite-range wall-time model or a
+bit-complexity claim for arbitrary s. Its retained fitted verdict is descriptive
+under [Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim). Rational row reduction may instead dominate; `inspect-full`
 records the actual elimination updates and matrix dimensions to assess that
 possibility. The inventory below shows fewer row additions than dense
 Gauss-Jordan, while the two dense inverse checks still execute cubic loops.
@@ -174,35 +175,32 @@ come from the same clean revision and executable hash as the paired run; their
 [metadata](data/sign-det-compare/50af81103/inventory-full.metadata.json)
 records the output hash and verified finite count identities.
 
-The profile and operation inventory explain why the full arm's normalized
-`27^s` timing constant declines on this schedule: rational elimination is
-costly despite its lower source-level operation count. The two dense checks
-still contribute `27^s` arithmetic, so the inventory alone does not refute
-that eventual asymptotic term. Neither these five inputs nor the profile
-establish a replacement wall-time model. The finding is resolved as a mistaken
-finite-range timing prediction: rational row updates dominate the measured
-reference path, while the cubic formula counts rational and integer operations
-as equal units. The source-state inventory and 87.97% inversion attribution
-predict the observed downward trend and its approximate size: at s=3→4 and
-s=4→5, full-arm time grows about 15.0× and 17.1×, respectively, compared with
-the actual rational row-update counts’19.3× and18.6×, respectively, and the
-declared scalar count’s27×. The leading rational term alone would predict18×. Over
-s=2..5 the normalized constant falls about6.9×, versus about2.6× from the
-actual4(18^s−9^s) count (3.4× from its18^s leading term alone). The difference
-includes substantial small-input work: after subtracting the reduced arm’s
-median as an approximate allowance for shared polynomial/query work, residual
-time per rational row-update pair is about308,283,235 and217ns at s=2..5.
-The reduced-arm allowance is about46.5% of full time at s=2, and only0.052%
-at s=5; together with the residual per-pair decrease it explains the additional
-roughly2.6× normalized fall. These separately measured arms do not isolate an exact phase; the residual
-still includes the full arm’s integer checks and other work. Its roughly30%
-decline, together with the87.97% inversion attribution at the largest input,
-quantifies why the count alone underpredicts the finite normalized fall. This is a finite-range explanation, not a fitted replacement
-model. The original inconclusive verdict remains.
-The required paired comparison still measures both algorithms on identical
-inputs, with exact-answer agreement and adjacent alternating execution; this
-resolution does not invent a passing scaling verdict. The required degree, coefficient-bit, maximal-support,
-nested-field, allocation-byte and proof-checking tracks also remain open.
+The auxiliary full-reference arm's retained verdict is descriptive under
+[Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim).
+Rational elimination dominates its measured cost (87.97% of the representative
+profile) although its source-level operation count is lower than that of the
+integer checks. Counting both as equal units does not predict feasible wall
+times. This path is not used by production on these matrix sizes, so no
+reference-only scaling acceptance is required. The required paired comparison
+still measures both algorithms on identical inputs with exact-answer agreement
+and adjacent alternating execution.
+
+The actual rational pair count predicts about a 2.6× decline in time/27^s over
+s=2..5 if per-pair cost stays constant; the observed decline is about 6.9×.
+The actual count ratios at s=3→4 and s=4→5 are 19.3× and 18.6×, versus observed
+time ratios of 15.0× and 17.1×. The leading 18^s term alone would predict 18×
+and a 3.4× normalized decline. These source counts predict the direction,
+but do not account for the entire finite-range difference.
+
+For description, subtracting the reduced arm's median and dividing by the
+rational pair count gives about 308, 283, 235 and 217 ns at s=2..5. The
+subtracted allowance is about 46.5% of full time at s=2 and 0.052% at s=5.
+This is a breakdown of measured times, not an independent prediction or exact
+phase isolation: the two arms do different work, and the residual includes
+integer checks and other reference work. Neither it nor the profile supplies
+a replacement timing law. Every original sample and the inconclusive verdict
+remain unchanged; no passing scaling result is claimed. Other required
+performance families retain their own obligations.
 
 ## Earlier calibration record
 

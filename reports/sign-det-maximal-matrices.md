@@ -148,30 +148,31 @@ inverse against `inverse?`, using the existing inspection algorithm. The
 retains the recorded sources and output; this is untimed evidence, separate from
 the scientific collection. The row-addition term
 alone has growth `r^(log₃ 18)`, approximately `r^2.631`. Its dominant `18^s`
-term would give normalized slope `log₃ 18−3 ≈ −0.369`, close to the observed
-solve slope. Thus the known operation mix predicts a substantial downward
+term would give normalized slope `log₃ 18−3 ≈ −0.369`; the exact count gives
+about −0.31 over the fitted finite range. Thus the known operation mix predicts a substantial downward
 trend in `time/r³` while rational elimination dominates. A wider range alone
 is not a justified remedy for the complete-solve fit.
 
 Subtracting the separately timed check medians from the solve medians gives
 about 256, 214, 197, 191 and 191 ns per source-derived rational row-addition
 pair at query counts two through six. The actual count, including its −9^s
-term, predicts normalized slope about −0.31 over sizes9..729, rather than the
+term, predicts normalized slope about −0.31 over sizes 9..729, rather than the
 leading-term −0.369. Small inputs have substantial additional cost per pair;
-that residual falls by about25% before settling near191ns at the two largest
-inputs. The profile independently identifies elimination as the dominant
-large-input phase. This comparison is not a direct phase timer: the
+that residual falls by about 25% before settling near 191 ns at the two largest
+inputs. This comparison is not a direct phase timer: the
 processes differ and the residual includes other solve work. The profile at
 size 243 independently identifies elimination as the dominant phase there;
 it does not establish attribution at every size or an exact timing law.
 
 No model, fit setting or completed sample was changed after this observation,
 and no unchanged rerun was used. The complete operation still executes its
-cubic integer check. The reference-solve prediction is resolved by a finite-range
-explanation, supported by the source operation mix, profile, finite pair counts and decreasing measured
-residual per pair. The leading-term slope alone does not predict this entire
-finite range. This is a disposition of the
-finding, not a relabeling of its verdict. The checker’s interpretation remains
+cubic integer check. The retired auxiliary reference solve's retained verdict
+is descriptive under
+[Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim).
+The counts and profile establish why the scalar count is a poor practical
+timing prediction; the residuals describe the observations and do not supply
+a fitted replacement model. No reference-only acceptance run is required.
+The checker’s interpretation remains
 separate: its wider retained results and finite-range work need assessment,
 not a claim that these small inputs establish asymptotic wall-time behavior. General bit-cost analysis
 and the remaining Phase-4 obligations are still outstanding.

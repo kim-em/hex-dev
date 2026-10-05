@@ -1,27 +1,19 @@
 #!/usr/bin/env python3
 """Historical full-support reference-solve and integer-check collection support.
 
-The shared harness supplies fixed trial-major samples. Retain every completed
-arm, including failures and inconclusive results, without an automatic rerun.
+Validators retain the original fixed schedules and declarations. The collector
+entry point is retired; historical reproduction uses the recorded revision.
 """
 from __future__ import annotations
 
-import argparse
-import hashlib
 import json
 import math
-import os
 from pathlib import Path
-import platform
 import subprocess
 import sys
-import time
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scripts.bench.sign_det_compare import archive_sources
-from scripts.bench.sign_det_sparse import source_hashes
-from scripts.bench.cpu_lease import cpu_lease as acquire_cpu
 
 PARAMS = [1, 2, 3, 4, 5]
 DIMENSION_ARITIES = [1, 2, 3, 4, 5, 6]

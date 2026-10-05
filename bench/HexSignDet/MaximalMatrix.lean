@@ -11,7 +11,9 @@ open Hex.SignDet
 open scoped Hex
 
 /-- The complete finite moment system, with every ternary word occurring once.
-Preparation uses the actual solver and validates all counts before timing.
+Reference checks use the actual solver and validate all counts; their tiny
+preparation is included in the fixed callback. Tensor checker preparation
+happens before timing.
 No polynomial or Tarski-query work is included in these matrix callbacks. -/
 structure Input where
   arity : Nat
@@ -85,18 +87,6 @@ private def referenceConfig (s : Nat) : LeanBench.FixedBenchmarkConfig :=
 setup_fixed_benchmark reference1 where referenceConfig 1
 setup_fixed_benchmark reference2 where referenceConfig 2
 setup_fixed_benchmark reference3 where referenceConfig 3
-
-/-- Prepare the same full system by its literal matrix dimension. Unsupported
-sizes return `none`; scientific inspection validates every scheduled input. -/
-def dimensionInput (r : Nat) : Option Input := do
-  let s ← #[1, 2, 3, 4, 5, 6].find? (fun s => 3^s == r)
-  input s
-
-/-- The existing complete solver, with matrix dimension as the parameter. -/
-@[noinline] def runSolveDimension (i : Option Input) : Option UInt64 := runSolve i
-
-/-- The existing literal checker, with matrix dimension as the parameter. -/
-@[noinline] def runCheckDimension (i : Option Input) : Bool := runCheck i
 
 /-- Prepare the same complete system with the library's existing Kronecker
 product. Only preparation changes: the measured callback remains System.check.
