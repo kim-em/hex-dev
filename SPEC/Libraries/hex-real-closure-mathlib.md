@@ -639,23 +639,32 @@ history construct one ordinary reader, coherent original-owner restrictions
 and their closed arithmetic domains. Native equality between transported values
 implies equality of those reads. `Live.Collection.realize` covers the original
 requested values, polynomial coefficients and every coefficient reached by
-each retained descriptor's finite replay, preserving all their signs at once.
+each retained descriptor's finite replay, preserving all their signs at once
+and reflecting zero on those inventory operands. This supplies the agreement
+needed by `Transport.Inventory.descriptor_data`.
 The sample/export APIs must retain these ownership and membership conditions.
 
 Infinitesimals added after selected roots enter a new staged base through checked
 enlargement and suffix reconstruction. `Live.Enlargement.realize` constructs
 one ordinary reader for all original-owner inventories, any finite requested
-old computed values, and the returned new parameter. The parameter is positive;
+old computed values, caller-requested fresh expressions involving the new
+parameter, and the returned parameter itself. Every requested fresh sign is
+preserved and its zero guard reflected. The parameter is positive;
 the pre-enlargement reader is its pullback through the actual predecessor
 inclusion, with a closed arithmetic domain and the original requested signs.
+The same reader retains every inherited fixed real coefficient and identifies
+any values equal in the enlarged context. `Enlargement.realize_model` accepts
+the preceding canonical factory model, so it can be used after further
+enlargements without a new gather.
 The caller supplies actual gather/enlargement results and provider history,
 without an ambient model or independent agreement assumptions. This is the
 relative semantic route; it constructs symbolic ordered real-closed references
 internally. General interleaved sample/export assembly must compose each returned
 factory model and retained inclusion with the direct `Sample.realizeReplay`
 proof, rather than treating this relative theorem as that direct proof.
-Together these supply the required induction through arbitrarily interleaved
-infinitesimals and algebraic extensions. These theorems specialize finite sign
+The complete assembly through arbitrarily interleaved infinitesimals and
+algebraic extensions remains required, as does construction of arbitrary
+jointly compatible real bases. These theorems specialize finite sign
 conditions rather than embedding a whole infinitesimal field into ℝ.
 
 These induction and transport lemmas are local proof deliverables. They

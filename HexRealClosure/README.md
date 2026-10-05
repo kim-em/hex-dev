@@ -2085,6 +2085,44 @@ requirement; the ambient `Model.next` interpretations here do not assert that
 ordinary-real conclusion.
 
 
+The companion module `HexRealClosureMathlib.SharedRealization` specializes
+actual shared collections at one ordinary-real interpretation.
+`Shared.realize_values` takes the successful native gather, the target's
+provider history and finite requests indexed by their original owners. It
+constructs one target reader and closed arithmetic domains pulled back through
+all retained inclusions, preserves every requested sign and inherited real
+coefficient, reflects zero on the requested operands, and identifies reads of
+values equal in the shared context. No ambient model or separate
+source-agreement premise is supplied.
+
+`Live.Collection.realize` collects each original frame's values, stored
+polynomial coefficients and actual finite descriptor/replay inventory. Its
+zero-reflection clause supplies the inventory agreement required by
+`Transport.Inventory.descriptor_data`.
+`Live.Enlargement.realize` covers requested old computed target values,
+caller-requested fresh expressions involving the new parameter, and the
+parameter itself after checked enlargement. The parameter has a positive
+ordinary value; every requested fresh sign is preserved, including finite
+inequalities between the parameter and old values. The old reader is the
+pullback through the returned predecessor inclusion, so its arithmetic on the
+domain and requested signs remain coherent with the enlarged reader. The same
+reader retains inherited fixed real coefficients and identifies any values
+equal in the enlarged context. `Enlargement.realize_model` uses the previous
+canonical factory model and applies again after any earlier enlargement.
+`Inclusion.Model.fieldHom` and `read_comap` expose the underlying semantic-field
+inclusion and reader law; native expressions themselves acquire no field instance.
+
+These are relative semantic theorems. They internally construct symbolic
+ordered real-closed references from provider histories. The direct accepted
+finite-replay `Sample.realizeReplay` theorem, general interleaved export
+assembly and construction of arbitrary jointly compatible real bases remain
+required work. These theorems do not replace those contracts.
+
+Run `lake build HexRealClosureMathlib.SharedRealizationTests` for public
+consumers deriving old sum/product and fresh parameter-expression signs,
+usable descriptor transport premises, and specialization after two actual
+enlargements without a new gather.
+
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
 proves that its ordered algebraic real closure of `R(ε)` is algebraic over the
 mapped `B(ε)`. The proof combines Mathlib's algebraic polynomial-extension
@@ -2121,35 +2159,6 @@ context and rebuild the extracted one-root suffix. The existing four-root
 transport fixture includes a deeper count check and runs outside routine CI.
 
 ### Sections and sectors
-
-The companion module `HexRealClosureMathlib.SharedRealization` specializes
-actual shared collections at one ordinary-real interpretation.
-`Shared.realize_values` takes the successful native gather, the target's
-provider history and finite requests indexed by their original owners. It
-constructs one target reader and closed arithmetic domains pulled back through
-all retained inclusions, preserves every requested sign and inherited real
-coefficient, and identifies reads of values equal in the shared context.
-No ambient model or separate source-agreement premise is supplied.
-
-`Live.Collection.realize` collects each original frame's values, stored
-polynomial coefficients and actual finite descriptor/replay inventory.
-`Live.Enlargement.realize` also covers requested old computed target values and
-the actual new parameter after checked enlargement. That parameter has a
-positive ordinary value. The old reader is the pullback through the returned
-predecessor inclusion, so its arithmetic on the domain and requested signs
-remain coherent with the enlarged reader. `Inclusion.Model.fieldHom` and
-`read_comap` expose the underlying semantic-field inclusion and reader law;
-native expressions themselves acquire no field instance.
-
-These are relative semantic theorems. They internally construct symbolic
-ordered real-closed references from provider histories. The direct accepted
-finite-replay `Sample.realizeReplay` theorem, general interleaved export
-assembly and construction of arbitrary jointly compatible real bases remain
-required work. These theorems do not replace those contracts.
-
-Run `lake build HexRealClosureMathlib.SharedRealizationTests` for the public
-consumer that derives one positive ordinary parameter and simultaneous signs
-of old operands, their sum and their product after actual enlargement.
 
 `Tower.Sample.section` constructs a section from a validated descriptor and
 retains its cached root context, ordinary native value and coefficient

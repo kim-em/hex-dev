@@ -8,6 +8,7 @@ module
 public import HexRealClosureMathlib.NativeRealization
 public import HexRealClosureMathlib.LiveRequest
 public import HexRealClosureMathlib.TransportInventory
+public import HexRealClosureMathlib.ModelInventory
 
 public section
 
@@ -56,6 +57,17 @@ theorem domain_comap (interpretation : CoefficientMap model.target.field ℝ) (a
 end Inclusion.Model
 
 variable {base : BaseContext.PackedContext registry} {owners : List (Context registry)}
+
+omit [DecidableEq K] in
+private theorem read_zero [IsStrictOrderedRing K] {context : Context registry}
+    (model : Tower.Model context K) (interpretation : CoefficientMap model.field ℝ)
+    (a : context.Value) (domain : model.domain interpretation a)
+    (sign : (SignType.sign (model.read interpretation a) : Int) = context.sign a) :
+    model.read interpretation a = 0 ↔ a = 0 := by
+  have data := model.inventory_agreement interpretation [a]
+    (fun x member => by cases List.mem_singleton.mp member; exact domain)
+    (fun x member => by cases List.mem_singleton.mp member; exact sign)
+  exact (data a (List.mem_singleton.mpr rfl)).2.2
 
 /-- The finite images of every owner's requested operands, in request order. -/
 def Shared.inventory (shared : Shared base owners)
@@ -173,7 +185,8 @@ theorem Shared.realize_values (shared : Shared base owners) (following : base.Re
       (∀ index, Transport.Closed (fun a => read (shared.value index a))
         (fun a => domain (shared.value index a))) ∧
       (∀ index a, a ∈ values index → domain (shared.value index a) ∧
-        (SignType.sign (read (shared.value index a)) : Int) = (owners[index]).sign a) ∧
+        (SignType.sign (read (shared.value index a)) : Int) = (owners[index]).sign a ∧
+        (read (shared.value index a) = 0 ↔ a = 0)) ∧
       (∀ i j a b, shared.input.context.equal (shared.value i a) (shared.value j b) = true →
         read (shared.value i a) = read (shared.value j b)) ∧
       (∀ a r, shared.input.context.origin.RealValue (shared.base_eq.symm ▸ following) a r →
@@ -196,7 +209,9 @@ theorem Shared.realize_values (shared : Shared base owners) (following : base.Re
   · intro index a member
     obtain ⟨domain, sign⟩ := finite index a member
     exact ⟨(model.ownerDomain_iff interpretation index a).mp domain,
-      (model.ownerRead_apply interpretation index a) ▸ sign⟩
+      (model.ownerRead_apply interpretation index a) ▸ sign, by
+        rw [← model.ownerRead_apply]
+        exact read_zero (model.owners.get index).1 _ a domain sign⟩
   · intro i j a b equal
     rw [model.target.equal_spec] at equal
     have same := of_decide_eq_true equal
@@ -206,13 +221,13 @@ namespace Live
 
 /-- Every requested value and polynomial coefficient, together with every
 coefficient reached by the retained descriptor's actual finite replay. -/
-def Frame.inventory {owner : Context registry} (frame : Frame owner) : List owner.Value :=
+@[expose] def Frame.inventory {owner : Context registry} (frame : Frame owner) : List owner.Value :=
   frame.values ++ frame.polynomials.flatMap Transport.Inventory.coefficients ++
     frame.descriptors.flatMap fun descriptor =>
       Transport.Inventory.descriptor descriptor.raw descriptor.evidence
 
 /-- Enumerate original operands at the exact positions retained by gathering. -/
-def Request.inventory (request : Request registry) (index : Fin request.owners.length) :
+@[expose] def Request.inventory (request : Request registry) (index : Fin request.owners.length) :
     List (request.owners[index]).Value :=
   (request.frame ⟨index.val, by simpa only [Request.owners, List.length_map] using index.isLt⟩).inventory
 
@@ -229,7 +244,8 @@ theorem Collection.realize {request : Request registry} (collection : Collection
         (fun a => domain (collection.shared.value index a))) ∧
       (∀ index a, a ∈ request.inventory index → domain (collection.shared.value index a) ∧
         (SignType.sign (read (collection.shared.value index a)) : Int) =
-          (request.owners[index]).sign a) ∧
+          (request.owners[index]).sign a ∧
+        (read (collection.shared.value index a) = 0 ↔ a = 0)) ∧
       (∀ i j a b, collection.shared.input.context.equal
           (collection.shared.value i a) (collection.shared.value j b) = true →
         read (collection.shared.value i a) = read (collection.shared.value j b)) ∧
@@ -239,15 +255,18 @@ theorem Collection.realize {request : Request registry} (collection : Collection
     (Request.gather?_shared base request collection produced) request.inventory
 
 /-- Specialize an actual enlargement at one ordinary interpretation for its
-original owner inventories, requested old computed values and new parameter.
+original owner inventories, requested old and fresh values and new parameter.
 The old reader is the pullback through the returned predecessor inclusion.
-Both symbolic models and the prescribed infinitesimal ambient are constructed
-internally; this remains the relative semantic route. -/
-theorem Enlargement.realize {request : Request registry} {original : Collection base request}
-    (result : Enlargement original) (following : base.Realization)
-    (gathered : request.gather? base = some original)
+The previous canonical model can come from gathering or any earlier enlargement.
+The next infinitesimal ambient is constructed internally; this remains the
+relative semantic route. -/
+theorem Enlargement.realize_model [IsStrictOrderedRing K] [IsRealClosed K]
+    {request : Request registry} {original : Collection base request}
+    {following : base.Realization} {reference : Tower.Model (Context.ofBase base) K}
+    (result : Enlargement original) (old : Shared.Model original.shared following reference)
     (produced : original.enlarge? = some result)
-    (values : List original.shared.input.context.Value) :
+    (values : List original.shared.input.context.Value)
+    (fresh : List result.collection.shared.input.context.Value := []) :
     ∃ read : result.collection.shared.input.context.Value → ℝ,
       ∃ domain : result.collection.shared.input.context.Value → Prop,
       Transport.Closed read domain ∧
@@ -258,13 +277,19 @@ theorem Enlargement.realize {request : Request registry} {original : Collection 
       (∀ index a, a ∈ request.inventory index →
         domain (result.collection.shared.value index a) ∧
         (SignType.sign (read (result.collection.shared.value index a)) : Int) =
-          (request.owners[index]).sign a) ∧
+          (request.owners[index]).sign a ∧
+        (read (result.collection.shared.value index a) = 0 ↔ a = 0)) ∧
+      (∀ a ∈ fresh, domain a ∧
+        (SignType.sign (read a) : Int) = result.collection.shared.input.context.sign a ∧
+        (read a = 0 ↔ a = 0)) ∧
+      (∀ a b, result.collection.shared.input.context.equal a b = true → read a = read b) ∧
+      (∀ a r, result.collection.shared.input.context.origin.RealValue
+        (result.collection.shared.base_eq.symm ▸ following.infinitesimal) a r →
+        domain a ∧ read a = r) ∧
       domain result.parameter ∧
       0 < read result.parameter := by
   classical
-  let reference := following.reference
-  let old := original.model following reference.model gathered
-  let ambient := Ambient.ofField (Hex.RationalFn reference.Carrier)
+  let ambient := Ambient.ofField (Hex.RationalFn K)
   let returned := result.model old ambient produced
   have parameterSign : result.collection.shared.input.context.sign result.parameter = 1 := by
     rw [returned.target.sign]
@@ -284,8 +309,8 @@ theorem Enlargement.realize {request : Request registry} {original : Collection 
   have embeddingValue (a : original.shared.input.context.Value) :
       embedding (lifted.toValue a) = returned.target.toValue (result.previous.value a) :=
     Subtype.ext (preserved a).symm
-  let extra := values.map result.previous.value ++ [result.parameter]
-  obtain ⟨interpretation, _, finite, additional, _, _⟩ := returned.realize request.inventory extra
+  let extra := values.map result.previous.value ++ result.parameter :: fresh
+  obtain ⟨interpretation, _, finite, additional, _, real⟩ := returned.realize request.inventory extra
   have reads : lifted.read (interpretation.comap embedding) =
       fun a => returned.target.read interpretation (result.previous.value a) := by
     funext a
@@ -296,7 +321,7 @@ theorem Enlargement.realize {request : Request registry} {original : Collection 
     apply propext
     rw [Tower.Model.domain_iff, CoefficientMap.comap_domain, embeddingValue, Tower.Model.domain_iff]
   refine ⟨returned.target.read interpretation, returned.target.domain interpretation,
-    returned.target.closed interpretation, ?_, ?_, ?_, ?_, ?_⟩
+    returned.target.closed interpretation, ?_, ?_, ?_, ?_, ?_, real, ?_, ?_⟩
   · rw [← reads, ← domains]
     exact lifted.closed _
   · intro a member
@@ -306,13 +331,60 @@ theorem Enlargement.realize {request : Request registry} {original : Collection 
   · intro index a member
     obtain ⟨domain, sign⟩ := finite index a member
     exact ⟨(returned.ownerDomain_iff interpretation index a).mp domain,
-      (returned.ownerRead_apply interpretation index a) ▸ sign⟩
-  · exact (additional result.parameter (List.mem_append_right _ (by simp only [List.mem_singleton]))).1
-  · have sign := (additional result.parameter (List.mem_append_right _ (by simp only [List.mem_singleton]))).2
+      (returned.ownerRead_apply interpretation index a) ▸ sign, by
+        rw [← returned.ownerRead_apply]
+        exact read_zero (returned.owners.get index).1 _ a domain sign⟩
+  · intro a member
+    obtain ⟨domain, sign⟩ := additional a
+      (List.mem_append_right _ (List.mem_cons_of_mem _ member))
+    exact ⟨domain, sign, read_zero returned.target interpretation a domain sign⟩
+  · intro a b equal
+    rw [returned.target.equal_spec] at equal
+    rw [Tower.Model.read_apply, Tower.Model.read_apply,
+      (returned.target.toValue_equal a b).mpr (of_decide_eq_true equal)]
+  · exact (additional result.parameter
+      (List.mem_append_right _ (List.mem_cons_self ..))).1
+  · have sign := (additional result.parameter
+      (List.mem_append_right _ (List.mem_cons_self ..))).2
     rw [parameterSign] at sign
     have realSign : SignType.sign (returned.target.read interpretation result.parameter) = 1 := by
       cases value : SignType.sign (returned.target.read interpretation result.parameter) <;> simp_all
     exact sign_eq_one_iff.mp realSign
+
+/-- Specialize an actual first enlargement without a caller-supplied model.
+The canonical starting model is constructed from the actual gather and provider
+history. Further enlargements use `realize_model` with their factory models. -/
+theorem Enlargement.realize {request : Request registry} {original : Collection base request}
+    (result : Enlargement original) (following : base.Realization)
+    (gathered : request.gather? base = some original)
+    (produced : original.enlarge? = some result)
+    (values : List original.shared.input.context.Value)
+    (fresh : List result.collection.shared.input.context.Value := []) :
+    ∃ read : result.collection.shared.input.context.Value → ℝ,
+      ∃ domain : result.collection.shared.input.context.Value → Prop,
+      Transport.Closed read domain ∧
+      Transport.Closed (fun a => read (result.previous.value a))
+        (fun a => domain (result.previous.value a)) ∧
+      (∀ a ∈ values, domain (result.previous.value a) ∧
+        (SignType.sign (read (result.previous.value a)) : Int) = original.shared.input.context.sign a) ∧
+      (∀ index a, a ∈ request.inventory index →
+        domain (result.collection.shared.value index a) ∧
+        (SignType.sign (read (result.collection.shared.value index a)) : Int) =
+          (request.owners[index]).sign a ∧
+        (read (result.collection.shared.value index a) = 0 ↔ a = 0)) ∧
+      (∀ a ∈ fresh, domain a ∧
+        (SignType.sign (read a) : Int) = result.collection.shared.input.context.sign a ∧
+        (read a = 0 ↔ a = 0)) ∧
+      (∀ a b, result.collection.shared.input.context.equal a b = true → read a = read b) ∧
+      (∀ a r, result.collection.shared.input.context.origin.RealValue
+        (result.collection.shared.base_eq.symm ▸ following.infinitesimal) a r →
+        domain a ∧ read a = r) ∧
+      domain result.parameter ∧
+      0 < read result.parameter := by
+  classical
+  let reference := following.reference
+  let old := original.model following reference.model gathered
+  exact result.realize_model old produced values fresh
 
 end Live
 
@@ -341,3 +413,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Live.Enlargement.realize' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Live.Enlargement.realize
+
+/-- info: 'Hex.RealClosure.Tower.Live.Enlargement.realize_model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.Enlargement.realize_model
