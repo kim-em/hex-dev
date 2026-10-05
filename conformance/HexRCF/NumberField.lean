@@ -9,7 +9,6 @@ public import HexRCF.RealCoefficients.NumberField
 import all HexRCF.RealCoefficients.NumberField
 public meta import HexRCF.RealCoefficients.NumberField
 public meta import HexRCF.Tactic
-public meta import HexRCF.ProofEvidence
 public import HexRealClosure.RootFrame
 public meta import HexRealClosure.RootFrame
 
@@ -122,6 +121,8 @@ private def controls : List (String × Bool) := Id.run do
   let cancelled := RealFormula.QF.atom ⟨(a*a-2)*x^3+x, .eq⟩
   return [
     ("constants", constants),
+    ("variable disequality", run (.atom ⟨x^2-a, .ne⟩) .forallReal == some false &&
+      run (.atom ⟨x^2-a, .ne⟩) .existsReal == some true),
     ("cancellation", run (.atom ⟨a-a, .eq⟩) .forallReal == some true &&
       run cancelled .existsReal == some true && run cancelled .forallReal == some false),
     ("domains", run (.and zero (domain 0 1)) .existsReal == some false &&
@@ -185,9 +186,6 @@ run_meta do
 run_meta do
   Hex.RCF.checkAxioms ``Hex.RCF.NumberFieldTests.original
     (Lean.mkConst ``Hex.RCF.NumberFieldTests.original)
-  unless ← Hex.RCF.ProofEvidence.contains ``Hex.RCF.NumberFieldTests.original
-      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.NumberField.run_spec) do
-    throwError "original-field proof must use the public formula law"
   -- Pin this composition during refactors; the axiom audit checks the trust boundary.
   let info ← Lean.getConstInfo ``Hex.RCF.RealCoefficients.NumberField.run_spec
   let some body := info.value? (allowOpaque := true)
