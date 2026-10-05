@@ -107,6 +107,10 @@ class WideMatrix(unittest.TestCase):
         interrupted = bench.outcome(error=KeyboardInterrupt())
         self.assertEqual((interrupted["state"], interrupted["collector_exit_code"]), ("interrupted", 130))
         self.assertTrue(interrupted["error"])
+        self.assertEqual(bench.outcome(error=KeyboardInterrupt(), identity_error=RuntimeError("changed")),
+                         interrupted)
+        failed = bench.outcome(error=ValueError("original"), identity_error=RuntimeError("changed"))
+        self.assertEqual(failed["error"], "original")
         terminated = bench.outcome(error=SystemExit(143))
         self.assertEqual((terminated["state"], terminated["collector_exit_code"]), ("interrupted", 143))
         with self.assertRaises(ValueError):
@@ -149,12 +153,27 @@ class InterruptedProfiles(unittest.TestCase):
                 except ProcessLookupError:
                     pass
 
+    def test_exited_runner_stops_its_descendant(self):
+        child = ("import subprocess, sys; "
+                 "p = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)']); "
+                 "print(p.pid, flush=True); sys.exit(7)")
+        with tempfile.TemporaryFile(mode="w+") as stdout, tempfile.TemporaryFile(mode="w+") as stderr:
+            self.assertEqual(bench.run_owned([sys.executable, "-c", child], stdout, stderr), 7)
+            stdout.seek(0)
+            pid = int(stdout.read().strip())
+            status = Path(f"/proc/{pid}/status")
+            if status.exists():
+                state = next(line for line in status.read_text().splitlines() if line.startswith("State:"))
+                self.assertIn("Z", state, "descendant survived its failed runner")
+
     def test_inherited_ignored_signal_is_preserved(self):
         previous = signal.signal(signal.SIGHUP, signal.SIG_IGN)
         installed = {}
         try:
             installed = bench.install_signals()
             self.assertNotIn(signal.SIGHUP, installed)
+            if signal.SIGTERM in installed:
+                self.assertIs(signal.getsignal(signal.SIGTERM), bench.stop_signal)
             self.assertEqual(signal.getsignal(signal.SIGHUP), signal.SIG_IGN)
         finally:
             for number, handler in installed.items():

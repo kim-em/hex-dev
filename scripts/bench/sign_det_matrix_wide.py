@@ -88,35 +88,45 @@ def validate_result(path, expected, revision):
     return {key: result[key] for key in ["verdict", "slope", "complexity_formula", "advisories"]}
 
 
+SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP, signal.SIGQUIT)
+
+
+def ignore_signals():
+    """Disable termination atomically before cleanup; preserve prior handlers."""
+    blocked = signal.pthread_sigmask(signal.SIG_BLOCK, SIGNALS)
+    try:
+        return {number: signal.signal(number, signal.SIG_IGN) for number in SIGNALS}
+    finally:
+        signal.pthread_sigmask(signal.SIG_SETMASK, blocked)
+
 
 def run_owned(command, stdout, stderr):
     """Stop the runner and its timing children when the collector is interrupted."""
     process = subprocess.Popen(command, cwd=ROOT, stdout=stdout, stderr=stderr,
                                start_new_session=True)
     try:
-        return process.wait()
-    except BaseException:
-        previous = {number: signal.signal(number, signal.SIG_IGN)
-                    for number in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)}
+        # Keep the exited leader unreaped until its descendants are stopped,
+        # preventing reuse of its process-group ID.
+        os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOWAIT)
+    finally:
         try:
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            process.wait()
-        finally:
-            for number, handler in previous.items():
-                signal.signal(number, handler)
-        raise
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        process.wait()
+    return process.returncode
 
 
 def stop_signal(number, _frame):
+    ignore_signals()
+    if number == signal.SIGINT:
+        raise KeyboardInterrupt
     raise SystemExit(128 + number)
 
 
 def install_signals():
     previous = {}
-    for number in (signal.SIGTERM, signal.SIGHUP):
+    for number in SIGNALS:
         handler = signal.getsignal(number)
         if handler != signal.SIG_IGN:
             previous[number] = signal.signal(number, stop_signal)
@@ -175,14 +185,21 @@ def main():
         record = {"label": label, "command": [str(executable), *arguments], "state": "running"}
         m["runs"].append(record); save()
         start = time.monotonic()
-        with (out / (label + ".stdout")).open("w") as stdout, (out / (label + ".stderr")).open("w") as stderr:
-            code = run_owned(record["command"], stdout, stderr)
+        try:
+            with (out / (label + ".stdout")).open("w") as stdout, (out / (label + ".stderr")).open("w") as stderr:
+                code = run_owned(record["command"], stdout, stderr)
+        except BaseException as error:
+            record.update(state="interrupted" if isinstance(error, (KeyboardInterrupt, SystemExit)) else "failed",
+                          exception=type(error).__name__, elapsed_seconds=time.monotonic()-start)
+            save()
+            raise
         record.update(state="complete", exit_code=code, elapsed_seconds=time.monotonic()-start,
                       load_after=os.getloadavg()); save()
         return code
     verdict = None
     captured_error = None
     try:
+        save()
         archive_sources(out, m); save()
         if run("overlap", ["inspect-maximal-matrix-tensors"]):
             raise ValueError("tensor/ordinary-solver comparison failed")
@@ -194,19 +211,12 @@ def main():
             raise ValueError("wide checker runner failed; raw output retained")
         summary = validate_result(out / "timings.json", expected, revision)
         (out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
-        m["source_sha256_after"] = {name: digest(ROOT / name) for name in sources}
-        if (m["source_sha256_after"] != sources or digest(executable) != m["binary_sha256"] or harness_binding(ROOT) != m["harness_binding"] or
-                subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip() != revision or
-                subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True)):
-            raise ValueError("source, binary or harness changed during collection")
-        m["scientific_samples"] = 24
         verdict = summary["verdict"]
     except BaseException as error:
         captured_error = error
     finally:
         # Finish durable metadata even if another termination signal arrives.
-        previous = {number: signal.signal(number, signal.SIG_IGN)
-                    for number in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)}
+        previous = ignore_signals()
         final_error = None
         try:
             m["source_sha256_after"] = {name: digest(ROOT / name) for name in sources}
@@ -224,8 +234,10 @@ def main():
             final_error = error
         if final_error is not None:
             m["final_identity_error"] = str(final_error) or type(final_error).__name__
-        m.update(outcome(verdict, captured_error, final_error))
         try:
+            m.update(outcome(verdict, captured_error, final_error))
+            if m["state"] == "complete":
+                m["scientific_samples"] = 24
             m["file_sha256"] = {p.name: digest(p) for p in out.iterdir()
                                 if p.is_file() and p.name not in ("metadata.json", "metadata.tmp")}
             m["load_after"] = os.getloadavg()

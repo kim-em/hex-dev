@@ -55,11 +55,11 @@ automatic CPU lease, records host load, retains all completed observations
 and binds clean source, executable and pinned harness before and after the
 run. It retains the complete 1-through-729 overlap comparison and performs full
 input guards before collecting the 24 timing points. A failure exits 2,
-an inconclusive result exits 1 and Ctrl-C exits 130. SIGTERM and SIGHUP
+an inconclusive result exits 1 and Ctrl-C exits 130. SIGTERM, SIGHUP and SIGQUIT
 exit with 128 plus the signal number. Interrupting the collector stops its
 runner and timing children before releasing the CPU lease. Once collection
 has begun, metadata records these outcomes and final source bindings;
-preflight errors before metadata creation are reported on stderr.
+errors and signals before metadata creation leave no metadata.
 The runner does not export its prepared-input hash. The inventory hash is
 linked to timed children through the same binary and deterministic preparation.
 Child peak RSS includes startup and preparation; it is not an isolated
