@@ -519,6 +519,15 @@ inclusions, preserving requested values, all polynomial coefficients and
 selected descriptor roots under the same returned canonical models.
 
 
+Ordinary-real specialization of an enlarged collection chooses one new reader
+for all requested original and fresh operands. It preserves the finite native
+sign constraints and prescribed provider coefficients through the retained
+inclusions. It does not extend an earlier chosen ordinary reader: consumers
+must include their previous computed operands when requesting specialization.
+Assembly of a complete interleaved replay into these inventories remains part
+of the ordinary-real export contract.
+
+
 Enlargement preserves embeddings, root identity and all previous comparisons,
 and returns a new context; appending an infinitesimal after an algebraic
 level is invalid. Prove the stage order agrees with this stronger model:

@@ -61,6 +61,55 @@ theorem Chain.Realization.subsequence_sign
           exact FieldEmbedding.rationalFunctions_sign previousMap _ _
             (fun b => ih sourceParent sourceProof previousMap found b) a
 
+/-- Checked staged subsequences retain the prescribed real values of every
+inherited provider coefficient, even between independently validated prefixes. -/
+theorem Chain.Realization.subsequence_realValue
+    {K S : Type} [Lean.Grind.Field K] [DecidableEq K]
+    [Lean.Grind.Field S] [DecidableEq S] {sign : K → Int} {sourceSign : S → Int}
+    {target : Chain registry K sign} (following : target.Realization registry)
+    (source : Chain registry S sourceSign) (original : source.Realization registry)
+    (map : FieldEmbedding S K) (produced : target.subsequence? source = some map)
+    (a : S) (r : ℝ) (inherited : original.RealValue a r) :
+    following.RealValue (map.value a) r := by
+  induction following generalizing S with
+  | real targetReal model targetProof =>
+    cases original with
+    | real sourceReal sourceModel sourceProof =>
+      change targetReal.subsequence? sourceReal = some map at produced
+      change model.hom (map.value a) = r
+      exact (targetProof.subsequence sourceProof map produced a).trans inherited
+    | infinitesimal sourceParent sourceProof =>
+      change none = some map at produced
+      contradiction
+  | infinitesimal parent previous ih =>
+    by_cases deeper : source.signature.infinitesimals < parent.signature.infinitesimals + 1
+    · rw [Chain.subsequence?.eq_def] at produced
+      simp only [deeper, ↓reduceIte] at produced
+      cases found : parent.subsequence? source with
+      | none => simp only [found, Option.map_none] at produced; contradiction
+      | some previousMap =>
+        simp only [found, Option.map_some, Option.some.injEq] at produced
+        subst map
+        exact ⟨previousMap.value a,
+          by rw [FieldEmbedding.comp_value, FieldEmbedding.constants_value],
+          ih source original previousMap found a inherited⟩
+    · cases original with
+      | real sourceReal sourceModel sourceProof =>
+        change ¬ 0 < parent.signature.infinitesimals + 1 at deeper
+        omega
+      | infinitesimal sourceParent sourceProof =>
+        rw [Chain.subsequence?.eq_def] at produced
+        simp only [deeper, ↓reduceIte] at produced
+        cases found : parent.subsequence? sourceParent with
+        | none => simp only [found, Option.map_none] at produced; contradiction
+        | some previousMap =>
+          simp only [found, Option.map_some, Option.some.injEq] at produced
+          subst map
+          obtain ⟨b, same, real⟩ := inherited
+          subst a
+          refine ⟨previousMap.value b, ?_, ih sourceParent sourceProof previousMap found b real⟩
+          rw [FieldEmbedding.rationalFunctions_value, RationalFn.mapCoeffs_C]
+
 end Hex.RealClosure.BaseContext
 
 /-- info: 'Hex.RealClosure.BaseContext.Chain.Realization.subsequence_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -93,3 +142,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.BaseInclusion.sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.BaseInclusion.sign
+
+/-- info: 'Hex.RealClosure.BaseContext.Chain.Realization.subsequence_realValue' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.Chain.Realization.subsequence_realValue
