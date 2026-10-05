@@ -36,6 +36,12 @@ Mathlib-free. Its other direct dependency is
 {ref "hex-truncated-series"}[`HexTruncatedSeries`], whose fixed-precision
 series representation supplies the Newton-inversion boundary.
 
+The coefficient-specific adapters live with their coefficient owners:
+`HexPolyZ.KroneckerMulti` and `HexPolyZ.NttMul` provide integer kernels,
+and `HexPolyFp.NttMul` provides finite-field kernels. Their umbrellas export
+these adapters. `HexHensel` uses the integer multiplication plan for ordered
+product trees within its measured factor-count and coefficient-shape guard.
+
 # Multiplication plans
 %%%
 tag := "hex-poly-fast-plans"

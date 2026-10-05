@@ -30,7 +30,6 @@ BUILD_ONLY_LIBS = {
     "HexRealClosureMathlibTests",
     "CadSampleCostsExperiment",  # Manual experiments; no released library or CI target.
     "KernelReplayExperiment",  # Kernel replay experiment; not a released library.
-    "HexPolyFastKernels",
     "HexGraphIsoProofProbe",
     "HexGraphIsoSparseProofProbe",
     "HexGraphIsoMathlibProofProbe",

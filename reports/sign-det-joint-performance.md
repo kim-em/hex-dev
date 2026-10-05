@@ -23,10 +23,38 @@ Completion and comparison construct the domains required by their actual APIs. R
 hashes include both returned derivative words or both table counts; the comparison hash
 also includes its common head and ordering.
 
-Preparation constructs and validates the source descriptors, completes them, computes a
-comparison and both direct tables, and retains the supplied trees and graphs. It is
-outside the timed loops. Untimed callback checks compare answers with exact evaluation
-at the known roots before any measurement. This family has realized support two,
+Each registration prepares its source descriptors, domains or supplied trees.
+Completion receives only
+the two validated partial descriptors. Comparison receives the two completed source
+identities. Table production receives the actual common polynomial, checked prepared
+domain and ordered queries, without producing either table first. Replay receives the
+two supplied trees for its selected reduced or direct mode, checked against exact
+evaluation at the known roots. Reduced replay trees are constructed by
+`buildPrepared` in reduced mode and compared by complete serialized-graph
+equality with the comparison producer’s re-encoding evidence. Preparation
+remains outside the timed loops.
+
+The combined case constructor is retained for independent input inspection. Callback
+inspection checks separate preparations against the combined case’s literal source
+descriptors and complete serialized evidence, as well as the common head and both ordered
+query lists, then compares the six callbacks with the same exact root answers. Type
+indices prevent completion/comparison or reduced/direct replay preparations from being
+swapped in a registration. The retained collections below used the combined
+constructor; their input inventories, callback result hashes and observations
+remain unchanged. Separating preparation supplies no new scientific timing
+verdict and changes no cubic cost model. It does not authorize another unchanged
+rerun: the measured operations remain unchanged, and the disposition recorded
+below still requires inclusive attribution and a changed schedule or an
+independently demonstrated declaration error.
+
+The new reduced/direct replay arms retain only their respective supplied trees,
+whereas both historical arms retained the same complete combined case. Heap
+contents, allocator locality and process resident peaks can therefore differ.
+Future replay ratios and resident measurements are not directly comparable
+with the retained combined-preparation ratios and memory observations. Both
+production arms still use the same prepared input.
+
+This family has realized support two,
 candidate matrices of width at most four, infinite endpoints and no shared source roots.
 It does not cover maximal support, finite endpoint constraints, common roots or nested
 coefficient fields.

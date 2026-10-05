@@ -56,7 +56,6 @@ UMBRELLA_BUILD_TARGETS = {
     "HexRealClosureTests",
     "HexRealClosureConformanceSupport",
     "HexRealClosureMathlibTests",
-    "HexPolyFastKernels",
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
     "HexRankBenchSupport",

@@ -130,7 +130,8 @@ instructions.
 
 Token selection is distinct from organization approval. Both existing tokens
 have fifty selections; `leanprover/fplll` accounts for the additional selection
-on `hex-publishing` outside the manifest. Real publication requires approval of
-the four new grants and the maintainer's go-ahead after the dry-run consumer
-builds. The fast kernels return to published umbrellas in a separate change
-after successful publication.
+on `hex-publishing` outside the manifest. The read-only workflow grant check verifies writable access to all 64
+manifest repositories; the token inventory documents how agents verify grants.
+The source umbrellas include the coefficient-owner fast kernels, and Hensel's
+ordered product uses its guarded tree dispatcher. Mirror publication remains
+subject to the maintainer's go-ahead after the dry-run consumer builds.

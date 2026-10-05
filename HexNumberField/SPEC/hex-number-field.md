@@ -140,7 +140,15 @@ proof equations identify exactly that deterministic run and refinement.
 `canonicalRepIn?` preserves orientation, and `ofNormalizedIn?` returns the
 complete result of `ofNormalized?`, including the same stored representative
 and every checked failure. `exactFactor?` uses this certified reuse after its
-candidate isolation. These helpers retain the shipped all-roots provenance;
+candidate isolation. `withEliminant?` keeps the producer's certified run
+available to its immediate consumer without storing another root representation.
+`exactIn?` reuses that run when a factor equals the whole enclosing polynomial;
+proper factors are isolated separately. Canonical addition and multiplication,
+and checked common-field rational/addition/multiplication construction, use
+this fused producer/consumer path. Whole-result equalities preserve the old
+canonical representatives and checked failures; total-operation equalities
+also retain their original fallback branches.
+These helpers retain the shipped all-roots provenance;
 they do not implement the forward local-canonicalization migration. The private record
 stores an `OrientedIsolation`: a canonical real or upper-half-plane `base`,
 and a `RootSide` tag (`real`, `upper`, or `lower`). The `valid` field proves
@@ -371,9 +379,14 @@ def AlgebraicRoot.add? (a b : AlgebraicRoot) : Option AlgebraicRoot
 def AlgebraicRoot.add  (a b : AlgebraicRoot) : AlgebraicRoot
 -- likewise sub, mul, div, and inv; neg is certificate-free
 
-def AlgebraicNumber.add (a b : AlgebraicNumber) : AlgebraicNumber :=
-  (a.toRoot.add b.toRoot).exact
--- likewise sub, mul, neg, inv, and div
+def AlgebraicNumber.add (a b : AlgebraicNumber) : AlgebraicNumber
+def AlgebraicNumber.mul (a b : AlgebraicNumber) : AlgebraicNumber
+-- Fused selection and exactification, with transient parent-isolation reuse.
+theorem AlgebraicNumber.add_eq (a b : AlgebraicNumber) :
+  AlgebraicNumber.add a b = (a.toRoot.add b.toRoot).exact
+theorem AlgebraicNumber.mul_eq (a b : AlgebraicNumber) :
+  AlgebraicNumber.mul a b = (a.toRoot.mul b.toRoot).exact
+-- sub, neg, inv, and div still use the lazy operation followed by exactification.
 ```
 
 - `neg` substitutes `-X` and reflects the isolation.

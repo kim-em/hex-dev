@@ -280,15 +280,6 @@ lean_lib HexNumberFieldTower where
 lean_lib HexPolyFp where
   precompileModules := true
 
--- Fast-multiplication kernels specified by HexPolyFast/SPEC/hex-poly-fast.md
--- §"Coefficient-owner file layouts". They import HexPolyFast and HexModular,
--- which must be published before the released umbrellas HexPolyZ.lean and
--- HexPolyFp.lean can export them. Restore the kernels after a successful real
--- sync publishes those dependencies (https://github.com/kim-em/hex-dev/issues/10739).
-@[default_target]
-lean_lib HexPolyFastKernels where
-  globs := #[`HexPolyZ.KroneckerMulti, `HexPolyZ.NttMul, `HexPolyFp.NttMul]
-
 lean_lib HexGFqRing where
 
 lean_lib HexGFqField where

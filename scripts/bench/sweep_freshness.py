@@ -655,14 +655,18 @@ FACTOR_COMMON = (
 FACTOR_LIBRARIES = (
     "Hex", "HexArith", "HexBareiss", "HexBerlekamp", "HexBerlekampZassenhaus",
     "HexHensel", "HexLLL", "HexMatrix", "HexModArith", "HexPoly", "HexPolyFp",
-    "HexPolyZ", "HexBasic",
+    "HexPolyZ", "HexBasic", "HexPolyFast", "HexModular", "HexTruncatedSeries",
+    "HexDeterminant", "HexGramSchmidt", "HexRowReduce",
 )
 
 FACTOR_SYSTEM_PATHS = {
     "hex-factor": tuple(
-        f"{library}/*.lean" for library in FACTOR_LIBRARIES) + (
+        path for library in FACTOR_LIBRARIES
+        for path in (f"{library}/*.lean", f"{library}.lean")) + (
         "bench/HexBench/FactorService.lean",
+        "bench/HexBench/BerlekampKernel.lean",
         "HexPrimality/Table.lean",
+        "HexPrimality/Sieve.lean",
         "lakefile.lean",
         "lake-manifest.json",
         "lean-toolchain",

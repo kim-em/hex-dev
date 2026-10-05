@@ -1,0 +1,3172 @@
+{
+  "rows": [
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4146870550002859,
+      "output": "Add-2-0-Before.json",
+      "nanos": 931586.34375,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4078655359999175,
+      "output": "Add-2-0-After.json",
+      "nanos": 487149.4453125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-4-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4877982120001434,
+      "output": "Add-4-0-Before.json",
+      "nanos": 9025258.125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-4-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.48533228600035727,
+      "output": "Add-4-0-After.json",
+      "nanos": 4575151.375,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.3915461410001626,
+      "output": "Add-8-0-Before.json",
+      "nanos": 334677607.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.766186301000289,
+      "output": "Add-8-0-After.json",
+      "nanos": 171706501.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.38908297099987976,
+      "output": "Sqrt-2-0-Before.json",
+      "nanos": 13257204.25,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5658541890002198,
+      "output": "Sqrt-2-0-After.json",
+      "nanos": 11562178.75,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-4-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.0161680280002656,
+      "output": "Sqrt-4-0-Before.json",
+      "nanos": 200270175.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-4-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.888893578999614,
+      "output": "Sqrt-4-0-After.json",
+      "nanos": 167766574.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-8-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 43.722677616000055,
+      "output": "Sqrt-8-0-Before.json",
+      "nanos": 9613128385.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-8-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 29.678344314000242,
+      "output": "Sqrt-8-0-After.json",
+      "nanos": 7168328788.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.41245655499960776,
+      "output": "Add-2-1-After.json",
+      "nanos": 485912.9453125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4136522019998665,
+      "output": "Add-2-1-Before.json",
+      "nanos": 936390.703125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-4-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.48832334000007904,
+      "output": "Add-4-1-After.json",
+      "nanos": 4580654.125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-4-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.488793608999913,
+      "output": "Add-4-1-Before.json",
+      "nanos": 9160569.625,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.6613815670002623,
+      "output": "Add-8-1-After.json",
+      "nanos": 160336967.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.369389948999924,
+      "output": "Add-8-1-Before.json",
+      "nanos": 326051327.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.563509633999729,
+      "output": "Sqrt-2-1-After.json",
+      "nanos": 11084233.875,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4909386179997455,
+      "output": "Sqrt-2-1-Before.json",
+      "nanos": 12412234.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-4-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.9573692389999451,
+      "output": "Sqrt-4-1-After.json",
+      "nanos": 163640909.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-4-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.06963185099994,
+      "output": "Sqrt-4-1-Before.json",
+      "nanos": 232642569.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-8-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 29.75255824199985,
+      "output": "Sqrt-8-1-After.json",
+      "nanos": 7120744411.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-8-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 36.19269219600028,
+      "output": "Sqrt-8-1-Before.json",
+      "nanos": 8744465788.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.41380839600060426,
+      "output": "Add-2-2-Before.json",
+      "nanos": 909208.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4096569459998136,
+      "output": "Add-2-2-After.json",
+      "nanos": 474927.640625,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-4-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4890843450002649,
+      "output": "Add-4-2-Before.json",
+      "nanos": 9053435.625,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-4-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4858006739996199,
+      "output": "Add-4-2-After.json",
+      "nanos": 4525951.0625,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.291531156000019,
+      "output": "Add-8-2-Before.json",
+      "nanos": 318329740.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.6374084930002937,
+      "output": "Add-8-2-After.json",
+      "nanos": 158083672.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4899383849997321,
+      "output": "Sqrt-2-2-Before.json",
+      "nanos": 12515562.875,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5382384380000076,
+      "output": "Sqrt-2-2-After.json",
+      "nanos": 10963129.125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-4-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.9900054059999093,
+      "output": "Sqrt-4-2-Before.json",
+      "nanos": 192426930.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-4-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.8603329140005371,
+      "output": "Sqrt-4-2-After.json",
+      "nanos": 164059705.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-8-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 36.34199878399977,
+      "output": "Sqrt-8-2-Before.json",
+      "nanos": 8900615774.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-8-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 29.37293305499952,
+      "output": "Sqrt-8-2-After.json",
+      "nanos": 7109615809.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.40956007500062697,
+      "output": "Add-2-3-After.json",
+      "nanos": 487947.578125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4104650680001214,
+      "output": "Add-2-3-Before.json",
+      "nanos": 904197.828125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-4-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.48510276899924065,
+      "output": "Add-4-3-After.json",
+      "nanos": 4569235.6875,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-4-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4872589420001532,
+      "output": "Add-4-3-Before.json",
+      "nanos": 9070681.75,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.6385136439994312,
+      "output": "Add-8-3-After.json",
+      "nanos": 160120860.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.291972608000833,
+      "output": "Add-8-3-Before.json",
+      "nanos": 322620827.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5358180250004807,
+      "output": "Sqrt-2-3-After.json",
+      "nanos": 11036917.25,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5642686709998088,
+      "output": "Sqrt-2-3-Before.json",
+      "nanos": 12474798.25,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-4-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.8605733439999312,
+      "output": "Sqrt-4-3-After.json",
+      "nanos": 160516208.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-4-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.9878137840005365,
+      "output": "Sqrt-4-3-Before.json",
+      "nanos": 193045418.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-8-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 29.197011622999526,
+      "output": "Sqrt-8-3-After.json",
+      "nanos": 7015675153.0,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-8-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 36.48957652300032,
+      "output": "Sqrt-8-3-Before.json",
+      "nanos": 9014320852.0,
+      "result_hash": "0xb"
+    }
+  ],
+  "references": [
+    {
+      "operation": "Add",
+      "size": 2,
+      "comparator": "Flint",
+      "trial": 0,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-2-Flint-0-Flint.json"
+      ],
+      "output": "Add-2-Flint-0-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5861168150004232,
+      "nanos": 17629.0234375,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "comparator": "Z3",
+      "trial": 0,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Add2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-2-Z3-0-Z3.json"
+      ],
+      "output": "Add-2-Z3-0-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5918544630039833,
+      "nanos": 15428.55322265625,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "comparator": "Flint",
+      "trial": 0,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-4-Flint-0-Flint.json"
+      ],
+      "output": "Add-4-Flint-0-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.696526202998939,
+      "nanos": 22330.96435546875,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "comparator": "Z3",
+      "trial": 0,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Add4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-4-Z3-0-Z3.json"
+      ],
+      "output": "Add-4-Z3-0-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5863879669996095,
+      "nanos": 16650.330810546875,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "comparator": "Flint",
+      "trial": 0,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-8-Flint-0-Flint.json"
+      ],
+      "output": "Add-8-Flint-0-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.4904926710005384,
+      "nanos": 24526.16015625,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "comparator": "Z3",
+      "trial": 0,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Add8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-8-Z3-0-Z3.json"
+      ],
+      "output": "Add-8-Z3-0-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.6162091189980856,
+      "nanos": 19326.20068359375,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "comparator": "Flint",
+      "trial": 0,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-2-Flint-0-Flint.json"
+      ],
+      "output": "Sqrt-2-Flint-0-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5391030270038755,
+      "nanos": 15597.089111328125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "comparator": "Z3",
+      "trial": 0,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Sqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-2-Z3-0-Z3.json"
+      ],
+      "output": "Sqrt-2-Z3-0-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.6867538209990016,
+      "nanos": 23455.991943359375,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "comparator": "Flint",
+      "trial": 0,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-4-Flint-0-Flint.json"
+      ],
+      "output": "Sqrt-4-Flint-0-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.562180217995774,
+      "nanos": 15798.268798828125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "comparator": "Z3",
+      "trial": 0,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Sqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-4-Z3-0-Z3.json"
+      ],
+      "output": "Sqrt-4-Z3-0-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.7128972599966801,
+      "nanos": 23757.273681640625,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "comparator": "Flint",
+      "trial": 0,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-8-Flint-0-Flint.json"
+      ],
+      "output": "Sqrt-8-Flint-0-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5346580350014847,
+      "nanos": 15791.698974609375,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "comparator": "Z3",
+      "trial": 0,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Sqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-8-Z3-0-Z3.json"
+      ],
+      "output": "Sqrt-8-Z3-0-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.6895504970016191,
+      "nanos": 23242.50390625,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "comparator": "Flint",
+      "trial": 1,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-2-Flint-1-Flint.json"
+      ],
+      "output": "Add-2-Flint-1-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.8370366450035363,
+      "nanos": 33105.8115234375,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "comparator": "Z3",
+      "trial": 1,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Add2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-2-Z3-1-Z3.json"
+      ],
+      "output": "Add-2-Z3-1-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9820834569982253,
+      "nanos": 22638.033203125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "comparator": "Flint",
+      "trial": 1,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-4-Flint-1-Flint.json"
+      ],
+      "output": "Add-4-Flint-1-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 1.1133002700007637,
+      "nanos": 37045.5361328125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "comparator": "Z3",
+      "trial": 1,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Add4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-4-Z3-1-Z3.json"
+      ],
+      "output": "Add-4-Z3-1-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.8628930369959562,
+      "nanos": 28078.62548828125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "comparator": "Flint",
+      "trial": 1,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-8-Flint-1-Flint.json"
+      ],
+      "output": "Add-8-Flint-1-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9384959899980458,
+      "nanos": 39138.4443359375,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "comparator": "Z3",
+      "trial": 1,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Add8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-8-Z3-1-Z3.json"
+      ],
+      "output": "Add-8-Z3-1-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 1.0073335699999006,
+      "nanos": 34045.84326171875,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "comparator": "Flint",
+      "trial": 1,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-2-Flint-1-Flint.json"
+      ],
+      "output": "Sqrt-2-Flint-1-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9777997939963825,
+      "nanos": 28799.26953125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "comparator": "Z3",
+      "trial": 1,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Sqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-2-Z3-1-Z3.json"
+      ],
+      "output": "Sqrt-2-Z3-1-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9813326340008643,
+      "nanos": 29103.22607421875,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "comparator": "Flint",
+      "trial": 1,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-4-Flint-1-Flint.json"
+      ],
+      "output": "Sqrt-4-Flint-1-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.8727064300037455,
+      "nanos": 30275.35009765625,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "comparator": "Z3",
+      "trial": 1,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Sqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-4-Z3-1-Z3.json"
+      ],
+      "output": "Sqrt-4-Z3-1-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9594047360005789,
+      "nanos": 41221.01025390625,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "comparator": "Flint",
+      "trial": 1,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-8-Flint-1-Flint.json"
+      ],
+      "output": "Sqrt-8-Flint-1-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.8503829260007478,
+      "nanos": 29413.099609375,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "comparator": "Z3",
+      "trial": 1,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Sqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-8-Z3-1-Z3.json"
+      ],
+      "output": "Sqrt-8-Z3-1-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5427510529989377,
+      "nanos": 25046.5068359375,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "comparator": "Flint",
+      "trial": 2,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-2-Flint-2-Flint.json"
+      ],
+      "output": "Add-2-Flint-2-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5917284609968192,
+      "nanos": 17697.1171875,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "comparator": "Z3",
+      "trial": 2,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Add2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-2-Z3-2-Z3.json"
+      ],
+      "output": "Add-2-Z3-2-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.562177961000998,
+      "nanos": 14772.53125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "comparator": "Flint",
+      "trial": 2,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-4-Flint-2-Flint.json"
+      ],
+      "output": "Add-4-Flint-2-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.6407176680004341,
+      "nanos": 20526.8017578125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "comparator": "Z3",
+      "trial": 2,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Add4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-4-Z3-2-Z3.json"
+      ],
+      "output": "Add-4-Z3-2-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5835984360019211,
+      "nanos": 16413.636962890625,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "comparator": "Flint",
+      "trial": 2,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-8-Flint-2-Flint.json"
+      ],
+      "output": "Add-8-Flint-2-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.6842484309963766,
+      "nanos": 23998.66162109375,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "comparator": "Z3",
+      "trial": 2,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Add8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-8-Z3-2-Z3.json"
+      ],
+      "output": "Add-8-Z3-2-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.6110481809955672,
+      "nanos": 18884.6376953125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "comparator": "Flint",
+      "trial": 2,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-2-Flint-2-Flint.json"
+      ],
+      "output": "Sqrt-2-Flint-2-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5345581530054915,
+      "nanos": 14864.06103515625,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "comparator": "Z3",
+      "trial": 2,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Sqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-2-Z3-2-Z3.json"
+      ],
+      "output": "Sqrt-2-Z3-2-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.6886681339965435,
+      "nanos": 22525.53955078125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "comparator": "Flint",
+      "trial": 2,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-4-Flint-2-Flint.json"
+      ],
+      "output": "Sqrt-4-Flint-2-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.535219514000346,
+      "nanos": 15239.642578125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "comparator": "Z3",
+      "trial": 2,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Sqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-4-Z3-2-Z3.json"
+      ],
+      "output": "Sqrt-4-Z3-2-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.6864785370053141,
+      "nanos": 23017.1083984375,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "comparator": "Flint",
+      "trial": 2,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-8-Flint-2-Flint.json"
+      ],
+      "output": "Sqrt-8-Flint-2-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5400170880020596,
+      "nanos": 15565.755859375,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "comparator": "Z3",
+      "trial": 2,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Sqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-8-Z3-2-Z3.json"
+      ],
+      "output": "Sqrt-8-Z3-2-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.6849984520013095,
+      "nanos": 23442.089111328125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "comparator": "Flint",
+      "trial": 3,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-2-Flint-3-Flint.json"
+      ],
+      "output": "Add-2-Flint-3-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5628266120038461,
+      "nanos": 17338.563232421875,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "comparator": "Z3",
+      "trial": 3,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Add2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-2-Z3-3-Z3.json"
+      ],
+      "output": "Add-2-Z3-3-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5371316480013775,
+      "nanos": 14607.86572265625,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "comparator": "Flint",
+      "trial": 3,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-4-Flint-3-Flint.json"
+      ],
+      "output": "Add-4-Flint-3-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.6172167770055239,
+      "nanos": 20488.033447265625,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "comparator": "Z3",
+      "trial": 3,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Add4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-4-Z3-3-Z3.json"
+      ],
+      "output": "Add-4-Z3-3-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5864372239957447,
+      "nanos": 16549.688232421875,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "comparator": "Flint",
+      "trial": 3,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-8-Flint-3-Flint.json"
+      ],
+      "output": "Add-8-Flint-3-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.686645314002817,
+      "nanos": 23702.34326171875,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "comparator": "Z3",
+      "trial": 3,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Add8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-8-Z3-3-Z3.json"
+      ],
+      "output": "Add-8-Z3-3-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.61299380499986,
+      "nanos": 18485.292724609375,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "comparator": "Flint",
+      "trial": 3,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-2-Flint-3-Flint.json"
+      ],
+      "output": "Sqrt-2-Flint-3-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5351626789997681,
+      "nanos": 14926.52685546875,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "comparator": "Z3",
+      "trial": 3,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Sqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-2-Z3-3-Z3.json"
+      ],
+      "output": "Sqrt-2-Z3-3-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.6947073589981301,
+      "nanos": 22373.92578125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "comparator": "Flint",
+      "trial": 3,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-4-Flint-3-Flint.json"
+      ],
+      "output": "Sqrt-4-Flint-3-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5357162989967037,
+      "nanos": 15228.957763671875,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "comparator": "Z3",
+      "trial": 3,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Sqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-4-Z3-3-Z3.json"
+      ],
+      "output": "Sqrt-4-Z3-3-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.687231193005573,
+      "nanos": 23117.81201171875,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "comparator": "Flint",
+      "trial": 3,
+      "arm": "Flint",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runFlintSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-8-Flint-3-Flint.json"
+      ],
+      "output": "Sqrt-8-Flint-3-Flint.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5381396730008419,
+      "nanos": 15391.14892578125,
+      "result_hash": "0xb"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "comparator": "Z3",
+      "trial": 3,
+      "arm": "Z3",
+      "control": false,
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/hexrealalgebraic_bench-9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc",
+        "run",
+        "Hex.RealAlgebraicScaling.runZ3Sqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-8-Z3-3-Z3.json"
+      ],
+      "output": "Sqrt-8-Z3-3-Z3.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.6889165110042086,
+      "nanos": 23319.857177734375,
+      "result_hash": "0xb"
+    }
+  ],
+  "canonical_rows": [
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4918272650002109,
+      "output": "CanonicalAdd-4-0-Before.json",
+      "nanos": 9791292.25,
+      "result_hash": "0xb2956b93cac0235f"
+    },
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4901378170006865,
+      "output": "CanonicalAdd-4-0-After.json",
+      "nanos": 4937341.875,
+      "result_hash": "0xb2956b93cac0235f"
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicMul",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46653394599979947,
+      "output": "CanonicalMul-2-0-Before.json",
+      "nanos": 1062005.859375,
+      "result_hash": "0xab6b27ac2b367388"
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicMul",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46375285899921437,
+      "output": "CanonicalMul-2-0-After.json",
+      "nanos": 559429.1796875,
+      "result_hash": "0xab6b27ac2b367388"
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runCommonPowers",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.39137707999998383,
+      "output": "CommonPowers-16-0-Before.json",
+      "nanos": 25020032.5,
+      "result_hash": "0x3187ce8732d0a00b"
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runCommonPowers",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46393802300008247,
+      "output": "CommonPowers-16-0-After.json",
+      "nanos": 18074240.75,
+      "result_hash": "0x3187ce8732d0a00b"
+    },
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.48775819999991654,
+      "output": "CanonicalAdd-4-1-After.json",
+      "nanos": 4942776.4375,
+      "result_hash": "0xb2956b93cac0235f"
+    },
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49052783400020417,
+      "output": "CanonicalAdd-4-1-Before.json",
+      "nanos": 9896514.125,
+      "result_hash": "0xb2956b93cac0235f"
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicMul",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4648016809996989,
+      "output": "CanonicalMul-2-1-After.json",
+      "nanos": 572780.609375,
+      "result_hash": "0xab6b27ac2b367388"
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicMul",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46613205499943433,
+      "output": "CanonicalMul-2-1-Before.json",
+      "nanos": 1058486.359375,
+      "result_hash": "0xab6b27ac2b367388"
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runCommonPowers",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4626736250002068,
+      "output": "CommonPowers-16-1-After.json",
+      "nanos": 18120485.25,
+      "result_hash": "0x3187ce8732d0a00b"
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runCommonPowers",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.3926598569996713,
+      "output": "CommonPowers-16-1-Before.json",
+      "nanos": 25247524.5,
+      "result_hash": "0x3187ce8732d0a00b"
+    },
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.491448104000483,
+      "output": "CanonicalAdd-4-2-Before.json",
+      "nanos": 9843078.5,
+      "result_hash": "0xb2956b93cac0235f"
+    },
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49034042099992803,
+      "output": "CanonicalAdd-4-2-After.json",
+      "nanos": 4936845.5625,
+      "result_hash": "0xb2956b93cac0235f"
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicMul",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4657926170002611,
+      "output": "CanonicalMul-2-2-Before.json",
+      "nanos": 1062211.4375,
+      "result_hash": "0xab6b27ac2b367388"
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicMul",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4635952800008454,
+      "output": "CanonicalMul-2-2-After.json",
+      "nanos": 564169.9921875,
+      "result_hash": "0xab6b27ac2b367388"
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runCommonPowers",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4916759899997487,
+      "output": "CommonPowers-16-2-Before.json",
+      "nanos": 25099848.5,
+      "result_hash": "0x3187ce8732d0a00b"
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runCommonPowers",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46452338699964457,
+      "output": "CommonPowers-16-2-After.json",
+      "nanos": 18120045.5,
+      "result_hash": "0x3187ce8732d0a00b"
+    },
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4875946579995798,
+      "output": "CanonicalAdd-4-3-After.json",
+      "nanos": 4905009.5,
+      "result_hash": "0xb2956b93cac0235f"
+    },
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49415330000010727,
+      "output": "CanonicalAdd-4-3-Before.json",
+      "nanos": 9797126.5,
+      "result_hash": "0xb2956b93cac0235f"
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicMul",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46400346199970954,
+      "output": "CanonicalMul-2-3-After.json",
+      "nanos": 563821.296875,
+      "result_hash": "0xab6b27ac2b367388"
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicMul",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4657634129998769,
+      "output": "CanonicalMul-2-3-Before.json",
+      "nanos": 1063986.96875,
+      "result_hash": "0xab6b27ac2b367388"
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runCommonPowers",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4645076950000657,
+      "output": "CommonPowers-16-3-After.json",
+      "nanos": 17996684.75,
+      "result_hash": "0x3187ce8732d0a00b"
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runCommonPowers",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.3912879850004174,
+      "output": "CommonPowers-16-3-Before.json",
+      "nanos": 25046948.0,
+      "result_hash": "0x3187ce8732d0a00b"
+    }
+  ],
+  "summary": [
+    {
+      "operation": "Add",
+      "size": 2,
+      "paired_ratios": [
+        1.9123214707806955,
+        1.9270750288877136,
+        1.9144137384875966,
+        1.8530634614470145
+      ],
+      "median_paired_ratio": 1.913367604634146,
+      "median_ms": {
+        "Before": 0.920397171875,
+        "After": 0.4865311953125
+      }
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "paired_ratios": [
+        1.9726687458510594,
+        1.999838751195824,
+        2.000338823813785,
+        1.985163902753922
+      ],
+      "median_paired_ratio": 1.992501326974873,
+      "median_ms": {
+        "Before": 9.0620586875,
+        "After": 4.57219353125
+      }
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "paired_ratios": [
+        1.9491260089214677,
+        2.033538073599708,
+        2.013678806752414,
+        2.01485819524077
+      ],
+      "median_paired_ratio": 2.014268500996592,
+      "median_ms": {
+        "Before": 324.33607700000005,
+        "After": 160.22891349999998
+      }
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "paired_ratios": [
+        1.1466008731269615,
+        1.1198098253768576,
+        1.1416049863409776,
+        1.1302792226697178
+      ],
+      "median_paired_ratio": 1.1359421045053477,
+      "median_ms": {
+        "Before": 12.4951805625,
+        "After": 11.0605755625
+      }
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "paired_ratios": [
+        1.1937430098560635,
+        1.4216650984259689,
+        1.1729079361687258,
+        1.2026537407362625
+      ],
+      "median_paired_ratio": 1.1981983752961631,
+      "median_ms": {
+        "Before": 196.65779650000002,
+        "After": 163.850307
+      }
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "paired_ratios": [
+        1.341055728511319,
+        1.2280269145023242,
+        1.2519123414141153,
+        1.284882873766661
+      ],
+      "median_paired_ratio": 1.2683976075903882,
+      "median_ms": {
+        "Before": 8957.468313000001,
+        "After": 7115.180109999999
+      }
+    }
+  ],
+  "canonical_summary": [
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "paired_ratios": [
+        1.9831100413722111,
+        2.0022176301393766,
+        1.9937991527965688,
+        1.9973715647237789
+      ],
+      "median_paired_ratio": 1.9955853587601737,
+      "median_ms": {
+        "Before": 9.8201025,
+        "After": 4.937093718750001
+      }
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "paired_ratios": [
+        1.8983740890459841,
+        1.84797868861166,
+        1.882786132210622,
+        1.8870996442439942
+      ],
+      "median_paired_ratio": 1.8849428882273083,
+      "median_ms": {
+        "Before": 1.0621086484375,
+        "After": 0.56399564453125
+      }
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "paired_ratios": [
+        1.384292311144522,
+        1.3933139290516516,
+        1.385197873813286,
+        1.3917534450338138
+      ],
+      "median_paired_ratio": 1.38847565942355,
+      "median_ms": {
+        "Before": 25.07339825,
+        "After": 18.097143125000002
+      }
+    }
+  ],
+  "reference_source": "a3ddc9473fb850e38a609c1df377c58e7b0e60df"
+}
