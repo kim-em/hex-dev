@@ -208,8 +208,12 @@ theorem shared_realized :
     reference.model request (by simp [request, Live.Request.owners])
   let ambient := Ambient.ofField (Hex.RationalFn reference.Carrier)
   obtain ⟨result, produced, _⟩ := collection.enlarge?_models model ambient
-  obtain ⟨read, domain, closed, _, _, _, _, _, _, fixed, _, _, parameter, positive⟩ :=
+  obtain ⟨read, domain, data⟩ :=
     result.realize following gathered produced []
+  have closed := data.closed
+  have fixed := data.baseFixed
+  have parameter := data.parameter
+  have positive := data.positive
   have preserved := fixed coefficient (liouvilleNumber 2) coefficient_value
   exact ⟨collection, result, gathered, produced, read, domain, closed,
     preserved.1, preserved.2, parameter, positive⟩
@@ -240,8 +244,12 @@ theorem shared_twice_realized :
   let previous := first.model initial ambient built
   let nextAmbient := Ambient.ofField (Hex.RationalFn ambient.Carrier)
   obtain ⟨next, produced, _⟩ := first.collection.enlarge?_models previous nextAmbient
-  obtain ⟨read, domain, closed, _, _, _, _, _, _, fixed, _, _, parameter, positive⟩ :=
+  obtain ⟨read, domain, data⟩ :=
     next.realize_model previous produced []
+  have closed := data.closed
+  have fixed := data.representativeFixed
+  have parameter := data.parameter
+  have positive := data.positive
   let inherited := Context.baseValue staged.infinitesimal
     (RationalFn.C (Context.baseStored staged coefficient))
   have real : PackedContext.Realization.RealValue following.infinitesimal inherited
@@ -283,8 +291,10 @@ theorem shared_owner_realized :
     (by intro owner member; cases List.mem_singleton.mp member
         simp only [baseEq, PackedContext.infinitesimal_signature]
         exact ⟨List.Sublist.refl _, Nat.le_succ _⟩)
-  obtain ⟨read, domain, closed, _, _, _, _, _, _, ownerFixed⟩ :=
+  obtain ⟨read, domain, data⟩ :=
     shared.realize_values following.infinitesimal gathered (fun _ => [])
+  have closed := data.closed
+  have ownerFixed := data.ownerFixed
   obtain ⟨ownerHistory, inherited⟩ := suffix.realValue_owner staged following
     coefficient (liouvilleNumber 2) coefficient_value
   have fixed := ownerFixed ⟨0, by simp⟩ ownerHistory (suffix.embed coefficient)
@@ -325,8 +335,13 @@ theorem shared_thrice_realized :
   obtain ⟨third, final, _⟩ := second.collection.enlarge?_models secondModel finalAmbient
   let old := second.previous.value (first.previous.value (collection.shared.input.value coefficient))
   let carried := third.previous.value old
-  obtain ⟨read, domain, closed, _, _, _, fresh, _, _, fixed, _, _, parameter, positive⟩ :=
+  obtain ⟨read, domain, data⟩ :=
     third.realize_model secondModel final [] [carried - third.parameter]
+  have closed := data.closed
+  have fresh := data.additional
+  have fixed := data.representativeFixed
+  have parameter := data.parameter
+  have positive := data.positive
   let inherited := Context.baseValue staged.infinitesimal
     (RationalFn.C (Context.baseStored staged coefficient))
   let twice := Context.baseValue staged.infinitesimal.infinitesimal
@@ -405,8 +420,13 @@ theorem enlarged_owner_realized :
       exact ⟨List.Sublist.refl _, Nat.le_succ _⟩)
   let ambient := Ambient.ofField (Hex.RationalFn following.infinitesimal.reference.Carrier)
   obtain ⟨result, produced, _⟩ := collection.enlarge?_models model ambient
-  obtain ⟨read, domain, closed, _, _, finite, _, _, _, _, _, ownerFixed, parameter, positive⟩ :=
+  obtain ⟨read, domain, data⟩ :=
     result.realize following.infinitesimal gathered produced []
+  have closed := data.closed
+  have finite := data.owners
+  have ownerFixed := data.ownerFixed
+  have parameter := data.parameter
+  have positive := data.positive
   let index : Fin request.owners.length := ⟨0, by simp [request, Live.Request.owners]⟩
   obtain ⟨ownerHistory, inherited⟩ := suffix.realValue_owner staged following
     coefficient (liouvilleNumber 2) coefficient_value

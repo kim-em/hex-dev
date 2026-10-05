@@ -2095,6 +2095,11 @@ coefficient, reflects zero on the requested operands, and identifies reads of
 values equal in the shared context. A direct base-coefficient clause fixes
 `shared.input.value b` at its prescribed real value without an origin cast.
 Optional finite target requests also retain signs, domain and zero reflection.
+The result uses `Shared.Realized` with named fields for arithmetic, inventories,
+coherence and fixed coefficients. Enlargement returns `Enlargement.Realized`;
+its model form adds `ModelRealized.representativeFixed` for carrying arbitrary
+representatives through successive factory models. Consumers use these fields
+without depending on the order of the contracts.
 The owner coefficient clause fixes values inherited from each original owner's
 provider history through `shared.value index a`. Checked base subsequences
 preserve the prescribed values even when the prefixes were validated separately.

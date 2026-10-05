@@ -33,9 +33,15 @@ theorem enlarge_arithmetic (result : Enlargement original) (following : base.Rea
       (SignType.sign (x * y) : Int) = original.shared.input.context.sign (a * b) ∧
       (SignType.sign (x - epsilon) : Int) = result.collection.shared.input.context.sign
         (result.previous.value a - result.parameter) := by
-  obtain ⟨read, domain, targetClosed, closed, finite, _, fresh, _, _, _, _, _, parameter, positive⟩ :=
+  obtain ⟨read, domain, data⟩ :=
     result.realize following gathered produced [a, b, a + b, a * b]
       [result.previous.value a - result.parameter]
+  have targetClosed := data.closed
+  have closed := data.previousClosed
+  have finite := data.finite
+  have fresh := data.additional
+  have parameter := data.parameter
+  have positive := data.positive
   have left := finite a (by simp)
   have right := finite b (by simp)
   have sum := finite (a + b) (by simp)
@@ -64,7 +70,9 @@ theorem collection_replay (collection : Collection base request) (following : ba
         Transport.DescriptorData (fun a => read (collection.shared.value index a))
           (fun a => domain (collection.shared.value index a)) (request.owners[index]).sign
           (fun a : ℝ => (SignType.sign a : Int)) descriptor.raw descriptor.evidence := by
-  obtain ⟨read, domain, _, closed, finite, _, _⟩ := collection.realize following produced
+  obtain ⟨read, domain, data⟩ := collection.realize following produced
+  have closed := data.ownerClosed
+  have finite := data.finite
   refine ⟨read, domain, ?_⟩
   intro index descriptor member
   apply Transport.Inventory.descriptor_data (closed index)
@@ -94,9 +102,14 @@ theorem enlarge_twice (first : Enlargement original) (next : Enlargement first.c
   let initial := original.model following reference.model gathered
   let ambient := Ambient.ofField (Hex.RationalFn reference.Carrier)
   let previous := first.model initial ambient built
-  obtain ⟨read, domain, closed, _, finite, _, fresh, _, _, _, _, _, parameter, positive⟩ :=
+  obtain ⟨read, domain, data⟩ :=
     next.realize_model previous produced [first.parameter]
       [next.previous.value first.parameter - next.parameter]
+  have closed := data.closed
+  have finite := data.finite
+  have fresh := data.additional
+  have parameter := data.parameter
+  have positive := data.positive
   have old := finite first.parameter (by simp)
   have difference := fresh (next.previous.value first.parameter - next.parameter) (by simp)
   refine ⟨read, domain, closed, old.1, parameter, positive, old.2.1, ?_⟩
@@ -116,8 +129,10 @@ theorem target_replay (collection : Collection base request) (following : base.R
             List.Mem descriptor frame.descriptors →
             Transport.DescriptorData read domain collection.shared.input.context.sign
               (fun a : ℝ => (SignType.sign a : Int)) descriptor.raw descriptor.evidence := by
-  obtain ⟨read, domain, closed, _, _, additional, _⟩ :=
+  obtain ⟨read, domain, data⟩ :=
     collection.realize following produced collection.inventory
+  have closed := data.closed
+  have additional := data.additional
   refine ⟨read, domain, ?_⟩
   intro frame member descriptor stored
   apply Transport.Inventory.descriptor_data closed
@@ -172,11 +187,13 @@ theorem separate_providers (source parent : BaseContext.RealPrefix.Model registr
     [Context.ofBase original] (by
       intro owner member
       cases List.mem_singleton.mp member
-      simp only [baseOrigin, original, target, BaseContext.PackedContext.infinitesimal_signature,
+      simp only [baseOrigin, original, BaseContext.PackedContext.infinitesimal_signature,
         BaseContext.RealPrefix.finish_signature, sourceKeys, childKeys]
       exact ⟨List.sublist_append_right [alpha] [beta], Nat.le_refl _⟩)
-  obtain ⟨read, domain, closed, _, _, _, _, _, _, ownerFixed⟩ :=
+  obtain ⟨read, domain, data⟩ :=
     shared.realize_values following gathered (fun _ => [])
+  have closed := data.closed
+  have ownerFixed := data.ownerFixed
   have real : BaseContext.PackedContext.Realization.RealValue source.realization.infinitesimal a
       (source.interpretation.hom (Context.baseStored source.context.finish b)) :=
     (BaseContext.PackedContext.Realization.realValue_infinitesimal source.realization b _).mpr
