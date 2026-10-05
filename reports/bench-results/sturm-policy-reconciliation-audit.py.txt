@@ -1,0 +1,54 @@
+# Run with Python 3 and PyYAML from the repository root.
+# If the measured commit is unavailable: git fetch origin evidence/issue-10577-sturm-growing-6d78bf3
+import hashlib, importlib.util, json, re, subprocess
+from pathlib import Path
+import yaml
+root=Path.cwd()
+def sha(p): return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+spec=importlib.util.spec_from_file_location('admission', 'scripts/ci/check_named_admissions.py')
+m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+def normalized(s):
+    # Include string literals, which the admission scanner masks along with comments.
+    return (' '.join(m.code_only(s).split()), re.findall(r'"(?:\\.|[^"\\])*"', s))
+def declaration(s, name, kind='def'):
+    code=m.code_only(s)
+    match=re.search(r'^(?:@\[.*\]\s*)?'+kind+r' '+re.escape(name)+r'(?=\s|\(|:|$)',code,re.M)
+    assert match, name
+    end=re.search(r'^(?:@\[.*\]\s*)?(?:def |theorem |structure |instance |setup_benchmark |setup_fixed_benchmark |namespace |end |private def )',code[match.end():],re.M)
+    return normalized(s[match.start():match.end()+end.start() if end else len(s)])
+evidence=Path('reports/bench-results/prerequisite-sturm-growing-operands')
+saved=(evidence/'Frontend.lean.txt').read_text(); current=Path('bench/HexSturm/Frontend.lean').read_text()
+names=['head','fromHead','chainHash','certHash','integerHash','runPrepared','runCount','runPreparedCount','runCertificate','runPreparedCertificate','runCountCertificate','runFieldReplay','runCachedReplay','runClear','runInfinite','oddMantissa','endpointBounds','fractionalInput','runFractionalBits','translatedInput']
+comparison={name:declaration(saved,name)==declaration(current,name) for name in names}
+assert all(comparison.values()), comparison
+registrations={}
+for name in ['runFractionalBits','runPreparedBits','runCountBits','runPreparedCountBits','runCertificateBits','runPreparedCertificateBits','runCountCertificateBits','runFieldReplayBits','runCachedReplayBits','runClearBits','runInfiniteBits']:
+    registrations[name]=declaration(saved,name,'setup_benchmark')==declaration(current,name,'setup_benchmark')
+assert all(registrations.values()), registrations
+core_names=['normalize','prepare','queryPrepared','countPrepared','query','rootCount','certifyPrepared','certifyCountPrepared','certify','check','checkCached']
+core_saved=subprocess.check_output(['git','show','6d78bf3e1fb1aa23129df83f7888979dd5afeb6d:HexSturm/Basic.lean'],text=True)
+core_current=Path('HexSturm/Basic.lean').read_text()
+core_comparison={name:declaration(core_saved,name)==declaration(core_current,name) for name in core_names}
+assert all(core_comparison.values()), core_comparison
+rows=[]
+for filename in ['odd-operands.json','translated.json']:
+    for r in json.loads((evidence/filename).read_text())['results']:
+        points=r['points']; params=r['config']['param_schedule']['params']; trials=r['config']['outer_trials']
+        assert len(points)==len(params)*trials
+        assert all(p['status']=='ok' for p in points)
+        assert not r['budget_truncated']
+        assert all(sum(p['param']==n and p['trial_index']==t for p in points)==1 for n in params for t in range(trials))
+        assert r['slope']<0
+        rows.append({'function':r['function'], 'file':str(evidence/filename), 'sha256':sha(evidence/filename), 'declared_expression':r['complexity_formula'], 'harness_verdict':r['verdict'], 'residual_slope':r['slope'], 'completed_samples':len(points), 'params':params, 'outer_trials':trials, 'verdict_dropped_leading':r['verdict_dropped_leading'], 'recorded_toolchain':r['env']['lean_toolchain'], 'interpretation':'faster than predeclared cited upper bound on measured source; no two-sided pass'})
+registry=yaml.safe_load(Path('libraries.yml').read_text())['libraries']
+if isinstance(registry,list): registry={x['name']:x for x in registry}
+deps={}
+for name in ['HexSturm','HexSturmMathlib','HexRealAlgebraic','HexRealAlgebraicMathlib']:
+    entry=registry[name]; deps[name]={'done_through':entry['done_through'],'direct_dependencies':{d:registry[d]['done_through'] for d in entry['deps']}}
+meta=json.loads((evidence/'metadata.json').read_text())
+assert sha(evidence/'Frontend.lean.txt')==meta['hashes']['bench/HexSturm/Frontend.lean']
+changed=subprocess.check_output(['git','diff','--name-only',meta['head'],'HEAD','--','HexPoly','HexPolyZ','HexRealRoots'],text=True).splitlines()
+assert all('/SPEC/' in x for x in changed),changed
+result={'base_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'policy':'PLAN/Phase4.md and SPEC/benchmarking.md: independently derived model or cited upper bound; no mandatory dominant-phase profile','direct_dependency_state':deps,'growing_operand_evidence':{'metadata':str(evidence/'metadata.json'),'metadata_sha256':sha(evidence/'metadata.json'),'registered_source_snapshot_sha256':sha(evidence/'Frontend.lean.txt'),'snapshot_matches_recorded_hash':True,'measured_commit':meta['head'],'selected_benchmark_definitions_match_ignoring_comments_and_whitespace':comparison,'eleven_original_upper_bound_registrations_unchanged':registrations,'selected_core_definitions_unchanged':core_comparison,'HexPoly_HexPolyZ_HexRealRoots_changes_since_measured_commit':changed,'scope':'Core arithmetic paths unchanged; HexSturm Basic adds restoring constructors/proofs. New operations are outside retained registrations. Executable hashes are recorded for original collection; no current binary identity or current absolute timing is claimed.','runs':rows},'limits':['This audit schedules no measurements and advances no library phase.','Full import-cone or current binary identity is not inferred from selected declaration checks.','Historical raw profiles lost after reboot are not reusable raw attribution.','Sign traversal and head-degree frontend two-sided failures remain unresolved.']}
+out=Path('reports/bench-results/sturm-policy-reconciliation.json');out.write_text(json.dumps(result,indent=2)+'\n')
+print(json.dumps({'dependencies':deps,'checked_runs':len(rows),'completed_samples':sum(r['completed_samples'] for r in rows),'selected_definitions_equal':len(comparison)},indent=2))

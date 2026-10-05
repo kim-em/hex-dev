@@ -339,14 +339,18 @@ The replacement 128–1024 attempt is retained in
 fail their two-sided quadratic and cubic bit-work hypotheses. They are not
 relabelled as upper-bound passes after observation. The Rat-chain profile at
 512 has 52.06% allocation and 33.64% GMP, with linear-limb arithmetic rather
-than material general multiplication or gcd. The proposed quartic scalar
-citations therefore do not justify those head-degree mode-2 registrations.
+than material general multiplication or gcd. The cited GMP bounds and those
+profiles alone neither establish nor refute a total-work upper bound. Those
+old head-degree candidates remain retired pending a complete operation-count
+and intermediate-width audit; this does not reinterpret the failed two-sided
+retargeting/prepared-count claims.
 
 The power-of-two quadratic and endpoint attempts in that artifact are also
 retained. Primitive derivative normalization makes the quadratic's chain
 short; power-of-two dyadic endpoints have mantissa ±1. Their dominant work is
-linear-limb copying/shifting, not the general multiplication cited in their
-withdrawn quadratic upper-bound hypotheses.
+linear-limb copying/shifting. They do not provide the advertised general-operand
+coverage; the withdrawn hypotheses remain retained. Linear-limb dominance
+alone would not invalidate a correctly derived upper bound.
 
 ### New head-only and short-chain two-sided families
 
@@ -401,15 +405,19 @@ the number of operations, and all intermediate widths are O(b). The cited
 bounds are [GMP basecase multiplication](https://gmplib.org/manual/Basecase-Multiplication)
 and [GMP binary gcd](https://gmplib.org/manual/Binary-GCD), with faster
 large-operand algorithms in the same manual. Algorithm crossovers prevent a
-single tight monomial across these limb regimes. Operation-only profiles must
-confirm that general multiplication/gcd really occurs in the measured phase;
-otherwise the upper-bound claim is not admitted. These qualifications and
-schedules precede collection. The cap is not an absolute performance budget.
+single tight monomial across these limb regimes. The total-work argument also covers copies,
+allocation, coefficient signs and output hashing: fixed degree/chain lengths
+bound the number of arrays and coefficients, and each has O(b) width, so
+this work is O(b), within O(b²). Literal replay uses the same fixed polynomial
+lengths. Infinity checks omit finite Horner evaluation and remain within the
+same bound. General multiplication or gcd need not dominate the runtime for
+this cited upper bound to apply. The original declarations and schedules
+precede collection; the cap is an operational safeguard.
 
-Admission status: the odd cubic and integral-endpoint profiles show the
-required general products/gcds. The fractional family has a passing own profile with substantial inclusive
-multiplication/Toom entries; dominant-phase admission remains under audit.
-The translated frontend captures predominantly show single-limb arithmetic
-and copies; general-product caller attribution is incomplete. They therefore
-do not establish the dominant published phase and are unadmitted candidates.
-Their original declarations and completed measurements remain retained.
+The [retained observations](hex-sturm-performance.md#verdicts) satisfy these
+predeclared bounds on their recorded source, including the fractional and ten
+translated frontend cases. The two-sided harness's faster-direction
+`inconclusive` is not a failure of an upper bound under the current policy.
+Their historical profile summaries explain constants; missing raw files are
+not reprocessable attribution. No tight exponent, new measurement or phase
+advance is inferred. Failed two-sided declarations remain failures.

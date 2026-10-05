@@ -1,0 +1,14 @@
+
+.lake/build/bin/hexsturm_bench:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000049ad880 <_ZN4lean3mpzC1ERKS0_>:
+ 49ad880:	e9 8b 52 03 00       	jmp    49e2b10 <__gmpz_init_set>
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .plt:

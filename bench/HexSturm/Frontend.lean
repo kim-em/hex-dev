@@ -110,14 +110,15 @@ def runClear (i : Input) : Option UInt64 :=
 
 def runEmbed (i : Input) : Option UInt64 := i.integer.map fun c => certHash c.toRat
 
-/- Retired upper-bound hypothesis: the Chebyshev profile does not exercise
-the cited general arithmetic as a dominant phase. This registration is
-diagnostic and does not attest Phase 4. Not a unit-cost claim. The normal
-Chebyshev chain has O(n²) coefficient operations on O(n)-bit scalars. GMP's
-published schoolbook multiplication and classical quadratic gcd upper bounds
-cover Rat normalization and literal replay, hence O(n⁴) bit work. The mixed
-allocation/limb costs and algorithm thresholds prevent a uniform tight power
-model on the finite ladder. See reports/sturm-bit-cost-models.md. -/
+/- Retained head-degree upper-bound candidate: this audit does not establish
+the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
+widths for every stage. This diagnostic registration does not attest Phase 4.
+GMP's schoolbook multiplication and classical quadratic gcd bounds would
+cover Rat normalization and literal replay under those premises, yielding
+O(n⁴) total bit work with storage traversal separately accounted for.
+General multiplication need not dominate a valid bound. The mixed costs and
+algorithm thresholds prevent a uniform tight power model on this ladder.
+See reports/sturm-bit-cost-models.md. -/
 setup_benchmark runPrepared n => n ^ 4
   with prep := prepare
   where {
@@ -143,14 +144,15 @@ setup_benchmark runRetarget n => n ^ 2
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retired upper-bound hypothesis: the Chebyshev profile does not exercise
-the cited general arithmetic as a dominant phase. This registration is
-diagnostic and does not attest Phase 4. Not a unit-cost claim. The normal
-Chebyshev chain has O(n²) coefficient operations on O(n)-bit scalars. GMP's
-published schoolbook multiplication and classical quadratic gcd upper bounds
-cover Rat normalization and literal replay, hence O(n⁴) bit work. The mixed
-allocation/limb costs and algorithm thresholds prevent a uniform tight power
-model on the finite ladder. See reports/sturm-bit-cost-models.md. -/
+/- Retained head-degree upper-bound candidate: this audit does not establish
+the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
+widths for every stage. This diagnostic registration does not attest Phase 4.
+GMP's schoolbook multiplication and classical quadratic gcd bounds would
+cover Rat normalization and literal replay under those premises, yielding
+O(n⁴) total bit work with storage traversal separately accounted for.
+General multiplication need not dominate a valid bound. The mixed costs and
+algorithm thresholds prevent a uniform tight power model on this ladder.
+See reports/sturm-bit-cost-models.md. -/
 setup_benchmark runCount n => n ^ 4
   with prep := prepare
   where {
@@ -178,14 +180,15 @@ setup_benchmark runPreparedCount n => n ^ 3
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retired upper-bound hypothesis: the Chebyshev profile does not exercise
-the cited general arithmetic as a dominant phase. This registration is
-diagnostic and does not attest Phase 4. Not a unit-cost claim. The normal
-Chebyshev chain has O(n²) coefficient operations on O(n)-bit scalars. GMP's
-published schoolbook multiplication and classical quadratic gcd upper bounds
-cover Rat normalization and literal replay, hence O(n⁴) bit work. The mixed
-allocation/limb costs and algorithm thresholds prevent a uniform tight power
-model on the finite ladder. See reports/sturm-bit-cost-models.md. -/
+/- Retained head-degree upper-bound candidate: this audit does not establish
+the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
+widths for every stage. This diagnostic registration does not attest Phase 4.
+GMP's schoolbook multiplication and classical quadratic gcd bounds would
+cover Rat normalization and literal replay under those premises, yielding
+O(n⁴) total bit work with storage traversal separately accounted for.
+General multiplication need not dominate a valid bound. The mixed costs and
+algorithm thresholds prevent a uniform tight power model on this ladder.
+See reports/sturm-bit-cost-models.md. -/
 setup_benchmark runCertificate n => n ^ 4
   with prep := prepare
   where {
@@ -197,14 +200,15 @@ setup_benchmark runCertificate n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retired upper-bound hypothesis: the Chebyshev profile does not exercise
-the cited general arithmetic as a dominant phase. This registration is
-diagnostic and does not attest Phase 4. Not a unit-cost claim. The normal
-Chebyshev chain has O(n²) coefficient operations on O(n)-bit scalars. GMP's
-published schoolbook multiplication and classical quadratic gcd upper bounds
-cover Rat normalization and literal replay, hence O(n⁴) bit work. The mixed
-allocation/limb costs and algorithm thresholds prevent a uniform tight power
-model on the finite ladder. See reports/sturm-bit-cost-models.md. -/
+/- Retained head-degree upper-bound candidate: this audit does not establish
+the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
+widths for every stage. This diagnostic registration does not attest Phase 4.
+GMP's schoolbook multiplication and classical quadratic gcd bounds would
+cover Rat normalization and literal replay under those premises, yielding
+O(n⁴) total bit work with storage traversal separately accounted for.
+General multiplication need not dominate a valid bound. The mixed costs and
+algorithm thresholds prevent a uniform tight power model on this ladder.
+See reports/sturm-bit-cost-models.md. -/
 setup_benchmark runPreparedCertificate n => n ^ 4
   with prep := prepare
   where {
@@ -216,14 +220,15 @@ setup_benchmark runPreparedCertificate n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retired upper-bound hypothesis: the Chebyshev profile does not exercise
-the cited general arithmetic as a dominant phase. This registration is
-diagnostic and does not attest Phase 4. Not a unit-cost claim. The normal
-Chebyshev chain has O(n²) coefficient operations on O(n)-bit scalars. GMP's
-published schoolbook multiplication and classical quadratic gcd upper bounds
-cover Rat normalization and literal replay, hence O(n⁴) bit work. The mixed
-allocation/limb costs and algorithm thresholds prevent a uniform tight power
-model on the finite ladder. See reports/sturm-bit-cost-models.md. -/
+/- Retained head-degree upper-bound candidate: this audit does not establish
+the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
+widths for every stage. This diagnostic registration does not attest Phase 4.
+GMP's schoolbook multiplication and classical quadratic gcd bounds would
+cover Rat normalization and literal replay under those premises, yielding
+O(n⁴) total bit work with storage traversal separately accounted for.
+General multiplication need not dominate a valid bound. The mixed costs and
+algorithm thresholds prevent a uniform tight power model on this ladder.
+See reports/sturm-bit-cost-models.md. -/
 setup_benchmark runCountCertificate n => n ^ 4
   with prep := prepare
   where {
@@ -235,14 +240,15 @@ setup_benchmark runCountCertificate n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retired upper-bound hypothesis: the Chebyshev profile does not exercise
-the cited general arithmetic as a dominant phase. This registration is
-diagnostic and does not attest Phase 4. Not a unit-cost claim. The normal
-Chebyshev chain has O(n²) coefficient operations on O(n)-bit scalars. GMP's
-published schoolbook multiplication and classical quadratic gcd upper bounds
-cover Rat normalization and literal replay, hence O(n⁴) bit work. The mixed
-allocation/limb costs and algorithm thresholds prevent a uniform tight power
-model on the finite ladder. See reports/sturm-bit-cost-models.md. -/
+/- Retained head-degree upper-bound candidate: this audit does not establish
+the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
+widths for every stage. This diagnostic registration does not attest Phase 4.
+GMP's schoolbook multiplication and classical quadratic gcd bounds would
+cover Rat normalization and literal replay under those premises, yielding
+O(n⁴) total bit work with storage traversal separately accounted for.
+General multiplication need not dominate a valid bound. The mixed costs and
+algorithm thresholds prevent a uniform tight power model on this ladder.
+See reports/sturm-bit-cost-models.md. -/
 setup_benchmark runFieldReplay n => n ^ 4
   with prep := prepare
   where {
@@ -254,14 +260,15 @@ setup_benchmark runFieldReplay n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retired upper-bound hypothesis: the Chebyshev profile does not exercise
-the cited general arithmetic as a dominant phase. This registration is
-diagnostic and does not attest Phase 4. Not a unit-cost claim. The normal
-Chebyshev chain has O(n²) coefficient operations on O(n)-bit scalars. GMP's
-published schoolbook multiplication and classical quadratic gcd upper bounds
-cover Rat normalization and literal replay, hence O(n⁴) bit work. The mixed
-allocation/limb costs and algorithm thresholds prevent a uniform tight power
-model on the finite ladder. See reports/sturm-bit-cost-models.md. -/
+/- Retained head-degree upper-bound candidate: this audit does not establish
+the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
+widths for every stage. This diagnostic registration does not attest Phase 4.
+GMP's schoolbook multiplication and classical quadratic gcd bounds would
+cover Rat normalization and literal replay under those premises, yielding
+O(n⁴) total bit work with storage traversal separately accounted for.
+General multiplication need not dominate a valid bound. The mixed costs and
+algorithm thresholds prevent a uniform tight power model on this ladder.
+See reports/sturm-bit-cost-models.md. -/
 setup_benchmark runCachedReplay n => n ^ 4
   with prep := prepare
   where {
@@ -273,14 +280,15 @@ setup_benchmark runCachedReplay n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retired upper-bound hypothesis: the Chebyshev profile does not exercise
-the cited general arithmetic as a dominant phase. This registration is
-diagnostic and does not attest Phase 4. Not a unit-cost claim. The normal
-Chebyshev chain has O(n²) coefficient operations on O(n)-bit scalars. GMP's
-published schoolbook multiplication and classical quadratic gcd upper bounds
-cover Rat normalization and literal replay, hence O(n⁴) bit work. The mixed
-allocation/limb costs and algorithm thresholds prevent a uniform tight power
-model on the finite ladder. See reports/sturm-bit-cost-models.md. -/
+/- Retained head-degree upper-bound candidate: this audit does not establish
+the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
+widths for every stage. This diagnostic registration does not attest Phase 4.
+GMP's schoolbook multiplication and classical quadratic gcd bounds would
+cover Rat normalization and literal replay under those premises, yielding
+O(n⁴) total bit work with storage traversal separately accounted for.
+General multiplication need not dominate a valid bound. The mixed costs and
+algorithm thresholds prevent a uniform tight power model on this ladder.
+See reports/sturm-bit-cost-models.md. -/
 setup_benchmark runClear n => n ^ 4
   with prep := prepare
   where {
@@ -292,14 +300,15 @@ setup_benchmark runClear n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retired upper-bound hypothesis: the Chebyshev profile does not exercise
-the cited general arithmetic as a dominant phase. This registration is
-diagnostic and does not attest Phase 4. Not a unit-cost claim. The normal
-Chebyshev chain has O(n²) coefficient operations on O(n)-bit scalars. GMP's
-published schoolbook multiplication and classical quadratic gcd upper bounds
-cover Rat normalization and literal replay, hence O(n⁴) bit work. The mixed
-allocation/limb costs and algorithm thresholds prevent a uniform tight power
-model on the finite ladder. See reports/sturm-bit-cost-models.md. -/
+/- Retained head-degree upper-bound candidate: this audit does not establish
+the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
+widths for every stage. This diagnostic registration does not attest Phase 4.
+GMP's schoolbook multiplication and classical quadratic gcd bounds would
+cover Rat normalization and literal replay under those premises, yielding
+O(n⁴) total bit work with storage traversal separately accounted for.
+General multiplication need not dominate a valid bound. The mixed costs and
+algorithm thresholds prevent a uniform tight power model on this ladder.
+See reports/sturm-bit-cost-models.md. -/
 setup_benchmark runEmbed n => n ^ 4
   with prep := prepare
   where {
@@ -491,7 +500,7 @@ setup_benchmark runRetargetWide n => n ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, candidate cited upper bound pending a profile check: unlike the withdrawn power-of-two endpoint family, odd b-bit
+/- Cost-model derivation, cited upper bound: unlike the withdrawn power-of-two endpoint family, odd b-bit
 mantissas make each nontrivial fixed-degree Horner product growing-by-growing.
 Both integral and fractional endpoints exercise GMP multiplication. -/
 setup_benchmark runFractionalBits bits => bits ^ 2
@@ -526,12 +535,14 @@ def runCachedReplayBits := runCachedReplay
 def runClearBits := runClear
 def runInfiniteBits := runInfinite
 
-/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
-normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
-chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds apply only if those phases dominate, which the
-retained profiles do not establish. Size thresholds
-prevent a single tight monomial across the registered limb regimes. -/
+/- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
+and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
+intermediates. GMP's published quadratic product/gcd bounds cover its
+fixed number of scalar operations. Copying, allocation, sign tests and
+hashing visit a fixed number of O(b)-bit values and take O(b) work.
+Thus O(b²) bounds total work, including replay and infinity checks that
+omit finite Horner evaluation. No dominant multiplication phase is required.
+Size thresholds prevent a single tight monomial on the registered ladder. -/
 setup_benchmark runPreparedBits bits => bits ^ 2
   with prep := translatedInput
   where {
@@ -544,12 +555,14 @@ setup_benchmark runPreparedBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
-normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
-chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds apply only if those phases dominate, which the
-retained profiles do not establish. Size thresholds
-prevent a single tight monomial across the registered limb regimes. -/
+/- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
+and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
+intermediates. GMP's published quadratic product/gcd bounds cover its
+fixed number of scalar operations. Copying, allocation, sign tests and
+hashing visit a fixed number of O(b)-bit values and take O(b) work.
+Thus O(b²) bounds total work, including replay and infinity checks that
+omit finite Horner evaluation. No dominant multiplication phase is required.
+Size thresholds prevent a single tight monomial on the registered ladder. -/
 setup_benchmark runCountBits bits => bits ^ 2
   with prep := translatedInput
   where {
@@ -562,12 +575,14 @@ setup_benchmark runCountBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
-normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
-chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds apply only if those phases dominate, which the
-retained profiles do not establish. Size thresholds
-prevent a single tight monomial across the registered limb regimes. -/
+/- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
+and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
+intermediates. GMP's published quadratic product/gcd bounds cover its
+fixed number of scalar operations. Copying, allocation, sign tests and
+hashing visit a fixed number of O(b)-bit values and take O(b) work.
+Thus O(b²) bounds total work, including replay and infinity checks that
+omit finite Horner evaluation. No dominant multiplication phase is required.
+Size thresholds prevent a single tight monomial on the registered ladder. -/
 setup_benchmark runPreparedCountBits bits => bits ^ 2
   with prep := translatedInput
   where {
@@ -580,12 +595,14 @@ setup_benchmark runPreparedCountBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
-normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
-chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds apply only if those phases dominate, which the
-retained profiles do not establish. Size thresholds
-prevent a single tight monomial across the registered limb regimes. -/
+/- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
+and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
+intermediates. GMP's published quadratic product/gcd bounds cover its
+fixed number of scalar operations. Copying, allocation, sign tests and
+hashing visit a fixed number of O(b)-bit values and take O(b) work.
+Thus O(b²) bounds total work, including replay and infinity checks that
+omit finite Horner evaluation. No dominant multiplication phase is required.
+Size thresholds prevent a single tight monomial on the registered ladder. -/
 setup_benchmark runCertificateBits bits => bits ^ 2
   with prep := translatedInput
   where {
@@ -598,12 +615,14 @@ setup_benchmark runCertificateBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
-normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
-chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds apply only if those phases dominate, which the
-retained profiles do not establish. Size thresholds
-prevent a single tight monomial across the registered limb regimes. -/
+/- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
+and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
+intermediates. GMP's published quadratic product/gcd bounds cover its
+fixed number of scalar operations. Copying, allocation, sign tests and
+hashing visit a fixed number of O(b)-bit values and take O(b) work.
+Thus O(b²) bounds total work, including replay and infinity checks that
+omit finite Horner evaluation. No dominant multiplication phase is required.
+Size thresholds prevent a single tight monomial on the registered ladder. -/
 setup_benchmark runPreparedCertificateBits bits => bits ^ 2
   with prep := translatedInput
   where {
@@ -616,12 +635,14 @@ setup_benchmark runPreparedCertificateBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
-normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
-chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds apply only if those phases dominate, which the
-retained profiles do not establish. Size thresholds
-prevent a single tight monomial across the registered limb regimes. -/
+/- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
+and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
+intermediates. GMP's published quadratic product/gcd bounds cover its
+fixed number of scalar operations. Copying, allocation, sign tests and
+hashing visit a fixed number of O(b)-bit values and take O(b) work.
+Thus O(b²) bounds total work, including replay and infinity checks that
+omit finite Horner evaluation. No dominant multiplication phase is required.
+Size thresholds prevent a single tight monomial on the registered ladder. -/
 setup_benchmark runCountCertificateBits bits => bits ^ 2
   with prep := translatedInput
   where {
@@ -634,12 +655,14 @@ setup_benchmark runCountCertificateBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
-normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
-chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds apply only if those phases dominate, which the
-retained profiles do not establish. Size thresholds
-prevent a single tight monomial across the registered limb regimes. -/
+/- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
+and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
+intermediates. GMP's published quadratic product/gcd bounds cover its
+fixed number of scalar operations. Copying, allocation, sign tests and
+hashing visit a fixed number of O(b)-bit values and take O(b) work.
+Thus O(b²) bounds total work, including replay and infinity checks that
+omit finite Horner evaluation. No dominant multiplication phase is required.
+Size thresholds prevent a single tight monomial on the registered ladder. -/
 setup_benchmark runFieldReplayBits bits => bits ^ 2
   with prep := translatedInput
   where {
@@ -652,12 +675,14 @@ setup_benchmark runFieldReplayBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
-normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
-chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds apply only if those phases dominate, which the
-retained profiles do not establish. Size thresholds
-prevent a single tight monomial across the registered limb regimes. -/
+/- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
+and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
+intermediates. GMP's published quadratic product/gcd bounds cover its
+fixed number of scalar operations. Copying, allocation, sign tests and
+hashing visit a fixed number of O(b)-bit values and take O(b) work.
+Thus O(b²) bounds total work, including replay and infinity checks that
+omit finite Horner evaluation. No dominant multiplication phase is required.
+Size thresholds prevent a single tight monomial on the registered ladder. -/
 setup_benchmark runCachedReplayBits bits => bits ^ 2
   with prep := translatedInput
   where {
@@ -670,12 +695,14 @@ setup_benchmark runCachedReplayBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
-normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
-chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds apply only if those phases dominate, which the
-retained profiles do not establish. Size thresholds
-prevent a single tight monomial across the registered limb regimes. -/
+/- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
+and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
+intermediates. GMP's published quadratic product/gcd bounds cover its
+fixed number of scalar operations. Copying, allocation, sign tests and
+hashing visit a fixed number of O(b)-bit values and take O(b) work.
+Thus O(b²) bounds total work, including replay and infinity checks that
+omit finite Horner evaluation. No dominant multiplication phase is required.
+Size thresholds prevent a single tight monomial on the registered ladder. -/
 setup_benchmark runClearBits bits => bits ^ 2
   with prep := translatedInput
   where {
@@ -688,12 +715,14 @@ setup_benchmark runClearBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
-normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
-chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds apply only if those phases dominate, which the
-retained profiles do not establish. Size thresholds
-prevent a single tight monomial across the registered limb regimes. -/
+/- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
+and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
+intermediates. GMP's published quadratic product/gcd bounds cover its
+fixed number of scalar operations. Copying, allocation, sign tests and
+hashing visit a fixed number of O(b)-bit values and take O(b) work.
+Thus O(b²) bounds total work, including replay and infinity checks that
+omit finite Horner evaluation. No dominant multiplication phase is required.
+Size thresholds prevent a single tight monomial on the registered ladder. -/
 setup_benchmark runInfiniteBits bits => bits ^ 2
   with prep := translatedInput
   where {

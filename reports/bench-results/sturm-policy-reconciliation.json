@@ -1,0 +1,363 @@
+{
+  "base_commit": "604148b31df595fee164b89dd98ee44eaf248eea",
+  "policy": "PLAN/Phase4.md and SPEC/benchmarking.md: independently derived model or cited upper bound; no mandatory dominant-phase profile",
+  "direct_dependency_state": {
+    "HexSturm": {
+      "done_through": 3,
+      "direct_dependencies": {
+        "HexPoly": 7,
+        "HexRealRoots": 7
+      }
+    },
+    "HexSturmMathlib": {
+      "done_through": 3,
+      "direct_dependencies": {
+        "HexSturm": 3,
+        "HexPolyMathlib": 7,
+        "HexRealRootsMathlib": 7
+      }
+    },
+    "HexRealAlgebraic": {
+      "done_through": 3,
+      "direct_dependencies": {
+        "HexNumberField": 7
+      }
+    },
+    "HexRealAlgebraicMathlib": {
+      "done_through": 3,
+      "direct_dependencies": {
+        "HexRealAlgebraic": 3,
+        "HexNumberFieldMathlib": 7,
+        "HexRealRootsMathlib": 7
+      }
+    }
+  },
+  "growing_operand_evidence": {
+    "metadata": "reports/bench-results/prerequisite-sturm-growing-operands/metadata.json",
+    "metadata_sha256": "a877f71453d33f4b07835dc085b5440b485aa3051c7cb73480c15712a4a9e9cf",
+    "registered_source_snapshot_sha256": "f926233755825ca0ee1b6a0f752ff0752e7d5960d92e6e7d9e27d731dbfa3e5e",
+    "snapshot_matches_recorded_hash": true,
+    "measured_commit": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+    "selected_benchmark_definitions_match_ignoring_comments_and_whitespace": {
+      "head": true,
+      "fromHead": true,
+      "chainHash": true,
+      "certHash": true,
+      "integerHash": true,
+      "runPrepared": true,
+      "runCount": true,
+      "runPreparedCount": true,
+      "runCertificate": true,
+      "runPreparedCertificate": true,
+      "runCountCertificate": true,
+      "runFieldReplay": true,
+      "runCachedReplay": true,
+      "runClear": true,
+      "runInfinite": true,
+      "oddMantissa": true,
+      "endpointBounds": true,
+      "fractionalInput": true,
+      "runFractionalBits": true,
+      "translatedInput": true
+    },
+    "eleven_original_upper_bound_registrations_unchanged": {
+      "runFractionalBits": true,
+      "runPreparedBits": true,
+      "runCountBits": true,
+      "runPreparedCountBits": true,
+      "runCertificateBits": true,
+      "runPreparedCertificateBits": true,
+      "runCountCertificateBits": true,
+      "runFieldReplayBits": true,
+      "runCachedReplayBits": true,
+      "runClearBits": true,
+      "runInfiniteBits": true
+    },
+    "selected_core_definitions_unchanged": {
+      "normalize": true,
+      "prepare": true,
+      "queryPrepared": true,
+      "countPrepared": true,
+      "query": true,
+      "rootCount": true,
+      "certifyPrepared": true,
+      "certifyCountPrepared": true,
+      "certify": true,
+      "check": true,
+      "checkCached": true
+    },
+    "HexPoly_HexPolyZ_HexRealRoots_changes_since_measured_commit": [
+      "HexPoly/SPEC/hex-poly.md",
+      "HexPolyZ/SPEC/hex-poly-z.md"
+    ],
+    "scope": "Core arithmetic paths unchanged; HexSturm Basic adds restoring constructors/proofs. New operations are outside retained registrations. Executable hashes are recorded for original collection; no current binary identity or current absolute timing is claimed.",
+    "runs": [
+      {
+        "function": "Hex.SturmFrontendBench.runCoefficientBits",
+        "file": "reports/bench-results/prerequisite-sturm-growing-operands/odd-operands.json",
+        "sha256": "a6323dde75a6f0154e3607e0f231c7b4398bc21e8758281e40bab7c09a19be4f",
+        "declared_expression": "bits ^ 2",
+        "harness_verdict": "inconclusive",
+        "residual_slope": -0.352125,
+        "completed_samples": 20,
+        "params": [
+          2048,
+          4096,
+          8192,
+          16384,
+          32768
+        ],
+        "outer_trials": 4,
+        "verdict_dropped_leading": 1,
+        "recorded_toolchain": "leanprover/lean4:4.35.0-rc3",
+        "interpretation": "faster than predeclared cited upper bound on measured source; no two-sided pass"
+      },
+      {
+        "function": "Hex.SturmFrontendBench.runEndpointBits",
+        "file": "reports/bench-results/prerequisite-sturm-growing-operands/odd-operands.json",
+        "sha256": "a6323dde75a6f0154e3607e0f231c7b4398bc21e8758281e40bab7c09a19be4f",
+        "declared_expression": "bits ^ 2",
+        "harness_verdict": "inconclusive",
+        "residual_slope": -0.586339,
+        "completed_samples": 20,
+        "params": [
+          2048,
+          4096,
+          8192,
+          16384,
+          32768
+        ],
+        "outer_trials": 4,
+        "verdict_dropped_leading": 1,
+        "recorded_toolchain": "leanprover/lean4:4.35.0-rc3",
+        "interpretation": "faster than predeclared cited upper bound on measured source; no two-sided pass"
+      },
+      {
+        "function": "Hex.SturmFrontendBench.runFractionalBits",
+        "file": "reports/bench-results/prerequisite-sturm-growing-operands/odd-operands.json",
+        "sha256": "a6323dde75a6f0154e3607e0f231c7b4398bc21e8758281e40bab7c09a19be4f",
+        "declared_expression": "bits ^ 2",
+        "harness_verdict": "inconclusive",
+        "residual_slope": -0.580784,
+        "completed_samples": 20,
+        "params": [
+          2048,
+          4096,
+          8192,
+          16384,
+          32768
+        ],
+        "outer_trials": 4,
+        "verdict_dropped_leading": 1,
+        "recorded_toolchain": "leanprover/lean4:4.35.0-rc3",
+        "interpretation": "faster than predeclared cited upper bound on measured source; no two-sided pass"
+      },
+      {
+        "function": "Hex.SturmFrontendBench.runPreparedBits",
+        "file": "reports/bench-results/prerequisite-sturm-growing-operands/translated.json",
+        "sha256": "c2efa1955eac9d255ba642645dad9ac806c2a3a86596ca6161b41c853500b111",
+        "declared_expression": "bits ^ 2",
+        "harness_verdict": "inconclusive",
+        "residual_slope": -0.849544,
+        "completed_samples": 20,
+        "params": [
+          2048,
+          4096,
+          8192,
+          16384,
+          32768
+        ],
+        "outer_trials": 4,
+        "verdict_dropped_leading": 1,
+        "recorded_toolchain": "leanprover/lean4:4.35.0-rc3",
+        "interpretation": "faster than predeclared cited upper bound on measured source; no two-sided pass"
+      },
+      {
+        "function": "Hex.SturmFrontendBench.runCountBits",
+        "file": "reports/bench-results/prerequisite-sturm-growing-operands/translated.json",
+        "sha256": "c2efa1955eac9d255ba642645dad9ac806c2a3a86596ca6161b41c853500b111",
+        "declared_expression": "bits ^ 2",
+        "harness_verdict": "inconclusive",
+        "residual_slope": -0.869592,
+        "completed_samples": 20,
+        "params": [
+          2048,
+          4096,
+          8192,
+          16384,
+          32768
+        ],
+        "outer_trials": 4,
+        "verdict_dropped_leading": 1,
+        "recorded_toolchain": "leanprover/lean4:4.35.0-rc3",
+        "interpretation": "faster than predeclared cited upper bound on measured source; no two-sided pass"
+      },
+      {
+        "function": "Hex.SturmFrontendBench.runPreparedCountBits",
+        "file": "reports/bench-results/prerequisite-sturm-growing-operands/translated.json",
+        "sha256": "c2efa1955eac9d255ba642645dad9ac806c2a3a86596ca6161b41c853500b111",
+        "declared_expression": "bits ^ 2",
+        "harness_verdict": "inconclusive",
+        "residual_slope": -0.655776,
+        "completed_samples": 20,
+        "params": [
+          2048,
+          4096,
+          8192,
+          16384,
+          32768
+        ],
+        "outer_trials": 4,
+        "verdict_dropped_leading": 1,
+        "recorded_toolchain": "leanprover/lean4:4.35.0-rc3",
+        "interpretation": "faster than predeclared cited upper bound on measured source; no two-sided pass"
+      },
+      {
+        "function": "Hex.SturmFrontendBench.runCertificateBits",
+        "file": "reports/bench-results/prerequisite-sturm-growing-operands/translated.json",
+        "sha256": "c2efa1955eac9d255ba642645dad9ac806c2a3a86596ca6161b41c853500b111",
+        "declared_expression": "bits ^ 2",
+        "harness_verdict": "inconclusive",
+        "residual_slope": -0.882864,
+        "completed_samples": 20,
+        "params": [
+          2048,
+          4096,
+          8192,
+          16384,
+          32768
+        ],
+        "outer_trials": 4,
+        "verdict_dropped_leading": 1,
+        "recorded_toolchain": "leanprover/lean4:4.35.0-rc3",
+        "interpretation": "faster than predeclared cited upper bound on measured source; no two-sided pass"
+      },
+      {
+        "function": "Hex.SturmFrontendBench.runPreparedCertificateBits",
+        "file": "reports/bench-results/prerequisite-sturm-growing-operands/translated.json",
+        "sha256": "c2efa1955eac9d255ba642645dad9ac806c2a3a86596ca6161b41c853500b111",
+        "declared_expression": "bits ^ 2",
+        "harness_verdict": "inconclusive",
+        "residual_slope": -0.867449,
+        "completed_samples": 20,
+        "params": [
+          2048,
+          4096,
+          8192,
+          16384,
+          32768
+        ],
+        "outer_trials": 4,
+        "verdict_dropped_leading": 1,
+        "recorded_toolchain": "leanprover/lean4:4.35.0-rc3",
+        "interpretation": "faster than predeclared cited upper bound on measured source; no two-sided pass"
+      },
+      {
+        "function": "Hex.SturmFrontendBench.runCountCertificateBits",
+        "file": "reports/bench-results/prerequisite-sturm-growing-operands/translated.json",
+        "sha256": "c2efa1955eac9d255ba642645dad9ac806c2a3a86596ca6161b41c853500b111",
+        "declared_expression": "bits ^ 2",
+        "harness_verdict": "inconclusive",
+        "residual_slope": -0.777107,
+        "completed_samples": 20,
+        "params": [
+          2048,
+          4096,
+          8192,
+          16384,
+          32768
+        ],
+        "outer_trials": 4,
+        "verdict_dropped_leading": 1,
+        "recorded_toolchain": "leanprover/lean4:4.35.0-rc3",
+        "interpretation": "faster than predeclared cited upper bound on measured source; no two-sided pass"
+      },
+      {
+        "function": "Hex.SturmFrontendBench.runFieldReplayBits",
+        "file": "reports/bench-results/prerequisite-sturm-growing-operands/translated.json",
+        "sha256": "c2efa1955eac9d255ba642645dad9ac806c2a3a86596ca6161b41c853500b111",
+        "declared_expression": "bits ^ 2",
+        "harness_verdict": "inconclusive",
+        "residual_slope": -0.876956,
+        "completed_samples": 20,
+        "params": [
+          2048,
+          4096,
+          8192,
+          16384,
+          32768
+        ],
+        "outer_trials": 4,
+        "verdict_dropped_leading": 1,
+        "recorded_toolchain": "leanprover/lean4:4.35.0-rc3",
+        "interpretation": "faster than predeclared cited upper bound on measured source; no two-sided pass"
+      },
+      {
+        "function": "Hex.SturmFrontendBench.runCachedReplayBits",
+        "file": "reports/bench-results/prerequisite-sturm-growing-operands/translated.json",
+        "sha256": "c2efa1955eac9d255ba642645dad9ac806c2a3a86596ca6161b41c853500b111",
+        "declared_expression": "bits ^ 2",
+        "harness_verdict": "inconclusive",
+        "residual_slope": -0.85663,
+        "completed_samples": 20,
+        "params": [
+          2048,
+          4096,
+          8192,
+          16384,
+          32768
+        ],
+        "outer_trials": 4,
+        "verdict_dropped_leading": 1,
+        "recorded_toolchain": "leanprover/lean4:4.35.0-rc3",
+        "interpretation": "faster than predeclared cited upper bound on measured source; no two-sided pass"
+      },
+      {
+        "function": "Hex.SturmFrontendBench.runClearBits",
+        "file": "reports/bench-results/prerequisite-sturm-growing-operands/translated.json",
+        "sha256": "c2efa1955eac9d255ba642645dad9ac806c2a3a86596ca6161b41c853500b111",
+        "declared_expression": "bits ^ 2",
+        "harness_verdict": "inconclusive",
+        "residual_slope": -0.829891,
+        "completed_samples": 20,
+        "params": [
+          2048,
+          4096,
+          8192,
+          16384,
+          32768
+        ],
+        "outer_trials": 4,
+        "verdict_dropped_leading": 1,
+        "recorded_toolchain": "leanprover/lean4:4.35.0-rc3",
+        "interpretation": "faster than predeclared cited upper bound on measured source; no two-sided pass"
+      },
+      {
+        "function": "Hex.SturmFrontendBench.runInfiniteBits",
+        "file": "reports/bench-results/prerequisite-sturm-growing-operands/translated.json",
+        "sha256": "c2efa1955eac9d255ba642645dad9ac806c2a3a86596ca6161b41c853500b111",
+        "declared_expression": "bits ^ 2",
+        "harness_verdict": "inconclusive",
+        "residual_slope": -0.954303,
+        "completed_samples": 20,
+        "params": [
+          2048,
+          4096,
+          8192,
+          16384,
+          32768
+        ],
+        "outer_trials": 4,
+        "verdict_dropped_leading": 1,
+        "recorded_toolchain": "leanprover/lean4:4.35.0-rc3",
+        "interpretation": "faster than predeclared cited upper bound on measured source; no two-sided pass"
+      }
+    ]
+  },
+  "limits": [
+    "This audit schedules no measurements and advances no library phase.",
+    "Full import-cone or current binary identity is not inferred from selected declaration checks.",
+    "Historical raw profiles lost after reboot are not reusable raw attribution.",
+    "Sign traversal and head-degree frontend two-sided failures remain unresolved."
+  ]
+}
