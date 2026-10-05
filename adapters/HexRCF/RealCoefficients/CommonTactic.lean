@@ -915,7 +915,8 @@ private meta partial def prepareCached (baseCache : IO.Ref (ExprMap AlgebraicRoo
   return result
 
 /-- Authenticate sources with one cache for the entire recursive preparation.
-The cache is discarded together with any failed preparation. -/
+Every nested failure is terminal for this call. The cache is discarded when
+the top-level call returns, including after a nested environment rollback. -/
 meta def prepare (target : Expr) :
     MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Environment) := do
   let baseCache ← IO.mkRef ({} : ExprMap AlgebraicRoot.Identity)

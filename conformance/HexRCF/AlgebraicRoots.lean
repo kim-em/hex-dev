@@ -167,6 +167,20 @@ run_elab do
     throwError "oversized root was not refused before base preparation"
   unless early.consumed == 0 && early.requested == 5 &&
       (← calls.get) == 1 do throwError "early degree refusal ran base preparation"
+  let base : Expr ← pure q((3 : ℝ) + Real.sqrt 2)
+  let some entry := (← cache.get)[base]? |
+    throwError "shared base was not cached"
+  cache.modify (·.insert base
+    {entry with proof := mkConst `Hex.RCF.AlgebraicRoots.missingBaseProof})
+  let before ← getMCtx
+  let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
+  let .error (.internal "cached base proof is unavailable") ←
+      (AlgebraicRoot.identify q(Real.sqrt (3 + Real.sqrt 2))
+        q(3 + Real.sqrt 2) 2 prepareBase limit (some cache)).run |
+    throwError "cache accepted a missing proof declaration"
+  unless (← calls.get) == 1 && (← getMCtx).mvarCounter == before.mvarCounter &&
+      (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
+    throwError "invalid cache entry triggered fallback or changed caller state"
   let unsupported target := pure (.error
     (Hex.RealFormula.Reify.Error.unsupported target "test unsupported base"))
   let .error (.unsupported subject "test unsupported base") ←

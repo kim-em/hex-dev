@@ -86,9 +86,43 @@ theorem false_sentence : ¬ (∀ x : ℝ, x ^ 2 + Real.sqrt 2 - Real.pi > 0) := 
   norm_num at hzero
   linarith [Real.pi_gt_three]
 
-/-- error: rcf: algebraic enclosure needs a supported selected-field presentation -/
+theorem pi_nested : ∀ x : ℝ,
+    x ^ 2 + Real.pi - Real.sqrt (Real.sqrt 2) > 0 := by rcf
+
+theorem exp_shifted : ∀ x : ℝ,
+    x ^ 2 + Real.exp 1 - Real.sqrt (3 + Real.sqrt 2) > 0 := by rcf
+
+theorem pi_guarded_root : ∀ x : ℝ,
+    x ^ 2 + Real.pi - Real.sqrt (1 / (4 + Real.sqrt 2)) > 0 := by rcf
+
+theorem pi_nested_divisor : ∀ x : ℝ,
+    x ^ 2 + 1 / (Real.pi - Real.sqrt (Real.sqrt 2)) > 0 := by rcf
+
+/-- error: rcf: original closed divisor is zero -/
 #guard_msgs in
-example : ∀ x : ℝ, x ^ 2 + Real.pi - Real.sqrt (Real.sqrt 2) > 0 := by rcf
+example : ∀ x : ℝ,
+    x ^ 2 + Real.pi + Real.sqrt (0 / (Real.sqrt 2 - Real.sqrt 2)) > 0 := by rcf
+
+/-- error: rcf: original closed divisor is zero -/
+#guard_msgs in
+example : ∀ x : ℝ,
+    x ^ 2 + Real.pi + 0 * Real.sqrt (1 / (Real.sqrt 2 - Real.sqrt 2)) > 0 := by rcf
+
+/-- error: rcf: original closed divisor is zero -/
+#guard_msgs in
+example : ∀ x ∈ Set.Ioc (1 : ℝ) 0,
+    x ^ 2 + Real.pi + Real.sqrt (0 / (Real.sqrt 2 - Real.sqrt 2)) > 0 := by rcf
+
+/-- error: rcf: original closed divisor remains unresolved in supplied bounds -/
+#guard_msgs in
+example : ∀ x : ℝ,
+    x ^ 2 + Real.pi + 0 / (NamedConstants.unknown - Real.sqrt (Real.sqrt 2)) > 0 := by rcf
+
+/-- error: rcf: budget exhausted in dimension literal exponent: limit 2, consumed 2, requested 4 -/
+#guard_msgs in
+set_option rcf.algebraic.commonDegree 2 in
+example : ∀ x : ℝ,
+    x ^ 2 + Real.pi - Real.sqrt (Real.sqrt 2) > 0 := by rcf
 
 /-- error: rcf: original closed divisor is zero -/
 #guard_msgs in
@@ -104,11 +138,14 @@ example : ∀ x : ℝ,
 example : ∀ x ∈ Set.Ioc (1 : ℝ) 0,
     x ^ 2 + Real.pi + 0 / (Real.sqrt 2 - Real.sqrt 2) > 0 := by rcf
 
-private meta def refuses (action : MetaM α) : MetaM Unit := do
+private meta def refuses (action : MetaM α) (expected : Option String := none) : MetaM Unit := do
   let before ← getMCtx
   let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
   let failed ← tryCatchRuntimeEx (action *> pure false) (fun error => do
     if error.isRuntime || error.isInterrupt then throw error
+    if let some expected := expected then
+      unless (← error.toMessageData.toString) == expected do
+        throwError "unexpected mixed finite refusal: {error.toMessageData}"
     pure true)
   unless failed do throwError "expected mixed finite evidence rejection"
   unless (← getMCtx).mvarCounter == before.mvarCounter do
@@ -120,6 +157,12 @@ private meta def refuses (action : MetaM α) : MetaM Unit := do
 #guard_msgs (whitespace := lax) in
 example : ∀ x : ℝ,
     x ^ 2 + Real.pi + Real.sqrt ((((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ)) ^ (64 : ℕ)) > 0 := by rcf
+
+/-- error: rcf: budget exhausted in dimension coefficient bits: limit 4096, consumed 3, requested 4097 -/
+#guard_msgs (whitespace := lax) in
+example : ∀ x : ℝ,
+    x ^ 2 + Real.pi + Real.sqrt
+      (Real.sqrt ((((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ)) ^ (64 : ℕ))) > 0 := by rcf
 
 /-- error: rcf: budget exhausted in dimension coefficient bits: limit 4096, consumed 3, requested 4097 -/
 #guard_msgs (whitespace := lax) in
@@ -220,7 +263,33 @@ run_elab do
     throwError "higher-root enclosure did not authenticate its selected embedding"
   let _ ← Hex.RCF.checkProof `Hex.RCF.MixedConstants.rootEnclosure
     (← inferType rootProof) rootProof
-  refuses (AlgebraicBounds.enclose q(Real.sqrt (Real.sqrt 2)) (1 / 16))
+  let (nestedBounds, nestedProof) ← AlgebraicBounds.enclose q(Real.sqrt (Real.sqrt 2)) (1 / 16)
+  let nestedName := nestedProof.getAppFn.constName!
+  let .thmInfo _ ← getConstInfo nestedName |
+    throwError "nested public enclosure did not produce a fresh ordinary theorem"
+  let lower : Q(ℚ) ← pure (← mkAppM ``mkRat
+    #[mkIntLit nestedBounds.lower.num, mkNatLit nestedBounds.lower.den])
+  let upper : Q(ℚ) ← pure (← mkAppM ``mkRat
+    #[mkIntLit nestedBounds.upper.num, mkNatLit nestedBounds.upper.den])
+  let ordered ← mkDecideProof q($lower ≤ $upper)
+  let literal ← mkAppM ``Hex.OrderedFn.Oracle.Bounds.mk #[lower, upper, ordered]
+  let _ ← Hex.RCF.checkProof `Hex.RCF.MixedConstants.nestedEnclosure
+    (← mkAppM ``Hex.OrderedFn.Oracle.Contains #[literal, q(Real.sqrt (Real.sqrt 2))])
+    nestedProof
+  unless ← Hex.RCF.ProofEvidence.contains nestedName
+      (fun e => e.isConstOf ``CommonPresentation.checkRoot_sound) do
+    throwError "nested public enclosure omitted exact source authentication"
+  let nestedFalse ← Finite.prepare q(∀ x : ℝ,
+    x ^ 2 + Real.sqrt (Real.sqrt 2) - Real.pi > 0)
+  refuses (Finite.build nestedFalse)
+  refuses (AlgebraicBounds.enclose
+    q(Real.sqrt (0 / (Real.sqrt 2 - Real.sqrt 2))) (1 / 16))
+    (some "rcf: original closed divisor is zero")
+  refuses (withOptions (CommonTactic.rcf.algebraic.commonDegree.set · 2)
+    (AlgebraicBounds.enclose q(Real.sqrt (Real.sqrt 2)) (1 / 16)))
+    (some "rcf: budget exhausted in dimension literal exponent: limit 2, consumed 2, requested 4")
+  refuses (AlgebraicBounds.enclose q(Real.sqrt Real.pi) (1 / 16))
+    (some "rcf: no selected-field environment\n  √Real.pi")
   let shared ← Finite.prepare q(∀ x : ℝ, x ^ 2 + 1 / (Real.pi - Real.sqrt 2) > 0)
   let some guard := shared.guardBounds[0]? | throwError "missing shared guard bound"
   let some coefficient := shared.coefficients[0]? | throwError "missing inverse bound"
@@ -242,7 +311,21 @@ run_elab do
 
 end Hex.RCF.MixedConstants
 
-open Hex.RCF.RealCoefficients
+open Hex Hex.RCF.RealCoefficients
+
+private meta def checkRootProof (name : Lean.Name) : Lean.MetaM Unit := do
+  for marker in [``CommonPresentation.checkEntry_sound_of_selected,
+      ``CommonPresentation.checkRoot_sound, ``Replay.check_sound] do
+    unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf marker) do
+      throwError "mixed algebraic-base proof omitted ordinary replay {marker}"
+  for forbidden in [``rootInterval, ``RealAlgebraicNumber.approxBall, ``Replay.build,
+      ``FieldBuild.produceWithin, ``AlgebraicRoot.identify, ``AlgebraicBounds.enclose,
+      ``Finite.prepare, ``Finite.build, ``FieldBuild.buildTable, ``Coefficients.root,
+      ``Sturm.queryPrepared, ``Sturm.certifyPrepared, ``QAdjoin.common,
+      ``RealAlgebraicNumber.ofAlgebraic?, ``PolyQuot.toAlgebraicNumber] do
+    if ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf forbidden) then
+      throwError "mixed algebraic-base quotation includes native production {forbidden}"
+  Hex.RCF.checkAxioms name (Lean.mkConst name)
 
 run_meta do
   for name in [`Hex.RCF.MixedConstants.pi_radical, `Hex.RCF.MixedConstants.pi_other_radical,
@@ -250,7 +333,9 @@ run_meta do
       `Hex.RCF.MixedConstants.exp_selected, `Hex.RCF.MixedConstants.exp_normalized,
       `Hex.RCF.MixedConstants.exp_field, `Hex.RCF.MixedConstants.pi_negative_field,
       `Hex.RCF.MixedConstants.pi_positive_divisor,
-      `Hex.RCF.MixedConstants.pi_negative_divisor, `Hex.RCF.MixedConstants.pi_cancelled] do
+      `Hex.RCF.MixedConstants.pi_negative_divisor, `Hex.RCF.MixedConstants.pi_cancelled,
+      `Hex.RCF.MixedConstants.pi_nested, `Hex.RCF.MixedConstants.exp_shifted,
+      `Hex.RCF.MixedConstants.pi_guarded_root, `Hex.RCF.MixedConstants.pi_nested_divisor] do
     unless ← Hex.RCF.ProofEvidence.contains name
         (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound ||
           e.isConstOf ``Hex.RCF.RealCoefficients.Replay.check_sound) do
@@ -263,6 +348,9 @@ run_meta do
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.MixedConstants.pi_rational_root
       (fun e => e.isConstOf ``RationalRoot.selected) do
     throwError "mixed rational-root proof did not use its checked embedding"
+  for name in [`Hex.RCF.MixedConstants.pi_nested, `Hex.RCF.MixedConstants.exp_shifted,
+      `Hex.RCF.MixedConstants.pi_guarded_root, `Hex.RCF.MixedConstants.pi_nested_divisor] do
+    checkRootProof name
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.MixedConstants.pi_inverse_root
       (fun e => e.isConstOf ``RationalRoot.selected) do
     throwError "inverse-written root did not use its checked embedding"
@@ -328,3 +416,117 @@ run_meta do
 /-- info: 'Hex.RCF.MixedConstants.pi_inverse_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.MixedConstants.pi_inverse_root
+
+/-- info: 'Hex.RCF.MixedConstants.pi_nested' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RCF.MixedConstants.pi_nested
+/-- info: 'Hex.RCF.MixedConstants.exp_shifted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RCF.MixedConstants.exp_shifted
+/-- info: 'Hex.RCF.MixedConstants.pi_guarded_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RCF.MixedConstants.pi_guarded_root
+/-- info: 'Hex.RCF.MixedConstants.pi_nested_divisor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RCF.MixedConstants.pi_nested_divisor
+
+namespace Hex.RCF.MixedConstants
+
+open Lean Meta Qq
+
+set_option maxRecDepth 16384
+set_option maxHeartbeats 2400000
+
+-- A registered subterm inside a root remains a frozen registry dependency,
+-- even when exact algebraic replay proves the outer containment independently.
+@[rcf_constant] def innerRegistration : Registration (Real.sqrt 2) where
+  version := 1
+  approximation _ := ⟨1, 2, by decide⟩
+  containment _ _ := by
+    simp only [Hex.OrderedFn.Oracle.Contains]
+    constructor
+    · norm_num [Real.le_sqrt]
+    · norm_num [Real.sqrt_le_iff]
+
+theorem pi_registered_base : ∀ x : ℝ,
+    x ^ 2 + Real.pi - Real.sqrt (Real.sqrt 2) > 0 := by rcf
+
+run_elab do
+  let target := q(∀ x : ℝ, x ^ 2 + Real.pi - Real.sqrt (Real.sqrt 2) > 0)
+  let prepared ← Finite.prepare target
+  let some index := prepared.coefficients.findIdx? fun e =>
+      e.source == q(Real.sqrt (Real.sqrt 2)) |
+    throwError "missing registered-base enclosure"
+  let some evidence := prepared.coefficients[index]? |
+    throwError "missing indexed registered-base enclosure"
+  unless evidence.observations.map (·.declaration) == #[``innerRegistration] do
+    throwError "nested root omitted the matched inner provider"
+  let certificate ← Finite.build prepared
+  let _ ← Finite.check prepared.source certificate
+  let corrupt (observations : Array Finite.Observation) :=
+    {certificate with prepared := {prepared with
+      coefficients := prepared.coefficients.set! index
+        {evidence with observations := observations}}}
+  refuses (Finite.check prepared.source (corrupt #[]))
+    (some "rcf: enclosure omits or transplants provider observations")
+  let some observation := evidence.observations[0]? | throwError "missing inner observation"
+  refuses (Finite.check prepared.source (corrupt #[{observation with version := 999}]))
+    (some "rcf: enclosure has a stale provider version")
+
+end Hex.RCF.MixedConstants
+
+/-- info: 'Hex.RCF.MixedConstants.pi_registered_base' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RCF.MixedConstants.pi_registered_base
+
+run_meta checkRootProof `Hex.RCF.MixedConstants.pi_registered_base
+
+namespace Hex.RCF.MixedConstants
+
+open Lean Meta Qq
+set_option maxRecDepth 16384
+set_option maxHeartbeats 2400000
+
+/-- error: rcf: no selected-field environment
+  √Real.pi -/
+#guard_msgs in
+example : ∀ x : ℝ, x ^ 2 + Real.sqrt Real.pi > 0 := by rcf
+
+@[rcf_constant] def outerRegistration : Registration (Real.sqrt (Real.sqrt 2)) where
+  version := 1
+  approximation _ := ⟨1, 2, by decide⟩
+  containment _ _ := by
+    simp only [Hex.OrderedFn.Oracle.Contains]
+    constructor <;> norm_num [Real.le_sqrt, Real.sqrt_le_iff]
+
+run_elab do
+  let prepared ← Finite.prepare q(∀ x : ℝ,
+    x ^ 2 + Real.pi - Real.sqrt (Real.sqrt 2) > 0)
+  let some evidence := prepared.coefficients.find? fun e =>
+      e.source == q(Real.sqrt (Real.sqrt 2)) |
+    throwError "missing whole registered-root enclosure"
+  unless evidence.observations.map (·.declaration) == #[``outerRegistration] do
+    throwError "whole-subject registration did not precede the inner provider"
+  if ← Hex.RCF.ProofEvidence.contains evidence.proof.getAppFn.constName!
+      (fun e => e.isConstOf ``CommonPresentation.checkRoot_sound) then
+    throwError "whole registered root invoked exact algebraic replay"
+  let certificate ← Finite.build prepared
+  let _ ← Finite.check prepared.source certificate
+
+@[rcf_constant] def fourRegistration : Registration (4 : ℝ) where
+  version := 1
+  approximation _ := Hex.OrderedFn.Oracle.Bounds.singleton 4
+  containment _ _ := by
+    norm_num [Hex.OrderedFn.Oracle.Contains, Hex.OrderedFn.Oracle.Bounds.singleton]
+
+run_elab do
+  let prepared ← Finite.prepare q(∀ x : ℝ, x ^ 2 + Real.pi + Real.sqrt 4 > 0)
+  let some evidence := prepared.coefficients.find? fun e => e.source == q(Real.sqrt 4) |
+    throwError "missing rational-root enclosure with registered radicand"
+  unless evidence.bounds.lower == 2 && evidence.bounds.upper == 2 &&
+      evidence.observations.map (·.declaration) == #[``fourRegistration] do
+    throwError "registered rational radicand lost singleton bounds or observation"
+  let certificate ← Finite.build prepared
+  let _ ← Finite.check prepared.source certificate
+
+end Hex.RCF.MixedConstants
