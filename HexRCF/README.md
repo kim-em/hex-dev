@@ -207,11 +207,15 @@ conjugates, coefficient order, diagnostic false results and half-open domains.
 `Gather.values` transports ordered coefficients from independently constructed
 native contexts through the owner's checked common-context maps. Its
 `prepare_eval` and `run_spec` laws preserve coordinates in supplied compatible
-models. `gather_spec` and `run_original` additionally bind those coordinates to
-the authenticated original owner models and selected embeddings. The
+models. `gather_subsequence` proves gathering and decision production when each
+owner's registered keys form an ordered subsequence of the target keys and its
+infinitesimal depth does not exceed the target depth. For example, an owner over
+`[β]` can enter a supplied target over `[α, β]`; provider versions and key order
+remain fixed. `gather_spec` retains the prefix API. `run_original` additionally
+binds coordinates to separately authenticated original models and selected embeddings. The
 [gathering regressions](../conformance/HexRCF/Gather.lean) exercise different
 polynomials, selected conjugates, repeated owners, cancellation and a further
-root over the common coefficient field.
+root over the common coefficient field, non-prefix compatibility and stale keys.
 This is a producer API, not literal replay or source-goal quotation. The manual
 gives direct API examples. General frozen tower replay, source authentication
 for that backend and joint infinitesimal realization still require the owner

@@ -8,6 +8,7 @@ public import HexRCF.RealCoefficients.Samples
 public import HexRealClosureMathlib.CacheGather
 
 public section
+open scoped List
 namespace Hex.RCF.RealCoefficients.Gather
 open Hex RealClosure RealClosure.Tower
 
@@ -87,8 +88,28 @@ theorem run_original (following : base.Realization)
   rw [aligned] at result
   exact result
 
-/-- Actual gathering succeeds for compatible original owners and produces the
-shared formula decision with all owner meanings in their original order. -/
+/-- Ordered subsequences of registered constants suffice for actual gathering
+and decision production. Every coefficient keeps its original owner's meaning;
+additional target constants need not occur after the source constants. -/
+theorem gather_subsequence (following : base.Realization)
+    (reference : Model (Context.ofBase base) ℝ)
+    (compatible : ∀ source ∈ owners,
+      source.origin.base.signature.constants <+ base.signature.constants ∧
+      source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals)
+    (coefficients : (i : Fin owners.length) → (owners[i]).Value)
+    (formula : RealFormula.QF (owners.length + 1)) (quantifier : RealFormula.Quantifier) :
+    ∃ shared : Shared base owners, Shared.gather? base owners = some shared ∧
+      ∃ model : Shared.Model shared following reference,
+        ∃ result, Samples.run (values shared coefficients) formula quantifier = some result ∧
+          (result = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+            (fun i => (model.owners.get i).1.value (coefficients i))) := by
+  obtain ⟨shared, produced, ⟨model⟩⟩ :=
+    Shared.gather?_models following reference owners compatible
+  obtain ⟨result, accepted, semantic⟩ :=
+    run_spec shared model.target model.owners coefficients formula quantifier
+  exact ⟨shared, produced, model, result, accepted, semantic⟩
+
+/-- Prefix-compatible callers retain their original gathering and decision API. -/
 theorem gather_spec (following : base.Realization)
     (reference : Model (Context.ofBase base) ℝ)
     (compatible : ∀ source ∈ owners,
@@ -100,13 +121,9 @@ theorem gather_spec (following : base.Realization)
       ∃ model : Shared.Model shared following reference,
         ∃ result, Samples.run (values shared coefficients) formula quantifier = some result ∧
           (result = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
-            (fun i => (model.owners.get i).1.value (coefficients i))) := by
-  obtain ⟨shared, produced, ⟨model⟩⟩ :=
-    Shared.gather?_models following reference owners
-      (fun source member => ⟨(compatible source member).1.sublist,
-        (compatible source member).2⟩)
-  obtain ⟨result, accepted, semantic⟩ :=
-    run_spec shared model.target model.owners coefficients formula quantifier
-  exact ⟨shared, produced, model, result, accepted, semantic⟩
+            (fun i => (model.owners.get i).1.value (coefficients i))) :=
+  gather_subsequence following reference
+    (fun source member => ⟨(compatible source member).1.sublist,
+      (compatible source member).2⟩) coefficients formula quantifier
 
 end Hex.RCF.RealCoefficients.Gather

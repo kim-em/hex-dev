@@ -12,6 +12,7 @@ public meta import HexRealClosure.LiveContext
 public meta import HexRealClosure.TowerContext
 
 public section
+open scoped List
 namespace Hex.RCF.RealCoefficients.GatherTests
 open Hex RealClosure RealClosure.Tower
 
@@ -100,7 +101,58 @@ def empty : Bool := Id.run do
 
 #guard empty
 
+/-- A source registered only at β can supply coefficients to a target registered
+at α and then β. The old prefix premise is false, while actual gathering and
+native formula production retain the original owner's coordinate meaning.
+`source` may itself contain an algebraic suffix over its registered base. -/
+theorem insert_before {providers : BaseContext.Registry}
+    {target : BaseContext.PackedContext providers}
+    (source : Context providers) (following : target.Realization)
+    (reference : Model (Context.ofBase target) ℝ)
+    (α β : BaseContext.ConstantKey) (different : β ≠ α)
+    (sourceKeys : source.origin.base.signature.constants = [β])
+    (targetKeys : target.signature.constants = [α, β])
+    (depth : source.origin.base.signature.infinitesimals ≤ target.signature.infinitesimals)
+    (coefficients : (i : Fin [source].length) → ([source][i]).Value)
+    (formula : RealFormula.QF 2) (quantifier : RealFormula.Quantifier) :
+    ¬ source.origin.base.signature.constants <+: target.signature.constants ∧
+      ∃ shared : Shared target [source], Shared.gather? target [source] = some shared ∧
+        ∃ model : Shared.Model shared following reference,
+          ∃ result, Samples.run (Gather.values shared coefficients) formula quantifier =
+              some result ∧
+            (result = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+              (fun i => (model.owners.get i).1.value (coefficients i))) := by
+  constructor
+  · rw [sourceKeys, targetKeys, List.singleton_prefix_cons_iff]
+    exact different
+  · apply Gather.gather_subsequence following reference
+    intro owner member
+    have same : owner = source := by simpa only [List.mem_singleton] using member
+    subst owner
+    constructor
+    · rw [sourceKeys, targetKeys]
+      exact List.sublist_append_right [α] [β]
+    · exact depth
+
+/-- Subsequence compatibility retains provider versions and relative key order. -/
+private def keyBindings : Bool :=
+  let α : BaseContext.ConstantKey := ⟨"alpha", 1⟩
+  let β : BaseContext.ConstantKey := ⟨"beta", 1⟩
+  let stale : BaseContext.ConstantKey := ⟨"beta", 0⟩
+  Decidable.decide ([β] <+ [α, β]) && !Decidable.decide ([β] <+: [α, β]) &&
+    !Decidable.decide ([β, α] <+ [α, β]) && !Decidable.decide ([stale] <+ [α, β])
+
+#guard keyBindings
+
 end Hex.RCF.RealCoefficients.GatherTests
+
+/-- info: 'Hex.RCF.RealCoefficients.GatherTests.insert_before' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RealCoefficients.GatherTests.insert_before
+
+/-- info: 'Hex.RCF.RealCoefficients.Gather.gather_subsequence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RealCoefficients.Gather.gather_subsequence
 
 /-- info: 'Hex.RCF.RealCoefficients.Gather.values_real' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
