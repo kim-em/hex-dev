@@ -92,6 +92,9 @@ theorem pi_nested : ∀ x : ℝ,
 theorem exp_shifted : ∀ x : ℝ,
     x ^ 2 + Real.exp 1 - Real.sqrt (3 + Real.sqrt 2) > 0 := by rcf
 
+theorem pi_algebraic_rpow : ∀ x : ℝ,
+    x ^ 2 + Real.pi - (3 + Real.sqrt 2) ^ (1 / 3 : ℝ) > 0 := by rcf
+
 theorem pi_guarded_root : ∀ x : ℝ,
     x ^ 2 + Real.pi - Real.sqrt (1 / (4 + Real.sqrt 2)) > 0 := by rcf
 
@@ -112,6 +115,16 @@ example : ∀ x : ℝ,
 #guard_msgs in
 example : ∀ x ∈ Set.Ioc (1 : ℝ) 0,
     x ^ 2 + Real.pi + Real.sqrt (0 / (Real.sqrt 2 - Real.sqrt 2)) > 0 := by rcf
+
+/-- error: rcf: original closed divisor is zero -/
+#guard_msgs in
+example : ∀ x : ℝ, x ^ 2 + Real.pi +
+    0 * (3 + Real.sqrt 2 + 0 / (Real.sqrt 2 - Real.sqrt 2)) ^ (1 / 3 : ℝ) > 0 := by rcf
+
+/-- error: rcf: original closed divisor is zero -/
+#guard_msgs in
+example : ∀ x ∈ Set.Ioc (1 : ℝ) 0, x ^ 2 + Real.pi +
+    (3 + Real.sqrt 2 + 0 / (Real.sqrt 2 - Real.sqrt 2)) ^ (1 / 3 : ℝ) > 0 := by rcf
 
 /-- error: rcf: original closed divisor remains unresolved in supplied bounds -/
 #guard_msgs in
@@ -335,6 +348,7 @@ run_meta do
       `Hex.RCF.MixedConstants.pi_positive_divisor,
       `Hex.RCF.MixedConstants.pi_negative_divisor, `Hex.RCF.MixedConstants.pi_cancelled,
       `Hex.RCF.MixedConstants.pi_nested, `Hex.RCF.MixedConstants.exp_shifted,
+      `Hex.RCF.MixedConstants.pi_algebraic_rpow,
       `Hex.RCF.MixedConstants.pi_guarded_root, `Hex.RCF.MixedConstants.pi_nested_divisor] do
     unless ← Hex.RCF.ProofEvidence.contains name
         (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound ||
@@ -349,6 +363,7 @@ run_meta do
       (fun e => e.isConstOf ``RationalRoot.selected) do
     throwError "mixed rational-root proof did not use its checked embedding"
   for name in [`Hex.RCF.MixedConstants.pi_nested, `Hex.RCF.MixedConstants.exp_shifted,
+      `Hex.RCF.MixedConstants.pi_algebraic_rpow,
       `Hex.RCF.MixedConstants.pi_guarded_root, `Hex.RCF.MixedConstants.pi_nested_divisor] do
     checkRootProof name
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.MixedConstants.pi_inverse_root
@@ -423,6 +438,10 @@ run_meta do
 /-- info: 'Hex.RCF.MixedConstants.exp_shifted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RCF.MixedConstants.exp_shifted
+
+/-- info: 'Hex.RCF.MixedConstants.pi_algebraic_rpow' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.MixedConstants.pi_algebraic_rpow
 /-- info: 'Hex.RCF.MixedConstants.pi_guarded_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RCF.MixedConstants.pi_guarded_root
