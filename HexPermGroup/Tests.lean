@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexPermGroup
+meta import HexPermGroup.Tactic
+meta import Lean
 public section
 
 namespace Hex.PermGroup.Tests
@@ -100,3 +102,86 @@ set_option pp.width 200 in
 #print axioms m11_not_mem
 
 end Hex.PermGroup.Tests
+
+namespace Hex.PermGroup.InterfaceTests
+
+open Lean Elab Meta Lean.Elab.Tactic
+
+/-- Exercise the supported API without the tactic's goal dispatcher. -/
+elab "perm_group_public" : tactic => withMainContext do
+  let goal ← getMainGoal
+  let target ← instantiateMVars (← goal.getType)
+  let (S, request) ← if target.isAppOfArity ``HasOrder 3 then do
+      let some N ← (evalNat (target.getArg! 2)).run | throwError "expected numeral"
+      pure (target.getArg! 1, Tactic.Goal.card N)
+    else if target.isAppOfArity ``Generated 3 then
+      pure (target.getArg! 1, Tactic.Goal.mem { term := target.getArg! 2 })
+    else if target.isAppOfArity ``Not 1 then
+      let body := target.getArg! 0
+      pure (body.getArg! 1, Tactic.Goal.notMem { term := body.getArg! 2 })
+    else if target.isAppOfArity ``GeneratesAll 2 then
+      pure (target.getArg! 1, Tactic.Goal.all)
+    else throwError "unexpected interface test goal"
+  let some generators ← getArrayLit? S | throwError "expected array literal"
+  let inputs ← generators.toList.mapM fun term => do
+    pure ({ term, canonical? := some (term, ← mkEqRefl term) } : Tactic.Input)
+  let prepared ← Tactic.prepare {} 2 inputs
+  goal.assign (← Tactic.replay prepared request)
+  replaceMainGoal []
+
+theorem order : HasOrder #[Perm.ofImages 2 [1, 0]] 2 := by perm_group_public
+theorem member : Generated #[Perm.ofImages 2 [1, 0]] (Perm.id 2) := by perm_group_public
+theorem nonmember : ¬ Generated (#[] : Array (Perm 2)) (Perm.ofImages 2 [1, 0]) := by
+  perm_group_public
+theorem full : GeneratesAll #[Perm.ofImages 2 [1, 0]] := by perm_group_public
+
+private meta def expectFailure (action : TacticM α) : TacticM Unit := do
+  let failed ← try
+    let _ ← action
+    pure false
+  catch _ => pure true
+  unless failed do throwError "expected interface failure"
+
+elab "check_perm_group_failures" : tactic => withMainContext do
+  let goal ← getMainGoal
+  let images ← mkListLit (mkConst ``Nat) [mkNatLit 1, mkNatLit 0]
+  let swap ← mkAppM ``Perm.ofImages #[mkNatLit 2, images]
+  let identity ← mkAppM ``Perm.id #[mkNatLit 2]
+  let bad : Tactic.Input := { term := swap, canonical? := some (identity, ← mkEqRefl identity) }
+  expectFailure (Tactic.prepare {} 2 [bad])
+  let wrongDegree ← mkAppM ``Perm.id #[mkNatLit 3]
+  let wrongProof ← mkEqRefl wrongDegree
+  let badDegree : Tactic.Input := { term := swap, canonical? := some (wrongDegree, wrongProof) }
+  expectFailure (Tactic.prepare {} 2 [badDegree])
+  let unresolved ← mkFreshExprMVar (← inferType swap)
+  expectFailure (Tactic.prepare {} 2 [{ term := unresolved }])
+  let prepared ← Tactic.prepare {} 2 [{ term := swap }]
+  let marker ← Kernel.Tactic.auxName "level_0"
+  -- `inferType` does not validate application arguments. Replay must kernel-check
+  -- the supplied equality, even when its inferred result type looks correct.
+  let equalityType ← mkEq swap swap
+  let malformed := mkApp4 (mkConst ``Eq.mpr [0]) equalityType equalityType
+    (← mkEqRefl equalityType) (mkConst ``True.intro)
+  let badEquality ← Tactic.prepare {} 2
+    [{ term := swap, canonical? := some (swap, malformed) }]
+  expectFailure (Tactic.replay badEquality (.card 2))
+  if (← getEnv).contains marker then throwError "bad equality leaked declarations"
+  expectFailure (Tactic.replay { prepared with images := [[0, 1]] } (.card 2))
+  if (← getEnv).contains marker then throwError "failed replay leaked declarations"
+  -- The old callback API remains supported and must also restore assigned goals.
+  expectFailure (Kernel.Tactic.prove {} 2 [swap] (.card 2) fun _ _ _ _ => do
+    goal.assign (mkConst ``True.intro)
+    throwError "injected packing failure")
+  if (← getEnv).contains marker then throwError "compatibility replay leaked declarations"
+  if ← goal.isAssigned then throwError "failed replay assigned the original goal"
+  unless (← getGoals) == [goal] do throwError "failed replay changed the goal list"
+  evalTactic (← `(tactic| trivial))
+
+example : True := by check_perm_group_failures
+
+set_option pp.width 200 in
+/-- info: 'Hex.PermGroup.InterfaceTests.order' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms order
+
+end Hex.PermGroup.InterfaceTests
