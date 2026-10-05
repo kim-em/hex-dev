@@ -176,6 +176,8 @@ def check() -> None:
              "HexSignDet.FieldChecks", "HexRealClosure.BaseTests",
              "HexRealClosure.QAdjoinTests", "HexRealClosure.NumberField",
              "HexRealClosureMathlib.NumberField", "HexRealClosure.NumberFieldConformance",
+             "HexRealClosure.NumberFieldTower", "HexRealClosureMathlib.NumberFieldTower",
+             "HexRealClosure.NumberFieldSamples",
              "HexRealClosure.TowerCatalog", "HexRealClosure.TowerTests",
              "HexRealClosure.RootFrame", "HexRealClosure.RootFrameTests",
              "HexRealClosure.FrameFormat", "HexRealClosure.FrameFormatTests",
