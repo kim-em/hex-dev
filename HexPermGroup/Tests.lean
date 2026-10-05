@@ -28,6 +28,32 @@ example : GeneratesAll (#[] : Array (Perm 0)) := by perm_group
 example : GeneratesAll (#[] : Array (Perm 1)) := by perm_group
 example : HasOrder #[Perm.id 3, cycle, cycle, cycle.inv] 3 := by perm_group
 
+
+example : Generated #[Perm.ofImages 3 [0, 0, 1]] (Perm.id 3) := by perm_group
+example : HasOrder #[Perm.ofImages 3 [0, 3, 1]] 1 := by perm_group
+example : HasOrder #[Perm.ofImages 3 []] 1 := by perm_group
+
+def symmetric11 : Array (Perm 11) := #[
+  Perm.ofImages 11 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0],
+  Perm.ofImages 11 [1, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
+
+theorem symmetric11_all : GeneratesAll symmetric11 := by perm_group
+theorem symmetric11_forall : ∀ p : Perm 11, Generated symmetric11 p := by perm_group
+
+set_option pp.width 200 in
+/-- info: 'Hex.PermGroup.Tests.symmetric11_all' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms symmetric11_all
+set_option pp.width 200 in
+/-- info: 'Hex.PermGroup.Tests.symmetric11_forall' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms symmetric11_forall
+
+/-- error: perm_group: full coverage check needs 100 estimated operations, exceeding maxChunkWork := 1 -/
+#guard_msgs in
+example : GeneratesAll (#[] : Array (Perm 100)) := by
+  perm_group (maxChunkWork := 1)
+
 def m11 : Array (Perm 11) := #[
   Perm.ofImages 11 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0],
   Perm.ofImages 11 [0, 1, 6, 9, 5, 3, 10, 2, 8, 4, 7]]

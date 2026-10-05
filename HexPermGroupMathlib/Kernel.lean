@@ -37,7 +37,7 @@ theorem pack_ofEquiv_permOfImages {n : Nat} {l : List Nat} (h : imagesOk n l = t
     pack (Perm.ofEquiv (permOfImages n l)) = packList n l := by
   simpa only [permOfImages, Perm.ofEquiv_toEquiv] using pack_ofImages h
 
-/-- The image list of a Mathlib permutation, read in compiled code. -/
+/-- The image-list API retained for certificate sources produced by earlier releases. -/
 def images (n : Nat) (g : Equiv.Perm (Fin n)) : List Nat :=
   (List.finRange n).map fun i => (g i).val
 
@@ -88,6 +88,9 @@ theorem eq_top_of_hasOrder {gs : List (Equiv.Perm (Fin n))}
     Subgroup.closure {x | x ∈ gs} = ⊤ := by
   rw [← Subgroup.card_eq_iff_eq_top, card_of_hasOrder h, Nat.card_perm,
     Nat.card_eq_fintype_card, Fintype.card_fin]
+
+/-! Compatibility assembly lemmas for reusable certificate sources. Their
+soundness is supplied entirely by the computational library. -/
 
 theorem map_pack_nil : (([] : List (Equiv.Perm (Fin n))).map Perm.ofEquiv).map pack = [] :=
   rfl

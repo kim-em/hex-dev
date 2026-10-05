@@ -57,6 +57,16 @@ meta def evalImages (_n : Nat) (g : Expr) : MetaM (List Nat) := do
     throwError "perm_group: failed to evaluate the permutation{indentExpr g}\n{ex.toMessageData}\
       \nThe generators and the query must be closed terms the compiler can evaluate."
 
+private meta unsafe def evalBoolUnsafe (e : Expr) : MetaM Bool :=
+  evalExpr Bool (mkConst ``Bool) e
+
+@[implemented_by evalBoolUnsafe]
+private meta opaque evalBoolCore (e : Expr) : MetaM Bool
+
+/-- Check whether an image-list constructor uses its valid-permutation branch. -/
+meta def checkedImages (nE l : Expr) : MetaM Bool := do
+  evalBoolCore (← mkAppM ``imagesOk #[nE, l])
+
 /-- A runtime permutation from its image list. -/
 meta def parsePerm (n : Nat) (l : List Nat) : MetaM (Perm n) := do
   let imgs : Array (Fin n) ← l.toArray.mapM fun x =>
@@ -129,14 +139,14 @@ checked in time linear in `n`. Any other closed permutation is evaluated by the 
 meta def packTie (nE g : Expr) (x : Nat) (suffix : String) : TacticM Expr := do
   if g.isAppOfArity ``Hex.Perm.ofImages 2 then
     let l := g.getArg! 1
-    let hok ← addKernelEq (← auxName s!"{suffix}_images") (← mkAppM ``imagesOk #[nE, l])
-      (mkConst ``Bool.true)
-    let hpk ← addKernelEq (← auxName s!"{suffix}_pack") (← mkAppM ``packList #[nE, l])
-      (mkNatLit x)
-    mkEqTrans (← mkAppM ``pack_ofImages #[hok]) hpk
-  else
-    addKernelEq (← auxName suffix)
-      (← mkAppOptM ``pack #[nE, g]) (mkNatLit x)
+    if ← checkedImages nE l then
+      let hok ← addKernelEq (← auxName s!"{suffix}_images") (← mkAppM ``imagesOk #[nE, l])
+        (mkConst ``Bool.true)
+      let hpk ← addKernelEq (← auxName s!"{suffix}_pack") (← mkAppM ``packList #[nE, l])
+        (mkNatLit x)
+      return ← mkEqTrans (← mkAppM ``pack_ofImages #[hok]) hpk
+  addKernelEq (← auxName suffix)
+    (← mkAppOptM ``pack #[nE, g]) (mkNatLit x)
 
 /-- Read an array literal, unfolding definitions without reducing its elements. -/
 meta partial def arrayElems? (s : Expr) (fuel : Nat := 32) : MetaM (Option (List Expr)) := do
@@ -203,11 +213,11 @@ meta def prove (cfg : Config) (n : Nat) (gens : List Expr) (kind : GoalKind)
     | _ => pure none
   match kind with
   | .all =>
-    let work := n * n * (c.length + 1)
+    let work := (c.map fun L => n * (2 * L.size + 2)).foldl max n
     if work > cfg.maxChunkWork then
       throwError "perm_group: full coverage check needs {work} estimated operations, \
         exceeding maxChunkWork := {cfg.maxChunkWork}"
-    unless full n [] c do
+    unless full n 0 c do
       throwError "perm_group: the certified group does not generate every permutation"
   | .card N =>
     unless order c == N do
@@ -273,9 +283,16 @@ meta def prove (cfg : Config) (n : Nat) (gens : List Expr) (kind : GoalKind)
   let hCheck ← mkAppM ``check_of #[hIn, hLevels]
   let proof ← match kind with
     | .all =>
-      let fixed ← natListLit []
-      let hf ← addKernelEq (← auxName "full") (← mkAppM ``full #[nE, fixed, certE])
+      let masks := c.scanl (fun fixed L => Nat.lor fixed (Nat.shiftLeft 1 L.base)) 0
+      let mut hf ← addKernelEq (← auxName "full_end")
+        (← mkAppM ``full #[nE, mkNatLit masks.getLast!, ← suffix c.length])
         (mkConst ``Bool.true)
+      for k' in [0:c.length] do
+        let k := c.length - 1 - k'
+        let hL ← addKernelEq (← auxName s!"level_{k}_full")
+          (← mkAppM ``fullLevel #[nE, mkNatLit masks[k]!, levelConsts[k]!])
+          (mkConst ``Bool.true)
+        hf ← mkAppM ``full_cons_of #[hL, hf]
       mkAppM ``all_of_check #[hS, hCheck, hf]
     | .card N =>
       let hO ← addKernelEq (← auxName "order") (← mkAppM ``order #[certE]) (mkNatLit N)
@@ -365,7 +382,9 @@ syntax (name := permGroup) "perm_group" optConfig : tactic
           for ext in ← extensions do
             if result.isNone then result ← ext.prove? cfg target
           let some proof := result
-            | throwError "perm_group: unsupported goal{indentExpr target}"
+            | throwError "perm_group: unsupported goal{indentExpr target}\n\
+              Expected `Generated S p`, `¬ Generated S p`, `HasOrder S N` or `GeneratesAll S`.\n\
+              Import HexPermGroupMathlib for goals about Mathlib subgroup closures."
           pure proof
       unless ← isDefEq (← inferType proof) target do
         throwError "perm_group: internal final proof mismatch"
@@ -393,8 +412,11 @@ meta def levelSrc (L : Level) : String :=
 /-- Print the same packing ties and bounded checks that the tactic replays. -/
 meta def certificateSource (name : String) (n : Nat) (gens : List Expr)
     (elemSrc : List String) (sSrc : String)
-    (imagesTie : Expr → Option String := fun g =>
-      if g.isAppOfArity ``Hex.Perm.ofImages 2 then some "pack_ofImages" else none) :
+    (imagesTie : Expr → MetaM (Option String) := fun g => do
+      if g.isAppOfArity ``Hex.Perm.ofImages 2 then
+        if ← checkedImages (mkNatLit n) (g.getArg! 1) then
+          return some "pack_ofImages"
+      return none) :
     TermElabM String := do
   let gsSrc := "[" ++ ", ".intercalate elemSrc ++ "]"
   let images ← gens.mapM fun g => evalImages n g
@@ -411,14 +433,14 @@ meta def certificateSource (name : String) (n : Nat) (gens : List Expr)
     listSrc (fun j => s!"{name}_level_{j}") (List.range' k (c.length - k))
   let mut out := "section\n\nopen Hex Hex.PermGroup Hex.PermGroup.Kernel\n\n"
   for h : i in [0:c.length] do
-    out := out ++ s!"noncomputable def {name}_level_{i} : Level :=\n  {levelSrc c[i]}\n\n"
+    out := out ++ s!"noncomputable def {name}_level_{i} : Hex.PermGroup.Kernel.Level :=\n  {levelSrc c[i]}\n\n"
   -- one packing theorem per generator, as in the tactic
   let mut hS := "pack_nil"
   for k' in [0:gens.length] do
     let k := gens.length - 1 - k'
     let g := gens[k]!
     let x := inputs[k]!
-    let tie ← if let some lemmaName := imagesTie g then do
+    let tie ← if let some lemmaName ← imagesTie g then do
         let l := listSrc toString images[k]!
         out := out ++ s!"theorem {name}_input_{k}_images : imagesOk {n} {l} = true := by\n" ++
           "  decide +kernel\n\n"

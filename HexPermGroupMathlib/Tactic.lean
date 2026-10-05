@@ -132,32 +132,29 @@ meta def coeSortArg? (T : Expr) : MetaM (Option Expr) := do
   return some H
 
 /-- Match one of the four supported goals exactly, returning the generating set. -/
-meta def readGoal (goal : Expr) : MetaM (Expr × GoalKind) := do
+meta def readGoal? (goal : Expr) : MetaM (Option (Expr × GoalKind)) := do
   let goal ← instantiateMVars goal
-  let unsupported {α} : MetaM α := throwError "perm_group: unsupported goal{indentExpr goal}\n\
-    Expected `Nat.card (Subgroup.closure s) = N`, `g ∈ Subgroup.closure s`, \
-    `g ∉ Subgroup.closure s` or `Subgroup.closure s = ⊤`."
   if goal.isAppOfArity ``Eq 3 then
     let lhs := goal.getArg! 1
     let rhs := goal.getArg! 2
     if lhs.isAppOfArity ``Nat.card 1 then
-      let some H ← coeSortArg? (lhs.getArg! 0) | unsupported
-      let some s ← closureArg? H | unsupported
+      let some H ← coeSortArg? (lhs.getArg! 0) | return none
+      let some s ← closureArg? H | return none
       let some N ← (evalNat rhs).run
         | throwError "perm_group: the claimed order must be a numeral{indentExpr rhs}"
-      return (s, .card N)
+      return some (s, .card N)
     if rhs.isAppOfArity ``Top.top 2 then
-      let some s ← closureArg? lhs | unsupported
-      return (s, .top)
-    unsupported
+      let some s ← closureArg? lhs | return none
+      return some (s, .top)
+    return none
   if goal.isAppOfArity ``Membership.mem 5 then
-    let some s ← closureArg? (goal.getArg! 3) | unsupported
-    return (s, .mem (goal.getArg! 4))
+    let some s ← closureArg? (goal.getArg! 3) | return none
+    return some (s, .mem (goal.getArg! 4))
   if goal.isAppOfArity ``Not 1 && (goal.getArg! 0).isAppOfArity ``Membership.mem 5 then
     let m := goal.getArg! 0
-    let some s ← closureArg? (m.getArg! 3) | unsupported
-    return (s, .notMem (m.getArg! 4))
-  unsupported
+    let some s ← closureArg? (m.getArg! 3) | return none
+    return some (s, .notMem (m.getArg! 4))
+  return none
 
 /-- A proof of `{x | x ∈ [g₁, …, gₖ]} = {g₁, …, gₖ}` built from the list lemmas,
 without traversing the elements. -/
@@ -213,6 +210,8 @@ meta def packTie (nE g : Expr) (x : Nat) (suffix : String) : TacticM Expr := do
   let e := g.getArg! 1
   if e.isAppOfArity ``permOfImages 2 then
     let l := e.getArg! 1
+    if !(← checkedImages nE l) then
+      return ← Hex.PermGroup.Kernel.Tactic.packTie nE g x suffix
     let hok ← addKernelEq (← auxName s!"{suffix}_images") (← mkAppM ``imagesOk #[nE, l])
       (mkConst ``Bool.true)
     let hpk ← addKernelEq (← auxName s!"{suffix}_pack") (← mkAppM ``packList #[nE, l])
@@ -225,7 +224,7 @@ its conclusion through the correspondence theorems. -/
 @[perm_group_extension] public meta def extension : Hex.PermGroup.Kernel.Tactic.Extension where
   prove? cfg target := do
     let t ← unfoldClosures target
-    let parsed ← try some <$> readGoal t catch _ => pure none
+    let parsed ← readGoal? t
     let some (s, kind) := parsed | return none
     let some gens ← setLitElems s
       | throwError "perm_group: the generating set must be a set literal or a coerced Finset \
@@ -260,22 +259,30 @@ its conclusion through the correspondence theorems. -/
       | _ => return none
     let n ← permDegree permTy
     let converted ← gens.mapM fun g => mkAppOptM ``Perm.ofEquiv #[mkNatLit n, g]
-    let sSrc := (sStx.reprint.getD "").trimAscii.toString
+    let rawSrc := (sStx.reprint.getD "").trimAscii.toString
+    let sSrc := s!"({rawSrc} : Set (Equiv.Perm (Fin {n})))"
     let elemSrc := elemStx.toList.map fun e => (e.reprint.getD "").trimAscii.toString
     let gsSrc := "[" ++ ", ".intercalate elemSrc ++ "]"
     let arraySrc := s!"(({gsSrc} : List (Equiv.Perm (Fin {n}))).map Perm.ofEquiv).toArray"
     let out ← certificateSource name n converted
       (elemSrc.map fun g => s!"Perm.ofEquiv ({g} : Equiv.Perm (Fin {n}))") arraySrc
-      (fun g => if g.isAppOfArity ``Perm.ofEquiv 2 &&
-          (g.getArg! 1).isAppOfArity ``permOfImages 2 then
-        some "pack_ofEquiv_permOfImages" else none)
+      (fun g => do
+        if g.isAppOfArity ``Perm.ofEquiv 2 &&
+            (g.getArg! 1).isAppOfArity ``permOfImages 2 then
+          if ← checkedImages (mkNatLit n) ((g.getArg! 1).getArg! 1) then
+            return some "pack_ofEquiv_permOfImages"
+        return none)
     let imageLists ← converted.mapM fun g => Hex.PermGroup.Kernel.Tactic.evalImages n g
     let perms ← imageLists.mapM fun l => (parsePerm n l : MetaM (Perm n))
     let c ← match certify perms.toArray with
       | .ok c => pure c
       | .error msg => throwError "#perm_group_certificate: {msg}"
     let finsetLemmas := if sSrc.contains '↑' then
-      ", Finset.coe_insert, Finset.coe_singleton, Finset.coe_empty" else ""
+      match gens.length with
+      | 0 => ", Finset.coe_empty"
+      | 1 => ", Finset.coe_singleton"
+      | _ => ", Finset.coe_insert, Finset.coe_singleton"
+      else ""
     let setLemmas := match gens.length with
       | 0 => "setOf_mem_nil"
       | 1 => "setOf_mem_singleton"

@@ -481,9 +481,11 @@ predicate from a checked group's existing rank and unrank maps.
 The proof follows the packed representation (`Rep`), canonical packings
 (`Canon`) and checked level invariants (`LevelBase`). From the last level
 upward, sifting accepts exactly the generated permutations. The checked
-Schreier family gives the full point stabilizer, using the same word
-induction and transversal multiplication as the complete-chain Schreier
-argument. Each level decomposes its generated permutations uniquely into an
+Schreier family gives the full point stabilizer, by signed-word
+induction and transversal multiplication. The complete-chain Schreier
+lemmas require an `Orbit.Valid` with checked word programs, which the packed
+certificate does not store; its representation and tree checks supply
+these facts instead. Each level decomposes its generated permutations uniquely into an
 orbit index and an element of the next stabilizer. Composing these
 bijections and mixed-radix encoding gives `Fin (Kernel.order c)`. The input
 checks identify the first level's generation predicate with `Generated S`.
@@ -508,7 +510,7 @@ degree and claimed order are numerals; generators and queries are closed
 terms the compiler can evaluate. Empty arrays, identity and duplicate inputs,
 and degrees zero and one are supported.
 
-The producer and chunking are unchanged. The tactic evaluates the inputs,
+The tactic evaluates the inputs,
 builds a certificate with `Kernel.certify`, and checks the order or sift
 verdict in compiled code before emitting declarations. False goals and failed
 chunk limits report an error. A successful call emits noncomputable level
@@ -522,18 +524,20 @@ A failed call restores the environment, removing its auxiliary declarations.
 For this form, the tactic checks `Kernel.imagesOk n l` and `Kernel.packList n l`
 in time linear in `n` and uses `Kernel.pack_ofImages` to tie the result to the
 typed permutation. Invalid lists give the identity fallback; the optimized
-packing route requires `imagesOk`, so it rejects such a list explicitly.
+packing route first checks `imagesOk` in compiled code. If the list is
+invalid, the generic kernel packing tie proves the identity fallback.
 `Kernel.ofNatArray_permOfImages` proves the checked pipeline cannot use the
 fallback. Other closed permutations are packed by kernel evaluation.
 
 `GeneratesAll S` abbreviates `∀ p, Generated S p`. This goal additionally
-replays `Kernel.full n [] c`: each orbit covers all points outside the
+replays `Kernel.full n 0 c`: each orbit covers all points outside the
 previous base points, the transversal fixes those points, and at most one
-point remains at the end. Its proof applies to every permutation, without
+point remains at the end, checked in a single scan. Fixed points are stored
+as a bitmask and checked with raw `Nat` operations. Its proof applies to every permutation, without
 enumerating the symmetric group. This coverage check is separate from the
 membership/order checker and is used only for the computational universal
-goal. It adds one kernel declaration, whose estimated field-operation cost
-must also fit `maxChunkWork`.
+goal. Each coverage level and the terminal scan is checked in its own kernel
+declaration, and each estimated field-operation cost must fit `maxChunkWork`.
 
 `perm_group (maxChunkWork := k)` sets a positive chunk budget;
 `set_option trace.perm_group true` reports the certificate shape and each
