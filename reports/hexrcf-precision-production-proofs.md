@@ -1,5 +1,10 @@
 # Initial precision through tactic proof acceptance
 
+> The drivers under `scripts/bench/hexrcf_*.py` and the probe modules under
+> `bench/HexRCF/ProofProbe/` that this report cites, other than `Examples` and
+> `Registered/`, were removed from `main` after commit `45a4e4e9a4`. Check out
+> that commit to rerun them.
+
 This experiment asks whether a tighter initial √2 generator interval helps
 when its constructor validity, selected-root identification and target
 transport are proved inside the fresh measured module. All four arms call

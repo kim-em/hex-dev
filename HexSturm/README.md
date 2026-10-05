@@ -23,6 +23,13 @@ reuse proved data without preparing another chain. `certify` and
 to their query results; `check_bindings` exposes the exact bindings
 established by acceptance.
 
+`queryReduced` and `queryReducedPrepared` first reduce the query modulo the
+head with the existing remainder-only division worker, then invoke the shared
+Tarski producer. They avoid retaining the high-degree quotient. The companion
+proves equality with the ordinary value APIs, including the exact success
+domain, when coefficient division has its lawful field interpretation. Use the
+ordinary certificate APIs for evidence bound to the unreduced query.
+
 `domain.withEndpoints? lower upper` reuses the same literal head, sign operation
 and squarefree chain after checking the new endpoints. It returns `none` for
 root endpoints, equal or reversed bounds, or other failed endpoint guards. It agrees

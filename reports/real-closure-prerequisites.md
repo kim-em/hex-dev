@@ -15,9 +15,9 @@ headlines are available from the ordinary companion libraries.
 
 | Library | Implemented/proved coverage | Phase requirements still to discharge | Evidence |
 | --- | --- | --- | --- |
-| HexSturm | Shared ordered-domain kernel; guarded queries and exact-domain natural counts; prepared domains, retargeting, counts, cached replay and literal certificate transport | Phase 4: comparator/registration reconciliation, admissible characterization and retained concerns | `HexSturm/Basic.lean`, `Transport.lean`, `conformance/HexSturm/Conformance.lean`, [performance report](hex-sturm-performance.md) |
+| HexSturm | Shared ordered-domain kernel; guarded queries and exact-domain natural counts; prepared domains, retargeting, counts, cached replay, literal certificate transport and a proved remainder-only value query | Phase 4: comparator/registration reconciliation, admissible characterization and retained concerns | `HexSturm/Basic.lean`, `Transport.lean`, `conformance/HexSturm/Conformance.lean`, [performance report](hex-sturm-performance.md) |
 | HexSturmMathlib | Domain equivalence, prepared bindings, producer acceptance, representation congruence and rational/integer whole-Option agreement; exact query iff, count equality and bounds in the ordinary companion and public umbrella | Phase 4: core eligibility; no dedicated performance deliverable for this theorem-only layer | `Domain`, `Compare`, `Rational`, `DenominatorClearing`, `IntCast`; `HexSturmMathlib/Soundness.lean`; ordinary-kernel `HexSturmMathlibTests` |
-| HexRealAlgebraic | Real subtype, rational recognition and toRat?-first rounding, canonical arithmetic/order, rounding, square roots, fixed-field coordinate signs, integer and algebraic-coefficient real roots, complex norms; proved early nonreal rejection and actual polynomial-root degree comparisons | Phase 4: canonical root enumeration remains far behind external backends; fixed-operation admission, leaf/separation/rounding and higher-degree characterization remain | `conformance/HexRealAlgebraic`, pinned FLINT/qqbar oracle and fixtures; `bench/HexRealAlgebraic/Bench.lean`; [root curves and attribution](hex-real-algebraic-performance.md#direct-polynomial-root-size-comparisons) |
+| HexRealAlgebraic | Real subtype, rational recognition and toRat?-first rounding, canonical arithmetic/order, rounding, square roots, fixed-field coordinate signs, integer and algebraic-coefficient real roots, complex norms; proved early nonreal rejection and actual polynomial-root degree comparisons | Phase 4: canonical root enumeration and canonical scalar addition/square root remain far behind external backends; fixed-operation admission, remaining leaf/control attribution and higher-degree characterization remain | `conformance/HexRealAlgebraic`, pinned FLINT/qqbar oracle and fixtures; `bench/HexRealAlgebraic/Bench.lean`; [root curves and attribution](hex-real-algebraic-performance.md#direct-polynomial-root-size-comparisons) |
 | HexRealAlgebraicMathlib | Arithmetic/order and closure, law/dictionary coherence, rational recognition, rounding, approximation, Repr round trip, fixed-field sign correspondence, combined roots contract and real closedness | Phase 4: core eligibility; no dedicated performance deliverable for this theorem-only layer | `HexRealAlgebraicMathlib/Instances.lean`, `Roots.lean`, `RealClosed.lean`, `HexRealAlgebraicMathlib/Tests.lean` |
 
 ## Semantic availability
@@ -104,17 +104,16 @@ The transitive HexPolyFp performance concerns belong to
 [#9809](https://github.com/kim-em/hex-dev/issues/9809); no unrelated counter is
 promoted by this assignment.
 
-The rational-height benchmark also discovered a transitive preparation concern:
-its first direct child probe took longer than the declared supervised-run cap,
-and a native backtrace places the worker in HexArith's square root for the factorization
-prime planner's coefficient-norm bound. [The retained diagnostic](bench-results/real-algebraic-rational-height/direct/preparation-diagnostic/README.md)
-states the exact source, failed probe and attribution limits. The related original
-HexArith performance issue [#721](https://github.com/kim-em/hex-dev/issues/721) is
-closed; no current owner was found. This is not a HexPolyFp #9809 concern, and no
-unrelated implementation or phase metadata is changed here. The rational-height
-declaration remains unmeasured and does not supply Phase-4 admission. The
-diagnostic bypassed parent supervision; ordinary `run` caps the whole child,
-including fixture preparation, through `LeanBench.spawnWithCap`.
+The rational-height benchmark exposed expensive canonical preparation through
+HexArith's square root for the factorization prime planner. The proved
+bit-length initializer now preserves `Nat.sqrt` exactly, and the selective
+Hex-only factor sweep has current source-bound evidence. [The retained height
+captures](bench-results/real-algebraic-rational-height-after-sqrt/README.md)
+admit the registered recognition, floor, ceiling and former quotient control
+operation timers through two million bits on their recorded source. Canonical
+preparation remains costly and is excluded from those timers; representative
+operation-specific attribution remains outstanding. No unrelated library phase is promoted. Historical failed
+preparation evidence is retained with its original source and scope.
 
 ## Verification
 

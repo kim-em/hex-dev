@@ -139,6 +139,8 @@ noncomputable def evalHom (ht : RelativeTranscendence ι τ) : Extension r →+*
 theorem evalHom_apply (ht : RelativeTranscendence ι τ) (f : Extension r) :
     evalHom ht f = Real.eval ι τ f.val := Real.evalHom_apply ht f.val
 
+/-- The registered total sign agrees with the real embedding, under containment
+for its fixed provider and transcendence over the predecessor field. -/
 theorem sign_eq (ha : ApproximationCorrect ι τ r.source)
     (ht : RelativeTranscendence ι τ) (f : Extension r) :
     sign f = sgn (evalHom ht f) := Real.sign_eq ha ht f.val _

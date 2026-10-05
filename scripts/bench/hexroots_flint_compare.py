@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Informational python-flint comparator for hex-roots complex root isolation.
+"""Orientation python-flint comparator for hex-roots complex root isolation.
 
 Times `flint.fmpz_poly.complex_roots()` on the historical unregistered
 fixed-separation isolation diagnostic ladder (degrees 4–10, including the
@@ -7,11 +7,10 @@ canonical fixed `runIsolate` degree 8), plus the canonical degree-12
 `runIsolateAll` input, so each ratio in `reports/hex-roots-performance.md`
 uses identical polynomials.
 
-This is an `informational` process-call comparator (SPEC/benchmarking.md
-§External comparators): FLINT's `complex_roots` is a multiprecision Arb
-ball-arithmetic engine, structurally different from hex-roots' decidable
-exact-integer Pellet / Newton-Kantorovich certificates, so it orients but does
-not gate Phase 4. All degrees run in one warm process; the process-startup and
+This is a process-call comparator (SPEC/benchmarking.md §External
+comparators) recorded for orientation: FLINT's `complex_roots` is a
+multiprecision Arb ball-arithmetic engine, structurally different from
+hex-roots' decidable exact-integer Pellet / Newton-Kantorovich certificates. All degrees run in one warm process; the process-startup and
 per-call floors are measured separately and reported.
 
 Reproduce under a `python-flint >= 0.9.0` virtualenv:

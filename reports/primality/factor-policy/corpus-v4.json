@@ -1,0 +1,3611 @@
+{
+  "schema": "hex-pocklington-corpus/v2",
+  "generator_source": "#!/usr/bin/env python3\n\"\"\"Freeze independent prime subjects before any factor-policy measurement.\n\nHash-derived odd candidates are tested by rejection sampling, not by rounding\nup to the next prime. PARI's unconditional isprime verifies each accepted\nsubject. Neither predecessor factors nor search results select a subject.\n\"\"\"\nfrom __future__ import annotations\nimport argparse\nimport hashlib\nimport json\nfrom pathlib import Path\nimport shutil\nimport subprocess\n\nDOMAIN = 'hex-pocklington-corpus/v1'\n\n\ndef candidate(bits, index, counter, domain=DOMAIN):\n    material = f'{domain}/{bits}/{index}/{counter}'\n    n = int.from_bytes(hashlib.shake_256(material.encode()).digest((bits + 7) // 8), 'big')\n    return (n & ((1 << bits) - 1)) | (1 << (bits - 1)) | 1\n\n\ndef validate(report):\n    \"\"\"Check the frozen subjects, identities and split without running a search.\"\"\"\n    assert report['schema'] in [DOMAIN, 'hex-pocklington-corpus/v2'] and report['complete'] is True\n    count = report['count_per_size']\n    assert isinstance(count, int) and count >= 4\n    expected = {(bits, i) for bits in [128, 256, 384, 512] for i in range(count)}\n    assert len(report['cases']) == len(expected)\n    seen = set()\n    for case in report['cases']:\n        bits, index, counter = case['bits'], case['index'], case['counter']\n        assert (bits, index) in expected and (bits, index) not in seen\n        seen.add((bits, index))\n        assert isinstance(counter, int) and counter >= 0\n        split = 'tuning' if index < count // 4 else 'validation'\n        assert case['split'] == split and case['id'] == f'{split}-{bits}-{index}'\n        assert case['subject'] == candidate(bits, index, counter, report['schema'])\n        assert case['pari_isprime'] is True\n    assert len({x['subject'] for x in report['cases']}) == len(expected)\n\n\ndef main():\n    p = argparse.ArgumentParser(description=__doc__)\n    p.add_argument('--output', type=Path)\n    p.add_argument('--check', type=Path, help='check identities and split of an existing corpus')\n    p.add_argument('--gp', default=shutil.which('gp'))\n    p.add_argument('--domain', choices=[DOMAIN, 'hex-pocklington-corpus/v2'], default=DOMAIN)\n    p.add_argument('--count', type=int, default=100, help='subjects per bit size')\n    args = p.parse_args()\n    if args.check:\n        validate(json.loads(args.check.read_text()))\n        print('Frozen corpus identities and split checked')\n        return\n    if not args.output:\n        p.error('--output is required for generation')\n    if not args.gp or args.count < 4 or args.output.exists():\n        p.error('require GP, count >= 4 and a new output path')\n    version = subprocess.check_output([args.gp, '--version'], stderr=subprocess.STDOUT, text=True)\n    report = {'schema': args.domain, 'generator_source': Path(__file__).read_text(),\n              'gp_version': version.strip(), 'count_per_size': args.count,\n              'generation': 'SHAKE256/domain/bits/index/counter; mask to exact bits; set top and odd bits; '\n                            'first passing ispseudoprime candidate, verified with unconditional isprime',\n              'split': 'first floor(count/4) indices per size tuning; remaining validation',\n              'cases': [], 'complete': False}\n    args.output.parent.mkdir(parents=True, exist_ok=True)\n    seen = set()\n    for bits in [128, 256, 384, 512]:\n        for index in range(args.count):\n            counter = 0\n            while True:\n                ns = [candidate(bits, index, k, args.domain) for k in range(counter, counter + 64)]\n                code = f'V={ns};print(select(i->ispseudoprime(V[i]),vector(#V,i,i)));quit\\n'\n                r = subprocess.run([args.gp, '-q', '-f'], input=code, capture_output=True,\n                                   text=True, check=True)\n                if r.stderr:\n                    raise RuntimeError(r.stderr)\n                selected = json.loads(r.stdout)\n                if selected:\n                    counter += selected[0] - 1\n                    n = candidate(bits, index, counter, args.domain)\n                    proof = subprocess.run([args.gp, '-q', '-f'], input=f'print(isprime({n}));quit\\n',\n                                           text=True, capture_output=True, check=True)\n                    if proof.stderr or proof.stdout.strip() != '1':\n                        raise RuntimeError(f'PARI did not prove candidate {n}: {proof}')\n                    assert n not in seen and n.bit_length() == bits\n                    seen.add(n)\n                    split = 'tuning' if index < args.count // 4 else 'validation'\n                    report['cases'].append({'id': f'{split}-{bits}-{index}', 'split': split,\n                                            'bits': bits, 'index': index, 'counter': counter,\n                                            'subject': n, 'pari_isprime': True})\n                    args.output.write_text(json.dumps(report, indent=2) + '\\n')\n                    print(bits, index, counter, flush=True)\n                    break\n                counter += 64\n    report['complete'] = True\n    validate(report)\n    args.output.write_text(json.dumps(report, indent=2) + '\\n')\n\n\nif __name__ == '__main__':\n    main()\n",
+  "gp_version": "GP/PARI CALCULATOR Version 2.17.3 (released)\n          amd64 running linux (x86-64/GMP-6.3.0 kernel) 64-bit version\n                compiled: Nov 11 2025, gcc version 15.3.0 (GCC)\n                           threading engine: pthread\n                (readline v8.3 disabled, extended help enabled)",
+  "count_per_size": 100,
+  "generation": "SHAKE256/domain/bits/index/counter; mask to exact bits; set top and odd bits; first passing ispseudoprime candidate, verified with unconditional isprime",
+  "split": "first floor(count/4) indices per size tuning; remaining validation",
+  "cases": [
+    {
+      "id": "tuning-128-0",
+      "split": "tuning",
+      "bits": 128,
+      "index": 0,
+      "counter": 4,
+      "subject": 226068008402728246107525230667115376627,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-1",
+      "split": "tuning",
+      "bits": 128,
+      "index": 1,
+      "counter": 31,
+      "subject": 188102050468865900502487890887967760133,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-2",
+      "split": "tuning",
+      "bits": 128,
+      "index": 2,
+      "counter": 59,
+      "subject": 312049881433401737424980182388984489713,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-3",
+      "split": "tuning",
+      "bits": 128,
+      "index": 3,
+      "counter": 54,
+      "subject": 268351020125323407718972895177046054389,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-4",
+      "split": "tuning",
+      "bits": 128,
+      "index": 4,
+      "counter": 54,
+      "subject": 198566452900631500211139767496260124859,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-5",
+      "split": "tuning",
+      "bits": 128,
+      "index": 5,
+      "counter": 37,
+      "subject": 315354134278355902215045913235465370737,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-6",
+      "split": "tuning",
+      "bits": 128,
+      "index": 6,
+      "counter": 66,
+      "subject": 196500316308383601349182108895056367331,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-7",
+      "split": "tuning",
+      "bits": 128,
+      "index": 7,
+      "counter": 72,
+      "subject": 267732798241690818461295497235570074077,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-8",
+      "split": "tuning",
+      "bits": 128,
+      "index": 8,
+      "counter": 80,
+      "subject": 244117975678004532466034804615796827167,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-9",
+      "split": "tuning",
+      "bits": 128,
+      "index": 9,
+      "counter": 126,
+      "subject": 298417549764622700488546017723640172893,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-10",
+      "split": "tuning",
+      "bits": 128,
+      "index": 10,
+      "counter": 59,
+      "subject": 279684880060153667920591603560129493199,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-11",
+      "split": "tuning",
+      "bits": 128,
+      "index": 11,
+      "counter": 32,
+      "subject": 205145291362369453888019330632756383997,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-12",
+      "split": "tuning",
+      "bits": 128,
+      "index": 12,
+      "counter": 11,
+      "subject": 271072123130232480351607481111152402139,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-13",
+      "split": "tuning",
+      "bits": 128,
+      "index": 13,
+      "counter": 8,
+      "subject": 295784438239381920291069505098116842043,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-14",
+      "split": "tuning",
+      "bits": 128,
+      "index": 14,
+      "counter": 17,
+      "subject": 242682928539221009657206183525023855449,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-15",
+      "split": "tuning",
+      "bits": 128,
+      "index": 15,
+      "counter": 19,
+      "subject": 274480985057905370863480513815558928213,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-16",
+      "split": "tuning",
+      "bits": 128,
+      "index": 16,
+      "counter": 52,
+      "subject": 229964732119859875234489488193675146443,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-17",
+      "split": "tuning",
+      "bits": 128,
+      "index": 17,
+      "counter": 29,
+      "subject": 268380334382373535724309701859311258981,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-18",
+      "split": "tuning",
+      "bits": 128,
+      "index": 18,
+      "counter": 131,
+      "subject": 323648962646553705938672438230008285241,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-19",
+      "split": "tuning",
+      "bits": 128,
+      "index": 19,
+      "counter": 10,
+      "subject": 172521422665364368973705089611921448229,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-20",
+      "split": "tuning",
+      "bits": 128,
+      "index": 20,
+      "counter": 8,
+      "subject": 211460127084212360138382932886180788503,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-21",
+      "split": "tuning",
+      "bits": 128,
+      "index": 21,
+      "counter": 63,
+      "subject": 305991570872647573259557436440691186713,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-22",
+      "split": "tuning",
+      "bits": 128,
+      "index": 22,
+      "counter": 10,
+      "subject": 197042760100250385092143681731197604641,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-23",
+      "split": "tuning",
+      "bits": 128,
+      "index": 23,
+      "counter": 34,
+      "subject": 229411526560291003807003527262621682261,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-128-24",
+      "split": "tuning",
+      "bits": 128,
+      "index": 24,
+      "counter": 16,
+      "subject": 276780297719545805755814281277939076319,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-25",
+      "split": "validation",
+      "bits": 128,
+      "index": 25,
+      "counter": 34,
+      "subject": 329839203489149340652763118540116700701,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-26",
+      "split": "validation",
+      "bits": 128,
+      "index": 26,
+      "counter": 2,
+      "subject": 192138629755679484809283654407209184459,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-27",
+      "split": "validation",
+      "bits": 128,
+      "index": 27,
+      "counter": 66,
+      "subject": 254087141443817901172793764933613865497,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-28",
+      "split": "validation",
+      "bits": 128,
+      "index": 28,
+      "counter": 4,
+      "subject": 187730696573130018857297601719904390673,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-29",
+      "split": "validation",
+      "bits": 128,
+      "index": 29,
+      "counter": 114,
+      "subject": 304419254533937312273651459981811718787,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-30",
+      "split": "validation",
+      "bits": 128,
+      "index": 30,
+      "counter": 66,
+      "subject": 315844155192386703083817762877382634757,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-31",
+      "split": "validation",
+      "bits": 128,
+      "index": 31,
+      "counter": 69,
+      "subject": 182631141757201081662980248013834015681,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-32",
+      "split": "validation",
+      "bits": 128,
+      "index": 32,
+      "counter": 65,
+      "subject": 264240193937696384823570607950426188467,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-33",
+      "split": "validation",
+      "bits": 128,
+      "index": 33,
+      "counter": 6,
+      "subject": 212500001236066483306201689117236286779,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-34",
+      "split": "validation",
+      "bits": 128,
+      "index": 34,
+      "counter": 10,
+      "subject": 315096417703678961363146583470948853087,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-35",
+      "split": "validation",
+      "bits": 128,
+      "index": 35,
+      "counter": 115,
+      "subject": 223837328132201042609524576411474984241,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-36",
+      "split": "validation",
+      "bits": 128,
+      "index": 36,
+      "counter": 71,
+      "subject": 185663582354586477247647219833014261189,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-37",
+      "split": "validation",
+      "bits": 128,
+      "index": 37,
+      "counter": 121,
+      "subject": 288620160655650420641576358199358182823,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-38",
+      "split": "validation",
+      "bits": 128,
+      "index": 38,
+      "counter": 12,
+      "subject": 319053365356384419565168645703194043171,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-39",
+      "split": "validation",
+      "bits": 128,
+      "index": 39,
+      "counter": 33,
+      "subject": 175398835624663388490680063954279064293,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-40",
+      "split": "validation",
+      "bits": 128,
+      "index": 40,
+      "counter": 12,
+      "subject": 279285922293780546545708128226483961719,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-41",
+      "split": "validation",
+      "bits": 128,
+      "index": 41,
+      "counter": 125,
+      "subject": 331141689854343830823298622721389238163,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-42",
+      "split": "validation",
+      "bits": 128,
+      "index": 42,
+      "counter": 9,
+      "subject": 176026565205119327974369511621932004159,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-43",
+      "split": "validation",
+      "bits": 128,
+      "index": 43,
+      "counter": 7,
+      "subject": 307913375851605812234977945686925698427,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-44",
+      "split": "validation",
+      "bits": 128,
+      "index": 44,
+      "counter": 54,
+      "subject": 288196492320474123351467897475712503187,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-45",
+      "split": "validation",
+      "bits": 128,
+      "index": 45,
+      "counter": 120,
+      "subject": 285340285321201523193328931353730910511,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-46",
+      "split": "validation",
+      "bits": 128,
+      "index": 46,
+      "counter": 7,
+      "subject": 173732722407859571684719527938818420643,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-47",
+      "split": "validation",
+      "bits": 128,
+      "index": 47,
+      "counter": 87,
+      "subject": 248844959006369087592231232484215349293,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-48",
+      "split": "validation",
+      "bits": 128,
+      "index": 48,
+      "counter": 99,
+      "subject": 284941635328378611151069681483736921239,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-49",
+      "split": "validation",
+      "bits": 128,
+      "index": 49,
+      "counter": 30,
+      "subject": 222702959703144966457506054723274199407,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-50",
+      "split": "validation",
+      "bits": 128,
+      "index": 50,
+      "counter": 119,
+      "subject": 315026635997759466035200862982192740423,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-51",
+      "split": "validation",
+      "bits": 128,
+      "index": 51,
+      "counter": 3,
+      "subject": 304846524189496738661883166997523670811,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-52",
+      "split": "validation",
+      "bits": 128,
+      "index": 52,
+      "counter": 6,
+      "subject": 273363721214058441759568697516659531933,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-53",
+      "split": "validation",
+      "bits": 128,
+      "index": 53,
+      "counter": 70,
+      "subject": 242835837655045833351869496798331015441,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-54",
+      "split": "validation",
+      "bits": 128,
+      "index": 54,
+      "counter": 26,
+      "subject": 310235404253313441763163429262671940047,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-55",
+      "split": "validation",
+      "bits": 128,
+      "index": 55,
+      "counter": 4,
+      "subject": 284322348495653697996015796032299889433,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-56",
+      "split": "validation",
+      "bits": 128,
+      "index": 56,
+      "counter": 4,
+      "subject": 324286123708088817124708054663267139467,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-57",
+      "split": "validation",
+      "bits": 128,
+      "index": 57,
+      "counter": 44,
+      "subject": 217511172958913124204139953406513611061,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-58",
+      "split": "validation",
+      "bits": 128,
+      "index": 58,
+      "counter": 57,
+      "subject": 222143136999058890554144431298284185833,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-59",
+      "split": "validation",
+      "bits": 128,
+      "index": 59,
+      "counter": 9,
+      "subject": 203957947655969989955964577951988707769,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-60",
+      "split": "validation",
+      "bits": 128,
+      "index": 60,
+      "counter": 66,
+      "subject": 333147626386545075065602620451367864759,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-61",
+      "split": "validation",
+      "bits": 128,
+      "index": 61,
+      "counter": 31,
+      "subject": 277646390053210728783552159800518816063,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-62",
+      "split": "validation",
+      "bits": 128,
+      "index": 62,
+      "counter": 10,
+      "subject": 296802690131721461449689701458510966991,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-63",
+      "split": "validation",
+      "bits": 128,
+      "index": 63,
+      "counter": 37,
+      "subject": 212045108866828262316900626640320240033,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-64",
+      "split": "validation",
+      "bits": 128,
+      "index": 64,
+      "counter": 257,
+      "subject": 229492651132294600554906237579035285971,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-65",
+      "split": "validation",
+      "bits": 128,
+      "index": 65,
+      "counter": 4,
+      "subject": 296773857123945696882764840335296027049,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-66",
+      "split": "validation",
+      "bits": 128,
+      "index": 66,
+      "counter": 20,
+      "subject": 257999580596679099850393178233088706487,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-67",
+      "split": "validation",
+      "bits": 128,
+      "index": 67,
+      "counter": 88,
+      "subject": 212134656330155917241106884589002703977,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-68",
+      "split": "validation",
+      "bits": 128,
+      "index": 68,
+      "counter": 32,
+      "subject": 187307322014133529611860106224912279933,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-69",
+      "split": "validation",
+      "bits": 128,
+      "index": 69,
+      "counter": 11,
+      "subject": 257182555539072741503147985050071234489,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-70",
+      "split": "validation",
+      "bits": 128,
+      "index": 70,
+      "counter": 62,
+      "subject": 282069368762124230598443497830202733273,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-71",
+      "split": "validation",
+      "bits": 128,
+      "index": 71,
+      "counter": 32,
+      "subject": 243699747182312508675633736486359359927,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-72",
+      "split": "validation",
+      "bits": 128,
+      "index": 72,
+      "counter": 35,
+      "subject": 251323971664513507716613324068768094891,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-73",
+      "split": "validation",
+      "bits": 128,
+      "index": 73,
+      "counter": 114,
+      "subject": 178929988355330730458408894069807897119,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-74",
+      "split": "validation",
+      "bits": 128,
+      "index": 74,
+      "counter": 8,
+      "subject": 339498083478407318739034480503721151573,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-75",
+      "split": "validation",
+      "bits": 128,
+      "index": 75,
+      "counter": 15,
+      "subject": 199624113911514070136334299906117328007,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-76",
+      "split": "validation",
+      "bits": 128,
+      "index": 76,
+      "counter": 6,
+      "subject": 219960414054849028746144320473958788807,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-77",
+      "split": "validation",
+      "bits": 128,
+      "index": 77,
+      "counter": 79,
+      "subject": 174845140977586770549947058269722640071,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-78",
+      "split": "validation",
+      "bits": 128,
+      "index": 78,
+      "counter": 61,
+      "subject": 254856257283881272916898664696483667453,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-79",
+      "split": "validation",
+      "bits": 128,
+      "index": 79,
+      "counter": 28,
+      "subject": 218558700888602356988218348613635191251,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-80",
+      "split": "validation",
+      "bits": 128,
+      "index": 80,
+      "counter": 2,
+      "subject": 252850564741584226176801956694589508407,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-81",
+      "split": "validation",
+      "bits": 128,
+      "index": 81,
+      "counter": 7,
+      "subject": 309253505669046954925946901214061325697,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-82",
+      "split": "validation",
+      "bits": 128,
+      "index": 82,
+      "counter": 27,
+      "subject": 260674089516361502297192166025225723991,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-83",
+      "split": "validation",
+      "bits": 128,
+      "index": 83,
+      "counter": 44,
+      "subject": 244765428420498604370569394388224002001,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-84",
+      "split": "validation",
+      "bits": 128,
+      "index": 84,
+      "counter": 37,
+      "subject": 297917967708716413941345490704533923757,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-85",
+      "split": "validation",
+      "bits": 128,
+      "index": 85,
+      "counter": 2,
+      "subject": 239253291093884573929306032178764507229,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-86",
+      "split": "validation",
+      "bits": 128,
+      "index": 86,
+      "counter": 101,
+      "subject": 247391029587731126398478156606703677453,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-87",
+      "split": "validation",
+      "bits": 128,
+      "index": 87,
+      "counter": 125,
+      "subject": 221810578102316311131172818878056058999,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-88",
+      "split": "validation",
+      "bits": 128,
+      "index": 88,
+      "counter": 1,
+      "subject": 290755429786894847960257695542746457557,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-89",
+      "split": "validation",
+      "bits": 128,
+      "index": 89,
+      "counter": 62,
+      "subject": 278818549652827282799063915336726034647,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-90",
+      "split": "validation",
+      "bits": 128,
+      "index": 90,
+      "counter": 96,
+      "subject": 202429082919027165328824246466395264781,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-91",
+      "split": "validation",
+      "bits": 128,
+      "index": 91,
+      "counter": 97,
+      "subject": 323879760545210191071174406759498661641,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-92",
+      "split": "validation",
+      "bits": 128,
+      "index": 92,
+      "counter": 11,
+      "subject": 279414190102883677870444874051385300209,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-93",
+      "split": "validation",
+      "bits": 128,
+      "index": 93,
+      "counter": 4,
+      "subject": 184154297647164599490850506771521817509,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-94",
+      "split": "validation",
+      "bits": 128,
+      "index": 94,
+      "counter": 132,
+      "subject": 266078319456462071237854106071203905593,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-95",
+      "split": "validation",
+      "bits": 128,
+      "index": 95,
+      "counter": 26,
+      "subject": 222860385842924420782094733523945540577,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-96",
+      "split": "validation",
+      "bits": 128,
+      "index": 96,
+      "counter": 63,
+      "subject": 307087401839216939071741926871210718677,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-97",
+      "split": "validation",
+      "bits": 128,
+      "index": 97,
+      "counter": 128,
+      "subject": 174827829992357275087966940011689806351,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-98",
+      "split": "validation",
+      "bits": 128,
+      "index": 98,
+      "counter": 17,
+      "subject": 208359860300723445863693149715302278923,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-128-99",
+      "split": "validation",
+      "bits": 128,
+      "index": 99,
+      "counter": 0,
+      "subject": 339321961936533108018569310546491699399,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-0",
+      "split": "tuning",
+      "bits": 256,
+      "index": 0,
+      "counter": 78,
+      "subject": 66991578022311740422679101676420503637865603862062482968863734653033745584123,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-1",
+      "split": "tuning",
+      "bits": 256,
+      "index": 1,
+      "counter": 5,
+      "subject": 79482853261933151657322877114882782483404444280583501691581700003454046104317,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-2",
+      "split": "tuning",
+      "bits": 256,
+      "index": 2,
+      "counter": 54,
+      "subject": 78992574222766632858135256725929617424041972935245039032142209713519860475577,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-3",
+      "split": "tuning",
+      "bits": 256,
+      "index": 3,
+      "counter": 44,
+      "subject": 99499906076396496946597781255504405947030349932151119746594604355614606119337,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-4",
+      "split": "tuning",
+      "bits": 256,
+      "index": 4,
+      "counter": 75,
+      "subject": 79061670641763111222288123262358094449313892049527926364515133932892100825167,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-5",
+      "split": "tuning",
+      "bits": 256,
+      "index": 5,
+      "counter": 181,
+      "subject": 93698161217615938937113994539778693003837655379931764552005748595198390891867,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-6",
+      "split": "tuning",
+      "bits": 256,
+      "index": 6,
+      "counter": 80,
+      "subject": 101455844727607826607610740484451161348037218098998975005205762430467399118791,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-7",
+      "split": "tuning",
+      "bits": 256,
+      "index": 7,
+      "counter": 243,
+      "subject": 101359715351694674969847425033214215888389665237667281700922310248709361718929,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-8",
+      "split": "tuning",
+      "bits": 256,
+      "index": 8,
+      "counter": 113,
+      "subject": 87925893381913002630065574663473799677188667466452781767272019685269746362053,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-9",
+      "split": "tuning",
+      "bits": 256,
+      "index": 9,
+      "counter": 33,
+      "subject": 115371486384995475119718242269904898814565362619191005346225378643265300199079,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-10",
+      "split": "tuning",
+      "bits": 256,
+      "index": 10,
+      "counter": 49,
+      "subject": 100704221531930233214111339851500758098150974430788866539211593197577931677127,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-11",
+      "split": "tuning",
+      "bits": 256,
+      "index": 11,
+      "counter": 45,
+      "subject": 107451876035341345346629833978105281174335204961989198511735495314381261143769,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-12",
+      "split": "tuning",
+      "bits": 256,
+      "index": 12,
+      "counter": 6,
+      "subject": 66093954740564667119290608809018185151231850587320350123002738821289761303507,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-13",
+      "split": "tuning",
+      "bits": 256,
+      "index": 13,
+      "counter": 6,
+      "subject": 77287708292195933866571544803905703644912140725342353729282642810229143263547,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-14",
+      "split": "tuning",
+      "bits": 256,
+      "index": 14,
+      "counter": 251,
+      "subject": 77618283763791973581052529572597644356274645490010650215688021570447922996413,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-15",
+      "split": "tuning",
+      "bits": 256,
+      "index": 15,
+      "counter": 60,
+      "subject": 95275991168347195519232718883699479439456762937829901084739328755211392233159,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-16",
+      "split": "tuning",
+      "bits": 256,
+      "index": 16,
+      "counter": 30,
+      "subject": 115053171612936563164071855414669541740584626489629476416414797135469192811849,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-17",
+      "split": "tuning",
+      "bits": 256,
+      "index": 17,
+      "counter": 20,
+      "subject": 107345287447704052976236705166100960934818065842353400533876113016787166460829,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-18",
+      "split": "tuning",
+      "bits": 256,
+      "index": 18,
+      "counter": 32,
+      "subject": 73297533682066167526686738210834879449422348410318646102827429159874705879517,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-19",
+      "split": "tuning",
+      "bits": 256,
+      "index": 19,
+      "counter": 292,
+      "subject": 85817993092492753771371815818490338549487926917261676835217464423104457497039,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-20",
+      "split": "tuning",
+      "bits": 256,
+      "index": 20,
+      "counter": 26,
+      "subject": 76259246456411669701874786552592512229345298179551133980677944775982258457499,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-21",
+      "split": "tuning",
+      "bits": 256,
+      "index": 21,
+      "counter": 21,
+      "subject": 111375171971877963095707875408258453709350552992737091482293386695485386639027,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-22",
+      "split": "tuning",
+      "bits": 256,
+      "index": 22,
+      "counter": 15,
+      "subject": 77661743225618701744590965909436787207918421460800490707246486638989806702491,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-23",
+      "split": "tuning",
+      "bits": 256,
+      "index": 23,
+      "counter": 36,
+      "subject": 62913568443637736892412170415427814390497992593524963823612054490170079256281,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-256-24",
+      "split": "tuning",
+      "bits": 256,
+      "index": 24,
+      "counter": 86,
+      "subject": 112488258583122153141074485762093239470674707637272931924141737225591848187161,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-25",
+      "split": "validation",
+      "bits": 256,
+      "index": 25,
+      "counter": 97,
+      "subject": 70845728524071296338339288134626548832348309227821074576047054921115179349831,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-26",
+      "split": "validation",
+      "bits": 256,
+      "index": 26,
+      "counter": 66,
+      "subject": 98423300762798232456208262562185833212649263989899937264064917781586512244343,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-27",
+      "split": "validation",
+      "bits": 256,
+      "index": 27,
+      "counter": 197,
+      "subject": 97888054833475599546493430746026034632907093766153267790732973200570854612983,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-28",
+      "split": "validation",
+      "bits": 256,
+      "index": 28,
+      "counter": 55,
+      "subject": 73650494187575423086581469229541931013586567490075636749532047494662836213149,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-29",
+      "split": "validation",
+      "bits": 256,
+      "index": 29,
+      "counter": 125,
+      "subject": 109971681085037085129400671086181418285611454397962207981818990275639341401401,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-30",
+      "split": "validation",
+      "bits": 256,
+      "index": 30,
+      "counter": 72,
+      "subject": 92992595365191951391095037603354344648737012165018776834793998479632250225163,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-31",
+      "split": "validation",
+      "bits": 256,
+      "index": 31,
+      "counter": 102,
+      "subject": 78219422815159183329688090451936052509731366427118962901662059865976404704471,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-32",
+      "split": "validation",
+      "bits": 256,
+      "index": 32,
+      "counter": 82,
+      "subject": 73426358477531165433226794445980425592122755663001117046889171872335449728929,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-33",
+      "split": "validation",
+      "bits": 256,
+      "index": 33,
+      "counter": 16,
+      "subject": 63148282494280103231132924008119535852253356936971738687729110667495378906601,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-34",
+      "split": "validation",
+      "bits": 256,
+      "index": 34,
+      "counter": 69,
+      "subject": 106476668589057994954030280548508461694193513053922536592559563670033429191307,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-35",
+      "split": "validation",
+      "bits": 256,
+      "index": 35,
+      "counter": 68,
+      "subject": 80482677204704043204108631242322921528091640152758109356403156689668620452651,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-36",
+      "split": "validation",
+      "bits": 256,
+      "index": 36,
+      "counter": 244,
+      "subject": 63206298473639626075466602385140862799395462895317508646635585756810415352017,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-37",
+      "split": "validation",
+      "bits": 256,
+      "index": 37,
+      "counter": 54,
+      "subject": 104614593217436974791578750722049835142507646253455213183305528885707989245811,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-38",
+      "split": "validation",
+      "bits": 256,
+      "index": 38,
+      "counter": 1,
+      "subject": 105321625529729239420699997521394234748783492818863771001358863951153830125299,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-39",
+      "split": "validation",
+      "bits": 256,
+      "index": 39,
+      "counter": 67,
+      "subject": 96116808558096091363812243184129511093100431636498585659974288419803642649957,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-40",
+      "split": "validation",
+      "bits": 256,
+      "index": 40,
+      "counter": 220,
+      "subject": 112964127394513751832284836079133916073103457206988838680219499353528386383539,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-41",
+      "split": "validation",
+      "bits": 256,
+      "index": 41,
+      "counter": 178,
+      "subject": 66095865409969963512769009351851786604618035736772789163052904321675213083493,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-42",
+      "split": "validation",
+      "bits": 256,
+      "index": 42,
+      "counter": 1,
+      "subject": 106909176538015120514508289845463240744708672823907250278308803774544403712909,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-43",
+      "split": "validation",
+      "bits": 256,
+      "index": 43,
+      "counter": 11,
+      "subject": 64122721333534873949780038096702711708454548948915064683663203127053475343413,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-44",
+      "split": "validation",
+      "bits": 256,
+      "index": 44,
+      "counter": 9,
+      "subject": 109399562254340585084600118916547624079854289716703676659366040258580691530713,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-45",
+      "split": "validation",
+      "bits": 256,
+      "index": 45,
+      "counter": 103,
+      "subject": 86926538394070668125386184502283006425466516212731784653976196792929912630959,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-46",
+      "split": "validation",
+      "bits": 256,
+      "index": 46,
+      "counter": 172,
+      "subject": 98725064373667121382174855406017825356905878104171613528130501276369518782989,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-47",
+      "split": "validation",
+      "bits": 256,
+      "index": 47,
+      "counter": 17,
+      "subject": 110791116136583533937564380397109763311102032558533131010201405510228909261463,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-48",
+      "split": "validation",
+      "bits": 256,
+      "index": 48,
+      "counter": 29,
+      "subject": 100733573085627462022153891116041346001859391688609113059823706270307760376069,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-49",
+      "split": "validation",
+      "bits": 256,
+      "index": 49,
+      "counter": 54,
+      "subject": 112059645997256354049914216929983353912395435710614832792375074789175724872077,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-50",
+      "split": "validation",
+      "bits": 256,
+      "index": 50,
+      "counter": 76,
+      "subject": 63942791304686956264049252444082067493025253751472847709137471677270954498641,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-51",
+      "split": "validation",
+      "bits": 256,
+      "index": 51,
+      "counter": 80,
+      "subject": 99964527595058093851417832181915895165218787275542031785245829336049359150449,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-52",
+      "split": "validation",
+      "bits": 256,
+      "index": 52,
+      "counter": 110,
+      "subject": 107265678545310402583624752737392354466276597804215977783944348712594375122207,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-53",
+      "split": "validation",
+      "bits": 256,
+      "index": 53,
+      "counter": 76,
+      "subject": 108949689068317562998875225051259340359183364262329585874269125417144652216737,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-54",
+      "split": "validation",
+      "bits": 256,
+      "index": 54,
+      "counter": 10,
+      "subject": 102278724833297910604330989964806398545621314664301058009329121249095732546171,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-55",
+      "split": "validation",
+      "bits": 256,
+      "index": 55,
+      "counter": 36,
+      "subject": 74195783994782574842020011613305523516458372065068728147812408164712213868103,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-56",
+      "split": "validation",
+      "bits": 256,
+      "index": 56,
+      "counter": 269,
+      "subject": 96651237636984897087757136191278677419343810458959904702317631724339837891183,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-57",
+      "split": "validation",
+      "bits": 256,
+      "index": 57,
+      "counter": 218,
+      "subject": 68902963908814966847837512172724920304690797816547949781970982987372687200283,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-58",
+      "split": "validation",
+      "bits": 256,
+      "index": 58,
+      "counter": 80,
+      "subject": 92647743055652287049611300650097786233113688366843917335995107141292863066249,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-59",
+      "split": "validation",
+      "bits": 256,
+      "index": 59,
+      "counter": 132,
+      "subject": 84331830505012213412183826368085462389802131606072856130913214260498686513901,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-60",
+      "split": "validation",
+      "bits": 256,
+      "index": 60,
+      "counter": 52,
+      "subject": 93194143571292597530547048770795003285127074325668230694132683676800224969713,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-61",
+      "split": "validation",
+      "bits": 256,
+      "index": 61,
+      "counter": 202,
+      "subject": 110563179035163486352209484708408778505376952372118350536524234111346330039309,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-62",
+      "split": "validation",
+      "bits": 256,
+      "index": 62,
+      "counter": 103,
+      "subject": 75622428668850429995494284478275766537969860582314443365067794817279314380201,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-63",
+      "split": "validation",
+      "bits": 256,
+      "index": 63,
+      "counter": 16,
+      "subject": 97626265422364998117480351306826736582888202597360525202330147834107645431669,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-64",
+      "split": "validation",
+      "bits": 256,
+      "index": 64,
+      "counter": 32,
+      "subject": 109441662012562789639896596629053827110104267792577437645706841979667509371299,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-65",
+      "split": "validation",
+      "bits": 256,
+      "index": 65,
+      "counter": 9,
+      "subject": 68191123267404419179086053637008898662139090487986795377240823817248046281763,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-66",
+      "split": "validation",
+      "bits": 256,
+      "index": 66,
+      "counter": 67,
+      "subject": 90691595592787852810140289775731730665175303316941370673811022831408291455113,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-67",
+      "split": "validation",
+      "bits": 256,
+      "index": 67,
+      "counter": 107,
+      "subject": 113128810366788209956020972127668824414150572251704919178355496602955522708811,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-68",
+      "split": "validation",
+      "bits": 256,
+      "index": 68,
+      "counter": 139,
+      "subject": 102225077273946280054858042234293257391367821233506580585955370344116482090343,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-69",
+      "split": "validation",
+      "bits": 256,
+      "index": 69,
+      "counter": 179,
+      "subject": 64071119972465830792846696197653781211277244437651815218044909841288451491521,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-70",
+      "split": "validation",
+      "bits": 256,
+      "index": 70,
+      "counter": 59,
+      "subject": 81989474532707580340325483150308108436237147435162162812067359192422527556013,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-71",
+      "split": "validation",
+      "bits": 256,
+      "index": 71,
+      "counter": 146,
+      "subject": 62561263508896193855979464402352831323862545750803235447661552118233145656581,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-72",
+      "split": "validation",
+      "bits": 256,
+      "index": 72,
+      "counter": 85,
+      "subject": 96647132764956742030633530997496172103265638908759535474052608796476348090589,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-73",
+      "split": "validation",
+      "bits": 256,
+      "index": 73,
+      "counter": 10,
+      "subject": 86969621308297449247257935325388126206731377556124621529891044037043137440311,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-74",
+      "split": "validation",
+      "bits": 256,
+      "index": 74,
+      "counter": 99,
+      "subject": 94342660240778615479006404881295798177544947600574498087817747819513042075663,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-75",
+      "split": "validation",
+      "bits": 256,
+      "index": 75,
+      "counter": 27,
+      "subject": 59844776178632531294330607122730566758230002515124497965675254832175515702799,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-76",
+      "split": "validation",
+      "bits": 256,
+      "index": 76,
+      "counter": 467,
+      "subject": 93272587303324044806576925703255461796450007921361762392047201056986558703757,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-77",
+      "split": "validation",
+      "bits": 256,
+      "index": 77,
+      "counter": 159,
+      "subject": 58988068871129626299522615539489014879024228812218716814496185707579940866133,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-78",
+      "split": "validation",
+      "bits": 256,
+      "index": 78,
+      "counter": 231,
+      "subject": 114525991912537369361333435480013669243304567704698875322349039524072620854443,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-79",
+      "split": "validation",
+      "bits": 256,
+      "index": 79,
+      "counter": 317,
+      "subject": 106770378147401690308816315609815045291847961459074076953293326602989236680033,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-80",
+      "split": "validation",
+      "bits": 256,
+      "index": 80,
+      "counter": 42,
+      "subject": 87826951236840884608861417209733106106599707795233227499494507673950567713789,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-81",
+      "split": "validation",
+      "bits": 256,
+      "index": 81,
+      "counter": 49,
+      "subject": 90805963093142203614728990853735604593373939795467298973207480458051328696807,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-82",
+      "split": "validation",
+      "bits": 256,
+      "index": 82,
+      "counter": 0,
+      "subject": 114815055570146135448086104272446432487325347399055490531903142327789645386089,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-83",
+      "split": "validation",
+      "bits": 256,
+      "index": 83,
+      "counter": 73,
+      "subject": 95467528800959142223828529514053384696852149628690073420113032106226377345071,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-84",
+      "split": "validation",
+      "bits": 256,
+      "index": 84,
+      "counter": 65,
+      "subject": 69212835738482849770431081983405833938052038844489389764766568158429525064843,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-85",
+      "split": "validation",
+      "bits": 256,
+      "index": 85,
+      "counter": 31,
+      "subject": 91987682788781540599290852057129746353469485030059681676942299999617386556543,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-86",
+      "split": "validation",
+      "bits": 256,
+      "index": 86,
+      "counter": 6,
+      "subject": 78881910979623689794798164569670292707740052838107809518063456276511990265347,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-87",
+      "split": "validation",
+      "bits": 256,
+      "index": 87,
+      "counter": 114,
+      "subject": 75203338546100569986944307090756770974885973971979439321897048945859383833431,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-88",
+      "split": "validation",
+      "bits": 256,
+      "index": 88,
+      "counter": 32,
+      "subject": 101394760244057902173576581183930403384679326502302416024278273137640348090757,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-89",
+      "split": "validation",
+      "bits": 256,
+      "index": 89,
+      "counter": 20,
+      "subject": 89950742662998192670298739771337392707051811711133837146337028515268566548107,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-90",
+      "split": "validation",
+      "bits": 256,
+      "index": 90,
+      "counter": 131,
+      "subject": 113865990661783854534550984523895582356510133881835727442007928353482359746619,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-91",
+      "split": "validation",
+      "bits": 256,
+      "index": 91,
+      "counter": 33,
+      "subject": 79627436205971106126293140613721932164696973749152626741461857658339836088897,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-92",
+      "split": "validation",
+      "bits": 256,
+      "index": 92,
+      "counter": 1,
+      "subject": 67669116527397644956540083328620094677749524216304500955895596741016867607217,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-93",
+      "split": "validation",
+      "bits": 256,
+      "index": 93,
+      "counter": 358,
+      "subject": 101916020242825245186419432989228344137461794529039751777293455906014010959047,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-94",
+      "split": "validation",
+      "bits": 256,
+      "index": 94,
+      "counter": 0,
+      "subject": 66781110955574635027625848199727876208785874294957488141064876847109811958041,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-95",
+      "split": "validation",
+      "bits": 256,
+      "index": 95,
+      "counter": 75,
+      "subject": 65428036770633136109735440901398125643885186091953122414606704163968925054023,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-96",
+      "split": "validation",
+      "bits": 256,
+      "index": 96,
+      "counter": 185,
+      "subject": 67735649059011715816390874437118330998300186416550926959768130056344855036207,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-97",
+      "split": "validation",
+      "bits": 256,
+      "index": 97,
+      "counter": 0,
+      "subject": 89064403956642397898854115727891558672937411444484005520070810340651673404409,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-98",
+      "split": "validation",
+      "bits": 256,
+      "index": 98,
+      "counter": 287,
+      "subject": 102749727869766029083403126040868629803393974572290743767015396797852368020041,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-256-99",
+      "split": "validation",
+      "bits": 256,
+      "index": 99,
+      "counter": 24,
+      "subject": 104761271846337030430636558907960127824024352081322470611107345764316156373447,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-0",
+      "split": "tuning",
+      "bits": 384,
+      "index": 0,
+      "counter": 31,
+      "subject": 24066439910130314799207801735205412566780227899077717328889191536656768087484136172528152504708405992820377479900037,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-1",
+      "split": "tuning",
+      "bits": 384,
+      "index": 1,
+      "counter": 40,
+      "subject": 33868883027889259294905386682243697654056472940023953228305947706827129405461406884584161658196444278023648461498323,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-2",
+      "split": "tuning",
+      "bits": 384,
+      "index": 2,
+      "counter": 239,
+      "subject": 27113143466427280413508848156102439528942766048094328257530974142190746196868985628066562422961752394193885306331691,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-3",
+      "split": "tuning",
+      "bits": 384,
+      "index": 3,
+      "counter": 4,
+      "subject": 38850199378360747442009316271141914441925427383091171936408923934296325320083101679228661218306005176917823788845437,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-4",
+      "split": "tuning",
+      "bits": 384,
+      "index": 4,
+      "counter": 22,
+      "subject": 32367688638383069292641287225913161087849565757822272166288180660768113377741955287493734611871908879976122084191723,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-5",
+      "split": "tuning",
+      "bits": 384,
+      "index": 5,
+      "counter": 363,
+      "subject": 29346862284388966433852742962439902461116311679356983353980220628184690356959293955020440355217699678289119798021709,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-6",
+      "split": "tuning",
+      "bits": 384,
+      "index": 6,
+      "counter": 71,
+      "subject": 25127923679188480384582053741880877325166646919534382955582658451363531470118316689812780427956345963771127850953147,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-7",
+      "split": "tuning",
+      "bits": 384,
+      "index": 7,
+      "counter": 96,
+      "subject": 33083181916503657082881309218405350380019948112577031218910252593012626466688825798858645739202732001190613482941939,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-8",
+      "split": "tuning",
+      "bits": 384,
+      "index": 8,
+      "counter": 128,
+      "subject": 35969715351779637138919290068771267237173230901618474021855259320474167543631127372759801016123777311448828940113979,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-9",
+      "split": "tuning",
+      "bits": 384,
+      "index": 9,
+      "counter": 18,
+      "subject": 24085747858680212652322373937133026932484667688285370413854512850800064443169646772894853708690297666814185729229351,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-10",
+      "split": "tuning",
+      "bits": 384,
+      "index": 10,
+      "counter": 49,
+      "subject": 21577603958093556037274392681209091505786760730598793245681190468767972455008467509777604946409524308867183611288883,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-11",
+      "split": "tuning",
+      "bits": 384,
+      "index": 11,
+      "counter": 124,
+      "subject": 21588412017254127410154007698328284501605189972721089604843027992287648857866194421305478611383363335121952067634851,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-12",
+      "split": "tuning",
+      "bits": 384,
+      "index": 12,
+      "counter": 143,
+      "subject": 30535111364211936509932201839293323875486441521435537591553760899983185894209732619648963612895916782175004007022077,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-13",
+      "split": "tuning",
+      "bits": 384,
+      "index": 13,
+      "counter": 166,
+      "subject": 22839136663076474947366095242370217183070693976633157324944447883576205636159399127856347253154600102557395355896689,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-14",
+      "split": "tuning",
+      "bits": 384,
+      "index": 14,
+      "counter": 7,
+      "subject": 20370921705216520023221330371044791472501931739302345344180573246681332018246303951632400204485734612912629628179141,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-15",
+      "split": "tuning",
+      "bits": 384,
+      "index": 15,
+      "counter": 180,
+      "subject": 26565277204988955211317580751841680654113581850155001124552943590888500023960020930650581814525120715819603087026703,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-16",
+      "split": "tuning",
+      "bits": 384,
+      "index": 16,
+      "counter": 532,
+      "subject": 29406239488122346399160308941554218328487432135656643429516257165906533615961575251604270875225703812580738477516249,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-17",
+      "split": "tuning",
+      "bits": 384,
+      "index": 17,
+      "counter": 40,
+      "subject": 28888453035408557298956414986009507788556261579492018449837541624530687081748193508765966572921069374791163357562869,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-18",
+      "split": "tuning",
+      "bits": 384,
+      "index": 18,
+      "counter": 95,
+      "subject": 29200546723810280065457028591792839433641277676409115991323597277990512534596202509379851674841686407558770474149531,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-19",
+      "split": "tuning",
+      "bits": 384,
+      "index": 19,
+      "counter": 3,
+      "subject": 35059723543347523274372284603429999446139485617226364278722588173914568549692616857116354963878863859410803466774943,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-20",
+      "split": "tuning",
+      "bits": 384,
+      "index": 20,
+      "counter": 9,
+      "subject": 22054740599762835851893793125685034839237692672226235208112885980357877507446349389394864135065511101282078224450809,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-21",
+      "split": "tuning",
+      "bits": 384,
+      "index": 21,
+      "counter": 198,
+      "subject": 34242335918118851154857491374409283396648768370070776775290325007632082388070278768518530363626881120505540978896969,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-22",
+      "split": "tuning",
+      "bits": 384,
+      "index": 22,
+      "counter": 7,
+      "subject": 38819749125900357787204746199177090171329863806194916141341922178322017152514050982167062575227104224317914576194129,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-23",
+      "split": "tuning",
+      "bits": 384,
+      "index": 23,
+      "counter": 93,
+      "subject": 31994391997791739735250006043505642582610479640763303397292166591445225569004617489250153184165065690552446719188267,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-384-24",
+      "split": "tuning",
+      "bits": 384,
+      "index": 24,
+      "counter": 455,
+      "subject": 24297419764622808119678514903046830025564785286435011352795617149304183018079395692995128222790769484587045240811673,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-25",
+      "split": "validation",
+      "bits": 384,
+      "index": 25,
+      "counter": 188,
+      "subject": 20219326970734471886145502627628838977378137876409052129607950040093175399065389888786242903594474759684348571651731,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-26",
+      "split": "validation",
+      "bits": 384,
+      "index": 26,
+      "counter": 230,
+      "subject": 30164056854098692510317281341325145245148957095010443792659303259114115469399541316453329219233513317455439719471609,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-27",
+      "split": "validation",
+      "bits": 384,
+      "index": 27,
+      "counter": 89,
+      "subject": 32686577018228499184957404243992743332657420069199967750147242995704384532553030625798404717944653123398619462615419,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-28",
+      "split": "validation",
+      "bits": 384,
+      "index": 28,
+      "counter": 249,
+      "subject": 20317673917732167336911233292416131151326465057002670936959359475960410979620778209446316512812891908123089642228451,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-29",
+      "split": "validation",
+      "bits": 384,
+      "index": 29,
+      "counter": 103,
+      "subject": 32822230844775901061363648970069711791231569856799079273866821094276495451092214569353277882012237634737425549821247,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-30",
+      "split": "validation",
+      "bits": 384,
+      "index": 30,
+      "counter": 24,
+      "subject": 36945394344569789395295324260416045281306006212138798760570508017023817468689241500138322742414938772470899962989873,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-31",
+      "split": "validation",
+      "bits": 384,
+      "index": 31,
+      "counter": 25,
+      "subject": 21626443997501887375694237481003076277083619716092502114988109406025370617343340166586609273778421207794243266775151,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-32",
+      "split": "validation",
+      "bits": 384,
+      "index": 32,
+      "counter": 56,
+      "subject": 24494646231626190187016064466256753177483939215318417709340612733118081905432935666118403414200230980727038999465437,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-33",
+      "split": "validation",
+      "bits": 384,
+      "index": 33,
+      "counter": 565,
+      "subject": 35140264512922696219726796804149042809682594230973384021698094075891078889530440791608310777824721582755454751068113,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-34",
+      "split": "validation",
+      "bits": 384,
+      "index": 34,
+      "counter": 183,
+      "subject": 27868327717612940516599677227810172912853619430804865936637902490918209784981325716399367982343394241583337910040957,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-35",
+      "split": "validation",
+      "bits": 384,
+      "index": 35,
+      "counter": 19,
+      "subject": 28893480488836338510136333030297735306262454839097035023076732320325759395901511013177393589694794852593305933941683,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-36",
+      "split": "validation",
+      "bits": 384,
+      "index": 36,
+      "counter": 127,
+      "subject": 38974594251204624085855238773686039048319100907127804618371165464180174835720397017559908772302917069155529585296027,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-37",
+      "split": "validation",
+      "bits": 384,
+      "index": 37,
+      "counter": 7,
+      "subject": 36376825418722913223077019623566553550481754319695856046075487716837817009830147351792659867154779590955446307609881,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-38",
+      "split": "validation",
+      "bits": 384,
+      "index": 38,
+      "counter": 291,
+      "subject": 30790390010806562526589784622872424407325777372914316940835020409452275976732643197846254610584348411874802829499987,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-39",
+      "split": "validation",
+      "bits": 384,
+      "index": 39,
+      "counter": 3,
+      "subject": 39211359744804124796331436421731125451992963195421392772691443748204538052514122834357394956816979838026842526198923,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-40",
+      "split": "validation",
+      "bits": 384,
+      "index": 40,
+      "counter": 118,
+      "subject": 25176979668039615543200987383617902940058202405475526365394493430601116745039345123459124480813576813572280965474207,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-41",
+      "split": "validation",
+      "bits": 384,
+      "index": 41,
+      "counter": 17,
+      "subject": 20550072593656997211392408420284044439387839864047440775054482948439646267217829847751206188244058164308313459570767,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-42",
+      "split": "validation",
+      "bits": 384,
+      "index": 42,
+      "counter": 33,
+      "subject": 24861271949501155038098851397582471748353308045473779587871460192011746627324314757688931426673049463601196745062591,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-43",
+      "split": "validation",
+      "bits": 384,
+      "index": 43,
+      "counter": 46,
+      "subject": 35938533899263996335381325824339818568504780779978781647776111882386899057150180666261669139947786314686009882232579,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-44",
+      "split": "validation",
+      "bits": 384,
+      "index": 44,
+      "counter": 52,
+      "subject": 20424376462841195254704014924457181701823943493435998333143304909444365240286226377337625909406380455081894862688551,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-45",
+      "split": "validation",
+      "bits": 384,
+      "index": 45,
+      "counter": 128,
+      "subject": 31754166244164907977202295248843202494974933912042363094180608348579176655289778064182094069816485022667774328200109,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-46",
+      "split": "validation",
+      "bits": 384,
+      "index": 46,
+      "counter": 174,
+      "subject": 24231958192514654320802083948010486515282856058626578461503852934602233885105290476609960342919880112347646760396467,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-47",
+      "split": "validation",
+      "bits": 384,
+      "index": 47,
+      "counter": 3,
+      "subject": 39113455128659980860479509291208529756328098304243338347459203847492004209853949553962069239270607720082915642079523,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-48",
+      "split": "validation",
+      "bits": 384,
+      "index": 48,
+      "counter": 377,
+      "subject": 21317503099200513867867325766314059908104226963593845551238911082181107267578615748598260029195979233893552369470161,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-49",
+      "split": "validation",
+      "bits": 384,
+      "index": 49,
+      "counter": 211,
+      "subject": 38928991131374055859740224319372010011732589576351224110936400141819050841949478139481224289802065041234891670212941,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-50",
+      "split": "validation",
+      "bits": 384,
+      "index": 50,
+      "counter": 208,
+      "subject": 34179511392329909766347671660111814249221887292519939191650449547076060638387986257010579259891740681015817184409597,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-51",
+      "split": "validation",
+      "bits": 384,
+      "index": 51,
+      "counter": 84,
+      "subject": 35700830701254678008013336998319627846709764833564187044568905848512628276106366152581529987386248336611002499750289,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-52",
+      "split": "validation",
+      "bits": 384,
+      "index": 52,
+      "counter": 37,
+      "subject": 24095083115309198372638551533357680094388590926204140725022333364585810754971178320196228679349230769270519222260283,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-53",
+      "split": "validation",
+      "bits": 384,
+      "index": 53,
+      "counter": 273,
+      "subject": 27748485259414954431898636149119842349544790022856189493945390923480836124913423637180212497088735780844589092409149,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-54",
+      "split": "validation",
+      "bits": 384,
+      "index": 54,
+      "counter": 53,
+      "subject": 20872840861387862388838484267663060491481066331437461289872002141639226486496881987574633786585554658818138863851461,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-55",
+      "split": "validation",
+      "bits": 384,
+      "index": 55,
+      "counter": 120,
+      "subject": 21211649573585875036056256142539130576001951935158695175756641314227426306488509322402912222351345163347077714398373,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-56",
+      "split": "validation",
+      "bits": 384,
+      "index": 56,
+      "counter": 2,
+      "subject": 27905709218752963324134573695577840148192168783168259108668269465725341349129375349309131519101585513983657240479899,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-57",
+      "split": "validation",
+      "bits": 384,
+      "index": 57,
+      "counter": 203,
+      "subject": 32292221023144306138077099155310634752404824476794053428357119240789145645634469633774117675947217881695768222528361,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-58",
+      "split": "validation",
+      "bits": 384,
+      "index": 58,
+      "counter": 11,
+      "subject": 36191566560119291576124170852995562211030985248161703300217398826527551618752989402562437506712808893593798598909071,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-59",
+      "split": "validation",
+      "bits": 384,
+      "index": 59,
+      "counter": 67,
+      "subject": 22080142464296292319618594097074146384960055481146170914178844309028653365991867390920334556956557932405921306066779,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-60",
+      "split": "validation",
+      "bits": 384,
+      "index": 60,
+      "counter": 173,
+      "subject": 31968361515663326495795032695309958323733291521045362173672382878940950867589013756418028257778390781328857202143583,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-61",
+      "split": "validation",
+      "bits": 384,
+      "index": 61,
+      "counter": 182,
+      "subject": 34869411957952222556980669196363336334594631416915773812641467077364057437112826525608164096080171031483876031690971,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-62",
+      "split": "validation",
+      "bits": 384,
+      "index": 62,
+      "counter": 75,
+      "subject": 28945775644910018902938882940291103399709295501159113364607519650584308575087407239778468438596652647254439438812031,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-63",
+      "split": "validation",
+      "bits": 384,
+      "index": 63,
+      "counter": 43,
+      "subject": 22378980978906376012373275012429031524212592036075074699373210942425424545658355868722840799905276444815102470952979,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-64",
+      "split": "validation",
+      "bits": 384,
+      "index": 64,
+      "counter": 41,
+      "subject": 31411485028347845787792410896103994075148670316721043711594933809335917394241186101222663746905638554481174796007053,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-65",
+      "split": "validation",
+      "bits": 384,
+      "index": 65,
+      "counter": 1,
+      "subject": 27048438825649370928726440953731705957464381392831555700788543953861755510795810976741597427256791611788419947306917,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-66",
+      "split": "validation",
+      "bits": 384,
+      "index": 66,
+      "counter": 110,
+      "subject": 27922955486367143965525270706853681989711894820830663657626430080700507304366694319150611180332482429001476105044303,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-67",
+      "split": "validation",
+      "bits": 384,
+      "index": 67,
+      "counter": 99,
+      "subject": 31847364036958218262229075289981520286286522094978065792843690994783688835706461394562377233939197120036753837482123,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-68",
+      "split": "validation",
+      "bits": 384,
+      "index": 68,
+      "counter": 197,
+      "subject": 26184647584642421432692798019947477644321466914345323770848864301692745405729707201061600832958229080952331415548531,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-69",
+      "split": "validation",
+      "bits": 384,
+      "index": 69,
+      "counter": 155,
+      "subject": 33910274712761139382633198141100968999002117531579263980902184847729581131898368023622545532915718176098670598877929,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-70",
+      "split": "validation",
+      "bits": 384,
+      "index": 70,
+      "counter": 111,
+      "subject": 39365877884238400199402487587168543649626081662259323011772518444228871850177061049196782841280604552748483434211719,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-71",
+      "split": "validation",
+      "bits": 384,
+      "index": 71,
+      "counter": 20,
+      "subject": 39132875132198844600252876265576177977680335425105386946776391102316827061380289463549716393300264469913216837301889,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-72",
+      "split": "validation",
+      "bits": 384,
+      "index": 72,
+      "counter": 179,
+      "subject": 22719613819394320975557048052901760194974965061116468133099404059724767918465475220768887802917303826807223043190213,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-73",
+      "split": "validation",
+      "bits": 384,
+      "index": 73,
+      "counter": 28,
+      "subject": 25977558219099437158524906148231331588080440247481438114567238733339169117304104340306768026007266432435863321484261,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-74",
+      "split": "validation",
+      "bits": 384,
+      "index": 74,
+      "counter": 36,
+      "subject": 23203516440986138146533496687259753860680498793035648619576559471237857709308916688197810785862819257232751742327481,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-75",
+      "split": "validation",
+      "bits": 384,
+      "index": 75,
+      "counter": 92,
+      "subject": 37200426976199986532230509239404722341269280233328556168906998533663588272267073967727699902689896964182394057180963,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-76",
+      "split": "validation",
+      "bits": 384,
+      "index": 76,
+      "counter": 152,
+      "subject": 29458419398276612116142525135136423662434638660702418077886550279724994137297341179997287191028982260395382361816561,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-77",
+      "split": "validation",
+      "bits": 384,
+      "index": 77,
+      "counter": 544,
+      "subject": 35727254234325258146689407950341609741186978917171859262542341192052649097862332422661270972937805980729564773726263,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-78",
+      "split": "validation",
+      "bits": 384,
+      "index": 78,
+      "counter": 42,
+      "subject": 38465422011343652472203446314607451952968560290041116995353291824545410585731877795425499388389614719761558259005009,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-79",
+      "split": "validation",
+      "bits": 384,
+      "index": 79,
+      "counter": 30,
+      "subject": 38788441225733943802425445772615571512523936425459840784564285060612329862922317091054361760588949590637092491522237,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-80",
+      "split": "validation",
+      "bits": 384,
+      "index": 80,
+      "counter": 180,
+      "subject": 25399013307622669896904623369478464302110671711137304964074017026735930611717052232144154094895263661801069850384157,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-81",
+      "split": "validation",
+      "bits": 384,
+      "index": 81,
+      "counter": 62,
+      "subject": 25503041285137724796606197810656276294286146749731789624211380505013170853536795957428562356393958499789823295757901,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-82",
+      "split": "validation",
+      "bits": 384,
+      "index": 82,
+      "counter": 339,
+      "subject": 21274226905202545767292926096498003515984521238873537878585958506000028994713667723721904227306102233959619640317721,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-83",
+      "split": "validation",
+      "bits": 384,
+      "index": 83,
+      "counter": 197,
+      "subject": 34730152303213258661142885000258083991439860104379939165016045425256161811717519506874250341809730923130702070406751,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-84",
+      "split": "validation",
+      "bits": 384,
+      "index": 84,
+      "counter": 73,
+      "subject": 38263153534549020075577499487925562752666468595869529540948441374417978266391745412596275461280463099871108717719333,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-85",
+      "split": "validation",
+      "bits": 384,
+      "index": 85,
+      "counter": 73,
+      "subject": 36983372716978735789362717564178406760035121500501596496371354964393882094343197887576900572066319773062340282595063,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-86",
+      "split": "validation",
+      "bits": 384,
+      "index": 86,
+      "counter": 23,
+      "subject": 27608650654435360139929881591174987503042760915831201647774987917034471416944101705744691165406194435232464666319073,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-87",
+      "split": "validation",
+      "bits": 384,
+      "index": 87,
+      "counter": 21,
+      "subject": 32569487085552163369931188876896413166302484716171387032069990523751878711763152944910287262824611049653359347421467,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-88",
+      "split": "validation",
+      "bits": 384,
+      "index": 88,
+      "counter": 206,
+      "subject": 20394316329659284873842016144857984932515103023078124807041051144901869281597334244845832038278273756670970309612621,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-89",
+      "split": "validation",
+      "bits": 384,
+      "index": 89,
+      "counter": 485,
+      "subject": 27347577534468967108198378750693233312362940678974381134592983547008025590495855679634155618518799288229354254205871,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-90",
+      "split": "validation",
+      "bits": 384,
+      "index": 90,
+      "counter": 163,
+      "subject": 33551691150878840437866930963155781091360774351310791106433285272307233434806553245391304809758688897075512578314877,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-91",
+      "split": "validation",
+      "bits": 384,
+      "index": 91,
+      "counter": 38,
+      "subject": 27303537618313416760522523439297174984364775237406231992223229254916384857095438283856745245273583821915807284238693,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-92",
+      "split": "validation",
+      "bits": 384,
+      "index": 92,
+      "counter": 82,
+      "subject": 23102319608209914706378077570406811714280423086378073181185160783686842801604849020164980420723089235252313574398769,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-93",
+      "split": "validation",
+      "bits": 384,
+      "index": 93,
+      "counter": 135,
+      "subject": 24624921479591306147311770878320704203564304250581466666651633624337548589523872730680778307124882337789886951674299,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-94",
+      "split": "validation",
+      "bits": 384,
+      "index": 94,
+      "counter": 270,
+      "subject": 24128711784271643079763797861136769544774892545451342398274709663128299789850599952752185970922565075915289634020469,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-95",
+      "split": "validation",
+      "bits": 384,
+      "index": 95,
+      "counter": 291,
+      "subject": 36585993141961092814424348934378473638257236123440491729130168514608594915255052900418554525419662817392927918116773,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-96",
+      "split": "validation",
+      "bits": 384,
+      "index": 96,
+      "counter": 72,
+      "subject": 32301949922960909918756026359733050222961270962453915475813539705654603443667300827267507070109055574340039249823369,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-97",
+      "split": "validation",
+      "bits": 384,
+      "index": 97,
+      "counter": 6,
+      "subject": 19878734708207661765501217871444398975503126660959176875756158873354207085388344794879242525296665971277629156914041,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-98",
+      "split": "validation",
+      "bits": 384,
+      "index": 98,
+      "counter": 88,
+      "subject": 28270952671315975351909354998067145720473435195264839529854338977730321786679024718265540404097029465296210383216563,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-384-99",
+      "split": "validation",
+      "bits": 384,
+      "index": 99,
+      "counter": 16,
+      "subject": 21437462266481709865585629751936802398186906485313766383277347754947033867699778395032428161464874584341384350696781,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-0",
+      "split": "tuning",
+      "bits": 512,
+      "index": 0,
+      "counter": 5,
+      "subject": 9816339684063032192945362914636442898039505655894996264815913241872782733309714321701601934817852617017918597471673225348282790903404567688003025283534417,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-1",
+      "split": "tuning",
+      "bits": 512,
+      "index": 1,
+      "counter": 532,
+      "subject": 11043010710308698299327460075844045724896681025252693100711113078091618009994749253642113633491205826971443071203702808843540064820952856081068580276343061,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-2",
+      "split": "tuning",
+      "bits": 512,
+      "index": 2,
+      "counter": 111,
+      "subject": 12359552599644139297536439984209036807213471876511276333199180942522593844653838167038951636676348680137620376543331165360660066473540728816400293187893271,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-3",
+      "split": "tuning",
+      "bits": 512,
+      "index": 3,
+      "counter": 124,
+      "subject": 8231022179370770140659118536319685793162276685646012529218934255073173793821778846729018087574733463327118861553313067621682849854001964709091715530503053,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-4",
+      "split": "tuning",
+      "bits": 512,
+      "index": 4,
+      "counter": 339,
+      "subject": 11934317882907212779130926374111233116709313365850386124680404857630974130006595929871838358625484775891844276232584081434922654899672756791764625820416747,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-5",
+      "split": "tuning",
+      "bits": 512,
+      "index": 5,
+      "counter": 78,
+      "subject": 9447794907389506677792999877921151621326525853511135183082069648796461697049308178087902478505831700536306661944136243900502582799261532419875525703421561,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-6",
+      "split": "tuning",
+      "bits": 512,
+      "index": 6,
+      "counter": 387,
+      "subject": 10045573375210335093497888669754611586603494379131846871476089295886159162189460428878427704918190361415057713941664769563410947906844167727113424181382353,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-7",
+      "split": "tuning",
+      "bits": 512,
+      "index": 7,
+      "counter": 156,
+      "subject": 6959298805255958793900151331240746508384095882588805298199964386747319903146928144780962494064236305163311027880305400344838379986075991028069693945723917,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-8",
+      "split": "tuning",
+      "bits": 512,
+      "index": 8,
+      "counter": 18,
+      "subject": 13383384408915969375363324219874267373495235955864384944176180094186024792460284266021719740955759133739076051410782873940034615026590198568410441383403651,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-9",
+      "split": "tuning",
+      "bits": 512,
+      "index": 9,
+      "counter": 1005,
+      "subject": 7173763590291552521543528998662914408831327906088508793209933961499767977943491691017923859241710859756595387554664680025508937831124737469759953385050111,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-10",
+      "split": "tuning",
+      "bits": 512,
+      "index": 10,
+      "counter": 619,
+      "subject": 8662049251345877768466998980495823586600397840355942184642084770970201994468569534900611791640376612556086535083184508397608818689067354625899644818570801,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-11",
+      "split": "tuning",
+      "bits": 512,
+      "index": 11,
+      "counter": 82,
+      "subject": 10644100853538187929302598104417932221833804991812796395633503581687282763478243461011977521364977328869993213219687153561248607080835798748324282497741219,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-12",
+      "split": "tuning",
+      "bits": 512,
+      "index": 12,
+      "counter": 134,
+      "subject": 11149705758568201636386192892285543303611620419248005041451995769011951008984765201839862791383655737674034237412464922319025608096880975670191271052483617,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-13",
+      "split": "tuning",
+      "bits": 512,
+      "index": 13,
+      "counter": 221,
+      "subject": 13342922114223263310070254773587691521271386895181280750733593120798305323375535344633257598413428428940192229967268927531455084008581661693847706705122621,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-14",
+      "split": "tuning",
+      "bits": 512,
+      "index": 14,
+      "counter": 53,
+      "subject": 9003828433276930949486756760411119611357847908717855688222184382412600277473277431881501489256156864973653126955032546789673837641917265806483757163021097,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-15",
+      "split": "tuning",
+      "bits": 512,
+      "index": 15,
+      "counter": 526,
+      "subject": 10566986630994535937882921119911308427163958683063597331297788819508333086876588305418652553906921119964426126007695359340084854782816304789922856595029427,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-16",
+      "split": "tuning",
+      "bits": 512,
+      "index": 16,
+      "counter": 131,
+      "subject": 13135943581684879764112181031965373786036214841934935543113470247919881064419451864314582970618506662972574392231478397126986573934779851437330063765902489,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-17",
+      "split": "tuning",
+      "bits": 512,
+      "index": 17,
+      "counter": 40,
+      "subject": 13091332448645742787737397830811226429455474026701255111552605948109405046439978858186625759172322366817280509868804514818666725537787826714373478328157827,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-18",
+      "split": "tuning",
+      "bits": 512,
+      "index": 18,
+      "counter": 33,
+      "subject": 12758690451830764533288029112596129012591760905184193943972976625294794716817849737880942903373970769598768667037474739442579717012526691274374753487546249,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-19",
+      "split": "tuning",
+      "bits": 512,
+      "index": 19,
+      "counter": 10,
+      "subject": 12586601247808757917623657803433531101179075873125776575968665104428245746049483720360115681739088622355653689492719381549611489139182077134882360419314659,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-20",
+      "split": "tuning",
+      "bits": 512,
+      "index": 20,
+      "counter": 158,
+      "subject": 13302452604805129689534088730913809238914500323464870663798917883268384496844938570757250994310838232304958618832428069429819322955266710463545973824002573,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-21",
+      "split": "tuning",
+      "bits": 512,
+      "index": 21,
+      "counter": 62,
+      "subject": 9991506868142517502034069057406651401213795873863522535133421537772356610803367008436843132725821467217966147844095654841995578121084735729469799990358047,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-22",
+      "split": "tuning",
+      "bits": 512,
+      "index": 22,
+      "counter": 159,
+      "subject": 7776481622508351605321037314511575896958830372406165934650640478611816414494453373196897093960377429118909655664978237680365322838386242814250940294192643,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-23",
+      "split": "tuning",
+      "bits": 512,
+      "index": 23,
+      "counter": 501,
+      "subject": 8808484799016019926574032448301529873422254025222071911436359928542233003851446652621556339560166932383141179135392014943266333817599886447366023684719023,
+      "pari_isprime": true
+    },
+    {
+      "id": "tuning-512-24",
+      "split": "tuning",
+      "bits": 512,
+      "index": 24,
+      "counter": 32,
+      "subject": 7587043367208181543898693142187662059279686950335599784617920292274906792379165679110955689130769439092603490977125086262360203191287503202269709622148703,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-25",
+      "split": "validation",
+      "bits": 512,
+      "index": 25,
+      "counter": 152,
+      "subject": 10936834231105650070402230722722539072113119348567556261376170472729078581778192928353157443205797143256680225150893091409093660236863317115771039693534997,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-26",
+      "split": "validation",
+      "bits": 512,
+      "index": 26,
+      "counter": 73,
+      "subject": 12199295763542853335532738840157453988957301870574906834519918703986011723785792983989116046593440345029677100985865379561595478255224953926019885538255439,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-27",
+      "split": "validation",
+      "bits": 512,
+      "index": 27,
+      "counter": 652,
+      "subject": 9977612812042167343587517562982268165923949891118822421591123733619978997592710372525494498780939533590216766583795864946251757500759627869450762922055001,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-28",
+      "split": "validation",
+      "bits": 512,
+      "index": 28,
+      "counter": 161,
+      "subject": 12735968958207734663370882754871876842378886862584720771106399171195643427483083750398556276278695500968995856036023432848230683224156352055792516089781557,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-29",
+      "split": "validation",
+      "bits": 512,
+      "index": 29,
+      "counter": 262,
+      "subject": 8821241405277438986556309589311978449645628786265626323555971117067345917597880079830813655249388497892043760528010706556303958713071557703361413060923271,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-30",
+      "split": "validation",
+      "bits": 512,
+      "index": 30,
+      "counter": 131,
+      "subject": 11712745356327801154393072563676579693566232039361418032492296557615680059515216500543790865723938328511023487941395100729092138049770370232995232392141523,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-31",
+      "split": "validation",
+      "bits": 512,
+      "index": 31,
+      "counter": 71,
+      "subject": 12364440722887537930252654958453927945901427134282477801344297288032230315065381427859850568355070152274607426640920217753605961653838241318839093821065377,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-32",
+      "split": "validation",
+      "bits": 512,
+      "index": 32,
+      "counter": 179,
+      "subject": 8260158602607665759574305241821466585195378373324789045828236845420042177041608528430613438210205449159474438685394283494568683363853107333036526956987603,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-33",
+      "split": "validation",
+      "bits": 512,
+      "index": 33,
+      "counter": 178,
+      "subject": 11434196327100451316069662206148790427341405393083602244021652854175934448795400230228245377734042467221647801842088563138050894384266775378920104951456391,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-34",
+      "split": "validation",
+      "bits": 512,
+      "index": 34,
+      "counter": 86,
+      "subject": 7143833540800861808657462274806796205614490192525371829020084407591135456607631299164388291827190447715485442127257453396681596556014192521578557463197233,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-35",
+      "split": "validation",
+      "bits": 512,
+      "index": 35,
+      "counter": 47,
+      "subject": 8653683205145310682492903003180951651673241994637781969971688665971807059242534106627900158525750729281550694088223077734957941804044852665331825554678413,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-36",
+      "split": "validation",
+      "bits": 512,
+      "index": 36,
+      "counter": 217,
+      "subject": 13172103891610986468255957293977789946366697920946217657698105597195374371074532301792063281399089660479149878205205910078960419773670753904604894939031993,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-37",
+      "split": "validation",
+      "bits": 512,
+      "index": 37,
+      "counter": 622,
+      "subject": 13327965410411803370846734850127656802109919841335461491876410824960843802675332511496942996578789089301724629890160054508844452592077857926934191881347711,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-38",
+      "split": "validation",
+      "bits": 512,
+      "index": 38,
+      "counter": 159,
+      "subject": 10837096974532439710400385589913423453205028275410673116666544564370552285427405129889009274625870037518956045072743122447891919111130570375166932823035511,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-39",
+      "split": "validation",
+      "bits": 512,
+      "index": 39,
+      "counter": 131,
+      "subject": 6740565740260157005294296552000378713458967589728908113103172095488889011284834500460017980438377700546713551779481139455569782132169350234663462748017441,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-40",
+      "split": "validation",
+      "bits": 512,
+      "index": 40,
+      "counter": 168,
+      "subject": 7091468326161682575538845180377201793099992074941075493341359813985390421588465653499270635776940082463506783778005346995436029925509918350271389955855231,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-41",
+      "split": "validation",
+      "bits": 512,
+      "index": 41,
+      "counter": 27,
+      "subject": 11743726560448344919944734091785007213176558041815058461956581357563775245944011046485692619380180663898807840901860162169814315896871251483540050901941799,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-42",
+      "split": "validation",
+      "bits": 512,
+      "index": 42,
+      "counter": 48,
+      "subject": 8612783492129130123648664951845812403053252312529612435185700400658358422984801647356609902196284307719566143204384535401206871110562560868432921602832823,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-43",
+      "split": "validation",
+      "bits": 512,
+      "index": 43,
+      "counter": 740,
+      "subject": 10327092920356734084308993193234490438402610998973494388289426819582031899889342209327751306734739215940150935123456822164288182471562908050099435848811971,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-44",
+      "split": "validation",
+      "bits": 512,
+      "index": 44,
+      "counter": 66,
+      "subject": 6725894348989464808177820363536844614181107127232420948563368838304290021768936926368821011948207485557765493363736963793600271389070362329136903134864169,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-45",
+      "split": "validation",
+      "bits": 512,
+      "index": 45,
+      "counter": 261,
+      "subject": 9716686159105215918133309965282703854591427666210402552069818638115683917869024508113703183853195745722971931275144642877646218104961984113510988379251287,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-46",
+      "split": "validation",
+      "bits": 512,
+      "index": 46,
+      "counter": 130,
+      "subject": 7085280401505623498162258115584572971210326794335333964345539686553788468970407102860424368759860764952448875573700866788469542230597931580309209849597321,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-47",
+      "split": "validation",
+      "bits": 512,
+      "index": 47,
+      "counter": 200,
+      "subject": 10096109637125321389889087348091919220992198142795987935550240272306553781355961252989253941007288173248029628518246607431784290031553760543993196360969613,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-48",
+      "split": "validation",
+      "bits": 512,
+      "index": 48,
+      "counter": 126,
+      "subject": 12848287022881256628824652677708905372045540833575980575430793346840842805890051476060957126285966014213794871016060495971507439498574961932983651322688161,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-49",
+      "split": "validation",
+      "bits": 512,
+      "index": 49,
+      "counter": 179,
+      "subject": 8438869381454555279805052770117761222853917910844785477821631143243499287054131639927631294837141989036663208239310405599395965319350435973572840330286629,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-50",
+      "split": "validation",
+      "bits": 512,
+      "index": 50,
+      "counter": 117,
+      "subject": 7326126290116653613326262071991935181378877516000183504467418804647588128573844747791326656856955415654054019150524065303666084674450786523789782174433047,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-51",
+      "split": "validation",
+      "bits": 512,
+      "index": 51,
+      "counter": 33,
+      "subject": 9954955248569875013925761507932863272174100350526684715705034804181945765192287509073723728653731381089886083966046393950708801877906587865708568448538099,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-52",
+      "split": "validation",
+      "bits": 512,
+      "index": 52,
+      "counter": 137,
+      "subject": 7504376049380291720384338672845625971072720341257531815488197987096462642576815192961595061570994484549017768092070264137864116507000125063294253519877749,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-53",
+      "split": "validation",
+      "bits": 512,
+      "index": 53,
+      "counter": 579,
+      "subject": 8180603429624935399600638996802295045984657667061297035242287332016499431419446762975708184950502061734606919877346094838079309814222400300462784099803159,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-54",
+      "split": "validation",
+      "bits": 512,
+      "index": 54,
+      "counter": 69,
+      "subject": 8798466522921280522084905535240788891745565396129391808566452286256385132665660173984412793872733416570548870988262400579606590222208126678293843261368747,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-55",
+      "split": "validation",
+      "bits": 512,
+      "index": 55,
+      "counter": 57,
+      "subject": 7299740099215023357535694855671177354746153171796008353116888277052675181951265777258524941118476957262284510355691003426056336060018075640672322905891291,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-56",
+      "split": "validation",
+      "bits": 512,
+      "index": 56,
+      "counter": 8,
+      "subject": 12136827351332981215578228068871275344223504864349136764985398424407770973198883913865941069424352811168938182434969586537545544858240161993749838593817323,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-57",
+      "split": "validation",
+      "bits": 512,
+      "index": 57,
+      "counter": 15,
+      "subject": 11342778199760722080421888135255992166065405071705358590757558825737358913353967087353258888248591744609597066791877216997743405893619532747003605353358531,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-58",
+      "split": "validation",
+      "bits": 512,
+      "index": 58,
+      "counter": 28,
+      "subject": 13052644308434700471983022033566659838866019777689797715514792858312554754750474355421967860908843332518037532591516843022923309015885710007061048559239219,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-59",
+      "split": "validation",
+      "bits": 512,
+      "index": 59,
+      "counter": 873,
+      "subject": 8133167944667802066945289529001433872659361840714758220281635764615317279861991367049347695448541940966391142442803279806238628594549221934344072335945189,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-60",
+      "split": "validation",
+      "bits": 512,
+      "index": 60,
+      "counter": 358,
+      "subject": 10193191815623349001098613917129012500741553294622636834458510762504098880350742219765886165456389649837543872914052169622291436177833297418185065799335001,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-61",
+      "split": "validation",
+      "bits": 512,
+      "index": 61,
+      "counter": 552,
+      "subject": 12249467942532342482208878016834640862225041326345391320127211057009236128979336259879257647192147915933242185212593808730153105444501748192712330182011871,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-62",
+      "split": "validation",
+      "bits": 512,
+      "index": 62,
+      "counter": 83,
+      "subject": 12577988439530906760498908880094200467199361953494941251175107806136620218748512527390028738644897581255331426618780208966372002666847632449319909435362671,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-63",
+      "split": "validation",
+      "bits": 512,
+      "index": 63,
+      "counter": 27,
+      "subject": 9199783422079619624875313086818229052226222856129893669160235823005020413189350750895924602269364536484351020924534748701772198059407568436390183296891457,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-64",
+      "split": "validation",
+      "bits": 512,
+      "index": 64,
+      "counter": 64,
+      "subject": 9465818822651582933698062832645250130288101700557454912014227714690021608399248052765796912948036071975443568837768010090285465351217654659104779860673629,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-65",
+      "split": "validation",
+      "bits": 512,
+      "index": 65,
+      "counter": 44,
+      "subject": 6757110154797061544983496572438198943857435360374461283097472576289569617610180943321117201179489633702323494541836628826364152876812525767241231736534971,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-66",
+      "split": "validation",
+      "bits": 512,
+      "index": 66,
+      "counter": 39,
+      "subject": 12861575418016517354273005224520481840836590366327288535079156425602458059088281363126007490838940253680710085238304627054216195434860593801690281863447521,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-67",
+      "split": "validation",
+      "bits": 512,
+      "index": 67,
+      "counter": 230,
+      "subject": 7273374849123490486380458362486005875973277720001348775360121432316529204459273845924469749647776353964610618134474267419278990501686460999364910189418409,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-68",
+      "split": "validation",
+      "bits": 512,
+      "index": 68,
+      "counter": 319,
+      "subject": 11155023042191608738211657368260338560028568012812170450499075101425669465606917908613956058765812418164406392234033565335782299608839965878882762849818139,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-69",
+      "split": "validation",
+      "bits": 512,
+      "index": 69,
+      "counter": 240,
+      "subject": 8719341166278762136717412457094721434223651775979373797923317539056434398016691049113720696945614061225712279435165140203585389253134123550379535343250461,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-70",
+      "split": "validation",
+      "bits": 512,
+      "index": 70,
+      "counter": 246,
+      "subject": 11867460853364119819728781287178898494655976801551777045688174446092621531651963592115210931540235829866232126989959264721074206903793649532242053706061571,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-71",
+      "split": "validation",
+      "bits": 512,
+      "index": 71,
+      "counter": 410,
+      "subject": 9541911955294000655726164830206796682143230028469574492296593600783051097461108137965662573135071256566147117211961644885379515372097943157240568819865501,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-72",
+      "split": "validation",
+      "bits": 512,
+      "index": 72,
+      "counter": 130,
+      "subject": 12872851557632665890972727532639777936560710431364558137632598948916662787706259423521668262948380452258502319578620448332383399984117507551658910332177621,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-73",
+      "split": "validation",
+      "bits": 512,
+      "index": 73,
+      "counter": 357,
+      "subject": 8099975769390281151706934681028331719922512213917455281775107649305042312892854325405122251519077394572176339204125512037676494656287575764812445228513891,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-74",
+      "split": "validation",
+      "bits": 512,
+      "index": 74,
+      "counter": 161,
+      "subject": 10563315264209541406348544934532191736223532790813929845588669626850508643242317307774669109939484862345497989343751820011107284749380727004817496275902231,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-75",
+      "split": "validation",
+      "bits": 512,
+      "index": 75,
+      "counter": 231,
+      "subject": 11335067957305626809373512169155849928996252668260526877101374292378183341533038610230858695882523819696767022485417452827723318669863545753539850097196771,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-76",
+      "split": "validation",
+      "bits": 512,
+      "index": 76,
+      "counter": 57,
+      "subject": 8538847599478871876552379658931790029207346767671720865619047594702191912081267256064828806206898325655250771877725893105313405325814829797083547776596071,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-77",
+      "split": "validation",
+      "bits": 512,
+      "index": 77,
+      "counter": 169,
+      "subject": 10133471647181947579896384650266844060713849090766027760095687469597152104840850612898432794360461807067553923683341850211950624196278029816845868121453607,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-78",
+      "split": "validation",
+      "bits": 512,
+      "index": 78,
+      "counter": 94,
+      "subject": 11632869119388959220488323818958208003931929086849450413709939467319867914204643838309683792408142121910210713858333836907011454453490174995989704164916781,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-79",
+      "split": "validation",
+      "bits": 512,
+      "index": 79,
+      "counter": 504,
+      "subject": 6833743624396217673771576349538368630687391033859653742246298158877290794999995346405563969024439966996384850570924736835798744040054410337777216502474961,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-80",
+      "split": "validation",
+      "bits": 512,
+      "index": 80,
+      "counter": 246,
+      "subject": 7891531216696996707162947391341760917975086602624791316604671126710584180099049372681121428034045014599495902789463572112305231850463644706470296973217449,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-81",
+      "split": "validation",
+      "bits": 512,
+      "index": 81,
+      "counter": 47,
+      "subject": 7133843860514228895576079171997685289165013475419979971336254138825739425381086046819439888737642492071918225096570079875543546504654693024732835625720867,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-82",
+      "split": "validation",
+      "bits": 512,
+      "index": 82,
+      "counter": 26,
+      "subject": 10236314121350216920971363124466949945332996409784840585496870713368367476211047501187528767519647800071599999796741348941580588205258999087710091962276139,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-83",
+      "split": "validation",
+      "bits": 512,
+      "index": 83,
+      "counter": 137,
+      "subject": 12622793826898205697412266419684794912271846350196885977375129347040078350508607198258943228177626599427399707840965836430002078006675664419857031525896111,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-84",
+      "split": "validation",
+      "bits": 512,
+      "index": 84,
+      "counter": 114,
+      "subject": 7388717090052818268397803472233946319946871608573383597471553811808416480077127143808191396090649667626666302981879210044768208630775653351320388817659943,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-85",
+      "split": "validation",
+      "bits": 512,
+      "index": 85,
+      "counter": 123,
+      "subject": 12841729439797009039166874318840672204264988213259217635950051214678926020195120742410982535878696869590735754538130659463013029323563648642841988972600083,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-86",
+      "split": "validation",
+      "bits": 512,
+      "index": 86,
+      "counter": 407,
+      "subject": 10472207756047770732739155020777222988267577699828072966153246224475523242334503381436393848799797699235092063872018631920545073067891554187683179687907511,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-87",
+      "split": "validation",
+      "bits": 512,
+      "index": 87,
+      "counter": 20,
+      "subject": 9784498141249847337524038270030399455332024146685101887413875550897659442505800560971857795885701819036246651737346402355373371628317766910542316162826483,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-88",
+      "split": "validation",
+      "bits": 512,
+      "index": 88,
+      "counter": 26,
+      "subject": 11818070940731382110456656708139567217680910427902592407464652066989778647070007817942814883201379258744105307288667643913997023994827216878335945151258569,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-89",
+      "split": "validation",
+      "bits": 512,
+      "index": 89,
+      "counter": 251,
+      "subject": 10131049820998269672900806065875019779684171230903002131148074439477998458623299227703262785532573093944267569207933860051097699643360236239546648364484589,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-90",
+      "split": "validation",
+      "bits": 512,
+      "index": 90,
+      "counter": 42,
+      "subject": 11274147595951190884786289156003918380353855473612948431150878092001356820000077451978180199127731656613530001886888090831445751805052061065301246322466971,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-91",
+      "split": "validation",
+      "bits": 512,
+      "index": 91,
+      "counter": 34,
+      "subject": 13114541384118444374997120836785382075741668450228206331522137751710447037903945403246233631111849835166140517514244865910674692056475311604880530225303961,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-92",
+      "split": "validation",
+      "bits": 512,
+      "index": 92,
+      "counter": 14,
+      "subject": 7378030095762727669712479303235674865247614741087488184799894012166992974564736054202378620016037641940591139526254809924074171191380058896384937733835257,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-93",
+      "split": "validation",
+      "bits": 512,
+      "index": 93,
+      "counter": 135,
+      "subject": 11540842553115835383883602252056878163686306281228351918900117903535912109032243189109495396153682956311185264559255520409538334993267569295615288032504369,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-94",
+      "split": "validation",
+      "bits": 512,
+      "index": 94,
+      "counter": 201,
+      "subject": 8614430108933945825408502612812103529537913302957458920910667545119149812588046304633145792098311532161174169844816596629839485684066786862005207069289307,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-95",
+      "split": "validation",
+      "bits": 512,
+      "index": 95,
+      "counter": 14,
+      "subject": 10085956325382758296537844116857748906648679250641300839209930866168332673484446382629860905879317648250015023001074281865320119669455472630137866475884471,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-96",
+      "split": "validation",
+      "bits": 512,
+      "index": 96,
+      "counter": 60,
+      "subject": 6708727061884686258711400141727763980985972326372075404732632546283615001551921471214836721108755550777376978158155531265486370498894742275113296213370149,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-97",
+      "split": "validation",
+      "bits": 512,
+      "index": 97,
+      "counter": 241,
+      "subject": 9606824415276783753504458889690064022064334681361972041257092383741148218073771687604578048614449378954783570277651674764139753794801194661926536049206401,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-98",
+      "split": "validation",
+      "bits": 512,
+      "index": 98,
+      "counter": 394,
+      "subject": 9282142770069283301660184370113225074807778695141690101345952961638213525486932810568354660489802772864021078353788608005259799063197920476493810750896993,
+      "pari_isprime": true
+    },
+    {
+      "id": "validation-512-99",
+      "split": "validation",
+      "bits": 512,
+      "index": 99,
+      "counter": 77,
+      "subject": 11972485800276643131186080990028795224482350778885860811038492430688366995371450139482557672747679792753800194319875272827654691912340833143224023602701109,
+      "pari_isprime": true
+    }
+  ],
+  "complete": true
+}

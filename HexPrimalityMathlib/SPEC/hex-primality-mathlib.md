@@ -333,8 +333,7 @@ semantic rather than a claimed speed distinction. Keeping all inputs through
 while the bounded certificate route is required above it to avoid Mathlib's
 unbounded trial behavior and 31-bit kernel-depth failure.
 
-There is `no-comparable-surface-in-named-comparator` for the bridge proof
-track. No external tool emits and kernel-checks the same `Nat.Prime` proof term
+The Mathlib proof track has no external comparator. No external tool emits and kernel-checks the same `Nat.Prime` proof term
 through this registration, transport theorem, and pinned Lean kernel. The
 transported certificate search remains performance-owned by `HexPrimality`;
 it is not a second comparator for the bridge wrapper.

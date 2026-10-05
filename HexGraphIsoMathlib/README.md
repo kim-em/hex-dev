@@ -76,18 +76,27 @@ example : IsEmpty (c5a ≃g p5) := by graph_iso
   search under the same tactic name. It accepts the same two limits,
   `(maxSearchNodes := ...)` and `(maxCertRecords := ...)`, and does not
   reinterpret them. Kernel replay uses Lean's actual resource controls.
+- `graph_aut` proves `Nat.card (G ≃g G) = N`, the corresponding coloured
+  statement, and explicit `Subgroup.closure` descriptions of the full
+  automorphism group. It combines a kernel-replayed point-stabilizer
+  certificate with `perm_group`'s checked generator-subgroup certificate.
 
 # Verification
 
-This library adds no search and no decision procedure. A positive goal
-encodes both graphs, runs the Mathlib-free `findIso`, and emits a literal
-transporter the kernel checks through `Kernel.checkIso` and
+For `graph_iso`, this library adds no search and no decision procedure. A
+positive goal encodes both graphs, runs the Mathlib-free `findIso`, and emits
+a literal transporter the kernel checks through `Kernel.checkIso` and
 `Kernel.isIso_of_checkIso`, exactly as the Mathlib-free tactic does. A
 negative goal takes the same root-separator and certificate-replay routes
 and decodes the result through the `not_encode_iso` theorems. Cardinality
 and colour-class refutations (`isEmpty_iso_of_card_ne`,
 `not_isomorphic_of_card_color_ne`) are proved on the Mathlib side and run
 before any search.
+
+For `graph_aut`, compiled search proposes orbit bounds and canonical-key
+separations along an individualization chain. The kernel replays every
+refinement certificate, while a separate permutation-group certificate proves
+the matching lower bound. Neither compiled search result is trusted.
 
 ```lean
 theorem encode_iso_iff (eV : V ≃ Fin n) (eW : W ≃ Fin n) :

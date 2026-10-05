@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexSturm.Transport
+public import HexSturm.Reduced
 public meta import HexSturm.Transport
 public import HexSturm.Fixtures
 public import HexRealRoots.TarskiTests
@@ -34,8 +35,7 @@ Covered edge cases:
 - Constants, zero/repeated heads and common query roots.
 - Invalid/equal/reversed bounds and all finite/infinite endpoint pairs.
 - Noncanonical coefficients, corrupted identities, stale endpoints and foreign contexts.
-Computational conformance owner: `HexSturm`. Differential checks are not an
-independent semantic oracle.
+Differential checks are not an independent semantic oracle.
 -/
 namespace Hex.Sturm.Conformance
 
@@ -346,5 +346,32 @@ Each translated certificate is checked independently, including wrong bindings. 
     (7 : Nat) Hex.TarskiTests.p (Hex.TarskiTests.x - 1) .negInf .posInf with
   | none => false
   | some c => check orderSign 7 p (x - 1) .negInf .posInf (-1) c.toRat
+
+private def reducedCases : Array
+    (DensePoly Rat × DensePoly Rat × Endpoint Rat × Endpoint Rat × Option Int) :=
+  let head : DensePoly Rat := DensePoly.ofCoeffs #[-2, 0, 1]
+  let wide := DensePoly.monomial 64 (1 : Rat) + 1
+  #[(head, wide, .finite (-2), .finite 2, some 2),
+    (head, -1, .negInf, .posInf, some (-2)),
+    (head, 0, .negInf, .posInf, some 0),
+    (head, head, .negInf, .posInf, some 0),
+    (head, DensePoly.monomial 1 1, .negInf, .posInf, some 0),
+    (head, wide, .finite 2, .finite 3, some 0),
+    (DensePoly.ofCoeffs #[4, 0, -2], wide, .negInf, .posInf, some 2),
+    (1, wide, .negInf, .posInf, some 0),
+    (0, wide, .negInf, .posInf, none),
+    (DensePoly.ofCoeffs #[1, -2, 1], wide, .negInf, .posInf, none),
+    (DensePoly.ofCoeffs #[-1, 0, 1], wide, .finite (-1), .finite 2, none),
+    (head, wide, .finite 2, .finite (-2), none)]
+
+#guard reducedCases.all fun (p, q, a, b, expected) =>
+  queryReduced orderSign p q a b == expected && query orderSign p q a b == expected
+
+#guard match prepare orderSign (DensePoly.ofCoeffs #[-2, 0, (1 : Rat)])
+    (.finite (-2)) (.finite 2) with
+  | none => false
+  | some domain =>
+      let q := DensePoly.monomial 64 (1 : Rat) + 1
+      queryReducedPrepared domain q == 2 && queryPrepared domain q == 2
 
 end Hex.Sturm.Conformance

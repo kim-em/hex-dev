@@ -5,7 +5,7 @@ Inputs and coefficient contexts are prepared once. Each non-control request
 calls the root API, filters the open interval, evaluates the complete query
 and sums its exact signs. No roots are cached by this driver; persistent
 backend contexts may retain internal caches. JSON transport, root production and temporary
-cleanup are timed. This is an informational end-to-end comparison, not literal
+cleanup are timed. This is an orientation-only end-to-end comparison, not literal
 certificate replay or isolated root-production timing.
 """
 from __future__ import annotations

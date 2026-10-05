@@ -7,7 +7,8 @@ pseudo-remainder and literal replay kernel in `hex-real-roots`.
 
 The computational frontend is implemented in `HexSturm/Basic.lean`, using the
 shared query producer and literal checker. It provides `prepare`, `query`,
-`queryPrepared`, `certify`, `certifyPrepared` and `check`, with explicit
+`queryPrepared`, `queryReduced`, `queryReducedPrepared`, `certify`,
+`certifyPrepared` and `check`, with explicit
 coefficient signs and finite/infinite endpoints. `PreparedDomain` has a private
 constructor and retains its sign operation, head, endpoints and validated
 squarefree chain. A domain is prepared by the shared producer, or restored
@@ -129,12 +130,21 @@ The required public operations use the same shared arithmetic kernel:
 | `domain.withEndpoints? a b` | Retain the exact head, sign operation and squarefree chain, checking the new endpoints. Return the same whole result as fresh preparation of that head. A changed head requires fresh preparation. |
 | `query p f a b` | Return `Option Int`; `none` exactly when the domain fails. |
 | `queryPrepared domain f` | Return the query for an already validated domain. |
+| `queryReduced p f a b` | Validate the same domain, reduce `f` by remainder-only division modulo `p`, and invoke the shared producer on that remainder. Under lawful coefficient division its whole result equals `query`, including `none`. |
+| `queryReducedPrepared domain f` | Reduce modulo the prepared head and invoke `queryPrepared`. The companion proves the same signed value under lawful division. |
 | `countPrepared domain` | Return the query of `1` as `Int`, reusing the stored squarefree chain for both certificate positions and recomputing the current endpoint signs. Under the lawful interpretation this is the nonnegative root cardinality. Compare integer counts directly or prove nonnegativity before `Nat` conversion; never clamp an unexpected negative result. |
 | `rootCount p a b` | Query `f=1`, returning `Option Nat` with the same domain. Prove nonnegativity before conversion; never clamp an unexpected negative value. |
 | `certify p f a b` | Run the shared kernel while retaining its literal query certificate. Return `none` on the same invalid domain. |
 | `certifyPrepared context domain f` | Retain the literal query certificate while reusing the prepared squarefree chain and binding the supplied context. |
 | `certifyCountPrepared context domain` | Produce the query-one certificate with the stored chain, fresh endpoint signs and exact context bindings. It equals the ordinary prepared certificate for `1`; old interval counts or endpoint evidence are not reused. |
 | `check` | Check a supplied finite certificate; return `Bool`, false on malformed or incorrect data. |
+
+The reduced value APIs reuse `DensePoly` remainder-only division and the shared
+Tarski producer. They avoid retaining the original high-degree quotient as
+literal certificate evidence. They do not return a certificate bound to the
+unreduced query; use the existing certificate APIs for that contract. Their
+correspondence additionally requires coefficient division to have its lawful
+field interpretation. Storage itself still needs no field/order instance.
 
 No operation takes a caller resource budget. Squarefreeness uses the existing
 plain field gcd of `P,P'`, testing that it is a nonzero constant, or a plain
@@ -268,11 +278,11 @@ and `[IsRealClosed R]` on the Mathlib side.
 
 | Statement | Required conclusion / owner |
 | --- | --- |
-| `query_sound` | `query p f a b = some q` implies `Domain p a b` and `q = TaQ(F,P;a,b)`; development `HexQuerySemantics` adapter. |
-| `check_sound` | Accepted replay implies the same domain and query equality; development `HexQuerySemantics` adapter via the shared replay theorem. |
+| `query_sound` | `query p f a b = some q` implies `Domain p a b` and `q = TaQ(F,P;a,b)`; ordinary `HexSturmMathlib.Soundness` companion. |
+| `check_sound` | Accepted replay implies the same domain and query equality; ordinary `HexSturmMathlib.Soundness` companion via the shared replay theorem. |
 | `query_isSome` | `(query p f a b).isSome ↔ Domain p a b`; executable guard/termination proof here, interpretation in companion. |
 | `certify_checks` | Certificates produced on the domain pass replay and carry the same value as `query`. |
-| `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; proved in the development `HexQuerySemantics` adapters, for eventual companion publication. |
+| `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; proved in ordinary `HexSturmMathlib.Soundness` and exported by the companion umbrella. |
 | `query_congr` | Order-preserving field maps and transported endpoints preserve query results, including domain validity. |
 | `check_congr` | Checked positive-scaled chains have equal values; producer acceptance gives whole-`Option` rational/integer agreement with different normalizers. |
 | `query_rat_eq` | Positive denominator clearing at rational coefficients and dyadic endpoints agrees, including `none`, with `ZPoly.tarskiQuery`; companion. |
@@ -368,8 +378,8 @@ coefficient sizes, gcd work, coefficient calls and certificate bytes; use the
 actual polynomial lengths and certificate sizes for replay costs.
 
 Compare the rational frontend with the optimized integer/dyadic backend
-on identical queries; correctness agreement is gating. Pinned python-flint
-and Z3 end-to-end comparisons are informational where they expose comparable
+on identical queries; correctness agreement is required. Pinned python-flint
+and Z3 end-to-end comparisons are for orientation where they expose comparable
 queries; record any lack of a matching query surface rather than timing root
 isolation as if it were query evaluation. No external system supplies a
 comparable Lean kernel proof surface. The companion's correctness tests

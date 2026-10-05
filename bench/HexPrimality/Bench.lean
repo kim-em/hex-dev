@@ -430,7 +430,7 @@ setup_fixed_benchmark runDecision512 where {
 
 /- Search at the exact 512-bit boundary has a distinct rho factorization
 shape, so no honest one-parameter family exists below it. The 5 s absolute
-budget is the accepted mode-3 policy ceiling. -/
+budget is the accepted fixed-budget policy ceiling. -/
 setup_fixed_benchmark runCertSearch512 where {
   repeats := 5
   maxSecondsPerCall := 5.0
@@ -470,18 +470,18 @@ private initialize curveRef : IO.Ref Input ← IO.mkRef {
 
 private initialize runtimeBoundRef : IO.Ref Nat ← IO.mkRef 524289
 
-/-- Fixed mode-3 Curve25519 construction, including final compiled self-check. -/
+/-- Fixed Curve25519 construction, including final compiled self-check. -/
 def runConstruction (_ : Unit) : IO Nat := do
   let input ← curveRef.get
   match Construction.run input.n (Hex.Rand.ofSeed input.n) with
   | .ok s => return s.attempts
   | .error _ => return 0
 
-/-- Fixed mode-3 compiled replay of the exact Curve25519 suggestion. -/
+/-- Fixed compiled replay of the exact Curve25519 suggestion. -/
 def runCurveChecker (_ : Unit) : IO Nat := do
   return if checkPrime (← curveRef.get).cert then 1 else 0
 
-/-- Fixed mode-3 runtime enumeration through the construction bound. -/
+/-- Fixed runtime enumeration through the construction bound. -/
 def runRuntimePrimes (_ : Unit) : IO Nat := do
   return (primesBelow (← runtimeBoundRef.get)).length
 
@@ -893,14 +893,14 @@ def constructProbe (args : List String) : IO UInt32 := do
 end Stage2
 private initialize p521Ref : IO.Ref Input ← IO.mkRef p521
 
-/-- Fixed mode-3 P-521 construction, including the final compiled self-check. -/
+/-- Fixed P-521 construction, including the final compiled self-check. -/
 def runP521Construction (_ : Unit) : IO Nat := do
   let input ← p521Ref.get
   match Construction.run input.n (Hex.Rand.ofSeed input.n) with
   | .ok s => return s.attempts
   | .error _ => return 0
 
-/-- Fixed mode-3 compiled replay of the exact P-521 suggestion. -/
+/-- Fixed compiled replay of the exact P-521 suggestion. -/
 def runP521Checker (_ : Unit) : IO Nat := do
   return if checkPrime (← p521Ref.get).cert then 1 else 0
 

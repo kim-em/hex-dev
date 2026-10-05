@@ -1,0 +1,9 @@
+Hex.SturmBench.runRationalHigh    expected complexity: m ^ 2    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=cf86495-dirty, 2026-10-04T19:22:36Z, host=chungus2
+    param  per-call  repeats  C
+  262_144  6.275 s   ×2^0     C=0.091
+  verdict: inconclusive (cMin=—, cMax=—, β=—)
+  per-spawn floor (harness self-measurement): 22.262 ms
+  peak RSS: 3_292_276 kB (across 1 ok row(s))
+  ‼ only 1 verdict-eligible row(s) survived warmup-trim + signal-floor filter; the verdict is below resolution. Lower `--warmup-fraction`, raise `--param-ceiling`, or use `where { paramSchedule := .custom #[...] }` to pin a tractable rung set.
+exported to /home/kim/.local/state/hex/issue-10577-proposals/sturm-remainder-only/trial2-262144-original.json

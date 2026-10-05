@@ -1305,14 +1305,14 @@ The last two families are owned by `bench/HexGFq/Bench.lean`; neither
 hex-finite-field nor hex-berlekamp imports the concrete instance
 libraries for benchmarking.
 
-**Comparators.** FLINT `fq_default_poly_factor` via python-flint,
-**informational** on the extension-field family. FLINT's full factorizer
+**Comparators.** FLINT `fq_default_poly_factor` via python-flint, for
+orientation on the extension-field family. FLINT's full factorizer
 selects among tuned algorithms, including Kaltofen-Shoup regimes this
 SPEC does not implement, and its representation differs from both Hex
-extension representations; a gating ratio would not isolate this
-project's algorithm. Correctness fixtures remain gating.
-FLINT `nmod_poly_factor` remains gating on the prime-field family as it
-is today. FLINT `fq_default_poly_factor_equal_deg` is **informational**
+extension representations; a target ratio would not isolate this
+project's algorithm. Correctness fixtures remain required.
+FLINT `nmod_poly_factor` remains the comparator on the prime-field family
+as it is today. FLINT `fq_default_poly_factor_equal_deg` is for orientation
 on the equal-degree family. The direct C function has the same semantic
 operation, but its implementation and representation are not a stable
 like-for-like performance contract.

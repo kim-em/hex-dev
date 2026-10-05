@@ -182,7 +182,7 @@ The Smith loop performs polynomial gcd/division plus dense row and column
 updates. The degree registrations use consecutive continuants, so they force a
 linear Euclidean remainder chain instead of short-circuiting on divisibility.
 Their maximum transform degree, rational denominator width, and coefficient
-width follow from the recurrence and appear in the mode-1 wall models. The
+width follow from the recurrence and appear in the two-sided wall models. The
 supplemental dimension chains isolate dense matrix traversal at fixed degree.
 The original generic dense inputs remain fixed comparator stress cases; they do
 not make a parametric complexity claim.
@@ -209,7 +209,7 @@ dimension is fixed, every Euclidean quotient is linear, and the remainder
 degrees decrease by one, so their coefficient scans sum quadratically rather
 than paying the general maximum-degree bound at every reduction. The dimension
 families instead fix `D` and keep `L` within the derived limb count, leaving the
-cubic trailing-matrix work dominant. Thus the mode-1 models are specializations
+cubic trailing-matrix work dominant. Thus the two-sided models are specializations
 of, not replacements for, the worst-case contract.
 
 The required within-Lean comparisons are:
@@ -217,16 +217,14 @@ The required within-Lean comparisons are:
 - `snf` against `snfData` on the same dimension and degree ladders;
 - `snfCert` against `mulEqCertAt` at fixed degree across the dimension ladder.
 
-External square-input comparisons are informational:
+External square-input comparisons are for orientation:
 
 - SymPy `smith_normal_form` over `QQ[x]`;
 - PARI/GP `matsnf` on matrices of polynomial entries.
 
-Both use persistent subprocesses and fixed-rung registrations. Their process
-framing overhead and every shared-rung ratio are recorded in
-`reports/hex-poly-smith-performance.md`. PARI is square-only and neither tool
-exposes the transform, solving, structure, or certificate surfaces; those
-operations therefore have `no-comparable-surface-in-named-comparator`.
+Both use persistent subprocesses and fixed-rung registrations. PARI is
+square-only and neither tool exposes the transform, solving, structure, or
+certificate surfaces, so those operations have no external comparator.
 
 ## Files
 

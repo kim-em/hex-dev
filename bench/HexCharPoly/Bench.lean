@@ -13,13 +13,13 @@ import LeanBench
 /-!
 Benchmark registrations for Samuelson--Berkowitz characteristic polynomials.
 
-The headline random family has separate dimension and entry-bit-width ladders.
+The main random family has separate dimension and entry-bit-width ladders.
 The `growth` command times the public computation and separately observes the
 peak bit size among every Berkowitz Toeplitz column and every intermediate
 coefficient vector, reporting both measurements for both ladders as JSONL.
 The structured family checks companion matrices and Jordan blocks against
 closed-form answers inside the benchmark.  FLINT and PARI are fixed-rung
-informational comparators; PARI uses flag `3`, its division-free Berkowitz
+comparators recorded for orientation; PARI uses flag `3`, its division-free Berkowitz
 implementation.
 -/
 

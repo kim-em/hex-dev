@@ -16,8 +16,9 @@ former repeated-normalization cost from the implemented recurrence products.
 
 All earlier declarations, failures and samples are retained. These observations
 cover effective query/checker paths. They do not attest complete frontend Phase-4 coverage or downstream extension
-evidence. The general signed-root-sum theorem is proved in the development
-`HexQuerySemantics` target; theorem-only companions have no dedicated Phase-4
+evidence. The general signed-root-sum theorem is exported by ordinary
+`HexRealRootsMathlib` and `HexSturmMathlib` imports. `HexQuerySemantics` retains
+semantic regression tests; theorem-only companions have no dedicated Phase-4
 performance deliverable under the current policy.
 
 ## Original protocol and provenance
@@ -454,8 +455,8 @@ the measured code.
 The separate fresh-module proof track checks literal acceptance, rejection of a
 false terminal identity, stale-context rejection and interpretation of the
 accepted domain. The delivered IVT/Rolle and signed-remainder foundation now establishes
-query root-sum semantics through `HexQuerySemantics`; its ordinary-kernel
-semantic replay tests and axiom guards are correctness checks, separate from
+query root-sum semantics in the ordinary Mathlib companions; `HexQuerySemantics`
+retains ordinary-kernel semantic replay tests and axiom guards, separate from
 compiled arithmetic performance.
 
 The independent size sweeps and operation/normalization diagnostics above are
@@ -466,8 +467,9 @@ upper-bound observation below. Current Phase-4 admission remains suspended
 until its dominant-phase attribution satisfies the policy. Concrete
 extension-depth and nested-evidence probes belong downstream under #10378;
 general root-sum/replay soundness, singleton/sign/bound consequences and the
-exact-domain natural root-count wrapper are proved in the development
-`HexQuerySemantics` target. Their [semantic proof-cost evidence](sturm-tarski-semantics.md)
+exact-domain natural root-count wrapper are proved and exported by the ordinary
+`HexSturmMathlib` companion. Its regression target `HexQuerySemantics` keeps
+the semantic replay and axiom tests. Their [semantic proof-cost evidence](sturm-tarski-semantics.md)
 is separate from these arithmetic measurements. The integer query-one
 finite/whole-line counts and rational finite-dyadic specialization also retain
 their proofs using the existing real Sturm theorem. Whole-`Option` field-representation and
@@ -719,6 +721,32 @@ bit fixtures likewise collapse to a one-bit mantissa or a normalized linear
 chain. Neither those families nor the original short, mixed-word head ladder
 justify current Phase 4. No failed two-sided case is relabelled mode 2.
 
+## Remainder-only value queries
+
+`queryReduced` and `queryReducedPrepared` reduce by the validated head using
+`DensePoly.modImpl`, then invoke the existing shared producer. The companion
+proves equality with the original whole result, including failures, under
+lawful coefficient division. These opt-in value APIs avoid retaining the
+unreduced query's literal quotient; the existing certificate contract remains
+available.
+
+The [controlled storage/runtime comparison](bench-results/sturm-reduced-value-comparison/README.md)
+retains all 32 adjacent AB/BA arms with identical rational value-only preparation.
+At degree 262144 peak whole-process RSS falls from about 2175 to 137 MiB, and
+median kernel time improves about 1.5×. Preparation and process memory are
+included in RSS, while kernel timings exclude preparation. All signed-result
+hashes agree. Earlier coupled-preparation and quotient-producing prototypes
+remain archived with their actual limitations and interrupted parents.
+
+The reduced query's registered quadratic bit-work ladder passes at degrees
+131072–1048576 with four trials per rung: residual −0.063658, no truncation or
+signal exclusion. Median kernel time at the largest rung is still 78.0 seconds.
+The [current representative capture](bench-results/readiness-runtime-profiles/README.md)
+attributes 90.79% inclusive share to the remainder-only worker. This provides
+family-specific evidence, not an admission of the unresolved sign or replay
+candidates. The former 33.8 GB observation remains valid for its original
+quotient-retaining API and recorded source.
+
 ## Comparator ratios
 
 The [short-chain backend pairs](bench-results/sturm-short-chain-degree/analysis.json)
@@ -830,17 +858,21 @@ frontend profiles are separate evidence for prepared, cached and transport paths
 
 ## Concerns
 
-- The headline `query_iff` is proved in the development semantic adapter, but
-  ordinary `import HexSturmMathlib` still does not export it. The bounded public
-  foundation/frontend import integration belongs to
-  [#10575](https://github.com/kim-em/hex-dev/issues/10575); it cannot wait for
-  #10577 closure because it is itself a Sturm Phase-4 prerequisite.
+- The public foundation/frontend integration from
+  [#10683](https://github.com/kim-em/hex-dev/pull/10683), owned by
+  [#10575](https://github.com/kim-em/hex-dev/issues/10575), is included in this
+  source tree. Ordinary `import HexSturmMathlib` exports `query_iff` and the
+  reduced-query correspondence. Source availability does not attest Phase 4
+  or publish the split repositories.
 
-- Growing nonconstant queries against a fixed quadratic still materialize
-  the large quotient even in the value-only path. The retained prepared-query
-  ladder above reaches roughly 99 seconds and 32 GiB whole-child peak RSS.
-  Exact result agreement and family-specific characterization do not resolve
-  this storage cost; no streaming implementation is claimed.
+- The original prepared-query API still materializes a large quotient for
+  growing queries against a fixed quadratic. Its retained historical ladder
+  reaches roughly 99 seconds and 32 GiB whole-child peak RSS. The new
+  remainder-only value-query path avoids retaining that quotient: the current
+  degree-262144 comparison observes roughly 137 MiB rather than 2175 MiB.
+  It still has quadratic bit work and takes roughly 78 seconds at degree
+  1048576. These observations do not establish a general space bound or
+  change the existing certificate API.
 
 - The wide replay/checker and coefficient-sign failures of characterization
   remain retained. The narrower passing models and current Chebyshev external

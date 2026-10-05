@@ -20,7 +20,7 @@ full-degree work, repeated low-order blocks, and a closed-form full-degree answe
 The `metrics` command times the public operation and reports `deg m_A` and the
 sum of the basis-vector order degrees for every family. On random rational inputs
 it also independently instruments the order/lcm fold and records peak coefficient
-bit size. FLINT and PARI are fixed-rung, informational comparators driven through
+bit size. FLINT and PARI are fixed-rung orientation comparators driven through
 the shared persistent subprocesses.
 -/
 

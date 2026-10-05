@@ -175,6 +175,12 @@ Original values remain indexed by their original contexts;
 owner index. The native base compatibility check uses the full real-prefix key
 path and nondecreasing infinitesimal depth, rather than a hash or a carrier type.
 
+`Shared.register?` returns the new shared target together with the actual
+checked inclusion of the previous target and the new owner's map. The result
+retains transport for values computed in the previous shared target, beyond
+values stored in its original owner list. Every retained owner map composes
+with this same inclusion. The collection agrees with the existing `add?` API.
+
 `Shared.enlarge?` reconstructs the shared suffix once over the next staged base.
 Its result retains the existing checked conversion/parameter packet, a new
 shared target and all original-owner maps. Reading the parameter performs no
@@ -493,6 +499,24 @@ literally through `R → R(δ) → R'`; no unlisted uniqueness-of-real-closure
 theorem is assumed. Since `R/B` is algebraic, `R'/B(δ)` is algebraic too.
 Computationally reconstruct the staged base `B(δ)` and revalidate transported
 root descriptors/certificates in predecessor order.
+
+The finite live-request API is `Tower.Live.Request`: every frame retains
+its immutable owner, values, polynomials and checked descriptors. A selected
+root request retains its predecessor descriptor and actual cached child
+generator. `Request.gather?` gathers owner ancestry before mapping operands,
+and `Collection.enlarge?` rebuilds that shared ancestry once and transports
+the current frames through the previous target map when its zero check
+passes, with a full original-request transport fallback otherwise. Semantic
+inclusions preserve zero. Both branches refresh every
+descriptor while retaining the original producer certificate. The returned
+enlargement retains the old target map,
+the original owner maps and a collection ready for successive enlargement.
+
+`Tower.Live.Collection.preserve_twice` relates every returned frame to its
+initial gathered frame through the composition of the two actual infinitesimal
+inclusions, preserving requested values, all polynomial coefficients and
+selected descriptor roots under the same returned canonical models.
+
 
 Enlargement preserves embeddings, root identity and all previous comparisons,
 and returns a new context; appending an infinitesimal after an algebraic
@@ -813,6 +837,6 @@ Keep bench imports Mathlib-free and replay measurements separate. Use
 lean-bench's fixed trial-major schedule, automatic CPU selection where
 supported, adjacent alternating `AB`/`BA` comparisons, and retain every
 completed sample with host activity as context. Allow at most one unchanged
-rerun after an inconclusive result and supply one representative attribution
-profile. Historical paper timings are not host-independent targets or CI
+rerun after an inconclusive result; profile only to explain an unexpected
+result. Historical paper timings are not host-independent targets or CI
 budgets. No quiet-core preflight or retry-until-clean rule is introduced.

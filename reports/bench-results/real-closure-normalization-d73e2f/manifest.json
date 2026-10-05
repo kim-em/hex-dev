@@ -1,0 +1,3269 @@
+{
+  "status": "completed",
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "sizes": [
+    2,
+    4,
+    8,
+    16
+  ],
+  "trials": 6,
+  "target_inner_nanos": 500000000,
+  "child_timeout_seconds": 600,
+  "warmup_first_iter": true,
+  "python_version": "3.14.7 (main, Aug  5 2026, 10:29:49) [GCC 15.3.0]",
+  "schedule": "trial-major; degree order 2,4,8,16; adjacent AB/BA alternating by trial",
+  "arms": {
+    "A": "clean",
+    "B": "eager"
+  },
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 3667948,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/0.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/0.stderr"
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 31580164,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/1.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/1.stderr"
+    },
+    {
+      "argv": [
+        "lake",
+        "env",
+        "lean",
+        "--version"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1215233363,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/2.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/2.stderr"
+    },
+    {
+      "argv": [
+        "lscpu",
+        "--json"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 15912489,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/3.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/3.stderr"
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-normalization/.lake/packages/lean-bench",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1405684,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/4.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/4.stderr"
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-normalization/.lake/packages/lean-bench",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 3354112,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/5.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/5.stderr"
+    },
+    {
+      "argv": [
+        "lake",
+        "build",
+        "hexrealclosure_normalization_bench"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1454770509,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/6.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/6.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/phase4-oracles-env/bin/python",
+        "-c",
+        "import z3; from importlib.metadata import version; print(version(\"python-flint\"), z3.get_version_string())"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 63748310,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/7.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/7.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "storage",
+        "2"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 35715104,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/8.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/8.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/phase4-oracles-env/bin/python",
+        "scripts/oracle/real_closure_normalization.py",
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/8.stdout"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 113857461,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/9.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/9.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "storage",
+        "4"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 35146210,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/10.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/10.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/phase4-oracles-env/bin/python",
+        "scripts/oracle/real_closure_normalization.py",
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/10.stdout"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 115734593,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/11.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/11.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "storage",
+        "8"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 65380609,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/12.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/12.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/phase4-oracles-env/bin/python",
+        "scripts/oracle/real_closure_normalization.py",
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/12.stdout"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 115822654,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/13.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/13.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "storage",
+        "16"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 467821672,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/14.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/14.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/phase4-oracles-env/bin/python",
+        "scripts/oracle/real_closure_normalization.py",
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/14.stdout"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 115169766,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/15.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/15.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "verify"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 65339258,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/16.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/16.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean2",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1169076392,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/17.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/17.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager2",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1419455241,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/18.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/18.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean4",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1119040712,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/19.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/19.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager4",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1970190205,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/20.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/20.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean8",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 2020290886,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/21.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/21.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager8",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1819611622,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/22.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/22.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean16",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1268812224,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/23.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/23.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager16",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1168840198,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/24.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/24.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager2",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1419290603,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/25.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/25.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean2",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1218889701,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/26.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/26.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager4",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1969800837,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/27.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/27.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean4",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1118778919,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/28.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/28.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager8",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1819936151,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/29.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/29.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean8",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1969282933,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/30.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/30.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager16",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1168718041,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/31.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/31.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean16",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1268110771,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/32.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/32.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean2",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1168481211,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/33.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/33.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager2",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1419307946,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/34.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/34.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean4",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1116515157,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/35.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/35.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager4",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1967684178,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/36.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/36.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean8",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 2020012111,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/37.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/37.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager8",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1819651098,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/38.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/38.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean16",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1216850968,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/39.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/39.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager16",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1168687912,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/40.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/40.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager2",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1418112090,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/41.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/41.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean2",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1169398236,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/42.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/42.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager4",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1920099958,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/43.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/43.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean4",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1119382735,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/44.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/44.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager8",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1819435234,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/45.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/45.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean8",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 2020111038,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/46.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/46.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager16",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1168525336,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/47.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/47.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean16",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1265873546,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/48.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/48.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean2",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1168788197,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/49.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/49.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager2",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1418795129,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/50.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/50.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean4",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1119238004,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/51.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/51.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager4",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1969785991,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/52.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/52.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean8",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 2019806494,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/53.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/53.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager8",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1870426183,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/54.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/54.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean16",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1269627035,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/55.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/55.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager16",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1169086243,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/56.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/56.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager2",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1419901123,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/57.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/57.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean2",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1169008990,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/58.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/58.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager4",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1969664941,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/59.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/59.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean4",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1116846825,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/60.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/60.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager8",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1819992587,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/61.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/61.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean8",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 2020119759,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/62.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/62.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.eager16",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1169159616,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/63.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/63.stderr"
+    },
+    {
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/hexrealclosure_normalization_bench",
+        "_child",
+        "--bench",
+        "Hex.RealClosure.Normalization.clean16",
+        "--fixed",
+        "--min-total-nanos",
+        "500000000"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 1269294448,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/64.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/64.stderr"
+    },
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 5268110,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/65.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/65.stderr"
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0,
+      "elapsed_ns": 66373332,
+      "stdout": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/66.stdout",
+      "stderr": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/66.stderr"
+    }
+  ],
+  "measurements": [
+    {
+      "trial": 0,
+      "degree": 2,
+      "arm": "A",
+      "order": "AB",
+      "load": [
+        2.33447265625,
+        2.66162109375,
+        3.64892578125
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/17.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean2",
+          "repeat_index": 0,
+          "inner_repeats": 32768,
+          "total_nanos": 544854695,
+          "result_hash": "0x3412eccad34759ea",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 72668,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:15Z",
+            "timestamp_unix_ms": 1791151815104
+          }
+        }
+      ]
+    },
+    {
+      "trial": 0,
+      "degree": 2,
+      "arm": "B",
+      "order": "AB",
+      "load": [
+        2.33447265625,
+        2.66162109375,
+        3.64892578125
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/18.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager2",
+          "repeat_index": 0,
+          "inner_repeats": 65536,
+          "total_nanos": 657283258,
+          "result_hash": "0xe368522d9dc1d2f2",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73552,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:16Z",
+            "timestamp_unix_ms": 1791151816273
+          }
+        }
+      ]
+    },
+    {
+      "trial": 0,
+      "degree": 4,
+      "arm": "A",
+      "order": "AB",
+      "load": [
+        2.3076171875,
+        2.650390625,
+        3.6396484375
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/19.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean4",
+          "repeat_index": 0,
+          "inner_repeats": 2048,
+          "total_nanos": 513895993,
+          "result_hash": "0x94e8f7be8d8094d5",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73400,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:17Z",
+            "timestamp_unix_ms": 1791151817695
+          }
+        }
+      ]
+    },
+    {
+      "trial": 0,
+      "degree": 4,
+      "arm": "B",
+      "order": "AB",
+      "load": [
+        2.3076171875,
+        2.650390625,
+        3.6396484375
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/20.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager4",
+          "repeat_index": 0,
+          "inner_repeats": 4096,
+          "total_nanos": 936631871,
+          "result_hash": "0x319b3437a6d96431",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 72740,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:18Z",
+            "timestamp_unix_ms": 1791151818813
+          }
+        }
+      ]
+    },
+    {
+      "trial": 0,
+      "degree": 8,
+      "arm": "A",
+      "order": "AB",
+      "load": [
+        2.3076171875,
+        2.650390625,
+        3.6396484375
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/21.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean8",
+          "repeat_index": 0,
+          "inner_repeats": 512,
+          "total_nanos": 957129238,
+          "result_hash": "0x7fafce5255084bbd",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 72736,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:20Z",
+            "timestamp_unix_ms": 1791151820785
+          }
+        }
+      ]
+    },
+    {
+      "trial": 0,
+      "degree": 8,
+      "arm": "B",
+      "order": "AB",
+      "load": [
+        2.28271484375,
+        2.63916015625,
+        3.63037109375
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/22.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager8",
+          "repeat_index": 0,
+          "inner_repeats": 512,
+          "total_nanos": 872624519,
+          "result_hash": "0xcfa38add5d03e099",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 71988,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:22Z",
+            "timestamp_unix_ms": 1791151822805
+          }
+        }
+      ]
+    },
+    {
+      "trial": 0,
+      "degree": 16,
+      "arm": "A",
+      "order": "AB",
+      "load": [
+        2.28271484375,
+        2.63916015625,
+        3.63037109375
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/23.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean16",
+          "repeat_index": 0,
+          "inner_repeats": 32,
+          "total_nanos": 597218721,
+          "result_hash": "0x992873940e7a7ca3",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 74176,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:24Z",
+            "timestamp_unix_ms": 1791151824626
+          }
+        }
+      ]
+    },
+    {
+      "trial": 0,
+      "degree": 16,
+      "arm": "B",
+      "order": "AB",
+      "load": [
+        2.28271484375,
+        2.63916015625,
+        3.63037109375
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/24.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager16",
+          "repeat_index": 0,
+          "inner_repeats": 32,
+          "total_nanos": 545893607,
+          "result_hash": "0x72603d1a602928b2",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73760,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:25Z",
+            "timestamp_unix_ms": 1791151825897
+          }
+        }
+      ]
+    },
+    {
+      "trial": 1,
+      "degree": 2,
+      "arm": "B",
+      "order": "BA",
+      "load": [
+        2.259765625,
+        2.62841796875,
+        3.62158203125
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/25.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager2",
+          "repeat_index": 0,
+          "inner_repeats": 65536,
+          "total_nanos": 660556884,
+          "result_hash": "0xe368522d9dc1d2f2",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 71968,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:27Z",
+            "timestamp_unix_ms": 1791151827067
+          }
+        }
+      ]
+    },
+    {
+      "trial": 1,
+      "degree": 2,
+      "arm": "A",
+      "order": "BA",
+      "load": [
+        2.259765625,
+        2.62841796875,
+        3.62158203125
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/26.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean2",
+          "repeat_index": 0,
+          "inner_repeats": 32768,
+          "total_nanos": 549055435,
+          "result_hash": "0x3412eccad34759ea",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73100,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:28Z",
+            "timestamp_unix_ms": 1791151828490
+          }
+        }
+      ]
+    },
+    {
+      "trial": 1,
+      "degree": 4,
+      "arm": "B",
+      "order": "BA",
+      "load": [
+        2.259765625,
+        2.62841796875,
+        3.62158203125
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/27.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager4",
+          "repeat_index": 0,
+          "inner_repeats": 4096,
+          "total_nanos": 932970238,
+          "result_hash": "0x319b3437a6d96431",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73500,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:29Z",
+            "timestamp_unix_ms": 1791151829706
+          }
+        }
+      ]
+    },
+    {
+      "trial": 1,
+      "degree": 4,
+      "arm": "A",
+      "order": "BA",
+      "load": [
+        2.259765625,
+        2.62841796875,
+        3.62158203125
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/28.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean4",
+          "repeat_index": 0,
+          "inner_repeats": 2048,
+          "total_nanos": 517982464,
+          "result_hash": "0x94e8f7be8d8094d5",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73092,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:31Z",
+            "timestamp_unix_ms": 1791151831680
+          }
+        }
+      ]
+    },
+    {
+      "trial": 1,
+      "degree": 8,
+      "arm": "B",
+      "order": "BA",
+      "load": [
+        2.6396484375,
+        2.701171875,
+        3.64013671875
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/29.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager8",
+          "repeat_index": 0,
+          "inner_repeats": 512,
+          "total_nanos": 866663306,
+          "result_hash": "0xcfa38add5d03e099",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73400,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:32Z",
+            "timestamp_unix_ms": 1791151832798
+          }
+        }
+      ]
+    },
+    {
+      "trial": 1,
+      "degree": 8,
+      "arm": "A",
+      "order": "BA",
+      "load": [
+        2.6396484375,
+        2.701171875,
+        3.64013671875
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/30.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean8",
+          "repeat_index": 0,
+          "inner_repeats": 512,
+          "total_nanos": 945847369,
+          "result_hash": "0x7fafce5255084bbd",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 72788,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:34Z",
+            "timestamp_unix_ms": 1791151834618
+          }
+        }
+      ]
+    },
+    {
+      "trial": 1,
+      "degree": 16,
+      "arm": "B",
+      "order": "BA",
+      "load": [
+        2.6396484375,
+        2.701171875,
+        3.64013671875
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/31.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager16",
+          "repeat_index": 0,
+          "inner_repeats": 32,
+          "total_nanos": 549601376,
+          "result_hash": "0x72603d1a602928b2",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73044,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:36Z",
+            "timestamp_unix_ms": 1791151836588
+          }
+        }
+      ]
+    },
+    {
+      "trial": 1,
+      "degree": 16,
+      "arm": "A",
+      "order": "BA",
+      "load": [
+        2.58837890625,
+        2.689453125,
+        3.630859375
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/32.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean16",
+          "repeat_index": 0,
+          "inner_repeats": 32,
+          "total_nanos": 589749522,
+          "result_hash": "0x992873940e7a7ca3",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73672,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:37Z",
+            "timestamp_unix_ms": 1791151837758
+          }
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "degree": 2,
+      "arm": "A",
+      "order": "AB",
+      "load": [
+        2.58837890625,
+        2.689453125,
+        3.630859375
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/33.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean2",
+          "repeat_index": 0,
+          "inner_repeats": 32768,
+          "total_nanos": 545317896,
+          "result_hash": "0x3412eccad34759ea",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 72952,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:39Z",
+            "timestamp_unix_ms": 1791151839028
+          }
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "degree": 2,
+      "arm": "B",
+      "order": "AB",
+      "load": [
+        2.58837890625,
+        2.689453125,
+        3.630859375
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/34.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager2",
+          "repeat_index": 0,
+          "inner_repeats": 65536,
+          "total_nanos": 661642546,
+          "result_hash": "0xe368522d9dc1d2f2",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 72740,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:40Z",
+            "timestamp_unix_ms": 1791151840198
+          }
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "degree": 4,
+      "arm": "A",
+      "order": "AB",
+      "load": [
+        2.58837890625,
+        2.689453125,
+        3.630859375
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/35.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean4",
+          "repeat_index": 0,
+          "inner_repeats": 2048,
+          "total_nanos": 518479052,
+          "result_hash": "0x94e8f7be8d8094d5",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73452,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:41Z",
+            "timestamp_unix_ms": 1791151841618
+          }
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "degree": 4,
+      "arm": "B",
+      "order": "AB",
+      "load": [
+        2.78173828125,
+        2.72802734375,
+        3.638671875
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/36.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager4",
+          "repeat_index": 0,
+          "inner_repeats": 4096,
+          "total_nanos": 938189990,
+          "result_hash": "0x319b3437a6d96431",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 72800,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:42Z",
+            "timestamp_unix_ms": 1791151842737
+          }
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "degree": 8,
+      "arm": "A",
+      "order": "AB",
+      "load": [
+        2.78173828125,
+        2.72802734375,
+        3.638671875
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/37.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean8",
+          "repeat_index": 0,
+          "inner_repeats": 512,
+          "total_nanos": 958914853,
+          "result_hash": "0x7fafce5255084bbd",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73504,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:44Z",
+            "timestamp_unix_ms": 1791151844704
+          }
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "degree": 8,
+      "arm": "B",
+      "order": "AB",
+      "load": [
+        2.87939453125,
+        2.74951171875,
+        3.640625
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/38.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager8",
+          "repeat_index": 0,
+          "inner_repeats": 512,
+          "total_nanos": 873680122,
+          "result_hash": "0xcfa38add5d03e099",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73396,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:46Z",
+            "timestamp_unix_ms": 1791151846726
+          }
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "degree": 16,
+      "arm": "A",
+      "order": "AB",
+      "load": [
+        2.87939453125,
+        2.74951171875,
+        3.640625
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/39.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean16",
+          "repeat_index": 0,
+          "inner_repeats": 32,
+          "total_nanos": 574830749,
+          "result_hash": "0x992873940e7a7ca3",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73724,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:48Z",
+            "timestamp_unix_ms": 1791151848546
+          }
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "degree": 16,
+      "arm": "B",
+      "order": "AB",
+      "load": [
+        2.87939453125,
+        2.74951171875,
+        3.640625
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/40.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager16",
+          "repeat_index": 0,
+          "inner_repeats": 32,
+          "total_nanos": 547965203,
+          "result_hash": "0x72603d1a602928b2",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73204,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:49Z",
+            "timestamp_unix_ms": 1791151849764
+          }
+        }
+      ]
+    },
+    {
+      "trial": 3,
+      "degree": 2,
+      "arm": "B",
+      "order": "BA",
+      "load": [
+        2.87939453125,
+        2.74951171875,
+        3.640625
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/41.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager2",
+          "repeat_index": 0,
+          "inner_repeats": 65536,
+          "total_nanos": 658451729,
+          "result_hash": "0xe368522d9dc1d2f2",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73528,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:50Z",
+            "timestamp_unix_ms": 1791151850935
+          }
+        }
+      ]
+    },
+    {
+      "trial": 3,
+      "degree": 2,
+      "arm": "A",
+      "order": "BA",
+      "load": [
+        3.04931640625,
+        2.787109375,
+        3.64794921875
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/42.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean2",
+          "repeat_index": 0,
+          "inner_repeats": 32768,
+          "total_nanos": 542877061,
+          "result_hash": "0x3412eccad34759ea",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 74108,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:52Z",
+            "timestamp_unix_ms": 1791151852354
+          }
+        }
+      ]
+    },
+    {
+      "trial": 3,
+      "degree": 4,
+      "arm": "B",
+      "order": "BA",
+      "load": [
+        3.04931640625,
+        2.787109375,
+        3.64794921875
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/43.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager4",
+          "repeat_index": 0,
+          "inner_repeats": 4096,
+          "total_nanos": 923955052,
+          "result_hash": "0x319b3437a6d96431",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73440,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:53Z",
+            "timestamp_unix_ms": 1791151853524
+          }
+        }
+      ]
+    },
+    {
+      "trial": 3,
+      "degree": 4,
+      "arm": "A",
+      "order": "BA",
+      "load": [
+        3.04931640625,
+        2.787109375,
+        3.64794921875
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/44.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean4",
+          "repeat_index": 0,
+          "inner_repeats": 2048,
+          "total_nanos": 518141844,
+          "result_hash": "0x94e8f7be8d8094d5",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73672,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:55Z",
+            "timestamp_unix_ms": 1791151855447
+          }
+        }
+      ]
+    },
+    {
+      "trial": 3,
+      "degree": 8,
+      "arm": "B",
+      "order": "BA",
+      "load": [
+        3.04931640625,
+        2.787109375,
+        3.64794921875
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/45.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager8",
+          "repeat_index": 0,
+          "inner_repeats": 512,
+          "total_nanos": 858874417,
+          "result_hash": "0xcfa38add5d03e099",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 72736,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:56Z",
+            "timestamp_unix_ms": 1791151856567
+          }
+        }
+      ]
+    },
+    {
+      "trial": 3,
+      "degree": 8,
+      "arm": "A",
+      "order": "BA",
+      "load": [
+        3.044921875,
+        2.791015625,
+        3.64404296875
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/46.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean8",
+          "repeat_index": 0,
+          "inner_repeats": 512,
+          "total_nanos": 969067859,
+          "result_hash": "0x7fafce5255084bbd",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 72760,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:10:58Z",
+            "timestamp_unix_ms": 1791151858389
+          }
+        }
+      ]
+    },
+    {
+      "trial": 3,
+      "degree": 16,
+      "arm": "B",
+      "order": "BA",
+      "load": [
+        3.044921875,
+        2.791015625,
+        3.64404296875
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/47.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager16",
+          "repeat_index": 0,
+          "inner_repeats": 32,
+          "total_nanos": 535205610,
+          "result_hash": "0x72603d1a602928b2",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 74216,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:00Z",
+            "timestamp_unix_ms": 1791151860409
+          }
+        }
+      ]
+    },
+    {
+      "trial": 3,
+      "degree": 16,
+      "arm": "A",
+      "order": "BA",
+      "load": [
+        3.044921875,
+        2.791015625,
+        3.64404296875
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/48.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean16",
+          "repeat_index": 0,
+          "inner_repeats": 32,
+          "total_nanos": 577675639,
+          "result_hash": "0x992873940e7a7ca3",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 74208,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:01Z",
+            "timestamp_unix_ms": 1791151861578
+          }
+        }
+      ]
+    },
+    {
+      "trial": 4,
+      "degree": 2,
+      "arm": "A",
+      "order": "AB",
+      "load": [
+        3.041015625,
+        2.794921875,
+        3.64013671875
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/49.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean2",
+          "repeat_index": 0,
+          "inner_repeats": 32768,
+          "total_nanos": 545023124,
+          "result_hash": "0x3412eccad34759ea",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73104,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:02Z",
+            "timestamp_unix_ms": 1791151862846
+          }
+        }
+      ]
+    },
+    {
+      "trial": 4,
+      "degree": 2,
+      "arm": "B",
+      "order": "AB",
+      "load": [
+        3.041015625,
+        2.794921875,
+        3.64013671875
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/50.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager2",
+          "repeat_index": 0,
+          "inner_repeats": 65536,
+          "total_nanos": 660436404,
+          "result_hash": "0xe368522d9dc1d2f2",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 72748,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:04Z",
+            "timestamp_unix_ms": 1791151864018
+          }
+        }
+      ]
+    },
+    {
+      "trial": 4,
+      "degree": 4,
+      "arm": "A",
+      "order": "AB",
+      "load": [
+        3.041015625,
+        2.794921875,
+        3.64013671875
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/51.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean4",
+          "repeat_index": 0,
+          "inner_repeats": 2048,
+          "total_nanos": 515276028,
+          "result_hash": "0x94e8f7be8d8094d5",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73676,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:05Z",
+            "timestamp_unix_ms": 1791151865437
+          }
+        }
+      ]
+    },
+    {
+      "trial": 4,
+      "degree": 4,
+      "arm": "B",
+      "order": "AB",
+      "load": [
+        3.041015625,
+        2.794921875,
+        3.64013671875
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/52.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager4",
+          "repeat_index": 0,
+          "inner_repeats": 4096,
+          "total_nanos": 936860737,
+          "result_hash": "0x319b3437a6d96431",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73504,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:06Z",
+            "timestamp_unix_ms": 1791151866558
+          }
+        }
+      ]
+    },
+    {
+      "trial": 4,
+      "degree": 8,
+      "arm": "A",
+      "order": "AB",
+      "load": [
+        3.1181640625,
+        2.81494140625,
+        3.64208984375
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/53.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean8",
+          "repeat_index": 0,
+          "inner_repeats": 512,
+          "total_nanos": 962798860,
+          "result_hash": "0x7fafce5255084bbd",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73496,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:08Z",
+            "timestamp_unix_ms": 1791151868528
+          }
+        }
+      ]
+    },
+    {
+      "trial": 4,
+      "degree": 8,
+      "arm": "B",
+      "order": "AB",
+      "load": [
+        3.1181640625,
+        2.81494140625,
+        3.64208984375
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/54.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager8",
+          "repeat_index": 0,
+          "inner_repeats": 512,
+          "total_nanos": 879507058,
+          "result_hash": "0xcfa38add5d03e099",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 71948,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:10Z",
+            "timestamp_unix_ms": 1791151870550
+          }
+        }
+      ]
+    },
+    {
+      "trial": 4,
+      "degree": 16,
+      "arm": "A",
+      "order": "AB",
+      "load": [
+        3.1083984375,
+        2.818359375,
+        3.63818359375
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/55.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean16",
+          "repeat_index": 0,
+          "inner_repeats": 32,
+          "total_nanos": 602225514,
+          "result_hash": "0x992873940e7a7ca3",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73100,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:12Z",
+            "timestamp_unix_ms": 1791151872423
+          }
+        }
+      ]
+    },
+    {
+      "trial": 4,
+      "degree": 16,
+      "arm": "B",
+      "order": "AB",
+      "load": [
+        3.1083984375,
+        2.818359375,
+        3.63818359375
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/56.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager16",
+          "repeat_index": 0,
+          "inner_repeats": 32,
+          "total_nanos": 554265498,
+          "result_hash": "0x72603d1a602928b2",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73760,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:13Z",
+            "timestamp_unix_ms": 1791151873693
+          }
+        }
+      ]
+    },
+    {
+      "trial": 5,
+      "degree": 2,
+      "arm": "B",
+      "order": "BA",
+      "load": [
+        3.1083984375,
+        2.818359375,
+        3.63818359375
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/57.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager2",
+          "repeat_index": 0,
+          "inner_repeats": 65536,
+          "total_nanos": 669409528,
+          "result_hash": "0xe368522d9dc1d2f2",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73504,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:14Z",
+            "timestamp_unix_ms": 1791151874868
+          }
+        }
+      ]
+    },
+    {
+      "trial": 5,
+      "degree": 2,
+      "arm": "A",
+      "order": "BA",
+      "load": [
+        3.1083984375,
+        2.818359375,
+        3.63818359375
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/58.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean2",
+          "repeat_index": 0,
+          "inner_repeats": 32768,
+          "total_nanos": 544727910,
+          "result_hash": "0x3412eccad34759ea",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73092,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:16Z",
+            "timestamp_unix_ms": 1791151876285
+          }
+        }
+      ]
+    },
+    {
+      "trial": 5,
+      "degree": 4,
+      "arm": "B",
+      "order": "BA",
+      "load": [
+        3.66064453125,
+        2.93798828125,
+        3.67236328125
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/59.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager4",
+          "repeat_index": 0,
+          "inner_repeats": 4096,
+          "total_nanos": 926639790,
+          "result_hash": "0x319b3437a6d96431",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73564,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:17Z",
+            "timestamp_unix_ms": 1791151877455
+          }
+        }
+      ]
+    },
+    {
+      "trial": 5,
+      "degree": 4,
+      "arm": "A",
+      "order": "BA",
+      "load": [
+        3.66064453125,
+        2.93798828125,
+        3.67236328125
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/60.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean4",
+          "repeat_index": 0,
+          "inner_repeats": 2048,
+          "total_nanos": 516196345,
+          "result_hash": "0x94e8f7be8d8094d5",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73148,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:19Z",
+            "timestamp_unix_ms": 1791151879437
+          }
+        }
+      ]
+    },
+    {
+      "trial": 5,
+      "degree": 8,
+      "arm": "B",
+      "order": "BA",
+      "load": [
+        3.66064453125,
+        2.93798828125,
+        3.67236328125
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/61.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager8",
+          "repeat_index": 0,
+          "inner_repeats": 512,
+          "total_nanos": 878989193,
+          "result_hash": "0xcfa38add5d03e099",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 72728,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:20Z",
+            "timestamp_unix_ms": 1791151880546
+          }
+        }
+      ]
+    },
+    {
+      "trial": 5,
+      "degree": 8,
+      "arm": "A",
+      "order": "BA",
+      "load": [
+        3.607421875,
+        2.939453125,
+        3.66845703125
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/62.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean8",
+          "repeat_index": 0,
+          "inner_repeats": 512,
+          "total_nanos": 981652723,
+          "result_hash": "0x7fafce5255084bbd",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 72740,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:22Z",
+            "timestamp_unix_ms": 1791151882368
+          }
+        }
+      ]
+    },
+    {
+      "trial": 5,
+      "degree": 16,
+      "arm": "B",
+      "order": "BA",
+      "load": [
+        3.607421875,
+        2.939453125,
+        3.66845703125
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/63.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.eager16",
+          "repeat_index": 0,
+          "inner_repeats": 32,
+          "total_nanos": 542413620,
+          "result_hash": "0x72603d1a602928b2",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73188,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:24Z",
+            "timestamp_unix_ms": 1791151884390
+          }
+        }
+      ]
+    },
+    {
+      "trial": 5,
+      "degree": 16,
+      "arm": "A",
+      "order": "BA",
+      "load": [
+        3.607421875,
+        2.939453125,
+        3.66845703125
+      ],
+      "output": "/home/kim/.codex/tasks/hex-10378/normalization-capture-d73e2f/64.stdout",
+      "exit_code": 0,
+      "rows": [
+        {
+          "schema_version": 1,
+          "kind": "fixed",
+          "function": "Hex.RealClosure.Normalization.clean16",
+          "repeat_index": 0,
+          "inner_repeats": 32,
+          "total_nanos": 580861056,
+          "result_hash": "0x992873940e7a7ca3",
+          "status": "ok",
+          "error": null,
+          "alloc_bytes": null,
+          "peak_rss_kb": 73016,
+          "env": {
+            "arch": "x86_64",
+            "cpu_cores": 96,
+            "cpu_model": "AMD EPYC 9455 48-Core Processor",
+            "exe_name": "hexrealclosure_normalization_bench",
+            "git_commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+            "git_dirty": false,
+            "hostname": "chungus2",
+            "lean_bench_version": "0.1.0",
+            "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+            "lean_version": "4.35.0-rc3",
+            "os": "linux",
+            "platform_target": "x86_64-unknown-linux-gnu",
+            "timestamp_iso": "2026-10-04T22:11:25Z",
+            "timestamp_unix_ms": 1791151885561
+          }
+        }
+      ]
+    }
+  ],
+  "comparison": {
+    "per_call": "total_nanos / inner_repeats",
+    "statistic": "per-degree median (mean of the middle two sorted values) and full range of six paired eager/clean ratios",
+    "analyzer": "scripts/bench/analyze_real_closure_normalization.py",
+    "direction_rule": "consistent direction only if all six ratios are strictly on the same side of 1; otherwise mixed/inconclusive",
+    "rerun_policy": "one fixed capture; no rerun for an inconclusive result; at most one unchanged recapture after an operational failure, retaining all completed arms and failed attempts",
+    "inference": "descriptive shared-host observations, no significance or asymptotic verdict"
+  },
+  "regime": "one Rat extension, head leading coefficient 2, 2n products; stored eager denominators at most 4; unique selected root uses direct Sturm rather than BKR; degree 2 uses the linear endpoint fast path; no normalization policy conclusion",
+  "commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+  "dirty": false,
+  "lean_version": "Lean (version 4.35.0-rc3, x86_64-unknown-linux-gnu, commit 470d5ce1400764999581fd26d5d72b00d990b0f4, Release)",
+  "cpu_info": "{\n   \"lscpu\": [\n      {\n         \"field\": \"Architecture:\",\n         \"data\": \"x86_64\"\n      },{\n         \"field\": \"CPU op-mode(s):\",\n         \"data\": \"32-bit, 64-bit\"\n      },{\n         \"field\": \"Address sizes:\",\n         \"data\": \"46 bits physical, 57 bits virtual\"\n      },{\n         \"field\": \"Byte Order:\",\n         \"data\": \"Little Endian\"\n      },{\n         \"field\": \"CPU(s):\",\n         \"data\": \"96\"\n      },{\n         \"field\": \"On-line CPU(s) list:\",\n         \"data\": \"0-95\"\n      },{\n         \"field\": \"Vendor ID:\",\n         \"data\": \"AuthenticAMD\"\n      },{\n         \"field\": \"Model name:\",\n         \"data\": \"AMD EPYC 9455 48-Core Processor\"\n      },{\n         \"field\": \"CPU family:\",\n         \"data\": \"26\"\n      },{\n         \"field\": \"Model:\",\n         \"data\": \"2\"\n      },{\n         \"field\": \"Thread(s) per core:\",\n         \"data\": \"2\"\n      },{\n         \"field\": \"Core(s) per socket:\",\n         \"data\": \"48\"\n      },{\n         \"field\": \"Socket(s):\",\n         \"data\": \"1\"\n      },{\n         \"field\": \"Stepping:\",\n         \"data\": \"1\"\n      },{\n         \"field\": \"Microcode version:\",\n         \"data\": \"0xb002175\"\n      },{\n         \"field\": \"Frequency boost:\",\n         \"data\": \"enabled\"\n      },{\n         \"field\": \"CPU(s) scaling MHz:\",\n         \"data\": \"49%\"\n      },{\n         \"field\": \"CPU max MHz:\",\n         \"data\": \"4411.2300\"\n      },{\n         \"field\": \"CPU min MHz:\",\n         \"data\": \"1500.0000\"\n      },{\n         \"field\": \"BogoMIPS:\",\n         \"data\": \"6289.94\"\n      },{\n         \"field\": \"Flags:\",\n         \"data\": \"fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good amd_lbr_v2 nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba perfmon_v2 ibrs ibpb stibp ibrs_enhanced vmmcall fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk avx_vnni avx512_bf16 clzero irperf xsaveerptr rdpru wbnoinvd amd_ppin cppc arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif x2avic v_spec_ctrl vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid bus_lock_detect movdiri movdir64b overflow_recov succor smca fsrm avx512_vp2intersect flush_l1d sev sev_es debug_swap amd_lbr_pmc_freeze\"\n      },{\n         \"field\": \"Virtualization:\",\n         \"data\": \"AMD-V\"\n      },{\n         \"field\": \"L1d cache:\",\n         \"data\": \"2.3 MiB (48 instances)\"\n      },{\n         \"field\": \"L1i cache:\",\n         \"data\": \"1.5 MiB (48 instances)\"\n      },{\n         \"field\": \"L2 cache:\",\n         \"data\": \"48 MiB (48 instances)\"\n      },{\n         \"field\": \"L3 cache:\",\n         \"data\": \"256 MiB (8 instances)\"\n      },{\n         \"field\": \"NUMA node(s):\",\n         \"data\": \"4\"\n      },{\n         \"field\": \"NUMA node0 CPU(s):\",\n         \"data\": \"0-11,48-59\"\n      },{\n         \"field\": \"NUMA node1 CPU(s):\",\n         \"data\": \"12-23,60-71\"\n      },{\n         \"field\": \"NUMA node2 CPU(s):\",\n         \"data\": \"24-35,72-83\"\n      },{\n         \"field\": \"NUMA node3 CPU(s):\",\n         \"data\": \"36-47,84-95\"\n      },{\n         \"field\": \"Vulnerability Gather data sampling:\",\n         \"data\": \"Not affected\"\n      },{\n         \"field\": \"Vulnerability Indirect target selection:\",\n         \"data\": \"Not affected\"\n      },{\n         \"field\": \"Vulnerability Itlb multihit:\",\n         \"data\": \"Not affected\"\n      },{\n         \"field\": \"Vulnerability L1tf:\",\n         \"data\": \"Not affected\"\n      },{\n         \"field\": \"Vulnerability Mds:\",\n         \"data\": \"Not affected\"\n      },{\n         \"field\": \"Vulnerability Meltdown:\",\n         \"data\": \"Not affected\"\n      },{\n         \"field\": \"Vulnerability Mmio stale data:\",\n         \"data\": \"Not affected\"\n      },{\n         \"field\": \"Vulnerability Reg file data sampling:\",\n         \"data\": \"Not affected\"\n      },{\n         \"field\": \"Vulnerability Retbleed:\",\n         \"data\": \"Not affected\"\n      },{\n         \"field\": \"Vulnerability Spec rstack overflow:\",\n         \"data\": \"Mitigation; Reduced Speculation\"\n      },{\n         \"field\": \"Vulnerability Spec store bypass:\",\n         \"data\": \"Mitigation; Speculative Store Bypass disabled via prctl\"\n      },{\n         \"field\": \"Vulnerability Spectre v1:\",\n         \"data\": \"Mitigation; usercopy/swapgs barriers and __user pointer sanitization\"\n      },{\n         \"field\": \"Vulnerability Spectre v2:\",\n         \"data\": \"Mitigation; Enhanced / Automatic IBRS; IBPB conditional; STIBP always-on; PBRSB-eIBRS Not affected; BHI Not affected\"\n      },{\n         \"field\": \"Vulnerability Srbds:\",\n         \"data\": \"Not affected\"\n      },{\n         \"field\": \"Vulnerability Tsa:\",\n         \"data\": \"Not affected\"\n      },{\n         \"field\": \"Vulnerability Tsx async abort:\",\n         \"data\": \"Not affected\"\n      },{\n         \"field\": \"Vulnerability Vmscape:\",\n         \"data\": \"Mitigation; IBPB before exit to userspace\"\n      }\n   ]\n}\n",
+  "dependency_pins": {
+    "mathlib": "d870b9068518a0870842d15a0cd42637ec30b587",
+    "TauCeti": "0dbbe255a4f418084b30a3ffe6763d824a6b4250",
+    "AINTLIB": "ab1451487da02cd4483d0e2cdb2cc9e44bbbac17",
+    "\u00ablean-bench\u00bb": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+    "NautyFFI": "ec8597014d0ae82490a616b855d59a35e6bfa21f",
+    "verso": "8fc7a297f14d5adc1a551b5b4ecf283c08bd691f",
+    "plausible": "fb13df72ecefd8ddbf9291021d7f33a8673eb57b",
+    "LeanSearchClient": "29ff470276c725ae01505d55b17148c18fc7dfd3",
+    "importGraph": "a6d31147557d4b044a3ce226768572919acc1def",
+    "proofwidgets": "c643bbb3c24f8a25f9c14e3a6b1ceb13d01f3de1",
+    "aesop": "a90fbf7b02ff06a0deebf74088dff9e5fe02c9ea",
+    "Qq": "37b0ba0b26109cf9f9c541f0f9557e50cfa1a3b9",
+    "batteries": "33131f4fb10067cb3009bf4db615d9680c1ccd6b",
+    "Cli": "843844fa601dd56767b1eb22b7ada5b64d5e567a",
+    "illuminate": "af451aaa73d8f8025189f228642b6e4fe047ce4f",
+    "MD4Lean": "31907cc18f48a95384f99cee5582c00fb39e0f67",
+    "subverso": "d047cb484b2f3598187450935dbcc84d078cb581"
+  },
+  "executable_sha256": "a3897599b1607c9fdef3830e4b77e843ec84f7a5bc83b89c25afcf188d6cb739",
+  "oracle_python": "/home/kim/.codex/tasks/hex-10378/phase4-oracles-env/bin/python",
+  "oracle_version": "0.9.0 4.15.4",
+  "cpu": 48,
+  "affinity": [
+    48
+  ],
+  "load": [
+    2.33447265625,
+    2.66162109375,
+    3.64892578125
+  ],
+  "expected_hashes": {
+    "2": {
+      "A": "0x3412eccad34759ea",
+      "B": "0xe368522d9dc1d2f2"
+    },
+    "4": {
+      "A": "0x94e8f7be8d8094d5",
+      "B": "0x319b3437a6d96431"
+    },
+    "8": {
+      "A": "0x7fafce5255084bbd",
+      "B": "0xcfa38add5d03e099"
+    },
+    "16": {
+      "A": "0x992873940e7a7ca3",
+      "B": "0x72603d1a602928b2"
+    }
+  },
+  "registration_purpose": "fixed exact-result comparison endpoints in a short product-chain regime; no policy, scaling or absolute-budget verdict",
+  "artifacts": {
+    "0.stdout": "c52d38f5485f82c04412428b142a5c0e92727dc8d61f3f76bc866d740f2e1bdb",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "948624fc4eacf0eb148f98d864af4814b3e60174b0a53f6817afc937e41279d3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "42b0b5c46022014442bca95b08d3f0b43c48997b61af98c545f3ecb1fad57f01",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "ea4051d25617d0e024f030bda5851a0455d525691cc814683f878e4ccdb2ed5d",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "5.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "5.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stdout": "0ea40e6481dd839913b9ee7a1bdb69188d3347e9fa5da626a93f39a5fb28cf7a",
+    "6.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "hexrealclosure_normalization_bench": "a3897599b1607c9fdef3830e4b77e843ec84f7a5bc83b89c25afcf188d6cb739",
+    "7.stdout": "8fa23a2fc38385521190e36f4dcab223408fdbb3fa2503e60296bfa4ca5d1861",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "8.stdout": "eb3da52ba3ec5e7f67033853dbe66d419c2d412a52b78edac9c053673c012e37",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stdout": "f8940012b66457235d4b07ab7775eba3c4b155f7dfb85b152e2d95969480a6a9",
+    "9.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stdout": "1b20e9c12c098a910f69a3360a2711a130fa4e582d353d42d314407d5d9d8960",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "344fdcc108b3423360a94190020af8c0d830340a577521e7ac848b2dfdb41c8f",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "12.stdout": "090ffcdaafec8f87e251ad00e5b74c3b2c22d246fd0751d26fb6d149dca45384",
+    "12.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "13.stdout": "91a9e09c2014a6c5b516eccd795f92cb631255b55bfb6b92fcab9d8aea8cb70f",
+    "13.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "14.stdout": "1f39e0f58c3bd2321885121d88836c07cdb9a58f70c024684e524c763aef39d2",
+    "14.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "15.stdout": "2edf0b362c7e6f4da9055c352ce94959b07efdcd1c12f417ca92e4cc79274144",
+    "15.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "16.stdout": "e9b4ab2b71985ba3c4f0c97cc11172dcd3e9431ff5468869deebb4286da45400",
+    "16.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "17.stdout": "a040fbcd0f70f0be7b9641c04014455d568cc0d449cba5f2bbaa8c0950e7213d",
+    "17.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "18.stdout": "68ac1ab89a4fa0d64456552131a9ab3df46d2cbeff5af1c37bb22ec217eb1868",
+    "18.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "19.stdout": "d14491e50485bf2cef5ccbe42ce2b91951cec335d18bf6f4030c956b74fab669",
+    "19.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "20.stdout": "a086fdfef44f6b3ff2362d58cce67ad97310d6dd16b84f5f661637502e8ac090",
+    "20.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "21.stdout": "40d592e6cb5d5f72e0f65bb2186894c88cfa3a24f811f7d26651b9cd1dd1a57c",
+    "21.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "22.stdout": "b834ea048fb7320f048c8f6abb8e87a52a1b3dcab1e4e3938766f5dff7ff2e74",
+    "22.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "23.stdout": "e82afcc41856aaf3349cb77f810c5a471441186880ee62145f9aa52c436c7956",
+    "23.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "24.stdout": "d11c12df740a1d7a3adf6ef7ba1eea5ec1dcebee341e3ec5139de38ddc4ef974",
+    "24.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "25.stdout": "57dc4c850f132dabbeb4c1d2aa2239680dcae40d7b14027b323472862b5c0e9f",
+    "25.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "26.stdout": "638ee05767477ed8db8f9444bff83129099dc683ef1c799cf3234c30b7dc9f6b",
+    "26.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "27.stdout": "a5f55726e21af1ae2682e339fe44a35259c79e674904221c12d5e75ac457974e",
+    "27.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "28.stdout": "5fbad41a0c4f1db55c417cc72c72b9e19f39940b1795460eda82923d6088d8fa",
+    "28.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "29.stdout": "65b5e368460029b7ee4a69b8a9d1b72bc41dc56438726dec12763a3d811398cc",
+    "29.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "30.stdout": "2da1bbef0346bcefe34c8b61251543c0421bb8f8f36239a38f6e0c42d1b4b8de",
+    "30.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "31.stdout": "4bc6f3f7b4deff9213fb4c87bb93e93ed79901ec233be6d2559896cd650bd15f",
+    "31.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "32.stdout": "b78683082a3e520427ce23f8961b74935cea78f83a9161d35bbc8454382198c9",
+    "32.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "33.stdout": "9a9553b79695bfb77abb16b665c40ceb001d59bd4f0e47666fbbf7ee4e834600",
+    "33.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "34.stdout": "cc3fde55b8e0bb46ad7eaa1be3c2850d76e308db87edb8a4294fc30c79b98a03",
+    "34.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "35.stdout": "8174a6d38976c43bc024140652f360f139787346ce0f149cd624be0a8e7f619d",
+    "35.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "36.stdout": "ff5cf94638f21567099b552fa49d236d4b798d86b0b3c448c06b99172e86d2a3",
+    "36.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "37.stdout": "2c0f6747e30e44661d68727df9f1846144c84de4d4a0cefad8f1173585349035",
+    "37.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "38.stdout": "6cde2047669f7b8a730c4f0cc8b647078f69a81e6d2759c21fc8534452b966ec",
+    "38.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "39.stdout": "b87cf5f553d480993bef3cf74a371e0df0c415ac0f1ac8dc81f359c7a6ca527e",
+    "39.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "40.stdout": "a3dae7f57898f61aff0731369cfa2afb59de4d49381392dd020d7b53351124f2",
+    "40.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "41.stdout": "6d6ef740718ca65d54ee87dd8273469a7e3558879c47c1404c48e9cfb7fc71b6",
+    "41.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "42.stdout": "a69da07fd275ec2d19309cbb52ae049eb6a9fcc5671158ec1bb3732eb82a6621",
+    "42.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "43.stdout": "49bd863d8ffcd4d122f3f4792382b90d89b286e7f036b0bf6fcbaa7c62106093",
+    "43.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "44.stdout": "ce61b616c94890f2f54c5dcbff2eb8d568ec1aee155f79d477a47117e6c5ecd5",
+    "44.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "45.stdout": "8abddab52b6c74db7b035ede084b3006bac9e6b8428ec29140057f92bd7637ab",
+    "45.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "46.stdout": "a722162335d68a32e78b05817b172eabf661c15eb040a209a888117693a329d0",
+    "46.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "47.stdout": "be44d90cd6b31cd9ea85451c43d4ca35656bdf835d937d063ec407d863f699e1",
+    "47.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "48.stdout": "19a1c16c831ff83168947a75fc1cc03e9e14e7a4e1426c8db6bced9ad6cbba68",
+    "48.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "49.stdout": "e13b9afb2cbfd5a164c4e15b06123fe81ead067b30a68a93c6cfced6265ae0ed",
+    "49.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "50.stdout": "25dafba4564910375c3c2d4dd126a73b55b14d792962b10a9eb13907ae1d4dcb",
+    "50.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "51.stdout": "3768dab9514b5d4362a8eae5d78bac36e88786353e86c58800e010d983d53a43",
+    "51.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "52.stdout": "8cb6ef749e129f6e96695c45326a186c6165e418efea74e87985bf1a57bc9f38",
+    "52.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "53.stdout": "04c5927e2d2256374a941ed5b83ef8512a9c2a03e104cfb1f9dd58d7b8baf7dc",
+    "53.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "54.stdout": "f90f5e79cb8e01fd047d62985d3d2512191ed2138ed6aade245ef045228a6a75",
+    "54.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "55.stdout": "060fde0744c987edc47132aa8fca7d154a6df29815c189152db37c1b5db5d602",
+    "55.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "56.stdout": "306a98eca9049a8d787ba05a75930df165a28a95a3a1d67646b528f73da3afa4",
+    "56.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "57.stdout": "66f1ea8da4c5941804f2d66fdff772c264fa9b72125640717d05b7f07544b6d7",
+    "57.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "58.stdout": "1b34e2cd2581c5e58bca65bdb0acaa8712624256bdf484d6a42d28302f335e6f",
+    "58.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "59.stdout": "41572f808a3cd9735151ce2f4fea42b91480b2931ed4423f1f67cc8c19e4885e",
+    "59.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "60.stdout": "3879bdbf02e4ec79c18f993b66a81e5a842dbf2189be09ba190cb5792abbb8eb",
+    "60.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "61.stdout": "c094ae09091ee50e3234cd79cce61b966a74f7996e7c89a8ee9d9b12f22c79ef",
+    "61.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "62.stdout": "427f4b280c01d0898ef062c53f70d64a4370ee386f5793e7e7aa8d7bbc2d8d43",
+    "62.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "63.stdout": "ab572c8c46682cf21267b64a0dfd2108725579e1bf1d00cad3d7dcb582f71d97",
+    "63.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "64.stdout": "8e1cca9d9fec20b2eafb13eb43e7bbff7017bf8a8240330ff0e59ac4d9aff7fa",
+    "64.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "65.stdout": "c52d38f5485f82c04412428b142a5c0e92727dc8d61f3f76bc866d740f2e1bdb",
+    "65.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "66.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "66.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

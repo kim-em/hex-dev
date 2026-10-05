@@ -1267,13 +1267,12 @@ Families:
 **Comparators.** FLINT's truncated series operations on `fmpq_poly`
 (`fmpq_poly_inv_series`, `fmpq_poly_exp_series`, `fmpq_poly_log_series`,
 `fmpq_poly_sqrt_series`, `fmpq_poly_compose_series`,
-`fmpq_poly_revert_series`) are `informational`, not `gating`. The
-rationale is structural and is the same one hex-poly records for
+`fmpq_poly_revert_series`) are for orientation only, with no target
+ratio. The rationale is structural and is the same one hex-poly records for
 rational polynomial operations: FLINT's series routines are built on tuned,
 coefficient-specific Karatsuba/Toom-Cook/FFT multiplication, while this
 library uses a generic schoolbook kernel. The ratio therefore
-continues to measure a known kernel gap rather than only the Newton iteration,
-so it does not gate.
+continues to measure a known kernel gap rather than only the Newton iteration.
 
 Two required internal checks, which matter more than the external one:
 
@@ -1521,24 +1520,6 @@ HexTruncatedSeriesMathlib.lean
     mathlib: false
     done_through: 0
     status: planned
-    phase4:
-      comparators:
-        - tool: FLINT fmpq_poly truncated series routines via python-flint
-          class: informational
-          rationale: "FLINT's series routines run on tuned coefficient-specific Karatsuba/Toom-Cook/FFT multiplication while this library uses a generic schoolbook kernel, so the measured ratio includes a known kernel gap."
-      input_families:
-        - name: multiplication
-          description: truncated products at precisions 8 to 4096 over Int and Rat
-        - name: inverse
-          description: Newton inversion against the linear recurrence on the same ladder
-        - name: exp-log
-          description: exp and log at precisions 8 to 1024 over Rat
-        - name: sqrt
-          description: square root at a supplied constant root over Rat
-        - name: composition
-          description: Horner against Brent-Kung at precisions 8 to 512
-        - name: reversion
-          description: Newton reversion against Lagrange inversion over Rat
   HexTruncatedSeriesMathlib:
     deps: [HexTruncatedSeries]
     mathlib: true

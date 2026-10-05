@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Informational persistent FLINT comparison; conversion is outside C timing.
+"""Orientation persistent FLINT comparison; conversion is outside C timing.
 
 Build rationalfn_flint.c against FLINT, then pass its executable and a fixture
 file. No SymPy dependency: canonical output conversion uses Fraction only.

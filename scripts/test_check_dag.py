@@ -20,7 +20,6 @@ from check_dag import (
     main,
     lean_build_roots,
 )
-from check_phase4 import check_headline_reports
 from libgraph import (load_libraries, library_owner_for_path, may_import,
                       reachable_dependencies)
 
@@ -244,31 +243,24 @@ class SealedImportAllTest(unittest.TestCase):
             )
 
 
-class HeadlineReportTest(unittest.TestCase):
-    def write_manifest(self, root: Path, mathlib: bool) -> None:
-        (root / "libraries.yml").write_text(
-            "libraries:\n"
-            "  HexFoo:\n"
-            "    deps: []\n"
-            f"    mathlib: {'true' if mathlib else 'false'}\n"
-            "    done_through: 4\n"
-            "    status: active\n",
-            encoding="utf-8",
-        )
-
-    def test_compiled_library_needs_report(self) -> None:
+class RemovedLibraryFieldTest(unittest.TestCase):
+    def test_phase4_block_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            self.write_manifest(root, mathlib=False)
-            _, error = check_headline_reports(root)
-            self.assertIn("HexFoo: missing Phase-4 headline report", error)
-
-    def test_mathlib_library_needs_no_report(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            self.write_manifest(root, mathlib=True)
-            _, error = check_headline_reports(root)
-            self.assertIsNone(error)
+            path = Path(directory) / "libraries.yml"
+            path.write_text(
+                "libraries:\n"
+                "  HexFoo:\n"
+                "    deps: []\n"
+                "    mathlib: false\n"
+                "    done_through: 4\n"
+                "    status: active\n"
+                "    phase4:\n"
+                "      comparators:\n"
+                "        - tool: FLINT\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "HexFoo has removed field 'phase4'"):
+                load_libraries(path)
 
 
 if __name__ == "__main__":

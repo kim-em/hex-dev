@@ -560,13 +560,10 @@ bridge against the landed API and coefficient conventions.
 
 ## External comparators
 
-No external comparator is required.
-
-**Justification:** `implementation-is-extern` per
-`SPEC/benchmarking.md §"Comparator naming"`. HexArith's bigint
-primitives — multiplication, addition, division and gcd — use Lean's
+No external comparator is required. HexArith's bigint
+primitives (multiplication, addition, division and gcd) use Lean's
 GMP-backed runtime. The extended-GCD backport additionally exposes GMP
-through `extended_gcd.c`, with the documented small-input dispatch. The Phase-4 surface is GMP itself; there is no
+through `extended_gcd.c`, with the documented small-input dispatch. The measured surface is GMP itself; there is no
 algorithmically distinct reference implementation to compare
 against. Within-Lean alternative-implementation comparisons cover
 the surfaces where they exist: Barrett vs Montgomery modular
@@ -581,7 +578,11 @@ again.
 
 `HexArith/Nat/Sqrt.lean` provides Newton-iteration `HexArith.Nat.floorSqrt`
 and `ceilSqrt`, with zero equations, `floorSqrt_sq_le`, `le_ceilSqrt_sq`,
-and `ceilSqrt_le` for comparison with a known square bound. The polynomial
+and `ceilSqrt_le` for comparison with a known square bound. Newton iteration
+starts at `min n (2 ^ ((n.log2 + 2) / 2))`, a proved positive upper estimate
+for nonzero inputs. `lt_floorSqrt_succ` gives the strict successor-square
+bound, and `floorSqrt_eq` proves agreement with Lean's `Nat.sqrt` for every
+input. The polynomial
 Mignotte module retains compatibility aliases.
 
 ## Native code

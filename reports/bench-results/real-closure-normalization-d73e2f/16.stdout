@@ -1,0 +1,10 @@
+verifying 8 benchmark(s)...
+  [ok ] Hex.RealClosure.Normalization.clean8  [fixed]
+  [ok ] Hex.RealClosure.Normalization.clean4  [fixed]
+  [ok ] Hex.RealClosure.Normalization.eager2  [fixed]
+  [ok ] Hex.RealClosure.Normalization.clean16  [fixed]
+  [ok ] Hex.RealClosure.Normalization.eager16  [fixed]
+  [ok ] Hex.RealClosure.Normalization.eager4  [fixed]
+  [ok ] Hex.RealClosure.Normalization.eager8  [fixed]
+  [ok ] Hex.RealClosure.Normalization.clean2  [fixed]
+all 8 benchmark(s) passed

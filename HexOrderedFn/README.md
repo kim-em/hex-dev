@@ -5,6 +5,11 @@ enclosure and total refinement over the existing canonical `Hex.RationalFn` arit
 imports neither Mathlib nor an interval library. The full contract is in
 [hex-ordered-fn](../SPEC/Libraries/hex-ordered-fn.md).
 
+The [OrderedFn manual chapter](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-ordered-fn)
+walks through infinitesimal comparisons, successive extensions, finite real
+sign checks and registered real fields, with checked examples and the
+Mathlib correspondence.
+
 `Infinitesimal.sign` takes a predecessor sign and scans the first nonzero
 numerator and denominator coefficients. `Infinitesimal.compare` compares by
 the sign of subtraction. `open scoped Hex.OrderedFn.Infinitesimal` enables

@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runZ3Rational64    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a3ddc94-dirty, 2026-10-04T20:11:06Z, host=chungus2
+  repeat 0  10.827 µs  (×2^13, total 88.702 ms)
+  median: 10.827 µs    min: 10.827 µs    max: 10.827 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_188 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Rational-64-Z3-2-Z3.json

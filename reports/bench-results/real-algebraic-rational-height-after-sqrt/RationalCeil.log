@@ -1,0 +1,29 @@
+Hex.RealAlgebraicBench.runRationalCeil    expected complexity: b    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=16cff19, 2026-10-04T20:07:55Z, host=chungus2
+      param  per-call   repeats  C
+    262_144   3.162 µs  ×2^15    C=0.012 [trial 1/4]
+    524_288   6.023 µs  ×2^14    C=0.012 [trial 1/4]
+  1_048_576  12.536 µs  ×2^13    C=0.012 [trial 1/4]
+  2_097_152  23.941 µs  ×2^12    C=0.011 [trial 1/4]
+    262_144   3.164 µs  ×2^15    C=0.012 [trial 2/4]
+    524_288   6.094 µs  ×2^14    C=0.012 [trial 2/4]
+  1_048_576  12.552 µs  ×2^13    C=0.012 [trial 2/4]
+  2_097_152  24.099 µs  ×2^12    C=0.011 [trial 2/4]
+    262_144   3.132 µs  ×2^15    C=0.012 [trial 3/4]
+    524_288   6.174 µs  ×2^14    C=0.012 [trial 3/4]
+  1_048_576  12.405 µs  ×2^13    C=0.012 [trial 3/4]
+  2_097_152  24.548 µs  ×2^12    C=0.011 [trial 3/4]
+    262_144   3.185 µs  ×2^15    C=0.012 [trial 4/4]
+    524_288   6.041 µs  ×2^14    C=0.012 [trial 4/4]
+  1_048_576  12.436 µs  ×2^13    C=0.012 [trial 4/4]
+  2_097_152  24.040 µs  ×2^12    C=0.011 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=0.011, cMax=0.012, β=-0.018)
+  per-spawn floor (harness self-measurement): 39.367 ms
+  peak RSS: 65_492 kB..76_464 kB (across 16 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+        param  trials  median     min        max        spread
+      262_144  4/4      3.163 µs   3.132 µs   3.185 µs  1.668%
+      524_288  4/4      6.068 µs   6.023 µs   6.174 µs  2.491%
+    1_048_576  4/4     12.486 µs  12.405 µs  12.552 µs  1.179%
+    2_097_152  4/4     24.070 µs  23.941 µs  24.548 µs  2.522%
+exported to /home/kim/.local/state/hex/issue-10577-proposals/sqrt-initializer/current-main/height-science/RationalCeil.json

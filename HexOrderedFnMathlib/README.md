@@ -7,6 +7,11 @@ containment, with integer signs explicitly related to Mathlib's
 `SignType.sign`. The full contract is in
 [hex-ordered-fn-mathlib](../SPEC/Libraries/hex-ordered-fn-mathlib.md).
 
+The [OrderedFn manual chapter](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-ordered-fn)
+explains the public interpretation theorems beside their computational
+operations, including the distinct hypotheses for finite signs and total
+real extensions.
+
 `Infinitesimal.embed` identifies rational functions with their Laurent series
 in the lexicographically ordered Hahn field. The coefficient scan equals the
 polynomial trailing coefficient; signs, normalization and comparisons agree

@@ -388,8 +388,9 @@ shape](#canonical-issue-body-shape) plus a **Symptom** section:
   a conformance finding: the failing input, the Lean output, and the
   oracle output. For an audit finding: the specific evidence (a
   bench input the algorithm short-circuits past, a profile entry
-  showing a dominant cost not attributed to a registered target,
-  a comparator named in the per-library SPEC but not wired, etc.).
+  showing a dominant cost no registered target measures, a
+  performance target in the per-library SPEC that nothing checks,
+  etc.).
 - **Root-cause hypothesis.** One paragraph: what algorithmic shape
   produces this observation? "Quadratic on `p` because we search
   `List.range p`," "factor of `n` slower because we rebuild
@@ -407,38 +408,27 @@ Cross-link both PRs to this issue.
 #### What "audit finding" means
 
 A bench verdict mismatch and a conformance failure both fire from
-an automated check. An audit finding fires from an author writing
-a headline report, reviewing a Phase-4 claim, or otherwise
-auditing existing work, and noticing something that warrants an
-issue **even though no automated verdict fired**.
+an automated check. An audit finding fires from someone reviewing a
+Phase-4 claim, profiling an unexpected result, or otherwise auditing
+existing work, and noticing something that warrants an issue **even
+though no automated verdict fired**.
 
 Examples (illustrative, not exhaustive):
 
 - A bench input is degenerate so the algorithm short-circuits
   past it (e.g. an LLL bench whose only end-to-end target uses
   the identity basis, where no Lovász swap fires).
-- A comparator the per-library SPEC requires is not wired.
+- A performance target the per-library SPEC states against an
+  external comparator is not measured, or is measured and missed.
 - A profile shows a dominant inclusive cost the bench targets
-  do not measure (per
-  [SPEC/benchmarking.md §Attribution rule](../SPEC/benchmarking.md#the-attribution-rule)).
+  do not measure, in a phase whose cost could go wrong.
 - An end-to-end target's empirical slope visibly disagrees with
   its declared complexity over the parameter ladder.
-- A per-library SPEC names no comparator for an algorithm where
-  external references obviously exist (LLL, factoring, GCD, ...)
-  and Phase 4's comparator clause is being claimed satisfied
-  vacuously.
 
-When an audit finding occurs while writing a headline report:
-
-1. Record the finding in the affected SPEC's issue using the body shape above.
-2. Link the issue from the report's §Concerns subsection.
-3. Complete the rest of the report.
-
-The library cannot **remain** at `done_through: 4` while the
-Concern is unresolved (per
-[PLAN/Phase4.md §Exit criteria](Phase4.md#exit-criteria)).
-Resolve the issue tied to the Concern and remove the Concern entry
-from the report once the underlying problem is fixed.
+File the finding in the affected SPEC's issue using the body shape
+above. Whether it rolls the library back follows
+[Rollback is a normal action](#rollback-is-a-normal-action): a defect
+in the library itself does; a missing measurement alone does not.
 
 ### Visual artefacts require visual verification
 

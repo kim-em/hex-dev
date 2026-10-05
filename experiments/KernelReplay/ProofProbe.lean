@@ -9,6 +9,7 @@ public import Lean.Elab.Command
 public import Lean.Meta.Reduce
 public import Lean.Meta.Tactic.Simp
 public import Lean.Util.CollectAxioms
+public meta import KernelReplay.Assemble
 public import HexRealClosure.SignCodec
 public import HexSignDet.Codec.FiniteGraph
 import all HexSignDet.Codec
@@ -42,6 +43,11 @@ open scoped Hex
     NestedSignsConformance.linearRaw.upper NestedSignsConformance.graph).isSome
 
 @[expose] def missingGraph : Bool :=
+  (Dag.validateCached? reduction reduction_eq facts 8
+    NestedSignsConformance.linearHead NestedSignsConformance.linearRaw.lower
+    NestedSignsConformance.linearRaw.upper NestedSignsConformance.graph).isSome
+
+@[expose] def collectionGraph (facts : List (SignFact context)) : Bool :=
   (Dag.validateCached? reduction reduction_eq facts 8
     NestedSignsConformance.linearHead NestedSignsConformance.linearRaw.lower
     NestedSignsConformance.linearRaw.upper NestedSignsConformance.graph).isSome
@@ -195,56 +201,9 @@ info: 'Hex.RealClosure.Algebraic.KernelReplayProofProbe.endpoint_missing' depend
 #guard_msgs (whitespace := lax) in
 #print axioms endpoint_missing
 
-open Lean Meta Elab Command
+open Lean Meta Elab Command KernelReplay
 
 meta section
-
-private def auditProof (proof type : Expr) : MetaM (Array Name) := do
-  if proof.hasSorry || proof.hasMVar || type.hasSorry || type.hasMVar then
-    throwError "incomplete proof"
-  let mut axioms : Array Name := #[]
-  for decl in (proof.getUsedConstants ++ type.getUsedConstants) do
-    for axiomName in (← collectAxioms decl) do
-      if !axioms.contains axiomName then axioms := axioms.push axiomName
-      unless #[`propext, `Classical.choice, `Quot.sound].contains axiomName do
-        throwError "unexpected axiom {axiomName} through {decl}"
-  return axioms
-
-private def kernelCheck (name : Name) (type proof : Expr) : MetaM Unit := do
-  let options := (← getOptions).setBool `debug.skipKernelTC false
-  ofExceptKernelException <| ((← getEnv).toKernelEnv.addDecl options
-    (.thmDecl { name, levelParams := [], type, value := proof })).map (fun _ => ())
-
-/-- A failed Boolean comparison permits another candidate; all other kernel
-errors are fatal in both the binding and result paths. -/
-private def acceptKernel {α : Type} (checked : Except Kernel.Exception α) : MetaM Bool :=
-  match checked with
-  | .ok _ => pure true
-  | .error (.declTypeMismatch _ _ _) => pure false
-  | .error exception => throwKernelException exception
-
-/-- Follow demanded projections and recursor scrutinees, never lambda bodies.
-Unfold blocked definitions to their actual recursors, which select the
-operand; do not guess from the declared argument order. -/
-private partial def missingRedex (expression : Expr) : MetaM (Option Expr) :=
-  withIncRecDepth do
-    let expression ← withOptions (fun options => smartUnfolding.set options false) do
-      withTransparency .all (whnf expression)
-    if expression.getAppFn.isConstOf ``Element.missing then return some expression
-    match expression with
-    | .proj _ _ value => missingRedex value
-    | .mdata _ value => missingRedex value
-    | .app .. =>
-      if let .proj .. := expression.getAppFn then return ← missingRedex expression.getAppFn
-      if let .const name levels := expression.getAppFn then
-        let args := expression.getAppArgs
-        if let .recInfo recursor ← getConstInfo name then
-          if let some major := args[recursor.getMajorIdx]? then return ← missingRedex major
-        if let .defnInfo definition ← getConstInfo name then
-          let body := definition.value.instantiateLevelParams definition.levelParams levels
-          return ← missingRedex (body.beta args)
-      return none
-    | _ => return none
 
 /-- Regression terms must be closed before inspecting their reduction paths. -/
 private def closedTerm (stx : Syntax) (typeName : Name) : TermElabM Expr := do
@@ -255,6 +214,23 @@ private def closedTerm (stx : Syntax) (typeName : Name) : TermElabM Expr := do
   if expression.hasSorry || expression.hasMVar then throwError "incomplete regression input"
   return expression
 
+private def probeRules : MetaM SimpTheorems := do
+  let mut rules : SimpTheorems := {}
+  for decl in #[``complete, ``missing, ``falseClaim, ``completeGraph, ``missingGraph, ``collectionGraph,
+      ``falseGraph, ``falseEndpointGraph, ``completeMemo, ``byteEqual, ``readJson, ``checkJson,
+      ``Dag.validateCached?, ``Hex.SignDet.Dag.changeOps, ``Hex.SignDet.Dag.validate?,
+      ``Replay.check, ``queryPoly, ``Sturm.check, ``SignedRemainderChain.check] do
+    rules ← rules.addDeclToUnfold decl
+  for decl in #[``graph_read_full, ``graph_read_missing, ``Hex.SignDet.Dag.step_eq,
+      ``Node.check_eq, ``checkMoment_eq, ``TarskiCertificate.check_eq,
+      ``Array.toList_range] do
+    rules ← rules.addConst decl
+  rules ← rules.addConst ``Array.all_toList (inv := true)
+  rules ← rules.addConst ``Array.foldlM_toList (inv := true)
+  rules ← rules.addConst ``eq_self
+  rules ← rules.addConst ``iff_self
+  return rules
+
 syntax "#proof_probe " term " expecting " str (" binding " term)? : command
 elab_rules : command
 | `(#proof_probe $term expecting $expected $[binding $literal]?) => do
@@ -264,7 +240,7 @@ elab_rules : command
     let expression ← instantiateMVars expression
     if expression.hasSorry || expression.hasMVar then throwError "incomplete input"
     let started ← IO.monoNanosNow
-    let mut rules : SimpTheorems := {}
+    let mut rules ← probeRules
     if let some literal := literal then
       let input ← Term.withoutErrToSorry (Term.elabTermEnsuringType literal (mkConst ``Codec.Json))
       Term.synthesizeSyntheticMVarsNoPostponing
@@ -288,68 +264,159 @@ elab_rules : command
       kernelCheck `__kernelReplayBinding type proof
       rules ← rules.add (.stx `__inputBinding literal.raw) #[] proof
       logInfo "inputBinding=proved"
-    for decl in #[``complete, ``missing, ``falseClaim, ``completeGraph, ``missingGraph,
-        ``falseGraph, ``falseEndpointGraph, ``completeMemo, ``byteEqual, ``readJson, ``checkJson,
-        ``Dag.validateCached?, ``Hex.SignDet.Dag.changeOps, ``Hex.SignDet.Dag.validate?,
-        ``Replay.check, ``queryPoly, ``Sturm.check, ``SignedRemainderChain.check] do
-      rules ← rules.addDeclToUnfold decl
-    for decl in #[``graph_read_full, ``graph_read_missing, ``Hex.SignDet.Dag.step_eq,
-        ``Node.check_eq, ``checkMoment_eq, ``TarskiCertificate.check_eq,
-        ``Array.toList_range] do
-      rules ← rules.addConst decl
-    rules ← rules.addConst ``Array.all_toList (inv := true)
-    rules ← rules.addConst ``Array.foldlM_toList (inv := true)
-    rules ← rules.addConst ``eq_self
-    rules ← rules.addConst ``iff_self
     let context ← Simp.mkContext (simpTheorems := #[rules])
       (congrTheorems := ← getSimpCongrTheorems)
-    let (simplified, stats) ← Meta.simp expression context
+    let (assembled, stats) ← KernelReplay.assemble expression context
     if literal.isSome then
       let used := stats.usedTheorems.toArray.map (·.key)
       unless used.contains `__inputBinding &&
           (used.contains ``graph_read_full || used.contains ``graph_read_missing) do
         throwError "binding or certified decoder rewrite was not used"
       logInfo "inputBinding=used decoderEquation=used"
-    let equation ← simplified.getProof' expression
-    let equationType ← mkEq expression simplified.expr
-    let _ ← auditProof equation equationType
-    kernelCheck `__kernelReplaySimplification equationType equation
-    let options := (← getOptions).setBool `debug.skipKernelTC false
-    let env := (← getEnv).toKernelEnv
-    let mut outcome := "unproved"
-    for candidate in [true, false] do
-      let result := mkConst (if candidate then ``Bool.true else ``Bool.false)
-      let proposition ← mkEq simplified.expr result
-      let decisionInstance ← synthInstance (mkApp (mkConst ``Decidable) proposition)
-      let decision := mkAppN (mkConst ``decide) #[proposition, decisionInstance]
-      let comparisonType ← mkEq decision (mkConst ``Bool.true)
-      let reflexivity ← mkEqRefl (mkConst ``Bool.true)
-      let checked := env.addDecl options
-        (.thmDecl {
-          name := `__kernelReplayReduction
-          levelParams := []
-          type := comparisonType
-          value := reflexivity })
-      if ← acceptKernel checked then
-        let resultProof := mkAppN (mkConst ``of_decide_eq_true)
-          #[proposition, decisionInstance, reflexivity]
-        let proof := mkAppN (mkConst ``Eq.trans [.succ .zero])
-          #[mkConst ``Bool, expression, simplified.expr, result, equation, resultProof]
-        let type ← mkEq expression result
-        let axioms ← auditProof proof type
-        kernelCheck `__kernelReplayProofProbe type proof
+    let outcome ← match assembled with
+      | .checked value _ axioms => do
         logInfo m!"kernelAccepted=true axioms={axioms}"
-        outcome := if candidate then "true" else "false"
-        break
-      else logInfo "kernelResult=typeMismatch"
-    if outcome == "unproved" then
-      let some redex ← missingRedex simplified.expr
-        | throwError "unproved result without a demanded missing-fact boundary: {simplified.expr}"
-      logInfo m!"missingRedex={redex}"
+        pure (if value then "true" else "false")
+      | .missing redex => do
+        logInfo m!"missingRedex={redex}"
+        pure "unproved"
     logInfo m!"result={outcome} nanos={(← IO.monoNanosNow) - started}"
     unless outcome == expected.getString do throwError "unexpected result {outcome}"
 
+/-- The inventory contains facts already proved before execution. Selection
+collects those demanded by the actual two-entry checker, including Horner
+intermediates absent from the stored-coefficient list. -/
+private def supplyFrom (inventory : Expr) (needed : KernelReplay.Request) : MetaM (Option Expr) := do
+  unless ← isDefEq needed.context (mkConst ``CoefficientSignsConformance.context) do
+    return none
+  let kept := mkApp (mkConst ``reduction) needed.polynomial
+  let selected ← mkAppM ``SignFact.find #[inventory, kept]
+  let selected ← withTransparency .all (whnf selected)
+  if selected.getAppFn.isConstOf ``Option.none then return none
+  unless selected.getAppFn.isConstOf ``Option.some do
+    throwError "coefficient inventory lookup did not reduce"
+  let selected := selected.getAppArgs.back!
+  return some (← mkAppM ``SignFact.mk
+    #[kept, ← mkAppM ``Subtype.val #[selected], ← mkAppM ``Subtype.property #[selected]])
+
+private def rejectError (expectedPrefix : String) (action : MetaM Unit) : MetaM Unit := do
+  let rejected ← try
+    action
+    pure false
+  catch exception =>
+    let message ← exception.toMessageData.toString
+    if message.startsWith expectedPrefix then pure true else throw exception
+  unless rejected do throwError "expected rejection with prefix {expectedPrefix}"
+
+syntax "#collect_probe" : command
+elab_rules : command
+| `(#collect_probe) => liftTermElabM do
+    let initial ← Term.withoutErrToSorry
+      (Term.elabTerm (← `(([] : List (SignFact context)))) none)
+    Term.synthesizeSyntheticMVarsNoPostponing
+    let initial ← instantiateMVars initial
+    let context ← Simp.mkContext (simpTheorems := #[← probeRules])
+      (congrTheorems := ← getSimpCongrTheorems)
+    let program := mkConst ``collectionGraph
+    let collected ← KernelReplay.collect 2 program initial context
+      (supplyFrom (mkConst ``NestedSignsConformance.facts))
+    unless collected.requests.size == 2 do
+      throwError "unexpected number of demanded facts: {collected.requests.size}"
+    let firstKey ← Term.withoutErrToSorry
+      (Term.elabTerm (← `((2 * Sturm.Fixtures.x : DensePoly Rat))) none)
+    Term.synthesizeSyntheticMVarsNoPostponing
+    let firstKey ← instantiateMVars firstKey
+    for (needed, expected) in collected.requests.zip #[firstKey,
+        mkConst ``NestedSignsConformance.endpointQuery] do
+      let actualContext := mkConst ``CoefficientSignsConformance.context
+      kernelCheck `__kernelReplayRequestContext (← mkEq needed.context actualContext)
+        (← mkEqRefl actualContext)
+      let key := mkApp (mkConst ``reduction) needed.polynomial
+      kernelCheck `__kernelReplayRequestKey (← mkEq key expected) (← mkEqRefl expected)
+    match collected.outcome with
+    | .checked true proof axioms =>
+      let type ← mkEq (mkApp program collected.facts) (mkConst ``Bool.true)
+      kernelCheck `__kernelReplayCollectedGraph type proof
+      logInfo m!"collected=2 kernelAccepted=true axioms={axioms}"
+    | _ => throwError "complete inventory did not check the actual graph"
+    let missing ← KernelReplay.collect 2 program initial context
+      (supplyFrom (mkConst ``PackingConformance.facts))
+    unless missing.requests.size == 2 do throwError "incomplete inventory request count changed"
+    match missing.outcome with
+    | .missing application =>
+      let needed ← KernelReplay.request application
+      let actualContext := mkConst ``CoefficientSignsConformance.context
+      kernelCheck `__kernelReplayMissingContext (← mkEq needed.context actualContext)
+        (← mkEqRefl actualContext)
+      let key := mkApp (mkConst ``reduction) needed.polynomial
+      let expected := mkConst ``NestedSignsConformance.endpointQuery
+      kernelCheck `__kernelReplayMissingKey (← mkEq key expected) (← mkEqRefl expected)
+      logInfo "incompleteInventory=missingEndpoint"
+    | _ => throwError "incomplete inventory unexpectedly checked"
+    let bounded ← KernelReplay.collect 0 program initial context
+      (fun _ => throwError "supplier called after fuel exhaustion")
+    unless bounded.requests.size == 1 do throwError "zero fuel request count changed"
+    match bounded.outcome with
+    | .missing _ => logInfo "zeroFuel=normalRejection"
+    | _ => throwError "empty inventory unexpectedly checked"
+    let literal ← mkAppM ``List.head? #[mkConst ``PackingConformance.literalFacts]
+    let literal ← withTransparency .all (whnf literal)
+    unless literal.getAppFn.isConstOf ``Option.some do
+      throwError "missing literal fixture fact"
+    let calls ← IO.mkRef (0 : Nat)
+    let irrelevant ← KernelReplay.collect 2 program initial context (fun _ => do
+      calls.modify (· + 1)
+      pure (some literal.getAppArgs.back!))
+    unless (← calls.get) == 2 do throwError "irrelevant supplier call count changed"
+    unless irrelevant.requests.size == 3 do throwError "irrelevant supplier request count changed"
+    match irrelevant.outcome with
+    | .missing _ => logInfo "irrelevantSupplier=boundedRejection"
+    | _ => throwError "irrelevant facts unexpectedly checked"
+    let limited ← KernelReplay.collect 1 program initial context
+      (supplyFrom (mkConst ``NestedSignsConformance.facts))
+    unless limited.requests.size == 2 do throwError "one fuel request count changed"
+    match limited.outcome with
+    | .missing application =>
+      let needed ← KernelReplay.request application
+      let expected := mkConst ``NestedSignsConformance.endpointQuery
+      kernelCheck `__kernelReplayFuelKey
+        (← mkEq (mkApp (mkConst ``reduction) needed.polynomial) expected) (← mkEqRefl expected)
+      logInfo "oneFuel=missingEndpoint"
+    | _ => throwError "one fuel incorrectly completed two demands"
+    let falseResult ← KernelReplay.collect 2 (mkConst ``falseEndpointGraph) initial context
+      (supplyFrom (mkConst ``NestedSignsConformance.facts))
+    match falseResult.outcome with
+    | .checked false _ _ => logInfo "falseGraph=checkedFalse"
+    | _ => throwError "false graph did not yield a checked false result"
+    let inventory ← mkAppM ``List.reverse #[← mkAppM ``List.append
+      #[mkConst ``NestedSignsConformance.facts, mkConst ``PackingConformance.literalFacts]]
+    let reordered ← KernelReplay.collect 2 program initial context (supplyFrom inventory)
+    match reordered.outcome with
+    | .checked true _ _ =>
+      let length ← mkAppM ``List.length #[reordered.facts]
+      kernelCheck `__kernelReplayCollectedLength (← mkEq length (toExpr (2 : Nat)))
+        (← mkEqRefl (toExpr (2 : Nat)))
+      logInfo "extraReorderedInventory=twoFacts"
+    | _ => throwError "extra reordered inventory did not complete"
+    let honest ← mkAppM ``List.head? #[mkConst ``PackingConformance.facts]
+    let honest ← withTransparency .all (whnf honest)
+    let honest ← withTransparency .all (whnf honest.getAppArgs.back!)
+    unless honest.getAppFn.isConstOf ``SignFact.mk do throwError "unexpected fact fixture"
+    let args := honest.getAppArgs
+    let corrupt := mkAppN honest.getAppFn (args.set! (args.size - 2) (toExpr (-1 : Int)))
+    rejectError "(kernel) application type mismatch" do
+      let _ ← KernelReplay.collect 1 program initial context (fun _ => pure (some corrupt))
+    logInfo "malformedFact=kernelRejected"
+    let hole ← mkFreshExprMVar (← inferType honest)
+    rejectError "incomplete supplied fact" do
+      let _ ← KernelReplay.collect 1 program initial context (fun _ => pure (some hole))
+    logInfo "incompleteFact=rejected"
+
 end
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+#collect_probe
 
 /-- An unrelated opaque boundary must never be classified as missing evidence. -/
 opaque otherStuck : Bool := true

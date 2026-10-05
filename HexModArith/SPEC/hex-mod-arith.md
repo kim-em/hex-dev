@@ -266,18 +266,15 @@ dispatchers can select a different verified kernel.
 
 ## External comparators
 
-No external comparator is required.
-
-**Justification:** scalar operations are `implementation-is-extern` per
-`SPEC/benchmarking.md §"Comparator naming"`: they route through GMP or the
+No external comparator is required. Scalar operations route through GMP or the
 dedicated word-arithmetic C externs, leaving no algorithmically distinct
 external implementation. The NTT surface is an internal building block rather
 than a user-facing result type; FLINT comparison belongs to the `FpPoly` and
 `ZPoly` convolution consumers where inputs and outputs match.
 
-The architecturally important within-Lean comparisons — Barrett versus
+The architecturally important within-Lean comparisons (Barrett versus
 Montgomery modular multiplication, and canonical versus redundant-residue
-butterflies — are registered as
+butterflies) are registered as
 `compare` groups in `HexModArith/Bench.lean` (per
 `SPEC/benchmarking.md §"Within-Lean comparisons"`). Those
 comparisons are the right shape for this library; an external tool

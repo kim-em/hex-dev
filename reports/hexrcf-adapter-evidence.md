@@ -1,5 +1,10 @@
 # Real-coefficient adapter evidence
 
+> The drivers under `scripts/bench/hexrcf_*.py` and the probe modules under
+> `bench/HexRCF/ProofProbe/` that this report cites, other than `Examples` and
+> `Registered/`, were removed from `main` after commit `45a4e4e9a4`. Check out
+> that commit to rerun them.
+
 This record covers the implemented optional `HexRCF.RealCoefficients` surface.
 It does not attest completion of the planned extension or extend the rational
 solver's existing performance claims to real coefficients. The owning

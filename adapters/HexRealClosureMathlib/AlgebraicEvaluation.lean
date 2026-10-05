@@ -298,7 +298,10 @@ theorem adjoin_realization (model : Model context K)
                 model.read interpretation a) ∧
             (model.adjoin descriptor).toValue (context.adjoin descriptor).generator ∈ extended.domain ∧
               extended.map ((model.adjoin descriptor).toValue (context.adjoin descriptor).generator) =
-                selected := by
+                selected ∧
+            (∀ a : (model.adjoin descriptor).field, a ∈ extended.domain →
+              extended.map a ≠ 0 → a⁻¹ ∈ extended.domain ∧
+                extended.map a⁻¹ = (extended.map a)⁻¹) := by
   classical
   obtain ⟨q, query, s, built, _⟩ := model.minimal_query descriptor
     (values.map (context.polynomial descriptor))
@@ -315,7 +318,7 @@ theorem adjoin_realization (model : Model context K)
       (fun _ _ => rfl) (fun _ => rfl) (fun _ => rfl)
   let ambient := interpretation.algebraic root selected minimal monic original chosen
   let extended := ambient.regular.comap (model.adjoin descriptor).field.subtype
-  refine ⟨extended, ?_, ?_, ?_, ?_⟩
+  refine ⟨extended, ?_, ?_, ?_, ?_, ?_⟩
   · intro a member
     obtain ⟨domain, signValue⟩ := preserved a member
     refine ⟨?_, ?_⟩
@@ -356,6 +359,8 @@ theorem adjoin_realization (model : Model context K)
     rw [ambient.regular_map _
       (interpretation.algebraic_mem root selected minimal monic original chosen)]
     exact interpretation.algebraic_root root selected minimal monic original chosen
+  · intro a member nonzero
+    exact ambient.regular_comap_inv (model.adjoin descriptor).field.subtype a member nonzero
 
 /-- info: 'Hex.RealClosure.Tower.Model.adjoin_realization' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
@@ -428,7 +433,9 @@ theorem adjoin_inventory (model : Model context K)
                 model.read interpretation a) ∧
             (model.adjoin descriptor).toValue (context.adjoin descriptor).generator ∈ extended.domain ∧
               extended.map ((model.adjoin descriptor).toValue (context.adjoin descriptor).generator) =
-                selected := by
+                selected ∧
+            (∀ a, a ∈ extended.domain → extended.map a ≠ 0 →
+              a⁻¹ ∈ extended.domain ∧ extended.map a⁻¹ = (extended.map a)⁻¹) := by
   classical
   obtain ⟨q, minimal, s, built, realize⟩ := model.adjoin_realization (G := G) descriptor values
   refine ⟨q, minimal, s, built, ?_⟩
@@ -455,10 +462,11 @@ theorem adjoin_inventory (model : Model context K)
     intro a member
     exact (hv.flatMap (context.polynomial descriptor a)
       (List.mem_map.mpr ⟨a, member, rfl⟩)).members
-  obtain ⟨extended, finite, coefficients, generator⟩ := realize interpretation minimalGuards descriptorData
+  obtain ⟨extended, finite, coefficients, generator, selected, inverses⟩ :=
+    realize interpretation minimalGuards descriptorData
     (Transport.Inventory.replay_data closed descriptor.raw.head descriptor.raw.lower descriptor.raw.upper
       (descriptor.raw.queries ++ q :: values.map (context.polynomial descriptor)) s.evidence hr) valueGuards
-  refine ⟨descriptorData, extended, ?_, coefficients, generator⟩
+  refine ⟨descriptorData, extended, ?_, coefficients, generator, selected, inverses⟩
   intro a member
   refine ⟨(model.adjoin descriptor).domain_iff extended a |>.mpr (finite a member).1, ?_⟩
   rw [(model.adjoin descriptor).read_apply, (model.adjoin descriptor).sign]

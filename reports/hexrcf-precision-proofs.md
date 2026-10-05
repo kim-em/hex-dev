@@ -1,5 +1,10 @@
 # Initial generator precision and fixed-field proof cost
 
+> The drivers under `scripts/bench/hexrcf_*.py` and the probe modules under
+> `bench/HexRCF/ProofProbe/` that this report cites, other than `Examples` and
+> `Registered/`, were removed from `main` after commit `45a4e4e9a4`. Check out
+> that commit to rerun them.
+
 This experiment asks whether starting with a tighter generator square reduces
 full sign queries and whole proof-build cost. It compares eight and sixty-four
 bits for the same positive √2, formula and original target. It does not measure

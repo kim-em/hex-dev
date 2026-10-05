@@ -43,9 +43,9 @@ fallback, and both must hash-agree on the isolation endpoints at every common
 degree.
 
 External comparator: SageMath `real_roots` / python-flint (the SPEC's oracle
-role list) is `informational`, structurally different (approximate/native
-vs the certified exact-integer engine), and scheduled-only — not wired in this
-PR. See `libraries.yml: HexRealRoots.phase4.comparators`.
+role list) is structurally different (approximate/native vs the certified
+exact-integer engine), so it would be recorded for orientation only; it is not
+wired.
 -/
 
 namespace Hex.RealRootsBench

@@ -58,6 +58,31 @@ class AdmissionScannerTests(unittest.TestCase):
         source = 'def x := f x\' \'"\'\ntheorem bad : False := by sorry\n'
         self.assertIsNotNone(ADMISSION.search(code_only(source)))
 
+    def test_overlapping_cyclic_roots_and_fresh_source(self):
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "Local").mkdir()
+            sources = {
+                "Local/Left.lean": "import Local.Shared\n",
+                "Local/Right.lean": "public import Local.Shared\n",
+                "Local/Shared.lean": "import Local.Left\ntheorem h : True := by trivial\n",
+            }
+            for name, source in sources.items():
+                (root / name).write_text(source)
+            with patch.object(audit, "ROOT", root), patch.object(
+                audit, "code_only", wraps=code_only
+            ) as mask:
+                paths = audit.import_cones(["Local.Left", "Local.Right"])
+                self.assertEqual(paths, set(map(Path, sources)))
+                self.assertEqual(mask.call_count, 3)
+                # A shared dependency must be reread on the next audit.
+                (root / "Local/Shared.lean").write_text("import Local.Missing\n")
+                with self.assertRaisesRegex(ValueError, "missing local import Local.Missing"):
+                    audit.import_cones(["Local.Left", "Local.Right"])
+                (root / "Local/Shared.lean").write_text(sources["Local/Shared.lean"])
+                with self.assertRaisesRegex(ValueError, "missing local import Local.Absent"):
+                    audit.import_cones(["Local.Left", "Local.Absent"])
+
     def test_import_cone_and_present_adapter(self):
         with TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -101,6 +126,7 @@ class AdmissionScannerTests(unittest.TestCase):
             transport_sample = root / "adapters/HexRealClosureMathlib/TransportSample.lean"
             transport_descriptor = root / "adapters/HexRealClosureMathlib/TransportDescriptor.lean"
             transport_selected = root / "adapters/HexRealClosureMathlib/TransportSelected.lean"
+            transport_finite_tests = root / "adapters/HexRealClosureMathlib/TransportFiniteTests.lean"
             algebraic_transport = root / "adapters/HexRealClosureMathlib/AlgebraicTransport.lean"
             algebraic_yun = root / "adapters/HexRealClosureMathlib/AlgebraicYun.lean"
             algebraic_reencode = root / "adapters/HexRealClosureMathlib/AlgebraicReencode.lean"
@@ -166,6 +192,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 "adapters/HexRealClosureMathlib/CoefficientReplay.lean",
                 "adapters/HexRealClosureMathlib/CoefficientMoment.lean",
                 "adapters/HexRealClosureMathlib/CoefficientReduction.lean",
+                "adapters/HexRealClosureMathlib/SharedPresentation.lean",
+                "adapters/HexRealClosureMathlib/SharedPresentationTests.lean",
                 "adapters/HexRealClosureMathlib/BaseOrder.lean",
                 "adapters/HexRealClosureMathlib/BaseMapModel.lean",
                 "HexRealClosure/TowerInclusion.lean",
@@ -251,7 +279,7 @@ class AdmissionScannerTests(unittest.TestCase):
                          transport_tarski, transport_closed, transport_closed_query,
                          transport_regular, transport_reduction, transport_closed_reduction,
                          transport_preparation, transport_moment, transport_replay,
-                         transport_sample, transport_descriptor, transport_selected,
+                         transport_sample, transport_descriptor, transport_selected, transport_finite_tests,
                          algebraic_transport, algebraic_yun, algebraic_reencode,
                          algebraic_reencode_tests, algebraic_roots,
                          union, union_tests,
@@ -282,16 +310,24 @@ class AdmissionScannerTests(unittest.TestCase):
             specialize_descriptor.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             transport_polynomial.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             transport_product.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            for path in (transport_arithmetic, transport_query, transport_tests, transport_ring, transport_power, transport_tarski, transport_closed, transport_closed_query, transport_regular, transport_reduction, transport_closed_reduction, transport_preparation, transport_moment, transport_replay, transport_sample, transport_descriptor, transport_selected, algebraic_transport, algebraic_yun, algebraic_reencode, algebraic_reencode_tests, algebraic_roots):
+            for path in (transport_arithmetic, transport_query, transport_tests, transport_ring, transport_power, transport_tarski, transport_closed, transport_closed_query, transport_regular, transport_reduction, transport_closed_reduction, transport_preparation, transport_moment, transport_replay, transport_sample, transport_descriptor, transport_selected, transport_finite_tests, algebraic_transport, algebraic_yun, algebraic_reencode, algebraic_reencode_tests, algebraic_roots):
                 path.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             union.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             union_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             qadjoin.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             qadjoin_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+            live_probes = []
+            for module in ("HexRealClosure.LiveRequest", "HexRealClosure.LiveRequestTests",
+                           "HexRealClosureMathlib.LiveRequest", "HexRealClosureMathlib.LiveRequestTests"):
+                directory = root / ("adapters" if "Mathlib" in module else "")
+                path = directory / (module.replace(".", "/") + ".lean")
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+                live_probes.append(path)
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
-                for probe in (union, union_tests, qadjoin, qadjoin_tests):
+                for probe in (union, union_tests, qadjoin, qadjoin_tests, *live_probes):
                     probe.unlink()
                     with self.assertRaisesRegex(ValueError, "missing local import"):
                         audit.check()
@@ -307,7 +343,7 @@ class AdmissionScannerTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, "unapproved admission"):
                         audit.check()
                     probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-                for probe in (specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, specialize_tarski, specialize_reduction, specialize_moment, specialize_replay, specialize_sample, specialize_selected, specialize_descriptor, transport_polynomial, transport_product, transport_arithmetic, transport_query, transport_tests, transport_ring, transport_power, transport_tarski, transport_closed, transport_closed_query, transport_regular, transport_reduction, transport_closed_reduction, transport_preparation, transport_moment, transport_replay, transport_sample, transport_descriptor, transport_selected, algebraic_transport, algebraic_yun, algebraic_reencode, algebraic_reencode_tests, algebraic_roots):
+                for probe in (specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, specialize_tarski, specialize_reduction, specialize_moment, specialize_replay, specialize_sample, specialize_selected, specialize_descriptor, transport_polynomial, transport_product, transport_arithmetic, transport_query, transport_tests, transport_ring, transport_power, transport_tarski, transport_closed, transport_closed_query, transport_regular, transport_reduction, transport_closed_reduction, transport_preparation, transport_moment, transport_replay, transport_sample, transport_descriptor, transport_selected, transport_finite_tests, algebraic_transport, algebraic_yun, algebraic_reencode, algebraic_reencode_tests, algebraic_roots):
                     probe.unlink()
                     with self.assertRaisesRegex(ValueError, "missing local import"):
                         audit.check()

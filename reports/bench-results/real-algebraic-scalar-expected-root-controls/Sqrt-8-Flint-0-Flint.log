@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runFlintSqrt8    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6edf1b7, 2026-10-04T19:30:13Z, host=chungus2
+  repeat 0  18.816 µs  (×2^12, total 77.073 ms)
+  median: 18.816 µs    min: 18.816 µs    max: 18.816 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_400 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-scaling/Sqrt-8-Flint-0-Flint.json

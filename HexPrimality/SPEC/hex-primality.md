@@ -1017,10 +1017,11 @@ linear cost in recurrence transitions plus initialization per multiplier.
 For variable queue capacity, searches cost up to that capacity per tested
 square form; report queue work rather than claiming unconditional constant
 cost. The familiar heuristic `N^(1/4)` describes average search work under
-assumptions about forms, not a worst-case bound or a termination proof. Apply
-the ordered evidence modes of `SPEC/benchmarking.md` honestly to irregular
-completion data; a fuel cap is not an empirical complexity model. Include one
-representative profile attributing the dominant raw-splitter cost. A combined
+assumptions about forms, not a worst-case bound or a termination proof.
+Declare a two-sided model or a cited upper bound only where irregular
+completion data honestly admits one; a fuel cap is not an empirical complexity
+model. If results are unexpected, a profile of the dominant raw-splitter cost
+is the first diagnostic. A combined
 cap can expire immediately before or during reverse search; the per-phase
 trace must show this rather than count an uncompleted reverse as success.
 Use reduced fixtures/limits for CI `Bench verify` so the existing per-library
@@ -1458,8 +1459,8 @@ not a fabricated ratio. No in-process clocks appear in the probe import
 closure. Native per-input timings remain the compiled performance gate.
 
 The internal comparator is the identical bounded policy with continuation
-disabled. An external p−1 comparator is optional and **informational**, never a
-Phase-4 gate; if added, pin its version, base, both stage bounds, and one
+disabled. An external p−1 comparator is optional and for orientation only; if
+added, pin its version, base, both stage bounds, and one
 persistent subprocess protocol, and record
 protocol overhead under the repository comparator rules. A default-bound
 `factor` subprocess is not a stage-2 comparison. These registrations extend
@@ -2294,8 +2295,8 @@ acceptance, not a second compiled timing of the executable checker or search.
 | input elaboration, production-search attribution, and emitted certificate literal | matched fresh modules | 31, 61, 123, 256, 511, and 512 bits |
 | `prime_of_checkPrimeAt` theorem instantiation and kernel replay | matched fresh modules | the same exact emitted certificates and allowed axiom set |
 | Mathlib-free `primality` elaboration | matched fresh modules | the same size family, including the accepted 512-bit ceiling |
-| `Construction.run` | fixed compiled `runConstruction` | Curve25519, mode 3 |
-| `primesBelow` through the construction bound | fixed compiled `runRuntimePrimes` | bound 524289, mode 3 |
+| `Construction.run` | fixed compiled `runConstruction` | Curve25519, fixed |
+| `primesBelow` through the construction bound | fixed compiled `runRuntimePrimes` | bound 524289, fixed |
 | emitted Curve25519 checker | fixed compiled `runCurveChecker` and adjacent fresh replay modules | pinned three-node literal and five-node reference |
 | `primality?` input, search, literal, rendering, replay, and end-to-end costs | adjacent fresh modules | Curve25519 |
 
@@ -2308,26 +2309,25 @@ scientific modules are deliberately absent from the CI target; the existing
 boundary, exhaustion, and over-budget modules remain the single-job build
 smoke.
 
-The six bit-size registrations from `runMillerRabin` through `runChecker` use
-mode 2.  A tight family-specific model is unavailable because GMP changes
+The six bit-size registrations from `runMillerRabin` through `runChecker`
+declare a cited upper bound.  A tight family-specific model is unavailable because GMP changes
 multiplication algorithms across this range and the certificate tree shrinks
 by input-dependent amounts.  The published schoolbook bound is nevertheless
 applicable: binary powering performs `O(b)` multiplications of `b`-bit
 integers, each costing `O(b^2)`, hence `O(b^3)` per fixed number of witnesses
 or certificate levels (Brent and Zimmermann, *Modern Computer Arithmetic*,
 chapter 1).  The `table-smooth-certificates` ladder exercises the modular
-powering and certificate phases, and the inclusive profile below attributes
-the dominant cost to those paths.  Faster observations therefore mean
-"within declared upper bound (observed faster)", never a two-sided
-complexity match.  `runSieve`, `runTableLookup`, `runOrder`, `runPMinusOne`,
-`runRho`, `runSegment`, and `runNextPrime` use mode 1 with the family-specific
-derivations at their registrations.  The exact 512-bit rho-backed decision,
-search, and replay plus the sole Pocklington-3 constructor use mode 3 fixed
-budgets: their structurally distinct single boundary inputs do not admit an
-honest one-parameter family.
+powering and certificate phases.  Faster observations therefore satisfy the
+bound without being a two-sided complexity match.  `runSieve`,
+`runTableLookup`, `runOrder`, `runPMinusOne`, `runRho`, `runSegment`, and
+`runNextPrime` declare two-sided models with the family-specific derivations
+at their registrations.  The exact 512-bit rho-backed decision, search, and
+replay plus the sole Pocklington-3 constructor are fixed registrations: their
+structurally distinct single boundary inputs do not admit an honest
+one-parameter family.
 
 **Comparators.** PARI `isprime` via cypari2 and FLINT `fmpz_is_prime`
-via python-flint are **informational native comparators**. They return proven
+via python-flint are native comparators for orientation. They return proven
 primality decisions but do not produce Lean proof terms; the Hex construction
 route produces and self-checks reusable certificate data. Their different
 outputs and algorithms preclude a required speed ratio. PARI remains the
@@ -2340,7 +2340,7 @@ under the current library configuration and are labeled as tactic-search
 observations, separately from native-executable timings. Full `primality?`
 builds include that search regime, proof emission, and kernel checking.
 
-The kernel comparator is **PrimeCert**, also informational. Fresh-module
+The kernel comparator is **PrimeCert**, also for orientation. Fresh-module
 measurements retain imports, literal elaboration, and kernel checking, with
 adjacent baseline modules exposing overhead. The six existing bit-family
 witnesses have supplied certificates in both systems. The construction cactus
@@ -2413,7 +2413,7 @@ width covered by the accepted construction measurements. The 522-bit boundary re
 rejected. Writing P-521 as `2 ^ 521 - 1` needs local
 `maxRecDepth = 1024` and `exponentiation.threshold = 521` for Lean to normalize
 the original goal; the numeral and certificate replay use default limits.
-The fixed mode-3 targets `runP521Construction` and `runP521Checker`, exact
+The fixed targets `runP521Construction` and `runP521Checker`, exact
 suggestion guard, per-target traces, and paired phase measurements are described
 in [the standard-field report](../../reports/hex-primality-fields.md).
 

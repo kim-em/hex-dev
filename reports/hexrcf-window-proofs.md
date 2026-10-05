@@ -1,5 +1,10 @@
 # Checked generator-window proof costs
 
+> The drivers under `scripts/bench/hexrcf_*.py` and the probe modules under
+> `bench/HexRCF/ProofProbe/` that this report cites, other than `Examples` and
+> `Registered/`, were removed from `main` after commit `45a4e4e9a4`. Check out
+> that commit to rerun them.
+
 `rcf.algebraic.signRefinements` remains zero by default. A four-step budget
 removes full sign queries in a checked lower-precision fixed-field example,
 but this comparison does not establish a useful reduction in whole-module

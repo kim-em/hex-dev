@@ -146,8 +146,9 @@ def module_file(module: str) -> Path | None:
     return None
 
 
-def import_cone(start: str) -> set[Path]:
-    pending = [start]
+def import_cones(starts: list[str]) -> set[Path]:
+    """Traverse a union once; shared dependencies retain all audit obligations."""
+    pending = list(starts)
     seen: set[str] = set()
     paths: set[Path] = set()
     while pending:
@@ -188,6 +189,8 @@ def check() -> None:
              "HexRealClosure.BaseInclusion", "HexRealClosure.BaseInclusionTests",
              "HexRealClosure.TowerInclusion", "HexRealClosure.LiveContext",
              "HexRealClosure.LiveContextTests",
+             "HexRealClosure.LiveRequest", "HexRealClosure.LiveRequestTests",
+             "HexRealClosureMathlib.LiveRequest", "HexRealClosureMathlib.LiveRequestTests",
              "HexRealClosureMathlib.TowerInclusion", "HexRealClosureMathlib.LiveContext",
              "HexRealClosure.TowerConversionTests", "HexRealClosure.TowerPresentationTests",
              "HexRealClosure.QueryReductionTests",
@@ -202,6 +205,7 @@ def check() -> None:
              "HexRealClosureMathlib.BaseFactoryTests",
              "HexRealClosureMathlib.CacheModels", "HexRealClosureMathlib.CacheRebuild",
              "HexRealClosureMathlib.CacheGather", "HexRealClosureMathlib.GatherTests",
+             "HexRealClosureMathlib.SharedPresentation", "HexRealClosureMathlib.SharedPresentationTests",
              "HexRealClosureMathlib.BaseOrder", "HexRealClosureMathlib.BaseMapModel",
              "HexRealClosure.BisectionTests", "HexRealClosure.DeflationConformance",
              "HexRealClosure.BisectionFrontierTests", "HexRealClosure.IsolationTests",
@@ -259,7 +263,7 @@ def check() -> None:
              "HexRealClosureMathlib.TransportClosedQuery", "HexRealClosureMathlib.TransportClosedReduction",
              "HexRealClosureMathlib.TransportPreparation", "HexRealClosureMathlib.TransportMoment",
              "HexRealClosureMathlib.TransportReplay", "HexRealClosureMathlib.TransportSample", "HexRealClosureMathlib.TransportDescriptor",
-             "HexRealClosureMathlib.TransportSelected", "HexRealClosureMathlib.TransportRegular",
+             "HexRealClosureMathlib.TransportSelected", "HexRealClosureMathlib.TransportFiniteTests", "HexRealClosureMathlib.TransportRegular",
              "HexRealClosureMathlib.TransportReduction",
              "HexRealClosureMathlib.SpecializeTests", "HexRealClosureMathlib.Algebraic",
              "HexRealClosureMathlib.AlgebraicClean", "HexRealClosureMathlib.AlgebraicValue",
@@ -288,7 +292,7 @@ def check() -> None:
             module = ".".join(path.relative_to(ROOT / "conformance").with_suffix("").parts)
             if module_file(module) != path:
                 raise ValueError(f"conformance module {module} is shadowed by another source file")
-    paths = set().union(*(import_cone(module) for module in roots))
+    paths = import_cones(roots)
     if BRIDGE not in paths:
         raise ValueError(f"the optional adapter no longer imports {BRIDGE}")
     for relative in sorted(paths):

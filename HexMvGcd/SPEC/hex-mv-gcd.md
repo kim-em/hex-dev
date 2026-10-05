@@ -1648,11 +1648,11 @@ The Singular driver uses `gcd`, checked exact quotient, and `factorize` in a
 persistent characteristic-zero polynomial ring. SymPy remains the oracle and
 is not a performance comparator.
 
-Both performance comparators are `informational`. FLINT selects among Brown,
+Both performance comparators are recorded for orientation. FLINT selects among Brown,
 Zippel, a sparse Hensel route, and subresultants with tuned crossovers, while
 this library specifies Brown and the subresultant fallback; Singular likewise
 has sparse routes outside this SPEC. A required broad ratio would therefore
-check routes that do not exist. The written-down expectation is narrow: on
+check routes that do not exist. Performance target: on
 the **coprime** family the ratio should be within a small constant, since all
 three sides should discharge the inputs without full interpolation. A large
 ratio there means the fast path is not firing. No advance ratio claim is made

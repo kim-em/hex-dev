@@ -97,6 +97,25 @@ theorem RealChain.interpretStep_embed
     (RationalFn.C a) = model.hom a
   exact RealModel.evalHom_C HexPolyMathlib.toGrind_fieldOfGrind transcendental a
 
+/-- The stored registered generator has exactly the provider's real value. -/
+theorem RealChain.interpretStep_X
+    {K : Type} [g : Lean.Grind.Field K] [DecidableEq K]
+    {approx : K → Rat → Bounds} {sign : K → Int}
+    (parent : RealChain registry K approx sign)
+    (model : (RealContext.ofChain parent).Interpretation)
+    (key : ConstantKey) (bounds : Rat → Bounds) (registered : registry key = some bounds)
+    (sp : ∀ f : RationalFn K, Acc (Next (Real.attempt ⟨approx, bounds⟩ f)) 0)
+    (ap : ∀ (f : RationalFn K) (δ : Rat),
+      Acc (Next (Real.approxAttempt ⟨approx, bounds⟩ f (Real.requestWidth δ))) 0)
+    (τ : ℝ) (contained : ∀ δ, 0 < δ → Contains (bounds δ) τ)
+    (transcendental : letI : Field K := HexPolyMathlib.fieldOfGrind
+      Real.RelativeTranscendence model.hom τ) :
+    (parent.interpretStep model key bounds registered sp ap τ contained transcendental).hom
+      RationalFn.X = τ := by
+  let : Field K := HexPolyMathlib.fieldOfGrind
+  change RealModel.evalHom HexPolyMathlib.toGrind_fieldOfGrind transcendental RationalFn.X = τ
+  exact RealModel.evalHom_X HexPolyMathlib.toGrind_fieldOfGrind transcendental
+
 /-- Interpretation of an actual packed real prefix, retaining its native field. -/
 @[expose] def RealPrefix.Interpretation (entry : RealPrefix registry) : Type := by
   cases entry with

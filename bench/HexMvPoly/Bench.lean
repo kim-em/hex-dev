@@ -26,7 +26,7 @@ hashes of the canonical outputs, so result traversal stays within the declared
 operation cost and gives LeanBench a conformance signal.
 
 `HexMvPolyCorpus` owns the representation-independent deterministic term
-generators. Phase 4's informational CompPoly and Mathlib `MvSparsePoly`
+generators. Phase 4's orientation CompPoly and Mathlib `MvSparsePoly`
 adapters consume those generators externally; neither comparator is imported
 here, keeping the native executable Mathlib-free.
 

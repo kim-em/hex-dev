@@ -14,8 +14,7 @@ public meta import HexRealAlgebraic.Order
 public section
 
 /-! Exact algebraic coefficient aliases. These check coefficient conversion,
-not discharge of quantified goals by the optional tactic handler.
-Computational conformance owner: `HexRCF`. -/
+not discharge of quantified goals by the optional tactic handler. -/
 namespace Hex.RCF.RootAliasTests
 
 open RealCoefficients.Coefficients

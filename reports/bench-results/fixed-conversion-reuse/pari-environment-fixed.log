@@ -1,0 +1,11 @@
+warning: Nix search path entry '/nix/var/nix/profiles/per-user/root/channels' does not exist, ignoring
+this derivation will be built:
+  /nix/store/w338pgwdycp952qn8ibnsmrz6wkcg7rc-python3-3.14.7-env.drv
+this path will be fetched (229.0 KiB download, 730.5 KiB unpacked):
+  /nix/store/pp6zajyqb7c4sxfaql7r5klb00sshis1-python3.14-cysignals-1.12.6
+copying path '/nix/store/pp6zajyqb7c4sxfaql7r5klb00sshis1-python3.14-cysignals-1.12.6' from 'https://cache.nixos.org'...
+building '/nix/store/w338pgwdycp952qn8ibnsmrz6wkcg7rc-python3-3.14.7-env.drv'...
+structuredAttrs is enabled
+created 227 symlinks in user environment
+/nix/store/n2vg4iqpkgrrjwqqgnjxilbp0xsllyrc-python3-3.14.7-env/bin/python3
+5

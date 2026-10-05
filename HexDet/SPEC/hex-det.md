@@ -288,7 +288,7 @@ sizes only. Larger oracle comparisons use python-flint `fmpz_mat.det()`,
 residues. Polynomial carriers use SymPy `Matrix.det(method="berkowitz")`
 over identical exact polynomial domains.
 
-The required Phase-4 input families are:
+The benchmark input families are:
 
 | Family | Sweep and compared arms |
 |---|---|
@@ -302,12 +302,8 @@ Crossovers are benchmark outputs, never numerical SPEC constants. Record
 each enabled cutoff, coefficient-size region, tie rule, seed, and fuel
 setting with the source revision, fixture identifiers, command, host context,
 raw measurements, and adjacent-arm ratios in
-`reports/hex-det-performance.md`. Register these families under
-`HexDet.phase4.input_families` in `libraries.yml`. When a policy is enabled
-or changed, update the corresponding family's `description` with the exact
-policy constant names and values and a reference to the report's policy
-table. This uses the existing `phase4` schema, which has no `crossovers`
-field. The report and executable policy must agree with that record.
+`reports/hex-det-performance.md`, together with the exact policy constant
+names and values. The report and executable policy must agree.
 
 Use the shared-host discipline in [benchmarking](../../SPEC/benchmarking.md):
 automatically select and pin a CPU when supported, retain host context and
@@ -319,10 +315,10 @@ initial availability policies above must be labeled unmeasured until the
 first evidence is collected.
 
 Internal comparisons determine selection. External comparators are
-informational because their algorithm selection and process overhead differ.
-The dispatch-overhead and route-agreement surfaces have comparator-absence
-class `no-comparable-surface-in-named-comparator`: python-flint and SymPy do
-not expose Hex's arm selection or fallback route as callable operations.
+orientation only because their algorithm selection and process overhead
+differ. The dispatch-overhead and route-agreement surfaces have no external
+comparator: python-flint and SymPy do not expose Hex's arm selection or
+fallback route as callable operations.
 Ordinary Mathlib-free bench targets verify bounded fixture outputs and route
 agreement. Timing runs are manual, extending the existing benchmark setup
 under its CI wall-clock cap, with no new workflow jobs. Tactic elaboration,

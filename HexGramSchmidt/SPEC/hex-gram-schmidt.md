@@ -331,10 +331,7 @@ for the analogous rule on the matrix side.
 
 ## External comparators
 
-No external comparator is required.
-
-**Justification:** `structural-layer` per
-[the benchmarking spec's "Comparator naming" section](https://github.com/kim-em/hex-dev/blob/main/SPEC/benchmarking.md#comparator-naming). HexGramSchmidt is a
+No external comparator is required. HexGramSchmidt is a
 structural layer over `HexMatrix`: the integer Gram-Schmidt
 construction is implemented via the per-row Schur-complement
 recurrence specified for `scaledCoeffs` above, with the diagonal
@@ -346,7 +343,7 @@ the determinant computation that the recurrence's diagonal
 produces.
 
 End-to-end coverage of the integer Gram-Schmidt construction as
-it appears in downstream consumers is via HexLLL's `gating`
+it appears in downstream consumers is via HexLLL's
 comparator (the verified Isabelle LLL Haskell extraction), which
 exercises `LLLState.ofBasis` — itself a thin wrapper around the
 GS construction — under its end-to-end ratio measurement. No

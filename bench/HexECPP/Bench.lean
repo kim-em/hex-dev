@@ -17,8 +17,8 @@ Mathlib-free compiled ECPP measurements. Conversion, checking, and raw
 certificate size have separate registrations; kernel replay is measured in
 fresh bridge proof modules.
 
-The complete accepted-certificate and native endpoint registrations use
-mode 3. Subject-bit ladders vary witness counts, recursive leaves and search
+The complete accepted-certificate and native endpoint registrations are
+fixed registrations with absolute budgets. Subject-bit ladders vary witness counts, recursive leaves and search
 branches independently; the frozen corpus has both success and exhaustion
 at each size. Those ladders therefore do not have a tight scalar wall-time
 model, and a published bound on scalar replay does not cover factor search
@@ -172,7 +172,7 @@ private def native512Cert : IO Cert := do
   native512CertRef.set (some c)
   return c
 
-/-- Fixed heldout-512-ordinary-0, seed zero. Mode 3: search branches and
+/-- Fixed heldout-512-ordinary-0, seed zero. Fixed budget: search branches and
 terminal shape do not admit a tight subject-width wall-time model. The
 five-second ceiling is declared before bench collection, above twice the
 retained whole-route search measurements. -/
@@ -387,7 +387,7 @@ def modulusWidthInput (bits : Nat) : SizedCase :=
     input.n 5 input.q input.point).toOption.any fun result =>
       result.1 == input.result && result.2 == input.inverses
 
--- Mode 2. Both scalar and modulus have k bits, including the real 64..512
+-- Cited upper bound. Both scalar and modulus have k bits, including the real 64..512
 -- caller range. Replay performs at most 2*k affine additions. GMP's documented
 -- basecase multiply/divide bound is quadratic in operand bits; faster regimes
 -- improve that bound. Nat.testBit copies contribute O(k^2), so O(k^3) bounds
@@ -398,7 +398,7 @@ setup_benchmark runSizedReplay k => k * k * k with prep := sizedInput where {
   targetInnerNanos := 5000000000, maxSecondsPerCall := 120.0
 }
 
--- Mode 2. Classical extended Euclid costs O(k^2): quotient bit lengths
+-- Cited upper bound. Classical extended Euclid costs O(k^2): quotient bit lengths
 -- sum to O(k), and each division/coefficient update costs at most its quotient
 -- width times k. At most 2*k inverse proposals give O(k^3). The compiled
 -- Nat recurrence uses these operations, rather than a direct GMP GCDEXT call.

@@ -11,7 +11,6 @@ public import HexRealRootsMathlib.TarskiTests
 public section
 
 /-! Reduction correspondence and ordinary-kernel replay probes.
-Computational conformance owner: `HexSignDet`.
 These are polynomial sign identities, not Tarski root-sum theorems. -/
 namespace Hex.SignDetMathlib.Conformance
 

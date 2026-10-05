@@ -263,7 +263,7 @@ def certificateReplay : Unit → IO Nat := fun _ => do
   return small.chain.length + G.chain.length + kernel.group.chain.length + word.nodes.size
 
 /- The group degree is part of the Lean type, while the other families vary
-several independent dimensions. These are mode-3 canonical cases: each checks
+several independent dimensions. These are fixed canonical cases: each checks
 its complete mathematical result and carries an operation-specific ceiling.
 The scientific report records the controlled dimensions and separate profiles.
 The ceilings exceed the clean calibration medians by at least 100x while still

@@ -418,8 +418,8 @@ and infinitesimal levels.
 
 Use the shared-host fixed trial-major schedule, automatic CPU selection when
 supported, adjacent alternating `AB`/`BA` comparisons, retained completed
-samples and at most one unchanged inconclusive rerun. Provide one attribution
-profile. The companion supplies ordinary-kernel correctness proofs. Tactic and
+samples and at most one unchanged inconclusive rerun. Profile only to explain
+an unexpected result. The companion supplies ordinary-kernel correctness proofs. Tactic and
 proof-generator performance belongs to the consuming libraries; ordinary runtime
 arithmetic needs no per-operation certificate benchmark. Historical paper
 timings are not acceptance thresholds.
@@ -427,14 +427,13 @@ timings are not acceptance thresholds.
 ### Comparator coverage
 
 Inherited fraction arithmetic (`subtraction`, and the arithmetic component of
-`comparison`, `denominators` and `compareHeight`) is a **structural-layer** over
-HexRationalFn. Its informational FLINT `fmpz_poly_q` comparison and ratios are
-owned by [HexRationalFn](../../HexRationalFn/SPEC/hex-rational-fn.md), rather
+`comparison`, `denominators` and `compareHeight`) is a layer over
+HexRationalFn. Its FLINT `fmpz_poly_q` comparison and ratios are owned by [HexRationalFn](../../HexRationalFn/SPEC/hex-rational-fn.md), rather
 than duplicated here. The local paired subtraction/comparison run measures
 the additional order work on the same operands.
 
 [Z3 RCF](https://github.com/Z3Prover/z3/blob/z3-4.15.4/src/api/python/z3/z3rcf.py)
-is an **informational** comparator for `comparison`, `denominators` and
+is an orientation comparator for `comparison`, `denominators` and
 `compareHeight`. Use the pinned Z3 Python/FFI API on the same mathematical
 operands, with preparation outside timing. Its representation and cached signs
 differ from Hex's dense coefficient scans; report ratios without requiring a
@@ -442,16 +441,15 @@ constant-factor match or external superiority. The scheduled driver is
 `scripts/bench/ordered_fn_z3.py`; it invokes the existing lean-bench child for
 Hex, with adjacent alternating trials, and checks the returned signs.
 
-For `scan`, `degree`, `height`, `second` and `third`, declare
-**no-comparable-surface-in-named-comparator**: Z3 determines and caches the
+`scan`, `degree`, `height`, `second` and `third` have no Z3 comparator: Z3
+determines and caches the
 sign while constructing a value, and its public comparison with zero only
 reads that cached information. Timing construction instead would include work
 excluded from the Hex sign timer. Retain any sign-lookup observations as
 diagnostics, not as ratios of sign-computation costs.
 
-For `refinement`, `jointRefinement`, `horner`, `realHeight`, `approximation`,
-`successiveApproximation`, `thirdApproximation` and `provider`, the absence
-classification is **no-comparable-surface-in-named-comparator** relative to
-Z3 RCF. Z3 refines its built-in real constants internally but does not expose
+`refinement`, `jointRefinement`, `horner`, `realHeight`, `approximation`,
+`successiveApproximation`, `thirdApproximation` and `provider` likewise have
+no Z3 RCF comparator. Z3 refines its built-in real constants internally but does not expose
 the caller-supplied coefficient/constant approximation protocol measured here.
 Named-constant generation remains outside this library's benchmark contract.

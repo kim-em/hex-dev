@@ -1,0 +1,486 @@
+{
+  "scalar-sqrt.manifest.json": [
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/0.stdout",
+      "sha256": "c09bceaa62f30b438f8622033b653b1ff9e6d3dc201cfe925e93e3398d713afa",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/0.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/1.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/1.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/2.stdout",
+      "sha256": "ea4051d25617d0e024f030bda5851a0455d525691cc814683f878e4ccdb2ed5d",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/2.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/3.stdout",
+      "sha256": "e35d3608d07cf59f7870878491e6b275a359bb34ea901c9e8086aed6bec6e07a",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/3.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/bench-HexRealAlgebraic-Bench.lean.txt",
+      "sha256": "8ec200aabde0070e6dc34383de1abcbcc018efd170fa892ba8f2ba7a334dd6ce",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/bench-HexSturm-Bench.lean.txt",
+      "sha256": "f8c803b090c2ba78d6c888b40f0744bc0af914b2d8b38319bbd0b26c9aac3e95",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/HexSturm-Reduced.lean.txt",
+      "sha256": "1fb74c85ccc88f238a4ad0ea74ab8389b804bedf95b202994a086600c69fc669",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/HexPoly-Euclid-DivGcd.lean.txt",
+      "sha256": "d56dbe5cf69e9abe58436486e4b3870afe1a07650d62aa2a36af0e528b73f149",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/HexRealAlgebraic-Basic.lean.txt",
+      "sha256": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/HexRealAlgebraic-Roots.lean.txt",
+      "sha256": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/HexNumberField-Roots.lean.txt",
+      "sha256": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/HexNumberField-Convert.lean.txt",
+      "sha256": "059b2d9716d199c4b60fdbe9a51fcdb527728cbd554a75bf626ca7363c0a0b86",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/HexArith-Nat-Sqrt.lean.txt",
+      "sha256": "02684a5167ec604cdf432554058be0c4674e926fdb356934e45bf1964c81746e",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/4.stdout",
+      "sha256": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/4.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/5.stdout",
+      "sha256": "773fb1f2e2e076dd506d133fd9f11106c30eb440541d879fe11125a6e75495ce",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/5.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/6.stdout",
+      "sha256": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/6.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/7.stdout",
+      "sha256": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/7.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/spawn-anchor.json",
+      "sha256": "f5d9f77ebc3224cf7a6188d34b6fa772b9fbf2e4d7973ab608692d017e3a6e63",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/perf.data",
+      "sha256": "f251cd9cde9f9ec4155b63958f543503712f24486b2d71df38feffa50c5a8718",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/timed-1652128.jsonl",
+      "sha256": "ef3543ddc67e2f34a13a27e868645ef21064ba629789f93c1186af2823f83591",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/8.stdout",
+      "sha256": "7ff8c230550eeeb3ace6043ca21c476d575110665d610d330dabcef8150d94d0",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/8.stderr",
+      "sha256": "0f03d705e346e807157aec9fe2bbf82ce0a6da48da312d2126485ca2359dabbc",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/samply.json.gz",
+      "sha256": "eac4b7e1e8a7fe60437be3ef23ca919d7c803c588845ae885cf339976693b6a2",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/9.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/9.stderr",
+      "sha256": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/10.stdout",
+      "sha256": "af5121680ce6dc57eefb6ab51bf9bae33e79a280d4b76a30229b5d77574266e2",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/10.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/perf-samples.txt",
+      "sha256": "af5121680ce6dc57eefb6ab51bf9bae33e79a280d4b76a30229b5d77574266e2",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/normalized.json.gz",
+      "sha256": "418469ba19f0491b8416ef2ccd04498d1fa4c6030587b2a86f33d69561f072bd",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/11.stdout",
+      "sha256": "50d19ddcb8f11ef33b1d26f7b9f1552c53b433bec4c2ead525bf0554caa0b80c",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/11.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/filtered.json.gz",
+      "sha256": "fa289384bd00485297c96101b70511d23d6ced7db5c7e967c0ef0e97d7fc78a0",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/diagnostics.json",
+      "sha256": "5a45d04c05c0b7156b077e98c79f03e922f463d9b43db62adfebc7e8f7e59d77",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/12.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/12.stderr",
+      "sha256": "ac6b49089f7a114ad865681830f983d2ac66d5aab67be3d8d30842e27ac0d9a4",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/symbols.json",
+      "sha256": "818b64be6c28c3fe27cd009216fb4bc578b20418696167f258cd9c7b64ed4efb",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/13.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/13.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/14.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/14.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    }
+  ],
+  "reduced-query.manifest.json": [
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/0.stdout",
+      "sha256": "c09bceaa62f30b438f8622033b653b1ff9e6d3dc201cfe925e93e3398d713afa",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/0.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/1.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/1.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/2.stdout",
+      "sha256": "ea4051d25617d0e024f030bda5851a0455d525691cc814683f878e4ccdb2ed5d",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/2.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/3.stdout",
+      "sha256": "e35d3608d07cf59f7870878491e6b275a359bb34ea901c9e8086aed6bec6e07a",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/3.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/bench-HexRealAlgebraic-Bench.lean.txt",
+      "sha256": "8ec200aabde0070e6dc34383de1abcbcc018efd170fa892ba8f2ba7a334dd6ce",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/bench-HexSturm-Bench.lean.txt",
+      "sha256": "f8c803b090c2ba78d6c888b40f0744bc0af914b2d8b38319bbd0b26c9aac3e95",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/HexSturm-Reduced.lean.txt",
+      "sha256": "1fb74c85ccc88f238a4ad0ea74ab8389b804bedf95b202994a086600c69fc669",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/HexPoly-Euclid-DivGcd.lean.txt",
+      "sha256": "d56dbe5cf69e9abe58436486e4b3870afe1a07650d62aa2a36af0e528b73f149",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/HexRealAlgebraic-Basic.lean.txt",
+      "sha256": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/HexRealAlgebraic-Roots.lean.txt",
+      "sha256": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/HexNumberField-Roots.lean.txt",
+      "sha256": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/HexNumberField-Convert.lean.txt",
+      "sha256": "059b2d9716d199c4b60fdbe9a51fcdb527728cbd554a75bf626ca7363c0a0b86",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/HexArith-Nat-Sqrt.lean.txt",
+      "sha256": "02684a5167ec604cdf432554058be0c4674e926fdb356934e45bf1964c81746e",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/4.stdout",
+      "sha256": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/4.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/5.stdout",
+      "sha256": "773fb1f2e2e076dd506d133fd9f11106c30eb440541d879fe11125a6e75495ce",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/5.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/6.stdout",
+      "sha256": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/6.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/7.stdout",
+      "sha256": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/7.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/spawn-anchor.json",
+      "sha256": "31215ff9616213c025ead896e1e79cd60a160ead33bb194a6579699357597ca7",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/perf.data",
+      "sha256": "c55c69b718d529a21431d818a0b01816dfda24a61b1ca4c66c5031fc98ee0521",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/timed-1652124.jsonl",
+      "sha256": "310d2951988b79f5d8ead107c3bf60cb1c7e9b10bfb7b7da90617004eb04eb33",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/8.stdout",
+      "sha256": "1d56b70811632a417e19d526259200e5ef305c38e32be5e54c80acc9d90dc1f7",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/8.stderr",
+      "sha256": "5f02bd694c58e57bf8f644b45e3a3038f940889b638e80bc2538168e82cfd5d5",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/samply.json.gz",
+      "sha256": "6f6b539952e4cda6dbf9c66d8b09a00e125986876b651d1d7b47f31b4fdbb17b",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/9.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/9.stderr",
+      "sha256": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/10.stdout",
+      "sha256": "deb582d46c0f5a7d34953fbc034008517c3fcb12dcffe7c90fb119d5afaabc0d",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/10.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/perf-samples.txt",
+      "sha256": "deb582d46c0f5a7d34953fbc034008517c3fcb12dcffe7c90fb119d5afaabc0d",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/normalized.json.gz",
+      "sha256": "ab6632c92c8b1d9f5fa0ae6fc74a7b5b220775b45600a9cd32ab88aa92293bf0",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/11.stdout",
+      "sha256": "0e810359cd4d42659a30b7badf43a1d41b262eb417dd958e791dd70c18922d23",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/11.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/filtered.json.gz",
+      "sha256": "eaac3cab30ddc542a3451cd827ac0b06af9d0b704551ef3ad90c4bfeb716459b",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/diagnostics.json",
+      "sha256": "c94937c3fa164aa8b98bbe0e2ad37ce677ac9c83443e1372576555b7893d73cc",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/12.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/12.stderr",
+      "sha256": "7962ea9255b4fa3bbe9b2cc86c660bfd430525ccf4f04c5b6cac2b8fded37122",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/symbols.json",
+      "sha256": "c27bc27967c565a26204e0c1670ced171ba79c8a7d1c0806e5b238fcd43b05cd",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/13.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/13.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/14.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/14.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    }
+  ]
+}

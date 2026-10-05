@@ -238,15 +238,14 @@ grid rather than replacing it with asymptotic-only cases.
 
 ## External comparators
 
-| Comparator | Class | Scope |
-|---|---|---|
-| FLINT `fmpz_poly` via python-flint | informational | bench targets exercising arithmetic on `ZPoly` (the integer-polynomial surface inherited from `HexPoly`) |
+| Comparator | Scope |
+|---|---|
+| FLINT `fmpz_poly` via python-flint | bench targets exercising arithmetic on `ZPoly` (the integer-polynomial surface inherited from `HexPoly`) |
 
-Same comparator and rationale as `hex-poly` (informational because
+Same comparator and rationale as `hex-poly` (orientation only, because
 FLINT and Hex have independently tuned schoolbook/Kronecker/transform
-dispatchers, so one global ratio cannot gate every input cell). The Mignotte /
+dispatchers, so one global ratio cannot judge every input cell). The Mignotte /
 Hensel-lift
 data surfaces specific to `hex-poly-z` have no direct FLINT
-analog at the same level of abstraction; those bench targets
-declare absence with the `no-comparable-surface-in-named-comparator`
-reason per `SPEC/benchmarking.md §"Comparator naming"`.
+analog at the same level of abstraction, so those bench targets have no
+external comparator.

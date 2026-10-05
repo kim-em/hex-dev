@@ -342,11 +342,11 @@ support products.  Packing is linear in the input tree or supplied supports;
 each accepted scalar multiplication is a GMP integer multiplication on at
 most `N`-bit values.  A plain outer dot uses `r` inner-sized multiplications;
 a signed-packed outer dot uses four multiplications at its reported outer bit
-size, and the benchmark hash-compares both modes.  Registrations use
-[benchmarking's](../../SPEC/benchmarking.md#choosing-the-complexity-claim) first
-applicable mode.  A two-sided parametric claim is used only where the family
+size, and the benchmark hash-compares both modes.  Registrations follow
+[benchmarking §Choosing the complexity claim](../../SPEC/benchmarking.md#choosing-the-complexity-claim).
+A two-sided parametric claim is used only where the family
 fixes the operation count and one GMP multiplication regime while varying
-`N`.  A family crossing GMP regimes uses the one-sided quadratic upper bound
+`N`.  A family crossing GMP regimes uses the cited quadratic upper bound
 from the
 [GMP multiplication algorithms](https://gmplib.org/manual/Multiplication-Algorithms)
 plus the linear traversal cost, and records observed faster regimes as such.

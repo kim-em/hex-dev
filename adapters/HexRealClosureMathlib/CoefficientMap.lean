@@ -59,6 +59,12 @@ theorem comap_map {E : Type} [Field E] [DecidableEq E] (embedding : E →+* F) (
   simp only [map, comap, Subring.mem_comap]
   split_ifs <;> rfl
 
+omit [DecidableEq F] [DecidableEq G] in
+/-- An uninterpreted coefficient uses the total reader's zero fallback. -/
+theorem map_nonmem (coefficient : F) (outside : coefficient ∉ interpretation.domain) :
+    interpretation.map coefficient = 0 := by
+  simp only [map, dite_eq_right outside]
+
 theorem map_zero : interpretation.map 0 = 0 := by
   rw [map_mem _ _ interpretation.domain.zero_mem]
   exact interpretation.value.map_zero

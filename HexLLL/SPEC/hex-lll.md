@@ -171,6 +171,18 @@ external reducer revision. Raw external reduction, Lean exact
 reduction, Lean-certified external reduction, and the corresponding
 verified Isabelle measurements remain separate series.
 
+**Performance targets.** Both are measured against the verified Isabelle LLL
+(AFP `LLL_Basis_Reduction`, Haskell extraction from
+[Zenodo record 2636367](https://zenodo.org/records/2636367)):
+
+- Lean's exact LLL is at least as fast as Isabelle's verified LLL on shared
+  canonical inputs at the bottom of each input family's parameter ladder.
+- The certified path (fpLLL plus the verified checker) is at least as fast as
+  Isabelle's certified LLL (JAR 2020 §7; `svp_certified` from the same
+  archive) at the largest rung of each input family on which both complete
+  within the timeout. Measurements record the ratio, the checker's share of
+  the cost, and the candidate rejection rate.
+
 ## Native code
 
 `lean_lib HexLLL` sets `precompileModules := true` because the library binds

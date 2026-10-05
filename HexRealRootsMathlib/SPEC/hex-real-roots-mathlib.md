@@ -652,6 +652,13 @@ owner's ordinary benchmarks. A general comparison elaborator is deferred.
 
 ### Effective and semantic delivery boundaries
 
+`TarskiMod.lean` exports `Tarski.rootSum_mod`: replacing a query by its
+remainder modulo the head preserves the signed root sum over any ordered
+field, including zero heads, repeated roots and infinite endpoints. This
+algebraic invariance supplies the reduced-query frontend correspondence.
+The released `TarskiTests` module checks the public theorem and its ordinary
+kernel axiom set.
+
 `TarskiSum.lean` supplies the mathematical finite root set and signed sum,
 with singleton evaluation, query-one cardinality, zero and divisible queries,
 constant heads, and cardinality/degree bounds. It uses existing algebra and

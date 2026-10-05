@@ -2059,7 +2059,7 @@ Families:
   exponentiation-dominated exponent ladder and `n²` for the sequential product
   of bounded-size table-prime entry sums into a linearly growing accumulator.
 
-**Comparators.** PARI `factor` via cypari2 is **informational**:
+**Comparators.** PARI `factor` via cypari2 is recorded for orientation:
 PARI dispatches among trial division, SQUFOF, Pollard-Brent rho,
 `p - 1`, and MPQS with tuned crossovers. Hex specifies an explicit bounded
 SQUFOF route but has no implemented SQUFOF or MPQS production route; a
@@ -2070,18 +2070,15 @@ covers the table, balanced, and power-form families. A widening PARI ratio is
 reported as the observed cost of the portfolio difference, while the table
 and balanced internal controls above diagnose Hex dispatch and certificate
 construction and the rho registration/profile diagnose rho.
-GMP-ECM stage 1 is likewise **informational** on the unbalanced family: the
-comparison fixes the curve and `B1`, disables stage 2, and uses one fixed
-persistent-subprocess batch shape. Ratios are recorded at every shared rung;
-the protocol overhead for that batch shape is recorded and subtracted, and
-the eligibility rule in
-[SPEC/benchmarking.md](../../SPEC/benchmarking.md) marks which rungs may carry
-an interpretation. The PARI/python-flint oracle pairing is for conformance,
+GMP-ECM stage 1 is likewise recorded for orientation on the unbalanced family:
+the comparison fixes the curve and `B1`, disables stage 2, and uses one fixed
+persistent-subprocess batch shape. Ratios are recorded at every shared rung,
+with the protocol overhead for that batch shape measured alongside them. The
+PARI/python-flint oracle pairing is for conformance,
 not a performance requirement.
 
-The named factorization comparator suite has
-**no-comparable-surface-in-named-comparator** for kernel certificate replay,
-order/primitive-root computation, or generalized divisor sums: neither the
+Kernel certificate replay, order/primitive-root computation, and generalized
+divisor sums have no external comparator: neither the
 PARI `factor` endpoint nor GMP-ECM exposes those operations. Their evidence is
 therefore the native/kernel registration and profile rather than an external
 ratio.

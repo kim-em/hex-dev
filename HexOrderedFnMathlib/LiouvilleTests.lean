@@ -18,6 +18,8 @@ public import Mathlib.RingTheory.Localization.Integral
 /-!
 A test-local Liouville approximation provider with proved containment, width and
 transcendence, exercising registered real extensions and their total searches.
+The OrderedFn manual reuses this fixture's values, prepared fractions and
+finite-sign proofs alongside its registration and containment evidence.
 -/
 
 @[expose] public section

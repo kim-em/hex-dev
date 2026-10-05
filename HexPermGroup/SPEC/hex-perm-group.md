@@ -925,7 +925,12 @@ example : Subgroup.closure ({σ, τ} : Set (Equiv.Perm (Fin 11))) = ⊤ := by
 ```
 
 The degree is a numeral. The generating set is a set literal `{σ₁, …, σₖ}` or
-the coercion of a `Finset` literal. Each generator and the query `g` are
+the coercion of a `Finset` literal. The subgroup and the generating set may
+each be given by a definition, such as
+`def M11 : Subgroup (Equiv.Perm (Fin 11)) := Subgroup.closure {σ, τ}` or
+`def gens : Set (Equiv.Perm (Fin 11)) := {σ, τ}`: the tactic unfolds
+definitions one at a time until it reaches `Subgroup.closure` and a literal, and
+never unfolds `Subgroup.closure` itself. Each generator and the query `g` are
 closed terms of type `Equiv.Perm (Fin n)` that the compiler can evaluate, and
 the claimed order is a numeral.
 
@@ -1133,7 +1138,7 @@ The companion also proves that no action of `C_2` can send its generator
 to a three-cycle. This build-only counterexample exercises the relation-law
 requirement on action constructors; generator bijectivity is insufficient.
 
-The GAP throughput comparator is **informational**, using the same named
+The GAP throughput comparator uses the same named
 operations through a persistent process. GAP has different permutation storage,
 chain heuristics and group-specific methods, and does not emit Lean replay
 certificates. Time construction on fresh groups and membership/order on
@@ -1143,9 +1148,8 @@ GAP order against a fresh Hex construction.
 
 Permutation array operations are covered by GAP's permutation operations and
 `Order`; cycle serialization is outside the timed region. Certificate
-generation and kernel replay have
-**no-comparable-surface-in-named-comparator** for this protocol and require
-their own native and kernel measurements. All arithmetic uses exact integers.
+generation and kernel replay have no comparable GAP surface and are measured
+on their own. All arithmetic uses exact integers.
 
 ## Complexity, benchmarks and placement
 

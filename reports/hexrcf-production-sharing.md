@@ -1,5 +1,10 @@
 # Fixed-field quoted proof syntax
 
+> The drivers under `scripts/bench/hexrcf_*.py` and the probe modules under
+> `bench/HexRCF/ProofProbe/` that this report cites, other than `Examples` and
+> `Registered/`, were removed from `main` after commit `45a4e4e9a4`. Check out
+> that commit to rerun them.
+
 The selected-field producer emits literal isolation, radical, root-query and
 sign-table evidence before ordinary-kernel quotation. This audit addresses
 whether the resulting proof syntax can be represented compactly despite

@@ -1,0 +1,80 @@
+{
+  "measured_source": "e69775794cde5727ad76d515a2f4ad2d04471e2e",
+  "current_source": "f4b496999e3ee395c175e0f731f15d348be7e266",
+  "checks": [
+    {
+      "path": "HexNumberField/Basic.lean",
+      "measured_sha256": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+      "current_sha256": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+      "equal": true
+    },
+    {
+      "path": "HexNumberField/Convert.lean",
+      "measured_sha256": "7ddcb009a40146461d30c1e23d7b2dcfcafb62c03e5867b020ace11ce78f74dd",
+      "current_sha256": "7ddcb009a40146461d30c1e23d7b2dcfcafb62c03e5867b020ace11ce78f74dd",
+      "equal": true
+    },
+    {
+      "path": "HexNumberField/Lazy.lean",
+      "measured_sha256": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+      "current_sha256": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+      "equal": true
+    },
+    {
+      "path": "HexNumberField/Roots.lean",
+      "measured_sha256": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+      "current_sha256": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+      "equal": true
+    },
+    {
+      "path": "HexNumberFieldMathlib/Exact.lean",
+      "measured_sha256": "2643164a438395789ab1e8d07a47eb25e81ceeaaa179e5cfd33c549447197430",
+      "current_sha256": "2643164a438395789ab1e8d07a47eb25e81ceeaaa179e5cfd33c549447197430",
+      "equal": true
+    },
+    {
+      "path": "HexRealAlgebraic/Basic.lean",
+      "measured_sha256": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+      "current_sha256": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+      "equal": true
+    },
+    {
+      "path": "HexRealAlgebraic/Roots.lean",
+      "measured_sha256": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+      "current_sha256": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+      "equal": true
+    },
+    {
+      "path": "HexRealAlgebraic/Order.lean",
+      "measured_sha256": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+      "current_sha256": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+      "equal": true
+    },
+    {
+      "path": "bench/HexRealAlgebraic/Bench.lean",
+      "measured_sha256": "ce266771fc5752e1ea17f9f326877177dc8a635b09ef0d449aef227ff0454d71",
+      "current_sha256": "ce266771fc5752e1ea17f9f326877177dc8a635b09ef0d449aef227ff0454d71",
+      "equal": true
+    },
+    {
+      "path": "bench/HexNumberField/Bench.lean",
+      "measured_sha256": "24f97cee0a3b52190fe46c6e8b95a17b463b4f9f3eeebb005eaf82d94cf7562a",
+      "current_sha256": "24f97cee0a3b52190fe46c6e8b95a17b463b4f9f3eeebb005eaf82d94cf7562a",
+      "equal": true
+    },
+    {
+      "path": "lean-toolchain",
+      "measured_sha256": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+      "current_sha256": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+      "equal": true
+    },
+    {
+      "path": "lake-manifest.json",
+      "measured_sha256": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+      "current_sha256": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+      "equal": true
+    }
+  ],
+  "all_match": true,
+  "note": "Rebased onto main 8bfb411d41; only unrelated real-closure correspondence changed in the base. Measurements remain attributed to their frozen compiled source."
+}

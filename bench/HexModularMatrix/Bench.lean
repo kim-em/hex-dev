@@ -113,7 +113,7 @@ def runRepeatedAt (n r : Nat) (reuse : Bool) :=
   let A := solveInput n
   runRepeated A (rhsInput A false r) reuse
 
-/-- Informational FLINT fmpq_mat_solve comparator on the same integer system. -/
+/-- Orientation FLINT fmpq_mat_solve comparator on the same integer system. -/
 def runFlintSolve (rows rhs : Lean.Json) (_ : Unit) : IO Int := do
   let result ← Hex.BenchOracle.Flint.runOp "fmpq_mat" "dixon_solve"
     #[("rows", rows), ("rhs", rhs)]
@@ -737,7 +737,7 @@ def runRankPublic (A : Matrix Int n m) (_ : Unit) : IO Int := return A.rankModul
 
 def runRankDirect (A : Matrix Int n m) (_ : Unit) : IO Int := return A.rank
 
-/-- Informational FLINT integer-rank comparator. -/
+/-- Orientation FLINT integer-rank comparator. -/
 def runRankFlint (rows : Lean.Json) (_ : Unit) : IO Int := do
   let value ← Hex.BenchOracle.Flint.runOp "fmpz_mat" "rank" #[("rows", rows)]
   match value.getInt? with

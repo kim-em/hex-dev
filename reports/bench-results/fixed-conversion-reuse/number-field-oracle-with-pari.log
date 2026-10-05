@@ -1,0 +1,4 @@
+usage: number_field_flint_pari.py [-h] [--failure-dir FAILURE_DIR]
+                                  [--profile PROFILE] [--seed SEED]
+                                  [--check | input]
+number_field_flint_pari.py: error: unrecognized arguments: --fixtures

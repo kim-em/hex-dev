@@ -64,6 +64,11 @@ end
 `Finset` literal. -/
 meta partial def setLitElems (s : Expr) : MetaM (Option (List Expr)) := do
   let s ← instantiateMVars s
+  if s.isAppOfArity ``List.cons 3 then
+    let some rest ← setLitElems (s.getArg! 2) | return none
+    return some (s.getArg! 1 :: rest)
+  if s.isAppOfArity ``List.nil 1 then
+    return some []
   if s.isAppOfArity ``Insert.insert 5 then
     let some rest ← setLitElems (s.getArg! 4) | return none
     return some (s.getArg! 3 :: rest)
@@ -80,7 +85,10 @@ meta partial def setLitElems (s : Expr) : MetaM (Option (List Expr)) := do
     if body.isAppOfArity ``Membership.mem 5 && !(body.getArg! 3).hasLooseBVars then
       return ← setLitElems (body.getArg! 3)
   let s' ← whnfR s
-  if s' != s then setLitElems s' else return none
+  if s' != s then return ← setLitElems s'
+  -- A generating set given by a definition, such as `def gens : Set _ := {a, b}`.
+  let some s' ← unfoldDefinition? s | return none
+  setLitElems s'
 
 /-- The degree `n` of a type `Equiv.Perm (Fin n)`, as a numeral. -/
 meta def permDegree (ty : Expr) : MetaM Nat := do
@@ -176,13 +184,52 @@ meta inductive GoalKind where
   | notMem (g : Expr)
   | top
 
-/-- The generating set `s` when `H` is exactly `Subgroup.closure s`. -/
+/-- `H` unfolded until it is `Subgroup.closure s`, so that a subgroup given by a
+definition, such as `def M : Subgroup _ := Subgroup.closure {a, b}`, is
+recognised. Definitions are unfolded one at a time, and `Subgroup.closure`
+itself is never unfolded. -/
+meta partial def unfoldToClosure? (H : Expr) (fuel : Nat := 32) : MetaM (Option Expr) := do
+  let H ← whnfR (← instantiateMVars H)
+  if H.isAppOfArity ``Subgroup.closure 3 then return some H
+  match fuel with
+  | 0 => return none
+  | fuel + 1 =>
+    let some H' ← unfoldDefinition? H | return none
+    unfoldToClosure? H' fuel
+
+/-- The generating set `s` when `H` is `Subgroup.closure s`, possibly behind
+definitions. -/
 meta def closureArg? (H : Expr) : MetaM (Option Expr) := do
-  let H ← instantiateMVars H
-  if H.isAppOfArity ``Subgroup.closure 3 then return some (H.getArg! 2)
-  let H' ← whnfR H
-  if H'.isAppOfArity ``Subgroup.closure 3 then return some (H'.getArg! 2)
-  return none
+  let some H' ← unfoldToClosure? H | return none
+  return some (H'.getArg! 2)
+
+/-- `s` with definitions unfolded until it is a set literal or a coerced
+`Finset`, so that a generating set such as `def gens : Set _ := {a, b}` is
+recognised. -/
+meta partial def unfoldSetDefs (s : Expr) (fuel : Nat := 32) : MetaM Expr := do
+  let s ← instantiateMVars s
+  if s.isAppOfArity ``Insert.insert 5 || s.isAppOfArity ``Singleton.singleton 4 ||
+      s.isAppOfArity ``EmptyCollection.emptyCollection 2 ||
+      s.isAppOfArity ``SetLike.coe 4 || s.isAppOfArity ``setOf 2 then
+    return s
+  match fuel with
+  | 0 => return s
+  | fuel + 1 =>
+    let some s' ← unfoldDefinition? s | return s
+    unfoldSetDefs s' fuel
+
+/-- The goal with every subgroup that unfolds to `Subgroup.closure s` replaced by
+that closure, and `s` unfolded to a literal. It is definitionally equal to the
+goal, and later steps rewrite `s` syntactically. -/
+meta def unfoldClosures (goal : Expr) : MetaM Expr := do
+  Meta.transform goal (pre := fun e => do
+    let ty ← whnfR (← inferType e)
+    unless ty.isAppOfArity ``Subgroup 2 do return .continue
+    match ← unfoldToClosure? e with
+    | some H =>
+      let s ← unfoldSetDefs (H.getArg! 2)
+      return .done (mkAppN H.getAppFn (H.getAppArgs.set! 2 s))
+    | none => return .continue)
 
 /-- The subgroup `H` when the type `T` is `↥H`, that is `{x // x ∈ H}`. -/
 meta def coeSortArg? (T : Expr) : MetaM (Option Expr) := do
@@ -241,6 +288,8 @@ meta def rewriteSet (mvarId : MVarId) (s gsList : Expr) (gens : List Expr) (perm
   -- `{x | x ∈ gs}` in exactly the form the soundness statements use
   let clTy ← whnfR (← inferType (← mkAppM ``closure_ofEquiv #[gsList]))
   let target := (clTy.getArg! 2).getArg! 2
+  if ← isDefEq target s then
+    return mvarId
   let direct ← setOfListEq permTy gens
   let pf ← if ← isDefEq (← inferType direct) (← mkEq target s) then
       pure direct
@@ -273,6 +322,7 @@ meta def packTie (nE g : Expr) (x : Nat) (suffix : String) : TacticM Expr := do
 
 meta def permGroupTac (cfg : Config) : TacticM Unit := withMainContext do
   let mvarId ← getMainGoal
+  let mvarId ← mvarId.replaceTargetDefEq (← unfoldClosures (← mvarId.getType))
   let (s, kind) ← readGoal (← mvarId.getType)
   let some gens ← setLitElems s
     | throwError "perm_group: the generating set must be a set literal or a coerced Finset \

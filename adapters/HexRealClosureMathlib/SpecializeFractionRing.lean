@@ -189,6 +189,10 @@ noncomputable def fractionRing (domain : Subring F) (value : domain →+* G) :
     rintro _ ⟨presentation⟩
     exact ⟨presentation.neg⟩
 
+/-- Membership retains exactly a surviving source fraction presentation. -/
+theorem fractionRing_mem (domain : Subring F) (value : domain →+* G) (fraction : Hex.RationalFn F) :
+    fraction ∈ fractionRing domain value ↔ Nonempty (FractionPresentation domain value fraction) := Iff.rfl
+
 namespace FractionRing
 
 variable (domain : Subring F) (value : domain →+* G)

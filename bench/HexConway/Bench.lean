@@ -19,7 +19,7 @@ slice.
 
 Scientific registrations:
 
-* `runLuebeckConwayPolynomialLookupChecksum`: mode-1 affine lookup and checksum
+* `runLuebeckConwayPolynomialLookupChecksum`: two-sided affine lookup and checksum
   over every committed Luebeck table key, using the one-based table ordinal to
   recover the selected entry's degree.
 * `runConwayPolySupported_2_1Checksum`: fixed canonical measurement for the
@@ -27,17 +27,17 @@ Scientific registrations:
   stored polynomial out of the witness in constant time, but the target also
   checksums the result, and that traversal is linear in the degree, so this
   measurement stands for `C(2, 1)` rather than for the committed table.
-* `runTier1Irreducibility_13_6Checksum`: mode-3 Rabin irreducibility
+* `runTier1Irreducibility_13_6Checksum`: fixed-budget Rabin irreducibility
   verification at the retained `C(13, 6)` anchor and binary degree 16.
-* `runTier2Compat_13_1_6Checksum`: mode-3 divisor compatibility for the
+* `runTier2Compat_13_1_6Checksum`: fixed-budget divisor compatibility for the
   divisor pairs, including the binary degree-16 norm chain.
 
-The mode-3 ceilings are enabled only by `HEXCONWAY_ENFORCE_BUDGETS=1` during
-scientific runs, so the CI smoke gate never asserts hosted-runner timing. The
-remaining fixed Tier 1 and Tier 2 registrations are correctness/hash
-anchors for selected entries and make no complexity claim. The headline report
-records the failed controlled parameter ladders that rule out stronger modes
-for the two performance-evidence registrations.
+The fixed-budget ceilings are enabled only by `HEXCONWAY_ENFORCE_BUDGETS=1`
+during scientific runs, so the CI `verify` check never asserts hosted-runner
+timing. The remaining fixed Tier 1 and Tier 2 registrations are
+correctness/hash anchors for selected entries and make no complexity claim.
+The performance report records the failed controlled parameter ladders that
+rule out a two-sided model for the two budgeted registrations.
 
 Fixed registrations are wrapped as `Unit → IO α` so the harness exercises
 them per-call rather than measuring a closed compile-time-folded constant
@@ -153,10 +153,10 @@ private initialize tier1_13_6Ref : IO.Ref (MonicPoly 13) ←
             Conway.luebeckConwayPolynomial_13_6_monic⟩
 
 /- `maxSecondsPerCall` bounds the whole child process, including startup. A
-scientific mode-3 run sets `HEXCONWAY_ENFORCE_BUDGETS=1`; only then does this
-wrapper time the operation body and throw on a ceiling violation. Throwing
+scientific fixed-budget run sets `HEXCONWAY_ENFORCE_BUDGETS=1`; only then does
+this wrapper time the operation body and throw on a ceiling violation. Throwing
 checks every auto-tuned invocation, including iterations whose result the
-harness discards. The CI `verify` smoke gate leaves the variable unset and
+harness discards. The CI `verify` check leaves the variable unset and
 therefore does not assert timing on a noisy hosted runner. -/
 def withBudget (name : String) (ceilingNanos : Nat) (work : IO Bool) : IO Bool := do
   if (← IO.getEnv "HEXCONWAY_ENFORCE_BUDGETS") == some "1" then

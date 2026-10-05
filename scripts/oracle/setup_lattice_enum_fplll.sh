@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the informational comparator against installed fplll 5.5.0.
+# Build the orientation-only comparator against installed fplll 5.5.0.
 # Dependencies: C++17, pkg-config, fplll 5.5.0, GMP C++ and MPFR development headers.
 # Prints the executable path; honours CXX and HEX_ORACLE_CACHE.
 set -euo pipefail

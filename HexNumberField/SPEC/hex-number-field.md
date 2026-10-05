@@ -347,7 +347,10 @@ forms applied with the number's own representative `a.rep`.
 `PolyQuot.toAlgebraicNumber?` materializes `1, a, a², ...` once with one
 fixed-field multiplication per new power, finds the first Krylov dependence by
 row reduction, clears denominators, normalizes the primitive part, and
-identifies the matching isolated root.
+identifies the matching isolated root. Its canonical constructor reuses this
+certified isolation run. `PolyQuot.toAlgebraicNumber?_eq` proves equality with
+the pipeline using `AlgebraicNumber.ofNormalized?`, including the stored
+canonical representative and every checked failure.
 
 `AlgebraicRoot.exact?` factors `a.p`, selects the unique irreducible factor whose
 isolated root agrees with `a.rep`, and returns that factor in canonical form.
@@ -1099,8 +1102,8 @@ output polynomial and canonical isolating square.
 ## External comparators
 
 **PARI/GP via cypari2** (https://pari.math.u-bordeaux.fr/, driven through
-the cypari2 binding, the same binding the conformance oracles use) —
-**informational**, scoped to the fixed-field arithmetic bench targets.
+the cypari2 binding, the same binding the conformance oracles use),
+scoped to the fixed-field arithmetic bench targets.
 PARI's t_POLMOD arithmetic (`Mod(a, m) * Mod(b, m)` and `Mod(a, m)^(-1)`)
 is the callable unit surface computing exactly `PolyQuot` multiplication and
 extended-gcd inversion in `ℚ[x]/(m)`. It is wired as a persistent-subprocess
@@ -1109,10 +1112,9 @@ process call (`scripts/oracle/pari_bench_driver.py`,
 pairs on identical deterministic inputs, joined on the identical reduced
 rational coefficient hash. PARI is a mature optimized C library, so the
 constant-factor gap is structural rather than algorithmic; the ratio is
-recorded for orientation and does not gate Phase 4.
+recorded for orientation only.
 
-Absence declarations, all with reason
-**no-comparable-surface-in-named-comparator**:
+PARI exposes no comparable callable unit for the other surfaces:
 
 - *Factorization-lazy and canonical arithmetic* (`AlgebraicRoot.add?` and
   friends, `AlgebraicNumber` arithmetic): PARI has no certified lazy

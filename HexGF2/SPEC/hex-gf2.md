@@ -225,9 +225,9 @@ proof budget.
 
 ## External comparators
 
-| Comparator | Class | Scope |
-|---|---|---|
-| NTL `GF2X` | informational | performance ratios for packed multiplication, division, modular reduction, and GCD; addition is a same-input correctness/protocol anchor |
+| Comparator | Scope |
+|---|---|
+| NTL `GF2X` | performance ratios for packed multiplication, division, modular reduction, and GCD; addition is a same-input correctness/protocol anchor |
 
 NTL is the speed reference for hand-tuned `GF(2)[x]` arithmetic. The measured
 NTL 11.6.0 build links gf2x 1.3.0 for large multiplication; NTL's `GF2X`
@@ -237,19 +237,16 @@ crossover. Hex uses packed schoolbook
 multiplication, long division and remainder, and Euclidean GCD.
 Those operations therefore have different complexity classes at
 the upper end of the ladder; their ratios orient future optimization
-but do not gate Phase 4. Addition has the same linear packed-word
+and set no performance target. Addition has the same linear packed-word
 kernel shape, but the hex-framed driver measures serialization rather
 than raw NTL addition, so its paired registrations are correctness and
-protocol anchors rather than performance evidence. The comparator is
-`informational`.
+protocol anchors rather than performance evidence.
 
 The wiring pattern (process-call driver vs `@[extern]` C++ shim
 vs hybrid) is an implementation choice for the HO that wires
 this comparator. The SPEC names NTL as the tool; the choice of
 integration shape is documented in the bench module docstring
 when the HO lands. Either pattern satisfies the SPEC.
-
-Structured metadata in `libraries.yml: HexGF2.phase4.comparators`.
 
 ## Native code
 

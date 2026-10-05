@@ -841,11 +841,12 @@ the `euclidUntil` target and therefore supplies the external curve for the
 comparator is scoped to scalar `Crt.push` and fixed-depth `CrtVec.push`, using
 `fmpz_mod_ctx` inversion and `fmpz` multiply-adds for the same incremental
 Garner recurrence; it supplies the `incremental-crt` and `vector-crt` curves.
-Both are `informational`: they are C-backed implementations of the same
-arithmetic primitives, and the ratios chiefly measure binding and orchestration
-cost rather than an alternative Hex algorithm. SymPy is the oracle and is not
-a performance comparator. No comparator is `gating`, because this library has
-no algorithmic choice for one to discriminate: the algorithms here are the
+Both are recorded for orientation: they are C-backed implementations of the
+same arithmetic primitives, and the ratios chiefly measure binding and
+orchestration cost rather than an alternative Hex algorithm. SymPy is the
+oracle and is not a performance comparator. No performance target is set
+against either, because this library has no algorithmic choice for one to
+discriminate: the algorithms here are the
 standard ones and the performance question is entirely about the arithmetic
 underneath, which hex-arith already measures.
 

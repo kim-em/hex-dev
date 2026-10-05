@@ -191,7 +191,7 @@ order, Bézout, and monicity witnesses. Integer and rational fixture results
 are checked coefficient-for-coefficient against FLINT. Benchmarks separate
 evaluation, Krylov construction, vector orders, matrix minimal polynomials,
 certificate production, and certificate checking, with FLINT and PARI as
-informational comparators.
+external comparators recorded for orientation.
 
 # The Mathlib correspondence
 %%%

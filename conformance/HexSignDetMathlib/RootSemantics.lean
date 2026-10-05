@@ -13,8 +13,7 @@ public import HexRealRootsMathlib.RealClosed
 
 public section
 
-/-! Actual root support from accepted BKR replay.
-Computational conformance owner: `HexSignDet`. -/
+/-! Actual root support from accepted BKR replay. -/
 namespace Hex.SignDetMathlib.RootSemantics
 
 open Hex Hex.SignDet Hex.SignDet.Conformance HexPolyMathlib.Interpret HexRealRootsMathlib

@@ -1599,6 +1599,15 @@ infinitesimal depth; unrelated paths and decreasing depth are rejected.
 check, so the same conversion rebuilds dependent roots over a proper real-prefix
 enlargement. Earlier infinitesimals retain their positions before any new ones.
 
+`Shared.register? source` returns a `Registration` packet containing the new
+shared collection, the actual checked inclusion of the previous shared target,
+and the new owner's inclusion. Its `previous.value` transports values already
+computed from several owners, and its coefficient map transports their
+polynomials. `maps_eq` binds all retained owner maps to that same inclusion.
+`Shared.Model.register?` proves interpretation by the returned canonical model;
+`register?_union` preserves the union image of every previously computed value.
+The existing `add?` surface returns the same shared collection.
+
 The development companion `BaseOrder` derives an ordered coefficient field
 from a provider-derived `Chain.Realization`, then constructs its real-closed
 ambient and base tower model. `BaseInclusion.Model.ofTarget` in `BaseMapModel`
@@ -1646,6 +1655,44 @@ prefix/depth compatibility condition for every owner.
 `Shared.Model.value`, `polynomial`, `sign`, and `compare` preserve the original
 owners' values, coefficients, and native order results. `value_of_model` also
 identifies the transported value with a separately retrieved canonical owner model.
+
+`Shared.Model.enlarge ambient` proves the existence of a complete `Shared.Model` for the
+actual returned enlargement. `Model.next` constructs its new declared base
+interpretation, preserving old constants through the ambient coefficient
+embedding. `Model.nextBase_parameter` identifies the new base parameter with
+its prescribed ambient infinitesimal. The same returned shared target model
+interprets the enlargement's cached parameter as that infinitesimal.
+The enlarged target and every retained owner are the new canonical
+`Context.model?` results; the rebuilt native predecessor cache and transported
+old cache are coherent with that same target. The returned checked inclusion
+identifies the old shared interpretation with the new target. This complete
+model supports `add?`, `collect?`, and further `enlarge` calls. These agreements
+are derived from the original factory model and provider history.
+
+`Shared.presentation index value` packages the actual checked owner value as a
+finite native presentation over the shared collection's declared base. The
+`SharedPresentation` development adapter proves that its denotation is the
+canonical original owner's value. `Shared.Model.toUnion` then enters that
+value into the prescribed relative algebraic union, preserving canonical zero,
+one, arithmetic, total inversion, mathematical equality and comparison.
+`Shared.targetPresentation` and `Shared.targetToUnion` also cover arbitrary
+computed target values, including arithmetic combining different owners. Their
+operation and sign theorems use the fixed canonical target interpretation.
+`Shared.Model.toUnion_coherent` identifies an original value across differently
+ordered gatherings, and `algEquiv_toValue` connects its map to the mathematical
+presentation quotient. A Liouville-prefix example combines nested rational-root
+owners after proper real-prefix enlargement.
+`Shared.union_coverage` proves that every element of that union has an actual
+native root-producer entry and a successful shared gathering whose inclusion
+represents it. `Shared.Model.union_extend` instead appends such an actual
+producer owner to an existing gathering and preserves every retained owner's
+union image. Target equality, zero, one and the base-embedding law are explicit.
+`toUnion_embed` preserves a parent's image through a selected child, including
+in the Liouville-prefix client. Together with `Presentation.algEquiv` and `Presentation.realClosed`,
+this identifies these compatible native values with the algebraic real closed
+union under the supplied base embedding. This construction uses the native
+prefix/depth compatibility check; it does not deduplicate differently encoded
+equivalent roots or supply joint ordinary-real specialization.
 
 Registration caches checked inclusions for every original algebraic predecessor.
 Parent/child registration, sibling branches, and repeated owners reuse their
@@ -1867,21 +1914,84 @@ and staged-order results with dependency closure. The interpretation ingredients
 5. `Shared.gather?_models` constructs coherent original-owner interpretations
    and predecessor-cache models for compatible live contexts. Its factory
    derives source coefficient agreement from the target provider history;
-   `Shared.Model.enlarge?` then transports the whole returned owner family
+   `Shared.Model.enlarge` constructs the whole enlarged factory model,
+   including canonical owner interpretations and coherent predecessor caches,
    through one actual shared enlargement. `Context.origin` extracts each
    exact base and validated root suffix. Reuse recognizes exact native
    predecessors and checks cached generator images, their negatives and linear
    coefficient-field roots against the full converted descriptor. Covered
    equivalent intervals and reordered algebraic chains add no root level;
-   arbitrary expressions in several generators are not searched, and compatible
+   arbitrary expressions in several generators are not searched. Compatible
    real-prefix permutations remain outside the prefix check.
-   Owners
-   over incomparable real-prefix paths are rejected. Supporting them requires
-   new native inclusions for non-prefix keys as well as a joint realization.
-   Remaining: re-establish the canonical `Shared.Model`, including its target,
-   original owners and cache, after enlargement against the next staged
-   realization and lifted reference. Automatic dependency-closed traversal and
-   the total `Context.enlarge` constructor also remain required.
+   `Shared.Model.enlarge` re-establishes the canonical model, original owner
+   interpretations and predecessor cache against the next staged realization
+   and lifted reference. Finite operand requests use the interface below.
+
+### Finite live requests
+
+`Tower.Live.Frame owner` retains values, polynomials and checked descriptors
+in their immutable owner. A `Request` is an ordered finite list of these
+frames. `rootRequest` retains a selected root's defining descriptor in its
+predecessor and its actual cached child generator. Each owner supplies its
+validated coefficient ancestry through `Context.origin`.
+
+`Request.gather?` gathers that complete ancestry once, using the shared
+predecessor cache, and transports every frame through its retained inclusion.
+It validates every descriptor again against the actual common target.
+`Collection.enlarge?` rebuilds that shared suffix once after adding an
+infinitesimal, then transports the current frames through the previous target's
+inclusion and refreshes their descriptors. The proved transport composition
+retains the original producer certificate without recomputing its historical
+maps. This incremental branch checks that the predecessor inclusion maps
+zero to zero; otherwise the producer retains a full transport fallback.
+The semantic inclusion proves zero preservation, and native tests check the
+incremental branch at both enlargements. The enlargement retains
+one map for the previous shared target and maps for all original owners;
+`Enlargement.maps` identifies their compositions. `Enlargement.collection`
+retains the original request for further enlargement.
+
+The companion proves gathering success from the canonical staged base
+factory and native prefix compatibility. It proves enlargement success with
+a complete canonical model of the returned collection. At every original
+frame position, the actual produced values, polynomial coefficients and
+selected roots retain their interpreted lists in one common model.
+`Collection.model` interprets an actual gathered result through that factory.
+`Collection.enlarge?_models` retains the new parameter identity and the
+checked predecessor model; `Enlargement.semantics` preserves the ordered
+frame lists across that enlargement in the lifted old model.
+`Collection.root_agreement` identifies the actual child value of a root pair
+in a request equal to `pre ++ rootRequest root ++ post` with the root selected by its refreshed predecessor
+descriptor. Both interpretations come from the collection's canonical factory;
+no root-agreement premise is supplied. The theorem also retains the parent model from the canonical factory at the
+current reference and equality with the original selected descriptor root. It also applies to the collection
+returned by enlargement. `Enlargement.model` retrieves that new canonical
+model through the public collection interface for the next enlargement.
+`model_parameter` identifies its new parameter and `model_previous` retains
+the checked old-target inclusion aligned with that same returned model.
+`Enlargement.preserve` states complete frame-list preservation using those
+public accessors; `Enlargement.root_agreement` identifies a selected root
+inside a composite request through the returned canonical model. A request
+split equation locates either root pair without casting the collection or
+its enlargement. `Collection.roots_twice` starts with a gathered composite
+request, obtains each public returned model, and proves that both final selected
+roots equal their starting interpretations through the two actual coefficient
+embeddings. It retains the starting factory equations as conclusions.
+`Collection.frame` provides total access by an original request index, with
+`frame_eq` identifying it with the returned frame list. Public projection
+equations identify the enlargement's collection frames, previous map and
+parameter with its checked packet.
+Native tests gather a selected parent and dependent child in reverse order,
+transport computed values and coefficients, perform two enlargements, check
+fresh descriptor bindings and reject stale descriptors and serialized values
+and polynomials. The original contexts remain usable.
+
+The native `gather?` compatibility check requires each owner's constants to
+form a prefix of the shared base and its infinitesimal depth to fit. Incomparable
+prefixes such as `[a]` and `[b]`, and permutations such as `[a,b]` and `[b,a]`,
+need non-prefix native inclusions and a joint realization. Separately, simultaneous
+finite sign realization at an ordinary real point through arbitrarily interleaved
+algebraic and infinitesimal stages remains an issue-wide requirement; the ambient
+`Model.next` interpretations here do not assert that ordinary-real conclusion.
 
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`

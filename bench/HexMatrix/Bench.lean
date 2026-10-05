@@ -36,11 +36,10 @@ back `reports/figures/hex-matrix-mul-scaling.svg` via
 `scripts/plots/hex-matrix-mul-scaling.py`.
 
 The dense base surfaces (multiplication, row operations on the structural
-`Vector` / `Array` primitives) have no named external comparator (declared
-absence with the `structural-layer` reason per
-`SPEC/Libraries/hex-matrix.md §"External comparators"`). The Strassen driver
-declares the same structural-layer absence: its baseline is the internal naive
-`mul`, not an external tool. Determinant benchmarks live in `hex-determinant`
+`Vector` / `Array` primitives) have no named external comparator: they are a
+structural layer (`SPEC/Libraries/hex-matrix.md §"External comparators"`). The
+Strassen driver likewise has no external comparator: its baseline is the
+internal naive `mul`, not an external tool. Determinant benchmarks live in `hex-determinant`
 (Leibniz) and `hex-bareiss` (Bareiss, with the FLINT comparator).
 -/
 

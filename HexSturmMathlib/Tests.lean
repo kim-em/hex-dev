@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexSturmMathlib
+public import HexSturmMathlib.Tests.Reduced
 public import HexRealRootsMathlib.TarskiTests
 
 public section
@@ -15,7 +16,6 @@ public section
 #print axioms HexSturmMathlib.rootCount_sturm
 
 /-! Universal instantiations of field frontend domain and replay correspondence.
-Computational conformance owner: `HexSturm`.
 No runtime comparison is used to prove a semantic query value. -/
 namespace HexSturmMathlib.Tests
 
