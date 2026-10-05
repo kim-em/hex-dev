@@ -313,6 +313,25 @@ which the shared tower assembly also accepts through `Inclusion.base?`.
 The shared-assembly section below describes this transport and the remaining
 coherent owner and cache factory.
 
+`RealChain.subsequence?` and the packed `RealPrefix.subsequence?` accept a
+source whose keys occur in order within an already constructed target chain.
+They preserve matching formal variables and include omitted target constants
+without polynomial gcd work. For example, the independently registered path
+`[β]` enters `[α, β]`. `subsequence?_isSome` proves the exact key check;
+`subsequence?_self` proves that a self map is the identity.
+The companion `RealPrefix.Model.subsequence_map` derives preservation of every
+real coefficient from both registered models. `RealChain.Realization.subsequence_sign`
+derives agreement of their actual native signs. `RealContext.provider_unique`
+uses stored approximation progress to prove that a registry key has one real
+value. The build-only `SubsequenceTests.insert_before` constructs the target
+with `Model.register`, checks this non-prefix inclusion and proves that the
+prefix-only producer rejects it.
+
+The target retains its own relative-transcendence premises and progress proofs
+for each exact predecessor. The subsequence factory does not construct a joint
+target from separately supplied providers, permute a real-key path, or enlarge
+the prefix-only `Tower.BaseInclusion` interface.
+
 `BaseContext.Context.real` finishes that prefix. `Context.infinitesimal` then
 adds any number of successive positive infinitesimals. The types prevent
 adding another real constant after this step. These carriers use the existing

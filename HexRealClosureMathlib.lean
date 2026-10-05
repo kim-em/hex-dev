@@ -9,4 +9,5 @@ public import HexPolyMathlib.Interpret
 public import HexRealClosureMathlib.BaseContext
 public import HexRealClosureMathlib.BaseStagedRealization
 public import HexRealClosureMathlib.BaseProvider
+public import HexRealClosureMathlib.BaseSubsequence
 public import HexRealClosureMathlib.BaseModels
