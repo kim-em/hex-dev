@@ -156,6 +156,15 @@ def stop_signal(number, _frame):
     raise SystemExit(128 + number)
 
 
+def install_signals():
+    previous = {}
+    for number in (signal.SIGTERM, signal.SIGHUP):
+        handler = signal.getsignal(number)
+        if handler != signal.SIG_IGN:
+            previous[number] = signal.signal(number, stop_signal)
+    return previous
+
+
 def validate_retained(directory):
     """Check every retained raw file and the complete fixed capture schedule."""
     directory = Path(directory)
@@ -322,8 +331,7 @@ def main():
         print(label, "retained", flush=True)
         return row["result_hash"]
 
-    previous_signals = {number: signal.signal(number, stop_signal)
-                        for number in (signal.SIGTERM, signal.SIGHUP)}
+    previous_signals = install_signals()
     try:
         archive_sources(out, metadata)
         save()

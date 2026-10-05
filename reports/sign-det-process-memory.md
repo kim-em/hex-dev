@@ -41,8 +41,11 @@ identify the input; that digest alone does not identify a certificate.
 Each archive keeps the original metadata, all stdout/stderr and page snapshots,
 and the verified source reconstruction patch. Compressed files retain hashes
 of both stored and original bytes; collection metadata is copied unchanged.
-CI re-runs the retained input checks, reconstructs the expected callback digests,
-and validates every retained file, capture order, answer and memory summary.
+CI applies the independent Python input validators to the retained inspection
+outputs and validates every retained file, capture order, answer and memory
+summary. Callback digests come from the compiled inspection commands, whose Lean
+checks compare callbacks with exact known-root answers; CI does not rerun that
+binary or independently reconstruct those digests from the root literals.
 The stderr captures also retain mimalloc’s process-exit statistics through
 `MIMALLOC_SHOW_STATS=1`. These describe allocator page/chunk commitments and
 reserves, and are diagnostic output rather than validated live-object counts.
@@ -108,3 +111,18 @@ Output directories must be new and outside the worktree. The driver checks
 build freshness and source, executable and harness identity before and after
 collection. Failed output remains available. Ctrl-C, SIGTERM and SIGHUP stop the owned
 profile process group and leave the collection marked failed with retained output.
+A signal inherited as ignored remains ignored, preserving `nohup` behavior.
+Later collector revisions change validation and interruption handling, rather
+than the measured callbacks or the retained original captures.
+
+Package each completed collection and validate its portable archive with:
+
+```sh
+python3 scripts/bench/sign_det_memory_archive.py /path/to/new-joint-captures \
+  /path/to/new-joint-archive
+```
+
+The packaging command checks the original capture hashes, copies metadata bytes
+unchanged, compresses the remaining files deterministically, records both raw and
+stored hashes, and applies the same archive validator used by CI. It leaves the
+original collection untouched.

@@ -12,7 +12,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.bench.sign_det_memory import child_record, page_peak, validate_retained
+from scripts.bench.sign_det_memory import child_record, page_peak, validate_retained, install_signals
 
 
 class MemoryRecords(unittest.TestCase):
@@ -25,6 +25,18 @@ class MemoryRecords(unittest.TestCase):
 
     def check(self, row):
         return child_record(json.dumps(row), "f", 3, "revision")
+
+    def test_inherited_ignored_hangup_is_preserved(self):
+        original = signal.signal(signal.SIGHUP, signal.SIG_IGN)
+        previous = {}
+        try:
+            previous = install_signals()
+            self.assertEqual(signal.getsignal(signal.SIGHUP), signal.SIG_IGN)
+            self.assertNotIn(signal.SIGHUP, previous)
+        finally:
+            for number, handler in previous.items():
+                signal.signal(number, handler)
+            signal.signal(signal.SIGHUP, original)
 
     def test_wrong_subject_and_source(self):
         self.check(self.row)
@@ -85,6 +97,22 @@ class RetainedMemory(unittest.TestCase):
         self.assertEqual(joint["revision"], other["revision"])
         self.assertEqual(joint["binary_sha256"], other["binary_sha256"])
 
+
+    def test_packaging_preserves_original_metadata(self):
+        from scripts.bench.sign_det_memory_archive import package
+        source = Path(__file__).resolve().parents[2] / "reports/data/sign-det-process-memory/4c790b883d/joint"
+        archive = json.loads((source / "archive.json").read_text())
+        with tempfile.TemporaryDirectory() as temporary:
+            raw = Path(temporary) / "raw"
+            raw.mkdir()
+            for name, binding in archive["files"].items():
+                data = (source / binding["stored"]).read_bytes()
+                (raw / name).write_bytes(gzip.decompress(data) if binding["stored"].endswith(".gz") else data)
+            target = Path(temporary) / "archive"
+            self.assertEqual(len(package(raw, target)["runs"]), 36)
+            self.assertEqual((target / "metadata.json").read_bytes(), (raw / "metadata.json").read_bytes())
+            with self.assertRaisesRegex(ValueError, "must be new"):
+                package(raw, target)
 
     def test_self_consistent_forged_answers_reject(self):
         source = Path(__file__).resolve().parents[2] / "reports/data/sign-det-process-memory/4c790b883d/joint"
