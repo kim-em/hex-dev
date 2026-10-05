@@ -26,4 +26,8 @@ namespace Goal
 export Hex.PermGroup.Kernel.Tactic.Goal (card mem notMem all)
 end Goal
 
+namespace Prepared
+export Hex.PermGroup.Kernel.Tactic.Prepared (order)
+end Prepared
+
 end Hex.PermGroup.Tactic

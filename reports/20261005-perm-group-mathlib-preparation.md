@@ -43,7 +43,10 @@ records host load. All 44 completed samples are retained.
 Every final comparison stays within the 10% limit. M22's initial mean change
 was +25.35%; its one permitted unchanged rerun gave -0.79%. The table uses
 that rerun for M22 and the initial series for every other workload. These are
-shared-host observations, without a claim of deterministic speedup.
+shared-host observations, without a claim of deterministic speedup or
+multithreaded throughput. Subsequent review fixes affect source rendering and
+compatibility aliases, rather than certificate production or replay; their
+source hashes are recorded separately from the measured endpoints.
 
 | Workload | Before (s) | After (s) | Change |
 | --- | ---: | ---: | ---: |

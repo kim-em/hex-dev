@@ -135,11 +135,15 @@ theorem nonmember : ¬ Generated (#[] : Array (Perm 2)) (Perm.ofImages 2 [1, 0])
   perm_group_public
 theorem full : GeneratesAll #[Perm.ofImages 2 [1, 0]] := by perm_group_public
 
-private meta def expectFailure (action : TacticM α) : TacticM Unit := do
+private meta def expectFailure (fragment : String) (action : TacticM α) : TacticM Unit := do
   let failed ← try
     let _ ← action
     pure false
-  catch _ => pure true
+  catch ex =>
+    let message ← ex.toMessageData.toString
+    unless message.contains fragment do
+      throwError "unexpected interface failure: {message}"
+    pure true
   unless failed do throwError "expected interface failure"
 
 elab "check_perm_group_failures" : tactic => withMainContext do
@@ -148,13 +152,13 @@ elab "check_perm_group_failures" : tactic => withMainContext do
   let swap ← mkAppM ``Perm.ofImages #[mkNatLit 2, images]
   let identity ← mkAppM ``Perm.id #[mkNatLit 2]
   let bad : Tactic.Input := { term := swap, canonical? := some (identity, ← mkEqRefl identity) }
-  expectFailure (Tactic.prepare {} 2 [bad])
+  expectFailure "canonical input equality has the wrong type" (Tactic.prepare {} 2 [bad])
   let wrongDegree ← mkAppM ``Perm.id #[mkNatLit 3]
   let wrongProof ← mkEqRefl wrongDegree
   let badDegree : Tactic.Input := { term := swap, canonical? := some (wrongDegree, wrongProof) }
-  expectFailure (Tactic.prepare {} 2 [badDegree])
+  expectFailure "canonical input has the wrong degree" (Tactic.prepare {} 2 [badDegree])
   let unresolved ← mkFreshExprMVar (← inferType swap)
-  expectFailure (Tactic.prepare {} 2 [{ term := unresolved }])
+  expectFailure "closed terms" (Tactic.prepare {} 2 [{ term := unresolved }])
   let prepared ← Tactic.prepare {} 2 [{ term := swap }]
   let marker ← Kernel.Tactic.auxName "level_0"
   -- `inferType` does not validate application arguments. Replay must kernel-check
@@ -164,12 +168,12 @@ elab "check_perm_group_failures" : tactic => withMainContext do
     (← mkEqRefl equalityType) (mkConst ``True.intro)
   let badEquality ← Tactic.prepare {} 2
     [{ term := swap, canonical? := some (swap, malformed) }]
-  expectFailure (Tactic.replay badEquality (.card 2))
+  expectFailure "mismatch" (Tactic.replay badEquality (.card 2))
   if (← getEnv).contains marker then throwError "bad equality leaked declarations"
-  expectFailure (Tactic.replay { prepared with images := [[0, 1]] } (.card 2))
+  expectFailure "mismatch" (Tactic.replay { prepared with images := [[0, 1]] } (.card 2))
   if (← getEnv).contains marker then throwError "failed replay leaked declarations"
   -- The old callback API remains supported and must also restore assigned goals.
-  expectFailure (Kernel.Tactic.prove {} 2 [swap] (.card 2) fun _ _ _ _ => do
+  expectFailure "injected packing failure" (Kernel.Tactic.prove {} 2 [swap] (.card 2) fun _ _ _ _ => do
     goal.assign (mkConst ``True.intro)
     throwError "injected packing failure")
   if (← getEnv).contains marker then throwError "compatibility replay leaked declarations"

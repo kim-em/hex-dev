@@ -539,7 +539,9 @@ meta def levelSrc (L : Level) : String :=
   s!"    invs := {rarraySrc toString L.invs},\n    parents := {rarraySrc pairSrc L.parents},\n" ++
   s!"    lookup := {L.lookup},\n    next := {listSrc pairSrc L.next} }"
 
-/-- Print the same packing ties and bounded checks that the tactic replays. -/
+/-- Print kernel packing ties and bounded checks for the prepared certificate.
+Canonical image constructors use their optimized ties; other inputs use
+kernel evaluation of the original term. -/
 meta def render (name : String) (prepared : Prepared)
     (elemSrc : List String) (sSrc : String)
     (imagesTie : Expr → MetaM (Option String) := fun g => do
@@ -559,7 +561,8 @@ meta def render (name : String) (prepared : Prepared)
   let ctx := s!"{n} (width {n}) (ident {n} (width {n}))"
   let lv (k : Nat) : String :=
     listSrc (fun j => s!"{name}_level_{j}") (List.range' k (c.length - k))
-  let mut out := "section\n\nopen Hex Hex.PermGroup Hex.PermGroup.Kernel\n\n"
+  let mut out := "section\n\nset_option maxRecDepth 8192\n\n" ++
+    "open Hex Hex.PermGroup Hex.PermGroup.Kernel\n\n"
   for h : i in [0:c.length] do
     out := out ++ s!"noncomputable def {name}_level_{i} : Hex.PermGroup.Kernel.Level :=\n  {levelSrc c[i]}\n\n"
   -- one packing theorem per generator, as in the tactic
@@ -578,7 +581,9 @@ meta def render (name : String) (prepared : Prepared)
           "  decide +kernel\n\n"
         let tie := s!"(({lemmaName} {name}_input_{k}_images).trans {name}_input_{k}_pack)"
         if let some (_, equality) := input.canonical? then
-          let equalitySrc ← withOptions (fun opts => (opts.setBool `pp.fullNames true).setBool `pp.proofs true) do
+          let equalitySrc ← withOptions (fun opts =>
+              ((opts.setBool `pp.fullNames true).setBool `pp.proofs true)
+                |>.setBool `pp.deepTerms true |>.set `pp.maxSteps (100000000 : Nat)) do
             return (← ppExpr equality).pretty
           pure s!"((congrArg (pack (n := {n})) ({equalitySrc})).trans {tie})"
         else pure tie
@@ -652,9 +657,10 @@ meta def elabPermGroupCertificate : Command.CommandElab := fun stx => do
     let s ← instantiateMVars s
     let out ← match ← arrayElems? s with
       | some gens =>
-        let sSrc := (sStx.reprint.getD "").trimAscii.toString
+        let sSrc := ((sStx.updateTrailing "".toRawSubstring).reprint.getD "").trimAscii.toString
         let elemSrc := match arraySources? sStx with
-          | some xs => xs.toList.map fun e => (e.reprint.getD "").trimAscii.toString
+          | some xs => xs.toList.map fun e =>
+              ((e.updateTrailing "".toRawSubstring).reprint.getD "").trimAscii.toString
           | none => (List.range gens.length).map fun k => s!"({sSrc})[{k}]'(by decide)"
         certificateSource name (← degree s) gens elemSrc sSrc
       | none => do

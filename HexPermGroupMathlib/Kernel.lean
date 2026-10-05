@@ -28,10 +28,8 @@ theorem card_closure {S : Array (Perm n)} {c : Certificate}
     (h : check n (S.toList.map pack) c = true) : Nat.card (closure S) = order c :=
   hasOrder_iff_card.mp (order_of_check h)
 
-/-- A Mathlib permutation from its literal images. The checked constructor and
-its packing proof belong to the computational library. -/
-@[expose] def permOfImages (n : Nat) (l : List Nat) : Equiv.Perm (Fin n) :=
-  (Perm.ofImages n l).toEquiv
+-- Keep the historical name as an alias of the lightweight conversion.
+export Hex.PermGroup (permOfImages)
 
 theorem pack_ofEquiv_permOfImages {n : Nat} {l : List Nat} (h : imagesOk n l = true) :
     pack (Perm.ofEquiv (permOfImages n l)) = packList n l := by

@@ -287,9 +287,10 @@ its conclusion through the correspondence theorems. -/
     let p ← presentation s
     let prepared ← prepare {} p.degree (← p.elements.mapM fun e => input p.degree e)
     let n := p.degree
-    let rawSrc := (sStx.reprint.getD "").trimAscii.toString
+    let rawSrc := ((sStx.updateTrailing "".toRawSubstring).reprint.getD "").trimAscii.toString
     let sSrc := s!"({rawSrc} : Set (Equiv.Perm (Fin {n})))"
-    let elemSrc := elemStx.toList.map fun e => (e.reprint.getD "").trimAscii.toString
+    let elemSrc := elemStx.toList.map fun e =>
+      ((e.updateTrailing "".toRawSubstring).reprint.getD "").trimAscii.toString
     let gsSrc := "[" ++ ", ".intercalate elemSrc ++ "]"
     let arraySrc := s!"(({gsSrc} : List (Equiv.Perm (Fin {n}))).map Perm.ofEquiv).toArray"
     let out ← render name prepared
@@ -304,7 +305,7 @@ its conclusion through the correspondence theorems. -/
       | 0 => "setOf_mem_nil"
       | 1 => "setOf_mem_singleton"
       | _ => "setOf_mem_cons, setOf_mem_singleton"
-    return some (out ++ s!"\nopen Hex.PermGroup in\n" ++
+    return some (out ++ "\nset_option maxRecDepth 8192 in\nopen Hex.PermGroup in\n" ++
       s!"theorem {name}_card : Nat.card (Subgroup.closure {sSrc}) = {prepared.order} := by\n" ++
       s!"  rw [show {sSrc} = \{x | x ∈ {gsSrc}} by\n" ++
       s!"    symm; simp only [{setLemmas}{finsetLemmas}]]\n" ++
