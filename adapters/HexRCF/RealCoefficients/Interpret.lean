@@ -81,13 +81,21 @@ def admitRational (source : Expr) : ReifyM Unit := do
 private partial def coverSubterms (source : Expr) : StateM ExprSet Unit := do
   if (← get).contains source then return ()
   modify (·.insert source)
-  let _ ← source.traverseChildren fun child => do
-    coverSubterms child
-    pure child
+  let e := source.consumeMData
+  let args := e.getAppArgs
+  let op := e.getAppFn.constName?
+  if [``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv].any (op == some ·) &&
+      args.size == 6 then
+    coverSubterms args[4]!
+    coverSubterms args[5]!
+  else if [``Neg.neg, ``Inv.inv].any (op == some ·) && args.size == 3 then
+    coverSubterms args[2]!
+  else if e.isAppOfArity ``HPow.hPow 6 then
+    coverSubterms args[4]!
 
 /-- Admit original rational guards, largest first, without repeating admission
-for a subterm of an already admitted guard. A covered divisor uses the enclosing
-operation's shared scalar bound, which can be less conservative than a separate
+for a subterm of an already admitted guard. A covered operand uses the enclosing
+operation's shared numerator or scalar bound, which can be less conservative than a separate
 numerator bound. Results retain original guard order; unsupported syntax is
 recognition-only, while every other error is terminal. All admission precedes
 per-guard zero evaluation. -/

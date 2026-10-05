@@ -92,20 +92,37 @@ run_elab do
   unless admitted == #[true, true, true, false] do
     throwError "guard admission changed original order or hid unsupported syntax"
   let power : Q(ℝ) := q((2 : ℝ) ^ (3 : ℕ))
-  let admit (guards : Array Expr) := ((Coefficients.admitGuards guards).run
+  let checkGuards (guards : Array Expr) := ((Coefficients.admitGuards guards).run
     {config, budget := .ofBudget config.ring.budget}).run
-  let .error (.budget exhausted) ← admit #[power] |
+  let .error (.budget exhausted) ← checkGuards #[power] |
     throwError "standalone power guard bypassed its numerator bound"
   unless exhausted.dimension == .coefficientBits do
     throwError "standalone guard used the wrong resource dimension"
-  let .ok (covered, _) ← admit #[power, q(1 / $power)] |
+  let .ok (covered, _) ← checkGuards #[power, q(1 / $power)] |
     throwError "nested divisor did not reuse its enclosing scalar admission"
   unless covered == #[true, true] do
     throwError "shared divisor admission changed original guard order"
-  let .error (.budget exhausted) ← admit #[q(Real.sin 0 + $power), power] |
+  let .error (.budget exhausted) ← checkGuards #[q(Real.sin 0 + $power), power] |
     throwError "unsupported outer guard hid an oversized inner guard"
   unless exhausted.dimension == .coefficientBits do
     throwError "uncovered inner guard used the wrong resource dimension"
+  let hiddenInstance := mkApp q(fun _ : ℝ => (inferInstance : HDiv ℝ ℝ ℝ)) power
+  let hiddenType := mkApp q(fun _ : ℝ => ℝ) power
+  let instanceGuard : Q(ℝ) := mkAppN (mkConst ``HDiv.hDiv [.zero, .zero, .zero])
+    #[q(ℝ), q(ℝ), q(ℝ), hiddenInstance, q((1 : ℝ)), q((2 : ℝ))]
+  let typeGuard : Q(ℝ) := mkAppN (mkConst ``HDiv.hDiv [.zero, .zero, .zero])
+    #[hiddenType, q(ℝ), q(ℝ), q(inferInstance : HDiv ℝ ℝ ℝ), q((1 : ℝ)), q((2 : ℝ))]
+  for hidden in #[instanceGuard, typeGuard] do
+    let hidden : Q(ℝ) := hidden
+    let _ ← Hex.RCF.checkProof `Hex.RCF.RationalRoots.hidden
+      q($hidden = $hidden) (← mkEqRefl hidden)
+    let .ok (admitted, _) ← checkGuards #[hidden] |
+      throwError "canonical hidden-argument fixture failed rational admission"
+    unless admitted == #[true] do throwError "hidden-argument fixture was unsupported"
+    let .error (.budget exhausted) ← checkGuards #[hidden, power] |
+      throwError "an unbounded type or instance argument covered another guard"
+    unless exhausted.dimension == .coefficientBits do
+      throwError "hidden guard used the wrong resource dimension"
   let mut small : Q(ℝ) := q(1)
   for _ in [:32] do small := q($small ^ (0 : ℕ))
   let .ok (3, _) ← degree q($small / 3) |
