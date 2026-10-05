@@ -70,8 +70,9 @@ end OrderedFnInfinitesimals
 
 The explicit `sign` and `compare` functions accept a predecessor sign
 function. The companion proves the order laws when that function agrees
-with the predecessor's order. It does not install a global order on every
-rational-function carrier.
+with the predecessor's order. The scope is opt-in; while it is open,
+`RationalFn K` uses the infinitesimal order on the available ordered
+coefficient field. Registered real extensions use a separate wrapper.
 
 With the companion import, that same scope also installs its proved
 `LinearOrder`, `IsStrictOrderedRing` and core `Lean.Grind.OrderedRing`
@@ -81,8 +82,10 @@ executable carrier.
 The examples select `Field.toGrindField` locally before forming their
 carriers. This keeps the coefficient arithmetic dictionary consistent with
 the companion's Mathlib field. When transporting fractions formed with the
-core rational dictionary, `HexRationalFnMathlib.ratField_eq` transports to
-the companion dictionary. The generic
+core rational dictionary, use `HexRationalFnMathlib.ratField_eq` by an
+explicit rewrite or equality transport to the companion dictionary; the
+two rational dictionaries do not unify definitionally. The existing
+`LiouvilleCoreTests` fixture demonstrates this transport. The generic
 `HexRationalFnMathlib.coreField_eq` identifies the field induced on a
 rational-function carrier with its original core field.
 
@@ -166,8 +169,9 @@ def linear (q : Rat) : RationalFn Rat :=
 #guard Real.sign? source
   (RationalFn.ofPoly (#p[-2, 0, 1])) 4 = none
 
-theorem source_correct : ApproximationCorrect
-    (Rat.castHom ℝ) (_root_.Real.sqrt 2) source :=
+theorem source_correct :
+    ApproximationCorrect (Rat.castHom ℝ)
+      (_root_.Real.sqrt 2) source :=
   SemanticTests.sqrt_correct
 
 example : (1 : Int) =
@@ -183,8 +187,8 @@ The computation needs only endpoint data; its mathematical conclusion
 needs a containment proof for this provider, subject and embedding.
 Here `source_correct` reuses the companion test's proof for `Real.sqrt 2`.
 That algebraic subject is suitable for finite checks, but cannot supply a
-transcendental registration. Fuel exhaustion returns `none`, as does a
-denominator that cannot be separated from zero. A zero-containing interval
+transcendental registration. Fuel exhaustion returns `none`; this includes
+a denominator that remains unseparated from zero. A zero-containing interval
 does not prove a zero value; an exact singleton zero can do so.
 
 {docstring Hex.OrderedFn.Real.sign?_sound}
@@ -210,6 +214,10 @@ embedding `ι` to be strictly monotone. `Valid` does not include that
 condition: it justifies the real interpretation's order, which can differ
 from a previously chosen order on the predecessor. `Extension.C_lt` uses
 `StrictMono ι` to prove agreement on embedded coefficients.
+
+Over the rationals, `Rat.cast_strictMono` supplies this condition. At a
+successive real level, `Extension.eval_strictMono` supplies it under the
+local `LinearOrder` built from that theorem's same witness tuple.
 
 {docstring Hex.OrderedFn.Real.Extension.C_lt}
 
@@ -239,8 +247,9 @@ A further real registration uses `Extension.approximation` to obtain bounds
 for its predecessor coefficients. Each new real constant needs relative
 transcendence over that entire predecessor field. Separate transcendence
 of two constants over the rationals does not establish this condition.
-The fixture's `LiouvilleTests.second_valid` constructs such a second
-registration under explicit hypotheses on its new constant and provider.
+The fixture's `LiouvilleTests.second_valid` proves validity under explicit
+hypotheses on its new constant and provider; `secondRegistration` constructs
+the corresponding registration.
 For a fixed relatively transcendental subject, containment proofs for both
 providers and the same embedding suffice to preserve order through
 `Extension.transport_lt`.
@@ -253,7 +262,8 @@ coefficient order agrees with the executable scan. The public theorems
 `Infinitesimal.X_pos` and `X_lt_C` establish positivity and the comparison
 with every positive predecessor coefficient; `X_lt_pow` supplies the
 successive-level law used above. `Infinitesimal.towerEmbed` and
-`towerEmbed_lt` identify the two-level field with its iterated Hahn model.
+`towerEmbed_lt` embed the two-level field into its iterated Hahn model
+and preserve and reflect order.
 
 {docstring Hex.OrderedFn.Infinitesimal.embed}
 
@@ -283,10 +293,13 @@ The existing test-local Liouville provider illustrates a complete real
 registration: rational partial sums and tail bounds have proved containment
 and requested width, and `liouvilleNumber 2` has proved transcendence. The
 fixture defines `positive = X-5/4`, `negative = X-2` and their quotient.
-Its `preparedPositive` stores an explicit normalized fraction. A finite
-successful trial proves that prepared value's total sign from containment.
-The fixture identifies the arithmetic-built `positive` with it using
-`positive_eq`, proved through injective real evaluation under transcendence.
+Its `preparedPositive` stores a literal normalized fraction that the kernel
+can reduce. A finite successful trial proves that prepared value's total
+sign from containment. Its equality with the arithmetic-built `positive`
+is formal and independent of the chosen real subject. The fixture proves
+that identity using `positive_eq` through injective real evaluation under
+transcendence; this is one proof route, rather than an extra hypothesis of
+the finite-success sign theorem.
 
 For an already registered carrier, `Extension.OrderValid` requires
 containment and relative transcendence; it does not request the width
@@ -338,5 +351,9 @@ algebraic extensions. A positive infinitesimal over the rationals has no
 order-preserving real embedding. A later real registration could choose a
 different real interpretation of the formal rational functions, but its
 order would not extend that infinitesimal order. It therefore cannot serve
-as a subsequent stage with the prescribed order preservation. General
-tower-building and ordinary-real realization remain separate obligations.
+as a subsequent stage with the prescribed order preservation. The existing
+`Hex.RealClosure.BaseContext` constructors already separate the real prefix
+from subsequent infinitesimals. See the
+{ref "hex-rcf-selected-root"}[selected-root RCF examples] for delivered
+consumers. General tower-building and ordinary-real realization remain
+separate obligations.
