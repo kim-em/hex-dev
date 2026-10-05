@@ -176,11 +176,13 @@ def main():
     results = []
     for index, path in enumerate(args.inputs):
         rows = [json.loads(line) for line in path.read_text().splitlines() if line.startswith('{')]
-        require(len(rows) == 1, 'one functional row per input required')
-        checked = verify(rows[0])
-        if args.trace:
-            checked['callback_counts'] = trace_counts(args.trace[index])
-        results.append(checked)
+        require(bool(rows), 'missing functional rows')
+        require(not args.trace or len(rows) == 1, 'one traced row per input required')
+        for row in rows:
+            checked = verify(row)
+            if args.trace:
+                checked['callback_counts'] = trace_counts(args.trace[index])
+            results.append(checked)
     if len(results) == 2:
         require(results[0]['depth'] == results[1]['depth'] and
                 results[0]['steps'] == results[1]['steps'] and

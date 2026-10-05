@@ -132,7 +132,7 @@ def main():
     run([host_cc, '-c', '-o', str(observer_object), str(observer),
          '-I', include, '-fPIC', '-O3', '-std=c11'])
     arguments.append(str(observer_object))
-    for symbol in ['lean_nat_gcd', '__gmpz_gcd', '__gmpz_gcdext', 'lean_io_prim_handle_put_str']:
+    for symbol in ['lean_nat_gcd', '__gmpz_gcd', '__gmpz_gcdext', 'lean_io_prim_handle_put_str', 'lean_dbg_trace']:
         arguments.append('-Wl,--wrap=' + symbol)
     binary = output / 'nested-normalization-counts'
     run([compiler, '-o', str(binary)] + arguments)
