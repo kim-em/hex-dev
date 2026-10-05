@@ -2371,11 +2371,29 @@ example (d : SampleSelection) :
     sampleFormula .existsReal
 ```
 
+All coefficient coordinates belong to one native parent context, and they
+may be different values there. Independently constructed fields require
+proved conversion into that common context first. The
+{name}`Hex.RCF.RealCoefficients.Samples.section_formula` and
+{name}`Hex.RCF.RealCoefficients.Samples.sector_formula` laws interpret the
+whole Boolean formula at the same selected boundary or ordinary sector
+point; {name}`Hex.RCF.RealCoefficients.Samples.cell_formula` applies throughout
+the cell. These compose actual root coverage, cell membership and sign laws,
+without adding them as unproved assumptions.
+
+The compiled regressions distinguish positive and negative selected √2 in
+`∀ x, x² + α > 0`, and swap two distinct coefficient coordinates to check
+that their order changes the answer. They retain repeated/common roots,
+zero and cancelled atoms, all six comparisons and Boolean operations, and
+equal, reversed and half-open domains. Fresh modules check the public
+semantics and its standard axiom inventory. These are correctness regressions;
+no timing improvement is claimed for this composition.
+
 For an existing {name}`Hex.RealAlgebraicNumber`,
-{name}`Hex.RCF.RealCoefficients.NumberField.run` constructs that parent
+{name}`Hex.RCF.RealCoefficients.NumberField.run` constructs the native parent context
 with the owner's checked number-field factory. Its inputs are the original
 {name}`Hex.QAdjoin` coordinates. The factory retains the generator's minimal
-polynomial and selected real embedding; packing preserves its conjugate.
+polynomial and selected real embedding; packing preserves that embedding.
 The following public law covers every shared one-quantifier formula at
 those original real values:
 
@@ -2402,32 +2420,21 @@ root of `X³ − 2`, then find further roots of `x² − α` over each original
 number field. They test the complete conjunction with the repeated atom
 `(x² − α)² ≥ 0` and the half-open guards `1 < x` and `x ≤ 2`.
 Positive √2 and the cube root return true; negative √2 returns false.
-Further controls compute `α² − 1` in the original fixed field, swap the
-coordinate order, cancel a leading term, and retain zero atoms and exact
-endpoint, equal and reversed domains. All six comparisons and both
+Further controls select the middle and largest roots of the totally real
+cubic `X³ − 3X + 1`, a non-monic quadratic and a rational generator. They
+compute the irrational coordinate `α² − α` in each quadratic conjugate,
+swap the coordinate order, cancel a leading term, and retain zero atoms
+and exact endpoint, equal and reversed domains. All six comparisons and both
 quantifiers are exercised. The public correctness, totality and truth laws
 have only the standard three axioms. These compiled controls are diagnostic
 examples; they do not supply frozen certificates or quoted source proofs.
 This API performs root production and does not complete generic replay or
 frontend authentication for that backend. No timing improvement is claimed.
 
-All coefficient coordinates belong to one native parent context, and they
-may be different values there. Independently constructed fields require
-proved conversion into that common context first. The
-{name}`Hex.RCF.RealCoefficients.Samples.section_formula` and
-{name}`Hex.RCF.RealCoefficients.Samples.sector_formula` laws interpret the
-whole Boolean formula at the same selected boundary or ordinary sector
-point; {name}`Hex.RCF.RealCoefficients.Samples.cell_formula` applies throughout
-the cell. These compose actual root coverage, cell membership and sign laws,
-without adding them as unproved assumptions.
-
-The compiled regressions distinguish positive and negative selected √2 in
-`∀ x, x² + α > 0`, and swap two distinct coefficient coordinates to check
-that their order changes the answer. They retain repeated/common roots,
-zero and cancelled atoms, all six comparisons and Boolean operations, and
-equal, reversed and half-open domains. Fresh modules check the public
-semantics and its standard axiom inventory. These are correctness regressions;
-no timing improvement is claimed for this composition.
+All coordinates supplied to this entry point belong to the same original
+number field. Each call constructs its presentation anew. A caller reusing
+one checked presentation can pack its coordinates once and call `Samples.run`
+with `parent := source.context`, using `source.model` for its correctness law.
 
 Independently constructed contexts can be gathered through the owner's
 {name}`Hex.RealClosure.Tower.Shared.gather?` operation. Its checked maps retain

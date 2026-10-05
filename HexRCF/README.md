@@ -210,8 +210,9 @@ owner's checked presentation preserves the minimal polynomial and selected
 real embedding; `run_spec` proves shared sentence truth at those original
 values. The [number-field controls](../conformance/HexRCF/NumberField.lean)
 find further roots over selected quadratic and cubic fields, distinguish
-conjugates and swapped computed coordinates, and check zero/cancelled atoms
-and half-open endpoints. This is diagnostic production, with ordinary-kernel
+conjugates and swapped irrational coordinates, include several-real-root,
+non-monic and rational generators, and check zero/cancelled atoms and
+half-open endpoints. This is diagnostic production, with ordinary-kernel
 correctness laws, rather than frozen replay or source-goal quotation.
 `Gather.values` transports ordered coefficients from independently constructed
 native contexts through the owner's checked common-context maps. Its

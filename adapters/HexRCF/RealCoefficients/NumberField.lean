@@ -15,7 +15,9 @@ open Hex
 
 /-- Construct the actual original selected number-field presentation before
 specializing source coordinates and producing shared section/sector rows.
-This is diagnostic production, not frozen certificate replay. -/
+All coordinates belong to this original field. Each call constructs its
+presentation; callers reusing a checked presentation can pack once and use
+`Samples.run` directly. This is diagnostic production, not frozen replay. -/
 @[expose] def run (generator : RealAlgebraicNumber) (registry : RealClosure.BaseContext.Registry)
     (values : Fin n → QAdjoin generator.toAlgebraic)
     (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier) : Option Bool :=

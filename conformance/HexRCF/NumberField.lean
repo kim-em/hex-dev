@@ -50,10 +50,41 @@ private def decideCubic : Option Bool :=
       (fun _ : Fin 1 => generator.toAlgebraic.toQAdjoin) schema .existsReal
 #guard decideCubic = some true
 
-/-- Exercise the owner factory, original QAdjoin arithmetic and native cell
-folds together. These are compiled diagnostics, not quoted source proofs. -/
-private def controls : Bool := Id.run do
-  let some generator := selected 1 2 | return false
+private def decideRoot (context : Nat) (coefficients : List Int)
+    (lower upper : Rat) : Option Bool := do
+  let d ← Root.validate context
+    { context := context, head := DensePoly.ofList coefficients,
+      lower := .finite lower, upper := .finite upper, indices := [], signs := [] }
+  let generator := d.handle.canonical
+  NumberField.run generator registry
+    (fun _ : Fin 1 => generator.toAlgebraic.toQAdjoin) schema .existsReal
+
+-- Three real conjugates: the middle root is below 1; the largest is above 1.
+#guard decideRoot 9 [1,-3,0,1] 0 1 = some false
+#guard decideRoot 9 [1,-3,0,1] 1 2 = some true
+-- Primitive non-monic defining polynomial and a degree-one field.
+#guard decideRoot 10 [-3,0,2] 1 2 = some true
+#guard decideRoot 11 [-3,2] 1 2 = some true
+
+/-- Computed coordinates remain irrational after reduction. Their order's
+truth changes under the two original selected quadratic embeddings. -/
+private def coordinates (lower upper : Rat) (expected : Bool) : Bool := Id.run do
+  let some generator := selected lower upper | return false
+  let g := generator.toAlgebraic.toQAdjoin
+  let computed : Fin 2 → QAdjoin generator.toAlgebraic :=
+    fun i => if i.val = 0 then g else g*g-g
+  let ordered := RealFormula.QF.atom
+    ⟨MvPoly.X 2 ^ 2 + MvPoly.X 0 - MvPoly.X 1, .gt⟩
+  let swapped : Fin 2 → QAdjoin generator.toAlgebraic :=
+    fun i => if i.val = 0 then g*g-g else g
+  return NumberField.run generator registry computed ordered .forallReal == some expected &&
+    NumberField.run generator registry swapped ordered .forallReal == some (!expected)
+#guard coordinates 1 2 true
+#guard coordinates (-2) (-1) false
+
+/-- Native diagnostic controls, grouped to identify a failed category. -/
+private def controls : List (String × Bool) := Id.run do
+  let some generator := selected 1 2 | return [("selected root", false)]
   let g := generator.toAlgebraic.toQAdjoin
   let values := fun _ : Fin 1 => g
   let x : RealFormula.Poly 2 := MvPoly.X 1
@@ -67,28 +98,24 @@ private def controls : Bool := Id.run do
   let constants := (comparisons.zip signs).all fun (cmp, expected) =>
     run (.atom ⟨a, cmp⟩) .forallReal == some expected &&
       run (.atom ⟨a, cmp⟩) .existsReal == some expected
-  let computed : Fin 2 → QAdjoin generator.toAlgebraic :=
-    fun i => if i.val = 0 then g else g*g-1
-  let ordered := RealFormula.QF.atom
-    ⟨MvPoly.X 2 ^ 2 + MvPoly.X 0 - MvPoly.X 1, .gt⟩
-  let swapped : Fin 2 → QAdjoin generator.toAlgebraic :=
-    fun i => if i.val = 0 then g*g-1 else g
   let cancelled := RealFormula.QF.atom ⟨(a*a-2)*x^3+x, .eq⟩
-  return constants &&
-    run schema .forallReal == some false &&
-    run (.atom ⟨a-a, .eq⟩) .forallReal == some true &&
-    run cancelled .existsReal == some true &&
-    run cancelled .forallReal == some false &&
-    run (.and zero (domain 0 1)) .existsReal == some false &&
-    run (.and zero (domain (-1) 0)) .existsReal == some true &&
-    run (domain 1 1) .existsReal == some false &&
-    run (domain 2 1) .existsReal == some false &&
-    run (.imp (domain 2 1) .ff) .forallReal == some true &&
-    run (.or (.not .ff) .ff) .forallReal == some true &&
-    NumberField.run generator registry computed ordered .forallReal == some true &&
-    NumberField.run generator registry swapped ordered .forallReal == some false
+  return [
+    ("constants", constants),
+    ("cancellation", run (.atom ⟨a-a, .eq⟩) .forallReal == some true &&
+      run cancelled .existsReal == some true && run cancelled .forallReal == some false),
+    ("domains", run (.and zero (domain 0 1)) .existsReal == some false &&
+      run (.and zero (domain (-1) 0)) .existsReal == some true &&
+      run (domain 1 1) .existsReal == some false &&
+      run (domain 2 1) .existsReal == some false &&
+      run (.imp (domain 2 1) .ff) .forallReal == some true),
+    ("Booleans", run .tt .forallReal == some true &&
+      run .ff .existsReal == some false &&
+      run (.or (.not .ff) .ff) .forallReal == some true),
+    ("false universal", run schema .forallReal == some false)]
+run_meta do
+  for (name, passed) in controls do
+    unless passed do throwError "original number-field control failed: {name}"
 
-#guard controls
 /-- Fresh-module ordinary-kernel composition at the original selected values.
 No concrete compiled diagnostic is used as a proof of a real sentence. -/
 theorem original (generator : RealAlgebraicNumber)
@@ -122,6 +149,7 @@ run_meta do
   unless ← Hex.RCF.ProofEvidence.contains ``Hex.RCF.NumberFieldTests.original
       (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.NumberField.run_spec) do
     throwError "original-field proof must use the public formula law"
+  -- Pin this composition during refactors; the axiom audit checks the trust boundary.
   let info ← Lean.getConstInfo ``Hex.RCF.RealCoefficients.NumberField.run_spec
   let some body := info.value? (allowOpaque := true)
     | throwError "missing original-field correctness proof"
