@@ -169,7 +169,7 @@ private def cubeData (n F : Nat) : Nat × Nat × Nat :=
 
 /-- Cheap size and discriminant screening before any recursive certification.
 The public checker validates these computations again on the final literal. -/
-private def sufficient (budget : ConstructionBudget) (n F : Nat) : Bool :=
+def sufficient (budget : ConstructionBudget) (n F : Nat) : Bool :=
   if n < F * F then true else
     let (r, s, w) := cubeData n F
     let m := sieveBound (2 * F) r s

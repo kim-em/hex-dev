@@ -901,6 +901,7 @@ lean_lib HexPrimalityMathlibProofProbe where
     `HexPrimalityMathlib.ProofProbe.Negative65,
     `HexPrimalityMathlib.ProofProbe.Negative512,
     `HexPrimalityMathlib.ProofProbe.Negative512Odd,
+    `HexPrimalityMathlib.ProofProbe.Adoption,
     `HexPrimalityMathlib.ProofProbe.NegativeExhausted512].map Glob.one ++
     #[.submodules `HexPrimalityMathlib.ProofProbe.FactorCorpus]
 
@@ -2340,6 +2341,7 @@ lean_exe hexecpp_emit_class_polynomials where
 lean_lib KernelReplayExperiment where
   srcDir := "experiments"
   globs := #[.one `KernelReplay.Assemble, .one `KernelReplay.Json, .one `KernelReplay.Generated,
+    .one `KernelReplay.Nested, .one `KernelReplay.NestedProbe,
     .one `KernelReplay.ProofProbe,
     .one `KernelReplay.InProcessProbe, .one `KernelReplay.LowerProbe, .one `KernelReplay.LowerProof]
 

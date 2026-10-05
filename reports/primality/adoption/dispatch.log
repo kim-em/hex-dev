@@ -1,0 +1,9 @@
+ℹ [85/219] Replayed HexPrimality.Table:c.o
+info: stderr:
+/home/kim/worktrees/hex-dev/hex-dev-issue-10585/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]
+1 warning generated.
+ℹ [219/219] Built HexECPPMathlib.PariScratchj4ktw254.Dispatch (404s)
+info: HexECPPMathlib/PariScratchj4ktw254/Dispatch.lean:7:0: CURRENT_CONSTRUCTION tuning-256-0: exhausted after 649 attempts
+info: HexECPPMathlib/PariScratchj4ktw254/Dispatch.lean:7:0: CURRENT_CONSTRUCTION holdout-512-ordinary-0: exhausted after 656 attempts
+info: HexECPPMathlib/PariScratchj4ktw254/Dispatch.lean:7:0: CURRENT_CONSTRUCTION holdout-512-ordinary-3: exhausted after 642 attempts
+Build completed successfully (219 jobs).

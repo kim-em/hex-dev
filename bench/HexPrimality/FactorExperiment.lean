@@ -6,22 +6,24 @@ Authors: Kim Morrison
 
 module
 
-import HexIntFactor.Construction
+import all HexIntFactor.Construction
 meta import HexIntFactor.EcmStage2
-import all HexPrimality.Construction
+import HexPrimality.Construction
 import Lean.Data.Json
 
 /-! Offline comparison of bounded factor-search policies for Pocklington
-certificate construction. These policies do not change the public tactic.
+certificate construction. The interleaved profile uses the public provider;
+the other
+profiles retain earlier search policies for comparison.
 Every proposed factorization is checked for exact reconstruction, and every
 successful construction is checked against its original subject. -/
 
 open Hex.Nat
 
-private def insert (q e : Nat) : List (Nat × Nat) → List (Nat × Nat)
+private def insertFactor (q e : Nat) : List (Nat × Nat) → List (Nat × Nat)
   | [] => [(q, e)]
   | (p, k) :: rest =>
-      if p = q then (p, k + e) :: rest else (p, k) :: insert q e rest
+      if p = q then (p, k + e) :: rest else (p, k) :: insertFactor q e rest
 
 -- Finite approximation to SymPy's first two ECM rounds. The second-stage
 -- endpoint stays within Hex's existing bound of 4194304.
@@ -31,23 +33,8 @@ private def rounds : List (Nat × Nat × Nat) :=
 #guard rounds.all fun (b₁, b₂, _) => Ecm.validBounds b₁ b₂
 #guard Ecm.validBounds 32768 524288
 
--- One proper divisor is enough to split the worklist. Unlike the core factor
--- search, this helper does not recursively factor its result and then throw
--- away that work. Its fixed exponent depends only on the bound and base.
-private def longSplit (allocation : FactorSearchBudget) (n limit : Nat) :
-    Option Nat × Nat := Id.run do
-  let mut work := 0
-  for bound in [262144, 524288] do
-    for base in allocation.smoothBases do
-      if work ≥ limit then return (none, work)
-      let result := PMinusOne.start n base bound
-      work := work + 1
-      if let .factor d := result.result then
-        if 1 < d && d < n && n % d == 0 then return (some d, work)
-  return (none, work)
-
 private def staged (randomCurves trace : Bool) (mixed : Bool := false)
-    (early : Bool := false) (interleave : Bool := false) :
+    (early : Bool := false) :
     FactorSearch := fun allocation n r => Id.run do
   if n == 0 then return ⟨⟨[], 0⟩, r, 0, []⟩
   let limit := allocation.attemptLimit.getD 1024
@@ -60,51 +47,25 @@ private def staged (randomCurves trace : Bool) (mixed : Bool := false)
   let mut events := initial.events
   let mut factors := initial.raw.factors
   let mut residual := 1
-  -- A failed long p-1 search cannot split any divisor of the same subject:
-  -- gcd(a^E - 1, d) is 1 or d when the ancestor gcd was 1 or the ancestor.
-  -- Descendants inherit this flag. After a success this experimental policy
-  -- restarts the ladder; reusing its failed prefix is a remaining optimization.
-  let mut stack := [(initial.raw.residual, false)]
-  let schedule := if interleave then
-    [(10000, 1000000, 8, true), (10000, 1000000, 42, true),
-      (32768, 524288, 64, false), (50000, 4000000, 200, true)]
-    else if mixed then
+  let mut stack := [initial.raw.residual]
+  let schedule := if mixed then
     [(10000, 1000000, 50, true), (32768, 524288, 64, false),
       (50000, 4000000, 200, true)]
     else rounds.map fun (b₁, b₂, curves) => (b₁, b₂, curves, randomCurves)
   let mut tables := schedule.toArray.map fun (b₁, b₂, _, _) => Ecm.prepare b₁ b₂
   for _ in [:allocation.factorFuel] do
-    let unfactored := stack.foldl (fun acc (m, _) => acc * m) residual
+    let unfactored := stack.foldl (fun acc m => acc * m) residual
     if early && unfactored > 0 &&
         Construction.sufficient constructionBudget (n + 1) (n / unfactored) then break
-    let (m, tried) :: rest := stack | break
+    let m :: rest := stack | break
     stack := rest
     if m ≤ 1 then continue
     if isProbablePrime m then
-      factors := insert m 1 factors
+      factors := insertFactor m 1 factors
       continue
-    let small := m.log2 + 1 ≤ 192
-    let mut tried := tried
     let mut divisor := 0
-    if interleave && small && !tried then
-      let (found, used) := longSplit coreAllocation m (limit - work)
-      work := work + used
-      divisor := found.getD 0
-      tried := found.isNone
-      events := events ++ [.route "long-pminus-one"
-        [("subject", toString m), ("attempts", toString used), ("factor", toString divisor)]]
     if divisor == 0 then
       for idx in [:schedule.length] do
-        -- Both halves of the first round share the bound-dependent schedules.
-        if interleave && idx == 1 then tables := tables.set! 1 tables[0]!
-        if interleave && !small && !tried && idx == 1 then
-          let (found, used) := longSplit coreAllocation m (limit - work)
-          work := work + used
-          divisor := found.getD 0
-          tried := found.isNone
-          events := events ++ [.route "long-pminus-one"
-            [("subject", toString m), ("attempts", toString used), ("factor", toString divisor)]]
-          if divisor > 0 then break
         let (b₁, b₂, curves, randomCurves) := schedule[idx]!
         for curve in [:curves] do
           if work ≥ limit then break
@@ -132,9 +93,9 @@ private def staged (randomCurves trace : Bool) (mixed : Bool := false)
         work := work + found.attempts
         rand := found.rand
         events := events ++ found.events
-        for (p, e) in found.raw.factors do factors := insert p e factors
-        stack := (found.raw.residual, tried) :: stack
-  return ⟨⟨factors, stack.foldl (fun acc (m, _) => acc * m) residual⟩, rand, work, events⟩
+        for (p, e) in found.raw.factors do factors := insertFactor p e factors
+        stack := found.raw.residual :: stack
+  return ⟨⟨factors, stack.foldl (fun acc m => acc * m) residual⟩, rand, work, events⟩
 
 private def profile (name : String) (trace : Bool) :
     Option (ConstructionBudget × FactorSearch) := do
@@ -153,7 +114,7 @@ private def profile (name : String) (trace : Bool) :
   | "mixed" => some (short, staged true trace true)
   | "efficient" => some (short, staged true trace true true)
   | "balanced" => some (balanced, staged true trace true true)
-  | "interleaved" => some (balanced, staged true trace (mixed := true) (early := true) (interleave := true))
+  | "interleaved" => some (constructionBudget, interleavedFactorSearch trace)
   | "random-retry" => some (constructionBudget, staged true trace)
   | _ => none
 
@@ -175,10 +136,10 @@ public def main (args : List String) : IO UInt32 := do
             result.raw.factors.all (fun (q, e) => q > 1 && e > 0 && n % q == 0) do
           throw <| IO.userError "interleaved allowance or reconstruction failure"
     for limit in [0, 1, 2, 3, 4] do
-      let (found, used) := longSplit budget.factor (d * p) limit
+      let (found, used) := Hex.Nat.longSplit budget.factor (d * p) limit
       unless used ≤ limit && (if limit < 3 then found.isNone else found == some d) do
         throw <| IO.userError "long-p-1 cutoff failure"
-    let thorough := staged true false (mixed := true) (interleave := true)
+    let thorough := interleavedFactorSearch (early := false)
     let repeated := thorough budget.factor (d^2 * p) (Hex.Rand.ofSeed 1)
     unless repeated.raw.residual == 1 && repeated.raw.factors.contains (d, 2) &&
         repeated.raw.factors.contains (p, 1) do
@@ -231,13 +192,15 @@ public def main (args : List String) : IO UInt32 := do
     | .error f => pure [("nanos", Lean.toJson (stop - start)),
         ("status", Lean.toJson (reprStr f.stop)),
         ("attempts", Lean.toJson f.attempts),
-        ("unresolved", Lean.toJson (f.obligation.getD n))]
+        ("unresolved", Lean.toJson (f.obligation.getD n)),
+        ("rand_state", Lean.toJson f.rand.state), ("events", Lean.toJson (reprStr f.events))]
     | .ok s =>
         unless s.cert.raw.subject == n && checkPrime s.cert.raw do
           throw <| IO.userError "invalid certificate"
         pure [("nanos", Lean.toJson (stop - start)), ("status", Lean.toJson "success"),
           ("attempts", Lean.toJson s.attempts),
-          ("certificate", Lean.toJson (reprStr s.cert.raw))]
+          ("certificate", Lean.toJson (reprStr s.cert.raw)),
+          ("rand_state", Lean.toJson s.rand.state), ("events", Lean.toJson (reprStr s.events))]
   else throw <| IO.userError "unknown mode"
   IO.println <| (Lean.Json.mkObj <| [("subject", Lean.toJson n),
     ("seed", Lean.toJson seed), ("profile", Lean.toJson name),

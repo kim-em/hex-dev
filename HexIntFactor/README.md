@@ -67,12 +67,20 @@ def twelve : CheckedFactorization 12 :=
 
 # Certificate construction
 
-For bounded construction of secp256k1, P-384 and Curve448 certificates, import
-`HexIntFactor.Construction` and `HexPrimality.Elab`, then use
-`primality? (factor := Hex.Nat.ecmFactorSearch)` with a local
-`set_option maxHeartbeats 4000000`. This explicit ECM route keeps the default
-primality and factorization portfolios unchanged. Apply its emitted literal
-certificate to avoid repeating search.
+Import `HexIntFactor` and use `primality?` to search for Pocklington
+certificates with Pollard's p-minus-one method, rho and ECM. The search
+shares one finite attempt allowance across factoring, recursive child proofs
+and witnesses. It proves the secp256k1, P-384 and Curve448 field primes
+without supplied factors; these examples use local
+`set_option maxHeartbeats 4000000`.
+
+Apply the emitted literal certificate to keep search out of later builds.
+With `HexPrimalityMathlib` also imported, the same tactic proves `Nat.Prime`.
+Ordinary `primality` and integer factorization use their separate portfolios.
+`primality? (factor := Hex.Nat.interleavedConstructionFactor)` explicitly
+selects the new provider; `Hex.Nat.ecmFactorSearch` retains the original
+fixed-curve provider. Importing only `HexPrimality` keeps its core-only
+construction policy.
 
 # Optional external production
 

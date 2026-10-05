@@ -52,7 +52,7 @@ set_option maxHeartbeats 4000000
 The finite heartbeat allowance accommodates certificate construction. All three
 examples pass with this option alone; it is a tested allowance, not a measured
 minimum. It does not increase the factor search's shared 1024-attempt budget.
-Lean 4.34.0 may warn that the powers with exponents 384 and 448 exceed its
+Lean may warn that the powers with exponents 384 and 448 exceed its
 shortcut threshold of 256. The goals still normalize and the proofs succeed;
 these examples leave that warning visible.
 
@@ -94,23 +94,27 @@ certificate. Apply the suggestion to replace the search with a proof that
 replays that certificate. This is particularly useful when sharing a file:
 other people can check the proof without repeating the factor search.
 
-The standard import makes bounded ECM available automatically. Construction
-first tries HexPrimality's own methods. If they exhaust with attempts left,
-it retries with ECM, carrying forward the random state and charging both
-routes to the same allowance. P-521 and Curve25519 finish on the first route.
-You do not need to supply factors, curve parameters, seeds or certificates.
-The expert override `primality? (factor := Hex.Nat.ecmFactorSearch)` selects
-that provider directly and bypasses automatic selection. To retain the core-only
-route, including its faster exhaustion on some unsupported inputs, use
-`primality? (factor := Hex.Nat.Construction.factorSearch)`. Automatic retry can
-add substantial work even when it ultimately fails: the tested 507-bit fixture
-increased from about 0.9 seconds to 20.7 seconds.
+The standard import selects a search combining Pollard's `p - 1` method
+and elliptic-curve factorization (ECM). It factors the predecessors needed
+by Pocklington and recursively proves the smaller primes. This is different
+from using an elliptic curve directly to certify primality through ECPP.
+
+The entire construction shares one 1024-attempt allowance and one advancing
+random state. You do not need to supply factors, curve parameters, seeds or
+certificates. Apply the suggested proof to avoid repeating this search.
+The expert override
+`primality? (factor := Hex.Nat.interleavedConstructionFactor)` selects the
+same provider explicitly. Use
+`primality? (factor := Hex.Nat.Construction.factorSearch)` for the core-only
+route. The original fixed-curve provider remains available through
+`primality? (factor := Hex.Nat.ecmFactorSearch)` for explicit comparisons.
 
 If Lean reports a heartbeat limit, include the local option from the setup.
-A message saying that certificate construction exhausted its attempts instead
-refers to the factor search budget and identifies the unresolved subject.
+A message saying that certificate construction exhausted its search instead
+means that its schedule or attempt allowance ran out. It identifies the
+unresolved subject; it does not show compositeness.
 The {ref "hex-int-factor-search"}[factor-search reference] describes the
-optional bounds, curve count and tracing arguments.
+default schedule and the optional arguments of the explicit providers.
 
 Build note: the three construction examples and their exact `Try this:`
 suggestions are checked in
@@ -146,8 +150,9 @@ The kernel checks the certificate through
 {name}`Hex.Nat.prime_of_checkPrimeAt`. The search is untrusted: finding a
 factor is not enough to establish primality, and every necessary recursive
 certificate must pass the same checker. The
-[complete saved certificates](https://github.com/kim-em/hex-dev/blob/main/conformance/HexIntFactor/FieldReplay.lean)
-also include P-384 and Curve448.
+[earlier saved certificates](https://github.com/kim-em/hex-dev/blob/main/conformance/HexIntFactor/FieldReplay.lean)
+also include P-384 and the original Curve448 certificate; the current
+Curve448 suggestion uses a different, equally kernel-checkable certificate.
 
 # How long does it take?
 %%%
@@ -158,20 +163,26 @@ Allow a few minutes to try all three searches in Lean. Construction and its
 factor provider run natively during elaboration; the complete module build
 also includes imports, certificate rendering and kernel checking.
 
-The recorded shared-host automatic-construction medians were 26.0 seconds for
-secp256k1, 32.2 seconds for P-384, and 21.6 seconds for Curve448. Direct kernel
-replay medians were about 3.6–11.8 milliseconds per proof, excluding imports
-and elaboration. These are host-specific observations, not time limits or
-guarantees. See the
-[automatic construction report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-fallback.md)
-for separate construction, rendering, kernel and caller-resource measurements,
-and the
-[ECM construction report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-ecm-stage2.md)
-for the explicit-provider experiments.
+In the paired field-prime comparison, native search medians were about 35.6 seconds
+for secp256k1, 2.4 seconds for P-384 and 5.0 seconds for Curve448. These
+measurements use the policy selected by the examples above, but exclude
+imports, Lean proof rendering, elaboration and kernel replay. They are
+observations on a shared host, not time limits or guarantees. The
+[factor-policy report](https://github.com/kim-em/hex-dev/blob/main/reports/primality/factor-policy/corpus-v3.md)
+records every trial and the paired comparison with the previous policy.
+
+Earlier complete-module and direct-kernel measurements used the previous
+core-first search and its saved certificates. The
+[construction report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-fallback.md)
+and [ECM report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-ecm-stage2.md)
+retain those measurements, with their exact revisions and separate costs.
 
 The native search is synchronous. Lean can report a heartbeat overrun only
 after that computation returns; the heartbeat allowance is not a wall-clock
-timeout. The finite attempt limit bounds the search schedule.
+timeout. The finite attempt limit bounds the search schedule. Difficult inputs can
+take more than three minutes; the comparison runner's 180-second process
+limit does not apply to the tactic. Use a smaller `maxAttempts` allocation
+when you want less search work, then save successful suggestions for replay.
 
 The search has a fixed, bounded schedule and can still exhaust on other
 primes. The
