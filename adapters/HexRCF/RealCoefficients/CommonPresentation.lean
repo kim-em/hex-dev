@@ -494,4 +494,64 @@ theorem checkPolynomials_sound {p : ZPoly} {s : DyadicSquare}
     (fields i) (anchors i) (anchorValues i) (congrFun hanchors i)).trans
       (hvalue i)
 
+/-- The literal identity coordinate evaluates at the selected real generator. -/
+theorem literalGenerator {p : ZPoly} {s : DyadicSquare}
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    (hreal : s.meetsRealAxis = true) :
+    Field.value (Field.literalRep p s hw hp)
+        (PolyQuot.ofSquare p s (DensePoly.ofList [0, 1]) hw hp) =
+      (Field.literalRep p s hw hp).root.re := by
+  apply Complex.ofReal_injective
+  rw [Field.value_complex (Field.literalRep p s hw hp)
+    (Field.literalRep_mk p s hw hp) (Field.literalRep_real p s hw hp hreal)]
+  change (HexPolyMathlib.toPolynomial
+    (PolyQuot.reduceCoeffs p (DensePoly.ofList [0, 1]))).eval₂
+    (algebraMap Rat ℂ) (Field.literalRep p s hw hp).root = _
+  rw [PolyQuot.eval_reduceCoeffs]
+  have hX : HexPolyMathlib.toPolynomial (DensePoly.ofList ([0, 1] : List Rat)) =
+      Polynomial.X := by
+    ext n
+    rw [HexPolyMathlib.coeff_toPolynomial, Polynomial.coeff_X]
+    simp only [DensePoly.coeff_ofList]
+    rcases n with _ | _ | n <;> simp [List.getD]; rfl
+  rw [hX, Polynomial.eval₂_X]
+  exact Complex.ext rfl (Field.literalRep_real p s hw hp hreal)
+
+/-- A recorded power equation and nonnegative sign select the real root of an
+already authenticated base in this same fixed field. Degree zero is rejected. -/
+@[expose] def checkRoot {p : ZPoly} {root : SimpleRoot p}
+    (table : LiteralSign.Table (PolyQuot p root)) (v base : PolyQuot p root)
+    (degree : Nat) : Bool :=
+  decide (degree ≠ 0) && decide (v ^ degree = base) &&
+    (table.lookup? v).any (fun observed => decide (0 ≤ observed))
+
+/-- Frozen power/sign evidence identifies the nonnegative real-power branch.
+The base identity and root sign concern the same selected embedding. -/
+theorem checkRoot_sound {p : ZPoly} {s : DyadicSquare}
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    (hreal : s.meetsRealAxis = true)
+    (table : LiteralSign.Table (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    (checked : Field.checkSignTable p s hw hp table = true)
+    (v base : PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (source : ℝ) (identity : Field.value (Field.literalRep p s hw hp) base = source)
+    (degree : Nat) (accepted : checkRoot table v base degree = true) :
+    Field.value (Field.literalRep p s hw hp) v = source ^ (1 / (degree : ℝ)) := by
+  have parts : (degree ≠ 0 ∧ v ^ degree = base) ∧
+      (table.lookup? v).any (fun observed => decide (0 ≤ observed)) = true := by
+    simpa only [checkRoot, Bool.and_eq_true, decide_eq_true_eq] using accepted
+  have power := congrArg (Field.value (Field.literalRep p s hw hp)) parts.1.2
+  rw [Field.value_pow (Field.literalRep p s hw hp)
+    (Field.literalRep_mk p s hw hp) (Field.literalRep_real p s hw hp hreal), identity] at power
+  have nonnegative : 0 ≤ Field.value (Field.literalRep p s hw hp) v := by
+    cases hit : table.lookup? v with
+    | none => simp [hit] at parts
+    | some observed =>
+        have positive : 0 ≤ observed := by simpa [hit] using parts.2
+        have sign := Field.checkSignTable_lookup p s hw hp table checked v observed hit
+        cases h : SignType.sign (Field.value (Field.literalRep p s hw hp) v) with
+        | zero => exact le_of_eq (sign_eq_zero_iff.mp h).symm
+        | neg => simp [h] at sign; omega
+        | pos => exact le_of_lt (sign_eq_one_iff.mp h)
+  rw [← power, one_div, Real.pow_rpow_inv_natCast nonnegative parts.1.1]
+
 end Hex.RCF.RealCoefficients.CommonPresentation

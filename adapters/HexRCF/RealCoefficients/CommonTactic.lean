@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
+public meta import HexRCF.RealCoefficients.AlgebraicRoot
 public meta import HexRCF.RealCoefficients.Tactic
 public meta import HexRCF.RealCoefficients.SquareRoot
 public meta import HexRCF.RealCoefficients.RationalRoot
@@ -23,6 +24,11 @@ original guards in their checked common field before goal certificate search. -/
 namespace Hex.RCF.RealCoefficients.CommonTactic
 
 open Hex Lean Meta Qq
+
+register_option rcf.algebraic.commonDegree : Nat := {
+  defValue := 64
+  descr := "upper bound on the product of distinct selected-generator degrees before common-field search"
+}
 
 /-- Quote a checked irreducibility proof for a literal common polynomial.
 The runtime input selects finite evidence; the kernel checks that evidence
@@ -299,9 +305,23 @@ private meta def sourceRoot? (argument : Expr) :
     (args ++ #[hreal, literalP, hpoly, literalSquare, hw, hp, hs])
   return some (← FieldRuntime.evalReal argument, p, s, .normalized selected checked)
 
-private meta def sourcePlan? (source : Expr) (root : Option RationalRoot.Parameters) :
-    MetaM (Option SourcePlan) := do
+private meta def sourcePlan? (source : Expr) (root : Option RationalRoot.Parameters)
+    (general : Option (Expr × Nat))
+    (prepareBase : Expr → MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Environment)) :
+    ExceptT Hex.RealFormula.Reify.Error MetaM (Option SourcePlan) := do
   let identity : DensePoly Rat := DensePoly.ofList [0, 1]
+  if let some (base, degree) := general then
+    let authenticated ← AlgebraicRoot.identify source base degree prepareBase
+      (rcf.algebraic.commonDegree.get (← getOptions))
+    let p := authenticated.value.toAlgebraic.p
+    let square := authenticated.value.toAlgebraic.rep.1.square
+    let pe : Q(ZPoly) ← FieldLiteral.zpolyExpr p
+    let hd ← mkDecideProof (q(0 < ($pe).natDegree) : Q(Prop))
+    let checked ← certify p pe hd
+    let fieldExpr ← FieldLiteral.ratPolyExpr identity
+    let sourceProof ← mkAppM ``CommonPresentation.generator_eval #[source]
+    return some ⟨source, authenticated.value, p, square, identity, fieldExpr,
+      sourceProof, .normalized authenticated.proof checked⟩
   if let some radicand ← naturalSquareRoot? source then
     let (_, _, anchorValue) ← FieldRuntime.coefficient source
     let sourceP := SquareRoot.polynomial radicand
@@ -665,11 +685,6 @@ register_option rcf.algebraic.validateFresh : Bool := {
   descr := "diagnostic comparison: repeat prepared-input validation for fresh tactic data"
 }
 
-register_option rcf.algebraic.commonDegree : Nat := {
-  defValue := 64
-  descr := "upper bound on the product of distinct selected-generator degrees before common-field search"
-}
-
 /-- Assemble only factory-produced data. No editable environment is accepted
 at this private boundary; the dispatcher checks the complete original proof. -/
 private meta def proveFresh (prepared : Coefficients.Environment) : MetaM Expr :=
@@ -709,11 +724,54 @@ private meta def proveRational (source : Reify.Source) : MetaM Expr := do
 private structure Leaves where
   sources : Array Expr := #[]
   roots : ExprMap RationalRoot.Parameters := {}
+  general : ExprMap (Expr × Nat) := {}
   error : Option Hex.RealFormula.Reify.Error := none
 
-private meta partial def gatherCore (source : Expr) (leaves : Leaves) :
+private meta def rootParts? (source : Expr) : MetaM (Option (Expr × Expr)) := do
+  let e := source.consumeMData
+  if e.isAppOfArity ``Real.sqrt 1 then return some (e.appArg!, q(1 / 2 : ℝ))
+  if e.isAppOfArity ``Real.rpow 2 then return some (e.getAppArgs[0]!, e.getAppArgs[1]!)
+  if ← RationalRoot.isRealPower e then
+    let a : Q(ℝ) := e.getAppArgs[4]!
+    let b : Q(ℝ) := e.getAppArgs[5]!
+    unless ← isDefEq e q($a ^ $b) do return none
+    return some (a, b)
+  return none
+
+private meta partial def gatherCore (source : Expr) (leaves : Leaves)
+    (bounded : Bool := false) :
     MetaM (Except Hex.RealFormula.Reify.Error (Option Leaves)) := do
   if leaves.sources.contains source then return .ok (some leaves)
+  if bounded && !(← hasRoot source) then
+    let config : Hex.RealFormula.Reify.Config := {}
+    match ← ((Coefficients.admitRational source).run
+        {config, budget := .ofBudget config.ring.budget}).run with
+    | .ok _ => return .ok (some leaves)
+    | .error (.budget exhausted) =>
+        return .ok (some {leaves with error := leaves.error.or (some (.budget exhausted))})
+    | .error (.unsupported _ _) => pure ()
+    | .error error => return .error error
+  if let some (base, exponent) ← rootParts? source then
+    if ← hasRoot base then
+      let baseLeaves ← match ← gatherCore base {} true with
+        | .error error => return .error error
+        | .ok none => return .ok none
+        | .ok (some result) => pure result
+      if !baseLeaves.sources.isEmpty then
+        let config : Hex.RealFormula.Reify.Config := {}
+        let outcome ← ((Coefficients.rootDegree exponent).run
+          {config, budget := .ofBudget config.ring.budget}).run
+        let (degree, error) ← match outcome with
+          | .ok (degree, _) => pure (degree, baseLeaves.error)
+          | .error (.unsupported _ _) => return .ok none
+          | .error (.budget exhausted) => pure (2, some (.budget exhausted))
+          | .error error => return .error error
+        let updated : Leaves := {leaves with
+          sources := (leaves.sources.push source)
+          general := (leaves.general.insert source (base, degree))
+          error := (leaves.error.or error)}
+        return .ok (some updated)
+
   let (accepted, root, deferred) ← match ← eligible source with
     | .ok (accepted, root) => pure (accepted, root, none)
     | .error (.budget exhausted) =>
@@ -726,23 +784,23 @@ private meta partial def gatherCore (source : Expr) (leaves : Leaves) :
     let error := match leaves.error with
       | some error => some error
       | none => deferred
-    let updated : Leaves := {sources := (leaves.sources.push source), roots, error}
+    let updated : Leaves := {leaves with sources := (leaves.sources.push source), roots, error}
     return .ok (some updated)
   let e := source.consumeMData
   let args := e.getAppArgs
   let op := e.getAppFn.constName?
   if [``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv].any (op == some ·) &&
       args.size == 6 then
-    let left ← match ← gatherCore args[4]! leaves with
+    let left ← match ← gatherCore args[4]! leaves bounded with
       | .error error => return .error error
       | .ok none => return .ok none
       | .ok (some left) => pure left
-    return ← gatherCore args[5]! left
+    return ← gatherCore args[5]! left bounded
   if [``Neg.neg, ``Inv.inv].any (op == some ·) && args.size == 3 then
-    return ← gatherCore args[2]! leaves
+    return ← gatherCore args[2]! leaves bounded
   if e.isAppOfArity ``HPow.hPow 6 then
     if (← inferType args[5]!).isConstOf ``Nat then
-      return ← gatherCore args[4]! leaves
+      return ← gatherCore args[4]! leaves bounded
   if RationalRoot.isNotation e || (← RationalRoot.isRealPower e) then
     unless ← RationalRoot.hasSyntax e do return .ok none
     -- A nonpositive rational base may normalize to a rational whole root.
@@ -778,7 +836,8 @@ private def PlanError.toMessageData : PlanError → MessageData
   | .commonDegree exhausted =>
       m!"rcf: {(Hex.RealFormula.Reify.Error.budget exhausted).toMessageData} (common-field degree; see rcf.algebraic.commonDegree)"
 
-private meta def sourcePlans (source : Reify.Source) :
+private meta def sourcePlans (source : Reify.Source)
+    (prepareBase : Expr → MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Environment)) :
     MetaM (Except PlanError (Option (Array Expr × Array SourcePlan))) := do
   for expression in #[source.proof, source.sentenceProof] ++
       source.coefficients ++ source.divisors do
@@ -799,8 +858,11 @@ private meta def sourcePlans (source : Reify.Source) :
     let mut distinct : Array RealAlgebraicNumber := #[]
     let mut degree := 1
     for scalar in leaves.sources do
-      let some plan ← sourcePlan? scalar (leaves.roots[scalar]?) |
-        throwError "rcf: internal: eligible leaf has no plan"
+      let plan ← match ← (sourcePlan? scalar (leaves.roots[scalar]?)
+          (leaves.general[scalar]?) prepareBase).run with
+        | .error error => return .error (.recognition error)
+        | .ok none => throwError "rcf: internal: eligible leaf has no plan"
+        | .ok (some plan) => pure plan
       unless distinct.contains plan.anchorValue do
         distinct := distinct.push plan.anchorValue
         let requested := degree * plan.anchorValue.toAlgebraic.p.natDegree
@@ -817,9 +879,10 @@ private meta def sourcePlans (source : Reify.Source) :
 
 /-- Prepare an exact selected-field environment without root/cell production.
 The rational-only input remains with the existing rational solver. -/
-private meta def prepareSource (source : Reify.Source) :
+private meta def prepareSource (source : Reify.Source)
+    (prepareBase : Expr → MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Environment)) :
     MetaM (Except Hex.RealFormula.Reify.Error (Option Coefficients.Environment)) := do
-  let (leaves, plans) ← match ← sourcePlans source with
+  let (leaves, plans) ← match ← sourcePlans source prepareBase with
     | .error error => return .error error.toError
     | .ok none => return .ok none
     | .ok (some result) => pure result
@@ -827,6 +890,27 @@ private meta def prepareSource (source : Reify.Source) :
   let prepared ← (← prepareField source leaves plans).instantiate
   prepared.checkDomains
   return .ok (some prepared)
+
+meta partial def prepare (target : Expr) :
+    MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Environment) := do
+  let saved ← saveState
+  let (result, _) ← tryFinally' (withNewMCtxDepth <| withOptions (fun options =>
+      debug.skipKernelTC.set (Elab.async.set options false) false) do
+    let source ← match ← Reify.prepare target with
+      | .ok source => pure source
+      | .error error => return .error error
+    let prepared ← match ← prepareSource source prepare with
+      | .error error => return .error error
+      | .ok none => return .error (.unsupported target "no selected-field environment")
+      | .ok (some prepared) => pure prepared
+    return .ok prepared)
+    (fun result => do
+      match result with
+      | some (.ok _) => modify fun state => {state with
+          mctx := saved.meta.mctx, postponed := saved.meta.postponed,
+          zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds}
+      | _ => saved.restore)
+  return result
 
 @[rcf_handler] meta def handle : Handler := fun target => do
   unless ← candidate target do return .declined
@@ -842,7 +926,7 @@ private meta def prepareSource (source : Reify.Source) :
   if source.coefficients.size == 1 then
     if (← Tactic.handlesCoefficient source.coefficients[0]!) &&
         (← rationalGuards source.divisors) then return .declined
-  let (leaves, plans) ← match ← sourcePlans source with
+  let (leaves, plans) ← match ← sourcePlans source prepare with
     | .error error => return .failed (error.toMessageData)
     | .ok none => return .declined
     | .ok (some result) => pure result
@@ -860,25 +944,7 @@ Purely rational goals use the base solver; caller-registered bounds use the
 finite-certificate frontend. A structured decline or exception restores the
 metavariable and environment state. No failure starts a different solver. -/
 meta def prepare (target : Expr) :
-    MetaM (Except Hex.RealFormula.Reify.Error Environment) := do
-  let saved ← saveState
-  let (result, _) ← tryFinally' (withNewMCtxDepth <| withOptions (fun options =>
-      debug.skipKernelTC.set (Elab.async.set options false) false) do
-    let source ← match ← Reify.prepare target with
-      | .ok source => pure source
-      | .error error => return .error error
-    let prepared ← match ← CommonTactic.prepareSource source with
-      | .error error => return .error error
-      | .ok none =>
-          return .error (.unsupported target "no supported selected-field coefficient environment")
-      | .ok (some prepared) => pure prepared
-    return .ok prepared)
-    (fun result => do
-      match result with
-      | some (.ok _) => modify fun state => {state with
-          mctx := saved.meta.mctx, postponed := saved.meta.postponed,
-          zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds}
-      | _ => saved.restore)
-  return result
+    MetaM (Except Hex.RealFormula.Reify.Error Environment) :=
+  CommonTactic.prepare target
 
 end Hex.RCF.RealCoefficients.Coefficients
