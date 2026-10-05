@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import gzip
 import json
 import os
 from pathlib import Path
@@ -84,6 +85,67 @@ def page_peak(text):
         raise ValueError("missing memory snapshots")
     return {"mapped_page_peak_bytes": max(row["mem_heap_B"] for row in snapshots),
             "snapshots": len(snapshots)}
+
+
+def validate_retained(directory):
+    """Check every retained raw file and the complete fixed capture schedule."""
+    directory = Path(directory)
+    archive = json.loads((directory / "archive.json").read_text())
+    if archive.get("schema") != "hex-memory-archive-v1":
+        raise ValueError("unknown memory archive")
+    raw = {}
+    for name, binding in archive["files"].items():
+        stored = binding["stored"]
+        if Path(name).name != name or Path(stored).name != stored:
+            raise ValueError("archive filenames must stay in the directory")
+        data = (directory / stored).read_bytes()
+        if hashlib.sha256(data).hexdigest() != binding["stored_sha256"]:
+            raise ValueError("stored memory artifact hash differs")
+        data = gzip.decompress(data) if stored.endswith(".gz") else data
+        if hashlib.sha256(data).hexdigest() != binding["raw_sha256"]:
+            raise ValueError("raw memory artifact hash differs")
+        raw[name] = data
+    metadata = json.loads(raw["metadata.json"])
+    if (metadata.get("schema") != "hex-sign-det-process-memory-v1" or
+            metadata.get("state") != "complete" or metadata.get("scope") != SCOPE or
+            metadata.get("trials") != TRIALS):
+        raise ValueError("incomplete or different memory collection")
+    if set(raw) != set(metadata["file_sha256"]) | {"metadata.json"}:
+        raise ValueError("missing or additional retained artifacts")
+    for name, expected in metadata["file_sha256"].items():
+        if hashlib.sha256(raw[name]).hexdigest() != expected:
+            raise ValueError("original capture hash differs")
+    source = metadata["source_archive"]
+    if hashlib.sha256(raw[source["file"]]).hexdigest() != source["sha256"]:
+        raise ValueError("source archive differs")
+    schedule = []
+    for trial in range(TRIALS):
+        for name, group in metadata["groups"].items():
+            parameters, functions = GROUPS[name]
+            if group != [parameters, functions]:
+                raise ValueError("different registered memory schedule")
+            for parameter in parameters:
+                for function in functions:
+                    modes = ["native", "massif"] if trial % 2 == 0 else ["massif", "native"]
+                    schedule.extend(("Hex.SignDetBench." + function, parameter, trial, mode) for mode in modes)
+    if len(schedule) != len(metadata["runs"]):
+        raise ValueError("incomplete memory schedule")
+    for record, expected in zip(metadata["runs"], schedule, strict=True):
+        subject = (record["function"], record["parameter"], record["trial"], record["mode"])
+        if subject != expected or record["state"] != "complete" or record["exit_code"] != 0:
+            raise ValueError("wrong memory capture subject or failed point")
+        label = record["label"]
+        row = child_record(raw[label + ".stdout"].decode(), subject[0], subject[1], metadata["revision"])
+        answer = metadata["expected_result_hashes"][f"{subject[0]}:{subject[1]}"]
+        if row["result_hash"] != answer or record["result_hash"] != answer:
+            raise ValueError("retained callback answer differs")
+        if record["process_peak_rss_kib"] != row["peak_rss_kb"]:
+            raise ValueError("retained process memory differs")
+        if subject[3] == "massif":
+            peak = page_peak(raw[label + ".massif"].decode())
+            if any(record.get(key) != value for key, value in peak.items()):
+                raise ValueError("retained page peak differs")
+    return metadata
 
 
 def main():

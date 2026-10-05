@@ -1,8 +1,9 @@
 """Reject memory captures with mismatched source, operation or measurement mode."""
 import json
 import unittest
+from pathlib import Path
 
-from scripts.bench.sign_det_memory import child_record, page_peak
+from scripts.bench.sign_det_memory import child_record, page_peak, validate_retained
 
 
 class MemoryRecords(unittest.TestCase):
@@ -52,3 +53,16 @@ class MemoryRecords(unittest.TestCase):
                 page_peak(changed)
         with self.assertRaises(ValueError):
             page_peak("desc: --pages-as-heap=yes\ntime_unit: B\n")
+
+
+class RetainedMemory(unittest.TestCase):
+    def test_all_completed_captures(self):
+        root = Path(__file__).resolve().parents[2] / "reports/data/sign-det-process-memory/4c790b883d"
+        joint = validate_retained(root / "joint")
+        other = validate_retained(root / "other")
+        self.assertEqual(len(joint["runs"]), 36)
+        self.assertEqual(len(other["runs"]), 126)
+        self.assertEqual(set(joint["groups"]) | set(other["groups"]),
+                         {"joint", "sparse", "matrix", "height"})
+        self.assertEqual(joint["revision"], other["revision"])
+        self.assertEqual(joint["binary_sha256"], other["binary_sha256"])
