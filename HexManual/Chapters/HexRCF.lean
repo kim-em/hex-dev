@@ -2394,8 +2394,11 @@ For an existing {name}`Hex.RealAlgebraicNumber`,
 with the owner's checked number-field factory. Its inputs are the original
 {name}`Hex.QAdjoin` coordinates. The factory retains the generator's minimal
 polynomial and selected real embedding; packing preserves that embedding.
-The following public law covers every shared one-quantifier formula at
-those original real values:
+{name}`Hex.RCF.RealCoefficients.NumberField.value_eq_ofField` identifies the
+native interpretation with the frontend's existing
+{name}`Hex.RCF.RealCoefficients.Coefficients.ofField` conversion. The following
+public law covers every shared one-quantifier formula at those converted
+original real values:
 
 ```lean
 example (generator : Hex.RealAlgebraicNumber)
@@ -2409,16 +2412,17 @@ example (generator : Hex.RealAlgebraicNumber)
       (result = true ↔
         (Hex.RealFormula.Prenex.quant quantifier
           (.matrix formula)).toProp
-          (fun i => Hex.RealClosure.NumberField.value
-            generator (values i))) := by
-  exact NumberField.run_spec generator registry values
-    formula quantifier
+          (fun i => (Coefficients.ofField generator
+            (values i)).toReal)) := by
+  exact NumberField.run_coefficients generator registry
+    values formula quantifier
 ```
 
 The compiled API regressions select both roots of `X² − 2` and the positive
 root of `X³ − 2`, then find further roots of `x² − α` over each original
-number field. They test the complete conjunction with the repeated atom
-`(x² − α)² ≥ 0` and the half-open guards `1 < x` and `x ≤ 2`.
+number field. They test the complete conjunction with the squared atom
+`(x² − α)² ≥ 0`, whose repeated roots are shared with `x² − α`, and the
+half-open guards `1 < x` and `x ≤ 2`.
 Positive √2 and the cube root return true; negative √2 returns false.
 Further controls select the middle and largest roots of the totally real
 cubic `X³ − 3X + 1`, a non-monic quadratic and a rational generator. They
@@ -2432,9 +2436,12 @@ This API performs root production and does not complete generic replay or
 frontend authentication for that backend. No timing improvement is claimed.
 
 All coordinates supplied to this entry point belong to the same original
-number field. Each call constructs its presentation anew. A caller reusing
-one checked presentation can pack its coordinates once and call `Samples.run`
-with `parent := source.context`, using `source.model` for its correctness law.
+number field. Each `run` call constructs its presentation anew.
+{name}`Hex.RCF.RealCoefficients.NumberField.runWith` reuses one checked
+presentation across formulas; its
+{name}`Hex.RCF.RealCoefficients.NumberField.runWith_spec` law preserves the
+original selected coordinate values directly. A compiled control evaluates
+both quantifiers over the same retained presentation.
 
 Independently constructed contexts can be gathered through the owner's
 {name}`Hex.RealClosure.Tower.Shared.gather?` operation. Its checked maps retain

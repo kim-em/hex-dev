@@ -124,7 +124,15 @@ run_meta do
   for (name, passed) in controls do
     unless passed do throwError "original number-field control failed: {name}"
 
-/-- Fresh-module ordinary-kernel composition at the original selected values.
+private def reuse : Bool := Id.run do
+  let some generator := selected 1 2 | return false
+  let some source := Hex.RealClosure.NumberField.present? generator registry | return false
+  let values := fun _ : Fin 1 => generator.toAlgebraic.toQAdjoin
+  return NumberField.runWith source values schema .existsReal == some true &&
+    NumberField.runWith source values schema .forallReal == some false
+#guard reuse
+
+/-- Pin the public statement shape in a fresh module at the original selected values.
 No concrete compiled diagnostic is used as a proof of a real sentence. -/
 theorem original (generator : RealAlgebraicNumber)
     (registry : BaseContext.Registry)
@@ -134,6 +142,16 @@ theorem original (generator : RealAlgebraicNumber)
       (result = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
         (fun i => Hex.RealClosure.NumberField.value generator (values i))) :=
   NumberField.run_spec generator registry values formula quantifier
+
+/-- The native law composes with the actual frontend coefficient conversion. -/
+theorem coefficients (generator : RealAlgebraicNumber)
+    (registry : BaseContext.Registry)
+    (values : Fin n → QAdjoin generator.toAlgebraic)
+    (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier) :
+    ∃ result, NumberField.run generator registry values formula quantifier = some result ∧
+      (result = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+        (fun i => (Coefficients.ofField generator (values i)).toReal)) :=
+  NumberField.run_coefficients generator registry values formula quantifier
 
 end Hex.RCF.NumberFieldTests
 
@@ -165,5 +183,21 @@ run_meta do
       ``Hex.RealClosure.NumberField.present?_success) |>.isSome do
     throwError "original-field law must consume the owner's actual factory theorem"
   unless body.find? (fun e => e.isConstOf
+      ``Hex.RCF.RealCoefficients.NumberField.runWith_spec) |>.isSome do
+    throwError "original-field law must use the reusable presentation law"
+  let info ← Lean.getConstInfo ``Hex.RCF.RealCoefficients.NumberField.runWith_spec
+  let some body := info.value? (allowOpaque := true)
+    | throwError "missing reusable presentation correctness proof"
+  unless body.find? (fun e => e.isConstOf
       ``Hex.RealClosure.NumberField.Presentation.pack_value) |>.isSome do
-    throwError "original-field law must preserve the owner's selected embedding"
+    throwError "reusable presentation law must preserve the owner's selected embedding"
+
+/-- info: 'Hex.RCF.NumberFieldTests.coefficients' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RCF.NumberFieldTests.coefficients
+run_meta do
+  for name in [``Hex.RCF.RealCoefficients.NumberField.value_eq_ofField,
+      ``Hex.RCF.RealCoefficients.NumberField.runWith_spec,
+      ``Hex.RCF.RealCoefficients.NumberField.run_coefficients,
+      ``Hex.RCF.NumberFieldTests.coefficients] do
+    Hex.RCF.checkAxioms name (Lean.mkConst name)

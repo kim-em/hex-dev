@@ -208,7 +208,10 @@ conjugates, coefficient order, diagnostic false results and half-open domains.
 `RealAlgebraicNumber` and accepts its original `QAdjoin` coordinates. The
 owner's checked presentation preserves the minimal polynomial and selected
 real embedding; `run_spec` proves shared sentence truth at those original
-values. The [number-field controls](../conformance/HexRCF/NumberField.lean)
+values. `value_eq_ofField` identifies them with the existing frontend
+`Coefficients.ofField` conversion, and `run_coefficients` states the result
+at those converted real values. `runWith` and `runWith_spec` reuse one checked
+presentation across formulas. The [number-field controls](../conformance/HexRCF/NumberField.lean)
 find further roots over selected quadratic and cubic fields, distinguish
 conjugates and swapped irrational coordinates, include several-real-root,
 non-monic and rational generators, and check zero/cancelled atoms and
