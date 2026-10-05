@@ -525,7 +525,9 @@ selected child root, preserve the requested child signs in the next stage's nati
 and return a partial
 coefficient interpretation on the child's actual semantic field. The finite
 sign conditions supply zero reflection; closure derives all intermediate
-arithmetic. This is the algebraic step of finite realization. The general
+arithmetic. The returned interpretation contains every inverse whose interpreted
+value is nonzero, with the corresponding inverted value. Source nonzero alone
+does not suffice. This is the algebraic step of finite realization. The general
 induction through arbitrarily interleaved infinitesimal levels remains required.
 
 These induction and transport lemmas are local proof deliverables. They
