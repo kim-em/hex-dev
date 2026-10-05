@@ -220,6 +220,14 @@ class JointTimingTests(unittest.TestCase):
         self.assertEqual(final["revision_after"], metadata["revision"])
         self.assertEqual(final["status_after"], "")
         self.assertEqual(final["harness_revision_after"], metadata["harness_revision"])
+        inspection = json.loads((directory/"harness-inspection.json").read_text())
+        self.assertEqual(inspection["revision"], metadata["harness_revision"])
+        self.assertEqual(inspection["manifest_revision"], inspection["revision"])
+        self.assertEqual(inspection["status"], "")
+        interruption = json.loads((directory/"interruption.json").read_text())
+        self.assertGreater(inspection["observed_at"], interruption["utc"])
+        for name, digest in interruption["completed_artifact_sha256"].items():
+            self.assertEqual(archive["files_sha256"][name], digest)
         self.assertEqual(hashlib.sha256((directory/"collector.py").read_bytes()).hexdigest(),
                          metadata["source_sha256"]["scripts/bench/sign_det_joint_timing.py"])
         timing.validate_inputs(directory/"inputs.log", degrees=timing.WIDE_DEGREES)
@@ -249,6 +257,24 @@ class JointTimingTests(unittest.TestCase):
             self.assertEqual((row["kind"], row["arm"], point["trial_index"], point["param"]),
                              ("sample", arm, trial, n))
             timing.validate_points([point], arm.removeprefix(timing.PREFIX), expected, [(trial, n)])
+
+    def test_interrupted_wide_source_reconstruction(self):
+        import hashlib
+        import os
+        import subprocess
+        directory = timing.ROOT/"reports/data/sign-det-joint-timing/432958c4fc-interrupted"
+        metadata = json.loads((directory/"metadata.json").read_text())
+        source = metadata["source_archive"]
+        patch = directory/source["file"]
+        self.assertEqual(hashlib.sha256(patch.read_bytes()).hexdigest(), source["sha256"])
+        with tempfile.TemporaryDirectory() as temporary:
+            env = dict(os.environ, GIT_INDEX_FILE=str(Path(temporary)/"index"))
+            def git(*args):
+                return subprocess.check_output(["git", *args], cwd=timing.ROOT, env=env)
+            git("read-tree", source["base_revision"])
+            git("apply", "--cached", "--unidiff-zero", str(patch))
+            for name, digest in metadata["source_sha256"].items():
+                self.assertEqual(hashlib.sha256(git("show", ":"+name)).hexdigest(), digest, name)
 
     def test_complete_retained_collection_and_archive_binding(self):
         import hashlib

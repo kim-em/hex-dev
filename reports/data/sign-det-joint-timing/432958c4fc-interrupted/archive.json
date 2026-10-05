@@ -20,6 +20,7 @@
     "runComparison.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "runCompletion.json": "35c05a4b14afc3962e4ab162fb4b5b7c3cafcec7fd8693e6d1227cb42c5734e5",
     "runCompletion.log": "a8b1878ec666350c645549dfa212545193187b72d1caea9e64d6da3755b70d44",
-    "runCompletion.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    "runCompletion.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harness-inspection.json": "6138fa09c50464aaf33c67ee350ebba9668aa1168e0fd7388dfdccfef936cc5f"
   }
 }

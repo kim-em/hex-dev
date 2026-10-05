@@ -464,10 +464,14 @@ peak live memory or resolve the running-time verdicts above.
 
 The [retained archive](data/sign-det-joint-timing/432958c4fc-interrupted/archive.json)
 binds source `432958c4fc14dbff1ea8110e47c5d1b073bd5ac8`, its compiled binary,
-pinned harness, source patch and all original outputs. The input inventory and
+pinned harness, source patch and all original outputs. The source is reconstructed
+from merged base `98cab2feb5` plus `committed-source.patch`; the archived metadata
+records that reconstruction check. The measurements describe that snapshot,
+whose commit need not remain reachable after rebasing. Equality with current
+main’s executable is not claimed. The input inventory and
 callback checks completed at degrees 15, 31, 63, 127 and 255. Completion and
 cross-polynomial comparison each completed all 30 scheduled timing points,
-with exact result hashes checked against that inventory.
+with exact result hashes checked against the callback inventory.
 
 | Source degree | Completion median (s) | Comparison median (s) |
 | ---: | ---: | ---: |
@@ -479,11 +483,14 @@ with exact result hashes checked against that inventory.
 
 The unchanged cubic declaration gives **inconclusive** for completion
 (residual slope −0.219255) and **consistent with declared complexity** for
-comparison (−0.084199). These are the original harness verdicts. The cubic
+comparison (−0.084199). The fits exclude the leading degree-15 warmup rung,
+while retaining all its observations. These are the original harness verdicts. The cubic
 coefficient-operation count is not a bit-cost bound. The varying factorial
 coefficients, dense zero entries and rational normalization have different
 costs; passing this fit does not establish the running time of arbitrary
-comparison inputs.
+comparison inputs. Completion has appreciable trial variation, including a
+92.1-second degree-255 observation; all completed samples and recorded host
+load remain included. Host activity is context, not a reason to remove points.
 
 The collection was interrupted during the subsequent adjacent production
 comparison. It retains nine completed points, in the original scheduled
@@ -493,18 +500,24 @@ verdict. The original collector metadata records `failed` with
 `KeyboardInterrupt`; its last operation record remains `running` because the
 collector was interrupted inside that operation. A separate
 [final binding](data/sign-det-joint-timing/432958c4fc-interrupted/final-binding.json)
-records unchanged source, binary, revision and harness after interruption.
+records unchanged source, binary, revision and harness revision after interruption.
+A separate [later harness inspection](data/sign-det-joint-timing/432958c4fc-interrupted/harness-inspection.json)
+records its clean status and manifest-pin agreement, with its actual observation
+time and commands; this is not an original collector after-check.
 The remaining measurement processes were stopped; none continued separately.
 No original record is rewritten as a completed collection.
 
 The input inspection took 5,883 seconds, callback inspection 11,621 seconds,
 completion collection 440 seconds and comparison collection 12,708 seconds.
-Those durations include preparation and child startup. They are not the
-callback medians above. Extending the campaign adds substantial cost and is
+Those durations include preparation and child startup. They are not per-call
+timings. Extending the campaign adds substantial cost and is
 not required merely to obtain another fitted verdict. The retained smaller
 adjacent production/replay comparisons remain separate evidence. This archive
 supplies completed wider observations and explicit limits, not final Phase-4
-attestation or a resolution of every earlier finding.
+attestation. Under the changed schedule, comparison is consistent; completion
+remains inconclusive. This collection does not resolve the four earlier
+production/replay findings. Their disposition remains separate, using the
+applicable evidence policy rather than continuing this interrupted campaign.
 
 The existing CI test `scripts.bench.test_sign_det_joint_timing` checks archive
 hashes, unchanged bindings, input and callback answers, both complete timing
