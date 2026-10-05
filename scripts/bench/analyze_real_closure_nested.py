@@ -17,6 +17,10 @@ def summarize(folder):
     for name, expected in manifest['artifacts'].items():
         if Path(name).name != name or digest(folder / name) != expected:
             raise ValueError('artifact changed or invalid filename: ' + name)
+    for command in manifest['commands']:
+        record = Path(command['stdout']).with_suffix('.command.json').name
+        if record not in manifest['artifacts'] or json.loads((folder / record).read_text()) != command:
+            raise ValueError('manifest command differs from retained command record')
     identities = {'analyzer_sha256': Path(__file__),
                   'capture_script_sha256': ROOT / 'scripts/bench/real_closure_nested_measurement.py',
                   'protocol_sha256': ROOT / 'reports/bench-results/real-closure-nested-protocol.md',
