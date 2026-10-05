@@ -21,8 +21,9 @@ The downstream partial-factor adapter for HexPrimality certificate search.
 The adapter projects HexIntFactor's checker-accepted complete or partial
 aggregate into HexPrimality's deliberately untrusted `FactorSearchResult`.
 Importing this module also registers the adapter with the `primality`
-elaborator through its versioned, well-known declaration boundary. The core
-route runs first; this stronger route is tried only after core exhaustion.
+elaborator through its versioned, well-known declaration boundary. Ordinary
+`primality` retains its core-first retry. Bounded `primality?`
+construction selects the interleaved provider before searching.
 -/
 
 namespace Hex
@@ -64,9 +65,9 @@ public meta def extension : Hex.PrimalityTactic.SearchExtension where
   version := 3
   factorName := ``Hex.Nat.intFactorSearch
 
-/-- Total-limit-aware construction provider, independent of ordinary search. -/
+/-- Default interleaved construction provider, independent of ordinary search. -/
 public meta def constructionExtension : Hex.PrimalityTactic.ConstructionExtension where
-  version := 1
-  factorName := ``Hex.Nat.ecmConstructionFactor
+  version := 2
+  factorName := ``Hex.Nat.interleavedConstructionFactor
 
 end HexIntFactor.PrimalityTactic

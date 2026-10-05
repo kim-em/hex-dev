@@ -13,7 +13,10 @@ generated certificates passed Lean kernel replay.
 
 This is exploratory evidence on a previously inspected corpus. It does not
 establish coverage on unseen primes, a success probability, or a universally
-faster policy. Production defaults are unchanged. The experiments live in
+faster policy. The later independent comparison above supplies the evidence
+for the interleaved provider now selected by `primality?` with `HexIntFactor`
+imported. This earlier experiment retains its original policy labels and results.
+The comparison runner lives in
 `bench/HexPrimality/FactorExperiment.lean`; the computational executable imports
 no Mathlib. Frozen kernel replay lives separately in
 `bench/HexPrimalityMathlib/ProofProbe/FactorExperiment.lean`, built by the existing

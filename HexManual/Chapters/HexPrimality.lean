@@ -177,7 +177,8 @@ also handles `Nat.Prime` and suggests the corresponding bridge theorem.
 
 Construction supports inputs through 521 bits, recursive depth 32, and a
 shared limit of 1024 attempts. `primality? (maxAttempts := 29)` sets a smaller
-limit; Curve25519 succeeds at 29 and exhausts at 28. It uses
+limit; with only `HexPrimality` imported, Curve25519 succeeds at 29 and
+exhausts at 28. It uses
 stage-one Pollard `p - 1` up to 524288, bounded rho work, and deterministic
 small witnesses before random candidates. Every limit is finite; exhaustion
 reports the seed, attempts, and resource profile. Success depends on finding
@@ -188,19 +189,47 @@ can trade up to 63 small-divisor checks for a smaller factored part of the
 predecessor. These checks are included in the reusable certificate and replayed
 by the kernel. The ordinary `primality` policy keeps its existing smaller budget.
 
-With the standard `import HexIntFactor`, plain `primality?` also discovers
-secp256k1, P-384 and Curve448. It preserves the first route's successful
-certificate; only exhaustion with attempts left triggers a complete retry with
-bounded ECM. Both routes share the same 1024 attempts and advancing random
-state. These three fields need an explicit finite Lean heartbeat allowance;
-`set_option maxHeartbeats 4000000` is tested, without a recursion-depth option.
-See the {ref "tutorial-field-primes"}[field-prime tutorial] for complete examples.
-An explicit `factor :=` provider or `using` certificate bypasses automatic selection.
-Use `primality? (factor := Hex.Nat.Construction.factorSearch)` for core-only
-construction. Automatic fallback also costs time on unsupported inputs: the
-507-bit fixture still exhausts, taking about 20.7 seconds instead of 0.9 seconds
-on the measured host. Native search runs synchronously, so a heartbeat overrun
-can be reported after it returns; heartbeats are not a wall-clock timeout.
+With `import HexIntFactor`, plain `primality?` uses a stronger search that
+combines Pollard's `p - 1` method with elliptic-curve factorization (ECM).
+Both methods look for factors of the predecessors needed by Pocklington;
+ECM here is a factoring algorithm, distinct from the elliptic-curve primality
+certificates described in the {ref "hex-ecpp"}[ECPP chapter]. The search
+retains factors as it finds them and changes methods according to the size
+of the remaining composite. It stops when it has enough factors for the
+primality criterion, then recursively proves the primality of those factors.
+
+This import selects the stronger provider before construction begins. One
+search shares the same 1024 attempts across factoring, recursive proofs and
+witnesses. It discovers certificates for secp256k1, P-384 and Curve448 without
+supplied factors or curve parameters. See the
+{ref "tutorial-field-primes"}[field-prime tutorial] for complete examples.
+The tutorial uses a finite `maxHeartbeats` allowance of 4000000. Exhaustion
+means that this search failed within its allowance; it does not show that
+the number is composite. Native search runs synchronously, so heartbeats
+are not a wall-clock timeout.
+
+Importing only `HexPrimality` retains the smaller portfolio described above,
+including Curve25519's 29-attempt construction. With `HexIntFactor`, that
+certificate is unchanged and takes 31 attempts. An explicit `factor :=`
+provider or a supplied `using` certificate bypasses automatic selection.
+Use `primality? (factor := Hex.Nat.Construction.factorSearch)` to select the
+core route, or `primality? (factor := Hex.Nat.interleavedConstructionFactor)`
+to select the stronger route explicitly. Ordinary `primality` keeps its
+separate search policy.
+
+A comparison tested the stronger native search on 300 independently generated
+primes: 75 each at 128, 256, 384 and 512 bits, with a 180-second limit per search. It
+constructed 186 certificates, compared with 138 for the previous automatic
+Hex policy and 170 for PrimeCert with SymPy. Every successful certificate
+was replayed by the Lean kernel. These are observations on a fixed corpus
+and shared host, not completeness or latency guarantees. In particular,
+at 512 bits, 12 searches succeeded, 12 exhausted their schedules and 51 hit
+the 180-second process limit. The tactic has no such timeout and can take
+more than three minutes on difficult inputs. A smaller `maxAttempts` or the
+explicit core-only provider reduces the search allocation; neither is a
+wall-clock limit.
+The [comparison report](https://github.com/kim-em/hex-dev/blob/main/reports/primality/factor-policy/corpus-v3.md)
+contains all samples, failures, exact certificates and reproduction instructions.
 
 The Curve25519 result has three non-leaf certificate nodes and eight factor
 entries. Kernel replay reads the already verified sieve bitset for table
@@ -213,8 +242,10 @@ The fixed-corpus comparison measured Curve25519 native decision at
 the original `2 ^ 255 - 19` expression took 2.17–2.29 seconds, compared with
 7.01–10.41 seconds before these optimizations. FLINT and PARI native decisions
 took 25.9 and 55.4 milliseconds respectively. The native timings use a
-standalone executable; the full tactic currently runs search through Lean’s
-interpreter before kernel checking. All completed samples are
+standalone executable; the complete tactic build also includes interpreted
+core search, elaboration and kernel checking. Importing the precompiled
+`HexIntFactor` producer selects native execution as well as a stronger policy. These measurements use the revisions pinned in the
+report, rather than the current stronger search policy. All completed samples are
 retained. These are host-specific observations, not latency guarantees. The
 [measurement report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-construction.md)
 records every sample, certificate sizes, and the comparison with the larger
@@ -222,10 +253,10 @@ reference certificate.
 
 The fixed comparison corpus also includes standard cryptographic field
 primes. The current construction profile finds P-256 and the structured
-511/512-bit benchmark primes and P-521. The default profile exhausts on
-secp256k1, P-384 and Curve448. The explicit ECM provider constructs all three:
+511/512-bit benchmark primes and P-521. The core-only profile exhausts on
+secp256k1, P-384 and Curve448. Importing `HexIntFactor` enables all three:
 see {ref "tutorial-field-primes"}[the field-prime tutorial] for complete
-examples and reusable proofs. P-521 uses 25 factor candidates and 170 attempts; the constructor
+examples and reusable proofs. The core-only P-521 construction uses 25 factor candidates and 170 attempts; the constructor
 admits at most 32 factors and still examines at most 4096 subsets. For the
 expression `2 ^ 521 - 1`, set local `maxRecDepth` to 1024 and
 `exponentiation.threshold` to 521; its numeral needs neither option.
@@ -262,8 +293,9 @@ records exact revisions, every sample, component costs, negative controls,
 and construction regression checks. Hex uses Lean 4.34.0 and PrimeCert uses
 Lean 4.33.0; identical-code calibration is reported separately.
 The kernel replay comparison uses a supplied Curve448 certificate in both systems.
-The explicit ECM route in {ref "tutorial-field-primes"}[the field-prime tutorial]
-constructs its own certificate. The corpus is small and structured.
+The search in {ref "tutorial-field-primes"}[the field-prime tutorial]
+constructs its own certificate. Those replay measurements use a small,
+structured corpus; the independent comparison above tests broader search coverage.
 
 # The Mathlib correspondence
 %%%

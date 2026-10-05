@@ -104,7 +104,7 @@ run_cmd Lean.Elab.Command.liftTermElabM do
   let some ext ← Hex.PrimalityTactic.constructionExtension?
       `HexIntFactor.PrimalityTactic.constructionExtension
     | throwError "missing construction registration"
-  unless ext.version == 1 && ext.factorName == ``Hex.Nat.ecmConstructionFactor do
+  unless ext.version == 2 && ext.factorName == ``Hex.Nat.interleavedConstructionFactor do
     throwError "incorrect construction registration"
   unless (← Hex.PrimalityTactic.searchExtensions).any
       (fun ext => ext.version == 3 && ext.factorName == ``Hex.Nat.intFactorSearch) do
@@ -127,14 +127,30 @@ error: primality?: certificate construction for 1000003 exhausted after 0 attemp
 example : Hex.Nat.Prime 1000003 := by
   primality? (factor := Hex.Nat.intFactorSearch)
 
--- Registered providers impose no search on successes of the first route.
+-- Automatic construction selects the measured provider once, at the root.
+-- Both routes retain accepted certificates and a bounded shared attempt count.
 run_cmd Lean.Elab.Command.liftTermElabM do
-  for (n, attempts) in [(2^521 - 1, 170), (2^255 - 19, 29)] do
-    let .ok first := Construction.run n (Rand.ofSeed n)
-      | throwError "core regression"
+  for (n, attempts) in [(2^521 - 1, 137), (2^255 - 19, 31)] do
+    let .ok expected := Construction.run n (Rand.ofSeed n)
+        (factor := interleavedConstructionFactor)
+      | throwError "interleaved regression"
     let (result, allocations) ← Hex.PrimalityTactic.construct n constructionBudget
     let .ok result := result | throwError "automatic regression"
-    unless allocations.isEmpty && result.attempts == attempts &&
-        result.attempts == first.attempts && result.rand == first.rand &&
-        result.events == first.events && reprStr result.cert.raw == reprStr first.cert.raw do
-      throwError "first-route success changed"
+    unless allocations == [(``Hex.Nat.interleavedConstructionFactor, 1024)] &&
+        result.attempts == attempts && result.attempts == expected.attempts && result.rand == expected.rand &&
+        result.events == expected.events && reprStr result.cert.raw == reprStr expected.cert.raw do
+      throwError "automatic dispatch changed the measured construction"
+
+-- The public dispatcher passes reduced allowances into the same construction.
+-- Zero bypasses registration; positive limits are allocated exactly once.
+run_cmd Lean.Elab.Command.liftTermElabM do
+  for allowance in [0, 1, 30] do
+    let (result, allocations) ← Hex.PrimalityTactic.construct (2^255 - 19)
+      { constructionBudget with maxAttempts := allowance }
+    let expected := if allowance == 0 then [] else
+      [(``Hex.Nat.interleavedConstructionFactor, allowance)]
+    unless allocations == expected do throwError "incorrect provider allowance"
+    match result with
+    | .error f => unless f.stop == .exhausted && f.attempts == allowance do
+        throwError "construction exceeded or lost the reduced allowance"
+    | .ok _ => throwError "unexpected success below the measured boundary"

@@ -1,18 +1,19 @@
 # Interleaved factor search on independent prime subjects
 
 The corrected native Pocklington search proves **186 of 300 fresh primes**
-under a 180-second process limit, compared with **138 for current Hex** and
+under a 180-second process limit, compared with **138 for the previous automatic Hex policy** and
 **170 for PrimeCert + SymPy**. Every successful output passes Lean kernel replay.
 The experiment also removes the earlier Curve25519 regression and substantially
-improves three larger standard field-prime timings. Production defaults remain
-unchanged.
+improves three larger standard field-prime timings. The measured interleaved
+policy is the default for `primality?` after importing `HexIntFactor`. The
+retained `baseline` measurements refer to the previous core-first retry policy.
 
 Pocklington proves that n is prime using enough certified prime factors of
 n−1 and modular identities. These experiments improve the search for those
 factors, using Pollard p−1 and elliptic-curve factorization (ECM). The resulting
 primality certificates still use Pocklington; this is separate from ECPP.
 
-The `interleaved` experimental policy restores the longer Pollard p−1 searches
+The measured `interleaved` policy restores the longer Pollard p−1 searches
 that the `balanced` policy omitted. For composite residuals of at most 192 bits,
 it tries bounds 262144 and 524288 before ECM. For larger residuals, it tries
 eight random ECM curves first, then those p−1 bounds, then the remaining 42
@@ -26,8 +27,9 @@ search is remembered by all descendants: for its fixed exponent E, an ancestor
 gcd of 1 or the whole ancestor gives a gcd of 1 or the whole divisor on each
 descendant. Repeating that search cannot help. A successful split currently
 restarts the ladder on its children; reusing the failed prefix is a remaining
-optimization, with repeated factors requiring care. No production policy or
-public tactic changes.
+optimization, with repeated factors requiring care. Its implementation lives
+in `HexIntFactor/Construction.lean`; the offline runner delegates this profile
+to the production provider. Ordinary `primality` keeps its separate policy.
 
 Curve25519 explains why the larger p−1 bounds matter: proving its primality
 requires a recursive prime whose predecessor has factor 31757755568855353.
@@ -97,13 +99,15 @@ python3 scripts/bench/primality_factor_corpus.py --gp /path/to/gp --output /tmp/
 Add `--domain hex-pocklington-corpus/v2` to reproduce the second corpus.
 
 The corrected comparison uses a subject-derived Hex seed. It does not measure
-variation over seeds. The baseline runs the current core-first dispatch followed
+variation over seeds. The baseline runs the previous core-first dispatch followed
 by its registered-provider retry; the experiment runs one combined-provider
 pass. The result compares complete policies, including their different
 preliminary factoring, stopping conditions and dispatch. It does not isolate
 ECM interleaving, and registering this provider as a fallback would not reproduce
-these timings. Production selection still needs multiple seeds and the actual
-proposed public-tactic dispatch.
+these timings. The public tactic now selects this provider before the first
+construction and uses the same subject-derived seed. Exact field suggestions,
+independent 256/384/512-bit tactic proofs and resource guards check that dispatch.
+Variation over seeds remains unmeasured.
 
 PrimeCert is unmodified commit
 `0803c2f6bd289c09704c7d352bb8fcf770cbb9b2`, using SymPy 1.14.0. Its literal
@@ -128,7 +132,7 @@ python3 scripts/bench/primality_factor_experiment.py \
 subjects, with 75 at each size. All successful outputs passed the separate Lean
 kernel replay. No predecessor factors, witnesses or curves were supplied.
 
-| Bits | Current Hex | Interleaved Hex | PrimeCert + SymPy |
+| Bits | Previous Hex | Interleaved Hex | PrimeCert + SymPy |
 | --- | --- | --- | --- |
 | 128 | 75/75 | 75/75 | 75/75 |
 | 256 | 40/75 | 61/75 | 59/75 |
@@ -136,7 +140,7 @@ kernel replay. No predecessor factors, witnesses or curves were supplied.
 | 512 | 5/75 | 12/75 | 7/75 |
 
 On this cohort, the experiment proves 186 subjects, compared with 138 for
-current Hex and 170 for PrimeCert + SymPy. Its coverage exceeds PrimeCert's at
+the previous automatic Hex policy and 170 for PrimeCert + SymPy. Its coverage exceeds PrimeCert's at
 256, 384 and 512 bits under the common process limit. This is bounded coverage
 on these subjects, not a success probability or a general speed guarantee.
 
@@ -182,7 +186,7 @@ in alternating orders. The two time columns are medians of four completed runs;
 the ratio is the median of the four within-block baseline/interleaved ratios.
 All subjects succeeded in both arms. Every repeated output is kernel-linked.
 
-| Subject | Current Hex (s) | Interleaved Hex (s) | Median paired ratio |
+| Subject | Previous Hex (s) | Interleaved Hex (s) | Median paired ratio |
 | --- | --- | --- | --- |
 | Curve25519 | 0.826 | 0.849 | 0.92 |
 | secp256k1 | 37.921 | 35.575 | 1.10 |
@@ -212,7 +216,7 @@ information. Each version's validation corpus was frozen before its results
 were inspected. Their different subjects and host conditions prevent a paired
 before/after comparison between versions.
 
-| Split | Bits | Current Hex | Preliminary interleaved Hex | PrimeCert + SymPy |
+| Split | Bits | Previous Hex | Preliminary interleaved Hex | PrimeCert + SymPy |
 | --- | --- | --- | --- | --- |
 | Tuning | 128 | 25/25 | 25/25 | 25/25 |
 | Tuning | 256 | 12/25 | 17/25 | 18/25 |
