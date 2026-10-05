@@ -131,6 +131,13 @@ def validate_allocation(directory):
         profiler = row["command"][row["command"].index("--profiler")+1]
         origin = next(word.removeprefix("LD_PRELOAD=") for word in profiler.split()
                       if word.startswith("LD_PRELOAD="))
+        wrapper_name = f"wrapper-{functions.index(row['function'])}.so"
+        commands = [c for c in meta["compile_commands"] if Path(c[-1]).name == wrapper_name]
+        callback = meta["callbacks"][row["function"]]
+        if (len(commands) != 1 or origin != commands[0][-1] or
+                "-DSIGN_DET_CALLBACK="+callback["symbol"] not in commands[0] or
+                "-DSIGN_DET_RESULT=void*" not in commands[0]):
+            raise ValueError("sample wrapper does not bind its callback")
         driver.check_events(counts_raw, json.loads(logs[".dhat.json"]), Path(origin))
         depth, size = int(row["function"][-1]), row["parameter"]
         key = "productionResultHash" if "runProduce" in row["function"] else "replayResultHash"
@@ -183,8 +190,8 @@ def validate_allocation(directory):
     import re
     for callback in meta["callbacks"].values():
         if (digest(generated) != callback["generated_c_sha256"] or
-                not re.search(rb"LEAN_EXPORT lean_object\* " + callback["symbol"].encode() +
-                              rb"\(lean_object\*", generated) or
+                len(re.findall(rb"LEAN_EXPORT lean_object\* " + callback["symbol"].encode() +
+                               rb"\(lean_object\*[^,)]*\)\{", generated)) != 1 or
                 not any(line.split()[-1] == callback["symbol"] for line in symbols)):
             raise ValueError("generated helper ABI or symbol disagreement")
     summary = {function: {str(size): {
@@ -205,7 +212,13 @@ def validate_sources(directory):
     manifest = json.loads((directory/"archive.json").read_text())
     root = Path(__file__).resolve().parents[2]
     with tempfile.TemporaryDirectory() as temporary:
-        env = dict(os.environ, GIT_INDEX_FILE=str(Path(temporary)/"index"))
+        objects = Path(temporary)/"objects"; objects.mkdir()
+        original_objects = subprocess.check_output(
+            ["git", "rev-parse", "--git-path", "objects"], cwd=root, text=True).strip()
+        original_objects = str((root/original_objects).resolve())
+        env = dict(os.environ, GIT_INDEX_FILE=str(Path(temporary)/"index"),
+                   GIT_OBJECT_DIRECTORY=str(objects),
+                   GIT_ALTERNATE_OBJECT_DIRECTORIES=original_objects)
         def git(*arguments):
             return subprocess.check_output(["git", *arguments], cwd=root, env=env)
         git("read-tree", manifest["source_base"])

@@ -145,7 +145,7 @@ Every completed sample is included; shared-host activity does not exclude points
 Tree replay at depth one is consistent with the declared model in both
 collections, by margins of only 0.003 and 0.004 inside the slope tolerance.
 All four slopes are negative: time grows more slowly than the model here.
-Observed doubling ratios are 2.03–2.16, compared with 2.29–2.5 for the model.
+Rerun doubling ratios are 2.03–2.16, compared with 2.29–2.5 for the model.
 The four families show similar growth; this pass does not establish a distinct
 scaling regime for depth-one replay. The other three families are inconclusive in both collections.
 The source-derived model remains s(log₂s+1); the large linear terms described
@@ -158,7 +158,10 @@ retains all 36 operation captures: three trial-major rounds, four registrations,
 and 8, 32 and 128 queries. It uses the existing allocator profiler and stock
 Valgrind; no arithmetic or profiler C implementation is changed. Each wrapper
 calls the actual non-inlined `produce` or `checkTree` helper, whose generated
-one-object-argument, pointer-result ABI and binary symbol are checked. These
+one-object-argument, pointer-result ABI is checked. Symbol lines are retained
+from the unchanged binary with the measured hash; the binary itself is not
+archived. The in-capture evidence of each symbol’s actual invocation is its
+single wrapped callback. These
 helpers run once per captured operation and are not called during preparation.
 The independent literal oracle checks the field depth, queries and root/sign
 table. Agreement with the same binary’s live inventory checks reproducibility.
@@ -195,7 +198,8 @@ provenance, ABI self-checks and callback bindings with:
     python3 -m scripts.bench.sign_det_nested_archive reports/data/sign-det-nested-tables/39066b34e1 --reconstruct-source
 
 Source reconstruction applies the retained patch to its recorded base in a
-private Git index, verifies the complete tree and every recorded source hash,
+private Git index and temporary object store, verifies the complete tree and
+every recorded source hash,
 and leaves the checkout unchanged. Historical exports use the explicitly fixed
 8..128 ladder, never the current default. The allocation supplement retains
 unchanged stock collector sources and generated helper declarations and symbol
