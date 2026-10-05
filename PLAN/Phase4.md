@@ -43,8 +43,9 @@ For each library `HexFoo` advancing through Phase 4:
    compiled operations that warrant performance checks with
    `setup_benchmark` (parametric), and canonical inputs worth pinning with
    `setup_fixed_benchmark`. Each parametric declaration is an independently
-   derived model or a cited upper bound, never a model read from observed
-   timings, with the derivation in an adjacent comment.
+   derived model, a cited upper bound, or an explicitly descriptive operation
+   count under SPEC/benchmarking.md's representative-observation rule, never a
+   model read from observed timings, with the derivation in an adjacent comment.
 2. **`lakefile.lean` exe entry**:
 
    ```lean
@@ -67,9 +68,12 @@ For each library `HexFoo` advancing through Phase 4:
 - **Declare the intended algorithm's independently derived expected scaling on
   the registered family**, derived before measurement and never read off
   observed timings. When no family model is derivable, declare a cited upper
-  bound where one usefully predicts timing. If neither is useful, document
-  the source operation bound and its cost limitations, and measure representative
-  inputs without asserting a scaling law. The adjacent comment explains how
+  bound covering actual timing costs, even when loose. If neither is available,
+  follow the representative-observation rule: identify variable costs from
+  source and operand evidence, retain the operation bound and measure at least
+  two sizes in the downstream range without asserting a scaling law. Bounded
+  per-operation cost cannot be relabelled to evade the intended timing model.
+  The adjacent comment explains how
   the family relates to the per-library SPEC's worst-case bound.
 - **Use the assigned harness.** LeanBench is the sole compiled-code harness.
 - **Use stable case names, fixed seeds and committed inputs.**
@@ -85,6 +89,8 @@ For each library `HexFoo` advancing through Phase 4:
 For library `hex-foo`, Phase 4 is done when:
 
 - every performance claim the library makes has a complete scientific run;
+- representative observations have a complete retained schedule covering their
+  stated inputs, with explicit bounds and limits rather than a scaling claim;
 - each timing finding has an evidence-based disposition under
   [Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim):
   a passing model/bound check, a corrected defect or declaration, replacement

@@ -76,7 +76,8 @@ operational safeguards rather than scientific budgets.
 
 ## The verdict-as-bug-trigger model
 
-Every parametric benchmark has a complexity claim declared *at the
+Every parametric benchmark has a timing model, an upper bound, or an explicitly
+descriptive operation-count formula declared *at the
 registration site* in the per-library `Bench.lean`. The benchmark harness
 ([§Harness](#harness-lean-bench)) fits the observed scaling against that model.
 Its current two-sided mode emits one of two verdicts:
@@ -114,15 +115,30 @@ comment says which:
   result faster than the bound can read `inconclusive`; that result
   satisfies the bound, and whoever records it says so.
 
-Neither choice is mandatory when neither predicts useful timing behavior.
-For example, an exact count of coefficient operations may mix dense loops
-over zeros with variable-size rational normalization. Keep the independently
-derived operation bound, explain why it supplies no useful wall-time model,
-and record timings and memory on representative downstream inputs instead.
-State the resulting limitation explicitly: these observations do not establish
-a scaling law. This applies to production computations as well as references.
-It does not remove a separately mandated performance target or excuse an
-implementation defect.
+A valid cited upper bound covering actual timing costs remains a one-sided
+check even when it is loose; it need not predict elapsed time accurately.
+When neither a useful timing model nor such a bound is available, representative
+observations are permitted. First fix identified implementation defects and
+consider practical improvements justified by intended use. Consider correcting
+the model for operand sizes or choosing inputs with bounded per-operation cost.
+If those do not yield a useful independently derived claim, identify from the
+source which costs vary and why; existing observations must support that
+explanation with operand inventories or attribution. Keep the source operation
+bound and record time and memory at at least two sizes covering the intended
+downstream range. Growth exceeding what known operation and operand-size bounds
+allow remains a finding. The observations establish no scaling law.
+This route is unavailable when the intended model already has bounded
+per-operation costs, such as fixed-precision word operations. Do not use it merely
+because a fitted verdict is inconvenient, and do not infer a model from timings.
+The same standard applies before and after measurement, to production as well
+as references. Explicit performance targets and implementation defects remain
+obligations; this route requires no exhaustive optimization campaign.
+
+Representative measurements may use fixed-problem registrations. A parametric
+registration retained for paired sampling may instead label its formula as an
+operation count with a descriptive fitted verdict in its adjacent comment and
+report. It makes no timing-scaling claim. Preserve historical formulas,
+observations and verdicts when replacing an invalidated timing claim.
 
 A fixed registration makes no performance claim; see
 [§Fixed-problem benchmarks](#fixed-problem-benchmarks). The operation's
