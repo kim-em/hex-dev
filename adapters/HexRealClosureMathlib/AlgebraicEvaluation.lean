@@ -433,7 +433,9 @@ theorem adjoin_inventory (model : Model context K)
                 model.read interpretation a) ∧
             (model.adjoin descriptor).toValue (context.adjoin descriptor).generator ∈ extended.domain ∧
               extended.map ((model.adjoin descriptor).toValue (context.adjoin descriptor).generator) =
-                selected := by
+                selected ∧
+            (∀ a, a ∈ extended.domain → extended.map a ≠ 0 →
+              a⁻¹ ∈ extended.domain ∧ extended.map a⁻¹ = (extended.map a)⁻¹) := by
   classical
   obtain ⟨q, minimal, s, built, realize⟩ := model.adjoin_realization (G := G) descriptor values
   refine ⟨q, minimal, s, built, ?_⟩
@@ -460,10 +462,11 @@ theorem adjoin_inventory (model : Model context K)
     intro a member
     exact (hv.flatMap (context.polynomial descriptor a)
       (List.mem_map.mpr ⟨a, member, rfl⟩)).members
-  obtain ⟨extended, finite, coefficients, generator⟩ := realize interpretation minimalGuards descriptorData
+  obtain ⟨extended, finite, coefficients, generator, selected, inverses⟩ :=
+    realize interpretation minimalGuards descriptorData
     (Transport.Inventory.replay_data closed descriptor.raw.head descriptor.raw.lower descriptor.raw.upper
       (descriptor.raw.queries ++ q :: values.map (context.polynomial descriptor)) s.evidence hr) valueGuards
-  refine ⟨descriptorData, extended, ?_, coefficients, generator⟩
+  refine ⟨descriptorData, extended, ?_, coefficients, generator, selected, inverses⟩
   intro a member
   refine ⟨(model.adjoin descriptor).domain_iff extended a |>.mpr (finite a member).1, ?_⟩
   rw [(model.adjoin descriptor).read_apply, (model.adjoin descriptor).sign]

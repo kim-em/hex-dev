@@ -517,6 +517,8 @@ Membership and sign agreement on `adjoinCoefficients` suffice to interpret the
 selected child root, preserve the requested child signs in the next stage's native input form,
 and return a partial
 coefficient interpretation on the child's actual semantic field. The finite
+interpretation contains every inverse whose interpreted value is nonzero,
+with the corresponding inverted value. Source nonzero alone does not suffice.
 sign conditions supply zero reflection; closure derives all intermediate
 arithmetic. This is the algebraic step of finite realization. The general
 induction through arbitrarily interleaved infinitesimal levels remains required.
