@@ -9,6 +9,8 @@ module
 import all Init.Data.Array.Basic
 
 import HexPermGroupMathlib
+import Mathlib.GroupTheory.Perm.Cycle.Concrete
+meta import Mathlib.GroupTheory.Perm.Cycle.Concrete
 meta import HexPermGroup.Rank
 meta import HexPermGroupMathlib.Rank
 
@@ -200,5 +202,21 @@ example : (Random.rand (Element square) : RandG StdGen (Element square)) =
 #guard
   let draws := (indexDraws 3 (by decide) 300).run' (ULift.up (mkStdGen 7))
   (List.range 3).all fun k => draws.any (·.val == k)
+
+/-! `perm_group` sees through definitions of the subgroup and of its generating set. -/
+
+def m11 : Subgroup (Equiv.Perm (Fin 11)) :=
+  Subgroup.closure {c[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], c[2, 6, 10, 7] * c[3, 9, 4, 5]}
+
+example : Nat.card m11 = 7920 := by perm_group
+example : c[0, 1] ∉ m11 := by perm_group
+example : c[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] ∈ m11 := by perm_group
+
+def s11Gens : Set (Equiv.Perm (Fin 11)) := {c[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], c[0, 1]}
+
+def s11 : Subgroup (Equiv.Perm (Fin 11)) := Subgroup.closure s11Gens
+
+example : s11 = ⊤ := by perm_group
+example : Nat.card (Subgroup.closure s11Gens) = 39916800 := by perm_group
 
 end Hex.PermGroup.Tests

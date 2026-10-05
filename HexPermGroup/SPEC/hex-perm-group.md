@@ -925,7 +925,12 @@ example : Subgroup.closure ({σ, τ} : Set (Equiv.Perm (Fin 11))) = ⊤ := by
 ```
 
 The degree is a numeral. The generating set is a set literal `{σ₁, …, σₖ}` or
-the coercion of a `Finset` literal. Each generator and the query `g` are
+the coercion of a `Finset` literal. The subgroup and the generating set may
+each be given by a definition, such as
+`def M11 : Subgroup (Equiv.Perm (Fin 11)) := Subgroup.closure {σ, τ}` or
+`def gens : Set (Equiv.Perm (Fin 11)) := {σ, τ}`: the tactic unfolds
+definitions one at a time until it reaches `Subgroup.closure` and a literal, and
+never unfolds `Subgroup.closure` itself. Each generator and the query `g` are
 closed terms of type `Equiv.Perm (Fin n)` that the compiler can evaluate, and
 the claimed order is a numeral.
 
