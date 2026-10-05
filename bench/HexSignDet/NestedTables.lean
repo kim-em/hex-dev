@@ -176,7 +176,7 @@ same positive constant. Every parent retains one sign column and the constant
 row; leaves have three moment rows. Polynomial degree, coefficient size and
 matrix dimension stay bounded independently of s. Replaying query reductions
 at every balanced node contributes s*(log2(s)+1) steps. The 4s-1 moment checks,
-s leaf-domain replays and production's s initial normalizations contribute
+s leaf-domain replays and production's s normalizations, bounded certificate/rank construction and solves add
 linear terms with potentially large constants. The leading asymptotic cost is
 Theta(s log s); this short range need not separate it from those linear terms.
 Graph sharing has no registered tight model. Depth is a fixed facet.
@@ -188,7 +188,8 @@ def input2 (size : Nat) : Option Input := input 2 size
 @[noinline] def runProduce1 (i : Option Input) := produce i
 
 -- Cost model: balanced query-reduction replay has s*(log2(s)+1) steps.
--- Production includes its own full replay plus linear initial normalization.
+-- Production includes full replay, normalization, certificate/rank construction
+-- and bounded-size solves; their per-node work adds linear terms.
 -- Fixed depth bounds arithmetic and matrix sizes, giving Theta(s log s)
 -- with linear lower-order terms; finite-range consistency is not assumed.
 setup_benchmark runProduce1 s => s * (Nat.log2 s + 1)
@@ -224,7 +225,8 @@ setup_benchmark runTree1 s => s * (Nat.log2 s + 1)
 @[noinline] def runProduce2 (i : Option Input) := produce i
 
 -- Cost model: balanced query-reduction replay has s*(log2(s)+1) steps.
--- Production includes its own full replay plus linear initial normalization.
+-- Production includes full replay, normalization, certificate/rank construction
+-- and bounded-size solves; their per-node work adds linear terms.
 -- Fixed depth bounds arithmetic and matrix sizes, giving Theta(s log s)
 -- with linear lower-order terms; finite-range consistency is not assumed.
 setup_benchmark runProduce2 s => s * (Nat.log2 s + 1)
@@ -281,7 +283,7 @@ private def inventory (depth size : Nat) (i : Input) : Lean.Json :=
     ("momentSlots", Lean.toJson (ns.foldl (fun n node => n + node.size) 0)),
     ("queryReductionSteps", Lean.toJson (ns.foldl (fun n node =>
       n + (node.preparation.map (fun r => r.steps.length)).getD 0) 0)),
-    ("leafDomains", Lean.toJson (ns.filter (fun node => node.queries.length == 1)).length),
+    ("leafNodes", Lean.toJson (ns.filter (fun node => node.queries.length == 1)).length),
     ("maxMatrixSize", Lean.toJson (ns.foldl (fun n node => max n node.size) 0)),
     ("coefficient", i.coefficients.encode i.coefficients.epsilon),
     ("graphNodes", Lean.toJson i.data.graph.entries.size),

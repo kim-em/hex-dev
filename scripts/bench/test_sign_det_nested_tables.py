@@ -12,7 +12,8 @@ class NestedTablesTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.path = Path(self.tmp.name)/"records"
-        # Actual compiled inventories; fingerprints are not invented by the test.
+        # Compiled inventory snapshot; fingerprints are not invented by the test.
+        # The collector regenerates live inputs; this fixture is not a freshness gate.
         fixture = Path(__file__).with_name("fixtures")/"sign-det-nested-table-inputs.jsonl"
         self.rows = [json.loads(line) for line in fixture.read_text().splitlines()]
 
@@ -26,7 +27,7 @@ class NestedTablesTests(unittest.TestCase):
                            ("coefficient", bench.constant(1, 1)),
                            ("queryPolynomials", []), ("head", []),
                            ("momentSlots", 3), ("inputHash", True),
-                           ("queryReductionSteps", 8), ("leafDomains", 0),
+                           ("queryReductionSteps", 8), ("leafNodes", 0),
                            ("replayResultHash", 1)):
             changed = copy.deepcopy(self.rows); changed[0][key] = value
             with self.subTest(key=key), self.assertRaises(ValueError):

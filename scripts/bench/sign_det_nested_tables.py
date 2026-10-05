@@ -55,7 +55,7 @@ def validate_inputs(path):
             raise ValueError("wrong literal polynomial, coefficient or complete one-root table")
         sizes = {"headDegree": 1, "queryDegree": 0, "rootCount": 1, "realizedSupport": 1,
                  "treeNodes": 2*size-1, "momentSlots": 4*size-1, "maxMatrixSize": 3,
-                 "queryReductionSteps": size*size.bit_length(), "leafDomains": size}
+                 "queryReductionSteps": size*size.bit_length(), "leafNodes": size}
         if any(type(row.get(key)) is not int or row[key] != value for key, value in sizes.items()):
             raise ValueError("wrong nested-field evidence dimensions")
         if (type(row.get("graphNodes")) is not int or row["graphNodes"] < 1 or
