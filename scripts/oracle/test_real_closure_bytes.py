@@ -44,7 +44,16 @@ class ByteTests(unittest.TestCase):
                 elif field == 'stage': value[0][1] = 1
                 else: value[0][0][0][1] = 18
                 rows[index]['value_text'] = json.dumps(value,ensure_ascii=False)
-                with self.assertRaises(ValueError): verify(rows)
+                if field != 'unicode':
+                    rows[index]['polynomial_json'][0] = copy.deepcopy(value[0])
+                    rows[index]['polynomial_text'] = json.dumps(
+                        rows[index]['polynomial_json'],ensure_ascii=False)
+                reason = {
+                    'root':'reducible selected predecessor changed',
+                    'stage':'lost context stage or root',
+                    'unicode':'Unicode or provider version changed',
+                }[field]
+                with self.assertRaisesRegex(ValueError,reason): verify(rows)
 
     def test_json_literal_types_and_duplicate_fields(self):
         with self.assertRaises(ValueError): packet('[[[],0,[]],[0,true,3]]',[[[],0,[]],[0,1,3]])

@@ -1497,12 +1497,13 @@ successive roots, restore generator payloads and polynomials, work with a cached
 prefix, and reject an explicit stale full predecessor reference, misplaced
 frames, false graph versions and matrix certificates, unknown real providers,
 malformed frames and extra unreachable graph entries. These are structured JSON
-APIs; byte-parser and pretty-printer laws, and a roundtrip theorem for every
-freshly encoded tower (which needs graph-shape completeness), remain open.
+APIs; the `TowerBytes` interface below proves shared parser/printer laws and
+exact byte/text roundtrips for known contexts. A roundtrip theorem for every
+freshly encoded tower with an uninstalled suffix still requires graph-shape
+completeness.
 Batch callers can reconstruct once, insert the returned context, and then use
 the installed-prefix readers to avoid replaying each missing frame per value.
-The root reader's graph-shape and byte-format obligations also apply after
-refinement.
+The root reader's remaining graph-shape obligation also applies after refinement.
 
 ### Interpretation, algebraicity and order of native towers
 
@@ -2881,8 +2882,9 @@ They exercise rational data, both point and selected roots, a reducible-root
 inverse, nested algebraics, successive infinitesimals, escaped Unicode
 provider names and unknown-provider rejection. The independent Python JSON
 parser checks agreement of printed packets with the structured JSON emitted
-beside them, their full field structure, frame/stage counts and expected native
-observations. It independently checks literal rational and Unicode data and
+beside them, their top-level signature and frame field structure, frame/stage
+counts and expected native observations. It independently checks literal
+rational and Unicode data and
 the first reducible defining head. It does not independently establish the
 algebraic payload values or replay-graph correctness. Native readers also
 check invalid UTF-8, truncated syntax, stale contexts, malformed coefficients,

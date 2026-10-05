@@ -715,7 +715,11 @@ the original handle when it is installed. Root output retains its owning
 context and value, but does not reconstruct its `Root parent` constructor or
 predecessor embedding. Complete root-presentation and root-set serialization,
 including multiplicities and `all`, remain required exploration work; this
-packet interface does not discharge those obligations. Decimal display is not
+packet interface does not discharge those obligations. Eventual root `Repr`
+must meet that reconstruction contract. Success of reconstruction for every
+freshly printed tower whose algebraic suffix is not installed also remains
+required work, including completeness of the emitted replay graph shape.
+Decimal display is not
 a reconstruction format. A conditional
 total mode reuses its law package rather than serializing proofs of
 transcendence as runtime data.

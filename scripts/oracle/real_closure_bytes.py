@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Independently parse actual printed tower packets with Python's JSON parser.
 
-Check printed/structured packet agreement, complete field structure, stage/frame
-counts, and specified rational, Unicode and defining-head literals. Algebraic
+Check printed/structured packet agreement, top-level signature and frame field
+structure, stage/frame counts, and specified rational, Unicode and defining-head literals. Algebraic
 payload values and replay graphs are not independently established here.
 Field arithmetic is covered by the existing algebraic conformance oracles;
 native readers exercise reconstruction/rejection and have exact roundtrip proofs.
