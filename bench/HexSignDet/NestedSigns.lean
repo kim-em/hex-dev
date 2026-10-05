@@ -65,14 +65,24 @@ coefficient serialization and input hashing happen during preparation. -/
 
 def depths : Array Nat := #[2, 4, 6, 8, 10, 12]
 
-/- Declared cost-model: Θ(2^d) on this input family. The actual sign calls the
-predecessor sign for numerator and denominator. The selected coefficients are
-one, so both branches persist at every level, ending in 2^d rational signs.
-Canonical equality/lowest-coefficient scans at one level cost at most O(d)
-on these constant arrays. Thus T(d)=2T(d-1)+O(d)=Θ(2^d). This describes the
-consumed sign operation, not arbitrary rational-function arithmetic, BKR
+/-- Source-derived constructor recurrence: at one level, zero builds two
+lower zeros and one lower one; one builds two of each. This counts fixed-size
+constructor work, not just the rational signs at the leaves. -/
+def numeralCosts : Nat → Nat × Nat
+  | 0 => (1, 1)
+  | depth + 1 =>
+    let (zeros, ones) := numeralCosts depth
+    (2*zeros + ones + 1, 2*zeros + 2*ones + 1)
+
+def numeralCost (depth : Nat) : Nat := (numeralCosts depth).1
+
+/- Declared cost-model: Θ((2+√2)^d) for the actual compiled coefficient sign.
+The field dictionary rebuilds numerals during zero checks and lowest-coefficient
+scans. Constructor costs follow the recurrence above, whose dominant eigenvalue
+is 2+√2. The 2^d lower sign calls and the top zero-equality scan are cheaper.
+The model counts actual constant construction, not arbitrary arithmetic, BKR
 production or lower-level proof-certificate dependencies. -/
-setup_benchmark runSign d => 2^d
+setup_benchmark runSign d => numeralCost d
   with prep := input
   where {
     paramSchedule := .custom depths
@@ -95,7 +105,7 @@ def inspect : IO UInt32 := do
       ("depth", Lean.toJson depth), ("coefficient", Lean.toJson i.literal),
       ("encodedBytes", Lean.toJson i.literal.utf8ByteSize),
       ("predictedBaseSigns", Lean.toJson (2^depth)),
-      ("resultHash", Lean.toJson (hash (1 : Int)).toNat)]).compress
+      ("resultHash", Lean.toJson (hash (runSign i)).toNat)]).compress
   return 0
 
 end Hex.SignDetBench.NestedSigns

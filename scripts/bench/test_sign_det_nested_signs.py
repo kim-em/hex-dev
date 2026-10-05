@@ -42,7 +42,7 @@ class NestedSigns(unittest.TestCase):
     def test_failed_nonfinite_or_missing_observations(self):
         expected = self.inputs(self.rows)
         result = {"function": bench.FUNCTION, "kind": "parametric", "hashable": True,
-                  "budget_truncated": False, "complexity_formula": "2^d", "config": bench.CONFIG,
+                  "budget_truncated": False, "complexity_formula": "numeralCost d", "config": bench.CONFIG,
                   "env": {"git_commit": "source", "git_dirty": False}, "verdict": "inconclusive",
                   "slope": 1, "advisories": [], "points": [
                       {"trial_index": trial, "param": d, "status": "ok", "result_hash": "0x2",

@@ -63,7 +63,7 @@ def validate_result(path, expected, revision):
     result = export["results"][0]
     if (result["function"] != FUNCTION or result["kind"] != "parametric" or
             result["hashable"] is not True or result["budget_truncated"] is not False or
-            result["complexity_formula"].replace(" ", "") != "2^d" or
+            result["complexity_formula"].replace(" ", "") != "numeralCostd" or
             any(result["config"][k] != v for k, v in CONFIG.items()) or
             result["env"]["git_commit"] != revision or result["env"]["git_dirty"] is not False):
         raise ValueError("wrong nested-sign registration or source binding")
