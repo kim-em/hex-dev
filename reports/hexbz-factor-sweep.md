@@ -6,7 +6,7 @@ factorization entry point and external comparators.
 ## Systems
 
 - `hex-factor`: public Hex production factorization at clean revision
-  `1a78e196b3e75f83d23eb4b7d8679750f788249b`
+  `8d2f3007d21880f44f64b60eb47377aaafc31f77`
 - `flint`: python-flint 0.9.0
 - `pari`: PARI/GP 2.17.2 through cypari2 2.2.4
 - `ntl`: NTL 11.6.0 `ZZXFactoring`
@@ -18,14 +18,18 @@ factorization entry point and external comparators.
 The external toolchains came from transient nixpkgs environments. Isabelle
 session and Haskell-export builds completed before timed calls. Hex includes
 its restored fast polynomial dispatchers and guarded Hensel ordered-product
-tree; the executable hash and source fingerprint accompany its record.
+tree. The binary was built from the source committed at `8d2f3007d218`;
+measurement began after that commit from a clean worktree. Its SHA-256 is
+`306302812d74218063d43989ffa797082ee38173eeeeb220607fb28f87063728`.
+The source fingerprint includes the imported coefficient-owner dependency
+libraries, their umbrellas, and the factor-service adapters.
 
 ## Method
 
 - Host: `chungus2`, AMD EPYC 9455, Linux x86-64, Lean `4.35.0-rc3` for Hex.
-- CPU placement: Hex harness and service pinned to automatically leased CPU 33.
-  Shared-host load averages at the start were 167.64, 129.63, and 77.49;
-  at the end they were 39.99, 95.76, and 71.59. Every completed sample is
+- CPU placement: Hex harness and service pinned to automatically leased CPU 92.
+  Shared-host load averages at the start were 25.54, 32.41, and 56.55;
+  at the end they were 17.97, 27.58, and 51.87. Every completed sample is
   retained. The external record used CPU 0 on the same shared host.
 - Corpus: `bench/corpus/hexbz-factor-corpus.jsonl`, all 392 rows.
 - Corpus SHA-256:
@@ -42,7 +46,7 @@ tree; the executable hash and source fingerprint accompany its record.
   times. Paired comparisons require each measurement to strictly exceed
   ten times its own protocol overhead.
 
-The per-system protocol overheads were 31.397 us for Hex, 15.493 us for
+The per-system protocol overheads were 21.572 us for Hex, 15.493 us for
 FLINT, 11.027 us for NTL, 18.006 us for PARI, 18.628 us for Isabelle BZ,
 and 18.848 us for Isabelle LLL. Reported service times do not subtract them.
 
@@ -50,9 +54,9 @@ and 18.848 us for Isabelle LLL. Reported service times do not subtract them.
 
 The plotting tool selects the newest current-corpus record for each system:
 
-- `reports/bench-results/hexbz-factor-sweep-1a78e196-fast-kernels-chungus2.json`
+- `reports/bench-results/hexbz-factor-sweep-8d2f3007-fast-kernels-chungus2.json`
   supplies Hex; SHA-256
-  `91d728908c8ecfaa878303c1ff9931b2e7626839c4c475b80bca9570ada7b2f8`.
+  `98a1c6caefcb0cb2813a0c284e2aaf1c5f7a0fc05d5c2f0ed9cece9403280b81`.
 - `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`
   supplies FLINT, NTL, PARI, Isabelle BZ, and Isabelle LLL; SHA-256
   `4de27e389d738abc1e878f0be273485c3723216211a101c3eba55860e7b8a242`.
@@ -60,13 +64,18 @@ The plotting tool selects the newest current-corpus record for each system:
 Both records use a clean worktree, the current corpus hash, the same host,
 cutoff, and repetition policy. All answering systems agree. They are
 observations from separate shared-host runs; these figures do not isolate the
-performance effect of restoring the dispatchers.
+performance effect of restoring the dispatchers. All 392 per-case statuses
+match the preceding published Hex curve at `ab371eaf`: no case newly times
+out, declines, or becomes an error. The first restoration measurement at
+`1a78e196` is retained as a separate complete record; its binary source was
+`233faf0a7e`, before the audit-only commit. Both complete restoration runs
+remain available.
 
 ## Current summary
 
 | System | Answered | Timed out | Median | p90 | Slowest answer |
 |---|---:|---:|---:|---:|---:|
-| Hex public factorization | 383 | 9 | 283.710 us | 7.961 ms | 3.934 s |
+| Hex public factorization | 383 | 9 | 259.796 us | 6.038 ms | 3.696 s |
 | FLINT 0.9.0 | 391 | 1 | 60.089 us | 1.139 ms | 1.241 s |
 | PARI/GP 2.17.2 | 391 | 1 | 65.687 us | 1.008 ms | 960.815 ms |
 | NTL 11.6.0 | 391 | 1 | 88.160 us | 2.365 ms | 1.305 s |
