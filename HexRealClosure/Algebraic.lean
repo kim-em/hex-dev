@@ -562,6 +562,7 @@ and scale the one-sided Bézout coefficient by its computed constant gcd. -/
   let eg := DensePoly.xgcdLeft p (inverseFactors head p).2
   DensePoly.scale eg.gcd.leadingCoeff⁻¹ eg.left
 
+/-- The inverse polynomial for this operand and its exact defining head. -/
 @[expose] def inverseCandidate (a : Element context) : DensePoly E :=
   inversePolynomial context.root.raw.head a.polynomial
 

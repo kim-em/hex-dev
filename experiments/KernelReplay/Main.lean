@@ -39,7 +39,8 @@ experiment is not a public certificate byte reader. -/
 unsafe def main (args : List String) : IO UInt32 := do
   initSearchPath (← findSysroot)
   enableInitializersExecution
-  let env ← importModules (loadExts := true) #[{ module := `KernelReplay.FactOperationsProbe }] {}
+  let env ← importModules (loadExts := true) #[{ module := `KernelReplay.NestedProbe },
+    { module := `KernelReplay.FactOperationsProbe }] {}
   if let ["emit", path] := args then
     IO.FS.writeBinFile path Hex.RealClosure.Algebraic.KernelReplayProofProbe.graphJson.writeBytes
     return 0
@@ -81,7 +82,7 @@ unsafe def main (args : List String) : IO UInt32 := do
     | some control => [control]
     | none => controls.filter fun control => args.isEmpty || args.contains control.1
   if selected.isEmpty then
-    (← IO.getStderr).putStrLn "expected complete, missing, false, memo, collect, generated, or nested"
+    (← IO.getStderr).putStrLn "expected complete, missing, false, memo, collect, generated, nested, or fact-operations"
     return 2
   for (label, term, outcome, literal) in selected do
     IO.println s!"control={label}"

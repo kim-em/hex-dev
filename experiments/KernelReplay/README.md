@@ -271,8 +271,10 @@ addition and multiplication; inversion receives the one, addition,
 subtraction, multiplication, inverse and division operations used by the
 existing gcd/Bézout algorithm. The original element carrier and context stay
 fixed when predecessor fact lists change. Packing also takes an explicit
-reduction function proved equal to the original policy. These operations
-inherit the ordinary-kernel missing-fact boundary; compiled evaluation retains
+reduction function proved equal to the original policy. For ordinary-kernel
+replay, reduction must also use supplied predecessor operations: `Context.factReduce` retains the existing policy and monic-division
+algorithm with explicit equal predecessor operations. Passing the original
+reduction function can start lower sign searches. Compiled evaluation retains
 the native fallback.
 
 `FactOperations.lean` exercises these operations on an element in a second
@@ -280,8 +282,14 @@ extension whose coefficient retains a noncanonical polynomial in the first.
 Addition requests the lower fact for `4X`; without that fact the kernel stops
 in the first context. All eight arithmetic checks together request five lower
 packets. A separate pass uses only the recorded packets, and removing any one
-of the five leaves the check unproved. Accepted proofs use only the three
-standard axioms. The controls use fixed typed contexts; they do not establish
+of the five leaves the check unproved at the exact omitted polynomial key.
+A monic defining polynomial exercises the division loop with supplied lower
+operations, fresh certificate production, and a separate recorded-packet pass.
+Missing division evidence is checked against the exact lower context and key.
+A nonconstant upper result separately requires its own upper-context fact;
+removing that fact stops at the exact upper context and original polynomial.
+All nine operation and reduction laws are audited theorem declarations.
+Accepted proofs use only the three standard axioms. The controls use fixed typed contexts; they do not establish
 context reconstruction from bytes or general replay performance.
 
 ```sh

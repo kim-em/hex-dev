@@ -24,6 +24,43 @@ local notation "Fact" =>
 local notation "nativeReduce" =>
   @Context.reduce E Ctx zero dec one add neg sub mul inv div natCast decCtx coeffSign parent context
 
+/-- Apply the original reduction policy with equal predecessor operations.
+A clean monic head uses the existing monic-division algorithm; other contexts
+retain the input literally. The original context and checked policy are fixed. -/
+@[expose] def Context.factReduce (subject : Context E Ctx coeffSign parent)
+    (predecessorOne : One E) (predecessorSub : Sub E) (predecessorMul : Mul E)
+    (ho : predecessorOne = one) (_hs : predecessorSub = sub) (_hm : predecessorMul = mul)
+    (p : DensePoly E) : DensePoly E :=
+  let root := @Context.root E Ctx zero dec one add neg sub mul inv div natCast decCtx
+    coeffSign parent subject
+  let head := (@SignDet.Descriptor.raw E Ctx zero dec one add sub mul natCast decCtx
+    coeffSign parent root).head
+  let canReduce := @Context.canReduce E Ctx zero dec one add neg sub mul inv div natCast
+    decCtx coeffSign parent subject
+  let monic := @Context.monic_of_reduce E Ctx zero dec one add neg sub mul inv div natCast
+    decCtx coeffSign parent subject
+  letI := predecessorOne
+  letI := predecessorSub
+  letI := predecessorMul
+  if h : canReduce = true then
+    (DensePoly.divModMonic p head (by
+      change head.leadingCoeff = @One.one E predecessorOne
+      rw [ho]
+      exact monic h)).2
+  else p
+
+theorem Context.factReduce_eq (subject : Context E Ctx coeffSign parent)
+    (predecessorOne : One E) (predecessorSub : Sub E) (predecessorMul : Mul E)
+    (ho : predecessorOne = one) (hs : predecessorSub = sub) (hm : predecessorMul = mul) :
+    @Context.factReduce E Ctx zero dec one add neg sub mul inv div natCast decCtx
+      coeffSign parent subject predecessorOne predecessorSub predecessorMul ho hs hm =
+      @Context.reduce E Ctx zero dec one add neg sub mul inv div natCast decCtx
+        coeffSign parent subject := by
+  cases ho
+  cases hs
+  cases hm
+  rfl
+
 /-- Compute polynomial addition with equal predecessor operations, retaining
 this extension's original carrier and packing with supplied scalar facts. -/
 @[expose, instance_reducible] def Element.factAdd (predecessor : Add E)
@@ -90,7 +127,8 @@ theorem Element.factMul_eq
   cases hm
   exact Element.cachedMul_eq reduce hr facts
 
-/-- Supplied-fact packing with an equal predecessor Sub operation. -/
+/-- Negate as `0 - p` with equal predecessor subtraction, then pack
+from supplied scalar facts in the original carrier. -/
 @[expose, instance_reducible] def Element.factNeg (predecessor : Sub E)
     (_equal : predecessor = sub) (reduce : DensePoly E → DensePoly E)
     (hr : reduce = nativeReduce) (facts : List Fact) : Neg Carrier :=
@@ -116,7 +154,7 @@ theorem Element.factNeg_eq (predecessor : Sub E) (equal : predecessor = sub)
   let pack := @Element.pack E Ctx zero dec one add neg sub mul inv div natCast decCtx
     coeffSign parent context reduce hr facts
   letI := predecessor
-  ⟨pack (1)⟩
+  ⟨pack 1⟩
 
 theorem Element.factOne_eq (predecessor : One E) (equal : predecessor = one)
     (reduce : DensePoly E → DensePoly E) (hr : reduce = nativeReduce)

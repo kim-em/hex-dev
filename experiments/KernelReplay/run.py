@@ -38,11 +38,14 @@ def main() -> None:
         print(f"{label}: passed", flush=True)
 
     run("fact-operations", ["fact-operations"],
-        contains=("factOperationsLaws=8AuditedTheorems",
+        contains=("factOperationsLaws=9AuditedTheorems",
                   "factOperations=kernelAccepted children=1",
                   "factOperationsPackets=kernelAccepted", "factOperationsMissing=lowerContext",
                   "factArithmetic=kernelAccepted children=5",
-                  "factArithmeticPackets=kernelAccepted", "factArithmeticIncomplete=5MissingChildren"))
+                  "factArithmeticPackets=kernelAccepted", "factArithmeticIncomplete=5MissingChildren",
+                  "factMonic=kernelAccepted children=", "factMonicPackets=kernelAccepted",
+                  "factMonicMissing=lowerContextAndKey", "factNonconstant=kernelAccepted",
+                  "factNonconstantMissing=upperContextAndKey"))
     run("nested", ["nested"],
         contains=("nestedSelections=kernelAccepted children=2",
                   "nestedPacketReplay=kernelAccepted", "nestedMissingChild=unproved",
