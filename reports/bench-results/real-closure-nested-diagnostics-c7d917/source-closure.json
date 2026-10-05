@@ -1,0 +1,603 @@
+{
+  "captured_source": "c7d917ccd3178db41014374244442f5716ed66fd",
+  "integrated_base": "826a786e399881ca3718cb9c074fff680c1cc918",
+  "local_reachable_files": [
+    {
+      "path": "bench/HexRealClosure/NestedNormalization.lean",
+      "sha256": "c0db62b3f8817eeba04bbea7db41509850f06f9937085e25e8300c3bfdabed41"
+    },
+    {
+      "path": "HexRealClosure/Algebraic.lean",
+      "sha256": "6f36305fbba2c2983e6f454fd649005f9037607fc6d2eab534472014b7aa0711"
+    },
+    {
+      "path": "HexSignDet/Codec.lean",
+      "sha256": "cdfea75af38381420c365c93d02eaacb02f5305ec33cdc49cd9aa9e9114e8d3d"
+    },
+    {
+      "path": "HexOrderedFn/Infinitesimal.lean",
+      "sha256": "86940616b6b9fbe849c65c2288a4d2f4ff41a5614ea3011210cacdf4a9e259f6"
+    },
+    {
+      "path": "HexSignDet/QueryHandle.lean",
+      "sha256": "f70fd69f2cab0fb292e0ffb92f4ab25f272edcf83487c0d48f94289f22e1cd8f"
+    },
+    {
+      "path": "HexPoly/Lcm.lean",
+      "sha256": "7a4df92652d683ce4e2213cc6949a5954de3a10f0623895fa171941fe7b3956a"
+    },
+    {
+      "path": "HexPoly/PseudoGcd.lean",
+      "sha256": "56583fa5dacfb5235b0de78f497a06f82e65c15740269e7b66506b16e7f87ea2"
+    },
+    {
+      "path": "HexSignDet/Codec/Node.lean",
+      "sha256": "19ad969914aa51044fd9eca8352946a81310bf8bf3086d2ce6ba14a77b452f86"
+    },
+    {
+      "path": "HexSignDet/Codec/Bytes.lean",
+      "sha256": "8f8107dcba4e03f0723b1cf0206479d5debf36ba89098b09e93426d0f204a708"
+    },
+    {
+      "path": "HexSignDet/DagSigns.lean",
+      "sha256": "573cac40c32e9d40990d5841e106c75bac4f121f531aa9b606f7a6f74b353cc3"
+    },
+    {
+      "path": "HexSignDet/DagSelectedSigns.lean",
+      "sha256": "73b70dea4457ed2a9e07a8e3b0be247754b02d0fff610cab9a7a196f95e07b86"
+    },
+    {
+      "path": "HexRationalFn.lean",
+      "sha256": "93478ebc49618fb3cfac1dc781cf9f2c58bcf6fa13ef958a91da420e9c22e270"
+    },
+    {
+      "path": "HexSignDet/SelectedSigns.lean",
+      "sha256": "c6b4d25060bff509f967c167ae0305ae7f7422c0f53985082b268a89fa1853ad"
+    },
+    {
+      "path": "HexPoly/Euclid.lean",
+      "sha256": "9464b8af020de02dfef2d58331c9141d0462a0ce86d9c9420479d9604fb55799"
+    },
+    {
+      "path": "HexPoly/PseudoDiv.lean",
+      "sha256": "379f8cd699847db6e9648e5341be10f23a315ed83b733d33e192029e6f574a6e"
+    },
+    {
+      "path": "HexSignDet/Codec/Evidence.lean",
+      "sha256": "a83d9078d7e59b5448747c1ed7a07d33f1faf6cea63daebe1fe291efdafa2cd7"
+    },
+    {
+      "path": "HexSignDet/Codec/Laws.lean",
+      "sha256": "bdc3b48addff7adc172228b3a2734476a4d7ba07eaa792a841cccd87a72144fb"
+    },
+    {
+      "path": "HexSignDet/Dag.lean",
+      "sha256": "1a458092a55d164900ea7846bc0c48b060891ca33b99f0e13f583f13bd9956b7"
+    },
+    {
+      "path": "HexSignDet/SignOperands.lean",
+      "sha256": "be2c50cf3e5a11ba36313f13759b9884942caf6ec26fadaea32f9e0ea019e8d0"
+    },
+    {
+      "path": "HexSignDet/DagExpand.lean",
+      "sha256": "2d664a8a227f702a5aa5b582587bff1c3b7f608d58e891e4448a39c95c9dc415"
+    },
+    {
+      "path": "HexRationalFn/Basic.lean",
+      "sha256": "af57b353c803366cd2e09ac55ad42c457107e068148ed176ba7c900c5f975dd8"
+    },
+    {
+      "path": "HexRationalFn/Normalize.lean",
+      "sha256": "9c1f5a3f402cfb181bc9e4f7aaf4c79d1cbade5f0b04b6340f2b4274a7cde809"
+    },
+    {
+      "path": "HexRationalFn/Arithmetic.lean",
+      "sha256": "d28f16bb94d67c176d210e304aac97861b1c38a0337b518f8da19387fe7b2faa"
+    },
+    {
+      "path": "HexRationalFn/Field.lean",
+      "sha256": "9bdb6e155b171bdeafd7eb72ddb96fc9eb06e0729555a07deab588dc260b39a1"
+    },
+    {
+      "path": "HexRationalFn/Map.lean",
+      "sha256": "bbf892ce8eab4ba0776b276035df758767c48a114a9baa0e51f889429630098c"
+    },
+    {
+      "path": "HexRationalFn/Eval.lean",
+      "sha256": "96fafa0dc02829160c06651524994e8bb1b179cd117e4e55a9579da366b07411"
+    },
+    {
+      "path": "HexRationalFn/Cert.lean",
+      "sha256": "e2f2812ff5571594dec88168a68e7488dd965c2dd686e43631a77b7f674fcd47"
+    },
+    {
+      "path": "HexRationalFn/Derivative.lean",
+      "sha256": "f34abb8a6f6603c580eed66fccf597d4256f232048bea7556ba7f1d571abb66a"
+    },
+    {
+      "path": "HexRationalFn/Split.lean",
+      "sha256": "e7bfa4b91b915a398aac20bcc3b8205225f482df23e927ae3ce2dc64a8132a13"
+    },
+    {
+      "path": "HexSignDet/Descriptor.lean",
+      "sha256": "6b5516366f8e8f4a57d9603c20fbc24d8492b7f842d426f06424d0dabf3f7910"
+    },
+    {
+      "path": "HexPoly/Operations.lean",
+      "sha256": "4341cbad08c47a1cc5fbc28df296a07a7f220266b1526e369a96e71e9f416e1d"
+    },
+    {
+      "path": "HexPoly/Euclid/Content.lean",
+      "sha256": "7d9d7260e745447e55e8b353aaebe29ed0bff4fb95896451d148d34b4d05a4fa"
+    },
+    {
+      "path": "HexPoly/Euclid/DivGcd.lean",
+      "sha256": "d56dbe5cf69e9abe58436486e4b3870afe1a07650d62aa2a36af0e528b73f149"
+    },
+    {
+      "path": "HexPoly/Euclid/MulRing.lean",
+      "sha256": "4e6e7bf52fca3a5b9f5ebc703c6f8a6923b3628759653797f8bf9ca92b68a744"
+    },
+    {
+      "path": "HexPoly/Euclid/Reconstruction.lean",
+      "sha256": "528737ffe53931f488d3381b0fc7ac32aeac9533f777e2a33f7d1f77074624fc"
+    },
+    {
+      "path": "HexPoly/Euclid/EvalMul.lean",
+      "sha256": "5d3d3298f143257ee49b6c4c99afeb8c70c6231840b937f70e267fd6cba969b5"
+    },
+    {
+      "path": "HexPoly/Euclid/MonicUnique.lean",
+      "sha256": "b459d3db21dd6eeae12b34cd0e44fc609f77881d51960a1f2fd19f401001459b"
+    },
+    {
+      "path": "HexPoly/Instances.lean",
+      "sha256": "bab233dd7885b965f8bcfd14de738c520a2a737859a2c148e1e6a66a3bf59f82"
+    },
+    {
+      "path": "HexPoly/Dense.lean",
+      "sha256": "7c358928a9151b55a854809295512857c7944f6ffb5372d7f26b115a7fc622c5"
+    },
+    {
+      "path": "HexSignDet/Codec/Basic.lean",
+      "sha256": "5327bfe6bb5b8c34928aed0c7c2bf6471ee6bbc3a952a2f3af3c1d3c6fac659d"
+    },
+    {
+      "path": "HexSignDet/Codec/Json.lean",
+      "sha256": "e2202c97d8fd47859440b6f68aaca949ae397deee4fd9c305401b0f6d1a92114"
+    },
+    {
+      "path": "HexRealRoots/SignOperands.lean",
+      "sha256": "71df1253cc7c1d7a46f6bd3aa8852058f2a421d6739ea021ffcf67b68df87c65"
+    },
+    {
+      "path": "HexSignDet/Replay.lean",
+      "sha256": "aa5cc94f99001a78b17883b82d84f59d8413ee711289ad57b8881eac3e610052"
+    },
+    {
+      "path": "HexSignDet/DagReplay.lean",
+      "sha256": "d9f7dc81d077437a2152e9b7ee9a8349f8e5b9f5cdca619d0c6809e8f7a8b26a"
+    },
+    {
+      "path": "HexPoly.lean",
+      "sha256": "7d54a680162588de4016e70d8e6558caa9b295529d35c9ec88d03bd794799f9a"
+    },
+    {
+      "path": "HexPolyFast/HalfGcd.lean",
+      "sha256": "fcfe66ee5f0a79e802087ba1d69acffafcb1f77b147952dbcde4d6bf25133792"
+    },
+    {
+      "path": "HexPolyFast/Karatsuba.lean",
+      "sha256": "5c93b92bb9cf3e4961f9a1b16f1296a28cda1d94df8a829f0176cbe60e595ba9"
+    },
+    {
+      "path": "HexPoly/Interpret.lean",
+      "sha256": "06ef5ced17a9869fe6dcf1987566b1cefbbe89d8228f9637e887b93e6e510c81"
+    },
+    {
+      "path": "HexSignDet/Thom.lean",
+      "sha256": "3347a4f58e9a075191a69a729d92b6e2c2e683d2a6ece09ee0098cd77a045cf8"
+    },
+    {
+      "path": "HexSignDet/Codec/Value.lean",
+      "sha256": "63e87521422e1c9cdf01a0b147f4503543bc03222589396bae08fa8e1d96ed9a"
+    },
+    {
+      "path": "HexRealRoots/Tarski.lean",
+      "sha256": "959f1882c67b7068e6274cdfeef9296b9ce3683e84ca8d1c38e5e75da57857a7"
+    },
+    {
+      "path": "HexSignDet/Support.lean",
+      "sha256": "27bdda357f8cf1aa9d5a28b3a8686f92279d26a900db0fbd653c4bf2a23cf061"
+    },
+    {
+      "path": "HexSignDet/MomentReplay.lean",
+      "sha256": "7052669c286e9a60d596139236451d36d0942f001d47e1c9230cdb64264f7b68"
+    },
+    {
+      "path": "HexSignDet/QueryReduction.lean",
+      "sha256": "92360de3c3f1f33aedf51f5a020fb1cfa289258cbd6b21eeba03855a7eecb70b"
+    },
+    {
+      "path": "HexSignDet/DagMemo.lean",
+      "sha256": "048b8a5afd648fc601f293c47472821bbe98da63cc69016e11d488136139033c"
+    },
+    {
+      "path": "HexPoly/Field.lean",
+      "sha256": "92fb1c28ac3a90db2b295e687743b5f57e88b677bf53c14a29104d5bd3b9a650"
+    },
+    {
+      "path": "HexPoly/Coprime.lean",
+      "sha256": "474bd098214ed1c9ef5538b77e8d1a5a1b0b8e286392c0b5d5111913cfca5e29"
+    },
+    {
+      "path": "HexPoly/Monic.lean",
+      "sha256": "89fa2249746c84dee9ad2cf762123ec0c8e6a69182bbaf90ed838c7d667a8a32"
+    },
+    {
+      "path": "HexPoly/PseudoInterpret.lean",
+      "sha256": "0a7f26680ef0cfa75bb4978d1a9210afb26970adfedb6063c00bb3f2f8272355"
+    },
+    {
+      "path": "HexPolyFast/Division.lean",
+      "sha256": "4b484aa656431e51c48ff40e7f39bac3690b4add9c95c03b55160ac19c0780f5"
+    },
+    {
+      "path": "HexPolyFast/Plan.lean",
+      "sha256": "0bd4e3c51fd8bcdb74bda65e4337eea8322e2319af240b6d899a59fac41c4dfd"
+    },
+    {
+      "path": "HexSignDet/TableProducer.lean",
+      "sha256": "9bd5e8a1b3f7e41130d58f0db85cb56dfce1157e004502d993a2783b9dcf8636"
+    },
+    {
+      "path": "HexSignDet/Codec/Token.lean",
+      "sha256": "384e84bf7b2e0c094fd28dc57260c6ed92526c658ea1ad0e2dab35d6d89963d8"
+    },
+    {
+      "path": "HexRealRoots/SignedRemainderChain.lean",
+      "sha256": "be56bd454a976838e2a3d87b7126100d26de92af686b556c4f31e9e36cd7e874"
+    },
+    {
+      "path": "HexRealRoots/Var.lean",
+      "sha256": "a2b7cec06a3670ba860f4ce7b6cdbde0b94e1822f305c65edc635bd9f7188ec6"
+    },
+    {
+      "path": "HexSignDet/Matrix.lean",
+      "sha256": "79f45d03cf43c469e67287eeab512b62cfce87ec7733ceb7408c7a3777ce90f4"
+    },
+    {
+      "path": "HexSignDet/Reduction.lean",
+      "sha256": "5f5de18d91c7736f8de19656eac0b52de1e85785148b89fd758defd3c8a54cee"
+    },
+    {
+      "path": "HexSignDet/DagEncode.lean",
+      "sha256": "0552d2f65a27cc7f965e03624751723592c984b6b5ba53d3f0d5bf9027045afc"
+    },
+    {
+      "path": "HexPolyFast/Reciprocal.lean",
+      "sha256": "75dc6d72b5578bf9fbcbbdcae136a8d755628ae5197f5a21ac0096b961211eb3"
+    },
+    {
+      "path": "HexSignDet/Table.lean",
+      "sha256": "de95d8aee884cf18a865a89a448a22e9a7a3d217c049d3be82d807f36299f231"
+    },
+    {
+      "path": "HexSignDet/Produce.lean",
+      "sha256": "94a3345ef6eb1f5e870c2308371f9cbcf8c6e2cc787ec68d950a8e7a68a076fc"
+    },
+    {
+      "path": "HexSignDet/Codec/String.lean",
+      "sha256": "89eed00d129711a815fe63cf8c8685f610361c5c815cf34c80e67dcce40e62ec"
+    },
+    {
+      "path": "HexBasic/OfFn.lean",
+      "sha256": "63cd87f7e128845c403e44d17b97a26c504637fda9ce34839b1f0ea4148ac7eb"
+    },
+    {
+      "path": "HexBasic/ArrayDecEq.lean",
+      "sha256": "6ebc4dcb2e7f26ff9731b83cf9b0d16b6b293f1f44558ba516726ccdb3820af9"
+    },
+    {
+      "path": "HexRealRoots/Chain.lean",
+      "sha256": "9e3ef4fa97c23eac4cc0359ace74add48fc3306830543e0ca9c2f1b79e31fc61"
+    },
+    {
+      "path": "HexRealRoots/Basic.lean",
+      "sha256": "8f5193e33a7743f2aa908062bd352587bc01618cbc343b760298e71b2e844360"
+    },
+    {
+      "path": "HexRank/Cert.lean",
+      "sha256": "88aa08a29248a9967aecc5d04714ab541679dc06d05850916037cf21657009ee"
+    },
+    {
+      "path": "HexMatrix/MatrixAlgebra.lean",
+      "sha256": "fd22838a18c560e1becb14f04e534c8471a8dfe2e3a127c84510e0961a90201f"
+    },
+    {
+      "path": "HexSignDet/Moment.lean",
+      "sha256": "bb8b34b81436016d931d3810543e4f85968ed01a0e22a2e24effd02a7871c79b"
+    },
+    {
+      "path": "HexPolyFast/Reverse.lean",
+      "sha256": "62f958ee0a9e14a82996bbe5ca5cd52e133a02ca3c47f1e4ecdfa9045af01c2c"
+    },
+    {
+      "path": "HexTruncatedSeries/Inverse.lean",
+      "sha256": "ecf14f5a5356ca825aa4bee5a2318667965ccfd830b2175fef5bbd6e211f4174"
+    },
+    {
+      "path": "HexSignDet/Induction.lean",
+      "sha256": "ed325a2b5b6ce104714b1c101f17e677ef0f55566ce00c2ef36a6b73a2c1566e"
+    },
+    {
+      "path": "HexSignDet/Tensor.lean",
+      "sha256": "0346652cd8e57f896a7143b8a1ff9d9d1968ac04973c32a066be07051f13f74a"
+    },
+    {
+      "path": "HexRank/Int.lean",
+      "sha256": "a6e7b24f8606e60cf3770f146ec4a3e5558d0fc7b6d098e237c1c7b129b0def9"
+    },
+    {
+      "path": "HexRowReduce/Inverse.lean",
+      "sha256": "78d35ec2bb92eb2df15e343d5973ed6e3b183f1696ed1a0f791824590d16ceb8"
+    },
+    {
+      "path": "HexSignDet/Codec/Decimal.lean",
+      "sha256": "ce24af2e192a248dc087df991786cf57449300307fc3b97b39a9f3ff7bb21023"
+    },
+    {
+      "path": "HexPolyZ/IntegerPolynomial.lean",
+      "sha256": "d32d46ba1116313d0e36dbd352b6ac58f4a70dfdf8cb37a5d0afaf276098b0b4"
+    },
+    {
+      "path": "HexDeterminant.lean",
+      "sha256": "b3421e3990bff4c3193dc2d3e393dcce922dd5a2ac6d7917f3d374912269e58f"
+    },
+    {
+      "path": "HexMatrix/Basic.lean",
+      "sha256": "8496ba44593635abfa21aacddb8c6e37de0a5d707ad7dd9e9a14a1ef0abd2ba0"
+    },
+    {
+      "path": "HexMatrix/Diagonal.lean",
+      "sha256": "f019bb42e85e2d3b722ab3e189764ee549ad541daf5c79e94ef3463873ec5293"
+    },
+    {
+      "path": "HexMatrix/DotProduct.lean",
+      "sha256": "2f4bcc12e01f3a2707d6b7f2e4ca7f597fdeb459611647a54adbeac0340f97fa"
+    },
+    {
+      "path": "HexSturm/Basic.lean",
+      "sha256": "089f16c57fae8c14943fa6bcf42ca4c0310dc46db596d1e6c16e12a6d6118c88"
+    },
+    {
+      "path": "HexTruncatedSeries.lean",
+      "sha256": "6b533aaa8d0fb01519b3bf39684fa45604af7050dfdde53079f057e29fca5d4d"
+    },
+    {
+      "path": "HexTruncatedSeries/Newton.lean",
+      "sha256": "71cdbbfa7b1a3f5ba85170299088d6086622898727b5979c8eabc774c64a5850"
+    },
+    {
+      "path": "HexSignDet/Counts.lean",
+      "sha256": "b71960493d0da2568d47cfa6f072d23a9c43239bb4d872bf717dfa3513f5f763"
+    },
+    {
+      "path": "HexRank/Produce.lean",
+      "sha256": "42a20f328dd27a0a5eae1d54675f05e6bf69d9f8338ce7058fb95945ec9494a5"
+    },
+    {
+      "path": "HexArith/ExactDiv.lean",
+      "sha256": "2d04d055fe4977d4e8de4801fb08194f4d011ccebc6d3d2143c4dcc294a2aef2"
+    },
+    {
+      "path": "HexRowReduce/Api.lean",
+      "sha256": "4bd60e5a0b5bb95702459b7d019d4bc5243135ce80329f6161dd70eabd8264bb"
+    },
+    {
+      "path": "HexDeterminant/Leibniz.lean",
+      "sha256": "36a21b9463e049417d73453aa563a3f302e87d60ba62ec690eedb7d5ba22e3a4"
+    },
+    {
+      "path": "HexDeterminant/Enumeration.lean",
+      "sha256": "d274d59fd3a41c4c24e42fe71db0f890785da88ea81842abc514f24d7e037153"
+    },
+    {
+      "path": "HexDeterminant/Minor.lean",
+      "sha256": "632c40130027c3a66a1f67daab15ea8b0b8b6e55cbf63ce54e18d5daae70c1cd"
+    },
+    {
+      "path": "HexDeterminant/LastRow.lean",
+      "sha256": "5a9ec9ba42bc7f3c193f6372e7d1d6052b9877b90ef4891d7602ba653eb7a098"
+    },
+    {
+      "path": "HexDeterminant/Permutation.lean",
+      "sha256": "84231ee35889e3681a2737b83a2679cc81108425a8231a09cb11615dc24c4d01"
+    },
+    {
+      "path": "HexDeterminant/RowOps.lean",
+      "sha256": "50fb5b40222276d58a1d49979e43cd7edb3bf2cecf9a00e6df28a351defa73c1"
+    },
+    {
+      "path": "HexDeterminant/ColumnLinear.lean",
+      "sha256": "0bcaf662d3df8f88b73edd9704f10ce3a6a49e07510321c8dc3597f43470e4f6"
+    },
+    {
+      "path": "HexDeterminant/Laplace.lean",
+      "sha256": "950d50944f621a6be51726c78f1df30b95760cd2aaae82c274fe6a35c34b37a0"
+    },
+    {
+      "path": "HexDeterminant/CauchyBinet.lean",
+      "sha256": "ff00e4c17e71cf1568e5c0218933719366771204ee294127ed95768f97d5e775"
+    },
+    {
+      "path": "HexDeterminant/Triangular.lean",
+      "sha256": "dce85455404730ae76ed8b5381ced78f0f004c10194d2a2860a789a826ea2128"
+    },
+    {
+      "path": "HexDeterminant/Gram.lean",
+      "sha256": "4cc1b2b2a9291f0a1c59d399da60d9c97e126749752d52a0011ea825d6a53a22"
+    },
+    {
+      "path": "HexDeterminant/Adjugate.lean",
+      "sha256": "1a2bffada16e9a0ec57a58ed41e974562761ab43eb71c307cabb624d8b14e231"
+    },
+    {
+      "path": "HexDeterminant/Plucker.lean",
+      "sha256": "dc466f45565336af09ce582e07369f12180e2fb69bb9174069cec9f02cc4e5e7"
+    },
+    {
+      "path": "HexBasic.lean",
+      "sha256": "dc870ca7c173d8867989c415d284d5796689893f7472a27aec9a82593c19e055"
+    },
+    {
+      "path": "HexRealRoots/TarskiShared.lean",
+      "sha256": "d910644940aad917e19973cde4469c599e03c865b041a99ac0eaa9d6c03588af"
+    },
+    {
+      "path": "HexTruncatedSeries/Defs.lean",
+      "sha256": "dad1984a6096b3cefaeacf679900743192105a7a19e118388e187aab57a23bd8"
+    },
+    {
+      "path": "HexTruncatedSeries/Ring.lean",
+      "sha256": "c12484de7fb880d9abe273a0ca16e2d9147e274105b980fe6f0fe5481f0e8881"
+    },
+    {
+      "path": "HexTruncatedSeries/Classes.lean",
+      "sha256": "81f438a4d160b064b1ec190efeecf7da2c6045c6ebe7110bb526edc21b936854"
+    },
+    {
+      "path": "HexTruncatedSeries/Precision.lean",
+      "sha256": "a583ea8f982a021adf2ac261e0bce930c7c360d132424bf412f122489c2c259f"
+    },
+    {
+      "path": "HexTruncatedSeries/Sqrt.lean",
+      "sha256": "1b98f7a84e07ebd4ec26b7ee7090b01019234036eba4c4aeba961a86f96c1365"
+    },
+    {
+      "path": "HexTruncatedSeries/ExpLog.lean",
+      "sha256": "834ec68f4026833c09e146e0a763dd823e105266a61013154706ac6e243b6985"
+    },
+    {
+      "path": "HexTruncatedSeries/Comp.lean",
+      "sha256": "41f2a775527ed6ead820350df37d9edcc5a5130d260adf46f74569ebe3c68ab4"
+    },
+    {
+      "path": "HexTruncatedSeries/Revert.lean",
+      "sha256": "c8d7161c9dc23f17c7ff39035e0a2ad914948db4ac6e545333a95d56b1ddd73e"
+    },
+    {
+      "path": "HexTruncatedSeries/ModuleBoundaryTests.lean",
+      "sha256": "e409d9f23f70199a1a75c892d7f5ee9185ccaf378d64f966da9f39770750a3e2"
+    },
+    {
+      "path": "HexRank/ReduceImpl.lean",
+      "sha256": "ead64131be0bb5c9127bea634f7167c955e75a54609906e9803afd67bc208091"
+    },
+    {
+      "path": "HexRowReduce/Nullspace.lean",
+      "sha256": "0953f8ab82ea4916d3f0d4947c1f584983193b7026b6af6c31065e4a6473e0c7"
+    },
+    {
+      "path": "HexMatrix/Submatrix.lean",
+      "sha256": "63fcb59c82fe5affeb9482e681324803a54ba68965e79bbd77a66e06c1aafbaf"
+    },
+    {
+      "path": "HexMatrix/Pad.lean",
+      "sha256": "0f8f79aea0f8fc46ddbaf0f9c362f30875200dbe9a2391ef83bbb9210a4741d2"
+    },
+    {
+      "path": "HexMatrix/Elementary.lean",
+      "sha256": "dbca8fb4fa217d539121c1004e64d21d59aede229787a679df88582b020881d9"
+    },
+    {
+      "path": "HexMatrix/Vector/Insert.lean",
+      "sha256": "8e8987345a632357a3fd8b83ee0ed7ba308e075c6f6b3eee20bb02216431fc12"
+    },
+    {
+      "path": "HexMatrix/Gram.lean",
+      "sha256": "b5ff954525f555a62e7ee153bee777da875c89b9039bc7d7e9c7610303043e30"
+    },
+    {
+      "path": "HexBasic/ExactDiv.lean",
+      "sha256": "fc176110d0bad7b19b70d4967851551face4c29653685e97bbed29034af185d7"
+    },
+    {
+      "path": "HexBasic/ExtTreeMap.lean",
+      "sha256": "64007c2b6a28ea63f228f04f417e6e0b0239ba781164f37e2ff99bf287f695eb"
+    },
+    {
+      "path": "HexBasic/Kernel.lean",
+      "sha256": "3f0972eefab4bb966a5786a691c146195c82b2ed6a6f833387ad298da8372411"
+    },
+    {
+      "path": "HexBasic/Fold.lean",
+      "sha256": "b0a4257fa2d205859ebdbf21efe990748bff886b6fa6c82e62ed1ff279f678f6"
+    },
+    {
+      "path": "HexBasic/List.lean",
+      "sha256": "8a58906b3a24dc8d7a643ab63f7cefd2f0d482b88a7cc7767e151d9df19e54b7"
+    },
+    {
+      "path": "HexBasic/ModuleBoundaryTests.lean",
+      "sha256": "1ed5b67f11c11f0ae7d6525cbb8278570be1e8061e2f3f47d136484b02d9ffe3"
+    },
+    {
+      "path": "HexBasic/Sort.lean",
+      "sha256": "f572d565e4791b6810731c56b74ca3489b80bf64d7c7b139c7c815594e347709"
+    },
+    {
+      "path": "HexBasic/Rand.lean",
+      "sha256": "f248f72b683384ebd8fa08898883c70928d96060eb821163243158785be54b0e"
+    },
+    {
+      "path": "HexBasic/Vector/Modify.lean",
+      "sha256": "f0131e4ac7f097328fca0cc2df3b3aa66289d51836f7544caf104dee0a7f5db4"
+    },
+    {
+      "path": "HexRank/Reduce.lean",
+      "sha256": "6b4c79e282de3dd7be5653c01f7274155fc728fbf781fcfeda161490caafc0b9"
+    },
+    {
+      "path": "HexRowReduce/Span.lean",
+      "sha256": "a7eb4ed673fff9c62df21a4ea64bd8b46473d3fbf780855ab6a406e0ae8f00a6"
+    },
+    {
+      "path": "HexBasic/ListShim.lean",
+      "sha256": "0592907ec6e26446537ba8d8d4b2b01ea0868c871a8183cd4ea833c51706fce7"
+    },
+    {
+      "path": "HexBareiss/Bareiss.lean",
+      "sha256": "4a5e021df694cce75ec41301144ddd6851fe1fe8e79efb44e3aa2bb4b11cbd16"
+    },
+    {
+      "path": "HexRowReduce/Loop.lean",
+      "sha256": "9fd6163b40b840447302553bc6d9bfaca010a69a9245fc484f83bae8c47802c0"
+    },
+    {
+      "path": "HexBareiss/BorderedMinor.lean",
+      "sha256": "9bec40077a29ed25119c9d50483d1b3b87631da086bd8b665c7aba624d0cd992"
+    },
+    {
+      "path": "HexRowReduce/Pivot.lean",
+      "sha256": "bc0e6b4b6ad04e4e0495ba5787406737afe42e99f7196c7a0a44b51cf1c355e3"
+    },
+    {
+      "path": "HexRowReduce/RowEchelon.lean",
+      "sha256": "065c06ee60d7e038666b7a8811dd5a2408d5b7f0ef09ec2c77e8816602b2e5d1"
+    },
+    {
+      "path": "HexRowReduce/RowEchelon/Elementary.lean",
+      "sha256": "259be162fce1b0a82765f4cd01edd339e7866d7a398dcc71a994f1fac4bdf090"
+    },
+    {
+      "path": "HexRowReduce/RowEchelon/Contracts.lean",
+      "sha256": "01a161bbd8e64f8820f26e444942b98b90e0e3934894fbb925dc425809dfab50"
+    },
+    {
+      "path": "HexMatrix/ElementaryAlgebra.lean",
+      "sha256": "ae90a41a0663b895a28e9225e569df137cafded9335a7e84e6a6d51cca9d9c7d"
+    }
+  ],
+  "all_byte_identical": true
+}

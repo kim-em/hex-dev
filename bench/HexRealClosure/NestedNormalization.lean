@@ -1,0 +1,255 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+import HexRealClosure.Algebraic
+import HexSignDet.Codec
+import HexOrderedFn.Infinitesimal
+import Lean.Data.Json
+
+namespace Hex.RealClosure.NestedNormalization
+
+open SignDet
+
+/-- Runtime diagnostics preserve the ordinary kernel computation. The event
+counts one executed callback; rational gcds internal to Rat are not observed. -/
+def traceOp {A : Type} (enabled : Bool) (depth : Nat) (operation : String)
+    (run : Unit → A) : A :=
+  if enabled then dbgTrace s!"NESTED {depth} {operation}" run else run ()
+
+theorem traceOp_eq {A : Type} (enabled : Bool) (depth : Nat) (operation : String)
+    (run : Unit → A) : traceOp enabled depth operation run = run () := by
+  cases enabled <;> rfl
+
+/-- Ordinary coefficient operations. Raw algebraic values are deliberately
+not given a ring or field instance. Each arm changes packing at every level. -/
+structure Level where
+  Carrier : Type
+  zero : Zero Carrier
+  equality : DecidableEq Carrier
+  one : One Carrier
+  add : Add Carrier
+  neg : Neg Carrier
+  sub : Sub Carrier
+  mul : Mul Carrier
+  inv : Inv Carrier
+  div : Div Carrier
+  nat : NatCast Carrier
+  alpha : Carrier
+  sign : Carrier → Int
+  clean : Carrier → Bool
+  encode : Carrier → Codec.Json
+  decode : Codec.Json → Except String Carrier
+  replay : Carrier → Codec.Json → Except String Unit
+  replayRoots : Unit → Except String Unit
+  evidence : Carrier → Except String Codec.Json
+  heads : Array Codec.Json := #[]
+  roots : Array Codec.Json := #[]
+
+instance (level : Level) : Zero level.Carrier := level.zero
+instance (level : Level) : DecidableEq level.Carrier := level.equality
+instance (level : Level) : One level.Carrier := level.one
+instance (level : Level) : Add level.Carrier := level.add
+instance (level : Level) : Neg level.Carrier := level.neg
+instance (level : Level) : Sub level.Carrier := level.sub
+instance (level : Level) : Mul level.Carrier := level.mul
+instance (level : Level) : Inv level.Carrier := level.inv
+instance (level : Level) : Div level.Carrier := level.div
+instance (level : Level) : NatCast level.Carrier := level.nat
+
+private def ratJson (q : Rat) : Codec.Json := .arr #[.number q.num, .number q.den]
+
+/-- Rat retains its exact ordinary primitives. Trace wrappers add no arithmetic
+and never reject a completed operation or timing sample. -/
+def rational (trace : Bool) : Level where
+  Carrier := Rat
+  zero := inferInstance
+  equality := fun a b =>
+    if trace then traceOp true 0 (if a.num == 0 || b.num == 0 then "zero" else "eq")
+      (fun _ => inferInstanceAs (Decidable (a = b)))
+    else inferInstanceAs (Decidable (a = b))
+  one := inferInstance
+  add := ⟨fun a b => traceOp trace 0 "add" (fun _ => a + b)⟩
+  neg := ⟨fun a => traceOp trace 0 "neg" (fun _ => -a)⟩
+  sub := ⟨fun a b => traceOp trace 0 "sub" (fun _ => a - b)⟩
+  mul := ⟨fun a b => traceOp trace 0 "mul" (fun _ => a * b)⟩
+  inv := ⟨fun a => traceOp trace 0 "inv" (fun _ => a⁻¹)⟩
+  div := ⟨fun a b => traceOp trace 0 "div" (fun _ => a / b)⟩
+  nat := inferInstance
+  alpha := 1
+  sign := fun a => traceOp trace 0 "sign" (fun _ => OrderedFn.orderSign a)
+  clean := fun a => decide (a.den = 1)
+  encode := ratJson
+  decode := ValueCodec.rat.decode
+  replay := fun _ _ => .ok ()
+  replayRoots := fun _ => .ok ()
+  evidence := fun _ => .ok (.arr #[])
+
+private def codec (level : Level) : ValueCodec level.Carrier :=
+  ⟨level.encode, level.decode⟩
+private def unitCodec : ValueCodec Unit :=
+  ⟨fun _ => .null, fun j => if j == .null then .ok () else .error "expected null context"⟩
+
+variable {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Neg E]
+  [Sub E] [Mul E] [Inv E] [Div E] [NatCast E] {sign : E → Int}
+  {context : Algebraic.Context E Unit sign ()}
+
+/-- Execute inverseFactor and xgcdLeft once each, following the production
+inverseCandidate. The split event observes the already computed local gcd. These events count
+only the local inverse sites; gcd calls within other kernels are not counted. -/
+def inverseRaw (trace : Bool) (depth : Nat) (a : Algebraic.Element context) : DensePoly E :=
+  let factors := traceOp trace depth "inverse_gcd" (fun _ => a.inverseFactor)
+  let factors := traceOp (trace && factors.1.natDegree > 0) depth "split" (fun _ => factors)
+  let eg := traceOp trace depth "inverse_xgcd" (fun _ => DensePoly.xgcdLeft a.polynomial factors.2)
+  DensePoly.scale eg.gcd.leadingCoeff⁻¹ eg.left
+
+theorem inverseRaw_eq (trace : Bool) (depth : Nat) (a : Algebraic.Element context) :
+    inverseRaw trace depth a = a.inverseCandidate := by
+  simp only [inverseRaw, traceOp_eq]
+  rfl
+
+private def treeNodes : Replay E Unit → Nat
+  | .leaf _ => 1
+  | .split _ left right => 1 + treeNodes left + treeNodes right
+
+private def graphJson (level : Level) (tree : Replay level.Carrier Unit) : Codec.Json :=
+  letI : Hashable level.Carrier := ⟨fun a => hash (level.encode a)⟩
+  let graph := Dag.encode tree
+  .arr #[.number (treeNodes tree), .number graph.entries.size,
+    Codec.graph (codec level) unitCodec graph]
+
+/-- The same positive quadratic root and extraneous root 3 occur in both arms:
+(2X² - alpha)(X - 3), with the selected root in (0,1). Eager uses a monic
+working polynomial; the validated descriptor and its defining head are kept. -/
+def adjoin (parent : Level) (depth : Nat) (eager trace : Bool) : Option Level :=
+  let quadratic := DensePoly.monomial 2 (NatCast.natCast 2 : parent.Carrier) - DensePoly.C parent.alpha
+  let linear := DensePoly.monomial 1 (1 : parent.Carrier) - DensePoly.C (NatCast.natCast 3 : parent.Carrier)
+  let head : DensePoly parent.Carrier := quadratic * linear
+  let raw : RawDescriptor parent.Carrier Unit := ⟨(), head, .finite 0, .finite 1, [], []⟩
+  match Descriptor.validate parent.sign () raw with
+  | none => none
+  | some descriptor =>
+    let context := Algebraic.Context.adjoin descriptor parent.clean
+    let working := DensePoly.monicize head
+    if monic : working.leadingCoeff = 1 then
+      let pack (p : DensePoly parent.Carrier) : Algebraic.Element context :=
+        if eager then Algebraic.Element.ofPoly (DensePoly.divModMonic p working monic).2
+        else Algebraic.Element.ofPoly p
+      let inverse (a : Algebraic.Element context) : Algebraic.Element context :=
+        traceOp trace depth "inv" fun _ =>
+          match a.stored with
+          | none => 0
+          | some _ => pack (inverseRaw trace depth a)
+      let multiply (a b : Algebraic.Element context) : Algebraic.Element context :=
+        traceOp trace depth "mul" fun _ => pack (a.polynomial * b.polynomial)
+      some {
+        Carrier := Algebraic.Element context
+        zero := inferInstance
+        equality := fun a b =>
+        if trace then traceOp true depth (if a.stored.isNone || b.stored.isNone then "zero" else "eq")
+          (fun _ => inferInstanceAs (Decidable (a = b)))
+        else inferInstanceAs (Decidable (a = b))
+        one := ⟨pack 1⟩
+        add := ⟨fun a b => traceOp trace depth "add" (fun _ => pack (a.polynomial + b.polynomial))⟩
+        neg := ⟨fun a => traceOp trace depth "neg" (fun _ => pack (0 - a.polynomial))⟩
+        sub := ⟨fun a b => traceOp trace depth "sub" (fun _ => pack (a.polynomial - b.polynomial))⟩
+        mul := ⟨multiply⟩
+        inv := ⟨inverse⟩
+        div := ⟨fun a b => traceOp trace depth "div" (fun _ => multiply a (inverse b))⟩
+        nat := ⟨fun n => pack (DensePoly.C n)⟩
+        alpha := pack (DensePoly.monomial 1 1)
+        sign := fun a => traceOp trace depth "sign" (fun _ => a.sign)
+        clean := Algebraic.Element.isClean
+        encode := fun a => Codec.poly (codec parent) a.polynomial
+        decode := fun j => do
+          let polynomial ← Codec.readPoly (codec parent) j
+          let value : Algebraic.Element context := Algebraic.Element.ofPoly polynomial
+          if Codec.poly (codec parent) value.polynomial == j then return value
+          else throw "noncanonical algebraic value"
+        replayRoots := fun _ => do
+          let _ ← parent.replayRoots ()
+          let packet ← Codec.tuple 3 (graphJson parent descriptor.evidence)
+          let _ ← Dag.decodeDescriptor (codec parent) unitCodec parent.sign () raw
+            packet[2].writeBytes
+          return ()
+        replay := fun a packet => do
+          let fields ← Codec.tuple 3 packet
+          let _ ← Dag.decodeSigns (codec parent) unitCodec descriptor [a.polynomial]
+            ⟨#[a.sign], rfl⟩ fields[2].writeBytes
+          return ()
+        evidence := fun a => do
+          let signs ← (descriptor.buildSigns [a.polynomial]).mapError (fun error => s!"{repr error}")
+          return graphJson parent signs.evidence
+        heads := parent.heads.push (Codec.poly (codec parent) head)
+        roots := parent.roots.push (graphJson parent descriptor.evidence)
+      }
+    else none
+
+/-- Assemble actual cached contexts outside the measured workload. -/
+def prepare (depth : Nat) (eager trace : Bool) : Option Level := do
+  let mut level := rational trace
+  for index in List.range depth do
+    level ← adjoin level (index + 1) eager trace
+  return level
+
+/-- This grows the stored multiplication chain and exercises a genuine local
+inverse split at every requested top level: the selected root never equals 3. -/
+@[noinline] def run (level : Level) (steps : Nat) (alpha : level.Carrier) : level.Carrier :=
+  let seed := 1 + alpha
+  let product := (List.range steps).foldl (fun a _ => a * seed) 1
+  product / (alpha - NatCast.natCast 3)
+
+private def leanJson (value : Codec.Json) : Except String Lean.Json :=
+  Lean.Json.parse (String.fromUTF8! value.writeBytes)
+
+/-- Functional output only. A scientific protocol, frozen source and capture
+schedule must be registered before elapsed times are used as evidence. -/
+def emit (depth steps : Nat) (eager trace : Bool) (reportHash : Bool := true) : IO Unit := do
+  let some level := prepare depth eager trace | throw (IO.userError "nested context preparation failed")
+  let input ← IO.mkRef (some level.alpha)
+  let some alpha ← input.get | throw (IO.userError "missing nested input")
+  if trace then
+    (← IO.getStderr).putStrLn "NESTED BEGIN"
+    (← IO.getStderr).flush
+  let value := run level steps alpha
+  let encoded := level.encode value
+  let digest := hash encoded
+  if reportHash then IO.println s!"hash {digest}"
+  if trace then
+    (← IO.getStderr).putStrLn "NESTED END"
+    (← IO.getStderr).flush
+  let .ok proof := level.evidence value | throw (IO.userError "query evidence production failed")
+  let .ok decoded := level.decode encoded | throw (IO.userError "value reader rejected")
+  unless level.encode decoded == encoded do throw (IO.userError "value roundtrip mismatch")
+  let .ok _ := level.replayRoots () | throw (IO.userError "root graph replay rejected")
+  let .ok _ := level.replay value proof | throw (IO.userError "query graph replay rejected")
+  let .ok result := leanJson encoded | throw (IO.userError "value serialization failed")
+  let .ok definitions := leanJson (.arr level.heads) | throw (IO.userError "definition serialization failed")
+  let .ok roots := leanJson (.arr level.roots) | throw (IO.userError "root evidence serialization failed")
+  let .ok proof := leanJson proof | throw (IO.userError "query evidence serialization failed")
+  IO.println <| (Lean.Json.mkObj [
+    ("depth", Lean.toJson depth), ("steps", Lean.toJson steps),
+    ("eager", Lean.toJson eager), ("hash", Lean.toJson digest.toNat),
+    ("sign", Lean.toJson (level.sign value)), ("value", result),
+    ("value_roundtrip", Lean.toJson true), ("roots_replayed", Lean.toJson true),
+    ("query_replayed", Lean.toJson true),
+    ("heads", definitions), ("roots", roots), ("query", proof)]).compress
+
+end Hex.RealClosure.NestedNormalization
+
+def main (args : List String) : IO UInt32 := do
+  match args with
+  | [] =>
+    Hex.RealClosure.NestedNormalization.emit 2 2 false false false
+    Hex.RealClosure.NestedNormalization.emit 2 2 true false false
+  | [depth, steps, policy, diagnostic] =>
+    let some depth := depth.toNat? | throw (IO.userError "invalid depth")
+    let some steps := steps.toNat? | throw (IO.userError "invalid steps")
+    unless depth > 0 && (policy == "clean" || policy == "eager") &&
+        (diagnostic == "plain" || diagnostic == "trace") do
+      throw (IO.userError "usage: hexrealclosure_nested_normalization depth steps clean|eager plain|trace")
+    Hex.RealClosure.NestedNormalization.emit depth steps (policy == "eager") (diagnostic == "trace")
+  | _ => throw (IO.userError "usage: hexrealclosure_nested_normalization depth steps clean|eager plain|trace")
+  return 0

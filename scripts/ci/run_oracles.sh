@@ -112,6 +112,7 @@ ORACLES=(
   "HexRealClosure|hexrealclosure_policy_conformance|scripts/oracle/real_closure_policies.py|conformance-fixtures/HexRealClosure/policies.jsonl"
   "HexRealClosure|hexrealclosure_sample_conformance|scripts/oracle/real_closure_samples.py|conformance-fixtures/HexRealClosure/samples.jsonl"
   "HexRealClosure|hexrealclosure_normalization_bench|scripts/oracle/real_closure_normalization.py|conformance-fixtures/HexRealClosure/normalization.jsonl"
+  "HexRealClosure|hexrealclosure_nested_normalization|scripts/oracle/real_closure_nested_normalization.py|conformance-fixtures/HexRealClosure/nested-normalization.jsonl"
   # Exact Python integer/Fraction Cartesian enumeration
   "HexLatticeEnum|hexlatticeenum_emit_fixtures|scripts/oracle/lattice_enum.py|conformance-fixtures/HexLatticeEnum/latticeenum.jsonl"
   # Conway tables backed
