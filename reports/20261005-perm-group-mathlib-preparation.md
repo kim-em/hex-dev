@@ -33,30 +33,35 @@ are specified in [the plan](../PLAN/PermGroupMathlib.md).
 
 ## Kernel replay
 
-The baseline is `f9ab615bbca2`, before this preparation. Inputs and source
-are retained in [the results](bench-results/perm-group-mathlib-preparation.json),
-including the ATLAS image lists and classical M11. The metric is Lean's
-cumulative `type checking` profiler time. Each series uses an automatically
-leased CPU, adjacent before/after arms followed by after/before arms, and
-records host load. All 44 completed samples are retained.
+The baseline is `f9ab615bbca2`, before this preparation. The metric is
+Lean's cumulative `type checking` profiler time. Each series uses an
+automatically leased CPU and adjacent AB/BA arms, recording host load.
+All 84 completed samples are retained.
 
-The pooled M22 comparison exceeds the 10% limit. Its initial mean change
-was +25.35%; the permitted unchanged rerun gave -0.79%. Pooling all four
-samples per arm gives +12.24%. The table includes both series for M22 and
-the initial series for every other workload. The initial implementation
-therefore does not establish performance acceptance. These are shared-host
-observations, without a claim of deterministic speedup or multithreaded
-throughput. Source-rendering and alias changes have separately recorded hashes.
+[The initial results](bench-results/perm-group-mathlib-preparation.json)
+retain 44 samples. M22's initial comparison was +25.35%; its permitted
+unchanged rerun was -0.79%. Pooling all four samples per arm gives +12.24%,
+which exceeds the limit. That implementation did not establish acceptance.
+
+[The packing results](bench-results/perm-group-mathlib-preparation-packing.json)
+retain a new full cohort of 40 samples, with no unchanged rerun. Canonical
+packing now combines the transport and literal packing checks in one
+auxiliary declaration, removing one declaration per canonical input.
+Finalizers also restore state after runtime exceptions. Every workload of
+this implementation stays within the 10% limit; J2 has the largest mean
+increase, +6.44%. The table uses all completed samples of this implementation.
+These are shared-host observations, without a claim of deterministic speedup
+or multithreaded throughput.
 
 | Workload | Before (s) | After (s) | Change |
 | --- | ---: | ---: | ---: |
-| M11 | 0.09765 | 0.0902 | -7.63% |
-| M11-classical | 0.09545 | 0.09045 | -5.24% |
-| M12 | 0.123 | 0.1195 | -2.85% |
-| M22 | 0.25125 | 0.282 | +12.24% |
-| M23 | 0.45 | 0.3985 | -11.44% |
-| M24 | 0.5745 | 0.532 | -7.40% |
-| HS | 5.75 | 5.975 | +3.91% |
-| J2 | 3.06 | 2.71 | -11.44% |
-| McL | 35.9 | 35.1 | -2.23% |
-| Co3 | 85.5 | 76.3 | -10.76% |
+| M11 | 0.0938 | 0.0895 | -4.58% |
+| M11-classical | 0.0973 | 0.09065 | -6.83% |
+| M12 | 0.124 | 0.117 | -5.65% |
+| M22 | 0.239 | 0.2335 | -2.30% |
+| M23 | 0.4035 | 0.3915 | -2.97% |
+| M24 | 0.534 | 0.525 | -1.69% |
+| HS | 5.39 | 5.145 | -4.55% |
+| J2 | 2.64 | 2.81 | +6.44% |
+| McL | 32.2 | 33.25 | +3.26% |
+| Co3 | 75.1 | 73.4 | -2.26% |
