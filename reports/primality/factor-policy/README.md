@@ -1,5 +1,10 @@
 # Pocklington construction: native factor-search experiments
 
+The [larger independent comparison](corpus-v3.md) tests 700 fresh prime subjects
+across 128–512 bits, restores the p−1 search needed by Curve25519, and includes
+four paired field-prime timing blocks. The report below retains the earlier
+eight-subject experiments and their policy tradeoffs.
+
 A bounded native Hex policy matched PrimeCert+SymPy's **two successes out of
 eight 512-bit subjects**, under a common 180-second process limit. On the two
 common successes, four adjacent alternating comparisons gave generation-time
@@ -53,6 +58,7 @@ isolate a single bound or the effect of random curve parameters.
 | `mixed` | Same as `short` | First random round, current 64-curve consecutive round, then larger random round | One combined-provider pass |
 | `efficient` | Same as `short` | Same as `mixed` | Also stops between residuals when the constructor's own sufficient-factor test accepts the known product |
 | `balanced` | Adds p−1 bound 32768 to `short` | Same as `efficient` | Same as `efficient` |
+| `interleaved` | Same as `balanced`; restores bounds 262144 and 524288 before ECM on smaller residuals and after eight curves on larger ones | Split first random round, current consecutive round, then larger random round | Same as `efficient`; see the independent comparison for the corrected policy |
 | `random-retry` | Current construction budget | Same as `random` | Current core-first pass, then retry; extension-dispatch control |
 
 All current profiles retain the 1024-attempt shared construction limit, 521-bit
@@ -236,8 +242,8 @@ includes later controls and stopping policies. `--seed-offset` selects additiona
 seeds separately from repeated timing trials. Kernel replay is a separate build,
 with generated certificate hashes linked to the run records.
 
-Before selecting a production policy, freeze a fresh independent corpus, test
-several seeds, measure the actual proposed tactic dispatch, and resolve the
-remaining Curve25519 regression. Preserve the existing sound checker and kernel
-replay throughout. No library phase counter, production allocation or release
-admission changes on the strength of this exploratory sample.
+The [independent comparison](corpus-v3.md) supplies the fresh corpus and resolves
+the Curve25519 regression. Before selecting a production policy, test several
+seeds and measure the actual proposed tactic dispatch. Preserve the existing
+sound checker and kernel replay throughout. No library phase counter, production
+allocation or release admission changes on the strength of these experiments.
