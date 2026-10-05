@@ -2092,8 +2092,10 @@ provider history and finite requests indexed by their original owners. It
 constructs one target reader and closed arithmetic domains pulled back through
 all retained inclusions, preserves every requested sign and inherited real
 coefficient, reflects zero on the requested operands, and identifies reads of
-values equal in the shared context. No ambient model or separate
-source-agreement premise is supplied.
+values equal in the shared context. A direct base-coefficient clause fixes
+`shared.input.value b` at its prescribed real value without an origin cast.
+Optional finite target requests also retain signs, domain and zero reflection.
+No ambient model or separate source-agreement premise is supplied.
 
 `Live.Collection.realize` collects each original frame's values, stored
 polynomial coefficients and actual finite descriptor/replay inventory. Its
@@ -2106,8 +2108,11 @@ ordinary value; every requested fresh sign is preserved, including finite
 inequalities between the parameter and old values. The old reader is the
 pullback through the returned predecessor inclusion, so its arithmetic on the
 domain and requested signs remain coherent with the enlarged reader. The same
-reader retains inherited fixed real coefficients and identifies any values
-equal in the enlarged context. `Enlargement.realize_model` uses the previous
+reader fixes every original provider coefficient through
+`previous.value (original.shared.input.value b)` at its prescribed real value,
+without an origin cast or a native equality premise. It also retains the
+enlarged origin's inherited real coefficients and identifies any values equal
+in the enlarged context. `Enlargement.realize_model` uses the previous
 canonical factory model and applies again after any earlier enlargement.
 `Inclusion.Model.fieldHom` and `read_comap` expose the underlying semantic-field
 inclusion and reader law; native expressions themselves acquire no field instance.
@@ -2122,6 +2127,9 @@ Run `lake build HexRealClosureMathlib.SharedRealizationTests` for public
 consumers deriving old sum/product and fresh parameter-expression signs,
 usable descriptor transport premises, and specialization after two actual
 enlargements without a new gather.
+`lake build HexRealClosureMathlib.NativeRealizationTests` additionally checks
+an actual gather and enlargement over a registered Liouville coefficient,
+recovering its prescribed value under the same positive-parameter reader.
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
 proves that its ordered algebraic real closure of `R(ε)` is algebraic over the

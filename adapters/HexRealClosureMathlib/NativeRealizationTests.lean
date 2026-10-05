@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.NativeRealization
+public import HexRealClosureMathlib.SharedRealization
 public import HexRealClosure.TowerEnlarge
 public import HexOrderedFnMathlib.LiouvilleTests
 
@@ -69,6 +70,8 @@ example (a : (suffix base first second).context.Value)
 end Hex.RealClosure.Tower.NativeRealizationTests
 
 namespace Hex.RealClosure.Tower.RegisteredRealizationTests
+
+open scoped Hex.OrderedFn.Infinitesimal
 
 open BaseContext OrderedFn OrderedFn.Oracle
 
@@ -184,8 +187,39 @@ theorem realized :
   exact ⟨descriptor, roots, built, member, read, domain, closed,
     fixed.1, fixed.2, positive.1, sign_eq_one_iff.mp realSign⟩
 
+/-- An actual gather and enlargement over the registered Liouville prefix
+retain the coefficient's prescribed value under the same positive ordinary
+parameter reader. The consumer supplies no origin equality or native equality
+proof and constructs both successful producer results. -/
+theorem shared_realized :
+    ∃ collection : Live.Collection staged ([] : Live.Request registry),
+      ∃ result : Live.Enlargement collection,
+        Live.Request.gather? staged ([] : Live.Request registry) = some collection ∧
+        collection.enlarge? = some result ∧
+        ∃ read : result.collection.shared.input.context.Value → ℝ,
+          ∃ domain : result.collection.shared.input.context.Value → Prop,
+            domain (result.previous.value (collection.shared.input.value coefficient)) ∧
+            read (result.previous.value (collection.shared.input.value coefficient)) =
+              liouvilleNumber 2 ∧
+            domain result.parameter ∧ 0 < read result.parameter := by
+  classical
+  let request : Live.Request registry := []
+  obtain ⟨collection, gathered, ⟨model⟩⟩ := Live.Request.gather?_models following
+    reference.model request (by simp [request, Live.Request.owners])
+  let ambient := Ambient.ofField (Hex.RationalFn reference.Carrier)
+  obtain ⟨result, produced, _⟩ := collection.enlarge?_models model ambient
+  obtain ⟨read, domain, _, _, _, _, _, _, _, fixed, parameter, positive⟩ :=
+    result.realize following gathered produced []
+  have preserved := fixed coefficient (liouvilleNumber 2) coefficient_value
+  exact ⟨collection, result, gathered, produced, read, domain,
+    preserved.1, preserved.2, parameter, positive⟩
+
 end Hex.RealClosure.Tower.RegisteredRealizationTests
 
 /-- info: '_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.realized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.RegisteredRealizationTests.realized
+
+/-- info: '_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.shared_realized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.RegisteredRealizationTests.shared_realized

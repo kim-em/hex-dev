@@ -58,6 +58,55 @@ end Inclusion.Model
 
 variable {base : BaseContext.PackedContext registry} {owners : List (Context registry)}
 
+/-- The next canonical base sends an original coefficient through the actual
+constant inclusion into the infinitesimal ambient. -/
+theorem Model.next_constant [IsStrictOrderedRing K] [IsRealClosed K]
+    (reference : Tower.Model (Context.ofBase base) K) (ambient : Ambient (Hex.RationalFn K))
+    (b : (Context.ofBase base).Value) :
+    (Tower.Model.next base reference ambient).value (Context.baseValue base.infinitesimal
+      (RationalFn.C (Context.baseStored base b))) =
+      Ambient.coefficientHom ambient (reference.value b) := by
+  cases base with
+  | pack original =>
+    erw [Tower.Model.next_pack]
+    exact Tower.Model.nextBase_embed original reference ambient b
+
+/-- A canonical context reader fixes every original provider coefficient at
+its prescribed real value, regardless of which native value represents it.
+The caller supplies no dependent cast through the extracted origin. -/
+theorem Origin.read_base [IsStrictOrderedRing K] [IsRealClosed K]
+    {context : Context registry} (origin : Origin context) (sameBase : origin.base = base)
+    (following : base.Realization) (reference : Tower.Model (Context.ofBase base) K)
+    (model : Tower.Model context K)
+    (canonical : origin.model? following reference = some model)
+    (interpretation : CoefficientMap model.field ℝ)
+    (real : ∀ a r, origin.RealValue (sameBase.symm ▸ following) a r →
+      model.domain interpretation a ∧ model.read interpretation a = r)
+    (b : (Context.ofBase base).Value) (r : ℝ)
+    (inherited : BaseContext.PackedContext.Realization.RealValue following b r)
+    (a : context.Value) (same : model.value a = reference.value b) :
+    model.domain interpretation a ∧ model.read interpretation a = r := by
+  cases origin with
+  | pack original suffix sameContext =>
+    change BaseContext.PackedContext.pack original = base at sameBase
+    cases sameBase
+    cases sameContext
+    have factory := Origin.model?_pack original suffix rfl following reference
+    have baseFactory : (Context.base original).model? following reference = some reference :=
+      Context.model?_base following reference
+    rw [baseFactory] at factory
+    dsimp only [Option.map] at factory
+    rw [canonical] at factory
+    have aligned := Option.some.inj factory
+    have coefficient := real (suffix.embed b) r
+      ((Origin.realValue_pack original suffix following _ r).mpr ⟨b, rfl, inherited⟩)
+    have values : model.toValue a = model.toValue (suffix.embed b) := by
+      apply (model.toValue_equal _ _).mpr
+      exact same.trans (by erw [aligned, Tower.Model.extend_embed])
+    rw [Tower.Model.domain_iff, values, ← Tower.Model.domain_iff]
+    rw [Tower.Model.read_apply, values, ← Tower.Model.read_apply]
+    exact coefficient
+
 omit [DecidableEq K] in
 private theorem read_zero [IsStrictOrderedRing K] {context : Context registry}
     (model : Tower.Model context K) (interpretation : CoefficientMap model.field ℝ)
@@ -154,11 +203,14 @@ theorem realize (values : (index : Fin owners.length) → List (owners[index]).V
       (∀ i j a b, model.target.value (shared.value i a) = model.target.value (shared.value j b) →
         model.ownerRead interpretation i a = model.ownerRead interpretation j b) ∧
       (∀ a r, shared.input.context.origin.RealValue (shared.base_eq.symm ▸ following) a r →
-        model.target.domain interpretation a ∧ model.target.read interpretation a = r) := by
+        model.target.domain interpretation a ∧ model.target.read interpretation a = r) ∧
+      (∀ b r, BaseContext.PackedContext.Realization.RealValue following b r →
+        ∀ a, model.target.value a = reference.value b →
+          model.target.domain interpretation a ∧ model.target.read interpretation a = r) := by
   obtain ⟨interpretation, finite, real⟩ :=
     shared.input.context.realize (shared.base_eq.symm ▸ following) model.target
       (shared.inventory values ++ extra)
-  refine ⟨interpretation, model.owner_closed interpretation, ?_, ?_, ?_, real⟩
+  refine ⟨interpretation, model.owner_closed interpretation, ?_, ?_, ?_, real, ?_⟩
   · intro index a member
     obtain ⟨domain, sign⟩ := finite _
       (List.mem_append_left _ (shared.mem_inventory values index a member))
@@ -170,6 +222,11 @@ theorem realize (values : (index : Fin owners.length) → List (owners[index]).V
   · intro i j a b same
     rw [model.ownerRead_apply, model.ownerRead_apply, Tower.Model.read_apply,
       Tower.Model.read_apply, (model.target.toValue_equal _ _).mpr same]
+  · intro b r inherited a same
+    have canonical := model.canonical
+    rw [Context.model?_origin] at canonical
+    exact shared.input.context.origin.read_base shared.base_eq following reference model.target
+      canonical interpretation real b r inherited a same
 
 end Shared.Model
 
@@ -179,7 +236,8 @@ Arithmetic holds on the pulled-back domains; mathematical equality and all
 requested signs are coherent across owners. -/
 theorem Shared.realize_values (shared : Shared base owners) (following : base.Realization)
     (produced : Shared.gather? base owners = some shared)
-    (values : (index : Fin owners.length) → List (owners[index]).Value) :
+    (values : (index : Fin owners.length) → List (owners[index]).Value)
+    (extra : List shared.input.context.Value := []) :
     ∃ read : shared.input.context.Value → ℝ, ∃ domain : shared.input.context.Value → Prop,
       Transport.Closed read domain ∧
       (∀ index, Transport.Closed (fun a => read (shared.value index a))
@@ -187,16 +245,20 @@ theorem Shared.realize_values (shared : Shared base owners) (following : base.Re
       (∀ index a, a ∈ values index → domain (shared.value index a) ∧
         (SignType.sign (read (shared.value index a)) : Int) = (owners[index]).sign a ∧
         (read (shared.value index a) = 0 ↔ a = 0)) ∧
+      (∀ a ∈ extra, domain a ∧ (SignType.sign (read a) : Int) = shared.input.context.sign a ∧
+        (read a = 0 ↔ a = 0)) ∧
       (∀ i j a b, shared.input.context.equal (shared.value i a) (shared.value j b) = true →
         read (shared.value i a) = read (shared.value j b)) ∧
       (∀ a r, shared.input.context.origin.RealValue (shared.base_eq.symm ▸ following) a r →
-        domain a ∧ read a = r) := by
+        domain a ∧ read a = r) ∧
+      (∀ b r, BaseContext.PackedContext.Realization.RealValue following b r →
+        domain (shared.input.value b) ∧ read (shared.input.value b) = r) := by
   classical
   let reference := following.reference
   let model := Shared.Model.ofGather following reference.model owners shared produced
-  obtain ⟨interpretation, closed, finite, _, coherent, real⟩ := model.realize values
+  obtain ⟨interpretation, closed, finite, additional, coherent, real, fixed⟩ := model.realize values extra
   refine ⟨model.target.read interpretation, model.target.domain interpretation,
-    model.target.closed interpretation, ?_, ?_, ?_, real⟩
+    model.target.closed interpretation, ?_, ?_, ?_, ?_, real, ?_⟩
   · intro index
     have reads : model.ownerRead interpretation index =
         fun a => model.target.read interpretation (shared.value index a) :=
@@ -212,10 +274,15 @@ theorem Shared.realize_values (shared : Shared base owners) (following : base.Re
       (model.ownerRead_apply interpretation index a) ▸ sign, by
         rw [← model.ownerRead_apply]
         exact read_zero (model.owners.get index).1 _ a domain sign⟩
+  · intro a member
+    obtain ⟨domain, sign⟩ := additional a member
+    exact ⟨domain, sign, read_zero model.target interpretation a domain sign⟩
   · intro i j a b equal
     rw [model.target.equal_spec] at equal
     have same := of_decide_eq_true equal
     simpa only [model.ownerRead_apply] using coherent i j a b same
+  · intro b r inherited
+    exact fixed b r inherited (shared.input.value b) (model.input b)
 
 namespace Live
 
@@ -236,7 +303,8 @@ replay inventories of an actual gathered collection. Domains and arithmetic
 are pulled back through its original owner maps; caller provider coefficients
 stay fixed. The symbolic reference is constructed internally. -/
 theorem Collection.realize {request : Request registry} (collection : Collection base request)
-    (following : base.Realization) (produced : request.gather? base = some collection) :
+    (following : base.Realization) (produced : request.gather? base = some collection)
+    (extra : List collection.shared.input.context.Value := []) :
     ∃ read : collection.shared.input.context.Value → ℝ,
       ∃ domain : collection.shared.input.context.Value → Prop,
       Transport.Closed read domain ∧
@@ -246,13 +314,18 @@ theorem Collection.realize {request : Request registry} (collection : Collection
         (SignType.sign (read (collection.shared.value index a)) : Int) =
           (request.owners[index]).sign a ∧
         (read (collection.shared.value index a) = 0 ↔ a = 0)) ∧
+      (∀ a ∈ extra, domain a ∧
+        (SignType.sign (read a) : Int) = collection.shared.input.context.sign a ∧
+        (read a = 0 ↔ a = 0)) ∧
       (∀ i j a b, collection.shared.input.context.equal
           (collection.shared.value i a) (collection.shared.value j b) = true →
         read (collection.shared.value i a) = read (collection.shared.value j b)) ∧
       (∀ a r, collection.shared.input.context.origin.RealValue
-          (collection.shared.base_eq.symm ▸ following) a r → domain a ∧ read a = r) :=
+          (collection.shared.base_eq.symm ▸ following) a r → domain a ∧ read a = r) ∧
+      (∀ b r, BaseContext.PackedContext.Realization.RealValue following b r →
+        domain (collection.shared.input.value b) ∧ read (collection.shared.input.value b) = r) :=
   collection.shared.realize_values following
-    (Request.gather?_shared base request collection produced) request.inventory
+    (Request.gather?_shared base request collection produced) request.inventory extra
 
 /-- Specialize an actual enlargement at one ordinary interpretation for its
 original owner inventories, requested old and fresh values and new parameter.
@@ -273,7 +346,8 @@ theorem Enlargement.realize_model [IsStrictOrderedRing K] [IsRealClosed K]
       Transport.Closed (fun a => read (result.previous.value a))
         (fun a => domain (result.previous.value a)) ∧
       (∀ a ∈ values, domain (result.previous.value a) ∧
-        (SignType.sign (read (result.previous.value a)) : Int) = original.shared.input.context.sign a) ∧
+        (SignType.sign (read (result.previous.value a)) : Int) = original.shared.input.context.sign a ∧
+        (read (result.previous.value a) = 0 ↔ a = 0)) ∧
       (∀ index a, a ∈ request.inventory index →
         domain (result.collection.shared.value index a) ∧
         (SignType.sign (read (result.collection.shared.value index a)) : Int) =
@@ -286,6 +360,9 @@ theorem Enlargement.realize_model [IsStrictOrderedRing K] [IsRealClosed K]
       (∀ a r, result.collection.shared.input.context.origin.RealValue
         (result.collection.shared.base_eq.symm ▸ following.infinitesimal) a r →
         domain a ∧ read a = r) ∧
+      (∀ b r, BaseContext.PackedContext.Realization.RealValue following b r →
+        domain (result.previous.value (original.shared.input.value b)) ∧
+        read (result.previous.value (original.shared.input.value b)) = r) ∧
       domain result.parameter ∧
       0 < read result.parameter := by
   classical
@@ -302,6 +379,8 @@ theorem Enlargement.realize_model [IsStrictOrderedRing K] [IsRealClosed K]
       returned.target.value (result.previous.value a) = lifted.value a := by
     rw [← aligned]
     exact previous.value a
+  -- Use the aligned target directly so public reader domains have no field
+  -- cast through the existential predecessor model's target.
   let embedding : lifted.field →+* returned.target.field :=
     Subfield.inclusion (by
       rintro a ⟨value, rfl⟩
@@ -310,7 +389,8 @@ theorem Enlargement.realize_model [IsStrictOrderedRing K] [IsRealClosed K]
       embedding (lifted.toValue a) = returned.target.toValue (result.previous.value a) :=
     Subtype.ext (preserved a).symm
   let extra := values.map result.previous.value ++ result.parameter :: fresh
-  obtain ⟨interpretation, _, finite, additional, _, real⟩ := returned.realize request.inventory extra
+  obtain ⟨interpretation, _, finite, additional, _, real, fixed⟩ :=
+    returned.realize request.inventory extra
   have reads : lifted.read (interpretation.comap embedding) =
       fun a => returned.target.read interpretation (result.previous.value a) := by
     funext a
@@ -321,13 +401,20 @@ theorem Enlargement.realize_model [IsStrictOrderedRing K] [IsRealClosed K]
     apply propext
     rw [Tower.Model.domain_iff, CoefficientMap.comap_domain, embeddingValue, Tower.Model.domain_iff]
   refine ⟨returned.target.read interpretation, returned.target.domain interpretation,
-    returned.target.closed interpretation, ?_, ?_, ?_, ?_, ?_, real, ?_, ?_⟩
+    returned.target.closed interpretation, ?_, ?_, ?_, ?_, ?_, real, ?_, ?_, ?_⟩
   · rw [← reads, ← domains]
     exact lifted.closed _
   · intro a member
     obtain ⟨domain, sign⟩ := additional _
       (List.mem_append_left _ (List.mem_map.mpr ⟨a, member, rfl⟩))
-    exact ⟨domain, sign.trans (previous.sign a)⟩
+    have oldSign := sign.trans (previous.sign a)
+    refine ⟨domain, oldSign, ?_⟩
+    rw [← congrFun reads a]
+    apply read_zero lifted (interpretation.comap embedding) a
+    · rw [congrFun domains a]
+      exact domain
+    · rw [congrFun reads a]
+      exact oldSign
   · intro index a member
     obtain ⟨domain, sign⟩ := finite index a member
     exact ⟨(returned.ownerDomain_iff interpretation index a).mp domain,
@@ -342,6 +429,15 @@ theorem Enlargement.realize_model [IsStrictOrderedRing K] [IsRealClosed K]
     rw [returned.target.equal_spec] at equal
     rw [Tower.Model.read_apply, Tower.Model.read_apply,
       (returned.target.toValue_equal a b).mpr (of_decide_eq_true equal)]
+  · intro b r inherited
+    let coefficient := Context.baseValue base.infinitesimal
+      (RationalFn.C (Context.baseStored base b))
+    have realCoefficient : BaseContext.PackedContext.Realization.RealValue
+        following.infinitesimal coefficient r :=
+      (BaseContext.PackedContext.Realization.realValue_infinitesimal following b r).mpr inherited
+    apply fixed coefficient r realCoefficient
+    rw [preserved, Tower.Model.liftInfinitesimal_value, old.input]
+    exact (Tower.Model.next_constant reference ambient b).symm
   · exact (additional result.parameter
       (List.mem_append_right _ (List.mem_cons_self ..))).1
   · have sign := (additional result.parameter
@@ -366,7 +462,8 @@ theorem Enlargement.realize {request : Request registry} {original : Collection 
       Transport.Closed (fun a => read (result.previous.value a))
         (fun a => domain (result.previous.value a)) ∧
       (∀ a ∈ values, domain (result.previous.value a) ∧
-        (SignType.sign (read (result.previous.value a)) : Int) = original.shared.input.context.sign a) ∧
+        (SignType.sign (read (result.previous.value a)) : Int) = original.shared.input.context.sign a ∧
+        (read (result.previous.value a) = 0 ↔ a = 0)) ∧
       (∀ index a, a ∈ request.inventory index →
         domain (result.collection.shared.value index a) ∧
         (SignType.sign (read (result.collection.shared.value index a)) : Int) =
@@ -379,6 +476,9 @@ theorem Enlargement.realize {request : Request registry} {original : Collection 
       (∀ a r, result.collection.shared.input.context.origin.RealValue
         (result.collection.shared.base_eq.symm ▸ following.infinitesimal) a r →
         domain a ∧ read a = r) ∧
+      (∀ b r, BaseContext.PackedContext.Realization.RealValue following b r →
+        domain (result.previous.value (original.shared.input.value b)) ∧
+        read (result.previous.value (original.shared.input.value b)) = r) ∧
       domain result.parameter ∧
       0 < read result.parameter := by
   classical
@@ -417,3 +517,15 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Live.Enlargement.realize_model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Live.Enlargement.realize_model
+
+/-- info: 'Hex.RealClosure.Tower.Inclusion.Model.domain_comap' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Inclusion.Model.domain_comap
+
+/-- info: 'Hex.RealClosure.Tower.Model.next_constant' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Model.next_constant
+
+/-- info: 'Hex.RealClosure.Tower.Origin.read_base' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Origin.read_base

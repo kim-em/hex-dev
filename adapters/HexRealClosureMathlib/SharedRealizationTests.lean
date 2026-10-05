@@ -33,7 +33,7 @@ theorem enlarge_arithmetic (result : Enlargement original) (following : base.Rea
       (SignType.sign (x * y) : Int) = original.shared.input.context.sign (a * b) ∧
       (SignType.sign (x - epsilon) : Int) = result.collection.shared.input.context.sign
         (result.previous.value a - result.parameter) := by
-  obtain ⟨read, domain, targetClosed, closed, finite, _, fresh, _, _, parameter, positive⟩ :=
+  obtain ⟨read, domain, targetClosed, closed, finite, _, fresh, _, _, _, parameter, positive⟩ :=
     result.realize following gathered produced [a, b, a + b, a * b]
       [result.previous.value a - result.parameter]
   have left := finite a (by simp)
@@ -42,11 +42,11 @@ theorem enlarge_arithmetic (result : Enlargement original) (following : base.Rea
   have product := finite (a * b) (by simp)
   have difference := fresh (result.previous.value a - result.parameter) (by simp)
   refine ⟨read (result.previous.value a), read (result.previous.value b),
-    read result.parameter, positive, left.2, right.2, ?_, ?_, ?_⟩
+    read result.parameter, positive, left.2.1, right.2.1, ?_, ?_, ?_⟩
   · rw [← closed.read_add a b left.1 right.1]
-    exact sum.2
+    exact sum.2.1
   · rw [← closed.read_mul a b left.1 right.1]
-    exact product.2
+    exact product.2.1
   · rw [← targetClosed.read_sub _ _ left.1 parameter]
     exact difference.2.1
 
@@ -88,13 +88,13 @@ theorem enlarge_twice (first : Enlargement original) (next : Enlargement first.c
   let initial := original.model following reference.model gathered
   let ambient := Ambient.ofField (Hex.RationalFn reference.Carrier)
   let previous := first.model initial ambient built
-  obtain ⟨read, domain, closed, _, finite, _, fresh, _, _, parameter, positive⟩ :=
+  obtain ⟨read, domain, closed, _, finite, _, fresh, _, _, _, parameter, positive⟩ :=
     next.realize_model previous produced [first.parameter]
       [next.previous.value first.parameter - next.parameter]
   have old := finite first.parameter (by simp)
   have difference := fresh (next.previous.value first.parameter - next.parameter) (by simp)
   refine ⟨read (next.previous.value first.parameter), read next.parameter,
-    positive, old.2, ?_⟩
+    positive, old.2.1, ?_⟩
   rw [← closed.read_sub _ _ old.1 parameter]
   exact difference.2.1
 

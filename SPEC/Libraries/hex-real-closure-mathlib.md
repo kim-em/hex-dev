@@ -641,7 +641,10 @@ implies equality of those reads. `Live.Collection.realize` covers the original
 requested values, polynomial coefficients and every coefficient reached by
 each retained descriptor's finite replay, preserving all their signs at once
 and reflecting zero on those inventory operands. This supplies the agreement
-needed by `Transport.Inventory.descriptor_data`.
+needed by `Transport.Inventory.descriptor_data`. Optional finite target
+requests provide the same domain/sign/zero agreement for freshly computed
+operands. A direct base-coefficient clause retains `shared.input.value b` at
+its prescribed real value without a cast through the extracted origin.
 The sample/export APIs must retain these ownership and membership conditions.
 
 Infinitesimals added after selected roots enter a new staged base through checked
@@ -652,8 +655,11 @@ parameter, and the returned parameter itself. Every requested fresh sign is
 preserved and its zero guard reflected. The parameter is positive;
 the pre-enlargement reader is its pullback through the actual predecessor
 inclusion, with a closed arithmetic domain and the original requested signs.
-The same reader retains every inherited fixed real coefficient and identifies
-any values equal in the enlarged context. `Enlargement.realize_model` accepts
+The same reader fixes each original provider coefficient through
+`previous.value (original.shared.input.value b)` at its prescribed real value,
+with no origin cast or native equality premise. It also retains all inherited
+real coefficients of the new origin and identifies any values equal in the
+enlarged context. `Enlargement.realize_model` accepts
 the preceding canonical factory model, so it can be used after further
 enlargements without a new gather.
 The caller supplies actual gather/enlargement results and provider history,
