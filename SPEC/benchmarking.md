@@ -123,17 +123,20 @@ relates to it.
 Use measurements to assess useful operations on representative inputs and
 detect unexpected costs. Do not require a parametric model for an auxiliary
 reference computation merely because it can be timed. An auxiliary computation
-is unreachable from production at the measured sizes and has no separately
-mandated performance target. Required algorithm comparisons remain required.
+is not performed by production at the sizes over which scaling is assessed
+and has no separately mandated performance target. Required algorithm
+comparisons remain required.
 When no useful timing
 model is available, fixed-problem measurements and required comparisons can
 still document time and memory, with explicit limits on what they establish.
 They do not prove scaling or replace a mandated performance target.
 Required runtime comparisons do not require a useful timing model for every
 arm. If the paired sampler retains a source operation-count formula for an
-arm with mixed costs, state that limitation at the registration and in its
+auxiliary reference arm with mixed costs, state that limitation at the
+registration and in its
 report. Its fitted verdict is descriptive; the comparison uses actual times,
-matching results and any separately stated ratio target.
+matching results and any separately stated ratio target. A production arm's
+verdict is never descriptive; resolve its scaling claim under the rules below.
 
 An inconclusive harness verdict is a finding to resolve, not an automatic
 requirement for a larger collection. Retain its original verdict and samples.
@@ -700,7 +703,8 @@ When a library trips either:
   appropriate for "does this module compile and run". Scientific
   settings are unchanged.
 - If the smallest honest input is genuinely minutes at any
-  setting, that's a bench-found finding per
+  setting, investigate whether the implementation or the measurement plan is
+  responsible. A confirmed implementation defect is a bench-found finding per
   [§verdict-as-bug-trigger](#the-verdict-as-bug-trigger-model):
   file the issue, roll back `done_through`, fix the underlying
   implementation at the rolled-back phase.
@@ -830,7 +834,12 @@ explicitly forbidden:
   checks it. Rewriting the implementation under test, rescaling
   `degree := f(n)`, or raising `verdictWarmupFraction` until the
   harness reports "consistent" is not a fix; it is laundering the
-  verdict. Investigate inconclusive results and record their disposition;
+  verdict. Retire an inconclusive registration only for an auxiliary computation
+  as defined above, retaining its archived samples, verdict and written
+  disposition.
+  Production registrations may be consolidated around the same measured operation
+  only with all findings carried forward; retirement never clears a finding.
+  Investigate inconclusive results and record their disposition;
   a larger schedule is warranted only when it answers a useful unresolved
   performance question. An inconclusive verdict
   whose root cause is a too-narrow schedule (rungs too close to the

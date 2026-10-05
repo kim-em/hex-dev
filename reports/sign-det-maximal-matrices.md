@@ -162,8 +162,8 @@ it does not establish attribution at every size or an exact timing law.
 
 No model, fit setting or completed sample was changed after this observation,
 and no unchanged rerun was used. The complete operation still executes its
-cubic integer check. The reference-solve prediction is resolved as a model
-error, supported by the source operation mix, profile and the −0.369 predicted
+cubic integer check. The reference-solve prediction is resolved by a finite-range
+explanation, supported by the source operation mix, profile and the −0.369 predicted
 versus −0.384273 measured normalized slope. This is a disposition of the
 finding, not a relabeling of its verdict. The checker’s interpretation remains
 separate: its wider retained results and finite-range work need assessment,
@@ -338,3 +338,9 @@ refer to their recorded source revisions. The old paired collector's CLI now
 stops before launching work; its validators remain available for historical
 records. Use `scripts/bench/sign_det_matrix_wide.py` for current production
 checker collection. No new timing result is claimed by the fixed checks.
+
+The earlier `runCheck` and `runCheckDimension` registrations are superseded
+by `runTensorCheck`, which invokes the same `System.check` with a tensor-prepared
+witness. Their measurements and findings remain intact; consolidation does not
+clear the outstanding wider checker finding. New memory captures use small
+tensor-prepared inputs and do not prepare a large rational reference solve.

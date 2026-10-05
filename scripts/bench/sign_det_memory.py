@@ -25,16 +25,26 @@ from scripts.bench.sign_det_joint_timing import harness_binding
 from scripts.bench.sign_det_sparse import inventory_hashes
 from scripts.bench.sign_det_joint import validate as validate_joint
 from scripts.bench.sign_det_maximal_matrix import validate_inventory as validate_matrix
+from scripts.bench.sign_det_matrix_wide import validate_inputs as validate_tensor
 from scripts.bench.sign_det_height import validate_phases as validate_height
 
 # Fixed before collection; all are parameters of the existing registrations.
-GROUPS = {
+V1_GROUPS = {
     "sparse": ([64, 256, 1024], ["runProduce", "runTree", "runGraph"]),
     "joint": ([3, 7, 15], ["Joint.runComparison", "Joint.runCheckReduced"]),
     "matrix": ([9, 27, 81], ["MaximalMatrix.runSolveDimension", "MaximalMatrix.runCheckDimension"]),
     "height": ([8192, 65536, 524288], ["Height.runReduce", "Height.runCheck"]),
 }
-CURRENT_GROUPS = dict(GROUPS, matrix=([9, 27, 81], ["MaximalMatrix.runCheckDimension"]))
+V2_GROUPS = {
+    "sparse": ([64, 256, 1024], ["runProduce", "runTree", "runGraph"]),
+    "joint": ([3, 7, 15], ["Joint.runComparison", "Joint.runCheckReduced"]),
+    "matrix": ([9, 27, 81], ["MaximalMatrix.runTensorCheck"]),
+    "height": ([8192, 65536, 524288], ["Height.runReduce", "Height.runCheck"]),
+}
+GROUPS = V1_GROUPS  # Historical schedule retained for existing archives.
+CURRENT_GROUPS = V2_GROUPS
+SCHEDULES = {"hex-sign-det-process-memory-v1": V1_GROUPS,
+             "hex-sign-det-process-memory-v2": V2_GROUPS}
 TRIALS = 3
 SCOPE = ("whole child, including preparation, runtime initialization and result consumption; "
          "native VmHWM is peak resident memory; Massif page mode includes allocator reserves "
@@ -57,11 +67,9 @@ def require_registered(executable, groups):
 
 
 def capture_schedule(schema):
-    if schema == "hex-sign-det-process-memory-v1":
-        return GROUPS
-    if schema == "hex-sign-det-process-memory-v2":
-        return CURRENT_GROUPS
-    raise ValueError("unknown memory collection schema")
+    if schema not in SCHEDULES:
+        raise ValueError("unknown memory collection schema")
+    return SCHEDULES[schema]
 
 
 def child_record(text, function, parameter, revision):
@@ -122,17 +130,30 @@ def page_peak(text, function=None, parameter=None):
 
 def expected_results(groups, inventory):
     """Re-derive answers by checking actual retained or freshly emitted inputs."""
+    if not isinstance(groups, dict):
+        raise ValueError("memory groups must be a schedule mapping")
     expected = {}
     for group in groups:
-        parameters, functions = groups[group] if isinstance(groups, dict) else GROUPS[group]
+        parameters, functions = groups[group]
         if group == "sparse":
             rows = inventory_hashes(inventory("inputs-sparse", ["inspect"]))
             keys = ["productionResultHash", "replayResultHash", "replayResultHash"]
         elif group == "matrix":
-            rows = validate_matrix(inventory("inputs-matrix", ["inspect-maximal-matrix-dimensions"]),
-                                   by_dimension=True)
-            keys = ["solveResultHash" if name.endswith("runSolveDimension") else "checkResultHash"
-                    for name in functions]
+            if functions == ["MaximalMatrix.runTensorCheck"]:
+                rows = {}
+                for parameter in parameters:
+                    arity = next((s for s in range(9) if 3**s == parameter), None)
+                    if arity is None:
+                        raise ValueError("unsupported tensor dimension")
+                    path = inventory(f"inputs-matrix-{parameter}",
+                                     ["inspect-wide-matrix-checks", str(arity)])
+                    rows[parameter] = {"checkResultHash": int(validate_tensor(path, arities=[arity])[parameter], 16)}
+                keys = ["checkResultHash"]
+            else:
+                rows = validate_matrix(inventory("inputs-matrix", ["inspect-maximal-matrix-dimensions"]),
+                                       by_dimension=True)
+                keys = ["solveResultHash" if name.endswith("runSolveDimension") else "checkResultHash"
+                        for name in functions]
         elif group == "height":
             path = inventory("inputs-height", ["inspect-height-phases"])
             validate_height(path, height_sensitive=True)

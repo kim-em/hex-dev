@@ -183,7 +183,13 @@ establish a replacement wall-time model. The finding is resolved as a mistaken
 finite-range timing prediction: rational row updates dominate the measured
 reference path, while the cubic formula counts rational and integer operations
 as equal units. The source-state inventory and 87.97% inversion attribution
-predict the observed downward trend. The original inconclusive verdict remains.
+predict the observed downward trend and its approximate size: at s=3→4 and
+s=4→5, full-arm time grows about 15.0× and 17.1×, respectively, compared with
+the dominant rational row-update term’s 18× and the declared scalar count’s
+27×. The remaining lower-order work reduces the finite ratios further. Over
+s=2..5 the normalized constant falls about 6.9×, versus 3.4× from the dominant
+18^s term alone. This is a finite-range explanation, not a fitted replacement
+model. The original inconclusive verdict remains.
 The required paired comparison still measures both algorithms on identical
 inputs, with exact-answer agreement and adjacent alternating execution; this
 resolution does not invent a passing scaling verdict. The required degree, coefficient-bit, maximal-support,

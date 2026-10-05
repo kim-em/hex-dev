@@ -64,7 +64,9 @@ cheap integer checks. That count does not supply a useful wall-time model
 on its small-input comparison domain. Production uses rational inversion
 only at leaves of size at most three; parents use their child tensor inverses.
 Keep reference solves as small fixed checks. The production-relevant integer
-checker retains its independently derived cubic scaling registration. -/
+checker retains its independently derived cubic scaling registration, `runTensorCheck`.
+The earlier checker registrations are superseded by that same callback with
+tensor preparation; their archived findings remain subject to investigation. -/
 
 initialize referenceInputs : IO.Ref (Array (Option Input)) ←
   IO.mkRef #[input 1, input 2, input 3]
@@ -86,19 +88,6 @@ setup_fixed_benchmark reference1 where referenceConfig 1
 setup_fixed_benchmark reference2 where referenceConfig 2
 setup_fixed_benchmark reference3 where referenceConfig 3
 
--- Declared cost-model: Θ(27^s) integer coefficient operations, dense scaled-inverse identity check.
-setup_benchmark runCheck s => 27^s
-  with prep := input
-  where {
-    paramSchedule := .custom #[1, 2, 3, 4, 5]
-    paramFloor := 1
-    paramCeiling := 5
-    outerTrials := 6
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
-  }
-
 /-- Prepare the same full system by its literal matrix dimension. Unsupported
 sizes return `none`; scientific inspection validates every scheduled input. -/
 def dimensionInput (r : Nat) : Option Input := do
@@ -110,19 +99,6 @@ def dimensionInput (r : Nat) : Option Input := do
 
 /-- The existing literal checker, with matrix dimension as the parameter. -/
 @[noinline] def runCheckDimension (i : Option Input) : Bool := runCheck i
-
--- Declared cost-model: Θ(r^3) integer coefficient operations, the same dense scaled-inverse identity check.
-setup_benchmark runCheckDimension r => r^3
-  with prep := dimensionInput
-  where {
-    paramSchedule := .custom #[3, 9, 27, 81, 243, 729]
-    paramFloor := 3
-    paramCeiling := 729
-    outerTrials := 6
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
-  }
 
 /-- Prepare the same complete system with the library's existing Kronecker
 product. Only preparation changes: the measured callback remains System.check.

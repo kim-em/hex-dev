@@ -138,8 +138,12 @@ destinations within the source collection.
 
 
 Current collection uses schema `hex-sign-det-process-memory-v2`: the matrix
-family measures the production checker only, after retirement of the auxiliary
-large reference-solve registration. The original v1 schedules and all their raw
+family uses `runTensorCheck` at dimensions 9, 27 and 81. Preparation constructs
+the supplied inverse by tensor products and performs no large rational solve.
+The small tensor inventories check exactly these three dimensions. These remain
+whole-child measurements including preparation, not isolated checker memory.
+The earlier checker registrations are superseded by this unchanged checker
+with tensor preparation, and their scaling findings remain open until resolved. The original v1 schedules and all their raw
 records remain unchanged and are still validated against their historical
 schedule. Before any capture starts, the driver verifies every requested
 callback against the compiled benchmark catalog, so a stale plan fails before
