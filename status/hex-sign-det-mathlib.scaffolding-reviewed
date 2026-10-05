@@ -1,0 +1,20 @@
+Phase-2 scaffolding attestation for HexSignDetMathlib.
+
+Independent reviewer: Claude Opus through the second-opinion skill, source
+basis c12e9c7116, against HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md and PLAN/Phase2.md.
+The complete findings are retained in
+status/reviews/issue-10377-opus-scaffolding.md.
+
+The review checked actual API correspondence, correct executable algorithm
+shape, generic coefficient interpretations, support completeness, exact
+bindings, checked conversion, public codec composition, proof ownership,
+dependency boundaries and banned proof mechanisms.
+
+The identified conformance header and re-encoding description are corrected
+by 85676159615955c7728472b4030d215bc1c7d4f7. The companion's headline semantic
+proof modules remain in the development adapter tree and are built by
+HexQuerySemantics in addition to HexSignDetMathlib. Phase-3 validation names
+both targets; no package publication claim follows from this attestation.
+
+No unresolved Phase-2 blocker. This token attests scaffolding only. Phase 4,
+compiled performance acceptance and distribution readiness are not attested.
