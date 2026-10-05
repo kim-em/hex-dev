@@ -125,7 +125,22 @@ private unsafe def accepted : TermElabM Unit := do
   unless (← readRecord argument { packet with packing :=
       { packet.packing with scalar := { packet.packing.scalar with claimed := 0 } } }).isNone do
     throwError "changed packed sign accepted"
-  logInfo "inverse packets retain native equality; cached replay and three mutations kernel checked"
+  let alteredKey ← Term.withoutErrToSorry
+    (Term.elabTerm (← `((inverseKey + Sturm.Fixtures.p : DensePoly Rat))) none)
+  Term.synthesizeSyntheticMVarsNoPostponing
+  let alteredKey ← instantiateMVars alteredKey
+  let some altered ← Packing.produce
+    ⟨mkConst ``CoefficientSignsConformance.context, alteredKey⟩
+    | throwError "altered inverse candidate production failed"
+  let some originalEntry ← Packing.readRecord packet.packing | throwError "original packing rejected"
+  let some alteredEntry ← Packing.readRecord altered | throwError "valid altered packing rejected"
+  let originalValue ← mkAppM ``Algebraic.Packing.value #[originalEntry]
+  let alteredValue ← mkAppM ``Algebraic.Packing.value #[alteredEntry]
+  KernelReplay.kernelCheck `__inverseSameValue (← mkEq alteredValue originalValue)
+    (← mkEqRefl originalValue)
+  unless (← readRecord argument { packet with packing := altered }).isNone do
+    throwError "same-value altered native inverse candidate accepted"
+  logInfo "inverse packets retain native equality; cached replay and four mutations kernel checked"
 
 syntax (name := inversePackets) "#inverse_packets" : command
 @[command_elab inversePackets]
@@ -135,7 +150,7 @@ end
 
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 1000000 in
-/-- info: inverse packets retain native equality; cached replay and three mutations kernel checked -/
+/-- info: inverse packets retain native equality; cached replay and four mutations kernel checked -/
 #guard_msgs in
 #inverse_packets
 

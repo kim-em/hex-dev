@@ -2945,15 +2945,20 @@ factory. `Inverse.native` identifies the packed output with the native inverse.
 Canonical zero instead follows `Element.inv_zero` directly, with no candidate.
 `KernelReplay.Inverse` checks native-produced packing and inverse-equation
 packets with the ordinary kernel, then checks the retained record's native
-inverse equality. Cached replay repeats only the readers; zero-input, malformed
-graph and changed-sign mutations are checked rejections.
+inverse equality. Cached replay repeats only the readers. Kernel-checked rejections cover
+zero-input query mismatch, a malformed graph, changed scalar sign, and a
+legitimate same-value packing with a different native inverse candidate.
 
 The companion's `Inverse.eval_inv` proves the inverse equation using only the
 reached predecessor product and subtraction data, plus zero and unit
 preservation. `Inverse.realize_many` uses one checked selected root for all
 records, preserving both operand and output signs and the packing equation.
 No supplied ambient model, whole-field embedding or globally closed domain is
-required. These finite premises still have to be constructed by the recursive
+required.
+Ordinary packing and inverse inventories share the same selected point in
+`Inverse.realize_many`. `Element.replayInv` currently requests the original
+packing record; the recursive exporter must additionally demand the inverse
+equation record. That additional demand is not enforced by replay assembly yet. These finite premises still have to be constructed by the recursive
 tower exporter; the record does not supply that exporter or its totality.
 
 `KernelReplay.PackingProbe` checks literal native-produced packets with the

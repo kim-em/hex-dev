@@ -46,7 +46,7 @@ private def sample (scale : Rat) : Option Bool := do
   let unrelatedRead := Inverse.readMemo? unrelated entry memo graph.root
   let differentRoot ← SignDet.Descriptor.validate Sturm.orderSign 7
     { context := 7, head := DensePoly.scale scale head,
-      lower := .finite 2, upper := .finite 4, indices := [], signs := [] }
+      lower := .finite (-2), upper := .finite (-1), indices := [], signs := [] }
   let .ok differentSigns := differentRoot.buildSigns
     [argument.polynomial, argument.polynomial * entry.value.polynomial - 1] | none
   let differentGraph := SignDet.Dag.encode differentSigns.evidence
@@ -54,9 +54,16 @@ private def sample (scale : Rat) : Option Bool := do
     differentRoot.raw.head differentRoot.raw.lower differentRoot.raw.upper
   let wrongDomain := Inverse.readMemo? argument entry differentMemo differentGraph.root
   let zeroRead := Inverse.readMemo? (0 : Element context) entry memo graph.root
+  let .ok zeroSigns := context.buildSigns
+    [(0 : Element context).polynomial,
+      (0 : Element context).polynomial * entry.value.polynomial - 1] | none
+  let zeroMade := Inverse.make? (0 : Element context) entry zeroSigns
   return read.argument == argument && entry.value == argument⁻¹ &&
     wrong.isNone && altered.isNone && outOfRange.isNone && unrelatedRead.isNone &&
-    wrongDomain.isNone && zeroRead.isNone && ((0 : Element context)⁻¹ == 0)
+    (scale != 1 || changed.value == entry.value) &&
+    supplied.values.toList == [argument.sign, 0] &&
+    differentSigns.values.toList == [argument.sign, 0] &&
+    wrongDomain.isNone && zeroRead.isNone && zeroMade.isNone && ((0 : Element context)⁻¹ == 0)
 
 #guard sample 1 == some true
 #guard sample 2 == some true

@@ -93,10 +93,17 @@ structure Inverse.Data (record : Inverse entry) (read : E → K) : Prop where
 and cached sign together. The predecessor's finite arithmetic and replay data
 remain explicit; their recursive construction belongs to the tower exporter. -/
 theorem Inverse.realize_many [IsStrictOrderedRing K] [IsRealClosed K]
+    (entries : List (Packing context))
     (records : List (Σ entry : Packing context, Inverse entry)) (read : E → K)
     (zero : read 0 = 0) (unit : read 1 = 1)
     (descriptorData : Transport.Finite.DescriptorData read coeffSign
       (fun x : K => (SignType.sign x : Int)) context.root.raw context.root.evidence)
+    (packingData : ∀ entry ∈ entries,
+      Transport.Finite.ReplayData read coeffSign (fun x : K => (SignType.sign x : Int))
+        context.root.raw.head context.root.raw.lower context.root.raw.upper
+        (context.root.raw.queries ++ [entry.representative, entry.original - entry.representative])
+        entry.signs.evidence ∧
+      Transport.Difference read entry.original entry.representative)
     (data : ∀ record ∈ records, Inverse.Data record.2 read) :
     ∃ x : K,
       x ∈ Tarski.rootsIn
@@ -106,6 +113,8 @@ theorem Inverse.realize_many [IsStrictOrderedRing K] [IsRealClosed K]
         ((Transport.endpoint read context.root.raw.upper).map (fun y : K => y)) ∧
       signsAt (fun y : K => y) (fun _ => Iff.rfl)
         (context.root.raw.queries.map (Transport.polynomial read)) x = context.root.raw.signs ∧
+      (∀ entry ∈ entries, eval read x entry.value.polynomial = eval read x entry.original ∧
+        (SignType.sign (eval read x entry.original) : Int) = entry.value.sign) ∧
       ∀ record ∈ records,
         eval read x record.1.value.polynomial = eval read x record.1.original ∧
         eval read x record.1.value.polynomial = (eval read x record.2.argument.polynomial)⁻¹ ∧
@@ -125,7 +134,15 @@ theorem Inverse.realize_many [IsStrictOrderedRing K] [IsRealClosed K]
   change point ∈ _ ∧ _ at spec
   rw [raw, queries] at spec
   simp only [Transport.descriptor] at spec
-  refine ⟨point, spec.1, spec.2, ?_⟩
+  refine ⟨point, spec.1, spec.2, ?_, ?_⟩
+  · intro entry member
+    have observed := (Transport.Finite.selected_signs read zero unit (fun c : Ctx => c)
+      coeffSign parent context.root descriptorData _ entry.signs
+        (packingData entry member).1).trans entry.observed
+    have equal := eval_original entry read zero point (packingData entry member).2 observed
+    refine ⟨equal, ?_⟩
+    rw [← equal]
+    exact eval_sign entry read zero point observed
   intro record member
   have packing := (Transport.Finite.selected_signs read zero unit (fun c : Ctx => c)
     coeffSign parent context.root descriptorData _ record.1.signs
