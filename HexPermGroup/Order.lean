@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexPermGroup.Rank
+public import HexPermGroup.Generated
 
 public section
 
@@ -70,9 +70,5 @@ end Bijection
 mutually inverse ranking and unranking maps to `Fin N`. -/
 @[expose] def HasOrder (S : Array (Perm n)) (N : Nat) : Prop :=
   Nonempty (Bijection {p : Perm n // Generated S p} (Fin N))
-
-/-- The checked group's existing rank and unrank maps witness its order. -/
-theorem Group.hasOrder (G : Group n) : HasOrder G.generators G.order :=
-  ⟨⟨G.rank, G.unrank, G.unrank_rank, G.rank_unrank⟩⟩
 
 end Hex.PermGroup

@@ -6,10 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexPermGroupMathlib.Kernel
-public import HexPermGroup.Kernel.Certify
-public meta import HexPermGroup.Kernel.Certify
-public meta import HexPermGroupMathlib.Kernel
+public import HexPermGroupMathlib.Generated
+public meta import HexPermGroupMathlib.Generated
 public import HexPermGroup.Tactic
 public meta import HexPermGroup.Tactic
 public meta import Lean
@@ -20,8 +18,8 @@ public section
 
 namespace Hex.PermGroup.Mathlib.Tactic
 
-open Lean Elab Tactic Meta
-open Hex.PermGroup.Kernel Hex.PermGroup.Kernel.Tactic
+open Lean Elab Meta
+open _root_.Lean.Elab.Tactic _root_.Hex.PermGroup.Tactic
 
 /-- The elements of a set literal `{a, b, …}`, or of the coercion of a
 `Finset` literal. -/
@@ -171,55 +169,13 @@ meta partial def setOfListEq (permTy : Expr) : List Expr → MetaM Expr
       mkLambdaFVars #[t] (← mkAppM ``Insert.insert #[g, t])
     mkEqTrans step (← mkCongrArg ins ih)
 
-/-- Replace the generating set `s` in the goal by `{x | x ∈ gs}`. -/
-meta def rewriteSet (mvarId : MVarId) (s gsList : Expr) (gens : List Expr) (permTy : Expr) :
-    TacticM MVarId := do
-  -- `{x | x ∈ gs}` in exactly the form the soundness statements use
-  let clTy ← whnfR (← inferType (← mkAppM ``closure_ofEquiv #[gsList]))
-  let target := (clTy.getArg! 2).getArg! 2
-  if ← isDefEq target s then
-    return mvarId
-  let direct ← setOfListEq permTy gens
-  let pf ← if ← isDefEq (← inferType direct) (← mkEq target s) then
-      pure direct
-    else
-      -- a coerced `Finset` literal: identify it by rewriting
-      let pf ← mkFreshExprMVar (← mkEq target s)
-      let rem ← Term.withoutErrToSorry <| Tactic.run pf.mvarId! do
-        evalTactic (← `(tactic| simp only [Hex.PermGroup.Kernel.setOf_mem_cons,
-          Hex.PermGroup.Kernel.setOf_mem_singleton, Hex.PermGroup.Kernel.setOf_mem_nil,
-          Finset.coe_insert, Finset.coe_singleton, Finset.coe_empty]))
-      unless rem.isEmpty do
-        throwError "perm_group: could not identify the generating set with a list"
-      instantiateMVars pf
-  let r ← mvarId.rewrite (← mvarId.getType) (← mkEqSymm pf)
-  mvarId.replaceTargetEq r.eNew r.eqProof
-
-/-- The elements of a set-literal syntax `{a, b, …}`, possibly under a type
-ascription. -/
-meta partial def setLitStx (stx : Syntax) : Option (Array Syntax) :=
-  if stx.getKind == ``Lean.Parser.Term.typeAscription then setLitStx stx[1]
-  else if stx.getKind == ``Lean.Parser.Term.paren then setLitStx stx[1]
-  else if stx.getKind == `coeNotation then setLitStx stx[1]
-  else if stx.getNumArgs == 3 && stx[0].isToken "{" && stx[2].isToken "}" then
-    some stx[1].getSepArgs
-  else none
-
-/-- Preserve the optimized image-list packing route for Mathlib inputs. -/
-meta def packTie (nE g : Expr) (x : Nat) (suffix : String) : TacticM Expr := do
-  unless g.isAppOfArity ``Perm.ofEquiv 2 do
-    return ← Hex.PermGroup.Kernel.Tactic.packTie nE g x suffix
-  let e := g.getArg! 1
-  if e.isAppOfArity ``permOfImages 2 then
-    let l := e.getArg! 1
-    if !(← checkedImages nE l) then
-      return ← Hex.PermGroup.Kernel.Tactic.packTie nE g x suffix
-    let hok ← addKernelEq (← auxName s!"{suffix}_images") (← mkAppM ``imagesOk #[nE, l])
-      (mkConst ``Bool.true)
-    let hpk ← addKernelEq (← auxName s!"{suffix}_pack") (← mkAppM ``packList #[nE, l])
-      (mkNatLit x)
-    return ← mkEqTrans (← mkAppM ``pack_ofEquiv_permOfImages #[hok]) hpk
-  Hex.PermGroup.Kernel.Tactic.packTie nE g x suffix
+/-- One normalized presentation, including the equality to the original set. -/
+private meta structure Presentation where
+  degree : Nat
+  elements : List Expr
+  list : Expr
+  equality : Expr
+  finset : Bool
 
 /-- The element type of a set, including a predicate written as a raw lambda. -/
 private meta def setElementType (s : Expr) : MetaM Expr := do
@@ -232,72 +188,125 @@ private meta def setElementType (s : Expr) : MetaM Expr := do
     return dom
   | _ => throwError "perm_group: unexpected set type{indentExpr ty}"
 
+/-- Normalize once, producing a proof that the original set equals list membership. -/
+private meta def presentation (s : Expr) : TermElabM Presentation := do
+  let ty ← inferType s
+  let s ← if ty.isAppOfArity ``Finset 1 then mkAppM ``SetLike.coe #[s] else pure s
+  let some elements ← setLitElems s
+    | throwError "perm_group: the generating set must be a set literal or a coerced Finset \
+        literal{indentExpr s}"
+  let permTy ← setElementType s
+  let degree ← permDegree permTy
+  let list ← mkListLit permTy elements
+  let clTy ← whnfR (← inferType (← mkAppM ``closure_ofEquiv #[list]))
+  let canonical := (clTy.getArg! 2).getArg! 2
+  let equality ← if ← isDefEq s canonical then mkEqRefl s else do
+    let direct ← setOfListEq permTy elements
+    if ← isDefEq (← inferType direct) (← mkEq canonical s) then
+      mkEqSymm direct
+    else
+      let proof ← mkFreshExprMVar (← mkEq canonical s)
+      let setLemmas := match elements.length with
+        | 0 => #[``Hex.PermGroup.setOf_mem_nil]
+        | 1 => #[``Hex.PermGroup.setOf_mem_singleton]
+        | _ => #[``Hex.PermGroup.setOf_mem_cons, ``Hex.PermGroup.setOf_mem_singleton]
+      let finsetLemmas := match elements.length with
+        | 0 => #[``Finset.coe_empty]
+        | 1 => #[``Finset.coe_singleton]
+        | _ => #[``Finset.coe_insert, ``Finset.coe_singleton]
+      let args ← (setLemmas ++ finsetLemmas).mapM fun name =>
+        `(Parser.Tactic.simpLemma| $(mkIdent name):ident)
+      let rem ← Term.withoutErrToSorry <| Tactic.run proof.mvarId! do
+        evalTactic (← `(tactic| simp only [$args,*]))
+      unless rem.isEmpty do
+        throwError "perm_group: could not identify the generating set with a list{indentExpr (← rem.head!.getType)}"
+      mkEqSymm (← instantiateMVars proof)
+  let reduced ← whnfR s
+  let finset := (s.find? fun e => e.isAppOfArity ``Finset 1).isSome ||
+    (reduced.find? fun e => e.isAppOfArity ``Finset 1).isSome
+  return { degree, elements, list, equality, finset }
+
+/-- Compatibility normalization entry point for graph automorphism consumers. -/
+meta def rewriteSet (mvarId : MVarId) (s _gsList : Expr) (_gens : List Expr) (_permTy : Expr) :
+    TacticM MVarId := do
+  let p ← presentation s
+  let r ← mvarId.rewrite (← mvarId.getType) p.equality
+  mvarId.replaceTargetEq r.eNew r.eqProof
+
+/-- The elements of a set-literal syntax `{a, b, …}`, possibly under a type
+ascription. -/
+meta partial def setLitStx (stx : Syntax) : Option (Array Syntax) :=
+  if stx.getKind == ``Lean.Parser.Term.typeAscription then setLitStx stx[1]
+  else if stx.getKind == ``Lean.Parser.Term.paren then setLitStx stx[1]
+  else if stx.getKind == `coeNotation then setLitStx stx[1]
+  else if stx.getNumArgs == 3 && stx[0].isToken "{" && stx[2].isToken "}" then
+    some stx[1].getSepArgs
+  else none
+
+/-- Find a converted Hex expression without unfolding the conversion itself. -/
+private meta partial def toHex? (e : Expr) (fuel : Nat := 32) : MetaM (Option Expr) := do
+  if e.isAppOfArity ``Perm.toEquiv 2 then return some (e.getArg! 1)
+  match fuel with
+  | 0 => return none
+  | fuel + 1 =>
+    let some e' ← unfoldDefinition? e | return none
+    toHex? e' fuel
+
+/-- Supply only a round-trip equality; Hex owns the optimized packing proof. -/
+private meta def input (n : Nat) (e : Expr) : MetaM Input := do
+  let term ← mkAppOptM ``Perm.ofEquiv #[mkNatLit n, e]
+  let canonical? ← (← toHex? e).mapM fun canonical => do
+    return (canonical, ← mkAppM ``Perm.ofEquiv_toEquiv #[canonical])
+  return { term, canonical? }
+
 /-- Translate Mathlib's goal, run the shared computational tactic and transport
 its conclusion through the correspondence theorems. -/
-@[perm_group_extension] public meta def extension : Hex.PermGroup.Kernel.Tactic.Extension where
+@[perm_group_extension] public meta def extension : Extension where
   prove? cfg target := do
     let t ← unfoldClosures target
-    let parsed ← readGoal? t
-    let some (s, kind) := parsed | return none
-    let some gens ← setLitElems s
-      | throwError "perm_group: the generating set must be a set literal or a coerced Finset \
-          literal{indentExpr s}"
-    let permTy ← setElementType s
-    let n ← permDegree permTy
-    let nE := mkNatLit n
-    let gs ← mkListLit permTy gens
-    let converted ← gens.mapM fun g => mkAppOptM ``Perm.ofEquiv #[nE, g]
-    let coreKind ← match kind with
-      | .card N => pure (Hex.PermGroup.Kernel.Tactic.GoalKind.card N)
-      | .top => pure (.card n.factorial)
-      | .mem g => pure (.mem (← mkAppOptM ``Perm.ofEquiv #[nE, g]))
-      | .notMem g => pure (.notMem (← mkAppOptM ``Perm.ofEquiv #[nE, g]))
-    let core ← Hex.PermGroup.Kernel.Tactic.prove cfg n converted coreKind packTie
+    let some (s, kind) ← readGoal? t | return none
+    let p ← presentation s
+    let inputs ← p.elements.mapM fun e => input p.degree e
+    let prepared ← prepare cfg p.degree inputs
+    let request ← match kind with
+      | .card N => pure (Goal.card N)
+      | .top => pure Goal.all
+      | .mem g => pure (.mem (← input p.degree g))
+      | .notMem g => pure (.notMem (← input p.degree g))
+    let core ← replay prepared request
     let pf ← match kind with
-      | .card _ => mkAppOptM ``card_of_hasOrder #[nE, gs, none, core]
-      | .top => mkAppOptM ``eq_top_of_hasOrder #[nE, gs, core]
-      | .mem g => mkAppOptM ``mem_of_generated #[nE, gs, g, core]
-      | .notMem g => mkAppOptM ``not_mem_of_neg #[nE, gs, g, core]
-    let goal ← mkFreshExprMVar t
-    let rewritten ← rewriteSet goal.mvarId! s gs gens permTy
-    rewritten.assign pf
-    return some (← instantiateMVars goal)
+      | .card _ => mkAppOptM ``card_of_hasOrder #[mkNatLit p.degree, p.list, none, core]
+      | .top => mkAppOptM ``eq_top_of_all #[mkNatLit p.degree, p.list, core]
+      | .mem g => mkAppOptM ``mem_of_generated #[mkNatLit p.degree, p.list, g, core]
+      | .notMem g => mkAppOptM ``not_mem_of_neg #[mkNatLit p.degree, p.list, g, core]
+    let predicate := mkLambda `generators .default (← inferType s) (← kabstract t s)
+    let goalEq ← mkCongrArg predicate p.equality
+    return some (← mkAppM ``Eq.mpr #[goalEq, pf])
   certificate? name s sStx := do
     let some elemStx := setLitStx sStx | return none
-    let some gens ← setLitElems s | return none
-    let permTy ← setElementType s
-    let n ← permDegree permTy
-    let converted ← gens.mapM fun g => mkAppOptM ``Perm.ofEquiv #[mkNatLit n, g]
-    let rawSrc := (sStx.reprint.getD "").trimAscii.toString
+    let p ← presentation s
+    let prepared ← prepare {} p.degree (← p.elements.mapM fun e => input p.degree e)
+    let n := p.degree
+    let rawSrc := ((sStx.updateTrailing "".toRawSubstring).reprint.getD "").trimAscii.toString
     let sSrc := s!"({rawSrc} : Set (Equiv.Perm (Fin {n})))"
-    let elemSrc := elemStx.toList.map fun e => (e.reprint.getD "").trimAscii.toString
+    let elemSrc := elemStx.toList.map fun e =>
+      ((e.updateTrailing "".toRawSubstring).reprint.getD "").trimAscii.toString
     let gsSrc := "[" ++ ", ".intercalate elemSrc ++ "]"
     let arraySrc := s!"(({gsSrc} : List (Equiv.Perm (Fin {n}))).map Perm.ofEquiv).toArray"
-    let out ← certificateSource name n converted
+    let out ← render name prepared
       (elemSrc.map fun g => s!"Perm.ofEquiv ({g} : Equiv.Perm (Fin {n}))") arraySrc
-      (fun g => do
-        if g.isAppOfArity ``Perm.ofEquiv 2 &&
-            (g.getArg! 1).isAppOfArity ``permOfImages 2 then
-          if ← checkedImages (mkNatLit n) ((g.getArg! 1).getArg! 1) then
-            return some "pack_ofEquiv_permOfImages"
-        return none)
-    let imageLists ← converted.mapM fun g => Hex.PermGroup.Kernel.Tactic.evalImages n g
-    let perms ← imageLists.mapM fun l => (parsePerm n l : MetaM (Perm n))
-    let c ← match certify perms.toArray with
-      | .ok c => pure c
-      | .error msg => throwError "#perm_group_certificate: {msg}"
-    let finsetLemmas := if sSrc.contains '↑' then
-      match gens.length with
+    let finsetLemmas := if p.finset then
+      match p.elements.length with
       | 0 => ", Finset.coe_empty"
       | 1 => ", Finset.coe_singleton"
       | _ => ", Finset.coe_insert, Finset.coe_singleton"
       else ""
-    let setLemmas := match gens.length with
+    let setLemmas := match p.elements.length with
       | 0 => "setOf_mem_nil"
       | 1 => "setOf_mem_singleton"
       | _ => "setOf_mem_cons, setOf_mem_singleton"
-    return some (out ++ s!"\nopen Hex.PermGroup Hex.PermGroup.Kernel in\n" ++
-      s!"theorem {name}_card : Nat.card (Subgroup.closure {sSrc}) = {order c} := by\n" ++
+    return some (out ++ "\nset_option maxRecDepth 8192 in\nopen Hex.PermGroup in\n" ++
+      s!"theorem {name}_card : Nat.card (Subgroup.closure {sSrc}) = {prepared.order} := by\n" ++
       s!"  rw [show {sSrc} = \{x | x ∈ {gsSrc}} by\n" ++
       s!"    symm; simp only [{setLemmas}{finsetLemmas}]]\n" ++
       s!"  exact card_of_hasOrder {name}_hasOrder\n")

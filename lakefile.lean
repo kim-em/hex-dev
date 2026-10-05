@@ -467,7 +467,8 @@ lean_lib HexPermGroupMathlib where
 @[default_target]
 lean_lib HexPermGroupTests where
   globs := #[.one `HexPermGroup.Tests, .one `HexPermGroup.CertificateTests,
-    .one `HexPermGroupMathlib.Tests, .one `HexPermGroupMathlib.CertificateTests]
+    .one `HexPermGroupMathlib.Tests, .one `HexPermGroupMathlib.CertificateTests,
+    .one `HexPermGroupMathlib.TacticTests]
 
 lean_lib HexGraph where
 
@@ -741,6 +742,8 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.StagedEvaluation,
     `HexRealClosureMathlib.BaseEvaluation,
     `HexRealClosureMathlib.NativeRealization,
+    `HexRealClosureMathlib.SharedRealization,
+    `HexRealClosureMathlib.SharedRealizationTests,
     `HexRealClosureMathlib.NativeRealizationTests,
     `HexRealClosureMathlib.CoefficientMap, `HexRealClosureMathlib.CoefficientComposition,
     `HexRealClosureMathlib.CoefficientQuery,
@@ -1419,12 +1422,14 @@ lean_lib HexReleaseTests where
     `HexGraphIso.SparseTests,
     `HexGraphIso.TacticTests,
     `HexGraphIso.ModuleBoundaryTests,
+    `HexBasic.ModuleBoundaryTests,
     `HexGraphIsoMathlib.TacticTests,
     `HexGraphIsoMathlib.SparseTacticTests,
     `HexPermGroup.Tests,
     `HexPermGroup.CertificateTests,
     `HexPermGroupMathlib.Tests,
     `HexPermGroupMathlib.CertificateTests,
+    `HexPermGroupMathlib.TacticTests,
     `HexNumberFieldTower.Embed,
     `HexRCF.LanguageTests,
     `HexRCF.SturmBuilderTests,
@@ -1941,7 +1946,7 @@ lean_lib HexSignDetBenchSupport where
   srcDir := "bench"
   globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases, .one `HexSignDet.Small,
     .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Joint,
-    .one `HexSignDet.MaximalMatrix, .one `HexSignDet.Height]
+    .one `HexSignDet.MaximalMatrix, .one `HexSignDet.Height, .one `HexSignDet.NestedSigns]
 
 lean_exe hexrealalgebraic_bench where
   srcDir := "bench"

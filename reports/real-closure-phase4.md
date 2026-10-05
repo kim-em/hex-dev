@@ -63,8 +63,9 @@ three roots and passed the least-root interval check. It then reached the
 metadata records signal 9 and exit code −9. This localizes the unfinished
 work to construction of the second polynomial, rather than its isolation.
 The canonical construction uses generic real-algebraic multiplication and
-exactification: products of the degree-15 operands form degree-225 product
-eliminants before exact factorization. The native construction instead reduces
+exactification: products of the degree-15 operands can form degree-225 product
+eliminants before exact factorization. This is a plausible mechanism; the
+canonical arm was not profiled. The native construction instead reduces
 inside `ℚ(α)`. Consequently the retained canonical arm supplies no second
 isolation measurement. The 91bcb67 build logs show Lake's target was up
 to date at a clean source commit. The 7b63305 snapshot log records compilation
@@ -79,7 +80,7 @@ The unprofiled native run of the profiled binary spends about 90% of its
 build-bound native run spends about 92% there. The preliminary whole-process
 profile therefore mostly describes this base-field path. It provides little evidence
 about the algebraic tower stage. The separately filtered first- and
-second-stage attribution is now retained in the
+second-stage attribution is retained in the
 [MetiTarski root-operation profiles](bench-results/real-closure-metitarski-kernels/).
 
 ## Preliminary native profile
@@ -159,15 +160,135 @@ at most 4, and direct Sturm queries; degree 2 takes the linear endpoint fast
 path. These observations do not determine a normalization policy or satisfy
 whole-tower normalization, scaling, operation-counter or time-budget coverage.
 
-## Remaining measurements
+## Nested clean/eager measurements
 
-The functional runs do not establish Phase 4 readiness. Required remaining
-evidence includes the fixed trial-major schedule, clean versus eager
-reduction, exact archived workloads, coefficient and evidence growth,
-operation and query counters, DAG sharing, serialization and kernel replay,
-and profile coverage of the remaining required input families. The separately
-[filtered MetiTarski profiles](bench-results/real-closure-metitarski-kernels/)
-supply representative first- and second-stage inclusive Hex attribution, with
-clean committed postprocessing and recorded stack truncation. This preliminary
+The [nested matched comparison](bench-results/real-closure-nested-measurement-ca2e22/README.md)
+retains all 96 adjacent AB/BA arms from six fixed trial-major trials, at depths
+one and two and product counts 2, 4, 8 and 16. Every arm computes
+`(1 + alpha_d)^m / (alpha_d - 3)` in the actual validated tower with heads
+`(2X^2 - alpha_(d-1))(X - 3)`. All sixteen endpoints pass native checked
+reading and root/query replay, and eight paired FLINT exact-value checks.
+
+Each arm reduces or retains representations at every level and builds its
+own lower-level evidence. The depth-two ratios and evidence sizes therefore
+include those lower-level effects as well as top-level storage.
+These nonmonic heads disable production monic reduction. Clean packing keeps
+nonzero representatives unreduced; eager reduces against the full working
+cubic, including its extraneous root 3. This comparison does not measure
+production reduction under monic clean heads or a minimal quadratic policy.
+Both arms exercise the nonconstant inversion gcd split; these data do not
+isolate storage policy, a smaller defining polynomial after splitting and an
+irreducibility fast path from one another.
+The timer includes product/division, recursive arithmetic and packing's
+selected-root queries, plus encoding and hashing the result. Context setup,
+final query evidence, checked reading and replay occur outside timing.
+
+At depth one with two products the paired direction is mixed. Eager is lower
+in all six pairs of every other parameter combination. At depth two, the
+paired eager/clean median falls from 0.134639 for two products to 0.039732 for
+sixteen. The largest endpoint retains 765/221 stored bytes and
+6,211,399/17,869 final-query bytes for clean/eager. Final evidence is produced
+outside timing; these sizes do not measure its construction or replay cost.
+The linked archive retains all medians, ranges, coefficient degrees and bits,
+source/binary identities, raw points and host activity. These are finite
+family observations and do not determine a global normalization policy.
+
+The separate [generated-C diagnostics](bench-results/real-closure-nested-diagnostics-c7d917/README.md)
+retain callback counts, polynomial gcd/xgcdLeft entries and Lean/GMP integer
+gcd entries from source `c7d917` and an instrumented binary, rather than the
+measured `ca2e22` executable. These counts do not attribute the timing ratios. For depth two and four products, both policies enter polynomial
+gcd and xgcdLeft 23 times each, while clean/eager enter integer gcd
+248,512/82,295 times. Callback categories also nest: division invokes
+multiplication and inversion, and inversion invokes gcd/xgcd sites; do not
+sum these categories. Lean and GMP count different layers of the same calls;
+they must not be added. Counts exclude setup and final evidence production,
+and omit the fast polynomial `*With` entries. The traced depth-three clean
+preparation hit its 600-second cap before entering the counted workload.
+That retained interruption supplies no clean depth-three expression timing
+or matched depth-three comparison.
+
+## MetiTarski second-stage scaling
+
+The [degree-ladder protocol and results](bench-results/real-closure-metitarski-scaling/README.md)
+measure complete roots of `Y^n + alpha^3 + 1` for n = 3, 5, 7, 9 in the
+fixed selected degree-15 predecessor field. Degree three is the exact paper
+second input; the higher degrees are a derived family. Setup and an untimed
+warm-up precede the measured action. The timer includes complete root
+production, its count check, runtime input-prefix extraction/normalization
+and the harness consumer; functional equations, serialization and replay
+are outside timing.
+
+All 24 points from six fixed trial-major rounds completed and are retained.
+Median milliseconds are 213.826, 469.475, 731.902 and 1299.439; corresponding
+`time/n^3` values are 7.919, 3.756, 2.134 and 1.782 ms. Descriptor bytes grow from
+21,688 to 204,318. The harness verdict is `inconclusive`, with log-log slope -1.404948 for
+`time/n^3` against n and no dropped leading points. Degree three already costs
+214 ms. Over this threefold degree range, median time grows by 6.08× against
+27× for n³. This short range cannot separate a constant term from the
+asymptotic order. Its registration does not identify the n³ hypothesis as an
+independently derived model or a cited bound. This capture
+does not satisfy the Phase 4 exit criterion; its declaration, family and
+calibration need investigation under the
+[benchmarking policy](../SPEC/benchmarking.md#anti-patterns).
+The cause remains unclassified, with investigation tracked in #10378. Possible
+causes include a declaration error, family mismatch, proximity to the spawn
+floor, or a ladder too short to distinguish lower-order terms. The policy
+requires investigating the model or family when an operation appears faster
+than declared; a short ladder calls for a raised schedule or ceiling with fresh
+registration. See [Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim)
+and [Anti-patterns](../SPEC/benchmarking.md#anti-patterns). The retained degree-three
+`runMetiSecond` profile has a different timed boundary and source (`52f769a`)
+from this scaling capture (`14b03f`); it does not explain this ladder's slope.
+Any declaration correction needs an independent counterexample and cost-model
+derivation before collecting new measurements, retention of the old declaration
+and every sample, and fresh validation. Choosing exponents from observed slopes
+is verdict-fitting; relabelling a hypothesis as a cited bound is also a
+declaration change.
+It cannot turn this earlier inconclusive capture into a pass.
+
+The signal-floor multiplier is 1 rather than the ordinary 10. 22 of 24 measured batches
+fall below the ordinary floor. Child-side inner timing avoids
+charging spawn time to the operation, but the multiplier-1 exception requires
+rungs fixed by the library SPEC. That condition is unmet: the SPEC does not
+fix this derived 3/5/7/9 ladder. A permitted unchanged rerun would repeat this
+unqualified registration and would not resolve that policy gap. The next
+protocol must establish eligibility independently of the observed timings,
+or use the ordinary floor and an appropriately raised schedule, with fresh
+validation. Wide ranges and recorded changing host activity also limit
+inference; every observation is retained.
+
+The [complete retained capture](bench-results/real-closure-metitarski-scaling-14b03f/README.md)
+binds the measured source, all raw timings, seven frozen source snapshots,
+functional and measured-input packets, and independent FLINT checks of the
+selected predecessor, coefficients, unique odd-radical root, interval,
+Thom word and reported multiplicity. The exact negative radical and
+closed-form derivative signs establish multiplicity one. Scientific timing is separate from CI's native
+fixture/replay and independent oracle checks.
+
+## Measurement coverage and remaining work
+
+These deliveries supply specific evidence; the library's Phase 4 readiness
+still requires the complete specified coverage and final audit.
+
+| Required evidence | Retained coverage | Remaining scope |
+| --- | --- | --- |
+| Exact archived tower workloads | MetiTarski degree-15 input and cubic second stage transcribed from the paper and independently checked | `basic.py` cases remain unreproduced from the original script; paper-transcribed basic examples are supplied separately by [#10778](https://github.com/kim-em/hex-dev/pull/10778). Script-level `nlsat.py` provenance and original Rioboo/Strzeboński inputs; authoritative `tower8` correction/archive, its isolation, zero/sign-test counts and the required counters |
+| Fixed trial-major scaling | Six trials at four odd degrees in one fixed MetiTarski coefficient field | Investigate the inconclusive verdict, declaration/family and unmet floor-exception condition; a qualified protocol/model needs fresh validation; remaining required input/depth families |
+| Matched clean/eager storage | 48 single-level arms and 96 depth-one/two product/division arms | Repeated nested zero-test costs; distinguish storage policy, smaller defining heads after splitting and an irreducibility fast path; other required families and monic-clean production reduction |
+| Coefficient and evidence growth | Stored degrees, bytes and coefficient bits; selected/query graph bytes in those families | Remaining families/stages and certificate operand sizes |
+| Operation/query counters | Nested callback and selected polynomial/integer gcd diagnostics | Scalar inversions, gcd/xgcd, splits/transports, bound attempts, bisection nodes, BKR queries/matrix work and coefficient-sign and zero-test calls across the required families |
+| Outer isolation scaling | Functional isolation/policy checks | Counter evidence consistent with the stated linear bounds; full fallback, joint comparison and transport costs |
+| Root/generator reuse | [Reuse report](real-closure-root-reuse.md): two-trial reuse/order diagnostics from recorded modified worktrees | General required tower families and final correspondence to accepted APIs; these observations do not measure certificate DAG sharing |
+| Certificate sharing and depth | Functional DAG reading/checking | Bytes/nodes/edges versus unshared occurrence costs, arithmetic/operand sizes, cycle/forward-reference rejection before expansion, `Sℓ ≤ Sℓ,local + bℓ*max Sℓ₋₁` and the analogous replay-time recurrence |
+| Separated compiled stage costs | Functional reading/replay and whole-command observations | Yun, query production, BKR solving, coefficient signs, isolation, serialization and kernel replay; whole-command success is not a separated timing distribution |
+| Trivial-path delegation | Native/canonical agreement, `TrivialTests` and independent FLINT conformance; retained canonical MetiTarski arm is censored | Required matched comparison against the existing real-algebraic backend |
+| Midpoint/dyadic versus infinitesimal samples | Functional sample APIs and conformance | Required matched measurement evidence for those alternatives for #10301 |
+| Profiling diagnostics | [Filtered first/second-stage profiles](bench-results/real-closure-metitarski-kernels/README.md) explain observed sorting/sign costs | No per-family profiling quota; profile unexpected verdicts, surprising constant factors or unexplained dominant costs outside registered targets |
+
+The accepted filtered profiles supply inclusive Hex attribution with clean
+committed postprocessing and recorded stack truncation. The preliminary
 whole-process profile and historical gather profiles with missing source
-provenance remain insufficient for that requirement.
+provenance do not supply that filtered contract. Ordinary-kernel correctness,
+compiled functional checks and scientific timing have distinct boundaries;
+none substitutes for the missing tower8 correction or unfinished coverage.
+Profiling diagnoses observed costs; it is not a separate phase deliverable.

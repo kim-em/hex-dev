@@ -525,6 +525,24 @@ declaration by kernel reduction of an ascribed equality proof. The assembly
 lemmas produce the accepted check and the soundness theorems close the goal.
 A failed call restores the environment, removing its auxiliary declarations.
 
+The supported downstream interface is `Hex.PermGroup.Tactic` in
+`HexPermGroup/Tactic.lean`. `Input` carries a closed Hex permutation and,
+optionally, a canonical expression with a proof that it equals the original.
+`prepare` evaluates the original generators once and returns `Prepared`
+certificate data, without adding declarations. `replay` takes that data and
+a `Goal` (`card`, `mem`, `notMem` or `all`); `render` prints reusable source
+from the same data without running the producer again. Prepared data is
+untrusted: packing ties, canonical equalities and all certificate checks are
+kernel-checked during replay. Auxiliary checks run synchronously so failures
+restore both the environment and tactic state before returning. The modules
+under `Tactic/` own declaration names, packing, chunking and assembly.
+
+`HexPermGroup/Generated.lean` contains generation and full-generation
+semantics, depending only on `Perm`. `HexPermGroup/Order.lean` contains
+`Bijection` and `HasOrder`, without importing the chain or ranking algorithms.
+`Group.hasOrder` lives in `HexPermGroup/Rank/Order.lean`. These small semantic
+imports let downstream correspondence proofs avoid the computational engine.
+
 `Perm.ofImages n l` constructs a Hex permutation from a literal image list.
 For this form, the tactic checks `Kernel.imagesOk n l` and `Kernel.packList n l`
 in time linear in `n` and uses `Kernel.pack_ofImages` to tie the result to the
@@ -974,9 +992,10 @@ cross this boundary just because each generator image is a permutation.
 
 ### Kernel replay in Mathlib
 
-`HexPermGroupMathlib/Order.lean` proves
+`HexPermGroupMathlib/Generated.lean` proves
 `HasOrder S N ↔ Nat.card (closure S) = N` by converting the two maps to an
-`Equiv` and using `generated_iff_mem`. `HexPermGroupMathlib/Kernel.lean`
+`Equiv` and using `generated_iff_mem`, and proves
+`GeneratesAll S ↔ closure S = ⊤` directly. `HexPermGroupMathlib/Kernel.lean`
 translates the computational soundness conclusions:
 
 ```lean
@@ -990,7 +1009,9 @@ Kernel.card_closure h : Nat.card (closure S) = Kernel.order c
 It contains no second Schreier or certificate soundness proof.
 `HexPermGroupMathlib/Tactic.lean` registers an extension of the same
 `perm_group` syntax, translating its generators and queries through
-`Perm.ofEquiv`, then invoking the computational tactic engine. Its existing
+`Perm.ofEquiv`, then invoking the supported `Hex.PermGroup.Tactic` interface.
+It imports only `Generated` and the computational tactic, without the legacy
+Mathlib kernel or the optional `Group (Perm n)` instance. Its existing
 Mathlib goal forms remain:
 
 ```lean
@@ -1011,14 +1032,19 @@ The generating set may be a set literal, a coerced `Finset` literal, or its
 set-builder membership form. Subgroup and generating-set definitions are
 unfolded until the closure and literal are found; `Subgroup.closure` itself
 is never unfolded. A proof identifying that set with the generator list
-preserves these presentations. Degree, closed-input and configuration
+preserves these presentations. Parsing produces one list and one equality
+between the original set and list membership, reused by goal transport and
+certificate rendering. Degree, closed-input and configuration
 requirements are the same as for the computational tactic.
 
 Membership and nonmembership translate through `generated_iff_mem`; order
-translates through `hasOrder_iff_card`. The whole-group goal uses the order
-translation and Mathlib's theorem that the symmetric group has order `n!`.
-`Kernel.permOfImages n l` is the Mathlib wrapper around `Perm.ofImages n l`,
-and retains the linear packing route. The extension of
+translates through `hasOrder_iff_card`; full generation translates through
+`generatesAll_iff_eq_top`, using the computational coverage check.
+`HexPermGroupMathlib/Perm/Basic.lean` provides the conversions and
+`Hex.PermGroup.permOfImages n l`, the Mathlib wrapper around `Perm.ofImages n l`.
+The adapter supplies the round-trip equality for converted Hex inputs;
+Hex owns its transport to the optimized linear packing proof.
+`Kernel.permOfImages` remains available for compatibility. The extension of
 `#perm_group_certificate` accepts the existing Mathlib set-literal syntax
 and prints the computational certificate proof plus a theorem
 `name_card : Nat.card (Subgroup.closure S) = N` obtained by translation.

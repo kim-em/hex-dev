@@ -1,0 +1,57 @@
+{
+  "kind": "nested-sign-model-diagnosis",
+  "cpu": 95,
+  "host": "chungus2",
+  "load_before": [
+    4.8828125,
+    6.4951171875,
+    7.40966796875
+  ],
+  "revision": "596ef4d810ec8f515bed1ed03ce28ff84b7aa3ec",
+  "binary_sha256": "f1056c536a1eda98e752e746c12e69984a6aa191b4f4c0094988f2b4937bb958",
+  "state": "complete",
+  "command": [
+    "perf",
+    "record",
+    "--clockid",
+    "mono",
+    "-e",
+    "cycles:u",
+    "-F",
+    "999",
+    "--call-graph",
+    "dwarf",
+    "-o",
+    "/home/kim/.local/state/hex/issue-10377-session-progress/nested-signs-profile/perf.data",
+    "--",
+    "env",
+    "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/home/kim/.local/state/hex/issue-10377-session-progress/nested-signs-profile/timed-%p.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-nested-signs/.lake/build/bin/hexsigndet_bench",
+    "profile",
+    "Hex.SignDetBench.NestedSigns.runSign",
+    "--param",
+    "12",
+    "--target-inner-nanos",
+    "1000000000",
+    "--profiler",
+    "env"
+  ],
+  "exit_code": 0,
+  "load_after": [
+    6.333984375,
+    6.76953125,
+    7.49365234375
+  ],
+  "file_sha256": {
+    "profile.stdout": "1cf109240e05ca561db45eabe6252ca0dfe12d989fdc7fad80b2584ca8d04efa",
+    "profile.stderr": "d599bcdfaff56ae0dfb499f4d61d5461046c7feebbdde601ccc090aa9ab8380f",
+    "perf.data": "12e43d5d727bf87914d866f5bc78f1a4a7861eaae52de6bab9296a900e767520",
+    "timed-329980.jsonl": "4df1e5f135a12c25fe741de6f3dd178f99540b16fd5866ab0aa76dc2dd1f64d0",
+    "perf-script.txt": "4f6ca6dee00abf1f47c353fc3c277238fdd594736e441212ad488e7e45a50080",
+    "perf-script.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "kernel-summary.json": "0523c5549af4c8a5b0f990a394df3c378453ada8c713aeefa65042e226c70f9b",
+    "perf-script-pids.txt": "cc6479c012f246af9c004d917680ba84f7bdcf08e76c645770780b4efd233683",
+    "perf-leaf.txt": "d75d7689033fd2b9d21b84f7465998057a1d56f8a3506dc570ac3db34233173a",
+    "kernel-leaf-summary.json": "a7ec04b0e6634f457883cd1402e9f7cb1f76afe770093db38c229c3d0893c27b"
+  }
+}

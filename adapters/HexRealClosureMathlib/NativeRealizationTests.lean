@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.NativeRealization
+public import HexRealClosureMathlib.SharedRealization
 public import HexRealClosure.TowerEnlarge
 public import HexOrderedFnMathlib.LiouvilleTests
 
@@ -69,6 +70,8 @@ example (a : (suffix base first second).context.Value)
 end Hex.RealClosure.Tower.NativeRealizationTests
 
 namespace Hex.RealClosure.Tower.RegisteredRealizationTests
+
+open scoped Hex.OrderedFn.Infinitesimal
 
 open BaseContext OrderedFn OrderedFn.Oracle
 
@@ -184,8 +187,283 @@ theorem realized :
   exact ⟨descriptor, roots, built, member, read, domain, closed,
     fixed.1, fixed.2, positive.1, sign_eq_one_iff.mp realSign⟩
 
+/-- An actual gather and enlargement over the registered Liouville prefix
+retain the coefficient's prescribed value under the same positive ordinary
+parameter reader. The consumer supplies no origin equality or native equality
+proof and constructs both successful producer results. -/
+theorem shared_realized :
+    ∃ collection : Live.Collection staged ([] : Live.Request registry),
+      ∃ result : Live.Enlargement collection,
+        Live.Request.gather? staged ([] : Live.Request registry) = some collection ∧
+        collection.enlarge? = some result ∧
+        ∃ read : result.collection.shared.input.context.Value → ℝ,
+          ∃ domain : result.collection.shared.input.context.Value → Prop,
+            Transport.Closed read domain ∧ domain (result.previous.value (collection.shared.input.value coefficient)) ∧
+            read (result.previous.value (collection.shared.input.value coefficient)) =
+              liouvilleNumber 2 ∧
+            domain result.parameter ∧ 0 < read result.parameter := by
+  classical
+  let request : Live.Request registry := []
+  obtain ⟨collection, gathered, ⟨model⟩⟩ := Live.Request.gather?_models following
+    reference.model request (by simp [request, Live.Request.owners])
+  let ambient := Ambient.ofField (Hex.RationalFn reference.Carrier)
+  obtain ⟨result, produced, _⟩ := collection.enlarge?_models model ambient
+  obtain ⟨read, domain, data⟩ :=
+    result.realize following gathered produced []
+  have closed := data.closed
+  have fixed := data.previousBaseFixed
+  have parameter := data.parameter
+  have positive := data.positive
+  have preserved := fixed coefficient (liouvilleNumber 2) coefficient_value
+  exact ⟨collection, result, gathered, produced, read, domain, closed,
+    preserved.1, preserved.2, parameter, positive⟩
+
+/-- Two successful enlargements preserve the registered coefficient along
+both returned predecessor maps. No caller-supplied semantic equality is needed. -/
+theorem shared_twice_realized :
+    ∃ collection : Live.Collection staged ([] : Live.Request registry),
+      ∃ first : Live.Enlargement collection,
+        ∃ next : Live.Enlargement first.collection,
+          Live.Request.gather? staged ([] : Live.Request registry) = some collection ∧
+          collection.enlarge? = some first ∧ first.collection.enlarge? = some next ∧
+          ∃ read : next.collection.shared.input.context.Value → ℝ,
+            ∃ domain : next.collection.shared.input.context.Value → Prop,
+              Transport.Closed read domain ∧ domain (next.previous.value
+                (first.previous.value (collection.shared.input.value coefficient))) ∧
+              read (next.previous.value
+                (first.previous.value (collection.shared.input.value coefficient))) =
+                liouvilleNumber 2 ∧
+              domain next.parameter ∧ 0 < read next.parameter := by
+  classical
+  let request : Live.Request registry := []
+  obtain ⟨collection, gathered, _⟩ := Live.Request.gather?_models following
+    reference.model request (by simp [request, Live.Request.owners])
+  let initial := collection.model following reference.model gathered
+  let ambient := Ambient.ofField (Hex.RationalFn reference.Carrier)
+  obtain ⟨first, built, _⟩ := collection.enlarge?_models initial ambient
+  let previous := first.model initial ambient built
+  let nextAmbient := Ambient.ofField (Hex.RationalFn ambient.Carrier)
+  obtain ⟨next, produced, _⟩ := first.collection.enlarge?_models previous nextAmbient
+  obtain ⟨read, domain, data⟩ :=
+    next.realize_model previous produced []
+  have closed := data.closed
+  have fixed := data.representativeFixed
+  have parameter := data.parameter
+  have positive := data.positive
+  let inherited := Context.baseValue staged.infinitesimal
+    (RationalFn.C (Context.baseStored staged coefficient))
+  have real : PackedContext.Realization.RealValue following.infinitesimal inherited
+      (liouvilleNumber 2) :=
+    (PackedContext.Realization.realValue_infinitesimal following coefficient _).mpr coefficient_value
+  have preserved := fixed inherited (liouvilleNumber 2) real
+    (first.previous.value (collection.shared.input.value coefficient))
+    (first.model_constant initial ambient built coefficient)
+  exact ⟨collection, first, next, gathered, built, produced, read, domain, closed,
+    preserved.1, preserved.2, parameter, positive⟩
+
+/-- A nonempty owner with an actual producer-built algebraic suffix keeps its
+registered coefficient when gathered into the common target. The prescribed
+value is read through the returned owner inclusion. -/
+theorem shared_owner_realized :
+    ∃ descriptor : SignDet.Descriptor initial.Value Signature initial.sign initial.signature,
+      ∃ roots,
+        SignDet.Descriptor.buildRoots initial.sign initial.signature head .negInf .posInf =
+          .ok (some roots) ∧ descriptor ∈ roots ∧
+        let suffix : Suffix initial := .root descriptor .nil
+        ∃ shared : Shared staged.infinitesimal [suffix.context],
+          Shared.gather? staged.infinitesimal [suffix.context] = some shared ∧
+          ∃ read : shared.input.context.Value → ℝ,
+            ∃ domain : shared.input.context.Value → Prop,
+              Transport.Closed read domain ∧ domain (shared.value ⟨0, by simp⟩ (suffix.embed coefficient)) ∧
+              read (shared.value ⟨0, by simp⟩ (suffix.embed coefficient)) = liouvilleNumber 2 := by
+  classical
+  obtain ⟨roots, built, nonempty⟩ := producer
+  obtain ⟨descriptor, member⟩ := List.exists_mem_of_ne_nil roots nonempty
+  let suffix : Suffix initial := .root descriptor .nil
+  have baseOrigin (base : PackedContext registry) : (Context.ofBase base).origin.base = base := by
+    cases base with
+    | pack base => change (Context.base base).origin.base = PackedContext.pack base; rw [Context.origin_base]; rfl
+  have baseEq : suffix.context.origin.base = staged := by
+    rw [Suffix.base_eq]
+    exact baseOrigin staged
+  obtain ⟨shared, gathered, _⟩ := Shared.gather?_models following.infinitesimal following.infinitesimal.reference.model
+    [suffix.context]
+    (by intro owner member; cases List.mem_singleton.mp member
+        simp only [baseEq, PackedContext.infinitesimal_signature]
+        exact ⟨List.Sublist.refl _, Nat.le_succ _⟩)
+  obtain ⟨read, domain, data⟩ :=
+    shared.realize_values following.infinitesimal gathered (fun _ => [])
+  have closed := data.closed
+  have ownerFixed := data.ownerFixed
+  obtain ⟨ownerHistory, inherited⟩ := suffix.realValue_owner staged following
+    coefficient (liouvilleNumber 2) coefficient_value
+  have fixed := ownerFixed ⟨0, by simp⟩ ownerHistory (suffix.embed coefficient)
+    (liouvilleNumber 2) inherited
+  exact ⟨descriptor, roots, built, member, shared, gathered, read, domain, closed, fixed⟩
+
+/-- Three actual predecessor maps retain the provider coefficient and a
+fresh cross-term sign under one closed ordinary reader. -/
+theorem shared_thrice_realized :
+    ∃ collection : Live.Collection staged ([] : Live.Request registry),
+      ∃ first : Live.Enlargement collection,
+        ∃ second : Live.Enlargement first.collection,
+          ∃ third : Live.Enlargement second.collection,
+            Live.Request.gather? staged ([] : Live.Request registry) = some collection ∧
+            collection.enlarge? = some first ∧ first.collection.enlarge? = some second ∧
+            second.collection.enlarge? = some third ∧
+            ∃ read : third.collection.shared.input.context.Value → ℝ,
+              ∃ domain : third.collection.shared.input.context.Value → Prop,
+                Transport.Closed read domain ∧
+                let carried := third.previous.value (second.previous.value
+                  (first.previous.value (collection.shared.input.value coefficient)))
+                domain carried ∧ read carried = liouvilleNumber 2 ∧
+                domain third.parameter ∧ 0 < read third.parameter ∧
+                (SignType.sign (liouvilleNumber 2 - read third.parameter) : Int) =
+                  third.collection.shared.input.context.sign (carried - third.parameter) := by
+  classical
+  let request : Live.Request registry := []
+  obtain ⟨collection, gathered, _⟩ := Live.Request.gather?_models following
+    reference.model request (by simp [request, Live.Request.owners])
+  let initial := collection.model following reference.model gathered
+  let ambient := Ambient.ofField (Hex.RationalFn reference.Carrier)
+  obtain ⟨first, built, _⟩ := collection.enlarge?_models initial ambient
+  let firstModel := first.model initial ambient built
+  let nextAmbient := Ambient.ofField (Hex.RationalFn ambient.Carrier)
+  obtain ⟨second, produced, _⟩ := first.collection.enlarge?_models firstModel nextAmbient
+  let secondModel := second.model firstModel nextAmbient produced
+  let finalAmbient := Ambient.ofField (Hex.RationalFn nextAmbient.Carrier)
+  obtain ⟨third, final, _⟩ := second.collection.enlarge?_models secondModel finalAmbient
+  let old := second.previous.value (first.previous.value (collection.shared.input.value coefficient))
+  let carried := third.previous.value old
+  obtain ⟨read, domain, data⟩ :=
+    third.realize_model secondModel final [] [carried - third.parameter]
+  have closed := data.closed
+  have fresh := data.additional
+  have fixed := data.representativeFixed
+  have parameter := data.parameter
+  have positive := data.positive
+  let inherited := Context.baseValue staged.infinitesimal
+    (RationalFn.C (Context.baseStored staged coefficient))
+  let twice := Context.baseValue staged.infinitesimal.infinitesimal
+    (RationalFn.C (Context.baseStored staged.infinitesimal inherited))
+  obtain ⟨realFirst, sameFirst⟩ := first.realValue_step initial ambient built coefficient
+    (liouvilleNumber 2) coefficient_value (collection.shared.input.value coefficient)
+    (initial.input coefficient)
+  obtain ⟨realSecond, sameSecond⟩ := second.realValue_step firstModel nextAmbient produced inherited
+    (liouvilleNumber 2) realFirst (first.previous.value (collection.shared.input.value coefficient))
+    sameFirst
+  have preserved := fixed twice (liouvilleNumber 2) realSecond old sameSecond
+  have difference := fresh (carried - third.parameter) (by simp)
+  refine ⟨collection, first, second, third, gathered, built, produced, final,
+    read, domain, closed, preserved.1, preserved.2, parameter, positive, ?_⟩
+  rw [← preserved.2, ← closed.read_sub _ _ preserved.1 parameter]
+  exact difference.2.1
+
+/-- An actual nonempty frame requests both a provider coefficient and a
+polynomial over a shorter owner base. Gathering into a deeper base and then
+enlarging preserve the owner's inventory signs and every prescribed constant
+under the same closed positive-parameter reader. -/
+theorem enlarged_owner_realized :
+    ∃ descriptor : SignDet.Descriptor initial.Value Signature initial.sign initial.signature,
+      ∃ roots,
+        SignDet.Descriptor.buildRoots initial.sign initial.signature head .negInf .posInf =
+          .ok (some roots) ∧ descriptor ∈ roots ∧
+        let suffix : Suffix initial := .root descriptor .nil
+        let request : Live.Request registry := [⟨suffix.context,
+          { values := [suffix.embed coefficient],
+            polynomials := [DensePoly.C (suffix.embed coefficient)] }⟩]
+        ∃ collection : Live.Collection staged.infinitesimal request,
+          ∃ result : Live.Enlargement collection,
+            request.gather? staged.infinitesimal = some collection ∧
+            collection.enlarge? = some result ∧
+            ∃ read : result.collection.shared.input.context.Value → ℝ,
+              ∃ domain : result.collection.shared.input.context.Value → Prop,
+                Transport.Closed read domain ∧
+                (∀ index a, a ∈ request.inventory index →
+                  domain (result.collection.shared.value index a) ∧
+                  (SignType.sign (read (result.collection.shared.value index a)) : Int) =
+                    (request.owners[index]).sign a) ∧
+                (∀ index (original : (request.owners[index]).origin.base.Realization) a r,
+                  (request.owners[index]).origin.RealValue original a r →
+                  domain (result.collection.shared.value index a) ∧
+                  read (result.collection.shared.value index a) = r) ∧
+                domain (result.collection.shared.value ⟨0, by simp [request, Live.Request.owners]⟩
+                  (suffix.embed coefficient)) ∧
+                read (result.collection.shared.value ⟨0, by simp [request, Live.Request.owners]⟩
+                  (suffix.embed coefficient)) = liouvilleNumber 2 ∧
+                (SignType.sign (read (result.collection.shared.value
+                  ⟨0, by simp [request, Live.Request.owners]⟩ (suffix.embed coefficient))) : Int) =
+                  suffix.context.sign (suffix.embed coefficient) ∧
+                domain result.parameter ∧ 0 < read result.parameter := by
+  classical
+  obtain ⟨roots, built, nonempty⟩ := producer
+  obtain ⟨descriptor, member⟩ := List.exists_mem_of_ne_nil roots nonempty
+  let suffix : Suffix initial := .root descriptor .nil
+  let request : Live.Request registry := [⟨suffix.context,
+    { values := [suffix.embed coefficient],
+      polynomials := [DensePoly.C (suffix.embed coefficient)] }⟩]
+  have baseOrigin (base : PackedContext registry) : (Context.ofBase base).origin.base = base := by
+    cases base with
+    | pack base =>
+      change (Context.base base).origin.base = PackedContext.pack base
+      rw [Context.origin_base]
+      rfl
+  have baseEq : suffix.context.origin.base = staged := by
+    rw [Suffix.base_eq]
+    exact baseOrigin staged
+  obtain ⟨collection, gathered, ⟨model⟩⟩ := Live.Request.gather?_models following.infinitesimal
+    following.infinitesimal.reference.model request (by
+      intro owner member
+      have same : owner = suffix.context := by simpa [request, Live.Request.owners] using member
+      subst owner
+      simp only [baseEq, PackedContext.infinitesimal_signature]
+      exact ⟨List.Sublist.refl _, Nat.le_succ _⟩)
+  let ambient := Ambient.ofField (Hex.RationalFn following.infinitesimal.reference.Carrier)
+  obtain ⟨result, produced, _⟩ := collection.enlarge?_models model ambient
+  obtain ⟨read, domain, data⟩ :=
+    result.realize following.infinitesimal gathered produced []
+  have closed := data.closed
+  have finite := data.finite
+  have ownerFixed := data.ownerFixed
+  have parameter := data.parameter
+  have positive := data.positive
+  let index : Fin request.owners.length := ⟨0, by simp [request, Live.Request.owners]⟩
+  obtain ⟨ownerHistory, inherited⟩ := suffix.realValue_owner staged following
+    coefficient (liouvilleNumber 2) coefficient_value
+  have preserved := ownerFixed index ownerHistory (suffix.embed coefficient)
+    (liouvilleNumber 2) inherited
+  have requested : suffix.embed coefficient ∈ request.inventory index := by
+    simp only [request, index, Live.Request.inventory, Live.Frame.inventory,
+      Live.Request.frame, Live.Request.owners]
+    exact List.mem_append_left _ (List.mem_append_left _ (List.mem_singleton.mpr rfl))
+  have sign := (finite index (suffix.embed coefficient) requested).2.1
+  exact ⟨descriptor, roots, built, member, collection, result, gathered, produced,
+    read, domain, closed, fun index a member =>
+      ⟨(finite index a member).1, (finite index a member).2.1⟩,
+    ownerFixed, preserved.1, preserved.2, sign, parameter, positive⟩
+
 end Hex.RealClosure.Tower.RegisteredRealizationTests
 
 /-- info: '_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.realized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.RegisteredRealizationTests.realized
+
+/-- info: '_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.shared_realized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.RegisteredRealizationTests.shared_realized
+
+/-- info: '_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.shared_twice_realized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.RegisteredRealizationTests.shared_twice_realized
+
+/-- info: '_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.shared_owner_realized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.RegisteredRealizationTests.shared_owner_realized
+
+/-- info: '_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.shared_thrice_realized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.RegisteredRealizationTests.shared_thrice_realized
+
+/-- info: '_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.enlarged_owner_realized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.RegisteredRealizationTests.enlarged_owner_realized

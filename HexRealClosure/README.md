@@ -2085,6 +2085,84 @@ requirement; the ambient `Model.next` interpretations here do not assert that
 ordinary-real conclusion.
 
 
+The companion module `HexRealClosureMathlib.SharedRealization` specializes
+actual shared collections at one ordinary-real interpretation.
+`Shared.realize_values` takes the successful native gather, the target's
+provider history and finite requests indexed by their original owners. It
+constructs one target reader and closed arithmetic domains pulled back through
+all retained inclusions, preserves every requested sign and inherited real
+coefficient, reflects zero on the requested operands, and identifies reads of
+values equal in the shared context. A direct base-coefficient clause fixes
+`shared.input.value b` at its prescribed real value without an origin cast.
+Optional finite target requests also retain signs, domain and zero reflection.
+The result uses `Shared.Realized` with named fields for arithmetic, inventories,
+coherence and fixed coefficients. `Enlargement.Realized` extends the returned
+collection’s `Shared.Realized`, retaining all owner arithmetic and replay laws;
+its model form adds `ModelRealized.representativeFixed` for carrying arbitrary
+representatives through successive factory models. Consumers use these fields
+without depending on the order of the contracts.
+The owner coefficient clause fixes values inherited from each original owner's
+provider history through `shared.value index a`. Checked base subsequences
+preserve the prescribed values even when the prefixes were validated separately.
+No ambient model or separate source-agreement premise is supplied.
+
+`Live.Collection.realize` collects each original frame's values, stored
+polynomial coefficients and actual finite descriptor/replay inventory. Its
+zero-reflection clause supplies the inventory agreement required by
+`Transport.Inventory.descriptor_data`.
+`Live.Enlargement.realize` covers requested old computed target values,
+caller-requested fresh expressions involving the new parameter, and the
+parameter itself after checked enlargement. The parameter has a positive
+ordinary value; every requested fresh sign is preserved, including finite
+inequalities between the parameter and old values. The old reader is the
+pullback through the returned predecessor inclusion, so its arithmetic on the
+domain and requested signs remain coherent with the enlarged reader. The same
+reader fixes every original provider coefficient through
+`previous.value (original.shared.input.value b)` at its prescribed real value,
+without an origin cast or a native equality premise. It also retains the
+enlarged origin's inherited real coefficients and identifies any values equal
+in the enlarged context. `Enlargement.realize_model` uses the previous
+canonical factory model and applies again after any earlier enlargement.
+Its coefficient clause accepts any old operand whose canonical semantic value
+is the inherited constant. `Enlargement.model_constant` identifies a carried
+coefficient with the next base constant. `Enlargement.model_previous_value`
+relates every carried operand to its preceding model, so the fixed-coefficient
+clause composes through any number of successive predecessor maps.
+`Enlargement.realValue_step` carries both the prescribed value and canonical
+model agreement into the next base in one call. The new base input and original owner coefficients
+also retain their prescribed values. `Model.read_eq_zero_iff` supplies zero reflection
+from domain membership and native sign agreement for model-level consumers.
+`Inclusion.Model.fieldHom` and `read_comap` expose the underlying semantic-field
+inclusion and reader law; native expressions themselves acquire no field instance.
+
+Each specialization chooses a new ordinary reader for the complete requested
+finite inventory. Callers retain earlier sign constraints by including their
+old computed operands in `values`; an already chosen ordinary reader is not
+extended. `Collection.inventory` gathers refreshed target-side replay operands
+for the optional `extra` or `fresh` requests.
+
+These are relative semantic theorems. They internally construct symbolic
+ordered real-closed references from provider histories. The direct accepted
+finite-replay `Sample.realizeReplay` theorem, general interleaved export
+assembly and construction of arbitrary jointly compatible real bases remain
+required work. These theorems do not replace those contracts.
+
+Run `lake build HexRealClosureMathlib.SharedRealizationTests` for public
+consumers deriving old sum/product and fresh parameter-expression signs,
+usable descriptor transport premises before and after enlargement, and
+specialization after two actual enlargements without a new gather.
+`separate_providers` registers a second constant after a different prefix and
+gathers an independently validated single-constant owner, with aligned
+infinitesimal stages. `target_replay` derives descriptor transport premises
+from every refreshed frame using the target-side inventory.
+`lake build HexRealClosureMathlib.NativeRealizationTests` additionally checks
+an actual gather and enlargement over a registered Liouville coefficient,
+recovering its prescribed value under the same positive-parameter reader,
+through three successive predecessor maps with a fresh cross-term sign, and
+through a nonempty gathered owner with a producer-built algebraic suffix.
+The owner is gathered through a nonidentity base inclusion; a nonempty frame
+then requests its coefficient and a polynomial through another enlargement.
+
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
 proves that its ordered algebraic real closure of `R(ε)` is algebraic over the
 mapped `B(ε)`. The proof combines Mathlib's algebraic polynomial-extension

@@ -28,10 +28,8 @@ theorem card_closure {S : Array (Perm n)} {c : Certificate}
     (h : check n (S.toList.map pack) c = true) : Nat.card (closure S) = order c :=
   hasOrder_iff_card.mp (order_of_check h)
 
-/-- A Mathlib permutation from its literal images. The checked constructor and
-its packing proof belong to the computational library. -/
-@[expose] def permOfImages (n : Nat) (l : List Nat) : Equiv.Perm (Fin n) :=
-  (Perm.ofImages n l).toEquiv
+-- Keep the historical name as an alias of the lightweight conversion.
+export Hex.PermGroup (permOfImages)
 
 theorem pack_ofEquiv_permOfImages {n : Nat} {l : List Nat} (h : imagesOk n l = true) :
     pack (Perm.ofEquiv (permOfImages n l)) = packList n l := by
@@ -41,47 +39,8 @@ theorem pack_ofEquiv_permOfImages {n : Nat} {l : List Nat} (h : imagesOk n l = t
 def images (n : Nat) (g : Equiv.Perm (Fin n)) : List Nat :=
   (List.finRange n).map fun i => (g i).val
 
-theorem setOf_mem_cons {α : Type} (a b : α) (l : List α) :
-    {x | x ∈ a :: b :: l} = insert a {x | x ∈ b :: l} := by
-  ext x
-  simp
-
-theorem setOf_mem_singleton {α : Type} (a : α) : {x | x ∈ [a]} = ({a} : Set α) := by
-  ext x
-  simp
-
-theorem setOf_mem_nil {α : Type} : {x | x ∈ ([] : List α)} = (∅ : Set α) := by
-  ext x
-  simp
-
-theorem closure_ofEquiv (gs : List (Equiv.Perm (Fin n))) :
-    closure (gs.map Perm.ofEquiv).toArray = Subgroup.closure {x | x ∈ gs} := by
-  unfold closure
-  congr 1
-  ext x
-  simp
-
-/-- Translate a computational order proof for a closed generating list. -/
-theorem card_of_hasOrder {gs : List (Equiv.Perm (Fin n))} {N : Nat}
-    (h : HasOrder (gs.map Perm.ofEquiv).toArray N) :
-    Nat.card (Subgroup.closure {x | x ∈ gs}) = N := by
-  rw [← closure_ofEquiv]
-  exact hasOrder_iff_card.mp h
-
-/-- Translate computational generation for a closed generating list. -/
-theorem mem_of_generated {gs : List (Equiv.Perm (Fin n))} {g : Equiv.Perm (Fin n)}
-    (h : Generated (gs.map Perm.ofEquiv).toArray (Perm.ofEquiv g)) :
-    g ∈ Subgroup.closure {x | x ∈ gs} := by
-  rw [← closure_ofEquiv]
-  simpa using generated_iff_mem.mp h
-
-theorem not_mem_of_neg {gs : List (Equiv.Perm (Fin n))} {g : Equiv.Perm (Fin n)}
-    (h : ¬ Generated (gs.map Perm.ofEquiv).toArray (Perm.ofEquiv g)) :
-    g ∉ Subgroup.closure {x | x ∈ gs} := by
-  intro hg
-  apply h
-  apply generated_iff_mem.mpr
-  simpa only [Perm.toEquiv_ofEquiv, closure_ofEquiv] using hg
+export Hex.PermGroup (setOf_mem_cons setOf_mem_singleton setOf_mem_nil
+  closure_ofEquiv card_of_hasOrder mem_of_generated not_mem_of_neg)
 
 theorem eq_top_of_hasOrder {gs : List (Equiv.Perm (Fin n))}
     (h : HasOrder (gs.map Perm.ofEquiv).toArray n.factorial) :
