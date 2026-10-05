@@ -34,7 +34,7 @@ structure; the Lean reader performs mathematical replay.
 | 2 | 2 | eager | 17 / 17 | 45071 | 45071 | 4958 |
 | 2 | 4 | clean | 23 / 23 | 248512 | 248512 | 1106461 |
 | 2 | 4 | eager | 23 / 23 | 82295 | 82295 | 7114 |
-| 3 | 1 | eager | 547 / 547 | 2873125 | 2873125 | see retained oracle output |
+| 3 | 1 | eager | 547 / 547 | 2873125 | 2873125 | see `checked-d3-m1.json` |
 | 3 | 1 | clean | unavailable | unavailable | unavailable | unavailable |
 
 The depth-three clean process exited 124 at its operational 600-second limit
@@ -85,3 +85,19 @@ the complete historical link closure by itself. The current builder requires
 a clean source tree, builds and verifies the native target, and records every
 object/archive argument on the link line for future captures. These updates do
 not replace or re-run any retained diagnostic sample.
+
+`checked-d2-m2.json`, `checked-d2-m4.json` and `checked-d3-m1.json` re-check
+the retained rows/traces with oracle commit
+`ba4635fabe468d71cb1a713db5515478ecfbb2bf`. These include actual operation
+counters and reject empty count regions, mismatched depth/product counts and
+imbalanced inverse/gcd sites. This postprocessing collects no new sample.
+The workload-shape checks and archive digests bind the recorded trace pairing;
+they do not authenticate a process against arbitrary replacement data.
+
+The fresh build on `2c2faba6b7bfcba9e253432c9e7ea244d788e1ea` reproduced both
+ordinary and diagnostic binaries byte-for-byte. `rebuild-2c2fab.json` records
+all 153 object/archive link arguments; `rebuild-comparison.json` checks both
+binary digests against the historical capture. Thus the integrated executable
+and original diagnostic observer agree exactly despite the source rebase.
+System libraries resolved through `-l` are not individually hashed; the full
+binary digests and pinned toolchain remain the reproduction boundary.
