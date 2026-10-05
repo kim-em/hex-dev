@@ -380,7 +380,8 @@ lean_lib HexRealClosureMathlib where
 
 @[default_target]
 lean_lib HexRealClosureMathlibTests where
-  globs := #[.one `HexRealClosureMathlib.BaseTests]
+  globs := #[.one `HexRealClosureMathlib.BaseTests,
+    .one `HexRealClosureMathlib.BaseSubsequenceTests]
 
 @[default_target]
 lean_lib HexSturmMathlib where
@@ -474,7 +475,8 @@ lean_lib HexPermGroupMathlib where
 
 @[default_target]
 lean_lib HexPermGroupTests where
-  globs := #[`HexPermGroupMathlib.Tests]
+  globs := #[.one `HexPermGroup.Tests, .one `HexPermGroup.CertificateTests,
+    .one `HexPermGroupMathlib.Tests, .one `HexPermGroupMathlib.CertificateTests]
 
 lean_lib HexGraph where
 
@@ -782,6 +784,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.AlgebraicValue, `HexRealClosureMathlib.BaseClean, `HexRealClosureMathlib.AlgebraicTower,
     `HexRealClosureMathlib.SelectedRoot,
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element, `HexRealClosureMathlib.QAdjoin,
+    `HexRealClosureMathlib.NumberField,
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
     `HexRealClosureMathlib.YunInvariant, `HexRealClosureMathlib.Bounds,
     `HexRealClosureMathlib.Deflation, `HexRealClosureMathlib.Bisection,
@@ -1423,7 +1426,10 @@ lean_lib HexReleaseTests where
     `HexGraphIso.ModuleBoundaryTests,
     `HexGraphIsoMathlib.TacticTests,
     `HexGraphIsoMathlib.SparseTacticTests,
+    `HexPermGroup.Tests,
+    `HexPermGroup.CertificateTests,
     `HexPermGroupMathlib.Tests,
+    `HexPermGroupMathlib.CertificateTests,
     `HexNumberFieldTower.Embed,
     `HexRCF.LanguageTests,
     `HexRCF.SturmBuilderTests,
@@ -1788,6 +1794,10 @@ lean_exe hexrealclosure_trivial_tests where
 lean_exe hexrealclosure_trivial_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.TrivialConformance
+
+lean_exe hexrealclosure_number_field_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.NumberFieldConformance
 
 lean_exe hexrealclosure_bounds_conformance where
   srcDir := "conformance"
@@ -2342,6 +2352,7 @@ lean_lib KernelReplayExperiment where
   srcDir := "experiments"
   globs := #[.one `KernelReplay.Assemble, .one `KernelReplay.Json, .one `KernelReplay.Generated,
     .one `KernelReplay.Nested, .one `KernelReplay.NestedProbe,
+    .one `KernelReplay.FactOperations, .one `KernelReplay.FactOperationsProbe,
     .one `KernelReplay.ProofProbe,
     .one `KernelReplay.InProcessProbe, .one `KernelReplay.LowerProbe, .one `KernelReplay.LowerProof]
 

@@ -46,6 +46,7 @@ import HexManual.Chapters.HexRealFormula
 import HexManual.Chapters.HexPolyFast
 import HexManual.Chapters.HexRationalFn
 import HexManual.Chapters.HexOrderedFn
+import HexManual.Chapters.HexSturm
 import HexManual.Chapters.HexLatticeEnum
 import HexManual.Chapters.HexIntFactor
 import HexManual.Chapters.HexModular
@@ -205,6 +206,8 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexRationalFn}
 
 {include 2 HexManual.Chapters.HexOrderedFn}
+
+{include 2 HexManual.Chapters.HexSturm}
 
 {include 2 HexManual.Chapters.HexLatticeEnum}
 

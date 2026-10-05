@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from classify_changed_libraries import classify_paths, load_oracle_owners
+from classify_changed_libraries import classify_paths, load_oracle_owners, write_github_output
 
 
 ORACLE_OWNERS = {
@@ -65,8 +66,53 @@ class ClassifyChangedLibrariesTests(unittest.TestCase):
         self.assertEqual(set(result.libraries), {"HexOrderedFn", "HexSignDet", "HexRealClosure"})
 
     def test_documentation_does_not_widen_mixed_change(self) -> None:
-        result = self.classify("HexRoots/Basic.lean", "SPEC/testing.md")
+        result = self.classify("HexRoots/Basic.lean", "SPEC/testing.md", "HexPoly/README.md")
         self.assertEqual(result.libraries, ("HexRoots",))
+
+    def test_manual_changes_skip_computational_checks(self) -> None:
+        for path in (
+            "HexManual.lean",
+            "HexManual/Chapters/HexPermGroup.lean",
+            "HexManual/Chapters/NewChapter.lean",
+        ):
+            with self.subTest(path=path):
+                result = self.classify(path, "SPEC/testing.md", "HexRoots/README.md")
+                self.assertTrue(result.manual_only)
+                self.assertFalse(result.all_libraries)
+                self.assertEqual(result.libraries, ())
+                # An empty filter normally means all libraries, so the workflow
+                # must also receive the explicit manual-only guard.
+                with tempfile.TemporaryDirectory() as directory:
+                    output = Path(directory) / "output"
+                    write_github_output(output, result)
+                    self.assertEqual(output.read_text(), "library_filter=\nmanual_only=true\n")
+
+    def test_manual_does_not_widen_mixed_change(self) -> None:
+        for paths in (
+            ("HexRoots/Basic.lean", "HexManual/Chapters/HexPermGroup.lean"),
+            ("HexManual.lean", "HexRoots/Basic.lean"),
+        ):
+            with self.subTest(paths=paths):
+                result = self.classify(*paths)
+                self.assertFalse(result.manual_only)
+                self.assertEqual(result.library_filter, "HexRoots")
+
+    def test_manual_does_not_hide_unknown_or_shared_changes(self) -> None:
+        for path in ("scripts/libgraph.py", "lakefile.lean", ".github/workflows/ci.yml"):
+            with self.subTest(path=path):
+                result = self.classify("HexManual.lean", path)
+                self.assertFalse(result.manual_only)
+                self.assertTrue(result.all_libraries)
+
+    def test_empty_diff_still_runs_all_checks(self) -> None:
+        result = self.classify()
+        self.assertFalse(result.manual_only)
+        self.assertTrue(result.all_libraries)
+
+    def test_manual_does_not_skip_conway_spec_observation(self) -> None:
+        result = self.classify("HexManual.lean", "HexConway/SPEC/hex-conway.md")
+        self.assertFalse(result.manual_only)
+        self.assertEqual(result.libraries, ("HexConway",))
 
     def test_unclassified_path_widens_mixed_change(self) -> None:
         result = self.classify("HexRoots/Basic.lean", "scripts/libgraph.py")

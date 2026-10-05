@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "/home/kim/.codex/tasks/hex-10378/phase4-oracles-env/bin/python",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-nested-measurement/scripts/oracle/real_closure_nested_normalization.py",
+    "/home/kim/.codex/tasks/hex-10378/nested-measurement-capture-ca2e22/26.stdout",
+    "/home/kim/.codex/tasks/hex-10378/nested-measurement-capture-ca2e22/27.stdout"
+  ],
+  "stdout": "28.stdout",
+  "stderr": "28.stderr",
+  "exit_code": 0,
+  "incomplete": false,
+  "elapsed_ns": 115096065
+}

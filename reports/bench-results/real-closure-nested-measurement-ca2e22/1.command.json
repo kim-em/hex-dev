@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "git",
+    "status",
+    "--porcelain"
+  ],
+  "stdout": "1.stdout",
+  "stderr": "1.stderr",
+  "exit_code": 0,
+  "incomplete": false,
+  "elapsed_ns": 31582790
+}

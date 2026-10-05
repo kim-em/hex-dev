@@ -1,61 +1,77 @@
 # hex-sturm-mathlib
 
-Mathlib correspondence for the shared ordered-field query frontend.
-This development library is not yet released.
+`HexSturmMathlib` is part of [Hex](https://github.com/kim-em/hex-dev), a computer
+algebra library for Lean 4. The aim is fast executable code, fully verified,
+built with spec-driven development.
 
-`Domain` states the mathematical domain: a nonzero squarefree interpreted
-polynomial, strictly ordered finite/infinite endpoints and nonvanishing at
-finite endpoints. `query_isSome` and `prepare_isSome` characterize that domain
-exactly. `prepare_sound` proves exact input bindings; `prepared_domain` proves
-validity for every prepared object. `certify_checks` and `certifyPrepared_checks`
-prove acceptance of produced literal certificates, and `check_domain` extracts
-the mathematical domain from accepted replay. `query_rat_eq` proves whole-`Option`
-agreement between rational and integer/dyadic queries after positive denominator
-clearing, on finite ordered dyadic intervals. `check_rat_value` proves value
-agreement for arbitrary accepted certificates on those corresponding inputs.
-The theorems permit noninjective coefficient interpretations and require no
-field instance on noncanonical representatives.
+It proves the domain, root-sum and certificate contracts for `HexSturm`, using
+`HexPolyMathlib` and `HexRealRootsMathlib`. Mathlib and Tau Ceti belong to this
+proof layer. This development library is unreleased.
+The [manual](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-sturm)
+documents the computations alongside their correspondence theorems.
 
-`withEndpoints_isSome` characterizes success of endpoint retargeting by the
-same mathematical domain, and `withEndpoints_domain` proves validity for the
-actual returned object. The core `PreparedDomain.withEndpoints_bindings`
-theorem preserves the literal sign, head and chain and binds the new endpoints.
-`certifyCountPrepared_checks` proves acceptance of query-one certificates made
-from that stored chain. These results use the domain and arithmetic proofs.
+# Quickstart
 
-`query_congr` proves whole-`Option` agreement between field representations
-at corresponding finite or infinite endpoints, allowing positive scaling of
-both polynomial inputs. `check_congr` compares arbitrary accepted certificates.
-`DenominatorClearing.certificate_checks` proves acceptance of translated rational
-evidence over the integers; `IntCast.certificate_checks` embeds integer evidence
-and its endpoints into the rational frontend. These translations retain the
-full context and value and do not rerun the polynomial producer.
+Use these imports from the `hex-dev` monorepo; there is no released package yet.
+The real-roots companion supplies the real-closed-field instance for `ℝ`.
+The equivalence below characterizes both success and the returned signed sum.
 
-The shared Sturm–Tarski theorem proves root-sum semantics for arbitrary
-accepted certificates over an ordered real closed field. `query_sound` and
-`queryPrepared_sound` apply it to the ordinary and prepared producers;
-`query_iff` characterizes both failure and the returned signed root sum;
-`query_count`, `query_sign` and `query_bound` give counts, singleton signs and
-degree bounds. `query_nonneg` justifies the exact natural-number conversion in
-`Sturm.rootCount`, whose success domain is unchanged. `rootCount_sturm`
-also bridges successful finite-dyadic natural counts to the existing half-open
-integer Sturm count after positive denominator clearing; it does not change
-that API's upper-endpoint-root behavior.
-`countPrepared_sound` relates the actual prepared count to the number of
-distinct roots in its current open interval through the proved shared theorem.
-`countPrepared_nonneg` proves nonnegativity under the same coefficient laws
-before a consumer converts the count to `Nat`.
+```lean
+import HexSturmMathlib
+import HexRealRootsMathlib
+open Hex HexPolyMathlib.Interpret HexRealRootsMathlib
+open scoped Classical
+noncomputable section
 
-`HexSturmMathlib.Soundness` belongs to the ordinary companion target and is
-exported by `import HexSturmMathlib`. It consumes the shared semantics from
-HexRealRootsMathlib; Tau Ceti remains confined to Mathlib companions. This
-companion is still unreleased. Semantic regression tests build through
-`HexQuerySemantics`, alongside the remaining owners’ development adapters.
-Their axiom audits admit only `propext`, `Classical.choice` and `Quot.sound`. This theorem-only companion has no dedicated
-Phase-4 performance deliverable. Ordinary-kernel correctness checks are built
-by `HexSturmMathlibTests` and `HexQuerySemantics`; Phase-4 prerequisite
-eligibility remains in the readiness audit. The public semantic import gap
-is closed. See [the specification](SPEC/hex-sturm-mathlib.md).
+example (p q : DensePoly ℝ) (a b : Endpoint ℝ) (v : Int) :
+    Sturm.query Sturm.orderSign p q a b = some v ↔
+      HexSturmMathlib.Domain id (fun _ => Iff.rfl) p a b ∧
+      v = Tarski.rootSum (interpret id (fun _ => Iff.rfl) p)
+        (interpret id (fun _ => Iff.rfl) q) (a.map id) (b.map id) :=
+  HexSturmMathlib.query_iff id (fun _ => Iff.rfl) rfl
+    (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl) (fun _ => rfl)
+    Sturm.orderSign HexSturmMathlib.orderSign_eq
+    (fun _ => rfl) (fun _ => rfl) p q a b v
+```
 
-Executable translations live in Mathlib-free `HexSturm.Transport`; see the
-[SPEC](SPEC/hex-sturm-mathlib.md) for their endpoint and binding contracts.
+# Functionality
+
+- `Domain` states a nonzero squarefree interpreted head, strictly ordered
+  endpoints and nonvanishing at finite endpoints. `query_isSome`, `prepare_isSome`
+  and `query_iff` characterize that domain exactly.
+- `check_sound` proves domain validity and the signed root sum for arbitrary
+  accepted certificates. `certify_checks` and its prepared variants prove
+  acceptance of produced evidence, independently of arbitrary replay soundness.
+- `queryPrepared_sound`, `countPrepared_sound` and `countPrepared_nonneg`
+  identify prepared results on their current interval. `withEndpoints_isSome`
+  and `withEndpoints_domain` characterize endpoint retargeting.
+- `query_count`, `query_sign` and `query_bound` give distinct-root counts,
+  singleton-root signs and degree bounds. `query_nonneg` justifies natural-number
+  conversion; `rootCount_sturm` bridges successful finite-dyadic counts to the
+  existing half-open integer count with root-free endpoints.
+- `queryReduced_eq` preserves the whole ordinary query result under lawful
+  division. `query_congr` compares representations at corresponding endpoints,
+  allowing independent positive scaling of both input polynomials.
+- `query_rat_eq` proves whole-`Option` rational/integer agreement on finite dyadic
+  intervals after positive denominator clearing. `DenominatorClearing.certificate_checks` and
+  `IntCast.certificate_checks` preserve acceptance when translating certificates,
+  retaining literal contexts and values without rerunning the producer.
+
+# Verification
+
+Root-sum semantics and arbitrary-certificate soundness are proved over an ordered
+real closed field. Generic correspondence theorems permit noninjective coefficient
+interpretations: storage needs lawful operations and zero reflection, not its own
+field or order instance. Producer results additionally require lawful negation and
+inversion. Representation transport compares supplied interpretations; it does not
+construct a common field or ordinary-real realization of arbitrary extensions.
+
+`HexSturmMathlibTests` and `HexQuerySemantics` build semantic regression tests and
+ordinary-kernel axiom guards. Those guards admit only `propext`, `Classical.choice`
+and `Quot.sound`. Executable translations remain in Mathlib-free `HexSturm.Transport`.
+See [the specification](SPEC/hex-sturm-mathlib.md) for the full hypotheses.
+
+# Contributing
+
+Development happens in [hex-dev](https://github.com/kim-em/hex-dev).
+Contributions are welcome as PRs to `SPEC/`: describe the behavior you want.

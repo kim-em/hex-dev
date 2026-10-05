@@ -181,7 +181,8 @@ theorem inverse_key_sign : context.signPoly inverseKey = 1 := by
 
 set_option maxRecDepth 32768 in
 theorem nonconstant_candidate : small.inverseCandidate = inverseKey := by
-  simp only [Element.inverseCandidate, Element.inverseFactor, context, Context.root_adjoin,
+  simp only [Element.inverseCandidate, Element.inversePolynomial, Element.inverseFactors,
+    context, Context.root_adjoin,
     CoefficientSignsConformance.source_raw]
   decide +kernel
 
@@ -221,7 +222,7 @@ set_option maxRecDepth 32768 in
 theorem constant_inverseCandidate :
     ((Element.cachedNatCast id opaque_reduction reciprocalFacts).natCast 3).inverseCandidate =
       DensePoly.C (1 / 3 : Rat) := by
-  simp only [Element.inverseCandidate, Element.inverseFactor,
+  simp only [Element.inverseCandidate, Element.inversePolynomial, Element.inverseFactors,
     opaqueContext, Context.root_adjoin, opaque_root_raw]
   decide +kernel
 

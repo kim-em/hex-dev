@@ -60,13 +60,14 @@ abbrev Certificate := List Level
   let k := Nat.sub (field W L.lookup (field W s (L.orbit.get j))) 1
   comp n W (L.invs.get k) (comp n W s (L.reps.get j))
 
-/-- Sift a packed permutation through the levels, accepting when the residual
-after the last level is `e`. -/
+/-- Sift a packed permutation through the levels, accepting as soon as the
+residual is `e`. -/
 @[expose] def sift (n W e : Nat) : List Level → Nat → Bool
   | [], x => Nat.beq x e
   | L :: rest, x =>
-    let j := field W L.lookup (field W x L.base)
-    cond (Nat.beq j 0) false (sift n W e rest (comp n W (L.invs.get (Nat.sub j 1)) x))
+    cond (Nat.beq x e) true <|
+      let j := field W L.lookup (field W x L.base)
+      cond (Nat.beq j 0) false (sift n W e rest (comp n W (L.invs.get (Nat.sub j 1)) x))
 
 /-- Items 3 and 5 of the SPEC's checker for the Schreier pairs `p` with
 `lo ≤ p < hi`, where pair `p` is generator `p / size` and orbit point `p % size`. -/

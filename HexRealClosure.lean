@@ -25,9 +25,11 @@ public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
 public import HexRealClosure.BaseInclusion
 public import HexRealClosure.BaseEmbedding
+public import HexRealClosure.BaseSubsequence
 public import HexRealClosure.SignCodec
 public import HexRealClosure.ContextOperations
 public import HexRealClosure.SignFacts
+public import HexRealClosure.FactOperations
 public import HexRealClosure.SignReplay
 public import HexRealClosure.SignRequests
 public import HexRealClosure.SignEvidence
@@ -52,3 +54,4 @@ public import HexRealClosure.RootTransport
 public import HexRealClosure.RootCollection
 public import HexRealClosure.Sample
 public import HexRealClosure.QAdjoin
+public import HexRealClosure.NumberField

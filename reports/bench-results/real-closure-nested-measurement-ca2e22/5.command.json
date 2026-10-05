@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "git",
+    "-C",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-nested-measurement/.lake/packages/lean-bench",
+    "status",
+    "--porcelain"
+  ],
+  "stdout": "5.stdout",
+  "stderr": "5.stderr",
+  "exit_code": 0,
+  "incomplete": false,
+  "elapsed_ns": 3445017
+}
