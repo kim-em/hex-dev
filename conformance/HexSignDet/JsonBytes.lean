@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexSignDet.Codec.Value
+import HexSignDet.Codec.Descriptor
 
 /-! Conformance for the total integer-only JSON byte backend.
 Oracle: Python's standard JSON parser, required, via JsonBytesDriver.
@@ -37,5 +38,38 @@ This is only a native test canary, never part of parsing or certificate replay. 
     let result ← stackCanary n
     if result == n then pure (result + 1)
     else throw (IO.userError "stack canary result changed")
+
+/-- Public composition uses exact contexts and every selected-root field. -/
+def subject : RawDescriptor Rat Nat :=
+  ⟨7, DensePoly.ofCoeffs #[-1, 0, 1], .negInf, .posInf, [1, 2], [1, 1]⟩
+
+def encodedSubject : Codec.Json := Codec.descriptor ValueCodec.rat ValueCodec.nat subject
+
+def acceptsSubject (raw : RawDescriptor Rat Nat) : Bool :=
+  match Codec.readDescriptorBinding ValueCodec.rat ValueCodec.nat raw encodedSubject with
+  | .ok () => true
+  | .error _ => false
+
+def parsedSubject : Bool :=
+  match Codec.readDescriptor ValueCodec.rat ValueCodec.nat encodedSubject with
+  | .ok raw => decide (raw = subject)
+  | .error _ => false
+
+#guard parsedSubject
+#guard acceptsSubject subject
+#guard !acceptsSubject {subject with context := 8}
+#guard !acceptsSubject {subject with head := DensePoly.ofCoeffs #[-2, 0, 1]}
+#guard !acceptsSubject {subject with indices := [2, 1]}
+#guard !acceptsSubject {subject with signs := [-1, 1]}
+#guard !acceptsSubject {subject with lower := .finite 0}
+
+/-- An ordinary kernel proof using the public reader and encoder. -/
+theorem subject_roundtrip :
+    parsedSubject = true := by
+  decide +kernel
+
+/-- info: 'Hex.SignDet.JsonBytes.subject_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms subject_roundtrip
 
 end Hex.SignDet.JsonBytes

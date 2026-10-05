@@ -581,3 +581,16 @@ adjacent alternating `AB`/`BA` comparisons. Retain every completed sample and
 allow at most one unchanged rerun after an inconclusive result. The
 `bench verify` fast check is not Phase-4 performance evidence. This contract does not itself establish a benchmark result, proof
 completion or phase advancement.
+
+### Selected-root subjects in composed certificate packets
+
+`Codec.descriptor` encodes the literal full context, defining polynomial,
+interval endpoints, derivative indices and derivative signs.
+`Codec.readDescriptor` parses these fields without asserting root validity;
+`Codec.readDescriptorBinding` accepts only the caller’s exact subject.
+`Codec.read_descriptor_of` establishes roundtrip from coverage of the stored
+coefficient and context values. `Codec.readDescriptorBinding_checked`
+establishes literal agreement for arbitrary accepted input. Mathematical
+validation remains the responsibility of checked root replay. These readers
+and their proofs are available through public imports for downstream packet
+composition.
