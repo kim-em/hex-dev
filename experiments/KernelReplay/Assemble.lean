@@ -7,6 +7,7 @@ module
 
 public import Lean.Elab.Command
 public import Lean.Meta.Reduce
+public meta import Lean.Meta.Reduce
 public import Lean.Meta.Tactic.Simp
 public meta import Lean.Meta.Tactic.Simp.Main
 public import Lean.Util.CollectAxioms
@@ -56,10 +57,11 @@ def kernelCheck (name : Name) (type proof : Expr) : MetaM Unit := do
   ofExceptKernelException <| ((← getEnv).toKernelEnv.addDecl options
     (.thmDecl { name, levelParams := [], type, value := proof })).map (fun _ => ())
 
-/-- Store a checked scalar-sign proof once as an ordinary theorem. Its fact
-keeps transparent polynomial/sign data and an opaque proof reference, so later
-checks do not inline the child certificate again. No native evaluation is used. -/
-def registerFact (fact : Expr) : MetaM Expr := do
+/-- Store exact data bindings and a scalar-sign proof in one checked theorem.
+The restored fact uses its semantic conjunct. Kernel failures are returned with
+their actual exception constructor; callers must propagate resource errors.
+The environment is committed only after the restored fact is also checked. -/
+def registerFact (fact : Expr) : MetaM (Except Kernel.Exception Expr) := do
   if fact.hasSorry || fact.hasMVar || fact.hasFVar then
     throwError "incomplete fact"
   let factType ← inferType fact
@@ -67,29 +69,47 @@ def registerFact (fact : Expr) : MetaM Expr := do
     throwError "expected a scalar sign fact"
   let context := factType.getAppArgs.back!
   let originalPolynomial ← mkAppM ``SignFact.polynomial #[fact]
-  let polynomial ← withTransparency .all (whnf originalPolynomial)
-  kernelCheck `__kernelReplayRegisteredPolynomial
-    (← mkEq originalPolynomial polynomial) (← mkEqRefl polynomial)
+  let polynomial ← withTransparency .all (reduce originalPolynomial)
   let originalSign ← mkAppM ``SignFact.sign #[fact]
-  let claimed ← withTransparency .all (whnf originalSign)
-  kernelCheck `__kernelReplayRegisteredSign (← mkEq originalSign claimed) (← mkEqRefl claimed)
-  let proof ← mkAppM ``SignFact.checked #[fact]
-  let type ← mkEq (← mkAppM ``Context.signPoly #[context, polynomial]) claimed
+  let claimed ← withTransparency .all (reduce originalSign)
+  let semantic ← mkEq (← mkAppM ``Context.signPoly #[context, polynomial]) claimed
+  let type ← mkAppM ``And #[← mkEq polynomial originalPolynomial,
+    ← mkAppM ``And #[← mkEq claimed originalSign, semantic]]
+  let proof ← mkAppM ``And.intro #[← mkEqRefl polynomial,
+    ← mkAppM ``And.intro #[← mkEqRefl claimed, ← mkAppM ``SignFact.checked #[fact]]]
   let _ ← auditProof proof type
   let name ← mkFreshUserName `__kernelReplaySign
-  let options ← getOptions
-  let env ← ofExceptKernelException <| (← getEnv).addDeclCore
-    (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
-    (.thmDecl { name, levelParams := [], type, value := proof }) none (doCheck := true)
-  let restored ← withEnv env do
-    let restored ← mkAppM ``SignFact.mk #[polynomial, claimed, mkConst name]
+  let options := (← getOptions).setBool `debug.skipKernelTC false
+  let env ← match (← getEnv).addDeclCore
+      (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+      (.thmDecl { name, levelParams := [], type, value := proof }) none (doCheck := true) with
+    | .error exception => return .error exception
+    | .ok env => pure env
+  let restored : Except Kernel.Exception Expr ← withEnv env do
+    -- Normalized proposition arguments keep the source fact out of the
+    -- restored proof term; the saved theorem checks the original bindings.
+    let polynomialEq ← mkEq polynomial polynomial
+    let signEq ← mkEq claimed claimed
+    let signAndSemantic ← mkAppM ``And #[signEq, semantic]
+    let tail := mkAppN (mkConst ``And.right) #[polynomialEq, signAndSemantic, mkConst name]
+    let semanticProof := mkAppN (mkConst ``And.right) #[signEq, semantic, tail]
+    let restored ← mkAppM ``SignFact.mk #[polynomial, claimed, semanticProof]
     let equationType ← mkEq restored restored
     let equation ← mkEqRefl restored
     let _ ← auditProof equation equationType
-    kernelCheck `__kernelReplayRegisteredFact equationType equation
-    return restored
-  setEnv env
-  return restored
+    match (← getEnv).toKernelEnv.addDecl options
+        (.thmDecl {
+          name := `__kernelReplayRegisteredFact
+          levelParams := []
+          type := equationType
+          value := equation }) with
+    | .error exception => return .error exception
+    | .ok _ => return .ok restored
+  match restored with
+  | .error exception => return .error exception
+  | .ok restored =>
+    setEnv env
+    return .ok restored
 
 /-- Only a declaration type mismatch permits trying the other Boolean value.
 Timeouts and other kernel failures remain errors. -/

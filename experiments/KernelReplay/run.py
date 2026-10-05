@@ -46,7 +46,9 @@ def main() -> None:
                   "nestedRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.wrongQuery",
                   "nestedRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.wrongCount",
                   "nestedChildProofs=theoremReferences", "nestedMalformedProof=kernelRejected",
-                  "nestedIncompleteProof=rejected"))
+                  "nestedIncompleteProof=rejected", "nestedRegistrationRollback=kernelRejected",
+                  "nestedRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.wrongSelectedContext",
+                  "nestedRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.wrongSelectedCount"))
     run("generated", ["generated"],
         contains=("generated=2 kernelAccepted=true", "generatedWrongSigns=kernelRejected",
                   "generatedDifferentQuery=kernelRejected", "generatedStaleContext=kernelRejected",

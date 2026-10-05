@@ -225,8 +225,10 @@ performance evidence remain separate obligations.
 and one lower fact list. All eight coefficient operations use supplied-fact
 packing; `Context.changeOps` retains the original checked root and prepared
 cache. Interpretation laws and `changeOps_signPoly` return facts in the
-original context. Kernel equations check both retained polynomial keys and
-claimed signs.
+original context. The two input polynomials, `X` and `1`, both reduce to the
+unit query and
+select the same checked row. The output checks distinguish their original
+polynomial keys and list order, as well as their claimed signs.
 
 ```sh
 lake build hexsigndet_kernel_replay_probe
@@ -236,25 +238,28 @@ lake env .lake/build/bin/hexsigndet_kernel_replay_probe nested
 The control starts with no intermediate lower facts, produces the two demanded
 rational-predecessor certificates, and checks their literal packets. A separate
 pass starts from the same empty list and reads only those recorded packets.
-The actual kernel-checked result includes the two distinct upper polynomial
-keys and their signs, rather than just an acceptance flag. Missing or incomplete
+The kernel-checked result includes the two distinct input polynomial keys
+and their signs. Missing or incomplete
 child evidence leaves the calculation unproved. False signs, a different query
-with the same sign, a stale upper context, and a corrupted unused graph entry
-are rejected by the existing checker.
+with the same sign, stale context IDs and corrupted moments in both the
+selected and unused graph entries are rejected by the existing checker.
 
-Accepted child proofs are registered synchronously as kernel-checked theorems.
+Each saved theorem proves the exact copied polynomial and integer sign,
+together with the scalar-sign equality. One synchronous kernel declaration
+check validates that combined statement and its proof.
 The fact data remains transparent and refers to those theorem constants.
-Kernel equations preserve the exact polynomial and integer sign copied from
-the supplied fact.
 Registration uses the kernel environment API with checking explicitly enabled;
-errors leave the environment unchanged. Controls check the returned theorem
-references and reject a malformed proof and an unresolved proof hole without
-adding a declaration. The checks permit only the three standard axioms listed
+errors leave the declaration set unchanged. Controls inspect the returned
+theorem references, require the actual registration call to reject a malformed
+proof, and reject an unresolved proof hole. A separate control forces a failure
+after the theorem check and verifies that the candidate declaration is not
+committed. Kernel exception constructors distinguish those failures from
+resource errors. The checks permit only the three standard axioms listed
 above.
 
 This control uses an existing validated upper context and a typed upper graph.
 Only its lower certificates are freshly produced and retained as in-memory
-JSON packets. It does not reconstruct upper contexts or graphs from bytes,
-handle arbitrary depth, or establish a compiled replay interface or a
-performance gate. `NestedProbe.lean` supplies the private definition bodies
-needed for meta-level reduction and runs the same control during `lake build`.
+JSON packets. General context/graph reconstruction from bytes, arbitrary-depth
+replay, the public interface and required performance evidence remain
+outstanding. `NestedProbe.lean` supplies the private definition bodies needed
+for meta-level reduction and runs the same control during `lake build`.

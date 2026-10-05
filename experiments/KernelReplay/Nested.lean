@@ -154,12 +154,26 @@ in the original context with its exact polynomial key. -/
         {entry with node := {NestedSignsConformance.linearNode with moments :=
           #v[{NestedSignsConformance.linearCount with lowerVariations := 0}]}})}).isSome
 
+@[expose] def wrongSelectedContext (facts : List (SignFact context)) : Bool :=
+  (readFacts? facts [(NestedSignsConformance.nextQuery, 1)]
+    {NestedSignsConformance.graph with entries :=
+      NestedSignsConformance.graph.entries.modify 1 (fun entry =>
+        {entry with node := {entry.node with context := 9}})}).isSome
+
+@[expose] def wrongSelectedCount (facts : List (SignFact context)) : Bool :=
+  (readFacts? facts [(NestedSignsConformance.nextQuery, 1)]
+    {NestedSignsConformance.graph with entries :=
+      NestedSignsConformance.graph.entries.modify 1 (fun entry =>
+        let moments := entry.node.moments.map (fun count => {count with value := count.value + 1})
+        {entry with node := {entry.node with moments}})}).isSome
+
 meta section
 open Lean Meta Elab Command
 
 private def rules : MetaM SimpTheorems := do
   let mut rules : SimpTheorems := {}
-  for name in #[``selections, ``wrongSign, ``wrongContext, ``wrongQuery, ``wrongCount, ``readFacts?, ``cachedContext,
+  for name in #[``selections, ``wrongSign, ``wrongContext, ``wrongQuery, ``wrongCount,
+      ``wrongSelectedContext, ``wrongSelectedCount, ``readFacts?, ``cachedContext,
       ``NestedSignsConformance.next, ``Context.extend, ``Dag.validate?, ``Replay.check,
       ``queryPoly, ``Sturm.check, ``SignedRemainderChain.check] do
     rules ← rules.addDeclToUnfold name
@@ -183,11 +197,16 @@ private unsafe def control : TermElabM Unit := do
   let program := mkConst ``selections
   let registered ← IO.mkRef (#[] : Array Name)
   let register := fun fact => do
-    let restored ← KernelReplay.registerFact fact
+    let restored ← ofExceptKernelException (← KernelReplay.registerFact fact)
     unless restored.getAppFn.isConstOf ``SignFact.mk do
       throwError "registered fact was not a constructor"
     let proof := restored.getAppArgs.back!
-    let .const name _ := proof | throwError "registered proof was not a constant"
+    unless (proof.find? (fun expression => expression == fact)).isNone do
+      throwError "restored proof inlined the source fact"
+    let names := proof.getUsedConstants.filter
+      (fun name => name.eraseMacroScopes == `__kernelReplaySign)
+    unless names.size == 1 do throwError "registered proof lost its theorem reference"
+    let name := names[0]!
     let .thmInfo _ ← getConstInfo name | throwError "registered proof was not a theorem"
     registered.modify (·.push name)
     return restored
@@ -221,6 +240,7 @@ private unsafe def control : TermElabM Unit := do
     (fun needed => do
       let some fact ← Generated.readPackets (← packets.get) needed | return none
       return some (← register fact))
+  unless replayed.requests.size == 2 do throwError "unexpected nested replay request count"
   match replayed.outcome with
   | .checked true _ _ => logInfo "nestedPacketReplay=kernelAccepted"
   | _ => throwError "nested packet replay failed"
@@ -235,7 +255,8 @@ private unsafe def control : TermElabM Unit := do
       (← mkEqRefl (mkConst ``CoefficientSignsConformance.context))
     logInfo "nestedMissingChild=unproved"
   | _ => throwError "nested replay ran without child evidence"
-  for name in [``wrongSign, ``wrongContext, ``wrongQuery, ``wrongCount] do
+  for name in [``wrongSign, ``wrongContext, ``wrongQuery, ``wrongCount,
+      ``wrongSelectedContext, ``wrongSelectedCount] do
     let (outcome, _) ← KernelReplay.assemble (mkApp (mkConst name) collected.facts) simpContext
     match outcome with
     | .checked false _ _ => logInfo m!"nestedRejected={name}"
@@ -253,21 +274,22 @@ private unsafe def control : TermElabM Unit := do
   unless honest.getAppFn.isConstOf ``SignFact.mk do throwError "unexpected collected fact"
   let args := honest.getAppArgs
   let corrupt := mkAppN honest.getAppFn (args.set! (args.size - 2) (toExpr (-1 : Int)))
-  let countRegistered := fun env => env.toKernelEnv.constants.fold
+  let countKernel := fun (env : Kernel.Environment) => env.constants.fold
     (fun count name _ => if name.eraseMacroScopes == `__kernelReplaySign then count + 1 else count)
     (0 : Nat)
+  let countRegistered := fun (env : Environment) => countKernel env.toKernelEnv
   let before := countRegistered (← getEnv)
-  let rejected ← try
-    let _ ← KernelReplay.registerFact corrupt
-    pure false
-  catch exception =>
-    let message ← exception.toMessageData.toString
-    if message.startsWith "(kernel) application type mismatch" then pure true else throw exception
-  unless rejected do throwError "registered malformed sign proof"
+  match ← KernelReplay.registerFact corrupt with
+  | .error (.appTypeMismatch env ..) =>
+    unless countKernel env == before do
+      throwError "malformed fact failed after unchecked registration"
+  | .error exception => throwKernelException exception
+  | .ok _ => throwError "registered malformed sign proof"
   unless countRegistered (← getEnv) == before do
     throwError "rejected proof changed the registered declarations"
   logInfo "nestedMalformedProof=kernelRejected"
-  let hole ← mkFreshExprMVar (← inferType honest)
+  let hole ← mkFreshExprMVar (← inferType args.back!)
+  let hole := mkAppN honest.getAppFn (args.set! (args.size - 1) hole)
   let rejected ← try
     let _ ← KernelReplay.registerFact hole
     pure false
@@ -277,6 +299,26 @@ private unsafe def control : TermElabM Unit := do
   unless rejected && countRegistered (← getEnv) == before do
     throwError "incomplete fact changed the registered declarations"
   logInfo "nestedIncompleteProof=rejected"
+
+  let options := (← getOptions).setBool `debug.skipKernelTC false
+  let collision := `__kernelReplayRegisteredFact
+  let seeded ← ofExceptKernelException <| (← getEnv).addDeclCore
+    (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+    (.thmDecl {
+      name := collision
+      levelParams := []
+      type := mkConst ``True
+      value := mkConst ``True.intro }) none (doCheck := true)
+  withEnv seeded do
+    let before := countRegistered (← getEnv)
+    match ← KernelReplay.registerFact honest with
+    | .error (.alreadyDeclared _ name) =>
+      unless name == collision do throwError "unexpected declaration collision"
+    | .error exception => throwKernelException exception
+    | .ok _ => throwError "post-registration failure did not reject"
+    unless countRegistered (← getEnv) == before do
+      throwError "post-registration failure committed a declaration"
+  logInfo "nestedRegistrationRollback=kernelRejected"
 
 syntax (name := nestedProbe) "#nested_probe" : command
 @[command_elab nestedProbe]
