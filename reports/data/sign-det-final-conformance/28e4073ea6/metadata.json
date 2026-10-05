@@ -1,0 +1,367 @@
+{
+  "kind": "direct-library-conformance",
+  "scientific_samples": 0,
+  "revision": "28e4073ea6beac14e32a7c48d6c07c116e49b11e",
+  "host": "chungus2",
+  "cpu": 20,
+  "load_before": [
+    3.67529296875,
+    8.3046875,
+    7.8857421875
+  ],
+  "runs": [
+    {
+      "label": "build",
+      "command": [
+        "lake",
+        "build",
+        "hexsigndet_field_checks",
+        "hexsigndet_emit_field_signs",
+        "hexsigndet_emit_common_fields",
+        "hexsigndet_emit_nested_fields",
+        "hexsigndet_emit_fixtures",
+        "hexsigndet_json_bytes",
+        "hexsigndet_emit_infinitesimal"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 177.2577754570002,
+      "load_after": [
+        8.43994140625,
+        8.552734375,
+        8.05859375
+      ]
+    },
+    {
+      "label": "build-freshness",
+      "command": [
+        "lake",
+        "build",
+        "--no-build",
+        "hexsigndet_field_checks",
+        "hexsigndet_emit_field_signs",
+        "hexsigndet_emit_common_fields",
+        "hexsigndet_emit_nested_fields",
+        "hexsigndet_emit_fixtures",
+        "hexsigndet_json_bytes",
+        "hexsigndet_emit_infinitesimal"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 0.7334609989993623,
+      "load_after": [
+        8.43994140625,
+        8.552734375,
+        8.05859375
+      ]
+    },
+    {
+      "label": "field-checks",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-final-merged/.lake/build/bin/hexsigndet_field_checks"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 8.23079501600023,
+      "load_after": [
+        9.0322265625,
+        8.66845703125,
+        8.10107421875
+      ]
+    },
+    {
+      "label": "rational",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-final-merged/.lake/build/bin/hexsigndet_emit_fixtures"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 2.7181947589997435,
+      "load_after": [
+        8.708984375,
+        8.607421875,
+        8.083984375
+      ]
+    },
+    {
+      "label": "scalars",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-final-merged/.lake/build/bin/hexsigndet_emit_field_signs"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 0.04549745799977245,
+      "load_after": [
+        8.708984375,
+        8.607421875,
+        8.083984375
+      ]
+    },
+    {
+      "label": "common",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-final-merged/.lake/build/bin/hexsigndet_emit_common_fields"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 0.6142118030002166,
+      "load_after": [
+        8.708984375,
+        8.607421875,
+        8.083984375
+      ]
+    },
+    {
+      "label": "nested",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-final-merged/.lake/build/bin/hexsigndet_emit_nested_fields"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 0.8817409819994282,
+      "load_after": [
+        8.708984375,
+        8.607421875,
+        8.083984375
+      ]
+    },
+    {
+      "label": "rational-oracle",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-oracle-venv/bin/python",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-final-merged/scripts/oracle/sign_det_flint.py",
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-merged-conformance/rational.stdout",
+        "--failure-dir",
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-merged-conformance/failures"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 0.08482184400054393,
+      "load_after": [
+        8.708984375,
+        8.607421875,
+        8.083984375
+      ]
+    },
+    {
+      "label": "scalars-oracle",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-oracle-venv/bin/python",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-final-merged/scripts/oracle/sign_det_common_fields.py",
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-merged-conformance/scalars.stdout",
+        "--scalars",
+        "--failure-dir",
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-merged-conformance/failures"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 0.07811851699989347,
+      "load_after": [
+        8.708984375,
+        8.607421875,
+        8.083984375
+      ]
+    },
+    {
+      "label": "common-oracle",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-oracle-venv/bin/python",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-final-merged/scripts/oracle/sign_det_common_fields.py",
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-merged-conformance/common.stdout",
+        "--failure-dir",
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-merged-conformance/failures"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 0.0469322849994569,
+      "load_after": [
+        8.708984375,
+        8.607421875,
+        8.083984375
+      ]
+    },
+    {
+      "label": "nested-oracle",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-oracle-venv/bin/python",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-final-merged/scripts/oracle/sign_det_nested_z3.py",
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-merged-conformance/nested.stdout",
+        "--failure-dir",
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-merged-conformance/failures"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 0.05798965699977998,
+      "load_after": [
+        8.708984375,
+        8.607421875,
+        8.083984375
+      ]
+    },
+    {
+      "label": "infinitesimal",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-final-merged/.lake/build/bin/hexsigndet_emit_infinitesimal"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 20.197957702000167,
+      "load_after": [
+        7.8095703125,
+        8.40576171875,
+        8.0283203125
+      ]
+    },
+    {
+      "label": "infinitesimal-oracle",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-oracle-venv/bin/python",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-final-merged/scripts/oracle/sign_det_z3.py",
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-merged-conformance/infinitesimal.stdout",
+        "--failure-dir",
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-merged-conformance/failures"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 10.851942625000447,
+      "load_after": [
+        7.14990234375,
+        8.244140625,
+        7.97900390625
+      ]
+    },
+    {
+      "label": "bytes-native-stress",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-oracle-venv/bin/python",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-final-merged/scripts/oracle/sign_det_json_stress.py",
+        "--ci",
+        "--exe",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-final-merged/.lake/build/bin/hexsigndet_json_bytes"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 4.539754542000082,
+      "load_after": [
+        6.8974609375,
+        8.17333984375,
+        7.95751953125
+      ]
+    },
+    {
+      "label": "bytes-oracle",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-oracle-venv/bin/python",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-final-merged/scripts/oracle/sign_det_json_bytes.py",
+        "--exe",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-final-merged/.lake/build/bin/hexsigndet_json_bytes"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 0.17272841300018626,
+      "load_after": [
+        6.8974609375,
+        8.17333984375,
+        7.95751953125
+      ]
+    },
+    {
+      "label": "oracle-adversarial-tests",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-oracle-venv/bin/python",
+        "-m",
+        "unittest",
+        "scripts.oracle.test_sign_det_flint",
+        "scripts.oracle.test_sign_det_common_fields",
+        "scripts.oracle.test_sign_det_nested_z3",
+        "scripts.oracle.test_sign_det_json_bytes",
+        "scripts.oracle.test_sign_det_z3"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 72.09651178600052,
+      "load_after": [
+        11.89013671875,
+        9.6923828125,
+        8.5205078125
+      ]
+    }
+  ],
+  "state": "complete",
+  "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-final-merged",
+  "source_clean_before": true,
+  "affinity_before": [
+    20
+  ],
+  "binary_sha256": {
+    "hexsigndet_field_checks": "80b47d29ecd2c41ba62a3f051819901f782558a4e1580d0b88f60f0f6385c470",
+    "hexsigndet_emit_field_signs": "b1daee2a200335571b7773d80b8695142e147fa171be6ff18fc43d87d01f922f",
+    "hexsigndet_emit_common_fields": "e8a80c19e80bf2866061807f77a10733eb38f357c6d235c9bda55889b8884b53",
+    "hexsigndet_emit_nested_fields": "025350129f0a552aa54890c4a4bd655b5541e84471fdd17d54411116b101c40a",
+    "hexsigndet_emit_fixtures": "9967946cd0523f12f5fae1a3baa02460e3d5d0bfaa10f6725ab4cfcb77215b4b",
+    "hexsigndet_json_bytes": "aaed70d473e9dff8025013cd3cc9ece63cdbe4254caa4737051347ee0e687b8f",
+    "hexsigndet_emit_infinitesimal": "8c8a3365da7565bc33106a6c2a05c468bc938b316e91cf5374722d686a966688"
+  },
+  "base": "28e4073ea6beac14e32a7c48d6c07c116e49b11e",
+  "tree": "3f7960162273f9e8a515ca93e82341d9cc416358",
+  "python": "Python 3.13.14",
+  "oracle_packages": {
+    "python-flint": "0.9.0",
+    "z3-solver": "4.15.4.0"
+  },
+  "revision_after": "28e4073ea6beac14e32a7c48d6c07c116e49b11e",
+  "source_clean_after": true,
+  "binary_sha256_after": {
+    "hexsigndet_field_checks": "80b47d29ecd2c41ba62a3f051819901f782558a4e1580d0b88f60f0f6385c470",
+    "hexsigndet_emit_field_signs": "b1daee2a200335571b7773d80b8695142e147fa171be6ff18fc43d87d01f922f",
+    "hexsigndet_emit_common_fields": "e8a80c19e80bf2866061807f77a10733eb38f357c6d235c9bda55889b8884b53",
+    "hexsigndet_emit_nested_fields": "025350129f0a552aa54890c4a4bd655b5541e84471fdd17d54411116b101c40a",
+    "hexsigndet_emit_fixtures": "9967946cd0523f12f5fae1a3baa02460e3d5d0bfaa10f6725ab4cfcb77215b4b",
+    "hexsigndet_json_bytes": "aaed70d473e9dff8025013cd3cc9ece63cdbe4254caa4737051347ee0e687b8f",
+    "hexsigndet_emit_infinitesimal": "8c8a3365da7565bc33106a6c2a05c468bc938b316e91cf5374722d686a966688"
+  },
+  "affinity_after": [
+    20
+  ],
+  "load_after": [
+    11.89013671875,
+    9.6923828125,
+    8.5205078125
+  ],
+  "file_sha256": {
+    "build.stdout": "1c0f2887a5ee2569a83d675536046ef3d01b216160e628dd9a9cb07aaba364bf",
+    "build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-freshness.stdout": "6ab1c119d436d7d159868164b47d2705da99cc9a63d85029f90b8265ce98ad81",
+    "build-freshness.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "collector.py": "ffbb95f1b98688d1836f0c886db941642bfdeb4e1c9825dbc9cd901da113b183",
+    "field-checks.stdout": "3f16bc7c17f625dd86328addc71017f3736ecd54ecf3548d967db13f631c26c3",
+    "field-checks.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "rational.stdout": "acd865d8447d8cf57ff85863f889e90a2aa7ced65e38baf71f0a6b260a499751",
+    "rational.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "scalars.stdout": "23927e322214a54f03e62fb47d49d6e9e91d30bb919552dcb4951823b9483781",
+    "scalars.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "common.stdout": "59838a9da9649c10170d58af62a12fe5cb74ff77ab835516a50b16e5a8a2e56b",
+    "common.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nested.stdout": "2c33a5bed8ed66c0357ef52845d3119c59d243ab500d898e430b0c2e690962ca",
+    "nested.stderr": "2d5ff21ea3c4a8506889c089a73984fe9a2217d40ac8b3abfcff71603f34ab4f",
+    "rational-oracle.stdout": "e831e6d69f36d5b8b87ee488b2cd155f4603d4bf497333dd49a35886c675f7e7",
+    "rational-oracle.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "scalars-oracle.stdout": "31379dee0f228260acc4f9397863df18b8dd02130194cae546e37970a0030c49",
+    "scalars-oracle.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "common-oracle.stdout": "f6d04b4740c69d7003684dd0dad81f2cedfe029477d6385ab9cc0c457b71f752",
+    "common-oracle.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nested-oracle.stdout": "5c630b3393eabc6d8bac3bf658b4609c3b9f7ae52dad2057247baea47c54f22c",
+    "nested-oracle.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "infinitesimal.stdout": "979d3988d6ca7e18db277e693550192cb349b8e32f144ebde80b9045e9653818",
+    "infinitesimal.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "infinitesimal-oracle.stdout": "c209996942eca57f98b99493128096a767b30d32c296348e081bf0452ec1d525",
+    "infinitesimal-oracle.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes-native-stress.stdout": "d202855b54879f830dfd62916e1d7de3138684fc294f5648ac87cf619e647e66",
+    "bytes-native-stress.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes-oracle.stdout": "f11b3a28b022f9179ca38a40522fee29c998977a2dcc66d168e911141111234d",
+    "bytes-oracle.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "oracle-adversarial-tests.stdout": "31379dee0f228260acc4f9397863df18b8dd02130194cae546e37970a0030c49",
+    "oracle-adversarial-tests.stderr": "0b74197e27def7e9a80f63b9d949963904d2aa06cd2e87c0c1acd206f066092c"
+  }
+}
