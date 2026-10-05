@@ -214,7 +214,8 @@ at those converted real values. `runWith` and `runWith_spec` reuse one checked
 presentation across formulas. The [number-field controls](../conformance/HexRCF/NumberField.lean)
 find further roots over selected quadratic and cubic fields, distinguish
 conjugates and swapped irrational coordinates, include several-real-root,
-non-monic and rational generators, and check zero/cancelled atoms and
+non-monic and rational generators and a degree-two cubic-field coordinate,
+and check zero/cancelled atoms and
 half-open endpoints. This is diagnostic production, with ordinary-kernel
 correctness laws, rather than frozen replay or source-goal quotation.
 `Gather.values` transports ordered coefficients from independently constructed

@@ -90,14 +90,27 @@ private def coordinates (lower upper : Rat) (expected : Bool) : Bool := Id.run d
 #guard coordinates 1 2 true
 #guard coordinates (-2) (-1) false
 
+/-- A degree-two coordinate is packed in a cubic field, with its sign retained. -/
+private def cubicCoordinate : Bool := Id.run do
+  let some generator := cubic | return false
+  let some source := Hex.RealClosure.NumberField.present? generator registry | return false
+  let g := generator.toAlgebraic.toQAdjoin
+  let beta := g*g-g
+  let formula := RealFormula.QF.atom ⟨MvPoly.X 1 ^ 2 + MvPoly.X 0, .gt⟩
+  return NumberField.runWith source (fun _ : Fin 1 => beta) formula .forallReal == some true &&
+    NumberField.runWith source (fun _ : Fin 1 => -beta) formula .forallReal == some false
+#guard cubicCoordinate
+
 /-- Native diagnostic controls, grouped to identify a failed category. -/
 private def controls : List (String × Bool) := Id.run do
   let some generator := selected 1 2 | return [("selected root", false)]
+  let some source := Hex.RealClosure.NumberField.present? generator registry
+    | return [("original presentation", false)]
   let g := generator.toAlgebraic.toQAdjoin
   let values := fun _ : Fin 1 => g
   let x : RealFormula.Poly 2 := MvPoly.X 1
   let a : RealFormula.Poly 2 := MvPoly.X 0
-  let run := NumberField.run generator registry values
+  let run := NumberField.runWith source values
   let domain := fun lower upper : RealFormula.Poly 2 =>
     RealFormula.QF.and (.atom ⟨lower-x, .lt⟩) (.atom ⟨x-upper, .le⟩)
   let zero := RealFormula.QF.atom ⟨x, .eq⟩

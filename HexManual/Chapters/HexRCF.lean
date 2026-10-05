@@ -2424,10 +2424,11 @@ number field. They test the complete conjunction with the squared atom
 `(x² − α)² ≥ 0`, whose repeated roots are shared with `x² − α`, and the
 half-open guards `1 < x` and `x ≤ 2`.
 Positive √2 and the cube root return true; negative √2 returns false.
-Further controls select the middle and largest roots of the totally real
+Further controls select all three roots of the totally real
 cubic `X³ − 3X + 1`, a non-monic quadratic and a rational generator. They
-compute the irrational coordinate `α² − α` in each quadratic conjugate,
-swap the coordinate order, cancel a leading term, and retain zero atoms
+compute the irrational coordinate `α² − α` in both conjugates of `X² − 2`,
+swap the coordinate order, and compare a degree-two coordinate with its
+negative in the cubic field. They cancel a leading term and retain zero atoms
 and exact endpoint, equal and reversed domains. All six comparisons and both
 quantifiers are exercised. The public correctness, totality and truth laws
 have only the standard three axioms. These compiled controls are diagnostic
