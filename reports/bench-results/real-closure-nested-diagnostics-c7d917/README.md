@@ -34,7 +34,10 @@ all root descriptors and the actual final query graph.
 The independent python-flint 0.9.0 oracle interprets every stored coefficient
 in `Q(γ)`, `γ^(2^d) = 2`, with `αₗ = γ^(2^(d−l))/2`. It checks the defining
 polynomials, exact final value and negative sign. Graph statistics check graph
-structure; the Lean reader performs mathematical replay.
+structure; the Lean reader performs mathematical replay. The oracle's historical
+`selected_root_sign_checked` key checks the negative sign under the specified
+positive-root assignment in `Q(γ)`; it does not authenticate root selection.
+The native descriptor replay supplies that root identity.
 
 | Depth | Products | Policy | Polynomial gcd / xgcdLeft | Lean integer gcd | GMP integer gcd | Stored value bytes | Query evidence bytes (after counted region) |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -58,8 +61,10 @@ Counters cover only the region between `NESTED BEGIN` and `NESTED END`, excludin
 construction, final query construction and replay. They include packing's internal sign queries and the final
 value hash; the separately reported final sign runs after the counted region.
 Callback categories nest: division invokes multiplication and inversion,
-and inversion invokes its gcd/extended-gcd sites. Do not sum these categories. The observer counts actual polynomial gcd workers, actual
-Lean/GMP gcd entry calls, and per-level arithmetic/zero callbacks. Lean and GMP
+and inversion invokes its gcd/extended-gcd sites. Do not sum these categories. The observer counts workers for `DensePoly.gcd`, `xgcd`, `xgcdLeft` and
+`pseudoGcd`, and actual Lean/GMP gcd entry calls. It does not instrument
+HexPolyFast's `*With` entry points; their activity is not bounded by these
+polynomial counts. It also counts per-level arithmetic/zero callbacks. Lean and GMP
 counts describe different layers and must not be added; the two counts are
 identical in every completed run. Polynomial xgcd,
 pseudo-gcd and GMP extended-gcd counts were zero in the completed runs. The
@@ -108,8 +113,12 @@ they do not authenticate a process against arbitrary replacement data.
 The fresh build on `2c2faba6b7bfcba9e253432c9e7ea244d788e1ea` reproduced both
 ordinary and diagnostic binaries byte-for-byte. `rebuild-2c2fab.json` records
 all 153 object/archive link arguments; `rebuild-comparison.json` checks both
-binary digests against the historical capture. Thus the integrated executable
-and original diagnostic observer agree exactly despite the source rebase.
+binary digests against the historical capture. Thus the `2c2fab` executable and original diagnostic observer agree exactly.
+The later integration base `9caee6229f3b58e3829425a5101167e9f0ba361e` also changes
+none of the 149 driver source-closure files; no new binary equivalence capture
+is attributed to that later base. The rebuild and oracle source commits are
+retained by published tags `issue-10378-nested-rebuild-source-2c2fab` and
+`issue-10378-nested-oracle-source-ba4635`.
 System libraries resolved through `-l` are not individually hashed; the full
 binary digests and pinned toolchain remain the reproduction boundary.
 
@@ -118,7 +127,10 @@ the unchanged original rebuild record to its exact builder script, retained
 as `builder-42e3701e.py` in this archive. The current builder also records its own digest. Commit names provide historical context;
 these content keys survive rebase and squash merge. The CI regression replays
 every current derived command and verifies all manifest file digests, the
-current oracle key and the retained rebuild builder key. The run inventory
+retained oracle and rebuild builder keys. The exact `oracle-478fefcc.py` is
+archived and used for historical replay; the live oracle is tested separately
+by the current fixture tuple and mutation suite, so later oracle edits need
+not change this archive. The run inventory
 attributes the binary digest from `build.json` and reconstructs parameter/trace
 arguments from the original parameter inventory and filenames. These identities
 were not independently captured at each launch; the empty timeout files supply

@@ -101,9 +101,10 @@ class ExactTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256((archive / builder['file']).read_bytes()).hexdigest(), builder['sha256'])
         self.assertIn(builder['record'], manifest['files'])
         for entry in manifest['derived']:
-            self.assertEqual(hashlib.sha256((repo / entry['command'][1]).read_bytes()).hexdigest(), entry['oracle_sha256'])
+            self.assertEqual(hashlib.sha256((archive / entry['oracle_file']).read_bytes()).hexdigest(), entry['oracle_sha256'])
             command = list(entry['command'])
             command[0] = sys.executable
+            command[1] = str(archive / entry['oracle_file'])
             actual = subprocess.check_output(command, cwd=repo)
             self.assertEqual(actual, (archive / entry['output']).read_bytes(), entry['output'])
 
