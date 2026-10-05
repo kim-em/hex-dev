@@ -192,7 +192,8 @@ lean_lib HexOrderedFnMathlib where
 lean_lib HexOrderedFnTests where
   globs := #[.one `HexOrderedFn.Tests, .one `HexOrderedFnMathlib.Tests,
     .one `HexOrderedFn.InfinitesimalTests, .one `HexOrderedFnMathlib.InfinitesimalTests,
-    .one `HexOrderedFn.ExtensionTests, .one `HexOrderedFnMathlib.LiouvilleTests]
+    .one `HexOrderedFn.ExtensionTests, .one `HexOrderedFnMathlib.LiouvilleTests,
+    .one `HexOrderedFnMathlib.LintTests]
 
 lean_lib HexMvPoly where
 

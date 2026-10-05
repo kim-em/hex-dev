@@ -22,6 +22,7 @@ namespace Hex.OrderedFn.Oracle
 /-- Integer image of Mathlib's semantic sign. -/
 noncomputable def sgn (x : ℝ) : Int := (SignType.sign x : Int)
 
+/-- The sign of total real division is the product of the two signs, including zero. -/
 theorem sgn_div (x y : ℝ) : sgn (x / y) = sgn x * sgn y := by
   have hi : SignType.sign y⁻¹ = SignType.sign y := by
     simp only [sign_apply, inv_pos, inv_lt_zero]
@@ -33,7 +34,9 @@ def Contains (a : Bounds) (x : ℝ) : Prop := (a.lower : ℝ) ≤ x ∧ x ≤ (a
 /-- Validity for the same providers and requests as the computational interface. -/
 structure ApproximationCorrect {K : Type u} [Semiring K]
     (ι : K →+* ℝ) (τ : ℝ) (a : Approximation K) : Prop where
+  /-- Every positive-width coefficient request contains its image under `ι`. -/
   coeff : ∀ x δ, 0 < δ → Contains (a.coeff x δ) (ι x)
+  /-- Every positive-width constant request contains this same subject `τ`. -/
   constant : ∀ δ, 0 < δ → Contains (a.constant δ) τ
 
 /-- Exact rational coefficients require only the constant's containment proof. -/
@@ -45,19 +48,23 @@ theorem ApproximationCorrect.ofConstant (constant : Rat → Bounds) (τ : ℝ)
 
 namespace Contains
 
+/-- An exact rational bound contains its real image. -/
 @[simp] theorem singleton (q : Rat) : Contains (.singleton q) (q : ℝ) := ⟨le_rfl, le_rfl⟩
 
 /-- Dyadic conversion preserves its exact rational value. -/
 theorem ofDyadic (x : Dyadic) : Contains (.ofDyadic x) (x.toRat : ℝ) := singleton x.toRat
 
+/-- Reversing and negating endpoints encloses the negated subject. -/
 theorem neg {a : Bounds} {x : ℝ} (h : Contains a x) : Contains a.neg (-x) := by
   simpa [Contains, Bounds.neg] using And.intro (neg_le_neg h.2) (neg_le_neg h.1)
 
+/-- Endpoint addition encloses the sum of contained subjects. -/
 theorem add {a b : Bounds} {x y : ℝ} (ha : Contains a x) (hb : Contains b y) :
     Contains (a.add b) (x + y) := by
   simpa [Contains, Bounds.add] using
     And.intro (add_le_add ha.1 hb.1) (add_le_add ha.2 hb.2)
 
+/-- The four corner products bound a product regardless of either interval's signs. -/
 private theorem mul_bounds {a b c d x y : ℝ} (hx : a ≤ x ∧ x ≤ b)
     (hy : c ≤ y ∧ y ≤ d) :
     min (min (a * c) (a * d)) (min (b * c) (b * d)) ≤ x * y ∧
@@ -76,11 +83,13 @@ private theorem mul_bounds {a b c d x y : ℝ} (hx : a ≤ x ∧ x ≤ b)
         (mul_le_mul_of_nonpos_right hx.2 hy0)),
       ((mul_le_mul_of_nonpos_right hx.1 hy0).trans (step a).2).trans (le_max_left _ _)⟩
 
+/-- The four-product hull encloses the product of contained subjects. -/
 theorem mul {a b : Bounds} {x y : ℝ} (ha : Contains a x) (hb : Contains b y) :
     Contains (a.mul b) (x * y) := by
   simpa [Contains, Bounds.mul, Bounds.hull4, Rat.cast_min, Rat.cast_max] using
     mul_bounds ha hb
 
+/-- A successful intersection still contains any subject shared by both inputs. -/
 theorem inter {a b c : Bounds} {x : ℝ} (ha : Contains a x) (hb : Contains b x)
     (hc : a.inter b = some c) : Contains c x := by
   unfold Bounds.inter at hc
@@ -90,6 +99,7 @@ theorem inter {a b c : Bounds} {x : ℝ} (ha : Contains a x) (hb : Contains b x)
       (max_le ha.1 hb.1) (le_min ha.2 hb.2)
   · contradiction
 
+/-- Strict separation of an enclosure from zero proves its subject is nonzero. -/
 theorem ne_zero {a : Bounds} {x : ℝ} (ha : Contains a x) (h : a.separated = true) :
     x ≠ 0 := by
   simp only [Bounds.separated, Bool.or_eq_true, decide_eq_true_eq] at h
@@ -99,6 +109,7 @@ theorem ne_zero {a : Bounds} {x : ℝ} (ha : Contains a x) (h : a.separated = tr
   · have : (0 : ℝ) < a.lower := by exact_mod_cast h
     exact (this.trans_le ha.1).ne'
 
+/-- A successful quotient enclosure contains the quotient and certifies its divisor. -/
 theorem div {a b c : Bounds} {x y : ℝ} (ha : Contains a x) (hb : Contains b y)
     (hc : a.div? b = some c) : Contains c (x / y) ∧ y ≠ 0 := by
   unfold Bounds.div? at hc

@@ -55,9 +55,16 @@ def approxAttempt (a : Approximation K) (f : RationalFn K) (δ : Rat) (n : Nat) 
 /-- Nonpositive requests ask for a coarse width-one enclosure. -/
 def requestWidth (δ : Rat) : Rat := if 0 < δ then δ else 1
 
+/-- Positive requests retain their original width. -/
 @[simp] theorem requestWidth_of_pos {δ : Rat} (h : 0 < δ) : requestWidth δ = δ :=
   ite_eq_left h
 
+/-- Nonpositive requests use width one instead. -/
+@[simp] theorem requestWidth_of_nonpos {δ : Rat} (h : δ ≤ 0) : requestWidth δ = 1 := by
+  have hn : ¬0 < δ := by have := h; grind
+  exact ite_eq_right hn
+
+/-- Every normalized request is strictly positive, so refinement can progress. -/
 theorem requestWidth_pos (δ : Rat) : 0 < requestWidth δ := by
   unfold requestWidth
   split
@@ -82,6 +89,7 @@ this function is never a coefficient field operation. -/
 def sign? (a : Approximation K) (f : RationalFn K) (fuel : Nat) : Option Int :=
   go fuel 0
 where
+  /-- Try consecutive precisions until the fuel is exhausted or a trial succeeds. -/
   go : Nat → Nat → Option Int
     | 0, _ => none
     | fuel + 1, n =>
@@ -89,12 +97,15 @@ where
       | some s => some s
       | none => go fuel (n + 1)
 
+/-- Formal zero succeeds at every precision without querying the provider. -/
 theorem attempt_zero (a : Approximation K) (n : Nat) : attempt a 0 n = some 0 := by
   simp [attempt, show (0 : RationalFn K).num = 0 from rfl]
 
+/-- A total sign search returns zero for the zero fraction. -/
 theorem sign_zero (a : Approximation K) (h : Acc (Next (attempt a 0)) 0) :
     sign a 0 h = 0 := firstSome_some _ _ _ (attempt_zero a 0)
 
+/-- Every successful approximation trial meets its supplied width bound. -/
 theorem approxAttempt_width (a : Approximation K) (f : RationalFn K)
     (δ : Rat) (n : Nat) {b : Bounds} (hb : approxAttempt a f δ n = some b) :
     b.width ≤ δ := by
