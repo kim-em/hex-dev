@@ -759,7 +759,8 @@ def _mathlib_dependencies_at(git_url: str, revision: str, source: Path) -> list[
     local = source / ".lake/packages/mathlib"
     if (local / "lake-manifest.json").is_file() and run(
             ["git", "rev-parse", "HEAD"], cwd=local, capture=True) == revision:
-        document = json.loads((local / "lake-manifest.json").read_text())
+        document = json.loads(run(["git", "show", f"{revision}:lake-manifest.json"],
+                                  cwd=local, capture=True))
     else:
         url = f"https://raw.githubusercontent.com/{match[1]}/{match[2]}/{revision}/lake-manifest.json"
         with urllib.request.urlopen(url, timeout=60) as response:

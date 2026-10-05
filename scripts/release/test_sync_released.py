@@ -1739,6 +1739,8 @@ class StagedReleaseTests(unittest.TestCase):
                  "commit", "-qm", "lock", cwd=local)
         revision = self.git("rev-parse", "HEAD", cwd=local)
         url = "https://github.com/leanprover-community/mathlib4.git"
+        # A dirty dependency checkout must not replace the immutable lockfile.
+        (local / "lake-manifest.json").write_text(json.dumps({"packages": []}))
         with patch.object(sync_released.urllib.request, "urlopen") as fetch:
             self.assertEqual(sync_released._mathlib_dependencies_at(url, revision, self.source), [package])
             fetch.assert_not_called()
