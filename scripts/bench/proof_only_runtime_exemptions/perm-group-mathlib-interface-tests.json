@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "bec3e8a34b5f1f1d3beeebf2a9877ae715e14071",
+  "current_blob": "2c173e9532bf725d31aefca59508f5caa6fbe9a3",
+  "reason": "The only changed declaration selected by factorization_blocks is HexReleaseTests, whose literal globs add the permutation-group certificate/interface tests and the existing HexBasic module-boundary tests. HexPermGroupTests also adds the lightweight Mathlib adapter tests. These targets do not supply any module imported by the factorization service or benchmark executables. No measured package option, dependency pin, library build setting, executable, native link input or benchmark configuration changes. HexBasic.ModuleBoundaryTests is removed from the public umbrella and remains checked by this explicit test target."
+}
