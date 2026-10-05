@@ -149,9 +149,8 @@ Rerun doubling ratios are 2.03–2.16, compared with 2.29–2.5 for the model.
 The four families show similar growth; this pass does not establish a distinct
 scaling regime for depth-one replay. The other three families are inconclusive in both collections.
 The source-derived model remains s(log₂s+1); the large linear terms described
-above are not fitted away. These observations do not satisfy the full timing
-gate. The larger range specified above supplies the separate follow-up to test
-those costs; its timing collection has its own outstanding acceptance gate. No further unchanged rerun is authorized for this range.
+above are not fitted away. The larger-range collection below supplies the separate follow-up to test
+those costs; the original inconclusive verdicts remain unchanged. No further unchanged rerun is authorized for this range.
 
 [The allocation archive](data/sign-det-nested-tables/39066b34e1/allocation/archive.json)
 retains all 36 operation captures: three trial-major rounds, four registrations,
@@ -205,3 +204,41 @@ and leaves the checkout unchanged. Historical exports use the explicitly fixed
 unchanged stock collector sources and generated helper declarations and symbol
 lines from the original measured binary; original collection metadata and raw
 capture bytes remain unchanged.
+
+## Larger-range timing observations
+
+The larger-range collection contains all 120 scheduled observations at revision
+219e2232cf2a2e2f768ed058119a011e4e1ad13a. All input and result checks passed,
+with no truncated, invalid or discarded sample. The four verdicts are
+consistent with the declared model; no unchanged rerun was needed.
+
+| Operation | Residual slope | Median at 128 queries (ms) | Median at 2048 queries (ms) |
+|---|---:|---:|---:|
+| Depth-one production | −0.095825 | 126.281 | 2276.226 |
+| Depth-one tree replay | −0.074557 | 77.784 | 1483.962 |
+| Depth-two production | −0.093002 | 2566.310 | 46544.805 |
+| Depth-two tree replay | −0.085363 | 1573.124 | 29594.698 |
+
+The [archive](data/sign-det-nested-wide/219e2232cf/archive.json) retains the
+original metadata and losslessly compressed outputs, including the independent
+literal input inventory, host load and CPU affinity, result fingerprints,
+source and executable hashes and harness revision. The full source patch
+reconstructs the measured Git tree; all 303 recorded source hashes are checked.
+The archived collector, bound to its recorded hash, supplies the declaration
+used to validate this historical collection. Validate the points, derived
+medians and source reconstruction with:
+
+    python3 -m scripts.bench.sign_det_nested_wide_archive \
+      reports/data/sign-det-nested-wide/219e2232cf --reconstruct-source
+
+The shared host was chungus2, pinned to CPU 21. At 2048 queries the median
+whole-child peak RSS values were 107290, 88130, 139466 and 104228 KiB in the
+operation order shown above. These include setup and runtime state; they are
+neither operation allocation traffic nor peak live-object sizes. The separate
+36 operation-allocation captures on the earlier ladder remain unchanged in
+PR #10785. Production and replay are overlapping regions and their times are
+not added. The negative slopes indicate slower growth than the normalization
+on the fitted finite range. As explained above, this range does not separate
+linear growth from the logarithmic factor. These results satisfy this family's
+declared finite consistency check, without establishing the library's remaining
+joint/maximal-support findings or complete Phase-4 readiness.

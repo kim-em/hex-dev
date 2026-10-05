@@ -216,3 +216,33 @@ class NestedTablesTests(unittest.TestCase):
         (target/"archive.json").write_text(json.dumps(manifest))
         with self.assertRaisesRegex(ValueError, "reconstructed source tree mismatch"):
             validate_sources(target)
+    def test_wide_archive_preserves_complete_collection(self):
+        from scripts.bench.sign_det_nested_wide_archive import validate
+        archive = Path(__file__).resolve().parents[2]/"reports/data/sign-det-nested-wide/219e2232cf"
+        rows = validate(archive)
+        self.assertEqual(len(rows), 4)
+        self.assertTrue(all(r["verdict"] == "consistent_with_declared_complexity" for r in rows.values()))
+
+    def test_wide_archive_rejects_corrupted_bytes(self):
+        from scripts.bench.sign_det_nested_wide_archive import validate
+        import shutil
+        original = Path(__file__).resolve().parents[2]/"reports/data/sign-det-nested-wide/219e2232cf"
+        archive = Path(self.tmp.name)/"archive"
+        shutil.copytree(original, archive)
+        p = archive/"metadata.json"
+        p.write_bytes(p.read_bytes()+b" ")
+        with self.assertRaisesRegex(ValueError, "archive bytes changed"):
+            validate(archive)
+
+    def test_wide_archive_rejects_rehashed_false_summary(self):
+        from scripts.bench.sign_det_nested_wide_archive import validate
+        import shutil
+        original = Path(__file__).resolve().parents[2]/"reports/data/sign-det-nested-wide/219e2232cf"
+        archive = Path(self.tmp.name)/"archive"
+        shutil.copytree(original, archive)
+        p = archive/"archive.json"
+        manifest = json.loads(p.read_text())
+        manifest["observations"]["runTree2"]["medians_ms"]["2048"] = 1
+        p.write_text(json.dumps(manifest))
+        with self.assertRaisesRegex(ValueError, "summary disagrees"):
+            validate(archive)
