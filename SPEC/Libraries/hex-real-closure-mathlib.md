@@ -560,6 +560,27 @@ constructors derive `DescriptorData` and `ReplayData` from a closed coefficient
 interpretation and membership, sign agreement and zero reflection on this
 finite list; native expressions need no field structure.
 
+`Transport.Finite` transports those same literal checks from reached arithmetic
+operations without assuming `Transport.Closed`. `Transport.MomentData` records the actual
+binary-power trees and left-associated product fold. Its `NodeData` and
+`ReplayData` retain optional preprocessing/reduction witnesses and the exact
+positional child slices. `DerivativeData` records each reconstructed derivative;
+`DescriptorData` combines that sequence with the original count-one replay.
+The finite checker and cardinality theorems retain the same integer evidence.
+The checked-descriptor and selected-sign theorems select one common target root.
+The `of_closed` constructors derive the finite premises; existing closed-domain
+APIs are corollaries of the finite theorems. An importing ordinary-real test
+identifies the unique count-one point satisfying the descriptor
+row and whole additional recorded sign vector from explicit finite data.
+Its identity-interpretation example derives that data from the actual retained
+inventory and consumes the closed-to-finite compatibility constructors.
+A nonempty moment test transports its reached powers and products through a
+reader that changes 2 to 3 and agrees at 0 and 1. No closed domain containing
+the unit supports that reader, since it fails addition at 1 + 1.
+Constructing this arithmetic data from accepted tower
+`Γ`, including the reached zero packings, remains a separate requirement of
+the direct `Sample.realizeReplay` contract.
+
 `Tower.Model.adjoin_inventory` chooses a native representative of the minimal
 polynomial classically and feeds it to the actual joint producer before
 quantifying the interpretation.

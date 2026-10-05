@@ -54,13 +54,42 @@ structure NodeData (read : E → K) (S : E → Prop) (sourceSign : E → Int) (t
     (Hex.SignDet.queryPoly (Hex.SignDet.QueryReduction.operands qs n.preparation)
       n.system.rows[i] n.reductions[i]) a b n.moments[i]
 
+namespace Finite
+
+/-- Finite data for the actual node: only unreduced moments need power/product
+operations; reduced moments retain their literal checked reduction witnesses. -/
+structure NodeData (read : E → K) (sourceSign : E → Int) (targetSign : K → Int)
+    (p : Hex.DensePoly E) (a b : Hex.Endpoint E) (qs : List (Hex.DensePoly E))
+    (n : Hex.SignDet.Node E C) : Prop where
+  head : Leading read p
+  preparation : ∀ r, n.preparation = some r → PreparationData read sourceSign targetSign p qs r.steps
+  products : ∀ i : Fin n.size, n.reductions[i] = none →
+    MomentData read (Hex.SignDet.QueryReduction.operands qs n.preparation) n.system.rows[i]
+  reductions : ∀ i : Fin n.size, ∀ r, n.reductions[i] = some r →
+    ReductionData read sourceSign targetSign p 1
+      (Hex.SignDet.factors (Hex.SignDet.QueryReduction.operands qs n.preparation) n.system.rows[i])
+      r.steps r.result
+  moments : ∀ i : Fin n.size, QueryData read sourceSign targetSign p
+    (Hex.SignDet.queryPoly (Hex.SignDet.QueryReduction.operands qs n.preparation)
+      n.system.rows[i] n.reductions[i]) a b n.moments[i]
+
+/-- Existing closed-domain node data supplies each reached finite operation. -/
+theorem NodeData.of_closed (read : E → K) (S : E → Prop) (closed : Closed read S)
+    (sourceSign : E → Int) (targetSign : K → Int)
+    (p : Hex.DensePoly E) (a b : Hex.Endpoint E) (qs : List (Hex.DensePoly E))
+    (n : Hex.SignDet.Node E C)
+    (data : Hex.RealClosure.Transport.NodeData read S sourceSign targetSign p a b qs n) :
+    NodeData read sourceSign targetSign p a b qs n :=
+  ⟨data.head, data.preparation, fun i _ => MomentData.of_closed read S closed _ _ data.members,
+    data.reductions, data.moments⟩
+
 /-- Full node replay transports every literal binding, preprocessing step and
 moment, retaining the native rank and left-inverse checks on the same integers. -/
 theorem node_check [DecidableEq C] [DecidableEq D]
-    (read : E → K) (S : E → Prop) (closed : Closed read S) (contextMap : C → D)
+    (read : E → K) (zero : read 0 = 0) (unit : read 1 = 1) (contextMap : C → D)
     (sourceSign : E → Int) (targetSign : K → Int) (context : C)
     (p : Hex.DensePoly E) (a b : Hex.Endpoint E) (qs : List (Hex.DensePoly E))
-    (n : Hex.SignDet.Node E C) (data : NodeData read S sourceSign targetSign p a b qs n)
+    (n : Hex.SignDet.Node E C) (data : NodeData read sourceSign targetSign p a b qs n)
     (accepted : n.check sourceSign context p a b qs = true) :
     (node read contextMap n).check targetSign (contextMap context) (polynomial read p)
       (endpoint read a) (endpoint read b) (qs.map (polynomial read)) = true := by
@@ -76,14 +105,30 @@ theorem node_check [DecidableEq C] [DecidableEq D]
     | none => rfl
     | some r =>
       have checked : r.check sourceSign p qs = true := by simpa only [h] using prepared
-      exact preparation_check read closed.read_zero closed.read_one sourceSign targetSign p qs r
+      exact preparation_check read zero unit sourceSign targetSign p qs r
         data.head (data.preparation r h) checked
   · rw [List.all_eq_true] at moments ⊢
     intro i member
-    have checked := moment_check read S closed contextMap sourceSign targetSign context p a b
+    have checked := moment_check read zero unit contextMap sourceSign targetSign context p a b
       (Hex.SignDet.QueryReduction.operands qs n.preparation) n.system.rows[i] n.system.values[i]
-      n.moments[i] n.reductions[i] data.members (data.reductions i) (data.moments i) (moments i member)
+      n.moments[i] n.reductions[i] (data.products i) (data.reductions i) (data.moments i) (moments i member)
     simpa only [preparation_operands, Fin.getElem_fin, Vector.getElem_map] using checked
+
+end Finite
+
+/-- Full node replay transports every literal binding, preprocessing step and
+moment, retaining the native rank and left-inverse checks on the same integers. -/
+theorem node_check [DecidableEq C] [DecidableEq D]
+    (read : E → K) (S : E → Prop) (closed : Closed read S) (contextMap : C → D)
+    (sourceSign : E → Int) (targetSign : K → Int) (context : C)
+    (p : Hex.DensePoly E) (a b : Hex.Endpoint E) (qs : List (Hex.DensePoly E))
+    (n : Hex.SignDet.Node E C) (data : NodeData read S sourceSign targetSign p a b qs n)
+    (accepted : n.check sourceSign context p a b qs = true) :
+    (node read contextMap n).check targetSign (contextMap context) (polynomial read p)
+      (endpoint read a) (endpoint read b) (qs.map (polynomial read)) = true := by
+  exact Finite.node_check read closed.read_zero closed.read_one contextMap
+    sourceSign targetSign context p a b qs n
+    (Finite.NodeData.of_closed read S closed sourceSign targetSign p a b qs n data) accepted
 
 /-- Interpret every supplied node, retaining the finite tree's actual shape. -/
 @[expose] def replay (read : E → K) (contextMap : C → D) :
@@ -107,13 +152,37 @@ theorem replay_node (read : E → K) (contextMap : C → D) (t : Hex.SignDet.Rep
       ReplayData read S sourceSign targetSign p a b (qs.take (qs.length / 2)) l ∧
       ReplayData read S sourceSign targetSign p a b (qs.drop (qs.length / 2)) r
 
+namespace Finite
+
+/-- Finite obligations follow the actual tree and its positional query slices. -/
+@[expose] def ReplayData (read : E → K) (sourceSign : E → Int)
+    (targetSign : K → Int) (p : Hex.DensePoly E) (a b : Hex.Endpoint E)
+    (qs : List (Hex.DensePoly E)) : Hex.SignDet.Replay E C → Prop
+  | .leaf n => NodeData read sourceSign targetSign p a b qs n
+  | .split n l r => NodeData read sourceSign targetSign p a b qs n ∧
+      ReplayData read sourceSign targetSign p a b (qs.take (qs.length / 2)) l ∧
+      ReplayData read sourceSign targetSign p a b (qs.drop (qs.length / 2)) r
+
+/-- Closed replay data derives finite data without altering a node or query slice. -/
+theorem ReplayData.of_closed (read : E → K) (S : E → Prop) (closed : Closed read S)
+    (sourceSign : E → Int) (targetSign : K → Int)
+    (p : Hex.DensePoly E) (a b : Hex.Endpoint E) (qs : List (Hex.DensePoly E))
+    (t : Hex.SignDet.Replay E C)
+    (data : Hex.RealClosure.Transport.ReplayData read S sourceSign targetSign p a b qs t) :
+    ReplayData read sourceSign targetSign p a b qs t := by
+  induction t generalizing qs with
+  | leaf n => exact NodeData.of_closed read S closed sourceSign targetSign p a b qs n data
+  | split n l r ihl ihr =>
+    exact ⟨NodeData.of_closed read S closed sourceSign targetSign p a b qs n data.1,
+      ihl _ data.2.1, ihr _ data.2.2⟩
+
 /-- Complete recursive BKR replay transports both child checks, exact product
 supports and retained rows, every node's integer evidence, and all moments. -/
 theorem replay_check [DecidableEq C] [DecidableEq D]
-    (read : E → K) (S : E → Prop) (closed : Closed read S) (contextMap : C → D)
+    (read : E → K) (zero : read 0 = 0) (unit : read 1 = 1) (contextMap : C → D)
     (sourceSign : E → Int) (targetSign : K → Int) (context : C)
     (p : Hex.DensePoly E) (a b : Hex.Endpoint E) (qs : List (Hex.DensePoly E))
-    (t : Hex.SignDet.Replay E C) (data : ReplayData read S sourceSign targetSign p a b qs t)
+    (t : Hex.SignDet.Replay E C) (data : ReplayData read sourceSign targetSign p a b qs t)
     (accepted : t.check sourceSign context p a b qs = true) :
     (replay read contextMap t).check targetSign (contextMap context) (polynomial read p)
       (endpoint read a) (endpoint read b) (qs.map (polynomial read)) = true := by
@@ -123,7 +192,7 @@ theorem replay_check [DecidableEq C] [DecidableEq D]
     simp only [replay, Hex.SignDet.Replay.check, node, List.length_map,
       Bool.and_eq_true, decide_eq_true_eq, and_assoc]
     exact ⟨accepted.1, accepted.2.1, accepted.2.2.1,
-      node_check read S closed contextMap sourceSign targetSign context p a b qs n data accepted.2.2.2⟩
+      node_check read zero unit contextMap sourceSign targetSign context p a b qs n data accepted.2.2.2⟩
   | split n l r ihl ihr =>
     simp only [Hex.SignDet.Replay.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at accepted
     simp only [replay, Hex.SignDet.Replay.check, replay_node, node, List.length_map,
@@ -134,8 +203,24 @@ theorem replay_check [DecidableEq C] [DecidableEq D]
     · rw [replay_node, replay_node]
       exact accepted.2.2.2.1
     · exact accepted.2.2.2.2.1
-    · exact node_check read S closed contextMap sourceSign targetSign context p a b qs n
+    · exact node_check read zero unit contextMap sourceSign targetSign context p a b qs n
         data.1 accepted.2.2.2.2.2
+
+end Finite
+
+/-- Complete recursive BKR replay transports both child checks, exact product
+supports and retained rows, every node's integer evidence, and all moments. -/
+theorem replay_check [DecidableEq C] [DecidableEq D]
+    (read : E → K) (S : E → Prop) (closed : Closed read S) (contextMap : C → D)
+    (sourceSign : E → Int) (targetSign : K → Int) (context : C)
+    (p : Hex.DensePoly E) (a b : Hex.Endpoint E) (qs : List (Hex.DensePoly E))
+    (t : Hex.SignDet.Replay E C) (data : ReplayData read S sourceSign targetSign p a b qs t)
+    (accepted : t.check sourceSign context p a b qs = true) :
+    (replay read contextMap t).check targetSign (contextMap context) (polynomial read p)
+      (endpoint read a) (endpoint read b) (qs.map (polynomial read)) = true := by
+  exact Finite.replay_check read closed.read_zero closed.read_one contextMap
+    sourceSign targetSign context p a b qs t
+    (Finite.ReplayData.of_closed read S closed sourceSign targetSign p a b qs t data) accepted
 
 end Hex.RealClosure.Transport
 
@@ -151,3 +236,19 @@ end Hex.RealClosure.Transport
 /-- info: 'Hex.RealClosure.Transport.replay_check' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Transport.replay_check
+
+/-- info: 'Hex.RealClosure.Transport.Finite.NodeData.of_closed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.Finite.NodeData.of_closed
+
+/-- info: 'Hex.RealClosure.Transport.Finite.node_check' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.Finite.node_check
+
+/-- info: 'Hex.RealClosure.Transport.Finite.ReplayData.of_closed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.Finite.ReplayData.of_closed
+
+/-- info: 'Hex.RealClosure.Transport.Finite.replay_check' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.Finite.replay_check

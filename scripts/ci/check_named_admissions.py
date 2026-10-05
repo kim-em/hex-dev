@@ -263,7 +263,7 @@ def check() -> None:
              "HexRealClosureMathlib.TransportClosedQuery", "HexRealClosureMathlib.TransportClosedReduction",
              "HexRealClosureMathlib.TransportPreparation", "HexRealClosureMathlib.TransportMoment",
              "HexRealClosureMathlib.TransportReplay", "HexRealClosureMathlib.TransportSample", "HexRealClosureMathlib.TransportDescriptor",
-             "HexRealClosureMathlib.TransportSelected", "HexRealClosureMathlib.TransportRegular",
+             "HexRealClosureMathlib.TransportSelected", "HexRealClosureMathlib.TransportFiniteTests", "HexRealClosureMathlib.TransportRegular",
              "HexRealClosureMathlib.TransportReduction",
              "HexRealClosureMathlib.SpecializeTests", "HexRealClosureMathlib.Algebraic",
              "HexRealClosureMathlib.AlgebraicClean", "HexRealClosureMathlib.AlgebraicValue",
