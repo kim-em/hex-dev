@@ -107,4 +107,3 @@ class NestedSigns(unittest.TestCase):
                          "consistent_with_declared_complexity")
 
 # Include whole-table checks in the existing nested-coefficient CI suite.
-from scripts.bench.test_sign_det_nested_tables import NestedTablesTests

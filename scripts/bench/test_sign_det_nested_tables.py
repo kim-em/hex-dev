@@ -12,19 +12,9 @@ class NestedTablesTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.path = Path(self.tmp.name)/"records"
-        self.rows = []
-        for depth in bench.DEPTHS:
-            epsilon = {"num": [bench.constant(0, depth-1), bench.constant(1, depth-1)],
-                       "den": [bench.constant(1, depth-1)]}
-            for size in bench.SIZES:
-                self.rows.append({"depth": depth, "queries": size,
-                    "head": [bench.constant(0, depth), bench.constant(1, depth)],
-                    "coefficient": epsilon, "queryPolynomials": [[epsilon]]*size,
-                    "table": [[[1]*size, 1]], "headDegree": 1, "queryDegree": 0,
-                    "rootCount": 1, "realizedSupport": 1, "treeNodes": 2*size-1,
-                    "momentSlots": 4*size-1, "maxMatrixSize": 3,
-                    "graphNodes": 1, "graphEdges": 0, "inputHash": depth*size,
-                    "productionResultHash": depth*1000+size, "replayResultHash": 11})
+        # Actual compiled inventories; fingerprints are not invented by the test.
+        fixture = Path(__file__).with_name("fixtures")/"sign-det-nested-table-inputs.jsonl"
+        self.rows = [json.loads(line) for line in fixture.read_text().splitlines()]
 
     def inputs(self, rows):
         self.path.write_text("\n".join(map(json.dumps, rows))+"\n")
@@ -35,7 +25,9 @@ class NestedTablesTests(unittest.TestCase):
         for key, value in (("table", [[[0]*8, 1]]), ("rootCount", 2),
                            ("coefficient", bench.constant(1, 1)),
                            ("queryPolynomials", []), ("head", []),
-                           ("momentSlots", 3), ("inputHash", True)):
+                           ("momentSlots", 3), ("inputHash", True),
+                           ("queryReductionSteps", 8), ("leafDomains", 0),
+                           ("replayResultHash", 1)):
             changed = copy.deepcopy(self.rows); changed[0][key] = value
             with self.subTest(key=key), self.assertRaises(ValueError):
                 self.inputs(changed)
@@ -76,3 +68,31 @@ class NestedTablesTests(unittest.TestCase):
         changed = copy.deepcopy(result); changed["points"].pop()
         with self.assertRaises(ValueError):
             check(changed)
+
+    def test_replay_rejects_another_depth_or_query_count(self):
+        expected = self.inputs(self.rows)
+        hashes = [row["replayResultHash"] for row in expected.values()]
+        self.assertEqual(len(set(hashes)), len(hashes))
+        for size in bench.SIZES:
+            self.assertNotEqual(expected[1, size]["productionResultHash"],
+                                expected[2, size]["productionResultHash"])
+        result = {"function": bench.PREFIX+"runTree2", "kind": "parametric",
+                  "hashable": True, "budget_truncated": False, "config": bench.CONFIG,
+                  "complexity_formula": "s * (Nat.log2 s + 1)",
+                  "env": {"git_commit": "source", "git_dirty": False},
+                  "verdict": "inconclusive", "slope": 1, "advisories": [], "points": [
+                      {"trial_index": trial, "param": size, "status": "ok",
+                       "result_hash": hex(expected[2, size]["replayResultHash"]),
+                       "part_of_verdict": True, "below_signal_floor": False,
+                       "per_call_nanos": size*100, "inner_repeats": 1,
+                       "peak_rss_kb": 100, "alloc_bytes": None}
+                      for trial in range(bench.TRIALS) for size in bench.SIZES]}
+        def check(value):
+            self.path.write_text(json.dumps({"export_schema_version": 1, "results": [value]}))
+            return bench.validate_result(self.path, "runTree2", expected, "source")
+        check(result)
+        for depth, size in ((1, bench.SIZES[0]), (2, bench.SIZES[1])):
+            changed = copy.deepcopy(result)
+            changed["points"][0]["result_hash"] = hex(expected[depth, size]["replayResultHash"])
+            with self.subTest(depth=depth, size=size), self.assertRaises(ValueError):
+                check(changed)

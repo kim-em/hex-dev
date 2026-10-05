@@ -54,7 +54,8 @@ def validate_inputs(path):
                 literal(row["table"]) != literal([[[1]*size, 1]])):
             raise ValueError("wrong literal polynomial, coefficient or complete one-root table")
         sizes = {"headDegree": 1, "queryDegree": 0, "rootCount": 1, "realizedSupport": 1,
-                 "treeNodes": 2*size-1, "momentSlots": 4*size-1, "maxMatrixSize": 3}
+                 "treeNodes": 2*size-1, "momentSlots": 4*size-1, "maxMatrixSize": 3,
+                 "queryReductionSteps": size*size.bit_length(), "leafDomains": size}
         if any(type(row.get(key)) is not int or row[key] != value for key, value in sizes.items()):
             raise ValueError("wrong nested-field evidence dimensions")
         if (type(row.get("graphNodes")) is not int or row["graphNodes"] < 1 or
@@ -63,6 +64,8 @@ def validate_inputs(path):
         for key in ("inputHash", "productionResultHash", "replayResultHash"):
             if type(row.get(key)) is not int or not 0 <= row[key] < 2**64:
                 raise ValueError("invalid inventory hash")
+        if row["replayResultHash"] != row["inputHash"]:
+            raise ValueError("replay result does not bind the prepared input")
         expected[depth, size] = row
     return expected
 
@@ -137,6 +140,7 @@ def main():
         for p in [ROOT/(library+".lean"), *(ROOT/library).rglob("*.lean")]:
             sources[str(p.relative_to(ROOT))] = digest(p)
     for name in ("scripts/bench/sign_det_nested_tables.py", "scripts/bench/test_sign_det_nested_tables.py",
+                 "scripts/bench/fixtures/sign-det-nested-table-inputs.jsonl",
                  "scripts/bench/sign_det_nested_signs.py", "scripts/bench/sign_det_compare.py",
                  "scripts/bench/sign_det_joint_timing.py", "reports/sign-det-nested-tables.md"):
         sources[name] = digest(ROOT/name)

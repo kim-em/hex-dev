@@ -145,21 +145,20 @@ Polynomial/field construction and the input's reference evidence are outside tim
   | some i =>
     letI := i.coefficients.field
     letI := i.coefficients.equality
-    letI : Hashable i.coefficients.Carrier := ⟨i.coefficients.fingerprint⟩
     letI : NatCast i.coefficients.Carrier := Lean.Grind.Semiring.natCast
     match buildPrepared (10377 : Nat) i.data.domain i.data.queries with
     | .error _ => none
-    | .ok built => some (hash (entries built.val.node.system))
+    | .ok built => some (mixHash i.fingerprint (hash (entries built.val.node.system)))
 
-@[noinline] private def checkTree (i : Option Input) : Bool :=
+@[noinline] private def checkTree (i : Option Input) : Option UInt64 :=
   match i with
-  | none => false
+  | none => none
   | some i =>
     letI := i.coefficients.field
     letI := i.coefficients.equality
     letI : NatCast i.coefficients.Carrier := Lean.Grind.Semiring.natCast
-    i.data.tree.check i.coefficients.sign 10377 i.data.head
-      .negInf .posInf i.data.queries
+    if i.data.tree.check i.coefficients.sign 10377 i.data.head
+        .negInf .posInf i.data.queries then some i.fingerprint else none
 
 @[noinline] private def checkGraph (i : Option Input) : Bool :=
   match i with
@@ -174,13 +173,13 @@ Polynomial/field construction and the input's reference evidence are outside tim
 /-
 For each fixed coefficient depth, P=X has one root and each query is the
 same positive constant. Every parent retains one sign column and the constant
-row; leaves have three moment rows. Thus every polynomial degree, coefficient
-representation and matrix dimension is bounded independently of s. There are
-2s-1 tree nodes and balanced arity volume s*(log2(s)+1). Constructing/checking
-the literal length-k query/sign/exponent lists costs O(k) at a node, giving
-Theta(s log s). Graph sharing reduces repeated child entries but its root
-still contains length-s lists; this registration makes no tight graph model.
-Depth is a separately fixed facet, not a fitted arithmetic exponent.
+row; leaves have three moment rows. Polynomial degree, coefficient size and
+matrix dimension stay bounded independently of s. Replaying query reductions
+at every balanced node contributes s*(log2(s)+1) steps. The 4s-1 moment checks,
+s leaf-domain replays and production's s initial normalizations contribute
+linear terms with potentially large constants. The leading asymptotic cost is
+Theta(s log s); this short range need not separate it from those linear terms.
+Graph sharing has no registered tight model. Depth is a fixed facet.
 -/
 
 def input1 (size : Nat) : Option Input := input 1 size
@@ -188,6 +187,10 @@ def input2 (size : Nat) : Option Input := input 2 size
 
 @[noinline] def runProduce1 (i : Option Input) := produce i
 
+-- Cost model: balanced query-reduction replay has s*(log2(s)+1) steps.
+-- Production includes its own full replay plus linear initial normalization.
+-- Fixed depth bounds arithmetic and matrix sizes, giving Theta(s log s)
+-- with linear lower-order terms; finite-range consistency is not assumed.
 setup_benchmark runProduce1 s => s * (Nat.log2 s + 1)
   with prep := input1
   where {
@@ -202,6 +205,10 @@ setup_benchmark runProduce1 s => s * (Nat.log2 s + 1)
 
 @[noinline] def runTree1 (i : Option Input) := checkTree i
 
+-- Cost model: balanced query-reduction replay has s*(log2(s)+1) steps.
+-- Supplied-tree replay also checks 4s-1 bounded-size moments and s leaf domains.
+-- Fixed depth bounds arithmetic and matrix sizes, giving Theta(s log s)
+-- with linear lower-order terms; finite-range consistency is not assumed.
 setup_benchmark runTree1 s => s * (Nat.log2 s + 1)
   with prep := input1
   where {
@@ -216,6 +223,10 @@ setup_benchmark runTree1 s => s * (Nat.log2 s + 1)
 
 @[noinline] def runProduce2 (i : Option Input) := produce i
 
+-- Cost model: balanced query-reduction replay has s*(log2(s)+1) steps.
+-- Production includes its own full replay plus linear initial normalization.
+-- Fixed depth bounds arithmetic and matrix sizes, giving Theta(s log s)
+-- with linear lower-order terms; finite-range consistency is not assumed.
 setup_benchmark runProduce2 s => s * (Nat.log2 s + 1)
   with prep := input2
   where {
@@ -230,6 +241,10 @@ setup_benchmark runProduce2 s => s * (Nat.log2 s + 1)
 
 @[noinline] def runTree2 (i : Option Input) := checkTree i
 
+-- Cost model: balanced query-reduction replay has s*(log2(s)+1) steps.
+-- Supplied-tree replay also checks 4s-1 bounded-size moments and s leaf domains.
+-- Fixed depth bounds arithmetic and matrix sizes, giving Theta(s log s)
+-- with linear lower-order terms; finite-range consistency is not assumed.
 setup_benchmark runTree2 s => s * (Nat.log2 s + 1)
   with prep := input2
   where {
@@ -264,14 +279,17 @@ private def inventory (depth size : Nat) (i : Input) : Lean.Json :=
     ("table", Lean.toJson table),
     ("treeNodes", Lean.toJson ns.length),
     ("momentSlots", Lean.toJson (ns.foldl (fun n node => n + node.size) 0)),
+    ("queryReductionSteps", Lean.toJson (ns.foldl (fun n node =>
+      n + (node.preparation.map (fun r => r.steps.length)).getD 0) 0)),
+    ("leafDomains", Lean.toJson (ns.filter (fun node => node.queries.length == 1)).length),
     ("maxMatrixSize", Lean.toJson (ns.foldl (fun n node => max n node.size) 0)),
     ("coefficient", i.coefficients.encode i.coefficients.epsilon),
     ("graphNodes", Lean.toJson i.data.graph.entries.size),
     ("graphEdges", Lean.toJson (i.data.graph.entries.foldl
       (fun n e => n + if e.children.isSome then 2 else 0) (0 : Nat))),
     ("inputHash", Lean.toJson (hash (some i)).toNat),
-    ("productionResultHash", Lean.toJson (hash (some (hash table))).toNat),
-    ("replayResultHash", Lean.toJson (hash true).toNat)]
+    ("productionResultHash", Lean.toJson (hash (some (mixHash i.fingerprint (hash table)))).toNat),
+    ("replayResultHash", Lean.toJson (hash (some i.fingerprint)).toNat)]
 
 /-- Exact one-root tables and supplied tree/graph checks before measurement.
 The coefficient encoding shows the actual positive newest infinitesimal. -/
@@ -282,8 +300,10 @@ def inspectFor (depths sizes : Array Nat) : IO UInt32 := do
       letI := i.coefficients.field
       letI := i.coefficients.equality
       letI : NatCast i.coefficients.Carrier := Lean.Grind.Semiring.natCast
-      let expected := some (hash [(List.replicate size (1 : Int), (1 : Int))])
-      unless produce (some i) == expected && checkTree (some i) && checkGraph (some i) do
+      let expected := some (mixHash i.fingerprint
+        (hash [(List.replicate size (1 : Int), (1 : Int))]))
+      unless produce (some i) == expected &&
+          checkTree (some i) == some i.fingerprint && checkGraph (some i) do
         throw (IO.userError "nested table callback failed")
       IO.println (inventory depth size i).compress
       (← IO.getStdout).flush

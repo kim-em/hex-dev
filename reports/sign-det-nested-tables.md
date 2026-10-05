@@ -26,9 +26,24 @@ matrix dimensions are bounded independently of the query count s. Leaves
 have three moment rows and every parent retains one row and one sign column.
 The tree has 2s−1 nodes and 4s−1 moment slots. Its balanced arity volume is
 s(log₂s+1); the actual construction and replay scan length-k query, sign and
-exponent lists at a node. The declared model is therefore s(log₂s+1).
+exponent lists at a node. Inspection counts the query-reduction steps actually stored at every node:
+s(log₂s+1). Replay also checks 4s−1 moment certificates and s leaf domains;
+production adds s initial query normalizations. These linear terms can have
+large constants. The asymptotic model is s(log₂s+1), but the range 8..128
+may give an inconclusive verdict if it does not separate the two terms.
+The harness fits per-parameter medians after dropping the first parameter,
+so the fitted range is 16..128. No exponent or linear coefficient is fitted.
 Depth-dependent arithmetic costs are fixed within each registration.
 The measurements make no fitted exponential claim across depths.
+
+Normalization changes the constant infinitesimal query to operand 1 and
+stores the infinitesimal in its scale witness. The Tarski moments therefore
+use 1 and X; infinitesimal arithmetic occurs in normalization and replay of
+the query-reduction witnesses. At depth two, the lower-level coefficients
+are only 0 and 1. These examples measure two layers of field arithmetic,
+not interactions between infinitesimals from different levels. Field
+operations use stored instance dictionaries, so absolute times need not
+match a caller with specialized concrete coefficient types.
 
 Run:
 
@@ -40,7 +55,11 @@ The collector uses one automatically leased CPU, six trial-major rounds
 per registration, the shared 100 ms repeat target and a 300-second
 operational child cap. It retains all scheduled outputs before judging
 them, including inconclusive results or invalid points. Clean source,
-binary, harness, exact input/result hashes and host context are recorded.
+binary, harness, input/result fingerprints and host context are recorded.
+The timed producer mixes its table hash with the prepared input fingerprint;
+successful replay returns that fingerprint. Both results distinguish the
+field depth and supplied input. These fingerprints are reproducibility
+checks, not independent mathematical proofs.
 Its output must be outside the source checkout.
 
 These supplied same-level graphs do not represent coefficient-sign proof
