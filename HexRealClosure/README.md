@@ -179,9 +179,18 @@ checks the original polynomials, all roots, labels, intervals, derivative words
 and query signs. A second cubic fixture selects the middle root of
 `X³−3X+1`, which has three real embeddings including two positive ones.
 Each generator carries its actual isolating bounds, so the oracle and
-conjugate-swap mutations distinguish embeddings with the same sign. Existing SignDet common-field fixtures cover coordinates obtained
-from distinct real fields through `QAdjoin.common`. The companion's
-`NumberField.common_value` proves that every returned common-field coordinate
+conjugate-swap mutations distinguish embeddings with the same sign.
+
+The same executable computes a common field for the selected positive values
+`a = √2` and `b = √3` using `QAdjoin.common`, then runs `NumberField.roots`
+on `Y³(Y²−b)²(Y−a)` in the returned coordinates. It returns
+`−3^(1/4), 0, 3^(1/4), √2` with multiplicities `2,3,2,1`.
+The zero entry uses the point-root branch. FLINT independently checks the
+selected primitive quartic generator, both original inputs and their coordinates before
+checking the input polynomial and its complete root list. All fixtures' selected
+entries also record the sign of `(root−3)⁻¹ + 1/2`, which varies across the roots;
+the oracle computes this value independently.
+The companion's `NumberField.common_value` proves that every returned common-field coordinate
 retains the corresponding input's entire complex value when the computed
 common generator passes the real check.
 

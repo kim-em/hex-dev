@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
+public import HexNumberField.CommonField
+public import HexNumberField.Nearest
 public import HexRealClosure.NumberField
 public import HexRealClosure.QAdjoin
 public import HexRealClosure.Algebraic
@@ -51,6 +53,8 @@ private def entryJson (generator : RealAlgebraicNumber) (context : Nat)
         ("indices", Json.of d.raw.indices), ("signs", Json.of d.raw.signs),
         ("generator_sign", Json.of (Algebraic.Element.sign beta)),
         ("inverse_sign", Json.of (Algebraic.Element.sign shifted⁻¹)),
+        ("inverse_shift_sign", Json.of (Algebraic.Element.sign (shifted⁻¹ + Algebraic.Element.ofPoly
+          (DensePoly.C (1 / 2 : QAdjoin generator.toAlgebraic))))),
         ("inverse_identity_sign", Json.of (Algebraic.Element.sign (shifted * shifted⁻¹ - 1)))],
         signs.values.toList)
   let (root, signs) := result
@@ -59,7 +63,9 @@ private def entryJson (generator : RealAlgebraicNumber) (context : Nat)
 
 private def emit (generator : RealAlgebraicNumber) (name : String)
     (p : DensePoly (QAdjoin generator.toAlgebraic))
-    (queries : List (DensePoly (QAdjoin generator.toAlgebraic))) : IO Unit := do
+    (queries : List (DensePoly (QAdjoin generator.toAlgebraic)))
+    (inputs : Array AlgebraicNumber := #[])
+    (coordinates : Array (QAdjoin generator.toAlgebraic) := #[]) : IO Unit := do
   let context := 10378
   let output := NumberField.roots generator context p
   let output ← match output with
@@ -76,6 +82,12 @@ private def emit (generator : RealAlgebraicNumber) (name : String)
     ("generator_sign", Json.of generator.sign),
     ("generator_lower", rational (square.re - square.radiusHi).toRat),
     ("generator_upper", rational (square.re + square.radiusHi).toRat),
+    ("inputs", .arr (inputs.map fun a =>
+      let square := a.rep.1.square
+      object [("head", .arr (a.p.toArray.map Json.of)),
+        ("lower", rational (square.re - square.radiusHi).toRat),
+        ("upper", rational (square.re + square.radiusHi).toRat)])),
+    ("coordinates", .arr (coordinates.map coordinate)),
     ("head", .arr (p.toArray.map coordinate)),
     ("queries", .arr (queries.toArray.map fun p => .arr (p.toArray.map coordinate))),
     ("output", output)])
@@ -105,3 +117,17 @@ def main : IO Unit := do
   let y : DensePoly (QAdjoin middle.toAlgebraic) := DensePoly.ofList [0, 1]
   let q := y*y - DensePoly.C gamma
   emit middle "middle cubic embedding" (q*q*(y-1)) [y, y-1, q, y-DensePoly.C gamma]
+
+  let inputs := #[ZPoly.rootNear #p[-2, 0, 1] 1.4, ZPoly.rootNear #p[-3, 0, 1] 1.7]
+  let common := QAdjoin.common inputs
+  if real : common.generator.isReal = true then
+    let generator := RealAlgebraicNumber.ofAlgebraic common.generator real
+    let coordinates : Array (QAdjoin generator.toAlgebraic) := common.entries
+    let some a := coordinates[0]? | throw (IO.userError "missing quadratic coordinate")
+    let some b := coordinates[1]? | throw (IO.userError "missing second coordinate")
+    let y : DensePoly (QAdjoin generator.toAlgebraic) := DensePoly.ofList [0, 1]
+    let quadratic := y*y - DensePoly.C b
+    emit generator "common quadratic fields with zero root"
+      (y*y*y * quadratic*quadratic*(y-DensePoly.C a))
+      [y, y-1, quadratic, y-DensePoly.C a] inputs coordinates
+  else throw (IO.userError "common generator is not real")

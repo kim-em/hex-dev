@@ -17,7 +17,7 @@ class NumberFieldTests(unittest.TestCase):
 
     def test_original_and_case_inventory(self):
         rows = self.rows()
-        self.assertEqual(check(rows)['cases'], 4)
+        self.assertEqual(check(rows)['cases'], 5)
         for changed in [rows[:-1], rows+[rows[1]], [rows[0], rows[1], rows[1]]]:
             with self.assertRaises(ValueError): check(changed)
 
@@ -62,12 +62,41 @@ class NumberFieldTests(unittest.TestCase):
             lambda r: r.__setitem__('head', []),
             lambda r: r.__setitem__('inverse_sign', 1),
             lambda r: r.__setitem__('inverse_identity_sign', 1),
+            lambda r: r.__setitem__('inverse_shift_sign', 0),
         ]
         for mutate in mutations:
             with self.subTest(mutation=mutate):
                 rows = self.rows()
                 root = next(e['root'] for e in rows[1]['output']['entries'] if e['root']['kind']=='selected')
                 mutate(root)
+                with self.assertRaises(ValueError): check(rows)
+
+    def test_common_field_inputs_and_point_branch(self):
+        mutations = [
+            lambda r: r.__setitem__('generator_head', [-5,1,50,-10,-5,1]),
+            lambda r: r.__setitem__('generator_head', [2,0,-20,0,2]),
+            lambda r: r.update(generator_lower=[1,4],generator_upper=[1,2]),
+            lambda r: r.update(generator_lower=[-16,5],generator_upper=[-3,1],generator_sign=-1),
+            lambda r: r.__setitem__('generator_sign', 0),
+            lambda r: r.__setitem__('inputs', [1,2]),
+            lambda r: r['inputs'][0].pop('lower'),
+            lambda r: r.__setitem__('head', []),
+            lambda r: r['queries'][0].clear(),
+            lambda r: r['output']['entries'][0]['root'].__setitem__('lower', [2]),
+            lambda r: r['output']['entries'][0]['root'].__setitem__('indices', [0]),
+            lambda r: r['output']['entries'][0]['root'].__setitem__('inverse_shift_sign', 0),
+            lambda r: r['inputs'][0].__setitem__('head', [-3,0,1]),
+            lambda r: r['inputs'][1].__setitem__('lower', [-2,1]),
+            lambda r: r['coordinates'].reverse(),
+            lambda r: r['coordinates'][0].clear(),
+            lambda r: r['output']['entries'][1].__setitem__('multiplicity', 2),
+            lambda r: r['output']['entries'][1]['root'].__setitem__('value', [[1,1]]),
+        ]
+        for mutate in mutations:
+            with self.subTest(mutation=mutate):
+                rows = self.rows()
+                row = next(r for r in rows if r['case'] == 'common quadratic fields with zero root')
+                mutate(row)
                 with self.assertRaises(ValueError): check(rows)
 
 
