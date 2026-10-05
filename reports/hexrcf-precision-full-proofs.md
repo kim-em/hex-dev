@@ -1,5 +1,10 @@
 # Initial precision with construction and transport included
 
+> The drivers under `scripts/bench/hexrcf_*.py` and the probe modules under
+> `bench/HexRCF/ProofProbe/` that this report cites, other than `Examples` and
+> `Registered/`, were removed from `main` after commit `45a4e4e9a4`. Check out
+> that commit to rerun them.
+
 The separate [production-acceptance study](hexrcf-precision-production-proofs.md)
 uses the actual tactic acceptance routine and a balanced six-round schedule.
 Its observations are retained separately from this 24-arm study.

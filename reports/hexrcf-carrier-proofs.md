@@ -1,5 +1,10 @@
 # Fixed-field carrier normalization comparison
 
+> The drivers under `scripts/bench/hexrcf_*.py` and the probe modules under
+> `bench/HexRCF/ProofProbe/` that this report cites, other than `Examples` and
+> `Registered/`, were removed from `main` after commit `45a4e4e9a4`. Check out
+> that commit to rerun them.
+
 This experiment tests #10634's carrier-normalization proposal. The candidate
 uses the existing `DensePoly.monicize` operation on the derivative-gcd quotient.
 It preserves the original polynomial product and checks both radical

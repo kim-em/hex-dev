@@ -1,5 +1,10 @@
 # Fixed-field root-section proof cost
 
+> The drivers under `scripts/bench/hexrcf_*.py` and the probe modules under
+> `bench/HexRCF/ProofProbe/` that this report cites, other than `Examples` and
+> `Registered/`, were removed from `main` after commit `45a4e4e9a4`. Check out
+> that commit to rerun them.
+
 This experiment investigates the proof-construction cost of two actual algebraic
 `rcf` goals: sections separated by `2^-132`, and a further algebraic root with
 `x² = √2` and `1 < x < 2`. Each fresh module uses identical imports and emits an
