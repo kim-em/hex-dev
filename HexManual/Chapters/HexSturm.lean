@@ -256,14 +256,10 @@ This uses `HexSturmMathlib` together with `HexRealRootsMathlib`, whose
 umbrella supplies the real-closed-field instance for `ℝ`. Both are ordinary
 public imports:
 
-The local instance makes the executable operations use the field dictionary
-induced by Mathlib's `Field`, matching this theorem specialization.
-
 ```lean
 namespace SturmSemantics
 open HexPolyMathlib.Interpret HexRealRootsMathlib
-attribute [local instance 2000]
-  Field.toGrindField
+open scoped Classical
 noncomputable section
 
 variable (p q : DensePoly ℝ)

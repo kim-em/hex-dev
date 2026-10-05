@@ -52,8 +52,8 @@ example (p q : DensePoly ℝ) (a b : Endpoint ℝ) (v : Int) :
 - `queryReduced_eq` preserves the whole ordinary query result under lawful
   division. `query_congr` compares representations at corresponding endpoints,
   allowing independent positive scaling of both input polynomials.
-- `query_rat_eq` proves whole-`Option` rational/integer agreement after positive
-  denominator clearing. `DenominatorClearing.certificate_checks` and
+- `query_rat_eq` proves whole-`Option` rational/integer agreement on finite dyadic
+  intervals after positive denominator clearing. `DenominatorClearing.certificate_checks` and
   `IntCast.certificate_checks` preserve acceptance when translating certificates,
   retaining literal contexts and values without rerunning the producer.
 
