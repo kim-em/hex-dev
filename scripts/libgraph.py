@@ -18,7 +18,9 @@ KNOWN_EXCEPTIONS = {"Hex", "HexManual", "HexAggregateCheck", "HexGraph"}
 # Native carrier lean_libs: each takes the modules binding a library's C code,
 # plus the objects, so Windows can link them (PLAN/Conventions.md). They are part
 # of the library named by their prefix and are published inside its repository.
-NATIVE_CARRIER_LIBS = {"HexArithNative", "HexModArithNative"}
+# The optional tower reconstruction plugin keeps its runtime dependencies out
+# of imports that use only the main tower umbrella.
+NATIVE_CARRIER_LIBS = {"HexArithNative", "HexModArithNative", "HexRealClosureRepr"}
 # Build-only lean_libs for drivers, proof probes and examples under
 # `bench/`, `conformance/` and `examples/`. They are not project libraries (no libraries.yml
 # entry, no repo-root file); exempt them from the Lake-config alignment check only.

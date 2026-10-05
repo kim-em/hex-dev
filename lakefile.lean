@@ -343,8 +343,14 @@ lean_lib HexSignDet where
 lean_lib HexSignDetMathlib where
 
 lean_lib HexRealClosure where
-  roots := #[`HexRealClosure, `HexRealClosure.TowerRepr]
   -- The runnable selected-root tests use `#eval` across the library boundary.
+  precompileModules := true
+
+-- Optional reconstruction expressions have their own native plugin. The main
+-- tower plugin must not acquire dependencies absent from its public umbrella.
+lean_lib HexRealClosureRepr where
+  roots := #[`HexRealClosure.TowerRepr]
+  globs := #[.one `HexRealClosure.TowerRepr, .one `HexRealClosure.ReprFormat]
   precompileModules := true
 
 @[default_target]
