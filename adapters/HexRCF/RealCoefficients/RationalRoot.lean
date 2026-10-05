@@ -148,14 +148,7 @@ def parameters? (original : Expr) (config : Hex.RealFormula.Reify.Config := {}) 
     let view ← arithmetic #[] normalized
     -- Shared denominator normalization bounds denominators; its ring reifier
     -- bounds the numerator before rational evaluation, including natural powers.
-    match ← liftM (Hex.Reflect.run (Hex.Reflect.reifyCommRing view.numerator) config.ring) with
-    | .success ring _ =>
-        charge .coefficientBits
-          (Hex.Reflect.RingExpr.coeffBitBound (config.ring.budget.coefficientBits + 1) ring.expr)
-    | .declined (.budgetExhausted exhausted) _ => abort (.budget exhausted)
-    | .declined reason usage => abort (.providerDeclined reason usage #[])
-    | .failure reason => abort (.providerFailure reason #[])
-    | .notApplicable => abort (.unsupported base "expected a rational coefficient ring")
+    Coefficients.boundNumerator view.numerator
     return degree
   let degree ← match ← (action.run
       {config, budget := .ofBudget config.ring.budget}).run with

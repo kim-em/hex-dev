@@ -41,6 +41,27 @@ theorem type_alias : ∀ x : ℝ,
     x ^ 2 + @HPow.hPow ℝ (id ℝ) ℝ (inferInstance : HPow ℝ ℝ ℝ)
       (5 / 3) (1 / 4 : ℝ) > 0 := by rcf
 
+run_elab do
+  let config : Hex.RealFormula.Reify.Config :=
+    {ring := {budget := {Hex.Reflect.Budget.default with coefficientBits := 8}}}
+  let degree (source : Expr) := ((Coefficients.rootDegree source).run
+    {config, budget := .ofBudget config.ring.budget}).run
+  let .ok (3, _) ← degree q((1 / 3 : ℝ)) |
+    throwError "bounded reciprocal-degree recognition refused an ordinary exponent"
+  -- The largest literal calculation is only 2^64, even on a regressed path.
+  let large : Q(ℝ) := q(((2 : ℝ) ^ (8 : ℕ)) ^ (8 : ℕ))
+  let exponent : Q(ℝ) := q(($large - $large + 1) / 3)
+  let .error (.budget exhausted) ← degree exponent |
+    throwError "cancelled exponent numerator bypassed coefficient admission"
+  unless exhausted.dimension == .coefficientBits do
+    throwError "exponent numerator used the wrong resource dimension"
+  let .error (.budget _) ← RationalRoot.parameters? q((2 : ℝ) ^ $exponent) config |
+    throwError "root parameter admission bypassed the exponent numerator bound"
+  let .error (.unsupported _ _) ← degree q((0 / (3 - 3) + 1 / 3 : ℝ)) |
+    throwError "cancelled zero divisor survived exponent admission"
+  let .error (.unsupported _ _) ← degree q((Real.sin 0 + 1 / 3 : ℝ)) |
+    throwError "unsupported exponent was hidden by coefficient admission"
+
 theorem direct_power : ∀ x : ℝ, x ^ 2 + Real.rpow (3 : ℝ) (1 / 5 : ℝ) > 0 := by rcf
 
 theorem field_root : ∃ x : ℝ, x ^ 2 = Real.sqrt (1 / 2) ∧ 0 < x ∧ x < 1 := by rcf

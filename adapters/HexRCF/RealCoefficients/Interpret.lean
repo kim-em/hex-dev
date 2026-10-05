@@ -36,6 +36,19 @@ structure Prepared where
   /-- Ordinary proof of `RealAlgebraicNumber.toReal value = source`. -/
   proof : Expr
 
+/-- Bound a shared arithmetic numerator before rational evaluation. The ring
+view bounds literal powers and coefficient growth without evaluating them. -/
+def boundNumerator (numerator : Expr) : ReifyM Unit := do
+  let config := (← get).config
+  match ← liftM (Hex.Reflect.run (Hex.Reflect.reifyCommRing numerator) config.ring) with
+  | .success ring _ =>
+      charge .coefficientBits
+        (Hex.Reflect.RingExpr.coeffBitBound (config.ring.budget.coefficientBits + 1) ring.expr)
+  | .declined (.budgetExhausted exhausted) _ => abort (.budget exhausted)
+  | .declined reason usage => abort (.providerDeclined reason usage #[])
+  | .failure reason => abort (.providerFailure reason #[])
+  | .notApplicable => abort (.unsupported numerator "expected rational coefficient arithmetic")
+
 /-- Recognize a positive reciprocal integer exponent using checked rational
 normalization. The caller retains the source exponent's divisor obligations. -/
 def rootDegree (source : Expr) : ReifyM Nat := do
@@ -49,7 +62,8 @@ def rootDegree (source : Expr) : ReifyM Nat := do
         abort (.unsupported e "nonstandard inverse instance in root exponent")
       return .continue (some q(1 / $a))
     return .continue) (skipInstances := true)
-  let _ ← arithmetic #[] normalized
+  let view ← arithmetic #[] normalized
+  boundNumerator view.numerator
   let source : Q(ℝ) ← pure source
   let result ← liftM <| observing? do
     let ⟨value, _, _, _⟩ ← Mathlib.Meta.NormNum.deriveRat source (_inst := q(inferInstance))
