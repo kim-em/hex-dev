@@ -298,3 +298,28 @@ context reconstruction from bytes or general replay performance.
 lake build hexsigndet_kernel_replay_probe
 lake env .lake/build/bin/hexsigndet_kernel_replay_probe fact-operations
 ```
+
+
+`Root.lean` reconstructs a checked root context from two supplied JSON records:
+the existing six-field root subject and the existing graph encoding. The
+predecessor context stays fixed. Stored algebraic coefficients require exact
+sign facts through `Element.signCodec`; missing stored facts reject. The
+reconstructed root re-encodes to the exact supplied subject and retains its
+nonmonic reduction policy. The graph has two entries, including an unused
+entry, and both are checked.
+
+The control collects two fresh intermediate certificates with independently
+specified keys `2X` and `2X − 1`. A separate pass uses only the recorded
+packets. Ordinary-kernel checks reject absent stored facts, a stale parent
+binding, copied derivative vectors and an incorrect unused moment count.
+The native fixture encoder supplies untrusted JSON data, quoted as literal
+constructors before checking. Neither fixture initialization nor quotation
+establishes acceptance. The predecessor and its stored facts remain typed
+fixtures; this is one-level reconstruction, not arbitrary-depth byte replay.
+The canonical prepared cache is constructed and transported by the public
+context APIs; the control does not separately reduce its root-count field.
+
+```sh
+lake build hexsigndet_kernel_replay_probe
+lake env .lake/build/bin/hexsigndet_kernel_replay_probe root
+```
