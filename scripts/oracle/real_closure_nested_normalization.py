@@ -116,6 +116,8 @@ def verify(row):
     require(type(steps) is int and steps >= 0, 'invalid steps')
     require(type(row['eager']) is bool, 'invalid policy')
     require(type(row['hash']) is int and 0 <= row['hash'] < 2 ** 64, 'invalid observed hash')
+    for flag in ('value_roundtrip', 'roots_replayed', 'query_replayed'):
+        require(row.get(flag) is True, f'unchecked native {flag}')
     field = Field(depth)
     require(isinstance(row['heads'], list) and len(row['heads']) == depth,
             'missing defining heads')
@@ -150,6 +152,7 @@ def trace_counts(path):
     active = False
     started = ended = 0
     counts = Counter()
+    aggregate = None
     for line in Path(path).read_text().splitlines():
         if line == 'NESTED BEGIN':
             require(not active and started == 0, 'duplicate workload start')
@@ -159,11 +162,25 @@ def trace_counts(path):
             require(active, 'workload end without start')
             active = False
             ended += 1
+        elif line.startswith('NESTED CALLBACKS '):
+            require(ended == 1 and not active and aggregate is None, 'misplaced callback aggregate')
+            packet = json.loads(line.removeprefix('NESTED CALLBACKS '))
+            require(packet.get('overflow') is False, 'callback counter overflow')
+            aggregate = packet.get('counts')
+            require(isinstance(aggregate, dict) and all(
+                len(key.split(':')) == 2 and key.split(':')[0].isdecimal() and
+                key.split(':')[1] in {'add', 'sub', 'neg', 'mul', 'inv', 'div', 'sign', 'zero',
+                                      'eq', 'split', 'inverse_gcd', 'inverse_xgcd'} and
+                type(value) is int and value >= 0 for key, value in aggregate.items()),
+                'bad callback aggregate')
         elif active and line.startswith('NESTED '):
             _, depth, operation = line.split()
             require(depth.isdecimal(), 'invalid callback depth')
             counts[f'{depth}:{operation}'] += 1
     require(started == ended == 1 and not active, 'incomplete workload trace')
+    if aggregate is not None:
+        require(not counts or dict(counts) == aggregate, 'callback trace disagrees with aggregate')
+        counts = aggregate
     return dict(sorted(counts.items()))
 
 

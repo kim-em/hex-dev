@@ -3,7 +3,8 @@ import copy
 import json
 from pathlib import Path
 import unittest
-from scripts.oracle.real_closure_nested_normalization import verify
+import tempfile
+from scripts.oracle.real_closure_nested_normalization import verify, trace_counts
 
 
 class ExactTests(unittest.TestCase):
@@ -22,7 +23,7 @@ class ExactTests(unittest.TestCase):
 
     def test_changed_inputs(self):
         for source in self.rows:
-            for change in ['value', 'head', 'fraction', 'sign', 'steps', 'nodes', 'children']:
+            for change in ['value', 'head', 'fraction', 'sign', 'steps', 'nodes', 'children', 'replayed']:
                 with self.subTest(eager=source['eager'], change=change):
                     row = copy.deepcopy(source)
                     if change == 'value':
@@ -32,8 +33,22 @@ class ExactTests(unittest.TestCase):
                     elif change == 'sign': row['sign'] = True
                     elif change == 'steps': row['steps'] = -1
                     elif change == 'nodes': row['query'][1] += 1
+                    elif change == 'replayed': row['query_replayed'] = False
                     elif change == 'children': row['query'][2][2][0][1] = [[0, 0]]
                     with self.assertRaises(ValueError): verify(row)
+
+    def test_aggregate_trace(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'trace'
+            packet = dict(overflow=False, counts={'0:mul': 12, '1:inverse_gcd': 1})
+            def write(packet):
+                path.write_text('NESTED BEGIN\nNESTED END\nNESTED CALLBACKS ' + json.dumps(packet) + '\n')
+            write(packet)
+            self.assertEqual(trace_counts(path), packet['counts'])
+            for bad in [dict(packet, overflow=True), dict(packet, counts={'0:mul': True}),
+                        dict(packet, counts={'bad': 1}), dict(packet, counts={'0:mul': -1})]:
+                write(bad)
+                with self.assertRaises(ValueError): trace_counts(path)
 
 
 if __name__ == '__main__':
