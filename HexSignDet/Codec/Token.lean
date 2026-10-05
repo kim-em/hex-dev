@@ -62,6 +62,26 @@ canonical decimal spelling of its parsed value. -/
 makes token boundaries explicit in the byte-roundtrip proof. -/
 @[expose] def emit (token : Token) : List Char := token.write ++ [' ']
 
+/-- Printed token characters without encoding and then decoding its decimal text. -/
+@[expose] def chars : Token → List Char
+  | .leftArray => ['[', ' '] | .rightArray => [']', ' ']
+  | .leftObject => ['{', ' '] | .rightObject => ['}', ' ']
+  | .comma => [',', ' '] | .colon => [':', ' ']
+  | .null => ['n', 'u', 'l', 'l', ' ']
+  | .bool true => ['t', 'r', 'u', 'e', ' ']
+  | .bool false => ['f', 'a', 'l', 's', 'e', ' ']
+  | .number (.ofNat n) => Nat.toDigits 10 n ++ [' ']
+  | .number (.negSucc n) => '-' :: Nat.toDigits 10 (n + 1) ++ [' ']
+  | .string s => '"' :: Str.writeBody s.toList ++ ['"', ' ']
+
+/-- The structural character printer retains the existing wire format. -/
+theorem emit_eq_chars (token : Token) : token.emit = token.chars := by
+  cases token with
+  | number n => cases n <;> simp [emit, write, chars, Int.repr_eq_ite, Nat.toList_repr]
+  | bool b => cases b <;> simp [emit, write, chars]
+  | string s => simp [emit, write, chars, Str.write]
+  | _ => rfl
+
 private theorem repr_digits (n : Nat) : ∀ c ∈ n.repr.toList, c.isDigit = true := by
   intro c hc
   exact Nat.isDigit_of_mem_toDigits (b := 10) (by decide) (by decide) (by simpa using hc)

@@ -434,6 +434,15 @@ must run `Codec.checkBytes` first; unrestricted nesting can exhaust the stack. -
   let (value, rest) ← readLoop (tokens.length + 1) tokens
   if rest.isEmpty then return value else none
 
+/-- Expose the writer's exact bytes as a list for ordinary-kernel comparison. -/
+theorem Value.writeBytes_toList (value : Value) :
+    value.writeBytes.data.toList =
+      (value.tokensLoop.flatMap Token.chars).flatMap String.utf8EncodeChar := by
+  have h : Token.emit = Token.chars := funext Token.emit_eq_chars
+  simp only [Value.writeBytes, Token.writeBytes, Token.writeTokens, h,
+    String.toUTF8_eq_toByteArray, String.toByteArray_ofList, List.utf8Encode,
+    List.toList_data_toByteArray]
+
 /-- Every finite integer-only JSON value survives its actual printed UTF-8
 bytes. This includes arbitrary array/object nesting, Unicode and integer sizes;
 there is no parser-success premise or fixed collection of literal fixtures. -/

@@ -2715,7 +2715,13 @@ retain the compiled native fallback.
 `Algebraic.RootReplay.readDescriptor` decodes the complete root subject with
 `SignRequests.readRoot`, decodes every graph entry against its exact domain,
 and validates a count-one descriptor through the shared checker.
-`readDescriptor_subject` preserves the full decoded subject. `readContext`
+`readDescriptor_subject` preserves the full decoded subject.
+`RootReplay.decodeDescriptor` parses both the subject and graph byte records
+through `Codec.decodePair` before applying that reader. This differs from
+`SignDet.Dag.decodeDescriptor`, which receives a typed subject and graph bytes.
+`decodeDescriptor_write` preserves the reader's full result or error under the
+lexical limits; `decodeDescriptor_subject` retains the decoded subject for
+arbitrary accepted bytes. `readContext`
 uses supplied predecessor operations to construct a context and transports its
 root, canonical prepared cache and reduction policy to the original operations.
 `readContext_eq` proves exact agreement with native reconstruction, including

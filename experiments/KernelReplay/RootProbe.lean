@@ -13,6 +13,7 @@ import all HexRealClosure.SignCodec
 import all HexRealClosure.SignRequests
 import all HexSignDet.Codec
 import all HexSignDet.Codec.Basic
+import all HexSignDet.Codec.Bytes
 import all HexSignDet.Codec.Node
 import all HexSignDet.Codec.Evidence
 import all HexSignDet.Codec.Json
@@ -22,6 +23,7 @@ import all HexSignDet.Descriptor
 import all HexRealRoots.TarskiShared
 import all HexPoly.Euclid.DivGcd
 import all Init.Data.Array.Basic
+import all Init.Data.Repr
 
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 1000000 in
