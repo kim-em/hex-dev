@@ -8,6 +8,7 @@ import HexRealClosure.Algebraic
 import HexSignDet.Codec
 import HexOrderedFn.Infinitesimal
 import Lean.Data.Json
+import LeanBench
 
 namespace Hex.RealClosure.NestedNormalization
 
@@ -237,6 +238,188 @@ def emit (depth steps : Nat) (eager trace : Bool) (reportHash : Bool := true) : 
     ("query_replayed", Lean.toJson true),
     ("heads", definitions), ("roots", roots), ("query", proof)]).compress
 
+namespace Measure
+
+/-- Each registered action reads its actual typed input through IO before
+running the pure kernel. This prevents preparation from evaluating the workload. -/
+private def action (level : Level) (steps : Nat) : IO (IO UInt64) := do
+  let input ← IO.mkRef level.alpha
+  return do
+    let alpha ← input.get
+    return hash (level.encode (run level steps alpha))
+
+initialize actions : IO.Ref (List ((Nat × Nat × Bool) × IO UInt64)) ← IO.mkRef []
+
+/-- All context/descriptor construction is completed before harness timing. -/
+def install : IO Unit := do
+  let mut inputs := []
+  for depth in [1, 2] do
+    for eager in [false, true] do
+      let some level := prepare depth eager false | throw (IO.userError "measurement context rejected")
+      for steps in [2, 4, 8, 16] do
+        let compute ← action level steps
+        inputs := inputs ++ [((depth, steps, eager), compute)]
+  actions.set inputs
+
+private def measure (depth steps : Nat) (eager : Bool) : IO UInt64 := do
+  let some (_, compute) := (← actions.get).find? (fun input => input.1 == (depth, steps, eager)) |
+    throw (IO.userError "measurement input missing")
+  compute
+
+namespace Depth1
+
+def clean2 (_ : Unit) : IO UInt64 := measure 1 2 false
+
+setup_fixed_benchmark clean2 where {
+  expectedHash := some 0xc0fb77a71e36c625
+  warmupFirstIter := true
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def clean4 (_ : Unit) : IO UInt64 := measure 1 4 false
+
+setup_fixed_benchmark clean4 where {
+  expectedHash := some 0x89c0b97ebc57fd9a
+  warmupFirstIter := true
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def clean8 (_ : Unit) : IO UInt64 := measure 1 8 false
+
+setup_fixed_benchmark clean8 where {
+  expectedHash := some 0xab29785e84ba06
+  warmupFirstIter := true
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def clean16 (_ : Unit) : IO UInt64 := measure 1 16 false
+
+setup_fixed_benchmark clean16 where {
+  expectedHash := some 0x65836c88d9e27258
+  warmupFirstIter := true
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def eager2 (_ : Unit) : IO UInt64 := measure 1 2 true
+
+setup_fixed_benchmark eager2 where {
+  expectedHash := some 0x6543b969183eca94
+  warmupFirstIter := true
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def eager4 (_ : Unit) : IO UInt64 := measure 1 4 true
+
+setup_fixed_benchmark eager4 where {
+  expectedHash := some 0x72d28e9734488a8c
+  warmupFirstIter := true
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def eager8 (_ : Unit) : IO UInt64 := measure 1 8 true
+
+setup_fixed_benchmark eager8 where {
+  expectedHash := some 0x7f3ac14148f96d7d
+  warmupFirstIter := true
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def eager16 (_ : Unit) : IO UInt64 := measure 1 16 true
+
+setup_fixed_benchmark eager16 where {
+  expectedHash := some 0x5d0e7bba1e93af81
+  warmupFirstIter := true
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+end Depth1
+
+namespace Depth2
+
+def clean2 (_ : Unit) : IO UInt64 := measure 2 2 false
+
+setup_fixed_benchmark clean2 where {
+  expectedHash := some 0xd810a57d553cd32a
+  warmupFirstIter := true
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def clean4 (_ : Unit) : IO UInt64 := measure 2 4 false
+
+setup_fixed_benchmark clean4 where {
+  expectedHash := some 0xf9c32eabe35d037a
+  warmupFirstIter := true
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def clean8 (_ : Unit) : IO UInt64 := measure 2 8 false
+
+setup_fixed_benchmark clean8 where {
+  expectedHash := some 0x93ef161c7f29988d
+  warmupFirstIter := true
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def clean16 (_ : Unit) : IO UInt64 := measure 2 16 false
+
+setup_fixed_benchmark clean16 where {
+  expectedHash := some 0xb42a715536ce7cc9
+  warmupFirstIter := true
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def eager2 (_ : Unit) : IO UInt64 := measure 2 2 true
+
+setup_fixed_benchmark eager2 where {
+  expectedHash := some 0xff1c20bd74c34c12
+  warmupFirstIter := true
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def eager4 (_ : Unit) : IO UInt64 := measure 2 4 true
+
+setup_fixed_benchmark eager4 where {
+  expectedHash := some 0x3a11f59e602ed3e2
+  warmupFirstIter := true
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def eager8 (_ : Unit) : IO UInt64 := measure 2 8 true
+
+setup_fixed_benchmark eager8 where {
+  expectedHash := some 0x45a014cfa05b79bb
+  warmupFirstIter := true
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+def eager16 (_ : Unit) : IO UInt64 := measure 2 16 true
+
+setup_fixed_benchmark eager16 where {
+  expectedHash := some 0x8ce9f2bcbdb855b6
+  warmupFirstIter := true
+  minTotalSeconds := 0.5
+  maxSecondsPerCall := 120.0
+}
+
+end Depth2
+
+end Measure
+
 end Hex.RealClosure.NestedNormalization
 
 def main (args : List String) : IO UInt32 := do
@@ -244,6 +427,9 @@ def main (args : List String) : IO UInt32 := do
   | [] =>
     Hex.RealClosure.NestedNormalization.emit 2 2 false false false
     Hex.RealClosure.NestedNormalization.emit 2 2 true false false
+  | "bench" :: _ | "_child" :: _ | "verify" :: _ | "list" :: _ =>
+    Hex.RealClosure.NestedNormalization.Measure.install
+    return ← LeanBench.Cli.dispatch args
   | [depth, steps, policy, diagnostic] =>
     let some depth := depth.toNat? | throw (IO.userError "invalid depth")
     let some steps := steps.toNat? | throw (IO.userError "invalid steps")
