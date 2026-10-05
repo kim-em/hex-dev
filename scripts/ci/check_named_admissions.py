@@ -194,8 +194,6 @@ def check() -> None:
              "HexRealClosure.TowerBytes", "HexRealClosure.BytesConformance",
              "HexRealClosure.FrameRoundtrip", "HexRealClosure.RootFormat",
              "HexRealClosure.RootBytes", "HexRealClosure.RootFormatConformance",
-             "HexRealClosure.ReprFormat", "HexRealClosure.TowerRepr",
-             "HexRealClosure.ReprConformance", "HexRealClosure.ReprChecks",
              "HexRealClosure.RootFrame", "HexRealClosure.RootFrameTests",
              "HexRealClosure.FrameFormat", "HexRealClosure.FrameFormatTests",
              "HexRealClosure.TowerOrder", "HexRealClosure.TowerOrderTests",

@@ -715,43 +715,35 @@ family proves composition from those contracts; it does not implement or prove
 analytic approximation providers. An adapter to an interval library would be
 separate future work and is not a dependency or deliverable here.
 
-`Repr` emits checked reconstruction code containing the context DAG, named
-constant provider/version registrations, infinitesimal order, polynomial
-coefficients, root intervals and indexed Thom signs. Its expression calls the
-appropriate `Tower.Catalog.restore*Text` reader with the caller's `catalog`
-and `limits` bindings and a quoted complete packet. Evaluation returns
-`Except String` containing the reconstructed packed object; failures remain
-explicit. The catalog supplies validated provider progress proofs that cannot
-be manufactured from serialized names. The checked reader binds all
-dependencies and rejects changed registrations or stale references.
-`repr_roundtrip` applies to a base-only `Tower.Catalog` formed from the caller's
-validated base catalog. Availability of the original validated base and the
-lexical policy suffice for success and exact reconstruction of the native
-context and object. The entire algebraic suffix is reconstructed. General
-catalog readers can also reuse their retained validated prefixes. The `TowerBytes` and `RootBytes` JSON packet interfaces are
-separate from checked reconstruction-code `Repr`. They use the shared printer/parser
-and the caller's lexical policy. Full root packets bind the original
-predecessor and retain point/selected kinds, canonical defining descriptors
-and replay graphs; complete root-set packets retain positive multiplicities,
-literal entry order and the universal `all` case. Root tags 0/1 and root-set
-tags 2/3 are disjoint, so their typed readers reject one another's packets. The reader validates each
-selected descriptor in its reconstructed predecessor. A root-set packet does
-not independently claim completeness or strict ordering for a polynomial:
-those properties belong to the original producer and its correspondence laws.
+Explicit checked serialization supplies the reconstruction interface. The
+`TowerBytes` and `RootBytes` JSON packets contain the context DAG, named constant
+provider/version registrations, infinitesimal order, polynomial coefficients,
+root intervals and indexed Thom signs. The caller's validated `Tower.Catalog`
+supplies the approximation functions and effective progress proofs for the
+registered base. The reader checks all dependencies and rejects changed
+registrations or stale references. Printed names cannot supply functions or
+manufacture their progress proofs.
 
-Fresh reconstruction retains the original native context, root or root set
-from a base-only catalog containing its actual validated base, with no
-installed algebraic suffix or parser-success premise. The base
-availability premise retains caller progress proofs for registered providers;
-a printed name cannot manufacture those proofs. Lexical limits bound input
-bytes, nesting and integer digits, not subsequent mathematical replay costs.
-`TowerRepr` supplies the checked reconstruction code and `repr_roundtrip`
-contract. Its total string printer and checked reader are proved in the ordinary
-kernel. Actual `reprStr` rendering and Lean string-literal decoding cross the
-standard formatter/elaborator boundary and are checked by compiled reconstruction
-programs; no generic kernel inverse theorem for those boundaries is claimed. Decimal display is not a reconstruction format. A conditional
-total mode reuses its law package rather than serializing proofs of
-transcendence as runtime data.
+No constructor-syntax `Repr` instance is required for context-indexed tower
+objects. Their arbitrary caller-supplied functions have no general Lean source
+representation. A printed reader call returning `Except String` is an explicit
+reconstruction program, rather than constructor syntax for the original value;
+the checked packet API already provides that operation. Decimal display is not
+a reconstruction format.
+
+Fresh reconstruction retains the original native context, element, polynomial,
+root or root set from a base-only catalog containing its actual validated base,
+with no installed algebraic suffix or parser-success premise. Exact byte/text
+roundtrip theorems use the caller's lexical policy. General catalogs may also
+reuse validated prefixes. Full root packets bind the original predecessor and
+retain point/selected kinds, canonical defining descriptors and replay graphs;
+root-set packets retain positive multiplicities, literal entry order and the
+universal `all` case. Root tags 0/1 and root-set tags 2/3 are disjoint. Each
+selected descriptor is validated in its reconstructed predecessor. Completeness
+and strict ordering belong to the original root producer, rather than arbitrary
+serialized lists. Lexical limits bound bytes, nesting and integer digits,
+rather than subsequent mathematical replay costs. Conditional total modes
+reuse the caller's law package; transcendence proofs are not runtime data.
 
 For a trivial transcendental/infinitesimal base, delegate supported work to
 `RealAlgebraicNumber.compare` (which uses `AlgebraicNumber.realCompare`) and

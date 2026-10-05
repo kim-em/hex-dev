@@ -346,13 +346,6 @@ lean_lib HexRealClosure where
   -- The runnable selected-root tests use `#eval` across the library boundary.
   precompileModules := true
 
--- Optional reconstruction expressions have their own native plugin. The main
--- tower plugin must not acquire dependencies absent from its public umbrella.
-lean_lib HexRealClosureRepr where
-  roots := #[`HexRealClosure.TowerRepr]
-  globs := #[.one `HexRealClosure.TowerRepr, .one `HexRealClosure.ReprFormat]
-  precompileModules := true
-
 @[default_target]
 lean_lib HexRealClosureTests where
   globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.PackingTests, .one `HexRealClosure.RootOrderTests,
@@ -1273,7 +1266,7 @@ lean_lib HexConformance where
 
     ++ #[`HexRealAlgebraic.Conformance, `HexRealAlgebraic.Checks,
       `HexRealAlgebraic.FieldSignConformance, `HexNumberField.ComplexChecks,
-      `HexRealAlgebraic.ReprChecks, `HexRealClosure.ReprChecks, `HexRealAlgebraicMathlib.FieldSignConformance].map Glob.one
+      `HexRealAlgebraic.ReprChecks, `HexRealAlgebraicMathlib.FieldSignConformance].map Glob.one
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
@@ -2410,7 +2403,3 @@ lean_exe hexrealclosure_basic_conformance where
 lean_exe hexrealclosure_root_format_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.RootFormatConformance
-
-lean_exe hexrealclosure_repr_conformance where
-  srcDir := "conformance"
-  root := `HexRealClosure.ReprConformance
