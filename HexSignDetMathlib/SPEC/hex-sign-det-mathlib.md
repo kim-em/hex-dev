@@ -3,29 +3,23 @@
 Exact sign-table semantics, literal replay soundness and Thom root identity
 and ordering for [hex-sign-det](../../HexSignDet/SPEC/hex-sign-det.md).
 
-## Status, scope and dependencies
+## Scope and dependencies
 
-`HexSignDetMathlib.Reduction` proves sign preservation for arbitrary accepted
-positive-scaled moment reductions and for the actual moment replay operand.
-`ReductionProducer` proves that shared pseudo-division and normalization produce
-accepted reduction chains. Both support noninjective coefficient interpretations
-with canonical zero and ordinary operations. Conformance instantiates these
-theorems and checks literal reductions in the ordinary kernel.
+`HexSignDetMathlib`, in namespace `Hex.SignDet`, proves correspondence of the
+actual sign-table, replay and selected-root algorithms with mathematical roots.
+It uses `HexSignDet`, `HexSturmMathlib`, `HexPolyMathlib`, `HexMatrixMathlib`
+and `HexRankMathlib`, together with the Tau Ceti foundations specified below.
+The finite support and linear algebra proofs live in `HexSignDetMathlib/`;
+the root correspondence modules live in `adapters/HexSignDetMathlib/` and are
+built by the monorepo's `HexQuerySemantics` target. Consumers import the
+individual correspondence modules they use. This layout does not introduce a
+dependency on the real-closure tower implementation.
 
-The remaining names and formulas below are required statement shapes, not
-claims of existing Lean declarations. The companion is a development target in
-the [real-closure family](../../SPEC/future-work.md#real-closures-of-ordered-fields);
-no phase or release is advanced. Full sign-table and Thom correspondence still
-consume the separately specified foundations.
-
-`HexSignDetMathlib`, in namespace `Hex.SignDet`, imports `HexSignDet`,
-`HexSturmMathlib`, `HexPolyMathlib`, `HexMatrixMathlib`,
-`HexRowReduceMathlib` and `HexRankMathlib`, plus the Tau Ceti foundations
-specified below. [hex-sturm-mathlib](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md) supplies query,
-domain and exact coefficient correspondence through the shared
-hex-real-roots-mathlib primitive. Do not duplicate Sturm–Tarski here.
-The matrix companions supply representation, rank and rational linear
-algebra; their computational libraries remain Mathlib-free.
+[hex-sturm-mathlib](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md) supplies
+query, domain and exact coefficient correspondence through the shared
+hex-real-roots-mathlib primitive. Do not duplicate Sturm–Tarski here. The
+matrix companions supply representation, rank and rational linear algebra;
+their computational libraries remain Mathlib-free.
 
 No computational library imports a companion or Tau Ceti. Existing
 polynomial, rational-function, real-root and real-algebraic
@@ -40,29 +34,38 @@ outside this library.
 
 ## Semantic parameters and representations
 
-Every root theorem quantifies over arbitrary `K,R` with
+Root correspondence uses an arbitrary ordered real closed field `R`:
 
 ```text
-[Field K] [LinearOrder K] [IsStrictOrderedRing K]
-[Field R] [LinearOrder R] [IsStrictOrderedRing R] [IsRealClosed R]
-ι : K →+* R
-hι : StrictMono ι
+[Field R] [DecidableEq R] [LinearOrder R]
+[IsStrictOrderedRing R] [IsRealClosed R]
+f : E → R
 ```
 
-The field homomorphism is injective and `hι` preserves order. Neither `K`
-real closed nor `R=ℝ` is required. No Archimedean, metric, ordinary
-connectedness or rational-separation hypothesis is allowed. Existence of
-`R,ι` is a separate family foundation; these statements are conditional on
-that supplied model.
+The stored coefficient type `E` supplies ordinary total operations and a
+canonical zero; it need not have a ring or field instance. The interpretation
+`f` reflects zero and preserves one, addition, subtraction, multiplication,
+natural casts and the explicit executable sign. Producer success also uses
+preservation of negation and inverse; comparison uses preservation of division.
+These hypotheses are explicit arguments to the correspondence theorems.
+`f` need not be injective. Semantic polynomial equations use zero differences;
+integer matrix identities and literal context bindings retain actual equality.
+
+A coefficient field `K` may be interpreted in `R` by an order-preserving field
+homomorphism `ι : K →+* R`. Compose its coefficient interpretation with `ι` to
+instantiate the interface above. Existence of such `R,ι` is a separate family
+foundation. Neither `K` real closed nor `R=ℝ` is required. No Archimedean,
+metric, ordinary connectedness or rational-separation hypothesis is allowed.
+`Descriptor.root_map` and `Descriptor.root_comp` express preservation of
+selected roots between ordered real closed ambient fields.
 
 Canonical coefficient fields use HexPolyMathlib's polynomial correspondence.
-For canonical-zero representation coefficients use the
-[execution contract](../../SPEC/real-closure-execution.md): interpret `DensePoly E`
-coefficientwise in `K`, preserving operations, degree, semantic equality and
-sign, then map along `ι`. The first map need not be injective. Prove its
-correspondence for the actual shared Sturm/BKR algorithms, not a parallel
-algorithm over the semantic field. Signs are integers in `{-1,0,1}`, translated
-explicitly to `SignType.sign`.
+Canonical-zero representations use the
+[execution contract](../../SPEC/real-closure-execution.md): interpret
+`DensePoly E` coefficientwise in `R`, preserving degree, semantic equality and
+sign. Prove correspondence for the actual shared Sturm/BKR algorithms, not a
+parallel algorithm over the semantic field. Signs are integers in `{-1,0,1}`,
+translated explicitly to `SignType.sign`.
 
 The tower companion supplies selected-root interpretation and zero reflection
 by induction on predecessor levels. A squarefree reducible `p` does not make
@@ -249,7 +252,8 @@ Thom injectivity does not supply existence of a root for an arbitrary vector.
 
 ## Local checker correspondence
 
-Prove `Replay.check_sound` by induction over the actual accepted replay.
+Prove `Replay.check_domain`, `Replay.check_support` and `Replay.check_counts`
+by induction over the actual accepted replay.
 Acceptance includes the domain and coefficient guards; no producer-success
 hypothesis is needed. The proof must follow this order at each node:
 
@@ -258,7 +262,7 @@ hypothesis is needed. The proof must follow this order at each node:
    the root-restriction lemma, checking exact query-list concatenation,
    candidate Cartesian product, context, head and interval agreement.
 2. Interpret every moment through hex-sturm-mathlib's
-   `Replay.check_sound`/`queryPrepared_sound`. Validate factor indices and
+   `HexSturmMathlib.check_sound`. Validate factor indices and
    exponents. For reduced moments, check each identity
    `u*(Gprev*F)=B*P+v*Gnext`, with `u,v>0` and `Gnext=0` or
    `degree Gnext<degree P`, where `F` is the next certified query factor.
@@ -334,7 +338,7 @@ its unique full `U` encoding denotes the same root. The whole-line domain
 avoids an old endpoint being a root of the other head. Comparison of the
 two new encodings then establishes all three order cases.
 
-The separate `reencode d h I'` contract requires a valid target domain
+The separate `Descriptor.buildReencoding d h a b` contract requires a valid target domain
 and proves that the selected source root belongs to `Roots(H;I')`, where
 `H` interprets the target `h`. Use the source head `P` on its interval
 with queries for its selected derivatives, `H`, all derivatives of `H`
@@ -343,30 +347,41 @@ condition, then check that the target head sign is zero and the finite target
 endpoint signs are strictly inside `I'`. This establishes target membership
 and the full encoding without a union-polynomial gcd. On success the new full descriptor has the same
 root and derivative signs of the target `h`, not reused signs of `P`.
-Failure of target domain or membership returns `none`, with its exact
-mathematical meaning proved by `reencode_isSome`.
+Failure of target domain or membership returns `.ok none`, with its exact
+mathematical meaning proved by `Descriptor.buildReencoding_isSome`. Internal
+errors use the diagnostic `Except` layer and are excluded by producer success
+and the invalid-domain and absent-root theorems under lawful interpretations.
 This is the bridge used when a dynamic split changes the defining
 polynomial. Preserving all live tower values under that split remains a
 downstream obligation, not a field law on descriptor syntax.
 
 ## Headline correspondence and completeness
 
-These names refine the computational SPEC in `Hex.SignDet`. All conclusions
-use the exact coefficient field and the semantic parameters above, universally
-in the supplied `R,ι,hι`.
+The declarations below refine the computational SPEC in `Hex.SignDet`.
+Conclusions use the exact coefficient interpretation in the supplied ordered
+real closed field. Producer theorems concern the actual diagnostic builders;
+replay theorems quantify over arbitrary accepted certificates.
 
-| Theorem | Required statement |
+| Declaration | Correspondence or completeness statement |
 | --- | --- |
-| `determine_correct` | `determine p I Q = some T` implies the domain and `∀ σ, T.count σ=c(σ)`, including omitted conditions. |
-| `Replay.check_sound` | An accepted literal result replay implies its corresponding postcondition, including complete support, guards and exact coefficient interpretation, without trusting the producer. |
-| `validate_correct` | Validation succeeds iff `Valid(d)`; the computed selected count equals `Selected(d).card`. |
-| `complete_correct` | Total completion of a valid descriptor preserves its root and gives all derivative signs. |
-| `signAt_correct` | For a valid descriptor, `signAt d q = sgn(q.eval root(d))`. |
-| `compare_correct` | For valid descriptors over the same coefficient field, `lt`, `eq`, `gt` are equivalent to the respective root relations. |
-| `reencode_correct`, `reencode_isSome` | Success iff the target domain and selected-root membership hold; success preserves the root and target derivative signs. |
-| `roots_correct` | On a valid domain, the returned descriptors are valid, strictly increasing and contain each `α∈Z` exactly once. |
-| `determine_isSome`, `roots_isSome` | The respective `Option` is `some` iff the root domain holds. |
-| `result_congr` | Order-preserving field maps and root-preserving descriptor transports preserve outputs and validity. |
+| `determine_correct`, `determinePrepared_correct` | Every returned count is the number of roots with that sign word, including omitted conditions. |
+| `Replay.check_domain`, `Replay.check_support`, `Replay.check_counts` | Accepted literal replay establishes the domain, complete support and exact counts without trusting the producer. |
+| `Descriptor.validate_success_iff`, `Descriptor.build_success_iff` | Success is equivalent to literal context agreement, a well-formed encoding, a valid domain and selected count one. |
+| `Descriptor.complete_correct` | Total completion preserves the root and gives all derivative signs; `buildCompletion_success` excludes its fallback. |
+| `Descriptor.signAt_correct`, `Descriptor.signAt_success` | The total single-query operation gives the mathematical evaluation sign and agrees with a successful `buildSigns` computation. |
+| `Descriptor.compare_correct`, `compare_lt_iff`, `compare_eq_iff`, `compare_gt_iff` | The actual total comparison agrees with the three mathematical root relations. |
+| `Descriptor.buildReencoding_isSome`, `buildReencoding_invalid`, `buildReencoding_absent`, `buildReencoding_success`, `Reencoding.root_eq_source`, `target_constraints` | Success iff the target domain contains the selected root; success preserves that root and records the target derivative signs. |
+| `Descriptor.buildRoots_roots`, `buildRoots_ordered`, `buildRoots_coverage` | On a valid domain the actual builder returns valid descriptors for every root exactly once, in strictly increasing order. |
+| `determine_isSome`, `Descriptor.buildRoots_isSome` | Actual success is equivalent to the root domain, including the empty list for a nonzero constant. |
+| `Descriptor.root_map`, `root_comp`, `convert_success`, `convert_root` | Ordered ambient field embeddings and checked coefficient/context conversions preserve the selected root and descriptor validity. |
+| `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `convert_compare`, `buildRoots_convert_roots` | Value-preserving coefficient conversion preserves actual success, all table counts, selected-root signs, comparison results and ordered mathematical root lists. |
+
+The last two rows give the result-congruence contract. Coefficient conversion
+need not preserve operations as literal representations: source and target
+operations must satisfy their respective interpretation laws. The converted
+descriptor is checked in its new context; copied evidence has no validity
+presumption. Results concern counts, signs and denoted roots, rather than
+literal equality of certificates produced by different representations.
 
 Enumeration completeness follows by applying table completeness to all
 `n` derivatives: every root has an encoding, injectivity makes each positive
@@ -379,9 +394,10 @@ put integration tests downstream so this obligation creates no reverse import.
 
 The input predicates are `Domain` for tables and root enumeration; `Valid(d)`
 for descriptor validation; and a valid target domain with selected-root
-membership for re-encoding. They define exactly the `none` cases of raw-input
-`Option` APIs. Completion, sign-at-root and comparison on validated descriptors
-are total. All coefficient operations are ordinary total field operations.
+membership for re-encoding. They define exactly the `none` cases of option-valued APIs and the `.ok none`
+cases of diagnostic root-list and re-encoding builders. Completion, sign-at-root and comparison on validated descriptors
+are total. All coefficient operations are ordinary total operations on `E` satisfying
+the stated interpretation laws.
 Singular chosen matrices or negative/nonintegral solved counts on valid inputs
 are ruled out by the producer proof, not reported as mathematical invalidity.
 
@@ -421,7 +437,7 @@ replay plus final theorem axiom sets. Planned foundations must stay visibly
 separate from existing declarations; neither `axiom`, `native_decide` nor
 unfinished core proofs may substitute for the correspondence.
 
-`conformance/HexSignDetMathlib/FieldConformance.lean` instantiates each
+`conformance/HexRCF/SignDetFieldProofs.lean` instantiates each
 producer correctness theorem (selected signs, completion, query handles, root
 coverage, tables, comparison, absence, refinement, re-encoding, conversion and
 root transport along order embeddings) once at the actual cubic field ℚ(∛2)
