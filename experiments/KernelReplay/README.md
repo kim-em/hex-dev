@@ -226,9 +226,8 @@ and one lower fact list. All eight coefficient operations use supplied-fact
 packing; `Context.changeOps` retains the original checked root and prepared
 cache. Interpretation laws and `changeOps_signPoly` return facts in the
 original context. The two input polynomials, `X` and `1`, both reduce to the
-unit query and
-select the same checked row. The output checks distinguish their original
-polynomial keys and list order, as well as their claimed signs.
+unit query and select the same checked row. The output checks their original
+polynomial keys, list order and claimed signs.
 
 ```sh
 lake build hexsigndet_kernel_replay_probe
@@ -244,10 +243,11 @@ child evidence leaves the calculation unproved. False signs, a different query
 with the same sign, stale context IDs and corrupted moments in both the
 selected and unused graph entries are rejected by the existing checker.
 
-Each saved theorem proves the exact copied polynomial and integer sign,
-together with the scalar-sign equality. One synchronous kernel declaration
+Each saved theorem binds the normalized polynomial and integer sign to the
+original data, together with the scalar-sign equality. One synchronous kernel declaration
 check validates that combined statement and its proof.
-The fact data remains transparent and refers to those theorem constants.
+The fact data remains transparent; its proof field refers to those theorem
+constants.
 Registration uses the kernel environment API with checking explicitly enabled;
 errors leave the declaration set unchanged. Controls inspect the returned
 theorem references, require the actual registration call to reject a malformed

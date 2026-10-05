@@ -312,8 +312,10 @@ private unsafe def control : TermElabM Unit := do
   withEnv seeded do
     let before := countRegistered (← getEnv)
     match ← KernelReplay.registerFact honest with
-    | .error (.alreadyDeclared _ name) =>
+    | .error (.alreadyDeclared env name) =>
       unless name == collision do throwError "unexpected declaration collision"
+      unless countKernel env == before + 1 do
+        throwError "collision did not follow a checked theorem registration"
     | .error exception => throwKernelException exception
     | .ok _ => throwError "post-registration failure did not reject"
     unless countRegistered (← getEnv) == before do

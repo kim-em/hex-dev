@@ -86,13 +86,9 @@ def registerFact (fact : Expr) : MetaM (Except Kernel.Exception Expr) := do
     | .error exception => return .error exception
     | .ok env => pure env
   let restored : Except Kernel.Exception Expr ← withEnv env do
-    -- Normalized proposition arguments keep the source fact out of the
-    -- restored proof term; the saved theorem checks the original bindings.
-    let polynomialEq ← mkEq polynomial polynomial
-    let signEq ← mkEq claimed claimed
-    let signAndSemantic ← mkAppM ``And #[signEq, semantic]
-    let tail := mkAppN (mkConst ``And.right) #[polynomialEq, signAndSemantic, mkConst name]
-    let semanticProof := mkAppN (mkConst ``And.right) #[signEq, semantic, tail]
+    -- Projections reuse the checked semantic conjunct without supplying
+    -- proposition arguments that require the original data to reduce again.
+    let semanticProof := Expr.proj ``And 1 (Expr.proj ``And 1 (mkConst name))
     let restored ← mkAppM ``SignFact.mk #[polynomial, claimed, semanticProof]
     let equationType ← mkEq restored restored
     let equation ← mkEqRefl restored
