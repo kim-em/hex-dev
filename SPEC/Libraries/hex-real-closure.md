@@ -500,6 +500,24 @@ theorem is assumed. Since `R/B` is algebraic, `R'/B(δ)` is algebraic too.
 Computationally reconstruct the staged base `B(δ)` and revalidate transported
 root descriptors/certificates in predecessor order.
 
+The finite live-request API is `Tower.Live.Request`: every frame retains
+its immutable owner, values, polynomials and checked descriptors. A selected
+root request retains its predecessor descriptor and actual cached child
+generator. `Request.gather?` gathers owner ancestry before mapping operands,
+and `Collection.enlarge?` rebuilds that shared ancestry once and transports
+the current frames through the previous target map when its zero check
+passes, with a full original-request transport fallback otherwise. Semantic
+inclusions preserve zero. Both branches refresh every
+descriptor while retaining the original producer certificate. The returned
+enlargement retains the old target map,
+the original owner maps and a collection ready for successive enlargement.
+
+`Tower.Live.Collection.preserve_twice` relates every returned frame to its
+initial gathered frame through the composition of the two actual infinitesimal
+inclusions, preserving requested values, all polynomial coefficients and
+selected descriptor roots under the same returned canonical models.
+
+
 Enlargement preserves embeddings, root identity and all previous comparisons,
 and returns a new context; appending an infinitesimal after an algebraic
 level is invalid. Prove the stage order agrees with this stronger model:

@@ -284,6 +284,39 @@ transported old cache all agree with this new canonical factory. The returned
 model supports later compatible registration and successive enlargement
 without additional coefficient or root agreement premises.
 
+`Tower.Live.Request.gather?_models` constructs the canonical shared model
+for a finite request of immutable owner frames. The executable gathering
+follows each owner's validated ancestry and refreshes every requested
+descriptor in the common target. `Request.transport?_semantics` preserves
+the complete value, polynomial-coefficient and selected-root lists at every
+original frame position. `Collection.enlarge?_models` constructs the complete
+canonical model of the actual enlarged collection, the new parameter identity
+and its checked predecessor model. `Enlargement.semantics` preserves each
+ordered frame list across the enlargement in the lifted old model, and
+`Collection.root_agreement` connects the actual child value and refreshed
+predecessor descriptor at the retained offsets in a composite request, deriving both
+models from the common canonical factory. It applies after enlargement too.
+`Enlargement.model` retrieves the returned canonical model through its public
+collection interface, with the parameter identity and checked predecessor
+model aligned with that same returned interpretation. `Enlargement.preserve`
+states complete frame-list preservation in that model through public
+accessors, and `Enlargement.root_agreement` connects an enlarged composite
+request's retained root frames. Public projection equations and `Collection.frame_eq`
+connect these semantic claims to the executable accessors. The original request
+supports successive enlargement without supplied root or coefficient
+agreement. These factories use the native real-prefix and infinitesimal-depth
+compatibility check. Incomparable constant prefixes, including `[a]` and `[b]`,
+and permutations such as `[a,b]` and `[b,a]`, require non-prefix native inclusions
+and a joint realization. The separate ordinary-real finite-sign conclusion for
+arbitrary interleaved stages is not supplied by these ambient `Model.next`
+interpretations. Root agreement also retains the parent model at the current reference from
+its canonical factory and equality with the original descriptor root.
+`Tower.Live.Collection.roots_twice` connects the final roots of a gathered composite
+request after two enlargements to their original interpretations through the
+two coefficient embeddings, retaining the starting canonical factory equations.
+`Collection.preserve_twice` supplies the corresponding composed inclusion for
+every frame, including all requested values and polynomial coefficients.
+
 At a fixed level of initial degree `d`, there are at most `d-1` nontrivial
 persistent splits. Sum those bounds over a fixed tower; this is not a bound
 on future adjunctions or the cost of repeatedly recomputing a local split.

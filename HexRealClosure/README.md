@@ -1921,15 +1921,77 @@ and staged-order results with dependency closure. The interpretation ingredients
    predecessors and checks cached generator images, their negatives and linear
    coefficient-field roots against the full converted descriptor. Covered
    equivalent intervals and reordered algebraic chains add no root level;
-   arbitrary expressions in several generators are not searched, and compatible
+   arbitrary expressions in several generators are not searched. Compatible
    real-prefix permutations remain outside the prefix check.
-   Owners
-   over incomparable real-prefix paths are rejected. Supporting them requires
-   new native inclusions for non-prefix keys as well as a joint realization.
-   Remaining: re-establish the canonical `Shared.Model`, including its target,
-   original owners and cache, after enlargement against the next staged
-   realization and lifted reference. Automatic dependency-closed traversal and
-   the total `Context.enlarge` constructor also remain required.
+   `Shared.Model.enlarge` re-establishes the canonical model, original owner
+   interpretations and predecessor cache against the next staged realization
+   and lifted reference. Finite operand requests use the interface below.
+
+### Finite live requests
+
+`Tower.Live.Frame owner` retains values, polynomials and checked descriptors
+in their immutable owner. A `Request` is an ordered finite list of these
+frames. `rootRequest` retains a selected root's defining descriptor in its
+predecessor and its actual cached child generator. Each owner supplies its
+validated coefficient ancestry through `Context.origin`.
+
+`Request.gather?` gathers that complete ancestry once, using the shared
+predecessor cache, and transports every frame through its retained inclusion.
+It validates every descriptor again against the actual common target.
+`Collection.enlarge?` rebuilds that shared suffix once after adding an
+infinitesimal, then transports the current frames through the previous target's
+inclusion and refreshes their descriptors. The proved transport composition
+retains the original producer certificate without recomputing its historical
+maps. This incremental branch checks that the predecessor inclusion maps
+zero to zero; otherwise the producer retains a full transport fallback.
+The semantic inclusion proves zero preservation, and native tests check the
+incremental branch at both enlargements. The enlargement retains
+one map for the previous shared target and maps for all original owners;
+`Enlargement.maps` identifies their compositions. `Enlargement.collection`
+retains the original request for further enlargement.
+
+The companion proves gathering success from the canonical staged base
+factory and native prefix compatibility. It proves enlargement success with
+a complete canonical model of the returned collection. At every original
+frame position, the actual produced values, polynomial coefficients and
+selected roots retain their interpreted lists in one common model.
+`Collection.model` interprets an actual gathered result through that factory.
+`Collection.enlarge?_models` retains the new parameter identity and the
+checked predecessor model; `Enlargement.semantics` preserves the ordered
+frame lists across that enlargement in the lifted old model.
+`Collection.root_agreement` identifies the actual child value of a root pair
+in a request equal to `pre ++ rootRequest root ++ post` with the root selected by its refreshed predecessor
+descriptor. Both interpretations come from the collection's canonical factory;
+no root-agreement premise is supplied. The theorem also retains the parent model from the canonical factory at the
+current reference and equality with the original selected descriptor root. It also applies to the collection
+returned by enlargement. `Enlargement.model` retrieves that new canonical
+model through the public collection interface for the next enlargement.
+`model_parameter` identifies its new parameter and `model_previous` retains
+the checked old-target inclusion aligned with that same returned model.
+`Enlargement.preserve` states complete frame-list preservation using those
+public accessors; `Enlargement.root_agreement` identifies a selected root
+inside a composite request through the returned canonical model. A request
+split equation locates either root pair without casting the collection or
+its enlargement. `Collection.roots_twice` starts with a gathered composite
+request, obtains each public returned model, and proves that both final selected
+roots equal their starting interpretations through the two actual coefficient
+embeddings. It retains the starting factory equations as conclusions.
+`Collection.frame` provides total access by an original request index, with
+`frame_eq` identifying it with the returned frame list. Public projection
+equations identify the enlargement's collection frames, previous map and
+parameter with its checked packet.
+Native tests gather a selected parent and dependent child in reverse order,
+transport computed values and coefficients, perform two enlargements, check
+fresh descriptor bindings and reject stale descriptors and serialized values
+and polynomials. The original contexts remain usable.
+
+The native `gather?` compatibility check requires each owner's constants to
+form a prefix of the shared base and its infinitesimal depth to fit. Incomparable
+prefixes such as `[a]` and `[b]`, and permutations such as `[a,b]` and `[b,a]`,
+need non-prefix native inclusions and a joint realization. Separately, simultaneous
+finite sign realization at an ordinary real point through arbitrarily interleaved
+algebraic and infinitesimal stages remains an issue-wide requirement; the ambient
+`Model.next` interpretations here do not assert that ordinary-real conclusion.
 
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
