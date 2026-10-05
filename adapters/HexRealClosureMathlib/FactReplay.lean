@@ -44,6 +44,7 @@ those operations' native fallback. The interpretation occurs only in proofs. -/
     (hdiv : predecessorDiv = div) (hcast : predecessorNatCast = natCast)
     (required : List (DensePoly E)) (evidence : SignEvidence E Ctx) :
     Option (Vector (Fact context) required.length) :=
+  let context := context
   letI := predecessorOne
   letI := predecessorAdd
   letI := predecessorNeg
@@ -145,7 +146,7 @@ theorem Context.readEvidenceWith_eq (context : Context E Ctx coeffSign parent)
 
 /-- Decode a context-bound joint packet with the supplied predecessor codec,
 then check it with the equal supplied arithmetic. Missing stored coefficient
-facts reject during decoding; missing intermediate facts block kernel evaluation. -/
+facts reject during decoding; missing intermediate facts block kernel evaluation. Compiled arithmetic retains its native fallback. -/
 @[expose, macro_inline] def Context.decodeEvidenceWith (context : Context E Ctx coeffSign parent)
     (predecessorOne : One E) (predecessorAdd : Add E) (predecessorNeg : Neg E)
     (predecessorSub : Sub E) (predecessorMul : Mul E) (predecessorInv : Inv E)
@@ -156,6 +157,7 @@ facts reject during decoding; missing intermediate facts block kernel evaluation
     (value : ValueCodec E) (ctx : ValueCodec Ctx) (required : List (DensePoly E))
     (input : ByteArray) (limits : Codec.Limits := {}) :
     Except String (Vector (Fact context) required.length) := do
+  let context := context
   let root := @Context.root E Ctx zero dec one add neg sub mul inv div natCast decCtx
     coeffSign parent context
   let raw := @Descriptor.raw E Ctx zero dec one add sub mul natCast decCtx
@@ -194,3 +196,11 @@ theorem Context.decodeEvidenceWith_eq (context : Context E Ctx coeffSign parent)
   · split <;> simp_all
 
 end Hex.RealClosure.Algebraic
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.readEvidenceWith_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.readEvidenceWith_eq
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.decodeEvidenceWith_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.decodeEvidenceWith_eq

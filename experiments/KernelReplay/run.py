@@ -71,6 +71,7 @@ def main() -> None:
     run("nested", ["nested"],
         contains=("nestedSelections=kernelAccepted children=2",
                   "nestedJointReader=kernelAccepted", "nestedJointMissing=unproved",
+                  "nestedJointLaws=2AuditedTheorems",
                   "nestedJointRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.jointWrongSign",
                   "nestedJointRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.jointWrongKeys",
                   "nestedJointRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.jointForeign",

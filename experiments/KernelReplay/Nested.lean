@@ -134,6 +134,7 @@ in the original context with its exact polynomial key. -/
 /-- Apply the generic joint reader with supplied predecessor operations.
 The packet is supplied literally; no producer runs inside this function. -/
 @[expose] def jointFacts (facts : List (SignFact context))
+    (required : List (DensePoly (Element context)))
     (evidence : SignEvidence (Element context) Nat) :=
   NestedSignsConformance.next.readEvidenceWith? embedding
     (Element.denote_eq_zero (fun q : Rat => (q : ℝ))
@@ -189,28 +190,29 @@ The packet is supplied literally; no producer runs inside this function. -/
     (Element.cachedInv_eq reduction reduction_eq facts)
     (Element.cachedDiv_eq reduction reduction_eq facts)
     (Element.cachedNatCast_eq reduction reduction_eq facts)
-    [NestedSignsConformance.unitPoly] evidence
+    required evidence
 
 @[expose] def jointSelection (facts : List (SignFact context)) : Bool :=
-  match jointFacts facts
+  match jointFacts facts [NestedSignsConformance.unitPoly]
       ⟨[NestedSignsConformance.unitPoly], #v[1], NestedSignsConformance.graph⟩ with
   | none => false
   | some selected => decide (selected[0].polynomial = NestedSignsConformance.unitPoly ∧
       selected[0].sign = 1)
 
 @[expose] def jointWrongSign (facts : List (SignFact context)) : Bool :=
-  (jointFacts facts
+  (jointFacts facts [NestedSignsConformance.unitPoly]
     ⟨[NestedSignsConformance.unitPoly], #v[-1], NestedSignsConformance.graph⟩).isNone
 
 @[expose] def jointWrongKeys (facts : List (SignFact context)) : Bool :=
-  (jointFacts facts ⟨[], #v[], NestedSignsConformance.graph⟩).isNone
+  (jointFacts facts [NestedSignsConformance.nextQuery]
+    ⟨[NestedSignsConformance.unitPoly], #v[1], NestedSignsConformance.graph⟩).isNone
 
 @[expose] def jointForeign (facts : List (SignFact context)) : Bool :=
-  (jointFacts facts
+  (jointFacts facts [NestedSignsConformance.unitPoly]
     ⟨[NestedSignsConformance.unitPoly], #v[1],
       {NestedSignsConformance.graph with entries :=
-        NestedSignsConformance.graph.entries.modify 0 fun entry =>
-          {entry with node := {entry.node with context := 9}}}⟩).isNone
+        (NestedSignsConformance.graph.entries.modify NestedSignsConformance.graph.root
+          (fun entry => {entry with node := {entry.node with context := 9}}))}⟩).isNone
 
 @[expose] def selections (facts : List (SignFact context)) : Bool :=
   match readFacts? facts [(NestedSignsConformance.nextQuery, 1),
@@ -328,6 +330,7 @@ private unsafe def control : TermElabM Unit := do
     let .thmInfo law ← getConstInfo name
       | throwError "joint reader agreement is not a theorem"
     let _ ← KernelReplay.auditProof (mkConst name) law.type
+  logInfo "nestedJointLaws=2AuditedTheorems"
   let (joint, _) ← KernelReplay.assemble (mkApp (mkConst ``jointSelection) collected.facts)
     simpContext
   match joint with
@@ -342,7 +345,15 @@ private unsafe def control : TermElabM Unit := do
   let (jointMissing, _) ← KernelReplay.assemble (mkApp (mkConst ``jointSelection) initial)
     simpContext
   match jointMissing with
-  | .missing _ => logInfo "nestedJointMissing=unproved"
+  | .missing application =>
+    let needed ← KernelReplay.request application
+    let expectedContext := mkConst ``CoefficientSignsConformance.context
+    KernelReplay.kernelCheck `__kernelReplayJointMissingContext
+      (← mkEq needed.context expectedContext) (← mkEqRefl expectedContext)
+    let key := mkApp (mkConst ``reduction) needed.polynomial
+    KernelReplay.kernelCheck `__kernelReplayJointMissingKey
+      (← mkEq key firstKey) (← mkEqRefl firstKey)
+    logInfo "nestedJointMissing=unproved"
   | _ => throwError "generic joint reader did not stop at the missing lower fact"
   let replayed ← KernelReplay.collect 2 program initial simpContext
     (fun needed => do

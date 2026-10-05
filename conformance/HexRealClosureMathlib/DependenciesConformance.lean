@@ -108,12 +108,12 @@ def read (lowerRequests : List (Codec.Json × List (DensePoly Rat)))
       let child ← children[0]?
       match child.value with
       | .upper _ _ => none
-      | .lower _ facts =>
-        let reader := Element.signCodec ValueCodec.rat facts
+      | .lower _ lowerFacts =>
+        let reader := Element.signCodec ValueCodec.rat lowerFacts
         let queries ← if entry.subject == upperSubject₁ then some queries₁
           else if entry.subject == upperSubject₂ then some queries₂ else none
-        let facts ← (decodeUpperWith facts reader queries entry.payload.writeBytes).toOption
-        return .upper level facts.toList
+        let upperFacts ← (decodeUpperWith lowerFacts reader queries entry.payload.writeBytes).toOption
+        return .upper level upperFacts.toList
   else none
 
 /-- Separately produced upper packets share one checked lower packet.
@@ -158,6 +158,9 @@ def checks : Option (List (String × Bool)) := do
   let bad := {lower with values := lower.values.map (· + 1)}
   let falseEntry := {entry₀ with payload := lowerCodec.encode bad}
   let falseLower := {graph with entries := graph.entries.set! 0 falseEntry}
+  let badUpper := {packet₁ with values := packet₁.values.map (· + 1)}
+  let falseUpperEntry := {entry₁ with payload := upperCodec.encode badUpper}
+  let falseUpper := {graph with entries := graph.entries.set! 1 falseUpperEntry}
   let falseUnused := {graph with entries := graph.entries.push falseEntry}
   let incomplete ← (context.buildEvidence incompleteKeys).toOption
   let incompleteEntry : Dependencies.Entry := ⟨0, incompleteSubject, lowerCodec.encode incomplete, #[]⟩
@@ -194,6 +197,10 @@ def checks : Option (List (String × Bool)) := do
     ("exact literals", memo.map Dependencies.Checked.entry == graph.entries),
     ("selected shared results", decoded.results.toList.map (fun result => signs result.value) ==
       [[1, 1, 0, 1], [1, 1, 0, 1], [1]]),
+    ("false upper signs", falseUpper.check && (decodeGraph falseUpper).toOption.isNone),
+    ("false upper exact error", (decodeUpperWith lowerFacts.toList reader qs₁
+      (upperCodec.encodeBytes badUpper)).map (fun _ => ()) ==
+        .error "child sign evidence rejected"),
     ("false child", (decodeGraph falseLower).toOption.isNone),
     ("false unused packet", falseUnused.check && (decodeGraph falseUnused).toOption.isNone),
     ("independently valid incomplete child", keys.contains stored && stored != 0 &&
