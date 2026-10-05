@@ -50,7 +50,7 @@ def main():
                   executable_sha256=hashlib.sha256(exe.read_bytes()).hexdigest(),
                   driver_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                   cpu_model=next((line.split(':',1)[1].strip() for line in Path('/proc/cpuinfo').read_text().splitlines() if line.startswith('model name')), 'unknown'),
-                  purpose='Required representative attribution for the remainder-only query path and unexpected canonical scalar square-root cost. Not a timing sweep or phase admission.')
+                  purpose='Attribution of observed reduced-query or canonical square-root cost. Not a timing sweep or phase attestation.')
     def run(command):
         result = subprocess.run(list(map(str, command)), capture_output=True, text=True)
         index = len(record['commands'])
@@ -65,7 +65,7 @@ def main():
         record['lean_bench_commit'] = run(['git', '-C', ROOT / '.lake/packages/lean-bench', 'rev-parse', 'HEAD']).strip()
         record['lake_version'] = run(['lake', '--version']).strip()
         record['computational_source_sha256'] = {}
-        for relative in ['bench/HexRealAlgebraic/Bench.lean', 'bench/HexSturm/Bench.lean', 'HexSturm/Reduced.lean', 'HexPoly/Euclid/DivGcd.lean', 'HexRealAlgebraic/Basic.lean', 'HexRealAlgebraic/Roots.lean', 'HexNumberField/Roots.lean', 'HexNumberField/Convert.lean', 'HexArith/Nat/Sqrt.lean']:
+        for relative in ['bench/HexRealAlgebraic/Bench.lean', 'bench/HexSturm/Bench.lean', 'HexSturm/Reduced.lean', 'HexPoly/Euclid/DivGcd.lean', 'HexRealAlgebraic/Basic.lean', 'HexRealAlgebraic/Roots.lean', 'HexNumberField/Roots.lean', 'HexNumberField/Convert.lean', 'HexNumberField/Lazy.lean', 'HexArith/Nat/Sqrt.lean']:
             source = ROOT / relative
             record['computational_source_sha256'][relative] = hashlib.sha256(source.read_bytes()).hexdigest()
             (args.raw / (relative.replace('/', '-') + '.txt')).write_bytes(source.read_bytes())

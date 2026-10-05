@@ -140,7 +140,15 @@ proof equations identify exactly that deterministic run and refinement.
 `canonicalRepIn?` preserves orientation, and `ofNormalizedIn?` returns the
 complete result of `ofNormalized?`, including the same stored representative
 and every checked failure. `exactFactor?` uses this certified reuse after its
-candidate isolation. These helpers retain the shipped all-roots provenance;
+candidate isolation. `withEliminant?` keeps the producer's certified run
+available to its immediate consumer without storing another root representation.
+`exactIn?` reuses that run when a factor equals the whole enclosing polynomial;
+proper factors are isolated separately. Canonical addition and multiplication,
+and checked common-field rational/addition/multiplication construction, use
+this fused producer/consumer path. Whole-result equalities preserve the old
+canonical representatives and checked failures; total-operation equalities
+also retain their original fallback branches.
+These helpers retain the shipped all-roots provenance;
 they do not implement the forward local-canonicalization migration. The private record
 stores an `OrientedIsolation`: a canonical real or upper-half-plane `base`,
 and a `RootSide` tag (`real`, `upper`, or `lower`). The `valid` field proves

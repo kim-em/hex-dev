@@ -193,6 +193,85 @@ def exact? (a : AlgebraicRoot) : Option AlgebraicNumber :=
       | none => exactFactor? a entry.1)
     none
 
+/-- Exactify the enclosing polynomial using a certified isolation run already
+computed by its producer. Reducible enclosing polynomials are rejected here. -/
+@[expose]
+def exactParent? (a : AlgebraicRoot)
+    (isolations : Array (DyadicRootIsolation a.p))
+    (refined : Array (RefinedIsolation a.p))
+    (hisolate : ZPoly.isolateComplexRoots? a.p a.squarefree
+      (separationDepth a.p : Int) = some isolations)
+    (hrefine : isolations.mapM DyadicRootIsolation.toRefined? = some refined) :
+    Option AlgebraicNumber :=
+  if hirred : ZPoly.isIrreducible a.p = true then do
+    let comparable ← refined.mapM fun r =>
+      (r.refineTo? (mahlerPrec a.p : Int)).unattach
+    let matching ← comparable.toList.find? fun r =>
+      decide ((mahlerPrec a.p : Int) ≤ r.1.square.prec) &&
+        r.1.square.discsMeet a.rep.1.square
+    AlgebraicNumber.ofNormalizedIn? a.p a.prim a.pos_lc a.pos_degree
+      ⟨hirred, a.pos_degree⟩ a.squarefree matching isolations refined hisolate hrefine
+  else none
+
+-- RefinedIsolation projections need ordinary definitional reduction when
+-- simplifying the checked binds across this module boundary.
+set_option backward.isDefEq.respectTransparency false in
+/-- Reusing the parent run preserves the complete factor selector result. -/
+theorem exactParent?_eq (a : AlgebraicRoot)
+    (isolations : Array (DyadicRootIsolation a.p))
+    (refined : Array (RefinedIsolation a.p))
+    (hisolate : ZPoly.isolateComplexRoots? a.p a.squarefree
+      (separationDepth a.p : Int) = some isolations)
+    (hrefine : isolations.mapM DyadicRootIsolation.toRefined? = some refined) :
+    exactParent? a isolations refined hisolate hrefine = exactFactor? a a.p := by
+  have hprim : ZPoly.content a.p = 1 := a.prim
+  rw [exactFactor?_eq]
+  simp only [exactParent?, AlgebraicNumber.ofNormalizedIn?_eq,
+    hprim, a.pos_lc, a.pos_degree, a.squarefree, dite_eq_left]
+  split
+  · simp only [hisolate, hrefine, Option.bind_eq_bind, Option.bind_some]
+  · rfl
+
+/-- Exactification reusing the enclosing polynomial's certified isolation
+when a returned factor is that polynomial. Proper factors use their own runs. -/
+@[expose]
+def exactIn? (a : AlgebraicRoot)
+    (isolations : Array (DyadicRootIsolation a.p))
+    (refined : Array (RefinedIsolation a.p))
+    (hisolate : ZPoly.isolateComplexRoots? a.p a.squarefree
+      (separationDepth a.p : Int) = some isolations)
+    (hrefine : isolations.mapM DyadicRootIsolation.toRefined? = some refined) :
+    Option AlgebraicNumber :=
+  (ZPoly.factorize a.p).factors.foldl
+    (fun found entry =>
+      match found with
+      | some b => some b
+      | none =>
+          if entry.1 = a.p then exactParent? a isolations refined hisolate hrefine
+          else exactFactor? a entry.1)
+    none
+
+/-- Parent isolation reuse changes neither canonical representatives nor
+checked failures of exactification, including reducible enclosing polynomials. -/
+theorem exactIn?_eq (a : AlgebraicRoot)
+    (isolations : Array (DyadicRootIsolation a.p))
+    (refined : Array (RefinedIsolation a.p))
+    (hisolate : ZPoly.isolateComplexRoots? a.p a.squarefree
+      (separationDepth a.p : Int) = some isolations)
+    (hrefine : isolations.mapM DyadicRootIsolation.toRefined? = some refined) :
+    exactIn? a isolations refined hisolate hrefine = a.exact? := by
+  unfold exactIn? exact?
+  congr 1
+  funext found entry
+  cases found with
+  | some b => simp only
+  | none =>
+      simp only
+      split
+      · rename_i h
+        rw [exactParent?_eq, h]
+      · rfl
+
 /-- Canonicalize a lazy root: the total form of `exact?`, whose `none` branch
 the Mathlib companion proves unreachable. -/
 @[expose]
@@ -542,3 +621,14 @@ info: 'Hex.AlgebraicRoot.exactFactor?_eq' depends on axioms: [propext, Classical
 -/
 #guard_msgs in
 #print axioms Hex.AlgebraicRoot.exactFactor?_eq
+
+/--
+info: 'Hex.AlgebraicRoot.exactParent?_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.AlgebraicRoot.exactParent?_eq
+/--
+info: 'Hex.AlgebraicRoot.exactIn?_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.AlgebraicRoot.exactIn?_eq

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Measure scalar arithmetic before/after certified fixed-conversion reuse.
+"""Measure existing arithmetic anchors before/after certified isolation reuse.
 
 Both directories contain frozen executables, source snapshots and metadata.json.
 Four trial-major blocks alternate adjacent AB/BA arms. Keep every completed arm;
@@ -34,17 +34,27 @@ def main() -> None:
     parser.add_argument("--before", type=Path, required=True)
     parser.add_argument("--after", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--conversion-only", action="store_true",
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument("--conversion-only", action="store_true",
                         help="Measure the existing fixed-field conversion anchor instead of scalar consumers")
+    selection.add_argument("--canonical-arithmetic-only", action="store_true",
+                           help="Measure existing canonical addition, multiplication and common-field powers")
     args = parser.parse_args()
     directories = {"Before": args.before.resolve(), "After": args.after.resolve()}
     sources = {
         arm: json.loads((directory / "metadata.json").read_text())
         for arm, directory in directories.items()
     }
-    executable = "hexnumberfield_bench" if args.conversion_only else "hexrealalgebraic_bench"
-    bench = "bench/HexNumberField/Bench.lean" if args.conversion_only else "bench/HexRealAlgebraic/Bench.lean"
-    families = {"FixedConversion": [2]} if args.conversion_only else FAMILIES
+    number_field = args.conversion_only or args.canonical_arithmetic_only
+    executable = "hexnumberfield_bench" if number_field else "hexrealalgebraic_bench"
+    bench = "bench/HexNumberField/Bench.lean" if number_field else "bench/HexRealAlgebraic/Bench.lean"
+    targets = {"FixedConversion": "Hex.NumberFieldBench.runQAdjoinCanonical",
+               "CanonicalAdd": "Hex.NumberFieldBench.runAlgebraicAdd",
+               "CanonicalMul": "Hex.NumberFieldBench.runAlgebraicMul",
+               "CommonPowers": "Hex.NumberFieldBench.runCommonPowers"}
+    families = ({"FixedConversion": [2]} if args.conversion_only else
+                {"CanonicalAdd": [4], "CanonicalMul": [2], "CommonPowers": [16]}
+                if args.canonical_arithmetic_only else FAMILIES)
     if sources["Before"]["sources"][bench] != sources["After"]["sources"][bench]:
         raise SystemExit("Benchmark source differs between compiled arms")
     executables = {}
@@ -94,7 +104,7 @@ def main() -> None:
                 for size in sizes:
                     for arm in order:
                         label = f"{operation}-{size}-{trial}-{arm}"
-                        target = ("Hex.NumberFieldBench.runQAdjoinCanonical" if args.conversion_only
+                        target = (targets[operation] if number_field
                                   else f"Hex.RealAlgebraicScaling.run{operation}{size}")
                         command = [
                             str(executables[arm]), "run",

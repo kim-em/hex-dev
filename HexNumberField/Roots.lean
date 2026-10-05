@@ -336,21 +336,41 @@ def rational? (q : Rat) : Option AlgebraicNumber :=
     some 0
   else do
     let p := ZPoly.ratPolyPrimitivePart (DensePoly.ofList [-q, 1])
-    let root ← AlgebraicRoot.ofEliminant? p fun prec =>
+    AlgebraicRoot.exactEliminant? p fun prec =>
       some (DyadicComplexBall.ofRat q prec)
-    root.exact?
+
+/-- Isolation reuse preserves rational construction, including its zero branch. -/
+theorem rational?_eq (q : Rat) :
+    rational? q =
+      (if q = 0 then some 0 else do
+        let p := ZPoly.ratPolyPrimitivePart (DensePoly.ofList [-q, 1])
+        let root ← AlgebraicRoot.ofEliminant? p fun prec =>
+          some (DyadicComplexBall.ofRat q prec)
+        root.exact?) := by
+  unfold rational?
+  split
+  · rfl
+  · exact AlgebraicRoot.exactEliminant?_eq _ _
 
 /-- Checked canonical sum. -/
 @[expose]
-def add? (a b : AlgebraicNumber) : Option AlgebraicNumber := do
-  let root ← a.toRoot.add? b.toRoot
-  root.exact?
+def add? (a b : AlgebraicNumber) : Option AlgebraicNumber :=
+  a.toRoot.exactAdd? b.toRoot
+
+/-- Checked common-field addition retains the complete canonical result. -/
+theorem add?_eq (a b : AlgebraicNumber) :
+    add? a b = (a.toRoot.add? b.toRoot).bind AlgebraicRoot.exact? :=
+  AlgebraicRoot.exactAdd?_eq _ _
 
 /-- Checked canonical product. -/
 @[expose]
-def mul? (a b : AlgebraicNumber) : Option AlgebraicNumber := do
-  let root ← a.toRoot.mul? b.toRoot
-  root.exact?
+def mul? (a b : AlgebraicNumber) : Option AlgebraicNumber :=
+  a.toRoot.exactMul? b.toRoot
+
+/-- Checked common-field multiplication retains the complete canonical result. -/
+theorem mul?_eq (a b : AlgebraicNumber) :
+    mul? a b = (a.toRoot.mul? b.toRoot).bind AlgebraicRoot.exact? :=
+  AlgebraicRoot.exactMul?_eq _ _
 
 /-- Checked multiplication by an integer shift. -/
 @[expose]
@@ -745,3 +765,19 @@ end Hex
             extended.generator.p.natDegree = 4 && extended.coefficients.size = 2
         | none => false
     | _, _ => false
+
+/--
+info: 'Hex.AlgebraicPoly.Common.rational?_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.AlgebraicPoly.Common.rational?_eq
+/--
+info: 'Hex.AlgebraicPoly.Common.add?_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.AlgebraicPoly.Common.add?_eq
+/--
+info: 'Hex.AlgebraicPoly.Common.mul?_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.AlgebraicPoly.Common.mul?_eq
