@@ -3,7 +3,7 @@
 The input fields iterate the existing canonical RationalFn field over the
 rationals, with the existing positive-infinitesimal sign operation. The
 registrations fix the extension depth at one or two. Within each
-field, the query-count schedule is 8, 16, 32, 64 and 128.
+field, the query-count schedule is 128, 256, 512, 1024 and 2048.
 
 The polynomial is P=X on the whole line, and every query is the constant
 newest infinitesimal. There is exactly one root, zero, and its complete sign
@@ -33,9 +33,9 @@ moments also replay their domains. Production adds s initial query
 normalizations, 4s−1 bounded-size moment-chain constructions, 2s−1 rank
 certificates, s leaf inversions and s−1 scaled solves. These linear terms
 can have large constants. The asymptotic model is s(log₂s+1), but the
-fitted range 16..128 may give an inconclusive verdict if it does not separate the two terms.
+fitted range 256..2048 may give an inconclusive verdict if it does not separate the two terms.
 The harness fits per-parameter medians after dropping the first parameter,
-so the fitted range is 16..128. The model has no free exponent or linear
+so the fitted range is 256..2048. The model has no free exponent or linear
 coefficient; the harness fits only the slope of time divided by that model.
 Depth-dependent arithmetic costs are fixed within each registration.
 The measurements make no fitted exponential claim across depths.
@@ -75,3 +75,23 @@ examples. The native fields in this family use ordinary coefficient
 arithmetic, without tower implementations or additional field instances.
 This registration alone claims no timing result, allocation measurement
 or Phase-4 completion.
+
+
+The larger range retains the same source-derived s(log₂s+1) model, six
+trial-major rounds, 100 ms target, 300-second operational cap and slope rule.
+Only the fixed query-count ladder changes to 128,256,512,1024,2048. The complete
+first range and its sole unchanged rerun remain source-bound evidence; their
+inconclusive results are not discarded or relabeled. Historical validators
+accept that exact earlier ladder only when it is explicitly requested.
+
+The source has large linear terms from normalization and bounded-size
+certificate, domain and matrix work, in addition to query-reduction replay at
+every balanced node. A larger s range tests the declared model with those
+terms still present; neither exponent nor a linear coefficient is fitted.
+The 300-second cap is an operational limit, not a performance threshold.
+For planning only, the earlier depth-two production median of about 2.6 seconds
+at 128 queries scales to about 62 seconds at 2048 under the declared model.
+Preparation and the multiple calls used by the harness add wall-clock work;
+the complete collection may take tens of minutes. The actual recorded results
+and cap outcomes determine acceptance. No quiet-host preflight or retry-until-
+clean loop is used. Finite-range consistency cannot prove an asymptotic bound.

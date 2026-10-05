@@ -341,7 +341,7 @@ def main (args : List String) : IO UInt32 :=
   else if args == ["inspect-joint-wide"] then Hex.SignDetBench.Joint.inspect #[15, 31, 63, 127, 255]
   else if args == ["inspect-joint-timings-wide"] then Hex.SignDetBench.Joint.inspectTimings #[15, 31, 63, 127, 255]
   else if args == ["inspect-nested-tables"] then
-    Hex.SignDetBench.NestedTables.inspectFor #[1, 2] #[8, 16, 32, 64, 128]
+    Hex.SignDetBench.NestedTables.inspectFor #[1, 2] #[128, 256, 512, 1024, 2048]
   else if args == ["inspect-nested-tables-small"] then
     Hex.SignDetBench.NestedTables.inspectFor #[1, 2] #[2]
 

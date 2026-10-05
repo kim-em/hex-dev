@@ -178,7 +178,7 @@ matrix dimension stay bounded independently of s. Replaying query reductions
 at every balanced node contributes s*(log2(s)+1) steps. The 4s-1 moment checks,
 s leaf-domain replays and production's s normalizations, bounded certificate/rank construction and solves add
 linear terms with potentially large constants. The leading asymptotic cost is
-Theta(s log s); this short range need not separate it from those linear terms.
+Theta(s log s); finite ranges need not separate it from those linear terms.
 Graph sharing has no registered tight model. Depth is a fixed facet.
 -/
 
@@ -195,9 +195,9 @@ def input2 (size : Nat) : Option Input := input 2 size
 setup_benchmark runProduce1 s => s * (Nat.log2 s + 1)
   with prep := input1
   where {
-    paramSchedule := .custom #[8, 16, 32, 64, 128]
-    paramFloor := 8
-    paramCeiling := 128
+    paramSchedule := .custom #[128, 256, 512, 1024, 2048]
+    paramFloor := 128
+    paramCeiling := 2048
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
@@ -213,9 +213,9 @@ setup_benchmark runProduce1 s => s * (Nat.log2 s + 1)
 setup_benchmark runTree1 s => s * (Nat.log2 s + 1)
   with prep := input1
   where {
-    paramSchedule := .custom #[8, 16, 32, 64, 128]
-    paramFloor := 8
-    paramCeiling := 128
+    paramSchedule := .custom #[128, 256, 512, 1024, 2048]
+    paramFloor := 128
+    paramCeiling := 2048
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
@@ -232,9 +232,9 @@ setup_benchmark runTree1 s => s * (Nat.log2 s + 1)
 setup_benchmark runProduce2 s => s * (Nat.log2 s + 1)
   with prep := input2
   where {
-    paramSchedule := .custom #[8, 16, 32, 64, 128]
-    paramFloor := 8
-    paramCeiling := 128
+    paramSchedule := .custom #[128, 256, 512, 1024, 2048]
+    paramFloor := 128
+    paramCeiling := 2048
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
@@ -250,9 +250,9 @@ setup_benchmark runProduce2 s => s * (Nat.log2 s + 1)
 setup_benchmark runTree2 s => s * (Nat.log2 s + 1)
   with prep := input2
   where {
-    paramSchedule := .custom #[8, 16, 32, 64, 128]
-    paramFloor := 8
-    paramCeiling := 128
+    paramSchedule := .custom #[128, 256, 512, 1024, 2048]
+    paramFloor := 128
+    paramCeiling := 2048
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1

@@ -97,3 +97,16 @@ class NestedTablesTests(unittest.TestCase):
             changed["points"][0]["result_hash"] = hex(expected[depth, size]["replayResultHash"])
             with self.subTest(depth=depth, size=size), self.assertRaises(ValueError):
                 check(changed)
+
+    def test_historical_ladder_requires_explicit_binding(self):
+        fixture = Path(__file__).with_name("fixtures")/"sign-det-nested-table-short-inputs.jsonl"
+        with self.assertRaisesRegex(ValueError, "missing or reordered"):
+            bench.validate_inputs(fixture)
+        historical = bench.validate_inputs(fixture, sizes=bench.SHORT_SIZES)
+        self.assertEqual(len(historical), 10)
+        self.assertEqual(bench.configuration(bench.SHORT_SIZES)["param_floor"], 8)
+        self.assertEqual(bench.CONFIG["param_floor"], 128)
+        with self.assertRaisesRegex(ValueError, "unknown declared"):
+            bench.validate_inputs(fixture, sizes=list(reversed(bench.SHORT_SIZES)))
+        with self.assertRaisesRegex(ValueError, "unknown declared"):
+            bench.configuration([8, 128])

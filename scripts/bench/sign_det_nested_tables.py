@@ -21,7 +21,8 @@ from scripts.bench.sign_det_joint_timing import harness_binding
 from scripts.bench.sign_det_nested_signs import constant
 
 DEPTHS = [1, 2]
-SIZES = [8, 16, 32, 64, 128]
+SHORT_SIZES = [8, 16, 32, 64, 128]
+SIZES = [128, 256, 512, 1024, 2048]
 TRIALS = 6
 PREFIX = "Hex.SignDetBench.NestedTables."
 CONFIG = {"param_floor": SIZES[0], "param_ceiling": SIZES[-1], "outer_trials": TRIALS,
@@ -32,10 +33,18 @@ CONFIG = {"param_floor": SIZES[0], "param_ceiling": SIZES[-1], "outer_trials": T
           "narrow_range_noise_floor": 1.5}
 
 
-def validate_inputs(path):
+def configuration(sizes):
+    if list(sizes) not in (SHORT_SIZES, SIZES):
+        raise ValueError("unknown declared query-count ladder")
+    return dict(CONFIG, param_floor=sizes[0], param_ceiling=sizes[-1],
+                param_schedule={"kind": "custom", "params": list(sizes)})
+
+
+def validate_inputs(path, sizes=SIZES):
+    configuration(sizes)
     rows = [json.loads(line) for line in Path(path).read_text().splitlines()]
     if [(row["depth"], row["queries"]) for row in rows] != [
-            (depth, size) for depth in DEPTHS for size in SIZES]:
+            (depth, size) for depth in DEPTHS for size in sizes]:
         raise ValueError("missing or reordered nested-field inputs")
     expected = {}
     def literal(value):
@@ -70,7 +79,8 @@ def validate_inputs(path):
     return expected
 
 
-def validate_result(path, name, expected, revision):
+def validate_result(path, name, expected, revision, sizes=SIZES):
+    config = configuration(sizes)
     export = json.loads(Path(path).read_text())
     if export["export_schema_version"] != 1 or len(export["results"]) != 1:
         raise ValueError("wrong nested-table export")
@@ -82,11 +92,11 @@ def validate_result(path, name, expected, revision):
             result["complexity_formula"].replace(" ", "") != "s*(Nat.log2s+1)" or
             result["env"]["git_commit"] != revision or result["env"]["git_dirty"] is not False or
             any(type(result["config"][key]) is not type(value) or result["config"][key] != value
-                for key, value in CONFIG.items())):
+                for key, value in config.items())):
         raise ValueError("wrong registration, model, settings or source binding")
     points = result["points"]
     if [(p["trial_index"], p["param"]) for p in points] != [
-            (trial, size) for trial in range(TRIALS) for size in SIZES]:
+            (trial, size) for trial in range(TRIALS) for size in sizes]:
         raise ValueError("incomplete or reordered nested-table schedule")
     key = "productionResultHash" if name.startswith("runProduce") else "replayResultHash"
     for point in points:
