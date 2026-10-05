@@ -38,7 +38,7 @@ except ImportError:  # Direct script invocation.
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "scripts" / "release" / "released.yml"
-HEX_URL = re.compile(r"https://github\.com/leanprover/([A-Za-z0-9_-]+?)(?:\.git)?$")
+HEX_URL = re.compile(r"https://github\.com/(?:leanprover|kim-em)/([A-Za-z0-9_-]+?)(?:\.git)?$")
 LEAN_REQUIRE = re.compile(
     r'(require\s+\S+\s+from\s+)git\s*\n?\s*"https://github\.com/leanprover/'
     r'([A-Za-z0-9_-]+?)(?:\.git)?"\s*@\s*"[^"]*"'
@@ -289,6 +289,9 @@ def main() -> int:
                              e["repo"].split("/")[-1] in selected for e in entries)
     available = [e for e in entries if (stage / e["repo"].split("/")[-1]).is_dir()]
     required = set(known if aggregate_selected else selected)
+    if plan:
+        required.update(match[1] for p in plan.get("mathlib_dependencies", [])
+                        if (match := HEX_URL.match(p.get("url", ""))) and match[1] in known)
     for entry in entries:
         if entry["repo"].split("/")[-1] in selected:
             required.update(entry.get("pins") or [])

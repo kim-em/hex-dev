@@ -1841,6 +1841,8 @@ def main() -> int:
         # Every completed mirror is guarded before the first new push, including
         # repositories outside this run's consumer closure.
         closure = set(selected)
+        closure.update(_git_url(p["url"]).split("/")[-1] for p in mathlib_packages
+                       if HEX_PACKAGE_URL.search(p["url"]))
         for entry in manifest["repos"]:
             if entry["repo"].split("/")[-1] in selected:
                 closure.update(entry.get("pins") or [])

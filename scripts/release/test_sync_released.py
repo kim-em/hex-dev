@@ -1718,6 +1718,10 @@ class StagedReleaseTests(unittest.TestCase):
             "HexFirst": (), "HexSecond": ()}))
         self.manifest.write_text(yaml.safe_dump({"repos": self.entries}, sort_keys=False))
         self.sha = "source-two"
+        stage = self.root / "stage"
+        self.assertEqual(self.publish("--dry-run", "--advance-source", "--only", "hex-second",
+                                      "--stage", str(stage)), 0)
+        self.assertTrue((stage / "hex-first/HexFirst/Basic.lean").is_file())
         self.assertEqual(self.publish("--advance-source"), 0)
         lock = json.loads(self.git("--git-dir", str(self.remotes["leanprover/hex-second"]),
                                    "show", "main:lake-manifest.json"))
