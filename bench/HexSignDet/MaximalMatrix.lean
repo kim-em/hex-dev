@@ -68,16 +68,14 @@ checker retains its independently derived cubic scaling registration, `runTensor
 The earlier checker registrations are superseded by that same callback with
 tensor preparation; their archived findings remain subject to investigation. -/
 
-initialize referenceInputs : IO.Ref (Array (Option Input)) ←
-  IO.mkRef #[input 1, input 2, input 3]
+/- Fixed reference checks include their tiny preparation. Keeping it inside
+these callbacks avoids running reference solves at every executable startup. -/
+@[noinline] private def referenceAt (s : Nat) (_ : Unit) : IO (Option UInt64) :=
+  return runSolve (input s)
 
-private def referenceAt (index : Nat) (_ : Unit) : IO (Option UInt64) := do
-  let prepared ← referenceInputs.get
-  return runSolve prepared[index]!
-
-def reference1 := referenceAt 0
-def reference2 := referenceAt 1
-def reference3 := referenceAt 2
+def reference1 := referenceAt 1
+def reference2 := referenceAt 2
+def reference3 := referenceAt 3
 
 private def referenceConfig (s : Nat) : LeanBench.FixedBenchmarkConfig :=
   let expected := (words [-1, 0, 1] s).map fun word => (word, (1 : Int))

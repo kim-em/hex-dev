@@ -185,10 +185,19 @@ reference path, while the cubic formula counts rational and integer operations
 as equal units. The source-state inventory and 87.97% inversion attribution
 predict the observed downward trend and its approximate size: at s=3→4 and
 s=4→5, full-arm time grows about 15.0× and 17.1×, respectively, compared with
-the dominant rational row-update term’s 18× and the declared scalar count’s
-27×. The remaining lower-order work reduces the finite ratios further. Over
-s=2..5 the normalized constant falls about 6.9×, versus 3.4× from the dominant
-18^s term alone. This is a finite-range explanation, not a fitted replacement
+the actual rational row-update counts’19.3× and18.6×, respectively, and the
+declared scalar count’s27×. The leading rational term alone would predict18×. Over
+s=2..5 the normalized constant falls about6.9×, versus about2.6× from the
+actual4(18^s−9^s) count (3.4× from its18^s leading term alone). The difference
+includes substantial small-input work: after subtracting the reduced arm’s
+median as an approximate allowance for shared polynomial/query work, residual
+time per rational row-update pair is about308,283,235 and217ns at s=2..5.
+The reduced-arm allowance is about46.5% of full time at s=2, and only0.052%
+at s=5; together with the residual per-pair decrease it explains the additional
+roughly2.6× normalized fall. These separately measured arms do not isolate an exact phase; the residual
+still includes the full arm’s integer checks and other work. Its roughly30%
+decline, together with the87.97% inversion attribution at the largest input,
+quantifies why the count alone underpredicts the finite normalized fall. This is a finite-range explanation, not a fitted replacement
 model. The original inconclusive verdict remains.
 The required paired comparison still measures both algorithms on identical
 inputs, with exact-answer agreement and adjacent alternating execution; this

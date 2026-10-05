@@ -28,7 +28,8 @@ from scripts.bench.sign_det_maximal_matrix import validate_inventory as validate
 from scripts.bench.sign_det_matrix_wide import validate_inputs as validate_tensor
 from scripts.bench.sign_det_height import validate_phases as validate_height
 
-# Fixed before collection; all are parameters of the existing registrations.
+# Fixed before collection. The small tensor sizes are explicit profiler inputs,
+# outside the scientific timing ladder; lean-bench profile accepts these sizes.
 V1_GROUPS = {
     "sparse": ([64, 256, 1024], ["runProduce", "runTree", "runGraph"]),
     "joint": ([3, 7, 15], ["Joint.runComparison", "Joint.runCheckReduced"]),
@@ -314,7 +315,8 @@ def main():
     harness = harness_binding(ROOT)
     sources = source_hashes()
     for name in ("sign_det_memory", "test_sign_det_memory", "sign_det_compare", "sign_det_joint",
-                 "sign_det_joint_timing", "sign_det_maximal_matrix", "sign_det_height"):
+                 "sign_det_joint_timing", "sign_det_maximal_matrix", "sign_det_height",
+                 "sign_det_matrix_wide", "sign_det_memory_archive"):
         path = "scripts/bench/" + name + ".py"
         sources[path] = digest(ROOT / path)
     cpu, lease = cpu_lease()

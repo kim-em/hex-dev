@@ -85,7 +85,8 @@ For library `hex-foo`, Phase 4 is done when:
 - every performance claim the library makes has a complete scientific run;
 - each timing finding has an evidence-based disposition under
   [Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim):
-  a passing model/bound check, a corrected defect or declaration, or a documented
+  a passing model/bound check, a corrected defect or declaration, a descriptive
+  auxiliary-reference verdict with its limitation stated, or a documented
   explanation predicting its direction and rough size from actual source work,
   with retained measurements and phase attribution where relative costs matter;
   unexplained excessive costs and unmet explicit performance targets remain open;
