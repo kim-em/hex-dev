@@ -226,7 +226,7 @@ than the declared n³ hypothesis. Its registration does not identify that
 hypothesis as an independently derived model or a cited bound. This capture
 does not satisfy the Phase 4 exit criterion; its declaration, family and
 calibration need investigation under the
-[benchmarking policy](../SPEC/benchmarking.md#anti-patterns-to-avoid).
+[benchmarking policy](../SPEC/benchmarking.md#anti-patterns).
 The cause has not been classified as an implementation bug, declaration error
 or schedule miscalibration. Each requires the policy's corresponding response.
 Any declaration correction needs an independent counterexample and derivation,
