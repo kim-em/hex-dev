@@ -97,7 +97,9 @@ Its producer-side collector retries the actual checker after obtaining each
 required fact from a supplier. It audits and kernel checks supplied facts and
 returns the finite list used in the final checked equation. A missing supplier
 result or exhausted fuel returns the unresolved request; neither establishes
-a Boolean result. Replay does not call this collector or its supplier.
+a Boolean result. The collector calls its supplier when a fact is missing;
+that supplied function may produce new certificates or read recorded packets.
+The proof assembler itself never calls the supplier.
 
 ```sh
 lake env .lake/build/bin/hexsigndet_kernel_replay_probe collect
@@ -142,8 +144,11 @@ lake env .lake/build/bin/hexsigndet_kernel_replay_probe generated
 
 The producer uses unsafe native evaluation to obtain a requested rational
 polynomial and run existing production. Those results remain untrusted data:
-quotation and native computation cannot establish acceptance. Replay takes
-supplied packets and does not call the producer. Generation, collection and
+quotation and native computation cannot establish acceptance. After generation,
+a second collection reads only the recorded packets and checks the actual graph
+again. Its supplier matches literal polynomial keys and calls the packet reader;
+it never calls the producer. A forged packet leaves an unresolved request and
+establishes no Boolean result. Generation, collection and
 checking run within the same process. This fixture still starts from an already
 validated coefficient context and a fixed upper-level graph; it does not produce
 that graph or reconstruct its context from bytes. It demonstrates fresh

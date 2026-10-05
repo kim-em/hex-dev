@@ -40,7 +40,8 @@ def main() -> None:
     run("generated", ["generated"],
         contains=("generated=2 kernelAccepted=true", "generatedWrongSigns=kernelRejected",
                   "generatedDifferentQuery=kernelRejected", "generatedStaleContext=kernelRejected",
-                  "generatedForgedCount=kernelRejected", "productionNanos=", "packetCheckNanos="))
+                  "generatedForgedCount=kernelRejected", "productionNanos=", "packetCheckNanos=",
+                  "packetReplay=kernelAccepted", "forgedPacketReplay=normalRejection"))
     run("collect", ["collect"],
         contains=("collected=2 kernelAccepted=true", "incompleteInventory=missingEndpoint",
                   "zeroFuel=normalRejection", "irrelevantSupplier=boundedRejection",

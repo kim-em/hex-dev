@@ -71,7 +71,8 @@ unsafe def produce (needed : KernelReplay.Request) : MetaM (Option Packet) := do
     return none
   let key := mkApp (mkConst ``reduction) needed.polynomial
   let normalized ← withTransparency .all (reduce key)
-  let p ← evalExpr (DensePoly Rat) (← inferType key) normalized (checkMeta := false)
+  let expected ← mkAppOptM ``DensePoly #[some (mkConst ``Rat), none, none]
+  let p ← evalExpr (DensePoly Rat) expected normalized (checkMeta := false)
   let signs ← match context.buildSigns [context.queryPoly p] with
     | .ok signs => pure signs
     | .error error => throwError "coefficient evidence production failed: {reprStr error}"
@@ -113,6 +114,27 @@ def readFact (packet : Packet) : MetaM (Option Expr) := do
   let _ ← KernelReplay.auditProof proof type
   KernelReplay.kernelCheck `__kernelReplayGeneratedFact type proof
   return some fact
+
+/-- Match a demanded retained polynomial against supplied literal packets.
+The supplier performs kernel checks and never invokes production. -/
+def readPackets (packets : List Packet) (needed : KernelReplay.Request) :
+    MetaM (Option Expr) := do
+  unless ← isDefEq needed.context (mkConst ``CoefficientSignsConformance.context) do
+    return none
+  let key := mkApp (mkConst ``reduction) needed.polynomial
+  for packet in packets do
+    let decoded ← mkAppM ``Codec.readPoly
+      #[mkConst ``ValueCodec.rat, KernelReplay.jsonExpr packet.polynomial]
+    let decoded ← withTransparency .all (whnf decoded)
+    unless decoded.getAppFn.isConstOf ``Except.ok do continue
+    let polynomial := decoded.getAppArgs.back!
+    let type ← mkEq key polynomial
+    let proof ← mkEqRefl polynomial
+    let options := (← getOptions).setBool `debug.skipKernelTC false
+    let matched := (← getEnv).toKernelEnv.addDecl options
+      (.thmDecl { name := `__kernelReplayPacketKey, levelParams := [], type, value := proof })
+    if ← KernelReplay.acceptKernel matched then return ← readFact packet
+  return none
 
 private def rules : MetaM SimpTheorems := do
   let mut rules : SimpTheorems := {}
@@ -182,11 +204,27 @@ private unsafe def control : TermElabM Unit := do
     KernelReplay.kernelCheck `__kernelReplayGeneratedKey (← mkEq key expected) (← mkEqRefl expected)
   let packets ← packets.get
   unless packets.length == 2 do throwError "unexpected production call count"
+  let replayed ← KernelReplay.collect 2 program initial context (readPackets packets)
+  unless replayed.requests.size == 2 do throwError "unexpected packet replay request count"
+  match replayed.outcome with
+  | .checked true proof _ =>
+    KernelReplay.kernelCheck `__kernelReplayPacketGraph
+      (← mkEq (mkApp program replayed.facts) (mkConst ``Bool.true)) proof
+    logInfo "packetReplay=kernelAccepted"
+  | _ => throwError "supplied packets did not replay the actual graph"
+  let rejected ← KernelReplay.collect 1 program initial context
+    (readPackets (packets.map fun packet => {packet with claimed := -packet.claimed}))
+  unless rejected.requests.size == 1 do throwError "unexpected forged packet request count"
+  match rejected.outcome with
+  | .missing _ => logInfo "forgedPacketReplay=normalRejection"
+  | _ => throwError "forged packets established a Boolean result"
   for packet in packets do
     unless (← readFact {packet with claimed := -packet.claimed}).isNone do
       throwError "wrong sign accepted"
   logInfo "generatedWrongSigns=kernelRejected"
-  let some packet := packets.head? | throwError "missing generated packet"
+  let endpoint := Codec.poly ValueCodec.rat (DensePoly.ofCoeffs #[-1, 2])
+  let some packet := packets.find? (·.polynomial == endpoint)
+    | throwError "missing endpoint packet"
   let different := Codec.poly ValueCodec.rat Sturm.Fixtures.x
   unless (← readFact {packet with polynomial := different}).isNone do
     throwError "different query accepted"
