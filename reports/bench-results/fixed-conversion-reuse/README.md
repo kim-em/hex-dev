@@ -64,6 +64,12 @@ Compiled-arm provenance comes from `metadata.json.sources.Before/After`,
 the frozen executable hashes and snapshots. The lean-bench exporter observes
 the collector checkout for both arms; its `env.git_commit` is not the compiled
 baseline's source identity.
+The measured changed source remains reachable through the pushed
+`evidence/issue-10577-fixed-conversion-source` branch.
+[source-equivalence.json](source-equivalence.json) verifies all twelve frozen
+changed-arm source hashes after rebasing onto current main. The rebased full
+Lake build also passes; measured timings remain attributed to their original
+compiled source.
 
 Reproduce collection with `scripts/bench/fixed_conversion_paired.py --before
 <frozen-before> --after <frozen-after> --output <new-directory>`.
