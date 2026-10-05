@@ -2971,3 +2971,31 @@ check invalid UTF-8, truncated syntax, stale contexts, malformed coefficients,
 trailing zeros and byte/depth/digit policies. Field arithmetic correspondence
 and exact mathematical conformance remain supplied by the existing tower
 proofs and algebraic oracles.
+## Introductory paper examples
+
+`hexrealclosure_basic_conformance` executes the introductory operations from
+section 4 of [de Moura–Passmore, CADE 2013](https://www.cl.cam.ac.uk/~gp351/infinitesimals.pdf).
+The complete native producer returns both square roots of two in increasing
+order with multiplicity one. The positive root owns the original inverse,
+square and cube-plus-one calculations. Its actual checked enlargement retains
+that selected root while adding a positive infinitesimal `ε`.
+The next complete producer selects the unique real root `β` of `X³-ε` and
+checks `ε<β<1`, `β³=ε`, and `1/ε>10^27` through native arithmetic.
+
+```sh
+lake exe hexrealclosure_basic_conformance
+python3 scripts/oracle/real_closure_basic.py \
+  conformance-fixtures/HexRealClosure/basic.jsonl
+```
+
+The independent pinned Z3 4.15.4 RCF oracle selects every retained root from
+its original polynomial and retained interval (these examples have empty
+Thom words), interprets all nine stored values and checks the four original
+values after enlargement, including polynomial and endpoint transport.
+Native execution replays the three producer-returned descriptors; checked
+enlargement validates the rebuilt predecessor. These are compiled correctness
+fixtures; ordinary-real realization and scientific timing remain separate
+requirements. [Input provenance and coverage](../reports/hex-real-closure/basic-examples.md)
+identify the transcribed paper operations. The two examples involving `π`
+remain explicitly unsupported without a caller-validated provider and its
+progress laws; no other constant is used in their place.

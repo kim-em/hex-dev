@@ -189,7 +189,7 @@ def check() -> None:
              "HexRealClosure.QAdjoinTests", "HexRealClosure.NumberField",
              "HexRealClosureMathlib.NumberField", "HexRealClosure.NumberFieldConformance",
              "HexRealClosure.NumberFieldTower", "HexRealClosureMathlib.NumberFieldTower",
-             "HexRealClosure.NumberFieldSamples",
+             "HexRealClosure.NumberFieldSamples", "HexRealClosure.BasicConformance",
              "HexRealClosure.TowerCatalog", "HexRealClosure.TowerTests",
              "HexRealClosure.TowerBytes", "HexRealClosure.BytesConformance",
              "HexRealClosure.RootFrame", "HexRealClosure.RootFrameTests",

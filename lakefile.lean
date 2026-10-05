@@ -2379,3 +2379,7 @@ lean_exe hexrealclosure_policy_conformance where
 lean_exe hexrealclosure_normalization_bench where
   srcDir := "bench"
   root := `HexRealClosure.Normalization
+
+lean_exe hexrealclosure_basic_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.BasicConformance
