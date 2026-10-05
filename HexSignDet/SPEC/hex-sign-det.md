@@ -284,6 +284,7 @@ the companion proves their semantic meanings.
 | `Descriptor.compare d₁ d₂` | Total `Ordering` of roots over the same coefficient field, using completion and joint re-encoding where necessary. Its internal-error branch emits a diagnostic and returns `eq`; `compare_success` proves it unreachable under lawful interpretations. |
 | `Descriptor.buildReencoding d h a b` | `Except BuildError (Option (Reencoding d h a b))`. It succeeds exactly when the target domain is valid and contains the selected root. The result includes a validated full target descriptor and its checked relation to the source. Invalid domain or absent root gives `.ok none`; the companion excludes internal errors under lawful interpretations. |
 | `buildTree` / `buildPrepared` / `Replay.check` | Produce and independently check Tarski/BKR evidence. Builders expose internal diagnostics; checking returns `Bool`. Malformed or false evidence returns `false`. |
+| `Dag.mapNodes transform graph` | Raw graph with each literal node transformed once, preserving all entries, child indices and the root index across coefficient/context types. It preserves sharing; target `validate?` or `replay?` must establish acceptance under the new complete bindings. |
 
 Diagnostic `Except` results expose producer errors on arbitrary coefficient
 operations; they do not add mathematical invalidity cases. The companion proves

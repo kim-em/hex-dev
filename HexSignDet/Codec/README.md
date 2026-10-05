@@ -152,8 +152,8 @@ The BKR graph payload encodes same-level recursion and literal coefficient
 values. The dependency envelope below retains lower-level proof dependencies;
 local packet readers supply coefficient and root semantics. The companion's
 soundness theorems apply to arbitrary accepted evidence, with the required
-coefficient interpretation laws. Serialization and nested computation costs
-are measured separately from those proofs.
+coefficient interpretation laws. Serialization and nested computation cost measurements are separate
+Phase-4 obligations tracked in [#10377](https://github.com/kim-em/hex-dev/issues/10377).
 
 `Dag.mapNodes` transforms raw nodes across coefficient and context types while
 retaining all entries, child indices and the root index. It preserves sharing

@@ -21,7 +21,8 @@ public section
 namespace Hex.SignDetMathlib.ProofProbe
 open Hex.SignDetMathlib.Diagnostics
 
-/-- Assemble acceptance for the exact nested literal evidence. -/
+/-- Re-export ordinary-kernel acceptance of the exact nested literal evidence
+from the warm diagnostic dependency. -/
 theorem nested_accept : Nested.check 1 = true := Nested.N1.Accept.checked
 
 /-- A copied child binding cannot prove the requested nested result. -/

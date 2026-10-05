@@ -360,7 +360,9 @@ or injective interpretation on stored coefficients.
 Actual coefficient/context and graph byte roundtrips are proved by the
 computational codec laws. `Dependencies.Graph` routes shared typed packet
 results across coefficient levels and proves full literal reference bindings.
-The generic fact reader and ordinary in-process Lean-kernel assembler check
+The downstream generic reader in `HexRealClosureMathlib.FactReplay` and
+`Hex.RealClosure.Algebraic.KernelReplay.collectMany` in
+`HexRealClosureMathlib.KernelReplay` check
 supplied intermediate facts against their exact typed contexts and polynomials.
 Missing evidence stops at the requested fact. Native coefficient arithmetic
 still uses its ordinary sign operation. Consumer context and tower-catalog

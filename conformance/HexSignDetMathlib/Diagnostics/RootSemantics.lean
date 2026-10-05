@@ -14,6 +14,7 @@ public import HexSignDetMathlib.ThomRoots
 public import HexSignDetMathlib.ThomReencoding
 public import HexSignDetMathlib.ComparisonProducer
 public import HexSignDetMathlib.Naturality
+public import HexSignDetMathlib.Embedding
 public import HexSignDet.Conformance
 public import HexRealRootsMathlib.RealClosed
 
@@ -202,5 +203,33 @@ theorem literal_support (s : List Int) :
 /-- info: 'Hex.SignDet.Descriptor.buildRoots_convert_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.buildRoots_convert_roots
+
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_convert_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.buildRoots_convert_isSome
+
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.buildRoots_isSome
+
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_domain' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.buildRoots_domain
+
+/-- info: 'Hex.SignDet.Descriptor.compare_lt_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.compare_lt_iff
+
+/-- info: 'Hex.SignDet.Descriptor.compare_eq_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.compare_eq_iff
+
+/-- info: 'Hex.SignDet.Descriptor.compare_gt_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.compare_gt_iff
+
+/-- info: 'Hex.SignDet.Descriptor.root_comp' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.root_comp
 
 end Hex.SignDetMathlib.RootSemantics

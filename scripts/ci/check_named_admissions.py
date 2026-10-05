@@ -299,7 +299,9 @@ def check() -> None:
         for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [
         ".".join(path.relative_to(ROOT / "conformance").with_suffix("").parts)
         for library in ("HexSignDetMathlib", "HexRealClosureMathlib")
-        for path in sorted((ROOT / "conformance" / library).rglob("*.lean"))]
+        for path in sorted((ROOT / "conformance" / library).rglob("*.lean"))] + [
+        ".".join(path.relative_to(ROOT / "bench").with_suffix("").parts)
+        for path in sorted((ROOT / "bench" / "HexSignDetMathlib" / "ProofProbe").rglob("*.lean"))]
     # Named roots remain mandatory; the glob also audits unnamed conformance
     # modules, including their own declarations and imported dependencies.
     roots = list(dict.fromkeys(roots))
@@ -312,6 +314,10 @@ def check() -> None:
             module = ".".join(path.relative_to(ROOT / "conformance").with_suffix("").parts)
             if module_file(module) != path:
                 raise ValueError(f"conformance module {module} is shadowed by another source file")
+    for path in sorted((ROOT / "bench" / "HexSignDetMathlib" / "ProofProbe").rglob("*.lean")):
+        module = ".".join(path.relative_to(ROOT / "bench").with_suffix("").parts)
+        if module_file(module) != path:
+            raise ValueError(f"proof-probe module {module} is shadowed by another source file")
     paths = import_cones(roots)
     if BRIDGE not in paths:
         raise ValueError(f"the optional adapter no longer imports {BRIDGE}")

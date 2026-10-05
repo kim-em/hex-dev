@@ -31,6 +31,13 @@ call `validate?` or `replay?` with the target operations and full bindings. -/
     (graph.mapNodes f).entries.size = graph.entries.size := by
   simp [mapNodes]
 
+/-- Each retained entry contains the transformed original literal node. -/
+@[simp] theorem node_mapNodes (f : Node E Ctx → Node F Target)
+    (graph : SignDet.Dag E Ctx) (i : Nat) (h : i < graph.entries.size) :
+    ((graph.mapNodes f).entries[i]'(by simpa using h)).node =
+      f (graph.entries[i]'h).node := by
+  simp [mapNodes]
+
 /-- Every shared edge retains its exact original index after conversion. -/
 @[simp] theorem children_mapNodes (f : Node E Ctx → Node F Target)
     (graph : SignDet.Dag E Ctx) (i : Nat) (h : i < graph.entries.size) :

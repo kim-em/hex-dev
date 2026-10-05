@@ -16,7 +16,8 @@ public section
 namespace Hex.SignDetMathlib.ProofProbe
 open Hex Hex.SignDet Hex.SignDet.Conformance Hex.SignDetMathlib.Diagnostics
 
-/-- Kernel assembly of accepted evidence and its mathematical counts. -/
+/-- Re-export the checked graph and its mathematical counts from the warm
+diagnostic dependency. -/
 theorem replay_counts : ∃ t,
     Dag.replay? Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper
       (List.replicate (2 ^ 3) (DensePoly.C (2 : Rat))) D3.Accept.evidence = some t ∧

@@ -59,7 +59,6 @@ variable (hgn : ∀ a, g (-a) = -g a) (hgi : ∀ a, g a⁻¹ = (g a)⁻¹)
 variable {sign : E → Int} (hfsign : ∀ a, sign a = (SignType.sign (f a) : Int))
 variable (newSign : F → Int) (hgsign : ∀ a, newSign a = (SignType.sign (g a) : Int))
 
-
 variable [Neg E] [Inv E]
 variable (hfn : ∀ a, f (-a) = -f a) (hfi : ∀ a, f a⁻¹ = (f a)⁻¹)
 
@@ -145,8 +144,21 @@ theorem determine_convert_isSome (context : Ctx) (newContext : NewCtx)
     (determine sign context p a b qs reduced).isSome = true := by
   rw [determine_isSome g hgz hg1 hga hgs hgm hgnat hgn hgi newSign hgsign,
     determine_isSome f hfz hf1 hfa hfs hfm hfnat hfn hfi sign hfsign]
-  exact (⟨context, p, a, b, [], []⟩ : RawDescriptor E Ctx).map_domain
-    f hfz g hgz convert hcz hvalue newContext
+  exact domain_convert f hfz g hgz convert hcz hvalue p a b
+
+omit [Div E] [Div F] in
+include hfz hgz hf1 hfa hfs hfm hfnat hfsign hg1 hga hgs hgm hgnat hgsign hvalue
+    hfn hfi hgn hgi in
+/-- Actual root-list success is preserved by value-preserving coefficient
+and context conversion, including domains with no roots. -/
+theorem Descriptor.buildRoots_convert_isSome (context : Ctx) (newContext : NewCtx)
+    (p : DensePoly E) (a b : Endpoint E) :
+    (∃ out, Descriptor.buildRoots newSign newContext (DensePoly.Interpret.map convert hcz p)
+      (a.map convert) (b.map convert) = .ok (some out)) ↔
+    (∃ out, Descriptor.buildRoots sign context p a b = .ok (some out)) := by
+  rw [Descriptor.buildRoots_isSome g hgz hg1 hga hgs hgm hgnat hgsign hgn hgi,
+    Descriptor.buildRoots_isSome f hfz hf1 hfa hfs hfm hfnat hfsign hfn hfi]
+  exact domain_convert f hfz g hgz convert hcz hvalue p a b
 
 omit [Div E] [Div F] in
 include hf1 hfa hfs hfm hfnat hfsign hg1 hga hgs hgm hgnat hgsign hvalue in

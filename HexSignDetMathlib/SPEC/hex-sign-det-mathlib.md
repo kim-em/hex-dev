@@ -252,7 +252,8 @@ Thom injectivity does not supply existence of a root for an arbitrary vector.
 
 ## Local checker correspondence
 
-Prove `Replay.check_sound` by induction over the actual accepted replay.
+Prove `Replay.check_domain`, `Replay.check_support` and `Replay.check_counts`
+by induction over the actual accepted replay.
 Acceptance includes the domain and coefficient guards; no producer-success
 hypothesis is needed. The proof must follow this order at each node:
 
@@ -261,7 +262,7 @@ hypothesis is needed. The proof must follow this order at each node:
    the root-restriction lemma, checking exact query-list concatenation,
    candidate Cartesian product, context, head and interval agreement.
 2. Interpret every moment through hex-sturm-mathlib's
-   `Replay.check_sound`/`queryPrepared_sound`. Validate factor indices and
+   `HexSturmMathlib.check_sound`. Validate factor indices and
    exponents. For reduced moments, check each identity
    `u*(Gprev*F)=B*P+v*Gnext`, with `u,v>0` and `Gnext=0` or
    `degree Gnext<degree P`, where `F` is the next certified query factor.
@@ -369,11 +370,11 @@ replay theorems quantify over arbitrary accepted certificates.
 | `Descriptor.complete_correct` | Total completion preserves the root and gives all derivative signs; `buildCompletion_success` excludes its fallback. |
 | `Descriptor.signAt_correct`, `Descriptor.signAt_success` | The total single-query operation gives the mathematical evaluation sign and agrees with a successful `buildSigns` computation. |
 | `Descriptor.compare_correct`, `compare_lt_iff`, `compare_eq_iff`, `compare_gt_iff` | The actual total comparison agrees with the three mathematical root relations. |
-| `Descriptor.buildReencoding_isSome`, `buildReencoding_success`, `Reencoding.root_eq_source`, `target_constraints` | Success iff the target domain contains the selected root; success preserves that root and records the target derivative signs. |
+| `Descriptor.buildReencoding_isSome`, `buildReencoding_invalid`, `buildReencoding_absent`, `buildReencoding_success`, `Reencoding.root_eq_source`, `target_constraints` | Success iff the target domain contains the selected root; success preserves that root and records the target derivative signs. |
 | `Descriptor.buildRoots_roots`, `buildRoots_ordered`, `buildRoots_coverage` | On a valid domain the actual builder returns valid descriptors for every root exactly once, in strictly increasing order. |
 | `determine_isSome`, `Descriptor.buildRoots_isSome` | Actual success is equivalent to the root domain, including the empty list for a nonzero constant. |
 | `Descriptor.root_map`, `root_comp`, `convert_success`, `convert_root` | Ordered ambient field embeddings and checked coefficient/context conversions preserve the selected root and descriptor validity. |
-| `determine_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `convert_compare`, `buildRoots_convert_roots` | Value-preserving coefficient conversion preserves actual success, all table counts, selected-root signs, comparison results and ordered mathematical root lists. |
+| `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `convert_compare`, `buildRoots_convert_roots` | Value-preserving coefficient conversion preserves actual success, all table counts, selected-root signs, comparison results and ordered mathematical root lists. |
 
 The last two rows give the result-congruence contract. Coefficient conversion
 need not preserve operations as literal representations: source and target
@@ -393,9 +394,10 @@ put integration tests downstream so this obligation creates no reverse import.
 
 The input predicates are `Domain` for tables and root enumeration; `Valid(d)`
 for descriptor validation; and a valid target domain with selected-root
-membership for re-encoding. They define exactly the `none` cases of raw-input
-`Option` APIs. Completion, sign-at-root and comparison on validated descriptors
-are total. All coefficient operations are ordinary total field operations.
+membership for re-encoding. They define exactly the `none` cases of option-valued APIs and the `.ok none`
+cases of diagnostic root-list and re-encoding builders. Completion, sign-at-root and comparison on validated descriptors
+are total. All coefficient operations are ordinary total operations on `E` satisfying
+the stated interpretation laws.
 Singular chosen matrices or negative/nonintegral solved counts on valid inputs
 are ruled out by the producer proof, not reported as mathematical invalidity.
 
@@ -435,7 +437,7 @@ replay plus final theorem axiom sets. Planned foundations must stay visibly
 separate from existing declarations; neither `axiom`, `native_decide` nor
 unfinished core proofs may substitute for the correspondence.
 
-`conformance/HexSignDetMathlib/FieldConformance.lean` instantiates each
+`conformance/HexRCF/SignDetFieldProofs.lean` instantiates each
 producer correctness theorem (selected signs, completion, query handles, root
 coverage, tables, comparison, absence, refinement, re-encoding, conversion and
 root transport along order embeddings) once at the actual cubic field ℚ(∛2)

@@ -421,6 +421,21 @@ class AdmissionScannerTests(unittest.TestCase):
                             audit.check()
                         shadow.unlink()
                     additional.unlink()
+                proof = root / "bench/HexSignDetMathlib/ProofProbe/Injected.lean"
+                proof.parent.mkdir(parents=True, exist_ok=True)
+                proof.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                audit.check()
+                proof.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in bench/HexSignDetMathlib/ProofProbe"):
+                    audit.check()
+                proof.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                proof_shadow = root / "adapters/HexSignDetMathlib/ProofProbe/Injected.lean"
+                proof_shadow.parent.mkdir(parents=True, exist_ok=True)
+                proof_shadow.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "proof-probe module .* is shadowed"):
+                    audit.check()
+                proof_shadow.unlink()
+                proof.unlink()
                 adapter_shadow = root / "HexSignDetMathlib/RootProducer.lean"
                 adapter_shadow.parent.mkdir(parents=True, exist_ok=True)
                 adapter_shadow.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
