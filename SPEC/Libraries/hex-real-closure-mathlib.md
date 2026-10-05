@@ -528,7 +528,7 @@ interpretation and membership, sign agreement and zero reflection on this
 finite list; native expressions need no field structure.
 
 `Transport.Finite` transports those same literal checks from reached arithmetic
-operations without assuming `Transport.Closed`. `MomentData` records the actual
+operations without assuming `Transport.Closed`. `Transport.MomentData` records the actual
 binary-power trees and left-associated product fold. Its `NodeData` and
 `ReplayData` retain optional preprocessing/reduction witnesses and the exact
 positional child slices. `DerivativeData` records each reconstructed derivative;
@@ -539,7 +539,8 @@ closed-domain APIs derive these finite premises as corollaries. An ordinary-real
 consumer identifies the unique count-one point satisfying the descriptor
 row and whole additional recorded sign vector from explicit finite data.
 Its identity-interpretation example derives that data from the actual retained
-inventory and consumes the closed-to-finite compatibility constructors. Constructing this arithmetic data from accepted tower
+inventory and consumes the closed-to-finite compatibility constructors.
+Constructing this arithmetic data from accepted tower
 `Γ`, including the reached zero packings, remains a separate requirement of
 the direct `Sample.realizeReplay` contract.
 

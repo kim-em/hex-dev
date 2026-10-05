@@ -83,44 +83,6 @@ theorem Closed.coeff_moment (read : E → K) (S : E → Prop) (data : Closed rea
   obtain ⟨⟨q, k⟩, paired, rfl⟩ := List.mem_map.mp member
   exact data.coeff_natPow read S q k (members q (List.of_mem_zip paired).1) j
 
-private theorem fold_polynomial (read : E → K) (S : E → Prop) (data : Closed read S)
-    (xs : List (Hex.DensePoly E)) (members : ∀ p ∈ xs, ∀ i < p.size, S (p.coeff i))
-    (initial : Hex.DensePoly E) (start : ∀ i < initial.size, S (initial.coeff i)) :
-    polynomial read (xs.foldl (· * ·) initial) =
-      (xs.map (polynomial read)).foldl (· * ·) (polynomial read initial) := by
-  induction xs generalizing initial with
-  | nil => rfl
-  | cons p xs ih =>
-    have hp := members p (by simp)
-    have product := Product.of_closed read S data initial p start hp
-    simp only [List.foldl_cons, List.map_cons]
-    rw [ih (fun q member => members q (List.mem_cons_of_mem _ member)) (initial * p)
-      (fun i _ => data.coeff_mul read S initial p start hp i),
-      Ring.polynomial_mul read data.read_zero initial p product.products product.sums]
-
-/-- Interpretation transports the actual moment's binary powers and product
-fold from membership of the finite query coefficients in a closed domain. -/
-theorem moment_polynomial (read : E → K) (S : E → Prop) (data : Closed read S)
-    (qs : List (Hex.DensePoly E)) (es : List Nat)
-    (members : ∀ q ∈ qs, ∀ i < q.size, S (q.coeff i)) :
-    polynomial read (Hex.SignDet.moment qs es) =
-      Hex.SignDet.moment (qs.map (polynomial read)) es := by
-  have powers : ∀ p ∈ (qs.zip es).map (fun (q, k) => q.natPow k),
-      ∀ i < p.size, S (p.coeff i) := by
-    intro p member
-    obtain ⟨⟨q, k⟩, paired, rfl⟩ := List.mem_map.mp member
-    exact fun i _ => data.coeff_natPow read S q k (members q (List.of_mem_zip paired).1) i
-  rw [Hex.SignDet.moment, fold_polynomial read S data _ powers 1
-    (fun i _ => data.coeff_one read S i), polynomial_one read data.read_zero data.read_one]
-  unfold Hex.SignDet.moment
-  rw [List.zip_map_left, List.map_map, List.map_map]
-  congr 1
-  apply List.map_congr_left
-  intro pair member
-  obtain ⟨q, k⟩ := pair
-  exact polynomial_natPow read data.read_zero data.read_one q k
-    (PowerData.of_closed read S data q k (members q (List.of_mem_zip member).1))
-
 /-- Finite arithmetic obligations along the actual left-associated product fold. -/
 @[expose] def FoldData (read : E → K) : List (Hex.DensePoly E) → Hex.DensePoly E → Prop
   | [], _ => True
@@ -174,23 +136,23 @@ theorem MomentData.of_closed (read : E → K) (S : E → Prop) (closed : Closed 
 namespace Finite
 
 /-- Moment interpretation requires only the reached power and product operations. -/
-theorem moment_polynomial (read : E → K) (zero : read 0 = 0) (one : read 1 = 1)
+theorem moment_polynomial (read : E → K) (zero : read 0 = 0) (unit : read 1 = 1)
     (qs : List (Hex.DensePoly E)) (es : List Nat) (data : MomentData read qs es) :
     polynomial read (Hex.SignDet.moment qs es) =
       Hex.SignDet.moment (qs.map (polynomial read)) es := by
   rw [Hex.SignDet.moment, FoldData.polynomial read zero _ 1 data.products,
-    polynomial_one read zero one]
+    polynomial_one read zero unit]
   unfold Hex.SignDet.moment
   rw [List.zip_map_left, List.map_map, List.map_map]
   congr 1
   apply List.map_congr_left
   intro pair member
-  exact polynomial_natPow read zero one pair.1 pair.2 (data.powers pair member)
+  exact polynomial_natPow read zero unit pair.1 pair.2 (data.powers pair member)
 
 /-- Transport the actual optional reduction and Tarski moment check from finite
 operations, without closure over arbitrary pairs of domain elements. -/
 theorem moment_check {C : Type w} {D : Type z} [DecidableEq C] [DecidableEq D]
-    (read : E → K) (zero : read 0 = 0) (one : read 1 = 1) (contextMap : C → D)
+    (read : E → K) (zero : read 0 = 0) (unit : read 1 = 1) (contextMap : C → D)
     (sourceSign : E → Int) (targetSign : K → Int) (context : C)
     (p : Hex.DensePoly E) (a b : Hex.Endpoint E) (qs : List (Hex.DensePoly E)) (es : List Nat)
     (value : Int) (cert : Hex.TarskiCertificate E E C)
@@ -206,20 +168,31 @@ theorem moment_check {C : Type w} {D : Type z} [DecidableEq C] [DecidableEq D]
   have operand : polynomial read (Hex.SignDet.queryPoly qs es reduced) =
       Hex.SignDet.queryPoly (qs.map (polynomial read)) es (reduced.map (reduction read)) := by
     cases reduced with
-    | none => exact moment_polynomial read zero one qs es (products rfl)
+    | none => exact moment_polynomial read zero unit qs es (products rfl)
     | some r => rfl
   simp only [Hex.SignDet.checkMoment_eq, Bool.and_eq_true] at accepted ⊢
   refine ⟨?_, ?_⟩
   · cases reduced with
     | none => simpa only [Option.map_none, List.length_map] using accepted.1
     | some r =>
-      exact reduction_check read zero one sourceSign targetSign p qs es r
+      exact reduction_check read zero unit sourceSign targetSign p qs es r
         data.squarefree.head (reductions r rfl) accepted.1
   · rw [← operand]
-    exact query_check read zero one contextMap sourceSign targetSign context
+    exact query_check read zero unit contextMap sourceSign targetSign context
       p (Hex.SignDet.queryPoly qs es reduced) a b value cert data accepted.2
 
 end Finite
+
+/-- Interpretation transports the actual moment's binary powers and product
+fold from membership of the finite query coefficients in a closed domain. -/
+theorem moment_polynomial (read : E → K) (S : E → Prop) (data : Closed read S)
+    (qs : List (Hex.DensePoly E)) (es : List Nat)
+    (members : ∀ q ∈ qs, ∀ i < q.size, S (q.coeff i)) :
+    polynomial read (Hex.SignDet.moment qs es) =
+      Hex.SignDet.moment (qs.map (polynomial read)) es := by
+  exact Finite.moment_polynomial read data.read_zero data.read_one qs es
+    (MomentData.of_closed read S data qs es members)
+
 
 /-- The complete moment checker retains its exponent positions, optional
 product reduction, literal Tarski query, context binding and integer value. -/

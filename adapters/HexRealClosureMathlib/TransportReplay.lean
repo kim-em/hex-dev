@@ -86,7 +86,7 @@ theorem NodeData.of_closed (read : E → K) (S : E → Prop) (closed : Closed re
 /-- Full node replay transports every literal binding, preprocessing step and
 moment, retaining the native rank and left-inverse checks on the same integers. -/
 theorem node_check [DecidableEq C] [DecidableEq D]
-    (read : E → K) (zero : read 0 = 0) (one : read 1 = 1) (contextMap : C → D)
+    (read : E → K) (zero : read 0 = 0) (unit : read 1 = 1) (contextMap : C → D)
     (sourceSign : E → Int) (targetSign : K → Int) (context : C)
     (p : Hex.DensePoly E) (a b : Hex.Endpoint E) (qs : List (Hex.DensePoly E))
     (n : Hex.SignDet.Node E C) (data : NodeData read sourceSign targetSign p a b qs n)
@@ -105,11 +105,11 @@ theorem node_check [DecidableEq C] [DecidableEq D]
     | none => rfl
     | some r =>
       have checked : r.check sourceSign p qs = true := by simpa only [h] using prepared
-      exact preparation_check read zero one sourceSign targetSign p qs r
+      exact preparation_check read zero unit sourceSign targetSign p qs r
         data.head (data.preparation r h) checked
   · rw [List.all_eq_true] at moments ⊢
     intro i member
-    have checked := moment_check read zero one contextMap sourceSign targetSign context p a b
+    have checked := moment_check read zero unit contextMap sourceSign targetSign context p a b
       (Hex.SignDet.QueryReduction.operands qs n.preparation) n.system.rows[i] n.system.values[i]
       n.moments[i] n.reductions[i] (data.products i) (data.reductions i) (data.moments i) (moments i member)
     simpa only [preparation_operands, Fin.getElem_fin, Vector.getElem_map] using checked
@@ -179,7 +179,7 @@ theorem ReplayData.of_closed (read : E → K) (S : E → Prop) (closed : Closed 
 /-- Complete recursive BKR replay transports both child checks, exact product
 supports and retained rows, every node's integer evidence, and all moments. -/
 theorem replay_check [DecidableEq C] [DecidableEq D]
-    (read : E → K) (zero : read 0 = 0) (one : read 1 = 1) (contextMap : C → D)
+    (read : E → K) (zero : read 0 = 0) (unit : read 1 = 1) (contextMap : C → D)
     (sourceSign : E → Int) (targetSign : K → Int) (context : C)
     (p : Hex.DensePoly E) (a b : Hex.Endpoint E) (qs : List (Hex.DensePoly E))
     (t : Hex.SignDet.Replay E C) (data : ReplayData read sourceSign targetSign p a b qs t)
@@ -192,7 +192,7 @@ theorem replay_check [DecidableEq C] [DecidableEq D]
     simp only [replay, Hex.SignDet.Replay.check, node, List.length_map,
       Bool.and_eq_true, decide_eq_true_eq, and_assoc]
     exact ⟨accepted.1, accepted.2.1, accepted.2.2.1,
-      node_check read zero one contextMap sourceSign targetSign context p a b qs n data accepted.2.2.2⟩
+      node_check read zero unit contextMap sourceSign targetSign context p a b qs n data accepted.2.2.2⟩
   | split n l r ihl ihr =>
     simp only [Hex.SignDet.Replay.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at accepted
     simp only [replay, Hex.SignDet.Replay.check, replay_node, node, List.length_map,
@@ -203,7 +203,7 @@ theorem replay_check [DecidableEq C] [DecidableEq D]
     · rw [replay_node, replay_node]
       exact accepted.2.2.2.1
     · exact accepted.2.2.2.2.1
-    · exact node_check read zero one contextMap sourceSign targetSign context p a b qs n
+    · exact node_check read zero unit contextMap sourceSign targetSign context p a b qs n
         data.1 accepted.2.2.2.2.2
 
 end Finite
