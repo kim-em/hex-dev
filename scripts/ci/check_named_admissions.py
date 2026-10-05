@@ -199,6 +199,8 @@ def check() -> None:
              "HexRealClosureMathlib.BaseInterpretation", "HexRealClosureMathlib.BaseRealization",
              "HexRealClosureMathlib.BaseStagedRealization",
              "HexRealClosureMathlib.BaseProvider",
+             "HexRealClosure.BaseSubsequence", "HexRealClosureMathlib.BaseSubsequence",
+             "HexRealClosureMathlib.BaseSubsequenceTests",
              "HexRealClosureMathlib.BaseModel",
              "HexRealClosureMathlib.BasePrefixModels", "HexRealClosureMathlib.BaseModels",
              "HexRealClosureMathlib.BaseFactory", "HexRealClosureMathlib.ContextModel",
