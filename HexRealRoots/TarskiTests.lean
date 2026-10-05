@@ -22,6 +22,17 @@ namespace Hex.TarskiTests
 open DensePoly
 open scoped Hex
 
+-- Exercise the imported compiler rewrite on immediate and multiprecision
+-- integers, including both sides of the signed machine-integer boundary.
+#guard (#[0, 1, -1, 2 ^ 62 - 1, 2 ^ 62, -(2 ^ 62), 2 ^ 4096, -(2 ^ 4096)] : Array Int).map
+  Int.sign == #[0, 1, -1, 1, 1, -1, 1, -1]
+
+example : Int.sign (2 ^ 128) = 1 ∧ Int.sign (-(2 ^ 128)) = -1 := by decide +kernel
+
+/-- info: 'Hex.sign_eq' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.sign_eq
+
 @[expose] def p : ZPoly := ofCoeffs #[-1, 0, 1]
 @[expose] def x : ZPoly := ofCoeffs #[0, 1]
 @[expose] def interval : DyadicInterval := ⟨Dyadic.ofInt (-2), Dyadic.ofInt 2, by decide +kernel⟩
