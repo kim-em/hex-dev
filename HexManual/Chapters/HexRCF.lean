@@ -2640,12 +2640,12 @@ example : ∀ x : ℝ,
 ```
 
 These additional examples combine supplied bounds with square and cube roots
-of algebraic bases. The `Real.rpow` example takes the positive cube root of
+of algebraic bases. The real-power example takes the positive cube root of
 `3 + √2`; its exact source authentication uses that non-rational base rather
 than a rational-root shortcut. Before proposing an enclosure, the frontend
 authenticates the source and its selected embedding, checking every original
-divisor inside the base. Ordinary literal replay then proves containment in the proposed
-rational interval. The mixed-division example also checks that the combined
+divisor inside the base. Ordinary literal replay then proves containment in
+the proposed rational interval. The mixed-division example also checks that the combined
 bounds separate its original divisor from zero. Neither step treats a registered
 constant as an executable ordered field, and frozen replay does not repeat
 the algebraic search. An unsupported base, exhausted admission or unresolved

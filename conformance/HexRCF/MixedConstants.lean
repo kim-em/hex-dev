@@ -126,6 +126,11 @@ example : ∀ x : ℝ, x ^ 2 + Real.pi +
 example : ∀ x ∈ Set.Ioc (1 : ℝ) 0, x ^ 2 + Real.pi +
     (3 + Real.sqrt 2 + 0 / (Real.sqrt 2 - Real.sqrt 2)) ^ (1 / 3 : ℝ) > 0 := by rcf
 
+/-- error: rcf: original closed divisor is zero -/
+#guard_msgs in
+example : ∀ x : ℝ, x ^ 2 + Real.pi +
+    0 * Real.rpow (3 + Real.sqrt 2 + 0 / (Real.sqrt 2 - Real.sqrt 2)) (1 / 3) > 0 := by rcf
+
 /-- error: rcf: original closed divisor remains unresolved in supplied bounds -/
 #guard_msgs in
 example : ∀ x : ℝ,
@@ -440,8 +445,9 @@ run_meta do
 #print axioms Hex.RCF.MixedConstants.exp_shifted
 
 /-- info: 'Hex.RCF.MixedConstants.pi_algebraic_rpow' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
+#guard_msgs in
 #print axioms Hex.RCF.MixedConstants.pi_algebraic_rpow
+
 /-- info: 'Hex.RCF.MixedConstants.pi_guarded_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RCF.MixedConstants.pi_guarded_root
