@@ -59,6 +59,8 @@ class AnalysisTests(unittest.TestCase):
                 argv=[str(binary), '_child', '--bench', name, '--fixed', '--min-total-nanos', str(TARGET_NANOS)]))
             manifest['measurements'].append(dict(trial=trial, depth=depth, steps=steps, arm=arm,
                                                 output=output, rows=[row], exit_code=0))
+        for command_record in manifest['commands']:
+            (folder / Path(command_record['stdout']).with_suffix('.command.json')).write_text(json.dumps(command_record)+'\n')
         self.save(folder, manifest)
         return manifest
 
@@ -73,6 +75,7 @@ class AnalysisTests(unittest.TestCase):
             result = summarize(folder)
             self.assertEqual(result['complete_arms'], 96)
             self.assertTrue(all(r['paired_eager_over_clean_median'] == 0.5 for r in result['summary']))
+            self.assertTrue(all(r['direction'] == 'eager lower in all six trials' for r in result['summary']))
             manifest['measurements'].pop()
             self.save(folder, manifest)
             with self.assertRaisesRegex(ValueError, 'order differs'):
@@ -126,6 +129,11 @@ class AnalysisTests(unittest.TestCase):
             (folder / attempt['output']).write_text(json.dumps(attempt['rows'][0])+'\n')
             self.save(folder, manifest)
             self.assertEqual(summarize(folder)['summary'][0]['direction'], 'mixed/inconclusive')
+            for attempt in manifest['measurements']:
+                attempt['rows'][0]['inner_repeats'] = 2 if attempt['arm'] == 'A' else 1
+                (folder / attempt['output']).write_text(json.dumps(attempt['rows'][0])+'\n')
+            self.save(folder, manifest)
+            self.assertTrue(all(r['direction'] == 'clean lower in all six trials' for r in summarize(folder)['summary']))
 
     def test_functional_binary_and_source_binding_mutations(self):
         mutations = [lambda m: m['expected_hashes']['1:2'].__setitem__('A', '0xdead'),

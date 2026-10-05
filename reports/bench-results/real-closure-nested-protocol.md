@@ -24,9 +24,12 @@ perform pseudo-division, prepared Sturm queries and recursive lower-level
 coefficient arithmetic/signs. These costs are included in the observations.
 It executes the action on every invocation. Preparation of all four contexts
 and all sixteen input closures occurs before harness timing. Initial descriptor
-validation, final query evidence production, final sign, checked reading and replay
+validation, final query evidence production, reading the cached final sign,
+checked reading and replay
 are outside this measured region. Their untimed functional outputs are
 retained and independently checked; they do not supply replay timings.
+The selected-root sign query that packs the final value is inside timing;
+the later sign read uses that cached result.
 
 ## Source and correctness binding
 
@@ -90,6 +93,17 @@ oracle commands and successful paired outputs, check the successful harness
 verify command, bind every measurement command to the snapshot and compare
 its SHA256 with the artifact index. Check the current analyzer, capture,
 protocol and oracle content keys before analyzing retained results.
+Compare every manifest command with its independently retained, digested
+command JSON record.
+
+Retain the full capture, including the executable, outside the checkout under
+`/home/kim/.codex/tasks/hex-10378/nested-measurement-capture-<source-prefix>`.
+Publish a tag for the exact captured source. Analysis requires all retained
+artifacts, including the binary, and runs from a clean checkout of that tag:
+its source content-key checks deliberately require the recorded versions.
+Later source edits do not replace the captured scripts. A report archive may
+link the externally retained binary and capture, but does not claim that a
+partial archive by itself can run this analyzer.
 
 These are descriptive shared-host observations. The finite matrix supplies
 no asymptotic or significance verdict, global normalization recommendation,
