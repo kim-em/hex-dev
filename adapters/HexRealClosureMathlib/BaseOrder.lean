@@ -99,7 +99,7 @@ theorem FieldEmbedding.strictMono
   apply sign_eq_one_iff.mp
   cases result : SignType.sign (map.hom a) <;> simp_all
 
-/-- The actual checked staged inclusion constructs a strictly monotone field
+/-- The legacy checked prefix inclusion constructs a strictly monotone field
 hom without any additional coefficient-agreement premise. -/
 theorem Chain.Realization.embedding_mono
     {S : Type} [Lean.Grind.Field S] [DecidableEq S] {sourceSign : S → Int}

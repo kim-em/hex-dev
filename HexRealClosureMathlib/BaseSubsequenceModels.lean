@@ -101,7 +101,7 @@ noncomputable def RealPrefix.Model.submodel? {registry : Registry}
     | pack source =>
       exact if compatible : (target.subsequence? source.chain).isSome = true then
         let map := (target.subsequence? source.chain).get compatible
-        let available :=  proof.restrict_subsequence source.chain map (Option.some_get compatible).symm
+        let available := proof.restrict_subsequence source.chain map (Option.some_get compatible).symm
         let original := available.choose
         let realization := Classical.choice available.choose_spec
         some (.pack source.chain original realization)

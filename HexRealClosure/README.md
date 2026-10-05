@@ -1998,7 +1998,7 @@ and staged-order results with dependency closure. The interpretation ingredients
    coefficient-field roots against the full converted descriptor. Covered
    equivalent intervals and reordered algebraic chains add no root level;
    arbitrary expressions in several generators are not searched. Compatible
-   real-prefix permutations remain outside the prefix check.
+   real-key permutations remain outside the subsequence check.
    `Shared.Model.enlarge` re-establishes the canonical model, original owner
    interpretations and predecessor cache against the next staged realization
    and lifted reference. Finite operand requests use the interface below.

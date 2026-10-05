@@ -172,8 +172,9 @@ presentations covered by the candidate rule add no algebraic level and preserve
 the selected-root identity required by the shared sample interface.
 Original values remain indexed by their original contexts;
 `Shared.value` and `Shared.polynomial` select the checked map by its original
-owner index. The native base compatibility check uses the full real-prefix key
-path and nondecreasing infinitesimal depth, rather than a hash or a carrier type.
+owner index. The native base compatibility check requires the source real keys
+to be an ordered subsequence of the target keys and the infinitesimal depth to
+be nondecreasing. It checks actual keys rather than a hash or a carrier type.
 
 `Shared.register?` returns the new shared target together with the actual
 checked inclusion of the previous target and the new owner's map. The result

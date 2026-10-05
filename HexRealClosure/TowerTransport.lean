@@ -79,7 +79,7 @@ structure Conversion (source : Context registry) : Type 1 where
 def Conversion.identity (source : Context registry) : Conversion source :=
   ⟨source, id, .identity source⟩
 
-/-- Retain the checked native coefficient map across real-prefix enlargement
+/-- Retain the checked native coefficient map across real-key subsequence inclusion
 and ordered infinitesimal transport. -/
 @[expose] def Conversion.base {source target : BaseContext.PackedContext registry}
     (inclusion : BaseInclusion source target) : Conversion (Context.ofBase source) :=
