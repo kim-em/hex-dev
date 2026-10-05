@@ -603,9 +603,11 @@ The admission also applies to a single generator. Algebraic-base roots require
 the root degree times the degree of the field authenticating their base to
 fit the same limit. This conservative bound applies before native root
 production, including when cancellation reduces the base's minimal degree.
-Repeated uses of exactly the same base share authentication within one preparation.
+Repeated uses of exactly the same base share authentication throughout one recursive preparation.
 These roots require supported selected-field presentations and irreducibility certificates.
 It does not establish complete witness search or bound every later operation.
+Authentication follows source order; a terminal failure or exhaustion prevents
+authentication of later coefficients, even when a later negative base would decline.
 
 The adapter's source preparation applies its coefficient-size limit to
 intermediate arithmetic in rational-root bases, reciprocal exponents and

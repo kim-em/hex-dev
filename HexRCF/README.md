@@ -120,6 +120,8 @@ Nonreciprocal real exponents remain unsupported.
 In common-field preparation, unsupported root-base syntax and unsupported
 sibling coefficients take precedence over recognition exhaustion. For otherwise supported sources,
 `Coefficients.prepare` returns a structured budget error before field construction.
+Authentication then proceeds in source order: a terminal failure or exhaustion
+stops before later coefficients are authenticated, including later negative bases.
 Before common-field search, `rcf.algebraic.commonDegree` bounds the product of
 the canonical degrees of distinct selected generators (default 64). This
 conservative admission uses the shared exponent budget diagnostic; different
@@ -128,7 +130,7 @@ every subsequent operation or prove certificate-search completeness.
 The admission also applies to a single generator. For algebraic-base roots,
 the root degree times the base's authentication-field degree must fit the same
 limit before root production, even if cancellation lowers its minimal degree.
-Exactly repeated bases share authentication within one preparation. These roots require
+Exactly repeated bases share authentication throughout one recursive preparation. These roots require
 supported selected-field presentations and irreducibility certificates;
 arbitrary algebraic source conversion is not yet complete.
 The finite-bound path applies the root syntax and size checks separately to

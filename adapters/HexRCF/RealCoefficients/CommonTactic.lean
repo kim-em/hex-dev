@@ -109,7 +109,7 @@ private inductive SourceKind where
   | radical (radicand : Nat) (aliasProof : Expr)
   | root (parameters : RationalRoot.Parameters) (aliasProof : Expr)
   | selected (args : Array Expr) (checked : Expr)
-  | normalized (selected checked : Expr)
+  | normalized (selected : Expr) (checked : Option Expr)
   deriving Inhabited
 
 private structure SourcePlan where
@@ -303,7 +303,7 @@ private meta def sourceRoot? (argument : Expr) :
     (q((mahlerPrec $literalP : Int) ≤ ($literalSquare).prec) : Q(Prop))
   let selected ← mkAppM ``Selected.normalized_toReal
     (args ++ #[hreal, literalP, hpoly, literalSquare, hw, hp, hs])
-  return some (← FieldRuntime.evalReal argument, p, s, .normalized selected checked)
+  return some (← FieldRuntime.evalReal argument, p, s, .normalized selected (some checked))
 
 private meta def sourcePlan? (source : Expr) (root : Option RationalRoot.Parameters)
     (general : Option (Expr × Nat))
@@ -316,13 +316,10 @@ private meta def sourcePlan? (source : Expr) (root : Option RationalRoot.Paramet
       (rcf.algebraic.commonDegree.get (← getOptions)) (some baseCache)
     let p := authenticated.value.toAlgebraic.p
     let square := authenticated.value.toAlgebraic.rep.1.square
-    let pe : Q(ZPoly) ← FieldLiteral.zpolyExpr p
-    let hd ← mkDecideProof (q(0 < ($pe).natDegree) : Q(Prop))
-    let checked ← certify p pe hd
     let fieldExpr ← FieldLiteral.ratPolyExpr identity
     let sourceProof ← mkAppM ``CommonPresentation.generator_eval #[source]
     return some ⟨source, authenticated.value, p, square, identity, fieldExpr,
-      sourceProof, .normalized authenticated.proof checked⟩
+      sourceProof, .normalized authenticated.proof none⟩
   if let some radicand ← naturalSquareRoot? source then
     let (_, _, anchorValue) ← FieldRuntime.coefficient source
     let sourceP := SquareRoot.polynomial radicand
@@ -528,7 +525,8 @@ private meta def prepareField (source : Reify.Source) (leafSources : Array Expr)
         if plan.sourcePolynomial != p then continue
         let checked ← match plan.kind with
           | .radical _ _ | .root _ _ => pure none
-          | .selected _ checked | .normalized _ checked => pure (some checked)
+          | .selected _ checked => pure (some checked)
+          | .normalized _ checked => pure checked
         if let some checked := checked then
           unless (← inferType checked) == instType do
             throwError "rcf: internal: transported source irreducibility has a different literal polynomial"
@@ -838,7 +836,8 @@ private def PlanError.toMessageData : PlanError → MessageData
       m!"rcf: {(Hex.RealFormula.Reify.Error.budget exhausted).toMessageData} (common-field degree; see rcf.algebraic.commonDegree)"
 
 private meta def sourcePlans (source : Reify.Source)
-    (prepareBase : Expr → MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Environment)) :
+    (prepareBase : Expr → MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Environment))
+    (baseCache : IO.Ref (ExprMap AlgebraicRoot.Identity)) :
     MetaM (Except PlanError (Option (Array Expr × Array SourcePlan))) := do
   for expression in #[source.proof, source.sentenceProof] ++
       source.coefficients ++ source.divisors do
@@ -853,7 +852,6 @@ private meta def sourcePlans (source : Reify.Source)
   if let some error := leaves.error then
     return .error (.recognition error)
   let limit := rcf.algebraic.commonDegree.get (← getOptions)
-  let baseCache ← IO.mkRef ({} : ExprMap AlgebraicRoot.Identity)
   let result : Except PlanError (Array SourcePlan) ←
       profileitM Exception "rcf source authentication" (← getOptions) do
     let mut plans : Array SourcePlan := #[]
@@ -882,9 +880,10 @@ private meta def sourcePlans (source : Reify.Source)
 /-- Prepare an exact selected-field environment without root/cell production.
 The rational-only input remains with the existing rational solver. -/
 private meta def prepareSource (source : Reify.Source)
-    (prepareBase : Expr → MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Environment)) :
+    (prepareBase : Expr → MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Environment))
+    (baseCache : IO.Ref (ExprMap AlgebraicRoot.Identity)) :
     MetaM (Except Hex.RealFormula.Reify.Error (Option Coefficients.Environment)) := do
-  let (leaves, plans) ← match ← sourcePlans source prepareBase with
+  let (leaves, plans) ← match ← sourcePlans source prepareBase baseCache with
     | .error error => return .error error.toError
     | .ok none => return .ok none
     | .ok (some result) => pure result
@@ -893,7 +892,8 @@ private meta def prepareSource (source : Reify.Source)
   prepared.checkDomains
   return .ok (some prepared)
 
-meta partial def prepare (target : Expr) :
+private meta partial def prepareCached (baseCache : IO.Ref (ExprMap AlgebraicRoot.Identity))
+    (target : Expr) :
     MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Environment) := do
   let saved ← saveState
   let (result, _) ← tryFinally' (withNewMCtxDepth <| withOptions (fun options =>
@@ -901,7 +901,7 @@ meta partial def prepare (target : Expr) :
     let source ← match ← Reify.prepare target with
       | .ok source => pure source
       | .error error => return .error error
-    let prepared ← match ← prepareSource source prepare with
+    let prepared ← match ← prepareSource source (prepareCached baseCache) baseCache with
       | .error error => return .error error
       | .ok none => return .error (.unsupported target "no selected-field environment")
       | .ok (some prepared) => pure prepared
@@ -913,6 +913,13 @@ meta partial def prepare (target : Expr) :
           zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds}
       | _ => saved.restore)
   return result
+
+/-- Authenticate sources with one cache for the entire recursive preparation.
+The cache is discarded together with any failed preparation. -/
+meta def prepare (target : Expr) :
+    MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Environment) := do
+  let baseCache ← IO.mkRef ({} : ExprMap AlgebraicRoot.Identity)
+  prepareCached baseCache target
 
 @[rcf_handler] meta def handle : Handler := fun target => do
   unless ← candidate target do return .declined
@@ -928,7 +935,8 @@ meta partial def prepare (target : Expr) :
   if source.coefficients.size == 1 then
     if (← Tactic.handlesCoefficient source.coefficients[0]!) &&
         (← rationalGuards source.divisors) then return .declined
-  let (leaves, plans) ← match ← sourcePlans source prepare with
+  let baseCache ← IO.mkRef ({} : ExprMap AlgebraicRoot.Identity)
+  let (leaves, plans) ← match ← sourcePlans source (prepareCached baseCache) baseCache with
     | .error (.recognition (.unsupported _ _)) => return .declined
     | .error error => return .failed (error.toMessageData)
     | .ok none => return .declined

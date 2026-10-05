@@ -52,6 +52,10 @@ private meta def identifyBase (source : Expr)
       {dimension := .exponent, limit := degreeLimit, consumed := 0, requested := degree})
   if let some cache := cache then
     if let some authenticated := (← cache.get)[source]? then
+      -- Entries retain ordinary proof auxiliaries. The cache belongs to the
+      -- enclosing preparation and must not survive a rollback of its environment.
+      unless authenticated.proof.getAppFn.constName?.any (← getEnv).contains do
+        throwThe Hex.RealFormula.Reify.Error (.internal "cached base proof is unavailable")
       let requested := degree * authenticated.fieldDegree
       if requested > degreeLimit then
         throwThe Hex.RealFormula.Reify.Error (.budget
@@ -59,12 +63,14 @@ private meta def identifyBase (source : Expr)
            consumed := authenticated.fieldDegree, requested})
       return authenticated
   let x : Q(ℝ) ← pure source
+  let target := q(∀ _ : ℝ, 0 ≤ $x)
   let outcome : Except Hex.RealFormula.Reify.Error Coefficients.Environment ←
-    liftM (prepareBase q(∀ _ : ℝ, 0 ≤ $x))
+    liftM (prepareBase target)
   let environment ← match outcome with
     | .ok environment => pure environment
-    | .error (.unsupported _ reason) =>
-      throwThe Hex.RealFormula.Reify.Error (.unsupported source reason)
+    | .error (.unsupported subject reason) =>
+      throwThe Hex.RealFormula.Reify.Error
+        (.unsupported (if subject == target then source else subject) reason)
     | .error error => throwThe Hex.RealFormula.Reify.Error error
   let requested := degree * environment.polynomial.natDegree
   if requested > degreeLimit then
@@ -163,7 +169,7 @@ meta def identify (source base : Expr) (degree : Nat)
     let remaining ← Elab.runTactic' normalize.mvarId!
       (← `(tactic| norm_num [Real.rpow_one]))
     unless remaining.isEmpty do
-      throwThe Hex.RealFormula.Reify.Error (.unsupported source "degree-one root notation")
+      throwThe Hex.RealFormula.Reify.Error (.internal "degree-one root notation did not normalize")
     let proof ← mkEqTrans authenticated.proof (← instantiateMVars normalize)
     let selected : Q(ℝ) ← pure authenticated.expression
     let proof ← Hex.RCF.checkProof `Hex.RCF.RealCoefficients.AlgebraicRoot.degreeOne
@@ -226,7 +232,7 @@ meta def identify (source base : Expr) (degree : Nat)
       let remaining ← Elab.runTactic' normalize.mvarId!
         (← `(tactic| norm_num [Real.sqrt_eq_rpow]))
       unless remaining.isEmpty do
-        throwThe Hex.RealFormula.Reify.Error (.unsupported source "root notation")
+        throwThe Hex.RealFormula.Reify.Error (.internal "source root notation did not normalize")
       let identity ← mkEqTrans rootIdentity (← instantiateMVars normalize)
       let generator ← mkAppM ``CommonPresentation.literalGenerator #[hwe, hpe, hre]
       let identity ← mkEqTrans (← mkEqSymm generator) identity

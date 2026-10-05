@@ -50,6 +50,14 @@ theorem rationalBase : ∀ x : ℝ, x ^ 2 + Real.sqrt (Real.sqrt 4 + 1) > 0 := b
 theorem selectedBase : ∀ x : ℝ,
     x ^ 2 + Real.sqrt CubeTwo.realAlgebraic.toReal > 0 := by rcf
 
+theorem sharedBase : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt (Real.sqrt 4 + 1) +
+      (Real.sqrt 4 + 1) ^ (1 / 1 : ℝ) > 0 := by rcf
+
+theorem sharedNested : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt (Real.sqrt (Real.sqrt 4 + 1)) +
+      (Real.sqrt 4 + 1) ^ (1 / 1 : ℝ) > 0 := by rcf
+
 run_elab do
   for name in #[`Hex.RCF.AlgebraicRoots.square,
       `Hex.RCF.AlgebraicRoots.shifted,
@@ -61,6 +69,8 @@ run_elab do
       `Hex.RCF.AlgebraicRoots.sharedAnchor,
       `Hex.RCF.AlgebraicRoots.rationalBase,
       `Hex.RCF.AlgebraicRoots.selectedBase,
+      `Hex.RCF.AlgebraicRoots.sharedBase,
+      `Hex.RCF.AlgebraicRoots.sharedNested,
       `Hex.RCF.AlgebraicRoots.negativeDegreeOne] do
     let markers := #[``CommonPresentation.checkEntry_sound_of_selected,
       ``CommonPresentation.checkPolynomials_sound]
@@ -79,6 +89,7 @@ run_elab do
             ``Sturm.queryPrepared, ``Sturm.certifyPrepared,
             ``RealAlgebraicNumber.ofAlgebraic?, ``PolyQuot.toAlgebraicNumber,
             ``AlgebraicRoot.identify,
+            ``QAdjoin.common, ``RealAlgebraicNumber.approxBall,
             ``HexBerlekampZassenhaus.FactorTactic.searchWitness,
             ``Hex.certifyIrreducible?, ``Hex.QuadraticNormCertificate.certify?].contains n)) then
       throwError "tactic proof transitively includes native production"
@@ -123,6 +134,13 @@ run_elab do
 #guard_msgs in
 #print axioms selectedBase
 
+/-- info: 'Hex.RCF.AlgebraicRoots.sharedBase' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms sharedBase
+/-- info: 'Hex.RCF.AlgebraicRoots.sharedNested' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms sharedNested
+
 run_elab do
   let cache ← IO.mkRef ({} : ExprMap AlgebraicRoot.Identity)
   let calls ← IO.mkRef 0
@@ -157,6 +175,34 @@ run_elab do
     throwError "base refusal was not preserved"
   unless subject == q((3 : ℝ) + Real.sqrt 2) do
     throwError "base refusal named the synthetic goal"
+  let precise _ := pure (.error
+    (Hex.RealFormula.Reify.Error.unsupported q(Real.sin 0) "test offending subterm"))
+  let .error (.unsupported subject "test offending subterm") ←
+      (AlgebraicRoot.identify q(Real.sqrt (3 + Real.sqrt 2))
+        q(3 + Real.sqrt 2) 2 precise limit).run |
+    throwError "inner subterm refusal was not preserved"
+  unless subject == q(Real.sin 0) do throwError "precise inner subject was replaced"
+
+example : ∀ x : ℝ, x ^ 2 + Real.sqrt (-Real.sqrt 2) ≥ 0 := by
+  run_tac do
+    let original ← Lean.Elab.Tactic.getGoals
+    let before ← getMCtx
+    let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
+    let failure ← tryCatchRuntimeEx (do
+      Hex.RCF.evalRCFTac (← `(tactic| rcf))
+      pure none) fun error => do
+        if error.isRuntime || error.isInterrupt then throw error
+        pure (some error)
+    let some error := failure | throwError "negative-base tactic unexpectedly succeeded"
+    unless (← error.toMessageData.toString).startsWith
+        "rcf: symbolic or non-rational coefficient" do
+      throwError "negative-base final diagnostic changed: {error.toMessageData}"
+    unless (← Lean.Elab.Tactic.getGoals) == original &&
+        (← getMCtx).mvarCounter == before.mvarCounter &&
+        (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
+      throwError "negative-base final decline changed caller state"
+  intro x
+  positivity
 
 run_elab do
   let before ← getMCtx
