@@ -98,8 +98,9 @@ def run : IO Unit := do
         lower := .finite 0, upper := .finite (1 + 1), indices := [], signs := [] }
     | throw (IO.userError "dependent live-root descriptor failed")
   let child := extension.context.adjoin dependent
-  let some registered := next.add? child.context
+  let some registration := next.register? child.context
     | throw (IO.userError "dependent root registration after enlargement failed")
+  let registered := registration.shared
   require (registered.input.context.signature.roots.length == 2)
     "parent/child registration duplicated their common root"
   let retained := registered.value ⟨0, by simp [owners]⟩ alpha
@@ -108,6 +109,23 @@ def run : IO Unit := do
     "registered root did not retain its transported coefficient dependency"
   require (registered.input.context.sign b == 1)
     "registration selected a different dependent root"
+  let previousParameter := registration.previous.value t
+  let computed := (a' + e') * (d' + t)
+  let expected := (retained + registered.value ⟨1, by simp [owners]⟩ epsilon) *
+    (registered.value ⟨2, by simp [owners]⟩ delta + previousParameter)
+  require (registered.input.context.equal (registration.previous.value computed) expected)
+    "registration lost a value computed in the previous shared target"
+  require (registered.input.context.sign previousParameter == 1)
+    "registration lost the previous shared infinitesimal"
+  require (registered.input.context.compare previousParameter
+      (registered.value ⟨2, by simp [owners]⟩ delta) == .lt)
+    "registration lost the earlier infinitesimal order"
+  let some again := registered.enlarge?
+    | throw (IO.userError "registered target's second enlargement failed")
+  let retainedParameter := again.previous.value previousParameter
+  require (again.shared.input.context.sign retainedParameter == 1 &&
+    again.shared.input.context.compare again.parameter retainedParameter == .lt)
+    "second enlargement lost the earlier shared infinitesimal"
   let some reversed := Shared.gather? (.pack rational) [child.context, extension.context]
     | throw (IO.userError "child/parent registration failed")
   require (reversed.input.context.signature.roots.length == 2)

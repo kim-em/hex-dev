@@ -59,6 +59,32 @@ private noncomputable def Shared.Model.ofParts {owners : List (Context registry)
   cases eq_of_heq cacheEq
   exact ⟨target, canonical, preserved, ownersModel, canonicalOwners, cacheModel⟩
 
+private theorem Shared.Model.ofParts_value {owners : List (Context registry)}
+    (shared : Shared base owners) (following : base.Realization)
+    (reference : Tower.Model (Context.ofBase base) R)
+    (conversion : Conversion (Context.ofBase base)) (same : shared.input = conversion)
+    (target : Tower.Model conversion.context R)
+    (canonical : conversion.context.model? following reference = some target)
+    (preserved : ∀ a, target.value (conversion.value a) = reference.value a)
+    (maps : Inclusions conversion.context owners) (mapsEq : HEq shared.maps maps)
+    (ownersModel : Inclusions.Models target maps)
+    (canonicalOwners : ∀ index : Fin owners.length,
+      (owners[index]).model? following reference = some (ownersModel.get index).1)
+    (cache : InclusionCache conversion.context) (cacheEq : HEq shared.cache cache)
+    (cacheModel : InclusionCache.Models following reference target cache)
+    {source : Context registry} (old : Tower.Model source R)
+    (previous : Inclusion source conversion.context)
+    (previousValue : ∀ a, target.value (previous.value a) = old.value a)
+    (retained : Inclusion source shared.input.context) (retainedEq : HEq retained previous) :
+      ∀ a, (Shared.Model.ofParts shared following reference conversion same target canonical
+        preserved maps mapsEq ownersModel canonicalOwners cache cacheEq cacheModel).target.value
+          (retained.value a) = old.value a := by
+  cases same
+  cases eq_of_heq mapsEq
+  cases eq_of_heq cacheEq
+  cases eq_of_heq retainedEq
+  exact previousValue
+
 private theorem nil_heq {left right : Context registry} (same : left = right) :
     HEq (Inclusions.nil (target := left)) (Inclusions.nil (target := right)) := by
   cases same
@@ -153,7 +179,7 @@ private theorem canonical_snoc {destination source : Context registry}
 /-- Registration derives the original base interpretation from the target
 provider history, and returns coherent models for all owners and cache entries.
 Compatibility checks the original staged base; no cache agreement is supplied. -/
-theorem Shared.Model.addOrigin? {owners : List (Context registry)}
+theorem Shared.Model.registerOrigin?_models {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
     (model : Shared.Model shared following reference)
@@ -165,8 +191,10 @@ theorem Shared.Model.addOrigin? {owners : List (Context registry)}
       base.signature.constants ∧
       (BaseContext.PackedContext.pack original).signature.infinitesimals ≤
         base.signature.infinitesimals) :
-    ∃ result, shared.addOrigin? (.pack original suffix same) = some result ∧
-      Nonempty (Shared.Model result following reference) := by
+    ∃ packet : Registration shared source,
+      shared.registerOrigin? (.pack original suffix same) = some packet ∧
+        ∃ returned : Shared.Model packet.shared following reference,
+          ∀ a, returned.target.value (packet.previous.value a) = model.target.value a := by
   have success := (BaseInclusion.make?_isSome (.pack original) base).mpr compatible
   obtain ⟨coefficients, produced⟩ := Option.isSome_iff_exists.mp success
   let previous : Inclusion (Context.base original) (Context.ofBase base) :=
@@ -183,8 +211,9 @@ theorem Shared.Model.addOrigin? {owners : List (Context registry)}
   obtain ⟨rebuilt, rebuiltProduced, ⟨interpreted⟩⟩ :=
     shared.cache.rebuild?_models following reference model.target model.cache
       model.canonical initial incoming suffix
-  obtain ⟨result, resultProduced, inputEq, mapsEq, cacheEq⟩ :=
-    shared.addOrigin?_spec original suffix same previous baseProduced rebuilt rebuiltProduced
+  obtain ⟨packet, resultProduced, inputEq, previousEq, mapsEq, cacheEq⟩ :=
+    shared.registerOrigin?_spec original suffix same previous baseProduced rebuilt rebuiltProduced
+  let result := packet.shared
   let combined := (current.comp rebuilt.inclusion).native
   have canonical : combined.context.model? following reference = some interpreted.target :=
     interpreted.produced
@@ -223,9 +252,56 @@ theorem Shared.Model.addOrigin? {owners : List (Context registry)}
       canonical_snoc fixedModels fixedCanonical originalModel.original
         originalModel.inclusion originalModel.inclusion_target originalModel.produced⟩
   obtain ⟨ownersModel, canonicalOwners⟩ := family
-  exact ⟨result, resultProduced, ⟨Shared.Model.ofParts result following reference
+  let returned := Shared.Model.ofParts result following reference
     combined inputEq interpreted.target canonical preserved _ mapsEq ownersModel canonicalOwners
-    rebuilt.cache cacheEq interpreted.cache⟩⟩
+    rebuilt.cache cacheEq interpreted.cache
+  have retainedValue := Shared.Model.ofParts_value result following reference
+    combined inputEq interpreted.target canonical preserved _ mapsEq ownersModel canonicalOwners
+    rebuilt.cache cacheEq interpreted.cache model.target rebuilt.inclusion interpreted.previous
+    packet.previous previousEq
+  exact ⟨packet, resultProduced, returned, retainedValue⟩
+
+/-- The existing registration surface retains the packet's actual target map. -/
+theorem Shared.Model.addOrigin?_transport {owners : List (Context registry)}
+    {shared : Shared base owners} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) R}
+    (model : Shared.Model shared following reference)
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (original : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base original)) {source : Context registry}
+    (same : suffix.context = source)
+    (compatible : (BaseContext.PackedContext.pack original).signature.constants <+:
+      base.signature.constants ∧
+      (BaseContext.PackedContext.pack original).signature.infinitesimals ≤
+        base.signature.infinitesimals) :
+    ∃ result, shared.addOrigin? (.pack original suffix same) = some result ∧
+      ∃ returned : Shared.Model result following reference,
+        ∃ previous : Inclusion shared.input.context result.input.context,
+          ∀ a, returned.target.value (previous.value a) = model.target.value a := by
+  obtain ⟨packet, produced, returned, preserved⟩ :=
+    model.registerOrigin?_models original suffix same compatible
+  have forgotten := congrArg (Option.map Registration.shared) produced
+  rw [Shared.registerOrigin?_shared] at forgotten
+  exact ⟨packet.shared, forgotten, returned, packet.previous, preserved⟩
+
+/-- Registration preserves coherence of every original owner and cache entry. -/
+theorem Shared.Model.addOrigin? {owners : List (Context registry)}
+    {shared : Shared base owners} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) R}
+    (model : Shared.Model shared following reference)
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (original : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base original)) {source : Context registry}
+    (same : suffix.context = source)
+    (compatible : (BaseContext.PackedContext.pack original).signature.constants <+:
+      base.signature.constants ∧
+      (BaseContext.PackedContext.pack original).signature.infinitesimals ≤
+        base.signature.infinitesimals) :
+    ∃ result, shared.addOrigin? (.pack original suffix same) = some result ∧
+      Nonempty (Shared.Model result following reference) := by
+  obtain ⟨result, produced, returned, _, _⟩ :=
+    model.addOrigin?_transport original suffix same compatible
+  exact ⟨result, produced, ⟨returned⟩⟩
 
 /-- Public registration needs only compatibility of the original staged base
 with the declared target base. All semantic agreements come from the factory. -/
@@ -242,6 +318,42 @@ theorem Shared.Model.add? {owners : List (Context registry)}
   | pack original suffix same =>
     rw [originEq] at compatible
     exact model.addOrigin? original suffix same compatible
+
+/-- Registration retains an explicit checked inclusion for every value computed
+in the previous shared target, interpreted by the returned canonical model. -/
+theorem Shared.Model.add?_transport {owners : List (Context registry)}
+    {shared : Shared base owners} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) R}
+    (model : Shared.Model shared following reference) (source : Context registry)
+    (compatible : source.origin.base.signature.constants <+: base.signature.constants ∧
+      source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals) :
+    ∃ result, shared.add? source = some result ∧
+      ∃ returned : Shared.Model result following reference,
+        ∃ previous : Inclusion shared.input.context result.input.context,
+          ∀ a, returned.target.value (previous.value a) = model.target.value a := by
+  rw [Shared.add?_eq]
+  cases originEq : source.origin with
+  | pack original suffix same =>
+    rw [originEq] at compatible
+    exact model.addOrigin?_transport original suffix same compatible
+
+/-- The executable registration packet and its retained target inclusion are
+interpreted by one canonical model, with no caller-supplied value agreement. -/
+theorem Shared.Model.register? {owners : List (Context registry)}
+    {shared : Shared base owners} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) R}
+    (model : Shared.Model shared following reference) (source : Context registry)
+    (compatible : source.origin.base.signature.constants <+: base.signature.constants ∧
+      source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals) :
+    ∃ packet : Registration shared source,
+      shared.register? source = some packet ∧
+        ∃ returned : Shared.Model packet.shared following reference,
+          ∀ a, returned.target.value (packet.previous.value a) = model.target.value a := by
+  rw [Shared.register?_eq]
+  cases originEq : source.origin with
+  | pack original suffix same =>
+    rw [originEq] at compatible
+    exact model.registerOrigin?_models original suffix same compatible
 
 private noncomputable def Shared.Model.castOwners {left right : List (Context registry)}
     (same : left = right) (shared : Shared base left) (following : base.Realization)
@@ -386,3 +498,10 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Shared.Model.ofGather' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Shared.Model.ofGather
+/-- info: 'Hex.RealClosure.Tower.Shared.Model.add?_transport' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.Model.add?_transport
+
+/-- info: 'Hex.RealClosure.Tower.Shared.Model.register?' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.Model.register?

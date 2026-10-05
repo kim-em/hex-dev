@@ -202,6 +202,7 @@ def check() -> None:
              "HexRealClosureMathlib.BaseFactoryTests",
              "HexRealClosureMathlib.CacheModels", "HexRealClosureMathlib.CacheRebuild",
              "HexRealClosureMathlib.CacheGather", "HexRealClosureMathlib.GatherTests",
+             "HexRealClosureMathlib.SharedPresentation", "HexRealClosureMathlib.SharedPresentationTests",
              "HexRealClosureMathlib.BaseOrder", "HexRealClosureMathlib.BaseMapModel",
              "HexRealClosure.BisectionTests", "HexRealClosure.DeflationConformance",
              "HexRealClosure.BisectionFrontierTests", "HexRealClosure.IsolationTests",

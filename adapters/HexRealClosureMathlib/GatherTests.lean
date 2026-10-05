@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.CacheGather
+public import HexRealClosureMathlib.SharedPresentation
 public import HexRealRootsMathlib.RealClosed
 public import HexOrderedFnMathlib.LiouvilleTests
 
@@ -62,7 +62,11 @@ example
     let second := first.context.adjoin child
     ∃ shared, Tower.Shared.gather? providerModel.context.finish
         [second.context, first.context, second.context] = some shared ∧
-      Nonempty (Tower.Shared.Model shared providerModel.realization providerModel.towerModel) := by
+      ∃ model : Tower.Shared.Model shared providerModel.realization providerModel.towerModel,
+        shared.targetToUnion providerModel.towerModel
+          (shared.value 0 second.generator + shared.value 1 first.generator) =
+          model.toUnion 0 second.generator + model.toUnion 1 first.generator ∧
+        model.toUnion 0 (second.embed first.generator) = model.toUnion 1 first.generator := by
   dsimp only
   let first := (Tower.Context.base (BaseContext.rational registry)).adjoin parent
   let second := first.context.adjoin child
@@ -81,16 +85,21 @@ example
     simp only [PackedContext.signature, BaseContext.rational,
       Context.signature_real, RealContext.keys_rational]
     exact ⟨List.nil_prefix, Nat.zero_le _⟩
-  apply Tower.Shared.gather?_models providerModel.realization providerModel.towerModel
-  intro source present
-  simp only [List.mem_cons, List.not_mem_nil, or_false] at present
-  rcases present with rfl | rfl | rfl
-  · rw [secondBase]
-    exact allowed
-  · rw [firstBase]
-    exact allowed
-  · rw [secondBase]
-    exact allowed
+  obtain ⟨shared, produced, ⟨model⟩⟩ :=
+    Tower.Shared.gather?_models providerModel.realization providerModel.towerModel
+      [second.context, first.context, second.context] (by
+        intro source present
+        simp only [List.mem_cons, List.not_mem_nil, or_false] at present
+        rcases present with rfl | rfl | rfl
+        · rw [secondBase]
+          exact allowed
+        · rw [firstBase]
+          exact allowed
+        · rw [secondBase]
+          exact allowed)
+  exact ⟨shared, produced, model,
+    model.targetToUnion_add (shared.value 0 second.generator) (shared.value 1 first.generator),
+    model.toUnion_embed 1 0 (.selected child second rfl) rfl first.generator⟩
 
 
 end Hex.RealClosure.BaseContext.GatherTests

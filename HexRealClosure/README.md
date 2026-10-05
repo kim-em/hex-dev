@@ -1599,6 +1599,15 @@ infinitesimal depth; unrelated paths and decreasing depth are rejected.
 check, so the same conversion rebuilds dependent roots over a proper real-prefix
 enlargement. Earlier infinitesimals retain their positions before any new ones.
 
+`Shared.register? source` returns a `Registration` packet containing the new
+shared collection, the actual checked inclusion of the previous shared target,
+and the new owner's inclusion. Its `previous.value` transports values already
+computed from several owners, and its coefficient map transports their
+polynomials. `maps_eq` binds all retained owner maps to that same inclusion.
+`Shared.Model.register?` proves interpretation by the returned canonical model;
+`register?_union` preserves the union image of every previously computed value.
+The existing `add?` surface returns the same shared collection.
+
 The development companion `BaseOrder` derives an ordered coefficient field
 from a provider-derived `Chain.Realization`, then constructs its real-closed
 ambient and base tower model. `BaseInclusion.Model.ofTarget` in `BaseMapModel`
@@ -1646,6 +1655,31 @@ prefix/depth compatibility condition for every owner.
 `Shared.Model.value`, `polynomial`, `sign`, and `compare` preserve the original
 owners' values, coefficients, and native order results. `value_of_model` also
 identifies the transported value with a separately retrieved canonical owner model.
+
+`Shared.presentation index value` packages the actual checked owner value as a
+finite native presentation over the shared collection's declared base. The
+`SharedPresentation` development adapter proves that its denotation is the
+canonical original owner's value. `Shared.Model.toUnion` then enters that
+value into the prescribed relative algebraic union, preserving canonical zero,
+one, arithmetic, total inversion, mathematical equality and comparison.
+`Shared.targetPresentation` and `Shared.targetToUnion` also cover arbitrary
+computed target values, including arithmetic combining different owners. Their
+operation and sign theorems use the fixed canonical target interpretation.
+`Shared.Model.toUnion_coherent` identifies an original value across differently
+ordered gatherings, and `algEquiv_toValue` connects its map to the mathematical
+presentation quotient. A Liouville-prefix example combines nested rational-root
+owners after proper real-prefix enlargement.
+`Shared.union_coverage` proves that every element of that union has an actual
+native root-producer entry and a successful shared gathering whose inclusion
+represents it. `Shared.Model.union_extend` instead appends such an actual
+producer owner to an existing gathering and preserves every retained owner's
+union image. Target equality, zero, one and the base-embedding law are explicit.
+`toUnion_embed` preserves a parent's image through a selected child, including
+in the Liouville-prefix client. Together with `Presentation.algEquiv` and `Presentation.realClosed`,
+this identifies these compatible native values with the algebraic real closed
+union under the supplied base embedding. This construction uses the native
+prefix/depth compatibility check; it does not deduplicate differently encoded
+equivalent roots or supply joint ordinary-real specialization.
 
 Registration caches checked inclusions for every original algebraic predecessor.
 Parent/child registration, sibling branches, and repeated owners reuse their

@@ -99,6 +99,93 @@ def Shared.addOrigin? {base : BaseContext.PackedContext registry}
       return ⟨combined, (shared.maps.extend rebuilt.inclusion).snoc newest,
         rebuilt.base_eq.trans shared.base_eq, rebuilt.cache⟩
 
+/-- One actual registration retains the old target inclusion as executable
+result data, together with the new owner and every earlier owner map. -/
+structure Registration {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (original : Shared base owners)
+    (source : Context registry) : Type 1 where
+  private mk ::
+  shared : Shared base (owners ++ [source])
+  previous : Inclusion original.input.context shared.input.context
+  newest : Inclusion source shared.input.context
+  maps_eq : shared.maps = (original.maps.extend previous).snoc newest
+
+/-- Register once and return the actual maps for old computed values and the
+new owner. The same cached rebuilding operation produces both. -/
+def Shared.registerOrigin? {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    {source : Context registry} (origin : Origin source) :
+    Option (Registration shared source) := by
+  cases origin with
+  | pack original suffix source_eq =>
+    exact do
+      let previous ← Inclusion.base? (.pack original) base
+      let starting := previous.comp (Inclusion.mk shared.input rfl)
+      let rebuilt ← shared.cache.rebuild? starting suffix
+      let combined := ((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native
+      let newest : Inclusion source rebuilt.target := source_eq ▸ rebuilt.original
+      let result : Shared base (owners ++ [source]) :=
+        ⟨combined, (shared.maps.extend rebuilt.inclusion).snoc newest,
+          rebuilt.base_eq.trans shared.base_eq, rebuilt.cache⟩
+      return ⟨result, rebuilt.inclusion, newest, rfl⟩
+
+/-- Register a live context and retain its actual executable target transport. -/
+def Shared.register? {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (source : Context registry) : Option (Registration shared source) :=
+  shared.registerOrigin? source.origin
+
+/-- Forgetting the retained maps gives exactly the existing origin registration. -/
+theorem Shared.registerOrigin?_shared {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    {source : Context registry} (origin : Origin source) :
+    (shared.registerOrigin? origin).map Registration.shared = shared.addOrigin? origin := by
+  cases origin with
+  | pack original suffix same =>
+    simp only [Shared.registerOrigin?, Shared.addOrigin?]
+    cases baseEq : Inclusion.base? (.pack original) base with
+    | none => simp [baseEq]
+    | some previous =>
+      cases rebuiltEq : shared.cache.rebuild?
+          (previous.comp (Inclusion.mk shared.input rfl)) suffix with
+      | none => simp [baseEq, rebuiltEq]
+      | some rebuilt => simp [baseEq, rebuiltEq]
+
+/-- The retained-map producer has the same shared result as registration. -/
+theorem Shared.register?_shared {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (source : Context registry) :
+    (shared.register? source).map Registration.shared = shared.addOrigin? source.origin :=
+  shared.registerOrigin?_shared source.origin
+
+/-- A successful cached rebuild supplies the actual retained-target inclusion,
+new-owner map, input conversion and cache of the registration packet. -/
+theorem Shared.registerOrigin?_spec {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (original : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base original)) {source : Context registry}
+    (same : suffix.context = source)
+    (previous : Inclusion (Context.base original) (Context.ofBase base))
+    (baseProduced : Inclusion.base? (.pack original) base = some previous)
+    (rebuilt : CacheResult shared.input.context suffix.context)
+    (produced : shared.cache.rebuild?
+      (previous.comp (Inclusion.mk shared.input rfl)) suffix = some rebuilt) :
+    ∃ packet : Registration shared source,
+      shared.registerOrigin? (.pack original suffix same) = some packet ∧
+      packet.shared.input = ((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native ∧
+      HEq packet.previous rebuilt.inclusion ∧
+      HEq packet.shared.maps ((shared.maps.extend rebuilt.inclusion).snoc (_root_.cast
+        (congrArg (fun context => Inclusion context rebuilt.target) same) rebuilt.original)) ∧
+      HEq packet.shared.cache rebuilt.cache := by
+  cases same
+  refine ⟨⟨⟨((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native,
+    (shared.maps.extend rebuilt.inclusion).snoc rebuilt.original,
+    rebuilt.base_eq.trans shared.base_eq, rebuilt.cache⟩,
+    rebuilt.inclusion, rebuilt.original, rfl⟩, ?_, rfl, HEq.rfl, HEq.rfl, HEq.rfl⟩
+  simp only [Shared.registerOrigin?, baseProduced, bind, Option.bind, pure]
+  rw (config := { transparency := .all }) [produced]
+
 private theorem Shared.empty_input_proof (base : BaseContext.PackedContext registry) :
     (Shared.empty base).input = Conversion.identity (Context.ofBase base) := rfl
 
@@ -255,6 +342,18 @@ private theorem Shared.collect?_nil_proof {base : BaseContext.PackedContext regi
     {owners : List (Context registry)} (shared : Shared base owners) :
     shared.collect? [] = some (_root_.cast
       (congrArg (Shared base) (List.append_nil owners).symm) shared) := rfl
+
+private theorem Shared.register?_eq_proof {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (source : Context registry) :
+    shared.register? source = shared.registerOrigin? source.origin := rfl
+
+/-- Registration with retained maps consumes the same stored origin. -/
+theorem Shared.register?_eq {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (source : Context registry) :
+    shared.register? source = shared.registerOrigin? source.origin :=
+  Shared.register?_eq_proof shared source
 
 /-- The empty collection step only transports its owner-list index. -/
 theorem Shared.collect?_nil {base : BaseContext.PackedContext registry}
