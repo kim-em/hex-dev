@@ -170,6 +170,7 @@ jobs:
           python3 -m unittest scripts/profile/test_real_closure.py
           python3 -m unittest scripts/bench/test_core_telemetry.py
           python3 -m unittest scripts/bench/test_build_nested_normalization_counts.py
+          python3 -m unittest scripts/bench/test_real_closure_nested_measurement.py
           python3 -m unittest scripts/bench/test_tower_factor_compare.py
           python3 -m unittest scripts/oracle/test_flint_mpoly_bench.py
           python3 -m unittest scripts/oracle/test_flint_fmpq_bench.py
