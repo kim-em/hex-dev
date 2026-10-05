@@ -124,8 +124,8 @@ Both slopes are negative, so the observed growth is slower than the declared
 cubic model on this range. The larger sample does not establish the required
 consistency gate merely because its slope is close to the interval. All 48
 completed points remain included. Native process peak RSS includes startup
-and preparation; it is not callback live memory. These results leave the
-matrix timing gate open.
+and preparation; it is not callback live memory. The original harness findings are retained; the finite-range investigation
+below supplies their disposition without changing either verdict.
 
 The successive three-fold-size ratios correspond to descriptive exponents
 about 2.69, 2.87 and 2.94 in the first collection and 2.69, 2.86 and 2.97 in
@@ -142,3 +142,61 @@ Recheck the archive with:
 The validator uses the hash-bound historical collector’s declaration and
 validators. The reconstruction test requires the recorded main ancestor and
 therefore full Git history, as fetched by CI.
+
+
+## Finite-range explanation
+
+A short representative profile uses the same unchanged revision `6b977999bc`,
+compiled binary and source hashes as both timing collections. It samples one
+cold `runTensorCheck` call at dimensions 243 and 729, using stock `perf` at
+2000 Hz. The [archive](data/sign-det-matrix-attribution/6b977999bc/archive.json)
+retains both raw perf recordings, operation-window sidecars, result records,
+leaf and attempted stack exports, the binary's symbol table, collector and
+checksums. All completed captures are included. These are attribution captures,
+not new scaling samples or another unchanged timing rerun.
+
+The exact monotonic callback windows contain 119 and 2711 leaf samples,
+respectively. The compiled dense integer dot-product loop accounts for 66
+(55.5%) and 1960 (72.3%). These are direct leaf counts, not inclusive caller
+attribution. The attempted dwarf stack export often has no frames; no recovered
+stack attribution is claimed. Startup and preparation fall outside the windows.
+All in-window samples belong to one thread of the profiled child.
+The small capture has substantial sampling uncertainty; even the larger
+profile supplies approximate relative costs, not exact phase times.
+
+`System.check` performs exactly r³ dense multiply/add pairs. Its other work
+includes constructing r² moment entries of length s, distinctness checks on
+length-s words, matrix-vector multiplication and literal equality. This is
+O(r²s) work on this family. List construction and small exponentiation incur
+allocation and runtime calls; they cost more per source operation than the
+compiled machine-integer dot-product loop. The retained leaf counts include
+list zip/map, exponentiation, GMP and allocator functions. Thus non-cubic
+work is material on the smallest inputs, rather than an unexplained constant.
+
+The source predicts that this work's contribution to time/r³ decreases roughly
+as s/r, whereas the dense loop's contribution stays approximately constant.
+For a rough size prediction, take the independent size-243 leaf proportions,
+not weights fitted to the scientific timings. From r=243 (s=5) to r=6561
+(s=8), the lower-order factor falls to (8/5)/27. The predicted normalized
+ratio is about 0.555 + 0.445 × (8/5)/27 = 0.58. The actual first and rerun
+ratios are about 0.57 and 0.60. At r=729 the profile independently shows a
+larger dense-loop share, as predicted. This explains the direction and rough
+size of the declining normalized constants. It is an approximate finite-range
+explanation, with sampling and shared-host limits, not a new fitted model or
+an asymptotic proof.
+
+The inconclusive findings are resolved by this explanation. The actual cubic
+operation bound and checker implementation are retained. No point, exponent,
+tolerance, warmup setting or original verdict changes. A further collection
+solely to move the fitted slope across ±0.15 would add little useful evidence;
+no larger matrix ladder is required for that purpose. Other Phase-4 families
+and explicit comparisons still require their own evidence.
+
+Validate the archived operation windows, source/binary agreement, successful
+answers and leaf summaries with:
+
+    python3 -m scripts.bench.sign_det_matrix_attribution reports/data/sign-det-matrix-attribution/6b977999bc
+
+The validator parses retained records without executing archived Python. The
+original source reconstruction and all 48 scientific points remain checked
+by `sign_det_matrix_archive`.

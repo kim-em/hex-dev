@@ -208,3 +208,38 @@ class InterruptedProfiles(unittest.TestCase):
             for number, handler in installed.items():
                 signal.signal(number, handler)
             signal.signal(signal.SIGHUP, previous)
+
+
+class MatrixAttribution(unittest.TestCase):
+    def setUp(self):
+        from scripts.bench.sign_det_matrix_attribution import validate
+        self.validate = validate
+        root = Path(__file__).resolve().parents[2]/"reports/data"
+        self.source = root/"sign-det-matrix-attribution/6b977999bc"
+        self.matrix = root/"sign-det-matrix-wide/6b977999bc-first"
+
+    def test_complete_operation_windows(self):
+        rows = self.validate(self.source)
+        self.assertEqual((rows["243"]["samples"], rows["243"]["dense_loop"]), (119, 66))
+        self.assertEqual((rows["729"]["samples"], rows["729"]["dense_loop"]), (2711, 1960))
+
+    def test_corrupted_profile_bytes(self):
+        import shutil
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary)/"archive"; shutil.copytree(self.source, target)
+            path = target/"729/perf.data.gz"; path.write_bytes(path.read_bytes()+b"changed")
+            with self.assertRaisesRegex(ValueError, "stored bytes changed"):
+                self.validate(target, matrix_directory=self.matrix)
+
+    def test_rehashed_summary_is_not_the_evidence(self):
+        import shutil, hashlib
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary)/"archive"; shutil.copytree(self.source, target)
+            path = target/"summary.json"; summary = json.loads(path.read_text())
+            summary["729"]["dense_loop"] += 1; path.write_text(json.dumps(summary))
+            manifest = json.loads((target/"archive.json").read_text())
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            manifest["files"]["summary.json"].update(sha256=digest, stored_sha256=digest)
+            (target/"archive.json").write_text(json.dumps(manifest))
+            with self.assertRaisesRegex(ValueError, "summary disagrees"):
+                self.validate(target, matrix_directory=self.matrix)
