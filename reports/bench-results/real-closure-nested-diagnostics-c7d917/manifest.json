@@ -67,7 +67,7 @@
     "checked-d2-m2.json": "c35461fb161cf5e5620ad4749917ca0a8e66be793d60feeb09ed493c506058f8",
     "checked-d2-m4.json": "bec5854beeae118471d3e237733215260f278fa2dfadd007a88889928149bd95",
     "checked-d3-m1.json": "218395b702b3369dd7ab6fc189d87474d9ff7df8ef8654324e33c1eaf4d93991",
-    "rebuild-2c2fab.json": "56127074fa7f1908ccd4629314a0ac0892e935dd40e7f3921502153a84e383d5",
+    "rebuild-2c2fab.json": "ae134781fa6f0be38efdcfd862dad7e26f79967777378c04cb32b14b4d8cae1b",
     "rebuild-comparison.json": "d907062b41c017960a745cac1aa348624d6592711ef1f5a5c636c965c5369860"
   },
   "derived": [
@@ -89,7 +89,8 @@
         "nested-counts-c7d917-d2-m2-eager.jsonl",
         "nested-counts-c7d917-d2-m2-clean.trace",
         "nested-counts-c7d917-d2-m2-eager.trace"
-      ]
+      ],
+      "oracle_sha256": "478fefcc194df40630ed3c9fb17a9d237a20875738e0e82d97905ba0031c228a"
     },
     {
       "output": "checked-d2-m4.json",
@@ -109,7 +110,8 @@
         "nested-counts-c7d917-d2-m4-eager.jsonl",
         "nested-counts-c7d917-d2-m4-clean.trace",
         "nested-counts-c7d917-d2-m4-eager.trace"
-      ]
+      ],
+      "oracle_sha256": "478fefcc194df40630ed3c9fb17a9d237a20875738e0e82d97905ba0031c228a"
     },
     {
       "output": "checked-d3-m1.json",
@@ -125,7 +127,8 @@
       "inputs": [
         "nested-counts-c7d917-d3-m1-eager.jsonl",
         "nested-counts-c7d917-d3-m1-eager.trace"
-      ]
+      ],
+      "oracle_sha256": "478fefcc194df40630ed3c9fb17a9d237a20875738e0e82d97905ba0031c228a"
     }
   ]
 }

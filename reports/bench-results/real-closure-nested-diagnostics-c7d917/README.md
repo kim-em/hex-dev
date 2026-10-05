@@ -34,7 +34,7 @@ structure; the Lean reader performs mathematical replay.
 | 2 | 2 | eager | 17 / 17 | 45071 | 45071 | 4958 |
 | 2 | 4 | clean | 23 / 23 | 248512 | 248512 | 1106461 |
 | 2 | 4 | eager | 23 / 23 | 82295 | 82295 | 7114 |
-| 3 | 1 | eager | 547 / 547 | 2873125 | 2873125 | see `checked-d3-m1.json` |
+| 3 | 1 | eager | 547 / 547 | 2873125 | 2873125 | 14495 |
 | 3 | 1 | clean | unavailable | unavailable | unavailable | unavailable |
 
 The depth-three clean process exited 124 at its operational 600-second limit
@@ -101,3 +101,17 @@ binary digests against the historical capture. Thus the integrated executable
 and original diagnostic observer agree exactly despite the source rebase.
 System libraries resolved through `-l` are not individually hashed; the full
 binary digests and pinned toolchain remain the reproduction boundary.
+
+Derived entries content-key their oracle script by SHA-256; the rebuilt record
+content-keys its builder script. Commit names provide historical context;
+these content keys survive rebase and squash merge. The CI regression replays
+every current derived command and verifies all manifest file digests. Earlier
+`d2-m2-oracle.json` and `nested-c7d917-*-oracle*.json` are retained older
+postprocessing outputs; `checked-*.json` are the current verified results.
+
+The rebuilt link recipe resolves `libnautyffi.a` into the sibling
+`hex-dev-issue-10378-algebraic-bound` worktree. Its digest is recorded and both
+complete binaries match, but the local clean-tree check does not cover that
+sibling. Exact reproduction of this recorded link recipe requires that
+retained external input; a fresh normal Lake build may resolve its own pinned
+archive instead.

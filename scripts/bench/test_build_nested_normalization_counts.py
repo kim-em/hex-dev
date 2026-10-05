@@ -27,6 +27,12 @@ return;
 LEAN_EXPORT void lp_Hex_Hex_DensePoly_gcd___redArg___lam__0(void){
 return;
 }
+LEAN_EXPORT void lp_Hex_Hex_DensePoly_gcd___at___00Main_spec__4___boxed(void){
+return;
+}
+LEAN_EXPORT void lp_Hex_Hex_DensePoly_gcd___at___00Main_spec__4___lam__0(void){
+return;
+}
 LEAN_EXPORT void lp_Hex_Hex_DensePoly_modImpl___at___00Hex_DensePoly_gcd_spec__3(void){
 return;
 }

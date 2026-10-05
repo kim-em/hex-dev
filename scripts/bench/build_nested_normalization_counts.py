@@ -33,7 +33,9 @@ def instrument(source):
         name = match.group(1)
         # Specialization suffixes name callees too. Classify the first
         # declaration name, never a later '...___at___...DensePoly_gcd...'.
-        declaration = name.split('___at___', 1)[0]
+        declaration, *specialization = name.split('___at___', 1)
+        if specialization and re.search(r'_spec__\d+(?:___redArg)?$', specialization[0]) is None:
+            continue
         if '_DensePoly_' not in declaration:
             continue
         operation = declaration.split('_DensePoly_', 1)[1]

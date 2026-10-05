@@ -549,5 +549,6 @@
   },
   "observer_compiler_version": "clang version 23.1.0\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /nix/store/qkyiflzkas69laf943jkwninmmc0m31g-clang-23.1.0/bin\n",
   "observer_sha256": "b66cc0fee6547989e7646bf7ebf9ac94b1fcc720da2033553761e1168911525e",
-  "diagnostic_binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0"
+  "diagnostic_binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
+  "builder_sha256": "42e3701e71b30e7c9aac50f6217e4257540a30dd65c799bf6108092c38413daf"
 }

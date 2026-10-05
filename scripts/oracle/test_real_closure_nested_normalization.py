@@ -6,6 +6,7 @@ import unittest
 import tempfile
 import subprocess
 import sys
+import hashlib
 from scripts.oracle.real_closure_nested_normalization import verify, trace_counts, trace_data, verify_pairs, validate_trace
 
 
@@ -88,6 +89,20 @@ class ExactTests(unittest.TestCase):
             elif change == 'gcd': bad['operation_counts']['poly_gcd'] += 1
             elif change == 'inverse': bad['callback_counts']['2:inverse_xgcd'] = 0
             with self.assertRaises(ValueError): validate_trace(row, bad)
+
+
+    def test_retained_derived_outputs(self):
+        repo = Path(__file__).resolve().parents[2]
+        archive = repo / 'reports/bench-results/real-closure-nested-diagnostics-c7d917'
+        manifest = json.loads((archive / 'manifest.json').read_text())
+        for name, expected in manifest['files'].items():
+            self.assertEqual(hashlib.sha256((archive / name).read_bytes()).hexdigest(), expected, name)
+        for entry in manifest['derived']:
+            command = list(entry['command'])
+            command[0] = sys.executable
+            actual = subprocess.check_output(command, cwd=repo)
+            self.assertEqual(actual, (archive / entry['output']).read_bytes(), entry['output'])
+
 
 
 if __name__ == '__main__':
