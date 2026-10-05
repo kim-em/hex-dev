@@ -81,13 +81,15 @@ computation paths without clearing those timing findings.
 
 The frozen candidate executable has SHA-256
 `6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed`,
-which the final API build reproduces. The compared pinned builds use different
+which `lake build HexOrderedFn hexorderedfn_bench` at integrated source
+commit `205cd87bc672cc29daedd246b0dd8c9015f09076` reproduces (215 jobs). The compared pinned builds use different
 Lean versions. Invocation-checkout metadata is distinct from frozen executable
 provenance. None of these observations establishes causal attribution to the API
 patch or supplies a Phase-6 performance pass.
 
 Phase 6 still requires resolution of the performance findings and final acceptance
-of the declaration review. A linter pass or successful theorem application cannot
+of the declaration review, including the explicit zero-reference dispositions and
+the recorded import-minimality finding. A linter pass or successful theorem application cannot
 substitute for that computational check. The chapter and READMEs supply
 documentation, but do not advance Phase 7 ahead of Phase 6. Neither pair is added
 to the released manifest by this work.

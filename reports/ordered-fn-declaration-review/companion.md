@@ -199,13 +199,16 @@ No unused alternate handwritten semantic algorithm was identified. Private
 helpers have actual proof or elaboration consumers. Zero compiled named-reference
 counts for exported laws do not by themselves justify removing public
 normalization, order, embedding or transport APIs; those laws characterize the
-library's promised behavior, and some are used through simp or anonymous examples.
+library's promised behavior. The [49 zero-reference dispositions](zero-references.md)
+identify actual anonymous examples and distinguish rfl/dsimp or unfolded-instance
+reductions. Named non-rfl simp/ext/instance uses are counted when retained in
+proof bodies; nonzero counts can also come from tests.
 The declaration-use artifact records these limits explicitly rather than treating
 reference counts as a linter-based proof of API quality.
 
 The compiled audit's 545 production constants have only `propext`,
 `Classical.choice`, `Quot.sound` as axioms. The prior full builds and lint target
 provide diagnostics; the substantive source assessments above provide a different
-part of Phase 6. Final performance acceptance and independent review of the
-combined declaration review remain outstanding. No phase counters are changed
+part of Phase 6. Final performance acceptance, the recorded import-minimality finding and
+acceptance of the zero-reference API dispositions remain outstanding. No phase counters are changed
 by this review.

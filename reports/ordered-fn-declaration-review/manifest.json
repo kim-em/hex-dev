@@ -25,8 +25,13 @@
   "build_log": "orderedfn-usage-audit-build.log, retained under /home/kim/.codex/tasks/hex-10575",
   "build_result": "13487 Lake jobs complete; audit module compiled",
   "limitations": [
-    "Reference graph scans named imported constants; elaborator attributes and anonymous examples are not completely represented.",
-    "Generated declarations are included; reference count zero is not a dead-API verdict.",
-    "Snapshot environment imports HexManual at the stated source commit; it is not an audit of later unrelated libraries."
-  ]
+    "Named imported proof-body references count non-rfl simp/ext/instance uses; anonymous examples, rfl/dsimp reductions and unfolded elaboration instances may leave no named reference.",
+    "The snapshot imports HexManual at the preserved source tag, including OrderedFn Tests/LiouvilleTests; it is not the entire bench/conformance/examples tree.",
+    "Users include test declarations; nonzero reference counts do not establish production use. Generated declarations are also included.",
+    "Rebuilding at a later HexManual import closure changes users even when all thirteen production modules are byte-identical."
+  ],
+  "source_tag": "audit/issue-10575-orderedfn-review",
+  "matching_integrated_source_commit": "d07b00469d75085b3fe6161f5896a6134c2037b2",
+  "output_sha256": "257c8158c83e631f929ce922d01c55b3c11365cb67f770f766b7ea0ae93678bb",
+  "zero_reference_handwritten": 49
 }

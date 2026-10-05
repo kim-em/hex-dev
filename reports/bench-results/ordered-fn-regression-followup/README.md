@@ -14,20 +14,31 @@ outputs do not include runner signal-floor/verdict eligibility, so the analysis
 applies the median arithmetic to every scheduled successful observation; it is
 not a replay of those runner eligibility checks.
 
-| Capture | Completed arms | Failed arms | Compared parameters | Flagged regressions |
-| --- | ---: | ---: | ---: | ---: |
-| [Original](../ordered-fn-api-regression/guard-analysis.json) | 816 | 0 | 136 | 1 |
-| [Follow-up](guard-analysis.json) | 816 | 0 | 136 | 4 |
+| Capture | Completed arms | Failed arms | Compared parameters | Flagged regressions | Flagged improvements |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| [Original](../ordered-fn-api-regression/guard-analysis.json) | 816 | 0 | 136 | 1 | 8 |
+| [Follow-up](guard-analysis.json) | 816 | 0 | 136 | 4 | 12 |
 
 The original `approximation@10240` finding was +16.85%; it is −0.34% here.
 The follow-up flags `height@128` (+14.58%), `height@2048` (+17.63%),
 `third@1024` (+12.92%) and `approximation@12288` (+14.20%). Adjacent-pair
 medians are retained separately and do not replace the declared comparison.
+The sets of flagged workload/parameter pairs are disjoint between captures.
+For each follow-up flag, only one of its three adjacent ratios exceeds 1.10:
+`height@128` 1.365, `height@2048` 1.238, `third@1024` 1.129 and
+`approximation@12288` 1.142. Their paired medians range from 1.019 to 1.047;
+those observations do not replace the declared independent-arm median rule.
+The symmetric rule also flags eight improvements in the original capture and
+12 in the follow-up: all eight `scan` parameters in each, plus follow-up
+`horner@20480`, `horner@24576`, `degree@16384` and `subtraction@128`.
+No causal interpretation or performance pass follows from those improvement flags.
+
 All 408 adjacent result hashes agree; these small hashes are consistency checks,
 not exact semantic oracles.
 
 Both frozen executable hashes are unchanged. Every follow-up child records the
-clean invocation checkout `79b991882a486a8c8d05fd26aaf1656358834b7e`; that is
+clean invocation checkout `79b991882a486a8c8d05fd26aaf1656358834b7e`, preserved by
+`audit/issue-10575-orderedfn-review`; that is
 invocation metadata. The executable provenance remains the exact historical
 and candidate source/toolchain identities in [sources.json](sources.json).
 The entire shared-host record remains retained. No sample was discarded,

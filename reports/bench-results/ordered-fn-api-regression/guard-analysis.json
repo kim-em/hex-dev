@@ -5,6 +5,7 @@
   "failures": [],
   "parameters_compared": 136,
   "regression_count": 1,
+  "improvement_count": 8,
   "all_hashes_agree": true,
   "points": [
     {

@@ -26,8 +26,8 @@ acceptance thresholds or quiet-core conditions were introduced.
 | approximation 12288 | baseline | 4321 | 93.08 | 0.39 | 6.27 |
 | approximation 12288 | candidate | 4335 | 92.76 | 0.18 | 6.78 |
 
-All six filtered profiles pass the existing diagnostics. Clock-calibration
-residuals are below one millisecond. Full leaf and inclusive rankings,
+All six filtered profiles pass the existing diagnostics. Selected one-boundary-trimmed clock-calibration
+residuals are below one millisecond; raw maxima reach 1.201 ms. Full leaf and inclusive rankings,
 diagnostics, command lines, executable hashes, sampler identity, automatic CPU
 selection and shared-host context are in the summaries and manifests. The
 classification calls runtime allocation/free symbols allocation; its percentages

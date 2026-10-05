@@ -78,6 +78,7 @@ def analyze(root):
     return dict(policy=POLICY, threshold_percent=THRESHOLD_PERCENT, completed_arms=len(rows),
         failures=failures, parameters_compared=len(points),
         regression_count=sum(p['classification'] == 'regression' for p in points),
+        improvement_count=sum(p['classification'] == 'improvement' for p in points),
         all_hashes_agree=all(p['hashes_agree'] for p in points) if points else None,
         points=points,
         scope='Arithmetic comparison of all scheduled native observations; not runner signal-floor eligibility, causal attribution, semantic conformance, fresh scaling evidence, or full Phase-6 acceptance.')
@@ -90,7 +91,7 @@ def main():
     args = parser.parse_args()
     result = analyze(args.capture)
     args.output.write_text(json.dumps(result, indent=2) + '\n')
-    print(json.dumps({k: result[k] for k in ('completed_arms', 'failures', 'parameters_compared', 'regression_count', 'all_hashes_agree')}))
+    print(json.dumps({k: result[k] for k in ('completed_arms', 'failures', 'parameters_compared', 'regression_count', 'improvement_count', 'all_hashes_agree')}))
     for p in result['points']:
         if p['classification'] == 'regression':
             print(f"{p['name']}@{p['param']}: +{p['change_percent']:.6f}%")

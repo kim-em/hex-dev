@@ -107,3 +107,10 @@ and follow the unchanged-rerun limit.
 Phase 5. CI benchmark verification and theorem timing cannot substitute for
 computational evidence. The Mathlib companion has no separate computational
 benchmark surface.
+
+The added [median comparison](guard-analysis.json) applies pinned lean-bench’s
+existing 10% default after the original collection. It flags one regression and
+eight improvements; the original descriptive analysis and its lack of a
+predeclared acceptance rule remain unchanged. The
+[declared follow-up](../ordered-fn-regression-followup/README.md) retains its
+separate question, rule and unresolved findings.

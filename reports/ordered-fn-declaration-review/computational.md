@@ -107,6 +107,7 @@ not additional handwritten algorithms.
 | `lowestIndex` | Scans the actual dense coefficient array for the first nonzero entry; zero uses the array's sentinel behavior. Companion trailing-degree theorem handles zero separately. |
 | `lowestCoeff` | Reads the scanned coefficient. Zero behavior is covered by the trailing-coefficient correspondence. |
 | `sign` | Multiplies numerator and denominator lowest-coefficient signs, with the canonical zero branch. Denominator sign must not be omitted. |
+| `sign_zero` | Public simp law for the canonical zero, independent of the supplied predecessor sign. |
 | `sign_range` | Assumes a three-valued base sign and proves the same range for fractions; it does not claim order correctness from range alone. |
 | `compare` | Compares via sign of the canonical difference. Companion laws connect it to the Laurent interpretation. |
 | scoped `instLE` / `instLT` / `instDecidableLE` / `instDecidableLT` | Explicit scoped relations avoid a global unproved ordered-field instance in the computational library. |
@@ -114,8 +115,11 @@ not additional handwritten algorithms.
 The compiled declaration audit contains 545 constants including generated
 proofs, projections, equations and instances. Their axiom union is exactly
 `propext`, `Classical.choice`, `Quot.sound`. A zero reference count is not a
-safe deletion criterion: elaborator instance/ext/simp registration and anonymous
-Verso examples are not fully represented in named proof-body references.
-No alternate unused handwritten computational algorithm was identified by this
+safe deletion criterion. Non-rfl simp/ext/instance uses retained in named proof
+bodies are counted; anonymous
+examples, rfl/dsimp reductions and unfolded elaboration instances may not leave
+a named reference.
+The [per-declaration zero-reference dispositions](zero-references.md) distinguish
+these cases. No alternate unused handwritten computational algorithm was identified by this
 source review. Public characterizing lemmas above are intentional API; the
 companion review assesses its exported laws on the same basis.
