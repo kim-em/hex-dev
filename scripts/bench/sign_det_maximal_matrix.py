@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Measure the actual full-support matrix solver and literal integer checker.
+"""Historical full-support reference-solve and integer-check collection support.
 
 The shared harness supplies fixed trial-major samples. Retain every completed
 arm, including failures and inconclusive results, without an automatic rerun.
@@ -213,10 +213,7 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        exit_code = main()
-    except Exception:
-        import traceback
-        traceback.print_exc()
-        exit_code = 2
-    raise SystemExit(exit_code)
+    print("Reference-solve scaling registrations are retired. "
+          "Use sign_det_matrix_wide.py for production checker measurements; "
+          "reproduce historical solve runs at their recorded source revision.", file=sys.stderr)
+    raise SystemExit(2)

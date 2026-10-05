@@ -374,7 +374,7 @@ class DimensionEvidenceTests(unittest.TestCase):
             self.assertEqual(summary["validation_errors"], [])
             self.assertEqual(len(summary["observations"]), 2)
 
-    def test_script_failure_exit_is_distinct_from_inconclusive(self):
+    def test_retired_collection_cli_stops_before_running_commands(self):
         script = bench.ROOT/"scripts/bench/sign_det_maximal_matrix.py"
         with patch.object(sys, "argv", [str(script), "--output", "/unused-test-output"]), \
              patch.object(subprocess, "check_output", side_effect=RuntimeError("forced early failure")), \
@@ -382,7 +382,7 @@ class DimensionEvidenceTests(unittest.TestCase):
             with self.assertRaises(SystemExit) as exit_error:
                 runpy.run_path(str(script), run_name="__main__")
         self.assertEqual(exit_error.exception.code, 2)
-        self.assertIn("forced early failure", stderr.getvalue())
+        self.assertIn("Reference-solve scaling registrations are retired", stderr.getvalue())
 
     def test_main_dispatches_dimension_inventory_and_retains_exit_status(self):
         with TemporaryDirectory() as d:

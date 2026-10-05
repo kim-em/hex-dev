@@ -81,8 +81,9 @@ Its current two-sided mode emits one of two verdicts:
 
 - **consistent with declared complexity**: observed scaling matches
   the model within tolerance.
-- **inconclusive**: observed scaling does not match. The
-  implementation is either wrong, or the model was misdeclared.
+- **inconclusive**: observed scaling does not match. Investigate the
+  implementation, the model and the finite input range; the verdict alone
+  does not distinguish defects from explained lower-order costs.
 
 The latter case is the **valuable** outcome of a benchmark run.
 "Everything looks consistent and within a small constant factor of
@@ -97,9 +98,12 @@ comment says which:
 
 - **An independently derived model.** The intended algorithm's expected
   scaling on the registered input family, derived before measurement and
-  never read off observed timings. This is the default. Both directions
-  are findings: slower than declared means the implementation is wrong,
-  faster than declared means the model or the family is wrong.
+  never read off observed timings. This is the default when such a model
+  usefully predicts the measured work. Deviations in either direction prompt
+  investigation. They can reflect an implementation defect, a mistaken model,
+  or lower-order work dominating the measured range. An arithmetic-operation
+  count is not automatically a wall-time model when it combines operations
+  with substantially different costs.
 - **A cited upper bound**, when no family-specific model is derivable. The
   bound is a published result that covers the work the family exercises.
   Slower than the bound is a finding; faster satisfies it. lean-bench has
@@ -113,6 +117,24 @@ A fixed registration makes no performance claim; see
 worst-case bound stays in its per-library SPEC whatever the registration
 declares, and the adjacent comment explains how the registered family
 relates to it.
+
+Use measurements to assess useful operations on representative inputs and
+detect unexpected costs. Do not require a parametric model for an auxiliary
+reference computation merely because it can be timed. When no useful timing
+model is available, fixed-problem measurements and required comparisons can
+still document time and memory, with explicit limits on what they establish.
+They do not prove scaling or replace a mandated performance target.
+
+An inconclusive harness verdict is a finding to resolve, not an automatic
+requirement for a larger collection. Retain its original verdict and samples.
+A resolution may identify a defect and fix it, correct an independently
+demonstrated model error, or explain the finite-range behavior using source
+work counts and representative phase measurements or attribution. State the
+evidence, the operation's relevance, and any remaining limitation in the
+performance report. A small difference from a fitted-slope threshold alone
+does not justify an expensive collection whose only purpose is to cross that
+threshold. Unexplained excessive growth, unsuitable time or memory on intended
+inputs, and unmet explicit comparison targets remain unresolved requirements.
 
 When a declared claim fails, or when a passing verdict has a constant wildly
 off an external reference (orders of magnitude, not a small constant factor),
@@ -767,9 +789,10 @@ explicitly forbidden:
   to fit the cap is allowed; lowering the scientific
   `setup_benchmark` parameters or `targetInnerNanos`, or shrinking the
   declared range to make a budget skip go away, is verdict-laundering.
-  If a benchmark would exceed its wallclock cap at the declared range,
-  the implementation is too slow at that range: file an issue, roll
-  back, fix.
+  A cap hit remains a recorded failed observation. Determine whether it
+  exposes an implementation defect or an unsuitable measurement plan; it
+  does not by itself establish a scientific time bound. Correct the defect
+  or plan without omitting completed samples or weakening an explicit target.
 - **Declaring a complexity model that matches the buggy current code.**
   The declared model is the independently derived expected family
   scaling, or a cited published bound. Observation disagreeing with the
@@ -781,8 +804,9 @@ explicitly forbidden:
   checks it. Rewriting the implementation under test, rescaling
   `degree := f(n)`, or raising `verdictWarmupFraction` until the
   harness reports "consistent" is not a fix; it is laundering the
-  verdict. Inconclusive means raise the schedule or file a
-  finding-issue against the implementation. An inconclusive verdict
+  verdict. Investigate inconclusive results and record their disposition;
+  a larger schedule is warranted only when it answers a useful unresolved
+  performance question. An inconclusive verdict
   whose root cause is a too-narrow schedule (rungs too close to the
   per-spawn floor) is miscalibration, not a finding, and the
   registration must be re-tuned. A demonstrated error in the

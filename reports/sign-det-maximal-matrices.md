@@ -1,8 +1,11 @@
 # Complete-support matrix solving and checking
 
 These benchmarks isolate the actual `solveSystem` and `System.check` operations
-on complete ternary moment systems. They measure the matrix phase required by
-HexSignDet, independently of the polynomial-query phase. They do not measure
+on complete ternary moment systems. The large rational solve belongs to the
+full-ternary reference implementation. Production BKR uses it only at leaves
+of size at most three; parents combine child inverse witnesses through
+`solveScaled`. The large integer checker is shared with production. These
+measurements separate matrix work from the polynomial-query phase. They do not measure
 root isolation, Tarski queries, recursive BKR production or descriptor operations,
 and do not close the separate rank-library performance obligation #10352.
 
@@ -27,7 +30,7 @@ guards, not proofs. They are bound to deterministic prepared inputs through the
 recorded source revision, executable hash and parameter; the child protocol does
 not export a separate input digest.
 
-## Cost model derived before measurement
+## Retained arithmetic-operation model
 
 Both callbacks execute `System.check` on an accepted system. It constructs the
 moment matrix and computes the dense product of the supplied inverse and moment
@@ -48,8 +51,9 @@ Both registrations use mode 1 (two-sided parametric), with the source-derived
 coefficient-operation law above. Both use six fixed trial-major rounds, a 100 ms repeat target and
 an operational 180 s child timeout. The shared harness gives each operation its
 own verdict. The timeout is not a scientific absolute performance budget.
-An inconclusive observation remains an outstanding gate; it is never promoted
-by compilation, fixture equality or a successful smoke check.
+An inconclusive observation retains its original verdict. Its disposition is
+assessed from the actual code path and measured work, rather than compilation,
+fixture equality or a successful smoke check.
 
 ## Matrix dimension as the parameter
 
@@ -202,9 +206,10 @@ exports. The retained parameter range is `s=2,…,5`, whose logarithmic span `lo
 pinned fitter's minimum span 1. Consequently it reports no slope and uses its
 unchanged multiplicative range check. The normalized median constants vary by
 3.70 for solve and 8.36 for check, exceeding its 1.5 narrow-range allowance.
-This is the faster-than-declared direction over these finite inputs, and remains
-an outstanding performance gate. It is not evidence of a passing upper bound;
-these registrations did not qualify for that mode.
+This is the faster-than-declared direction over these finite inputs. The
+original verdicts remain inconclusive; they are not relabeled as passing upper
+bounds. The disposition below separates the reference-only solve prediction
+from the production checker and its known lower-order work.
 
 The source-derived cubic scalar-operation count is separate from the unresolved
 wall-time scaling. In particular, the rational elimination skips zero multipliers.
@@ -227,13 +232,12 @@ At the largest solve inputs and largest check input, the harness uses one inner
 call per sample; smaller inputs use repeated calls. All six completed trials at
 each size are retained.
 
-The current input sizes can expose lower-order overhead and
-unequal costs of scalar operations; these possibilities are not established by
-these timings. The profile below identifies the dominant phase for solve at `s=5`; a wider independently
-planned schedule or a separately derived model for that phase is still needed
-before correcting its wall-time declaration. The check schedule also needs a
-wider range before its cubic term can be assessed. No fit setting or complexity law has been changed to obtain a
-passing result. No unchanged rerun has been collected.
+The current input sizes expose a combination of work with unequal scalar costs.
+The profile below identifies the dominant solve phase at `s=5`; the source
+separates its rational elimination from the integer check. The checker also
+constructs matrix entries and validates sign words, adding `O(r²s)` work to
+its cubic product. The wider checker records are assessed separately. No fit
+setting or complexity law is changed to obtain a passing verdict. No unchanged rerun has been collected.
 
 This matrix-phase evidence does not establish the growing-degree polynomial query
 track, maximal-support end-to-end production, ordinary-kernel matrix replay costs,
@@ -303,3 +307,28 @@ This checks specific stack concerns; timing-window confidence does not prove
 unwind edges, and the path check does not validate every edge of every stack.
 The captured runtime behavior is consistent with the pinned Lean implementation
 of `mpz(uint64)`; no duplicated arithmetic implementation is introduced here.
+
+
+## Disposition of the reference-solve timing prediction
+
+The cubic total scalar-operation bound combines two kinds of work with
+substantially different costs. On this structured family, rational elimination
+skips zero multipliers; the retained source-state inventory records
+`4(18^s−9^s)` rational row-update pairs, alongside the dense `27^s` integer
+checker pairs. The representative solve profile attributes 93.6% of samples to
+inversion. A single cubic operation-count model therefore does not predict
+wall-time scaling over the measured reference-solve inputs.
+
+The large reference-only two-sided solve registrations are retired. Small
+fixed checks `reference1`, `reference2` and `reference3` retain exact table
+checksums on matrices of sizes 3, 9 and 27. The required reduced-versus-full
+correctness and runtime comparisons remain in their separate registrations.
+Production's large integer checker keeps its independently derived cubic
+model and retained measurements. No inversion algorithm or checker is changed.
+
+All original solve/check observations, declarations, profiles and verdicts
+remain unchanged in their archives. Commands in the earlier collection sections
+refer to their recorded source revisions. The old paired collector's CLI now
+stops before launching work; its validators remain available for historical
+records. Use `scripts/bench/sign_det_matrix_wide.py` for current production
+checker collection. No new timing result is claimed by the fixed checks.

@@ -83,10 +83,15 @@ For each library `HexFoo` advancing through Phase 4:
 For library `hex-foo`, Phase 4 is done when:
 
 - every performance claim the library makes has a complete scientific run;
-- after at most the one identical rerun the
-  [shared-host policy](../SPEC/benchmarking.md#shared-host-measurement-policy)
-  permits, the evidence satisfies the declared two-sided model or cited upper
-  bound;
+- each timing finding has an evidence-based disposition under
+  [Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim):
+  a passing model/bound check, a corrected defect or declaration, or a documented
+  explanation supported by source analysis and retained measurements;
+  unexplained excessive costs and unmet explicit performance targets remain open;
+- collection follows the
+  [shared-host policy](../SPEC/benchmarking.md#shared-host-measurement-policy),
+  including its limit of one unchanged rerun; an inconclusive slope alone does
+  not require a larger or more expensive run;
 - every completed run is retained: the raw JSONL is linked from the PR that
   advances the library;
 - fixed hash-only registrations carry no performance verdict;
