@@ -319,13 +319,16 @@ def prepDivModInput (n : Nat) : DivModInput :=
 
 Starting from `(F₀, F₁) = (0, 1)`, the recurrence
 `Fₖ₊₂ = X * Fₖ₊₁ + Fₖ` makes `(Fₙ₊₁, Fₙ)` a coprime consecutive pair whose
-Euclidean remainder sequence has exactly `n` degree-one quotient steps. -/
+Euclidean remainder sequence has exactly `n` degree-one quotient steps.
+Multiplying both by the common factor `X + n` keeps those quotients and makes
+the gcd, and so the checksum, differ between rungs. -/
 def prepGcdInput (n : Nat) : GcdInput :=
   let pair := (List.range n).foldl
     (fun state _ => (state.2, X * state.2 + state.1))
     ((0 : FpPoly 65537), (1 : FpPoly 65537))
-  { f := pair.2
-    g := pair.1 }
+  let common := X + C (ZMod64.ofNat 65537 n)
+  { f := common * pair.2
+    g := common * pair.1 }
 
 /-- Family-specific work model for fixed-prime Frobenius.
 
@@ -503,6 +506,15 @@ def runMulSchoolbookChecksum (input : MulInput) : UInt64 :=
 def runMulPackedChecksum (input : MulInput) : UInt64 :=
   checksumPoly (mulPacked input.left input.right)
 
+/-- Work model for balanced Karatsuba on two size-`n` operands, following
+`DensePoly.karatsubaAux`: schoolbook `n²` at or below `cutoff`, otherwise two
+subproducts of size `⌈n/2⌉` (the low halves and the sums), one of size `⌊n/2⌋`,
+and linear splitting and recombination. -/
+def karatsubaCost (cutoff n : Nat) : Nat :=
+  if n ≤ max 1 cutoff then n * n
+  else 2 * karatsubaCost cutoff ((n + 1) / 2) + karatsubaCost cutoff (n / 2) + n
+decreasing_by all_goals omega
+
 /-- Benchmark target: forced generic Karatsuba multiplication. -/
 def runMulKaratsubaChecksum (input : MulInput) : UInt64 :=
   checksumPoly (DensePoly.mulKaratsuba FpPoly.karatsubaCutoff input.left input.right)
@@ -596,9 +608,9 @@ setup_benchmark runMulPacked257Checksum n => (n * n)
     tags := #["multiplication", "forced", "balanced", "fp257"]
   }
 
-/- Cost model: the three-subproblem Karatsuba recurrence is represented by
-the integer-valued `n * sqrt n` surrogate. -/
-setup_benchmark runMulKaratsuba257Checksum n => (n * Nat.sqrt n)
+/- Cost model: `karatsubaCost` follows the executable recursion, so the ladder's
+crossing of the 32-coefficient cutoff is modelled rather than fitted. -/
+setup_benchmark runMulKaratsuba257Checksum n => karatsubaCost FpPoly.karatsubaCutoff n
   with prep := prepMulInput257
   where {
     paramFloor := 4
@@ -686,10 +698,9 @@ setup_benchmark runMulPackedChecksum n => (n * n)
     tags := #["multiplication", "forced", "balanced", "fp65537"]
   }
 
-/- Cost model: `n * sqrt n` is the nearest integer-valued built-in model to
-`n^(log_2 3)`; crossover comparison, rather than the slope verdict, is the
-purpose of this forced registration. -/
-setup_benchmark runMulKaratsubaChecksum n => (n * Nat.sqrt n)
+/- Cost model: `karatsubaCost` follows the executable recursion, which is
+`Θ(n^(log₂ 3))` above the schoolbook cutoff. -/
+setup_benchmark runMulKaratsubaChecksum n => karatsubaCost FpPoly.karatsubaCutoff n
   with prep := prepMulInput
   where {
     paramFloor := 16
