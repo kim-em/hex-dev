@@ -20,9 +20,11 @@ class ScalingCaptureTests(unittest.TestCase):
             for degree in DEGREES:
                 status = 'killed_at_cap' if degree == 9 and trial == 2 else 'ok'
                 points.append(dict(trial_index=trial, param=degree, status=status,
-                                   result_hash='0x1', below_signal_floor=False,
-                                   inner_repeats=2, total_nanos=300000000,
-                                   per_call_nanos=150000000.0))
+                                   result_hash='0x1' if status=='ok' else None,
+                                   below_signal_floor=False,
+                                   inner_repeats=2 if status=='ok' else 0,
+                                   total_nanos=300000000 if status=='ok' else 0,
+                                   per_call_nanos=150000000.0 if status=='ok' else 0.0))
         result = dict(kind='parametric', function=FUNCTION, budget_truncated=False,
                       config=dict(param_schedule=dict(kind='custom', params=DEGREES),
                                   outer_trials=6, target_inner_nanos=500000000,
@@ -32,7 +34,7 @@ class ScalingCaptureTests(unittest.TestCase):
         put('measurements.json', dict(export_schema_version=1, env=env, results=[result]))
         functional = []
         for degree in DEGREES:
-            value = dict(degree=degree, head=[degree], first_coefficients=[1,2])
+            value = dict(degree=degree, head=[degree], first_coefficients=[1,2], first=[degree,1])
             put(f'functional-{degree}.json', value)
             put(f'measured-{degree}.json', value)
             put(f'oracle-{degree}.json', dict(degree=degree, real_roots=1,
@@ -49,7 +51,8 @@ class ScalingCaptureTests(unittest.TestCase):
             (folder/name).write_bytes(name.encode())
         record = dict(schema=1, status='completed', degrees=DEGREES, trials=6,
                       dirty=False, affinity=[1], cpu=1, commit=env['git_commit'],
-                      commands=[dict(exit_code=0)], functional=functional,
+                      commands=[dict(argv=['hexrealclosure_bench','run',FUNCTION],
+                                     exit_code=0, acceptable_exit_codes=[0,2])], functional=functional,
                       source_hashes={name:digest(folder/'sources'/name) for name in SOURCES})
         record['artifacts'] = {str(p.relative_to(folder)):digest(p)
                                for p in folder.rglob('*') if p.is_file()}
@@ -73,6 +76,23 @@ class ScalingCaptureTests(unittest.TestCase):
             self.assertEqual(result['rows'][-1]['failures'][0]['status'], 'killed_at_cap')
             self.assertEqual(result['rows'][-1]['completed_trials'], 5)
 
+    def test_all_failures_and_harness_exit_two(self):
+        for status in ['killed_at_cap', 'timed_out', 'error']:
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as directory:
+                folder = Path(directory)
+                record = self.prepare(folder)
+                document = json.loads((folder/'measurements.json').read_text())
+                for point in document['results'][0]['points']:
+                    point.update(status=status, inner_repeats=0, total_nanos=0,
+                                 per_call_nanos=0.0, result_hash=None)
+                (folder/'measurements.json').write_text(json.dumps(document))
+                record['commands'][0]['exit_code'] = 2
+                self.reseal(folder, record, 'measurements.json')
+                result = summarize(folder)
+                self.assertEqual(result['completed_samples'], 0)
+                self.assertTrue(all(r['median_ns'] is None and len(r['failures'])==6
+                                    for r in result['rows']))
+
     def test_semantic_changes_despite_matching_artifact_hashes(self):
         changes = [
             ('measurements.json', lambda d:d['results'][0]['points'].pop()),
@@ -81,6 +101,7 @@ class ScalingCaptureTests(unittest.TestCase):
             ('measurements.json', lambda d:d['results'][0]['points'][0].update(result_hash='0x0')),
             ('measurements.json', lambda d:d['results'][0]['points'][0].update(per_call_nanos=1)),
             ('measured-9.json', lambda d:d.update(head=[7])),
+            ('measured-9.json', lambda d:d.update(first=[7,1])),
             ('oracle-9.json', lambda d:d.update(multiplicity=2)),
         ]
         for name, mutate in changes:

@@ -58,13 +58,13 @@ def main():
     manifest = destination/'manifest.json'
     def save():
         manifest.write_text(json.dumps(record,indent=2)+'\n')
-    def run(argv,timeout=600):
+    def run(argv,timeout=600,acceptable=(0,)):
         argv = list(map(str,argv))
         index = len(record['commands'])
         output, errors = destination/f'{index}.stdout',destination/f'{index}.stderr'
         began = time.monotonic_ns()
         item = dict(argv=argv,stdout=output.name,stderr=errors.name,load=list(os.getloadavg()),
-                    started_utc=datetime.now(timezone.utc).isoformat())
+                    started_utc=datetime.now(timezone.utc).isoformat(),acceptable_exit_codes=list(acceptable))
         record['commands'].append(item)
         save()
         with output.open('w') as out,errors.open('w') as err:
@@ -80,7 +80,7 @@ def main():
             finally:
                 item['elapsed_ns'] = time.monotonic_ns()-began
                 save()
-        if item['exit_code'] != 0:
+        if item['exit_code'] not in acceptable:
             raise RuntimeError(f'command failed: {argv}')
         return output
     lease = None
@@ -124,7 +124,7 @@ def main():
             measured = json.loads(bench_path.read_text())
             functional = json.loads(path.read_text())
             if any(measured.get(key) != functional[key] for key in
-                   ['degree','head','first_coefficients']):
+                   ['degree','head','first_coefficients','first']):
                 raise RuntimeError('measured input differs from independently checked fixture')
             checked = run([oracle_python,'scripts/oracle/real_closure_metitarski_scaling.py',path])
             record['functional'].append(dict(degree=degree,fixture=path.name,measured_input=bench_path.name,oracle=checked.name))
@@ -134,7 +134,7 @@ def main():
         save()
         run([destination/'hexrealclosure_bench','run',FUNCTION,'--outer-trials','6',
              '--target-inner-nanos','500000000','--signal-floor-multiplier','1',
-             '--export-file',destination/'measurements.json'],timeout=3600)
+             '--export-file',destination/'measurements.json'],timeout=3600,acceptable=(0,2))
         record['status'] = 'completed'
         if run(['git','rev-parse','HEAD']).read_text().strip()!=record['commit'] or run(['git','status','--porcelain']).read_text().strip():
             raise RuntimeError('source changed during measurement')

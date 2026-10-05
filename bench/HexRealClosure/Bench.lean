@@ -392,18 +392,23 @@ private instance : Hashable (Σ owner : Tower.Context nativeRegistry, owner.Poly
 /-- Prepare the actual least-root coefficient context outside the measured
 second-stage operation. Odd degrees extend `Y³ + α³ + 1` for a degree ladder;
 rung three is the exact second MetiTarski input. -/
-def metiSecondInput (degree : Nat) : Option (Σ owner : Tower.Context nativeRegistry, owner.Poly) :=
+private def metiFirst? : Option (Tower.Root nativeBase) :=
   match nativeBase.roots? metiHead with
-  | .ok (.finite (first :: _)) =>
-    if first.root.signAt (DensePoly.ofCoeffs #[⟨1875 / 2048⟩, 1]) != 1 ||
+  | .ok (.finite (first :: rest)) =>
+    if rest.length != 2 || first.multiplicity != 1 ||
+        first.root.signAt (DensePoly.ofCoeffs #[⟨1875 / 2048⟩, 1]) != 1 ||
         first.root.signAt (DensePoly.ofCoeffs #[⟨1875 / 4096⟩, 1]) != -1 then none
-    else
-      let owner := first.root.context
-      let alpha := first.root.value
-      let y : owner.Poly := DensePoly.ofCoeffs #[0, 1]
-      let power := (List.range degree).foldl (fun p _ => p * y) (DensePoly.C 1)
-      some ⟨owner, power + DensePoly.C (alpha * alpha * alpha + 1)⟩
+    else some first.root
   | _ => none
+
+/-- Build the measured polynomial over the retained checked predecessor. -/
+def metiSecondInput (degree : Nat) : Option (Σ owner : Tower.Context nativeRegistry, owner.Poly) := do
+  let first ← metiFirst?
+  let owner := first.context
+  let alpha := first.value
+  let y : owner.Poly := DensePoly.ofCoeffs #[0, 1]
+  let power := (List.range degree).foldl (fun p _ => p * y) (DensePoly.C 1)
+  return ⟨owner, power + DensePoly.C (alpha * alpha * alpha + 1)⟩
 
 /-- Complete native root production over the retained least-root context.
 Preparation, hashing and process exit are outside the profile's timed regions. -/
@@ -415,11 +420,6 @@ def runMetiSecond (input : Option (Σ owner : Tower.Context nativeRegistry, owne
     | .ok (.finite roots) => if roots.length == 1 then 1 else 0
     | _ => 0
 
-/- Cost model: cubic degree scaling is a hypothesis for this fixed coefficient
-context. The Euclidean factor recurrence and signed-remainder chains each use
-quadratic dense polynomial operations through a degree-linear sequence. Bit
-sizes and repeated algebraic sign checks may exceed this degree-only model;
-the measured ladder must test that hypothesis. -/
 private def metiConfig : LeanBench.BenchmarkConfig := {
     paramFloor := 3, paramCeiling := 9
     paramSchedule := .custom #[3, 5, 7, 9]
@@ -428,6 +428,11 @@ private def metiConfig : LeanBench.BenchmarkConfig := {
     signalFloorMultiplier := 1.0
   }
 
+/- Cost model: cubic degree scaling is a hypothesis for this fixed coefficient
+context. The Euclidean factor recurrence and signed-remainder chains each use
+quadratic dense polynomial operations through a degree-linear sequence. Bit
+sizes and repeated algebraic sign checks may exceed this degree-only model;
+the measured ladder must test that hypothesis. -/
 setup_benchmark runMetiSecond n => n ^ 3
   with prep := metiSecondInput where metiConfig
 
@@ -460,8 +465,14 @@ def metiCheck (args : List String) : IO UInt32 := do
     | throw (IO.userError "invalid measured polynomial UTF-8")
   let .ok encoded := Lean.Json.parse text
     | throw (IO.userError "invalid measured polynomial serialization")
+  let some (.selected descriptor _ _) := metiFirst?
+    | throw (IO.userError "missing measured predecessor descriptor")
+  let some firstText := String.fromUTF8? (Tower.rootData nativeBase.codec descriptor).writeBytes
+    | throw (IO.userError "invalid measured predecessor UTF-8")
+  let .ok first := Lean.Json.parse firstText
+    | throw (IO.userError "invalid measured predecessor serialization")
   IO.println <| (Lean.Json.mkObj [
-    ("degree", Lean.toJson degree), ("head", encoded),
+    ("degree", Lean.toJson degree), ("head", encoded), ("first", first),
     ("first_coefficients", Lean.toJson (metiCoefficients.map
       fun q => [q.num,(q.den : Int)]))]).compress
   return 0
@@ -473,7 +484,7 @@ private def metiRunner (degree : Nat) : IO (Nat → IO (Nat × Option UInt64)) :
   LeanBench.blackBox (hash input)
   let ref ← IO.mkRef (metiCall input)
   let warm ← measureMetiSecond ref (degree+1)
-  unless warm == 1 do throw (IO.userError "measured MetiTarski warm-up failed")
+  unless warm == (if degree % 2 == 1 then 1 else 0) do throw (IO.userError "measured MetiTarski warm-up failed")
   LeanBench.blackBox warm
   return fun count => do
     if count == 0 then return (0,none)
