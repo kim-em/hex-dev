@@ -298,6 +298,7 @@ The coefficient encoding shows the actual positive newest infinitesimal. -/
 def inspectFor (depths sizes : Array Nat) : IO UInt32 := do
   for depth in depths do
     for size in sizes do
+      let start ← IO.monoNanosNow
       let some i := input depth size | throw (IO.userError "nested table preparation failed")
       letI := i.coefficients.field
       letI := i.coefficients.equality
@@ -307,6 +308,8 @@ def inspectFor (depths sizes : Array Nat) : IO UInt32 := do
       unless produce (some i) == expected &&
           checkTree (some i) == some i.fingerprint && checkGraph (some i) do
         throw (IO.userError "nested table callback failed")
+      let elapsed := (← IO.monoNanosNow) - start
+      (← IO.getStderr).putStrLn s!"nested-table inspection depth={depth} queries={size} elapsed_ns={elapsed}"
       IO.println (inventory depth size i).compress
       (← IO.getStdout).flush
   return 0

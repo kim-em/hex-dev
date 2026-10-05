@@ -62,10 +62,10 @@ def validate_inputs(path, sizes=SIZES):
                 literal(row["queryPolynomials"]) != literal([[epsilon]]*size) or
                 literal(row["table"]) != literal([[[1]*size, 1]])):
             raise ValueError("wrong literal polynomial, coefficient or complete one-root table")
-        sizes = {"headDegree": 1, "queryDegree": 0, "rootCount": 1, "realizedSupport": 1,
+        dimensions = {"headDegree": 1, "queryDegree": 0, "rootCount": 1, "realizedSupport": 1,
                  "treeNodes": 2*size-1, "momentSlots": 4*size-1, "maxMatrixSize": 3,
                  "queryReductionSteps": size*size.bit_length(), "leafNodes": size}
-        if any(type(row.get(key)) is not int or row[key] != value for key, value in sizes.items()):
+        if any(type(row.get(key)) is not int or row[key] != value for key, value in dimensions.items()):
             raise ValueError("wrong nested-field evidence dimensions")
         if (type(row.get("graphNodes")) is not int or row["graphNodes"] < 1 or
                 type(row.get("graphEdges")) is not int or row["graphEdges"] < 0):

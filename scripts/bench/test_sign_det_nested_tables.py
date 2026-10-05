@@ -110,3 +110,24 @@ class NestedTablesTests(unittest.TestCase):
             bench.validate_inputs(fixture, sizes=list(reversed(bench.SHORT_SIZES)))
         with self.assertRaisesRegex(ValueError, "unknown declared"):
             bench.configuration([8, 128])
+
+    def test_historical_export_requires_explicit_binding(self):
+        fixture = Path(__file__).with_name("fixtures")/"sign-det-nested-table-short-inputs.jsonl"
+        expected = bench.validate_inputs(fixture, sizes=bench.SHORT_SIZES)
+        result = {"function": bench.PREFIX+"runTree2", "kind": "parametric",
+                  "hashable": True, "budget_truncated": False,
+                  "config": bench.configuration(bench.SHORT_SIZES),
+                  "complexity_formula": "s * (Nat.log2 s + 1)",
+                  "env": {"git_commit": "source", "git_dirty": False},
+                  "verdict": "inconclusive", "slope": -0.16, "advisories": [],
+                  "points": [{"trial_index": trial, "param": size, "status": "ok",
+                              "result_hash": hex(expected[2, size]["replayResultHash"]),
+                              "part_of_verdict": True, "below_signal_floor": False,
+                              "per_call_nanos": size*100, "inner_repeats": 1,
+                              "peak_rss_kb": 100, "alloc_bytes": None}
+                             for trial in range(bench.TRIALS) for size in bench.SHORT_SIZES]}
+        self.path.write_text(json.dumps({"export_schema_version": 1, "results": [result]}))
+        self.assertEqual(bench.validate_result(self.path, "runTree2", expected, "source",
+                                             sizes=bench.SHORT_SIZES)["slope"], -0.16)
+        with self.assertRaisesRegex(ValueError, "wrong registration"):
+            bench.validate_result(self.path, "runTree2", expected, "source")
