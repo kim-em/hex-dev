@@ -689,6 +689,32 @@ equality-preserving export. Future real-valued tactics consume only the
 transitive evidence needed for the final real coefficient/realization claims,
 retaining every prerequisite guard. No tactic integration is implemented here.
 
+### Original packing equations
+
+`Algebraic.Packing` retains each original polynomial and its exact native
+packing, including canonical zero. The record binds the computed representative
+and cached sign to a checked joint replay for the representative and the
+original-minus-representative equation. Scalar cache entries alone do not
+retain this information on successful, constant or zero paths.
+
+`Element.replayPack` and the eight `ReplayOperations` dictionaries preserve
+native arithmetic literally while requiring an original-key record at every
+packing boundary in ordinary-kernel assembly. `KernelReplay.collectMany`
+routes typed scalar and packing inventories by their actual context and kind.
+It resolves packings needed to authenticate a polynomial key before collecting
+that key's outer record. Compiled missing-record fallback remains ordinary
+native arithmetic, so this is an assembly boundary rather than an untrusted
+compiled-replay checker.
+
+`Packing.realize_many` constructs one selected target root realizing every
+record's original equation and native sign. Its predecessor premises are the
+actual finite `DescriptorData`, `ReplayData` and `Difference` operations;
+neither a caller's ambient model nor universal `Closed` laws are needed.
+The complete exporter must construct these reached premises recursively before
+choosing subsequent algebraic roots or infinitesimal parameters. The scalar
+collector does not synthesize them or prove completeness of an arbitrary
+consumer's finite conjunction.
+
 ## Trivial towers, reconstruction and adversarial examples
 
 With no transcendental or infinitesimal levels, interpret the compatible

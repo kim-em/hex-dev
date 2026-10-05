@@ -2901,11 +2901,49 @@ Retain the returned presentation for repeated operations. Even a rational
 generator may currently receive a degree-one root frame. These construction
 costs are not cached arithmetic costs or higher-degree performance evidence.
 
+### Original packing equations
+
+`Algebraic.Packing` retains the original polynomial, its actual reduced
+representative, native packed value and cached sign. It also retains a checked
+joint selected-sign replay for `[representative, original - representative]`
+with signs `[cachedSign, 0]`. A value packed to canonical zero therefore keeps
+its original equation. `make?` requires the exact representative's scalar fact,
+including constants; `readMemo?` reads supplied checked graph entries, and
+`build?` produces the joint replay using the context's cached prepared domain.
+
+`Element.replayPack` looks up the original key. In ordinary-kernel assembly,
+every absent key stops at `Element.missing`, including constants and successful
+zero tests. A record for one polynomial cannot cover another polynomial that
+reduces to the same representative. Compiled fallback remains native packing;
+this boundary is not a strict checker for untrusted compiled replay.
+
+`ReplayOperations` supplies addition, subtraction, multiplication, negation,
+one, natural casts, inversion and division with complete packing records and
+equal predecessor operations. Their equality laws preserve the original
+context's native operations and local gcd/Bézout inversion. Collection resolves
+packings inside a polynomial key before requesting the outer packing. This
+retains division's inverse record before its multiplication record.
+
+`HexRealClosureMathlib.Packing.realize_many` chooses one checked selected root
+for every record in a level. At that point the packed value equals evaluation
+of its original polynomial and has its retained native sign, including zero
+outputs. The theorem requires only the reached finite descriptor, replay and
+coefficient-subtraction data of the predecessor reader. It assumes no supplied
+ambient model or globally closed interpretation domain. Constructing those
+finite premises recursively through all interleaved stages belongs to the
+accepted tower-replay exporter.
+
+`KernelReplay.PackingProbe` checks literal native-produced packets with the
+ordinary kernel, cached replay without production, mixed scalar/packing
+inventories, wrong inventory kinds, same-value raw-equation mutations and all
+eight operation boundaries. Division records its exact inverse and product
+keys and replays the resulting inventories without requesting another record.
+
 The companion module `HexRealClosureMathlib.KernelReplay` provides in-process
 proof assembly and collection of intermediate sign facts. `collectMany` keeps
-one typed finite inventory for each coefficient context, routes missing facts
-by the actual context, and checks every supplied fact with Lean's ordinary
-kernel before insertion. The final equation refers to the inventories actually
+a typed finite inventory for each coefficient context and evidence kind, routes
+requests by both, and checks every supplied scalar fact or packing record with
+Lean's ordinary kernel before insertion. The final equation refers to the inventories actually
 used. Replay can supply recorded certificates without calling the producer.
 The caller retains the supplied-fact arithmetic boundary and supplies the
 validated contexts; this interface does not reconstruct a tower catalog.
