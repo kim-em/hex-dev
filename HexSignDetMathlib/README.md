@@ -1,5 +1,9 @@
 # hex-sign-det-mathlib
 
+The [manual](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-sign-det)
+explains the public computation and its mathematical hypotheses with checked
+examples in `hex-dev`.
+
 Algebraic correspondence for BKR moment reduction over the shared coefficient
 interpretation. This development companion is not yet released.
 

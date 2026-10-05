@@ -1,5 +1,9 @@
 # Selected-root arithmetic and immutable bases
 
+The [manual](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-real-closure)
+explains the public computation and its mathematical hypotheses with checked
+examples. This is an unreleased development library in `hex-dev`.
+
 `Root.validate` checks a `Hex.SignDet.RawDescriptor Rat Nat` against its exact
 version tag. The tag is a `Nat` and does not yet own a defining polynomial or
 dependency graph. An `Expression d` stores a rational polynomial evaluated at the
