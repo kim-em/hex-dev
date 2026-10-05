@@ -55,6 +55,30 @@ class JointTimingTests(unittest.TestCase):
         self.assertEqual(len(summary["paired"]), 5)
         self.assertEqual(summary["paired"][0]["ratios"], [1]*6)
 
+    def test_wider_protocol_rejects_old_schedule_and_preserves_model(self):
+        name = "runComparison"
+        expected = {n: {key: 100+i for i, key in enumerate(sorted(set(timing.RESULT_KEYS.values())))}
+                    for n in timing.WIDE_DEGREES}
+        result = self.result(name)
+        result["config"] = timing.WIDE_CONFIG
+        result["points"] = [dict(result["points"][0], param=n, trial_index=trial,
+                                 per_call_nanos=n**3)
+                            for trial in range(timing.TRIALS) for n in timing.WIDE_DEGREES]
+        timing.validate_result(result, name, expected, "measured",
+                               degrees=timing.WIDE_DEGREES, config=timing.WIDE_CONFIG)
+        with self.assertRaisesRegex(ValueError, "registered schedule"):
+            timing.validate_result(result, name, expected, "measured")
+        altered = copy.deepcopy(result)
+        altered["config"]["slope_tolerance"] = 0.5
+        with self.assertRaisesRegex(ValueError, "registered schedule"):
+            timing.validate_result(altered, name, expected, "measured",
+                                   degrees=timing.WIDE_DEGREES, config=timing.WIDE_CONFIG)
+        altered = copy.deepcopy(result)
+        altered["points"][0]["param"] = 3
+        with self.assertRaisesRegex(ValueError, "scientific observations"):
+            timing.validate_result(altered, name, expected, "measured",
+                                   degrees=timing.WIDE_DEGREES, config=timing.WIDE_CONFIG)
+
     def test_missing_reordered_or_duplicated_arms_rejected(self):
         names, rows = self.pair()
         for alter in (lambda rs: rs.pop(1), lambda rs: rs.insert(1, rs[1]),

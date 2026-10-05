@@ -122,10 +122,13 @@ afterward.
 
 ## Collection protocol
 
-The explicit degree schedule is 3, 7, 15, 31 and 63, with six trial-major rounds.
+The current explicit degree schedule is 15, 31, 63, 127 and 255, with six
+trial-major rounds. It extends the geometric degree ladder to exercise the
+dense coefficient operations at larger degrees. Historical collections keep
+their original 3, 7, 15, 31 and 63 schedule and settings.
 Reduced/direct production and replay use adjacent alternating AB/BA arms. Completion and
 comparison each use the ordinary shared LeanBench schedule. The target inner duration is
-100 ms; a 180-second child-process cap is an operational safeguard that includes
+100 ms; a 3600-second child-process cap is an operational safeguard that includes
 preparation and calibration, although the reported per-call timing excludes them. Every
 completed observation is retained. One CPU is automatically leased, and host activity is
 recorded without an idleness test or sample filtering.

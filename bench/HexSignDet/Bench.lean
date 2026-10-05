@@ -195,78 +195,78 @@ reports/sign-det-joint-performance.md for the scope and derivation. -/
 setup_benchmark Joint.runCompletion n => n^3
   with prep := Joint.sourceInput
   where {
-    paramSchedule := .custom #[3, 7, 15, 31, 63]
-    paramFloor := 3
-    paramCeiling := 63
+    paramSchedule := .custom #[15, 31, 63, 127, 255]
+    paramFloor := 15
+    paramCeiling := 255
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
+    maxSecondsPerCall := 3600
   }
 
 -- Declared cost-model: Θ(n³) coefficient operations for four common-head re-encoding/descriptor tables; see the joint derivation above.
 setup_benchmark Joint.runComparison n => n^3
   with prep := Joint.comparisonInput
   where {
-    paramSchedule := .custom #[3, 7, 15, 31, 63]
-    paramFloor := 3
-    paramCeiling := 63
+    paramSchedule := .custom #[15, 31, 63, 127, 255]
+    paramFloor := 15
+    paramCeiling := 255
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
+    maxSecondsPerCall := 3600
   }
 
 -- Declared cost-model: Θ(n³) coefficient operations for both joint tables with reduced products; see the joint derivation above.
 setup_benchmark Joint.runReduced n => n^3
   with prep := Joint.tableInput
   where {
-    paramSchedule := .custom #[3, 7, 15, 31, 63]
-    paramFloor := 3
-    paramCeiling := 63
+    paramSchedule := .custom #[15, 31, 63, 127, 255]
+    paramFloor := 15
+    paramCeiling := 255
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
+    maxSecondsPerCall := 3600
   }
 
 -- Declared cost-model: Θ(n³) coefficient operations for both joint tables with direct products; see the joint derivation above.
 setup_benchmark Joint.runDirect n => n^3
   with prep := Joint.tableInput
   where {
-    paramSchedule := .custom #[3, 7, 15, 31, 63]
-    paramFloor := 3
-    paramCeiling := 63
+    paramSchedule := .custom #[15, 31, 63, 127, 255]
+    paramFloor := 15
+    paramCeiling := 255
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
+    maxSecondsPerCall := 3600
   }
 
 -- Declared cost-model: Θ(n³) coefficient operations for literal reduced evidence checks; see the joint derivation above.
 setup_benchmark Joint.runCheckReduced n => n^3
   with prep := Joint.reducedInput
   where {
-    paramSchedule := .custom #[3, 7, 15, 31, 63]
-    paramFloor := 3
-    paramCeiling := 63
+    paramSchedule := .custom #[15, 31, 63, 127, 255]
+    paramFloor := 15
+    paramCeiling := 255
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
+    maxSecondsPerCall := 3600
   }
 
 -- Declared cost-model: Θ(n³) coefficient operations for literal direct evidence checks; see the joint derivation above.
 setup_benchmark Joint.runCheckDirect n => n^3
   with prep := Joint.directInput
   where {
-    paramSchedule := .custom #[3, 7, 15, 31, 63]
-    paramFloor := 3
-    paramCeiling := 63
+    paramSchedule := .custom #[15, 31, 63, 127, 255]
+    paramFloor := 15
+    paramCeiling := 255
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
+    maxSecondsPerCall := 3600
   }
 
 private def intBits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
@@ -337,6 +337,8 @@ def main (args : List String) : IO UInt32 :=
   else if args == ["inspect-maximal-matrix-tensors"] then Hex.SignDetBench.MaximalMatrix.inspectTensors
   else if args == ["inspect-maximal-matrix-dimensions"] then Hex.SignDetBench.MaximalMatrix.inspectDimension
   else if args == ["inspect-nested-signs"] then Hex.SignDetBench.NestedSigns.inspect
+  else if args == ["inspect-joint-wide"] then Hex.SignDetBench.Joint.inspect #[15, 31, 63, 127, 255]
+  else if args == ["inspect-joint-timings-wide"] then Hex.SignDetBench.Joint.inspectTimings #[15, 31, 63, 127, 255]
   else if args == ["inspect-joint"] then Hex.SignDetBench.Joint.inspect #[3, 7, 15, 31, 63]
   else if let ["inspect-joint", degree] := args then
     match degree.toNat? with
