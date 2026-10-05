@@ -23,6 +23,11 @@ class SyncReleasedTests(unittest.TestCase):
     def setUp(self) -> None:
         self.enterContext(patch.object(sync_released, "publication_fingerprint", return_value="a" * 64))
         self.enterContext(patch.object(sync_released, "reuse_published"))
+        self.enterContext(patch.object(sync_released, "mathlib_dependencies", return_value=[]))
+        closure = sync_released.closure_external_packages
+        self.enterContext(patch.object(sync_released, "closure_external_packages",
+                                      side_effect=lambda e, es: closure(e, es)
+                                      if e.get("lib") or e.get("pins_only") else set()))
         classification = sync_released._library_mathlib() | {"HexProbe": True}
         self.enterContext(patch.object(sync_released, "_library_mathlib", return_value=classification))
         self.temporary = tempfile.TemporaryDirectory()
@@ -1033,6 +1038,7 @@ class TokenPreflightTests(unittest.TestCase):
         publish.assert_not_called()
 
     def setUp(self) -> None:
+        self.enterContext(patch.object(sync_released, "closure_external_packages", return_value=set()))
         self.temporary = tempfile.TemporaryDirectory()
         self.repo = Path(self.temporary.name)
         self.addCleanup(self.temporary.cleanup)
@@ -1169,6 +1175,11 @@ class GeneratedLakefileTests(unittest.TestCase):
     DEPS = {"HexFoo": ("HexBar",), "HexPlain": ("HexBar",), "HexBar": (), "HexLinked": ()}
 
     def setUp(self) -> None:
+        self.enterContext(patch.object(sync_released, "mathlib_dependencies", return_value=[]))
+        cached = sync_released._source_import_roots_cached
+        fixtures = {e["repo"] for e in self.ENTRIES}
+        self.enterContext(patch.object(sync_released, "_source_import_roots_cached",
+                                      side_effect=lambda repo: frozenset() if repo in fixtures else cached(repo)))
         classification = sync_released._library_mathlib() | {"HexPlain": True, "HexFoo": False}
         self.enterContext(patch.object(sync_released, "_library_mathlib", return_value=classification))
 
@@ -1177,7 +1188,8 @@ class GeneratedLakefileTests(unittest.TestCase):
         pins = {"https://github.com/leanprover-community/mathlib4": {
             "name": "mathlib", "url": "https://github.com/leanprover-community/mathlib4.git",
             "rev": "abc", "inputRev": "abc"}}
-        with patch.object(sync_released, "_source_import_roots", return_value=set(roots)):
+        with patch.object(sync_released, "_source_import_roots", return_value=set(roots)), \
+                patch.object(sync_released, "_source_import_roots_cached", return_value=frozenset(roots)):
             return sync_released.render_lakefile(
                 entry, self.ENTRIES, "v0.9.0", {}, pins, self.DEPS, self.SOURCE)
 
@@ -1334,6 +1346,9 @@ class StagedReleaseTests(unittest.TestCase):
     """Exercise real local Git publication across different source commits."""
 
     def setUp(self) -> None:
+        self.mathlib_packages = []
+        self.enterContext(patch.object(sync_released, "mathlib_dependencies",
+                                      side_effect=lambda: self.mathlib_packages))
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
@@ -1583,6 +1598,27 @@ class StagedReleaseTests(unittest.TestCase):
         self.assertEqual(self.publish("--only", "hex-first", "--plan",
                                       str(stage / "release-stage.json")), 0)
 
+    def test_checked_trees_cover_same_phase_dependency_revisions(self) -> None:
+        stage = self.root / "stage"
+        self.assertEqual(self.publish("--dry-run", "--stage", str(stage)), 0)
+        plan = json.loads((stage / "release-stage.json").read_text())
+        self.assertEqual(set(plan["trees"]), {"hex-first", "hex-second"})
+        self.assertEqual(self.publish("--plan", str(stage / "release-stage.json")), 0)
+
+    def test_force_cannot_publish_preserved_files_changed_since_staging(self) -> None:
+        stage = self.root / "stage"
+        self.assertEqual(self.publish("--dry-run", "--force", "--stage", str(stage)), 0)
+        checkout = self.root / "out-of-band"
+        self.git("clone", str(self.remotes["leanprover/hex-first"]), str(checkout))
+        (checkout / "LICENSE").write_text("changed after staging\n")
+        self.git("add", ".", cwd=checkout)
+        self.git("-c", "user.name=Test", "-c", "user.email=test@example.org",
+                 "commit", "-m", "out of band", cwd=checkout)
+        self.git("push", "origin", "main", cwd=checkout)
+        self.assertEqual(self.publish("--force", "--plan", str(stage / "release-stage.json")), 1)
+        for remote in self.remotes.values():
+            self.assertEqual(self.git("--git-dir", str(remote), "tag", "--list"), "")
+
     def test_atomic_push_recovery_can_be_staged_and_completed(self) -> None:
         self.first_phase()
         self.sha = "source-two"
@@ -1608,6 +1644,164 @@ class StagedReleaseTests(unittest.TestCase):
         self.assertEqual(self.publish("--plan", str(stage / "release-stage.json")), 0)
         self.assertEqual(self.git("--git-dir", second_remote, "rev-parse", "v0.2.0"), second)
         self.assertEqual(json.loads(self.baseline.read_text())["_version"], "v0.2.0")
+
+    def test_skipped_target_stops_its_dependents_and_fails_partial_phase(self) -> None:
+        checkout = self.root / "out-of-band"
+        self.git("clone", str(self.remotes["leanprover/hex-first"]), str(checkout))
+        (checkout / "new.txt").write_text("uncoordinated\n")
+        self.git("add", ".", cwd=checkout)
+        self.git("-c", "user.name=Test", "-c", "user.email=test@example.org",
+                 "commit", "-m", "uncoordinated", cwd=checkout)
+        self.git("push", "origin", "main", cwd=checkout)
+        self.assertEqual(self.publish("--only", "hex-first,hex-second"), 1)
+        self.assertEqual(json.loads(self.baseline.read_text())["_pending_release"]["repos"], [])
+        for remote in self.remotes.values():
+            self.assertEqual(self.git("--git-dir", str(remote), "tag", "--list"), "")
+
+    def test_failed_push_does_not_persist_an_unpublished_commit(self) -> None:
+        old = json.loads(self.baseline.read_text())["hex-first"]
+        ordinary_run = sync_released.run
+
+        def reject_push(command, cwd=None, capture=False):
+            if command[:3] == ["git", "push", "--atomic"]:
+                raise subprocess.CalledProcessError(1, command)
+            return ordinary_run(command, cwd=cwd, capture=capture)
+
+        with patch.object(sync_released, "run", side_effect=reject_push):
+            self.assertEqual(self.publish("--only", "hex-first"), 1)
+        state = json.loads(self.baseline.read_text())
+        self.assertEqual(state["hex-first"], old)
+        self.assertEqual(state["_pending_release"]["repos"], [])
+        self.assertEqual(self.publish(), 0)
+
+    def test_arbitrary_tagged_commit_cannot_claim_interrupted_push_recovery(self) -> None:
+        self.first_phase()
+        checkout = self.root / "out-of-band"
+        self.git("clone", str(self.remotes["leanprover/hex-second"]), str(checkout))
+        (checkout / "new.txt").write_text("uncoordinated\n")
+        self.git("add", ".", cwd=checkout)
+        self.git("-c", "user.name=Test", "-c", "user.email=test@example.org",
+                 "commit", "-m", "uncoordinated", cwd=checkout)
+        self.git("tag", "v0.2.0", cwd=checkout)
+        self.git("push", "origin", "main", "v0.2.0", cwd=checkout)
+        self.assertEqual(self.publish("--dry-run", "--stage", str(self.root / "stage")), 1)
+
+    def use_mathlib_with_first_dependency(self, revision: str) -> None:
+        self.enterContext(patch.object(sync_released, "_library_mathlib", return_value={
+            "HexFirst": False, "HexSecond": True}))
+        self.lock.write_text(json.dumps({"packages": [{
+            "name": "mathlib", "type": "git", "subDir": None,
+            "url": "https://github.com/leanprover-community/mathlib4.git",
+            "rev": "mathlib-rev", "inputRev": "mathlib-rev",
+            "configFile": "lakefile.lean"}]}))
+        (self.source / "HexSecond/Basic.lean").write_text("import Mathlib\ndef second := 1\n")
+        self.mathlib_packages = [{
+            "name": "HexFirst", "type": "git", "subDir": None,
+            "url": "https://github.com/leanprover/hex-first.git",
+            "rev": revision, "inputRev": "v0.2.0", "configFile": "lakefile.toml"}]
+
+    def test_mathlib_requires_exact_completed_hex_pins_before_publishing(self) -> None:
+        self.use_mathlib_with_first_dependency("old")
+        self.assertEqual(self.publish(), 1)
+        first = self.first_phase()
+        self.sha = "source-two"
+        self.assertEqual(self.publish("--advance-source"), 1)
+        self.mathlib_packages[0]["rev"] = first
+        self.assertEqual(self.publish("--advance-source"), 0)
+
+    def test_mathlib_inherited_hex_dependencies_survive_lockfile_reconciliation(self) -> None:
+        first = self.first_phase()
+        self.use_mathlib_with_first_dependency(first)
+        self.mathlib_packages[0]["url"] = "https://github.com/leanprover/hex-first"
+        self.entries[1]["pins"] = []
+        self.enterContext(patch.object(sync_released, "_library_deps", return_value={
+            "HexFirst": (), "HexSecond": ()}))
+        self.manifest.write_text(yaml.safe_dump({"repos": self.entries}, sort_keys=False))
+        self.sha = "source-two"
+        self.assertEqual(self.publish("--advance-source"), 0)
+        lock = json.loads(self.git("--git-dir", str(self.remotes["leanprover/hex-second"]),
+                                   "show", "main:lake-manifest.json"))
+        dependency = next(p for p in lock["packages"] if p["name"] == "HexFirst")
+        self.assertEqual(dependency["rev"], first)
+        self.assertEqual(dependency["url"], self.mathlib_packages[0]["url"])
+        self.assertTrue(dependency["inherited"])
+
+    def test_mathlib_lockfile_is_read_at_its_immutable_revision(self) -> None:
+        import io
+        local = self.source / ".lake/packages/mathlib"
+        local.mkdir(parents=True)
+        self.git("init", "-q", "-b", "main", cwd=local)
+        package = {"name": "batteries", "type": "git", "rev": "a" * 40,
+                   "url": "https://github.com/leanprover-community/batteries"}
+        (local / "lake-manifest.json").write_text(json.dumps({"packages": [package]}))
+        self.git("add", ".", cwd=local)
+        self.git("-c", "user.name=Test", "-c", "user.email=test@example.org",
+                 "commit", "-qm", "lock", cwd=local)
+        revision = self.git("rev-parse", "HEAD", cwd=local)
+        url = "https://github.com/leanprover-community/mathlib4.git"
+        with patch.object(sync_released.urllib.request, "urlopen") as fetch:
+            self.assertEqual(sync_released._mathlib_dependencies_at(url, revision, self.source), [package])
+            fetch.assert_not_called()
+        package["rev"] = "b" * 40
+        response = io.BytesIO(json.dumps({"packages": [package]}).encode())
+        with patch.object(sync_released.urllib.request, "urlopen", return_value=response) as fetch:
+            self.assertEqual(sync_released._mathlib_dependencies_at(url, "c" * 40, self.source), [package])
+            fetch.assert_called_once_with(
+                "https://raw.githubusercontent.com/leanprover-community/mathlib4/"
+                + "c" * 40 + "/lake-manifest.json", timeout=60)
+
+
+class ConsumerPinTests(unittest.TestCase):
+    def test_external_and_mathlib_pin_drift_is_rejected_before_cache_get(self) -> None:
+        from scripts.release.consumer_check import check_consumer_pins
+        with tempfile.TemporaryDirectory() as directory:
+            consumer = Path(directory)
+            mathlib = consumer / ".lake/packages/mathlib"
+            mathlib.mkdir(parents=True)
+            dependency = {"name": "batteries", "type": "git", "subDir": None,
+                          "url": "https://github.com/leanprover-community/batteries", "rev": "new"}
+            (mathlib / "lake-manifest.json").write_text(json.dumps({"packages": [dependency]}))
+            package = {"name": "mathlib", "type": "git", "rev": "m", "subDir": None,
+                       "url": "https://github.com/leanprover-community/mathlib4.git"}
+            lock = consumer / "lake-manifest.json"
+            lock.write_text(json.dumps({"packages": [package, dict(dependency, rev="old")]}))
+            with self.assertRaisesRegex(RuntimeError, "batteries"):
+                check_consumer_pins(consumer, None)
+            lock.write_text(json.dumps({"packages": [package, dependency]}))
+            check_consumer_pins(consumer, None)
+            lock.write_text(json.dumps({"packages": [package, dict(dependency, url=dependency["url"] + ".git")]}))
+            with self.assertRaisesRegex(RuntimeError, "batteries"):
+                check_consumer_pins(consumer, None)
+            lock.write_text(json.dumps({"packages": [package, dependency]}))
+            plan = {"external_pins": {"mathlib": dict(package, rev="other")}, "baseline": {}}
+            with self.assertRaisesRegex(RuntimeError, "mathlib"):
+                check_consumer_pins(consumer, plan)
+
+    def test_published_hex_dependency_must_resolve_to_recorded_commit(self) -> None:
+        from scripts.release.consumer_check import check_consumer_pins
+        with tempfile.TemporaryDirectory() as directory:
+            consumer = Path(directory)
+            package = {"name": "HexBasic", "type": "git", "rev": "wrong",
+                       "url": "https://github.com/leanprover/hex-basic.git"}
+            (consumer / "lake-manifest.json").write_text(json.dumps({"packages": [package]}))
+            plan = {"external_pins": {}, "baseline": {
+                "hex-basic": "recorded", "_pending_release": {"repos": ["hex-basic"]}}}
+            with self.assertRaisesRegex(RuntimeError, "published pin"):
+                check_consumer_pins(consumer, plan)
+
+    def test_mathlib_locked_hex_dependency_cannot_resolve_as_staged_path(self) -> None:
+        from scripts.release.consumer_check import check_consumer_pins
+        with tempfile.TemporaryDirectory() as directory:
+            consumer = Path(directory)
+            mathlib = consumer / ".lake/packages/mathlib"
+            mathlib.mkdir(parents=True)
+            dependency = {"name": "HexBasic", "type": "git", "rev": "recorded",
+                          "url": "https://github.com/leanprover/hex-basic.git"}
+            (mathlib / "lake-manifest.json").write_text(json.dumps({"packages": [dependency]}))
+            (consumer / "lake-manifest.json").write_text(json.dumps({"packages": [
+                {"name": "mathlib"}, {"name": "HexBasic", "type": "path", "dir": "../hex-basic"}]}))
+            with self.assertRaisesRegex(RuntimeError, "HexBasic"):
+                check_consumer_pins(consumer, None)
 
 
 if __name__ == "__main__":

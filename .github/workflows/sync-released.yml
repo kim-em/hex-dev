@@ -7,8 +7,8 @@ name: Sync released repos
 # each released repo's managed paths, publishes one shared semantic-version tag,
 # and advances the baseline. A subset leaves the shared version pending. A
 # completed real sync increments the minor version. The uncoordinated-commit
-# guard skips any released repo whose `main` has
-# moved off the baseline, so out-of-band commits are never clobbered. Needs the
+# guard stops publication when a released repo's `main` has moved off the
+# baseline, so its dependents cannot acquire missing tags. Needs the
 # `RELEASED_SYNC_PAT` and `RELEASED_SYNC_PAT_2` secrets (Contents and Workflows:
 # read/write on the released repos; Workflows is required for managed CI files.
 # The set is split across two fine-grained tokens because one token caps its

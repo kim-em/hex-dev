@@ -248,6 +248,9 @@ libraries to be published before Mathlib updates its dependency pins, followed
 by the companions that need that Mathlib update. Publish any companions that
 already pass consumer checks in an earlier phase. The aggregate is published
 last, after every split repository has joined the shared version.
+The shared version coordinates Hex sources; earlier companions may retain an
+older Mathlib requirement. Later phases and the aggregate explicitly select
+their current external pins and test the earlier companions against them.
 
 The workflow's `only` input accepts space- or comma-separated repository short
 names; the CLI accepts repeated `--only` arguments too. A selected repository's
@@ -274,6 +277,18 @@ executable. The last phase checks the complete aggregate. Publishing checks the
 saved stage plan against the source, selected repositories and live baseline,
 so a baseline change during consumer validation cannot silently publish another
 version or dependency graph. Perform a dry run before every real phase.
+The plan also records complete staged-tree fingerprints, including lockfiles
+and preserved mirror files. Publication verifies each rendered tree before its
+push; only this phase's not-yet-known Hex commit IDs are normalized.
+
+Before selecting Mathlib-dependent repositories, publish every Hex dependency
+recorded in Mathlib's own lockfile and update Mathlib to those exact commits.
+The driver verifies this requirement, preserves those transitive dependencies
+in companion lockfiles, and checks their exact revisions. Consumers compare
+all resolved Mathlib dependencies with Mathlib's lockfile before fetching its
+cache, so an older Batteries or Hex pin cannot silently cause a Mathlib rebuild.
+The list of repositories is fixed for a pending release; add new libraries in
+the next release rather than changing it between phases.
 
 ### The generated Lake file
 

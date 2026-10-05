@@ -166,7 +166,8 @@ def write_helper_consumer(stage: Path, entries: list[dict]) -> tuple[Path, list[
 
 
 def write_partial_consumer(stage: Path, entries: list[dict], selected: set[str],
-                           local_names: set[str], version: str
+                           local_names: set[str], version: str,
+                           preferred_urls: dict[str, str] | None = None
                            ) -> tuple[Path, list[str]]:
     """Build the selected roots against their staged, possibly published, closure."""
     available = [e for e in entries if (stage / e["repo"].split("/")[-1]).is_dir()]
@@ -179,8 +180,10 @@ def write_partial_consumer(stage: Path, entries: list[dict], selected: set[str],
     requires = ""
     for entry in roots:
         name = entry["repo"].split("/")[-1]
+        url = (preferred_urls or {}).get(entry.get("lean_lib_name", entry["lib"]),
+                                        f'https://github.com/{entry["repo"]}.git')
         location = (f'path = "../{name}"' if name in local_names else
-                    f'git = "https://github.com/{entry["repo"]}.git"\nrev = "{version}"')
+                    f'git = "{url}"\nrev = "{version}"')
         requires += (f'[[require]]\nname = "{entry.get("lean_lib_name", entry["lib"])}"\n'
                      f'{location}\n\n')
     (consumer / "lakefile.toml").write_text(
@@ -213,6 +216,55 @@ def write_partial_consumer(stage: Path, entries: list[dict], selected: set[str],
 def run(cmd: list[str], cwd: Path) -> None:
     print("+", " ".join(cmd), flush=True)
     subprocess.run(cmd, cwd=cwd, check=True)
+
+
+def pin_consumer_externals(consumer: Path, stage: Path, entries: list[dict],
+                           plan: dict | None) -> None:
+    """Test earlier mirrors against this phase's actual external dependencies."""
+    if plan is None:
+        return
+    names = set()
+    for entry in entries:
+        lock = stage / entry["repo"].split("/")[-1] / "lake-manifest.json"
+        if lock.is_file():
+            names.update(p["name"] for p in json.loads(lock.read_text())["packages"])
+    lakefile = consumer / "lakefile.toml"
+    with lakefile.open("a") as output:
+        for pin in plan["external_pins"].values():
+            if pin["name"] in names:
+                output.write(f'\n[[require]]\nname = "{pin["name"]}"\n'
+                             f'git = "{pin["url"]}"\nrev = "{pin["rev"]}"\n')
+
+
+def check_consumer_pins(consumer: Path, plan: dict | None) -> None:
+    """Reject pin drift before cache retrieval or any Mathlib compilation."""
+    document = json.loads((consumer / "lake-manifest.json").read_text())
+    packages = {p["name"]: p for p in document["packages"]}
+
+    def check(expected: dict) -> None:
+        actual = packages.get(expected["name"])
+        if (actual is None or actual.get("type") != "git" or
+                actual.get("rev") != expected["rev"] or
+                actual.get("url") != expected["url"] or
+                actual.get("subDir") != expected.get("subDir")):
+            raise RuntimeError(f'consumer resolved {expected["name"]} differently from '
+                               "the checked publication or Mathlib lockfile")
+
+    if plan:
+        for expected in plan["external_pins"].values():
+            if expected["name"] in packages:
+                check(expected)
+        completed = plan["baseline"].get("_pending_release", {}).get("repos", [])
+        for package in packages.values():
+            match = HEX_URL.match(package.get("url", ""))
+            if match and match[1] in completed:
+                if package.get("type") != "git" or package.get("rev") != plan["baseline"][match[1]]:
+                    raise RuntimeError(f"consumer must retain the published pin of {match[1]}")
+    if "mathlib" in packages:
+        path = consumer / document.get("packagesDir", ".lake/packages") / "mathlib/lake-manifest.json"
+        dependencies = json.loads(path.read_text())["packages"]
+        for expected in dependencies:
+            check(expected)
 
 
 def main() -> int:
@@ -250,8 +302,12 @@ def main() -> int:
         point_at_stage(stage, repo, local_names)
     if not aggregate_selected:
         consumer, modules = write_partial_consumer(stage, entries, selected,
-                                                   local_names, plan["version"] if plan else "")
+                                                   local_names, plan["version"] if plan else "",
+                                                   {p["name"]: p["url"] for p in
+                                                    plan.get("mathlib_dependencies", [])} if plan else {})
+        pin_consumer_externals(consumer, stage, available, plan)
         run(["lake", "update"], consumer)
+        check_consumer_pins(consumer, plan)
         lock = json.loads((consumer / "lake-manifest.json").read_text())
         if any(p.get("name") == "mathlib" for p in lock["packages"]):
             run(["lake", "exe", "cache", "get"], consumer)
@@ -261,11 +317,16 @@ def main() -> int:
     helper = write_helper_consumer(stage, entries)
     if helper is not None:
         project, targets = helper
+        pin_consumer_externals(project, stage, [e for e in available
+                               if not e.get("aggregate", True)], plan)
         run(["lake", "update"], project)
+        check_consumer_pins(project, plan)
         run(["lake", "build", *targets], project)
     modules = write_consumer(stage, entries)
     consumer = stage / "consumer"
+    pin_consumer_externals(consumer, stage, available, plan)
     run(["lake", "update"], consumer)
+    check_consumer_pins(consumer, plan)
     run(["lake", "exe", "cache", "get"], consumer)
     run(["lake", "build", *modules, "consumer_link"], consumer)
     run(["lake", "exe", "consumer_link"], consumer)
