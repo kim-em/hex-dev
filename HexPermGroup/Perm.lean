@@ -6,7 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexBasic
+public import HexBasic.ArrayDecEq
+public import HexBasic.OfFn
 
 public section
 
