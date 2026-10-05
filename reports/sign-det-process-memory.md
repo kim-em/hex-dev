@@ -42,7 +42,10 @@ Each archive keeps the original metadata, all stdout/stderr and page snapshots,
 and the verified source reconstruction patch. Compressed files retain hashes
 of both stored and original bytes; collection metadata is copied unchanged.
 CI applies the independent Python input validators to the retained inspection
-outputs and validates every retained file, capture order, answer and memory
+outputs (literal known-root checks for joint, dimension/formula checks for
+matrix, symbolic phase checks for height; sparse checks only its schedule and
+hash shape). Sparse correctness rests on the compiled inspection command.
+CI validates every retained file, capture order, answer and memory
 summary. Callback digests come from the compiled inspection commands, whose Lean
 checks compare callbacks with exact known-root answers; CI does not rerun that
 binary or independently reconstruct those digests from the root literals.
@@ -123,6 +126,12 @@ python3 scripts/bench/sign_det_memory_archive.py /path/to/new-joint-captures \
 ```
 
 The packaging command checks the original capture hashes, copies metadata bytes
-unchanged, compresses the remaining files deterministically, records both raw and
+unchanged, compresses the remaining files reproducibly for a given Python/zlib version,
+records both raw and
 stored hashes, and applies the same archive validator used by CI. It leaves the
 original collection untouched.
+
+Compression bytes can differ across Python/zlib versions; archive validation
+binds both compressed and original bytes and checks the original captures.
+Packaging validates a temporary archive before publishing it and rejects
+destinations within the source collection.

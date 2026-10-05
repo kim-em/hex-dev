@@ -12,7 +12,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.bench.sign_det_memory import child_record, page_peak, validate_retained, install_signals
+from scripts.bench.sign_det_memory import child_record, page_peak, validate_retained, install_signals, stop_signal
 
 
 class MemoryRecords(unittest.TestCase):
@@ -28,15 +28,18 @@ class MemoryRecords(unittest.TestCase):
 
     def test_inherited_ignored_hangup_is_preserved(self):
         original = signal.signal(signal.SIGHUP, signal.SIG_IGN)
+        term = signal.signal(signal.SIGTERM, signal.SIG_DFL)
         previous = {}
         try:
             previous = install_signals()
             self.assertEqual(signal.getsignal(signal.SIGHUP), signal.SIG_IGN)
             self.assertNotIn(signal.SIGHUP, previous)
+            self.assertEqual(signal.getsignal(signal.SIGTERM), stop_signal)
         finally:
             for number, handler in previous.items():
                 signal.signal(number, handler)
             signal.signal(signal.SIGHUP, original)
+            signal.signal(signal.SIGTERM, term)
 
     def test_wrong_subject_and_source(self):
         self.check(self.row)
@@ -109,6 +112,13 @@ class RetainedMemory(unittest.TestCase):
                 data = (source / binding["stored"]).read_bytes()
                 (raw / name).write_bytes(gzip.decompress(data) if binding["stored"].endswith(".gz") else data)
             target = Path(temporary) / "archive"
+            with self.assertRaisesRegex(ValueError, "outside"):
+                package(raw, raw / "archive")
+            (raw / "extra").write_text("extra")
+            with self.assertRaisesRegex(ValueError, "additional"):
+                package(raw, target)
+            (raw / "extra").unlink()
+            self.assertFalse(target.exists())
             self.assertEqual(len(package(raw, target)["runs"]), 36)
             self.assertEqual((target / "metadata.json").read_bytes(), (raw / "metadata.json").read_bytes())
             with self.assertRaisesRegex(ValueError, "must be new"):

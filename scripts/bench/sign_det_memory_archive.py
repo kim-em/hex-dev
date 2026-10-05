@@ -8,6 +8,7 @@ import hashlib
 import json
 from pathlib import Path
 import sys
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -18,6 +19,8 @@ def package(source, target):
     source, target = Path(source).resolve(), Path(target).resolve()
     if target.exists():
         raise ValueError("archive directory must be new")
+    if target.is_relative_to(source):
+        raise ValueError("archive must be outside the source collection")
     metadata_bytes = (source / "metadata.json").read_bytes()
     metadata = json.loads(metadata_bytes)
     if metadata.get("state") != "complete":
@@ -34,17 +37,22 @@ def package(source, target):
         if name != "metadata.json" and digest != metadata["file_sha256"][name]:
             raise ValueError("original capture hash differs")
         raw[name] = data
-    target.mkdir(parents=True)
-    archive = {"schema": "hex-memory-archive-v1", "files": {}}
-    for name, data in raw.items():
-        stored = name if name == "metadata.json" else name + ".gz"
-        payload = data if name == "metadata.json" else gzip.compress(data, mtime=0)
-        (target / stored).write_bytes(payload)
-        archive["files"][name] = {"stored": stored,
-                                  "stored_sha256": hashlib.sha256(payload).hexdigest(),
-                                  "raw_sha256": hashlib.sha256(data).hexdigest()}
-    (target / "archive.json").write_text(json.dumps(archive, indent=2) + "\n")
-    return validate_retained(target)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=".hex-memory-", dir=target.parent) as temporary:
+        staging = Path(temporary) / "archive"
+        staging.mkdir()
+        archive = {"schema": "hex-memory-archive-v1", "files": {}}
+        for name, data in raw.items():
+            stored = name if name == "metadata.json" else name + ".gz"
+            payload = data if name == "metadata.json" else gzip.compress(data, mtime=0)
+            (staging / stored).write_bytes(payload)
+            archive["files"][name] = {"stored": stored,
+                                      "raw_sha256": hashlib.sha256(data).hexdigest(),
+                                      "stored_sha256": hashlib.sha256(payload).hexdigest()}
+        (staging / "archive.json").write_text(json.dumps(archive, indent=2) + "\n")
+        checked = validate_retained(staging)
+        staging.rename(target)
+        return checked
 
 
 def main():

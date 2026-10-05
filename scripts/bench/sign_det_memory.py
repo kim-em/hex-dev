@@ -171,6 +171,9 @@ def validate_retained(directory):
     archive = json.loads((directory / "archive.json").read_text())
     if archive.get("schema") != "hex-memory-archive-v1":
         raise ValueError("unknown memory archive")
+    listed = {binding["stored"] for binding in archive["files"].values()} | {"archive.json"}
+    if {p.name for p in directory.iterdir()} != listed:
+        raise ValueError("unlisted or missing archive artifact")
     raw = {}
     for name, binding in archive["files"].items():
         stored = binding["stored"]
@@ -284,7 +287,9 @@ def main():
                 "runs": [], "state": "running"}
 
     def save():
-        (out / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
+        temporary = out / "metadata.tmp"
+        temporary.write_text(json.dumps(metadata, indent=2) + "\n")
+        os.replace(temporary, out / "metadata.json")
 
     def inventory(label, arguments):
         path = out / (label + ".stdout")
@@ -359,12 +364,15 @@ def main():
         metadata.update(state="failed", error=str(error), exception=type(error).__name__)
         raise
     finally:
+        previous_cleanup = {n: signal.signal(n, signal.SIG_IGN)
+                            for n in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)}
         metadata["load_after"] = os.getloadavg()
         metadata["file_sha256"] = {p.name: digest(p) for p in sorted(out.iterdir())
                                     if p.is_file() and p.name != "metadata.json"}
         save()
         lease.close()
-        for number, previous in previous_signals.items():
+        previous_cleanup.update(previous_signals)
+        for number, previous in previous_cleanup.items():
             signal.signal(number, previous)
 
 
