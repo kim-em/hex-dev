@@ -2609,6 +2609,9 @@ example : ∀ x : ℝ,
     x ^ 2 + Real.exp 1 -
       Real.sqrt (3 + Real.sqrt 2) > 0 := by rcf
 example : ∀ x : ℝ,
+    x ^ 2 + Real.pi -
+      (3 + Real.sqrt 2) ^ (1 / 3 : ℝ) > 0 := by rcf
+example : ∀ x : ℝ,
     x ^ 2 + Real.pi - Real.sqrt
       (1 / (4 + Real.sqrt 2)) > 0 := by rcf
 example : ∀ x : ℝ,
@@ -2636,11 +2639,13 @@ example : ∀ x : ℝ,
     x ^ 2 + 0 / (Real.pi - Real.pi) ≥ 0 := by rcf
 ```
 
-These additional examples combine supplied bounds with roots of algebraic
-bases. Before proposing an enclosure, the exact frontend authenticates the
-source and its selected embedding, checking every original divisor inside
-the base. Ordinary literal replay then proves containment in the proposed
-rational interval. The mixed-division example also checks that the combined
+These additional examples combine supplied bounds with square and cube roots
+of algebraic bases. The real-power example takes the positive cube root of
+`3 + √2`; its exact source authentication uses that non-rational base rather
+than a rational-root shortcut. Before proposing an enclosure, the frontend
+authenticates the source and its selected embedding, checking every original
+divisor inside the base. Ordinary literal replay then proves containment in
+the proposed rational interval. The mixed-division example also checks that the combined
 bounds separate its original divisor from zero. Neither step treats a registered
 constant as an executable ordered field, and frozen replay does not repeat
 the algebraic search. An unsupported base, exhausted admission or unresolved
