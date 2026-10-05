@@ -18,9 +18,15 @@ local. The unmodified same-toolchain reference is the reproducible executable
 `6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed`
 documented in [the API report](../../hex-ordered-fn-api.md). Its 215-job
 rebuild used `lake build HexOrderedFn hexorderedfn_bench`, without the companion
-target. That source, `205cd87`, adds only reports to the variants' parent `d07b004`;
-all non-report build inputs agree. The tag above points to `c7abff` and retains
-its ancestor `91799d`, so both source variants remain fetchable.
+target. The variants' parent is `7d59cacdc887a0e770f556bb7ef55a5da1c478db`.
+The reference's `205cd87` adds reports to the earlier `d07b004`; the subsequent
+main changes add tower/sign integration outside this benchmark's import closure.
+All 65 local files in that closure, the Lean toolchain and dependency lock agree
+between `205cd87` and `7d59cac`. The Lake-file differences add unrelated tower
+module/executable registrations. Rebuilding the unmodified parent also
+reproduces the reference executable byte for byte; [source-check.json](source-check.json)
+records the closure, exact command, binary hash and both build summaries. The source tag above points to `c7abff` and
+retains its ancestor `91799d`, so both variants remain fetchable.
 
 The full-sign variant generates expanded caller bodies and specialized array
 loops. The scan-only variant keeps the height caller as a 365-byte wrapper while
@@ -48,7 +54,8 @@ measurements. Changes compare each arm's median of three native per-call observa
 completed captures have 18 successful arms and matching hashes in all nine pairs.
 Height and third-level signs both hash to `0x2`; this verifies that small returned
 sign, rather than broad semantic equivalence of arbitrary inputs.
-Neither variant is suitable to ship. The two decisions and all negative results
+The cause of the scan slowdown remains undiagnosed; this result does not
+rule out other implementations or compiler annotations. Neither variant is suitable to ship. The two decisions and all negative results
 remain preserved; no further unchanged capture is justified.
 
 `failed-capture` preserves the first collection, including its nine successful
@@ -59,6 +66,8 @@ bytes. The failed invocations do not count as timing observations. Raw scripts a
 metadata preserve their original absolute host paths and compact wording;
 `orderedfn-inline-investigation` in those paths refers to `failed-capture` here,
 and canonical hashes should be read from the structured `binaries` fields.
+The raw description "based on d07b00469d" is incorrect: the actual variant
+parent is `7d59cac`, as established above.
 
 The annotation changes are absent from the integrated library. The retained
 historical-baseline comparison and its unresolved findings remain in force.

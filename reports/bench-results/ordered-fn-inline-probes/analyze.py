@@ -11,6 +11,11 @@ for variant in ("full-sign", "scan-only"):
             (folder / "probe-observations.jsonl").read_text().splitlines()]
     stored = json.loads((folder / "probe-analysis.json").read_text())
     assert len(rows) == stored["completed_arms"] == 18
+    assert stored["failed_arms"] == 0
+    assert stored["all_pair_hashes_agree"] is True
+    context = json.loads((folder / "probe-context.json").read_text())
+    decision = json.loads((folder / "decision.json").read_text())
+    assert context["binaries"]["inline"] == decision["native_binary_sha256"]
     assert all(row["returncode"] == 0 and
                row["observation"]["status"] == "ok" for row in rows)
     for row in rows:
@@ -40,6 +45,9 @@ for variant in ("full-sign", "scan-only"):
     print(json.dumps({"variant": variant, "change_percent": changes,
                       "expand_full_comparison": expand}))
 
+failed_context = json.loads((root / "failed-capture/probe-context.json").read_text())
+full_context = json.loads((root / "full-sign/probe-context.json").read_text())
+assert failed_context["binaries"]["inline"] == full_context["binaries"]["inline"]
 failed = [json.loads(line) for line in
           (root / "failed-capture/probe-observations.jsonl").read_text().splitlines()]
 assert len(failed) == 18
