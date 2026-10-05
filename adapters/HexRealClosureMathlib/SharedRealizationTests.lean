@@ -79,10 +79,16 @@ an expression involving the old parameter share one ordinary reader. -/
 theorem enlarge_twice (first : Enlargement original) (next : Enlargement first.collection)
     (following : base.Realization) (gathered : request.gather? base = some original)
     (built : original.enlarge? = some first) (produced : first.collection.enlarge? = some next) :
-    ∃ x epsilon : ℝ, 0 < epsilon ∧
-      (SignType.sign x : Int) = first.collection.shared.input.context.sign first.parameter ∧
-      (SignType.sign (x - epsilon) : Int) = next.collection.shared.input.context.sign
-        (next.previous.value first.parameter - next.parameter) := by
+    ∃ read : next.collection.shared.input.context.Value → ℝ,
+      ∃ domain : next.collection.shared.input.context.Value → Prop,
+        Transport.Closed read domain ∧
+        domain (next.previous.value first.parameter) ∧ domain next.parameter ∧
+        0 < read next.parameter ∧
+        (SignType.sign (read (next.previous.value first.parameter)) : Int) =
+          first.collection.shared.input.context.sign first.parameter ∧
+        (SignType.sign (read (next.previous.value first.parameter) - read next.parameter) : Int) =
+          next.collection.shared.input.context.sign
+            (next.previous.value first.parameter - next.parameter) := by
   classical
   let reference := following.reference
   let initial := original.model following reference.model gathered
@@ -93,8 +99,7 @@ theorem enlarge_twice (first : Enlargement original) (next : Enlargement first.c
       [next.previous.value first.parameter - next.parameter]
   have old := finite first.parameter (by simp)
   have difference := fresh (next.previous.value first.parameter - next.parameter) (by simp)
-  refine ⟨read (next.previous.value first.parameter), read next.parameter,
-    positive, old.2.1, ?_⟩
+  refine ⟨read, domain, closed, old.1, parameter, positive, old.2.1, ?_⟩
   rw [← closed.read_sub _ _ old.1 parameter]
   exact difference.2.1
 

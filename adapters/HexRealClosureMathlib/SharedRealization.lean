@@ -383,6 +383,11 @@ coefficient reached by the retained descriptor's actual finite replay. -/
     List (request.owners[index]).Value :=
   (request.frame ⟨index.val, by simpa only [Request.owners, List.length_map] using index.isLt⟩).inventory
 
+/-- Operands and replay coefficients of every refreshed target-side frame.
+Pass this inventory as `extra` or `fresh` when these replays will be exported. -/
+@[expose] def Collection.inventory {request : Request registry} (collection : Collection base request) :
+    List collection.shared.input.context.Value := collection.frames.flatMap Frame.inventory
+
 /-- One ordinary reader simultaneously preserves the full finite operand and
 replay inventories of an actual gathered collection. Domains and arithmetic
 are pulled back through its original owner maps; caller provider coefficients
@@ -413,6 +418,19 @@ theorem Collection.realize {request : Request registry} (collection : Collection
   collection.shared.realize_values following
     (Request.gather?_shared base request collection produced) request.inventory extra
 
+/-- Every operand follows the actual predecessor inclusion into the returned
+model. This law composes for any number of successful enlargements. -/
+theorem Enlargement.model_previous_value [IsStrictOrderedRing K] [IsRealClosed K]
+    {request : Request registry} {original : Collection base request}
+    {following : base.Realization} {reference : Tower.Model (Context.ofBase base) K}
+    (result : Enlargement original) (old : Shared.Model original.shared following reference)
+    (ambient : Ambient (Hex.RationalFn K)) (produced : original.enlarge? = some result)
+    (a : original.shared.input.context.Value) :
+    (result.model old ambient produced).target.value (result.previous.value a) =
+      Ambient.coefficientHom ambient (old.target.value a) := by
+  obtain ⟨previous, aligned⟩ := result.model_previous old ambient produced
+  rw [← aligned, previous.value, Tower.Model.liftInfinitesimal_value]
+
 /-- A carried coefficient and the next canonical base constant have the same
 semantic value in the actual returned model. This law composes predecessor
 maps across successive enlargements. -/
@@ -426,8 +444,7 @@ theorem Enlargement.model_constant [IsStrictOrderedRing K] [IsRealClosed K]
         (result.previous.value (original.shared.input.value b)) =
       (Tower.Model.next base reference ambient).value (Context.baseValue base.infinitesimal
         (RationalFn.C (Context.baseStored base b))) := by
-  obtain ⟨previous, aligned⟩ := result.model_previous old ambient produced
-  rw [← aligned, previous.value, Tower.Model.liftInfinitesimal_value, old.input]
+  rw [result.model_previous_value old ambient produced, old.input]
   exact (Tower.Model.next_constant reference ambient b).symm
 
 /-- Specialize an actual enlargement at one ordinary interpretation for its
@@ -676,3 +693,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Model.read_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Model.read_zero
+
+/-- info: 'Hex.RealClosure.Tower.Live.Enlargement.model_previous_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.Enlargement.model_previous_value

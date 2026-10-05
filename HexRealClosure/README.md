@@ -2119,12 +2119,19 @@ in the enlarged context. `Enlargement.realize_model` uses the previous
 canonical factory model and applies again after any earlier enlargement.
 Its coefficient clause accepts any old operand whose canonical semantic value
 is the inherited constant. `Enlargement.model_constant` identifies a carried
-coefficient with the next base constant, so this clause composes through
-successive predecessor maps. The new base input and original owner coefficients
+coefficient with the next base constant. `Enlargement.model_previous_value`
+relates every carried operand to its preceding model, so the fixed-coefficient
+clause composes through any number of successive predecessor maps. The new base input and original owner coefficients
 also retain their prescribed values. `Model.read_zero` supplies zero reflection
 from domain membership and native sign agreement for model-level consumers.
 `Inclusion.Model.fieldHom` and `read_comap` expose the underlying semantic-field
 inclusion and reader law; native expressions themselves acquire no field instance.
+
+Each specialization chooses a new ordinary reader for the complete requested
+finite inventory. Callers retain earlier sign constraints by including their
+old computed operands in `values`; an already chosen ordinary reader is not
+extended. `Collection.inventory` gathers refreshed target-side replay operands
+for the optional `extra` or `fresh` requests.
 
 These are relative semantic theorems. They internally construct symbolic
 ordered real-closed references from provider histories. The direct accepted
@@ -2139,8 +2146,10 @@ enlargements without a new gather.
 `lake build HexRealClosureMathlib.NativeRealizationTests` additionally checks
 an actual gather and enlargement over a registered Liouville coefficient,
 recovering its prescribed value under the same positive-parameter reader,
-through two successive predecessor maps, and through a nonempty gathered owner
-with a producer-built algebraic suffix.
+through three successive predecessor maps with a fresh cross-term sign, and
+through a nonempty gathered owner with a producer-built algebraic suffix.
+The owner is gathered through a nonidentity base inclusion; a nonempty frame
+then requests its coefficient and a polynomial through another enlargement.
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
 proves that its ordered algebraic real closure of `R(ε)` is algebraic over the
