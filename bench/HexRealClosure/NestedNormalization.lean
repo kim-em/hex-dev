@@ -427,7 +427,8 @@ def main (args : List String) : IO UInt32 := do
   | [] =>
     Hex.RealClosure.NestedNormalization.emit 2 2 false false false
     Hex.RealClosure.NestedNormalization.emit 2 2 true false false
-  | "bench" :: _ | "_child" :: _ | "verify" :: _ | "list" :: _ =>
+  | "run" :: _ | "compare" :: _ | "profile" :: _ | "_probe_floor" :: _ |
+      "_child" :: _ | "verify" :: _ | "list" :: _ | "--help" :: _ =>
     Hex.RealClosure.NestedNormalization.Measure.install
     return ← LeanBench.Cli.dispatch args
   | [depth, steps, policy, diagnostic] =>

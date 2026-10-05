@@ -37,6 +37,33 @@ def schedule():
             for depth, steps in PARAMETERS for arm in ('AB' if trial % 2 == 0 else 'BA')]
 
 
+def retained_command(argv, output, errors, *, timeout):
+    """Retain spawn errors and kill the child's whole process group on interruption."""
+    process = None
+    record = dict(argv=list(map(str, argv)), stdout=output.name, stderr=errors.name,
+                  exit_code=None, incomplete=False)
+    began = time.monotonic_ns()
+    try:
+        with output.open('w') as out, errors.open('w') as err:
+            process = subprocess.Popen(record['argv'], stdout=out, stderr=err, start_new_session=True)
+            record['exit_code'] = process.wait(timeout=timeout)
+    except BaseException as error:
+        record.update(incomplete=True, error=str(error))
+        if process is not None:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.wait()
+            record['exit_code'] = process.returncode
+        raise
+    finally:
+        record['elapsed_ns'] = time.monotonic_ns() - began
+        # A separate command record survives even failure before Popen succeeds.
+        output.with_suffix('.command.json').write_text(json.dumps(record, indent=2) + '\n')
+    return record
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
@@ -53,8 +80,9 @@ def main():
                   parameters=PARAMETERS, trials=TRIALS, target_inner_nanos=TARGET_NANOS,
                   child_timeout_seconds=600, warmup_first_iter=True,
                   schedule='trial-major; depth1 then depth2; steps2/4/8/16; adjacent alternating AB/BA',
-                  arms=dict(A='clean', B='eager'), commands=[], measurements=[],
+                  arms=dict(A='clean', B='eager'), commands=[], measurements=[], functional_checks=[],
                   python_version=sys.version, oracle_python=str(interpreter),
+                  oracle_argv1=str(ROOT / 'scripts/oracle/real_closure_nested_normalization.py'),
                   protocol_sha256=digest(ROOT / 'reports/bench-results/real-closure-nested-protocol.md'),
                   capture_script_sha256=digest(Path(__file__)),
                   analyzer_sha256=digest(ROOT / 'scripts/bench/analyze_real_closure_nested.py'),
@@ -67,29 +95,22 @@ def main():
         argv = list(map(str, command))
         index = len(record['commands'])
         output, errors = destination / f'{index}.stdout', destination / f'{index}.stderr'
-        began = time.monotonic_ns()
-        incomplete = False
-        with output.open('w') as out, errors.open('w') as err:
-            process = subprocess.Popen(argv, stdout=out, stderr=err, start_new_session=True)
-            try:
-                code = process.wait(timeout=timeout)
-            except BaseException:
-                incomplete = True
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-                process.wait()
-                raise
-            finally:
-                record['commands'].append(dict(argv=argv, exit_code=process.returncode,
-                    incomplete=incomplete, elapsed_ns=time.monotonic_ns()-began,
-                    stdout=output.name, stderr=errors.name))
+        try:
+            command_record = retained_command(argv, output, errors, timeout=timeout)
+        finally:
+            command_file = output.with_suffix('.command.json')
+            if command_file.exists():
+                record['commands'].append(json.loads(command_file.read_text()))
                 save()
-        if check and code != 0:
+        if check and command_record['exit_code'] != 0:
             raise RuntimeError(f'command failed: {argv}')
         return output
 
+    def interrupted(signum, _frame):
+        raise SystemExit(f'capture interrupted by signal {signum}')
+
+    for signum in (signal.SIGTERM, signal.SIGHUP):
+        signal.signal(signum, interrupted)
     lease = None
     try:
         record['commit'] = run(['git', 'rev-parse', 'HEAD']).read_text().strip()
@@ -109,6 +130,7 @@ def main():
         snapshot = destination / 'hexrealclosure_nested_normalization'
         shutil.copy2(ROOT / '.lake/build/bin/hexrealclosure_nested_normalization', snapshot)
         record['executable_sha256'] = digest(snapshot)
+        record['snapshot_argv0'] = str(snapshot)
         record['oracle_version'] = run([interpreter, '-c',
             'from importlib.metadata import version; print(version("python-flint"))']).read_text().strip()
         cpu, lease = cpu_lease()
@@ -118,6 +140,7 @@ def main():
         # Fresh ordinary outputs bind the snapshotted binary to exact field values.
         for depth, steps in PARAMETERS:
             fixtures = []
+            check_record = dict(depth=depth, steps=steps, outputs={})
             hashes[f'{depth}:{steps}'] = {}
             for arm in 'AB':
                 policy = 'clean' if arm == 'A' else 'eager'
@@ -126,10 +149,14 @@ def main():
                 if len(rows) != 1 or (rows[0]['depth'], rows[0]['steps'], rows[0]['eager']) != (depth, steps, arm == 'B'):
                     raise RuntimeError('functional endpoint names a different parameter or policy')
                 hashes[f'{depth}:{steps}'][arm] = f'0x{rows[0]["hash"]:x}'
+                check_record['outputs'][arm] = fixture.name
                 fixtures.append(fixture)
-            run([interpreter, ROOT / 'scripts/oracle/real_closure_nested_normalization.py', *fixtures])
+            oracle_output = run([interpreter, ROOT / 'scripts/oracle/real_closure_nested_normalization.py', *fixtures])
+            check_record['oracle_output'] = oracle_output.name
+            record['functional_checks'].append(check_record)
+            save()
         record['expected_hashes'] = hashes
-        run([snapshot, 'verify'])
+        record['verify_output'] = run([snapshot, 'verify']).name
         for trial, depth, steps, arm in schedule():
             name = benchmark(depth, steps, arm)
             attempt = dict(trial=trial, depth=depth, steps=steps, arm=arm,
