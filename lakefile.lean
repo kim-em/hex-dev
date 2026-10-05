@@ -1505,7 +1505,8 @@ lean_lib HexFactorizationModules where
 lean_lib HexSparsePolyTests where
   globs := #[`HexSparsePolyMathlib.LintTests]
 
--- Declaration linting stays in the monorepo; mirrors build the published API.
+-- Declaration linting runs in monorepo CI. The lint source is copied to the
+-- mirror with its bridge library; mirror CI builds the published API.
 @[default_target]
 lean_lib HexTruncatedSeriesTests where
   globs := #[`HexTruncatedSeriesMathlib.LintTests]

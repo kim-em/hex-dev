@@ -67,12 +67,23 @@ Both binaries use their own pinned toolchains and benchmark harness revisions:
 A uses Lean `v4.34.0-rc2` and lean-bench `fa30c2763cf5`; B uses Lean
 `v4.35.0-rc3` and lean-bench `8a37daf1074c`. The historical harness uses
 parameter-major trials; the current harness uses the fixed trial-major schedule.
-The baseline was preserved rather than changing its measurement implementation.
-Thus this checks the released native
-path against the previous retained baseline; it does not isolate the constant
-factor attributable to an individual library edit. The five registered inputs,
+Arm A retains the historical measurement implementation.
+The source interval also includes the division changes and the later `@[csimp]`
+routing through `divModWithImpl`, `gcdWithImpl` and `xgcdWithImpl`. The observed
+ratios combine those runtime changes with compiler and harness differences.
+This comparison checks the released native path against the retained baseline.
+It does not isolate the constant factor attributable to an individual library edit. The five registered inputs,
 operations and result checksums agree at every matched parameter. All twenty
 arms are consistent with their declared complexity.
+
+Per-export `git_commit` and `git_dirty` describe the invoking checkout, including
+for arm A; they do not identify the separately built baseline binary. Arm
+identity is recorded by the source revisions, toolchains, harness revisions and
+`binary_sha256` values in `protocol.json`. Arm B was built at `29e9cc3567`
+with committed Lean and build source, while an untracked Lake-freshness
+exemption made the full worktree dirty. The recorded comparison revision
+`005b8a182b` adds only that exemption record; its executable and build source
+is identical. The exports are retained unchanged.
 
 Ratios below are current/baseline per-call times, using the median of three
 trials at each input. The block columns are geometric means over matched

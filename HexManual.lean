@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
--- Released libraries (dependency order).
+-- Library reference chapters; the released split and inclusion order are below.
 import HexManual.Chapters.HexBasic
 import HexManual.Chapters.HexArith
 import HexManual.Chapters.HexPrimality
@@ -38,7 +38,6 @@ import HexManual.Chapters.HexRCF
 import HexManual.Chapters.HexResultant
 import HexManual.Chapters.HexNumberField
 import HexManual.Chapters.HexNumberFieldTower
--- Unreleased libraries (dependency order).
 import HexManual.Chapters.HexRealAlgebraic
 import HexManual.Chapters.HexTruncatedSeries
 import HexManual.Chapters.HexReflect

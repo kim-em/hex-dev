@@ -730,5 +730,10 @@
   "trial_schedules": {
     "A": "parameter-major (historical pinned harness)",
     "B": "trial-major (current pinned harness)"
-  }
+  },
+  "binary_source_revisions": {
+    "A": "53ef234e9c36d66f7af72c968d7287d770ff2141",
+    "B": "29e9cc3567a0db72464372c63c3fcae6b04a39d6"
+  },
+  "export_git_metadata": "Invoking checkout, not separately built binary source. Arm B build had committed Lean/build source and an untracked Lake-freshness exemption; current_revision adds only that record."
 }

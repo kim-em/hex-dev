@@ -386,7 +386,9 @@ repository outside its list, so the clone succeeds from public https and only
 the push returns `403 Permission to leanprover/<repo>.git denied`.
 `sync_released.py` now preflights every target repository against the tokens
 before the first push and refuses to start, naming the repositories no token
-covers. A dry run does not preflight, using no token and pushing nothing.
+covers. The driver's `--dry-run` mode uses no token and pushes nothing. The
+workflow runs a separate read-only grant diagnostic before staging; see the
+verification instructions in the token inventory below.
 
 **What the preflight does not prove.** Its receive-pack probe verifies that a
 token can push ordinary content to the selected repository. GitHub checks the
@@ -494,9 +496,10 @@ write grants distinct in this inventory.
 Both publishing tokens are at their 50-repository limit. The next new
 repository needs `hex-publishing-3`: create the fine-grained token, select
 that repository with Contents and Workflows read/write, obtain organization
-approval, store it as `RELEASED_SYNC_PAT_3`, and add one environment line to
-the `sync` job in `.github/workflows/sync-released.yml`. The driver already
-probes numbered environment slots in order.
+approval, store it as `RELEASED_SYNC_PAT_3`, and add its environment line to
+both the `sync` job and the stage job's read-only grant-check step in
+`.github/workflows/sync-released.yml`. The driver already probes numbered
+environment slots in order.
 
 Selection alone does not establish write access. The real-sync preflight
 checks every target again before pushing any repository; the diagnostic
