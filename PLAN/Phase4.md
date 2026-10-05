@@ -67,8 +67,10 @@ For each library `HexFoo` advancing through Phase 4:
 - **Declare the intended algorithm's independently derived expected scaling on
   the registered family**, derived before measurement and never read off
   observed timings. When no family model is derivable, declare a cited upper
-  bound. The adjacent comment explains how the family relates to the
-  per-library SPEC's worst-case bound.
+  bound where one usefully predicts timing. If neither is useful, document
+  the source operation bound and its cost limitations, and measure representative
+  inputs without asserting a scaling law. The adjacent comment explains how
+  the family relates to the per-library SPEC's worst-case bound.
 - **Use the assigned harness.** LeanBench is the sole compiled-code harness.
 - **Use stable case names, fixed seeds and committed inputs.**
 - **Keep verify and scientific settings distinct.** `verify` is for wiring;
@@ -85,7 +87,9 @@ For library `hex-foo`, Phase 4 is done when:
 - every performance claim the library makes has a complete scientific run;
 - each timing finding has an evidence-based disposition under
   [Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim):
-  a passing model/bound check, a corrected defect or declaration, a descriptive
+  a passing model/bound check, a corrected defect or declaration, replacement
+  of an independently invalidated timing model by representative measurements
+  with an explicit source bound and limitations, a descriptive
   auxiliary-reference verdict with its limitation stated, or a documented
   explanation predicting its direction and rough size from actual source work,
   with retained measurements and phase attribution where relative costs matter;

@@ -114,6 +114,16 @@ comment says which:
   result faster than the bound can read `inconclusive`; that result
   satisfies the bound, and whoever records it says so.
 
+Neither choice is mandatory when neither predicts useful timing behavior.
+For example, an exact count of coefficient operations may mix dense loops
+over zeros with variable-size rational normalization. Keep the independently
+derived operation bound, explain why it supplies no useful wall-time model,
+and record timings and memory on representative downstream inputs instead.
+State the resulting limitation explicitly: these observations do not establish
+a scaling law. This applies to production computations as well as references.
+It does not remove a separately mandated performance target or excuse an
+implementation defect.
+
 A fixed registration makes no performance claim; see
 [§Fixed-problem benchmarks](#fixed-problem-benchmarks). The operation's
 worst-case bound stays in its per-library SPEC whatever the registration
@@ -135,8 +145,13 @@ arm. If the paired sampler retains a source operation-count formula for an
 auxiliary reference arm with mixed costs, state that limitation at the
 registration and in its
 report. Its fitted verdict is descriptive; the comparison uses actual times,
-matching results and any separately stated ratio target. A production arm's
-verdict is never descriptive; resolve its scaling claim under the rules below.
+matching results and any separately stated ratio target. If an independently
+demonstrated mismatch between operation counts and timing costs invalidates a
+production timing model, retain its old formula, observations and verdict as
+historical evidence. Explain the mismatch from the actual algorithm and operand
+sizes, and replace the unsupported timing claim with the appropriate bound or
+representative observations. Do not drop a model merely because its fitted
+verdict is inconvenient.
 
 An inconclusive harness verdict is a finding to resolve, not an automatic
 requirement for a larger collection. Retain its original verdict and samples.
