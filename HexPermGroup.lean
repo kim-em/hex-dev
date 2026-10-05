@@ -26,6 +26,7 @@ public import HexPermGroup.Conjugate
 public import HexPermGroup.Predicates
 public import HexPermGroup.Rank
 public import HexPermGroup.Order
+public import HexPermGroup.Rank.Order
 public import HexPermGroup.Tactic
 public import HexPermGroup.Enumerate
 public import HexPermGroup.Membership
