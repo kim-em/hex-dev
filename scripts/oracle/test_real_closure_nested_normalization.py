@@ -110,10 +110,6 @@ class ExactTests(unittest.TestCase):
 
 
 
-if __name__ == '__main__':
-    unittest.main()
-
-
 class MonicTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -145,3 +141,46 @@ class MonicTests(unittest.TestCase):
                         for coefficient in row['heads'][0]: coefficient[0] *= 2
                         expected = 'different defining polynomial'
                     with self.assertRaisesRegex(ValueError, expected): verify(row)
+
+    def test_changed_values_and_selection(self):
+        from fractions import Fraction
+        from itertools import zip_longest
+
+        def add(left, right, level):
+            if level == 0:
+                value = Fraction(*left) + Fraction(*right)
+                return [value.numerator, value.denominator]
+            zero = [0, 1] if level == 1 else []
+            result = [add(a, b, level - 1) for a, b in
+                      zip_longest(left, right, fillvalue=zero)]
+            while result and result[-1] == zero:
+                result.pop()
+            return result
+
+        for source in self.rows:
+            for change in ('value', 'unreduced', 'negative_root'):
+                with self.subTest(depth=source['depth'], steps=source['steps'], change=change):
+                    row = copy.deepcopy(source)
+                    if change == 'value':
+                        coefficient = row['value']
+                        for _ in range(row['depth']): coefficient = coefficient[0]
+                        coefficient[0] += coefficient[1]
+                        expected = 'stored value disagrees'
+                    elif change == 'unreduced':
+                        row['value'] = add(row['value'], row['heads'][-1], row['depth'])
+                        expected = 'value was not reduced'
+                    else:
+                        graph = row['roots'][-1][2]
+                        node = graph[2][graph[1]][0]
+                        def scalar(n, level):
+                            value = [n, 1]
+                            for _ in range(level): value = [value] if n else []
+                            return value
+                        node[2] = [1, scalar(-2, row['depth'] - 1)]
+                        node[3] = [1, scalar(0, row['depth'] - 1)]
+                        expected = 'different selected-root interval'
+                    with self.assertRaisesRegex(ValueError, expected): verify(row)
+
+
+if __name__ == '__main__':
+    unittest.main()

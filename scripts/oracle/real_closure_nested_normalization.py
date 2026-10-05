@@ -152,6 +152,21 @@ def verify(row):
     require(type(row['sign']) is int and row['sign'] == -1, 'wrong selected-root sign')
     require(isinstance(row['roots'], list) and len(row['roots']) == depth,
             'missing root evidence')
+    for level, packet in enumerate(row['roots'], 1):
+        graph_statistics(packet)
+        _, root, entries = packet[2]
+        node = entries[root][0]
+        require(isinstance(node, list) and len(node) == 11 and
+                node[1] == row['heads'][level - 1], 'different root defining head')
+        lower, upper = node[2:4]
+        require(isinstance(lower, list) and len(lower) == 2 and lower[0] == 1 and
+                isinstance(upper, list) and len(upper) == 2 and upper[0] == 1,
+                'different selected-root interval')
+        require(field.value(lower[1], level - 1) == 0 and
+                field.value(upper[1], level - 1) == (2 if monic else 1),
+                'different selected-root interval')
+        # These literal bounds isolate only the positive quadratic root:
+        # the conjugate is negative and the remaining cubic root is 3.
     stored = growth(row['value'], depth)
     require(not (row['eager'] or monic) or all(d < 3 for d in stored['max_degree_by_level']),
             'value was not reduced at every enabled level')
@@ -159,7 +174,7 @@ def verify(row):
     return dict(depth=depth, steps=steps, eager=row['eager'],
                 **({'monic': True, 'production_reductions_checked': True} if monic else {}),
                 exact_value_checked=True,
-                selected_root_sign_checked=True, field_residue=residue,
+                selected_root_sign_checked=True, root_selection_checked=True, field_residue=residue,
                 stored=stored,
                 roots=[graph_statistics(packet) for packet in row['roots']],
                 query=graph_statistics(row['query']))

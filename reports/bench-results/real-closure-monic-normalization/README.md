@@ -50,11 +50,14 @@ size/replay recurrence.
   stored-value and root/query graph outputs. Native readers/replay pass.
 - [Pinned FLINT checks](functional-oracle.json) independently use
   Q(gamma), gamma^(2^depth) = 2, to check selected definitions, values, signs
-  and literal growth. Graph statistics are structural; mathematical replay
+  and literal growth. Literal root-head and interval checks distinguish the
+  positive root from its conjugate. Graph statistics are structural; mathematical replay
   is checked by the native driver, rather than claimed by the Python oracle.
-- Eight oracle tests include changed family/branch flags and coupled scaling
-  of a defining head that preserves its roots. All pass. The original two
-  nonmonic fixture outputs remain byte-identical; their six tests still pass.
+- Nine oracle tests include changed family/branch flags, conjugate-root
+  intervals, changed values and unreduced representatives with identical
+  field values, plus coupled head scaling that preserves roots. All pass.
+  The original two nonmonic fixture outputs remain byte-identical; their six
+  tests still pass.
 - All eight named monic benchmark smoke checks pass.
 - Executable SHA-256: `5a0cd7469e5836b1e65ef1b7a2bbaa06a9c779ed2b4420e7d50a049bc8419f8e`.
 - [Build binding](build-binding.log) records the committed source and binary
@@ -76,7 +79,9 @@ The separate [count protocol](counters-protocol.md) was committed at
 [Build bindings](counts/build.json), complete stdout/stderr and
 [independent value/trace checks](counts/oracle.json) retain both results.
 Their functional packets exactly match the earlier m = 16 endpoints.
-These counts exclude preparation, final queries and encoding. The diagnostic
+These counts exclude preparation and final queries. Encoding, hashing and
+hash output occur inside the window; they perform no counted scalar/gcd
+operation for these packets. The diagnostic
 binary is separate from the timed executable; no diagnostic timing is used.
 
 | Depth | Top-level products | Polynomial gcd | Polynomial xgcdLeft | Lean integer gcd | GMP integer gcd |

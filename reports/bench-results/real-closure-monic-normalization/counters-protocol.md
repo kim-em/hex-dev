@@ -10,8 +10,9 @@ This binary supplies counts only, with no timing interpretation.
 Run exactly the depth-one and depth-two m = 16 monic endpoints once each,
 using `monic depth 16 trace`. Retain stdout, stderr, the diagnostic build
 manifest, generated-C source hashes and both executable hashes. Workload
-markers exclude context preparation, final queries and serialization from
-counters. Check emitted workload hashes/values against the previously checked
+markers exclude context preparation and final queries. Encoding, hashing
+and hash output occur inside the counter window; no counted scalar or gcd
+operation is attributed to that serialization. Check emitted workload hashes/values against the previously checked
 functional endpoints and use the independent FLINT oracle to validate values,
 signs, defining heads and top-level callback counts. Retain every completed
 run; do not retry for a preferred count.
