@@ -136,6 +136,36 @@ theorem Context.readRootSet_data (parent : Context registry) (roots : RootSet pa
 @[expose] def RootSet.write {parent : Context registry} (roots : RootSet parent) : Serialized :=
   ⟨parent.signature, roots.data⟩
 
+/-- Require the complete original predecessor binding before reading a root
+payload in a caller-supplied context. -/
+@[expose] def Context.readRootPacket (parent : Context registry) (data : Serialized) :
+    Except String (Root parent) :=
+  if data.binding = parent.signature then parent.readRoot data.value
+  else .error "root predecessor mismatch"
+
+@[expose] def Context.readRootSetPacket (parent : Context registry) (data : Serialized) :
+    Except String (RootSet parent) :=
+  if data.binding = parent.signature then parent.readRootSet data.value
+  else .error "root-set predecessor mismatch"
+
+theorem Context.readRoot_write (parent : Context registry) (root : Root parent) :
+    parent.readRootPacket root.write = .ok root := by
+  simp [Context.readRootPacket, Root.write, parent.readRoot_data]
+
+theorem Context.readRootSet_write (parent : Context registry) (roots : RootSet parent) :
+    parent.readRootSetPacket roots.write = .ok roots := by
+  simp [Context.readRootSetPacket, RootSet.write, parent.readRootSet_data]
+
+theorem Context.readRoot_stale (parent : Context registry) (data : Serialized)
+    (different : data.binding ≠ parent.signature) :
+    parent.readRootPacket data = .error "root predecessor mismatch" := by
+  simp [Context.readRootPacket, different]
+
+theorem Context.readRootSet_stale (parent : Context registry) (data : Serialized)
+    (different : data.binding ≠ parent.signature) :
+    parent.readRootSetPacket data = .error "root-set predecessor mismatch" := by
+  simp [Context.readRootSetPacket, different]
+
 /-- A reconstructed root retains its original predecessor as well as the
 native root context selected by its kind and descriptor. -/
 structure PackedRoot (registry : BaseContext.Registry) : Type 1 where
@@ -201,3 +231,19 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Catalog.restoreRootSet_origin' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Catalog.restoreRootSet_origin
+
+/-- info: 'Hex.RealClosure.Tower.Context.readRoot_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.readRoot_write
+
+/-- info: 'Hex.RealClosure.Tower.Context.readRootSet_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.readRootSet_write
+
+/-- info: 'Hex.RealClosure.Tower.Context.readRoot_stale' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.readRoot_stale
+
+/-- info: 'Hex.RealClosure.Tower.Context.readRootSet_stale' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.readRootSet_stale
