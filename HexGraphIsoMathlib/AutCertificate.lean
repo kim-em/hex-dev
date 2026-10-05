@@ -29,6 +29,32 @@ product of the recorded orbit bounds; it does not trust the producer's search
 or its claimed orbits.
 -/
 
+namespace Hex.GraphIso.Aut
+
+variable {n k : Nat} {G : Colored n k}
+
+/-- An automorphism carrying `v` to `w` identifies the two colourings obtained
+by individualizing those vertices. -/
+theorem indiv_isIso_map {v w : Fin n} {Hv Hw : Colored n (k + 1)}
+    (hv : indiv? G v = some Hv) (hw : indiv? G w = some Hw)
+    {p : Perm n} (hp : Hex.GraphIso.IsIso G G p) (hpvw : p.get v = w) :
+    Hex.GraphIso.IsIso Hv Hw p := by
+  obtain ⟨hvgraph, hvcolors⟩ := indiv_fields hv
+  obtain ⟨hwgraph, hwcolors⟩ := indiv_fields hw
+  apply Hex.GraphIso.IsIso.intro
+  · intro u
+    apply Fin.ext
+    rw [hwcolors, hvcolors]
+    by_cases hu : u = v
+    · subst u
+      simp [hpvw]
+    · have hpu : p.get u ≠ w := fun h => hu (p.get_inj (h.trans hpvw.symm))
+      rw [ite_eq_right hu, ite_eq_right hpu]
+      exact congrArg Fin.val (hp.cells_eq u)
+  · simpa only [hvgraph, hwgraph] using hp.adj_eq
+
+end Hex.GraphIso.Aut
+
 namespace Hex.GraphIso.Aut.Kernel
 
 open Hex.GraphIso.Nauty
