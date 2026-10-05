@@ -1,0 +1,4 @@
+NESTED BEGIN
+NESTED END
+NESTED COUNTERS {"poly_gcd":23,"poly_xgcd":0,"poly_xgcd_left":23,"poly_pseudo_gcd":0,"lean_nat_gcd":82295,"gmp_gcd":82295,"gmp_gcdext":0}
+NESTED CALLBACKS {"overflow":false,"counts":{"0:add":13894,"0:sub":6125,"0:neg":451,"0:mul":28768,"0:inv":914,"0:div":314,"0:sign":3853,"0:zero":7807,"1:add":212,"1:sub":102,"1:neg":8,"1:mul":448,"1:inv":22,"1:div":8,"1:sign":53,"1:zero":138,"1:inverse_gcd":22,"1:inverse_xgcd":22,"2:add":1,"2:sub":1,"2:mul":5,"2:inv":1,"2:div":1,"2:split":1,"2:inverse_gcd":1,"2:inverse_xgcd":1}}
