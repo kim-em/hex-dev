@@ -218,14 +218,14 @@ private meta def validateGenerators (G : Expr) (gens : List Expr) : MetaM Unit :
 private meta def setOfList (permTy gsList : Expr) : MetaM Expr :=
   withLocalDeclD `g permTy fun g => do
     let pred ← mkLambdaFVars #[g] (← mkAppM ``Membership.mem #[gsList, g])
-    return mkApp2 (mkConst ``setOf [0]) permTy pred
+    return ← mkAppM ``Set.ofPred #[pred]
 
 private meta def closureCard (permTy set : Expr) : MetaM Expr := do
   let closure ← mkAppM ``Subgroup.closure #[set]
   let pred ← withLocalDeclD `g permTy fun g => do
     mkLambdaFVars #[g] (← mkAppM ``Membership.mem #[closure, g])
-  let subtype := mkApp2 (mkConst ``Subtype [0]) permTy pred
-  return mkApp (mkConst ``Nat.card [0]) subtype
+  let subtype ← mkAppM ``Subtype #[pred]
+  mkAppM ``Nat.card #[subtype]
 
 private meta def cardClosureTarget (permTy set : Expr) (N : Nat) : MetaM Expr := do
   mkAppM ``Eq #[← closureCard permTy set, mkNatLit N]
@@ -279,8 +279,8 @@ private meta def parseGoal (target : Expr) : MetaM Parsed := do
   let lhs := target.getArg! 1
   let rhs := target.getArg! 2
   if let some G ← equivGroupGraph? rhs then
-    let some set ← Hex.PermGroup.Kernel.Tactic.closureArg? lhs | unsupported
-    let some gens ← Hex.PermGroup.Kernel.Tactic.setLitElems set
+    let some set ← Hex.PermGroup.Mathlib.Tactic.closureArg? lhs | unsupported
+    let some gens ← Hex.PermGroup.Mathlib.Tactic.setLitElems set
       | throwError "graph_aut: the generating set must be a set literal or a coerced Finset literal"
     let permTy ← match (← inferType set) with
       | .app _ ty => pure ty
@@ -290,7 +290,7 @@ private meta def parseGoal (target : Expr) : MetaM Parsed := do
   let some N ← (evalNat rhs).run
     | throwError "graph_aut: the claimed order must be a numeral"
   let cardTy := lhs.getArg! 0
-  if let some H ← Hex.PermGroup.Kernel.Tactic.coeSortArg? cardTy then
+  if let some H ← Hex.PermGroup.Mathlib.Tactic.coeSortArg? cardTy then
     if let some G ← equivGroupGraph? H then
       return ⟨.execCard G, N⟩
   if let some (G, H) ← HexGraphIsoMathlib.Tactic.matchColoredIso? cardTy then
@@ -331,7 +331,7 @@ private meta def prepare : GoalInput → MetaM Prepared
 private meta def run (cfg : Config) : TacticM Unit := withMainContext do
   let goal ← getMainGoal
   let goal ← goal.replaceTargetDefEq
-    (← Hex.PermGroup.Kernel.Tactic.unfoldClosures (← goal.getType))
+    (← Hex.PermGroup.Mathlib.Tactic.unfoldClosures (← goal.getType))
   let target ← goal.getType
   if (← instantiateMVars target).hasMVar then
     throwError "graph_aut: the goal contains metavariables; the graph must be a closed term"
@@ -397,7 +397,7 @@ private meta def run (cfg : Config) : TacticM Unit := withMainContext do
   let goal ← match set? with
     | none => pure goal
     | some set =>
-        Hex.PermGroup.Kernel.Tactic.rewriteSet goal set gsList gens permTy
+        Hex.PermGroup.Mathlib.Tactic.rewriteSet goal set gsList gens permTy
   unless ← isDefEq (← inferType proof) (← goal.getType) do
     throwError "graph_aut: internal final proof mismatch"
   goal.assign (← instantiateMVars proof)

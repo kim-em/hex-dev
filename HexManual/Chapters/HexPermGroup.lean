@@ -46,9 +46,10 @@ The same tactic proves that a given permutation does or does not lie in such a
 subgroup, and that a list of permutations generates the whole symmetric group;
 see {ref "hex-perm-group-proofs"}[The Mathlib correspondence].
 
-`HexPermGroup` itself does not depend on Mathlib. Import it for computation, and
-import `HexPermGroupMathlib` for the tactic and for the theorems that
-translate its results into statements about `Equiv.Perm (Fin n)`.
+`HexPermGroup` itself does not depend on Mathlib. Import it for computation and
+for `perm_group` proofs about Hex permutations. Import `HexPermGroupMathlib`
+for the extension and the theorems that translate its results into statements
+about `Equiv.Perm (Fin n)`.
 
 # Permutations and groups
 
@@ -83,6 +84,26 @@ stabilizer of a vertex has order two. {name}`Hex.PermGroup.Group.orbit`
 returns the orbit of a point in increasing order, and
 {name}`Hex.PermGroup.Group.stabilizer` returns the stabilizer of a point as a
 new group.
+
+The same generators support kernel-checked proofs using only
+`import HexPermGroup`. {name}`Hex.PermGroup.HasOrder` expresses exact order
+by mutually inverse maps between the generated permutations and a finite
+index type. The `perm_group` tactic proves that order, membership and
+nonmembership without importing Mathlib:
+
+```lean
+example : HasOrder #[rotation, reflection] 8 := by
+  perm_group
+example : Generated #[rotation, reflection]
+    (rotation.comp reflection) := by
+  perm_group
+example : ¬ Generated #[rotation, reflection]
+    (Perm.mk #v[1, 0, 2, 3]) := by
+  perm_group
+```
+
+These proofs check a packed stabilizer-chain certificate in the kernel;
+they use the same certificate machinery as the Mathlib examples below.
 
 {name}`Hex.PermGroup.Group.word?` decides whether a permutation lies in the
 group, and if it does, expresses it in terms of the generators, as a

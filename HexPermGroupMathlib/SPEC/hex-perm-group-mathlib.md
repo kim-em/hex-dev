@@ -18,12 +18,12 @@ graph-independent `Perm.toEquiv` and `Perm.ofEquiv` conversions from
 `HexGraphIsoMathlib` when migrating that consumer. This library must not
 depend on graph isomorphism or a classification database.
 
-The library also provides the kernel replay theorems and the `perm_group`
-tactic specified in
+The library translates the Mathlib-free kernel replay theorems and extends
+the `perm_group` tactic from `HexPermGroup`, as specified in
 [hex-perm-group, Kernel replay in Mathlib](../../HexPermGroup/SPEC/hex-perm-group.md#kernel-replay-in-mathlib),
 and the examples of
 [User-facing examples](../../HexPermGroup/SPEC/hex-perm-group.md#user-facing-examples).
-Because it owns a tactic, its Phase 4 deliverable is the proof track: example
+Because it extends a tactic, its Phase 4 deliverable is the proof track: example
 files running the kernel replay theorems and `perm_group` in
 `bench/HexPermGroupMathlib/ProofProbe`, declared as its `libraries.yml`
 `proof_probes` root and built by CI on every PR.

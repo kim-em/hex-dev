@@ -517,6 +517,7 @@ repos:
   - repo: leanprover/hex-perm-group
     component: Permutation groups
     lib: HexPermGroup
+    test_modules: [HexPermGroup.Tests, HexPermGroup.CertificateTests]
     umbrella: true
     spec: hex-perm-group
     pins: [hex-basic]
@@ -524,7 +525,7 @@ repos:
 
   - repo: leanprover/hex-perm-group-mathlib
     lib: HexPermGroupMathlib
-    test_modules: [HexPermGroupMathlib.Tests]
+    test_modules: [HexPermGroupMathlib.Tests, HexPermGroupMathlib.CertificateTests]
     umbrella: true
     spec: hex-perm-group-mathlib
     pins: [hex-basic, hex-perm-group]
