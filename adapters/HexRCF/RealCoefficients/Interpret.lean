@@ -36,20 +36,93 @@ structure Prepared where
   /-- Ordinary proof of `RealAlgebraicNumber.toReal value = source`. -/
   proof : Expr
 
-/-- Recognize a positive reciprocal integer exponent using checked rational
-normalization. The caller retains the source exponent's divisor obligations. -/
-def rootDegree (source : Expr) : ReifyM Nat := do
+-- This is only a size view: rational evaluation still uses the original source.
+-- Retaining a zero power's base prevents the shared bound from erasing its cost.
+private def retainBases : Hex.Reflect.RingExpr → Hex.Reflect.RingExpr
+  | .pow a 0 => retainBases a
+  | .pow a k => .pow (retainBases a) k
+  | .neg a => .neg (retainBases a)
+  | .add a b => .add (retainBases a) (retainBases b)
+  | .sub a b => .sub (retainBases a) (retainBases b)
+  | .mul a b => .mul (retainBases a) (retainBases b)
+  | e => e
+
+/-- Bound every intermediate numerator before rational evaluation. The shared
+ring view bounds literal powers and growth without evaluating their values. -/
+def boundNumerator (numerator : Expr) : ReifyM Unit := do
+  let config := (← get).config
+  match ← liftM (Hex.Reflect.run (Hex.Reflect.reifyCommRing numerator) config.ring) with
+  | .success ring _ =>
+      charge .coefficientBits
+        (Hex.Reflect.RingExpr.coeffBitBound (config.ring.budget.coefficientBits + 1)
+          (retainBases ring.expr))
+  | .declined (.budgetExhausted exhausted) _ => abort (.budget exhausted)
+  | .declined reason usage => abort (.providerDeclined reason usage #[])
+  | .failure reason => abort (.providerFailure reason #[])
+  | .notApplicable => abort (.unsupported numerator "expected rational coefficient arithmetic")
+
+/-- Admit closed rational arithmetic before value normalization. Inverse
+notation is checked against the standard real instance before denominator
+reflection. Every original divisor remains the caller's obligation. -/
+def admitRational (source : Expr) : ReifyM Unit := do
   let (normalized, _) ← Meta.transformWithCache source {} (pre := fun e => do
     if e.isAppOfArity ``Inv.inv 3 then
       let args := e.getAppArgs
       unless ← isDefEq (← inferType args[2]!) q(ℝ) do
-        abort (.unsupported e "root exponents use real rational arithmetic")
-      let a : Q(ℝ) ← pure args[2]!
+        abort (.unsupported e "rational inverse requires real arithmetic")
+      let a : Q(ℝ) := args[2]!
       unless ← isDefEq e q($a⁻¹) do
-        abort (.unsupported e "nonstandard inverse instance in root exponent")
+        abort (.unsupported e "nonstandard rational inverse instance")
       return .continue (some q(1 / $a))
     return .continue) (skipInstances := true)
-  let _ ← arithmetic #[] normalized
+  let view ← arithmetic #[] normalized
+  boundNumerator view.numerator
+
+private partial def coverSubterms (source : Expr) : StateM ExprSet Unit := do
+  if (← get).contains source then return ()
+  modify (·.insert source)
+  let e := source.consumeMData
+  let args := e.getAppArgs
+  let op := e.getAppFn.constName?
+  if [``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv].any (op == some ·) &&
+      args.size == 6 then
+    coverSubterms args[4]!
+    coverSubterms args[5]!
+  else if [``Neg.neg, ``Inv.inv].any (op == some ·) && args.size == 3 then
+    coverSubterms args[2]!
+  else if e.isAppOfArity ``HPow.hPow 6 then
+    coverSubterms args[4]!
+
+/-- Admit original rational guards, largest first, without repeating admission
+for a subterm of an already admitted guard. A covered operand uses the enclosing
+operation's shared numerator or scalar bound, which can be less conservative than a separate
+numerator bound. Results retain original guard order; unsupported syntax is
+recognition-only, while every other error is terminal. All admission precedes
+per-guard zero evaluation. -/
+def admitGuards (sources : Array Expr) : ReifyM (Array Bool) := do
+  let order := (sources.mapIdx fun i source => (i, source.sizeWithoutSharing)).qsort
+    (fun a b => a.2 > b.2 || (a.2 == b.2 && a.1 < b.1))
+  let mut covered : ExprSet := {}
+  let mut admitted := Array.replicate sources.size false
+  for (i, _) in order do
+    let source := sources[i]!
+    if covered.contains source then
+      admitted := admitted.set! i true
+      continue
+    let accepted ← tryCatchThe Error (do
+        admitRational source
+        pure true) (fun error => match error with
+        | .unsupported _ _ => pure false
+        | _ => abort error)
+    if accepted then
+      covered := ((coverSubterms source).run covered).2
+      admitted := admitted.set! i true
+  return admitted
+
+/-- Recognize a positive reciprocal integer exponent using checked rational
+normalization. The caller retains the source exponent's divisor obligations. -/
+def rootDegree (source : Expr) : ReifyM Nat := do
+  let _ ← admitRational source
   let source : Q(ℝ) ← pure source
   let result ← liftM <| observing? do
     let ⟨value, _, _, _⟩ ← Mathlib.Meta.NormNum.deriveRat source (_inst := q(inferInstance))
