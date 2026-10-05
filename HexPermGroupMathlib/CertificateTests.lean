@@ -20,6 +20,13 @@ namespace Hex.PermGroup.Mathlib.CertificateTests
 example : Nat.card (Subgroup.closure
     ({Kernel.permOfImages 3 [0, 0, 1]} : Set (Equiv.Perm (Fin 3)))) = 1 := by
   perm_group
+example : Nat.card (Subgroup.closure
+    {x : Equiv.Perm (Fin 3) | x ∈ [Kernel.permOfImages 3 [1, 2, 0]]}) = 3 := by
+  perm_group
+example : Kernel.permOfImages 3 [1, 0, 2] ∉ Subgroup.closure
+    ((fun x : Equiv.Perm (Fin 3) => x ∈ [Kernel.permOfImages 3 [1, 2, 0]]) : Set _) := by
+  perm_group
+
 -- The previous certificate emitter used these assembly lemmas.
 example : Nat.card (Subgroup.closure
     {x : Equiv.Perm (Fin 0) | x ∈ [(1 : Equiv.Perm (Fin 0))]}) = 1 := by

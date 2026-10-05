@@ -42,10 +42,11 @@ meta partial def setLitElems (s : Expr) : MetaM (Option (List Expr)) := do
   if s.isAppOfArity ``SetLike.coe 4 then
     -- `↑t` for a `Finset` literal `t`
     return ← setLitElems (s.getArg! 3)
-  if s.isAppOfArity ``setOf 2 then
-    -- `↑t` for a `Finset` literal `t` unfolds to `{a | a ∈ t}`.
-    let .lam _ _ body _ := s.getArg! 1 | return none
-    if body.isAppOfArity ``Membership.mem 5 && !(body.getArg! 3).hasLooseBVars then
+  let pred := if s.isAppOfArity ``setOf 2 || s.isAppOfArity ``Set.ofPred 2 then
+      s.getArg! 1 else s
+  if let .lam _ _ body _ := pred then
+    if body.isAppOfArity ``Membership.mem 5 && body.getArg! 4 == .bvar 0 &&
+        !(body.getArg! 3).hasLooseBVars then
       return ← setLitElems (body.getArg! 3)
   let s' ← whnfR s
   if s' != s then return ← setLitElems s'
@@ -100,7 +101,8 @@ meta partial def unfoldSetDefs (s : Expr) (fuel : Nat := 32) : MetaM Expr := do
   let s ← instantiateMVars s
   if s.isAppOfArity ``Insert.insert 5 || s.isAppOfArity ``Singleton.singleton 4 ||
       s.isAppOfArity ``EmptyCollection.emptyCollection 2 ||
-      s.isAppOfArity ``SetLike.coe 4 || s.isAppOfArity ``setOf 2 then
+      s.isAppOfArity ``SetLike.coe 4 || s.isAppOfArity ``setOf 2 ||
+      s.isAppOfArity ``Set.ofPred 2 || s.isLambda then
     return s
   match fuel with
   | 0 => return s
@@ -219,6 +221,17 @@ meta def packTie (nE g : Expr) (x : Nat) (suffix : String) : TacticM Expr := do
     return ← mkEqTrans (← mkAppM ``pack_ofEquiv_permOfImages #[hok]) hpk
   Hex.PermGroup.Kernel.Tactic.packTie nE g x suffix
 
+/-- The element type of a set, including a predicate written as a raw lambda. -/
+private meta def setElementType (s : Expr) : MetaM Expr := do
+  let ty ← inferType s
+  if ty.isAppOfArity ``Set 1 || ty.isAppOfArity ``Finset 1 then return ty.getArg! 0
+  match ← whnfR ty with
+  | .forallE _ dom body _ =>
+    unless body == .sort .zero do
+      throwError "perm_group: unexpected set type{indentExpr ty}"
+    return dom
+  | _ => throwError "perm_group: unexpected set type{indentExpr ty}"
+
 /-- Translate Mathlib's goal, run the shared computational tactic and transport
 its conclusion through the correspondence theorems. -/
 @[perm_group_extension] public meta def extension : Hex.PermGroup.Kernel.Tactic.Extension where
@@ -229,9 +242,7 @@ its conclusion through the correspondence theorems. -/
     let some gens ← setLitElems s
       | throwError "perm_group: the generating set must be a set literal or a coerced Finset \
           literal{indentExpr s}"
-    let permTy ← match (← inferType s) with
-      | .app _ ty => pure ty
-      | ty => throwError "perm_group: unexpected set type{indentExpr ty}"
+    let permTy ← setElementType s
     let n ← permDegree permTy
     let nE := mkNatLit n
     let gs ← mkListLit permTy gens
@@ -254,9 +265,7 @@ its conclusion through the correspondence theorems. -/
   certificate? name s sStx := do
     let some elemStx := setLitStx sStx | return none
     let some gens ← setLitElems s | return none
-    let permTy ← match (← inferType s) with
-      | .app _ ty => pure ty
-      | _ => return none
+    let permTy ← setElementType s
     let n ← permDegree permTy
     let converted ← gens.mapM fun g => mkAppOptM ``Perm.ofEquiv #[mkNatLit n, g]
     let rawSrc := (sStx.reprint.getD "").trimAscii.toString

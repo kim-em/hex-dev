@@ -365,8 +365,8 @@ meta def extensions : MetaM (List Extension) := do
 Importing `HexPermGroupMathlib` extends this syntax to Mathlib subgroup goals. -/
 syntax (name := permGroup) "perm_group" optConfig : tactic
 
-@[tactic permGroup] meta def evalPermGroup : Tactic := fun stx => do
-  let cfg ← elabPermGroupConfig stx[1]
+/-- The shared tactic entry point, also callable by computational consumers. -/
+meta def permGroupTac (cfg : Config) : TacticM Unit := do
   let env ← getEnv
   try
     withMainContext do
@@ -386,13 +386,16 @@ syntax (name := permGroup) "perm_group" optConfig : tactic
               Expected `Generated S p`, `¬ Generated S p`, `HasOrder S N` or `GeneratesAll S`.\n\
               Import HexPermGroupMathlib for goals about Mathlib subgroup closures."
           pure proof
-      unless ← isDefEq (← inferType proof) target do
-        throwError "perm_group: internal final proof mismatch"
+      unless ← withTransparency .all (isDefEq (← inferType proof) target) do
+        throwError "perm_group: internal final proof mismatch\nProof:{indentExpr (← inferType proof)}\nGoal:{indentExpr target}"
       goal.assign proof
       replaceMainGoal []
   catch ex =>
     setEnv env
     throw ex
+
+@[tactic permGroup] meta def evalPermGroup : Tactic := fun stx => do
+  permGroupTac (← elabPermGroupConfig stx[1])
 
 meta partial def rarraySrc (f : α → String) : Lean.RArray α → String
   | .leaf x => s!"(.leaf {f x})"
