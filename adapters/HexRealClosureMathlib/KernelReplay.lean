@@ -129,7 +129,11 @@ partial def missingRedex (expression : Expr) : MetaM (Option Expr) :=
       -- without following unused branches or lambda bodies.
       let polynomial := expression.getAppArgs.back!
       let equality ← mkEq polynomial polynomial
-      let decisionInstance ← synthInstance (mkApp (mkConst ``Decidable) equality)
+      -- A carrier without an available decision dictionary retains the old
+      -- outer missing request; dependency reduction failures still propagate.
+      let decisionInstance ← try
+        synthInstance (mkApp (mkConst ``Decidable) equality)
+      catch _ => return some expression
       let decision := mkAppN (mkConst ``decide) #[equality, decisionInstance]
       if let some prerequisite ← missingRedex decision then return some prerequisite
       return some expression

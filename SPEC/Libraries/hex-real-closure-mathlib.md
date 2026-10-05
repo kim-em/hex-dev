@@ -699,8 +699,11 @@ retain this information on successful, constant or zero paths.
 
 `Element.replayPack` and the eight `ReplayOperations` dictionaries preserve
 native arithmetic literally while requiring an original-key record at every
-packing boundary in ordinary-kernel assembly. `KernelReplay.collectMany`
-routes typed scalar and packing inventories by their actual context and kind.
+call to `replayPack` in ordinary-kernel assembly. Native embedding, generator
+constructors and numeral instances require explicit exporter routing to enter
+that boundary. `KernelReplay.collectMany` routes supplied facts to typed scalar
+and packing inventories by their actual context and kind; requests themselves
+retain the context and polynomial, so the supplier must know the boundary kind.
 It resolves packings needed to authenticate a polynomial key before collecting
 that key's outer record. Compiled missing-record fallback remains ordinary
 native arithmetic, so this is an assembly boundary rather than an untrusted

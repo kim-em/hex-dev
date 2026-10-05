@@ -2922,7 +2922,9 @@ one, natural casts, inversion and division with complete packing records and
 equal predecessor operations. Their equality laws preserve the original
 context's native operations and local gcd/Bézout inversion. Collection resolves
 packings inside a polynomial key before requesting the outer packing. This
-retains division's inverse record before its multiplication record.
+retains division's inverse record before its multiplication record. Native
+embedding, generator constructors and numeral instances do not enter this
+boundary automatically; an exporter must route those constructions explicitly.
 
 `HexRealClosureMathlib.Packing.realize_many` chooses one checked selected root
 for every record in a level. At that point the packed value equals evaluation
@@ -2942,9 +2944,12 @@ keys and replays the resulting inventories without requesting another record.
 The companion module `HexRealClosureMathlib.KernelReplay` provides in-process
 proof assembly and collection of intermediate sign facts. `collectMany` keeps
 a typed finite inventory for each coefficient context and evidence kind, routes
-requests by both, and checks every supplied scalar fact or packing record with
+supplied facts by their actual type, and checks every supplied scalar fact or packing record with
 Lean's ordinary kernel before insertion. The final equation refers to the inventories actually
-used. Replay can supply recorded certificates without calling the producer.
+used. A request contains its context and polynomial, rather than an inventory
+kind. The supplier must know which arithmetic boundary is in use. Supplying a
+fact for an existing inventory of the other kind may consume fuel without
+resolving the request. Replay can supply recorded certificates without calling the producer.
 The caller retains the supplied-fact arithmetic boundary and supplies the
 validated contexts; this interface does not reconstruct a tower catalog.
 
