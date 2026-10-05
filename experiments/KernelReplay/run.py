@@ -37,6 +37,12 @@ def main() -> None:
         outcomes.append({"control": label, "exit_code": process.returncode})
         print(f"{label}: passed", flush=True)
 
+    run("collect", ["collect"],
+        contains=("collected=2 kernelAccepted=true", "incompleteInventory=missingEndpoint",
+                  "zeroFuel=normalRejection", "irrelevantSupplier=boundedRejection",
+                  "oneFuel=missingEndpoint", "falseGraph=checkedFalse",
+                  "extraReorderedInventory=twoFacts", "malformedFact=kernelRejected",
+                  "incompleteFact=rejected"))
     graph = results / "graph.json"
     run("emit", ["emit", str(graph)])
     if len(graph.read_bytes()) != 4093 or hashlib.sha256(graph.read_bytes()).hexdigest() != \
