@@ -714,7 +714,7 @@ lean_lib HexQuerySemantics where
     `HexSignDetMathlib.ComparisonProducer,
     `HexRealClosureMathlib.Specialize, `HexRealClosureMathlib.SpecializeTests,
     `HexRealClosureMathlib.SignFacts, `HexRealClosureMathlib.SignRequests,
-    `HexRealClosureMathlib.SignEvidence, `HexRealClosureMathlib.FactReplay,
+    `HexRealClosureMathlib.SignEvidence,
     `HexRealClosureMathlib.TransportPolynomial, `HexRealClosureMathlib.TransportProduct,
     `HexRealClosureMathlib.TransportArithmetic, `HexRealClosureMathlib.TransportQuery, `HexRealClosureMathlib.TransportTests,
     `HexRealClosureMathlib.TransportPower, `HexRealClosureMathlib.TransportTarski,
@@ -775,7 +775,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.AlgebraicValue, `HexRealClosureMathlib.BaseClean, `HexRealClosureMathlib.AlgebraicTower,
     `HexRealClosureMathlib.SelectedRoot,
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element, `HexRealClosureMathlib.QAdjoin,
-    `HexRealClosureMathlib.NumberField, `HexRealClosureMathlib.NumberFieldTower,
+    `HexRealClosureMathlib.NumberField,
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
     `HexRealClosureMathlib.YunInvariant, `HexRealClosureMathlib.Bounds,
     `HexRealClosureMathlib.Deflation, `HexRealClosureMathlib.Bisection,
@@ -1788,10 +1788,6 @@ lean_exe hexrealclosure_number_field_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.NumberFieldConformance
 
-lean_exe hexrealclosure_number_field_samples where
-  srcDir := "conformance"
-  root := `HexRealClosure.NumberFieldSamples
-
 lean_exe hexrealclosure_bounds_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.BoundsConformance
@@ -2346,7 +2342,6 @@ lean_lib KernelReplayExperiment where
   globs := #[.one `KernelReplay.Assemble, .one `KernelReplay.Json, .one `KernelReplay.Generated,
     .one `KernelReplay.Nested, .one `KernelReplay.NestedProbe,
     .one `KernelReplay.FactOperations, .one `KernelReplay.FactOperationsProbe,
-    .one `KernelReplay.Root, .one `KernelReplay.RootProbe,
     .one `KernelReplay.ProofProbe,
     .one `KernelReplay.InProcessProbe, .one `KernelReplay.LowerProbe, .one `KernelReplay.LowerProof]
 

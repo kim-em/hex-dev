@@ -402,7 +402,7 @@ class Families(unittest.TestCase):
         self.assertTrue(family.matches("HexPolyZ/Rational.lean"))
         self.assertTrue(family.matches("HexPrimality/Table.lean"))
         self.assertTrue(family.matches("bench/corpus/hexbz-factor-corpus.jsonl"))
-        self.assertFalse(family.matches("HexPrimality/Sieve.lean"))
+        self.assertTrue(family.matches("HexPrimality/Sieve.lean"))
         self.assertFalse(family.matches("HexPolyZ/SPEC/hex-poly-z.md"))
 
     def test_comparator_families_see_only_their_own_adapter(self):

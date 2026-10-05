@@ -9,6 +9,8 @@ module
 public import HexPolyZ.IntegerPolynomial
 public import HexPolyZ.ExactDivision
 public import HexPolyZ.Kronecker
+public import HexPolyZ.KroneckerMulti
+public import HexPolyZ.NttMul
 public import HexPolyZ.Rational
 public import HexPolyZ.Decomposition
 public import HexPolyZ.Mignotte
@@ -19,5 +21,5 @@ public section
 The `HexPolyZ` library specializes the generic dense polynomial library to
 integer coefficients, exposing the `ZPoly` alias together with congruence,
 content, primitive-part, conservative executable Mignotte-bound APIs used
-by the factoring pipeline, and the Kronecker-substitution product kernel.
+by the factoring pipeline, and the Kronecker-substitution and CRT-NTT product kernels.
 -/

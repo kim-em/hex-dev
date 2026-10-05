@@ -34,6 +34,32 @@ lean_exe hexbz_factor_service where
 
 
 class RepositoryLakefile(unittest.TestCase):
+    def test_factor_fingerprint_covers_imported_sources(self):
+        # Resolve package-root and bench sources by their actual module names;
+        # a manual chapter named HexPoly.lean is HexManual.Chapters.HexPoly,
+        # not the HexPoly umbrella. The general Lake scanner deliberately
+        # over-approximates ambiguous suffixes for configuration exemptions.
+        sources = {}
+        paths = {}
+        for line in freshness.git('ls-files', '-s', '--', '*.lean').splitlines():
+            metadata, path = line.split('\t')
+            module = Path(path)
+            if module.parts[0] == 'bench':
+                module = Path(*module.parts[1:])
+            sources.setdefault(module, []).append(metadata.split()[1])
+            paths[module] = path
+        prefixes = {path.parts[0] for path in sources}
+        modules = freshness.lean_import_modules(
+            ['HexBench.FactorService'], lambda: (sources, prefixes))
+        self.assertIsNotNone(modules)
+        family = freshness.factor_family('hex-factor')
+        missing = []
+        for name in modules:
+            module = Path(*name.split('.')).with_suffix('.lean')
+            if module in paths and not family.matches(paths[module]):
+                missing.append(paths[module])
+        self.assertEqual(sorted(missing), [])
+
     def test_current_import_closure_and_library_ownership(self):
         guard.factor_import_modules.cache_clear()
         self.addCleanup(guard.factor_import_modules.cache_clear)
@@ -257,7 +283,7 @@ class LakefileAffectsRuntime(unittest.TestCase):
             self.assertTrue(guard.lakefile_texts_differ(tail, tail.replace('fast', 'slow')))
 
     def test_registering_a_new_target_is_not_a_runtime_change(self):
-        after = BASE + '\nlean_lib HexPolyFast where\n  srcDir := "."\n'
+        after = BASE + '\nlean_lib HexGraphIso where\n  srcDir := "."\n'
         self.assertFalse(guard.lakefile_texts_differ(BASE, after))
 
     def test_registering_a_new_exe_is_not_a_runtime_change(self):
