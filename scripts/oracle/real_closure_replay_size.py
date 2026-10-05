@@ -24,6 +24,13 @@ def bytes_of(value):
     return len(json.dumps(value, separators=(',', ':'), ensure_ascii=False).encode())
 
 
+def tokens(value):
+    if isinstance(value, list):
+        return 2 + max(0, len(value) - 1) + sum(tokens(v) for v in value)
+    require(type(value) is int, 'non-integer graph token')
+    return 1
+
+
 def value(raw, level, gamma, modulus, leaves):
     require(isinstance(raw, list), 'coefficient is not an array')
     if level == 0:
@@ -61,6 +68,18 @@ def verify(row):
     def polynomial(raw):
         require(isinstance(raw, list), 'polynomial is not an array')
         return [value(c, depth - 1, gamma, modulus, leaves) for c in raw]
+    parent = row['parent_context']
+    require(isinstance(parent, list) and len(parent) == 3 and parent[0] == []
+            and type(parent[1]) is int and parent[1] == 0, 'changed rational base')
+    if depth == 1:
+        require(parent[2] == [], 'unexpected algebraic parent')
+    else:
+        require(isinstance(parent[2], list) and len(parent[2]) == 1, 'missing parent descriptor')
+        frame = parent[2][0]
+        require(isinstance(frame, list) and len(frame) == 7 and frame[0] == [0]
+                and frame[1] == [[0, -2, 1], [0, 0, 1], [0, 1, 1]]
+                and frame[2:4] == [[1, [0, 1, 1]], [1, [0, 2, 1]]]
+                and frame[4:6] == [[], []], 'changed parent descriptor')
     head = polynomial(row['head'])
     require(head == [-fmpq_poly([2]) if depth == 1 else -(gamma ** 2),
                      fmpq_poly([]), fmpq_poly([1])], 'changed defining polynomial')
@@ -77,6 +96,9 @@ def verify(row):
     _, root, entries = graph
     require(type(root) is int and isinstance(entries, list) and 0 <= root < len(entries),
             'invalid graph root')
+    require(type(row['native_graph_bytes']) is int
+            and row['native_graph_bytes'] == bytes_of(graph) + tokens(graph),
+            'wrong native graph byte count')
     nodes, expanded_bytes, child_edges, payload_bytes = [], [], [], []
     expected_context = entries[root][0][0]
     require(expected_context == [0], 'unknown context reference')
@@ -85,8 +107,16 @@ def verify(row):
         node, children = entry
         require(isinstance(node, list) and len(node) == 11, 'invalid node shape')
         require(node[0] == expected_context and node[1] == row['head'], 'stale node binding')
-        require(node[2] == entries[root][0][2] and node[3] == entries[root][0][3],
-                'changed node endpoints')
+        for endpoint, expected in [(node[2], 1), (node[3], 2)]:
+            require(isinstance(endpoint, list) and len(endpoint) == 2
+                    and type(endpoint[0]) is int and endpoint[0] == 1
+                    and value(endpoint[1], depth - 1, gamma, modulus, []) == fmpq_poly([expected]),
+                    'changed node endpoints')
+        require(isinstance(node[7], list), 'invalid moment list')
+        for moment in node[7]:
+            require(isinstance(moment, list) and len(moment) == 12
+                    and moment[0] == expected_context and moment[1] == row['head']
+                    and moment[3:5] == node[2:4], 'changed moment binding')
         require(isinstance(children, list) and len(children) <= 1, 'invalid optional children')
         links = children[0] if children else []
         require(isinstance(links, list) and len(links) in (0, 2)
@@ -114,7 +144,8 @@ def verify(row):
     for name, expected in [('dag_nodes', len(entries)), ('dag_edges', edges),
                            ('tree_occurrences', nodes[root])]:
         require(type(row[name]) is int and row[name] == expected, f'wrong {name}')
-    return dict(depth=depth, queries_count=count, repeated=repeated, dag_nodes=len(entries),
+    return dict(depth=depth, queries_count=count, repeated=repeated,
+                native_graph_bytes=row['native_graph_bytes'], dag_nodes=len(entries),
                 dag_edges=edges, tree_occurrences=nodes[root], graph_compact_bytes=bytes_of(graph),
                 unique_node_payload_bytes=sum(payload_bytes),
                 unshared_node_payload_bytes=expanded_bytes[root],

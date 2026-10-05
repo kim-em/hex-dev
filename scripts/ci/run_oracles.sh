@@ -260,7 +260,8 @@ run_tuple() {
     fi
     emit_command=(env LEAN_ABORT_ON_PANIC=1 "${emit_command[@]}")
   fi
-  if [ "$oracle" = "scripts/oracle/real_closure_basic.py" ]; then
+  if [ "$oracle" = "scripts/oracle/real_closure_basic.py" ] ||
+      [ "$emit" = "hexrealclosure_replay_size" ]; then
     emit_command=(env LEAN_ABORT_ON_PANIC=1 "${emit_command[@]}")
   fi
   if ! "${emit_command[@]}" >"$fresh"; then

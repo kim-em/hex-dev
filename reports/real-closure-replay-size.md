@@ -8,13 +8,15 @@ families run the production `Descriptor.buildSigns`, encode its actual replay
 with `Dag.encode`, and check the resulting bytes with `Dag.decodeSigns`.
 
 The [retained analysis](bench-results/real-closure-replay-size/analysis.json)
-contains all 24 rows. The [manifest](bench-results/real-closure-replay-size/manifest.json)
+contains all 24 rows, including the native codec byte count. The [manifest](bench-results/real-closure-replay-size/manifest.json)
 binds the driver, independent oracle, fixture, analysis and native binary by
 SHA-256. Rebuild with `lake build hexrealclosure_replay_size`; run the native
 command and analysis command in the manifest. CI reproduces the entire native
 fixture, runs the oracle and tests changed inputs and graph/count mutations.
 The FLINT oracle checks the exact defining and query coefficients in
-`Q(gamma)` with `gamma^(2^depth)=2`. Both selected positive roots lie strictly
+`Q(gamma)` with `gamma^(2^depth)=2`. It checks each emitted root interval and the first
+level's full defining head and interval in the depth-two parent signature.
+Both selected positive roots lie strictly
 between 1 and 2, which gives the query signs independently of Hex. Its graph
 checks authenticate shape, bindings and child query slices; the mathematical
 certificate replay is performed by the native Lean checker.
@@ -50,7 +52,10 @@ All input queries have outer degree one. The defining polynomials have degree
 two. The analysis counts rational leaves and numerator/denominator bits in the
 literal input coefficients, including stored algebraic representatives at
 depth two. It separately reports graph bytes and node payload bytes, with
-compact UTF-8 JSON delimiters and no transport whitespace. The unique payload
+compact UTF-8 JSON delimiters. The native codec places one space after each
+token, including the final token; these spaces form its canonical output and
+count towards reader byte limits. The driver emits the actual native byte
+count, and the oracle checks it against compact bytes plus the token count. The unique payload
 sum counts each stored node once; the unshared payload sum follows every tree
 occurrence. These payload sums include node-local context frames and integer
 certificates, and exclude child-reference indices and graph delimiters.
@@ -61,12 +66,12 @@ bytes follow `t_i=1+t_left+t_right` and
 these recurrences in the actual postorder graph, retaining multiplicity when
 both children have the same index. Unique bytes are `sum_i b_i`.
 
-| Depth | Family | n | Compact graph bytes | Unique node payload bytes | Unshared node payload bytes |
-| ---: | --- | ---: | ---: | ---: | ---: |
-| 1 | Repeated | 32 | 8,598 | 8,530 | 81,133 |
-| 2 | Repeated | 32 | 12,769 | 12,701 | 120,267 |
-| 1 | Distinct | 32 | 83,067 | 82,474 | 82,474 |
-| 2 | Distinct | 32 | 123,107 | 122,514 | 122,514 |
+| Depth | Family | n | Native codec bytes | Compact graph bytes | Unique node payload bytes | Unshared node payload bytes |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | Repeated | 32 | 16,983 | 8,598 | 8,530 | 81,133 |
+| 2 | Repeated | 32 | 25,148 | 12,769 | 12,701 | 120,267 |
+| 1 | Distinct | 32 | 162,997 | 83,067 | 82,474 | 82,474 |
+| 2 | Distinct | 32 | 240,333 | 123,107 | 122,514 | 122,514 |
 
 Graph node count alone omits query-array width, integer certificate sizes and
 nested coefficient/context payloads. These exact size observations do not

@@ -48,12 +48,13 @@ private def emitCase {ctx : Context registry}
     let edges := graph.entries.foldl (fun n entry => n + if entry.children.isSome then 2 else 0) 0
     let payload := object [
       ("depth", Json.of depth), ("queries_count", Json.of count),
-      ("repeated", .bool repeated), ("head", Codec.poly ctx.codec descriptor.raw.head),
+      ("repeated", .bool repeated), ("parent_context", ctx.signature.literal.toJson),
+      ("head", Codec.poly ctx.codec descriptor.raw.head),
       ("queries", .arr (queries.toArray.map (Codec.poly ctx.codec))),
       ("signs", Json.of signs.values.toList),
       ("tree_occurrences", Json.of (occurrences signs.evidence)),
       ("dag_nodes", Json.of graph.entries.size), ("dag_edges", Json.of edges),
-      ("replayed", .bool true),
+      ("replayed", .bool true), ("native_graph_bytes", Json.of bytes.size),
       ("graph", Codec.graph ctx.codec (contextCodec ctx.signature) graph)]
     let some text := String.fromUTF8? payload.writeBytes
       | throw (IO.userError "invalid UTF-8 output")
