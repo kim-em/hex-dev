@@ -2479,6 +2479,64 @@ as above; they do not supply that general enlargement. Frozen context/sign
 reconstruction and general joint realization still require the corresponding
 owner interfaces.
 
+# Ordinary witnesses from one infinitesimal replay
+%%%
+tag := "hex-rcf-infinitesimal-replay"
+%%%
+
+Internal sample data can contain one infinitesimal without treating it as a
+real number. {name}`Hex.RCF.RealCoefficients.Realization.queries` specializes
+every shared source atom in the fixed coefficient field and lifts its
+coefficients as constant rational functions. It retains atom order, repeated
+atoms and domain guards. {name}`Hex.RCF.RealCoefficients.Realization.signs`
+proves that specialization at one ordinary parameter gives exactly the source
+sign vector at one ordinary real point.
+
+{name}`Hex.RCF.RealCoefficients.Realization.exists_real` combines an accepted
+literal BKR replay, a count-one complete sign row and a true shared Boolean
+formula. The fixed coefficient field must already have its supplied ordered
+embedding into ℝ. The owner's finite realization law supplies one positive
+ordinary parameter and one root satisfying all recorded signs together:
+
+```lean
+open Hex Hex.RCF.RealCoefficients in
+example {F : Type} [Field F] [DecidableEq F]
+    [LinearOrder F] [IsStrictOrderedRing F]
+    (embedding : F →+* ℝ) (ordered : StrictMono embedding)
+    (values : Fin n → F)
+    (formula : Hex.RealFormula.QF (n + 1))
+    (p : DensePoly (RationalFn F))
+    (a b : Endpoint (RationalFn F))
+    (r : SignDet.Replay (RationalFn F) Nat)
+    (accepted : r.check
+      (OrderedFn.Infinitesimal.sign OrderedFn.orderSign)
+      7 p a b (Realization.queries values formula) = true)
+    (condition : List Int)
+    (one : (r.table accepted).count condition = 1)
+    (truth :
+      Samples.Row.eval formula condition = some true) :
+    ∃ x : ℝ, formula.toProp (Hex.RealFormula.append
+      (fun i => embedding (values i)) x) :=
+  Realization.exists_real embedding ordered 7 values formula
+    p a b r accepted condition one truth
+```
+
+The conformance example freezes the root of `X − (1 + ε)` and the complete
+source guard conjunction `1 < x ∧ x ≤ 2`. Its two BKR children certify the
+ordered row `[1, −1]`; the ordinary-kernel proof concludes that an ordinary real
+witness satisfies the whole conjunction. A changed context or coefficient,
+omitted BKR children, a false row and a truncated row are rejected. The
+Tarski root interval has its own open endpoints, while the source's half-open
+upper bound remains an atom. No root producer or approximation callback
+supplies the frozen certificates.
+
+This is a direct semantic API. Frontend quotation still needs the authenticated
+coefficient identities, every original divisor proof and the original-goal
+reification equivalence. It does not reconstruct arbitrary tower contexts,
+provide a global real embedding of an infinitesimal field, or realize nested
+selected roots with successive infinitesimals. Those require the complete
+joint owner realization interface.
+
 # Caller-supplied finite bounds
 %%%
 tag := "hex-rcf-registered-bounds"
