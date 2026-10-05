@@ -110,6 +110,8 @@ def main():
             record[name+'_sha256'] = digest(snapshot)
         record['oracle_version'] = run([oracle_python,'-c',
             'import flint; print(flint.__version__,flint.__FLINT_VERSION__)']).read_text().strip()
+        if record['oracle_version'] != '0.9.0 3.6.0':
+            raise RuntimeError('measurement requires pinned python-flint/FLINT versions')
         cpu,lease = cpu_lease()
         os.sched_setaffinity(0,{cpu})
         record.update(cpu=cpu,affinity=sorted(os.sched_getaffinity(0)),load=list(os.getloadavg()))
