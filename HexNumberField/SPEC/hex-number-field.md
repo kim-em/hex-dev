@@ -347,7 +347,10 @@ forms applied with the number's own representative `a.rep`.
 `PolyQuot.toAlgebraicNumber?` materializes `1, a, a², ...` once with one
 fixed-field multiplication per new power, finds the first Krylov dependence by
 row reduction, clears denominators, normalizes the primitive part, and
-identifies the matching isolated root.
+identifies the matching isolated root. Its canonical constructor reuses this
+certified isolation run. `PolyQuot.toAlgebraicNumber?_eq` proves equality with
+the pipeline using `AlgebraicNumber.ofNormalized?`, including the stored
+canonical representative and every checked failure.
 
 `AlgebraicRoot.exact?` factors `a.p`, selects the unique irreducible factor whose
 isolated root agrees with `a.rep`, and returns that factor in canonical form.
