@@ -132,6 +132,22 @@ theorem Conversion.infinitesimal_spec {K : Type} [Lean.Grind.Field K] [Decidable
           (Context.base context.infinitesimal).Value) :=
   ⟨rfl, HEq.rfl⟩
 
+private theorem Conversion.infinitesimal_value_proof
+    {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    {sign : K → Int} (context : BaseContext.Context registry K sign)
+    (a : (Context.base context).Value) :
+    _root_.cast (congrArg Context.Value (Conversion.infinitesimal_spec context).1)
+      ((Conversion.infinitesimal context).value a) = BaseContext.Element.embed a := rfl
+
+/-- The checked infinitesimal conversion is the native constant embedding
+after aligning its returned context with the enlarged base. -/
+theorem Conversion.infinitesimal_value {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    {sign : K → Int} (context : BaseContext.Context registry K sign)
+    (a : (Context.base context).Value) :
+    _root_.cast (congrArg Context.Value (Conversion.infinitesimal_spec context).1)
+      ((Conversion.infinitesimal context).value a) = BaseContext.Element.embed a :=
+  Conversion.infinitesimal_value_proof context a
+
 /-- Compose two actual native conversions, retaining both packing closures. -/
 def Conversion.comp {source : Context registry} (first : Conversion source)
     (next : Conversion first.context) : Conversion source :=

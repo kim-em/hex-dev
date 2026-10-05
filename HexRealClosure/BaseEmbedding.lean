@@ -60,6 +60,35 @@ theorem BaseInclusion.self_value {base : BaseContext.PackedContext registry}
     change inclusion.coefficients.value a.stored = a.stored
     rw [coefficients, BaseContext.FieldEmbedding.identity_value]
 
+/-- The actual checked map into the next staged base is the old map followed
+by the constant rational-function embedding. Earlier infinitesimals retain
+their original values. -/
+theorem BaseInclusion.next_value {source : BaseContext.PackedContext registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (target : BaseContext.Context registry B sign)
+    (old : BaseInclusion source (.pack target))
+    (next : BaseInclusion source (.pack target.infinitesimal))
+    (a : (Context.ofBase source).Value) :
+    next.value a = BaseContext.Element.embed (old.value a) := by
+  have compatible := (BaseContext.PackedContext.embedding?_isSome source (.pack target)).mp
+    (by rw [old.produced]; rfl)
+  have deeper : source.signature.infinitesimals < target.chain.signature.infinitesimals + 1 := by
+    exact Nat.lt_succ_of_le compatible.2
+  have first : target.chain.embedding? source = some old.coefficients := by
+    have produced := old.produced
+    rw [BaseContext.PackedContext.embedding?_context] at produced
+    exact produced
+  have second := next.produced
+  rw [BaseContext.PackedContext.embedding?_context, BaseContext.Context.infinitesimal_chain,
+    BaseContext.Chain.embedding?_extra target.chain source deeper,
+    first, Option.map_some] at second
+  have coefficients := (Option.some.inj second).symm
+  apply BaseContext.Element.ext
+  change next.coefficients.value (Context.baseStored source a) =
+    Hex.RationalFn.C (old.coefficients.value (Context.baseStored source a))
+  rw [coefficients, BaseContext.FieldEmbedding.comp_value,
+    BaseContext.FieldEmbedding.constants_value]
+
 end Hex.RealClosure.Tower
 
 /-- info: 'Hex.RealClosure.Tower.BaseInclusion.self_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/

@@ -144,3 +144,41 @@ example (parent : Root initial) (child : Root parent.context)
   exact ⟨shared, produced, model, packet, registered, returned, union _⟩
 
 end Hex.RealClosure.Tower.SharedPresentationTests
+
+namespace Hex.RealClosure.Tower.SharedPresentationTests
+open scoped Hex.OrderedFn.Infinitesimal
+
+/-- Enlarge, register a new owner, then enlarge again. The first generated
+infinitesimal survives both actual packets in the final canonical model. -/
+theorem retain_parameter {registry : BaseContext.Registry} {base : BaseContext.PackedContext registry}
+    {R : Type u} [Field R] [LinearOrder R] [DecidableEq R]
+    [IsStrictOrderedRing R] [IsRealClosed R]
+    {owners : List (Context registry)} {shared : Shared base owners}
+    {following : base.Realization} {reference : Tower.Model (Context.ofBase base) R}
+    (model : Shared.Model shared following reference)
+    (ambient : Ambient (Hex.RationalFn R)) (source : Context registry)
+    (compatible : source.origin.base.signature.constants <+: base.infinitesimal.signature.constants ∧
+      source.origin.base.signature.infinitesimals ≤ base.infinitesimal.signature.infinitesimals)
+    (nextAmbient : Ambient (Hex.RationalFn ambient.Carrier)) :
+    ∃ first : SharedEnlargement shared, shared.enlarge? = some first ∧
+      ∃ packet : Registration first.shared source, first.shared.register? source = some packet ∧
+        ∃ second : SharedEnlargement packet.shared, packet.shared.enlarge? = some second ∧
+          ∃ returned : Shared.Model second.shared following.infinitesimal.infinitesimal
+              (Tower.Model.next base.infinitesimal (Tower.Model.next base reference ambient) nextAmbient),
+            returned.target.value
+                (second.previous.value (packet.previous.value first.parameter)) =
+              Ambient.coefficientHom nextAmbient (ambient.inclusion Hex.RationalFn.X) ∧
+            returned.target.value second.parameter = nextAmbient.inclusion Hex.RationalFn.X := by
+  obtain ⟨first, enlarged, firstModel, parameter, _, _⟩ := model.enlarge ambient
+  obtain ⟨packet, registered, registeredModel, preserved⟩ :=
+    firstModel.register? source compatible
+  obtain ⟨second, enlargedAgain, returned, nextParameter, previous, aligned⟩ :=
+    registeredModel.enlarge nextAmbient
+  refine ⟨first, enlarged, packet, registered, second, enlargedAgain, returned, ?_, nextParameter⟩
+  rw [← aligned, previous.value, Tower.Model.liftInfinitesimal_value, preserved, parameter]
+
+end Hex.RealClosure.Tower.SharedPresentationTests
+
+/-- info: 'Hex.RealClosure.Tower.SharedPresentationTests.retain_parameter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.SharedPresentationTests.retain_parameter

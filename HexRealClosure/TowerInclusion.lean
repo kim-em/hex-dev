@@ -60,6 +60,14 @@ private theorem cast_apply {source left right : Context registry} (same : left =
   cases eq_of_heq agree
   rfl
 
+/-- Read a checked conversion through its specified target and value map. -/
+theorem Inclusion.value_eq {source target : Context registry}
+    (conversion : Conversion source) (same : conversion.context = target)
+    (value : source.Value → target.Value) (agree : HEq conversion.value value)
+    (a : source.Value) :
+    (⟨conversion, same⟩ : Inclusion source target).value a = value a :=
+  cast_apply same conversion.value value agree a
+
 /-- Composition applies the two cached inclusion maps in order. -/
 theorem Inclusion.comp_value {source middle target : Context registry}
     (first : Inclusion source middle) (next : Inclusion middle target) (a : source.Value) :

@@ -108,6 +108,29 @@ def Suffix.prefixes {source : Context registry} (suffix : Suffix source) : suffi
     let inclusion := first.comp later.inclusion
     ⟨inclusion, later.cache.insert inclusion⟩
 
+private theorem Suffix.prefixes_value_proof {source : Context registry}
+    (suffix : Suffix source) (a : source.Value) :
+    suffix.prefixes.inclusion.value a = suffix.embed a := by
+  induction suffix with
+  | nil => exact Inclusion.identity_value _ a
+  | @root parent descriptor rest ih =>
+    let first : Inclusion parent (parent.adjoin descriptor).context :=
+      ⟨Conversion.includeRoot parent descriptor (parent.adjoin descriptor) rfl,
+        (Conversion.includeRoot_spec parent descriptor (parent.adjoin descriptor) rfl).1⟩
+    change (first.comp rest.prefixes.inclusion).value a =
+      rest.embed ((parent.adjoin descriptor).embed a)
+    rw [Inclusion.comp_value, ih]
+    exact congrArg rest.embed (Inclusion.value_eq
+      (Conversion.includeRoot parent descriptor (parent.adjoin descriptor) rfl)
+      (Conversion.includeRoot_spec parent descriptor (parent.adjoin descriptor) rfl).1
+      (parent.adjoin descriptor).embed
+      (Conversion.includeRoot_spec parent descriptor (parent.adjoin descriptor) rfl).2 a)
+
+/-- The retained predecessor inclusion is exactly the native suffix embedding. -/
+theorem Suffix.prefixes_value {source : Context registry}
+    (suffix : Suffix source) (a : source.Value) :
+    suffix.prefixes.inclusion.value a = suffix.embed a := Suffix.prefixes_value_proof suffix a
+
 private def findInclusion {target : Context registry} (source : Context registry) :
     List (Σ owner : Context registry, Inclusion owner target) → Option (Inclusion source target)
   | [] => none

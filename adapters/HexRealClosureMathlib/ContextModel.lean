@@ -191,6 +191,19 @@ theorem Context.model?_embed (context : Context registry)
   rw [parentProduced, childProduced, Option.map_some] at same
   rw [Option.some.inj same, original.adjoin_embed descriptor a]
 
+/-- Canonical interpretation of every actual selected-root suffix extends the
+canonical model of its starting context. -/
+theorem Suffix.model?_extend {source : Context registry} (suffix : Suffix source)
+    (following : base.Realization) (reference : Tower.Model (Context.ofBase base) R) :
+    ∀ (model : Tower.Model source R), source.model? following reference = some model →
+      suffix.context.model? following reference = some (model.extend suffix) := by
+  induction suffix with
+  | nil => intro model canonical; exact canonical
+  | root descriptor rest ih =>
+    intro model canonical
+    exact ih (model.adjoin descriptor) (by
+      rw [Context.model?_adjoin, canonical, Option.map_some])
+
 private theorem Context.model?_isSome_proof (context : Context registry)
     (following : base.Realization) (target : Tower.Model (Context.ofBase base) R) :
     (context.model? following target).isSome = true ↔
@@ -210,6 +223,118 @@ theorem Context.model?_isSome (context : Context registry)
       context.origin.base.signature.constants <+: base.signature.constants ∧
         context.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals :=
   context.model?_isSome_proof following target
+
+private theorem Origin.model?_next_proof
+    {context : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    {S : Type v} [Field S] [LinearOrder S] [DecidableEq S]
+    [IsStrictOrderedRing S] [IsRealClosed S]
+    (origin : Origin context) (base : BaseContext.Context registry B sign)
+    (original : (BaseContext.PackedContext.pack base).Realization)
+    (following : (BaseContext.PackedContext.pack base.infinitesimal).Realization)
+    (oldBase : Tower.Model (Context.ofBase (.pack base)) R)
+    (nextBase : Tower.Model (Context.ofBase (.pack base.infinitesimal)) S)
+    (embedding : R →+* S) (ordered : StrictMono embedding)
+    (constants : ∀ a, nextBase.value (BaseContext.Element.embed a) =
+      embedding (oldBase.value a))
+    (old : Tower.Model context R) (next : Tower.Model context S)
+    (oldProduced : origin.model? original oldBase = some old)
+    (nextProduced : origin.model? following nextBase = some next)
+    (a : context.Value) : next.value a = embedding (old.value a) := by
+  cases origin with
+  | pack source suffix same =>
+    cases same
+    cases first : BaseInclusion.make? (.pack source) (.pack base) with
+    | none => simp [Origin.model?, first] at oldProduced
+    | some oldInclusion =>
+      cases second : BaseInclusion.make? (.pack source) (.pack base.infinitesimal) with
+      | none => simp [Origin.model?, second] at nextProduced
+      | some nextInclusion =>
+        simp only [Origin.model?, first, Option.map_some] at oldProduced
+        simp only [Origin.model?, second, Option.map_some] at nextProduced
+        have oldEq : (BaseInclusion.Model.derive original oldInclusion oldBase).source.extend
+            suffix = old := Option.some.inj oldProduced
+        have nextEq : (BaseInclusion.Model.derive following nextInclusion nextBase).source.extend
+            suffix = next := Option.some.inj nextProduced
+        rw [← oldEq, ← nextEq]
+        rw [BaseInclusion.Model.derive_next base oldInclusion nextInclusion original following
+          oldBase nextBase embedding ordered constants]
+        exact Tower.Model.map_extend _ embedding ordered suffix a
+
+/-- The canonical owner factory commutes with the next base inclusion through
+every stored selected root. Only the actual two factory results are compared. -/
+theorem Origin.model?_next
+    {context : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    {S : Type v} [Field S] [LinearOrder S] [DecidableEq S]
+    [IsStrictOrderedRing S] [IsRealClosed S]
+    (origin : Origin context) (base : BaseContext.Context registry B sign)
+    (original : (BaseContext.PackedContext.pack base).Realization)
+    (following : (BaseContext.PackedContext.pack base.infinitesimal).Realization)
+    (oldBase : Tower.Model (Context.ofBase (.pack base)) R)
+    (nextBase : Tower.Model (Context.ofBase (.pack base.infinitesimal)) S)
+    (embedding : R →+* S) (ordered : StrictMono embedding)
+    (constants : ∀ a, nextBase.value (BaseContext.Element.embed a) =
+      embedding (oldBase.value a))
+    (old : Tower.Model context R) (next : Tower.Model context S)
+    (oldProduced : origin.model? original oldBase = some old)
+    (nextProduced : origin.model? following nextBase = some next)
+    (a : context.Value) : next.value a = embedding (old.value a) :=
+  origin.model?_next_proof base original following oldBase nextBase embedding ordered
+    constants old next oldProduced nextProduced a
+
+open scoped Hex.OrderedFn.Infinitesimal in
+/-- Canonical owner models in the constructed enlarged base are exactly the
+ordered images of the old canonical models. Provider history and constant
+agreement are both derived, including every stored algebraic root. -/
+theorem Context.model?_next_eq (context : Context registry)
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (original : (BaseContext.PackedContext.pack base).Realization)
+    (reference : Tower.Model (Context.base base) R)
+    (ambient : Ambient (Hex.RationalFn R))
+    (old : Tower.Model context R) (next : Tower.Model context ambient.Carrier)
+    (oldProduced : context.model? original reference = some old)
+    (nextProduced : context.model? original.infinitesimal
+      (Tower.Model.nextBase base reference ambient) = some next) :
+    next = old.map (Ambient.coefficientHom ambient)
+      (Ambient.coefficientHom_strictMono ambient) := by
+  apply Tower.Model.value_ext
+  intro a
+  exact context.origin.model?_next base original original.infinitesimal reference
+    (Tower.Model.nextBase base reference ambient) (Ambient.coefficientHom ambient)
+    (Ambient.coefficientHom_strictMono ambient)
+    (Tower.Model.nextBase_embed base reference ambient) old next oldProduced nextProduced a
+
+open scoped Hex.OrderedFn.Infinitesimal in
+/-- Every old canonical owner is accepted by the next base's factory, which
+returns its ordered image without an additional interpretation premise. -/
+theorem Context.model?_next (context : Context registry)
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (original : (BaseContext.PackedContext.pack base).Realization)
+    (reference : Tower.Model (Context.base base) R)
+    (ambient : Ambient (Hex.RationalFn R))
+    (old : Tower.Model context R)
+    (oldProduced : context.model? original reference = some old) :
+    context.model? original.infinitesimal (Tower.Model.nextBase base reference ambient) =
+      some (old.map (Ambient.coefficientHom ambient)
+        (Ambient.coefficientHom_strictMono ambient)) := by
+  have compatible := (context.model?_isSome original reference).mp (by rw [oldProduced]; rfl)
+  have success := (context.model?_isSome original.infinitesimal
+    (Tower.Model.nextBase base reference ambient)).mpr (by
+      change context.origin.base.signature.constants <+:
+          ((BaseContext.PackedContext.pack base).infinitesimal).signature.constants ∧
+        context.origin.base.signature.infinitesimals ≤
+          ((BaseContext.PackedContext.pack base).infinitesimal).signature.infinitesimals
+      rw [BaseContext.PackedContext.infinitesimal_signature]
+      exact ⟨compatible.1, Nat.le.step compatible.2⟩)
+  cases produced : context.model? original.infinitesimal
+      (Tower.Model.nextBase base reference ambient) with
+  | none => rw [produced] at success; cases success
+  | some next =>
+    exact congrArg some
+      (context.model?_next_eq base original reference ambient old next oldProduced produced)
 
 end Hex.RealClosure.Tower
 

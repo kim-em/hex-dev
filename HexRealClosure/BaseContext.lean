@@ -961,6 +961,19 @@ theorem PackedContext.embedding?_ofChain {registry : Registry} {K : Type}
     source.embedding? (.pack (Context.ofChain target)) = target.embedding? source :=
   PackedContext.embedding?_ofChain_proof source target
 
+private theorem PackedContext.embedding?_context_proof {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (source : PackedContext registry) (target : Context registry K sign) :
+    source.embedding? (.pack target) = target.chain.embedding? source := rfl
+
+/-- Unpack an arbitrary declared target while retaining the exact source and
+coefficient field dictionaries of the checked native factory. -/
+theorem PackedContext.embedding?_context {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (source : PackedContext registry) (target : Context registry K sign) :
+    source.embedding? (.pack target) = target.chain.embedding? source :=
+  PackedContext.embedding?_context_proof source target
+
 /-- Native packed inclusion has exactly the staged-chain compatibility boundary. -/
 theorem PackedContext.embedding?_isSome {registry : Registry}
     (source target : PackedContext registry) :
