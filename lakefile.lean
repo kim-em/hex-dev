@@ -1252,7 +1252,7 @@ lean_lib HexConformance where
     ++ #[
       `HexRCF.SelectedRoot.Audit, `HexRCF.SelectedRoot.Checks, `HexRCF.SelectedRoot.Collect,
       `HexRCF.SelectedRoot.Controls, `HexRCF.SelectedRoot.Data, `HexRCF.SelectedRoot.Frozen,
-      `HexRCF.SelectedRoot.FrozenCollect, `HexRCF.SelectedRoot.Intermediates, `HexRCF.SelectedRoot.Literals,
+      `HexRCF.SelectedRoot.FrozenCollect, `HexRCF.SelectedRoot.KernelCheck, `HexRCF.SelectedRoot.Intermediates, `HexRCF.SelectedRoot.Literals,
       `HexRCF.SelectedRoot.PacketFields, `HexRCF.SelectedRoot.Packets, `HexRCF.SelectedRoot.Proofs,
       `HexRCF.SelectedRoot.Read, `HexRCF.SelectedRoot.Refusals, `HexRCF.SelectedRoot.ReplayTools,
       `HexRCF.SelectedRoot.Row, `HexRCF.SelectedRoot.RowCollect, `HexRCF.SelectedRoot.RowIntermediates,

@@ -16,8 +16,12 @@ or degree/atom/width/precision/depth scaling verdict.
 The upper root is `Descriptor.ofChecked` over independently parsed raw data
 and a structurally expanded literal graph. Cached predecessor operations are
 used for both specialization and replay. Kernel diagnostics require active,
-nonempty counters and reject unfolds of the audited native root/sign producers
-while checking root, row and exact refusal proofs. Zero unresolved requests is
+nonempty counters and reject unfolds of the listed native root/sign producers
+while checking all 37 scalar-packet acceptances, three upper-data parser
+acceptances, the upper-root check, the row check and five collected refusals.
+The rational parent construction, separately elaborated source theorems and
+direct codec/zero-divisor controls are outside this diagnostic guard; they
+still receive ordinary kernel and axiom checks. Zero unresolved requests is
 checked separately. Scalar restoration retains literal key/sign fields using
 the owner's `Context.readSignFact_fields`; subsequent field lookup needs the
 rational key parser rather than the entire certificate reader.
@@ -32,7 +36,8 @@ record the post-build host activity; this is not a pre-run quiet-host test.
 
 | Build | Elapsed | Largest child RSS | Capture scope |
 | --- | ---: | ---: | --- |
-| [Frozen fixture](data/hexrcf-selected-root/fixture-build.log.gz) | 140.12 s | 9,271,492 KiB | All 21 fixture outputs removed once; owner/adapter dependencies warm. Includes data, scalar acceptance, root/row quotation, fresh original-goal proof, refusals and complete audits. |
+| [Frozen fixture](data/hexrcf-selected-root/fixture-build.log.gz) | 140.12 s | 9,271,492 KiB | All original 21 fixture outputs removed once; owner/adapter dependencies warm. Includes data, scalar acceptance, root/row quotation, fresh original-goal proof, refusals and complete audits. |
+| [Guarded replay/refusals](data/hexrcf-selected-root/guarded-build.log.gz) | 140.75 s | 9,258,528 KiB | Incremental fixture rebuild with all generated scalar/parser acceptances guarded, redundant root replay removed and the false-to-true row forgery rejected. Dependencies and unchanged fixture modules warm; [exact source/context](data/hexrcf-selected-root/guarded-build-context.json). |
 | [Affected adapter/conformance/manual](data/hexrcf-selected-root/affected-build.log.gz) | 353.86 s | 14,809,424 KiB | Default optional adapter, all RCF conformance modules, handler/reifier regressions and manual. Some outputs, including the fixture, were already warm. The existing RCF chapter built in 205 s. |
 
 RSS is the largest waited-for child, not an aggregate concurrent-memory

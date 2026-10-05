@@ -57,6 +57,14 @@ def forgedRow (inventory : List (Algebraic.SignFact native)) : Bool :=
     graph := packet.graph }
   Decidable.decide (Row.evaluate inventory values [] schema evidence = .error .evidence)
 
+/-- Without row authentication this forgery turns the false source row true. -/
+def forgedTrue (inventory : List (Algebraic.SignFact native)) : Bool :=
+  let evidence : Algebraic.SignEvidence parent.Value Tower.Signature := {
+    queries := packet.queries
+    values := ⟨packet.values.toArray.set! 0 1, by simp⟩
+    graph := packet.graph }
+  Decidable.decide (Row.evaluate inventory values [] falseSchema evidence = .error .evidence)
+
 def zeroBeforePacket : Bool :=
   Decidable.decide (Row.evaluate facts values [zeroGuard] schema badPacket = .error .divisor)
 

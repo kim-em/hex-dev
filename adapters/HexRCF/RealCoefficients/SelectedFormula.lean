@@ -31,7 +31,8 @@ sign under locally supplied equal operation instances. -/
 
 /-- A row result concerns this selected point, never an existential decision.
 The supplied divisor values are checked before inspecting the packet. The
-frontend must authenticate their identities and collect every original divisor. -/
+frontend must authenticate their identities and collect every original divisor.
+Inlining keeps the noncomputable real model out of compiled checking. -/
 @[expose, macro_inline] def checkRow (original : Model parent ℝ) (values : Fin n → parent.Value)
     (guards : List parent.Value) (formula : RealFormula.QF (n+1))
     (context : Algebraic.Context parent.Value Signature parent.sign parent.signature)
@@ -46,7 +47,8 @@ frontend must authenticate their identities and collect every original divisor. 
       | some value => .ok value
 
 /-- Supply exactly the owner's eight checked predecessor operations for both
-specialization and packet checking. No native alternative is tried on failure. -/
+specialization and packet checking. No native alternative is tried on failure.
+Inlining keeps the noncomputable real model out of compiled checking. -/
 @[expose, macro_inline] def checkRowWith (original : Model parent ℝ) (values : Fin n → parent.Value)
     (guards : List parent.Value) (formula : RealFormula.QF (n+1))
     (context : Algebraic.Context parent.Value Signature parent.sign parent.signature)

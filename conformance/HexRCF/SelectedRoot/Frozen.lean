@@ -23,11 +23,7 @@ elab "#selected_parse " name:ident " := " term:term : command => liftTermElabM d
   match outcome with
   | .checked true proof _ =>
     let type ← mkEq program (mkConst ``Bool.true)
-    let options := (← getOptions).setBool `debug.skipKernelTC false
-    let env ← ofExceptKernelException <| (← getEnv).addDeclCore
-      (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
-      (.thmDecl {name := name.getId, levelParams := [], type, value := proof}) none (doCheck := true)
-    setEnv env
+    KernelCheck.addChecked name.getId type proof
   | .checked false .. => throwError "literal parser rejected"
   | .missing expression => throwError "parser requires arithmetic: {expression}"
 end

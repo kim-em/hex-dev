@@ -68,7 +68,7 @@ run_meta do
       ``SelectedFormula.row_sound, ``SelectedFormula.row_false,
       ``SelectedFormula.row_total, ``SelectedFormula.row_zero,
       ``Refusals.falseChecked, ``Refusals.coefficientChecked,
-      ``Refusals.orderChecked, ``Refusals.rowChecked,
+      ``Refusals.orderChecked, ``Refusals.rowChecked, ``Refusals.forgedTrueChecked,
       ``Checks.context_checked, ``Checks.negative_real,
       ``Checks.zero_real, ``Checks.falseAccepted, ``Checks.counterexample, ``Controls.zero_checked,
       ``Controls.sign_checked, ``Controls.version_checked] do

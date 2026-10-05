@@ -2643,8 +2643,10 @@ path; the frozen regression exercises the native selected-field representation.
 The regression restores the upper descriptor from parsed literal data and
 structural graph expansion with `Descriptor.ofChecked`. It supplies checked
 predecessor operations for both specialization and replay. Kernel diagnostics
-reject native sign/root producers during root and row proof checking; zero
-unresolved requests alone would not establish that property. Wrong coefficients,
+reject listed native sign/root producer unfolds during generated scalar,
+upper-data parser, root, row and collected refusal checks. Parent construction
+and separately elaborated source/codec controls receive ordinary kernel checks
+outside that diagnostic guard; zero requests alone would not establish it. Wrong coefficients,
 reversed keys, a forged sign with unchanged keys and graph, a crossed context,
 a stale version and an original zero divisor are rejected. Missing arithmetic
 intermediates stay unresolved rather than yielding a Boolean verdict.

@@ -52,7 +52,7 @@ private def control : TermElabM Unit := do
     let acceptedType ← mkEq (mkApp program (mkConst factsName)) (mkConst ``Bool.true)
     let acceptedName := `Hex.RCF.SelectedRootTests.RowCollect.rowAccepted
     let _ ← KernelReplay.auditProof proof acceptedType
-    FrozenCollect.addChecked acceptedName acceptedType proof
+    KernelCheck.addChecked acceptedName acceptedType proof
     logInfo m!"row checked: true; native unfolds=0; requests={collected.requests.size}; axioms={axioms}"
   | .checked false .. => throwError "valid joint row rejected"
   | .missing application => throwError "frozen row still demands arithmetic: {application}"

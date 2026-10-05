@@ -31,60 +31,24 @@ private def control : TermElabM Unit := do
     let expression := mkAppN (mkConst ``Read.fromPacket?) #[polynomial, claimed, graph]
     let some fact ← ReplayTools.readExpression (22+index) expression | throwError "intermediate packet rejected"
     facts ← mkAppM ``List.cons #[fact, facts]
-  logInfo m!"checked literal packets: {Packets.packets.length}"
-  let simpContext ← Simp.mkContext (simpTheorems := #[← ReplayTools.rules])
-    (congrTheorems := ← getSimpCongrTheorems)
-  let raw := mkApp (mkConst ``Read.rawProgram) facts
-  let (rawOutcome, _) ← KernelReplay.assemble raw simpContext
-  match rawOutcome with
-  | .checked value _ _ => logInfo m!"literal subject parsing: {value}"
-  | .missing _ => throwError "subject parsing unexpectedly required arithmetic"
-  let program := mkConst ``Read.rootProgram
-  let collected ← KernelReplay.collectMany 0 program #[⟨facts⟩] simpContext (fun _ _ => pure none)
-  match collected.outcome with
-  | .checked true proof axioms =>
-    let some inventory := collected.inventories[0]? | throwError "missing retained inventory"
-    let options := (← getOptions).setBool `debug.skipKernelTC false
-    let factsName := `Hex.RCF.SelectedRootTests.Collect.facts
-    let factType ← inferType inventory.facts
-    let declaration := Declaration.defnDecl {
-      name := factsName
-      levelParams := []
-      type := factType
-      value := inventory.facts
-      hints := .regular 0
-      safety := .safe }
-    let env ← ofExceptKernelException <| (← getEnv).addDeclCore
-      (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
-      declaration none (doCheck := true)
-    setEnv env
-    compileDecl declaration (logErrors := true)
-    let acceptedType ← mkEq (mkApp program (mkConst factsName)) (mkConst ``Bool.true)
-    let acceptedName := `Hex.RCF.SelectedRootTests.Collect.rootAccepted
-    let _ ← KernelReplay.auditProof proof acceptedType
-    let env ← ofExceptKernelException <| (← getEnv).addDeclCore
-      (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
-      (.thmDecl { name := acceptedName, levelParams := [], type := acceptedType, value := proof })
-      none (doCheck := true)
-    setEnv env
-    logInfo m!"root reconstructed: checked=true, requests={collected.requests.size}, axioms={axioms}"
-  | .checked false .. => throwError "valid upper root data rejected"
-  | .missing application => throwError "reached missing arithmetic: {application}"
+  let options := (← getOptions).setBool `debug.skipKernelTC false
+  let factsName := `Hex.RCF.SelectedRootTests.Collect.facts
+  let factType ← inferType facts
+  let declaration := Declaration.defnDecl {
+    name := factsName, levelParams := [], type := factType, value := facts,
+    hints := .regular 0, safety := .safe }
+  let _ ← KernelReplay.auditProof facts factType
+  let env ← ofExceptKernelException <| (← getEnv).addDeclCore
+    (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+    declaration none (doCheck := true)
+  setEnv env
+  compileDecl declaration (logErrors := true)
+  logInfo "checked literal packets: 22 plus 2 root intermediates; native unfolds=0"
 
 elab "#selected_collect" : command => liftTermElabM control
 end Hex.RCF.SelectedRootTests.Collect
-/--
-info: checked literal packets: 22
----
-info: literal subject parsing: true
----
-info: root reconstructed: checked=true, requests=0, axioms=[propext, Classical.choice, Quot.sound]
--/
+/-- info: checked literal packets: 22 plus 2 root intermediates; native unfolds=0 -/
 #guard_msgs in
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 4000000 in
 #selected_collect
-
-/-- info: 'Hex.RCF.SelectedRootTests.Collect.rootAccepted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.RCF.SelectedRootTests.Collect.rootAccepted

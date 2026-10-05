@@ -32,7 +32,8 @@ private def control : TermElabM Unit := do
       (``Controls.falseProgram, `Hex.RCF.SelectedRootTests.Refusals.falseChecked),
       (``Controls.wrongCoefficient, `Hex.RCF.SelectedRootTests.Refusals.coefficientChecked),
       (``Controls.swappedKeys, `Hex.RCF.SelectedRootTests.Refusals.orderChecked),
-      (``Controls.forgedRow, `Hex.RCF.SelectedRootTests.Refusals.rowChecked)] do
+      (``Controls.forgedRow, `Hex.RCF.SelectedRootTests.Refusals.rowChecked),
+      (``Controls.forgedTrue, `Hex.RCF.SelectedRootTests.Refusals.forgedTrueChecked)] do
     let program := mkConst programName
     let facts := mkConst ``RowCollect.facts
     let collected ← KernelReplay.collectMany 0 program #[⟨facts⟩] context (fun _ _ => pure none)
@@ -40,7 +41,7 @@ private def control : TermElabM Unit := do
     | .checked true proof axioms =>
       let type ← mkEq (mkApp program facts) (mkConst ``Bool.true)
       let _ ← KernelReplay.auditProof proof type
-      FrozenCollect.addChecked theoremName type proof
+      KernelCheck.addChecked theoremName type proof
       logInfo m!"{programName}: true; requests={collected.requests.size}; native unfolds=0; axioms={axioms}"
     | .checked false .. => throwError "{programName} failed its exact expected result"
     | .missing application => throwError "{programName} needs an unrecorded fact: {application}"
@@ -57,6 +58,8 @@ info: Hex.RCF.SelectedRootTests.Controls.wrongCoefficient: true; requests=0; nat
 info: Hex.RCF.SelectedRootTests.Controls.swappedKeys: true; requests=0; native unfolds=0; axioms=[propext, Classical.choice, Quot.sound]
 ---
 info: Hex.RCF.SelectedRootTests.Controls.forgedRow: true; requests=0; native unfolds=0; axioms=[propext, Classical.choice, Quot.sound]
+---
+info: Hex.RCF.SelectedRootTests.Controls.forgedTrue: true; requests=0; native unfolds=0; axioms=[propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 set_option maxRecDepth 32768 in
@@ -76,3 +79,7 @@ set_option maxHeartbeats 8000000 in
 /-- info: 'Hex.RCF.SelectedRootTests.Refusals.rowChecked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RCF.SelectedRootTests.Refusals.rowChecked
+
+/-- info: 'Hex.RCF.SelectedRootTests.Refusals.forgedTrueChecked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RCF.SelectedRootTests.Refusals.forgedTrueChecked

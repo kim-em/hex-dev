@@ -1,12 +1,14 @@
 {
-  "scope": "ordinary Lake build observations, not scientific performance comparisons",
-  "fixture": "all 21 new fixture modules rebuilt once; owner and adapter dependencies warm",
+  "scope": "ordinary incremental build after guard/refusal changes; dependencies and unchanged fixture modules warm; no paired comparison",
+  "command": "lake build HexRCF.SelectedRoot.Audit",
+  "elapsed_seconds": 140.75,
+  "largest_child_rss_kib": 9258528,
   "machine": "Linux-6.12.111-x86_64-with-glibc2.42",
-  "activity_capture": "after completed builds",
+  "activity_capture": "after completed build",
   "load_average": [
-    5.28125,
-    9.2021484375,
-    15.3408203125
+    17.3525390625,
+    6.47509765625,
+    8.51513671875
   ],
   "affinity": [
     0,
@@ -106,41 +108,34 @@
     94,
     95
   ],
-  "sources": {
-    "conformance/HexRCF/SelectedRoot/Audit.lean": "ab1e761817c89f6158aa7354cb47d5a58c57deaa35b486515c1c51b96e573e32",
+  "source_sha256": {
+    "adapters/HexRCF/RealCoefficients/SelectedFormula.lean": "5ed30cf4b66ada831bcace2edd4b3444f8bce8eaed64f5b76b280a94210bb115",
+    "conformance/HexRCF/SelectedRoot/Audit.lean": "9f7c12f67bc373380e5e14a7371305f0a13acb4909351efb69e0ae301a4e24f7",
     "conformance/HexRCF/SelectedRoot/Checks.lean": "2973d1c51cafc66867fedf9d24c806665a07cbb2c07a10c6815a89a5cced93e0",
-    "conformance/HexRCF/SelectedRoot/Collect.lean": "af18242827a441cba7a7def5b10d299e181edd689c8dd7c5654118d56fd35725",
-    "conformance/HexRCF/SelectedRoot/Controls.lean": "7651d32a2b07439b32bf058c08fdf4234a7f2364767412b949b7ad22018fface",
+    "conformance/HexRCF/SelectedRoot/Collect.lean": "4a87b1ae2332a0481a779889faf0a7b266eea54c8cbc200bf11d5f76c82cd554",
+    "conformance/HexRCF/SelectedRoot/Controls.lean": "dc2a83f196a59b8be6ff471d4ca6a8da6cfff87e0a33a8fe77fa23b5316dfa25",
     "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
-    "conformance/HexRCF/SelectedRoot/Frozen.lean": "677d25743301fd79b451c2de5d485c97303e3984c4836e019d9e81c47a4c4dd4",
-    "conformance/HexRCF/SelectedRoot/FrozenCollect.lean": "1c96075ed7df7723b3d8cc1639a258645cd489f117b9437bde588bb37a09c1c9",
+    "conformance/HexRCF/SelectedRoot/Frozen.lean": "2a85cbd9787097d80e34225e8a66f7fcc5fa36321fe979592e274bab2ce99bd1",
+    "conformance/HexRCF/SelectedRoot/FrozenCollect.lean": "a2b14e2e673a09868bee85db3cb5a987819d2c4750f2e4e97c112223a4f6199c",
     "conformance/HexRCF/SelectedRoot/Intermediates.lean": "2da4e76f34bbaac347e0f67804b6fb5db9ef98b63b4c2ed14fa57bd83d1899e1",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "a674062ae3c691893bfc21585b9e2f102f711dcf70089eaa88d8b83943379576",
     "conformance/HexRCF/SelectedRoot/Literals.lean": "8ea46de6f8cfdb6990723cedf445a85c1b64a7885d5939c4c69857a6404ab0e6",
     "conformance/HexRCF/SelectedRoot/PacketFields.lean": "20e39b32e55f7dd1bf9cbe4ce58fa0c9205ef756ce4ef1de916fad017cd76791",
     "conformance/HexRCF/SelectedRoot/Packets.lean": "ae9dd1cc60897dffad8394e4e824bff0295077ec594482805a271b445de93860",
     "conformance/HexRCF/SelectedRoot/Proofs.lean": "76c55013e7f7e786a640aa909801990139fdda50fc11ea3e33ceeda37c12d98b",
     "conformance/HexRCF/SelectedRoot/Read.lean": "7ed6bb9402c562879604a4d32d93f8abb60d06d83160adb76e565c6342410b8e",
-    "conformance/HexRCF/SelectedRoot/Refusals.lean": "19ff9dd56c99abcc5b7ed0688ff1f309100c8c20cd89f14f7ff7345ca5bf9551",
-    "conformance/HexRCF/SelectedRoot/ReplayTools.lean": "999ae4aa08b31a0b4c05bc3f9a3614a7e89a7672de378f49cacb945a0ee89418",
+    "conformance/HexRCF/SelectedRoot/Refusals.lean": "3a353fba1a28012cc46205c6061b30015f3d03e5fbe660ca340e83ebbb281012",
+    "conformance/HexRCF/SelectedRoot/ReplayTools.lean": "6ed3b890b9090a982942aa869151f3e1e46a3ff4de91d23edb9b43d5c1b9ef88",
     "conformance/HexRCF/SelectedRoot/Row.lean": "d625dfed6fa404d90182da47d0da111eb9b8beba1bb2fa994b7552a402f7ff3b",
-    "conformance/HexRCF/SelectedRoot/RowCollect.lean": "8f0f9eddb49dde9eee03cd84215bb50719a952d362cd492b4fce02c0ac650c32",
+    "conformance/HexRCF/SelectedRoot/RowCollect.lean": "5e9c1a0364c67bc42ad6401a76b48bea154c87c5ee11c024c7c8483cf411d846",
     "conformance/HexRCF/SelectedRoot/RowIntermediates.lean": "357830e52c086b1dfb926301119df65ba1b3b8e57af668965c2d30e7b8787964",
     "conformance/HexRCF/SelectedRoot/RowTools.lean": "fc28b905c2f53523467acb9247c236a5d117b5869490afff314e4c78ce68942d",
     "conformance/HexRCF/SelectedRoot/Source.lean": "0b2f14b248c2474f40475dae2db107043d07726cb3e262e3c0b6fa131bbb8fa3",
-    "conformance/HexRCF/SelectedRoot/Upper.lean": "089ad57ccd494cbff122343c5c77f656a1c29d6fe6a1d54ef02be408200fac2d",
-    "adapters/HexRCF/RealCoefficients/SelectedFormula.lean": "7581cac8e2f93375cba75bd724c2ebbcffaf1d8bf1ecdb873d79e86beded5951",
-    "conformance-fixtures/HexRCF/selected-root.json": "b7cb083f2d43bac004b6dd84c20b85a189ca264687e265bd126abe062d22a7e4",
-    "scripts/rcf/selected_literals.py": "da295ab34bc5a7f43a12d2ca267930acb9ed0893a930bbfcd2989e833d4fa532"
+    "conformance/HexRCF/SelectedRoot/Upper.lean": "089ad57ccd494cbff122343c5c77f656a1c29d6fe6a1d54ef02be408200fac2d"
   },
-  "raw_logs": {
-    "fixture-build.log.gz": {
-      "uncompressed_sha256": "063bdf586aac42b1c7a8733844e511e2b01ddef51ee6b8cbb8b4b3850dcc3d41",
-      "uncompressed_bytes": 51254
-    },
-    "affected-build.log.gz": {
-      "uncompressed_sha256": "4eb478e3eb6764d02d8ecdc2f6bd00f2e5ea92a7bc1982e05c8e3cc3a7de641f",
-      "uncompressed_bytes": 731492
-    }
-  },
-  "source_revision": "ba14406842d3b85ba521e32e31a58905e8620727"
+  "log": {
+    "file": "guarded-build.log.gz",
+    "uncompressed_bytes": 50884,
+    "uncompressed_sha256": "294e9d5255b08e4d641b96e0804fa7fab3927e2ff4d8f87cfe803dcd5629b9ed"
+  }
 }

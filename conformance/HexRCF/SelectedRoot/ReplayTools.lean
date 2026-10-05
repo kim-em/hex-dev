@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.Read
+import HexRCF.SelectedRoot.KernelCheck
 import HexRCF.SelectedRoot.PacketFields
 import HexRCF.SelectedRoot.Packets
 import HexRealClosureMathlib.KernelReplay
@@ -24,12 +24,7 @@ def readExpression (_index : Nat) (expression : Expr) : MetaM (Option Expr) := d
   let proof := mkAppN (mkConst ``of_decide_eq_true) #[proposition, decisionInstance, reflexivity]
   let _ ← KernelReplay.auditProof proof proposition
   let proofName ← mkFreshUserName `__selectedPacketAccepted
-  let options := (← getOptions).setBool `debug.skipKernelTC false
-  let env ← ofExceptKernelException <| (← getEnv).addDeclCore
-    (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
-    (.thmDecl {name := proofName, levelParams := [], type := proposition, value := proof})
-    none (doCheck := true)
-  setEnv env
+  KernelCheck.addChecked proofName proposition proof
   unless expression.getAppFn.isConstOf ``Read.fromPacket? do
     throwError "expected a frozen scalar packet reader"
   let fact ← mkAppM ``PacketFields.restore
