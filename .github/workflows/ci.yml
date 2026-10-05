@@ -427,6 +427,7 @@ jobs:
         env:
           HEX_LIBRARY_FILTER: ${{ steps.classify.outputs.library_filter }}
         run: |
+          python3 scripts/rcf/selected_literals.py --check
           lake build \
             HexConformance HexMvFactorizationTests NautyFFI/nautyffi_tests hextruncatedseries_emit_fixtures \
             hexmvpoly_emit_fixtures hexrealformula_emit_fixtures hexsparsepoly_emit_fixtures \
