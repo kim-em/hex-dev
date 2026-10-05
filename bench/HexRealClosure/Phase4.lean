@@ -89,6 +89,52 @@ Semantic zero and multiplicity checks are outside the isolation timings. -/
     ("backend", Lean.toJson "native"), ("checked", Lean.toJson true),
     ("first_context_depth", Lean.toJson owner.signature.roots.length)]).compress
 
+private def json (value : SignDet.Codec.Json) : IO Lean.Json := do
+  let some text := String.fromUTF8? value.writeBytes
+    | throw (IO.userError "invalid encoded UTF-8")
+  match Lean.Json.parse text with
+  | .ok result => pure result
+  | .error error => throw (IO.userError error)
+
+/-- Functional records for the declared odd-degree ladder over the same least
+MetiTarski root. Root equations, multiplicities, and stored descriptor data
+are emitted outside scientific timing. Only degree three is the paper input. -/
+def scaling (degree : Nat) : IO Unit := do
+  unless degree ∈ [3,5,7,9] do throw (IO.userError "unsupported scaling degree")
+  let some input ← nativeInput.get | throw (IO.userError "missing scaling input")
+  let .ok (.finite (first :: rest)) := base.roots? input
+    | throw (IO.userError "missing first scaling root")
+  unless rest.length == 2 && first.multiplicity == 1 &&
+      first.root.signAt input == 0 &&
+      first.root.signAt (DensePoly.ofCoeffs #[⟨-leastLower⟩, 1]) == 1 &&
+      first.root.signAt (DensePoly.ofCoeffs #[⟨-leastUpper⟩, 1]) == -1 do
+    throw (IO.userError "scaling predecessor selection failed")
+  let .selected firstDescriptor _ _ := first.root
+    | throw (IO.userError "scaling predecessor must be selected")
+  let owner := first.root.context
+  let alpha := first.root.value
+  let y : owner.Poly := DensePoly.ofCoeffs #[0,1]
+  let power := (List.range degree).foldl (fun p _ => p*y) (DensePoly.C 1)
+  let head := power + DensePoly.C (alpha*alpha*alpha+1)
+  let .ok (.finite [entry]) := owner.roots? head
+    | throw (IO.userError "scaling complete roots failed")
+  let .selected descriptor _ _ := entry.root
+    | throw (IO.userError "scaling root must be selected")
+  unless entry.multiplicity == 1 && entry.root.signAt head == 0 &&
+      firstDescriptor.raw.check base.sign base.signature firstDescriptor.evidence &&
+      descriptor.raw.check owner.sign owner.signature descriptor.evidence do
+    throw (IO.userError "scaling root equation or replay failed")
+  IO.println <| (Lean.Json.mkObj [
+    ("schema", Lean.toJson (1 : Nat)), ("workload", Lean.toJson "metitarski-degree-ladder"),
+    ("degree", Lean.toJson degree), ("first_coefficients", Lean.toJson (metiCoefficients.map
+      fun q => [q.num,(q.den : Int)])),
+    ("first", ← json (Tower.rootData base.codec firstDescriptor)),
+    ("head", ← json (owner.writePoly head).value),
+    ("root", ← json (Tower.rootData owner.codec descriptor)),
+    ("root_count", Lean.toJson (1 : Nat)), ("multiplicity", Lean.toJson entry.multiplicity),
+    ("equation_sign", Lean.toJson (entry.root.signAt head)),
+    ("first_replay", Lean.toJson true), ("root_replay", Lean.toJson true)]).compress
+
 /-- The same two inputs and least-root selection through the existing
 canonical real-algebraic backend, with semantic checks after timing. -/
 @[noinline] def canonical : IO Unit := do
@@ -127,7 +173,12 @@ end Hex.RealClosure.Phase4
 
 def main (args : List String) : IO UInt32 := do
   match args with
+  | [] =>
+    for degree in [3,5,7,9] do Hex.RealClosure.Phase4.scaling degree
+  | ["metitarski", "scaling", degree] =>
+    let some n := degree.toNat? | throw (IO.userError "degree must be natural")
+    Hex.RealClosure.Phase4.scaling n
   | ["metitarski", "native"] => Hex.RealClosure.Phase4.native
   | ["metitarski", "canonical"] | ["metitarski", "trivial"] => Hex.RealClosure.Phase4.canonical
-  | _ => throw (IO.userError "usage: hexrealclosure_phase4 metitarski native|canonical")
+  | _ => throw (IO.userError "usage: hexrealclosure_phase4 metitarski native|canonical|scaling DEGREE")
   return 0
