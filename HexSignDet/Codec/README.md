@@ -1,5 +1,11 @@
 # Literal graph byte format
 
+`Codec.decodePair` parses two supplied byte records before invoking an existing
+structured reader. Parsing errors short-circuit that reader. `decodePair_ok`
+substitutes the two proved parser results; `decodePair_write` preserves the
+reader's full result or error for printed records under lexical limits.
+The lexical precheck iterates directly over the byte buffer without boxing it.
+
 `Dag.encodeBytes` writes a UTF-8 JSON encoding of the supplied graph.
 `Dag.decodeBytes` parses and independently replays it for the caller's exact
 context, head, endpoints and ordered query list. It returns `Except String` with

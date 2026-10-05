@@ -33,8 +33,11 @@ def main() -> None:
                                        start_new_session=True)
             try:
                 process.wait(timeout=180)
-            except subprocess.TimeoutExpired:
-                os.killpg(process.pid, signal.SIGKILL)
+            except BaseException:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
                 process.wait()
                 raise
         output = log.read_text()
@@ -49,7 +52,7 @@ def main() -> None:
         print(f"{label}: passed", flush=True)
 
     run("root", ["root"],
-        contains=("rootLaws=5AuditedTheorems", "rootReconstructed=kernelAccepted children=2",
+        contains=("rootLaws=7AuditedTheorems", "rootReconstructed=kernelAccepted children=2",
                   "rootReconstructedPackets=kernelAccepted", "rootBytes=kernelAccepted actualInputs=2",
                   "rootBytesBindings=2UsedParserEquations", "rootBytesMissingChild=unproved",
                   "rootBytesMissingStoredFacts=kernelRejected", "rootBytesTruncated=kernelRejected",

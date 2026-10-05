@@ -329,7 +329,10 @@ context reconstruction. `Codec.decodePair` supplies this byte adapter for the
 existing context reader; its generic law preserves the reader's full result or
 error. The control requires both parser equations to occur in the
 final proof, stops at a missing intermediate sign fact, and rejects absent
-stored facts and a truncated byte record. Acceptance is checked under the
+stored facts and a prefix of the supplied subject with its final closing
+bracket removed. The lexical precheck rejects that prefix. Executable checks
+also cover the public descriptor byte adapter and a malformed second record.
+Acceptance is checked under the
 supplied operations, whose
 agreement with the original operations is proved. This control covers the
 writer's spelling of the records; it does not cover every whitespace or numeric

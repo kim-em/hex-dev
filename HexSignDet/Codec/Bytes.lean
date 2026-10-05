@@ -18,6 +18,27 @@ structure Limits where
   depth : Nat := 128
   digits : Nat := 4096
 
+/-- Direct byte iteration agrees with array iteration. Compiled checking uses
+`ByteArray.forInUnsafe` and does not box a copy of the byte buffer. -/
+theorem forIn_data {β : Type v} {m : Type v → Type w} [Monad m]
+    (input : ByteArray) (initial : β) (step : UInt8 → β → m (ForInStep β)) :
+    forIn input initial step = forIn input.data initial step := by
+  change ByteArray.forIn input initial step = Array.forIn' input.data initial (fun a _ b => step a b)
+  unfold ByteArray.forIn Array.forIn'
+  have loop (n : Nat) (bound : n ≤ input.size) (state : β) :
+      ByteArray.forIn.loop input step n bound state =
+        Array.forIn'.loop input.data (fun a _ b => step a b) n bound state := by
+    induction n generalizing state with
+    | zero => rfl
+    | succ n ih =>
+      simp only [ByteArray.forIn.loop, Array.forIn'.loop]
+      congr 1
+      funext result
+      cases result with
+      | done state => rfl
+      | yield state => exact ih _ state
+  exact loop _ _ _
+
 /-- Bound nesting and integer-token size before JSON parsing. Numeric tokens
 are integers only: exponent/fraction syntax is not part of this wire format.
 Escapes and bracket characters inside strings do not affect nesting. The JSON
@@ -29,7 +50,7 @@ def checkBytes (limits : Limits) (input : ByteArray) : Except String Unit := do
   let mut depth := 0
   let mut number := false
   let mut digits := 0
-  for byte in input.data do
+  for byte in input do
     let c := byte.toNat
     if quoted then
       if escaped then escaped := false

@@ -46,6 +46,17 @@ open scoped Hex
     ⟨#[⟨NestedSignsConformance.linearNode, none⟩,
       ⟨NestedSignsConformance.linearNode, none⟩], 0⟩
 
+-- These executable checks exercise the public byte-descriptor adapter.
+-- The ordinary-kernel control below separately checks context reconstruction.
+#guard (RootReplay.decodeDescriptor (Element.codec (context := context) ValueCodec.rat) ValueCodec.nat
+  Element.sign 8 subject.writeBytes evidence.writeBytes).isOk
+#guard match RootReplay.decodeDescriptor (Element.codec (context := context) ValueCodec.rat)
+    ValueCodec.nat Element.sign 8 subject.writeBytes (evidence.writeBytes.extract 0 1) with
+  | .error message => message == "truncated certificate syntax"
+  | .ok _ => false
+#guard Codec.checkBytes {} (subject.writeBytes.extract 0 (subject.writeBytes.size - 2)) =
+  .error "truncated certificate syntax"
+
 @[expose] def literals : List (SignFact context) :=
   PackingConformance.literalFacts ++
     [⟨DensePoly.C (1 : Rat), 1, by
@@ -137,10 +148,10 @@ private def saveProof (stem : Name) (proof : Expr) (type? : Option Expr := none)
 private unsafe def control : TermElabM Unit := do
   for name in #[``RootReplay.readDescriptor_subject, ``RootReplay.readContext_eq,
       ``RootReplay.decodeDescriptor_write, ``RootReplay.decodeDescriptor_subject,
-      ``Codec.decodePair_write] do
+      ``Codec.decodePair_write, ``Codec.decodePair_ok, ``Codec.parse_write] do
     let .thmInfo declaration ← getConstInfo name | throwError "root law is not a theorem"
     let _ ← KernelReplay.auditProof (mkConst name) declaration.type
-  logInfo "rootLaws=5AuditedTheorems"
+  logInfo "rootLaws=7AuditedTheorems"
   let initial := mkConst ``literals
   let mut rules : SimpTheorems := {}
   for name in #[``rejectsWith, ``reconstructed, ``restored, ``RootReplay.readContext,
@@ -205,6 +216,7 @@ private unsafe def control : TermElabM Unit := do
   let mut byteRules := rules
   let mut lexicalRules : SimpTheorems := {}
   lexicalRules ← lexicalRules.addDeclToUnfold ``Codec.checkBytes
+  lexicalRules ← lexicalRules.addConst ``Codec.forIn_data
   lexicalRules ← lexicalRules.addConst ``Array.forIn_toList (inv := true)
   let byteDecisionContext ← Simp.mkContext (simpTheorems := #[lexicalRules])
     (congrTheorems := ← getSimpCongrTheorems)
@@ -292,6 +304,8 @@ private unsafe def control : TermElabM Unit := do
   let checkedBytes ← KernelReplay.collect 32 byteProgram initial byteContext (fun needed => do
     let some fact ← Generated.readPackets (← packets.get) needed | return none
     return some (← register fact))
+  unless checkedBytes.requests.size == collected.requests.size do
+    throwError "actual byte replay changed the arithmetic child count"
   match checkedBytes.outcome with
   | .checked true _ _ => logInfo "rootBytes=kernelAccepted actualInputs=2"
   | _ => throwError "actual root bytes failed to replay the supplied packets"
@@ -307,7 +321,8 @@ private unsafe def control : TermElabM Unit := do
   | _ => throwError "the final byte replay did not accept the retained facts"
   let used := byteStats.usedTheorems.toArray.map (·.key)
   unless used.contains `__rootBytesFront do
-    throwError "the final byte replay did not use both proved parser equations"
+    throwError "the final byte replay did not use the checked frontend equation"
+  -- The pair equation retains both parser theorems; the frontend retains that pair.
   logInfo "rootBytesBindings=2UsedParserEquations"
   IO.eprintln "rootByteReplay=bindingsChecked"
   let (missingByteChild, _) ← KernelReplay.assemble (mkApp byteProgram initial) byteContext
@@ -326,7 +341,8 @@ private unsafe def control : TermElabM Unit := do
   let truncationRules ← lexicalRules.addDeclToUnfold ``Codec.parse
   let truncationContext ← Simp.mkContext (simpTheorems := #[rules, truncationRules])
     (congrTheorems := ← getSimpCongrTheorems)
-  let truncated := mkApp (mkConst ``ByteArray.mk) (toExpr (#[91] : Array UInt8))
+  let truncatedData := subjectData.writeBytes.extract 0 (subjectData.writeBytes.size - 2)
+  let truncated := mkApp (mkConst ``ByteArray.mk) (toExpr truncatedData.data)
   let (truncatedResult, _) ← KernelReplay.assemble
     (mkAppN (mkConst ``acceptsBytes) #[limits, truncated, bytes[1]!, initial]) truncationContext
   match truncatedResult with

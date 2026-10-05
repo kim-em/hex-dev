@@ -77,8 +77,7 @@ theorem decodeDescriptor_write (value : ValueCodec E) (ctx : ValueCodec Ctx)
   exact Codec.decodePair_write _ subject evidence limits subjectBound evidenceBound
 
 omit neg inv div in
-/-- Every accepted byte descriptor retains the full decoded subject. A missing
-or altered graph cannot be replaced by another packet by this reader. -/
+/-- Every accepted byte descriptor retains the full decoded subject. -/
 theorem decodeDescriptor_subject (value : ValueCodec E) (ctx : ValueCodec Ctx)
     (sign : E → Int) (binding : Ctx) (subject evidence : ByteArray)
     (limits : Codec.Limits) (descriptor : Descriptor E Ctx sign binding)
@@ -87,9 +86,9 @@ theorem decodeDescriptor_subject (value : ValueCodec E) (ctx : ValueCodec Ctx)
       SignRequests.readRoot value ctx raw = .ok descriptor.raw := by
   unfold decodeDescriptor Codec.decodePair at accepted
   cases hs : Codec.parse limits subject with
-  | error message => simp [hs, bind, Except.bind] at accepted
+  | error message => simp [hs] at accepted
   | ok raw =>
-    simp only [hs, bind, Except.bind] at accepted
+    simp only [hs] at accepted
     cases hg : Codec.parse limits evidence with
     | error message => simp [hg] at accepted
     | ok graph =>
