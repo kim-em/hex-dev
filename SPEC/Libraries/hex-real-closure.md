@@ -708,10 +708,8 @@ coefficients, root intervals and indexed Thom signs. The checked reader binds
 all dependencies and rejects changed registrations or stale references.
 `repr_roundtrip` says that re-reading emitted data with the same caller-supplied
 registry succeeds and preserves denotation/root identity; caches
-need not match. The current `TowerBytes` implementation supplies a JSON-packet
-`Repr` for packed values and polynomials for inspecting their serialized packets.
-This packet display does not discharge the constructor-syntax or
-`repr_roundtrip` requirements. It has exact byte/text
+need not match. The `TowerBytes` JSON packet interface is separate from the constructor-syntax
+`Repr` format. It has exact byte/text
 roundtrip theorems under the caller's lexical policy; catalog roundtrips retain
 the original handle when it is installed. Root output retains its owning
 context and value, but does not reconstruct its `Root parent` constructor or

@@ -2840,8 +2840,8 @@ whole immutable binding and every stored coefficient. The binding includes
 provider names and versions, the infinitesimal depth and each algebraic
 frame's defining polynomial, interval, Thom word and replay graph.
 `Root.writeValueText` prints its native value and actual owner; a selected root's
-frame remains part of that owner's binding. `Repr` for packed values and
-packed polynomials uses this same format. Complete root-kind and predecessor
+frame remains part of that owner's binding. Packed values and polynomials also provide explicit `writeText` methods.
+This JSON packet format is separate from the constructor-syntax `Repr` contract. Complete root-kind and predecessor
 reconstruction belongs to the full root format. Reading printed roots returns
 their native value in that owner, rather than reconstructing `Root parent`
 or its point/selected constructor and predecessor embedding. `RootEntry` and
@@ -2871,7 +2871,7 @@ polynomial zeros are rejected. These limits bound lexical input; they do not
 bound certificate replay or coefficient-sign recomputation during uninstalled
 context reconstruction.
 
-Run the actual text and `Repr` examples:
+Run the actual text and byte examples:
 
 ```sh
 lake exe hexrealclosure_bytes_conformance

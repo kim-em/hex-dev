@@ -37,9 +37,9 @@ private def emit (name : String) (context : Context registry) (a : context.Value
     throw (IO.userError "printed data changed")
   let printedValue : PackedElement registry := ⟨context,a⟩
   let printedPoly : PackedPolynomial registry := ⟨context,p⟩
-  let .ok restored := (Catalog.empty registry).restoreElementText (reprStr printedValue)
+  let .ok restored := (Catalog.empty registry).restoreElementText printedValue.writeText
     | throw (IO.userError "printed context failed reconstruction")
-  let .ok restoredPoly := (Catalog.empty registry).restorePolynomialText (reprStr printedPoly)
+  let .ok restoredPoly := (Catalog.empty registry).restorePolynomialText printedPoly.writeText
     | throw (IO.userError "printed polynomial context failed reconstruction")
   unless restored.context.writeBytes restored.value == bytes && restored.sign == context.sign a &&
       restoredPoly.context.writePolyBytes restoredPoly.value == polyBytes do
@@ -47,24 +47,24 @@ private def emit (name : String) (context : Context registry) (a : context.Value
   let staleBase := { context.signature.base with
     infinitesimals := context.signature.base.infinitesimals+1 }
   let stale : Serialized := ⟨⟨staleBase,context.signature.roots⟩,(context.write a).value⟩
-  unless context.readBytes stale.writeBytes matches .error _ do
+  unless context.readBytes stale.writeBytes matches .error "context binding mismatch" do
     throw (IO.userError "stale printed binding accepted")
   let forged : Serialized := ⟨context.signature,.string "not a coefficient"⟩
   unless context.readBytes forged.writeBytes matches .error _ do
     throw (IO.userError "malformed coefficient accepted")
   let trailing : Serialized := ⟨context.signature,
     .arr ((p.toArray.map context.codec.encode).push (context.codec.encode 0))⟩
-  unless context.readPolyBytes trailing.writeBytes matches .error _ do
+  unless context.readPolyBytes trailing.writeBytes matches .error "noncanonical polynomial vector" do
     throw (IO.userError "trailing polynomial zero accepted")
-  unless context.readBytes (ByteArray.mk #[255]) matches .error _ do
+  unless context.readBytes (ByteArray.mk #[255]) matches .error "invalid certificate JSON or UTF-8" do
     throw (IO.userError "invalid UTF-8 accepted")
-  unless context.readBytes "[".toUTF8 matches .error _ do
+  unless context.readBytes "[".toUTF8 matches .error "truncated certificate syntax" do
     throw (IO.userError "truncated syntax accepted")
-  unless context.readBytes bytes { bytes := 0 } matches .error _ do
+  unless context.readBytes bytes { bytes := 0 } matches .error "certificate byte limit exceeded" do
     throw (IO.userError "byte policy ignored")
-  unless context.readBytes bytes { depth := 0 } matches .error _ do
+  unless context.readBytes bytes { depth := 0 } matches .error "certificate nesting limit exceeded" do
     throw (IO.userError "depth policy ignored")
-  unless context.readBytes bytes { digits := 0 } matches .error _ do
+  unless context.readBytes bytes { digits := 0 } matches .error "integer token limit exceeded" do
     throw (IO.userError "digit policy ignored")
   let payload := object [("case", .string name),
     ("value_text", .string (context.writeText a)), ("value_json", Serialized.codec.encode (context.write a)),

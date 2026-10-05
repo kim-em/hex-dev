@@ -161,12 +161,6 @@ def PackedElement.writeText (a : PackedElement registry) : String :=
 def PackedPolynomial.writeText (p : PackedPolynomial registry) : String :=
   p.context.writePolyText p.value
 
-instance : Repr (PackedElement registry) where
-  reprPrec a _ := .text a.writeText
-
-instance : Repr (PackedPolynomial registry) where
-  reprPrec p _ := .text p.writeText
-
 theorem Catalog.restoreElementBytes_write (catalog : Catalog registry) (context : Context registry)
     (a : context.Value) (installed : catalog.lookup context.signature = some context)
     (limits : Codec.Limits) (bound : Codec.checkBytes limits (context.writeBytes a) = .ok ()) :
@@ -207,15 +201,24 @@ def Root.writeValueBytes {parent : Context registry} (root : Root parent) : Byte
 def Root.writeValueText {parent : Context registry} (root : Root parent) : String :=
   root.context.writeText root.value
 
+/-- Read a value packet using the root's original owner. -/
+def Root.readValueBytes {parent : Context registry} (root : Root parent) (input : ByteArray)
+    (limits : Codec.Limits := {}) : Except String root.context.Value :=
+  root.context.readBytes input limits
+
+def Root.readValueText {parent : Context registry} (root : Root parent) (input : String)
+    (limits : Codec.Limits := {}) : Except String root.context.Value :=
+  root.context.readText input limits
+
 /-- A printed root is read as its exact native value in its original owner. -/
 theorem Root.readValueBytes_write {parent : Context registry} (root : Root parent)
     (limits : Codec.Limits) (bound : Codec.checkBytes limits root.writeValueBytes = .ok ()) :
-    root.context.readBytes root.writeValueBytes limits = .ok root.value :=
+    root.readValueBytes root.writeValueBytes limits = .ok root.value :=
   root.context.readBytes_write root.value limits bound
 
 theorem Root.readValueText_write {parent : Context registry} (root : Root parent)
     (limits : Codec.Limits) (bound : Codec.checkBytes limits root.writeValueBytes = .ok ()) :
-    root.context.readText root.writeValueText limits = .ok root.value :=
+    root.readValueText root.writeValueText limits = .ok root.value :=
   root.context.readText_write root.value limits bound
 
 end Hex.RealClosure.Tower
