@@ -900,6 +900,7 @@ lean_lib HexPrimalityMathlibProofProbe where
     `HexPrimalityMathlib.ProofProbe.Negative65,
     `HexPrimalityMathlib.ProofProbe.Negative512,
     `HexPrimalityMathlib.ProofProbe.Negative512Odd,
+    `HexPrimalityMathlib.ProofProbe.Adoption,
     `HexPrimalityMathlib.ProofProbe.NegativeExhausted512].map Glob.one ++
     #[.submodules `HexPrimalityMathlib.ProofProbe.FactorCorpus]
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check retained certificate links and reproduce one native policy certificate."""
+"""Check retained certificate links and reproduce exact native policy certificates."""
 from __future__ import annotations
 
 import hashlib
@@ -141,6 +141,35 @@ def main():
         for index, row in enumerate(data.get("samples", [])):
             if row.get("result", {}).get("status") in ["success", "generated"]:
                 assert (path.name, index) in linked
+    adoption = ROOT / "reports/primality/adoption"
+    measurements = json.loads((adoption / "measurements.json").read_text())
+    assert measurements["complete"]
+    provenance = json.loads((adoption / "provenance.json").read_text())
+    assert provenance["source_commit"] == measurements["source_commit"]
+    assert provenance["executable_sha256"] == measurements["executable_sha256"]
+    assert provenance["sources"] == measurements["sources"]
+    assert digest((adoption / provenance["source_patch"]).read_text()) == provenance["patch_sha256"]
+    replay = json.loads((adoption / "kernel-replay.json").read_text())
+    assert digest((adoption / "measurements.json").read_text()) == replay["measurements_sha256"]
+    assert replay["build_returncode"] == 0
+    source = (ROOT / replay["source"]).read_text()
+    assert digest(source) == replay["source_sha256"]
+    assert digest((adoption / "kernel-replay.log").read_text()) == replay["log_sha256"]
+    dispatch = json.loads((adoption / "dispatch.json").read_text())
+    assert dispatch["policy"] == "interleaved" and dispatch["returncode"] == 0
+    assert len(dispatch["cases"]) == len(dispatch["confirmations"]) == 3
+    assert digest((adoption / "dispatch.log").read_text()) == dispatch["log_sha256"]
+    successes = {i for i, row in enumerate(measurements["samples"])
+                 if row.get("result", {}).get("status") == "success"}
+    assert successes == {link["sample"] for link in replay["links"]}
+    for link in replay["links"]:
+        row = measurements["samples"][link["sample"]]
+        sha = digest(row["result"]["certificate"])
+        assert sha == link["certificate_sha256"]
+        entry = replay["certificates"][sha]
+        assert digest(entry["certificate"]) == sha and entry["subject"] == row["subject"]
+        assert f'theorem {entry["theorem"]} : _root_.Nat.Prime {entry["subject"]}' in source
+        assert f'(c := {entry["certificate"]}) (by decide +kernel)' in source
     case = next(entry for entry in certificates.values()
                 if entry["case"] == "Curve448" and entry["profile"] == "balanced")
     output = subprocess.check_output(
@@ -157,8 +186,21 @@ def main():
     result = json.loads(output)
     assert result["status"] == "success" and result["attempts"] == 31
     assert digest(result["certificate"]) == case["certificate_sha256"]
+    # Pin the adopted provider on actual ECM paths as well as the p-1 fixture.
+    fields = load_report("fields-v4.json")
+    for name in ["P-521", "P-384", "Curve448"]:
+        sample = next(row for row in fields["samples"]
+                      if row["case"] == name and row["profile"] == "interleaved")
+        output = subprocess.check_output(
+            [str(ROOT / ".lake/build/bin/hexprimality_factor_experiment"),
+             "construct", "interleaved", str(sample["subject"])],
+            text=True, timeout=120)
+        result = json.loads(output)
+        assert result["status"] == "success"
+        assert result["attempts"] == sample["result"]["attempts"]
+        assert digest(result["certificate"]) == digest(sample["result"]["certificate"])
     subprocess.run([str(ROOT / ".lake/build/bin/hexprimality_factor_experiment"), "selftest"], check=True)
-    print(f"Checked {len(linked)} replay links and exact native Curve448/Curve25519 certificates")
+    print(f"Checked {len(linked)} replay links and exact native field-prime certificates")
 
 
 if __name__ == "__main__":

@@ -1132,19 +1132,57 @@ including core table/screening work outside semantic attempt counts. The
 constructor independently validates products, selects subsets, recursively
 certifies children, and accepts only through the unchanged sound checker.
 
-Use `primality? (factor := Hex.Nat.ecmFactorSearch)` after importing
-`HexIntFactor.Construction` and `HexPrimality.Elab`. Automatic fallback after
-an exhausted construction is owned by
-[HexPrimality's construction contract](../../HexPrimality/SPEC/hex-primality.md#automatic-construction-fallback-and-caller-resources).
-`HexIntFactor.PrimalityTactic.constructionExtension` must use
-`ConstructionExtension` version 1 and name
-`Hex.Nat.ecmConstructionFactor : FactorSearch`, the default ECM provider wrapper.
-This registration is distinct from the ordinary `SearchExtension` version-3
-registration of `intFactorSearch`. It does not enable ECM in ordinary integer factorization. The provider must
-certify the three field-prime paths and preserve P-521's certificate and attempt
-total when its HexPrimality factor subset suffices. Retain native construction,
-checker and replay measurements in
-[the ECM field report](../../reports/hex-primality-ecm-stage2.md).
+Use `primality? (factor := Hex.Nat.ecmFactorSearch)` to select the original
+fixed-curve provider explicitly after importing `HexIntFactor.Construction`
+and `HexPrimality.Elab`. Its schedule and result accounting remain available
+for reproduction of retained comparisons.
+
+The standard `HexIntFactor` import selects
+`interleavedConstructionFactor : FactorSearch`, the default closure of
+`interleavedFactorSearch (trace := false) (early := true)`. The version-2
+`HexIntFactor.PrimalityTactic.constructionExtension` names this closure.
+Selection before the first complete construction is owned by
+[HexPrimality's construction contract](../../HexPrimality/SPEC/hex-primality.md#automatic-construction-selection-and-caller-resources).
+This remains independent of ordinary `SearchExtension` version 3 and changes
+neither ordinary integer factorization nor ordinary `primality`.
+
+The preliminary core search uses bounds `[64,512,4096,32768]` at the supplied
+bases and caps the supplied rho step limit at 8192. The supplied SQUFOF
+policy retains its core factoring semantics. Long stage-one p-minus-one calls use `[262144,524288]`
+at those bases and return a single validated proper divisor. Residuals through
+192 bits try this long ladder first; larger residuals try eight random ECM
+curves at bounds `(10000,1000000)` first. The remaining ladder is 42 random
+curves at those same bounds, 64 consecutive parameters from 6 at
+`(32768,524288)`, then 200 random curves at `(50000,4000000)`.
+Random parameters use the supplied advancing `Rand`; bounds and curve counts
+are fixed, finite policy choices rather than caller-specific factor hints.
+
+Keep both parts of every split. A failed complete long p-minus-one ladder is
+inherited by residual divisors, since each fixed base/exponent's ancestor gcd
+of one or the whole modulus cannot become a proper divisor on a descendant.
+After a successful split, the long ladder restarts on descendants. Merge every
+core-discovered factor power and retain all unsplit work in the residual.
+All stage calls and rho restarts share the supplied total attempt limit (1024
+if absent); each worklist is bounded by `factorFuel`. Default early stopping
+uses `Construction.sufficient constructionBudget` for the predecessor's
+subject. It is an untrusted search heuristic: the caller independently selects
+subsets, recursively certifies candidates and checks the complete certificate.
+`early := false` requests continued factoring. No probable-prime screen can
+establish a successful primality proof.
+
+Reuse bound-dependent prepared tables across curves and residuals, including
+both portions of the first ECM round. Keep stage-two preparation lazy and
+curve/modulus data local. Retain zero-input, attempt-boundary, repeated-factor,
+failed-search inheritance and exact certificate tests. Standard imports must
+prove secp256k1, P-384 and Curve448 through the public tactic; guard complete
+suggestion text and theorem axioms. Curve25519 retains its accepted certificate
+with 31 attempts, and the core-only route retains its 29-attempt construction.
+
+The [independent comparison](../../reports/primality/factor-policy/corpus-v3.md)
+records coverage, paired field timings and kernel replay of the policy adopted
+here. The original fixed-curve provider and
+[ECM field report](../../reports/hex-primality-ecm-stage2.md) remain historical
+comparison evidence, not descriptions of the automatic dispatch.
 
 #### Construction cost experiments and optimization contract
 
@@ -1239,7 +1277,7 @@ HexPrimality and HexIntFactor, with HexArith already precompiled; their Mathlib
 bridges remain unprecompiled.
 
 The heartbeat policy is owned by
-[HexPrimality's caller-resource contract](../../HexPrimality/SPEC/hex-primality.md#automatic-construction-fallback-and-caller-resources)
+[HexPrimality's caller-resource contract](../../HexPrimality/SPEC/hex-primality.md#automatic-construction-selection-and-caller-resources)
 and applies to all provider execution modes and table preparation. Examples
 must declare a finite user-set limit when the default is insufficient. Lower
 wall time alone does not establish lower heartbeat consumption. Preserve the
@@ -2241,7 +2279,7 @@ HexIntFactor/
   PMinusOne.lean    -- adapter from the shared p-1 primitive to the dispatch
   Ecm.lean          -- Montgomery-curve ECM stage 1
   EcmStage2.lean    -- bounded saved-point continuation
-  Construction.lean -- ECM provider and ecmConstructionFactor wrapper
+  Construction.lean -- interleaved and fixed-curve construction providers
   Cyclotomic.lean   -- cyclotomicSplit? and the checked candidate
   Order.lean        -- OrderCert, checkOrder, primitive roots, Carmichael
   Factor.lean       -- the dispatch, factor?, factorPartial?
@@ -2301,7 +2339,7 @@ and uses its separate `FactorSearchBudget` smooth bounds and bases.
 
 
 The ordinary `SearchExtension` primality adapter advertises ABI version 3.
-The separate `ConstructionExtension` registration uses version 1. The ordinary
+The separate `ConstructionExtension` registration uses version 2. The ordinary
 registered allocation has no total attempt limit. When a construction caller
 sets `FactorSearchBudget.attemptLimit`, the adapter declines with no attempts
 or random draws and retains the entire input as residual; it does not claim to

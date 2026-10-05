@@ -1,0 +1,22 @@
+{
+  "policy": "interleaved",
+  "source": "import HexIntFactor.Primality\n\nopen Lean\n\nset_option maxHeartbeats 0\n\nrun_cmd Lean.Elab.Command.liftTermElabM do\n  let (result, allocations) \u2190 Hex.PrimalityTactic.construct 69199437377629051939477864552334532767081794053034238723740032946332041487367 Hex.Nat.constructionBudget\n  unless allocations == [(``Hex.Nat.interleavedConstructionFactor, 1024)] do\n    throwError \"unexpected construction allocation\"\n  match result with\n  | .ok _ => throwError \"expected construction exhaustion for 69199437377629051939477864552334532767081794053034238723740032946332041487367\"\n  | .error f =>\n    unless f.stop == .exhausted && f.attempts == 649 &&\n        f.rand.state == 3067306412167698271 do\n      throwError \"construction outcome changed for 69199437377629051939477864552334532767081794053034238723740032946332041487367\"\n    logInfo m!\"CURRENT_CONSTRUCTION tuning-256-0: exhausted after {f.attempts} attempts\"\n  let (result, allocations) \u2190 Hex.PrimalityTactic.construct 12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457 Hex.Nat.constructionBudget\n  unless allocations == [(``Hex.Nat.interleavedConstructionFactor, 1024)] do\n    throwError \"unexpected construction allocation\"\n  match result with\n  | .ok _ => throwError \"expected construction exhaustion for 12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457\"\n  | .error f =>\n    unless f.stop == .exhausted && f.attempts == 656 &&\n        f.rand.state == 18089624840608904307 do\n      throwError \"construction outcome changed for 12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457\"\n    logInfo m!\"CURRENT_CONSTRUCTION holdout-512-ordinary-0: exhausted after {f.attempts} attempts\"\n  let (result, allocations) \u2190 Hex.PrimalityTactic.construct 7065189838482317911507479868798535730570068332444669726683537376311597879857917999853299197262244131953963424316801120147570853989595570812519051510818097 Hex.Nat.constructionBudget\n  unless allocations == [(``Hex.Nat.interleavedConstructionFactor, 1024)] do\n    throwError \"unexpected construction allocation\"\n  match result with\n  | .ok _ => throwError \"expected construction exhaustion for 7065189838482317911507479868798535730570068332444669726683537376311597879857917999853299197262244131953963424316801120147570853989595570812519051510818097\"\n  | .error f =>\n    unless f.stop == .exhausted && f.attempts == 642 &&\n        f.rand.state == 16968484052485737441 do\n      throwError \"construction outcome changed for 7065189838482317911507479868798535730570068332444669726683537376311597879857917999853299197262244131953963424316801120147570853989595570812519051510818097\"\n    logInfo m!\"CURRENT_CONSTRUCTION holdout-512-ordinary-3: exhausted after {f.attempts} attempts\"\n",
+  "cases": [
+    "tuning-256-0",
+    "holdout-512-ordinary-0",
+    "holdout-512-ordinary-3"
+  ],
+  "command": [
+    "lake",
+    "build",
+    "+HexECPPMathlib.PariScratchj4ktw254.Dispatch:olean"
+  ],
+  "wall_ns": 413044566924,
+  "returncode": 0,
+  "confirmations": [
+    "info: HexECPPMathlib/PariScratchj4ktw254/Dispatch.lean:7:0: CURRENT_CONSTRUCTION tuning-256-0: exhausted after 649 attempts",
+    "info: HexECPPMathlib/PariScratchj4ktw254/Dispatch.lean:7:0: CURRENT_CONSTRUCTION holdout-512-ordinary-0: exhausted after 656 attempts",
+    "info: HexECPPMathlib/PariScratchj4ktw254/Dispatch.lean:7:0: CURRENT_CONSTRUCTION holdout-512-ordinary-3: exhausted after 642 attempts"
+  ],
+  "log_sha256": "7fce8ddb4d237a3d3bbb5e20e2435063ab329a3176c980b2d38b935a1216b97e"
+}

@@ -7,22 +7,16 @@ Authors: Kim Morrison
 import HexIntFactor.Construction
 import Lean.Data.Json
 
-/-! The full current construction profile, including the registered ECM
-retry. This is the same default schedule as Hex.PrimalityTactic.construct.
-Inputs use the ordinary construction seed (the subject). -/
+/-! The current registered construction profile: one pass with the interleaved
+factor provider. Inputs use the ordinary construction seed (the subject).
+Earlier retained reports used the core-first/fixed-curve retry policy. -/
 
 open Hex.Nat
 
 @[noinline] private def run (n : Nat) : IO Lean.Json := do
-  let first := Construction.runTraced n (Hex.Rand.ofSeed n) constructionBudget
-  let (result, coreAttempts, retry) :
-      Except Construction.Failure (Internal.PrimeCertSuccess n) × Nat × Bool := match first with
-    | .ok result => (.ok result, result.attempts, false)
-    | .error f =>
-      if Construction.retryable n constructionBudget f then
-        (Construction.retry n constructionBudget f ecmConstructionFactor, f.attempts, true)
-      else (.error f, f.attempts, false)
-  let common := [("core_attempts", Lean.toJson coreAttempts), ("ecm_retry", Lean.toJson retry),
+  let result := Construction.runTraced n (Hex.Rand.ofSeed n)
+    constructionBudget interleavedConstructionFactor
+  let common := [("policy", Lean.toJson "interleaved"),
     ("budget", Lean.toJson (reprStr constructionBudget))]
   return Lean.Json.mkObj <| common ++ match result with
     | .ok result => [("verdict", Lean.toJson "success"), ("attempts", Lean.toJson result.attempts),
