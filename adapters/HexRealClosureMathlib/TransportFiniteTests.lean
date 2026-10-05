@@ -15,6 +15,64 @@ namespace Hex.RealClosure.Transport.Finite.Tests
 
 open Hex.SignDet HexRealRootsMathlib HexPolyMathlib.Interpret
 
+/-- A reader that agrees at the reached scalars 0 and 1, but fails addition
+at 1 + 1. No closed domain containing the unit can support this reader. -/
+def changedTwo (x : Rat) : Rat := if x = 2 then 3 else x
+
+theorem changedTwo_not_closed (S : Rat → Prop) : ¬ Closed changedTwo S := by
+  intro closed
+  have addition := closed.read_add 1 1 closed.one closed.one
+  norm_num [changedTwo] at addition
+
+private theorem changedTwo_product :
+    Product changedTwo (1 : Hex.DensePoly Rat) 1 := by
+  have coefficient : (1 : Hex.DensePoly Rat).coeff 0 = 1 := by
+    rw [← HexPolyMathlib.coeff_toPolynomial, HexPolyMathlib.toPolynomial_one]
+    simp
+  constructor
+  · intro i hi j hj
+    have iz : i = 0 := by change i < 1 at hi; omega
+    have jz : j = 0 := by change j < 1 at hj; omega
+    subst i; subst j
+    norm_num [coefficient, changedTwo]
+  · intro i hi j hj
+    have iz : i = 0 := by change i < 1 at hi; omega
+    have jz : j = 0 := by change j < 1 at hj; omega
+    subst i; subst j
+    norm_num [productPrefix, Hex.DensePoly.coeff_C, changedTwo]
+
+/-- Nonempty binary-power and product-fold data is inhabited even when no
+universal closed-domain interpretation exists for the same reader. -/
+theorem changedTwo_moment : MomentData changedTwo [1] [1] := by
+  have power : PowerData changedTwo (1 : Hex.DensePoly Rat) 1 := by
+    rw [PowerData]
+    simp only [Nat.one_ne_zero, ↓reduceIte]
+    refine ⟨changedTwo_product, ?_, ?_⟩
+    · rw [PowerData]
+      simp
+    · change Product changedTwo ((1 * 1 : Hex.DensePoly Rat).natPow 0) 1
+      simpa only [Hex.DensePoly.natPow, ↓reduceIte] using changedTwo_product
+  constructor
+  · intro pair member
+    simp only [List.zip_cons_cons, List.zip_nil_left, List.mem_singleton] at member
+    subst pair
+    exact power
+  · change FoldData changedTwo [(1 : Hex.DensePoly Rat).natPow 1] 1
+    rw [FoldData]
+    constructor
+    · have unitPower : (1 : Hex.DensePoly Rat).natPow 1 = 1 := by
+        simpa [Hex.DensePoly.natPow] using
+          (Hex.DensePoly.mul_one_right_poly (1 : Hex.DensePoly Rat))
+      rw [unitPower]
+      exact changedTwo_product
+    · trivial
+
+/-- Consume the actual finite theorem with that nonclosed reader. -/
+theorem changedTwo_transport :
+    polynomial changedTwo (moment [1] [1]) = moment ([1].map (polynomial changedTwo)) [1] := by
+  exact moment_polynomial changedTwo (by norm_num [changedTwo])
+    (by norm_num [changedTwo]) [1] [1] changedTwo_moment
+
 variable {E C : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E] [Mul E] [NatCast E]
 variable [DecidableEq C]
 
@@ -93,3 +151,13 @@ end Hex.RealClosure.Transport.Finite.Tests
 /-- info: 'Hex.RealClosure.Transport.Finite.Tests.identity_point' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Transport.Finite.Tests.identity_point
+
+/-- info: 'Hex.RealClosure.Transport.Finite.Tests.changedTwo_not_closed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.Finite.Tests.changedTwo_not_closed
+/-- info: 'Hex.RealClosure.Transport.Finite.Tests.changedTwo_moment' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.Finite.Tests.changedTwo_moment
+/-- info: 'Hex.RealClosure.Transport.Finite.Tests.changedTwo_transport' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.Finite.Tests.changedTwo_transport
