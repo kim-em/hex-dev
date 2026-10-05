@@ -53,3 +53,4 @@ public import HexRealClosure.RootTransport
 public import HexRealClosure.RootCollection
 public import HexRealClosure.Sample
 public import HexRealClosure.QAdjoin
+public import HexRealClosure.NumberField

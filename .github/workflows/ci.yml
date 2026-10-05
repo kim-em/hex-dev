@@ -215,6 +215,7 @@ jobs:
           python3 -m unittest scripts/oracle/test_real_algebraic_scaling_bench.py
           python3 -m unittest scripts/oracle/test_real_closure_normalization.py
           python3 -m unittest scripts/oracle/test_real_closure_nested_normalization.py
+          python3 -m unittest scripts/oracle/test_real_closure_number_field.py
       - name: Verify performance measurements and figures are current
         if: steps.classify.outputs.docs_only != 'true' && steps.classify.outputs.manual_only != 'true'
         run: |

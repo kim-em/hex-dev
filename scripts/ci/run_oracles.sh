@@ -106,6 +106,7 @@ ORACLES=(
   # Exact Python integer/Fraction formula evaluation
   "HexRealFormula|hexrealformula_emit_fixtures|scripts/oracle/real_formula.py|conformance-fixtures/HexRealFormula/formula.jsonl"
   "HexRealClosure|hexrealclosure_trivial_conformance|scripts/oracle/real_closure_trivial.py|conformance-fixtures/HexRealClosure/trivial.jsonl"
+  "HexRealClosure|hexrealclosure_number_field_conformance|scripts/oracle/real_closure_number_field.py|conformance-fixtures/HexRealClosure/number-field.jsonl"
   "HexRealClosure|hexrealclosure_bounds_conformance|scripts/oracle/real_closure_bounds.py|conformance-fixtures/HexRealClosure/bounds.jsonl"
   "HexRealClosure|hexrealclosure_deflation_conformance|scripts/oracle/real_closure_deflation.py|conformance-fixtures/HexRealClosure/deflation.jsonl"
   "HexRealClosure|hexrealclosure_isolation_conformance|scripts/oracle/real_closure_isolation.py|conformance-fixtures/HexRealClosure/isolation.jsonl"
