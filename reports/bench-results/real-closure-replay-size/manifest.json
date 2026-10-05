@@ -1,0 +1,28 @@
+{
+  "format": 1,
+  "measurement": "Exact sizes and counts; no elapsed timings",
+  "base_commit": "bbbaad294c4137fef90a2f84d1cb034f8a5ef09f",
+  "executable_sha256": "ade08400b6f4a6563c37c9d2df4121379d5bf2e61d222354379af3c2b941fc5d",
+  "files": {
+    "conformance/HexRealClosure/ReplaySize.lean": "dcc48d0adf517492db3cc6879b30387d3b46ce5c5cf16a8e9cfae85e6268c1a2",
+    "scripts/oracle/real_closure_replay_size.py": "03c80edfa7962393ed28b2671af45f0101b0c6baddfa1d8e244f4f4b8df38060",
+    "conformance-fixtures/HexRealClosure/replay-size.jsonl": "a5816552285540f55657b56abadaed56583626de0e099d33c14585a111552653",
+    "reports/bench-results/real-closure-replay-size/analysis.json": "59c09528f37736ea6473248059c30f33cdc1c5dee63899acdca750b1d6ea0bb7"
+  },
+  "native_command": [
+    "env",
+    "LEAN_ABORT_ON_PANIC=1",
+    ".lake/build/bin/hexrealclosure_replay_size"
+  ],
+  "analysis_command": [
+    "python3",
+    "scripts/oracle/real_closure_replay_size.py",
+    "conformance-fixtures/HexRealClosure/replay-size.jsonl"
+  ],
+  "versions": {
+    "lean": "4.35.0-rc3",
+    "python-flint": "0.9.0",
+    "flint": "3.6.0"
+  },
+  "scope": "Two algebraic levels over the rational base, selected roots in (1,2), repeated and distinct linear queries; no infinitesimals or elapsed proof-cost claims"
+}

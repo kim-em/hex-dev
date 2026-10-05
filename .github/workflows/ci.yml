@@ -220,6 +220,7 @@ jobs:
           python3 -m unittest scripts/oracle/test_real_algebraic_scaling_bench.py
           python3 -m unittest scripts/oracle/test_real_closure_normalization.py
           python3 -m unittest scripts/oracle/test_real_closure_nested_normalization.py
+          python3 -m unittest scripts/oracle/test_real_closure_replay_size.py
           python3 -m unittest scripts/oracle/test_real_closure_number_field.py
           python3 -m unittest scripts/oracle/test_real_closure_metitarski_scaling.py
           python3 -m unittest scripts/bench/test_analyze_real_closure_metitarski_scaling.py

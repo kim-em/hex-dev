@@ -1787,6 +1787,10 @@ lean_exe hexrealclosure_nested_normalization where
   srcDir := "bench"
   root := `HexRealClosure.NestedNormalization
 
+lean_exe hexrealclosure_replay_size where
+  srcDir := "conformance"
+  root := `HexRealClosure.ReplaySize
+
 lean_exe hexrealclosure_trivial_tests where
   root := `HexRealClosure.TrivialTowerTests
 
