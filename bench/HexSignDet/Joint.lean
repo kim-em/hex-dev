@@ -43,26 +43,29 @@ instance : Hashable Case where
       rootHash i.leftFull, rootHash i.rightFull, hash i.left, hash i.right,
       hash leftDirect, hash rightDirect)
 
-/-- Only the two descriptors used by completion or comparison. -/
-structure Sources where
+/-- The index keeps partial-source completion and full-source comparison
+registrations distinct. Constructors remain private to this fixture. -/
+structure Sources (full : Bool) where
+  private mk ::
   left : Root
   right : Root
 
-instance : Hashable Sources where
+instance {full : Bool} : Hashable (Sources full) where
   hash i := hash (rootHash i.left, rootHash i.right)
 
-/-- Only the prepared domains, queries and supplied evidence used by a table
-operation. Production does not need evidence; checking receives it explicitly. -/
-structure Tables where
+/-- Separate production (0), reduced replay (1) and direct replay (2) inputs.
+The index prevents swapping their preparations in a benchmark registration. -/
+structure Tables (kind : Nat) where
+  private mk ::
   left : Input
   right : Input
 
-instance : Hashable Tables where
+instance {kind : Nat} : Hashable (Tables kind) where
   hash i := hash (hash i.left, hash i.right)
 
 /-- Complete both original partial descriptors, including their actual table
 production and derivative-word selection. Preparation is outside this body. -/
-@[noinline] def runCompletion (input : Option Sources) : Option (UInt64 × UInt64) := do
+@[noinline] def runCompletion (input : Option (Sources false)) : Option (UInt64 × UInt64) := do
   let i ← input
   let .ok l := i.left.buildCompletion | none
   let .ok r := i.right.buildCompletion | none
@@ -70,14 +73,14 @@ production and derivative-word selection. Preparation is outside this body. -/
 
 /-- Compare the already completed sources through the actual common-product
 and re-encoding producers. Keep the returned head and both root identities. -/
-@[noinline] def runComparison (input : Option Sources) : Option UInt64 := do
+@[noinline] def runComparison (input : Option (Sources true)) : Option UInt64 := do
   let i ← input
   let .ok c := i.left.buildComparison i.right | none
   let order : Nat := match c.order with | .lt => 0 | .eq => 1 | .gt => 2
   return hash (order, polyHash c.common.head,
     c.leftEncoding.target.raw.signs, c.rightEncoding.target.raw.signs)
 
-private def runTables (input : Option Tables) (reduced : Bool) : Option (UInt64 × UInt64) := do
+private def runTables (input : Option (Tables 0)) (reduced : Bool) : Option (UInt64 × UInt64) := do
   let i ← input
   let ld ← i.left.domain
   let rd ← i.right.domain
@@ -86,16 +89,16 @@ private def runTables (input : Option Tables) (reduced : Bool) : Option (UInt64 
   return (hash (entries l.val.node.system), hash (entries r.val.node.system))
 
 /-- Construct both original ordered joint tables with modulo-head products. -/
-@[noinline] def runReduced (input : Option Tables) : Option (UInt64 × UInt64) :=
+@[noinline] def runReduced (input : Option (Tables 0)) : Option (UInt64 × UInt64) :=
   runTables input true
 
 /-- Construct the same two tables with unreduced moment products. -/
-@[noinline] def runDirect (input : Option Tables) : Option (UInt64 × UInt64) :=
+@[noinline] def runDirect (input : Option (Tables 0)) : Option (UInt64 × UInt64) :=
   runTables input false
 
 /-- Check both supplied reduced evidence trees, including their literal
 polynomial, interval, context, support and exact matrix witnesses. -/
-@[noinline] def runCheckReduced (input : Option Tables) : Bool :=
+@[noinline] def runCheckReduced (input : Option (Tables 1)) : Bool :=
   match input with
   | none => false
   | some i =>
@@ -106,7 +109,7 @@ polynomial, interval, context, support and exact matrix witnesses. -/
     | _, _ => false
 
 /-- Check the supplied direct evidence against the same caller bindings. -/
-@[noinline] def runCheckDirect (input : Option Tables) : Bool :=
+@[noinline] def runCheckDirect (input : Option (Tables 2)) : Bool :=
   match input with
   | none => false
   | some i =>
@@ -161,7 +164,7 @@ def input (n : Nat) : Option Case := do
 
 /-- Validate just the original partial selections. Completing them is the
 measured operation, so no completion or comparison runs here. -/
-def sourceInput (n : Nat) : Option Sources := do
+def sourceInput (n : Nat) : Option (Sources false) := do
   if n < 3 || n % 2 != 1 then none else do
     let x : DensePoly Rat := DensePoly.monomial n 1
     let raw := fun head => (⟨10377, head, .negInf, .posInf, [n], [1]⟩ : RawDescriptor Rat Nat)
@@ -172,7 +175,7 @@ def sourceInput (n : Nat) : Option Sources := do
 
 /-- Comparison starts with complete original identities. Do not also compute
 its common-head result or either direct reference table during preparation. -/
-def comparisonInput (n : Nat) : Option Sources := do
+def comparisonInput (n : Nat) : Option (Sources true) := do
   let i ← sourceInput n
   let .ok l := i.left.buildCompletion | none
   let .ok r := i.right.buildCompletion | none
@@ -182,7 +185,7 @@ def comparisonInput (n : Nat) : Option Sources := do
 
 /-- Construct the actual common head and ordered joint queries. No table
 production or root comparison is needed to prepare a table producer. -/
-def tableInput (n : Nat) : Option Tables := do
+def tableInput (n : Nat) : Option (Tables 0) := do
   if n < 3 || n % 2 != 1 then none else do
     let x : DensePoly Rat := DensePoly.monomial n 1
     let p := x - 1
@@ -200,7 +203,7 @@ def tableInput (n : Nat) : Option Tables := do
 
 /-- Prepare only the two supplied trees checked by the chosen replay arm.
 Validate their answers independently by exact evaluation at ±1. -/
-def evidenceInput (n : Nat) (reduced : Bool) : Option Tables := do
+def evidenceInput (n : Nat) (reduced : Bool) : Option (Tables (if reduced then 1 else 2)) := do
   let i ← tableInput n
   let ld ← i.left.domain
   let rd ← i.right.domain
@@ -211,8 +214,8 @@ def evidenceInput (n : Nat) (reduced : Bool) : Option Tables := do
       entries r.val.node.system != expected i.right.queries then none else
     some ⟨{i.left with tree := some l.val}, {i.right with tree := some r.val}⟩
 
-def reducedInput (n : Nat) : Option Tables := evidenceInput n true
-def directInput (n : Nat) : Option Tables := evidenceInput n false
+def reducedInput (n : Nat) : Option (Tables 1) := evidenceInput n true
+def directInput (n : Nat) : Option (Tables 2) := evidenceInput n false
 
 private def bits (z : Int) : Nat := if z == 0 then 0 else z.natAbs.log2 + 1
 
@@ -304,20 +307,33 @@ def inspectTimings (ns : Array Nat) : IO UInt32 := do
     let comparison := some (hash ((2 : Nat), polyHash i.left.head,
       signs (target.full []).queries 1, signs (target.full []).queries (-1)))
     let tables := some (hash leftTable, hash rightTable)
-    unless runCompletion (some ⟨i.leftPartial, i.rightPartial⟩) == completion && runComparison (some ⟨i.leftFull, i.rightFull⟩) == comparison &&
-        runReduced (some ⟨i.left, i.right⟩) == tables && runDirect (some ⟨i.left, i.right⟩) == tables &&
-        runCheckReduced (some ⟨i.left, i.right⟩) && runCheckDirect (some ⟨{i.left with tree := some i.leftDirect},
-          {i.right with tree := some i.rightDirect}⟩) do
-      throw (IO.userError s!"joint callback differs from the independent root answers at {n}")
-    unless runCompletion (sourceInput n) == completion &&
-        runComparison (comparisonInput n) == comparison &&
-        runReduced (tableInput n) == tables && runDirect (tableInput n) == tables &&
-        runCheckReduced (reducedInput n) && runCheckDirect (directInput n) do
-      throw (IO.userError s!"separate joint preparation differs at {n}")
+    let some selected := sourceInput n | throw (IO.userError "missing partial source inputs")
+    let some completed := comparisonInput n | throw (IO.userError "missing completed source inputs")
     let some prepared := tableInput n | throw (IO.userError "missing prepared joint queries")
-    unless prepared.left.head == i.left.head && prepared.right.head == i.right.head &&
-        prepared.left.queries == i.left.queries && prepared.right.queries == i.right.queries do
-      throw (IO.userError s!"separate joint preparation changed literal bindings at {n}")
+    let some reduced := reducedInput n | throw (IO.userError "missing reduced evidence inputs")
+    let some direct := directInput n | throw (IO.userError "missing direct evidence inputs")
+    let some leftTree := i.left.tree | throw (IO.userError "missing reference left tree")
+    let some rightTree := i.right.tree | throw (IO.userError "missing reference right tree")
+    let sameEvidence := fun (a b : Replay Rat Nat) =>
+      decide (Codec.graph ValueCodec.rat ValueCodec.nat (Dag.encode a) =
+        Codec.graph ValueCodec.rat ValueCodec.nat (Dag.encode b))
+    let sameRoot := fun (a b : Root) => decide (a.raw = b.raw) && sameEvidence a.evidence b.evidence
+    let sameTree := fun (a : Input) (b : Replay Rat Nat) =>
+      (a.tree.map (sameEvidence · b)).getD false
+    let sameBindings := fun (a b : Input) => a.head == b.head && a.queries == b.queries
+    unless sameRoot selected.left i.leftPartial && sameRoot selected.right i.rightPartial &&
+        sameRoot completed.left i.leftFull && sameRoot completed.right i.rightFull &&
+        sameBindings prepared.left i.left && sameBindings prepared.right i.right &&
+        sameBindings reduced.left i.left && sameBindings reduced.right i.right &&
+        sameBindings direct.left i.left && sameBindings direct.right i.right &&
+        sameTree reduced.left leftTree && sameTree reduced.right rightTree &&
+        sameTree direct.left i.leftDirect && sameTree direct.right i.rightDirect do
+      throw (IO.userError s!"separate joint preparation changed literal inputs at {n}")
+    unless runCompletion (some selected) == completion &&
+        runComparison (some completed) == comparison &&
+        runReduced (some prepared) == tables && runDirect (some prepared) == tables &&
+        runCheckReduced (some reduced) && runCheckDirect (some direct) do
+      throw (IO.userError s!"joint callback differs from the independent root answers at {n}")
     IO.println <| (Lean.Json.mkObj [
       ("degree", Lean.toJson n), ("queries", Lean.toJson (3*n+1)),
       ("completionResultHash", Lean.toJson (hash completion).toNat),

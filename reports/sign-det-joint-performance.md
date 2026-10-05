@@ -23,7 +23,7 @@ Completion and comparison construct the domains required by their actual APIs. R
 hashes include both returned derivative words or both table counts; the comparison hash
 also includes its common head and ordering.
 
-Each registration prepares the inputs its callback consumes. Completion receives only
+Each registration prepares its source descriptors or prepared domains. Completion receives only
 the two validated partial descriptors. Comparison receives the two completed source
 identities. Table production receives the actual common polynomial, checked prepared
 domain and ordered queries, without producing either table first. Replay receives the
@@ -31,10 +31,11 @@ two supplied trees for its selected reduced or direct mode, checked against exac
 evaluation at the known roots. Preparation remains outside the timed loops.
 
 The combined case constructor is retained for independent input inspection. Callback
-inspection compares both the combined case and the separate preparations with the same
-exact root answers, and checks that the common head and both ordered query lists agree
-literally. The retained collections below used the combined constructor; their original
-input hashes and observations remain unchanged. Separating preparation supplies no new
+inspection checks separate preparations against the combined case’s literal source
+descriptors and complete serialized evidence, as well as the common head and both ordered
+query lists, then compares the six callbacks with the same exact root answers. Type
+indices prevent completion/comparison or reduced/direct replay preparations from being
+swapped in a registration. The retained collections below used the combined constructor; their retained input inventories, callback result hashes and observations remain unchanged. Separating preparation supplies no new
 scientific timing verdict and changes no cubic cost model. This family has realized support two,
 candidate matrices of width at most four, infinite endpoints and no shared source roots.
 It does not cover maximal support, finite endpoint constraints, common roots or nested
