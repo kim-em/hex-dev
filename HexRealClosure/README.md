@@ -2830,3 +2830,52 @@ kernel before insertion. The final equation refers to the inventories actually
 used. Replay can supply recorded certificates without calling the producer.
 The caller retains the supplied-fact arithmetic boundary and supplies the
 validated contexts; this interface does not reconstruct a tower catalog.
+
+## Printed tower values, roots and polynomials
+
+Import `HexRealClosure.TowerBytes` for the shared JSON text and byte format.
+`context.writeText value` and `context.writePolyText polynomial` retain the
+whole immutable binding and every stored coefficient. The binding includes
+provider names and versions, the infinitesimal depth and each algebraic
+frame's defining polynomial, interval, Thom word and replay graph.
+`Root.writeText` prints its native value and actual owner; a selected root's
+frame remains part of that owner's binding. `Repr` for roots, packed values
+and packed polynomials uses this same format.
+
+`context.readText` and `readPolyText` parse through the shared UTF-8/JSON
+parser, require the exact supplied binding, and invoke the existing checked
+value or polynomial reader. `Catalog.readElementText` and
+`readPolynomialText` retain the actual reconstructed context with the result.
+Their byte counterparts accept the same packet as a `ByteArray`. Catalogs
+retain caller-validated provider prefixes and their progress premises;
+reading a provider name does not manufacture those premises. Unknown providers
+and incompatible versions remain errors. Uninstalled algebraic suffixes use
+the existing frame/replay reconstruction over a known base.
+
+The byte and text roundtrip theorems return the exact original native value
+or polynomial. Catalog roundtrips apply when the original context is installed,
+so the result retains that exact handle. This directly preserves interpretation
+in every model of the original context. The unconditional shared-printer/parser
+packet theorem also retains the complete structured JSON before semantic
+reading. Lexical resource limits are an explicit reader policy: the typed
+roundtrip theorems require `Codec.checkBytes` to accept the printed packet,
+with no assumed parser success. Callers can supply larger limits for larger
+native packets. Stale bindings, malformed stored values and trailing literal
+polynomial zeros are rejected.
+
+Run the actual text and `Repr` examples:
+
+```sh
+lake exe hexrealclosure_bytes_conformance
+python3 scripts/oracle/real_closure_bytes.py \
+  conformance-fixtures/HexRealClosure/bytes.jsonl
+```
+
+They exercise rational data, both point and selected roots, a reducible-root
+inverse, nested algebraics, successive infinitesimals, escaped Unicode
+provider names and unknown-provider rejection. The independent Python JSON
+parser checks the exact printed bindings and payloads. Native readers also
+check invalid UTF-8, truncated syntax, stale contexts, malformed coefficients,
+trailing zeros and byte/depth/digit policies. Field arithmetic correspondence
+and exact mathematical conformance remain supplied by the existing tower
+proofs and algebraic oracles.

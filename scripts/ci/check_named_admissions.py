@@ -191,6 +191,7 @@ def check() -> None:
              "HexRealClosure.NumberFieldTower", "HexRealClosureMathlib.NumberFieldTower",
              "HexRealClosure.NumberFieldSamples",
              "HexRealClosure.TowerCatalog", "HexRealClosure.TowerTests",
+             "HexRealClosure.TowerBytes", "HexRealClosure.BytesConformance",
              "HexRealClosure.RootFrame", "HexRealClosure.RootFrameTests",
              "HexRealClosure.FrameFormat", "HexRealClosure.FrameFormatTests",
              "HexRealClosure.TowerOrder", "HexRealClosure.TowerOrderTests",

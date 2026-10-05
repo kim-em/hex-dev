@@ -1793,6 +1793,9 @@ lean_exe hexrealclosure_number_field_conformance where
 lean_exe hexrealclosure_number_field_samples where
   srcDir := "conformance"
   root := `HexRealClosure.NumberFieldSamples
+lean_exe hexrealclosure_bytes_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.BytesConformance
 
 lean_exe hexrealclosure_bounds_conformance where
   srcDir := "conformance"
