@@ -74,8 +74,11 @@ DAG size/replay evidence remain required for Phase 4.
 
 ## Untimed operation counts
 
-The separate [count protocol](counters-protocol.md) was committed at
+The separate [registered count protocol](source/counters-protocol.md) was committed at
 `087312b7d5f652ef6710014236853aa0cae2ac38` before two diagnostic runs.
+The [current window description](counters-protocol.md) corrects that registered
+text after the runs: it wrongly excluded encoding. The procedure, binaries
+and counts are unchanged, and the original text is retained verbatim.
 [Build bindings](counts/build.json), complete stdout/stderr and
 [independent value/trace checks](counts/oracle.json) retain both results.
 Their functional packets exactly match the earlier m = 16 endpoints.
