@@ -110,5 +110,77 @@ class ExactTests(unittest.TestCase):
 
 
 
+class MonicTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        fixture = Path(__file__).resolve().parents[2] / 'conformance-fixtures/HexRealClosure/monic-normalization.jsonl'
+        cls.rows = [json.loads(line) for line in fixture.read_text().splitlines()]
+
+    def test_production_values(self):
+        self.assertEqual([(r['depth'], r['steps']) for r in self.rows],
+                         [(d, m) for d in (1, 2) for m in (2, 4, 8, 16)])
+        checked = [verify(row) for row in self.rows]
+        verify_pairs(self.rows, checked)
+        for result in checked:
+            self.assertTrue(result['production_reductions_checked'])
+            self.assertTrue(all(degree < 3 for degree in result['stored']['max_degree_by_level']))
+
+    def test_changed_branch_and_family(self):
+        for source in self.rows:
+            for change in ('flag_type', 'disabled', 'missing', 'family', 'same_roots_scaled_head'):
+                with self.subTest(depth=source['depth'], steps=source['steps'], change=change):
+                    row = copy.deepcopy(source)
+                    expected = 'monic production reduction was not enabled'
+                    if change == 'flag_type': row['production_reductions'][0] = 1
+                    elif change == 'disabled': row['production_reductions'][0] = False
+                    elif change == 'missing': row.pop('production_reductions')
+                    elif change == 'family':
+                        row['monic'] = False
+                        expected = 'different defining polynomial'
+                    else:
+                        for coefficient in row['heads'][0]: coefficient[0] *= 2
+                        expected = 'different defining polynomial'
+                    with self.assertRaisesRegex(ValueError, expected): verify(row)
+
+    def test_changed_values_and_selection(self):
+        from fractions import Fraction
+        from itertools import zip_longest
+
+        def add(left, right, level):
+            if level == 0:
+                value = Fraction(*left) + Fraction(*right)
+                return [value.numerator, value.denominator]
+            zero = [0, 1] if level == 1 else []
+            result = [add(a, b, level - 1) for a, b in
+                      zip_longest(left, right, fillvalue=zero)]
+            while result and result[-1] == zero:
+                result.pop()
+            return result
+
+        for source in self.rows:
+            for change in ('value', 'unreduced', 'negative_root'):
+                with self.subTest(depth=source['depth'], steps=source['steps'], change=change):
+                    row = copy.deepcopy(source)
+                    if change == 'value':
+                        coefficient = row['value']
+                        for _ in range(row['depth']): coefficient = coefficient[0]
+                        coefficient[0] += coefficient[1]
+                        expected = 'stored value disagrees'
+                    elif change == 'unreduced':
+                        row['value'] = add(row['value'], row['heads'][-1], row['depth'])
+                        expected = 'value was not reduced'
+                    else:
+                        graph = row['roots'][-1][2]
+                        node = graph[2][graph[1]][0]
+                        def scalar(n, level):
+                            value = [n, 1]
+                            for _ in range(level): value = [value] if n else []
+                            return value
+                        node[2] = [1, scalar(-2, row['depth'] - 1)]
+                        node[3] = [1, scalar(0, row['depth'] - 1)]
+                        expected = 'different selected-root interval'
+                    with self.assertRaisesRegex(ValueError, expected): verify(row)
+
+
 if __name__ == '__main__':
     unittest.main()

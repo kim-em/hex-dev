@@ -540,11 +540,6 @@ def main (args : List String) : IO UInt32 := do
     let some steps := steps.toNat? | throw (IO.userError "invalid steps")
     unless depth > 0 do throw (IO.userError "positive depth required")
     Hex.RealClosure.NestedNormalization.emit depth steps false false true true
-  | ["monic", depth, steps, "trace"] =>
-    let some depth := depth.toNat? | throw (IO.userError "invalid depth")
-    let some steps := steps.toNat? | throw (IO.userError "invalid steps")
-    unless depth > 0 do throw (IO.userError "positive depth required")
-    Hex.RealClosure.NestedNormalization.emit depth steps false true true true
   | [depth, steps, policy, diagnostic] =>
     let some depth := depth.toNat? | throw (IO.userError "invalid depth")
     let some steps := steps.toNat? | throw (IO.userError "invalid steps")
