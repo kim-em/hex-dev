@@ -76,7 +76,7 @@ theorem add_converges {a b : Nat → Bounds}
     (ha : Tendsto (fun n => ((a n).width : ℝ)) atTop (𝓝 0))
     (hb : Tendsto (fun n => ((b n).width : ℝ)) atTop (𝓝 0)) :
     Tendsto (fun n => (((a n).add (b n)).width : ℝ)) atTop (𝓝 0) := by
-  simpa [Bounds.width, Bounds.add, sub_add_sub_comm] using ha.add hb
+  simpa only [Bounds.width_add, Rat.cast_add, zero_add] using ha.add hb
 
 /-- The product width estimate tends to zero when both input widths do. -/
 theorem mul_converges {a b : Nat → Bounds} {x y : ℝ}
