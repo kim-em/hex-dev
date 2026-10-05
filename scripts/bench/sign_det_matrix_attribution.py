@@ -10,10 +10,10 @@ DENSE = "lp_Hex_Fin_foldl_loop___at___00Vector_dotProductImpl___at___00Hex_Matri
 HEADER = re.compile(r"\s*(\d+)/(\d+)\s+(\d+)\.(\d{9}):\s+([0-9a-f]+)\s+(.*?)\s+\((.*)\)$")
 
 
-def validate(directory, *, matrix_directory=None):
+def read_archive(directory, schema):
     directory = Path(directory)
     archive = json.loads((directory/"archive.json").read_text())
-    if archive["schema"] != "hex-matrix-check-attribution-archive-v1":
+    if archive["schema"] != schema:
         raise ValueError("unknown attribution archive")
     listed = {binding["stored"] for binding in archive["files"].values()} | {"archive.json"}
     if {str(p.relative_to(directory)) for p in directory.rglob("*") if p.is_file()} != listed:
@@ -30,6 +30,12 @@ def validate(directory, *, matrix_directory=None):
         if hashlib.sha256(data).hexdigest() != binding["sha256"]:
             raise ValueError("attribution raw bytes changed")
         raw[name] = data
+    return raw
+
+
+def validate(directory, *, matrix_directory=None):
+    directory = Path(directory)
+    raw = read_archive(directory, "hex-matrix-check-attribution-archive-v1")
     meta = json.loads(raw["metadata.json"])
     matrix = Path(matrix_directory) if matrix_directory is not None else directory.parents[1]/"sign-det-matrix-wide/6b977999bc-first"
     original = json.loads((matrix/"timing/metadata.json").read_text())
@@ -120,6 +126,48 @@ def validate(directory, *, matrix_directory=None):
     if summaries != expected:
         raise ValueError("leaf summary disagrees with retained samples")
     return summaries
+
+
+def validate_comparison(directory):
+    import statistics
+    import math
+    raw = read_archive(directory, "hex-matrix-power-archive-v1")
+    meta = json.loads(raw["metadata.json"])
+    if (meta["state"] != "complete" or meta["provenance_unchanged"] is not True or
+            meta["sizes"] != [243, 729] or meta["trials"] != 6 or
+            set(meta["arms"]) != {"before", "after"}):
+        raise ValueError("wrong paired comparison plan or provenance")
+    for arm in ("before", "after"):
+        if hashlib.sha256(raw[arm+"-Matrix.lean"]).hexdigest() != meta["arms"][arm]["matrix_sha256"]:
+            raise ValueError("paired source module mismatch")
+    schedule = [(trial, size, arm) for trial in range(6) for size in [243, 729]
+                for arm in (["before", "after"] if trial % 2 == 0 else ["after", "before"])]
+    if [(r["trial"], r["size"], r["arm"]) for r in meta["samples"]] != schedule:
+        raise ValueError("incomplete or reordered paired comparison")
+    times = {}
+    for sample in meta["samples"]:
+        trial, size, arm = sample["trial"], sample["size"], sample["arm"]
+        label = f"{trial}-{size}-{arm}"
+        rows = [json.loads(line) for line in raw[label+".stdout"].decode().splitlines()
+                if line.startswith("{")]
+        row = sample["row"]
+        if rows != [row] or sample["capture"] != label:
+            raise ValueError("paired row disagrees with raw output")
+        duration = row["per_call_nanos"]
+        if (row["status"] != "ok" or row["result_hash"] != "0xb" or row["param"] != size or
+                row["cache_mode"] != "warm" or row["env"]["git_commit"] != meta["arms"][arm]["revision"] or
+                row["env"]["git_dirty"] is not False or type(duration) not in (int, float) or
+                not math.isfinite(duration) or duration <= 0 or
+                type(row["inner_repeats"]) is not int or row["inner_repeats"] <= 0 or
+                row["function"] != "Hex.SignDetBench.MaximalMatrix.runTensorCheck"):
+            raise ValueError("failed or substituted paired result")
+        times[trial, size, arm] = duration
+    summary = {str(size): {"median_before_after_ratio": statistics.median(
+        times[trial, size, "before"]/times[trial, size, "after"] for trial in range(6))}
+        for size in [243, 729]}
+    if summary != meta["summary"]:
+        raise ValueError("paired ratios disagree with raw samples")
+    return summary
 
 
 if __name__ == "__main__":

@@ -238,3 +238,27 @@ only and remain non-dense; system-library leaves do not enter the dense count.
 The computational source closure contains 275 files; the timing archive
 additionally hashes five collector/documentation files, which are excluded
 explicitly from the closure comparison. These are the same clean revision.
+
+
+## Avoiding unnecessary exponentiation
+
+Moment entries use powers zero, one and two. `power` returns 1, the value,
+and its square directly at those exponents, preserving general exponentiation
+for larger exponents. `power_eq` proves equality for every integer and natural
+exponent, and the existing correspondence proofs use that equality. The matrix
+identities, count equations and support checks are unchanged.
+
+A short [before/after comparison](data/sign-det-matrix-power/7d21b4083f/metadata.json)
+retains all 24 warm child samples: six trial-major rounds at dimensions 243
+and 729, adjacent arms alternating AB/BA. It compares the original measured
+binary at `6b977999bc` with the optimized binary at `7d21b4083f`. Both return
+true for every supplied system; sources and binaries remain unchanged during
+collection. The median paired before/after ratios are 1.284 and 1.140, about
+22% and 12% less callback time. These are finite shared-host observations,
+not a new scaling verdict or a claim about every application.
+
+The archive retains original metadata, outputs, collector, both core source
+modules and binary/source hashes. The ordinary companion proofs compile,
+all 33 genuine-number-field checks pass, and the pinned independent FLINT
+oracle confirms 102 rational root/sign cases. The original matrix timing
+records and profile observations above remain unchanged.

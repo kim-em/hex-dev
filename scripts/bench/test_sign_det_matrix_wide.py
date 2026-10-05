@@ -293,3 +293,21 @@ class MatrixAttribution(unittest.TestCase):
             (target/"extra").write_text("unlisted")
             with self.assertRaisesRegex(ValueError, "unlisted"):
                 self.validate(target, matrix_directory=self.matrix)
+
+    def test_retained_power_comparison_and_false_ratio(self):
+        from scripts.bench.sign_det_matrix_attribution import validate_comparison
+        import shutil, hashlib
+        source = Path(__file__).resolve().parents[2]/"reports/data/sign-det-matrix-power/7d21b4083f"
+        ratios = validate_comparison(source)
+        self.assertGreater(ratios["243"]["median_before_after_ratio"], 1)
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary)/"archive"; shutil.copytree(source, target)
+            path = target/"metadata.json"; meta = json.loads(path.read_text())
+            meta["summary"]["243"]["median_before_after_ratio"] = 100
+            path.write_text(json.dumps(meta))
+            manifest = json.loads((target/"archive.json").read_text())
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            manifest["files"]["metadata.json"].update(sha256=digest, stored_sha256=digest)
+            (target/"archive.json").write_text(json.dumps(manifest))
+            with self.assertRaisesRegex(ValueError, "ratios disagree"):
+                validate_comparison(target)
