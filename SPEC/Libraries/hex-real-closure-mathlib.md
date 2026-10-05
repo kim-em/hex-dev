@@ -536,8 +536,10 @@ positional child slices. `DerivativeData` records each reconstructed derivative;
 The finite checker, cardinality, checked-descriptor and selected-sign theorems
 retain the same integer evidence and select one common target root. Existing
 closed-domain APIs derive these finite premises as corollaries. An ordinary-real
-consumer obtains a root satisfying the whole recorded sign vector from the
-explicit finite data. Constructing this arithmetic data from accepted tower
+consumer identifies the unique count-one point satisfying the descriptor
+row and whole additional recorded sign vector from explicit finite data.
+Its identity-interpretation example derives that data from the actual retained
+inventory and consumes the closed-to-finite compatibility constructors. Constructing this arithmetic data from accepted tower
 `Γ`, including the reached zero packings, remains a separate requirement of
 the direct `Sample.realizeReplay` contract.
 

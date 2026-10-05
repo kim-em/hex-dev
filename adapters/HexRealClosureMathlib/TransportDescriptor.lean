@@ -163,7 +163,7 @@ theorem descriptor_check [DecidableEq C] [DecidableEq D]
 
 variable [DecidableEq C] [DecidableEq D]
 
-/-- Finite premises for transporting an accepted descriptor. Membership
+/-- Closed-domain premises for transporting an accepted descriptor. Membership
 derives the complete derivative arithmetic from the original head alone. -/
 structure DescriptorData (read : E → K) (S : E → Prop) (sourceSign : E → Int)
     (targetSign : K → Int) (raw : Hex.SignDet.RawDescriptor E C)
@@ -250,13 +250,9 @@ with its own reconstructed derivative queries and immutable context. -/
     (contextMap : C → D) (sourceSign : E → Int) (targetSign : K → Int) (context : C)
     (d : Hex.SignDet.Descriptor E C sourceSign context)
     (data : DescriptorData read S sourceSign targetSign d.raw d.evidence) :
-    Hex.SignDet.Descriptor K D targetSign (contextMap context) := by
-  have accepted := descriptor_check read S closed contextMap sourceSign targetSign context
-    d.raw d.evidence data.members data.head data.replay d.accepted
-  simp only [Hex.SignDet.RawDescriptor.check, Bool.and_eq_true, decide_eq_true_eq] at accepted
-  exact Hex.SignDet.Descriptor.ofTable _ _ accepted.1.1.1 accepted.1.1.2 accepted.1.2
-    (((replay read contextMap d.evidence).table_lookup accepted.1.2
-      (descriptor read contextMap d.raw).signs).trans accepted.2)
+    Hex.SignDet.Descriptor K D targetSign (contextMap context) :=
+  Finite.checkedDescriptor read closed.read_zero closed.read_one contextMap sourceSign targetSign context d
+    (Finite.DescriptorData.of_closed read S closed sourceSign targetSign d.raw d.evidence data)
 
 /-- The validated descriptor retains its literal mapped raw input. -/
 theorem checkedDescriptor_raw (read : E → K) (S : E → Prop) (closed : Closed read S)
@@ -265,7 +261,8 @@ theorem checkedDescriptor_raw (read : E → K) (S : E → Prop) (closed : Closed
     (data : DescriptorData read S sourceSign targetSign d.raw d.evidence) :
     (checkedDescriptor read S closed contextMap sourceSign targetSign context d data).raw =
       descriptor read contextMap d.raw := by
-  simp only [checkedDescriptor, Hex.SignDet.Descriptor.ofTable_raw]
+  exact Finite.checkedDescriptor_raw read closed.read_zero closed.read_one contextMap sourceSign targetSign context d
+    (Finite.DescriptorData.of_closed read S closed sourceSign targetSign d.raw d.evidence data)
 
 /-- Checking the exact interpreted raw descriptor and replay returns the
 constructed target descriptor, with no new sign determination. -/
@@ -276,8 +273,8 @@ theorem checkedDescriptor_checked (read : E → K) (S : E → Prop) (closed : Cl
     Hex.SignDet.Descriptor.ofReplay? targetSign (contextMap context)
       (descriptor read contextMap d.raw) (replay read contextMap d.evidence) =
         some (checkedDescriptor read S closed contextMap sourceSign targetSign context d data) := by
-  simp only [checkedDescriptor]
-  apply Hex.SignDet.Descriptor.ofReplay_ofTable
+  exact Finite.checkedDescriptor_checked read closed.read_zero closed.read_one contextMap sourceSign targetSign context d
+    (Finite.DescriptorData.of_closed read S closed sourceSign targetSign d.raw d.evidence data)
 
 /-- The result retains the whole literal replay, including every descendant,
 moment, reduction, preprocessing entry and rank witness. -/
@@ -287,13 +284,8 @@ theorem checkedDescriptor_evidence (read : E → K) (S : E → Prop) (closed : C
     (data : DescriptorData read S sourceSign targetSign d.raw d.evidence) :
     (checkedDescriptor read S closed contextMap sourceSign targetSign context d data).evidence =
       replay read contextMap d.evidence := by
-  have accepted := descriptor_check read S closed contextMap sourceSign targetSign context
-    d.raw d.evidence data.members data.head data.replay d.accepted
-  have fields := Hex.SignDet.Descriptor.ofReplay_data targetSign (contextMap context)
-    (descriptor read contextMap d.raw) (replay read contextMap d.evidence)
-  rw [checkedDescriptor_checked read S closed contextMap sourceSign targetSign context d data,
-    Option.map_some, ite_eq_left accepted] at fields
-  exact (Prod.mk.inj (Option.some.inj fields)).2
+  exact Finite.checkedDescriptor_evidence read closed.read_zero closed.read_one contextMap sourceSign targetSign context d
+    (Finite.DescriptorData.of_closed read S closed sourceSign targetSign d.raw d.evidence data)
 
 end Hex.RealClosure.Transport
 

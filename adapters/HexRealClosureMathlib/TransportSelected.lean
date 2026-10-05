@@ -99,14 +99,10 @@ theorem selected_check (read : E → K) (S : E → Prop) (closed : Closed read S
       (qs.map (polynomial read))
       ⟨values.toArray, by simpa only [List.length_map] using values.size_toArray⟩
       (replay read contextMap evidence) = true := by
-  simp only [RawDescriptor.checkSigns, Bool.and_eq_true, decide_eq_true_eq] at accepted ⊢
-  refine ⟨⟨⟨(descriptor_wellFormed read closed.read_zero contextMap raw head).trans accepted.1.1.1,
-    congrArg contextMap accepted.1.1.2⟩, ?_⟩, ?_⟩
-  · rw [descriptor_queries read S closed contextMap raw members head, ← List.map_append]
-    exact replay_check read S closed contextMap sourceSign targetSign context
-      raw.head raw.lower raw.upper (raw.queries ++ qs) evidence data accepted.1.2
-  · rw [descriptor_queries read S closed contextMap raw members head, List.length_map, replay_node]
-    exact accepted.2
+  exact Finite.selected_check read closed.read_zero closed.read_one contextMap sourceSign targetSign context
+    raw qs values evidence (Finite.DerivativeData.of_closed read S closed raw.head raw.head.natDegree members)
+    head (Finite.ReplayData.of_closed read S closed sourceSign targetSign raw.head raw.lower raw.upper
+      (raw.queries ++ qs) evidence data) accepted
 
 /-- Transport checked selected-sign evidence to the actual validated target
 descriptor, retaining the original sign vector and complete joint replay. -/
@@ -119,12 +115,10 @@ descriptor, retaining the original sign vector and complete joint replay. -/
       (d.raw.queries ++ qs) s.evidence) :
     SelectedSigns (checkedDescriptor read S closed contextMap sourceSign targetSign context d descriptorData)
       (qs.map (polynomial read)) :=
-  { values := ⟨s.values.toArray, by simpa only [List.length_map] using s.values.size_toArray⟩
-    evidence := replay read contextMap s.evidence
-    accepted := by
-      rw [Descriptor.checkSigns, checkedDescriptor_raw]
-      exact selected_check read S closed contextMap sourceSign targetSign context d.raw qs s.values
-        s.evidence descriptorData.members descriptorData.head data s.accepted }
+  Finite.selected read closed.read_zero closed.read_one contextMap sourceSign targetSign context d
+    (Finite.DescriptorData.of_closed read S closed sourceSign targetSign d.raw d.evidence descriptorData) qs s
+    (Finite.ReplayData.of_closed read S closed sourceSign targetSign d.raw.head d.raw.lower d.raw.upper
+      (d.raw.queries ++ qs) s.evidence data)
 
 /-- The selected-sign vector is retained literally after its length transport. -/
 theorem selected_values (read : E → K) (S : E → Prop) (closed : Closed read S)
@@ -200,12 +194,10 @@ theorem selected_signs (read : E → K) (S : E → Prop) (closed : Closed read S
         (fun x : K => (SignType.sign x : Int)) context d descriptorData).root
         (fun x : K => x) (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl)
         (fun _ _ => rfl) (fun _ => rfl) (fun _ => rfl)) = s.values.toList := by
-  have signs := (selected read S closed contextMap sourceSign
-    (fun x : K => (SignType.sign x : Int)) context d descriptorData qs s data).values_at_root
-      (fun x : K => x) (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl)
-      (fun _ _ => rfl) (fun _ => rfl) (fun _ => rfl)
-  exact signs.symm.trans (selected_values read S closed contextMap sourceSign
-    (fun x : K => (SignType.sign x : Int)) context d descriptorData qs s data)
+  exact Finite.selected_signs read closed.read_zero closed.read_one contextMap sourceSign context d
+    (Finite.DescriptorData.of_closed read S closed sourceSign _ d.raw d.evidence descriptorData) qs s
+    (Finite.ReplayData.of_closed read S closed sourceSign _ d.raw.head d.raw.lower d.raw.upper
+      (d.raw.queries ++ qs) s.evidence data)
 
 end Hex.RealClosure.Transport
 
