@@ -227,14 +227,13 @@ The committed comparison uses three cold outer trials on `chungus2` (AMD EPYC
 Regenerate it with `lake exe hexpolyz_bench compare Hex.PolyZBench.runMulKS1Checksum Hex.PolyZBench.runMulCrtNttChecksum --param-floor 4096 --param-ceiling 16384 --param-schedule doubling --cache-mode cold --outer-trials 3 --signal-floor-multiplier 1`. The resulting `ZPoly` multiplication plan can drive generic product trees
 and clipped products; no new `Mul ZPoly` instance is introduced.
 
-The `KroneckerMulti` and `NttMul` modules import hex-poly-fast and
-hex-modular, which are not yet published, so the released `HexPolyZ` umbrella
-does not export them: hex-dev builds them through its `HexPolyFastKernels`
-target, `ZPoly.mulFast` and `ZPoly.fastPlan` have no published consumer, and
-both modules rejoin the umbrella when those libraries are admitted to the
-release manifest (https://github.com/kim-em/hex-dev/issues/10001). Their conformance extends the current signed
-Kronecker fixtures, and their benchmark extends the current two-dimensional
-grid rather than replacing it with asymptotic-only cases.
+The umbrella exports `KroneckerMulti` and `NttMul`, whose dependencies
+hex-poly-fast and hex-modular are included in the release manifest.
+`ZPoly.mulFast` and `ZPoly.fastPlan` are available to downstream consumers;
+Hensel's ordered product uses the plan within its measured shape and
+factor-count guard. Their conformance extends the current signed Kronecker
+fixtures, and their benchmark extends the current two-dimensional grid
+rather than replacing it with asymptotic-only cases.
 
 ## External comparators
 

@@ -156,11 +156,11 @@ coefficient ranges, and exact-division checks remain the public semantics.
 
 A balanced `ZPoly.fastPlan` product tree was measured for the ordered
 product at factor counts in `[8, 1024)` when every factor has at most two
-coefficients and maximum coefficient magnitude at most four. Its adoption is
-deferred: the tree depends on hex-poly-fast, which is not yet published, so
-`Array.polyProduct` compiles as the left fold until that library is admitted
-to the release manifest (https://github.com/kim-em/hex-dev/issues/10001); the shape guard recorded here is part of
-the measured crossover policy for that adoption, not a correctness
+coefficients and maximum coefficient magnitude at most four. `Array.polyProduct`
+compiles to that tree within this guard and retains the ordered left fold
+otherwise. The dispatcher depends on hex-poly-fast, which is included in
+the release manifest. The shape guard is part of the measured crossover
+policy, not a correctness
 precondition. Three warm outer trials on `chungus2` (AMD EPYC 9455), Lean
 `4.34.0-rc2`, measured the shared deterministic small-linear-factor fixtures
 as follows (medians):

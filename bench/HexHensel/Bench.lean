@@ -29,8 +29,8 @@ Scientific registrations:
 * `runHenselLiftChecksum`: iterative linear lift at fixed high precision,
   `O(n^2)` in the degree.
 * `runQuadraticHenselStepChecksum`: one quadratic Hensel correction, `O(n^2)`.
-* `runPolyProductChecksum`: public ordered-product dispatcher on its retained
-  fallback interval, `O(n^2)`.
+* `runPolyProductChecksum`: public ordered-product dispatcher with its measured
+  tree interval and retained fold fallback, `O(n^2)`.
 * `runPolyProductFoldChecksum`: retained ordered left fold, `O(n^2)`.
 * `runPolyProductTreeChecksum`: the same ordered product through a balanced
   tree and `ZPoly.fastPlan`, with a packed schoolbook upper bound `O(n^4)`.
