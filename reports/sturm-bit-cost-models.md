@@ -401,10 +401,11 @@ shift representation.
 All these mode-2 declarations are `bits ^ 2`, on
 `2048,4096,8192,16384,32768`, four trial-major trials, a 100 ms inner target
 and a 600 s operational whole-child cap. Fixed degree and chain length bound
-the number of operations. Translation commutes with polynomial division and
-leading-coefficient normalization, so the translated normal chain and its
-transient products are fixed-degree expressions in z. Their numerator and
-denominator widths are O(b). Fixed-degree odd-cubic operations likewise form
+the number of operations. There is a fixed number of arithmetic steps,
+each producing an output no wider than the sum of its input widths plus O(1);
+division and normalization cannot increase those widths. Thus the translated
+chain and transient long-division states have O(b)-bit numerator/denominator
+widths, not just their final quotients and remainders. Fixed-degree odd-cubic operations likewise form
 a fixed number of products/quotients of O(b)-bit inputs. The fractional
 endpoint's fixed powers of its numerator and denominator also have O(b) bits. The cited bounds are [GMP basecase multiplication](https://gmplib.org/manual/Basecase-Multiplication),
 [GMP basecase division](https://gmplib.org/manual/Basecase-Division), and

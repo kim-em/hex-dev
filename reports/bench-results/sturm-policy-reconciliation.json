@@ -1,5 +1,5 @@
 {
-  "base_commit": "551ff13f4977bb11d3ebdce85ac484ada4b43bd3",
+  "audited_checkout_head": "200e791bc7912d48d0087e768dc2a7fec563137e",
   "policy": "PLAN/Phase4.md and SPEC/benchmarking.md: independently derived model or cited upper bound; no mandatory dominant-phase profile",
   "direct_dependency_state": {
     "HexSturm": {

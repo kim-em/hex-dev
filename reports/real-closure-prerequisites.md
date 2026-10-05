@@ -199,7 +199,9 @@ The [Sturm reconciliation](bench-results/sturm-policy-reconciliation.json)
 checks direct dependencies and all 260 retained growing-bit observations.
 The predeclared replay and growing-bit upper bounds have valid one-sided
 observations on their measured sources; current policy does not impose a
-mandatory dominant-phase profile. Failed sign-traversal, retargeting and
+mandatory dominant-phase profile. The growing-bit collection has only selected
+source comparisons: full library-source provenance and import-cone/manifest
+changes remain to be checked before it attests current Phase 4. Failed sign-traversal, retargeting and
 prepared-count two-sided declarations remain unresolved. Fixed hash anchors
 have no performance claim, and theorem-only Mathlib layers have no dedicated
 compiled performance deliverable.

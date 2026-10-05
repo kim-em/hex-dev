@@ -543,9 +543,10 @@ def runInfiniteBits := runInfinite
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
 intermediates. GMP's published quadratic product/division/gcd bounds cover
-its fixed number of scalar operations. Translation commutes with polynomial
-division and leading-coefficient normalization: fixed-degree expressions
-in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
+its fixed number of scalar operations. A fixed number of
+arithmetic steps each increases width by at most the sum of input widths
+plus O(1); division and normalization reduce widths. Thus intermediates
+as well as final fixed-degree expressions in z have O(b)-bit coefficients. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -565,9 +566,10 @@ setup_benchmark runPreparedBits bits => bits ^ 2
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
 intermediates. GMP's published quadratic product/division/gcd bounds cover
-its fixed number of scalar operations. Translation commutes with polynomial
-division and leading-coefficient normalization: fixed-degree expressions
-in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
+its fixed number of scalar operations. A fixed number of
+arithmetic steps each increases width by at most the sum of input widths
+plus O(1); division and normalization reduce widths. Thus intermediates
+as well as final fixed-degree expressions in z have O(b)-bit coefficients. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -587,9 +589,10 @@ setup_benchmark runCountBits bits => bits ^ 2
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
 intermediates. GMP's published quadratic product/division/gcd bounds cover
-its fixed number of scalar operations. Translation commutes with polynomial
-division and leading-coefficient normalization: fixed-degree expressions
-in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
+its fixed number of scalar operations. A fixed number of
+arithmetic steps each increases width by at most the sum of input widths
+plus O(1); division and normalization reduce widths. Thus intermediates
+as well as final fixed-degree expressions in z have O(b)-bit coefficients. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -609,9 +612,10 @@ setup_benchmark runPreparedCountBits bits => bits ^ 2
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
 intermediates. GMP's published quadratic product/division/gcd bounds cover
-its fixed number of scalar operations. Translation commutes with polynomial
-division and leading-coefficient normalization: fixed-degree expressions
-in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
+its fixed number of scalar operations. A fixed number of
+arithmetic steps each increases width by at most the sum of input widths
+plus O(1); division and normalization reduce widths. Thus intermediates
+as well as final fixed-degree expressions in z have O(b)-bit coefficients. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -631,9 +635,10 @@ setup_benchmark runCertificateBits bits => bits ^ 2
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
 intermediates. GMP's published quadratic product/division/gcd bounds cover
-its fixed number of scalar operations. Translation commutes with polynomial
-division and leading-coefficient normalization: fixed-degree expressions
-in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
+its fixed number of scalar operations. A fixed number of
+arithmetic steps each increases width by at most the sum of input widths
+plus O(1); division and normalization reduce widths. Thus intermediates
+as well as final fixed-degree expressions in z have O(b)-bit coefficients. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -653,9 +658,10 @@ setup_benchmark runPreparedCertificateBits bits => bits ^ 2
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
 intermediates. GMP's published quadratic product/division/gcd bounds cover
-its fixed number of scalar operations. Translation commutes with polynomial
-division and leading-coefficient normalization: fixed-degree expressions
-in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
+its fixed number of scalar operations. A fixed number of
+arithmetic steps each increases width by at most the sum of input widths
+plus O(1); division and normalization reduce widths. Thus intermediates
+as well as final fixed-degree expressions in z have O(b)-bit coefficients. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -675,9 +681,10 @@ setup_benchmark runCountCertificateBits bits => bits ^ 2
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
 intermediates. GMP's published quadratic product/division/gcd bounds cover
-its fixed number of scalar operations. Translation commutes with polynomial
-division and leading-coefficient normalization: fixed-degree expressions
-in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
+its fixed number of scalar operations. A fixed number of
+arithmetic steps each increases width by at most the sum of input widths
+plus O(1); division and normalization reduce widths. Thus intermediates
+as well as final fixed-degree expressions in z have O(b)-bit coefficients. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -697,9 +704,10 @@ setup_benchmark runFieldReplayBits bits => bits ^ 2
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
 intermediates. GMP's published quadratic product/division/gcd bounds cover
-its fixed number of scalar operations. Translation commutes with polynomial
-division and leading-coefficient normalization: fixed-degree expressions
-in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
+its fixed number of scalar operations. A fixed number of
+arithmetic steps each increases width by at most the sum of input widths
+plus O(1); division and normalization reduce widths. Thus intermediates
+as well as final fixed-degree expressions in z have O(b)-bit coefficients. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -719,9 +727,10 @@ setup_benchmark runCachedReplayBits bits => bits ^ 2
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
 intermediates. GMP's published quadratic product/division/gcd bounds cover
-its fixed number of scalar operations. Translation commutes with polynomial
-division and leading-coefficient normalization: fixed-degree expressions
-in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
+its fixed number of scalar operations. A fixed number of
+arithmetic steps each increases width by at most the sum of input widths
+plus O(1); division and normalization reduce widths. Thus intermediates
+as well as final fixed-degree expressions in z have O(b)-bit coefficients. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -741,9 +750,10 @@ setup_benchmark runClearBits bits => bits ^ 2
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
 intermediates. GMP's published quadratic product/division/gcd bounds cover
-its fixed number of scalar operations. Translation commutes with polynomial
-division and leading-coefficient normalization: fixed-degree expressions
-in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
+its fixed number of scalar operations. A fixed number of
+arithmetic steps each increases width by at most the sum of input widths
+plus O(1); division and normalization reduce widths. Thus intermediates
+as well as final fixed-degree expressions in z have O(b)-bit coefficients. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
