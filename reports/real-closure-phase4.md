@@ -230,9 +230,8 @@ independently derived model or a cited bound. This capture
 does not satisfy the Phase 4 exit criterion; its declaration, family and
 calibration need investigation under the
 [benchmarking policy](../SPEC/benchmarking.md#anti-patterns).
-The cause remains unclassified, with investigation tracked in #10378. Possible
-causes include a declaration error, family mismatch, proximity to the spawn
-floor, or a ladder too short to distinguish lower-order terms. The policy
+The cause remains unclassified, with investigation tracked in [#10378](https://github.com/kim-em/hex-dev/issues/10378). Possible
+causes include a declaration error, family mismatch or a ladder too short to distinguish lower-order terms. The policy
 requires investigating the model or family when an operation appears faster
 than declared; a short ladder calls for a raised schedule or ceiling with fresh
 registration. See [Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim)
@@ -253,8 +252,9 @@ rungs fixed by the library SPEC. That condition is unmet: the SPEC does not
 fix this derived 3/5/7/9 ladder. A permitted unchanged rerun would repeat this
 unqualified registration and would not resolve that policy gap. The next
 protocol must establish eligibility independently of the observed timings,
-or use the ordinary floor and an appropriately raised schedule, with fresh
-validation. Wide ranges and recorded changing host activity also limit
+or use the ordinary floor with a raised target inner-batch duration, with fresh
+validation. Raising rungs or the ceiling is a separate response to a short
+asymptotic ladder. Wide ranges and recorded changing host activity also limit
 inference; every observation is retained.
 
 The [complete retained capture](bench-results/real-closure-metitarski-scaling-14b03f/README.md)
@@ -280,10 +280,10 @@ still requires the complete specified coverage and final audit.
 | Outer isolation scaling | Functional isolation/policy checks | Counter evidence consistent with the stated linear bounds; full fallback, joint comparison and transport costs |
 | Root/generator reuse | [Reuse report](real-closure-root-reuse.md): two-trial reuse/order diagnostics from recorded modified worktrees | General required tower families and final correspondence to accepted APIs; these observations do not measure certificate DAG sharing |
 | Certificate sharing and depth | Functional DAG reading/checking | Bytes/nodes/edges versus unshared occurrence costs, arithmetic/operand sizes, cycle/forward-reference rejection before expansion, `Sℓ ≤ Sℓ,local + bℓ*max Sℓ₋₁` and the analogous replay-time recurrence |
-| Separated compiled stage costs | [Six-round compiled fixed-stage capture](bench-results/real-closure-stage-costs/README.md) separates inclusive zero/Yun, factor assembly, complete roots and native child construction on the same repeated-factor input | Query production, BKR solving, coefficient signs, exclusive isolation, serialization and kernel replay; further required families. Inclusive stage timings cannot be subtracted to infer exclusive costs |
+| Separated compiled stage costs | [Six-round compiled fixed-stage capture](bench-results/real-closure-stage-costs/README.md) reports inclusive zero/Yun, factor assembly, rational complete roots and native complete roots on the same repeated-factor input | Query production, BKR solving, coefficient signs, exclusive isolation and selected-child construction, serialization and kernel replay; further required families. Inclusive stage timings cannot be subtracted to infer exclusive costs |
 | Trivial-path delegation | Native/canonical agreement, `TrivialTests` and independent FLINT conformance; retained canonical MetiTarski arm is censored | Required matched comparison against the existing real-algebraic backend |
-| Midpoint/dyadic versus infinitesimal samples | Functional sample APIs and conformance | Required matched measurement evidence for those alternatives for #10301 |
-| Profiling diagnostics | [Filtered first/second-stage profiles](bench-results/real-closure-metitarski-kernels/README.md) explain observed sorting/sign costs | No per-family profiling quota; profile unexpected verdicts, surprising constant factors or unexplained dominant costs outside registered targets |
+| Midpoint/dyadic versus infinitesimal samples | Functional sample APIs and conformance | Required matched measurement evidence for those alternatives for [#10301](https://github.com/kim-em/hex-dev/issues/10301) |
+| Profiling diagnostics | [Filtered first/second-stage profiles](bench-results/real-closure-metitarski-kernels/README.md) explain observed sorting/sign costs | First-stage root sorting and descriptor comparison/reencoding remain under investigation in [#10377](https://github.com/kim-em/hex-dev/issues/10377); profile unexpected verdicts, surprising constant factors or unexplained dominant costs outside registered targets |
 
 The accepted filtered profiles supply inclusive Hex attribution with clean
 committed postprocessing and recorded stack truncation. The preliminary

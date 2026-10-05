@@ -10,6 +10,9 @@ STAGES = ('runYun', 'runAssembly', 'runRoots', 'runNativeRoots')
 
 def analyze(directory: Path) -> dict:
     metadata = json.loads((directory / 'metadata.json').read_text())
+    # lean-bench serializes the official toolchain tag without its leading v.
+    expected_toolchain = metadata['lean_toolchain'].replace(
+        'leanprover/lean4:v', 'leanprover/lean4:', 1)
     if metadata['rounds'] != 6 or tuple(metadata['trial_major_order']) != STAGES:
         raise ValueError('changed registered schedule')
     expected = [(trial, stage) for trial in range(6) for stage in STAGES]
@@ -24,6 +27,13 @@ def analyze(directory: Path) -> dict:
             if len(export['results']) != 1:
                 raise ValueError('unexpected result count')
             result = export['results'][0]
+            environment = export['env']
+            if (result['env'] != environment or environment['git_commit'] != metadata['source']
+                    or environment['git_dirty'] is not False
+                    or environment['exe_name'] != 'hexrealclosure_bench'
+                    or environment['hostname'] != metadata['host']
+                    or environment['lean_toolchain'] != expected_toolchain):
+                raise ValueError('changed source, executable or environment binding')
             if result['kind'] != 'fixed' or result['function'] != f'Hex.RealClosure.Bench.{stage}':
                 raise ValueError('unexpected registration')
             if result['expected_hash_check']['status'] != 'match':

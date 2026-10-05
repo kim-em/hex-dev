@@ -17,9 +17,8 @@ orchestrator and inherited children there, without checking core quietness.
 
 These are inclusive stage boundaries: Yun includes zero extraction and the
 raw recurrence; assembly includes those stages and every factor's isolation;
-complete roots also include global comparisons/sorting; native roots use the tower-base coefficient and context types and include
-materialization of each selected child and its checked descriptor/prepared domain.
-The rational and native complete-root boundaries are not nested operations.
+complete roots also include global comparisons/sorting; native roots also
+materialize each selected child and its checked descriptor/prepared domain.
 Each checks its actual result and returns the registered expected hash 1.
 Do not subtract their observations to infer exclusive stage costs. They are
 fixed-input absolute observations, with no complexity or scaling verdict.

@@ -1,0 +1,15 @@
+{
+  "measured_source": "bd5e4f10826060517b465c3759bb4795d095baf2",
+  "compiled_worktree_commit": "eb48afe43af9b801c9dc3115ce3f22b2df771998",
+  "measured_binary_sha256": "88d50c5d65f58d882ebe51de4cacc745ac8d0c304323f8eb8890a1f1db166958",
+  "retained_binary_sha256": "88d50c5d65f58d882ebe51de4cacc745ac8d0c304323f8eb8890a1f1db166958",
+  "build_log_sha256": "0aa449527ec7d96fe7257fbf62e5823cd2f3e9386ef6f01b4842e00227d85782",
+  "registration_source_sha256": "04c3b84ab4f85f3e25837a2009f64716c38c24314ed31519222e8b53fd3c0476",
+  "changes_between_build_and_protocol": [
+    "reports/bench-results/real-closure-stage-costs/protocol.md",
+    "reports/real-closure-phase4.md",
+    "scripts/bench/analyze_real_closure_stages.py",
+    "scripts/bench/collect_real_closure_stages.py"
+  ],
+  "verification_boundary": "Bindings verified against retained executable and git sources after capture; build log itself does not contain a contemporaneous git/hash command."
+}
