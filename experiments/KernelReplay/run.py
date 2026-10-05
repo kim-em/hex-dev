@@ -37,6 +37,18 @@ def main() -> None:
         outcomes.append({"control": label, "exit_code": process.returncode})
         print(f"{label}: passed", flush=True)
 
+    run("nested", ["nested"],
+        contains=("nestedSelections=kernelAccepted children=2",
+                  "nestedPacketReplay=kernelAccepted", "nestedMissingChild=unproved",
+                  "nestedIncompleteChildren=unproved",
+                  "nestedRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.wrongSign",
+                  "nestedRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.wrongContext",
+                  "nestedRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.wrongQuery",
+                  "nestedRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.wrongCount",
+                  "nestedChildProofs=theoremReferences", "nestedMalformedProof=kernelRejected",
+                  "nestedIncompleteProof=rejected", "nestedRegistrationRollback=kernelRejected",
+                  "nestedRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.wrongSelectedContext",
+                  "nestedRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.wrongSelectedCount"))
     run("generated", ["generated"],
         contains=("generated=2 kernelAccepted=true", "generatedWrongSigns=kernelRejected",
                   "generatedDifferentQuery=kernelRejected", "generatedStaleContext=kernelRejected",

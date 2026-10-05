@@ -8,6 +8,7 @@ module
 public import Lean
 public meta import KernelReplay.ProofProbe
 public meta import KernelReplay.Generated
+public meta import KernelReplay.NestedProbe
 
 public meta section
 
@@ -37,7 +38,7 @@ experiment is not a public certificate byte reader. -/
 unsafe def main (args : List String) : IO UInt32 := do
   initSearchPath (← findSysroot)
   enableInitializersExecution
-  let env ← importModules (loadExts := true) #[{ module := `KernelReplay.Generated }] {}
+  let env ← importModules (loadExts := true) #[{ module := `KernelReplay.NestedProbe }] {}
   if let ["emit", path] := args then
     IO.FS.writeBinFile path Hex.RealClosure.Algebraic.KernelReplayProofProbe.graphJson.writeBytes
     return 0
@@ -47,7 +48,8 @@ unsafe def main (args : List String) : IO UInt32 := do
     ("false", "falseGraph", "false", none),
     ("memo", "completeMemo", "true", none),
     ("collect", "", "", none),
-    ("generated", "", "", none)]
+    ("generated", "", "", none),
+    ("nested", "", "", none)]
   let byteControl ← match args with
     | ["bytes-equal", path] => do
       let json ← match Codec.parse {} (← IO.FS.readBinFile path) with
@@ -77,11 +79,12 @@ unsafe def main (args : List String) : IO UInt32 := do
     | some control => [control]
     | none => controls.filter fun control => args.isEmpty || args.contains control.1
   if selected.isEmpty then
-    (← IO.getStderr).putStrLn "expected complete, missing, false, memo, collect, or generated"
+    (← IO.getStderr).putStrLn "expected complete, missing, false, memo, collect, generated, or nested"
     return 2
   for (label, term, outcome, literal) in selected do
     IO.println s!"control={label}"
-    let input := if label == "generated" then "#generated_probe" else
+    let input := if label == "nested" then "#nested_probe" else
+      if label == "generated" then "#generated_probe" else
       if label == "collect" then "#collect_probe" else
       "#proof_probe Hex.RealClosure.Algebraic.KernelReplayProofProbe." ++
         term ++ " expecting \"" ++ outcome ++ "\"" ++
