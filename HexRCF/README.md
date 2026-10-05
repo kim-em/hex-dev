@@ -216,7 +216,8 @@ binds coordinates to separately authenticated original models and selected
 embeddings. The
 [gathering regressions](../conformance/HexRCF/Gather.lean) exercise different
 polynomials, selected conjugates, repeated owners, cancellation and a further
-root over the common coefficient field, non-prefix compatibility and stale keys.
+root over the common coefficient field. Ordinary-kernel theorems cover
+provider-constructed non-prefix gathering and refusal of reordered and stale keys.
 This is a producer API, not literal replay or source-goal quotation. The manual
 gives direct API examples. General frozen tower replay, source authentication
 for that backend and joint infinitesimal realization still require the owner
