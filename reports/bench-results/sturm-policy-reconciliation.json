@@ -1,5 +1,5 @@
 {
-  "base_commit": "604148b31df595fee164b89dd98ee44eaf248eea",
+  "base_commit": "551ff13f4977bb11d3ebdce85ac484ada4b43bd3",
   "policy": "PLAN/Phase4.md and SPEC/benchmarking.md: independently derived model or cited upper bound; no mandatory dominant-phase profile",
   "direct_dependency_state": {
     "HexSturm": {
@@ -58,7 +58,11 @@
       "endpointBounds": true,
       "fractionalInput": true,
       "runFractionalBits": true,
-      "translatedInput": true
+      "translatedInput": true,
+      "runCoefficientBits": true,
+      "runEndpointBits": true,
+      "coefficientInput": true,
+      "endpointInput": true
     },
     "eleven_original_upper_bound_registrations_unchanged": {
       "runFractionalBits": true,
@@ -90,7 +94,7 @@
       "HexPoly/SPEC/hex-poly.md",
       "HexPolyZ/SPEC/hex-poly-z.md"
     ],
-    "scope": "Core arithmetic paths unchanged; HexSturm Basic adds restoring constructors/proofs. New operations are outside retained registrations. Executable hashes are recorded for original collection; no current binary identity or current absolute timing is claimed.",
+    "scope": "Selected benchmark/core definitions match the saved sources or recorded commit. This is not full import-cone identity. Library files in the dirty measurement tree were not all hashed; current Phase-4 reuse needs additional library-source provenance checks. Original executable hashes do not establish current binary identity or current absolute timings.",
     "runs": [
       {
         "function": "Hex.SturmFrontendBench.runCoefficientBits",

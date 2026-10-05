@@ -8,11 +8,22 @@
     "objdump -d --disassemble=_ZN4lean3mpzC1ERKS0_ .lake/build/bin/hexsturm_bench"
   ],
   "scope": "Code-generation diagnostic only. Existing local executable predates this report change; no claim that it is built from current HEAD and no timing samples are collected. Timed runSigns source remains unchanged.",
-  "finding": "Int.sign calls lean_big_int_to_nat for positive multiprecision values; the runtime uses mpz copy construction. A constant-work sign assumption is not supported by this executable. This does not by itself assign a causal share to the retained timing failure.",
+  "finding": "Int.sign calls lean_big_int_to_nat for positive multiprecision values; the runtime makes two mpz copies through GMP init_set and allocates a heap object. A constant-work sign assumption is not supported by this executable. No causal timing share is inferred.",
   "sha256": {
     "l_Int_sign.txt": "9e99ebeed9c11b5034808b370b456413c8bf827a1c03e68d90d092ee02a54a76",
     "lean_big_int_to_nat.txt": "6f12f9e06b2acf507ec5fb855877a77f72234ca3c29a77750ae53668c8d9feec",
     "_ZN4lean3mpzC1ERKS0_.txt": "ba3fa9aa3f259ecf2ecaca81da3813c6c7846a7d232e77bc0951b3f5526b4b23",
     "Int-sign.lean.txt": "9e43b260dc16168722ed596d8c9e3e51dd7f774bb2aff8344aa749b5a17ca849"
+  },
+  "toolchain_link": {
+    "sign_rerun": "reports/bench-results/sturm-signs-unchanged/results.json",
+    "sign_rerun_binary_sha256": "d81094975c9e126f7bc3c3935ca06cf3c8d5c1bb65b72f59d9c82d09891f125e",
+    "recorded_lean_version": "4.35.0-rc3",
+    "inference": "Int.sign and the mpz runtime are statically linked from the same recorded Lean toolchain. The diagnosed benchmark executable is different from the rerun binary; this supplies toolchain-level diagnostic evidence, not exact rerun-binary inspection."
+  },
+  "source": {
+    "path": "src/lean/Init/Data/Int/Basic.lean",
+    "tag": "leanprover/lean4:v4.35.0-rc3",
+    "excerpt": "Int-sign.lean.txt"
   }
 }

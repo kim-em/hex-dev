@@ -110,7 +110,7 @@ def runClear (i : Input) : Option UInt64 :=
 
 def runEmbed (i : Input) : Option UInt64 := i.integer.map fun c => certHash c.toRat
 
-/- Retained head-degree upper-bound candidate: this audit does not establish
+/- Retired head-degree upper-bound hypothesis: this audit does not establish
 the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
 widths for every stage. This diagnostic registration does not attest Phase 4.
 GMP's schoolbook multiplication and classical quadratic gcd bounds would
@@ -144,7 +144,7 @@ setup_benchmark runRetarget n => n ^ 2
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retained head-degree upper-bound candidate: this audit does not establish
+/- Retired head-degree upper-bound hypothesis: this audit does not establish
 the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
 widths for every stage. This diagnostic registration does not attest Phase 4.
 GMP's schoolbook multiplication and classical quadratic gcd bounds would
@@ -180,7 +180,7 @@ setup_benchmark runPreparedCount n => n ^ 3
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retained head-degree upper-bound candidate: this audit does not establish
+/- Retired head-degree upper-bound hypothesis: this audit does not establish
 the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
 widths for every stage. This diagnostic registration does not attest Phase 4.
 GMP's schoolbook multiplication and classical quadratic gcd bounds would
@@ -200,7 +200,7 @@ setup_benchmark runCertificate n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retained head-degree upper-bound candidate: this audit does not establish
+/- Retired head-degree upper-bound hypothesis: this audit does not establish
 the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
 widths for every stage. This diagnostic registration does not attest Phase 4.
 GMP's schoolbook multiplication and classical quadratic gcd bounds would
@@ -220,7 +220,7 @@ setup_benchmark runPreparedCertificate n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retained head-degree upper-bound candidate: this audit does not establish
+/- Retired head-degree upper-bound hypothesis: this audit does not establish
 the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
 widths for every stage. This diagnostic registration does not attest Phase 4.
 GMP's schoolbook multiplication and classical quadratic gcd bounds would
@@ -240,7 +240,7 @@ setup_benchmark runCountCertificate n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retained head-degree upper-bound candidate: this audit does not establish
+/- Retired head-degree upper-bound hypothesis: this audit does not establish
 the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
 widths for every stage. This diagnostic registration does not attest Phase 4.
 GMP's schoolbook multiplication and classical quadratic gcd bounds would
@@ -260,7 +260,7 @@ setup_benchmark runFieldReplay n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retained head-degree upper-bound candidate: this audit does not establish
+/- Retired head-degree upper-bound hypothesis: this audit does not establish
 the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
 widths for every stage. This diagnostic registration does not attest Phase 4.
 GMP's schoolbook multiplication and classical quadratic gcd bounds would
@@ -280,7 +280,7 @@ setup_benchmark runCachedReplay n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retained head-degree upper-bound candidate: this audit does not establish
+/- Retired head-degree upper-bound hypothesis: this audit does not establish
 the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
 widths for every stage. This diagnostic registration does not attest Phase 4.
 GMP's schoolbook multiplication and classical quadratic gcd bounds would
@@ -300,7 +300,7 @@ setup_benchmark runClear n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retained head-degree upper-bound candidate: this audit does not establish
+/- Retired head-degree upper-bound hypothesis: this audit does not establish
 the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
 widths for every stage. This diagnostic registration does not attest Phase 4.
 GMP's schoolbook multiplication and classical quadratic gcd bounds would
@@ -500,9 +500,14 @@ setup_benchmark runRetargetWide n => n ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, cited upper bound: unlike the withdrawn power-of-two endpoint family, odd b-bit
-mantissas make each nontrivial fixed-degree Horner product growing-by-growing.
-Both integral and fractional endpoints exercise GMP multiplication. -/
+/- Cost-model derivation, cited upper bound: unlike power-of-two endpoints,
+odd b-bit mantissas produce growing-by-growing Horner products. Fixed degree
+and chain length bound the number of steps; fixed powers of the endpoint's
+numerator and denominator have O(b) bits. GMP's published basecase
+multiplication, division and gcd bounds cover scalar arithmetic by O(b²);
+copying, allocation, signs and hashing cost O(b), within that bound.
+Algorithm thresholds prevent a justified tight monomial on this ladder.
+See the citations and complete derivation in reports/sturm-bit-cost-models.md. -/
 setup_benchmark runFractionalBits bits => bits ^ 2
   with prep := fractionalInput
   where {
@@ -537,8 +542,10 @@ def runInfiniteBits := runInfinite
 
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
-intermediates. GMP's published quadratic product/gcd bounds cover its
-fixed number of scalar operations. Copying, allocation, sign tests and
+intermediates. GMP's published quadratic product/division/gcd bounds cover
+its fixed number of scalar operations. Translation commutes with polynomial
+division and leading-coefficient normalization: fixed-degree expressions
+in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -557,8 +564,10 @@ setup_benchmark runPreparedBits bits => bits ^ 2
 
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
-intermediates. GMP's published quadratic product/gcd bounds cover its
-fixed number of scalar operations. Copying, allocation, sign tests and
+intermediates. GMP's published quadratic product/division/gcd bounds cover
+its fixed number of scalar operations. Translation commutes with polynomial
+division and leading-coefficient normalization: fixed-degree expressions
+in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -577,8 +586,10 @@ setup_benchmark runCountBits bits => bits ^ 2
 
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
-intermediates. GMP's published quadratic product/gcd bounds cover its
-fixed number of scalar operations. Copying, allocation, sign tests and
+intermediates. GMP's published quadratic product/division/gcd bounds cover
+its fixed number of scalar operations. Translation commutes with polynomial
+division and leading-coefficient normalization: fixed-degree expressions
+in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -597,8 +608,10 @@ setup_benchmark runPreparedCountBits bits => bits ^ 2
 
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
-intermediates. GMP's published quadratic product/gcd bounds cover its
-fixed number of scalar operations. Copying, allocation, sign tests and
+intermediates. GMP's published quadratic product/division/gcd bounds cover
+its fixed number of scalar operations. Translation commutes with polynomial
+division and leading-coefficient normalization: fixed-degree expressions
+in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -617,8 +630,10 @@ setup_benchmark runCertificateBits bits => bits ^ 2
 
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
-intermediates. GMP's published quadratic product/gcd bounds cover its
-fixed number of scalar operations. Copying, allocation, sign tests and
+intermediates. GMP's published quadratic product/division/gcd bounds cover
+its fixed number of scalar operations. Translation commutes with polynomial
+division and leading-coefficient normalization: fixed-degree expressions
+in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -637,8 +652,10 @@ setup_benchmark runPreparedCertificateBits bits => bits ^ 2
 
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
-intermediates. GMP's published quadratic product/gcd bounds cover its
-fixed number of scalar operations. Copying, allocation, sign tests and
+intermediates. GMP's published quadratic product/division/gcd bounds cover
+its fixed number of scalar operations. Translation commutes with polynomial
+division and leading-coefficient normalization: fixed-degree expressions
+in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -657,8 +674,10 @@ setup_benchmark runCountCertificateBits bits => bits ^ 2
 
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
-intermediates. GMP's published quadratic product/gcd bounds cover its
-fixed number of scalar operations. Copying, allocation, sign tests and
+intermediates. GMP's published quadratic product/division/gcd bounds cover
+its fixed number of scalar operations. Translation commutes with polynomial
+division and leading-coefficient normalization: fixed-degree expressions
+in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -677,8 +696,10 @@ setup_benchmark runFieldReplayBits bits => bits ^ 2
 
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
-intermediates. GMP's published quadratic product/gcd bounds cover its
-fixed number of scalar operations. Copying, allocation, sign tests and
+intermediates. GMP's published quadratic product/division/gcd bounds cover
+its fixed number of scalar operations. Translation commutes with polynomial
+division and leading-coefficient normalization: fixed-degree expressions
+in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -697,8 +718,10 @@ setup_benchmark runCachedReplayBits bits => bits ^ 2
 
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
-intermediates. GMP's published quadratic product/gcd bounds cover its
-fixed number of scalar operations. Copying, allocation, sign tests and
+intermediates. GMP's published quadratic product/division/gcd bounds cover
+its fixed number of scalar operations. Translation commutes with polynomial
+division and leading-coefficient normalization: fixed-degree expressions
+in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.
@@ -717,8 +740,10 @@ setup_benchmark runClearBits bits => bits ^ 2
 
 /- Cost-model derivation, cited upper bound: T_8(X−z), with odd b-bit z
 and endpoints z±2, has fixed polynomial and chain lengths with O(b)-bit
-intermediates. GMP's published quadratic product/gcd bounds cover its
-fixed number of scalar operations. Copying, allocation, sign tests and
+intermediates. GMP's published quadratic product/division/gcd bounds cover
+its fixed number of scalar operations. Translation commutes with polynomial
+division and leading-coefficient normalization: fixed-degree expressions
+in z have O(b)-bit coefficients, including the transient products. Copying, allocation, sign tests and
 hashing visit a fixed number of O(b)-bit values and take O(b) work.
 Thus O(b²) bounds total work, including replay and infinity checks that
 omit finite Horner evaluation. No dominant multiplication phase is required.

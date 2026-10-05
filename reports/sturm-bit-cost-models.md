@@ -401,9 +401,14 @@ shift representation.
 All these mode-2 declarations are `bits ^ 2`, on
 `2048,4096,8192,16384,32768`, four trial-major trials, a 100 ms inner target
 and a 600 s operational whole-child cap. Fixed degree and chain length bound
-the number of operations, and all intermediate widths are O(b). The cited
-bounds are [GMP basecase multiplication](https://gmplib.org/manual/Basecase-Multiplication)
-and [GMP binary gcd](https://gmplib.org/manual/Binary-GCD), with faster
+the number of operations. Translation commutes with polynomial division and
+leading-coefficient normalization, so the translated normal chain and its
+transient products are fixed-degree expressions in z. Their numerator and
+denominator widths are O(b). Fixed-degree odd-cubic operations likewise form
+a fixed number of products/quotients of O(b)-bit inputs. The fractional
+endpoint's fixed powers of its numerator and denominator also have O(b) bits. The cited bounds are [GMP basecase multiplication](https://gmplib.org/manual/Basecase-Multiplication),
+[GMP basecase division](https://gmplib.org/manual/Basecase-Division), and
+[GMP binary gcd](https://gmplib.org/manual/Binary-GCD), with faster
 large-operand algorithms in the same manual. Algorithm crossovers prevent a
 single tight monomial across these limb regimes. The total-work argument also covers copies,
 allocation, coefficient signs and output hashing: fixed degree/chain lengths

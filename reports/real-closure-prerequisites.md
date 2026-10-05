@@ -213,7 +213,7 @@ main cost and the severe external gap remains a concern. Timing result hashes
 are separate from the frozen-binary panic-rejecting verifier evidence.
 [Required CI](https://github.com/kim-em/hex-dev/actions/runs/37317773840)
 on reviewed head `dca7d35e70` passes the full library/conformance/oracle/trust
-suite and smoke verification at 412/600 filtered seconds. This is an
+suite and benchmark verification at 412/600 filtered seconds. This is an
 operational observation, not a performance budget. The four assigned libraries
 still record 3; both cores have direct prerequisites at 7. Consumers #10377,
 #10378 and #10575 can use the merged proved APIs without waiting for #10577.

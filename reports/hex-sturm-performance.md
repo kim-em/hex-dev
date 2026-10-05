@@ -1,7 +1,8 @@
 # Shared Sturm–Tarski computation measurements
 
 The current [Phase-4 policy](../PLAN/Phase4.md) accepts an independently
-derived model or a cited upper bound. A predeclared upper bound does not
+derived model or, when no family-specific model is derivable, a cited upper
+bound. A predeclared upper bound does not
 require multiplication or gcd to dominate a profile. The retained head-degree
 replay and growing-bit observations below satisfy their cited upper bounds
 on their measured sources, including results the two-sided harness calls
@@ -10,13 +11,17 @@ two-sided declarations or complete the library's Phase-4 audit.
 
 [Source and sample reconciliation](bench-results/sturm-policy-reconciliation.json)
 checks all 260 growing-bit samples, eleven original upper-bound registrations,
-twenty fixture/timed-body definitions and eleven shared frontend definitions
+twenty-four fixture/timed-body definitions and eleven shared frontend definitions
 against the current source. Its [reproduction script](bench-results/sturm-policy-reconciliation-audit.py.txt)
-checks the same assertions from the repository root. The
-fixed-degree frontend bodies and the underlying HexPoly, HexPolyZ and
-HexRealRoots computational files are unchanged since that collection;
-HexSturm adds restoring constructors, proofs and opt-in reduced-query APIs.
-These checks support reuse at the recorded scope. They do not establish
+checks the same assertions from the repository root and prints JSON without
+overwriting the retained artifact by default. The
+selected fixed-degree frontend bodies match the saved benchmark source;
+the checked HexPoly, HexPolyZ and HexRealRoots directories have only SPEC
+changes since the recorded commit. This is a selected-source comparison,
+not an import-cone identity check. The collection records benchmark source
+and binary hashes but not every library file in its dirty tree. Full library
+source provenance and import-cone reuse scope therefore remain to be checked
+before these runs attest current Phase 4. They do not establish
 current executable identity, recover lost raw profiles or turn historical
 wall-clock values into current absolute timing claims.
 
@@ -717,7 +722,9 @@ truncation; its ordinary leading-rung verdict exclusion is recorded separately
 in the reconciliation artifact and no raw sample is discarded. Under the
 current cited-upper-bound policy these observations satisfy their original
 `bits²` declarations on the measured source. This is a one-sided observation,
-not a two-sided pass. The bounds were declared before collection; no failed
+not a two-sided pass. The total-work explanation is completed here from the
+source, extending the original phase-specific derivation; the expression and
+schedule are unchanged and no exponent is selected from the measurements. The bounds were declared before collection; no failed
 two-sided result is relabelled. Historical profile summaries explain constants
 but their missing raw captures supply no reprocessable attribution.
 
@@ -913,6 +920,10 @@ frontend profiles are separate evidence for prepared, cached and transport paths
   ±5 ms sensitivity checks. Current policy requires profiles to explain
   surprising results or constants, rather than a new capture for every operation.
 
+- The quadratic growing-bit bounds are intentionally loose. Satisfying them
+  does not establish good constants or rule out a subquadratic regression;
+  the external curves and actual cost attribution remain relevant.
+
 - [#10577](https://github.com/kim-em/hex-dev/issues/10577): reconcile all advertised frontend operations with registrations/comparators, resolve the retained coefficient-sign characterization, and finish dependency-ordered Phase-4 attestation. The valid family observations and retained failed declarations above do not close this audit.
 
 ## Remaining Phase-4 work
@@ -921,7 +932,7 @@ frontend profiles are separate evidence for prepared, cached and transport paths
 | --- | --- | --- |
 | Shared query semantics and exact-domain natural root count | Proved and exported by the ordinary Mathlib companion; kernel guards remain required | Reuse the APIs immediately in downstream work |
 | Degree, query-degree, coefficient-size, endpoint-size and short/long-chain coverage | Independent models and predeclared upper bounds have retained scoped observations; fixed anchors check results only | Reconcile the complete advertised frontend surface and declarations; do not schedule a blanket rerun |
-| Coefficient-sign traversal | Current head-degree `n²` claim fails after one unchanged rerun | Investigate the retained `Int.sign` limb-copy diagnostic and an equivalent comparison-based sign operation; preserve the declaration and both runs |
+| Coefficient-sign traversal | Current head-degree `n²` claim fails after one unchanged rerun | Fix the production sign path with proved equality, or independently correct a demonstrated declaration error and collect fresh validation; retain both failed runs |
 | Retargeting and prepared-count long-chain models | Earlier two-sided failures remain, alongside distinct passing short-chain families | Resolve the failed claims without relabelling them as bounds |
 | Rational versus integer and external comparators | Retained exact agreement and FLINT/Z3 complete-query degree curves | Check each SPEC-named common domain against current registrations; use the curves as orientation with their recorded sources |
 | Representative attribution | Retained raw replay/prepared-query captures and reduced-query attribution; older 38 captures lost | Reuse valid captures; profile only a remaining surprising result or constant |
@@ -932,9 +943,18 @@ shows `Int.sign` calling `lean_big_int_to_nat` on positive multiprecision
 values, whose implementation performs `mpz` copy construction. Therefore a
 constant-work assumption for each sign test is unsupported by that executable.
 This is source/code-generation evidence, not a new timing run or a claim that
-all of the observed failure is explained. The next investigation can test a
-proved equivalent comparison-based sign operation without changing the
-benchmark's declared family or discarding either completed run.
+all of the observed failure is explained. The diagnostic and the sign rerun
+use the same Lean 4.35.0-rc3 library implementation, but different benchmark
+binaries; their recorded hashes are not interchangeable.
+
+A fix must change a production sign path with proved equality and then
+benchmark that path, rather than substitute another function only in the
+benchmark. Alternatively, an independent bit-volume argument can establish
+a source-level error in the original constant-cost assumption and justify a
+corrected declaration under SPEC/benchmarking.md. That route requires fresh
+validation and retains the original failed `n²` runs. Neither route may infer
+a replacement exponent from the observed slope. #10577 owns this concern;
+it does not require a workaround decomposition issue.
 
 Extension depth, nested coefficient-oracle scaling, BKR sign determination and
 tower assembly remain with #10377/#10378. Their available proved APIs and
