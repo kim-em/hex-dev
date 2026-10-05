@@ -36,6 +36,10 @@ example {K : Type} [Field K] [DecidableEq K]
   exact mul_self_nonneg f
 ```
 
+Mathlib facts about `RationalFn K` use `Field.toGrindField`, selected above.
+`HexRationalFnMathlib.ratField_eq` transports results between that dictionary
+and the native rational dictionary.
+
 # Functionality
 
 - `Oracle.Contains` proves containment through the actual bound operations.
@@ -54,7 +58,8 @@ example {K : Type} [Field K] [DecidableEq K]
   without reducing an opaque accessibility proof.
 - `Real.registration` derives erased termination proofs from `Valid`.
   `registration_source` identifies its provider; `Valid.orderValid` supplies
-  its order hypothesis and ordered-ring laws. `Extension.coreField_eq` preserves the native field
+  its order hypothesis; `OrderValid.strictOrderedRing` and `orderedRing` supply
+  the ordered-ring laws. `Extension.coreField_eq` preserves the native field
   dictionary, while `transport_lt` checks both providers against one subject.
 
 # Verification
@@ -63,6 +68,20 @@ Containment suffices for successful-trial soundness. Total field registration
 additionally needs shrinking widths and relative transcendence. Preserving an
 already chosen predecessor order also requires a strictly monotone embedding;
 `Valid` does not impose that extra hypothesis.
+
+The headline laws in `Hex.OrderedFn.Real.Extension` connect the executable sign
+and comparisons to the same real evaluation. Their statements, with proofs
+omitted, are:
+
+```lean
+theorem sign_eq (ha : ApproximationCorrect ι τ r.source)
+    (ht : RelativeTranscendence ι τ) (f : Extension r) :
+    sign f = sgn (evalHom ht f)
+
+theorem eval_lt (ha : ApproximationCorrect ι τ r.source)
+    (ht : RelativeTranscendence ι τ) (f g : Extension r) :
+    f < g ↔ evalHom ht f < evalHom ht g
+```
 
 `finiteAttempt_sound` and `sign?_sound` certify the stored denominator is nonzero.
 They do not discharge source-expression divisor guards erased by cancellation.
