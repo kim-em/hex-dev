@@ -14,9 +14,9 @@
       "stored_sha256": "d6d274240200c169f6af5cceb2b22fa883d4ee8e1f3d0cb2590386338e233dcf"
     },
     "collector.py": {
-      "stored": "collector.py.gz",
+      "stored": "collector.py",
       "raw_sha256": "774b475451888a084ca97b54cf97a93e1d1c8adf273c643f0c41b3ac91f0ac30",
-      "stored_sha256": "793a90d7542d096509a60652297b19dbb73d2a199c2bb17e2cbaa002f61c43ee"
+      "stored_sha256": "774b475451888a084ca97b54cf97a93e1d1c8adf273c643f0c41b3ac91f0ac30"
     },
     "infinitesimal-oracle-tests.stderr": {
       "stored": "infinitesimal-oracle-tests.stderr.gz",
@@ -58,5 +58,6 @@
       "raw_sha256": "fdee144bdf4001f8bd8a8f32c4cc3eae58db1aae1a731629043e086ccc9175a5",
       "stored_sha256": "975e5015e6d6c4c409441df43a760852c72eb19ab354376f6f3ca7f5e517117c"
     }
-  }
+  },
+  "tree": "ee727586d56b6f9e929494afb13b03c6f7e4e52b"
 }

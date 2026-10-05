@@ -40,21 +40,25 @@ inputs, changed selected embeddings and malformed byte records. The native
 field checks separately exercise the actual certificate checker; oracle
 mutation tests alone do not establish its rejection behavior.
 
-The execution binds source `c377f1454431abc75d4d11e0d6fe98dfbb316a4d` and all
+The execution records source `c377f1454431abc75d4d11e0d6fe98dfbb316a4d` and all
 six compiled binary hashes. It used automatically leased CPU 57 on `chungus2`
 and retained host load before execution and after every command. The oracle
 environment used python-flint 0.9.0 / FLINT 3.6.0 and z3-solver 4.15.4.0.
 The retained original collector asserts clean source and binary identity before
-and after execution. Its code is included in the archive; the original metadata
+and after execution. Its code and source patch were retained afterwards from local state.
+The original metadata
 records one revision and binary-hash set, rather than separate final fields. Every completed command is retained.
 
 The captured commit was on the collector branch before its rebase onto main;
 it was not a merged commit. Compared with main `7d59cacdc8`, the BKR/Thom,
 number-field, real-algebraic and rational-function implementations and these
-conformance/oracle sources are unchanged. The dependency changes are a
-sign-det README addition and proof-only edits in `HexOrderedFn.Oracle`; the
-Lake changes add client/companion targets. This is direct native-library
-conformance, not a run of every consumer at a merged head.
+conformance/oracle sources are unchanged. The other differences are outside these sign-det executables’ imports or
+are proof/API-only edits in `HexOrderedFn.Oracle`, with no compiled-code
+change in their dependencies at that base. This is direct native-library
+conformance, not a run of every consumer at a merged head. Later main
+`28e4073ea6` includes #10763’s compiled polynomial-kernel changes in
+number-field dependencies. The merged-source execution below covers that
+drift; the original captures are not relabelled as executions of that source.
 
 The nested stderr contains per-depth timings, rather than errors. This
 first collection does not include the separate infinitesimal emitter/oracle
@@ -78,7 +82,8 @@ four depths. The oracle package versions are part of the input contract.
 
 To reconstruct the captured source, create a separate checkout of the base
 recorded in `archive.json`, decompress `source.patch.gz` and apply it with
-`git apply`. Build and run from that checkout's repository root. Install the
+`git apply`. Check the resulting `git write-tree` against the `tree` recorded in the
+archive, then build and run from that checkout's repository root. Install the
 oracle environment with `python -m pip install python-flint==0.9.0 z3-solver==4.15.4.0`. Adapt the archived absolute worktree/output paths to the
 new checkout; command arguments and package pins remain as recorded. The
 retained collector documents CPU pinning and its before/after assertions.
@@ -101,9 +106,55 @@ hashes and CPU affinity are explicit fields in the original metadata.
 | Infinitesimal oracle regression tests | 18 tests passed | 66.677 |
 | Native JSON stress probes | all capacity/rejection and stack controls passed | 4.111 |
 
-The JSON probes exercise a 4 MiB string, arrays and objects with one million
-entries, an escaped string, nesting depth 128, and explicit byte/depth/digit
+The JSON probes exercise a 4 MiB string, an array with one million entries
+and an object with one million duplicate-key members, an escaped string, nesting depth 128, and explicit byte/depth/digit
 rejections. A stack canary verifies that the runtime actually applies the
 8 MiB stack setting. These are capacity/correctness checks, not timing or
 combined depth/width memory bounds. The time observations have the same
-whole-command limitations as the first collection.
+whole-command limitations as the first collection. Z3 independently checks
+mathematical inputs and answers; the oracle also requires native-reported
+certificate rejection flags, which Z3 does not itself establish.
+
+## Merged-source execution
+
+The [merged-source capture](data/sign-det-final-conformance/28e4073ea6/metadata.json)
+runs from clean main `28e4073ea6`, including the upstream compiled polynomial
+changes in #10763. Its retained collector first builds all seven executables
+with `lake build` and then verifies build freshness with `lake build --no-build`.
+The build and freshness outputs are retained; all execution commands succeed.
+Source revision, clean-tree state, executable hashes and CPU affinity are
+checked before and after execution. The archive includes its source tree id,
+source reconstruction and readable collector.
+
+This repeats the fast native/oracle set: 33 coefficient-field checks, 102
+rational fixtures, 20 close-value signs, three independently embedded common
+fields, the nested CI profile at depths one and two, 31 infinitesimal fixtures,
+324 byte-oracle cases, native JSON capacity/rejection controls, and 69 positive
+and mutation regression tests. The depth-three/four local nested execution
+remains the earlier separately bound capture; it is not represented as a run
+from this main revision.
+
+| Command group | Whole-command elapsed seconds |
+| --- | ---: |
+| build | 177.258 |
+| build-freshness | 0.733 |
+| field-checks | 8.231 |
+| rational | 2.718 |
+| scalars | 0.045 |
+| common | 0.614 |
+| nested | 0.882 |
+| rational-oracle | 0.085 |
+| scalars-oracle | 0.078 |
+| common-oracle | 0.047 |
+| nested-oracle | 0.058 |
+| infinitesimal | 20.198 |
+| infinitesimal-oracle | 10.852 |
+| bytes-native-stress | 4.540 |
+| bytes-oracle | 0.173 |
+| oracle-adversarial-tests | 72.097 |
+
+These observations retain the same descriptive-time limits stated above.
+They establish the executable checks at this recorded merged source, not
+scientific scaling, proof costs or correctness of later revisions. Both the
+FLINT/Z3 mathematical comparisons and native certificate rejection controls
+retain their distinct roles.
