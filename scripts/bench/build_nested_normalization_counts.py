@@ -19,7 +19,7 @@ import shutil
 import subprocess
 
 KINDS = {'gcd': 0, 'xgcd': 1, 'xgcdLeft': 2, 'pseudoGcd': 3}
-ENTRY = re.compile(r'^LEAN_EXPORT [^;\n{}]*\b(\w+_DensePoly_(gcd|xgcd|xgcdLeft|pseudoGcd)(?:___\w+)?)\([^\n;]*\)\{', re.M)
+ENTRY = re.compile(r'^LEAN_EXPORT [^;\n{}]*\b(\w+)\([^\n;]*\)\{', re.M)
 
 
 def digest(path):
@@ -30,8 +30,14 @@ def instrument(source):
     insertions = []
     names = []
     for match in ENTRY.finditer(source):
-        name, kind = match.groups()
-        if name.endswith('___boxed'):
+        name = match.group(1)
+        # Specialization suffixes name callees too. Classify the first
+        # declaration name, never a later '...___at___...DensePoly_gcd...'.
+        declaration = name.split('___at___', 1)[0]
+        if '_DensePoly_' not in declaration:
+            continue
+        kind = declaration.split('_DensePoly_', 1)[1].split('___', 1)[0]
+        if kind not in KINDS or name.endswith('___boxed'):
             continue
         # Read the entire generated function, ignoring strings and comments.
         remainder = source[match.end():]
