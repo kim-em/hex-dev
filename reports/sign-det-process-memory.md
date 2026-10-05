@@ -13,8 +13,9 @@ by the pinned harness. Massif uses `--pages-as-heap=yes`: it counts mapped pages
 including code, data, stacks and allocator reserves. Mapped address space need
 not be resident. The [Massif manual](https://valgrind.org/docs/manual/ms-manual.html#ms-manual.using-massif)
 explains this distinction. Massif’s default peak-recording tolerance is 1%;
-the table below takes the maximum of every retained snapshot. Instrumented
-resident memory and elapsed time include Valgrind overhead and are not native
+the page summaries take the maximum of every retained snapshot. On a Massif record, `process_peak_rss_kib` is the instrumented child’s RSS; on a
+native record, it is native RSS. Only native records enter the resident table.
+Instrumented resident memory and elapsed time include Valgrind overhead and are not native
 memory values or scientific timing samples.
 
 ## Captures and validation
@@ -32,13 +33,20 @@ pairs alternate AB/BA order. Each child must report one successful cold
 invocation, its exact operation and parameter, and its clean source revision.
 Before collection, existing input and callback validators check the exact
 known-root answers, full ternary matrix dimensions and height-sensitive output
-fingerprints. Every observed answer must match that validated input and its
-paired native/profile answer.
+fingerprints. Every observed answer must match the validated callback digest and its paired
+native/profile answer. A Boolean checker digest is `hash true`: it records
+acceptance, while the function/parameter, registration and binary bindings
+identify the input; that digest alone does not identify a certificate.
 
 Each archive keeps the original metadata, all stdout/stderr and page snapshots,
 and the verified source reconstruction patch. Compressed files retain hashes
 of both stored and original bytes; collection metadata is copied unchanged.
-CI validates every retained file, capture order, answer and memory summary.
+CI re-runs the retained input checks, reconstructs the expected callback digests,
+and validates every retained file, capture order, answer and memory summary.
+The stderr captures also retain mimalloc’s process-exit statistics through
+`MIMALLOC_SHOW_STATS=1`. These describe allocator page/chunk commitments and
+reserves, and are diagnostic output rather than validated live-object counts.
+
 The measurement driver uses no custom native wrapper and changes no compiled
 algorithm or scientific timing settings.
 
@@ -71,11 +79,13 @@ memory at the larger dimension 729; this capture does not replace that range.
 ## Page-profile attribution and limits
 
 Most page peaks are 4,587,094,016 bytes; the largest is 4,587,253,760 bytes.
-The retained degree-three joint-comparison peak tree attributes 3,221,237,760
+Under Valgrind, the retained degree-three joint-comparison peak tree attributes 3,221,237,760
 bytes to runtime thread-stack mappings. The allocator also reserves address
 space in large chunks. These reservations dominate the page totals while the
 native resident totals are much smaller. The page profiles explain why their
-nearly flat peaks are not evidence of constant algorithmic storage.
+nearly flat peaks are not evidence of constant algorithmic storage. For example,
+the sparse 1024-query resident peak grows by about 15 MiB from its 64-query
+value while its mapped-page peak remains unchanged.
 
 The captures supply process-memory observations and startup attribution over
 four existing families. They do not supply live-object accounting, operation
@@ -96,4 +106,5 @@ python3 scripts/bench/sign_det_memory.py --groups sparse matrix height \
 
 Output directories must be new and outside the worktree. The driver checks
 build freshness and source, executable and harness identity before and after
-collection. Every failed or interrupted output remains available.
+collection. Failed output remains available. Ctrl-C, SIGTERM and SIGHUP stop the owned
+profile process group and leave the collection marked failed with retained output.

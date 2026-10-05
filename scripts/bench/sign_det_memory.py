@@ -10,6 +10,8 @@ import os
 from pathlib import Path
 import platform
 import signal
+import shlex
+import tempfile
 import subprocess
 import sys
 import time
@@ -64,9 +66,20 @@ def child_record(text, function, parameter, revision):
     return row
 
 
-def page_peak(text):
+def page_peak(text, function=None, parameter=None):
     if "--pages-as-heap=yes" not in text or "time_unit: B" not in text:
         raise ValueError("wrong Massif memory mode")
+    if function is not None:
+        commands = [shlex.split(line[5:]) for line in text.splitlines() if line.startswith("cmd: ")]
+        if len(commands) != 1:
+            raise ValueError("missing Massif command binding")
+        command = commands[0]
+        for flag, value in (("--bench", function), ("--param", str(parameter))):
+            if command.count(flag) != 1:
+                raise ValueError("wrong Massif subject")
+            index = command.index(flag)
+            if index + 1 >= len(command) or command[index + 1] != value:
+                raise ValueError("wrong Massif subject")
     snapshots = []
     for block in text.split("snapshot=")[1:]:
         row = {}
@@ -85,6 +98,62 @@ def page_peak(text):
         raise ValueError("missing memory snapshots")
     return {"mapped_page_peak_bytes": max(row["mem_heap_B"] for row in snapshots),
             "snapshots": len(snapshots)}
+
+
+def expected_results(groups, inventory):
+    """Re-derive answers by checking actual retained or freshly emitted inputs."""
+    expected = {}
+    for group in groups:
+        parameters, functions = GROUPS[group]
+        if group == "sparse":
+            rows = inventory_hashes(inventory("inputs-sparse", ["inspect"]))
+            keys = ["productionResultHash", "replayResultHash", "replayResultHash"]
+        elif group == "matrix":
+            rows = validate_matrix(inventory("inputs-matrix", ["inspect-maximal-matrix-dimensions"]),
+                                   by_dimension=True)
+            keys = ["solveResultHash", "checkResultHash"]
+        elif group == "height":
+            path = inventory("inputs-height", ["inspect-height-phases"])
+            validate_height(path, height_sensitive=True)
+            rows = {r["height"]: r for r in map(json.loads, path.read_text().splitlines())}
+            keys = ["productionResultHash", "replayResultHash"]
+        else:
+            rows = {}
+            for parameter in parameters:
+                path = inventory(f"inputs-joint-{parameter}", ["inspect-joint", str(parameter)])
+                validate_joint(path, degrees=[parameter])
+                path = inventory(f"answers-joint-{parameter}", ["inspect-joint-timings", str(parameter)])
+                records = [json.loads(line) for line in path.read_text().splitlines()]
+                if len(records) != 1 or records[0]["degree"] != parameter:
+                    raise ValueError("missing joint callback verification")
+                rows[parameter] = records[0]
+            keys = ["comparisonResultHash", "replayResultHash"]
+        for parameter in parameters:
+            for name, key in zip(functions, keys, strict=True):
+                value = rows[parameter][key]
+                if type(value) is not int or not 0 <= value < 2**64:
+                    raise ValueError("invalid expected callback result")
+                expected[("Hex.SignDetBench." + name, parameter)] = hex(value)
+    return expected
+
+
+def run_owned(command, stdout, stderr):
+    """Stop the whole profile group if waiting is interrupted."""
+    process = subprocess.Popen(command, cwd=ROOT, stdout=stdout, stderr=stderr,
+                               start_new_session=True)
+    try:
+        return process.wait()
+    except BaseException:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        process.wait()
+        raise
+
+
+def stop_signal(number, _frame):
+    raise SystemExit(128 + number)
 
 
 def validate_retained(directory):
@@ -118,6 +187,25 @@ def validate_retained(directory):
     source = metadata["source_archive"]
     if hashlib.sha256(raw[source["file"]]).hexdigest() != source["sha256"]:
         raise ValueError("source archive differs")
+    records = metadata["inventories"]
+    recorded = {record["label"]: record for record in records}
+    if len(recorded) != len(records):
+        raise ValueError("duplicate input verification")
+    used = set()
+    with tempfile.TemporaryDirectory(prefix="hex-memory-inputs-") as temporary:
+        def inventory(label, arguments):
+            record = recorded.get(label)
+            if (record is None or record["state"] != "complete" or record["exit_code"] != 0 or
+                    record["command"][1:] != arguments):
+                raise ValueError("missing, mismatched or failed input verification")
+            used.add(label)
+            path = Path(temporary) / (label + ".stdout")
+            path.write_bytes(raw[label + ".stdout"])
+            return path
+        answers = expected_results(metadata["groups"], inventory)
+    expected = {f"{name}:{parameter}": answer for (name, parameter), answer in answers.items()}
+    if set(recorded) != used or metadata["expected_result_hashes"] != expected:
+        raise ValueError("retained answers differ from the validated input checks")
     schedule = []
     for trial in range(TRIALS):
         for name, group in metadata["groups"].items():
@@ -142,7 +230,7 @@ def validate_retained(directory):
         if record["process_peak_rss_kib"] != row["peak_rss_kb"]:
             raise ValueError("retained process memory differs")
         if subject[3] == "massif":
-            peak = page_peak(raw[label + ".massif"].decode())
+            peak = page_peak(raw[label + ".massif"].decode(), subject[0], subject[1])
             if any(record.get(key) != value for key, value in peak.items()):
                 raise ValueError("retained page peak differs")
     return metadata
@@ -195,10 +283,10 @@ def main():
         metadata.setdefault("inventories", []).append(record)
         save()
         with path.open("w") as stdout, (out / (label + ".stderr")).open("w") as stderr:
-            result = subprocess.run(record["command"], cwd=ROOT, stdout=stdout, stderr=stderr)
-        record.update(state="complete", exit_code=result.returncode)
+            code = run_owned(record["command"], stdout, stderr)
+        record.update(state="complete", exit_code=code)
         save()
-        if result.returncode:
+        if code:
             raise ValueError("input/callback verification failed: " + label)
         return path
 
@@ -218,67 +306,28 @@ def main():
         save()
         start = time.monotonic()
         with (out / (label + ".stdout")).open("w") as stdout, (out / (label + ".stderr")).open("w") as stderr:
-            process = subprocess.Popen(command, cwd=ROOT, stdout=stdout, stderr=stderr,
-                                       start_new_session=True)
-            try:
-                process.wait()
-            except BaseException:
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-                process.wait()
-                raise
-        record.update(state="complete", exit_code=process.returncode,
+            code = run_owned(command, stdout, stderr)
+        record.update(state="complete", exit_code=code,
                       instrumented_wall_seconds=time.monotonic() - start, load_after=os.getloadavg())
         save()
-        if process.returncode:
+        if code:
             raise ValueError(f"profile failed: {label}; output is retained")
         row = child_record((out / (label + ".stdout")).read_text(), function, parameter, revision)
         if row["result_hash"] != expected[(function, parameter)]:
             raise ValueError("callback differs from the validated input answer")
         record.update(result_hash=row["result_hash"], process_peak_rss_kib=row["peak_rss_kb"])
         if mode == "massif":
-            record.update(page_peak((out / (label + ".massif")).read_text()))
+            record.update(page_peak((out / (label + ".massif")).read_text(), function, parameter))
         save()
         print(label, "retained", flush=True)
         return row["result_hash"]
 
+    previous_signals = {number: signal.signal(number, stop_signal)
+                        for number in (signal.SIGTERM, signal.SIGHUP)}
     try:
         archive_sources(out, metadata)
         save()
-        for group in args.groups:
-            parameters, functions = GROUPS[group]
-            if group == "sparse":
-                path = inventory("inputs-sparse", ["inspect"])
-                rows = inventory_hashes(path)
-                keys = ["productionResultHash", "replayResultHash", "replayResultHash"]
-            elif group == "matrix":
-                path = inventory("inputs-matrix", ["inspect-maximal-matrix-dimensions"])
-                rows = validate_matrix(path, by_dimension=True)
-                keys = ["solveResultHash", "checkResultHash"]
-            elif group == "height":
-                path = inventory("inputs-height", ["inspect-height-phases"])
-                validate_height(path, height_sensitive=True)
-                rows = {r["height"]: r for r in map(json.loads, path.read_text().splitlines())}
-                keys = ["productionResultHash", "replayResultHash"]
-            else:
-                rows = {}
-                for parameter in parameters:
-                    path = inventory(f"inputs-joint-{parameter}", ["inspect-joint", str(parameter)])
-                    validate_joint(path, degrees=[parameter])
-                    path = inventory(f"answers-joint-{parameter}", ["inspect-joint-timings", str(parameter)])
-                    record = [json.loads(line) for line in path.read_text().splitlines()]
-                    if len(record) != 1 or record[0]["degree"] != parameter:
-                        raise ValueError("missing joint callback verification")
-                    rows[parameter] = record[0]
-                keys = ["comparisonResultHash", "replayResultHash"]
-            for parameter in parameters:
-                for name, key in zip(functions, keys, strict=True):
-                    value = rows[parameter][key]
-                    if type(value) is not int or not 0 <= value < 2**64:
-                        raise ValueError("invalid expected callback result")
-                    expected[("Hex.SignDetBench." + name, parameter)] = hex(value)
+        expected = expected_results(args.groups, inventory)
         metadata["expected_result_hashes"] = {f"{name}:{parameter}": value
                                                for (name, parameter), value in expected.items()}
         save()
@@ -307,6 +356,8 @@ def main():
                                     if p.is_file() and p.name != "metadata.json"}
         save()
         lease.close()
+        for number, previous in previous_signals.items():
+            signal.signal(number, previous)
 
 
 if __name__ == "__main__":
