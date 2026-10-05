@@ -57,6 +57,21 @@ class ByteTests(unittest.TestCase):
 
     def test_json_literal_types_and_duplicate_fields(self):
         with self.assertRaises(ValueError): packet('[[[],0,[]],[0,true,3]]',[[[],0,[]],[0,1,3]])
+        for root in [False,True]:
+            with self.subTest(coupled_boolean=root):
+                rows = copy.deepcopy(self.rows)
+                index = 1 if root else 0
+                value = rows[index]['value_json']
+                if root:
+                    value[0][2][0][1][-1][1] = True
+                    rows[index]['polynomial_json'][0] = copy.deepcopy(value[0])
+                    rows[index]['polynomial_text'] = json.dumps(rows[index]['polynomial_json'])
+                    reason = 'reducible selected predecessor changed'
+                else:
+                    value[1][1] = True
+                    reason = 'wrong rational example'
+                rows[index]['value_text'] = json.dumps(value)
+                with self.assertRaisesRegex(ValueError,reason): verify(rows)
         for text in ['1.0','1e2','NaN','{"case":"a","case":"b"}']:
             with self.subTest(text=text), self.assertRaises(ValueError): parse(text)
 

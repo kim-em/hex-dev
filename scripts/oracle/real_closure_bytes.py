@@ -51,7 +51,7 @@ def packet(text, expected):
             isinstance(signature[0],list) and type(signature[1]) is int and signature[1] >= 0 and
             isinstance(signature[2],list), 'wrong full signature')
     for frame in signature[2]:
-        require(isinstance(frame,list) and len(frame) == 7 and frame[0] == [0] and
+        require(isinstance(frame,list) and len(frame) == 7 and same_json(frame[0],[0]) and
                 all(isinstance(frame[i],list) for i in range(1,7)), 'incomplete root frame')
     return signature
 
@@ -62,8 +62,8 @@ def verify(rows):
         signature = packet(row['value_text'],row['value_json'])
         if i == 4:
             require(set(row) == {'case','value_text','value_json','unknown_rejected'}, 'wrong Unicode record')
-            require(signature == [[['α\n"\\λ',17]],2,[]] and
-                    row['value_json'][1] == '\x00\nλ𐐷"\\' and row['unknown_rejected'] is True,
+            require(same_json(signature,[[['α\n"\\λ',17]],2,[]]) and
+                    same_json(row['value_json'][1],'\x00\nλ𐐷"\\') and row['unknown_rejected'] is True,
                     'Unicode or provider version changed')
             continue
         require(set(row) == {'case','value_text','value_json','polynomial_text','polynomial_json',
@@ -76,10 +76,11 @@ def verify(rows):
         require(row['roundtrip'] is True and row['reconstructed'] is True and
                 type(row['rejections']) is int and row['rejections'] == 8, 'native reader check failed')
         if i == 0:
-            require(row['value_json'][1] == [0,1,3] and row['polynomial_json'][1] ==
-                    [[0,-2,1],[0,0,1],[0,1,1]], 'wrong rational example')
+            require(same_json(row['value_json'][1],[0,1,3]) and
+                    same_json(row['polynomial_json'][1],[[0,-2,1],[0,0,1],[0,1,1]]),
+                    'wrong rational example')
         elif i in (1,2):
-            require(signature[2][0][1] == [[0,6,1],[0,-2,1],[0,-3,1],[0,1,1]],
+            require(same_json(signature[2][0][1],[[0,6,1],[0,-2,1],[0,-3,1],[0,1,1]]),
                     'reducible selected predecessor changed')
     return len(rows)
 
