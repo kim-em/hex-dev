@@ -206,8 +206,8 @@
       "sha256": "01669c5e97e5d4a8fec417e7a4586cecd58073910a1398677d1afc4f2b1d8efa"
     },
     "review-fix-admissions.log": {
-      "bytes": 0,
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "bytes": 242,
+      "sha256": "03279bc4eb71d955e89c7265be14e444c58a298fad003a54e42e1aa4a9607bf2"
     },
     "before/HexNumberField-Basic.lean.txt": {
       "bytes": 26409,
@@ -1768,6 +1768,10 @@
     "plots-review-final/analysis.json": {
       "bytes": 94966,
       "sha256": "e3d4ecfa4762c88d04ff2e093c46e2a02e1615a51978652ec7049dc8aea66ff5"
+    },
+    "review-fix-admissions-final.log": {
+      "bytes": 95,
+      "sha256": "9d1d16fb4a32bddaeeb72dd1255d0b854cbdca250ce36e57529b6259838c8431"
     }
   }
 }
