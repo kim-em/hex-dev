@@ -29,10 +29,10 @@ run_cmd Lean.Elab.Command.liftTermElabM do
 
 namespace RegistrationFixtures
 meta def wrongType : Nat := 0
-meta def wrongVersion : ConstructionExtension := ⟨2, `missing⟩
-meta def missingFactor : ConstructionExtension := ⟨1, `RegistrationFixtures.missing⟩
+meta def wrongVersion : ConstructionExtension := ⟨1, `missing⟩
+meta def missingFactor : ConstructionExtension := ⟨2, `RegistrationFixtures.missing⟩
 def wrongFactor : Nat := 0
-meta def wrongFactorType : ConstructionExtension := ⟨1, ``wrongFactor⟩
+meta def wrongFactorType : ConstructionExtension := ⟨2, ``wrongFactor⟩
 end RegistrationFixtures
 
 /--
@@ -44,7 +44,7 @@ run_cmd Lean.Elab.Command.liftTermElabM do
   let _ ← constructionExtension? `RegistrationFixtures.wrongType
 
 /--
-error: primality?: construction extension RegistrationFixtures.wrongVersion uses ABI version 2; expected 1
+error: primality?: construction extension RegistrationFixtures.wrongVersion uses ABI version 1; expected 2
 -/
 #guard_msgs in
 run_cmd Lean.Elab.Command.liftTermElabM do
@@ -72,7 +72,7 @@ meta def constructionExtension : Hex.PrimalityTactic.ConstructionExtension := �
 end HexIntFactor.PrimalityTactic
 
 /--
-error: primality?: construction extension HexIntFactor.PrimalityTactic.constructionExtension uses ABI version 0; expected 1
+error: primality?: construction extension HexIntFactor.PrimalityTactic.constructionExtension uses ABI version 0; expected 2
 -/
 #guard_msgs in
 run_cmd Lean.Elab.Command.liftTermElabM do
@@ -101,16 +101,14 @@ example : Hex.Nat.Prime 15 := by primality?
 example : Hex.Nat.Prime 1000003 := by
   primality? (factor := Hex.Nat.Construction.factorSearch)
 
--- This module has the deliberately malformed registration above. Zero and
--- completely consumed allowances must return without inspecting it.
+-- A zero allowance returns without inspecting the malformed registration.
 run_cmd Lean.Elab.Command.liftTermElabM do
-  for allowance in [0, 1] do
-    let (result, allocations) ← construct 1000003
-      { Hex.Nat.constructionBudget with maxAttempts := allowance }
-    unless allocations.isEmpty do throwError "unexpected retry"
-    match result with
-    | .error f => unless f.attempts == allowance do throwError "wrong total"
-    | .ok _ => throwError "unexpected certificate"
+  let (result, allocations) ← construct 1000003
+    { Hex.Nat.constructionBudget with maxAttempts := 0 }
+  unless allocations.isEmpty do throwError "unexpected provider allocation"
+  match result with
+  | .error f => unless f.attempts == 0 do throwError "wrong total"
+  | .ok _ => throwError "unexpected certificate"
 
 #guard_msgs (drop info) in
 example : Hex.Nat.Prime

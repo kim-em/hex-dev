@@ -166,6 +166,9 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosureMathlib/BaseRealization.lean",
                 "HexRealClosureMathlib/BaseStagedRealization.lean",
                 "HexRealClosureMathlib/BaseProvider.lean",
+                "HexRealClosure/BaseSubsequence.lean",
+                "HexRealClosureMathlib/BaseSubsequence.lean",
+                "HexRealClosureMathlib/BaseSubsequenceTests.lean",
                 "adapters/HexRealClosureMathlib/BaseModel.lean",
                 "HexRealClosureMathlib/BasePrefixModels.lean",
                 "HexRealClosureMathlib/BaseModels.lean",
@@ -259,7 +262,10 @@ class AdmissionScannerTests(unittest.TestCase):
                 "adapters/HexRealClosureMathlib/TowerEnlargeOrderTests.lean",
                 "HexRealClosure/TowerEnlargeOrderTests.lean",
                 "HexRealClosure/TowerEnlargement.lean",
-                "adapters/HexRealClosureMathlib/RootFactors.lean")]
+                "adapters/HexRealClosureMathlib/RootFactors.lean",
+                "HexRealClosure/NumberField.lean",
+                "adapters/HexRealClosureMathlib/NumberField.lean",
+                "conformance/HexRealClosure/NumberFieldConformance.lean")]
             qadjoin = root / "adapters/HexRealClosureMathlib/QAdjoin.lean"
             qadjoin_tests = root / "HexRealClosure/QAdjoinTests.lean"
             dependency = root / "HexExtra/SelectedField.lean"

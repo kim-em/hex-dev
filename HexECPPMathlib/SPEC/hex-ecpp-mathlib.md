@@ -344,6 +344,11 @@ unchanged explicit `using`/`factor :=`/ECPP/PARI routes. Verify that already
 successful construction does not invoke the optional producer. Extend the
 existing single CI job and declared proof/conformance targets.
 
+Construction-exhaustion evidence identifies the factor provider, allocation and
+source revision. When the automatic provider changes, re-attest the relevant
+current-route comparisons; retain older outcomes with their historical policy
+labels. A process timeout does not establish construction exhaustion.
+
 ## Proof-track evidence
 
 This Mathlib companion has no compiled benchmark track. Literal `ecpp using`,

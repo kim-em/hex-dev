@@ -37,7 +37,10 @@ example : Hex.Nat.Prime (2 ^ 255 - 19) := by primality?
 `primality?` uses a larger, finite construction profile and offers a clickable
 `Try this:` replacement containing the checked certificate. Applying it removes
 search from subsequent builds; Lean still replays the checker in its kernel.
-The ordinary `primality` tactic retains its interactive budget.
+The ordinary `primality` tactic retains its interactive budget. Importing
+`HexIntFactor` selects a stronger construction
+provider combining Pollard p-minus-one, rho and ECM; `HexPrimality` alone
+retains its core-only search.
 `primality? (pMinusOneStage2 := true)` enables bounded Pollard p−1
 continuations within the same total attempt budget. This option defaults to
 `false`.

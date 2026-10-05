@@ -496,6 +496,11 @@ obligations, update core and coordinated companion documentation with actual
 support and unsuccessful cases, and extend existing conformance/oracle/CI
 scripts. Larger CI kernel fixtures require measured endpoint evidence first.
 
+Construction comparisons identify the exact factor provider, finite allocation
+and source revision. Results against a superseded provider remain historical
+evidence and do not establish exhaustion of the current `primality?` route.
+A process timeout is inconclusive for the exhaustion criteria above.
+
 ## Conformance and evidence
 
 Core tests cover every addition branch, inverse consumption, canonicality,

@@ -264,27 +264,51 @@ tag := "hex-int-factor-ecm"
 %%%
 
 Importing `HexIntFactor` also strengthens HexPrimality's tactics. A
-Pocklington certificate for `p` needs a partial factorization of `p - 1`.
-When HexPrimality's own search for one runs out, `primality` tries again
-with the search of this library, and `primality?` tries again with
-{name}`Hex.Nat.ecmFactorSearch`, a two-stage elliptic curve method that can
-find a large prime factor of `p - 1` out of reach of rho. The
+Pocklington certificate for `p` needs a partial factorization of `p - 1`, so
+proving a large prime is itself a factoring problem. When HexPrimality's own
+search for that factorization runs out, `primality` tries again with the
+search of this library. `primality?`, which constructs a certificate to save
+and reuse, instead uses {name}`Hex.Nat.interleavedConstructionFactor` from
+the start:
+
+{docstring Hex.Nat.interleavedFactorSearch}
+
+{docstring Hex.Nat.interleavedConstructionFactor}
+
+The search first runs the usual quick methods, with rho cut short. From then
+on, between composites, it checks whether the factors found so far already
+make up enough of `p - 1` for a Pocklington certificate, and stops when they
+do; those factors must still be proved prime in turn. Each composite that
+remains is attacked with two slower methods: Pollard's `p - 1` method with
+first-stage bounds `262144` and `524288`, and the elliptic curve method with
+both stages, on up to 314 curves: 50 with bounds `(10000, 1000000)`, then 64
+with `(32768, 524288)`, then 200 with `(50000, 4000000)`. Numbers of at most
+192 bits try the `p - 1` method first; larger ones try eight curves before
+it. A `p - 1` search that failed on a number is not repeated on its
+divisors. By default the whole construction, including the certificates of
+the factors found and the search for Pocklington witnesses, shares one
+allowance of 1024 attempts, where each `p - 1` run and each stage of each
+curve costs one. That bounds the work, not the time: on the shared host,
+a search that failed on a 507-bit prime took about two and a half minutes,
+not counting elaboration and kernel checking. The
 {ref "tutorial-field-primes"}[field-prime tutorial] proves the field primes
-of secp256k1, P-384 and Curve448 prime this way. Writing
-`primality? (factor := Hex.Nat.ecmFactorSearch)` selects the elliptic curve
-search directly, with its arguments under the caller's control.
+of secp256k1, P-384 and Curve448 prime this way.
+
+The argument `factor :=` of `primality?` selects a different search.
+{name}`Hex.Nat.ecmFactorSearch` is a simpler elliptic curve search, whose
+bounds and number of curves the caller chooses:
 
 {docstring Hex.Nat.ecmFactorSearch}
 
-The default bounds are `b₁ = 32768` for the first stage and `b₂ = 524288`
-for the second, with at most 64 curves for each number to be split. With
-bounds above `524288` and `4194304` respectively the elliptic curve stages
-are skipped, and more than 64 curves are not used. The first stage of a
-curve and its second stage each count as one attempt against the tactic's
-`maxAttempts`, which is shared with the rest of the certificate search. For
-example `primality? (factor := Hex.Nat.ecmFactorSearch (curves := 16))` uses
-fewer curves, and `Hex.Nat.ecmFactorSearch (trace := true)` reports what
-each curve found.
+Its default bounds are `b₁ = 32768` for the first stage and `b₂ = 524288`
+for the second, with at most 64 curves for each number to be split. The
+elliptic curve stages are skipped if `b₁` exceeds `524288` or `b₂` exceeds
+`4194304`, and more than 64 curves are not used. The first stage of a curve
+costs one attempt against the tactic's `maxAttempts`, and its second stage,
+when it runs, costs another. For example
+`primality? (factor := Hex.Nat.ecmFactorSearch (curves := 16))` uses fewer
+curves, and `Hex.Nat.ecmFactorSearch (trace := true)` reports what each
+curve found.
 
 # Arithmetic from a factorization
 %%%

@@ -102,6 +102,34 @@ checks frozen bound/subject/version bindings and coverage of used providers,
 then validates enclosure, guard and final proofs in the ordinary kernel.
 Nonseparating bounds leave guards unresolved. This mode is bounded proof search,
 not a complete named-constant field solver.
+Positive rational square and higher-root aliases are authenticated against
+checked selected roots of `denominator * X^n - numerator`. Closed division by
+these aliases preserves original base/exponent/divisor guards and becomes
+multiplication by a closed inverse before shared-schema abstraction. The
+[rational-root regressions](../conformance/HexRCF/RationalRoots.lean) exercise
+actual tactic and prepared replay proofs, a further root over the coefficient
+field, half-open domains, terminal false verdicts and zero-divisor failures.
+Root bases or exponents with an evaluated zero divisor are refused during
+recognition rather than reaching common-field replay. Negative bases,
+nonreciprocal real exponents and unsupported nested algebraic-base roots do
+not acquire a signed-root interpretation from this frontend.
+In common-field preparation, unsupported root-base syntax and unsupported
+sibling coefficients take precedence over recognition exhaustion. For otherwise supported sources,
+`Coefficients.prepare` returns a structured budget error before field construction.
+Before common-field search, `rcf.algebraic.commonDegree` bounds the product of
+the canonical degrees of distinct selected generators (default 64). This
+conservative admission uses the shared exponent budget diagnostic; different
+aliases for the same selected generator are counted once. It does not bound
+every subsequent operation or prove certificate-search completeness.
+The admission also applies to a single generator. A root inside a root base
+is outside this rational-base grammar even when its value is rational.
+The finite-bound path applies the root syntax and size checks separately to
+each leaf before rational normalization or enclosure proposals; errors there
+are terminal in traversal order.
+Zero-divisor detection within a root follows bounded arithmetic evaluation;
+earlier exhaustion can prevent that detection, and either outcome refuses the input.
+Inverse notation is supported in rational bases and reciprocal exponents,
+including `Real.sqrt (2⁻¹)`. Visible rational constructors are lowered in both.
 Registered bounds compose with unregistered selected algebraic values and
 checked root aliases through separately proved algebraic enclosures. The
 [mixed-coefficient regressions](../conformance/HexRCF/MixedConstants.lean)
@@ -157,6 +185,14 @@ folds; `run_spec` proves the exact `Prenex.toProp` meaning at arbitrary fixed
 coordinates in one parent with an actual real model. The
 [formula regressions](../conformance/HexRCF/Samples.lean) distinguish selected
 conjugates, coefficient order, diagnostic false results and half-open domains.
+`Gather.values` transports ordered coefficients from independently constructed
+native contexts through the owner's checked common-context maps. Its
+`prepare_eval` and `run_spec` laws preserve coordinates in supplied compatible
+models. `gather_spec` and `run_original` additionally bind those coordinates to
+the authenticated original owner models and selected embeddings. The
+[gathering regressions](../conformance/HexRCF/Gather.lean) exercise different
+polynomials, selected conjugates, repeated owners, cancellation and a further
+root over the common coefficient field.
 This is a producer API, not literal replay or source-goal quotation. The manual
 gives direct API examples. General frozen tower replay, source authentication
 for that backend and joint infinitesimal realization still require the owner

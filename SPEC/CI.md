@@ -103,7 +103,9 @@ Concretely:
   classifier uses `libraries.yml` ownership and the pull request's diff against
   its merge base; changes to shared infrastructure and unclassified non-documentation
   paths select every library. It reports both the selected library names and the
-  paths that caused the selection. This is deliberately an owner-only filter:
+  paths that caused the selection. Manual paths (`HexManual.lean` and
+  `HexManual/**`) do not select libraries or widen a mixed change's filter.
+  This is deliberately an owner-only filter:
   dependents are not added, so a change to `HexPoly` runs only `HexPoly`'s oracle
   and bench verify. If an owning library has no oracle tuple or bench executable,
   that verification tail has no per-library work for the change; downstream
@@ -156,10 +158,10 @@ its base parent (`HEAD^1`) -- the exact delta under test, and the
 spelling that counts a source file renamed under an allowlisted path as
 a source change -- and records both the fast-path and manual-build
 decisions in the job summary.
-Every step from dependency installation through the verification tails,
-apart from the separately guarded manual build, carries
-`if: steps.classify.outputs.docs_only != 'true'`, and the fail-closed gate
-passes trivially on that path. The structural lints and the Python
+Dependency setup and compilation are guarded by `docs_only`. Computational
+builds and verification also exclude `manual_only` changes, and the manual
+build has its own guard. The fail-closed gate passes without verification
+sentinels on either fast path. The structural lints and the Python
 unit tests before that point (copyright headers, line counts, DAG,
 released manifest, manual split, `test_sync_released.py`, trust surface,
 Phase-4 and Phase-7 checks, conformance-matrix invariant) run on both
@@ -176,9 +178,17 @@ costs one slow-to-detect breakage on the next code PR, not a release:
 is collected when those files change, so such a pull request takes the full
 build path despite containing documentation only.
 
+A PR changing only `HexManual.lean`, `HexManual/**`, and documentation sets
+`manual_only=true`. It sets up Lean and restores caches, then runs
+`lake build HexManual`, which compiles the manual's imports as needed.
+It skips computational builds, benchmark verification, performance-figure
+checks, architecture experiments, and conformance/oracle runs. Manual imports
+do not determine benchmark or oracle ownership. Mixed manual and library
+changes select verification using the library changes alone.
+
 Anything else (`lakefile.lean`, `lake-manifest.json`, `lean-toolchain`,
-`.github/**`, `scripts/**`, any `.lean` file, ...) makes the PR a full
-build. Pushes to `main` and manual dispatches always build in full,
+`.github/**`, `scripts/**`, library `.lean` files, ...) makes the PR a full
+build. Pushes to `main` and workflow dispatches always build in full,
 regardless of the changed files, so the Lake artifact cache publish only
 ever comes from a fully verified tree. The fast path is
 neither a second job nor a workflow-level `paths` filter: the required
@@ -196,8 +206,8 @@ non-pull-request run also builds it unconditionally.
 
 Every full-path pull request and every push to `main` runs two
 deterministic checks for the published integer polynomial factorization
-comparison (a docs-only PR skips them, even when it edits `reports/`;
-see § Docs-only fast path):
+comparison (documentation-only and manual-only PRs skip them, even when
+they edit `reports/`; see § Docs-only fast path):
 
 - `scripts/bench/check_factor_sweep_freshness.py` requires a complete,
   cross-checked current-corpus measurement for Hex, FLINT, NTL, PARI, Isabelle

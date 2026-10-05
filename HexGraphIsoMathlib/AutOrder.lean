@@ -66,7 +66,9 @@ private theorem card_of_singletons (h : ∀ v : Fin n, orbitSize G v ≤ 1) :
     (⟨p.get v, (mem_orbit G v _).mpr (SameOrbit.intro p hp rfl)⟩ : MulAction.orbit (group G) v)
     ⟨v, MulAction.mem_orbit_self v⟩)
 
-private theorem card_of_colors (h : n ≤ k) : Nat.card (group G) = 1 := by
+/-- If every vertex has its own colour, the colour-preserving automorphism
+group is trivial. -/
+theorem card_discrete (h : n ≤ k) : Nat.card (group G) = 1 := by
   have hk : k ≤ n := by simpa using Fintype.card_le_of_surjective _ G.coloring.onto
   have he : n = k := by omega
   have hi := G.coloring.onto.injective_of_finite (finCongr he)
@@ -85,7 +87,7 @@ theorem orderAux_card (fuel : Nat) :
   | zero =>
     intro k G hk
     rw [orderAux]
-    exact (card_of_colors (by omega)).symm
+    exact (card_discrete (by omega)).symm
   | succ fuel ih =>
     intro k G hk
     rw [orderAux]

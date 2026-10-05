@@ -9,8 +9,9 @@ import HexIntFactor.FieldReplay
 import LeanBench
 
 /-! Fixed native construction and checker observations for explicit ECM
-and automatic fallback. The input references prevent closed-term lifting. Search includes the
-final compiled self-check; the checker targets use the exact emitted literals. -/
+and the automatic interleaved provider. The input references prevent closed-term lifting. Search includes the
+final compiled self-check. Checker targets retain the original fixed-curve
+literals, including the earlier Curve448 certificate. -/
 
 namespace Hex.IntFactorFields
 open Hex.Nat
@@ -23,13 +24,8 @@ private initialize curveRef : IO.Ref PrimeCert ← IO.mkRef curve448
 
 private def construct (ref : IO.Ref PrimeCert) (automatic : Bool := false) : IO Nat := do
   let n := (← ref.get).subject
-  let first := Construction.runTraced n (Hex.Rand.ofSeed n) constructionBudget
-    (if automatic then Construction.factorSearch else ecmConstructionFactor)
-  let result := if automatic then
-    match first with
-    | .ok s => .ok s
-    | .error f => Construction.retry n constructionBudget f ecmConstructionFactor
-    else first
+  let result := Construction.runTraced n (Hex.Rand.ofSeed n) constructionBudget
+    (if automatic then interleavedConstructionFactor else ecmConstructionFactor)
   match result with
   | .ok success => return success.attempts
   | .error _ => return 0

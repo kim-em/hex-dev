@@ -14,8 +14,6 @@ import LeanBench
 import Lean.Data.Json
 
 /-!
-Computational performance owner: `HexSignDet`.
-
 The sparse-support family fixes P=X²−1, uses s copies of X and takes s to be
 a power of two. There are exactly two realized words. Leaves have three
 columns; every internal candidate has four columns, of which two survive.

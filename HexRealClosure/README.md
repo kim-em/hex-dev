@@ -142,6 +142,49 @@ fixed-field coordinate is accepted by the independently validated real-closure
 handle, and compares exact division and multiplication with the selected
 real-algebraic value.
 
+### Roots over an existing real number field
+
+`NumberField.roots generator context p` uses the complete HexRealClosure
+producer directly on `QAdjoin generator.toAlgebraic` coefficients, with the
+existing interval sign operation for that selected embedding. It retains the
+zero polynomial's `all` case, ordered point/descriptor roots and their original
+positive multiplicities. `NumberField.roots?` exposes producer diagnostics.
+The input generator is a checked `RealAlgebraicNumber`; an external
+`AlgebraicNumber` first enters through `RealAlgebraicNumber.ofAlgebraic?`.
+
+For example, with a checked positive cubic generator `a = ∛2`:
+
+```lean
+let alpha := a.toAlgebraic.toQAdjoin
+let y : DensePoly (QAdjoin a.toAlgebraic) := DensePoly.ofList [0, 1]
+let quadratic := y*y - DensePoly.C alpha
+let result := NumberField.roots a 10378 (quadratic*quadratic*(y-1))
+```
+
+The roots are `-2^(1/6), 1, 2^(1/6)` with multiplicities `2,1,2`.
+Selected entries support the existing `descriptor.buildSigns` and
+`Algebraic.Context.adjoin` arithmetic; comparison uses `entry.root.compare`.
+The companion's `NumberField.value_complex` retains the entire selected
+complex value in ℝ, and `roots_success`, `roots_all`, `roots_spec` and
+`roots_sorted` prove totality, the zero case, exact multiplicities and ordering
+for every polynomial in the actual field coordinates. The public
+`value_add/sub/mul/div/neg/inv/nat` laws support further selected-entry proofs.
+
+Run `lake build hexrealclosure_number_field_conformance` followed by
+`.lake/build/bin/hexrealclosure_number_field_conformance`. Its compiled cubic
+fixture exercises the zero case, repeated roots and a negative nonmonic input,
+selected signs, strict comparison and inversion at the returned roots. The
+independent FLINT qqbar oracle reconstructs the selected cubic embedding and
+checks the original polynomials, all roots, labels, intervals, derivative words
+and query signs. A second cubic fixture selects the middle root of
+`X³−3X+1`, which has three real embeddings including two positive ones.
+Each generator carries its actual isolating bounds, so the oracle and
+conjugate-swap mutations distinguish embeddings with the same sign. Existing SignDet common-field fixtures cover coordinates obtained
+from distinct real fields through `QAdjoin.common`. The companion's
+`NumberField.common_value` proves that every returned common-field coordinate
+retains the corresponding input's entire complex value when the computed
+common generator passes the real check.
+
 `Yun.decompose` runs the specified finite recurrence over an executable
 ordered field. `Yun.decomposeRaw` runs the same recurrence on packed tower
 coefficients, where stored equality need not be value equality. The zero and
@@ -312,6 +355,25 @@ provider-derived staged realizations. This includes proper real prefixes,
 which the shared tower assembly also accepts through `Inclusion.base?`.
 The shared-assembly section below describes this transport and the remaining
 coherent owner and cache factory.
+
+`RealChain.subsequence?` and the packed `RealPrefix.subsequence?` accept a
+source whose keys occur in order within an already constructed target chain.
+They preserve matching formal variables and include omitted target constants
+without polynomial gcd work. For example, the independently registered path
+`[β]` enters `[α, β]`. `subsequence?_isSome` proves the exact key check;
+`subsequence?_self` proves that a self map is the identity.
+The companion `RealPrefix.Model.subsequence_map` derives preservation of every
+real coefficient from both registered models. `RealChain.Realization.subsequence_sign`
+derives agreement of their actual native signs. `RealContext.provider_unique`
+uses stored approximation progress to prove that a registry key has one real
+value. The build-only `SubsequenceTests.insert_before` constructs the target
+with `Model.register`, checks this non-prefix inclusion and proves that the
+prefix-only producer rejects it.
+
+The target retains its own relative-transcendence premises and progress proofs
+for each exact predecessor. The subsequence factory does not construct a joint
+target from separately supplied providers, permute a real-key path, or enlarge
+the prefix-only `Tower.BaseInclusion` interface.
 
 `BaseContext.Context.real` finishes that prefix. `Context.infinitesimal` then
 adds any number of successive positive infinitesimals. The types prevent

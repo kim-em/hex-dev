@@ -89,6 +89,32 @@ private partial def castGuards (e : Expr) : ScanM Unit := do
     modify (·.push q(($d : ℝ)))
   for a in args do castGuards a
 
+/-- Lower visible rational and checked algebraic constructors using their
+proved interpretations, preserving exact registered whole subjects. -/
+private partial def lowerCore (registered : Array Expr) (source : Expr) :
+    StateRefT (Array Expr) MetaM Expr := do
+  let (lowered, _) ← Meta.transformWithCache source {} (pre := fun e => do
+    if ← registered.anyM (fun value => liftM (Registration.sameSubject e value)) then
+      return .done e
+    if ← isProof e then return .done e
+    if let some (value, proof) ← Conversion.step? e then
+      let expected ← mkAppM ``Eq #[e, value]
+      unless ← isDefEq (← inferType proof) expected do
+        throwError "rcf: source conversion has the wrong equality"
+      let proof ← mkExpectedTypeHint proof expected
+      modify (·.push proof)
+      return .done (← lowerCore registered value)
+    if isClosed e && e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 &&
+        e.appArg!.isAppOfArity ``Hex.RealAlgebraicNumber.ofRat 1 then
+      let value : Q(ℚ) := e.appArg!.appArg!
+      return .done q(($value : ℝ))
+    return .continue) (skipInstances := true)
+  return lowered
+
+/-- Lower visible constructor syntax, keeping registered whole subjects exact. -/
+def lowerSources (registered : Array Expr) (source : Expr) : MetaM Expr :=
+  Prod.fst <$> (lowerCore registered source).run #[]
+
 private partial def scalar (registered : Array Expr) (source : Expr) : ScanM Unit := do
   let e := source.consumeMData
   unless isClosed e do reject e "coefficient must be closed"
@@ -172,7 +198,7 @@ private partial def scalar (registered : Array Expr) (source : Expr) : ScanM Uni
   if e.isAppOfArity ``Real.rpow 2 then
     scalar registered args[0]!
     scalar registered args[1]!
-    let _ ← Coefficients.rootDegree args[1]!
+    let _ ← Coefficients.rootDegree (← lowerSources registered args[1]!)
     return ()
   if [``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv].any (op == some ·) &&
       args.size == 6 then
@@ -204,7 +230,7 @@ private partial def scalar (registered : Array Expr) (source : Expr) : ScanM Uni
       unless ← isDefEq e q($a ^ $p) do reject e "nonstandard real power instance"
       scalar registered args[4]!
       scalar registered args[5]!
-      let _ ← Coefficients.rootDegree args[5]!
+      let _ ← Coefficients.rootDegree (← lowerSources registered args[5]!)
       return ()
     unless (← inferType args[5]!).isConstOf ``Nat do
       reject e "coefficient exponent must be a natural literal or positive reciprocal root degree"
@@ -230,7 +256,8 @@ private def checkInterval (source : Expr) : FrontendM Unit := do
       reject source "only literal-dyadic Set.Ioc domains are supported"
     for endpoint in #[args[2]!, args[3]!] do
       unless isClosed endpoint do reject endpoint "interval endpoints must be literal dyadic rationals"
-      let _ ← Hex.RealFormula.Reify.arithmetic #[] endpoint
+      let view ← Hex.RealFormula.Reify.arithmetic #[] endpoint
+      Coefficients.boundNumerator view.numerator
       let eQ : Q(ℝ) := endpoint
       let ⟨q, _, _, _⟩ ← Mathlib.Meta.NormNum.deriveRat eQ (_inst := q(inferInstance))
       unless q.den == 2 ^ q.den.log2 do
@@ -266,33 +293,9 @@ private partial def hasNamedSource (registered : Array Expr) (e : Expr) : MetaM 
       e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 ||
       e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 ||
       e.isConstOf ``Real.pi || e.isAppOfArity ``Real.exp 1 then return true
+  if e.isAppOfArity ``HPow.hPow 6 then
+    if (← inferType e.getAppArgs[5]!).isConstOf ``Real then return true
   e.getAppArgs.anyM (hasNamedSource registered)
-
-/-- Lower visible rational and checked algebraic constructors using their
-proved interpretations, preserving exact registered whole subjects. -/
-private partial def lowerCore (registered : Array Expr) (source : Expr) :
-    StateRefT (Array Expr) MetaM Expr := do
-  let (lowered, _) ← Meta.transformWithCache source {} (pre := fun e => do
-    if ← registered.anyM (fun value => liftM (Registration.sameSubject e value)) then
-      return .done e
-    if ← isProof e then return .done e
-    if let some (value, proof) ← Conversion.step? e then
-      let expected ← mkAppM ``Eq #[e, value]
-      unless ← isDefEq (← inferType proof) expected do
-        throwError "rcf: source conversion has the wrong equality"
-      let proof ← mkExpectedTypeHint proof expected
-      modify (·.push proof)
-      return .done (← lowerCore registered value)
-    if isClosed e && e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 &&
-        e.appArg!.isAppOfArity ``Hex.RealAlgebraicNumber.ofRat 1 then
-      let value : Q(ℚ) := e.appArg!.appArg!
-      return .done q(($value : ℝ))
-    return .continue) (skipInstances := true)
-  return lowered
-
-/-- Lower visible constructor syntax, keeping registered whole subjects exact. -/
-def lowerSources (registered : Array Expr) (source : Expr) : MetaM Expr :=
-  Prod.fst <$> (lowerCore registered source).run #[]
 
 private def addCasts (theorems : SimpTheorems := {}) : MetaM SimpTheorems := do
   let mut theorems := theorems
@@ -413,23 +416,22 @@ private def prepareCore (registered : Array Expr) (original : Expr) (config : He
     -- A known zero guard is terminal before the shared reifier can turn its
     -- rational denominator into a syntax decline. Other guards remain for the
     -- consuming handler, including unresolved algebraic/registered signs.
-    for divisor in divisors do
-      let divisor : Q(ℝ) ← lowerSources registered divisor
-      let outcome ← liftM (do
+    let lowered ← liftM (divisors.mapM (lowerSources registered))
+    let admitted ← Coefficients.admitGuards lowered
+    for i in [:lowered.size] do
+      unless admitted[i]! do continue
+      let divisor : Q(ℝ) := lowered[i]!
+      let (value, proof) ← liftM (do
         let saved ← saveState
         try
-          let recognized ← (do
-            try
-              let ⟨value, _, _, proof⟩ ← Mathlib.Meta.NormNum.deriveRat divisor
-                (_inst := q(inferInstance))
-              pure (some (value, ← instantiateMVars proof))
-            catch _ => pure none : MetaM (Option (Rat × Expr)))
-          if let some (_, proof) := recognized then checkWithKernel proof
-          return recognized
-        finally saved.restore : MetaM (Option (Rat × Expr)))
-      if let some (value, proof) := outcome then
-        Hex.RealFormula.Reify.accountProof proof
-        if value == 0 then throwError "rcf: original closed divisor is zero"
+          let ⟨value, _, _, proof⟩ ← Mathlib.Meta.NormNum.deriveRat divisor
+            (_inst := q(inferInstance))
+          let proof ← instantiateMVars proof
+          checkWithKernel proof
+          return (value, proof)
+        finally saved.restore : MetaM (Rat × Expr))
+      Hex.RealFormula.Reify.accountProof proof
+      if value == 0 then throwError "rcf: original closed divisor is zero"
   let normalized ← normalize registered rationalized
   let coefficients ← collect registered normalized
   let state ← get

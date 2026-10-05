@@ -63,24 +63,26 @@ example : Hex.Nat.Prime
 info: Try this:
   [apply] exact
     Hex.Nat.prime_of_checkPrimeAt (c :=
-      Hex.Nat.PrimeCert.pock3
+      Hex.Nat.PrimeCert.pock3Sieve
         726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439
-        54009879755274134901254563533313489965746040273 11750363824128505328512224094510391536838
-        54009879755274134901254563533313489965746040272
-        [(7, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 18287),
-          (2, 0,
-            Hex.Nat.PrimeCert.pock 1466449 [(3, 0, Hex.Nat.PrimeCert.small 137), (2, 0, Hex.Nat.PrimeCert.small 223)]),
+        200419688320257918107309753790586446759397775 4869360204515751591126894045814862955338309044
+        200419688320257918107309753790586446759397677 14
+        [(7, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 641), (2, 0, Hex.Nat.PrimeCert.small 18287),
           (2, 0,
             Hex.Nat.PrimeCert.pock 2916841 [(3, 0, Hex.Nat.PrimeCert.small 109), (2, 0, Hex.Nat.PrimeCert.small 223)]),
           (2, 0, Hex.Nat.PrimeCert.pock 6700417 [(3, 0, Hex.Nat.PrimeCert.small 17449)]),
           (2, 0,
-            Hex.Nat.PrimeCert.pock3 167773885276849215533569 22486179 20805492 22486175
-              [(17, 8, Hex.Nat.PrimeCert.small 2), (3, 1, Hex.Nat.PrimeCert.small 7),
-                (3, 0, Hex.Nat.PrimeCert.small 2531)])])
+            Hex.Nat.PrimeCert.pock 596242599987116128415063
+              [(3, 0,
+                  Hex.Nat.PrimeCert.pock 36131535570665139281
+                    [(2, 0,
+                        Hex.Nat.PrimeCert.pock3 34741861125639557 1257937 43047 1257936
+                          [(2, 1, Hex.Nat.PrimeCert.small 2), (11, 2, Hex.Nat.PrimeCert.small 7),
+                            (2, 0, Hex.Nat.PrimeCert.small 463)])])])])
       (by decide +kernel)
 -/
 #guard_msgs in
-example : Hex.Nat.Prime 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439 := by
+theorem interleavedCurve448 : Hex.Nat.Prime 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439 := by
   primality?
 
 -- An open provider expression is rejected before even a table-prime search.
@@ -98,9 +100,34 @@ example : Hex.Nat.Prime 100003 := by
   primality? (factor := Hex.Nat.ecmFactorSearch) (maxAttempts := 0)
 
 -- Standard HexIntFactor import: this 507-bit input also exhausts with the
--- registered ECM retry. Its failure belongs only to the filtered field target.
+-- interleaved provider. Its failure belongs only to the filtered field target.
 /--
-error: primality?: certificate construction for 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771 exhausted after 156 attempts (seed 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771; core allocation: maximum 521 bits, recursive depth 32, total attempts 1024, factor fuel 1024, p-minus-one bounds [64, 512, 4096, 32768, 262144, 524288] at bases [2, 3], 2 rho restarts with 32768 steps, ECM bounds [] and 0 curves, witness bases [2, 3, 5, 7, 11, 13, 17] then 32 random candidates, at most 32 factors and 4096 subsets, sieve bound at most 64; construction retries [Hex.Nat.ecmConstructionFactor allocated 1010 attempts] (their per-attempt bounds apply)); unresolved obligation 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771
+error: primality?: certificate construction for 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771 exhausted after 642 attempts (seed 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771; maximum 521 bits, recursive depth 32, total attempts 1024, factor fuel 1024, registered factor provider Hex.Nat.interleavedConstructionFactor (its per-attempt bounds apply), witness bases [2, 3, 5, 7, 11, 13, 17] then 32 random candidates, at most 32 factors and 4096 subsets, sieve bound at most 64; construction provider [Hex.Nat.interleavedConstructionFactor allocated 1024 attempts]); unresolved obligation 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771
 -/
 #guard_msgs in
 example : Hex.Nat.Prime 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771 := by primality?
+
+/-- info: 'interleavedCurve448' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms interleavedCurve448
+
+-- Independent corpus subjects exercise the adopted route through the tactic,
+-- including cases that exhausted in the retained previous-policy comparison.
+#guard_msgs (drop info) in
+theorem interleaved256 : Hex.Nat.Prime
+    98725064373667121382174855406017825356905878104171613528130501276369518782989 := by
+  primality?
+
+#guard_msgs (drop info) in
+theorem interleaved384 : Hex.Nat.Prime
+    34730152303213258661142885000258083991439860104379939165016045425256161811717519506874250341809730923130702070406751 := by
+  primality?
+
+#guard_msgs (drop info) in
+theorem interleaved512 : Hex.Nat.Prime
+    10133471647181947579896384650266844060713849090766027760095687469597152104840850612898432794360461807067553923683341850211950624196278029816845868121453607 := by
+  primality?
+
+/-- info: 'interleaved512' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms interleaved512

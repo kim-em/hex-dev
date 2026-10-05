@@ -220,3 +220,46 @@ contexts from untrusted bytes or prove that an entire nested replay execution
 avoids production. General polynomial-identity integration, evidence production,
 deeper-level replay, independent final-interface conformance and Phase-4
 performance evidence remain separate obligations.
+
+`Nested.lean` checks two upper scalar-sign facts using one shared graph memo
+and one lower fact list. All eight coefficient operations use supplied-fact
+packing; `Context.changeOps` retains the original checked root and prepared
+cache. Interpretation laws and `changeOps_signPoly` return facts in the
+original context. The two input polynomials, `X` and `1`, both reduce to the
+unit query and select the same checked row. The output checks their original
+polynomial keys, list order and claimed signs.
+
+```sh
+lake build hexsigndet_kernel_replay_probe
+lake env .lake/build/bin/hexsigndet_kernel_replay_probe nested
+```
+
+The control starts with no intermediate lower facts, produces the two demanded
+rational-predecessor certificates, and checks their literal packets. A separate
+pass starts from the same empty list and reads only those recorded packets.
+The kernel-checked result includes the two distinct input polynomial keys
+and their signs. Missing or incomplete
+child evidence leaves the calculation unproved. False signs, a different query
+with the same sign, stale context IDs and corrupted moments in both the
+selected and unused graph entries are rejected by the existing checker.
+
+Each saved theorem binds the normalized polynomial and integer sign to the
+original data, together with the scalar-sign equality. One synchronous kernel declaration
+check validates that combined statement and its proof.
+The fact data remains transparent; its proof field refers to those theorem
+constants.
+Registration uses the kernel environment API with checking explicitly enabled;
+errors leave the declaration set unchanged. Controls inspect the returned
+theorem references, require the actual registration call to reject a malformed
+proof, and reject an unresolved proof hole. A separate control forces a failure
+after the theorem check and verifies that the candidate declaration is not
+committed. Kernel exception constructors distinguish those failures from
+resource errors. The checks permit only the three standard axioms listed
+above.
+
+This control uses an existing validated upper context and a typed upper graph.
+Only its lower certificates are freshly produced and retained as in-memory
+JSON packets. General context/graph reconstruction from bytes, arbitrary-depth
+replay, the public interface and required performance evidence remain
+outstanding. `NestedProbe.lean` supplies the private definition bodies needed
+for meta-level reduction and runs the same control during `lake build`.

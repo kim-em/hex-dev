@@ -631,6 +631,7 @@ Required theorem shapes, with the semantic parameters and coefficient laws above
 | `Element.eq_iff` | Executable zero sign of `a-b` iff denotations agree; lifted equality iff equality in `Value ctx`. |
 | `Element.inv_sound` | Selected squarefree root and nonzero `q(α)` give `eval(inv q)*eval(q)=1`; total inversion maps zero to zero. |
 | `Root.Handle.packQAdjoin_checked`, `packQAdjoin?_isSome_iff`, `packQAdjoin?_eq_some_iff` | Fixed-field coordinates at the selected rational root pack to the same canonical real value; checked external generators are accepted exactly when equal to the selected generator, returning the proof-carrying packed result. |
+| `NumberField.roots_success`, `roots_all`, `roots_spec`, `roots_sorted` | Complete roots over actual `QAdjoin` coordinates of a checked real generator succeed for every polynomial; the selected embedding reflects zero and gives exact root coverage, multiplicities and strict ordering. |
 | `Context.transport_sound` | Refinement/enlargement preserves interpretations, selected roots, order and compositional transport for all live handles. |
 | `Yun.decompose_sound` | Exact zero case or the stated product, unit, degree, squarefree and coprime properties. |
 | `roots_sound` | `all` iff `F=0`; finite results are strictly increasing, contain exactly all real roots in `R` and carry each root's exact positive multiplicity. |

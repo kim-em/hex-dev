@@ -481,18 +481,20 @@ The adapter is currently available in the development monorepo; it is not in
 the released `hex-rcf` package.
 The optional adapter accepts a selected algebraic coefficient in
 an otherwise rational polynomial sentence. Its direct notation support covers
-`Real.sqrt 2` and Mathlib's `(2 : ℝ) ^ (1 / 3 : ℝ)`. It also accepts the checked
+positive rational square roots and positive rational bases with a reciprocal
+natural exponent, including Mathlib's `(2 : ℝ) ^ (1 / 3 : ℝ)`.
+It also accepts the checked
 Hex values `CubeTwo.realAlgebraic` and `CubeTwo.shifted`. For a different
 coordinate in a chosen number field, write a `Selected.field` expression with
 the field element and its checked chosen root, as shown below. In these
 examples, the power in `(2 : ℝ) ^ (1 / 3 : ℝ)` defines a closed coefficient;
 the quantified variable still occurs in an ordinary polynomial. Products with
 rational constants are supported. Closed division is also supported for the
-selected and reconstructed Hex inputs and positive natural square-root
-aliases. The adapter checks every original divisor before solving the target,
+selected and reconstructed Hex inputs and these checked positive-root aliases.
+The adapter checks every original divisor before solving the target,
 including divisors erased by cancellation, zero multiplication or an empty
-domain. The higher-root `Real.rpow` alias retains its earlier polynomial path;
-closed division involving that alias is not yet supported.
+domain. Named square/cube aliases keep their existing direct path when all
+original divisors are rational; algebraic division uses the common field.
 
 Visible `RealAlgebraicNumber.ofRat` constructors also retain their proved
 rational value. They use the rational decision path after checked source
@@ -520,7 +522,61 @@ square root with the positive selected root. Square roots of rational
 constructors with zero or negative values reduce through the rational path;
 they do not select a positive algebraic root.
 
-These examples use the selected real root of `X³ − 2`. The adapter records an
+Positive rational roots use the same selected-field certificate machinery.
+For a rational base `a` and positive natural degree `n`, the frontend records
+`a.den * X^n - a.num` and checks a real-axis isolating square with a strictly
+positive lower endpoint. The proved root equation and positivity identify
+that selected root with `a ^ (1 / n : ℝ)`; approximation proposes the square
+but supplies no proof. The base and exponent may also use inverse notation,
+and visible rational constructors are lowered in both. Every
+original denominator in the base, exponent or surrounding expression remains
+a source guard.
+
+```lean
+section
+set_option maxRecDepth 8192
+set_option maxHeartbeats 2400000
+
+example : ∀ x : ℝ,
+    x ^ 2 - 2 * Real.sqrt (1 / 2) * x + 1 / 2 ≥ 0 := by
+  rcf
+
+example : ∀ x : ℝ,
+    x ^ 2 + (5 / 3 : ℝ) ^ (1 / 4 : ℝ) > 0 := by rcf
+
+example : ∃ x : ℝ,
+    x ^ 2 = Real.sqrt (1 / 2) ∧ 0 < x ∧ x < 1 := by rcf
+
+example : ∀ x : ℝ,
+    x / (2 : ℝ) ^ (1 / 3 : ℝ) =
+      ((2 : ℝ) ^ (1 / 3 : ℝ)) ^ 2 * x / 2 := by rcf
+end
+```
+
+The first example uses the chosen positive square root in a polynomial whose
+minimum is zero. The third finds a further root over that coefficient field.
+The last checks the cube root's nonzero divisor before using its power equation.
+Division by a closed higher-root alias becomes multiplication by its closed
+inverse before abstraction, so the shared integer reifier receives no parameter
+denominator. Natural powers of the quantified variable keep their usual
+polynomial meaning. Negative real-power bases and nonreciprocal real exponents
+are outside this alias grammar. Nested roots with an algebraic base, such as
+`Real.sqrt (Real.sqrt 2)`, still need a supported source presentation; this
+rational-base path does not provide that conversion. Before common-field
+search, `rcf.algebraic.commonDegree` bounds the product of the canonical degrees
+of distinct selected generators (default 64), reporting exhaustion through
+the shared exponent dimension. This is a conservative admission bound:
+aliases for one selected generator count once, but algebraic relations between
+different generators can make the actual common degree smaller than the product.
+The admission also applies to a single generator. Root notation inside a base
+is outside this rational-base grammar even when its value is rational.
+It does not establish complete witness search or bound every later operation.
+
+The adapter's source preparation applies its coefficient-size limit to
+intermediate arithmetic in rational-root bases, reciprocal exponents and
+dyadic endpoints. Cancellation and zero powers do not erase those bounds.
+
+The selected-field constructions below use the real root of `X³ − 2`. The adapter records an
 isolating square and verifies its root witness. It reconstructs Hex's
 {name}`Hex.AlgebraicNumber` and {name}`Hex.RealAlgebraicNumber` through the
 existing canonical constructor. The second coefficient is computed as `1 + a`
@@ -689,8 +745,8 @@ wrapper. Both forms preserve the selected embedding.
 
 The two-square-root examples below combine `Real.sqrt 2` and `Real.sqrt 3`
 in one common field and check that each field coordinate names the intended
-positive root. This path accepts natural literal radicands when at least two
-distinct square roots occur in the goal. A lone `Real.sqrt 2` whose original
+positive root. This path accepts positive rational radicands as well as
+natural literals, and also accepts the positive rational-root aliases above. A lone `Real.sqrt 2` whose original
 divisors are all rational uses the earlier single-coefficient path; other
 positive natural square roots use the common-field frontend, including
 perfect-square radicands. Algebraic divisors contribute generators even when
@@ -2296,6 +2352,70 @@ equal, reversed and half-open domains. Fresh modules check the public
 semantics and its standard axiom inventory. These are correctness regressions;
 no timing improvement is claimed for this composition.
 
+Independently constructed contexts can be gathered through the owner's
+{name}`Hex.RealClosure.Tower.Shared.gather?` operation. Its checked maps retain
+each original owner in input order; repeated owners can reuse the same cached
+predecessor. {name}`Hex.RCF.RealCoefficients.Gather.values` applies those maps
+to the ordered coefficient coordinates. No new quotient-field representation
+or field instance on stored expressions is introduced.
+
+The following computation constructs √2 and √3 independently, gathers them,
+and checks `∃ x, x² = √2 ∧ 1 < x ∧ x < √3`. Its variable roots are therefore
+computed over the already gathered algebraic coefficient field.
+
+```lean
+private def gatheredRoots : Bool := Id.run do
+  let x : sampleBase.Poly := DensePoly.ofCoeffs #[0, 1]
+  let raw := fun n =>
+    ({context := sampleBase.signature,
+      head := x * x - DensePoly.C n,
+      lower := .finite 1, upper := .finite (1 + 1),
+      indices := [], signs := []} :
+        SignDet.RawDescriptor sampleBase.Value
+          Tower.Signature)
+  let some first := SignDet.Descriptor.validate
+      sampleBase.sign sampleBase.signature
+      (raw (1 + 1)) | return false
+  let some second := SignDet.Descriptor.validate
+      sampleBase.sign sampleBase.signature
+      (raw (1 + 1 + 1)) | return false
+  let a := sampleBase.adjoin first
+  let b := sampleBase.adjoin second
+  let owners := [a.context, b.context]
+  let some shared := Shared.gather?
+      (.pack (BaseContext.rational sampleRegistry))
+      owners | return false
+  let coefficients : (i : Fin owners.length) →
+      (owners[i]).Value := by
+    change (i : Fin 2) →
+      ([a.context, b.context][i]).Value
+    exact Fin.cases a.generator
+      (Fin.cases b.generator (fun i => Fin.elim0 i))
+  let v : Hex.RealFormula.Poly 3 := Hex.MvPoly.X 2
+  let formula := Hex.RealFormula.QF.and
+    (.atom ⟨v ^ 2 - Hex.MvPoly.X 0, .eq⟩)
+    (.and (.atom ⟨v - 1, .gt⟩)
+      (.atom ⟨v - Hex.MvPoly.X 1, .lt⟩))
+  return Samples.run (Gather.values shared coefficients)
+    formula .existsReal == some true
+
+#guard gatheredRoots
+```
+
+{name}`Hex.RCF.RealCoefficients.Gather.prepare_eval` proves the meaning of
+every original atom after transport. {name}`Hex.RCF.RealCoefficients.Gather.run_spec`
+relates native production to the shared quantified formula in the original
+owner order. {name}`Hex.RCF.RealCoefficients.Gather.gather_spec` proves actual
+gathering and decision production for compatible source contexts under the
+supplied real base interpretation. For separately authenticated source models,
+{name}`Hex.RCF.RealCoefficients.Gather.run_original` uses their factory equations
+to establish agreement with the common model; no coefficient agreement is
+assumed. Their complete theorem axiom inventories use only the standard three
+axioms. These laws do not treat the computed Boolean above as a proof of a
+source goal. The compiled controls also distinguish the two selected roots of
+`X² − 2`, reverse coefficient order, retain a repeated owner, and check zero
+and leading-term cancellation. Empty collections retain the rational case.
+
 `Samples.run` performs production, including root finding. Its Boolean output
 is not frozen certificate evidence. Turning it into a source-goal tactic
 proof still requires checked literal context/root/sign data, exact source
@@ -2309,8 +2429,11 @@ checked literal context and predecessor-sign interfaces. The example proves
 the simultaneous signs of these ordinary samples. General finite replay for
 nested selected roots and successive infinitesimals still needs one ordinary
 real assignment for the complete joint constraint set. Executable all-live
-enlargement assembly and its frozen acceptance interfaces also remain owner
-obligations.
+enlargement assembly and its frozen acceptance interfaces remain owner
+obligations. Native gathering and shared cache/model transport are available
+as above; they do not supply that general enlargement. Frozen context/sign
+reconstruction and general joint realization still require the corresponding
+owner interfaces.
 
 # Caller-supplied finite bounds
 %%%

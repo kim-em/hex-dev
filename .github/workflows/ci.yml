@@ -36,7 +36,7 @@ jobs:
         with:
           # The release-manifest admission check reads release-sync-baseline.
           fetch-depth: 0
-      # --- Docs-only fast path (SPEC/CI.md § Docs-only fast path) ---
+      # --- Documentation/manual fast paths (SPEC/CI.md) ---
       # A pull request whose diff against its merge parent touches only
       # documentation and planning text skips everything from dependency
       # installation onward; the structural lints and Python unit tests
@@ -46,6 +46,8 @@ jobs:
       # PR, not a release. The same pass also decides whether a full-build
       # PR needs the manual: library/manual Lean and build-configuration
       # changes do; bench, conformance, example, and automation changes do not.
+      # Manual-only PRs build HexManual and its imports without computational
+      # builds or benchmark/oracle verification.
       - name: Classify the change (docs-only fast path)
         id: classify
         env:
@@ -100,9 +102,15 @@ jobs:
           fi
           echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
           echo "build_manual=$build_manual" >> "$GITHUB_OUTPUT"
+          python3 scripts/ci/classify_changed_libraries.py \
+            --event "$EVENT_NAME" --base "$base" --github-output "$GITHUB_OUTPUT"
+          manual_only="$(sed -n 's/^manual_only=//p' "$GITHUB_OUTPUT")"
           if [ "$docs_only" = true ]; then
             path="Docs-only fast path"
             detail="dependency installation, the Lean build and the verification tails are skipped."
+          elif [ "$manual_only" = true ]; then
+            path="Manual build only"
+            detail="HexManual and its imports are built; benchmarks and oracles are skipped."
           elif [ "$build_manual" = true ]; then
             path="Full build"
             detail="the full graph, including HexManual, is built and verified."
@@ -112,8 +120,6 @@ jobs:
           fi
           echo "::notice title=CI path::$path: $reason"
           printf '## CI path\n\n**%s**: %s; %s\n' "$path" "$reason" "$detail" >> "$GITHUB_STEP_SUMMARY"
-          python3 scripts/ci/classify_changed_libraries.py \
-            --event "$EVENT_NAME" --base "$base" --github-output "$GITHUB_OUTPUT"
       # --- Structural + source lints ---
       - run: python3 scripts/check_copyright_headers.py
       - name: Lint Lean file line counts (SPEC/CI.md §Source-file lints)
@@ -134,6 +140,7 @@ jobs:
       - run: python3 -m unittest scripts/release/test_sync_released.py
       - run: python3 scripts/release/check_trust_surface.py
       - name: Cross-check every compiled clmul path (HexGF2/SPEC/hex-gf2.md)
+        if: steps.classify.outputs.manual_only != 'true'
         run: bash scripts/ci/check_clmul_paths.sh
       - run: python3 scripts/check_phase4.py
       - name: Check Phase 7 chapters and anchored tutorials (PLAN/Phase7.md)
@@ -169,6 +176,7 @@ jobs:
           python3 -m unittest scripts/profile/test_elf_symbols.py
           python3 -m unittest scripts/profile/test_real_closure.py
           python3 -m unittest scripts/bench/test_core_telemetry.py
+          python3 -m unittest scripts/bench/test_build_nested_normalization_counts.py
           python3 -m unittest scripts/bench/test_tower_factor_compare.py
           python3 -m unittest scripts/oracle/test_flint_mpoly_bench.py
           python3 -m unittest scripts/oracle/test_flint_fmpq_bench.py
@@ -178,7 +186,7 @@ jobs:
       # Walks the import graph of every Lean bench source, so it is the one
       # slow lint; nothing it reads changes on a docs-only PR.
       - name: Check benches are Mathlib-free (SPEC/benchmarking.md)
-        if: steps.classify.outputs.docs_only != 'true'
+        if: steps.classify.outputs.docs_only != 'true' && steps.classify.outputs.manual_only != 'true'
         run: python3 scripts/ci/check_benches_mathlib_free.py
       - name: Verify conformance matrix invariant
         run: python3 scripts/conformance_targets.py --check
@@ -195,7 +203,7 @@ jobs:
           version: "1.0"
           execute_install_scripts: true
       - name: Install Python dependencies (bench comparator + oracles)
-        if: steps.classify.outputs.docs_only != 'true'
+        if: steps.classify.outputs.docs_only != 'true' && steps.classify.outputs.manual_only != 'true'
         run: |
           python3 -m pip install --user -r scripts/conway/requirements.txt \
             python-flint==0.9.0 z3-solver==4.15.4.0 sympy==1.14.0 mpmath==1.3.0 gmpy2 cypari2 conway-polynomials matplotlib==3.11.1
@@ -206,8 +214,10 @@ jobs:
           python3 -m unittest scripts/oracle/test_row_reduce_fields.py
           python3 -m unittest scripts/oracle/test_real_algebraic_scaling_bench.py
           python3 -m unittest scripts/oracle/test_real_closure_normalization.py
+          python3 -m unittest scripts/oracle/test_real_closure_nested_normalization.py
+          python3 -m unittest scripts/oracle/test_real_closure_number_field.py
       - name: Verify performance measurements and figures are current
-        if: steps.classify.outputs.docs_only != 'true'
+        if: steps.classify.outputs.docs_only != 'true' && steps.classify.outputs.manual_only != 'true'
         run: |
           python3 -m unittest scripts/bench/test_sweep_freshness.py
           python3 -m unittest scripts/bench/test_check_factor_sweep_freshness.py
@@ -320,13 +330,13 @@ jobs:
       # up-to-date yet cannot run. By never publishing them, exes always link
       # fresh against the restored libs, which is cheap.
       - name: Define the hex-dev cache + build target sets
-        if: steps.classify.outputs.docs_only != 'true'
+        if: steps.classify.outputs.docs_only != 'true' && steps.classify.outputs.manual_only != 'true'
         run: |
           echo "HEX_LIB_TARGETS=HexBasic HexTruncatedSeries HexTruncatedSeriesMathlib HexArith HexPoly HexPolyFast HexRationalFn HexRationalFnMathlib HexOrderedFn HexOrderedFnMathlib HexOrderedFnTests HexRationalFnKernelProbe HexPolyFastKernels HexMvPoly HexModArith HexGF2 HexPolyZ HexRoots HexResultant HexRealRootsMathlibReplayProbe HexSturm HexSignDet HexSignDetMathlib HexSignDetMathlibProofProbe HexSignDetMathlibDiagnostics HexSturmMathlib HexSturmMathlibTests HexRealClosure HexRealClosureMathlib HexRealClosureTests HexRealClosureMathlibTests HexRCFProofProbe HexRealFormula HexRealFormulaMathlib HexRCFRealFormula HexRCFRealCoefficients HexQuerySemantics RealClosureConsumer HexRealFormulaProofProbe HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexPrimality HexECPP HexECPPMathlib HexIntFactor HexIntFactorTests HexIntFactorMixedFrozen HexPrimalityKernelProbe HexPrimalityElabProbe HexPrimalityMathlibProofProbe HexECPPMathlibProofProbe HexIntFactorKernelProbe HexMvGcdKernelProbe HexBerlekampZassenhaus HexRealRoots HexMatrix HexRowReduce HexDeterminant HexBareiss HexModularMatrix HexModularMatrixMathlib HexRank HexDet HexHermite HexSmith HexCharPoly HexMinPoly HexPolySmith HexGramSchmidt HexLatticeEnum HexLatticeEnumMathlib HexLatticeEnumTests HexPermGroup HexPermGroupMathlib HexPermGroupTests HexLLL HexMatrixMathlib HexRankMathlib HexRankTests HexRankMathlibProofProbe HexGenericRank HexGenericRankMathlib HexGenericRankTests HexGenericRankMathlibProofProbe HexBareissMathlibProofProbe HexPolyDet HexPolyDetMathlib HexHermiteMathlib HexSmithMathlib HexSmithTests HexDetMathlib HexCharPolyMathlib HexMinPolyMathlib HexStructuralTacticTests HexStructuralTacticProofProbe HexPolySmithMathlib HexDeterminantalIdeal HexDeterminantalIdealMathlib HexDeterminantalIdealTests HexDeterminantalIdealMathlibProofProbe HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib HexBerlekampZassenhausMathlibProofProbe HexBerlekampMathlibProofProbe HexPrimalityMathlib HexIntFactorMathlib HexIntFactorMathlibTests HexIntFactorMathlibProofProbe HexPolyFpMathlib HexFactorizationModules HexRealRootsMathlib HexGF2Mathlib HexGFqMathlib HexMvPolyMathlib HexMvPolyMathlibProofProbe HexMvPolyBenchSupport HexReflect HexReflectMathlib HexKronecker HexKroneckerMathlib HexKroneckerTests HexRCF HexRootsMathlib HexResultantMathlib HexNumberField HexNumberFieldMathlib HexRealAlgebraic HexRealAlgebraicMathlib HexRealAlgebraicMathlibTests HexNumberFieldTower HexNumberFieldTowerMathlib HexReleaseTests HexReleaseExamples HexAggregateCheck HexGraphIsoProofProbe HexGraphIsoSparseProofProbe HexGraphIsoMathlibProofProbe HexPermGroupMathlibProofProbe HexPolyDetMathlibProofProbe HexCharPolyMathlibProofProbe" >> "$GITHUB_ENV"
-          echo "HEX_EXE_TARGETS=hextruncatedseries_bench hexarith_bench hexpoly_bench hexpolyfast_bench hexrationalfn_bench hexorderedfn_bench hexpolysmith_bench hexmvpoly_bench hexrealformula_bench hexreflect_bench hexmvgcd_bench hexsparsepoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexmodular_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexprimality_bench hexecpp_bench hexprimality_squfof_measure hexprimality_policy_probe hexprimality_field_probe hexprimality_factor_experiment hexprimality_fuel_probe hexintfactor_bench hexintfactor_field_bench hexberlekamp_bench hexbz_bench hexconway_bench hexconway_replay hexmatrix_bench hexgraphiso_bench hexpermgroup_bench hexstrassen_compare hexrowreduce_bench hexdeterminant_bench hexdeterminantalideal_bench hexbareiss_bench hexpolydet_bench hexmodularmatrix_bench hexrank_bench hexgenericrank_bench hexdet_bench hexcharpoly_bench hexminpoly_bench hexgramschmidt_bench hexlatticeenum_bench hexhermite_bench hexsmith_bench hexsigndet_bench hexsturm_bench hexrealalgebraic_bench hexrealclosure_bench hexrealclosure_phase4 hexrealclosure_normalization_bench hexrealclosure_codec_bytes hexrealroots_bench hexrcf_bench hexroots_bench hexresultant_bench hexnumberfield_bench hexnumberfieldtower_bench tower_factor_diff hexinterval_decision_bench hexroots_demo hex_interval_representation_spike hex_interval_center_spike hex_interval_scale_spike hex_interval_scheduler_spike hex_interval_policy_frontier_spike hex_arith_floor hexlll_bench hexlll_gram_bench hexlll_external_reduction hexbz_factor_service" >> "$GITHUB_ENV"
+          echo "HEX_EXE_TARGETS=hextruncatedseries_bench hexarith_bench hexpoly_bench hexpolyfast_bench hexrationalfn_bench hexorderedfn_bench hexpolysmith_bench hexmvpoly_bench hexrealformula_bench hexreflect_bench hexmvgcd_bench hexsparsepoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexmodular_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexprimality_bench hexecpp_bench hexprimality_squfof_measure hexprimality_policy_probe hexprimality_field_probe hexprimality_factor_experiment hexprimality_fuel_probe hexintfactor_bench hexintfactor_field_bench hexberlekamp_bench hexbz_bench hexconway_bench hexconway_replay hexmatrix_bench hexgraphiso_bench hexpermgroup_bench hexstrassen_compare hexrowreduce_bench hexdeterminant_bench hexdeterminantalideal_bench hexbareiss_bench hexpolydet_bench hexmodularmatrix_bench hexrank_bench hexgenericrank_bench hexdet_bench hexcharpoly_bench hexminpoly_bench hexgramschmidt_bench hexlatticeenum_bench hexhermite_bench hexsmith_bench hexsigndet_bench hexsturm_bench hexrealalgebraic_bench hexrealclosure_bench hexrealclosure_phase4 hexrealclosure_normalization_bench hexrealclosure_nested_normalization hexrealclosure_codec_bytes hexrealroots_bench hexrcf_bench hexroots_bench hexresultant_bench hexnumberfield_bench hexnumberfieldtower_bench tower_factor_diff hexinterval_decision_bench hexroots_demo hex_interval_representation_spike hex_interval_center_spike hex_interval_scale_spike hex_interval_scheduler_spike hex_interval_policy_frontier_spike hex_arith_floor hexlll_bench hexlll_gram_bench hexlll_external_reduction hexbz_factor_service" >> "$GITHUB_ENV"
       - name: Decide whether to collect Conway rebuild evidence
         id: conway-rebuild
-        if: steps.classify.outputs.docs_only != 'true'
+        if: steps.classify.outputs.docs_only != 'true' && steps.classify.outputs.manual_only != 'true'
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -376,7 +386,7 @@ jobs:
       # reuses their outputs. The RSS guard is conservative because shared
       # mappings can be counted in several processes.
       - name: Build hex libraries + bench exes
-        if: steps.classify.outputs.docs_only != 'true'
+        if: steps.classify.outputs.docs_only != 'true' && steps.classify.outputs.manual_only != 'true'
         run: |
           lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests \
             HexPolyDetMathlib.Tests \
@@ -385,7 +395,7 @@ jobs:
           lake exe hexarith_extgcd_tests
           python3 scripts/ci/check_rank_compiler.py
       - name: Verify Conway generation and compiled certificates
-        if: steps.classify.outputs.docs_only != 'true'
+        if: steps.classify.outputs.docs_only != 'true' && steps.classify.outputs.manual_only != 'true'
         run: |
           python3 -m unittest scripts/conway/test_tools.py
           python3 scripts/conway/generate.py --check
@@ -400,10 +410,10 @@ jobs:
           name: conway-rebuild-evidence
           path: reports/conway/ci-*
       - name: Verify deterministic HexPrimality table regeneration
-        if: steps.classify.outputs.docs_only != 'true'
+        if: steps.classify.outputs.docs_only != 'true' && steps.classify.outputs.manual_only != 'true'
         run: python3 scripts/bench/check_prime_table.py
       - name: Build conformance + emit-fixture targets
-        if: steps.classify.outputs.docs_only != 'true'
+        if: steps.classify.outputs.docs_only != 'true' && steps.classify.outputs.manual_only != 'true'
         env:
           HEX_LIBRARY_FILTER: ${{ steps.classify.outputs.library_filter }}
         run: |
@@ -445,7 +455,7 @@ jobs:
           # using the runner's tuple registry rather than another target list.
           bash scripts/ci/run_oracles.sh --build-only
       - name: Check real-closure architecture experiments
-        if: steps.classify.outputs.docs_only != 'true'
+        if: steps.classify.outputs.docs_only != 'true' && steps.classify.outputs.manual_only != 'true'
         env:
           MATHLIB_NO_CACHE_ON_UPDATE: "1"
         run: |
@@ -502,7 +512,7 @@ jobs:
       # propagation, so gating never depends on background-step exit codes.
       # (`shell: bash` is set job-wide, so these run under `-eo pipefail`.)
       - name: Bench verify (smoke gate per SPEC/benchmarking.md §CI integration)
-        if: steps.classify.outputs.docs_only != 'true'
+        if: steps.classify.outputs.docs_only != 'true' && steps.classify.outputs.manual_only != 'true'
         id: bench
         background: true
         env:
@@ -551,7 +561,7 @@ jobs:
           python3 scripts/ci/check_primality_factor_replay.py
           touch "$RUNNER_TEMP/bench.ok"
       - name: Conformance oracles + BZ gates
-        if: steps.classify.outputs.docs_only != 'true'
+        if: steps.classify.outputs.docs_only != 'true' && steps.classify.outputs.manual_only != 'true'
         id: conformance
         background: true
         env:
@@ -596,9 +606,13 @@ jobs:
       - name: Gate on parallel verification results (fail-closed)
         env:
           DOCS_ONLY: ${{ steps.classify.outputs.docs_only }}
+          MANUAL_ONLY: ${{ steps.classify.outputs.manual_only }}
         run: |
           if [ "$DOCS_ONLY" = true ]; then
             echo "docs-only fast path: verification tails were not run"; exit 0
+          fi
+          if [ "$MANUAL_ONLY" = true ]; then
+            echo "manual-only build: verification tails were not run"; exit 0
           fi
           rc=0
           [ -f "$RUNNER_TEMP/bench.ok" ] || { echo "::error::Bench verify did not complete successfully"; rc=1; }
