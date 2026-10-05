@@ -42,7 +42,7 @@ variable {K : Type u}
 
 /-- Sign at a positive infinitesimal, using the predecessor field's total sign.
 Both coefficients matter: a monic denominator can have a negative lowest coefficient. -/
-@[inline] def sign [Lean.Grind.Field K] [DecidableEq K] (baseSign : K → Int)
+def sign [Lean.Grind.Field K] [DecidableEq K] (baseSign : K → Int)
     (f : RationalFn K) : Int :=
   if f.num = 0 then 0 else
     baseSign (lowestCoeff f.num) * baseSign (lowestCoeff f.den)
