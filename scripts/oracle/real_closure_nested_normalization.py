@@ -13,6 +13,7 @@ from collections import Counter
 from importlib.metadata import version
 import json
 import math
+import sys
 from pathlib import Path
 
 
@@ -139,20 +140,24 @@ def verify(row):
     require(type(row['sign']) is int and row['sign'] == -1, 'wrong selected-root sign')
     require(isinstance(row['roots'], list) and len(row['roots']) == depth,
             'missing root evidence')
+    stored = growth(row['value'], depth)
+    require(not row['eager'] or all(d < 3 for d in stored['max_degree_by_level']),
+            'eager value was not reduced at every level')
     residue = [[int(q.numerator), int(q.denominator)] for q in actual]
     return dict(depth=depth, steps=steps, eager=row['eager'], exact_value_checked=True,
                 selected_root_sign_checked=True, field_residue=residue,
-                stored=growth(row['value'], depth),
+                stored=stored,
                 roots=[graph_statistics(packet) for packet in row['roots']],
                 query=graph_statistics(row['query']))
 
 
-def trace_counts(path):
+def trace_data(path):
     """Count callback diagnostics strictly between the workload markers."""
     active = False
     started = ended = 0
     counts = Counter()
     aggregate = None
+    operations = None
     for line in Path(path).read_text().splitlines():
         if line == 'NESTED BEGIN':
             require(not active and started == 0, 'duplicate workload start')
@@ -162,6 +167,14 @@ def trace_counts(path):
             require(active, 'workload end without start')
             active = False
             ended += 1
+        elif line.startswith('NESTED COUNTERS '):
+            require(ended == 1 and not active and operations is None, 'misplaced operation counters')
+            operations = json.loads(line.removeprefix('NESTED COUNTERS '))
+            keys = {'poly_gcd', 'poly_xgcd', 'poly_xgcd_left', 'poly_pseudo_gcd',
+                    'lean_nat_gcd', 'gmp_gcd', 'gmp_gcdext'}
+            require(isinstance(operations, dict) and set(operations) == keys and
+                    all(type(value) is int and value >= 0 for value in operations.values()),
+                    'bad operation counters')
         elif line.startswith('NESTED CALLBACKS '):
             require(ended == 1 and not active and aggregate is None, 'misplaced callback aggregate')
             packet = json.loads(line.removeprefix('NESTED CALLBACKS '))
@@ -180,31 +193,48 @@ def trace_counts(path):
     require(started == ended == 1 and not active, 'incomplete workload trace')
     if aggregate is not None:
         require(not counts or dict(counts) == aggregate, 'callback trace disagrees with aggregate')
+        require(operations is not None, 'missing operation counters')
         counts = aggregate
-    return dict(sorted(counts.items()))
+    return dict(callback_counts=dict(sorted(counts.items())), operation_counts=operations)
+
+
+def trace_counts(path):
+    return trace_data(path)['callback_counts']
+
+
+def verify_pairs(rows, results, unpaired=False):
+    groups = {}
+    for row, result in zip(rows, results):
+        groups.setdefault((row['depth'], row['steps']), []).append((row, result))
+    for pair in groups.values():
+        require(len(pair) == 2 or (unpaired and len(pair) == 1), 'unmatched policy pair')
+        if len(pair) == 2:
+            (a, ra), (b, rb) = pair
+            require(a['eager'] != b['eager'], 'duplicate policy')
+            require(a['heads'] == b['heads'], 'different literal defining heads')
+            require(ra['field_residue'] == rb['field_residue'], 'policy values disagree')
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('inputs', nargs='+', type=Path)
+    parser.add_argument('inputs', nargs='*', type=Path)
     parser.add_argument('--trace', action='append', default=[], type=Path)
+    parser.add_argument('--unpaired', action='store_true', help='allow a single diagnostic arm')
     args = parser.parse_args()
-    require(not args.trace or len(args.trace) == len(args.inputs), 'one trace per input required')
-    results = []
-    for index, path in enumerate(args.inputs):
-        rows = [json.loads(line) for line in path.read_text().splitlines() if line.startswith('{')]
+    require(not args.trace or len(args.trace) == len(args.inputs), 'one trace per explicit input required')
+    texts = [path.read_text() for path in args.inputs] if args.inputs else [sys.stdin.read()]
+    results, all_rows = [], []
+    for index, text in enumerate(texts):
+        rows = [json.loads(line) for line in text.splitlines() if line.startswith('{')]
         require(bool(rows), 'missing functional rows')
         require(not args.trace or len(rows) == 1, 'one traced row per input required')
         for row in rows:
             checked = verify(row)
             if args.trace:
-                checked['callback_counts'] = trace_counts(args.trace[index])
+                checked.update(trace_data(args.trace[index]))
             results.append(checked)
-    if len(results) == 2:
-        require(results[0]['depth'] == results[1]['depth'] and
-                results[0]['steps'] == results[1]['steps'] and
-                results[0]['eager'] != results[1]['eager'], 'unmatched policy pair')
-        require(results[0]['field_residue'] == results[1]['field_residue'], 'policy values disagree')
+            all_rows.append(row)
+    verify_pairs(all_rows, results, args.unpaired)
     print(json.dumps(dict(oracle='python-flint', version=version('python-flint'),
                          results=results), sort_keys=True))
 

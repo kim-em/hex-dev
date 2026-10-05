@@ -62,6 +62,7 @@
     "nested-c7d917-d2-m4-oracle-aggregate.json": "c34c1aa7e5a8b884887fc5608dd772f2995d4c0d7d1153967afa4272710d7baf",
     "nested-c7d917-d3-m1-eager-oracle.json": "a522f0c7e7b1ca2a949678a442d64353f544e90335ba480334925e8ca7836477",
     "build.json": "69759948d502b5b06ae927433f2e4416409200570ad4b6f0625a9f4dcb8ab477",
-    "d2-m2-oracle.json": "83e519f131853fc1fdc601de5e9e036eca96fa92917eb522f2f079083c8bdb1f"
+    "d2-m2-oracle.json": "83e519f131853fc1fdc601de5e9e036eca96fa92917eb522f2f079083c8bdb1f",
+    "source-closure.json": "4f6c90c0a9315658cce88b700d0f78665609dfb95c61081e67cf3ba51f274d0d"
   }
 }
