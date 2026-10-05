@@ -15,6 +15,7 @@ import json
 from pathlib import Path
 import re
 import shlex
+import shutil
 import subprocess
 
 KINDS = {'gcd': 0, 'xgcd': 1, 'xgcdLeft': 2, 'pseudoGcd': 3}
@@ -113,10 +114,17 @@ def main():
     compiler = recipe(executable.with_suffix('.trace'))[0]
     # Use the same toolchain include/sysroot options as one compiled object.
     example = recipe(Path(str(root / '.lake/build/ir/HexRealClosure/NestedNormalization.c.o.export') + '.trace'))
-    flags = example[example.index('-I'):]
+    include = example[example.index('-I') + 1]
     observer = root / 'scripts/bench/ffi/nested_normalization_counts.c'
     observer_object = output / 'observer.o'
-    run([compiler, '-c', '-o', str(observer_object), str(observer)] + flags)
+    # Lean's C sysroot deliberately omits libc headers. The observer uses the
+    # host C toolchain for stdio; generated Lean C keeps its original recipe.
+    host_cc = shutil.which('cc')
+    if not host_cc:
+        raise ValueError('host C compiler is unavailable')
+    metadata['observer_compiler_version'] = subprocess.check_output([host_cc, '--version'], text=True)
+    run([host_cc, '-c', '-o', str(observer_object), str(observer),
+         '-I', include, '-fPIC', '-O3', '-std=c11'])
     arguments.append(str(observer_object))
     for symbol in ['lean_nat_gcd', '__gmpz_gcd', '__gmpz_gcdext', 'lean_io_prim_handle_put_str']:
         arguments.append('-Wl,--wrap=' + symbol)
