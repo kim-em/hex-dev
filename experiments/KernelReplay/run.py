@@ -70,7 +70,8 @@ def main() -> None:
                   "factNonconstantMissing=upperContextAndKey",
                   "multiFields=kernelAccepted requests=3", "multiFieldPackets=kernelAccepted",
                   "multiFieldMissing=exactUpperRequest", "multiFieldWrongContext=rejected",
-                  "multiFieldUnknownContext=unproved"))
+                  "multiFieldUnknownContext=unproved", "multiSiblingFields=kernelAcceptedSameCarrier",
+                  "multiSiblingWrongRoot=rejected", "multiNonBoolProgram=rejectedBeforeSupply"))
     run("nested", ["nested"],
         contains=("nestedSelections=kernelAccepted children=2",
                   "nestedJointReader=kernelAccepted", "nestedJointMissing=unproved",

@@ -373,3 +373,11 @@ the supplied upper graph. Repeating the upper scalar reuses the same inventory.
 Omitting the upper packet stops at its exact context and polynomial. Contexts
 and the upper graph remain typed fixtures; this control does not reconstruct an
 arbitrary-depth catalog or complete the required performance evaluation.
+
+A second control uses two contexts over `Rat`, both labelled 7, selecting the
+opposite roots of `X² - 1`. Their facts concern the same polynomial `2X` but
+have opposite signs. The collector adds the negative-root fact only to the
+second inventory, preserves the positive-root inventory, and rejects that
+positive-root fact when requested for the negative root. The negative root
+and its sign are validated by supplied Tarski/BKR certificates in the ordinary
+kernel. A non-Boolean collection program rejects before invoking the supplier.

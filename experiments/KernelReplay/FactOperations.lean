@@ -16,6 +16,7 @@ import all HexRealClosureMathlib.PackingConformance
 import all HexRealClosureMathlib.CoefficientSignsConformance
 import all HexPoly.Euclid.DivGcd
 import all HexPoly.Dense
+import all HexSignDet.Descriptor
 import all Init.Data.Array.Basic
 
 public section
@@ -245,6 +246,118 @@ an upper result does not demand another certificate. -/
 @[expose] def multiple (lower : List (SignFact context))
     (upper : List (SignFact NestedSignsConformance.next)) : Bool :=
   Nested.selections lower && nonconstant upper && nonconstant upper
+
+/-- A second root over Rat with the same context label 7. The supplied count
+certificate selects the negative root of X² - 1 on `(-2, 0]`. -/
+@[expose] def siblingRaw : SignDet.RawDescriptor Rat Nat :=
+  {SignDet.Conformance.singletonRaw with lower := .finite (-2), upper := .finite 0}
+
+@[expose] def siblingCount : TarskiCertificate Rat Rat Nat :=
+  {Sturm.Fixtures.literal with
+    upper := .finite 0
+    upperSigns := #[-1, 0, 1]
+    upperVariations := 1
+    value := 1}
+
+@[expose] def siblingNode : SignDet.Node Rat Nat :=
+  {SignDet.Conformance.singletonNode with
+    lower := .finite (-2)
+    upper := .finite 0
+    moments := #v[siblingCount]}
+
+set_option maxRecDepth 32768 in
+theorem sibling_checked : siblingRaw.check Sturm.orderSign 7 (.leaf siblingNode) = true := by
+  simp only [SignDet.RawDescriptor.check, SignDet.Replay.check, SignDet.Node.check_eq,
+    SignDet.checkMoment_eq, SignDet.queryPoly, Sturm.check, TarskiCertificate.check_eq,
+    SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+@[expose] def siblingRoot : SignDet.Descriptor Rat Nat Sturm.orderSign 7 :=
+  SignDet.Descriptor.ofTable siblingRaw (.leaf siblingNode)
+    (SignDet.RawDescriptor.check_eq sibling_checked).1
+    (SignDet.RawDescriptor.check_eq sibling_checked).2.1
+    (SignDet.RawDescriptor.check_eq sibling_checked).2.2.1
+    (SignDet.RawDescriptor.check_eq sibling_checked).2.2.2
+
+@[expose] def siblingContext := Context.adjoin siblingRoot (fun _ => false)
+
+theorem siblingReduction : (id : DensePoly Rat → DensePoly Rat) = siblingContext.reduce := by
+  funext p
+  symm
+  apply Context.reduce_unclean
+  simp only [siblingContext, Context.root_adjoin, Context.clean_adjoin,
+    siblingRoot, SignDet.Descriptor.ofTable_raw, siblingRaw,
+    SignDet.Conformance.singletonRaw]
+  decide +kernel
+
+@[expose] def siblingFirst : TarskiCertificate Rat Rat Nat :=
+  {SignDet.Conformance.firstQuery with
+    lower := .finite (-2)
+    upper := .finite 0
+    lowerSigns := #[1, 1]
+    upperSigns := #[-1, 1]
+    lowerVariations := 0
+    upperVariations := 1
+    value := -1}
+
+@[expose] def siblingSquare : TarskiCertificate Rat Rat Nat :=
+  {SignDet.Conformance.firstSquare with
+    lower := .finite (-2)
+    upper := .finite 0
+    lowerSigns := #[1, -1, 1]
+    upperSigns := #[-1, 0, 1]
+    lowerVariations := 2
+    upperVariations := 1
+    value := 1}
+
+@[expose] def siblingSigns : SignDet.Node Rat Nat :=
+  {SignDet.Conformance.firstNode with
+    lower := .finite (-2)
+    upper := .finite 0
+    system := {SignDet.Conformance.firstNode.system with
+      counts := #v[1, 0, 0]
+      values := #v[1, -1, 1]}
+    moments := #v[siblingCount, siblingFirst, siblingSquare]}
+
+set_option maxRecDepth 32768 in
+theorem siblingSigns_checked :
+    siblingRoot.checkSigns [2 * Sturm.Fixtures.x] #v[-1] (.leaf siblingSigns) = true := by
+  simp only [siblingRoot, SignDet.Descriptor.ofTable_raw, SignDet.Descriptor.checkSigns,
+    SignDet.RawDescriptor.checkSigns, SignDet.Replay.check, SignDet.Node.check_eq,
+    SignDet.checkMoment_eq, SignDet.queryPoly, Sturm.check, TarskiCertificate.check_eq,
+    SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+theorem sibling_sign : siblingContext.signPoly (2 * Sturm.Fixtures.x) = -1 := by
+  have queryEq : siblingContext.queryPoly (2 * Sturm.Fixtures.x) = 2 * Sturm.Fixtures.x := by
+    simp only [Context.queryPoly, Context.queryRemainder, siblingContext,
+      Context.root_adjoin, siblingRoot, SignDet.Descriptor.ofTable_raw,
+      siblingRaw, SignDet.Conformance.singletonRaw]
+    decide +kernel
+  let signs : SignDet.SelectedSigns siblingContext.root
+      [siblingContext.queryPoly (2 * Sturm.Fixtures.x)] :=
+    ⟨#v[-1], .leaf siblingSigns, by
+      rw [queryEq]
+      simpa only [siblingContext, Context.root_adjoin] using siblingSigns_checked⟩
+  have h := siblingContext.signPoly_checked (fun q : Rat => (q : ℝ))
+    (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+    (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+    (fun _ => by simp) Generated.cast_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _)
+    (2 * Sturm.Fixtures.x) signs
+  simpa [SignDet.SelectedSigns.value, signs] using h
+
+@[expose] def siblingFact : SignFact siblingContext :=
+  ⟨2 * Sturm.Fixtures.x, -1, sibling_sign⟩
+
+@[expose] def siblingLiteral : Element siblingContext :=
+  Element.restore (2 * Sturm.Fixtures.x) (-1) sibling_sign (by decide +kernel)
+
+@[expose] def siblings (_positive : List (SignFact context))
+    (negative : List (SignFact siblingContext)) : Bool :=
+  decide (((Element.cachedAdd id siblingReduction negative).add siblingLiteral 0).sign = -1)
+
+@[expose] def nonBoolProgram (_positive : List (SignFact context))
+    (_negative : List (SignFact siblingContext)) : Nat := 0
 
 meta section
 open Lean Meta Elab Command
@@ -537,6 +650,63 @@ private unsafe def control : TermElabM Unit := do
       (← mkEq needed.context expected) (← mkEqRefl expected)
     logInfo "multiFieldUnknownContext=unproved"
   | _ => throwError "multi-field collector manufactured an absent inventory"
+
+
+  let negative ← Term.withoutErrToSorry
+    (Term.elabTerm (← `(([] : List (SignFact siblingContext)))) none)
+  Term.synthesizeSyntheticMVarsNoPostponing
+  let negative ← instantiateMVars negative
+  let positive := mkConst ``PackingConformance.facts
+  let siblingsInitial : Array KernelReplay.Inventory := #[⟨positive⟩, ⟨negative⟩]
+  let siblingsProgram := mkConst ``siblings
+  let siblingCollected ← KernelReplay.collectMany 1 siblingsProgram siblingsInitial simpContext
+    (fun needed _ => do
+      let expected := mkConst ``siblingContext
+      KernelReplay.kernelCheck `__siblingContext
+        (← mkEq needed.context expected) (← mkEqRefl expected)
+      let fact ← register (mkConst ``siblingFact)
+      return some fact)
+  unless siblingCollected.requests.size == 1 do
+    throwError "same-carrier collection changed request count"
+  let some retainedPositive := siblingCollected.inventories[0]?
+    | throwError "missing positive-root inventory"
+  let some retainedNegative := siblingCollected.inventories[1]?
+    | throwError "missing negative-root inventory"
+  KernelReplay.kernelCheck `__siblingPositiveInventory
+    (← mkEq retainedPositive.facts positive) (← mkEqRefl positive)
+  let expected ← mkAppM ``List.cons #[mkConst ``siblingFact, negative]
+  KernelReplay.kernelCheck `__siblingNegativeInventory
+    (← mkEq retainedNegative.facts expected) (← mkEqRefl expected)
+  match siblingCollected.outcome with
+  | .checked true _ _ => logInfo "multiSiblingFields=kernelAcceptedSameCarrier"
+  | _ => throwError "same-carrier collection rejected the negative-root fact"
+  let wrongSibling : Except Exception KernelReplay.Collections ← try
+    let result ← KernelReplay.collectMany 1 siblingsProgram siblingsInitial simpContext
+      (fun _ _ => do
+        let first ← mkAppM ``List.head? #[positive]
+        let first ← withTransparency .all (whnf first)
+        unless first.getAppFn.isConstOf ``Option.some do throwError "missing positive fixture"
+        return some first.getAppArgs.back!)
+    pure (.ok result)
+  catch error => pure (.error error)
+  match wrongSibling with
+  | .error error =>
+    unless (← error.toMessageData.toString) ==
+        "supplied fact belongs to a different coefficient context" do throw error
+    logInfo "multiSiblingWrongRoot=rejected"
+  | .ok _ => throwError "same-carrier collection accepted a different selected root"
+  let nonBool := mkConst ``nonBoolProgram
+  let malformed : Except Exception KernelReplay.Collections ← try
+    let result ← KernelReplay.collectMany 1 nonBool siblingsInitial simpContext
+      (fun _ _ => throwError "malformed program called the supplier")
+    pure (.ok result)
+  catch error => pure (.error error)
+  match malformed with
+  | .error error =>
+    unless (← error.toMessageData.toString) ==
+        "collection program must return Bool with these inventories" do throw error
+    logInfo "multiNonBoolProgram=rejectedBeforeSupply"
+  | .ok _ => throwError "collection accepted a non-Bool program"
 
 syntax (name := factOperationsProbe) "#fact_operations_probe" : command
 @[command_elab factOperationsProbe]

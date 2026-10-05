@@ -8,6 +8,7 @@ module
 public import Lean.Elab.Command
 public import Lean.Meta.Reduce
 public meta import Lean.Meta.Reduce
+public meta import Lean.Meta.Check
 public import Lean.Meta.Tactic.Simp
 public meta import Lean.Meta.Tactic.Simp.Main
 public import Lean.Util.CollectAxioms
@@ -275,6 +276,10 @@ def collectMany (fuel : Nat) (program : Expr) (initial : Array Inventory)
     for previous in types do
       if ← isDefEq previous type then throwError "duplicate coefficient inventory"
     types := types.push type
+  let expression := mkAppN program (initial.map Inventory.facts)
+  check expression
+  unless ← isDefEq (← inferType expression) (mkConst ``Bool) do
+    throwError "collection program must return Bool with these inventories"
   go fuel initial types #[]
 where
   go (remaining : Nat) (inventories : Array Inventory) (types : Array Expr)
@@ -289,7 +294,9 @@ where
       let mut selected := none
       for i in [:types.size] do
         let declared := types[i]!.getAppArgs.back!
-        if ← isDefEq declared needed.context then selected := some i
+        if declared == needed.context || (← isDefEq declared needed.context) then
+          selected := some i
+          break
       let some slot := selected
         | return ⟨inventories, outcome, requests⟩
       match remaining with
