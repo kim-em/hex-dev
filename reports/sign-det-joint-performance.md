@@ -133,6 +133,24 @@ preparation and calibration, although the reported per-call timing excludes them
 completed observation is retained. One CPU is automatically leased, and host activity is
 recorded without an idleness test or sample filtering.
 
+The cap is a planning safeguard. The earlier size-63 comparison child took
+about 29 seconds including preparation; cubic extrapolation to 255 gives
+roughly 1900 seconds. A full collection may take around 18 hours. These are
+estimates, not measured size-255 guarantees: the larger coefficient operands
+and host activity can increase the duration. The collector checks all five
+sizes and all actual callbacks before beginning the scientific arms, retaining
+their elapsed wall times. A cap hit is a failed observation, retained with the
+later scheduled samples, rather than a passed or inconclusive performance gate.
+
+After the fixed warmup exclusion, the wider fit uses degrees 31 through 255.
+At 255 the stored reduced and direct witnesses have about 3900 and 7700 bits.
+A consistent cubic verdict is finite-range wall-time evidence; it does not
+separate coefficient-operation counts from growing bit costs. A slope outside
+the fixed tolerance remains an investigated finding. The model, exponent,
+tolerance and completed samples are not changed to obtain a desired verdict.
+The explicit commands with suffix `-wide` select this ladder; the commands
+`inspect-joint` and `inspect-joint-timings` retain their historical defaults.
+
 The independent input validator checks literal polynomials, both exact sign tables and
 dimensions. Callback result hashes bind the measured answers to those checked inputs.
 The collector retains source reconstruction, executable identity, command output, exact

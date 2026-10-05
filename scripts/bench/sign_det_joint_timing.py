@@ -259,7 +259,7 @@ def main():
         if summary["validation_errors"]:
             raise ValueError("scientific validation failed; all scheduled arm records are retained")
         metadata["state"] = "complete"
-        metadata["scientific_samples"] = 180
+        metadata["scientific_samples"] = TRIALS * len(WIDE_DEGREES) * len(RESULT_KEYS)
         return int(any(v["verdict"] == "inconclusive" for v in summary["observations"].values()))
     except BaseException as exc:
         metadata.update(state="failed", error=str(exc), exception=type(exc).__name__)
