@@ -28,6 +28,11 @@ theorem toValue_zero (a : context.Value) : model.toValue a = 0 ↔ a = 0 := by
 noncomputable def polynomial (p : DensePoly context.Value) : Polynomial model.field :=
   interpret model.toValue model.toValue_zero p
 
+/-- The semantic polynomial retains every native coefficient's value. -/
+@[simp] theorem polynomial_coeff (p : DensePoly context.Value) (i : Nat) :
+    (model.polynomial p).coeff i = model.toValue (p.coeff i) := by
+  simp only [polynomial, coeff_interpret]
+
 /-- Coercing these coefficients gives the original ambient interpretation. -/
 theorem polynomial_map (p : DensePoly context.Value) :
     (model.polynomial p).map model.field.subtype = interpret model.value model.zero_iff p := by
