@@ -1,0 +1,214 @@
+{
+  "checks": [
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/0.stdout",
+      "sha256": "eb5efbe6e726571007a127d9b2809b3d9e772d7a6451dd38a2bb7c09c5816c38"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/0.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/1.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/1.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/2.stdout",
+      "sha256": "ea4051d25617d0e024f030bda5851a0455d525691cc814683f878e4ccdb2ed5d"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/2.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/3.stdout",
+      "sha256": "e35d3608d07cf59f7870878491e6b275a359bb34ea901c9e8086aed6bec6e07a"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/3.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/bench-HexRealAlgebraic-Bench.lean.txt",
+      "sha256": "ce266771fc5752e1ea17f9f326877177dc8a635b09ef0d449aef227ff0454d71"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/bench-HexSturm-Bench.lean.txt",
+      "sha256": "9655257c41bb922388fb90980687a6d7e7e325e470f28f9d1e5a4bbc4b94e499"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/HexSturm-Reduced.lean.txt",
+      "sha256": "bc45c2958590e0d5f2793d574b5b6f77664730082512c2dc209ca2f9b3e2229a"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/HexPoly-Euclid-DivGcd.lean.txt",
+      "sha256": "d56dbe5cf69e9abe58436486e4b3870afe1a07650d62aa2a36af0e528b73f149"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/HexRealAlgebraic-Basic.lean.txt",
+      "sha256": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/HexRealAlgebraic-Roots.lean.txt",
+      "sha256": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/HexNumberField-Roots.lean.txt",
+      "sha256": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/HexNumberField-Convert.lean.txt",
+      "sha256": "7ddcb009a40146461d30c1e23d7b2dcfcafb62c03e5867b020ace11ce78f74dd"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/HexArith-Nat-Sqrt.lean.txt",
+      "sha256": "02684a5167ec604cdf432554058be0c4674e926fdb356934e45bf1964c81746e"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/4.stdout",
+      "sha256": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/4.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/5.stdout",
+      "sha256": "773fb1f2e2e076dd506d133fd9f11106c30eb440541d879fe11125a6e75495ce"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/5.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/6.stdout",
+      "sha256": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/6.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/7.stdout",
+      "sha256": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/7.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/spawn-anchor.json",
+      "sha256": "22f45591ab68e4b99e25e13e4485fbf54f0008ceefe96542bede3de8edeb1983"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/perf.data",
+      "sha256": "df24429b4ff0fd1d8db986f01684ffe3a67d6586cb3f3e3f59757440b6a3e0aa"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/timed-1155717.jsonl",
+      "sha256": "14785b88c51339d50e7676af505bd9551bac1339d6988f41a7726f079663e2d2"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/8.stdout",
+      "sha256": "27b7e1a3e463470f7448813ca1ad56e19c83a6d8005759189cebf82fe99635b8"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/8.stderr",
+      "sha256": "c95e780b1839b6d87563cb7218ad856ad632c2fc9f0e84ec114f7d83cde37c1a"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/samply.json.gz",
+      "sha256": "0e8b0b96a3508b803085273822d4b9e805be76ce010906c8f1d08214c0ba0890"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/9.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/9.stderr",
+      "sha256": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/10.stdout",
+      "sha256": "5889efe795c4b09e6b6da1ded6c34b45e4b4632f9f1e0e75b080535b19e54452"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/10.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/perf-samples.txt",
+      "sha256": "5889efe795c4b09e6b6da1ded6c34b45e4b4632f9f1e0e75b080535b19e54452"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/normalized.json.gz",
+      "sha256": "157c60852f3bd384f0860f700d4c5e02bfdf00309741b656eeae409ed2cb494e"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/11.stdout",
+      "sha256": "6d27ed836099a3c17bc0f45aa85331563460399c1bb4d4533e6a939dab923898"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/11.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/filtered.json.gz",
+      "sha256": "981503221a2763960fcbd59758919a73155efe0de3972f78f5f02f1f2e7a1ae0"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/diagnostics.json",
+      "sha256": "4432f0e950ffcc51b5d7cb2880bced8cfa0b5a188ebcf3b46643950e68c1387d"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/12.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/12.stderr",
+      "sha256": "f1365425ad8b89690f00db79f6e9434c58388cc9191bdcdef20df85ceffbeea0"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/symbols.json",
+      "sha256": "43782ed418ddc22c22201cf9a66728e0240942ec250b519309f41ebb553137f7"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/13.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/13.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/14.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw/14.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/before/hexrealalgebraic_bench",
+      "sha256": "9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/before/hexnumberfield_bench",
+      "sha256": "b524fc9a3e8678c61ab47253c63fb8be7f4edc41b984a9652ae278978839f4d7"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/after/hexrealalgebraic_bench",
+      "sha256": "9beaa01bfe01cbc075557e325826a6e820777f1439dddfa2798056d6ca483f5c"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/after/hexnumberfield_bench",
+      "sha256": "c991f1f8741fa253333fe36c729a84abe1cf1b6bbcc458bb24fb67b1873f145a"
+    }
+  ],
+  "all_match": true,
+  "raw_root": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/profile-raw"
+}

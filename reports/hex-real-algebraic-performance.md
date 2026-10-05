@@ -356,6 +356,29 @@ reconciliation with the implemented surface and its actual matching APIs.
 
 ## Profile
 
+[Certified fixed-field conversion reuse](bench-results/fixed-conversion-reuse/README.md)
+eliminates a repeated output-polynomial isolation while preserving the complete
+canonical `Option` result by an ordinary-kernel equality theorem. All 48
+adjacent scalar arms pass their exact result guards; the timings are
+inconclusive about an end-to-end improvement. The linked degree plots include
+retained FLINT/Z3 reference curves and every observation.
+The existing direct degree-two conversion anchor has eight successful arms
+and a median adjacent before/after ratio of 1.899, with medians 0.912/0.480 ms.
+That improvement is scoped to conversion, not the full square-root pipeline.
+The unchanged Add control's median adjacent ratios span 0.916–1.164.
+Applying the direct 1.9-fold factor to the changed square-root profile's
+1.76% conversion share would predict only about a 1.6% end-to-end gain if
+other costs stayed constant. This conditional cross-fixture estimate is not
+a measured gain; the larger observed scalar ratios remain inconclusive.
+The changed-source degree-4 square-root profile retains 965 kernel-window
+samples and passes calibration, confidence and sensitivity checks. Isolation
+accounts for 95.85% inclusive cost, common-field presentation for 49.53%, and
+exact-factor canonicalization for 41.87%; fixed-field conversion is only 1.76%.
+These overlapping shares explain the limited scope of this optimization.
+All raw captures and frozen executables are retained outside `/tmp` with
+verified hashes. Canonical isolation and presentation power construction
+remain substantial concerns.
+
 [Current polynomial-root attribution](bench-results/prerequisite-current-root-profile-d6cebc4de/rational-roots.manifest.json)
 profiles `Hex.RealAlgebraicBench.runRationalRoots8`, parameter 0, on source
 `d6cebc4de` and automatically leased CPU 28. Its 1266 kernel-window samples
@@ -431,6 +454,13 @@ remains recorded. Full diagnostics, including residuals and sensitivity, are
 in the linked summaries.
 
 ## Concerns
+
+- Certified fixed-conversion reuse removes redundant work, but its retained
+  paired scalar study does not establish a consistent end-to-end speedup.
+  Degree-8 square root still takes about 13.6 seconds at the changed arm's
+  median on this host. The degree-4 attribution puts almost all inclusive
+  cost in isolation, with conversion itself below 2%. The remaining dominant
+  costs require further implementation work; no phase is advanced.
 
 - Actual canonical real-polynomial root enumeration remains several thousand
   times slower than the exact external root backends on the larger tested

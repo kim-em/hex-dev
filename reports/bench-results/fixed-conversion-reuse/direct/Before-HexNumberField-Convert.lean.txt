@@ -22,8 +22,8 @@ the unique factor isolation whose disc meets the input representative. The
 selected factor is finally passed through
 {name}`Hex.AlgebraicNumber.ofNormalizedIn?`, reusing the certified isolation
 run. Its whole-result equality with `ofNormalized?` preserves the library's
-deterministic canonical isolation strategy. Fixed-presentation conversion also
-reuses its certified output-polynomial isolation run.
+deterministic canonical isolation strategy. Fixed-presentation conversion
+still uses `ofNormalized?`; it does not yet reuse its isolation run.
 -/
 namespace Hex
 
@@ -355,30 +355,25 @@ def toAlgebraicNumber? [ZPoly.CheckedIrreducible p]
       if hdegree : 0 < q.natDegree then
         if hirred : ZPoly.isIrreducible q = true then
           if hsquarefree : HasOnlySimpleRoots q then do
-            match hisolate : ZPoly.isolateComplexRoots? q hsquarefree
-                (separationDepth q : Int) with
-            | none => none
-            | some isolations =>
-              match hrefine : isolations.mapM DyadicRootIsolation.toRefined? with
-              | none => none
-              | some refined => do
-                let requested : Int := mahlerPrec q
-                let target := requested + (approxGuardBits rep.1.square a.coeffs : Int)
-                -- This checked bind is deliberate: `PolyQuot.approx` has a sound
-                -- but potentially coarse fallback when refinement fails, while
-                -- root selection must fail rather than compare that wide ball.
-                let threaded ← rep.refineTo? target
-                let valueBall := evalRatBall a.coeffs threaded.1.1.square target
-                -- Candidate discs have radius below `sep(q)/4`; the guarded value
-                -- ball requested at `mahlerPrec q` has radius below
-                -- `sep(q)/(4*sqrt 2)`. Hence two candidates meeting it would put
-                -- distinct roots less than `2r + 2R < sep(q)` apart. The first
-                -- match is therefore unique. The precision here must follow `q`,
-                -- not the defining polynomial `p`.
-                let matching ← refined.toList.find? fun r =>
-                  r.1.square.meetsBall valueBall
-                AlgebraicNumber.ofNormalizedIn? q hprim hpos hdegree
-                  ⟨hirred, hdegree⟩ hsquarefree matching isolations refined hisolate hrefine
+            let isolations ← ZPoly.isolateComplexRoots? q hsquarefree (separationDepth q : Int)
+            let refined ← isolations.mapM DyadicRootIsolation.toRefined?
+            let requested : Int := mahlerPrec q
+            let target := requested + (approxGuardBits rep.1.square a.coeffs : Int)
+            -- This checked bind is deliberate: `PolyQuot.approx` has a sound
+            -- but potentially coarse fallback when refinement fails, while
+            -- root selection must fail rather than compare that wide ball.
+            let threaded ← rep.refineTo? target
+            let valueBall := evalRatBall a.coeffs threaded.1.1.square target
+            -- Candidate discs have radius below `sep(q)/4`; the guarded value
+            -- ball requested at `mahlerPrec q` has radius below
+            -- `sep(q)/(4*sqrt 2)`. Hence two candidates meeting it would put
+            -- distinct roots less than `2r + 2R < sep(q)` apart. The first
+            -- match is therefore unique. The precision here must follow `q`,
+            -- not the defining polynomial `p`.
+            let matching ← refined.toList.find? fun r =>
+              r.1.square.meetsBall valueBall
+            AlgebraicNumber.ofNormalized? q hprim hpos hdegree
+              ⟨hirred, hdegree⟩ hsquarefree matching
           else
             none
         else
@@ -389,48 +384,6 @@ def toAlgebraicNumber? [ZPoly.CheckedIrreducible p]
       none
   else
     none
-
-set_option backward.isDefEq.respectTransparency false in
-/-- Reusing the certified isolation run preserves the complete canonical
-conversion result, including every stored representative and checked failure. -/
-theorem toAlgebraicNumber?_eq [ZPoly.CheckedIrreducible p]
-    (a : PolyQuot p x) (rep : RefinedIsolation p)
-    (h : SimpleRoot.mk rep = x) :
-    a.toAlgebraicNumber? rep h = (do
-      let q ← a.minpoly?
-      if hprim : ZPoly.content q = 1 then
-        if hpos : 0 < q.leadingCoeff then
-          if hdegree : 0 < q.natDegree then
-            if hirred : ZPoly.isIrreducible q = true then
-              if hsquarefree : HasOnlySimpleRoots q then do
-                let isolations ← ZPoly.isolateComplexRoots? q hsquarefree (separationDepth q : Int)
-                let refined ← isolations.mapM DyadicRootIsolation.toRefined?
-                let requested : Int := mahlerPrec q
-                let target := requested + (approxGuardBits rep.1.square a.coeffs : Int)
-                let threaded ← rep.refineTo? target
-                let valueBall := evalRatBall a.coeffs threaded.1.1.square target
-                let matching ← refined.toList.find? fun r =>
-                  r.1.square.meetsBall valueBall
-                AlgebraicNumber.ofNormalized? q hprim hpos hdegree
-                  ⟨hirred, hdegree⟩ hsquarefree matching
-              else
-                none
-            else
-              none
-          else
-            none
-        else
-          none
-      else
-        none
-    ) := by
-  unfold toAlgebraicNumber?
-  simp only [Option.bind_eq_bind]
-  cases a.minpoly? <;> simp only [Option.bind_none, Option.bind_some]
-  simp only [AlgebraicNumber.ofNormalizedIn?_eq]
-  repeat' first | split | rfl
-  all_goals simp_all only [Option.bind_none, Option.bind_some]
-
 
 /-- Total fixed-presentation conversion. The checked failure branch is proved
 unreachable by the Mathlib companion. -/
@@ -492,13 +445,6 @@ private def three : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
       sqrtTwo.minpoly? = some sqrtTwoPoly &&
         three.minpoly? = some (DensePoly.ofList [-3, 1]) &&
         oneAddSqrtTwo.minpoly? = some shiftedPoly &&
-        (match (0 : PolyQuot sqrtTwoPoly sqrtTwoRoot).toAlgebraicNumber?
-            sqrtTwoRep rfl with
-        | some a => a == 0
-        | none => false) &&
-        (match three.toAlgebraicNumber? sqrtTwoRep rfl with
-        | some a => a.p = DensePoly.ofList [-3, 1] && decide (0 < a.rep.1.square.re)
-        | none => false) &&
         sqrtTwoTotal.p = sqrtTwoPoly &&
         sqrtTwoTotal.rep.1.square.discsMeet sqrtTwoSquare &&
         (match sqrtTwo.toAlgebraicNumber? sqrtTwoRep rfl with
@@ -515,12 +461,6 @@ private def three : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
 
 end PolyQuot
 end Hex
-
-/--
-info: 'Hex.PolyQuot.toAlgebraicNumber?_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Hex.PolyQuot.toAlgebraicNumber?_eq
 
 /--
 info: 'Hex.AlgebraicNumber.rawRepIn?_eq' depends on axioms: [propext, Classical.choice, Quot.sound]

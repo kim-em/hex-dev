@@ -1,0 +1,60 @@
+warning: Nix search path entry '/nix/var/nix/profiles/per-user/root/channels' does not exist, ignoring
+these 2 derivations will be built:
+  /nix/store/ayd475nbk7zmz61gsd5dhrr4fwr90yg3-builder.pl.drv
+  /nix/store/28q4v83ks800jwrj8gh41z1r0hradp4d-python3-3.14.7-env.drv
+these 14 paths will be fetched (13.7 MiB download, 52.3 MiB unpacked):
+  /nix/store/7gddsfyp9bwb0m6iwd10ig7jr06xrv73-bin
+  /nix/store/6jwjml7pv5qmdhmi7sk1nm3pa1vzrwfp-die-hook
+  /nix/store/b8xvzgd52jby5dfpi0pf46nisy6wma5d-diffutils-3.12
+  /nix/store/fv9yl55hkskpc2cj9c0sdyq91car9kgl-file-5.48
+  /nix/store/n8k0wza75nmrx08civlj29h26scx2fjh-gnu-config-2024-01-01
+  /nix/store/c011mk580m964s1zxjccvdax3fcmppnl-gnumake-4.4.1
+  /nix/store/41l3h8s1lr518n03bsrzv5vsf37bhnb9-gnutar-1.35
+  /nix/store/xysbrlyn8h5gmxw2y4y14rbjgsvx6qdj-make-binary-wrapper-hook
+  /nix/store/8jmg390qca8sv8k077r4h77yqrzmsfy9-pari-2.17.3
+  /nix/store/dmhf4vk1p6qpbpb8fkgh9jadir4i3fm9-python3.14-cypari2-2.2.4
+  /nix/store/dcx893dzz4cszxyxl57apsfndklwpnh9-readline-8.3p3-dev
+  /nix/store/dp0zdsysxsli2xncj4prvhsik08qn697-stdenv-linux
+  /nix/store/c29a7xzhhv8nk62w1gls6f6jj8zihggv-stdenv-linux-no-cc
+  /nix/store/rjri54xd29c5qfwj124j62ffzjjigjmh-update-autotools-gnu-config-scripts-hook
+copying path '/nix/store/n8k0wza75nmrx08civlj29h26scx2fjh-gnu-config-2024-01-01' from 'https://cache.nixos.org'...
+copying path '/nix/store/7gddsfyp9bwb0m6iwd10ig7jr06xrv73-bin' from 'https://cache.nixos.org'...
+copying path '/nix/store/b8xvzgd52jby5dfpi0pf46nisy6wma5d-diffutils-3.12' from 'https://cache.nixos.org'...
+copying path '/nix/store/fv9yl55hkskpc2cj9c0sdyq91car9kgl-file-5.48' from 'https://cache.nixos.org'...
+copying path '/nix/store/c011mk580m964s1zxjccvdax3fcmppnl-gnumake-4.4.1' from 'https://cache.nixos.org'...
+copying path '/nix/store/41l3h8s1lr518n03bsrzv5vsf37bhnb9-gnutar-1.35' from 'https://cache.nixos.org'...
+copying path '/nix/store/6jwjml7pv5qmdhmi7sk1nm3pa1vzrwfp-die-hook' from 'https://cache.nixos.org'...
+copying path '/nix/store/dcx893dzz4cszxyxl57apsfndklwpnh9-readline-8.3p3-dev' from 'https://cache.nixos.org'...
+copying path '/nix/store/xysbrlyn8h5gmxw2y4y14rbjgsvx6qdj-make-binary-wrapper-hook' from 'https://cache.nixos.org'...
+copying path '/nix/store/rjri54xd29c5qfwj124j62ffzjjigjmh-update-autotools-gnu-config-scripts-hook' from 'https://cache.nixos.org'...
+copying path '/nix/store/8jmg390qca8sv8k077r4h77yqrzmsfy9-pari-2.17.3' from 'https://cache.nixos.org'...
+copying path '/nix/store/dp0zdsysxsli2xncj4prvhsik08qn697-stdenv-linux' from 'https://cache.nixos.org'...
+copying path '/nix/store/c29a7xzhhv8nk62w1gls6f6jj8zihggv-stdenv-linux-no-cc' from 'https://cache.nixos.org'...
+building '/nix/store/ayd475nbk7zmz61gsd5dhrr4fwr90yg3-builder.pl.drv'...
+copying path '/nix/store/dmhf4vk1p6qpbpb8fkgh9jadir4i3fm9-python3.14-cypari2-2.2.4' from 'https://cache.nixos.org'...
+structuredAttrs is enabled
+Running phase: patchPhase
+Running phase: updateAutotoolsGnuConfigScriptsPhase
+Running phase: configurePhase
+no configure script, doing nothing
+Running phase: buildPhase
+Running phase: checkPhase
+Running phase: installPhase
+no Makefile or custom installPhase, doing nothing
+Running phase: fixupPhase
+shrinking RPATHs of ELF executables and libraries in /nix/store/8l4s0n61pskzsgr2ccdfj70fd3vcz0gv-builder.pl
+checking for references to /build/ in /nix/store/8l4s0n61pskzsgr2ccdfj70fd3vcz0gv-builder.pl...
+patching script interpreter paths in /nix/store/8l4s0n61pskzsgr2ccdfj70fd3vcz0gv-builder.pl
+building '/nix/store/28q4v83ks800jwrj8gh41z1r0hradp4d-python3-3.14.7-env.drv'...
+structuredAttrs is enabled
+created 223 symlinks in user environment
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import sys, cypari2; print(sys.executable); print(sys.version); print(cypari2.__version__)
+    ^^^^^^^^^^^^^^^^^^^
+  File "/nix/store/4x3ckxxvrmzfisbhklsyyy8hxga16hh5-python3-3.14.7-env/lib/python3.14/site-packages/cypari2/__init__.py", line 1, in <module>
+    from .pari_instance import Pari
+  File "cypari2/pari_instance.pyx", line 1, in init cypari2.pari_instance
+  File "cypari2/gen.pyx", line 1, in init cypari2.gen
+  File "cypari2/stack.pyx", line 1, in init cypari2.stack
+ModuleNotFoundError: No module named 'cysignals'
