@@ -20,8 +20,12 @@ The original complete capture, including the 120771072-byte executable,
 remains at `/home/kim/.codex/tasks/hex-10378/nested-measurement-capture-ca2e22`.
 This archive preserves the original manifest and every command stdout/stderr,
 command JSON and derived analysis. `archive.json` binds all archived files and
-identifies the binary omitted from git. Original absolute command paths remain
-unchanged.
+identifies the binary omitted from git. The 395 original records are unchanged;
+four additional files under `sources/` preserve the captured analyzer, capture
+script, protocol and oracle. Original absolute command paths remain unchanged.
+The capture tag records the measurement source; it is distinct from the merged
+integration commits. The benchmark and its Lean import closure are unchanged
+by this packaging and archive validation.
 
 The protocol was committed before observations. Six fixed trial-major trials
 visit depth one then two and m = 2, 4, 8, 16, with adjacent AB/BA arms alternating
@@ -91,6 +95,7 @@ readers and descriptor/query replay perform those checks before timing.
 | 2 | 8 | [2, 9] / [2, 2] | 383 / 151 | 666 / 313 | 2438985 / 10665 |
 | 2 | 16 | [2, 17] / [2, 2] | 765 / 221 | 1433 / 557 | 6211399 / 17869 |
 
+Stored degrees are listed from the bottom algebraic level to the top.
 The final query evidence is generated outside timing; packing performs related
 selected-root queries inside timing. Evidence byte growth therefore describes
 the retained final evidence, and is not itself a replay timing. Full endpoint
@@ -111,14 +116,27 @@ replaced by an untraced measurement or counted as an observation here.
 Tower8's premise correction, MetiTarski scaling and the other specified Phase 4
 requirements remain open.
 
-To reanalyze, use a clean checkout of the published capture tag with the **full
-original capture**, including its executable. The analyzer deliberately checks
-its source, protocol, capture and oracle content keys. Move the existing
-`analysis.json` aside before running
+To validate this git archive without restoring the executable, run:
+
+```sh
+python3 scripts/bench/analyze_real_closure_nested.py --archive reports/bench-results/real-closure-nested-measurement-ca2e22
+```
+
+This read-only check validates the complete inventory and all content digests,
+binds the omitted executable's digest to the original manifest, uses the frozen
+source copies and the versioned historical schedule, recomputes the analysis
+from all 96 raw arms, and checks both tables above against retained observations.
+It runs in the existing CI job. Live capture-script, protocol and oracle changes
+do not invalidate historical source keys. The executable is not rerun by this
+check, and the omitted binary's bytes remain available only in the full capture.
+
+To regenerate the original analysis, use a clean checkout of the published
+capture tag with the **full original capture**, including its executable.
+Move the existing `analysis.json` aside before running
 `python3 scripts/bench/analyze_real_closure_nested.py /home/kim/.codex/tasks/hex-10378/nested-measurement-capture-ca2e22`;
-it refuses to overwrite that derived file. A copied archive requires restoring
-the omitted snapshot under its original filename and checking its digest.
-Historical absolute argv paths remain provenance, not commands redirected by
-this packaging. The partial git archive alone cannot run the full analyzer.
-The tagged executable can emit each endpoint with `depth steps clean|eager plain`;
-its `verify` command checks all sixteen registrations.
+that analyzer refuses to overwrite the derived file and checks its original
+source keys. Historical absolute argv paths remain provenance, not commands
+redirected by this packaging. The captured executable can emit each endpoint
+with `depth steps clean|eager plain`; its `verify` command checks all sixteen
+registrations. Rebuilding from the tag is a reproduction of the source, without
+a guarantee of the captured executable's byte identity.

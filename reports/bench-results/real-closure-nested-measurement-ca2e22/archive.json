@@ -402,6 +402,17 @@
     "99.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "99.stdout": "b4d46034f6f2d6681c97afbe49d0e6a0def84a56b2a55bd4aaafbe8bd84c26ad",
     "analysis.json": "c5bc29548f5907177ee53bb65202df2328a6279c3600061622f5f8b72d9f1af1",
-    "manifest.json": "4863557c6dbf6e9490d6c01054f125514f805664b76d7150c26cedbbc7f71cbf"
+    "manifest.json": "4863557c6dbf6e9490d6c01054f125514f805664b76d7150c26cedbbc7f71cbf",
+    "sources/analyze_real_closure_nested.py": "f179d31cd1cbc0521fe867b56153f4bc66f96528e0949022c6ef4d4c3c7cba1b",
+    "sources/real_closure_nested_measurement.py": "788959d07870084ae81c7353acc95018407f3b523f76de25df58b49d54867388",
+    "sources/real-closure-nested-protocol.md": "d8ceab7c7eb83e3ce88ab158331bce89e6511980aed0c206c5c4f8712c350c87",
+    "sources/real_closure_nested_normalization.py": "478fefcc194df40630ed3c9fb17a9d237a20875738e0e82d97905ba0031c228a"
+  },
+  "schema": "nested-clean-eager-v1",
+  "sources": {
+    "analyzer_sha256": "sources/analyze_real_closure_nested.py",
+    "capture_script_sha256": "sources/real_closure_nested_measurement.py",
+    "protocol_sha256": "sources/real-closure-nested-protocol.md",
+    "oracle_sha256": "sources/real_closure_nested_normalization.py"
   }
 }

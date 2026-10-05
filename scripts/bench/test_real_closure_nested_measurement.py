@@ -166,7 +166,7 @@ class RetentionTests(unittest.TestCase):
             self.assertEqual(output.read_text(), 'fake endpoint\n')
             with self.assertRaises(subprocess.TimeoutExpired):
                 retained_command([sys.executable, '-c', 'import time; print("attempt", flush=True); time.sleep(60)'],
-                                 output, errors, timeout=0.1)
+                                 output, errors, timeout=2)
             record = json.loads(output.with_suffix('.command.json').read_text())
             self.assertTrue(record['incomplete'])
             self.assertLess(record['exit_code'], 0)

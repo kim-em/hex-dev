@@ -2,45 +2,26 @@
 """Check retained raw arms and summarize the fixed nested comparison."""
 import argparse
 import json
-import hashlib
 from pathlib import Path
 import statistics
 
-ROOT = Path(__file__).resolve().parents[2]
+from real_closure_nested_measurement import ROOT, PARAMETERS, TRIALS, TARGET_NANOS, benchmark, digest, schedule
 
 
-def digest(path):
-    with path.open('rb') as stream:
-        return hashlib.file_digest(stream, 'sha256').hexdigest()
-
-
-def summarize(folder, *, protocol=None, identities=None, omitted_snapshot=None):
-    # New captures use the current protocol. Historical archives supply their
-    # versioned schedule and frozen sources, independently of current scripts.
-    if protocol is None:
-        import real_closure_nested_measurement as protocol
-    PARAMETERS, TRIALS, TARGET_NANOS = protocol.PARAMETERS, protocol.TRIALS, protocol.TARGET_NANOS
-    benchmark, schedule = protocol.benchmark, protocol.schedule
+def summarize(folder):
     manifest = json.loads((folder / 'manifest.json').read_text())
     if (manifest['status'] != 'completed' or manifest['trials'] != TRIALS
             or manifest['parameters'] != [list(p) for p in PARAMETERS]
             or manifest['target_inner_nanos'] != TARGET_NANOS):
         raise ValueError('incomplete or different fixed schedule')
     for name, expected in manifest['artifacts'].items():
-        if Path(name).name != name:
-            raise ValueError('artifact changed or invalid filename: ' + name)
-        if omitted_snapshot is not None and name == omitted_snapshot['filename']:
-            if expected != omitted_snapshot['sha256'] or (folder / name).exists():
-                raise ValueError('omitted snapshot binding failed')
-            continue
-        if not (folder / name).is_file() or digest(folder / name) != expected:
+        if Path(name).name != name or digest(folder / name) != expected:
             raise ValueError('artifact changed or invalid filename: ' + name)
     for command in manifest['commands']:
         record = Path(command['stdout']).with_suffix('.command.json').name
         if record not in manifest['artifacts'] or json.loads((folder / record).read_text()) != command:
             raise ValueError('manifest command differs from retained command record')
-    if identities is None:
-        identities = {'analyzer_sha256': Path(__file__),
+    identities = {'analyzer_sha256': Path(__file__),
                   'capture_script_sha256': ROOT / 'scripts/bench/real_closure_nested_measurement.py',
                   'protocol_sha256': ROOT / 'reports/bench-results/real-closure-nested-protocol.md',
                   'oracle_sha256': ROOT / 'scripts/oracle/real_closure_nested_normalization.py'}
@@ -144,14 +125,7 @@ def summarize(folder, *, protocol=None, identities=None, omitted_snapshot=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('directory', type=Path)
-    parser.add_argument('--archive', action='store_true', help='validate the committed archive without writing or restoring its executable')
-    args = parser.parse_args()
-    folder = args.directory
-    if args.archive:
-        from check_real_closure_nested_archive import check_archive
-        result = check_archive(folder)
-        print(json.dumps(result, indent=2))
-        return
+    folder = parser.parse_args().directory
     result = summarize(folder)
     with (folder / 'analysis.json').open('x') as out:
         json.dump(result, out, indent=2)
