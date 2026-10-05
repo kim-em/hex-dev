@@ -28,6 +28,7 @@ it is not a field embedding without relative transcendence. -/
 noncomputable def eval (ι : K →+* ℝ) (τ : ℝ) (f : RationalFn K) : ℝ :=
   (toPolynomial f.num).eval₂ ι τ / (toPolynomial f.den).eval₂ ι τ
 
+/-- Every dyadic refinement request is strictly positive. -/
 theorem precision_pos (n : Nat) : 0 < precision n := by
   unfold precision
   positivity
@@ -86,6 +87,7 @@ theorem sign_of_attempt (ha : ApproximationCorrect ι τ a) (f : RationalFn K)
     (hs : attempt a f n = some s) : sign a f h = s :=
   firstSome_eq _ _ h hs (attempt_unique ha f)
 
+/-- A successful approximation trial contains the evaluation of the canonical fraction. -/
 theorem approxAttempt_contains (ha : ApproximationCorrect ι τ a) (f : RationalFn K)
     (δ : Rat) (n : Nat) {b : Bounds} (hb : approxAttempt a f δ n = some b) :
     Contains b (eval ι τ f) := by

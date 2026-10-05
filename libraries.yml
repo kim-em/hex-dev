@@ -80,12 +80,12 @@ libraries:
   HexOrderedFn:
     deps: [HexRationalFn, HexPoly, HexPolyFast]
     mathlib: false
-    done_through: 4
+    done_through: 5
     status: active
   HexOrderedFnMathlib:
     deps: [HexOrderedFn, HexRationalFnMathlib, HexPolyMathlib]
     mathlib: true
-    done_through: 4
+    done_through: 5
     status: active
   HexRealFormula:
     deps: [HexMvPoly]

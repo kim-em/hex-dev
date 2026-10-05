@@ -41,6 +41,7 @@ theorem RelativeTranscendence.ne_image (h : RelativeTranscendence ι τ) (c : K)
 
 
 omit [DecidableEq K] in
+/-- Relative transcendence sends nonzero polynomial denominators to nonzero reals. -/
 theorem RelativeTranscendence.preserves_nonzero (h : RelativeTranscendence ι τ) :
     (Polynomial K)⁰ ≤ (ℝ)⁰.comap (Polynomial.eval₂RingHom ι τ) := by
   intro p hp
@@ -52,6 +53,7 @@ noncomputable def evalHom (h : RelativeTranscendence ι τ) : RationalFn K →+*
   (RatFunc.liftRingHom (Polynomial.eval₂RingHom ι τ) (h.preserves_nonzero)).comp
     HexRationalFnMathlib.equiv.toRingHom
 
+/-- The field embedding evaluates the fraction's stored numerator and denominator. -/
 theorem evalHom_apply (h : RelativeTranscendence ι τ) (f : RationalFn K) :
     evalHom h f = eval ι τ f := by
   change RatFunc.liftRingHom (Polynomial.eval₂RingHom ι τ) h.preserves_nonzero
@@ -60,9 +62,11 @@ theorem evalHom_apply (h : RelativeTranscendence ι τ) (f : RationalFn K) :
     HexRationalFnMathlib.embed, RatFunc.liftRingHom_apply_div]
   rfl
 
+/-- Relative transcendence makes evaluation injective on canonical fractions. -/
 theorem evalHom_injective (h : RelativeTranscendence ι τ) :
     Function.Injective (evalHom h) := (evalHom h).injective
 
+/-- A stored canonical denominator cannot vanish at a relatively transcendental subject. -/
 theorem eval_den_ne_zero (h : RelativeTranscendence ι τ) (f : RationalFn K) :
     (toPolynomial f.den).eval₂ ι τ ≠ 0 := by
   apply h
@@ -79,11 +83,13 @@ theorem evalHom_eq_ratFunc {K : Type} [Field K] [DecidableEq K]
     HexRationalFnMathlib.den_toRatFunc]
   rfl
 
+/-- Evaluation restricts to the specified predecessor embedding on constants. -/
 @[simp] theorem evalHom_C (h : RelativeTranscendence ι τ) (c : K) :
     evalHom h (RationalFn.C c) = ι c := by
   rw [evalHom_apply]
   simp [eval, RationalFn.C, RationalFn.ofPoly]
 
+/-- Evaluation sends the indeterminate to the specified new subject. -/
 @[simp] theorem evalHom_X (h : RelativeTranscendence ι τ) :
     evalHom h RationalFn.X = τ := by
   rw [evalHom_apply]
