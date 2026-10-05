@@ -10,12 +10,17 @@ The two source variants are retained by `audit/issue-10575-orderedfn-inline-prob
 - `c7abff79dccf64ea4e14c13b0423cb607f7369d2` annotates only `lowestIndex`
   and `lowestCoeff`.
 
-Build each source with `lake build HexOrderedFn hexorderedfn_bench`.
+Build each variant with
+`lake build HexOrderedFn HexOrderedFnMathlib.Infinitesimal hexorderedfn_bench`.
 Both targeted builds completed 3233 jobs, including the companion infinitesimal
 proofs. The native executable hashes are in each `decision.json`; binaries remain
 local. The unmodified same-toolchain reference is the reproducible executable
 `6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed`
-documented in [the API report](../../hex-ordered-fn-api.md).
+documented in [the API report](../../hex-ordered-fn-api.md). Its 215-job
+rebuild used `lake build HexOrderedFn hexorderedfn_bench`, without the companion
+target. That source, `205cd87`, adds only reports to the variants' parent `d07b004`;
+all non-report build inputs agree. The tag above points to `c7abff` and retains
+its ancestor `91799d`, so both source variants remain fetchable.
 
 The full-sign variant generates expanded caller bodies and specialized array
 loops. The scan-only variant keeps the height caller as a 365-byte wrapper while
@@ -24,7 +29,10 @@ source change; generated code alone did not predict improvement.
 
 Each completed capture contains three trial-major adjacent AB/BA pairs at each
 of the three named parameters. The CPU lease, host context, exact commands,
-raw stdout/stderr and observation rows are retained. The predeclared decision
+raw stdout/stderr and observation rows are retained. Observation `env.git_commit`
+identifies the invocation checkout, including in reference arms; it is not the
+source commit of the frozen reference binary. Canonical executable hashes are in
+`probe-context.json` under `binaries`. The predeclared decision
 requires both scan cases to improve by more than the existing 10% default before
 expanding to a full comparison. Approximation remains a separately unresolved
 path. This attribution probe cannot establish Phase-6 acceptance.
@@ -38,6 +46,8 @@ Run `python3 reports/bench-results/ordered-fn-inline-probes/analyze.py` to
 validate raw observations, pair hashes and the retained analyses without new
 measurements. Changes compare each arm's median of three native per-call observations. Both
 completed captures have 18 successful arms and matching hashes in all nine pairs.
+Height and third-level signs both hash to `0x2`; this verifies that small returned
+sign, rather than broad semantic equivalence of arbitrary inputs.
 Neither variant is suitable to ship. The two decisions and all negative results
 remain preserved; no further unchanged capture is justified.
 
@@ -45,7 +55,10 @@ remain preserved; no further unchanged capture is justified.
 reference arms and nine failed candidate invocations. Copying the executable
 without its executable mode caused permission errors. `full-sign` is the single
 permitted unchanged rerun, with the file mode corrected and identical binary
-bytes. The failed invocations do not count as timing observations.
+bytes. The failed invocations do not count as timing observations. Raw scripts and
+metadata preserve their original absolute host paths and compact wording;
+`orderedfn-inline-investigation` in those paths refers to `failed-capture` here,
+and canonical hashes should be read from the structured `binaries` fields.
 
 The annotation changes are absent from the integrated library. The retained
 historical-baseline comparison and its unresolved findings remain in force.

@@ -44,4 +44,18 @@ failed = [json.loads(line) for line in
           (root / "failed-capture/probe-observations.jsonl").read_text().splitlines()]
 assert len(failed) == 18
 assert sum("error" in row for row in failed) == 9
+assert all(row["arm"] == "inline" and "Permission denied" in row["error"]
+           for row in failed if "error" in row)
+for row in failed:
+    if row["arm"] == "baseline":
+        assert row["returncode"] == 0 and row["observation"]["status"] == "ok"
+        raw = root / "failed-capture" / (
+            f"probe-{row['trial']}-{row['name']}-baseline.stdout")
+        assert json.loads(raw.read_text()) == row["observation"]
+for trial in range(3):
+    for name in ("height", "third", "approximation"):
+        pair = [row for row in failed
+                if row["trial"] == trial and row["name"] == name]
+        assert len(pair) == 2
+        assert {row["arm"] for row in pair} == {"baseline", "inline"}
 print("Nine failed candidate invocations remain excluded from timing observations.")
