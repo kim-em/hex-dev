@@ -104,10 +104,10 @@ def verify(rows):
                         'wrong printed polynomial')
                 continue
             elif i == 3:
-                require(payload == [0, []], 'lost universal roots')
+                require(payload == [2, []], 'lost universal roots')
                 continue
             elif i == 8:
-                require(type(payload) is list and len(payload) == 2 and payload[0] == 1 and
+                require(type(payload) is list and len(payload) == 2 and payload[0] == 3 and
                         type(payload[1]) is list and len(payload[1]) == 1, 'wrong finite root set')
                 entry = payload[1][0]
                 require(type(entry) is list and len(entry) == 2 and entry[1] == 3,
