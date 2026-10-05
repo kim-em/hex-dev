@@ -467,7 +467,8 @@ lean_lib HexPermGroupMathlib where
 @[default_target]
 lean_lib HexPermGroupTests where
   globs := #[.one `HexPermGroup.Tests, .one `HexPermGroup.CertificateTests,
-    .one `HexPermGroupMathlib.Tests, .one `HexPermGroupMathlib.CertificateTests]
+    .one `HexPermGroupMathlib.Tests, .one `HexPermGroupMathlib.CertificateTests,
+    .one `HexPermGroupMathlib.TacticTests]
 
 lean_lib HexGraph where
 
@@ -1416,12 +1417,14 @@ lean_lib HexReleaseTests where
     `HexGraphIso.SparseTests,
     `HexGraphIso.TacticTests,
     `HexGraphIso.ModuleBoundaryTests,
+    `HexBasic.ModuleBoundaryTests,
     `HexGraphIsoMathlib.TacticTests,
     `HexGraphIsoMathlib.SparseTacticTests,
     `HexPermGroup.Tests,
     `HexPermGroup.CertificateTests,
     `HexPermGroupMathlib.Tests,
     `HexPermGroupMathlib.CertificateTests,
+    `HexPermGroupMathlib.TacticTests,
     `HexNumberFieldTower.Embed,
     `HexRCF.LanguageTests,
     `HexRCF.SturmBuilderTests,
