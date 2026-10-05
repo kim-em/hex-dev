@@ -418,21 +418,23 @@ private def prepareCore (registered : Array Expr) (original : Expr) (config : He
     -- consuming handler, including unresolved algebraic/registered signs.
     for divisor in divisors do
       let divisor : Q(ℝ) ← lowerSources registered divisor
-      let outcome ← liftM (do
+      let rational ← tryCatchThe Hex.RealFormula.Reify.Error (do
+          let _ ← Coefficients.admitRational divisor
+          pure true) (fun error => match error with
+          | .unsupported _ _ => pure false
+          | _ => Hex.RealFormula.Reify.abort error)
+      unless rational do continue
+      let (value, proof) ← liftM (do
         let saved ← saveState
         try
-          let recognized ← (do
-            try
-              let ⟨value, _, _, proof⟩ ← Mathlib.Meta.NormNum.deriveRat divisor
-                (_inst := q(inferInstance))
-              pure (some (value, ← instantiateMVars proof))
-            catch _ => pure none : MetaM (Option (Rat × Expr)))
-          if let some (_, proof) := recognized then checkWithKernel proof
-          return recognized
-        finally saved.restore : MetaM (Option (Rat × Expr)))
-      if let some (value, proof) := outcome then
-        Hex.RealFormula.Reify.accountProof proof
-        if value == 0 then throwError "rcf: original closed divisor is zero"
+          let ⟨value, _, _, proof⟩ ← Mathlib.Meta.NormNum.deriveRat divisor
+            (_inst := q(inferInstance))
+          let proof ← instantiateMVars proof
+          checkWithKernel proof
+          return (value, proof)
+        finally saved.restore : MetaM (Rat × Expr))
+      Hex.RealFormula.Reify.accountProof proof
+      if value == 0 then throwError "rcf: original closed divisor is zero"
   let normalized ← normalize registered rationalized
   let coefficients ← collect registered normalized
   let state ← get

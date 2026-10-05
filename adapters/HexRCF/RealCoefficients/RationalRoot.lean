@@ -121,19 +121,6 @@ def hasSyntax (original : Expr) : MetaM Bool := do
   let some (base, exponent) ← parts? original | return false
   return (← rationalSyntax base) && (← rationalSyntax exponent)
 
-private def normalizeInverse (source : Expr) : ReifyM Expr := do
-  let (normalized, _) ← Meta.transformWithCache source {} (pre := fun e => do
-    if e.isAppOfArity ``Inv.inv 3 then
-      let args := e.getAppArgs
-      unless ← isDefEq (← inferType args[2]!) q(ℝ) do
-        abort (.unsupported e "root bases use real rational arithmetic")
-      let a : Q(ℝ) := args[2]!
-      unless ← isDefEq e q($a⁻¹) do
-        abort (.unsupported e "nonstandard inverse instance in root base")
-      return .continue (some q(1 / $a))
-    return .continue) (skipInstances := true)
-  return normalized
-
 /-- Recognize a positive rational base and reciprocal natural degree. Shared
 reflection limits remain structured errors; source admission retains every
 original base/exponent divisor before this classification. -/
@@ -144,11 +131,7 @@ def parameters? (original : Expr) (config : Hex.RealFormula.Reify.Config := {}) 
   unless ← rationalSyntax exponent do return .ok none
   let action : ReifyM Nat := do
     let degree ← Coefficients.rootDegree exponent
-    let normalized ← normalizeInverse base
-    let view ← arithmetic #[] normalized
-    -- Shared denominator normalization bounds denominators; its ring reifier
-    -- bounds the numerator before rational evaluation, including natural powers.
-    Coefficients.boundNumerator view.numerator
+    let _ ← Coefficients.admitRational base
     return degree
   let degree ← match ← (action.run
       {config, budget := .ofBudget config.ring.budget}).run with

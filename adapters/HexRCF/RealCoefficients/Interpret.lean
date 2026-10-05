@@ -36,16 +36,16 @@ structure Prepared where
   /-- Ordinary proof of `RealAlgebraicNumber.toReal value = source`. -/
   proof : Expr
 
--- Rational evaluation visits power bases even when the exponent is zero.
--- The final polynomial's coefficient bound alone would hide those operands.
-private def intermediateBits (cap : Nat) (e : Hex.Reflect.RingExpr) : Nat :=
-  let bound := Hex.Reflect.RingExpr.coeffBitBound cap e
-  if bound ≥ cap then cap else
-    match e with
-    | .neg a | .pow a _ => max bound (intermediateBits cap a)
-    | .add a b | .sub a b | .mul a b =>
-        max bound (max (intermediateBits cap a) (intermediateBits cap b))
-    | _ => bound
+-- This is only a size view: rational evaluation still uses the original source.
+-- Retaining a zero power's base prevents the shared bound from erasing its cost.
+private def retainBases : Hex.Reflect.RingExpr → Hex.Reflect.RingExpr
+  | .pow a 0 => retainBases a
+  | .pow a k => .pow (retainBases a) k
+  | .neg a => .neg (retainBases a)
+  | .add a b => .add (retainBases a) (retainBases b)
+  | .sub a b => .sub (retainBases a) (retainBases b)
+  | .mul a b => .mul (retainBases a) (retainBases b)
+  | e => e
 
 /-- Bound every intermediate numerator before rational evaluation. The shared
 ring view bounds literal powers and growth without evaluating their values. -/
@@ -54,27 +54,34 @@ def boundNumerator (numerator : Expr) : ReifyM Unit := do
   match ← liftM (Hex.Reflect.run (Hex.Reflect.reifyCommRing numerator) config.ring) with
   | .success ring _ =>
       charge .coefficientBits
-        (intermediateBits (config.ring.budget.coefficientBits + 1) ring.expr)
+        (Hex.Reflect.RingExpr.coeffBitBound (config.ring.budget.coefficientBits + 1)
+          (retainBases ring.expr))
   | .declined (.budgetExhausted exhausted) _ => abort (.budget exhausted)
   | .declined reason usage => abort (.providerDeclined reason usage #[])
   | .failure reason => abort (.providerFailure reason #[])
   | .notApplicable => abort (.unsupported numerator "expected rational coefficient arithmetic")
 
-/-- Recognize a positive reciprocal integer exponent using checked rational
-normalization. The caller retains the source exponent's divisor obligations. -/
-def rootDegree (source : Expr) : ReifyM Nat := do
+/-- Admit closed rational arithmetic before value normalization. Inverse
+notation is checked against the standard real instance before denominator
+reflection. Every original divisor remains the caller's obligation. -/
+def admitRational (source : Expr) : ReifyM Unit := do
   let (normalized, _) ← Meta.transformWithCache source {} (pre := fun e => do
     if e.isAppOfArity ``Inv.inv 3 then
       let args := e.getAppArgs
       unless ← isDefEq (← inferType args[2]!) q(ℝ) do
-        abort (.unsupported e "root exponents use real rational arithmetic")
-      let a : Q(ℝ) ← pure args[2]!
+        abort (.unsupported e "rational inverse requires real arithmetic")
+      let a : Q(ℝ) := args[2]!
       unless ← isDefEq e q($a⁻¹) do
-        abort (.unsupported e "nonstandard inverse instance in root exponent")
+        abort (.unsupported e "nonstandard rational inverse instance")
       return .continue (some q(1 / $a))
     return .continue) (skipInstances := true)
   let view ← arithmetic #[] normalized
   boundNumerator view.numerator
+
+/-- Recognize a positive reciprocal integer exponent using checked rational
+normalization. The caller retains the source exponent's divisor obligations. -/
+def rootDegree (source : Expr) : ReifyM Nat := do
+  let _ ← admitRational source
   let source : Q(ℝ) ← pure source
   let result ← liftM <| observing? do
     let ⟨value, _, _, _⟩ ← Mathlib.Meta.NormNum.deriveRat source (_inst := q(inferInstance))

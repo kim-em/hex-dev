@@ -205,15 +205,18 @@ private meta def rationalGuards (divisors : Array Expr) : MetaM Bool := do
   for original in divisors do
     let divisor ← Reify.lowerSources #[] original
     if ← hasRoot divisor then return false
+    let config : Hex.RealFormula.Reify.Config := {}
+    match ← ((Coefficients.admitRational divisor).run
+        {config, budget := .ofBudget config.ring.budget}).run with
+    | .error (.unsupported _ _) => return false
+    | .error error => throwError "rcf: {error.toMessageData}"
+    | .ok _ => pure ()
     let value : Q(ℝ) := divisor
-    let result ← (do
-      let saved ← saveState
-      try
-        let ⟨_, _, _, _⟩ ← Mathlib.Meta.NormNum.deriveRat value (_inst := q(inferInstance))
-        return true
-      catch _ => return false
-      finally saved.restore : MetaM Bool)
-    if !result then return false
+    let saved ← saveState
+    try
+      let ⟨_, _, _, _⟩ ← Mathlib.Meta.NormNum.deriveRat value (_inst := q(inferInstance))
+      pure ()
+    finally saved.restore
   return true
 
 private meta def rootParameters? (source : Expr) :
