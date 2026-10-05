@@ -68,3 +68,61 @@ linked to timed children through the same binary and deterministic preparation.
 Child peak RSS includes startup and preparation; it is not an isolated
 callback allocation or live-object count. This protocol alone establishes no
 performance result or Phase-4 completion.
+
+
+## First larger checker collection
+
+The first collection uses source 6b977999bc5b4008cea31ce4f9edfbe1bc3c6658,
+rather than the revised collector described above. Its
+[original metadata](data/sign-det-matrix-wide/6b977999bc-first/timing/metadata.json),
+[24 timing observations](data/sign-det-matrix-wide/6b977999bc-first/timing/timings.json)
+and [complete source reconstruction](data/sign-det-matrix-wide/6b977999bc-first/archive.json)
+are retained without modifying the original records.
+
+All 24 points returned the expected true check. The fixed cubic model remains
+**inconclusive**, with normalized slope −0.166523 against tolerance ±0.15.
+
+| Dimension | Median callback time (s) |
+| ---: | ---: |
+| 243 | 0.051484 |
+| 729 | 0.986365 |
+| 2187 | 22.949557 |
+| 6561 | 578.715180 |
+
+The original collector checks the denominator's bit length; it does not have
+the newer exact-denominator guard or an overlap stage. The deterministic
+tensor construction supplies denominator 2^s. A
+[separate overlap capture](data/sign-det-matrix-wide/6b977999bc-first/overlap/metadata.json)
+compares the whole literal witness against ordinary solving at every dimension
+1 through 729. Its before/after binary hash equals the timing binary hash.
+Both collectors, the full source tree patch and each recorded source hash
+are verified in the archive.
+
+The original collector's exit code 1 does not distinguish inconclusive
+results from failures; its completed metadata state, successful points and
+retained verdict establish this collection's outcome. The sole unchanged rerun is retained below under the shared-host policy. These observations
+do not establish successful cubic scaling or Phase-4 completion.
+
+
+## Sole unchanged rerun
+
+The [original rerun metadata](data/sign-det-matrix-wide/6b977999bc-first/unchanged-rerun/metadata.json)
+and [all 24 raw points](data/sign-det-matrix-wide/6b977999bc-first/unchanged-rerun/timings.json)
+retain the same clean source revision, source hashes, binary and harness as the
+first collection. Every point returned the expected successful check. The
+cubic verdict remains inconclusive, with residual slope −0.155112, just outside
+the unchanged ±0.15 interval. No further unchanged rerun is permitted.
+
+| Dimension | First median (s) | Rerun median (s) |
+| ---: | ---: | ---: |
+| 243 | 0.051484 | 0.051217 |
+| 729 | 0.986365 | 0.984929 |
+| 2187 | 22.949557 | 22.863537 |
+| 6561 | 578.715180 | 600.740774 |
+
+Both slopes are negative, so the observed growth is slower than the declared
+cubic model on this range. The larger sample does not establish the required
+consistency gate merely because its slope is close to the interval. All 48
+completed points remain included. Native process peak RSS includes startup
+and preparation; it is not callback live memory. These results leave the
+matrix timing gate open.

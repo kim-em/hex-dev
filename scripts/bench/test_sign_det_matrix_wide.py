@@ -116,6 +116,22 @@ class WideMatrix(unittest.TestCase):
         with self.assertRaises(ValueError):
             bench.outcome("unknown")
 
+    def test_archived_points_and_summary_tampering(self):
+        from scripts.bench.sign_det_matrix_archive import validate
+        import shutil, hashlib
+        directory = bench.ROOT/"reports/data/sign-det-matrix-wide/6b977999bc-first"
+        self.assertEqual(len(validate(directory, reconstruct=True)), 2)
+        target = Path(self.temporary.name)/"archive"
+        shutil.copytree(directory, target)
+        path = target/"derived-rerun-summary.json"
+        value = json.loads(path.read_text()); value["rows"][-1]["median_seconds"] += 1
+        path.write_text(json.dumps(value))
+        manifest = json.loads((target/"archive.json").read_text())
+        manifest["files_sha256"]["derived-rerun-summary.json"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        (target/"archive.json").write_text(json.dumps(manifest))
+        with self.assertRaisesRegex(ValueError, "summary disagrees with raw points"):
+            validate(target)
+
 
 @unittest.skipUnless(sys.platform.startswith("linux"), "Linux process-group cleanup")
 class InterruptedProfiles(unittest.TestCase):
