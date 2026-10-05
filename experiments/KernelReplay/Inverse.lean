@@ -125,6 +125,8 @@ private unsafe def accepted : TermElabM Unit := do
   unless (← readRecord argument { packet with packing :=
       { packet.packing with scalar := { packet.packing.scalar with claimed := 0 } } }).isNone do
     throwError "changed packed sign accepted"
+  unless (← readRecord argument { packet with inverse := packet.packing.joint }).isNone do
+    throwError "valid graph with a different inverse query slice accepted"
   let alteredKey ← Term.withoutErrToSorry
     (Term.elabTerm (← `((inverseKey + Sturm.Fixtures.p : DensePoly Rat))) none)
   Term.synthesizeSyntheticMVarsNoPostponing
@@ -140,7 +142,7 @@ private unsafe def accepted : TermElabM Unit := do
     (← mkEqRefl originalValue)
   unless (← readRecord argument { packet with packing := altered }).isNone do
     throwError "same-value altered native inverse candidate accepted"
-  logInfo "inverse packets retain native equality; cached replay and four mutations kernel checked"
+  logInfo "inverse packets retain native equality; cached replay and five mutations kernel checked"
 
 syntax (name := inversePackets) "#inverse_packets" : command
 @[command_elab inversePackets]
@@ -150,7 +152,7 @@ end
 
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 1000000 in
-/-- info: inverse packets retain native equality; cached replay and four mutations kernel checked -/
+/-- info: inverse packets retain native equality; cached replay and five mutations kernel checked -/
 #guard_msgs in
 #inverse_packets
 

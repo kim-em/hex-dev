@@ -718,6 +718,23 @@ choosing subsequent algebraic roots or infinitesimal parameters. The scalar
 collector does not synthesize them or prove completeness of an arbitrary
 consumer's finite conjunction.
 
+### Inverse equations
+
+`Algebraic.Packing.Inverse` binds a nonzero native operand, its exact
+local gcd/Bézout candidate and checked signs for the operand and the
+operand-times-output-minus-one equation. `Inverse.eval_inv` proves the
+inverse equation from the reached finite predecessor product and subtraction
+operations. `Inverse.realize_many` chooses one selected root for both ordinary
+packing records and inverse records, preserving all their equations and signs.
+Canonical zero follows `Element.inv_zero` without an inverse candidate.
+
+`Element.replayInv` currently demands the packing record for the inverse key.
+That record identifies the packed candidate but does not prove its inverse
+equation. Replay assembly must additionally demand the inverse record before
+these dictionaries can supply complete inversion evidence to the recursive
+finite-sign exporter. Constructing the reached predecessor premises and
+proving producer totality are also obligations of that exporter.
+
 ## Trivial towers, reconstruction and adversarial examples
 
 With no transcendental or infinitesimal levels, interpret the compatible
