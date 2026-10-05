@@ -7,6 +7,7 @@ module
 
 public import Lean
 public import HexSignDet.Codec.Json
+public meta import HexSignDet.Codec.Json
 
 public meta section
 
@@ -31,5 +32,17 @@ def fieldsExpr : Codec.Json.Fields → Expr
   | .cons key value rest => mkAppN (mkConst ``Codec.Json.Fields.cons)
       #[toExpr key, jsonExpr value, fieldsExpr rest]
 end
+
+/-- Change one literal JSON field only when its previous value is exactly the
+expected input. Used to make certificate mutations independent of decoding. -/
+def replace (j : Codec.Json) (path : List Nat) (expected value : Codec.Json) :
+    Option Codec.Json := do
+  match path with
+  | [] => if j = expected then some value else none
+  | i :: rest =>
+    let values ← j.getArr?.toOption
+    let old ← values[i]?
+    let changed ← replace old rest expected value
+    return Codec.Json.arr (values.set! i changed)
 
 end Hex.RealClosure.Algebraic.KernelReplay

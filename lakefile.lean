@@ -2351,6 +2351,7 @@ lean_lib KernelReplayExperiment where
   globs := #[.one `KernelReplay.Assemble, .one `KernelReplay.Json, .one `KernelReplay.Generated,
     .one `KernelReplay.Nested, .one `KernelReplay.NestedProbe,
     .one `KernelReplay.FactOperations, .one `KernelReplay.FactOperationsProbe,
+    .one `KernelReplay.Root, .one `KernelReplay.RootProbe,
     .one `KernelReplay.ProofProbe,
     .one `KernelReplay.InProcessProbe, .one `KernelReplay.LowerProbe, .one `KernelReplay.LowerProof]
 

@@ -32,6 +32,7 @@ public import HexRealClosure.SignFacts
 public import HexRealClosure.FactOperations
 public import HexRealClosure.SignReplay
 public import HexRealClosure.SignRequests
+public import HexRealClosure.RootReplay
 public import HexRealClosure.SignEvidence
 public import HexRealClosure.AlgebraicContext
 public import HexRealClosure.AlgebraicReencode

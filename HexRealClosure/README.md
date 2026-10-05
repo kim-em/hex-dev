@@ -2708,6 +2708,18 @@ intermediate reduction on that path; the stored policy can still evaluate
 native constant one. These APIs are for ordinary-kernel proof assembly and
 retain the compiled native fallback.
 
+`Algebraic.RootReplay.readDescriptor` decodes the complete root subject with
+`SignRequests.readRoot`, decodes every graph entry against its exact domain,
+and validates a count-one descriptor through the shared checker.
+`readDescriptor_subject` preserves the full decoded subject. `readContext`
+uses supplied predecessor operations to construct a context and transports its
+root, canonical prepared cache and reduction policy to the original operations.
+`readContext_eq` proves exact agreement with native reconstruction, including
+rejection. A strict predecessor codec can require supplied stored sign facts.
+These readers support ordinary-kernel proof assembly; compiled coefficient
+operations retain their native fallback. The kernel demo checks the root subject
+and nonmonicity, but does not evaluate the prepared cache or its root count.
+
 `Algebraic.Context.changeOps` retains an existing root context under proved
 literal equalities of its coefficient operations. It preserves the descriptor,
 optional canonical prepared cache, root count and reduction policy. Its
