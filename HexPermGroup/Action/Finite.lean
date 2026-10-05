@@ -8,6 +8,7 @@ module
 
 public import HexPermGroup.Action.Build
 public import HexPermGroup.Enumerate
+public import HexBasic.List.Nodup
 
 public section
 

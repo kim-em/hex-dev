@@ -6,12 +6,12 @@ Authors: Kim Morrison
 
 module
 
-public import HexPermGroup.Tactic
+public import HexPermGroup
 meta import Lean
 
 public section
 
-/-! The tactic imports only HexBasic helpers whose public names belong to Hex. -/
+/-! The umbrella imports only HexBasic helpers whose public names belong to Hex. -/
 
 run_elab do
   let env ← Lean.getEnv
@@ -19,7 +19,7 @@ run_elab do
     `HexBasic.List.Nodup]
   for mod in env.header.moduleNames do
     if (`HexBasic).isPrefixOf mod && !allowed.contains mod then
-      throwError "unexpected HexBasic tactic dependency: {mod}"
+      throwError "unexpected HexBasic umbrella dependency: {mod}"
   for (name, _) in env.constants.toList do
     if let some idx := env.getModuleIdxFor? name then
       let mod := env.header.moduleNames[idx.toNat]!
@@ -30,6 +30,12 @@ run_elab do
 -- Lean's global Array or Vector equality instances.
 example : (inferInstance : DecidableEq (Array Nat)) = Array.instDecidableEq := rfl
 example : (inferInstance : DecidableEq (Vector Nat 2)) = instDecidableEqVector := rfl
+
+open scoped Hex in
+example : (inferInstance : DecidableEq (Array Nat)) = Hex.instDecidableEqArray := rfl
+
+open scoped Hex in
+example : (inferInstance : DecidableEq (Vector Nat 2)) = Hex.instDecidableEqVector := rfl
 
 open Hex Hex.PermGroup
 

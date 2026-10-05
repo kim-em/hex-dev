@@ -9,6 +9,7 @@ module
 public import HexPermGroup.Product.WreathMaps
 public import HexPermGroup.Enumerate
 public import HexPermGroup.Group.Trivial
+public import HexBasic.List.Nodup
 
 public section
 

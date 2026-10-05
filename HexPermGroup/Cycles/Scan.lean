@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPermGroup.Cycles.Visit
+public import HexBasic.List.Nodup
 
 public section
 

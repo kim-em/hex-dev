@@ -8,6 +8,7 @@ module
 
 public import HexPermGroup.Product.Maps
 public import HexPermGroup.Enumerate
+public import HexBasic.List.Nodup
 
 public section
 

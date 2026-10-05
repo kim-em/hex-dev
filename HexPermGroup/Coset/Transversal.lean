@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPermGroup.Coset
+public import HexBasic.List.Nodup
 
 public section
 
