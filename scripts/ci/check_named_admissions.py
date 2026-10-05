@@ -167,6 +167,18 @@ def import_cones(starts: list[str]) -> set[Path]:
     return paths
 
 
+def find_admissions(source: str) -> list[re.Match[str]]:
+    """Do not mistake Expr's admission detector for an admission constructor.
+
+    Only the exact dotted `hasSorry` selector is excluded. Admission-producing
+    APIs, `sorryAx`, bare identifiers and the syntax tokens remain forbidden.
+    """
+    return [match for match in ADMISSION.finditer(source) if not (
+        match.group() == "hasSorry" and match.start() > 0
+        and source[match.start() - 1] == "."
+    )]
+
+
 def check() -> None:
     if module_file("HexRCF.RealCoefficients") is None:
         raise ValueError("the optional rcf adapter module is missing")
@@ -304,7 +316,7 @@ def check() -> None:
         raise ValueError(f"the optional adapter no longer imports {BRIDGE}")
     for relative in sorted(paths):
         source = code_only((ROOT / relative).read_text(encoding="utf-8"))
-        admissions = list(ADMISSION.finditer(source))
+        admissions = find_admissions(source)
         if relative == Path("HexBareissMathlib/Tactic.lean"):
             # This Lean elaborator API prevents failed elaboration from inserting
             # an admitted term; it is the opposite of an admission.

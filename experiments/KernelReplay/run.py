@@ -67,7 +67,11 @@ def main() -> None:
                   "factMonic=kernelAccepted children=3", "factMonicPackets=kernelAccepted",
                   "factMonicMissing=3ExactLowerKeys",
                   "factMonicPacking=kernelAcceptedReducedRemainder", "factNonconstant=kernelAccepted",
-                  "factNonconstantMissing=upperContextAndKey"))
+                  "factNonconstantMissing=upperContextAndKey",
+                  "multiFields=kernelAccepted requests=3", "multiFieldPackets=kernelAccepted",
+                  "multiFieldMissing=exactUpperRequest", "multiFieldWrongContext=rejected",
+                  "multiFieldUnknownContext=unproved", "multiSiblingFields=kernelAcceptedSameCarrier",
+                  "multiSiblingWrongRoot=rejected", "multiNonBoolProgram=rejectedBeforeSupply"))
     run("nested", ["nested"],
         contains=("nestedSelections=kernelAccepted children=2",
                   "nestedJointReader=kernelAccepted", "nestedJointMissing=unproved",
