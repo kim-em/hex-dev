@@ -37,12 +37,28 @@ open Hex Lean Meta Qq Hex.OrderedFn.Oracle
 fixed-field checker. This bounded operation promises containment, not a width
 or eventual success for every algebraic source presentation. -/
 private meta def encloseCore (source : Expr) (request : Rat) : MetaM (Bounds × Expr) := do
-  if RationalRoot.isNotation source || (← RationalRoot.isRealPower source) then
-    match ← RationalRoot.parameters? source with
-    | .ok (some _) => pure ()
-    | .ok none => throwError "rcf: algebraic enclosure needs a supported selected-field presentation"
-    | .error error => throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
-  let (_, _, value) ← FieldRuntime.coefficient source
+  let general ← if RationalRoot.isNotation source || (← RationalRoot.isRealPower source) then
+      match ← RationalRoot.parameters? source with
+      | .ok (some _) => pure false
+      | .ok none =>
+          if ← RationalRoot.hasSyntax source then
+            throwError "rcf: algebraic enclosure needs a supported selected-field presentation"
+          pure true
+      | .error error => throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
+    else pure false
+  let value ← if general then do
+      -- Authenticate before interval production. Degree one gives the exact
+      -- selected value without imposing positivity or discarding original guards.
+      let x : Q(ℝ) ← pure source
+      let authenticated ← match ← (AlgebraicRoot.identify q($x ^ (1 / 1 : ℝ))
+          source 1 Coefficients.prepare
+          (CommonTactic.rcf.algebraic.commonDegree.get (← getOptions))).run with
+        | .ok identity => pure identity
+        | .error error => throwError "rcf: {error.toMessageData}"
+      pure authenticated.value
+    else do
+      let (_, _, value) ← FieldRuntime.coefficient source
+      pure value
   let precision := request.den.log2 + 2
   let some interval := rootInterval value precision |
     throwError "rcf: algebraic coefficient enclosure proposal failed"

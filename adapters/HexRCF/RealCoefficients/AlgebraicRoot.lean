@@ -52,8 +52,9 @@ private meta def identifyBase (source : Expr)
       {dimension := .exponent, limit := degreeLimit, consumed := 0, requested := degree})
   if let some cache := cache then
     if let some authenticated := (← cache.get)[source]? then
-      -- Entries retain ordinary proof auxiliaries. The cache belongs to the
-      -- enclosing preparation and must not survive a rollback of its environment.
+      -- Entries retain ordinary proof auxiliaries. A failed recursive
+      -- preparation is terminal for the whole call; the top-level cache is
+      -- then discarded. Reject an entry whose environment was rolled back.
       unless authenticated.proof.getAppFn.constName?.any (← getEnv).contains do
         throwThe Hex.RealFormula.Reify.Error (.internal "cached base proof is unavailable")
       let requested := degree * authenticated.fieldDegree

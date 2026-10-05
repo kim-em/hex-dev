@@ -146,6 +146,21 @@ private partial def enclose (cache : Cache) (entries : Array (Name × Expr)) (re
   cache.modify (·.insert source evidence)
   return evidence
 
+private partial def observed (cache : Cache) (entries : Array (Name × Expr)) (request : Rat)
+    (evidence : Enclosure) : MetaM Enclosure := do
+  -- Exact leaf containment does not use a registered subterm's bounds.
+  -- Still freeze each matched provider claim for source/registry binding.
+  let mut observations := #[]
+  for (_, subject) in ← Registration.used entries #[evidence.source] do
+    let child ← enclose cache entries request subject
+    observations := observations ++ child.observations
+  return {evidence with observations}
+
+private partial def algebraic (cache : Cache) (entries : Array (Name × Expr)) (request : Rat)
+    (source : Expr) : MetaM Enclosure := do
+  let (bounds, proof) ← AlgebraicBounds.enclose source request
+  observed cache entries request (← checked source bounds proof)
+
 private partial def encloseCore (cache : Cache) (entries : Array (Name × Expr)) (request : Rat)
     (source : Expr) : MetaM Enclosure := do
   -- Whole-subject matching precedes arithmetic and rational normalization.
@@ -174,14 +189,15 @@ private partial def encloseCore (cache : Cache) (entries : Array (Name × Expr))
       e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 || realPower then
     if RationalRoot.isNotation source || realPower then
       unless ← RationalRoot.hasSyntax source do
-        throwError "rcf: algebraic enclosure needs a supported selected-field presentation"
+        -- General algebraic bases need checked source authentication before
+        -- whole-root rational normalization, even when their value is rational.
+        return ← algebraic cache entries request source
       match ← RationalRoot.parameters? source with
       | .error error => throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
       | .ok _ => pure ()
     if (← (Hex.RCF.Reify.recognizeCoefficient source).run).isOk then
-      return ← rational source
-    let (bounds, proof) ← AlgebraicBounds.enclose source request
-    return ← checked source bounds proof
+      return ← observed cache entries request (← rational source)
+    return ← algebraic cache entries request source
   if [``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv].contains op && args.size == 6 then
     let left ← enclose cache entries request args[4]!
     let right ← enclose cache entries request args[5]!
@@ -255,7 +271,7 @@ private partial def encloseCore (cache : Cache) (entries : Array (Name × Expr))
     let proof ← mkAppM ``Eq.mp #[← mkAppM ``congrArg
       #[predicate, ← instantiateMVars equality], result.proof]
     return ← checked source result.bounds proof result.observations
-  rational source
+  observed cache entries request (← rational source)
 end
 
 /-- Freeze supplied bounds and discharge every source guard before proof search.

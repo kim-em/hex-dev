@@ -2590,11 +2590,58 @@ example : ∃ x : ℝ,
 example : ∀ x : ℝ,
     x ^ 2 + 1 / (4 - Real.pi) > 0 := by rcf
 
+section
+set_option maxRecDepth 16384
+set_option maxHeartbeats 2400000
+
+example : ∀ x : ℝ,
+    x ^ 2 + Real.pi -
+      Real.sqrt (Real.sqrt 2) > 0 := by rcf
+example : ∀ x : ℝ,
+    x ^ 2 + Real.exp 1 -
+      Real.sqrt (3 + Real.sqrt 2) > 0 := by rcf
+example : ∀ x : ℝ,
+    x ^ 2 + Real.pi - Real.sqrt
+      (1 / (4 + Real.sqrt 2)) > 0 := by rcf
+example : ∀ x : ℝ,
+    x ^ 2 + 1 /
+      (Real.pi - Real.sqrt (Real.sqrt 2)) > 0 := by rcf
+
+@[rcf_constant] private def callerInner :
+    Registration (Real.sqrt 2) where
+  version := 1
+  approximation _ := ⟨1, 2, by decide⟩
+  containment _ _ := by
+    simp only [Contains]
+    constructor
+    · norm_num [Real.le_sqrt]
+    · norm_num [Real.sqrt_le_iff]
+
+example : ∀ x : ℝ,
+    x ^ 2 + Real.pi -
+      Real.sqrt (Real.sqrt 2) > 0 := by rcf
+end
+
 /-- error: rcf: original closed divisor is zero -/
 #guard_msgs in
 example : ∀ x : ℝ,
     x ^ 2 + 0 / (Real.pi - Real.pi) ≥ 0 := by rcf
 ```
+
+These additional examples combine supplied bounds with roots of algebraic
+bases. Before proposing an enclosure, the exact frontend authenticates the
+source and its selected embedding, checking every original divisor inside
+the base. Ordinary literal replay then proves containment in the proposed
+rational interval. The mixed-division example also checks that the combined
+bounds separate its original divisor from zero. Neither step treats a registered
+constant as an executable ordered field, and frozen replay does not repeat
+the algebraic search. An unsupported base, exhausted admission or unresolved
+divisor remains a failure of this bounded finite path. The final registration
+also illustrates a registered subterm inside an algebraic root. The root must
+still authenticate exactly without using the subterm provider's bounds;
+registering π does not admit `Real.sqrt Real.pi`. The finite certificate retains
+and checks the matched provider's frozen subject, request and version.
+A registration for the whole coefficient takes precedence over its subterms.
 
 All original divisors are checked before cancellation, coefficient abstraction
 or proof search. Thus even an erased division by `sin 1 - sin 1` is invalid.
