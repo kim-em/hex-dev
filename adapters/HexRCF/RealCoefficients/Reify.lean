@@ -416,14 +416,11 @@ private def prepareCore (registered : Array Expr) (original : Expr) (config : He
     -- A known zero guard is terminal before the shared reifier can turn its
     -- rational denominator into a syntax decline. Other guards remain for the
     -- consuming handler, including unresolved algebraic/registered signs.
-    for divisor in divisors do
-      let divisor : Q(ℝ) ← lowerSources registered divisor
-      let rational ← tryCatchThe Hex.RealFormula.Reify.Error (do
-          let _ ← Coefficients.admitRational divisor
-          pure true) (fun error => match error with
-          | .unsupported _ _ => pure false
-          | _ => Hex.RealFormula.Reify.abort error)
-      unless rational do continue
+    let lowered ← liftM (divisors.mapM (lowerSources registered))
+    let admitted ← Coefficients.admitGuards lowered
+    for i in [:lowered.size] do
+      unless admitted[i]! do continue
+      let divisor : Q(ℝ) := lowered[i]!
       let (value, proof) ← liftM (do
         let saved ← saveState
         try

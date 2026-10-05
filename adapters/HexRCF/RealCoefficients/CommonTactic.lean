@@ -202,22 +202,21 @@ private meta def candidate (target : Expr) : MetaM Bool := do
 /-- Preserve single-coefficient priority only when every original divisor
 is rational. Rational normalization restores its temporary metavariable state. -/
 private meta def rationalGuards (divisors : Array Expr) : MetaM Bool := do
-  for original in divisors do
-    let divisor ← Reify.lowerSources #[] original
-    if ← hasRoot divisor then return false
+  let saved ← saveState
+  try
+    let lowered ← divisors.mapM (Reify.lowerSources #[])
     let config : Hex.RealFormula.Reify.Config := {}
-    match ← ((Coefficients.admitRational divisor).run
+    let admitted ← match ← ((Coefficients.admitGuards lowered).run
         {config, budget := .ofBudget config.ring.budget}).run with
-    | .error (.unsupported _ _) => return false
-    | .error error => throwError "rcf: {error.toMessageData}"
-    | .ok _ => pure ()
-    let value : Q(ℝ) := divisor
-    let saved ← saveState
-    try
+      | .error error => throwError "rcf: {error.toMessageData}"
+      | .ok (admitted, _) => pure admitted
+    unless admitted.all id do return false
+    for divisor in lowered do
+      let value : Q(ℝ) := divisor
       let ⟨_, _, _, _⟩ ← Mathlib.Meta.NormNum.deriveRat value (_inst := q(inferInstance))
       pure ()
-    finally saved.restore
-  return true
+    return true
+  finally saved.restore
 
 private meta def rootParameters? (source : Expr) :
     MetaM (Except Hex.RealFormula.Reify.Error (Option RationalRoot.Parameters)) := do

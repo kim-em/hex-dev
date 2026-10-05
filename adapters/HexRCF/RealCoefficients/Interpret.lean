@@ -78,6 +78,36 @@ def admitRational (source : Expr) : ReifyM Unit := do
   let view ← arithmetic #[] normalized
   boundNumerator view.numerator
 
+private partial def coverSubterms (source : Expr) : StateM ExprSet Unit := do
+  if (← get).contains source then return ()
+  modify (·.insert source)
+  let _ ← source.traverseChildren fun child => do
+    coverSubterms child
+    pure child
+
+/-- Admit original rational guards, largest first, without repeating admission
+for a subterm of an already admitted guard. Results retain original guard order;
+unsupported syntax is recognition-only, while every other error is terminal. -/
+def admitGuards (sources : Array Expr) : ReifyM (Array Bool) := do
+  let order := (sources.mapIdx fun i source => (i, source.sizeWithoutSharing)).qsort
+    (fun a b => a.2 > b.2 || (a.2 == b.2 && a.1 < b.1))
+  let mut covered : ExprSet := {}
+  let mut admitted := Array.replicate sources.size false
+  for (i, _) in order do
+    let source := sources[i]!
+    if covered.contains source then
+      admitted := admitted.set! i true
+      continue
+    let accepted ← tryCatchThe Error (do
+        admitRational source
+        pure true) (fun error => match error with
+        | .unsupported _ _ => pure false
+        | _ => abort error)
+    if accepted then
+      covered := ((coverSubterms source).run covered).2
+      admitted := admitted.set! i true
+  return admitted
+
 /-- Recognize a positive reciprocal integer exponent using checked rational
 normalization. The caller retains the source exponent's divisor obligations. -/
 def rootDegree (source : Expr) : ReifyM Nat := do

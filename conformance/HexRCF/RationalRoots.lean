@@ -73,7 +73,9 @@ run_elab do
       q(∀ x : ℝ, x ^ 2 + (RealAlgebraicNumber.ofRat 1).toReal +
         Real.sqrt (1 / $large) > 0),
       q(∀ x : ℝ, x ^ 2 + (RealAlgebraicNumber.ofRat 1).toReal +
-        Real.sqrt (1 / $zeroPower) > 0)] do
+        Real.sqrt (1 / $zeroPower) > 0),
+      q(∀ x : ℝ, x ^ 2 + (RealAlgebraicNumber.ofRat 1).toReal +
+        x / ($large - $large) ≥ 0)] do
     let .error (.budget exhausted) ← Reify.prepare target config |
       throwError "source preparation bypassed an intermediate numerator bound"
     unless exhausted.dimension == .coefficientBits do
@@ -81,6 +83,14 @@ run_elab do
     unless (← getMCtx).mvarCounter == beforeFrontend.mvarCounter &&
         (← (← getEnv).getLocalConstantInfos).map (·.name) == frontendNames do
       throwError "source budget refusal changed caller state"
+  let inner : Q(ℝ) := q(1 / 2)
+  let outer : Q(ℝ) := q(1 / $inner)
+  let .ok (admitted, _) ← ((Coefficients.admitGuards
+      #[inner, outer, inner, q(Real.sin 0 + $inner)]).run
+        {config, budget := .ofBudget config.ring.budget}).run |
+    throwError "nested guard admission failed"
+  unless admitted == #[true, true, true, false] do
+    throwError "guard admission changed original order or hid unsupported syntax"
   let mut small : Q(ℝ) := q(1)
   for _ in [:32] do small := q($small ^ (0 : ℕ))
   let .ok (3, _) ← degree q($small / 3) |
