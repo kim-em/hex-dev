@@ -65,7 +65,7 @@ structure Parameters where
 def isNotation (source : Expr) : Bool := Id.run do
   let e := source.consumeMData
   return e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 ||
-    (e.isAppOfArity ``HPow.hPow 6 && e.getAppArgs[1]!.isConstOf ``Real)
+    (e.isAppOfArity ``HPow.hPow 6 && e.getAppArgs[1]!.consumeMData.isConstOf ``Real)
 
 /-- Check scalar syntax without computing its value or coefficient size.
 The shared arithmetic reifier still validates instances and performs all

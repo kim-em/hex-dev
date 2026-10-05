@@ -225,6 +225,16 @@ run_elab do
   let .error (.budget _) ← RationalRoot.parameters? wrappedLarge |
     throwError "metadata hid inverse-containing radicand exhaustion"
   refuses (AlgebraicBounds.enclose wrappedLarge (1 / 4))
+  let powerLarge : Q(ℝ) := q((((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ)) ^ (1 / 2 : ℝ))
+  let powerArgs := powerLarge.getAppArgs
+  let wrappedType := mkAppN powerLarge.getAppFn
+    (powerArgs.set! 1 (.mdata {} powerArgs[1]!))
+  let _ ← Hex.RCF.checkExpr `Hex.RCF.RationalRoots.typeMetadata wrappedType
+  unless RationalRoot.isNotation wrappedType do
+    throwError "type-argument metadata hid real root notation"
+  let .error (.budget _) ← RationalRoot.parameters? wrappedType |
+    throwError "type-argument metadata hid root admission exhaustion"
+  refuses (AlgebraicBounds.enclose wrappedType (1 / 4))
   let combined := q(∀ x : ℝ, x ^ 2 + Real.sqrt 2 + Real.sqrt 3 > 0)
   let beforeCombined ← getMCtx
   let combinedNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
