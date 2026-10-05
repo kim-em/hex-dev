@@ -675,6 +675,11 @@ register_option rcf.algebraic.validateFresh : Bool := {
   descr := "diagnostic comparison: repeat prepared-input validation for fresh tactic data"
 }
 
+register_option rcf.algebraic.commonDegree : Nat := {
+  defValue := 64
+  descr := "upper bound on the product of distinct selected-generator degrees before common-field search"
+}
+
 /-- Assemble only factory-produced data. No editable environment is accepted
 at this private boundary; the dispatcher checks the complete original proof. -/
 private meta def proveFresh (prepared : Coefficients.Environment) : MetaM Expr :=
@@ -748,6 +753,14 @@ private meta partial def gatherCore (source : Expr) (leaves : Leaves) :
   if e.isAppOfArity ``HPow.hPow 6 then
     if (← inferType args[5]!).isConstOf ``Nat then
       return ← gatherCore args[4]! leaves
+  if RationalRoot.isNotation e then
+    unless ← RationalRoot.hasSyntax e do return .ok none
+    -- A nonpositive rational base may normalize to a rational whole root.
+    -- It reaches this fallback only after bounded parameter recognition.
+    match ← RationalRoot.parameters? e with
+    | .error (.unsupported _ _) => return .ok none
+    | .error error => return .error error
+    | .ok _ => pure ()
   let rational ← observing? do
     let q : Q(ℝ) := e
     let _ ← Mathlib.Meta.NormNum.deriveRat q (_inst := q(inferInstance))
@@ -782,6 +795,19 @@ private meta def sourcePlans (source : Reify.Source) :
         throwError "rcf: internal: eligible leaf has no plan"
       plans := plans.push plan
     pure plans
+  let limit := rcf.algebraic.commonDegree.get (← getOptions)
+  let mut distinct : Array RealAlgebraicNumber := #[]
+  let mut degree := 1
+  for plan in plans do
+    unless distinct.contains plan.anchorValue do
+      distinct := distinct.push plan.anchorValue
+      let requested := degree * plan.anchorValue.toAlgebraic.p.natDegree
+      if requested > limit then
+        -- The shared exponent dimension also bounds this polynomial-degree
+        -- admission. No common-field search has run at this boundary.
+        return .error (.budget
+          {dimension := .exponent, limit, consumed := degree, requested})
+      degree := requested
   return .ok (some (leaves.sources, plans))
 
 /-- Prepare an exact selected-field environment without root/cell production.

@@ -57,6 +57,9 @@ theorem pi_negative_field : ∀ x : ℝ,
 theorem pi_rational_root : ∀ x : ℝ,
     x ^ 2 + Real.pi - Real.sqrt (1 / 2) > 0 := by rcf
 
+theorem pi_inverse_root : ∀ x : ℝ,
+    x ^ 2 + Real.pi - Real.sqrt ((2 : ℝ)⁻¹) > 0 := by rcf
+
 theorem pi_positive_divisor : ∀ x : ℝ,
     x ^ 2 + 1 / (Real.pi - Real.sqrt 2) > 0 := by rcf
 
@@ -117,6 +120,11 @@ private meta def refuses (action : MetaM α) : MetaM Unit := do
 #guard_msgs (whitespace := lax) in
 example : ∀ x : ℝ,
     x ^ 2 + Real.pi + Real.sqrt ((((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ)) ^ (64 : ℕ)) > 0 := by rcf
+
+/-- error: rcf: budget exhausted in dimension coefficient bits: limit 4096, consumed 3, requested 4097 -/
+#guard_msgs (whitespace := lax) in
+example : ∀ x : ℝ, x ^ 2 + Real.pi +
+    Real.sqrt ((2 : ℝ)⁻¹ * 2 * (((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ))) > 0 := by rcf
 
 run_elab do
   let before ← getMCtx
@@ -231,6 +239,11 @@ run_meta do
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.MixedConstants.pi_rational_root
       (fun e => e.isConstOf ``RationalRoot.selected) do
     throwError "mixed rational-root proof did not use its checked embedding"
+  unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.MixedConstants.pi_inverse_root
+      (fun e => e.isConstOf ``RationalRoot.selected) do
+    throwError "inverse-written root did not use its checked embedding"
+  Hex.RCF.checkAxioms `Hex.RCF.MixedConstants.pi_inverse_root
+    (Lean.mkConst `Hex.RCF.MixedConstants.pi_inverse_root)
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.MixedConstants.pi_other_radical
       (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.Replay.check_sound) do
     throwError "mixed sqrt3 proof did not use prepared finite replay"
@@ -287,3 +300,7 @@ run_meta do
 /-- info: 'Hex.RCF.MixedConstants.pi_rational_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.MixedConstants.pi_rational_root
+
+/-- info: 'Hex.RCF.MixedConstants.pi_inverse_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.MixedConstants.pi_inverse_root

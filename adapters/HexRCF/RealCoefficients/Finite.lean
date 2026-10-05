@@ -174,6 +174,8 @@ private partial def encloseCore (cache : Cache) (entries : Array (Name × Expr))
   if e.isAppOfArity ``RealAlgebraicNumber.toReal 1 ||
       e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 || realPower then
     if RationalRoot.isNotation source then
+      unless ← RationalRoot.hasSyntax source do
+        throwError "rcf: algebraic enclosure needs a supported selected-field presentation"
       match ← RationalRoot.parameters? source with
       | .error error => throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
       | .ok _ => pure ()

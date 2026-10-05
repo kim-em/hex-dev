@@ -113,14 +113,21 @@ Zero divisions inside an unsupported root base or exponent are refused during
 recognition rather than reaching common-field replay. Negative bases,
 nonreciprocal real exponents and unsupported nested algebraic-base roots do
 not acquire a signed-root interpretation from this frontend.
-Unsupported root-base syntax and unsupported sibling coefficients take
-precedence over recognition exhaustion. For otherwise supported sources,
+In common-field preparation, unsupported root-base syntax and unsupported
+sibling coefficients take precedence over recognition exhaustion. For otherwise supported sources,
 `Coefficients.prepare` returns a structured budget error before field construction.
-The finite-bound path applies the same root check before enclosure proposals.
+Before common-field search, `rcf.algebraic.commonDegree` bounds the product of
+the canonical degrees of distinct selected generators (default 64). This
+conservative admission uses the shared exponent budget diagnostic; different
+aliases for the same selected generator are counted once. It does not bound
+every subsequent operation or prove certificate-search completeness.
+The finite-bound path applies the root syntax and size checks separately to
+each leaf before rational normalization or enclosure proposals; errors there
+are terminal in traversal order.
 Zero-divisor detection within a root follows bounded arithmetic evaluation;
 earlier exhaustion can prevent that detection, and either outcome refuses the input.
-Use `1 / 2` for a rational root base: inverse notation is currently admitted
-in reciprocal root exponents, but `Real.sqrt (2⁻¹)` remains unsupported.
+Inverse notation is supported in rational bases and reciprocal exponents,
+including `Real.sqrt (2⁻¹)`. Visible rational constructors are lowered in both.
 Registered bounds compose with unregistered selected algebraic values and
 checked root aliases through separately proved algebraic enclosures. The
 [mixed-coefficient regressions](../conformance/HexRCF/MixedConstants.lean)

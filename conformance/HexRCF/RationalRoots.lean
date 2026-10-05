@@ -29,6 +29,14 @@ theorem fourth : ∀ x : ℝ, x ^ 2 + (5 / 3 : ℝ) ^ (1 / 4 : ℝ) > 0 := by rc
 
 theorem inverse_exponent : ∀ x : ℝ, x ^ 2 + (5 : ℝ) ^ ((4 : ℝ)⁻¹) > 0 := by rcf
 
+theorem inverse_base : ∀ x : ℝ, x ^ 2 + Real.sqrt ((2 : ℝ)⁻¹) > 0 := by rcf
+
+theorem inverse_natural : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt (4 * (2 : ℝ)⁻¹) + Real.sqrt (8 * (2 : ℝ)⁻¹ + 1) > 0 := by rcf
+
+theorem constructor_exponent : ∀ x : ℝ,
+    x ^ 2 + (3 : ℝ) ^ (RealAlgebraicNumber.ofRat (1 / 3)).toReal > 0 := by rcf
+
 theorem direct_power : ∀ x : ℝ, x ^ 2 + Real.rpow (3 : ℝ) (1 / 5 : ℝ) > 0 := by rcf
 
 theorem field_root : ∃ x : ℝ, x ^ 2 = Real.sqrt (1 / 2) ∧ 0 < x ∧ x < 1 := by rcf
@@ -123,8 +131,16 @@ run_elab do
   let .error (.budget _) ← RationalRoot.parameters? q((2 : ℝ) ^ (1 / 10000 : ℝ))
       {ring := {budget := {Hex.Reflect.Budget.default with exponent := 8}}} |
     throwError "shared root-degree budget was ignored"
-  let .ok none ← RationalRoot.parameters? q(Real.sqrt ((2 : ℝ)⁻¹)) |
-    throwError "inverse-base notation bypassed rational-root syntax admission"
+  let .ok (some inverseParameters) ← RationalRoot.parameters? q(Real.sqrt ((2 : ℝ)⁻¹)) |
+    throwError "inverse-base notation was not admitted"
+  unless inverseParameters.base == 1 / 2 && inverseParameters.degree == 2 do
+    throwError "inverse-base parameters differ from their rational interpretation"
+  let wrapped := Expr.mdata {} q(Real.sqrt ((2 : ℝ)⁻¹))
+  unless RationalRoot.isNotation wrapped && (← RationalRoot.hasSyntax wrapped) do
+    throwError "metadata hid root admission"
+  let .ok (some wrappedParameters) ← RationalRoot.parameters? wrapped |
+    throwError "metadata hid root parameters"
+  let _ ← RationalRoot.identify wrapped wrappedParameters
   let large : Q(ℝ) := q(Real.sqrt (1 / (((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ))))
   let budgetGoal := q(∀ x : ℝ, x ^ 2 + Real.sqrt 3 + $large > 0)
   let .ok _ ← Reify.prepare budgetGoal |
@@ -196,6 +212,30 @@ run_elab do
   unless (← getMCtx).mvarCounter == beforeNatural.mvarCounter &&
       (← (← getEnv).getLocalConstantInfos).map (·.name) == naturalNames do
     throwError "natural-radicand exhaustion changed caller state"
+  let inverseLarge := q(Real.sqrt ((2 : ℝ)⁻¹ * 2 *
+    (((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ))))
+  let .error (.budget _) ← RationalRoot.parameters? inverseLarge |
+    throwError "inverse-containing radicand bypassed bounded normalization"
+  let wrappedLarge := Expr.mdata {} inverseLarge
+  let .error (.budget _) ← RationalRoot.parameters? wrappedLarge |
+    throwError "metadata hid inverse-containing radicand exhaustion"
+  refuses (AlgebraicBounds.enclose wrappedLarge (1 / 4))
+  let combined := q(∀ x : ℝ, x ^ 2 + Real.sqrt 2 + Real.sqrt 3 > 0)
+  let beforeCombined ← getMCtx
+  let combinedNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
+  let .error (.budget exhausted) ← withOptions (CommonTactic.rcf.algebraic.commonDegree.set · 2)
+      (Coefficients.prepare combined) |
+    throwError "combined generator degree was not bounded"
+  unless exhausted.dimension == .exponent && exhausted.limit == 2 &&
+      exhausted.consumed == 2 && exhausted.requested == 4 do
+    throwError "combined generator degree report lost its exact admission bounds"
+  unless (← getMCtx).mvarCounter == beforeCombined.mvarCounter &&
+      (← (← getEnv).getLocalConstantInfos).map (·.name) == combinedNames do
+    throwError "combined degree exhaustion changed caller state"
+  let .ok _ ← withOptions (CommonTactic.rcf.algebraic.commonDegree.set · 2) <|
+      Coefficients.prepare q(∀ x : ℝ,
+        x ^ 2 + Real.sqrt 2 - (4 : ℝ) ^ (1 / 4 : ℝ) = x ^ 2) |
+    throwError "repeated selected anchor was charged twice"
   let .ok division ← Reify.prepare q(∀ x : ℝ,
       x / (2 : ℝ) ^ (1 / 3 : ℝ) =
         ((2 : ℝ) ^ (1 / 3 : ℝ)) ^ 2 * x / 2) |
@@ -214,6 +254,23 @@ run_elab do
     throwError "nested algebraic-base root unexpectedly admitted"
 
 end Hex.RCF.RationalRoots
+
+run_meta do
+  for name in [`Hex.RCF.RationalRoots.inverse_base,
+      `Hex.RCF.RationalRoots.inverse_natural, `Hex.RCF.RationalRoots.constructor_exponent] do
+    Hex.RCF.checkAxioms name (Lean.mkConst name)
+
+/-- info: 'Hex.RCF.RationalRoots.inverse_base' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RationalRoots.inverse_base
+
+/-- info: 'Hex.RCF.RationalRoots.inverse_natural' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RationalRoots.inverse_natural
+
+/-- info: 'Hex.RCF.RationalRoots.constructor_exponent' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RationalRoots.constructor_exponent
 
 run_meta do
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.constructor

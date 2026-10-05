@@ -527,7 +527,8 @@ For a rational base `a` and positive natural degree `n`, the frontend records
 `a.den * X^n - a.num` and checks a real-axis isolating square with a strictly
 positive lower endpoint. The proved root equation and positivity identify
 that selected root with `a ^ (1 / n : ℝ)`; approximation proposes the square
-but supplies no proof. The exponent may also use inverse notation. Every
+but supplies no proof. The base and exponent may also use inverse notation,
+and visible rational constructors are lowered in both. Every
 original denominator in the base, exponent or surrounding expression remains
 a source guard.
 
@@ -561,8 +562,13 @@ denominator. Natural powers of the quantified variable keep their usual
 polynomial meaning. Negative real-power bases and nonreciprocal real exponents
 are outside this alias grammar. Nested roots with an algebraic base, such as
 `Real.sqrt (Real.sqrt 2)`, still need a supported source presentation; this
-rational-base path does not provide that conversion. Common-field construction
-and finite certificate search retain their existing bounds and diagnostics.
+rational-base path does not provide that conversion. Before common-field
+search, `rcf.algebraic.commonDegree` bounds the product of the canonical degrees
+of distinct selected generators (default 64), reporting exhaustion through
+the shared exponent dimension. This is a conservative admission bound:
+aliases for one selected generator count once, but algebraic relations between
+different generators can make the actual common degree smaller than the product.
+It does not establish complete witness search or bound every later operation.
 
 The selected-field constructions below use the real root of `X³ − 2`. The adapter records an
 isolating square and verifies its root witness. It reconstructs Hex's
@@ -2340,7 +2346,7 @@ equal, reversed and half-open domains. Fresh modules check the public
 semantics and its standard axiom inventory. These are correctness regressions;
 no timing improvement is claimed for this composition.
 
-Independently constructed contexts can now be gathered through the owner's
+Independently constructed contexts can be gathered through the owner's
 {name}`Hex.RealClosure.Tower.Shared.gather?` operation. Its checked maps retain
 each original owner in input order; repeated owners can reuse the same cached
 predecessor. {name}`Hex.RCF.RealCoefficients.Gather.values` applies those maps
