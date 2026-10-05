@@ -33,16 +33,16 @@ namespace Infinitesimal
 variable {K : Type u}
 
 /-- Scan from degree zero, returning the array size when all coefficients vanish. -/
-def lowestIndex [Zero K] [DecidableEq K] (p : DensePoly K) : Nat :=
+@[inline] def lowestIndex [Zero K] [DecidableEq K] (p : DensePoly K) : Nat :=
   p.coeffs.findIdx (fun c => c != 0)
 
 /-- The first nonzero coefficient, or zero for the zero polynomial. -/
-def lowestCoeff [Zero K] [DecidableEq K] (p : DensePoly K) : K :=
+@[inline] def lowestCoeff [Zero K] [DecidableEq K] (p : DensePoly K) : K :=
   p.coeff (lowestIndex p)
 
 /-- Sign at a positive infinitesimal, using the predecessor field's total sign.
 Both coefficients matter: a monic denominator can have a negative lowest coefficient. -/
-def sign [Lean.Grind.Field K] [DecidableEq K] (baseSign : K → Int)
+@[inline] def sign [Lean.Grind.Field K] [DecidableEq K] (baseSign : K → Int)
     (f : RationalFn K) : Int :=
   if f.num = 0 then 0 else
     baseSign (lowestCoeff f.num) * baseSign (lowestCoeff f.den)
