@@ -167,7 +167,8 @@ Selected entries support the existing `descriptor.buildSigns` and
 The companion's `NumberField.value_complex` retains the entire selected
 complex value in ℝ, and `roots_success`, `roots_all`, `roots_spec` and
 `roots_sorted` prove totality, the zero case, exact multiplicities and ordering
-for every polynomial in the actual field coordinates.
+for every polynomial in the actual field coordinates. The public
+`value_add/sub/mul/div/neg/inv/nat` laws support further selected-entry proofs.
 
 Run `lake build hexrealclosure_number_field_conformance` followed by
 `.lake/build/bin/hexrealclosure_number_field_conformance`. Its compiled cubic
@@ -175,7 +176,10 @@ fixture exercises the zero case, repeated roots and a negative nonmonic input,
 selected signs, strict comparison and inversion at the returned roots. The
 independent FLINT qqbar oracle reconstructs the selected cubic embedding and
 checks the original polynomials, all roots, labels, intervals, derivative words
-and query signs. Existing common-field fixtures cover coordinates obtained
+and query signs. A second cubic fixture selects the middle root of
+`X³−3X+1`, which has three real embeddings including two positive ones.
+Each generator carries its actual isolating bounds, so the oracle and
+conjugate-swap mutations distinguish embeddings with the same sign. Existing SignDet common-field fixtures cover coordinates obtained
 from distinct real fields through `QAdjoin.common`. The companion's
 `NumberField.common_value` proves that every returned common-field coordinate
 retains the corresponding input's entire complex value when the computed

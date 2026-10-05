@@ -70,9 +70,12 @@ private def emit (generator : RealAlgebraicNumber) (name : String)
           throw (IO.userError "number-field roots are not strictly ordered")
       let entries ← entries.mapM (entryJson generator context queries)
       pure (object [("kind", .string "finite"), ("entries", .arr entries.toArray)])
+  let square := generator.toAlgebraic.rep.1.square
   printJson (object [("case", .string name), ("context", Json.of context),
     ("generator_head", .arr (generator.toAlgebraic.p.toArray.map Json.of)),
     ("generator_sign", Json.of generator.sign),
+    ("generator_lower", rational (square.re - square.radiusHi).toRat),
+    ("generator_upper", rational (square.re + square.radiusHi).toRat),
     ("head", .arr (p.toArray.map coordinate)),
     ("queries", .arr (queries.toArray.map fun p => .arr (p.toArray.map coordinate))),
     ("output", output)])
@@ -91,3 +94,14 @@ def main : IO Unit := do
   emit generator "cubic-field zero" 0 queries
   emit generator "cubic-field repeated roots" (quadratic*quadratic*(x-1)) queries
   emit generator "cubic-field nonmonic roots" (DensePoly.scale (-2) (quadratic*quadratic*(x-1))) queries
+
+  let middleRaw : SignDet.RawDescriptor Rat Nat :=
+    { context := 13, head := DensePoly.ofList [1, -3, 0, 1],
+      lower := .finite 0, upper := .finite 1, indices := [], signs := [] }
+  let some middleDescriptor := Root.validate 13 middleRaw
+    | throw (IO.userError "middle cubic generator validation failed")
+  let middle := middleDescriptor.handle.canonical
+  let gamma := middle.toAlgebraic.toQAdjoin
+  let y : DensePoly (QAdjoin middle.toAlgebraic) := DensePoly.ofList [0, 1]
+  let q := y*y - DensePoly.C gamma
+  emit middle "middle cubic embedding" (q*q*(y-1)) [y, y-1, q, y-DensePoly.C gamma]

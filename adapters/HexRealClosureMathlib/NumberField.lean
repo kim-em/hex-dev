@@ -29,43 +29,43 @@ theorem value_complex (a : QAdjoin generator.toAlgebraic) :
       PolyQuot.toComplex a generator.toAlgebraic.rep generator.toAlgebraic.rep_mk := by
   exact Complex.ext rfl (QAdjoin.value_real a generator.property).symm
 
-private theorem value_zero : value generator 0 = 0 := by
+theorem value_zero : value generator 0 = 0 := by
   simp [value, PolyQuot.map_zero]
 
-private theorem value_one : value generator 1 = 1 := by
+theorem value_one : value generator 1 = 1 := by
   simp [value, PolyQuot.map_one]
 
-private theorem value_add (a b : QAdjoin generator.toAlgebraic) :
+theorem value_add (a b : QAdjoin generator.toAlgebraic) :
     value generator (a + b) = value generator a + value generator b := by
   apply Complex.ofReal_injective
   rw [Complex.ofReal_add, value_complex, value_complex, value_complex, PolyQuot.map_add]
 
-private theorem value_sub (a b : QAdjoin generator.toAlgebraic) :
+theorem value_sub (a b : QAdjoin generator.toAlgebraic) :
     value generator (a - b) = value generator a - value generator b := by
   apply Complex.ofReal_injective
   rw [Complex.ofReal_sub, value_complex, value_complex, value_complex, PolyQuot.map_sub]
 
-private theorem value_mul (a b : QAdjoin generator.toAlgebraic) :
+theorem value_mul (a b : QAdjoin generator.toAlgebraic) :
     value generator (a * b) = value generator a * value generator b := by
   apply Complex.ofReal_injective
   rw [Complex.ofReal_mul, value_complex, value_complex, value_complex, PolyQuot.map_mul]
 
-private theorem value_div (a b : QAdjoin generator.toAlgebraic) :
+theorem value_div (a b : QAdjoin generator.toAlgebraic) :
     value generator (a / b) = value generator a / value generator b := by
   apply Complex.ofReal_injective
   rw [Complex.ofReal_div, value_complex, value_complex, value_complex, PolyQuot.map_div]
 
-private theorem value_neg (a : QAdjoin generator.toAlgebraic) :
+theorem value_neg (a : QAdjoin generator.toAlgebraic) :
     value generator (-a) = -value generator a := by
   apply Complex.ofReal_injective
   rw [Complex.ofReal_neg, value_complex, value_complex, PolyQuot.map_neg]
 
-private theorem value_inv (a : QAdjoin generator.toAlgebraic) :
+theorem value_inv (a : QAdjoin generator.toAlgebraic) :
     value generator (a⁻¹) = (value generator a)⁻¹ := by
   apply Complex.ofReal_injective
   rw [Complex.ofReal_inv, value_complex, value_complex, PolyQuot.map_inv]
 
-private theorem value_nat (n : Nat) : value generator (n : QAdjoin generator.toAlgebraic) = n := by
+theorem value_nat (n : Nat) : value generator (n : QAdjoin generator.toAlgebraic) = n := by
   apply Complex.ofReal_injective
   rw [value_complex]
   change PolyQuot.toComplex ((n : Rat) • (1 : QAdjoin generator.toAlgebraic))
@@ -93,12 +93,11 @@ theorem sign_spec (a : QAdjoin generator.toAlgebraic) :
 complex value when the actual common generator passes the real check. -/
 theorem common_value (inputs : Array AlgebraicNumber)
     (real : (QAdjoin.common inputs).generator.isReal = true)
-    (i : Nat) (hi : i < inputs.size)
-    (present : i < (QAdjoin.common inputs).entries.size) :
+    (i : Nat) (hi : i < inputs.size) :
     (value (RealAlgebraicNumber.ofAlgebraic (QAdjoin.common inputs).generator real)
-      (QAdjoin.common inputs).entries[i] : ℂ) = inputs[i].toComplex := by
+      ((QAdjoin.common inputs).entries[i]'(by simpa using hi)) : ℂ) = inputs[i].toComplex := by
   exact (value_complex _ _).trans
-    ((PolyQuot.toAlgebraicNumber_toComplex (QAdjoin.common inputs).entries[i]
+    ((PolyQuot.toAlgebraicNumber_toComplex ((QAdjoin.common inputs).entries[i]'(by simpa using hi))
       (QAdjoin.common inputs).generator.rep (QAdjoin.common inputs).generator.rep_mk).symm.trans
       (congrArg AlgebraicNumber.toComplex (QAdjoin.common_get inputs i hi)))
 
@@ -184,3 +183,39 @@ end Hex.RealClosure.NumberField
 /-- info: 'Hex.RealClosure.NumberField.roots_sorted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.NumberField.roots_sorted
+
+/-- info: 'Hex.RealClosure.NumberField.value_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.NumberField.value_zero
+
+/-- info: 'Hex.RealClosure.NumberField.value_one' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.NumberField.value_one
+
+/-- info: 'Hex.RealClosure.NumberField.value_add' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.NumberField.value_add
+
+/-- info: 'Hex.RealClosure.NumberField.value_sub' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.NumberField.value_sub
+
+/-- info: 'Hex.RealClosure.NumberField.value_mul' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.NumberField.value_mul
+
+/-- info: 'Hex.RealClosure.NumberField.value_div' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.NumberField.value_div
+
+/-- info: 'Hex.RealClosure.NumberField.value_neg' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.NumberField.value_neg
+
+/-- info: 'Hex.RealClosure.NumberField.value_inv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.NumberField.value_inv
+
+/-- info: 'Hex.RealClosure.NumberField.value_nat' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.NumberField.value_nat

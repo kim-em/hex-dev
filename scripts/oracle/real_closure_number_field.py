@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.oracle.real_algebraic_qqbar import QQBar
 
-CASES = {'cubic-field zero', 'cubic-field repeated roots', 'cubic-field nonmonic roots'}
+CASES = {'cubic-field zero', 'cubic-field repeated roots', 'cubic-field nonmonic roots', 'middle cubic embedding'}
 
 
 def require(condition, message):
@@ -19,10 +19,9 @@ def require(condition, message):
 
 
 def check(rows):
-    require(len(rows) == 3 and {r.get('case') for r in rows} == CASES, 'missing or duplicate case')
+    require(len(rows) == 4 and {r.get('case') for r in rows} == CASES, 'missing or duplicate case')
     with QQBar() as q:
         zero, one, two = [q.number(i) for i in (0, 1, 2)]
-        alpha = q.nth_root(two, 3)
         neg = lambda x: q.unary('neg', x)
         add = lambda x, y: q.binary('add', x, y)
         mul = lambda x, y: q.binary('mul', x, y)
@@ -34,16 +33,16 @@ def check(rows):
                 out = add(c, mul(out, x))
             return out
 
+        def number(raw):
+            require(isinstance(raw, list) and len(raw) == 2 and all(type(v) is int for v in raw)
+                    and raw[1] > 0, 'invalid rational coordinate')
+            f = Fraction(*raw)
+            require([f.numerator, f.denominator] == raw, 'noncanonical rational coordinate')
+            return q.number(f)
+
         def coordinate(raw):
             require(isinstance(raw, list) and len(raw) <= 3, 'invalid cubic-field coordinates')
-            values = []
-            for c in raw:
-                require(isinstance(c, list) and len(c) == 2 and all(type(v) is int for v in c)
-                        and c[1] > 0, 'invalid rational coordinate')
-                f = Fraction(*c)
-                require([f.numerator, f.denominator] == c, 'noncanonical rational coordinate')
-                values.append(q.number(f))
-            return evaluate(values, alpha)
+            return evaluate([number(c) for c in raw], alpha)
 
         def polynomial(raw):
             require(isinstance(raw, list), 'invalid polynomial')
@@ -76,13 +75,24 @@ def check(rows):
                 return order < 0 if is_lower else order > 0
             return bound(lower, True) and bound(upper, False)
 
-        quadratic = [neg(alpha), zero, one]
-        repeated = product(product(quadratic, quadratic), [neg(one), one])
-        expected_queries = [[zero, one], [neg(one), one], quadratic, [neg(alpha), one]]
         for row in rows:
             name = row['case']
-            require(row.get('context') == 10378 and row.get('generator_head') == [-2, 0, 0, 1]
-                    and row.get('generator_sign') == 1, 'wrong selected cubic generator or context')
+            middle = name == 'middle cubic embedding'
+            defining = [1,-3,0,1] if middle else [-2,0,0,1]
+            require(row.get('context') == 10378 and row.get('generator_head') == defining
+                    and type(row.get('generator_sign')) is int and row['generator_sign'] == 1,
+                    'wrong selected cubic generator or context')
+            lower, upper = number(row['generator_lower']), number(row['generator_upper'])
+            expected_lower, expected_upper = (zero,one) if middle else (one,two)
+            require(q.compare(expected_lower, lower) < 0 and q.compare(lower, upper) < 0
+                    and q.compare(upper, expected_upper) < 0, 'wrong generator isolating interval')
+            generator_roots = q.roots([q.number(c,q.integer) for c in defining], integer=True)
+            hits = [r for r,m in generator_roots if m == 1 and q.compare(lower,r) < 0 and q.compare(r,upper) < 0]
+            require(len(hits) == 1, 'generator interval does not select a unique simple root')
+            alpha = hits[0]
+            quadratic = [neg(alpha), zero, one]
+            repeated = product(product(quadratic, quadratic), [neg(one), one])
+            expected_queries = [[zero,one], [neg(one),one], quadratic, [neg(alpha),one]]
             head = polynomial(row['head'])
             expected = [] if name == 'cubic-field zero' else repeated
             if name == 'cubic-field nonmonic roots':
@@ -132,7 +142,7 @@ def check(rows):
                 expected_signs = [sign(evaluate(query, root)) for query in queries]
                 require(entry.get('query_signs') == expected_signs
                         and all(type(s) is int for s in entry['query_signs']), 'wrong selected query signs')
-    return {'oracle': 'FLINT qqbar', 'cases': len(rows), 'selected_field': 'positive cube root of 2',
+    return {'oracle': 'FLINT qqbar', 'cases': len(rows), 'selected_fields': 'recorded cubic isolating intervals',
             'root_counts': [0 if r['case'] == 'cubic-field zero' else 3 for r in rows]}
 
 

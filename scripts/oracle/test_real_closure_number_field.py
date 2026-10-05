@@ -17,7 +17,7 @@ class NumberFieldTests(unittest.TestCase):
 
     def test_original_and_case_inventory(self):
         rows = self.rows()
-        self.assertEqual(check(rows)['cases'], 3)
+        self.assertEqual(check(rows)['cases'], 4)
         for changed in [rows[:-1], rows+[rows[1]], [rows[0], rows[1], rows[1]]]:
             with self.assertRaises(ValueError): check(changed)
 
@@ -35,6 +35,23 @@ class NumberFieldTests(unittest.TestCase):
             with self.subTest(mutation=mutate):
                 rows = copy.deepcopy(self.rows()); mutate(rows)
                 with self.assertRaises(ValueError): check(rows)
+
+    def test_selected_embedding_and_original_inputs(self):
+        rows = self.rows()
+        middle = next(r for r in rows if r['case'] == 'middle cubic embedding')
+        # Both the selected middle root and the largest conjugate are positive.
+        # Changing only the real isolating interval must still be rejected.
+        middle['generator_lower'], middle['generator_upper'] = [3,2], [8,5]
+        with self.assertRaisesRegex(ValueError, 'generator isolating interval'): check(rows)
+        rows = self.rows()
+        middle = next(r for r in rows if r['case'] == 'middle cubic embedding')
+        middle['output'] = copy.deepcopy(rows[1]['output'])
+        with self.assertRaises(ValueError): check(rows)
+        for field in ('head','queries'):
+            rows = self.rows()
+            if field == 'head': rows[2][field] = []
+            else: rows[2][field][0] = []
+            with self.assertRaises(ValueError): check(rows)
 
     def test_descriptor_and_arithmetic_mutations(self):
         mutations = [
