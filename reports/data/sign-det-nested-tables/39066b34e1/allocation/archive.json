@@ -824,5 +824,15 @@
     "driver_source_files_verified": 305,
     "whole_source_patch": "../whole-source.patch",
     "check": "passed"
+  },
+  "supplement": {
+    "binary_sha256": "ce7be1fe1669af426e7dd0b156400eda4ae1bbe33dcbca67cf7b4dd03689dcc0",
+    "policy": "ABI and symbol retention from unchanged measured source and binary; original collection records unchanged",
+    "files": {
+      "supplement/NestedTables.c.gz": "3e3e2b6abf070442bf5f4618c37194a53687f159dd745fca0f24e97b7a526d71",
+      "supplement/collector-sources/scripts/bench/sign_det_allocations.c": "93bf5c5cd38e47d6ee8eec2ffc06cfba76df1d7add25d5f73d2aede389e8cb01",
+      "supplement/collector-sources/scripts/bench/sign_det_allocations.py": "b340ad957d7179b47bbfcfac62f2c5671ed4b881633526e1326f2895c0207d52",
+      "supplement/helper-symbols.txt": "1c6a1b8a478d3094b0702f12d5396400c640c5ec17ae0732a9e18bfdf803c06e"
+    }
   }
 }

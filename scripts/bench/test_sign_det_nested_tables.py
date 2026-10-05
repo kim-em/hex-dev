@@ -146,6 +146,12 @@ class NestedTablesTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "changed stored bytes"):
             validate(copy)
         file.write_bytes(original)
+        original_manifest = json.loads(json.dumps(manifest))
+        manifest["timing_collections"][1]["observations"]["runProduce2"]["medians_ms"]["128"] += 1
+        (copy/"archive.json").write_text(json.dumps(manifest))
+        with self.assertRaisesRegex(ValueError, "timing medians disagree"):
+            validate(copy)
+        manifest = original_manifest
         manifest["timing_collections"][1]["observations"]["runProduce2"]["verdict"] = "consistent_with_declared_complexity"
         (copy/"archive.json").write_text(json.dumps(manifest))
         with self.assertRaisesRegex(ValueError, "summary disagrees"):
@@ -169,3 +175,44 @@ class NestedTablesTests(unittest.TestCase):
         (copy/"archive.json").write_text(json.dumps(manifest))
         with self.assertRaises(ValueError):
             validate_allocation(copy)
+
+    def test_allocation_metadata_cannot_replace_raw_counters(self):
+        from scripts.bench.sign_det_nested_archive import validate_allocation
+        import shutil, gzip, hashlib
+        directory = Path(__file__).resolve().parents[2]/"reports/data/sign-det-nested-tables/39066b34e1/allocation"
+        target = Path(self.tmp.name)/"laundered"
+        shutil.copytree(directory, target)
+        manifest = json.loads((target/"archive.json").read_text())
+        def load(name):
+            path = target/manifest["files"][name]["file"]
+            return json.loads(gzip.decompress(path.read_bytes()) if path.suffix == ".gz" else path.read_bytes())
+        def write(name, value):
+            binding = manifest["files"][name]; path = target/binding["file"]
+            raw = (json.dumps(value)+"\n").encode()
+            stored = gzip.compress(raw, mtime=0) if path.suffix == ".gz" else raw
+            path.write_bytes(stored)
+            binding["sha256"] = hashlib.sha256(raw).hexdigest()
+            binding["stored_sha256"] = hashlib.sha256(stored).hexdigest()
+        metadata = load("metadata.json")
+        metadata["samples"][0]["counters"]["lean_bytes"] += 1
+        write("metadata.json", metadata)
+        nested = load("nested-binding.json")
+        nested["file_sha256"]["metadata.json"] = manifest["files"]["metadata.json"]["sha256"]
+        write("nested-binding.json", nested)
+        (target/"archive.json").write_text(json.dumps(manifest))
+        with self.assertRaisesRegex(ValueError, "metadata disagrees with raw sample"):
+            validate_allocation(target)
+
+    def test_source_reconstruction_checks_the_complete_tree(self):
+        from scripts.bench.sign_det_nested_archive import validate_sources
+        import shutil
+        directory = Path(__file__).resolve().parents[2]/"reports/data/sign-det-nested-tables/39066b34e1"
+        self.assertEqual(validate_sources(directory),
+                         ("eca74829a44b000b0eb2a955dae64633d373d34e", 305))
+        target = Path(self.tmp.name)/"source-check"
+        shutil.copytree(directory, target)
+        manifest = json.loads((target/"archive.json").read_text())
+        manifest["source_tree"] = "0"*40
+        (target/"archive.json").write_text(json.dumps(manifest))
+        with self.assertRaisesRegex(ValueError, "reconstructed source tree mismatch"):
+            validate_sources(target)
