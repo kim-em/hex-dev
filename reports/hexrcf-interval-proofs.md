@@ -1,5 +1,10 @@
 # Literal interval sign replay
 
+> The drivers under `scripts/bench/hexrcf_*.py` and the probe modules under
+> `bench/HexRCF/ProofProbe/` that this report cites, other than `Examples` and
+> `Registered/`, were removed from `main` after commit `45a4e4e9a4`. Check out
+> that commit to rerun them.
+
 This comparison selects exact rational Horner signs instead of a full rational
 Sturm query for each field element when the generator's authenticated interval
 suffices. Inconclusive bounds retain Sturm evidence. Singleton zero is exact

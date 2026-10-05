@@ -1,5 +1,10 @@
 # Fixed-field input costs and proof attribution
 
+> The drivers under `scripts/bench/hexrcf_*.py` and the probe modules under
+> `bench/HexRCF/ProofProbe/` that this report cites, other than `Examples` and
+> `Registered/`, were removed from `main` after commit `45a4e4e9a4`. Check out
+> that commit to rerun them.
+
 The implementation question is whether increasing source degree, source comparison atoms
 or integer coefficient width independently increases end-to-end module build
 time on a fixed selected field. Six fresh proof modules use matching optional

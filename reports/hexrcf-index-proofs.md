@@ -1,5 +1,10 @@
 # Fixed-field sign lookup comparison
 
+> The drivers under `scripts/bench/hexrcf_*.py` and the probe modules under
+> `bench/HexRCF/ProofProbe/` that this report cites, other than `Examples` and
+> `Registered/`, were removed from `main` after commit `45a4e4e9a4`. Check out
+> that commit to rerun them.
+
 This experiment answers #10633's finite-sign lookup question. Both arms use
 matched imports and goals, monic carriers, `PolyQuot.reduce` quotation, interval
 sign evidence, and split kernel replay. The reference retrieves keys linearly

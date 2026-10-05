@@ -1,5 +1,10 @@
 # Fixed-field certificate replay comparison
 
+> The drivers under `scripts/bench/hexrcf_*.py` and the probe modules under
+> `bench/HexRCF/ProofProbe/` that this report cites, other than `Examples` and
+> `Registered/`, were removed from `main` after commit `45a4e4e9a4`. Check out
+> that commit to rerun them.
+
 This experiment tests #10634's proposal to check the certificate in one kernel
 declaration. Both arms use the same imports, goal, solver, coordinate quotation,
 interval signs, literal checker and soundness theorem. The reference checks

@@ -1,5 +1,10 @@
 # Source tactic proofs with repeated and shared roots
 
+> The drivers under `scripts/bench/hexrcf_*.py` and the probe modules under
+> `bench/HexRCF/ProofProbe/` that this report cites, other than `Examples` and
+> `Registered/`, were removed from `main` after commit `45a4e4e9a4`. Check out
+> that commit to rerun them.
+
 This experiment checks how the fixed-field tactic handles repeated roots and
 additional polynomials sharing roots, while retaining the same degree-four
 normalized carrier. All three fresh modules use the actual `rcf` command and
