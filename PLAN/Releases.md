@@ -412,6 +412,29 @@ the user to track allocations or capacity. Keep requested allocations distinct
 from confirmed selections and approved grants. If the token's numeric ID is
 available, link directly to its edit page.
 
+Approval and write access are verifiable information; agents must investigate
+rather than asking the maintainer to confirm them. An organization owner can
+inspect the approved tokens and pending requests through
+[GitHub's token API](https://docs.github.com/en/rest/orgs/personal-access-tokens):
+`gh api --paginate orgs/leanprover/personal-access-tokens` and
+`gh api --paginate orgs/leanprover/personal-access-token-requests`.
+For each token, its `repositories_url` lists its approved repository scope;
+its `permissions.repository` records Contents and Workflows grants.
+These owner-only endpoints can return 404 to a member even when the tokens exist.
+
+The dry-run workflow's **Check publishing-token grants (read-only)** step uses
+the actual `RELEASED_SYNC_PAT` and `RELEASED_SYNC_PAT_2` secrets, calling
+`route_tokens`/`selection_check` in `scripts/release/sync_released.py`.
+It probes each repository's receive-pack advertisement without pushing and
+reports the publishing secret name with Contents write access. Inspect this step's
+logs to update approved coverage in this inventory. Its diagnostic failure does
+not prevent staging or consumer builds; the real sync repeats the preflight and
+fails before any push if a grant is missing. Public repository metadata, a
+successful clone, SSH access, and repository selection alone are not evidence
+that a publishing token can write. The receive-pack probe cannot check the
+separate Workflows permission; inspect the approved permission metadata where
+available, and keep this limitation distinct from verified Contents access.
+
 `hex-publishing` selects all managed repositories in `released.yml` except
 those listed on `hex-publishing-2` below, plus
 [`leanprover/fplll`](https://github.com/leanprover/fplll), which is outside

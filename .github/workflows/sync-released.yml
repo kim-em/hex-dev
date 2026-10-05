@@ -58,6 +58,32 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 -m pip install --user pyyaml
+      - name: Check publishing-token grants (read-only)
+        # Approval does not block staging or consumer validation. Real syncs
+        # repeat this check and fail before the first push if coverage is missing.
+        continue-on-error: true
+        env:
+          RELEASED_SYNC_PAT: ${{ secrets.RELEASED_SYNC_PAT }}
+          RELEASED_SYNC_PAT_2: ${{ secrets.RELEASED_SYNC_PAT_2 }}
+        run: |
+          python3 - <<'PYCODE'
+          import os
+          import sys
+          import yaml
+          from scripts.release.sync_released import MANIFEST, env_tokens, route_tokens
+          tokens = env_tokens()
+          if not tokens:
+              raise SystemExit("No publishing tokens configured")
+          entries = yaml.safe_load(MANIFEST.read_text())["repos"]
+          routed, blocked = route_tokens(entries, tokens)
+          for repo, token in routed.items():
+              slot = next(name for name in os.environ
+                          if name.startswith("RELEASED_SYNC_PAT") and os.environ[name] == token)
+              print(f"{repo}: Contents write approved through {slot}")
+          for reason in blocked:
+              print(reason, file=sys.stderr)
+          sys.exit(bool(blocked))
+          PYCODE
       - name: Load live baseline
         run: |
           if git fetch origin "$BASELINE_BRANCH" 2>/dev/null; then
