@@ -243,10 +243,13 @@ example (h : Real.Valid a) :
   Real.Extension.linearOrder h.orderValid
 
 example (h : Real.Valid a)
-    (f : Real.Extension (Real.registration h)) :
-    let := Real.Extension.linearOrder h.orderValid
+    (f : Real.Extension
+      (Real.registration h)) :
+    let := Real.Extension.linearOrder
+      h.orderValid
     0 ≤ f * f := by
-  let := Real.Extension.linearOrder h.orderValid
+  let := Real.Extension.linearOrder
+    h.orderValid
   let := h.orderValid.strictOrderedRing
   let := h.orderValid.orderedRing
   exact mul_self_nonneg f
