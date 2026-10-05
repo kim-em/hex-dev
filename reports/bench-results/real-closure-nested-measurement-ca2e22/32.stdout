@@ -1,0 +1,18 @@
+verifying 16 benchmark(s)...
+  [ok ] Hex.RealClosure.NestedNormalization.Measure.Depth1.clean4  [fixed]
+  [ok ] Hex.RealClosure.NestedNormalization.Measure.Depth2.eager2  [fixed]
+  [ok ] Hex.RealClosure.NestedNormalization.Measure.Depth1.clean2  [fixed]
+  [ok ] Hex.RealClosure.NestedNormalization.Measure.Depth1.eager8  [fixed]
+  [ok ] Hex.RealClosure.NestedNormalization.Measure.Depth2.clean4  [fixed]
+  [ok ] Hex.RealClosure.NestedNormalization.Measure.Depth1.eager16  [fixed]
+  [ok ] Hex.RealClosure.NestedNormalization.Measure.Depth1.eager4  [fixed]
+  [ok ] Hex.RealClosure.NestedNormalization.Measure.Depth1.eager2  [fixed]
+  [ok ] Hex.RealClosure.NestedNormalization.Measure.Depth2.clean2  [fixed]
+  [ok ] Hex.RealClosure.NestedNormalization.Measure.Depth2.eager16  [fixed]
+  [ok ] Hex.RealClosure.NestedNormalization.Measure.Depth2.clean8  [fixed]
+  [ok ] Hex.RealClosure.NestedNormalization.Measure.Depth2.eager4  [fixed]
+  [ok ] Hex.RealClosure.NestedNormalization.Measure.Depth1.clean16  [fixed]
+  [ok ] Hex.RealClosure.NestedNormalization.Measure.Depth2.clean16  [fixed]
+  [ok ] Hex.RealClosure.NestedNormalization.Measure.Depth2.eager8  [fixed]
+  [ok ] Hex.RealClosure.NestedNormalization.Measure.Depth1.clean8  [fixed]
+all 16 benchmark(s) passed
