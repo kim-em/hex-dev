@@ -90,8 +90,12 @@ def main():
             run([binary, "verify", BENCH], arm + "-verify")
         run([binaries["after"], "run", BENCH, "--export-file", out / "after-ladder.json"],
             "after-ladder")
-        expected_hashes = {p["param"]: p["result_hash"] for p in
-                           json.loads((out / "after-ladder.json").read_text())["results"][0]["points"]}
+        ladder = json.loads((out / "after-ladder.json").read_text())["results"][0]
+        if ladder["budget_truncated"] or len(ladder["points"]) != TRIALS * len(PARAMETERS):
+            raise RuntimeError("registered ladder incomplete; retain its results")
+        if any(p["status"] != "ok" or p["result_hash"] is None for p in ladder["points"]):
+            raise RuntimeError("registered ladder has failed measurements")
+        expected_hashes = {p["param"]: p["result_hash"] for p in ladder["points"]}
         with (out / "paired.jsonl").open("w") as stream:
             for trial in range(TRIALS):
                 for n in PARAMETERS:
@@ -108,6 +112,10 @@ def main():
                         record["samples"].append(row)
                         save()
                         measured = rows[0]
+                        if (measured["status"] != "ok" or measured["param"] != n or
+                                measured["function"] != BENCH or measured["inner_repeats"] < 1 or
+                                measured.get("profile_kernel", False)):
+                            raise RuntimeError("invalid scientific child row; retained: " + name)
                         if measured["result_hash"] != expected_hashes[n]:
                             raise RuntimeError("before/after result hashes disagree")
         summary = []
