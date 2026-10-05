@@ -33,13 +33,21 @@ The squarefree chain is reused by prepared queries. -/
 structure PreparedDomain (E : Type u) [Zero E] [DecidableEq E] [One E] [Add E] [Sub E] [Mul E]
     [NatCast E] [Neg E] [Inv E] where
   private mk ::
+  /-- The coefficient sign operation used by preparation and endpoint guards. -/
   sign : E → Int
+  /-- The literal polynomial whose distinct roots are queried. -/
   head : DensePoly E
+  /-- The excluded lower endpoint of the prepared interval. -/
   lower : Endpoint E
+  /-- The excluded upper endpoint of the prepared interval. -/
   upper : Endpoint E
+  /-- The retained derivative chain validating squarefreeness of the head. -/
   squarefree : SignedRemainderChain E
+  /-- The head is nonzero and the endpoints pass order and nonvanishing guards. -/
   endpoints_valid : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign) head lower upper = true
+  /-- The retained chain ends in a nonzero constant, as preparation requires. -/
   last_constant : SignedRemainderChain.lastIsConstant squarefree = true
+  /-- The retained chain is exactly the chain computed for query one. -/
   produced : squarefree = SignedRemainderChain.build sign (normalize sign) head 1
 
 /-- Restore a prepared domain from the same proofs required by preparation.

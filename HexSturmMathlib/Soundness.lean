@@ -35,6 +35,8 @@ variable (sign : E → Int) (hsign : ∀ a, sign a = (SignType.sign (f a) : Int)
 include hsign in
 omit [Zero E] [DecidableEq E] [One E] [Add E] [Sub E] [Mul E] [NatCast E]
     [DecidableEq R] [IsStrictOrderedRing R] [IsRealClosed R] in
+/-- Semantic sign agreement supplies the positivity, negativity, zero and
+range facts used by the domain and certificate theorems. -/
 theorem sign_spec (x : E) :
     (sign x = 1 ↔ 0 < f x) ∧ (sign x < 0 ↔ f x < 0) ∧
     (sign x = 0 ↔ f x = 0) ∧ -1 ≤ sign x ∧ sign x ≤ 1 := by
@@ -144,7 +146,7 @@ theorem query_iff (p q : DensePoly E) (a b : Endpoint E) (value : Int) :
     | some actual =>
       have actual_eq := query_sound f hz h1 ha hs hm hnat sign hsign hn hi p q a b actual result
       have equal : actual = value := actual_eq.trans value_eq.symm
-      simpa only [equal] using result
+      simp only [equal]
 
 include h1 ha hs hm hnat hsign hn hi in
 /-- A successful query of one is exactly the number of distinct interval roots. -/

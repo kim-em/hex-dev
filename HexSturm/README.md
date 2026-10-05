@@ -1,7 +1,32 @@
 # hex-sturm
 
-Ordered-field Sturm–Tarski queries through the shared `HexRealRoots` kernel.
-This development library is Mathlib-free and is not yet released.
+`HexSturm` is part of [Hex](https://github.com/kim-em/hex-dev), executable
+computer algebra for Lean 4 developed from specifications and verified APIs.
+It computes ordered-field Sturm–Tarski queries and distinct-root counts through
+the shared `HexRealRoots` kernel.
+
+This development library depends on `HexPoly` and `HexRealRoots`, is Mathlib-free,
+and is not yet released. `HexSturmMathlib` supplies its mathematical correspondence.
+
+The [manual chapter](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-sturm)
+walks through signed queries, prepared domains, literal certificates and the
+Mathlib correspondence with checked examples.
+
+# Quickstart
+
+Use these imports from the `hex-dev` monorepo; there is no released package yet.
+
+```lean
+import HexSturm
+open Hex
+
+def p : DensePoly Rat := DensePoly.ofCoeffs #[-1, 0, 1]
+
+#guard Sturm.query Sturm.orderSign p 1 .negInf .posInf = some 2
+#guard Sturm.rootCount Sturm.orderSign p (.finite 0) .posInf = some 1
+```
+
+# Functionality
 
 `Hex.Sturm.query sign p f a b` returns `Option Int` for finite or infinite
 endpoints. `sign` is the exact coefficient sign; canonical ordered coefficients
@@ -45,6 +70,8 @@ whole-line certificate cannot be replayed as either child certificate.
 Compare integer counts directly or establish nonnegativity before converting
 to `Nat`; unexpected negative results must not be clamped.
 
+# Verification
+
 The companion proves exact domain equivalence and produced-certificate
 acceptance, whole-Option backend agreement and certificate transport.
 `HexSturm.Transport` exports `TarskiCertificate.clearDenominators` for finite
@@ -54,3 +81,8 @@ soundness, singleton signs and bounds using the pinned Tau Ceti foundation.
 `rootCount` returns an `Option Nat` on exactly the valid domains, with
 nonnegativity proved before conversion. Remaining Phase-4 evidence is
 specified; see [the specification](SPEC/hex-sturm.md).
+
+# Contributing
+
+Development happens in [hex-dev](https://github.com/kim-em/hex-dev).
+Contributions are welcome as PRs to `SPEC/`: describe the behavior you want.

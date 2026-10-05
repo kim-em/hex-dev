@@ -1,7 +1,37 @@
 # hex-sturm-mathlib
 
-Mathlib correspondence for the shared ordered-field query frontend.
-This development library is not yet released.
+`HexSturmMathlib` is part of [Hex](https://github.com/kim-em/hex-dev), executable
+computer algebra for Lean 4 developed from specifications and verified APIs.
+It proves the domain, root-sum and certificate contracts for `HexSturm`.
+
+It depends on `HexSturm`, `HexPolyMathlib` and `HexRealRootsMathlib`.
+Mathlib and Tau Ceti belong to this proof layer. This development library
+is not yet released.
+
+The [manual chapter](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-sturm)
+documents the computational API alongside its domain, replay and root-count
+theorems.
+
+# Quickstart
+
+Use this import from the `hex-dev` monorepo; there is no released package yet.
+The theorem connects a successful natural count to the existing integer count.
+Its success hypothesis entails root-free endpoints.
+
+```lean
+import HexSturmMathlib
+open Hex
+
+example (p : DensePoly Rat) (interval : DyadicInterval) (n : Nat)
+    (answer : Sturm.rootCount Sturm.orderSign p
+      (.finite interval.lower.toRat)
+      (.finite interval.upper.toRat) = some n) :
+    (n : Int) =
+      ZPoly.sturmCount (ZPoly.clearDenominators p).2 interval :=
+  HexSturmMathlib.rootCount_sturm p interval n answer
+```
+
+# Functionality
 
 `Domain` states the mathematical domain: a nonzero squarefree interpreted
 polynomial, strictly ordered finite/infinite endpoints and nonvanishing at
@@ -31,6 +61,8 @@ evidence over the integers; `IntCast.certificate_checks` embeds integer evidence
 and its endpoints into the rational frontend. These translations retain the
 full context and value and do not rerun the polynomial producer.
 
+# Verification
+
 The shared Sturm–Tarski theorem proves root-sum semantics for arbitrary
 accepted certificates over an ordered real closed field. `query_sound` and
 `queryPrepared_sound` apply it to the ordinary and prepared producers;
@@ -59,3 +91,8 @@ is closed. See [the specification](SPEC/hex-sturm-mathlib.md).
 
 Executable translations live in Mathlib-free `HexSturm.Transport`; see the
 [SPEC](SPEC/hex-sturm-mathlib.md) for their endpoint and binding contracts.
+
+# Contributing
+
+Development happens in [hex-dev](https://github.com/kim-em/hex-dev).
+Contributions are welcome as PRs to `SPEC/`: describe the behavior you want.
