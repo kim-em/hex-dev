@@ -7,6 +7,9 @@ Authors: Kim Morrison
 import HexRCF.RealizationData
 import HexRCF.ProofEvidence
 import HexRCF.Tactic
+import HexSignDet.Produce
+import HexSignDet.TableProducer
+import HexSignDet.DagExpand
 
 /-! Frozen one-infinitesimal replay for the complete shared `(1, 2]` guard
 conjunction. The ordinary witness follows from the owner realization law;
@@ -78,6 +81,22 @@ theorem reject_condition : (replay.table checked).count [1, 1] = 0 ∧
   simp only [replay, Replay.table, node]
   decide +kernel
 
+/-- Negation retains the accepted queries and count-one row, but its Boolean
+truth is false: the truth premise is independent of replay acceptance. -/
+theorem checked_not : replay.check sign 7 p (.finite 1) (.finite 2)
+    (queries values formula.not) = true := by
+  simpa only [queries, RepresentationSpecialize.prepare, QF.polys_not] using checked
+
+theorem reject_truth : (replay.table checked_not).count [1, -1] = 1 ∧
+    Samples.Row.eval formula.not [1, -1] = some false := by
+  simp only [replay, Replay.table, node]
+  decide +kernel
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 2000000 in
+theorem reject_order : replay.check sign 7 p (.finite 1) (.finite 2)
+    (queries values formula).reverse = false := by decide +kernel
+
 theorem reject_row : Samples.Row.eval formula [1] = none := by decide +kernel
 
 end Hex.RCF.RealizationTests
@@ -97,10 +116,32 @@ run_meta do
       ``Hex.RCF.RealizationTests.bounded, ``Hex.RCF.RealizationTests.reject_context,
       ``Hex.RCF.RealizationTests.reject_coefficients, ``Hex.RCF.RealizationTests.reject_leaf,
       ``Hex.RCF.RealizationTests.reject_condition, ``Hex.RCF.RealizationTests.reject_row,
+      ``Hex.RCF.RealizationTests.checked_not, ``Hex.RCF.RealizationTests.reject_truth,
+      ``Hex.RCF.RealizationTests.reject_order,
       ``Hex.RCF.RealCoefficients.Realization.lift_eval,
       ``Hex.RCF.RealCoefficients.Realization.signs,
       ``Hex.RCF.RealCoefficients.Realization.exists_real] do
     Hex.RCF.checkAxioms name (Lean.mkConst name)
+  let producers := #[``Hex.Sturm.query, ``Hex.Sturm.queryPrepared,
+    ``Hex.RealClosure.Tower.Sample.family, ``Hex.SignDet.buildNode,
+    ``Hex.SignDet.buildTreeFrom, ``Hex.SignDet.buildTree, ``Hex.SignDet.buildPrepared,
+    ``Hex.SignDet.buildTablePrepared, ``Hex.SignDet.Dag.Expansion.run]
+  -- Imported literal data are deliberately inspected directly: the shared
+  -- local-proof scan treats imported declarations as leaves.
+  for name in #[``Hex.RCF.RealizationTests.replay, ``Hex.RCF.RealizationTests.node,
+      ``Hex.RCF.RealizationTests.child, ``Hex.RCF.RealizationTests.count,
+      ``Hex.RCF.RealizationTests.moment, ``Hex.RCF.RealizationTests.chain,
+      ``Hex.RCF.RealizationTests.inverse3, ``Hex.RCF.RealizationTests.p,
+      ``Hex.RCF.RealizationTests.x, ``Hex.RCF.RealizationTests.first,
+      ``Hex.RCF.RealizationTests.second, ``Hex.RCF.RealizationTests.epsilon,
+      ``Hex.RCF.RealizationTests.values, ``Hex.RCF.RealizationTests.formula,
+      ``Hex.RCF.RealizationTests.sign] do
+    let info ← Lean.getConstInfo name
+    let some body := info.value? (allowOpaque := true) |
+      throwError "missing literal fixture body {name}"
+    for producer in producers do
+      if (body.find? (fun e => e.isConstOf producer)).isSome then
+        throwError "literal fixture {name} contains producer {producer}"
   for (name, markers) in #[(``Hex.RCF.RealCoefficients.Realization.exists_real,
       #[``Hex.RealClosure.Specialize.realizeBelow,
         ``Hex.RCF.RealCoefficients.Samples.Row.eval_true]),
@@ -117,7 +158,6 @@ run_meta do
         ``Hex.RCF.RealizationTests.checked] do
       unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf marker) do
         throwError "ordinary source proof {name} omitted checked realization boundary {marker}"
-    for forbidden in #[``Hex.Sturm.query, ``Hex.Sturm.queryPrepared,
-        ``Hex.RealClosure.Tower.Sample.family] do
+    for forbidden in producers do
       if ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf forbidden) then
         throwError "ordinary source proof contains native production"
