@@ -81,7 +81,7 @@ The larger range retains the same source-derived s(log₂s+1) model, six
 trial-major rounds, 100 ms target, 300-second operational cap and slope rule.
 Only the fixed query-count ladder changes to 128, 256, 512, 1024 and 2048.
 On the fitted range 256..2048, pure linear cost has expected residual slope
-about −0.138, s log s has slope zero, and s log² s has slope about +0.138.
+about −0.138, s(log₂s+1) has slope zero, and s(log₂s+1)² has slope about +0.138.
 All three fall within the unchanged acceptance interval |β| ≤ 0.15.
 A consistent verdict therefore shows finite-range consistency with the
 model; it neither confirms nor separates its logarithmic factor. The
@@ -105,7 +105,7 @@ ladder only when it is explicitly requested.
 The 300-second cap includes setup inside each child, as well as the timed
 callback. Setup produces the reference certificate, checks tree and graph,
 and computes their hashes. For planning only, the earlier depth-two
-production median of 2597.92124 ms at 128 queries scales to about 62 seconds
+production unchanged-rerun median of 2597.92124 ms at 128 queries scales to about 62 seconds
 at 2048 under the declared model. A production child also pays for setup:
 approximately two productions plus two replays in total, rather than one
 62-second operation. Once a callback takes at least 50 ms the harness uses
@@ -115,8 +115,11 @@ those records establish the actual operational margin under the cap.
 The complete depth-two inspection at 2048 queries took 154.461 seconds
 on the shared host: setup, production, tree replay and graph replay together.
 This is an operational preflight observation, not a scientific timing point;
-it is retained in nested-wide-review-fixes-inputs.stderr alongside the other
-nine sizes under ~/.local/state/hex/issue-10377-session-progress/.
+its [stderr record](data/sign-det-nested-cap-preflight/inputs.stderr) and
+[literal inventory](data/sign-det-nested-cap-preflight/inputs.stdout.gz) are
+retained with source and binary bindings. Each capped child performs a subset
+of that inspection’s operations. The observed margin is about 1.94, subject
+to changing shared-host activity; it is not a future wall-clock bound.
 A cap hit is retained and reported as an invalid observation, not a
 consistent or inconclusive scaling result. No quiet-host preflight or
 retry-until-clean loop is used. Finite-range consistency cannot prove an
