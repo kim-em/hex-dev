@@ -715,24 +715,14 @@ family proves composition from those contracts; it does not implement or prove
 analytic approximation providers. An adapter to an interval library would be
 separate future work and is not a dependency or deliverable here.
 
-`Repr` emits reconstructible Lean code with the context DAG, named constant
-provider/version registrations, infinitesimal order, polynomial coefficients,
-root intervals and indexed Thom signs. `TowerRepr` prints a parenthesized
-checked-reader application with the complete packet as its quoted argument.
-The expression uses caller bindings `catalog` and `limits` and returns
-`Except String` with a packed value, polynomial, root or root set. The catalog
-retains the validated provider premises. The checked reader binds all
-dependencies and rejects changed registrations or stale references.
-`repr_roundtrip` proves that the canonical expression reader succeeds and
-returns the exact original native object from its available origin base,
-without installing any algebraic suffix. Source, quoted-argument and packet
-lexical bounds are explicit; parser success is not a premise. `reprPrec_eq`
-identifies the actual `Repr` result with the proved `reprText` string in a
-`Std.Format.text` node at every precedence. Generic evaluation of Lean's
-partial `Std.Format.pretty` is not part of these kernel statements; actual
-rendering and re-elaboration are compiled conformance checks.
-The `TowerBytes` and `RootBytes` JSON packet interfaces are separate from the
-Lean reconstruction expression. They use the shared printer/parser
+`Repr` emits reconstructible constructor syntax with the context DAG, named
+constant provider/version registrations, infinitesimal order, polynomial
+coefficients, root intervals and indexed Thom signs. The checked reader binds
+all dependencies and rejects changed registrations or stale references.
+`repr_roundtrip` says that re-reading emitted data with the same caller-supplied
+registry succeeds and preserves denotation/root identity; caches
+need not match. The `TowerBytes` and `RootBytes` JSON packet interfaces are
+separate from constructor-syntax `Repr`. They use the shared printer/parser
 and the caller's lexical policy. Full root packets bind the original
 predecessor and retain point/selected kinds, canonical defining descriptors
 and replay graphs; complete root-set packets retain positive multiplicities,

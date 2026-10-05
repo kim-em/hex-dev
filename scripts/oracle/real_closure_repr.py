@@ -32,7 +32,9 @@ ERRORS = [('changed reader', 'wrong reconstruction expression'),
           ('truncated literal', 'truncated certificate syntax'),
           ('wrong literal type', 'expected a string'),
           ('unknown provider', 'unknown validated base'),
-          ('invalid stored point', 'invalid base payload')]
+          ('invalid stored point', 'invalid base payload'),
+          ('escaped unknown provider', 'unknown validated base'),
+          ('noncanonical expression', 'noncanonical reconstruction expression')]
 
 
 def argument(row):
@@ -69,7 +71,7 @@ def infinitesimal(raw, depth):
 
 
 def verify(rows):
-    require([row.get('case') for row in rows] == CASES + ['checked reconstruction failures'],
+    require([row.get('case') for row in rows] == CASES + ['checked reconstruction failures', 'escaped Lean literals'],
             'missing or reordered Repr cases')
     with QQBar() as q:
         reader = Reader(q)
@@ -77,7 +79,7 @@ def verify(rows):
         beta = q.unary('sqrt', alpha)
         expected = {0: q.number(Fraction(1,3)), 2: q.number(Fraction(1,3)), 4: alpha,
                     5: q.unary('inv', q.binary('sub', alpha, q.number(3))), 7: beta}
-        for i, row in enumerate(rows[:-1]):
+        for i, row in enumerate(rows[:len(CASES)]):
             require(row['reader'] == READERS[i], 'wrong object reader')
             binding, payload = argument(row)
             if i >= 9:
@@ -115,10 +117,37 @@ def verify(rows):
             else:
                 value = root(reader, binding, payload)
             require(reader.same(value, expected[i]), 'wrong printed value')
-    failure = rows[-1]
-    require(set(failure) == {'case','rejections'} and failure['rejections'] ==
-            [{'case': name, 'message': message} for name, message in ERRORS],
-            'missing or changed native rejection')
+    failure = rows[len(CASES)]
+    require(set(failure) == {'case','rejections'} and type(failure['rejections']) is list and
+            len(failure['rejections']) == len(ERRORS), 'missing native rejection')
+    functions = ['Catalog.readElementRepr catalog', 'ReprFormat.read "restoreRootText"',
+                 'Catalog.readRootRepr catalog', 'Catalog.readRootRepr catalog',
+                 'ReprFormat.read "restoreRootText"', 'ReprFormat.read "restoreRootText"',
+                 'Catalog.restoreRootText catalog', 'Catalog.restoreRootText catalog',
+                 'Catalog.restoreRootText catalog', 'ReprFormat.read "restoreRootText"']
+    for i, (entry, (name, message)) in enumerate(zip(failure['rejections'], ERRORS)):
+        require(set(entry) == {'case','message','expression'} and entry['case'] == name and
+                entry['message'] == message, 'missing or changed native rejection')
+        prefix = '(Hex.RealClosure.Tower.' + functions[i] + ' '
+        suffix = (' { bytes := 1 })' if i == 2 else ' { digits := 0 })' if i == 3 else ' limits)')
+        source = entry['expression']
+        require(type(source) is str and source.startswith(prefix) and source.endswith(suffix),
+                'wrong rejection expression')
+        value = parse_record(source[len(prefix):-len(suffix)])
+        require(type(value) is str, 'rejection argument is not a string')
+        if i in (6,7,8):
+            expected_packet = [[[['missing',0]],0,[]],[0,[0,1,1]]] if i == 6 else \
+                [[[],0,[]],[0,[0,1,0]]] if i == 7 else \
+                [[[['α\n"\\λ𐐷',17]],0,[]],[0,[0,1,1]]]
+            require(parse_record(value) == expected_packet, 'changed rejected packet')
+    literals = rows[-1]
+    require(set(literals) == {'case','literals'} and type(literals['literals']) is list and
+            len(literals['literals']) == 5, 'missing escaped literals')
+    for entry, text in zip(literals['literals'], ['"', '\\', chr(1), 'λ𐐷', r'\u0001']):
+        require(set(entry) == {'quoted','codepoints'} and type(entry['quoted']) is str and
+                type(entry['codepoints']) is list and all(type(n) is int for n in entry['codepoints']) and
+                entry['codepoints'] == [ord(c) for c in text] and
+                parse_record(entry['quoted']) == text, 'wrong Lean literal code points')
     return len(CASES)
 
 
@@ -134,6 +163,8 @@ module
 public import HexRealClosure.TowerRepr
 public meta import HexRealClosure.TowerBytes
 public meta import HexRealClosure.RootBytes
+public meta import HexRealClosure.ReprFormat
+public meta import HexRealClosure.TowerRepr
 
 /-! Generated from hexrealclosure_repr_conformance by real_closure_repr.py --lean-checks. -/
 
@@ -151,11 +182,23 @@ private def check{kind} (result : Except String (Packed{kind} registry)) (expect
   | .error _ => false
   | .ok value => value.writeText == expected
 '''
-    for row in rows[:-1]:
+    for row in rows[:len(CASES)]:
         argument(row)
         kind = row['reader'].removeprefix('restore').removesuffix('Text')
         template += '\n-- ' + row['case'] + '\n#guard check' + kind + ' ' + row['representation']
         template += ' ' + json.dumps(row['packet_text'], ensure_ascii=False) + '\n'
+    template += """
+private def checkError {α : Type u} (result : Except String α) (expected : String) : Bool :=
+  match result with
+  | .error message => message == expected
+  | .ok _ => false
+"""
+    for entry in rows[len(CASES)]['rejections']:
+        template += '\n-- ' + entry['case'] + '\n#guard checkError ' + entry['expression']
+        template += ' ' + json.dumps(entry['message']) + '\n'
+    for entry in rows[-1]['literals']:
+        points = ', '.join('Char.ofNat ' + str(n) for n in entry['codepoints'])
+        template += '\n#guard (' + entry['quoted'] + ' : String) == String.ofList [' + points + ']\n'
     return template
 
 

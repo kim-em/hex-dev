@@ -733,16 +733,10 @@ both the delegated backend and generic backend obey these statements.
 Do not copy the zero-polynomial empty-array convention of a convenience API.
 
 `Repr.roundtrip` requires the same authenticated caller-supplied constant
-registry, context DAG, stage order, coefficients, intervals and derivative signs.
-The computational `TowerRepr` API emits a checked Lean reader application
-using caller bindings `catalog` and `limits`, returning `Except String` with
-the packed object. Its ordinary-kernel `repr_roundtrip` laws prove canonical
-expression reader success and exact native reconstruction, under lexical
-bounds and availability of the actual validated origin base. Exact native
-identity preserves every model's denotation and selected root. `reprPrec_eq`
-connects the actual `Repr` format node to the total expression string; generic
-execution of the partial standard renderer remains a compiled conformance
-check. Rational-base semantic conversion continues to use the existing
+registry, context DAG, stage order, coefficients, intervals and derivative signs. Reading emitted constructor data succeeds and
+preserves denotation and selected-root identity, modulo explicit context
+isomorphisms; incidental caches need not match. Prove reader success and
+semantic round trip separately, composing the existing rational-base
 [Repr correspondence](../../HexRealAlgebraicMathlib/Repr.lean).
 A changed oracle registration/version, missing guard or stale reference is
 rejected; display decimals are not reconstruction data.

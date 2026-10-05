@@ -8,6 +8,8 @@ module
 public import HexRealClosure.TowerRepr
 public meta import HexRealClosure.TowerBytes
 public meta import HexRealClosure.RootBytes
+public meta import HexRealClosure.ReprFormat
+public meta import HexRealClosure.TowerRepr
 
 /-! Generated from hexrealclosure_repr_conformance by real_closure_repr.py --lean-checks. -/
 
@@ -70,3 +72,48 @@ private def checkRootSet (result : Except String (PackedRootSet registry)) (expe
 
 -- infinitesimal point
 #guard checkRoot (Hex.RealClosure.Tower.Catalog.restoreRootText catalog "[ [ [ ] , 2 , [ ] ] , [ 0 , [ 1 , [ [ 1 , [ ] , [ [ 0 , 1 , 1 ] ] ] , [ 1 , [ [ 0 , 1 , 1 ] ] , [ [ 0 , 1 , 1 ] ] ] ] , [ [ 1 , [ [ 0 , 1 , 1 ] ] , [ [ 0 , 1 , 1 ] ] ] ] ] ] ] "  limits) "[ [ [ ] , 2 , [ ] ] , [ 0 , [ 1 , [ [ 1 , [ ] , [ [ 0 , 1 , 1 ] ] ] , [ 1 , [ [ 0 , 1 , 1 ] ] , [ [ 0 , 1 , 1 ] ] ] ] , [ [ 1 , [ [ 0 , 1 , 1 ] ] , [ [ 0 , 1 , 1 ] ] ] ] ] ] ] "
+
+private def checkError {α : Type u} (result : Except String α) (expected : String) : Bool :=
+  match result with
+  | .error message => message == expected
+  | .ok _ => false
+
+-- changed reader
+#guard checkError (Hex.RealClosure.Tower.Catalog.readElementRepr catalog "(Hex.RealClosure.Tower.Catalog.restoreRootText catalog \"[ [ [ ] , 0 , [ ] ] , [ 0 , [ 0 , 1 , 3 ] ] ]\"  limits)"  limits) "wrong reconstruction expression"
+
+-- missing policy
+#guard checkError (Hex.RealClosure.Tower.ReprFormat.read "restoreRootText" "(Hex.RealClosure.Tower.Catalog.restoreRootText catalog \"[ [ [ ] , 0 , [ ] ] , [ 0 , [ 0 , 1 , 3 ] ] ]\" "  limits) "missing reconstruction policy"
+
+-- source byte limit
+#guard checkError (Hex.RealClosure.Tower.Catalog.readRootRepr catalog "(Hex.RealClosure.Tower.Catalog.restoreRootText catalog \"[ [ [ ] , 0 , [ ] ] , [ 0 , [ 0 , 1 , 3 ] ] ]\"  limits)"  { bytes := 1 }) "reconstruction expression byte limit exceeded"
+
+-- packet integer limit
+#guard checkError (Hex.RealClosure.Tower.Catalog.readRootRepr catalog "(Hex.RealClosure.Tower.Catalog.restoreRootText catalog \"[ [ [ ] , 0 , [ ] ] , [ 0 , [ 0 , 1 , 3 ] ] ]\"  limits)"  { digits := 0 }) "integer token limit exceeded"
+
+-- truncated literal
+#guard checkError (Hex.RealClosure.Tower.ReprFormat.read "restoreRootText" "(Hex.RealClosure.Tower.Catalog.restoreRootText catalog \"truncated limits)"  limits) "truncated certificate syntax"
+
+-- wrong literal type
+#guard checkError (Hex.RealClosure.Tower.ReprFormat.read "restoreRootText" "(Hex.RealClosure.Tower.Catalog.restoreRootText catalog 0 limits)"  limits) "expected a string"
+
+-- unknown provider
+#guard checkError (Hex.RealClosure.Tower.Catalog.restoreRootText catalog "[ [ [ [ \"missing\", 0 ] ] , 0 , [] ] , [0, [0,1,1]] ]"  limits) "unknown validated base"
+
+-- invalid stored point
+#guard checkError (Hex.RealClosure.Tower.Catalog.restoreRootText catalog "[ [ [] , 0 , [] ] , [0, [0,1,0]] ]"  limits) "invalid base payload"
+
+-- escaped unknown provider
+#guard checkError (Hex.RealClosure.Tower.Catalog.restoreRootText catalog "[ [ [ [ \"α\\u000a\\\"\\\\λ𐐷\" , 17 ] ] , 0 , [ ] ] , [ 0 , [ 0 , 1 , 1 ] ] ] "  limits) "unknown validated base"
+
+-- noncanonical expression
+#guard checkError (Hex.RealClosure.Tower.ReprFormat.read "restoreRootText" "(Hex.RealClosure.Tower.Catalog.restoreRootText catalog  \"[ [ [ ] , 0 , [ ] ] , [ 0 , [ 0 , 1 , 3 ] ] ]\"  limits)"  limits) "noncanonical reconstruction expression"
+
+#guard ("\""  : String) == String.ofList [Char.ofNat 34]
+
+#guard ("\\"  : String) == String.ofList [Char.ofNat 92]
+
+#guard ("\u0001"  : String) == String.ofList [Char.ofNat 1]
+
+#guard ("λ𐐷"  : String) == String.ofList [Char.ofNat 955, Char.ofNat 66615]
+
+#guard ("\\u0001"  : String) == String.ofList [Char.ofNat 92, Char.ofNat 117, Char.ofNat 48, Char.ofNat 48, Char.ofNat 48, Char.ofNat 49]

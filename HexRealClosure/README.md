@@ -2996,7 +2996,7 @@ polynomial zeros are rejected. These limits bound lexical input; they do not
 bound certificate replay or coefficient-sign recomputation during uninstalled
 context reconstruction.
 
-Import `HexRealClosure.TowerRepr` for Lean reconstruction expressions. The
+Import the optional `HexRealClosure.TowerRepr` module for checked Lean reconstruction expressions. The
 `Repr` instances on packed values, packed polynomials, roots and root sets emit
 parenthesized code such as:
 
@@ -3009,6 +3009,8 @@ Bind `catalog` to a caller-validated `Tower.Catalog` and `limits` to a
 `Hex.SignDet.Codec.Limits`; evaluating the expression returns `Except String`
 with the reconstructed packed object. The catalog retains provider proofs
 that cannot be represented by runtime text. Reader failures remain explicit.
+A `Root parent` prints a packed result because its caller-owned `parent` is
+reconstructed from the packet, rather than supplied as another free variable.
 The expression can be embedded as an argument or a list entry because it is
 parenthesized. `PackedRoot` and `PackedRootSet` delegate to the same root
 instances.
@@ -3019,12 +3021,20 @@ Each object's total `reprText` method supplies the expression string, and
 `readPolynomialRepr`, `readRootRepr` and `readRootSetRepr` accept this canonical
 expression form; they do not evaluate arbitrary Lean code. The ordinary-kernel
 `repr_roundtrip` theorems prove success and exact object reconstruction from
-an available validated origin base. Their three bounds cover the whole Lean
+an available validated origin base in `Catalog.ofBase baseCatalog`. Installed
+prefixes can return their retained matching handles; these exact-identity
+laws use the base-only catalog to reconstruct the original suffix.
+Their three bounds cover the whole Lean
 expression, the quoted JSON string and the underlying packet. They assume no
-parser or mathematical success. Generic rendering by Lean's partial
-`Std.Format.pretty` is outside these kernel laws. The conformance executable
-checks actual `reprStr` rendering, and a generated Lean module re-elaborates
-and executes each actual printed expression.
+parser or mathematical success. After decoding, the canonical expression
+reader requires exact agreement with the printer, rejecting alternate JSON
+spellings and whitespace. Lean execution of the printed code instead uses
+Lean's string-literal decoder. The statement that this meta decoder inverts
+`ReprFormat.quote`, and rendering by the partial `Std.Format.pretty`, are
+outside these kernel laws. Compiled conformance checks actual `reprStr`
+rendering and re-elaborates the printed code. Five additional literal checks
+compare quoted strings containing a quote, backslash, control character,
+Unicode and an already escaped sequence against independent code-point lists.
 
 Run those examples and independent exact checks:
 
@@ -3035,13 +3045,14 @@ python3 scripts/oracle/real_closure_repr.py \
   conformance-fixtures/HexRealClosure/repr.jsonl
 ```
 
-Eleven examples cover rational data, point and selected roots, universal
+Eleven native-object examples cover rational data, point and selected roots, universal
 roots, a reducible selected root's inverse, an algebraic polynomial, a nested
 root and its multiplicity, and both successive infinitesimal value and root
 packets. The independent FLINT/SymPy oracle reconstructs their selected
-embeddings and arithmetic. Eight native failures cover the wrong reader,
+embeddings and arithmetic. Ten native failures cover the wrong reader,
 missing policy, resource limits, malformed quoted data, unknown providers and
-invalid point data. CI also regenerates `ReprChecks.lean` from the actual
+invalid point data, escaped provider names and noncanonical spelling. The generated
+module also executes every failure expression and checks its exact error. CI regenerates `ReprChecks.lean` from the actual
 native output and compares it with the compiled module.
 
 Run the actual text and byte examples:

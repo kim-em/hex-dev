@@ -54,7 +54,9 @@ The argument is decoded by the shared UTF-8/JSON parser with the same policy. -/
   if input.toUTF8.size > limits.bytes then throw "reconstruction expression byte limit exceeded"
   let literal ← argument reader input
   let value ← Codec.parse limits literal.toUTF8
-  value.getStr?
+  let text ← value.getStr?
+  if write reader text != input then throw "noncanonical reconstruction expression"
+  return text
 
 /-- The canonical expression reader recovers the actual argument. Both
 premises are lexical bounds; no parse or mathematical success is assumed. -/
@@ -67,7 +69,34 @@ theorem read_write (reader text : String) (limits : Codec.Limits)
   simp only [bind, Except.bind]
   rw [quote_utf8] at literalBound ⊢
   rw [Codec.parse_write _ limits literalBound]
-  rfl
+  simp [Json.Value.getStr?, write, pure, Except.pure]
+
+/-- Every successful canonical expression read has exactly the printer's
+spelling. Alternate JSON escape spellings do not enter the Lean-code API. -/
+theorem read_canonical (reader input text : String) (limits : Codec.Limits)
+    (success : read reader input limits = .ok text) : write reader text = input := by
+  unfold read at success
+  split at success
+  · cases success
+  · cases parsed : argument reader input with
+    | error message => simp [parsed, bind, Except.bind] at success
+    | ok literal =>
+      simp only [parsed, bind, Except.bind] at success
+      cases checked : Codec.parse limits literal.toUTF8 with
+      | error message =>
+        rw [checked] at success
+        cases success
+      | ok value =>
+        simp only [checked] at success
+        cases decoded : value.getStr? with
+        | error message => simp [decoded] at success
+        | ok result =>
+          simp only [decoded] at success
+          split at success
+          · cases success
+          · have same : result = text := Except.ok.inj success
+            subst text
+            simpa using ‹¬ (write reader result != input) = true›
 
 end Hex.RealClosure.Tower.ReprFormat
 
@@ -77,3 +106,6 @@ end Hex.RealClosure.Tower.ReprFormat
 /-- info: 'Hex.RealClosure.Tower.ReprFormat.read_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.ReprFormat.read_write
+/-- info: 'Hex.RealClosure.Tower.ReprFormat.read_canonical' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.ReprFormat.read_canonical

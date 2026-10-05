@@ -343,6 +343,7 @@ lean_lib HexSignDet where
 lean_lib HexSignDetMathlib where
 
 lean_lib HexRealClosure where
+  roots := #[`HexRealClosure, `HexRealClosure.TowerRepr]
   -- The runnable selected-root tests use `#eval` across the library boundary.
   precompileModules := true
 

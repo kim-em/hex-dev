@@ -58,11 +58,26 @@ class ReprTests(unittest.TestCase):
         self.reject_coupled(9, lambda p: p[1][1][0][1][0].__setitem__(1, 2))
         self.reject_coupled(10, lambda p: p[1].__setitem__(0, 1))
 
+    def test_escaped_literals_and_provider_names(self):
+        rows = copy.deepcopy(self.rows)
+        rows[-1]['literals'][0]['codepoints'][0] = 92
+        with self.assertRaises(ValueError):
+            verify(rows)
+        rows = copy.deepcopy(self.rows)
+        entry = rows[-2]['rejections'][8]
+        entry['expression'] = entry['expression'].replace('17', '18')
+        with self.assertRaises(ValueError):
+            verify(rows)
+        rows = copy.deepcopy(self.rows)
+        rows[-2]['rejections'][0]['expression'] = '(Except.error "wrong reconstruction expression")'
+        with self.assertRaises(ValueError):
+            verify(rows)
+
     def test_strict_leaves_and_required_rejections(self):
         for value in [True, None, '1', {}]:
             self.reject_coupled(0, lambda p, value=value: p[1].__setitem__(1, value))
         rows = copy.deepcopy(self.rows)
-        rows[-1]['rejections'].pop()
+        rows[-2]['rejections'].pop()
         with self.assertRaises(ValueError):
             verify(rows)
 
