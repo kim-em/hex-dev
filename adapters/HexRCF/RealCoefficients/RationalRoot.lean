@@ -67,6 +67,14 @@ def isNotation (source : Expr) : Bool := Id.run do
   return e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 ||
     (e.isAppOfArity ``HPow.hPow 6 && e.getAppArgs[1]!.consumeMData.isConstOf ``Real)
 
+/-- Typed real-power admission, shared with enclosure dispatch. Explicit type
+arguments may be definitionally real without being syntactic `Real`. -/
+def isRealPower (source : Expr) : MetaM Bool := do
+  let e := source.consumeMData
+  unless e.isAppOfArity ``HPow.hPow 6 do return false
+  if e.getAppArgs[5]!.hasLooseBVars then return false
+  withNewMCtxDepth <| isDefEq (← inferType e.getAppArgs[5]!) q(ℝ)
+
 /-- Check scalar syntax without computing its value or coefficient size.
 The shared arithmetic reifier still validates instances and performs all
 bounded normalization. Unsupported operands must not be hidden by exhaustion. -/
@@ -97,8 +105,7 @@ private def parts? (original : Expr) : MetaM (Option (Expr × Expr)) := do
   let source := original.consumeMData
   let args := source.getAppArgs
   let square := source.isAppOfArity ``Real.sqrt 1
-  let realPower ← if source.isAppOfArity ``HPow.hPow 6 then
-      pure ((← inferType args[5]!).isConstOf ``Real) else pure false
+  let realPower ← isRealPower source
   let parts := if square then some (args[0]!, q((1 / 2 : ℝ)))
     else if source.isAppOfArity ``Real.rpow 2 then some (args[0]!, args[1]!)
     else if realPower then some (args[4]!, args[5]!) else none

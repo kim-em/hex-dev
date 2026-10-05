@@ -37,7 +37,7 @@ open Hex Lean Meta Qq Hex.OrderedFn.Oracle
 fixed-field checker. This bounded operation promises containment, not a width
 or eventual success for every algebraic source presentation. -/
 private meta def encloseCore (source : Expr) (request : Rat) : MetaM (Bounds × Expr) := do
-  if RationalRoot.isNotation source then
+  if RationalRoot.isNotation source || (← RationalRoot.isRealPower source) then
     match ← RationalRoot.parameters? source with
     | .ok (some _) => pure ()
     | .ok none => throwError "rcf: algebraic enclosure needs a supported selected-field presentation"

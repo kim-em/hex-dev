@@ -126,6 +126,23 @@ example : ∀ x : ℝ,
 example : ∀ x : ℝ, x ^ 2 + Real.pi +
     Real.sqrt ((2 : ℝ)⁻¹ * 2 * (((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ))) > 0 := by rcf
 
+private meta def enclosePower (typeArgument : Expr) : MetaM Unit := do
+  let power : Q(ℝ) := q((((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ)) ^ (1 / 2 : ℝ))
+  let source := mkAppN power.getAppFn (power.getAppArgs.set! 1 typeArgument)
+  let _ ← Hex.RCF.checkProof `Hex.RCF.MixedConstants.powerType
+    (← mkEq source source) (← mkEqRefl source)
+  let source : Q(ℝ) := source
+  let _ ← Finite.prepare q(∀ x : ℝ, x ^ 2 + Real.pi + $source > 0)
+  throwError "expected real-power admission exhaustion"
+
+/-- error: rcf: budget exhausted in dimension coefficient bits: limit 4096, consumed 3, requested 4097 -/
+#guard_msgs (whitespace := lax) in
+run_elab enclosePower (.mdata {} q(ℝ))
+
+/-- error: rcf: budget exhausted in dimension coefficient bits: limit 4096, consumed 3, requested 4097 -/
+#guard_msgs (whitespace := lax) in
+run_elab enclosePower q(id ℝ)
+
 run_elab do
   let before ← getMCtx
   let .ok value ← (Hex.RCF.Reify.recognizeCoefficient q(Real.sqrt 4)).run |

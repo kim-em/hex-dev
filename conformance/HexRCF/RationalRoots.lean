@@ -37,6 +37,10 @@ theorem inverse_natural : ∀ x : ℝ,
 theorem constructor_exponent : ∀ x : ℝ,
     x ^ 2 + (3 : ℝ) ^ (RealAlgebraicNumber.ofRat (1 / 3)).toReal > 0 := by rcf
 
+theorem type_alias : ∀ x : ℝ,
+    x ^ 2 + @HPow.hPow ℝ (id ℝ) ℝ (inferInstance : HPow ℝ ℝ ℝ)
+      (5 / 3) (1 / 4 : ℝ) > 0 := by rcf
+
 theorem direct_power : ∀ x : ℝ, x ^ 2 + Real.rpow (3 : ℝ) (1 / 5 : ℝ) > 0 := by rcf
 
 theorem field_root : ∃ x : ℝ, x ^ 2 = Real.sqrt (1 / 2) ∧ 0 < x ∧ x < 1 := by rcf
@@ -229,12 +233,24 @@ run_elab do
   let powerArgs := powerLarge.getAppArgs
   let wrappedType := mkAppN powerLarge.getAppFn
     (powerArgs.set! 1 (.mdata {} powerArgs[1]!))
-  let _ ← Hex.RCF.checkExpr `Hex.RCF.RationalRoots.typeMetadata wrappedType
+  let _ ← Hex.RCF.checkProof `Hex.RCF.RationalRoots.typeMetadata
+    (← mkEq wrappedType wrappedType) (← mkEqRefl wrappedType)
   unless RationalRoot.isNotation wrappedType do
     throwError "type-argument metadata hid real root notation"
   let .error (.budget _) ← RationalRoot.parameters? wrappedType |
     throwError "type-argument metadata hid root admission exhaustion"
   refuses (AlgebraicBounds.enclose wrappedType (1 / 4))
+  let aliasType : Q(Type) := q(id ℝ)
+  let aliasPower := mkAppN powerLarge.getAppFn (powerArgs.set! 1 aliasType)
+  let _ ← Hex.RCF.checkProof `Hex.RCF.RationalRoots.typeAlias
+    (← mkEq aliasPower aliasPower) (← mkEqRefl aliasPower)
+  unless ← RationalRoot.isRealPower aliasPower do
+    throwError "definitionally real exponent type bypassed typed admission"
+  let .error (.budget _) ← RationalRoot.parameters? aliasPower |
+    throwError "definitionally real power bypassed recognition exhaustion"
+  refuses (AlgebraicBounds.enclose aliasPower (1 / 4))
+  if ← RationalRoot.isRealPower q((2 : ℝ) ^ (3 : ℕ)) then
+    throwError "typed real-power admission classified a natural power as a root"
   let combined := q(∀ x : ℝ, x ^ 2 + Real.sqrt 2 + Real.sqrt 3 > 0)
   let beforeCombined ← getMCtx
   let combinedNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
@@ -275,10 +291,15 @@ run_meta do
       `Hex.RCF.RationalRoots.inverse_natural, `Hex.RCF.RationalRoots.constructor_exponent] do
     Hex.RCF.checkAxioms name (Lean.mkConst name)
   for name in [`Hex.RCF.RationalRoots.inverse_base,
-      `Hex.RCF.RationalRoots.constructor_exponent] do
+      `Hex.RCF.RationalRoots.constructor_exponent, `Hex.RCF.RationalRoots.type_alias] do
     unless ← Hex.RCF.ProofEvidence.contains name
         (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.RationalRoot.selected) do
       throwError "inverse/constructor root proof did not authenticate the selected embedding"
+  Hex.RCF.checkAxioms `Hex.RCF.RationalRoots.type_alias (Lean.mkConst `Hex.RCF.RationalRoots.type_alias)
+
+/-- info: 'Hex.RCF.RationalRoots.type_alias' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RationalRoots.type_alias
 
 /-- info: 'Hex.RCF.RationalRoots.inverse_base' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

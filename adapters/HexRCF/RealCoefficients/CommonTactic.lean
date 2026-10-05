@@ -175,48 +175,30 @@ private meta def normalizedArgs? (argument : Expr) :
       (·.isAppOfArity ``AlgebraicNumber.ofNormalized 8) | return none
   return some (algebraic.getAppArgs, realArgs[1]!)
 
-private partial def sourceAtoms (e : Expr) (seen : Array Expr) : Array Expr :=
-  if RationalRoot.isNotation e ||
-      e.isAppOfArity ``RealAlgebraicNumber.toReal 1 then
-    if seen.contains e then seen else seen.push e
-  else
-    match e with
-    | .app fn arg => sourceAtoms arg (sourceAtoms fn seen)
-    | .forallE _ type body _ | .lam _ type body _ =>
-        sourceAtoms body (sourceAtoms type seen)
-    | .letE _ type value body _ =>
-        sourceAtoms body (sourceAtoms value (sourceAtoms type seen))
-    | .mdata _ body | .proj _ _ body => sourceAtoms body seen
-    | _ => seen
-
-private partial def algebraicDivision (e : Expr) : Bool :=
-  let args := e.getAppArgs
-  let inverse := if e.isAppOfArity ``Inv.inv 3 then
-      args[0]!.isConstOf ``Real && !(sourceAtoms args[2]! #[]).isEmpty
-    else false
-  let division := if e.isAppOfArity ``HDiv.hDiv 6 then
-      args[0]!.isConstOf ``Real && !(sourceAtoms args[5]! #[]).isEmpty
-    else false
-  inverse || division || match e with
-    | .app fn arg => algebraicDivision fn || algebraicDivision arg
-    | .forallE _ type body _ | .lam _ type body _ =>
-        algebraicDivision type || algebraicDivision body
-    | .letE _ type value body _ =>
-        algebraicDivision type || algebraicDivision value || algebraicDivision body
-    | .mdata _ body | .proj _ _ body => algebraicDivision body
-    | _ => false
+private partial def hasRoot (source : Expr) : MetaM Bool := do
+  let e := source.consumeMData
+  if RationalRoot.isNotation e || e.isAppOfArity ``RealAlgebraicNumber.toReal 1 ||
+      (← RationalRoot.isRealPower e) then return true
+  match e with
+  | .app fn arg => return (← hasRoot fn) || (← hasRoot arg)
+  | .forallE _ type body _ | .lam _ type body _ =>
+      return (← hasRoot type) || (← hasRoot body)
+  | .letE _ type value body _ =>
+      return (← hasRoot type) || (← hasRoot value) || (← hasRoot body)
+  | .proj _ _ body => hasRoot body
+  | _ => return false
 
 private meta def candidate (target : Expr) : MetaM Bool := do
   -- Local aliases are resolved by the shared frontend, with their proofs.
-  if target.hasFVar || algebraicDivision target then return true
-  return !(sourceAtoms target #[]).isEmpty
+  if target.hasFVar then return true
+  hasRoot target
 
 /-- Preserve single-coefficient priority only when every original divisor
 is rational. Rational normalization restores its temporary metavariable state. -/
 private meta def rationalGuards (divisors : Array Expr) : MetaM Bool := do
   for original in divisors do
     let divisor ← Reify.lowerSources #[] original
-    if !(sourceAtoms divisor #[]).isEmpty then return false
+    if ← hasRoot divisor then return false
     let value : Q(ℝ) := divisor
     let result ← (do
       let saved ← saveState
@@ -753,7 +735,7 @@ private meta partial def gatherCore (source : Expr) (leaves : Leaves) :
   if e.isAppOfArity ``HPow.hPow 6 then
     if (← inferType args[5]!).isConstOf ``Nat then
       return ← gatherCore args[4]! leaves
-  if RationalRoot.isNotation e then
+  if RationalRoot.isNotation e || (← RationalRoot.isRealPower e) then
     unless ← RationalRoot.hasSyntax e do return .ok none
     -- A nonpositive rational base may normalize to a rational whole root.
     -- It reaches this fallback only after bounded parameter recognition.

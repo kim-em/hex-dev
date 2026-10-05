@@ -169,11 +169,10 @@ private partial def encloseCore (cache : Cache) (entries : Array (Name × Expr))
         #[{ declaration := name, subject := source, version, request, bounds, identity, containment }]
   let e := source.consumeMData
   let (op, args) := e.getAppFnArgs
-  let realPower ← if op == ``HPow.hPow && args.size == 6 then
-      pure ((← inferType args[5]!).isConstOf ``Real) else pure false
+  let realPower ← RationalRoot.isRealPower e
   if e.isAppOfArity ``RealAlgebraicNumber.toReal 1 ||
       e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 || realPower then
-    if RationalRoot.isNotation source then
+    if RationalRoot.isNotation source || realPower then
       unless ← RationalRoot.hasSyntax source do
         throwError "rcf: algebraic enclosure needs a supported selected-field presentation"
       match ← RationalRoot.parameters? source with
