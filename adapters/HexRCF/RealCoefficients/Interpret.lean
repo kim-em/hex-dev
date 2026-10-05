@@ -86,8 +86,11 @@ private partial def coverSubterms (source : Expr) : StateM ExprSet Unit := do
     pure child
 
 /-- Admit original rational guards, largest first, without repeating admission
-for a subterm of an already admitted guard. Results retain original guard order;
-unsupported syntax is recognition-only, while every other error is terminal. -/
+for a subterm of an already admitted guard. A covered divisor uses the enclosing
+operation's shared scalar bound, which can be less conservative than a separate
+numerator bound. Results retain original guard order; unsupported syntax is
+recognition-only, while every other error is terminal. All admission precedes
+per-guard zero evaluation. -/
 def admitGuards (sources : Array Expr) : ReifyM (Array Bool) := do
   let order := (sources.mapIdx fun i source => (i, source.sizeWithoutSharing)).qsort
     (fun a b => a.2 > b.2 || (a.2 == b.2 && a.1 < b.1))

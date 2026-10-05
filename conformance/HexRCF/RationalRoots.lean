@@ -91,6 +91,21 @@ run_elab do
     throwError "nested guard admission failed"
   unless admitted == #[true, true, true, false] do
     throwError "guard admission changed original order or hid unsupported syntax"
+  let power : Q(ℝ) := q((2 : ℝ) ^ (3 : ℕ))
+  let admit (guards : Array Expr) := ((Coefficients.admitGuards guards).run
+    {config, budget := .ofBudget config.ring.budget}).run
+  let .error (.budget exhausted) ← admit #[power] |
+    throwError "standalone power guard bypassed its numerator bound"
+  unless exhausted.dimension == .coefficientBits do
+    throwError "standalone guard used the wrong resource dimension"
+  let .ok (covered, _) ← admit #[power, q(1 / $power)] |
+    throwError "nested divisor did not reuse its enclosing scalar admission"
+  unless covered == #[true, true] do
+    throwError "shared divisor admission changed original guard order"
+  let .error (.budget exhausted) ← admit #[q(Real.sin 0 + $power), power] |
+    throwError "unsupported outer guard hid an oversized inner guard"
+  unless exhausted.dimension == .coefficientBits do
+    throwError "uncovered inner guard used the wrong resource dimension"
   let mut small : Q(ℝ) := q(1)
   for _ in [:32] do small := q($small ^ (0 : ℕ))
   let .ok (3, _) ← degree q($small / 3) |
