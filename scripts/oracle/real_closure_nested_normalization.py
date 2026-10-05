@@ -215,6 +215,23 @@ def verify_pairs(rows, results, unpaired=False):
             require(ra['field_residue'] == rb['field_residue'], 'policy values disagree')
 
 
+def validate_trace(row, trace):
+    counts = trace['callback_counts']
+    depth, steps = row['depth'], row['steps']
+    require(all(int(key.split(':')[0]) <= depth for key in counts), 'trace has deeper context')
+    require(counts.get(f'{depth}:mul', 0) == steps + 1, 'trace product count disagrees with row')
+    for operation in ['add', 'sub', 'inv', 'div', 'split', 'inverse_gcd', 'inverse_xgcd']:
+        require(counts.get(f'{depth}:{operation}', 0) == 1, f'trace {operation} disagrees with row')
+    operations = trace['operation_counts']
+    if operations is not None:
+        require(operations['poly_gcd'] == sum(value for key, value in counts.items()
+                                              if key.endswith(':inverse_gcd')),
+                'polynomial gcd does not match observed inverse sites')
+        require(operations['poly_xgcd_left'] == sum(value for key, value in counts.items()
+                                                    if key.endswith(':inverse_xgcd')),
+                'polynomial xgcdLeft does not match observed inverse sites')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('inputs', nargs='*', type=Path)
@@ -231,7 +248,9 @@ def main():
         for row in rows:
             checked = verify(row)
             if args.trace:
-                checked.update(trace_data(args.trace[index]))
+                trace = trace_data(args.trace[index])
+                validate_trace(row, trace)
+                checked.update(trace)
             results.append(checked)
             all_rows.append(row)
     verify_pairs(all_rows, results, args.unpaired)

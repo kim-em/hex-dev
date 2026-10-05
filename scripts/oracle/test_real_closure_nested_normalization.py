@@ -6,7 +6,7 @@ import unittest
 import tempfile
 import subprocess
 import sys
-from scripts.oracle.real_closure_nested_normalization import verify, trace_counts, trace_data, verify_pairs
+from scripts.oracle.real_closure_nested_normalization import verify, trace_counts, trace_data, verify_pairs, validate_trace
 
 
 class ExactTests(unittest.TestCase):
@@ -73,6 +73,21 @@ class ExactTests(unittest.TestCase):
         different[1]['heads'][0][0] = [4, 1]
         with self.assertRaises(ValueError): verify_pairs(different, checked)
         verify_pairs(self.rows[:1], checked[:1], unpaired=True)
+
+    def test_trace_binds_workload(self):
+        root = Path(__file__).resolve().parents[2]
+        path = root / 'reports/bench-results/real-closure-nested-diagnostics-c7d917/nested-counts-c7d917-d2-m2-clean.trace'
+        trace = trace_data(path)
+        row = self.rows[0]
+        validate_trace(row, trace)
+        for change in ['empty', 'depth', 'steps', 'gcd', 'inverse']:
+            bad = copy.deepcopy(trace)
+            if change == 'empty': bad['callback_counts'] = {}
+            elif change == 'depth': bad['callback_counts']['3:mul'] = 1
+            elif change == 'steps': bad['callback_counts']['2:mul'] += 1
+            elif change == 'gcd': bad['operation_counts']['poly_gcd'] += 1
+            elif change == 'inverse': bad['callback_counts']['2:inverse_xgcd'] = 0
+            with self.assertRaises(ValueError): validate_trace(row, bad)
 
 
 if __name__ == '__main__':
