@@ -122,8 +122,8 @@ runs from clean main `28e4073ea6`, including the upstream compiled polynomial
 changes in #10763. Its retained collector first builds all seven executables
 with `lake build` and then verifies build freshness with `lake build --no-build`.
 The build and freshness outputs are retained; all execution commands succeed.
-Source revision, clean-tree state, executable hashes and CPU affinity are
-checked before and after execution. The archive includes its source tree id,
+Source revision, clean-tree state and executable hashes are checked before
+and after execution. CPU affinity is recorded at both endpoints. The archive includes its source tree id,
 source reconstruction and readable collector.
 
 This repeats the fast native/oracle set: 33 coefficient-field checks, 102
@@ -158,3 +158,30 @@ They establish the executable checks at this recorded merged source, not
 scientific scaling, proof costs or correctness of later revisions. Both the
 FLINT/Z3 mathematical comparisons and native certificate rejection controls
 retain their distinct roles.
+
+## Number-field dependency execution
+
+Main `5af58b1a8f` contains #10766’s changes to compiled number-field arithmetic.
+The [number-field capture](data/sign-det-final-conformance/5af58b1a8f/metadata.json)
+builds and verifies freshness of the three affected conformance executables
+at that exact revision. All 33 coefficient-field checks, 20 close-value signs
+and three common-field cases pass, including their independent FLINT oracles.
+The source tree, readable collector, build outputs and before/after source and
+executable identities are retained. CPU affinity is recorded, not asserted.
+
+| Command group | Whole-command elapsed seconds |
+| --- | ---: |
+| build | 55.744 |
+| build-freshness | 0.920 |
+| field-checks | 8.864 |
+| scalars | 0.065 |
+| common | 0.655 |
+| scalars-oracle | 0.105 |
+| common-oracle | 0.059 |
+
+These checks cover the affected imports at the recorded revision; they do not
+repeat unrelated oracle tests or constitute checks of every later main commit.
+The nested, byte and infinitesimal executables are byte-identical between the
+earlier captures and the verified-fresh `28e4073ea6` build. In particular, the
+local depth-three/four nested capture uses that same binary, while retaining
+its original source and execution record.
