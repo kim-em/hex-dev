@@ -1,7 +1,60 @@
 {
   "benchmark": "perm_group packed-certificate kernel replay",
   "baseline_commit": "7dad39087bcdc62acea50b10d085d66047fe7967",
-  "after_revision": "issue-10736 implementation before graph_aut consumer integration; producer, checker and packed representation hashes below also match final implementation",
+  "implementations": {
+    "original_feature": {
+      "reference_revision": "17a29bf76925cdfa9b17466a24ac8bdfd0303316",
+      "revision_note": "Samples collected during feature development before the identity exit. The runtime checker source hashes below are exact and are preserved in this reference revision.",
+      "series": [
+        "initial",
+        "unchanged-rerun",
+        "large-heartbeat-limit"
+      ],
+      "runtime_files": [
+        {
+          "path": "HexPermGroup/Kernel/Pack.lean",
+          "sha256": "b90c267c0af1296761c475914bdb351bdabf17a523f6bde7c4b3453ffadac6b3",
+          "identical_to_baseline": true
+        },
+        {
+          "path": "HexPermGroup/Kernel/Check.lean",
+          "sha256": "cc6305a85e4f36466552dfe77360add6203c55d856658fcc3248276cbf5a27c7",
+          "identical_to_baseline": true
+        },
+        {
+          "path": "HexPermGroup/Kernel/Certify.lean",
+          "sha256": "4e581a62c8243804b6ab4442c2d43640fb54a73f82f1594b7446a2052bdc496a",
+          "identical_to_baseline": true
+        }
+      ]
+    },
+    "identity_exit": {
+      "base_commit": "17a29bf76925cdfa9b17466a24ac8bdfd0303316",
+      "patch_context": "context-identity-exit",
+      "series": [
+        "identity-exit",
+        "identity-exit-classical"
+      ],
+      "change": "Sift returns true immediately for an identity residual, skipping remaining compositions. LevelHyp.sift_iff proves the new branch for arbitrary accepted certificates. Certificate data and chunk boundaries are unchanged.",
+      "runtime_files": [
+        {
+          "path": "HexPermGroup/Kernel/Pack.lean",
+          "sha256": "b90c267c0af1296761c475914bdb351bdabf17a523f6bde7c4b3453ffadac6b3",
+          "identical_to_baseline": true
+        },
+        {
+          "path": "HexPermGroup/Kernel/Check.lean",
+          "sha256": "24876309e168e6a327ecbcde72c1417641f0607b04fad0f8d15676d652abe363",
+          "identical_to_baseline": false
+        },
+        {
+          "path": "HexPermGroup/Kernel/Certify.lean",
+          "sha256": "4e581a62c8243804b6ab4442c2d43640fb54a73f82f1594b7446a2052bdc496a",
+          "identical_to_baseline": true
+        }
+      ]
+    }
+  },
   "metric": "Lean cumulative profiler type checking; includes auxiliary declaration checks and final proof check",
   "command": [
     "lake",
@@ -9,9 +62,28 @@
     "HexPermGroupMathlib.PerfCompare"
   ],
   "source_template": "import HexPermGroupMathlib\nset_option profiler true\nset_option trace.perm_group true\nset_option maxRecDepth 100000\nopen Hex.PermGroup\nnoncomputable def generators : Set (Equiv.Perm (Fin DEGREE)) := {Kernel.permOfImages DEGREE GENERATOR_1, Kernel.permOfImages DEGREE GENERATOR_2}\nexample : Nat.card (Subgroup.closure generators) = ORDER := by perm_group\n",
-  "heartbeats": "Default 200000 for M11 through HS. McL first baseline attempt exceeded this during elaboration, before replay. McL and Co3 completed comparisons use 5000000 in both arms. J2 rerun retains original options.",
-  "schedule": "One CPU selected automatically by scripts/bench/cpu_lease.py for each series. Group-major adjacent AB then BA. Every completed sample retained. J2 and McL each have exactly one unchanged rerun after an inconclusive result.",
+  "heartbeats": "Default 200000 for M11 through HS, including classical M11. McL first baseline attempt exceeded this during elaboration, before replay. McL and Co3 completed comparisons use 5000000 in both arms. J2 rerun retains original options.",
+  "schedule": "One CPU selected automatically by scripts/bench/cpu_lease.py for each series. Group-major adjacent AB then BA. Every completed sample retained. The original implementation has exactly one unchanged rerun each for J2 and McL after an inconclusive result. The identity-exit implementation is a new comparison of changed code, without an unchanged rerun. Classical M11 is the separate workload specified by the kernel replay sizing report.",
   "contexts": {
+    "context-classical": {
+      "cpu": 65,
+      "host": "chungus2",
+      "toolchain": "leanprover/lean4:v4.35.0-rc3",
+      "baseline": "7dad39087bcdc62acea50b10d085d66047fe7967",
+      "schedule": "group-major adjacent AB, BA; two samples per arm; all completed retained",
+      "change": "Kernel.sift accepts the identity residual immediately, before remaining levels; Sound.sift_iff proves the new branch",
+      "after_diff": ""
+    },
+    "context-identity-exit": {
+      "cpu": 33,
+      "host": "chungus2",
+      "toolchain": "leanprover/lean4:v4.35.0-rc3",
+      "baseline": "7dad39087bcdc62acea50b10d085d66047fe7967",
+      "schedule": "group-major adjacent AB, BA; two samples per arm; all completed retained",
+      "change": "Kernel.sift accepts the identity residual immediately, before remaining levels; Sound.sift_iff proves the new branch",
+      "after_diff": "diff --git a/HexPermGroup/Kernel/Check.lean b/HexPermGroup/Kernel/Check.lean\nindex dd90cfb0f7..63645b5fe6 100644\n--- a/HexPermGroup/Kernel/Check.lean\n+++ b/HexPermGroup/Kernel/Check.lean\n@@ -60,13 +60,14 @@ abbrev Certificate := List Level\n   let k := Nat.sub (field W L.lookup (field W s (L.orbit.get j))) 1\n   comp n W (L.invs.get k) (comp n W s (L.reps.get j))\n \n-/-- Sift a packed permutation through the levels, accepting when the residual\n-after the last level is `e`. -/\n+/-- Sift a packed permutation through the levels, accepting as soon as the\n+residual is `e`. -/\n @[expose] def sift (n W e : Nat) : List Level \u2192 Nat \u2192 Bool\n   | [], x => Nat.beq x e\n   | L :: rest, x =>\n-    let j := field W L.lookup (field W x L.base)\n-    cond (Nat.beq j 0) false (sift n W e rest (comp n W (L.invs.get (Nat.sub j 1)) x))\n+    cond (Nat.beq x e) true <|\n+      let j := field W L.lookup (field W x L.base)\n+      cond (Nat.beq j 0) false (sift n W e rest (comp n W (L.invs.get (Nat.sub j 1)) x))\n \n /-- Items 3 and 5 of the SPEC's checker for the Schreier pairs `p` with\n `lo \u2264 p < hi`, where pair `p` is generator `p / size` and orbit point `p % size`. -/\ndiff --git a/HexPermGroup/Kernel/Sound.lean b/HexPermGroup/Kernel/Sound.lean\nindex 17f5e0932a..76afa280ae 100644\n--- a/HexPermGroup/Kernel/Sound.lean\n+++ b/HexPermGroup/Kernel/Sound.lean\n@@ -527,7 +527,15 @@ theorem base_mem : h.\u03a9 ((\u27e8L.base, h.base_lt\u27e9 : Fin n)) := by\n theorem sift_iff {x : Nat} {\u03c3 : Perm n} (hx : Rep n x \u03c3) :\n     Kernel.sift n W e (L :: rest) x = true \u2194 levelGroup n L (\u03c3) := by\n   have hxb : field W x L.base = (\u03c3 \u27e8L.base, h.base_lt\u27e9).val := hx \u27e8L.base, h.base_lt\u27e9\n-  simp only [Kernel.sift, hxb]\n+  by_cases he : x = e\n+  \u00b7 subst x\n+    have h\u03c3 : \u03c3 = 1 := hx.unique rep_ident\n+    subst \u03c3\n+    simp only [Kernel.sift, Nat.beq_refl, Bool.cond_true, true_iff]\n+    exact Span.id\n+  have hne : Nat.beq x e = false := by\n+    simpa [beq_eq_decide] using he\n+  simp only [Kernel.sift, hne, Bool.cond_false, hxb]\n   by_cases h\u03a9 : h.\u03a9 (\u03c3 \u27e8L.base, h.base_lt\u27e9)\n   \u00b7 have h0 : field W L.lookup (\u03c3 \u27e8L.base, h.base_lt\u27e9).val \u2260 0 := h\u03a9\n     have hk := h.idx_lt h\u03a9\n",
+      "after_base_commit": "17a29bf76925cdfa9b17466a24ac8bdfd0303316"
+    },
     "context-mcl-rerun": {
       "cpu": 61,
       "host": "chungus2",
@@ -34,23 +106,6 @@
       "schedule": "group-major adjacent AB, BA; two samples per arm; all completed retained"
     }
   },
-  "runtime_files": [
-    {
-      "path": "HexPermGroup/Kernel/Pack.lean",
-      "sha256": "b90c267c0af1296761c475914bdb351bdabf17a523f6bde7c4b3453ffadac6b3",
-      "identical_to_baseline": true
-    },
-    {
-      "path": "HexPermGroup/Kernel/Check.lean",
-      "sha256": "cc6305a85e4f36466552dfe77360add6203c55d856658fcc3248276cbf5a27c7",
-      "identical_to_baseline": true
-    },
-    {
-      "path": "HexPermGroup/Kernel/Certify.lean",
-      "sha256": "4e581a62c8243804b6ab4442c2d43640fb54a73f82f1594b7446a2052bdc496a",
-      "identical_to_baseline": true
-    }
-  ],
   "inputs": [
     {
       "group": "Co3",
@@ -1050,6 +1105,40 @@
       ]
     },
     {
+      "group": "M11-classical",
+      "degree": 11,
+      "order": 7920,
+      "generators": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          0
+        ],
+        [
+          0,
+          1,
+          6,
+          9,
+          5,
+          3,
+          10,
+          2,
+          8,
+          4,
+          7
+        ]
+      ],
+      "source": "HexPermGroup.Tests.m11; reports/20260928-perm-group-kernel-replay-sizing.md classical generators"
+    },
+    {
       "group": "M11",
       "degree": 11,
       "order": 7920,
@@ -1894,6 +1983,24 @@
       "within_ten_percent": true
     },
     {
+      "group": "Co3",
+      "series": "identity-exit",
+      "kernel_seconds": {
+        "before": [
+          124.0,
+          117.0
+        ],
+        "after": [
+          80.6,
+          76.7
+        ]
+      },
+      "mean_before_seconds": 120.5,
+      "mean_after_seconds": 78.65,
+      "mean_change_percent": -34.73029045643153,
+      "within_ten_percent": true
+    },
+    {
       "group": "HS",
       "series": "initial",
       "kernel_seconds": {
@@ -1909,6 +2016,24 @@
       "mean_before_seconds": 14.9,
       "mean_after_seconds": 12.75,
       "mean_change_percent": -14.429530201342288,
+      "within_ten_percent": true
+    },
+    {
+      "group": "HS",
+      "series": "identity-exit",
+      "kernel_seconds": {
+        "before": [
+          8.67,
+          9.09
+        ],
+        "after": [
+          5.33,
+          5.36
+        ]
+      },
+      "mean_before_seconds": 8.879999999999999,
+      "mean_after_seconds": 5.345000000000001,
+      "mean_change_percent": -39.80855855855855,
       "within_ten_percent": true
     },
     {
@@ -1948,6 +2073,42 @@
       "within_ten_percent": true
     },
     {
+      "group": "J2",
+      "series": "identity-exit",
+      "kernel_seconds": {
+        "before": [
+          4.69,
+          4.61
+        ],
+        "after": [
+          2.7,
+          2.76
+        ]
+      },
+      "mean_before_seconds": 4.65,
+      "mean_after_seconds": 2.73,
+      "mean_change_percent": -41.29032258064517,
+      "within_ten_percent": true
+    },
+    {
+      "group": "M11-classical",
+      "series": "identity-exit-classical",
+      "kernel_seconds": {
+        "before": [
+          0.171,
+          0.125
+        ],
+        "after": [
+          0.131,
+          0.163
+        ]
+      },
+      "mean_before_seconds": 0.14800000000000002,
+      "mean_after_seconds": 0.14700000000000002,
+      "mean_change_percent": -0.6756756756756799,
+      "within_ten_percent": true
+    },
+    {
       "group": "M11",
       "series": "initial",
       "kernel_seconds": {
@@ -1963,6 +2124,24 @@
       "mean_before_seconds": 0.132,
       "mean_after_seconds": 0.1145,
       "mean_change_percent": -13.257575757575758,
+      "within_ten_percent": true
+    },
+    {
+      "group": "M11",
+      "series": "identity-exit",
+      "kernel_seconds": {
+        "before": [
+          0.116,
+          0.111
+        ],
+        "after": [
+          0.09820000000000001,
+          0.09809999999999999
+        ]
+      },
+      "mean_before_seconds": 0.1135,
+      "mean_after_seconds": 0.09815,
+      "mean_change_percent": -13.52422907488987,
       "within_ten_percent": true
     },
     {
@@ -1984,6 +2163,24 @@
       "within_ten_percent": true
     },
     {
+      "group": "M12",
+      "series": "identity-exit",
+      "kernel_seconds": {
+        "before": [
+          0.156,
+          0.155
+        ],
+        "after": [
+          0.127,
+          0.126
+        ]
+      },
+      "mean_before_seconds": 0.1555,
+      "mean_after_seconds": 0.1265,
+      "mean_change_percent": -18.649517684887464,
+      "within_ten_percent": true
+    },
+    {
       "group": "M22",
       "series": "initial",
       "kernel_seconds": {
@@ -1999,6 +2196,24 @@
       "mean_before_seconds": 0.3525,
       "mean_after_seconds": 0.363,
       "mean_change_percent": 2.9787234042553123,
+      "within_ten_percent": true
+    },
+    {
+      "group": "M22",
+      "series": "identity-exit",
+      "kernel_seconds": {
+        "before": [
+          0.375,
+          0.355
+        ],
+        "after": [
+          0.25,
+          0.244
+        ]
+      },
+      "mean_before_seconds": 0.365,
+      "mean_after_seconds": 0.247,
+      "mean_change_percent": -32.32876712328767,
       "within_ten_percent": true
     },
     {
@@ -2020,6 +2235,24 @@
       "within_ten_percent": true
     },
     {
+      "group": "M23",
+      "series": "identity-exit",
+      "kernel_seconds": {
+        "before": [
+          0.599,
+          0.607
+        ],
+        "after": [
+          0.41600000000000004,
+          0.422
+        ]
+      },
+      "mean_before_seconds": 0.603,
+      "mean_after_seconds": 0.41900000000000004,
+      "mean_change_percent": -30.51409618573797,
+      "within_ten_percent": true
+    },
+    {
       "group": "M24",
       "series": "initial",
       "kernel_seconds": {
@@ -2035,6 +2268,24 @@
       "mean_before_seconds": 1.0635,
       "mean_after_seconds": 0.8915,
       "mean_change_percent": -16.173013634226606,
+      "within_ten_percent": true
+    },
+    {
+      "group": "M24",
+      "series": "identity-exit",
+      "kernel_seconds": {
+        "before": [
+          0.856,
+          0.894
+        ],
+        "after": [
+          0.548,
+          0.619
+        ]
+      },
+      "mean_before_seconds": 0.875,
+      "mean_after_seconds": 0.5835,
+      "mean_change_percent": -33.31428571428571,
       "within_ten_percent": true
     },
     {
@@ -2072,9 +2323,28 @@
       "mean_after_seconds": 88.2,
       "mean_change_percent": 29.99263080324246,
       "within_ten_percent": false
+    },
+    {
+      "group": "McL",
+      "series": "identity-exit",
+      "kernel_seconds": {
+        "before": [
+          90.1,
+          62.9
+        ],
+        "after": [
+          57.5,
+          33.4
+        ]
+      },
+      "mean_before_seconds": 76.5,
+      "mean_after_seconds": 45.45,
+      "mean_change_percent": -40.588235294117645,
+      "within_ten_percent": true
     }
   ],
-  "acceptance": "McL is above the requested +10% bound in both completed series. J2 is above the bound initially and below it on its one rerun. Substantial variation occurs within unchanged arms and host load is recorded, but these observations do not establish the requested bound for McL. No samples are excluded due to host activity.",
+  "final_comparisons_within_ten_percent": true,
+  "acceptance": "Every completed comparison of the identity-exit implementation is within the requested +10% bound. The earlier implementation was above the bound for McL in both series and for J2 initially; those samples are retained. No samples are excluded due to host activity.",
   "samples": [
     {
       "group": "M11",
@@ -3065,6 +3335,886 @@
       "exit_code": 0,
       "kernel_seconds": 65.1,
       "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (127s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: [perm_group] degree 275, order 898128000, orbit sizes [275, 112, 81, 36, 5, 2], chunks per level [4, 2, 2, 1, 1, 1]\n[perm_group] level 5: pairs [0, 2)\n[perm_group] level 4: pairs [0, 15)\n[perm_group] level 3: pairs [0, 108)\n[perm_group] level 2: pairs [0, 359)\n[perm_group] level 2: pairs [359, 405)\n[perm_group] level 1: pairs [0, 307)\n[perm_group] level 1: pairs [307, 448)\n[perm_group] level 0: pairs [0, 268)\n[perm_group] level 0: pairs [268, 536)\n[perm_group] level 0: pairs [536, 804)\n[perm_group] level 0: pairs [804, 825)\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:0: tactic execution of Hex.PermGroup.Kernel.Tactic.permGroup took 60.2s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 2.06s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 1.01s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 121ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 242ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 1.86s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 768ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 11.3s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 851ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 964ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 10.3s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 3.86s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 2.74s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 9.39s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 9.29s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 9.63s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 500ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 2.34ms\n\tattribute application 0.0173ms\n\tcompilation (IR) 0.765ms\n\tcompilation (LCNF base) 19ms\n\tcompilation (LCNF impure) 8.88ms\n\tcompilation (LCNF mono) 17.4ms\n\telaboration 67.3ms\n\tfix level params 0.163ms\n\tinstantiate metavars 0.266ms\n\tinterpretation 2.05ms\n\tlet-to-have transformation 1.45ms\n\tlinting 67.1ms\n\tmodule linting 0.00179ms\n\toverlappingInstancesLinter 1.16ms\n\tparsing 6.14ms\n\tprocess pre-definitions 5.49ms\n\tshare common exprs 11.3ms\n\ttactic execution 60.2s\n\ttacticAnalysis 20.9ms\n\ttype checking 65.1s\n\ttypeclass inference 34.2ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "McL",
+      "degree": 275,
+      "arm": "before",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        22.1611328125,
+        25.2197265625,
+        20.30322265625
+      ],
+      "load_after": [
+        55.7529296875,
+        45.6455078125,
+        29.3525390625
+      ],
+      "wall_seconds": 183.320586079004,
+      "exit_code": 0,
+      "kernel_seconds": 90.1,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (180s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: [perm_group] degree 275, order 898128000, orbit sizes [275, 112, 81, 36, 5, 2], chunks per level [4, 2, 2, 1, 1, 1]\n[perm_group] level 5: pairs [0, 2)\n[perm_group] level 4: pairs [0, 15)\n[perm_group] level 3: pairs [0, 108)\n[perm_group] level 2: pairs [0, 359)\n[perm_group] level 2: pairs [359, 405)\n[perm_group] level 1: pairs [0, 307)\n[perm_group] level 1: pairs [307, 448)\n[perm_group] level 0: pairs [0, 268)\n[perm_group] level 0: pairs [268, 536)\n[perm_group] level 0: pairs [536, 804)\n[perm_group] level 0: pairs [804, 825)\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:0: tactic execution of Hex.PermGroup.Kernel.Tactic.permGroup took 88s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 4.09s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 2.65s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 101ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 134ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 289ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 705ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 3.33s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 1.3s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 17s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 1.15s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 1.13s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 11.7s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 5.47s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 4.25s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 12.6s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 12.1s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 11.1s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 721ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 3.8ms\n\tattribute application 0.0203ms\n\tcompilation (IR) 0.793ms\n\tcompilation (LCNF base) 20.9ms\n\tcompilation (LCNF impure) 12.5ms\n\tcompilation (LCNF mono) 18ms\n\telaboration 115ms\n\tfix level params 0.249ms\n\tinstantiate metavars 0.173ms\n\tinterpretation 2.16ms\n\tlet-to-have transformation 1.24ms\n\tlinting 64.2ms\n\tmodule linting 0.00345ms\n\toverlappingInstancesLinter 4.84ms\n\tparsing 61.2ms\n\tprocess pre-definitions 8.36ms\n\tshare common exprs 2.11ms\n\ttactic execution 88s\n\ttacticAnalysis 31.1ms\n\ttype checking 90.1s\n\ttypeclass inference 48.9ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "McL",
+      "degree": 275,
+      "arm": "after",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        55.7529296875,
+        45.6455078125,
+        29.3525390625
+      ],
+      "load_after": [
+        63.140625,
+        54.75,
+        35.501953125
+      ],
+      "wall_seconds": 160.19845703100145,
+      "exit_code": 0,
+      "kernel_seconds": 57.5,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (156s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:7:0: elaboration took 162ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: [perm_group] degree 275, order 898128000, orbit sizes [275, 112, 81, 36, 5, 2], chunks per level [4, 2, 2, 1, 1, 1]\n[perm_group] level 5: pairs [0, 2)\n[perm_group] level 4: pairs [0, 15)\n[perm_group] level 3: pairs [0, 108)\n[perm_group] level 2: pairs [0, 359)\n[perm_group] level 2: pairs [359, 405)\n[perm_group] level 1: pairs [0, 307)\n[perm_group] level 1: pairs [307, 448)\n[perm_group] level 0: pairs [0, 268)\n[perm_group] level 0: pairs [268, 536)\n[perm_group] level 0: pairs [536, 804)\n[perm_group] level 0: pairs [804, 825)\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:0: interpretation of Hex.PermGroup.Mathlib.Tactic.extension._lam_0._boxed took 94.7s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 3.05s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 2.16s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 275ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 588ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 2.18s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 1.14s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 11s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 1.22s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 1.6s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 8.1s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 3.56s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 3.5s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 4.98s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 6.09s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 7s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 750ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 4.49ms\n\tattribute application 0.0274ms\n\tcompilation (IR) 5.34ms\n\tcompilation (LCNF base) 61.4ms\n\tcompilation (LCNF impure) 25.4ms\n\tcompilation (LCNF mono) 83.1ms\n\telaboration 172ms\n\tfix level params 0.325ms\n\tinstantiate metavars 0.319ms\n\tinterpretation 94.7s\n\tlet-to-have transformation 1.9ms\n\tlinting 210ms\n\tmodule linting 0.00274ms\n\toverlappingInstancesLinter 2.51ms\n\tparsing 13.2ms\n\tprocess pre-definitions 10.6ms\n\tshare common exprs 7.18ms\n\ttactic execution 7.06ms\n\ttacticAnalysis 25.3ms\n\ttype checking 57.5s\n\ttypeclass inference 92.4ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "McL",
+      "degree": 275,
+      "arm": "after",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        63.140625,
+        54.75,
+        35.501953125
+      ],
+      "load_after": [
+        27.23193359375,
+        46.56494140625,
+        34.93798828125
+      ],
+      "wall_seconds": 116.8960589650087,
+      "exit_code": 0,
+      "kernel_seconds": 33.4,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (113s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:7:0: elaboration took 129ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: [perm_group] degree 275, order 898128000, orbit sizes [275, 112, 81, 36, 5, 2], chunks per level [4, 2, 2, 1, 1, 1]\n[perm_group] level 5: pairs [0, 2)\n[perm_group] level 4: pairs [0, 15)\n[perm_group] level 3: pairs [0, 108)\n[perm_group] level 2: pairs [0, 359)\n[perm_group] level 2: pairs [359, 405)\n[perm_group] level 1: pairs [0, 307)\n[perm_group] level 1: pairs [307, 448)\n[perm_group] level 0: pairs [0, 268)\n[perm_group] level 0: pairs [268, 536)\n[perm_group] level 0: pairs [536, 804)\n[perm_group] level 0: pairs [804, 825)\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:0: interpretation of Hex.PermGroup.Mathlib.Tactic.extension._lam_0._boxed took 76.7s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 1.12s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 1.06s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 120ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 248ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 927ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 629ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 5.74s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 593ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 941ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 5.03s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 2.32s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 2.8s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 3.66s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 3.58s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 4.15s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 329ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.72ms\n\tattribute application 0.0181ms\n\tcompilation (IR) 2.43ms\n\tcompilation (LCNF base) 49ms\n\tcompilation (LCNF impure) 22ms\n\tcompilation (LCNF mono) 54.3ms\n\telaboration 131ms\n\tfix level params 0.196ms\n\tinstantiate metavars 0.504ms\n\tinterpretation 76.7s\n\tlet-to-have transformation 1.47ms\n\tlinting 79.4ms\n\tmodule linting 0.00214ms\n\toverlappingInstancesLinter 7.83ms\n\tparsing 42.1ms\n\tprocess pre-definitions 9.33ms\n\tshare common exprs 2.33ms\n\ttactic execution 5.11ms\n\ttacticAnalysis 22.5ms\n\ttype checking 33.4s\n\ttypeclass inference 48.7ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "McL",
+      "degree": 275,
+      "arm": "before",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        27.23193359375,
+        46.56494140625,
+        34.93798828125
+      ],
+      "load_after": [
+        8.09814453125,
+        31.92041015625,
+        31.0166015625
+      ],
+      "wall_seconds": 126.41210180100461,
+      "exit_code": 0,
+      "kernel_seconds": 62.9,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (124s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: [perm_group] degree 275, order 898128000, orbit sizes [275, 112, 81, 36, 5, 2], chunks per level [4, 2, 2, 1, 1, 1]\n[perm_group] level 5: pairs [0, 2)\n[perm_group] level 4: pairs [0, 15)\n[perm_group] level 3: pairs [0, 108)\n[perm_group] level 2: pairs [0, 359)\n[perm_group] level 2: pairs [359, 405)\n[perm_group] level 1: pairs [0, 307)\n[perm_group] level 1: pairs [307, 448)\n[perm_group] level 0: pairs [0, 268)\n[perm_group] level 0: pairs [268, 536)\n[perm_group] level 0: pairs [536, 804)\n[perm_group] level 0: pairs [804, 825)\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:0: tactic execution of Hex.PermGroup.Kernel.Tactic.permGroup took 59.8s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 1.08s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 998ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 128ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 261ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 2.09s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 700ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 10.8s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 801ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 1.02s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 9.55s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 3.81s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 2.73s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 9.38s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 9.53s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 9.38s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:67: type checking took 473ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.66ms\n\tattribute application 0.017ms\n\tcompilation (IR) 0.825ms\n\tcompilation (LCNF base) 18.4ms\n\tcompilation (LCNF impure) 7.2ms\n\tcompilation (LCNF mono) 16.9ms\n\telaboration 52.5ms\n\tfix level params 0.157ms\n\tinstantiate metavars 0.107ms\n\tinterpretation 1.92ms\n\tlet-to-have transformation 1.22ms\n\tlinting 62.9ms\n\tmodule linting 0.00215ms\n\toverlappingInstancesLinter 1.13ms\n\tparsing 8.8ms\n\tprocess pre-definitions 3.43ms\n\tshare common exprs 1.26ms\n\ttactic execution 59.8s\n\ttacticAnalysis 16.5ms\n\ttype checking 62.9s\n\ttypeclass inference 26.8ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "M11",
+      "degree": 11,
+      "arm": "before",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        8.09814453125,
+        31.92041015625,
+        31.0166015625
+      ],
+      "load_after": [
+        8.09814453125,
+        31.92041015625,
+        31.0166015625
+      ],
+      "wall_seconds": 3.7141572480031755,
+      "exit_code": 0,
+      "kernel_seconds": 0.116,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (2.0s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:62: [perm_group] degree 11, order 7920, orbit sizes [11, 10, 9, 8], chunks per level [1, 1, 1, 1]\n[perm_group] level 3: pairs [0, 40)\n[perm_group] level 2: pairs [0, 54)\n[perm_group] level 1: pairs [0, 50)\n[perm_group] level 0: pairs [0, 33)\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.24ms\n\tattribute application 0.013ms\n\tcompilation (IR) 0.0775ms\n\tcompilation (LCNF base) 0.852ms\n\tcompilation (LCNF impure) 0.485ms\n\tcompilation (LCNF mono) 0.636ms\n\telaboration 13.3ms\n\tfix level params 0.0375ms\n\tinstantiate metavars 0.0269ms\n\tinterpretation 0.243ms\n\tlet-to-have transformation 0.012ms\n\tlinting 55ms\n\tmodule linting 0.00166ms\n\toverlappingInstancesLinter 0.593ms\n\tparsing 0.495ms\n\tprocess pre-definitions 0.532ms\n\tshare common exprs 0.167ms\n\ttactic execution 51.6ms\n\ttacticAnalysis 1.48ms\n\ttype checking 116ms\n\ttypeclass inference 10.9ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "M11",
+      "degree": 11,
+      "arm": "after",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        8.09814453125,
+        31.92041015625,
+        31.0166015625
+      ],
+      "load_after": [
+        7.689453125,
+        31.43994140625,
+        30.86572265625
+      ],
+      "wall_seconds": 3.195470311999088,
+      "exit_code": 0,
+      "kernel_seconds": 0.09820000000000001,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (1.6s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:62: [perm_group] degree 11, order 7920, orbit sizes [11, 10, 9, 8], chunks per level [1, 1, 1, 1]\n[perm_group] level 3: pairs [0, 40)\n[perm_group] level 2: pairs [0, 54)\n[perm_group] level 1: pairs [0, 50)\n[perm_group] level 0: pairs [0, 33)\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.53ms\n\tattribute application 0.0118ms\n\tcompilation (IR) 0.125ms\n\tcompilation (LCNF base) 1.62ms\n\tcompilation (LCNF impure) 0.923ms\n\tcompilation (LCNF mono) 1.17ms\n\telaboration 3.55ms\n\tfix level params 0.0353ms\n\tinstantiate metavars 0.0242ms\n\tinterpretation 44.7ms\n\tlet-to-have transformation 0.0117ms\n\tlinting 26.7ms\n\tmodule linting 0.0017ms\n\toverlappingInstancesLinter 0.599ms\n\tparsing 0.791ms\n\tprocess pre-definitions 1.57ms\n\tshare common exprs 0.169ms\n\ttactic execution 0.84ms\n\ttacticAnalysis 5.3ms\n\ttype checking 98.2ms\n\ttypeclass inference 12.5ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "M11",
+      "degree": 11,
+      "arm": "after",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        7.689453125,
+        31.43994140625,
+        30.86572265625
+      ],
+      "load_after": [
+        7.2333984375,
+        30.951171875,
+        30.71044921875
+      ],
+      "wall_seconds": 3.2876811519963667,
+      "exit_code": 0,
+      "kernel_seconds": 0.09809999999999999,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (1.6s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:62: [perm_group] degree 11, order 7920, orbit sizes [11, 10, 9, 8], chunks per level [1, 1, 1, 1]\n[perm_group] level 3: pairs [0, 40)\n[perm_group] level 2: pairs [0, 54)\n[perm_group] level 1: pairs [0, 50)\n[perm_group] level 0: pairs [0, 33)\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.41ms\n\tattribute application 0.0143ms\n\tcompilation (IR) 0.127ms\n\tcompilation (LCNF base) 1.61ms\n\tcompilation (LCNF impure) 0.934ms\n\tcompilation (LCNF mono) 1.2ms\n\telaboration 12.4ms\n\tfix level params 0.0361ms\n\tinstantiate metavars 0.0257ms\n\tinterpretation 44.8ms\n\tlet-to-have transformation 0.0132ms\n\tlinting 33.8ms\n\tmodule linting 0.00187ms\n\toverlappingInstancesLinter 0.636ms\n\tparsing 0.494ms\n\tprocess pre-definitions 0.566ms\n\tshare common exprs 0.175ms\n\ttactic execution 3.32ms\n\ttacticAnalysis 4.63ms\n\ttype checking 98.1ms\n\ttypeclass inference 6.7ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "M11",
+      "degree": 11,
+      "arm": "before",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        7.2333984375,
+        30.951171875,
+        30.71044921875
+      ],
+      "load_after": [
+        7.2333984375,
+        30.951171875,
+        30.71044921875
+      ],
+      "wall_seconds": 3.322028685011901,
+      "exit_code": 0,
+      "kernel_seconds": 0.111,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (1.6s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:62: [perm_group] degree 11, order 7920, orbit sizes [11, 10, 9, 8], chunks per level [1, 1, 1, 1]\n[perm_group] level 3: pairs [0, 40)\n[perm_group] level 2: pairs [0, 54)\n[perm_group] level 1: pairs [0, 50)\n[perm_group] level 0: pairs [0, 33)\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 0.757ms\n\tattribute application 0.0123ms\n\tcompilation (IR) 0.0722ms\n\tcompilation (LCNF base) 0.841ms\n\tcompilation (LCNF impure) 0.516ms\n\tcompilation (LCNF mono) 0.626ms\n\telaboration 5.77ms\n\tfix level params 0.0362ms\n\tinstantiate metavars 0.0244ms\n\tinterpretation 0.238ms\n\tlet-to-have transformation 0.0125ms\n\tlinting 22.3ms\n\tmodule linting 0.0018ms\n\toverlappingInstancesLinter 0.585ms\n\tparsing 5.89ms\n\tprocess pre-definitions 5.76ms\n\tshare common exprs 0.17ms\n\ttactic execution 35.3ms\n\ttacticAnalysis 2.45ms\n\ttype checking 111ms\n\ttypeclass inference 3.01ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "M12",
+      "degree": 12,
+      "arm": "before",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        7.2333984375,
+        30.951171875,
+        30.71044921875
+      ],
+      "load_after": [
+        7.05419921875,
+        30.52001953125,
+        30.572265625
+      ],
+      "wall_seconds": 3.2915378410107223,
+      "exit_code": 0,
+      "kernel_seconds": 0.156,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (1.7s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:63: [perm_group] degree 12, order 95040, orbit sizes [12, 11, 10, 9, 8], chunks per level [1, 1, 1, 1, 1]\n[perm_group] level 4: pairs [0, 32)\n[perm_group] level 3: pairs [0, 54)\n[perm_group] level 2: pairs [0, 60)\n[perm_group] level 1: pairs [0, 33)\n[perm_group] level 0: pairs [0, 36)\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 0.932ms\n\tattribute application 0.0142ms\n\tcompilation (IR) 0.09ms\n\tcompilation (LCNF base) 0.922ms\n\tcompilation (LCNF impure) 0.542ms\n\tcompilation (LCNF mono) 0.685ms\n\telaboration 13.7ms\n\tfix level params 0.0372ms\n\tinstantiate metavars 0.0284ms\n\tinterpretation 0.256ms\n\tlet-to-have transformation 0.0124ms\n\tlinting 41.2ms\n\tmodule linting 0.00155ms\n\toverlappingInstancesLinter 0.603ms\n\tparsing 0.486ms\n\tprocess pre-definitions 0.388ms\n\tshare common exprs 0.185ms\n\ttactic execution 58.2ms\n\ttacticAnalysis 1.86ms\n\ttype checking 156ms\n\ttypeclass inference 3.15ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "M12",
+      "degree": 12,
+      "arm": "after",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        7.05419921875,
+        30.52001953125,
+        30.572265625
+      ],
+      "load_after": [
+        6.5693359375,
+        30.02978515625,
+        30.4130859375
+      ],
+      "wall_seconds": 3.295201384011307,
+      "exit_code": 0,
+      "kernel_seconds": 0.127,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (1.7s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:63: [perm_group] degree 12, order 95040, orbit sizes [12, 11, 10, 9, 8], chunks per level [1, 1, 1, 1, 1]\n[perm_group] level 4: pairs [0, 32)\n[perm_group] level 3: pairs [0, 54)\n[perm_group] level 2: pairs [0, 60)\n[perm_group] level 1: pairs [0, 33)\n[perm_group] level 0: pairs [0, 36)\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.56ms\n\tattribute application 0.0127ms\n\tcompilation (IR) 0.141ms\n\tcompilation (LCNF base) 1.79ms\n\tcompilation (LCNF impure) 1.06ms\n\tcompilation (LCNF mono) 1.32ms\n\telaboration 6.85ms\n\tfix level params 0.0373ms\n\tinstantiate metavars 0.0262ms\n\tinterpretation 48.1ms\n\tlet-to-have transformation 0.012ms\n\tlinting 20.3ms\n\tmodule linting 0.00172ms\n\toverlappingInstancesLinter 0.592ms\n\tparsing 0.808ms\n\tprocess pre-definitions 0.765ms\n\tshare common exprs 0.183ms\n\ttactic execution 0.829ms\n\ttacticAnalysis 5.43ms\n\ttype checking 127ms\n\ttypeclass inference 23.4ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "M12",
+      "degree": 12,
+      "arm": "after",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        6.5693359375,
+        30.02978515625,
+        30.4130859375
+      ],
+      "load_after": [
+        6.5693359375,
+        30.02978515625,
+        30.4130859375
+      ],
+      "wall_seconds": 3.2978001879964722,
+      "exit_code": 0,
+      "kernel_seconds": 0.126,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (1.7s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:63: [perm_group] degree 12, order 95040, orbit sizes [12, 11, 10, 9, 8], chunks per level [1, 1, 1, 1, 1]\n[perm_group] level 4: pairs [0, 32)\n[perm_group] level 3: pairs [0, 54)\n[perm_group] level 2: pairs [0, 60)\n[perm_group] level 1: pairs [0, 33)\n[perm_group] level 0: pairs [0, 36)\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.42ms\n\tattribute application 0.0131ms\n\tcompilation (IR) 0.135ms\n\tcompilation (LCNF base) 1.76ms\n\tcompilation (LCNF impure) 1.01ms\n\tcompilation (LCNF mono) 1.3ms\n\telaboration 13.6ms\n\tfix level params 0.0377ms\n\tinstantiate metavars 0.0255ms\n\tinterpretation 57.4ms\n\tlet-to-have transformation 0.012ms\n\tlinting 22.2ms\n\tmodule linting 0.00184ms\n\toverlappingInstancesLinter 0.6ms\n\tparsing 0.482ms\n\tprocess pre-definitions 1.6ms\n\tshare common exprs 0.182ms\n\ttactic execution 0.852ms\n\ttacticAnalysis 1.57ms\n\ttype checking 126ms\n\ttypeclass inference 3.16ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "M12",
+      "degree": 12,
+      "arm": "before",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        6.5693359375,
+        30.02978515625,
+        30.4130859375
+      ],
+      "load_after": [
+        6.5234375,
+        29.63037109375,
+        30.28173828125
+      ],
+      "wall_seconds": 3.2936775849957485,
+      "exit_code": 0,
+      "kernel_seconds": 0.155,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (1.7s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:63: [perm_group] degree 12, order 95040, orbit sizes [12, 11, 10, 9, 8], chunks per level [1, 1, 1, 1, 1]\n[perm_group] level 4: pairs [0, 32)\n[perm_group] level 3: pairs [0, 54)\n[perm_group] level 2: pairs [0, 60)\n[perm_group] level 1: pairs [0, 33)\n[perm_group] level 0: pairs [0, 36)\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.33ms\n\tattribute application 0.0148ms\n\tcompilation (IR) 0.0759ms\n\tcompilation (LCNF base) 0.884ms\n\tcompilation (LCNF impure) 0.534ms\n\tcompilation (LCNF mono) 0.667ms\n\telaboration 12.2ms\n\tfix level params 0.039ms\n\tinstantiate metavars 0.0328ms\n\tinterpretation 0.25ms\n\tlet-to-have transformation 0.012ms\n\tlinting 18.1ms\n\tmodule linting 0.00157ms\n\toverlappingInstancesLinter 0.613ms\n\tparsing 0.504ms\n\tprocess pre-definitions 0.53ms\n\tshare common exprs 7.21ms\n\ttactic execution 47.3ms\n\ttacticAnalysis 2.82ms\n\ttype checking 155ms\n\ttypeclass inference 3.1ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "M22",
+      "degree": 22,
+      "arm": "before",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        6.5234375,
+        29.63037109375,
+        30.28173828125
+      ],
+      "load_after": [
+        6.0810546875,
+        29.15478515625,
+        30.1240234375
+      ],
+      "wall_seconds": 3.6036619180085836,
+      "exit_code": 0,
+      "kernel_seconds": 0.375,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (1.0s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: [perm_group] degree 22, order 443520, orbit sizes [22, 21, 20, 16, 3], chunks per level [1, 1, 1, 1, 1]\n[perm_group] level 4: pairs [0, 6)\n[perm_group] level 3: pairs [0, 80)\n[perm_group] level 2: pairs [0, 80)\n[perm_group] level 1: pairs [0, 63)\n[perm_group] level 0: pairs [0, 66)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: tactic execution of Hex.PermGroup.Kernel.Tactic.permGroup took 131ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 103ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 0.848ms\n\tattribute application 0.0135ms\n\tcompilation (IR) 0.0917ms\n\tcompilation (LCNF base) 1.25ms\n\tcompilation (LCNF impure) 0.746ms\n\tcompilation (LCNF mono) 1.01ms\n\telaboration 7.91ms\n\tfix level params 0.0416ms\n\tinstantiate metavars 0.052ms\n\tinterpretation 0.315ms\n\tlet-to-have transformation 0.0154ms\n\tlinting 27.1ms\n\tmodule linting 0.00175ms\n\toverlappingInstancesLinter 0.626ms\n\tparsing 0.51ms\n\tprocess pre-definitions 0.63ms\n\tshare common exprs 0.22ms\n\ttactic execution 131ms\n\ttacticAnalysis 2.04ms\n\ttype checking 375ms\n\ttypeclass inference 9.96ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "M22",
+      "degree": 22,
+      "arm": "after",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        6.0810546875,
+        29.15478515625,
+        30.1240234375
+      ],
+      "load_after": [
+        6.0810546875,
+        29.15478515625,
+        30.1240234375
+      ],
+      "wall_seconds": 3.5004045279929414,
+      "exit_code": 0,
+      "kernel_seconds": 0.25,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (1.9s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: [perm_group] degree 22, order 443520, orbit sizes [22, 21, 20, 16, 3], chunks per level [1, 1, 1, 1, 1]\n[perm_group] level 4: pairs [0, 6)\n[perm_group] level 3: pairs [0, 80)\n[perm_group] level 2: pairs [0, 80)\n[perm_group] level 1: pairs [0, 63)\n[perm_group] level 0: pairs [0, 66)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: interpretation of Hex.PermGroup.Mathlib.Tactic.extension._lam_0._boxed took 127ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.48ms\n\tattribute application 0.0131ms\n\tcompilation (IR) 0.187ms\n\tcompilation (LCNF base) 2.47ms\n\tcompilation (LCNF impure) 1.48ms\n\tcompilation (LCNF mono) 1.88ms\n\telaboration 16.1ms\n\tfix level params 0.041ms\n\tinstantiate metavars 0.035ms\n\tinterpretation 128ms\n\tlet-to-have transformation 0.0142ms\n\tlinting 32ms\n\tmodule linting 0.00167ms\n\toverlappingInstancesLinter 0.624ms\n\tparsing 0.521ms\n\tprocess pre-definitions 4.14ms\n\tshare common exprs 0.211ms\n\ttactic execution 1.81ms\n\ttacticAnalysis 1.7ms\n\ttype checking 250ms\n\ttypeclass inference 4.44ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "M22",
+      "degree": 22,
+      "arm": "after",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        6.0810546875,
+        29.15478515625,
+        30.1240234375
+      ],
+      "load_after": [
+        6.23486328125,
+        28.80322265625,
+        30.0048828125
+      ],
+      "wall_seconds": 3.495759461002308,
+      "exit_code": 0,
+      "kernel_seconds": 0.244,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (1.9s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: [perm_group] degree 22, order 443520, orbit sizes [22, 21, 20, 16, 3], chunks per level [1, 1, 1, 1, 1]\n[perm_group] level 4: pairs [0, 6)\n[perm_group] level 3: pairs [0, 80)\n[perm_group] level 2: pairs [0, 80)\n[perm_group] level 1: pairs [0, 63)\n[perm_group] level 0: pairs [0, 66)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: interpretation of Hex.PermGroup.Mathlib.Tactic.extension._lam_0._boxed took 128ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.57ms\n\tattribute application 0.0128ms\n\tcompilation (IR) 0.167ms\n\tcompilation (LCNF base) 2.46ms\n\tcompilation (LCNF impure) 1.44ms\n\tcompilation (LCNF mono) 2.09ms\n\telaboration 7.86ms\n\tfix level params 0.0395ms\n\tinstantiate metavars 0.0347ms\n\tinterpretation 128ms\n\tlet-to-have transformation 0.0143ms\n\tlinting 21.5ms\n\tmodule linting 0.00158ms\n\toverlappingInstancesLinter 0.638ms\n\tparsing 4.65ms\n\tprocess pre-definitions 0.62ms\n\tshare common exprs 0.213ms\n\ttactic execution 3.51ms\n\ttacticAnalysis 1.78ms\n\ttype checking 244ms\n\ttypeclass inference 3.36ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "M22",
+      "degree": 22,
+      "arm": "before",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        6.23486328125,
+        28.80322265625,
+        30.0048828125
+      ],
+      "load_after": [
+        5.8955078125,
+        28.35791015625,
+        29.85400390625
+      ],
+      "wall_seconds": 3.6105461979896063,
+      "exit_code": 0,
+      "kernel_seconds": 0.355,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (1.0s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: [perm_group] degree 22, order 443520, orbit sizes [22, 21, 20, 16, 3], chunks per level [1, 1, 1, 1, 1]\n[perm_group] level 4: pairs [0, 6)\n[perm_group] level 3: pairs [0, 80)\n[perm_group] level 2: pairs [0, 80)\n[perm_group] level 1: pairs [0, 63)\n[perm_group] level 0: pairs [0, 66)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: tactic execution of Hex.PermGroup.Kernel.Tactic.permGroup took 126ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 0.816ms\n\tattribute application 0.0129ms\n\tcompilation (IR) 0.113ms\n\tcompilation (LCNF base) 1.3ms\n\tcompilation (LCNF impure) 0.775ms\n\tcompilation (LCNF mono) 1.04ms\n\telaboration 7.41ms\n\tfix level params 0.0419ms\n\tinstantiate metavars 0.0386ms\n\tinterpretation 0.322ms\n\tlet-to-have transformation 0.0146ms\n\tlinting 34.9ms\n\tmodule linting 0.00154ms\n\toverlappingInstancesLinter 0.62ms\n\tparsing 0.496ms\n\tprocess pre-definitions 2.74ms\n\tshare common exprs 0.215ms\n\ttactic execution 129ms\n\ttacticAnalysis 1.72ms\n\ttype checking 355ms\n\ttypeclass inference 9.71ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "M23",
+      "degree": 23,
+      "arm": "before",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        5.8955078125,
+        28.35791015625,
+        29.85400390625
+      ],
+      "load_after": [
+        5.74365234375,
+        27.953125,
+        29.71484375
+      ],
+      "wall_seconds": 3.997315394997713,
+      "exit_code": 0,
+      "kernel_seconds": 0.599,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (2.3s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: [perm_group] degree 23, order 10200960, orbit sizes [23, 22, 21, 20, 3, 16], chunks per level [1, 1, 1, 1, 1, 1]\n[perm_group] level 5: pairs [0, 64)\n[perm_group] level 4: pairs [0, 15)\n[perm_group] level 3: pairs [0, 120)\n[perm_group] level 2: pairs [0, 84)\n[perm_group] level 1: pairs [0, 88)\n[perm_group] level 0: pairs [0, 69)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: tactic execution of Hex.PermGroup.Kernel.Tactic.permGroup took 239ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 117ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 125ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 115ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 0.83ms\n\tattribute application 0.0137ms\n\tcompilation (IR) 0.0986ms\n\tcompilation (LCNF base) 1.32ms\n\tcompilation (LCNF impure) 0.809ms\n\tcompilation (LCNF mono) 1.06ms\n\telaboration 16.2ms\n\tfix level params 0.0431ms\n\tinstantiate metavars 0.036ms\n\tinterpretation 0.335ms\n\tlet-to-have transformation 0.0141ms\n\tlinting 22.1ms\n\tmodule linting 0.00176ms\n\toverlappingInstancesLinter 0.68ms\n\tparsing 0.535ms\n\tprocess pre-definitions 0.636ms\n\tshare common exprs 0.224ms\n\ttactic execution 239ms\n\ttacticAnalysis 3.95ms\n\ttype checking 599ms\n\ttypeclass inference 3.38ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "M23",
+      "degree": 23,
+      "arm": "after",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        5.74365234375,
+        27.953125,
+        29.71484375
+      ],
+      "load_after": [
+        5.74365234375,
+        27.953125,
+        29.71484375
+      ],
+      "wall_seconds": 3.803926060005324,
+      "exit_code": 0,
+      "kernel_seconds": 0.41600000000000004,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (2.1s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: [perm_group] degree 23, order 10200960, orbit sizes [23, 22, 21, 20, 3, 16], chunks per level [1, 1, 1, 1, 1, 1]\n[perm_group] level 5: pairs [0, 64)\n[perm_group] level 4: pairs [0, 15)\n[perm_group] level 3: pairs [0, 120)\n[perm_group] level 2: pairs [0, 84)\n[perm_group] level 1: pairs [0, 88)\n[perm_group] level 0: pairs [0, 69)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: interpretation of Hex.PermGroup.Mathlib.Tactic.extension._lam_0._boxed took 228ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.44ms\n\tattribute application 0.0121ms\n\tcompilation (IR) 0.169ms\n\tcompilation (LCNF base) 2.54ms\n\tcompilation (LCNF impure) 1.52ms\n\tcompilation (LCNF mono) 1.94ms\n\telaboration 13.5ms\n\tfix level params 0.0435ms\n\tinstantiate metavars 0.0533ms\n\tinterpretation 228ms\n\tlet-to-have transformation 0.0141ms\n\tlinting 29.6ms\n\tmodule linting 0.00151ms\n\toverlappingInstancesLinter 0.655ms\n\tparsing 0.559ms\n\tprocess pre-definitions 3.51ms\n\tshare common exprs 0.227ms\n\ttactic execution 0.891ms\n\ttacticAnalysis 1.82ms\n\ttype checking 416ms\n\ttypeclass inference 10.1ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "M23",
+      "degree": 23,
+      "arm": "after",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        5.74365234375,
+        27.953125,
+        29.71484375
+      ],
+      "load_after": [
+        5.60400390625,
+        27.55517578125,
+        29.57666015625
+      ],
+      "wall_seconds": 3.79584267300379,
+      "exit_code": 0,
+      "kernel_seconds": 0.422,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (2.2s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: [perm_group] degree 23, order 10200960, orbit sizes [23, 22, 21, 20, 3, 16], chunks per level [1, 1, 1, 1, 1, 1]\n[perm_group] level 5: pairs [0, 64)\n[perm_group] level 4: pairs [0, 15)\n[perm_group] level 3: pairs [0, 120)\n[perm_group] level 2: pairs [0, 84)\n[perm_group] level 1: pairs [0, 88)\n[perm_group] level 0: pairs [0, 69)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: interpretation of Hex.PermGroup.Mathlib.Tactic.extension._lam_0._boxed took 237ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 0.742ms\n\tattribute application 0.0139ms\n\tcompilation (IR) 0.178ms\n\tcompilation (LCNF base) 2.53ms\n\tcompilation (LCNF impure) 1.48ms\n\tcompilation (LCNF mono) 1.94ms\n\telaboration 14.6ms\n\tfix level params 0.0419ms\n\tinstantiate metavars 0.0347ms\n\tinterpretation 238ms\n\tlet-to-have transformation 0.0145ms\n\tlinting 13.1ms\n\tmodule linting 0.00173ms\n\toverlappingInstancesLinter 0.629ms\n\tparsing 0.824ms\n\tprocess pre-definitions 3.84ms\n\tshare common exprs 0.222ms\n\ttactic execution 4.35ms\n\ttacticAnalysis 5.64ms\n\ttype checking 422ms\n\ttypeclass inference 4ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "M23",
+      "degree": 23,
+      "arm": "before",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        5.60400390625,
+        27.55517578125,
+        29.57666015625
+      ],
+      "load_after": [
+        5.31494140625,
+        27.130859375,
+        29.42822265625
+      ],
+      "wall_seconds": 4.023121974008973,
+      "exit_code": 0,
+      "kernel_seconds": 0.607,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (2.3s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: [perm_group] degree 23, order 10200960, orbit sizes [23, 22, 21, 20, 3, 16], chunks per level [1, 1, 1, 1, 1, 1]\n[perm_group] level 5: pairs [0, 64)\n[perm_group] level 4: pairs [0, 15)\n[perm_group] level 3: pairs [0, 120)\n[perm_group] level 2: pairs [0, 84)\n[perm_group] level 1: pairs [0, 88)\n[perm_group] level 0: pairs [0, 69)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: tactic execution of Hex.PermGroup.Kernel.Tactic.permGroup took 240ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 114ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 134ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 115ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 0.875ms\n\tattribute application 0.0134ms\n\tcompilation (IR) 0.0925ms\n\tcompilation (LCNF base) 1.3ms\n\tcompilation (LCNF impure) 0.766ms\n\tcompilation (LCNF mono) 1.02ms\n\telaboration 13.8ms\n\tfix level params 0.0434ms\n\tinstantiate metavars 0.0365ms\n\tinterpretation 0.316ms\n\tlet-to-have transformation 0.0143ms\n\tlinting 20ms\n\tmodule linting 0.00196ms\n\toverlappingInstancesLinter 0.652ms\n\tparsing 0.55ms\n\tprocess pre-definitions 0.627ms\n\tshare common exprs 0.24ms\n\ttactic execution 240ms\n\ttacticAnalysis 3.03ms\n\ttype checking 607ms\n\ttypeclass inference 3.47ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "M24",
+      "degree": 24,
+      "arm": "before",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        5.31494140625,
+        27.130859375,
+        29.42822265625
+      ],
+      "load_after": [
+        5.04931640625,
+        26.71337890625,
+        29.28076171875
+      ],
+      "wall_seconds": 4.290888172996347,
+      "exit_code": 0,
+      "kernel_seconds": 0.856,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (2.6s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:67: [perm_group] degree 24, order 244823040, orbit sizes [24, 23, 22, 21, 20, 16, 3], chunks per level [1, 1, 1, 1, 1, 1, 1]\n[perm_group] level 6: pairs [0, 6)\n[perm_group] level 5: pairs [0, 96)\n[perm_group] level 4: pairs [0, 120)\n[perm_group] level 3: pairs [0, 84)\n[perm_group] level 2: pairs [0, 88)\n[perm_group] level 1: pairs [0, 92)\n[perm_group] level 0: pairs [0, 72)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: tactic execution of Hex.PermGroup.Kernel.Tactic.permGroup took 295ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:67: type checking took 116ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:67: type checking took 101ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:67: type checking took 134ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:67: type checking took 166ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:67: type checking took 141ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 0.81ms\n\tattribute application 0.0133ms\n\tcompilation (IR) 0.0976ms\n\tcompilation (LCNF base) 1.4ms\n\tcompilation (LCNF impure) 0.798ms\n\tcompilation (LCNF mono) 1.09ms\n\telaboration 7.86ms\n\tfix level params 0.0446ms\n\tinstantiate metavars 0.0391ms\n\tinterpretation 0.339ms\n\tlet-to-have transformation 0.0148ms\n\tlinting 12.6ms\n\tmodule linting 0.00166ms\n\toverlappingInstancesLinter 0.63ms\n\tparsing 0.54ms\n\tprocess pre-definitions 0.845ms\n\tshare common exprs 0.238ms\n\ttactic execution 295ms\n\ttacticAnalysis 3.39ms\n\ttype checking 856ms\n\ttypeclass inference 8.95ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "M24",
+      "degree": 24,
+      "arm": "after",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        5.04931640625,
+        26.71337890625,
+        29.28076171875
+      ],
+      "load_after": [
+        4.724609375,
+        26.2861328125,
+        29.12841796875
+      ],
+      "wall_seconds": 3.8999732280062744,
+      "exit_code": 0,
+      "kernel_seconds": 0.548,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (2.3s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:67: [perm_group] degree 24, order 244823040, orbit sizes [24, 23, 22, 21, 20, 16, 3], chunks per level [1, 1, 1, 1, 1, 1, 1]\n[perm_group] level 6: pairs [0, 6)\n[perm_group] level 5: pairs [0, 96)\n[perm_group] level 4: pairs [0, 120)\n[perm_group] level 3: pairs [0, 84)\n[perm_group] level 2: pairs [0, 88)\n[perm_group] level 1: pairs [0, 92)\n[perm_group] level 0: pairs [0, 72)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: interpretation of Hex.PermGroup.Mathlib.Tactic.extension._lam_0._boxed took 272ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 0.795ms\n\tattribute application 0.0137ms\n\tcompilation (IR) 0.172ms\n\tcompilation (LCNF base) 2.6ms\n\tcompilation (LCNF impure) 1.58ms\n\tcompilation (LCNF mono) 2.03ms\n\telaboration 10.6ms\n\tfix level params 0.0431ms\n\tinstantiate metavars 0.0366ms\n\tinterpretation 273ms\n\tlet-to-have transformation 0.0147ms\n\tlinting 20.9ms\n\tmodule linting 0.00152ms\n\toverlappingInstancesLinter 0.631ms\n\tparsing 0.563ms\n\tprocess pre-definitions 0.74ms\n\tshare common exprs 0.244ms\n\ttactic execution 7.08ms\n\ttacticAnalysis 1.78ms\n\ttype checking 548ms\n\ttypeclass inference 6.65ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "M24",
+      "degree": 24,
+      "arm": "after",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        4.724609375,
+        26.2861328125,
+        29.12841796875
+      ],
+      "load_after": [
+        4.724609375,
+        26.2861328125,
+        29.12841796875
+      ],
+      "wall_seconds": 3.9922008519934025,
+      "exit_code": 0,
+      "kernel_seconds": 0.619,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (2.4s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:67: [perm_group] degree 24, order 244823040, orbit sizes [24, 23, 22, 21, 20, 16, 3], chunks per level [1, 1, 1, 1, 1, 1, 1]\n[perm_group] level 6: pairs [0, 6)\n[perm_group] level 5: pairs [0, 96)\n[perm_group] level 4: pairs [0, 120)\n[perm_group] level 3: pairs [0, 84)\n[perm_group] level 2: pairs [0, 88)\n[perm_group] level 1: pairs [0, 92)\n[perm_group] level 0: pairs [0, 72)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: interpretation of Hex.PermGroup.Mathlib.Tactic.extension._lam_0._boxed took 270ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:67: type checking took 106ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.54ms\n\tattribute application 0.0137ms\n\tcompilation (IR) 0.181ms\n\tcompilation (LCNF base) 2.63ms\n\tcompilation (LCNF impure) 1.56ms\n\tcompilation (LCNF mono) 2.1ms\n\telaboration 13.7ms\n\tfix level params 0.05ms\n\tinstantiate metavars 0.0373ms\n\tinterpretation 271ms\n\tlet-to-have transformation 0.0145ms\n\tlinting 21.2ms\n\tmodule linting 0.00204ms\n\toverlappingInstancesLinter 0.642ms\n\tparsing 0.566ms\n\tprocess pre-definitions 0.662ms\n\tshare common exprs 0.236ms\n\ttactic execution 5.97ms\n\ttacticAnalysis 3.34ms\n\ttype checking 619ms\n\ttypeclass inference 7.27ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "M24",
+      "degree": 24,
+      "arm": "before",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        4.724609375,
+        26.2861328125,
+        29.12841796875
+      ],
+      "load_after": [
+        4.58642578125,
+        25.8994140625,
+        28.98779296875
+      ],
+      "wall_seconds": 4.312186205992475,
+      "exit_code": 0,
+      "kernel_seconds": 0.894,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (2.7s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:67: [perm_group] degree 24, order 244823040, orbit sizes [24, 23, 22, 21, 20, 16, 3], chunks per level [1, 1, 1, 1, 1, 1, 1]\n[perm_group] level 6: pairs [0, 6)\n[perm_group] level 5: pairs [0, 96)\n[perm_group] level 4: pairs [0, 120)\n[perm_group] level 3: pairs [0, 84)\n[perm_group] level 2: pairs [0, 88)\n[perm_group] level 1: pairs [0, 92)\n[perm_group] level 0: pairs [0, 72)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: tactic execution of Hex.PermGroup.Kernel.Tactic.permGroup took 294ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:67: type checking took 125ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:67: type checking took 106ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:67: type checking took 140ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:67: type checking took 166ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:67: type checking took 148ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 0.826ms\n\tattribute application 0.0228ms\n\tcompilation (IR) 0.146ms\n\tcompilation (LCNF base) 1.41ms\n\tcompilation (LCNF impure) 0.895ms\n\tcompilation (LCNF mono) 1.12ms\n\telaboration 12.9ms\n\tfix level params 0.0433ms\n\tinstantiate metavars 0.0388ms\n\tinterpretation 0.359ms\n\tlet-to-have transformation 0.0152ms\n\tlinting 35.4ms\n\tmodule linting 0.00176ms\n\toverlappingInstancesLinter 0.675ms\n\tparsing 0.561ms\n\tprocess pre-definitions 0.896ms\n\tshare common exprs 0.24ms\n\ttactic execution 294ms\n\ttacticAnalysis 1.96ms\n\ttype checking 894ms\n\ttypeclass inference 6.49ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "J2",
+      "degree": 100,
+      "arm": "before",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        4.58642578125,
+        25.8994140625,
+        28.98779296875
+      ],
+      "load_after": [
+        4.43505859375,
+        25.162109375,
+        28.71435546875
+      ],
+      "wall_seconds": 10.880579335003858,
+      "exit_code": 0,
+      "kernel_seconds": 4.69,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (9.3s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: [perm_group] degree 100, order 604800, orbit sizes [100, 63, 24, 4], chunks per level [1, 1, 1, 1]\n[perm_group] level 3: pairs [0, 8)\n[perm_group] level 2: pairs [0, 96)\n[perm_group] level 1: pairs [0, 252)\n[perm_group] level 0: pairs [0, 300)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: tactic execution of Hex.PermGroup.Kernel.Tactic.permGroup took 3s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 114ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 113ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 291ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 145ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 1.44s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 241ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 2.25s\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 2.99ms\n\tattribute application 0.0152ms\n\tcompilation (IR) 0.244ms\n\tcompilation (LCNF base) 6.52ms\n\tcompilation (LCNF impure) 2.52ms\n\tcompilation (LCNF mono) 3.84ms\n\telaboration 23.6ms\n\tfix level params 0.0761ms\n\tinstantiate metavars 0.0487ms\n\tinterpretation 0.797ms\n\tlet-to-have transformation 0.437ms\n\tlinting 67ms\n\tmodule linting 0.00213ms\n\toverlappingInstancesLinter 0.846ms\n\tparsing 0.859ms\n\tprocess pre-definitions 1.66ms\n\tshare common exprs 0.637ms\n\ttactic execution 3s\n\ttacticAnalysis 11.2ms\n\ttype checking 4.69s\n\ttypeclass inference 21.7ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "J2",
+      "degree": 100,
+      "arm": "after",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        4.43505859375,
+        25.162109375,
+        28.71435546875
+      ],
+      "load_after": [
+        4.5888671875,
+        24.513671875,
+        28.46533203125
+      ],
+      "wall_seconds": 8.803431300999364,
+      "exit_code": 0,
+      "kernel_seconds": 2.7,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (7.1s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: [perm_group] degree 100, order 604800, orbit sizes [100, 63, 24, 4], chunks per level [1, 1, 1, 1]\n[perm_group] level 3: pairs [0, 8)\n[perm_group] level 2: pairs [0, 96)\n[perm_group] level 1: pairs [0, 252)\n[perm_group] level 0: pairs [0, 300)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: interpretation of Hex.PermGroup.Mathlib.Tactic.extension._lam_0._boxed took 2.89s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 117ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 101ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 212ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 141ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 865ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 234ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 929ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.18ms\n\tattribute application 0.0139ms\n\tcompilation (IR) 0.59ms\n\tcompilation (LCNF base) 15.7ms\n\tcompilation (LCNF impure) 8.26ms\n\tcompilation (LCNF mono) 9.6ms\n\telaboration 18.4ms\n\tfix level params 0.0745ms\n\tinstantiate metavars 0.0476ms\n\tinterpretation 2.89s\n\tlet-to-have transformation 0.435ms\n\tlinting 32.6ms\n\tmodule linting 0.00171ms\n\toverlappingInstancesLinter 0.727ms\n\tparsing 0.851ms\n\tprocess pre-definitions 1.36ms\n\tshare common exprs 0.577ms\n\ttactic execution 4.21ms\n\ttacticAnalysis 12.9ms\n\ttype checking 2.7s\n\ttypeclass inference 16.5ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "J2",
+      "degree": 100,
+      "arm": "after",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        4.5888671875,
+        24.513671875,
+        28.46533203125
+      ],
+      "load_after": [
+        4.6455078125,
+        23.8701171875,
+        28.21337890625
+      ],
+      "wall_seconds": 8.830053138997755,
+      "exit_code": 0,
+      "kernel_seconds": 2.76,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (7.2s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: [perm_group] degree 100, order 604800, orbit sizes [100, 63, 24, 4], chunks per level [1, 1, 1, 1]\n[perm_group] level 3: pairs [0, 8)\n[perm_group] level 2: pairs [0, 96)\n[perm_group] level 1: pairs [0, 252)\n[perm_group] level 0: pairs [0, 300)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: interpretation of Hex.PermGroup.Mathlib.Tactic.extension._lam_0._boxed took 2.87s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 113ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 102ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 211ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 142ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 909ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 237ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 946ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.16ms\n\tattribute application 0.0154ms\n\tcompilation (IR) 0.55ms\n\tcompilation (LCNF base) 14.6ms\n\tcompilation (LCNF impure) 8.19ms\n\tcompilation (LCNF mono) 7.97ms\n\telaboration 27.4ms\n\tfix level params 0.0727ms\n\tinstantiate metavars 0.0561ms\n\tinterpretation 2.87s\n\tlet-to-have transformation 0.433ms\n\tlinting 37ms\n\tmodule linting 0.00167ms\n\toverlappingInstancesLinter 0.75ms\n\tparsing 0.884ms\n\tprocess pre-definitions 1.55ms\n\tshare common exprs 0.388ms\n\ttactic execution 4.45ms\n\ttacticAnalysis 8.26ms\n\ttype checking 2.76s\n\ttypeclass inference 10.3ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "J2",
+      "degree": 100,
+      "arm": "before",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        4.6455078125,
+        23.8701171875,
+        28.21337890625
+      ],
+      "load_after": [
+        4.158203125,
+        23.1328125,
+        27.9267578125
+      ],
+      "wall_seconds": 10.810226064000744,
+      "exit_code": 0,
+      "kernel_seconds": 4.61,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (9.1s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: [perm_group] degree 100, order 604800, orbit sizes [100, 63, 24, 4], chunks per level [1, 1, 1, 1]\n[perm_group] level 3: pairs [0, 8)\n[perm_group] level 2: pairs [0, 96)\n[perm_group] level 1: pairs [0, 252)\n[perm_group] level 0: pairs [0, 300)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: tactic execution of Hex.PermGroup.Kernel.Tactic.permGroup took 2.97s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 105ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 101ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 279ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 147ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 1.45s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 231ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:64: type checking took 2.2s\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.04ms\n\tattribute application 0.015ms\n\tcompilation (IR) 0.257ms\n\tcompilation (LCNF base) 4.47ms\n\tcompilation (LCNF impure) 3.98ms\n\tcompilation (LCNF mono) 6.86ms\n\telaboration 21.4ms\n\tfix level params 0.076ms\n\tinstantiate metavars 0.0498ms\n\tinterpretation 0.792ms\n\tlet-to-have transformation 0.439ms\n\tlinting 40.2ms\n\tmodule linting 0.00193ms\n\toverlappingInstancesLinter 0.783ms\n\tparsing 1.12ms\n\tprocess pre-definitions 1.56ms\n\tshare common exprs 0.642ms\n\ttactic execution 2.97s\n\ttacticAnalysis 14ms\n\ttype checking 4.61s\n\ttypeclass inference 18.4ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "HS",
+      "degree": 100,
+      "arm": "before",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        4.158203125,
+        23.1328125,
+        27.9267578125
+      ],
+      "load_after": [
+        4.02001953125,
+        21.8623046875,
+        27.4052734375
+      ],
+      "wall_seconds": 17.89178020399413,
+      "exit_code": 0,
+      "kernel_seconds": 8.67,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (16s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: [perm_group] degree 100, order 44352000, orbit sizes [100, 77, 60, 32, 3], chunks per level [1, 1, 1, 1, 1]\n[perm_group] level 4: pairs [0, 6)\n[perm_group] level 3: pairs [0, 128)\n[perm_group] level 2: pairs [0, 360)\n[perm_group] level 1: pairs [0, 308)\n[perm_group] level 0: pairs [0, 300)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: tactic execution of Hex.PermGroup.Kernel.Tactic.permGroup took 6.01s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 117ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 116ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 483ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 146ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 2.2s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 197ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 2.33s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 231ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 2.72s\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.34ms\n\tattribute application 0.0156ms\n\tcompilation (IR) 0.26ms\n\tcompilation (LCNF base) 6.52ms\n\tcompilation (LCNF impure) 2.6ms\n\tcompilation (LCNF mono) 3.83ms\n\telaboration 22.5ms\n\tfix level params 0.0766ms\n\tinstantiate metavars 0.0495ms\n\tinterpretation 0.801ms\n\tlet-to-have transformation 0.432ms\n\tlinting 82ms\n\tmodule linting 0.002ms\n\toverlappingInstancesLinter 0.899ms\n\tparsing 1.14ms\n\tprocess pre-definitions 1.55ms\n\tshare common exprs 0.635ms\n\ttactic execution 6.01s\n\ttacticAnalysis 7.94ms\n\ttype checking 8.67s\n\ttypeclass inference 24.7ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "HS",
+      "degree": 100,
+      "arm": "after",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        4.02001953125,
+        21.8623046875,
+        27.4052734375
+      ],
+      "load_after": [
+        3.578125,
+        20.888671875,
+        26.99755859375
+      ],
+      "wall_seconds": 14.41274069499923,
+      "exit_code": 0,
+      "kernel_seconds": 5.33,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (12s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: [perm_group] degree 100, order 44352000, orbit sizes [100, 77, 60, 32, 3], chunks per level [1, 1, 1, 1, 1]\n[perm_group] level 4: pairs [0, 6)\n[perm_group] level 3: pairs [0, 128)\n[perm_group] level 2: pairs [0, 360)\n[perm_group] level 1: pairs [0, 308)\n[perm_group] level 0: pairs [0, 300)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: interpretation of Hex.PermGroup.Mathlib.Tactic.extension._lam_0._boxed took 5.92s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 117ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 103ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 319ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 144ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 1.54s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 185ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 1.38s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 230ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 1.2s\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.07ms\n\tattribute application 0.0179ms\n\tcompilation (IR) 0.572ms\n\tcompilation (LCNF base) 16.6ms\n\tcompilation (LCNF impure) 5.53ms\n\tcompilation (LCNF mono) 8.18ms\n\telaboration 29ms\n\tfix level params 0.0756ms\n\tinstantiate metavars 0.048ms\n\tinterpretation 5.93s\n\tlet-to-have transformation 0.427ms\n\tlinting 42.9ms\n\tmodule linting 0.00172ms\n\toverlappingInstancesLinter 0.857ms\n\tparsing 0.902ms\n\tprocess pre-definitions 4.49ms\n\tshare common exprs 0.407ms\n\ttactic execution 0.956ms\n\ttacticAnalysis 8.24ms\n\ttype checking 5.33s\n\ttypeclass inference 10.5ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "HS",
+      "degree": 100,
+      "arm": "after",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        3.578125,
+        20.888671875,
+        26.99755859375
+      ],
+      "load_after": [
+        3.2548828125,
+        20.24951171875,
+        26.72412109375
+      ],
+      "wall_seconds": 14.415724803999183,
+      "exit_code": 0,
+      "kernel_seconds": 5.36,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (12s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: [perm_group] degree 100, order 44352000, orbit sizes [100, 77, 60, 32, 3], chunks per level [1, 1, 1, 1, 1]\n[perm_group] level 4: pairs [0, 6)\n[perm_group] level 3: pairs [0, 128)\n[perm_group] level 2: pairs [0, 360)\n[perm_group] level 1: pairs [0, 308)\n[perm_group] level 0: pairs [0, 300)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: interpretation of Hex.PermGroup.Mathlib.Tactic.extension._lam_0._boxed took 5.85s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 116ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 104ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 320ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 146ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 1.54s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 186ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 1.34s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 228ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 1.25s\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 2.16ms\n\tattribute application 0.0167ms\n\tcompilation (IR) 0.509ms\n\tcompilation (LCNF base) 11.9ms\n\tcompilation (LCNF impure) 5.37ms\n\tcompilation (LCNF mono) 11.1ms\n\telaboration 29.7ms\n\tfix level params 0.0765ms\n\tinstantiate metavars 0.0526ms\n\tinterpretation 5.85s\n\tlet-to-have transformation 0.433ms\n\tlinting 55.2ms\n\tmodule linting 0.00181ms\n\toverlappingInstancesLinter 0.834ms\n\tparsing 0.935ms\n\tprocess pre-definitions 1.47ms\n\tshare common exprs 0.593ms\n\ttactic execution 3.18ms\n\ttacticAnalysis 3.99ms\n\ttype checking 5.36s\n\ttypeclass inference 10.8ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "HS",
+      "degree": 100,
+      "arm": "before",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        3.2548828125,
+        20.24951171875,
+        26.72412109375
+      ],
+      "load_after": [
+        3.5458984375,
+        19.21240234375,
+        26.24462890625
+      ],
+      "wall_seconds": 18.291296348994365,
+      "exit_code": 0,
+      "kernel_seconds": 9.09,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (16s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: [perm_group] degree 100, order 44352000, orbit sizes [100, 77, 60, 32, 3], chunks per level [1, 1, 1, 1, 1]\n[perm_group] level 4: pairs [0, 6)\n[perm_group] level 3: pairs [0, 128)\n[perm_group] level 2: pairs [0, 360)\n[perm_group] level 1: pairs [0, 308)\n[perm_group] level 0: pairs [0, 300)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:0: tactic execution of Hex.PermGroup.Kernel.Tactic.permGroup took 6.09s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 116ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 109ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 426ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 147ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 2.14s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 194ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 2.49s\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 245ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:66: type checking took 3.11s\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 1.22ms\n\tattribute application 0.0168ms\n\tcompilation (IR) 0.258ms\n\tcompilation (LCNF base) 4.52ms\n\tcompilation (LCNF impure) 2.47ms\n\tcompilation (LCNF mono) 5.71ms\n\telaboration 22.3ms\n\tfix level params 0.0803ms\n\tinstantiate metavars 0.0506ms\n\tinterpretation 0.795ms\n\tlet-to-have transformation 0.427ms\n\tlinting 33.6ms\n\tmodule linting 0.00206ms\n\toverlappingInstancesLinter 0.828ms\n\tparsing 0.862ms\n\tprocess pre-definitions 4.59ms\n\tshare common exprs 0.687ms\n\ttactic execution 6.09s\n\ttacticAnalysis 18.3ms\n\ttype checking 9.09s\n\ttypeclass inference 24.7ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "Co3",
+      "degree": 276,
+      "arm": "before",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        3.5458984375,
+        19.21240234375,
+        26.24462890625
+      ],
+      "load_after": [
+        9.15673828125,
+        11.646484375,
+        21.28125
+      ],
+      "wall_seconds": 255.66460992199427,
+      "exit_code": 0,
+      "kernel_seconds": 124.0,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (254s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: [perm_group] degree 276, order 495766656000, orbit sizes [276,\n     275,\n     162,\n     56,\n     45,\n     16], chunks per level [5, 5, 2, 1, 1, 1]\n[perm_group] level 5: pairs [0, 64)\n[perm_group] level 4: pairs [0, 180)\n[perm_group] level 3: pairs [0, 392)\n[perm_group] level 2: pairs [0, 356)\n[perm_group] level 2: pairs [356, 648)\n[perm_group] level 1: pairs [0, 304)\n[perm_group] level 1: pairs [304, 608)\n[perm_group] level 1: pairs [608, 912)\n[perm_group] level 1: pairs [912, 1216)\n[perm_group] level 1: pairs [1216, 1375)\n[perm_group] level 0: pairs [0, 266)\n[perm_group] level 0: pairs [266, 532)\n[perm_group] level 0: pairs [532, 798)\n[perm_group] level 0: pairs [798, 1064)\n[perm_group] level 0: pairs [1064, 1104)\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:0: tactic execution of Hex.PermGroup.Kernel.Tactic.permGroup took 128s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 1.47s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 1.05s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 107ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 439ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 327ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 2.55s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 483ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 8.5s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 1.58s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 9.28s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 7.38s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 3.05s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 9.44s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 9.34s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 9.39s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 9.35s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 4.45s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 2.78s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 9.62s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 9.83s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 9.79s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 11.4s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 1.95s\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 2.3ms\n\tattribute application 0.0159ms\n\tcompilation (IR) 0.721ms\n\tcompilation (LCNF base) 18.4ms\n\tcompilation (LCNF impure) 6.78ms\n\tcompilation (LCNF mono) 14.4ms\n\telaboration 62.9ms\n\tfix level params 0.163ms\n\tinstantiate metavars 0.106ms\n\tinterpretation 1.91ms\n\tlet-to-have transformation 1.22ms\n\tlinting 75.3ms\n\tmodule linting 0.0017ms\n\toverlappingInstancesLinter 1.24ms\n\tparsing 1.66ms\n\tprocess pre-definitions 3.22ms\n\tshare common exprs 1.23ms\n\ttactic execution 128s\n\ttacticAnalysis 18.4ms\n\ttype checking 124s\n\ttypeclass inference 29.5ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "Co3",
+      "degree": 276,
+      "arm": "after",
+      "block": 0,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        9.15673828125,
+        11.646484375,
+        21.28125
+      ],
+      "load_after": [
+        10.501953125,
+        10.8564453125,
+        18.9580078125
+      ],
+      "wall_seconds": 214.87653500300075,
+      "exit_code": 0,
+      "kernel_seconds": 80.6,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (211s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: [perm_group] degree 276, order 495766656000, orbit sizes [276,\n     275,\n     162,\n     56,\n     45,\n     16], chunks per level [5, 5, 2, 1, 1, 1]\n[perm_group] level 5: pairs [0, 64)\n[perm_group] level 4: pairs [0, 180)\n[perm_group] level 3: pairs [0, 392)\n[perm_group] level 2: pairs [0, 356)\n[perm_group] level 2: pairs [356, 648)\n[perm_group] level 1: pairs [0, 304)\n[perm_group] level 1: pairs [304, 608)\n[perm_group] level 1: pairs [608, 912)\n[perm_group] level 1: pairs [912, 1216)\n[perm_group] level 1: pairs [1216, 1375)\n[perm_group] level 0: pairs [0, 266)\n[perm_group] level 0: pairs [266, 532)\n[perm_group] level 0: pairs [532, 798)\n[perm_group] level 0: pairs [798, 1064)\n[perm_group] level 0: pairs [1064, 1104)\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:0: interpretation of Hex.PermGroup.Mathlib.Tactic.extension._lam_0._boxed took 128s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 1.16s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 1.02s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 114ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 378ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 324ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 1.77s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 470ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 7.36s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 1.53s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 5.1s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 5.08s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 2.66s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 5.36s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 6.65s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 6.71s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 6.6s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 3.84s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 2.78s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 5.05s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 5.92s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 4.93s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 4.93s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 700ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 2.38ms\n\tattribute application 0.0243ms\n\tcompilation (IR) 1.75ms\n\tcompilation (LCNF base) 37.1ms\n\tcompilation (LCNF impure) 17.6ms\n\tcompilation (LCNF mono) 47ms\n\telaboration 74.3ms\n\tfix level params 0.193ms\n\tinstantiate metavars 0.187ms\n\tinterpretation 128s\n\tlet-to-have transformation 1.62ms\n\tlinting 81.7ms\n\tmodule linting 0.00227ms\n\toverlappingInstancesLinter 4.07ms\n\tparsing 6.1ms\n\tprocess pre-definitions 12.1ms\n\tshare common exprs 14.3ms\n\ttactic execution 8.4ms\n\ttacticAnalysis 24.7ms\n\ttype checking 80.6s\n\ttypeclass inference 45.9ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "Co3",
+      "degree": 276,
+      "arm": "after",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        10.501953125,
+        10.8564453125,
+        18.9580078125
+      ],
+      "load_after": [
+        7.7802734375,
+        11.1572265625,
+        17.546875
+      ],
+      "wall_seconds": 219.17981374599913,
+      "exit_code": 0,
+      "kernel_seconds": 76.7,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (216s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: [perm_group] degree 276, order 495766656000, orbit sizes [276,\n     275,\n     162,\n     56,\n     45,\n     16], chunks per level [5, 5, 2, 1, 1, 1]\n[perm_group] level 5: pairs [0, 64)\n[perm_group] level 4: pairs [0, 180)\n[perm_group] level 3: pairs [0, 392)\n[perm_group] level 2: pairs [0, 356)\n[perm_group] level 2: pairs [356, 648)\n[perm_group] level 1: pairs [0, 304)\n[perm_group] level 1: pairs [304, 608)\n[perm_group] level 1: pairs [608, 912)\n[perm_group] level 1: pairs [912, 1216)\n[perm_group] level 1: pairs [1216, 1375)\n[perm_group] level 0: pairs [0, 266)\n[perm_group] level 0: pairs [266, 532)\n[perm_group] level 0: pairs [532, 798)\n[perm_group] level 0: pairs [798, 1064)\n[perm_group] level 0: pairs [1064, 1104)\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:0: interpretation of Hex.PermGroup.Mathlib.Tactic.extension._lam_0._boxed took 138s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 2.34s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 972ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 111ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 379ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 323ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 1.78s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 479ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 6.05s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 1.45s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 6.22s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 4.83s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 2.65s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 5.19s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 5.58s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 6.4s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 6.41s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 3.52s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 2.7s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 4.75s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 4.3s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 5.01s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 4.43s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 692ms\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 3.14ms\n\tattribute application 0.0203ms\n\tcompilation (IR) 1.51ms\n\tcompilation (LCNF base) 44.3ms\n\tcompilation (LCNF impure) 17.6ms\n\tcompilation (LCNF mono) 67.7ms\n\telaboration 67.5ms\n\tfix level params 0.162ms\n\tinstantiate metavars 0.103ms\n\tinterpretation 138s\n\tlet-to-have transformation 1.21ms\n\tlinting 84ms\n\tmodule linting 0.0022ms\n\toverlappingInstancesLinter 1.33ms\n\tparsing 19.4ms\n\tprocess pre-definitions 39.2ms\n\tshare common exprs 1.11ms\n\ttactic execution 1.5ms\n\ttacticAnalysis 28ms\n\ttype checking 76.7s\n\ttypeclass inference 33.2ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "Co3",
+      "degree": 276,
+      "arm": "before",
+      "block": 1,
+      "cpu": 33,
+      "series": "identity-exit",
+      "load_before": [
+        7.7802734375,
+        11.1572265625,
+        17.546875
+      ],
+      "load_after": [
+        8.81396484375,
+        10.45068359375,
+        15.80029296875
+      ],
+      "wall_seconds": 250.0384678499977,
+      "exit_code": 0,
+      "kernel_seconds": 117.0,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (248s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:7:0: elaboration took 118ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: [perm_group] degree 276, order 495766656000, orbit sizes [276,\n     275,\n     162,\n     56,\n     45,\n     16], chunks per level [5, 5, 2, 1, 1, 1]\n[perm_group] level 5: pairs [0, 64)\n[perm_group] level 4: pairs [0, 180)\n[perm_group] level 3: pairs [0, 392)\n[perm_group] level 2: pairs [0, 356)\n[perm_group] level 2: pairs [356, 648)\n[perm_group] level 1: pairs [0, 304)\n[perm_group] level 1: pairs [304, 608)\n[perm_group] level 1: pairs [608, 912)\n[perm_group] level 1: pairs [912, 1216)\n[perm_group] level 1: pairs [1216, 1375)\n[perm_group] level 0: pairs [0, 266)\n[perm_group] level 0: pairs [266, 532)\n[perm_group] level 0: pairs [532, 798)\n[perm_group] level 0: pairs [798, 1064)\n[perm_group] level 0: pairs [1064, 1104)\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:0: tactic execution of Hex.PermGroup.Kernel.Tactic.permGroup took 129s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 1.03s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 956ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 110ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 424ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 329ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 2.29s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 493ms\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 8.34s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 1.47s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 10s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 7.14s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 2.72s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 9.19s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 9.07s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 9.28s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 8.9s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 4.62s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 2.59s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 9.39s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 9.06s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 9.48s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 9.12s\ninfo: HexPermGroupMathlib/PerfCompare.lean:9:70: type checking took 1.01s\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 2.05ms\n\tattribute application 0.0233ms\n\tcompilation (IR) 0.913ms\n\tcompilation (LCNF base) 13.7ms\n\tcompilation (LCNF impure) 6.57ms\n\tcompilation (LCNF mono) 11.4ms\n\telaboration 123ms\n\tfix level params 0.169ms\n\tinstantiate metavars 0.2ms\n\tinterpretation 2.12ms\n\tlet-to-have transformation 1.43ms\n\tlinting 63.2ms\n\tmodule linting 0.00185ms\n\toverlappingInstancesLinter 1.27ms\n\tparsing 7.74ms\n\tprocess pre-definitions 9.9ms\n\tshare common exprs 1.19ms\n\ttactic execution 129s\n\ttacticAnalysis 19.2ms\n\ttype checking 117s\n\ttypeclass inference 35.4ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "M11-classical",
+      "degree": 11,
+      "arm": "before",
+      "block": 0,
+      "cpu": 65,
+      "series": "identity-exit-classical",
+      "load_before": [
+        10.1767578125,
+        10.4052734375,
+        15.49462890625
+      ],
+      "load_after": [
+        10.4833984375,
+        10.46533203125,
+        15.486328125
+      ],
+      "wall_seconds": 4.061859458000981,
+      "exit_code": 0,
+      "kernel_seconds": 0.171,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (2.2s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:62: [perm_group] degree 11, order 7920, orbit sizes [11, 10, 9, 8], chunks per level [1, 1, 1, 1]\n[perm_group] level 3: pairs [0, 32)\n[perm_group] level 2: pairs [0, 54)\n[perm_group] level 1: pairs [0, 40)\n[perm_group] level 0: pairs [0, 44)\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 38.5ms\n\tattribute application 0.0126ms\n\tcompilation (IR) 0.0718ms\n\tcompilation (LCNF base) 0.868ms\n\tcompilation (LCNF impure) 0.497ms\n\tcompilation (LCNF mono) 0.663ms\n\telaboration 18.5ms\n\tfix level params 0.0347ms\n\tinstantiate metavars 0.0315ms\n\tinterpretation 0.25ms\n\tlet-to-have transformation 0.0112ms\n\tlinting 29.9ms\n\tmodule linting 0.0018ms\n\toverlappingInstancesLinter 0.647ms\n\tparsing 0.487ms\n\tprocess pre-definitions 3.69ms\n\tshare common exprs 0.177ms\n\ttactic execution 33.7ms\n\ttacticAnalysis 12.1ms\n\ttype checking 171ms\n\ttypeclass inference 4.91ms\nBuild completed successfully (3155 jobs).\n"
+    },
+    {
+      "group": "M11-classical",
+      "degree": 11,
+      "arm": "after",
+      "block": 0,
+      "cpu": 65,
+      "series": "identity-exit-classical",
+      "load_before": [
+        10.4833984375,
+        10.46533203125,
+        15.486328125
+      ],
+      "load_after": [
+        11.00537109375,
+        10.57421875,
+        15.49462890625
+      ],
+      "wall_seconds": 3.976602882001316,
+      "exit_code": 0,
+      "kernel_seconds": 0.131,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (2.2s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:62: [perm_group] degree 11, order 7920, orbit sizes [11, 10, 9, 8], chunks per level [1, 1, 1, 1]\n[perm_group] level 3: pairs [0, 32)\n[perm_group] level 2: pairs [0, 54)\n[perm_group] level 1: pairs [0, 40)\n[perm_group] level 0: pairs [0, 44)\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 3.9ms\n\tattribute application 0.0131ms\n\tcompilation (IR) 0.141ms\n\tcompilation (LCNF base) 1.69ms\n\tcompilation (LCNF impure) 0.951ms\n\tcompilation (LCNF mono) 1.24ms\n\telaboration 24.6ms\n\tfix level params 0.0347ms\n\tinstantiate metavars 0.0321ms\n\tinterpretation 43.1ms\n\tlet-to-have transformation 0.0115ms\n\tlinting 56.8ms\n\tmodule linting 0.00164ms\n\toverlappingInstancesLinter 17.2ms\n\tparsing 0.522ms\n\tprocess pre-definitions 0.397ms\n\tshare common exprs 0.17ms\n\ttactic execution 3.72ms\n\ttacticAnalysis 1.56ms\n\ttype checking 131ms\n\ttypeclass inference 6.16ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "M11-classical",
+      "degree": 11,
+      "arm": "after",
+      "block": 1,
+      "cpu": 65,
+      "series": "identity-exit-classical",
+      "load_before": [
+        11.00537109375,
+        10.57421875,
+        15.49462890625
+      ],
+      "load_after": [
+        10.9248046875,
+        10.564453125,
+        15.46484375
+      ],
+      "wall_seconds": 4.046481383993523,
+      "exit_code": 0,
+      "kernel_seconds": 0.163,
+      "profile_output": "\u2139 [3163/3163] Built HexPermGroupMathlib.PerfCompare (2.2s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:62: [perm_group] degree 11, order 7920, orbit sizes [11, 10, 9, 8], chunks per level [1, 1, 1, 1]\n[perm_group] level 3: pairs [0, 32)\n[perm_group] level 2: pairs [0, 54)\n[perm_group] level 1: pairs [0, 40)\n[perm_group] level 0: pairs [0, 44)\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 6.56ms\n\tattribute application 0.0139ms\n\tcompilation (IR) 0.14ms\n\tcompilation (LCNF base) 1.76ms\n\tcompilation (LCNF impure) 3.51ms\n\tcompilation (LCNF mono) 1.3ms\n\telaboration 7.94ms\n\tfix level params 0.036ms\n\tinstantiate metavars 0.0318ms\n\tinterpretation 41.8ms\n\tlet-to-have transformation 0.0117ms\n\tlinting 107ms\n\tmodule linting 0.00176ms\n\toverlappingInstancesLinter 0.669ms\n\tparsing 0.525ms\n\tprocess pre-definitions 1.65ms\n\tshare common exprs 0.171ms\n\ttactic execution 0.934ms\n\ttacticAnalysis 1.64ms\n\ttype checking 163ms\n\ttypeclass inference 73.2ms\nBuild completed successfully (3163 jobs).\n"
+    },
+    {
+      "group": "M11-classical",
+      "degree": 11,
+      "arm": "before",
+      "block": 1,
+      "cpu": 65,
+      "series": "identity-exit-classical",
+      "load_before": [
+        10.9248046875,
+        10.564453125,
+        15.46484375
+      ],
+      "load_after": [
+        10.9248046875,
+        10.564453125,
+        15.46484375
+      ],
+      "wall_seconds": 4.013057820004178,
+      "exit_code": 0,
+      "kernel_seconds": 0.125,
+      "profile_output": "\u2139 [3155/3155] Built HexPermGroupMathlib.PerfCompare (2.1s)\ninfo: HexPermGroupMathlib/PerfCompare.lean:8:62: [perm_group] degree 11, order 7920, orbit sizes [11, 10, 9, 8], chunks per level [1, 1, 1, 1]\n[perm_group] level 3: pairs [0, 32)\n[perm_group] level 2: pairs [0, 54)\n[perm_group] level 1: pairs [0, 40)\n[perm_group] level 0: pairs [0, 44)\ninfo: stderr:\ncumulative profiling times:\n\t.olean serialization 3.91ms\n\tattribute application 0.0128ms\n\tcompilation (IR) 0.0765ms\n\tcompilation (LCNF base) 0.912ms\n\tcompilation (LCNF impure) 0.536ms\n\tcompilation (LCNF mono) 0.647ms\n\telaboration 7.49ms\n\tfix level params 0.036ms\n\tinstantiate metavars 0.0267ms\n\tinterpretation 0.255ms\n\tlet-to-have transformation 0.0123ms\n\tlinting 40ms\n\tmodule linting 0.0019ms\n\toverlappingInstancesLinter 0.721ms\n\tparsing 6.89ms\n\tprocess pre-definitions 0.573ms\n\tshare common exprs 0.175ms\n\ttactic execution 35.3ms\n\ttacticAnalysis 2.37ms\n\ttype checking 125ms\n\ttypeclass inference 3.26ms\nBuild completed successfully (3155 jobs).\n"
     }
   ]
 }
