@@ -123,5 +123,10 @@
     "stored": "source.patch.gz",
     "raw_sha256": "e0f225ffb18bb1d286d8be8fae7aefa0742ec7308f4429a6f7f7fe688da8ac37",
     "stored_sha256": "f1fe98833477d9aae935446d101bab88b947814702cebcec25500688344b271a"
+  },
+  "collector": {
+    "stored": "collector.py.gz",
+    "raw_sha256": "b88a29e3ee30c42e76ae09ed82adbe79c2c07c8bbac02c945c913beb0b895ef4",
+    "stored_sha256": "eeb71818624efada0631b99d275494560a7c00eb29a8aa3efabc8e82bcc0c3bd"
   }
 }
