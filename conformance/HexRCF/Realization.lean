@@ -111,9 +111,50 @@ end Hex.RCF.RealizationTests
 #guard_msgs in
 #print axioms Hex.RCF.RealCoefficients.Realization.exists_real
 
-/-- Follow the complete literal-data definition closure. Within query/sign/root
-namespaces permit only types, constructors, projections, proofs and frozen count indexing;
-certificate producers and unlisted computational helpers are rejected. -/
+/-- Explicit arithmetic, literal syntax, array and count-index primitives.
+Unlisted foreign helpers are rejected even when they hide a producer outside
+its usual namespace. Constructors, projections and proofs are handled separately. -/
+private meta def dataPrimitives : Array Lean.Name := #[
+    ``Field.toGrindField, ``Rat.instField,
+    ``instDecidableEqRat, ``Hex.RationalFn.instZero,
+    ``Hex.RationalFn.instDecidableEq, ``instOfNatNat,
+    ``instHSub, ``Hex.DensePoly.instSub,
+    ``Hex.RationalFn.instSub, ``Hex.DensePoly.ofList,
+    ``Hex.RationalFn.instOfNat, ``Hex.DensePoly.C,
+    ``instHAdd, ``Hex.RationalFn.instAdd,
+    ``Hex.RationalFn.X, ``Hex.DensePoly.instOfNat,
+    ``Hex.RationalFn.instCommRing, ``List.toArray,
+    ``rfl, ``Array.size,
+    ``instOfNat, ``Int.instNegInt,
+    ``Hex.Matrix.identity, ``instHMul,
+    ``Hex.RationalFn.instMul, ``Hex.DensePoly.instMulOfAdd,
+    ``Vector.replicate, ``List.length,
+    ``Hex.SignDet.System.positive, ``Fin.instOfNat,
+    ``instLTNat, ``Nat.decLt,
+    ``id, ``ite,
+    ``Int.instDecidableEq, ``Hex.Matrix.ofRows,
+    ``Hex.DensePoly.instAdd, ``dite,
+    ``Eq.mpr, ``Int.instLTInt,
+    ``List.instGetElemNatLtLength, ``Eq.ndrec,
+    ``List.instMembership, ``List.finRange,
+    ``Int.decLt, ``List.filter,
+    ``GT.gt, ``Fin.instGetElemFinVal,
+    ``Vector.instGetElemNatLt, ``Nat.instAddMonoidWithOne,
+    ``instHMod, ``Nat.instMod,
+    ``instMulZeroClassOfSemiring, ``Int.instSemiring,
+    ``Ring.toAddGroupWithOne, ``Int.instRing,
+    ``Int.instPartialOrder, ``Not,
+    ``Rat.instOfNat, ``Zero.ofOfNat0,
+    ``Hex.Mono.lex, ``Hex.RealFormula.Poly,
+    ``Hex.MvPoly.instSubOfAddOfNegOfLawfulBEq, ``Int.instAdd,
+    ``Int.instLinearOrderPackage, ``Hex.MvPoly.X,
+    ``Hex.MvPoly.instOfNat, ``Lean.Grind.instCommRingInt,
+    ``Hex.OrderedFn.Infinitesimal.sign, ``Hex.OrderedFn.orderSign,
+    ``Rat.semiring, ``Rat.instLT,
+    ``Rat.instDecidableLt]
+
+/-- Follow every definition in the literal-data module, including private
+helpers; require explicit admission for every foreign computational definition. -/
 private meta partial def auditData (moduleIndex : Lean.ModuleIdx)
     (seen : Lean.NameHashSet) (name : Lean.Name) : Lean.MetaM Lean.NameHashSet := do
   if seen.contains name then return seen
@@ -122,19 +163,17 @@ private meta partial def auditData (moduleIndex : Lean.ModuleIdx)
   let some body := info.value? (allowOpaque := true) |
     throwError "missing literal fixture body {name}"
   for called in body.getUsedConstants do
-    let visible := (Lean.privateToUserName? called).getD called
-    if (`Hex.Sturm).isPrefixOf visible || (`Hex.SignDet).isPrefixOf visible ||
-        (`Hex.RealClosure).isPrefixOf visible then
+    if (← Lean.getEnv).getModuleIdxFor? called == some moduleIndex then
+      seen ← auditData moduleIndex seen called
+    else
       let calledInfo ← Lean.getConstInfo called
-      let harmless := called == ``Hex.SignDet.System.positive ||
+      let harmless := dataPrimitives.contains called ||
         ((← Lean.getEnv).getProjectionFnInfo? called).isSome ||
         match calledInfo with
         | .ctorInfo _ | .inductInfo _ | .recInfo _ | .thmInfo _ => true
         | _ => false
       unless harmless do
-        throwError "literal fixture {name} contains query/sign/root computation {called}"
-    if (← Lean.getEnv).getModuleIdxFor? called == some moduleIndex then
-      seen ← auditData moduleIndex seen called
+        throwError "literal fixture {name} contains unlisted computation {called}"
   return seen
 
 run_meta do
