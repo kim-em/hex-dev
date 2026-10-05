@@ -18,12 +18,13 @@ u_j = 2 z_(j−1) + 2 u_(j−1) + Θ(1).
 
 The recurrence matrix has eigenvalues 2 ± √2. Both positive constructor costs
 are Θ((2+√2)^j). Below the top level the sign of one invokes two predecessor
-signs and constructs these zero defaults. The top scan also compares two
+signs and constructs lower zeros for its numerator-zero test and scans. The top scan also compares two
 nested zeros structurally, which costs Θ(2^d). Thus the whole coefficient sign
 is Θ((2+√2)^d), although there are exactly 2^d rational sign calls. The
 registration normalizes against `numeralCost`, a positive integer version of
-the constructor recurrence. This derivation follows the constructors and the
-compiled sign; it is not an exponent fitted to observations.
+the constructor recurrence. This derivation follows `RationalFn.instOfNat`, `DensePoly.instOfNat`,
+`RationalFn.ofPoly` and the specialized `Infinitesimal.sign` compiled in
+`NestedSigns.c`; it is not an exponent fitted to observations.
 
 The compiler specializes the scanning function: a zero is constructed for
 each visited coefficient. Its in-bounds coefficient access does not evaluate
@@ -33,8 +34,10 @@ there is no caching optimization in this benchmark.
 
 Construction of field dictionaries and the coefficient, complete recursive
 coefficient encoding, and input hashing take place during preparation. Only
-the existing sign operation is timed. The input hash includes its complete
-literal coefficient encoding and depth. The inspection checks the positive
+the existing sign operation is timed. The Hashable input includes its complete literal coefficient encoding and
+depth. The runner does not export that input hash; the recorded executable
+hash, deterministic preparation and inspected result tie the timed input to
+the inspected literal. The inspection checks the positive
 answer; an independent Python validator checks the entire recursively encoded
 value against the literal newest infinitesimal, including its denominator.
 `predictedBaseSigns` describes the derived call count, not an instrumented
@@ -74,12 +77,47 @@ at depths 2,4,6,8,10,12 are 0.481 μs, 6.670 μs, 82.123 μs, 0.965 ms,
 constructor costs above; these records are not rewritten under the corrected
 declaration or counted as a successful gate.
 
-The retained operation-only profile has 1173 sampled instruction pointers
+An ad hoc operation-only diagnosis retained 1173 sampled instruction pointers
 within the actual child’s monotonic-clock kernel intervals, including its
 calibration call and eight timed calls. It excludes preparation and startup.
 43.05% of samples are in `lean_free_object`, 15.43% in `lean_dec_ref_cold`,
 8.35% in polynomial trailing-zero normalization, and 7.93% in small-object
 allocation. These are self samples. Stack unwinding failed inside the kernel
-intervals, so no inclusive caller attribution is claimed. The raw profile is
-retained externally and bound by its archive hash; decoded samples, boundaries
-and summaries are committed.
+intervals, so no inclusive caller attribution is claimed. The raw profile is retained at
+`/home/kim/.local/state/hex/issue-10377-session-progress/nested-signs-profile/perf.data`
+on `chungus2`, bound by its archive hash. Decoded samples, boundaries and
+summaries are committed. This diagnosis is not a reproducible profiling
+pipeline or a replacement for the separate required representative attribution.
+
+## Corrected declaration measurements
+
+The [new source-bound collection](data/sign-det-nested-signs/92056cad4a/timing/metadata.json)
+uses the constructor recurrence above, with the same coefficient, sign operation,
+depth schedule and harness settings. All 36 points completed successfully.
+Its verdict is **consistent with declared complexity**, with normalized slope
++0.087018 and no advisories. The fitted range drops depth two and uses depths
+4,6,8,10,12 with the pinned slope tolerance 0.15. This is a new collection
+after correcting a demonstrably wrong declaration; the original observations
+retain their original declaration and verdict. It does not measure a speedup.
+
+| Extension depth | Median per-call time |
+| --- | ---: |
+| 2 | 0.000546 ms |
+| 4 | 0.007635 ms |
+| 6 | 0.094731 ms |
+| 8 | 1.127748 ms |
+| 10 | 13.232210 ms |
+| 12 | 155.551184 ms |
+
+The source and binary hashes, input guards, complete trial-major export,
+source reconstruction and host loads are retained. The declaration models
+this particular compiled scalar sign, not arbitrary nested arithmetic or the
+whole sign-table producer. Higher-depth table production, nested evidence,
+allocation and live-memory gates remain separate.
+
+The declaration keeps the dominant constructor term rather than every
+lower-order sign call. At lower level j, the sign of one also obeys
+`S(j) = 2 S(j−1) + 3 z_(j−1) + Θ(1)`. Dividing the complete sign cost by
+`numeralCost` therefore includes a converging geometric sum. A finite positive
+normalized slope is compatible with that source-derived lower-order term;
+these data do not distinguish the exact constants of its components.

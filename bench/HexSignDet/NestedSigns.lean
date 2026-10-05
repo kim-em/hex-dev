@@ -35,7 +35,7 @@ private def coefficients : Nat → Coefficients
         ("den", Lean.Json.arr (f.den.toArray.map base.encode))] }
 
 /-- Capture the actual typed coefficient and sign operation in the closure;
-its complete literal encoding, rather than the closure, binds the input hash. -/
+its complete literal encoding, rather than the closure, supplies Hashable input. -/
 structure Input where
   depth : Nat
   literal : String
@@ -79,7 +79,7 @@ def numeralCost (depth : Nat) : Nat := (numeralCosts depth).1
 /- Declared cost-model: Θ((2+√2)^d) for the actual compiled coefficient sign.
 The field dictionary rebuilds numerals during zero checks and lowest-coefficient
 scans. Constructor costs follow the recurrence above, whose dominant eigenvalue
-is 2+√2. The 2^d lower sign calls and the top zero-equality scan are cheaper.
+is 2+√2. The 2^d rational leaf signs and the top zero-equality scan are cheaper.
 The model counts actual constant construction, not arbitrary arithmetic, BKR
 production or lower-level proof-certificate dependencies. -/
 setup_benchmark runSign d => numeralCost d

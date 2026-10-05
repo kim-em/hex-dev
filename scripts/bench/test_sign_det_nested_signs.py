@@ -1,6 +1,7 @@
 """Reject fabricated nested coefficient inputs and incomplete timing streams."""
 import copy
 import json
+import gzip
 from pathlib import Path
 import tempfile
 import unittest
@@ -63,3 +64,17 @@ class NestedSigns(unittest.TestCase):
         changed["points"].pop()
         with self.assertRaises(ValueError):
             check(changed)
+
+    def test_original_declaration_is_retained_and_rejected(self):
+        root = Path(__file__).resolve().parents[2]
+        directory = root / "reports/data/sign-det-nested-signs/596ef4d810/timing"
+        raw = gzip.decompress((directory / "timings.json.gz").read_bytes())
+        result = json.loads(raw)["results"][0]
+        self.assertEqual(result["complexity_formula"].replace(" ", ""), "2^d")
+        self.assertEqual(result["verdict"], "inconclusive")
+        self.assertAlmostEqual(result["slope"], 3.924086, places=5)
+        self.path.write_bytes(raw)
+        expected = {
+            d: result["points"][i]["result_hash"] for i, d in enumerate(bench.DEPTHS)}
+        with self.assertRaises(ValueError):
+            bench.validate_result(self.path, expected, result["env"]["git_commit"])
