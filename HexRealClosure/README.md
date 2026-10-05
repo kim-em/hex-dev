@@ -2840,7 +2840,11 @@ provider names and versions, the infinitesimal depth and each algebraic
 frame's defining polynomial, interval, Thom word and replay graph.
 `Root.writeText` prints its native value and actual owner; a selected root's
 frame remains part of that owner's binding. `Repr` for roots, packed values
-and packed polynomials uses this same format.
+and packed polynomials uses this same format. Reading printed roots returns
+their native value in that owner, rather than reconstructing `Root parent`
+or its point/selected constructor and predecessor embedding. `RootEntry` and
+`RootSet`, including multiplicities, ordering and the `all` result, do not yet
+have a serialization interface.
 
 `context.readText` and `readPolyText` parse through the shared UTF-8/JSON
 parser, require the exact supplied binding, and invoke the existing checked
@@ -2861,7 +2865,9 @@ reading. Lexical resource limits are an explicit reader policy: the typed
 roundtrip theorems require `Codec.checkBytes` to accept the printed packet,
 with no assumed parser success. Callers can supply larger limits for larger
 native packets. Stale bindings, malformed stored values and trailing literal
-polynomial zeros are rejected.
+polynomial zeros are rejected. These limits bound lexical input; they do not
+bound certificate replay or coefficient-sign recomputation during uninstalled
+context reconstruction.
 
 Run the actual text and `Repr` examples:
 
@@ -2874,7 +2880,11 @@ python3 scripts/oracle/real_closure_bytes.py \
 They exercise rational data, both point and selected roots, a reducible-root
 inverse, nested algebraics, successive infinitesimals, escaped Unicode
 provider names and unknown-provider rejection. The independent Python JSON
-parser checks the exact printed bindings and payloads. Native readers also
+parser checks agreement of printed packets with the structured JSON emitted
+beside them, their full field structure, frame/stage counts and expected native
+observations. It independently checks literal rational and Unicode data and
+the first reducible defining head. It does not independently establish the
+algebraic payload values or replay-graph correctness. Native readers also
 check invalid UTF-8, truncated syntax, stale contexts, malformed coefficients,
 trailing zeros and byte/depth/digit policies. Field arithmetic correspondence
 and exact mathematical conformance remain supplied by the existing tower
