@@ -63,7 +63,7 @@ three roots and passed the least-root interval check. It then reached the
 metadata records signal 9 and exit code −9. This localizes the unfinished
 work to construction of the second polynomial, rather than its isolation.
 The canonical construction uses generic real-algebraic multiplication and
-exactification: products of the degree-15 operands form degree-225 product
+exactification: products of the degree-15 operands can form degree-225 product
 eliminants before exact factorization. The native construction instead reduces
 inside `ℚ(α)`. Consequently the retained canonical arm supplies no second
 isolation measurement. The 91bcb67 build logs show Lake's target was up
@@ -79,7 +79,7 @@ The unprofiled native run of the profiled binary spends about 90% of its
 build-bound native run spends about 92% there. The preliminary whole-process
 profile therefore mostly describes this base-field path. It provides little evidence
 about the algebraic tower stage. The separately filtered first- and
-second-stage attribution is now retained in the
+second-stage attribution is retained in the
 [MetiTarski root-operation profiles](bench-results/real-closure-metitarski-kernels/).
 
 ## Preliminary native profile
@@ -168,6 +168,9 @@ one and two and product counts 2, 4, 8 and 16. Every arm computes
 `(2X^2 - alpha_(d-1))(X - 3)`. All sixteen endpoints pass native checked
 reading and root/query replay, and eight paired FLINT exact-value checks.
 
+Each arm reduces or retains representations at every level and builds its
+own lower-level evidence. The depth-two ratios and evidence sizes therefore
+include those lower-level effects as well as top-level storage.
 These nonmonic heads disable production monic reduction. Clean packing keeps
 nonzero representatives unreduced; eager reduces against the full working
 cubic, including its extraneous root 3. This comparison does not measure
@@ -176,7 +179,7 @@ The timer includes product/division, recursive arithmetic and packing's
 selected-root queries, plus encoding and hashing the result. Context setup,
 final query evidence, checked reading and replay occur outside timing.
 
-At depth one and two products the paired direction is mixed. Eager is lower
+At depth one with two products the paired direction is mixed. Eager is lower
 in all six pairs of every other parameter combination. At depth two, the
 paired eager/clean median falls from 0.134639 for two products to 0.039732 for
 sixteen. The largest endpoint retains 765/221 stored bytes and
@@ -190,7 +193,9 @@ The separate [generated-C diagnostics](bench-results/real-closure-nested-diagnos
 retain callback counts, polynomial gcd/xgcdLeft entries and Lean/GMP integer
 gcd entries. For depth two and four products, both policies enter polynomial
 gcd and xgcdLeft 23 times each, while clean/eager enter integer gcd
-248,512/82,295 times. Lean and GMP count different layers of the same calls;
+248,512/82,295 times. Callback categories also nest: division invokes
+multiplication and inversion, and inversion invokes gcd/xgcd sites; do not
+sum these categories. Lean and GMP count different layers of the same calls;
 they must not be added. Counts exclude setup and final evidence production,
 and omit the fast polynomial `*With` entries. The traced depth-three clean
 preparation hit its 600-second cap before entering the counted workload.
@@ -210,10 +215,14 @@ are outside timing.
 
 All 24 points from six fixed trial-major rounds completed and are retained.
 Median milliseconds are 213.826, 469.475, 731.902 and 1299.439; corresponding
-`time/n^3` values are 7.919, 3.756, 2.134 and 1.782. Descriptor bytes grow from
-21,688 to 204,318. The harness verdict is `inconclusive`, with slope -1.404948
-and no dropped leading points. A finite degree range and substantial fixed
-cost do not establish asymptotic complexity. The signal-floor multiplier is
+`time/n^3` values are 7.919, 3.756, 2.134 and 1.782 ms. Descriptor bytes grow from
+21,688 to 204,318. The harness verdict is `inconclusive`, with log-log slope -1.404948 for
+`time/n^3` against n and no dropped leading points. A finite degree range and substantial fixed
+cost do not establish asymptotic complexity. The declared n^3 hypothesis
+remains unresolved for the Phase 4 exit criterion. The single permitted
+unchanged rerun has not been collected; a model revision instead requires
+an independently derived model or an applicable cited upper bound.
+The signal-floor multiplier is
 1 rather than the ordinary 10, and the wide ranges and recorded changing
 host activity further limit inference. All observations are retained.
 
@@ -221,7 +230,8 @@ The [complete retained capture](bench-results/real-closure-metitarski-scaling-14
 binds the measured source, all raw timings, seven frozen source snapshots,
 functional and measured-input packets, and independent FLINT checks of the
 selected predecessor, coefficients, unique odd-radical root, interval,
-Thom word and multiplicity. Scientific timing is separate from CI's native
+Thom word and reported multiplicity, using the nonvanishing derivative at
+the selected root to establish multiplicity one. Scientific timing is separate from CI's native
 fixture/replay and independent oracle checks.
 
 ## Measurement coverage and remaining work
@@ -231,15 +241,18 @@ still requires the complete specified coverage and final audit.
 
 | Required evidence | Retained coverage | Remaining scope |
 | --- | --- | --- |
-| Exact archived tower workloads | MetiTarski degree-15 input and its cubic second stage, independently checked | Authoritative corrected `tower8` input/archive; original Rioboo/Strz inputs and other specified families |
-| Fixed trial-major scaling | Six trials at four odd degrees in one fixed MetiTarski coefficient field | Other required degrees, extension-depth and input families; no global complexity conclusion |
+| Exact archived tower workloads | MetiTarski degree-15 input and its cubic second stage, independently checked | Original `basic.py`, Rioboo/Strzeboński and other specified inputs; authoritative `tower8` correction/archive, its isolation report and zero/sign costs in clean/eager measurements |
+| Fixed trial-major scaling | Six trials at four odd degrees in one fixed MetiTarski coefficient field | Resolve the declared n³ hypothesis through the permitted unchanged rerun or an independently justified model/bound; remaining required input/depth families |
 | Matched clean/eager storage | 48 single-level arms and 96 depth-one/two product/division arms | Other specified operation/input families and monic-clean production reduction |
-| Coefficient and evidence growth | Stored degrees, bytes and coefficient bits; selected/query graph bytes in those families | Coverage across the remaining families and stages |
-| Operation/query counters | Retained nested callback and selected polynomial/integer gcd diagnostics | Remaining stage-specific Yun, BKR, sign/zero, splitting/conversion and query coverage |
-| DAG sharing and reuse | [Gather/reuse diagnostics](bench-results/real-closure-gather-reused-owners-valid/) and [root reuse/order evidence](bench-results/real-closure-root-reuse-order-corrected-valid/) | General required tower families and final correspondence to the accepted APIs |
-| Serialization and kernel replay costs | Functional reading/replay and whole-command observations | Separate required compiled stage costs; functional success is not a timing distribution |
-| Representative profiling | [Filtered MetiTarski first/second-stage profiles](bench-results/real-closure-metitarski-kernels/README.md) | Remaining required sample/operation families and attribution coverage |
-| Trivial, dyadic and infinitesimal sample comparison | Functional sample APIs and existing conformance | Required matched measurement evidence for those alternatives |
+| Coefficient and evidence growth | Stored degrees, bytes and coefficient bits; selected/query graph bytes in those families | Remaining families/stages and certificate operand sizes |
+| Operation/query counters | Nested callback and selected polynomial/integer gcd diagnostics | Scalar inversions, gcd/xgcd, splits/transports, bound attempts, bisection nodes, BKR queries/matrix work and coefficient-sign calls across the required families |
+| Outer isolation scaling | Functional isolation/policy checks | Measured linear bound-attempt/bisection-node claims under the stated policy and the full fallback/comparison costs |
+| Root/generator reuse | [Reuse report](real-closure-root-reuse.md): two-trial reuse/order diagnostics from recorded modified worktrees | General required tower families and final correspondence to accepted APIs; these observations do not measure certificate DAG sharing |
+| Certificate sharing and depth | Functional DAG reading/checking | Shared node+edge versus unshared occurrence costs, arithmetic/operand sizes, `Sℓ ≤ Sℓ,local + bℓ*max Sℓ₋₁` and the analogous replay-time recurrence |
+| Separated compiled stage costs | Functional reading/replay and whole-command observations | Yun, query production, BKR solving, coefficient signs, isolation, serialization and kernel replay; whole-command success is not a separated timing distribution |
+| Trivial-path delegation | Functional native/canonical agreement; retained canonical MetiTarski arm is censored | Required matched comparison against the existing real-algebraic backend |
+| Midpoint/dyadic versus infinitesimal samples | Functional sample APIs and conformance | Required matched measurement evidence for those alternatives for #10301 |
+| Profiling diagnostics | [Filtered first/second-stage profiles](bench-results/real-closure-metitarski-kernels/README.md) explain observed sorting/sign costs | No per-family profiling quota; further profiles require an unexpected result or a named diagnostic question |
 
 The accepted filtered profiles supply inclusive Hex attribution with clean
 committed postprocessing and recorded stack truncation. The preliminary
@@ -247,3 +260,4 @@ whole-process profile and historical gather profiles with missing source
 provenance do not supply that filtered contract. Ordinary-kernel correctness,
 compiled functional checks and scientific timing have distinct boundaries;
 none substitutes for the missing tower8 correction or unfinished coverage.
+Profiling diagnoses observed costs; it is not a separate phase deliverable.
