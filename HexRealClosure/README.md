@@ -2096,7 +2096,8 @@ values equal in the shared context. A direct base-coefficient clause fixes
 `shared.input.value b` at its prescribed real value without an origin cast.
 Optional finite target requests also retain signs, domain and zero reflection.
 The result uses `Shared.Realized` with named fields for arithmetic, inventories,
-coherence and fixed coefficients. Enlargement returns `Enlargement.Realized`;
+coherence and fixed coefficients. `Enlargement.Realized` extends the returned
+collection’s `Shared.Realized`, retaining all owner arithmetic and replay laws;
 its model form adds `ModelRealized.representativeFixed` for carrying arbitrary
 representatives through successive factory models. Consumers use these fields
 without depending on the order of the contracts.
@@ -2148,8 +2149,12 @@ required work. These theorems do not replace those contracts.
 
 Run `lake build HexRealClosureMathlib.SharedRealizationTests` for public
 consumers deriving old sum/product and fresh parameter-expression signs,
-usable descriptor transport premises, and specialization after two actual
-enlargements without a new gather.
+usable descriptor transport premises before and after enlargement, and
+specialization after two actual enlargements without a new gather.
+`separate_providers` registers a second constant after a different prefix and
+gathers an independently validated single-constant owner, with aligned
+infinitesimal stages. `target_replay` derives descriptor transport premises
+from every refreshed frame using the target-side inventory.
 `lake build HexRealClosureMathlib.NativeRealizationTests` additionally checks
 an actual gather and enlargement over a registered Liouville coefficient,
 recovering its prescribed value under the same positive-parameter reader,
@@ -2157,10 +2162,6 @@ through three successive predecessor maps with a fresh cross-term sign, and
 through a nonempty gathered owner with a producer-built algebraic suffix.
 The owner is gathered through a nonidentity base inclusion; a nonempty frame
 then requests its coefficient and a polynomial through another enlargement.
-`separate_providers` registers a second constant after a different prefix and
-gathers an independently validated single-constant owner, with aligned
-infinitesimal stages. `target_replay` derives descriptor transport premises
-from every refreshed frame using the target-side inventory.
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
 proves that its ordered algebraic real closure of `R(ε)` is algebraic over the

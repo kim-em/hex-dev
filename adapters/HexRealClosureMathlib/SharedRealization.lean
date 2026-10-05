@@ -269,7 +269,7 @@ structure Realized (values : (index : Fin owners.length) → List (owners[index]
     model.target.read interpretation a = model.target.read interpretation b
   real : ∀ a r, shared.input.context.origin.RealValue (shared.base_eq.symm ▸ following) a r →
     model.target.domain interpretation a ∧ model.target.read interpretation a = r
-  fixed : ∀ b r, BaseContext.PackedContext.Realization.RealValue following b r →
+  representativeFixed : ∀ b r, BaseContext.PackedContext.Realization.RealValue following b r →
     ∀ a, model.target.value a = reference.value b →
       model.target.domain interpretation a ∧ model.target.read interpretation a = r
   ownerFixed : ∀ index (original : (owners[index]).origin.base.Realization) a r,
@@ -301,7 +301,7 @@ theorem realize (values : (index : Fin owners.length) → List (owners[index]).V
     additional := ?_
     coherent := ?_
     real := real
-    fixed := fixed
+    representativeFixed := fixed
     ownerFixed := ?_ }⟩
   · intro index a member
     obtain ⟨domain, sign⟩ := finite _
@@ -386,7 +386,7 @@ theorem Shared.realize_values (shared : Shared base owners) (following : base.Re
     rw [model.target.equal_spec] at equal
     exact data.coherent a b (of_decide_eq_true equal)
   · intro b r inherited
-    exact data.fixed b r inherited (shared.input.value b) (model.input b)
+    exact data.representativeFixed b r inherited (shared.input.value b) (model.input b)
   · intro index original a r inherited
     have preserved := data.ownerFixed index original a r inherited
     exact ⟨(model.ownerDomain_iff interpretation index a).mp preserved.1,
@@ -455,7 +455,7 @@ theorem Enlargement.model_constant [IsStrictOrderedRing K] [IsRealClosed K]
 
 /-- One enlargement carries a prescribed coefficient and its canonical value
 agreement to the next base. Repeating this step retains both hypotheses needed
-by the fixed-value clause of `realize_model`. -/
+by `ModelRealized.representativeFixed`. -/
 theorem Enlargement.realValue_step [IsStrictOrderedRing K] [IsRealClosed K]
     {request : Request registry} {original : Collection base request}
     {following : base.Realization} {reference : Tower.Model (Context.ofBase base) K}
@@ -479,35 +479,17 @@ structure Enlargement.Realized {request : Request registry} {original : Collecti
     (values : List original.shared.input.context.Value)
     (fresh : List result.collection.shared.input.context.Value)
     (read : result.collection.shared.input.context.Value → ℝ)
-    (domain : result.collection.shared.input.context.Value → Prop) : Prop where
-  closed : Transport.Closed read domain
+    (domain : result.collection.shared.input.context.Value → Prop) : Prop
+    extends toShared : result.collection.shared.Realized
+      following.infinitesimal request.inventory fresh read domain where
   previousClosed : Transport.Closed (fun a => read (result.previous.value a))
     (fun a => domain (result.previous.value a))
-  finite : ∀ a ∈ values, domain (result.previous.value a) ∧
+  previous : ∀ a ∈ values, domain (result.previous.value a) ∧
     (SignType.sign (read (result.previous.value a)) : Int) = original.shared.input.context.sign a ∧
     (read (result.previous.value a) = 0 ↔ a = 0)
-  owners : ∀ index a, a ∈ request.inventory index →
-    domain (result.collection.shared.value index a) ∧
-    (SignType.sign (read (result.collection.shared.value index a)) : Int) =
-      (request.owners[index]).sign a ∧
-    (read (result.collection.shared.value index a) = 0 ↔ a = 0)
-  additional : ∀ a ∈ fresh, domain a ∧
-    (SignType.sign (read a) : Int) = result.collection.shared.input.context.sign a ∧
-    (read a = 0 ↔ a = 0)
-  coherent : ∀ a b, result.collection.shared.input.context.equal a b = true → read a = read b
-  real : ∀ a r, result.collection.shared.input.context.origin.RealValue
-    (result.collection.shared.base_eq.symm ▸ following.infinitesimal) a r →
-    domain a ∧ read a = r
-  baseFixed : ∀ b r, BaseContext.PackedContext.Realization.RealValue following b r →
+  previousBaseFixed : ∀ b r, BaseContext.PackedContext.Realization.RealValue following b r →
     domain (result.previous.value (original.shared.input.value b)) ∧
     read (result.previous.value (original.shared.input.value b)) = r
-  nextBaseFixed : ∀ b r, BaseContext.PackedContext.Realization.RealValue following.infinitesimal b r →
-    domain (result.collection.shared.input.value b) ∧
-    read (result.collection.shared.input.value b) = r
-  ownerFixed : ∀ index (original : (request.owners[index]).origin.base.Realization) a r,
-    (request.owners[index]).origin.RealValue original a r →
-      domain (result.collection.shared.value index a) ∧
-      read (result.collection.shared.value index a) = r
   parameter : domain result.parameter
   positive : 0 < read result.parameter
 
@@ -586,38 +568,36 @@ theorem Enlargement.realize_model [IsStrictOrderedRing K] [IsRealClosed K]
     have realCoefficient : BaseContext.PackedContext.Realization.RealValue
         following.infinitesimal coefficient r :=
       (BaseContext.PackedContext.Realization.realValue_infinitesimal following b r).mpr inherited
-    apply data.fixed coefficient r realCoefficient
+    apply data.representativeFixed coefficient r realCoefficient
     rw [preserved, Tower.Model.liftInfinitesimal_value, same]
     exact (Tower.Model.next_constant reference ambient b).symm
   refine ⟨returned.target.read interpretation, returned.target.domain interpretation,
     {
       toRealized := {
-        closed := returned.target.closed interpretation
+        toShared := {
+          closed := returned.target.closed interpretation
+          ownerClosed := ?_
+          finite := ?_
+          additional := ?_
+          coherent := ?_
+          real := data.real
+          baseFixed := ?_
+          ownerFixed := ?_ }
         previousClosed := ?_
-        finite := ?_
-        owners := ?_
-        additional := ?_
-        coherent := ?_
-        real := data.real
-        baseFixed := fun b r inherited => carriedFixed b r inherited _ (old.input b)
-        nextBaseFixed := ?_
-        ownerFixed := ?_
+        previous := ?_
+        previousBaseFixed := fun b r inherited => carriedFixed b r inherited _ (old.input b)
         parameter := ?_
         positive := ?_ }
       representativeFixed := carriedFixed }⟩
-  · rw [← reads, ← domains]
-    exact lifted.closed _
-  · intro a member
-    obtain ⟨domain, sign⟩ := data.additional _
-      (List.mem_append_left _ (List.mem_map.mpr ⟨a, member, rfl⟩))
-    have oldSign := sign.trans (previous.sign a)
-    refine ⟨domain, oldSign, ?_⟩
-    rw [← congrFun reads a]
-    apply Tower.Model.read_eq_zero_iff lifted (interpretation.comap embedding) a
-    · rw [congrFun domains a]
-      exact domain
-    · rw [congrFun reads a]
-      exact oldSign
+  · intro index
+    have ownerReads : returned.ownerRead interpretation index =
+        fun a => returned.target.read interpretation (result.collection.shared.value index a) :=
+      funext (returned.ownerRead_apply interpretation index)
+    have ownerDomains : returned.ownerDomain interpretation index =
+        fun a => returned.target.domain interpretation (result.collection.shared.value index a) :=
+      funext fun a => propext (returned.ownerDomain_iff interpretation index a)
+    rw [← ownerReads, ← ownerDomains]
+    exact data.ownerClosed index
   · intro index a member
     obtain ⟨domain, sign⟩ := data.finite index a member
     exact ⟨(returned.ownerDomain_iff interpretation index a).mp domain,
@@ -633,11 +613,24 @@ theorem Enlargement.realize_model [IsStrictOrderedRing K] [IsRealClosed K]
     rw [Tower.Model.read_apply, Tower.Model.read_apply,
       (returned.target.toValue_equal a b).mpr (of_decide_eq_true equal)]
   · intro b r inherited
-    exact data.fixed b r inherited _ (returned.input b)
+    exact data.representativeFixed b r inherited _ (returned.input b)
   · intro index original a r inherited
     have preserved := data.ownerFixed index original a r inherited
     exact ⟨(returned.ownerDomain_iff interpretation index a).mp preserved.1,
       (returned.ownerRead_apply interpretation index a).symm.trans preserved.2⟩
+  · rw [← reads, ← domains]
+    exact lifted.closed _
+  · intro a member
+    obtain ⟨domain, sign⟩ := data.additional _
+      (List.mem_append_left _ (List.mem_map.mpr ⟨a, member, rfl⟩))
+    have oldSign := sign.trans (previous.sign a)
+    refine ⟨domain, oldSign, ?_⟩
+    rw [← congrFun reads a]
+    apply Tower.Model.read_eq_zero_iff lifted (interpretation.comap embedding) a
+    · rw [congrFun domains a]
+      exact domain
+    · rw [congrFun reads a]
+      exact oldSign
   · exact (data.additional result.parameter
       (List.mem_append_right _ (List.mem_cons_self ..))).1
   · have sign := (data.additional result.parameter

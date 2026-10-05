@@ -211,7 +211,7 @@ theorem shared_realized :
   obtain ⟨read, domain, data⟩ :=
     result.realize following gathered produced []
   have closed := data.closed
-  have fixed := data.baseFixed
+  have fixed := data.previousBaseFixed
   have parameter := data.parameter
   have positive := data.positive
   have preserved := fixed coefficient (liouvilleNumber 2) coefficient_value
@@ -423,7 +423,7 @@ theorem enlarged_owner_realized :
   obtain ⟨read, domain, data⟩ :=
     result.realize following.infinitesimal gathered produced []
   have closed := data.closed
-  have finite := data.owners
+  have finite := data.finite
   have ownerFixed := data.ownerFixed
   have parameter := data.parameter
   have positive := data.positive

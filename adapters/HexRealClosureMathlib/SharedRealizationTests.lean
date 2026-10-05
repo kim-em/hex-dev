@@ -38,7 +38,7 @@ theorem enlarge_arithmetic (result : Enlargement original) (following : base.Rea
       [result.previous.value a - result.parameter]
   have targetClosed := data.closed
   have closed := data.previousClosed
-  have finite := data.finite
+  have finite := data.previous
   have fresh := data.additional
   have parameter := data.parameter
   have positive := data.positive
@@ -81,6 +81,34 @@ theorem collection_replay (collection : Collection base request) (following : ba
   unfold Request.inventory Frame.inventory
   exact List.mem_append_right _ (List.mem_flatMap.mpr ⟨descriptor, member, stored⟩)
 
+/-- Original-owner descriptor replay remains available after any actual
+enlargement, using its inherited shared reader laws. -/
+theorem enlargement_replay {K : Type} [Field K] [LinearOrder K] [DecidableEq K]
+    [IsStrictOrderedRing K] [IsRealClosed K] {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) K}
+    (result : Enlargement original) (old : Shared.Model original.shared following reference)
+    (produced : original.enlarge? = some result) :
+    ∃ read : result.collection.shared.input.context.Value → ℝ,
+      ∃ domain : result.collection.shared.input.context.Value → Prop,
+      ∀ index : Fin request.owners.length,
+        ∀ descriptor : SignDet.Descriptor (request.owners[index]).Value Signature
+          (request.owners[index]).sign (request.owners[index]).signature,
+        List.Mem descriptor (request.frame ⟨index.val,
+          by simpa only [Request.owners, List.length_map] using index.isLt⟩).descriptors →
+        Transport.DescriptorData (fun a => read (result.collection.shared.value index a))
+          (fun a => domain (result.collection.shared.value index a)) (request.owners[index]).sign
+          (fun a : ℝ => (SignType.sign a : Int)) descriptor.raw descriptor.evidence := by
+  obtain ⟨read, domain, data⟩ := result.realize_model old produced []
+  have closed := data.ownerClosed
+  have finite := data.finite
+  refine ⟨read, domain, ?_⟩
+  intro index descriptor member
+  apply Transport.Inventory.descriptor_data (closed index)
+  intro a stored
+  apply finite index a
+  unfold Request.inventory Frame.inventory
+  exact List.mem_append_right _ (List.mem_flatMap.mpr ⟨descriptor, member, stored⟩)
+
 /-- A second actual enlargement uses the first returned factory model;
 the collection need not be produced by a new gather. Its new parameter and
 an expression involving the old parameter share one ordinary reader. -/
@@ -106,7 +134,7 @@ theorem enlarge_twice (first : Enlargement original) (next : Enlargement first.c
     next.realize_model previous produced [first.parameter]
       [next.previous.value first.parameter - next.parameter]
   have closed := data.closed
-  have finite := data.finite
+  have finite := data.previous
   have fresh := data.additional
   have parameter := data.parameter
   have positive := data.positive
@@ -225,3 +253,7 @@ end Hex.RealClosure.Tower.Live.RealizationTests
 /-- info: 'Hex.RealClosure.Tower.Live.RealizationTests.target_replay' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Live.RealizationTests.target_replay
+
+/-- info: 'Hex.RealClosure.Tower.Live.RealizationTests.enlargement_replay' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.RealizationTests.enlargement_replay
