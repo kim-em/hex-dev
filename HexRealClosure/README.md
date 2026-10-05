@@ -2724,3 +2724,51 @@ and reduction-policy equations used by the ordinary constructor.
 The restoring factories keep their constructors private. Public projection
 laws expose their stored fields; direct kernel unfolding requires the owning
 module imports used by the conformance fixture.
+
+
+## Number-field coordinates in the shared sample context
+
+Import `HexRealClosure.NumberFieldTower` to retain a checked
+`RealAlgebraicNumber` generator in an immutable native context.
+`NumberField.present? generator registry` enumerates the native roots of the
+original minimal polynomial and checks the original selected embedding.
+Its companion proves success for every such generator; arbitrary complex
+algebraic numbers must first pass `RealAlgebraicNumber.ofAlgebraic?`.
+
+The returned `NumberField.Presentation` owns a context indexed by that
+selection. `source.pack a` evaluates the original
+`QAdjoin generator.toAlgebraic` coordinates at its retained generator.
+`source.polynomial p` packs every original coefficient. `source.roots p`
+and `source.roots? p` run the shared complete producer in that same context.
+Zero gives `all`; nonzero roots retain the original polynomial's exact
+multiplicities and selected real embedding. `source.family polynomials`
+uses the shared section and sector algorithm and its checked coefficient
+conversions. It returns one section for each distinct root across the nonzero
+inputs and one sector in each intervening or unbounded interval.
+
+The companion `HexRealClosureMathlib.NumberFieldTower` proves presentation
+success, coefficient preservation, zero reflection, packed arithmetic and
+sign agreement, exact root coverage and multiplicities, strict ordering,
+family coverage, section signs and signs at every real point in each sector.
+Nonzero native representatives can have different storage; `pack_add`,
+`pack_mul` and `pack_inv` therefore state that the native difference is zero.
+Context and value packets are read through `Tower.Catalog.reconstruct` and
+the reconstructed context's checked `read`.
+
+Run the complete examples and independent exact checks from the repository root:
+
+```sh
+lake exe hexrealclosure_number_field_samples
+python3 scripts/oracle/real_closure_number_field_samples.py \
+  conformance-fixtures/HexRealClosure/number-field-samples.jsonl
+```
+
+The oracle requires python-flint 0.9.0 / FLINT 3.6.0. The executable covers
+∛2, the middle root of `X³−3X+1`, the actual `QAdjoin.common` field generated
+by √2 and √3, and a rational generator. It checks native arithmetic, original
+zero output, every sample's strict membership, reconstructed contexts and
+value roundtrips. FLINT independently recovers the original generators and
+coordinates, checks all converted coefficients and sign vectors, all sections
+and sectors, and roots of the repeated original polynomial with their exact
+multiplicities. Its checks concern selected-root semantics; native replay
+and byte-reader validation remain exercised by the executable.
