@@ -183,7 +183,7 @@ issue before starting Phase 1; the Phase 0 PR must land on `main` first.
      readiness against the predicate in [Releases.md](Releases.md);
      prints the missing libraries (with the specific `done_through`
      they need to reach) and whether the integration example exists
-     and builds.
+     and is covered by the CI build. It runs no build itself.
 
    - Exit non-zero on malformed `libraries.yml` or disagreement
      between `libraries.yml` and `lakefile.lean`.

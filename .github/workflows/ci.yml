@@ -121,6 +121,7 @@ jobs:
       - name: Check dependency DAG and trusted-internals imports
         run: |
           python3 -m unittest scripts/test_check_dag.py
+          python3 -m unittest scripts/test_status.py
           python3 scripts/check_dag.py
           python3 -m unittest discover -s scripts/ci -p test_check_named_admissions.py
           python3 scripts/ci/check_named_admissions.py

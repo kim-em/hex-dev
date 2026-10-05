@@ -84,7 +84,10 @@ A release `R` is ready when, computed from `libraries.yml`:
 > **and `R.integration-example` builds and its test passes in CI**.
 
 `scripts/status.py release <N>` computes the dependency closure from
-`libraries.yml` and evaluates this predicate.
+`libraries.yml` and evaluates this predicate without building anything:
+it checks that the integration example exists and is in the
+`HexReleaseExamples` target that `ci.yml` builds, so the build half of
+the predicate is the CI result for the commit being released.
 
 This is the only release-level gate. Per-library requirements that
 were previously stated as project-wide release criteria (the
