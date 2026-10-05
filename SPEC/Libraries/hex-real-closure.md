@@ -715,14 +715,21 @@ family proves composition from those contracts; it does not implement or prove
 analytic approximation providers. An adapter to an interval library would be
 separate future work and is not a dependency or deliverable here.
 
-`Repr` emits reconstructible constructor syntax with the context DAG, named
+`Repr` emits checked reconstruction code containing the context DAG, named
 constant provider/version registrations, infinitesimal order, polynomial
-coefficients, root intervals and indexed Thom signs. The checked reader binds
-all dependencies and rejects changed registrations or stale references.
-`repr_roundtrip` says that re-reading emitted data with the same caller-supplied
-registry succeeds and preserves denotation/root identity; caches
-need not match. The `TowerBytes` and `RootBytes` JSON packet interfaces are
-separate from constructor-syntax `Repr`. They use the shared printer/parser
+coefficients, root intervals and indexed Thom signs. Its expression calls the
+appropriate `Tower.Catalog.restore*Text` reader with the caller's `catalog`
+and `limits` bindings and a quoted complete packet. Evaluation returns
+`Except String` containing the reconstructed packed object; failures remain
+explicit. The catalog supplies validated provider progress proofs that cannot
+be manufactured from serialized names. The checked reader binds all
+dependencies and rejects changed registrations or stale references.
+`repr_roundtrip` applies to a base-only `Tower.Catalog` formed from the caller's
+validated base catalog. Availability of the original validated base and the
+lexical policy suffice for success and exact reconstruction of the native
+context and object. The entire algebraic suffix is reconstructed. General
+catalog readers can also reuse their retained validated prefixes. The `TowerBytes` and `RootBytes` JSON packet interfaces are
+separate from checked reconstruction-code `Repr`. They use the shared printer/parser
 and the caller's lexical policy. Full root packets bind the original
 predecessor and retain point/selected kinds, canonical defining descriptors
 and replay graphs; complete root-set packets retain positive multiplicities,
@@ -738,8 +745,11 @@ installed algebraic suffix or parser-success premise. The base
 availability premise retains caller progress proofs for registered providers;
 a printed name cannot manufacture those proofs. Lexical limits bound input
 bytes, nesting and integer digits, not subsequent mathematical replay costs.
-Constructor-syntax `Repr` and its `repr_roundtrip` contract remain required
-separately. Decimal display is not a reconstruction format. A conditional
+`TowerRepr` supplies the checked reconstruction code and `repr_roundtrip`
+contract. Its total string printer and checked reader are proved in the ordinary
+kernel. Actual `reprStr` rendering and Lean string-literal decoding cross the
+standard formatter/elaborator boundary and are checked by compiled reconstruction
+programs; no generic kernel inverse theorem for those boundaries is claimed. Decimal display is not a reconstruction format. A conditional
 total mode reuses its law package rather than serializing proofs of
 transcendence as runtime data.
 
