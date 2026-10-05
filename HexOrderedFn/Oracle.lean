@@ -96,7 +96,7 @@ theorem inter_eq_some {a b c : Bounds} :
       cases h
       exact ⟨rfl, rfl⟩
     · rintro ⟨hl, hu⟩
-      exact congrArg some (ext hl.symm hu.symm)
+      exact congrArg some (ext_iff.mpr ⟨hl.symm, hu.symm⟩)
   · constructor
     · intro h
       contradiction

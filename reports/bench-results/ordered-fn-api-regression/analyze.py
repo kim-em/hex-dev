@@ -11,6 +11,7 @@ import hashlib
 import json
 from pathlib import Path
 import statistics
+import re
 
 
 def analyze(root):
@@ -67,6 +68,21 @@ def main():
     if hashlib.sha256((root / "measure.py").read_bytes()).hexdigest() != context["script_sha256"]:
         raise ValueError("frozen measurement script hash differs from capture context")
     result = analyze(root)
+    sources = json.loads((root / "sources.json").read_text())
+    if context["failed_arms"] != result["failed_arms"]:
+        raise ValueError("capture context and observations disagree on failed arms")
+    for arm in ("baseline", "candidate"):
+        if context["binaries_after"][arm] != sources[arm]["binary_sha256"]:
+            raise ValueError(f"recorded executable hash changed: {arm}")
+    table = dict((name, (median, bounds)) for name, median, bounds in re.findall(
+        r"\| `([^`]+)` \| ([0-9.]+) \| ([0-9.]+–[0-9.]+) \|", (root / "README.md").read_text()))
+    if len(table) != len(result["summary"]):
+        raise ValueError("README table and computed families differ")
+    for family in result["summary"]:
+        medians = [p["median_ratio"] for p in family["points"]]
+        columns = (f'{family["median_ratio"]:.3f}', f'{min(medians):.3f}–{max(medians):.3f}')
+        if table.get(family["name"].rsplit(".", 1)[-1]) != columns:
+            raise ValueError(f'README table differs for {family["name"]}')
     target = root / "analysis.json"
     if args.write:
         target.write_text(json.dumps(result, indent=2) + "\n")

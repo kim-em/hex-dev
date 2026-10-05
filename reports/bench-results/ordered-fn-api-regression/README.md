@@ -39,7 +39,8 @@ The first two rows record a clean invocation directory; the other 814 record
 inventoried, so this capture cannot identify that change or certify absence
 of overlapping builds. This is a provenance limitation rather than evidence
 that the measured executable changed. Host load is retained, and both frozen
-executables remain unchanged.
+executables remain unchanged. All rows retain the same invocation HEAD;
+the capture script checks the frozen executable hash before every arm.
 
 The baseline uses Lean 4.34.1; the candidate uses 4.35.0-rc3 and the current pins.
 This is a comparison of whole pinned builds. It cannot causally attribute a
@@ -57,7 +58,8 @@ For each parameter and trial, divide candidate `per_call_nanos` by baseline
 `per_call_nanos`. The family median pools all 24 ratios; the range spans the
 eight parameter medians, each of three ratios.
 [analyze.py](analyze.py) recomputes the statistics and verifies all raw stdout,
-the complete ordered schedule and the frozen capture-script hash. Run
+the complete ordered schedule, rounded README table, capture-script hash
+and recorded before/after executable hashes. Run
 `python3 reports/bench-results/ordered-fn-api-regression/analyze.py` to check
 `analysis.json`, or add `--write` to regenerate that derived file without
 running benchmarks.
@@ -93,13 +95,15 @@ pass. No acceptance threshold is selected after observing the data.
 
 These descriptive observations do not discharge the Phase-6 requirement to
 pass a performance regression check. No predeclared acceptance rule accompanies
-this capture. The flagged largest-rung `second` point, `third` at 4096,
-`jointRefinement` at 14336 and the degree family need an explicit acceptance
-decision or a focused investigation with its comparison rule and schedule
-declared before collection. A fresh capture must retain these original results
+this capture. Final acceptance must consider every retained family and
+parameter, including each largest rung. The largest-rung `second` point,
+`third` at 4096, `jointRefinement` at 14336 and the degree family are illustrative
+findings, not an exhaustive scope or a post-data pass/fail selection rule.
+An explicit acceptance decision or focused investigation needs its comparison
+rule and schedule declared before collection. A fresh capture must retain these original results
 and follow the unchanged-rerun limit.
 
 [The API change](https://github.com/kim-em/hex-dev/pull/10750) advances only
-Phase 5. CI benchmark smoke checks and theorem timing cannot substitute for
+Phase 5. CI benchmark verification and theorem timing cannot substitute for
 computational evidence. The Mathlib companion has no separate computational
 benchmark surface.

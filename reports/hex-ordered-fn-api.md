@@ -68,7 +68,8 @@ compare the last committed benchmark baseline to the API candidate. They cover
 all 17 retained native workload families, with 816 completed adjacent arms and
 matching result hashes. Final performance acceptance remains distinct from
 collecting those observations: whole pinned builds use different Lean versions,
-and the retained slower points need their stated interpretation. At review
+and the retained slower points need an explicit acceptance decision or
+a focused investigation. At review
 commit [`484c5405fe`](https://github.com/kim-em/hex-dev/tree/484c5405fe7f7b34e01854510006d80b42856063),
 the rebuilt benchmark has SHA-256
 `6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed`,
