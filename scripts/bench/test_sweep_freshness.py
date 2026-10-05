@@ -568,16 +568,16 @@ class ExcludedTestsAreUnreachable(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             driver = root / self.FACTOR_ROOTS[0]
-            boundary = root / "HexBasic/ModuleBoundaryTests.lean"
+            boundary = root / "HexBasic/ImportedTests.lean"
             driver.parent.mkdir(parents=True)
             boundary.parent.mkdir(parents=True)
-            driver.write_text("module\npublic import HexBasic.ModuleBoundaryTests\n")
+            driver.write_text("module\npublic import HexBasic.ImportedTests\n")
             boundary.write_text("module\n")
             with unittest.mock.patch.object(freshness, "ROOT", root):
                 factor = import_closure(self.FACTOR_ROOTS)
-        self.assertIn("HexBasic/ModuleBoundaryTests.lean", factor)
+        self.assertIn("HexBasic/ImportedTests.lean", factor)
         self.assertTrue(freshness.factor_family("hex-factor").matches(
-            "HexBasic/ModuleBoundaryTests.lean"))
+            "HexBasic/ImportedTests.lean"))
 
     def test_the_relevant_set_drops_the_excluded_tests(self):
         self.assertFalse(

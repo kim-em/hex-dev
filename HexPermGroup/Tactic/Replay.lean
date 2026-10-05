@@ -387,16 +387,27 @@ private meta def transaction (action : TacticM α) : TacticM α := do
   let saved ← Tactic.saveState
   -- Auxiliary kernel errors must be caught before returning a proof or rolling
   -- back. Deferred checks could otherwise escape this transaction.
-  try withOptions (fun opts => opts.setBool `Elab.async false) action catch ex =>
-    saved.restore true
-    throw ex
+  let completed ← IO.mkRef false
+  try
+    let result ← withOptions (fun opts => opts.setBool `Elab.async false) action
+    completed.set true
+    return result
+  finally
+    unless ← completed.get do saved.restore true
 
 private meta def packInput (nE : Expr) (input : Input) (x : Nat) (suffix : String) :
     TacticM Expr := do
   match input.canonical? with
   | none => packTie nE input.term x suffix
   | some (canonical, equality) =>
-    let tie ← packTie nE canonical x suffix
+    -- The transport declaration also checks the literal packing. Keeping a
+    -- separate packing declaration would check the same equality twice.
+    let tie ← if canonical.isAppOfArity ``Hex.Perm.ofImages 2 &&
+        (← checkedImages nE (canonical.getArg! 1)) then do
+      let hok ← addKernelEq (← auxName s!"{suffix}_images")
+        (← mkAppM ``imagesOk #[nE, canonical.getArg! 1]) (mkConst ``Bool.true)
+      mkAppM ``pack_ofImages #[hok]
+    else packTie nE canonical x suffix
     let packed ← mkCongrArg (← mkAppOptM ``pack #[nE]) equality
     let value ← mkEqTrans packed tie
     let type ← mkEq (← mkAppOptM ``pack #[nE, input.term]) (mkNatLit x)
@@ -487,9 +498,7 @@ Importing `HexPermGroupMathlib` extends this syntax to Mathlib subgroup goals. -
 syntax (name := permGroup) "perm_group" optConfig : tactic
 
 /-- The shared tactic entry point, also callable by computational consumers. -/
-meta def permGroupTac (cfg : Config) : TacticM Unit := do
-  let saved ← Tactic.saveState
-  try
+meta def permGroupTac (cfg : Config) : TacticM Unit := transaction do
     withMainContext do
       let goal ← getMainGoal
       let target ← instantiateMVars (← goal.getType)
@@ -517,9 +526,6 @@ meta def permGroupTac (cfg : Config) : TacticM Unit := do
         throwError "perm_group: internal final proof mismatch\nProof:{indentExpr (← inferType proof)}\nGoal:{indentExpr target}"
       goal.assign proof
       replaceMainGoal []
-  catch ex =>
-    saved.restore
-    throw ex
 
 @[tactic permGroup] meta def evalPermGroup : Tactic := fun stx => do
   permGroupTac (← elabPermGroupConfig stx[1])

@@ -179,6 +179,24 @@ elab "check_perm_group_failures" : tactic => withMainContext do
   if (← getEnv).contains marker then throwError "compatibility replay leaked declarations"
   if ← goal.isAssigned then throwError "failed replay assigned the original goal"
   unless (← getGoals) == [goal] do throwError "failed replay changed the goal list"
+  -- Runtime exceptions bypass ordinary `catch`; finalizers must still roll back.
+  for heartbeat in [true, false] do
+    let failed ← tryCatchRuntimeEx (do
+      let _ ← Kernel.Tactic.prove {} 2 [swap] (.card 2) fun _ _ _ _ => do
+        goal.assign (mkConst ``True.intro)
+        if heartbeat then
+          Lean.Core.throwMaxHeartbeat `perm_group `maxHeartbeats 1
+          throwError "unreachable"
+        else
+          throwMaxRecDepthAt (← getRef)
+      pure false) fun ex => do
+        unless ex.isMaxHeartbeat || ex.isMaxRecDepth do
+          throwError "unexpected runtime exception"
+        pure true
+    unless failed do throwError "expected a runtime exception"
+    if (← getEnv).contains marker then throwError "runtime failure leaked declarations"
+    if ← goal.isAssigned then throwError "runtime failure assigned the original goal"
+    unless (← getGoals) == [goal] do throwError "runtime failure changed the goal list"
   evalTactic (← `(tactic| trivial))
 
 example : True := by check_perm_group_failures

@@ -3445,10 +3445,12 @@
   "acceptance": {
     "maximum_mean_change_percent": 10,
     "completed_samples_retained": 44,
-    "all_final_comparisons_within_ten_percent": true,
+    "all_final_comparisons_within_ten_percent": false,
     "unchanged_reruns": {
       "M22": 1
-    }
+    },
+    "aggregation": "All completed samples for each unchanged implementation are pooled, including its permitted rerun.",
+    "status": "M22 exceeds the limit in the pooled comparison; the initial implementation does not establish acceptance."
   },
   "final_sources_sha256": {
     "HexBasic/ArrayDecEq.lean": "6ebc4dcb2e7f26ff9731b83cf9b0d16b6b293f1f44558ba516726ccdb3820af9",
@@ -3822,5 +3824,201 @@
     "HexPermGroupMathlib/Cycles/Type.lean": "20d71ee87136e7217eea014d9377aada30c2aac5c935a30734ab67d7013e3058",
     "HexPermGroupMathlib/Perm/Basic.lean": "97ca67e041c032b21147ddfeecc4649d36e4700cffcac4b964eb15472fc2c3fd"
   },
-  "review_changes_note": "After the measured endpoint, source rendering strips trailing syntax comments, raises printed-source recursion limits and pretty-print limits, and the public facade exports Prepared.order. Kernel.permOfImages is now an alias of the existing lightweight conversion; failure and rendering regressions were added. Producer, checker and replay bodies are unchanged. These rendering and alias changes were built and tested, but are not additional timing samples."
+  "review_changes_note": "After the measured endpoint, source rendering strips trailing syntax comments, raises printed-source recursion limits and pretty-print limits, and the public facade exports Prepared.order. Kernel.permOfImages is now an alias of the existing lightweight conversion; failure and rendering regressions were added. Producer, checker and replay bodies are unchanged. These rendering and alias changes were built and tested, but are not additional timing samples.",
+  "pooled_comparisons": [
+    {
+      "group": "M11",
+      "seconds": {
+        "before": [
+          0.0943,
+          0.101
+        ],
+        "after": [
+          0.0903,
+          0.0901
+        ]
+      },
+      "means": {
+        "before": 0.09765,
+        "after": 0.0902
+      },
+      "change_percent": -7.629288274449564,
+      "within_ten_percent": true
+    },
+    {
+      "group": "M11-classical",
+      "seconds": {
+        "before": [
+          0.0958,
+          0.09509999999999999
+        ],
+        "after": [
+          0.0906,
+          0.0903
+        ]
+      },
+      "means": {
+        "before": 0.09545,
+        "after": 0.09045
+      },
+      "change_percent": -5.238344683080132,
+      "within_ten_percent": true
+    },
+    {
+      "group": "M12",
+      "seconds": {
+        "before": [
+          0.124,
+          0.122
+        ],
+        "after": [
+          0.121,
+          0.11800000000000001
+        ]
+      },
+      "means": {
+        "before": 0.123,
+        "after": 0.1195
+      },
+      "change_percent": -2.8455284552845517,
+      "within_ten_percent": true
+    },
+    {
+      "group": "M22",
+      "seconds": {
+        "before": [
+          0.261,
+          0.24,
+          0.253,
+          0.251
+        ],
+        "after": [
+          0.28400000000000003,
+          0.34400000000000003,
+          0.257,
+          0.243
+        ]
+      },
+      "means": {
+        "before": 0.25125,
+        "after": 0.28200000000000003
+      },
+      "change_percent": 12.23880597014928,
+      "within_ten_percent": false
+    },
+    {
+      "group": "M23",
+      "seconds": {
+        "before": [
+          0.488,
+          0.41200000000000003
+        ],
+        "after": [
+          0.402,
+          0.395
+        ]
+      },
+      "means": {
+        "before": 0.45,
+        "after": 0.3985
+      },
+      "change_percent": -11.444444444444446,
+      "within_ten_percent": true
+    },
+    {
+      "group": "M24",
+      "seconds": {
+        "before": [
+          0.539,
+          0.61
+        ],
+        "after": [
+          0.529,
+          0.535
+        ]
+      },
+      "means": {
+        "before": 0.5745,
+        "after": 0.532
+      },
+      "change_percent": -7.397737162750218,
+      "within_ten_percent": true
+    },
+    {
+      "group": "HS",
+      "seconds": {
+        "before": [
+          5.62,
+          5.88
+        ],
+        "after": [
+          5.66,
+          6.29
+        ]
+      },
+      "means": {
+        "before": 5.75,
+        "after": 5.975
+      },
+      "change_percent": 3.913043478260869,
+      "within_ten_percent": true
+    },
+    {
+      "group": "J2",
+      "seconds": {
+        "before": [
+          2.73,
+          3.39
+        ],
+        "after": [
+          2.76,
+          2.66
+        ]
+      },
+      "means": {
+        "before": 3.06,
+        "after": 2.71
+      },
+      "change_percent": -11.43790849673203,
+      "within_ten_percent": true
+    },
+    {
+      "group": "McL",
+      "seconds": {
+        "before": [
+          34.4,
+          37.4
+        ],
+        "after": [
+          33.8,
+          36.4
+        ]
+      },
+      "means": {
+        "before": 35.9,
+        "after": 35.099999999999994
+      },
+      "change_percent": -2.2284122562674202,
+      "within_ten_percent": true
+    },
+    {
+      "group": "Co3",
+      "seconds": {
+        "before": [
+          97.4,
+          73.6
+        ],
+        "after": [
+          74.7,
+          77.9
+        ]
+      },
+      "means": {
+        "before": 85.5,
+        "after": 76.30000000000001
+      },
+      "change_percent": -10.760233918128637,
+      "within_ten_percent": true
+    }
+  ]
 }

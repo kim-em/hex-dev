@@ -40,20 +40,20 @@ cumulative `type checking` profiler time. Each series uses an automatically
 leased CPU, adjacent before/after arms followed by after/before arms, and
 records host load. All 44 completed samples are retained.
 
-Every final comparison stays within the 10% limit. M22's initial mean change
-was +25.35%; its one permitted unchanged rerun gave -0.79%. The table uses
-that rerun for M22 and the initial series for every other workload. These are
-shared-host observations, without a claim of deterministic speedup or
-multithreaded throughput. Subsequent review fixes affect source rendering and
-compatibility aliases, rather than certificate production or replay; their
-source hashes are recorded separately from the measured endpoints.
+The pooled M22 comparison exceeds the 10% limit. Its initial mean change
+was +25.35%; the permitted unchanged rerun gave -0.79%. Pooling all four
+samples per arm gives +12.24%. The table includes both series for M22 and
+the initial series for every other workload. The initial implementation
+therefore does not establish performance acceptance. These are shared-host
+observations, without a claim of deterministic speedup or multithreaded
+throughput. Source-rendering and alias changes have separately recorded hashes.
 
 | Workload | Before (s) | After (s) | Change |
 | --- | ---: | ---: | ---: |
 | M11 | 0.09765 | 0.0902 | -7.63% |
 | M11-classical | 0.09545 | 0.09045 | -5.24% |
 | M12 | 0.123 | 0.1195 | -2.85% |
-| M22 | 0.252 | 0.25 | -0.79% |
+| M22 | 0.25125 | 0.282 | +12.24% |
 | M23 | 0.45 | 0.3985 | -11.44% |
 | M24 | 0.5745 | 0.532 | -7.40% |
 | HS | 5.75 | 5.975 | +3.91% |

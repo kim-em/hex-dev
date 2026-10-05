@@ -26,6 +26,38 @@ the algorithms. Basic Mathlib conversions do not install a group instance
 on `Hex.Perm n`. The optional group instance and multiplicative equivalence
 remain separate from the initial tactic integration.
 
+## Dependency prerequisites
+
+Before opening the Mathlib PR, verify the dependency layout with the candidate
+Mathlib dependency, rather than only building the four new modules in isolation.
+Development must provide each module exactly once. Use local Lake packages for
+HexBasic and HexPermGroup that point at the monorepo sources; the root explicitly
+requires these packages and removes its competing library declarations. These
+requirements override Mathlib's inherited released dependencies. Update graph,
+release and cache tooling to understand the local package descriptors, and build
+both the complete monorepo and fresh released consumers with that layout.
+
+Mathlib pins one tested Hex release. A later shared Hex release does not move
+that pin automatically. A downstream project choosing a newer Hex release must
+resolve both packages consistently through explicit requirements and verify the
+Mathlib consumers against them; mixed providers or an untested override are not
+a supported configuration. The release consumer check must cover this case.
+
+Audit the imports reachable from the basic correspondence and tactic. Import
+only the required HexBasic modules. Helpers required by this closure belong in
+Hex namespaces; optional compatibility imports can remain in other modules.
+Record and test the actual exported declarations, including scoped instances,
+so that importing Mathlib does not introduce Hex additions to core namespaces.
+Rebuild affected consumers and refresh benchmark evidence when imports change.
+
+Provide a toolchain-adaptation route before making the computational packages
+Mathlib dependencies. Coordinate their registration in `downstream-lean4` and
+any nightly exports with its current process; `lean-pr-testing-*` branches are
+obsolete. The route must bring adaptations back to hex-dev and use generated,
+consumer-checked exports for mirrors, without overwriting release `main` or
+advancing the shared release baseline. Verify one nightly and one Lean PR
+adaptation through the registered route.
+
 ## Initial Mathlib PR
 
 Publish the Hex preparation through the guarded release workflow before
@@ -50,8 +82,12 @@ soundness proof and no packing or checker implementation.
 ## Subsequent correspondence PRs
 
 After the initial PR lands, replace the corresponding companion modules
-with public imports and compatibility aliases, updating the Mathlib pin in
-the monorepo. Never keep parallel implementations. Subsequent migrations
+with public imports, updating the Mathlib pin and development package layout
+in the same change. Basic, Generated and Tactic become import-only shims; do
+not alias an unchanged name or register the extension again. Add compatibility
+aliases only for names that actually move. Never keep parallel implementations. Graph consumers must use a supported
+normalization API or a companion compatibility wrapper, rather than depending
+on private Mathlib adapter helpers. Subsequent migrations
 also wait for their prerequisites and target Mathlib's default branch.
 
 Migrate the remaining correspondence in dependency order: the optional
@@ -74,6 +110,7 @@ release-manifest checks.
 Compare kernel replay on the retained M11–Co3 inputs, including classical
 M11, using adjacent AB/BA arms on an automatically leased CPU. Retain all
 completed samples and permit at most one unchanged rerun after an
-inconclusive comparison. Each workload's mean kernel time must stay within
-10% of the baseline. Keep the initial Mathlib patch free of benchmark and
+inconclusive comparison. For each implementation, pool every completed sample of each workload,
+including any permitted unchanged rerun. Each pooled mean kernel time must
+stay within 10% of the baseline. Keep the initial Mathlib patch free of benchmark and
 certificate machinery.
