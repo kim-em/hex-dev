@@ -39,16 +39,21 @@ the left fold is reproducibly faster and also uses substantially less memory. -/
 non-leading coefficient has absolute value at most four.  Larger-degree or
 wider factors follow the retained fold: BZ-shaped measurements show that a
 factor-count-only decision can reverse sharply as intermediate coefficient
-width grows. -/
+width grows. The guard also admits constants, zero, and non-monic linear
+factors satisfying the same coefficient bound. -/
 def treeProductEligible (factors : Array Hex.ZPoly) : Bool :=
   factors.all fun factor => factor.size ≤ 2 && Hex.ZPoly.maxAbs factor ≤ 4
+
+/-- Select the product tree within its measured count and coefficient bounds. -/
+@[inline] def useProductTree (factors : Array Hex.ZPoly) : Bool :=
+  treeProductMin ≤ factors.size && factors.size < treeProductLimit &&
+    treeProductEligible factors
 
 /-- Compiled ordered-product dispatcher.  The balanced tree is selected only
 on the measured small-linear-factor interval; both branches preserve the exact
 ordered product observed by `polyProduct`. -/
 def polyProductImpl (factors : Array Hex.ZPoly) : Hex.ZPoly :=
-  if treeProductMin ≤ factors.size && factors.size < treeProductLimit &&
-      treeProductEligible factors then
+  if useProductTree factors then
     (Hex.DensePoly.ProductTree.build Hex.ZPoly.fastPlan factors).root
   else
     factors.foldl (· * ·) 1

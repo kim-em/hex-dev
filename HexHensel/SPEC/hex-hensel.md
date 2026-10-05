@@ -160,8 +160,7 @@ coefficients and maximum coefficient magnitude at most four. `Array.polyProduct`
 compiles to that tree within this guard and retains the ordered left fold
 otherwise. The dispatcher depends on hex-poly-fast, which is included in
 the release manifest. The shape guard is part of the measured crossover
-policy, not a correctness
-precondition. Three warm outer trials on `chungus2` (AMD EPYC 9455), Lean
+policy, not a correctness precondition. Three warm outer trials on `chungus2` (AMD EPYC 9455), Lean
 `4.34.0-rc2`, measured the shared deterministic small-linear-factor fixtures
 as follows (medians):
 
@@ -177,8 +176,13 @@ Regenerate the table with `lake exe hexhensel_bench compare
 Hex.HenselBench.runPolyProductFoldChecksum
 Hex.HenselBench.runPolyProductTreeChecksum --param-floor 4 --param-ceiling
 1024 --param-schedule doubling --cache-mode warm --outer-trials 3
---signal-floor-multiplier 1`.  The public `Array.polyProduct` is the
-left-fold specification; when the tree is adopted, a `@[csimp]` theorem proves
+--signal-floor-multiplier 1`; repeat with `--param-floor 768 --param-ceiling 768`
+for the table's non-doubling point. These historical measurements define the
+retained policy; they do not establish the crossover on Lean `4.35.0-rc3`.
+The guard also accepts constants, zero, and bounded non-monic linear factors,
+and correctness holds for them independently of the measured monic fixtures.
+The public `Array.polyProduct` is the
+left-fold specification; its `@[csimp]` theorem proves
 the compiled dispatcher extensionally equal to it for every crossover-table
 and shape-guard choice. The BZ adoption audit records why larger-degree and
 wider-coefficient factors must not enter this count-only interval.

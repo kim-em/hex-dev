@@ -114,6 +114,18 @@ private def smallLinearFactors (n : Nat) : Array ZPoly :=
   Array.replicate n (DensePoly.ofCoeffs #[1, 1])
 
 #guard Array.treeProductEligible (smallLinearFactors 8)
+#guard !Array.useProductTree (smallLinearFactors 7)
+#guard Array.useProductTree (smallLinearFactors 8)
+#guard Array.useProductTree (Array.replicate 1023 (1 : ZPoly))
+#guard !Array.useProductTree (Array.replicate 1024 (1 : ZPoly))
+#guard Array.useProductTree
+  (Array.replicate 8 (DensePoly.ofCoeffs #[-4, 1] : ZPoly))
+#guard !Array.useProductTree
+  (Array.replicate 8 (DensePoly.ofCoeffs #[-5, 1] : ZPoly))
+#guard !Array.useProductTree
+  ((smallLinearFactors 7).push (DensePoly.ofCoeffs #[1, 0, 1]))
+#guard !Array.useProductTree
+  ((smallLinearFactors 7).push (DensePoly.ofCoeffs #[5, 1]))
 #guard zcoeffs (Array.polyProductImpl (smallLinearFactors 7)) =
   [1, 7, 21, 35, 35, 21, 7, 1]
 #guard zcoeffs (Array.polyProduct (smallLinearFactors 8)) =
