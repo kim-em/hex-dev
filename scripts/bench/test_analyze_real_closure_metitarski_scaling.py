@@ -66,6 +66,16 @@ class ScalingCaptureTests(unittest.TestCase):
         record['artifacts'][name] = digest(folder/name)
         (folder/'manifest.json').write_text(json.dumps(record))
 
+    def test_lake_quoted_dependency_name(self):
+        from scripts.bench.real_closure_metitarski_scaling import dependency_pins
+        self.assertEqual(dependency_pins([dict(name='«lean-bench»', rev='abc')]),
+                         {'lean-bench':'abc'})
+        with self.assertRaises(ValueError):
+            dependency_pins([dict(name='«lean-bench»', rev='abc'),
+                             dict(name='lean-bench', rev='def')])
+        actual = json.loads((Path(__file__).resolve().parents[2]/'lake-manifest.json').read_text())
+        self.assertEqual(len(dependency_pins(actual['packages'])['lean-bench']),40)
+
     def test_short_batch_and_cap_are_retained(self):
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
