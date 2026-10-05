@@ -13,7 +13,7 @@ The two SPEC families traverse the full atom/degree grid. Accepted points and
 declines have separate registrations. The parameter identifies a grid point;
 the cost functions use its reported packed bit size, not its atom count.
 
-Mode 2: GMP switches between basecase, Karatsuba, Toom and FFT multiplication
+Cited upper bound: GMP switches between basecase, Karatsuba, Toom and FFT multiplication
 across this grid, so no single tight exponent applies. The published quadratic
 upper bound charges every integer multiplication at N², plus traversal and
 the coefficient-cap construction. Here coefficient bounds fit in one GMP
@@ -148,7 +148,7 @@ def productWork (mode : MulMode) (i : Nat) : Nat :=
   let a := prepProduct mode i
   (productSupport a).length * (a.k+1) * budget.maxPackedBits + productMuls mode a * a.size.packedBits^2
 
--- Cost model (mode 2): traversal plus the quadratic bound per packed multiplication,
+-- Cost model (cited upper bound): traversal plus the quadratic bound per packed multiplication,
 -- using the actual report N and the explicit operation count at each grid point.
 setup_benchmark runTree i => treeWork i with prep := prepTree where {
   paramFloor := 1
@@ -159,7 +159,7 @@ setup_benchmark runTree i => treeWork i with prep := prepTree where {
   signalFloorMultiplier := 1.0
 }
 
--- Cost model (mode 2): direct support packing and two N-bit dot multiplications.
+-- Cost model (cited upper bound): direct support packing and two N-bit dot multiplications.
 -- N is the inner report, and the count includes every square-and-multiply step.
 setup_benchmark runPlain i => productWork .plain i with prep := prepPlain where {
   paramFloor := 1
@@ -170,7 +170,7 @@ setup_benchmark runPlain i => productWork .plain i with prep := prepPlain where 
   signalFloorMultiplier := 1.0
 }
 
--- Cost model (mode 2): support packing plus four outer multiplications, charged
+-- Cost model (cited upper bound): support packing plus four outer multiplications, charged
 -- at the report's larger N. No crossover or tight common GMP exponent is assumed.
 setup_benchmark runPacked i => productWork .signedPacked i with prep := prepPacked where {
   paramFloor := 1

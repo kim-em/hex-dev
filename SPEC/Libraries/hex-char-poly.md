@@ -738,16 +738,16 @@ Per [SPEC/benchmarking.md](../benchmarking.md), drivers at
   characteristic polynomials are known in closed form, so a wrong answer
   is caught by the bench itself rather than only by conformance.
 
-**Comparators.** FLINT `fmpz_mat_charpoly` through python-flint,
-`informational`. Its default entry point chooses between Berkowitz and a
+**Comparators.** FLINT `fmpz_mat_charpoly` through python-flint, for
+orientation. Its default entry point chooses between Berkowitz and a
 modular algorithm according to the input, so which algorithm the ratio
-compares against is not fixed across the ladder and no required threshold
+compares against is not fixed across the ladder and no target threshold
 can be held. Do not describe it as "the modular algorithm": that is wrong
 at small sizes. A same-algorithm comparison would need FLINT's explicit
 `fmpz_mat_charpoly_berkowitz` entry point, which python-flint does not
 expose, so it is out of scope rather than merely unmeasured.
 
-PARI `charpoly` through `cypari2`, also `informational`. PARI's `charpoly`
+PARI `charpoly` through `cypari2`, also for orientation. PARI's `charpoly`
 takes an algorithm flag, and flag `3` is documented as Berkowitz, which
 makes this the one available same-algorithm comparator. Confirm the flag
 against the PARI version pinned by `.github/workflows/ci.yml` before

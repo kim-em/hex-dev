@@ -1615,18 +1615,17 @@ Families, chosen to isolate the costs the complexity table separates:
   records the known gap while no sparse route is specified; it does not
   claim to isolate a route.
 
-**Comparators.** FLINT's `fmpz_mpoly_factor` is `gating`, scoped to the
-**dense EEZ** bench target, with the goal that this library solve every
-rung the comparator solves under the declared cap and stay within a
-stated constant of it there. That is the required ratio
-[hex-mv-hensel](../../HexMvHensel/SPEC/hex-mv-hensel.md) defers to this library, on the one
-family where the two implementations are doing the same work. On every
-other family FLINT is `informational`: its sparse Hensel lifting and
-Zippel interpolation have no counterpart here while hex-mv-hensel
-specifies only the dense diophantine recursion, so a ratio there would
-be a check on routes that do not exist, which is the same position
-hex-mv-gcd takes for `fmpz_mpoly_gcd`. Singular's `factorize` is
-`informational` for the same reason. SymPy is the oracle and is not a
+**Performance target.** On the **dense EEZ** bench target, this library
+solves every rung that FLINT's `fmpz_mpoly_factor` solves under the
+declared cap and stays within a stated constant of it there. That is the
+ratio [hex-mv-hensel](../../HexMvHensel/SPEC/hex-mv-hensel.md) defers to
+this library, on the one family where the two implementations are doing
+the same work. On every other family FLINT is recorded for orientation
+only: its sparse Hensel lifting and Zippel interpolation have no
+counterpart here while hex-mv-hensel specifies only the dense diophantine
+recursion, so a ratio there would be a check on routes that do not exist,
+which is the same position hex-mv-gcd takes for `fmpz_mpoly_gcd`.
+Singular's `factorize` is likewise for orientation only. SymPy is the oracle and is not a
 performance comparator: `dmp_zz_wang` is Python, so a favourable ratio
 would measure the language and not the algorithm.
 
@@ -1953,14 +1952,6 @@ HexMvFactorMathlib.lean
     mathlib: false
     done_through: 1
     status: active
-    phase4:
-      comparators:
-        - tool: "FLINT fmpz_mpoly_factor (dense EEZ bench target)"
-          class: gating
-          goal: "Solve every rung of the dense EEZ family that the comparator solves under the declared cap, and stay within a stated constant of it there. Scoped to that bench target; on the sparse, recombination-stress, and irreducible-input families the same tool is informational, because FLINT's sparse Hensel and Zippel routes have no counterpart in the dense diophantine recursion hex-mv-hensel specifies."
-        - tool: "Singular factorize"
-          class: informational
-          rationale: "A second mature EEZ implementation with different route selection and its own crossovers, useful as orientation on every family and not as a yardstick for any single one."
   HexMvFactorMathlib:
     deps: [HexMvFactor, HexMvHenselMathlib, HexMvGcdMathlib, HexMvPolyMathlib, HexBerlekampZassenhausMathlib, HexPolyZMathlib, HexReflectMathlib]
     mathlib: true

@@ -134,7 +134,7 @@ unsafe def inspect (family : String) (parameter : Nat) (p f : ZPoly) (a b : Int)
 
 end Hex.SturmDiagnostics
 
-/-! Informational complete-query comparators on `T_8` and (-2,2).
+/-! Orientation complete-query comparators on `T_8` and (-2,2).
 Coefficient inputs and backend contexts are prepared; every request invokes
 root production, open-interval filtering, exact query evaluation and sign sum.
 JSON transport and temporary cleanup remain timed. The persistent drivers
@@ -189,7 +189,7 @@ def runNativeCount : Unit → IO (Option Int) := fun _ => nativeQuery 0
 def runFlintCount : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count"
 def runZ3Count : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count"
 
--- Fixed complete-query and expected-result anchors; informational comparison, no mode.
+-- Fixed complete-query and expected-result anchors; orientation comparison, no performance claim.
 setup_fixed_benchmark runNativeCount where { observations with expectedHash := some (hash (some (8 : Int))) }
 setup_fixed_benchmark runFlintCount where { observations with expectedHash := some (hash (some (8 : Int))) }
 setup_fixed_benchmark runZ3Count where { observations with expectedHash := some (hash (some (8 : Int))) }
@@ -198,7 +198,7 @@ def runNativeMixed : Unit → IO (Option Int) := fun _ => nativeQuery 1
 def runFlintMixed : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "mixed"
 def runZ3Mixed : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "mixed"
 
--- Fixed complete-query and expected-result anchors; informational comparison, no mode.
+-- Fixed complete-query and expected-result anchors; orientation comparison, no performance claim.
 setup_fixed_benchmark runNativeMixed where { observations with expectedHash := some (hash (some (0 : Int))) }
 setup_fixed_benchmark runFlintMixed where { observations with expectedHash := some (hash (some (0 : Int))) }
 setup_fixed_benchmark runZ3Mixed where { observations with expectedHash := some (hash (some (0 : Int))) }
@@ -207,7 +207,7 @@ def runNativeNegative : Unit → IO (Option Int) := fun _ => nativeQuery 2
 def runFlintNegative : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "negative"
 def runZ3Negative : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "negative"
 
--- Fixed complete-query and expected-result anchors; informational comparison, no mode.
+-- Fixed complete-query and expected-result anchors; orientation comparison, no performance claim.
 setup_fixed_benchmark runNativeNegative where { observations with expectedHash := some (hash (some (-8 : Int))) }
 setup_fixed_benchmark runFlintNegative where { observations with expectedHash := some (hash (some (-8 : Int))) }
 setup_fixed_benchmark runZ3Negative where { observations with expectedHash := some (hash (some (-8 : Int))) }
@@ -216,7 +216,7 @@ def runNativeCommon : Unit → IO (Option Int) := fun _ => nativeQuery 3
 def runFlintCommon : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "common"
 def runZ3Common : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "common"
 
--- Fixed complete-query and expected-result anchors; informational comparison, no mode.
+-- Fixed complete-query and expected-result anchors; orientation comparison, no performance claim.
 setup_fixed_benchmark runNativeCommon where { observations with expectedHash := some (hash (some (0 : Int))) }
 setup_fixed_benchmark runFlintCommon where { observations with expectedHash := some (hash (some (0 : Int))) }
 setup_fixed_benchmark runZ3Common where { observations with expectedHash := some (hash (some (0 : Int))) }
@@ -356,7 +356,7 @@ def headInput (n : Nat) : Input :=
 def runInitialWide := runInitial
 def runClearingWide := runClearing
 
-/- Cost-model derivation, mode 1: query one has no initial cancellation; the derivative materializes
+/- Cost-model derivation, two-sided: query one has no initial cancellation; the derivative materializes
 n coefficients with Θ(n) total-width progression and multiplies by word-size
 indices. The output alone has Θ(n²) bits. This ladder makes limb work dominate
 per-coefficient dispatch. Preparation builds only the polynomial. -/
@@ -372,7 +372,7 @@ setup_benchmark runInitialWide n => n ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 1: clearing the fixed denominator six traverses and materializes
+/- Cost-model derivation, two-sided: clearing the fixed denominator six traverses and materializes
 Θ(n²) coefficient bits with big-by-small arithmetic; scalar lcm work is fixed.
 The same head-only preparation avoids constructing a cubic-bit chain. -/
 setup_benchmark runClearingWide n => n ^ 2
@@ -387,7 +387,7 @@ setup_benchmark runClearingWide n => n ^ 2
     maxSecondsPerCall := 600
   }
 
--- Declared cost-model: mode 2, O(n⁴) binary work; O(n²) scalar operations on O(n)-bit integers.
+-- Declared cost-model: cited upper bound, O(n⁴) binary work; O(n²) scalar operations on O(n)-bit integers.
 setup_benchmark runInteger n => n ^ 4
   with prep := degreeInput
   where {
@@ -399,7 +399,7 @@ setup_benchmark runInteger n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
--- Declared cost-model: mode 2, O(n⁴) binary work; growing Rat numerators/denominators and GMP normalization.
+-- Declared cost-model: cited upper bound, O(n⁴) binary work; growing Rat numerators/denominators and GMP normalization.
 setup_benchmark runRational n => n ^ 4
   with prep := degreeInput
   where {
@@ -411,7 +411,7 @@ setup_benchmark runRational n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
--- Declared cost-model: mode 2, O(n⁴) binary work; the normal derivative chain has growing coefficients.
+-- Declared cost-model: cited upper bound, O(n⁴) binary work; the normal derivative chain has growing coefficients.
 setup_benchmark runDomain n => n ^ 4
   with prep := degreeInput
   where {
@@ -423,7 +423,7 @@ setup_benchmark runDomain n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
--- Declared cost-model: mode 1, Θ(n²) binary work; derivative and hashing scan n growing coefficients.
+-- Declared cost-model: two-sided, Θ(n²) binary work; derivative and hashing scan n growing coefficients.
 setup_benchmark runInitial n => n ^ 2
   with prep := degreeInput
   where {
@@ -435,7 +435,7 @@ setup_benchmark runInitial n => n ^ 2
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
--- Declared cost-model: mode 2, O(n⁴) binary work; coefficient operations multiply O(n)-bit integers.
+-- Declared cost-model: cited upper bound, O(n⁴) binary work; coefficient operations multiply O(n)-bit integers.
 setup_benchmark runChain n => n ^ 4
   with prep := degreeInput
   where {
@@ -447,7 +447,7 @@ setup_benchmark runChain n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
--- Declared cost-model: mode 1, Θ(n³) binary work; fixed-endpoint Horner traverses Θ(n³) stored coefficient bits.
+-- Declared cost-model: two-sided, Θ(n³) binary work; fixed-endpoint Horner traverses Θ(n³) stored coefficient bits.
 setup_benchmark runEndpoints n => n ^ 3
   with prep := degreeInput
   where {
@@ -471,7 +471,7 @@ setup_benchmark runSigns n => n ^ 2
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
--- Mode 2: O(n⁴) binary-work upper bound. Recurrence replay makes O(n²)
+-- Cited upper bound: O(n⁴) binary work. Recurrence replay makes O(n²)
 -- products on O(n)-bit integers; GMP uses at most schoolbook work. Deferred
 -- dyadic Horner costs O(n³). GMP's size-dependent multiplication crossovers
 -- prevent a tight monomial wall-time claim on this ladder. See the published
@@ -487,7 +487,7 @@ setup_benchmark runReplay n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 1800
   }
--- Mode 1, Θ(n²) bit work: fixed-denominator clearing visits n O(n)-bit coefficients.
+-- Two-sided cost model, Θ(n²) bit work: fixed-denominator clearing visits n O(n)-bit coefficients.
 setup_benchmark runClearing n => n ^ 2
   with prep := degreeInput
   where {
@@ -542,7 +542,7 @@ setup_benchmark runRationalValue degree => degree ^ 2
     maxSecondsPerCall := 120
   }
 
--- Mode 1: the same fixed quadratic head and X^m+1 input. Remainder-only
+-- Two-sided cost model: the same fixed quadratic head and X^m+1 input. Remainder-only
 -- long division makes O(m) big-by-small scalar steps whose numerators grow
 -- to O(m) bits; denominators stay one. These copies/shifts give Θ(m²) bit
 -- work. Its mutable array contains the input's O(m) word-size coefficients

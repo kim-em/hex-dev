@@ -560,13 +560,10 @@ bridge against the landed API and coefficient conventions.
 
 ## External comparators
 
-No external comparator is required.
-
-**Justification:** `implementation-is-extern` per
-`SPEC/benchmarking.md §"Comparator naming"`. HexArith's bigint
-primitives — multiplication, addition, division and gcd — use Lean's
+No external comparator is required. HexArith's bigint
+primitives (multiplication, addition, division and gcd) use Lean's
 GMP-backed runtime. The extended-GCD backport additionally exposes GMP
-through `extended_gcd.c`, with the documented small-input dispatch. The Phase-4 surface is GMP itself; there is no
+through `extended_gcd.c`, with the documented small-input dispatch. The measured surface is GMP itself; there is no
 algorithmically distinct reference implementation to compare
 against. Within-Lean alternative-implementation comparisons cover
 the surfaces where they exist: Barrett vs Montgomery modular

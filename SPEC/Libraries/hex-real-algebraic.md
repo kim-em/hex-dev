@@ -626,26 +626,23 @@ queries may amortize the generator's derivative chain and isolation, but each
 new `F` changes the Tarski chain. Degree and height regimes must report this
 amortization explicitly.
 
-External timing comparators are **informational**: python-flint's
+External timing comparators are for orientation: python-flint's
 [`qqbar` generic-ring interface](https://python-flint.readthedocs.io/en/latest/_gr.html)
 and Z3's [`z3.z3rcf` Python binding](https://github.com/Z3Prover/z3/blob/master/src/api/python/z3/z3rcf.py)
 (`RCFNum`, `MkRoots`, exact relational operators). Restrict Z3 to algebraic
 inputs and exact root selection; use neither SMT solver timing nor its
 transcendental/infinitesimal extensions. Pin and capability-probe both bindings,
-record versions and setup separately, and report unavailable scheduled-only
-comparators explicitly. Informational timing status does not weaken
-python-flint's conformance obligations.
+record versions and setup separately, and report unavailable comparators
+explicitly. Their orientation-only timing role does not weaken python-flint's
+conformance obligations.
 
-Follow [the benchmark mode rules](../benchmarking.md#choosing-the-complexity-claim):
-use an independently derived two-sided family model first; a published
-one-sided bound only when its conditions and attribution hold; a fixed absolute
-ceiling only after explaining why both stronger modes fail. That ceiling must
-be justified by a comparator, a requirement, or a measured baseline plus stated
-margin. It is not the generic harness timeout. No timing ratio to an
-informational comparator is a universal merge gate. Mode failures, required
-budget failures, and unequal result hashes block acceptance. The report records
-per-regime dispatch decisions and inconclusive results rather than inventing
-thresholds in this SPEC. Shared-host trials retain every completed sample,
+Follow [the complexity-claim rule](../benchmarking.md#choosing-the-complexity-claim):
+declare an independently derived two-sided family model where one exists, or
+else a cited upper bound; a fixed registration is a correctness check and
+makes no performance claim. No timing ratio to an external comparator is a
+merge requirement. Verdict failures against a declared model or bound and
+unequal result hashes block acceptance. Record per-regime dispatch decisions
+and inconclusive results rather than inventing thresholds in this SPEC. Shared-host trials retain every completed sample,
 use the fixed trial-major schedule and adjacent alternating AB/BA arms where
 applicable, and follow the policy's single unchanged rerun limit.
 

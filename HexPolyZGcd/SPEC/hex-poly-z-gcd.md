@@ -648,12 +648,11 @@ Families:
   library exists and it should show the largest improvement.
 - **Rational coefficients**, the same inputs over `ℚ` through `ratGcd`.
 
-**Comparators.** FLINT's `fmpz_poly_gcd` is `gating`. FLINT dispatches
-among a heuristic route, a modular route, and a subresultant fallback,
-which is the same set of routes this SPEC specifies, so the comparison is
-like-for-like and there is no structural reason for an exemption. The
-threshold, written down in advance: within `5x` of FLINT on the dense and
-coprime families at every rung above degree 32. Two required internal
+**Comparators.** FLINT's `fmpz_poly_gcd` dispatches among a heuristic
+route, a modular route, and a subresultant fallback, which is the same set
+of routes this SPEC specifies, so the comparison is like-for-like.
+**Performance target:** within `5x` of FLINT on the dense and coprime
+families at every rung above degree 32. Two required internal
 checks, which matter more than the external one:
 
 - `gcd` must be faster than the existing `DensePoly Rat` Euclidean route
@@ -764,22 +763,6 @@ HexPolyZGcdMathlib.lean
     mathlib: false
     done_through: 1
     status: active
-    phase4:
-      comparators:
-        - tool: FLINT fmpz_poly_gcd via python-flint
-          class: gating
-          goal: within 5x on the dense and coprime families above degree 32
-      input_families:
-        - name: coprime-pairs
-          description: coprime inputs at degrees 8 to 512, where route 1 must settle it
-        - name: dense-gcds
-          description: gcds of about half the input degree at 8 and 256 bit coefficients
-        - name: swell
-          description: small inputs whose subresultant sequence has large coefficients
-        - name: squarefree
-          description: the Berlekamp-Zassenhaus squarefree decomposition ladder
-        - name: rational
-          description: the same inputs over the rationals through ratGcd
   HexPolyZGcdMathlib:
     deps: [HexPolyZGcd, HexPolyZMathlib, HexPolyMathlib]
     mathlib: true

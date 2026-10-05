@@ -378,8 +378,8 @@ coefficient sizes, gcd work, coefficient calls and certificate bytes; use the
 actual polynomial lengths and certificate sizes for replay costs.
 
 Compare the rational frontend with the optimized integer/dyadic backend
-on identical queries; correctness agreement is gating. Pinned python-flint
-and Z3 end-to-end comparisons are informational where they expose comparable
+on identical queries; correctness agreement is required. Pinned python-flint
+and Z3 end-to-end comparisons are for orientation where they expose comparable
 queries; record any lack of a matching query surface rather than timing root
 isolation as if it were query evaluation. No external system supplies a
 comparable Lean kernel proof surface. The companion's correctness tests

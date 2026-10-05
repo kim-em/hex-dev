@@ -185,19 +185,19 @@ wider-coefficient factors must not enter this count-only interval.
 
 ## External comparators
 
-| Comparator | Class | Scope |
-|---|---|---|
-| [FLINT `fmpz_poly`](https://flintlib.org/doc/fmpz_poly.html) Newton-style Hensel emulation via [python-flint](https://python-flint.readthedocs.io/) | informational | linear-step, iterated-linear, quadratic-step, and two-factor multifactor Hensel registrations |
+| Comparator | Scope |
+|---|---|
+| [FLINT `fmpz_poly`](https://flintlib.org/doc/fmpz_poly.html) Newton-style Hensel emulation via [python-flint](https://python-flint.readthedocs.io/) | linear-step, iterated-linear, quadratic-step, and two-factor multifactor Hensel registrations |
 
 The persistent python-flint driver implements the same Newton-style correction
 schema with `fmpz_poly` arithmetic. python-flint does not expose FLINT's native
 Hensel entry points, so these ratios are explicitly an emulation comparison,
-not a native `fmpz_poly_hensel_lift_*` performance claim. It is informational
-because representation choices and the emulated orchestration differ from the
-Hex APIs; the ratios orient implementation work but do not gate Phase 4.
+not a native `fmpz_poly_hensel_lift_*` performance claim. Representation
+choices and the emulated orchestration differ from the Hex APIs, so the ratios
+orient implementation work and set no performance target.
 
-The coefficient-conversion and ordered-product registrations declare
-external-comparator absence with the **structural-layer** reason. They measure
+The coefficient-conversion and ordered-product registrations have no external
+comparator. They measure
 composition over integer and finite-field polynomial operations owned by
 `hex-poly`, `hex-poly-z`, and `hex-poly-fast`; those libraries' declared FLINT
 comparators cover the underlying arithmetic rather than duplicating it here.

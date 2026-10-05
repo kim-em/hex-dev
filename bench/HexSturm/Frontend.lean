@@ -129,7 +129,7 @@ setup_benchmark runPrepared n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Cost-model derivation: mode 1. Two integer-endpoint Horner passes
+/- Cost-model derivation: two-sided. Two integer-endpoint Horner passes
 visit n coefficients and O(n)-bit accumulators, multiplying by fixed ±3.
 This is Θ(n²) big-by-small bit work on the all-bignum ladder. -/
 setup_benchmark runRetarget n => n ^ 2
@@ -162,7 +162,7 @@ setup_benchmark runCount n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Cost-model derivation: mode 1. Prepared counting only evaluates the
+/- Cost-model derivation: two-sided. Prepared counting only evaluates the
 stored monic U-chain. There are Θ(n²) coefficients with Θ(n) total-width
 progression per entry; adjacent dyadic denominators differ by word-size
 factors on this ladder. Horner at ±2 and power-of-two gcd normalization take
@@ -427,7 +427,7 @@ def runCoefficientBits (i : AxisInput) : Option Int := ZPoly.tarskiQuery i.p 1 i
 def runEndpointBits (i : AxisInput) : Option Int := ZPoly.tarskiQuery i.p 1 i.interval
 def runFractionalBits (i : AxisInput) : Option Int := ZPoly.tarskiQuery i.p 1 i.interval
 
-/- Cost-model derivation, mode 2: fixed degree bounds the number of scalar operations; operand and
+/- Cost-model derivation, cited upper bound: fixed degree bounds the number of scalar operations; operand and
 intermediate widths are O(bits). GMP's published quadratic multiplication/gcd
 bounds give O(bits²). Binary normalization, allocation and GMP crossover
 thresholds prevent a uniform tight monomial for the whole pipeline. -/
@@ -443,7 +443,7 @@ setup_benchmark runCoefficientBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 2: eight fixed Horner steps per fixed chain entry perform arithmetic
+/- Cost-model derivation, cited upper bound: eight fixed Horner steps per fixed chain entry perform arithmetic
 on O(bits)-wide dyadic accumulators. The same published GMP upper bounds
 cover their scalar products. This is an endpoint-size axis, not a head- or
 query-degree axis. No fitted arithmetic-regime exponent is used. -/
@@ -474,7 +474,7 @@ def retargetInput (n : Nat) : RetargetInput :=
 def runRetargetWide (i : RetargetInput) : Bool :=
   i.domain.any fun d => (d.withEndpoints? (.finite (-3)) (.finite 3)).isSome
 
-/- Cost-model derivation, mode 1: X^n−2 has a short derivative chain, so preparation needs only
+/- Cost-model derivation, two-sided: X^n−2 has a short derivative chain, so preparation needs only
 linear storage. Retargeting at ±3 performs n big-by-small Horner products
 with Θ(n)-bit accumulators. Θ(n²) bit work dominates the Θ(n) dispatch term
 on the preregistered 1600..13000-limb regime. The original Chebyshev attempt
@@ -491,7 +491,7 @@ setup_benchmark runRetargetWide n => n ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode-2 candidate pending attribution audit: unlike the withdrawn power-of-two endpoint family, odd b-bit
+/- Cost-model derivation, candidate cited upper bound pending a profile check: unlike the withdrawn power-of-two endpoint family, odd b-bit
 mantissas make each nontrivial fixed-degree Horner product growing-by-growing.
 Both integral and fractional endpoints exercise GMP multiplication. -/
 setup_benchmark runFractionalBits bits => bits ^ 2
@@ -526,10 +526,10 @@ def runCachedReplayBits := runCachedReplay
 def runClearBits := runClear
 def runInfiniteBits := runInfinite
 
-/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds require dominant-phase attribution, which the
+published quadratic product/gcd bounds apply only if those phases dominate, which the
 retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runPreparedBits bits => bits ^ 2
@@ -544,10 +544,10 @@ setup_benchmark runPreparedBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds require dominant-phase attribution, which the
+published quadratic product/gcd bounds apply only if those phases dominate, which the
 retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runCountBits bits => bits ^ 2
@@ -562,10 +562,10 @@ setup_benchmark runCountBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds require dominant-phase attribution, which the
+published quadratic product/gcd bounds apply only if those phases dominate, which the
 retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runPreparedCountBits bits => bits ^ 2
@@ -580,10 +580,10 @@ setup_benchmark runPreparedCountBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds require dominant-phase attribution, which the
+published quadratic product/gcd bounds apply only if those phases dominate, which the
 retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runCertificateBits bits => bits ^ 2
@@ -598,10 +598,10 @@ setup_benchmark runCertificateBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds require dominant-phase attribution, which the
+published quadratic product/gcd bounds apply only if those phases dominate, which the
 retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runPreparedCertificateBits bits => bits ^ 2
@@ -616,10 +616,10 @@ setup_benchmark runPreparedCertificateBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds require dominant-phase attribution, which the
+published quadratic product/gcd bounds apply only if those phases dominate, which the
 retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runCountCertificateBits bits => bits ^ 2
@@ -634,10 +634,10 @@ setup_benchmark runCountCertificateBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds require dominant-phase attribution, which the
+published quadratic product/gcd bounds apply only if those phases dominate, which the
 retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runFieldReplayBits bits => bits ^ 2
@@ -652,10 +652,10 @@ setup_benchmark runFieldReplayBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds require dominant-phase attribution, which the
+published quadratic product/gcd bounds apply only if those phases dominate, which the
 retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runCachedReplayBits bits => bits ^ 2
@@ -670,10 +670,10 @@ setup_benchmark runCachedReplayBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds require dominant-phase attribution, which the
+published quadratic product/gcd bounds apply only if those phases dominate, which the
 retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runClearBits bits => bits ^ 2
@@ -688,10 +688,10 @@ setup_benchmark runClearBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, candidate cited upper bound: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds require dominant-phase attribution, which the
+published quadratic product/gcd bounds apply only if those phases dominate, which the
 retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runInfiniteBits bits => bits ^ 2
@@ -721,7 +721,7 @@ def embedInput (n : Nat) : IntegerInput :=
 def runEmbedSparse (i : IntegerInput) : Option UInt64 :=
   i.cert.map fun c => certHash c.toRat
 
-/- Cost-model derivation, mode 1: embedding is a literal coefficient/scale cast, not arithmetic on
+/- Cost-model derivation, two-sided: embedding is a literal coefficient/scale cast, not arithmetic on
 coefficient magnitudes. X^n−2 has a short chain containing Θ(n) word-size
 entries. Every cast and scalar hash is constant word work; output traversal
 and array allocation are Θ(n). The old long-chain bit-volume hypothesis is
@@ -791,7 +791,7 @@ def runSparseClear (i : SparseInput) : Option UInt64 := runClear i.frontend
 
 def runSparseEmbed (i : SparseInput) : Option UInt64 := runEmbed i.frontend
 
-/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+/- Cost-model derivation, two-sided: P=2X^n−1, F=1 and endpoints ±1.
 The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
 so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
 literal identities, denominator clearing and full output hashes traverse
@@ -810,7 +810,7 @@ setup_benchmark runSparseDomain n => n
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+/- Cost-model derivation, two-sided: P=2X^n−1, F=1 and endpoints ±1.
 The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
 so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
 literal identities, denominator clearing and full output hashes traverse
@@ -829,7 +829,7 @@ setup_benchmark runSparseQuery n => n
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+/- Cost-model derivation, two-sided: P=2X^n−1, F=1 and endpoints ±1.
 The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
 so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
 literal identities, denominator clearing and full output hashes traverse
@@ -848,7 +848,7 @@ setup_benchmark runSparseInteger n => n
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+/- Cost-model derivation, two-sided: P=2X^n−1, F=1 and endpoints ±1.
 The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
 so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
 literal identities, denominator clearing and full output hashes traverse
@@ -867,7 +867,7 @@ setup_benchmark runSparsePrepared n => n
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+/- Cost-model derivation, two-sided: P=2X^n−1, F=1 and endpoints ±1.
 The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
 so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
 literal identities, denominator clearing and full output hashes traverse
@@ -886,7 +886,7 @@ setup_benchmark runSparseCount n => n
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+/- Cost-model derivation, two-sided: P=2X^n−1, F=1 and endpoints ±1.
 The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
 so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
 literal identities, denominator clearing and full output hashes traverse
@@ -905,7 +905,7 @@ setup_benchmark runSparsePreparedCount n => n
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+/- Cost-model derivation, two-sided: P=2X^n−1, F=1 and endpoints ±1.
 The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
 so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
 literal identities, denominator clearing and full output hashes traverse
@@ -924,7 +924,7 @@ setup_benchmark runSparseCertificate n => n
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+/- Cost-model derivation, two-sided: P=2X^n−1, F=1 and endpoints ±1.
 The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
 so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
 literal identities, denominator clearing and full output hashes traverse
@@ -943,7 +943,7 @@ setup_benchmark runSparsePreparedCertificate n => n
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+/- Cost-model derivation, two-sided: P=2X^n−1, F=1 and endpoints ±1.
 The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
 so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
 literal identities, denominator clearing and full output hashes traverse
@@ -962,7 +962,7 @@ setup_benchmark runSparseCountCertificate n => n
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+/- Cost-model derivation, two-sided: P=2X^n−1, F=1 and endpoints ±1.
 The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
 so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
 literal identities, denominator clearing and full output hashes traverse
@@ -981,7 +981,7 @@ setup_benchmark runSparseReplay n => n
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+/- Cost-model derivation, two-sided: P=2X^n−1, F=1 and endpoints ±1.
 The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
 so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
 literal identities, denominator clearing and full output hashes traverse
@@ -1000,7 +1000,7 @@ setup_benchmark runSparseCachedReplay n => n
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+/- Cost-model derivation, two-sided: P=2X^n−1, F=1 and endpoints ±1.
 The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
 so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
 literal identities, denominator clearing and full output hashes traverse
@@ -1019,7 +1019,7 @@ setup_benchmark runSparseClear n => n
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 1: P=2X^n−1, F=1 and endpoints ±1.
+/- Cost-model derivation, two-sided: P=2X^n−1, F=1 and endpoints ±1.
 The normalized chain is P,X^(n−1),1. Its divisions have d=2 or m=0,
 so the dynamic recurrence has Θ(n) word-size work. Horner at ±1,
 literal identities, denominator clearing and full output hashes traverse

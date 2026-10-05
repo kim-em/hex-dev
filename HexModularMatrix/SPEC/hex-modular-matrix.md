@@ -46,7 +46,7 @@ overhead-adjusted ratio differs from the raw one only at `n = 16` and
 FLINT time. FLINT spends about a ninth of Hex's wall time on the same
 determinant, and the gap widens with `n`.
 
-hex-bareiss's SPEC classifies that comparator as `informational` for a
+hex-bareiss's SPEC sets no target against that comparator for a
 stated reason: FLINT uses multi-modular reduction with Chinese
 remaindering, and Bareiss is fraction-free elimination over `Int`, so the
 two have different asymptotic and constant-factor profiles. The report's
@@ -1432,8 +1432,8 @@ Families:
   rejected primes, successful certificates and fallback use; size the
   budget to require successful recovery after the skips.
   Keep forced fuel-exhaustion cases separately labelled so that a fast
-  fallback cannot stand in for modular-rank performance. The rank
-  comparator is `FLINT fmpz_mat_rank via python-flint`, `informational`
+  fallback cannot stand in for modular-rank performance. FLINT's
+  `fmpz_mat_rank` (via python-flint) is recorded for orientation only,
   because there is no shared fixture history and crossover policies
   differ. Also measure `Hex.Matrix.rank` on the same inputs to record
   the crossover with the direct algorithm: the mandatory certificate
@@ -1449,14 +1449,10 @@ Families:
   rank certificate's adjugate. FLINT has no counterpart for this family,
   since `fmpq_mat_solve` does not expose its decomposition.
 
-**Comparators.** FLINT's `fmpz_mat_det` carries `class: gating` here,
-the required-check classification of
-[SPEC/benchmarking.md](../../SPEC/benchmarking.md), and this is the one
-classification change this SPEC makes to an existing
-comparator relationship. hex-bareiss classifies it `informational`
-because the algorithms differ; once this library implements the same
-algorithm the comparison is like-for-like and the reason for the
-exemption is gone. Two thresholds, written against the numbers in
+**Performance target.** FLINT's `fmpz_mat_det` (via python-flint) is the
+yardstick here. hex-bareiss sets no target against it because the
+algorithms differ; once this library implements the same algorithm the
+comparison is like-for-like. Two thresholds, written against the numbers in
 [reports/hex-bareiss-performance.md](../../reports/hex-bareiss-performance.md)
 as they stand:
 
@@ -1486,7 +1482,7 @@ The first-implementation measurements establish the crossover and separate
 forced-route cost from the public entry point. Absolute times describe the
 recorded shared host; these thresholds are ratios within the same run.
 
-FLINT's `fmpz_mat.rank` and `fmpq_mat.solve` are `informational`: FLINT's
+FLINT's `fmpz_mat.rank` and `fmpq_mat.solve` carry no target: FLINT's
 solve uses a tuned multi-modular and Dixon hybrid with a different
 crossover policy, and there is no shared fixture history to anchor a
 required ratio.
@@ -1697,32 +1693,6 @@ HexModularMatrixMathlib.lean
     mathlib: false
     done_through: 0
     status: planned
-    phase4:
-      comparators:
-        - tool: FLINT fmpz_mat_det via python-flint
-          class: gating
-          goal: detViaDivisor faster than Hex.Matrix.bareiss by at least 4x at n = 512 on the shared tridiagonal fixture in the same run, with the FLINT ratio recorded and the 5x target at every eligible rung reviewed after the first measurement
-        - tool: FLINT fmpz_mat_rank via python-flint
-          class: informational
-          rationale: no shared fixture history and a different crossover policy
-        - tool: FLINT fmpq_mat_solve via python-flint
-          class: informational
-          rationale: FLINT dispatches between fraction-free, multi-modular and Dixon solvers with tuned crossovers, and its solve does not expose a reusable decomposition, so the repeated-solve family has no FLINT counterpart
-      input_families:
-        - name: structured-determinant
-          description: the deterministic tridiagonal fixture shared with HexBareiss.Bench
-        - name: dense-random-determinant
-          description: dense random matrices at 8, 64, and 1024 bit entries
-        - name: unimodular-determinant
-          description: matrices of determinant plus or minus one, the worst case for the divisor
-        - name: rank
-          description: square and rectangular matrices at several ranks, measuring rankCert? and rankModular
-        - name: rank-bad-primes
-          description: large-coefficient rank-deficient s L R matrices, with s the product of initial producer primes, requiring skips and a successful certificate
-        - name: solve
-          description: single right-hand sides with integral and with large-denominator solutions, at n = 32 to 256, measuring decomp? and solveWith separately
-        - name: repeated-solve
-          description: r right-hand sides against one matrix through one decomposition, at r = 1, 8, n, against r independent solve? calls, measuring what the decomposition saves
   HexModularMatrixMathlib:
     deps: [HexModularMatrix, HexRankMathlib, HexMatrixMathlib, HexDeterminantMathlib, HexBareissMathlib, HexRowReduceMathlib, HexModularMathlib]
     mathlib: true

@@ -1,4 +1,4 @@
-// Informational fplll 5.5.0 comparator; no Hex runtime FFI is introduced.
+// Orientation-only fplll 5.5.0 comparator; no Hex runtime FFI is introduced.
 // Protocol: one line per request: shortest|closest n, n*n basis entries, n target entries.
 // Inputs have already been scaled to integer targets by the Python driver.
 #include <fplll/fplll.h>

@@ -1570,7 +1570,7 @@ the diophantine recursion and the coefficient arithmetic:
   dense. This records the known gap while no sparse route is specified;
   it does not claim to isolate a route.
 
-**Comparators.** All are `informational`. SymPy is the oracle and is not
+**Comparators.** All are recorded for orientation. SymPy is the oracle and is not
 a performance comparator, and its `dmp_zz_wang_hensel_lifting` is Python,
 so a favourable ratio against it would measure the language and not the
 algorithm. FLINT and Singular expose multivariate *factorization*

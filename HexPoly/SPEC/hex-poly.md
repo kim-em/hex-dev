@@ -241,13 +241,13 @@ the extension owner.
 
 ## External comparators
 
-| Comparator | Class | Scope |
-|---|---|---|
-| FLINT `fmpz_poly` via python-flint | informational | all `setup_benchmark` registrations against integer polynomial inputs |
+| Comparator | Scope |
+|---|---|
+| FLINT `fmpz_poly` via python-flint | all `setup_benchmark` registrations against integer polynomial inputs |
 
 FLINT's `fmpz_poly` is the standard reference for univariate
-integer polynomial arithmetic. The comparator is `informational`
-rather than `gating`: FLINT tunes Karatsuba/Toom-Cook/FFT
+integer polynomial arithmetic. It is an orientation comparator with no
+target ratio: FLINT tunes Karatsuba/Toom-Cook/FFT
 crossovers in `fmpz_poly_mul` and uses Newton-style algorithms for
 division and GCD; this library deliberately supplies only the schoolbook
 semantic foundation. The coefficient-specific and composed algorithms are

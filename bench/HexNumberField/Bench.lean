@@ -174,18 +174,18 @@ The parametric ladders carry the Phase-4 asymptotic evidence:
 * `runMergeRootListLadder`: the duplicate-removal fold across the two Yun
   components of the repeated-factor fixed-field family;
 * `runCommonPresentationLadder`: the public common-field construction
-  behind `AlgebraicPoly.roots?`, separated per the Attribution rule;
+  behind `AlgebraicPoly.roots?`, registered separately as its own phase;
 * `runContainedPresentation`: checked coordinates when the first coefficient
   already generates a field containing every coefficient.
 
-Informational PARI comparator (`SPEC/benchmarking.md` §External comparators
+PARI comparator (`SPEC/benchmarking.md` §External comparators
 §Process call): PARI's `t_POLMOD` arithmetic (`Mod(a, m) * Mod(b, m)` and
 `Mod(a, m)^(-1)`) is the callable PARI surface matching `PolyQuot`
 multiplication and inversion. The `runQAdjoinMulPair*` / `runPariPolmodMul*`
 rungs run at `n = 4, 6, 8, 12, 16, 20` and the `runQAdjoinInvPair*` /
 `runPariPolmodInv*` rungs at `n = 4, 6, 8, 10, 12, 16`: six rungs each rather than
-a doubling-only triple, because `SPEC/benchmarking.md` §Headline reports
-requires enough eligible rungs for the ratio's shape to be unambiguous, and
+a doubling-only triple, so that there are enough eligible rungs for the
+ratio's shape to be unambiguous, and
 both families cross the ratio 1 inside these ranges. The pairs consume identical
 deterministic inputs and hash the identical reduced rational coefficient
 vector, so `compare` joins them on result hashes. The PARI side runs through
@@ -502,7 +502,7 @@ def runQAdjoinCanonical : Unit → IO UInt64 :=
 isolation, and representative selection are all exercised at fixed defining
 degree two; varying that degree would change the public value's field rather
 than isolate a caller size parameter, and no executable isolator bound supplies
-a mode-2 ceiling. The total wrapper adds only the constant-time checked-result
+a cited upper bound. The total wrapper adds only the constant-time checked-result
 projection. Including both warmup and measured conversion, its 0.93 ms median
 plus the 47 ms spawn floor sits over 10x inside the 500 ms zero-grace
 whole-child budget. `PolyQuot.isZero` is grouped as a constant-time anchor. -/
@@ -888,7 +888,7 @@ private def getMajorantFixedInput : IO MajorantInput := do
 def runEvalMajorantFixed : Unit → IO UInt64 := fun _ => do
   return runEvalMajorant (← getMajorantFixedInput)
 
-/- Mode 3. The independently derived `n²` linear-bit model was tested first:
+/- Fixed budget. The independently derived `n²` linear-bit model was tested first:
 `evalMajorant` performs `n` exact-Nat recurrence steps on state whose bit width
 grows linearly. A 32-through-4096 sweep remained faster than that model by
 `n^0.689` after the small-Nat/GMP transition, so it supplies no honest
@@ -923,9 +923,8 @@ coefficient `i` reduces to denominator `(i + 2) / gcd (i + 2) (salt - 1)`, and
 the common denominator is the lcm of those. For the fixed salts in use that
 lcm still has `Θ(len)` bit length — it differs from `lcm (2, …, len + 1)` only
 by the divisors of `salt - 1`, a constant. So a ladder built on it varied
-coefficient height together with degree: not the controlled one-parameter
-ladder [PLAN/Phase4.md](../../PLAN/Phase4.md) requires, and no bounded-height
-cost model could fit it.
+coefficient height together with degree: not a controlled one-parameter
+ladder, and no bounded-height cost model could fit it.
 
 `prepAlgPolyInput` shares this helper for the same reason. -/
 private def denseRatCoeff (i salt : Nat) : Rat :=
@@ -1346,7 +1345,7 @@ private def getPolyQuotApproxInput : IO FieldInput := do
 def runQAdjoinApprox : Unit → IO UInt64 := fun _ => do
   return runQAdjoinApproxLadder (← getPolyQuotApproxInput)
 
-/- Mode 3. The independently derived conservative bit model is `O(n⁴)`: the
+/- Fixed budget. The independently derived conservative bit model is `O(n⁴)`: the
 guard makes the refined root ball `O(n)` bits, exact Horner multiplication
 grows the accumulator to `O(n²)` bits, and the sum of schoolbook products is
 quartic. The controlled 4-through-128 sweep was faster by `n^2.262`, while the
@@ -1750,7 +1749,7 @@ def runExactFactorLadder : Unit → IO UInt64 := fun _ => do
 def runCanonicalRepLadder : Unit → IO UInt64 := fun _ => do
   return canonicalRepChecksum (← getCanonicalHardInput)
 
-/- Mode 3. The clean historical sweeps tried factor count on the end-to-end
+/- Fixed budget. The clean historical sweeps tried factor count on the end-to-end
 family and candidate degree on both certification phases. They do not admit a
 tight independently derived model: the executable all-roots isolator dominates
 certification, differs materially from the published CIsolate algorithm, and
@@ -2323,7 +2322,7 @@ setup_benchmark runContainedPresentation n => n
   }
 
 /- Cost model. The public common-field construction behind
-`AlgebraicPoly.roots?`, separated per the Attribution rule: a linear scan finds
+`AlgebraicPoly.roots?`, registered separately as its own phase: a linear scan finds
 the first nonzero coefficient, and the proposed rational field is rejected
 by the quadratic coefficient's degree before coordinate recovery. `primitive?`
 folds `extend?` over the `n + 1` coefficients, and with a single quadratic
@@ -2351,8 +2350,8 @@ setup_benchmark runCommonPresentationLadder n => n
     slopeTolerance := 0.35
   }
 
-/- Cost model. This is the duplicate-removal phase separated under the
-Attribution rule. The linear Yun component seeds the list, then `n` roots
+/- Cost model. This is the duplicate-removal phase, registered separately
+as its own phase. The linear Yun component seeds the list, then `n` roots
 from the degree-`n` component are merged. Candidate `k` performs one rational
 gcd against the linear component and `k` same-polynomial isolation comparisons.
 The gcd of a degree-`2n` norm eliminant and a linear polynomial takes `O(n)`
@@ -2385,11 +2384,12 @@ profiled process in `componentRoots?` and 85.01% in `ZPoly.isolateComplexRoots?`
 scaling of the HexRoots executable on this family has been derived independently of timing,
 and BSSY's `Õ(d³ + d²·tau)` result analyzes `CIsolate`, not HexRoots' distinct
 driver. The former `n⁵ log² n` declaration instead composed HexRoots'
-heuristic isolation proxy and is not a mode-1 or mode-2 model. This
+heuristic isolation proxy and is neither an independently derived model nor
+a cited upper bound. This
 project-internal canonical input is the repaired profile's `n = 6` case and
 tracks a 20 s absolute budget without asserting an asymptotic shape. The
 historical `Ladder` name is retained so committed exports continue to identify
-the same operation across the mode change. -/
+the same operation across the change to a fixed registration. -/
 setup_fixed_benchmark runQAdjoinRootsLadder where {
   repeats := 3
   maxSecondsPerCall := 20.0
@@ -2540,8 +2540,8 @@ def runPariPolmodInv16 : Unit → IO UInt64 := fun _ => do
 /-- Per-call driver overhead for the PARI comparator: one `polmod`-family
 request whose PARI-side work is a constant `0`, so the measured time is the
 JSON request/reply round trip alone. `SPEC/benchmarking.md` §External
-comparators §Process call requires this figure so the headline report can
-quote overhead-adjusted ratios. -/
+comparators §Process call uses this figure to quote overhead-adjusted
+ratios. -/
 def runPariPolmodOverhead : Unit → IO UInt64 := fun _ => do
   let result ← Hex.BenchOracle.Pari.runOp "polmod" "overhead" #[]
   match result.getInt? with
@@ -2595,7 +2595,7 @@ setup_fixed_benchmark runPariPolmodInv16 where pariCompareConfig
 
 /- Driver round-trip floor for the PARI comparator: no algorithmic work on
 either side, so this registration measures only the per-call request/reply
-cost that the headline report subtracts from the PARI wall times. -/
+cost that is subtracted from the PARI wall times. -/
 setup_fixed_benchmark runPariPolmodOverhead where
   { pariCompareConfig with expectedHash := some 0x0 }
 

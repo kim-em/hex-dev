@@ -1217,11 +1217,11 @@ Per [SPEC/benchmarking.md](../benchmarking.md), drivers at
   answer is caught by the bench itself and not only by conformance.
 
 **Comparators.** FLINT `fmpz_mat_minpoly` and `fmpq_mat.minpoly()`
-through python-flint, `informational`. FLINT's minimal polynomial is not
+through python-flint, for orientation. FLINT's minimal polynomial is not
 this algorithm: it works from a small number of vectors and repeats when
 the result fails to annihilate, so the comparison is across algorithms
-and no required threshold can be held. PARI `minpoly` through `cypari2`,
-also `informational`, for the same reason. Both are installed by the
+and no target threshold can be held. PARI `minpoly` through `cypari2`,
+also for orientation, for the same reason. Both are installed by the
 existing `pip install` step in `.github/workflows/ci.yml`, so neither
 adds a CI dependency.
 

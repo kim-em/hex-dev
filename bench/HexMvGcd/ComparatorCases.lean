@@ -88,7 +88,7 @@ def runSingularDense4d5 (_ : Unit) : IO Flint.IntTerms := do
 
 /-! Sparse-gap endpoints. These smaller cases keep the complete public-GCD
 call finite for all three comparator implementations; the high endpoint is
-also the canonical mode-3 sparse-stress input. -/
+also the canonical fixed-budget sparse-stress input. -/
 
 initialize sparse5d4 : IO.Ref (P 5 Int × P 5 Int) ←
   IO.mkRef (sparseGapGcd 5 4)

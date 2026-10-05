@@ -116,7 +116,8 @@ The benchmark surface separates direct evaluation, Krylov construction,
 vector order, matrix minimal polynomial, certificate production, and
 certificate checking. It also includes dense rational, fixed-width prime
 field, derogatory, and companion-matrix families. FLINT and PARI are
-informational external comparators because they use different algorithms.
+external comparators recorded for orientation, because they use different
+algorithms.
 
 ## Conformance
 

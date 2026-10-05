@@ -10,7 +10,7 @@ public import HexMvPoly
 
 @[expose] public section
 
-/-! Canonical sorted-list proxy used by the informational native comparator. -/
+/-! Canonical sorted-list proxy used by the native orientation comparator. -/
 
 namespace Hex.MvPolyBench
 open Hex Hex.MvPoly

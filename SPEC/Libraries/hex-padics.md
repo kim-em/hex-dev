@@ -1388,14 +1388,14 @@ Families:
   against `ZpApprox` at the same absolute precision.
 - **Exactification**, `toRatSym?` on the same ladder.
 
-**Comparators.** PARI's `t_PADIC` arithmetic through cypari2 is
-`informational`, not `gating`. At the low end of the ladder the ratio
+**Comparators.** PARI's `t_PADIC` arithmetic through cypari2 is for
+orientation, with no target ratio. At the low end of the ladder the ratio
 measures Lean's boxed-`Nat` overhead against PARI's inlined small
 integers rather than anything about the algorithms, and at the high end
-both sides are GMP, so a single classification covering the whole
+both sides are GMP, so a single target ratio covering the whole
 ladder would be reporting two different things under one number.
-Reclassification to `gating` is worth revisiting once the ladder has
-run and the crossover is a measured number.
+A target is worth revisiting once the ladder has run and the crossover
+is a measured number.
 
 Two required internal checks, which matter more than the external one:
 
@@ -1634,24 +1634,6 @@ HexPadicsMathlib.lean
     mathlib: false
     done_through: 0
     status: planned
-    phase4:
-      comparators:
-        - tool: PARI t_PADIC arithmetic via cypari2
-          class: informational
-          rationale: "At small precisions the ratio measures Lean's boxed-Nat overhead against PARI's inlined small integers rather than the algorithms, and at large precisions both sides are GMP. One classification cannot cover both ends of the ladder; revisit once the crossover is measured."
-      input_families:
-        - name: multiplication
-          description: products at absolute precisions 8 to 8192 over p = 5 and a 31-bit prime
-        - name: inversion
-          description: bounded Newton against the extended GCD on the same ladder
-        - name: valuation
-          description: binary-splitting removal against repeated division at valuations 0, N/2, N-1
-        - name: digit-loop
-          description: divPow? 1 iterated N times, the shape the Dixon solve runs
-        - name: qp-arithmetic
-          description: mixed QpApprox sequences with cancellations at relative precisions 8 to 1024
-        - name: exactification
-          description: toRatSym? on the same ladder
   HexPadicsMathlib:
     deps: [HexPadics, HexPrimalityMathlib]
     mathlib: true

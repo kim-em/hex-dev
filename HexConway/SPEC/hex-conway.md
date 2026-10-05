@@ -144,13 +144,34 @@ certificates.
 reports irreducibility, primitivity and compatibility timings separately. Its
 mutable polynomial input prevents compile-time folding of closed successful
 checks. The LeanBench lookup registration derives its keys from `supportedPairs`;
-fixed registrations provide operation budgets and expected-result checks.
+fixed registrations provide expected-result checks.
 See `reports/hex-conway-performance.md` for the measured limits and raw evidence.
 
-Lübeck's database and the optional package adapter are input-source checks,
-not independent performance comparators. There is no external executable
-comparator for this imported-table service (`input-source-only` under
-`SPEC/benchmarking.md`).
+Lübeck's database and the optional package adapter are input sources, not
+independent performance comparators; there is no external executable
+comparator for this imported-table service.
+
+### Benchmark tiers
+
+Conway benchmarks follow the three-tier design and are reported separately,
+never aggregated into a single "Conway runtime" number. The tier is part of
+the registration name:
+
+- **Tier 1:** irreducibility of committed Conway polynomials, one fixed
+  registration per measured entry.
+- **Tier 2:** full table verification (irreducibility, primitivity,
+  compatibility with divisor-degree entries) on committed entries, one fixed
+  registration per measured entry.
+- **Tier 3:** search for missing entries, once implemented (see
+  [§Tier 3](#tier-3)). Naturally parametric in the search degree at a fixed
+  prime; individual canonical search probes (e.g. the smallest unsolved degree
+  at a given prime, like `(2, 410)`) may be fixed registrations.
+
+Useful cases include entries near the top of the Lübeck table (e.g.
+`(2, 409)`, `(3, 263)`, `(5, 251)`), entries for medium and large primes
+(e.g. `(97, 127)`, `(521, 13)`, `(65537, 7)`), just-beyond-table search
+probes (e.g. `(2, 410)`, `(97, 128)`), and large-degree irreducibility stress
+tests over `F_2` at degrees `512`, `1024`, `2048` and beyond when feasible.
 
 ## Tier 3
 

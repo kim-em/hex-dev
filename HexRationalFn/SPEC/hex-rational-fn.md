@@ -338,14 +338,14 @@ normalization route in multiplication must include the same canonical output
 requirement. Publish its crossover and intermediate-degree savings, not a
 promise that cancellation is faster on every small coprime input.
 
-The required external throughput comparator is
+The external throughput comparator is
 [FLINT `fmpz_poly_q`](https://flintlib.org/doc/fmpz_poly_q.html), specifically
 `fmpz_poly_q_canonicalise`, `add`, `sub`, `mul`, `div`, `inv`, `pow`,
 `derivative`, `equal`, and `evaluate_fmpq` (see the
 [public header](https://github.com/flintlib/flint/blob/main/src/fmpz_poly_q.h)).
 Use a persistent driver linked to
-FLINT, with the `fmpz_poly_q_` prefix on each function name. It is
-**informational**: FLINT stores integer numerator/denominator pairs with its
+FLINT, with the `fmpz_poly_q_` prefix on each function name. It is for
+orientation only: FLINT stores integer numerator/denominator pairs with its
 own scalar normalization, whereas this library stores monic-denominator
 polynomials over `Rat`. Convert inputs and outputs outside the timed operation
 and compare the resulting canonical `Rat` coefficient arrays. Record both
@@ -353,10 +353,10 @@ representation sizes. FLINT's zero-input rejection conventions must be
 adapted explicitly rather than equated with total field division.
 
 The comparator covers the rational-coefficient arithmetic, equality and
-evaluation surfaces. Polynomial-part splitting is a **structural-layer**
-comparison delegated to `HexPolyFast` division evidence. Certificate production
-and replay have **no-comparable-surface-in-named-comparator**: FLINT does not
-expose this Bézout normalization certificate protocol. Measure those native
+evaluation surfaces. Polynomial-part splitting is covered by `HexPolyFast`
+division evidence. Certificate production and replay have no external
+comparator: FLINT does not expose this Bézout normalization certificate
+protocol. Measure those native
 operations and kernel replay independently. Prime-field plan comparisons use
 the same generic implementation and internal plan-agreement checks.
 

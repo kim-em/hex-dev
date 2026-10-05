@@ -1061,16 +1061,13 @@ Families:
   sparse pairs, where it would not. The measurement that decides whether
   a sparse division algorithm is worth specifying.
 
-**Comparators.** SymPy's sparse ring elements, `informational`: SymPy is
-the oracle and is Python, so the ratio is reported for context and does
-not determine acceptance.
-FLINT's `fmpz_poly` via python-flint, `informational` and restricted to
-the crossover family: it is a dense representation, so above the
+**Comparators.** SymPy's sparse ring elements: SymPy is the oracle and is
+Python, so the ratio is reported for context and does not determine
+acceptance.
+FLINT's `fmpz_poly` via python-flint, restricted to the crossover family: it is a dense representation, so above the
 crossover the comparison measures the choice of representation rather
 than the quality of either implementation, and a threshold there would
-be meaningless. No external comparator is registered with
-`class: gating`, so none of them has a required threshold, and that is
-the justification.
+be meaningless. Neither external comparator has a target threshold.
 
 Two required internal checks, which matter more than the external ones:
 
@@ -1230,27 +1227,6 @@ derivative theorems are stated against the dense operations.
     mathlib: false
     done_through: 0
     status: planned
-    phase4:
-      comparators:
-        - tool: SymPy sparse ring elements (sympy.polys.rings)
-          class: informational
-          rationale: "SymPy is the conformance oracle and is Python, so the ratio is reported for context and does not determine acceptance."
-        - tool: FLINT fmpz_poly via python-flint
-          class: informational
-          rationale: "fmpz_poly is dense, so above the crossover the comparison measures the choice of representation rather than the quality of either implementation. Recorded on the crossover family only."
-      input_families:
-        - name: sparse-arithmetic
-          description: addition and multiplication of 2 to 64 term inputs at degrees 10^3 to 10^6
-        - name: sparse-multiplication
-          description: low-collision and high-collision products across the three candidate implementations
-        - name: crossover
-          description: the same operations against DensePoly with the term count swept from 2 to the degree, locating one crossover per operation
-        - name: evaluation
-          description: gap Horner against dense Horner across the same sweep
-        - name: substitution-power
-          description: substPow on the cyclotomic shapes against the dense route
-        - name: convert-gcd
-          description: gcd and divMod through the conversions on the sparse-remainder x^n-1 pair and on generic sparse pairs, recording the conversion share separately
   HexSparsePolyMathlib:
     deps: [HexSparsePoly, HexPolyMathlib, HexPoly]
     mathlib: true

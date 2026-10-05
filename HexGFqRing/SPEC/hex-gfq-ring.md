@@ -98,10 +98,7 @@ the screens with `lake exe hexgfqring_bench compare` and the paired
 
 ## External comparators
 
-No external comparator is required.
-
-**Justification:** `structural-layer` per
-`SPEC/benchmarking.md §"Comparator naming"`. HexGFqRing's semantic
+No external comparator is required. HexGFqRing's semantic
 domain is `F_p[x]/(f)` for *any* nonconstant `f`, including reducible
 moduli (see the contents section: "This does NOT require `f` to be
 irreducible — the quotient is always a ring"). The natural FLINT
@@ -119,7 +116,7 @@ quotient-ring constant-factor parity.
 
 Coverage at the finite-field subset of HexGFqRing's domain is provided
 upstream by HexGFqField's external comparator declaration (FLINT
-`fq_default`, informational), which exercises HexGFqRing's quotient
+`fq_default`), which exercises HexGFqRing's quotient
 arithmetic transitively through `FiniteField p f hf hirr`'s thin
 wrapper over `PolyQuotient p f hf`. The irreducibility precondition
 that breaks the declaration at this layer is naturally satisfied at

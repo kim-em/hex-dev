@@ -557,7 +557,7 @@ Reduced-versus-full solver correctness is a required check. Runtime comparison
 uses identical small inputs and separately shows reduced-matrix scaling on larger
 lists. Compare unreduced and modulo-`p` moment construction on derivative and
 joint-encoding lists, including coefficient sizes and reduction replay costs.
-Z3 and python-flint end-to-end comparisons are informational where an exact
+Z3 and python-flint end-to-end comparisons are for orientation where an exact
 matching operation is available; root isolation time must not be labelled
 matrix-solving time. No external oracle supplies a comparable Lean proof
 checker. Kernel replay has representative CI-built examples in the

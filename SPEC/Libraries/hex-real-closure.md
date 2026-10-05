@@ -819,6 +819,6 @@ Keep bench imports Mathlib-free and replay measurements separate. Use
 lean-bench's fixed trial-major schedule, automatic CPU selection where
 supported, adjacent alternating `AB`/`BA` comparisons, and retain every
 completed sample with host activity as context. Allow at most one unchanged
-rerun after an inconclusive result and supply one representative attribution
-profile. Historical paper timings are not host-independent targets or CI
+rerun after an inconclusive result; profile only to explain an unexpected
+result. Historical paper timings are not host-independent targets or CI
 budgets. No quiet-core preflight or retry-until-clean rule is introduced.
