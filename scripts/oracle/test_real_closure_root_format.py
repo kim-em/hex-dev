@@ -14,15 +14,25 @@ class RootFormatTests(unittest.TestCase):
         path = Path(__file__).resolve().parents[2] / 'conformance-fixtures/HexRealClosure/root-format.jsonl'
         self.rows = [parse_record(line) for line in path.read_text().splitlines() if line.strip()]
 
-    def reject_coupled(self, index, mutate):
+    def reject_coupled(self, index, mutate, message=None):
         rows = copy.deepcopy(self.rows)
         mutate(rows[index]['packet'])
         rows[index]['reconstructed'] = copy.deepcopy(rows[index]['packet'])
         rows[index]['packet_text'] = json.dumps(rows[index]['packet'])
         binding, payload = rows[index]['packet']
         rows[index]['root_texts'] = [json.dumps([binding, entry[0]]) for entry in payload[1]]
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, message or ''):
             verify(rows)
+
+    def test_same_value_different_kind(self):
+        # This frame selects zero. Field-value agreement alone must not accept
+        # a selected-root packet for the fixture's extracted point root.
+        frame = [[0], [[0, 0, 1], [0, 1, 1]],
+                 [1, [0, -1, 1]], [1, [0, 1, 1]], [], [], []]
+        self.reject_coupled(5, lambda p: p[1][1][1].__setitem__(0, [1, frame]),
+                            'wrong root kind')
+        self.reject_coupled(5, lambda p: p[1][1][-1].__setitem__(0, [0, [0, 3, 1]]),
+                            'wrong root kind')
 
     def test_actual_roots(self):
         self.assertEqual(verify(self.rows), 6)

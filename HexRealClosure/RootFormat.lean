@@ -61,6 +61,24 @@ theorem Context.readRoot_data (parent : Context registry) (root : Root parent) :
       rfl
     exact extensions _ _ same
 
+/-- Every successfully read selected frame re-encodes literally, including
+the replay graph and its sharing. This law applies to arbitrary input. -/
+theorem Context.readRoot_frame (parent : Context registry) (frame : Json)
+    (root : Root parent)
+    (accepted : parent.readRoot (.arr #[Json.of (1 : Nat), frame]) = .ok root) :
+    root.data = .arr #[Json.of (1 : Nat), frame] := by
+  have tagged : RootFormat.readTagged (.arr #[Json.of (1 : Nat), frame]) = .ok (1, frame) := by
+    simp [RootFormat.readTagged, Codec.tuple, Json.getArr_arr, Codec.read_nat,
+      bind, Except.bind, pure, Except.pure]
+  rw [Context.readRoot, tagged] at accepted
+  cases hf : parent.readFrame frame with
+  | error message => simp [hf, bind, Except.bind] at accepted
+  | ok restored =>
+    simp only [hf, bind, Except.bind, pure, Except.pure, Except.ok.injEq] at accepted
+    subst root
+    rw [Root.data, restored.frame_eq]
+    rfl
+
 /-- The outer binding names the full predecessor, independently of the root
 kind and its own child context. -/
 @[expose] def Root.write {parent : Context registry} (root : Root parent) : Serialized :=
@@ -205,6 +223,35 @@ structure PackedRootSet (registry : BaseContext.Registry) : Type 1 where
   let roots ← parent.val.readRootSet data.value
   return ⟨parent.val, roots⟩
 
+/-- Every successful root reconstruction owns the exact requested predecessor. -/
+theorem Catalog.restoreRoot_signature (catalog : Catalog registry) (data : Serialized)
+    (result : PackedRoot registry) (accepted : catalog.restoreRoot data = .ok result) :
+    result.parent.signature = data.binding := by
+  unfold Catalog.restoreRoot at accepted
+  cases hc : catalog.reconstruct data.binding with
+  | error message => simp [hc, bind, Except.bind] at accepted
+  | ok parent =>
+    cases hr : parent.val.readRoot data.value with
+    | error message => simp [hc, hr, bind, Except.bind] at accepted
+    | ok root =>
+      simp only [hc, hr, bind, Except.bind, pure, Except.pure, Except.ok.injEq] at accepted
+      subst result
+      exact parent.property
+
+theorem Catalog.restoreRootSet_signature (catalog : Catalog registry) (data : Serialized)
+    (result : PackedRootSet registry) (accepted : catalog.restoreRootSet data = .ok result) :
+    result.parent.signature = data.binding := by
+  unfold Catalog.restoreRootSet at accepted
+  cases hc : catalog.reconstruct data.binding with
+  | error message => simp [hc, bind, Except.bind] at accepted
+  | ok parent =>
+    cases hr : parent.val.readRootSet data.value with
+    | error message => simp [hc, hr, bind, Except.bind] at accepted
+    | ok roots =>
+      simp only [hc, hr, bind, Except.bind, pure, Except.pure, Except.ok.injEq] at accepted
+      subst result
+      exact parent.property
+
 /-- A root roundtrip does not require the predecessor's algebraic suffix to
 be installed. The base catalog retains the actual provider progress premises. -/
 theorem Catalog.restoreRoot_origin (catalog : BaseContext.Catalog registry)
@@ -272,3 +319,15 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Context.readRootSet_asRoot' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Context.readRootSet_asRoot
+
+/-- info: 'Hex.RealClosure.Tower.Context.readRoot_frame' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.readRoot_frame
+
+/-- info: 'Hex.RealClosure.Tower.Catalog.restoreRoot_signature' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Catalog.restoreRoot_signature
+
+/-- info: 'Hex.RealClosure.Tower.Catalog.restoreRootSet_signature' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Catalog.restoreRootSet_signature

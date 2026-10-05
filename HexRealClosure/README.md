@@ -2982,7 +2982,10 @@ proofs and algebraic oracles.
 before reconstructing their typed results. `Catalog.restoreRootText` and
 `restoreRootSetText` first reconstruct that predecessor through its validated
 base catalog, then replay each selected descriptor. Their byte counterparts
-use the same shared UTF-8/JSON parser. `PackedRoot` and `PackedRootSet` retain the
+use the same shared UTF-8/JSON parser. Successful `restoreRoot_signature` and
+`restoreRootSet_signature` laws retain the requested predecessor for arbitrary
+input, and `readRoot_frame` proves exact re-encoding of every accepted selected
+frame. `PackedRoot` and `PackedRootSet` retain the
 returned predecessor explicitly. Old contexts and their objects remain valid.
 
 Single roots use point/selected tags 0/1; root sets use universal/finite tags
@@ -2996,8 +2999,7 @@ The reader rejects unknown kinds, malformed points, nonpositive multiplicities,
 nonempty universal payloads, stale predecessors, unknown validated providers,
 changed descriptor fields or replay graphs, and invalid or oversized text.
 The kernel roundtrip laws use a base-only catalog with actual origin-base
-availability and lexical
-policy acceptance, with no assumed successful descriptor or byte parse.
+availability and lexical policy acceptance, with no assumed successful descriptor or byte parse.
 
 Run the compiled full-root examples and the independent exact oracle:
 
@@ -3015,10 +3017,13 @@ root kinds, selected values and cached owners. It also checks a 100,000-entry
 finite packet under the default byte policy. The FLINT oracle independently
 selects roots by their exact defining heads, intervals and Thom signs, evaluates
 stored algebraic coefficients, and checks prescribed values, entry order and
-multiplicities. Replay-graph acceptance remains the native checker's responsibility.
+multiplicities and each prescribed point/selected kind. Replay-graph acceptance remains the native checker's responsibility.
 The fixture includes actual rejection messages; coupled mutation tests alter
 both original and reconstructed packets to ensure agreement alone cannot hide
-a changed embedding or multiplicity.
+a changed embedding, kind or multiplicity. An extra unreachable replay entry
+passes descriptor replay but is rejected as a noncanonical root frame; the
+fixture checks that exact path. Outer-packet and descriptor predecessor
+mismatches have distinct errors.
 
 ## Introductory paper examples
 
@@ -3048,4 +3053,3 @@ requirements. [Input provenance and coverage](../reports/hex-real-closure/basic-
 identify the transcribed paper operations. The two examples involving `π`
 remain explicitly unsupported without a caller-validated provider and its
 progress laws; no other constant is used in their place.
-

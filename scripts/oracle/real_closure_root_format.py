@@ -38,7 +38,9 @@ ERRORS = {
         ('changed lower endpoint', 'graph context or domain mismatch'),
         ('changed Thom indices', 'root descriptor replay rejected'),
         ('changed Thom signs', 'root descriptor replay rejected'),
-        ('missing replay graph', 'wrong field count')],
+        ('missing replay graph', 'wrong field count'),
+        ('unreachable replay entry', 'noncanonical root frame'),
+        ('changed descriptor predecessor', 'root descriptor predecessor mismatch')],
 }
 
 
@@ -81,6 +83,9 @@ def verify(rows):
                     [q.unary('sqrt', alpha), q.unary('inv', q.binary('sub', alpha, q.number(3)))],
                     [q.unary('neg', alpha), q.number(0), alpha, q.number(3)]]
         multiplicities = [[], [], [3, 2], [2], [3, 1], [3, 2, 3, 4]]
+        # The complete producer extracts zero as a point; its nonzero linear
+        # factor still supplies a selected descriptor for the rational root 3.
+        kinds = [[], [], [0, 0], [1], [1, 0], [1, 0, 1, 1]]
         for i, row in enumerate(rows):
             require(set(row) == {'case', 'packet', 'packet_text', 'root_texts', 'reconstructed', 'rejections'}, 'wrong root record')
             printed = parse_record(row['packet_text'])
@@ -102,12 +107,15 @@ def verify(rows):
             require(len(entries) == len(expected[i]), 'missing or extra root entry')
             require(type(row['root_texts']) is list and len(row['root_texts']) == len(entries),
                     'missing individual root packets')
-            for entry, value, count, text in zip(entries, expected[i], multiplicities[i], row['root_texts']):
+            for entry, value, count, kind, text in zip(entries, expected[i], multiplicities[i],
+                                                       kinds[i], row['root_texts']):
                 individual = parse_record(text)
                 integers(individual)
                 require(individual == [binding, entry[0]], 'individual root packet differs')
                 require(type(entry) is list and len(entry) == 2 and type(entry[1]) is int and
                         entry[1] == count, 'wrong root multiplicity')
+                require(type(entry[0]) is list and len(entry[0]) == 2 and
+                        type(entry[0][0]) is int and entry[0][0] == kind, 'wrong root kind')
                 require(r.same(root(r, binding, entry[0]), value), 'wrong selected root or literal order')
             checks = [{'case': name, 'message': message} for name, message in ERRORS.get(row['case'], [])]
             require(row['rejections'] == checks, 'missing or changed native rejection')

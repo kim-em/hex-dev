@@ -134,6 +134,19 @@ def main : IO Unit := do
     let changed := Json.arr (fields.set! index replacement)
     rejected := rejected.push (← rejection name
       (base.readRoot (.arr #[Json.of (1 : Nat), changed])))
+  let .ok graph := fields[6]!.getArr? | throw (IO.userError "missing replay graph")
+  let .ok entries := graph[2]!.getArr? | throw (IO.userError "missing graph entries")
+  let unreachable := Json.arr (graph.set! 2 (.arr (entries.push entries[0]!)))
+  let changed := Json.arr (fields.set! 6 unreachable)
+  let .ok _ := base.readDescriptor changed
+    | throw (IO.userError "unreachable entry did not reach canonical-frame check")
+  rejected := rejected.push (← rejection "unreachable replay entry"
+    (base.readRoot (.arr #[Json.of (1 : Nat), changed])) (some "noncanonical root frame"))
+  let foreign := (Context.base (BaseContext.rational registry).infinitesimal).signature
+  let changed := Json.arr (fields.set! 0 (.arr #[Json.of (1 : Nat), foreign.literal.toJson]))
+  rejected := rejected.push (← rejection "changed descriptor predecessor"
+    (base.readRoot (.arr #[Json.of (1 : Nat), changed]))
+    (some "root descriptor predecessor mismatch"))
   emit "selected reducible root" base (.finite [⟨selected, 2, by decide⟩]) rejected
   let parent := extension.context
   let y : parent.Poly := DensePoly.ofList [0,1]

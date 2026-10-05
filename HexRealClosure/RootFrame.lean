@@ -101,7 +101,7 @@ def Context.readDescriptor (parent : Context registry) (j : Json) :
     Except String (Descriptor parent.Value Signature parent.sign parent.signature) := do
   let fields ← Codec.tuple 7 j
   let binding ← (contextCodec parent.signature).decode fields[0]
-  if binding ≠ parent.signature then throw "root predecessor mismatch"
+  if binding ≠ parent.signature then throw "root descriptor predecessor mismatch"
   let head ← Codec.readPoly parent.codec fields[1]
   let lower ← Codec.readEndpoint parent.codec fields[2]
   let upper ← Codec.readEndpoint parent.codec fields[3]

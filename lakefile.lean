@@ -2387,4 +2387,3 @@ lean_exe hexrealclosure_basic_conformance where
 lean_exe hexrealclosure_root_format_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.RootFormatConformance
-
