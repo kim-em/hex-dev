@@ -53,7 +53,7 @@ def main():
                   target_inner_nanos=500000000,child_timeout_seconds=120,
                   process_timeout_seconds=3600,
                   inside='input-function IO.Ref read, full coefficient-prefix extraction/normalization, native complete second-stage root production, root-count check and ordinary harness hash/consumer',
-                  outside='degree15 root construction, least-root checks, input powers and initial forcing/hash, functional queries and serialization',
+                  outside='degree15 root construction, least-root checks, input powers and initial forcing/hash, one explicit warm-up per child, functional queries and serialization',
                   source_hashes={name:digest(ROOT/name) for name in SOURCE_PATHS})
     manifest = destination/'manifest.json'
     def save():
@@ -120,8 +120,14 @@ def main():
             path = run([destination/'hexrealclosure_phase4','metitarski','scaling',degree])
             if path.read_text() != fixtures[degree]:
                 raise RuntimeError('snapshot functional output differs from committed fixture')
+            bench_path = run([destination/'hexrealclosure_bench','meti-input',degree])
+            measured = json.loads(bench_path.read_text())
+            functional = json.loads(path.read_text())
+            if any(measured.get(key) != functional[key] for key in
+                   ['degree','head','first_coefficients']):
+                raise RuntimeError('measured input differs from independently checked fixture')
             checked = run([oracle_python,'scripts/oracle/real_closure_metitarski_scaling.py',path])
-            record['functional'].append(dict(degree=degree,fixture=path.name,oracle=checked.name))
+            record['functional'].append(dict(degree=degree,fixture=path.name,measured_input=bench_path.name,oracle=checked.name))
         if run(['git','rev-parse','HEAD']).read_text().strip()!=record['commit'] or run(['git','status','--porcelain']).read_text().strip():
             raise RuntimeError('source changed before measurement')
         record['status'] = 'measuring'

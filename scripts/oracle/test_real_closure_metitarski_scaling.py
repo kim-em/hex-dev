@@ -21,7 +21,7 @@ class MetitarskiScalingTests(unittest.TestCase):
 
     def test_semantic_mutations(self):
         mutations = [
-            lambda r: r.__setitem__('degree',4),
+            lambda r: r.__setitem__('degree',7),
             lambda r: r['first_coefficients'][0].__setitem__(0,592705),
             lambda r: r.__setitem__('multiplicity',2),
             lambda r: r.__setitem__('equation_sign',1),

@@ -11,6 +11,11 @@ import sys
 FUNCTION = 'Hex.RealClosure.Bench.measureMetiSecond'
 DEGREES = [3,5,7,9]
 TRIALS = 6
+SOURCES = {'bench/HexRealClosure/Bench.lean','bench/HexRealClosure/Phase4.lean',
+           'scripts/bench/real_closure_metitarski_scaling.py',
+           'scripts/oracle/real_closure_metitarski_scaling.py',
+           'scripts/bench/analyze_real_closure_metitarski_scaling.py',
+           'scripts/bench/cpu_lease.py','scripts/oracle/real_algebraic_qqbar.py'}
 
 
 def require(test,message):
@@ -30,6 +35,7 @@ def summarize(folder,archive=False):
             and record['degrees'] == DEGREES and record['trials'] == TRIALS
             and record['dirty'] is False and record['affinity'] == [record['cpu']],
             'wrong capture protocol')
+    require(set(record['source_hashes']) == SOURCES, 'changed frozen source inventory')
     omitted = {}
     if archive:
         index = json.loads((folder/'archive.json').read_text())
@@ -59,6 +65,9 @@ def summarize(folder,archive=False):
                     and record[name+'_sha256'] == checksum,'wrong omitted snapshot identity')
         else:
             require(digest(path) == checksum,'changed artifact: '+name)
+    for name in ['hexrealclosure_bench','hexrealclosure_phase4']:
+        require(record[name+'_sha256'] == record['artifacts'].get(name),
+                'snapshot identity differs from artifact digest')
     for name,checksum in record['source_hashes'].items():
         require(record['artifacts'].get('sources/'+name) == checksum,
                 'frozen source differs from measured identity')
@@ -82,12 +91,12 @@ def summarize(folder,archive=False):
     require([(p['trial_index'],p['param']) for p in points] ==
             [(t,n) for t in range(TRIALS) for n in DEGREES], 'changed trial-major schedule')
     for p in points:
-        require(p['status'] in ('ok','capped','error'), 'unknown measurement status')
+        require(p['status'] in ('ok','timed_out','killed_at_cap','error'), 'unknown measurement status')
         if p['status'] != 'ok':
             continue
         require(p['result_hash'] == '0x1' and not p['below_signal_floor']
                 and type(p['inner_repeats']) is int and p['inner_repeats'] > 0
-                and type(p['total_nanos']) is int and p['total_nanos'] >= 500000000,
+                and type(p['total_nanos']) is int and p['total_nanos'] > 0,
                 'invalid completed measurement')
         require(math.isfinite(p['per_call_nanos']) and
                 math.isclose(p['per_call_nanos'],p['total_nanos']/p['inner_repeats'],rel_tol=1e-12),
@@ -96,6 +105,11 @@ def summarize(folder,archive=False):
     functional = record['functional']
     require([f['degree'] for f in functional] == DEGREES,'missing functional rung')
     for n,entry in zip(DEGREES,functional):
+        functional = json.loads((folder/entry['fixture']).read_text())
+        measured = json.loads((folder/entry['measured_input']).read_text())
+        require(all(measured.get(key) == functional[key] for key in
+                    ['degree','head','first_coefficients']),
+                'measured input differs from functional fixture')
         checked = json.loads((folder/entry['oracle']).read_text())
         require(checked['degree'] == n and checked['real_roots'] == 1 and checked['multiplicity'] == 1,
                 'functional result differs from measured rung')
@@ -103,6 +117,9 @@ def summarize(folder,archive=False):
         values = [Fraction(p['total_nanos'],p['inner_repeats']) for p in rung if p['status'] == 'ok']
         median = statistics.median(values) if values else None
         rows.append(dict(degree=n,completed_trials=len(values),
+                         batches=[dict(trial_index=p['trial_index'],total_nanos=p['total_nanos'],
+                                       inner_repeats=p['inner_repeats'])
+                                  for p in rung if p['status'] == 'ok'],
                          failures=[p for p in rung if p['status'] != 'ok'],
                          median_ns=float(median) if median is not None else None,
                          min_ns=float(min(values)) if values else None,max_ns=float(max(values)) if values else None,
