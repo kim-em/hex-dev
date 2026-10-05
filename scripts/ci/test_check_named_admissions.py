@@ -428,6 +428,10 @@ class AdmissionScannerTests(unittest.TestCase):
                 proof.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, "unapproved admission in bench/HexSignDetMathlib/ProofProbe"):
                     audit.check()
+                for tactic in ("native_decide", "ofReduceBool"):
+                    proof.write_text("theorem bad : True := by " + tactic + "\n", encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "unapproved admission in bench/HexSignDetMathlib/ProofProbe"):
+                        audit.check()
                 proof.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
                 proof_shadow = root / "adapters/HexSignDetMathlib/ProofProbe/Injected.lean"
                 proof_shadow.parent.mkdir(parents=True, exist_ok=True)
