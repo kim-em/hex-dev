@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "bec3e8a34b5f1f1d3beeebf2a9877ae715e14071",
+  "current_blob": "8489db605410f4fc7814514d5c362ff3289891f3",
+  "reason": "Move HexModular.KernelTests and LoopTests between monorepo regression targets, register the HexPolyFast declaration lint in HexConformance, and clarify publication comments. No measured factorization or graph-isomorphism executable, compiler setting, dependency pin, native archive, or source in their runtime import graphs changes. The broad regression targets share library namespaces, so the conservative Lake claimant check requires this exact transition. Relative to the measured lakefile, the only declaration selected by factorization_blocks that changes is HexReleaseTests, whose regression modules are not linked into hexbz_factor_service. Existing unrelated real-closure targets and comment changes are also runtime-neutral."
+}
