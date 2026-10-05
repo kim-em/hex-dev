@@ -11,6 +11,13 @@ public section
 
 namespace Hex.PermGroup.Tests
 
+-- The identity residual stops immediately, but the full check still rejects
+-- a malformed level even when every input is the identity.
+example : Kernel.sift 4 (Kernel.width 4) (Kernel.ident 4 (Kernel.width 4))
+    [default] (Kernel.ident 4 (Kernel.width 4)) = true := by decide +kernel
+example : Kernel.check 4 [Kernel.ident 4 (Kernel.width 4)] [default] = false :=
+  by decide +kernel
+
 private def cycle : Perm 3 := Perm.mk #v[1, 2, 0]
 private def swap : Perm 3 := Perm.mk #v[1, 0, 2]
 private def gens : Array (Perm 3) := #[cycle, swap]

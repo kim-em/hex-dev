@@ -387,9 +387,11 @@ accepts exactly when all of the following hold for every level:
    next-level generator, each `(i, j)` has `i < g` and `j < o`, and the
    generator equals `h(i, j)`.
 
-After the last level, sifting accepts exactly the value `ident n`. Sifting a
-packed `x` at a level reads `j = L(x(b))`, rejects when `j = 0`, and otherwise
-continues with `comp n u_{j-1} x`.
+After the last level, sifting accepts exactly the value `ident n`. At each
+level it first accepts when the packed residual `x` equals `ident n`. Otherwise
+it reads `j = L(x(b))`, rejects when `j = 0`, and continues with
+`comp n u_{j-1} x`. The separate level checks still cover every level of the
+certificate.
 
 `Kernel.order c` is the product of the orbit sizes, in arbitrary-precision
 `Nat` arithmetic.
@@ -433,8 +435,10 @@ end where the next starts, and the last end at `g*o`. `Kernel.chunks n inputs.le
 for each level. It rejects `budget = 0`. Its cost estimate counts, for one pair,
 the two compositions forming `h(i, j)` and one composition and one lookup for
 each later level, each composition costing `n` field operations, and it counts
-the unsplit per-level and input checks the same way. When one unsplit check
-exceeds the budget, the producer fails before emitting any declaration and
+the unsplit per-level and input checks the same way. The estimate assumes the
+residual stays nontrivial through every later level, so identity exits do not
+change the partition. When one unsplit check exceeds the budget, the producer
+fails before emitting any declaration and
 reports the check and its estimated cost. The default budget keeps every
 declaration of the examples well within the default heartbeat limit.
 No proof, test or example raises `maxHeartbeats` for these checks.
@@ -480,9 +484,10 @@ predicate from a checked group's existing rank and unrank maps.
 
 The proof follows the packed representation (`Rep`), canonical packings
 (`Canon`) and checked level invariants (`LevelBase`). From the last level
-upward, sifting accepts exactly the generated permutations. The checked
-Schreier family gives the full point stabilizer, by signed-word
-induction and transversal multiplication. The complete-chain Schreier
+upward, sifting accepts exactly the generated permutations. The identity
+belongs to every generated subgroup, so the early identity exit preserves
+this equivalence. The checked Schreier family gives the full point stabilizer,
+by signed-word induction and transversal multiplication. The complete-chain Schreier
 lemmas require an `Orbit.Valid` with checked word programs, which the packed
 certificate does not store; its representation and tree checks supply
 these facts instead. Each level decomposes its generated permutations uniquely into an

@@ -527,7 +527,15 @@ theorem base_mem : h.Ω ((⟨L.base, h.base_lt⟩ : Fin n)) := by
 theorem sift_iff {x : Nat} {σ : Perm n} (hx : Rep n x σ) :
     Kernel.sift n W e (L :: rest) x = true ↔ levelGroup n L (σ) := by
   have hxb : field W x L.base = (σ ⟨L.base, h.base_lt⟩).val := hx ⟨L.base, h.base_lt⟩
-  simp only [Kernel.sift, hxb]
+  by_cases he : x = e
+  · subst x
+    have hσ : σ = 1 := hx.unique rep_ident
+    subst σ
+    simp only [Kernel.sift, Nat.beq_refl, Bool.cond_true, true_iff]
+    exact Span.id
+  have hne : Nat.beq x e = false := by
+    simpa [beq_eq_decide] using he
+  simp only [Kernel.sift, hne, Bool.cond_false, hxb]
   by_cases hΩ : h.Ω (σ ⟨L.base, h.base_lt⟩)
   · have h0 : field W L.lookup (σ ⟨L.base, h.base_lt⟩).val ≠ 0 := hΩ
     have hk := h.idx_lt hΩ
