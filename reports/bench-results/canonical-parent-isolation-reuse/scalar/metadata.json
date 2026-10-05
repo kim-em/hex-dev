@@ -1,0 +1,1365 @@
+{
+  "sources": {
+    "Before": {
+      "head": "98cab2feb583cfcf5019f21ccef62fb309547855",
+      "status": "",
+      "sources": {
+        "HexNumberField/Basic.lean": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+        "HexNumberField/Convert.lean": "7ddcb009a40146461d30c1e23d7b2dcfcafb62c03e5867b020ace11ce78f74dd",
+        "HexNumberField/Lazy.lean": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+        "HexNumberField/Roots.lean": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+        "HexNumberFieldMathlib/Exact.lean": "2643164a438395789ab1e8d07a47eb25e81ceeaaa179e5cfd33c549447197430",
+        "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+        "HexRealAlgebraic/Roots.lean": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+        "HexRealAlgebraic/Order.lean": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+        "bench/HexRealAlgebraic/Bench.lean": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+        "bench/HexNumberField/Bench.lean": "1b809b0d85e8f3ba69adb04fed8ff4a056b86f7af23c4d5e5d81e93c8d93cef5",
+        "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+        "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e"
+      },
+      "binaries": {
+        "hexrealalgebraic_bench": {
+          "path": "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+          "sha256": "9beaa01bfe01cbc075557e325826a6e820777f1439dddfa2798056d6ca483f5c"
+        },
+        "hexnumberfield_bench": {
+          "path": "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+          "sha256": "b0045791b5bbd73eb4ffbbccf4c330e9beaff5d14212cc36efe7fb0ac072a7bd"
+        }
+      }
+    },
+    "After": {
+      "head": "630a40345b62d9ed6ce6503d0770ba6d62d47809",
+      "status": "",
+      "sources": {
+        "HexNumberField/Basic.lean": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+        "HexNumberField/Convert.lean": "4f311aa22571ee8fc670bfa4710a48d3299a0fd623f1a287ca98b8814d062585",
+        "HexNumberField/Lazy.lean": "5d9ea561b4940cb8d2826d1649d50327c14f519a2805fb1d9b49e3c500c9c9c6",
+        "HexNumberField/Roots.lean": "97a28eaefb7c85221b4f1af7fb2c5d3aa603734118839d5d5651adf97027bfea",
+        "HexNumberFieldMathlib/Exact.lean": "2643164a438395789ab1e8d07a47eb25e81ceeaaa179e5cfd33c549447197430",
+        "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+        "HexRealAlgebraic/Roots.lean": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+        "HexRealAlgebraic/Order.lean": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+        "bench/HexRealAlgebraic/Bench.lean": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+        "bench/HexNumberField/Bench.lean": "1b809b0d85e8f3ba69adb04fed8ff4a056b86f7af23c4d5e5d81e93c8d93cef5",
+        "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+        "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e"
+      },
+      "binaries": {
+        "hexrealalgebraic_bench": {
+          "path": "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+          "sha256": "6f97a53819cf2d15418453a0d0c0c2e973ead424a7f8cca91880388d0cc7b152"
+        },
+        "hexnumberfield_bench": {
+          "path": "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+          "sha256": "e4c9093663079556e37bdefc4cfdefcc2d5e90d1e14f8b72061a9b72cac3520a"
+        }
+      }
+    }
+  },
+  "families": {
+    "Add": [
+      2,
+      4,
+      8
+    ],
+    "Sqrt": [
+      2,
+      4,
+      8
+    ]
+  },
+  "cpu": 42,
+  "host": "chungus2",
+  "load_start": [
+    6.97900390625,
+    15.07861328125,
+    35.06689453125
+  ],
+  "start": "2026-10-05T12:40:57.833629+00:00",
+  "schedule": "Four trial-major blocks, adjacent Before/After arms, alternating AB/BA",
+  "boundary": "Existing unchanged benchmark input and expected result fingerprint. Preparation and separate warmup excluded; registered caps unchanged. Each arm uses one fixed batch with a 50 ms floor. Descriptive comparison, no scientific mode admission or portable timing budget.",
+  "arms": [
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4146870550002859,
+      "output": "Add-2-0-Before.json"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4078655359999175,
+      "output": "Add-2-0-After.json"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-4-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4877982120001434,
+      "output": "Add-4-0-Before.json"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-4-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.48533228600035727,
+      "output": "Add-4-0-After.json"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.3915461410001626,
+      "output": "Add-8-0-Before.json"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.766186301000289,
+      "output": "Add-8-0-After.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.38908297099987976,
+      "output": "Sqrt-2-0-Before.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5658541890002198,
+      "output": "Sqrt-2-0-After.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-4-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.0161680280002656,
+      "output": "Sqrt-4-0-Before.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-4-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.888893578999614,
+      "output": "Sqrt-4-0-After.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-8-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 43.722677616000055,
+      "output": "Sqrt-8-0-Before.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-8-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 29.678344314000242,
+      "output": "Sqrt-8-0-After.json"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.41245655499960776,
+      "output": "Add-2-1-After.json"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4136522019998665,
+      "output": "Add-2-1-Before.json"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-4-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.48832334000007904,
+      "output": "Add-4-1-After.json"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-4-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.488793608999913,
+      "output": "Add-4-1-Before.json"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.6613815670002623,
+      "output": "Add-8-1-After.json"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.369389948999924,
+      "output": "Add-8-1-Before.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.563509633999729,
+      "output": "Sqrt-2-1-After.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4909386179997455,
+      "output": "Sqrt-2-1-Before.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-4-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.9573692389999451,
+      "output": "Sqrt-4-1-After.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-4-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.06963185099994,
+      "output": "Sqrt-4-1-Before.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-8-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 29.75255824199985,
+      "output": "Sqrt-8-1-After.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-8-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 36.19269219600028,
+      "output": "Sqrt-8-1-Before.json"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.41380839600060426,
+      "output": "Add-2-2-Before.json"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4096569459998136,
+      "output": "Add-2-2-After.json"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-4-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4890843450002649,
+      "output": "Add-4-2-Before.json"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-4-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4858006739996199,
+      "output": "Add-4-2-After.json"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.291531156000019,
+      "output": "Add-8-2-Before.json"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.6374084930002937,
+      "output": "Add-8-2-After.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4899383849997321,
+      "output": "Sqrt-2-2-Before.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5382384380000076,
+      "output": "Sqrt-2-2-After.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-4-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.9900054059999093,
+      "output": "Sqrt-4-2-Before.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-4-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.8603329140005371,
+      "output": "Sqrt-4-2-After.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-8-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 36.34199878399977,
+      "output": "Sqrt-8-2-Before.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-8-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 29.37293305499952,
+      "output": "Sqrt-8-2-After.json"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.40956007500062697,
+      "output": "Add-2-3-After.json"
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4104650680001214,
+      "output": "Add-2-3-Before.json"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-4-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.48510276899924065,
+      "output": "Add-4-3-After.json"
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-4-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4872589420001532,
+      "output": "Add-4-3-Before.json"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.6385136439994312,
+      "output": "Add-8-3-After.json"
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runAdd8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.291972608000833,
+      "output": "Add-8-3-Before.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5358180250004807,
+      "output": "Sqrt-2-3-After.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5642686709998088,
+      "output": "Sqrt-2-3-Before.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-4-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.8605733439999312,
+      "output": "Sqrt-4-3-After.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-4-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.9878137840005365,
+      "output": "Sqrt-4-3-Before.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-8-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 29.197011622999526,
+      "output": "Sqrt-8-3-After.json"
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicScaling.runSqrt8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-8-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 36.48957652300032,
+      "output": "Sqrt-8-3-Before.json"
+    }
+  ],
+  "load_end": [
+    9.3896484375,
+    13.515625,
+    29.03515625
+  ],
+  "binaries_unchanged": true,
+  "artifacts": {
+    "Before-HexNumberField-Basic.lean.txt": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+    "Before-HexNumberField-Convert.lean.txt": "7ddcb009a40146461d30c1e23d7b2dcfcafb62c03e5867b020ace11ce78f74dd",
+    "Before-HexNumberField-Lazy.lean.txt": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+    "Before-HexNumberField-Roots.lean.txt": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+    "Before-HexNumberFieldMathlib-Exact.lean.txt": "2643164a438395789ab1e8d07a47eb25e81ceeaaa179e5cfd33c549447197430",
+    "Before-HexRealAlgebraic-Basic.lean.txt": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "Before-HexRealAlgebraic-Roots.lean.txt": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+    "Before-HexRealAlgebraic-Order.lean.txt": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+    "Before-bench-HexRealAlgebraic-Bench.lean.txt": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+    "Before-bench-HexNumberField-Bench.lean.txt": "1b809b0d85e8f3ba69adb04fed8ff4a056b86f7af23c4d5e5d81e93c8d93cef5",
+    "Before-lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "Before-lake-manifest.json.txt": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+    "After-HexNumberField-Basic.lean.txt": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+    "After-HexNumberField-Convert.lean.txt": "4f311aa22571ee8fc670bfa4710a48d3299a0fd623f1a287ca98b8814d062585",
+    "After-HexNumberField-Lazy.lean.txt": "5d9ea561b4940cb8d2826d1649d50327c14f519a2805fb1d9b49e3c500c9c9c6",
+    "After-HexNumberField-Roots.lean.txt": "97a28eaefb7c85221b4f1af7fb2c5d3aa603734118839d5d5651adf97027bfea",
+    "After-HexNumberFieldMathlib-Exact.lean.txt": "2643164a438395789ab1e8d07a47eb25e81ceeaaa179e5cfd33c549447197430",
+    "After-HexRealAlgebraic-Basic.lean.txt": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "After-HexRealAlgebraic-Roots.lean.txt": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+    "After-HexRealAlgebraic-Order.lean.txt": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+    "After-bench-HexRealAlgebraic-Bench.lean.txt": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+    "After-bench-HexNumberField-Bench.lean.txt": "1b809b0d85e8f3ba69adb04fed8ff4a056b86f7af23c4d5e5d81e93c8d93cef5",
+    "After-lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "After-lake-manifest.json.txt": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+    "collector.py": "050d9da43ae900c4939c41f66358f6570c1064ffeaadedb89b0bf9fcf35881d6",
+    "Add-2-0-Before.log": "9e08cb3d234c70dbda7fedd43aeef3b695a7cf82a059e74de7422b398ced53be",
+    "Add-2-0-Before.json": "672c4921d6cb85ad44a8eb8dc74b612b0143ecdfba4e076819839b42c4bfdf02",
+    "Add-2-0-After.log": "9a7a9a0bfec0574ba1cf2257f6aa1a702d711f5c1e2c6e948b197a3e169aee83",
+    "Add-2-0-After.json": "89b3bfe31c09012f60e8dc8c869a7833c4eae1ec3ab2fc4f504c286f802580a5",
+    "Add-4-0-Before.log": "10fce219edbd665cbc8c815924b5ead2817dda50e465ef6a75cc975acedbbd57",
+    "Add-4-0-Before.json": "003bd9904ee6b306743be7368789b718957ad4f95152ddb9f441566307d39ffa",
+    "Add-4-0-After.log": "d6d95a4dc1ebd93988793040598d2e3c3ec79bd7e7a29c672a6cdc9b87a00fec",
+    "Add-4-0-After.json": "ddee342ac0fc476353d1945f41944f63d5380d5ee5415e288d9d9168d3d45b9b",
+    "Add-8-0-Before.log": "aa516e32a997d8488c22683ad21bef8371a6f7b193b78c8bbb64c598355e9342",
+    "Add-8-0-Before.json": "d38546d9c9291d2a085487c0db9030f444807eeeb54554ba36c9434e89406180",
+    "Add-8-0-After.log": "4427f7369639ad2697c2fe34bb9986c3f1766c938a16f54c9179cdc379f05476",
+    "Add-8-0-After.json": "0d449313cd038cca71370bbeafde74945abfd6f27640c39728dfa8ad6c921f4f",
+    "Sqrt-2-0-Before.log": "2699cf0b08a24cd3918e28a5884637c1d1871d8391cfbd89442b5c3bb7128336",
+    "Sqrt-2-0-Before.json": "bd4007152ce8e0a670be086fa11698c58872682347bf1dc38bc4c409018bfca8",
+    "Sqrt-2-0-After.log": "4cd4d19d9523d1ca07a61f8a4c874643bfc8da1bdace085204223f03157fe5df",
+    "Sqrt-2-0-After.json": "ff8de1ea53a8743aeb3f08b8c257306ffe62e4c290e4cb74724ed9a017083e1f",
+    "Sqrt-4-0-Before.log": "534473510dff8c75808673c44d3b4fabd3c7fcaf9bd7dcfc7764aa9e32b54f3b",
+    "Sqrt-4-0-Before.json": "e045bfc9aa7240036185a16c6059c181036d27d8b870bc037cfb897cba18e061",
+    "Sqrt-4-0-After.log": "53aaf501a37703eb2dab320548376aa5c7590b06cb5f5876b49cea65b460d093",
+    "Sqrt-4-0-After.json": "9fd51a91f1ebe034f213b4695fe1c1be7e7d4bb3ba5705bbe836a5b239071de4",
+    "Sqrt-8-0-Before.log": "4f3ffd4fd99c356a159d9ad9d4a8cd39914a7251704e67381cf767456ac6237d",
+    "Sqrt-8-0-Before.json": "a3ad03c5032c91e762f1ee46bcf957c73bb3b0ed42b3c98aaeec1b3517655e70",
+    "Sqrt-8-0-After.log": "74ad426da8d7aae6a932d29eba9e852894aee882bd5d68a9f0d80459537822b2",
+    "Sqrt-8-0-After.json": "4e97b0c72ab7d39c2a2569ff62ce8a2376aa8b038057003a52edf633c7d73af0",
+    "Add-2-1-After.log": "1e1431de0bfa695161d99c31b86f4beeb1134268fca3499e8e7fb12e14e1d3bb",
+    "Add-2-1-After.json": "1f834eb7028648e2d315388532185e65f6ddca0ede66392980fd4be5a3355062",
+    "Add-2-1-Before.log": "17d62b004076b54e89399c67c8114bdf9d798347caf130bea35ef8b0d0b6107e",
+    "Add-2-1-Before.json": "e34f1afe6975af9b284bd034848e397a5e3da8bd860a937a68285bd7d5a62447",
+    "Add-4-1-After.log": "b7710c2c3847a8fc726d781d59553d175eb4bafbb504965fb253a97719c1fb4d",
+    "Add-4-1-After.json": "23e1eb7b3b502e1adc44bdd32ff9fd8602706318ee0c8d51d68a4ad5e6afe376",
+    "Add-4-1-Before.log": "366a7cdc4b94c108ec242e37cafc2a8ae17152630b8e897ec3d248f2c3a48cb9",
+    "Add-4-1-Before.json": "50923e075a104d0c5d8e17b60c7cb3642f7924ecd8278891b17b56800dec4fcd",
+    "Add-8-1-After.log": "a47ae4bd9ce282003d6f596b440b6672574a6950054192de7bf9b4274d189cbd",
+    "Add-8-1-After.json": "a800eee8e52635a8044b5278103d5edc69e0264a1b460b855580d43c13a20935",
+    "Add-8-1-Before.log": "b5f4be192a4ba36bdebced7f4f12ba12115845777d5d96ace358d2e24bd4b191",
+    "Add-8-1-Before.json": "565e04208db8abb399952a613b60dbf594a48519109ce845c70165a49f9d911b",
+    "Sqrt-2-1-After.log": "dd814eaf6a276007253930bb55a35a0ce3069d59c2a18da9c447881c541526a8",
+    "Sqrt-2-1-After.json": "d59332a048248eacb530008018051d3196f4bbadeef8f2066ec96c15cc3848f4",
+    "Sqrt-2-1-Before.log": "3e022769eea335edf619d442e7b65c9189765ed3c4d00d4b0ebf653195856154",
+    "Sqrt-2-1-Before.json": "1e5a0def5ca5cd68b9b6d8396d51d15b5d24b705e71925c0b22af1ad0705010c",
+    "Sqrt-4-1-After.log": "e2c53008956a48cb274ec2293271df913a134bc8f6ef5dfd6e7649ac4ba6bef6",
+    "Sqrt-4-1-After.json": "85c3a8c6e76557633b6c768b56172f6ea838f48490a6ce457b2e9271daed4172",
+    "Sqrt-4-1-Before.log": "749441009dfd9189f0239c8932384006d2542d0445aeed292855f367d7719f76",
+    "Sqrt-4-1-Before.json": "d2732ff6d529791ccbfb1dbec365e5abcf07bff3565fa0e729c3ea9a15f3946c",
+    "Sqrt-8-1-After.log": "cf7fad2e13a6749395e236602e1588104572b7438fd410acc87079d43105afee",
+    "Sqrt-8-1-After.json": "8be18570faffa16d4964f9bc119471ea8d077acaaab5fefe346edbe6a0c1734c",
+    "Sqrt-8-1-Before.log": "1563422b7a885a280648f5b463f9a98104ce331998abc697f85cfa436fd999f9",
+    "Sqrt-8-1-Before.json": "d7e31296ad0a008b313ca502f63b77de64ae0fcada4ba477ed3d85945e8d6f76",
+    "Add-2-2-Before.log": "f05bc2c97a57e82161298270c02a3a68c985f9fbc6b11de6909b62e06bbf36b8",
+    "Add-2-2-Before.json": "45ef8ed73b12aa2284bb65ad34c7f467a96e2d8ca93c26d6b6ed5371e3a54c6b",
+    "Add-2-2-After.log": "fd5cf996940b87e8e459feb8eb81f25d72458113f66d28dbc2f88ea6d9fb7d22",
+    "Add-2-2-After.json": "f55916f533b6dff5af70c061ea9c50ae9f515df39fb45b11a9e188228b56082a",
+    "Add-4-2-Before.log": "3ef7d20628cc2f2fc1d5f57dc6daff938cb6128a5b722ab0b31868234b962040",
+    "Add-4-2-Before.json": "36a9526d5ec3fa93bfb45b240d129c3dd64bc90747e945d986e3a1d95eb03e41",
+    "Add-4-2-After.log": "2abd72e8ed271ae58e5431a624d8ded104e7d9d55ba6160cec92a5d2e523e61f",
+    "Add-4-2-After.json": "0f901c1a7d0aefc06b0146e4d7435031865cc4f08955534b296c90d52c667981",
+    "Add-8-2-Before.log": "f6de9a6a5fc2fcd2239ad220f1fed3f2bcb14dc4d120c4be17917d83cc391238",
+    "Add-8-2-Before.json": "feb1568c0ed0520f3db4c13f9b3f4c3cba59f1128d9e23e098be1eaba869847c",
+    "Add-8-2-After.log": "037006c886863096c2aefe084c087aa8984cd5ec9ef086da5145585a480a479c",
+    "Add-8-2-After.json": "9b139e81da72b5c6d435556acd259dd7ac959004a79ab0bdc67cfb4a105eb408",
+    "Sqrt-2-2-Before.log": "ac5d89446c92a9b67c0feb9446d13294a196bd57293bf1d66016aa295b784aa1",
+    "Sqrt-2-2-Before.json": "144298ce221c138c0996ff0e22d38adfd2c7e07fe8ba8e43f480da8dbb1f050b",
+    "Sqrt-2-2-After.log": "339ee7da08e1d706fe2df330efcd67047b8948ffebae501ca04d560910eb8fd6",
+    "Sqrt-2-2-After.json": "cf38368769c8b1f4042f50fcf0117ec38965bd505e4be4ffbae004afb4b6289c",
+    "Sqrt-4-2-Before.log": "e5d0e1f7516e20a6d897353cc22d10bd26463546d1fea97e7c4bcb141c9cacc6",
+    "Sqrt-4-2-Before.json": "26aba21cc71b41204ffe967cfe5a6f1f1a20d5bf5ba3739bdf7d7e1692c386ea",
+    "Sqrt-4-2-After.log": "757e9522892543db04cf27b4a1c9d2457952cf941b13cb8c1b838d12448aef14",
+    "Sqrt-4-2-After.json": "70940e9810e230d6f36991a15b4b568e669e86e47fd14ea3734c639664d583f4",
+    "Sqrt-8-2-Before.log": "5a358093d9be09dd64770b12e53eac2b7d3c53fe89febcec6bfcdbac54cf578b",
+    "Sqrt-8-2-Before.json": "ebf401d9445ae72d7c1c47b5ae11bad68fd3e8b4d827ea2ec1b9c10fff14a417",
+    "Sqrt-8-2-After.log": "a4238e60e8a94cacd831f06717e67664fe9568518fef1ee16507e468d7a5e7a2",
+    "Sqrt-8-2-After.json": "1479832adf79bc93a39dfa14e2239af55f07da11af8b1a331dd2e2a35b05421b",
+    "Add-2-3-After.log": "f8d91c656bfbbacad726d1cc1e37baa4471c5cef9b758bb328a28370d2814a89",
+    "Add-2-3-After.json": "dbe2e948c548360f989a28a023da15bc3ba60b8bf856bcd6268f6ee9279d00b7",
+    "Add-2-3-Before.log": "730f5712c0f218b4e1b55cb0b89d1581c3fb69dc0f128dcec682a633ac3eeb81",
+    "Add-2-3-Before.json": "e714a72ec466b9d172ed9cf58fa0570215d72bf80f705a97396880a47b0eaae6",
+    "Add-4-3-After.log": "550218c09b7dcbb07ee260ddbde74d870dd5ec4326ec3aeba87577e426f7f672",
+    "Add-4-3-After.json": "88fdc4685b1808905743349a7d208f303504e47e1b81b81d0a956964b823c044",
+    "Add-4-3-Before.log": "4f6f780f34493c8b3691296e53a7041c27d00a4f0272189a65775dc8199e815b",
+    "Add-4-3-Before.json": "11613a39793aa556ae3bb284e3773b141d5127bd6d3bcf967be5825bcc069034",
+    "Add-8-3-After.log": "ca319d4b35c124b2ca58c42375e13ca0120f167a006a852639ed0b84843d595d",
+    "Add-8-3-After.json": "6d0e27d2ef9b47c672ddb7592472e2b4d24ac3a6d67261556870d28776c278fa",
+    "Add-8-3-Before.log": "b203f6b106418111e9b5612e923e513dc58764d7f1f962449781f93f248b059d",
+    "Add-8-3-Before.json": "badc0ab96e2198b405582dc1a623fee3a84fd226093897a4f357a9a64afdf4af",
+    "Sqrt-2-3-After.log": "7a5d9bc1470cb918ef9a6c2bd92f4e1c6dbf2e7ec65b57b9199981c174e02deb",
+    "Sqrt-2-3-After.json": "b54488f426b3caf80b785c7c5239dd048e58f2cbefb16bbbdee47136c1698902",
+    "Sqrt-2-3-Before.log": "e3d5467734a6184a0ef8cb832536714e185e2e13ee6a701ee0b5f59fc0f37ef8",
+    "Sqrt-2-3-Before.json": "cec0904206850d3069cec136b4a1db4862b3a852a5ab427927bd29d8a127b942",
+    "Sqrt-4-3-After.log": "7563658abe8338527a4eb560eab40e98785ccfc95604779c66fe09f131bbd809",
+    "Sqrt-4-3-After.json": "1ae271c722d7a71f0de9df620d29bdc33cddc7af3f692a76febd5fca7601248b",
+    "Sqrt-4-3-Before.log": "7fc7fcfa87b0bfb76bbd0650b665a72b3a8564bf272459b8a02ddebbc63ad4a9",
+    "Sqrt-4-3-Before.json": "0eff3558f58e636bf40df81124d0a0ce45bc865a3d2cbaf81430a524e2352ec8",
+    "Sqrt-8-3-After.log": "698c730c8a2bf85e8cb7d4cffc860ac4d15ac126269e139d64e35d08f2c80153",
+    "Sqrt-8-3-After.json": "3e8d7c7a00f552e3a17704e259e66b7554a10e0faba3e6e41b146d5f6a7da225",
+    "Sqrt-8-3-Before.log": "a9c67b27458b6394c5495e4a047095060832ca7abfc26e64eea4672eff1570c9",
+    "Sqrt-8-3-Before.json": "bd58785945c272473fe4eeff7527fa16d1db7394e043b34dc57438fd629748de"
+  }
+}

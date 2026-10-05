@@ -1,9 +1,11 @@
 # Real-algebraic performance
 
 The shipped real subtype has a Mathlib-free benchmark executable and compiled
-correctness checks. Phase 4 remains incomplete: most fixed registrations are
-baseline/hash anchors, without an admissible mode or an absolute regression
-budget. The forward comparison-strategy extension is excluded by the owning
+correctness checks. Phase 4 remains incomplete because the audit has unresolved canonical
+isolation costs and coverage questions. Under the current benchmarking policy,
+performance coverage is a judgment call: fixed hash registrations make no
+performance claim, and neither per-operation budgets nor profiles for every
+family are required. The forward comparison-strategy extension is excluded by the owning
 SPEC; this exclusion does not waive `realCompare` or polynomial-root evidence.
 The theorem-only companion has correctness and axiom tests, not its own
 performance deliverable.
@@ -85,9 +87,9 @@ final source without weakening the cap.
 | Shipped surface | Registrations | Evidence status |
 | --- | --- | --- |
 | Checked/proved constructors, casts, rational recognition | `runConstructors`, `runCasts`, `runRational` | Fixed baseline anchors |
-| Arithmetic and scalar dictionaries | `runAdd`, `runSub`, `runMul`, `runDiv`, `runNeg`, `runInv`, `runNatPow`, `runIntPow`, `runScalars`; corresponding bare controls; `runHard*` | Canonical baseline and adjacent wrapper controls; mode/budget incomplete |
+| Arithmetic and scalar dictionaries | `runAdd`, `runSub`, `runMul`, `runDiv`, `runNeg`, `runInv`, `runNatPow`, `runIntPow`, `runScalars`; corresponding bare controls; `runHard*` | Canonical baseline and adjacent wrapper controls; isolation cost unresolved |
 | Equality, comparison, order, sign, abs, conjugation | `runEquality`, `runCompare`, `runCompareExact`, `runOrder`, `runSign`, `runAbs`, `runConj`, `runCloseCompare`, `runCloseExact` | Fixed branch/hash/comparison anchors; separation models incomplete |
-| Fixed-field coordinate sign | `runFieldSign` | Complete result vector on constant and nonconstant paths in the positive square-root-of-two embedding. [Inherited owner evidence](../bench-results/field-sign/README.md) concerns a pre-refactoring executable; current operation-specific mode/budget remains required |
+| Fixed-field coordinate sign | `runFieldSign` | Complete result vector on constant and nonconstant paths in the positive square-root-of-two embedding. [Inherited owner evidence](../bench-results/field-sign/README.md) concerns a pre-refactoring executable; current characterization remains a coverage question |
 | Rational degree-one leaf height | `runRationalRecognition`, `runRationalFloor`, `runRationalCeil`, `runRationalQuotient` | Recognition, floor, ceiling and former quotient control pass their declared height ladders on the initializer source; attribution remains outstanding; preparation is excluded and still costly |
 | Floor, ceiling, approximation, representation | `runRounding`, `runApprox`, `runRepr` | Baseline anchors; ceiling has proved before/after improvement |
 | Square roots | `runSqrt`, `runSqrtTotal` | Baseline/branch checks on pre-change source; degree/height scaling incomplete |
@@ -110,13 +112,13 @@ The separately forward-specified comparison-strategy extension remains excluded.
 
 | Manifest family | Current evidence | Remaining evidence or concern |
 | --- | --- | --- |
-| `canonical-real-arithmetic` | Compiled scalar/constructor, complex norm/absolute-value and real/imaginary projection anchors, canonical hard arithmetic and matching bare-parent controls; retained representative addition profile | Operation-specific characterization and remaining raw profile coverage; parent isolation cost |
-| `real-order-and-rounding` | Equality/sign/abs/conjugation/min-max anchors, near-integer checks, approximation anchors and proved ceiling improvement; current exact scalar degree and separation plots against FLINT/Z3 | Precision, remaining degree/height families, current attribution and scientific characterization; canonical square root is substantially slower on the measured degree ladder |
-| `rational-height` | Direct recognition, floor, ceiling and former quotient control pass their fixed height ladders after the proved square-root initializer; exact construction guards and retained preparation diagnostic | Operation-specific attribution remains and canonical preparation is still costly |
-| `polynomial-arrays-and-sorting` | Passing coefficient-array, membership/projection and distinct rational-root sorting families | Representative raw profile retention; repeated fixed-leaf/exactification controls do not establish varying leaf-size coverage |
+| `canonical-real-arithmetic` | Compiled scalar/constructor, complex norm/absolute-value and real/imaginary projection anchors, canonical hard arithmetic and matching bare-parent controls; retained representative addition profile | Parent-isolation reuse improves add/mul and common powers; remaining isolation cost |
+| `real-order-and-rounding` | Equality/sign/abs/conjugation/min-max anchors, near-integer checks, approximation anchors and proved ceiling improvement; current exact scalar degree and separation plots against FLINT/Z3 | Coverage of precision and other used degree/height axes remains to assess; canonical square root is substantially slower on the measured degree ladder |
+| `rational-height` | Direct recognition, floor, ceiling and former quotient control pass their fixed height ladders after the proved square-root initializer; exact construction guards and retained preparation diagnostic | Canonical preparation is still costly; further attribution is needed only to resolve a concrete question |
+| `polynomial-arrays-and-sorting` | Passing coefficient-array, membership/projection and distinct rational-root sorting families | Repeated fixed-leaf/exactification controls do not establish varying leaf-size coverage; assess whether a growing family finds a real bug |
 | `real-polynomial-roots` | Actual rational/quadratic-coefficient root API degree comparisons, complete fingerprints, repeated/integer/filter roots and multiplicity/exactification anchors, retained rejection pairs and before/after profiles | Severe remaining canonical isolation cost and higher-degree characterization |
-| `representation` | Fixed Repr formatter anchor and generated-term ordinary-kernel roundtrip checks | Separately reported growing-size roundtrip performance and attribution; formatter-only timings do not discharge this obligation |
-| `fixed-field-sign` | Current complete compiled sign vectors and companion guards; inherited source-scoped comparisons | Current operation-specific scaling and retained profile coverage; no new Tarski/approximation algorithm is assigned here |
+| `representation` | Fixed Repr formatter anchor and generated-term ordinary-kernel roundtrip checks | Assess growing-size roundtrip use; formatter-only timings do not characterize elaboration cost |
+| `fixed-field-sign` | Current complete compiled sign vectors and companion guards; inherited source-scoped comparisons | Assess scaling on downstream-used inputs; no new Tarski/approximation algorithm is assigned here |
 
 ## Verdicts
 
@@ -217,10 +219,10 @@ environment variables cannot silently replace these scientific fixtures.
 | `NatPow` | 197.664 | 197.521 | 196.252–198.326 |
 | `IntPow` | 244.249 | 242.489 | 243.777–245.346 |
 
-These are calibration observations, not mode-3 passes. Parent-library attempts
+These are historical calibration observations, not scaling verdicts. Parent-library attempts
 can explain why isolation lacks a stable model; its lazy-add ceiling does not
 cover this canonical add, which also exactifies. Its selected root can also
-differ. The other operations need their own admissibility and budget justification.
+differ. Further coverage should answer concrete performance questions; fixed anchors do not create mandatory operation-specific budgets.
 No generic timeout is promoted into a scientific ceiling.
 
 [Ceiling pairs](bench-results/real-algebraic-ceiling-pairs/) retain four adjacent
@@ -322,8 +324,8 @@ square-root API is unchanged. This is not a blanket profile attestation.
 
 These panels measure the implemented scalar APIs. They do not reopen the
 excluded forward comparison-strategy extension or attest its six comparator
-families. Remaining scalar operations, approximation, representation roundtrip
-and fixed-field sign require their own evidence.
+families. Coverage of remaining scalar operations, approximation, representation roundtrip
+and fixed-field sign must be assessed against actual use, rather than a per-operation quota.
 
 ## Comparator ratios
 
@@ -355,6 +357,23 @@ fixture attempt is retained. Other compiled comparator requirements still need
 reconciliation with the implemented surface and its actual matching APIs.
 
 ## Profile
+
+[Canonical parent-isolation reuse](bench-results/canonical-parent-isolation-reuse/README.md)
+passes the producer's transient certified arrays into canonical exactification,
+with full checked/total API equalities and unchanged Mathlib correspondence.
+All 72 scalar/canonical paired arms pass their exact guards without runtime
+panic diagnostics. Scalar addition improves by 1.91–2.01× at degrees 2/4/8,
+square root by 1.14–1.27×; canonical quadratic sum/product improve by
+2.00/1.88×, and the common-field power fixture by 1.39×.
+The [degree plots](bench-results/canonical-parent-isolation-reuse/plots/scalar-comparison.svg)
+retain the earlier FLINT/Z3 reference curves with their differing timed guards.
+The fresh square-root attribution has 812 retained kernel-window samples and
+passes calibration, confidence and sensitivity checks. Isolation is 95.32%
+inclusive, common-field presentation 39.90%, and powers 20.81%; overlapping
+shares cannot be added. This explains the remaining cost. Fixed observations
+make no general scaling claim, and current policy requires no blanket profile
+replacement. The failed eager-fallback prototype and every completed arm are
+retained with explicit exclusion from performance claims.
 
 [Certified fixed-field conversion reuse](bench-results/fixed-conversion-reuse/README.md)
 eliminates a repeated output-polynomial isolation while preserving the complete
@@ -455,18 +474,17 @@ in the linked summaries.
 
 ## Concerns
 
-- Certified fixed-conversion reuse removes redundant work, but its retained
-  paired scalar study does not establish a consistent end-to-end speedup.
-  Degree-8 square root still takes about 13.6 seconds at the changed arm's
-  median on this host. The degree-4 attribution puts almost all inclusive
-  cost in isolation, with conversion itself below 2%. The remaining dominant
-  costs require further implementation work; no phase is advanced.
+- [Canonical parent-isolation reuse](bench-results/canonical-parent-isolation-reuse/README.md)
+  improves scalar addition by 1.91–2.01× and square root by 1.14–1.27× on
+  four adjacent pairs per degree. Degree-8 square root still takes about
+  7.1 seconds on this host. The changed-source degree-4 profile puts 95.32%
+  inclusive cost in isolation; proper factors and final exactification remain
+  expensive. The severe external gap is unresolved; no phase is advanced.
 
 - Actual canonical real-polynomial root enumeration remains several thousand
   times slower than the exact external root backends on the larger tested
   rungs, after the proved early nonreal rejection. Repeated canonical isolation
-  remains dominant. Higher-degree characterization and operation-specific
-  Phase-4 admission remain incomplete; the historical oversized cap failures
+  remains dominant. Higher-degree characterization remains a coverage question; the historical oversized cap failures
   are retained without claiming they reproduce on changed source.
 
 - The earlier 38 raw captures were lost after a reboot. Their saved summaries
@@ -475,7 +493,7 @@ in the linked summaries.
   and `d6cebc4de` rational-root captures supply retained attribution for their
   scoped implementations without a blanket rerun of completed evidence.
 
-- [#10577](https://github.com/kim-em/hex-dev/issues/10577): finish operation-specific mode/budget justification and comparators, genuine root/leaf parameter families, separation/point and rounding sweeps, and square-root/rational-construction characterization. The shipped `compare_eq` and root completeness/multiplicity/sorting theorems are available independently of this timing work.
+- [#10577](https://github.com/kim-em/hex-dev/issues/10577): resolve severe observed costs, reconcile required comparators, and assess useful size families for roots, leaf operations, approximation, rounding and representation. Current policy does not require a mode/budget or profile for every operation. The shipped `compare_eq` and root completeness/multiplicity/sorting theorems are available independently of this timing work.
 
 - [The precise #10577 prerequisite diagnostic](https://github.com/kim-em/hex-dev/issues/10577#issuecomment-5971054259)
   records excessive canonical rational preparation through HexArith's

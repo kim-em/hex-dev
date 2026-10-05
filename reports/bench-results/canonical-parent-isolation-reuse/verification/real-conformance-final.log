@@ -1,0 +1,14 @@
+checking sqrtApprox
+checking mignotte
+checking crossFactor
+checking degreeEight
+checking irrationalCoefficient
+checking repeatedRoots
+checking integerRounding
+complex algebraic check passed: conjugation/order/projections
+complex algebraic check passed: conjugate pairs
+complex algebraic check passed: principal radicals
+complex algebraic check passed: common fields
+complex algebraic check passed: interval paths and fallback
+complex algebraic check passed: 40-bit quadratic
+complex algebraic check passed: unity and norms
