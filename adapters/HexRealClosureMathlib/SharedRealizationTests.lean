@@ -33,7 +33,7 @@ theorem enlarge_arithmetic (result : Enlargement original) (following : base.Rea
       (SignType.sign (x * y) : Int) = original.shared.input.context.sign (a * b) ∧
       (SignType.sign (x - epsilon) : Int) = result.collection.shared.input.context.sign
         (result.previous.value a - result.parameter) := by
-  obtain ⟨read, domain, targetClosed, closed, finite, _, fresh, _, _, _, parameter, positive⟩ :=
+  obtain ⟨read, domain, targetClosed, closed, finite, _, fresh, _, _, _, _, _, parameter, positive⟩ :=
     result.realize following gathered produced [a, b, a + b, a * b]
       [result.previous.value a - result.parameter]
   have left := finite a (by simp)
@@ -88,7 +88,7 @@ theorem enlarge_twice (first : Enlargement original) (next : Enlargement first.c
   let initial := original.model following reference.model gathered
   let ambient := Ambient.ofField (Hex.RationalFn reference.Carrier)
   let previous := first.model initial ambient built
-  obtain ⟨read, domain, closed, _, finite, _, fresh, _, _, _, parameter, positive⟩ :=
+  obtain ⟨read, domain, closed, _, finite, _, fresh, _, _, _, _, _, parameter, positive⟩ :=
     next.realize_model previous produced [first.parameter]
       [next.previous.value first.parameter - next.parameter]
   have old := finite first.parameter (by simp)

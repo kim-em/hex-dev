@@ -208,11 +208,86 @@ theorem shared_realized :
     reference.model request (by simp [request, Live.Request.owners])
   let ambient := Ambient.ofField (Hex.RationalFn reference.Carrier)
   obtain ⟨result, produced, _⟩ := collection.enlarge?_models model ambient
-  obtain ⟨read, domain, _, _, _, _, _, _, _, fixed, parameter, positive⟩ :=
+  obtain ⟨read, domain, _, _, _, _, _, _, _, fixed, _, _, parameter, positive⟩ :=
     result.realize following gathered produced []
   have preserved := fixed coefficient (liouvilleNumber 2) coefficient_value
   exact ⟨collection, result, gathered, produced, read, domain,
     preserved.1, preserved.2, parameter, positive⟩
+
+/-- Two successful enlargements preserve the registered coefficient along
+both returned predecessor maps. No caller-supplied semantic equality is needed. -/
+theorem shared_twice_realized :
+    ∃ collection : Live.Collection staged ([] : Live.Request registry),
+      ∃ first : Live.Enlargement collection,
+        ∃ next : Live.Enlargement first.collection,
+          Live.Request.gather? staged ([] : Live.Request registry) = some collection ∧
+          collection.enlarge? = some first ∧ first.collection.enlarge? = some next ∧
+          ∃ read : next.collection.shared.input.context.Value → ℝ,
+            ∃ domain : next.collection.shared.input.context.Value → Prop,
+              domain (next.previous.value
+                (first.previous.value (collection.shared.input.value coefficient))) ∧
+              read (next.previous.value
+                (first.previous.value (collection.shared.input.value coefficient))) =
+                liouvilleNumber 2 ∧
+              domain next.parameter ∧ 0 < read next.parameter := by
+  classical
+  let request : Live.Request registry := []
+  obtain ⟨collection, gathered, _⟩ := Live.Request.gather?_models following
+    reference.model request (by simp [request, Live.Request.owners])
+  let initial := collection.model following reference.model gathered
+  let ambient := Ambient.ofField (Hex.RationalFn reference.Carrier)
+  obtain ⟨first, built, _⟩ := collection.enlarge?_models initial ambient
+  let previous := first.model initial ambient built
+  let nextAmbient := Ambient.ofField (Hex.RationalFn ambient.Carrier)
+  obtain ⟨next, produced, _⟩ := first.collection.enlarge?_models previous nextAmbient
+  obtain ⟨read, domain, _, _, _, _, _, _, _, fixed, _, _, parameter, positive⟩ :=
+    next.realize_model previous produced []
+  let inherited := Context.baseValue staged.infinitesimal
+    (RationalFn.C (Context.baseStored staged coefficient))
+  have real : PackedContext.Realization.RealValue following.infinitesimal inherited
+      (liouvilleNumber 2) :=
+    (PackedContext.Realization.realValue_infinitesimal following coefficient _).mpr coefficient_value
+  have preserved := fixed inherited (liouvilleNumber 2) real
+    (first.previous.value (collection.shared.input.value coefficient))
+    (first.model_constant initial ambient built coefficient)
+  exact ⟨collection, first, next, gathered, built, produced, read, domain,
+    preserved.1, preserved.2, parameter, positive⟩
+
+/-- A nonempty owner with an actual producer-built algebraic suffix keeps its
+registered coefficient when gathered into the common target. The prescribed
+value is read through the returned owner inclusion. -/
+theorem shared_owner_realized :
+    ∃ descriptor : SignDet.Descriptor initial.Value Signature initial.sign initial.signature,
+      ∃ roots,
+        SignDet.Descriptor.buildRoots initial.sign initial.signature head .negInf .posInf =
+          .ok (some roots) ∧ descriptor ∈ roots ∧
+        let suffix : Suffix initial := .root descriptor .nil
+        ∃ shared : Shared staged [suffix.context],
+          Shared.gather? staged [suffix.context] = some shared ∧
+          ∃ read : shared.input.context.Value → ℝ,
+            ∃ domain : shared.input.context.Value → Prop,
+              domain (shared.value ⟨0, by simp⟩ (suffix.embed coefficient)) ∧
+              read (shared.value ⟨0, by simp⟩ (suffix.embed coefficient)) = liouvilleNumber 2 := by
+  classical
+  obtain ⟨roots, built, nonempty⟩ := producer
+  obtain ⟨descriptor, member⟩ := List.exists_mem_of_ne_nil roots nonempty
+  let suffix : Suffix initial := .root descriptor .nil
+  have baseOrigin (base : PackedContext registry) : (Context.ofBase base).origin.base = base := by
+    cases base with
+    | pack base => change (Context.base base).origin.base = PackedContext.pack base; rw [Context.origin_base]; rfl
+  have baseEq : suffix.context.origin.base = staged := by
+    rw [Suffix.base_eq]
+    exact baseOrigin staged
+  obtain ⟨shared, gathered, _⟩ := Shared.gather?_models following reference.model [suffix.context]
+    (by intro owner member; cases List.mem_singleton.mp member
+        rw [baseEq]; exact ⟨List.Sublist.refl _, Nat.le_refl _⟩)
+  obtain ⟨read, domain, _, _, _, _, _, _, _, ownerFixed⟩ :=
+    shared.realize_values following gathered (fun _ => [])
+  obtain ⟨ownerHistory, inherited⟩ := suffix.realValue_owner staged following
+    coefficient (liouvilleNumber 2) coefficient_value
+  have fixed := ownerFixed ⟨0, by simp⟩ ownerHistory (suffix.embed coefficient)
+    (liouvilleNumber 2) inherited
+  exact ⟨descriptor, roots, built, member, shared, gathered, read, domain, fixed⟩
 
 end Hex.RealClosure.Tower.RegisteredRealizationTests
 
@@ -223,3 +298,11 @@ end Hex.RealClosure.Tower.RegisteredRealizationTests
 /-- info: '_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.shared_realized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.RegisteredRealizationTests.shared_realized
+
+/-- info: '_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.shared_twice_realized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.RegisteredRealizationTests.shared_twice_realized
+
+/-- info: '_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.shared_owner_realized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.RegisteredRealizationTests.shared_owner_realized

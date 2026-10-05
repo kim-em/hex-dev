@@ -2095,6 +2095,9 @@ coefficient, reflects zero on the requested operands, and identifies reads of
 values equal in the shared context. A direct base-coefficient clause fixes
 `shared.input.value b` at its prescribed real value without an origin cast.
 Optional finite target requests also retain signs, domain and zero reflection.
+The owner coefficient clause fixes values inherited from each original owner's
+provider history through `shared.value index a`. Checked base subsequences
+preserve the prescribed values even when the prefixes were validated separately.
 No ambient model or separate source-agreement premise is supplied.
 
 `Live.Collection.realize` collects each original frame's values, stored
@@ -2114,6 +2117,12 @@ without an origin cast or a native equality premise. It also retains the
 enlarged origin's inherited real coefficients and identifies any values equal
 in the enlarged context. `Enlargement.realize_model` uses the previous
 canonical factory model and applies again after any earlier enlargement.
+Its coefficient clause accepts any old operand whose canonical semantic value
+is the inherited constant. `Enlargement.model_constant` identifies a carried
+coefficient with the next base constant, so this clause composes through
+successive predecessor maps. The new base input and original owner coefficients
+also retain their prescribed values. `Model.read_zero` supplies zero reflection
+from domain membership and native sign agreement for model-level consumers.
 `Inclusion.Model.fieldHom` and `read_comap` expose the underlying semantic-field
 inclusion and reader law; native expressions themselves acquire no field instance.
 
@@ -2129,7 +2138,9 @@ usable descriptor transport premises, and specialization after two actual
 enlargements without a new gather.
 `lake build HexRealClosureMathlib.NativeRealizationTests` additionally checks
 an actual gather and enlargement over a registered Liouville coefficient,
-recovering its prescribed value under the same positive-parameter reader.
+recovering its prescribed value under the same positive-parameter reader,
+through two successive predecessor maps, and through a nonempty gathered owner
+with a producer-built algebraic suffix.
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
 proves that its ordered algebraic real closure of `R(ε)` is algebraic over the
