@@ -173,6 +173,42 @@
       "bytes": 2862,
       "sha256": "01669c5e97e5d4a8fec417e7a4586cecd58073910a1398677d1afc4f2b1d8efa"
     },
+    "review-fix-build.log": {
+      "bytes": 21240,
+      "sha256": "4a6fe773f4b4aa6cb3c62beecf7d785040a2a3fa455960d39652c2e40580c936"
+    },
+    "review-fix-wrapper.log": {
+      "bytes": 12879,
+      "sha256": "4ff558fa0cf029e8584870d68b3a498365ca9f0d0ac9508e57f1eecb941794ae"
+    },
+    "review-fix-full-build.log": {
+      "bytes": 668508,
+      "sha256": "a12beffc9ba886b6ffbd564a6c6dfbf8ef044eb54c3fde2dd2a564635a8ac5fd"
+    },
+    "review-fix-wrapper-final.log": {
+      "bytes": 35289,
+      "sha256": "f0f87c51519eea0ed045b59622d6d091d582215cda6cf3854b5a227f9869a787"
+    },
+    "plots-review.log": {
+      "bytes": 2862,
+      "sha256": "01669c5e97e5d4a8fec417e7a4586cecd58073910a1398677d1afc4f2b1d8efa"
+    },
+    "merge-tree-review.txt": {
+      "bytes": 41,
+      "sha256": "6755281827274b70a2ab5e60a6c74ec820d362683eb16eaf404fe8beca678510"
+    },
+    "plots-review-final.log": {
+      "bytes": 2862,
+      "sha256": "01669c5e97e5d4a8fec417e7a4586cecd58073910a1398677d1afc4f2b1d8efa"
+    },
+    "plots-repeat-final.log": {
+      "bytes": 2862,
+      "sha256": "01669c5e97e5d4a8fec417e7a4586cecd58073910a1398677d1afc4f2b1d8efa"
+    },
+    "review-fix-admissions.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
     "before/HexNumberField-Basic.lean.txt": {
       "bytes": 26409,
       "sha256": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06"
@@ -1658,6 +1694,78 @@
       "sha256": "b78d309a5e9056b50070c359af3302781bb23619d485541767685c4bb85bcf80"
     },
     "plots/analysis.json": {
+      "bytes": 94966,
+      "sha256": "e3d4ecfa4762c88d04ff2e093c46e2a02e1615a51978652ec7049dc8aea66ff5"
+    },
+    "panic-verification/after-hexrealalgebraic_bench.log": {
+      "bytes": 3319,
+      "sha256": "7a6ed403a481208907c623ccfca081f7fc582cbbc8e4121f6fa7e245a5696c27"
+    },
+    "panic-verification/manifest.json": {
+      "bytes": 2013,
+      "sha256": "92194ea4b86d1d8a0e1f74cc0dd5949a3efbcb585fbe590e0320d015735d9b53"
+    },
+    "panic-verification/after-fixed-hexrealalgebraic_bench.log": {
+      "bytes": 11273,
+      "sha256": "682df84bfc66faf38f63759e5a3757cb18fd0511e42d1ad855be854e8bd18697"
+    },
+    "panic-verification/after-fixed-hexnumberfield_bench.log": {
+      "bytes": 5078,
+      "sha256": "2e9dbf84c8e83f58bfab5c2a7292edf41560fbdc70269a7b03ed92d71c1f4812"
+    },
+    "plots-review/scalar-comparison.png": {
+      "bytes": 216365,
+      "sha256": "b79d6deede2b2ff67b02e7b31e7ef3f2bb91bbdb4a4f7ef37ff4a4fbafd24bdb"
+    },
+    "plots-review/scalar-comparison.svg": {
+      "bytes": 139000,
+      "sha256": "4a506831bed61d521234f8688ce9f3606347e1b7fd3e198494c123995fe9f095"
+    },
+    "plots-review/scalar-comparison.pdf": {
+      "bytes": 36380,
+      "sha256": "4b2bc174e986382426a441d204fed5cc17d9761bc109fe91878d0baaa254b78b"
+    },
+    "plots-review/canonical-cases.png": {
+      "bytes": 97434,
+      "sha256": "0f412d7905ee0bd2ae73f312829c619ffe8a677b2d416a00d55b080f4e7718a3"
+    },
+    "plots-review/canonical-cases.svg": {
+      "bytes": 67819,
+      "sha256": "d619344dee163ad8a1b5a88c938b545da251a512b8921277fd294fc963e8afa1"
+    },
+    "plots-review/canonical-cases.pdf": {
+      "bytes": 21197,
+      "sha256": "9a9f93a6f34e99da9106b2c1daa9aad6f5165f5b398c02a2adc9c3494eadfdbe"
+    },
+    "plots-review/analysis.json": {
+      "bytes": 94966,
+      "sha256": "e3d4ecfa4762c88d04ff2e093c46e2a02e1615a51978652ec7049dc8aea66ff5"
+    },
+    "plots-review-final/scalar-comparison.png": {
+      "bytes": 216365,
+      "sha256": "b79d6deede2b2ff67b02e7b31e7ef3f2bb91bbdb4a4f7ef37ff4a4fbafd24bdb"
+    },
+    "plots-review-final/scalar-comparison.svg": {
+      "bytes": 138950,
+      "sha256": "9fd2f2acff0afaa29b5f19b300f723f9c78d5cc08ca8fe03dc5d91a81c9f86bd"
+    },
+    "plots-review-final/scalar-comparison.pdf": {
+      "bytes": 36346,
+      "sha256": "cbdf2734c97b1b10a39e3d498f7c1a5167f97631033398f67b56aa758b7b7dbe"
+    },
+    "plots-review-final/canonical-cases.png": {
+      "bytes": 97434,
+      "sha256": "0f412d7905ee0bd2ae73f312829c619ffe8a677b2d416a00d55b080f4e7718a3"
+    },
+    "plots-review-final/canonical-cases.svg": {
+      "bytes": 67769,
+      "sha256": "dd4ddb758c935e46f857b131d86ee3bfd9fed8be9da8367f67fb35b3028e4648"
+    },
+    "plots-review-final/canonical-cases.pdf": {
+      "bytes": 21163,
+      "sha256": "fcbb8093d4d9cec4f90eba85837dc0313095473a814a78fa34a24c83bc127dfc"
+    },
+    "plots-review-final/analysis.json": {
       "bytes": 94966,
       "sha256": "e3d4ecfa4762c88d04ff2e093c46e2a02e1615a51978652ec7049dc8aea66ff5"
     }

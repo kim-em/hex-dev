@@ -379,9 +379,14 @@ def AlgebraicRoot.add? (a b : AlgebraicRoot) : Option AlgebraicRoot
 def AlgebraicRoot.add  (a b : AlgebraicRoot) : AlgebraicRoot
 -- likewise sub, mul, div, and inv; neg is certificate-free
 
-def AlgebraicNumber.add (a b : AlgebraicNumber) : AlgebraicNumber :=
-  (a.toRoot.add b.toRoot).exact
--- likewise sub, mul, neg, inv, and div
+def AlgebraicNumber.add (a b : AlgebraicNumber) : AlgebraicNumber
+def AlgebraicNumber.mul (a b : AlgebraicNumber) : AlgebraicNumber
+-- Fused selection and exactification, with transient parent-isolation reuse.
+theorem AlgebraicNumber.add_eq (a b : AlgebraicNumber) :
+  AlgebraicNumber.add a b = (a.toRoot.add b.toRoot).exact
+theorem AlgebraicNumber.mul_eq (a b : AlgebraicNumber) :
+  AlgebraicNumber.mul a b = (a.toRoot.mul b.toRoot).exact
+-- sub, neg, inv, and div still use the lazy operation followed by exactification.
 ```
 
 - `neg` substitutes `-X` and reflects the isolation.

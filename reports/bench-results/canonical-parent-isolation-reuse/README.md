@@ -1,7 +1,7 @@
 # Canonical parent-isolation reuse
 
-Canonical arithmetic now consumes the certified isolation arrays already
-produced while selecting its eliminant root. When the chosen irreducible
+Canonical addition and multiplication now consume the certified isolation
+arrays already produced while selecting their eliminant roots. When the chosen irreducible
 factor is the enclosing polynomial, `exactIn?` reuses those arrays; proper
 factors retain their own isolation. Ordinary-kernel equalities identify the
 complete checked and total results with the former pipelines, including the
@@ -16,8 +16,8 @@ representation migration.
 identify clean compiled sources `98cab2feb5` and `630a40345b`, frozen binary
 hashes, source snapshots, leased CPU and host activity. Four trial-major blocks
 alternate adjacent AB/BA order. All 48 scalar and 24 canonical arms complete,
-with matching expected fingerprints and no panic diagnostics. All completed
-observations are retained; there is no unchanged rerun or load rejection.
+with matching expected fingerprints. Separate frozen-binary verification below
+checks runtime panic behavior. All completed observations are retained; there is no unchanged rerun or load rejection.
 Operand preparation and separate warmup are excluded. Result guards remain
 timed; benchmark sources and operational caps are identical between arms.
 The full library build ran concurrently on the shared host.
@@ -78,9 +78,18 @@ still accounts for 31.16%. These shares overlap and cannot be added.
 The profile explains remaining costs; it is not a per-operation admission quota.
 
 [Verification logs](verification/) retain the successful full Lake build,
-196 real-algebraic and 92 NumberField benchmark checks without panic diagnostics,
+196 real-algebraic and 92 NumberField benchmark checks,
 conformance, unchanged emitted fixtures, all 83 exact real-algebraic oracle
 cases without skips, and 11 NumberField FLINT/PARI cases without failures.
+[Panic verification](panic-verification/manifest.json) records exact commands,
+compiled commits and binary/log hashes for the frozen After executables under
+`LEAN_ABORT_ON_PANIC=1`. Both verifiers pass all 196/92 cases without panics.
+The prototype verifier aborts with its original certification-failure diagnostic,
+demonstrating that the guard detects the strict fallback. The existing CI smoke
+wrapper now sets this guard for these two audited executables only.
+Successful timing children discard stderr, so timing-arm logs establish no
+separate panic-free claim; the plot analyzer checks result status and hashes.
+
 The ordinary-kernel admission scan covers 354 roots and 1171 local modules,
 with no admissions. Required CI must additionally pass on the final PR head.
 All four assigned libraries remain Phase 3 pending the readiness audit.
@@ -89,8 +98,8 @@ All four assigned libraries remain Phase 3 pending the readiness audit.
 
 The [prototype capture](prototype/metadata.json) records 23 completed arms
 against `4dcae979fe`. The total producer passed a panic fallback as a strict
-argument, producing runtime panic/backtrace diagnostics even when the mathematical
-value and hash were correct. Capture was interrupted after diagnosing this;
+argument, producing panic/backtrace diagnostics under `verify` even when the mathematical
+value and hash were correct. Successful `run` children discard these diagnostics. Capture was interrupted after diagnosing this;
 the next in-progress arm produced no completed export. All completed exports,
 logs and partial diagnostics are retained, including the cancelled full build
 and stale conformance-executable attempt. They supply no performance claim.

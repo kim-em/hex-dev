@@ -26,8 +26,7 @@ def load(root, predicate=lambda arm: True):
         if not predicate(arm):
             continue
         row, failure = conversion_plot.read_arm(root, arm)
-        log = (root / arm["output"]).with_suffix(".log").read_text()
-        if failure or "backtrace:" in log or "certification failed" in log:
+        if failure:
             raise SystemExit(f"Invalid observation: {root / arm['output']}: {failure}")
         rows.append(row)
     return metadata, rows
@@ -56,7 +55,9 @@ def summarize(metadata, rows):
 def save(fig, output, name):
     for extension in ("png", "svg", "pdf"):
         path = output / f"{name}.{extension}"
-        fig.savefig(path, dpi=180)
+        metadata = {"Date": None} if extension == "svg" else (
+            {"CreationDate": None, "ModDate": None} if extension == "pdf" else None)
+        fig.savefig(path, dpi=180, metadata=metadata)
         if extension == "svg":
             path.write_text("\n".join(line.rstrip() for line in path.read_text().splitlines()) + "\n")
     plt.close(fig)

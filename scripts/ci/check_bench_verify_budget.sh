@@ -97,19 +97,28 @@ for bench in "${filtered_benches[@]}"; do
     # External comparisons and full polynomial-support ladders are manual measurements.
     verify_command=verify-ci
   fi
-  if [ "${GITHUB_ACTIONS:-}" = "true" ] && [ -x "$bench_exe" ]; then
-    "$bench_exe" list
-    "$bench_exe" "$verify_command"
-    if [ "$bench" = "hexsturm_bench" ]; then
-      "$bench_exe" check-head-fixtures
+  (
+    # These canonical arithmetic fixtures must never take a panic fallback.
+    # Lean otherwise returns the fallback value, letting verify report success.
+    # Scope the runtime guard to the audited executables without leaking it
+    # into other libraries' verification environments.
+    case "$bench" in
+      hexnumberfield_bench|hexrealalgebraic_bench) export LEAN_ABORT_ON_PANIC=1 ;;
+    esac
+    if [ "${GITHUB_ACTIONS:-}" = "true" ] && [ -x "$bench_exe" ]; then
+      "$bench_exe" list
+      "$bench_exe" "$verify_command"
+      if [ "$bench" = "hexsturm_bench" ]; then
+        "$bench_exe" check-head-fixtures
+      fi
+    else
+      lake exe "$bench" list
+      lake exe "$bench" "$verify_command"
+      if [ "$bench" = "hexsturm_bench" ]; then
+        lake exe "$bench" check-head-fixtures
+      fi
     fi
-  else
-    lake exe "$bench" list
-    lake exe "$bench" "$verify_command"
-    if [ "$bench" = "hexsturm_bench" ]; then
-      lake exe "$bench" check-head-fixtures
-    fi
-  fi
+  )
   end=$(date +%s)
   elapsed=$((end - start))
   total=$((total + elapsed))

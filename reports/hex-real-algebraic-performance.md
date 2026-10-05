@@ -359,10 +359,14 @@ reconciliation with the implemented surface and its actual matching APIs.
 ## Profile
 
 [Canonical parent-isolation reuse](bench-results/canonical-parent-isolation-reuse/README.md)
-passes the producer's transient certified arrays into canonical exactification,
-with full checked/total API equalities and unchanged Mathlib correspondence.
-All 72 scalar/canonical paired arms pass their exact guards without runtime
-panic diagnostics. Scalar addition improves by 1.91–2.01× at degrees 2/4/8,
+passes the producer's transient certified arrays into addition/multiplication
+exactification, with full checked/total API equalities and unchanged Mathlib correspondence.
+All 72 scalar/canonical paired arms pass their exact guards. Separate
+frozen-binary verification under `LEAN_ABORT_ON_PANIC=1` passes all 196/92
+cases, while the failed prototype aborts; the existing CI wrapper enforces this
+runtime guard for the two audited executables. Successful timing children
+discard stderr, so arm logs establish no separate panic-free claim.
+Scalar addition improves by 1.91–2.01× at degrees 2/4/8,
 square root by 1.14–1.27×; canonical quadratic sum/product improve by
 2.00/1.88×, and the common-field power fixture by 1.39×.
 The [degree plots](bench-results/canonical-parent-isolation-reuse/plots/scalar-comparison.svg)

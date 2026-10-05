@@ -1,0 +1,48 @@
+{
+  "environment": {
+    "LEAN_ABORT_ON_PANIC": "1",
+    "LD_LIBRARY_PATH": "/nix/store/chqq8mpmpyfi9kgsngya71akv5xicn03-gcc-15.2.0-lib/lib",
+    "PYTHONPATH": "/home/kim/.local/state/hex/issue-10577-oracles/lib/python3.14/site-packages",
+    "HEX_PARI_BENCH_PYTHON": "/nix/store/n2vg4iqpkgrrjwqqgnjxilbp0xsllyrc-python3-3.14.7-env/bin/python3",
+    "HEX_FLINT_BENCH_PYTHON": "/home/kim/.local/state/hex/issue-10577-oracles/bin/python"
+  },
+  "core_dumps_disabled": true,
+  "runs": [
+    {
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after/hexrealalgebraic_bench",
+        "verify"
+      ],
+      "compiled_commit": "4dcae979fe2590f1097f2d59964acb346d8111dd",
+      "binary_sha256": "0dd1a65bd47f38b6b8fa30da54a7138bc1bcc757f0efc583552bda36f04c1181",
+      "exit_code": -6,
+      "expected": "failure",
+      "log": "after-hexrealalgebraic_bench.log",
+      "log_sha256": "7a6ed403a481208907c623ccfca081f7fc582cbbc8e4121f6fa7e245a5696c27"
+    },
+    {
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+        "verify"
+      ],
+      "compiled_commit": "630a40345b62d9ed6ce6503d0770ba6d62d47809",
+      "binary_sha256": "6f97a53819cf2d15418453a0d0c0c2e973ead424a7f8cca91880388d0cc7b152",
+      "exit_code": 0,
+      "expected": "success",
+      "log": "after-fixed-hexrealalgebraic_bench.log",
+      "log_sha256": "682df84bfc66faf38f63759e5a3757cb18fd0511e42d1ad855be854e8bd18697"
+    },
+    {
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "verify"
+      ],
+      "compiled_commit": "630a40345b62d9ed6ce6503d0770ba6d62d47809",
+      "binary_sha256": "e4c9093663079556e37bdefc4cfdefcc2d5e90d1e14f8b72061a9b72cac3520a",
+      "exit_code": 0,
+      "expected": "success",
+      "log": "after-fixed-hexnumberfield_bench.log",
+      "log_sha256": "2e9dbf84c8e83f58bfab5c2a7292edf41560fbdc70269a7b03ed92d71c1f4812"
+    }
+  ]
+}

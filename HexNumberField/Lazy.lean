@@ -477,7 +477,7 @@ end AlgebraicRoot
 
 namespace AlgebraicNumber
 
-/-- Canonical sum: perform the lazy operation, then exactify. -/
+/-- Canonical sum, reusing the eliminant producer's certified isolation. -/
 @[expose] def add (a b : AlgebraicNumber) : AlgebraicNumber :=
   AlgebraicRoot.exactEliminant (ZPoly.addEliminant a.p b.p)
     (AlgebraicRoot.addBall? a.toRoot b.toRoot)
@@ -494,7 +494,7 @@ theorem add_eq (a b : AlgebraicNumber) :
 @[expose] def sub (a b : AlgebraicNumber) : AlgebraicNumber :=
   (a.toRoot.sub b.toRoot).exact
 
-/-- Canonical product: perform the lazy operation, then exactify. -/
+/-- Canonical product, reusing the eliminant producer's certified isolation. -/
 @[expose] def mul (a b : AlgebraicNumber) : AlgebraicNumber :=
   if a.toRoot.isZero || b.toRoot.isZero then
     AlgebraicNumber.zero.toRoot.exact
