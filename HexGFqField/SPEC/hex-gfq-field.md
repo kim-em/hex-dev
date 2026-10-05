@@ -56,9 +56,9 @@ cardinality, and correspondence with Mathlib's abstract finite fields.
 
 ## External comparators
 
-| Comparator | Class | Scope |
-|---|---|---|
-| FLINT `fq_default` arithmetic via python-flint | informational | bench targets exercising finite-field arithmetic: addition, multiplication, reduction modulo `f`, inversion, division, exponentiation, Frobenius |
+| Comparator | Scope |
+|---|---|
+| FLINT `fq_default` arithmetic via python-flint | bench targets exercising finite-field arithmetic: addition, multiplication, reduction modulo `f`, inversion, division, exponentiation, Frobenius |
 
 FLINT's `fq_default` is the standard reference for finite-field
 arithmetic and covers the same operations as HexGFqField:
@@ -67,7 +67,7 @@ multiplication, inversion, division, and exponentiation. FLINT
 internally selects between representations (`fq_nmod` for word-size
 primes, `fq_zech` for small fields) via crossover heuristics that
 Hex does not replicate; the constant-factor gap is structural rather
-than algorithmic. Classification is `informational`.
+than algorithmic, so the ratio is recorded for orientation only.
 
 The irreducibility precondition `hirr : Irreducible f` carried by
 `FiniteField p f hf hirr` matches the precondition `fq_default`
@@ -81,5 +81,3 @@ fixtures whose moduli are irreducible.
 
 Wired via a persistent-subprocess Python driver per
 `SPEC/benchmarking.md §"External comparators" §"Process call"`.
-
-Structured metadata in `libraries.yml: HexGFqField.phase4.comparators`.

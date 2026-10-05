@@ -1138,7 +1138,7 @@ The companion also proves that no action of `C_2` can send its generator
 to a three-cycle. This build-only counterexample exercises the relation-law
 requirement on action constructors; generator bijectivity is insufficient.
 
-The GAP throughput comparator is **informational**, using the same named
+The GAP throughput comparator uses the same named
 operations through a persistent process. GAP has different permutation storage,
 chain heuristics and group-specific methods, and does not emit Lean replay
 certificates. Time construction on fresh groups and membership/order on
@@ -1148,9 +1148,8 @@ GAP order against a fresh Hex construction.
 
 Permutation array operations are covered by GAP's permutation operations and
 `Order`; cycle serialization is outside the timed region. Certificate
-generation and kernel replay have
-**no-comparable-surface-in-named-comparator** for this protocol and require
-their own native and kernel measurements. All arithmetic uses exact integers.
+generation and kernel replay have no comparable GAP surface and are measured
+on their own. All arithmetic uses exact integers.
 
 ## Complexity, benchmarks and placement
 

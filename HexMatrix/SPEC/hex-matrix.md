@@ -485,7 +485,7 @@ check is a cross-check that the compiled `mulStrassen` agrees with the reference
 `mul` on concrete inputs. It runs through `#guard`, the compiled-evaluator path,
 not kernel `decide`: `mulStrassen` is defined by well-founded recursion and does
 not reduce cheaply in the kernel, so it stays off the `decide` cross-check path
-that design principle 11 discusses. Oracle: none; the surface is structural-layer
+that design principle 11 discusses. Oracle: none; the surface is
 exact arithmetic, as for the existing multiplication guards.
 
 `Matrix.castRows` transports the row dimension along an equality without
@@ -519,22 +519,14 @@ The row-transport additions are `Matrix.castRows`,
 ## External comparators
 
 The dense base surfaces (matrix multiplication, row operations, transposition,
-slicing) have **no** external comparator named. They declare absence with the
-**structural-layer** reason per
-[the benchmarking spec's "Comparator naming" section](https://github.com/kim-em/hex-dev/blob/main/SPEC/benchmarking.md#comparator-naming):
-those surfaces are GMP-backed `Int` arithmetic on `Vector` / `Array`
+slicing) have **no** external comparator named: those surfaces are GMP-backed `Int` arithmetic on `Vector` / `Array`
 primitives. The determinant comparator (FLINT `fmpz_mat_det`) covers the
 determinant surface and lives in `hex-bareiss`.
 
-The Strassen bench driver declares the same **structural-layer** absence: it
-measures the multiplication surface already covered above, and its baseline is
-the internal naive `mul`, not an external tool. Its deliverable is the measured
-crossover cutoff and the speedup at the largest benched dimension, recorded in
-the headline report.
-
-Structured metadata in the project's
-[`libraries.yml`](https://github.com/kim-em/hex-dev/blob/main/libraries.yml)
-under `HexMatrix.phase4`.
+The Strassen bench driver likewise has no external comparator: it measures
+the multiplication surface already covered above, and its baseline is the
+internal naive `mul`, not an external tool. Its purpose is the measured
+crossover cutoff and the speedup at the largest benched dimension.
 
 ## Entrywise maps
 

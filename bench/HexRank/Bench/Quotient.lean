@@ -22,7 +22,7 @@ its rows supplies deficient inputs with the same bounded coefficients.
 This is the existing Algebraic8Hex proof-probe family, extended in dimension;
 no polynomial-ring rank is substituted for quotient-field rank.
 
-All phases use mode 1 on this fixed block family. Coefficients and
+All phases declare two-sided models on this fixed block family. Coefficients and
 denominators remain bounded; the cubic counts below do not claim a model
 for arbitrary dense number-field matrices and are not fitted to timings.
 
@@ -98,7 +98,7 @@ def prepFull := prep false
 def prepDeficient := prep true
 
 def produceFull := runProduce
-/- Mode 1, cubic: bounded-coefficient prefix inverses sum Θ(k²) over k,
+/- Two-sided cost model, cubic: bounded-coefficient prefix inverses sum Θ(k²) over k,
 and lower-quotient dots traverse Θ(n³) entries. -/
 setup_benchmark produceFull n => n * n * n
   with prep := prepFull
@@ -112,7 +112,7 @@ setup_benchmark produceFull n => n * n * n
   }
 
 def prepareFull := runPrepare
-/- Mode 1, cubic: bounded-coefficient prefix inverses sum Θ(k²) over k,
+/- Two-sided cost model, cubic: bounded-coefficient prefix inverses sum Θ(k²) over k,
 and lower-quotient dots traverse Θ(n³) entries. -/
 setup_benchmark prepareFull n => n * n * n
   with prep := prepFull
@@ -126,7 +126,7 @@ setup_benchmark prepareFull n => n * n * n
   }
 
 def finishFull := runFinish
-/- Mode 1, cubic: Θ(n²) lower/upper relation dots each traverse Θ(n)
+/- Two-sided cost model, cubic: Θ(n²) lower/upper relation dots each traverse Θ(n)
 fixed-degree entries; modular construction adds only O(n²). -/
 setup_benchmark finishFull n => n * n * n
   with prep := prepFull
@@ -140,7 +140,7 @@ setup_benchmark finishFull n => n * n * n
   }
 
 def checkFull := runCheck
-/- Mode 1, cubic: Θ(n²) checked lower/upper relation dots each traverse
+/- Two-sided cost model, cubic: Θ(n²) checked lower/upper relation dots each traverse
 Θ(n) fixed-degree, bounded-coefficient entries. -/
 setup_benchmark checkFull n => n * n * n
   with prep := prepFull
@@ -154,7 +154,7 @@ setup_benchmark checkFull n => n * n * n
   }
 
 def produceDeficient := runProduce
-/- Mode 1, cubic: bounded-coefficient prefix inverses sum Θ(k²) over k,
+/- Two-sided cost model, cubic: bounded-coefficient prefix inverses sum Θ(k²) over k,
 and lower-quotient dots traverse Θ(n³) entries. -/
 setup_benchmark produceDeficient n => n * n * n
   with prep := prepDeficient
@@ -168,7 +168,7 @@ setup_benchmark produceDeficient n => n * n * n
   }
 
 def prepareDeficient := runPrepare
-/- Mode 1, cubic: bounded-coefficient prefix inverses sum Θ(k²) over k,
+/- Two-sided cost model, cubic: bounded-coefficient prefix inverses sum Θ(k²) over k,
 and lower-quotient dots traverse Θ(n³) entries. -/
 setup_benchmark prepareDeficient n => n * n * n
   with prep := prepDeficient
@@ -182,7 +182,7 @@ setup_benchmark prepareDeficient n => n * n * n
   }
 
 def finishDeficient := runFinish
-/- Mode 1, cubic: Θ(n²) lower/upper relation dots each traverse Θ(n)
+/- Two-sided cost model, cubic: Θ(n²) lower/upper relation dots each traverse Θ(n)
 fixed-degree entries; modular construction adds only O(n²). -/
 setup_benchmark finishDeficient n => n * n * n
   with prep := prepDeficient
@@ -196,7 +196,7 @@ setup_benchmark finishDeficient n => n * n * n
   }
 
 def checkDeficient := runCheck
-/- Mode 1, cubic: Θ(n²) checked lower/upper relation dots each traverse
+/- Two-sided cost model, cubic: Θ(n²) checked lower/upper relation dots each traverse
 Θ(n) fixed-degree, bounded-coefficient entries. -/
 setup_benchmark checkDeficient n => n * n * n
   with prep := prepDeficient
@@ -217,7 +217,7 @@ def dot (row : List (List Int)) : Bool :=
   if PolyWitness.dot row row == [1, 0, 1] then true
   else panic! "polynomial dot product disagrees with its exact fixture"
 
-/- Mode 1, linear: the two nonzero products and all accumulator coefficients have
+/- Two-sided cost model, linear: the two nonzero products and all accumulator coefficients have
 fixed degree and bounded size. Both list traversals inspect Θ(n) entries;
 each step does bounded coefficient work, including the zero entries.
 Thus time is Θ(n), independently of measurements. This isolates the dominant
@@ -239,7 +239,7 @@ def dotArray (row : Array (List Int)) : Bool :=
   if PolyWitness.dotArray row row == [1, 0, 1] then true
   else panic! "array polynomial dot product disagrees with its exact fixture"
 
-/- Mode 1: the same bounded-degree and bounded-coefficient fixture as `dot`.
+/- Two-sided cost model: the same bounded-degree and bounded-coefficient fixture as `dot`.
 The array loop visits every entry once with constant-time indexed access and
 bounded coefficient work. Thus its independently derived time is Θ(n).
 The native lower-triangle checker converts each certificate row once, inside
@@ -275,7 +275,7 @@ def prepSelectDeficient := prepSelect true
 def blockFull (input : Input) : List (List (List Int)) :=
   PolyWitness.block input.rows input.witness.rows input.witness.cols
 
-/- Mode 1: r² selected entries each perform linked-list lookups of mean
+/- Two-sided cost model: r² selected entries each perform linked-list lookups of mean
 length Θ(n), with r=n. Allocation is O(n²); total work is Θ(n³). -/
 setup_benchmark blockFull n => n * n * n
   with prep := prepSelectFull
@@ -289,7 +289,7 @@ setup_benchmark blockFull n => n * n * n
   }
 
 def blockDeficient := blockFull
-/- Mode 1: r=n/2, so r² entries with mean Θ(n) list lookups still give
+/- Two-sided cost model: r=n/2, so r² entries with mean Θ(n) list lookups still give
 Θ(n³) work, with O(n²) output allocation and bounded polynomial entries. -/
 setup_benchmark blockDeficient n => n * n * n
   with prep := prepSelectDeficient
@@ -305,7 +305,7 @@ setup_benchmark blockDeficient n => n * n * n
 def pivotColsFull (input : Input) : List (List (List Int)) :=
   PolyWitness.pivotCols input.dim input.rows input.witness.rows
 
-/- Mode 1: n*r entries with r=n each scan an input row index and a column
+/- Two-sided cost model: n*r entries with r=n each scan an input row index and a column
 index, both of mean Θ(n) length. Output allocation O(n²) is lower order. -/
 setup_benchmark pivotColsFull n => n * n * n
   with prep := prepSelectFull
@@ -319,7 +319,7 @@ setup_benchmark pivotColsFull n => n * n * n
   }
 
 def pivotColsDeficient := pivotColsFull
-/- Mode 1, cubic: n*r entries with r=n/2, each with mean Θ(n) list lookup cost,
+/- Two-sided cost model, cubic: n*r entries with r=n/2, each with mean Θ(n) list lookup cost,
 give Θ(n³) work. The fixture keeps degrees and coefficients bounded. -/
 setup_benchmark pivotColsDeficient n => n * n * n
   with prep := prepSelectDeficient

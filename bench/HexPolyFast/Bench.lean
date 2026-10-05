@@ -403,8 +403,8 @@ def runFullThenLowMod (input : BinaryMod) : UInt64 :=
 def runClippedLowMod (input : BinaryMod) : UInt64 :=
   checksumMod (mulLow (karatsubaPlan 32) input.left.size input.left input.right)
 
-/-! The external comparisons are deliberately fixed informational targets:
-production dispatch remains gated by the parametric within-Lean pairs below. -/
+/-! The external comparisons are deliberately fixed orientation targets:
+production dispatch remains decided by the parametric within-Lean pairs below. -/
 
 private def intPolyJson (p : DensePoly Int) : Lean.Json :=
   Hex.BenchOracle.Flint.intsToJson p.toArray.toList
@@ -419,13 +419,13 @@ private def checksumIntList (coeffs : List Int) : UInt64 :=
 private def checksumModList (coeffs : List Int) : UInt64 :=
   coeffs.foldl (fun acc value => mixHash acc (hash value.toNat)) 0
 
-/-- Informational FLINT `fmpz_poly.mul` comparator on the integer campaign. -/
+/-- Orientation FLINT `fmpz_poly.mul` comparator on the integer campaign. -/
 def runFlintInt (input : Binary) : IO UInt64 := do
   let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" "mul"
     #[("a", intPolyJson input.left), ("b", intPolyJson input.right)]
   return checksumIntList (← Hex.BenchOracle.Flint.jsonToInts result)
 
-/-- Informational FLINT `nmod_poly.mul` comparator on the small-field campaign. -/
+/-- Orientation FLINT `nmod_poly.mul` comparator on the small-field campaign. -/
 def runFlintMod (input : BinaryMod) : IO UInt64 := do
   let result ← Hex.BenchOracle.Flint.runOp "nmod_poly" "mul"
     #[("p", (5 : Lean.Json)), ("a", modPolyJson input.left),
@@ -1649,7 +1649,7 @@ setup_benchmark runHalfGcdPade n => karatsubaCost n * (Nat.log2 n + 1)
     tags := #["pade", "half-gcd", "normalized", "field-65537"]
   }
 
-/-! # Informational external comparators
+/-! # Orientation external comparators
 
 These paired rungs exercise both coefficient-specific FLINT families declared
 for this library. Equal hashes check that each pair observes the same product;

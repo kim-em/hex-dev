@@ -199,8 +199,8 @@ trial-major schedule. Before/after comparisons run adjacent arms and alternate
 `AB`/`BA` order. Retain every completed run and allow at most one unchanged
 rerun after an inconclusive result. Do not add quiet-core preflights,
 contamination thresholds, retry-until-clean loops, mandatory null controls, or
-per-change profiles. Profile only to explain an unexpected result or to supply
-one required representative Phase-4 attribution. Absolute wall-clock values
+per-change profiles. Profile only to explain an unexpected result or a
+surprising constant factor. Absolute wall-clock values
 are host-specific observations; CI timeouts are operational safeguards, not
 scientific budgets.
 

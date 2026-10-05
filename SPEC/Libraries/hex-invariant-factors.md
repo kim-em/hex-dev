@@ -687,7 +687,7 @@ second. This preserves the performance distinction made by
 `hex-poly-smith`.
 
 **Comparators.** Use the same polynomial-Smith implementation selected for
-conformance, marked `informational`. Also record FLINT characteristic and
+conformance, for orientation. Also record FLINT characteristic and
 minimal polynomial timings in the external benchmark report, but do not sum
 them and present the result as a competing invariant-factor algorithm. Those
 operations return less information.

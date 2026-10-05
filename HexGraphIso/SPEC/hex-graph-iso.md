@@ -1094,10 +1094,17 @@ inflated nauty's reported time by a median factor of three.
 
 Every canonicalization result is hashed from its ordered cell sizes,
 upper-triangle adjacency bits, and label. `compare` therefore checks exact
-result agreement as well as timing. The nauty comparator is `gating` in the
-terminology of [benchmarking.md](../../SPEC/benchmarking.md#external-comparators), but
-the first release sets no speed-ratio requirement. Its required result is
-exact output agreement.
+result agreement as well as timing.
+
+**Performance target.** Against nauty 2.9.3 (vendored source, called
+in-process through `Hex.BenchOracle.Nauty`; see
+[benchmarking.md](../../SPEC/benchmarking.md#external-comparators)), the
+first release sets no speed-ratio requirement: the target is exact agreement
+of the canonical upper-triangle bits on every joined instance, with the
+measured ratio reported without a threshold. Conformance pins the
+visited-node counters, so both programs traverse the same search tree and
+every timing difference is a per-node constant factor rather than an
+algorithmic one.
 
 The registrations report wallclock, allocation, result hash, visited nodes,
 refinement calls, canonical updates, automorphisms checked, branches pruned,
@@ -1203,9 +1210,8 @@ Representative example files under `bench/HexGraphIso/ProofProbe` exercise
 positive/negative dense and ordered-colour replay. CI builds them through
 `HexGraphIsoProofProbe` on every PR. These examples and the ordinary
 library/conformance tests establish correctness; this proof surface has no
-paired timing decision, timing ladder, absolute build-time gate, profile or
-headline-report requirement. The computational owner's LeanBench obligations
-remain separate.
+paired timing decision, timing ladder or build-time budget. The
+computational owner's LeanBench registrations remain separate.
 
 Sparse examples in `bench/HexGraphIso/SparseProofProbe` cover the same four
 positive/negative and ordered-colour forms and build through

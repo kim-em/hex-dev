@@ -33,7 +33,7 @@ Scientific registrations:
   `O(n^2 log n)`.
 * `runFrobChecksum`: Frobenius as the `p`-th power, `O(n^2 log p)`.
 
-Informational external comparator (FLINT `fq_default` via the shared
+External comparator (FLINT `fq_default` via the shared
 persistent-subprocess driver from `scripts/oracle/flint_bench_driver.py`):
 
 * `runFlintOfPolyReprChecksum*` ↔ `runOfPolyReprChecksum`
@@ -781,8 +781,8 @@ def runFlintFrobChecksum (input : UnaryInput) : IO UInt64 := do
 /-! Per-rung wrappers for paired fixed-benchmark registrations. Each `runFooN`
 calls the Hex target on the prepared fixture, while each `runFlintFooN` calls
 FLINT `fq_default` on the same modulus and operands. The rung ladder reuses the
-certificate-checked `#[2, 3, 4, 5, 6, 8]` schedule so the headline report can
-record raw and overhead-adjusted ratios for every Phase-4 input family without
+certificate-checked `#[2, 3, 4, 5, 6, 8]` schedule so a run can record raw
+and overhead-adjusted ratios for every input family without
 adding larger certificate elaboration to the normal bench module. -/
 
 /-- Read fixed Hex inputs through runtime state so the batching harness cannot
@@ -1073,7 +1073,7 @@ setup_benchmark runFrobChecksum n => n * n * Nat.log2 7
     signalFloorMultiplier := 1.0
   }
 
-/-! # FLINT `fq_default` informational comparator fixed registrations -/
+/-! # FLINT `fq_default` comparator fixed registrations -/
 
 /-- The FLINT targets make one discarded call to start the persistent Python
 driver before timing, then amortise protocol overhead across a 200 ms timed

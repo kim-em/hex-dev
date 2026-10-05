@@ -726,11 +726,11 @@ Representative example files under `bench/HexRCF/ProofProbe` exercise quadratic
 positivity, an existential witness, supplied literal replay and registered real
 constants. CI builds them through `HexRCFProofProbe` on every PR. These examples and the ordinary
 library/conformance tests establish correctness; this proof surface has no
-paired timing decision, timing ladder, absolute build-time gate, profile or
-headline-report requirement. The computational owner's LeanBench obligations
+paired timing decision, timing ladder, absolute build-time limit or profile
+requirement. The computational owner's LeanBench obligations
 remain separate.
 
-python-flint is an **informational**, scheduled-only comparator for the
+python-flint is an orientation comparator for the
 compiled carrier-degree decision family. The paired fixed registrations are
 `runLeanDecision{16,20,24,28,32}` and
 `runFlintDecision{16,20,24,28,32}`. The additional fixed registration
@@ -742,7 +742,7 @@ version-1 fixture encoding. The comparator is deliberately not assigned the
 Lean target's `n^4` class: it factors the atom product over `ZZ` and asks
 FLINT/Arb for certified real-root balls, a different algorithmic class from
 the Lean carrier/certificate pipeline. Ratio divergence is therefore expected
-and informational; the headline report must quantify the observed trend. The
+and is not a finding. The
 persistent-driver request and response are
 
 ```text
@@ -762,29 +762,23 @@ between outer children. The complete FLINT request line, including the exact
 version-1 sentence encoding, is precomputed; pipe transport and Python JSON
 decoding remain measured comparator overhead. The floor includes the complete
 request/reply path and minimal formula evaluation, but excludes process startup
-and understates the parsing cost of the longer degree-rung requests. The
-headline report retains raw times and ratios at every rung, then subtracts the
-floor median from the FLINT median only on rungs where the floor is at most 50%
-of the FLINT median. A rung above that threshold is floor-dominated, ineligible,
-and reported raw-only. On an eligible rung where the floor exceeds 5%, both raw
-and adjusted ratios are mandatory; below 5%, the raw ratio suffices. Routine
+and understates the parsing cost of the longer degree-rung requests. A rung
+where the floor exceeds half the FLINT median is floor-dominated and says
+nothing about the algorithms. Routine
 `hexrcf_bench verify` performs one semantic call through every fixed
-registration. Scientific runs and ratio reporting require `python3` with
-`python-flint` on the named release benchmark host.
+registration. Scientific runs require `python3` with `python-flint` on the measuring host.
 
 This comparison covers carrier degree and real-root count only. It does not
 measure atom multiplicity, common-root preparation, separation, certificate
 replay, reification, literal elaboration, or end-to-end tactic cost.
 python-flint is not proof-producing, and no comparable proof-producing
-univariate RCF tactic is currently named; the tactic/elaboration track is
-therefore `no-comparable-surface-in-named-comparator` rather than assigned a
-fake ratio. The Phase-3 `local` emitter exercises related compiled workloads
+univariate RCF tactic is currently named, so the tactic/elaboration track has
+no external comparator rather than a fake ratio. The Phase-3 `local` emitter exercises related compiled workloads
 but is neither an elaboration benchmark nor Phase-4 asymptotic evidence.
 
 `HexRCF.done_through` is `7`. Its Phase-4 record required every dependency,
 including HexRealRootsMathlib, to complete Phase 4 and both evidence tracks
-to have their structural wiring and scientific artifacts; the committed
-HexRCF Phase-4 headline report records that.
+to have their structural wiring and scientific artifacts.
 
 ## Conformance fixtures
 

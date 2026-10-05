@@ -30,8 +30,7 @@ theorems and decidability instances use build-only correctness examples in
 
 Under [Phase 4](../../PLAN/Phase4.md), these CI builds are the required proof
 track evidence. There is no compiled executable, tactic complexity verdict,
-required timing sweep, comparator ratio, profile or headline report for this
-library. Representative integer and field-carrier examples below are built by CI.
+required timing sweep, comparator ratio or profile for this library. Representative integer and field-carrier examples below are built by CI.
 
 Throughout, `e` is `HexMatrixMathlib.matrixEquiv`, `A : Hex.Matrix R n m`,
 `c : Hex.Matrix.RankCert R n m`, and `B`, `C`, `P`, `U`, `d`, `r` are as

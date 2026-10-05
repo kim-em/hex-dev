@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Informational Z3 RCF comparison of prepared infinitesimal operations.
+"""Orientation Z3 RCF comparison of prepared infinitesimal operations.
 
 Hex uses the existing lean-bench child; Z3 uses its pinned Python/FFI API in
 this process. Preparation and process startup are outside both operation timers.

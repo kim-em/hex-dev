@@ -1093,7 +1093,7 @@ cross-multiplied identity at random rational points. sympy has no
 Zeilberger implementation, and Maxima's `zeilberger` package is the
 nearest independent one; it is a manual cross-check during
 development, not a CI oracle, and the benchmarking section lists it as
-an informational comparator only.
+an orientation comparator only.
 
 ## Benchmarking
 
@@ -1122,7 +1122,7 @@ Families:
   must fail fast.
 
 **Comparators.** sympy's `gosper_term` and Maxima's `Zeilberger` are
-both **informational**: they are interpreted implementations answering
+both for orientation only: they are interpreted implementations answering
 in a different runtime with different startup costs, and neither
 checks anything, so a required ratio would compare a prover-plus-
 checker against a search alone. The comparison a reader wants, and

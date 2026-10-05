@@ -39,11 +39,10 @@ which forces every minor and gives LeanBench a conformance signal.
 Entries come from a fixed multiply-xorshift hash of the coordinate, so the
 inputs are identical on every host and no randomness is drawn at run time.
 
-The SPEC classifies SymPy, the same `combinations` and `det` loop the
-conformance oracle runs, as an `informational` comparator, so it is not a
-required Phase 4 check. It is not registered here: the comparator would run through
-`scripts/oracle/pari_bench_driver.py`, and its `phase4.comparators` entry lands
-with this library's `libraries.yml` record.
+SymPy, the same `combinations` and `det` loop the conformance oracle runs, is
+an orientation comparator rather than a required Phase 4 check. It is not
+registered here: the comparator would run through
+`scripts/oracle/pari_bench_driver.py`.
 
 `signalFloorMultiplier := 1.0` keeps the small-`r` rungs: a `1 × 1` or `2 × 2`
 minor sweep finishes well inside the executable-spawn floor, and discarding

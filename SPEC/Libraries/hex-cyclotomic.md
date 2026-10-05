@@ -808,12 +808,11 @@ Families:
   checked construction is a small constant factor, since the fixture
   emitter uses it.
 
-**Comparators.** PARI's `polcyclo` through cypari2, `informational`: it
+**Comparators.** PARI's `polcyclo` through cypari2, for orientation: it
 is the conformance oracle, and the measurement includes cypari2's
 marshalling of a degree-`φ(n)` coefficient vector into Python, so the
-ratio does not isolate the algorithm. SymPy's `cyclotomic_poly`,
-`informational`, for the same reason and more so. No external comparator
-is registered with `class: gating`, and that is the justification.
+ratio does not isolate the algorithm. SymPy's `cyclotomic_poly`, for
+orientation, for the same reason and more so. Neither has a target ratio.
 
 Two required internal checks, which matter more than the external ones:
 
@@ -1095,27 +1094,6 @@ still open.
     mathlib: false
     done_through: 0
     status: planned
-    phase4:
-      comparators:
-        - tool: PARI polcyclo via cypari2
-          class: informational
-          rationale: "PARI is the conformance oracle and the measurement includes cypari2's marshalling of a degree-phi(n) coefficient vector into Python, so the ratio does not isolate the algorithm."
-        - tool: SymPy cyclotomic_poly
-          class: informational
-          rationale: "SymPy is the second-opinion oracle and is Python, so the ratio is reported for context and does not determine acceptance."
-      input_families:
-        - name: powerful-index
-          description: n = 2^k and 2^a 3^b with phi(n) up to 10^6, where the radical is tiny and the cost should be the output size
-        - name: squarefree-index
-          description: products of the first j odd primes for j up to 6, where the ladder does all the work and the coefficients grow
-        - name: highly-composite-index
-          description: n in 5040, 27720, 720720, measuring cyclotomicDivisors against tau(n) separate constructions
-        - name: route-crossover
-          description: the ladder against the divisor recursion on every family, up to the index where the recursion is unaffordable
-        - name: evaluate
-          description: Phi_d(b) on the b^n +- 1 grid against hex-int-factor's Nat recursion for the same values
-        - name: checked-overhead
-          description: the checked construction and the product-identity check against the plain construction
   HexCyclotomicMathlib:
     deps: [HexCyclotomic, HexPolyZMathlib, HexPolyMathlib, HexIntFactorMathlib]
     mathlib: true

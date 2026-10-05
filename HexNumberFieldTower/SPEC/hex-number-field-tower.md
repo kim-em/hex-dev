@@ -275,9 +275,8 @@ materialization and the exact algebraic reality test; charge that preparation
 separately. The sign bound then uses all chosen complex generator embeddings
 and still applies to the certified real result.
 
-Conformance and Phase-4 sign/compare families, informational python-flint and
-Z3 RCF comparisons, and mode-dependent required ceilings are specified by the
-consumer contract. Include coordinate zero, rational and negative values,
+Conformance and Phase-4 sign/compare families, python-flint and Z3 RCF
+comparisons, and any required ceilings are specified by the consumer contract. Include coordinate zero, rational and negative values,
 relations reducing to zero, close nonzero values, multiple choices of real
 generator embedding, and rejection of nonreal elements. Measure norm setup
 and recursive evaluation separately; do not hide materialization or flattening
@@ -484,30 +483,29 @@ Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
   has bit cost set by the flattening's primitive-basis images, whose heights
   are fixed by the accepted primitive-element shift rather than by the
   dimension, so it has no one-parameter wall model in the dimension and is a
-  canonical mode-3 case below.
+  canonical fixed case below.
 
 The fixed canonical cases for adjoining, identity adjoining, one- and
 two-level factorization, checked replay, splitting, flattening, division at
 the top rung of the recursive family, and one dense `toPrimitive` call use
 zero-grace whole-child ceilings derived from clean reference-host measurements
 plus stated margin. These budgets do not replace the contracts above; they are
-mode-3 regression ceilings for operations whose realised phase mixtures admit
-neither a tight family model nor a published bound covering the dominant
-executable phases.
+regression ceilings for operations whose realised phase mixtures admit neither
+a tight family model nor a published bound covering the dominant executable
+phases, and they make no scaling claim.
 
-Negation has mode-1 evidence on dense bounded-height coordinate arrays at
+Negation has a two-sided declared model on dense bounded-height coordinate arrays at
 dimensions 128 through 448. The source-derived linear model covers one public
 negation plus structural result hashing; its exactly sized result constructor
 does not copy or normalize the coordinate array. `Elem.mk` remains private;
 the checked constructor is exposed only as `Internal.ofCoeffs`, and requires a
 proof that the supplied array has exactly the tower dimension.
 
-Inversion has mode-1 evidence on the recursive family. Division and dense
-`toPrimitive` are mode-3 surfaces: the inverse's coordinate height crosses a
-64-bit limb boundary inside the measured range, and the primitive images'
-heights are input-determined, so neither admits a one-parameter wall model;
-the headline report records the attempted schedules and their residuals. The
-fixed unit-basis registration and the dimension-four arithmetic
+Inversion has a two-sided declared model on the recursive family. Division
+and dense `toPrimitive` have fixed registrations only: the inverse's
+coordinate height crosses a 64-bit limb boundary inside the measured range,
+and the primitive images' heights are input-determined, so neither admits a
+one-parameter wall model. The fixed unit-basis registration and the dimension-four arithmetic
 registrations are hash anchors, not performance evidence.
 
 Merge-facing conformance remains restricted to tower dimension at most 8 and
@@ -517,8 +515,8 @@ performance evidence, not a merge-facing conformance fixture.
 ## External comparators
 
 **PARI/GP nffactor via cypari2** (https://pari.math.u-bordeaux.fr/, driven
-through the cypari2 binding, the same binding the conformance oracle uses) —
-**informational**, scoped to the `factor?` bench targets. `nffactor(nfinit f,
+through the cypari2 binding, the same binding the conformance oracle uses),
+scoped to the `factor?` bench targets. `nffactor(nfinit f,
 t)` is the callable PARI unit surface for factoring a polynomial over a
 number field, the semantic task of `factor?` at one level. It is wired as a
 persistent-subprocess process call (`scripts/oracle/pari_bench_driver.py`,
@@ -529,10 +527,9 @@ live in each system's own field presentation and are not a shared
 observable; the degree/multiplicity multiset of a complete factorization
 is). PARI is a mature optimized C library running over `nfinit`'s absolute
 integral-basis presentation with maximal-order machinery, so the gap is
-structural; the ratio is recorded for orientation and does not gate Phase 4.
+structural; the ratio is recorded for orientation only.
 
-Absence declarations, all with reason
-**no-comparable-surface-in-named-comparator**:
+PARI exposes no comparable callable unit for the other surfaces:
 
 - *Tower element arithmetic* (`Elem` add/sub/neg/mul/inv/div/smul): PARI's
   number-field element operations (`nfelt*`) act on absolute integral-basis

@@ -122,7 +122,7 @@ whose `rabin_irreducible` proves both directions of Rabin's criterion for a
 monic input and whose `fpIsIrreducible_iff` extends it to arbitrary input.
 
 Exact conformance against python-flint is a required release check. FLINT
-timings are informational optimization evidence. The required performance
+timings are orientation for optimization work. The required performance
 checks are the absolute Rabin and distinct-degree budgets stated in the
 [SPEC](SPEC/hex-berlekamp.md).
 

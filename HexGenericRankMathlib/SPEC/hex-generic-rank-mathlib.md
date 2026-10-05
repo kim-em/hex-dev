@@ -384,9 +384,7 @@ The bar of [matrix-tactics §The bar against Mathlib](../../SPEC/matrix-tactics.
 has two parts. The accepted fragment is strictly larger by construction:
 `eval_rank` requires kernel-decidable equality of entries and declines
 symbolic atoms, and no Lean tactic states a conditional rank, so the
-comparator absence is declared as
-**no-comparable-surface-in-named-comparator**, scoped to the symbolic
-targets, per [benchmarking](../../SPEC/benchmarking.md). Correctness examples cover that additional symbolic scope; there is no
+symbolic targets have no comparator. Correctness examples cover that additional symbolic scope; there is no
 paired performance choice or comparator ratio requirement.
 
 Representative example files under `bench/HexGenericRankMathlib/ProofProbe`

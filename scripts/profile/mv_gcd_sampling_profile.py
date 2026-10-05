@@ -4,7 +4,7 @@
 Capture the profiles first with ``scripts/profile/run_profile.sh``. The raw
 Firefox profiles and their symbolication sidecars stay under ``/tmp``; this
 script commits only the small reproducible analytical summary used by the
-headline report.
+performance report.
 """
 
 from __future__ import annotations

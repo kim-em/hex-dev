@@ -143,10 +143,10 @@ The `symbolic` family: dimensions `2, 4, 8`, variables `1, 2, 4, 8`, degree
 known low rank as above. Registrations in `bench/HexGenericRank/Bench.lean`
 (Mathlib-free) register the producer and the compiled checker separately,
 checker preparation holding a precomputed certificate. Support and degree
-ladders are not one cubic model, so each registration states its mode under
+ladders are not one cubic model, so each registration states its claim under
 [benchmarking §Choosing the complexity claim](../../SPEC/benchmarking.md#choosing-the-complexity-claim);
-the fixed-workload registrations use mode 3 with preregistered absolute
-ceilings from the first measurement. The report
+the fixed-workload registrations are correctness checks and make no
+performance claim. The report
 `reports/hex-generic-rank-performance.md` records producer time, compiled
 checker time, the certificate size (term count and maximum degree of
 `denom`, total term count of `adj`, serialised bytes), and the realised
@@ -154,9 +154,7 @@ intermediate support of the producer.
 
 There is no external comparator: python-flint has no multivariate
 polynomial matrices, and SymPy's fraction-field rank is a Python-process
-oracle used for conformance, not a timed comparator. The absence is declared
-as **no-comparable-surface-in-named-comparator** for these targets, per
-[benchmarking](../../SPEC/benchmarking.md).
+oracle used for conformance, not a timed comparator.
 
 ## File organisation
 

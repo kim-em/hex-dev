@@ -910,7 +910,7 @@ instance : Hashable RealRootCount where
 def runSortRoots (roots : Array RealRootCount) : Array RealRootCount :=
   (roots.toList.mergeSort (fun a b => decide (a.root ≤ b.root))).toArray
 
--- Mode 1: the same mergeSort/comparator expression used by realRoots.
+-- Two-sided cost model: the same mergeSort/comparator expression used by realRoots.
 -- Bit-reversal at power-of-two rungs forces interleaving at every merge.
 -- Rational roots 1..n have disjoint stored intervals and word-size heights;
 -- each comparison/hash is constant word work. Sorting costs Θ(n log n),
@@ -1047,7 +1047,7 @@ def runRationalQuotient (i : RationalLeaf) : Option Rat :=
 def runRationalFloor (i : RationalLeaf) : Int := i.value.floor
 def runRationalCeil (i : RationalLeaf) : Int := i.value.ceil
 
--- Mode-1 derivation before measurement: the canonical linear polynomial for
+-- Two-sided derivation before measurement: the canonical linear polynomial for
 -- q=((2^b-1)/3)/(2^b+1) at even b has primitive coefficients D=3*A+2.
 -- Recognition constructs the
 -- reduced Rat directly. Negating its borrowed b-bit constant coefficient

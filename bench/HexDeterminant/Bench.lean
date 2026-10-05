@@ -25,8 +25,7 @@ Scientific registration:
 The integer `runLeibnizDet` target has no external comparator: it is the reference
 combinatorial definition, cross-checked against the row-pivoted Bareiss
 determinant (`hex-bareiss`) for agreement rather than against an external tool
-(declared absence with the `structural-layer` reason per
-`SPEC/Libraries/hex-determinant.md §"External comparators"`).
+(see `SPEC/Libraries/hex-determinant.md §"External comparators"`).
 -/
 
 namespace Hex.DeterminantBench
@@ -99,7 +98,7 @@ setup_benchmark runLeibnizDet n => n * leibnizDetComplexity n
 /-! Symbolic carrier sweeps. Each fixed point compares the full canonical
 result on a prepared input. Dimensions are 2, 3, 4; dense and fraction degrees
 are 1, 2, 4; multivariate term counts are 2, 4, 8 at arity 3 and total degree 4.
-The SymPy points are informational, scheduled-only, and excluded from bare
+The SymPy points are for orientation, run manually, and excluded from bare
 `verify`. Explicit names still verify the external process and result hashes. -/
 
 open DeterminantCarriers

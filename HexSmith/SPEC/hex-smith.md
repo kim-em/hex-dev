@@ -691,19 +691,17 @@ square common domain and the geometry variants retain scientific scaling and
 oracle coverage. `runDiagonal` and `runDiagonalGeneral` answer an internal
 routing question on identical input; FLINT/PARI expose only general Smith form,
 not a separately callable diagonal fast path, so the route-to-route comparison
-is `no-comparable-surface-in-named-comparator`. The same declaration applies
-to `runRank` because neither tool exposes the projection as a callable unit,
+has no external comparator. The same applies to `runRank` because neither tool exposes the projection as a callable unit,
 and to `runDiagonalData`, `snfData`, their transforms and inverses,
 `smithBasis`, `abelianStructure`, `isSNFShape`, and `snfCert` because neither
 named tool emits or checks those executable data. These surfaces are checked
 independently in Lean rather than timed against a ceremonial external
 substitute. FLINT and PARI comparison is canonical invariant data only.
 
-**Comparators.** FLINT `fmpz_mat_snf` through python-flint,
-`informational`. FLINT's default dispatch includes algorithms not
-specified here, so the ratio compares different algorithms and does not
-hold a required threshold. PARI `matsnf` through `cypari2`, also
-`informational`.
+**Comparators.** FLINT `fmpz_mat_snf` through python-flint, for
+orientation. FLINT's default dispatch includes algorithms not specified
+here, so the ratio compares different algorithms and has no target
+threshold. PARI `matsnf` through `cypari2`, also for orientation.
 
 **The diagonal decision rule written down in advance.** `snfDiagonal` must
 be faster than `snf` on diagonal input by a margin that grows with `r`, since
@@ -747,21 +745,6 @@ HexSmithMathlib.lean
     mathlib: false
     done_through: 0
     status: active
-    phase4:
-      comparators:
-        - tool: FLINT fmpz_mat_snf via python-flint
-          class: informational
-          rationale: FLINT dispatches to algorithms and crossover policies outside this SPEC
-        - tool: PARI matsnf via cypari2
-          class: informational
-          rationale: PARI uses a separately tuned implementation and is recorded for orientation
-      input_families:
-        - name: random-dense-smith
-          description: dense square nonsingular integer matrices with uniformly bounded entries
-        - name: chain-conjugate
-          description: known divisibility chains conjugated by random unimodular matrices
-        - name: presentation-smith
-          description: sparse abelian-group relation matrices run through the dense implementation
   HexSmithMathlib:
     deps: [HexSmith, HexHermiteMathlib]
     mathlib: true

@@ -26,7 +26,7 @@ Scientific registration:
 
 * `runBareissDet`: row-pivoted Bareiss determinant over `Int`, `O(n^3)`.
 
-Informational external comparator (FLINT `fmpz_mat_det` via the shared
+External comparator (FLINT `fmpz_mat_det` via the shared
 persistent-subprocess python-flint driver, per
 `SPEC/Libraries/hex-bareiss.md §"External comparators"` and
 `SPEC/benchmarking.md §"External comparators" §"Process call"`):
@@ -35,7 +35,7 @@ persistent-subprocess python-flint driver, per
 
 FLINT's determinant uses multimodular reduction + CRT, structurally different
 from Hex's fraction-free Bareiss elimination; the ratio is recorded for
-orientation but does not block Phase 4.
+orientation.
 -/
 
 namespace Hex.BareissBench
@@ -140,8 +140,7 @@ def runFlintBareissDetAt (n : Nat) : Unit → IO Int :=
 rung ladder densifies the parametric `[8, 12, 16]` schedule outward
 toward sizes where FLINT's per-call wall time clears the persistent-
 subprocess startup floor, while staying inside the 10 s hard / 1 s
-soft per-call ceiling (per `SPEC/benchmarking.md §"Headline reports"
-§"Comparator ratios"`). The tridiagonal `flatSmallMatrix` fixture
+soft per-call ceiling. The tridiagonal `flatSmallMatrix` fixture
 keeps Bareiss intermediates bounded so the cubic in `n` scales the
 elimination loop, not bigint operand growth. -/
 
@@ -185,16 +184,14 @@ setup_benchmark runBareissDet n => n * n * n
     targetInnerNanos := 2000000000
   }
 
-/-! # FLINT `fmpz_mat_det` informational comparator fixed registrations
+/-! # FLINT `fmpz_mat_det` comparator fixed registrations
 
 `runBareissDet` is paired with the FLINT `fmpz_mat.det` op via the
 shared persistent-subprocess driver. The pairs are registered as
-`setup_fixed_benchmark` rungs across a densified ladder so the
-headline report records raw and overhead-adjusted ratios at each rung
-and a trend across the ladder. The comparator is `informational` per
-`HexBareiss/SPEC/hex-bareiss.md §"External comparators"`: no
-gating-goal verdict is required; the ratios are recorded for
-orientation. Both arms discard one call and use the same 200 ms inner-batch
+`setup_fixed_benchmark` rungs across a densified ladder so a run
+records raw and overhead-adjusted ratios at each rung and a trend
+across the ladder. The ratios are recorded for orientation
+(`HexBareiss/SPEC/hex-bareiss.md §"External comparators"`). Both arms discard one call and use the same 200 ms inner-batch
 floor, so driver startup and first-use effects are outside timing. -/
 
 def leanCompareConfig (maxSeconds : Float) : LeanBench.FixedBenchmarkConfig :=
@@ -550,7 +547,7 @@ setup_fixed_benchmark runOracleMvRatN5T4 where oracleConfig
 
 
 /-- Ordinary registration checks include all Hex carrier points. External carrier
-comparisons are informational and run only when explicitly selected. -/
+comparisons are for orientation and run only when explicitly selected. -/
 def verifyOrdinary : IO UInt32 := do
   let parametric ← LeanBench.allRuntimeEntries
   let fixed ← LeanBench.allFixedRuntimeEntries

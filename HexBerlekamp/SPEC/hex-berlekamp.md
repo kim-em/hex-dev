@@ -199,8 +199,7 @@ protocol.
 
 ## External comparators
 
-Two comparators are declared, both `informational`
-(see `libraries.yml` for the machine-readable form):
+Two external comparators are wired:
 
 - **FLINT `nmod_poly.is_irreducible` via python-flint**, paired with
   the Lean `runRabinTestChecksum` ladder.
@@ -215,12 +214,10 @@ structural: FLINT's hand-tuned C word-level kernels (nmod arithmetic
 with precomputed inverses, tuned modular composition and Frobenius
 strategies) against Hex's verified generic `FpPoly` arithmetic, at
 10x-373x (Rabin) and 44x-749x (DDF) across the eligible ladders in the
-2026-08-22 paired refresh. These comparators were originally declared
-`gating` with a parity goal; that goal was an aspiration the library's
-algorithm class does not support at comparable engineering effort, and
-the reclassification to `informational` records the structural nature
-of the gap rather than a harness artefact. The ratios are reported for
-orientation and do not gate Phase 4.
+2026-08-22 paired refresh. Parity with FLINT is not a target: the
+library's algorithm class does not support it at comparable engineering
+effort, and the gap is structural rather than a harness artefact. The
+ratios are recorded for orientation.
 
 ## References
 

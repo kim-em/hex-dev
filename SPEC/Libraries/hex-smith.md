@@ -646,11 +646,10 @@ Per [SPEC/benchmarking.md](../benchmarking.md), drivers at
 - `presentation-smith`: sparse relation matrices from abelian group
   presentations, the shape the headline consumer produces, run dense.
 
-**Comparators.** FLINT `fmpz_mat_snf` through python-flint,
-`informational`. FLINT's default dispatch includes algorithms not
-specified here, so the ratio compares different algorithms and does not
-hold a required threshold. PARI `matsnf` through `cypari2`, also
-`informational`.
+**Comparators.** FLINT `fmpz_mat_snf` through python-flint, for
+orientation. FLINT's default dispatch includes algorithms not specified
+here, so the ratio compares different algorithms and has no target
+threshold. PARI `matsnf` through `cypari2`, also for orientation.
 
 **The diagonal decision rule written down in advance.** `snfDiagonal` must
 be faster than `snf` on diagonal input by a margin that grows with `r`, since
@@ -694,21 +693,6 @@ HexSmithMathlib.lean
     mathlib: false
     done_through: 0
     status: active
-    phase4:
-      comparators:
-        - tool: FLINT fmpz_mat_snf via python-flint
-          class: informational
-          rationale: FLINT dispatches to algorithms and crossover policies outside this SPEC
-        - tool: PARI matsnf via cypari2
-          class: informational
-          rationale: PARI uses a separately tuned implementation and is recorded for orientation
-      input_families:
-        - name: random-dense-smith
-          description: dense square nonsingular integer matrices with uniformly bounded entries
-        - name: chain-conjugate
-          description: known divisibility chains conjugated by random unimodular matrices
-        - name: presentation-smith
-          description: sparse abelian-group relation matrices run through the dense implementation
   HexSmithMathlib:
     deps: [HexSmith, HexHermiteMathlib]
     mathlib: true
