@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.bench.cpu_lease import cpu_lease
 from scripts.bench.sign_det_compare import archive_sources
+from scripts.bench.sign_det_sparse import source_hashes
 from scripts.bench.sign_det_joint_timing import harness_binding
 
 DEPTHS = [2, 4, 6, 8, 10, 12]
@@ -101,8 +102,16 @@ def main():
     cpu, lease = cpu_lease()
     os.sched_setaffinity(0, {cpu})
     digest = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+    sources = source_hashes()
+    for name in ("HexRationalFn", "HexOrderedFn"):
+        for path in [ROOT / (name + ".lean"), *(ROOT / name).rglob("*.lean")]:
+            sources[str(path.relative_to(ROOT))] = digest(path)
+    for name in ("scripts/bench/sign_det_nested_signs.py", "scripts/bench/test_sign_det_nested_signs.py",
+                 "scripts/bench/sign_det_compare.py", "scripts/bench/sign_det_joint_timing.py",
+                 "reports/sign-det-nested-signs.md"):
+        sources[name] = digest(ROOT / name)
     m = {"kind": "nested-coefficient-sign-timing", "revision": revision,
-         "binary_sha256": digest(executable), "harness_binding": harness_binding(ROOT),
+         "source_sha256": sources, "binary_sha256": digest(executable), "harness_binding": harness_binding(ROOT),
          "host": platform.node(), "cpu": cpu, "load_before": os.getloadavg(),
          "runs": [], "state": "running"}
     def save(): (out / "metadata.json").write_text(json.dumps(m, indent=2) + "\n")
@@ -124,7 +133,8 @@ def main():
             raise ValueError("nested-sign runner failed; raw output retained")
         summary = validate_result(out / "timings.json", expected, revision)
         (out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
-        if (digest(executable) != m["binary_sha256"] or harness_binding(ROOT) != m["harness_binding"] or
+        m["source_sha256_after"] = {name: digest(ROOT / name) for name in sources}
+        if (m["source_sha256_after"] != sources or digest(executable) != m["binary_sha256"] or harness_binding(ROOT) != m["harness_binding"] or
                 subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip() != revision or
                 subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True)):
             raise ValueError("source, binary or harness changed during collection")
