@@ -419,15 +419,56 @@ context. The Euclidean factor recurrence and signed-remainder chains each use
 quadratic dense polynomial operations through a degree-linear sequence. Bit
 sizes and repeated algebraic sign checks may exceed this degree-only model;
 the measured ladder must test that hypothesis. -/
-setup_benchmark runMetiSecond n => n ^ 3
-  with prep := metiSecondInput
-  where {
+private def metiConfig : LeanBench.BenchmarkConfig := {
     paramFloor := 3, paramCeiling := 9
     paramSchedule := .custom #[3, 5, 7, 9]
     maxSecondsPerCall := 120.0
     targetInnerNanos := 500000000
     signalFloorMultiplier := 1.0
   }
+
+setup_benchmark runMetiSecond n => n ^ 3
+  with prep := metiSecondInput where metiConfig
+
+/-- The runtime function selects a coefficient prefix before root production.
+At the declared full size this is literally the original polynomial. -/
+private def metiCall (input : Option (Σ owner : Tower.Context nativeRegistry, owner.Poly))
+    (size : Nat) : UInt64 :=
+  match input with
+  | none => 0
+  | some ⟨owner,head⟩ =>
+    runMetiSecond (some ⟨owner,DensePoly.ofCoeffs (head.toArray.extract 0 size)⟩)
+
+private theorem metiCall_full (owner : Tower.Context nativeRegistry) (head : owner.Poly) :
+    metiCall (some ⟨owner,head⟩) head.toArray.size = runMetiSecond (some ⟨owner,head⟩) := by
+  simp only [metiCall, Array.extract_size, DensePoly.ofCoeffs_toArray]
+
+/-- Read the runtime function inside every iteration. Its argument controls
+actual polynomial data, so pure root production cannot be hoisted into prep. -/
+def measureMetiSecond (input : IO.Ref (Nat → UInt64)) (size : Nat) : IO UInt64 := do
+  return (← input.get) size
+
+private def metiRunner (degree : Nat) : IO (Nat → IO (Nat × Option UInt64)) := do
+  let input := metiSecondInput degree
+  let some ⟨_,head⟩ := input | throw (IO.userError "missing measured MetiTarski input")
+  unless head.size == degree+1 do throw (IO.userError "wrong measured degree")
+  LeanBench.blackBox (hash input)
+  let ref ← IO.mkRef (metiCall input)
+  return fun count => do
+    if count == 0 then return (0,none)
+    let mut last : UInt64 := 0
+    let start ← IO.monoNanosNow
+    for _ in [0:count] do
+      last := hash (← measureMetiSecond ref (degree+1))
+      LeanBench.blackBox last
+    return ((← IO.monoNanosNow)-start,some last)
+
+-- The same declared degree ladder and model. Preparation is forced before
+-- timing; the loop includes the IO read, full coefficient prefix and consumer.
+initialize do
+  LeanBench.register
+    { name := ``measureMetiSecond, complexityFormula := "n ^ 3", hashable := true,
+      config := metiConfig } metiRunner (fun n => n^3)
 
 end Hex.RealClosure.Bench
 
