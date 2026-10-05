@@ -1,0 +1,314 @@
+{
+  "name": "height",
+  "param": 2048,
+  "arm": "candidate",
+  "commands": [
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/timed-%p.jsonl",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-api-regression/hexorderedfn_bench-candidate",
+        "_child",
+        "--bench",
+        "Hex.OrderedFnBench.height",
+        "--param",
+        "2048",
+        "--target-nanos",
+        "1000000000"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/samply.json.gz",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10575/scripts/profile/normalize_perf.py",
+        "--profile",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/samply.json.gz",
+        "--perf-script",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/perf-samples.txt",
+        "--spawn-anchor",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/spawn-anchor.json",
+        "--output",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/normalized.json.gz",
+        "--sidecar",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/timed-112818.jsonl",
+        "--spawn-anchor",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/spawn-anchor.json",
+        "--out",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/filtered.json.gz",
+        "--diagnostics",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/diagnostics.json",
+        "--label-filter",
+        "warm-loop"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10575/scripts/profile/elf_symbols.py",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/filtered.json.gz",
+        "--output",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10575/scripts/profile/summarize_profile.py",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/filtered.json.gz",
+        "--symbols",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/symbols.json",
+        "--diagnostics",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate/diagnostics.json",
+        "--thread",
+        "hexorderedfn_be",
+        "--top",
+        "20",
+        "--output",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-candidate.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "load_before": [
+    5.3212890625,
+    3.90869140625,
+    2.0361328125
+  ],
+  "binary_sha256": "6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 112818,
+    "bench_thread_name": "hexorderedfn_be",
+    "bench_thread_tid": "112823",
+    "regions_total": 17,
+    "total_timed_ms": 584.35812,
+    "expected_samples_bench_thread": 583.8,
+    "retained_samples_bench_thread": 583,
+    "rejected_samples_bench_thread": 3,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1791211603482396090,
+    "spawn_anchor_mono_ns": 577032593607,
+    "sidecar_mono_anchor_ns": 577141044485,
+    "samply_meta_start_time_ms": 1791211603516.506,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.792613000026904,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.792613000026904,
+      "raw_max_residual_ms": 1.1268159999744967,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 17,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 583,
+          "regions_without_samples": 13,
+          "boundary_residual_trimmed_max_ms": 0.792613000026904,
+          "boundary_residual_raw_max_ms": 1.1268159999744967,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.0030121018238795844,
+          "leaf_function_support_size": 29,
+          "comparison_samples": 578,
+          "exchanged_samples": 5,
+          "exchanged_fraction": 0.00865051903114187,
+          "sampling_noise_allowance": 0.017677563701653704,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.004926196086344953,
+          "leaf_function_support_size": 29,
+          "comparison_samples": 578,
+          "exchanged_samples": 5,
+          "exchanged_fraction": 0.00865051903114187,
+          "sampling_noise_allowance": 0.017677563701653704,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 578,
+          "top_leaf_functions": [
+            {
+              "function": 29,
+              "name": "0x49c10a6",
+              "samples": 171
+            },
+            {
+              "function": 50,
+              "name": "0x499d413",
+              "samples": 145
+            },
+            {
+              "function": 48,
+              "name": "0x499d563",
+              "samples": 106
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 583,
+          "top_leaf_functions": [
+            {
+              "function": 29,
+              "name": "0x49c10a6",
+              "samples": 171
+            },
+            {
+              "function": 50,
+              "name": "0x499d413",
+              "samples": 147
+            },
+            {
+              "function": 48,
+              "name": "0x499d563",
+              "samples": 107
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 578,
+          "top_leaf_functions": [
+            {
+              "function": 29,
+              "name": "0x49c10a6",
+              "samples": 169
+            },
+            {
+              "function": 50,
+              "name": "0x499d413",
+              "samples": 147
+            },
+            {
+              "function": 48,
+              "name": "0x499d563",
+              "samples": 107
+            }
+          ]
+        }
+      }
+    }
+  },
+  "status": "profiled",
+  "load_after": [
+    5.3212890625,
+    3.90869140625,
+    2.0361328125
+  ],
+  "artifacts": {
+    "spawn-anchor.json": "f4ff34513c08ec32cafe9d702ead8537b0a32039eb892580bdbc09b265c40d68",
+    "perf.data": "20f2388bcaa47ba8cad19541c222e6996922aaef2c9e91626bc7ee39b0a10e57",
+    "timed-112818.jsonl": "23160f61acd2a66c51667a4a3db61c5fcc4d76fa5bc63f880bf1b9ad04e846ab",
+    "0.stdout": "beedc30d95d7a7b110b7f173ed9753512efbe3f77bcc9b159590d348c9a6292e",
+    "0.stderr": "be9a9b4b8d55149d773e8f82de7f82747ac947b3281fed760c7a22871f1c97a4",
+    "samply.json.gz": "17da3446f7f22a709fd9c66b8133e70c07f5182e18e97b5e4549e09052bf233d",
+    "1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "2.stdout": "bcaa9c3ff338a3bc05238fa43d4ae031d19573d5a427edc18113ca02da1fbbed",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "bcaa9c3ff338a3bc05238fa43d4ae031d19573d5a427edc18113ca02da1fbbed",
+    "normalized.json.gz": "413965ac34b9eded833d14ed0ed9d1577c9101f0fdd1c716cad955ee4de9d8c2",
+    "3.stdout": "71329c432b85fa38fdd371441906c22d5cfb2d5f95a8e0fcb51ea381a9c0cb75",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "ad5e5c8e4434acc558029ba1780a5796bbe5a7db0e791e4565641012ddc82ec3",
+    "diagnostics.json": "78fc5a8e4dfdc3397783722d0231a8674a7782c6d618f06a0ee4fa6a47054f0e",
+    "4.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stderr": "b86f3a8ff26ed08f8639661ccc3ca92adaa52eb632f1ce7160d19628325ccb5d",
+    "symbols.json": "2ea82ac1232a6196388079b8aa89075454296db364b0d6146817a22fe6c5e1cc",
+    "5.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "5.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
